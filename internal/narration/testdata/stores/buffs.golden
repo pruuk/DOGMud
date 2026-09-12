@@ -1,0 +1,265 @@
+# buffs store snapshot (internal/buffs)
+# Built 2026-09-12 from PRE-migration code. The *_user_text rows record what the
+# HOLDER is sent: for start and end that is StartUserNotice / EndUserNotice (authored
+# line, else the generic fallback, else nothing for a secret buff). A row exists only
+# when the sent line is non-empty. authored_start_line is the raw start_user_text of a
+# silent-start buff, as its applier (sleep, arrest, stun, broken limb) sends it.
+# dimensions: buff id x authored key; source only, buffs never know a target
+
+buff|0|start_user_text => You sit down and begin your meditation.
+buff|0|start_room_text => <ansi fg="username">Aliceia</ansi> sits down and begins to meditate.
+buff|0|trigger_user_text => You continue your meditation...
+buff|0|trigger_room_text => <ansi fg="username">Aliceia</ansi> continues meditating.
+buff|0|end_user_text => Your meditation ends and you slip away from the realm.
+buff|1|start_user_text => A warm glow surrounds you.
+buff|1|start_room_text => A warm glow surrounds Aliceia.
+buff|1|end_user_text => Your glow fades away.
+buff|1|end_room_text => The glow surrounding Aliceia fades away.
+buff|2|start_user_text => <ansi fg="yellow">You are stunned! You cannot attack.</ansi>
+buff|2|start_room_text => Aliceia staggers, dazed!
+buff|2|end_user_text => <ansi fg="green">You shake off the stun.</ansi>
+buff|3|start_user_text => <ansi fg="yellow">Your vision goes dark — you have been blinded!</ansi>
+buff|3|start_room_text => Aliceia claws at their eyes, blinded!
+buff|3|end_user_text => <ansi fg="green">Your vision slowly returns to normal.</ansi>
+buff|5|start_user_text => The compress warms against your skin as the herbs do their work.
+buff|5|end_user_text => The poultice's warmth fades.
+buff|6|start_user_text => The bitter draught burns going down, then spreads warmth through your legs.
+buff|6|trigger_user_text => The draught restores your vigor.
+buff|6|end_user_text => The draught's effect fades.
+buff|7|start_user_text => The sharp draught clears your thoughts as you swallow it.
+buff|7|trigger_user_text => The draught steadies your resolve.
+buff|7|end_user_text => The draught's clarity fades.
+buff|9|start_user_text => You feel sneaky.
+buff|9|start_room_text => Aliceia disappears into the shadows.
+buff|9|end_room_text => Aliceia emerges from the shadows.
+buff|15|end_user_text => You stir and wake.
+buff|15|authored_start_line => You lie down and let sleep take you.
+buff|24|start_user_text => You are weak and shaking as you recover from dying.
+buff|24|end_user_text => You have recovered from dying and feel steady again.
+buff|25|start_user_text => A dark shadow clings to you and dulls your senses.
+buff|25|end_user_text => The dark shadow lifts and your senses come back.
+buff|26|start_user_text => Conviction surges through your limbs, empowering your strikes.
+buff|26|end_user_text => The surge of conviction fades from your limbs.
+buff|27|start_user_text => Your mind hardens like iron, resolute and unyielding.
+buff|27|end_user_text => The iron resolve in your mind softens back to normal.
+buff|28|start_user_text => Chrysalis energy floods your nerves — everything feels faster.
+buff|28|end_user_text => The Chrysalis haste fades and your movements return to normal.
+buff|29|start_user_text => The dark thins and you make out grey shapes around you.
+buff|29|start_room_text => <ansi fg="username">Aliceia</ansi>'s eyes widen and catch the faint light.
+buff|29|end_user_text => The dark closes in again and the shapes are gone.
+buff|29|end_room_text => The faint light leaves <ansi fg="username">Aliceia</ansi>'s eyes.
+buff|30|start_user_text => Your muscles twitch uncontrollably as nerve signals misfire.
+buff|30|end_user_text => Your nerves settle and control returns to your limbs.
+buff|31|start_user_text => You wrap yourself in a psionic shroud, fading from perception.
+buff|31|start_room_text => <ansi fg="username">Aliceia</ansi> seems to shimmer and fade from view.
+buff|31|end_room_text => <ansi fg="username">Aliceia</ansi> shimmers back into view.
+buff|32|start_user_text => Chrysalis energy suffuses your body with a warm, mending pulse.
+buff|32|trigger_user_text => The vital surge mends your wounds.
+buff|32|end_user_text => The vital surge fades.
+buff|33|start_user_text => Deep Chrysalis energy wraps around you, accelerating your body's healing.
+buff|33|trigger_user_text => Chrysalis energy knits your wounds closed.
+buff|33|end_user_text => The Chrysalis regeneration fades.
+buff|34|start_user_text => Your mind opens and sharpens — every action feels more instructive.
+buff|34|end_user_text => The heightened attunement fades from your mind.
+buff|35|start_user_text => Chrysalis energy surges through your cells, accelerating mutation.
+buff|35|end_user_text => The mutagenic catalyst fades from your system.
+buff|36|start_user_text => A psionic anchor locks onto your mind, rooting you in place!
+buff|36|end_user_text => The psychic anchor releases its grip on your mind.
+buff|37|start_user_text => Your senses explode with input — everything is too bright, too loud!
+buff|37|end_user_text => The sensory overload subsides and your senses normalize.
+buff|38|start_user_text => Solidified conviction wraps around your body like armor.
+buff|38|start_room_text => <ansi fg="username">Aliceia</ansi> is encased in a shimmering layer of conviction.
+buff|38|end_user_text => The conviction armor fades from your body.
+buff|39|start_user_text => You feel venom seeping into your bloodstream!
+buff|39|start_room_text => <ansi fg="username">Aliceia</ansi> winces as venom takes hold.
+buff|39|trigger_user_text => Poison burns through your veins.
+buff|39|trigger_room_text => <ansi fg="username">Aliceia</ansi> shudders as venom courses through them.
+buff|39|end_user_text => The venom finally subsides, leaving you weakened.
+buff|40|start_user_text => A cloud of toxic spores engulfs you!
+buff|40|start_room_text => <ansi fg="username">Aliceia</ansi> is enveloped in a cloud of choking spores.
+buff|40|trigger_user_text => Toxic spores eat at your flesh.
+buff|40|trigger_room_text => <ansi fg="username">Aliceia</ansi> winces as fungal toxin spreads.
+buff|40|end_user_text => You finally cough up the last of the spores.
+buff|41|start_user_text => A thick fog descends over your thoughts...
+buff|41|end_user_text => The fog lifts from your mind and clarity returns.
+buff|42|start_user_text => The warm meal settles in your belly and your aches ease.
+buff|42|end_user_text => The comfort of the meal fades from your belly.
+buff|43|start_user_text => The hearty food works through you and your vigour returns.
+buff|43|end_user_text => The vigour from the food ebbs away.
+buff|44|start_user_text => The drink cools your thoughts and steadies your spirit.
+buff|44|end_user_text => The clear feeling in your mind fades.
+buff|45|start_user_text => You are full and hale, and it shows in how you stand.
+buff|45|end_user_text => You are no longer full, and hunger is not far off.
+buff|46|start_user_text => The stiff drink loosens your tongue and steadies your nerve.
+buff|46|end_user_text => The liquid courage wears off and you feel shy again.
+buff|47|start_user_text => The bitter draught burns your throat but you feel poisons loosening their grip.
+buff|47|start_room_text => <ansi fg="username">Aliceia</ansi> grimaces as they swallow an antidote.
+buff|47|trigger_user_text => The antidote soothes your body.
+buff|47|end_user_text => The antidote has run its course.
+buff|48|start_user_text => The tonic sharpens your thoughts to a razor's edge.
+buff|48|start_room_text => <ansi fg="username">Aliceia</ansi>'s eyes brighten with renewed focus.
+buff|48|end_user_text => The mental clarity fades, leaving your thoughts slightly muddled.
+buff|49|start_user_text => A warm tingling spreads through your body as you become more resistant to heat.
+buff|49|start_room_text => <ansi fg="username">Aliceia</ansi>'s skin takes on a faint reddish hue.
+buff|49|end_user_text => The protective warmth fades from your skin.
+buff|50|start_user_text => The poultice floods your body with deep, restorative warmth.
+buff|50|start_room_text => <ansi fg="username">Aliceia</ansi> sighs with relief as herbs do their work.
+buff|50|trigger_user_text => Healing energy suffuses your body.
+buff|50|end_user_text => The deep warmth of the poultice fades away.
+buff|51|start_user_text => Raw power surges through your muscles as the elixir takes hold. Your hands tremble with barely contained fury.
+buff|51|start_room_text => <ansi fg="username">Aliceia</ansi>'s muscles bulge and veins stand out as a wild look enters their eyes.
+buff|51|end_user_text => The berserker rage subsides, leaving you feeling drained but steady.
+buff|52|start_user_text => A Chrysalis sheen settles over your skin like a shell.
+buff|52|start_room_text => <ansi fg="username">Aliceia</ansi> takes on a faint sheen, like a shell.
+buff|52|end_user_text => The Chrysalis sheen flakes away from your skin.
+buff|52|end_room_text => The sheen over <ansi fg="username">Aliceia</ansi> flakes away.
+buff|53|start_user_text => Your sight pierces the Veil and hidden things show.
+buff|53|end_user_text => The Veil closes again and hidden things slip away.
+buff|54|start_user_text => Warmth spreads as the salve knits your wounds closed.
+buff|54|end_user_text => The warmth of the healing salve fades.
+buff|55|start_user_text => Your breath steadies as the tonic surges through you.
+buff|55|end_user_text => The tonic wears off and your breath comes hard again.
+buff|56|start_user_text => Purpose sharpens your focus as the draught takes hold.
+buff|56|end_user_text => The certainty of the draught fades from your mind.
+buff|57|start_user_text => Fire spreads in your veins and your aches burn away.
+buff|57|end_user_text => The fire cools and your muscles begin to ache again.
+buff|58|start_user_text => The Preacher's Tincture settles a calm certainty over you.
+buff|58|end_user_text => The calm lifts and your worries settle back in.
+buff|59|start_user_text => Your lungs open wide, as if you could run for hours.
+buff|59|end_user_text => Your chest tightens and the easy breathing is gone.
+buff|60|start_user_text => You feel restored, as if waking from perfect sleep.
+buff|60|end_user_text => The renewal fades and you feel your own aches again.
+buff|61|start_user_text => Your skin toughens like bark and your joints stiffen.
+buff|61|end_user_text => Your skin softens again and your joints move freely.
+buff|62|start_user_text => A shell of clarity blunts magic, but your arms feel heavy.
+buff|62|end_user_text => The shell of clarity dissolves and your arms lighten.
+buff|63|start_user_text => A bitter film blunts spoken power and dulls your senses.
+buff|63|end_user_text => The bitter film dissolves and your senses sharpen.
+buff|64|start_user_text => Nothing could turn your stomach now, but you feel slow.
+buff|64|end_user_text => Your stomach is ordinary again and your reflexes return.
+buff|65|start_user_text => The dark recedes and hidden things show, but you feel weak.
+buff|65|start_room_text => <ansi fg="username">Aliceia</ansi>'s eyes catch the light like a cat's.
+buff|65|end_user_text => The dark closes in, the hidden vanish, your strength returns.
+buff|65|end_room_text => The glint fades from <ansi fg="username">Aliceia</ansi>'s eyes.
+buff|66|start_user_text => The world slows as your reflexes sharpen, but you tire.
+buff|66|end_user_text => The world speeds up again and you feel ordinary.
+buff|67|start_user_text => Raw fury floods your muscles and narrows the world.
+buff|67|end_user_text => The fury drains away and leaves you spent.
+buff|68|start_user_text => Words come easily now, each one landing where you aim.
+buff|68|end_user_text => Your words lose their edge and your strength returns.
+buff|69|start_user_text => Your senses sharpen and you see each blow coming.
+buff|69|end_user_text => The battle trance breaks and the fight blurs again.
+buff|70|start_user_text => Your body convulses and expels everything inside you.
+buff|70|end_user_text => The convulsions stop and your body is your own.
+buff|71|start_user_text => Your body hums with potential and learns as you move.
+buff|71|end_user_text => The hum of potential fades from your body.
+buff|72|start_user_text => Knowledge settles faster now, and patterns stand out.
+buff|72|end_user_text => The infusion wears off and learning feels slow again.
+buff|73|start_user_text => Something shifts deep inside you, quiet and certain.
+buff|73|end_user_text => The shifting inside you settles and goes still.
+buff|74|start_user_text => Chrysalis energy rewrites something deep in your bones.
+buff|74|end_user_text => The Chrysalis energy settles and your bones go quiet.
+buff|75|start_user_text => Your stomach heaves and your vision swims.
+buff|75|end_user_text => The nausea passes and your stomach settles.
+buff|76|start_user_text => Everything in you aches in the wake of the purge.
+buff|76|end_user_text => The aching from the purge fades away.
+buff|77|start_user_text => A searing flash takes your sight and leaves only glare.
+buff|77|end_user_text => Your sight clears and shapes come back to you.
+buff|78|start_user_text => A cloud of choking fumes engulfs you!
+buff|78|start_room_text => <ansi fg="username">Aliceia</ansi> is engulfed in a cloud of toxic fumes.
+buff|78|trigger_user_text => The toxic fumes sear your lungs.
+buff|78|end_user_text => The toxic cloud finally dissipates.
+buff|79|end_user_text => The fervor of the warcry fades from you.
+buff|80|end_user_text => The strength of the rally drains from you.
+buff|82|start_user_text => Your hands go perfectly still and every motion is exact.
+buff|82|end_user_text => A faint tremor returns to your hands.
+buff|83|end_user_text => <ansi fg="green">The ache in your limb finally fades. You can move at full strength again.</ansi>
+buff|83|authored_start_line => <ansi fg="red">You feel the wrench of a broken limb. Sharp pain will follow every motion until it heals.</ansi>
+buff|84|end_user_text => <ansi fg="green">You shake off the stun and regain your composure.</ansi>
+buff|84|authored_start_line => <ansi fg="red">The submission's pressure leaves you stunned, unable to react.</ansi>
+buff|86|start_user_text => You commit the trail to memory and steady your senses.
+buff|86|end_user_text => Your focus on the trail breaks.
+buff|87|start_user_text => You fall into your quarry's wake, footfalls silenced to match theirs.
+buff|87|end_user_text => Your focus on the quarry breaks.
+buff|88|end_user_text => The cell door swings open. You are free to go.
+buff|88|authored_start_line => The cell door clangs shut behind you. You are held here until your sentence is served or your fine is paid.
+buff|89|end_user_text => The grip releases and you gasp air into your chest.
+buff|89|authored_start_line => A grip closes on your throat and crushes your breath.
+buff|90|start_user_text => The world falls away. A slow warmth floods from your center outward -- every ache dissolves, every edge softens. You feel capable of anything.
+buff|90|end_user_text => The warmth recedes, leaving a hollow ache in its wake. The world feels harder-edged than it did before.
+buff|91|start_user_text => The communion ends. Your body feels suddenly heavy, your thoughts thick and gray. You are left with the crash.
+buff|91|end_user_text => The worst of the crash passes, though you still feel wrung out.
+buff|92|start_user_text => The need for Bloom rises like a tide -- your hands shake, your mouth is dry, and your thoughts keep circling back to the wafer and its warmth.
+buff|92|end_user_text => The craving subsides, for now.
+buff|93|end_user_text => The worst of the purge passes. You are wrung out and hollow, but the Bloom's grip on you has slipped.
+buff|94|start_user_text => The air over the buried surface crawls, and a cold shock jolts up through you.
+buff|94|start_room_text => <ansi fg="username">Aliceia</ansi> jerks as the ground arcs against them.
+buff|94|trigger_user_text => A cold arc bites up through you.
+buff|94|trigger_room_text => <ansi fg="username">Aliceia</ansi> shudders as the ground arcs against them.
+buff|94|end_user_text => The stinging in your bones fades — for now.
+buff|95|start_user_text => The buried place presses your gift down and holds it.
+buff|95|end_user_text => The pressure lifts and your gift stirs awake again.
+buff|96|start_user_text => The dead metal wakes just enough to hate you, and a hard arc slams up through your bones.
+buff|96|start_room_text => <ansi fg="username">Aliceia</ansi> convulses as the dead metal arcs against them.
+buff|96|trigger_user_text => A savage arc bites up through you.
+buff|96|trigger_room_text => <ansi fg="username">Aliceia</ansi> shudders as the dead metal arcs against them.
+buff|96|end_user_text => The arcing fades — for now.
+buff|97|start_user_text => Something you crossed was still armed. A ward discharges in a white lash and the pain arrives a half-beat later.
+buff|97|start_room_text => <ansi fg="username">Aliceia</ansi> trips a dormant ward and the corridor flares white.
+buff|97|trigger_user_text => The ward's charge crawls through you again.
+buff|97|trigger_room_text => <ansi fg="username">Aliceia</ansi> spasms as the ward's charge finds them.
+buff|97|end_user_text => The seared feeling dulls.
+buff|98|start_user_text => The treads pulse — the world slows around your stride.
+buff|98|end_user_text => Your stride settles back to mortal pace.
+buff|100|start_user_text => The world goes red. Something in you comes off its chain.
+buff|100|start_room_text => <ansi fg="username">Aliceia</ansi>'s eyes go wide and bloodshot, and a low snarl builds in their throat.
+buff|100|end_user_text => The red haze recedes, and your limbs sag with the ebb of it.
+buff|101|start_user_text => You stand a little taller — someone at your side is worth following.
+buff|101|end_user_text => The steadying presence fades, and the fight feels lonelier.
+buff|102|start_user_text => A grinding dissonance fills your skull and your aim wanders.
+buff|102|start_room_text => <ansi fg="username">Aliceia</ansi> shudders as a grinding resonance sets their teeth on edge.
+buff|102|end_user_text => The dissonance fades and your aim steadies.
+buff|102|end_room_text => The dissonance around <ansi fg="username">Aliceia</ansi> fades.
+buff|103|start_user_text => You flex, and a slick sheen of venom weeps across your weapons. Every blow will bite deeper now.
+buff|103|end_user_text => The last of the venom dries and flakes away from your weapons.
+buff|104|start_user_text => You fold inward and a hard, translucent shell snaps shut around you. The world's blows dull to distant taps.
+buff|104|end_user_text => Your shell splits and sloughs away, and the world rushes back in.
+buff|105|start_user_text => You feel your bond-master's will surge through you.
+buff|105|end_user_text => The bond's strength ebbs away.
+buff|106|start_user_text => Molten backlash splashes across you and clings, searing!
+buff|106|start_room_text => Aliceia recoils, skin blistering with molten backlash.
+buff|106|trigger_user_text => The clinging heat burns deeper.
+buff|106|trigger_room_text => Aliceia grimaces as the molten residue burns on.
+buff|106|end_user_text => The searing heat finally fades from your skin.
+buff|107|start_user_text => Numbing frost creeps into your limbs, stiffening them.
+buff|107|start_room_text => Aliceia stiffens as frost bites into their limbs.
+buff|107|end_user_text => Warmth returns and the frost releases your limbs.
+buff|108|start_user_text => A jolt snaps through you, scrambling your nerves.
+buff|108|start_room_text => Aliceia jerks as a charge arcs through them.
+buff|108|end_user_text => The buzzing charge drains away and your nerves settle.
+buff|109|start_user_text => Your blow rebounds off a skin of telekinetic force, and you stagger!
+buff|109|start_room_text => Aliceia staggers as their own blow rebounds on them.
+buff|109|end_user_text => You recover your footing.
+buff|110|start_user_text => Clinging residue smears across you, dragging at every move.
+buff|110|start_room_text => Aliceia flounders, limbs fouled with clinging residue.
+buff|110|end_user_text => The clinging residue finally flakes away.
+buff|111|start_user_text => Barbed tendrils erupt and coil around your limbs, rooting you fast!
+buff|111|start_room_text => Aliceia is snared by a mass of barbed, writhing tendrils.
+buff|111|end_user_text => The tendrils wither and release their grip.
+buff|112|start_user_text => Silk and dissonance drag at your limbs and your focus.
+buff|112|start_room_text => Aliceia slows, snared and reeling in a smothering field of silk and dissonance.
+buff|112|end_user_text => The field thins and your limbs move freely again.
+buff|112|end_room_text => The smothering field around <ansi fg="username">Aliceia</ansi> thins and lifts.
+buff|113|start_user_text => A radiant presence blazes at your side — you feel lifted beyond yourself.
+buff|113|end_user_text => The radiant presence dims, and you settle back into yourself.
+buff|114|start_user_text => A cold, watching malice settles over you — your aim wavers and your guard sags.
+buff|114|start_room_text => Aliceia falters under an unseen, baleful gaze.
+buff|114|end_user_text => The watching malice lifts, and your focus returns.
+buff|115|start_user_text => Ragged claw-wounds tear open across you, bleeding freely!
+buff|115|start_room_text => Aliceia is raked open, blood welling from ragged claw-wounds.
+buff|115|trigger_user_text => Your torn wounds keep bleeding.
+buff|115|end_user_text => The bleeding finally slows and clots.
+buff|116|start_user_text => A primal dread rolls over you and every instinct says run.
+buff|116|start_room_text => Aliceia shrinks back, gripped by a sudden animal dread.
+buff|116|end_user_text => The dread loosens its grip on you.
+buff|116|end_room_text => The dread gripping <ansi fg="username">Aliceia</ansi> loosens.
