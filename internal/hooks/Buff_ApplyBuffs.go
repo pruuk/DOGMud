@@ -14,23 +14,27 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+// ApplyBuffs applies a queued buff to its holder and narrates the start.
 //
-// Checks for quests on the item
-//
-
+// Every nothing-to-do exit (wrong type, unknown buff, missing holder, an add
+// the primitive refused) returns Continue, not Cancel. Cancel stops every
+// later listener on the same event, and a listener that merely has nothing to
+// do must not veto the event for a second listener such as a client buff bar.
+// This is the only listener on events.Buff today; the convention is what keeps
+// that true in effect if another is ever added.
 func ApplyBuffs(e events.Event) events.ListenerReturn {
 
 	evt, typeOk := e.(events.Buff)
 	if !typeOk {
 		mudlog.Error("Event", "Expected Type", "Buff", "Actual Type", e.Type())
-		return events.Cancel
+		return events.Continue
 	}
 
 	//mudlog.Debug(`Event`, `type`, evt.Type(), `UserId`, evt.UserId, `MobInstanceId`, evt.MobInstanceId, `BuffId`, evt.BuffId)
 
 	buffInfo := buffs.GetBuffSpec(evt.BuffId)
 	if buffInfo == nil {
-		return events.Cancel
+		return events.Continue
 	}
 
 	var targetChar *characters.Character
@@ -39,7 +43,7 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 
 		buffMob := mobs.GetInstance(evt.MobInstanceId)
 		if buffMob == nil {
-			return events.Cancel
+			return events.Continue
 		}
 
 		targetChar = &buffMob.Character
@@ -48,7 +52,7 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 
 		buffUser := users.GetByUserId(evt.UserId)
 		if buffUser == nil {
-			return events.Cancel
+			return events.Continue
 		}
 
 		targetChar = buffUser.Character
@@ -83,7 +87,7 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 		addErr = targetChar.AddBuff(evt.BuffId, false)
 	}
 	if addErr != nil {
-		return events.Cancel
+		return events.Continue
 	}
 
 	//

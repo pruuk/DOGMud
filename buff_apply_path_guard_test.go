@@ -71,8 +71,8 @@ var (
 // it cannot be.
 var buffApplyPathAllowlist = map[string]string{
 	// ── The sanctioned consumer of the event ────────────────────────────────
-	"internal/hooks/Buff_ApplyBuffs.go|81": "this IS the hook the event feeds; it is where every routed buff is finally applied",
-	"internal/hooks/Buff_ApplyBuffs.go|83": "this IS the hook the event feeds; it is where every routed buff is finally applied",
+	"internal/hooks/Buff_ApplyBuffs.go|85": "this IS the hook the event feeds; it is where every routed buff is finally applied",
+	"internal/hooks/Buff_ApplyBuffs.go|87": "this IS the hook the event feeds; it is where every routed buff is finally applied",
 
 	// ── silent-start buffs whose applier narrates the moment itself ─────────
 	"internal/actions/combat_rally.go|116":    "buff 80 is silent-start; the rally move narrates the party rally and the synchronous apply is what its own messaging reads",
