@@ -1,0 +1,43 @@
+# Slice C: every buff tells its holder when it starts and ends.
+#
+# Two potions are granted: the Warrior's Brew (buff 57, a plain boon) and the
+# Purging Draught (buff 70, which is followed by Purging Weakness, buff 76, an
+# affliction). Each should print an authored line when it takes hold and
+# another when it fades. The four secret buffs (Meditating, Respawn Grace,
+# InfraredVision, Alt Character Mob) must never appear in `conditions`.
+#
+# Room 5343 is lit and quiet (the slice A lane used it), so nothing here
+# depends on sight and no fight is needed.
+ephemeral:
+  profile: veteran
+  start_room: 5343
+  overlays:
+    grant_items:
+      - 30039 # Warrior's Brew
+      - 30052 # Purging Draught
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    Type `conditions` and quote the list verbatim. Then type `inventory` and
+    confirm you carry a Warrior's Brew and a Purging Draught.
+  - >-
+    Type `drink brew`. Quote every line you receive, verbatim. You should read
+    the drink line and then a line about the brew taking hold. Type
+    `conditions` again and quote it: Warrior's Brew must be listed.
+  - >-
+    Wait, checking `conditions` every few rounds, until the Warrior's Brew
+    leaves the list. Quote the line you receive when it fades, verbatim. A
+    silent expiry (the buff leaves `conditions` with no line) is the defect
+    this lane exists to find.
+  - >-
+    Type `drink draught`. Quote every line: the purge taking hold, the purge
+    ending, and then the weakness that follows, each with its own line. Wait
+    until the weakness fades and quote that line too.
+  - >-
+    At no point should `conditions` list Meditating, Respawn Grace,
+    InfraredVision or Alt Character Mob, and no line should read "takes
+    effect." or "has expired." with nothing else before the name (that is
+    the generic fallback, which no shipped buff should reach). Report any
+    such line.
