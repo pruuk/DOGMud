@@ -95,9 +95,11 @@ Four changes:
    two quest-giver conditions and the companion sweep alone. A mob that cannot
    see the room finds no candidates and does not engage.
 3. **Give the two single hooks a viewer.** `mobcommands/attack.go:42` passes
-   `&mob.Character` instead of `nil`, and `cast_admission.go` stops
-   early-returning for mobs, so a mob's targeted cast needs sight the way a
-   player's does. The slice A lookup registry entry for the mob caller changes
+`&mob.Character` instead of `nil`. Note precisely what that buys: `Perceives`
+is about CONCEALMENT, not light, so this stops a mob naming a HIDDEN creature
+(slice A parity) and does NOT make it blind in the dark. Darkness for mobs is
+handled at the behaviour tree, which is where a target is chosen; gating the
+execution path would break fights already under way, against ruling 4. The slice A lookup registry entry for the mob caller changes
    from a deliberate exception to a filtered call, which the root guard then
    enforces.
 4. **Add the boot guard.** `buffs.HasSpec(id int) bool` mirroring
