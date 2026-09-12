@@ -374,7 +374,13 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 	// reaches the cell re-acquires aggro and fights the prisoner (smoke BUG-04;
 	// RunGuardEnforcement's own exemption only covered the justice tick, not the
 	// legacy group-hostile LookForTrouble path).
-	_ = player.AddBuffScaled(jailedBuffId, float64(rounds))
+	//
+	// Through the user record, not the character: Character.AddBuffScaled
+	// queues nothing, so the buff's start_user_text the comment below promises
+	// never actually fired. This is what makes that promise true.
+	if u := users.GetByUserId(userId); u != nil {
+		u.AddBuffScaled(jailedBuffId, float64(rounds), "arrest")
+	}
 
 	// Drop any combat the player was in — they're in custody now, not fighting.
 	targeting.Release(player, targeting.ReasonDisengage)

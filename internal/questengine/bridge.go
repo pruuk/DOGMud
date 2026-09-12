@@ -314,10 +314,12 @@ func (b *GameBridge) LearnRecipe(recipe string) {
 }
 
 // ApplyBuff adds the given buff to the player.
+//
+// Through the user record, not the character: a quest reward buff applied with
+// Character.AddBuff queues nothing, so Buff_ApplyBuffs never runs and the
+// player reads no line for the buff their quest just earned them.
 func (b *GameBridge) ApplyBuff(bf BuffDef) {
-	if err := b.user.Character.AddBuff(bf.Buff, false); err != nil {
-		mudlog.Error("GameBridge.ApplyBuff", "buff", bf.Buff, "error", err)
-	}
+	b.user.AddBuff(bf.Buff, "quest")
 }
 
 // Teleport moves the player to the specified room.
