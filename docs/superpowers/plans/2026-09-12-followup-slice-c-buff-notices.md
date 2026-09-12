@@ -384,7 +384,7 @@ for f in sorted(glob.glob('_datafiles/world/dogmud/buffs/*.yaml')):
         if not d.get(k): bad.append((f,'missing '+k))
     for line in open(f,encoding='utf-8'):
         if len(line.rstrip('\n'))>80 and ('_text:' in line): bad.append((f,'over 80: '+line.strip()[:40]))
-        if '2014' in line or '2013' in line: bad.append((f,'dash'))
+        if chr(0x2014) in line or chr(0x2013) in line: bad.append((f,'dash'))
 print(bad or 'all 102 clean')
 PY
 ```
