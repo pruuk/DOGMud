@@ -69,10 +69,11 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	targetChar.AddBuff(evt.BuffId, false)
 
 	//
-	// Send YAML start text (if defined) — only on first application,
-	// not on refresh of an already-active buff.
+	// Send the start notice (authored, or the generic line; a secret buff is
+	// silent) only on first application, not on refresh.
 	//
-	if !wasAlreadyActive && (buffInfo.StartUserText != "" || buffInfo.StartRoomText != "") {
+	startUser := buffInfo.StartUserNotice()
+	if !wasAlreadyActive && (startUser != "" || buffInfo.StartRoomText != "") {
 		var charName, charPlainName string
 		var sendFunc func(string)
 		var roomId, excludeId int
@@ -117,7 +118,7 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 				},
 				ExcludeId: excludeId,
 			}
-			textutil.SendPhaseText(buffInfo.StartUserText, buffInfo.StartRoomText, tCtx, "cyan", cfg)
+			textutil.SendPhaseText(startUser, buffInfo.StartRoomText, tCtx, "cyan", cfg)
 		}
 	}
 

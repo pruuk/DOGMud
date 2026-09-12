@@ -39,9 +39,14 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 				logOff = false
 				if buffsToPrune := user.Character.Buffs.Prune(); len(buffsToPrune) > 0 {
 					for _, buffInfo := range buffsToPrune {
-						// Send YAML end text (if defined).
+						// Send the end notice (authored, or the generic line;
+						// a secret buff is silent).
 						endBuffSpec := buffs.GetBuffSpec(buffInfo.BuffId)
-						if endBuffSpec != nil && (endBuffSpec.EndUserText != "" || endBuffSpec.EndRoomText != "") {
+						endUser := ""
+						if endBuffSpec != nil {
+							endUser = endBuffSpec.EndUserNotice()
+						}
+						if endBuffSpec != nil && (endUser != "" || endBuffSpec.EndRoomText != "") {
 							tCtx := textutil.TokenContext{
 								SourceName:      user.Character.GetCharacterName(true),
 								SourcePlainName: user.Character.GetCharacterName(false),
@@ -55,7 +60,7 @@ func PruneBuffs(e events.Event) events.ListenerReturn {
 								},
 								ExcludeId: user.UserId,
 							}
-							textutil.SendPhaseText(endBuffSpec.EndUserText, endBuffSpec.EndRoomText, tCtx, "cyan", cfg)
+							textutil.SendPhaseText(endUser, endBuffSpec.EndRoomText, tCtx, "cyan", cfg)
 						}
 
 						if buffInfo.BuffId == 0 { // Log them out // logoff // logout
