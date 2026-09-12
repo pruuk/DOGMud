@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -55,6 +56,7 @@ func castSightScene(t *testing.T, biome string) (*castSightActor, *rooms.Room) {
 	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{
 		"sight-heal": {SpellId: "sight-heal", Name: "Sight Heal", Type: spells.HelpSingle, BaseFolds: 2, Cost: 5},
 		"sight-bolt": {SpellId: "sight-bolt", Name: "Sight Bolt", Type: spells.HarmSingle, BaseFolds: 2, Cost: 5},
+		"sight-nova": {SpellId: "sight-nova", Name: "Sight Nova", Type: spells.HarmArea, BaseFolds: 2, Cost: 5},
 	}))
 	caster := users.NewTestUser(7811, "caster", "Caster", 97811)
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{
@@ -143,9 +145,52 @@ func TestCastSight_AHiddenCreatureIsNotAFigure(t *testing.T) {
 	assert.Equal(t, []int{7813}, r.TargetUserIds, "the hidden witness is skipped")
 }
 
-func TestCastSight_MobCasterIsUnaffected(t *testing.T) {
+func TestCastSight_MobCasterNeedsSightToo(t *testing.T) {
 	a, room := castSightScene(t, "cave")
 	mobCaster := newStubActor(a.GetCharacter(), room) // IsPlayer false
 	r := InitiateCast(mobCaster, "sight-heal", "witness")
-	require.True(t, r.Initiated, "mobs perceiving darkness is slice F")
+	require.False(t, r.Initiated, "slice F: a mob targeted cast needs sight too")
+	require.True(t, r.NoTarget)
+}
+
+// A blind mob keeps everything that does not pick out one victim. These pin the
+// exemptions the owner relied on when ruling that mob casts need sight: AOE and
+// self-sustain still work, only precise single-target harm is refused.
+func TestCastSight_BlindMobStillCastsArea(t *testing.T) {
+	a, room := castSightScene(t, "cave")
+	mobCaster := newStubActor(a.GetCharacter(), room)
+	r := InitiateCast(mobCaster, "sight-nova", "")
+	require.True(t, r.Initiated, "harmarea is outside admitCastAim's switch, so darkness cannot stop it")
+}
+
+func TestCastSight_BlindMobStillSelfHeals(t *testing.T) {
+	a, room := castSightScene(t, "cave")
+	mobCaster := newStubActor(a.GetCharacter(), room)
+	r := InitiateCast(mobCaster, "sight-heal", "")
+	require.True(t, r.Initiated, "a no-name helpsingle is a self cast, exempt via castsAtSelf")
+}
+
+// Hidden-parity: a mob must not name a concealed creature in a cast, the same
+// gap task 7 closed for melee. This is Perceives, not light, so the room is LIT.
+func TestCastSight_MobCannotNameAHiddenCreature(t *testing.T) {
+	a, room := castSightScene(t, "city")
+	viewerTestHide(t, users.GetByUserId(7812).Character)
+	mobCaster := newStubActor(a.GetCharacter(), room)
+	r := InitiateCast(mobCaster, "sight-bolt", "witness")
+	require.False(t, r.Initiated, "a mob with no see-hidden must not name a hidden creature")
+}
+
+// Slice F pins the seam itself: castViewer must hand back the MOB's character.
+// Before, it returned nil for a mob, which switched the perception filter off
+// wherever it was used, so a mob could name a hidden creature in a cast or a
+// track that a player could not. track.go:111 shares this seam, so this test
+// also guards that knock-on.
+func TestCastViewer_AMobIsItsOwnViewer(t *testing.T) {
+	char := &characters.Character{Name: "Lurker"}
+	room := &rooms.Room{RoomId: 7810}
+	mobActor := newStubActor(char, room) // IsPlayer false
+
+	got := castViewer(mobActor)
+	require.NotNil(t, got, "a mob must be its own viewer, or the perception filter is off")
+	require.Same(t, char, got)
 }

@@ -33,7 +33,7 @@ const (
 // command that names a creature passes the player as viewer.
 var lookupRegistry = map[string]lookupEntry{
 	"internal/actions/buy.go|Buy":                                      {viewer: 1, plain: 1, why: whySelf},
-	"internal/actions/cast.go|InitiateCast":                            {viewer: 3, plain: 1, why: "the mob help-spell branch; " + whyMob},
+	"internal/actions/cast.go|InitiateCast":                            {viewer: 4},
 	"internal/actions/combat_attack.go|FindAttackTarget":               {viewer: 1},
 	"internal/actions/combat_fire.go|ExecuteFire":                      {viewer: 2},
 	"internal/actions/melee_target.go|StageMeleeTarget":                {viewer: 1, plain: 1, why: whySelf},

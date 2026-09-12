@@ -237,7 +237,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 		} else {
 			// Mob HelpSingle: named target or self.
 			if targetName != `` {
-				pId, mId := room.FindByName(targetName)
+				pId, mId := room.FindByNameSeenBy(castViewer(actor), targetName)
 				if pId > 0 {
 					targetUserIds = append(targetUserIds, pId)
 				} else if mId > 0 {
