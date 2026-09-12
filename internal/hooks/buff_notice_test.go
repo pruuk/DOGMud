@@ -4,7 +4,12 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -98,4 +103,74 @@ func TestBuffNotice_ScaledEventStillNarratesTheStart(t *testing.T) {
 	}
 	require.True(t, found, "the buff must actually be held after the event")
 	assert.Equal(t, 5, triggersLeft, "the multiplier must survive the trip through the event")
+}
+
+// Buff ids for the immunity pair, clear of the notice fixtures above.
+const (
+	immunityNoticeBuffId = 7104 // poison-immunity, the Stone Stomach shape
+	venomNoticeBuffId    = 7105 // poison, authored start text for both audiences
+)
+
+// A refused add must not narrate. An immune player taking a serpent or
+// arachnid crit (species critbuffids carry buff 39) read "You feel venom
+// seeping into your bloodstream!" and the room read that it took hold, for a
+// buff that never landed: the add's bool was discarded and the notice was
+// gated on wasAlreadyActive alone.
+func TestBuffNotice_ARefusedPoisonBuffNarratesNothing(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		immunityNoticeBuffId: {BuffId: immunityNoticeBuffId, Name: "Test Stone Stomach", RoundInterval: 1, TriggerCount: 5,
+			Flags: []buffs.Flag{buffs.PoisonImmunity}, StartUserText: "Nothing could turn your stomach now.", EndUserText: "Your stomach is ordinary again."},
+		venomNoticeBuffId: {BuffId: venomNoticeBuffId, Name: "Test Venom", RoundInterval: 1, TriggerCount: 5,
+			Flags: []buffs.Flag{buffs.Poison}, StartUserText: "You feel venom seeping into your bloodstream!",
+			StartRoomText: "{source} winces as venom takes hold.", EndUserText: "The venom subsides."},
+	})
+	defer restore()
+	holder := users.GetByUserId(1)
+	require.True(t, holder.Character.Buffs.AddBuff(immunityNoticeBuffId, false))
+	drainPlain(1)
+	drainPlain(2)
+
+	assert.Equal(t, events.Cancel, ApplyBuffs(events.Buff{UserId: 1, BuffId: venomNoticeBuffId}))
+	assert.False(t, holder.Character.HasBuff(venomNoticeBuffId), "the poison buff never landed")
+	assert.Equal(t, 0, countContaining(drainPlain(1), "venom"), "the immune holder reads nothing")
+	assert.Equal(t, 0, countContaining(drainPlain(2), "venom"), "and the room sees nothing take hold")
+
+	// The scaled path is the same primitive and must refuse the same way.
+	assert.Equal(t, events.Cancel, ApplyBuffs(events.Buff{UserId: 1, BuffId: venomNoticeBuffId, DurationMult: 0.5}))
+	assert.False(t, holder.Character.HasBuff(venomNoticeBuffId))
+	assert.Equal(t, 0, countContaining(drainPlain(1), "venom"))
+	assert.Equal(t, 0, countContaining(drainPlain(2), "venom"))
+}
+
+// The other half of the same rule, for the condition rather than the buff: a
+// mob's dot cast at an immune player added nothing and still narrated
+// "afflicts you!" to the victim and the affliction to the room, because
+// AddCondition returned nothing for the call site to test.
+func TestBuffNotice_ARefusedPoisonedConditionNarratesNothing(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		immunityNoticeBuffId: {BuffId: immunityNoticeBuffId, Name: "Test Stone Stomach", RoundInterval: 1, TriggerCount: 5,
+			Flags: []buffs.Flag{buffs.PoisonImmunity}, StartUserText: "Nothing could turn your stomach now.", EndUserText: "Your stomach is ordinary again."},
+	})
+	defer restore()
+	original := runSpellChannelAttack
+	runSpellChannelAttack = func(combat.AttackChannel, combat.AttackSide, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
+		return spellContestAttackWin()
+	}
+	t.Cleanup(func() { runSpellChannelAttack = original })
+
+	target := users.GetByUserId(1)
+	require.True(t, target.Character.Buffs.AddBuff(immunityNoticeBuffId, false))
+	drainPlain(1)
+	drainPlain(2)
+
+	spell := &spells.SpellData{SpellId: "test-blight", Name: "Blight", Type: spells.HarmSingle, EffectType: "dot"}
+	resolveMobSpellAgainstPlayer(mobs.GetInstance(100), target, rooms.LoadRoom(1), spell, combat.AttackSide{}, 10)
+
+	assert.False(t, target.Character.HasCondition(characters.ConditionPoisoned), "the condition was refused")
+	assert.Equal(t, 0, countContaining(drainPlain(1), "afflicts you"), "the immune victim reads nothing")
+	assert.Equal(t, 0, countContaining(drainPlain(2), "afflicts"), "and the room is told nothing either")
 }

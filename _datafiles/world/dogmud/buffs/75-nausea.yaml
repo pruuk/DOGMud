@@ -12,3 +12,5 @@ statmods:
   vitality: -15
   willpower: -15
   charisma: -15
+flags:
+  - poison

@@ -69,13 +69,21 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	// for 1.0 AddBuffScaled is equivalent to AddBuff(id, false): both set
 	// TriggersLeft to the spec's TriggerCount with PermaBuff false, and both
 	// refresh an already-held buff in place rather than appending a second copy.
-	// The error is discarded either way, as it was before the split: it only
-	// reports an unknown buff id, and buffInfo above already proved the spec
-	// loads.
+	//
+	// The error is NOT discardable. It once reported only an unknown buff id,
+	// which buffInfo above already ruled out, but the primitives now also refuse
+	// a poison-flagged buff when the holder carries poison-immunity. Narrating a
+	// buff that never landed told an immune player venom was seeping into their
+	// bloodstream, so a refusal returns here and nothing below it runs: no start
+	// notice, no start_remove_buffs cure, no TrackBuffStarted, no BuffsTriggered.
+	var addErr error
 	if evt.DurationMult > 0 && evt.DurationMult != 1.0 {
-		_ = targetChar.AddBuffScaled(evt.BuffId, evt.DurationMult)
+		addErr = targetChar.AddBuffScaled(evt.BuffId, evt.DurationMult)
 	} else {
-		_ = targetChar.AddBuff(evt.BuffId, false)
+		addErr = targetChar.AddBuff(evt.BuffId, false)
+	}
+	if addErr != nil {
+		return events.Cancel
 	}
 
 	//

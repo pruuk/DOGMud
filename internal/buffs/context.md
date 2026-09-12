@@ -150,7 +150,44 @@ do not stack; the strongest value wins. So Savant's Infusion (buff 72) at 2.5
 beats Essence of Growth (buff 71) at the default, and Chrysalis Catalyst (buff
 74) at 3.0 beats Mutagen Brew (buff 73).
 
+### Flags are validated at load (slice E, 2026-09-12)
+
+`AllFlags` lists every declared `Flag`. `BuffSpec.ValidateFlags()` reports the
+first flag a spec carries that is not in the list. `ValidateLoadedFlags()` walks
+the loaded registry in id order and panics on the first offender, naming the
+buff id, name and flag; `LoadDataFiles` calls it after the registry is live. It
+is a named function precisely so a test can call it: no test loads world YAML,
+so an inlined check had nothing red to prove it works. The root guard
+`buff_flag_guard_test.go` walks the dogmud buff files and fails the build on
+the same condition, and `TestAllFlagsNamesEveryDeclaredConstant` parses the
+constants out of this package so the list cannot fall behind. Flags are
+compared exactly, nothing is normalised: the Cat's Eye Draught shipped with
+`night-vision` for `nightvision` and did nothing for weeks.
+The call from `LoadDataFiles` itself is pinned by nothing (no test loads world
+YAML, and a clean boot cannot detect a missing negative check); the function is
+pinned by a direct panic test, and the root guard is the gate that blocks a
+merge. The boot panic is defence in depth for a file edited by hand on prod.
+
+
+`poison-immunity` (`PoisonImmunity`, Stone Stomach): while held, `AddBuff` and
+`AddBuffScaled` refuse a spec carrying `poison`, and `Character.AddCondition`
+refuses `ConditionPoisoned`. Refusal is silent. The three toxins (39 Venom, 40
+Spore Toxin, 78 Toxic Cloud) and 75 Nausea carry `poison` since the same slice;
+before it NO buff did, so `CancelBuffsWithFlag(Poison)` in Purge Affliction and
+Cleansing Wave cancelled nothing and the `poisoned` adjective never showed.
+
+A refusal is a refusal all the way out: `Character.AddBuff` returns an error,
+`Buff_ApplyBuffs` returns on it before the start notice, `start_remove_buffs`,
+`TrackBuffStarted` or `BuffsTriggered`, and `Character.AddCondition` returns a
+`bool` the two spell dot sites test before narrating. `HasFlag` guards a nil
+spec, since every add now asks it and a save can hold a dead buff id.
+
 ### Flag Usage Patterns
+
+The sketch below is abridged and predates two fixes in the live body: `All`
+matches a flagless buff, and the spec lookup is nil-guarded before `.Flags`.
+Read `buffs.go` for the real thing.
+
 ```go
 // Check for specific behavioral flags
 func (bs *Buffs) HasFlag(action Flag, expire bool) bool {

@@ -141,7 +141,14 @@ func (bs *Buffs) HasFlag(action Flag, expire bool) bool {
 		// silently left those buffs active.
 		matches := action == All
 		if !matches {
-			matches = slices.Contains(GetBuffSpec(b.BuffId).Flags, action)
+			// A save can carry a buff id whose spec is gone, and Validate indexes
+			// it anyway, so the lookup can come back nil. ProgressMult guards the
+			// same way.
+			spec := GetBuffSpec(b.BuffId)
+			if spec == nil {
+				continue
+			}
+			matches = slices.Contains(spec.Flags, action)
 		}
 		if !matches {
 			continue
@@ -232,6 +239,15 @@ func (bs *Buffs) Started(buffId int) {
 // AddBuffScaled adds a buff with its duration multiplied by durationMult.
 func (bs *Buffs) AddBuffScaled(buffId int, durationMult float64) bool {
 	if buffInfo := GetBuffSpec(buffId); buffInfo != nil {
+
+		// Poison immunity (Stone Stomach): a poison-flagged buff is refused
+		// while the holder is immune. Checked here so every application path,
+		// event or direct, honours it. Silent: the immunity's own start line
+		// already told the player.
+		if slices.Contains(buffInfo.Flags, Poison) && bs.HasFlag(PoisonImmunity, false) {
+			return false
+		}
+
 		triggers := int(float64(buffInfo.TriggerCount) * durationMult)
 		if triggers < 1 {
 			triggers = 1
@@ -295,6 +311,14 @@ func (bs *Buffs) RefreshBuff(buffId int) bool {
 
 func (bs *Buffs) AddBuff(buffId int, isPermanent bool) bool {
 	if buffInfo := GetBuffSpec(buffId); buffInfo != nil {
+
+		// Poison immunity (Stone Stomach): a poison-flagged buff is refused
+		// while the holder is immune. Checked here so every application path,
+		// event or direct, honours it. Silent: the immunity's own start line
+		// already told the player.
+		if slices.Contains(buffInfo.Flags, Poison) && bs.HasFlag(PoisonImmunity, false) {
+			return false
+		}
 
 		newBuff := Buff{
 			BuffId:       buffInfo.BuffId,

@@ -123,7 +123,8 @@ return-damage recoil lines (`emitReturnDamageText`), counter lines
 (`actions.SendCounterTrio`) and spell lines between two parties
 (`spellAudience` in `spell_audience.go`, used by `applyPlayerEffect`,
 `sendSpellChannelDefenceMessages`, `resolveMobSpellAgainstPlayer` and
-`resolvePurgeAffliction`) all go through `messaging.SendTrio`, so a reader who
+`resolvePurgeAffliction`, which takes a `purgeTarget`: a player, a mob such as a
+charmed companion, or the caster) all go through `messaging.SendTrio`, so a reader who
 cannot see the other party reads "something", or "a figure" with infrared.
 The retarget notice ("You turn your attention to X!") is built once, by
 `actions.RetargetNotice` (`internal/actions/retarget_notice.go`), for

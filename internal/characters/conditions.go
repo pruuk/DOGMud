@@ -1,6 +1,7 @@
 package characters
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 )
@@ -85,8 +86,19 @@ func (c ConditionType) Description() string {
 	}
 }
 
-// AddCondition adds or overwrites a combat condition of the given type.
-func (c *Character) AddCondition(typ ConditionType, duration int, magnitude float64, source string) {
+// AddCondition adds or overwrites a combat condition of the given type. It
+// reports whether the condition is now held: true when applied or refreshed,
+// false when refused. A caller that narrates the affliction must test it, or it
+// tells an immune victim about a condition they never took. Today only
+// ConditionPoisoned can be refused (poison immunity); the callers that narrate
+// bleeding, warcry, rally, shield and regen discard the result and are correct
+// only for as long as that stays true. A new immunity must audit them.
+func (c *Character) AddCondition(typ ConditionType, duration int, magnitude float64, source string) bool {
+	// Poison immunity (Stone Stomach) refuses the poisoned condition the same
+	// way the buff primitives refuse a poison-flagged buff.
+	if typ == ConditionPoisoned && c.Buffs.HasFlag(buffs.PoisonImmunity, false) {
+		return false
+	}
 	for i, cond := range c.Conditions {
 		if cond.Type == typ {
 			c.Conditions[i] = CombatCondition{Type: typ, Duration: duration, Magnitude: magnitude, Source: source}
@@ -96,7 +108,7 @@ func (c *Character) AddCondition(typ ConditionType, duration int, magnitude floa
 				_ = c.Perception.TransitionTo(perception.Blinded,
 					state.TransitionReason{Trigger: perception.TriggerConditionAdded})
 			}
-			return
+			return true
 		}
 	}
 	c.Conditions = append(c.Conditions, CombatCondition{Type: typ, Duration: duration, Magnitude: magnitude, Source: source})
@@ -106,6 +118,7 @@ func (c *Character) AddCondition(typ ConditionType, duration int, magnitude floa
 		_ = c.Perception.TransitionTo(perception.Blinded,
 			state.TransitionReason{Trigger: perception.TriggerConditionAdded})
 	}
+	return true
 }
 
 // HasCondition returns true if the character currently has the given condition.

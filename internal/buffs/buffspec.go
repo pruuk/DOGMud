@@ -3,6 +3,7 @@ package buffs
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -54,6 +55,11 @@ const (
 	Poison Flag = `poison`
 	Drunk  Flag = `drunk`
 
+	// Protective flags. PoisonImmunity is the answer to Poison: while it is
+	// held, poison-flagged buffs and the poisoned condition are refused.
+	// Stone Stomach (buff 64) is the shipped holder.
+	PoisonImmunity Flag = `poison-immunity`
+
 	// Useful flags
 	Hidden         Flag = `hidden`
 	Sleeping       Flag = `sleeping` // chunk 3.3: bearer is asleep
@@ -94,6 +100,49 @@ const (
 	// Arbitrarily chosen round for calculating trigger round counts
 	validationRound = 1000000
 )
+
+// AllFlags is every flag the engine understands. LoadDataFiles rejects a buff
+// whose flags include anything else, exactly as spelled: the Cat's Eye
+// Draught shipped with `night-vision` for `nightvision` and did nothing for
+// weeks. TestAllFlagsNamesEveryDeclaredConstant keeps this list honest.
+//
+// The All sentinel is deliberately absent: it is the empty string, a query
+// wildcard, never something a buff file may carry.
+var AllFlags = []Flag{
+	NoCombat,
+	NoMovement,
+	NoFlee,
+	NoAggroTarget,
+	CancelIfCombat,
+	CancelOnAction,
+	CancelOnDamage,
+	CancelOnWater,
+	ReviveOnDeath,
+	PermaGear,
+	RemoveCurse,
+	Poison,
+	Drunk,
+	PoisonImmunity,
+	Hidden,
+	Sleeping,
+	EmitsLight,
+	SuperHearing,
+	NightVision,
+	InfraredVision,
+	Warmed,
+	Hydrated,
+	Thirsty,
+	Haste,
+	DamageBonus,
+	Slow,
+	SkillProgress,
+	MutationRate,
+	SeeHidden,
+	SeeNouns,
+	ConditionMirror,
+	Dampened,
+	SilentStart,
+}
 
 var (
 	buffs map[int]*BuffSpec = make(map[int]*BuffSpec)
@@ -263,6 +312,35 @@ func (b *BuffSpec) Validate() error {
 	return nil
 }
 
+// ValidateLoadedFlags panics on the first loaded buff carrying a flag the
+// engine does not declare, naming the id, name and flag. LoadDataFiles calls
+// it, so a typo in a buff file fails the boot rather than loading silently and
+// doing nothing; species.ValidateSpeciesBuffIds guards its data the same way.
+// Ids are walked in order so the panic names the same buff every time.
+func ValidateLoadedFlags() {
+	ids := make([]int, 0, len(buffs))
+	for id := range buffs {
+		ids = append(ids, id)
+	}
+	slices.Sort(ids)
+	for _, id := range ids {
+		if err := buffs[id].ValidateFlags(); err != nil {
+			panic(err)
+		}
+	}
+}
+
+// ValidateFlags reports the first flag this spec carries that the engine does
+// not declare. Compared exactly; nothing is normalised.
+func (b *BuffSpec) ValidateFlags() error {
+	for _, f := range b.Flags {
+		if !slices.Contains(AllFlags, f) {
+			return fmt.Errorf("buffId %d (%s) carries unknown flag %q; see buffs.AllFlags", b.BuffId, b.Name, f)
+		}
+	}
+	return nil
+}
+
 func (b *BuffSpec) Filename() string {
 	filename := util.ConvertForFilename(b.Name)
 	return fmt.Sprintf("%d-%s.yaml", b.BuffId, filename)
@@ -290,6 +368,10 @@ func LoadDataFiles() {
 	}
 
 	buffs = tmpBuffs
+
+	// A flag the engine does not declare is a typo that would load silently and
+	// do nothing, the way the Cat's Eye Draught did. Fail the boot instead.
+	ValidateLoadedFlags()
 
 	mudlog.Info("buffSpec.LoadDataFiles()", "loadedCount", len(buffs), "Time Taken", time.Since(start))
 }
