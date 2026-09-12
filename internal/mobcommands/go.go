@@ -38,9 +38,9 @@ func clearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 				theirTarget := m.Character.CurrentCombatTarget()
 				if theirTarget.UserId == uid {
 					targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mId}, targeting.ReasonAttack)
-					u.SendText(messaging.CategorySystem, fmt.Sprintf(
-						"You turn your attention to <ansi fg=\"mobname\">%s</ansi>!",
-						m.Character.Name))
+					if line, ok := actions.RetargetNotice(room, uid, state.ActorRef{MobInstanceId: mId}); ok {
+						u.SendText(messaging.CategorySystem, line)
+					}
 					retargeted = true
 					break
 				}
@@ -48,9 +48,9 @@ func clearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 				for _, comp := range u.Character.Companions {
 					if comp.InstanceId > 0 && theirTarget.MobInstanceId == comp.InstanceId {
 						targeting.Commit(u.Character, state.ActorRef{MobInstanceId: mId}, targeting.ReasonAttack)
-						u.SendText(messaging.CategorySystem, fmt.Sprintf(
-							"You turn your attention to <ansi fg=\"mobname\">%s</ansi>!",
-							m.Character.Name))
+						if line, ok := actions.RetargetNotice(room, uid, state.ActorRef{MobInstanceId: mId}); ok {
+							u.SendText(messaging.CategorySystem, line)
+						}
 						retargeted = true
 						break
 					}

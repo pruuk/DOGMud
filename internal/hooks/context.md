@@ -126,10 +126,11 @@ return-damage recoil lines (`emitReturnDamageText`), counter lines
 `resolvePurgeAffliction`) all go through `messaging.SendTrio`, so a reader who
 cannot see the other party reads "something", or "a figure" with infrared.
 The retarget notice ("You turn your attention to X!") is built once, by
-`retargetNotice` in `combat_retarget.go`, for both `DoCombat`'s validate-aggro
-pass and `emitRetargetMessage`; it hides X by the reader's sight and is not
-suppressed in the dark, because `RetargetOrEnd` picks whoever is already
-attacking the reader.
+`actions.RetargetNotice` (`internal/actions/retarget_notice.go`), for
+`DoCombat`'s validate-aggro pass, `emitRetargetMessage`, and the mob-departure
+retarget in `mobcommands.clearRoomAggroOnDeparture`; it hides X by the
+reader's sight and is not suppressed in the dark, because each caller picks
+the new target from whoever is already attacking the reader.
 
 ### Combat Round Processing
 ```go
@@ -671,14 +672,16 @@ chunk 0's sunset pass. Still consumed by `NewRound_DoCombat`.
   aggro and scans the room for a new target already attacking the
   character (or the character's companions). Returns true if a new target
   was found and `SetAggro` was called.
-- **`retargetNotice(room, userId, target)`** — builds the "You turn your
-  attention to X!" line with X hidden by the reader's `ParticipantSight`;
-  returns ok=false when the target no longer resolves. Both retarget call
-  sites use it.
 - **`CompanionAutoTarget(mob, room)`** — polling fallback for companion
   auto-assist. Runs once per round in `NewRound_DoCombat`. Directs idle
   companions to join the owner's fight or intercept mobs attacking the
   owner.
+
+The "You turn your attention to X!" builder used to live here as
+`retargetNotice`; it moved to `actions.RetargetNotice`
+(`internal/actions/retarget_notice.go`) so `mobcommands.go`'s mob-departure
+retarget could share it too, since nothing imports `hooks` but both `hooks`
+and `mobcommands` import `actions`.
 
 ### Round driver dispatch (NewRound_DoCombat.go)
 

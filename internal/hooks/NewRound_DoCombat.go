@@ -132,7 +132,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			uRoom := rooms.LoadRoom(user.Character.RoomId)
 			if uRoom != nil {
 				if RetargetOrEnd(user.Character, uRoom, user.UserId, 0) {
-					if line, ok := retargetNotice(uRoom, user.UserId, user.Character.CurrentCombatTarget()); ok {
+					if line, ok := actions.RetargetNotice(uRoom, user.UserId, user.Character.CurrentCombatTarget()); ok {
 						user.SendText(messaging.CategorySystem, line)
 					}
 				}

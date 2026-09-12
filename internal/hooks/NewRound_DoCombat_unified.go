@@ -1014,7 +1014,7 @@ func emitRetargetMessage(atk actions.Actor) {
 	if !atkChar.IsInCombat() {
 		return
 	}
-	if line, ok := retargetNotice(atk.GetRoom(), atk.GetUserId(), atkChar.CurrentCombatTarget()); ok {
+	if line, ok := actions.RetargetNotice(atk.GetRoom(), atk.GetUserId(), atkChar.CurrentCombatTarget()); ok {
 		atk.SendText(messaging.CategorySystem, line)
 	}
 }

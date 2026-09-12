@@ -7,7 +7,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -208,29 +207,4 @@ func CompanionAutoTarget(mob *mobs.Mob, room *rooms.Room) {
 			return
 		}
 	}
-}
-
-// retargetNotice builds the "You turn your attention to X!" line for a player
-// RetargetOrEnd just gave a new target, with X hidden by that player's sight
-// in room: "something" for a reader who cannot see, "a figure" for infrared.
-// ok is false when the target no longer resolves, in which case say nothing.
-//
-// The notice is not suppressed in the dark. RetargetOrEnd picks whoever is
-// already attacking the reader, and melee in the dark still swings, so the
-// honest line is that their attention turned to something.
-func retargetNotice(room *rooms.Room, userId int, target state.ActorRef) (string, bool) {
-	var name, line string
-	if mob := mobs.GetInstance(target.MobInstanceId); target.MobInstanceId > 0 && mob != nil {
-		name = mob.Character.Name
-		line = fmt.Sprintf(`You turn your attention to <ansi fg="mobname">%s</ansi>!`, name)
-	} else if u := users.GetByUserId(target.UserId); target.UserId > 0 && u != nil {
-		name = u.Character.Name
-		line = fmt.Sprintf(`You turn your attention to <ansi fg="username">%s</ansi>!`, name)
-	} else {
-		return "", false
-	}
-	if room == nil {
-		return line, true
-	}
-	return messaging.HideNames(line, []string{name}, room.ParticipantSight(userId)), true
 }
