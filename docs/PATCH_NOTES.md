@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-09-12: Every potion, meal and affliction now says hello and goodbye
+
+Many effects used to arrive and leave without a word. You would drink a
+potion, read that you drank it, and then hear nothing about what it did or
+when it stopped. Meals, tonics, draughts and most afflictions were the same.
+Every one of them now tells you when it takes hold and when it fades, in its
+own words. A few housekeeping effects the game uses behind the scenes no
+longer show up in your conditions list at all.
+
 ## 2026-09-12: Names are only red when they should be
 
 A name shown in red means that creature is fighting you. For a long while,

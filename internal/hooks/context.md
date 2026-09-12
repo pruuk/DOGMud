@@ -299,7 +299,10 @@ func CleanupZombies(e events.Event) events.ListenerReturn {
     return events.Continue
 }
 
-// Buff expiration management
+// Buff expiration management. The holder's line comes from
+// buffs.BuffSpec.EndUserNotice (authored end_user_text, else the generic
+// "<Name> has expired.", nothing for a secret buff); Buff_ApplyBuffs reads
+// StartUserNotice the same way. Slice C, 2026-09-12.
 func PruneBuffs(e events.Event) events.ListenerReturn {
     evt := e.(events.NewTurn)
     
