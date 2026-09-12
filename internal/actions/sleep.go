@@ -50,12 +50,13 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 	}
 
 	// Apply buff 15 (Sleeping) synchronously, on the character. It cannot go
-	// through the user's event path: the idempotence check above reads the
-	// Sleeping flag back, and the schedule executor calls this and expects the
-	// actor to be asleep when it returns. Buff 15 is therefore flagged
-	// silent-start, and the applier owes the holder the start line: that is
-	// what the SendText below is for. The buff YAML has no room text, so the
-	// third-person visual is also ours to emit.
+	// through the user's event path because the idempotence check above reads
+	// the Sleeping flag back, so a queued apply would let a second sleep in the
+	// same tick emit the room emote twice. (The schedule executor is not the
+	// reason: it reads the flag on a later tick, by which time an event would
+	// have drained.) Buff 15 is therefore flagged silent-start, and the applier
+	// owes the holder the start line: that is what the SendText below is for.
+	// The buff YAML has no room text, so the third-person visual is also ours.
 	if err := c.AddBuff(15, false); err != nil {
 		// Never surface the raw internal error (it leaks the buff id). Log it
 		// for ops and give the player clean flavor.

@@ -5,6 +5,11 @@ description: You are locked in a holding cell. You cannot leave until your
 triggerrate: 1 round
 triggercount: 1
 flags:
+  # ExecuteArrest applies this buff synchronously, because the two flags below
+  # are read inside the same round dispatch as the arrest. It therefore never
+  # travels the event that narrates a buff start, and ExecuteArrest sends the
+  # start_user_text above to the player itself.
+  - silent-start
   - no-go
   - no-aggro-target
 start_user_text: "The cell door clangs shut behind you. You are held here until your sentence is served or your fine is paid."
