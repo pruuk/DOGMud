@@ -58,22 +58,18 @@ func Aid(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	spellInfo := spells.GetSpell(`aidskill`)
 
 	// Send YAML cast text (if defined).
-	if spellInfo != nil && (spellInfo.CastUserText != "" || spellInfo.CastRoomText != "") {
+	if spellInfo != nil && spellInfo.Narration(spells.PhaseCast).Len() > 0 {
 		castRoom := rooms.LoadRoom(mob.Character.RoomId)
-		tCtx := textutil.TokenContext{
+		roles := spellInfo.Narrate(spells.PhaseCast, textutil.TokenContext{
 			SourceName:      mob.Character.GetCharacterName(true),
 			SourcePlainName: mob.Character.GetCharacterName(false),
 			TargetName:      p.Character.GetCharacterName(true),
 			TargetPlainName: p.Character.GetCharacterName(false),
+		})
+		// A mob caster has no client: its own line is rendered and dropped.
+		if roles.Observer != "" && castRoom != nil {
+			castRoom.SendTextVisual(messaging.CategorySpellVital, roles.Observer)
 		}
-		cfg := textutil.SendTextConfig{
-			RoomSendFunc: func(msg string, skip ...int) {
-				if castRoom != nil {
-					castRoom.SendTextVisual(messaging.CategorySpellVital, msg, skip...)
-				}
-			},
-		}
-		textutil.SendPhaseText("", spellInfo.CastRoomText, tCtx, "pink", cfg)
 	}
 
 	mob.Character.CancelBuffsWithFlag(buffs.Hidden)

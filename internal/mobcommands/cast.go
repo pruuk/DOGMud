@@ -116,7 +116,7 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	// Send YAML cast text (if defined).
-	if spellInfo.CastUserText != "" || spellInfo.CastRoomText != "" {
+	if spellInfo.Narration(spells.PhaseCast).Len() > 0 {
 		castRoom := rooms.LoadRoom(mob.Character.RoomId)
 		tCtx := textutil.TokenContext{
 			SourceName:      mob.Character.GetCharacterName(true),
@@ -133,14 +133,11 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				tCtx.TargetPlainName = tMob.Character.GetCharacterName(false)
 			}
 		}
-		cfg := textutil.SendTextConfig{
-			RoomSendFunc: func(msg string, skip ...int) {
-				if castRoom != nil {
-					castRoom.SendTextVisual(messaging.CategorySpellFold, msg, skip...)
-				}
-			},
+		roles := spellInfo.Narrate(spells.PhaseCast, tCtx)
+		// A mob caster has no client: its own line is rendered and dropped.
+		if roles.Observer != "" && castRoom != nil {
+			castRoom.SendTextVisual(messaging.CategorySpellFold, roles.Observer)
 		}
-		textutil.SendPhaseText("", spellInfo.CastRoomText, tCtx, "pink", cfg)
 	}
 
 	// Commit CastingState to Activity machine (sole truth).

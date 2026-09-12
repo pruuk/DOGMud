@@ -599,21 +599,20 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		cs := result.CastingData
 		spellData := result.SpellData
 		// Send YAML wait text (if defined).
-		if spellData != nil && (spellData.WaitUserText != "" || spellData.WaitRoomText != "") {
-			tCtx := textutil.TokenContext{
+		if spellData != nil && spellData.Narration(spells.PhaseWait).Len() > 0 {
+			roles := spellData.Narrate(spells.PhaseWait, textutil.TokenContext{
 				SourceName:      user.Character.GetCharacterName(true),
 				SourcePlainName: user.Character.GetCharacterName(false),
+			})
+			if roles.Actor != "" {
+				user.SendText(messaging.CategorySpellFold, roles.Actor)
 			}
-			cfg := textutil.SendTextConfig{
-				UserSendFunc: func(msg string) { user.SendText(messaging.CategorySpellFold, msg) },
-				RoomSendFunc: func(msg string, skip ...int) {
-					if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-						r.SendText(messaging.CategorySpellFold, msg, skip...)
-					}
-				},
-				ExcludeId: user.UserId,
+			// Audio channel, as before this refactor: filed, not changed here.
+			if roles.Observer != "" {
+				if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+					r.SendText(messaging.CategorySpellFold, roles.Observer, user.UserId)
+				}
 			}
-			textutil.SendPhaseText(spellData.WaitUserText, spellData.WaitRoomText, tCtx, "pink", cfg)
 		}
 
 		resolveRoom := rooms.LoadRoom(user.Character.RoomId)
@@ -743,21 +742,20 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		cs := result.CastingData
 		// Send YAML wait text (if defined).
 		waitSpellInfo := spells.GetSpell(cs.SpellId)
-		if waitSpellInfo != nil && (waitSpellInfo.WaitUserText != "" || waitSpellInfo.WaitRoomText != "") {
-			tCtx := textutil.TokenContext{
+		if waitSpellInfo != nil && waitSpellInfo.Narration(spells.PhaseWait).Len() > 0 {
+			roles := waitSpellInfo.Narrate(spells.PhaseWait, textutil.TokenContext{
 				SourceName:      user.Character.GetCharacterName(true),
 				SourcePlainName: user.Character.GetCharacterName(false),
+			})
+			if roles.Actor != "" {
+				user.SendText(messaging.CategorySpellFold, roles.Actor)
 			}
-			cfg := textutil.SendTextConfig{
-				UserSendFunc: func(msg string) { user.SendText(messaging.CategorySpellFold, msg) },
-				RoomSendFunc: func(msg string, skip ...int) {
-					if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-						r.SendText(messaging.CategorySpellFold, msg, skip...)
-					}
-				},
-				ExcludeId: user.UserId,
+			// Audio channel, as before this refactor: filed, not changed here.
+			if roles.Observer != "" {
+				if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+					r.SendText(messaging.CategorySpellFold, roles.Observer, user.UserId)
+				}
 			}
-			textutil.SendPhaseText(waitSpellInfo.WaitUserText, waitSpellInfo.WaitRoomText, tCtx, "pink", cfg)
 		}
 		// "cast_continuing", not "cast_started": this fires once per round while
 		// the folds are still being laid down, so the start pool announced the
