@@ -944,7 +944,7 @@ func TestApplyBuffs_WrongEventType(t *testing.T) {
 	// Pass a NewRound event instead of Buff — should return Cancel
 	evt := events.NewRound{RoundNumber: 1}
 	result := ApplyBuffs(evt)
-	assert.Equal(t, events.Cancel, result)
+	assert.Equal(t, events.Continue, result, "a wrong event type is not this listener's to veto")
 }
 
 func TestApplyBuffs_InvalidBuffId(t *testing.T) {
@@ -953,7 +953,7 @@ func TestApplyBuffs_InvalidBuffId(t *testing.T) {
 
 	evt := events.Buff{UserId: 1, BuffId: 99999} // nonexistent
 	result := ApplyBuffs(evt)
-	assert.Equal(t, events.Cancel, result, "should cancel for unknown buff ID")
+	assert.Equal(t, events.Continue, result, "nothing to do for an unknown buff ID, and no veto")
 }
 
 func TestApplyBuffs_InvalidUserId(t *testing.T) {
@@ -962,7 +962,7 @@ func TestApplyBuffs_InvalidUserId(t *testing.T) {
 
 	evt := events.Buff{UserId: 99999, BuffId: 100}
 	result := ApplyBuffs(evt)
-	assert.Equal(t, events.Cancel, result, "should cancel for unknown user ID")
+	assert.Equal(t, events.Continue, result, "nothing to do for an unknown user ID, and no veto")
 }
 
 func TestApplyBuffs_InvalidMobInstanceId(t *testing.T) {
@@ -971,7 +971,7 @@ func TestApplyBuffs_InvalidMobInstanceId(t *testing.T) {
 
 	evt := events.Buff{MobInstanceId: 99999, BuffId: 100}
 	result := ApplyBuffs(evt)
-	assert.Equal(t, events.Cancel, result, "should cancel for unknown mob instance")
+	assert.Equal(t, events.Continue, result, "nothing to do for an unknown mob instance, and no veto")
 }
 
 func TestApplyBuffs_AppliesBuffToUser(t *testing.T) {
