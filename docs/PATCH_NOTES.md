@@ -3,11 +3,14 @@
 ## 2026-09-12: Purge a friend, and poison that finally behaves
 
 Purge Affliction cast at a companion used to cleanse you instead of them. It
-now purges whoever you name, friend or self. Venom, spore toxin and the toxic
-cloud from a thrown flask now count as poison, so the purge spells clear
-them and a poisoned creature looks poisoned. Stone Stomach keeps its promise:
-while it lasts, poison cannot take hold in you. Savant's Infusion costs more
-than Essence of Growth now, as the stronger of the two learning tonics.
+now purges whoever you name, friend or self. Venom, spore toxin, the toxic
+cloud from a thrown flask and the nausea of a spoiled drink now all count as
+poison, so the purge spells clear them and a poisoned creature looks
+poisoned. An antidote now clears the toxic cloud as well, which it used to
+miss. Stone Stomach keeps its promise: while it lasts, poison cannot take hold
+in you. It guards you rather than cures you, so a poison already at work is
+not undone by it; an antidote or a purge does that. Savant's Infusion costs
+more than Essence of Growth now, as the stronger of the two learning tonics.
 
 ## 2026-09-12: Seven consumables now do what they say
 

@@ -29,7 +29,7 @@ var (
 		`lit`:      {`☀️Lit`, `☀️`, `lit`},       // Does light come from this character?
 		`sleeping`: {`asleep`, `zZz`, `gray`},    // Are they hiding?
 		`zombie`:   {`zOmBie`, `z`, `zombie`},    // Have they disconnected and are zombie status?
-		`poisoned`: {`☠poisoned`, `☠`, `purple`}, // Have they disconnected and are zombie status?
+		`poisoned`: {`☠poisoned`, `☠`, `purple`}, // Is poison at work in them?
 		`shop`:     {`shop`, `$`, `gold`},        // Do they sell stuff?
 	}
 

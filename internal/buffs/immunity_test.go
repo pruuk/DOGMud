@@ -58,3 +58,29 @@ func TestPoisonImmunityRefusesAHealthTickVenom(t *testing.T) {
 	unprotected := New()
 	assert.True(t, unprotected.AddBuff(immunityTestRealVenomId, false), "without immunity the venom lands")
 }
+
+const immunityTestDeadBuffId = 9405 // held (indexed by Validate) but no live spec
+
+// A save can carry a buff id whose spec is gone, and Validate indexes it
+// anyway. HasFlag dereferenced GetBuffSpec without a nil check, so once AddBuff
+// started asking HasFlag(PoisonImmunity) on every add, a character holding a
+// dead id ahead of the immunity buff would crash on the next venom crit.
+func TestHasFlagSurvivesAHeldBuffWithNoSpec(t *testing.T) {
+	restore := SeedBuffsForTest(map[int]*BuffSpec{
+		immunityTestStoneStomachId: {BuffId: immunityTestStoneStomachId, Name: "Test Stone Stomach", TriggerCount: 5, RoundInterval: 1, Flags: []Flag{PoisonImmunity}},
+		immunityTestVenomId:        {BuffId: immunityTestVenomId, Name: "Test Venom", TriggerCount: 5, RoundInterval: 1, Flags: []Flag{Poison}},
+	})
+	defer restore()
+
+	// The dead id is first in the list, so the flag scan reaches it before the
+	// immunity buff it is looking for.
+	bs := Buffs{List: []*Buff{{BuffId: immunityTestDeadBuffId, TriggersLeft: 3}}}
+	bs.Validate()
+	if _, ok := bs.buffIds[immunityTestDeadBuffId]; !ok {
+		t.Fatal("precondition: Validate should have indexed the dead id anyway")
+	}
+	require.True(t, bs.AddBuff(immunityTestStoneStomachId, false))
+
+	assert.True(t, bs.HasFlag(PoisonImmunity, false), "the flag is found past the dead id")
+	assert.False(t, bs.AddBuff(immunityTestVenomId, false), "and the immunity still refuses poison")
+}

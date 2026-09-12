@@ -141,7 +141,14 @@ func (bs *Buffs) HasFlag(action Flag, expire bool) bool {
 		// silently left those buffs active.
 		matches := action == All
 		if !matches {
-			matches = slices.Contains(GetBuffSpec(b.BuffId).Flags, action)
+			// A save can carry a buff id whose spec is gone, and Validate indexes
+			// it anyway, so the lookup can come back nil. ProgressMult guards the
+			// same way.
+			spec := GetBuffSpec(b.BuffId)
+			if spec == nil {
+				continue
+			}
+			matches = slices.Contains(spec.Flags, action)
 		}
 		if !matches {
 			continue

@@ -312,6 +312,24 @@ func (b *BuffSpec) Validate() error {
 	return nil
 }
 
+// ValidateLoadedFlags panics on the first loaded buff carrying a flag the
+// engine does not declare, naming the id, name and flag. LoadDataFiles calls
+// it, so a typo in a buff file fails the boot rather than loading silently and
+// doing nothing; species.ValidateSpeciesBuffIds guards its data the same way.
+// Ids are walked in order so the panic names the same buff every time.
+func ValidateLoadedFlags() {
+	ids := make([]int, 0, len(buffs))
+	for id := range buffs {
+		ids = append(ids, id)
+	}
+	slices.Sort(ids)
+	for _, id := range ids {
+		if err := buffs[id].ValidateFlags(); err != nil {
+			panic(err)
+		}
+	}
+}
+
 // ValidateFlags reports the first flag this spec carries that the engine does
 // not declare. Compared exactly; nothing is normalised.
 func (b *BuffSpec) ValidateFlags() error {
@@ -347,15 +365,13 @@ func LoadDataFiles() {
 		if b.Name != "" {
 			casing.AssertCanonical(b.Name, "buff", fmt.Sprintf("%d", id))
 		}
-		// A flag the engine does not declare is a typo that would load
-		// silently and do nothing, the way the Cat's Eye Draught did. Fail
-		// the boot naming the offender, as species.ValidateSpeciesBuffIds does.
-		if err := b.ValidateFlags(); err != nil {
-			panic(err)
-		}
 	}
 
 	buffs = tmpBuffs
+
+	// A flag the engine does not declare is a typo that would load silently and
+	// do nothing, the way the Cat's Eye Draught did. Fail the boot instead.
+	ValidateLoadedFlags()
 
 	mudlog.Info("buffSpec.LoadDataFiles()", "loadedCount", len(buffs), "Time Taken", time.Since(start))
 }
