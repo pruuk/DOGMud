@@ -27,8 +27,11 @@ func ValidateTokens(text string) []string
 
 A store assembles its `narration.Variants` (which line is Actor, Actee,
 Observer) and calls `Narrate`; the site delivers each role on its own channel.
-`SubstituteTokens` is a one-variant `Narrate`, kept for the dialogue store,
-which the messaging arc migrates in its item 7.
+`SubstituteTokens` is a one-variant `Narrate`. Two production callers remain:
+the dialogue store (`internal/behaviortree/actions_dialogue.go`, which the
+messaging arc migrates in its item 7) and `buffs.AuthoredStartLine`, the door
+for a silent-start buff's applier. It cannot be deleted at item 7 without
+moving the second.
 
 ## Gotchas
 
@@ -42,9 +45,12 @@ which the messaging arc migrates in its item 7.
 - **`Tokens` always carries all four keys**, so an absent target renders as an
   empty string. That is what `SubstituteTokens` has always done; a line that
   names `{target}` with no target has a hole in it.
-- **A misspelled token substitutes to nothing and does not error.**
-  `ValidateTokens` exists to catch that at load; buffs and spells only WARN on
-  it today, quests fail (`internal/quests/roomtext.go`).
+- **A misspelled token is left in the line verbatim and does not error.** The
+  core substitutes only the four known keys, so `{targat}` reaches the player
+  as written (quest 77 once showed a literal `{source}` this way).
+  `ValidateTokens` exists to catch it at load; buffs and spells only WARN on
+  it today, and quests fail on `room_text` only (`internal/quests/roomtext.go`);
+  `send_text` and the reward messages are not token-checked.
 - **`Pool` keeps whitespace.** A whitespace-only authored line must reach
   `narration.ValidateVariants` and be refused at load, not trimmed into
   silence.
@@ -59,6 +65,8 @@ which the messaging arc migrates in its item 7.
 ## Consumers
 
 `internal/buffs`, `internal/spells`, `internal/quests` (their `Narrate` doors and
-validators), `internal/questengine` (the bridge), the hook, command and action
-sites that build a `TokenContext`, and `internal/behaviortree` (dialogue, via
+validators), `internal/questengine` (the bridge), the hook, command, action
+and justice sites that build a `TokenContext` (`internal/hooks`,
+`internal/usercommands`, `internal/mobcommands`, `internal/actions`,
+`internal/justice`), and `internal/behaviortree` (dialogue, via
 `SubstituteTokens`).

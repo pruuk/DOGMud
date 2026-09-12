@@ -36,7 +36,10 @@ The quests system is built around several key components:
 
 `ActionDef.Narration()` (send_text = Actor, room_text = Observer) and
 `QuestReward.Narration()` (playermessage = Actor, roommessage = Observer), each
-with a `Narrate(ctx)` that renders through `textutil.Narrate`. `Validate`
+with a `Narrate(ctx)` that renders through `textutil.Narrate`. In production
+only the reward door is called directly (`hooks/Quest_HandleQuestUpdate.go`);
+a quest action's `Narration()` travels `questengine.ExecuteAction` to
+`GameBridge.Narrate`, which renders it there. `Validate`
 refuses an action that sets both texts (one narration per action) and any
 whitespace-only line, alongside the `room_text` rule in `roomtext.go`. The
 package holds four copies of the action-tree walker (`roomtext.go`,
