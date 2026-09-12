@@ -174,6 +174,11 @@ func (r *Quest) Validate() error {
 		return err
 	}
 
+	// One line per text action, and no whitespace-only line; see narration.go.
+	if err := r.validateNarration(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
