@@ -275,14 +275,27 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 			// this switch used to fall through to the self-cast arm whenever
 			// only TargetMobInstanceIds was set, so naming a poisoned
 			// companion purged the CASTER.
+			//
+			// Both named-target arms go through purgeTarget.stillPresent,
+			// which mirrors the target loops' admission above: a target that
+			// died or left mid-fold is neither purged nor narrated, and the
+			// loop's own "finds no targets" line is all the caster reads. A
+			// failed check must fall through to NOTHING, not to the self-cast
+			// arm below.
 			switch {
 			case len(cs.TargetUserIds) > 0:
 				if targetUser := users.GetByUserId(cs.TargetUserIds[0]); targetUser != nil {
-					resolvePurgeAffliction(user, room, purgeTarget{char: targetUser.Character, user: targetUser, name: targetUser.Character.Name})
+					t := purgeTarget{char: targetUser.Character, user: targetUser, name: targetUser.Character.Name}
+					if t.stillPresent(room) {
+						resolvePurgeAffliction(user, room, t)
+					}
 				}
 			case len(cs.TargetMobInstanceIds) > 0:
 				if tMob := mobs.GetInstance(cs.TargetMobInstanceIds[0]); tMob != nil {
-					resolvePurgeAffliction(user, room, purgeTarget{char: &tMob.Character, name: tMob.Character.Name, display: mobDisplayName(tMob, room, user.UserId)})
+					t := purgeTarget{char: &tMob.Character, name: tMob.Character.Name, display: mobDisplayName(tMob, room, user.UserId)}
+					if t.stillPresent(room) {
+						resolvePurgeAffliction(user, room, t)
+					}
 				}
 			default:
 				resolvePurgeAffliction(user, room, purgeTarget{char: user.Character, user: user, name: user.Character.Name}) // self-cast

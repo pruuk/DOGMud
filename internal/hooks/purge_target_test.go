@@ -96,3 +96,90 @@ func TestPurgeAffliction_NamedMobTargetInTheDarkIsHiddenFromTheRoom(t *testing.T
 	assert.Equal(t, 0, countContaining(casterLines, "Skeleton"), "a caster who cannot see does not name the mob")
 	assert.Equal(t, 0, countContaining(drainPlain(2), "purging"), "an unsighted observer reads nothing")
 }
+
+// The three lanes below cover a target that died or left the room during the
+// fold. Purge Affliction is waitrounds 2, so a companion wandering off or
+// dropping is ordinary. The dispatch read the target id raw and so ignored
+// every filter the target loops apply, exactly as charm once did.
+
+// castPurgeAtMob drives one Purge Affliction cast at mob instance 100 and
+// returns the caster's and the bystander's lines.
+func castPurgeAtMob(t *testing.T, room *rooms.Room) (casterLines, bystanderLines []string) {
+	t.Helper()
+	spell := &spells.SpellData{SpellId: "purge-affliction", Name: "Purge Affliction", Type: spells.HelpSingle}
+	resolveSpell(users.GetByUserId(1), activity.CastingData{SpellId: "purge-affliction", TargetMobInstanceIds: []int{100}}, spell, room)
+	return drainPlain(1), drainPlain(2)
+}
+
+func TestPurgeAffliction_MobTargetThatLeftTheRoomIsNeitherPurgedNorNarrated(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedPurgeTestPoison()
+	defer restore()
+	pinSpellContest(t)
+	room := rooms.LoadRoom(1)
+	mob := mobs.GetInstance(100)
+	require.True(t, mob.Character.Buffs.AddBuff(purgeTestPoisonBuffId, false))
+	// The companion wandered north mid-fold.
+	rooms.LoadRoom(1).RemoveMob(100)
+	mob.Character.RoomId = 2
+	rooms.LoadRoom(2).AddMob(100)
+	drainPlain(1)
+	drainPlain(2)
+
+	casterLines, bystanderLines := castPurgeAtMob(t, room)
+
+	assert.True(t, mob.Character.Buffs.HasFlag(buffs.Poison, false), "an absent mob is not purged")
+	assert.Equal(t, 0, countContaining(casterLines, "purging energy"), "no purge line for an absent target")
+	assert.Equal(t, 0, countContaining(bystanderLines, "purging energy"))
+	assert.Equal(t, 0, countContaining(casterLines, "from your body"), "and no fallback to self-cast")
+}
+
+func TestPurgeAffliction_DeadMobTargetIsNeitherPurgedNorNarrated(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedPurgeTestPoison()
+	defer restore()
+	pinSpellContest(t)
+	room := rooms.LoadRoom(1)
+	mob := mobs.GetInstance(100)
+	require.True(t, mob.Character.Buffs.AddBuff(purgeTestPoisonBuffId, false))
+	mob.Character.Health = 0 // the companion dropped mid-fold
+	drainPlain(1)
+	drainPlain(2)
+
+	casterLines, bystanderLines := castPurgeAtMob(t, room)
+
+	assert.True(t, mob.Character.Buffs.HasFlag(buffs.Poison, false), "a dead mob is not purged")
+	assert.Equal(t, 0, countContaining(casterLines, "purging energy"), "no purge line for a dead target")
+	assert.Equal(t, 0, countContaining(bystanderLines, "purging energy"))
+	assert.Equal(t, 0, countContaining(casterLines, "from your body"), "and no fallback to self-cast")
+}
+
+func TestPurgeAffliction_PlayerTargetThatLeftTheRoomIsNeitherPurgedNorNarrated(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedPurgeTestPoison()
+	defer restore()
+	pinSpellContest(t)
+	room := rooms.LoadRoom(1)
+	caster := users.GetByUserId(1)
+	target := users.GetByUserId(2)
+	require.True(t, target.Character.Buffs.AddBuff(purgeTestPoisonBuffId, false))
+	// Bobrick walked north mid-fold.
+	rooms.LoadRoom(1).RemovePlayer(2)
+	target.Character.RoomId = 2
+	rooms.LoadRoom(2).AddPlayer(2)
+	drainPlain(1)
+	drainPlain(2)
+
+	spell := &spells.SpellData{SpellId: "purge-affliction", Name: "Purge Affliction", Type: spells.HelpSingle}
+	resolveSpell(caster, activity.CastingData{SpellId: "purge-affliction", TargetUserIds: []int{2}}, spell, room)
+
+	assert.True(t, target.Character.Buffs.HasFlag(buffs.Poison, false), "an absent player is not purged")
+	targetLines := drainPlain(2)
+	assert.Equal(t, 0, countContaining(targetLines, "purges the afflictions from your body"))
+	casterLines := drainPlain(1)
+	assert.Equal(t, 0, countContaining(casterLines, "purging energy"), "no purge line for an absent target")
+	assert.Equal(t, 0, countContaining(casterLines, "from your body"), "and no fallback to self-cast")
+}

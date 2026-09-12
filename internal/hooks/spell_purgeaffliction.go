@@ -30,6 +30,21 @@ func (p purgeTarget) token() string {
 	return fmt.Sprintf(`<ansi fg="username">%s</ansi>`, p.name)
 }
 
+// stillPresent mirrors the target loops' own admission (spell_resolution.go
+// :137-152 for mobs, :159-170 for players): a target that died or left the room
+// while the spell was folding is neither purged nor narrated.
+//
+// Purge Affliction is waitrounds 2, so a companion wandering off or dropping
+// mid-fold is ordinary, not exotic. Charm carried the identical defect for the
+// identical reason and was fixed the same way: a raw read of the target id
+// AFTER the loop ignores every filter the loop applies. A failing check must
+// fall through to nothing, never to the self-cast arm, which would purge the
+// caster all over again.
+func (p purgeTarget) stillPresent(room *rooms.Room) bool {
+	return p.char != nil && room != nil &&
+		p.char.Health > 0 && p.char.RoomId == room.RoomId
+}
+
 // resolvePurgeAffliction narrates the purge and cancels poison on the target.
 // Self-cast keeps its one-line wording. A mob target has no client, so its
 // Actee recipient is nil and only the caster and the room read anything; names

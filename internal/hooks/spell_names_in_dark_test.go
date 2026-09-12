@@ -3,7 +3,6 @@ package hooks
 import (
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -98,11 +97,7 @@ func TestMobCastOnPlayer_TargetInTheDarkReadsSomething(t *testing.T) {
 	defer cleanup()
 	darken(t, 1)
 	drainPlain(2)
-	original := runSpellChannelAttack
-	runSpellChannelAttack = func(combat.AttackChannel, combat.AttackSide, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
-		return spellContestAttackWin()
-	}
-	t.Cleanup(func() { runSpellChannelAttack = original })
+	pinSpellContest(t)
 
 	spell := &spells.SpellData{SpellId: "test-hex", Name: "Hex", Type: spells.HarmSingle}
 	resolveMobSpellAgainstPlayer(mobs.GetInstance(100), users.GetByUserId(2), rooms.LoadRoom(1), spell, combat.AttackSide{}, 10)
