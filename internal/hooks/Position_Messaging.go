@@ -19,6 +19,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -352,6 +353,42 @@ func fireSubmissionResolutionMessage(
 		"target":   recipient.Name,
 	}
 	sendSubmissionTriple(attempter, recipient, tmpl, subs)
+}
+
+// narrateSubmissionEffects tells a player victim about the buffs the
+// submission outcome just applied, right after it applied them.
+//
+// Buffs 83 Broken Limb and 84 Stunned are applied synchronously on the
+// character inside internal/combat, which sends no player text anywhere in the
+// package, so their authored start_user_text never travelled the buff event
+// that would have narrated it: a player whose arm was just snapped read the
+// submission's outcome line and nothing at all about the break. Both are
+// flagged silent-start, and this is the applier's side of that bargain.
+//
+// The attempter and the room are already served by
+// fireSubmissionResolutionMessage's outcome triple; this is only the victim's
+// private consequence line. A mob victim has no client, so it gets nothing.
+func narrateSubmissionEffects(effects combat.SubmissionOutcomeEffects) {
+	sendSilentStartText(effects.StunnedVictim, combat.StunnedBuffId)
+	sendSilentStartText(effects.BrokenLimbVictim, combat.BrokenLimbBuffId)
+}
+
+// sendSilentStartText sends a silent-start buff's authored start line to c,
+// when c is a player. Reads StartUserText, not StartUserNotice(), which is
+// empty by design for a silent-start buff.
+func sendSilentStartText(c *characters.Character, buffId int) {
+	if c == nil {
+		return
+	}
+	u := userForCharacter(c)
+	if u == nil {
+		return
+	}
+	spec := buffs.GetBuffSpec(buffId)
+	if spec == nil || spec.StartUserText == "" {
+		return
+	}
+	u.SendText(messaging.CategoryBuffApply, spec.StartUserText)
 }
 
 func init() {

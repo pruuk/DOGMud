@@ -143,11 +143,12 @@ func (c *Character) ProgressionChanceForSkill(skillName string, bonusMultiplier 
 
 	// Phase 24.2: Apply mutation skill progression multiplier
 	mutSkillMult := 1.0 + mutations.GetSkillProgressionMultiplier(c.Mutations)
-	// Phase 25.3: Skill Attunement buff doubles skill progression chance
-	buffSkillMult := 1.0
-	if c.HasBuffFlag(buffs.SkillProgress) {
-		buffSkillMult = 2.0
-	}
+	// Phase 25.3: a skill-progress buff quickens skill progression chance. The
+	// magnitude now lives on the buff: a buff with no progress_mult is worth
+	// 2.0, the historic literal this line used to hardcode. That 2.0 default
+	// is a balance number living in Go rather than config.yaml and belongs on
+	// the config audit list.
+	buffSkillMult := c.Buffs.ProgressMult(buffs.SkillProgress)
 
 	// Mobs decay against their own soft cap: they fight far more often than
 	// players, so sharing the player curve would leave them flat for too long.

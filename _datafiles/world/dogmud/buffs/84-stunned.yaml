@@ -10,3 +10,9 @@ statmods:
   combatmodifier: -75
 start_user_text: '<ansi fg="red">The submission''s pressure leaves you stunned, unable to react.</ansi>'
 end_user_text: '<ansi fg="green">You shake off the stun and regain your composure.</ansi>'
+flags:
+  # Same bargain as buff 83: the submission outcome applies this
+  # synchronously, internal/combat cannot send the holder a line, so the
+  # submission hook sends the start_user_text above right after the crit
+  # release lands.
+  - silent-start

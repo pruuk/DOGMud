@@ -383,11 +383,13 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 					canDeepen := mutations.CanDeepen(user.Character.Mutations)
 					if canAcquire || canDeepen {
 						eyeMult := 0.5 + gametime.GetEyePhase()
-						// Phase 25.3: Mutation Catalyst buff doubles mutation progress gain
-						mutCatalystMult := 1.0
-						if user.Character.HasBuffFlag(buffs.MutationRate) {
-							mutCatalystMult = 2.0
-						}
+						// Phase 25.3: a mutation-rate buff quickens mutation progress
+						// gain. The magnitude now lives on the buff: a buff with no
+						// progress_mult is worth 2.0, the historic literal this line
+						// used to hardcode. That 2.0 default is a balance number
+						// living in Go rather than config.yaml and belongs on the
+						// config audit list.
+						mutCatalystMult := user.Character.Buffs.ProgressMult(buffs.MutationRate)
 						user.Character.MutationProgress += float64(mb.MutationProgressGainPerRound) * eyeMult * mutCatalystMult
 						// Phase 24.1: Use rarity-weighted load instead of flat event count
 						load := mutations.GetMutationLoad(user.Character.Mutations)

@@ -105,15 +105,13 @@ var buffApplyPathAllowlist = map[string]string{
 	// ── the buff must be in place before the function returns ───────────────
 	"internal/justice/arrest.go|395": "silent-start, the arrest narrates; no-go and no-aggro-target are read in the same round dispatch",
 
-	// ── OPEN DEFECT, recorded rather than hidden ────────────────────────────
-	// Buffs 83 and 84 carry authored start_user_text that reaches nobody:
-	// internal/combat holds only a *characters.Character here and sends no
-	// player text anywhere in the package, and no other code narrates the
-	// stun or the broken limb. Flagging them silent-start would assert that
-	// the applier narrates, which is false. Awaiting an owner decision on
-	// where a submission's consequences should be told to the victim.
-	"internal/combat/submission_outcome.go|271": "OPEN: buff 83 Broken Limb start_user_text reaches nobody; internal/combat has no player-text path and nothing else narrates it",
-	"internal/combat/submission_outcome.go|282": "OPEN: buff 84 Stunned start_user_text reaches nobody; internal/combat has no player-text path and nothing else narrates it",
+	// ── the applier's caller narrates, because internal/combat cannot ───────
+	// internal/combat holds only a *characters.Character and sends no player
+	// text anywhere in the package, so ResolveSubmissionOutcome reports the
+	// buffs it applied and Position_SubmissionTick delivers each authored
+	// start line to a player victim through narrateSubmissionEffects.
+	"internal/combat/submission_outcome.go|327": "silent-start; the submission hook narrates the start right after the outcome; must apply synchronously",
+	"internal/combat/submission_outcome.go|338": "silent-start; the submission hook narrates the start right after the outcome; must apply synchronously",
 }
 
 // primitivePackages define Character.AddBuff / Buffs.AddBuff themselves, so

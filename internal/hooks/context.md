@@ -1263,7 +1263,12 @@ fresh when this observer reads it.
    `c.LastSubmissionAttempted` index, cycling through the position's
    pool).
 5. Call `combat.RollSubmissionAttempt(attempter, recipient, subType)`.
-6. Call `combat.ResolveSubmissionOutcome(attempter, recipient, result, role)`.
+6. Call `combat.ResolveSubmissionOutcome(attempter, recipient, result, role)`,
+   then hand the `combat.SubmissionOutcomeEffects` it returns to
+   `narrateSubmissionEffects` (in `Position_Messaging.go`): the hook narrates
+   Stunned (buff 84) and Broken Limb (buff 83) to a player victim right after
+   the outcome, because the combat package sends no player text and both buffs
+   are applied synchronously and flagged `silent-start`.
 
 The `LastDriftRoll.Round` field is compared against the current round
 counter to reject stale snapshots (e.g., character just logged in).

@@ -1781,7 +1781,11 @@ PURPOSE: a fumble is the attempter's own blunder.
 ### Policy outcome ladder
 
 `ResolveSubmissionOutcome` dispatches to per-policy helpers based on
-`attempter.SubmissionPolicy`:
+`attempter.SubmissionPolicy`. It returns a `SubmissionOutcomeEffects`
+(`StunnedVictim`, `BrokenLimbVictim`, `BrokenBodyPart`) naming the
+silent-start buffs it actually applied, for the caller to narrate: this
+package sends no player text, so `Position_SubmissionTick` reads the report
+and delivers each buff's authored start line to a player victim.
 
 | Policy | Outcome |
 |--------|---------|

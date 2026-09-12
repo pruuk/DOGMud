@@ -1,5 +1,14 @@
 # DOGMud Patch Notes
 
+## 2026-09-12: Seven consumables now do what they say
+
+Some meals, tonics and brews on the shop shelves promised an effect and then
+did nothing at all. The meals now mend, restore or steady you as they say they
+do, and they last as long as a potion would rather than fading almost at once.
+The two learning tonics quicken how fast your skills come along, and the two
+mutagenic brews quicken the change working inside you. The catalyst is the
+stronger and the longer lasting of that pair, as its price suggests.
+
 ## 2026-09-12: Every potion, meal and affliction now says hello and goodbye
 
 Many effects used to arrive and leave without a word. You would drink a

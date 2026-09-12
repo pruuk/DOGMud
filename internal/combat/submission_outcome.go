@@ -9,6 +9,35 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 )
 
+// Buff ids the submission outcome applies. Both are flagged silent-start in
+// their YAML: they must be applied synchronously (their statmods must be live
+// for the rest of this round's dispatch, and the broken limb lands mid-cascade)
+// and internal/combat sends no player text anywhere, so the applier's caller
+// owes the victim the authored start line. See SubmissionOutcomeEffects.
+const (
+	// BrokenLimbBuffId is buff 83, applied by a cripple-policy success on a
+	// joint submission.
+	BrokenLimbBuffId = 83
+	// StunnedBuffId is buff 84, applied by a crit-tier mercy release.
+	StunnedBuffId = 84
+)
+
+// SubmissionOutcomeEffects reports the silent-start buffs
+// ResolveSubmissionOutcome actually applied, so the caller can narrate them.
+// internal/combat has no player-text path, so the submission hook reads this
+// and sends each buff's authored start line to a player victim right after the
+// outcome. A nil victim means that effect did not land this round; a buff whose
+// apply failed is not reported, so nobody is told about a stun they never took.
+type SubmissionOutcomeEffects struct {
+	// StunnedVictim holds buff 84, or nil.
+	StunnedVictim *characters.Character
+	// BrokenLimbVictim holds buff 83, or nil.
+	BrokenLimbVictim *characters.Character
+	// BrokenBodyPart is the limb the break names ("arm", "shoulder"), empty
+	// when no limb was broken.
+	BrokenBodyPart string
+}
+
 // Callbacks for submission narration. Registered by the hooks package
 // in its init() to avoid a combat → hooks import cycle. nil-safe;
 // ResolveSubmissionOutcome no-ops if not registered.
@@ -62,12 +91,16 @@ func RegisterSubmissionMessaging(
 // — per the design spec, only a mercy-policy attempter honours the
 // tap signal, and that check happens inside applyMercyRelease.
 // Other policies ignore the tap as a realism call.
+//
+// Returns the silent-start buffs it applied (see
+// SubmissionOutcomeEffects). internal/combat sends no player text, so the
+// caller narrates the stun and the broken limb to a player victim.
 func ResolveSubmissionOutcome(
 	attempter *characters.Character,
 	recipient *characters.Character,
 	result SubmissionAttemptResult,
 	role Role,
-) {
+) SubmissionOutcomeEffects {
 	// Resolve the effective body part now so messaging and outcome
 	// both use the same degraded value (choke cripple → subdue).
 	bodyPart := position.CrippleBodyPart(result.SubType)
@@ -82,13 +115,14 @@ func ResolveSubmissionOutcome(
 		onSubmissionOpening(attempter, recipient, result.SubType)
 	}
 
+	var effects SubmissionOutcomeEffects
 	switch result.Tier {
 	case SubTierBad:
 		applyBadTier(attempter, recipient)
 	case SubTierNeutral:
 		// no mechanical effect; fall through to resolution messaging
 	case SubTierSuccess, SubTierCrit:
-		applySuccessByPolicy(attempter, recipient, result)
+		effects = applySuccessByPolicy(attempter, recipient, result)
 	}
 
 	// Resolution narration fires after the outcome is applied.
@@ -101,6 +135,8 @@ func ResolveSubmissionOutcome(
 			bodyPart,
 		)
 	}
+
+	return effects
 }
 
 // applyBadTier handles the Sub-TierBad outcome: break the grapple to
@@ -125,12 +161,16 @@ func applyBadTier(attempter, recipient *characters.Character) {
 
 // applySuccessByPolicy dispatches to the correct outcome path based
 // on the attempter's SubmissionPolicy. Also applies the Crit-tier
-// Stunned buff stub (T10) when policy is mercy.
+// Stunned buff when policy is mercy. Returns the silent-start buffs it
+// applied so the caller can narrate them; the victim of either is always
+// the recipient, since both the death cascade and the crit stun land on
+// the side the attempt was made against.
 func applySuccessByPolicy(
 	attempter *characters.Character,
 	recipient *characters.Character,
 	result SubmissionAttemptResult,
-) {
+) SubmissionOutcomeEffects {
+	var effects SubmissionOutcomeEffects
 	policy := attempter.SubmissionPolicy
 
 	// Choke degradation: cripple on a choke-class sub becomes subdue
@@ -144,7 +184,9 @@ func applySuccessByPolicy(
 	// the recipient in play. For subdue/cripple/lethal the recipient
 	// enters the death cascade and the buff would be a no-op.
 	if result.Tier == SubTierCrit && policy == characters.PolicyMercy {
-		applyStunnedBuff(recipient)
+		if applyStunnedBuff(recipient) {
+			effects.StunnedVictim = recipient
+		}
 	}
 
 	switch policy {
@@ -154,12 +196,17 @@ func applySuccessByPolicy(
 		applyDeathCascade(attempter, recipient,
 			true /* noDeprogression */, false /* brokenLimb */, "")
 	case characters.PolicyCripple:
-		applyDeathCascade(attempter, recipient,
-			true /* noDeprogression */, true /* brokenLimb */, bodyPart)
+		if applyDeathCascade(attempter, recipient,
+			true /* noDeprogression */, true /* brokenLimb */, bodyPart) {
+			effects.BrokenLimbVictim = recipient
+			effects.BrokenBodyPart = bodyPart
+		}
 	case characters.PolicyLethal:
 		applyDeathCascade(attempter, recipient,
 			false /* deprogression normally */, false, "")
 	}
+
+	return effects
 }
 
 // applyMercyRelease executes the mercy-policy path: clean grapple
@@ -186,15 +233,19 @@ func applyMercyRelease(attempter, recipient *characters.Character) {
 // losing training.
 //
 // brokenLimb + brokenBodyPart — when true (cripple with a joint sub),
-// a broken-limb buff is applied after the cascade. T9 wires the
-// actual buff id + YAML.
+// a broken-limb buff is applied after the cascade.
+//
+// Returns true only when the broken-limb buff actually landed, so the
+// caller narrates a break that happened rather than one it asked for: an
+// already-dead victim short-circuits the whole cascade, and a choke sub
+// carries no body part.
 func applyDeathCascade(
 	killer *characters.Character,
 	victim *characters.Character,
 	noDeprogression bool,
 	brokenLimb bool,
 	brokenBodyPart string,
-) {
+) bool {
 	cfg := configs.GetBalanceConfig()
 	goldFrac := 0.0
 	if noDeprogression {
@@ -207,7 +258,7 @@ func applyDeathCascade(
 	}
 
 	if !victim.IsAlive() {
-		return
+		return false
 	}
 
 	damageSnapshot := snapshotVictimDamage(victim)
@@ -240,8 +291,9 @@ func applyDeathCascade(
 	}
 
 	if brokenLimb {
-		applyBrokenLimbBuff(victim, brokenBodyPart)
+		return applyBrokenLimbBuff(victim, brokenBodyPart)
 	}
+	return false
 }
 
 // snapshotVictimDamage returns a shallow copy of the victim's
@@ -258,26 +310,30 @@ func snapshotVictimDamage(victim *characters.Character) map[int]int {
 }
 
 // applyBrokenLimbBuff applies the chunk-4d broken-limb buff (id 83).
-// Stub for T7 — full implementation lands in T9 after the buff YAML
-// is registered.
-func applyBrokenLimbBuff(victim *characters.Character, bodyPart string) {
+// Reports whether it landed: the caller narrates the authored start line to
+// a player victim, and a break nobody took must not be announced.
+//
+// The buff is applied synchronously on the character, not through the buff
+// event, because the outcome path above reads the victim's state back in the
+// same round dispatch. Buff 83 is therefore flagged silent-start and its
+// start line belongs to whoever called us.
+func applyBrokenLimbBuff(victim *characters.Character, bodyPart string) bool {
 	if victim == nil || bodyPart == "" {
-		return
+		return false
 	}
-	// Buff 83 = broken_limb (T9 yaml). The body part ("arm" / "shoulder")
-	// is currently flavor only — narration uses it via Position_Messaging
-	// in T11. Future per-arm tracking could drive weapon-specific
-	// accuracy penalties.
-	_ = victim.AddBuff(83, false)
-	_ = bodyPart
+	// The body part ("arm" / "shoulder") is flavor only, spent by the
+	// resolution narration in Position_Messaging. Future per-arm tracking
+	// could drive weapon-specific accuracy penalties.
+	return victim.AddBuff(BrokenLimbBuffId, false) == nil
 }
 
-// applyStunnedBuff applies the 1-round Stunned buff (id 84) defined
-// in T10. Stub for T7 — full implementation lands in T10 after the
-// buff YAML is registered.
-func applyStunnedBuff(c *characters.Character) {
+// applyStunnedBuff applies the 1-round Stunned buff (id 84). Reports whether
+// it landed, for the same reason applyBrokenLimbBuff does. Buff 84 is
+// silent-start on the same grounds: it is applied synchronously and
+// internal/combat cannot send the holder a line.
+func applyStunnedBuff(c *characters.Character) bool {
 	if c == nil {
-		return
+		return false
 	}
-	_ = c.AddBuff(84, false)
+	return c.AddBuff(StunnedBuffId, false) == nil
 }
