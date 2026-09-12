@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -319,6 +320,13 @@ func (b *GameBridge) LearnRecipe(recipe string) {
 // Character.AddBuff queues nothing, so Buff_ApplyBuffs never runs and the
 // player reads no line for the buff their quest just earned them.
 func (b *GameBridge) ApplyBuff(bf BuffDef) {
+	// The hook drops an unknown spec without a word, so an authoring typo in a
+	// quest reward would otherwise vanish. The old direct add surfaced it
+	// through the error it returned; this keeps that signal.
+	if buffs.GetBuffSpec(bf.Buff) == nil {
+		mudlog.Error("GameBridge.ApplyBuff", "buff", bf.Buff, "error", "no such buff spec")
+		return
+	}
 	b.user.AddBuff(bf.Buff, "quest")
 }
 
