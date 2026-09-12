@@ -44,8 +44,9 @@ const (
 // combat.GetWaitMessages name the weapon as well as the foe (e.g. "Something
 // holds their Rusted Cleaver steady, eyes fixed on you."), so hiding just the
 // name is not enough. A participant without clear sight
-// (messaging.CanSeeSightImpairedOnly: darkness or blindness, not sleep;
-// infrared does not count as clear) instead reads one fixed dark line, the
+// (messaging.CanSeeSightImpairedOnly: darkness or blindness, not sleep, see
+// the predicate's own comment for why a sleeper must still read what hit
+// them; infrared does not count as clear) instead reads one fixed dark line, the
 // same convention the swing path (dispatchCritAndMessaging /
 // replaceDarknessMessages) already uses. The fixed line is only sent when
 // there was an authored line to begin with, so an empty authored list stays

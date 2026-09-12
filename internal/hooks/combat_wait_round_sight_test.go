@@ -137,7 +137,7 @@ func TestWaitRound_LitRoomShowsAttackerName(t *testing.T) {
 // TestWaitRound_DarkRoomHidesTargetNameFromAttacker pins the other half of
 // the drain: MessagesToSource, sent to the ATTACKER. Both tests above pass a
 // nil attackerUser (attacker is the mob), so neither one ever reaches the
-// `:66` send. Here the player is the attacker waiting on a mob target, so
+// attacker-side send. Here the player is the attacker waiting on a mob target, so
 // the toattacker line's {target} names the mob and must be hidden the same
 // way.
 func TestWaitRound_DarkRoomHidesTargetNameFromAttacker(t *testing.T) {
@@ -209,8 +209,8 @@ func TestWaitRound_DarkRoomInfraredDefenderStillGetsDarkLine(t *testing.T) {
 
 // TestWaitRound_EmptyAuthoredListStaysSilentInTheDark pins that the dark
 // line is only sent when there was an authored line to replace. No wait
-// messages are seeded for the weapon subtype here (attackMessages stays the
-// empty map seedAllRegistries leaves it as), so a dark defender must receive
+// messages are seeded for the weapon subtype here (attackMessages stays
+// empty because the test binary never loads world YAML), so a dark defender must receive
 // nothing at all, not an invented line.
 func TestWaitRound_EmptyAuthoredListStaysSilentInTheDark(t *testing.T) {
 	cleanup := seedAllRegistries()

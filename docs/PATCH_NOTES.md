@@ -1,13 +1,5 @@
 # DOGMud Patch Notes
 
-## 2026-09-12: A foe biding its time in the dark keeps its weapon to itself
-
-While a foe waited between blows in the dark, the line describing it still
-named the weapon it was holding, even though you could not see the foe. You
-now read only that something is out there, biding its time, until you can
-see. The same goes for your own waiting line: you no longer read what you
-are watching for when you cannot see it.
-
 ## 2026-09-12: Names are only red when they should be
 
 A name shown in red means that creature is fighting you. For a long while,
@@ -18,8 +10,10 @@ player it is actually attacking. Everyone else sees it in its ordinary colour.
 Three combat lines were also still naming people you could not see. If you
 struck something in the dark that hurt to hit, you were told exactly what it
 was; when the thing you were fighting fell or left and another took its place,
-you were told its name; and a foe biding its time between blows was named as
-it watched you. All three now say "something" until you can see.
+you were told its name; and a foe biding its time between blows was named,
+weapon and all, as it watched you. All three now say "something" until you
+can see, and while you cannot see, a waiting foe is only something out there,
+biding its time.
 
 ## 2026-09-11: What you cannot see, you cannot name
 

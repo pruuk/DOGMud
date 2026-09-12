@@ -138,7 +138,8 @@ sight directly with the swing path's own predicate
 (`messaging.CanSeeSightImpairedOnly`) and, for a participant without clear
 sight, send one fixed dark line instead of the authored one, the swing
 path's convention, because the authored wait lines name the weapon as well
-as the foe.
+as the foe. Infrared readers get the same dark line as full darkness here,
+as they do on the swing path; only clear sight reads the authored text.
 
 ### Combat Round Processing
 ```go
