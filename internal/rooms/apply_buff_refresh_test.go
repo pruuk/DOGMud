@@ -32,7 +32,7 @@ func refreshTestSetTriggersLeft(t *testing.T, list []*buffs.Buff, buffId, left i
 
 // A room mutator's playerbuffids run every round. A player who already holds
 // the buff must have it REFRESHED (TriggersLeft reset), not skipped until it
-// lapses and gets re-added a round later — the skip is what turned slice C's
+// lapses and gets re-added a round later: the skip is what turned slice C's
 // authored notices into a start/end loop every few rounds. A player who does
 // not yet hold the buff still goes through the normal grant path, which is
 // the async events.Buff queue (UserRecord.AddBuff only enqueues; it does not

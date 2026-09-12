@@ -707,8 +707,9 @@ func (r *Room) ApplyBuffIdToPlayers(buffIds []int, source string) {
 					// are here". Letting it expire and re-adding it next round
 					// would narrate its end and start every few rounds.
 					// Character.AddBuff resets the triggers and queues no event,
-					// so no start text repeats.
-					u.Character.AddBuff(bId, false)
+					// so no start text repeats. The only error is an unknown buff id,
+					// and a held buff's id is known by construction.
+					_ = u.Character.AddBuff(bId, false)
 					continue
 				}
 				u.AddBuff(bId, source)
