@@ -189,3 +189,61 @@ func TestSleep_IdempotentWhenAlreadySleeping(t *testing.T) {
 		t.Errorf("idempotent re-sleep expected Success, got %+v", second)
 	}
 }
+
+// TestSleep_PlayerReadsTheStartLine pins that the sleeper is told they went to
+// sleep. Buff 15 is flagged silent-start because Sleep applies it
+// synchronously and so it never travels the event that narrates a buff start;
+// the flag makes the line the applier's to send, and before this it was sent
+// by nobody at all. A mob holder has no client, so it gets nothing.
+func TestSleep_PlayerReadsTheStartLine(t *testing.T) {
+	const startLine = "You lie down and let sleep take you."
+
+	cleanup := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
+		9: {
+			BuffId:       9,
+			Name:         "Hidden",
+			Flags:        []buffs.Flag{buffs.Hidden},
+			TriggerCount: 1000000,
+		},
+		15: {
+			BuffId:        15,
+			Name:          "Sleeping",
+			Flags:         []buffs.Flag{buffs.SilentStart, buffs.Sleeping, buffs.CancelOnDamage},
+			TriggerCount:  1000000,
+			StartUserText: startLine,
+		},
+	})
+	defer cleanup()
+
+	t.Run("player reads it exactly once", func(t *testing.T) {
+		actor := newSleepActor(t, false /* notInCombat */, true /* isPlayer */)
+
+		if res := Sleep(actor, SleepOptions{}); !res.Success {
+			t.Fatalf("expected Success, got %+v", res)
+		}
+
+		count := 0
+		for _, msg := range actor.sent {
+			if strings.Contains(msg, startLine) {
+				count++
+			}
+		}
+		if count != 1 {
+			t.Errorf("player read the sleep start line %d times, want exactly 1; sent: %#v", count, actor.sent)
+		}
+	})
+
+	t.Run("a mob reads nothing", func(t *testing.T) {
+		actor := newSleepActor(t, false /* notInCombat */, false /* isPlayer */)
+
+		if res := Sleep(actor, SleepOptions{}); !res.Success {
+			t.Fatalf("expected Success, got %+v", res)
+		}
+
+		for _, msg := range actor.sent {
+			if strings.Contains(msg, startLine) {
+				t.Errorf("a mob holder has no client, so it must not be sent the start line; sent: %#v", actor.sent)
+			}
+		}
+	})
+}

@@ -49,9 +49,13 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 		return SleepResult{Success: false, Reason: "in combat"}
 	}
 
-	// Apply buff 15 (Sleeping). The buff YAML includes the room-broadcast
-	// "You are getting some much needed rest." message; we only need to emit
-	// the third-person room visual here.
+	// Apply buff 15 (Sleeping) synchronously, on the character. It cannot go
+	// through the user's event path: the idempotence check above reads the
+	// Sleeping flag back, and the schedule executor calls this and expects the
+	// actor to be asleep when it returns. Buff 15 is therefore flagged
+	// silent-start, and the applier owes the holder the start line: that is
+	// what the SendText below is for. The buff YAML has no room text, so the
+	// third-person visual is also ours to emit.
 	if err := c.AddBuff(15, false); err != nil {
 		// Never surface the raw internal error (it leaks the buff id). Log it
 		// for ops and give the player clean flavor.
@@ -61,6 +65,15 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 				"You can't seem to settle into sleep right now.")
 		}
 		return SleepResult{Success: false, Reason: err.Error()}
+	}
+
+	// The start line the silent-start flag makes ours to send. Read from
+	// StartUserText, not StartUserNotice(), which is empty by design for a
+	// silent-start buff. A mob holder has no client, so only a player gets it.
+	if actor.IsPlayer() {
+		if spec := buffs.GetBuffSpec(15); spec != nil && spec.StartUserText != "" {
+			actor.SendText(messaging.CategoryBuffApply, spec.StartUserText)
+		}
 	}
 
 	// Emit third-person room visual to other occupants.

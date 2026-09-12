@@ -547,8 +547,11 @@ func (bs *Buff) Name() string {
 - Two flags declare a deliberate silence: `hidden` (no end notice ever, a
   hider must not learn when the cover lapsed; room text still goes out) and
   `silent-start` (the applying command narrates the start; Warcry, Rally,
-  Throttled and Bloom Detox are applied through `Character.AddBuff`, which
-  never queues the buff event).
+  Throttled, Sleeping and Bloom Detox are applied through `Character.AddBuff`,
+  which never queues the buff event). A `silent-start` buff still owes the
+  holder a line, just not from the hook: `actions.Sleep` reads buff 15's
+  `StartUserText` directly and sends it, which is what the flag means by "the
+  applier narrates".
 - **A player buff must be applied through `users.UserRecord.AddBuff` or
   `UserRecord.AddBuffScaled`, the event path, or it lands in silence:
   `Character.AddBuff` / `Character.AddBuffScaled` apply in place and queue
