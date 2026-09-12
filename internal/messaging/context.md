@@ -87,10 +87,19 @@ Functions:
   whole-word, because mob names collide with ordinary words ("guard"). Inside an
   identity tag it ignores case and any duplicate index, and the whole tag is
   replaced: one Audience name then covers both the authored form ("skeleton")
-  and the display form the channel defence triad prints ("Skeleton #2"). A match
-  inside tag markup itself is never replaced.
+  and the display form the channel defence triad prints ("Skeleton #2"). When
+  the whole identity tag is hidden, one directly following adjective span
+  (` <ansi fg="black-bold">(...)</ansi>`, as `FormattedName.String` prints it,
+  with the adjective colour-patterned rune by rune into nested tags) goes with
+  it, so a caller may pass formatted names through the seam without leaking
+  "(dead)" or "(♥friend)". A match inside tag markup itself is never
+  replaced.
 - `Normalize(cat Category, text string) string`
-- `Anonymize(text string) string`
+- `Anonymize(text string) string`: the pipeline's infrared fallback for every
+  visual line. Replaces each identity tag with "a figure" and takes the
+  adjective span behind it (same pattern as `HideNames`), because
+  `rooms.go` anonymizes BEFORE it hides names and the span would otherwise
+  survive as "a figure (dead)".
 - `WrapAnsi(text string, maxWidth int) string`
 - `Say(cat Category, text string) Line`
 - `SendTrio(t Trio, aud Audience)`: delivers one narrated event to

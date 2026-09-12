@@ -1,0 +1,40 @@
+# Slice B: the recoil and retarget lines stop naming what you cannot see.
+#
+# Slice F's run in this room (2026-09-11) read "You recoil from striking Stone
+# Beetle Queen!" and "You turn your attention to Windscour Wyrm!" while every
+# other line of the fight said "something". Both were direct SendText calls
+# that bypassed the narration seam. The Stone Beetle Queen deals return
+# damage, so hitting her produces the recoil line, and she engaged a veteran
+# with no light in the slice F run, so no light is needed to start the fight.
+#
+# The aggro colour fix (names no longer red for everyone) cannot be observed
+# here: the AI port and the harness strip colour codes. Unit tests cover it.
+ephemeral:
+  profile: veteran
+  start_room: 3112
+  budgets:
+    wall_clock: 20m
+
+goals:
+  - >-
+    Do NOT cast chrysalis-glow or any light. Type `look` and quote the result.
+    You should read "You can't see anything!" or similar. If you can see the
+    room, say so at once and stop: the lane needs the dark.
+  - >-
+    Wait up to 6 rounds without attacking. The Stone Beetle Queen should engage
+    you on her own. Quote every combat line you receive. If she never engages,
+    type `attack queen` and note whether a fight starts.
+  - >-
+    Fight her with plain `attack` and keep fighting. Quote EVERY line that
+    contains the word "recoil", verbatim. Each one must read "something"
+    ("You recoil from striking something!"). Any recoil line that contains
+    "Stone Beetle Queen" or any other creature name is the defect this lane
+    exists to find. Report it at once, but keep fighting to collect more lines.
+  - >-
+    If she dies and another creature is attacking you, quote any line beginning
+    "You turn your attention to". It must read "You turn your attention to
+    something!". A creature name there is a defect. If no such line appears,
+    say so; that is not a defect.
+  - >-
+    Also quote any line in the whole fight that names a creature while you
+    still cannot see. Then stop.

@@ -133,3 +133,66 @@ func TestHideNames_IdentityTagsMatchWhateverTheCase(t *testing.T) {
 		})
 	}
 }
+
+// FormattedName.String prints a character's adjectives in a black-bold span
+// right after the identity tag. Hiding the name and leaving "(dead)" or
+// "(♥friend)" behind tells an unsighted reader what they could not see.
+func TestHideNames_AdjectiveSpanGoesWithTheTag(t *testing.T) {
+	const anon = "<ansi fg=\"combat-anon\">"
+	cases := []struct {
+		name  string
+		text  string
+		sight SightDecision
+		want  string
+	}{
+		{
+			name:  "one adjective",
+			text:  "You recoil from striking <ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(dead)</ansi>!",
+			sight: SightNone,
+			want:  "You recoil from striking " + anon + "something</ansi>!",
+		},
+		{
+			name:  "adjectives after a duplicate index",
+			text:  "<ansi fg=\"mobname-dup2\">Skeleton #2</ansi> <ansi fg=\"black-bold\">(♥friend|hidden)</ansi> recoils.",
+			sight: SightShapes,
+			want:  anon + "A figure</ansi> recoils.",
+		},
+		{
+			name:  "a black-bold span that is not adjectives stays",
+			text:  "<ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">hisses</ansi>.",
+			sight: SightNone,
+			want:  anon + "Something</ansi> <ansi fg=\"black-bold\">hisses</ansi>.",
+		},
+		{
+			name:  "clear sight leaves everything",
+			text:  "<ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(dead)</ansi> recoils.",
+			sight: SightFull,
+			want:  "<ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(dead)</ansi> recoils.",
+		},
+		{
+			name:  "colour-patterned adjective, the production shape",
+			text:  "You recoil from striking <ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(<ansi fg=\"52\">☠</ansi><ansi fg=\"88\">d</ansi><ansi fg=\"124\">e</ansi><ansi fg=\"160\">a</ansi><ansi fg=\"196\">d</ansi>)</ansi>!",
+			sight: SightNone,
+			want:  "You recoil from striking " + anon + "something</ansi>!",
+		},
+		{
+			name:  "two adjectived names in one line",
+			text:  "<ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(lost)</ansi> hits <ansi fg=\"mobname-dup2\">Skeleton #2</ansi> <ansi fg=\"black-bold\">(lost)</ansi>.",
+			sight: SightNone,
+			want:  anon + "Something</ansi> hits " + anon + "something</ansi>.",
+		},
+		{
+			name:  "an identity tag nested inside the span cannot panic",
+			text:  "<ansi fg=\"mobname\">Skeleton</ansi> <ansi fg=\"black-bold\">(<ansi fg=\"mobname\">Skeleton</ansi>)</ansi> hisses.",
+			sight: SightNone,
+			want:  anon + "Something</ansi> hisses.",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := HideNames(tc.text, []string{"skeleton"}, tc.sight); got != tc.want {
+				t.Fatalf("HideNames =\n  %q\nwant\n  %q", got, tc.want)
+			}
+		})
+	}
+}

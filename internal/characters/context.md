@@ -697,7 +697,12 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 - **Shop system** (`shop.go`): NPC merchant capabilities with restocking mechanics
 
 ### Character Presentation
-- **Formatted names** (`formattedname.go`): Rich text rendering with adjectives and color coding
+- **Formatted names** (`formattedname.go`): Rich text rendering with adjectives and color coding.
+  The `aggro` suffix (bright red) requires a real viewer, `viewingUserId > 0`,
+  whose id matches the character's combat target. Viewer-0 renders
+  (`GetCharacterName(true)`, room broadcasts) never carry it; until slice B
+  (2026-09-12) they carried it for every character not fighting a player,
+  because both sides of the comparison were 0.
 - **Adjectives system**: Visual indicators for character states (sleeping, charmed, poisoned, prone, etc.)
 - **Quest indicators**: Visual markers for quest-relevant NPCs
 

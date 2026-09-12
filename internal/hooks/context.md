@@ -118,12 +118,24 @@ events.RegisterListener(events.MobIdle{}, HandleIdleMobs)         // Mob AI beha
 
 ## Combat System Integration
 
-**Names in the dark.** Crit effect lines (`sendCritEffectTrio`), counter lines
+**Names in the dark.** Crit effect lines (`sendCritEffectTrio`), the
+return-damage recoil lines (`emitReturnDamageText`), counter lines
 (`actions.SendCounterTrio`) and spell lines between two parties
 (`spellAudience` in `spell_audience.go`, used by `applyPlayerEffect`,
 `sendSpellChannelDefenceMessages`, `resolveMobSpellAgainstPlayer` and
 `resolvePurgeAffliction`) all go through `messaging.SendTrio`, so a reader who
 cannot see the other party reads "something", or "a figure" with infrared.
+The retarget notice ("You turn your attention to X!") is built once, by
+`actions.RetargetNotice` (`internal/actions/retarget_notice.go`), for
+`DoCombat`'s validate-aggro pass, `emitRetargetMessage`, and the mob-departure
+retarget in `mobcommands.clearRoomAggroOnDeparture`; it hides X by the
+reader's sight and is not suppressed in the dark, because each caller picks
+the new target from whoever is already attacking the reader. The wait-round
+participant lines (`handleCombatWaitRound` in `NewRound_DoCombat_resolution.go`,
+drained from `combat.GetWaitMessages`'s authored `{source}`/`{target}` text)
+have no swing events for `replaceDarknessMessages` to act on, so they are
+name-hidden per reader directly, via `hideForParticipant`, before each
+participant send.
 
 ### Combat Round Processing
 ```go
@@ -669,6 +681,12 @@ chunk 0's sunset pass. Still consumed by `NewRound_DoCombat`.
   auto-assist. Runs once per round in `NewRound_DoCombat`. Directs idle
   companions to join the owner's fight or intercept mobs attacking the
   owner.
+
+The "You turn your attention to X!" builder used to live here as
+`retargetNotice`; it moved to `actions.RetargetNotice`
+(`internal/actions/retarget_notice.go`) so `mobcommands.go`'s mob-departure
+retarget could share it too, since nothing imports `hooks` but both `hooks`
+and `mobcommands` import `actions`.
 
 ### Round driver dispatch (NewRound_DoCombat.go)
 

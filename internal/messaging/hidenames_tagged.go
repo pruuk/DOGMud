@@ -13,8 +13,30 @@ var identityTagPattern = regexp.MustCompile(`<ansi fg="(?:(?:username|mobname)(?
 // mob's name in a room holding more than one of them.
 var dupIndexSuffix = regexp.MustCompile(` #\d+$`)
 
+// adjectiveSpanBody is the adjective list FormattedName.String prints right
+// after an identity tag, without the leading anchor: a space, then a
+// black-bold span holding a parenthesised list such as "(dead)" or
+// "(♥friend|hidden)". It goes with the name it describes; "something (dead)"
+// would tell a blind reader what they could not see. Shared by adjectiveSpan
+// below and by Anonymize's nameTagPattern in anonymize.go, which needs the
+// same span because the room broadcast path anonymizes before it hides names.
+//
+// CompileAdjectiveSwaps (internal/characters/formattedname.go) runs each
+// adjective through colorpatterns.ApplyColorPattern, which wraps every rune
+// in its own colour tag, so the body of the parentheses is nested markup, not
+// plain text: "(<ansi fg=\"52\">d</ansi><ansi fg=\"88\">e</ansi>...)". The
+// pattern admits one level of such single-purpose nested colour tags and
+// nothing else. No other producer emits a black-bold parenthesised span
+// directly after an identity tag: items.go:501 follows an item tag,
+// broadcast.go:16 precedes the mob tag, and search.go builds its span inside
+// the name tag.
+const adjectiveSpanBody = ` <ansi fg="black-bold">\((?:[^<]|<ansi fg="[^"]*">[^<]*</ansi>)*\)</ansi>`
+
+var adjectiveSpan = regexp.MustCompile(`^` + adjectiveSpanBody)
+
 // hideTaggedName replaces a whole identity tag whose content is this name,
-// ignoring case and any duplicate index.
+// ignoring case and any duplicate index, and one adjective span directly
+// after it.
 //
 // WHY CASE-INSENSITIVE HERE AND NOWHERE ELSE. An identity tag's content is
 // always a creature's name, so matching loosely inside one cannot hide an
@@ -32,6 +54,11 @@ func hideTaggedName(text, name, word string) string {
 	var b strings.Builder
 	last := 0
 	for _, m := range matches {
+		if m[0] < last {
+			// A match that began inside a span the previous iteration
+			// swallowed; it is already gone.
+			continue
+		}
 		inner := text[m[2]:m[3]]
 		if !strings.EqualFold(dupIndexSuffix.ReplaceAllString(inner, ""), name) {
 			continue
@@ -45,6 +72,9 @@ func hideTaggedName(text, name, word string) string {
 		b.WriteString(shown)
 		b.WriteString(`</ansi>`)
 		last = m[1]
+		if adj := adjectiveSpan.FindStringIndex(text[last:]); adj != nil {
+			last += adj[1]
+		}
 	}
 	if last == 0 {
 		return text

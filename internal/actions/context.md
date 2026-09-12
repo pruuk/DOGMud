@@ -229,6 +229,12 @@ the target instead of an interrupt.
 - **`SendCounterTrio(room, res, countered, counteredUserId)`**: the one counter
   dispatch, used by `DispatchCounterMessages` and `hooks.fireSpellCounterTier`.
   It goes through `messaging.SendTrio`, so a counter in the dark names nobody.
+- **`RetargetNotice(room, userId, target)`** (`retarget_notice.go`): builds
+  "You turn your attention to X!" with X hidden by the reader's
+  `ParticipantSight`; ok=false when target no longer resolves. Shared by
+  `hooks`'s two round-driver retarget sites and `mobcommands`'s
+  mob-departure retarget, since neither package is importable from the
+  other but both import `actions`.
 
 ## Skill Actions
 

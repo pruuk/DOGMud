@@ -70,10 +70,12 @@ func TestAnonymizeEmpty(t *testing.T) {
 
 // TestAnonymizeReplacesSuffixedUsernameTags guards the player half of the
 // suffix rule. FormattedName.String renders `username-aggro` and
-// `username-dead` as well as plain `username`, and GetCharacterName(true)
-// renders `username-aggro` for any character not fighting a player, so the
-// suffixed form is the COMMON one in room text. Only mob tags accepted a
-// suffix, so a player's name reached infrared-only observers in full.
+// `username-dead` as well as plain `username`. Until slice B,
+// GetCharacterName(true) rendered `username-aggro` for any character not
+// fighting a player, so the suffixed form was the COMMON one in room text; it
+// is now the form a player reads for a foe fighting them. Only mob tags
+// accepted a suffix, so a player's name reached infrared-only observers in
+// full.
 func TestAnonymizeReplacesSuffixedUsernameTags(t *testing.T) {
 	tests := []struct {
 		name string
@@ -98,5 +100,26 @@ func TestAnonymizeLeavesLookalikeTagsAlone(t *testing.T) {
 	in := `<ansi fg="usernames">roster</ansi> <ansi fg="mobnamex">x</ansi>`
 	if got := Anonymize(in); got != in {
 		t.Fatalf("non-identity tag was anonymized: got %q", got)
+	}
+}
+
+// FormattedName.String prints adjectives in a black-bold span after the identity
+// tag, colour-patterned rune by rune. The room broadcast path anonymizes BEFORE
+// it hides names, so the span has to go here or an infrared observer reads
+// "a figure (dead)".
+func TestAnonymizeTakesTheAdjectiveSpanWithTheTag(t *testing.T) {
+	const anon = `<ansi fg="combat-anon">a figure</ansi>`
+	cases := []struct{ name, in, want string }{
+		{"plain adjective", `<ansi fg="mobname">Skeleton</ansi> <ansi fg="black-bold">(dead)</ansi> recoils.`, anon + ` recoils.`},
+		{"colour-patterned adjective", `<ansi fg="mobname-dead">Skeleton</ansi> <ansi fg="black-bold">(<ansi fg="52">☠</ansi><ansi fg="88">d</ansi><ansi fg="124">e</ansi><ansi fg="160">a</ansi><ansi fg="196">d</ansi>)</ansi> recoils.`, anon + ` recoils.`},
+		{"two names, one adjectived", `<ansi fg="username">Kesh</ansi> <ansi fg="black-bold">(hidden)</ansi> hits <ansi fg="mobname-dup2">Rat #2</ansi>.`, anon + ` hits ` + anon + `.`},
+		{"a black-bold span that is not adjectives stays", `<ansi fg="mobname">Skeleton</ansi> <ansi fg="black-bold">hisses</ansi>.`, anon + ` <ansi fg="black-bold">hisses</ansi>.`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := Anonymize(tc.in); got != tc.want {
+				t.Fatalf("Anonymize =\n  %q\nwant\n  %q", got, tc.want)
+			}
+		})
 	}
 }
