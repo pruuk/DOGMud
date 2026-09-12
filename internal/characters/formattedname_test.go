@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -119,4 +120,28 @@ func TestGetFormattedAdjective(t *testing.T) {
 		got := GetFormattedAdjective("charmed")
 		assert.Equal(t, "charmed", got)
 	})
+}
+
+// The aggro suffix means "this character is fighting YOU". Viewer 0 is a room
+// broadcast with no single reader, and a character with no target (or a mob
+// target) reports target UserId 0, so the old equality test painted nearly
+// every name red in every viewer-0 line.
+func TestGetFormattedName_AggroNeedsARealViewer(t *testing.T) {
+	util.SetRoundCountForTest(100)
+	defer util.ResetRoundCountForTest()
+
+	// Health above zero, or the dead suffix wins before aggro is considered.
+	idle := &Character{Name: "Grix", Health: 10}
+	assert.Equal(t, "", idle.GetMobName(0).Suffix, "no target, viewer 0: not aggro")
+	assert.NotContains(t, idle.GetCharacterName(true), "-aggro")
+
+	vsMob := &Character{Name: "Grix", Health: 10}
+	vsMob.SetAggro(0, 55, DefaultAttack, 0)
+	assert.Equal(t, "", vsMob.GetMobName(0).Suffix, "mob target, viewer 0: not aggro")
+
+	vsPlayer := &Character{Name: "Grix", Health: 10}
+	vsPlayer.SetAggro(7, 0, DefaultAttack, 0)
+	assert.Equal(t, "aggro", vsPlayer.GetMobName(7).Suffix, "the player it is fighting sees aggro")
+	assert.Equal(t, "", vsPlayer.GetMobName(8).Suffix, "another player does not")
+	assert.Equal(t, "", vsPlayer.GetMobName(0).Suffix, "a room broadcast does not")
 }

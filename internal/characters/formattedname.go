@@ -196,7 +196,10 @@ func (c *Character) getFormattedName(viewingUserId int, uType string, renderFlag
 
 	if c.Health < 1 {
 		f.Suffix = `dead`
-	} else if c.CurrentCombatTarget().UserId == viewingUserId {
+	} else if target := c.CurrentCombatTarget(); viewingUserId > 0 && target.UserId == viewingUserId {
+		// aggro means "fighting YOU". Viewer 0 is a broadcast with no single
+		// reader, and a character with no target reports UserId 0, so without
+		// the viewer check every idle character rendered red to everyone.
 		f.Suffix = `aggro`
 	}
 

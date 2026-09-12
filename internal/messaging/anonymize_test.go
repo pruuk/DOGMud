@@ -70,10 +70,12 @@ func TestAnonymizeEmpty(t *testing.T) {
 
 // TestAnonymizeReplacesSuffixedUsernameTags guards the player half of the
 // suffix rule. FormattedName.String renders `username-aggro` and
-// `username-dead` as well as plain `username`, and GetCharacterName(true)
-// renders `username-aggro` for any character not fighting a player, so the
-// suffixed form is the COMMON one in room text. Only mob tags accepted a
-// suffix, so a player's name reached infrared-only observers in full.
+// `username-dead` as well as plain `username`. Until slice B,
+// GetCharacterName(true) rendered `username-aggro` for any character not
+// fighting a player, so the suffixed form was the COMMON one in room text; it
+// is now the form a player reads for a foe fighting them. Only mob tags
+// accepted a suffix, so a player's name reached infrared-only observers in
+// full.
 func TestAnonymizeReplacesSuffixedUsernameTags(t *testing.T) {
 	tests := []struct {
 		name string
