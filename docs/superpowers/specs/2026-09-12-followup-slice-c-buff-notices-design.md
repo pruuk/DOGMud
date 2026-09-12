@@ -14,13 +14,15 @@ the conversion of existing flavour to the generic line.
 
 | Fact | Where |
 |---|---|
-| 102 buff files in the dogmud world; 56 carry `end_user_text`; 46 carry neither `start_user_text` nor `end_user_text` (the two sets are identical); 0 are `secret: true` | `_datafiles/world/dogmud/buffs/`, grep |
+| 102 buff files in the dogmud world. 43 carry neither `start_user_text` nor `end_user_text`; 6 more carry one half (0 Meditating, 9 Hidden, 31 Empathic Shroud lack the end; 79 Warcry, 80 Rally, 93 Bloom Detox lack the start); 0 are `secret: true`. The spec first said 46 and 46; the content pass counted | `_datafiles/world/dogmud/buffs/`, grep |
 | Start text is sent from the apply hook only when `StartUserText` or `StartRoomText` is non-empty, on `CategoryBuffApply`, through `textutil.SendPhaseText` | `internal/hooks/Buff_ApplyBuffs.go:75-120` |
 | End text is sent from the player prune pass only when `EndUserText` or `EndRoomText` is non-empty, on `CategoryBuffExpire` | `internal/hooks/NewTurn_PruneBuffs.go:44-58` |
 | The mob prune pass sends end ROOM text only; mobs have no user line | `internal/hooks/NewTurn_PruneBuffs.go:102-120` |
 | `BuffSpec.Secret bool` has no yaml tag, so the key is `secret`; `VisibleNameDesc()` renders a secret buff as "Mysterious Affliction" | `internal/buffs/buffspec.go:102,145-150` |
 | `conditions` lists a player's buffs through `VisibleNameDesc()` | `internal/usercommands/conditions.go:56` |
-| Buff 0 Meditating is the logout timer: pruning it logs the player out | `internal/hooks/NewTurn_PruneBuffs.go:61` |
+| Buff 0 Meditating is the logout timer AND the quit narration: `quit` only adds buff 0, whose start and trigger text are all a quitting player reads; pruning it logs the player out | `internal/usercommands/quit.go:16`, `internal/hooks/NewTurn_PruneBuffs.go:61` |
+| 9 Hidden and 31 Empathic Shroud omit `end_user_text` by design (you must not learn when your cover lapsed) and both carry the `hidden` flag | their YAML comments |
+| 79 Warcry, 80 Rally, 93 Bloom Detox are applied through `Character.AddBuff`, which never queues `events.Buff`, so `Buff_ApplyBuffs` never runs for them and a start line on the buff cannot reach the holder; their commands narrate the start | `internal/characters/buffs.go:109`, `internal/users/userrecord.go:422` |
 | Buff specs load through `fileloader.LoadAllFlatFiles` from the configured world; test binaries load none | `internal/buffs/buffspec.go:265-283` |
 | Boot-time validator precedent: `species.ValidateSpeciesBuffIds(buffs.HasSpec)` wired after buffs load | `main.go:1694`, `internal/species/species.go:350` |
 | Root guards walk `_datafiles/world` with `filepath.WalkDir` and parse YAML directly, without the game's loader | `messaging_surface_guard_test.go:337` |
@@ -28,7 +30,7 @@ the conversion of existing flavour to the generic line.
 
 ## Defect
 
-Forty-six buffs apply and expire in silence from the buff's own text. A
+Forty-three buffs apply and expire in silence from the buff's own text, and six more are silent at one end. A
 potion prints "You drink the Warrior's Brew." from the item and then nothing,
 neither when the effect lands nor when it fades. Afflictions such as Nausea,
 Paralysed, Terrified and Throttled lift without a word. Nothing catches a new
@@ -43,6 +45,12 @@ buff added without text.
 - `EndUserNotice() string`: `EndUserText` if set; otherwise
   `"<Name> has expired."`; empty for a secret buff.
 
+Two deliberate silences are honoured by flag, so they are visible choices in
+the YAML rather than missing text: a buff with the `hidden` flag never
+announces its end (a hider must not learn when the cover lapsed; room text
+still goes out), and a buff with the new `silent-start` flag leaves the start
+to whatever applied it (Warcry, Rally, Bloom Detox).
+
 `Buff_ApplyBuffs` and the player prune pass call these instead of reading the
 raw fields, and the "only if text is non-empty" gates test the resolved
 notice, so the generic line reaches the player through the same
@@ -53,8 +61,9 @@ untouched.
 **The guard.** A root test, `buff_notice_guard_test.go`, walks
 `_datafiles/world/dogmud/buffs/*.yaml` and fails, naming the file, when:
 
-- a non-secret buff lacks authored `start_user_text` or `end_user_text`
-  (the generic line is a runtime net, never the shipped experience);
+- a non-secret buff lacks authored `start_user_text` (unless flagged
+  `silent-start`) or `end_user_text` (unless flagged `hidden`); the generic
+  line is a runtime net, never the shipped experience;
 - a secret buff carries any of the six text fields;
 - a non-secret buff has an empty `name` (the generic line would be blank).
 
@@ -67,8 +76,8 @@ root test is the gate that blocks a merge.
 secret, authored, missing), because once the content lands no shipped buff
 exercises it.
 
-**Content.** Forty-two buffs get authored `start_user_text` and
-`end_user_text` in the player-copy style: 80 columns, second person, no
+**Content.** Forty buffs get authored `start_user_text` and
+`end_user_text`, and Meditating gets an end line in the player-copy style: 80 columns, second person, no
 numbers, ESL-clear. Potions read as effects, not labels ("Heat spreads
 through your limbs as the Warrior's Brew takes hold." / "The Warrior's Brew
 fades, and your limbs feel ordinary again."). Afflictions read as relief
@@ -76,10 +85,11 @@ fades, and your limbs feel ordinary again."). Afflictions read as relief
 get real text. Room text is added only where a bystander could see something
 (a glow, a shudder), and never for potions.
 
-**Four buffs become `secret: true`** and stay silent by design, which also
+**Three buffs become `secret: true`** and stay silent by design, which also
 removes them from `conditions`, where they have no business showing:
-0 Meditating (the logout timer), 81 Respawn Grace, 85 InfraredVision (the
-synthetic shapes-only buff), 99 Alt Character Mob (mob-side gear lock).
+81 Respawn Grace, 85 InfraredVision (the synthetic shapes-only buff), 99 Alt
+Character Mob (mob-side gear lock). Meditating was on this list until the
+content pass found it is the quit narration; it stays visible.
 
 ## Out of scope
 
@@ -97,5 +107,5 @@ Unit tests for the resolver; the new root guard green against the finished
 content; the full suite; gofmt; `golangci-lint --new-from-rev=master`; the
 isolated boot check with zero silent-notice warnings; and, because this is
 content, an adversarial playtest: drink a potion and read both lines, take an
-affliction and read its end, confirm the four secret buffs say nothing and
-no longer appear in `conditions`.
+affliction and read its end, confirm the three secret buffs say nothing and
+no longer appear in `conditions`, and `quit` still narrates the meditation.

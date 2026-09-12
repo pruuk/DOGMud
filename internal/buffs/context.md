@@ -544,9 +544,14 @@ func (bs *Buff) Name() string {
 - `SilentNoticeBuffs() []string`: every loaded non-secret buff relying on the
   generic line, as `"<id> <name> (start, end)"`. `WarnSilentNotices()` logs
   one warning per entry at boot (wired in `main.go` after the species guard).
+- Two flags declare a deliberate silence: `hidden` (no end notice ever, a
+  hider must not learn when the cover lapsed; room text still goes out) and
+  `silent-start` (the applying command narrates the start; Warcry, Rally and
+  Bloom Detox are applied through `Character.AddBuff`, which never queues the
+  buff event).
 - **Every non-secret buff in the dogmud world must carry authored
-  `start_user_text` AND `end_user_text`, and a secret buff must carry no
-  player text.** The root guard `buff_notice_guard_test.go` fails the build
+  `start_user_text` (unless `silent-start`) AND `end_user_text` (unless
+  `hidden`), and a secret buff must carry no player text.** The root guard `buff_notice_guard_test.go` fails the build
   otherwise; the generic line is a runtime net, never the shipped experience.
   `secret: true` also hides the buff from `conditions`.
 

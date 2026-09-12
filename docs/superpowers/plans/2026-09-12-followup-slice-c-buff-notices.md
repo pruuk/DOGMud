@@ -311,6 +311,8 @@ git commit -m "chore(boot): warn on buffs relying on the generic notice" -m "Co-
 
 ### Task 4: Content, 42 authored buffs and 4 secret ones
 
+> **Correction after the content pass (2026-09-12):** the corpus had 43 fully silent buffs and 6 half-silent ones, not 46; 40 pairs were authored. Meditating is the quit narration and is NOT secret (it gets an end line); Hidden and Empathic Shroud keep no end line by design (the `hidden` flag opts out); Warcry, Rally and Bloom Detox are applied without the buff event, so a new `silent-start` flag opts them out of the start requirement. The resolver, the boot warning and the guard honour both flags. The table below is the plan as written.
+
 **Files:** `_datafiles/world/dogmud/buffs/*.yaml` (46 files).
 
 - [ ] **Step 1: Four secret buffs.** Add `secret: true` (top-level key, next to `name:`) to `0-meditating.yaml`, `81-respawn_grace.yaml`, `85-infraredvision.yaml`, `99-alt_character_mob.yaml`. Do not add text to them.
