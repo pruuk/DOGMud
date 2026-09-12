@@ -132,13 +132,13 @@ func TestBuffNotice_ARefusedPoisonBuffNarratesNothing(t *testing.T) {
 	drainPlain(1)
 	drainPlain(2)
 
-	assert.Equal(t, events.Cancel, ApplyBuffs(events.Buff{UserId: 1, BuffId: venomNoticeBuffId}))
+	assert.Equal(t, events.Continue, ApplyBuffs(events.Buff{UserId: 1, BuffId: venomNoticeBuffId}))
 	assert.False(t, holder.Character.HasBuff(venomNoticeBuffId), "the poison buff never landed")
 	assert.Equal(t, 0, countContaining(drainPlain(1), "venom"), "the immune holder reads nothing")
 	assert.Equal(t, 0, countContaining(drainPlain(2), "venom"), "and the room sees nothing take hold")
 
 	// The scaled path is the same primitive and must refuse the same way.
-	assert.Equal(t, events.Cancel, ApplyBuffs(events.Buff{UserId: 1, BuffId: venomNoticeBuffId, DurationMult: 0.5}))
+	assert.Equal(t, events.Continue, ApplyBuffs(events.Buff{UserId: 1, BuffId: venomNoticeBuffId, DurationMult: 0.5}))
 	assert.False(t, holder.Character.HasBuff(venomNoticeBuffId))
 	assert.Equal(t, 0, countContaining(drainPlain(1), "venom"))
 	assert.Equal(t, 0, countContaining(drainPlain(2), "venom"))
