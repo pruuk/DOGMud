@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -62,7 +63,7 @@ type ThrottleResult struct {
 //   - ExecuteSkillMove via combat package (UnarmedCombat skill, Dexterity
 //     attack stat, Dexterity defense stat, KickDamagePercent, Strength damage
 //     stat, no knockdown)
-//   - On hit: apply ConditionBleeding (duration 3, magnitude = Strength/10
+//   - On hit: apply the Bleeding record (duration 3, magnitude = Strength/10
 //     min 2) sourced as "throttle"
 //   - On hit: apply Throttled DoT buff (id 89) for stamina drain
 //   - On hit: an opposed contest through the concentration seam
@@ -140,7 +141,7 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 		if mag < 2 {
 			mag = 2
 		}
-		target.Char.AddCondition(characters.ConditionBleeding, 3, float64(mag), "throttle")
+		_ = target.Char.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(3), -float64(mag), "throttle")
 		bleedDmg = mag
 
 		// Stamina-over-time: apply the Throttled DoT buff (id 89).

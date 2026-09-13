@@ -3,6 +3,7 @@ package hooks
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -190,7 +191,7 @@ func procStealPool(owner, other *characters.Character, params map[string]float64
 	return false
 }
 
-// procApplyCondition applies a combat condition to the target. Params:
+// procApplyCondition applies the Bleeding record to the target. Params:
 // condition (1=bleeding — the switch is the extension point for future
 // condition ids; only bleeding is wired here, YAGNI), duration (rounds,
 // default 4 if unset/<1), magnitude (per-tick, default 2 if unset/<1).
@@ -210,7 +211,7 @@ func procApplyCondition(target *characters.Character, params map[string]float64)
 	}
 	switch int(params["condition"]) {
 	case 1:
-		target.AddCondition(characters.ConditionBleeding, dur, mag, "itemproc")
+		_ = target.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(dur), -mag, "itemproc")
 		return true
 	}
 	return false

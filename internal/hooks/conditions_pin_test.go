@@ -49,14 +49,14 @@ func TestPin_DeathCauseOrder(t *testing.T) {
 
 	t.Run("bleeding", func(t *testing.T) {
 		c := newChar()
-		c.AddCondition(characters.ConditionBleeding, 10, 3.0, "pin")
+		_ = c.AddBuffMagnitude(buffs.BuffIdBleeding, 10, -3, "pin")
 		require.Equal(t, "bleeding out", deathCauseFor(c))
 	})
 
 	t.Run("poisoned and bleeding, poison wins", func(t *testing.T) {
 		c := newChar()
 		_ = c.AddBuffMagnitude(buffs.BuffIdPoisoned, 10, -5, "pin")
-		c.AddCondition(characters.ConditionBleeding, 10, 3.0, "pin")
+		_ = c.AddBuffMagnitude(buffs.BuffIdBleeding, 10, -3, "pin")
 		require.Equal(t, "poison", deathCauseFor(c))
 	})
 }

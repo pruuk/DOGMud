@@ -269,14 +269,28 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 					triggeredBuffIds := []int{}
 					for _, buff := range triggeredBuffs {
 
-						if buff.Expired() {
-							triggeredBuffIds = append(triggeredBuffIds, buff.BuffId)
-							continue
-						}
-
-						// Send YAML trigger text (if defined).
 						trigBuffSpec := buffs.GetBuffSpec(buff.BuffId)
-						if trigBuffSpec != nil && trigBuffSpec.Narration(buffs.PhaseTrigger).Len() > 0 {
+
+						// Send YAML trigger text (if defined) — but not on the
+						// buff's final, expiring trigger; PruneBuffs' own end
+						// narration covers that moment instead. Matches the
+						// mob round tick's tickMobBuffs, which gates its own
+						// trigger text the same way.
+						//
+						// Bug found migrating Bleeding to a record (slice 1,
+						// task 9): this used to gate the WHOLE loop body —
+						// text AND the TickPool harm/restore below — behind
+						// !Expired(), which silently dropped the tick/harm
+						// effect on any buff's final trigger (invisible until
+						// now because every existing record used a trigger
+						// count far above 1: Warcry/Rally 25, MinorShield/
+						// Regenerating/Poisoned 10). A record created with
+						// exactly one trigger left — which buffs.TickTriggers
+						// produces for every ordinary Bleeding duration —
+						// never applied its one and only tick. tickMobBuffs
+						// never had this defect: it always applies TickAmount
+						// and only gates the flavor text on Expired().
+						if !buff.Expired() && trigBuffSpec != nil && trigBuffSpec.Narration(buffs.PhaseTrigger).Len() > 0 {
 							roles := trigBuffSpec.Narrate(buffs.PhaseTrigger, textutil.TokenContext{
 								SourceName:      user.Character.GetCharacterName(true),
 								SourcePlainName: user.Character.GetCharacterName(false),
@@ -297,9 +311,8 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						// the async AddBuff event and never snapshot it —
 						// so for a tick_pool buff with TickAmount still 0,
 						// compute and cache it here (e.g. hazard-room DoTs).
-						if trigBuffSpec == nil {
-							trigBuffSpec = buffs.GetBuffSpec(buff.BuffId)
-						}
+						// Runs on EVERY trigger, including the final one that
+						// also expires the buff (see the note above).
 						if trigBuffSpec != nil && trigBuffSpec.TickPool != "" {
 							tickAmt := buff.TickAmount
 							if tickAmt == 0 {

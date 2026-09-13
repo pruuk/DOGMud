@@ -234,6 +234,7 @@ func TestDispatchOnHitProcs_Lifesteal(t *testing.T) {
 // directly (constructing a full death flow is unnecessary here).
 func TestProcApplyCondition_Bleed(t *testing.T) {
 	defer seedAllRegistries()()
+	defer buffs.SeedConditionRecordsForTest()()
 	target := characters.New()
 
 	ok := procApplyCondition(target, map[string]float64{
@@ -244,14 +245,18 @@ func TestProcApplyCondition_Bleed(t *testing.T) {
 	if !ok {
 		t.Fatal("apply_condition should execute")
 	}
-	if !target.HasCondition(characters.ConditionBleeding) {
+	if !target.HasBuff(buffs.BuffIdBleeding) {
 		t.Fatal("target should be bleeding")
 	}
-	if got := target.GetConditionDuration(characters.ConditionBleeding); got != 6 {
-		t.Fatalf("expected duration 6, got %d", got)
+	if got := target.Buffs.TriggersLeft(buffs.BuffIdBleeding); got != buffs.TickTriggers(6) {
+		t.Fatalf("expected %d triggers (duration 6 at a 3-round triggerrate), got %d", buffs.TickTriggers(6), got)
 	}
-	if got := target.GetConditionMagnitude(characters.ConditionBleeding); got != 12 {
-		t.Fatalf("expected magnitude 12, got %v", got)
+	held := target.GetBuffs(buffs.BuffIdBleeding)
+	if len(held) != 1 {
+		t.Fatalf("expected exactly one held Bleeding record, got %d", len(held))
+	}
+	if got := held[0].Magnitude; got != -12 {
+		t.Fatalf("expected magnitude -12, got %v", got)
 	}
 }
 
@@ -271,6 +276,7 @@ func TestProcApplyCondition_NilAndUnknown(t *testing.T) {
 // bleed to the opponent — mirrors TestDispatchOnHitProcs_Lifesteal.
 func TestDispatchOnGrappleProcs_Bleed(t *testing.T) {
 	defer seedAllRegistries()()
+	defer buffs.SeedConditionRecordsForTest()()
 	enableItemProcs(t)
 	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
 		999921: {ItemId: 999921, Name: "spiked harness", Type: items.Body,
@@ -284,7 +290,7 @@ func TestDispatchOnGrappleProcs_Bleed(t *testing.T) {
 
 	dispatchItemProcs("on_grapple", wearer, opponent, nil, 0)
 
-	if !opponent.HasCondition(characters.ConditionBleeding) {
+	if !opponent.HasBuff(buffs.BuffIdBleeding) {
 		t.Fatal("on_grapple apply_condition expected the opponent to be bleeding")
 	}
 }

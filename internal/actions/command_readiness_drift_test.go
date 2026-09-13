@@ -166,15 +166,15 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 		{"combat_hamstring.go", "ExecuteHamstring", "HamstringResult", "costs.ActionHamstring", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!char.HasBodyPart(\"legs\")", "NoLegs"},
 			{"sp == nil || (sp.NaturalAttack != items.Bite && sp.NaturalAttack != items.Claws) || char.HasBodyPart(\"hands\")", "NotBeast"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddBuffMagnitude", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_rake.go", "ExecuteRake", "RakeResult", "costs.ActionRake", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsClawed(char)", "NotClawed"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddBuffMagnitude", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_maul.go", "ExecuteMaul", "MaulResult", "costs.ActionMaul", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddBuffMagnitude", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_pounce.go", "ExecutePounce", "PounceResult", "costs.ActionPounce", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"char.IsGrappling()", "Grappling"},
 			{"!combat.SpeciesIsQuadrupedPredator(char)", "NotPredator"},
@@ -185,11 +185,11 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 		}, []string{"combat.ExecuteSkillMove", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_drain.go", "ExecuteDrain", "DrainResult", "costs.ActionDrain", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"!combat.SpeciesHasLifeDrain(char)", "NotLifeDrainer"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "char.Heal", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddBuffMagnitude", "char.Heal", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 		{"combat_throttle.go", "ExecuteThrottle", "ThrottleResult", "costs.ActionThrottle", []specialMoveEarlyReturn{
 			{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"},
 			{"char.HasBodyPart(\"hands\") || !combat.SpeciesIsFanged(char)", "NotFanged"},
-		}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "target.Char.AddBuff", "InterruptTargetCast", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
+		}, []string{"combat.ExecuteSkillMove", "target.Char.AddBuffMagnitude", "target.Char.AddBuff", "InterruptTargetCast", "combat.RecordSpecialMove", "actor.AwardResolved"}, true},
 	}
 
 	_, thisFile, _, ok := runtime.Caller(0)

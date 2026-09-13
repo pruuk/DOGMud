@@ -987,6 +987,58 @@ func TestAutoHeal_RegeneratingRecordMultipliesOutOfCombatRegen(t *testing.T) {
 		"tick feedback fires exactly once while the Regenerating record is active")
 }
 
+// TestAutoHeal_RegeneratingRecordMultipliesInCombatRegen mirrors the
+// out-of-combat test above: in combat, AutoHeal's "else" branch grants no
+// base regen at all, but a Regenerating record still heals, scaled off
+// HealthPerRound() rather than the (zero) base regen.
+func TestAutoHeal_RegeneratingRecordMultipliesInCombatRegen(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u1 := users.GetByUserId(1)
+	u1.Character.SetAggro(0, 100, characters.DefaultAttack) // in combat: no base regen applies
+
+	// AddBuffMagnitude (below) calls Validate(), which recomputes
+	// HealthMax.Value from Base + Training + Mods. Seed a large Base up
+	// front and validate once so both measurements below read the same
+	// HealthMax the hook itself will see.
+	u1.Character.HealthMax.Base = 10000
+	require.NoError(t, u1.Character.Validate())
+	baseRegen := u1.Character.HealthPerRound()
+	require.Greater(t, baseRegen, 0)
+
+	u1.Character.Health = 10
+	drainPlain(1) // clear the queue before measuring
+
+	result := AutoHeal(events.NewRound{RoundNumber: 3})
+	require.Equal(t, events.Continue, result)
+	assert.Equal(t, 10, u1.Character.Health, "no Regenerating record: in combat gets no base regen at all")
+
+	firstLines := drainPlain(1)
+	assert.Equal(t, 0, countContaining(firstLines, "Your wounds knit closed."),
+		"no tick text without an active Regenerating record")
+
+	require.NoError(t, u1.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, 5, 2.0, "test"))
+
+	result = AutoHeal(events.NewRound{RoundNumber: 6})
+	require.Equal(t, events.Continue, result)
+	secondHeal := u1.Character.Health - 10
+	// The hook's in-combat formula is
+	// floor(HealthPerRound() * toxRegenMult * regenMult * roomRegenMultiplier).
+	// This fixture carries no toxicity and no active room mutators, so both
+	// toxRegenMult and roomRegenMultiplier are 1.0 and the expected heal
+	// reduces to HealthPerRound() * the record's magnitude (2.0).
+	expected := int(math.Floor(float64(baseRegen) * 2.0))
+	assert.Equal(t, expected, secondHeal, "Regenerating record must multiply HealthPerRound by its magnitude even in combat")
+
+	secondLines := drainPlain(1)
+	assert.Equal(t, 1, countContaining(secondLines, "Your wounds knit closed."),
+		"tick feedback fires exactly once while the Regenerating record is active")
+
+	u1.Character.EndAggro()
+}
+
 // ─── ApplyBuffs ───────────────────────────────────────────────────────────────
 
 func TestApplyBuffs_WrongEventType(t *testing.T) {

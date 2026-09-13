@@ -3,6 +3,7 @@ package hooks
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -29,107 +30,103 @@ func (h *helpCallerActor) GetCharacter() *characters.Character { return nil }
 func (h *helpCallerActor) GetRoom() *rooms.Room                { return nil }
 func (h *helpCallerActor) GetName() string                     { return h.name }
 
-// ─── Bleed DoT in AutoHeal ─────────────────────────────────────────────────
+// ─── Bleeding record tick ──────────────────────────────────────────────────
 
-func TestAutoHeal_BleedDamagesPlayer(t *testing.T) {
+// The Bleeding record's shipped triggerrate is 3 rounds (matching the old
+// AutoHeal hook, which only ever applied its DoT on every third round while
+// TickConditions decremented duration every round): buffs.TickTriggers
+// converts an old rounds-literal duration into the equivalent trigger count,
+// and RoundCounter must reach a multiple of 3 (rounds 1, 2, 3 of ticking)
+// before the record fires even once.
+func TestRoundTick_BleedDamagesPlayer(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	u := users.GetByUserId(1)
 	require.NotNil(t, u)
 
+	// The door validates on add, and Validate() recomputes HealthMax from
+	// stats/balance config, clobbering a raw HealthMax.Value. Seeding Base
+	// keeps HealthMax comfortably above the 40 this test needs.
+	u.Character.HealthMax.Base = 100
+	_ = u.Character.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(3), -5, "test")
 	u.Character.Health = 40
-	u.Character.HealthMax.Value = 100
-	u.Character.AddCondition(characters.ConditionBleeding, 3, 5.0, "test")
 
-	// AutoHeal fires every 3rd round
-	evt := events.NewRound{RoundNumber: 3}
-	AutoHeal(evt)
+	// Rounds 1 and 2: RoundCounter isn't yet a multiple of 3, no trigger.
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	assert.Equal(t, 40, u.Character.Health, "no trigger yet on round 1")
+	UserRoundTick(events.NewRound{RoundNumber: 2})
+	assert.Equal(t, 40, u.Character.Health, "no trigger yet on round 2")
 
-	// Health should have decreased by the bleed amount (5)
-	// but also increased by regen. The key check is that bleed was applied.
-	assert.True(t, u.Character.Health < 40+u.Character.HealthPerRound(),
-		"bleed should offset some regen; health=%d", u.Character.Health)
+	// Round 3: RoundCounter reaches 3, the record's one trigger lands.
+	UserRoundTick(events.NewRound{RoundNumber: 3})
+	assert.Equal(t, 35, u.Character.Health, "the single trigger should land on round 3")
 
-	// Clean up condition
-	u.Character.RemoveCondition(characters.ConditionBleeding)
+	// The record's one trigger is spent; a fourth round tick must not
+	// re-trigger it.
+	UserRoundTick(events.NewRound{RoundNumber: 4})
+	assert.Equal(t, 35, u.Character.Health, "the record has no triggers left; a further tick must not re-fire it")
+
+	// Cross-hook pin: AutoHeal's own bleed block is gone, so firing it after
+	// the tick must not apply a second, redundant bleed hit. Health may move
+	// by ordinary out-of-combat regen, but not by another 5-point bleed.
+	AutoHeal(events.NewRound{RoundNumber: 3})
+	assert.GreaterOrEqual(t, u.Character.Health, 35, "AutoHeal must not re-apply the bleed")
+	assert.Less(t, u.Character.Health, 40, "AutoHeal's own regen should be small next to the 5-point bleed it must not repeat")
+
+	u.Character.RemoveBuff(buffs.BuffIdBleeding)
 	u.Character.Health = 50
 }
 
-func TestAutoHeal_BleedDamagesMob(t *testing.T) {
+func TestRoundTick_BleedDamagesMob(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	mob := mobs.GetInstance(100)
 	require.NotNil(t, mob)
 
-	mob.Character.Health = 40
-	mob.Character.HealthMax.Value = 100
-	mob.Character.AddCondition(characters.ConditionBleeding, 3, 5.0, "test")
-
-	evt := events.NewRound{RoundNumber: 3}
-	AutoHeal(evt)
-
-	// Mob health should reflect bleed damage applied
-	// Out of combat: regen + bleed. Bleed = 5, regen = 1% of 100 = 1
-	// So net should be 40 + 1 - 5 = 36
-	assert.Less(t, mob.Character.Health, 40,
-		"bleed should reduce mob health below starting value; health=%d", mob.Character.Health)
-
-	mob.Character.RemoveCondition(characters.ConditionBleeding)
-	mob.Character.Health = 50
-}
-
-// U5b-2 removed this site's health floor. A bleed that overkills a mob now
-// stores the overkill instead of clamping to zero, which is what U6 reads to
-// size a killing blow. This test previously asserted the floor; it now asserts
-// the replacement contract, which is the stronger of the two: the magnitude is
-// preserved AND the value still reads as dead to every death gate in the game
-// (all of which test `< 1` or `<= 0`, never `== 0`).
-func TestAutoHeal_BleedOverkillsMobHealthBelowZero(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	mob := mobs.GetInstance(100)
-	require.NotNil(t, mob)
-
+	mob.Character.HealthMax.Base = 100
+	_ = mob.Character.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(3), -50, "test")
 	mob.Character.Health = 2
-	mob.Character.HealthMax.Value = 100
-	mob.Character.AddCondition(characters.ConditionBleeding, 3, 50.0, "massive bleed")
 
-	evt := events.NewRound{RoundNumber: 3}
-	AutoHeal(evt)
+	// tickMobBuffs runs in MobRoundTick's idle lane, before the active-zone
+	// check, so it fires for every mob regardless of zone activity. Three
+	// ticks are needed before the record's one trigger lands.
+	MobRoundTick(events.NewRound{RoundNumber: 1})
+	MobRoundTick(events.NewRound{RoundNumber: 2})
+	MobRoundTick(events.NewRound{RoundNumber: 3})
 
 	assert.Less(t, mob.Character.Health, 0,
 		"a 50-magnitude bleed on a 2-health mob should store overkill, not clamp to 0; health=%d", mob.Character.Health)
 	assert.Less(t, mob.Character.Health, 1,
 		"overkilled health must still satisfy the `< 1` death gate; health=%d", mob.Character.Health)
 
-	mob.Character.RemoveCondition(characters.ConditionBleeding)
+	mob.Character.RemoveBuff(buffs.BuffIdBleeding)
 	mob.Character.Health = 50
 }
 
-func TestAutoHeal_BleedMinDamageOne(t *testing.T) {
+func TestRoundTick_BleedMinDamageOne(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	mob := mobs.GetInstance(100)
 	require.NotNil(t, mob)
 
+	mob.Character.HealthMax.Base = 100
+	// Magnitude -0.5 truncates to 0, so the snapshot is floored to -1 in sign.
+	_ = mob.Character.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(3), -0.5, "test")
 	mob.Character.Health = 50
-	mob.Character.HealthMax.Value = 100
-	// Magnitude 0.5 truncates to 0, should be floored to 1
-	mob.Character.AddCondition(characters.ConditionBleeding, 3, 0.5, "tiny bleed")
 
-	evt := events.NewRound{RoundNumber: 3}
-	AutoHeal(evt)
+	MobRoundTick(events.NewRound{RoundNumber: 1})
+	MobRoundTick(events.NewRound{RoundNumber: 2})
+	MobRoundTick(events.NewRound{RoundNumber: 3})
 
-	// Even with tiny magnitude, at least 1 damage should be applied
-	// Out of combat regen is 1, bleed is 1, so net = 0 from start
-	// The important thing: no crash, and bleed was processed
-	assert.GreaterOrEqual(t, mob.Character.Health, 0)
+	assert.Equal(t, 49, mob.Character.Health)
 
-	mob.Character.RemoveCondition(characters.ConditionBleeding)
+	mob.Character.RemoveBuff(buffs.BuffIdBleeding)
 	mob.Character.Health = 50
 }
 

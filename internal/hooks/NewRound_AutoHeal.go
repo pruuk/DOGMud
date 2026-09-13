@@ -223,18 +223,6 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 						combat.GetHealDescription(healAmt, user.Character.HealthMax.Value)))
 				}
 			}
-
-			// Stage 42.7: Apply bleed DoT damage
-			if user.Character.HasCondition(characters.ConditionBleeding) {
-				bleedDmg := int(user.Character.GetConditionMagnitude(characters.ConditionBleeding))
-				if bleedDmg < 1 {
-					bleedDmg = 1
-				}
-				user.Character.ApplyHarm(characters.PoolHealth, bleedDmg, state.ActorRef{})
-				cancelCraftOrSalvageOnDamage(user.Character)
-				cancelDamageBuffs(user.Character)
-				user.SendText(messaging.CategoryToxin, `<ansi fg="red">Blood seeps from your wounds!</ansi>`)
-			}
 		}
 
 		// Regenerate Stamina - slower during combat
@@ -376,17 +364,6 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			[]string{"strength"}, 0)
 		mob.Character.OnRegenTick(characters.PoolConviction,
 			[]string{"willpower", "charisma"}, 0)
-
-		// Stage 42.7: Apply bleed DoT damage to mobs
-		if mob.Character.HasCondition(characters.ConditionBleeding) {
-			bleedDmg := int(mob.Character.GetConditionMagnitude(characters.ConditionBleeding))
-			if bleedDmg < 1 {
-				bleedDmg = 1
-			}
-			mob.Character.ApplyHarm(characters.PoolHealth, bleedDmg, state.ActorRef{})
-			cancelCraftOrSalvageOnDamage(&mob.Character)
-			cancelDamageBuffs(&mob.Character)
-		}
 	}
 
 	return events.Continue

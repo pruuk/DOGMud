@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -60,7 +61,7 @@ type HamstringResult struct {
 //   - ExecuteSkillMove via combat package (UnarmedCombat skill, Dexterity attack
 //     stat, Dexterity defense stat, TripDamagePercent, Strength damage stat,
 //     no knockdown)
-//   - On hit: apply ConditionBleeding (duration 5, magnitude = Strength/10 min 2)
+//   - On hit: apply the Bleeding record (duration 5, magnitude = Strength/10 min 2)
 //   - combat.RecordSpecialMove for analytics + RoundsWaiting = 1
 //   - OnSkillUse(UnarmedCombat) on hit for progression
 //
@@ -131,7 +132,7 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 		if bleedDmg < 2 {
 			bleedDmg = 2
 		}
-		target.Char.AddCondition(characters.ConditionBleeding, 5, float64(bleedDmg), "hamstring")
+		_ = target.Char.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(5), -float64(bleedDmg), "hamstring")
 	}
 
 	// Determine source/target types for analytics.

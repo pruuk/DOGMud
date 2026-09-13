@@ -169,7 +169,7 @@ func deathCauseFor(c *characters.Character) string {
 	if causeOfDeath == "" {
 		if c.HasBuffFlag(buffs.Poison) {
 			causeOfDeath = "poison"
-		} else if c.HasCondition(characters.ConditionBleeding) {
+		} else if c.HasBuffFlag(buffs.Bleeding) {
 			causeOfDeath = "bleeding out"
 		}
 	}

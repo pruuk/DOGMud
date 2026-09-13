@@ -96,13 +96,14 @@ func TestThrottle_NotFanged(t *testing.T) {
 }
 
 // TestThrottle_Executed_BleedAndBuff verifies that on a hit a fanged attacker
-// applies ConditionBleeding and Throttled buff (id 89) to the target.
+// applies the Bleeding record and Throttled buff (id 89) to the target.
 func TestThrottle_Executed_BleedAndBuff(t *testing.T) {
 	// Seed buff 89 so AddBuff can find it.
 	buffCleanup := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
 		89: {BuffId: 89, Name: "Throttled", TriggerCount: 3, RoundInterval: 1},
 	})
 	defer buffCleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	// Seed a fanged species.
 	speciesCleanup := species.SeedSpeciesForTest(map[int]*species.Species{
@@ -150,9 +151,17 @@ func TestThrottle_Executed_BleedAndBuff(t *testing.T) {
 		t.Fatal("no hit in 100 attempts — throttle hit path is broken")
 	}
 
-	// ConditionBleeding should be applied.
-	assert.True(t, targetMob.Character.HasCondition(characters.ConditionBleeding),
-		"target should have ConditionBleeding after a successful throttle")
+	// The Bleeding record should be applied.
+	assert.True(t, targetMob.Character.HasBuff(buffs.BuffIdBleeding),
+		"target should have the Bleeding record after a successful throttle")
+
+	// The sign pin: throttle must apply a HARMING record (negative magnitude
+	// and tick snapshot), not a healing one.
+	held := targetMob.Character.GetBuffs(buffs.BuffIdBleeding)
+	if assert.Len(t, held, 1, "expected exactly one held Bleeding record") {
+		assert.Less(t, held[0].Magnitude, 0.0, "throttle's Bleeding record must carry a negative magnitude")
+		assert.Less(t, held[0].TickAmount, 0, "throttle's Bleeding record must carry a negative tick snapshot")
+	}
 
 	// BleedDmg should be at least the minimum.
 	assert.GreaterOrEqual(t, res.BleedDmg, 2,
