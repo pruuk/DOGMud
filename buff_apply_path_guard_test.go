@@ -128,6 +128,10 @@ var buffApplyPathAllowlist = map[string]string{
 	// start line to a player victim through narrateSubmissionEffects.
 	"internal/combat/submission_outcome.go|327": "silent-start; the submission hook narrates the start right after the outcome; must apply synchronously",
 	"internal/combat/submission_outcome.go|338": "silent-start; the submission hook narrates the start right after the outcome; must apply synchronously",
+
+	// ── former combat conditions: grapple exposure and prone recovery are now
+	// quiet one-round records (Task 5) ──────────────────────────────────────
+	"internal/combat/grapple_move.go|59": "former combat condition (one-round penalty): quiet record; must apply synchronously inside the round tick",
 }
 
 // primitivePackages define Character.AddBuff / Buffs.AddBuff themselves, so

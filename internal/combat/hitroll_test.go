@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dice"
@@ -15,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -121,15 +123,50 @@ func TestCalcSwingCount_HardCap(t *testing.T) {
 }
 
 func TestCalcSwingCount_RecoveryForcesOne(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
 	ch := &characters.Character{}
-	ch.Stats.Dexterity.ValueAdj = 200
-	ch.StaminaMax.Value = 100
+	// Base, not ValueAdj/Value: character.AddBuffMagnitude runs the full
+	// c.Validate(), whose RecalculateStats() overwrites ValueAdj/Value from
+	// Base+Training+Mods (Training and Mods are 0 on this bare fixture, so
+	// ValueAdj/Value end up equal to what Base is set to here).
+	ch.Stats.Dexterity.Base = 200
+	ch.StaminaMax.Base = 100
 	ch.Stamina = 100
 	setCombatPositionParallel(ch, position.Standing)
-	ch.AddCondition(characters.ConditionRecoveryPenalty, 1, 1.0, "test")
+	ch.Buffs.Validate(true)
+	_ = ch.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "test")
 
 	got := calcSwingCount(ch, items.Item{}, 1.4, 0, false)
 	assert.Equal(t, 1, got, "recovery penalty should force swings to 1")
+}
+
+// Faithful to the enum (spec finding): a Recovering record applied and then
+// ticked in the same round contributes nothing to the swing count. Making the
+// cap bite is a filed owner call, not this slice.
+func TestRecoveringRecordExpiredByItsOwnTickCapsNothing(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
+	ch := &characters.Character{}
+	// Base, not ValueAdj/Value: see TestCalcSwingCount_RecoveryForcesOne.
+	ch.Stats.Dexterity.Base = 200
+	ch.StaminaMax.Base = 100
+	ch.Stamina = 100
+	setCombatPositionParallel(ch, position.Standing)
+	ch.Buffs.Validate(true)
+	_ = ch.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "test")
+	assert.Equal(t, 1, calcSwingCount(ch, items.Item{}, 1.4, 0, false), "held: the cap applies")
+	ch.Buffs.Trigger()
+	assert.Greater(t, calcSwingCount(ch, items.Item{}, 1.4, 0, false), 1, "expired by its own tick: no cap")
+}
+
+// The Off Balance record is the sole producer of EffectDefenseMult for a
+// failed grapple; Task 4's door in combat_helpers.go reads it directly.
+func TestOffBalanceRecordIsTheDefenseMultiplier(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
+	ch := &characters.Character{}
+	ch.Buffs.Validate(true)
+	require.InDelta(t, 1.0, ch.Buffs.Effect(buffs.EffectDefenseMult), 1e-9, "no record: identity multiplier")
+	_ = ch.AddBuffMagnitude(buffs.BuffIdOffBalance, 1, 0, "test")
+	require.InDelta(t, 0.85, ch.Buffs.Effect(buffs.EffectDefenseMult), 1e-9, "held: the record's literal 0.85")
 }
 
 func TestCalcSwingCount_ProneReduces(t *testing.T) {

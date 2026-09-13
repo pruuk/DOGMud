@@ -228,9 +228,10 @@ func calcSwingCount(sourceChar *characters.Character, weapon items.Item, weaponS
 		result = 1
 	}
 
-	// Recovery penalty: force to 1
-	if sourceChar.HasCondition(characters.ConditionRecoveryPenalty) {
-		result = 1
+	// Recovering record: caps swings (1 today; the record's literal). Zero
+	// means no cap is held.
+	if attacksCap := sourceChar.Buffs.Effect(buffs.EffectAttacksCap); attacksCap > 0 && result > int(attacksCap) {
+		result = int(attacksCap)
 	}
 
 	// Hard cap: max 4 swings per weapon
@@ -748,11 +749,6 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 		// Stage 8.5: Apply third-party vulnerability penalty
 		if isThirdParty {
 			defenseScore *= float64(bal.ThirdPartyGrapplePenalty)
-		}
-
-		// Stage 8.6: Apply failed grapple defense penalty
-		if targetChar.HasCondition(characters.ConditionDefensePenalty) {
-			defenseScore *= targetChar.GetConditionMagnitude(characters.ConditionDefensePenalty)
 		}
 
 		// Darkness penalty: defender can't see
