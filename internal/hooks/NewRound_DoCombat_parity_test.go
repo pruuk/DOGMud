@@ -223,14 +223,16 @@ func TestMvM_AttackerStatGainEmitsRoomMessage(t *testing.T) {
 		"new MvM stat-gain block must dispatch MobStatGainMessages[\"strength\"] via mobRoom.SendText; captured messages were: %v", *captured)
 }
 
-// ─── Gap 4: MvP ConditionShield single-application ────────────────────────────
+// ─── Gap 4: MvP Minor Shield single-application ───────────────────────────────
 
 // TestMvP_ConditionShieldAppliedOnceNotDoubleDipped locks the deletion of
 // the inline ConditionShield reduction in handleMobVsPlayer (Gap 4). The
 // magnitude is already added inside the mitigation layer
 // (GetPhysicalMitigation; the legacy GetDefense path was removed
 // 2026-08-03). The deleted block was applying a *second* reduction equal
-// to half the magnitude on top of that.
+// to half the magnitude on top of that. Minor Shield is now the buff record
+// (BuffIdMinorShield, Task 6) rather than the enum condition, but the
+// mitigation-layer contract this test pins is unchanged.
 //
 // Rather than try to drive a full attack with deterministic damage (combat
 // randomness makes that flaky), we directly assert the mitigation-layer
@@ -244,6 +246,7 @@ func TestMvM_AttackerStatGainEmitsRoomMessage(t *testing.T) {
 func TestMvP_ConditionShieldAppliedOnceNotDoubleDipped(t *testing.T) {
 	cleanupRegistries := seedAllRegistries()
 	defer cleanupRegistries()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	defUser := users.GetByUserId(1)
 	require.NotNil(t, defUser)
@@ -256,11 +259,11 @@ func TestMvP_ConditionShieldAppliedOnceNotDoubleDipped(t *testing.T) {
 	assert.Equal(t, 0.0, defUser.Character.GetPhysicalMitigation(),
 		"baseline: no shield, no equipment → 0 physical mitigation")
 
-	// Apply Minor Shield with magnitude 30 (this is the integer-percent value
-	// the spell stores; ConditionShield magnitude maps 1:1 into the mitigation
-	// percentage at characters/combat.go:200).
+	// Apply the Minor Shield record with magnitude 30 (this is the
+	// integer-percent value the spell stores; the magnitude maps 1:1 into
+	// the mitigation percentage at characters/combat.go:185).
 	const magnitude float64 = 30
-	defUser.Character.AddCondition(characters.ConditionShield, 10, magnitude, "test")
+	_ = defUser.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, 10, magnitude, "test")
 
 	// After applying: GetPhysicalMitigation should add exactly magnitude/100.
 	got := defUser.Character.GetPhysicalMitigation()
@@ -268,9 +271,10 @@ func TestMvP_ConditionShieldAppliedOnceNotDoubleDipped(t *testing.T) {
 	assert.InDelta(t, want, got, 1e-9,
 		"shield magnitude must contribute exactly magnitude/100 to GetPhysicalMitigation (one application, not two)")
 
-	// Sanity: attacker buffs do not change the result. This rules out
-	// regressions where unrelated buff state would leak into the mitigation
-	// numbers.
-	defUser.Character.Buffs = buffs.New()
-	assert.InDelta(t, want, defUser.Character.GetPhysicalMitigation(), 1e-9)
+	// The old trailing sanity check here cleared defUser.Character.Buffs and
+	// asserted mitigation was UNCHANGED, to prove unrelated buff state could
+	// not leak into the condition-derived mitigation number. That premise no
+	// longer holds post-Task-6: Minor Shield IS a Buffs record now, so
+	// clearing Buffs clears the shield itself. There is nothing left to
+	// sanity-check that the assertion above does not already cover.
 }

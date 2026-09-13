@@ -1162,7 +1162,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 		if out.AttackerCrit {
 			shieldBonus = int(float64(shieldBonus) * 1.5)
 		}
-		target.Character.AddCondition(characters.ConditionShield, duration, float64(shieldBonus), "spell")
+		_ = target.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, duration, float64(shieldBonus), "spell")
 		if target.UserId != user.UserId {
 			messaging.SendTrio(messaging.Trio{
 				Actor: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
@@ -1518,7 +1518,7 @@ func applyMobSelfEffect(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spell
 			}
 		}
 		duration := calcSpellDuration(spellData.BaseFolds, skillLevel, spellData.CasterStatValue(mob.Character.Stats))
-		mob.Character.AddCondition(characters.ConditionShield, duration, float64(shieldBonus), "spell")
+		_ = mob.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, duration, float64(shieldBonus), "spell")
 		sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
 			`A shimmering barrier forms around %s.`, mobDisplayName(mob, room, 0)))
 	}

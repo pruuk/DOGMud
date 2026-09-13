@@ -746,6 +746,11 @@ func captureDefenseScore(t *testing.T, buffFn func(*characters.Character)) float
 	t.Helper()
 	pinDefenceAdmissionConfig(t)
 	attacker, defender := defenceAdmissionCharacters()
+	// Validate the BASELINE defender too. AddBuffMagnitude validates as a side
+	// effect, so without this the no-buff capture is the only un-validated one
+	// and the ratios below would fold in any validation drift as if it were
+	// the record's doing.
+	require.NoError(t, defender.Validate())
 	if buffFn != nil {
 		buffFn(defender)
 	}

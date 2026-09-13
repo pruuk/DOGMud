@@ -504,18 +504,6 @@ func replaceDarknessMessages(result *combat.AttackResult, sourceCanSee bool, tar
 	}
 }
 
-// handlePlayerShieldDecay processes Minor Shield round expiry for a player.
-func handlePlayerShieldDecay(user *users.UserRecord) {
-	if user.Character.HasCondition(characters.ConditionShield) {
-		if user.Character.GetConditionDuration(characters.ConditionShield) <= 1 {
-			user.Character.RemoveCondition(characters.ConditionShield)
-			user.SendText(messaging.CategoryBuffExpire, `<ansi fg="cyan">Your Minor Shield dissipates.</ansi>`)
-		} else {
-			user.Character.DecrementCondition(characters.ConditionShield)
-		}
-	}
-}
-
 // castingTargetChar returns the first target character from a CastingData, or nil.
 func castingTargetChar(cs activity.CastingData) *characters.Character {
 	for _, mobInstId := range cs.TargetMobInstanceIds {

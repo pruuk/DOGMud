@@ -1076,39 +1076,74 @@ func TestMobDisplayName(t *testing.T) {
 	assert.NotEmpty(t, name, "mob display name should not be empty")
 }
 
-// ─── HandlePlayerShieldDecay ──────────────────────────────────────────────────
+// ─── Minor Shield record ──────────────────────────────────────────────────────
+//
+// Minor Shield used to be the enum condition ConditionShield, decremented
+// twice per round: once by TickConditions in the round ticks and again by
+// handlePlayerShieldDecay / the mob branch in DoCombat. Task 6 deleted the
+// second decrement entirely; the record now decays exactly once per round,
+// through Buffs.Trigger() in UserRoundTick, and narrates its end through the
+// PruneBuffs pass like every other buff.
 
-func TestHandlePlayerShieldDecay_NoShield(t *testing.T) {
+func TestMinorShieldRecordExpiresOnceAndNarratesItsEnd(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	// SeedConditionRecordsForTest seeds the Minor Shield record with the
+	// shipped mechanical shape but omits authored text (see its doc comment).
+	// Give it the real end text from
+	// _datafiles/world/dogmud/buffs/119-minor_shield.yaml here so the
+	// assertion below pins the shipped copy, not the generic "<Name> has
+	// expired." fallback that EndUserNotice would otherwise produce.
+	shieldSpec := buffs.GetBuffSpec(buffs.BuffIdMinorShield)
+	require.NotNil(t, shieldSpec)
+	shieldSpec.EndUserText = "Your Minor Shield dissipates."
+	shieldSpec.EndRoomText = "{source}'s Minor Shield dissipates."
 
 	u := users.GetByUserId(1)
-	// No shield condition — should not panic
-	handlePlayerShieldDecay(u)
+	require.NotNil(t, u)
+	drainPlain(1)
+
+	_ = u.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, 1, 10.0, "test")
+	assert.Equal(t, 10.0, u.Character.Buffs.Effect(buffs.EffectMitigationFlat),
+		"the mitigation effect must be live before the round ticks")
+
+	// UserRoundTick's Buffs.Trigger() is the one door that decrements a
+	// buff's TriggersLeft each round; PruneBuffs is the one door that removes
+	// an expired buff and sends its authored end text.
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	PruneBuffs(events.NewTurn{TurnNumber: 1})
+
+	assert.False(t, u.Character.HasBuff(buffs.BuffIdMinorShield),
+		"a 1-round shield must be gone after one round tick and one prune pass")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "Your Minor Shield dissipates."))
 }
 
-func TestHandlePlayerShieldDecay_ShieldExpires(t *testing.T) {
+// TestMinorShieldRecordDecaysOncePerRound pins the behaviour change itself:
+// a shield with 2 rounds left must still have exactly 1 after one round,
+// even though both UserRoundTick and DoCombat fire for it. Before Task 6,
+// DoCombat's handlePlayerShieldDecay call added a second decrement here and
+// a 2-round shield would have expired in one round instead of two.
+// DoCombat is fired even though its shield-decay branches are now deleted
+// entirely, precisely so that a reintroduced decrement there would be
+// caught by this assertion; UserRoundTick alone would not catch it.
+func TestMinorShieldRecordDecaysOncePerRound(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	u := users.GetByUserId(1)
-	u.Character.AddCondition(characters.ConditionShield, 1, 10.0, "test")
+	require.NotNil(t, u)
 
-	handlePlayerShieldDecay(u)
-	assert.False(t, u.Character.HasCondition(characters.ConditionShield),
-		"shield with duration 1 should be removed")
-}
+	_ = u.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, 2, 10.0, "test")
+	require.Equal(t, 2, u.Character.Buffs.TriggersLeft(buffs.BuffIdMinorShield))
 
-func TestHandlePlayerShieldDecay_ShieldDecrements(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	DoCombat(events.NewRound{RoundNumber: 1})
 
-	u := users.GetByUserId(1)
-	u.Character.AddCondition(characters.ConditionShield, 5, 10.0, "test")
-
-	handlePlayerShieldDecay(u)
-	assert.True(t, u.Character.HasCondition(characters.ConditionShield),
-		"shield with duration > 1 should still exist")
+	assert.Equal(t, 1, u.Character.Buffs.TriggersLeft(buffs.BuffIdMinorShield),
+		"the shield must decay exactly once per round")
 }
 
 // ─── HandleMobAIDecision ──────────────────────────────────────────────────────
@@ -1665,18 +1700,19 @@ func TestMobRoundTick_CharmedDecrement(t *testing.T) {
 	assert.Equal(t, 2, mob.Character.Charmed.RoundsRemaining)
 }
 
-func TestMobRoundTick_TickConditions(t *testing.T) {
+func TestMobRoundTick_TicksMinorShieldRecord(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	mob := mobs.GetInstance(100)
-	mob.Character.AddCondition(characters.ConditionShield, 3, 10.0, "test")
+	_ = mob.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, 3, 10.0, "test")
 
 	evt := events.NewRound{RoundNumber: 1}
 	MobRoundTick(evt)
 
-	// Condition should still exist but duration decremented
-	assert.True(t, mob.Character.HasCondition(characters.ConditionShield))
+	// The record should still exist but its trigger count decremented.
+	assert.True(t, mob.Character.HasBuff(buffs.BuffIdMinorShield))
 }
 
 // ─── ApplyMoonMods ────────────────────────────────────────────────────────────

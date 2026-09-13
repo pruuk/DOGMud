@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -69,7 +68,17 @@ func seedCasterMob(t *testing.T, instanceId int, spellbook map[string]int) (*mob
 	}
 	m.Character.Name = "testcaster"
 	m.Character.Conviction = 500
+	// Base, not just Value: the two tests below that apply Minor Shield via
+	// AddBuffMagnitude trigger a full Character.Validate(), which recomputes
+	// ConvictionMax/HealthMax from Base + stats + balance config and clamps
+	// Conviction/Health down to the recomputed max (validate.go:347-348,
+	// ~150). Without a real Base here, that max floors near zero in a test
+	// binary (balance config all zero) and every spell's conviction-cost
+	// check then fails, masking every branch's real Success/Failure signal.
+	m.Character.ConvictionMax.Base = 500
+	m.Character.ConvictionMax.Value = 500
 	m.Character.Health = 100
+	m.Character.HealthMax.Base = 100
 	m.Character.HealthMax.Value = 100
 	m.Character.SpellBook = spellbook
 	m.Character.Buffs = buffs.New()
@@ -157,9 +166,19 @@ func TestPureCaster_DefenseCovered_SingleEnemy_CastsHarmSingle(t *testing.T) {
 	defer cleanup()
 	defer events.DrainQueuedInputsForTest(mob.InstanceId)
 
-	// Activate iron-will (buff 27) and conviction-ward (ConditionShield).
+	// Activate iron-will (buff 27) and conviction-ward (the Minor Shield
+	// record). seedBuffOnChar replaces the whole spec map with just {27}, so
+	// SeedConditionRecordsForTest must run AFTER it to add Minor Shield's
+	// spec back in (additive) before AddBuffMagnitude needs it.
 	defer seedBuffOnChar(t, &mob.Character, 27)()
-	mob.Character.AddCondition(characters.ConditionShield, 20, 75, "test")
+	defer buffs.SeedConditionRecordsForTest()()
+	_ = mob.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, 20, 75, "test")
+	// AddBuffMagnitude validates the embedded Character directly, which
+	// installs a PLAYER Presence/Perception (Character.Validate()'s nil
+	// guard); mob.Validate() puts the mob ones back so TryMobBehavior sees a
+	// mob in its normal state, same as production (every producer applies
+	// this through a mob already wired by its own Validate() pass).
+	_ = mob.Validate()
 
 	// No room setup → multiple_enemies condition returns Failure (no other
 	// actors), so the AoE branch skips. Selector drops to harm_single.
@@ -190,8 +209,18 @@ func TestPureCaster_NoCandidates_FallsThrough(t *testing.T) {
 	defer cleanup()
 	defer events.DrainQueuedInputsForTest(mob.InstanceId)
 
+	// seedBuffOnChar replaces the whole spec map with just {27}, so
+	// SeedConditionRecordsForTest must run AFTER it to add Minor Shield's
+	// spec back in (additive) before AddBuffMagnitude needs it.
 	defer seedBuffOnChar(t, &mob.Character, 27)()
-	mob.Character.AddCondition(characters.ConditionShield, 20, 75, "test")
+	defer buffs.SeedConditionRecordsForTest()()
+	_ = mob.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, 20, 75, "test")
+	// AddBuffMagnitude validates the embedded Character directly, which
+	// installs a PLAYER Presence/Perception (Character.Validate()'s nil
+	// guard); mob.Validate() puts the mob ones back so TryMobBehavior sees a
+	// mob in its normal state, same as production (every producer applies
+	// this through a mob already wired by its own Validate() pass).
+	_ = mob.Validate()
 
 	ok := TryMobBehavior(mob.InstanceId, EventContext{EventType: "mob_combat_round"})
 	if ok {

@@ -3,6 +3,7 @@ package characters
 import (
 	"math"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -182,7 +183,7 @@ func (c *Character) GetPhysicalMitigation() float64 {
 	// folded their statmod sibling — physical was the odd one out, so buffs like
 	// Cocoon (104) and Ironhide Brew (61) that reserve physical_mitigation as a
 	// statmod silently did nothing until this line.
-	nonGearMit := int(c.GetConditionMagnitude(ConditionShield))
+	nonGearMit := int(c.Buffs.Effect(buffs.EffectMitigationFlat))
 	nonGearMit += mutations.GetNaturalArmor(c.Mutations)
 	nonGearMit += c.StatMod("physical_mitigation")
 	if speciesInfo := species.GetSpecies(c.SpeciesId); speciesInfo != nil {

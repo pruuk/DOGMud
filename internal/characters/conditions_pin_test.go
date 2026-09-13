@@ -3,6 +3,8 @@ package characters
 import (
 	"math"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 )
 
 // Pins for the conditions unification (slice 1). Each literal below is what
@@ -33,9 +35,11 @@ func pinCharacter() *Character {
 }
 
 func TestPin_ShieldAddsFlatPhysicalMitigation(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
 	c := pinCharacter()
 	before := c.GetPhysicalMitigation()
-	c.AddCondition(ConditionShield, 10, 12, "pin") // SETUP: migrates in Task 6
+	_ = c.AddBuffMagnitude(buffs.BuffIdMinorShield, 10, 12, "pin") // SETUP
+	c.Buffs.Validate(true)
 	got := c.GetPhysicalMitigation() - before
 	if math.Abs(got-0.12) > 1e-9 {
 		t.Fatalf("shield 12 must add exactly 0.12 mitigation, got %v", got)

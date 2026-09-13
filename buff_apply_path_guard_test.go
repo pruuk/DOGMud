@@ -133,6 +133,10 @@ var buffApplyPathAllowlist = map[string]string{
 	// ── former combat conditions: grapple exposure and prone recovery are now
 	// quiet one-round records (Task 5) ──────────────────────────────────────
 	"internal/combat/grapple_move.go|59": "former combat condition (one-round penalty): quiet record; must apply synchronously inside the round tick",
+
+	// ── former combat condition: Minor Shield is now one record (Task 6) ────
+	"internal/hooks/spell_resolution.go|1165": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
+	"internal/hooks/spell_resolution.go|1521": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
 }
 
 // primitivePackages define Character.AddBuff / Buffs.AddBuff themselves, so
@@ -298,7 +302,7 @@ func TestPlayerBuffsTravelTheEventPath(t *testing.T) {
 				advice := fmt.Sprintf("Route it through users.UserRecord.AddBuff / AddBuffScaled (or the mobs.Mob / actions.Actor equivalent, which all take a source string), or add %q to buffApplyPathAllowlist with a reason.", key)
 				if method := src[loc[2]:loc[3]]; method == "AddBuffMagnitude" {
 					rule = "the character door applies in place and the user door queues the event, but they share one four-argument shape, so this guard reads every AddBuffMagnitude call as a direct add (the safe reading). Record why in buffApplyPathAllowlist, or confirm the call is the user door and record that instead."
-					advice = fmt.Sprintf("Route it through users.UserRecord.AddBuffMagnitude (the event path) when the caller holds a *users.UserRecord, or add %q to buffApplyPathAllowlist with a reason.", key)
+					advice = "Routing it through users.UserRecord.AddBuffMagnitude does not silence this guard; allowlist it either way, noting which door it is."
 				}
 				problems = append(problems, fmt.Sprintf(
 					"%s: %s\n      THE RULE: %s\n      %s",

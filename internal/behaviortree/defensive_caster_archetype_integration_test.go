@@ -122,8 +122,8 @@ func TestDefensiveCaster_FullHP_Unbuffed_CastsCocoonFirst(t *testing.T) {
 // cast_best_in_category "already active" semantics from
 // action_cast_best_in_category.go: spellEffectAlreadyActive skips a
 // candidate when ANY of its BuffIds is already present on the caster.
-// chrysalis-cocoon carries BuffIds:[52], so seeding buff 52 (not
-// ConditionShield, which is a different, EffectType=="shield" check that
+// chrysalis-cocoon carries BuffIds:[52], so seeding buff 52 (not the Minor
+// Shield record, which is a different, EffectType=="shield" check that
 // chrysalis-cocoon also has but isn't required to trip this skip) is
 // sufficient to remove it as a self_defense candidate. With no other
 // self_defense spell known, that branch has no candidates and Fails;

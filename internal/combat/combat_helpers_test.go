@@ -3,6 +3,7 @@ package combat
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/pets"
@@ -96,6 +97,8 @@ func TestBuildWeaponSetup_ShootingWeaponMeleeClamp(t *testing.T) {
 // mitigation. The join rate is identical in expectation for both, so the ratio
 // of accumulated damage isolates the mitigation factor.
 func TestApplyPetDamage_RespectsPhysicalMitigation(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
+
 	const (
 		iterations  = 20000
 		petBase     = 20
@@ -116,14 +119,25 @@ func TestApplyPetDamage_RespectsPhysicalMitigation(t *testing.T) {
 		return c
 	}
 
-	// ConditionShield feeds GetPhysicalMitigation()'s non-gear term, so it sets
-	// mitigation without needing the item data files loaded.
+	// The Minor Shield record's mitigation_flat effect feeds
+	// GetPhysicalMitigation()'s non-gear term, so it sets mitigation without
+	// needing the item data files loaded.
+	//
+	// Fixture trap: AddBuffMagnitude re-validates the character as a side
+	// effect, and Character.Validate() derives HealthMax.Value from
+	// HealthMax.Base + stats + balance config rather than honoring a
+	// directly assigned .Value — so the HealthMax/Health = 500 below is
+	// reset by the very next call for any target that gets a shield.
+	// Harmless here: applyPetDamage never reads targetChar.Health or
+	// HealthMax, only GetPhysicalMitigation(), which does not depend on
+	// either.
 	newTarget := func(mitigationPct int) *characters.Character {
 		c := &characters.Character{RoomId: 1}
+		c.Buffs = buffs.New()
 		c.HealthMax.Value = 500
 		c.Health = 500
 		if mitigationPct > 0 {
-			c.AddCondition(characters.ConditionShield, 100, float64(mitigationPct), "test")
+			_ = c.AddBuffMagnitude(buffs.BuffIdMinorShield, 100, float64(mitigationPct), "test")
 		}
 		return c
 	}
