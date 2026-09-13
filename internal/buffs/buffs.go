@@ -24,7 +24,10 @@ type Buff struct {
 	// Magnitude is the per-instance strength the applier set. A spec effect
 	// whose value is the word "magnitude" reads it; a tick_from_magnitude
 	// record snapshots it into TickAmount. Zero means "no effect" for a
-	// multiplier and nothing for a flat; it is not a valid poison amount.
+	// multiplier and nothing for a flat. A non-zero magnitude that truncates
+	// to zero (e.g. -0.5) snapshots as 1 in its sign instead, since a zero
+	// tick would be unrecoverable; a magnitude of exactly zero snapshots as
+	// zero.
 	Magnitude float64 `yaml:"magnitude,omitempty"`
 }
 
@@ -310,7 +313,21 @@ func (bs *Buffs) AddBuffMagnitude(buffId int, rounds int, magnitude float64) boo
 	bs.List[idx].Magnitude = magnitude
 	if spec := GetBuffSpec(buffId); spec != nil && spec.TickFromMagnitude {
 		// The magnitude IS the signed per-round amount: negative harms.
-		bs.List[idx].TickAmount = int(magnitude)
+		// A non-zero magnitude that truncates to zero (e.g. -0.5) is floored
+		// to 1 in its sign instead: a zero snapshot is unrecoverable, since
+		// the round tick's fallback recomputes from TickPercent, which
+		// validateEffects forces to 0 on a tick_from_magnitude record, so
+		// ComputeTickAmount would return 0 and the record would tick for
+		// nothing forever. Mirrors the old poison/bleed hook's clamp.
+		amt := int(magnitude)
+		if amt == 0 && magnitude != 0 {
+			if magnitude < 0 {
+				amt = -1
+			} else {
+				amt = 1
+			}
+		}
+		bs.List[idx].TickAmount = amt
 	}
 	return true
 }

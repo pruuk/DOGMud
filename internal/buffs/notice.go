@@ -88,10 +88,10 @@ func SilentNoticeBuffs() []string {
 			continue
 		}
 		missing := ""
-		if b.StartUserText == "" && !b.hasFlag(SilentStart) {
+		if b.StartUserText == "" && !b.hasFlag(SilentStart) && !b.hasFlag(Quiet) {
 			missing = "start"
 		}
-		if b.EndUserText == "" && !b.hasFlag(Hidden) {
+		if b.EndUserText == "" && !b.hasFlag(Hidden) && !b.hasFlag(Quiet) {
 			if missing != "" {
 				missing += ", "
 			}

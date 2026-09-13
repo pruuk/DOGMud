@@ -153,6 +153,35 @@ func TestAddBuffMagnitudeSetsTheSnapshotForATickRecord(t *testing.T) {
 	}
 }
 
+// A tick_from_magnitude record's TickAmount must never land on zero while its
+// Magnitude is non-zero: the round tick's fallback recomputes from
+// TickPercent, which validateEffects forces to 0 on a tick_from_magnitude
+// record, so a zero snapshot would tick for nothing forever. int() truncates
+// toward zero, same as the old poison/bleed hook, so a magnitude that
+// truncates to zero floors to 1 in its own sign instead.
+func TestAddBuffMagnitudeTickSnapshotFloorsToOneInItsSign(t *testing.T) {
+	withSpecs(t, &BuffSpec{BuffId: 922, Name: "Trickle", TriggerRate: "1 round", TriggerCount: 4, TickPool: "health", TickFromMagnitude: true})
+	bs := Buffs{}
+	bs.Validate(true)
+
+	cases := []struct {
+		magnitude float64
+		wantTick  int
+	}{
+		{-0.5, -1},
+		{0.5, 1},
+		{0, 0},
+		{-7.9, -7},
+	}
+	for _, c := range cases {
+		bs.AddBuffMagnitude(922, 4, c.magnitude)
+		b := bs.GetBuffs(922)[0]
+		if b.TickAmount != c.wantTick {
+			t.Fatalf("magnitude %v: got TickAmount %d, want %d", c.magnitude, b.TickAmount, c.wantTick)
+		}
+	}
+}
+
 func TestAddBuffMagnitudeZeroRoundsMeansTheSpecDefault(t *testing.T) {
 	withSpecs(t, &BuffSpec{BuffId: 920, Name: "Default", TriggerRate: "1 round", TriggerCount: 7, Effects: map[EffectKind]EffectValue{EffectDamageMult: {UsesMagnitude: true}}})
 	bs := Buffs{}
@@ -235,5 +264,17 @@ func TestSeedConditionRecordsForTestIsAdditiveAndReversible(t *testing.T) {
 	}
 	if got := GetBuffSpec(BuffIdWarcry); got != pre {
 		t.Fatalf("cleanup must restore the pre-existing spec at id %d, got %+v", BuffIdWarcry, got)
+	}
+}
+
+// A kind classified as both a multiplier and a cap would double-count in
+// Effect's switch (multiplier branch always wins), silently dropping it from
+// the cap aggregation. This keeps a future kind added to only one list from
+// failing silently instead of loudly.
+func TestEveryEffectKindIsClassifiedExactlyOnce(t *testing.T) {
+	for _, k := range AllEffectKinds {
+		if k.isMultiplier() && k.isCap() {
+			t.Fatalf("effect kind %q is classified as both a multiplier and a cap", k)
+		}
 	}
 }
