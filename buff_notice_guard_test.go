@@ -29,6 +29,8 @@ import (
 //     purge narration being doubled. Only start_user_text is waived.
 //   - hidden: the holder must never learn when their cover lapsed, so no end
 //     notice is allowed to exist at all. Only end_user_text is waived.
+//   - quiet: listed but never announced, for a record reapplied every round
+//     it persists.
 func TestEveryDogmudBuffHasAuthoredNotices(t *testing.T) {
 	files, err := filepath.Glob(filepath.Join("_datafiles", "world", "dogmud", "buffs", "*.yaml"))
 	if err != nil || len(files) == 0 {
@@ -64,13 +66,14 @@ func TestEveryDogmudBuffHasAuthoredNotices(t *testing.T) {
 		}
 		silentStart := slices.Contains(b.Flags, "silent-start")
 		hidden := slices.Contains(b.Flags, "hidden")
+		quiet := slices.Contains(b.Flags, "quiet")
 		if strings.TrimSpace(b.Name) == "" {
 			problems = append(problems, base+": non-secret buff has no name (the generic notice would be blank)")
 		}
-		if strings.TrimSpace(b.StartUserText) == "" && !silentStart {
+		if strings.TrimSpace(b.StartUserText) == "" && !silentStart && !quiet {
 			problems = append(problems, base+": missing start_user_text (holder would read the generic line)")
 		}
-		if strings.TrimSpace(b.EndUserText) == "" && !hidden {
+		if strings.TrimSpace(b.EndUserText) == "" && !hidden && !quiet {
 			problems = append(problems, base+": missing end_user_text (holder would read the generic line)")
 		}
 	}

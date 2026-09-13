@@ -145,6 +145,25 @@ func (c *Character) AddBuffScaled(buffId int, durationMult float64) error {
 	return nil
 }
 
+// AddBuffMagnitude applies a record synchronously for an exact number of
+// rounds with a per-instance magnitude. It is what every former AddCondition
+// site calls: those effects must be in place within the same round tick (a
+// shout, a ward, a bleed) and their appliers narrate the moment themselves,
+// so the record is silent-start or quiet and the event path's start notice is
+// not wanted. The prune pass still narrates the end. rounds 0 means the
+// spec's own triggercount.
+func (c *Character) AddBuffMagnitude(buffId int, rounds int, magnitude float64, source string) error {
+	buffId = int(math.Abs(float64(buffId)))
+	if !c.Buffs.AddBuffMagnitude(buffId, rounds, magnitude) {
+		return fmt.Errorf(`failed to add buff. target: "%s" buffId: %d`, c.Name, buffId)
+	}
+	for _, b := range c.Buffs.GetBuffs(buffId) {
+		b.Source = source
+	}
+	c.Validate()
+	return nil
+}
+
 func (c *Character) TrackBuffStarted(buffId int) {
 	c.Buffs.Started(buffId)
 }

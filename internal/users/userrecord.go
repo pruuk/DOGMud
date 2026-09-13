@@ -451,6 +451,20 @@ func (u *UserRecord) AddBuffScaled(buffId int, durationMult float64, source stri
 
 }
 
+// AddBuffMagnitude queues a record with an exact duration and a per-instance
+// magnitude through the event path, so the holder reads the start notice.
+// Former conditions apply synchronously through Character.AddBuffMagnitude
+// instead; this door is for a spell or item that wants the notice too.
+func (u *UserRecord) AddBuffMagnitude(buffId int, rounds int, magnitude float64, source string) {
+	events.AddToQueue(events.Buff{
+		UserId:    u.UserId,
+		BuffId:    buffId,
+		Source:    source,
+		Rounds:    rounds,
+		Magnitude: magnitude,
+	})
+}
+
 // SendText delivers an audio-channel message to this user. See
 // rooms.SendText for channel semantics. CategoryDefault keeps prose
 // uncolored.

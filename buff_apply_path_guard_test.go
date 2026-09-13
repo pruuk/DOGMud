@@ -21,13 +21,15 @@ import (
 // source parameter, or drops one from UserRecord.AddBuff, these stop compiling
 // and the guard is fixed deliberately instead of quietly going blind.
 var (
-	_ func(int, bool) error      = (*characters.Character)(nil).AddBuff
-	_ func(int, float64) error   = (*characters.Character)(nil).AddBuffScaled
-	_ func(int, string)          = (*users.UserRecord)(nil).AddBuff
-	_ func(int, float64, string) = (*users.UserRecord)(nil).AddBuffScaled
-	_ func(int, string)          = (*mobs.Mob)(nil).AddBuff
-	_ func(int, string)          = (*actions.UserActor)(nil).AddBuff
-	_ func(int, string)          = (*actions.MobActor)(nil).AddBuff
+	_ func(int, bool) error                 = (*characters.Character)(nil).AddBuff
+	_ func(int, float64) error              = (*characters.Character)(nil).AddBuffScaled
+	_ func(int, int, float64, string) error = (*characters.Character)(nil).AddBuffMagnitude
+	_ func(int, string)                     = (*users.UserRecord)(nil).AddBuff
+	_ func(int, float64, string)            = (*users.UserRecord)(nil).AddBuffScaled
+	_ func(int, int, float64, string)       = (*users.UserRecord)(nil).AddBuffMagnitude
+	_ func(int, string)                     = (*mobs.Mob)(nil).AddBuff
+	_ func(int, string)                     = (*actions.UserActor)(nil).AddBuff
+	_ func(int, string)                     = (*actions.MobActor)(nil).AddBuff
 )
 
 // Slice C delivery path: a player buff must travel the events.Buff event, so
@@ -69,10 +71,19 @@ var (
 // is secret. When a legitimate direct add moves, update its line number here;
 // when a new one appears, either route it through the event path or record why
 // it cannot be.
+//
+// Character.AddBuffMagnitude and UserRecord.AddBuffMagnitude share one
+// four-argument shape ending in a source string, so arity cannot tell the
+// silent character door from the event-queuing user door apart the way it
+// does for AddBuff/AddBuffScaled; isEventPathCall reads every AddBuffMagnitude
+// call as a direct add, the safe reading, and every former-condition producer
+// site is allowlisted by hand with the reason "former combat condition;
+// applies synchronously; record is silent-start or quiet".
 var buffApplyPathAllowlist = map[string]string{
 	// ── The sanctioned consumer of the event ────────────────────────────────
-	"internal/hooks/Buff_ApplyBuffs.go|85": "this IS the hook the event feeds; it is where every routed buff is finally applied",
 	"internal/hooks/Buff_ApplyBuffs.go|87": "this IS the hook the event feeds; it is where every routed buff is finally applied",
+	"internal/hooks/Buff_ApplyBuffs.go|89": "this IS the hook the event feeds; it is where every routed buff is finally applied",
+	"internal/hooks/Buff_ApplyBuffs.go|91": "this IS the hook the event feeds; it is where every routed buff is finally applied",
 
 	// ── silent-start buffs whose applier narrates the moment itself ─────────
 	"internal/actions/combat_rally.go|116":    "buff 80 is silent-start; the rally move narrates the party rally and the synchronous apply is what its own messaging reads",
@@ -121,7 +132,7 @@ var primitivePackages = []string{
 	filepath.Join("internal", "characters"),
 }
 
-var buffAddCallPattern = regexp.MustCompile(`\.(AddBuff(?:Scaled)?)\(`)
+var buffAddCallPattern = regexp.MustCompile(`\.(AddBuff(?:Scaled|Magnitude)?)\(`)
 
 // identifierArgPattern matches a bare identifier or field selector, which is
 // how a variable source reaches these calls: src, reason, source, evt.Source.
@@ -197,6 +208,13 @@ func callArgs(src string, openParen int) (args []string, ok bool) {
 // identifier, while a correct call passing a variable source is never reported
 // as silent. The second result is false when the call could not be parsed.
 func isEventPathCall(src string, method string, openParen int) (eventPath bool, parsed bool) {
+	if method == "AddBuffMagnitude" {
+		// The character door and the user door share a four-argument shape
+		// ending in a source string, so arity cannot tell them apart. Treat
+		// every call as a direct add: the safe reading, since a producer
+		// site that is actually the event door gets allowlisted by hand.
+		return false, true
+	}
 	args, ok := callArgs(src, openParen)
 	if !ok {
 		return false, false

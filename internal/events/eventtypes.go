@@ -27,6 +27,11 @@ type Buff struct {
 	// does. Carried on the event so scaled applications still travel the one
 	// door that narrates the start.
 	DurationMult float64
+	// Magnitude is the per-instance strength for a record whose effects read
+	// it, and Rounds the exact duration; either non-zero routes the event
+	// through AddBuffMagnitude. Zero both means the DurationMult path.
+	Magnitude float64
+	Rounds    int
 }
 
 func (b Buff) Type() string { return `Buff` }
