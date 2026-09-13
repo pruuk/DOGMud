@@ -1,0 +1,64 @@
+# Conditions unification, slice 1: the ten combat conditions are buff records.
+#
+# Room 5000, the Rift Chamber, where Sable sells an arena fight for gold. Two
+# players: a shouter who fights, shouts and casts, and a caster who wards the
+# shouter and reads what the room is told. What changed and must be proved:
+#   - warcry and rally list ONCE each in `conditions` (they used to be two rows)
+#   - a ward now says when it ends, in and out of combat, and the room hears it
+#   - poison and blood loss tick every third round, as before, and say so
+#   - a shout, a ward or a poison survives a quit and a login
+name: conditions-slice-1
+mode: party
+summary: >-
+  A shouter fights an arena mob, shouts, wards, poisons and bleeds while a
+  caster reads the room; then the shouter logs out and back in still warded.
+on_actor_stop: continue
+budgets:
+  wall_clock: 30m
+requires:
+  max_connections: 20
+roster:
+  - id: shouter
+    personality: bug-finder
+    goals: goals/scenarios/conditions-slice-1/shouter.yaml
+  - id: caster
+    personality: bug-finder
+    goals: goals/scenarios/conditions-slice-1/caster.yaml
+
+group_goals:
+  - id: shouts-list-once
+    do: >-
+      Shouter buys an arena fight with `ask sable arena 350`, then types
+      `warcry` and `rally`, then `conditions`.
+    verify: >-
+      The `conditions` output lists "Warcry" once and "Rally" once. A second
+      row for either is the defect. When they fade, the shouter reads "The
+      fervor of the warcry fades from you." and "The strength of the rally
+      drains from you."
+  - id: ward-narrates-its-end
+    do: >-
+      Caster casts `cast conviction-ward shouter` (use the shouter's name).
+      Both leave the arena and rest until it ends.
+    verify: >-
+      The shouter reads "Your Minor Shield dissipates." out of combat. The
+      caster reads "<shouter's name>'s Minor Shield dissipates." A ward that
+      ends in silence is the defect.
+  - id: poison-and-bleed-tick
+    do: >-
+      Shouter casts `cast blood-boil` at an arena mob, and lets a beast land a
+      maul, rake or hamstring on them if one is present.
+    verify: >-
+      The mob shows no per-round line to anyone (mobs have no client). If the
+      shouter bleeds, they read "Blood seeps from your wounds!" every third
+      round and "Your wounds stop bleeding." at the end. Any literal "{source}"
+      anywhere is the defect.
+  - id: records-survive-login
+    do: >-
+      Caster wards the shouter again. Shouter types `quit`, logs back in, and
+      types `conditions`.
+    verify: >-
+      "Minor Shield" is still listed after the login. A lost record is the
+      defect.
+  - id: reads-well
+    do: Judge every line seen as prose.
+    verify: Report anything that repeats, reads machine-made, or shows a raw number.
