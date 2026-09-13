@@ -192,7 +192,8 @@ func TestAddBuffMagnitudeZeroRoundsMeansTheSpecDefault(t *testing.T) {
 	}
 }
 
-// Exact rounds, not a multiplier: AddBuffScaled truncates float64(count) *
+// Exact triggers (rounds for a one-round interval), not a multiplier:
+// AddBuffScaled truncates float64(count) *
 // mult, and 3.3 * 10 is 32.999... in binary, which would have shortened a
 // 33-round ward to 32. Every former condition passes the integer it computed.
 func TestAddBuffMagnitudeRoundsAreExact(t *testing.T) {

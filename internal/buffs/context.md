@@ -8,8 +8,9 @@ The GoMud buffs system provides comprehensive temporary status effects for chara
 
 There is ONE collection of timed state on a character: `Buffs`. The former
 `characters.CombatCondition` enum (ten combat conditions with their own tick,
-magnitude and display) is gone; each is a record under
-`_datafiles/world/dogmud/buffs/` (79, 80, 117 to 123). **Do not add a second
+magnitude and display) is gone; the ten became NINE records under
+`_datafiles/world/dogmud/buffs/` (79, 80, 117 to 123), because blinded had no
+producer and was deleted rather than ported. **Do not add a second
 collection, a `HasCondition`, or a Go enum of timed effects**; the root guard
 `timed_state_guard_test.go` fails the build on one. Slice 2 renames this
 package to `internal/conditions`.
@@ -49,7 +50,7 @@ and through nothing else. The live readers:
 | `damage_mult` | the damage mean and crit base, same file |
 | `defense_mult` | the defense score, same file |
 | `mitigation_flat` | `Character.GetPhysicalMitigation`, `internal/characters/combat.go`; `internal/combat/ai.go` and `internal/behaviortree/action_cast_best_in_category.go` ask `HasEffect` before casting a ward |
-| `dodge_mult` | `Character.GetDefenseScore`, `internal/characters/combat.go` (no shipped producer; the seam is kept because `Effect` is a product with identity 1.0) |
+| `dodge_mult` | `Character.GetDefenseScoreFor`, `internal/characters/combat.go` (`GetDefenseScore` is a one-line wrapper over it; no shipped producer, and the seam is kept because `Effect` is a product with identity 1.0) |
 | `regen_mult` | `internal/hooks/NewRound_AutoHeal.go`, four branches across the player and mob paths |
 | `pool_max_pct` | the pool loop in `internal/characters/validate.go`; the pool NAME rides on the instance's `Source` |
 
@@ -790,14 +791,21 @@ func (bs *Buff) Name() string {
 - `SilentNoticeBuffs() []string`: every loaded non-secret buff relying on the
   generic line, as `"<id> <name> (start, end)"`. `WarnSilentNotices()` logs
   one warning per entry at boot (wired in `main.go` after the species guard).
-- Two flags declare a deliberate silence: `hidden` (no end notice ever, a
-  hider must not learn when the cover lapsed; room text still goes out) and
-  `silent-start` (the applying command narrates the start; Warcry, Rally,
-  Throttled, Sleeping and Bloom Detox are applied through `Character.AddBuff`,
-  which never queues the buff event). A `silent-start` buff still owes the
-  holder a line, just not from the hook: `actions.Sleep` sends buff 15's line
-  through `AuthoredStartLine`, which is what the flag means by "the applier
-  narrates".
+- Three flags declare a deliberate silence, and `StartUserNotice` /
+  `EndUserNotice` are where each one returns the empty string:
+  - `silent-start` silences the START only (the applying command narrates it;
+    Warcry, Rally, Throttled, Sleeping and Bloom Detox are applied through
+    `Character.AddBuff`, which never queues the buff event). Such a buff still
+    owes the holder a line, just not from the hook: `actions.Sleep` sends buff
+    15's line through `AuthoredStartLine`, which is what the flag means by
+    "the applier narrates".
+  - `hidden` silences the END only (a hider must not learn when the cover
+    lapsed; room text still goes out).
+  - `quiet` silences BOTH, for a record reapplied every round it persists
+    (117 and 118), where either line would repeat every round.
+
+  A `secret` buff is silent at both ends too, but that is a spec field rather
+  than a flag, and it also hides the record from the `conditions` list.
 - **A player buff must be applied through `users.UserRecord.AddBuff` or
   `UserRecord.AddBuffScaled`, the event path, or it lands in silence:
   `Character.AddBuff` / `Character.AddBuffScaled` apply in place and queue
@@ -811,10 +819,12 @@ func (bs *Buff) Name() string {
   `AddBuffMagnitude` producers inside `internal/characters/skills.go` are
   exempted by that package-level carve-out, not individually allowlisted.
 - **Every non-secret buff in the dogmud world must carry authored
-  `start_user_text` (unless `silent-start`) AND `end_user_text` (unless
-  `hidden`), and a secret buff must carry no player text.** The root guard `buff_notice_guard_test.go` fails the build
-  otherwise; the generic line is a runtime net, never the shipped experience.
-  `secret: true` also hides the buff from `conditions`.
+  `start_user_text` (unless `silent-start` or `quiet`) AND `end_user_text`
+  (unless `hidden` or `quiet`), and a secret buff must carry no player text.**
+  The root guard `buff_notice_guard_test.go` fails the build otherwise; the
+  generic line is a runtime net, never the shipped experience. `secret: true`
+  also hides the buff from `conditions`. `SilentNoticeBuffs` exempts the same
+  three flags, so the boot warning and the guard agree.
 
 ### The narration door (M3 item 5b, `narration.go`)
 

@@ -304,10 +304,14 @@ Things worth knowing before touching it:
   `Char.Affects` always put there; the retired `Char.Conditions` list put
   `ConditionType.DisplayName()` there instead, so a client that switched on
   `type` to identify a condition must stop.
-- **Duration is read off the INSTANCE.** `buffs.GetDurations` uses the held
-  record's `TriggersLeft`, not the spec's authored `triggercount`. Reading the
-  spec default is what made a 50-round Enchant Withdrawal on a 10-trigger
-  record report a negative duration.
+- **`duration_cur` is read off the INSTANCE; `duration_max` is not.**
+  `buffs.GetDurations` derives the remaining rounds from the held record's
+  `TriggersLeft`, not the spec's authored `triggercount`. Reading the spec
+  default is what made a 50-round Enchant Withdrawal on a 10-trigger record
+  report a negative duration. The total it returns alongside is still the
+  spec's `triggercount × round interval`, floored at the instance's remaining
+  rounds (`max(totalRounds, roundsLeft)`) so that same 50-round withdrawal
+  reports a total of 50 rather than 10.
 - **A repeated name gets a `#n` suffix**, because the map is keyed by name and
   two records can present the same visible name. `nameIncrement` is ONE
   counter for the whole payload, not per name: the first collision anywhere
@@ -318,9 +322,11 @@ Things worth knowing before touching it:
   (`vitalsChangedHandler`), so any pool move republishes it, and on its own
   from `buffTriggeredHandler` on `events.BuffsTriggered`.
 - **`Char.Affects` is retired.** There is no builder for it. A client that
-  requests it falls through to the bottom of `GetCharPayload` and the server
-  logs `Bad module requested`, exactly as for any unknown module. The web
-  client's two panels both read `Char.Conditions`.
+  requests it falls through to the bottom of `GetCharNode`
+  (`gmcp.Char.go`) and the server logs `Bad module requested`, exactly as for
+  any unknown module. Two places in the web client read `Char.Conditions`:
+  `updateStatusPanel` renders the chips, and `evalTriggerCondition` reads the
+  same map to gate a `status`-kind trigger by condition name.
 
 ## Module index
 

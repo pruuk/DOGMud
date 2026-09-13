@@ -49,7 +49,7 @@ Every claim below was read from the tree at `230041292` on 2026-09-12.
 | Producers and their numbers: warcry and rally bonus = clamp(0.05 + 0.15 × sqrt((rhetoric/75) × (charisma/175)), 0.05, 0.20), × (1 + shout amp); duration 25 × (1 + amp); applied to self, party members in the room, and charmed mobs, each time as `AddCondition` PLUS `AddBuff(79 or 80)` | `internal/actions/combat_warcry.go:98-119`; `combat_rally.go`; `internal/usercommands/warcry.go:50-60,112-124`; `rally.go` |
 | Shield: `(caster stat + round(spellcasting × SkillWeight)) / 3`, min 1, × `effect_magnitude` / 100 when set, × 1.5 on crit; duration `calcSpellDuration(baseFolds, skill, stat)`; player and mob targets | `internal/hooks/spell_resolution.go:1147-1165,1521` |
 | Regen: `effect_magnitude` floored at 1.0, crit doubles the part above 1; duration `calcSpellDuration / 2` floored at 6; mob corpse feeding sets 2.0 for 6 rounds, a flesh golem 3.0 for 10 | `spell_resolution.go:1047-1062,841,1482`; `internal/mobcommands/consume.go:46,55` |
-| Poison (spell dot): magnitude = `effect_magnitude` as flat damage per round; duration `calcSpellDuration / 3` floored at 3 | `spell_resolution.go:615-637,1640-1653` |
+| Poison (spell dot): magnitude = `effect_magnitude` as flat damage per TICK, and the tick landed only every THIRD round (see the consumers row above: the whole `AutoHeal` body sits behind `RoundNumber%3`), while the duration counted down every round; duration `calcSpellDuration / 3` floored at 3 | `spell_resolution.go:615-637,1640-1653`; `NewRound_AutoHeal.go:35` |
 | Bleeding: maul strength/8 min 3 for 5 rounds; hamstring for 5; rake for 4; drain strength/12 min 2 for 4; throttle strength/10 min 2 for 3; item proc `magnitude` param min 2, `dur` default 4 | `internal/actions/combat_{maul,hamstring,rake,drain,throttle}.go`; `internal/hooks/item_procs.go:205-215` |
 | Recovery penalty: `AddCondition(RecoveryPenalty, 1, 1.0)` on every recovering round; grapple exposure: `AddCondition(DefensePenalty, 1, 0.85)` on a weak failure; withdrawal: `AddCondition(EnchantWithdrawal, config rounds, reservePct, reservePool)` | `internal/characters/skills.go:73,96,100`; `internal/combat/grapple_move.go:56`; `internal/usercommands/skill.disenchant.go:62-72` |
 | `calcSpellDuration(baseFolds, spellcasting, stat) = round(folds × (10 + stat/20 + skill/2))`, min 10 | `spell_resolution.go:35-44` |
@@ -215,13 +215,42 @@ dead blinded readers, the duplicate poison immunity check.
 7. **A pre-existing PLAYER-side bug is fixed on the way**, and it changes live
    numbers for buffs this slice never touches. `UserRoundTick` gated the whole
    tick body, harm included, on `!buff.Expired()`, so a record's FINAL trigger
-   applied nothing; the mob tick never had the defect. Every player-held tick
-   record now lands one more tick: 97 Arc Trap 1 becomes 2 (+100%), 89
-   Throttled 2 becomes 3 (+50%), 39 Venom / 40 Spore Toxin / 78 Toxic Cloud 4
-   become 5 (+25%), 5 Minor Potion Healing 5 becomes 6 (+20%), 50 Greater
-   Healing 9 becomes 10 (+11%). Fixing it was not optional: `TickTriggers`
-   yields exactly one trigger for every ordinary bleed, so a bleed would
-   otherwise have applied no damage at all.
+   applied nothing; the mob tick never had the defect. The fix is at the tick
+   path, so the affected set is defined by what carries a `tick_pool`, not by
+   who applies it: reproduce it with
+   `grep -l tick_pool _datafiles/world/dogmud/buffs/*.yaml`. Every one of those
+   eighteen records now lands one more tick on the player side, and the size of
+   the change is one over the number that used to land, read off each file's
+   shipped `triggercount`:
+
+   | Record | `triggercount` | Landed | Now | Change |
+   |---|---|---|---|---|
+   | 47 Minor Antidote | 1 | 0 | 1 | the heal NEVER landed |
+   | 122 Bleeding | 1 | 0 | 1 | the harm NEVER landed |
+   | 97 Arc Trap | 2 | 1 | 2 | +100% |
+   | 89 Throttled (stamina) | 3 | 2 | 3 | +50% |
+   | 94 Cold Discharge | 3 | 2 | 3 | +50% |
+   | 96 Hull Discharge | 3 | 2 | 3 | +50% |
+   | 106 Searing Backlash | 3 | 2 | 3 | +50% |
+   | 115 Rending Bleed | 4 | 3 | 4 | +33% |
+   | 39 Venom | 5 | 4 | 5 | +25% |
+   | 40 Spore Toxin | 5 | 4 | 5 | +25% |
+   | 78 Toxic Cloud | 5 | 4 | 5 | +25% |
+   | 5 Minor Potion Healing | 6 | 5 | 6 | +20% |
+   | 6 Stamina Draught | 6 | 5 | 6 | +20% |
+   | 7 Conviction Draught | 6 | 5 | 6 | +20% |
+   | 33 Chrysalis Regeneration | 8 | 7 | 8 | +14% |
+   | 32 Vital Surge | 9 | 8 | 9 | +12.5% |
+   | 50 Greater Healing | 10 | 9 | 10 | +11% |
+   | 121 Poisoned | 10 | 9 | 10 | +11% |
+
+   🔴 **47 Minor Antidote ships `triggercount: 1`**, and its only tick is a
+   `tick_percent: 0.05` heal, so on the player side the antidote's heal never
+   landed at all before this fix. 122 Bleeding is the same shape for the same
+   reason, which is why fixing this was not optional: `TickTriggers` yields
+   exactly one trigger for every ordinary bleed, so a bleed would otherwise
+   have applied no damage at all. (121 and 122 are this slice's own records;
+   the other sixteen it never touches.)
 8. Regenerating and Minor Shield narrate their END. Neither did before: the
    regen condition ended silently, and the shield's "dissipates" line existed
    only on the combat decay path.

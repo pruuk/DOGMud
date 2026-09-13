@@ -144,6 +144,50 @@ func TestRoundTick_BleedMinDamageOne(t *testing.T) {
 	mob.Character.Health = 50
 }
 
+// The ordinary bleed is a ONE-TRIGGER record: buffs.TickTriggers(3) yields 1.
+// The player tick used to gate its whole body, harm and text alike, on
+// !buff.Expired(), so that single trigger -- which is also the record's final
+// one -- applied nothing and said nothing, and every ordinary bleed a player
+// took was silent and harmless. This pins the expiring trigger: the harm lands
+// AND the flavour line goes out, exactly once.
+//
+// Null probe: restoring `!buff.Expired() &&` to the text gate in
+// NewRound_UserRoundTick.go turns the line assertion red.
+func TestRoundTick_BleedLineLandsOnExpiringTick(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u := users.GetByUserId(1)
+	require.NotNil(t, u)
+
+	// Discard anything an earlier test left queued, so the count below is
+	// only what these three rounds produced.
+	_ = drainPlain(1)
+
+	// Validate() recomputes HealthMax from stats and balance config, so seed
+	// Base rather than Value.
+	u.Character.HealthMax.Base = 100
+	_ = u.Character.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(3), -5, "test")
+	require.Equal(t, 1, u.Character.Buffs.GetBuffs(buffs.BuffIdBleeding)[0].TriggersLeft,
+		"an ordinary bleed is a single-trigger record; the trigger under test is its last")
+	// Health is set AFTER the add, because the door validates on add.
+	u.Character.Health = 80
+
+	// triggerrate is 3 rounds, so RoundCounter must reach 3 before it fires.
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	UserRoundTick(events.NewRound{RoundNumber: 2})
+	UserRoundTick(events.NewRound{RoundNumber: 3})
+
+	assert.Equal(t, 75, u.Character.Health,
+		"the record's only trigger is also its last, and it must still apply its harm")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "Blood seeps from your wounds!"),
+		"the expiring trigger must still send the bleed flavour line, exactly once")
+
+	u.Character.RemoveBuff(buffs.BuffIdBleeding)
+	u.Character.Health = 50
+}
+
 // ─── PackFlee ───────────────────────────────────────────────────────────────
 
 func TestPackFlee_WrongEventType(t *testing.T) {

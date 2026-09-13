@@ -300,10 +300,11 @@ progression for contest paths now flows exclusively through
   that lasts a number of rounds. The parallel combat condition enum
   (`conditions.go`, `CombatCondition`, `HasCondition`, `AddCondition`,
   `TickConditions`) was deleted on 2026-09-12 by slice 1 of the conditions
-  unification; its ten conditions are records 79, 80 and 117 to 123, combat
-  reads them through `Buffs.Effect`, and producers write them through
+  unification; its ten conditions became NINE records, 79, 80 and 117 to 123
+  (blinded had no producer and was deleted rather than ported), combat reads
+  them through `Buffs.Effect`, and producers write them through
   `Character.AddBuffMagnitude` (`buffs.go`). A root guard,
-  `timed_state_guard_test.go`, fails the build on a second collection or on
+  `timed_state_guard_test.go`, fails `go test .` on a second collection or on
   any of those spellings coming back.
 - **Aggro system** (`aggro.go`): Combat targeting and threat management
 - **Buffs integration**: Status effects that modify character capabilities
@@ -1230,19 +1231,19 @@ func (c *Character) Attackers() []state.ActorRef
     // snapshot of inbound attacker list from CombatPhase
 ```
 
-### Legacy Aggro field (compat surface)
+### The Aggro field is gone (U12c-2)
 
-The `Aggro *Aggro` field is kept in `combat_state_compat.go` for the
-~200 direct field reads in usercommands, hooks, combat, and mob-commands
-that were not migrated in chunk 0. **Do not add new reads against
-`Character.Aggro`** — use the predicate methods above.
+There is no `Character.Aggro` field and no `combat_state_compat.go`. U12c-2
+deleted the struct and renamed that file `engagement_storage.go`, which is
+where `SetAggro`, `EndAggro` and `IsAggro` live now. Use the predicate methods
+above to ask about engagement.
 
-All writes go through `SetAggro` / `EndAggro`, which dual-write to both
-`Aggro` and `CombatPhase.TransitionToEngaging` / `ForceIdle`. Direct
-mutation of `Character.Aggro` (bypassing the wrappers) is forbidden.
-
-Field removal is scheduled for a cleanup chunk after chunks 1-5 land and
-the remaining reads are migrated.
+`SetAggro` and `EndAggro` survived the collapse as the storage primitives, and
+they write `CombatPhase` alone. `AggroType` survived as a parameter, never as
+stored state; the file's header comment lists where each of the struct's four
+other jobs went. The rule on these two is a CALLER restriction, not a deletion:
+everything outside `internal/characters` and `internal/targeting` goes through
+the seam, and `aggro_writer_guard_test.go` holds that.
 
 `EndAggro` also clears **`RangedEngagedCueSpoken`** (`yaml:"-"`, U10d). That
 bool is the once-per-engagement latch for the shoot wrapper's "you cannot
@@ -1565,7 +1566,8 @@ default); all others return `false`.
 - `IsController()` — true when `Character.Control.State() ==
   control.Controlling`. Reads the `internal/state/control` FSM on
   `Character.Control *control.Machine`. Replaced the deleted
-  `HasCondition(ConditionGrappleController)` check (S4 shipped).
+  grapple-controller condition check (S4 shipped); the condition API that
+  check belonged to is itself gone as of the conditions unification.
 - `IsBeingControlled()` — true when `Character.Control.State() ==
   control.Controlled` (symmetric to `IsController`).
 - `IsLowGrappleStamina()` — true when stamina fraction is below
@@ -1596,7 +1598,7 @@ should use these predicates from day one):
 | `.IsGrapplePosition()` | `IsGrappling()` |
 | `.IsGroundPosition()` | `IsOnFloor()` |
 | `.GetSpeedMultiplier()` | `GetPositionSpeedMultiplier()` |
-| `HasCondition(GrappleController)` | `IsController()` |
+| the grapple-controller condition check | `IsController()` |
 
 Position predicates also drive the chunk-4c reach utility
 (`internal/combat/reach.go`): `IsGrappling()` + `State()` determine the
@@ -1837,15 +1839,16 @@ implementation-detail rationale.
 ## Files
 
 48 non-test files (`conditions.go` was deleted by the conditions unification,
-2026-09-12). Grouped by what they own:
+2026-09-12). Every file on disk appears in exactly one row below, and the rows
+name nothing that is not on disk. Grouped by what they own:
 
 | Group | Files |
 |-------|-------|
 | Core | `character.go`, `validate.go`, `migrations.go`, `overrides.go`, `description.go`, `formattedname.go`, `actor_identity.go` |
-| Stats & progression | `progression.go`, `skills.go`, `effective_stats.go`, `statmods`-adjacent helpers, `mobmastery.go`, `kdstats.go` |
+| Stats & progression | `progression.go`, `progression_award_resolved.go` (`AwardResolved`, the U10b-1 firing rule), `skills.go`, `effective_stats.go`, `mobmastery.go`, `kdstats.go` |
 | Resources & timed state | `pools.go`, `reservation.go`, `resources.go`, `cooldowns.go`, `buffs.go` (holds `Character.AddBuff`, `AddBuffScaled` and the `AddBuffMagnitude` writer door), `sight.go` |
 | Inventory & gear | `inventory.go`, `inventory_handle.go`, `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go`, `migrate_detuned_bows.go` |
-| Combat | `combat.go`, `combat_state_compat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go`, `engagement_storage.go` |
+| Combat | `combat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go`, `engagement_storage.go` (was `combat_state_compat.go`; renamed by U12c-2 when the struct it kept compatible was deleted) |
 | Casting | `cast_helpers.go`, `spells.go` |
 | Mutation | `intrinsic.go`, `bloom.go`, `bloom_mutation.go`, `chrysifier.go`, `mutation_scour.go` |
 | Social & economy | `companions.go`, `charminfo.go`, `shop.go`, `quests.go`, `alts.go` |

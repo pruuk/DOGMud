@@ -424,9 +424,18 @@ After buff triggers and before `Validate()`:
 
 ## The damaging buff tick (both round ticks, conditions unification 2026-09-12)
 
-Since the ten combat conditions became records, every dot in the game (39
-Venom, 40 Spore Toxin, 78 Toxic Cloud, 115 Rending Bleed, 121 Poisoned, 122
-Bleeding) ticks in ONE place: the `tick_pool` branch of the buff trigger loop
+Since the ten combat conditions became records, every dot in the game ticks in
+ONE place. The eleven records that carry a `tick_pool` and a NEGATIVE tick are
+39 Venom, 40 Spore Toxin, 78 Toxic Cloud, 89 Throttled (the one STAMINA dot),
+94 Cold Discharge, 96 Hull Discharge, 97 Arc Trap, 106 Searing Backlash, 115
+Rending Bleed, and 121 Poisoned / 122 Bleeding, whose sign rides on the
+magnitude their producer passes (`tick_from_magnitude`) rather than on an
+authored `tick_percent`. The same branch runs the seven healing tick records
+(5, 6, 7, 32, 33, 47, 50), so read it as "every tick record", not "every dot".
+List them with `grep -l tick_pool _datafiles/world/dogmud/buffs/*.yaml` rather
+than trusting this enumeration.
+
+That one place is the `tick_pool` branch of the buff trigger loop
 in `NewRound_UserRoundTick.go` and its mirror `tickMobBuffs` in
 `NewRound_MobRoundTick.go`. There is no longer a separate condition tick
 (`TickConditions`, deleted) and no separate poison and bleed block in
@@ -451,12 +460,28 @@ the old poison hook did and the buff tick path did NOT:
   dropped the only tick of a one-trigger record.
 
 `NewRound_AutoHeal.go` keeps only the REGEN half, and it reads the same
-vocabulary rather than an enum: four branches (player out of combat, player in
-combat, mob out of combat, mob in combat) ask
-`Character.Buffs.HasEffect(buffs.EffectRegenMult)` and multiply that round's
-`HealthPerRound()` by `Character.Buffs.Effect(buffs.EffectRegenMult)`. Record
-120 Regenerating is what a heal spell or a corpse feed applies, and its end is
-narrated by `PruneBuffs` like any other record's.
+vocabulary rather than an enum. **The whole hook is behind
+`if evt.RoundNumber%3 != 0 { return }`, so regen lands every THIRD round**, not
+every round, and that gate is also why the poison and bleed harm that used to
+live here landed every third round while the duration it counted down ran every
+round. Four branches read `regen_mult`, and the two kinds do NOT read it the
+same way:
+
+- **Out of combat** (player and mob) there is base regen regardless, and the
+  record is a multiplier ON it: the branch computes `healthRegen` /`hpRegen`
+  first, already scaled by toxicity, the mutation regen multipliers and the
+  room mutator multiplier, then applies
+  `if regenMult := Buffs.Effect(buffs.EffectRegenMult); regenMult > 1.0`. The
+  `> 1.0` test is what stands in for "is a record held", because `Effect` is a
+  product with identity 1.0.
+- **In combat** (player and mob) there is no base regen at all, so the whole
+  branch is gated on `Buffs.HasEffect(buffs.EffectRegenMult)` and the heal is
+  `HealthPerRound()` times the multiplier.
+
+The player's "Your wounds knit closed." line is gated on `HasEffect` in BOTH
+player branches, so an out-of-combat player regenerating without a record heals
+silently. Record 120 Regenerating is what a heal spell or a corpse feed
+applies, and its end is narrated by `PruneBuffs` like any other record's.
 
 ---
 
@@ -921,10 +946,12 @@ Cross-machine cleanup that fires on two Life transitions:
   that previously lived here were deleted in chunk 4b R4. The
   `position_life_dead` observer in `Position_Cascades.go` owns the
   Position FSM death cascade.)
-- Cancels all non-permanent active buffs. (The separate `c.Conditions = nil`
-  clear that sat beside it was deleted with the combat condition enum on
-  2026-09-12; the former conditions are ordinary records and the buff cancel
-  covers them.)
+- Cancels EVERY active buff, permanent ones included:
+  `CancelBuffsWithFlag(buffs.All)` reaches `Buffs.HasFlag(All, true)`, which
+  skips only records already `Expired()` and never consults `PermaBuff`. (The
+  separate `c.Conditions = nil` clear that sat beside it was deleted with the
+  combat condition enum on 2026-09-12; the former conditions are ordinary
+  records and the buff cancel covers them.)
 
 **Dead → Respawning:**
 - Refills all resource pools to 5% of max
@@ -1713,12 +1740,21 @@ room targeting the shooter", a wider question than "who has engaged me".
 it handles and the job it does, so `NewRound_IdleMobs.go` is the idle-mob step
 of the new-round event.
 
-Prefixes in use: `NewRound_*` (per-round work), `NewTurn_*` (per-turn work),
-`Input_*`, `Combat_*`, `Quest_*`, `RoomChange_*`, `Player*`/`Mob*` lifecycle.
-A handful of files are shared helpers rather than handlers and carry no
-prefix: `combat_shared_helpers.go`, `spell_resolution.go`, `item_procs.go`,
-and `tick_cause.go` (the death-cause tag a damaging health tick stamps; see
-"The damaging buff tick" above).
+The prefix IS the event name, so there is no short list of them: 98 of the 129
+files carry one and they spell 41 distinct events. The big ones are
+`NewRound_*` (21 files), `Death_*` (11), `MobDeath_*` (7), `NewTurn_*` and
+`Position_*` (5 each), `CombatPhase_*` (4), and `Awareness_*`,
+`MobRoomChange_*`, `PlayerDespawn_*` and `RoomChange_*` (3 each); the other 31
+prefixes carry one or two files apiece. Enumerate them with
+`ls internal/hooks/*.go | sed 's/_.*//' | sort -u` rather than trusting a list
+here. There is no `Input_*` or `Combat_*` prefix.
+
+The remaining 31 files are shared helpers rather than handlers and carry no
+prefix at all; they are the lowercase-named ones, for example
+`combat_shared_helpers.go`, `spell_resolution.go`, `item_procs.go`,
+`machine_resolver.go`, and `tick_cause.go` (the death-cause tag a damaging
+health tick stamps; see "The damaging buff tick" above). `hooks.go` is in that
+set and is the odd one out: it is not a helper but the registration table.
 
 Do not go looking for a registration in these files. **`hooks.go` holds
 `RegisterListeners()`, and that one function wires every listener in the

@@ -71,11 +71,23 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	// pool clamp lands before this command returns.
 	_ = user.Character.AddBuffMagnitude(buffs.BuffIdEnchantWithdrawal, penaltyRounds, reservePct, reservePool)
 
+	user.SendText(messaging.CategorySystem, `<ansi fg="magenta">You pry the Chrysalis free. It comes away screaming — a `+
+		`soundless wail that reverberates through your bones. The item `+
+		`falls silent, stripped of its living power.</ansi>`)
+	user.SendText(messaging.CategorySystem, `<ansi fg="red">A sudden emptiness floods through you. Your body aches `+
+		`for the connection it has lost. The withdrawal will pass... `+
+		`in time.</ansi>`)
+
 	// AddBuffMagnitude applies synchronously and never travels events.Buff, so
 	// ApplyBuffs' start notice never fires for this record; same reason sleep
 	// (15), arrest (88), stun (84) and broken limb (83) read their own start
 	// line through AuthoredStartLine instead. Render and send record 123's
 	// here, the same door those sites use.
+	//
+	// ORDER MATTERS: this goes AFTER the two flavour lines above. The record is
+	// applied earlier because the pool clamp must land before the command
+	// returns, but its line is the CONSEQUENCE of prying the Chrysalis free,
+	// so the player has to read the act first.
 	if withdrawalSpec := buffs.GetBuffSpec(buffs.BuffIdEnchantWithdrawal); withdrawalSpec != nil {
 		line := withdrawalSpec.AuthoredStartLine(textutil.TokenContext{
 			SourceName:      user.Character.GetCharacterName(true),
@@ -85,13 +97,6 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 			user.SendText(messaging.CategoryBuffApply, line)
 		}
 	}
-
-	user.SendText(messaging.CategorySystem, `<ansi fg="magenta">You pry the Chrysalis free. It comes away screaming — a `+
-		`soundless wail that reverberates through your bones. The item `+
-		`falls silent, stripped of its living power.</ansi>`)
-	user.SendText(messaging.CategorySystem, `<ansi fg="red">A sudden emptiness floods through you. Your body aches `+
-		`for the connection it has lost. The withdrawal will pass... `+
-		`in time.</ansi>`)
 
 	return true, nil
 }

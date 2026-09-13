@@ -177,6 +177,13 @@ git commit -m "test(conditions): pin today's shield, withdrawal and poison numbe
 
 ### Task 1: The record: magnitude, effects, the door, the writer, two flags
 
+> 📌 **Shipped-signature note (applies to the code blocks in Tasks 1 and 2).**
+> The second parameter is spelled `triggers`, not `rounds`. All three doors
+> shipped as `AddBuffMagnitude(buffId int, triggers int, magnitude float64,
+> ...)` (`internal/buffs/buffs.go`, `internal/characters/buffs.go`,
+> `internal/users/userrecord.go`). The quoted blocks below are left as the plan
+> wrote them; read `rounds int` as `triggers int` throughout.
+
 **Files:**
 - Create: `internal/buffs/ids.go`, `internal/buffs/effects.go`, `internal/buffs/effects_test.go`
 - Modify: `internal/buffs/buffs.go` (`Buff` struct, new `AddBuffMagnitude`), `internal/buffs/buffspec.go` (spec fields, flags, `AllFlags`, `Validate`), `internal/buffs/notice.go`
@@ -830,6 +837,11 @@ git commit -m "feat(conditions): the AddBuffMagnitude writer door at the charact
 ---
 
 ### Task 3: The records, the tick path's cancel helpers, and the one golden re-record
+
+> 📌 **Shipped-copy note.** Three of the `description:` lines quoted below use a
+> semicolon (117 Off Balance, 118 Recovering, 123 Enchant Withdrawal). The
+> shipped YAML uses two sentences instead in each case; read the files, not
+> these blocks, for the authored text.
 
 **Files:**
 - Modify: `_datafiles/world/dogmud/buffs/79-warcry.yaml`, `80-rally.yaml`

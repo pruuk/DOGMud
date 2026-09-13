@@ -1532,10 +1532,13 @@ scripted combat command.
     - **Resource depletion progression:** Moved to regen tick in
       `NewRound_AutoHeal.go` — smooth curve replaces old 25% threshold.
       See `characters/context.md` for details.
-12. **Minor Shield reduction**: flat damage reduction, read by
-    `Character.GetPhysicalMitigation` through
-    `Buffs.Effect(buffs.EffectMitigationFlat)`; the 119 Minor Shield record
-    declares `mitigation_flat: magnitude`.
+12. **Minor Shield reduction**: NOT flat damage off the top. It contributes
+    mitigation POINTS, read by `Character.GetPhysicalMitigation` through
+    `Buffs.Effect(buffs.EffectMitigationFlat)`, summed with gear, natural
+    armor, species armor and the `physical_mitigation` statmods, and the whole
+    sum is divided by 100 to become the mitigation FRACTION the damage
+    pipeline applies. The 119 Minor Shield record declares
+    `mitigation_flat: magnitude`.
 13. **Adrenaline Surge** — mutation check for bonus damage.
 14. **Crit effects (defender is player):**
     - Parry crit: player attempts to disarm the mob.
@@ -1627,8 +1630,8 @@ values directly.
 | `combat/descriptions.go` | `GetDamageDescription`, `GetHealDescription`, `GetDifficultyDescription` helpers |
 | `combat/taunt_messages.go` | Taunt/conviction combat messages |
 | `combat/analytics.go` | Ring buffer, `CombatEvent`, `AnalyticsSummary`, recording + query functions |
-| `hooks/NewRound_DoCombat.go` | `DoCombat`, `handlePlayerCombat` (~50 lines), `handleMobCombat` (~50 lines), `processGrappleProgression`, `handleAffected`, `applyMoonMods` |
-| `hooks/NewRound_DoCombat_helpers.go` | All extracted helpers: `handlePlayerFoldCasting`, `handleMobFoldCasting`, `handlePlayerFlee`, `handlePlayerVsPlayer`, `handlePlayerVsMob`, `handleMobVsPlayer`, `handleMobVsMob`, `handleMobAIDecision`, `handleMobTargetSwitch`, `handleMobWeaponPickup`, `handleMobDownedGrace`, `handlePartyAutoAttack`, `handleCharmedMobAssist`, `handleAutoRetargetPlayer`, `handlePlayerConcentrationBreak`, `dispatchCombatMessages`, `handleOffhandBreakUserDef`, `handleOffhandBreakMobDef` |
+| `hooks/NewRound_DoCombat.go` | `DoCombat`, `handlePlayerCombat`, `handleMobCombat`, `archerReengageable`, `handleAffected`, `applyMoonMods`, `snapshotSleepingVictims` |
+| `hooks/NewRound_DoCombat_helpers.go` | The extracted helpers. Rebuild this list with `grep -n "^func " internal/hooks/NewRound_DoCombat_helpers.go` rather than trusting it; as of the conditions unification it defines, in file order: `processAttackerProgression`, `attackerCandidates`, `processDefenderProgression`, `bestSwingDefence`, `defenceTypesUsed`, `defenceSkillFor`, `defenceStatFor`, `attackerBonusSkillAndStat`, `mobDisplayName`, `sendVisualRoomText`, `isExcludedUser`, `sendDarkRoomCombatFallback`, `replaceDarknessMessages`, `castingTargetChar`, `recordConcentrationFailure`, `handlePlayerFoldCasting`, `handleMobFoldCasting`, `handlePlayerFlee`, `handleCompanionOwnerAssist`, `handleCharmedMobAssist`, `handleOffhandBreakUserDef`, `handleOffhandBreakMobDef`, `handlePlayerConcentrationBreak`, `ordinaryMeleeEngagement`, `handleMobAIDecision`, `handleMobTargetSwitch`, `handleMobWeaponPickup`, `handlePartyAutoAttack`, `surpriseCandidate` |
 | `hooks/combat_shared_helpers.go` | `simulateFoldRound`, `calcFoldConvictionCost`, `checkConcentrationBreak`, `concentrationScore`, `tryWeaponBreak`, `applyCritEffects`, `CritEffectResult`, `calcSpellDamageForCharacter` |
 | `hooks/spell_resolution.go` | `resolveSpell`, `resolveAgainstMob`, `resolveAgainstPlayer`, `applyPlayerEffect` |
 

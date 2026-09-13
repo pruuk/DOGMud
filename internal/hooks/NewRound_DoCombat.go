@@ -295,7 +295,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			continue
 		}
 
-		// Only run the full combat prep (buff stripping, shield decay, etc.) when
+		// Only run the full combat prep (buff stripping, etc.) when
 		// actually fighting or when the mob might enter combat this round.
 		if mob.Character.IsInCombat() {
 			// Strip combat-cancelling buffs (Hidden, etc.) and remove
