@@ -86,18 +86,23 @@ var buffApplyPathAllowlist = map[string]string{
 	"internal/hooks/Buff_ApplyBuffs.go|91": "this IS the hook the event feeds; it is where every routed buff is finally applied",
 
 	// ── silent-start buffs whose applier narrates the moment itself ─────────
-	"internal/actions/combat_rally.go|116":    "buff 80 is silent-start; the rally move narrates the party rally and the synchronous apply is what its own messaging reads",
-	"internal/actions/combat_warcry.go|118":   "buff 79 is silent-start; the warcry move narrates the cry and the synchronous apply is what its own messaging reads",
 	"internal/actions/combat_throttle.go|147": "buff 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
 	"internal/actions/sleep.go|61":            "buff 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
-	"internal/usercommands/rally.go|57":       "party member gets buff 80, which is silent-start; the rally command narrates it and relies on the synchronous apply",
-	"internal/usercommands/rally.go|87":       "party member gets buff 79, which is silent-start; the rally command narrates it and relies on the synchronous apply",
-	"internal/usercommands/warcry.go|57":      "party member gets buff 79, which is silent-start; the warcry command narrates it and relies on the synchronous apply",
-	"internal/usercommands/warcry.go|91":      "party member gets buff 80, which is silent-start; the warcry command narrates it and relies on the synchronous apply",
+
+	// ── former combat conditions: warcry and rally are now one record each,
+	// applied via AddBuffMagnitude (buffs.BuffIdWarcry / buffs.BuffIdRally),
+	// both silent-start; the shout narrates itself and must apply synchronously
+	// so the fan-out and the same-round combat read it ─────────────────────
+	"internal/actions/combat_warcry.go|121": "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/actions/combat_rally.go|119":  "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|57":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|90":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|118":   "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|57":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|86":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|114":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
-	"internal/usercommands/rally.go|117":         "charmed mob, not a player; a mob holder has no client to read a start line",
-	"internal/usercommands/warcry.go|121":        "charmed mob, not a player; a mob holder has no client to read a start line",
 	"internal/usercommands/character.go|413":     "the holder is a MOB (m.Character), and buff 99 is a perma-gear pin, not something a player reads",
 	"internal/hooks/item_procs.go|264":           "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40": "the holder is a MOB (a summoned companion), not a player",
@@ -284,9 +289,13 @@ func TestPlayerBuffsTravelTheEventPath(t *testing.T) {
 				if lineEnd < lineStart {
 					lineEnd = len(src)
 				}
+				rule := "an event-path buff add ends in a source string; this call does not, so it applies the buff in place, Buff_ApplyBuffs never runs, and the holder reads nothing."
+				if method := src[loc[2]:loc[3]]; method == "AddBuffMagnitude" {
+					rule = "AddBuffMagnitude always applies synchronously (the character and user doors share one shape); a caller records why in buffApplyPathAllowlist."
+				}
 				problems = append(problems, fmt.Sprintf(
-					"%s: %s\n      THE RULE: an event-path buff add ends in a source string; this call does not, so it applies the buff in place, Buff_ApplyBuffs never runs, and the holder reads nothing.\n      Route it through users.UserRecord.AddBuff / AddBuffScaled (or the mobs.Mob / actions.Actor equivalent, which all take a source string), or add %q to buffApplyPathAllowlist with a reason.",
-					key, strings.TrimSpace(src[lineStart:lineEnd]), key))
+					"%s: %s\n      THE RULE: %s\n      Route it through users.UserRecord.AddBuff / AddBuffScaled (or the mobs.Mob / actions.Actor equivalent, which all take a source string), or add %q to buffApplyPathAllowlist with a reason.",
+					key, strings.TrimSpace(src[lineStart:lineEnd]), rule, key))
 			}
 			return nil
 		})

@@ -487,9 +487,8 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 		rawDmgForCrit *= (1.0 + mutDmgMult)
 	}
 
-	// Warcry condition: applies a physical damage multiplier from rhetoric shout
-	if sourceChar.HasCondition(characters.ConditionWarcry) {
-		warcryMult := 1.0 + sourceChar.GetConditionMagnitude(characters.ConditionWarcry)
+	// Warcry record: the damage multiplier is the record's magnitude (1 + bonus).
+	if warcryMult := sourceChar.Buffs.Effect(buffs.EffectDamageMult); warcryMult != 1.0 {
 		dmgMean *= warcryMult
 		rawDmgForCrit *= warcryMult
 	}
@@ -741,10 +740,10 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 			}
 		}
 
-		// Rally condition: applies a defense score multiplier from rhetoric shout
-		if targetChar.HasCondition(characters.ConditionRally) {
-			defenseScore *= 1.0 + targetChar.GetConditionMagnitude(characters.ConditionRally)
-		}
+		// Rally record: defense score multiplier from the rhetoric shout. The
+		// same door folds the grapple exposure (Task 5) and any other defense
+		// multiplier.
+		defenseScore *= targetChar.Buffs.Effect(buffs.EffectDefenseMult)
 
 		// Stage 8.5: Apply third-party vulnerability penalty
 		if isThirdParty {
