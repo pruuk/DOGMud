@@ -77,8 +77,9 @@ var (
 // silent character door from the event-queuing user door apart the way it
 // does for AddBuff/AddBuffScaled; isEventPathCall reads every AddBuffMagnitude
 // call as a direct add, the safe reading, and every former-condition producer
-// site is allowlisted by hand with the reason "former combat condition;
-// applies synchronously; record is silent-start or quiet".
+// site is allowlisted by hand with a reason worded like "former combat
+// condition (warcry/rally): silent-start record, the shout narrates; must
+// apply synchronously so the fan-out and the same-round combat read it".
 var buffApplyPathAllowlist = map[string]string{
 	// ── The sanctioned consumer of the event ────────────────────────────────
 	"internal/hooks/Buff_ApplyBuffs.go|87": "this IS the hook the event feeds; it is where every routed buff is finally applied",
@@ -294,12 +295,14 @@ func TestPlayerBuffsTravelTheEventPath(t *testing.T) {
 					lineEnd = len(src)
 				}
 				rule := "an event-path buff add ends in a source string; this call does not, so it applies the buff in place, Buff_ApplyBuffs never runs, and the holder reads nothing."
+				advice := fmt.Sprintf("Route it through users.UserRecord.AddBuff / AddBuffScaled (or the mobs.Mob / actions.Actor equivalent, which all take a source string), or add %q to buffApplyPathAllowlist with a reason.", key)
 				if method := src[loc[2]:loc[3]]; method == "AddBuffMagnitude" {
-					rule = "AddBuffMagnitude always applies synchronously (the character and user doors share one shape); a caller records why in buffApplyPathAllowlist."
+					rule = "the character door applies in place and the user door queues the event, but they share one four-argument shape, so this guard reads every AddBuffMagnitude call as a direct add (the safe reading). Record why in buffApplyPathAllowlist, or confirm the call is the user door and record that instead."
+					advice = fmt.Sprintf("Route it through users.UserRecord.AddBuffMagnitude (the event path) when the caller holds a *users.UserRecord, or add %q to buffApplyPathAllowlist with a reason.", key)
 				}
 				problems = append(problems, fmt.Sprintf(
-					"%s: %s\n      THE RULE: %s\n      Route it through users.UserRecord.AddBuff / AddBuffScaled (or the mobs.Mob / actions.Actor equivalent, which all take a source string), or add %q to buffApplyPathAllowlist with a reason.",
-					key, strings.TrimSpace(src[lineStart:lineEnd]), rule, key))
+					"%s: %s\n      THE RULE: %s\n      %s",
+					key, strings.TrimSpace(src[lineStart:lineEnd]), rule, advice))
 			}
 			return nil
 		})

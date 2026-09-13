@@ -181,7 +181,7 @@ func TestTauntRallyWarcryRefusalIsAtomicForPlayerAndMob(t *testing.T) {
 				require.Empty(t, actor.skillsUsed)
 				if result.selfBuffID != 0 {
 					require.False(t, char.HasBuff(result.selfBuffID))
-					require.False(t, char.HasBuff(result.selfBuffID))
+					require.InDelta(t, 1.0, char.Buffs.Effect(tc.effectKind), 1e-9, "a refused shout must leave no magnitude behind")
 				}
 				assertRhetoricRefusalCarryPreserved(t, actor, char, tc.action)
 			})
@@ -231,7 +231,7 @@ func TestTauntRallyWarcryReadOnlyGatesPreserveHiddenState(t *testing.T) {
 			require.Empty(t, actor.skillsUsed)
 			if result.selfBuffID != 0 {
 				require.False(t, char.HasBuff(result.selfBuffID))
-				require.False(t, char.HasBuff(result.selfBuffID))
+				require.InDelta(t, 1.0, char.Buffs.Effect(tc.effectKind), 1e-9, "a refused shout must leave no magnitude behind")
 			}
 		})
 	}
@@ -263,7 +263,7 @@ func TestRallyWarcryPaidBuffsChargeOnceBeforeEffects(t *testing.T) {
 				require.Greater(t, char.Cooldowns["special-move"], 0)
 				require.Equal(t, 1, char.RoundsWaiting())
 				require.True(t, char.HasBuff(result.selfBuffID))
-				require.True(t, char.HasBuff(result.selfBuffID))
+				require.Len(t, char.Buffs.List, 1, "a shout must apply exactly one buff record")
 				require.InDelta(t, 1.0+result.bonus, char.Buffs.Effect(tc.effectKind), 1e-9)
 				require.Equal(t, []string{string(skills.Rhetoric)}, actor.skillsUsed)
 			})
@@ -506,7 +506,7 @@ func TestTauntRallyWarcryPaidStaleCooldownPreservesEffects(t *testing.T) {
 			require.Empty(t, actor.skillsUsed)
 			if result.selfBuffID != 0 {
 				require.False(t, char.HasBuff(result.selfBuffID))
-				require.False(t, char.HasBuff(result.selfBuffID))
+				require.InDelta(t, 1.0, char.Buffs.Effect(tc.effectKind), 1e-9, "a refused shout must leave no magnitude behind")
 			}
 		})
 	}

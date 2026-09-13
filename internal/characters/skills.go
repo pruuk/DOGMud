@@ -71,6 +71,8 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
 	if minRounds > 0 {
 		c.Position.ConsumeRecoveryRound()
 		// Still in minimum recovery period — reduce attacks to 1 this round.
+		// The record's literal attacks_cap is the effect; the magnitude
+		// argument here is unused.
 		_ = c.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "prone recovery")
 		return false, false
 	}

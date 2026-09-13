@@ -85,7 +85,7 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				}
 				_ = memberUser.Character.AddBuffMagnitude(buffs.BuffIdWarcry, wd, 1.0+wb, "warcry")
 				// M1 audit defect: this fold loop is a copy of the primary
-				// party loop above that kept the one record and dropped the
+				// party loop above that kept the buff apply and dropped the
 				// line telling the member. Wording matches warcry.go's own
 				// member line, because what is being applied here IS a war cry.
 				memberUser.SendText(messaging.CategorySystem,
