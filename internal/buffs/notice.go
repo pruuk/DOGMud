@@ -32,6 +32,9 @@ func (b *BuffSpec) StartUserNotice() string {
 	if b.Secret {
 		return ""
 	}
+	if b.hasFlag(Quiet) {
+		return ""
+	}
 	if b.hasFlag(SilentStart) {
 		return ""
 	}
@@ -54,6 +57,9 @@ func (b *BuffSpec) StartUserNotice() string {
 // The player prune pass reads it instead of EndUserText.
 func (b *BuffSpec) EndUserNotice() string {
 	if b.Secret {
+		return ""
+	}
+	if b.hasFlag(Quiet) {
 		return ""
 	}
 	if b.hasFlag(Hidden) {

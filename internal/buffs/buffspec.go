@@ -97,6 +97,13 @@ const (
 	// is unaffected.
 	SilentStart Flag = `silent-start`
 
+	// Bleeding marks a bleed record: death cause reads it, as it reads Poison.
+	Bleeding Flag = `bleeding`
+	// Quiet marks a record that is listed but sends no start or end line,
+	// because it is reapplied every round it persists (prone recovery, the
+	// grapple exposure) and any line would repeat each round.
+	Quiet Flag = `quiet`
+
 	// Arbitrarily chosen round for calculating trigger round counts
 	validationRound = 1000000
 )
@@ -142,6 +149,8 @@ var AllFlags = []Flag{
 	ConditionMirror,
 	Dampened,
 	SilentStart,
+	Bleeding,
+	Quiet,
 }
 
 var (
@@ -181,6 +190,15 @@ type BuffSpec struct {
 	TickVariance     float64 `yaml:"tick_variance,omitempty"`      // Random variance added to percent
 	TickMin          int     `yaml:"tick_min,omitempty"`           // Minimum absolute tick amount (default 1)
 	StartRemoveBuffs []int   `yaml:"start_remove_buffs,omitempty"` // Buff IDs to remove when this buff starts
+
+	// Effects is the closed mechanical vocabulary combat reads through
+	// Buffs.Effect. See effects.go. A value is a number or the word
+	// "magnitude".
+	Effects map[EffectKind]EffectValue `yaml:"effects,omitempty"`
+	// TickFromMagnitude marks a tick record whose per-round amount is the
+	// applier's magnitude rather than tick_percent of a pool: the spell dot
+	// and bleed records. Requires tick_pool; forbids tick_percent.
+	TickFromMagnitude bool `yaml:"tick_from_magnitude,omitempty"`
 }
 
 // Calculates the value of this buff
@@ -284,6 +302,10 @@ func (b *BuffSpec) Validate() error {
 		return err
 	}
 
+	if err := b.validateEffects(); err != nil {
+		return err
+	}
+
 	// Validate tick fields
 	if b.TickPool != "" {
 		switch b.TickPool {
@@ -292,8 +314,10 @@ func (b *BuffSpec) Validate() error {
 		default:
 			return fmt.Errorf("buffId %d (%s) has invalid tick_pool %q (must be health/stamina/conviction)", b.BuffId, b.Name, b.TickPool)
 		}
-		if b.TickPercent == 0 {
-			mudlog.Warn("Buff.Validate", "buffId", b.BuffId, "warning", "tick_pool set but tick_percent is 0")
+		if !b.TickFromMagnitude {
+			if b.TickPercent == 0 {
+				mudlog.Warn("Buff.Validate", "buffId", b.BuffId, "warning", "tick_pool set but tick_percent is 0")
+			}
 		}
 	}
 

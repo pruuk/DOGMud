@@ -20,6 +20,12 @@ type Buff struct {
 	RoundCounter int `yaml:"roundcounter,omitempty"` // How many rounds have passed. Triggers on (RoundCounter%RoundInterval == 0)
 	TriggersLeft int `yaml:"triggersleft,omitempty"` // How many times it triggers
 	TickAmount   int `yaml:"tickamount,omitempty"`   // Snapshot: computed at application time, applied each trigger
+
+	// Magnitude is the per-instance strength the applier set. A spec effect
+	// whose value is the word "magnitude" reads it; a tick_from_magnitude
+	// record snapshots it into TickAmount. Zero means "no effect" for a
+	// multiplier and nothing for a flat; it is not a valid poison amount.
+	Magnitude float64 `yaml:"magnitude,omitempty"`
 }
 
 func (b *Buff) StatMod(statName string) int {
@@ -278,6 +284,35 @@ func (bs *Buffs) AddBuffScaled(buffId int, durationMult float64) bool {
 		return true
 	}
 	return false
+}
+
+// AddBuffMagnitude applies a record for an EXACT number of rounds with a
+// per-instance magnitude. It is the writer door for every record that used to
+// be a combat condition. rounds 0 means the spec's own triggercount. A held
+// record of the same id is refreshed and its magnitude, rounds and tick
+// snapshot overwritten, which is what AddCondition did. Returns false when
+// refused (poison immunity) or unknown.
+//
+// Rounds are an int on purpose: AddBuffScaled truncates float64(count) * mult,
+// and 3.3 * 10 is 32.999... in binary, so a multiplier would shorten some
+// durations by a round. The former conditions all computed an integer.
+func (bs *Buffs) AddBuffMagnitude(buffId int, rounds int, magnitude float64) bool {
+	if !bs.AddBuffScaled(buffId, 1.0) {
+		return false
+	}
+	idx, ok := bs.buffIds[buffId]
+	if !ok {
+		return false
+	}
+	if rounds > 0 {
+		bs.List[idx].TriggersLeft = rounds
+	}
+	bs.List[idx].Magnitude = magnitude
+	if spec := GetBuffSpec(buffId); spec != nil && spec.TickFromMagnitude {
+		// The magnitude IS the signed per-round amount: negative harms.
+		bs.List[idx].TickAmount = int(magnitude)
+	}
+	return true
 }
 
 // RefreshBuff tops a held buff's remaining triggers back up to the spec's

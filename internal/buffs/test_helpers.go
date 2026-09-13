@@ -10,3 +10,40 @@ func SeedBuffsForTest(buffMap map[int]*BuffSpec) func() {
 		buffs = orig
 	}
 }
+
+// SeedConditionRecordsForTest adds the condition records (79, 80, 117 to 123)
+// to whatever spec map is current, with exactly the shipped mechanical shape
+// (text omitted), and returns a cleanup that removes them again. Additive on
+// purpose: a package fixture that already seeded its own buffs keeps them.
+func SeedConditionRecordsForTest() func() {
+	mag := EffectValue{UsesMagnitude: true}
+	records := []*BuffSpec{
+		{BuffId: BuffIdWarcry, Name: "Warcry", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 25, Flags: []Flag{SilentStart}, Effects: map[EffectKind]EffectValue{EffectDamageMult: mag}},
+		{BuffId: BuffIdRally, Name: "Rally", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 25, Flags: []Flag{SilentStart}, Effects: map[EffectKind]EffectValue{EffectDefenseMult: mag}},
+		{BuffId: BuffIdOffBalance, Name: "Off Balance", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 1, Flags: []Flag{Quiet}, Effects: map[EffectKind]EffectValue{EffectDefenseMult: {Literal: 0.85}}},
+		{BuffId: BuffIdRecovering, Name: "Recovering", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 1, Flags: []Flag{Quiet}, Effects: map[EffectKind]EffectValue{EffectAttacksCap: {Literal: 1}}},
+		{BuffId: BuffIdMinorShield, Name: "Minor Shield", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 10, Flags: []Flag{SilentStart}, Effects: map[EffectKind]EffectValue{EffectMitigationFlat: mag}},
+		{BuffId: BuffIdRegenerating, Name: "Regenerating", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 10, Flags: []Flag{SilentStart}, Effects: map[EffectKind]EffectValue{EffectRegenMult: mag}},
+		{BuffId: BuffIdPoisoned, Name: "Poisoned", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 10, Flags: []Flag{Poison, SilentStart}, TickPool: "health", TickFromMagnitude: true},
+		{BuffId: BuffIdBleeding, Name: "Bleeding", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 10, Flags: []Flag{Bleeding, SilentStart}, TickPool: "health", TickFromMagnitude: true},
+		{BuffId: BuffIdEnchantWithdrawal, Name: "Enchant Withdrawal", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 10, Effects: map[EffectKind]EffectValue{EffectPoolMaxPct: mag}},
+	}
+	if buffs == nil {
+		buffs = map[int]*BuffSpec{}
+	}
+	replaced := map[int]*BuffSpec{}
+	for _, r := range records {
+		if old, ok := buffs[r.BuffId]; ok {
+			replaced[r.BuffId] = old
+		}
+		buffs[r.BuffId] = r
+	}
+	return func() {
+		for _, r := range records {
+			delete(buffs, r.BuffId)
+		}
+		for id, old := range replaced {
+			buffs[id] = old
+		}
+	}
+}
