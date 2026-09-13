@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -188,12 +189,9 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 					}
 				}
 
-				// ConditionRegen from heal spell — multiplier on base regen
-				if user.Character.HasCondition(characters.ConditionRegen) {
-					regenMult := user.Character.GetConditionMagnitude(characters.ConditionRegen)
-					if regenMult > 1.0 {
-						healthRegen *= regenMult
-					}
+				// Regenerating record from a heal spell: multiplier on base regen
+				if regenMult := user.Character.Buffs.Effect(buffs.EffectRegenMult); regenMult > 1.0 {
+					healthRegen *= regenMult
 				}
 
 				// Room multiplier applied last
@@ -203,18 +201,18 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				}
 				user.Character.Heal(healAmt)
 
-				// Emit tick feedback while a heal-spell ConditionRegen is active
+				// Emit tick feedback while a heal-spell Regenerating record is active
 				// so players get confirmation their mend-wounds (or similar) is working.
-				if user.Character.HasCondition(characters.ConditionRegen) {
+				if user.Character.Buffs.HasEffect(buffs.EffectRegenMult) {
 					user.SendText(messaging.CategorySpellVital, fmt.Sprintf(
 						`<ansi fg="green">Your wounds knit closed. (%s)</ansi>`,
 						combat.GetHealDescription(healAmt, user.Character.HealthMax.Value)))
 				}
 
 			} else {
-				// In combat: no base regen, but ConditionRegen (heal spell) still applies
-				if user.Character.HasCondition(characters.ConditionRegen) {
-					regenMult := user.Character.GetConditionMagnitude(characters.ConditionRegen)
+				// In combat: no base regen, but a Regenerating record (heal spell) still applies
+				if user.Character.Buffs.HasEffect(buffs.EffectRegenMult) {
+					regenMult := user.Character.Buffs.Effect(buffs.EffectRegenMult)
 					healAmt := int(math.Floor(float64(user.Character.HealthPerRound()) * toxRegenMult * regenMult * regenMultiplier))
 					if healAmt < 1 {
 						healAmt = 1
@@ -329,15 +327,12 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		mobInCombat := mob.Character.IsInCombat()
 		mobRegenMult := roomRegenMultiplier(rooms.LoadRoom(mob.Character.RoomId))
 
-		// Health regen (out of combat only, unless heal-spell ConditionRegen)
+		// Health regen (out of combat only, unless a heal-spell Regenerating record)
 		if !mobInCombat {
 			hpRegen := float64(mob.Character.HealthPerRound())
-			// ConditionRegen acts as a multiplier on base regen
-			if mob.Character.HasCondition(characters.ConditionRegen) {
-				regenMult := mob.Character.GetConditionMagnitude(characters.ConditionRegen)
-				if regenMult > 1.0 {
-					hpRegen *= regenMult
-				}
+			// Regenerating record acts as a multiplier on base regen
+			if regenMult := mob.Character.Buffs.Effect(buffs.EffectRegenMult); regenMult > 1.0 {
+				hpRegen *= regenMult
 			}
 			hpRegen *= mobRegenMult
 			hpAmt := int(math.Floor(hpRegen))
@@ -346,9 +341,9 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			}
 			mob.Character.ApplyRestore(characters.PoolHealth, hpAmt)
 		} else {
-			// In combat: only ConditionRegen applies
-			if mob.Character.HasCondition(characters.ConditionRegen) {
-				regenMult := mob.Character.GetConditionMagnitude(characters.ConditionRegen)
+			// In combat: only the Regenerating record applies
+			if mob.Character.Buffs.HasEffect(buffs.EffectRegenMult) {
+				regenMult := mob.Character.Buffs.Effect(buffs.EffectRegenMult)
 				hpAmt := int(math.Floor(float64(mob.Character.HealthPerRound()) * regenMult * mobRegenMult))
 				if hpAmt < 1 {
 					hpAmt = 1

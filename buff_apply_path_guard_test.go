@@ -137,6 +137,13 @@ var buffApplyPathAllowlist = map[string]string{
 	// ── former combat condition: Minor Shield is now one record (Task 6) ────
 	"internal/hooks/spell_resolution.go|1165": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
 	"internal/hooks/spell_resolution.go|1521": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
+
+	// ── former combat condition: Regenerating is now one record (Task 7) ────
+	"internal/hooks/spell_resolution.go|841":  "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/hooks/spell_resolution.go|1062": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/hooks/spell_resolution.go|1482": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/mobcommands/consume.go|46":      "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/mobcommands/consume.go|55":      "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 }
 
 // primitivePackages define Character.AddBuff / Buffs.AddBuff themselves, so

@@ -100,5 +100,11 @@ func TestShippedConditionRecordsMatchTestHelperShape(t *testing.T) {
 		if got.RoundInterval != want.RoundInterval {
 			t.Errorf("buff %d: RoundInterval = %d, want %d", id, got.RoundInterval, want.RoundInterval)
 		}
+		if got.EndUserText != want.EndUserText {
+			t.Errorf("buff %d: EndUserText = %q, want %q", id, got.EndUserText, want.EndUserText)
+		}
+		if got.EndRoomText != want.EndRoomText {
+			t.Errorf("buff %d: EndRoomText = %q, want %q", id, got.EndRoomText, want.EndRoomText)
+		}
 	}
 }

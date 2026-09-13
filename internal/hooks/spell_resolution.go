@@ -811,7 +811,7 @@ func applyMobEffect_buff(
 // exist: applyMobEffect's switch only handled damage/dot/knockdown/buff, so
 // a mob-to-mob (or player-to-companion) "heal" cast silently fell through to
 // applyMobEffect_default and did nothing. Mirrors applyMobSelfEffect's
-// "heal" case (percentage-of-max regen via ConditionRegen) but targets
+// "heal" case (percentage-of-max regen via the Regenerating record) but targets
 // `mob` instead of the caster. Returns 0 (no damage dealt) to match the
 // applyMobEffect_* int-return convention.
 func applyMobEffect_heal(
@@ -838,7 +838,7 @@ func applyMobEffect_heal(
 	if durationRounds < 6 {
 		durationRounds = 6
 	}
-	mob.Character.AddCondition(characters.ConditionRegen, durationRounds, regenMult, "heal spell")
+	_ = mob.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, durationRounds, regenMult, "heal spell")
 	sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
 		`<ansi fg="cyan">%s</ansi>'s %s washes over %s, knitting wounds shut.`,
 		casterName, spellData.Name, mName))
@@ -1059,7 +1059,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 		if durationRounds < 6 {
 			durationRounds = 6
 		}
-		target.Character.AddCondition(characters.ConditionRegen, durationRounds, regenMult, "heal spell")
+		_ = target.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, durationRounds, regenMult, "heal spell")
 		if target.UserId != user.UserId {
 			messaging.SendTrio(messaging.Trio{
 				Actor: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
@@ -1479,7 +1479,7 @@ func applyMobSelfEffect(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spell
 		if durationRounds < 6 {
 			durationRounds = 6
 		}
-		mob.Character.AddCondition(characters.ConditionRegen, durationRounds, regenMult, "heal spell")
+		_ = mob.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, durationRounds, regenMult, "heal spell")
 		sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
 			`%s channels restorative magic.`, mobDisplayName(mob, room, 0)))
 	case "buff":

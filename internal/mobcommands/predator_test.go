@@ -75,12 +75,13 @@ func TestConsume_NoCorpses(t *testing.T) {
 	assert.NoError(t, err)
 
 	// No condition applied when nothing to eat
-	assert.False(t, mob.Character.HasCondition(characters.ConditionRegen))
+	assert.False(t, mob.Character.HasBuff(buffs.BuffIdRegenerating))
 }
 
 func TestConsume_EatsCorpseAndAppliesRegen(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	mob, room := getTestMobAndRoom(t)
 
@@ -99,15 +100,16 @@ func TestConsume_EatsCorpseAndAppliesRegen(t *testing.T) {
 	// Corpse should be removed
 	assert.Empty(t, room.Corpses)
 
-	// Mob should have ConditionRegen
-	assert.True(t, mob.Character.HasCondition(characters.ConditionRegen))
-	assert.Equal(t, 2.0, mob.Character.GetConditionMagnitude(characters.ConditionRegen))
-	assert.Equal(t, 6, mob.Character.GetConditionDuration(characters.ConditionRegen))
+	// Mob should have the Regenerating record
+	assert.True(t, mob.Character.HasBuff(buffs.BuffIdRegenerating))
+	assert.InDelta(t, 2.0, mob.Character.Buffs.Effect(buffs.EffectRegenMult), 1e-9)
+	assert.Equal(t, 6, mob.Character.Buffs.TriggersLeft(buffs.BuffIdRegenerating))
 }
 
 func TestConsume_SkipsPrunableCorpses(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	mob, room := getTestMobAndRoom(t)
 
@@ -132,7 +134,7 @@ func TestConsume_SkipsPrunableCorpses(t *testing.T) {
 	// Only the prunable one should remain
 	assert.Len(t, room.Corpses, 1)
 	assert.Equal(t, "Old Bones", room.Corpses[0].Character.Name)
-	assert.True(t, mob.Character.HasCondition(characters.ConditionRegen))
+	assert.True(t, mob.Character.HasBuff(buffs.BuffIdRegenerating))
 }
 
 func TestConsume_AllPrunable(t *testing.T) {
@@ -154,7 +156,7 @@ func TestConsume_AllPrunable(t *testing.T) {
 
 	// Nothing consumed — all prunable
 	assert.Len(t, room.Corpses, 1)
-	assert.False(t, mob.Character.HasCondition(characters.ConditionRegen))
+	assert.False(t, mob.Character.HasBuff(buffs.BuffIdRegenerating))
 }
 
 // ─── Flee ───────────────────────────────────────────────────────────────────

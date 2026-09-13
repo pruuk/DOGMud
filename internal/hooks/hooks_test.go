@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"math"
 	"os"
 	"testing"
 
@@ -935,6 +936,50 @@ func TestAutoHeal_MobSkipsIfDead(t *testing.T) {
 	assert.Equal(t, 0, mob.Character.Health, "dead mob should not regen")
 }
 
+func TestAutoHeal_RegeneratingRecordMultipliesOutOfCombatRegen(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u1 := users.GetByUserId(1)
+	u1.Character.EndAggro() // out of combat: base %-regen applies
+
+	// AddBuffMagnitude (below) calls Validate(), which recomputes
+	// HealthMax.Value from Base + Training + Mods. Seed a large Base up
+	// front and validate once so both measurements below read the same
+	// HealthMax the hook itself will see.
+	u1.Character.HealthMax.Base = 10000
+	require.NoError(t, u1.Character.Validate())
+	baseRegen := u1.Character.HealthPerRound()
+	require.Greater(t, baseRegen, 0)
+
+	u1.Character.Health = 10
+	drainPlain(1) // clear the queue before measuring
+
+	result := AutoHeal(events.NewRound{RoundNumber: 3})
+	require.Equal(t, events.Continue, result)
+	firstHeal := u1.Character.Health - 10
+	assert.Equal(t, baseRegen, firstHeal, "no Regenerating record: heal equals the base regen amount")
+
+	firstLines := drainPlain(1)
+	assert.Equal(t, 0, countContaining(firstLines, "Your wounds knit closed."),
+		"no tick text without an active Regenerating record")
+
+	u1.Character.Health = 10
+	require.NoError(t, u1.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, 5, 3.0, "test"))
+
+	result = AutoHeal(events.NewRound{RoundNumber: 6})
+	require.Equal(t, events.Continue, result)
+	secondHeal := u1.Character.Health - 10
+	expected := int(math.Floor(float64(baseRegen) * 3.0))
+	assert.Equal(t, expected, secondHeal, "Regenerating record must multiply the base regen by its magnitude")
+	assert.Equal(t, 3*firstHeal, secondHeal)
+
+	secondLines := drainPlain(1)
+	assert.Equal(t, 1, countContaining(secondLines, "Your wounds knit closed."),
+		"tick feedback fires exactly once while the Regenerating record is active")
+}
+
 // ─── ApplyBuffs ───────────────────────────────────────────────────────────────
 
 func TestApplyBuffs_WrongEventType(t *testing.T) {
@@ -1089,17 +1134,6 @@ func TestMinorShieldRecordExpiresOnceAndNarratesItsEnd(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	defer buffs.SeedConditionRecordsForTest()()
-
-	// SeedConditionRecordsForTest seeds the Minor Shield record with the
-	// shipped mechanical shape but omits authored text (see its doc comment).
-	// Give it the real end text from
-	// _datafiles/world/dogmud/buffs/119-minor_shield.yaml here so the
-	// assertion below pins the shipped copy, not the generic "<Name> has
-	// expired." fallback that EndUserNotice would otherwise produce.
-	shieldSpec := buffs.GetBuffSpec(buffs.BuffIdMinorShield)
-	require.NotNil(t, shieldSpec)
-	shieldSpec.EndUserText = "Your Minor Shield dissipates."
-	shieldSpec.EndRoomText = "{source}'s Minor Shield dissipates."
 
 	u := users.GetByUserId(1)
 	require.NotNil(t, u)
@@ -1713,6 +1747,7 @@ func TestMobRoundTick_TicksMinorShieldRecord(t *testing.T) {
 
 	// The record should still exist but its trigger count decremented.
 	assert.True(t, mob.Character.HasBuff(buffs.BuffIdMinorShield))
+	assert.Equal(t, 2, mob.Character.Buffs.TriggersLeft(buffs.BuffIdMinorShield))
 }
 
 // ─── ApplyMoonMods ────────────────────────────────────────────────────────────

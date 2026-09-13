@@ -3,7 +3,7 @@ package mobcommands
 import (
 	"fmt"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -43,7 +43,7 @@ func Consume(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	if isGolem {
 		// Flesh golems graft fallen flesh onto themselves — stronger and longer regen.
-		mob.Character.AddCondition(characters.ConditionRegen, 10, 3.0, "grafted corpse")
+		_ = mob.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, 10, 3.0, "grafted corpse")
 		room.SendTextVisual(messaging.CategoryMobIdle,
 			fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> rips a piece from the fallen <ansi fg="mob-corpse">%s</ansi> and grafts it onto itself! Its form grows more massive.`,
@@ -52,7 +52,7 @@ func Consume(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		)
 	} else {
 		// Standard consume: magnitude 2.0 (2x base regen) for 6 rounds
-		mob.Character.AddCondition(characters.ConditionRegen, 6, 2.0, "consumed corpse")
+		_ = mob.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, 6, 2.0, "consumed corpse")
 		room.SendTextVisual(messaging.CategoryMobIdle,
 			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> tears into a corpse and feeds greedily!`, mob.Character.Name),
 		)
