@@ -270,19 +270,20 @@ func tickMobBuffs(mob *mobs.Mob, mobInstanceId int) {
 			// Trigger text. The player round tick has always sent it; this mob
 			// tick never did, so a mob holding a trigger-text buff showed
 			// nothing. Room line only, because a mob has no client. Visual,
-			// because the text describes what the room sees. An expired buff is
-			// skipped, matching the player tick. Same shape as the mob branch of
+			// because the text describes what the room sees. Sent on every
+			// trigger, including the expiring one (whole-branch review,
+			// slice 1): PruneBuffs' end narration is a separate, later line
+			// for the record's close, not a substitute for the trigger text
+			// on a one-trigger record. Same shape as the mob branch of
 			// PruneBuffs, so the line gets the same buff colour.
-			if !buff.Expired() {
-				if trigSpec := buffs.GetBuffSpec(buff.BuffId); trigSpec != nil && len(trigSpec.Narration(buffs.PhaseTrigger).Observer) > 0 {
-					if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-						roles := trigSpec.Narrate(buffs.PhaseTrigger, textutil.TokenContext{
-							SourceName:      mobDisplayName(mob, room, 0),
-							SourcePlainName: mob.Character.GetCharacterName(false),
-						})
-						if roles.Observer != "" {
-							room.SendTextVisual(messaging.CategoryBuffApply, roles.Observer)
-						}
+			if trigSpec := buffs.GetBuffSpec(buff.BuffId); trigSpec != nil && len(trigSpec.Narration(buffs.PhaseTrigger).Observer) > 0 {
+				if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+					roles := trigSpec.Narrate(buffs.PhaseTrigger, textutil.TokenContext{
+						SourceName:      mobDisplayName(mob, room, 0),
+						SourcePlainName: mob.Character.GetCharacterName(false),
+					})
+					if roles.Observer != "" {
+						room.SendTextVisual(messaging.CategoryBuffApply, roles.Observer)
 					}
 				}
 			}

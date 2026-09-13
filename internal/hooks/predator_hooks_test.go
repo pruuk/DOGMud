@@ -68,6 +68,11 @@ func TestRoundTick_BleedDamagesPlayer(t *testing.T) {
 	// Round 3: RoundCounter reaches 3, the first of six triggers lands.
 	UserRoundTick(events.NewRound{RoundNumber: 3})
 	assert.Equal(t, 35, u.Character.Health, "the first trigger should land on round 3")
+	// Whole-branch review (slice 1): the trigger text lands whenever the
+	// tick fires, including a record's final trigger; pin the bleed case
+	// alongside the poison one so the flavour line has coverage here too.
+	assert.Equal(t, 1, countContaining(drainPlain(1), "Blood seeps from your wounds!"),
+		"the third-round trigger sends the bleed flavour line")
 
 	// RoundCounter is 4, not a multiple of 3; a fourth round tick must not
 	// re-trigger it yet.

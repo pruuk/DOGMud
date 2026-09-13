@@ -271,10 +271,11 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 
 						trigBuffSpec := buffs.GetBuffSpec(buff.BuffId)
 
-						// Send YAML trigger text (if defined) — but not on the
-						// buff's final, expiring trigger; PruneBuffs' own end
-						// narration covers that moment instead. Matches the
-						// mob round tick's tickMobBuffs, which gates its own
+						// Send YAML trigger text (if defined), including on
+						// the buff's final, expiring trigger. PruneBuffs'
+						// own end narration still follows as a separate
+						// line for the record's close. Matches the mob
+						// round tick's tickMobBuffs, which narrates its own
 						// trigger text the same way.
 						//
 						// Bug found migrating Bleeding to a record (slice 1,
@@ -289,8 +290,19 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						// produces for every ordinary Bleeding duration —
 						// never applied its one and only tick. tickMobBuffs
 						// never had this defect: it always applies TickAmount
-						// and only gates the flavor text on Expired().
-						if !buff.Expired() && trigBuffSpec != nil && trigBuffSpec.Narration(buffs.PhaseTrigger).Len() > 0 {
+						// and always narrates the flavor text too.
+						//
+						// Whole-branch review (slice 1): the text was still
+						// gated on !Expired() even after the harm/restore fix
+						// above, so a one-trigger record (every combat bleed
+						// producer passes TickTriggers 3, 4 or 5, all of which
+						// return 1) applied its harm silently and only the
+						// prune pass's end line was ever seen. The harm AND
+						// the text now land on every trigger, including the
+						// expiring one; the prune pass's end line follows as
+						// the intended second line, not a replacement for the
+						// first.
+						if trigBuffSpec != nil && trigBuffSpec.Narration(buffs.PhaseTrigger).Len() > 0 {
 							roles := trigBuffSpec.Narrate(buffs.PhaseTrigger, textutil.TokenContext{
 								SourceName:      user.Character.GetCharacterName(true),
 								SourcePlainName: user.Character.GetCharacterName(false),

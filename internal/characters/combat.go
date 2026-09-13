@@ -119,8 +119,8 @@ func (c *Character) CalculateUnarmedDamage() (baseDamage float64, variance float
 	//     baseDamage += 5.0  // Flat +5 damage bonus
 	// }
 	//
-	// if c.Buffs.HasFlag(buffs.Weakened, false) {
-	//     baseDamage *= 0.7  // Weakened: -30% damage
+	// if c.Buffs.HasFlag(someFlag, false) {
+	//     baseDamage *= 0.7  // a weakening flag: -30% damage
 	// }
 	//
 	// if c.HasMutation("razor-claws") {

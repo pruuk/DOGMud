@@ -161,7 +161,7 @@ func (c *Character) AddBuffMagnitude(buffId int, triggers int, magnitude float64
 	for _, b := range c.Buffs.GetBuffs(buffId) {
 		b.Source = source
 	}
-	c.Validate()
+	_ = c.Validate()
 	return nil
 }
 

@@ -935,13 +935,13 @@ func TestRoundTick_PoisonDamage(t *testing.T) {
 	assert.Equal(t, 75, u1.Character.Health, "the third round lands the one tick this record carries")
 	// This 1-trigger record's only trigger also expires it: Buffs.Trigger
 	// decrements TriggersLeft to 0 before UserRoundTick reads
-	// buff.Expired(), so the tick_pool harm still applies (the Task 9 fix:
-	// harm is gated on the tick, never on expiry) but the flavour line is
-	// gated on !Expired() and is skipped. TestRoundTick_PoisonDamage_
-	// TriggerLineOnNonFinalTick below pins the line on a trigger that is
-	// not also the last one.
-	assert.Equal(t, 0, countContaining(drainPlain(1), "The poison burns through your veins!"),
-		"the final, expiring trigger applies harm but sends no flavour line")
+	// buff.Expired(). Whole-branch review (slice 1): both the tick_pool
+	// harm and the flavour line land on this trigger; only PruneBuffs' end
+	// line is gated on expiry. TestRoundTick_PoisonDamage_
+	// TriggerLineOnNonFinalTick below pins the same line on a trigger that
+	// is not also the last one.
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"the final, expiring trigger applies harm and still sends the flavour line")
 
 	// Cross-hook pin: NewRound_AutoHeal.go's hand-rolled poison block was
 	// deleted in Task 8 (the record's own tick path in UserRoundTick now
@@ -960,10 +960,11 @@ func TestRoundTick_PoisonDamage(t *testing.T) {
 }
 
 // TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick pins the flavour line
-// half of the same Task 9 fix: a 2-trigger record's FIRST trigger (round 3)
-// is not the one that expires it, so the line sends; its second trigger
-// (round 6) both lands the harm and expires the record, so the line does not
-// send a second time.
+// half of the Task 9 fix, updated by the whole-branch review (slice 1): a
+// 2-trigger record's FIRST trigger (round 3) is not the one that expires it,
+// so the line sends; its second trigger (round 6) both lands the harm and
+// expires the record, and the line sends again on that trigger too, since
+// the text is no longer gated on expiry.
 func TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -985,15 +986,18 @@ func TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick(t *testing.T) {
 
 	UserRoundTick(events.NewRound{RoundNumber: 6})
 	assert.Equal(t, 70, u1.Character.Health, "the second trigger lands the harm and expires the record")
-	assert.Equal(t, 0, countContaining(drainPlain(1), "The poison burns through your veins!"),
-		"the final, expiring trigger sends no flavour line")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"the final, expiring trigger still sends the flavour line")
 }
 
-// TestRoundTick_TriggerLineSkippedOnExpiringTick is the ONE-trigger sibling
+// TestRoundTick_TriggerLineLandsOnExpiringTick is the ONE-trigger sibling
 // of TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick: a record whose
-// only trigger is also its last must still land the harm, but must not send
-// the flavour line on that same, already-expiring tick.
-func TestRoundTick_TriggerLineSkippedOnExpiringTick(t *testing.T) {
+// only trigger is also its last must land both the harm and the flavour
+// line on that same, already-expiring tick. Whole-branch review (slice 1):
+// this used to assert the line was skipped, which meant a mauled player
+// took a silent tick and read only the record's end line; the trigger text
+// and the harm now land together on every trigger.
+func TestRoundTick_TriggerLineLandsOnExpiringTick(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	defer buffs.SeedConditionRecordsForTest()()
@@ -1008,8 +1012,8 @@ func TestRoundTick_TriggerLineSkippedOnExpiringTick(t *testing.T) {
 		UserRoundTick(events.NewRound{RoundNumber: round})
 	}
 	assert.Equal(t, 75, u1.Character.Health, "the record's one trigger lands the harm on round 3")
-	assert.Equal(t, 0, countContaining(drainPlain(1), "The poison burns through your veins!"),
-		"the expiring, one-and-only trigger sends no flavour line")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"the expiring, one-and-only trigger still sends the flavour line")
 }
 
 // TestDotProducerRecordsNegativeHarm_MobTarget pins the sign of the mob-target

@@ -803,9 +803,13 @@ func (bs *Buff) Name() string {
   `Character.AddBuff` / `Character.AddBuffScaled` apply in place and queue
   nothing, so `Buff_ApplyBuffs` never runs and no notice reaches the holder.**
   The multiplier rides on `events.Buff.DurationMult`, so a scaled application
-  takes the same door. The root guard `buff_apply_path_guard_test.go` fails the
-  build on any direct character-level add under `internal/usercommands` or
-  `internal/actions` that is not in its allowlist with a reason.
+  takes the same door. The root guard `buff_apply_path_guard_test.go` walks
+  all of `internal/` and `modules/` except the primitive packages
+  (`internal/buffs`, `internal/characters`, which define the primitive being
+  called) and fails the build on any direct character-level add outside them
+  that is not in its allowlist with a reason; the three prone-recovery
+  `AddBuffMagnitude` producers inside `internal/characters/skills.go` are
+  exempted by that package-level carve-out, not individually allowlisted.
 - **Every non-secret buff in the dogmud world must carry authored
   `start_user_text` (unless `silent-start`) AND `end_user_text` (unless
   `hidden`), and a secret buff must carry no player text.** The root guard `buff_notice_guard_test.go` fails the build

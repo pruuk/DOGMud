@@ -239,6 +239,27 @@ dead blinded readers, the duplicate poison immunity check.
     put `ConditionType.DisplayName()` there; a client switching on `type` to
     identify a condition must stop.
 
+Recorded by the whole-branch review (2026-09-12), not called out above when
+each landed:
+
+(a) A player's Minor Shield end now also sends the room line
+    (`end_room_text`); the deleted combat-decay helper sent a user line only.
+(b) The two quiet penalties' displayed names changed from "Defense
+    Penalty"/"Recovery Penalty" to "Off Balance" (117) and "Recovering" (118).
+(c) `Char.Conditions` changed from a JSON array to a name-keyed map carrying
+    the same keys `Char.Affects` used; a third-party client iterating it as
+    an array breaks.
+(d) `GetDurations` now reads the instance (`buff.TriggersLeft`) for EVERY
+    buff, not only former conditions, so any record applied with a
+    non-default trigger count (a scaled potion, a spell buff) shows a
+    different remaining duration than the spec's authored `TriggerCount`
+    would have reported.
+(e) `messaging.CategoryToxin` has no sender left; its ansi alias ("toxin")
+    and channel setting are inert now that the poison and bleed tick lines
+    ride `CategoryBuffApply` (change 6 above).
+(f) The trigger line lands on every tick, including the last one that also
+    expires the record (this commit; see the execution findings below).
+
 Everything else is number-identical, and the equivalence test proves it.
 
 ### Findings recorded while planning (2026-09-12)
@@ -292,19 +313,41 @@ Seven things the plan did not know. Each one changed the work.
   fraction against a floor of 1. Seed `.Base`.
 - 🪤 **The apply-path guard cannot see the prone recovery producers.**
   `buffAddCallPattern`'s `primitivePackages` exempts `internal/characters`
-  wholesale, because that is where `Character.AddBuff` is defined; the two
+  wholesale, because that is where `Character.AddBuff` is defined; the three
   `AddBuffMagnitude(BuffIdRecovering, ...)` calls in
-  `internal/characters/skills.go` sit inside that exemption and are therefore
-  neither reported nor allowlisted. The guard was taught to tell the character
-  door from the user door by method name during this slice, but the package
-  exemption still stands and is the reason those two sites are invisible to
-  it. Not a defect introduced here; worth knowing before trusting its
-  allowlist as a complete census of direct adds.
+  `internal/characters/skills.go` (lines 76, 99, 103) sit inside that
+  exemption and are therefore neither reported nor allowlisted. The guard was
+  taught to tell the character door from the user door by method name during
+  this slice, but the package exemption still stands and is the reason those
+  three sites are invisible to it. Not a defect introduced here; worth
+  knowing before trusting its allowlist as a complete census of direct adds.
+  The whole-branch review corrected the guard's own header comment to say so
+  explicitly rather than implying every producer is hand-allowlisted.
 - 🔑 **`AddBuffMagnitude`'s second argument counts TRIGGERS, not rounds.** It
   is assigned straight to `TriggersLeft`. For a one-round-interval record the
   two coincide, which is why the plan's "exact rounds" wording survived
   review; for the three-round dot and bleed it is a 3x error. Renamed
   throughout, with `events.Buff.Rounds` becoming `events.Buff.Triggers`.
+
+### Findings recorded by the whole-branch review (2026-09-12)
+
+- 🐛 **The Task 9 text gate silenced every one-trigger bleed.** Task 9 fixed
+  the harm half of the final-trigger hole (finding above) but left the
+  flavour text gated on `!buff.Expired()`. `buffs.TickTriggers(rounds)`
+  returns 1 for every `rounds` under 6, and every combat bleed producer
+  passes 3, 4 or 5, so a mauled player took a silent tick and read only the
+  record's end line ("Your wounds stop bleeding.") with no "Blood seeps from
+  your wounds!" ever shown. Fixed by dropping the expiry gate from the text
+  condition in both `NewRound_UserRoundTick.go` and
+  `NewRound_MobRoundTick.go`, so the trigger line lands whenever the tick
+  fires and the end line still follows as its own, later line.
+- 🐛 **The disenchant start line was undelivered.** Record 123 (Enchant
+  Withdrawal) carries `start_user_text`, but `Disenchant` applies it through
+  `Character.AddBuffMagnitude`, which is synchronous and never travels
+  `events.Buff`, so `Buff_ApplyBuffs`' start notice never ran and the line
+  reached no one. Fixed by having `Disenchant` render and send the line
+  itself through `buffs.AuthoredStartLine`, the same door sleep (15), arrest
+  (88), stun (84) and broken limb (83) already use for the same reason.
 
 ## The net
 

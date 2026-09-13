@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -2672,6 +2673,7 @@ func TestDisenchant(t *testing.T) {
 		user.Character.StoreItem(enchantedSword)
 		defer user.Character.RemoveItem(enchantedSword)
 
+		events.DrainQueuedMessagesForTest(user.UserId)
 		handled, err := Disenchant("iron sword", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
@@ -2680,6 +2682,14 @@ func TestDisenchant(t *testing.T) {
 		require.Len(t, held, 1, "disenchant must leave exactly one held withdrawal record")
 		assert.Equal(t, "stamina", held[0].Source, "the withdrawal record's Source must be the item's reserve pool")
 		assert.InDelta(t, 0.05, held[0].Magnitude, 0.0001, "the withdrawal record's Magnitude must equal the seeded reserve fraction")
+
+		// Whole-branch review (slice 1): AddBuffMagnitude applies synchronously
+		// and never travels events.Buff, so ApplyBuffs' start notice never
+		// fired for this record; the line reached no one. Disenchant now
+		// renders it itself through buffs.AuthoredStartLine.
+		sent := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "")
+		assert.Contains(t, sent, "The severed bond leaves a hollow in you that will take time to fill.",
+			"the withdrawal record's start line must reach the user")
 	})
 }
 

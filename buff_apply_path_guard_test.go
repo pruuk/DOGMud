@@ -77,9 +77,16 @@ var (
 // silent character door from the event-queuing user door apart the way it
 // does for AddBuff/AddBuffScaled; isEventPathCall reads every AddBuffMagnitude
 // call as a direct add, the safe reading, and every former-condition producer
-// site is allowlisted by hand with a reason worded like "former combat
-// condition (warcry/rally): silent-start record, the shout narrates; must
-// apply synchronously so the fan-out and the same-round combat read it".
+// site OUTSIDE the primitive packages is allowlisted by hand with a reason
+// worded like "former combat condition (warcry/rally): silent-start record,
+// the shout narrates; must apply synchronously so the fan-out and the
+// same-round combat read it". The allowlist below is a census of producers
+// outside primitivePackages, not of every producer: primitivePackages exempts
+// internal/characters wholesale (it defines the primitive being called), so
+// the three former-condition producers inside it, the prone-recovery
+// AddBuffMagnitude(buffs.BuffIdRecovering, ...) calls in
+// internal/characters/skills.go (lines 76, 99, 103), never reach this walk
+// and carry no allowlist entry.
 var buffApplyPathAllowlist = map[string]string{
 	// ── The sanctioned consumer of the event ────────────────────────────────
 	"internal/hooks/Buff_ApplyBuffs.go|87": "this IS the hook the event feeds; it is where every routed buff is finally applied",
@@ -104,7 +111,7 @@ var buffApplyPathAllowlist = map[string]string{
 	"internal/usercommands/rally.go|114":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
 
 	// ── former combat condition: enchant withdrawal ─────────────────────────
-	"internal/usercommands/skill.disenchant.go|71": "former combat condition (withdrawal): the disenchant command narrates; must apply synchronously so Validate clamps the pool now",
+	"internal/usercommands/skill.disenchant.go|72": "former combat condition (withdrawal): the disenchant command narrates; must apply synchronously so Validate clamps the pool now",
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
 	"internal/usercommands/character.go|413":     "the holder is a MOB (m.Character), and buff 99 is a perma-gear pin, not something a player reads",
@@ -161,7 +168,7 @@ var buffApplyPathAllowlist = map[string]string{
 	"internal/actions/combat_maul.go|132":      "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_rake.go|132":      "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_throttle.go|144":  "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/hooks/item_procs.go|214":         "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/hooks/item_procs.go|214":         "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
 }
 
 // primitivePackages define Character.AddBuff / Buffs.AddBuff themselves, so

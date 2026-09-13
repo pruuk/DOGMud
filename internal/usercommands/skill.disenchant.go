@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -69,6 +70,21 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	// magnitude we pass here. AddBuffMagnitude validates synchronously, so the
 	// pool clamp lands before this command returns.
 	_ = user.Character.AddBuffMagnitude(buffs.BuffIdEnchantWithdrawal, penaltyRounds, reservePct, reservePool)
+
+	// AddBuffMagnitude applies synchronously and never travels events.Buff, so
+	// ApplyBuffs' start notice never fires for this record; same reason sleep
+	// (15), arrest (88), stun (84) and broken limb (83) read their own start
+	// line through AuthoredStartLine instead. Render and send record 123's
+	// here, the same door those sites use.
+	if withdrawalSpec := buffs.GetBuffSpec(buffs.BuffIdEnchantWithdrawal); withdrawalSpec != nil {
+		line := withdrawalSpec.AuthoredStartLine(textutil.TokenContext{
+			SourceName:      user.Character.GetCharacterName(true),
+			SourcePlainName: user.Character.GetCharacterName(false),
+		})
+		if line != "" {
+			user.SendText(messaging.CategoryBuffApply, line)
+		}
+	}
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="magenta">You pry the Chrysalis free. It comes away screaming — a `+
 		`soundless wail that reverberates through your bones. The item `+
