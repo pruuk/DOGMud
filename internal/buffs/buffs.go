@@ -293,7 +293,7 @@ func (bs *Buffs) AddBuffScaled(buffId int, durationMult float64) bool {
 // per-instance magnitude. It is the writer door for every record that used to
 // be a combat condition. triggers 0 means the spec's own triggercount. A held
 // record of the same id is refreshed and its magnitude, triggers and tick
-// snapshot overwritten, which is what AddCondition did. Returns false when
+// snapshot overwritten, which is what the old condition add did. Returns false when
 // refused (poison immunity) or unknown.
 //
 // triggers is the exact trigger count, not a duration in rounds: for a

@@ -119,7 +119,7 @@ func (c *Character) CalculateUnarmedDamage() (baseDamage float64, variance float
 	//     baseDamage += 5.0  // Flat +5 damage bonus
 	// }
 	//
-	// if c.HasCondition("weakened") {
+	// if c.Buffs.HasFlag(buffs.Weakened, false) {
 	//     baseDamage *= 0.7  // Weakened: -30% damage
 	// }
 	//
@@ -288,10 +288,13 @@ func (c *Character) GetDefenseScoreFor(defenseType string, includeSkill bool) fl
 			unarmedSkill = float64(c.GetSkillLevel(skills.UnarmedCombat)) * skillWeight
 		}
 		score := dex + unarmedSkill + mutations.GetDodgeModifier(c.Mutations)
-		// Phase 24.5: Blinded condition reduces dodge
-		if c.HasCondition(ConditionBlinded) {
-			score *= c.GetConditionMagnitude(ConditionBlinded) // magnitude is 0.5–0.7 = penalty multiplier
-		}
+		// The `dodge_mult` vocabulary key has its reader here even though no
+		// shipped record declares it: Effect is a product with identity 1.0, so
+		// an absent producer leaves the score untouched. This replaced the
+		// blinded combat condition, which multiplied dodge by 0.5-0.7 but had
+		// no producer either — the enum is gone, the seam stays, and a future
+		// record that wants to blur dodge declares `dodge_mult` and is read.
+		score *= c.Buffs.Effect(buffs.EffectDodgeMult)
 		return score
 
 	case DefenseParry:

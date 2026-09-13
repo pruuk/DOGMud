@@ -114,10 +114,10 @@ func TestPin_WithdrawalOnStaminaAndConviction(t *testing.T) {
 }
 
 // TestPin_ASecondWithdrawalReplacesTheFirst used to pin a condition-list
-// quirk: the old enum path iterated c.Conditions and broke after the first
-// entry whose Type was ConditionEnchantWithdrawal, so a second entry
-// appended directly to that slice was silently ignored (AddCondition itself
-// never produced two live entries; only a direct append could). That
+// quirk: the old enum path iterated the condition slice and broke after the
+// first enchant-withdrawal entry, so a second entry appended directly to that
+// slice was silently ignored (the enum's own writer never produced two live
+// entries; only a direct append could). That
 // history is gone now that withdrawal is buff record 123: a Buffs list
 // holds one entry per buff id, and AddBuffMagnitude on a held id refreshes
 // it in place (buffs.go's AddBuffScaled early-return branch), overwriting

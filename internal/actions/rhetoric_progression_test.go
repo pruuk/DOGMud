@@ -400,7 +400,6 @@ func TestTauntPaidMovedTargetPreservesEffectsAndEngagement(t *testing.T) {
 	target.SetRoundsWaiting(8)
 	targetAggro := target.CurrentCombatTarget()
 	targetConviction := target.Conviction
-	targetConditions := len(target.Conditions)
 	targetBuffs := len(target.Buffs.GetBuffs())
 	race := &rhetoricAdmissionRaceActor{Actor: actor, onAdmission: func() {
 		target.RoomId = 2
@@ -419,7 +418,6 @@ func TestTauntPaidMovedTargetPreservesEffectsAndEngagement(t *testing.T) {
 	require.Zero(t, char.RoundsWaiting())
 	require.Equal(t, targetConviction, target.Conviction)
 	require.Equal(t, targetAggro, target.CurrentCombatTarget())
-	require.Len(t, target.Conditions, targetConditions)
 	require.Len(t, target.Buffs.GetBuffs(), targetBuffs)
 	require.Empty(t, actor.skillsUsed)
 }
@@ -431,7 +429,6 @@ func TestTauntPaidSwappedAggroPreservesBothTargetsAndRound(t *testing.T) {
 	original.SetRoundsWaiting(7)
 	originalAggro := original.CurrentCombatTarget()
 	originalConviction := original.Conviction
-	originalConditions := len(original.Conditions)
 	originalBuffs := len(original.Buffs.GetBuffs())
 
 	rhetoricTargetID++
@@ -452,7 +449,6 @@ func TestTauntPaidSwappedAggroPreservesBothTargetsAndRound(t *testing.T) {
 	replacement = &replacementMob.Character
 	replacementAggro := replacement.CurrentCombatTarget()
 	replacementConviction := replacement.Conviction
-	replacementConditions := len(replacement.Conditions)
 	replacementBuffs := len(replacement.Buffs.GetBuffs())
 	race := &rhetoricAdmissionRaceActor{Actor: actor, onAdmission: func() {
 		char.SetAggro(0, replacementMob.InstanceId, characters.DefaultAttack)
@@ -471,11 +467,9 @@ func TestTauntPaidSwappedAggroPreservesBothTargetsAndRound(t *testing.T) {
 	require.Zero(t, char.RoundsWaiting())
 	require.Equal(t, originalConviction, original.Conviction)
 	require.Equal(t, originalAggro, original.CurrentCombatTarget())
-	require.Len(t, original.Conditions, originalConditions)
 	require.Len(t, original.Buffs.GetBuffs(), originalBuffs)
 	require.Equal(t, replacementConviction, replacement.Conviction)
 	require.Equal(t, replacementAggro, replacement.CurrentCombatTarget())
-	require.Len(t, replacement.Conditions, replacementConditions)
 	require.Len(t, replacement.Buffs.GetBuffs(), replacementBuffs)
 	require.Empty(t, actor.skillsUsed)
 }

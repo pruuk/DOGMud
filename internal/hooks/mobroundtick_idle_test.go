@@ -15,7 +15,6 @@ func TestLaneSplit_HelperSymbolsExist(t *testing.T) {
 	var _ = expireMobCombatMemory
 	var _ = tickMobCharmDuration
 	var _ = tickMobBuffs
-	var _ = tickMobConditions
 
 	// Active-only — skipped entirely in idle zones.
 	var _ = tickMobProneRecovery

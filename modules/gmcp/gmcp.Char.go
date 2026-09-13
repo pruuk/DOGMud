@@ -581,14 +581,6 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 				continue
 			}
 
-			// Warcry/Rally are surfaced through Char.Conditions (the combat
-			// condition list); their mirror buff is skipped here so the web
-			// client doesn't render the same effect as both an Affect and a
-			// Condition chip.
-			if slices.Contains(buffSpec.Flags, buffs.ConditionMirror) {
-				continue
-			}
-
 			timeLeft, timeMax := -1, -1
 
 			if !buff.PermaBuff {
@@ -718,12 +710,34 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 	if all || g.wantsGMCPPayload(`Char.Conditions`, gmcpModule) {
 
+		// The combat condition enum is gone: buff records ARE the conditions,
+		// so this list reads the same source the Char.Affects map above reads.
 		payload.Conditions = []GMCPCondition{}
-		for _, cond := range user.Character.Conditions {
+		for _, buff := range user.Character.GetBuffs() {
+
+			buffSpec := buffs.GetBuffSpec(buff.BuffId)
+			if buffSpec == nil {
+				continue
+			}
+
+			if slices.Contains(buffSpec.Flags, buffs.Hidden) {
+				continue
+			}
+
+			roundsLeft := 0
+			if !buff.PermaBuff {
+				roundsLeft, _ = buffs.GetDurations(buff, buffSpec)
+				if roundsLeft < 0 {
+					roundsLeft = 0
+				}
+			}
+
+			name, desc := buffSpec.VisibleNameDesc()
+
 			payload.Conditions = append(payload.Conditions, GMCPCondition{
-				Type:        cond.Type.DisplayName(),
-				Description: cond.Type.Description(),
-				Duration:    conditionDurationLabel(cond.Duration),
+				Type:        name,
+				Description: desc,
+				Duration:    conditionDurationLabel(roundsLeft),
 			})
 		}
 

@@ -129,7 +129,6 @@ func MobRoundTick(e events.Event) events.ListenerReturn {
 		// practice nothing but this spell reaches it.
 		tickMobCharmState(mob)
 		tickMobBuffs(mob, mobInstanceId)
-		tickMobConditions(mob)
 		tickMobRecomputeGoals(mob, roundCount) // chunk 4.2 — strategic-layer selection
 		if room != nil && mobs.IsGuardMob(mob.Groups) {
 			tEnf := time.Now()
@@ -601,11 +600,6 @@ func tickMobCrafting(mob *mobs.Mob) {
 				mob.Character.ComponentItems,
 				recipe)
 	}
-}
-
-// tickMobConditions — current inline line 399.
-func tickMobConditions(mob *mobs.Mob) {
-	mob.Character.TickConditions()
 }
 
 // revalidateMobStats — current inline line 402.

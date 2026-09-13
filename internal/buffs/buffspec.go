@@ -82,13 +82,6 @@ const (
 	SeeHidden Flag = `see-hidden`
 	SeeNouns  Flag = `see-nouns`
 
-	// Display flags. ConditionMirror marks a buff whose name/description is
-	// already surfaced to the player through the combat-condition list (e.g.
-	// Warcry #79, Rally #80, which exist as both a buff for bookkeeping and a
-	// CombatCondition for the mechanical magnitude). Buff-display loops skip
-	// these to avoid showing the same effect twice. Mirrors the Hidden filter.
-	ConditionMirror Flag = `condition-mirror`
-
 	Dampened Flag = `dampened` // #22 crash-site: Chrysalis suppression — mutation/spell power scaled down
 
 	// SilentStart marks a buff whose start is narrated by whatever applies it
@@ -146,7 +139,6 @@ var AllFlags = []Flag{
 	MutationRate,
 	SeeHidden,
 	SeeNouns,
-	ConditionMirror,
 	Dampened,
 	SilentStart,
 	Bleeding,

@@ -112,7 +112,7 @@ var buffApplyPathAllowlist = map[string]string{
 	"internal/hooks/manifester_companions.go|40": "the holder is a MOB (a summoned companion), not a player",
 
 	// ── secret buffs: silence is the authored intent ────────────────────────
-	"internal/hooks/Life_Cascades.go|87": "buff 81 Respawn Grace is secret:true, so StartUserNotice is empty by design and the event would narrate nothing anyway",
+	"internal/hooks/Life_Cascades.go|84": "buff 81 Respawn Grace is secret:true, so StartUserNotice is empty by design and the event would narrate nothing anyway",
 
 	// ── the event path cannot express what the call needs ───────────────────
 	"internal/hooks/Awareness_Cascades.go|57": "buff 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",

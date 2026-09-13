@@ -34,7 +34,7 @@ func (h *helpCallerActor) GetName() string                     { return h.name }
 
 // The Bleeding record's shipped triggerrate is 3 rounds (matching the old
 // AutoHeal hook, which only ever applied its DoT on every third round while
-// TickConditions decremented duration every round): buffs.TickTriggers
+// the old condition enum decremented duration every round): buffs.TickTriggers
 // converts an old rounds-literal duration into the equivalent trigger count,
 // and RoundCounter must reach a multiple of 3 (rounds 1, 2, 3 of ticking)
 // before the record fires even once.

@@ -113,7 +113,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	targetMob.Character.Stats.Dexterity.ValueAdj = 1 // near-zero evasion
 	// A raw mob literal's Buffs is the zero value (nil maps); AddBuffMagnitude
 	// (the Bleeding record's door) writes into those maps directly and would
-	// panic on a nil map without this init, unlike the old AddCondition path.
+	// panic on a nil map without this init, unlike the old condition path.
 	targetMob.Character.Buffs = buffs.New()
 	setCombatPositionParallel(&targetMob.Character, position.Standing)
 	mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)

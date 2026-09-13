@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	mobcmd "github.com/GoMudEngine/GoMud/internal/mobcommands"
@@ -76,7 +77,7 @@ func TestRhetoricWrappersRefuseAtomicallyWithOnePoolAwareLine(t *testing.T) {
 			require.Empty(t, char.Cooldowns)
 			require.Zero(t, char.GetSkillUseCount("rhetoric"))
 			require.Zero(t, char.AttacksThisRound)
-			require.Empty(t, char.Conditions)
+			require.Empty(t, char.Buffs.GetBuffs(), "a refused shout must not apply its record")
 		})
 	}
 }
@@ -87,7 +88,7 @@ func usersForRhetoricRefusal(t *testing.T) *users.UserRecord {
 	user.Character.Conviction = 0
 	user.Character.Cooldowns = characters.Cooldowns{}
 	user.Character.Skills = map[string]int{}
-	user.Character.Conditions = nil
+	user.Character.Buffs = buffs.New()
 	events.DrainQueuedMessagesForTest(user.UserId)
 	return user
 }

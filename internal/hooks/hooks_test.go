@@ -1345,8 +1345,8 @@ func TestMobDisplayName(t *testing.T) {
 
 // ─── Minor Shield record ──────────────────────────────────────────────────────
 //
-// Minor Shield used to be the enum condition ConditionShield, decremented
-// twice per round: once by TickConditions in the round ticks and again by
+// Minor Shield used to be a combat-condition enum entry, decremented twice
+// per round: once by the enum's own tick in the round ticks and again by
 // handlePlayerShieldDecay / the mob branch in DoCombat. Task 6 deleted the
 // second decrement entirely; the record now decays exactly once per round,
 // through Buffs.Trigger() in UserRoundTick, and narrates its end through the

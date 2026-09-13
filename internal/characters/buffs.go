@@ -146,7 +146,7 @@ func (c *Character) AddBuffScaled(buffId int, durationMult float64) error {
 }
 
 // AddBuffMagnitude applies a record synchronously for an exact trigger count
-// with a per-instance magnitude. It is what every former AddCondition site
+// with a per-instance magnitude. It is what every former combat-condition site
 // calls: those effects must be in place within the same round tick (a shout,
 // a ward, a bleed) and their appliers narrate the moment themselves, so the
 // record is silent-start or quiet and the event path's start notice is not

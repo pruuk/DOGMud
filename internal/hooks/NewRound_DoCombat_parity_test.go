@@ -253,7 +253,6 @@ func TestMvP_ConditionShieldAppliedOnceNotDoubleDipped(t *testing.T) {
 
 	// Wipe equipment so DamageReduction from gear cannot mask the math.
 	defUser.Character.Equipment = characters.Worn{}
-	defUser.Character.Conditions = nil
 
 	// Without the shield: mitigation should be 0.
 	assert.Equal(t, 0.0, defUser.Character.GetPhysicalMitigation(),

@@ -297,7 +297,6 @@ type Character struct {
 	// Presence.Dormant. Used by Presence.PresenceTick to determine
 	// when to transition to Despawning.
 	LastDormantEntryRound   uint64                         `yaml:"-"`
-	Conditions              []CombatCondition              `yaml:"-"`                             // Active temporary combat conditions (Stage 9.8). Don't store this.
 	AttacksThisRound        int                            `yaml:"-"`                             // Stage 9.4: Tracks recent attacks for stance calculation. Don't store this.
 	DefensesThisRound       int                            `yaml:"-"`                             // Stage 9.4: Tracks recent defenses for stance calculation. Don't store this.
 	ConsecutiveHits         int                            `yaml:"-"`                             // Stage 9.4: Consecutive successful hits for momentum. Don't store this.

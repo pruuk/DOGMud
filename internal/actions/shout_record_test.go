@@ -33,7 +33,6 @@ func TestApplyWarcryEffectAppliesOneRecord(t *testing.T) {
 	require.Equal(t, 25, char.Buffs.TriggersLeft(buffs.BuffIdWarcry))
 	require.InDelta(t, 1.0+bonus, char.Buffs.Effect(buffs.EffectDamageMult), 1e-9)
 	require.Len(t, char.Buffs.List, 1, "warcry must apply exactly one buff record")
-	require.Empty(t, char.Conditions, "warcry must not also write a legacy combat condition")
 }
 
 // TestApplyRallyEffectAppliesOneRecord mirrors the warcry pin for rally's
@@ -50,5 +49,4 @@ func TestApplyRallyEffectAppliesOneRecord(t *testing.T) {
 	require.Equal(t, 25, char.Buffs.TriggersLeft(buffs.BuffIdRally))
 	require.InDelta(t, 1.0+bonus, char.Buffs.Effect(buffs.EffectDefenseMult), 1e-9)
 	require.Len(t, char.Buffs.List, 1, "rally must apply exactly one buff record")
-	require.Empty(t, char.Conditions, "rally must not also write a legacy combat condition")
 }

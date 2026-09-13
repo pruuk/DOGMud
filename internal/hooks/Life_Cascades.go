@@ -74,9 +74,6 @@ func wireLifeCrossMachineCascades(c *characters.Character) {
 				// and die again with no way out.
 				c.Toxicity = 0
 
-				// 6. Conditions slice → clear.
-				c.Conditions = nil
-
 			case from == life.Dead && to == life.Respawning:
 				// Player respawn cascade: resource reset + grace buff.
 				// (Mobs don't reach Respawning; their instances
