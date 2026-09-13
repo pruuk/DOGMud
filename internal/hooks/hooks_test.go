@@ -907,20 +907,27 @@ func TestAutoHeal_HealthCapsAtMax(t *testing.T) {
 	assert.LessOrEqual(t, u1.Character.Conviction, u1.Character.ConvictionMax.Value)
 }
 
-func TestAutoHeal_PoisonDamage(t *testing.T) {
+func TestRoundTick_PoisonDamage(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	u1 := users.GetByUserId(1)
+	// The door validates on add, and Validate() recomputes HealthMax from
+	// stats/balance config, clobbering the fixture's raw HealthMax.Value.
+	// Seeding Base keeps HealthMax comfortably above the 80 this test needs.
+	u1.Character.HealthMax.Base = 100
 	u1.Character.Health = 80
-	u1.Character.AddCondition(characters.ConditionPoisoned, 10, 5.0, "test")
+	_ = u1.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, 10, -5, "test")
+	u1.Character.Health = 80
+	drainPlain(1)
 
 	evt := events.NewRound{RoundNumber: 30}
-	AutoHeal(evt)
+	UserRoundTick(evt)
 
-	// Health may increase from regen, then decrease from poison.
-	// Just verify no panic and health changed.
-	assert.NotEqual(t, 80, u1.Character.Health, "health should change from regen+poison")
+	// No regen runs in the round tick, so the poison tick is the only change.
+	assert.Equal(t, 75, u1.Character.Health)
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"))
 }
 
 func TestAutoHeal_MobSkipsIfDead(t *testing.T) {
@@ -2466,6 +2473,7 @@ func TestResolveAgainstPlayer_Basic(t *testing.T) {
 func TestApplyPlayerEffect_Purge(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 	caster := users.GetByUserId(1)
 	target := users.GetByUserId(2)
 	room := rooms.LoadRoom(1)
@@ -2475,7 +2483,7 @@ func TestApplyPlayerEffect_Purge(t *testing.T) {
 		Name:       "Purge",
 		EffectType: "purge",
 	}
-	target.Character.AddCondition(characters.ConditionPoisoned, 10, 5.0, "test")
+	_ = target.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, 10, -5, "test")
 	applyPlayerEffect(caster, target, room, purgeSpell, 10, spellContestAttackWin())
 }
 

@@ -164,11 +164,11 @@ func TestBuffNotice_ARefusedPoisonBuffNarratesNothing(t *testing.T) {
 	assert.Equal(t, 0, countContaining(drainPlain(2), "venom"))
 }
 
-// The other half of the same rule, for the condition rather than the buff: a
-// mob's dot cast at an immune player added nothing and still narrated
-// "afflicts you!" to the victim and the affliction to the room, because
-// AddCondition returned nothing for the call site to test.
-func TestBuffNotice_ARefusedPoisonedConditionNarratesNothing(t *testing.T) {
+// The other half of the same rule, for the poison tick record rather than an
+// ordinary buff: a mob's dot cast at an immune player added nothing and still
+// narrated "afflicts you!" to the victim and the affliction to the room,
+// because AddBuffMagnitude returns an error for the call site to test.
+func TestBuffNotice_ARefusedPoisonedRecordNarratesNothing(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	restore := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
@@ -176,6 +176,7 @@ func TestBuffNotice_ARefusedPoisonedConditionNarratesNothing(t *testing.T) {
 			Flags: []buffs.Flag{buffs.PoisonImmunity}, StartUserText: "Nothing could turn your stomach now.", EndUserText: "Your stomach is ordinary again."},
 	})
 	defer restore()
+	defer buffs.SeedConditionRecordsForTest()()
 	original := runSpellChannelAttack
 	runSpellChannelAttack = func(combat.AttackChannel, combat.AttackSide, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
 		return spellContestAttackWin()
@@ -190,7 +191,7 @@ func TestBuffNotice_ARefusedPoisonedConditionNarratesNothing(t *testing.T) {
 	spell := &spells.SpellData{SpellId: "test-blight", Name: "Blight", Type: spells.HarmSingle, EffectType: "dot"}
 	resolveMobSpellAgainstPlayer(mobs.GetInstance(100), target, rooms.LoadRoom(1), spell, combat.AttackSide{}, 10)
 
-	assert.False(t, target.Character.HasCondition(characters.ConditionPoisoned), "the condition was refused")
+	assert.False(t, target.Character.HasBuff(buffs.BuffIdPoisoned), "the record was refused")
 	assert.Equal(t, 0, countContaining(drainPlain(1), "afflicts you"), "the immune victim reads nothing")
 	assert.Equal(t, 0, countContaining(drainPlain(2), "afflicts"), "and the room is told nothing either")
 }

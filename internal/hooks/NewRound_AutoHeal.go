@@ -224,20 +224,6 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 				}
 			}
 
-			// Phase 24.5: Apply poison DoT damage
-			if user.Character.HasCondition(characters.ConditionPoisoned) {
-				poisonDmg := int(user.Character.GetConditionMagnitude(characters.ConditionPoisoned))
-				if poisonDmg < 1 {
-					poisonDmg = 1
-				}
-				// Anonymous source: buffs.Buff carries no applier, so every
-				// damage-over-time site stays unattributed until it does.
-				user.Character.ApplyHarm(characters.PoolHealth, poisonDmg, state.ActorRef{})
-				cancelCraftOrSalvageOnDamage(user.Character)
-				cancelDamageBuffs(user.Character)
-				user.SendText(messaging.CategoryToxin, `<ansi fg="green">The poison burns through your veins!</ansi>`)
-			}
-
 			// Stage 42.7: Apply bleed DoT damage
 			if user.Character.HasCondition(characters.ConditionBleeding) {
 				bleedDmg := int(user.Character.GetConditionMagnitude(characters.ConditionBleeding))
@@ -390,17 +376,6 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			[]string{"strength"}, 0)
 		mob.Character.OnRegenTick(characters.PoolConviction,
 			[]string{"willpower", "charisma"}, 0)
-
-		// Phase 25.1: Apply poison DoT damage to mobs
-		if mob.Character.HasCondition(characters.ConditionPoisoned) {
-			poisonDmg := int(mob.Character.GetConditionMagnitude(characters.ConditionPoisoned))
-			if poisonDmg < 1 {
-				poisonDmg = 1
-			}
-			mob.Character.ApplyHarm(characters.PoolHealth, poisonDmg, state.ActorRef{})
-			cancelCraftOrSalvageOnDamage(&mob.Character)
-			cancelDamageBuffs(&mob.Character)
-		}
 
 		// Stage 42.7: Apply bleed DoT damage to mobs
 		if mob.Character.HasCondition(characters.ConditionBleeding) {
