@@ -534,9 +534,38 @@ func (bs *Buffs) SetTickAmount(buffId int, amount int) {
 	}
 }
 
+// GetDurations reports how many rounds this INSTANCE has left and how many it
+// had in total, both in rounds rather than triggers.
+//
+// roundsLeft reads the instance, not the spec. It used to be
+// spec.TriggerCount*spec.RoundInterval - buff.RoundCounter, which is only
+// right for a record added at its spec default: every AddBuffMagnitude and
+// AddBuffScaled producer sets an exact trigger count, and a record added with
+// 2 of a spec's 10 triggers displayed 30 rounds remaining instead of 6.
+// TriggersLeft*RoundInterval is the whole rounds still owed; RoundCounter
+// modulo RoundInterval is how far into the current interval the record
+// already is.
+//
+// totalRounds keeps the spec figure so a bar has a stable scale, but never
+// less than roundsLeft — a record refreshed above its spec default would
+// otherwise report a remainder larger than its own total.
+//
+// An unlimited record (a permabuff) keeps the old answer rather than a
+// nine-digit one: its callers gate on Buff.PermaBuff and render "sustained".
 func GetDurations(buff *Buff, spec *BuffSpec) (roundsLeft int, totalRounds int) {
+
+	if spec.RoundInterval < 1 {
+		// A pure flag record never ticks, so it has no duration to report.
+		return 0, 0
+	}
 
 	totalRounds = spec.TriggerCount * spec.RoundInterval
 
-	return totalRounds - buff.RoundCounter, totalRounds
+	if buff.TriggersLeft == TriggersLeftUnlimited {
+		return totalRounds - buff.RoundCounter, totalRounds
+	}
+
+	roundsLeft = buff.TriggersLeft*spec.RoundInterval - buff.RoundCounter%spec.RoundInterval
+
+	return roundsLeft, max(totalRounds, roundsLeft)
 }

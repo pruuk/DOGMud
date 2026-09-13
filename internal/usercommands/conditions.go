@@ -11,6 +11,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
+// Conditions lists everything currently affecting the player: one entry per
+// held, unexpired, non-hidden buff record, with its visible name, its visible
+// description and a duration.
+//
+// There is one loop because there is one source. This command used to print
+// the buff list and then a second list of combat conditions from an enum with
+// its own tick, which is why warcry and rally needed a mirror flag to keep
+// them out of the first list. The enum is gone; records are the conditions.
 func Conditions(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	type buffInfo struct {
@@ -40,15 +48,16 @@ func Conditions(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 		roundsLeft, _ := buffs.GetDurations(buff, spec)
 
-		newAffliction := buffInfo{
-			Name:        spec.Name,
-			Description: spec.Description,
+		// VisibleNameDesc, not spec.Name/spec.Description: a secret record
+		// shows the player the cover story it was authored with.
+		name, desc := spec.VisibleNameDesc()
+
+		afflictions = append(afflictions, buffInfo{
+			Name:        name,
+			Description: desc,
 			RoundsLeft:  roundsLeft,
 			PermaBuff:   buff.PermaBuff,
-		}
-		newAffliction.Name, newAffliction.Description = spec.VisibleNameDesc()
-
-		afflictions = append(afflictions, newAffliction)
+		})
 	}
 
 	tplTxt, _ := templates.Process("character/conditions", afflictions, user.UserId)
