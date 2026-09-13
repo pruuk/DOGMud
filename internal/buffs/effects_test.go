@@ -207,16 +207,36 @@ func TestAddBuffMagnitudeRoundsAreExact(t *testing.T) {
 	}
 }
 
+// The deleted internal/characters/conditions_immunity_test.go (Task 8) also
+// pinned two control arms alongside the refusal: a non-poison record still
+// lands on the immune holder (every other condition is unaffected), and
+// without immunity the poison record lands (immunity is the only thing
+// refusing it). Both are reproduced here on the record's replacement,
+// AddBuffMagnitude, so poison immunity is not narrowed to "the poison record
+// is always refused."
 func TestAddBuffMagnitudeRefusesPoisonUnderImmunity(t *testing.T) {
 	withSpecs(t,
 		&BuffSpec{BuffId: 917, Name: "Stone", TriggerRate: "1 round", TriggerCount: 5, Flags: []Flag{PoisonImmunity}},
 		&BuffSpec{BuffId: 918, Name: "Toxin", TriggerRate: "1 round", TriggerCount: 5, Flags: []Flag{Poison}, TickPool: "health", TickFromMagnitude: true},
+		&BuffSpec{BuffId: BuffIdBleeding, Name: "Bleeding", TriggerRate: "3 rounds", TriggerCount: 5, Flags: []Flag{Bleeding}, TickPool: "health", TickFromMagnitude: true},
 	)
 	bs := Buffs{}
 	bs.Validate(true)
 	bs.AddBuff(917, false)
 	if bs.AddBuffMagnitude(918, 5, -3) {
 		t.Fatal("a poison record must be refused under poison immunity")
+	}
+
+	// Control: every other record still lands while immune to poison only.
+	if !bs.AddBuffMagnitude(BuffIdBleeding, 5, -3) {
+		t.Fatal("a non-poison record must still land under poison immunity")
+	}
+
+	// Control: without immunity the poison record lands.
+	unprotected := Buffs{}
+	unprotected.Validate(true)
+	if !unprotected.AddBuffMagnitude(918, 5, -3) {
+		t.Fatal("without immunity the poison record must land")
 	}
 }
 

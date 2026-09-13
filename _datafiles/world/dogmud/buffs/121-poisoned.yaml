@@ -1,7 +1,7 @@
 buffid: 121
 name: Poisoned
 description: Toxins coursing through your body, dealing damage over time.
-triggerrate: 1 round
+triggerrate: 3 rounds
 triggercount: 10
 tick_pool: health
 tick_from_magnitude: true

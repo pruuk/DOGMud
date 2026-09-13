@@ -907,6 +907,11 @@ func TestAutoHeal_HealthCapsAtMax(t *testing.T) {
 	assert.LessOrEqual(t, u1.Character.Conviction, u1.Character.ConvictionMax.Value)
 }
 
+// TestRoundTick_PoisonDamage pins the Task 8 review fix: the spell dot record
+// keeps the old AutoHeal hook's every-third-round cadence instead of ticking
+// every round. buffs.TickTriggers converts a duration into that trigger
+// count; TickTriggers(3) is 1, matching the record's own three-round
+// triggerrate (buff 121).
 func TestRoundTick_PoisonDamage(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -918,16 +923,151 @@ func TestRoundTick_PoisonDamage(t *testing.T) {
 	// Seeding Base keeps HealthMax comfortably above the 80 this test needs.
 	u1.Character.HealthMax.Base = 100
 	u1.Character.Health = 80
-	_ = u1.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, 10, -5, "test")
+	_ = u1.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, buffs.TickTriggers(3), -5, "test")
 	u1.Character.Health = 80
 	drainPlain(1)
 
-	evt := events.NewRound{RoundNumber: 30}
-	UserRoundTick(evt)
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	assert.Equal(t, 80, u1.Character.Health, "the record's triggerrate is three rounds; no harm yet")
+	UserRoundTick(events.NewRound{RoundNumber: 2})
+	assert.Equal(t, 80, u1.Character.Health, "still short of the third round")
+	UserRoundTick(events.NewRound{RoundNumber: 3})
+	assert.Equal(t, 75, u1.Character.Health, "the third round lands the one tick this record carries")
+	// This 1-trigger record's only trigger also expires it: Buffs.Trigger
+	// decrements TriggersLeft to 0 before UserRoundTick reads
+	// buff.Expired(), so the tick_pool harm still applies (the Task 9 fix:
+	// harm is gated on the tick, never on expiry) but the flavour line is
+	// gated on !Expired() and is skipped. TestRoundTick_PoisonDamage_
+	// TriggerLineOnNonFinalTick below pins the line on a trigger that is
+	// not also the last one.
+	assert.Equal(t, 0, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"the final, expiring trigger applies harm but sends no flavour line")
 
-	// No regen runs in the round tick, so the poison tick is the only change.
-	assert.Equal(t, 75, u1.Character.Health)
-	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"))
+	// Cross-hook pin: NewRound_AutoHeal.go's hand-rolled poison block was
+	// deleted in Task 8 (the record's own tick path in UserRoundTick now
+	// applies the harm). If it were revived in record-reading form, this
+	// same round's regen-gate call would double the damage already applied
+	// above instead of only adding a small regen.
+	result := AutoHeal(events.NewRound{RoundNumber: 3})
+	require.Equal(t, events.Continue, result)
+	hpr := u1.Character.HealthPerRound()
+	assert.GreaterOrEqual(t, u1.Character.Health, 75, "no extra poison harm from AutoHeal")
+	assert.Less(t, u1.Character.Health, 80, "at most one small regen tick (HealthPerRound=%d)", hpr)
+
+	healthAfterAutoHeal := u1.Character.Health
+	UserRoundTick(events.NewRound{RoundNumber: 4})
+	assert.Equal(t, healthAfterAutoHeal, u1.Character.Health, "the record expired at round 3; a fourth tick is a no-op")
+}
+
+// TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick pins the flavour line
+// half of the same Task 9 fix: a 2-trigger record's FIRST trigger (round 3)
+// is not the one that expires it, so the line sends; its second trigger
+// (round 6) both lands the harm and expires the record, so the line does not
+// send a second time.
+func TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u1 := users.GetByUserId(1)
+	u1.Character.HealthMax.Base = 100
+	u1.Character.Health = 80
+	_ = u1.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, buffs.TickTriggers(6), -5, "test")
+	u1.Character.Health = 80
+	drainPlain(1)
+
+	for round := uint64(1); round <= 5; round++ {
+		UserRoundTick(events.NewRound{RoundNumber: round})
+	}
+	assert.Equal(t, 75, u1.Character.Health, "the first of two triggers lands on round 3")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"a trigger that is not also the last one sends its flavour line")
+
+	UserRoundTick(events.NewRound{RoundNumber: 6})
+	assert.Equal(t, 70, u1.Character.Health, "the second trigger lands the harm and expires the record")
+	assert.Equal(t, 0, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"the final, expiring trigger sends no flavour line")
+}
+
+// TestDotProducerRecordsNegativeHarm_MobTarget pins the sign of the mob-target
+// dot producer (spell_resolution.go's applyMobEffect_dot, a player's spell
+// landing on a mob) and that it converts dotDuration through
+// buffs.TickTriggers rather than passing it straight through as TriggersLeft.
+func TestDotProducerRecordsNegativeHarm_MobTarget(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u := users.GetByUserId(1)
+	mob := mobs.GetInstance(100)
+	room := rooms.LoadRoom(1)
+
+	dotSpell := &spells.SpellData{
+		SpellId:           "test-dot-mob-sign",
+		Name:              "Blight",
+		Type:              spells.HarmSingle,
+		EffectType:        "dot",
+		TargetDefenseType: "mental",
+		EffectMagnitude:   10,
+	}
+
+	// The fixture's caster skill and willpower are deterministic (u1's seed
+	// data), so the exact dotDuration calcSpellDuration produces can be
+	// recomputed here rather than only bounded.
+	casterSkill := u.Character.GetSkillLevel(skills.Spellcasting)
+	casterWil := dotSpell.CasterStatValue(u.Character.Stats)
+	wantDuration := calcSpellDuration(dotSpell.BaseFolds, casterSkill, casterWil) / 3
+	if wantDuration < 3 {
+		wantDuration = 3
+	}
+
+	dmg := applyMobEffect(u, u.Character, mob, room, dotSpell, 10, spellContestAttackWin())
+	assert.Equal(t, 0, dmg, "the dot effect deals no immediate damage")
+
+	recs := mob.Character.GetBuffs(buffs.BuffIdPoisoned)
+	require.Len(t, recs, 1)
+	assert.Less(t, recs[0].Magnitude, 0.0, "the producer's harm sign must be negative")
+	assert.Less(t, recs[0].TickAmount, 0, "the snapshot tick amount must be negative")
+	assert.Equal(t, buffs.TickTriggers(wantDuration), recs[0].TriggersLeft,
+		"TriggersLeft must be TickTriggers(dotDuration), not dotDuration itself")
+}
+
+// TestDotProducerRecordsNegativeHarm_PlayerTarget is the same pin for the
+// player-target dot producer (resolveMobSpellAgainstPlayer, a mob's spell
+// landing on a player).
+func TestDotProducerRecordsNegativeHarm_PlayerTarget(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+	original := runSpellChannelAttack
+	runSpellChannelAttack = func(combat.AttackChannel, combat.AttackSide, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
+		return spellContestAttackWin()
+	}
+	t.Cleanup(func() { runSpellChannelAttack = original })
+
+	target := users.GetByUserId(1)
+	drainPlain(1)
+	drainPlain(2)
+
+	caster := mobs.GetInstance(100)
+	spell := &spells.SpellData{SpellId: "test-blight-sign", Name: "Blight", Type: spells.HarmSingle, EffectType: "dot"}
+	resolveMobSpellAgainstPlayer(caster, target, rooms.LoadRoom(1), spell, combat.AttackSide{}, 10)
+
+	castSkill := skills.Spellcasting
+	if spell.HasSchool(spells.SchoolManifestation) {
+		castSkill = skills.Manifestation
+	}
+	wantDuration := calcSpellDuration(spell.BaseFolds, caster.Character.GetSkillLevel(castSkill), spell.CasterStatValue(caster.Character.Stats)) / 3
+	if wantDuration < 3 {
+		wantDuration = 3
+	}
+
+	recs := target.Character.GetBuffs(buffs.BuffIdPoisoned)
+	require.Len(t, recs, 1)
+	assert.Less(t, recs[0].Magnitude, 0.0, "the producer's harm sign must be negative")
+	assert.Less(t, recs[0].TickAmount, 0, "the snapshot tick amount must be negative")
+	assert.Equal(t, buffs.TickTriggers(wantDuration), recs[0].TriggersLeft,
+		"TriggersLeft must be TickTriggers(dotDuration), not dotDuration itself")
 }
 
 func TestAutoHeal_MobSkipsIfDead(t *testing.T) {

@@ -12,17 +12,25 @@ import (
 
 // Pin: a poisoned player at 1 health dies to the poison tick and the death
 // cause reads "poison".
+// TestPin_PoisonTickKillsAndNamesTheCause: the record now needs three round
+// ticks to land (buff 121's triggerrate is three rounds), where it used to
+// need only one, so the kill only lands on the third UserRoundTick call.
+// TickTriggers(30) is 10 triggers, not 1, so the kill's trigger is not also
+// the record's last: HasBuffFlag(Poison) must still read true right after,
+// which a 1-trigger record (expiring on the very tick that kills) would not.
 func TestPin_PoisonTickKillsAndNamesTheCause(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	defer buffs.SeedConditionRecordsForTest()()
 
 	u := users.GetByUserId(1)
-	_ = u.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, 10, -5, "pin")
+	_ = u.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, buffs.TickTriggers(30), -5, "pin")
 	u.Character.Health = 1
 
 	// No regen lands in the round tick: 1 - 5 <= 0.
-	UserRoundTick(events.NewRound{RoundNumber: 30})
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	UserRoundTick(events.NewRound{RoundNumber: 2})
+	UserRoundTick(events.NewRound{RoundNumber: 3})
 	require.LessOrEqual(t, u.Character.Health, 0, "the poison tick must take the last point")
 	require.True(t, u.Character.HasBuffFlag(buffs.Poison))
 }
