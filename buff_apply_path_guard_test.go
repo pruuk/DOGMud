@@ -103,6 +103,9 @@ var buffApplyPathAllowlist = map[string]string{
 	"internal/usercommands/rally.go|86":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
 	"internal/usercommands/rally.go|114":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
 
+	// ── former combat condition: enchant withdrawal ─────────────────────────
+	"internal/usercommands/skill.disenchant.go|71": "former combat condition (withdrawal): the disenchant command narrates; must apply synchronously so Validate clamps the pool now",
+
 	// ── mob holders: no client, so no line could reach anyone ───────────────
 	"internal/usercommands/character.go|413":     "the holder is a MOB (m.Character), and buff 99 is a perma-gear pin, not something a player reads",
 	"internal/hooks/item_procs.go|265":           "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",

@@ -55,12 +55,13 @@ func TestPin_ShieldAddsFlatPhysicalMitigation(t *testing.T) {
 // under the test. The withdrawal application itself lives at
 // validate.go:186-221.
 func TestPin_WithdrawalCutsThePoolMaximumByTheFraction(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
 	c := pinCharacter()
 	c.Validate()
 	baseHealth := c.HealthMax.Value
 	baseStamina := c.StaminaMax.Value
 
-	c.AddCondition(ConditionEnchantWithdrawal, 50, 0.25, "health") // SETUP: migrates in Task 10
+	_ = c.AddBuffMagnitude(buffs.BuffIdEnchantWithdrawal, 50, 0.25, "health") // SETUP: Task 10
 	c.Validate()
 
 	wantHealth := baseHealth - int(math.Floor(float64(baseHealth)*0.25))
@@ -74,12 +75,13 @@ func TestPin_WithdrawalCutsThePoolMaximumByTheFraction(t *testing.T) {
 
 func TestPin_WithdrawalOnStaminaAndConviction(t *testing.T) {
 	t.Run("stamina", func(t *testing.T) {
+		defer buffs.SeedConditionRecordsForTest()()
 		c := pinCharacter()
 		c.Validate()
 		baseHealth := c.HealthMax.Value
 		baseStamina := c.StaminaMax.Value
 
-		c.AddCondition(ConditionEnchantWithdrawal, 50, 0.5, "stamina") // SETUP: Task 10
+		_ = c.AddBuffMagnitude(buffs.BuffIdEnchantWithdrawal, 50, 0.5, "stamina") // SETUP: Task 10
 		c.Validate()
 
 		wantStamina := baseStamina - int(math.Floor(float64(baseStamina)*0.5))
@@ -92,12 +94,13 @@ func TestPin_WithdrawalOnStaminaAndConviction(t *testing.T) {
 	})
 
 	t.Run("conviction", func(t *testing.T) {
+		defer buffs.SeedConditionRecordsForTest()()
 		c := pinCharacter()
 		c.Validate()
 		baseHealth := c.HealthMax.Value
 		baseConviction := c.ConvictionMax.Value
 
-		c.AddCondition(ConditionEnchantWithdrawal, 50, 0.5, "conviction") // SETUP: Task 10
+		_ = c.AddBuffMagnitude(buffs.BuffIdEnchantWithdrawal, 50, 0.5, "conviction") // SETUP: Task 10
 		c.Validate()
 
 		wantConviction := baseConviction - int(math.Floor(float64(baseConviction)*0.5))
@@ -110,30 +113,33 @@ func TestPin_WithdrawalOnStaminaAndConviction(t *testing.T) {
 	})
 }
 
-// TestPin_OnlyTheFirstWithdrawalApplies pins a today-behavior quirk in the
-// withdrawal loop (validate.go:189-221): it iterates c.Conditions and
-// `break`s after the FIRST entry whose Type is ConditionEnchantWithdrawal, so
-// a second withdrawal condition on the same character is silently ignored.
-// AddCondition itself collapses same-type conditions to a single entry (see
-// conditions.go's overwrite-in-place loop), so reaching two live entries
-// requires appending to c.Conditions directly, the way two independently
-// timed disenchants overlapping would eventually produce. Task 10 must
-// decide whether "only the first counts" is deliberate (a character cannot
-// have two Chrysalis withdrawal penalties at once by design) or a bug worth
-// fixing when withdrawal becomes a buff record instead of a single-slot
-// condition list entry.
-func TestPin_OnlyTheFirstWithdrawalApplies(t *testing.T) {
+// TestPin_ASecondWithdrawalReplacesTheFirst used to pin a condition-list
+// quirk: the old enum path iterated c.Conditions and broke after the first
+// entry whose Type was ConditionEnchantWithdrawal, so a second entry
+// appended directly to that slice was silently ignored (AddCondition itself
+// never produced two live entries; only a direct append could). That
+// history is gone now that withdrawal is buff record 123: a Buffs list
+// holds one entry per buff id, and AddBuffMagnitude on a held id refreshes
+// it in place (buffs.go's AddBuffScaled early-return branch), overwriting
+// Magnitude, TriggersLeft and, via Character.AddBuffMagnitude, Source. So a
+// second disenchant does not silently no-op alongside the first, it REPLACES
+// it: the record that used to read "health" now reads "stamina", and only
+// the stamina penalty applies.
+func TestPin_ASecondWithdrawalReplacesTheFirst(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
 	c := pinCharacter()
-	c.Conditions = append(c.Conditions,
-		CombatCondition{Type: ConditionEnchantWithdrawal, Duration: 50, Magnitude: 0.25, Source: "health"},
-		CombatCondition{Type: ConditionEnchantWithdrawal, Duration: 50, Magnitude: 0.5, Source: "stamina"},
-	)
 	c.Validate()
 
+	_ = c.AddBuffMagnitude(buffs.BuffIdEnchantWithdrawal, 50, 0.25, "health")
 	if c.HealthMax.Value != 150 {
 		t.Fatalf("first withdrawal (health, 0.25 of base 200) must read 150, got %d", c.HealthMax.Value)
 	}
-	if c.StaminaMax.Value != 100 {
-		t.Fatalf("second withdrawal (stamina) must be silently ignored today, stamina max must stay 100, got %d", c.StaminaMax.Value)
+
+	_ = c.AddBuffMagnitude(buffs.BuffIdEnchantWithdrawal, 50, 0.5, "stamina")
+	if c.HealthMax.Value != 200 {
+		t.Fatalf("a second withdrawal on the same record must replace the first: health max must return to base 200, got %d", c.HealthMax.Value)
+	}
+	if c.StaminaMax.Value != 50 {
+		t.Fatalf("the replaced record must apply as stamina (0.5 of base 100): want 50, got %d", c.StaminaMax.Value)
 	}
 }

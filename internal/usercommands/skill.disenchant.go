@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -64,13 +64,11 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	bal := configs.GetBalanceConfig()
 	penaltyRounds := int(bal.EnchantRemovalPenaltyRounds)
 
-	// Magnitude stores the pool max reduction as a fraction
-	user.Character.AddCondition(
-		characters.ConditionEnchantWithdrawal,
-		penaltyRounds,
-		reservePct,
-		reservePool,
-	)
+	// Enchant Withdrawal (buff 123): the pool name rides on Source exactly as
+	// the old condition's did; the record's pool_max_pct effect reads the
+	// magnitude we pass here. AddBuffMagnitude validates synchronously, so the
+	// pool clamp lands before this command returns.
+	_ = user.Character.AddBuffMagnitude(buffs.BuffIdEnchantWithdrawal, penaltyRounds, reservePct, reservePool)
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="magenta">You pry the Chrysalis free. It comes away screaming — a `+
 		`soundless wail that reverberates through your bones. The item `+
