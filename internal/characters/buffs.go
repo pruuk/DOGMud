@@ -145,6 +145,26 @@ func (c *Character) AddBuffScaled(buffId int, durationMult float64) error {
 	return nil
 }
 
+// AddBuffMagnitude applies a record synchronously for an exact trigger count
+// with a per-instance magnitude. It is what every former combat-condition site
+// calls: those effects must be in place within the same round tick (a shout,
+// a ward, a bleed) and their appliers narrate the moment themselves, so the
+// record is silent-start or quiet and the event path's start notice is not
+// wanted. The prune pass still narrates the end. triggers 0 means the spec's
+// own triggercount; the exact trigger count, not rounds — use
+// buffs.TickTriggers for the three-round dot and bleed records.
+func (c *Character) AddBuffMagnitude(buffId int, triggers int, magnitude float64, source string) error {
+	buffId = int(math.Abs(float64(buffId)))
+	if !c.Buffs.AddBuffMagnitude(buffId, triggers, magnitude) {
+		return fmt.Errorf(`failed to add buff. target: "%s" buffId: %d`, c.Name, buffId)
+	}
+	for _, b := range c.Buffs.GetBuffs(buffId) {
+		b.Source = source
+	}
+	_ = c.Validate()
+	return nil
+}
+
 func (c *Character) TrackBuffStarted(buffId int) {
 	c.Buffs.Started(buffId)
 }

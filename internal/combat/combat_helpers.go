@@ -228,9 +228,10 @@ func calcSwingCount(sourceChar *characters.Character, weapon items.Item, weaponS
 		result = 1
 	}
 
-	// Recovery penalty: force to 1
-	if sourceChar.HasCondition(characters.ConditionRecoveryPenalty) {
-		result = 1
+	// Recovering record: caps swings (1 today; the record's literal). Zero
+	// means no cap is held.
+	if attacksCap := sourceChar.Buffs.Effect(buffs.EffectAttacksCap); attacksCap > 0 && result > int(attacksCap) {
+		result = int(attacksCap)
 	}
 
 	// Hard cap: max 4 swings per weapon
@@ -487,9 +488,8 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 		rawDmgForCrit *= (1.0 + mutDmgMult)
 	}
 
-	// Warcry condition: applies a physical damage multiplier from rhetoric shout
-	if sourceChar.HasCondition(characters.ConditionWarcry) {
-		warcryMult := 1.0 + sourceChar.GetConditionMagnitude(characters.ConditionWarcry)
+	// Warcry record: the damage multiplier is the record's magnitude (1 + bonus).
+	if warcryMult := sourceChar.Buffs.Effect(buffs.EffectDamageMult); warcryMult != 1.0 {
 		dmgMean *= warcryMult
 		rawDmgForCrit *= warcryMult
 	}
@@ -741,19 +741,14 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 			}
 		}
 
-		// Rally condition: applies a defense score multiplier from rhetoric shout
-		if targetChar.HasCondition(characters.ConditionRally) {
-			defenseScore *= 1.0 + targetChar.GetConditionMagnitude(characters.ConditionRally)
-		}
+		// Rally record: defense score multiplier from the rhetoric shout. The
+		// same door folds the grapple exposure (Task 5) and any other defense
+		// multiplier.
+		defenseScore *= targetChar.Buffs.Effect(buffs.EffectDefenseMult)
 
 		// Stage 8.5: Apply third-party vulnerability penalty
 		if isThirdParty {
 			defenseScore *= float64(bal.ThirdPartyGrapplePenalty)
-		}
-
-		// Stage 8.6: Apply failed grapple defense penalty
-		if targetChar.HasCondition(characters.ConditionDefensePenalty) {
-			defenseScore *= targetChar.GetConditionMagnitude(characters.ConditionDefensePenalty)
 		}
 
 		// Darkness penalty: defender can't see

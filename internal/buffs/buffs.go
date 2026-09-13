@@ -20,6 +20,15 @@ type Buff struct {
 	RoundCounter int `yaml:"roundcounter,omitempty"` // How many rounds have passed. Triggers on (RoundCounter%RoundInterval == 0)
 	TriggersLeft int `yaml:"triggersleft,omitempty"` // How many times it triggers
 	TickAmount   int `yaml:"tickamount,omitempty"`   // Snapshot: computed at application time, applied each trigger
+
+	// Magnitude is the per-instance strength the applier set. A spec effect
+	// whose value is the word "magnitude" reads it; a tick_from_magnitude
+	// record snapshots it into TickAmount. Zero means "no effect" for a
+	// multiplier and nothing for a flat. A non-zero magnitude that truncates
+	// to zero (e.g. -0.5) snapshots as 1 in its sign instead, since a zero
+	// tick would be unrecoverable; a magnitude of exactly zero snapshots as
+	// zero.
+	Magnitude float64 `yaml:"magnitude,omitempty"`
 }
 
 func (b *Buff) StatMod(statName string) int {
@@ -280,6 +289,53 @@ func (bs *Buffs) AddBuffScaled(buffId int, durationMult float64) bool {
 	return false
 }
 
+// AddBuffMagnitude applies a record for an EXACT trigger count with a
+// per-instance magnitude. It is the writer door for every record that used to
+// be a combat condition. triggers 0 means the spec's own triggercount. A held
+// record of the same id is refreshed and its magnitude, triggers and tick
+// snapshot overwritten, which is what the old condition add did. Returns false when
+// refused (poison immunity) or unknown.
+//
+// triggers is the exact trigger count, not a duration in rounds: for a
+// one-round-interval record the two coincide, but the three-round-interval
+// dot and bleed records need buffs.TickTriggers to convert a rounds-literal
+// duration into the trigger count this parameter expects. It is an int on
+// purpose: AddBuffScaled truncates float64(count) * mult, and 3.3 * 10 is
+// 32.999... in binary, so a multiplier would shorten some durations by a
+// round. The former conditions all computed an integer.
+func (bs *Buffs) AddBuffMagnitude(buffId int, triggers int, magnitude float64) bool {
+	if !bs.AddBuffScaled(buffId, 1.0) {
+		return false
+	}
+	idx, ok := bs.buffIds[buffId]
+	if !ok {
+		return false
+	}
+	if triggers > 0 {
+		bs.List[idx].TriggersLeft = triggers
+	}
+	bs.List[idx].Magnitude = magnitude
+	if spec := GetBuffSpec(buffId); spec != nil && spec.TickFromMagnitude {
+		// The magnitude IS the signed per-round amount: negative harms.
+		// A non-zero magnitude that truncates to zero (e.g. -0.5) is floored
+		// to 1 in its sign instead: a zero snapshot is unrecoverable, since
+		// the round tick's fallback recomputes from TickPercent, which
+		// validateEffects forces to 0 on a tick_from_magnitude record, so
+		// ComputeTickAmount would return 0 and the record would tick for
+		// nothing forever. Mirrors the old poison/bleed hook's clamp.
+		amt := int(magnitude)
+		if amt == 0 && magnitude != 0 {
+			if magnitude < 0 {
+				amt = -1
+			} else {
+				amt = 1
+			}
+		}
+		bs.List[idx].TickAmount = amt
+	}
+	return true
+}
+
 // RefreshBuff tops a held buff's remaining triggers back up to the spec's
 // TriggerCount and touches nothing else: RoundCounter keeps its cadence
 // (AddBuff resets it, which would starve any buff whose RoundInterval is
@@ -478,9 +534,38 @@ func (bs *Buffs) SetTickAmount(buffId int, amount int) {
 	}
 }
 
+// GetDurations reports how many rounds this INSTANCE has left and how many it
+// had in total, both in rounds rather than triggers.
+//
+// roundsLeft reads the instance, not the spec. It used to be
+// spec.TriggerCount*spec.RoundInterval - buff.RoundCounter, which is only
+// right for a record added at its spec default: every AddBuffMagnitude and
+// AddBuffScaled producer sets an exact trigger count, and a record added with
+// 2 of a spec's 10 triggers displayed 30 rounds remaining instead of 6.
+// TriggersLeft*RoundInterval is the whole rounds still owed; RoundCounter
+// modulo RoundInterval is how far into the current interval the record
+// already is.
+//
+// totalRounds keeps the spec figure so a bar has a stable scale, but never
+// less than roundsLeft — a record refreshed above its spec default would
+// otherwise report a remainder larger than its own total.
+//
+// An unlimited record (a permabuff) keeps the old answer rather than a
+// nine-digit one: its callers gate on Buff.PermaBuff and render "sustained".
 func GetDurations(buff *Buff, spec *BuffSpec) (roundsLeft int, totalRounds int) {
+
+	if spec.RoundInterval < 1 {
+		// A pure flag record never ticks, so it has no duration to report.
+		return 0, 0
+	}
 
 	totalRounds = spec.TriggerCount * spec.RoundInterval
 
-	return totalRounds - buff.RoundCounter, totalRounds
+	if buff.TriggersLeft == TriggersLeftUnlimited {
+		return totalRounds - buff.RoundCounter, totalRounds
+	}
+
+	roundsLeft = buff.TriggersLeft*spec.RoundInterval - buff.RoundCounter%spec.RoundInterval
+
+	return roundsLeft, max(totalRounds, roundsLeft)
 }

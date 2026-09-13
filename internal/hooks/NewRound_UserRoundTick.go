@@ -269,13 +269,39 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 					triggeredBuffIds := []int{}
 					for _, buff := range triggeredBuffs {
 
-						if buff.Expired() {
-							triggeredBuffIds = append(triggeredBuffIds, buff.BuffId)
-							continue
-						}
-
-						// Send YAML trigger text (if defined).
 						trigBuffSpec := buffs.GetBuffSpec(buff.BuffId)
+
+						// Send YAML trigger text (if defined), including on
+						// the buff's final, expiring trigger. PruneBuffs'
+						// own end narration still follows as a separate
+						// line for the record's close. Matches the mob
+						// round tick's tickMobBuffs, which narrates its own
+						// trigger text the same way.
+						//
+						// Bug found migrating Bleeding to a record (slice 1,
+						// task 9): this used to gate the WHOLE loop body —
+						// text AND the TickPool harm/restore below — behind
+						// !Expired(), which silently dropped the tick/harm
+						// effect on any buff's final trigger (invisible until
+						// now because every existing record used a trigger
+						// count far above 1: Warcry/Rally 25, MinorShield/
+						// Regenerating/Poisoned 10). A record created with
+						// exactly one trigger left — which buffs.TickTriggers
+						// produces for every ordinary Bleeding duration —
+						// never applied its one and only tick. tickMobBuffs
+						// never had this defect: it always applies TickAmount
+						// and always narrates the flavor text too.
+						//
+						// Whole-branch review (slice 1): the text was still
+						// gated on !Expired() even after the harm/restore fix
+						// above, so a one-trigger record (every combat bleed
+						// producer passes TickTriggers 3, 4 or 5, all of which
+						// return 1) applied its harm silently and only the
+						// prune pass's end line was ever seen. The harm AND
+						// the text now land on every trigger, including the
+						// expiring one; the prune pass's end line follows as
+						// the intended second line, not a replacement for the
+						// first.
 						if trigBuffSpec != nil && trigBuffSpec.Narration(buffs.PhaseTrigger).Len() > 0 {
 							roles := trigBuffSpec.Narrate(buffs.PhaseTrigger, textutil.TokenContext{
 								SourceName:      user.Character.GetCharacterName(true),
@@ -297,9 +323,8 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						// the async AddBuff event and never snapshot it —
 						// so for a tick_pool buff with TickAmount still 0,
 						// compute and cache it here (e.g. hazard-room DoTs).
-						if trigBuffSpec == nil {
-							trigBuffSpec = buffs.GetBuffSpec(buff.BuffId)
-						}
+						// Runs on EVERY trigger, including the final one that
+						// also expires the buff (see the note above).
 						if trigBuffSpec != nil && trigBuffSpec.TickPool != "" {
 							tickAmt := buff.TickAmount
 							if tickAmt == 0 {
@@ -331,6 +356,21 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 									user.Character.ApplyRestore(characters.PoolHealth, tickAmt)
 								} else if tickAmt < 0 {
 									user.Character.ApplyHarm(characters.PoolHealth, -tickAmt, state.ActorRef{})
+									// Damage is damage: wake a sleeper and drop
+									// cancel-on-damage records, as the poison and
+									// bleed hook always did (slice 1, change 5).
+									cancelCraftOrSalvageOnDamage(user.Character)
+									cancelDamageBuffs(user.Character)
+									// Capture the cause at the moment the tick lands: a
+									// tick that is the record's last trigger arrives
+									// already Expired (Buffs.Trigger decrements
+									// TriggersLeft before returning it), and the record
+									// can also be pruned before the death announcement
+									// listener runs. See tickCauseFor and deathCauseFor.
+									if cause := tickCauseFor(trigBuffSpec); cause != "" {
+										user.Character.LastTickCause = cause
+										user.Character.LastTickCauseRound = util.GetRoundCount()
+									}
 								}
 							case "stamina":
 								if tickAmt > 0 {
@@ -365,9 +405,6 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 
 				// Manifester: a Brood Mother is never petless.
 				tickBroodMotherFloor(user, room)
-
-				// Stage 9.8: Tick all combat conditions (decrements Duration, removes expired)
-				user.Character.TickConditions()
 
 				// Stage 12.2: Mutation progress — accumulates during combat, triggers acquisition or deepening
 				// Stage 17.2: The Eye modulates how quickly mutations happen (0.5× at new moon, 1.5× at full)

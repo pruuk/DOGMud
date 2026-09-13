@@ -632,9 +632,20 @@ func applyMobEffect_dot(
 	if dotDuration < 3 {
 		dotDuration = 3
 	}
-	// An immune target refuses the condition, and nothing that did not happen
+	// An immune target refuses the record, and nothing that did not happen
 	// may be narrated. The cast still earns aggro: it was made.
-	afflicted := mob.Character.AddCondition(characters.ConditionPoisoned, dotDuration, float64(magnitude), "spell")
+	//
+	// The hook applied int(magnitude) per round with a floor of one; the
+	// record's negative snapshot is that harm. The old hook landed that
+	// harm only every third round while dotDuration ticked down every
+	// round; the record keeps that cadence itself now (buff 121's
+	// triggerrate is three rounds), so TickTriggers converts dotDuration
+	// into the matching trigger count instead of one trigger per round.
+	dotAmount := magnitude
+	if dotAmount < 1 {
+		dotAmount = 1
+	}
+	afflicted := mob.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, buffs.TickTriggers(dotDuration), -float64(dotAmount), "spell") == nil
 	setMobSpellAggro(user, mob)
 	if afflicted && user != nil {
 		user.SendText(spellSchoolCategory(spellData), fmt.Sprintf(
@@ -811,7 +822,7 @@ func applyMobEffect_buff(
 // exist: applyMobEffect's switch only handled damage/dot/knockdown/buff, so
 // a mob-to-mob (or player-to-companion) "heal" cast silently fell through to
 // applyMobEffect_default and did nothing. Mirrors applyMobSelfEffect's
-// "heal" case (percentage-of-max regen via ConditionRegen) but targets
+// "heal" case (percentage-of-max regen via the Regenerating record) but targets
 // `mob` instead of the caster. Returns 0 (no damage dealt) to match the
 // applyMobEffect_* int-return convention.
 func applyMobEffect_heal(
@@ -838,7 +849,7 @@ func applyMobEffect_heal(
 	if durationRounds < 6 {
 		durationRounds = 6
 	}
-	mob.Character.AddCondition(characters.ConditionRegen, durationRounds, regenMult, "heal spell")
+	_ = mob.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, durationRounds, regenMult, "heal spell")
 	sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
 		`<ansi fg="cyan">%s</ansi>'s %s washes over %s, knitting wounds shut.`,
 		casterName, spellData.Name, mName))
@@ -1018,7 +1029,6 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 
 	case "purge":
 		target.Character.CancelBuffsWithFlag(buffs.Poison)
-		target.Character.RemoveCondition(characters.ConditionPoisoned)
 		if target.UserId != user.UserId {
 			messaging.SendTrio(messaging.Trio{
 				Actor: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
@@ -1059,7 +1069,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 		if durationRounds < 6 {
 			durationRounds = 6
 		}
-		target.Character.AddCondition(characters.ConditionRegen, durationRounds, regenMult, "heal spell")
+		_ = target.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, durationRounds, regenMult, "heal spell")
 		if target.UserId != user.UserId {
 			messaging.SendTrio(messaging.Trio{
 				Actor: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
@@ -1162,7 +1172,7 @@ func applyPlayerEffect(user *users.UserRecord, target *users.UserRecord, room *r
 		if out.AttackerCrit {
 			shieldBonus = int(float64(shieldBonus) * 1.5)
 		}
-		target.Character.AddCondition(characters.ConditionShield, duration, float64(shieldBonus), "spell")
+		_ = target.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, duration, float64(shieldBonus), "spell")
 		if target.UserId != user.UserId {
 			messaging.SendTrio(messaging.Trio{
 				Actor: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(
@@ -1479,7 +1489,7 @@ func applyMobSelfEffect(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spell
 		if durationRounds < 6 {
 			durationRounds = 6
 		}
-		mob.Character.AddCondition(characters.ConditionRegen, durationRounds, regenMult, "heal spell")
+		_ = mob.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, durationRounds, regenMult, "heal spell")
 		sendVisualRoomText(room, messaging.CategorySpellVital, fmt.Sprintf(
 			`%s channels restorative magic.`, mobDisplayName(mob, room, 0)))
 	case "buff":
@@ -1518,7 +1528,7 @@ func applyMobSelfEffect(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spell
 			}
 		}
 		duration := calcSpellDuration(spellData.BaseFolds, skillLevel, spellData.CasterStatValue(mob.Character.Stats))
-		mob.Character.AddCondition(characters.ConditionShield, duration, float64(shieldBonus), "spell")
+		_ = mob.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, duration, float64(shieldBonus), "spell")
 		sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
 			`A shimmering barrier forms around %s.`, mobDisplayName(mob, room, 0)))
 	}
@@ -1648,9 +1658,20 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 		if dotDuration < 3 {
 			dotDuration = 3
 		}
-		// An immune target refuses the condition, and nothing that did not happen
+		// An immune target refuses the record, and nothing that did not happen
 		// may be narrated. The targeting commit below still stands: the mob cast.
-		if target.Character.AddCondition(characters.ConditionPoisoned, dotDuration, float64(magnitude), "spell") {
+		//
+		// The hook applied int(magnitude) per round with a floor of one; the
+		// record's negative snapshot is that harm. The old hook landed that
+		// harm only every third round while dotDuration ticked down every
+		// round; the record keeps that cadence itself now (buff 121's
+		// triggerrate is three rounds), so TickTriggers converts dotDuration
+		// into the matching trigger count instead of one trigger per round.
+		dotAmount := magnitude
+		if dotAmount < 1 {
+			dotAmount = 1
+		}
+		if target.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, buffs.TickTriggers(dotDuration), -float64(dotAmount), "spell") == nil {
 			messaging.SendTrio(messaging.Trio{
 				Actor: messaging.NoLine,
 				Actee: messaging.Say(spellSchoolCategory(spellData), fmt.Sprintf(

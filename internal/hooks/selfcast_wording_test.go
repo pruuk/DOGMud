@@ -3,7 +3,7 @@ package hooks
 import (
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -23,12 +23,13 @@ import (
 func TestSelfCastPurge_OneLineToCaster_RoomNamesCasterOnce(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 	u := users.GetByUserId(1)
 	room := rooms.LoadRoom(1)
 	drainPlain(1)
 	drainPlain(2)
 
-	u.Character.AddCondition(characters.ConditionPoisoned, 10, 5.0, "test")
+	_ = u.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, 10, -5, "test")
 	spell := &spells.SpellData{SpellId: "cleansing-wave", Name: "Cleansing Wave", EffectType: "purge"}
 	applyPlayerEffect(u, u, room, spell, 10, spellContestAttackWin())
 

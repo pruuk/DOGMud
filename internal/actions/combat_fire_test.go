@@ -22,6 +22,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -344,7 +346,14 @@ func TestFire_UnseenTargetIsRejectedBeforeAdmission(t *testing.T) {
 			char.Stamina = 10
 			char.Equipment.Weapon = fireRangedWeapon(1, 1.0, true)
 			if tc.blindShooter {
-				char.AddCondition(characters.ConditionBlinded, 3, 1, "test")
+				// ExecuteFire reads the Perception machine, not a source
+				// record, so the machine is driven straight here. The old
+				// setup added the blinded combat condition, which the
+				// enum deletion took with it; seeding a blind buff instead
+				// would replace the package-wide buff registry that the
+				// hidden-target cases in this same table depend on.
+				require.NoError(t, char.Perception.TransitionTo(perception.Blinded,
+					state.TransitionReason{Trigger: "test-setup"}))
 			}
 			actor := newStubActor(char, rooms.LoadRoom(1))
 			healthBefore := target.Character.Health

@@ -3,7 +3,8 @@ name: Warcry
 description: A rallying battle cry bolsters your fighting spirit.
 triggerrate: 1 round
 triggercount: 25
+effects:
+  damage_mult: magnitude
 end_user_text: "The fervor of the warcry fades from you."
 flags:
-  - condition-mirror
   - silent-start

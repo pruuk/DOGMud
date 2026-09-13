@@ -153,7 +153,7 @@ func (g *GMCPCharModule) buffTriggeredHandler(e events.Event) events.ListenerRet
 
 	events.AddToQueue(GMCPCharUpdate{
 		UserId:     evt.UserId,
-		Identifier: `Char.Affects, Char.Conditions`,
+		Identifier: `Char.Conditions`,
 	})
 
 	return events.Continue
@@ -559,79 +559,6 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 		}
 	}
 
-	if all || g.wantsGMCPPayload(`Char.Affects`, gmcpModule) {
-
-		c := configs.GetTimingConfig()
-
-		payload.Affects = make(map[string]GMCPCharModule_Payload_Affect)
-
-		nameIncrement := 0
-		for _, buff := range user.Character.GetBuffs() {
-
-			buffSpec := buffs.GetBuffSpec(buff.BuffId)
-			if buffSpec == nil {
-				continue
-			}
-
-			// Stealth buffs (Hidden, Empathic Shroud, etc.) are deliberately not
-			// surfaced to the client — mirrors the `conditions` command filter and
-			// the no-end-message design on the hidden buff. If you can't know who
-			// spotted you, you shouldn't be told you're hidden.
-			if slices.Contains(buffSpec.Flags, buffs.Hidden) {
-				continue
-			}
-
-			// Warcry/Rally are surfaced through Char.Conditions (the combat
-			// condition list); their mirror buff is skipped here so the web
-			// client doesn't render the same effect as both an Affect and a
-			// Condition chip.
-			if slices.Contains(buffSpec.Flags, buffs.ConditionMirror) {
-				continue
-			}
-
-			timeLeft, timeMax := -1, -1
-
-			if !buff.PermaBuff {
-				roundsLeft, totalRounds := buffs.GetDurations(buff, buffSpec)
-				timeMax = c.RoundsToSeconds(totalRounds)
-				timeLeft = c.RoundsToSeconds(roundsLeft)
-				if timeLeft < 0 {
-					timeLeft = 0
-				}
-			}
-
-			name, desc := buffSpec.VisibleNameDesc()
-
-			buffSource := buff.Source
-			if buffSource == `` {
-				buffSource = `unknown`
-			}
-			aff := GMCPCharModule_Payload_Affect{
-				Name:         name,
-				Description:  desc,
-				DurationMax:  timeMax,
-				DurationLeft: timeLeft,
-				Type:         buffSource,
-			}
-
-			aff.Mods = make(map[string]int)
-			for name, value := range buffSpec.StatMods {
-				aff.Mods[name] = value
-			}
-
-			if _, ok := payload.Affects[name]; ok {
-				nameIncrement++
-				name += `#` + strconv.Itoa(nameIncrement)
-			}
-
-			payload.Affects[name] = aff
-		}
-
-		if !all {
-			return payload.Affects, `Char.Affects`
-		}
-	}
-
 	if all || g.wantsGMCPPayload(`Char.Quests`, gmcpModule) {
 
 		payload.Quests = []GMCPCharModule_Payload_Quest{}
@@ -718,13 +645,73 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 	if all || g.wantsGMCPPayload(`Char.Conditions`, gmcpModule) {
 
-		payload.Conditions = []GMCPCondition{}
-		for _, cond := range user.Character.Conditions {
-			payload.Conditions = append(payload.Conditions, GMCPCondition{
-				Type:        cond.Type.DisplayName(),
-				Description: cond.Type.Description(),
-				Duration:    conditionDurationLabel(cond.Duration),
-			})
+		// One payload, one source. Buff records ARE the conditions now, so
+		// this map is everything the client used to get as Char.Affects plus
+		// the qualitative duration word Char.Conditions used to carry. The
+		// client renders one chip per entry and no longer has to reconcile
+		// two lists that overlapped.
+		c := configs.GetTimingConfig()
+
+		payload.Conditions = make(map[string]GMCPCondition)
+
+		nameIncrement := 0
+		for _, buff := range user.Character.GetBuffs() {
+
+			buffSpec := buffs.GetBuffSpec(buff.BuffId)
+			if buffSpec == nil {
+				continue
+			}
+
+			// Stealth buffs (Hidden, Empathic Shroud, etc.) are deliberately not
+			// surfaced to the client — mirrors the `conditions` command filter and
+			// the no-end-message design on the hidden buff. If you can't know who
+			// spotted you, you shouldn't be told you're hidden.
+			if slices.Contains(buffSpec.Flags, buffs.Hidden) {
+				continue
+			}
+
+			timeLeft, timeMax := -1, -1
+			roundsLeft := 0
+
+			if !buff.PermaBuff {
+				var totalRounds int
+				roundsLeft, totalRounds = buffs.GetDurations(buff, buffSpec)
+				if roundsLeft < 0 {
+					roundsLeft = 0
+				}
+				timeMax = c.RoundsToSeconds(totalRounds)
+				timeLeft = c.RoundsToSeconds(roundsLeft)
+			}
+
+			name, desc := buffSpec.VisibleNameDesc()
+
+			buffSource := buff.Source
+			if buffSource == `` {
+				buffSource = `unknown`
+			}
+			cond := GMCPCondition{
+				Name:         name,
+				Description:  desc,
+				DurationMax:  timeMax,
+				DurationLeft: timeLeft,
+				// A permabuff reports roundsLeft 0, which the label reads as
+				// "sustained" — the same word the old condition list used for
+				// a permanent entry.
+				Duration: conditionDurationLabel(roundsLeft),
+				Type:     buffSource,
+			}
+
+			cond.Mods = make(map[string]int)
+			for name, value := range buffSpec.StatMods {
+				cond.Mods[name] = value
+			}
+
+			if _, ok := payload.Conditions[name]; ok {
+				nameIncrement++
+				name += `#` + strconv.Itoa(nameIncrement)
+			}
+
+			payload.Conditions[name] = cond
 		}
 
 		if !all {
@@ -759,26 +746,34 @@ func (g *GMCPCharModule) wantsGMCPPayload(packageToConsider string, packageReque
 }
 
 type GMCPCharModule_Payload struct {
-	Info       *GMCPCharModule_Payload_Info             `json:"Info,omitempty"`
-	Affects    map[string]GMCPCharModule_Payload_Affect `json:"Affects,omitempty"`
-	Enemies    []GMCPCharModule_Enemy                   `json:"Enemies,omitempty"`
-	Inventory  *GMCPCharModule_Payload_Inventory        `json:"Inventory,omitempty"`
-	Stats      *GMCPCharModule_Payload_Stats            `json:"Stats,omitempty"`
-	Vitals     *GMCPCharModule_Payload_Vitals           `json:"Vitals,omitempty"`
-	Worth      *GMCPCharModule_Payload_Worth            `json:"Worth,omitempty"`
-	Quests     []GMCPCharModule_Payload_Quest           `json:"Quests,omitempty"`
-	Pets       []GMCPCharModule_Payload_Pet             `json:"Pets,omitempty"`
-	Skills     map[string]string                        `json:"Skills,omitempty"`
-	Conditions []GMCPCondition                          `json:"Conditions,omitempty"`
+	Info       *GMCPCharModule_Payload_Info      `json:"Info,omitempty"`
+	Enemies    []GMCPCharModule_Enemy            `json:"Enemies,omitempty"`
+	Inventory  *GMCPCharModule_Payload_Inventory `json:"Inventory,omitempty"`
+	Stats      *GMCPCharModule_Payload_Stats     `json:"Stats,omitempty"`
+	Vitals     *GMCPCharModule_Payload_Vitals    `json:"Vitals,omitempty"`
+	Worth      *GMCPCharModule_Payload_Worth     `json:"Worth,omitempty"`
+	Quests     []GMCPCharModule_Payload_Quest    `json:"Quests,omitempty"`
+	Pets       []GMCPCharModule_Payload_Pet      `json:"Pets,omitempty"`
+	Skills     map[string]string                 `json:"Skills,omitempty"`
+	Conditions map[string]GMCPCondition          `json:"Conditions,omitempty"`
 }
 
 // /////////////////
 // Char.Conditions
 // /////////////////
+//
+// One entry per held record, keyed by its visible name (a repeated name takes
+// a `#n` suffix). This is the former Char.Affects shape plus Duration, the
+// qualitative word the retired Char.Conditions list carried; a permabuff
+// reports DurationMax/DurationLeft -1 and Duration "sustained".
 type GMCPCondition struct {
-	Type        string `json:"type"`
-	Description string `json:"description"`
-	Duration    string `json:"duration"` // "sustained", "briefly", "for a while", "extended"
+	Name         string         `json:"name"`
+	Description  string         `json:"description"`
+	DurationMax  int            `json:"duration_max"`
+	DurationLeft int            `json:"duration_cur"`
+	Duration     string         `json:"duration"` // "sustained", "briefly", "for a while", "extended"
+	Type         string         `json:"type"`
+	Mods         map[string]int `json:"affects"`
 }
 
 // conditionDurationLabel converts rounds remaining to a qualitative label.
@@ -1057,18 +1052,6 @@ type GMCPCharModule_Payload_Vitals struct {
 type GMCPCharModule_Payload_Worth struct {
 	Gold int `json:"gold_carry,omitempty"`
 	Bank int `json:"gold_bank,omitempty"`
-}
-
-// /////////////////
-// Char.Affects
-// /////////////////
-type GMCPCharModule_Payload_Affect struct {
-	Name         string         `json:"name"`
-	Description  string         `json:"description"`
-	DurationMax  int            `json:"duration_max"`
-	DurationLeft int            `json:"duration_cur"`
-	Type         string         `json:"type"`
-	Mods         map[string]int `json:"affects"`
 }
 
 // /////////////////

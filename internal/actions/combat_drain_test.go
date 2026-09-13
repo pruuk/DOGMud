@@ -3,6 +3,7 @@ package actions
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -102,6 +103,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 		6003: {SpeciesId: 6003, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
 	})
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	// Register a target mob with minimal dexterity so the hit chance is high.
 	targetMob := &mobs.Mob{InstanceId: 6199}
@@ -109,6 +111,10 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	targetMob.Character.HealthMax.Value = 500
 	targetMob.Character.Health = 500
 	targetMob.Character.Stats.Dexterity.ValueAdj = 1 // near-zero evasion
+	// A raw mob literal's Buffs is the zero value (nil maps); AddBuffMagnitude
+	// (the Bleeding record's door) writes into those maps directly and would
+	// panic on a nil map without this init, unlike the old condition path.
+	targetMob.Character.Buffs = buffs.New()
 	setCombatPositionParallel(&targetMob.Character, position.Standing)
 	mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
 	defer mobs.SetInstanceForTest(targetMob.InstanceId, nil)
@@ -154,9 +160,17 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	assert.Greater(t, res.Healed, 0,
 		"DrainResult.Healed should be positive on a hit")
 
-	// Target should have a bleed condition applied.
-	assert.True(t, targetMob.Character.HasCondition(characters.ConditionBleeding),
-		"target should have ConditionBleeding after a successful drain")
+	// Target should have a Bleeding record applied.
+	assert.True(t, targetMob.Character.HasBuff(buffs.BuffIdBleeding),
+		"target should have the Bleeding record after a successful drain")
+
+	// The sign pin: drain must apply a HARMING record (negative magnitude and
+	// tick snapshot), not a healing one.
+	held := targetMob.Character.GetBuffs(buffs.BuffIdBleeding)
+	if assert.Len(t, held, 1, "expected exactly one held Bleeding record") {
+		assert.Less(t, held[0].Magnitude, 0.0, "drain's Bleeding record must carry a negative magnitude")
+		assert.Less(t, held[0].TickAmount, 0, "drain's Bleeding record must carry a negative tick snapshot")
+	}
 
 	// BleedDmg should be at least the minimum.
 	assert.GreaterOrEqual(t, res.BleedDmg, 2,
@@ -179,6 +193,7 @@ func TestDrain_PartialDamageHealsWithoutBleed(t *testing.T) {
 		6004: {SpeciesId: 6004, Name: "vampire", BodyParts: []string{"arms", "hands", "legs", "mouth"}, NaturalAttack: items.Claws, LifeDrain: true},
 	})
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	// Register a target mob with a moderate Dexterity edge over the
 	// attacker's Strength — enough to produce frequent defended (non-Hit)
@@ -188,6 +203,10 @@ func TestDrain_PartialDamageHealsWithoutBleed(t *testing.T) {
 	targetMob.Character.HealthMax.Value = 100000
 	targetMob.Character.Health = 100000
 	targetMob.Character.Stats.Dexterity.ValueAdj = 130
+	// A raw mob literal's Buffs is the zero value (nil maps); a full (non-
+	// partial) hit elsewhere in the retry loop below calls AddBuffMagnitude,
+	// which would panic on those nil maps without this init.
+	targetMob.Character.Buffs = buffs.New()
 	setCombatPositionParallel(&targetMob.Character, position.Standing)
 	mobs.SetInstanceForTest(targetMob.InstanceId, targetMob)
 	defer mobs.SetInstanceForTest(targetMob.InstanceId, nil)
@@ -208,7 +227,7 @@ func TestDrain_PartialDamageHealsWithoutBleed(t *testing.T) {
 		char.Cooldowns = characters.Cooldowns{}
 		char.Health = char.HealthMax.Value - 1000 // below max so the heal is observable
 		targetMob.Character.Health = targetMob.Character.HealthMax.Value
-		targetMob.Character.RemoveCondition(characters.ConditionBleeding)
+		targetMob.Character.RemoveBuff(buffs.BuffIdBleeding)
 
 		res = ExecuteDrain(newStubActor(char, newTestRoom()))
 
@@ -227,8 +246,13 @@ func TestDrain_PartialDamageHealsWithoutBleed(t *testing.T) {
 
 	assert.Greater(t, res.Healed, 0,
 		"lifesteal should heal the attacker on a defended partial: it reads damage actually dealt, not the Hit flag")
-	assert.False(t, targetMob.Character.HasCondition(characters.ConditionBleeding),
-		"bleed stays hit-only; a defended partial must not apply the bleed condition")
+	// HasBuff ignores expiry (it only checks presence in the id index), and
+	// the per-iteration reset above calls RemoveBuff, which marks a held
+	// record expired in place rather than deleting it — so a stale record
+	// from an earlier full-hit iteration would still read HasBuff==true.
+	// GetBuffs filters expired records, which is what this assertion needs.
+	assert.Empty(t, targetMob.Character.GetBuffs(buffs.BuffIdBleeding),
+		"bleed stays hit-only; a defended partial must not apply the Bleeding record")
 }
 
 // TestDrain_TargetGone verifies that when aggro is set to an invalid mob
@@ -325,6 +349,7 @@ func TestDrainArea_SinglePlayer(t *testing.T) {
 	p1 := seedDrainAreaPlayer(7001, "quester1", "Vael")
 	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{7001: p1})
 	defer cleanupUsers()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	room := newTestRoom()
 	room.AddPlayer(7001)
@@ -335,7 +360,7 @@ func TestDrainArea_SinglePlayer(t *testing.T) {
 		char := drainAreaAttacker()
 		char.Health = char.HealthMax.Value - 100 // 100 HP below max so heal is observable
 		p1.Character.Health = 500
-		p1.Character.RemoveCondition(characters.ConditionBleeding)
+		p1.Character.RemoveBuff(buffs.BuffIdBleeding)
 
 		actor := newStubActor(char, room)
 		result = ExecuteDrainArea(actor)
@@ -362,7 +387,7 @@ func TestDrainArea_SinglePlayer(t *testing.T) {
 	require.Equal(7001, pr.UserId)
 	require.Greater(pr.MoveResult.Damage, 0, "hit player should take drain damage")
 	require.GreaterOrEqual(pr.BleedDmg, 2, "bleed magnitude should be at least the floor of 2")
-	require.True(p1.Character.HasCondition(characters.ConditionBleeding), "drained player should carry a bleed condition")
+	require.True(p1.Character.HasBuff(buffs.BuffIdBleeding), "drained player should carry the Bleeding record")
 
 	require.Greater(result.TotalDamage, 0, "aggregate damage should be positive")
 	require.Greater(result.Healed, 0, "mob should be healed by the aggregate lifesteal")
@@ -381,6 +406,7 @@ func TestDrainArea_MultiPlayer(t *testing.T) {
 		7004: p3,
 	})
 	defer cleanupUsers()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	room := newTestRoom()
 	room.AddPlayer(7002)
@@ -396,7 +422,7 @@ func TestDrainArea_MultiPlayer(t *testing.T) {
 		char.Health = char.HealthMax.Value - 300 // well below max so aggregate heal is observable
 		for _, p := range players {
 			p.Character.Health = 500
-			p.Character.RemoveCondition(characters.ConditionBleeding)
+			p.Character.RemoveBuff(buffs.BuffIdBleeding)
 		}
 
 		actor := newStubActor(char, room)
@@ -437,7 +463,7 @@ func TestDrainArea_MultiPlayer(t *testing.T) {
 		sumDamage += pr.MoveResult.Damage
 	}
 	for _, p := range players {
-		require.True(p.Character.HasCondition(characters.ConditionBleeding), "each drained player should carry a bleed condition")
+		require.True(p.Character.HasBuff(buffs.BuffIdBleeding), "each drained player should carry the Bleeding record")
 	}
 
 	require.Equal(sumDamage, result.TotalDamage, "TotalDamage should equal the sum of per-player damage")

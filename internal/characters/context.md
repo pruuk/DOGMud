@@ -295,6 +295,17 @@ progression for contest paths now flows exclusively through
 - **Item management**: Worn item tracking and validation
 
 ### Character States and Modifiers
+- 🔑 **Timed state is `Character.Buffs` and nothing else.** Read
+  `internal/buffs/context.md` before adding, reading or displaying anything
+  that lasts a number of rounds. The parallel combat condition enum
+  (`conditions.go`, `CombatCondition`, `HasCondition`, `AddCondition`,
+  `TickConditions`) was deleted on 2026-09-12 by slice 1 of the conditions
+  unification; its ten conditions became NINE records, 79, 80 and 117 to 123
+  (blinded had no producer and was deleted rather than ported), combat reads
+  them through `Buffs.Effect`, and producers write them through
+  `Character.AddBuffMagnitude` (`buffs.go`). A root guard,
+  `timed_state_guard_test.go`, fails `go test .` on a second collection or on
+  any of those spellings coming back.
 - **Aggro system** (`aggro.go`): Combat targeting and threat management
 - **Buffs integration**: Status effects that modify character capabilities
 - **Perception of hidden creatures** (`character.go`): `Perceives(other)` is
@@ -548,32 +559,32 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   `HealthPerRound()` at all -- they are applied by the caller,
   `internal/hooks/NewRound_AutoHeal.go`, and only on the out-of-combat player
   branch. A mob's health-regen mutations and a player's in-combat
-  `ConditionRegen` tick never see them. All three effect types are multipliers
+  Regenerating tick never see them. All three effect types are multipliers
   (`0.15` = +15%), matching the "never a flat `health_regen` effect" rule; the
   bounds enforced in `internal/devtools/magnitude_bounds_test.go` are
   `health_regen_multiplier` [-0.3, 0.6] and `stamina_regen_multiplier`
   [-0.4, 0.4].
-- **Heal spells regenerate via a condition, not a direct `Heal()` call.** The
+- **Heal spells regenerate via a timed record, not a direct `Heal()` call.** The
   spell's `effect_magnitude` YAML field becomes the regen multiplier
   (`spellData.EffectMagnitude`, e.g. 3 = 3x base regen, floored at 1.0; a
   crit doubles the portion above 1x). `internal/hooks/spell_resolution.go`'s
-  `"heal"` case calls `target.Character.AddCondition(characters.ConditionRegen,
+  `"heal"` case calls `target.Character.AddBuffMagnitude(buffs.BuffIdRegenerating,
   durationRounds, regenMult, "heal spell")` with `durationRounds =
   calcSpellDuration(...)/2`, floored at 6 rounds. Each round after that,
-  `NewRound_AutoHeal.go` reads `HasCondition(ConditionRegen)` and
-  `GetConditionMagnitude(ConditionRegen)` and multiplies that round's
+  `NewRound_AutoHeal.go` reads `Buffs.HasEffect(buffs.EffectRegenMult)` and
+  `Buffs.Effect(buffs.EffectRegenMult)` and multiplies that round's
   `HealthPerRound()` result by it -- in combat this is the ONLY health regen a
   player gets; out of combat it stacks on top of the base regen described
   above.
 - **Buff-tick healing (`tick_pool`/`tick_percent` on a `BuffSpec`) is a
   DIFFERENT primitive**, `buffs.ComputeTickAmount(maxPool, percent, variance,
   minAmount, scalingMult)` in `internal/buffs/tick.go`, not the
-  `*PerRound`/`ConditionRegen` path above. It rounds (`math.Round`), not
+  `*PerRound`/Regenerating path above. It rounds (`math.Round`), not
   floors, and layers a random variance term and a caller-supplied scaling
   multiplier before rounding -- so "floor(poolMax * fraction)" describes the
   three `*PerRound` functions but not this sibling mechanism.
 - **NPCs regen differently by pool.** Mob health regen only runs out of
-  combat (unless `ConditionRegen` is active, which still applies in combat);
+  combat (unless a `regen_mult` record is held, which still applies in combat);
   stamina regens at the same rate out of combat but 1/4 rate in combat;
   conviction regens every tick regardless of combat state. See the mob loop in
   `NewRound_AutoHeal.go`.
@@ -902,27 +913,36 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
     // MinRecoveryRounds gate, read from ProneData/SupineData, unchanged.
     if minRounds > 0 {
         c.Position.ConsumeRecoveryRound()
-        c.AddCondition(ConditionRecoveryPenalty, 1, 1.0, "prone recovery")
+        _ = c.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "prone recovery")
         return false, false
     }
 
     success := true
     if contestWin != nil {
         success = contestWin()
-        if success {
-            c.OnSkillUse(string(skills.UnarmedCombat), c.GetUserId())
-        }
+        c.AwardResolved(c.GetUserId(), success, c.CandidateFor(string(skills.UnarmedCombat)))
     }
 
     if success {
         c.Position.TransitionToStanding(state.TransitionReason{Trigger: position.TriggerRecoveryRoll})
     } else {
-        c.AddCondition(ConditionRecoveryPenalty, 1, 1.0, "prone recovery")
+        _ = c.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "prone recovery")
     }
 
     return true, success
 }
 ```
+
+**The recovery penalty is a record, and it never bites a player.** Buff 118
+Recovering carries `attacks_cap: 1` as a LITERAL, so the `magnitude` argument
+above is unused and passed as 0; `calcSwingCount` reads it through
+`Buffs.Effect(buffs.EffectAttacksCap)`. On the player side it is inert:
+`UserRoundTick` calls `AttemptRecovery` and then ticks the buffs in the same
+hook, expiring the one-trigger record before `DoCombat` ever runs. That is
+exactly what the `ConditionRecoveryPenalty` enum did before the conditions
+unification, so the migration is faithful rather than newly broken; on the mob
+side the cap always bit and still does. Making it bite for players is a filed
+owner call. See `internal/buffs/context.md`.
 
 **Contested vs. free — caller decides:**
 - `contestWin == nil` → automatic stand once `MinRecoveryRounds` is consumed.
@@ -930,9 +950,10 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
   recoverer.
 - `contestWin != nil` → the caller-built opposed contest (see
   `internal/hooks/recovery_contest.go`) against whoever is holding the
-  character down. **Success-only progression**: exactly one
-  `OnSkillUse(UnarmedCombat)` fires on a WON contest; a lost contest or a
-  free stand fires nothing.
+  character down. **Progression on either outcome** (U10b-1 task 18c): one
+  `AwardResolved(..., success, CandidateFor(UnarmedCombat))` fires whether the
+  contest was won or lost, because failing to scramble up is exactly what
+  teaches you to. A FREE stand ran no contest and fires nothing.
 - `AttemptRecovery` itself never touches `internal/combat` or `internal/contest`
   — it only calls the injected closure. All contest-building (score formula,
   opponent selection, `combat.RunContest`) lives in the caller, which is why
@@ -1210,19 +1231,19 @@ func (c *Character) Attackers() []state.ActorRef
     // snapshot of inbound attacker list from CombatPhase
 ```
 
-### Legacy Aggro field (compat surface)
+### The Aggro field is gone (U12c-2)
 
-The `Aggro *Aggro` field is kept in `combat_state_compat.go` for the
-~200 direct field reads in usercommands, hooks, combat, and mob-commands
-that were not migrated in chunk 0. **Do not add new reads against
-`Character.Aggro`** — use the predicate methods above.
+There is no `Character.Aggro` field and no `combat_state_compat.go`. U12c-2
+deleted the struct and renamed that file `engagement_storage.go`, which is
+where `SetAggro`, `EndAggro` and `IsAggro` live now. Use the predicate methods
+above to ask about engagement.
 
-All writes go through `SetAggro` / `EndAggro`, which dual-write to both
-`Aggro` and `CombatPhase.TransitionToEngaging` / `ForceIdle`. Direct
-mutation of `Character.Aggro` (bypassing the wrappers) is forbidden.
-
-Field removal is scheduled for a cleanup chunk after chunks 1-5 land and
-the remaining reads are migrated.
+`SetAggro` and `EndAggro` survived the collapse as the storage primitives, and
+they write `CombatPhase` alone. `AggroType` survived as a parameter, never as
+stored state; the file's header comment lists where each of the struct's four
+other jobs went. The rule on these two is a CALLER restriction, not a deletion:
+everything outside `internal/characters` and `internal/targeting` goes through
+the seam, and `aggro_writer_guard_test.go` holds that.
 
 `EndAggro` also clears **`RangedEngagedCueSpoken`** (`yaml:"-"`, U10d). That
 bool is the once-per-engagement latch for the shoot wrapper's "you cannot
@@ -1545,7 +1566,8 @@ default); all others return `false`.
 - `IsController()` — true when `Character.Control.State() ==
   control.Controlling`. Reads the `internal/state/control` FSM on
   `Character.Control *control.Machine`. Replaced the deleted
-  `HasCondition(ConditionGrappleController)` check (S4 shipped).
+  grapple-controller condition check (S4 shipped); the condition API that
+  check belonged to is itself gone as of the conditions unification.
 - `IsBeingControlled()` — true when `Character.Control.State() ==
   control.Controlled` (symmetric to `IsController`).
 - `IsLowGrappleStamina()` — true when stamina fraction is below
@@ -1576,7 +1598,7 @@ should use these predicates from day one):
 | `.IsGrapplePosition()` | `IsGrappling()` |
 | `.IsGroundPosition()` | `IsOnFloor()` |
 | `.GetSpeedMultiplier()` | `GetPositionSpeedMultiplier()` |
-| `HasCondition(GrappleController)` | `IsController()` |
+| the grapple-controller condition check | `IsController()` |
 
 Position predicates also drive the chunk-4c reach utility
 (`internal/combat/reach.go`): `IsGrappling()` + `State()` determine the
@@ -1641,6 +1663,18 @@ position's sub pool (`TopSubmissionsForPosition` or
 `BottomSubmissionsForPosition`). Advanced by
 `pickSubmissionRoundRobin` each time a sub attempt fires so the same
 sub type is not hammered every round. Not persisted: `yaml:"-"`.
+
+**`LastTickCause string` and `LastTickCauseRound uint64`** (conditions
+unification, 2026-09-12) are runtime only, `yaml:"-"`. Both round-tick paths
+stamp them ("poison" or "bleeding out", plus the round) at the moment a
+damaging health tick from a record carrying the `poison` or `bleeding` flag
+lands; see `tickCauseFor` in `internal/hooks/tick_cause.go`. They exist because
+`Buffs.Trigger` decrements `TriggersLeft` before returning, so a record's last
+tick arrives already expired, and `PruneBuffs` can remove it before the queued
+death event is handled. `deathCauseFor` reads the held record by id first and
+only falls back to the stamp, and only within one round of
+`LastTickCauseRound`, so a tick from an earlier fight cannot name a later
+death.
 
 ### Concentration is a contest, not a solo curve (U10)
 
@@ -1750,10 +1784,12 @@ to nil in `Character.ResetForMobInstance()` so fresh mob instances get
 their own machine. Not persisted: perception state is transient and
 reconstructed from active buffs/conditions at runtime.
 
-The Perception machine tracks whether a character can see — `Sighted`
-(default) or `Blinded` (any of three active sources: Buff 3, Buff 77,
-or ConditionBlinded). Chunk 6 ships DORMANT: transitions fire correctly
-via `AddBuff`/`RemoveBuff`/`AddCondition`/`RemoveCondition`, but no
+The Perception machine tracks whether a character can see: `Sighted`
+(default) or `Blinded` (either of two active sources, Buff 3 and Buff 77).
+There was a third, a blinded combat condition, deleted in the conditions
+unification (2026-09-12) because nothing in the tree ever produced it.
+Chunk 6 ships DORMANT: transitions fire correctly
+via `AddBuff` and `RemoveBuff`, but no
 consumer reads `Perception.State()` yet. The future messaging framework
 chunk wires this into broadcast gating (visual broadcasts suppressed
 while Blinded), infrared "red shapes" rendering, and look-command
@@ -1770,9 +1806,11 @@ framework chunk alongside the first real consumer.
 ### HasAnyBlindSource helper (sight.go)
 
 `Character.HasAnyBlindSource()` in `internal/characters/sight.go` checks
-all three blind sources and returns true if any is currently active. Used
-by the expire-paths in `RemoveBuff` and `RemoveCondition` to determine
-whether to fire `Blinded→Sighted` when one of multiple overlapping
+both blind buff sources (`perception.BuffIdBlinded` and
+`perception.BuffIdFlashbangBlindness`) and returns true if either is
+currently active. Used
+by the expire-path in `RemoveBuff` to determine
+whether to fire `Blinded` back to `Sighted` when one of two overlapping
 sources clears. Uses `Buffs.TriggersLeft(id) > 0` rather than
 `HasBuff(id)` — see `internal/state/perception/context.md` for the
 implementation-detail rationale.
@@ -1800,15 +1838,17 @@ implementation-detail rationale.
 
 ## Files
 
-46 non-test files. Grouped by what they own:
+48 non-test files (`conditions.go` was deleted by the conditions unification,
+2026-09-12). Every file on disk appears in exactly one row below, and the rows
+name nothing that is not on disk. Grouped by what they own:
 
 | Group | Files |
 |-------|-------|
-| Core | `character.go`, `validate.go`, `migrations.go`, `overrides.go`, `description.go`, `formattedname.go` |
-| Stats & progression | `progression.go`, `skills.go`, `effective_stats.go`, `statmods`-adjacent helpers, `mobmastery.go`, `kdstats.go` |
-| Resources & conditions | `pools.go`, `reservation.go`, `resources.go`, `conditions.go`, `cooldowns.go`, `buffs.go`, `sight.go` |
+| Core | `character.go`, `validate.go`, `migrations.go`, `overrides.go`, `description.go`, `formattedname.go`, `actor_identity.go` |
+| Stats & progression | `progression.go`, `progression_award_resolved.go` (`AwardResolved`, the U10b-1 firing rule), `skills.go`, `effective_stats.go`, `mobmastery.go`, `kdstats.go` |
+| Resources & timed state | `pools.go`, `reservation.go`, `resources.go`, `cooldowns.go`, `buffs.go` (holds `Character.AddBuff`, `AddBuffScaled` and the `AddBuffMagnitude` writer door), `sight.go` |
 | Inventory & gear | `inventory.go`, `inventory_handle.go`, `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go`, `migrate_detuned_bows.go` |
-| Combat | `combat.go`, `combat_state_compat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go` |
+| Combat | `combat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go`, `engagement_storage.go` (was `combat_state_compat.go`; renamed by U12c-2 when the struct it kept compatible was deleted) |
 | Casting | `cast_helpers.go`, `spells.go` |
 | Mutation | `intrinsic.go`, `bloom.go`, `bloom_mutation.go`, `chrysifier.go`, `mutation_scour.go` |
 | Social & economy | `companions.go`, `charminfo.go`, `shop.go`, `quests.go`, `alts.go` |

@@ -3,6 +3,7 @@ package actions
 import (
 	"math"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
@@ -112,7 +113,9 @@ func ApplyRallyEffect(char *characters.Character) (float64, int) {
 		duration = int(float64(duration) * (1.0 + amp))
 	}
 
-	char.AddCondition(characters.ConditionRally, duration, bonus, "rally")
-	char.AddBuff(80, false)
+	// One record carries both the bookkeeping and the magnitude; the defense
+	// multiplier the reader wants is 1 + bonus. duration is the exact integer
+	// the shout computed (25 scaled by shout amp).
+	_ = char.AddBuffMagnitude(buffs.BuffIdRally, duration, 1.0+bonus, "rally")
 	return bonus, duration
 }

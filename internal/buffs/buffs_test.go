@@ -345,6 +345,13 @@ func TestBuffs_AddBuff_Stacking(t *testing.T) {
 	})
 }
 
+// TestGetDurations covers a record whose TriggersLeft still matches its spec
+// default, which is what a bare AddBuff produces. Every case here reports the
+// same numbers the old spec-only formula
+// (TriggerCount*RoundInterval - RoundCounter) reported, and each case names
+// that arithmetic beside the new one: for a default add the two agree, which
+// is the equivalence the instance-correct formula had to preserve. The one
+// deliberate change is the zero-interval row.
 func TestGetDurations(t *testing.T) {
 	type args struct {
 		buff *Buff
@@ -359,56 +366,71 @@ func TestGetDurations(t *testing.T) {
 		{
 			name: "Normal case",
 			args: args{
-				buff: &Buff{RoundCounter: 2},
+				buff: &Buff{TriggersLeft: 5, RoundCounter: 2},
 				spec: &BuffSpec{TriggerCount: 5, RoundInterval: 3},
 			},
-			wantRounds: 13, // (5*3)-2 = 15-2 = 13
+			wantRounds: 13, // new: (5*3)-(2%3) = 15-2 = 13; old: (5*3)-2 = 13
 			wantTotal:  15,
 		},
 		{
 			name: "Zero rounds passed",
 			args: args{
-				buff: &Buff{RoundCounter: 0},
+				buff: &Buff{TriggersLeft: 4, RoundCounter: 0},
 				spec: &BuffSpec{TriggerCount: 4, RoundInterval: 2},
 			},
-			wantRounds: 8,
+			wantRounds: 8, // new: (4*2)-(0%2) = 8; old: (4*2)-0 = 8
 			wantTotal:  8,
 		},
 		{
 			name: "All rounds passed",
 			args: args{
-				buff: &Buff{RoundCounter: 12},
+				buff: &Buff{TriggersLeft: 0, RoundCounter: 12},
 				spec: &BuffSpec{TriggerCount: 3, RoundInterval: 4},
 			},
-			wantRounds: 0, // (3*4)-12 = 12-12 = 0
+			wantRounds: 0, // new: (0*4)-(12%4) = 0; old: (3*4)-12 = 0
 			wantTotal:  12,
 		},
 		{
 			name: "RoundCounter greater than total",
 			args: args{
-				buff: &Buff{RoundCounter: 10},
+				buff: &Buff{TriggersLeft: 0, RoundCounter: 10},
 				spec: &BuffSpec{TriggerCount: 2, RoundInterval: 4},
 			},
-			wantRounds: -2, // (2*4)-10 = 8-10 = -2
+			wantRounds: -2, // new: (0*4)-(10%4) = -2; old: (2*4)-10 = -2
 			wantTotal:  8,
 		},
 		{
 			name: "Zero trigger count",
 			args: args{
-				buff: &Buff{RoundCounter: 1},
+				buff: &Buff{TriggersLeft: 0, RoundCounter: 1},
 				spec: &BuffSpec{TriggerCount: 0, RoundInterval: 5},
 			},
-			wantRounds: -1, // (0*5)-1 = 0-1 = -1
+			wantRounds: -1, // new: (0*5)-(1%5) = -1; old: (0*5)-1 = -1
 			wantTotal:  0,
 		},
 		{
+			// The one row whose answer changed. A pure flag record has
+			// RoundInterval 0, never ticks, and has no duration to report;
+			// the old formula divided nothing but still returned a negative
+			// remainder (-3) for it.
 			name: "Zero round interval",
 			args: args{
-				buff: &Buff{RoundCounter: 3},
+				buff: &Buff{TriggersLeft: 4, RoundCounter: 3},
 				spec: &BuffSpec{TriggerCount: 4, RoundInterval: 0},
 			},
-			wantRounds: -3, // (4*0)-3 = 0-3 = -3
+			wantRounds: 0,
 			wantTotal:  0,
+		},
+		{
+			// A permabuff keeps the spec answer rather than reporting
+			// TriggersLeftUnlimited * RoundInterval rounds.
+			name: "Unlimited triggers",
+			args: args{
+				buff: &Buff{TriggersLeft: TriggersLeftUnlimited, RoundCounter: 2},
+				spec: &BuffSpec{TriggerCount: 5, RoundInterval: 3},
+			},
+			wantRounds: 13,
+			wantTotal:  15,
 		},
 	}
 	for _, tt := range tests {
@@ -419,6 +441,51 @@ func TestGetDurations(t *testing.T) {
 			assert.Equal(t, tt.wantTotal, gotTotal)
 		})
 	}
+}
+
+// TestGetDurations_ExactTriggerCountReadsTheInstance is the case the old
+// formula got wrong. AddBuffMagnitude — the door every former combat
+// condition goes through — applies an EXACT trigger count, so a record can
+// hold far fewer triggers than its spec declares. The spec-only formula
+// answered with the spec's lifetime (30 rounds for a 10-trigger,
+// 3-round-interval spec) no matter how few triggers the instance actually
+// held, so the `conditions` command and the web client's chips both showed a
+// duration the record would never reach.
+func TestGetDurations_ExactTriggerCountReadsTheInstance(t *testing.T) {
+	const buffId = 9401
+	defer SeedBuffsForTest(map[int]*BuffSpec{
+		buffId: {BuffId: buffId, Name: "Exact Count", TriggerCount: 10, RoundInterval: 3},
+	})()
+	spec := GetBuffSpec(buffId)
+	require.NotNil(t, spec)
+
+	bs := New()
+	require.True(t, bs.AddBuffMagnitude(buffId, 2, 1.0))
+
+	buff := bs.GetBuffs(buffId)[0]
+	require.Equal(t, 2, buff.TriggersLeft)
+
+	// Before any tick: two triggers of three rounds each are still owed.
+	// The old formula said 30 here, the spec's whole lifetime.
+	roundsLeft, totalRounds := GetDurations(buff, spec)
+	assert.Equal(t, 6, roundsLeft, "two triggers at a three-round interval is six rounds")
+	assert.Equal(t, 30, totalRounds, "total stays the spec lifetime so a bar has a stable scale")
+
+	// One round in: still two triggers owed, one round into the interval.
+	bs.Trigger()
+	require.Equal(t, 1, buff.RoundCounter)
+	require.Equal(t, 2, buff.TriggersLeft)
+	roundsLeft, _ = GetDurations(buff, spec)
+	assert.Equal(t, 5, roundsLeft)
+
+	// Three rounds in: the first trigger has fired and the interval reset,
+	// leaving one trigger of three rounds.
+	bs.Trigger()
+	bs.Trigger()
+	require.Equal(t, 3, buff.RoundCounter)
+	require.Equal(t, 1, buff.TriggersLeft)
+	roundsLeft, _ = GetDurations(buff, spec)
+	assert.Equal(t, 3, roundsLeft)
 }
 func TestBuffs_HasBuff(t *testing.T) {
 	type fields struct {

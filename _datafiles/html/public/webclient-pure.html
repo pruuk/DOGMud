@@ -1415,7 +1415,14 @@
                 return cond.op === "below" ? pct < n : cond.op === "above" ? pct > n : Math.round(pct) === Math.round(n);
             }
             if (cond.sourceKind === "status") {
-                var has = (a.Conditions || []).some(function(c){ return c && String(c.type).toLowerCase() === v.toLowerCase(); });
+                // Char.Conditions is a name-keyed map, so match on each
+                // entry's visible name (the key can carry a "#n" suffix when
+                // two held records share a name).
+                var condMap = a.Conditions || {};
+                var has = Object.keys(condMap).some(function(k){
+                    var c = condMap[k];
+                    return c && String(c.name || k).toLowerCase() === v.toLowerCase();
+                });
                 return cond.op === "exclude" ? !has : has;
             }
             if (cond.sourceKind === "capture") {
@@ -2132,34 +2139,22 @@
                 }
             }
 
-            // Statuses (active buffs) + combat conditions, rendered as chips.
-            // Statuses come from Char.Affects (a name-keyed map; the server already
-            // omits stealth buffs like Hidden/Empathic Shroud). Conditions come from
-            // Char.Conditions (Bleeding, Poisoned, Rally, Warcry, Shield, etc.).
+            // Everything affecting the character, rendered as chips. One list:
+            // Char.Conditions is a name-keyed map of held buff records (the
+            // server omits stealth buffs like Hidden/Empathic Shroud, and
+            // supplies the qualitative duration word itself). This used to be
+            // two loops over two payloads, one for buffs and one array for the
+            // combat-condition enum; the enum is gone and the second payload
+            // was retired with it.
             var chips = '';
 
-            var affects = charObj.Affects || null;
-            if (affects && typeof affects === 'object') {
-                var aNames = Object.keys(affects);
-                for (var ai = 0; ai < aNames.length; ai++) {
-                    var aff = affects[aNames[ai]];
-                    if (!aff) continue;
-                    var aLabel = escapeHTML(aff.name || aNames[ai]);
-                    var aTip   = escapeHTML(aff.description || '');
-                    var aDur   = escapeHTML(affectDurLabel(aff.duration_cur));
-                    chips += '<span class="cond-chip status-chip" title="' + aTip + '">' +
-                                aLabel +
-                                (aDur ? '<span class="cond-dur">' + aDur + '</span>' : '') +
-                             '</span>';
-                }
-            }
-
             var conditions = charObj.Conditions || null;
-            if (conditions && Array.isArray(conditions)) {
-                for (var i = 0; i < conditions.length; i++) {
-                    var cond = conditions[i];
+            if (conditions && typeof conditions === 'object') {
+                var cNames = Object.keys(conditions);
+                for (var ci = 0; ci < cNames.length; ci++) {
+                    var cond = conditions[cNames[ci]];
                     if (!cond) continue;
-                    var label    = escapeHTML(cond.type        || '');
+                    var label    = escapeHTML(cond.name        || cNames[ci]);
                     var tooltip  = escapeHTML(cond.description || '');
                     var duration = escapeHTML(cond.duration    || '');
                     chips += '<span class="cond-chip" title="' + tooltip + '">' +
@@ -2183,17 +2178,6 @@
             } else {
                 container.innerHTML = html;
             }
-        }
-
-        // Vague, no-hard-numbers duration label for an active buff, given its
-        // remaining seconds (Char.Affects.duration_cur; -1 == permabuff). Mirrors
-        // the server-side conditionDurationLabel vibe so statuses and conditions
-        // read consistently.
-        function affectDurLabel(sec) {
-            if (typeof sec !== 'number' || sec < 0) return 'sustained';
-            if (sec <= 30)  return 'briefly';
-            if (sec <= 120) return 'for a while';
-            return 'extended';
         }
 
         function escapeHTML(str) {
@@ -3097,14 +3081,6 @@
             margin-left: 4px;
             font-size: 0.66rem;
         }
-        /* Active buffs (statuses) get a teal/copper tint so they read distinctly
-           from the gold combat-condition chips. */
-        .cond-chip.status-chip {
-            border-color: var(--copper, #4a6b5d);
-            background: #16201c;
-            color: #8fb3a6;
-        }
-
         /* ── Mutation reveal (toast → ceremonial card) ─────────────────── */
         #mut-toast {
             position: fixed; top: 14px; right: 14px; z-index: 60;

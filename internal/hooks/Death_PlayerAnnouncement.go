@@ -3,6 +3,7 @@ package hooks
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -12,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/life"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/worldevents"
 )
 
@@ -114,24 +116,7 @@ func wirePlayerDeathAnnouncement(c *characters.Character) {
 
 			// 5. WorldEvent PvE death emission (only when no player damage).
 			if dmgCt == 0 {
-				causeOfDeath := ""
-				// Check if fighting a mob.
-				if c.IsInCombat() && c.EngagedTarget().MobInstanceId > 0 {
-					if mob := mobs.GetInstance(c.EngagedTarget().MobInstanceId); mob != nil {
-						causeOfDeath = mob.Character.Name
-					}
-				}
-				// Check for lethal conditions.
-				if causeOfDeath == "" {
-					if c.HasCondition(characters.ConditionPoisoned) {
-						causeOfDeath = "poison"
-					} else if c.HasCondition(characters.ConditionBleeding) {
-						causeOfDeath = "bleeding out"
-					}
-				}
-				if causeOfDeath == "" {
-					causeOfDeath = "their own foolishness"
-				}
+				causeOfDeath := deathCauseFor(c)
 
 				zone := c.Zone
 				region := ""
@@ -165,6 +150,64 @@ func wirePlayerDeathAnnouncement(c *characters.Character) {
 			//    the player gets closure text before the teleport fires.
 			u.SendText(messaging.CategoryDeath, `<ansi fg="yellow">Darkness swallows you. When you open your eyes, you are somewhere safe.</ansi>`)
 		})
+}
+
+// deathCauseFor derives the PvE death-event cause string for a character:
+// the engaged mob's name if one is fighting them, else "poison" if the
+// Poisoned record is held, else "bleeding out" if the Bleeding record is
+// held, else whatever the killing tick stamped (LastTickCause), else the
+// generic fallback. Order matters — a poisoned AND bleeding character reads
+// "poison" because that check comes first.
+//
+// The held-record checks read by id (HasBuff), not by flag (HasBuffFlag):
+// HasBuff only tests the id index and does not care whether the record
+// already reads Expired, while HasBuffFlag skips expired records outright.
+// Buffs.Trigger() decrements TriggersLeft before returning the triggered
+// buff, so a tick that is the record's LAST trigger — every ordinary bleed,
+// since buffs.TickTriggers commonly produces one trigger, and one poison
+// tick in ten — arrives already Expired; the old flag read then reported
+// "their own foolishness" for an outright poison or bleed-out kill. Reading
+// by id survives that, but not a prune: PruneBuffs runs on every NewTurn and
+// can remove the expired record before this announcement listener runs
+// (death is a queued event — see Character.DeathQueued), which is what
+// LastTickCause is for: the round tick that landed the fatal harm stamps it
+// at the moment the tick fires, before either hole can open.
+//
+// Checking by id also narrows the held-record check to the two named
+// records, Poisoned and Bleeding — faithful to the enum this function
+// replaced, which only ever knew the spell dot and the bleed record. A
+// poison- or bleeding-FLAGGED buff that is not one of those two (Venom,
+// Spore Toxin, Toxic Cloud, Nausea) does not satisfy the held-record check,
+// but the LastTickCause fallback below still names it: tickCauseFor stamps
+// that field for any record carrying the Poison or Bleeding flag. The
+// fallback only fires within one round of the stamp (LastTickCauseRound),
+// so a tick from an earlier fight cannot outlive it and misname a later,
+// unrelated death.
+//
+// Extracted from the dmgCt==0 branch of wirePlayerDeathAnnouncement so the
+// derivation can be pinned directly.
+func deathCauseFor(c *characters.Character) string {
+	causeOfDeath := ""
+	// Check if fighting a mob.
+	if c.IsInCombat() && c.EngagedTarget().MobInstanceId > 0 {
+		if mob := mobs.GetInstance(c.EngagedTarget().MobInstanceId); mob != nil {
+			causeOfDeath = mob.Character.Name
+		}
+	}
+	// Check for lethal conditions.
+	if causeOfDeath == "" {
+		if c.HasBuff(buffs.BuffIdPoisoned) {
+			causeOfDeath = "poison"
+		} else if c.HasBuff(buffs.BuffIdBleeding) {
+			causeOfDeath = "bleeding out"
+		} else if c.LastTickCause != "" && util.GetRoundCount()-c.LastTickCauseRound <= 1 {
+			causeOfDeath = c.LastTickCause
+		}
+	}
+	if causeOfDeath == "" {
+		causeOfDeath = "their own foolishness"
+	}
+	return causeOfDeath
 }
 
 func init() {

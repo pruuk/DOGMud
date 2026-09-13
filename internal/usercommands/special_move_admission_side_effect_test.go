@@ -406,10 +406,8 @@ func TestSpecialMoveWrappersStagedRacesHaveNoEngagementSideEffects(t *testing.T)
 
 				targetHealth := target.Character.Health
 				targetStamina := target.Character.Stamina
-				targetConditions := len(target.Character.Conditions)
 				targetBuffs := len(target.Character.Buffs.GetBuffs())
 				actorHealth := user.Character.Health
-				actorConditions := len(user.Character.Conditions)
 				actorBuffs := len(user.Character.Buffs.GetBuffs())
 				actorPosition := user.Character.Position.State()
 				targetPosition := target.Character.Position.State()
@@ -443,11 +441,9 @@ func TestSpecialMoveWrappersStagedRacesHaveNoEngagementSideEffects(t *testing.T)
 				assert.Equal(t, 0, opinions.Get(int(target.MobId), user.UserId))
 				assert.Empty(t, crimes.AllForFaction("thornwall_citizens", false))
 				require.Equal(t, actorHealth, user.Character.Health)
-				require.Len(t, user.Character.Conditions, actorConditions)
 				require.Len(t, user.Character.Buffs.GetBuffs(), actorBuffs)
 				require.Equal(t, targetHealth, target.Character.Health)
 				require.Equal(t, targetStamina, target.Character.Stamina)
-				require.Len(t, target.Character.Conditions, targetConditions)
 				require.Len(t, target.Character.Buffs.GetBuffs(), targetBuffs)
 				require.False(t, target.Character.IsInCombat())
 				require.Equal(t, actorPosition, user.Character.Position.State())

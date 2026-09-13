@@ -1,0 +1,30 @@
+# Conditions slice 1: the CASTER. You are Fold Adept, in the Rift Chamber with
+# Veteran Pathfinder. You ward them and READ what the room is told. Quote
+# every line VERBATIM. Do not fight unless attacked.
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: specialist-caster
+  start_room: 5000
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Confirm on the party channel that you are in the same room as Veteran
+    Pathfinder. Stay with them, including into the arena.
+  - >-
+    When they shout, quote every line you read about the warcry and the rally.
+  - >-
+    WARD. When asked, type `cast conviction-ward Veteran Pathfinder` (their
+    exact name). If it fizzles, cast it again. Quote what you are told.
+  - >-
+    WARD END. When their ward ends, quote the line you read. Expect
+    "Veteran Pathfinder's Minor Shield dissipates." No line at all, or a line
+    with a literal "{source}", is the defect.
+  - >-
+    LOGIN. When asked, ward them again before they quit. After they log back
+    in, ask them to type `conditions` and quote what they report.
+  - >-
+    Judge every line as writing. Quote anything with a raw number, a literal
+    "{source}", or that reads twice.

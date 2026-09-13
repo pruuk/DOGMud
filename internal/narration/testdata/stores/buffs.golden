@@ -265,3 +265,12 @@ buff|116|start_user_text => A primal dread rolls over you and every instinct say
 buff|116|start_room_text => Aliceia shrinks back, gripped by a sudden animal dread.
 buff|116|end_user_text => The dread loosens its grip on you.
 buff|116|end_room_text => The dread gripping <ansi fg="username">Aliceia</ansi> loosens.
+buff|119|end_user_text => Your Minor Shield dissipates.
+buff|119|end_room_text => <ansi fg="username">Aliceia</ansi>'s Minor Shield dissipates.
+buff|120|end_user_text => The healing magic in your wounds runs its course.
+buff|121|trigger_user_text => <ansi fg="green">The poison burns through your veins!</ansi>
+buff|121|end_user_text => The poison in your veins finally burns itself out.
+buff|122|trigger_user_text => <ansi fg="red">Blood seeps from your wounds!</ansi>
+buff|122|end_user_text => Your wounds stop bleeding.
+buff|123|start_user_text => The severed bond leaves a hollow in you that will take time to fill.
+buff|123|end_user_text => The hollow the severed bond left in you has finally closed.

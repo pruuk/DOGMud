@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -53,7 +54,9 @@ func ExecuteGrappleMove(attacker, defender *characters.Character,
 		// (U6b Task 13) — a decisively lost contest always lands under it,
 		// where the old self-relative z hit only its own wobble (~69%).
 		if result.NormalizedMargin < 0.5 {
-			attacker.AddCondition(characters.ConditionDefensePenalty, 1, 0.85, "failed grapple")
+			// The record's literal 0.85 (EffectDefenseMult) is the effect;
+			// the magnitude argument here is unused.
+			_ = attacker.AddBuffMagnitude(buffs.BuffIdOffBalance, 1, 0, "failed grapple")
 			result.DefensePenalty = true
 		}
 

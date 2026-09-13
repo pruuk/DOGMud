@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -65,7 +66,7 @@ type DrainResult struct {
 //   - ExecuteSkillMove via combat package (UnarmedCombat skill, Strength
 //     attack stat, Dexterity defense stat, TripDamagePercent, Strength damage
 //     stat, no knockdown)
-//   - On hit: apply ConditionBleeding (duration 4, magnitude = Strength/12
+//   - On hit: apply the Bleeding record (duration 4, magnitude = Strength/12
 //     min 2) sourced as "drain". Lifesteal heals the attacker for
 //     DrainHealRatio * damage actually dealt, including a defended attempt
 //     that still lands partial damage (bleed stays hit-only; lifesteal does
@@ -143,7 +144,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 		if mag < 2 {
 			mag = 2
 		}
-		target.Char.AddCondition(characters.ConditionBleeding, 4, float64(mag), "drain")
+		_ = target.Char.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(4), -float64(mag), "drain")
 		bleedDmg = mag
 	}
 
@@ -313,7 +314,7 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 			if mag < 2 {
 				mag = 2
 			}
-			target.Character.AddCondition(characters.ConditionBleeding, 4, float64(mag), "drain")
+			_ = target.Character.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(4), -float64(mag), "drain")
 			pr.BleedDmg = mag
 		}
 

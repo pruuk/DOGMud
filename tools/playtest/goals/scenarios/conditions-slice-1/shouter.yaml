@@ -1,0 +1,42 @@
+# Conditions slice 1: the SHOUTER. You are Veteran Pathfinder, in the Rift
+# Chamber with Fold Adept, who reads what the room is told. Quote every line
+# VERBATIM. Companions may follow you; ignore them.
+# 3 commands per round on the AI port; the overflow is dropped.
+
+ephemeral:
+  profile: veteran
+  start_room: 5000
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Confirm Fold Adept is in the room. Tell them on the party channel before
+    each step.
+  - >-
+    ARENA. Type `ask sable arena 350`. When a fight begins, type `warcry`, then
+    `rally`, then `conditions`. Quote the whole `conditions` output. "Warcry"
+    and "Rally" must each appear ONCE. Two rows for either is the defect. Keep
+    fighting; when each shout fades, quote the line. Expect "The fervor of the
+    warcry fades from you." and "The strength of the rally drains from you."
+  - >-
+    POISON. While fighting, type `cast blood-boil` at the mob. Type `look` at
+    the mob a few rounds later and quote what you see. You yourself should NOT
+    read "The poison burns through your veins!" for a poison on the mob.
+  - >-
+    BLEED. If a beast in the arena mauls, rakes or hamstrings you, quote every
+    line about your wounds. Expect "Blood seeps from your wounds!" no more
+    than once every third round, then "Your wounds stop bleeding." If no beast
+    lands one, say so and move on.
+  - >-
+    WARD. Ask Fold Adept to cast conviction-ward on you. Leave the arena, rest,
+    and type `conditions` once. Quote the "Minor Shield" row. When it ends,
+    quote the line. Expect "Your Minor Shield dissipates." A ward that ends
+    with no line is the defect.
+  - >-
+    LOGIN. Ask Fold Adept to ward you again. Type `quit`, log back in as the
+    same character, and type `conditions`. "Minor Shield" must still be
+    listed. Quote the output.
+  - >-
+    Judge every line as writing. Quote anything with a raw number, a literal
+    "{source}", or that reads twice.

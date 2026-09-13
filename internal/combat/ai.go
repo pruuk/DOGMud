@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -738,7 +739,7 @@ func CanUseCast(char *characters.Character) bool {
 // Priority: (1) minor-shield if unshielded, (2) heal-self if < 30% HP, (3) harm spells.
 func preferredSpell(mob *mobs.Mob) string {
 	// Shield self if not already shielded
-	if !mob.Character.HasCondition(characters.ConditionShield) {
+	if !mob.Character.Buffs.HasEffect(buffs.EffectMitigationFlat) {
 		if _, has := mob.Character.SpellBook["conviction-ward"]; has {
 			if sd := spells.GetSpell("conviction-ward"); sd != nil && mob.Character.Conviction >= sd.Cost {
 				return "conviction-ward"

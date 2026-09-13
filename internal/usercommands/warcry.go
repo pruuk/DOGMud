@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -53,8 +54,7 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			}
 			if memberUser := users.GetByUserId(memberId); memberUser != nil {
 				if memberUser.Character.RoomId == user.Character.RoomId {
-					memberUser.Character.AddCondition(characters.ConditionWarcry, result.Duration, result.Bonus, "warcry")
-					memberUser.Character.AddBuff(79, false)
+					_ = memberUser.Character.AddBuffMagnitude(buffs.BuffIdWarcry, result.Duration, 1.0+result.Bonus, "warcry")
 					memberUser.SendText(messaging.CategorySystem,
 						fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi>'s warcry stirs your blood!</ansi>`, user.Character.Name))
 
@@ -87,13 +87,11 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				if memberUser == nil || memberUser.Character.RoomId != user.Character.RoomId {
 					continue
 				}
-				memberUser.Character.AddCondition(characters.ConditionRally, rd, rb, "rally")
-				memberUser.Character.AddBuff(80, false)
+				_ = memberUser.Character.AddBuffMagnitude(buffs.BuffIdRally, rd, 1.0+rb, "rally")
 				// M1 audit defect: this fold loop is a copy of the primary
-				// party loop above that kept the AddCondition and AddBuff and
-				// dropped the line telling the member. Wording matches
-				// rally.go's own member line, because what is being applied
-				// here IS a rally.
+				// party loop above that kept the buff apply and dropped the
+				// line telling the member. Wording matches rally.go's own
+				// member line, because what is being applied here IS a rally.
 				memberUser.SendText(messaging.CategorySystem,
 					fmt.Sprintf(`<ansi fg="cyan-bold"><ansi fg="username">%s</ansi>'s rallying cry steadies your nerves!</ansi>`, user.Character.Name))
 				applyRallyToCompanions(memberUser, room, rb, rd)
@@ -117,7 +115,6 @@ func applyWarcryToCompanions(owner *users.UserRecord, room *rooms.Room, bonus fl
 		if mob.Character.RoomId != owner.Character.RoomId {
 			continue
 		}
-		mob.Character.AddCondition(characters.ConditionWarcry, duration, bonus, "warcry")
-		mob.Character.AddBuff(79, false)
+		_ = mob.Character.AddBuffMagnitude(buffs.BuffIdWarcry, duration, 1.0+bonus, "warcry")
 	}
 }

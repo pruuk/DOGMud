@@ -85,3 +85,14 @@ func TestHiddenBuffNotListedForMissingEnd(t *testing.T) {
 	defer restore()
 	assert.Equal(t, []string{}, SilentNoticeBuffs(), "a hidden buff with no end text is silent by design, not by accident")
 }
+
+// A quiet buff (prone recovery, the grapple exposure) is reapplied every
+// round it persists, so it never emits a start or end line by design, not by
+// missing authored text. The listing must not flag either as a problem.
+func TestQuietBuffNotListedForMissingNotices(t *testing.T) {
+	restore := SeedBuffsForTest(map[int]*BuffSpec{
+		22: {BuffId: 22, Name: "Off Balance", Flags: []Flag{Quiet}},
+	})
+	defer restore()
+	assert.Equal(t, []string{}, SilentNoticeBuffs(), "a quiet buff with no authored text is silent by design, not by accident")
+}

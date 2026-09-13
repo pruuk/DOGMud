@@ -105,6 +105,26 @@ func TestBuffNotice_ScaledEventStillNarratesTheStart(t *testing.T) {
 	assert.Equal(t, 5, triggersLeft, "the multiplier must survive the trip through the event")
 }
 
+// TestBuffNotice_MagnitudeEventAppliesSilently pins the event-path door for a
+// former combat condition: Character.AddBuffMagnitude is what every condition
+// site calls synchronously, but the event carries Triggers/Magnitude too, for
+// a future caller (a spell or item) that wants the start notice through the
+// queue instead. Minor Shield is silent-start, so no start line is expected;
+// this only pins that the exact trigger count and the magnitude-derived
+// effect both survive the trip through ApplyBuffs.
+func TestBuffNotice_MagnitudeEventAppliesSilently(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	assert.Equal(t, events.Continue, ApplyBuffs(events.Buff{UserId: 1, BuffId: buffs.BuffIdMinorShield, Triggers: 7, Magnitude: 9, Source: "test"}))
+
+	holder := users.GetByUserId(1)
+	require.NotNil(t, holder)
+	assert.Equal(t, 7, holder.Character.Buffs.TriggersLeft(buffs.BuffIdMinorShield))
+	assert.Equal(t, float64(9), holder.Character.Buffs.Effect(buffs.EffectMitigationFlat))
+}
+
 // Buff ids for the immunity pair, clear of the notice fixtures above.
 const (
 	immunityNoticeBuffId = 7104 // poison-immunity, the Stone Stomach shape
@@ -144,11 +164,11 @@ func TestBuffNotice_ARefusedPoisonBuffNarratesNothing(t *testing.T) {
 	assert.Equal(t, 0, countContaining(drainPlain(2), "venom"))
 }
 
-// The other half of the same rule, for the condition rather than the buff: a
-// mob's dot cast at an immune player added nothing and still narrated
-// "afflicts you!" to the victim and the affliction to the room, because
-// AddCondition returned nothing for the call site to test.
-func TestBuffNotice_ARefusedPoisonedConditionNarratesNothing(t *testing.T) {
+// The other half of the same rule, for the poison tick record rather than an
+// ordinary buff: a mob's dot cast at an immune player added nothing and still
+// narrated "afflicts you!" to the victim and the affliction to the room,
+// because AddBuffMagnitude returns an error for the call site to test.
+func TestBuffNotice_ARefusedPoisonedRecordNarratesNothing(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	restore := buffs.SeedBuffsForTest(map[int]*buffs.BuffSpec{
@@ -156,6 +176,7 @@ func TestBuffNotice_ARefusedPoisonedConditionNarratesNothing(t *testing.T) {
 			Flags: []buffs.Flag{buffs.PoisonImmunity}, StartUserText: "Nothing could turn your stomach now.", EndUserText: "Your stomach is ordinary again."},
 	})
 	defer restore()
+	defer buffs.SeedConditionRecordsForTest()()
 	original := runSpellChannelAttack
 	runSpellChannelAttack = func(combat.AttackChannel, combat.AttackSide, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
 		return spellContestAttackWin()
@@ -170,7 +191,7 @@ func TestBuffNotice_ARefusedPoisonedConditionNarratesNothing(t *testing.T) {
 	spell := &spells.SpellData{SpellId: "test-blight", Name: "Blight", Type: spells.HarmSingle, EffectType: "dot"}
 	resolveMobSpellAgainstPlayer(mobs.GetInstance(100), target, rooms.LoadRoom(1), spell, combat.AttackSide{}, 10)
 
-	assert.False(t, target.Character.HasCondition(characters.ConditionPoisoned), "the condition was refused")
+	assert.False(t, target.Character.HasBuff(buffs.BuffIdPoisoned), "the record was refused")
 	assert.Equal(t, 0, countContaining(drainPlain(1), "afflicts you"), "the immune victim reads nothing")
 	assert.Equal(t, 0, countContaining(drainPlain(2), "afflicts"), "and the room is told nothing either")
 }

@@ -46,7 +46,10 @@ func (b *BuffSpec) Narrate(p Phase, ctx textutil.TokenContext) narration.Roles {
 // AuthoredStartLine renders start_user_text as written, ignoring the notice
 // rules. It is the door for the applier of a silent-start buff, which narrates
 // the start itself because the buff never travels the event that would:
-// sleep (15), arrest (88), stun (84) and broken limb (83).
+// sleep (15), arrest (88), stun (84) and broken limb (83). Enchant Withdrawal
+// (123) is not silent-start, but disenchant applies it through
+// AddBuffMagnitude, which is also synchronous and never travels events.Buff,
+// so it reads the same door for the same reason.
 func (b *BuffSpec) AuthoredStartLine(ctx textutil.TokenContext) string {
 	return textutil.SubstituteTokens(b.StartUserText, ctx)
 }

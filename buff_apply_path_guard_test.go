@@ -21,13 +21,15 @@ import (
 // source parameter, or drops one from UserRecord.AddBuff, these stop compiling
 // and the guard is fixed deliberately instead of quietly going blind.
 var (
-	_ func(int, bool) error      = (*characters.Character)(nil).AddBuff
-	_ func(int, float64) error   = (*characters.Character)(nil).AddBuffScaled
-	_ func(int, string)          = (*users.UserRecord)(nil).AddBuff
-	_ func(int, float64, string) = (*users.UserRecord)(nil).AddBuffScaled
-	_ func(int, string)          = (*mobs.Mob)(nil).AddBuff
-	_ func(int, string)          = (*actions.UserActor)(nil).AddBuff
-	_ func(int, string)          = (*actions.MobActor)(nil).AddBuff
+	_ func(int, bool) error                 = (*characters.Character)(nil).AddBuff
+	_ func(int, float64) error              = (*characters.Character)(nil).AddBuffScaled
+	_ func(int, int, float64, string) error = (*characters.Character)(nil).AddBuffMagnitude
+	_ func(int, string)                     = (*users.UserRecord)(nil).AddBuff
+	_ func(int, float64, string)            = (*users.UserRecord)(nil).AddBuffScaled
+	_ func(int, int, float64, string)       = (*users.UserRecord)(nil).AddBuffMagnitude
+	_ func(int, string)                     = (*mobs.Mob)(nil).AddBuff
+	_ func(int, string)                     = (*actions.UserActor)(nil).AddBuff
+	_ func(int, string)                     = (*actions.MobActor)(nil).AddBuff
 )
 
 // Slice C delivery path: a player buff must travel the events.Buff event, so
@@ -69,30 +71,55 @@ var (
 // is secret. When a legitimate direct add moves, update its line number here;
 // when a new one appears, either route it through the event path or record why
 // it cannot be.
+//
+// Character.AddBuffMagnitude and UserRecord.AddBuffMagnitude share one
+// four-argument shape ending in a source string, so arity cannot tell the
+// silent character door from the event-queuing user door apart the way it
+// does for AddBuff/AddBuffScaled; isEventPathCall reads every AddBuffMagnitude
+// call as a direct add, the safe reading, and every former-condition producer
+// site OUTSIDE the primitive packages is allowlisted by hand with a reason
+// worded like "former combat condition (warcry/rally): silent-start record,
+// the shout narrates; must apply synchronously so the fan-out and the
+// same-round combat read it". The allowlist below is a census of producers
+// outside primitivePackages, not of every producer: primitivePackages exempts
+// internal/characters wholesale (it defines the primitive being called), so
+// the three former-condition producers inside it, the prone-recovery
+// AddBuffMagnitude(buffs.BuffIdRecovering, ...) calls in
+// internal/characters/skills.go (lines 76, 99, 103), never reach this walk
+// and carry no allowlist entry.
 var buffApplyPathAllowlist = map[string]string{
 	// ── The sanctioned consumer of the event ────────────────────────────────
-	"internal/hooks/Buff_ApplyBuffs.go|85": "this IS the hook the event feeds; it is where every routed buff is finally applied",
 	"internal/hooks/Buff_ApplyBuffs.go|87": "this IS the hook the event feeds; it is where every routed buff is finally applied",
+	"internal/hooks/Buff_ApplyBuffs.go|89": "this IS the hook the event feeds; it is where every routed buff is finally applied",
+	"internal/hooks/Buff_ApplyBuffs.go|91": "this IS the hook the event feeds; it is where every routed buff is finally applied",
 
 	// ── silent-start buffs whose applier narrates the moment itself ─────────
-	"internal/actions/combat_rally.go|116":    "buff 80 is silent-start; the rally move narrates the party rally and the synchronous apply is what its own messaging reads",
-	"internal/actions/combat_warcry.go|118":   "buff 79 is silent-start; the warcry move narrates the cry and the synchronous apply is what its own messaging reads",
-	"internal/actions/combat_throttle.go|147": "buff 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
+	"internal/actions/combat_throttle.go|148": "buff 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
 	"internal/actions/sleep.go|61":            "buff 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
-	"internal/usercommands/rally.go|57":       "party member gets buff 80, which is silent-start; the rally command narrates it and relies on the synchronous apply",
-	"internal/usercommands/rally.go|87":       "party member gets buff 79, which is silent-start; the rally command narrates it and relies on the synchronous apply",
-	"internal/usercommands/warcry.go|57":      "party member gets buff 79, which is silent-start; the warcry command narrates it and relies on the synchronous apply",
-	"internal/usercommands/warcry.go|91":      "party member gets buff 80, which is silent-start; the warcry command narrates it and relies on the synchronous apply",
+
+	// ── former combat conditions: warcry and rally are now one record each,
+	// applied via AddBuffMagnitude (buffs.BuffIdWarcry / buffs.BuffIdRally),
+	// both silent-start; the shout narrates itself and must apply synchronously
+	// so the fan-out and the same-round combat read it ─────────────────────
+	"internal/actions/combat_warcry.go|121": "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/actions/combat_rally.go|119":  "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|57":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|90":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|118":   "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|57":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|86":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|114":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+
+	// ── former combat condition: enchant withdrawal ─────────────────────────
+	"internal/usercommands/skill.disenchant.go|72": "former combat condition (withdrawal): the disenchant command narrates; must apply synchronously so Validate clamps the pool now",
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
-	"internal/usercommands/rally.go|117":         "charmed mob, not a player; a mob holder has no client to read a start line",
-	"internal/usercommands/warcry.go|121":        "charmed mob, not a player; a mob holder has no client to read a start line",
 	"internal/usercommands/character.go|413":     "the holder is a MOB (m.Character), and buff 99 is a perma-gear pin, not something a player reads",
-	"internal/hooks/item_procs.go|264":           "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
+	"internal/hooks/item_procs.go|265":           "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40": "the holder is a MOB (a summoned companion), not a player",
 
 	// ── secret buffs: silence is the authored intent ────────────────────────
-	"internal/hooks/Life_Cascades.go|87": "buff 81 Respawn Grace is secret:true, so StartUserNotice is empty by design and the event would narrate nothing anyway",
+	"internal/hooks/Life_Cascades.go|85": "buff 81 Respawn Grace is secret:true, so StartUserNotice is empty by design and the event would narrate nothing anyway",
 
 	// ── the event path cannot express what the call needs ───────────────────
 	"internal/hooks/Awareness_Cascades.go|57": "buff 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",
@@ -112,6 +139,36 @@ var buffApplyPathAllowlist = map[string]string{
 	// start line to a player victim through narrateSubmissionEffects.
 	"internal/combat/submission_outcome.go|327": "silent-start; the submission hook narrates the start right after the outcome; must apply synchronously",
 	"internal/combat/submission_outcome.go|338": "silent-start; the submission hook narrates the start right after the outcome; must apply synchronously",
+
+	// ── former combat conditions: grapple exposure and prone recovery are now
+	// quiet one-round records (Task 5) ──────────────────────────────────────
+	"internal/combat/grapple_move.go|59": "former combat condition (one-round penalty): quiet record; must apply synchronously inside the round tick",
+
+	// ── former combat condition: Minor Shield is now one record (Task 6) ────
+	"internal/hooks/spell_resolution.go|1175": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
+	"internal/hooks/spell_resolution.go|1531": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
+
+	// ── former combat condition: Regenerating is now one record (Task 7) ────
+	"internal/hooks/spell_resolution.go|852":  "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/hooks/spell_resolution.go|1072": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/hooks/spell_resolution.go|1492": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/mobcommands/consume.go|46":      "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/mobcommands/consume.go|55":      "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+
+	// ── former combat condition: the spell dot is now one record (Task 8;
+	// re-keyed Task 8 review: TickTriggers keeps its every-third-round
+	// cadence, shifting both lines) ──────────────────────────────────────
+	"internal/hooks/spell_resolution.go|648":  "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
+	"internal/hooks/spell_resolution.go|1674": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
+
+	// ── former combat condition: Bleeding is now one record (Task 9) ────────
+	"internal/actions/combat_drain.go|147":     "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_drain.go|317":     "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_hamstring.go|135": "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_maul.go|132":      "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_rake.go|132":      "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_throttle.go|144":  "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/hooks/item_procs.go|214":         "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
 }
 
 // primitivePackages define Character.AddBuff / Buffs.AddBuff themselves, so
@@ -121,7 +178,7 @@ var primitivePackages = []string{
 	filepath.Join("internal", "characters"),
 }
 
-var buffAddCallPattern = regexp.MustCompile(`\.(AddBuff(?:Scaled)?)\(`)
+var buffAddCallPattern = regexp.MustCompile(`\.(AddBuff(?:Scaled|Magnitude)?)\(`)
 
 // identifierArgPattern matches a bare identifier or field selector, which is
 // how a variable source reaches these calls: src, reason, source, evt.Source.
@@ -197,6 +254,13 @@ func callArgs(src string, openParen int) (args []string, ok bool) {
 // identifier, while a correct call passing a variable source is never reported
 // as silent. The second result is false when the call could not be parsed.
 func isEventPathCall(src string, method string, openParen int) (eventPath bool, parsed bool) {
+	if method == "AddBuffMagnitude" {
+		// The character door and the user door share a four-argument shape
+		// ending in a source string, so arity cannot tell them apart. Treat
+		// every call as a direct add: the safe reading, since a producer
+		// site that is actually the event door gets allowlisted by hand.
+		return false, true
+	}
 	args, ok := callArgs(src, openParen)
 	if !ok {
 		return false, false
@@ -266,9 +330,15 @@ func TestPlayerBuffsTravelTheEventPath(t *testing.T) {
 				if lineEnd < lineStart {
 					lineEnd = len(src)
 				}
+				rule := "an event-path buff add ends in a source string; this call does not, so it applies the buff in place, Buff_ApplyBuffs never runs, and the holder reads nothing."
+				advice := fmt.Sprintf("Route it through users.UserRecord.AddBuff / AddBuffScaled (or the mobs.Mob / actions.Actor equivalent, which all take a source string), or add %q to buffApplyPathAllowlist with a reason.", key)
+				if method := src[loc[2]:loc[3]]; method == "AddBuffMagnitude" {
+					rule = "the character door applies in place and the user door queues the event, but they share one four-argument shape, so this guard reads every AddBuffMagnitude call as a direct add (the safe reading). Record why in buffApplyPathAllowlist, or confirm the call is the user door and record that instead."
+					advice = "Routing it through users.UserRecord.AddBuffMagnitude does not silence this guard; allowlist it either way, noting which door it is."
+				}
 				problems = append(problems, fmt.Sprintf(
-					"%s: %s\n      THE RULE: an event-path buff add ends in a source string; this call does not, so it applies the buff in place, Buff_ApplyBuffs never runs, and the holder reads nothing.\n      Route it through users.UserRecord.AddBuff / AddBuffScaled (or the mobs.Mob / actions.Actor equivalent, which all take a source string), or add %q to buffApplyPathAllowlist with a reason.",
-					key, strings.TrimSpace(src[lineStart:lineEnd]), key))
+					"%s: %s\n      THE RULE: %s\n      %s",
+					key, strings.TrimSpace(src[lineStart:lineEnd]), rule, advice))
 			}
 			return nil
 		})

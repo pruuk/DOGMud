@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -56,7 +57,7 @@ type RakeResult struct {
 //   - ExecuteSkillMove via combat package (UnarmedCombat skill, Dexterity
 //     attack stat, Dexterity defense stat, TripDamagePercent, Strength damage
 //     stat, no knockdown)
-//   - On hit: apply ConditionBleeding (duration 4, magnitude = Strength/12
+//   - On hit: apply the Bleeding record (duration 4, magnitude = Strength/12
 //     min 2) sourced as "rake"
 //   - combat.RecordSpecialMove for analytics + RoundsWaiting = 1
 //   - OnSkillUse(UnarmedCombat) on hit for progression
@@ -128,7 +129,7 @@ func ExecuteRake(actor Actor) RakeResult {
 		if bleedDmg < 2 {
 			bleedDmg = 2
 		}
-		target.Char.AddCondition(characters.ConditionBleeding, 4, float64(bleedDmg), "rake")
+		_ = target.Char.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(4), -float64(bleedDmg), "rake")
 	}
 
 	// Determine source/target types for analytics.

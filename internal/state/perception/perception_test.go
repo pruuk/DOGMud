@@ -55,16 +55,10 @@ func TestSightedToBlindedOnFlashbang(t *testing.T) {
 	}
 }
 
-// PE-004: Sighted → Blinded via condition added.
-func TestSightedToBlindedOnConditionAdded(t *testing.T) {
-	m := NewMachine()
-	if err := m.TransitionTo(Blinded, state.TransitionReason{Trigger: TriggerConditionAdded}); err != nil {
-		t.Fatalf("TransitionTo(Blinded): %v", err)
-	}
-	if m.State() != Blinded {
-		t.Errorf("state = %v, want Blinded", m.State())
-	}
-}
+// PE-004 (Sighted → Blinded via condition added) and PE-007 (the reverse)
+// were deleted with the ConditionBlinded source by the conditions unification
+// (slice 1, 2026-09-12). Both edges are still covered, by PE-003/PE-005/PE-006
+// on the buff triggers, which are now the only triggers there are.
 
 // PE-005: Blinded → Sighted via buff expired.
 func TestBlindedToSightedOnBuffExpired(t *testing.T) {
@@ -83,18 +77,6 @@ func TestBlindedToSightedOnFlashbangExpired(t *testing.T) {
 	m := NewMachine()
 	_ = m.TransitionTo(Blinded, state.TransitionReason{Trigger: TriggerBuffApplied})
 	if err := m.TransitionTo(Sighted, state.TransitionReason{Trigger: TriggerBuffExpired, Metadata: map[string]any{"buffId": BuffIdFlashbangBlindness}}); err != nil {
-		t.Fatalf("TransitionTo(Sighted): %v", err)
-	}
-	if m.State() != Sighted {
-		t.Errorf("state = %v, want Sighted", m.State())
-	}
-}
-
-// PE-007: Blinded → Sighted via condition removed.
-func TestBlindedToSightedOnConditionRemoved(t *testing.T) {
-	m := NewMachine()
-	_ = m.TransitionTo(Blinded, state.TransitionReason{Trigger: TriggerConditionAdded})
-	if err := m.TransitionTo(Sighted, state.TransitionReason{Trigger: TriggerConditionRemoved}); err != nil {
 		t.Fatalf("TransitionTo(Sighted): %v", err)
 	}
 	if m.State() != Sighted {

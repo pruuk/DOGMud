@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"math"
 	"os"
 	"testing"
 
@@ -906,20 +907,194 @@ func TestAutoHeal_HealthCapsAtMax(t *testing.T) {
 	assert.LessOrEqual(t, u1.Character.Conviction, u1.Character.ConvictionMax.Value)
 }
 
-func TestAutoHeal_PoisonDamage(t *testing.T) {
+// TestRoundTick_PoisonDamage pins the Task 8 review fix: the spell dot record
+// keeps the old AutoHeal hook's every-third-round cadence instead of ticking
+// every round. buffs.TickTriggers converts a duration into that trigger
+// count; TickTriggers(3) is 1, matching the record's own three-round
+// triggerrate (buff 121).
+func TestRoundTick_PoisonDamage(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	u1 := users.GetByUserId(1)
+	// The door validates on add, and Validate() recomputes HealthMax from
+	// stats/balance config, clobbering the fixture's raw HealthMax.Value.
+	// Seeding Base keeps HealthMax comfortably above the 80 this test needs.
+	u1.Character.HealthMax.Base = 100
 	u1.Character.Health = 80
-	u1.Character.AddCondition(characters.ConditionPoisoned, 10, 5.0, "test")
+	_ = u1.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, buffs.TickTriggers(3), -5, "test")
+	u1.Character.Health = 80
+	drainPlain(1)
 
-	evt := events.NewRound{RoundNumber: 30}
-	AutoHeal(evt)
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	assert.Equal(t, 80, u1.Character.Health, "the record's triggerrate is three rounds; no harm yet")
+	UserRoundTick(events.NewRound{RoundNumber: 2})
+	assert.Equal(t, 80, u1.Character.Health, "still short of the third round")
+	UserRoundTick(events.NewRound{RoundNumber: 3})
+	assert.Equal(t, 75, u1.Character.Health, "the third round lands the one tick this record carries")
+	// This 1-trigger record's only trigger also expires it: Buffs.Trigger
+	// decrements TriggersLeft to 0 before UserRoundTick reads
+	// buff.Expired(). Whole-branch review (slice 1): both the tick_pool
+	// harm and the flavour line land on this trigger; only PruneBuffs' end
+	// line is gated on expiry. TestRoundTick_PoisonDamage_
+	// TriggerLineOnNonFinalTick below pins the same line on a trigger that
+	// is not also the last one.
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"the final, expiring trigger applies harm and still sends the flavour line")
 
-	// Health may increase from regen, then decrease from poison.
-	// Just verify no panic and health changed.
-	assert.NotEqual(t, 80, u1.Character.Health, "health should change from regen+poison")
+	// Cross-hook pin: NewRound_AutoHeal.go's hand-rolled poison block was
+	// deleted in Task 8 (the record's own tick path in UserRoundTick now
+	// applies the harm). If it were revived in record-reading form, this
+	// same round's regen-gate call would double the damage already applied
+	// above instead of only adding a small regen.
+	result := AutoHeal(events.NewRound{RoundNumber: 3})
+	require.Equal(t, events.Continue, result)
+	hpr := u1.Character.HealthPerRound()
+	assert.GreaterOrEqual(t, u1.Character.Health, 75, "no extra poison harm from AutoHeal")
+	assert.Less(t, u1.Character.Health, 80, "at most one small regen tick (HealthPerRound=%d)", hpr)
+
+	healthAfterAutoHeal := u1.Character.Health
+	UserRoundTick(events.NewRound{RoundNumber: 4})
+	assert.Equal(t, healthAfterAutoHeal, u1.Character.Health, "the record expired at round 3; a fourth tick is a no-op")
+}
+
+// TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick pins the flavour line
+// half of the Task 9 fix, updated by the whole-branch review (slice 1): a
+// 2-trigger record's FIRST trigger (round 3) is not the one that expires it,
+// so the line sends; its second trigger (round 6) both lands the harm and
+// expires the record, and the line sends again on that trigger too, since
+// the text is no longer gated on expiry.
+func TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u1 := users.GetByUserId(1)
+	u1.Character.HealthMax.Base = 100
+	u1.Character.Health = 80
+	_ = u1.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, buffs.TickTriggers(6), -5, "test")
+	u1.Character.Health = 80
+	drainPlain(1)
+
+	for round := uint64(1); round <= 5; round++ {
+		UserRoundTick(events.NewRound{RoundNumber: round})
+	}
+	assert.Equal(t, 75, u1.Character.Health, "the first of two triggers lands on round 3")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"a trigger that is not also the last one sends its flavour line")
+
+	UserRoundTick(events.NewRound{RoundNumber: 6})
+	assert.Equal(t, 70, u1.Character.Health, "the second trigger lands the harm and expires the record")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"the final, expiring trigger still sends the flavour line")
+}
+
+// TestRoundTick_TriggerLineLandsOnExpiringTick is the ONE-trigger sibling
+// of TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick: a record whose
+// only trigger is also its last must land both the harm and the flavour
+// line on that same, already-expiring tick. Whole-branch review (slice 1):
+// this used to assert the line was skipped, which meant a mauled player
+// took a silent tick and read only the record's end line; the trigger text
+// and the harm now land together on every trigger.
+func TestRoundTick_TriggerLineLandsOnExpiringTick(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u1 := users.GetByUserId(1)
+	u1.Character.HealthMax.Base = 100
+	u1.Character.Health = 80
+	_ = u1.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, buffs.TickTriggers(3), -5, "test")
+	drainPlain(1)
+
+	for round := uint64(1); round <= 3; round++ {
+		UserRoundTick(events.NewRound{RoundNumber: round})
+	}
+	assert.Equal(t, 75, u1.Character.Health, "the record's one trigger lands the harm on round 3")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"the expiring, one-and-only trigger still sends the flavour line")
+}
+
+// TestDotProducerRecordsNegativeHarm_MobTarget pins the sign of the mob-target
+// dot producer (spell_resolution.go's applyMobEffect_dot, a player's spell
+// landing on a mob) and that it converts dotDuration through
+// buffs.TickTriggers rather than passing it straight through as TriggersLeft.
+func TestDotProducerRecordsNegativeHarm_MobTarget(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u := users.GetByUserId(1)
+	mob := mobs.GetInstance(100)
+	room := rooms.LoadRoom(1)
+
+	dotSpell := &spells.SpellData{
+		SpellId:           "test-dot-mob-sign",
+		Name:              "Blight",
+		Type:              spells.HarmSingle,
+		EffectType:        "dot",
+		TargetDefenseType: "mental",
+		EffectMagnitude:   10,
+	}
+
+	// The fixture's caster skill and willpower are deterministic (u1's seed
+	// data), so the exact dotDuration calcSpellDuration produces can be
+	// recomputed here rather than only bounded.
+	casterSkill := u.Character.GetSkillLevel(skills.Spellcasting)
+	casterWil := dotSpell.CasterStatValue(u.Character.Stats)
+	wantDuration := calcSpellDuration(dotSpell.BaseFolds, casterSkill, casterWil) / 3
+	if wantDuration < 3 {
+		wantDuration = 3
+	}
+
+	dmg := applyMobEffect(u, u.Character, mob, room, dotSpell, 10, spellContestAttackWin())
+	assert.Equal(t, 0, dmg, "the dot effect deals no immediate damage")
+
+	recs := mob.Character.GetBuffs(buffs.BuffIdPoisoned)
+	require.Len(t, recs, 1)
+	assert.Less(t, recs[0].Magnitude, 0.0, "the producer's harm sign must be negative")
+	assert.Less(t, recs[0].TickAmount, 0, "the snapshot tick amount must be negative")
+	assert.Equal(t, buffs.TickTriggers(wantDuration), recs[0].TriggersLeft,
+		"TriggersLeft must be TickTriggers(dotDuration), not dotDuration itself")
+}
+
+// TestDotProducerRecordsNegativeHarm_PlayerTarget is the same pin for the
+// player-target dot producer (resolveMobSpellAgainstPlayer, a mob's spell
+// landing on a player).
+func TestDotProducerRecordsNegativeHarm_PlayerTarget(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+	original := runSpellChannelAttack
+	runSpellChannelAttack = func(combat.AttackChannel, combat.AttackSide, *characters.Character, *characters.Character) combat.ChannelDefenceResult {
+		return spellContestAttackWin()
+	}
+	t.Cleanup(func() { runSpellChannelAttack = original })
+
+	target := users.GetByUserId(1)
+	drainPlain(1)
+	drainPlain(2)
+
+	caster := mobs.GetInstance(100)
+	spell := &spells.SpellData{SpellId: "test-blight-sign", Name: "Blight", Type: spells.HarmSingle, EffectType: "dot"}
+	resolveMobSpellAgainstPlayer(caster, target, rooms.LoadRoom(1), spell, combat.AttackSide{}, 10)
+
+	castSkill := skills.Spellcasting
+	if spell.HasSchool(spells.SchoolManifestation) {
+		castSkill = skills.Manifestation
+	}
+	wantDuration := calcSpellDuration(spell.BaseFolds, caster.Character.GetSkillLevel(castSkill), spell.CasterStatValue(caster.Character.Stats)) / 3
+	if wantDuration < 3 {
+		wantDuration = 3
+	}
+
+	recs := target.Character.GetBuffs(buffs.BuffIdPoisoned)
+	require.Len(t, recs, 1)
+	assert.Less(t, recs[0].Magnitude, 0.0, "the producer's harm sign must be negative")
+	assert.Less(t, recs[0].TickAmount, 0, "the snapshot tick amount must be negative")
+	assert.Equal(t, buffs.TickTriggers(wantDuration), recs[0].TriggersLeft,
+		"TriggersLeft must be TickTriggers(dotDuration), not dotDuration itself")
 }
 
 func TestAutoHeal_MobSkipsIfDead(t *testing.T) {
@@ -933,6 +1108,102 @@ func TestAutoHeal_MobSkipsIfDead(t *testing.T) {
 	AutoHeal(evt)
 
 	assert.Equal(t, 0, mob.Character.Health, "dead mob should not regen")
+}
+
+func TestAutoHeal_RegeneratingRecordMultipliesOutOfCombatRegen(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u1 := users.GetByUserId(1)
+	u1.Character.EndAggro() // out of combat: base %-regen applies
+
+	// AddBuffMagnitude (below) calls Validate(), which recomputes
+	// HealthMax.Value from Base + Training + Mods. Seed a large Base up
+	// front and validate once so both measurements below read the same
+	// HealthMax the hook itself will see.
+	u1.Character.HealthMax.Base = 10000
+	require.NoError(t, u1.Character.Validate())
+	baseRegen := u1.Character.HealthPerRound()
+	require.Greater(t, baseRegen, 0)
+
+	u1.Character.Health = 10
+	drainPlain(1) // clear the queue before measuring
+
+	result := AutoHeal(events.NewRound{RoundNumber: 3})
+	require.Equal(t, events.Continue, result)
+	firstHeal := u1.Character.Health - 10
+	assert.Equal(t, baseRegen, firstHeal, "no Regenerating record: heal equals the base regen amount")
+
+	firstLines := drainPlain(1)
+	assert.Equal(t, 0, countContaining(firstLines, "Your wounds knit closed."),
+		"no tick text without an active Regenerating record")
+
+	u1.Character.Health = 10
+	require.NoError(t, u1.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, 5, 3.0, "test"))
+
+	result = AutoHeal(events.NewRound{RoundNumber: 6})
+	require.Equal(t, events.Continue, result)
+	secondHeal := u1.Character.Health - 10
+	expected := int(math.Floor(float64(baseRegen) * 3.0))
+	assert.Equal(t, expected, secondHeal, "Regenerating record must multiply the base regen by its magnitude")
+	assert.Equal(t, 3*firstHeal, secondHeal)
+
+	secondLines := drainPlain(1)
+	assert.Equal(t, 1, countContaining(secondLines, "Your wounds knit closed."),
+		"tick feedback fires exactly once while the Regenerating record is active")
+}
+
+// TestAutoHeal_RegeneratingRecordMultipliesInCombatRegen mirrors the
+// out-of-combat test above: in combat, AutoHeal's "else" branch grants no
+// base regen at all, but a Regenerating record still heals, scaled off
+// HealthPerRound() rather than the (zero) base regen.
+func TestAutoHeal_RegeneratingRecordMultipliesInCombatRegen(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u1 := users.GetByUserId(1)
+	u1.Character.SetAggro(0, 100, characters.DefaultAttack) // in combat: no base regen applies
+
+	// AddBuffMagnitude (below) calls Validate(), which recomputes
+	// HealthMax.Value from Base + Training + Mods. Seed a large Base up
+	// front and validate once so both measurements below read the same
+	// HealthMax the hook itself will see.
+	u1.Character.HealthMax.Base = 10000
+	require.NoError(t, u1.Character.Validate())
+	baseRegen := u1.Character.HealthPerRound()
+	require.Greater(t, baseRegen, 0)
+
+	u1.Character.Health = 10
+	drainPlain(1) // clear the queue before measuring
+
+	result := AutoHeal(events.NewRound{RoundNumber: 3})
+	require.Equal(t, events.Continue, result)
+	assert.Equal(t, 10, u1.Character.Health, "no Regenerating record: in combat gets no base regen at all")
+
+	firstLines := drainPlain(1)
+	assert.Equal(t, 0, countContaining(firstLines, "Your wounds knit closed."),
+		"no tick text without an active Regenerating record")
+
+	require.NoError(t, u1.Character.AddBuffMagnitude(buffs.BuffIdRegenerating, 5, 2.0, "test"))
+
+	result = AutoHeal(events.NewRound{RoundNumber: 6})
+	require.Equal(t, events.Continue, result)
+	secondHeal := u1.Character.Health - 10
+	// The hook's in-combat formula is
+	// floor(HealthPerRound() * toxRegenMult * regenMult * roomRegenMultiplier).
+	// This fixture carries no toxicity and no active room mutators, so both
+	// toxRegenMult and roomRegenMultiplier are 1.0 and the expected heal
+	// reduces to HealthPerRound() * the record's magnitude (2.0).
+	expected := int(math.Floor(float64(baseRegen) * 2.0))
+	assert.Equal(t, expected, secondHeal, "Regenerating record must multiply HealthPerRound by its magnitude even in combat")
+
+	secondLines := drainPlain(1)
+	assert.Equal(t, 1, countContaining(secondLines, "Your wounds knit closed."),
+		"tick feedback fires exactly once while the Regenerating record is active")
+
+	u1.Character.EndAggro()
 }
 
 // ─── ApplyBuffs ───────────────────────────────────────────────────────────────
@@ -1076,39 +1347,63 @@ func TestMobDisplayName(t *testing.T) {
 	assert.NotEmpty(t, name, "mob display name should not be empty")
 }
 
-// ─── HandlePlayerShieldDecay ──────────────────────────────────────────────────
+// ─── Minor Shield record ──────────────────────────────────────────────────────
+//
+// Minor Shield used to be a combat-condition enum entry, decremented twice
+// per round: once by the enum's own tick in the round ticks and again by
+// handlePlayerShieldDecay / the mob branch in DoCombat. Task 6 deleted the
+// second decrement entirely; the record now decays exactly once per round,
+// through Buffs.Trigger() in UserRoundTick, and narrates its end through the
+// PruneBuffs pass like every other buff.
 
-func TestHandlePlayerShieldDecay_NoShield(t *testing.T) {
+func TestMinorShieldRecordExpiresOnceAndNarratesItsEnd(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	u := users.GetByUserId(1)
-	// No shield condition — should not panic
-	handlePlayerShieldDecay(u)
+	require.NotNil(t, u)
+	drainPlain(1)
+
+	_ = u.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, 1, 10.0, "test")
+	assert.Equal(t, 10.0, u.Character.Buffs.Effect(buffs.EffectMitigationFlat),
+		"the mitigation effect must be live before the round ticks")
+
+	// UserRoundTick's Buffs.Trigger() is the one door that decrements a
+	// buff's TriggersLeft each round; PruneBuffs is the one door that removes
+	// an expired buff and sends its authored end text.
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	PruneBuffs(events.NewTurn{TurnNumber: 1})
+
+	assert.False(t, u.Character.HasBuff(buffs.BuffIdMinorShield),
+		"a 1-round shield must be gone after one round tick and one prune pass")
+	assert.Equal(t, 1, countContaining(drainPlain(1), "Your Minor Shield dissipates."))
 }
 
-func TestHandlePlayerShieldDecay_ShieldExpires(t *testing.T) {
+// TestMinorShieldRecordDecaysOncePerRound pins the behaviour change itself:
+// a shield with 2 rounds left must still have exactly 1 after one round,
+// even though both UserRoundTick and DoCombat fire for it. Before Task 6,
+// DoCombat's handlePlayerShieldDecay call added a second decrement here and
+// a 2-round shield would have expired in one round instead of two.
+// DoCombat is fired even though its shield-decay branches are now deleted
+// entirely, precisely so that a reintroduced decrement there would be
+// caught by this assertion; UserRoundTick alone would not catch it.
+func TestMinorShieldRecordDecaysOncePerRound(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	u := users.GetByUserId(1)
-	u.Character.AddCondition(characters.ConditionShield, 1, 10.0, "test")
+	require.NotNil(t, u)
 
-	handlePlayerShieldDecay(u)
-	assert.False(t, u.Character.HasCondition(characters.ConditionShield),
-		"shield with duration 1 should be removed")
-}
+	_ = u.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, 2, 10.0, "test")
+	require.Equal(t, 2, u.Character.Buffs.TriggersLeft(buffs.BuffIdMinorShield))
 
-func TestHandlePlayerShieldDecay_ShieldDecrements(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	DoCombat(events.NewRound{RoundNumber: 1})
 
-	u := users.GetByUserId(1)
-	u.Character.AddCondition(characters.ConditionShield, 5, 10.0, "test")
-
-	handlePlayerShieldDecay(u)
-	assert.True(t, u.Character.HasCondition(characters.ConditionShield),
-		"shield with duration > 1 should still exist")
+	assert.Equal(t, 1, u.Character.Buffs.TriggersLeft(buffs.BuffIdMinorShield),
+		"the shield must decay exactly once per round")
 }
 
 // ─── HandleMobAIDecision ──────────────────────────────────────────────────────
@@ -1665,18 +1960,20 @@ func TestMobRoundTick_CharmedDecrement(t *testing.T) {
 	assert.Equal(t, 2, mob.Character.Charmed.RoundsRemaining)
 }
 
-func TestMobRoundTick_TickConditions(t *testing.T) {
+func TestMobRoundTick_TicksMinorShieldRecord(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 
 	mob := mobs.GetInstance(100)
-	mob.Character.AddCondition(characters.ConditionShield, 3, 10.0, "test")
+	_ = mob.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, 3, 10.0, "test")
 
 	evt := events.NewRound{RoundNumber: 1}
 	MobRoundTick(evt)
 
-	// Condition should still exist but duration decremented
-	assert.True(t, mob.Character.HasCondition(characters.ConditionShield))
+	// The record should still exist but its trigger count decremented.
+	assert.True(t, mob.Character.HasBuff(buffs.BuffIdMinorShield))
+	assert.Equal(t, 2, mob.Character.Buffs.TriggersLeft(buffs.BuffIdMinorShield))
 }
 
 // ─── ApplyMoonMods ────────────────────────────────────────────────────────────
@@ -2395,6 +2692,7 @@ func TestResolveAgainstPlayer_Basic(t *testing.T) {
 func TestApplyPlayerEffect_Purge(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
 	caster := users.GetByUserId(1)
 	target := users.GetByUserId(2)
 	room := rooms.LoadRoom(1)
@@ -2404,7 +2702,7 @@ func TestApplyPlayerEffect_Purge(t *testing.T) {
 		Name:       "Purge",
 		EffectType: "purge",
 	}
-	target.Character.AddCondition(characters.ConditionPoisoned, 10, 5.0, "test")
+	_ = target.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, 10, -5, "test")
 	applyPlayerEffect(caster, target, room, purgeSpell, 10, spellContestAttackWin())
 }
 

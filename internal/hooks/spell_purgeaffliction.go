@@ -99,5 +99,4 @@ func resolvePurgeAffliction(user *users.UserRecord, room *rooms.Room, target pur
 	}
 
 	target.char.CancelBuffsWithFlag(buffs.Poison)
-	target.char.RemoveCondition(characters.ConditionPoisoned)
 }

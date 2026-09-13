@@ -117,8 +117,6 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			user.Character.CombatPhase.DispatchTickEvent()
 		}
 
-		handlePlayerShieldDecay(user)
-
 		if handlePlayerFoldCasting(user, userId) {
 			continue
 		}
@@ -297,24 +295,12 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			continue
 		}
 
-		// Only run the full combat prep (buff stripping, shield decay, etc.) when
+		// Only run the full combat prep (buff stripping, etc.) when
 		// actually fighting or when the mob might enter combat this round.
 		if mob.Character.IsInCombat() {
 			// Strip combat-cancelling buffs (Hidden, etc.) and remove
 			// their permabuff entries so Validate() doesn't re-apply them.
 			mob.Character.CancelCombatBuffs()
-
-			// Mob shield decay (symmetric with handlePlayerShieldDecay)
-			if mob.Character.HasCondition(characters.ConditionShield) {
-				if mob.Character.GetConditionDuration(characters.ConditionShield) <= 1 {
-					mob.Character.RemoveCondition(characters.ConditionShield)
-					mobRoom.SendText(messaging.CategoryBuffExpire, fmt.Sprintf(
-						`<ansi fg="cyan"><ansi fg="mobname">%s</ansi>'s Minor Shield dissipates.</ansi>`,
-						mob.Character.Name))
-				} else {
-					mob.Character.DecrementCondition(characters.ConditionShield)
-				}
-			}
 
 			if handleMobFoldCasting(mob, mobRoom) {
 				continue

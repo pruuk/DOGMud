@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -60,17 +61,15 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 		}
 	}
 
-	// Apply withdrawal condition
+	// Apply the withdrawal record
 	bal := configs.GetBalanceConfig()
 	penaltyRounds := int(bal.EnchantRemovalPenaltyRounds)
 
-	// Magnitude stores the pool max reduction as a fraction
-	user.Character.AddCondition(
-		characters.ConditionEnchantWithdrawal,
-		penaltyRounds,
-		reservePct,
-		reservePool,
-	)
+	// Enchant Withdrawal (buff 123): the pool name rides on Source exactly as
+	// the old condition's did; the record's pool_max_pct effect reads the
+	// magnitude we pass here. AddBuffMagnitude validates synchronously, so the
+	// pool clamp lands before this command returns.
+	_ = user.Character.AddBuffMagnitude(buffs.BuffIdEnchantWithdrawal, penaltyRounds, reservePct, reservePool)
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="magenta">You pry the Chrysalis free. It comes away screaming — a `+
 		`soundless wail that reverberates through your bones. The item `+
@@ -78,6 +77,26 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	user.SendText(messaging.CategorySystem, `<ansi fg="red">A sudden emptiness floods through you. Your body aches `+
 		`for the connection it has lost. The withdrawal will pass... `+
 		`in time.</ansi>`)
+
+	// AddBuffMagnitude applies synchronously and never travels events.Buff, so
+	// ApplyBuffs' start notice never fires for this record; same reason sleep
+	// (15), arrest (88), stun (84) and broken limb (83) read their own start
+	// line through AuthoredStartLine instead. Render and send record 123's
+	// here, the same door those sites use.
+	//
+	// ORDER MATTERS: this goes AFTER the two flavour lines above. The record is
+	// applied earlier because the pool clamp must land before the command
+	// returns, but its line is the CONSEQUENCE of prying the Chrysalis free,
+	// so the player has to read the act first.
+	if withdrawalSpec := buffs.GetBuffSpec(buffs.BuffIdEnchantWithdrawal); withdrawalSpec != nil {
+		line := withdrawalSpec.AuthoredStartLine(textutil.TokenContext{
+			SourceName:      user.Character.GetCharacterName(true),
+			SourcePlainName: user.Character.GetCharacterName(false),
+		})
+		if line != "" {
+			user.SendText(messaging.CategoryBuffApply, line)
+		}
+	}
 
 	return true, nil
 }

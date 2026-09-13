@@ -129,7 +129,6 @@ func MobRoundTick(e events.Event) events.ListenerReturn {
 		// practice nothing but this spell reaches it.
 		tickMobCharmState(mob)
 		tickMobBuffs(mob, mobInstanceId)
-		tickMobConditions(mob)
 		tickMobRecomputeGoals(mob, roundCount) // chunk 4.2 — strategic-layer selection
 		if room != nil && mobs.IsGuardMob(mob.Groups) {
 			tEnf := time.Now()
@@ -239,6 +238,19 @@ func tickMobBuffs(mob *mobs.Mob, mobInstanceId int) {
 							mob.Character.ApplyRestore(characters.PoolHealth, tickAmt)
 						} else if tickAmt < 0 {
 							mob.Character.ApplyHarm(characters.PoolHealth, -tickAmt, state.ActorRef{})
+							cancelCraftOrSalvageOnDamage(&mob.Character)
+							cancelDamageBuffs(&mob.Character)
+							// See tickCauseFor and deathCauseFor: captures the
+							// cause at tick-landing time so a record already
+							// Expired or pruned by the time a death is
+							// announced still has one. Nothing reads a mob's
+							// cause yet — mob deaths do not announce one —
+							// this is stamped for symmetry with the player
+							// tick path.
+							if cause := tickCauseFor(mobBuffSpec); cause != "" {
+								mob.Character.LastTickCause = cause
+								mob.Character.LastTickCauseRound = util.GetRoundCount()
+							}
 						}
 					case "stamina":
 						if tickAmt > 0 {
@@ -258,19 +270,20 @@ func tickMobBuffs(mob *mobs.Mob, mobInstanceId int) {
 			// Trigger text. The player round tick has always sent it; this mob
 			// tick never did, so a mob holding a trigger-text buff showed
 			// nothing. Room line only, because a mob has no client. Visual,
-			// because the text describes what the room sees. An expired buff is
-			// skipped, matching the player tick. Same shape as the mob branch of
+			// because the text describes what the room sees. Sent on every
+			// trigger, including the expiring one (whole-branch review,
+			// slice 1): PruneBuffs' end narration is a separate, later line
+			// for the record's close, not a substitute for the trigger text
+			// on a one-trigger record. Same shape as the mob branch of
 			// PruneBuffs, so the line gets the same buff colour.
-			if !buff.Expired() {
-				if trigSpec := buffs.GetBuffSpec(buff.BuffId); trigSpec != nil && len(trigSpec.Narration(buffs.PhaseTrigger).Observer) > 0 {
-					if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-						roles := trigSpec.Narrate(buffs.PhaseTrigger, textutil.TokenContext{
-							SourceName:      mobDisplayName(mob, room, 0),
-							SourcePlainName: mob.Character.GetCharacterName(false),
-						})
-						if roles.Observer != "" {
-							room.SendTextVisual(messaging.CategoryBuffApply, roles.Observer)
-						}
+			if trigSpec := buffs.GetBuffSpec(buff.BuffId); trigSpec != nil && len(trigSpec.Narration(buffs.PhaseTrigger).Observer) > 0 {
+				if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+					roles := trigSpec.Narrate(buffs.PhaseTrigger, textutil.TokenContext{
+						SourceName:      mobDisplayName(mob, room, 0),
+						SourcePlainName: mob.Character.GetCharacterName(false),
+					})
+					if roles.Observer != "" {
+						room.SendTextVisual(messaging.CategoryBuffApply, roles.Observer)
 					}
 				}
 			}
@@ -592,11 +605,6 @@ func tickMobCrafting(mob *mobs.Mob) {
 				mob.Character.ComponentItems,
 				recipe)
 	}
-}
-
-// tickMobConditions — current inline line 399.
-func tickMobConditions(mob *mobs.Mob) {
-	mob.Character.TickConditions()
 }
 
 // revalidateMobStats — current inline line 402.

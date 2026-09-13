@@ -3,6 +3,7 @@ package characters
 import (
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -70,7 +71,9 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
 	if minRounds > 0 {
 		c.Position.ConsumeRecoveryRound()
 		// Still in minimum recovery period — reduce attacks to 1 this round.
-		c.AddCondition(ConditionRecoveryPenalty, 1, 1.0, "prone recovery")
+		// The record's literal attacks_cap is the effect; the magnitude
+		// argument here is unused.
+		_ = c.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "prone recovery")
 		return false, false
 	}
 
@@ -93,11 +96,11 @@ func (c *Character) AttemptRecovery(contestWin func() bool) (bool, bool) {
 			// Should never happen — Prone→Standing and Supine→Standing are
 			// both valid edges. Log and report the attempt as a failure.
 			mudlog.Warn("AttemptRecovery: TransitionToStanding failed", "err", err)
-			c.AddCondition(ConditionRecoveryPenalty, 1, 1.0, "prone recovery")
+			_ = c.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "prone recovery")
 			return true, false
 		}
 	} else {
-		c.AddCondition(ConditionRecoveryPenalty, 1, 1.0, "prone recovery")
+		_ = c.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "prone recovery")
 	}
 
 	return true, success

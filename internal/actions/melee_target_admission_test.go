@@ -95,7 +95,6 @@ func TestStagedSpecialMoveStaleCooldownDoesNotCommitEngagement(t *testing.T) {
 			user, _, target, actor := stagedAdmissionFixture(t, tc.speciesID)
 			healthBefore := target.Character.Health
 			staminaBefore := target.Character.Stamina
-			conditionsBefore := len(target.Character.Conditions)
 			buffsBefore := len(target.Character.Buffs.GetBuffs())
 			actorPosition := user.Character.Position.State()
 			targetPosition := target.Character.Position.State()
@@ -114,7 +113,6 @@ func TestStagedSpecialMoveStaleCooldownDoesNotCommitEngagement(t *testing.T) {
 			assert.Empty(t, crimes.AllForFaction("thornwall_citizens", false))
 			require.Equal(t, healthBefore, target.Character.Health)
 			require.Equal(t, staminaBefore, target.Character.Stamina)
-			require.Len(t, target.Character.Conditions, conditionsBefore)
 			require.Len(t, target.Character.Buffs.GetBuffs(), buffsBefore)
 			require.Equal(t, actorPosition, user.Character.Position.State())
 			require.Equal(t, targetPosition, target.Character.Position.State())

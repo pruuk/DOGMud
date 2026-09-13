@@ -64,7 +64,11 @@ func TestIntegration_BuffBlindedAppliesBlinded(t *testing.T) {
 	}
 }
 
-// PE-INT-002: AddBuff(3) + AddCondition(Blinded) + RemoveBuff(3) → still Blinded.
+// PE-INT-002: AddBuff(3) + AddBuff(77) + RemoveBuff(3) → still Blinded.
+//
+// The second source used to be the ConditionBlinded enum entry. The enum is
+// gone and buffs 3 and 77 are the two blind sources that remain, so the
+// overlap this test exists to pin is now buff-on-buff.
 func TestIntegration_OverlapKeepsBlinded(t *testing.T) {
 	defer seedBlindBuffs(t)()
 
@@ -72,10 +76,12 @@ func TestIntegration_OverlapKeepsBlinded(t *testing.T) {
 	if err := c.AddBuff(perception.BuffIdBlinded, false); err != nil {
 		t.Fatalf("AddBuff(3): %v", err)
 	}
-	c.AddCondition(characters.ConditionBlinded, 5, 0.7, "test-overlap")
+	if err := c.AddBuff(perception.BuffIdFlashbangBlindness, false); err != nil {
+		t.Fatalf("AddBuff(77): %v", err)
+	}
 	c.RemoveBuff(perception.BuffIdBlinded)
 	if c.Perception.State() != perception.Blinded {
-		t.Errorf("after removing buff but condition still active, state = %v, want Blinded", c.Perception.State())
+		t.Errorf("after removing buff 3 but buff 77 still active, state = %v, want Blinded", c.Perception.State())
 	}
 }
 
@@ -85,9 +91,9 @@ func TestIntegration_AllSourcesClearedReturnsSighted(t *testing.T) {
 
 	c := characters.New()
 	_ = c.AddBuff(perception.BuffIdBlinded, false)
-	c.AddCondition(characters.ConditionBlinded, 5, 0.7, "test-clear")
+	_ = c.AddBuff(perception.BuffIdFlashbangBlindness, false)
 	c.RemoveBuff(perception.BuffIdBlinded)
-	c.RemoveCondition(characters.ConditionBlinded)
+	c.RemoveBuff(perception.BuffIdFlashbangBlindness)
 	if c.Perception.State() != perception.Sighted {
 		t.Errorf("after clearing all sources, state = %v, want Sighted", c.Perception.State())
 	}
@@ -130,40 +136,29 @@ func TestIntegration_FlashbangBlindness(t *testing.T) {
 	}
 }
 
-// PE-INT-006: ConditionBlinded alone drives the transitions.
-func TestIntegration_ConditionBlindedSolo(t *testing.T) {
-	c := characters.New()
-	c.AddCondition(characters.ConditionBlinded, 3, 0.5, "test-solo-cond")
-	if c.Perception.State() != perception.Blinded {
-		t.Errorf("after AddCondition(Blinded), state = %v, want Blinded", c.Perception.State())
-	}
-	c.RemoveCondition(characters.ConditionBlinded)
-	if c.Perception.State() != perception.Sighted {
-		t.Errorf("after RemoveCondition(Blinded), state = %v, want Sighted", c.Perception.State())
-	}
-}
-
-// PE-INT-007: Mixed source order — condition added first, then buff,
-// then condition removed → still Blinded (buff still active).
+// PE-INT-007: Mixed source order — flashbang first, then buff 3, then the
+// flashbang removed → still Blinded (buff 3 still active).
 func TestIntegration_MixedSourceOrder(t *testing.T) {
 	defer seedBlindBuffs(t)()
 
 	c := characters.New()
-	c.AddCondition(characters.ConditionBlinded, 5, 0.7, "test-order")
+	if err := c.AddBuff(perception.BuffIdFlashbangBlindness, false); err != nil {
+		t.Fatalf("AddBuff(77): %v", err)
+	}
 	if c.Perception.State() != perception.Blinded {
-		t.Fatalf("after AddCondition, state = %v, want Blinded", c.Perception.State())
+		t.Fatalf("after AddBuff(77), state = %v, want Blinded", c.Perception.State())
 	}
 	if err := c.AddBuff(perception.BuffIdBlinded, false); err != nil {
 		t.Fatalf("AddBuff(3): %v", err)
 	}
 	// Re-adding-while-already-Blinded path; state must remain Blinded.
 	if c.Perception.State() != perception.Blinded {
-		t.Errorf("after AddBuff while condition active, state = %v, want Blinded", c.Perception.State())
+		t.Errorf("after AddBuff(3) while already blinded, state = %v, want Blinded", c.Perception.State())
 	}
-	c.RemoveCondition(characters.ConditionBlinded)
-	// Buff still active → still Blinded.
+	c.RemoveBuff(perception.BuffIdFlashbangBlindness)
+	// Buff 3 still active → still Blinded.
 	if c.Perception.State() != perception.Blinded {
-		t.Errorf("after RemoveCondition (buff still active), state = %v, want Blinded", c.Perception.State())
+		t.Errorf("after RemoveBuff(77) (buff 3 still active), state = %v, want Blinded", c.Perception.State())
 	}
 	c.RemoveBuff(perception.BuffIdBlinded)
 	if c.Perception.State() != perception.Sighted {

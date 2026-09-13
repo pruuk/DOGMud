@@ -5,6 +5,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -183,43 +184,60 @@ func (c *Character) RecalculateStats() {
 		}
 	}
 
-	// Stage 31.6: Enchant withdrawal condition — unchanged.
-	if c.HasCondition(ConditionEnchantWithdrawal) {
-		mag := c.GetConditionMagnitude(ConditionEnchantWithdrawal)
-		for _, cond := range c.Conditions {
-			if cond.Type == ConditionEnchantWithdrawal {
-				penalty := int(math.Floor(float64(c.HealthMax.Value) * mag))
-				switch cond.Source {
-				case "health":
-					c.HealthMax.Value -= penalty
-					if c.HealthMax.Value < 1 {
-						c.HealthMax.Value = 1
-					}
-					if c.Health > c.HealthMax.Value {
-						c.Health = c.HealthMax.Value
-					}
-				case "stamina":
-					penalty = int(math.Floor(float64(c.StaminaMax.Value) * mag))
-					c.StaminaMax.Value -= penalty
-					if c.StaminaMax.Value < 0 {
-						c.StaminaMax.Value = 0
-					}
-					if c.Stamina > c.StaminaMax.Value {
-						c.Stamina = c.StaminaMax.Value
-					}
-				case "conviction":
-					penalty = int(math.Floor(float64(c.ConvictionMax.Value) * mag))
-					c.ConvictionMax.Value -= penalty
-					if c.ConvictionMax.Value < 0 {
-						c.ConvictionMax.Value = 0
-					}
-					if c.Conviction > c.ConvictionMax.Value {
-						c.Conviction = c.ConvictionMax.Value
-					}
-				}
-				break
-			}
+	// Enchant withdrawal records: each takes a fraction off the maximum of the
+	// pool named by its Source, after the reservation clamp above. Unchanged
+	// arithmetic from the condition it replaces; the first record whose
+	// Source matches a pool wins. A record with no matching Source is
+	// mis-sourced and is skipped rather than ending the loop, so it cannot
+	// shadow a valid record later in the list.
+	for _, b := range c.Buffs.List {
+		if b.Expired() {
+			continue
 		}
+		spec := buffs.GetBuffSpec(b.BuffId)
+		if spec == nil {
+			continue
+		}
+		v, ok := spec.Effects[buffs.EffectPoolMaxPct]
+		if !ok {
+			continue
+		}
+		mag := v.Literal
+		if v.UsesMagnitude {
+			mag = b.Magnitude
+		}
+		switch b.Source {
+		case "health":
+			penalty := int(math.Floor(float64(c.HealthMax.Value) * mag))
+			c.HealthMax.Value -= penalty
+			if c.HealthMax.Value < 1 {
+				c.HealthMax.Value = 1
+			}
+			if c.Health > c.HealthMax.Value {
+				c.Health = c.HealthMax.Value
+			}
+		case "stamina":
+			penalty := int(math.Floor(float64(c.StaminaMax.Value) * mag))
+			c.StaminaMax.Value -= penalty
+			if c.StaminaMax.Value < 0 {
+				c.StaminaMax.Value = 0
+			}
+			if c.Stamina > c.StaminaMax.Value {
+				c.Stamina = c.StaminaMax.Value
+			}
+		case "conviction":
+			penalty := int(math.Floor(float64(c.ConvictionMax.Value) * mag))
+			c.ConvictionMax.Value -= penalty
+			if c.ConvictionMax.Value < 0 {
+				c.ConvictionMax.Value = 0
+			}
+			if c.Conviction > c.ConvictionMax.Value {
+				c.Conviction = c.ConvictionMax.Value
+			}
+		default:
+			continue
+		}
+		break
 	}
 
 	// Emit CharacterStatsChanged if any tracked value changed.

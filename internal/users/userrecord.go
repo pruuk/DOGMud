@@ -451,6 +451,23 @@ func (u *UserRecord) AddBuffScaled(buffId int, durationMult float64, source stri
 
 }
 
+// AddBuffMagnitude queues a record with an exact trigger count and a
+// per-instance magnitude through the event path, so the holder reads the
+// start notice. Former conditions apply synchronously through
+// Character.AddBuffMagnitude instead; this door is for a spell or item that
+// wants the notice too. triggers is the exact trigger count, not a duration
+// in rounds — use buffs.TickTriggers for the three-round dot and bleed
+// records.
+func (u *UserRecord) AddBuffMagnitude(buffId int, triggers int, magnitude float64, source string) {
+	events.AddToQueue(events.Buff{
+		UserId:    u.UserId,
+		BuffId:    buffId,
+		Source:    source,
+		Triggers:  triggers,
+		Magnitude: magnitude,
+	})
+}
+
 // SendText delivers an audio-channel message to this user. See
 // rooms.SendText for channel semantics. CategoryDefault keeps prose
 // uncolored.

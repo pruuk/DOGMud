@@ -5,8 +5,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -15,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/control"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -121,15 +124,62 @@ func TestCalcSwingCount_HardCap(t *testing.T) {
 }
 
 func TestCalcSwingCount_RecoveryForcesOne(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
 	ch := &characters.Character{}
-	ch.Stats.Dexterity.ValueAdj = 200
-	ch.StaminaMax.Value = 100
+	// Base, not ValueAdj/Value: character.AddBuffMagnitude runs the full
+	// c.Validate(), whose RecalculateStats() overwrites ValueAdj/Value from
+	// Base+Training+Mods (Training and Mods are 0 on this bare fixture, so
+	// ValueAdj/Value end up equal to what Base is set to here).
+	ch.Stats.Dexterity.Base = 200
+	ch.StaminaMax.Base = 100
 	ch.Stamina = 100
 	setCombatPositionParallel(ch, position.Standing)
-	ch.AddCondition(characters.ConditionRecoveryPenalty, 1, 1.0, "test")
+	ch.Buffs.Validate(true)
+	// Force ValueAdj/Value from Base BEFORE the record lands, so the baseline
+	// swing count below is driven by dexterity, not by an un-Validated fixture
+	// sitting at its zero value. Without this, deleting the AddBuffMagnitude
+	// call below still passes: swings would floor to 1 because Dexterity.
+	// ValueAdj is 0, not because the recovery cap fired.
+	_ = ch.Validate()
+	require.Greater(t, calcSwingCount(ch, items.Item{}, 1.4, 0, false), 1, "fixture can swing more than once")
+
+	_ = ch.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "test")
 
 	got := calcSwingCount(ch, items.Item{}, 1.4, 0, false)
 	assert.Equal(t, 1, got, "recovery penalty should force swings to 1")
+}
+
+// Faithful to the enum (spec finding): a Recovering record applied and then
+// ticked in the same round contributes nothing to the swing count. That is
+// true of the PLAYER path only: UserRoundTick applies the penalty and expires
+// the record in the same tick before DoCombat runs. On the mob path,
+// MobRoundTick ticks buffs before DoCombat applies the recovery penalty, so
+// the cap survives into DoCombat and has always bitten there. Making the
+// player-path cap bite too is a filed owner call, not this slice.
+func TestRecoveringRecordExpiredByItsOwnTickCapsNothing(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
+	ch := &characters.Character{}
+	// Base, not ValueAdj/Value: see TestCalcSwingCount_RecoveryForcesOne.
+	ch.Stats.Dexterity.Base = 200
+	ch.StaminaMax.Base = 100
+	ch.Stamina = 100
+	setCombatPositionParallel(ch, position.Standing)
+	ch.Buffs.Validate(true)
+	_ = ch.AddBuffMagnitude(buffs.BuffIdRecovering, 1, 0, "test")
+	assert.Equal(t, 1, calcSwingCount(ch, items.Item{}, 1.4, 0, false), "held: the cap applies")
+	ch.Buffs.Trigger()
+	assert.Greater(t, calcSwingCount(ch, items.Item{}, 1.4, 0, false), 1, "expired by its own tick: no cap")
+}
+
+// The Off Balance record is the sole producer of EffectDefenseMult for a
+// failed grapple; Task 4's door in combat_helpers.go reads it directly.
+func TestOffBalanceRecordIsTheDefenseMultiplier(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
+	ch := &characters.Character{}
+	ch.Buffs.Validate(true)
+	require.InDelta(t, 1.0, ch.Buffs.Effect(buffs.EffectDefenseMult), 1e-9, "no record: identity multiplier")
+	_ = ch.AddBuffMagnitude(buffs.BuffIdOffBalance, 1, 0, "test")
+	require.InDelta(t, 0.85, ch.Buffs.Effect(buffs.EffectDefenseMult), 1e-9, "held: the record's literal 0.85")
 }
 
 func TestCalcSwingCount_ProneReduces(t *testing.T) {
@@ -625,4 +675,135 @@ func TestCalcSwingCount_WeaponSwingsAtWeaponSkill(t *testing.T) {
 
 	assert.Equal(t, lowUnarmed, highUnarmed,
 		"unarmed-combat rank must not change how fast a SWORD swings")
+}
+
+// ─── the two EffectDefenseMult / EffectDamageMult readers ──────────────────
+//
+// TestOffBalanceRecordIsTheDefenseMultiplier (above) pins the buffs-layer
+// getter: a held record changes what Buffs.Effect returns. Neither reader in
+// combat_helpers.go that actually CONSUMES that getter was pinned: whether a
+// held damage_mult record reaches both dmgMean and rawDmgForCrit in
+// buildDamageParams, and whether a held defense_mult record reaches the
+// defenseScore entry runBestOfAllDefenseWithRunner hands to the contest. Both
+// pins below go red if either multiply line is deleted.
+
+// newDamageMultCharacter builds a bare-hands combatant with full health at a
+// deterministic Base stat spread. Base, not the derived stat/pool fields: see
+// TestCalcSwingCount_RecoveryForcesOne and the AddBuffMagnitude trap it notes
+// -- AddBuffMagnitude calls Character.Validate(), which recomputes ValueAdj
+// and HealthMax.Value from Base on every call, so a fixture that set those
+// derived fields directly would have them silently reset the moment a buff
+// is added.
+func newDamageMultCharacter(t *testing.T) *characters.Character {
+	t.Helper()
+	c := characters.New()
+	c.Stats.Strength.Base = 100
+	c.Stats.Strength.Recalculate()
+	c.Stats.Dexterity.Base = 100
+	c.Stats.Dexterity.Recalculate()
+	c.Stats.Vitality.Base = 100
+	c.Stats.Vitality.Recalculate()
+	require.NoError(t, c.Validate())
+	c.Health = c.HealthMax.Value
+	setCombatPositionParallel(c, position.Standing)
+	return c
+}
+
+// TestDamageMultRecordScalesMeanAndCritRaw pins Task 4's damage-side door in
+// buildDamageParams: a held damage_mult record (warcry) must scale BOTH
+// dmgMean and rawDmgForCrit by its magnitude, not just one of the two.
+// Sabotage: comment out "rawDmgForCrit *= warcryMult" in buildDamageParams --
+// this test must go red while dmgMean still matches.
+func TestDamageMultRecordScalesMeanAndCritRaw(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
+
+	weapon := weaponSetup{weaponDmgMult: 1.0}
+
+	baseAttacker := newDamageMultCharacter(t)
+	baseTarget := newDamageMultCharacter(t)
+	baseline := buildDamageParams(baseAttacker, baseTarget, weapon, 0, User)
+	require.Greater(t, baseline.dmgMean, 0.0, "fixture guard: baseline damage must be nonzero")
+	require.Greater(t, baseline.rawDmgForCrit, 0.0, "fixture guard: baseline crit-raw damage must be nonzero")
+
+	heldAttacker := newDamageMultCharacter(t)
+	heldTarget := newDamageMultCharacter(t)
+	require.NoError(t, heldAttacker.AddBuffMagnitude(buffs.BuffIdWarcry, 25, 1.25, "test"))
+	held := buildDamageParams(heldAttacker, heldTarget, weapon, 0, User)
+
+	require.InDelta(t, baseline.dmgMean*1.25, held.dmgMean, 1e-6,
+		"a held warcry record must scale dmgMean by its magnitude")
+	require.InDelta(t, baseline.rawDmgForCrit*1.25, held.rawDmgForCrit, 1e-6,
+		"a held warcry record must scale rawDmgForCrit by its magnitude")
+}
+
+// captureDefenseScore runs runBestOfAllDefenseWithRunner for a single dodge
+// candidate and returns the entry's Score exactly as handed to the contest,
+// before any roll or cost commit. buffFn, if non-nil, applies a record to the
+// defender first (through AddBuffMagnitude, which re-validates the
+// character -- see newDamageMultCharacter's comment on why the fixture below
+// only ever sets Base fields).
+func captureDefenseScore(t *testing.T, buffFn func(*characters.Character)) float64 {
+	t.Helper()
+	pinDefenceAdmissionConfig(t)
+	attacker, defender := defenceAdmissionCharacters()
+	// Validate the BASELINE defender too. AddBuffMagnitude validates as a side
+	// effect, so without this the no-buff capture is the only un-validated one
+	// and the ratios below would fold in any validation drift as if it were
+	// the record's doing.
+	require.NoError(t, defender.Validate())
+	if buffFn != nil {
+		buffFn(defender)
+	}
+
+	result := &AttackResult{}
+	var captured float64
+	found := false
+	runner := func(atkScore float64, entries []contest.Entry) contest.Result {
+		for _, e := range entries {
+			if e.Name == characters.DefenseDodge {
+				captured = e.Score
+				found = true
+			}
+		}
+		return deterministicDefenceResult(t, atkScore, entries, characters.DefenseDodge, 0, entries[0].Score)
+	}
+	runBestOfAllDefenseWithRunner(result, attacker, defender,
+		[]string{characters.DefenseDodge}, 100, false,
+		combatContext{sourceCanSee: true, targetCanSee: true}, runner)
+	require.True(t, found, "fixture guard: the runner never saw a dodge entry")
+	return captured
+}
+
+// TestDefenseMultRecordReachesDefenseScore pins Task 4's defense-side door:
+// runBestOfAllDefenseWithRunner must multiply defenseScore by
+// Buffs.Effect(EffectDefenseMult) before handing the entry to the contest.
+// Rally (magnitude-based) and Off Balance (literal 0.85) both write that
+// effect, and Buffs.Effect composes multiple held records multiplicatively,
+// so holding both must yield 1.2 * 0.85 = 1.02. Sabotage: comment out
+// "defenseScore *= ...Effect(buffs.EffectDefenseMult)" in
+// runBestOfAllDefenseWithRunner -- this test must go red on all three cases.
+func TestDefenseMultRecordReachesDefenseScore(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
+
+	baseline := captureDefenseScore(t, nil)
+	require.Greater(t, baseline, 0.0, "fixture guard: baseline dodge score must be nonzero")
+
+	rallyScore := captureDefenseScore(t, func(c *characters.Character) {
+		require.NoError(t, c.AddBuffMagnitude(buffs.BuffIdRally, 25, 1.2, "test"))
+	})
+	require.InDelta(t, baseline*1.2, rallyScore, 1e-6,
+		"a held rally record must scale defenseScore by its magnitude")
+
+	offBalanceScore := captureDefenseScore(t, func(c *characters.Character) {
+		require.NoError(t, c.AddBuffMagnitude(buffs.BuffIdOffBalance, 1, 0, "test"))
+	})
+	require.InDelta(t, baseline*0.85, offBalanceScore, 1e-6,
+		"a held off-balance record's literal 0.85 must reach defenseScore")
+
+	bothScore := captureDefenseScore(t, func(c *characters.Character) {
+		require.NoError(t, c.AddBuffMagnitude(buffs.BuffIdRally, 25, 1.2, "test"))
+		require.NoError(t, c.AddBuffMagnitude(buffs.BuffIdOffBalance, 1, 0, "test"))
+	})
+	require.InDelta(t, baseline*1.02, bothScore, 1e-6,
+		"rally and off balance must compose multiplicatively (1.2 * 0.85 = 1.02)")
 }

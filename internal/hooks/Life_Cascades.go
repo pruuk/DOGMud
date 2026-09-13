@@ -58,7 +58,8 @@ func wireLifeCrossMachineCascades(c *characters.Character) {
 				//    lived here is removed in chunk-4b R4 now that all
 				//    production readers go through the FSM predicates.
 
-				// 5. Buffs (non-permanent) → cancel all.
+				// 5. Buffs → cancel all, permanent ones included (All skips
+				//    only already-expired records, never PermaBuff).
 				c.CancelBuffsWithFlag(buffs.All)
 
 				// 5b. Toxicity → clear. THIS MUST STAY BESIDE THE BUFF STRIP
@@ -73,9 +74,6 @@ func wireLifeCrossMachineCascades(c *characters.Character) {
 				// speed, so a player could respawn at 5% health still critical
 				// and die again with no way out.
 				c.Toxicity = 0
-
-				// 6. Conditions slice → clear.
-				c.Conditions = nil
 
 			case from == life.Dead && to == life.Respawning:
 				// Player respawn cascade: resource reset + grace buff.

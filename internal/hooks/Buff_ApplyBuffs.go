@@ -80,8 +80,12 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	// buff that never landed told an immune player venom was seeping into their
 	// bloodstream, so a refusal returns here and nothing below it runs: no start
 	// notice, no start_remove_buffs cure, no TrackBuffStarted, no BuffsTriggered.
+	// The same refusal applies on the magnitude path, for a former condition
+	// applied through this door instead of synchronously.
 	var addErr error
-	if evt.DurationMult > 0 && evt.DurationMult != 1.0 {
+	if evt.Magnitude != 0 || evt.Triggers > 0 {
+		addErr = targetChar.AddBuffMagnitude(evt.BuffId, evt.Triggers, evt.Magnitude, evt.Source)
+	} else if evt.DurationMult > 0 && evt.DurationMult != 1.0 {
 		addErr = targetChar.AddBuffScaled(evt.BuffId, evt.DurationMult)
 	} else {
 		addErr = targetChar.AddBuff(evt.BuffId, false)
