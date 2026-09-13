@@ -248,8 +248,8 @@ func TestProcApplyCondition_Bleed(t *testing.T) {
 	if !target.HasBuff(buffs.BuffIdBleeding) {
 		t.Fatal("target should be bleeding")
 	}
-	if got := target.Buffs.TriggersLeft(buffs.BuffIdBleeding); got != buffs.TickTriggers(6) {
-		t.Fatalf("expected %d triggers (duration 6 at a 3-round triggerrate), got %d", buffs.TickTriggers(6), got)
+	if got := target.Buffs.TriggersLeft(buffs.BuffIdBleeding); got != 2 {
+		t.Fatalf("expected 2 triggers (duration 6 at a 3-round triggerrate), got %d", got)
 	}
 	held := target.GetBuffs(buffs.BuffIdBleeding)
 	if len(held) != 1 {

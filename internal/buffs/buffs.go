@@ -289,17 +289,21 @@ func (bs *Buffs) AddBuffScaled(buffId int, durationMult float64) bool {
 	return false
 }
 
-// AddBuffMagnitude applies a record for an EXACT number of rounds with a
+// AddBuffMagnitude applies a record for an EXACT trigger count with a
 // per-instance magnitude. It is the writer door for every record that used to
-// be a combat condition. rounds 0 means the spec's own triggercount. A held
-// record of the same id is refreshed and its magnitude, rounds and tick
+// be a combat condition. triggers 0 means the spec's own triggercount. A held
+// record of the same id is refreshed and its magnitude, triggers and tick
 // snapshot overwritten, which is what AddCondition did. Returns false when
 // refused (poison immunity) or unknown.
 //
-// Rounds are an int on purpose: AddBuffScaled truncates float64(count) * mult,
-// and 3.3 * 10 is 32.999... in binary, so a multiplier would shorten some
-// durations by a round. The former conditions all computed an integer.
-func (bs *Buffs) AddBuffMagnitude(buffId int, rounds int, magnitude float64) bool {
+// triggers is the exact trigger count, not a duration in rounds: for a
+// one-round-interval record the two coincide, but the three-round-interval
+// dot and bleed records need buffs.TickTriggers to convert a rounds-literal
+// duration into the trigger count this parameter expects. It is an int on
+// purpose: AddBuffScaled truncates float64(count) * mult, and 3.3 * 10 is
+// 32.999... in binary, so a multiplier would shorten some durations by a
+// round. The former conditions all computed an integer.
+func (bs *Buffs) AddBuffMagnitude(buffId int, triggers int, magnitude float64) bool {
 	if !bs.AddBuffScaled(buffId, 1.0) {
 		return false
 	}
@@ -307,8 +311,8 @@ func (bs *Buffs) AddBuffMagnitude(buffId int, rounds int, magnitude float64) boo
 	if !ok {
 		return false
 	}
-	if rounds > 0 {
-		bs.List[idx].TriggersLeft = rounds
+	if triggers > 0 {
+		bs.List[idx].TriggersLeft = triggers
 	}
 	bs.List[idx].Magnitude = magnitude
 	if spec := GetBuffSpec(buffId); spec != nil && spec.TickFromMagnitude {

@@ -152,11 +152,34 @@ func wirePlayerDeathAnnouncement(c *characters.Character) {
 }
 
 // deathCauseFor derives the PvE death-event cause string for a character:
-// the engaged mob's name if one is fighting them, else "poison" if poisoned,
-// else "bleeding out" if bleeding, else the generic fallback. Order matters —
-// a poisoned AND bleeding character reads "poison" because that check comes
-// first. Extracted from the dmgCt==0 branch of wirePlayerDeathAnnouncement so
-// the derivation can be pinned directly; behavior is unchanged.
+// the engaged mob's name if one is fighting them, else "poison" if the
+// Poisoned record is held, else "bleeding out" if the Bleeding record is
+// held, else whatever the killing tick stamped (LastTickCause), else the
+// generic fallback. Order matters — a poisoned AND bleeding character reads
+// "poison" because that check comes first.
+//
+// The held-record checks read by id (HasBuff), not by flag (HasBuffFlag):
+// HasBuff only tests the id index and does not care whether the record
+// already reads Expired, while HasBuffFlag skips expired records outright.
+// Buffs.Trigger() decrements TriggersLeft before returning the triggered
+// buff, so a tick that is the record's LAST trigger — every ordinary bleed,
+// since buffs.TickTriggers commonly produces one trigger, and one poison
+// tick in ten — arrives already Expired; the old flag read then reported
+// "their own foolishness" for an outright poison or bleed-out kill. Reading
+// by id survives that, but not a prune: PruneBuffs runs on every NewTurn and
+// can remove the expired record before this announcement listener runs
+// (death is a queued event — see Character.DeathQueued), which is what
+// LastTickCause is for: the round tick that landed the fatal harm stamps it
+// at the moment the tick fires, before either hole can open.
+//
+// Checking by id also means a poison-FLAGGED buff that is not the Poisoned
+// record (Venom, Spore Toxin, Toxic Cloud, Nausea) no longer reports
+// "poison" here — narrower than the flag read it replaces, but faithful to
+// the enum this function replaced, which only ever knew the spell dot and
+// the bleed record.
+//
+// Extracted from the dmgCt==0 branch of wirePlayerDeathAnnouncement so the
+// derivation can be pinned directly.
 func deathCauseFor(c *characters.Character) string {
 	causeOfDeath := ""
 	// Check if fighting a mob.
@@ -167,10 +190,12 @@ func deathCauseFor(c *characters.Character) string {
 	}
 	// Check for lethal conditions.
 	if causeOfDeath == "" {
-		if c.HasBuffFlag(buffs.Poison) {
+		if c.HasBuff(buffs.BuffIdPoisoned) {
 			causeOfDeath = "poison"
-		} else if c.HasBuffFlag(buffs.Bleeding) {
+		} else if c.HasBuff(buffs.BuffIdBleeding) {
 			causeOfDeath = "bleeding out"
+		} else if c.LastTickCause != "" {
+			causeOfDeath = c.LastTickCause
 		}
 	}
 	if causeOfDeath == "" {

@@ -83,8 +83,8 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	// The same refusal applies on the magnitude path, for a former condition
 	// applied through this door instead of synchronously.
 	var addErr error
-	if evt.Magnitude != 0 || evt.Rounds > 0 {
-		addErr = targetChar.AddBuffMagnitude(evt.BuffId, evt.Rounds, evt.Magnitude, evt.Source)
+	if evt.Magnitude != 0 || evt.Triggers > 0 {
+		addErr = targetChar.AddBuffMagnitude(evt.BuffId, evt.Triggers, evt.Magnitude, evt.Source)
 	} else if evt.DurationMult > 0 && evt.DurationMult != 1.0 {
 		addErr = targetChar.AddBuffScaled(evt.BuffId, evt.DurationMult)
 	} else {

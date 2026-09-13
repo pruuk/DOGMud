@@ -241,6 +241,13 @@ func tickMobBuffs(mob *mobs.Mob, mobInstanceId int) {
 							mob.Character.ApplyHarm(characters.PoolHealth, -tickAmt, state.ActorRef{})
 							cancelCraftOrSalvageOnDamage(&mob.Character)
 							cancelDamageBuffs(&mob.Character)
+							// See tickCauseFor and deathCauseFor: captures the
+							// cause at tick-landing time so a record already
+							// Expired or pruned by the time a death is
+							// announced still has one.
+							if cause := tickCauseFor(mobBuffSpec); cause != "" {
+								mob.Character.LastTickCause = cause
+							}
 						}
 					case "stamina":
 						if tickAmt > 0 {

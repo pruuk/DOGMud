@@ -299,6 +299,24 @@ func (b *Buff) Expired() bool {
 }
 ```
 
+### Converting a rounds duration into a trigger count (`ticks.go`)
+
+`TickTriggers(rounds int) int` converts a duration expressed in rounds into
+the `TriggersLeft` a three-round-interval record needs, floored with a
+minimum of one: `rounds / 3`, or `1` if `rounds < 3`. It exists for exactly
+two records, 121 Poisoned and 122 Bleeding, whose shipped `TriggerRate` is
+"3 rounds" — the old AutoHeal hook that these records replaced landed its
+DoT only on every third round while the duration it read counted every
+round, so a duration of `rounds` produced `rounds/3` actual ticks. A caller
+seeding one of these records with `Character.AddBuffMagnitude` or
+`Buffs.AddBuffMagnitude` must pass `TickTriggers(rounds)`, not `rounds`
+itself, or the record fires three times too often. Every producer of these
+two records (the spell dot, the bleed producer, `apply_condition` item
+procs) calls it; `internal/hooks` tests seed the same way so a 1-trigger
+record — the common case for a short duration — exercises the same
+last-trigger-is-expired hole a longer one would hide (see
+`internal/hooks/Death_PlayerAnnouncement.go`'s `deathCauseFor`).
+
 ### Time String Processing
 ```go
 // Validate and convert time strings to round intervals
@@ -381,6 +399,39 @@ func (b *BuffSpec) GetValue() int {
 }
 ```
 
+## Effects Vocabulary (`effects.go`)
+
+`EffectKind` is a closed set of mechanical effects a `BuffSpec` may declare
+under its `effects:` map, keyed by kind and pointing at an `EffectValue`
+(either a literal number or the YAML word `"magnitude"`, meaning "read the
+holding instance's own `Magnitude`"). The set is closed on purpose — a new
+kind is a code change with a reader, never a data change —
+`BuffSpec.validateEffects` refuses an unknown key, and refuses
+`TickFromMagnitude` set without a `TickPool`, or set alongside a non-zero
+`TickPercent`.
+
+```go
+const (
+    EffectDamageMult     EffectKind = "damage_mult"     // physical damage multiplier (warcry)
+    EffectDefenseMult    EffectKind = "defense_mult"    // defense score multiplier (rally, grapple exposure)
+    EffectDodgeMult      EffectKind = "dodge_mult"      // dodge score multiplier (no producer today; kept for parity with the reader)
+    EffectRegenMult      EffectKind = "regen_mult"      // multiplier on base health regen (heal spells, corpse feeding)
+    EffectMitigationFlat EffectKind = "mitigation_flat" // flat physical mitigation points (wards)
+    EffectPoolMaxPct     EffectKind = "pool_max_pct"    // fraction taken off a pool maximum; the pool rides on Buff.Source
+    EffectAttacksCap     EffectKind = "attacks_cap"     // upper bound on swings per round
+)
+```
+
+`Buffs.Effect(kind EffectKind) float64` is the ONE door combat reads timed
+state through. It folds every held, unexpired record's contribution for
+that kind: a multiplier kind (`damage_mult`, `defense_mult`, `dodge_mult`,
+`regen_mult`) multiplies across records with identity `1.0`; `attacks_cap`
+takes the minimum non-zero value (`0` meaning no cap); everything else
+(`mitigation_flat`, `pool_max_pct`) sums with identity `0`. It never calls
+`HasFlag` with `expire=true`, so reading it has no side effect.
+`Buffs.HasEffect(kind EffectKind) bool` reports whether any held, unexpired
+record declares the kind at all, without computing a value.
+
 ## Buff Management Operations
 
 ### Adding Buffs
@@ -428,6 +479,36 @@ func (bs *Buffs) AddBuff(buffId int, isPermanent bool) bool {
     return false
 }
 ```
+
+### Magnitude Records (`AddBuffMagnitude`)
+
+`Buffs.AddBuffMagnitude(buffId int, triggers int, magnitude float64) bool`
+is the writer door for every record that used to be a hand-rolled combat
+condition (Minor Shield, Regenerating, Poisoned, Bleeding). It refreshes or
+adds the buff via `AddBuffScaled(buffId, 1.0)`, then, if `triggers > 0`,
+overwrites `TriggersLeft` with the exact count — **a trigger count, not a
+duration in rounds**: for a one-round-interval record the two coincide, but
+the three-round-interval dot and bleed records need `TickTriggers` (above)
+to convert a rounds-literal duration first. `triggers` of `0` leaves the
+spec's own `TriggerCount` in place. It also stamps `Magnitude`, and for a
+spec with `TickFromMagnitude` set, snapshots `TickAmount` from the
+magnitude's sign (floored to ±1 rather than 0, since a zero tick would
+never recover). Returns `false` on refusal (e.g. poison immunity via
+`AddBuffScaled`) or an unknown buff id, exactly like `AddBuffScaled`.
+
+Three doors wrap it, each documenting the same "triggers, not rounds"
+contract:
+- `Character.AddBuffMagnitude(buffId, triggers, magnitude, source)` applies
+  synchronously and sets `Source` on the held record — what every former
+  `AddCondition` call site now calls directly, since those effects must
+  land within the same round tick and narrate the moment themselves.
+- `UserRecord.AddBuffMagnitude(buffId, triggers, magnitude, source)` queues
+  an `events.Buff{Triggers: triggers, Magnitude: magnitude}` instead, for a
+  spell or item that wants the holder's start notice through the normal
+  `Buff_ApplyBuffs` door.
+- `events.Buff.Triggers` (with `.Magnitude`) is the field `UserRecord`
+  populates; `Buff_ApplyBuffs` routes to `Character.AddBuffMagnitude` when
+  either is non-zero, and to the `DurationMult` path otherwise.
 
 ### Removing Buffs
 ```go
@@ -1010,8 +1091,10 @@ they live downstream, in the damage pipeline.
 | `buffspec.go` | The authored `BuffSpec` and its loader |
 | `notice.go` | The player-side start/end notice resolver and the silent-buff listing |
 | `narration.go` | The narration door: `Phase`, `Narration`, `Narrate`, `AuthoredStartLine`, `validateNarration` |
-| `buffs.go` | Applied-buff instances, flags, stat mods |
+| `buffs.go` | Applied-buff instances, flags, stat mods, `AddBuffMagnitude` |
 | `tick.go` | Per-round buff processing and expiry |
+| `ticks.go` | `TickTriggers`: rounds-duration to trigger-count conversion for the three-round dot and bleed records |
+| `effects.go` | `EffectKind`, the closed effects vocabulary, `Buffs.Effect` / `Buffs.HasEffect` |
 | `test_helpers.go` | Test fixtures |
 
 Buff files are named `{buffid}-{ConvertForFilename(name)}.yaml` — `name:

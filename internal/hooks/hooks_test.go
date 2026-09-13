@@ -989,6 +989,29 @@ func TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick(t *testing.T) {
 		"the final, expiring trigger sends no flavour line")
 }
 
+// TestRoundTick_TriggerLineSkippedOnExpiringTick is the ONE-trigger sibling
+// of TestRoundTick_PoisonDamage_TriggerLineOnNonFinalTick: a record whose
+// only trigger is also its last must still land the harm, but must not send
+// the flavour line on that same, already-expiring tick.
+func TestRoundTick_TriggerLineSkippedOnExpiringTick(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer buffs.SeedConditionRecordsForTest()()
+
+	u1 := users.GetByUserId(1)
+	u1.Character.HealthMax.Base = 100
+	u1.Character.Health = 80
+	_ = u1.Character.AddBuffMagnitude(buffs.BuffIdPoisoned, buffs.TickTriggers(3), -5, "test")
+	drainPlain(1)
+
+	for round := uint64(1); round <= 3; round++ {
+		UserRoundTick(events.NewRound{RoundNumber: round})
+	}
+	assert.Equal(t, 75, u1.Character.Health, "the record's one trigger lands the harm on round 3")
+	assert.Equal(t, 0, countContaining(drainPlain(1), "The poison burns through your veins!"),
+		"the expiring, one-and-only trigger sends no flavour line")
+}
+
 // TestDotProducerRecordsNegativeHarm_MobTarget pins the sign of the mob-target
 // dot producer (spell_resolution.go's applyMobEffect_dot, a player's spell
 // landing on a mob) and that it converts dotDuration through

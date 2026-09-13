@@ -349,6 +349,15 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 									// bleed hook always did (slice 1, change 5).
 									cancelCraftOrSalvageOnDamage(user.Character)
 									cancelDamageBuffs(user.Character)
+									// Capture the cause at the moment the tick lands: a
+									// tick that is the record's last trigger arrives
+									// already Expired (Buffs.Trigger decrements
+									// TriggersLeft before returning it), and the record
+									// can also be pruned before the death announcement
+									// listener runs. See tickCauseFor and deathCauseFor.
+									if cause := tickCauseFor(trigBuffSpec); cause != "" {
+										user.Character.LastTickCause = cause
+									}
 								}
 							case "stamina":
 								if tickAmt > 0 {

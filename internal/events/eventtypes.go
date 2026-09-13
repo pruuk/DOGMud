@@ -28,10 +28,12 @@ type Buff struct {
 	// door that narrates the start.
 	DurationMult float64
 	// Magnitude is the per-instance strength for a record whose effects read
-	// it, and Rounds the exact duration; either non-zero routes the event
+	// it, and Triggers the exact trigger count (not a duration in rounds —
+	// buffs.TickTriggers converts a rounds-literal duration for the
+	// three-round dot and bleed records); either non-zero routes the event
 	// through AddBuffMagnitude. Zero both means the DurationMult path.
 	Magnitude float64
-	Rounds    int
+	Triggers  int
 }
 
 func (b Buff) Type() string { return `Buff` }

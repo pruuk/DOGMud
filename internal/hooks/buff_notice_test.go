@@ -107,17 +107,17 @@ func TestBuffNotice_ScaledEventStillNarratesTheStart(t *testing.T) {
 
 // TestBuffNotice_MagnitudeEventAppliesSilently pins the event-path door for a
 // former combat condition: Character.AddBuffMagnitude is what every condition
-// site calls synchronously, but the event carries Rounds/Magnitude too, for a
-// future caller (a spell or item) that wants the start notice through the
+// site calls synchronously, but the event carries Triggers/Magnitude too, for
+// a future caller (a spell or item) that wants the start notice through the
 // queue instead. Minor Shield is silent-start, so no start line is expected;
-// this only pins that the exact rounds and the magnitude-derived effect both
-// survive the trip through ApplyBuffs.
+// this only pins that the exact trigger count and the magnitude-derived
+// effect both survive the trip through ApplyBuffs.
 func TestBuffNotice_MagnitudeEventAppliesSilently(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	defer buffs.SeedConditionRecordsForTest()()
 
-	assert.Equal(t, events.Continue, ApplyBuffs(events.Buff{UserId: 1, BuffId: buffs.BuffIdMinorShield, Rounds: 7, Magnitude: 9, Source: "test"}))
+	assert.Equal(t, events.Continue, ApplyBuffs(events.Buff{UserId: 1, BuffId: buffs.BuffIdMinorShield, Triggers: 7, Magnitude: 9, Source: "test"}))
 
 	holder := users.GetByUserId(1)
 	require.NotNil(t, holder)

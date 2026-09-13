@@ -38,6 +38,12 @@ func (h *helpCallerActor) GetName() string                     { return h.name }
 // converts an old rounds-literal duration into the equivalent trigger count,
 // and RoundCounter must reach a multiple of 3 (rounds 1, 2, 3 of ticking)
 // before the record fires even once.
+//
+// The record is seeded with buffs.TickTriggers(20) (6 triggers), not
+// TickTriggers(3) (1 trigger): the cross-hook pin below needs the Bleeding
+// flag to still be held, not expired, when AutoHeal runs after round 4, or a
+// revived flag-gated AutoHeal bleed block would have nothing to gate on and
+// the pin would pass for the wrong reason.
 func TestRoundTick_BleedDamagesPlayer(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -50,7 +56,7 @@ func TestRoundTick_BleedDamagesPlayer(t *testing.T) {
 	// stats/balance config, clobbering a raw HealthMax.Value. Seeding Base
 	// keeps HealthMax comfortably above the 40 this test needs.
 	u.Character.HealthMax.Base = 100
-	_ = u.Character.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(3), -5, "test")
+	_ = u.Character.AddBuffMagnitude(buffs.BuffIdBleeding, buffs.TickTriggers(20), -5, "test")
 	u.Character.Health = 40
 
 	// Rounds 1 and 2: RoundCounter isn't yet a multiple of 3, no trigger.
@@ -59,18 +65,21 @@ func TestRoundTick_BleedDamagesPlayer(t *testing.T) {
 	UserRoundTick(events.NewRound{RoundNumber: 2})
 	assert.Equal(t, 40, u.Character.Health, "no trigger yet on round 2")
 
-	// Round 3: RoundCounter reaches 3, the record's one trigger lands.
+	// Round 3: RoundCounter reaches 3, the first of six triggers lands.
 	UserRoundTick(events.NewRound{RoundNumber: 3})
-	assert.Equal(t, 35, u.Character.Health, "the single trigger should land on round 3")
+	assert.Equal(t, 35, u.Character.Health, "the first trigger should land on round 3")
 
-	// The record's one trigger is spent; a fourth round tick must not
-	// re-trigger it.
+	// RoundCounter is 4, not a multiple of 3; a fourth round tick must not
+	// re-trigger it yet.
 	UserRoundTick(events.NewRound{RoundNumber: 4})
-	assert.Equal(t, 35, u.Character.Health, "the record has no triggers left; a further tick must not re-fire it")
+	assert.Equal(t, 35, u.Character.Health, "the interval hasn't come back around; a further tick must not re-fire it")
 
 	// Cross-hook pin: AutoHeal's own bleed block is gone, so firing it after
 	// the tick must not apply a second, redundant bleed hit. Health may move
-	// by ordinary out-of-combat regen, but not by another 5-point bleed.
+	// by ordinary out-of-combat regen, but not by another 5-point bleed. The
+	// record still has five triggers left here (Bleeding flag still held),
+	// so a revived flag-gated block in AutoHeal is reachable and would be
+	// caught.
 	AutoHeal(events.NewRound{RoundNumber: 3})
 	assert.GreaterOrEqual(t, u.Character.Health, 35, "AutoHeal must not re-apply the bleed")
 	assert.Less(t, u.Character.Health, 40, "AutoHeal's own regen should be small next to the 5-point bleed it must not repeat")
