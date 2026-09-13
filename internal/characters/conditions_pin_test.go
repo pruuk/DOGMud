@@ -15,7 +15,7 @@ func pinCharacter() *Character {
 	c := &Character{}
 	c.Buffs.Validate(true)
 	c.Name = "Pin"
-	// Base, not just Value: RecalculateStats (validate.go:29-249) only ever
+	// Base, not just Value: RecalculateStats (validate.go:30-282) only ever
 	// writes .Mods and then calls StatInfo.Recalculate() (Value = Base +
 	// Training + Mods), so a fixture that sets only .Value gets overwritten
 	// on the first Validate() call. In a test binary the balance config is
@@ -47,13 +47,13 @@ func TestPin_ShieldAddsFlatPhysicalMitigation(t *testing.T) {
 }
 
 // Validate() recomputes HealthMax/StaminaMax/ConvictionMax from stats on
-// every call (RecalculateStats, validate.go:29-249, called from Validate at
-// validate.go:682), so the fixture reads the maximum Validate itself computes
+// every call (RecalculateStats, validate.go:30-282, called from Validate at
+// validate.go:704), so the fixture reads the maximum Validate itself computes
 // as the base (with a real .Base now set above, that base is exactly 200 /
 // 100 / 80) and checks the withdrawal fraction against THAT base rather than
 // a hardcoded number Validate could otherwise silently redefine out from
 // under the test. The withdrawal application itself lives at
-// validate.go:186-221.
+// validate.go:187-245.
 func TestPin_WithdrawalCutsThePoolMaximumByTheFraction(t *testing.T) {
 	defer buffs.SeedConditionRecordsForTest()()
 	c := pinCharacter()

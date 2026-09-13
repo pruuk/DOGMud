@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/life"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/worldevents"
 )
 
@@ -172,11 +173,16 @@ func wirePlayerDeathAnnouncement(c *characters.Character) {
 // LastTickCause is for: the round tick that landed the fatal harm stamps it
 // at the moment the tick fires, before either hole can open.
 //
-// Checking by id also means a poison-FLAGGED buff that is not the Poisoned
-// record (Venom, Spore Toxin, Toxic Cloud, Nausea) no longer reports
-// "poison" here — narrower than the flag read it replaces, but faithful to
-// the enum this function replaced, which only ever knew the spell dot and
-// the bleed record.
+// Checking by id also narrows the held-record check to the two named
+// records, Poisoned and Bleeding — faithful to the enum this function
+// replaced, which only ever knew the spell dot and the bleed record. A
+// poison- or bleeding-FLAGGED buff that is not one of those two (Venom,
+// Spore Toxin, Toxic Cloud, Nausea) does not satisfy the held-record check,
+// but the LastTickCause fallback below still names it: tickCauseFor stamps
+// that field for any record carrying the Poison or Bleeding flag. The
+// fallback only fires within one round of the stamp (LastTickCauseRound),
+// so a tick from an earlier fight cannot outlive it and misname a later,
+// unrelated death.
 //
 // Extracted from the dmgCt==0 branch of wirePlayerDeathAnnouncement so the
 // derivation can be pinned directly.
@@ -194,7 +200,7 @@ func deathCauseFor(c *characters.Character) string {
 			causeOfDeath = "poison"
 		} else if c.HasBuff(buffs.BuffIdBleeding) {
 			causeOfDeath = "bleeding out"
-		} else if c.LastTickCause != "" {
+		} else if c.LastTickCause != "" && util.GetRoundCount()-c.LastTickCauseRound <= 1 {
 			causeOfDeath = c.LastTickCause
 		}
 	}

@@ -357,6 +357,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 									// listener runs. See tickCauseFor and deathCauseFor.
 									if cause := tickCauseFor(trigBuffSpec); cause != "" {
 										user.Character.LastTickCause = cause
+										user.Character.LastTickCauseRound = util.GetRoundCount()
 									}
 								}
 							case "stamina":

@@ -1,6 +1,6 @@
 buffid: 123
 name: Enchant Withdrawal
-description: Weakened from severing a Chrysalis bond; one of your reserves runs shallow.
+description: Weakened from severing a Chrysalis bond. One of your reserves runs shallow.
 triggerrate: 1 round
 triggercount: 10
 start_user_text: "The severed bond leaves a hollow in you that will take time to fill."

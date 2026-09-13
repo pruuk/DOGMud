@@ -243,9 +243,13 @@ func tickMobBuffs(mob *mobs.Mob, mobInstanceId int) {
 							// See tickCauseFor and deathCauseFor: captures the
 							// cause at tick-landing time so a record already
 							// Expired or pruned by the time a death is
-							// announced still has one.
+							// announced still has one. Nothing reads a mob's
+							// cause yet — mob deaths do not announce one —
+							// this is stamped for symmetry with the player
+							// tick path.
 							if cause := tickCauseFor(mobBuffSpec); cause != "" {
 								mob.Character.LastTickCause = cause
+								mob.Character.LastTickCauseRound = util.GetRoundCount()
 							}
 						}
 					case "stamina":

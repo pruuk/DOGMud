@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +38,10 @@ func TestPin_PoisonTickKillsAndNamesTheCause(t *testing.T) {
 	UserRoundTick(events.NewRound{RoundNumber: 2})
 	UserRoundTick(events.NewRound{RoundNumber: 3})
 	require.LessOrEqual(t, u.Character.Health, 0, "the poison tick must take the last point")
+	stampedCause := u.Character.LastTickCause
+	u.Character.LastTickCause = "" // isolate: this assertion exercises the by-id read alone, not the LastTickCause fallback
 	require.Equal(t, "poison", deathCauseFor(u.Character), "before prune: the expired-but-still-held record must still be read")
+	u.Character.LastTickCause = stampedCause // restore: the after-prune assertion below exercises the fallback
 
 	PruneBuffs(events.NewTurn{TurnNumber: 1})
 	require.Equal(t, "poison", deathCauseFor(u.Character), "after prune: LastTickCause must carry the cause once the record is gone")
@@ -60,7 +64,10 @@ func TestPin_BleedTickKillsAndNamesTheCause(t *testing.T) {
 	UserRoundTick(events.NewRound{RoundNumber: 2})
 	UserRoundTick(events.NewRound{RoundNumber: 3})
 	require.LessOrEqual(t, u.Character.Health, 0, "the bleed tick must take the last point")
+	stampedCause := u.Character.LastTickCause
+	u.Character.LastTickCause = "" // isolate: this assertion exercises the by-id read alone, not the LastTickCause fallback
 	require.Equal(t, "bleeding out", deathCauseFor(u.Character), "before prune: the expired-but-still-held record must still be read")
+	u.Character.LastTickCause = stampedCause // restore: the after-prune assertion below exercises the fallback
 
 	PruneBuffs(events.NewTurn{TurnNumber: 1})
 	require.Equal(t, "bleeding out", deathCauseFor(u.Character), "after prune: LastTickCause must carry the cause once the record is gone")
@@ -98,4 +105,24 @@ func TestPin_DeathCauseOrder(t *testing.T) {
 		_ = c.AddBuffMagnitude(buffs.BuffIdBleeding, 10, -3, "pin")
 		require.Equal(t, "poison", deathCauseFor(c))
 	})
+}
+
+// TestPin_AStaleTickCauseDoesNotNameTheDeath pins the LastTickCauseRound
+// bound added alongside LastTickCause (see Death_PlayerAnnouncement.go's
+// deathCauseFor): a character holding no lethal-condition records and not
+// in combat, whose LastTickCause was stamped five rounds ago, must NOT have
+// that stale cause read out. Without the round check a tick cause from an
+// earlier, unrelated fight could outlive it and misname a later death.
+func TestPin_AStaleTickCauseDoesNotNameTheDeath(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
+	defer util.ResetRoundCountForTest()
+
+	c := &characters.Character{}
+	c.Buffs.Validate(true)
+
+	current := util.GetRoundCount()
+	c.LastTickCause = "poison"
+	c.LastTickCauseRound = current - 5
+
+	require.Equal(t, "their own foolishness", deathCauseFor(c), "a tick cause five rounds stale must not name the death")
 }

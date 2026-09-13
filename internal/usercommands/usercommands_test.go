@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/connections"
+	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -2628,6 +2629,48 @@ func TestDisenchant(t *testing.T) {
 		handled, err := Disenchant("", user, room, 0)
 		assert.True(t, handled)
 		assert.NoError(t, err)
+	})
+
+	// A successful disenchant must leave exactly one held Enchant Withdrawal
+	// record whose Source names the item's reserve pool and whose Magnitude
+	// is the reserve fraction — the validate.go withdrawal loop reads both
+	// off this record (see B4's fix: a mis-sourced record must not shadow a
+	// valid one).
+	t.Run("successful_disenchant_leaves_a_withdrawal_record_on_its_reserve_pool", func(t *testing.T) {
+		defer buffs.SeedConditionRecordsForTest()()
+		defer enchantments.SeedEnchantmentsForTest(map[string]*enchantments.EnchantmentDef{
+			"test-enchant": {
+				EnchantId:   "test-enchant",
+				Name:        "Test Enchant",
+				ReservePool: "stamina",
+				TargetType:  "weapon",
+				Tiers: []enchantments.TierDef{
+					{Tier: 0, ReservePct: 0.05},
+				},
+			},
+		})()
+
+		room.Station = "enchanting_circle"
+		defer func() { room.Station = "" }()
+
+		enchantedSword := items.Item{
+			ItemId:      10001,
+			UUID:        items.NewItemUUID(),
+			EnchantType: "test-enchant",
+			EnchantTier: 0,
+			ReservePool: "stamina",
+		}
+		user.Character.StoreItem(enchantedSword)
+		defer user.Character.RemoveItem(enchantedSword)
+
+		handled, err := Disenchant("iron sword", user, room, 0)
+		assert.True(t, handled)
+		assert.NoError(t, err)
+
+		held := user.Character.Buffs.GetBuffs(buffs.BuffIdEnchantWithdrawal)
+		require.Len(t, held, 1, "disenchant must leave exactly one held withdrawal record")
+		assert.Equal(t, "stamina", held[0].Source, "the withdrawal record's Source must be the item's reserve pool")
+		assert.InDelta(t, 0.05, held[0].Magnitude, 0.0001, "the withdrawal record's Magnitude must equal the seeded reserve fraction")
 	})
 }
 

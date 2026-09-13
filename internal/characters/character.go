@@ -335,6 +335,7 @@ type Character struct {
 	LastSuicideRound        uint64                         `yaml:"-"` // runtime only — round of last Suicide execution, for double-fire dedupe
 	DeathQueued             bool                           `yaml:"-"` // runtime only — a CharacterDied event is in flight. NOT the same as "dying" (Health < 1 && IsAlive()); the backstop sweeps skip on THIS, never on health, or they skip the very population they exist to reap. See the U5c spec.
 	LastTickCause           string                         `yaml:"-"` // runtime only — "poison" or "bleeding out", set by the round tick when a damaging health tick from a record carrying the poison or bleeding flag lands; read by the death announcement when no attacker is engaged.
+	LastTickCauseRound      uint64                         `yaml:"-"` // runtime only — the round LastTickCause was stamped; the death announcement only honours the fallback within one round of this, so a tick from an earlier fight cannot outlive it and name a later death.
 	LastAttackRejectedRound uint64                         `yaml:"-"` // runtime only — round of last player_attack_rejected event fire, for dedupe
 	permaBuffIds            []int                          // Buff Id's that are always present for this character
 	userId                  int                            // User ID of the character if any

@@ -1,6 +1,6 @@
 buffid: 117
 name: Off Balance
-description: A failed grapple left you exposed; your defenses are weakened this round.
+description: A failed grapple left you exposed. Your defenses are weakened this round.
 triggerrate: 1 round
 triggercount: 1
 effects:

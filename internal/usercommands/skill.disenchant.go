@@ -60,7 +60,7 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 		}
 	}
 
-	// Apply withdrawal condition
+	// Apply the withdrawal record
 	bal := configs.GetBalanceConfig()
 	penaltyRounds := int(bal.EnchantRemovalPenaltyRounds)
 

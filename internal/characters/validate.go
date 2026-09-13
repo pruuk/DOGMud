@@ -186,8 +186,10 @@ func (c *Character) RecalculateStats() {
 
 	// Enchant withdrawal records: each takes a fraction off the maximum of the
 	// pool named by its Source, after the reservation clamp above. Unchanged
-	// arithmetic from the condition it replaces; the first held record wins,
-	// as the condition list collapsed to one entry.
+	// arithmetic from the condition it replaces; the first record whose
+	// Source matches a pool wins. A record with no matching Source is
+	// mis-sourced and is skipped rather than ending the loop, so it cannot
+	// shadow a valid record later in the list.
 	for _, b := range c.Buffs.List {
 		if b.Expired() {
 			continue
@@ -232,6 +234,8 @@ func (c *Character) RecalculateStats() {
 			if c.Conviction > c.ConvictionMax.Value {
 				c.Conviction = c.ConvictionMax.Value
 			}
+		default:
+			continue
 		}
 		break
 	}
