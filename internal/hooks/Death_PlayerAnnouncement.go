@@ -114,24 +114,7 @@ func wirePlayerDeathAnnouncement(c *characters.Character) {
 
 			// 5. WorldEvent PvE death emission (only when no player damage).
 			if dmgCt == 0 {
-				causeOfDeath := ""
-				// Check if fighting a mob.
-				if c.IsInCombat() && c.EngagedTarget().MobInstanceId > 0 {
-					if mob := mobs.GetInstance(c.EngagedTarget().MobInstanceId); mob != nil {
-						causeOfDeath = mob.Character.Name
-					}
-				}
-				// Check for lethal conditions.
-				if causeOfDeath == "" {
-					if c.HasCondition(characters.ConditionPoisoned) {
-						causeOfDeath = "poison"
-					} else if c.HasCondition(characters.ConditionBleeding) {
-						causeOfDeath = "bleeding out"
-					}
-				}
-				if causeOfDeath == "" {
-					causeOfDeath = "their own foolishness"
-				}
+				causeOfDeath := deathCauseFor(c)
 
 				zone := c.Zone
 				region := ""
@@ -165,6 +148,34 @@ func wirePlayerDeathAnnouncement(c *characters.Character) {
 			//    the player gets closure text before the teleport fires.
 			u.SendText(messaging.CategoryDeath, `<ansi fg="yellow">Darkness swallows you. When you open your eyes, you are somewhere safe.</ansi>`)
 		})
+}
+
+// deathCauseFor derives the PvE death-event cause string for a character:
+// the engaged mob's name if one is fighting them, else "poison" if poisoned,
+// else "bleeding out" if bleeding, else the generic fallback. Order matters —
+// a poisoned AND bleeding character reads "poison" because that check comes
+// first. Extracted from the dmgCt==0 branch of wirePlayerDeathAnnouncement so
+// the derivation can be pinned directly; behavior is unchanged.
+func deathCauseFor(c *characters.Character) string {
+	causeOfDeath := ""
+	// Check if fighting a mob.
+	if c.IsInCombat() && c.EngagedTarget().MobInstanceId > 0 {
+		if mob := mobs.GetInstance(c.EngagedTarget().MobInstanceId); mob != nil {
+			causeOfDeath = mob.Character.Name
+		}
+	}
+	// Check for lethal conditions.
+	if causeOfDeath == "" {
+		if c.HasCondition(characters.ConditionPoisoned) {
+			causeOfDeath = "poison"
+		} else if c.HasCondition(characters.ConditionBleeding) {
+			causeOfDeath = "bleeding out"
+		}
+	}
+	if causeOfDeath == "" {
+		causeOfDeath = "their own foolishness"
+	}
+	return causeOfDeath
 }
 
 func init() {
