@@ -4,6 +4,114 @@
 
 The GoMud buffs system provides comprehensive temporary status effects for characters with support for stat modifications, behavioral flags, round-based triggers, and duration management. It features a dual-layer architecture with immutable buff specifications and mutable buff instances, supporting complex timing mechanics, permanent buffs, and sophisticated flag-based behavior modification.
 
+## Conditions are buffs (slice 1 of the conditions unification, 2026-09-12)
+
+There is ONE collection of timed state on a character: `Buffs`. The former
+`characters.CombatCondition` enum (ten combat conditions with their own tick,
+magnitude and display) is gone; each is a record under
+`_datafiles/world/dogmud/buffs/` (79, 80, 117 to 123). **Do not add a second
+collection, a `HasCondition`, or a Go enum of timed effects**; the root guard
+`timed_state_guard_test.go` fails the build on one. Slice 2 renames this
+package to `internal/conditions`.
+
+| Was a condition | Is now the record | Id |
+|---|---|---|
+| Warcry | Warcry | 79 |
+| Rally | Rally | 80 |
+| Defense penalty (failed grapple) | Off Balance | 117 |
+| Recovery penalty (standing up) | Recovering | 118 |
+| Shield | Minor Shield | 119 |
+| Regenerating | Regenerating | 120 |
+| Poisoned (the spell dot) | Poisoned | 121 |
+| Bleeding | Bleeding | 122 |
+| Enchant withdrawal | Enchant Withdrawal | 123 |
+| Blinded | nothing; it had no producer, and perception rides buffs 3 and 77 | |
+
+`ids.go` holds those ids as constants so a producer or a reader never spells a
+bare number. Warcry and rally used to apply a condition AND a display-only
+mirror buff side by side; there is one record now, and the `condition-mirror`
+flag and both skip loops are deleted.
+
+### The record's strength
+
+Every instance carries `Magnitude float64` (`yaml:"magnitude,omitempty"`), the
+strength the applier computed for that one holder. What the strength DOES is
+declared by the spec, in the closed `effects:` map documented under "Effects
+Vocabulary (`effects.go`)" below: seven keys, each value either a literal
+number or the word `magnitude`, meaning "read the holding instance".
+
+Combat reads timed state through `Buffs.Effect(kind)` and `Buffs.HasEffect(kind)`
+and through nothing else. The live readers:
+
+| Kind | Read by |
+|---|---|
+| `attacks_cap` | `calcSwingCount`, `internal/combat/combat_helpers.go` |
+| `damage_mult` | the damage mean and crit base, same file |
+| `defense_mult` | the defense score, same file |
+| `mitigation_flat` | `Character.GetPhysicalMitigation`, `internal/characters/combat.go`; `internal/combat/ai.go` and `internal/behaviortree/action_cast_best_in_category.go` ask `HasEffect` before casting a ward |
+| `dodge_mult` | `Character.GetDefenseScore`, `internal/characters/combat.go` (no shipped producer; the seam is kept because `Effect` is a product with identity 1.0) |
+| `regen_mult` | `internal/hooks/NewRound_AutoHeal.go`, four branches across the player and mob paths |
+| `pool_max_pct` | the pool loop in `internal/characters/validate.go`; the pool NAME rides on the instance's `Source` |
+
+A spec that sets `tick_from_magnitude` snapshots the magnitude into the
+instance's `TickAmount`, so a dot deals exactly the signed integer its producer
+passed, floored to plus or minus one. The writer door is
+`AddBuffMagnitude`, documented under "Magnitude Records (`AddBuffMagnitude`)"
+below: `Buffs.AddBuffMagnitude(id, triggers, magnitude)`, wrapped by
+`Character.AddBuffMagnitude(id, triggers, magnitude, source)` (synchronous,
+sets `Source`, then `Validate`) and `UserRecord.AddBuffMagnitude(...)` (queues
+`events.Buff` with `Magnitude` and `Triggers`).
+
+**Scaling stays in the appliers.** The record carries base values and a
+vocabulary; the formula that produces a magnitude and a duration still lives in
+the spell, potion, action or skill that applies it, unchanged by this slice.
+Moving those formulas is the spell scaling arc's job, and it now has one seam
+to plug into.
+
+### Flags added
+
+- `bleeding`: marks a bleed record. The death cause reads it the way it reads
+  `poison`; see `tickCauseFor` in `internal/hooks/tick_cause.go`.
+- `quiet`: the record is listed, but sends no start line and no end line. It
+  exists for a record reapplied every round it persists (117 and 118), where a
+  line would repeat every round. The notice guard exempts it at both ends; see
+  "The player-side notice (slice C, `notice.go`)" below.
+
+### Cadence
+
+121 Poisoned and 122 Bleeding ship `triggerrate: 3 rounds`, not one round, and
+every producer converts its rounds-literal duration with
+`buffs.TickTriggers(rounds)`. That is not a design choice made here, it is
+fidelity: the AutoHeal hook these records replaced was gated on
+`RoundNumber%3`, so it landed harm only every third round while the duration it
+counted down ran every round. See "Converting a rounds duration into a trigger
+count (`ticks.go`)" below for the arithmetic and for why `AddBuffMagnitude`'s
+second argument is a trigger count rather than rounds. Whether the cadence
+SHOULD be every third round is a filed owner call for a balance pass; this
+slice only reproduces what shipped.
+
+### Facts worth knowing
+
+- **These records persist.** `Character.Conditions` was tagged `yaml:"-"`, so
+  every combat condition vanished on logout or restart. A record is saved with
+  the rest of `Buffs`, so a poison or a ward now survives a short absence.
+- **The prone recovery cap never bites a player.** `UserRoundTick` applies 118
+  at the stand attempt and the same tick's `Trigger` expires it, all before
+  `DoCombat` runs, so the door skips it. That is faithful to the enum, which
+  had the identical shape; the mob side always bit and still does. Making it
+  bite for players is an owner call, filed.
+- **A killing tick still names its cause.** `Buffs.Trigger` decrements
+  `TriggersLeft` before returning, so a record's LAST tick arrives already
+  `Expired`, and `PruneBuffs` can remove it before the queued death event is
+  handled. Both round ticks therefore stamp `Character.LastTickCause` and
+  `LastTickCauseRound` where the harm lands, and `deathCauseFor` reads the held
+  record by id first and falls back to the stamp within one round.
+- **A record's final trigger used to be dropped on the player side.**
+  `UserRoundTick` gated the whole tick body on `!buff.Expired()`, so the one
+  and only tick of a one-trigger record never landed. The mob tick never had
+  the defect. Fixed in this slice, which means every player-held tick record
+  now lands one more tick than it did before.
+
 ## Architecture
 
 The buffs system is built around several key components:
@@ -169,17 +277,20 @@ pinned by a direct panic test, and the root guard is the gate that blocks a
 merge. The boot panic is defence in depth for a file edited by hand on prod.
 
 
-`poison-immunity` (`PoisonImmunity`, Stone Stomach): while held, `AddBuff` and
-`AddBuffScaled` refuse a spec carrying `poison`, and `Character.AddCondition`
-refuses `ConditionPoisoned`. Refusal is silent. The three toxins (39 Venom, 40
+`poison-immunity` (`PoisonImmunity`, Stone Stomach): while held, `AddBuff`,
+`AddBuffScaled` and therefore `AddBuffMagnitude` refuse a spec carrying
+`poison`, which since the conditions unification includes the 121 Poisoned
+record. Refusal is silent. There used to be a SECOND immunity check in the
+combat condition path; it is deleted along with the enum, so there is one
+refusal in one place. The three toxins (39 Venom, 40
 Spore Toxin, 78 Toxic Cloud) and 75 Nausea carry `poison` since the same slice;
 before it NO buff did, so `CancelBuffsWithFlag(Poison)` in Purge Affliction and
 Cleansing Wave cancelled nothing and the `poisoned` adjective never showed.
 
 A refusal is a refusal all the way out: `Character.AddBuff` returns an error,
 `Buff_ApplyBuffs` returns on it before the start notice, `start_remove_buffs`,
-`TrackBuffStarted` or `BuffsTriggered`, and `Character.AddCondition` returns a
-`bool` the two spell dot sites test before narrating. `HasFlag` guards a nil
+`TrackBuffStarted` or `BuffsTriggered`, and `Character.AddBuffMagnitude`
+returns an `error` the two spell dot sites test before narrating. `HasFlag` guards a nil
 spec, since every add now asks it and a save can hold a dead buff id.
 
 ### Flag Usage Patterns
@@ -499,9 +610,11 @@ never recover). Returns `false` on refusal (e.g. poison immunity via
 Three doors wrap it, each documenting the same "triggers, not rounds"
 contract:
 - `Character.AddBuffMagnitude(buffId, triggers, magnitude, source)` applies
-  synchronously and sets `Source` on the held record — what every former
-  `AddCondition` call site now calls directly, since those effects must
-  land within the same round tick and narrate the moment themselves.
+  synchronously and sets `Source` on the held record, then revalidates. Every
+  producer of a former combat condition (the ward and heal and dot spells, the
+  shouts, the bleed actions, the grapple and stand paths, disenchant) calls
+  this one, because those effects must land within the same round tick and
+  narrate the moment themselves.
 - `UserRecord.AddBuffMagnitude(buffId, triggers, magnitude, source)` queues
   an `events.Buff{Triggers: triggers, Magnitude: magnitude}` instead, for a
   spell or item that wants the holder's start notice through the normal
@@ -1004,7 +1117,7 @@ if magnitude > 0 {
 if out.AttackerCrit {
     shieldBonus = int(float64(shieldBonus) * 1.5)
 }
-target.Character.AddCondition(characters.ConditionShield, duration, float64(shieldBonus), "spell")
+_ = target.Character.AddBuffMagnitude(buffs.BuffIdMinorShield, duration, float64(shieldBonus), "spell")
 ```
 
 `weightedSkill` is the caster's spellcasting skill level times `SkillWeight`
@@ -1035,13 +1148,15 @@ by the unexported `calcSpellDuration(baseFolds, spellcastingSkill, willpower)`
 in the same file, not by anything in this package:
 `duration = baseFolds * (10 + willpower/20 + spellcastingSkill/2)`.
 
-**Where the magnitude actually lands.** `AddCondition(characters.ConditionShield,
-...)` does not touch `magical_mitigation` or `conviction_mitigation` at all.
-The condition's magnitude is read only by `Character.GetPhysicalMitigation()`
-(`internal/characters/combat.go`), which sums it with gear
+**Where the magnitude actually lands.** The 119 Minor Shield record does not
+touch `magical_mitigation` or `conviction_mitigation` at all. Its declared
+effect is `mitigation_flat: magnitude`, and the only reader of that kind on a
+character is `Character.GetPhysicalMitigation()`
+(`internal/characters/combat.go`), which takes it through
+`c.Buffs.Effect(buffs.EffectMitigationFlat)` and sums it with gear
 `physical_mitigation`, mutation natural armor, and species natural armor, then
 clamps the total at `PhysicalMitigationCap`. So both "magical" ward spells buy
-physical mitigation through the shield condition, not magical or conviction
+physical mitigation through the Minor Shield record, not magical or conviction
 mitigation.
 
 A shield spell can separately carry `buff_ids`, and those buffs use the
@@ -1095,7 +1210,8 @@ they live downstream, in the damage pipeline.
 | `tick.go` | Per-round buff processing and expiry |
 | `ticks.go` | `TickTriggers`: rounds-duration to trigger-count conversion for the three-round dot and bleed records |
 | `effects.go` | `EffectKind`, the closed effects vocabulary, `Buffs.Effect` / `Buffs.HasEffect` |
-| `test_helpers.go` | Test fixtures |
+| `ids.go` | The record ids the engine names in code: `BuffIdWarcry` (79) through `BuffIdEnchantWithdrawal` (123) |
+| `test_helpers.go` | Test fixtures: `SeedBuffsForTest` (replaces the registry) and `SeedConditionRecordsForTest` (adds 79, 80 and 117 to 123 on top of whatever is already seeded) |
 
 Buff files are named `{buffid}-{ConvertForFilename(name)}.yaml` — `name:
 Stunned` must be `2-stunned.yaml`, or loading panics at startup.

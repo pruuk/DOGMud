@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-09-13: Shields hold as long as they should, and afflictions follow you
+
+A ward used to fade twice as fast while you were fighting, and it fell silent
+when it faded out of combat. It now lasts its full span and always tells you
+when it goes. Poison, bleeding, a shout's fervor and the rest of the effects
+that come and go now live in one place with everything else that affects
+you, so the conditions list and your client show each of them once, with the
+time they truly have left, and a short absence no longer wipes them away.
+Lingering harm and healing from a draught, a trap or a venom now land every
+tick they promise, including the last one. When poison or blood loss takes
+you, the world says so.
+
 ## 2026-09-12: Purge a friend, and poison that finally behaves
 
 Purge Affliction cast at a companion used to cleanse you instead of them. It

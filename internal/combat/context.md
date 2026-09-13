@@ -615,11 +615,16 @@ penalty profile via `IsProne() || IsSupine()` reads in
    UnarmedCombat×SkillWeight` for the recoverer and the strongest living
    same-room attacker from `Character.Attackers()`, then runs
    `combat.RunContest`. `nil` (nobody qualifies) means an automatic stand
-   with no roll and no progression; a won contest fires exactly one
-   `OnSkillUse(UnarmedCombat)`, a lost one fires nothing. On success fires
+   with no roll and no progression; a contest that actually ran fires one
+   `AwardResolved(..., success, CandidateFor(UnarmedCombat))` whether it was
+   won or lost (U10b-1 task 18c). On success fires
    `Position.TransitionToStanding(TriggerRecoveryRoll)`. Called every round
    via `NewRound_UserRoundTick` and `NewRound_MobRoundTick`. Failed/gated
-   attempts add `ConditionRecoveryPenalty` (limits attacks to 1).
+   attempts add the 118 Recovering record (`attacks_cap: 1`, read by
+   `calcSwingCount` through `Buffs.Effect(buffs.EffectAttacksCap)`). On the
+   PLAYER side that cap is inert: the same round tick that applies the
+   one-trigger record also expires it, before `DoCombat` runs. Faithful to the
+   condition it replaced; an owner call, filed.
 
 2. **Manual recovery** — `stand` command (`internal/usercommands/stand.go`)
    - Costs `StandStaminaCost` (config, 15% of max). Requires
@@ -776,7 +781,7 @@ same pattern as Phase 2: the AI `CanUse*` viability check in `ai.go`,
 | `pounce` | quadruped predator, not already grappling | Leap opener: knockdown + damage, no bleed (`pounce.yaml`) |
 | `gore` | horned (`horns` body part — load-validated) | Charge: damage + knockback (`gore.yaml`) |
 | `drain` | `LifeDrain` flag (vampire) | Lifesteal: bleed target, heal attacker = `damage × DrainHealRatio` (0.75) via `Character.Heal` (`drain.yaml`) |
-| `throttle` | fanged | Damage + `ConditionBleeding` + Throttled buff #89 (stamina DoT) + a cast interrupt gated by an opposed concentration contest (U10): throttler's grip (`Dex + unarmed-combat×SkillWeight`) vs. the target's hold (`Wil + spellcasting×SkillWeight`) via `combat.RunConcentrationContest`, floored only by `ConcentrationFloor` (0.02) — not the old flat `ThrottleInterruptChance` coin flip, which is deleted. A lost contest calls the shared `actions.InterruptTargetCast` helper, which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund); a held contest fires success-only spellcasting progression for the target instead. No new silence flag. (`throttle.yaml`) |
+| `throttle` | fanged | Damage + the Bleeding record (buff 122) + Throttled buff #89 (stamina DoT) + a cast interrupt gated by an opposed concentration contest (U10): throttler's grip (`Dex + unarmed-combat×SkillWeight`) vs. the target's hold (`Wil + spellcasting×SkillWeight`) via `combat.RunConcentrationContest`, floored only by `ConcentrationFloor` (0.02) — not the old flat `ThrottleInterruptChance` coin flip, which is deleted. A lost contest calls the shared `actions.InterruptTargetCast` helper, which reuses the engine's existing `activity.TriggerCastCancel` cancel path (+ conviction refund); a held contest fires success-only spellcasting progression for the target instead. No new silence flag. (`throttle.yaml`) |
 
 **New species field:** `LifeDrain bool` (yaml `lifedrain`). Vampire
 (species 34) carries `lifedrain: true`; the boar (species 6) received
@@ -1110,12 +1115,17 @@ DoCombat(evt)
 in combat:
 
 #### 2a. NoCombat Buff Check
-If the player has a `NoCombat` buff flag, skip the entire combat turn
-(including shield decay). This check happens before anything else.
+If the player has a `NoCombat` buff flag, skip the entire combat turn. This
+check happens before anything else.
 
-#### 2b. Shield Decay
-`handlePlayerShieldDecay(user)` — If the player has a `ConditionShield`
-(from Minor Shield spell), its duration ticks down. At 0, removed.
+#### 2b. (deleted) Shield Decay
+There used to be a `handlePlayerShieldDecay(user)` step here, decrementing the
+shield condition a SECOND time on every combat round while the condition tick
+had already decremented it once. Minor Shield is buff 119 now, decays once a
+round with every other record, and narrates its end wherever it ends rather
+than only in combat. The helper and its mob-side twin are deleted (conditions
+unification, 2026-09-12). A combat shield therefore lasts about twice as long
+as it did on prod.
 
 #### 2c. Fold Casting Check
 `handlePlayerFoldCasting(user, userId)` — If the player typed
@@ -1308,7 +1318,8 @@ ws.swingCount = calcSwingCount(sourceChar, ws.weapon, ws.weaponSpeed,
 // offhand: *= 0.5 + (dualSkill*SkillWeight/50)*0.5, dualSkill keyed on
 //   IsUnarmedStyle (the STANCE) and deliberately not per-weapon
 // then *= stamina, encumbrance, haste, position multipliers
-// ConditionRecoveryPenalty: forces swingCount = 1
+// Buffs.Effect(EffectAttacksCap) > 0: clamps swingCount to that cap (the 118
+//   Recovering record ships attacks_cap: 1)
 // Hard cap: max 4 swings per weapon
 ```
 `Character.GetModifiedAttackCount` was the pre-`calcSwingCount` version of this
@@ -1460,8 +1471,8 @@ adds up in `AttackResult.DamageToTarget`.
 
 #### 4a. Pre-checks
 Mob alive? Has aggro? Not in NoCombat buff? Load room. Cancel
-combat-incompatible buffs. Shield decay (symmetric with player —
-inline in `handleMobCombat`, not extracted to a helper).
+combat-incompatible buffs. (The inline shield-decay branch that used to sit
+here, symmetric with the player helper, is deleted; see 2b above.)
 
 #### 4b. Fold Casting Check
 `handleMobFoldCasting(mob, mobRoom)` — Same fold system as players. If
@@ -1521,8 +1532,10 @@ scripted combat command.
     - **Resource depletion progression:** Moved to regen tick in
       `NewRound_AutoHeal.go` — smooth curve replaces old 25% threshold.
       See `characters/context.md` for details.
-12. **Minor Shield reduction** — if player has `ConditionShield`, flat
-    damage reduction.
+12. **Minor Shield reduction**: flat damage reduction, read by
+    `Character.GetPhysicalMitigation` through
+    `Buffs.Effect(buffs.EffectMitigationFlat)`; the 119 Minor Shield record
+    declares `mitigation_flat: magnitude`.
 13. **Adrenaline Surge** — mutation check for bonus damage.
 14. **Crit effects (defender is player):**
     - Parry crit: player attempts to disarm the mob.
@@ -1615,7 +1628,7 @@ values directly.
 | `combat/taunt_messages.go` | Taunt/conviction combat messages |
 | `combat/analytics.go` | Ring buffer, `CombatEvent`, `AnalyticsSummary`, recording + query functions |
 | `hooks/NewRound_DoCombat.go` | `DoCombat`, `handlePlayerCombat` (~50 lines), `handleMobCombat` (~50 lines), `processGrappleProgression`, `handleAffected`, `applyMoonMods` |
-| `hooks/NewRound_DoCombat_helpers.go` | All extracted helpers: `handlePlayerShieldDecay`, `handlePlayerFoldCasting`, `handleMobFoldCasting`, `handlePlayerFlee`, `handlePlayerVsPlayer`, `handlePlayerVsMob`, `handleMobVsPlayer`, `handleMobVsMob`, `handleMobAIDecision`, `handleMobTargetSwitch`, `handleMobWeaponPickup`, `handleMobDownedGrace`, `handlePartyAutoAttack`, `handleCharmedMobAssist`, `handleAutoRetargetPlayer`, `handlePlayerConcentrationBreak`, `dispatchCombatMessages`, `handleOffhandBreakUserDef`, `handleOffhandBreakMobDef` |
+| `hooks/NewRound_DoCombat_helpers.go` | All extracted helpers: `handlePlayerFoldCasting`, `handleMobFoldCasting`, `handlePlayerFlee`, `handlePlayerVsPlayer`, `handlePlayerVsMob`, `handleMobVsPlayer`, `handleMobVsMob`, `handleMobAIDecision`, `handleMobTargetSwitch`, `handleMobWeaponPickup`, `handleMobDownedGrace`, `handlePartyAutoAttack`, `handleCharmedMobAssist`, `handleAutoRetargetPlayer`, `handlePlayerConcentrationBreak`, `dispatchCombatMessages`, `handleOffhandBreakUserDef`, `handleOffhandBreakMobDef` |
 | `hooks/combat_shared_helpers.go` | `simulateFoldRound`, `calcFoldConvictionCost`, `checkConcentrationBreak`, `concentrationScore`, `tryWeaponBreak`, `applyCritEffects`, `CritEffectResult`, `calcSpellDamageForCharacter` |
 | `hooks/spell_resolution.go` | `resolveSpell`, `resolveAgainstMob`, `resolveAgainstPlayer`, `applyPlayerEffect` |
 

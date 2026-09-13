@@ -21,23 +21,29 @@ var forbiddenTimedStateIdents = []string{"HasCondition", "AddCondition", "Remove
 func TestNoSecondTimedStateCollection(t *testing.T) {
 	fset := token.NewFileSet()
 	var problems []string
-	parsedFiles := 0
+	// Per root, not a single total: a walk that silently covered only one of
+	// the two trees would still clear a combined floor.
+	minFiles := map[string]int{"internal": 100, "modules": 10}
+	parsedFiles := map[string]int{}
 	for _, root := range []string{"internal", "modules"} {
-		_ = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
-			if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		walkErr := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 				return nil
 			}
 			f, perr := parser.ParseFile(fset, path, nil, 0)
 			if perr != nil {
 				return nil
 			}
-			parsedFiles++
+			parsedFiles[root]++
 			ast.Inspect(f, func(n ast.Node) bool {
 				switch x := n.(type) {
 				case *ast.Ident:
 					for _, bad := range forbiddenTimedStateIdents {
 						if x.Name == bad {
-							problems = append(problems, filepath.ToSlash(path)+": "+fset.Position(x.Pos()).String()+" spells "+bad)
+							problems = append(problems, filepath.ToSlash(fset.Position(x.Pos()).String())+" spells "+bad)
 						}
 					}
 				case *ast.StructType:
@@ -53,16 +59,21 @@ func TestNoSecondTimedStateCollection(t *testing.T) {
 						}
 					}
 					if hasDuration && hasMagnitude && !strings.HasPrefix(filepath.ToSlash(path), "internal/buffs/") {
-						problems = append(problems, filepath.ToSlash(path)+": "+fset.Position(x.Pos()).String()+" declares a Duration+Magnitude struct outside internal/buffs; timed state is a buffs.Buff")
+						problems = append(problems, filepath.ToSlash(fset.Position(x.Pos()).String())+" declares a Duration+Magnitude struct outside internal/buffs; timed state is a buffs.Buff")
 					}
 				}
 				return true
 			})
 			return nil
 		})
+		if walkErr != nil {
+			t.Fatalf("walk %s: %v", root, walkErr)
+		}
 	}
-	if parsedFiles < 100 {
-		t.Fatalf("only parsed %d Go files under internal/ and modules/; the walk is not exercising the guard", parsedFiles)
+	for _, root := range []string{"internal", "modules"} {
+		if parsedFiles[root] < minFiles[root] {
+			t.Fatalf("only parsed %d Go files under %s/ (want at least %d); the walk is not exercising the guard", parsedFiles[root], root, minFiles[root])
+		}
 	}
 	if len(problems) > 0 {
 		t.Fatalf("%d timed-state problem(s):\n  %s\n\nTimed state on a character is a buffs.Buff record read through Buffs.Effect; see internal/buffs/context.md.", len(problems), strings.Join(problems, "\n  "))

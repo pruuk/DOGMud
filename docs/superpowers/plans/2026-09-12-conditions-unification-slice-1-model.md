@@ -585,7 +585,9 @@ Add to the `Buff` struct, after `TickAmount`:
 Add after `AddBuffScaled`:
 
 ```go
-// AddBuffMagnitude applies a record for an EXACT number of rounds with a
+// AddBuffMagnitude applies a record for an EXACT number of TRIGGERS (triggers;
+// rounds for a one-round-interval record, but rounds/3 for the three-round dot
+// and bleed records, which is what buffs.TickTriggers converts) with a
 // per-instance magnitude. It is the writer door for every record that used to
 // be a combat condition. rounds 0 means the spec's own triggercount. A held
 // record of the same id is refreshed and its magnitude, rounds and tick
@@ -893,7 +895,7 @@ effects:
 flags:
   - silent-start
 ```
-(`triggercount` is only the default for a rounds of 0; the ward spell passes its computed `duration` as exact rounds. See Task 6.)
+(`triggercount` is only the default when the argument is 0; the ward spell passes its computed `duration` as an exact trigger count, which for this one-round-interval record is also exact rounds. See Task 6.)
 
 `120-regenerating.yaml`:
 ```yaml
@@ -910,11 +912,18 @@ flags:
 ```
 
 `121-poisoned.yaml`:
+
+> Corrected during execution (Task 8 follow-up): `triggerrate` ships as
+> `3 rounds`, not `1 round`. The AutoHeal hook this record replaces was gated
+> on `RoundNumber%3`, so a one-round rate tripled the dot's damage. Producers
+> convert their rounds duration with `buffs.TickTriggers` before passing it as
+> the trigger count. See "Findings recorded during execution" in the spec.
+
 ```yaml
 buffid: 121
 name: Poisoned
 description: Toxins coursing through your body, dealing damage over time.
-triggerrate: 1 round
+triggerrate: 3 rounds
 triggercount: 10
 tick_pool: health
 tick_from_magnitude: true
@@ -926,11 +935,14 @@ flags:
 ```
 
 `122-bleeding.yaml`:
+
+> Same correction as 121 above: `triggerrate` ships as `3 rounds`.
+
 ```yaml
 buffid: 122
 name: Bleeding
 description: Wounds seeping blood, taking damage over time.
-triggerrate: 1 round
+triggerrate: 3 rounds
 triggercount: 10
 tick_pool: health
 tick_from_magnitude: true
@@ -954,7 +966,7 @@ effects:
   pool_max_pct: magnitude
 ```
 
-Durations: every applier passes the exact integer of rounds it computed today as `AddBuffMagnitude`'s `rounds`; the record's `triggercount` is only the default for a rounds of 0. No multiplier arithmetic anywhere (`TestAddBuffMagnitudeRoundsAreExact` in Task 1 is why).
+Durations: every applier passes the exact integer it computed today as `AddBuffMagnitude`'s second argument (triggers; rounds for a one-round-interval record, `buffs.TickTriggers(rounds)` for the three-round dot and bleed); the record's `triggercount` is only the default when that argument is 0. No multiplier arithmetic anywhere (`TestAddBuffMagnitudeRoundsAreExact` in Task 1 is why).
 
 - [ ] **Step 3: The tick path calls the cancel helpers on a damaging health tick**
 

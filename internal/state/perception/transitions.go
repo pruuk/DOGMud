@@ -12,11 +12,15 @@ var transitions = state.TransitionTable[State]{
 }
 
 // Trigger reason constants. Used in state.TransitionReason.Trigger.
+//
+// There used to be TriggerConditionAdded / TriggerConditionRemoved here for a
+// third blind source, the ConditionBlinded combat condition. That condition
+// never had a producer anywhere in the tree, and the conditions unification
+// (slice 1, 2026-09-12) deleted the enum it lived in; the constants went with
+// it. Blindness has exactly two sources, both buffs.
 const (
-	TriggerBuffApplied      = "buff_applied"
-	TriggerBuffExpired      = "buff_expired"
-	TriggerConditionAdded   = "condition_added"
-	TriggerConditionRemoved = "condition_removed"
+	TriggerBuffApplied = "buff_applied"
+	TriggerBuffExpired = "buff_expired"
 )
 
 // Blind-source buff IDs. Detected by ID rather than by flag because

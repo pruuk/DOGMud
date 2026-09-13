@@ -44,7 +44,7 @@ Every claim below was read from the tree at `230041292` on 2026-09-12.
 | Poison immunity is checked in BOTH systems: `Buffs.AddBuffScaled` refuses a `poison`-flagged buff, `AddCondition` refuses `ConditionPoisoned` | `internal/buffs/buffs.go:245`; `conditions.go:96-99` |
 | `condition-mirror` is a display-only flag carried by exactly two files (79, 80) and read by exactly two loops that skip the record | `internal/buffs/buffspec.go:85-90`; `internal/usercommands/conditions.go:44`; `modules/gmcp/gmcp.Char.go:588`; the two YAML files |
 | Production callers by API (excluding the definitions): `AddCondition` 29 sites in 8 files; `HasCondition` 23 in 8; `GetConditionMagnitude` 14 in 4; `RemoveCondition` 4; `DecrementCondition` 2; `GetConditionDuration` 2; `TickConditions` 2 | grep, non-test |
-| Consumers: swing count caps to 1 under `RecoveryPenalty`; damage mean and crit base × (1 + warcry magnitude); defense score × (1 + rally magnitude) and × grapple-exposure magnitude; physical mitigation adds `int(shield magnitude)`; dodge × blinded magnitude (dead); regen hook multiplies `HealthPerRound()` by regen magnitude when > 1 out of combat and unconditionally in combat, and emits "Your wounds knit closed."; poison and bleed apply `int(magnitude)` (min 1) health harm per round with a fixed line each, then `cancelCraftOrSalvageOnDamage` and `cancelDamageBuffs`; `Validate` subtracts `floor(max × magnitude)` from the pool named by `Source` for withdrawal, after the reservation clamp | `internal/combat/combat_helpers.go:232,491-494,745-757`; `internal/characters/combat.go:185,291`; `internal/hooks/NewRound_AutoHeal.go:191-255,332-352,400-415`; `internal/characters/validate.go:187-221` |
+| Consumers: swing count caps to 1 under `RecoveryPenalty`; damage mean and crit base × (1 + warcry magnitude); defense score × (1 + rally magnitude) and × grapple-exposure magnitude; physical mitigation adds `int(shield magnitude)`; dodge × blinded magnitude (dead); regen hook multiplies `HealthPerRound()` by regen magnitude when > 1 out of combat and unconditionally in combat, and emits "Your wounds knit closed."; poison and bleed apply `int(magnitude)` (min 1) health harm with a fixed line each, then `cancelCraftOrSalvageOnDamage` and `cancelDamageBuffs`, **on every THIRD round, not every round** (corrected during execution): the whole `AutoHeal` body is behind `if evt.RoundNumber%3 != 0 { return }` (`NewRound_AutoHeal.go:34`) while the duration these conditions counted down ran every round, so a duration of `n` landed about `n/3` hits and the exact count depended on the round the condition was applied on; `Validate` subtracts `floor(max × magnitude)` from the pool named by `Source` for withdrawal, after the reservation clamp | `internal/combat/combat_helpers.go:232,491-494,745-757`; `internal/characters/combat.go:185,291`; `internal/hooks/NewRound_AutoHeal.go:191-255,332-352,400-415`; `internal/characters/validate.go:187-221` |
 | Other readers: mob AI casts a ward when unshielded; the behaviour tree skips a shield spell when shielded; death cause reads poisoned then bleeding; Purge Affliction cancels `poison`-flagged buffs AND removes the poisoned condition | `internal/combat/ai.go:741`; `internal/behaviortree/action_cast_best_in_category.go:210-225`; `internal/hooks/Death_PlayerAnnouncement.go:124-130`; `internal/hooks/spell_purgeaffliction.go:101-102` |
 | Producers and their numbers: warcry and rally bonus = clamp(0.05 + 0.15 × sqrt((rhetoric/75) × (charisma/175)), 0.05, 0.20), × (1 + shout amp); duration 25 × (1 + amp); applied to self, party members in the room, and charmed mobs, each time as `AddCondition` PLUS `AddBuff(79 or 80)` | `internal/actions/combat_warcry.go:98-119`; `combat_rally.go`; `internal/usercommands/warcry.go:50-60,112-124`; `rally.go` |
 | Shield: `(caster stat + round(spellcasting × SkillWeight)) / 3`, min 1, × `effect_magnitude` / 100 when set, × 1.5 on crit; duration `calcSpellDuration(baseFolds, skill, stat)`; player and mob targets | `internal/hooks/spell_resolution.go:1147-1165,1521` |
@@ -103,10 +103,14 @@ effects:
   attacks_cap: 1
 ```
 
-Seven keys, closed. `Validate` refuses any other key, a non-numeric value other
-than the word `magnitude`, and `effects` on a record that also declares a
-statmod for the same concern (there is none today; the rule stops a future
-double count). A value of `magnitude` on an instance whose magnitude is 0
+Seven keys, closed. `Validate` refuses any other key and a non-numeric value
+other than the word `magnitude`. (A third rule was proposed here and struck
+during execution: "`effects` on a record that also declares a statmod for the
+same concern". The two vocabularies do not overlap key for key, so "the same
+concern" had no mechanical definition to test, and the rule would have had
+nothing to refuse. What `validateEffects` DOES refuse besides the two above is
+`tick_from_magnitude` without a `tick_pool`, or alongside a non-zero
+`tick_percent`.) A value of `magnitude` on an instance whose magnitude is 0
 contributes nothing (multipliers read 1, flats read 0, caps are ignored).
 
 ### The door
@@ -188,9 +192,19 @@ dead blinded readers, the duplicate poison immunity check.
 1. Minor Shield lasts its authored duration (it decayed twice per round in
    combat) and narrates its end out of combat too.
 2. Former conditions persist across logout and restart, like every record.
-3. Poison and bleed damage moves from the regen hook to the tick path, so its
-   position inside the round shifts; the per-round integer is identical, and
-   the same cancel helpers run after the harm.
+3. Poison and bleed damage moves from the regen hook to the tick path, so it
+   lands EARLIER in the round (the round ticks run before `DoCombat`; AutoHeal
+   ran after it). The cadence is unchanged: records 121 and 122 ship
+   `triggerrate: 3 rounds`, and every producer converts its rounds-literal
+   duration with `buffs.TickTriggers(rounds)` (`rounds/3`, minimum 1), which
+   reproduces the `RoundNumber%3` gate the hook had. The per-tick integer is
+   identical. What DOES change is the exact hit count, because the old one was
+   phase-dependent: a 4 or 5 round bleed landed 1 or 2 hits depending on which
+   round it started, a 20 round dot 6 or 7. The record always lands the floor
+   of that range, and its first tick comes 3 rounds after application rather
+   than on the next round divisible by 3. Whether the cadence SHOULD be every
+   third round is a filed owner call for a balance pass; this slice reproduces
+   what shipped.
 4. The two one-round penalties stop appearing in `Char.Conditions` as bare
    words and appear as records; no line is sent for them.
 5. Every damaging tick (Venom, Spore Toxin, Rending Bleed and the new records)
@@ -198,6 +212,32 @@ dead blinded readers, the duplicate poison immunity check.
    and bleed hook already did; the tick path never called those two helpers.
 6. The poison and bleed tick lines go out on the record category
    (`CategoryBuffApply`) instead of `CategoryToxin`: a colour change only.
+7. **A pre-existing PLAYER-side bug is fixed on the way**, and it changes live
+   numbers for buffs this slice never touches. `UserRoundTick` gated the whole
+   tick body, harm included, on `!buff.Expired()`, so a record's FINAL trigger
+   applied nothing; the mob tick never had the defect. Every player-held tick
+   record now lands one more tick: 97 Arc Trap 1 becomes 2 (+100%), 89
+   Throttled 2 becomes 3 (+50%), 39 Venom / 40 Spore Toxin / 78 Toxic Cloud 4
+   become 5 (+25%), 5 Minor Potion Healing 5 becomes 6 (+20%), 50 Greater
+   Healing 9 becomes 10 (+11%). Fixing it was not optional: `TickTriggers`
+   yields exactly one trigger for every ordinary bleed, so a bleed would
+   otherwise have applied no damage at all.
+8. Regenerating and Minor Shield narrate their END. Neither did before: the
+   regen condition ended silently, and the shield's "dissipates" line existed
+   only on the combat decay path.
+9. A death by a Venom, Spore Toxin or Toxic Cloud tick now names "poison". The
+   enum only knew its own spell dot, so those three killed while reporting
+   "their own foolishness". The cause is carried by `Character.LastTickCause`,
+   stamped where the harm lands.
+10. The conditions list and `Char.Conditions` show the INSTANCE's real
+    remaining duration. `GetDurations` read the spec's authored
+    `TriggerCount`, so a 50-trigger Enchant Withdrawal on a record authored
+    with 10 reported a negative duration.
+11. `Char.Conditions[].type` is now the record's `Source` (the applier's
+    string: "spell", "heal spell", "prone recovery"), which is what
+    `Char.Affects` always carried there. The retired `Char.Conditions` list
+    put `ConditionType.DisplayName()` there; a client switching on `type` to
+    identify a condition must stop.
 
 Everything else is number-identical, and the equivalence test proves it.
 
@@ -214,6 +254,57 @@ Everything else is number-identical, and the equivalence test proves it.
 - The tick path applies `TickAmount` through `ApplyHarm` but never calls
   `cancelDamageBuffs` or `cancelCraftOrSalvageOnDamage`; the poison hook did.
   Change 5 above.
+
+### Findings recorded during execution (2026-09-12)
+
+Seven things the plan did not know. Each one changed the work.
+
+- 🪤 **The AutoHeal gate.** The planning fact table said poison and bleed
+  applied their harm "per round". `NewRound_AutoHeal.go:34` returns early on
+  `evt.RoundNumber%3 != 0`, so the whole hook, dot included, ran on every
+  third round while the duration ticked down every round. Task 8 migrated the
+  dot at a one-round `triggerrate` and passed the rounds figure straight
+  through, tripling its damage; caught and fixed by moving records 121 and 122
+  to `triggerrate: 3 rounds` and adding `buffs.TickTriggers`. The lesson is
+  the standing one: the cadence of a mechanism is not readable from the
+  mechanism, it is readable from its caller's gate.
+- 🐛 **The final-trigger hole, player side only.** `UserRoundTick` gated harm
+  and flavour text together on `!buff.Expired()`, and `Buffs.Trigger`
+  decrements before returning, so a record's last trigger applied nothing.
+  Invisible for years because every existing tick record had a trigger count
+  far above 1; the one-trigger bleed `TickTriggers` produces made it fatal.
+  Behaviour change 7 above lists the seven buffs whose damage or healing this
+  raised.
+- 🐛 **The death cause had two independent holes**, both from the same root:
+  the killing tick's record is already expired. The by-flag read skipped
+  expired records, and `PruneBuffs` runs on every `NewTurn` and could remove
+  the record entirely before the QUEUED death event was handled. A same-tick
+  fix would not have survived the prune. Fixed with a by-id read plus the
+  `LastTickCause` / `LastTickCauseRound` stamp.
+- 🪤 **`GetDurations` read the SPEC, not the instance.** It computed
+  `TriggerCount * RoundInterval - RoundCounter` from the authored default, so
+  a 50-trigger Enchant Withdrawal on a record authored with 10 reported a
+  negative duration in the list and in GMCP. It now reads `TriggersLeft`.
+- 🪤 **The fixture trap.** `Character.AddBuffMagnitude` calls `Validate`,
+  which calls `RecalculateStats`, which overwrites `.Value` from
+  `Base + Training + Mods`. A pin that set only `StatInfo.Value` had its
+  fixture erased on the first call and then multiplied its withdrawal
+  fraction against a floor of 1. Seed `.Base`.
+- 🪤 **The apply-path guard cannot see the prone recovery producers.**
+  `buffAddCallPattern`'s `primitivePackages` exempts `internal/characters`
+  wholesale, because that is where `Character.AddBuff` is defined; the two
+  `AddBuffMagnitude(BuffIdRecovering, ...)` calls in
+  `internal/characters/skills.go` sit inside that exemption and are therefore
+  neither reported nor allowlisted. The guard was taught to tell the character
+  door from the user door by method name during this slice, but the package
+  exemption still stands and is the reason those two sites are invisible to
+  it. Not a defect introduced here; worth knowing before trusting its
+  allowlist as a complete census of direct adds.
+- 🔑 **`AddBuffMagnitude`'s second argument counts TRIGGERS, not rounds.** It
+  is assigned straight to `TriggersLeft`. For a one-round-interval record the
+  two coincide, which is why the plan's "exact rounds" wording survived
+  review; for the three-round dot and bleed it is a 3x error. Renamed
+  throughout, with `events.Buff.Rounds` becoming `events.Buff.Triggers`.
 
 ## The net
 

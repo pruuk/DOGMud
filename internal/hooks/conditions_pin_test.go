@@ -116,6 +116,10 @@ func TestPin_DeathCauseOrder(t *testing.T) {
 func TestPin_AStaleTickCauseDoesNotNameTheDeath(t *testing.T) {
 	defer buffs.SeedConditionRecordsForTest()()
 	defer util.ResetRoundCountForTest()
+	// Self-contained: pin the counter rather than inheriting whatever round an
+	// earlier test in this binary left behind. RoundCountMinimum is comfortably
+	// above the 5 subtracted below, so the arithmetic cannot underflow.
+	util.SetRoundCountForTest(util.RoundCountMinimum)
 
 	c := &characters.Character{}
 	c.Buffs.Validate(true)

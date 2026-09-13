@@ -95,6 +95,14 @@ func seedAllRegistries() func() {
 		},
 	})
 
+	// The shipped condition records (79 Warcry, 80 Rally, 117 to 123) on top
+	// of the two test specs above. Without them the shouts' AddBuffMagnitude
+	// calls find no spec and silently do nothing, which makes every
+	// "a refused shout applied no record" assertion in this package pass for
+	// the wrong reason. Additive, so it must be undone BEFORE cleanupBuffs
+	// restores the original registry.
+	cleanupConditionRecords := buffs.SeedConditionRecordsForTest()
+
 	testMobSpecs := map[int]*mobs.Mob{
 		1: {
 			MobId:         1,
@@ -305,6 +313,7 @@ func seedAllRegistries() func() {
 		cleanupRooms()
 		cleanupUsers()
 		cleanupMobs()
+		cleanupConditionRecords()
 		cleanupBuffs()
 		cleanupKeywords()
 	}

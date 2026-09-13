@@ -15,7 +15,7 @@ func pinCharacter() *Character {
 	c := &Character{}
 	c.Buffs.Validate(true)
 	c.Name = "Pin"
-	// Base, not just Value: RecalculateStats (validate.go:30-282) only ever
+	// Base, not just Value: RecalculateStats (validate.go:30-267) only ever
 	// writes .Mods and then calls StatInfo.Recalculate() (Value = Base +
 	// Training + Mods), so a fixture that sets only .Value gets overwritten
 	// on the first Validate() call. In a test binary the balance config is
@@ -47,13 +47,13 @@ func TestPin_ShieldAddsFlatPhysicalMitigation(t *testing.T) {
 }
 
 // Validate() recomputes HealthMax/StaminaMax/ConvictionMax from stats on
-// every call (RecalculateStats, validate.go:30-282, called from Validate at
-// validate.go:704), so the fixture reads the maximum Validate itself computes
+// every call (RecalculateStats, validate.go:30-267, called from Validate at
+// validate.go:700), so the fixture reads the maximum Validate itself computes
 // as the base (with a real .Base now set above, that base is exactly 200 /
 // 100 / 80) and checks the withdrawal fraction against THAT base rather than
 // a hardcoded number Validate could otherwise silently redefine out from
 // under the test. The withdrawal application itself lives at
-// validate.go:187-245.
+// validate.go:187-241.
 func TestPin_WithdrawalCutsThePoolMaximumByTheFraction(t *testing.T) {
 	defer buffs.SeedConditionRecordsForTest()()
 	c := pinCharacter()
@@ -141,5 +141,40 @@ func TestPin_ASecondWithdrawalReplacesTheFirst(t *testing.T) {
 	}
 	if c.StaminaMax.Value != 50 {
 		t.Fatalf("the replaced record must apply as stamina (0.5 of base 100): want 50, got %d", c.StaminaMax.Value)
+	}
+}
+
+// TestPin_AMisSourcedWithdrawalDoesNotShadowAValidOne pins the `default:
+// continue` arm of the withdrawal loop (validate.go:237-238). The loop breaks
+// after the first record it actually APPLIES; a record carrying a Source that
+// names no pool must be skipped and let a later valid record apply, not fall
+// through to the break and swallow it. The enum path had the same shape and
+// the same hazard, so this is a fidelity pin, not a new rule.
+//
+// Two id-123 records have to be built by hand: the buffIds index holds one
+// entry per id, so AddBuffMagnitude would refresh the first rather than add a
+// second. Appending directly to List is how the old first-wins pin built its
+// pair, and the loop reads List, not the index.
+func TestPin_AMisSourcedWithdrawalDoesNotShadowAValidOne(t *testing.T) {
+	defer buffs.SeedConditionRecordsForTest()()
+	c := pinCharacter()
+	c.Validate()
+	baseStamina := c.StaminaMax.Value
+	if baseStamina != 100 {
+		t.Fatalf("fixture: stamina max must start at 100, got %d", baseStamina)
+	}
+
+	c.Buffs.List = append(c.Buffs.List,
+		&buffs.Buff{BuffId: buffs.BuffIdEnchantWithdrawal, Source: "bogus", TriggersLeft: 50, Magnitude: 0.9},
+		&buffs.Buff{BuffId: buffs.BuffIdEnchantWithdrawal, Source: "stamina", TriggersLeft: 50, Magnitude: 0.5},
+	)
+	c.Buffs.Validate(true)
+	c.Validate()
+
+	if c.StaminaMax.Value != 50 {
+		t.Fatalf("a mis-sourced withdrawal must be skipped, not end the loop: stamina max must read 50 (0.5 of base 100), got %d", c.StaminaMax.Value)
+	}
+	if c.HealthMax.Value != 200 {
+		t.Fatalf("neither record names health: health max must stay at base 200, got %d", c.HealthMax.Value)
 	}
 }
