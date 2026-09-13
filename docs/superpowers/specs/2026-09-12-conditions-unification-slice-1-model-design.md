@@ -193,19 +193,40 @@ dead blinded readers, the duplicate poison immunity check.
    the same cancel helpers run after the harm.
 4. The two one-round penalties stop appearing in `Char.Conditions` as bare
    words and appear as records; no line is sent for them.
+5. Every damaging tick (Venom, Spore Toxin, Rending Bleed and the new records)
+   now wakes a sleeper and cancels `cancel-on-damage` records, as the poison
+   and bleed hook already did; the tick path never called those two helpers.
+6. The poison and bleed tick lines go out on the record category
+   (`CategoryBuffApply`) instead of `CategoryToxin`: a colour change only.
 
 Everything else is number-identical, and the equivalence test proves it.
 
+### Findings recorded while planning (2026-09-12)
+
+- 🪦 **The prone recovery penalty never reaches combat today.** `UserRoundTick`
+  applies it at the stand attempt (`NewRound_UserRoundTick.go:246`) and its
+  own `TickConditions` at line 370 decrements the one-round duration to zero
+  and removes it, all before `DoCombat` runs (hooks register in the order
+  `UserRoundTick`, `MobRoundTick`, then `DoCombat`; `hooks.go:43-49`). The mob
+  tick has the same shape. The record migrates it FAITHFULLY (one trigger,
+  expired by the same tick's `Trigger`, skipped by the door), so the swing cap
+  stays inert; making it bite is an owner call, filed.
+- The tick path applies `TickAmount` through `ApplyHarm` but never calls
+  `cancelDamageBuffs` or `cancelCraftOrSalvageOnDamage`; the poison hook did.
+  Change 5 above.
+
 ## The net
 
-- **Equivalence test first** (root package): for each of the nine live
-  conditions, twin characters, one through today's `AddCondition` and one
-  through the new record; assert equal swings, damage mean, defense score,
-  mitigation fraction, regen amount, poison and bleed tick, pool maxima, and
-  the `conditions` listing. Written against the OLD code first, each row
-  proven capable of failing (a wrong number in the YAML goes red), then the
-  new door is added and the test compares both, then the old side is deleted
-  and the test keeps the expected numbers as literals.
+- **Pins first.** Tests written against the OLD code with literal
+  expectations for the live numbers (mitigation from a shield of 12, pool
+  maxima under a withdrawal fraction, the swing cap, the poison tick and the
+  death cause, the regen multiplier). Each migration task rewrites only the
+  SETUP lines of its pin to the record API and must keep every literal; a
+  reviewer who sees a literal change has found a number change. The producer
+  side is checked by reading: every task's replacement carries the exact
+  duration and magnitude expression it replaces, and the reviewer compares
+  them line by line. Durations are passed as exact integer rounds, never a
+  multiplier (`3.3 × 10` is 32.999 in binary).
 - **Goldens**: `buffs.golden` gains the new records' rows; recorded once in
   Task 0 after the records exist and before any site moves; `-update` forbidden
   after that.
