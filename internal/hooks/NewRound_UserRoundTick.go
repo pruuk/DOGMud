@@ -331,6 +331,11 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 									user.Character.ApplyRestore(characters.PoolHealth, tickAmt)
 								} else if tickAmt < 0 {
 									user.Character.ApplyHarm(characters.PoolHealth, -tickAmt, state.ActorRef{})
+									// Damage is damage: wake a sleeper and drop
+									// cancel-on-damage records, as the poison and
+									// bleed hook always did (slice 1, change 5).
+									cancelCraftOrSalvageOnDamage(user.Character)
+									cancelDamageBuffs(user.Character)
 								}
 							case "stamina":
 								if tickAmt > 0 {

@@ -1,0 +1,11 @@
+buffid: 119
+name: Minor Shield
+description: A magical barrier turns aside some of the blows that reach you.
+triggerrate: 1 round
+triggercount: 10
+end_user_text: "Your Minor Shield dissipates."
+end_room_text: "{source}'s Minor Shield dissipates."
+effects:
+  mitigation_flat: magnitude
+flags:
+  - silent-start

@@ -1,0 +1,12 @@
+buffid: 121
+name: Poisoned
+description: Toxins coursing through your body, dealing damage over time.
+triggerrate: 1 round
+triggercount: 10
+tick_pool: health
+tick_from_magnitude: true
+trigger_user_text: '<ansi fg="green">The poison burns through your veins!</ansi>'
+end_user_text: "The poison in your veins finally burns itself out."
+flags:
+  - poison
+  - silent-start

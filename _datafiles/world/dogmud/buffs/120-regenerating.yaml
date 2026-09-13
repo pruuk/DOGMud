@@ -1,0 +1,10 @@
+buffid: 120
+name: Regenerating
+description: Healing magic is knitting your wounds closed a little faster each round.
+triggerrate: 1 round
+triggercount: 10
+end_user_text: "The healing magic in your wounds runs its course."
+effects:
+  regen_mult: magnitude
+flags:
+  - silent-start

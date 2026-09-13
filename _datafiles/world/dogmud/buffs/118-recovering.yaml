@@ -1,0 +1,9 @@
+buffid: 118
+name: Recovering
+description: Still finding your feet; you can manage only a single attack this round.
+triggerrate: 1 round
+triggercount: 1
+effects:
+  attacks_cap: 1
+flags:
+  - quiet

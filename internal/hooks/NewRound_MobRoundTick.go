@@ -239,6 +239,8 @@ func tickMobBuffs(mob *mobs.Mob, mobInstanceId int) {
 							mob.Character.ApplyRestore(characters.PoolHealth, tickAmt)
 						} else if tickAmt < 0 {
 							mob.Character.ApplyHarm(characters.PoolHealth, -tickAmt, state.ActorRef{})
+							cancelCraftOrSalvageOnDamage(&mob.Character)
+							cancelDamageBuffs(&mob.Character)
 						}
 					case "stamina":
 						if tickAmt > 0 {
