@@ -41,7 +41,7 @@ character:
   gold: 40
   stats:
     perception:
-      base: 108
+      base: 110
     charisma:
       base: 104
   shop:

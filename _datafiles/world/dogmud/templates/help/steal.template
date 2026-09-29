@@ -45,19 +45,44 @@ else, your cover is blown. Either way the thing stays where it was.
 What a household keeps tends to be worth more than what lies about
 in the street, which is some comfort for the risk.
 
+<ansi fg="yellow">A merchant's chest:</ansi>
+
+Every merchant keeps a locked chest in the shop, and restocks it
+with coin and a few of their goods from time to time. A merchant
+with finer stock keeps a better lock and a sharper eye. Pick the
+lock first (<ansi fg="command">help picklock</ansi>); <ansi fg="command">steal</ansi> will not get through a lock.
+Setting your pick to it, and reaching in once it is open, are both
+tested against the most watchful person in the room. A merchant
+who sees you shouts thief, slams the chest shut and locks it, and
+you are treated as caught stealing from them. A sleeping merchant
+notices far less, and one who is out cannot notice at all. A picked
+chest locks itself again before long, and when a merchant restocks,
+whatever is left in the chest is cleared out and the lock is changed.
+
+Whatever you take from a merchant's chest is stolen goods, marked
+<ansi fg="item-stolen">s</ansi> in your pack, and it is hot for three days in the town you
+took it in, just like a stolen trinket (see below). While it is hot
+you cannot craft with it or salvage it. The merchant may recognise
+it on you anywhere, even worn or in your hand; being recognised by
+them is the same as being caught in the act. The town's guards and
+watchmen may recognise it on you while you are still in that town,
+and they report the theft to the law. Give it back to the merchant
+and it is theirs again. A merchant's chest is not yours to fill:
+you cannot put anything into one.
+
 <ansi fg="yellow">After the theft:</ansi>
 
-A stolen trinket stays "hot" for three days, in the town where you
-took it. There, no honest merchant will buy it, no storage will
-hold it, and the auction house will not list it; somewhere else it
-is just a trinket. A fence will buy it anywhere, and pays well for
-stolen goods. While it is hot, the one you took it from may
-recognise it on you if your paths cross, wherever that is, and that
-is the same as being caught in the act. Give
-it back to its owner and it is no longer hot; but walk in carrying
-it and they may spot it before you can hand it over, so go quietly.
-A thief who has been caught stealing wins back a little of the
-goodwill that cost with each thing they return, though never as
+A stolen trinket, or anything from a merchant's chest, stays "hot"
+for three days, in the town where you took it. There, no honest
+merchant will buy it, no storage will hold it, and the auction house
+will not list it; somewhere else it is ordinary goods. A fence will
+buy it anywhere, and pays well for stolen goods. While it is hot,
+the one you took it from may recognise it on you if your paths
+cross, wherever that is, and that is the same as being caught in the
+act. Give it back to its owner and it is no longer hot; but walk in
+carrying it and they may spot it before you can hand it over, so go
+quietly. A thief who has been caught stealing wins back a little of
+the goodwill that cost with each trinket they return, though never as
 much as the catch itself, and never more than they lost.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help plant</ansi>, <ansi fg="command">help skullduggery</ansi>

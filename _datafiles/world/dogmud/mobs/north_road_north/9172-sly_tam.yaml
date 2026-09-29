@@ -46,7 +46,7 @@ character:
     dexterity:
       base: 110
     perception:
-      base: 108
+      base: 115
     charisma:
       base: 106
     strength:

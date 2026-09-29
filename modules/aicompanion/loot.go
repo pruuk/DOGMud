@@ -129,6 +129,12 @@ func mobCompanionTakeout(rest string, mob *mobs.Mob, room *rooms.Room) (bool, er
 	if !ok || container.Hidden || container.Lock.IsLocked() {
 		return true, nil
 	}
+	// A merchant's chest is not the companion's to empty: taking from it is
+	// theft, watched by the room (actions.WatchMerchantChest), and a
+	// companion errand must not be a way around that.
+	if actions.IsMerchantChest(room, name) {
+		return true, nil
+	}
 	it, found := findContainerItem(container, itemId, uuidPart)
 	if !found || !mob.Character.StoreItem(it) {
 		return true, nil

@@ -3,6 +3,7 @@ package actions
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -322,5 +323,41 @@ func TestSalvage_FindsATargetInTheBandolier(t *testing.T) {
 	}
 	if got := len(actor.awards); got != 1 {
 		t.Errorf("a resolved bandolier salvage produced %d awards, want 1", got)
+	}
+}
+
+// TestSalvage_StolenItemRefused: hot stolen goods (a merchant chest's) are
+// not broken down, or the materials would come out clean.
+func TestSalvage_StolenItemRefused(t *testing.T) {
+	pinStolenClock(t, stolenTestNow)
+	room := newSalvageTestRoom(t, 9406)
+	user := newSalvageFakeActor(t, "SalvageThief", room, true, 4)
+	stolen := items.Item{ItemId: 70001, UUID: items.NewItemUUID(), StolenFrom: "Smith Brindle",
+		StolenFromMob: 2, StolenBy: 4, StolenAt: stolenTestNow.Add(-time.Hour).Unix()}
+	user.char.Items = append(user.char.Items, stolen)
+
+	result := Salvage(user, SalvageOptions{TargetItemUuid: stolen.UUID.String()})
+
+	if result.Succeeded || result.Reason != "stolen" {
+		t.Fatalf("expected a stolen refusal, got %+v", result)
+	}
+	if len(user.char.Items) != 1 {
+		t.Fatal("the stolen item stays whole in the pack")
+	}
+}
+
+// TestSalvage_CooledStolenItemIsNotRefused: once cooled, stolen goods are
+// ordinary goods to salvage (this one then fails for want of a spec).
+func TestSalvage_CooledStolenItemIsNotRefused(t *testing.T) {
+	pinStolenClock(t, stolenTestNow)
+	room := newSalvageTestRoom(t, 9407)
+	user := newSalvageFakeActor(t, "SalvageThief", room, true, 5)
+	cold := items.Item{ItemId: 70001, UUID: items.NewItemUUID(), StolenFrom: "Smith Brindle",
+		StolenFromMob: 2, StolenBy: 5, StolenAt: stolenTestNow.Add(-100 * time.Hour).Unix()}
+	user.char.Items = append(user.char.Items, cold)
+
+	result := Salvage(user, SalvageOptions{TargetItemUuid: cold.UUID.String()})
+	if result.Reason == "stolen" {
+		t.Fatal("a cooled item is not refused as stolen")
 	}
 }

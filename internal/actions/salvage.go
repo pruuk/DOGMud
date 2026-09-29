@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -304,6 +305,17 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 				`<ansi fg="red">The item you were salvaging is no longer in your possession.</ansi>`)
 		}
 		result.Reason = "item not found"
+		return result
+	}
+
+	// Hot stolen goods (a merchant chest's) are not broken down while hot:
+	// the materials would come out clean and shed the heat.
+	if baubles.GoodsHot(targetItem, stolenNow()) {
+		if actor.IsPlayer() {
+			actor.SendText(messaging.CategoryError,
+				`<ansi fg="red">That was stolen too recently to break down. A fence will pay for it whole.</ansi>`)
+		}
+		result.Reason = "stolen"
 		return result
 	}
 

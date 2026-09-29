@@ -47,6 +47,13 @@ was stolen, and how its text was generated.
   `PlainText`.
 - **mint.go**: `Place`, `NewPlace`, `MintOpts`, `Mint`.
 - **sales.go**: `MarkSold`, `SalesSince`.
+- **goods.go**: stolen goods that are not baubles, a merchant chest's
+  (`internal/merchantchests`), which carry their theft on the item
+  (`items.Item.StolenAt`, `StolenZone`, `StolenBy`, `StolenFromMob`) instead
+  of a record, on the same heat rules: `GoodsHot` (stolen within
+  `HeatDuration`), `GoodsHotIn` (hot, and in the `HeatArea` of the zone they
+  were taken in). `ItemIsHotIn` answers for them too, so storage and the
+  auction house refuse them where they are hot with no code of their own.
 - **theft.go**: `Theft`, `MarkStolen` (a household's bauble taken),
   `MarkHousehold`, `MarkVanished` (left untaken too long), `UntakenLimit`;
   after a theft (Phase 6c): `Record.Hot` (stolen within
@@ -141,7 +148,9 @@ func (r Record) Hot(now time.Time) bool
 func (r Record) RecognizedSinceTheft() bool
 func (r Record) HotIn(zone string, now time.Time) bool
 func HeatArea(zone string) string
-func ItemIsHotIn(itm items.Item, zone string, now time.Time) bool
+func ItemIsHotIn(itm items.Item, zone string, now time.Time) bool // baubles, and merchant-chest goods via GoodsHotIn
+func GoodsHot(itm items.Item, now time.Time) bool
+func GoodsHotIn(itm items.Item, zone string, now time.Time) bool
 func MarkRecognized(id string, byUserId int, at time.Time) bool
 func MarkReturned(id string, byUserId int, credited []string, at time.Time) bool
 func ReturnCredits(userId int, faction string, sinceRound uint64) int

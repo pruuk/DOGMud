@@ -187,6 +187,33 @@ The `internal/usercommands` package implements the complete command system for p
   `StealOptions.HouseholdItem` (the steal checks; see
   `internal/actions/context.md`).
 
+#### **Merchant chests** (`merchant_chest.go`, `get.go`, `picklock.go`, `look.go`, `offer.go`)
+- `picklock` on a merchant's chest (`actions.IsMerchantChest`) runs
+  `actions.WatchMerchantChest(..., MerchantChestPick)` once per attempt:
+  when the prompt is new, and on the keyring's instant solve. Caught, the
+  prompt is cleared and the lock stays shut. Opened, it calls
+  `merchantchests.MarkOpened` so the chest locks itself again later.
+- `get` from a merchant's chest runs `merchantChestTakeWatched`, only once
+  there is something to take (gold in it, or the named item found): the
+  take contest once per lock cycle (a pass is remembered in user temp data
+  against the lock's `RotationSeed`, so emptying the chest after one clean
+  take does not roll again). A thief caught is refused silently for the
+  rest of that round (`merchantChestCaughtThisRound`), so one
+  `get all <chest>` raises one alarm. The caught-this-round check runs
+  before the lock check, because the merchant has just locked the chest.
+- A take from a merchant's chest (only there: whoever picks the goods up
+  elsewhere is not made their thief) marks them taken
+  (`actions.MarkChestGoodsTaken`: thief, zone, time, so their heat starts) and adds `actions.StolenGoodsNote`; `look <container>`
+  prints `Container.Description` first; `offer` resolves its item with
+  `actions.SellFindItemInChar`; stolen goods are quoted by the fence
+  `actions.FenceFor` names, at its cut (`actions.FencePrice`), and
+  otherwise an honest merchant refuses them only where they are hot
+  (`actions.StolenGoodsHotHere`); `salvage` refuses them while hot
+  (`actions.StolenGoodsHotNow`). `put` refuses any merchant chest outright:
+  over-filling one spills a random item on the floor, which would pry its
+  goods out unwatched and unmarked. `storageFindAddable` passes over hot
+  goods in the component bag as well as the backpack.
+
 ### Special Features
 
 #### **Command Suggestions**

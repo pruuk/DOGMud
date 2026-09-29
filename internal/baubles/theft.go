@@ -140,11 +140,12 @@ func (r Record) RecognizedSinceTheft() bool {
 	return !r.RecognizedAt.IsZero() && !r.RecognizedAt.Before(r.StolenAt)
 }
 
-// ItemIsHotIn reports whether itm is a bauble that is hot now in zone
-// (Record.HotIn). Anything else, or a bauble with no record, is not.
+// ItemIsHotIn reports whether itm is hot now in zone: a bauble whose record
+// is (Record.HotIn), or stolen goods from a merchant's chest (GoodsHotIn,
+// goods.go). Anything else, or a bauble with no record, is not.
 func ItemIsHotIn(itm items.Item, zone string, now time.Time) bool {
 	if !itm.IsBauble() {
-		return false
+		return GoodsHotIn(itm, zone, now)
 	}
 	rec, ok := Get(itm.Bauble)
 	return ok && rec.HotIn(zone, now)

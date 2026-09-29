@@ -81,6 +81,7 @@ events.RegisterListener(events.NewRound{}, SpawnLootGoblin)       // Special mob
 events.RegisterListener(events.NewRound{}, UserRoundTick)         // Player round processing
 events.RegisterListener(events.NewRound{}, MobRoundTick)          // NPC round processing
 events.RegisterListener(events.NewRound{}, HandleRespawns)        // Mob respawning
+events.RegisterListener(events.NewRound{}, MerchantChestRestock)  // Merchant chests due a restock (internal/merchantchests)
 events.RegisterListener(events.NewRound{}, DoCombat)              // Combat resolution
 events.RegisterListener(events.NewRound{}, AutoHeal)              // Natural healing
 events.RegisterListener(events.NewRound{}, IdleMobs)              // Mob idle behavior

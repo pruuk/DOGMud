@@ -1,5 +1,37 @@
 # DOGMud Patch Notes
 
+## 2026-09-29: Merchant chests
+
+Every merchant now keeps a locked chest in the shop: a smith's iron
+strongbox, a jeweller's velvet-lined casket, a cook's tin cashbox, an
+enchanter's warded coffer, and the auction house has a vault. Each one
+is restocked from time to time with coin and a few of the merchant's
+own goods.
+
+Merchants with finer stock keep better locks and sharper eyes. Setting
+a pick to a merchant's chest, or reaching into one you have opened, is
+watched by everyone in the room. A merchant who catches you shouts
+thief, slams the chest shut and locks it, and you are treated as caught
+stealing from them. A sleeping merchant notices far less, whether you
+are at the chest or sneaking past, and one who has stepped out cannot
+notice at all.
+
+Whatever comes out of a merchant's chest is stolen goods, and shows an
+s beside its name in your pack. Like a stolen trinket, it is hot for
+three days in the town you took it in: no honest merchant, storage or
+auction house there will take it, and you cannot craft with it or
+salvage it while it is hot. Carry it to another town, or wait it out,
+and it sells like anything else. A fence buys it anywhere, at any time.
+While it is hot, the merchant you robbed may recognise it on you
+wherever you meet, even if you are wearing it, and the town's guards
+and watchmen may too while you are still in that town, and report you
+to the law. Give it back to the merchant and it is theirs again. A
+fence will not buy back goods taken from its own chest.
+Stolen goods never merge with clean ones in storage, and when you
+carry clean copies of the same thing, a sale takes those first.
+
+Also fixed: `steal` no longer reaches into a locked container.
+
 ## 2026-09-28: Healing and shields, whoever casts them
 
 Creatures now heal and shield you and each other by the same rules you

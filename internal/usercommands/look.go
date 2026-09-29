@@ -175,6 +175,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		container := room.Containers[containerName]
 
+		if container.Description != `` {
+			user.SendText(messaging.CategorySystem, ``)
+			user.SendText(messaging.CategorySystem, container.Description)
+		}
+
 		if container.Lock.IsLocked() {
 			user.SendText(messaging.CategorySystem, ``)
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))

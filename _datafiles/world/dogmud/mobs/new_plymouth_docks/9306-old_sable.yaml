@@ -50,7 +50,7 @@ character:
   gold: 110
   stats:
     perception:
-      base: 112
+      base: 113
     charisma:
       base: 108
     dexterity:

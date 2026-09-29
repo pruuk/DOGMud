@@ -80,7 +80,11 @@ drains those chests into cook-vendor stock.
 
 All three share one tag matcher (`componentTagOf`) and answer in recipe
 order, so they never disagree about WHICH tag is short. They differ only in
-what they are allowed to count.
+what they are allowed to count. `componentTagOf` gives hot stolen goods
+(a merchant chest's, `baubles.GoodsHot`, read through the `stolenNow`
+clock) no tag at all, so no count, selection, storage plan or consumption
+uses one while it is hot: crafting it into clean output would shed its
+heat. Cooled, it is an ordinary material.
 
 - **`HasIngredients(inv, componentInv, recipe) (bool, string)`** counts
   only what the actor CARRIES. This is what `actions.InitiateCraft` asks,

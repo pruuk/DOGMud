@@ -12,6 +12,7 @@ type Container struct {
 	Hidden       bool          `yaml:"hidden,omitempty"`       // If true, container is invisible until discovered via search.
 	DespawnRound uint64        `yaml:"despawnround,omitempty"` // If this is set, it's a chest that will disappear with time.
 	Recipes      map[int][]int `yaml:"recipes,omitempty,flow"` // Item Id's (key) that are created when the recipe is present in the container (values) and it is "used"
+	Description  string        `yaml:"description,omitempty"`  // Shown by `look <container>`, locked or not. Merchant chests set it from their catalog.
 }
 
 func (c Container) HasLock() bool {

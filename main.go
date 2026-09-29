@@ -65,6 +65,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
+	"github.com/GoMudEngine/GoMud/internal/merchantchests"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/moderation"
@@ -1918,6 +1919,37 @@ func loadAllDataFiles(isReload bool) {
 	}
 	mudlog.Info("BOOT", "msg", "eager-spawned shop-bearing rooms",
 		"preparedCount", shopRoomsPrepared, "totalRoomsScanned", shopRoomsScanned)
+
+	// Merchant chests (internal/merchantchests): a locked chest in every
+	// merchant's shop, restocked on a timer. Placed after the eager spawn so
+	// every merchant room is loaded; the restock clock lives in each room's
+	// saved long-term data, so a reboot only restocks chests that are due.
+	merchantchests.Load()
+	chestErrs, chestWarnings := merchantchests.CheckWorld(func(mobId, roomId int) bool {
+		room := rooms.LoadRoom(roomId)
+		if room == nil {
+			return false
+		}
+		for _, si := range room.SpawnInfo {
+			if si.MobId == mobId {
+				return true
+			}
+		}
+		return false
+	})
+	for _, w := range chestWarnings {
+		mudlog.Warn("merchantchests", "check", w)
+	}
+	if len(chestErrs) > 0 {
+		msg := strings.Join(chestErrs, "\n")
+		if isReload {
+			mudlog.Error("merchantchests.CheckWorld failed on reload", "error", msg,
+				"remediation", "fix merchant_chests.yaml or the listed mobs and run /reload again")
+		} else {
+			panic(fmt.Sprintf("merchantchests.CheckWorld failed:\n%s", msg))
+		}
+	}
+	merchantchests.EnsureAll()
 
 	// Load sealed crates from disk and attach them to their rooms.
 	// The crates/ directory mirrors shops/ — one YAML per crate,

@@ -44,7 +44,7 @@ character:
     charisma:
       base: 114
     perception:
-      base: 106
+      base: 110
   shop:
     - itemid: 30025
     - itemid: 30023

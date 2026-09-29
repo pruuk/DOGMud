@@ -39,7 +39,7 @@ character:
       itemid: 10017
   stats:
     perception:
-      base: 115
+      base: 129
     willpower:
       base: 110
     charisma:

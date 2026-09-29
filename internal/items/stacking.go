@@ -26,6 +26,14 @@ func SameStack(a, b Item) bool {
 	if a.Bauble != b.Bauble {
 		return false
 	}
+	// Stolen goods never share a stack with clean ones, or with goods from
+	// another theft: storage keeps one representative per stack, so merging
+	// them would hand a hot item back clean, or a clean one back hot.
+	if a.StolenFrom != b.StolenFrom || a.StolenFromMob != b.StolenFromMob ||
+		a.StolenBy != b.StolenBy || a.StolenAt != b.StolenAt ||
+		a.StolenZone != b.StolenZone || a.StolenSeen != b.StolenSeen {
+		return false
+	}
 	if a.Uses != b.Uses {
 		return false
 	}

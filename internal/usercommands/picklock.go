@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/merchantchests"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -140,6 +142,13 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	if sequenceMatches(keyring_sequence, sequence) {
+		// A merchant's chest is watched: setting a pick to it, even one
+		// already solved, is a theft attempt the room may notice.
+		if containerName != `` && actions.WatchMerchantChest(actions.NewUserActorInRoom(user, room), containerName, actions.MerchantChestPick) {
+			user.ClearPrompt()
+			return true, nil
+		}
+
 		user.SendText(messaging.CategorySystem, "")
 		user.SendText(messaging.CategorySystem, "Your keyring already has this lock on it.")
 
@@ -168,6 +177,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			container := room.Containers[containerName]
 			container.Lock.SetUnlocked()
 			room.Containers[containerName] = container
+			merchantchests.MarkOpened(room.RoomId, containerName, util.GetRoundCount())
 		} else {
 
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> picks the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
@@ -182,6 +192,13 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	cmdPrompt, isNew := user.StartPrompt(`picklock`, rest)
 
 	if isNew {
+		// Each fresh attempt on a merchant's chest is watched once, when the
+		// pick first goes in (not on every pin, which would make a long lock
+		// a string of contests).
+		if containerName != `` && actions.WatchMerchantChest(actions.NewUserActorInRoom(user, room), containerName, actions.MerchantChestPick) {
+			user.ClearPrompt()
+			return true, nil
+		}
 		user.SendText(messaging.CategorySystem, GetLockRender(sequence, keyring_sequence, user.UserId))
 	}
 
@@ -284,6 +301,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			container := room.Containers[containerName]
 			container.Lock.SetUnlocked()
 			room.Containers[containerName] = container
+			merchantchests.MarkOpened(room.RoomId, containerName, util.GetRoundCount())
 		} else {
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> picks the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
 			room.SetExitLock(exitName, false)

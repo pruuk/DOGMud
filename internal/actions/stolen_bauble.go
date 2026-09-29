@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/crimes"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/merchantchests"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -64,10 +65,11 @@ var stolenNow = time.Now
 // recognition, and the reputation a return earns with the owner's
 // factions.
 var (
-	stolenCaught  = thiefCaught
-	returnRepBump = factions.BumpRep
-	ownerFactions = factions.FactionsForMob
-	theftCatches  = identifiedTheftCatches
+	stolenCaught   = thiefCaught
+	stolenReported = theftReported
+	returnRepBump  = factions.BumpRep
+	ownerFactions  = factions.FactionsForMob
+	theftCatches   = identifiedTheftCatches
 )
 
 // identifiedTheftCatches counts the thefts faction caught userId at and
@@ -200,9 +202,18 @@ func recognizeIn(room *rooms.Room, userId int, mobInstanceId int) {
 }
 
 // recognizeOn looks through what carrier carries for a hot bauble one of
-// owners was robbed of. The first recognised is a catch, and the only one:
+// owners was robbed of, then for hot goods from a merchant's chest
+// (recognizeGoodsOn). The first recognised is a catch, and the only one:
 // the carrier is already caught.
 func recognizeOn(carrier Actor, owners []*mobs.Mob, room *rooms.Room, now time.Time) {
+	if recognizeBaublesOn(carrier, owners, room, now) {
+		return
+	}
+	recognizeGoodsOn(carrier, owners, room, now)
+}
+
+// recognizeBaublesOn is recognizeOn for baubles; true on a catch.
+func recognizeBaublesOn(carrier Actor, owners []*mobs.Mob, room *rooms.Room, now time.Time) bool {
 	char := carrier.GetCharacter()
 	for _, itm := range append([]items.Item(nil), char.Items...) {
 		if !itm.IsBauble() {
@@ -229,9 +240,148 @@ func recognizeOn(carrier Actor, owners []*mobs.Mob, room *rooms.Room, now time.T
 				continue
 			}
 			ownerRecognizes(carrier, m, itm, room, now)
+			return true
+		}
+	}
+	return false
+}
+
+// Stolen goods from merchant chests (internal/merchantchests,
+// sell_stolen.go) are recognised on the same terms as a stolen bauble:
+// while hot (baubles.GoodsHot), once per theft (items.Item.StolenSeen), only
+// on their thief (StolenBy), by a watcher awake and able to see shapes, and
+// only by winning the same contest (recognitionRoll). Two kinds of watcher
+// know them: the merchant they were taken from (its mob template,
+// StolenFromMob), anywhere, as a bauble's owner does; and a town guard
+// (mobs.IsGuardMob), or one of the catalog's lookouts
+// (merchantchests.IsLookout: a dock constable, a gate warden), in the heat
+// area they were taken in (baubles.GoodsHotIn), where word of the theft has
+// spread. Worn or wielded goods count: the watcher sees them on the thief.
+// Recognised by the merchant, the thief is caught as a thief caught in the
+// act (thiefCaught). Recognised by a guard or lookout, the theft is reported
+// (theftReported: its factions record it, with the reputation and bounty
+// that brings) and the justice tick takes it from there; the guard does not
+// simply start swinging.
+
+// recognizeGoodsOn looks through everything carrier carries for hot
+// merchant-chest goods one of watchers knows; true on a catch.
+func recognizeGoodsOn(carrier Actor, watchers []*mobs.Mob, room *rooms.Room, now time.Time) bool {
+	char := carrier.GetCharacter()
+	for _, itm := range carriedGoods(char) {
+		if itm.IsBauble() || !itm.IsStolen() || itm.StolenSeen || !baubles.GoodsHot(itm, now) {
+			continue
+		}
+		if itm.StolenBy == 0 || carrier.GetUserId() != itm.StolenBy {
+			continue // only the thief is ever accused
+		}
+		for _, m := range watchers {
+			owner := itm.StolenFromMob > 0 && int(m.MobId) == itm.StolenFromMob
+			watcher := mobs.IsGuardMob(m.Groups) || merchantchests.IsLookout(int(m.MobId))
+			guard := !owner && watcher && baubles.GoodsHotIn(itm, room.Zone, now)
+			if !owner && !guard {
+				continue
+			}
+			if !canRecognize(m) || !messaging.CanSeeShapes(&m.Character, room) {
+				continue
+			}
+			if !recognitionRoll(&m.Character, char, room) {
+				continue
+			}
+			goodsRecognized(carrier, m, itm, owner, room)
+			return true
+		}
+	}
+	return false
+}
+
+// carriedGoods is everything char has on them: backpack, bandolier,
+// component bag, and worn or wielded gear.
+func carriedGoods(char *characters.Character) []items.Item {
+	out := make([]items.Item, 0, len(char.Items)+len(char.PotionItems)+len(char.ComponentItems)+8)
+	out = append(out, char.Items...)
+	out = append(out, char.PotionItems...)
+	out = append(out, char.ComponentItems...)
+	for _, p := range char.Equipment.GetAllItemPtrs() {
+		out = append(out, *p)
+	}
+	return out
+}
+
+// markGoodsSeen sets StolenSeen on the carried item with itm's identity,
+// wherever the carrier keeps it, worn slots included.
+func markGoodsSeen(char *characters.Character, itm items.Item) {
+	for _, pool := range [][]items.Item{char.Items, char.PotionItems, char.ComponentItems} {
+		for i := range pool {
+			if pool[i].Equals(itm) {
+				pool[i].StolenSeen = true
+				return
+			}
+		}
+	}
+	for _, p := range char.Equipment.GetAllItemPtrs() {
+		if p.Equals(itm) {
+			p.StolenSeen = true
 			return
 		}
 	}
+}
+
+// goodsRecognized is m recognising stolen goods on carrier: said aloud,
+// marked seen, and then the catch. The room hears the thief named only
+// when m sees clearly, as for a bauble (ownerRecognizes).
+func goodsRecognized(carrier Actor, m *mobs.Mob, itm items.Item, owner bool, room *rooms.Room) {
+	markGoodsSeen(carrier.GetCharacter(), itm)
+	name := itm.DisplayName()
+	shout := `"That's mine! Thief!"`
+	if !owner {
+		shout = fmt.Sprintf(`"That was taken from %s. Thief!"`, ownerPhrase(itm.StolenFrom))
+	}
+	carrier.SendText(messaging.CategorySystem, fmt.Sprintf(
+		`<ansi fg="mobname">%s</ansi> stares at the <ansi fg="itemname">%s</ansi> you are carrying. %s`,
+		m.Character.Name, name, shout))
+	who := `a figure`
+	if messaging.CanSeeClearly(&m.Character, room) {
+		who = fmt.Sprintf(`<ansi fg="username">%s</ansi>`, carrier.GetCharacter().Name)
+	}
+	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
+		`<ansi fg="mobname">%s</ansi> points at %s. %s`,
+		m.Character.Name, who, shout), carrier.GetUserId())
+	mudlog.Info(`merchantchests`, `action`, `recognized`, `item`, itm.ItemId, `by`, m.Character.Name, `owner`, owner, `carrierUserId`, carrier.GetUserId())
+	if owner {
+		stolenCaught(carrier, m, room)
+		return
+	}
+	stolenReported(carrier, m, room)
+}
+
+// stolenGoodsGiven handles a player having given stolen goods from a
+// merchant's chest to m: given to the merchant they were taken from, they
+// are its own again (every stolen mark cleared on the item it now holds).
+// Unlike a bauble, a return earns no reputation back. Reports whether it
+// was a return.
+func stolenGoodsGiven(giver Actor, m *mobs.Mob, itm items.Item) bool {
+	if itm.StolenFromMob <= 0 || int(m.MobId) != itm.StolenFromMob {
+		return false
+	}
+	c := &m.Character
+	for _, pool := range [][]items.Item{c.Items, c.PotionItems, c.ComponentItems} {
+		for i := range pool {
+			if pool[i].Equals(itm) {
+				pool[i].ClearStolen()
+			}
+		}
+	}
+	name := itm.DisplayName()
+	giver.SendText(messaging.CategorySystem, fmt.Sprintf(
+		`<ansi fg="mobname">%s</ansi> snatches back the <ansi fg="itemname">%s</ansi>. "My %s! Where did you find that?"`,
+		m.Character.Name, name, name))
+	if room := giver.GetRoom(); room != nil {
+		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
+			`<ansi fg="mobname">%s</ansi> looks relieved to have the <ansi fg="itemname">%s</ansi> back.`,
+			m.Character.Name, name), giver.GetUserId())
+	}
+	mudlog.Info(`merchantchests`, `action`, `returned`, `item`, itm.ItemId, `to`, m.Character.Name, `byUserId`, giver.GetUserId())
+	return true
 }
 
 // ownerRecognizes is m recognising its stolen itm on carrier: said aloud,
@@ -277,6 +427,9 @@ func returnShare(prior int, catchRep int, perCatch int) int {
 // that mob's pocket does not make it the mob's stolen goods. It reports
 // whether it was a return. Call under the mud lock.
 func StolenBaubleGiven(giver Actor, m *mobs.Mob, itm items.Item) bool {
+	if m != nil && !itm.IsBauble() && itm.IsStolen() {
+		return stolenGoodsGiven(giver, m, itm)
+	}
 	if !itm.IsBauble() || m == nil {
 		return false
 	}

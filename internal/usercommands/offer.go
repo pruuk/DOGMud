@@ -29,7 +29,8 @@ func merchantSay(room *rooms.Room, mob *mobs.Mob, line string) {
 
 func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	item, found := user.Character.FindInBackpack(rest)
+	// The copy sell would sell: a clean one before a stolen twin.
+	item, found := actions.SellFindItemInChar(user.Character, rest)
 	if !found {
 		user.SendText(messaging.CategorySystem, "You don't have that item.")
 		return true, nil
@@ -38,6 +39,16 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	itemSpec := item.GetSpec()
 	if itemSpec.ItemId < 1 {
 		return true, nil
+	}
+
+	// Stolen goods go to a fence when the room has one, as sell sends them
+	// (actions.FenceFor), so offer names that buyer and its cut.
+	if item.IsStolen() && !item.IsBauble() {
+		if fence, _ := actions.FenceFor(room, item); fence != nil {
+			user.Character.CancelConditionsWithFlag(conditions.Hidden)
+			merchantSay(room, fence, fmt.Sprintf(`I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>, and no questions asked.`, actions.FencePrice(itemSpec.Value), item.DisplayName()))
+			return true, nil
+		}
 	}
 
 	for _, mobId := range room.GetMobs(rooms.FindMerchant) {
@@ -58,6 +69,17 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			}
 			merchantSay(room, mob, fmt.Sprintf(`I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, offer.Price, item.DisplayName()))
 			break
+		}
+
+		// Stolen goods (a merchant chest's) with no fence to take them (a
+		// fence is quoted above; one robbed of them refuses): an honest
+		// merchant refuses them while they are hot here and otherwise quotes
+		// them like anything else.
+		if item.IsStolen() {
+			if actions.IsFence(mob) || actions.StolenGoodsHotHere(item, room) {
+				merchantSay(room, mob, actions.StolenGoodsRefusal(mob, item))
+				continue
+			}
 		}
 
 		if item.IsSpecial() {

@@ -29,4 +29,7 @@ You'll need a set of <ansi fg="item">lockpicks</ansi>.
 
 Requires <ansi fg="skill">skullduggery</ansi> rank 1.
 
+A merchant's chest is watched, and locks itself again a little
+while after you pick it: see <ansi fg="command">help steal</ansi>.
+
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help picklock-example</ansi>, <ansi fg="command">help keyring</ansi>, <ansi fg="command">help skullduggery</ansi>

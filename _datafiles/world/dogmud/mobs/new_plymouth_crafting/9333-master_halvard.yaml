@@ -45,6 +45,8 @@ character:
   level: 1
   gold: 45
   stats:
+    perception:
+      base: 110
     strength:
       base: 114
     vitality:

@@ -40,6 +40,6 @@ character:
     strength:
       base: 105
     perception:
-      base: 103
+      base: 111
   shop:
     - itemid: 40144

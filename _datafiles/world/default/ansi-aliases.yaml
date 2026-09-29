@@ -88,6 +88,7 @@ colors:
   item-flags: 7 # light gray
   item-enchanted: 147
   item-cursed: 54
+  item-stolen: 167
   item-bonus-damage: 49
   name-flags-wrapper: 240
   name-flag: 246

@@ -40,6 +40,8 @@ character:
   level: 1
   gold: 55
   stats:
+    perception:
+      base: 115
     strength:
       base: 110
     dexterity:

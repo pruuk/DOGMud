@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -234,7 +235,18 @@ func GetAllForSkill(skill string) []*RecipeSpec {
 // isn't tagged as a crafting component/material. Shared matcher used by
 // HasIngredients, ConsumeIngredients, and CheckOwnComponents so tag-matching
 // behavior stays consistent across all three.
+// componentTagOf is the tag an item counts as in a recipe. Hot stolen goods
+// (a merchant chest's, baubles.GoodsHot) count as nothing, so no counting,
+// selection, storage plan or consumption uses them while they are hot:
+// crafting them into something new would shed their heat. Once they have
+// cooled they are ordinary materials.
+// stolenNow is the clock for stolen goods' heat. A variable for tests.
+var stolenNow = time.Now
+
 func componentTagOf(item items.Item) string {
+	if baubles.GoodsHot(item, stolenNow()) {
+		return ""
+	}
 	return item.GetSpec().ComponentTag
 }
 

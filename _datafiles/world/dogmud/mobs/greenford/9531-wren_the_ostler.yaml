@@ -45,7 +45,7 @@ character:
     dexterity:
       base: 106
     perception:
-      base: 105
+      base: 111
   shop:
     - itemid: 40162
     - itemid: 40154

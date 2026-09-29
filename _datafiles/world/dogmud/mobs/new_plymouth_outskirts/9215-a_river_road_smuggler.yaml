@@ -46,7 +46,7 @@ character:
   gold: 1000
   stats:
     perception:
-      base: 110
+      base: 115
     dexterity:
       base: 108
     willpower:

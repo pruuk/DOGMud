@@ -53,7 +53,7 @@ character:
     charisma:
       base: 108
     perception:
-      base: 106
+      base: 115
   shop:
     # Stillwater unique fish
     - itemid: 40058    # freshwater clam

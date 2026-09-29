@@ -79,7 +79,7 @@ character:
     alchemy: 1
   stats:
     perception:
-      base: 115
+      base: 124
     willpower:
       base: 110
     charisma:

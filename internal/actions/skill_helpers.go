@@ -85,7 +85,7 @@ func CalcSneakScoreVsObserver(sneaker, observer *characters.Character, room mess
 // the same way. A nil room is unity; pass combat.SightRoom for a *rooms.Room
 // that may be nil.
 func CalcDetectionScore(c *characters.Character, room messaging.RoomVisibility) float64 {
-	return (float64(c.Stats.Perception.ValueAdj) +
+	return (float64(c.Stats.Perception.ValueAdj)*sleepingMerchantPerceptionMult(c) +
 		float64(c.GetSkillLevel(skills.Search))*
 			float64(configs.GetBalanceConfig().SkillWeight)) *
 		messaging.SightMult(c, room)

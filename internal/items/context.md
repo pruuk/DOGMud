@@ -386,6 +386,19 @@ plain carrier ("Curious Trinket").
   the map racing a write is a fatal error. Everything that finds items by name
   goes through `NameMatch` via `FindMatchIn`, so `get`, `drop`, `look`,
   `appraise`, `sell`, `give` and `N.name` all behave the same.
+- **Stolen goods** (merchant chests, `internal/merchantchests`). Instance
+  fields, saved wherever the item is: `StolenFrom` (the merchant's name) and
+  `StolenFromMob` (its template id), stamped when a restock puts the item in
+  its chest (`IsMerchantGoods`); `StolenBy`, `StolenAt` (unix seconds) and
+  `StolenZone`, set by `MarkTaken` when it leaves the chest (get or steal),
+  after which `IsStolen` is true; `StolenSeen`, once it has been recognised
+  on the thief. `ClearStolen` wipes them all (a return to the merchant).
+  Heat is the bauble rule, computed in `internal/baubles` (`GoodsHot`,
+  `GoodsHotIn`): hot for `BaubleStolenHeatHours`, only in the theft's heat
+  area. `AttrString` shows an `s` flag for stolen goods (colour alias
+  `item-stolen`). `SameStack` never stacks goods from different thefts, or
+  stolen with clean, because storage keeps one representative per stack.
+  `items.New(id)` never sets any of them.
 - `IsSpecial()` is false for a bauble. Any code that rebuilds an item from
   its ItemId alone (`items.New(id)`) drops the link; the sell path has its
   own bauble branch for this reason. Display code that groups items by

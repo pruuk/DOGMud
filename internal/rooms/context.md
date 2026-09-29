@@ -329,9 +329,14 @@ type HiddenNoun struct {
 ```go
 type Container struct {
     // ... other fields ...
-    Hidden bool // If true, container is invisible until discovered
+    Hidden      bool   // If true, container is invisible until discovered
+    Description string // Shown by `look <container>`, locked or not
 }
 ```
+
+`Description` (`description:`) is what `look <container>` prints before the
+lock state or contents. Merchant chests (`internal/merchantchests`) set it
+from their catalog on every boot.
 
 **Behavior:**
 - When `Hidden` is `true`, the container doesn't appear in room descriptions or `look` output

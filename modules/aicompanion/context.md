@@ -96,7 +96,9 @@ Roadmap and phase plan: `docs/aicompanion/`.
 - **economy.go**: `browse` (priced as `list` prices), shop and price
   memory, the money rules for buying.
 - **loot.go**: the module's own mob commands `companion-loot` (owner's loot
-  rights only) and `companion-takeout` (unhidden, unlocked containers).
+  rights only) and `companion-takeout` (unhidden, unlocked containers,
+  never a merchant's chest: `actions.IsMerchantChest`, since taking from
+  one is watched theft).
 - **harm.go**: `harmAllowed` and `areaHarmAllowed`, the one gate on
   everything she starts: the engine's own player harm rules
   (`mobs.CheckPlayerHarm` for a creature; `(*Room).CanPvp` plus the party

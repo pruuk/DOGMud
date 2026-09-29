@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"math"
@@ -66,6 +67,12 @@ type Item struct {
 	BaubleSpot       string         `yaml:"baublespot,omitempty"`      // Where a found bauble lies in its room ("on the bookshelf"); cleared once anyone carries it
 	BaubleHousehold  int            `yaml:"baublehousehold,omitempty"` // Room id of the household a found bauble belongs to; taking it there is theft. Cleared once carried
 	BaubleLeftAt     int64          `yaml:"baubleleftat,omitempty"`    // Unix seconds a found bauble was left lying untaken; it vanishes BaubleUntakenHours later. Cleared once carried
+	StolenFrom       string         `yaml:"stolenfrom,omitempty"`      // Whose property this is: a merchant chest's goods (internal/merchantchests), stamped at restock
+	StolenFromMob    int            `yaml:"stolenfrommob,omitempty"`   // That merchant's mob template id: who may recognise it on the thief
+	StolenBy         int            `yaml:"stolenby,omitempty"`        // User id of the thief who took it out of the chest (0 = a mob, or unknown)
+	StolenAt         int64          `yaml:"stolenat,omitempty"`        // Unix seconds it was taken; 0 = never taken. Hot for Balance.BaubleStolenHeatHours after (baubles.GoodsHot)
+	StolenZone       string         `yaml:"stolenzone,omitempty"`      // Zone it was taken in: hot only in that heat area (baubles.GoodsHotIn)
+	StolenSeen       bool           `yaml:"stolenseen,omitempty"`      // Recognised on the thief since the theft; recognition happens once per theft
 	tempDataStore    map[string]any // Temporary data store for this item. Not saved to disk.
 }
 
@@ -445,6 +452,41 @@ func (i *Item) GetDamage() Damage {
 	return i.GetSpec().Damage
 }
 
+// IsMerchantGoods reports whether the item is marked as a merchant's
+// property: stocked into a merchant's chest (internal/merchantchests),
+// whether or not it has been taken out yet.
+func (i *Item) IsMerchantGoods() bool {
+	return i.StolenFrom != ``
+}
+
+// IsStolen reports whether the item is stolen goods: a merchant's property
+// taken out of its chest and not given back since. Like a stolen bauble, it
+// is hot for a while in the area it was taken in (baubles.GoodsHotIn), where
+// honest merchants, storage and the auction house refuse it; a fence buys it
+// at the fence's cut anywhere, hot or cold (actions/sell_stolen.go).
+func (i *Item) IsStolen() bool {
+	return i.StolenFrom != `` && i.StolenAt > 0
+}
+
+// MarkTaken records a merchant's goods leaving its chest: taken by userId
+// (0 for a mob) in zone at the given time, which starts its heat. Goods
+// already taken keep their first theft.
+func (i *Item) MarkTaken(userId int, zone string, at time.Time) {
+	if !i.IsMerchantGoods() || i.StolenAt > 0 {
+		return
+	}
+	i.StolenBy = userId
+	i.StolenAt = at.Unix()
+	i.StolenZone = zone
+	i.StolenSeen = false
+}
+
+// ClearStolen wipes every stolen mark: the goods are back with their owner.
+func (i *Item) ClearStolen() {
+	i.StolenFrom, i.StolenFromMob, i.StolenBy = ``, 0, 0
+	i.StolenAt, i.StolenZone, i.StolenSeen = 0, ``, false
+}
+
 func (i *Item) Equals(b Item) bool {
 	return i.ItemId == b.ItemId && i.UUID == b.UUID
 }
@@ -480,6 +522,9 @@ func (i *Item) AttrString() string {
 	}
 	if i.IsEnchanted() {
 		flags = append(flags, `<ansi fg="item-enchanted">e</ansi>`)
+	}
+	if i.IsStolen() {
+		flags = append(flags, `<ansi fg="item-stolen">s</ansi>`)
 	}
 
 	if len(flags) == 0 {

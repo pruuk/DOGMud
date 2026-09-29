@@ -48,7 +48,7 @@ character:
   gold: 40
   stats:
     perception:
-      base: 114
+      base: 108
     willpower:
       base: 106
   shop:

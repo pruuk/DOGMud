@@ -47,7 +47,7 @@ character:
     dexterity:
       base: 115
     perception:
-      base: 110
+      base: 115
     vitality:
       base: 108
     willpower:

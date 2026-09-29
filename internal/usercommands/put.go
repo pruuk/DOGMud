@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"strconv"
 	"strings"
 
@@ -56,6 +57,14 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	container := room.Containers[containerName]
+
+	// A merchant's chest takes nothing from strangers. Filling one past
+	// ContainerSizeMax spills a random item on the floor, which would pry its
+	// goods out without the take contest and without marking them stolen.
+	if actions.IsMerchantChest(room, containerName) {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is not yours to fill.`, containerName))
+		return true, nil
+	}
 
 	if container.Lock.IsLocked() {
 		user.SendText(messaging.CategorySystem, ``)
