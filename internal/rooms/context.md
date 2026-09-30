@@ -332,9 +332,10 @@ uses this pattern: its lifetime is owned entirely by `internal/justice`
 
 ## Routing Hooks (`routing_hooks.go`)
 
-Three single registered funcs let a subsystem that `rooms` must not import
-take part in movement decisions. `internal/housing` registers all three at
-boot (`housing.RegisterRoomHooks` in `main.go`). Unset hooks are no-ops.
+Five single registered funcs let a subsystem that `rooms` must not import
+take part in movement, loading and saving. `internal/housing` registers all
+five at boot (`housing.RegisterRoomHooks` in `main.go`). Unset hooks are
+no-ops.
 
 - **`SetExitRouter(ExitRouter)` / `RouteExit` / `IsRoutedExit`**: a routed
   exit sends each player to their own destination (`ExitRoute.RoomId`),
@@ -402,6 +403,16 @@ type Container struct {
 - Discovery is tracked per-player in the character's discovery map
 - The container noun in the room description should be subtly highlighted with `<ansi fg="itemname">noun</ansi>` for discoverability hints
 
+### Container Sealed Field
+`Container.Sealed` (`yaml:"-"`, set by its owner system on every load) marks a
+container opened only by its owner's hand: a housing strongbox. It is kept
+under `SealedLockDifficulty`, so everything that honours container locks
+refuses it, and `IsSealedShut()` makes picklock, unlock with a key (player and
+mob), steal and plant refuse it outright. Only `internal/housing` unlocks it,
+for the length of its owner's own command. Private rooms also skip untaken-
+bauble expiry (`removeUntakenBaubles`), and `removeRoomFromMemory` runs the
+room save hook before its save and logs a failed save.
+
 ### Authoring Convention
 When writing hidden noun descriptions:
 1. Reference parent objects in prose, not via formal links — e.g., "You see strange markings gouged into the **wooden wall**" rather than `parent: wall`
@@ -466,7 +477,7 @@ When writing hidden noun descriptions:
 | `baubles_untaken.go` | Found baubles left lying untaken for `BaubleUntakenHours` (24) vanish: `removeUntakenBaubles`, run from `RoundTick` (rooms with players) and `Prepare` (before a visitor sees the floor); records `baubles.MarkVanished` |
 | `spawninfo.go` / `spawninfo_validate.go` | Room spawn lists and their validation |
 | `instances.go` / `ephemeral.go` | Instanced and ephemeral rooms |
-| `routing_hooks.go` | Exit router, entry guard and private-room check registered by `internal/housing` |
+| `routing_hooks.go` | Exit router, entry guard, private-room check, room overlay and room save hook, registered by `internal/housing` |
 | `cubegen.go` | Generated cube/maze room structures |
 | `memory.go` | Memory reporting for the admin report |
 | `test_helpers.go` | Test fixtures |

@@ -69,6 +69,8 @@ func setup(t *testing.T) string {
 	landlordName = func(Building) string { return `Hobb Pennock` }
 	prevStaff := isStaff
 	isStaff = func(int) bool { return false }
+	prevSave := saveUser
+	saveUser = func(*users.UserRecord) {}
 	ResetForTest()
 	AddBuildingForTest(testBuilding())
 	// Weightless, because a test character has no strength to carry with.
@@ -85,6 +87,7 @@ func setup(t *testing.T) string {
 		restoreRep()
 		landlordName = prevName
 		isStaff = prevStaff
+		saveUser = prevSave
 		ResetForTest()
 	})
 	return dir

@@ -344,12 +344,9 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 		cmd, rest = actions.ExpandAliases(cmd, rest, user.TryCommandAlias)
 		alias := cmd
 
-		// A house strongbox opens for its owner alone. Refused here, before
-		// room trees, scripts or the command itself can touch its contents.
-		if refusal, refused := housing.GuardUserCommand(user.UserId, user.Character.RoomId, cmd, rest); refused {
-			user.SendText(messaging.CategorySystem, refusal)
-			return true, nil
-		}
+		// A house strongbox is kept locked; its owner's own command unlocks
+		// the strongboxes of the room they stand in for this command alone.
+		defer housing.OpenStrongboxesForUser(user.UserId, user.Character.RoomId)()
 
 		skipScript := flags.Has(events.CmdSkipScripts)
 		if info, ok := userCommands[alias]; ok && info.AdminOnly {

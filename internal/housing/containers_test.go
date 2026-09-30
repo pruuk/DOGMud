@@ -358,6 +358,7 @@ func TestCapture_NoChangeWritesNothing(t *testing.T) {
 	if Capture(w.room(home)) {
 		t.Error("capture reported a change when nothing changed")
 	}
+	w.saved = map[int]bool{}
 	AfterUserCommand(1, home)
 	if w.saved[1] {
 		t.Error("the player was saved though nothing changed")
@@ -507,68 +508,106 @@ func strongboxHouse(t *testing.T) (*containerWorld, *users.UserRecord, *users.Us
 	return w, alice, bob, home
 }
 
-func TestGuard_GuestUsesTheContainerButNotTheStrongbox(t *testing.T) {
-	_, _, bob, home := strongboxHouse(t)
-
-	refused := [][2]string{
-		{`look`, `in coffer`}, {`look`, `coffer`}, {`get`, `ring from coffer`}, {`get`, `all from coffer`},
-		{`put`, `ring in coffer`}, {`put`, `ring coffer`}, {`look`, `in coff`}, {`get`, `ring from COFFER`},
-		{`unlock`, `coffer`}, {`picklock`, `coffer`}, {`steal`, `ring from coffer`}, {`plant`, `ring coffer`},
-		{`use`, `key on coffer`}, {`remove`, `ring from coffer`},
+func TestStrongbox_PlacedHydratedAndRestoredShut(t *testing.T) {
+	w, _, _, home := strongboxHouse(t)
+	if c := w.room(home).Containers[`coffer`]; !c.IsSealedShut() {
+		t.Fatalf("a placed strongbox is not shut: %+v", c)
 	}
-	for _, c := range refused {
-		msg, stop := GuardUserCommand(bob.UserId, home, c[0], c[1])
-		if !stop || !strings.Contains(msg, `coffer`) {
-			t.Errorf("guest %s %q was not refused", c[0], c[1])
-		}
+	if c := w.room(home).Containers[`mug`]; c.Sealed || c.Lock.IsLocked() {
+		t.Fatalf("a shared container is sealed: %+v", c)
 	}
-	allowed := [][2]string{
-		{`look`, `in mug`}, {`get`, `ring from mug`}, {`put`, `ring in mug`}, {`look`, ``},
-		{`say`, `nice coffer`}, {`get`, `ring`},
+	w.reload(t)
+	if c := w.room(home).Containers[`coffer`]; !c.IsSealedShut() {
+		t.Fatal("a strongbox is not shut after a restart")
 	}
-	for _, c := range allowed {
-		if _, stop := GuardUserCommand(bob.UserId, home, c[0], c[1]); stop {
-			t.Errorf("guest %s %q was refused", c[0], c[1])
-		}
+	delete(w.room(home).Containers, `coffer`)
+	Capture(w.room(home))
+	if c := w.room(home).Containers[`coffer`]; !c.IsSealedShut() {
+		t.Fatal("a restored strongbox is not shut")
 	}
 }
 
-func TestGuard_OwnerAndStaffOpenTheStrongbox(t *testing.T) {
-	_, alice, _, home := strongboxHouse(t)
-	if _, stop := GuardUserCommand(alice.UserId, home, `get`, `ring from coffer`); stop {
-		t.Error("the owner was refused")
+func TestStrongbox_OpensForTheOwnersCommandOnly(t *testing.T) {
+	w, alice, bob, home := strongboxHouse(t)
+	r := w.room(home)
+
+	shut := OpenStrongboxesForUser(bob.UserId, home)
+	if !r.Containers[`coffer`].IsSealedShut() {
+		t.Fatal("a guest's command opened the strongbox")
 	}
+	shut()
+
+	shut = OpenStrongboxesForUser(alice.UserId, home)
+	if r.Containers[`coffer`].Lock.IsLocked() {
+		t.Fatal("the owner's command did not open the strongbox")
+	}
+	// A nested command sees it open already and must not shut it early.
+	inner := OpenStrongboxesForUser(alice.UserId, home)
+	inner()
+	if r.Containers[`coffer`].Lock.IsLocked() {
+		t.Fatal("a nested command shut the strongbox under the outer one")
+	}
+	shut()
+	if !r.Containers[`coffer`].IsSealedShut() {
+		t.Fatal("the strongbox stayed open after the owner's command")
+	}
+	if r.Containers[`mug`].Lock.IsLocked() {
+		t.Error("shutting strongboxes locked the shared container")
+	}
+}
+
+func TestStrongbox_StaffAndOnlyInHouses(t *testing.T) {
+	w, _, _, home := strongboxHouse(t)
 	prev := isStaff
 	isStaff = func(id int) bool { return id == 3 }
 	defer func() { isStaff = prev }()
-	if _, stop := GuardUserCommand(3, home, `look`, `in coffer`); stop {
-		t.Error("staff were refused")
+	shut := OpenStrongboxesForUser(3, home)
+	if w.room(home).Containers[`coffer`].Lock.IsLocked() {
+		t.Error("staff could not open it")
 	}
+	shut()
+	OpenStrongboxesForUser(1, 5615)() // not a house: nothing to do, no panic
 }
 
-func TestGuard_OnlyInHouses(t *testing.T) {
-	_, _, bob, _ := strongboxHouse(t)
-	if _, stop := GuardUserCommand(bob.UserId, 5615, `look`, `in coffer`); stop {
-		t.Error("refused outside any house")
-	}
-}
-
-func TestGuard_Mobs(t *testing.T) {
+func TestStrongbox_Mobs(t *testing.T) {
 	w, alice, bob, home := strongboxHouse(t)
-	w.mobAt[900], w.mobAt[901] = home, home
+	r := w.room(home)
 	w.charmed[900] = alice.UserId
 	w.charmed[901] = bob.UserId
 
-	if GuardMobCommand(900, home, `ring coffer`) {
-		t.Error("the owner's companion was refused")
+	shut := OpenStrongboxesForMob(901, home)
+	if !r.Containers[`coffer`].IsSealedShut() {
+		t.Error("a guest's companion opened the strongbox")
 	}
-	if !GuardMobCommand(901, home, `ring coffer`) {
-		t.Error("a guest's companion reached the strongbox")
+	shut()
+	shut = OpenStrongboxesForMob(902, home)
+	if !r.Containers[`coffer`].IsSealedShut() {
+		t.Error("a stray mob opened the strongbox")
 	}
-	if !GuardMobCommand(902, home, `in coffer`) {
-		t.Error("a stray mob reached the strongbox")
+	shut()
+	shut = OpenStrongboxesForMob(900, home)
+	if r.Containers[`coffer`].Lock.IsLocked() {
+		t.Error("the owner's companion could not open it")
 	}
-	if GuardMobCommand(901, home, `ring mug`) {
-		t.Error("a guest's companion was refused the shared container")
+	shut()
+	if !r.Containers[`coffer`].IsSealedShut() {
+		t.Error("left open after the companion's command")
+	}
+}
+
+// Deeds already bought and carried count against the free corners, so no deed
+// is sold that could never be placed.
+func TestBuyContainer_CountsCarriedDeeds(t *testing.T) {
+	setup(t)
+	w := newContainerWorld(t)
+	u := w.lodger(t, 1, `Alice`, OfferContainer) // carries one; the room takes 2
+	buyKey(u, OfferStrongbox)                    // carries two: every corner promised
+	gold := u.Character.Gold
+	buyKey(u, OfferContainer)
+	if u.Character.Gold != gold {
+		t.Error("sold a deed with every free corner already promised to a carried deed")
+	}
+	if o := offerMap(u); o[OfferContainer].Available {
+		t.Errorf("offered with no free corner left: %+v", o[OfferContainer])
 	}
 }

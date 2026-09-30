@@ -93,6 +93,14 @@ func useExtension(user *users.UserRecord, room *rooms.Room, itm items.Item, h Ho
 		send(`The deed is made out to somebody else, in a clerk's hand that does not smudge. It is no use to you.`)
 		return
 	}
+	if h.Outstanding(b) < 1 {
+		send(`The ledger says every deed made out to you has been honoured already. This one is waste paper now.`)
+		return
+	}
+	if _, isFrozen := Frozen(b.BuildingId); isFrozen {
+		send(`The letting company has stopped all building work while its ledger is gone over. Keep the deed and try again another day.`)
+		return
+	}
 	if len(h.RoomIds) >= b.MaxRooms {
 		send(`Your lodging is already as large as the letting company allows. The deed stays folded.`)
 		return
@@ -148,7 +156,7 @@ func useExtension(user *users.UserRecord, room *rooms.Room, itm items.Item, h Ho
 	if still {
 		_, dirTaken = cur.exitsOf(room.RoomId)[dir]
 	}
-	if !still || !cur.HasRoom(room.RoomId) || dirTaken || len(cur.RoomIds) >= b.MaxRooms {
+	if !still || !cur.HasRoom(room.RoomId) || dirTaken || len(cur.RoomIds) >= b.MaxRooms || cur.Outstanding(b) < 1 {
 		mu.Unlock()
 		send(`Something changed while you were unfolding the deed. Try again.`)
 		return
@@ -162,6 +170,7 @@ func useExtension(user *users.UserRecord, room *rooms.Room, itm items.Item, h Ho
 	newRoom := vacant[0]
 	next := cur.clone()
 	next.RoomIds = append(next.RoomIds, newRoom)
+	next.Floors = append(next.Floors, HouseFloor{RoomId: newRoom}) // it starts empty
 	next.Links = append(next.Links, RoomLink{From: room.RoomId, Direction: dir, To: newRoom})
 	if err := next.checkLinks(); err != nil {
 		mu.Unlock()
@@ -182,6 +191,7 @@ func useExtension(user *users.UserRecord, room *rooms.Room, itm items.Item, h Ho
 	if user.Character.RemoveItem(itm) {
 		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
 	}
+	saveUser(user)    // the house is on disk; the spent deed must be too
 	applyLayout(room) // the room the lodger stands in, whatever LoadRoom returns
 	refreshHouse(next, newRoom)
 	mudlog.Info(`housing.useExtension`, `user`, user.UserId, `building`, b.BuildingId, `from`, room.RoomId, `direction`, dir, `newRoom`, newRoom)
@@ -257,6 +267,7 @@ func useRedecorate(user *users.UserRecord, room *rooms.Room, itm items.Item, h H
 	if user.Character.RemoveItem(itm) {
 		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
 	}
+	saveUser(user) // the house is on disk; the spent voucher must be too
 	applyLayout(room)
 	mudlog.Info(`housing.useRedecorate`, `user`, user.UserId, `room`, room.RoomId, `length`, len(text))
 

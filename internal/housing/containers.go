@@ -1,16 +1,19 @@
 package housing
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"gopkg.in/yaml.v2"
 )
 
 // House containers. A container deed places a container in a room of the
@@ -140,10 +143,15 @@ func useContainerDeed(user *users.UserRecord, room *rooms.Room, itm items.Item, 
 	if user.Character.RemoveItem(itm) {
 		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
 	}
+	saveUser(user) // the house is on disk; the spent deed must be too
 	if room.Containers == nil {
 		room.Containers = map[string]rooms.Container{}
 	}
-	room.Containers[name] = rooms.Container{}
+	placed := rooms.Container{}
+	if ownerOnly {
+		sealContainer(&placed)
+	}
+	room.Containers[name] = placed
 	mudlog.Info(`housing.useContainerDeed`, `user`, user.UserId, `room`, room.RoomId, `name`, name, `ownerOnly`, ownerOnly)
 
 	if ownerOnly {
@@ -166,10 +174,14 @@ func hydrateContainers(r *rooms.Room, house House) {
 	}
 	fresh := make(map[string]rooms.Container, len(mine))
 	for _, c := range mine {
-		fresh[c.Name] = rooms.Container{
+		rc := rooms.Container{
 			Items: append([]items.Item(nil), c.Items...),
 			Gold:  c.Gold,
 		}
+		if c.OwnerOnly {
+			sealContainer(&rc)
+		}
+		fresh[c.Name] = rc
 	}
 	r.Containers = fresh
 }
@@ -193,14 +205,21 @@ func hydrateFloor(r *rooms.Room, house House) {
 // floor. A container missing from the live room (only something outside
 // housing could remove one) is put back from the record rather than lost.
 func Capture(r *rooms.Room) bool {
+	changed, _ := capture(r)
+	return changed
+}
+
+// capture is Capture reporting a failed write, so a caller about to replace
+// the live room from the record knows the record is behind.
+func capture(r *rooms.Room) (changed bool, err error) {
 	if r == nil {
-		return false
+		return false, nil
 	}
 	mu.Lock()
 	defer mu.Unlock()
 	cur, owned := roomHouse[r.RoomId]
 	if !owned {
-		return false
+		return false, nil
 	}
 	var next *House
 	change := func() *House {
@@ -220,7 +239,11 @@ func Capture(r *rooms.Room) bool {
 			if r.Containers == nil {
 				r.Containers = map[string]rooms.Container{}
 			}
-			r.Containers[c.Name] = rooms.Container{Items: append([]items.Item(nil), c.Items...), Gold: c.Gold}
+			rc := rooms.Container{Items: append([]items.Item(nil), c.Items...), Gold: c.Gold}
+			if c.OwnerOnly {
+				sealContainer(&rc)
+			}
+			r.Containers[c.Name] = rc
 			continue
 		}
 		if live.Gold == c.Gold && sameItems(live.Items, c.Items) {
@@ -250,24 +273,55 @@ func Capture(r *rooms.Room) bool {
 	}
 
 	if next == nil {
-		return false
+		return false, nil
 	}
 	if err := saveHouse(*next); err != nil {
 		// Keep the live room as it is; the next capture retries.
 		mudlog.Error(`housing.Capture`, `room`, r.RoomId, `error`, err.Error())
-		return false
+		return false, err
 	}
 	nn := next.clone()
 	indexLocked(&nn)
-	return true
+	return true, nil
 }
 
+// captureAllLoaded captures every loaded room of every house, before a data
+// reload replaces the registry from disk. It returns the rooms whose capture
+// failed: their live state is newer than their file, so the reload must not
+// overwrite it from the file.
+func captureAllLoaded() map[int]bool {
+	failed := map[int]bool{}
+	for _, h := range AllHouses() {
+		for _, id := range h.RoomIds {
+			if !roomLoaded(id) {
+				continue
+			}
+			if _, err := capture(liveRoom(id)); err != nil {
+				failed[id] = true
+			}
+		}
+	}
+	return failed
+}
+
+// sameItems reports whether two item lists would save the same: the same
+// instances (UUID) in the same order, each with the same saved state. The
+// saved state is compared as YAML, exactly what the house file would hold, so
+// any in-place change to a saved field is noticed and nothing unsaved
+// (temporary data) causes a rewrite.
 func sameItems(a, b []items.Item) bool {
 	if len(a) != len(b) {
 		return false
 	}
 	for i := range a {
-		if !a[i].Equals(b[i]) || a[i].Uses != b[i].Uses {
+		if !a[i].Equals(b[i]) {
+			return false
+		}
+	}
+	for i := range a {
+		ya, errA := yaml.Marshal(a[i])
+		yb, errB := yaml.Marshal(b[i])
+		if errA != nil || errB != nil || !bytes.Equal(ya, yb) {
 			return false
 		}
 	}
@@ -359,92 +413,72 @@ func AfterMobCommand(mobInstanceId int, roomBefore int) {
 	}
 }
 
-// ── Owner-only containers ──────────────────────────────────────────────────
+// ── Strongboxes ────────────────────────────────────────────────────────────
+//
+// A strongbox is a rooms.Container marked Sealed and kept under a lock
+// (rooms.SealedLockDifficulty) at all times. Every engine path that honours
+// container locks (look, get, put, use, tab completion, companions) therefore
+// refuses it with no housing code involved, and the paths that could force a
+// lock (picklock, unlock with a key, steal, plant) refuse a sealed container
+// outright. The owner's own command, and a command of a companion charmed by
+// the owner, unlocks the strongboxes of the room they stand in for the length
+// of that one command (usercommands.TryCommand, mobcommands.TryCommand). The
+// game loop runs one command at a time, so nobody else can act while one is
+// open.
 
-// Commands that can reach into a container. Anything else ("say nice mug")
-// is not a container use and is never refused.
-var containerVerbs = map[string]bool{
-	`look`: true, `get`: true, `put`: true, `unlock`: true, `lock`: true,
-	`picklock`: true, `steal`: true, `plant`: true, `use`: true, `defuse`: true,
-	`remove`: true, // "remove ring from coffer" is a get (usercommands.Remove)
+// sealContainer shuts a container as a strongbox.
+func sealContainer(c *rooms.Container) {
+	c.Sealed = true
+	c.Lock = gamelock.Lock{Difficulty: rooms.SealedLockDifficulty}
 }
 
-var containerStopWords = map[string]bool{
-	`in`: true, `into`: true, `from`: true, `on`: true, `at`: true, `the`: true,
-	`a`: true, `an`: true, `my`: true, `all`: true, `to`: true, `of`: true,
-}
-
-// strongboxNamed reports the name of an owner-only container in r that the
-// command text would reach, if any. It resolves words with the room's own
-// FindContainerByName, exactly as the container commands do, so no spelling
-// that reaches a strongbox can slip past.
-func strongboxNamed(r *rooms.Room, h House, rest string) (string, bool) {
-	private := map[string]bool{}
-	for _, c := range h.containersIn(r.RoomId) {
-		if c.OwnerOnly {
-			private[c.Name] = true
-		}
-	}
-	if len(private) == 0 {
-		return ``, false
-	}
-	candidates := []string{strings.TrimSpace(rest)}
-	for _, w := range strings.Fields(strings.ToLower(rest)) {
-		w = strings.Trim(w, `.,!?"'()`)
-		if len(w) < 1 || containerStopWords[w] {
-			continue
-		}
-		candidates = append(candidates, w)
-	}
-	for _, c := range candidates {
-		if c == `` {
-			continue
-		}
-		if name := r.FindContainerByName(c); name != `` && private[name] {
-			return name, true
-		}
-	}
-	return ``, false
-}
-
-// GuardUserCommand refuses a player's container command that would reach a
-// strongbox they do not own. usercommands.TryCommand calls it after alias
-// expansion, before anything else can act.
-func GuardUserCommand(userId int, roomId int, cmd string, rest string) (string, bool) {
-	if !containerVerbs[cmd] {
-		return ``, false
-	}
+// openStrongboxes unlocks every shut strongbox in roomId when the house's
+// owner (or staff) is the one acting, and returns what shuts them again.
+func openStrongboxes(roomId int, mayOpen func(h House) bool) (shut func()) {
+	noop := func() {}
 	h, owned := HouseForRoom(roomId)
-	if !owned || h.OwnerUserId == userId || isStaff(userId) {
-		return ``, false
+	if !owned || !mayOpen(h) {
+		return noop
 	}
 	r := liveRoom(roomId)
 	if r == nil {
-		return ``, false
+		return noop
 	}
-	if name, hit := strongboxNamed(r, h, rest); hit {
-		return fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked, and it opens for its owner and nobody else.`, name), true
+	opened := []string{}
+	for name, c := range r.Containers {
+		if c.IsSealedShut() {
+			c.Lock = gamelock.Lock{}
+			r.Containers[name] = c
+			opened = append(opened, name)
+		}
 	}
-	return ``, false
+	if len(opened) == 0 {
+		return noop // nothing shut, or an outer command already opened them
+	}
+	return func() {
+		for _, name := range opened {
+			if c, ok := r.Containers[name]; ok {
+				sealContainer(&c)
+				r.Containers[name] = c
+			}
+		}
+	}
 }
 
-// GuardMobCommand refuses a mob's command that would reach a strongbox,
-// unless the mob is a companion of the house's owner. Mobs have no verb
-// list: any command that names a strongbox is refused.
-func GuardMobCommand(mobInstanceId int, roomId int, rest string) bool {
-	h, owned := HouseForRoom(roomId)
-	if !owned {
-		return false
-	}
-	if mobCharmedBy(mobInstanceId, h.OwnerUserId) {
-		return false
-	}
-	r := liveRoom(roomId)
-	if r == nil {
-		return false
-	}
-	_, hit := strongboxNamed(r, h, rest)
-	return hit
+// OpenStrongboxesForUser unlocks the strongboxes of the room a player stands
+// in if they own it (or are staff), for the command about to run. The caller
+// must call the returned func when the command is done, whatever happens.
+func OpenStrongboxesForUser(userId int, roomId int) (shut func()) {
+	return openStrongboxes(roomId, func(h House) bool {
+		return h.OwnerUserId == userId || isStaff(userId)
+	})
+}
+
+// OpenStrongboxesForMob does the same for a mob charmed by the owner.
+func OpenStrongboxesForMob(mobInstanceId int, roomId int) (shut func()) {
+	return openStrongboxes(roomId, func(h House) bool {
+		return mobCharmedBy(mobInstanceId, h.OwnerUserId)
+	})
 }
 
 // CaptureOnSave is the rooms.RoomSaveHook: the autosave backstop, in case a

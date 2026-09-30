@@ -300,6 +300,13 @@ func TestSearch_Bauble_ExcludedRoomKindsNeverRoll(t *testing.T) {
 	if !baubleRoomAllowed(newSearchTestRoom(9511)) {
 		t.Fatal("an ordinary room is allowed")
 	}
+
+	// A private room (a housing lodging) never offers baubles either.
+	rooms.SetPrivateRoomCheck(func(roomId int) bool { return roomId == 9514 })
+	defer rooms.SetPrivateRoomCheck(nil)
+	if baubleRoomAllowed(newSearchTestRoom(9514)) {
+		t.Fatal("a private room offered baubles")
+	}
 }
 
 // The anti-leak property holds with the bauble tier in place: a failed

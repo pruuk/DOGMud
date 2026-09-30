@@ -75,11 +75,26 @@ func TestFloor_PickingEverythingUpIsRecordedToo(t *testing.T) {
 	}
 }
 
+// forgetFloors makes the house look like one written before floors were
+// recorded.
+func forgetFloors(t *testing.T, userId int) {
+	t.Helper()
+	h, _ := HouseOf(userId, testBldgId)
+	h.Floors = nil
+	if err := saveHouse(h); err != nil {
+		t.Fatal(err)
+	}
+	mu.Lock()
+	indexLocked(&h)
+	mu.Unlock()
+}
+
 func TestFloor_ExistingFloorIsAdoptedNotLost(t *testing.T) {
 	setup(t)
 	w := newContainerWorld(t)
 	u := w.lodger(t, 1, `Alice`, OfferContainer)
 	home := w.homeOf(t, u)
+	forgetFloors(t, 1)
 
 	// A lodging from before floors were recorded: its floor is only in the
 	// instance save, and the load leaves it there.
@@ -107,13 +122,38 @@ func TestFloor_AnEmptyUnrecordedFloorWritesNothing(t *testing.T) {
 	w := newContainerWorld(t)
 	u := w.lodger(t, 1, `Alice`, OfferContainer)
 	home := w.homeOf(t, u)
+	forgetFloors(t, 1)
 	w.room(home)
+	w.saved = map[int]bool{}
 	AfterUserCommand(1, home)
 	if w.saved[1] {
 		t.Error("an empty floor caused a write")
 	}
 	if _, ok := floorOf(t, 1, home); ok {
 		t.Error("an empty floor was recorded")
+	}
+}
+
+func TestFloor_ANewHomeStartsEmpty(t *testing.T) {
+	setup(t)
+	w := newContainerWorld(t)
+	// Something was left in the unit before it was sold (an old instance
+	// save, a tenancy removed by staff).
+	leftover := unitRoom(testUnitA)
+	leftover.Items = []items.Item{trinket(testKeyId)}
+	leftover.Gold = 99
+	leftover.Containers = map[string]rooms.Container{`crate`: {Gold: 5}}
+	w.rooms[testUnitA] = leftover
+
+	u := w.player(1, `Alice`, 1000)
+	if res, _ := buy(t, u); res != PurchaseOk {
+		t.Fatal(res)
+	}
+	if len(leftover.Items) != 0 || leftover.Gold != 0 || len(leftover.Containers) != 0 {
+		t.Errorf("the new home came with someone else's things: %+v gold %d %+v", leftover.Items, leftover.Gold, leftover.Containers)
+	}
+	if !w.saved[1] {
+		t.Error("the buyer was not saved after paying")
 	}
 }
 

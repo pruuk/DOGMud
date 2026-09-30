@@ -82,6 +82,16 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 		say(`You've already got a room.`)
 		return PurchaseAlreadyOwner
 	}
+	if heldOwners[ownerKey{b.BuildingId, user.UserId}] {
+		mu.Unlock()
+		say(`Your name's in the ledger already, but the page is in a state. The Widow's clerk is going over it. Nothing I can let you till it's straight.`)
+		return PurchaseAlreadyOwner
+	}
+	if _, isFrozen := frozen[b.BuildingId]; isFrozen {
+		mu.Unlock()
+		say(`The ledger's in a state. The Widow's clerk is going over it, and I'm to let nothing till he's done. Come back another day.`)
+		return PurchaseNoVacancy
+	}
 	vacant := vacantUnitsLocked(b.BuildingId)
 	if len(vacant) < tier.Rooms {
 		mu.Unlock()
@@ -98,6 +108,11 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 		RoomsPaid:   tier.Price,
 		PurchasedAt: now().UTC(),
 	}
+	// A new lodger's rooms start empty: whatever an old instance save or a
+	// previous tenancy left in them is not theirs.
+	for _, roomId := range h.RoomIds {
+		h.Floors = append(h.Floors, HouseFloor{RoomId: roomId})
+	}
 	if err := saveHouse(h); err != nil {
 		mu.Unlock()
 		mudlog.Error(`housing.Purchase`, `user`, user.UserId, `building`, b.BuildingId, `error`, err.Error())
@@ -110,6 +125,12 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 
 	fromGold, fromBank := chargeGold(user, tier.Price)
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -fromGold, BankChange: -fromBank})
+	saveUser(user) // the house is on disk; the payment must be too
+	for _, roomId := range h.RoomIds {
+		if roomLoaded(roomId) {
+			ApplyOverlay(liveRoom(roomId))
+		}
+	}
 
 	mudlog.Info(`housing.Purchase`, `user`, user.UserId, `character`, user.Character.Name, `building`, b.BuildingId, `tier`, tier.TierId, `rooms`, fmt.Sprint(h.RoomIds), `price`, tier.Price)
 

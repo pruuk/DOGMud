@@ -158,6 +158,7 @@ func useGuestKey(user *users.UserRecord, room *rooms.Room, itm items.Item, b Bui
 	if user.Character.RemoveItem(itm) {
 		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
 	}
+	saveUser(user) // the house is on disk; the spent key must be too
 	mudlog.Info(`housing.useGuestKey`, `guest`, user.UserId, `host`, host, `building`, b.BuildingId)
 	send(fmt.Sprintf(`You press the key into the brass plate. It sinks in and is gone, and the lock ticks, once. It knows your palm now. You can visit %s's lodging through the %s whenever you like.`, next.OwnerName, b.DoorExit))
 	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> presses a small brass key into the plate of the green door. The lock ticks.`, user.Character.Name), user.UserId)

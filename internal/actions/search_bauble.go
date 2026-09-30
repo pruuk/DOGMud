@@ -496,10 +496,15 @@ func BaubleSkillFactor(char *characters.Character) float64 {
 
 // baubleRoomAllowed rules out the rooms that never offer baubles whatever
 // the config says: instance and other temporary rooms (they are rebuilt, and
-// a paid instance must not become a bauble farm), banks, storage rooms and
-// character rooms. Excluded zones are checked by the baubles package.
+// a paid instance must not become a bauble farm), banks, storage rooms,
+// character rooms, and private rooms (housing lodgings: bought, safe, and
+// furnished with as many searchable containers as the owner likes, so a farm
+// for the same reason). Excluded zones are checked by the baubles package.
 func baubleRoomAllowed(room *rooms.Room) bool {
 	if room.IsEphemeral() || room.IsBank || room.IsStorage || room.IsCharacterRoom {
+		return false
+	}
+	if rooms.IsPrivateRoom(room.RoomId) {
 		return false
 	}
 	if rooms.GetInstanceRegistry().FindByRoomId(room.RoomId) != nil {

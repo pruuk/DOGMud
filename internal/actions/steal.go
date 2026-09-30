@@ -504,6 +504,10 @@ func stealFromContainer(actor Actor, containerName string,
 		actor.SendText(messaging.CategorySystem, "You don't see that here.")
 		return StealResult{Reason: "not found"}
 	}
+	if container.IsSealedShut() {
+		actor.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked, and it opens for its owner and nobody else.`, containerName))
+		return StealResult{Reason: "sealed"}
+	}
 
 	// Skill rank 2 required for the actual steal mechanic. Mirrors the
 	// gate in stealFromMob; checked AFTER target validation so the rebuff

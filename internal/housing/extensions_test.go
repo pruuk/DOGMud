@@ -119,7 +119,8 @@ func TestExtensionPriceEscalates(t *testing.T) {
 	u := testUser(1, 100000, 0)
 	buy(t, u)
 
-	for _, want := range []int{1500, 6000, 24000} {
+	where := []string{`north`, `east`}
+	for i, want := range []int{1500, 6000} {
 		if got := offerMap(u)[OfferExtension].Price; got != want {
 			t.Fatalf("next deed = %d, want %d", got, want)
 		}
@@ -128,22 +129,97 @@ func TestExtensionPriceEscalates(t *testing.T) {
 		if paid := before - u.Character.Gold; paid != want {
 			t.Fatalf("charged %d, want %d", paid, want)
 		}
+		deed, ok := deedIn(u)
+		if !ok || deed.BoundUserId != 1 {
+			t.Fatalf("deed = %+v, %v; want one bound to 1", deed, ok)
+		}
+		h, _ := HouseOf(1, testBldgId)
+		r := unitRoom(h.RoomIds[len(h.RoomIds)-1])
+		ApplyOverlay(r)
+		UseItem(u, r, deed, where[i], `deed `+where[i])
 	}
 	h, _ := HouseOf(1, testBldgId)
-	if h.RoomsPaid != 500+1500+6000+24000 {
-		t.Errorf("rooms paid = %d", h.RoomsPaid)
+	if h.RoomsPaid != 500+1500+6000 || len(h.RoomIds) != 3 || h.DeedsIssued != 2 {
+		t.Errorf("house = paid %d, rooms %v, deeds %d", h.RoomsPaid, h.RoomIds, h.DeedsIssued)
 	}
-	deeds := 0
-	for _, itm := range u.Character.Items {
-		if itm.ItemId == testDeedId {
-			deeds++
-			if itm.BoundUserId != 1 {
-				t.Errorf("deed bound to %d, want 1", itm.BoundUserId)
-			}
-		}
+	if o := offerMap(u)[OfferExtension]; o.Available {
+		t.Errorf("still offered at max_rooms: %+v", o)
 	}
-	if deeds != 3 {
-		t.Errorf("got %d deeds, want 3", deeds)
+}
+
+// A deed is a promise of one room. No second deed is sold while one is
+// unused, a lost one is replaced free, and only one of the copies is
+// honoured.
+func TestExtensionDeeds_OneUnusedAtATime(t *testing.T) {
+	setup(t)
+	u := testUser(1, 100000, 0)
+	buy(t, u)
+	buyKey(u, OfferExtension)
+	gold := u.Character.Gold
+
+	said := buyKey(u, OfferExtension)
+	if u.Character.Gold != gold || len(u.Character.Items) != 1 {
+		t.Fatalf("a second deed was sold while one is unused: %q", said)
+	}
+	if o := offerMap(u)[OfferExtension]; o.Available || o.Price != 0 {
+		t.Errorf("offered while one is unused: %+v", o)
+	}
+
+	// Lost (put in storage, say): a free replacement.
+	stored, _ := deedIn(u)
+	u.Character.RemoveItem(stored)
+	buyKey(u, OfferExtension)
+	fresh, ok := deedIn(u)
+	if !ok || u.Character.Gold != gold {
+		t.Fatalf("no free replacement: gold %d, deed %v", u.Character.Gold, ok)
+	}
+	h, _ := HouseOf(1, testBldgId)
+	if h.DeedsIssued != 1 || h.RoomsPaid != 2000 {
+		t.Errorf("the replacement changed the ledger: %+v", h)
+	}
+
+	// Either copy works once; the other is waste paper after.
+	entry := unitRoom(testUnitA)
+	ApplyOverlay(entry)
+	UseItem(u, entry, fresh, `north`, `deed north`)
+	u.Character.StoreItem(stored)
+	UseItem(u, entry, stored, `east`, `deed east`)
+	if h, _ := HouseOf(1, testBldgId); len(h.RoomIds) != 2 {
+		t.Errorf("two rooms from one paid deed: %v", h.RoomIds)
+	}
+}
+
+// Every unused deed in the building holds a vacant unit, so a deed is never
+// sold that could not be used.
+func TestExtensionDeeds_NeverSoldWithoutAUnitForThem(t *testing.T) {
+	setup(t)
+	a, b := testUser(1, 100000, 0), testUser(2, 100000, 0)
+	buy(t, a)
+	buy(t, b) // units: A, B owned; C vacant
+	buyKey(a, OfferExtension)
+	gold := b.Character.Gold
+	buyKey(b, OfferExtension)
+	if b.Character.Gold != gold {
+		t.Error("sold a deed with the last vacant unit already promised")
+	}
+	if o := offerMap(b)[OfferExtension]; o.Available {
+		t.Errorf("offered with no unit to spare: %+v", o)
+	}
+}
+
+func TestNormalizeDeeds_LegacyHouses(t *testing.T) {
+	b := testBuilding()
+	// Paid 500 + 1500 + 6000 for two deeds, used one of them.
+	h := House{TierId: `simple`, RoomIds: []int{testUnitA, testUnitB}, PricePaid: 500, RoomsPaid: 8000}
+	h.normalizeDeeds(b)
+	if h.DeedsIssued != 2 || h.Outstanding(b) != 1 {
+		t.Errorf("deeds %d outstanding %d, want 2 and 1", h.DeedsIssued, h.Outstanding(b))
+	}
+	// Rooms with no spend recorded at all still count as used deeds.
+	h = House{TierId: `simple`, RoomIds: []int{testUnitA, testUnitB}, PricePaid: 500}
+	h.normalizeDeeds(b)
+	if h.DeedsIssued != 1 || h.Outstanding(b) != 0 {
+		t.Errorf("deeds %d outstanding %d, want 1 and 0", h.DeedsIssued, h.Outstanding(b))
 	}
 }
 

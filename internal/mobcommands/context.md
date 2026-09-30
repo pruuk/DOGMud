@@ -222,14 +222,15 @@ The `internal/mobcommands` package implements the AI command system for non-play
 - **Resource pooling**: Shared resources for common AI operations
 
 ## House strongboxes
-`TryCommand` asks `housing.GuardMobCommand` after alias handling and
-silently drops (as handled) any command naming a house strongbox, unless the
-mob is charmed by the house's owner. world.go then calls
-`housing.AfterMobCommand` so a companion's put or get lands in the house
-record. See `internal/housing/context.md`.
+A house strongbox is a sealed, always-locked container. `TryCommand` defers
+`housing.OpenStrongboxesForMob` after alias handling, which unlocks the
+strongboxes of the mob's room for that one command only when the mob is
+charmed by the house's owner; `unlock` never keys a sealed container open.
+world.go then calls `housing.AfterMobCommand` so a companion's put, get or
+drop lands in the house record. See `internal/housing/context.md`.
 
 ## Dependencies
-- `internal/housing`: House strongbox guard
+- `internal/housing`: House strongbox window, floor and container capture
 - `internal/mobs`: Core mob management and state
 - `internal/rooms`: Room system for spatial awareness
 - `internal/characters`: Character system for mob properties

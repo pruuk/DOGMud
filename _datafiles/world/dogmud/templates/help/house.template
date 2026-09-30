@@ -29,6 +29,7 @@ come into it, and lets you take access away.
   in one of your rooms. Then <ansi fg="command">look in chest</ansi>, <ansi fg="command">put [item] in chest</ansi>
   and <ansi fg="command">get [item] from chest</ansi>. Guests can use it too. A
   <ansi fg="item">Strongbox Deed</ansi> (<ansi fg="command">buy strongbox</ansi>) places one that opens
-  for you alone. What they hold is kept for good.
+  for you alone. A room takes up to six. What they hold, and anything
+  left on your floors, is kept for good.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help visit</ansi>, <ansi fg="command">help list</ansi>

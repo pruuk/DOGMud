@@ -71,9 +71,18 @@ Hobb Pennock now sells furniture, of a sort. Lodgers can buy:
   nobody else: not your guests and not their pets. Your own companions
   can still use it for you.
 
-What you keep in them stays there through logouts and restarts. A lodging
-can hold up to ten, and each room can have several as long as the names
-differ. Look at a deed to read how it works.
+What you keep in them stays there through logouts and restarts. Each room
+of your lodging can hold up to six, as long as the names differ, and there
+is no limit for the lodging as a whole. Look at a deed to read how it works.
+
+Anything you leave on the floor of your lodging stays there too, through
+restarts and all. A lodging is private, so searching there turns up no
+curios.
+
+Room Extension Deeds: you can hold one unused deed at a time. If you lose
+yours, Hobb hands you a fresh copy for nothing; whichever copy you use first
+counts. Asking Hobb how much something costs no longer buys it by mistake:
+only asking him to buy a named thing does.
 
 Also: look in, look into and look inside now work on any container, not
 just ones in your lodging.

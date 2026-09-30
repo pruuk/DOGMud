@@ -38,6 +38,15 @@ var (
 	// selling the room again would hand a stranger someone else's things.
 	held = map[int]string{} // room id -> reason
 
+	// frozen buildings sell no rooms (no homes, no extensions): one of their
+	// house files could not be read, so which rooms it owned is unknown, and
+	// any vacant-looking unit may hold someone's things.
+	frozen = map[string]string{} // building id -> reason
+
+	// heldOwners own a house whose readable file was rejected. They are not
+	// sold a second home while it waits for repair.
+	heldOwners = map[ownerKey]bool{}
+
 	// unitCoords are each unit room's authored coordinates (x, y, z, plane),
 	// read from its template at load. A house's rooms are placed relative to
 	// its entry room's, so the overlay never has to load a room.
@@ -69,6 +78,17 @@ func LoadDataFiles() {
 	start := time.Now()
 	loaded := loadBuildings()
 	coords := validateBuildingsAgainstWorld(loaded)
+	nHouses, nHeld := rebuild(loaded, coords)
+	mudlog.Info(`housing.LoadDataFiles()`, `buildings`, len(loaded), `houses`, nHouses, `heldRooms`, nHeld, `Time Taken`, time.Since(start))
+}
+
+// rebuild replaces the registry with these buildings and the house files, and
+// lays the houses over their rooms.
+func rebuild(loaded map[string]Building, coords map[int][4]int) (nHouses int, nHeld int) {
+	// On a reload, what players did since the last capture is only in the
+	// live rooms: write it to the house files first, since the reload
+	// rebuilds everything from them.
+	keepLive := captureAllLoaded()
 
 	mu.Lock()
 	resetLocked()
@@ -83,9 +103,9 @@ func LoadDataFiles() {
 	}
 	mu.Unlock()
 
-	nHouses, nHeld := loadHouses()
-	applyAllOverlays()
-	mudlog.Info(`housing.LoadDataFiles()`, `buildings`, len(loaded), `houses`, nHouses, `heldRooms`, nHeld, `Time Taken`, time.Since(start))
+	nHouses, nHeld = loadHouses()
+	applyAllOverlays(keepLive)
+	return nHouses, nHeld
 }
 
 func resetLocked() {
@@ -96,7 +116,17 @@ func resetLocked() {
 	roomHouse = map[int]*House{}
 	ownerHouse = map[ownerKey]*House{}
 	held = map[int]string{}
+	frozen = map[string]string{}
+	heldOwners = map[ownerKey]bool{}
 	unitCoords = map[int][4]int{}
+}
+
+// Frozen reports why a building sells no rooms, if it does not.
+func Frozen(buildingId string) (string, bool) {
+	mu.RLock()
+	defer mu.RUnlock()
+	reason, ok := frozen[buildingId]
+	return reason, ok
 }
 
 // ResetForTest clears all registry state.
@@ -328,6 +358,17 @@ func VacantUnits(buildingId string) []int {
 	mu.RLock()
 	defer mu.RUnlock()
 	return vacantUnitsLocked(buildingId)
+}
+
+// vacantUnitsAll lists the vacant units of every building.
+func vacantUnitsAll() []int {
+	mu.RLock()
+	defer mu.RUnlock()
+	out := []int{}
+	for id := range buildings {
+		out = append(out, vacantUnitsLocked(id)...)
+	}
+	return out
 }
 
 func vacantUnitsLocked(buildingId string) []int {

@@ -116,13 +116,13 @@ func loadOneHouse(buildingDir string, path string, fileName string) bool {
 		if errors.Is(err, util.ErrStateAbsent) {
 			return false
 		}
-		quarantineAndHold(path, entryFromName, err)
+		quarantineAndHold(path, buildingDir, entryFromName, err)
 		return false
 	}
 
 	var h House
 	if uerr := yaml.Unmarshal(raw, &h); uerr != nil {
-		quarantineAndHold(path, entryFromName, fmt.Errorf(`%w: %v`, util.ErrStateCorrupt, uerr))
+		quarantineAndHold(path, buildingDir, entryFromName, fmt.Errorf(`%w: %v`, util.ErrStateCorrupt, uerr))
 		return false
 	}
 	// Item identities (UUIDs) are not written to disk; every loader mints
@@ -153,6 +153,9 @@ func loadOneHouse(buildingDir string, path string, fileName string) bool {
 		for _, roomId := range h.RoomIds {
 			holdLocked(roomId, reason)
 		}
+		if h.OwnerUserId > 0 {
+			heldOwners[ownerKey{h.BuildingId, h.OwnerUserId}] = true
+		}
 		return false
 	}
 
@@ -163,6 +166,7 @@ func loadOneHouse(buildingDir string, path string, fileName string) bool {
 	if !ok {
 		return reject(fmt.Sprintf(`building %q is not authored`, h.BuildingId))
 	}
+	h.normalizeDeeds(*b)
 	if h.EntryRoom() != entryFromName {
 		return reject(fmt.Sprintf(`entry room %d does not match the file name`, h.EntryRoom()))
 	}
@@ -191,7 +195,7 @@ func loadOneHouse(buildingDir string, path string, fileName string) bool {
 
 // quarantineAndHold applies rule 3 of the contract: move the bad file aside
 // (never delete), log at ERROR, and carry on. The room it named is held.
-func quarantineAndHold(path string, entryRoomId int, cause error) {
+func quarantineAndHold(path string, buildingId string, entryRoomId int, cause error) {
 	dest, qerr := util.QuarantineCorrupt(path)
 	if qerr != nil {
 		mudlog.Error(`housing.loadHouses`, `file`, path, `error`, cause.Error(), `quarantineError`, qerr.Error())
@@ -200,5 +204,8 @@ func quarantineAndHold(path string, entryRoomId int, cause error) {
 	}
 	mu.Lock()
 	holdLocked(entryRoomId, `house file unreadable: `+cause.Error())
+	// Which other rooms the file owned is unknown, so no room of this
+	// building is sold until staff repair or remove it.
+	frozen[buildingId] = fmt.Sprintf(`house file %s unreadable`, filepath.Base(path))
 	mu.Unlock()
 }

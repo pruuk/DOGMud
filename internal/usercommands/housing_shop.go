@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/housing"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -96,8 +97,10 @@ func tryHousingBuy(rest string, user *users.UserRecord, room *rooms.Room) bool {
 }
 
 // tryHousingItemUse handles "use deed north" and "use voucher [text]". The
-// item name is the shortest leading run of words that names a housing item
-// in the backpack; the rest are its arguments. Anything else returns false.
+// item name is the longest leading run of words that names a housing item in
+// the backpack; the rest are its arguments. Among matching housing items, one
+// this player may use (not made out to another account) is preferred.
+// Anything else returns false.
 func tryHousingItemUse(rest string, user *users.UserRecord, room *rooms.Room) bool {
 	// If the whole text already names an ordinary item ("use room key"), it is
 	// that item, even if a prefix would also match a deed.
@@ -107,8 +110,15 @@ func tryHousingItemUse(rest string, user *users.UserRecord, room *rooms.Room) bo
 	// Longest name first, so "use container deed mug" is the container deed
 	// named mug, not a "container" item given the words "deed mug".
 	words := strings.Fields(rest)
+	mine := func(i items.Item) bool {
+		return housing.IsHousingItem(i.ItemId) && (i.BoundUserId == 0 || i.BoundUserId == user.UserId)
+	}
 	for i := len(words); i >= 1; i-- {
-		itm, found := user.Character.FindInBackpack(strings.Join(words[:i], ` `))
+		name := strings.Join(words[:i], ` `)
+		itm, found := user.Character.FindInBackpackWhere(name, mine)
+		if !found {
+			itm, found = user.Character.FindInBackpack(name)
+		}
 		if !found || !housing.IsHousingItem(itm.ItemId) {
 			continue
 		}

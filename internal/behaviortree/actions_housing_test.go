@@ -49,3 +49,23 @@ func TestBuyHousingFailsWithoutActors(t *testing.T) {
 		}
 	}
 }
+
+// Asking about buying is not buying: only a plain request sells anything.
+func TestIsQuestion(t *testing.T) {
+	questions := []string{
+		`how much to buy a room?`, `do you buy furniture?`, `can I buy a room`,
+		`to tell me how to buy a deed?`, `if I can buy a home`, `what does a deed cost`,
+		`will you buy back my key`,
+	}
+	for _, q := range questions {
+		if !isQuestion(q) {
+			t.Errorf("%q read as a request to buy", q)
+		}
+	}
+	requests := []string{`buy a room`, `to buy a room`, `I want to buy a room`, `buy deed`, `buy a strongbox please`}
+	for _, r := range requests {
+		if isQuestion(r) {
+			t.Errorf("%q read as a question", r)
+		}
+	}
+}

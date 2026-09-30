@@ -162,10 +162,9 @@ func TryCommand(cmd string, rest string, mobId int) (bool, error) {
 		}
 	}
 
-	// A house strongbox opens for its owner (and the owner's companions) alone.
-	if housing.GuardMobCommand(mobId, mob.Character.RoomId, rest) {
-		return true, nil
-	}
+	// A house strongbox is kept locked; a companion of its owner may open it
+	// for the length of this one command.
+	defer housing.OpenStrongboxesForMob(mobId, mob.Character.RoomId)()
 
 	if cmdInfo, ok := mobCommands[cmd]; ok {
 		if mobDisabled && !cmdInfo.AllowedWhenDowned {

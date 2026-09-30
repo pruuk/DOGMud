@@ -93,12 +93,24 @@ func overlayRoom(r *rooms.Room, house House, b Building, base [4]int, hasBase bo
 }
 
 // applyAllOverlays lays every house over its rooms. LoadDataFiles calls it
-// after houses load, because the building validation and the rest of boot may
-// already have loaded unit rooms before any house was known.
-func applyAllOverlays() {
+// after houses load, because boot loads every room (validation, the shop
+// prewarm) before any house is known, so those rooms were built without their
+// floors and containers. Rooms in keepLive (their capture before a reload
+// failed, so their live state is newer than the file) get the layout only.
+// Loaded vacant units lose any containers left in them.
+func applyAllOverlays(keepLive map[int]bool) {
 	for _, h := range AllHouses() {
 		for _, roomId := range h.RoomIds {
-			ApplyOverlay(rooms.LoadRoom(roomId))
+			if keepLive[roomId] {
+				applyLayout(liveRoom(roomId))
+				continue
+			}
+			ApplyOverlay(liveRoom(roomId))
+		}
+	}
+	for _, roomId := range vacantUnitsAll() {
+		if roomLoaded(roomId) {
+			ApplyOverlay(liveRoom(roomId))
 		}
 	}
 }

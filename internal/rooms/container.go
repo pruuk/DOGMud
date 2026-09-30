@@ -12,10 +12,25 @@ type Container struct {
 	Hidden       bool          `yaml:"hidden,omitempty"`       // If true, container is invisible until discovered via search.
 	DespawnRound uint64        `yaml:"despawnround,omitempty"` // If this is set, it's a chest that will disappear with time.
 	Recipes      map[int][]int `yaml:"recipes,omitempty,flow"` // Item Id's (key) that are created when the recipe is present in the container (values) and it is "used"
+	// Sealed marks a container that is opened only by its owner's hand (a
+	// housing strongbox): it is kept locked, and its lock can never be
+	// picked, keyed open, stolen from or planted in. Its owner's own command
+	// unlocks it for that command alone (internal/housing). Set by its owner
+	// system on every load, never saved with the room.
+	Sealed bool `yaml:"-"`
 }
+
+// SealedLockDifficulty is the lock a sealed container is kept under.
+const SealedLockDifficulty = 255
 
 func (c Container) HasLock() bool {
 	return c.Lock.Difficulty > 0
+}
+
+// IsSealedShut reports whether a sealed container is shut right now, which is
+// always except during its owner's own command.
+func (c Container) IsSealedShut() bool {
+	return c.Sealed && c.Lock.IsLocked()
 }
 
 func (c *Container) AddItem(i items.Item) {

@@ -17,6 +17,10 @@ description: >
   some and shutters in others, the rooms of people who have somewhere to
   come home to.
 biome: city_backstreet
+coord:
+  x: -17
+  y: 86
+  z: 0
 # The company's lantern over the door, named in the description. The
 # backstreet biome's own lamp (35) is too dark after nightfall to make out
 # faces, so Hobb's list could not be read; 52 is the lamplit-street level of

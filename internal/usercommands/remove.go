@@ -18,11 +18,13 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// when the words after "from" name a container here; anything else is
 	// taking off equipment, as always.
 	if i := strings.LastIndex(strings.ToLower(rest), ` from `); i > 0 {
-		if room.FindContainerByName(strings.TrimSpace(rest[i+len(` from `):])) != `` {
-			return Get(rest, user, room, flags)
+		if name := room.FindContainerByName(strings.TrimSpace(rest[i+len(` from `):])); name != `` {
+			// A hidden container nobody has found is not there to take from.
+			if c := room.Containers[name]; !c.Hidden || user.Character.HasDiscovery(room.RoomId, name) {
+				return Get(rest, user, room, flags)
+			}
 		}
 	}
-
 
 	actor := &actions.UserActor{User: user, Room: room}
 

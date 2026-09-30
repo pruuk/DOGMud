@@ -111,8 +111,6 @@ var userOnlyCommands = map[string]string{
 	"set":             "ui",
 	"setdesc":         "ui",
 	"sethome":         "ui",
-	"house":           "ui",
-	"visit":           "ui",
 	"skills":          "ui",
 	"spells":          "ui",
 	"status":          "ui",
@@ -130,6 +128,7 @@ var userOnlyCommands = map[string]string{
 	"fine":       "player-mechanic: jailed-player justice interaction (5.1)",
 	"gc":         "player-mechanic: guild chat",
 	"guild":      "player-mechanic",
+	"house":      "player-mechanic", // housing: guests, revoke, leave (state changes)
 	"offer":      "player-mechanic",
 	"payfine":    "player-mechanic: jailed-player justice interaction (5.1)",
 	"party":      "player-mechanic",
@@ -144,6 +143,7 @@ var userOnlyCommands = map[string]string{
 	"talk":       "player-mechanic",
 	"target":     "player-mechanic",
 	"use":        "player-mechanic",
+	"visit":      "player-mechanic", // housing: walks into a lodging you may enter
 	"whisper":    "player-mechanic",
 	"zombieact":  "player-mechanic",
 

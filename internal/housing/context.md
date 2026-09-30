@@ -5,9 +5,9 @@
 `internal/housing` owns persistent player housing: the authored lodging
 buildings, the living-state record of who owns which rooms, the landlord's
 list (homes, extension deeds, redecorating vouchers, guest keys, container
-and strongbox deeds), the use of those items, the containers they place and
-what those hold, and the routing that sends each lodger through a building's one
-shared door to their own rooms.
+and strongbox deeds), the use of those items, what lies on a lodging's floors
+and in its containers, and the routing that sends each lodger through a
+building's one shared door to their own rooms.
 
 One building ships, the Back Court lodgings in New Plymouth Common. Hobb
 Pennock (mob 9801), a bored letting clerk for Crewe Lettings, sits in
@@ -20,6 +20,7 @@ list:
   has paid for rooms so far: 1500 after the home, then 6000, then 24000.
   Bound to the buying account. Used inside the lodging toward a direction, it
   knocks a new room through (`use deed north`, or `use deed` for a menu).
+  One unused deed at a time; a lost one is replaced free.
 - **Redecorating Voucher** (item 56), 500 gold. Used in a lodging room, it
   replaces that room's description with text the lodger writes.
 - **Guest Key** (item 57), 100 gold, made out to the buyer's house. Given to
@@ -28,8 +29,13 @@ list:
 - **Container Deed** (item 58), 250 gold. Used in a lodging room with one
   word (`use container deed mug`, or a prompt asks), it places a container
   of that name there. Anyone let in can look in, put into and get from it.
-- **Strongbox Deed** (item 59), 500 gold. The same, but only the owner can
-  use what it places. A house holds at most 10 containers of both kinds.
+- **Strongbox Deed** (item 59), 500 gold. The same, but only the owner (and
+  the owner's companions) can open what it places. Each ROOM holds at most 6
+  containers of both kinds (`max_containers_per_room`); the house as a whole
+  has no limit.
+
+Anything left on a lodging's floor, and in its containers, is kept in the
+house file and survives restarts, crashes and a wipe of `rooms.instances/`.
 
 Homes and extensions come from one pool of 100 blank unit rooms
 (6470-6569, zone New Plymouth Lodgings). A house holds at most 8 rooms.
@@ -57,27 +63,37 @@ contract (`internal/util/livingstate.go`):
 - reads go through `util.ReadLivingState`, so absent is not corrupt;
 - an unreadable or unparseable file is moved aside by
   `util.QuarantineCorrupt`, logged at ERROR, and never deleted;
-- every change (purchase, deed bought, deed used, voucher used) builds a new
-  record with `House.clone`, writes it, and only then publishes it to the
-  registry and takes gold or items.
+- every change (purchase, deed bought, deed used, voucher used, key used,
+  container placed, contents captured) builds a new record with
+  `House.clone`, writes it, and only then publishes it to the registry and
+  takes gold or items; the player is then saved at once (`saveUser`), so a
+  crash cannot give back what was spent while the house keeps what it bought.
 
 A house records its rooms (`RoomIds`, the first is the entry), the doorways
 between them (`Links`, one entry per doorway, the way back implied), the
 owner's descriptions by room (`Descriptions`) and what was paid for rooms
 (`RoomsPaid`; houses from before extensions have it 0 and `Spent` falls back
-to `PricePaid`), and the guests let in with keys (`Guests`, by account, with
-the character name that used the key for lists and revoking), and the
-containers placed by deeds WITH their contents (`Containers`: room, name,
-`owner_only`, items, gold).
+to `PricePaid`), the extension deeds sold (`DeedsIssued`; filled in from
+`RoomsPaid` for older files by `normalizeDeeds`), the guests let in with keys
+(`Guests`, by account, with the character name that used the key for lists
+and revoking), the containers placed by deeds WITH their contents
+(`Containers`: room, name, `owner_only`, items, gold), and what lies on each
+room's floor (`Floors`: room, items, stash, gold).
 
 A file is named by its entry room, not its owner, so a file that cannot be
 read still says which room it guarded. That room is **held**: never sold and
-never entered (except by staff) until someone repairs the file. A readable
-file that disagrees with the world (unknown building, a room that is not a
-unit, a room already owned, a second house for the same owner, a doorway
-outside the house or two doorways in one direction, a guest who is the
-owner or listed twice, or a container outside the house, badly named or
-named twice in one room: `checkLinks`) is left in place and its rooms held. `HeldRooms` lists them.
+never entered (except by staff) until someone repairs the file. Which OTHER
+rooms it owned is unknown, so the whole building is **frozen** (`Frozen`): it
+sells no home and builds no extension until the file is repaired or removed
+and the data reloaded, since any unit that looks vacant may hold that
+lodger's things. A readable file that disagrees with the world (unknown
+building, a room that is not a unit, a room listed twice or already owned, a
+second house for the same owner, a doorway outside the house or two doorways
+in one direction, a room no doorway reaches or two rooms in one place, a
+guest who is the owner or listed twice, a container outside the house, badly
+named or named twice in one room, or a floor recorded twice or outside the
+house: `checkLinks`) is left in place and all its rooms held, and its owner
+is not sold another home meanwhile (`heldOwners`). `HeldRooms` lists them.
 
 ## Files
 
@@ -88,7 +104,7 @@ named twice in one room: `checkLinks`) is left in place and its rooms held. `Hel
   validation, lookups, unit coordinates.
 - **persistence.go**: house files: `saveHouse`, `loadHouses`, quarantine.
 - **door.go**: `RegisterRoomHooks`, `RouteDoor`, `GuardEntry`.
-- **overlay.go**: `ApplyOverlay` (layout and containers, on load) and
+- **overlay.go**: `ApplyOverlay` (layout, containers and floor, on load) and
   `applyLayout` (layout only, for live rooms).
 - **offers.go**: the landlord's list: `Offers`, `MatchOffer`, `Buy`.
 - **purchase.go**: `Purchase` (a home), `PurchaseResult`.
@@ -97,9 +113,10 @@ named twice in one room: `checkLinks`) is left in place and its rooms held. `Hel
 - **guests.go**: guest keys and the guest list: `Revoke`, `Leave`,
   `HousesOwnedBy`, `GuestOf`, `BuildingForDoor`, ejection.
 - **containers.go**: container and strongbox deeds (`useContainerDeed`),
-  loading and capturing contents (`hydrateContainers`, `Capture`,
-  `AfterUserCommand`, `AfterMobCommand`, `CaptureOnSave`), and the strongbox
-  guards (`GuardUserCommand`, `GuardMobCommand`).
+  loading and capturing floors and contents (`hydrateContainers`,
+  `hydrateFloor`, `Capture`, `captureHouseAt`, `captureAllLoaded`,
+  `AfterUserCommand`, `AfterMobCommand`, `CaptureOnSave`), and strongboxes
+  (`OpenStrongboxesForUser`, `OpenStrongboxesForMob`).
 
 ## Public API
 
@@ -123,6 +140,8 @@ func Leave(userId int, ownerName string) (House, error)
 func AllHouses() []House
 func VacantUnits(buildingId string) []int
 func HeldRooms() map[int]string
+func Frozen(buildingId string) (string, bool)          // why a building sells no rooms
+func (h House) Outstanding(b Building) int            // extension deeds sold, not yet used
 
 func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer
 func MatchOffer(request string, ownsHome bool) (string, bool)   // OfferHome, OfferExtension, OfferRedecorate, OfferGuestKey, OfferContainer, OfferStrongbox
@@ -135,13 +154,13 @@ func RouteDoor(userId int, fromRoomId int, exitName string) (rooms.ExitRoute, bo
 func GuardEntry(userId int, toRoomId int) (bool, int, string)
 func ApplyOverlay(r *rooms.Room)
 
-func Capture(r *rooms.Room) bool                   // live containers -> house record, saved if changed
-func CaptureOnSave(r *rooms.Room)                  // the rooms.RoomSaveHook
-func AfterUserCommand(userId int)                  // world.go, after every player command
-func AfterMobCommand(mobInstanceId int)            // world.go, after every mob command
-func GuardUserCommand(userId int, roomId int, cmd string, rest string) (string, bool)
-func GuardMobCommand(mobInstanceId int, roomId int, rest string) bool
-func (h *House) WalkItems(visit func(*items.Item)) // the bauble sweep's housing source
+func Capture(r *rooms.Room) bool                            // live floor and containers -> house record, saved if changed
+func CaptureOnSave(r *rooms.Room)                           // the rooms.RoomSaveHook
+func AfterUserCommand(userId int, roomBefore int)           // world.go, after every player command
+func AfterMobCommand(mobInstanceId int, roomBefore int)     // world.go, after every mob command
+func OpenStrongboxesForUser(userId int, roomId int) func()  // usercommands.TryCommand; call the result when done
+func OpenStrongboxesForMob(mobInstanceId int, roomId int) func() // mobcommands.TryCommand
+func (h *House) WalkItems(visit func(*items.Item))          // the bauble sweep's housing source
 func ParseRepTier(name string) (opinions.Tier, bool)
 func ParseDirection(s string) (string, bool)
 ```
@@ -206,17 +225,23 @@ entry and the new room (`events.RebuildMap`). The lodgings zone is
 has no map direction), so houses never collide with each other on the map.
 
 `ApplyOverlay` also makes the room's containers exactly the house's
-(`hydrateContainers`), contents included, and strips any container from a
-vacant unit. Runtime changes to a house (a deed or voucher used) re-lay live
-rooms with `applyLayout`, which leaves containers alone: their live contents
-are newer than the record until the next capture. A room newly added to the
-house gets the full overlay.
+(`hydrateContainers`, strongboxes sealed), contents included, and puts the
+recorded floor into the room (`hydrateFloor`). A room with no recorded floor
+(a house written before floors were recorded) keeps what its instance save
+held until its first capture adopts it. A vacant unit loses any containers
+but keeps its floor. Runtime changes to a house (a deed or voucher used)
+re-lay live rooms with `applyLayout`, which leaves containers and floors
+alone: their live state is newer than the record until the next capture. A
+room newly added to the house, and every room of a newly bought home, is
+recorded with an empty floor and gets the full overlay, so it starts empty
+whatever an old instance save or tenancy left in it.
 
-Unit rooms are ordinary authored rooms, so their floors persist through the
-normal room instance save and are already walked by the bauble sweep. The
-local smoke-test instance wipe clears those floors in development, as it does
-every room's. Container contents are NOT on the floor: they live in the house
-file, which the wipe never touches.
+Boot loads every room (validation, the shop prewarm) before any house is
+known, so `LoadDataFiles` lays every house over its loaded rooms afterwards
+(`applyAllOverlays`). On a data reload it first captures every loaded house
+room (`captureAllLoaded`); a room whose capture could not be written gets the
+layout only, so the reload never replaces newer live state with an older
+file.
 
 ## The landlord's list
 
@@ -234,36 +259,49 @@ the same `Buy` through the behavior-tree action `buy_housing`, and
 - **Home** (`Purchase`): refuses unknown building or tier, an existing home in
   this building (one per ACCOUNT, shared by alts), standing below
   `min_rep_tier`, carried gold plus bank below the price, no vacant unit.
-- **Extension deed** (`buyExtension`): needs a home, room below `max_rooms`,
-  a vacant unit, and the price. It writes `RoomsPaid += price` BEFORE the
-  deed is handed over, so an unused deed still raises the next price and
-  deeds cannot be stockpiled cheaply. The deed carries
-  `items.Item.BoundUserId` and only works for that account.
+- **Extension deed** (`buyExtension`): needs a home, a building not frozen,
+  room below `max_rooms`, the price, and a vacant unit beyond those already
+  promised to every lodger's unused deeds (`outstandingLocked`), so no deed is
+  ever sold that could not be used. It writes `RoomsPaid += price` and
+  `DeedsIssued++` BEFORE the deed is handed over, so an unused deed still
+  raises the next price. While a lodger has an unused deed (`Outstanding`) no
+  other is sold: if they carry it they are told to use it, and if they do not
+  (lost, stored, junked) a replacement is handed over free. A deed is
+  honoured only while one is outstanding, so of two copies only the first
+  used builds a room. The deed carries `items.Item.BoundUserId` and only works
+  for that account.
 - **Voucher** (`buyRedecorate`): needs a home and the flat price. Unbound.
-- **Container and strongbox deeds** (`buyContainerDeed`): need a home, fewer
-  than `max_containers` containers, and the flat price. Unbound, since they
-  only work in their holder's own lodging. `MatchOffer` reads the strongbox
+- **Container and strongbox deeds** (`buyContainerDeed`): need a home, the
+  flat price, and a free corner: the rooms' remaining per-room space
+  (`containerSpace`) must exceed the container and strongbox deeds the buyer
+  already carries. Unbound, since they only work in their holder's own
+  lodging. `MatchOffer` reads the strongbox
   words (strongbox, lockable, locked, lock, private, safe) first, then the
   container words (container, box, storage), then the rest, so "container
   deed" is never read as an extension deed. The list's footer is built from
   the offer keys.
 
 Gold is always carried first, then the bank; `events.EquipmentChange` and
-`events.ItemOwnership` are queued.
+`events.ItemOwnership` are queued. Asking the landlord (`buy_housing`) only
+sells on a plain request that names an offer; a question ("how much to buy a
+room?", "do you buy furniture?") is answered with the terms, and an ask that
+names no offer sells nothing.
 
 ## Using the items
 
 `usercommands.Use` hands `use <words>` to `UseItem` when a leading run of
 words names a housing item in the backpack (unless the whole text already
 names an ordinary item), trying the LONGEST run first, so `use container deed
-mug` is the container deed named mug. Every item but the guest key only
-works inside the user's own house.
+mug` is the container deed named mug, and preferring an item this player may
+use (not bound to another account). Every item but the guest key only works
+inside the user's own house.
 
 - **Deed**: `use deed <direction>` builds straight away; `use deed` alone
   opens a prompt listing only the free directions (no exit that way, no room
   of the house in that cell) plus cancel. Refusals (wrong account, wrong
-  place, bad or taken direction, a cell already holding one of the house's
-  rooms, room cap, no vacant unit) never use up the deed.
+  place, a deed already honoured, a frozen building, bad or taken direction,
+  a cell already holding one of the house's rooms, room cap, no vacant unit)
+  never use up the deed.
 - **Voucher**: `use voucher <text>` or `use voucher` then a prompt for the
   text, then a yes/no confirmation with a preview. The text is cleaned
   (`util.EscapeAnsiTags`, whitespace folded) and must be
@@ -277,34 +315,51 @@ works inside the user's own house.
   strongbox deed <word>`; with no word, a prompt asks for one. The name is one
   word of 2 to 16 lower-case letters (upper case is folded), not reserved
   (`reservedContainerNames`: directions, door, all, gold, ...), and not an
-  exit, noun or container already in the room. Checked again under the
-  registry lock with the house re-read, then written, then the deed spent and
-  the empty container added to the live room. Refusals keep the deed.
+  exit, noun or container already in the room, and the room must hold fewer
+  than `max_containers_per_room`. Checked again under the registry lock with
+  the house re-read, then written, then the deed spent and the empty
+  container added to the live room. Refusals keep the deed.
 - **Using**: an ordinary `rooms.Container` in the live room, so `look in`,
   `open`, `put`, `get` and `remove ... from` work as on any container
   (`look` strips at/in/into/inside and the/my; `open`, an alias of `unlock`,
   shows an unlocked container's contents in a unit room; `remove X from Y`
-  is a get when Y is a container here).
-- **Where contents live**: in the house record, never in the room's instance
-  save. `ApplyOverlay` copies them in on load; `Capture` copies a changed
-  room back and saves it. world.go calls `AfterUserCommand` after every
-  player command and `AfterMobCommand` after every mob command; when a
-  player's command changed a container, the player is saved too (`saveUser`)
-  so an item is never both in the container and still in their saved pack
-  after a crash. The room save hook (`CaptureOnSave`, via
-  `rooms.SetRoomSaveHook`) is the backstop on every autosave and on
-  `SaveAllRooms`. Item UUIDs are not written to disk, so `loadOneHouse`
-  mints them (`Item.Validate`) as the room and user loaders do.
-- **Strongboxes**: `usercommands.TryCommand` calls `GuardUserCommand` after
-  alias expansion, before room trees, scripts or the command itself. For a
-  container verb (`containerVerbs`: look, get, put, remove, unlock, lock,
-  picklock, steal, plant, use, defuse) in a house room by anyone but the
-  owner or staff, it resolves the whole text and each word through the
-  room's own `FindContainerByName` (the same fuzzy match the commands use)
-  and refuses if any lands on a strongbox. `mobcommands.TryCommand` calls
-  `GuardMobCommand`, which refuses any command naming a strongbox unless the
-  mob is charmed by the owner. A word that merely prefixes a strongbox name
-  is refused too; that errs toward refusing.
+  is a get when Y is a container here that the player can see).
+- **Where floors and contents live**: in the house record, never only in the
+  room's instance save. `ApplyOverlay` copies them in on load; `Capture`
+  copies a changed room back and saves it, comparing items as the YAML the
+  file would hold, so any change to a saved field counts and nothing unsaved
+  does. world.go calls `AfterUserCommand` after every player command and
+  `AfterMobCommand` after every mob command, each with the room the actor
+  stood in before the command; they capture every loaded room of that house
+  and of the house the actor is in now (`captureHouseAt`), so dropping
+  something and walking out in one line, or something landing in the next
+  room, is caught. When a player's command changed anything, the player is
+  saved too (`saveUser`), so an item is never both on the floor and still in
+  their saved pack after a crash. The room save hook (`CaptureOnSave`, via
+  `rooms.SetRoomSaveHook`) is the backstop on every autosave, on
+  `SaveAllRooms` (shutdown, copyover) and when a room is unloaded, for
+  anything that landed without a command (a corpse rotting). Item UUIDs are
+  not written to disk, so `loadOneHouse` mints them (`Item.Validate`) as the
+  room and user loaders do.
+- **Strongboxes** are sealed (`rooms.Container.Sealed`) and kept under a lock
+  (`rooms.SealedLockDifficulty`) at all times, so every engine path that
+  honours container locks (look, get, put, use, tab completion, the AI
+  companion) refuses them, whatever word a player uses for the name. The
+  paths that could force a lock refuse a sealed one outright: picklock,
+  unlock with a key (players and mobs), steal and plant
+  (`Container.IsSealedShut`). The owner's own command, and a command of a
+  mob charmed by the owner, unlocks the strongboxes of the room the actor
+  stands in for that one command: `usercommands.TryCommand` defers
+  `OpenStrongboxesForUser` right after alias expansion, and
+  `mobcommands.TryCommand` defers `OpenStrongboxesForMob`. The game loop
+  runs one command at a time, so nobody else acts while one is open. A
+  nested command finds them open already and leaves the shutting to the
+  outer one. Staff may open them too.
+- **Baubles**: private rooms (all lodgings) never offer bauble searches
+  (`actions.baubleRoomAllowed`), as character rooms do not: a bought, safe
+  room with many searchable containers would be a farm. A found bauble
+  dropped in a lodging is an ordinary item, and a find left lying in a
+  private room from before never expires (`rooms.removeUntakenBaubles`).
 
 ## Guests
 
@@ -340,19 +395,27 @@ only adds them.
 
 ## Gotchas
 
-- **A house record holds items** (container contents). It is a bauble sweep
-  store: `House.WalkItems`, the `housing` live source in `bauble_sweep.go`
+- **A house record holds items** (floors and container contents). It is a
+  bauble sweep store: `House.WalkItems`, the `housing` live source in `bauble_sweep.go`
   (walking `AllHouses`), a root in `item_walker_guard_test.go`, and entries
   for `houses`, `roomHouse` and `ownerHouse` in `itemStoreVars`
   (`bauble_sweep_guard_test.go`). A new item-holding field must be reached by
   `WalkItems` or `TestItemWalkersVisitEveryItemField` fails.
-- **Never write a unit room's containers straight into the room** from
-  outside housing. The record is the source of truth: the next load replaces
-  the room's containers with the record's, and `Capture` puts back any
-  recorded container found missing.
+- **Never write a unit room's containers or floor from outside housing
+  except through ordinary commands.** The record is the source of truth: the
+  next load replaces the room's with the record's, and `Capture` puts back
+  any recorded container found missing (sealed again if a strongbox).
 - **Refresh live rooms with `applyLayout`, not `ApplyOverlay`.** The full
-  overlay reloads containers from the record and would throw away anything
-  put in since the last capture.
+  overlay reloads containers and floor from the record and would throw away
+  anything changed since the last capture.
+- **A strongbox is only as safe as the lock checks.** A new command that
+  reads or moves a room container's contents must honour
+  `Container.Lock.IsLocked()` (as get, put, look and use do) or refuse
+  `Container.IsSealedShut()`. Never unlock a sealed container anywhere but
+  `openStrongboxes`.
+- **Holding and freezing are not deletion.** A held room stays held, and a
+  frozen building sells nothing, until the file is fixed or removed by hand
+  and the data reloaded.
 - **Keep the door exit locked and without a `mapdirection`.** The lock is the
   only thing stopping mobs; a map direction would make the mapper draw a
   self-loop and join every house into one crawl.
@@ -362,13 +425,12 @@ only adds them.
   and logs; the builder change stays in memory until the room reloads.
 - **A deed from one building used in another** is refused. Items are shared
   between buildings only if a future building lists the same item ids.
-- **Holding is not deletion.** A held room stays held until its file is
-  fixed or removed by hand and the server reloads.
 
 ## Dependencies
 
-`configs`, `events`, `exit`, `factions`, `fileloader`, `items`, `messaging`,
-`mobs`, `mudlog`, `opinions`, `rooms`, `term`, `users`, `util`, plus YAML.
+`configs`, `events`, `exit`, `factions`, `fileloader`, `gamelock`, `items`,
+`messaging`, `mobs`, `mudlog`, `opinions`, `rooms`, `term`, `users`, `util`,
+plus YAML.
 
 ## Consumers
 
@@ -376,6 +438,8 @@ only adds them.
 `bauble_sweep.go` (the `housing` live source), `internal/behaviortree`
 (`buy_housing`, `housing_terms`), `internal/usercommands` (`list`, `buy`,
 `use`, via `housing_shop.go`; `house` and `visit`, via `house.go`; the
-strongbox guard in `TryCommand`; `unlock` for `open`), `internal/mobcommands`
-(the strongbox guard), and through the room hooks `internal/rooms` and
-`internal/usercommands`.
+strongbox window in `TryCommand`; `unlock` for `open`), `internal/mobcommands`
+(the strongbox window), and through the room hooks `internal/rooms` and
+`internal/usercommands`. `internal/rooms` (`Container.Sealed`) and
+`internal/actions` (steal, plant, `baubleRoomAllowed`) honour strongboxes and
+private rooms without importing housing.

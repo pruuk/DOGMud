@@ -46,9 +46,12 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 	vacant := len(VacantUnits(b.BuildingId))
 
 	home := Offer{Key: OfferHome, Name: `Home (` + tier.Name + `)`, Price: tier.Price}
+	_, homeFrozen := Frozen(b.BuildingId)
 	switch {
 	case owns:
 		home.Price, home.Note = 0, `You already lodge here`
+	case homeFrozen:
+		home.Price, home.Note = 0, `Not letting rooms just now`
 	case repTierFor(b.Faction, user.UserId) < b.MinTier():
 		home.Note = `The quarter must vouch for you first`
 	case vacant < tier.Rooms:
@@ -58,12 +61,17 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 	}
 
 	ext := Offer{Key: OfferExtension, Name: itemName(b.ExtensionItemId, `Room Extension Deed`)}
+	_, isFrozen := Frozen(b.BuildingId)
 	switch {
 	case !owns:
 		ext.Note = `Needs a home here first`
+	case house.Outstanding(b) > 0:
+		ext.Note = `You have one not yet used (lost? buy deed)`
+	case isFrozen:
+		ext.Note = `Not selling rooms just now`
 	case len(house.RoomIds) >= b.MaxRooms:
 		ext.Note = `Your lodging is as big as the company allows`
-	case vacant < 1:
+	case vacant <= buildingOutstanding(b):
 		ext.Note = `No rooms left to add`
 	default:
 		ext.Price = extensionPrice(b, house)
@@ -95,8 +103,8 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 	case !owns:
 		box.Note = `Needs a home here first`
 		safe.Note = box.Note
-	case !house.hasRoomForContainer(b):
-		box.Note = `Every room holds all the containers allowed`
+	case house.containerSpace(b) <= carriedContainerDeeds(user, b):
+		box.Note = `No free corner left for another`
 		safe.Note = box.Note
 	default:
 		box.Price, safe.Price = b.ContainerPrice, b.StrongboxPrice
@@ -199,8 +207,12 @@ func buyContainerDeed(user *users.UserRecord, say func(string), buildingId strin
 		say(fmt.Sprintf(`A %s's no use without a room to put it in. Get a home first.`, what))
 		return
 	}
-	if !house.hasRoomForContainer(b) {
-		say(`Every room you've got is full of furniture already. The company won't allow more to a room. Fire hazard, they say. Get another room.`)
+	if space := house.containerSpace(b); space <= carriedContainerDeeds(user, b) {
+		if space == 0 {
+			say(`Every room you've got is full of furniture already. The company won't allow more to a room. Fire hazard, they say. Get another room.`)
+		} else {
+			say(`You're carrying deeds enough for every free corner you've got. Use those first.`)
+		}
 		return
 	}
 	if user.Character.Gold+user.Character.Bank < price {
@@ -228,9 +240,14 @@ func buyContainerDeed(user *users.UserRecord, say func(string), buildingId strin
 }
 
 // buyExtension sells an extension deed made out to this account. What was
-// paid is added to the house's room spend BEFORE the deed is handed over or
-// any gold is taken, so the next deed is priced up even if this one is never
-// used, and a failed write costs nothing.
+// paid is added to the house's room spend, and the deed counted as issued,
+// BEFORE the deed is handed over or any gold is taken, so the next deed is
+// priced up even if this one is never used, and a failed write costs nothing.
+//
+// A deed is a promise of one room, so none is sold that could not be kept:
+// not while this lodger still has an unused deed (a lost one is replaced
+// free instead), not past max_rooms counting unused deeds, and not unless the
+// building has a vacant unit for every unused deed of every lodger.
 func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 	b, ok := GetBuilding(buildingId)
 	if !ok {
@@ -241,12 +258,36 @@ func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 		say(`Extensions are for lodgers. You'd want a home here first. It's on the list.`)
 		return
 	}
-	if len(house.RoomIds) >= b.MaxRooms {
-		say(`The company won't let one lodger have more of the building than you've got. Rules. Not mine.`)
+	if _, isFrozen := Frozen(b.BuildingId); isFrozen {
+		say(`The ledger's in a state. The Widow's clerk is going over it, and I'm to sell no rooms till he's done.`)
 		return
 	}
-	if len(VacantUnits(b.BuildingId)) < 1 {
-		say(`No rooms left to add on. The whole place is let. Try again when somebody moves out.`)
+	if house.Outstanding(b) > 0 {
+		for _, itm := range user.Character.Items {
+			if itm.ItemId == b.ExtensionItemId && itm.BoundUserId == user.UserId {
+				say(`You've a deed already, made out to you and not used. Use that one first. One room at a time.`)
+				return
+			}
+		}
+		// Sold, not used, and not carried: lost, stored or junked. Replace
+		// it free. Whichever copy is used first spends the one promise.
+		deed := items.New(b.ExtensionItemId)
+		if deed.ItemId == 0 {
+			mudlog.Error(`housing.buyExtension`, `building`, b.BuildingId, `error`, `extension item does not exist`)
+			return
+		}
+		deed.BoundUserId = user.UserId
+		if !user.Character.StoreItem(deed) {
+			say(`You're carrying too much to take a sheet of paper. Put something down.`)
+			return
+		}
+		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: deed, Gained: true})
+		mudlog.Info(`housing.buyExtension`, `user`, user.UserId, `building`, b.BuildingId, `reissued`, true)
+		say(`Lost your deed? The ledger says you paid for one and never used it. Here's a fresh copy, no charge. Whichever you use first counts, and the other's waste paper after.`)
+		return
+	}
+	if len(house.RoomIds) >= b.MaxRooms {
+		say(`The company won't let one lodger have more of the building than you've got. Rules. Not mine.`)
 		return
 	}
 	price := extensionPrice(b, house)
@@ -262,30 +303,78 @@ func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 	}
 	deed.BoundUserId = user.UserId
 
-	next := house.clone()
-	next.RoomsPaid = house.Spent() + price
+	mu.Lock()
+	cur, still := ownerHouse[ownerKey{b.BuildingId, user.UserId}]
+	if !still {
+		mu.Unlock()
+		return
+	}
+	if len(vacantUnitsLocked(b.BuildingId)) <= outstandingLocked(b) {
+		mu.Unlock()
+		say(`No rooms left to add on. Every empty room's promised to somebody's deed already. Try again when somebody moves out.`)
+		return
+	}
+	next := cur.clone()
+	next.RoomsPaid = cur.Spent() + price
+	next.DeedsIssued = cur.DeedsIssued + 1
 	if err := saveHouse(next); err != nil {
+		mu.Unlock()
 		mudlog.Error(`housing.buyExtension`, `user`, user.UserId, `error`, err.Error())
 		say(`The ledger's in a state. I'll not take your coin till it's straight. Come back later.`)
 		return
 	}
 	if !user.Character.StoreItem(deed) {
 		// Nothing was taken yet: put the ledger back as it was.
-		if err := saveHouse(house); err != nil {
+		if err := saveHouse(*cur); err != nil {
 			mudlog.Error(`housing.buyExtension`, `user`, user.UserId, `rollbackError`, err.Error())
-		} else {
-			publish(house)
+			nn := next.clone()
+			indexLocked(&nn) // the file says sold; keep memory in step with it
 		}
+		mu.Unlock()
 		say(`You're carrying too much to take a sheet of paper. Impressive. Put something down.`)
 		return
 	}
-	publish(next)
+	nn := next.clone()
+	indexLocked(&nn)
+	mu.Unlock()
+
 	fromGold, fromBank := chargeGold(user, price)
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -fromGold, BankChange: -fromBank})
 	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: deed, Gained: true})
-	mudlog.Info(`housing.buyExtension`, `user`, user.UserId, `building`, b.BuildingId, `price`, price, `roomsPaid`, next.RoomsPaid)
+	saveUser(user) // the ledger is on disk; the payment and the deed must be too
+	mudlog.Info(`housing.buyExtension`, `user`, user.UserId, `building`, b.BuildingId, `price`, price, `roomsPaid`, next.RoomsPaid, `deedsIssued`, next.DeedsIssued)
 
 	say(fmt.Sprintf(`%d gold. Your name's on it, so don't bother selling it on. Stand in your lodging and type use deed. It'll ask you which way the room goes.`, price))
+}
+
+// carriedContainerDeeds counts the container and strongbox deeds of this
+// building in a player's backpack: bought, not yet placed.
+func carriedContainerDeeds(user *users.UserRecord, b Building) int {
+	n := 0
+	for _, itm := range user.Character.Items {
+		if itm.ItemId == b.ContainerItemId || itm.ItemId == b.StrongboxItemId {
+			n++
+		}
+	}
+	return n
+}
+
+func buildingOutstanding(b Building) int {
+	mu.RLock()
+	defer mu.RUnlock()
+	return outstandingLocked(b)
+}
+
+// outstandingLocked is every unused extension deed of every lodger in a
+// building: each is a promise of one vacant unit.
+func outstandingLocked(b Building) int {
+	n := 0
+	for _, h := range houses {
+		if h.BuildingId == b.BuildingId {
+			n += h.Outstanding(b)
+		}
+	}
+	return n
 }
 
 // buyRedecorate sells a redecorating voucher at the building's flat price.
@@ -315,12 +404,4 @@ func buyRedecorate(user *users.UserRecord, say func(string), buildingId string) 
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -fromGold, BankChange: -fromBank})
 	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: voucher, Gained: true})
 	say(fmt.Sprintf(`%d gold. Use it in whichever room you want to look different, then write what you'd like it to look like. One room, one go.`, b.RedecoratePrice))
-}
-
-// publish replaces a house in the registry. The caller has already saved it.
-func publish(h House) {
-	mu.Lock()
-	defer mu.Unlock()
-	hh := h.clone()
-	indexLocked(&hh)
 }

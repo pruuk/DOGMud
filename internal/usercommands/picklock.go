@@ -82,6 +82,11 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 		container := room.Containers[containerName]
 
+		if container.IsSealedShut() {
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> has no keyhole to pick. It opens for its owner and nobody else.`, containerName))
+			return true, nil
+		}
+
 		if !container.HasLock() {
 			user.SendText(messaging.CategorySystem, "There is no lock there.")
 			return true, nil

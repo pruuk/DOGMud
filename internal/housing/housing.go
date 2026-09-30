@@ -249,6 +249,12 @@ type House struct {
 	// Houses written before extensions existed have it 0; Spent covers that.
 	RoomsPaid int `yaml:"rooms_paid,omitempty"`
 
+	// DeedsIssued counts the extension deeds sold for this house. Every room
+	// beyond the tier's own used one, so DeedsIssued minus those is the
+	// deeds sold and not yet used (Outstanding). A deed is only honoured
+	// while one is outstanding, and no new deed is sold while one is.
+	DeedsIssued int `yaml:"deeds_issued,omitempty"`
+
 	// Links are the doorways between this house's own rooms, one entry per
 	// doorway; the way back is implied (north from A to B is south from B to
 	// A). Placed by extension deeds.
@@ -308,15 +314,16 @@ func (h *House) WalkItems(visit func(*items.Item)) {
 	}
 }
 
-// hasRoomForContainer reports whether some room of the house can still take
-// a container under the building's per-room limit.
-func (h House) hasRoomForContainer(b Building) bool {
+// containerSpace is how many more containers the house's rooms can take
+// under the building's per-room limit.
+func (h House) containerSpace(b Building) int {
+	space := 0
 	for _, roomId := range h.RoomIds {
-		if len(h.containersIn(roomId)) < b.MaxContainersPerRoom {
-			return true
+		if n := b.MaxContainersPerRoom - len(h.containersIn(roomId)); n > 0 {
+			space += n
 		}
 	}
-	return false
+	return space
 }
 
 // floorOf returns the recorded floor of roomId and its index, if any.
@@ -380,6 +387,44 @@ func (h House) EntryRoom() int {
 }
 
 // Spent is what the owner has paid for rooms so far.
+// deedsUsed is how many rooms of the house came from extension deeds.
+func (h House) deedsUsed(b Building) int {
+	tierRooms := 1
+	if t, ok := b.Tier(h.TierId); ok && t.Rooms > 0 {
+		tierRooms = t.Rooms
+	}
+	if n := len(h.RoomIds) - tierRooms; n > 0 {
+		return n
+	}
+	return 0
+}
+
+// Outstanding is how many extension deeds were sold for the house and not
+// yet used.
+func (h House) Outstanding(b Building) int {
+	if n := h.DeedsIssued - h.deedsUsed(b); n > 0 {
+		return n
+	}
+	return 0
+}
+
+// normalizeDeeds fills DeedsIssued for a house written before it was
+// recorded, from what was paid: each deed multiplied the spend by
+// (1 + the building's multiplier).
+func (h *House) normalizeDeeds(b Building) {
+	if h.DeedsIssued == 0 && h.RoomsPaid > h.PricePaid && h.PricePaid > 0 && b.ExtensionPriceMultiplier > 0 {
+		spend, n := h.PricePaid, 0
+		for spend < h.RoomsPaid && n < 64 {
+			spend += b.ExtensionPriceMultiplier * spend
+			n++
+		}
+		h.DeedsIssued = n
+	}
+	if used := h.deedsUsed(b); h.DeedsIssued < used {
+		h.DeedsIssued = used
+	}
+}
+
 func (h House) Spent() int {
 	if h.RoomsPaid > 0 {
 		return h.RoomsPaid
@@ -497,6 +542,13 @@ func (h House) offsets() map[int][3]int {
 // outside the house, a bad direction, a slot used twice, or a doorway to
 // itself. A house file that fails it is held, never guessed at.
 func (h House) checkLinks() error {
+	seenRoom := map[int]bool{}
+	for _, id := range h.RoomIds {
+		if seenRoom[id] {
+			return fmt.Errorf(`room %d is listed twice`, id)
+		}
+		seenRoom[id] = true
+	}
 	used := map[int]map[string]bool{}
 	take := func(room int, dir string) error {
 		if used[room] == nil {
@@ -520,6 +572,23 @@ func (h House) checkLinks() error {
 		}
 		if err := take(l.To, oppositeDirection[l.Direction]); err != nil {
 			return err
+		}
+	}
+	// Every room must be reachable through the house's doorways (or it could
+	// never be entered, and its things never taken back), and no two rooms
+	// may sit in the same place.
+	if len(h.RoomIds) > 0 {
+		pos := h.offsets()
+		cells := map[[3]int]int{}
+		for _, id := range h.RoomIds {
+			p, ok := pos[id]
+			if !ok {
+				return fmt.Errorf(`room %d has no doorway joining it to the rest of the house`, id)
+			}
+			if other, clash := cells[p]; clash {
+				return fmt.Errorf(`rooms %d and %d sit in the same place`, other, id)
+			}
+			cells[p] = id
 		}
 	}
 	for roomId := range h.Descriptions {

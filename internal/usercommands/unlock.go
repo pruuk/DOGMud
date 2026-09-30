@@ -36,6 +36,11 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		container := room.Containers[containerName]
 
+		if container.IsSealedShut() {
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked, and it opens for its owner and nobody else.`, containerName))
+			return true, nil
+		}
+
 		if !container.Lock.IsLocked() {
 			// "open mug" (open is an alias of unlock) on a lodging's own
 			// container shows what is in it: that is what a lodger means.
