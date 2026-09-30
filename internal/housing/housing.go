@@ -75,6 +75,10 @@ type Building struct {
 	Location     string `yaml:"location"`
 	OutsideText  string `yaml:"outside_text"`
 
+	// Voice overrides what the landlord says, line by line (voice.go lists
+	// every key and the lines every landlord says by default).
+	Voice map[string]string `yaml:"voice,omitempty"`
+
 	Tiers []Tier `yaml:"tiers"`
 
 	// UnitRooms is the pool of blank authored rooms this building lets out,
@@ -216,6 +220,9 @@ func (b Building) Validate() error {
 		if strings.Contains(v, `;`) {
 			return fmt.Errorf(`housing building %s: %s must not contain ';' (the landlord says it, and ';' ends a spoken command)`, b.BuildingId, field)
 		}
+	}
+	if err := b.validateVoice(); err != nil {
+		return err
 	}
 	if strings.TrimSpace(b.ExtensionTitle) == `` || strings.TrimSpace(b.ExtensionDescription) == `` {
 		return fmt.Errorf(`housing building %s: extension_title and extension_description are required`, b.BuildingId)

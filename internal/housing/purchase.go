@@ -50,27 +50,27 @@ var now = time.Now
 func Purchase(user *users.UserRecord, say func(string), buildingId string, tierId string) PurchaseResult {
 	b, ok := GetBuilding(buildingId)
 	if !ok {
-		say(`I've no rooms to let just now.`)
+		say(Building{}.Line(`home.unknown_building`))
 		return PurchaseUnknownBuilding
 	}
 	tier, ok := b.Tier(tierId)
 	if !ok {
-		say(`I don't let that kind of room.`)
+		say(b.Line(`home.unknown_tier`))
 		return PurchaseUnknownTier
 	}
 
 	if _, owns := HouseOf(user.UserId, b.BuildingId); owns {
-		say(fmt.Sprintf(`You've already got a room. The %s's behind me. It knows you. Go on.`, b.DoorExit))
+		say(b.Line(`home.already_owner`))
 		return PurchaseAlreadyOwner
 	}
 
 	if repTierFor(b.Faction, user.UserId) < b.MinTier() {
-		say(fmt.Sprintf(`%s only lets to people %s will vouch for, and nobody's vouched for you. %s I'll still be here. I'm always here.`, capitalise(b.Proprietor), b.VouchedBy, b.StandingHint))
+		say(b.Line(`home.not_vouched`))
 		return PurchaseRepTooLow
 	}
 
 	if user.Character.Gold+user.Character.Bank < tier.Price {
-		say(fmt.Sprintf(`It's %d gold for %s, and you haven't got it, not even counting the bank. Come back when you have.`, tier.Price, tier.Name))
+		say(b.Line(`home.no_gold`, `price`, tier.Price, `tier`, tier.Name))
 		return PurchaseNoGold
 	}
 
@@ -79,17 +79,17 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 	mu.Lock()
 	if _, owns := ownerHouse[ownerKey{b.BuildingId, user.UserId}]; owns {
 		mu.Unlock()
-		say(`You've already got a room.`)
+		say(b.Line(`home.already_owner`))
 		return PurchaseAlreadyOwner
 	}
 	if heldOwners[ownerKey{b.BuildingId, user.UserId}] {
 		mu.Unlock()
-		say(fmt.Sprintf(`Your name's in the ledger already, but the page is in a state. %s's clerk is going over it. Nothing I can let you till it's straight.`, capitalise(b.Proprietor)))
+		say(b.Line(`home.held_owner`))
 		return PurchaseAlreadyOwner
 	}
 	if _, isFrozen := frozen[b.BuildingId]; isFrozen {
 		mu.Unlock()
-		say(fmt.Sprintf(`The ledger's in a state. %s's clerk is going over it, and I'm to let nothing till it's done. Come back another day.`, capitalise(b.Proprietor)))
+		say(b.Line(`home.frozen`))
 		return PurchaseNoVacancy
 	}
 	// Every unused extension deed in the building is a promise of a vacant
@@ -97,7 +97,7 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 	vacant := vacantUnitsLocked(b.BuildingId)
 	if len(vacant)-outstandingLocked(b) < tier.Rooms {
 		mu.Unlock()
-		say(`Every room's let. Nothing I can do. Try another day.`)
+		say(b.Line(`home.full`))
 		return PurchaseNoVacancy
 	}
 	h := House{
@@ -118,7 +118,7 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 	if err := saveHouse(h); err != nil {
 		mu.Unlock()
 		mudlog.Error(`housing.Purchase`, `user`, user.UserId, `building`, b.BuildingId, `error`, err.Error())
-		say(`The ledger's in a state. I'll not take your coin till it's straight. Come back later.`)
+		say(b.Line(`ledger_error`))
 		return PurchaseError
 	}
 	hh := h
@@ -142,7 +142,7 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 	} else if fromBank > 0 {
 		paid = fmt.Sprintf(`You sign over <ansi fg="gold">%d gold</ansi> from the bank`, fromBank)
 	}
-	say(fmt.Sprintf(`Stamped. Welcome to %s. Try not to set anything on fire.`, b.Name))
+	say(b.Line(`home.welcome`))
 	user.SendText(messaging.CategorySystem, util.SplitStringNL(fmt.Sprintf(
 		`%s. %s writes your name into the ledger, then takes your hand and presses it flat to the brass plate of the <ansi fg="exit">%s</ansi>. Something in the lock ticks, once, as if it has learned you.`,
 		paid, landlordName(b), b.DoorExit), 80))

@@ -35,6 +35,15 @@ standing_hint: Quist the Elder at the Margin Hall, west through the Scholars' Ga
 location: Quill Court, west off Hall Lane behind the Municipal Hall in the Confluence
 outside_text: You find yourself back out in Quill Court, the blue door shut behind you.
 
+# Aubric's own words where Hobb's would not suit a copyist (every other line
+# is the default; internal/housing/voice.go lists them all).
+voice:
+  terms.owner: "You lodge here already. The plate knows your hand. Do go in."
+  terms.pitch: "{Tier}, {price} gold, paid once. Four walls, a window, a sill to write at, and a door that opens for you and nobody else. Extensions and redecoration come after, for lodgers. The terms are on the list."
+  home.not_vouched: "{Proprietor} lets only to people {vouched_by} will speak for, and nobody has spoken for you. {standing_hint} I shall be here. I am always here."
+  home.welcome: "Entered in the ledger, in my best hand. Welcome to the Quillhouse. Do mind the ink on the stairs."
+  ask.buy_what: "Buy what, precisely? Type list and you will see what {proprietor} lets. Then buy home, buy deed, and so on."
+
 tiers:
   - tier_id: simple
     name: a Quillhouse room

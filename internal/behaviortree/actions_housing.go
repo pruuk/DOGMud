@@ -55,11 +55,8 @@ func actBuyHousing(params map[string]any, ctx *EvalContext) Result {
 	_, owns := housing.HouseOf(user.UserId, buildingId)
 	key, ok := housing.MatchOffer(ctx.Event.Text, owns)
 	if !ok {
-		owner := `the house`
-		if b, ok := housing.GetBuilding(buildingId); ok {
-			owner = b.Proprietor
-		}
-		say(`Buy what? Type list and I'll show you what ` + owner + ` sells. Then buy home, buy deed, and so on.`)
+		b, _ := housing.GetBuilding(buildingId)
+		say(b.Line(`ask.buy_what`))
 		return Success
 	}
 	housing.Buy(user, say, buildingId, tierId, key)

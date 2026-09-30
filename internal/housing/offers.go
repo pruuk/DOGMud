@@ -1,7 +1,6 @@
 package housing
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -204,19 +203,19 @@ func buyContainerDeed(user *users.UserRecord, say func(string), buildingId strin
 	}
 	house, owns := HouseOf(user.UserId, b.BuildingId)
 	if !owns {
-		say(fmt.Sprintf(`A %s's no use without a room to put it in. Get a home first.`, what))
+		say(b.Line(`storage.no_home`, `what`, what))
 		return
 	}
 	if space := house.containerSpace(b); space <= carriedContainerDeeds(user, b) {
 		if space == 0 {
-			say(`Every room you've got is full of furniture already. The company won't allow more to a room. Fire hazard, they say. Get another room.`)
+			say(b.Line(`storage.full`))
 		} else {
-			say(`You're carrying deeds enough for every free corner you've got. Use those first.`)
+			say(b.Line(`storage.carrying`))
 		}
 		return
 	}
 	if user.Character.Gold+user.Character.Bank < price {
-		say(fmt.Sprintf(`It's %d gold for a %s. You haven't got it.`, price, what))
+		say(b.Line(`storage.no_gold`, `price`, price, `what`, what))
 		return
 	}
 	deed := items.New(itemId)
@@ -225,7 +224,7 @@ func buyContainerDeed(user *users.UserRecord, say func(string), buildingId strin
 		return
 	}
 	if !user.Character.StoreItem(deed) {
-		say(`You're carrying too much to take a slip of paper. Put something down.`)
+		say(b.Line(`storage.too_heavy`))
 		return
 	}
 	fromGold, fromBank := chargeGold(user, price)
@@ -233,9 +232,9 @@ func buyContainerDeed(user *users.UserRecord, say func(string), buildingId strin
 	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: deed, Gained: true})
 	mudlog.Info(`housing.buyContainerDeed`, `user`, user.UserId, `building`, b.BuildingId, `ownerOnly`, ownerOnly, `price`, price)
 	if ownerOnly {
-		say(fmt.Sprintf(`%d gold. Stand where you want it and use the deed. Give it a one-word name when it asks. Only you'll get it open.`, price))
+		say(b.Line(`storage.strongbox_sold`, `price`, price))
 	} else {
-		say(fmt.Sprintf(`%d gold. Stand where you want it and use the deed. Give it a one-word name when it asks. Mug, chest, whatever. Anyone you let in can use it.`, price))
+		say(b.Line(`storage.container_sold`, `price`, price))
 	}
 }
 
@@ -255,17 +254,17 @@ func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 	}
 	house, owns := HouseOf(user.UserId, b.BuildingId)
 	if !owns {
-		say(`Extensions are for lodgers. You'd want a home here first. It's on the list.`)
+		say(b.Line(`deed.no_home`))
 		return
 	}
 	if _, isFrozen := Frozen(b.BuildingId); isFrozen {
-		say(fmt.Sprintf(`The ledger's in a state. %s's clerk is going over it, and I'm to sell no rooms till it's done.`, capitalise(b.Proprietor)))
+		say(b.Line(`deed.frozen`))
 		return
 	}
 	if house.Outstanding(b) > 0 {
 		for _, itm := range user.Character.Items {
 			if itm.ItemId == b.ExtensionItemId && itm.BoundUserId == user.UserId {
-				say(`You've a deed already, made out to you and not used. Use that one first. One room at a time.`)
+				say(b.Line(`deed.unused`))
 				return
 			}
 		}
@@ -278,21 +277,21 @@ func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 		}
 		deed.BoundUserId = user.UserId
 		if !user.Character.StoreItem(deed) {
-			say(`You're carrying too much to take a sheet of paper. Put something down.`)
+			say(b.Line(`deed.too_heavy`))
 			return
 		}
 		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: deed, Gained: true})
 		mudlog.Info(`housing.buyExtension`, `user`, user.UserId, `building`, b.BuildingId, `reissued`, true)
-		say(`Lost your deed? The ledger says you paid for one and never used it. Here's a fresh copy, no charge. Whichever you use first counts, and the other's waste paper after.`)
+		say(b.Line(`deed.reissued`))
 		return
 	}
 	if len(house.RoomIds) >= b.MaxRooms {
-		say(`The company won't let one lodger have more of the building than you've got. Rules. Not mine.`)
+		say(b.Line(`deed.max_rooms`))
 		return
 	}
 	price := extensionPrice(b, house)
 	if user.Character.Gold+user.Character.Bank < price {
-		say(fmt.Sprintf(`An extension runs you %d gold, the bank counting. You're short.`, price))
+		say(b.Line(`deed.no_gold`, `price`, price))
 		return
 	}
 
@@ -311,7 +310,7 @@ func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 	}
 	if len(vacantUnitsLocked(b.BuildingId)) <= outstandingLocked(b) {
 		mu.Unlock()
-		say(`No rooms left to add on. Every empty room's promised to somebody's deed already. Try again when somebody moves out.`)
+		say(b.Line(`deed.no_units`))
 		return
 	}
 	next := cur.clone()
@@ -320,7 +319,7 @@ func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 	if err := saveHouse(next); err != nil {
 		mu.Unlock()
 		mudlog.Error(`housing.buyExtension`, `user`, user.UserId, `error`, err.Error())
-		say(`The ledger's in a state. I'll not take your coin till it's straight. Come back later.`)
+		say(b.Line(`ledger_error`))
 		return
 	}
 	if !user.Character.StoreItem(deed) {
@@ -331,7 +330,7 @@ func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 			indexLocked(&nn) // the file says sold; keep memory in step with it
 		}
 		mu.Unlock()
-		say(`You're carrying too much to take a sheet of paper. Impressive. Put something down.`)
+		say(b.Line(`deed.too_heavy`))
 		return
 	}
 	nn := next.clone()
@@ -344,7 +343,7 @@ func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 	saveUser(user) // the ledger is on disk; the payment and the deed must be too
 	mudlog.Info(`housing.buyExtension`, `user`, user.UserId, `building`, b.BuildingId, `price`, price, `roomsPaid`, next.RoomsPaid, `deedsIssued`, next.DeedsIssued)
 
-	say(fmt.Sprintf(`%d gold. Your name's on it, so don't bother selling it on. Stand in your lodging and type use deed. It'll ask you which way the room goes.`, price))
+	say(b.Line(`deed.sold`, `price`, price))
 }
 
 // carriedContainerDeeds counts the container and strongbox deeds of this
@@ -384,11 +383,11 @@ func buyRedecorate(user *users.UserRecord, say func(string), buildingId string) 
 		return
 	}
 	if _, owns := HouseOf(user.UserId, b.BuildingId); !owns {
-		say(`A voucher's no use without a room to spend it on. Get a home first.`)
+		say(b.Line(`voucher.no_home`))
 		return
 	}
 	if user.Character.Gold+user.Character.Bank < b.RedecoratePrice {
-		say(fmt.Sprintf(`It's %d gold for a voucher. You haven't got it.`, b.RedecoratePrice))
+		say(b.Line(`voucher.no_gold`, `price`, b.RedecoratePrice))
 		return
 	}
 	voucher := items.New(b.RedecorateItemId)
@@ -397,11 +396,11 @@ func buyRedecorate(user *users.UserRecord, say func(string), buildingId string) 
 		return
 	}
 	if !user.Character.StoreItem(voucher) {
-		say(`You're carrying too much to take a slip of paper. Put something down.`)
+		say(b.Line(`voucher.too_heavy`))
 		return
 	}
 	fromGold, fromBank := chargeGold(user, b.RedecoratePrice)
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -fromGold, BankChange: -fromBank})
 	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: voucher, Gained: true})
-	say(fmt.Sprintf(`%d gold. Use it in whichever room you want to look different, then write what you'd like it to look like. One room, one go.`, b.RedecoratePrice))
+	say(b.Line(`voucher.sold`, `price`, b.RedecoratePrice))
 }

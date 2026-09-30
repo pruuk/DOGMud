@@ -89,6 +89,20 @@ carries the words the shared code speaks with, all required: `proprietor`
 `location` (where its door is) and `outside_text` (what a guest put out of a
 lodging sees). A tier must be exactly one room.
 
+**Each landlord has his own voice.** Everything a landlord says through say
+comes from `voice.go`: `defaultLines` holds every line (Hobb's words, the
+default for any landlord), keyed (`terms.pitch`, `home.welcome`,
+`deed.sold`, ...), and a building's `voice:` map overrides any of them.
+Lines use `{placeholders}`: the building's own words (`{proprietor}`,
+`{Proprietor}`, `{vouched_by}`, `{Vouched_by}`, `{standing_hint}`, `{name}`,
+`{Name}`, `{door}`, `{Door}`) and each key's own (`linePlaceholders`: `{price}`,
+`{tier}`, `{what}`, ...). `Building.Line(key, name, value, ...)` renders a
+line. `Validate` rejects an unknown key, a placeholder the key does not
+provide, an empty line and a semicolon. A new spoken line must go into
+`defaultLines` and be said through `Line`, or `TestVoice_EveryLineIsConsistentAndUsed`
+fails. Brannoc (the Burrows) overrides every line; Aubric (the Quillhouse)
+overrides a few.
+
 **Houses are living state.** One YAML per house in
 `<DataFiles>/housing/<building_id>/<entry_room_id>.yaml`. Gitignored, in
 `provisioning/Dockerfile.dockerignore`, kept on the production droplet, and
@@ -150,6 +164,7 @@ is not sold another home meanwhile (`heldOwners`). `HeldRooms` lists them.
 - **purchase.go**: `Purchase` (a home), `PurchaseResult`.
 - **use_items.go**: `UseItem` (deeds and vouchers).
 - **terms.go**: `DescribeTerms`, the landlord's answer in words.
+- **voice.go**: `defaultLines`, `Building.Line`, voice validation.
 - **guests.go**: guest keys and the guest list: `Revoke`, `Leave`,
   `HousesOwnedBy`, `GuestOf`, `BuildingForDoor`, ejection.
 - **containers.go**: container and strongbox deeds (`useContainerDeed`),

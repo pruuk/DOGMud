@@ -84,15 +84,15 @@ func buyGuestKey(user *users.UserRecord, say func(string), buildingId string) {
 	}
 	house, owns := HouseOf(user.UserId, b.BuildingId)
 	if !owns {
-		say(`A key to what? You'd want a home here first.`)
+		say(b.Line(`key.no_home`))
 		return
 	}
 	if len(house.Guests) >= b.MaxGuests {
-		say(fmt.Sprintf(`Your lock already knows as many palms as %s allows. Revoke somebody first. Type house guests.`, b.Proprietor))
+		say(b.Line(`key.max`))
 		return
 	}
 	if user.Character.Gold+user.Character.Bank < b.GuestKeyPrice {
-		say(fmt.Sprintf(`It's %d gold for a guest key. You haven't got it.`, b.GuestKeyPrice))
+		say(b.Line(`key.no_gold`, `price`, b.GuestKeyPrice))
 		return
 	}
 	key := items.New(b.GuestKeyItemId)
@@ -102,13 +102,13 @@ func buyGuestKey(user *users.UserRecord, say func(string), buildingId string) {
 	}
 	key.HouseKeyOwner = user.UserId
 	if !user.Character.StoreItem(key) {
-		say(`You're carrying too much to take a key. Put something down.`)
+		say(b.Line(`key.too_heavy`))
 		return
 	}
 	fromGold, fromBank := chargeGold(user, b.GuestKeyPrice)
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -fromGold, BankChange: -fromBank})
 	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: key, Gained: true})
-	say(fmt.Sprintf(`%d gold. Give it to whoever you want let in. They use it at the door, once, and the lock learns them. Type house guests to see who's in, and house revoke to throw them out.`, b.GuestKeyPrice))
+	say(b.Line(`key.sold`, `price`, b.GuestKeyPrice))
 }
 
 // useGuestKey handles "use guest key" at a building's door.

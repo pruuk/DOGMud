@@ -1,8 +1,6 @@
 package housing
 
 import (
-	"fmt"
-
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -26,36 +24,36 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 	box, safe := offers[OfferContainer], offers[OfferStrongbox]
 
 	if _, owns := HouseOf(user.UserId, b.BuildingId); owns {
-		say(`You've got a room already. Door's behind me, hand on the plate, same as always.`)
+		say(b.Line(`terms.owner`))
 		if ext.Available {
-			say(fmt.Sprintf(`If you want it bigger, an extension deed is %d gold for you. Goes up every time, that's %s's rule. A redecorating voucher is %d. Type list.`, ext.Price, b.Proprietor, deco.Price))
+			say(b.Line(`terms.extension`, `price`, ext.Price, `voucher`, deco.Price))
 		} else {
-			say(fmt.Sprintf(`No extensions for you just now. %s. A redecorating voucher is %d, if you're bored of the walls. Type list.`, ext.Note, deco.Price))
+			say(b.Line(`terms.no_extension`, `reason`, ext.Note, `voucher`, deco.Price))
 		}
 		if key.Available {
-			say(fmt.Sprintf(`Want to let a friend in? A guest key's %d. Give it to them, they use it on the door, done. Type house to see who's got in.`, key.Price))
+			say(b.Line(`terms.guest_key`, `price`, key.Price))
 		}
 		if box.Available {
-			say(fmt.Sprintf(`Somewhere to keep your things? A container deed's %d, a strongbox deed's %d. You name it, it turns up. Anyone you let in can use a container. A strongbox opens for you alone.`, box.Price, safe.Price))
+			say(b.Line(`terms.storage`, `container`, box.Price, `strongbox`, safe.Price))
 		}
 		return true
 	}
 
 	tier, _ := b.Tier(tierId)
 	if !home.Available && home.Price == 0 {
-		say(`Every room's let. Nothing I can do. Try again another day.`)
+		say(b.Line(`terms.full`))
 		return true
 	}
-	say(fmt.Sprintf(`%s, %d gold, paid once. Four walls, a window, and a door that opens for you and nobody else. Extensions and redecorating come after, for lodgers. It's all on the list.`, capitalise(tier.Name), tier.Price))
+	say(b.Line(`terms.pitch`, `Tier`, capitalise(tier.Name), `tier`, tier.Name, `price`, tier.Price))
 	if !home.Available {
-		say(fmt.Sprintf(`But %s only lets to people %s can vouch for, and nobody's vouched for you. %s`, b.Proprietor, b.VouchedBy, b.StandingHint))
+		say(b.Line(`terms.not_vouched`))
 		return true
 	}
 	if user.Character.Gold+user.Character.Bank < tier.Price {
-		say(`You'd want the gold first. The bank counts. Type buy home when you've got it.`)
+		say(b.Line(`terms.no_gold`))
 		return true
 	}
-	say(fmt.Sprintf(`%s speaks well enough of you. Type buy home and I'll get the stamp out.`, capitalise(b.VouchedBy)))
+	say(b.Line(`terms.ready`))
 	return true
 }
 
