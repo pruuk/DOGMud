@@ -62,6 +62,8 @@ character:
       itemid: 20045
     feet:
       itemid: 20052
+    light:
+      itemid: 40038
   skills:
     blacksmithing: 1
   stats:

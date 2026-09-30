@@ -39,6 +39,8 @@ character:
   equipment:
     weapon:
       itemid: 10017
+    light:
+      itemid: 40038
   stats:
     perception:
       base: 115

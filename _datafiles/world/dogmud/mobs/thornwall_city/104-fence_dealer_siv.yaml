@@ -39,6 +39,8 @@ character:
   equipment:
     weapon:
       itemid: 10009
+    light:
+      itemid: 40038
   items:
     - itemid: 10013
   stats:

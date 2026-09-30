@@ -34,6 +34,9 @@ character:
     will also mill grain you bring yourself for a modest fee.
   speciesid: 1
   gold: 100
+  equipment:
+    light:
+      itemid: 40038
   stats:
     strength:
       base: 110

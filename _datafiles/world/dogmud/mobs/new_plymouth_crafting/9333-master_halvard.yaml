@@ -44,6 +44,9 @@ character:
   speciesid: 1
   level: 1
   gold: 45
+  equipment:
+    light:
+      itemid: 40038
   stats:
     strength:
       base: 114

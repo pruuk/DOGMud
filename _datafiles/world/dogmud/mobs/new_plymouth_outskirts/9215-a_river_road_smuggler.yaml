@@ -44,6 +44,9 @@ character:
   speciesid: 1
   level: 1
   gold: 1000
+  equipment:
+    light:
+      itemid: 40038
   stats:
     perception:
       base: 110
