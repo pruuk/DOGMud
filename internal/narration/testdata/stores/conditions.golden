@@ -286,3 +286,5 @@ condition|130|start_actee => A dull heat spreads behind your eyes, and living wa
 condition|130|start_observer => A dull red sheen settles over <ansi fg="username">Aliceia</ansi>'s eyes.
 condition|130|end_actee => The heat behind your eyes cools, and the pale shapes fade.
 condition|130|end_observer => The red sheen fades from <ansi fg="username">Aliceia</ansi>'s eyes.
+condition|131|end_actee => The warmth of the bed lets you go.
+condition|131|authored_start_line => The bed is soft and warm, and you sleep deeply.

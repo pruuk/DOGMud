@@ -22,6 +22,7 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 	}
 	home, ext, deco, key := offers[OfferHome], offers[OfferExtension], offers[OfferRedecorate], offers[OfferGuestKey]
 	box, safe := offers[OfferContainer], offers[OfferStrongbox]
+	bed, station := offers[OfferBed], offers[OfferStation]
 
 	if _, owns := HouseOf(user.UserId, b.BuildingId); owns {
 		say(b.Line(`terms.owner`))
@@ -35,6 +36,9 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 		}
 		if box.Available {
 			say(b.Line(`terms.storage`, `container`, box.Price, `strongbox`, safe.Price))
+		}
+		if bed.Available || station.Available {
+			say(b.Line(`terms.furnish`, `bed`, b.BedPrice, `station`, b.StationPrice))
 		}
 		return true
 	}

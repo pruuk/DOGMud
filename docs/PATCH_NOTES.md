@@ -57,6 +57,16 @@
 - Picking something up by name that turns out to be stashed now refuses an
   item about to explode, the same as asking for it from your stash by name.
 
+## 2026-09-30: Beds and workshops
+
+Every landlord now sells two more things. A bed deed (250 gold) puts a bed
+in a room of your lodging: sleep in it and you rest twice as fast as on the
+floor. A crafting station deed (1500 gold) installs the station of your
+choice, a forge, loom, alchemy bench, jeweler bench, cooking fire or
+enchanting circle, so you can craft at home. Each room takes one of each,
+and your guests can use them too. At the Hollow Oak they cost a quarter as
+much, as everything there does. Type list beside your landlord.
+
 ## 2026-09-30: A hollow in the Oak
 
 Travellers on the South Road have been noticing a tree. Below the Lake &

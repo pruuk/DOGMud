@@ -52,7 +52,7 @@ that moves gold between players, never out of the sink.
 
 Each landlord sells from a list (prices as authored; the three city
 buildings ship the numbers below, and the Hollow Oak a quarter of each: 125,
-deeds from 375, 125, 25, 63 and 125):
+deeds from 375, 125, 25, 63, 125, and 63 and 375 for a bed and a station):
 
 - **Home**, 500 gold, to players the Common Quarter vouches for
   (`np_commonfolk` standing Warm or better; each building names its own
@@ -74,6 +74,15 @@ deeds from 375, 125, 25, 63 and 125):
   the owner's companions) can open what it places. Each ROOM holds at most 6
   containers of both kinds (`max_containers_per_room`); the house as a whole
   has no limit.
+- **Bed Deed** (item 75; Quillhouse 77, Burrows 79, Hollow Oak 81), 250 gold.
+  Used in a lodging room, it puts a bed there. Anyone who sleeps in it, owner
+  or guest, gets condition 131 Sleeping in a Bed with Sleeping, whose recovery
+  statmods double the sleeping regen.
+- **Crafting Station Deed** (item 76; 78, 80, 82), 1500 gold. Used in a
+  lodging room, it asks which station to install (every station a recipe
+  names: forge, loom, alchemy bench, ...) and sets that room's
+  `rooms.Room.Station`, so the craft commands work there for anyone let in.
+  A room takes one bed and one station.
 
 Anything left on a lodging's floor, and in its containers, is kept in the
 house file and survives restarts, crashes and a wipe of `rooms.instances/`.
@@ -190,6 +199,10 @@ is not sold another home meanwhile (`heldOwners`). `HeldRooms` lists them.
   `hydrateFloor`, `Capture`, `captureHouseAt`, `captureAllLoaded`,
   `AfterUserCommand`, `AfterMobCommand`, `CaptureOnSave`), and strongboxes
   (`OpenStrongboxesForUser`, `OpenStrongboxesForMob`).
+- **furnishings.go**: bed and station deeds: `HouseStation`, `StationName`,
+  `RoomHasBed`, buying (`buyFurnishing`), placing (`useBedDeed`,
+  `useStationDeed`, `placeFurnishing`), and laying them over a room
+  (`furnishRoom`, `stripFurnishings`).
 
 ## Public API
 
@@ -357,7 +370,12 @@ the same `Buy` through the behavior-tree action `buy_housing`, and
   lodging. `MatchOffer` reads the strongbox
   words (strongbox, lockable, locked, lock, private, safe) first, then the
   container words (container, box, storage), then the rest, so "container
-  deed" is never read as an extension deed. The list's footer is built from
+  deed" is never read as an extension deed. The bed and station words (bed,
+  mattress; station, crafting, forge, loom, bench, workbench, workshop) are
+  read before the container words for the same reason.
+- **Bed and station deeds** (`buyFurnishing`): need a home, the flat price,
+  and a room still without one: rooms lacking a bed (or a station) must
+  exceed the deeds of that kind the buyer already carries. Unbound. The list's footer is built from
   the offer keys.
 
 Gold is always carried first, then the bank; `events.EquipmentChange` and
@@ -389,6 +407,31 @@ inside the user's own house.
   `DescriptionMinLen` to `DescriptionMaxLen` characters. A later voucher in
   the same room overwrites the earlier text. The voucher is re-checked in the
   backpack after the confirmation.
+
+## Beds and crafting stations
+
+- **Placing** (`useBedDeed`, `useStationDeed`): only the owner, inside their
+  own lodging, with a deed of that lodging's building (the checks `UseItem`
+  makes for every deed). `use bed deed`; `use station deed <kind>`, or `use
+  station deed` alone for a menu of `stationTypes` (the distinct stations of
+  every loaded recipe). A room with a bed (or a station) already refuses, as
+  does a container in the room with the furnishing's noun; checked again
+  under the registry lock by `placeFurnishing`, which writes the house, then
+  spends the deed and re-lays the room. Refusals keep the deed.
+- **Where they live**: `House.Beds` (room ids) and `House.Stations`
+  (`HouseStation`). `checkLinks` refuses one outside the house, two in a
+  room, or a station id that is not lower-case words joined by underscores.
+- **What they do to the room**: `overlayRoom` calls `furnishRoom`, which sets
+  `Room.Station`, adds a noun for each (`bed`, and the station's last word:
+  `forge`, `bench`, `circle`, `fire`, `loom`), and appends a sentence for each
+  to the description. What it appended is kept in room temp data so a re-lay
+  replaces it rather than doubling it; `stripFurnishings` takes it all back,
+  including from a unit that has fallen vacant. The furnishing nouns are
+  reserved container names.
+- **Sleeping**: `usercommands.Sleep` passes `actions.SleepOptions{InBed:
+  RoomHasBed(room)}`; `actions.Sleep` then adds `actions.BedSleepConditionId`
+  (131). It carries the sleeping and cancel flags, so everything that wakes a
+  sleeper ends it too.
 
 ## Containers
 

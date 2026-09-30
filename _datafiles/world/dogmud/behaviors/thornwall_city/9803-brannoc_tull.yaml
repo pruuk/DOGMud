@@ -31,7 +31,7 @@ tree:
       children:
         - type: condition
           check: keyword_match
-          keywords: [room, rooms, hole, holes, hideout, hide-out, lodging, lodgings, let, rent, lease, price, prices, cost, much, house, home, vacancy, vacancies, key, lock, door, extension, extensions, deed, deeds, voucher, vouchers, redecorate, redecorating, decorate, paint, digging, list, sell, selling, guest, guests, friend, friends, visit, visitor, visitors, invite, container, containers, chest, chests, storage, strongbox, strongboxes, safe, furniture]
+          keywords: [room, rooms, hole, holes, hideout, hide-out, lodging, lodgings, let, rent, lease, price, prices, cost, much, house, home, vacancy, vacancies, key, lock, door, extension, extensions, deed, deeds, voucher, vouchers, redecorate, redecorating, decorate, paint, digging, list, sell, selling, guest, guests, friend, friends, visit, visitor, visitors, invite, container, containers, chest, chests, storage, strongbox, strongboxes, safe, furniture, bed, beds, sleep, station, stations, craft, crafting, forge, loom, bench, workbench, workshop]
         - type: action
           do: housing_terms
           building: the_burrows

@@ -43,6 +43,13 @@ var reservedContainerNames = map[string]bool{
 	`north`: true, `south`: true, `east`: true, `west`: true, `up`: true, `down`: true,
 }
 
+func init() {
+	// A bed's or a station's noun is not free for a container either.
+	for _, noun := range furnishingNouns {
+		reservedContainerNames[noun] = true
+	}
+}
+
 func validContainerName(name string) error {
 	if len(name) < ContainerNameMin || len(name) > ContainerNameMax {
 		return fmt.Errorf(`the name must be one word of %d to %d letters`, ContainerNameMin, ContainerNameMax)

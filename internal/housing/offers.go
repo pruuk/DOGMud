@@ -21,6 +21,8 @@ const (
 	OfferRedecorate = `voucher`
 	OfferContainer  = `container`
 	OfferStrongbox  = `strongbox`
+	OfferBed        = `bed`
+	OfferStation    = `station`
 )
 
 // Offer is one line of a landlord's list for one player.
@@ -111,7 +113,7 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 		safe.Note, safe.Available = `A container only you can open`, true
 	}
 
-	return []Offer{home, ext, deco, key, box, safe}
+	return append([]Offer{home, ext, deco, key, box, safe}, furnishingOffers(user, b, house, owns)...)
 }
 
 func extensionPrice(b Building, h House) int {
@@ -137,8 +139,17 @@ func MatchOffer(request string, ownsHome bool) (string, bool) {
 		}
 		words = append(words, word)
 	}
-	// The container words win over "deed", so "container deed" and "deed
-	// for a strongbox" are not read as an extension deed.
+	// The container and furnishing words win over "deed", so "container
+	// deed", "bed deed" and "deed for a strongbox" are not read as an
+	// extension deed.
+	for _, word := range words {
+		switch word {
+		case `bed`, `mattress`, `bedding`, `cot`:
+			return OfferBed, true
+		case `station`, `crafting`, `craft`, `workbench`, `workshop`, `forge`, `loom`, `bench`:
+			return OfferStation, true
+		}
+	}
 	for _, word := range words {
 		switch word {
 		case `strongbox`, `strongboxe`, `lockable`, `locked`, `lock`, `private`, `safe`:
@@ -186,6 +197,8 @@ func Buy(user *users.UserRecord, say func(string), buildingId string, tierId str
 		buyContainerDeed(user, say, buildingId, false)
 	case OfferStrongbox:
 		buyContainerDeed(user, say, buildingId, true)
+	case OfferBed, OfferStation:
+		buyFurnishing(user, say, buildingId, key)
 	}
 }
 

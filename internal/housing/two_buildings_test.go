@@ -33,6 +33,7 @@ func quillBuilding() Building {
 	b.OutsideText = `You find yourself back out in Quill Court.`
 	b.UnitRooms = []int{quillA, quillB, 6573}
 	b.ExtensionItemId, b.RedecorateItemId, b.GuestKeyItemId, b.ContainerItemId, b.StrongboxItemId = 60, 61, 62, 63, 64
+	b.BedItemId, b.StationItemId = 77, 78
 	return b
 }
 
@@ -253,6 +254,7 @@ func TestNoStandingCheck_AnybodyMayLodge(t *testing.T) {
 	wild.UnitRooms = []int{6772, 6773}
 	wild.Faction, wild.MinRepTier, wild.VouchedBy, wild.StandingHint = ``, ``, ``, ``
 	wild.ExtensionItemId, wild.RedecorateItemId, wild.GuestKeyItemId, wild.ContainerItemId, wild.StrongboxItemId = 70, 71, 72, 73, 74
+	wild.BedItemId, wild.StationItemId = 81, 82
 	if err := wild.Validate(); err != nil {
 		t.Fatalf("a building with no standing check is invalid: %v", err)
 	}

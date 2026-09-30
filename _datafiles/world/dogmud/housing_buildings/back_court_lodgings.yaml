@@ -67,6 +67,15 @@ strongbox_item_id: 59
 strongbox_price: 500
 max_containers_per_room: 6
 
+# Furnishings: a bed deed puts a bed in the room it is used in (sleeping in it
+# doubles the rest), and a station deed installs one crafting station the
+# lodger chooses (forge, loom, alchemy bench, ...). One of each to a room;
+# anyone let into the lodging may use them. Placed only by the owner.
+bed_item_id: 75
+bed_price: 250
+station_item_id: 76
+station_price: 1500
+
 unit_rooms: [6470, 6471, 6472, 6473, 6474, 6475, 6476, 6477, 6478, 6479, 6480, 6481,
   6482, 6483, 6484, 6485, 6486, 6487, 6488, 6489, 6490, 6491, 6492, 6493,
   6494, 6495, 6496, 6497, 6498, 6499, 6500, 6501, 6502, 6503, 6504, 6505,

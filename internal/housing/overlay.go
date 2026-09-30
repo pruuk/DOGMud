@@ -52,6 +52,9 @@ func applyOverlay(r *rooms.Room, withContainers bool) {
 		if isUnit && withContainers && len(r.Containers) > 0 {
 			r.Containers = nil
 		}
+		if isUnit {
+			stripFurnishings(r)
+		}
 		return
 	}
 	house := h.clone()
@@ -85,6 +88,7 @@ func overlayRoom(r *rooms.Room, house House, b Building, base [4]int, hasBase bo
 	if text, ok := house.Descriptions[r.RoomId]; ok && text != `` {
 		r.Description = text
 	}
+	furnishRoom(r, house)
 
 	if hasBase {
 		off := house.offsets()[r.RoomId]

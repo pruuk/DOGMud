@@ -56,6 +56,10 @@ func UseItem(user *users.UserRecord, room *rooms.Room, itm items.Item, args stri
 		useExtension(user, room, itm, h, b, args, rest, send)
 	case b.RedecorateItemId:
 		useRedecorate(user, room, itm, h, args, rest, send)
+	case b.BedItemId:
+		useBedDeed(user, room, itm, h, send)
+	case b.StationItemId:
+		useStationDeed(user, room, itm, h, args, rest, send)
 	default:
 		send(fmt.Sprintf(`The <ansi fg="itemname">%s</ansi> was issued for a different building.`, itm.DisplayName()))
 	}

@@ -77,6 +77,14 @@ voice:
   storage.too_heavy: "You are carrying too much to take a strip of bark. Put something down."
   storage.container_sold: "{price} gold. Stand where you want it and use the deed. Give it one word for a name when it asks. Chest, crate, whatever you like. Anyone you let in can open it."
   storage.strongbox_sold: "{price} gold. Stand where you want it and use the deed. Give it one word for a name. Only you will get it open. Not even me."
+  terms.furnish: "A bed is {bed}, and you will rest twice as fast in it. A crafting station is {station}, whichever kind you like. One of each to a hollow, and anyone you let in may use them. Type list."
+  furnish.no_home: "A {what} for where? You would want a hollow first."
+  furnish.full: "Every hollow you have has a {what} already. One to a hollow. Dig another."
+  furnish.carrying: "You are carrying a deed for a {what} in every hollow that lacks one. Use those first."
+  furnish.no_gold: "It is {price} gold for a {what}. You have not got it."
+  furnish.too_heavy: "You are carrying too much to take a strip of bark. Put something down."
+  furnish.bed_sold: "{price} gold. Stand in the hollow you want it in and use the deed, and my diggers will carry it in. Sleep in it and you will rest twice as fast. So will anyone you let in."
+  furnish.station_sold: "{price} gold. Stand in the hollow you want it in, use the deed, and tell my diggers which station. One to a hollow. Mind the forge, if you choose a forge. The Oak is wood."
   list.home_note: "A warm hollow and a door that knows you"
   ask.buy_what: "Buy what? Type list, if you please. Then buy home, buy deed, and so on. I am too old to guess."
 
@@ -123,6 +131,15 @@ container_price: 63
 strongbox_item_id: 74
 strongbox_price: 125
 max_containers_per_room: 6
+
+# Furnishings: a bed deed puts a bed in the room it is used in (sleeping in it
+# doubles the rest), and a station deed installs one crafting station the
+# lodger chooses (forge, loom, alchemy bench, ...). One of each to a room;
+# anyone let into the lodging may use them. Placed only by the owner.
+bed_item_id: 81
+bed_price: 63
+station_item_id: 82
+station_price: 375
 
 unit_rooms: [6774, 6775, 6776, 6777, 6778, 6779, 6780, 6781, 6782, 6783, 6784,
   6785, 6786, 6787, 6788, 6789, 6790, 6791, 6792, 6793, 6794, 6795, 6796,

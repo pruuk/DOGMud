@@ -1178,6 +1178,12 @@ actor already has the Sleeping condition, returns `SleepResult.AlreadyAsleep
   goes to the room only.
 - **Progression:** No stat/skill progression triggered.
 - **Cooldown:** None.
+- **In a bed:** `SleepOptions{InBed: true}` (the player command passes
+  `housing.RoomHasBed`) also adds `BedSleepConditionId` (131, Sleeping in a
+  Bed) through `sleepInBed`, which sends its start line. Its recovery statmods
+  double the sleeping regen, and it carries the sleeping flag, so whatever
+  wakes the sleeper ends it too. The room sees "<Actor> lies down in the bed
+  to sleep."
 
 Entry points that call `Sleep`:
 - `usercommands/sleep.go` — player `sleep` command

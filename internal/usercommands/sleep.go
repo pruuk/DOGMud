@@ -3,6 +3,7 @@ package usercommands
 import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -14,7 +15,8 @@ func Sleep(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	if refuseWhileBusy(user, `sleep`) {
 		return true, nil
 	}
-	actions.Sleep(&actions.UserActor{User: user, Room: room}, actions.SleepOptions{})
+	// A housing bed doubles the rest (anyone let into the lodging may use it).
+	actions.Sleep(&actions.UserActor{User: user, Room: room}, actions.SleepOptions{InBed: housing.RoomHasBed(room.RoomId)})
 
 	// Quest engine: command notification — sleeping advances "rest in the
 	// field" quest steps (e.g. the Spoke D wilderness cert). Mirrors the

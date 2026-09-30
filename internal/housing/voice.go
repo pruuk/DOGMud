@@ -22,6 +22,7 @@ var defaultLines = map[string]string{
 	`terms.no_extension`: `No extensions for you just now. {reason}. A redecorating voucher is {voucher}, if you're bored of the walls. Type list.`,
 	`terms.guest_key`:    `Want to let a friend in? A guest key's {price}. Give it to them, they use it on the door, done. Type house to see who's got in.`,
 	`terms.storage`:      `Somewhere to keep your things? A container deed's {container}, a strongbox deed's {strongbox}. You name it, it turns up. Anyone you let in can use a container. A strongbox opens for you alone.`,
+	`terms.furnish`:      `A bed's {bed}, and you'll rest twice as fast in it. A crafting station's {station}, whichever kind you like. One of each to a room, and anyone you let in can use them. Type list.`,
 	`terms.full`:         `Every room's let. Nothing I can do. Try again another day.`,
 	`terms.pitch`:        `{Tier}, {price} gold, paid once. Four walls, a window, and a door that opens for you and nobody else. Extensions and redecorating come after, for lodgers. It's all on the list.`,
 	`terms.not_vouched`:  `But {proprietor} only lets to people {vouched_by} can vouch for, and nobody's vouched for you. {standing_hint}`,
@@ -77,6 +78,15 @@ var defaultLines = map[string]string{
 	`storage.container_sold`: `{price} gold. Stand where you want it and use the deed. Give it a one-word name when it asks. Mug, chest, whatever. Anyone you let in can use it.`,
 	`storage.strongbox_sold`: `{price} gold. Stand where you want it and use the deed. Give it a one-word name when it asks. Only you'll get it open.`,
 
+	// Beds and crafting stations ({what} is "bed" or "crafting station").
+	`furnish.no_home`:      `A {what}'s no use without a room to put it in. Get a home first.`,
+	`furnish.full`:         `Every room you've got has a {what} already. One to a room. Get another room.`,
+	`furnish.carrying`:     `You're carrying a deed for a {what} in every room that hasn't got one. Use those first.`,
+	`furnish.no_gold`:      `It's {price} gold for a {what}. You haven't got it.`,
+	`furnish.too_heavy`:    `You're carrying too much to take a slip of paper. Put something down.`,
+	`furnish.bed_sold`:     `{price} gold. Stand in the room you want it in and use the deed. The porters do the rest. Sleep in it and you'll rest twice as fast as on the floor, and so will anyone you let in.`,
+	`furnish.station_sold`: `{price} gold. Stand in the room you want it in and use the deed, and tell the fitters which station you want. One to a room. Anyone you let in can work at it.`,
+
 	// The note beside an available home on the list.
 	`list.home_note`: `Four walls and a door that knows you`,
 
@@ -94,6 +104,9 @@ var linePlaceholders = map[string][]string{
 	`voucher.sold`: {`price`}, `key.no_gold`: {`price`}, `key.sold`: {`price`},
 	`storage.no_home`: {`what`}, `storage.no_gold`: {`price`, `what`},
 	`storage.container_sold`: {`price`}, `storage.strongbox_sold`: {`price`},
+	`terms.furnish`: {`bed`, `station`}, `furnish.no_home`: {`what`}, `furnish.full`: {`what`},
+	`furnish.carrying`: {`what`}, `furnish.no_gold`: {`price`, `what`},
+	`furnish.bed_sold`: {`price`}, `furnish.station_sold`: {`price`},
 }
 
 var buildingPlaceholders = []string{`proprietor`, `Proprietor`, `vouched_by`, `Vouched_by`,

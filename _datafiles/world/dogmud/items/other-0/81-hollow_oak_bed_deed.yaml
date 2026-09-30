@@ -1,0 +1,15 @@
+itemid: 81
+name: Hollow Oak Bed Deed
+namesimple: bed deed
+not_salable: true
+description: >
+  A strip of bark tied with grass, marked with a drawing of a bed and a
+  paw-print in wax. It puts one bed in a room of your lodging in the Hollow Oak. Anyone who sleeps in it, you or
+  anyone you let in, rests twice as fast as on a floor. To use it, stand in the
+  room where the bed should go and type use bed deed, then sleep there. A room
+  takes one bed.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

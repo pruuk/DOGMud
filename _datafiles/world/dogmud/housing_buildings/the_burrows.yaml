@@ -85,6 +85,14 @@ voice:
   storage.too_heavy: "You're carrying too much to take a bit of sacking. Drop something."
   storage.container_sold: "{price} gold. Stand where you want it and use the deed. Give it one word for a name when it asks. Crate, sack, whatever. Anyone you let in can root in it."
   storage.strongbox_sold: "{price} gold. Stand where you want it and use the deed. Give it one word for a name. Only you'll get it open. Not even me. I've tried."
+  terms.furnish: "Bed's {bed}. Sleep in it, you'll be back on your feet twice as quick. Bench, forge, whatever, that's {station}. One of each to a hole. Your mates can use them too. Type list."
+  furnish.no_home: "A {what} for where? Get a hole first."
+  furnish.full: "Every hole you've got has a {what} in it already. One to a hole. Dig another."
+  furnish.carrying: "You've got a deed for a {what} in every hole that hasn't got one. Use them first."
+  furnish.no_gold: "It's {price} gold for a {what}. You haven't got it."
+  furnish.too_heavy: "You're carrying too much to take a bit of paper. Drop something."
+  furnish.bed_sold: "{price} gold. Stand in the hole you want it in and use the deed. The lads drag it in. Sleep in it and you'll heal twice as quick. So will your mates."
+  furnish.station_sold: "{price} gold. Stand in the hole you want it in, use the deed, and tell the lads what kind. One to a hole. Don't set the place on fire."
   list.home_note: "Rock walls and a door that knows you"
   ask.buy_what: "Buy what? Type list. It's on the slate. Then buy home, buy deed, whatever. Stop just saying buy at me."
 
@@ -128,6 +136,15 @@ container_price: 250
 strongbox_item_id: 69
 strongbox_price: 500
 max_containers_per_room: 6
+
+# Furnishings: a bed deed puts a bed in the room it is used in (sleeping in it
+# doubles the rest), and a station deed installs one crafting station the
+# lodger chooses (forge, loom, alchemy bench, ...). One of each to a room;
+# anyone let into the lodging may use them. Placed only by the owner.
+bed_item_id: 79
+bed_price: 250
+station_item_id: 80
+station_price: 1500
 
 unit_rooms: [6672, 6673, 6674, 6675, 6676, 6677, 6678, 6679, 6680, 6681,
   6682, 6683, 6684, 6685, 6686, 6687, 6688, 6689, 6690, 6691, 6692, 6693,

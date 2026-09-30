@@ -40,6 +40,8 @@ func TestShippedHollowOak_OpenToAllAtAQuarterOfACity(t *testing.T) {
 		{`guest key`, oak.GuestKeyPrice, city.GuestKeyPrice},
 		{`container`, oak.ContainerPrice, city.ContainerPrice},
 		{`strongbox`, oak.StrongboxPrice, city.StrongboxPrice},
+		{`bed`, oak.BedPrice, city.BedPrice},
+		{`station`, oak.StationPrice, city.StationPrice},
 	}
 	for _, p := range prices {
 		if p.oak != quarter(p.city) {

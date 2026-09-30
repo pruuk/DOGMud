@@ -122,11 +122,20 @@ type Building struct {
 	StrongboxItemId      int `yaml:"strongbox_item_id"`
 	StrongboxPrice       int `yaml:"strongbox_price"`
 	MaxContainersPerRoom int `yaml:"max_containers_per_room"`
+
+	// Furnishings: a bed deed (BedItemId) puts a bed in one room, and a
+	// station deed (StationItemId) installs one crafting station of the
+	// owner's choice there. A room takes at most one of each; anyone let in
+	// may use them (furnishings.go).
+	BedItemId     int `yaml:"bed_item_id"`
+	BedPrice      int `yaml:"bed_price"`
+	StationItemId int `yaml:"station_item_id"`
+	StationPrice  int `yaml:"station_price"`
 }
 
 // housingItemIds lists every item the building sells, for validation.
 func (b Building) housingItemIds() []int {
-	return []int{b.ExtensionItemId, b.RedecorateItemId, b.GuestKeyItemId, b.ContainerItemId, b.StrongboxItemId}
+	return []int{b.ExtensionItemId, b.RedecorateItemId, b.GuestKeyItemId, b.ContainerItemId, b.StrongboxItemId, b.BedItemId, b.StationItemId}
 }
 
 func (b Building) Id() string       { return b.BuildingId }
@@ -193,12 +202,15 @@ func (b Building) Validate() error {
 	seenItem := map[int]bool{}
 	for _, id := range b.housingItemIds() {
 		if id <= 0 || seenItem[id] {
-			return fmt.Errorf(`housing building %s: extension_item_id, redecorate_item_id, guest_key_item_id, container_item_id and strongbox_item_id are required and must all differ`, b.BuildingId)
+			return fmt.Errorf(`housing building %s: extension_item_id, redecorate_item_id, guest_key_item_id, container_item_id, strongbox_item_id, bed_item_id and station_item_id are required and must all differ`, b.BuildingId)
 		}
 		seenItem[id] = true
 	}
 	if b.ContainerPrice <= 0 || b.StrongboxPrice <= 0 || b.MaxContainersPerRoom < 1 {
 		return fmt.Errorf(`housing building %s: container_price and strongbox_price must be positive and max_containers_per_room at least 1`, b.BuildingId)
+	}
+	if b.BedPrice <= 0 || b.StationPrice <= 0 {
+		return fmt.Errorf(`housing building %s: bed_price and station_price must be positive`, b.BuildingId)
 	}
 	if b.GuestKeyPrice <= 0 || b.MaxGuests < 1 {
 		return fmt.Errorf(`housing building %s: guest_key_price must be positive and max_guests at least 1`, b.BuildingId)
@@ -335,6 +347,11 @@ type House struct {
 	// changes back. A room with no entry yet keeps whatever its instance save
 	// held until its first capture adopts it.
 	Floors []HouseFloor `yaml:"floors,omitempty"`
+
+	// Beds are the rooms with a bed in them, and Stations the crafting
+	// stations installed, at most one of each per room (furnishings.go).
+	Beds     []int          `yaml:"beds,omitempty,flow"`
+	Stations []HouseStation `yaml:"stations,omitempty"`
 }
 
 // HouseFloor is what lies on one room's floor.
@@ -503,6 +520,8 @@ func (h House) clone() House {
 	c.RoomIds = append([]int(nil), h.RoomIds...)
 	c.Links = append([]RoomLink(nil), h.Links...)
 	c.Guests = append([]Guest(nil), h.Guests...)
+	c.Beds = append([]int(nil), h.Beds...)
+	c.Stations = append([]HouseStation(nil), h.Stations...)
 	c.Containers = make([]HouseContainer, len(h.Containers))
 	for i, hc := range h.Containers {
 		hc.Items = append([]items.Item(nil), hc.Items...)
@@ -673,6 +692,23 @@ func (h House) checkLinks() error {
 			return fmt.Errorf(`two floors recorded for room %d`, f.RoomId)
 		}
 		seenFloor[f.RoomId] = true
+	}
+	seenBed := map[int]bool{}
+	for _, roomId := range h.Beds {
+		if !h.HasRoom(roomId) || seenBed[roomId] {
+			return fmt.Errorf(`bed in room %d, which is not in this house or has two`, roomId)
+		}
+		seenBed[roomId] = true
+	}
+	seenStation := map[int]bool{}
+	for _, s := range h.Stations {
+		if !h.HasRoom(s.RoomId) || seenStation[s.RoomId] {
+			return fmt.Errorf(`station in room %d, which is not in this house or has two`, s.RoomId)
+		}
+		if !validStationId(s.Station) {
+			return fmt.Errorf(`station %q in room %d is not a station id`, s.Station, s.RoomId)
+		}
+		seenStation[s.RoomId] = true
 	}
 	seenGuest := map[int]bool{}
 	for _, g := range h.Guests {

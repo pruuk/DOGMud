@@ -26,6 +26,8 @@ const (
 	testKeyId     = 57
 	testBoxId     = 58
 	testSafeId    = 59
+	testBedId     = 75
+	testStationId = 76
 )
 
 func testBuilding() Building {
@@ -59,6 +61,10 @@ func testBuilding() Building {
 		ContainerPrice:           250,
 		StrongboxItemId:          testSafeId,
 		StrongboxPrice:           500,
+		BedItemId:                testBedId,
+		BedPrice:                 250,
+		StationItemId:            testStationId,
+		StationPrice:             1500,
 		MaxContainersPerRoom:     2,
 	}
 }
@@ -85,6 +91,10 @@ func setup(t *testing.T) string {
 		testKeyId:     {ItemId: testKeyId, Name: `Guest Key`, NameSimple: `guest key`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 		testBoxId:     {ItemId: testBoxId, Name: `Container Deed`, NameSimple: `container deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 		testSafeId:    {ItemId: testSafeId, Name: `Strongbox Deed`, NameSimple: `strongbox deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		testBedId:     {ItemId: testBedId, Name: `Bed Deed`, NameSimple: `bed deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		testStationId: {ItemId: testStationId, Name: `Crafting Station Deed`, NameSimple: `station deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		77:            {ItemId: 77, Name: `Quillhouse Bed Deed`, NameSimple: `bed deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		78:            {ItemId: 78, Name: `Quillhouse Crafting Station Deed`, NameSimple: `station deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 		// The second building's (two_buildings_test.go).
 		60: {ItemId: 60, Name: `Quillhouse Extension Deed`, NameSimple: `deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 		61: {ItemId: 61, Name: `Quillhouse Redecorating Voucher`, NameSimple: `voucher`, Type: items.Object, Subtype: items.Usable, Uses: 1},

@@ -114,7 +114,8 @@ var conditionApplyPathAllowlist = map[string]string{
 
 	// ── silent-start conditions whose applier narrates the moment itself ────
 	"internal/actions/combat_throttle.go|149": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
-	"internal/actions/sleep.go|60":            "condition 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
+	"internal/actions/sleep.go|69":            "condition 15 is silent-start; Sleep reads the Sleeping flag back for its own idempotence check, so it sends the start line itself",
+	"internal/actions/sleep.go|122":           "Sleeping in a Bed, added with condition 15 to a sleeper in a housing bed: silent-start and synchronous for the same reason as 15, so sleepInBed sends its start line itself",
 
 	// ── former combat conditions: warcry and rally are now one record each,
 	// applied via AddConditionMagnitude (conditions.ConditionIdWarcry /

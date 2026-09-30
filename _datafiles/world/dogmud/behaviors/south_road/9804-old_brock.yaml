@@ -30,7 +30,7 @@ tree:
       children:
         - type: condition
           check: keyword_match
-          keywords: [room, rooms, hollow, hollows, sett, setts, lodging, lodgings, let, rent, lease, price, prices, cost, much, house, home, vacancy, vacancies, key, acorn, acorns, lock, door, extension, extensions, deed, deeds, digging, dig, voucher, vouchers, paint, redecorate, redecorating, decorate, list, sell, selling, guest, guests, friend, friends, visit, visitor, visitors, invite, container, containers, chest, chests, storage, strongbox, strongboxes, safe, furniture]
+          keywords: [room, rooms, hollow, hollows, sett, setts, lodging, lodgings, let, rent, lease, price, prices, cost, much, house, home, vacancy, vacancies, key, acorn, acorns, lock, door, extension, extensions, deed, deeds, digging, dig, voucher, vouchers, paint, redecorate, redecorating, decorate, list, sell, selling, guest, guests, friend, friends, visit, visitor, visitors, invite, container, containers, chest, chests, storage, strongbox, strongboxes, safe, furniture, bed, beds, sleep, station, stations, craft, crafting, forge, loom, bench, workbench, workshop]
         - type: action
           do: housing_terms
           building: hollow_oak
