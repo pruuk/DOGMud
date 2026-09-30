@@ -67,7 +67,7 @@ sells everything Hobb Pennock sells in New Plymouth: homes, extension deeds,
 redecorating vouchers, guest keys, and container and strongbox deeds. Type
 list beside him.
 
-Madam Venn, who owns the house, lets only to people the Margin will speak
+Madam Pardew, who owns the house, lets only to people the Margin will speak
 for. If the scholars don't know you yet, Quist the Elder at the Margin Hall
 usually has an old chart that needs a second pair of eyes.
 

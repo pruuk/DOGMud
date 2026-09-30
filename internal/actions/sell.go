@@ -311,6 +311,12 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 		}
 		return 0, SellStopRejected
 	}
+	// Housing deeds, vouchers and keys: what was paid for them is gone for
+	// good, and no merchant gives any of it back (items.IsNeverBought).
+	if items.IsNeverBought(itemSpec.ItemId) {
+		merchantSay(room, mob, "That's lodging-house paper. It's no good to me, and I'll not give you a coin for it.")
+		return 0, SellStopRejected
+	}
 
 	char.CancelConditionsWithFlag(conditions.Hidden)
 	// Baubles (docs/baubles): catalog-priced; a player's average or rare one

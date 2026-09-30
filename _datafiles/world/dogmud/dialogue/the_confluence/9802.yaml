@@ -12,7 +12,7 @@ greetings:
 patterns:
   - keywords: ["plate", "brass", "touch", "palm", "rivers", "engraving"]
     responses:
-      - "Madam Venn had it from the same locksmith as the Crewe house downriver.
+      - "Madam Pardew had it from the same locksmith as the Crewe house downriver.
         It learns a lodger's palm when I enter them in the ledger. How, I could
         not tell you. I only keep the ledger."
       - "No, it cannot be picked. Yes, people try, usually at night, usually
@@ -20,7 +20,7 @@ patterns:
 
   - keywords: ["margin", "vouch", "scholars", "quist", "reputation", "standing"]
     responses:
-      - "Madam Venn lets only to people the Margin will speak for. Quist the
+      - "Madam Pardew lets only to people the Margin will speak for. Quist the
         Elder at the Margin Hall usually has some old chart that needs a
         second pair of eyes. Be the eyes. Then come back."
 

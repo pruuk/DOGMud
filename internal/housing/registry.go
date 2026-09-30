@@ -105,7 +105,18 @@ func rebuild(loaded map[string]Building, coords map[int][4]int) (nHouses int, nH
 
 	nHouses, nHeld = loadHouses()
 	applyAllOverlays(keepLive)
+	registerNeverBought()
 	return nHouses, nHeld
+}
+
+// registerNeverBought tells the sell action that no merchant buys anything a
+// landlord sells: housing payments are a gold sink with no way back.
+func registerNeverBought() {
+	ids := []int{}
+	for _, b := range AllBuildings() {
+		ids = append(ids, b.housingItemIds()...)
+	}
+	items.SetNeverBought(ids)
 }
 
 func resetLocked() {
@@ -195,15 +206,34 @@ func validateBuildingsAgainstWorld(loaded map[string]Building) map[int][4]int {
 		if !doorExit.HasLock() {
 			panic(fmt.Sprintf(`housing building %s: the %q exit in room %d must be locked so mobs cannot use it`, id, b.DoorExit, b.DoorRoom))
 		}
-		if mobs.GetMobSpec(mobs.MobId(b.LandlordMobId)) == nil {
+		landlord := mobs.GetMobSpec(mobs.MobId(b.LandlordMobId))
+		if landlord == nil {
 			panic(fmt.Sprintf(`housing building %s: landlord_mob_id %d does not exist`, id, b.LandlordMobId))
+		}
+		// Housing payments are a gold sink. The landlord is not a merchant
+		// (nothing can be sold to him), and he carries no gold of his own
+		// (nothing paid could be stolen or looted back): the payment is
+		// simply gone.
+		if len(landlord.Character.Shop) > 0 {
+			panic(fmt.Sprintf(`housing building %s: landlord %d must not have a shop; he sells from his housing list, and buys nothing`, id, b.LandlordMobId))
+		}
+		if landlord.Character.Gold != 0 {
+			panic(fmt.Sprintf(`housing building %s: landlord %d must carry no gold (gold: 0); housing payments are a sink`, id, b.LandlordMobId))
 		}
 		if factions.GetDefinition(b.Faction) == nil {
 			panic(fmt.Sprintf(`housing building %s: faction %q does not exist`, id, b.Faction))
 		}
 		for _, itemId := range b.housingItemIds() {
-			if items.GetItemSpec(itemId) == nil {
+			spec := items.GetItemSpec(itemId)
+			if spec == nil {
 				panic(fmt.Sprintf(`housing building %s: item %d does not exist`, id, itemId))
+			}
+			// Worth nothing to anyone but its lodger. The loader gives every
+			// item a value (an authored 0 is replaced by an automatic one),
+			// so what stops a shop paying for it is items.IsNeverBought,
+			// registered by registerNeverBought; these keep the data honest.
+			if !spec.NotSalable || len(spec.VendorCategories) > 0 {
+				panic(fmt.Sprintf(`housing building %s: item %d must be not_salable with no vendor_categories; what is paid for it is a sink`, id, itemId))
 			}
 		}
 		for _, roomId := range b.UnitRooms {

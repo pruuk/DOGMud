@@ -1,6 +1,6 @@
 # The Quillhouse: a tall, narrow lodging house at the end of Quill Court
 # (6570), west off Hall Lane (6144) behind the Municipal Hall in the
-# Confluence. It belongs to Madam Orla Venn, a retired chart-keeper of the
+# Confluence. It belongs to Madam Orla Pardew, a retired chart-keeper of the
 # Margin, and lets to people the Margin will speak for. Its under-clerk,
 # Aubric Sallow, sells everything below from a list.
 #
@@ -29,7 +29,7 @@ faction: margin
 min_rep_tier: warm
 
 # How the landlord and the house commands speak of this building.
-proprietor: Madam Venn
+proprietor: Madam Pardew
 vouched_by: the Margin
 standing_hint: Quist the Elder at the Margin Hall, west through the Scholars' Gate, always has some old chart that needs a second pair of eyes. Be the eyes, then come back.
 location: Quill Court, west off Hall Lane behind the Municipal Hall in the Confluence

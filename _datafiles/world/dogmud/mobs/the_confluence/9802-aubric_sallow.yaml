@@ -25,7 +25,7 @@ idlecommands:
   - 'emote sharpens a quill he has no use for, very slowly, with a small
     folding knife.'
   - ''
-  - 'say Madam Venn lets only to people the Margin will speak for. Type list,
+  - 'say Madam Pardew lets only to people the Margin will speak for. Type list,
     and I will tell you what she charges.'
   - ''
   - 'emote watches the rainwater in the gutter carry a lost quill exactly
@@ -35,7 +35,7 @@ character:
   name: Aubric Sallow
   description: |
     Aubric Sallow is the under-clerk of the Quillhouse, which is to say of
-    Madam Orla Venn, a retired chart-keeper of the Margin who owns the tall
+    Madam Orla Pardew, a retired chart-keeper of the Margin who owns the tall
     house behind him, lets its rooms to scholars, copyists and clerks, and
     now lives upriver with her charts and has not climbed its stairs in
     years. Aubric sits on a high clerk's stool under the door lamp with a
@@ -49,7 +49,7 @@ character:
     record rents.
   speciesid: 1
   level: 1
-  gold: 20
+  gold: 0
   stats:
     perception:
       base: 110

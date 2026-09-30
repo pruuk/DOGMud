@@ -19,7 +19,7 @@ city's standing, with its own rooms, deeds, guests, floors and containers.
   `np_commonfolk` Warm. Items 55-59; units 6470-6569 (zone New Plymouth
   Lodgings, plane 14).
 - **The Quillhouse** (`quillhouse`), the Confluence. Aubric Sallow (mob 9802),
-  under-clerk to Madam Orla Venn, sits in Quill Court (room 6570, west off
+  under-clerk to Madam Orla Pardew, sits in Quill Court (room 6570, west off
   Hall Lane 6144 behind the Municipal Hall). Standing: `margin` Warm (The
   Margin Notation, +15, is enough). Items 60-64; units 6571-6670 (zone
   Confluence Lodgings, plane 15).

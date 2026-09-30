@@ -51,7 +51,7 @@ character:
     forgets a lodger, and he wishes, sometimes, that he could.
   speciesid: 1
   level: 1
-  gold: 20
+  gold: 0
   stats:
     perception:
       base: 110

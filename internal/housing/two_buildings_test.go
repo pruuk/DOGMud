@@ -3,6 +3,7 @@ package housing
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -26,7 +27,7 @@ func quillBuilding() Building {
 	b.DoorRoom = quillDoor
 	b.LandlordMobId = 9802
 	b.Faction = `margin`
-	b.Proprietor = `Madam Venn`
+	b.Proprietor = `Madam Pardew`
 	b.VouchedBy = `the Margin`
 	b.Location = `Quill Court`
 	b.OutsideText = `You find yourself back out in Quill Court.`
@@ -225,4 +226,20 @@ func offersIn(u *users.UserRecord, buildingId string) map[string]Offer {
 		out[o.Key] = o
 	}
 	return out
+}
+
+// Everything every landlord sells is registered as never bought by a
+// merchant, so what was paid for it cannot come back through a shop.
+func TestLoad_EveryHousingItemIsNeverBought(t *testing.T) {
+	setup(t)
+	defer items.SetNeverBought(nil)
+	rebuild(map[string]Building{testBldgId: testBuilding(), quillId: quillBuilding()}, nil)
+	for _, id := range []int{55, 56, 57, 58, 59, 60, 61, 62, 63, 64} {
+		if !items.IsNeverBought(id) {
+			t.Errorf("item %d can be sold to a merchant", id)
+		}
+	}
+	if items.IsNeverBought(10001) {
+		t.Error("an ordinary item was marked never bought")
+	}
 }
