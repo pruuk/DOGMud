@@ -22,7 +22,7 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 	for _, o := range Offers(user, buildingId, tierId) {
 		offers[o.Key] = o
 	}
-	home, ext, deco := offers[OfferHome], offers[OfferExtension], offers[OfferRedecorate]
+	home, ext, deco, key := offers[OfferHome], offers[OfferExtension], offers[OfferRedecorate], offers[OfferGuestKey]
 
 	if _, owns := HouseOf(user.UserId, b.BuildingId); owns {
 		say(`You've got a room already. Door's behind me, hand on the plate, same as always.`)
@@ -30,6 +30,9 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 			say(fmt.Sprintf(`If you want it bigger, an extension deed is %d gold for you. Goes up every time, that's the Widow's rule. A redecorating voucher is %d. Type list.`, ext.Price, deco.Price))
 		} else {
 			say(fmt.Sprintf(`No extensions for you just now. %s. A redecorating voucher is %d, if you're bored of the walls. Type list.`, ext.Note, deco.Price))
+		}
+		if key.Available {
+			say(fmt.Sprintf(`Want to let a friend in? A guest key's %d. Give it to them, they use it on the door, done. Type house to see who's got in.`, key.Price))
 		}
 		return true
 	}

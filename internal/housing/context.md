@@ -21,6 +21,9 @@ list:
   knocks a new room through (`use deed north`, or `use deed` for a menu).
 - **Redecorating Voucher** (item 56), 500 gold. Used in a lodging room, it
   replaces that room's description with text the lodger writes.
+- **Guest Key** (item 57), 100 gold, made out to the buyer's house. Given to
+  a friend and used at the door once, it adds them to the house's guest list
+  (up to 5). The owner revokes with `house revoke <name>`.
 
 Homes and extensions come from one pool of 100 blank unit rooms
 (6470-6569, zone New Plymouth Lodgings). A house holds at most 8 rooms.
@@ -56,15 +59,16 @@ A house records its rooms (`RoomIds`, the first is the entry), the doorways
 between them (`Links`, one entry per doorway, the way back implied), the
 owner's descriptions by room (`Descriptions`) and what was paid for rooms
 (`RoomsPaid`; houses from before extensions have it 0 and `Spent` falls back
-to `PricePaid`).
+to `PricePaid`), and the guests let in with keys (`Guests`, by account, with
+the character name that used the key for lists and revoking).
 
 A file is named by its entry room, not its owner, so a file that cannot be
 read still says which room it guarded. That room is **held**: never sold and
 never entered (except by staff) until someone repairs the file. A readable
 file that disagrees with the world (unknown building, a room that is not a
 unit, a room already owned, a second house for the same owner, a doorway
-outside the house or two doorways in one direction: `checkLinks`) is left in
-place and its rooms held. `HeldRooms` lists them.
+outside the house or two doorways in one direction, or a guest who is the
+owner or listed twice: `checkLinks`) is left in place and its rooms held. `HeldRooms` lists them.
 
 ## Files
 
@@ -80,6 +84,8 @@ place and its rooms held. `HeldRooms` lists them.
 - **purchase.go**: `Purchase` (a home), `PurchaseResult`.
 - **use_items.go**: `UseItem` (deeds and vouchers).
 - **terms.go**: `DescribeTerms`, the landlord's answer in words.
+- **guests.go**: guest keys and the guest list: `Revoke`, `Leave`,
+  `HousesOwnedBy`, `GuestOf`, `BuildingForDoor`, ejection.
 
 ## Public API
 
@@ -94,12 +100,18 @@ func IsUnitRoom(roomId int) bool
 func IsHousingItem(itemId int) bool
 func HouseOf(userId int, buildingId string) (House, bool)
 func HouseForRoom(roomId int) (House, bool)
+func HostsOf(userId int, buildingId string) []House   // houses where userId is a guest
+func HousesOwnedBy(userId int) []House
+func GuestOf(userId int) []House
+func BuildingForDoor(roomId int) (Building, bool)
+func Revoke(ownerId int, name string) (Guest, error)
+func Leave(userId int, ownerName string) (House, error)
 func AllHouses() []House
 func VacantUnits(buildingId string) []int
 func HeldRooms() map[int]string
 
 func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer
-func MatchOffer(request string, ownsHome bool) (string, bool)   // OfferHome, OfferExtension, OfferRedecorate
+func MatchOffer(request string, ownsHome bool) (string, bool)   // OfferHome, OfferExtension, OfferRedecorate, OfferGuestKey
 func Buy(user *users.UserRecord, say func(string), buildingId string, tierId string, key string)
 func Purchase(user *users.UserRecord, say func(string), buildingId string, tierId string) PurchaseResult
 func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, tierId string) bool
@@ -125,14 +137,19 @@ destination; nobody ever arrives by it.
 (`routing_hooks.go`), which cannot import this package:
 
 - `rooms.SetExitRouter(RouteDoor)`: `usercommands.Go` asks the router before
-  moving. An owner is sent to their own entry room and the authored lock is
-  skipped; anyone else gets the refusal and does not move. Everything else in
+  moving. The router lists every lodging the player may enter: their own
+  (labelled `home`) and every house that has them as a guest (labelled by
+  owner name). One goes straight there, with the authored lock skipped;
+  several come back as `ExitRoute.Choices` and `Go` asks with a menu
+  (`Whose lodging? [home/Alice/cancel]`, prefix answers work), or takes a
+  destination pre-picked by the `visit <name>` command; none is refused. Everything else in
   `Go` (combat, stamina, sneaking, companions, quest `room_enter`, visited
   rooms, narration) runs unchanged. `unlock` ("open door") delegates to `Go`,
   `picklock` refuses before the lockpicks check, and `look door` shows the
   room's `door` noun instead of peering through.
 - `rooms.SetEntryGuard(GuardEntry)`: `rooms.MoveToRoom` refuses to place a
-  player in a unit room they do not own, however they arrive. Staff
+  player in a unit room of a house they neither own nor are a guest of,
+  however they arrive. Staff
   (`users.RoleAdmin`) may enter any unit. A refused LOGIN placement is
   redirected to the building's door room.
 - `rooms.SetPrivateRoomCheck(IsUnitRoom)`: the loot goblin never picks a unit
@@ -215,6 +232,27 @@ names an ordinary item). Both items only work inside the user's own house.
   the same room overwrites the earlier text. The voucher is re-checked in the
   backpack after the confirmation.
 
+## Guests
+
+- **Buying** (`buyGuestKey`): needs a home and fewer than `max_guests`
+  guests. The key carries `items.Item.HouseKeyOwner` (the buyer's account).
+  Nothing is recorded until the key is used, so an unused key costs nothing.
+- **Using** (`useGuestKey`, from `UseItem` before the in-house check): only at
+  the building's door room, not by the owner, not a second time by an existing
+  guest, and not past `max_guests` (checked again at the lock, so keys bought
+  early cannot overfill a house). The guest is written to the house, then the
+  key is spent; the owner is told if online. Every refusal keeps the key.
+- **Access** is the house record alone: owner or guest, by account. A guest
+  walks every room, arrives at the entry room, and leaves by the door. Guests
+  cannot use deeds or vouchers there (owner-only), and cannot invite anyone.
+- **Revoking** (`Revoke`, `house revoke <name>`, whole name or unique prefix)
+  and **leaving** (`Leave`, `house leave <owner>`) write the house first, then
+  put the player outside the building's door if they are online inside
+  (`ejectIfInside`). A player offline inside is redirected at login by
+  `GuardEntry`.
+- Commands live in `internal/usercommands/house.go`: `house` (own lodging,
+  guests, lodgings you may visit), `house revoke`, `house leave`, and `visit`.
+
 ## Adding capacity or a building
 
 Run `tools/housing_units.py` to generate blank unit rooms (it refuses to
@@ -252,5 +290,6 @@ only adds them.
 ## Consumers
 
 `main.go` (boot), `internal/behaviortree` (`buy_housing`, `housing_terms`),
-`internal/usercommands` (`list`, `buy`, `use`, via `housing_shop.go`), and
+`internal/usercommands` (`list`, `buy`, `use`, via `housing_shop.go`; `house`
+and `visit`, via `house.go`), and
 through the room hooks `internal/rooms` and `internal/usercommands`.

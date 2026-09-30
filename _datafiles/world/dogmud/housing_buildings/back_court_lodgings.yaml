@@ -42,6 +42,13 @@ extension_description: >
 redecorate_item_id: 56
 redecorate_price: 500
 
+# Guests: a lodger buys a guest key and gives it to a friend, who uses it at
+# the door once and is let in from then on. The owner revokes with
+# `house revoke <name>`. A house admits at most max_guests.
+guest_key_item_id: 57
+guest_key_price: 100
+max_guests: 5
+
 unit_rooms: [6470, 6471, 6472, 6473, 6474, 6475, 6476, 6477, 6478, 6479, 6480, 6481,
   6482, 6483, 6484, 6485, 6486, 6487, 6488, 6489, 6490, 6491, 6492, 6493,
   6494, 6495, 6496, 6497, 6498, 6499, 6500, 6501, 6502, 6503, 6504, 6505,

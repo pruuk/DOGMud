@@ -411,7 +411,10 @@ What matters is the shape, not the list:
   each landlord's per-lodger offers in the shop table style before any real
   merchant; `buy` tries `housing.MatchOffer` before `actions.Buy`; `use`
   hands `use deed north` / `use voucher ...` to `housing.UseItem` when a
-  leading run of words names a housing item. See
+  leading run of words names a housing item. `Go` turns a routed exit's
+  several `Choices` into a `Whose lodging?` menu (`pickRoutedDestination`),
+  which `visit <name>` skips by pre-picking a destination in temp data.
+  `house` and `visit` (`house.go`) manage guest access. See
   `internal/housing/context.md`.
 - **Target resolution** uses the existing fuzzy matchers, which already handle
   multi-word input. Reach for `internal/parser` only when a command must

@@ -323,6 +323,10 @@ that sells and consumes the item checks it. Housing extension deeds
 buyer's own house, so a deed passed to another account would sell rooms at
 someone else's price.
 
+`Item.HouseKeyOwner` (yaml `housekeyowner`) marks a housing guest key: the
+account whose house the key opens. The holder, whoever they are, presents it
+at the building's door once to be added to that house's guest list.
+
 ### Item Identification and Matching
 ```go
 // Multiple identification methods

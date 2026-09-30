@@ -23,6 +23,7 @@ const (
 
 	testDeedId    = 55
 	testVoucherId = 56
+	testKeyId     = 57
 )
 
 func testBuilding() Building {
@@ -44,6 +45,9 @@ func testBuilding() Building {
 		ExtensionDescription:     `A plain room knocked through from the rest of the lodging.`,
 		RedecorateItemId:         testVoucherId,
 		RedecoratePrice:          500,
+		GuestKeyItemId:           testKeyId,
+		GuestKeyPrice:            100,
+		MaxGuests:                2,
 	}
 }
 
@@ -64,6 +68,7 @@ func setup(t *testing.T) string {
 	restoreItems := items.SeedItemsForTest(map[int]*items.ItemSpec{
 		testDeedId:    {ItemId: testDeedId, Name: `Room Extension Deed`, NameSimple: `deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 		testVoucherId: {ItemId: testVoucherId, Name: `Redecorating Voucher`, NameSimple: `voucher`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		testKeyId:     {ItemId: testKeyId, Name: `Guest Key`, NameSimple: `guest key`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 	})
 	t.Cleanup(func() {
 		restoreItems()

@@ -76,7 +76,18 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 		deco.Note = `Needs a home here first`
 	}
 
-	return []Offer{home, ext, deco}
+	key := Offer{Key: OfferGuestKey, Name: itemName(b.GuestKeyItemId, `Guest Key`)}
+	switch {
+	case !owns:
+		key.Note = `Needs a home here first`
+	case len(house.Guests) >= b.MaxGuests:
+		key.Note = `Your lock knows as many guests as allowed`
+	default:
+		key.Price = b.GuestKeyPrice
+		key.Note, key.Available = `Lets one friend in. Give it to them`, true
+	}
+
+	return []Offer{home, ext, deco, key}
 }
 
 func extensionPrice(b Building, h House) int {
@@ -104,6 +115,8 @@ func MatchOffer(request string, ownsHome bool) (string, bool) {
 			return OfferExtension, true
 		case `voucher`, `redecorating`, `redecorate`, `redecoration`, `decorating`, `description`:
 			return OfferRedecorate, true
+		case `key`, `guest`:
+			return OfferGuestKey, true
 		case `room`:
 			if ownsHome {
 				return OfferExtension, true
@@ -123,6 +136,8 @@ func Buy(user *users.UserRecord, say func(string), buildingId string, tierId str
 		buyExtension(user, say, buildingId)
 	case OfferRedecorate:
 		buyRedecorate(user, say, buildingId)
+	case OfferGuestKey:
+		buyGuestKey(user, say, buildingId)
 	}
 }
 

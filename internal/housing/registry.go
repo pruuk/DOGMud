@@ -171,7 +171,7 @@ func validateBuildingsAgainstWorld(loaded map[string]Building) map[int][4]int {
 		if factions.GetDefinition(b.Faction) == nil {
 			panic(fmt.Sprintf(`housing building %s: faction %q does not exist`, id, b.Faction))
 		}
-		for _, itemId := range []int{b.ExtensionItemId, b.RedecorateItemId} {
+		for _, itemId := range []int{b.ExtensionItemId, b.RedecorateItemId, b.GuestKeyItemId} {
 			if items.GetItemSpec(itemId) == nil {
 				panic(fmt.Sprintf(`housing building %s: item %d does not exist`, id, itemId))
 			}
@@ -239,13 +239,13 @@ func LandlordBuildings(mobId int) []Building {
 	return out
 }
 
-// IsHousingItem reports whether itemId is any building's extension deed or
-// redecorating voucher.
+// IsHousingItem reports whether itemId is any building's extension deed,
+// redecorating voucher or guest key.
 func IsHousingItem(itemId int) bool {
 	mu.RLock()
 	defer mu.RUnlock()
 	for _, b := range buildings {
-		if itemId == b.ExtensionItemId || itemId == b.RedecorateItemId {
+		if itemId == b.ExtensionItemId || itemId == b.RedecorateItemId || itemId == b.GuestKeyItemId {
 			return true
 		}
 	}
@@ -292,6 +292,30 @@ func AllHouses() []House {
 		out = append(out, *h)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].EntryRoom() < out[j].EntryRoom() })
+	return out
+}
+
+// HostsOf returns the houses in buildingId where userId is a guest, ordered
+// by owner name so menus are stable.
+func HostsOf(userId int, buildingId string) []House {
+	mu.RLock()
+	defer mu.RUnlock()
+	return hostsOfLocked(userId, buildingId)
+}
+
+func hostsOfLocked(userId int, buildingId string) []House {
+	out := []House{}
+	for _, h := range houses {
+		if h.BuildingId == buildingId && h.IsGuest(userId) {
+			out = append(out, h.clone())
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].OwnerName != out[j].OwnerName {
+			return out[i].OwnerName < out[j].OwnerName
+		}
+		return out[i].EntryRoom() < out[j].EntryRoom()
+	})
 	return out
 }
 

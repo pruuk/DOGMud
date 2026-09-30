@@ -61,7 +61,7 @@ func renderHousingListings(user *users.UserRecord, room *rooms.Room) bool {
 		}
 		renderShopTable(user, `Lodgings and services`, `cyan`, l.mob.Character.Name, `mobname`,
 			[]string{`Name`, `Price`, `Note`}, rows,
-			`To buy, type: <ansi fg="command">buy home</ansi>, <ansi fg="command">buy deed</ansi> or <ansi fg="command">buy voucher</ansi>. Prices are in gold, and the bank counts.`)
+			`To buy, type: <ansi fg="command">buy home</ansi>, <ansi fg="command">buy deed</ansi>, <ansi fg="command">buy voucher</ansi> or <ansi fg="command">buy key</ansi>. Prices are in gold, and the bank counts.`)
 		listed = true
 	}
 	return listed
@@ -107,4 +107,41 @@ func tryHousingItemUse(rest string, user *users.UserRecord, room *rooms.Room) bo
 		return housing.UseItem(user, room, itm, strings.Join(words[i:], ` `), rest)
 	}
 	return false
+}
+
+// routedPickKey holds a destination chosen by `visit` for the next routed
+// exit this player takes, so `visit alice` can skip the menu.
+const routedPickKey = `housing.routedPick`
+
+// pickRoutedDestination chooses between a routed exit's destinations: a
+// room pre-picked by `visit`, else a menu (home first, then each host). The
+// prompt re-runs the go command with each answer, so it reports done=false
+// until the player has answered. A zero room with done=true is a cancel.
+func pickRoutedDestination(user *users.UserRecord, rest string, choices []rooms.ExitChoice) (roomId int, done bool) {
+	if v, ok := user.GetTempData(routedPickKey).(int); ok && v != 0 {
+		user.SetTempData(routedPickKey, nil)
+		for _, c := range choices {
+			if c.RoomId == v {
+				return v, true
+			}
+		}
+	}
+	options := make([]string, 0, len(choices)+1)
+	for _, c := range choices {
+		options = append(options, c.Label)
+	}
+	options = append(options, `cancel`)
+
+	cmdPrompt, _ := user.StartPrompt(`go`, rest)
+	q := cmdPrompt.Ask(`Whose lodging?`, options, `cancel`)
+	if !q.Done {
+		return 0, false
+	}
+	user.ClearPrompt()
+	for _, c := range choices {
+		if strings.EqualFold(c.Label, q.Response) {
+			return c.RoomId, true
+		}
+	}
+	return 0, true
 }

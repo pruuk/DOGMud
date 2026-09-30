@@ -139,11 +139,26 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		// out, is not consulted for a player it lets through.
 		routed := false
 		if route, handled := rooms.RouteExit(user.UserId, room.RoomId, exitName); handled {
-			if route.RoomId == 0 {
+			switch {
+			case len(route.Choices) > 1:
+				// Several destinations (a lodger who is also a guest): take
+				// one pre-picked by `visit`, or ask with a menu. The prompt
+				// re-runs this command with each answer.
+				picked, done := pickRoutedDestination(user, rest, route.Choices)
+				if !done {
+					return true, nil
+				}
+				if picked == 0 {
+					user.SendText(messaging.CategorySystem, `You stay where you are.`)
+					return true, nil
+				}
+				goRoomId = picked
+			case route.RoomId == 0:
 				user.SendText(messaging.CategorySystem, route.Refusal)
 				return true, nil
+			default:
+				goRoomId = route.RoomId
 			}
-			goRoomId = route.RoomId
 			routed = true
 		}
 
@@ -261,7 +276,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		// must NOT be opened by passing through from the far side.
 		if len(enterFromExit) < 1 {
 			for candidate := range destRoom.Exits {
-				if route, handled := rooms.RouteExit(user.UserId, destRoom.RoomId, candidate); handled && route.RoomId == room.RoomId {
+				if route, handled := rooms.RouteExit(user.UserId, destRoom.RoomId, candidate); handled && route.Leads(room.RoomId) {
 					enterFromExit = candidate
 					enterFromRouted = true
 					break

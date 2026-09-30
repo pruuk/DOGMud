@@ -1,0 +1,25 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">house</ansi> command
+
+The <ansi fg="command">house</ansi> command shows your lodging and who can
+come into it, and lets you take access away.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">house</ansi>                  Your lodging, its guests, and the
+                         lodgings you may visit
+  <ansi fg="command">house revoke [name]</ansi>    Take a guest's access away. If they
+                         are inside, they are put out in the
+                         alley.
+  <ansi fg="command">house leave [owner]</ansi>    Give up your own access to someone
+                         else's lodging
+
+<ansi fg="yellow">Letting a friend in:</ansi>
+
+  Buy a <ansi fg="item">Guest Key</ansi> from Hobb Pennock in Pennock's Alley
+  (<ansi fg="command">buy key</ansi>) and give it to your friend. They type
+  <ansi fg="command">use guest key</ansi> at the green door, once, and can come
+  and go from then on, whether or not you are there. Guests can walk
+  every room of your lodging and take anything left lying about, so
+  only let in people you trust.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help visit</ansi>, <ansi fg="command">help list</ansi>

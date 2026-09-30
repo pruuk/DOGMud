@@ -30,6 +30,13 @@ func UseItem(user *users.UserRecord, room *rooms.Room, itm items.Item, args stri
 	}
 	send := func(s string) { user.SendText(messaging.CategorySystem, util.SplitStringNL(s, 80)) }
 
+	// A guest key is used at the building's door, by the friend it was given
+	// to, not inside anybody's lodging.
+	if kb, isKey := buildingForKey(itm.ItemId); isKey {
+		useGuestKey(user, room, itm, kb, send)
+		return true
+	}
+
 	h, inHouse := HouseForRoom(room.RoomId)
 	if !inHouse || h.OwnerUserId != user.UserId {
 		send(fmt.Sprintf(`You can only use the <ansi fg="itemname">%s</ansi> inside your own lodging.`, itm.DisplayName()))

@@ -337,8 +337,11 @@ take part in movement decisions. `internal/housing` registers all three at
 boot (`housing.RegisterRoomHooks` in `main.go`). Unset hooks are no-ops.
 
 - **`SetExitRouter(ExitRouter)` / `RouteExit` / `IsRoutedExit`**: a routed
-  exit sends each player to their own destination (`ExitRoute.RoomId`) or
-  refuses them (`ExitRoute.Refusal`). `usercommands.Go` consults it before
+  exit sends each player to their own destination (`ExitRoute.RoomId`),
+  offers them several (`ExitRoute.Choices`, two or more `ExitChoice{Label,
+  RoomId}`, which `usercommands.Go` turns into a menu), or refuses them
+  (`ExitRoute.Refusal`). `ExitRoute.Leads(roomId)` reports whether a route
+  could reach a room either way. `usercommands.Go` consults it before
   moving and skips the exit's authored lock for a routed pass; `unlock`,
   `picklock` and `look` treat a routed exit as a door, not a lock or a view.
   An empty exit name is never routed.

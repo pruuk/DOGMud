@@ -837,7 +837,7 @@ zones:
 
 | Action | Params | Description |
 |--------|--------|-------------|
-| `buy_housing` | `building` (string, a housing `building_id`), `tier` (string, the `tier_id` sold as a home) | The landlord's sale: picks home, extension deed or voucher from the ask text (`housing.MatchOffer`; "buy a room" means an extension to an owner) and delegates to `housing.Buy`, the same path as the `buy` command. The mob speaks every refusal. Failure only when misconfigured or the actors are gone. |
+| `buy_housing` | `building` (string, a housing `building_id`), `tier` (string, the `tier_id` sold as a home) | The landlord's sale: picks home, extension deed, voucher or guest key from the ask text (`housing.MatchOffer`; "buy a room" means an extension to an owner) and delegates to `housing.Buy`, the same path as the `buy` command. The mob speaks every refusal. Failure only when misconfigured or the actors are gone. |
 | `housing_terms` | same as `buy_housing` | The landlord explains his list in words for this player: the home price and what stands in the way, or for an owner the next extension price and the voucher (`housing.DescribeTerms`, built from `housing.Offers`). Charges nothing. |
 
 Put `buy_housing` first and gate it on explicit buying words (`buy`,

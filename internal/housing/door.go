@@ -35,8 +35,10 @@ var landlordName = func(b Building) string {
 }
 
 // RouteDoor is the rooms.ExitRouter. A building's shared door leads each
-// owner to their own entry room and refuses everyone else. Every other exit
-// is not housing's business.
+// player to the lodgings they may enter: their own ("home") and every house
+// that has let them in as a guest (by owner name). One place goes straight
+// there; several come back as Choices for the caller to ask about; none is
+// refused. Every other exit is not housing's business.
 func RouteDoor(userId int, fromRoomId int, exitName string) (rooms.ExitRoute, bool) {
 	mu.RLock()
 	var b *Building
@@ -51,15 +53,23 @@ func RouteDoor(userId int, fromRoomId int, exitName string) (rooms.ExitRoute, bo
 		return rooms.ExitRoute{}, false
 	}
 	h, owns := ownerHouse[ownerKey{b.BuildingId, userId}]
-	entry := 0
-	if owns {
-		entry = h.EntryRoom()
+	choices := []rooms.ExitChoice{}
+	if owns && h.EntryRoom() > 0 {
+		choices = append(choices, rooms.ExitChoice{Label: `home`, RoomId: h.EntryRoom()})
+	}
+	for _, host := range hostsOfLocked(userId, b.BuildingId) {
+		choices = append(choices, rooms.ExitChoice{Label: host.OwnerName, RoomId: host.EntryRoom()})
 	}
 	bCopy := *b
 	mu.RUnlock()
 
-	if owns && entry > 0 {
-		return rooms.ExitRoute{RoomId: entry}, true
+	switch len(choices) {
+	case 0:
+		// refused below
+	case 1:
+		return rooms.ExitRoute{RoomId: choices[0].RoomId, Choices: choices}, true
+	default:
+		return rooms.ExitRoute{Choices: choices}, true
 	}
 
 	return rooms.ExitRoute{
@@ -68,9 +78,10 @@ func RouteDoor(userId int, fromRoomId int, exitName string) (rooms.ExitRoute, bo
 	}, true
 }
 
-// GuardEntry is the rooms.EntryGuard. A unit room admits its owner and staff,
-// and nobody else, however they try to arrive (walking, recall, summons, a
-// quest move, or logging in). A refused login lands at the building's door.
+// GuardEntry is the rooms.EntryGuard. A unit room admits its owner, the
+// owner's guests and staff, and nobody else, however they try to arrive
+// (walking, recall, summons, a quest move, or logging in). A refused login
+// lands at the building's door.
 func GuardEntry(userId int, toRoomId int) (bool, int, string) {
 	mu.RLock()
 	buildingId, isUnit := unitBuilding[toRoomId]
@@ -79,7 +90,7 @@ func GuardEntry(userId int, toRoomId int) (bool, int, string) {
 		return true, 0, ``
 	}
 	h, owned := roomHouse[toRoomId]
-	ownerOk := owned && h.OwnerUserId == userId
+	ownerOk := owned && h.MayEnter(userId) // the owner or one of their guests
 	door := 0
 	if b := buildings[buildingId]; b != nil {
 		door = b.DoorRoom

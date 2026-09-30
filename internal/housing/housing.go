@@ -83,6 +83,13 @@ type Building struct {
 	// description of the room it is used in, at a flat RedecoratePrice.
 	RedecorateItemId int `yaml:"redecorate_item_id"`
 	RedecoratePrice  int `yaml:"redecorate_price"`
+
+	// Guests: a guest key (GuestKeyItemId), made out to the buyer's house,
+	// is given to a friend, who uses it at the door once to be let in from
+	// then on. A house admits at most MaxGuests.
+	GuestKeyItemId int `yaml:"guest_key_item_id"`
+	GuestKeyPrice  int `yaml:"guest_key_price"`
+	MaxGuests      int `yaml:"max_guests"`
 }
 
 func (b Building) Id() string       { return b.BuildingId }
@@ -141,8 +148,12 @@ func (b Building) Validate() error {
 		}
 		seenRoom[id] = true
 	}
-	if b.ExtensionItemId <= 0 || b.RedecorateItemId <= 0 || b.ExtensionItemId == b.RedecorateItemId {
-		return fmt.Errorf(`housing building %s: extension_item_id and redecorate_item_id are required and must differ`, b.BuildingId)
+	if b.ExtensionItemId <= 0 || b.RedecorateItemId <= 0 || b.GuestKeyItemId <= 0 ||
+		b.ExtensionItemId == b.RedecorateItemId || b.GuestKeyItemId == b.ExtensionItemId || b.GuestKeyItemId == b.RedecorateItemId {
+		return fmt.Errorf(`housing building %s: extension_item_id, redecorate_item_id and guest_key_item_id are required and must all differ`, b.BuildingId)
+	}
+	if b.GuestKeyPrice <= 0 || b.MaxGuests < 1 {
+		return fmt.Errorf(`housing building %s: guest_key_price must be positive and max_guests at least 1`, b.BuildingId)
 	}
 	if b.ExtensionPriceMultiplier < 1 {
 		return fmt.Errorf(`housing building %s: extension_price_multiplier must be at least 1`, b.BuildingId)
@@ -223,6 +234,34 @@ type House struct {
 	// Descriptions are owner-written room descriptions by room id, set by a
 	// redecorating voucher. A room without one shows its default text.
 	Descriptions map[int]string `yaml:"descriptions,omitempty"`
+
+	// Guests are the accounts the owner has let in with a guest key. Like
+	// the owner, a guest is an ACCOUNT, so a guest's alts share the access.
+	Guests []Guest `yaml:"guests,omitempty"`
+}
+
+// Guest is one account let into a house.
+type Guest struct {
+	UserId int `yaml:"user_id"`
+	// Name is the character that used the key. For lists and revoking by
+	// name; access is decided by UserId only.
+	Name    string    `yaml:"name"`
+	AddedAt time.Time `yaml:"added_at"`
+}
+
+// IsGuest reports whether userId (an account) is one of the house's guests.
+func (h House) IsGuest(userId int) bool {
+	for _, g := range h.Guests {
+		if g.UserId == userId {
+			return true
+		}
+	}
+	return false
+}
+
+// MayEnter reports whether userId owns the house or is one of its guests.
+func (h House) MayEnter(userId int) bool {
+	return h.OwnerUserId == userId || h.IsGuest(userId)
 }
 
 // RoomLink is one doorway between two rooms of the same house.
@@ -264,6 +303,7 @@ func (h House) clone() House {
 	c := h
 	c.RoomIds = append([]int(nil), h.RoomIds...)
 	c.Links = append([]RoomLink(nil), h.Links...)
+	c.Guests = append([]Guest(nil), h.Guests...)
 	if h.Descriptions != nil {
 		c.Descriptions = make(map[int]string, len(h.Descriptions))
 		for k, v := range h.Descriptions {
@@ -372,6 +412,13 @@ func (h House) checkLinks() error {
 		if !h.HasRoom(roomId) {
 			return fmt.Errorf(`description for room %d, which is not in this house`, roomId)
 		}
+	}
+	seenGuest := map[int]bool{}
+	for _, g := range h.Guests {
+		if g.UserId <= 0 || g.UserId == h.OwnerUserId || seenGuest[g.UserId] {
+			return fmt.Errorf(`guest %d is invalid, the owner, or listed twice`, g.UserId)
+		}
+		seenGuest[g.UserId] = true
 	}
 	return nil
 }

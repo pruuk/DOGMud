@@ -201,6 +201,8 @@ var (
 		`set`:             {Set, true, true, false},
 		`setdesc`:         {SetDesc, true, true, false},
 		`sethome`:         {SetHome, true, true, false},
+		`house`:           {House, true, false, false},
+		`visit`:           {Visit, false, false, false},
 		`setmotd`:         {SetMotd, true, true, true}, // Admin only
 		`share`:           {Share, false, true, false},
 		`fire`:            {Fire, false, true, false},

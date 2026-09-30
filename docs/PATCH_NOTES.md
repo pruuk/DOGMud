@@ -57,6 +57,27 @@
 - Picking something up by name that turns out to be stashed now refuses an
   item about to explode, the same as asking for it from your stash by name.
 
+## 2026-09-30: Letting friends in
+
+You can now let friends into your lodging. Buy a **Guest Key** from Hobb
+Pennock (buy key, 100 gold) and give it to a friend. They type use guest
+key at the green door once, and after that the door lets them in too,
+whether or not you are home. A lodging can have up to five guests.
+
+If you can go to more than one lodging, the door asks you which: your
+own home or one of the lodgings you have a key to. You can also type
+visit home, or visit and the owner's name, to go straight there.
+
+Type house to see your lodging, who can come in, and whose lodgings you
+can visit. Type house revoke and a name to take a guest's access away.
+If they are inside at the time, they find themselves back in the alley.
+Guests can give up their own access with house leave and the owner's
+name.
+
+Guests can walk every room and pick up anything left lying about, so
+only give keys to people you trust. They cannot extend or redecorate
+your lodging.
+
 ## 2026-09-30: Bigger rooms, your own words
 
 Hobb Pennock, the letting clerk in Pennock's Alley, now keeps a proper

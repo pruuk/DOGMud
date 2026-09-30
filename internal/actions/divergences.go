@@ -111,6 +111,8 @@ var userOnlyCommands = map[string]string{
 	"set":             "ui",
 	"setdesc":         "ui",
 	"sethome":         "ui",
+	"house":           "ui",
+	"visit":           "ui",
 	"skills":          "ui",
 	"spells":          "ui",
 	"status":          "ui",

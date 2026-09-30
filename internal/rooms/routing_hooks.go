@@ -21,10 +21,37 @@ import "sync"
 // ExitRoute is an ExitRouter's answer for one player taking one exit.
 type ExitRoute struct {
 	// RoomId is where this player goes instead of the exit's authored room.
-	// Zero means "refused": Refusal says why.
+	// Zero with no Choices means "refused": Refusal says why.
 	RoomId int
-	// Refusal is shown to the player when RoomId is zero.
+	// Refusal is shown to the player when they are refused.
 	Refusal string
+	// Choices, when there are two or more, means this player may go to
+	// several places and must pick one (a lodger who is also a guest in
+	// other lodgings). RoomId is then zero and the caller asks.
+	Choices []ExitChoice
+}
+
+// ExitChoice is one destination a routed exit offers.
+type ExitChoice struct {
+	Label  string // what the player types or picks, e.g. "home", "Alice"
+	RoomId int
+}
+
+// Leads reports whether the route could take the player to roomId, either
+// directly or as one of its choices.
+func (r ExitRoute) Leads(roomId int) bool {
+	if roomId == 0 {
+		return false
+	}
+	if r.RoomId == roomId {
+		return true
+	}
+	for _, c := range r.Choices {
+		if c.RoomId == roomId {
+			return true
+		}
+	}
+	return false
 }
 
 // ExitRouter reports whether exitName in fromRoomId is a routed exit. When it
