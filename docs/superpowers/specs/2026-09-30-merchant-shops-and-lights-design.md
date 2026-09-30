@@ -34,6 +34,10 @@ Branch `feature/merchant-shops-and-lights`, from `origin/master` at `66b529e49`.
   day-cycle diff is exactly these 11 rooms in all 12 sections. Night, dawn and dusk rise to
   50; noon falls to 54, 57 and 59 (midwinter, equinox, midsummer) because the roof now cuts
   the sky.
+- **Pinned to the counter (`maxwander: 1` to `0`):** 9172 Sly Tam, 9209 A Market Hawker and
+  9215 A River-Road Smuggler. A wandering keeper with no light of his own walked into dark
+  rooms at night and refused trade there (Tam into 5375 to 5377 and 5379, the Hawker into
+  5474). 9174 Old Mabbot keeps `maxwander: 4`: he is a road peddler, and he carries a lantern.
 - **Stock**, bare item ids:
   - 102: 40007, 40002, 20052, 20022, 20023, 40103, 40102, 40105, 40038, 20096.
   - 88: 30021, 40103, 40102, 40105, 20096, 40038.

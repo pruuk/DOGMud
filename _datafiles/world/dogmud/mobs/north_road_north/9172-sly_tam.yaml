@@ -3,7 +3,7 @@ zone: North Road North
 behavior_archetype: noncombat_shopkeeper
 hostile: false
 non_combatant: true
-maxwander: 1
+maxwander: 0
 statpool: 36
 itemdropchance: 40
 groups:

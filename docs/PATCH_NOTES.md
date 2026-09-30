@@ -37,7 +37,9 @@
   watermill, the Fishmonger at New Plymouth's fish market and Aldith the
   Bookseller in Greenford.
 - The Market Merchant and the Traveling Merchant now stay at their posts
-  instead of wandering off.
+  instead of wandering off. So do Sly Tam in the Lake & Ladle, the hawker
+  in New Plymouth's Outer Market and the smuggler at the Ford, who used to
+  drift into the dark and turn customers away.
 
 ## 2026-09-30: Voices in the dark
 
