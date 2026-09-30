@@ -31,9 +31,12 @@ Branch `feature/merchant-shops-and-lights`, from `origin/master` at `66b529e49`.
 - **Room light (11 rooms, 12 keepers):** 423 (88, and 85 in the evening), 424 (85), 4045 (278),
   5245 (9116), 5378 (9171, 9172), 5448 (9197), 5449 (9196), 6114 (9423), 6116 (9424), 6252
   (9486), 6280 (9502). `biome:` is unchanged. Both lighting goldens were re-recorded: the
-  day-cycle diff is exactly these 11 rooms in all 12 sections. Night, dawn and dusk rise to
-  50; noon falls to 54, 57 and 59 (midwinter, equinox, midsummer) because the roof now cuts
-  the sky.
+  day-cycle diff is exactly these 11 rooms in all 12 sections. Every midnight, and the
+  midwinter and equinox dawns and dusks, rise to 50 (from 9 to 42). Midsummer dawn and dusk
+  go to 54: the open-sky rooms fall from 61 (6252 from 62), and 5245 rises from 49. Noon
+  goes to 54, 57 and 59 (midwinter, equinox, midsummer) because the roof now cuts the sky:
+  the open-sky rooms fall from 63, 70 and 74, and 5245 goes from 51, 58 and 62, so its
+  midwinter noon rises.
 - **Pinned to the counter (`maxwander: 1` to `0`):** 9172 Sly Tam, 9209 A Market Hawker and
   9215 A River-Road Smuggler. A wandering keeper with no light of his own walked into dark
   rooms at night and refused trade there (Tam into 5375 to 5377 and 5379, the Hawker into
@@ -50,9 +53,11 @@ Branch `feature/merchant-shops-and-lights`, from `origin/master` at `66b529e49`.
   102 and 40134 Mug of Ale is left off 278 (their text names the Confluence; follow-ups). 88
   and 278 get room light, not a lantern. 348 keeps the lantern the proposal gave it: its
   watermill (4135) is `city_backstreet`, and the proposal lists it with the street keepers.
-- **Tests:** `shop_night_trade_guard_test.go` (every shop keeper, awake in its shop at a
-  sunless hour on midwinter, the equinox or midsummer, can trade with a bare human; red on
-  master with the 29 keepers of section 2.2) and `merchant_shops_content_test.go` (the seven
+- **Tests:** `shop_night_trade_guard_test.go` (every shop keeper can trade with a bare human
+  at every hour of midwinter, the equinox and midsummer that it is awake: in its spawn room,
+  in each awake schedule segment's target room, and in every room its wander can reach; each
+  keeper must get a night sample or be listed as exempt with a reason; its first, spawn-room
+  version was red on master with the 29 keepers of section 2.2) and `merchant_shops_content_test.go` (the seven
   have valid shop blocks and `shops.ValidateShopMobTags` passes).
 
 ---
