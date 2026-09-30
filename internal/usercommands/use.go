@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -85,6 +86,15 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	} else {
 
 		itemSpec := matchItem.GetSpec()
+
+		// A housing deed or voucher is only ever spent by internal/housing,
+		// inside its owner's lodging. Never let this generic path consume one,
+		// whatever the text matched.
+		if housing.IsHousingItem(matchItem.ItemId) {
+			user.SendText(messaging.CategorySystem,
+				fmt.Sprintf(`You can only use the <ansi fg="itemname">%s</ansi> inside your own lodging.`, matchItem.DisplayName()))
+			return true, nil
+		}
 
 		if itemSpec.Subtype != items.Usable {
 			user.SendText(messaging.CategorySystem,
