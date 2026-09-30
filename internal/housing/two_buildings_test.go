@@ -243,3 +243,43 @@ func TestLoad_EveryHousingItemIsNeverBought(t *testing.T) {
 		t.Error("an ordinary item was marked never bought")
 	}
 }
+
+// A building with no faction checks no standing at all: a player every city
+// despises is still sold a home there.
+func TestNoStandingCheck_AnybodyMayLodge(t *testing.T) {
+	setup(t)
+	wild := quillBuilding()
+	wild.BuildingId, wild.DoorRoom = `test_wild`, 6771
+	wild.UnitRooms = []int{6772, 6773}
+	wild.Faction, wild.MinRepTier, wild.VouchedBy, wild.StandingHint = ``, ``, ``, ``
+	wild.ExtensionItemId, wild.RedecorateItemId, wild.GuestKeyItemId, wild.ContainerItemId, wild.StrongboxItemId = 70, 71, 72, 73, 74
+	if err := wild.Validate(); err != nil {
+		t.Fatalf("a building with no standing check is invalid: %v", err)
+	}
+	AddBuildingForTest(wild)
+	restore := SetRepTierForTest(func(string, int) opinions.Tier { return opinions.TierHostile })
+	defer restore()
+
+	u := testUser(1, 100000, 0)
+	if o := offersIn(u, `test_wild`)[OfferHome]; !o.Available {
+		t.Errorf("home not offered: %+v", o)
+	}
+	said := []string{}
+	DescribeTerms(u, func(s string) { said = append(said, s) }, `test_wild`, `simple`)
+	if len(said) == 0 || said[len(said)-1] != wild.Line(`terms.open`) {
+		t.Errorf("terms = %q", said)
+	}
+	if res := buyIn(u, `test_wild`); res != PurchaseOk {
+		t.Errorf("hostile everywhere, refused: %v", res)
+	}
+	// The same player is still refused in a city that checks.
+	if res := buyIn(u, testBldgId); res != PurchaseRepTooLow {
+		t.Errorf("a city skipped its check: %v", res)
+	}
+
+	bad := wild
+	bad.MinRepTier = `warm`
+	if err := bad.Validate(); err == nil {
+		t.Error("a standing tier with no faction was accepted")
+	}
+}

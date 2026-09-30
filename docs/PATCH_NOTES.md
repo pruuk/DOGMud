@@ -57,6 +57,21 @@
 - Picking something up by name that turns out to be stashed now refuses an
   item about to explode, the same as asking for it from your stash by name.
 
+## 2026-09-30: A hollow in the Oak
+
+Travellers on the South Road have been noticing a tree. Below the Lake &
+Ladle, at the Shepherd's Reach, a sheep-track drops east off the road into a
+green combe where an enormous oak stands, lit windows in its trunk and
+smoke rising from its roots. That is the Hollow Oak, and its hollows are to
+let. Old Brock, a badger of great age and some patience, keeps the ledger on
+a stump beneath it and sells everything the city landlords sell: homes,
+digging deeds, paint vouchers, guest acorns, and container and strongbox
+deeds. Type list beside him.
+
+Nobody needs to vouch for you under the Oak, and everything costs a quarter
+of what it does in a city. A home there is separate from your city homes,
+and its deeds and acorns are good only there.
+
 ## 2026-09-30: A hole in Thornwall
 
 Thornwall has lodgings too, of a sort. Past Torvan Cresk's operations room,

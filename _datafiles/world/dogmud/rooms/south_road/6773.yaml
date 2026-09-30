@@ -1,0 +1,75 @@
+roomid: 6773
+zone: South Road
+title: Beneath the Hollow Oak
+description: >
+  The combe opens into a round green clearing, and the Hollow Oak takes up
+  most of it. Its trunk is as wide as a cottage and as tall as a tower before
+  the first great bough, its bark furrowed deep enough to lose a hand in, and
+  its roots heave up out of the turf in ridges that make a hill of the ground
+  around it. Small round windows, lamplit, are set into the trunk at every
+  height, and between two of the greatest roots is a round
+  <ansi fg="itemname">door</ansi> painted leaf-green, with a smooth brass
+  <ansi fg="itemname">plate</ansi> where a knob should be. Beside it, on a
+  broad <ansi fg="itemname">stump</ansi>, lie a ledger, a pair of spectacles
+  and a pot of ink, under a <ansi fg="itemname">lantern</ansi> hung from a
+  low bough. A <ansi fg="itemname">board</ansi> of split oak is propped
+  against the roots.
+biome: forest
+coord: {x: -6, y: -19, z: 0}
+# The lantern on its bough, named in the description. The forest biome is
+# too dark after nightfall to make out faces, so the landlord's list could
+# not be read; 52 is the lamplit level the other lodging-house doors use.
+lamp: 52
+exits:
+  west: {roomid: 6772}
+  # The door into the Hollow Oak. It is a ROUTED exit (internal/housing):
+  # each lodger who goes through it arrives in their own hollow, and anyone
+  # else is turned away. It points back at this room only because an exit
+  # needs an authored destination; the router always decides. The lock
+  # keeps mobs, which never consult the router, from using it.
+  door:
+    roomid: 6773
+    lock:
+      difficulty: 255
+nouns:
+  door: >
+    A perfectly round door set between two roots, painted a green that the
+    oak itself seems to have agreed to. It has no keyhole and no knob, only a
+    brass plate in the middle. Lodgers lay a palm on it and duck inside.
+  plate: >
+    A brass plate the size of an open hand, set into the round door and worn
+    bright in the middle. Pressed into the brass is the shape of an oak leaf.
+    It knows the palms of the Oak's lodgers, and nobody else's.
+  stump: >
+    A broad, flat stump, polished by use, doing duty as a desk. On it lie a
+    fat ledger bound in bark, a pot of oak-gall ink, a quill, and a pair of
+    small round spectacles with one arm mended with twine.
+  lantern: >
+    A horn lantern hung from a low bough over the stump. It burns all night.
+    Moths hold long meetings around it.
+  board: >
+    A board of split oak propped against a root, painted in careful, slightly
+    crooked letters. HOLLOWS TO LET. DIGGING. PAINT. GUEST ACORNS. STORAGE.
+    ASK THE BADGER. Underneath, smaller, in a different hand, someone has
+    added TYPE LIST, and underneath that, smaller still and in the first
+    hand again, PLEASE.
+  windows: >
+    Small round windows set into the trunk at every height, each with a sill,
+    most with a candle or a lamp behind the glass, one with a sock drying on
+    it.
+  roots: >
+    Roots as thick as a man, humped up out of the turf and worn smooth on top
+    where generations of feet have walked them as paths.
+idlemessages:
+- Somewhere high in the Hollow Oak, a round window opens, a crumb-cloth is
+  shaken out, and the window closes again.
+- The great boughs creak overhead, slow and comfortable, like an old house
+  settling.
+- An acorn drops, bounces off a root, and rolls to a stop at your feet.
+- Wood-smoke curls out of a knot-hole high in the trunk and hangs in the
+  still air of the combe.
+spawninfo:
+  - mobid: 9804
+    respawnrate: "15 real minutes"
+x: 4
+y: 24

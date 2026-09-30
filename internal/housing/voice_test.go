@@ -14,11 +14,12 @@ func TestVoice_DefaultsSayWhatHobbAlwaysSaid(t *testing.T) {
 	b := testBuilding()
 	cases := map[string]string{
 		b.Line(`terms.pitch`, `Tier`, `A simple room`, `tier`, `a simple room`, `price`, 500): `A simple room, 500 gold, paid once. Four walls, a window, and a door that opens for you and nobody else. Extensions and redecorating come after, for lodgers. It's all on the list.`,
-		b.Line(`home.not_vouched`): `The Widow only lets to people the Common Quarter will vouch for, and nobody's vouched for you. Do some good round the Common Quarter and come back. I'll still be here. I'm always here.`,
+		b.Line(`home.not_vouched`):                               `The Widow only lets to people the Common Quarter will vouch for, and nobody's vouched for you. Do some good round the Common Quarter and come back. I'll still be here. I'm always here.`,
 		b.Line(`terms.extension`, `price`, 1500, `voucher`, 500): `If you want it bigger, an extension deed is 1500 gold for you. Goes up every time, that's the Widow's rule. A redecorating voucher is 500. Type list.`,
-		b.Line(`home.welcome`): `Stamped. Welcome to the test lodgings. Try not to set anything on fire.`,
-		b.Line(`terms.owner`):  `You've got a room already. Door's behind me, hand on the plate, same as always.`,
-		b.Line(`terms.ready`):  `The Common Quarter speaks well enough of you. Type buy home and I'll get the stamp out.`,
+		b.Line(`home.welcome`):                                   `Stamped. Welcome to the test lodgings. Try not to set anything on fire.`,
+		b.Line(`terms.owner`):                                    `You've got a room already. Door's behind me, hand on the plate, same as always.`,
+		b.Line(`terms.ready`):                                    `The Common Quarter speaks well enough of you. Type buy home and I'll get the stamp out.`,
+		b.Line(`list.home_note`):                                 `Four walls and a door that knows you`,
 	}
 	for got, want := range cases {
 		if got != want {

@@ -64,7 +64,7 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 		return PurchaseAlreadyOwner
 	}
 
-	if repTierFor(b.Faction, user.UserId) < b.MinTier() {
+	if !b.welcomes(user.UserId) {
 		say(b.Line(`home.not_vouched`))
 		return PurchaseRepTooLow
 	}

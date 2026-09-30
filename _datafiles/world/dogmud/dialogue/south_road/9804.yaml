@@ -1,0 +1,41 @@
+mobid: 9804
+zone: South Road
+defaultMood: neutral
+
+greetings:
+  - text: "Evening. Or morning. It is always one or the other, under the Oak.
+      Hollows to let. Type list, if you please."
+    moods: ["neutral"]
+  - text: "Ah, it is you. The door knows your paw. In you go, and wipe your
+      feet."
+    moods: ["friendly"]
+
+patterns:
+  - keywords: ["plate", "brass", "touch", "palm", "paw", "lock"]
+    responses:
+      - "The plate came from a city locksmith, carried up the road in a cart,
+        and cost me a winter's digging. It learns a lodger's palm when I write
+        them in the book. How, I could not tell you. Badgers do not ask brass
+        its business."
+
+  - keywords: ["vouch", "reputation", "standing", "city", "cities", "faction"]
+    responses:
+      - "Vouch? Nobody vouches for anybody under the Oak. Cities want to know
+        who your friends are. The Oak only wants to know you will not set fire
+        to it."
+
+  - keywords: ["oak", "tree", "hollow", "old", "age"]
+    responses:
+      - "She was old when my grandmother's grandmother dug the first sett
+        under her, and she is not in any hurry. The hollows are warm in winter
+        and cool in summer, and she does not mind the company. Mostly."
+
+  - keywords: ["cheap", "cheaper", "price", "why"]
+    responses:
+      - "Cheaper than a city? Of course it is. No walls to keep up, no
+        watchmen to pay, and no Widow. Just a badger, a book and a tree."
+
+  - keywords: [""]
+    responses:
+      - "I let hollows. Type list, if you please. I am too old to recite."
+      - "Is this about a hollow? I do hope it is about a hollow."

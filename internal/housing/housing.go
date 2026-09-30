@@ -56,7 +56,9 @@ type Building struct {
 	LandlordMobId int `yaml:"landlord_mob_id"`
 
 	// Faction and MinRepTier gate a purchase on the buyer's standing with the
-	// city (internal/factions). MinRepTier is one of hostile, cold, neutral,
+	// city (internal/factions). Both empty means no standing check at all:
+	// anybody may lodge (a building out in the wilds, answerable to no
+	// city). Otherwise MinRepTier is one of hostile, cold, neutral,
 	// warm, friendly.
 	Faction    string `yaml:"faction"`
 	MinRepTier string `yaml:"min_rep_tier"`
@@ -145,11 +147,13 @@ func (b Building) Validate() error {
 	if b.LandlordMobId <= 0 {
 		return fmt.Errorf(`housing building %s: landlord_mob_id is required`, b.BuildingId)
 	}
-	if b.Faction == `` {
-		return fmt.Errorf(`housing building %s: faction is required`, b.BuildingId)
+	if b.Faction == `` && b.MinRepTier != `` {
+		return fmt.Errorf(`housing building %s: min_rep_tier needs a faction (leave both empty for no standing check)`, b.BuildingId)
 	}
-	if _, ok := ParseRepTier(b.MinRepTier); !ok {
-		return fmt.Errorf(`housing building %s: min_rep_tier %q is not one of hostile, cold, neutral, warm, friendly`, b.BuildingId, b.MinRepTier)
+	if b.Faction != `` {
+		if _, ok := ParseRepTier(b.MinRepTier); !ok {
+			return fmt.Errorf(`housing building %s: min_rep_tier %q is not one of hostile, cold, neutral, warm, friendly`, b.BuildingId, b.MinRepTier)
+		}
 	}
 	if len(b.Tiers) == 0 {
 		return fmt.Errorf(`housing building %s: at least one tier is required`, b.BuildingId)
@@ -210,8 +214,12 @@ func (b Building) Validate() error {
 	if b.RedecoratePrice <= 0 {
 		return fmt.Errorf(`housing building %s: redecorate_price must be positive`, b.BuildingId)
 	}
-	for field, v := range map[string]string{`proprietor`: b.Proprietor, `vouched_by`: b.VouchedBy,
-		`standing_hint`: b.StandingHint, `location`: b.Location, `outside_text`: b.OutsideText} {
+	words := map[string]string{`proprietor`: b.Proprietor, `location`: b.Location, `outside_text`: b.OutsideText}
+	if b.Faction != `` {
+		// Only a building that checks standing talks about who vouches.
+		words[`vouched_by`], words[`standing_hint`] = b.VouchedBy, b.StandingHint
+	}
+	for field, v := range words {
 		if strings.TrimSpace(v) == `` {
 			return fmt.Errorf(`housing building %s: %s is required`, b.BuildingId, field)
 		}
@@ -238,6 +246,17 @@ func (b Building) Tier(tierId string) (Tier, bool) {
 		}
 	}
 	return Tier{}, false
+}
+
+// ChecksStanding reports whether buying a home here needs standing.
+func (b Building) ChecksStanding() bool {
+	return b.Faction != ``
+}
+
+// welcomes reports whether this player's standing lets them buy a home
+// here. A building with no faction welcomes everybody.
+func (b Building) welcomes(userId int) bool {
+	return !b.ChecksStanding() || repTierFor(b.Faction, userId) >= b.MinTier()
 }
 
 // MinTier returns the parsed minimum standing. Validate guarantees it parses.

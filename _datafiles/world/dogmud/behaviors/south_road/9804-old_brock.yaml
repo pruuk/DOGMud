@@ -1,0 +1,58 @@
+# Old Brock, mob 9804, the badger who lets the hollows of the Hollow Oak
+# (6773, east off the South Road at the Shepherd's Reach 6045 via the Combe
+# Track 6772). What he sells is on his list (the list and buy commands,
+# internal/usercommands/housing_shop.go). This tree lets players ask for the
+# same things in words. Buying and the terms are Go actions in
+# internal/housing, so every price and vacancy check reads the authored
+# building file (housing_buildings/hollow_oak.yaml). The Oak checks no
+# standing: anybody may lodge.
+tree:
+  type: selector
+  children:
+
+    # PURCHASE. Sits first (grant-node-first SOP). Explicit buying words
+    # only, and only a plain request buys (buy_housing answers questions
+    # with the terms).
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [buy, purchase]
+        - type: action
+          do: buy_housing
+          building: hollow_oak
+          tier: simple
+
+    # TERMS. Price, vacancy and what this player still needs.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [room, rooms, hollow, hollows, sett, setts, lodging, lodgings, let, rent, lease, price, prices, cost, much, house, home, vacancy, vacancies, key, acorn, acorns, lock, door, extension, extensions, deed, deeds, digging, dig, voucher, vouchers, paint, redecorate, redecorating, decorate, list, sell, selling, guest, guests, friend, friends, visit, visitor, visitors, invite, container, containers, chest, chests, storage, strongbox, strongboxes, safe, furniture]
+        - type: action
+          do: housing_terms
+          building: hollow_oak
+          tier: simple
+
+    # Greetings and who-are-you.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [hello, hi, hey, greetings, who, name, brock, badger, oak, tree, job, work, old, owner]
+        - type: action
+          do: say
+          text: Brock. Old Brock, they say on the road, and they are not wrong. I let the hollows of the Oak and I dig new ones. Type list, and I will tell you what it costs. It costs less than a city. Most things do.
+
+    # Silent player_enter no-op: claims the event so composition never falls
+    # through to noncombat_passive's "pays you little mind." emote.
+    - type: sequence
+      event: player_enter
+      children:
+        - type: action
+          do: set_state
+          key: brock_player_enter_suppressed
+          value: "true"

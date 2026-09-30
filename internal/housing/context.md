@@ -9,9 +9,10 @@ and strongbox deeds), the use of those items, what lies on a lodging's floors
 and in its containers, and the routing that sends each lodger through a
 building's one shared door to their own rooms.
 
-Three buildings ship, one per city, and they run independently: a player may
-own one home in each (one per ACCOUNT per building), each gated on its own
-city's standing, with its own rooms, deeds, guests, floors and containers.
+Four buildings ship, one per city and one in the wilds, and they run
+independently: a player may own one home in each (one per ACCOUNT per
+building), each gated on its own city's standing (the wild one on none), with
+its own rooms, deeds, guests, floors and containers.
 
 - **The Back Court lodgings** (`back_court_lodgings`), New Plymouth Common.
   Hobb Pennock (mob 9801), a bored letting clerk for Crewe Lettings, sits in
@@ -29,6 +30,13 @@ city's standing, with its own rooms, deeds, guests, floors and containers.
   under the city; the route passes the smugglers' lookout 247). Standing:
   `thornwall_citizens` Warm (one city quest, +15, is enough). Items 65-69;
   units 6672-6771 (zone Thornwall Burrows, plane 16).
+- **The Hollow Oak** (`hollow_oak`), in the wilds of the South Road between
+  Thornwall and the Confluence. Old Brock (mob 9804), a talking badger, keeps
+  the ledger on a stump beneath an enormous oak (room 6773), reached east from
+  the Shepherd's Reach 6045 by the Combe Track 6772; the Lake & Ladle 6044,
+  the Shepherd's Reach and the Long Furlong 6046 all point to the tree. No
+  standing check at all (no faction), and every price is a quarter of a
+  city's. Items 70-74; units 6774-6873 (zone Hollow Oak, plane 17).
 
 **Every housing payment is a gold sink.** Gold is only ever deducted
 (`chargeGold`) and never credited anywhere; nothing is refunded. Every item a
@@ -42,11 +50,13 @@ steal or loot), and a housing item that is salable or has vendor categories.
 Players can still give, trade or auction unbound housing items to each other;
 that moves gold between players, never out of the sink.
 
-Each landlord sells from a list (prices as authored; both buildings ship the
-same numbers):
+Each landlord sells from a list (prices as authored; the three city
+buildings ship the numbers below, and the Hollow Oak a quarter of each: 125,
+deeds from 375, 125, 25, 63 and 125):
 
 - **Home**, 500 gold, to players the Common Quarter vouches for
-  (`np_commonfolk` standing Warm or better). One per account.
+  (`np_commonfolk` standing Warm or better; each building names its own
+  faction). One per account.
 - **Room Extension Deed** (item 55; Quillhouse 60), priced at 3 times everything the lodger
   has paid for rooms so far: 1500 after the home, then 6000, then 24000.
   Bound to the buying account. Used inside the lodging toward a direction, it
@@ -80,7 +90,7 @@ building that sold it, and a guest key only at its door.
 `fileloader.LoadAllFlatFiles`. A bad file PANICS at boot like any authored
 content, including world checks against room TEMPLATES (not live rooms,
 which carry overlays after a reload): the door room exists, its door exit
-exists and is LOCKED, the landlord mob, faction and all five items exist, every
+exists and is LOCKED, the landlord mob, the faction (if any) and all five items exist, every
 unit room exists, leads back to the door room through an exit of the same
 name, belongs to one building only, spawns no mobs, and has no authored
 north/south/east/west/up/down exit (extensions place those). A building also
@@ -89,19 +99,27 @@ carries the words the shared code speaks with, all required: `proprietor`
 `location` (where its door is) and `outside_text` (what a guest put out of a
 lodging sees). A tier must be exactly one room.
 
+**Standing is optional.** A building with no `faction` (and so no
+`min_rep_tier`, which is invalid without one) checks no standing:
+`Building.ChecksStanding` is false, anybody who can pay is welcomed
+(`welcomes`), `vouched_by` and `standing_hint` are not required, and the
+terms end with the `terms.open` line instead of `terms.ready` or
+`terms.not_vouched`. The Hollow Oak is the one such building.
+
 **Each landlord has his own voice.** Everything a landlord says through say
 comes from `voice.go`: `defaultLines` holds every line (Hobb's words, the
 default for any landlord), keyed (`terms.pitch`, `home.welcome`,
 `deed.sold`, ...), and a building's `voice:` map overrides any of them.
-Lines use `{placeholders}`: the building's own words (`{proprietor}`,
+The note beside an available home on the list is a line too
+(`list.home_note`). Lines use `{placeholders}`: the building's own words (`{proprietor}`,
 `{Proprietor}`, `{vouched_by}`, `{Vouched_by}`, `{standing_hint}`, `{name}`,
 `{Name}`, `{door}`, `{Door}`) and each key's own (`linePlaceholders`: `{price}`,
 `{tier}`, `{what}`, ...). `Building.Line(key, name, value, ...)` renders a
 line. `Validate` rejects an unknown key, a placeholder the key does not
 provide, an empty line and a semicolon. A new spoken line must go into
 `defaultLines` and be said through `Line`, or `TestVoice_EveryLineIsConsistentAndUsed`
-fails. Brannoc (the Burrows) overrides every line; Aubric (the Quillhouse)
-overrides a few.
+fails. Brannoc (the Burrows) and Old Brock (the Hollow Oak) override nearly every
+line; Aubric (the Quillhouse) overrides a few.
 
 **Houses are living state.** One YAML per house in
 `<DataFiles>/housing/<building_id>/<entry_room_id>.yaml`. Gitignored, in

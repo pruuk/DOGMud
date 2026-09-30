@@ -51,12 +51,12 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 		home.Price, home.Note = 0, `You already lodge here`
 	case homeFrozen:
 		home.Price, home.Note = 0, `Not letting rooms just now`
-	case repTierFor(b.Faction, user.UserId) < b.MinTier():
+	case !b.welcomes(user.UserId):
 		home.Note = capitalise(b.VouchedBy) + ` must vouch for you first`
 	case vacant-buildingOutstanding(b) < tier.Rooms:
 		home.Price, home.Note = 0, `Every room is let`
 	default:
-		home.Note, home.Available = `Four walls and a door that knows you`, true
+		home.Note, home.Available = b.Line(`list.home_note`), true
 	}
 
 	ext := Offer{Key: OfferExtension, Name: itemName(b.ExtensionItemId, `Room Extension Deed`)}

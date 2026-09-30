@@ -53,6 +53,10 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 		say(b.Line(`terms.no_gold`))
 		return true
 	}
+	if !b.ChecksStanding() {
+		say(b.Line(`terms.open`))
+		return true
+	}
 	say(b.Line(`terms.ready`))
 	return true
 }

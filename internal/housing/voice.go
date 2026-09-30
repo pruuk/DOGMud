@@ -27,6 +27,7 @@ var defaultLines = map[string]string{
 	`terms.not_vouched`:  `But {proprietor} only lets to people {vouched_by} can vouch for, and nobody's vouched for you. {standing_hint}`,
 	`terms.no_gold`:      `You'd want the gold first. The bank counts. Type buy home when you've got it.`,
 	`terms.ready`:        `{Vouched_by} speaks well enough of you. Type buy home and I'll get the stamp out.`,
+	`terms.open`:         `Nobody needs to vouch for you here. Type buy home when you're ready.`,
 
 	// Buying a home (Purchase).
 	`home.unknown_building`: `I've no rooms to let just now.`,
@@ -75,6 +76,9 @@ var defaultLines = map[string]string{
 	`storage.too_heavy`:      `You're carrying too much to take a slip of paper. Put something down.`,
 	`storage.container_sold`: `{price} gold. Stand where you want it and use the deed. Give it a one-word name when it asks. Mug, chest, whatever. Anyone you let in can use it.`,
 	`storage.strongbox_sold`: `{price} gold. Stand where you want it and use the deed. Give it a one-word name when it asks. Only you'll get it open.`,
+
+	// The note beside an available home on the list.
+	`list.home_note`: `Four walls and a door that knows you`,
 
 	// An ask that names nothing he sells (behaviortree buy_housing).
 	`ask.buy_what`: `Buy what? Type list and I'll show you what {proprietor} sells. Then buy home, buy deed, and so on.`,

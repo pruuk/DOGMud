@@ -1,0 +1,5 @@
+name: Hollow Oak
+roomid: 6774
+defaultbiome: interior
+region: Windward Marches
+non_cartesian: true

@@ -220,7 +220,7 @@ func validateBuildingsAgainstWorld(loaded map[string]Building) map[int][4]int {
 		if landlord.Character.Gold != 0 {
 			panic(fmt.Sprintf(`housing building %s: landlord %d must carry no gold (gold: 0); housing payments are a sink`, id, b.LandlordMobId))
 		}
-		if factions.GetDefinition(b.Faction) == nil {
+		if b.ChecksStanding() && factions.GetDefinition(b.Faction) == nil {
 			panic(fmt.Sprintf(`housing building %s: faction %q does not exist`, id, b.Faction))
 		}
 		for _, itemId := range b.housingItemIds() {

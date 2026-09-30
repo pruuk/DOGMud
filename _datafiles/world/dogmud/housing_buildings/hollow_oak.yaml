@@ -1,0 +1,135 @@
+# The Hollow Oak: an enormous oak in a green combe east of the South Road at
+# the Shepherd's Reach (6045), between Thornwall and the Confluence, reached by
+# the Combe Track (6772). Its hollows are let, and new ones dug, by Old Brock,
+# a talking badger who keeps a ledger on a stump beneath the tree (6773).
+#
+# The one lodging outside a city. It checks no standing at all: no faction,
+# no min_rep_tier, so anybody who can pay may lodge. Every price is a quarter
+# of a city's. It runs independently of every other building: a player may own
+# one home here and one in each other building, with its own deeds, guests
+# and containers. Its items are its own (70-74), so a deed bought here is good
+# only here. Everything paid is a gold sink: nothing sold here can be sold to
+# a merchant, and the badger buys nothing and carries no gold.
+#
+# Authored content (internal/housing). Who owns which hollow, their doorways,
+# floors, containers and descriptions are living state under
+# housing/hollow_oak/, never in this file.
+#
+# To add capacity: run tools/housing_units.py with
+# --template tools/housing_unit_templates/hollow_oak.yaml.tmpl over a new id
+# range, then list the new ids in unit_rooms below.
+building_id: hollow_oak
+name: the Hollow Oak
+door_room: 6773
+door_exit: door
+landlord_mob_id: 9804
+# No faction and no min_rep_tier: the Oak takes anybody. (vouched_by and
+# standing_hint are only for a building that checks standing.)
+
+# How the badger and the house commands speak of this building.
+proprietor: the Oak
+location: "the clearing beneath the great oak, in a green combe east of the South Road at the Shepherd's Reach, between Thornwall and the Confluence"
+outside_text: "You duck back out through the round green door, and it swings shut behind you among the roots of the oak."
+
+# Old Brock's own words (internal/housing/voice.go lists every line and its
+# {placeholders}). He is old, slow and kindly, and patient up to a point.
+voice:
+  terms.owner: "You have a hollow already. The {door} is behind me. Lay your palm on the plate, same as ever, and in you go."
+  terms.extension: "If you want more room, a digging deed is {price} gold for you. It goes up each time. The Oak does not like to be hollowed out too quickly, and neither would you. A paint voucher is {voucher}. Type list."
+  terms.no_extension: "No more digging for you just now. {reason}. A paint voucher is {voucher}, if the walls want a change. Type list."
+  terms.guest_key: "A friend to visit? A guest acorn is {price}. Give it to them, they press it to the plate, and the door learns them. Type house to see who has been in."
+  terms.storage: "Somewhere to keep your things? A container deed is {container}, a strongbox deed {strongbox}. You name it, and my diggers carry it in. Anyone you let in may open a container. A strongbox opens for you and nobody else."
+  terms.full: "Every hollow is let. The Oak is full, and I will not dig into her heart for anybody. Come back when someone moves on."
+  terms.pitch: "{Tier}, {price} gold, paid once. Warm heartwood walls, a round window on the combe, and a door that opens for you and nobody else. Digging and paint come after, for lodgers. It is all on the board."
+  terms.no_gold: "You would want the gold first. The bank counts. Type buy home when you have it. I am not going anywhere."
+  terms.open: "Nobody needs to vouch for you under the Oak. Type buy home when you are ready, and I will write you in."
+  home.unknown_building: "I have no hollows to let just now."
+  home.unknown_tier: "I do not let that kind of hollow."
+  home.already_owner: "You have a hollow already. The {door} is behind me. It knows your palm. Go on in."
+  home.no_gold: "It is {price} gold for {tier}, and you have not got it, not even counting the bank. Come back when you have. It is cheaper than a city, mind."
+  home.held_owner: "Your name is in the ledger already, but the page has got muddled. I am going over it, slowly. Nothing I can let you till it is straight."
+  home.frozen: "The ledger has got muddled, and I am going over it, slowly. I am to let nothing till it is done. Come back another day."
+  home.full: "Every hollow is let. Try another day."
+  home.welcome: "There. Written in. Welcome to the Hollow Oak. Wipe your feet, and do not light fires anywhere but the niche."
+  ledger_error: "The ledger has got muddled. I will not take your coin till it is straight. Come back later."
+  deed.no_home: "Digging is for lodgers. You would want a hollow first. It is on the board."
+  deed.frozen: "The ledger has got muddled, and there is no digging till I have gone over it."
+  deed.unused: "You have a deed already, made out to you and not used. Use that one first. One hollow at a time."
+  deed.reissued: "Lost your deed? The ledger says you paid and never dug. Here is another, no charge. Whichever you use first counts, and the other is only bark after."
+  deed.max_rooms: "You have as many hollows as the Oak will give to one lodger. Any more and she would be all hole and no tree."
+  deed.no_gold: "A digging deed is {price} gold, the bank counting. You are short."
+  deed.no_units: "Nowhere left to dig. Every empty hollow is promised to somebody's deed already. Try again when somebody moves on."
+  deed.too_heavy: "You are carrying too much to take a curl of bark. Put something down."
+  deed.sold: "{price} gold. Your name is on it, so do not bother selling it on. Stand in your hollow and type use deed. It will ask which way to dig."
+  voucher.no_home: "Paint for what? You would want a hollow first."
+  voucher.no_gold: "A paint voucher is {price} gold. You have not got it."
+  voucher.too_heavy: "You are carrying too much to take a leaf. Put something down."
+  voucher.sold: "{price} gold. Use it in whichever hollow you want to look different, then tell it what you would like. One hollow, one go."
+  key.no_home: "An acorn for what door? You would want a hollow first."
+  key.max: "Your door knows as many palms as the Oak will allow. Send somebody off first. Type house guests."
+  key.no_gold: "A guest acorn is {price} gold. You have not got it."
+  key.too_heavy: "You are carrying too much to take an acorn. Put something down."
+  key.sold: "{price} gold. Give it to whoever you want let in. They press it to the plate, once, and the door learns them. Type house guests to see who is in, and house revoke to send them off."
+  storage.no_home: "A {what} for where? You would want a hollow first."
+  storage.full: "Every hollow you have is full of furniture already. The Oak will not hold more to a room. Dig another hollow."
+  storage.carrying: "You are carrying deeds enough for every free corner you have. Use those first."
+  storage.no_gold: "It is {price} gold for a {what}. You have not got it."
+  storage.too_heavy: "You are carrying too much to take a strip of bark. Put something down."
+  storage.container_sold: "{price} gold. Stand where you want it and use the deed. Give it one word for a name when it asks. Chest, crate, whatever you like. Anyone you let in can open it."
+  storage.strongbox_sold: "{price} gold. Stand where you want it and use the deed. Give it one word for a name. Only you will get it open. Not even me."
+  list.home_note: "A warm hollow and a door that knows you"
+  ask.buy_what: "Buy what? Type list, if you please. Then buy home, buy deed, and so on. I am too old to guess."
+
+tiers:
+  - tier_id: simple
+    name: a hollow in the Oak
+    price: 125
+    rooms: 1
+
+# Extensions. Each deed costs extension_price_multiplier times everything the
+# lodger has paid for hollows here so far: 125 for the first makes the first
+# deed 375, 125 + 375 makes the second 1500, then 6000, and so on (a quarter
+# of a city's at every step).
+extension_item_id: 70
+extension_price_multiplier: 3
+# A lodging can hold at most this many hollows, the first included.
+max_rooms: 8
+extension_title: A Root-Sett
+extension_description: >
+  A sett dug through from the rest of the lodging, down among the roots of the
+  oak, the new opening still smelling of fresh earth and cut wood. Roots
+  curve overhead like the ribs of a boat, the floor is swept earth laid with
+  boards, and a candle niche is worked into the biggest root. It is empty, and
+  it is yours.
+
+# Paint: a one-use voucher that rewrites one hollow's description.
+redecorate_item_id: 71
+redecorate_price: 125
+
+# Guests: a lodger buys a guest acorn and gives it to a friend, who uses it at
+# the door once and is let in from then on. The owner revokes with
+# `house revoke <name>`. A lodging admits at most max_guests.
+guest_key_item_id: 72
+guest_key_price: 25
+max_guests: 5
+
+# Containers: a deed places one container in the hollow it is used in, under
+# a one-word name the lodger chooses. A container deed's container can be
+# used by anyone in the room; a strongbox deed's opens for the owner alone.
+# What they hold lives in the house file. Each hollow holds at most
+# max_containers_per_room; the lodging as a whole has no limit.
+container_item_id: 73
+container_price: 63
+strongbox_item_id: 74
+strongbox_price: 125
+max_containers_per_room: 6
+
+unit_rooms: [6774, 6775, 6776, 6777, 6778, 6779, 6780, 6781, 6782, 6783, 6784,
+  6785, 6786, 6787, 6788, 6789, 6790, 6791, 6792, 6793, 6794, 6795, 6796,
+  6797, 6798, 6799, 6800, 6801, 6802, 6803, 6804, 6805, 6806, 6807, 6808,
+  6809, 6810, 6811, 6812, 6813, 6814, 6815, 6816, 6817, 6818, 6819, 6820,
+  6821, 6822, 6823, 6824, 6825, 6826, 6827, 6828, 6829, 6830, 6831, 6832,
+  6833, 6834, 6835, 6836, 6837, 6838, 6839, 6840, 6841, 6842, 6843, 6844,
+  6845, 6846, 6847, 6848, 6849, 6850, 6851, 6852, 6853, 6854, 6855, 6856,
+  6857, 6858, 6859, 6860, 6861, 6862, 6863, 6864, 6865, 6866, 6867, 6868,
+  6869, 6870, 6871, 6872, 6873]

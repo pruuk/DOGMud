@@ -85,6 +85,7 @@ voice:
   storage.too_heavy: "You're carrying too much to take a bit of sacking. Drop something."
   storage.container_sold: "{price} gold. Stand where you want it and use the deed. Give it one word for a name when it asks. Crate, sack, whatever. Anyone you let in can root in it."
   storage.strongbox_sold: "{price} gold. Stand where you want it and use the deed. Give it one word for a name. Only you'll get it open. Not even me. I've tried."
+  list.home_note: "Rock walls and a door that knows you"
   ask.buy_what: "Buy what? Type list. It's on the slate. Then buy home, buy deed, whatever. Stop just saying buy at me."
 
 tiers:
