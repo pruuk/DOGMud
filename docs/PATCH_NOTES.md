@@ -57,6 +57,25 @@
 - Picking something up by name that turns out to be stashed now refuses an
   item about to explode, the same as asking for it from your stash by name.
 
+## 2026-09-30: A hole in Thornwall
+
+Thornwall has lodgings too, of a sort. Past Torvan Cresk's operations room,
+at the foot of the smugglers' escape shaft, a crawlway runs east to the
+Burrow Mouth: the one way into the Burrows, a warren of wide tunnels and
+hide-outs cut under the city. Brannoc Tull minds the iron-banded door for
+Torvan. He lets hide-outs and sells digging deeds, paint vouchers, guest
+keys, and container and strongbox deeds, all off a chalked slate. He will
+not be polite about it. Type list beside him.
+
+Torvan only lets holes to people the folk upstairs will vouch for. If the
+city doesn't know you yet, Marek at the Drowning Post could use some help.
+
+As with the other cities, a home in the Burrows is separate from your homes
+elsewhere, and its deeds and keys are good only there.
+
+Also: whatever you pay a landlord is gone for good. None of their deeds,
+vouchers or keys can be sold to a merchant.
+
 ## 2026-09-30: A room in the Confluence
 
 The Confluence has a lodging house now. West off Hall Lane, behind the

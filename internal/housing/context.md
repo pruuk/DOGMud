@@ -9,7 +9,7 @@ and strongbox deeds), the use of those items, what lies on a lodging's floors
 and in its containers, and the routing that sends each lodger through a
 building's one shared door to their own rooms.
 
-Two buildings ship, one per city, and they run independently: a player may
+Three buildings ship, one per city, and they run independently: a player may
 own one home in each (one per ACCOUNT per building), each gated on its own
 city's standing, with its own rooms, deeds, guests, floors and containers.
 
@@ -23,6 +23,24 @@ city's standing, with its own rooms, deeds, guests, floors and containers.
   Hall Lane 6144 behind the Municipal Hall). Standing: `margin` Warm (The
   Margin Notation, +15, is enough). Items 60-64; units 6571-6670 (zone
   Confluence Lodgings, plane 15).
+- **The Burrows** (`the_burrows`), Thornwall. Brannoc Tull (mob 9803), Torvan
+  Cresk's rude doorman, sits at the Burrow Mouth (room 6671, east off the
+  smugglers' escape shaft 499 past Torvan's operations room, in the tunnels
+  under the city; the route passes the smugglers' lookout 247). Standing:
+  `thornwall_citizens` Warm (one city quest, +15, is enough). Items 65-69;
+  units 6672-6771 (zone Thornwall Burrows, plane 16).
+
+**Every housing payment is a gold sink.** Gold is only ever deducted
+(`chargeGold`) and never credited anywhere; nothing is refunded. Every item a
+landlord sells is registered with `items.SetNeverBought` (`registerNeverBought`,
+on every load), and the sell action refuses it at its one chokepoint
+(`actions.sellOneToMerchant`), so no merchant pays for it whatever its value.
+The item loader gives every item a value (an authored 0 is replaced by an
+automatic one), so value alone never protected them. Boot validation refuses
+a landlord with a shop (he buys nothing) or with gold of his own (nothing to
+steal or loot), and a housing item that is salable or has vendor categories.
+Players can still give, trade or auction unbound housing items to each other;
+that moves gold between players, never out of the sink.
 
 Each landlord sells from a list (prices as authored; both buildings ship the
 same numbers):
@@ -426,8 +444,9 @@ with a locked door exit (no map direction), a `lamp` so the list can be read
 at night, and an exit into it from a street; a new plane for its units; a
 landlord mob with a tree calling the two actions for its building id; its
 own five items (so none is honoured in another building); and a
-`housing_buildings/<id>.yaml` with the wording fields. The Quillhouse is the
-worked example of adding a second city. Record new rooms in the lighting goldens
+`housing_buildings/<id>.yaml` with the wording fields. The landlord needs
+`gold: 0` and no shop. The Quillhouse and the Burrows are worked examples of
+adding a city. Record new rooms in the lighting goldens
 (`-update-lighting-parity`, `-update-lighting-daycycle`) and confirm the diff
 only adds them.
 

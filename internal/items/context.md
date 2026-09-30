@@ -1374,6 +1374,7 @@ and `TestPreDetuneBowTable_MatchesTheRealTemplates` both fail otherwise.
 | `reach.go` | Weapon reach data |
 | `attack_messages.go` / `defensive_messages.go` | Combat message pools. Both render a coordinated triad through `narration.Render`; see below |
 | `memory.go` | Memory reporting |
+| `never_bought.go` | `SetNeverBought`, `IsNeverBought`: item ids no merchant buys whatever their value (housing deeds, vouchers and keys, registered by `internal/housing`; refused in `actions.sellOneToMerchant`). Note that the loader replaces an authored `value: 0` with an automatic value, so value 0 never makes an item unsellable |
 | `test_helpers.go` / `test_helpers_combat.go` | Test fixtures |
 
 Item ids at 40000+ live under `items/materials-40000/` — `Filepath()` routes by

@@ -1,0 +1,89 @@
+# The Burrows: a warren of wide tunnels and hide-outs cut under Thornwall,
+# behind a single iron-banded door at the Burrow Mouth (6671), east off the
+# smugglers' escape shaft (499) past Torvan Cresk's operations room. Torvan
+# owns it. His doorman, Brannoc Tull, lets the holes and sells everything
+# below from a list, rudely.
+#
+# It runs independently of every other building: a player may own one home
+# here and one in each other building, with its own deeds, guests and
+# containers. Its items are its own (65-69), so a deed bought here is good
+# only here. Everything paid is a gold sink: nothing sold here can be sold to
+# a merchant, and the doorman buys nothing and carries no gold.
+#
+# Authored content (internal/housing). Who owns which hide-out, their
+# doorways, floors, containers and descriptions are living state under
+# housing/the_burrows/, never in this file.
+#
+# To add capacity: run tools/housing_units.py with
+# --template tools/housing_unit_templates/burrows.yaml.tmpl over a new id
+# range, then list the new ids in unit_rooms below.
+building_id: the_burrows
+name: the Burrows
+door_room: 6671
+door_exit: door
+landlord_mob_id: 9803
+# Standing with the Thornwall Citizenry. Warm (15+) means the folk upstairs
+# vouch for you: a new character starts at 0, and one of the city's quests
+# (The Drowning Post's Debt, The Fallow Field or The Undertow, +15 each) is
+# enough. Torvan wants no Watch plants in his warren, only people the city
+# itself knows.
+faction: thornwall_citizens
+min_rep_tier: warm
+
+# How the doorman and the house commands speak of this building.
+proprietor: Torvan
+vouched_by: the folk upstairs
+standing_hint: "Marek at the Drowning Post has got thugs leaning on him. Sort that out, and the folk upstairs will know your name. Then come back and bother me."
+location: the Burrow Mouth, east off the smugglers' escape shaft past Torvan Cresk's rooms, in the tunnels under Thornwall
+outside_text: You get shoved back out into the Burrow Mouth, and the iron-banded door grinds shut behind you.
+
+tiers:
+  - tier_id: simple
+    name: a hide-out in the Burrows
+    price: 500
+    rooms: 1
+
+# Extensions. Each deed costs extension_price_multiplier times everything the
+# lodger has paid for holes in this warren so far: 500 for the first makes the
+# first deed 1500, 500 + 1500 makes the second 6000, then 24000, and so on.
+extension_item_id: 65
+extension_price_multiplier: 3
+# A lodging can hold at most this many hide-outs, the first included.
+max_rooms: 8
+extension_title: A Burrow Side-Cut
+extension_description: >
+  A side-cut dug through from the rest of the lodging, the rock of the new
+  opening still sharp and pale where the picks went in. A packed earth floor,
+  a candle niche and an iron hook in the wall. It is empty, and it is yours.
+
+# Paint: a one-use voucher that rewrites one hide-out's description.
+redecorate_item_id: 66
+redecorate_price: 500
+
+# Guests: a lodger buys a guest key and gives it to a friend, who uses it at
+# the door once and is let in from then on. The owner revokes with
+# `house revoke <name>`. A lodging admits at most max_guests.
+guest_key_item_id: 67
+guest_key_price: 100
+max_guests: 5
+
+# Containers: a deed places one container in the hide-out it is used in,
+# under a one-word name the lodger chooses. A container deed's container can
+# be used by anyone in the room; a strongbox deed's opens for the owner alone.
+# What they hold lives in the house file. Each hide-out holds at most
+# max_containers_per_room; the lodging as a whole has no limit.
+container_item_id: 68
+container_price: 250
+strongbox_item_id: 69
+strongbox_price: 500
+max_containers_per_room: 6
+
+unit_rooms: [6672, 6673, 6674, 6675, 6676, 6677, 6678, 6679, 6680, 6681,
+  6682, 6683, 6684, 6685, 6686, 6687, 6688, 6689, 6690, 6691, 6692, 6693,
+  6694, 6695, 6696, 6697, 6698, 6699, 6700, 6701, 6702, 6703, 6704, 6705,
+  6706, 6707, 6708, 6709, 6710, 6711, 6712, 6713, 6714, 6715, 6716, 6717,
+  6718, 6719, 6720, 6721, 6722, 6723, 6724, 6725, 6726, 6727, 6728, 6729,
+  6730, 6731, 6732, 6733, 6734, 6735, 6736, 6737, 6738, 6739, 6740, 6741,
+  6742, 6743, 6744, 6745, 6746, 6747, 6748, 6749, 6750, 6751, 6752, 6753,
+  6754, 6755, 6756, 6757, 6758, 6759, 6760, 6761, 6762, 6763, 6764, 6765,
+  6766, 6767, 6768, 6769, 6770, 6771]

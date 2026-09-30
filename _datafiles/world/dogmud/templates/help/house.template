@@ -3,11 +3,13 @@
 The <ansi fg="command">house</ansi> command shows your lodgings and who can
 come into them, and lets you take access away.
 
-Lodging houses let rooms in two cities, each to people the city's own
+Lodging houses let rooms in three cities, each to people the city's own
 folk will vouch for:
 
   New Plymouth    Hobb Pennock, Pennock's Alley, west of the Back Court
   The Confluence  Aubric Sallow, Quill Court, west off Hall Lane
+  Thornwall       Brannoc Tull, the Burrow Mouth, in the tunnels past
+                  the smugglers' escape shaft
 
 You may keep one home in each. Each is separate: its own rooms, deeds,
 guests and storage, and its landlord's deeds work only in his house.
