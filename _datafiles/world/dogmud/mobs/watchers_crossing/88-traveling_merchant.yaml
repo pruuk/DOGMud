@@ -1,11 +1,12 @@
 mobid: 88
 zone: Watchers Crossing
-behavior_archetype: noncombat_questgiver
+craft_support: general
+behavior_archetype: noncombat_shopkeeper
 statpool: 85
 itemdropchance: 0
 hostile: false
 non_combatant: true
-maxwander: 3
+maxwander: 0
 groups:
   - humanoid
   - merchant
@@ -35,7 +36,7 @@ character:
     want to be.
   speciesid: 1
   level: 1
-  gold: 500
+  gold: 5000
   equipment:
     weapon:
       itemid: 10020
@@ -46,3 +47,10 @@ character:
       base: 105
     charisma:
       base: 105
+  shop:
+    - itemid: 30021
+    - itemid: 40103
+    - itemid: 40102
+    - itemid: 40105
+    - itemid: 20096
+    - itemid: 40038

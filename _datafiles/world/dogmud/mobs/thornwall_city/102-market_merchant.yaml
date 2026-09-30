@@ -1,16 +1,18 @@
 mobid: 102
 zone: Thornwall City
-behavior_archetype: noncombat_questgiver
+craft_support: general
+behavior_archetype: noncombat_shopkeeper
 statpool: 120
 itemdropchance: 0
 hostile: false
 non_combatant: true
-maxwander: 1
+maxwander: 0
 schedule_id: thornwall_market_merchant
 groups:
   - humanoid
   - merchant
   - thornwall_citizens
+  - shopkeepers
 knows_facts:
   - thornwall-mayor-disgraced
   - thornwall-caravan-trade
@@ -34,9 +36,20 @@ character:
     about both.
   speciesid: 1
   level: 1
-  gold: 500
+  gold: 5000
   stats:
     charisma:
       base: 110
     perception:
       base: 105
+  shop:
+    - itemid: 40007
+    - itemid: 40002
+    - itemid: 20052
+    - itemid: 20022
+    - itemid: 20023
+    - itemid: 40103
+    - itemid: 40102
+    - itemid: 40105
+    - itemid: 40038
+    - itemid: 20096

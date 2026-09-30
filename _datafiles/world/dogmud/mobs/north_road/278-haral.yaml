@@ -1,5 +1,6 @@
 mobid: 278
 zone: North Road
+craft_support: cooking
 behavior_archetype: noncombat_shopkeeper
 statpool: 80
 itemdropchance: 0
@@ -9,6 +10,7 @@ charm_immune: true
 maxwander: 0
 groups:
   - humanoid
+  - shopkeepers
 idlecommands:
   - 'emote polishes a cup with a rag that is not noticeably cleaner than the cup'
   - ''
@@ -27,7 +29,7 @@ character:
     opinions behind the bar with the bottles.
   speciesid: 1
   level: 1
-  gold: 50
+  gold: 1000
   stats:
     strength:
       base: 110
@@ -37,3 +39,5 @@ character:
       base: 106
     charisma:
       base: 108
+  shop:
+    - itemid: 30023

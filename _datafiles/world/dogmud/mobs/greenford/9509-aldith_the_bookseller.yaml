@@ -1,7 +1,8 @@
 mobid: 9509
 zone: Greenford
 schedule_id: gf_bookseller
-behavior_archetype: noncombat_passive
+craft_support: general
+behavior_archetype: noncombat_shopkeeper
 non_combatant: true
 charm_immune: true
 hostile: false
@@ -44,3 +45,5 @@ character:
       base: 106
     charisma:
       base: 104
+  shop:
+    - itemid: 40137

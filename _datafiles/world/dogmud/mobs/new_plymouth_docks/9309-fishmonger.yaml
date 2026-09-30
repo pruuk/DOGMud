@@ -1,6 +1,7 @@
 mobid: 9309
 zone: New Plymouth Docks
-behavior_archetype: noncombat_passive
+craft_support: cooking
+behavior_archetype: noncombat_shopkeeper
 non_combatant: true
 hostile: false
 statpool: 32
@@ -39,3 +40,8 @@ character:
       base: 106
     charisma:
       base: 106
+  shop:
+    - itemid: 40126
+    - itemid: 40125
+    - itemid: 40152
+    - itemid: 40017

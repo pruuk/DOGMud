@@ -1,5 +1,7 @@
 mobid: 348
 zone: Stillwater
+craft_support: cooking
+behavior_archetype: noncombat_shopkeeper
 statpool: 75
 itemdropchance: 0
 hostile: false
@@ -11,6 +13,7 @@ groups:
   - humanoid
   - merchant
   - stillwater_citizens
+  - shopkeepers
 idlecommands:
   - 'emote adjusts the millstone brake and listens to the wheel-creak
     change pitch'
@@ -33,7 +36,7 @@ character:
     is reliably good. He sells it direct from the mill by the sack, and he
     will also mill grain you bring yourself for a modest fee.
   speciesid: 1
-  gold: 100
+  gold: 1000
   equipment:
     light:
       itemid: 40038
@@ -44,3 +47,6 @@ character:
       base: 106
     perception:
       base: 105
+  shop:
+    - itemid: 40076
+    - itemid: 40151

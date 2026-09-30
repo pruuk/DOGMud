@@ -1,5 +1,6 @@
 mobid: 273
 zone: Thornwall City
+craft_support: general
 behavior_archetype: noncombat_shopkeeper
 statpool: 80
 itemdropchance: 0
@@ -49,3 +50,7 @@ character:
       base: 110
     dexterity:
       base: 108
+  shop:
+    - itemid: 33
+    - itemid: 36
+    - itemid: 20097
