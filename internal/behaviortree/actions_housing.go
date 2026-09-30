@@ -37,9 +37,12 @@ func actBuyHousing(params map[string]any, ctx *EvalContext) Result {
 
 	say := func(line string) { mob.Command(`say ` + line) }
 
-	// A question that mentions buying ("how much to buy a room?", "do you
-	// buy furniture?") is a question: it is answered, and nothing is sold.
-	if isQuestion(ctx.Event.Text) {
+	// Only a plain request sells ("buy a room", "I'd like to buy a deed").
+	// A question that mentions buying ("how much to buy a room?"), a
+	// refusal ("I don't want to buy a room") or talk around it ("tell me
+	// about the key before I buy") is answered with the terms, which say
+	// how to buy; nothing is charged on a guess.
+	if isQuestion(ctx.Event.Text) || !isPlainPurchase(ctx.Event.Text) {
 		if housing.DescribeTerms(user, say, buildingId, tierId) {
 			return Success
 		}
@@ -57,6 +60,49 @@ func actBuyHousing(params map[string]any, ctx *EvalContext) Result {
 	}
 	housing.Buy(user, say, buildingId, tierId, key)
 	return Success
+}
+
+// purchaseLeadIns may come before the buying verb in a plain request.
+var purchaseLeadIns = map[string]bool{
+	`to`: true, `please`: true, `i`: true, `i'd`: true, `id`: true, `i'll`: true,
+	`ill`: true, `want`: true, `wanna`: true, `would`: true, `like`: true,
+	`let`: true, `me`: true, `just`: true, `gonna`: true, `going`: true,
+	`now`: true, `ok`: true, `okay`: true, `alright`: true, `yes`: true,
+	`sure`: true, `then`: true, `hobb`: true, `mr`: true, `pennock`: true,
+}
+
+// negations turn a sentence about buying into one about not buying.
+var negations = map[string]bool{
+	`not`: true, `no`: true, `never`: true, `don't`: true, `dont`: true,
+	`won't`: true, `wont`: true, `can't`: true, `cant`: true, `cannot`: true,
+	`didn't`: true, `didnt`: true, `wouldn't`: true, `wouldnt`: true,
+	`shouldn't`: true, `shouldnt`: true, `nor`: true, `without`: true,
+	`nothing`: true, `none`: true,
+}
+
+// isPlainPurchase reports whether an ask is a plain request to buy: after
+// lead-ins ("please", "I'd like to"), its first word is buy or purchase, and
+// nothing in it negates the request.
+func isPlainPurchase(text string) bool {
+	words := []string{}
+	for _, w := range strings.Fields(strings.ToLower(text)) {
+		w = strings.Trim(w, `.,!"()`)
+		w = strings.ReplaceAll(w, `’`, `'`)
+		if w == `` {
+			continue
+		}
+		if negations[w] || strings.HasSuffix(w, `n't`) {
+			return false
+		}
+		words = append(words, w)
+	}
+	for _, w := range words {
+		if purchaseLeadIns[w] {
+			continue
+		}
+		return w == `buy` || w == `purchase`
+	}
+	return false
 }
 
 // questionWords open a question in English.

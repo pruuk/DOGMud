@@ -92,8 +92,10 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 		say(`The ledger's in a state. The Widow's clerk is going over it, and I'm to let nothing till he's done. Come back another day.`)
 		return PurchaseNoVacancy
 	}
+	// Every unused extension deed in the building is a promise of a vacant
+	// unit; a new home may not take one of those.
 	vacant := vacantUnitsLocked(b.BuildingId)
-	if len(vacant) < tier.Rooms {
+	if len(vacant)-outstandingLocked(b) < tier.Rooms {
 		mu.Unlock()
 		say(`Every room's let. Nothing I can do. Try another day.`)
 		return PurchaseNoVacancy

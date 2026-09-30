@@ -54,7 +54,7 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 		home.Price, home.Note = 0, `Not letting rooms just now`
 	case repTierFor(b.Faction, user.UserId) < b.MinTier():
 		home.Note = `The quarter must vouch for you first`
-	case vacant < tier.Rooms:
+	case vacant-buildingOutstanding(b) < tier.Rooms:
 		home.Price, home.Note = 0, `Every room is let`
 	default:
 		home.Note, home.Available = `Four walls and a door that knows you`, true

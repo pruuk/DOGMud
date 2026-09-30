@@ -62,10 +62,22 @@ func TestIsQuestion(t *testing.T) {
 			t.Errorf("%q read as a request to buy", q)
 		}
 	}
-	requests := []string{`buy a room`, `to buy a room`, `I want to buy a room`, `buy deed`, `buy a strongbox please`}
+	requests := []string{`buy a room`, `to buy a room`, `I want to buy a room`, `buy deed`, `buy a strongbox please`,
+		`please buy a home`, `I'd like to buy a container deed`, `purchase a voucher`}
 	for _, r := range requests {
-		if isQuestion(r) {
-			t.Errorf("%q read as a question", r)
+		if isQuestion(r) || !isPlainPurchase(r) {
+			t.Errorf("%q not read as a request to buy", r)
+		}
+	}
+	notPurchases := []string{
+		`I don't want to buy a room`, `I will never buy a strongbox`, `price to buy a room`,
+		`tell me about the key before I buy`, `I already bought a room, no need to buy another room`,
+		`I wouldn’t buy a home here`, `about buying a room`,
+		`buy no room`, `buy nothing, just looking`, `buy a room? no`, `please buy none of it`,
+	}
+	for _, s := range notPurchases {
+		if isPlainPurchase(s) {
+			t.Errorf("%q read as a request to buy", s)
 		}
 	}
 }

@@ -122,6 +122,7 @@ func TestBuildingValidate(t *testing.T) {
 		`no tiers`:       func(b *Building) { b.Tiers = nil },
 		`free tier`:      func(b *Building) { b.Tiers[0].Price = 0 },
 		`zero rooms`:     func(b *Building) { b.Tiers[0].Rooms = 0 },
+		`two-room tier`:  func(b *Building) { b.Tiers[0].Rooms = 2 },
 		`no units`:       func(b *Building) { b.UnitRooms = nil },
 		`duplicate unit`: func(b *Building) { b.UnitRooms = []int{1, 1} },
 		`door is a unit`: func(b *Building) { b.UnitRooms = []int{testDoor} },

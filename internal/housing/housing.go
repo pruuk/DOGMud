@@ -148,8 +148,11 @@ func (b Building) Validate() error {
 		if t.Price <= 0 {
 			return fmt.Errorf(`housing building %s: tier %s price must be positive`, b.BuildingId, t.TierId)
 		}
-		if t.Rooms < 1 {
-			return fmt.Errorf(`housing building %s: tier %s must occupy at least one room`, b.BuildingId, t.TierId)
+		// A home is one room; more come from extension deeds, which lay the
+		// doorways between them. A tier of several rooms would be sold with
+		// no doorways joining them, and held as broken on the next load.
+		if t.Rooms != 1 {
+			return fmt.Errorf(`housing building %s: tier %s must be exactly one room (extensions add more)`, b.BuildingId, t.TierId)
 		}
 	}
 	if len(b.UnitRooms) == 0 {

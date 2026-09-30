@@ -86,7 +86,18 @@ func loadHouses() (loaded int, heldCount int) {
 		sort.Slice(entries, func(i, j int) bool { return entries[i].Name() < entries[j].Name() })
 		for _, e := range entries {
 			name := e.Name()
-			// Quarantined files keep their evidence alongside; skip them.
+			// A quarantined file still in the folder is a case staff have not
+			// closed: its rooms stay held and its building frozen, across any
+			// number of restarts, until the file is repaired (put back as
+			// <entry>.yaml) or moved out of the folder.
+			if entry, ok := quarantinedEntry(name); !e.IsDir() && ok {
+				mu.Lock()
+				reason := fmt.Sprintf(`house file quarantined as %s; repair it or move it out of the folder`, name)
+				holdLocked(entry, reason)
+				frozen[bd.Name()] = reason
+				mu.Unlock()
+				continue
+			}
 			if e.IsDir() || !strings.HasSuffix(name, `.yaml`) {
 				continue
 			}
@@ -166,7 +177,18 @@ func loadOneHouse(buildingDir string, path string, fileName string) bool {
 	if !ok {
 		return reject(fmt.Sprintf(`building %q is not authored`, h.BuildingId))
 	}
+	// Older files did not record deeds sold; count them once from what was
+	// paid, and write the count, so it never depends on a multiplier that
+	// might be changed later.
+	before := h.DeedsIssued
 	h.normalizeDeeds(*b)
+	defer func() {
+		if h.DeedsIssued != before {
+			if err := saveHouse(h); err != nil {
+				mudlog.Error(`housing.loadHouses`, `file`, path, `deedsIssued`, h.DeedsIssued, `error`, err.Error())
+			}
+		}
+	}()
 	if h.EntryRoom() != entryFromName {
 		return reject(fmt.Sprintf(`entry room %d does not match the file name`, h.EntryRoom()))
 	}
@@ -191,6 +213,17 @@ func loadOneHouse(buildingDir string, path string, fileName string) bool {
 	hh := h
 	indexLocked(&hh)
 	return true
+}
+
+// quarantinedEntry reads the entry room from a quarantined house file's name
+// ("6470.yaml.corrupt-<time>", util.QuarantineCorrupt's naming).
+func quarantinedEntry(name string) (int, bool) {
+	i := strings.Index(name, `.yaml.corrupt`)
+	if i <= 0 {
+		return 0, false
+	}
+	entry, err := strconv.Atoi(name[:i])
+	return entry, err == nil && entry > 0
 }
 
 // quarantineAndHold applies rule 3 of the contract: move the bad file aside

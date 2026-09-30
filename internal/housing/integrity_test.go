@@ -172,3 +172,77 @@ func TestCapture_NoticesAnItemChangedInPlace(t *testing.T) {
 		t.Error("an unchanged floor was written again")
 	}
 }
+
+// A deed a lodger has paid for holds a vacant unit against new homes too, not
+// only against other deeds.
+func TestPurchase_DoesNotTakeAUnitPromisedToADeed(t *testing.T) {
+	setup(t)
+	a, b, c := testUser(1, 100000, 0), testUser(2, 100000, 0), testUser(3, 100000, 0)
+	buy(t, a)
+	buyKey(a, OfferExtension) // units: A owned, B and C vacant, one promised
+	if res, _ := buy(t, b); res != PurchaseOk {
+		t.Fatalf("setup: %v", res)
+	}
+	if o := offerMap(c)[OfferHome]; o.Available {
+		t.Errorf("a home offered on the unit promised to a deed: %+v", o)
+	}
+	if res, _ := buy(t, c); res == PurchaseOk {
+		t.Fatal("a home was sold on the unit promised to a deed")
+	}
+	deed, _ := deedIn(a)
+	entry := unitRoom(testUnitA)
+	ApplyOverlay(entry)
+	UseItem(a, entry, deed, `north`, `deed north`)
+	if h, _ := HouseOf(1, testBldgId); len(h.RoomIds) != 2 {
+		t.Error("the paid deed could not be used")
+	}
+}
+
+// A freeze and a hold last across restarts while the quarantined file is
+// still in the folder, and lift when staff move it out.
+func TestCorruptFile_FreezeLastsUntilStaffAct(t *testing.T) {
+	dir := setup(t)
+	a := testUser(1, 100000, 0)
+	buy(t, a)
+	path := filepath.Join(dir, testBldgId, `6470.yaml`)
+	os.WriteFile(path, []byte("room_ids: [6470, 64"), 0o644)
+
+	for boot := 1; boot <= 2; boot++ {
+		ResetForTest()
+		AddBuildingForTest(testBuilding())
+		loadHouses()
+		if _, ok := Frozen(testBldgId); !ok {
+			t.Fatalf("boot %d: not frozen", boot)
+		}
+		if _, held := HeldRooms()[testUnitA]; !held {
+			t.Fatalf("boot %d: the entry room is not held", boot)
+		}
+	}
+
+	// Staff move the evidence out of the folder.
+	matches, _ := filepath.Glob(filepath.Join(dir, testBldgId, `6470.yaml.corrupt*`))
+	if len(matches) != 1 {
+		t.Fatalf("quarantined files = %v", matches)
+	}
+	os.Rename(matches[0], filepath.Join(t.TempDir(), `evidence`))
+	ResetForTest()
+	AddBuildingForTest(testBuilding())
+	loadHouses()
+	if _, ok := Frozen(testBldgId); ok {
+		t.Error("still frozen after staff cleared the case")
+	}
+}
+
+// An older house's deed count is written the first time it loads, so it
+// never depends on the multiplier at a later boot.
+func TestLoad_LegacyDeedCountIsWritten(t *testing.T) {
+	dir := setup(t)
+	os.MkdirAll(filepath.Join(dir, testBldgId), 0o755)
+	os.WriteFile(filepath.Join(dir, testBldgId, `6470.yaml`), []byte(
+		"building_id: test_lodgings\nowner_user_id: 1\ntier_id: simple\nroom_ids: [6470]\nprice_paid: 500\nrooms_paid: 2000\n"), 0o644)
+	loadHouses()
+	data, _ := os.ReadFile(filepath.Join(dir, testBldgId, `6470.yaml`))
+	if !strings.Contains(string(data), `deeds_issued: 1`) {
+		t.Errorf("the derived deed count was not written:\n%s", data)
+	}
+}

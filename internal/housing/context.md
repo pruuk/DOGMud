@@ -84,9 +84,12 @@ A file is named by its entry room, not its owner, so a file that cannot be
 read still says which room it guarded. That room is **held**: never sold and
 never entered (except by staff) until someone repairs the file. Which OTHER
 rooms it owned is unknown, so the whole building is **frozen** (`Frozen`): it
-sells no home and builds no extension until the file is repaired or removed
-and the data reloaded, since any unit that looks vacant may hold that
-lodger's things. A readable file that disagrees with the world (unknown
+sells no home and builds no extension, since any unit that looks vacant may
+hold that lodger's things. The quarantined file (`<entry>.yaml.corrupt-<time>`)
+stays in the building's folder, and every load treats it as an open case
+(`quarantinedEntry`): the hold and the freeze last across restarts until
+staff put a repaired `<entry>.yaml` back AND move the `.corrupt` file out of
+the folder, then reload. A readable file that disagrees with the world (unknown
 building, a room that is not a unit, a room listed twice or already owned, a
 second house for the same owner, a doorway outside the house or two doorways
 in one direction, a room no doorway reaches or two rooms in one place, a
@@ -257,8 +260,11 @@ the same `Buy` through the behavior-tree action `buy_housing`, and
 `housing_terms` explains the list in words.
 
 - **Home** (`Purchase`): refuses unknown building or tier, an existing home in
-  this building (one per ACCOUNT, shared by alts), standing below
-  `min_rep_tier`, carried gold plus bank below the price, no vacant unit.
+  this building (one per ACCOUNT, shared by alts), a held house of the same
+  owner, a frozen building, standing below `min_rep_tier`, carried gold plus
+  bank below the price, and no vacant unit beyond those promised to unused
+  extension deeds. A tier is exactly one room (`Validate`); more come from
+  deeds, which lay the doorways.
 - **Extension deed** (`buyExtension`): needs a home, a building not frozen,
   room below `max_rooms`, the price, and a vacant unit beyond those already
   promised to every lodger's unused deeds (`outstandingLocked`), so no deed is
@@ -283,9 +289,11 @@ the same `Buy` through the behavior-tree action `buy_housing`, and
 
 Gold is always carried first, then the bank; `events.EquipmentChange` and
 `events.ItemOwnership` are queued. Asking the landlord (`buy_housing`) only
-sells on a plain request that names an offer; a question ("how much to buy a
-room?", "do you buy furniture?") is answered with the terms, and an ask that
-names no offer sells nothing.
+sells on a plain request: after lead-ins ("please", "I'd like to") the first
+word is buy or purchase, nothing negates it (not, don't, never, no,
+nothing...), and it names an offer (`isPlainPurchase`, `MatchOffer`).
+Anything else that mentions buying, a question above all ("how much to buy
+a room?"), is answered with the terms, which say what to type.
 
 ## Using the items
 
@@ -343,8 +351,9 @@ inside the user's own house.
   room and user loaders do.
 - **Strongboxes** are sealed (`rooms.Container.Sealed`) and kept under a lock
   (`rooms.SealedLockDifficulty`) at all times, so every engine path that
-  honours container locks (look, get, put, use, tab completion, the AI
-  companion) refuses them, whatever word a player uses for the name. The
+  honours container locks (look, get and `get all <container>`, put, use,
+  tab completion, the AI companion) refuses them, whatever word a player
+  uses for the name, without saying what or how much is inside. The
   paths that could force a lock refuse a sealed one outright: picklock,
   unlock with a key (players and mobs), steal and plant
   (`Container.IsSealedShut`). The owner's own command, and a command of a

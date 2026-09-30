@@ -81,8 +81,10 @@ curios.
 
 Room Extension Deeds: you can hold one unused deed at a time. If you lose
 yours, Hobb hands you a fresh copy for nothing; whichever copy you use first
-counts. Asking Hobb how much something costs no longer buys it by mistake:
-only asking him to buy a named thing does.
+counts. Asking Hobb how much something costs no longer buys it by mistake,
+nor does telling him you don't want something: only asking him plainly to
+buy a named thing does ("ask hobb buy a room"), and the list and buy
+commands work as before.
 
 Also: look in, look into and look inside now work on any container, not
 just ones in your lodging.

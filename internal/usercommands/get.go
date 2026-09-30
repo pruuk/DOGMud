@@ -146,6 +146,12 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 			if cName != `` {
 				container := room.Containers[cName]
+				// A locked container gives nothing away, not even how many
+				// things are inside it.
+				if container.Lock.IsLocked() {
+					user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, cName))
+					return true, nil
+				}
 				if container.Gold > 0 {
 					Get(fmt.Sprintf("gold %s", cName), user, room, flags)
 				}
