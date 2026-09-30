@@ -42,26 +42,32 @@ var nightTradeSampleDays = []struct {
 // mutators, patrols, schedules and every mob template. For each template with
 // a shop and each room that spawns it, it spawns the real keeper through
 // mobs.NewMobByIdFresh (so an equipped light reaches the room through the
-// same worn-condition path as a live spawn), puts it in that room alone, and
-// asks the gate for a bare observer.
+// same worn-condition path as a live spawn), puts it alone in every room it
+// can be awake in, and asks the gate for a bare observer.
 //
-// What "night" and "awake" mean here, and why:
+// Where a keeper can be awake, and when:
 //
-//   - Night is every hour on the three sample days when the sun is below the
-//     horizon (gametime.SunLight is Absent). That is the engine's own
-//     definition of a sunless sky, not a copy of it. Twilight, when a low sun
-//     is above the horizon but the room still reads below faces, is not
-//     asserted: it is a sliver of a few days a year, and at the sample days
-//     it falls inside the sunless hours anyway at midwinter.
-//   - The moons are whatever the sample round gives. Every open sky and
-//     backstreet room stays below faces even under full moons (35 and 43),
-//     so the moon cannot hide a dark shop from this guard.
-//   - Awake in the shop means: no schedule (a keeper without one never
-//     sleeps), or a schedule segment at that hour whose activity is not
-//     sleeping or patrol and whose target room is the shop room (a target of
-//     0 means home). A sleeping keeper is exempt, since ShopClosedForSleep
-//     refuses before the sight gate ever runs. A keeper away from the shop at
-//     that hour is not in it to trade.
+//   - A keeper with no schedule never sleeps. It is in its spawn room at
+//     every hour, and, if it wanders, in every room its wander can reach
+//     (see wanderReach).
+//   - A keeper with a schedule is, at each hour, in that hour's segment's
+//     target room, unless the segment is sleeping or patrol. The loader
+//     rejects a target of 0 outside patrol, so every awake segment names a
+//     real room. A sleeping keeper is exempt, since ShopClosedForSleep
+//     refuses before the sight gate ever runs. A patrolling keeper is on the
+//     road, not keeping shop. The schedule executor pins MaxWander to 0, so
+//     a scheduled keeper never wanders.
+//
+// Every awake hour of the three sample days is asserted, day and night. The
+// moons are whatever the sample round gives. Every open sky and backstreet
+// room stays below faces even under full moons (35 and 43), so the moon
+// cannot hide a dark shop from this guard.
+//
+// A night sample is an awake hour when the sun is below the horizon
+// (gametime.SunLight is Absent), the engine's own definition of a sunless
+// sky. Every keeper must be tested at one or more night samples, or be
+// listed in nightSampleExempt with the reason it never trades at night, so
+// a keeper cannot pass by never being looked at in the dark.
 //
 // Each keeper is tested alone in the room: another keeper's lantern must not
 // cover for one who has none, because the two need not both be present.
@@ -120,8 +126,9 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 
 	// Every room that spawns a shop mob is that mob's shop.
 	type placement struct {
-		mob  *mobs.Mob
-		room *rooms.Room
+		mob       *mobs.Mob
+		room      *rooms.Room
+		maxWander int // the template's, or the spawn's override when it sets one
 	}
 	var placements []placement
 	roomIds := rooms.GetAllRoomIds()
@@ -141,7 +148,13 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 				continue
 			}
 			seen[si.MobId] = true
-			placements = append(placements, placement{mob: tmpl, room: r})
+			// rooms.go copies a spawn's maxwander over the template's only
+			// when it is non-zero.
+			mw := tmpl.MaxWander
+			if si.MaxWander != 0 {
+				mw = si.MaxWander
+			}
+			placements = append(placements, placement{mob: tmpl, room: r, maxWander: mw})
 		}
 	}
 	// A floor well under today's count, so a loader that silently finds no
@@ -152,7 +165,9 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 
 	lighting := configs.GetLightingConfig()
 	observer := &characters.Character{}
-	nightSamples := 0
+	totalSamples, totalNight := 0, 0
+	nightByKeeper := map[int]int{}
+	keeperNames := map[int]string{}
 	var failures []string
 
 	for _, p := range placements {
@@ -160,14 +175,27 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 		if p.mob.ScheduleId != "" && sched == nil {
 			t.Fatalf("mob %d schedule %q did not load", p.mob.MobId, p.mob.ScheduleId)
 		}
+		mobId := int(p.mob.MobId)
+		keeperNames[mobId] = p.mob.Character.Name
+		if _, ok := nightByKeeper[mobId]; !ok {
+			nightByKeeper[mobId] = 0
+		}
+
+		// The rooms an unscheduled keeper stands in at every hour: home, and
+		// whatever its wander reaches.
+		var roamRooms []*rooms.Room
+		if sched == nil {
+			roamRooms = append([]*rooms.Room{p.room}, wanderReach(t, p.room, p.maxWander)...)
+		}
 
 		inst := mobs.NewMobByIdFresh(p.mob.MobId, p.room.RoomId)
 		if inst == nil {
 			t.Fatalf("mob %d failed to spawn", p.mob.MobId)
 		}
-		p.room.AddMob(inst.InstanceId)
 
-		var dark []string
+		// dark collects refusals per room, in the order rooms are first seen.
+		dark := map[int][]string{}
+		var darkOrder []int
 		for _, d := range nightTradeSampleDays {
 			for hour := 0; hour < 24; hour++ {
 				// 37.5 rounds to the hour; ceil so an odd hour lands just
@@ -179,53 +207,155 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 					t.Fatalf("round %d reads hour %d, want %d: the sample mapping is off", round, gd.Hour24, hour)
 				}
 				sun := gametime.SunLight(lighting, gd.Day, float64(gd.Hour24)+gd.MinuteFloat/60)
-				if !math.IsInf(sun, -1) {
-					continue // the sun is up: not night
+				night := math.IsInf(sun, -1)
+
+				here := roamRooms
+				if sched != nil {
+					here = scheduledRoom(t, sched, hour, mobId)
 				}
-				if !awakeInShop(sched, hour, p.room.RoomId) {
-					continue
-				}
-				nightSamples++
-				if actions.ShopSightRefusal(observer, p.room) {
-					dark = append(dark, fmt.Sprintf("%s %02d:00 light %d", d.Name, hour, p.room.LightLevel()))
+				for _, r := range here {
+					inst.Character.RoomId = r.RoomId
+					r.AddMob(inst.InstanceId)
+					refused := actions.ShopSightRefusal(observer, r)
+					level := r.LightLevel()
+					r.RemoveMob(inst.InstanceId)
+
+					totalSamples++
+					if night {
+						totalNight++
+						nightByKeeper[mobId]++
+					}
+					if refused {
+						if _, ok := dark[r.RoomId]; !ok {
+							darkOrder = append(darkOrder, r.RoomId)
+						}
+						dark[r.RoomId] = append(dark[r.RoomId], fmt.Sprintf("%s %02d:00 light %d", d.Name, hour, level))
+					}
 				}
 			}
 		}
 
-		p.room.RemoveMob(inst.InstanceId)
 		mobs.DestroyInstance(inst.InstanceId)
 
-		if len(dark) > 0 {
-			failures = append(failures, fmt.Sprintf("mob %d %s in room %d: refused at %d night samples, first %s",
-				p.mob.MobId, p.mob.Character.Name, p.room.RoomId, len(dark), dark[0]))
+		for _, rid := range darkOrder {
+			failures = append(failures, fmt.Sprintf("mob %d %s (spawns in %d) in room %d: refused at %d awake samples, first %s",
+				p.mob.MobId, p.mob.Character.Name, p.room.RoomId, rid, len(dark[rid]), dark[rid][0]))
 		}
 	}
 
-	if nightSamples == 0 {
+	if totalNight == 0 {
 		t.Fatal("no awake night sample was taken: the guard checked nothing")
 	}
-	t.Logf("checked %d shop placements across %d awake night samples", len(placements), nightSamples)
+	t.Logf("checked %d shop placements across %d awake samples, %d of them at night",
+		len(placements), totalSamples, totalNight)
+
+	// Every keeper is looked at in the dark at least once, or says why not.
+	var unseen []string
+	keeperIds := make([]int, 0, len(nightByKeeper))
+	for id := range nightByKeeper {
+		keeperIds = append(keeperIds, id)
+	}
+	sort.Ints(keeperIds)
+	for _, id := range keeperIds {
+		_, exempt := nightSampleExempt[id]
+		switch {
+		case nightByKeeper[id] == 0 && !exempt:
+			unseen = append(unseen, fmt.Sprintf("mob %d %s", id, keeperNames[id]))
+		case nightByKeeper[id] > 0 && exempt:
+			t.Errorf("mob %d %s is in nightSampleExempt but was tested at %d night samples: drop the exemption",
+				id, keeperNames[id], nightByKeeper[id])
+		}
+	}
+	for id := range nightSampleExempt {
+		if _, ok := nightByKeeper[id]; !ok {
+			t.Errorf("nightSampleExempt names mob %d, which is not a shopkeeper placed in the world", id)
+		}
+	}
+	if len(unseen) > 0 {
+		t.Errorf("%d shopkeepers were never tested at night, so this guard proves nothing about them.\n"+
+			"Either they are awake somewhere after dark and the guard is not finding it, or\n"+
+			"they never trade at night: then list them in nightSampleExempt with the reason.\n\n%s",
+			len(unseen), strings.Join(unseen, "\n"))
+	}
+
 	if len(failures) > 0 {
-		t.Errorf("%d shopkeepers cannot trade at night while awake in their shop.\n"+
+		t.Errorf("%d shopkeeper rooms are too dark to trade in while the keeper is awake there.\n"+
 			"A normal human cannot make out the goods below the faces band. Give a street\n"+
-			"or stall keeper an Oil Lantern (40038) in the `light` equipment slot, or give\n"+
-			"a shop inside a building room light (`skylight: 0.15`, `lamp: 50`).\n\n%s",
+			"or stall keeper an Oil Lantern (40038) in the `light` equipment slot, give a\n"+
+			"shop inside a building room light (`skylight: 0.15`, `lamp: 50`), or pin a\n"+
+			"keeper who has no reason to roam to its counter with `maxwander: 0`.\n\n%s",
 			len(failures), strings.Join(failures, "\n"))
 	}
 }
 
-// awakeInShop reports whether a keeper on this schedule is awake and in the
-// shop room at hour. No schedule means always awake and always home.
-func awakeInShop(sched *mobs.Schedule, hour int, shopRoom int) bool {
-	if sched == nil {
-		return true
-	}
+// nightSampleExempt lists shopkeepers who are never awake anywhere after dark
+// on the sample days, with the reason. The guard fails if a listed keeper is
+// in fact tested at night, so an entry cannot outlive its reason.
+var nightSampleExempt = map[int]string{}
+
+// scheduledRoom returns the room a scheduled keeper is awake in at hour, or
+// nothing when the hour's segment is sleeping or patrol.
+func scheduledRoom(t *testing.T, sched *mobs.Schedule, hour int, mobId int) []*rooms.Room {
+	t.Helper()
 	seg := sched.CurrentSegment(hour)
 	if seg == nil {
-		return true // no segment: the spawn override leaves the keeper at home
+		// The loader rejects a schedule that does not cover all 24 hours.
+		t.Fatalf("mob %d schedule %q has no segment at hour %d", mobId, sched.Id, hour)
 	}
 	if seg.Activity == "sleeping" || seg.Activity == "patrol" {
-		return false
+		return nil
 	}
-	return seg.TargetRoom == 0 || seg.TargetRoom == shopRoom
+	r := rooms.LoadRoom(seg.TargetRoom)
+	if r == nil {
+		t.Fatalf("mob %d schedule %q hour %d targets room %d, which does not load", mobId, sched.Id, hour, seg.TargetRoom)
+	}
+	return []*rooms.Room{r}
+}
+
+// wanderReach returns the rooms other than home that a wandering keeper can
+// stand in. The engine sends a mob home once WanderCount > MaxWander, and
+// counts a step only as it is taken, so a mob with MaxWander N can take N+1
+// steps before it turns back. Wander stays inside the home zone. MaxWander -1
+// never turns back, so the whole zone is in reach. This walks every exit,
+// including the secret and locked ones the engine's random pick skips, so it
+// errs toward checking more rooms, not fewer.
+func wanderReach(t *testing.T, home *rooms.Room, maxWander int) []*rooms.Room {
+	t.Helper()
+	if maxWander == 0 {
+		return nil
+	}
+	depth := maxWander + 1
+	if maxWander < 0 {
+		depth = math.MaxInt
+	}
+	seen := map[int]bool{home.RoomId: true}
+	var out []*rooms.Room
+	frontier := []*rooms.Room{home}
+	for step := 0; step < depth && len(frontier) > 0; step++ {
+		var next []*rooms.Room
+		for _, r := range frontier {
+			exitIds := make([]int, 0, len(r.Exits))
+			for _, ex := range r.Exits {
+				exitIds = append(exitIds, ex.RoomId)
+			}
+			sort.Ints(exitIds)
+			for _, id := range exitIds {
+				if seen[id] {
+					continue
+				}
+				seen[id] = true
+				nr := rooms.LoadRoom(id)
+				if nr == nil {
+					t.Fatalf("room %d exit leads to room %d, which does not load", r.RoomId, id)
+				}
+				if nr.Zone != home.Zone {
+					continue
+				}
+				out = append(out, nr)
+				next = append(next, nr)
+			}
+		}
+		frontier = next
+	}
+	return out
 }
