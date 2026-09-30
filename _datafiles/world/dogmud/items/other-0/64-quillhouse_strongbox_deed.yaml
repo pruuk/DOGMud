@@ -1,0 +1,18 @@
+itemid: 64
+name: Quillhouse Strongbox Deed
+namesimple: strongbox deed
+not_salable: true
+description: >
+  A card headed THE QUILLHOUSE, ONE ARTICLE OF FURNITURE (SECURE), sealed in
+  blue wax. It places one container in your Quillhouse lodging that opens for
+  you and nobody else, not your guests and not their pets. To use it, stand in
+  the room of your lodging where it should go and type use strongbox deed.
+  You will be asked for one word to call it, like coffer, lockbox or deedbox.
+  You can also write the word straight after, as in use strongbox deed coffer.
+  Then look in coffer, put things in coffer and get them from coffer. What you
+  keep in it stays there.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

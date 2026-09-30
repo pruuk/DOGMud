@@ -88,7 +88,7 @@ func buyGuestKey(user *users.UserRecord, say func(string), buildingId string) {
 		return
 	}
 	if len(house.Guests) >= b.MaxGuests {
-		say(`Your lock already knows as many palms as the Widow allows. Revoke somebody first. Type house guests.`)
+		say(fmt.Sprintf(`Your lock already knows as many palms as %s allows. Revoke somebody first. Type house guests.`, b.Proprietor))
 		return
 	}
 	if user.Character.Gold+user.Character.Bank < b.GuestKeyPrice {
@@ -161,7 +161,7 @@ func useGuestKey(user *users.UserRecord, room *rooms.Room, itm items.Item, b Bui
 	saveUser(user) // the house is on disk; the spent key must be too
 	mudlog.Info(`housing.useGuestKey`, `guest`, user.UserId, `host`, host, `building`, b.BuildingId)
 	send(fmt.Sprintf(`You press the key into the brass plate. It sinks in and is gone, and the lock ticks, once. It knows your palm now. You can visit %s's lodging through the %s whenever you like.`, next.OwnerName, b.DoorExit))
-	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> presses a small brass key into the plate of the green door. The lock ticks.`, user.Character.Name), user.UserId)
+	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> presses a small brass key into the plate of the %s. The lock ticks.`, user.Character.Name, b.DoorExit), user.UserId)
 	if owner := onlineUser(host); owner != nil {
 		owner.SendText(messaging.CategorySystem, util.SplitStringNL(fmt.Sprintf(`The lock of your lodging has learned a new palm: <ansi fg="username">%s</ansi> can come and go now. Type <ansi fg="command">house guests</ansi> to see everyone who can.`, user.Character.Name), 80))
 	}
@@ -194,49 +194,70 @@ func matchGuest(h House, name string) (Guest, bool) {
 // Revoke takes a guest's access away from ownerId's house(s). The house is
 // written first; then, if the guest is inside, they are put outside the
 // building's door. It returns the guest removed, or an error to show.
-func Revoke(ownerId int, name string) (Guest, error) {
+// It takes the guest's access away from every lodging of the owner's that
+// they hold a key to (a lodger with homes in two cities may have given the
+// same friend a key to both), and returns the names of those buildings.
+func Revoke(ownerId int, name string) (Guest, []string, error) {
+	var revoked Guest
+	where := []string{}
 	for _, h := range HousesOwnedBy(ownerId) {
 		g, ok := matchGuest(h, name)
-		if !ok {
+		if !ok || (revoked.UserId != 0 && g.UserId != revoked.UserId) {
 			continue
 		}
 		if err := removeGuest(h.BuildingId, ownerId, g.UserId); err != nil {
-			return Guest{}, err
+			return Guest{}, nil, err
 		}
 		b, _ := GetBuilding(h.BuildingId)
 		if u := onlineUser(g.UserId); u != nil {
-			u.SendText(messaging.CategorySystem, util.SplitStringNL(fmt.Sprintf(`The lock of %s's lodging no longer knows your palm.`, h.OwnerName), 80))
+			u.SendText(messaging.CategorySystem, util.SplitStringNL(fmt.Sprintf(`The lock of %s's lodging in %s no longer knows your palm.`, h.OwnerName, b.Name), 80))
 		}
 		ejectIfInside(g.UserId, h, b)
-		return g, nil
+		revoked = g
+		where = append(where, b.Name)
 	}
-	return Guest{}, fmt.Errorf(`no guest of yours is called %q`, strings.TrimSpace(name))
+	if revoked.UserId == 0 {
+		return Guest{}, nil, fmt.Errorf(`no guest of yours is called %q`, strings.TrimSpace(name))
+	}
+	return revoked, where, nil
 }
 
 // Leave gives up userId's guest access to the house of the owner named. It
 // returns the house left, or an error to show.
-func Leave(userId int, ownerName string) (House, error) {
+// A guest of one owner's lodgings in two cities gives up both. It returns one
+// of the houses left and the names of their buildings.
+func Leave(userId int, ownerName string) (House, []string, error) {
 	want := strings.ToLower(strings.TrimSpace(ownerName))
-	var match []House
+	exact, prefix := map[int][]House{}, map[int][]House{}
 	for _, h := range GuestOf(userId) {
-		if strings.ToLower(h.OwnerName) == want {
-			match = []House{h}
-			break
+		name := strings.ToLower(h.OwnerName)
+		if name == want {
+			exact[h.OwnerUserId] = append(exact[h.OwnerUserId], h)
+		} else if want != `` && strings.HasPrefix(name, want) {
+			prefix[h.OwnerUserId] = append(prefix[h.OwnerUserId], h)
 		}
-		if want != `` && strings.HasPrefix(strings.ToLower(h.OwnerName), want) {
-			match = append(match, h)
+	}
+	owners := exact
+	if len(owners) == 0 {
+		owners = prefix
+	}
+	if len(owners) != 1 {
+		return House{}, nil, fmt.Errorf(`you are not a guest of anyone called %q`, strings.TrimSpace(ownerName))
+	}
+	var left House
+	where := []string{}
+	for _, houses := range owners {
+		for _, h := range houses {
+			if err := removeGuest(h.BuildingId, h.OwnerUserId, userId); err != nil {
+				return House{}, nil, err
+			}
+			b, _ := GetBuilding(h.BuildingId)
+			ejectIfInside(userId, h, b)
+			left = h
+			where = append(where, b.Name)
 		}
 	}
-	if len(match) != 1 {
-		return House{}, fmt.Errorf(`you are not a guest of anyone called %q`, strings.TrimSpace(ownerName))
-	}
-	h := match[0]
-	if err := removeGuest(h.BuildingId, h.OwnerUserId, userId); err != nil {
-		return House{}, err
-	}
-	b, _ := GetBuilding(h.BuildingId)
-	ejectIfInside(userId, h, b)
-	return h, nil
+	return left, where, nil
 }
 
 // removeGuest writes the house without guestId, then publishes it.
@@ -276,6 +297,6 @@ func ejectIfInside(userId int, h House, b Building) {
 		mudlog.Error(`housing.ejectIfInside`, `user`, userId, `error`, err.Error())
 		return
 	}
-	u.SendText(messaging.CategorySystem, `You find yourself back out in the alley, the green door shut behind you.`)
+	u.SendText(messaging.CategorySystem, util.SplitStringNL(b.OutsideText, 80))
 	u.Command(`look`)
 }

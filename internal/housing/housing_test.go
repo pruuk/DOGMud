@@ -37,6 +37,11 @@ func testBuilding() Building {
 		LandlordMobId: 9801,
 		Faction:       `np_commonfolk`,
 		MinRepTier:    `warm`,
+		Proprietor:    `the Widow`,
+		VouchedBy:     `the Common Quarter`,
+		StandingHint:  `Do some good round the Common Quarter and come back.`,
+		Location:      `Pennock's Alley`,
+		OutsideText:   `You find yourself back out in the alley.`,
 		Tiers:         []Tier{{TierId: `simple`, Name: `a simple room`, Price: 500, Rooms: 1}},
 		UnitRooms:     []int{testUnitA, testUnitB, testUnitC},
 
@@ -80,6 +85,12 @@ func setup(t *testing.T) string {
 		testKeyId:     {ItemId: testKeyId, Name: `Guest Key`, NameSimple: `guest key`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 		testBoxId:     {ItemId: testBoxId, Name: `Container Deed`, NameSimple: `container deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 		testSafeId:    {ItemId: testSafeId, Name: `Strongbox Deed`, NameSimple: `strongbox deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		// The second building's (two_buildings_test.go).
+		60: {ItemId: 60, Name: `Quillhouse Extension Deed`, NameSimple: `deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		61: {ItemId: 61, Name: `Quillhouse Redecorating Voucher`, NameSimple: `voucher`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		62: {ItemId: 62, Name: `Quillhouse Guest Key`, NameSimple: `guest key`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		63: {ItemId: 63, Name: `Quillhouse Container Deed`, NameSimple: `container deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		64: {ItemId: 64, Name: `Quillhouse Strongbox Deed`, NameSimple: `strongbox deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 	})
 	t.Cleanup(func() {
 		restoreItems()

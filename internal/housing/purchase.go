@@ -65,7 +65,7 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 	}
 
 	if repTierFor(b.Faction, user.UserId) < b.MinTier() {
-		say(`The Widow only lets to people the quarter vouches for, and nobody's vouched for you. Do some good round the Common Quarter and come back. I'll still be here. I'm always here.`)
+		say(fmt.Sprintf(`%s only lets to people %s will vouch for, and nobody's vouched for you. %s I'll still be here. I'm always here.`, capitalise(b.Proprietor), b.VouchedBy, b.StandingHint))
 		return PurchaseRepTooLow
 	}
 
@@ -84,12 +84,12 @@ func Purchase(user *users.UserRecord, say func(string), buildingId string, tierI
 	}
 	if heldOwners[ownerKey{b.BuildingId, user.UserId}] {
 		mu.Unlock()
-		say(`Your name's in the ledger already, but the page is in a state. The Widow's clerk is going over it. Nothing I can let you till it's straight.`)
+		say(fmt.Sprintf(`Your name's in the ledger already, but the page is in a state. %s's clerk is going over it. Nothing I can let you till it's straight.`, capitalise(b.Proprietor)))
 		return PurchaseAlreadyOwner
 	}
 	if _, isFrozen := frozen[b.BuildingId]; isFrozen {
 		mu.Unlock()
-		say(`The ledger's in a state. The Widow's clerk is going over it, and I'm to let nothing till he's done. Come back another day.`)
+		say(fmt.Sprintf(`The ledger's in a state. %s's clerk is going over it, and I'm to let nothing till it's done. Come back another day.`, capitalise(b.Proprietor)))
 		return PurchaseNoVacancy
 	}
 	// Every unused extension deed in the building is a promise of a vacant

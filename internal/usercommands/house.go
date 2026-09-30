@@ -40,24 +40,24 @@ func House(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			send(`Revoke whom? Type <ansi fg="command">house revoke [name]</ansi>. <ansi fg="command">house guests</ansi> lists them.`)
 			return true, nil
 		}
-		g, err := housing.Revoke(user.UserId, target)
+		g, where, err := housing.Revoke(user.UserId, target)
 		if err != nil {
 			send(capitaliseFirst(err.Error()) + `.`)
 			return true, nil
 		}
-		send(fmt.Sprintf(`The lock of your lodging no longer knows <ansi fg="username">%s</ansi>. If they were inside, they are outside now.`, g.Name))
+		send(fmt.Sprintf(`The lock of your lodging in %s no longer knows <ansi fg="username">%s</ansi>. If they were inside, they are outside now.`, strings.Join(where, ` and in `), g.Name))
 
 	case `leave`:
 		if target == `` {
 			send(`Whose lodging do you want to give up? Type <ansi fg="command">house leave [owner]</ansi>.`)
 			return true, nil
 		}
-		h, err := housing.Leave(user.UserId, target)
+		h, where, err := housing.Leave(user.UserId, target)
 		if err != nil {
 			send(capitaliseFirst(err.Error()) + `.`)
 			return true, nil
 		}
-		send(fmt.Sprintf(`The lock of <ansi fg="username">%s</ansi>'s lodging will not know your palm any more.`, h.OwnerName))
+		send(fmt.Sprintf(`The lock of <ansi fg="username">%s</ansi>'s lodging in %s will not know your palm any more.`, h.OwnerName, strings.Join(where, ` and in `)))
 
 	default:
 		send(`Usage: <ansi fg="command">house</ansi>, <ansi fg="command">house revoke [name]</ansi> or <ansi fg="command">house leave [owner]</ansi>. Type <ansi fg="command">help house</ansi> for more.`)
@@ -70,7 +70,10 @@ func houseInfo(user *users.UserRecord, send func(string)) {
 	visiting := housing.GuestOf(user.UserId)
 
 	if len(owned) == 0 && len(visiting) == 0 {
-		send(`You have no lodging, and nobody has given you a key to theirs. Hobb Pennock lets rooms in Pennock's Alley, west of the Back Court in New Plymouth. Type <ansi fg="command">list</ansi> beside him.`)
+		send(`You have no lodging, and nobody has given you a key to theirs.`)
+		for _, b := range housing.AllBuildings() {
+			send(fmt.Sprintf(`%s lets rooms in %s: %s. Type <ansi fg="command">list</ansi> beside them.`, housing.LandlordName(b), b.Name, b.Location))
+		}
 		return
 	}
 	for _, h := range owned {
@@ -79,7 +82,7 @@ func houseInfo(user *users.UserRecord, send func(string)) {
 		if n := len(h.RoomIds); n != 1 {
 			rooms = fmt.Sprintf(`%d rooms`, n)
 		}
-		send(fmt.Sprintf(`Your lodging in %s has %s.`, b.Name, rooms))
+		send(fmt.Sprintf(`Your lodging in %s (%s) has %s.`, b.Name, b.Location, rooms))
 		if len(h.Guests) == 0 {
 			send(fmt.Sprintf(`Nobody else can come in. Buy a guest key from the landlord to let a friend in. Up to %d guests.`, b.MaxGuests))
 			continue
@@ -90,12 +93,19 @@ func houseInfo(user *users.UserRecord, send func(string)) {
 		}
 		send(fmt.Sprintf(`Guests who can come in (%d of %d): %s. Type <ansi fg="command">house revoke [name]</ansi> to take a key back.`, len(h.Guests), b.MaxGuests, strings.Join(names, `, `)))
 	}
-	if len(visiting) > 0 {
-		names := make([]string, 0, len(visiting))
+	// Guest access, one line per building, since each door only knows its
+	// own lodgings.
+	for _, b := range housing.AllBuildings() {
+		names := []string{}
 		for _, h := range visiting {
-			names = append(names, `<ansi fg="username">`+h.OwnerName+`</ansi>`)
+			if h.BuildingId == b.BuildingId {
+				names = append(names, `<ansi fg="username">`+h.OwnerName+`</ansi>`)
+			}
 		}
-		send(fmt.Sprintf(`You may visit the lodgings of: %s. Use the door in Pennock's Alley, or type <ansi fg="command">visit [name]</ansi> there. <ansi fg="command">house leave [name]</ansi> gives one up.`, strings.Join(names, `, `)))
+		if len(names) == 0 {
+			continue
+		}
+		send(fmt.Sprintf(`In %s you may visit the lodgings of: %s. Use the door in %s, or type <ansi fg="command">visit [name]</ansi> there. <ansi fg="command">house leave [name]</ansi> gives one up.`, b.Name, strings.Join(names, `, `), b.Location))
 	}
 }
 

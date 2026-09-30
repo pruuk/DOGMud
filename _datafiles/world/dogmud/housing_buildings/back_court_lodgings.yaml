@@ -18,6 +18,13 @@ landlord_mob_id: 9801
 # quest such as The Street Sweeper's Secret (+15) is enough.
 faction: np_commonfolk
 min_rep_tier: warm
+
+# How the landlord and the house commands speak of this building.
+proprietor: the Widow
+vouched_by: the Common Quarter
+standing_hint: Do some good round the Common Quarter and come back.
+location: Pennock's Alley, west of the Back Court in New Plymouth
+outside_text: You find yourself back out in the alley, the green door shut behind you.
 tiers:
   - tier_id: simple
     name: a simple room

@@ -1,0 +1,18 @@
+itemid: 63
+name: Quillhouse Container Deed
+namesimple: container deed
+not_salable: true
+description: >
+  A card headed THE QUILLHOUSE, ONE ARTICLE OF FURNITURE (STORAGE), with a
+  ruled line where the article should be named. It places one container in
+  your Quillhouse lodging, and anyone you let in can use it. To use it, stand
+  in the room of your lodging where it should go and type use container deed.
+  You will be asked for one word to call it, like chest, shelf, press or
+  satchel. You can also write the word straight after, as in use container
+  deed press. Then look in press, put things in press and get them from press.
+  What you keep in it stays there. A room takes up to six.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

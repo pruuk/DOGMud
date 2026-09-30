@@ -11,10 +11,23 @@ Writes new files only. It refuses to overwrite a room that already exists, so
 it is safe to run again with a wider range to add capacity. After generating,
 add the new ids to the building's unit_rooms in housing_buildings/.
 
+The zone folder must be the zone name in lower case with underscores
+("Confluence Lodgings" -> confluence_lodgings), or the room loader will not
+find the rooms. Each building's units read like that building: --template names a file
+holding the whole unit room YAML with the placeholders {roomid}, {zone},
+{door_exit}, {door_room}, {x} and {plane}. Without it the New Plymouth unit
+(the Back Court lodgings) is written. Templates live in
+tools/housing_unit_templates/.
+
 Usage:
   python tools/housing_units.py --zone-folder new_plymouth_lodgings \\
       --zone "New Plymouth Lodgings" --first 6470 --count 24 \\
       --door-room 5625 --door-exit door --plane 14
+
+  python tools/housing_units.py --zone-folder confluence_lodgings \\
+      --zone "Confluence Lodgings" --region "The Tri-Rivers" --first 6571 \\
+      --count 100 --door-room 6570 --door-exit door --plane 15 \\
+      --template tools/housing_unit_templates/quillhouse.yaml.tmpl
 """
 import argparse
 import re
@@ -67,7 +80,13 @@ def main():
     p.add_argument("--door-room", type=int, required=True)
     p.add_argument("--door-exit", default="door")
     p.add_argument("--plane", type=int, required=True)
+    p.add_argument("--template", help="unit room YAML template (default: the New Plymouth unit)")
     a = p.parse_args()
+
+    unit = UNIT
+    if a.template:
+        with open(a.template) as f:
+            unit = f.read()
 
     folder = os.path.join(ROOT, a.zone_folder)
     os.makedirs(folder, exist_ok=True)
@@ -97,7 +116,7 @@ def main():
             print("exists, skipped", path, file=sys.stderr)
             continue
         with open(path, "x") as f:
-            f.write(UNIT.format(roomid=roomid, zone=a.zone, door_exit=a.door_exit,
+            f.write(unit.format(roomid=roomid, zone=a.zone, door_exit=a.door_exit,
                                 door_room=a.door_room, x=next_x, plane=a.plane))
         next_x += 1
         made += 1

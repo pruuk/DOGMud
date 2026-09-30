@@ -317,6 +317,46 @@ func HouseForRoom(roomId int) (House, bool) {
 }
 
 // AllHouses returns a copy of every house, ordered by entry room.
+// AllBuildings returns every building, sorted by id.
+func AllBuildings() []Building {
+	mu.RLock()
+	defer mu.RUnlock()
+	out := make([]Building, 0, len(buildings))
+	for _, b := range buildings {
+		out = append(out, *b)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].BuildingId < out[j].BuildingId })
+	return out
+}
+
+// ItemIssuedHere reports whether itemId is one of the items sold by the
+// building roomId belongs to (as a unit, or as its door room), so a player
+// holding deeds from two cities uses the one this place honours.
+func ItemIssuedHere(itemId int, roomId int) bool {
+	mu.RLock()
+	defer mu.RUnlock()
+	ids := []string{}
+	if id, ok := unitBuilding[roomId]; ok {
+		ids = append(ids, id)
+	}
+	ids = append(ids, doorBuilding[roomId]...)
+	for _, id := range ids {
+		if b := buildings[id]; b != nil {
+			for _, sold := range b.housingItemIds() {
+				if sold == itemId {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// LandlordName is the name of the NPC who lets a building's rooms.
+func LandlordName(b Building) string {
+	return landlordName(b)
+}
+
 func AllHouses() []House {
 	mu.RLock()
 	defer mu.RUnlock()

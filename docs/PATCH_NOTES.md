@@ -57,6 +57,25 @@
 - Picking something up by name that turns out to be stashed now refuses an
   item about to explode, the same as asking for it from your stash by name.
 
+## 2026-09-30: A room in the Confluence
+
+The Confluence has a lodging house now. West off Hall Lane, behind the
+Municipal Hall, a small flagged court ends at the blue door of the
+Quillhouse, a tall narrow house of scholars, copyists and clerks. Its
+under-clerk, Aubric Sallow, sits beneath the door lamp with his ledger and
+sells everything Hobb Pennock sells in New Plymouth: homes, extension deeds,
+redecorating vouchers, guest keys, and container and strongbox deeds. Type
+list beside him.
+
+Madam Venn, who owns the house, lets only to people the Margin will speak
+for. If the scholars don't know you yet, Quist the Elder at the Margin Hall
+usually has an old chart that needs a second pair of eyes.
+
+You can keep a home in both cities. They are entirely separate: each has its
+own rooms, guests, deeds and storage, and a deed or key from one lodging
+house is no good in the other. Type house to see all your lodgings; house
+revoke and house leave cover every lodging a guest or owner shares with you.
+
 ## 2026-09-30: Somewhere to keep things
 
 Hobb Pennock now sells furniture, of a sort. Lodgers can buy:

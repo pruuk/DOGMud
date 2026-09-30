@@ -61,6 +61,20 @@ type Building struct {
 	Faction    string `yaml:"faction"`
 	MinRepTier string `yaml:"min_rep_tier"`
 
+	// Words the shared code uses for this building, so each city's landlord
+	// speaks of his own place (every one is required):
+	//   Proprietor   who owns the house and makes its rules ("the Widow")
+	//   VouchedBy    who must vouch for a buyer ("the Common Quarter")
+	//   StandingHint how to earn that standing, a sentence or two
+	//   Location     where the door is, for players far from it
+	//                ("Pennock's Alley, west of the Back Court in New Plymouth")
+	//   OutsideText  what a guest put out of a lodging sees
+	Proprietor   string `yaml:"proprietor"`
+	VouchedBy    string `yaml:"vouched_by"`
+	StandingHint string `yaml:"standing_hint"`
+	Location     string `yaml:"location"`
+	OutsideText  string `yaml:"outside_text"`
+
 	Tiers []Tier `yaml:"tiers"`
 
 	// UnitRooms is the pool of blank authored rooms this building lets out,
@@ -191,6 +205,12 @@ func (b Building) Validate() error {
 	}
 	if b.RedecoratePrice <= 0 {
 		return fmt.Errorf(`housing building %s: redecorate_price must be positive`, b.BuildingId)
+	}
+	for field, v := range map[string]string{`proprietor`: b.Proprietor, `vouched_by`: b.VouchedBy,
+		`standing_hint`: b.StandingHint, `location`: b.Location, `outside_text`: b.OutsideText} {
+		if strings.TrimSpace(v) == `` {
+			return fmt.Errorf(`housing building %s: %s is required`, b.BuildingId, field)
+		}
 	}
 	if strings.TrimSpace(b.ExtensionTitle) == `` || strings.TrimSpace(b.ExtensionDescription) == `` {
 		return fmt.Errorf(`housing building %s: extension_title and extension_description are required`, b.BuildingId)

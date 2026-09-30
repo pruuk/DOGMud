@@ -9,27 +9,40 @@ and strongbox deeds), the use of those items, what lies on a lodging's floors
 and in its containers, and the routing that sends each lodger through a
 building's one shared door to their own rooms.
 
-One building ships, the Back Court lodgings in New Plymouth Common. Hobb
-Pennock (mob 9801), a bored letting clerk for Crewe Lettings, sits in
-Pennock's Alley (room 5625, west of the Back Court 5615) and sells from a
-list:
+Two buildings ship, one per city, and they run independently: a player may
+own one home in each (one per ACCOUNT per building), each gated on its own
+city's standing, with its own rooms, deeds, guests, floors and containers.
+
+- **The Back Court lodgings** (`back_court_lodgings`), New Plymouth Common.
+  Hobb Pennock (mob 9801), a bored letting clerk for Crewe Lettings, sits in
+  Pennock's Alley (room 5625, west of the Back Court 5615). Standing:
+  `np_commonfolk` Warm. Items 55-59; units 6470-6569 (zone New Plymouth
+  Lodgings, plane 14).
+- **The Quillhouse** (`quillhouse`), the Confluence. Aubric Sallow (mob 9802),
+  under-clerk to Madam Orla Venn, sits in Quill Court (room 6570, west off
+  Hall Lane 6144 behind the Municipal Hall). Standing: `margin` Warm (The
+  Margin Notation, +15, is enough). Items 60-64; units 6571-6670 (zone
+  Confluence Lodgings, plane 15).
+
+Each landlord sells from a list (prices as authored; both buildings ship the
+same numbers):
 
 - **Home**, 500 gold, to players the Common Quarter vouches for
   (`np_commonfolk` standing Warm or better). One per account.
-- **Room Extension Deed** (item 55), priced at 3 times everything the lodger
+- **Room Extension Deed** (item 55; Quillhouse 60), priced at 3 times everything the lodger
   has paid for rooms so far: 1500 after the home, then 6000, then 24000.
   Bound to the buying account. Used inside the lodging toward a direction, it
   knocks a new room through (`use deed north`, or `use deed` for a menu).
   One unused deed at a time; a lost one is replaced free.
-- **Redecorating Voucher** (item 56), 500 gold. Used in a lodging room, it
+- **Redecorating Voucher** (item 56; 61), 500 gold. Used in a lodging room, it
   replaces that room's description with text the lodger writes.
-- **Guest Key** (item 57), 100 gold, made out to the buyer's house. Given to
+- **Guest Key** (item 57; 62), 100 gold, made out to the buyer's house. Given to
   a friend and used at the door once, it adds them to the house's guest list
   (up to 5). The owner revokes with `house revoke <name>`.
-- **Container Deed** (item 58), 250 gold. Used in a lodging room with one
+- **Container Deed** (item 58; 63), 250 gold. Used in a lodging room with one
   word (`use container deed mug`, or a prompt asks), it places a container
   of that name there. Anyone let in can look in, put into and get from it.
-- **Strongbox Deed** (item 59), 500 gold. The same, but only the owner (and
+- **Strongbox Deed** (item 59; 64), 500 gold. The same, but only the owner (and
   the owner's companions) can open what it places. Each ROOM holds at most 6
   containers of both kinds (`max_containers_per_room`); the house as a whole
   has no limit.
@@ -37,8 +50,10 @@ list:
 Anything left on a lodging's floor, and in its containers, is kept in the
 house file and survives restarts, crashes and a wipe of `rooms.instances/`.
 
-Homes and extensions come from one pool of 100 blank unit rooms
-(6470-6569, zone New Plymouth Lodgings). A house holds at most 8 rooms.
+Each building's homes and extensions come from its own pool of 100 blank
+unit rooms. A house holds at most 8 rooms. Every item belongs to one
+building: a deed, voucher or container deed works only in a lodging of the
+building that sold it, and a guest key only at its door.
 
 ## Two kinds of data
 
@@ -50,7 +65,11 @@ which carry overlays after a reload): the door room exists, its door exit
 exists and is LOCKED, the landlord mob, faction and all five items exist, every
 unit room exists, leads back to the door room through an exit of the same
 name, belongs to one building only, spawns no mobs, and has no authored
-north/south/east/west/up/down exit (extensions place those).
+north/south/east/west/up/down exit (extensions place those). A building also
+carries the words the shared code speaks with, all required: `proprietor`
+("the Widow"), `vouched_by` ("the Common Quarter"), `standing_hint`,
+`location` (where its door is) and `outside_text` (what a guest put out of a
+lodging sees). A tier must be exactly one room.
 
 **Houses are living state.** One YAML per house in
 `<DataFiles>/housing/<building_id>/<entry_room_id>.yaml`. Gitignored, in
@@ -138,8 +157,11 @@ func HostsOf(userId int, buildingId string) []House   // houses where userId is 
 func HousesOwnedBy(userId int) []House
 func GuestOf(userId int) []House
 func BuildingForDoor(roomId int) (Building, bool)
-func Revoke(ownerId int, name string) (Guest, error)
-func Leave(userId int, ownerName string) (House, error)
+func Revoke(ownerId int, name string) (Guest, []string, error)     // from every home of the owner's; returns building names
+func Leave(userId int, ownerName string) (House, []string, error)  // from every home of that owner's
+func AllBuildings() []Building
+func LandlordName(b Building) string
+func ItemIssuedHere(itemId int, roomId int) bool   // item sold by the building roomId (unit or door) belongs to
 func AllHouses() []House
 func VacantUnits(buildingId string) []int
 func HeldRooms() map[int]string
@@ -384,7 +406,8 @@ inside the user's own house.
   walks every room, arrives at the entry room, and leaves by the door. Guests
   cannot use deeds or vouchers there (owner-only), and cannot invite anyone.
 - **Revoking** (`Revoke`, `house revoke <name>`, whole name or unique prefix)
-  and **leaving** (`Leave`, `house leave <owner>`) write the house first, then
+  and **leaving** (`Leave`, `house leave <owner>`) cover every lodging of
+  that owner's in every city, and write each house first, then
   put the player outside the building's door if they are online inside
   (`ejectIfInside`). A player offline inside is redirected at login by
   `GuardEntry`.
@@ -395,10 +418,16 @@ inside the user's own house.
 
 Run `tools/housing_units.py` to generate blank unit rooms (it refuses to
 overwrite and continues x after the highest existing unit, so authored cells
-never repeat), then list the new ids in the building's `unit_rooms`. A new
-building also needs a door exit in a street room (locked, no map direction),
-a landlord mob with a tree calling the two actions, its five items, and a
-`housing_buildings/<id>.yaml`. Record new rooms in the lighting goldens
+never repeat), then list the new ids in the building's `unit_rooms`. The
+zone folder must be the zone name in lower case with underscores, or the
+rooms will not load. A building's units read like it through `--template`
+(`tools/housing_unit_templates/`). A new building also needs: a door room
+with a locked door exit (no map direction), a `lamp` so the list can be read
+at night, and an exit into it from a street; a new plane for its units; a
+landlord mob with a tree calling the two actions for its building id; its
+own five items (so none is honoured in another building); and a
+`housing_buildings/<id>.yaml` with the wording fields. The Quillhouse is the
+worked example of adding a second city. Record new rooms in the lighting goldens
 (`-update-lighting-parity`, `-update-lighting-daycycle`) and confirm the diff
 only adds them.
 

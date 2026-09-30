@@ -411,7 +411,11 @@ What matters is the shape, not the list:
   each landlord's per-lodger offers in the shop table style before any real
   merchant; `buy` tries `housing.MatchOffer` before `actions.Buy`; `use`
   hands `use deed north` / `use voucher ...` to `housing.UseItem` when a
-  leading run of words names a housing item. `Go` turns a routed exit's
+  leading run of words names a housing item, preferring one the player may
+  use that was issued by the building they stand in
+  (`housing.ItemIssuedHere`), since a lodger with homes in two cities
+  carries two sets. `house` lists each lodging and guest access by city
+  (`housing.AllBuildings`). `Go` turns a routed exit's
   several `Choices` into a `Whose lodging?` menu (`pickRoutedDestination`),
   which `visit <name>` skips by pre-picking a destination in temp data.
   `house` and `visit` (`house.go`) manage guest access. `TryCommand` defers

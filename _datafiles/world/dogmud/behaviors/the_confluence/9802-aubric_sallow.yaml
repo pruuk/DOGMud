@@ -1,0 +1,58 @@
+# Aubric Sallow, mob 9802, under-clerk of the Quillhouse (Quill Court,
+# 6570, west off Hall Lane in the Confluence). What he sells is on his list
+# (the list and buy commands, internal/usercommands/housing_shop.go). This
+# tree lets players ask for the same things in words. Buying and the terms
+# are Go actions in internal/housing, so every price, vacancy and standing
+# check reads the authored building file (housing_buildings/quillhouse.yaml).
+tree:
+  type: selector
+  children:
+
+    # PURCHASE. Sits first (grant-node-first SOP). Explicit buying words
+    # only, and only a plain request buys (buy_housing answers questions
+    # with the terms). The ask text picks the offer: home, deed, voucher,
+    # key, container or strongbox ("buy a room" means an extension to
+    # someone who already lodges here).
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [buy, purchase]
+        - type: action
+          do: buy_housing
+          building: quillhouse
+          tier: simple
+
+    # TERMS. Price, vacancy and what this player still needs.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [room, rooms, lodging, lodgings, let, rent, lease, price, prices, cost, much, house, home, vacancy, vacancies, key, lock, door, extension, extensions, deed, deeds, voucher, vouchers, redecorate, redecorating, decorate, list, sell, selling, guest, guests, friend, friends, visit, visitor, visitors, invite, container, containers, chest, chests, storage, strongbox, strongboxes, safe, furniture]
+        - type: action
+          do: housing_terms
+          building: quillhouse
+          tier: simple
+
+    # Greetings and who-are-you.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [hello, hi, hey, greetings, who, name, aubric, sallow, job, work, venn, madam, owner, quillhouse]
+        - type: action
+          do: say
+          text: Aubric Sallow, under-clerk of the Quillhouse. Madam Venn owns it; I keep its accounts, in a hand that deserves better. Type list if you want to see what she lets.
+
+    # Silent player_enter no-op: claims the event so composition never falls
+    # through to noncombat_passive's "pays you little mind." emote.
+    - type: sequence
+      event: player_enter
+      children:
+        - type: action
+          do: set_state
+          key: sallow_player_enter_suppressed
+          value: "true"

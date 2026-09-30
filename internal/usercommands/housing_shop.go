@@ -113,9 +113,16 @@ func tryHousingItemUse(rest string, user *users.UserRecord, room *rooms.Room) bo
 	mine := func(i items.Item) bool {
 		return housing.IsHousingItem(i.ItemId) && (i.BoundUserId == 0 || i.BoundUserId == user.UserId)
 	}
+	// Best first: this player's item issued by the building they stand in
+	// (a lodger with homes in two cities carries two sets), then any of
+	// theirs, then anything that matches.
+	here := func(i items.Item) bool { return mine(i) && housing.ItemIssuedHere(i.ItemId, room.RoomId) }
 	for i := len(words); i >= 1; i-- {
 		name := strings.Join(words[:i], ` `)
-		itm, found := user.Character.FindInBackpackWhere(name, mine)
+		itm, found := user.Character.FindInBackpackWhere(name, here)
+		if !found {
+			itm, found = user.Character.FindInBackpackWhere(name, mine)
+		}
 		if !found {
 			itm, found = user.Character.FindInBackpack(name)
 		}

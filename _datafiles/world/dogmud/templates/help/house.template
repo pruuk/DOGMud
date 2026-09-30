@@ -1,23 +1,32 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">house</ansi> command
 
-The <ansi fg="command">house</ansi> command shows your lodging and who can
-come into it, and lets you take access away.
+The <ansi fg="command">house</ansi> command shows your lodgings and who can
+come into them, and lets you take access away.
+
+Lodging houses let rooms in two cities, each to people the city's own
+folk will vouch for:
+
+  New Plymouth    Hobb Pennock, Pennock's Alley, west of the Back Court
+  The Confluence  Aubric Sallow, Quill Court, west off Hall Lane
+
+You may keep one home in each. Each is separate: its own rooms, deeds,
+guests and storage, and its landlord's deeds work only in his house.
 
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">house</ansi>                  Your lodging, its guests, and the
                          lodgings you may visit
-  <ansi fg="command">house revoke [name]</ansi>    Take a guest's access away. If they
-                         are inside, they are put out in the
-                         alley.
+  <ansi fg="command">house revoke [name]</ansi>    Take a guest's access away, from
+                         every lodging of yours they may enter.
+                         If they are inside, they are put out.
   <ansi fg="command">house leave [owner]</ansi>    Give up your own access to someone
                          else's lodging
 
 <ansi fg="yellow">Letting a friend in:</ansi>
 
-  Buy a <ansi fg="item">Guest Key</ansi> from Hobb Pennock in Pennock's Alley
+  Buy a <ansi fg="item">Guest Key</ansi> from your landlord
   (<ansi fg="command">buy key</ansi>) and give it to your friend. They type
-  <ansi fg="command">use guest key</ansi> at the green door, once, and can come
+  <ansi fg="command">use guest key</ansi> at that lodging house's door, once, and can come
   and go from then on, whether or not you are there. Guests can walk
   every room of your lodging and take anything left lying about, so
   only let in people you trust.

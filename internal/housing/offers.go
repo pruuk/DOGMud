@@ -53,7 +53,7 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 	case homeFrozen:
 		home.Price, home.Note = 0, `Not letting rooms just now`
 	case repTierFor(b.Faction, user.UserId) < b.MinTier():
-		home.Note = `The quarter must vouch for you first`
+		home.Note = capitalise(b.VouchedBy) + ` must vouch for you first`
 	case vacant-buildingOutstanding(b) < tier.Rooms:
 		home.Price, home.Note = 0, `Every room is let`
 	default:
@@ -259,7 +259,7 @@ func buyExtension(user *users.UserRecord, say func(string), buildingId string) {
 		return
 	}
 	if _, isFrozen := Frozen(b.BuildingId); isFrozen {
-		say(`The ledger's in a state. The Widow's clerk is going over it, and I'm to sell no rooms till he's done.`)
+		say(fmt.Sprintf(`The ledger's in a state. %s's clerk is going over it, and I'm to sell no rooms till it's done.`, capitalise(b.Proprietor)))
 		return
 	}
 	if house.Outstanding(b) > 0 {

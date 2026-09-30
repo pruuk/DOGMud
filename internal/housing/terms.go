@@ -28,7 +28,7 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 	if _, owns := HouseOf(user.UserId, b.BuildingId); owns {
 		say(`You've got a room already. Door's behind me, hand on the plate, same as always.`)
 		if ext.Available {
-			say(fmt.Sprintf(`If you want it bigger, an extension deed is %d gold for you. Goes up every time, that's the Widow's rule. A redecorating voucher is %d. Type list.`, ext.Price, deco.Price))
+			say(fmt.Sprintf(`If you want it bigger, an extension deed is %d gold for you. Goes up every time, that's %s's rule. A redecorating voucher is %d. Type list.`, ext.Price, b.Proprietor, deco.Price))
 		} else {
 			say(fmt.Sprintf(`No extensions for you just now. %s. A redecorating voucher is %d, if you're bored of the walls. Type list.`, ext.Note, deco.Price))
 		}
@@ -48,14 +48,14 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 	}
 	say(fmt.Sprintf(`%s, %d gold, paid once. Four walls, a window, and a door that opens for you and nobody else. Extensions and redecorating come after, for lodgers. It's all on the list.`, capitalise(tier.Name), tier.Price))
 	if !home.Available {
-		say(`But the Widow only lets to people the quarter can vouch for, and nobody's vouched for you. Do some good round the Common Quarter and come back.`)
+		say(fmt.Sprintf(`But %s only lets to people %s can vouch for, and nobody's vouched for you. %s`, b.Proprietor, b.VouchedBy, b.StandingHint))
 		return true
 	}
 	if user.Character.Gold+user.Character.Bank < tier.Price {
 		say(`You'd want the gold first. The bank counts. Type buy home when you've got it.`)
 		return true
 	}
-	say(`Quarter speaks well enough of you. Type buy home and I'll get the stamp out.`)
+	say(fmt.Sprintf(`%s speaks well enough of you. Type buy home and I'll get the stamp out.`, capitalise(b.VouchedBy)))
 	return true
 }
 

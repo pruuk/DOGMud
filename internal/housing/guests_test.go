@@ -253,7 +253,7 @@ func TestRevoke_TakesAccessAwayAndPutsTheGuestOutside(t *testing.T) {
 	h, _ := HouseOf(1, testBldgId)
 	bob.Character.RoomId = h.EntryRoom() // Bob is inside
 
-	g, err := Revoke(1, `bo`) // a unique prefix works
+	g, _, err := Revoke(1, `bo`) // a unique prefix works
 	if err != nil || g.UserId != 2 {
 		t.Fatalf("Revoke = %+v, %v", g, err)
 	}
@@ -291,13 +291,13 @@ func TestRevoke_UnknownOrAmbiguousName(t *testing.T) {
 	buy(t, alice)
 	letIn(t, alice, w.player(2, `Bram`, 0))
 	letIn(t, alice, w.player(3, `Brin`, 0))
-	if _, err := Revoke(1, `zed`); err == nil {
+	if _, _, err := Revoke(1, `zed`); err == nil {
 		t.Error("revoked a name that is not a guest")
 	}
-	if _, err := Revoke(1, `br`); err == nil {
+	if _, _, err := Revoke(1, `br`); err == nil {
 		t.Error("revoked on an ambiguous prefix")
 	}
-	if _, err := Revoke(2, `Brin`); err == nil {
+	if _, _, err := Revoke(2, `Brin`); err == nil {
 		t.Error("a guest revoked someone from a house they do not own")
 	}
 	if h, _ := HouseOf(1, testBldgId); len(h.Guests) != 2 {
@@ -314,7 +314,7 @@ func TestLeave_GuestGivesUpAccess(t *testing.T) {
 	h, _ := HouseOf(1, testBldgId)
 	bob.Character.RoomId = h.EntryRoom()
 
-	if _, err := Leave(2, `ali`); err != nil {
+	if _, _, err := Leave(2, `ali`); err != nil {
 		t.Fatalf("Leave: %v", err)
 	}
 	if after, _ := HouseOf(1, testBldgId); after.IsGuest(2) {
@@ -323,7 +323,7 @@ func TestLeave_GuestGivesUpAccess(t *testing.T) {
 	if w.moves[2] != testDoor {
 		t.Error("Bob was not put outside")
 	}
-	if _, err := Leave(2, `ali`); err == nil {
+	if _, _, err := Leave(2, `ali`); err == nil {
 		t.Error("left a house twice")
 	}
 }
@@ -390,10 +390,10 @@ func TestLoad_BadGuestsAreHeld(t *testing.T) {
 
 func TestHouseCommandsNeverPanicWithNoHouse(t *testing.T) {
 	setup(t)
-	if _, err := Revoke(9, `anyone`); err == nil || !strings.Contains(err.Error(), `no guest`) {
+	if _, _, err := Revoke(9, `anyone`); err == nil || !strings.Contains(err.Error(), `no guest`) {
 		t.Errorf("Revoke with no house: %v", err)
 	}
-	if _, err := Leave(9, `anyone`); err == nil {
+	if _, _, err := Leave(9, `anyone`); err == nil {
 		t.Error("Leave with no access should error")
 	}
 }
