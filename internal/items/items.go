@@ -66,6 +66,7 @@ type Item struct {
 	BaubleSpot       string         `yaml:"baublespot,omitempty"`      // Where a found bauble lies in its room ("on the bookshelf"); cleared once anyone carries it
 	BaubleHousehold  int            `yaml:"baublehousehold,omitempty"` // Room id of the household a found bauble belongs to; taking it there is theft. Cleared once carried
 	BaubleLeftAt     int64          `yaml:"baubleleftat,omitempty"`    // Unix seconds a found bauble was left lying untaken; it vanishes BaubleUntakenHours later. Cleared once carried
+	BoundUserId      int            `yaml:"bounduserid,omitempty"`     // Account (UserRecord) this item only works for; 0 = anyone. Set by the seller (housing extension deeds, priced per house)
 	tempDataStore    map[string]any // Temporary data store for this item. Not saved to disk.
 }
 

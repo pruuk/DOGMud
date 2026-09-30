@@ -17,6 +17,7 @@ Usage:
       --door-room 5625 --door-exit door --plane 14
 """
 import argparse
+import re
 import os
 import sys
 
@@ -77,6 +78,17 @@ def main():
             f.write(ZONE_CONFIG.format(zone=a.zone, first=a.first, region=a.region))
         print("wrote", zc)
 
+    # Continue after the highest x already in the folder, so a second run
+    # never gives two units the same authored cell.
+    next_x = 0
+    for name in os.listdir(folder):
+        if not name[:-5].isdigit() or not name.endswith(".yaml"):
+            continue
+        with open(os.path.join(folder, name)) as f:
+            m = re.search(r"^x:\s*(-?\d+)", f.read(), re.M)
+        if m:
+            next_x = max(next_x, int(m.group(1)) + 1)
+
     made = 0
     for i in range(a.count):
         roomid = a.first + i
@@ -86,7 +98,8 @@ def main():
             continue
         with open(path, "x") as f:
             f.write(UNIT.format(roomid=roomid, zone=a.zone, door_exit=a.door_exit,
-                                door_room=a.door_room, x=i, plane=a.plane))
+                                door_room=a.door_room, x=next_x, plane=a.plane))
+        next_x += 1
         made += 1
     print(f"wrote {made} unit rooms {a.first}-{a.first + a.count - 1}")
 

@@ -16,6 +16,7 @@ func RegisterRoomHooks() {
 	rooms.SetExitRouter(RouteDoor)
 	rooms.SetEntryGuard(GuardEntry)
 	rooms.SetPrivateRoomCheck(IsUnitRoom)
+	rooms.SetRoomOverlay(ApplyOverlay)
 }
 
 // isStaff lets admins walk into any unit (teleport, to look into a report)
@@ -62,7 +63,7 @@ func RouteDoor(userId int, fromRoomId int, exitName string) (rooms.ExitRoute, bo
 	}
 
 	return rooms.ExitRoute{
-		Refusal: util.SplitStringNL(fmt.Sprintf(`The <ansi fg="exit">%s</ansi> is locked, and it will not open for you. It opens only for those who lodge here. <ansi fg="mobname">%s</ansi> lets the rooms. Try <ansi fg="command">ask %s about a room</ansi>.`,
+		Refusal: util.SplitStringNL(fmt.Sprintf(`The <ansi fg="exit">%s</ansi> is locked, and it will not open for you. It opens only for those who lodge here. <ansi fg="mobname">%s</ansi> lets the rooms. Type <ansi fg="command">list</ansi> to see what he sells, or <ansi fg="command">ask %s about a room</ansi>.`,
 			bCopy.DoorExit, landlordName(bCopy), firstWord(landlordName(bCopy))), 80),
 	}, true
 }

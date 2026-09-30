@@ -837,8 +837,8 @@ zones:
 
 | Action | Params | Description |
 |--------|--------|-------------|
-| `buy_housing` | `building` (string, a housing `building_id`), `tier` (string, a `tier_id`) | The landlord's sale: delegates to `housing.Purchase`, which checks one house per account, faction standing, carried gold plus bank, and vacancy, writes the house, then charges. The mob speaks every refusal. Failure only when misconfigured or the actors are gone. |
-| `housing_terms` | same as `buy_housing` | The landlord states the price and, for this player, whether standing, gold or an existing room changes the answer (`housing.DescribeTerms`). Charges nothing. |
+| `buy_housing` | `building` (string, a housing `building_id`), `tier` (string, the `tier_id` sold as a home) | The landlord's sale: picks home, extension deed or voucher from the ask text (`housing.MatchOffer`; "buy a room" means an extension to an owner) and delegates to `housing.Buy`, the same path as the `buy` command. The mob speaks every refusal. Failure only when misconfigured or the actors are gone. |
+| `housing_terms` | same as `buy_housing` | The landlord explains his list in words for this player: the home price and what stands in the way, or for an owner the next extension price and the voucher (`housing.DescribeTerms`, built from `housing.Offers`). Charges nothing. |
 
 Put `buy_housing` first and gate it on explicit buying words (`buy`,
 `purchase`), so asking about a room never charges anyone. Keep how-to hints

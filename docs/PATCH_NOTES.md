@@ -57,6 +57,25 @@
 - Picking something up by name that turns out to be stashed now refuses an
   item about to explode, the same as asking for it from your stash by name.
 
+## 2026-09-30: Bigger rooms, your own words
+
+Hobb Pennock, the letting clerk in Pennock's Alley, now keeps a proper
+list. Type list beside him to see what the lodging house sells:
+
+- **A home**, as before, for 500 gold, once the Common Quarter vouches
+  for you.
+- **A Room Extension Deed**, for lodgers. Stand in your lodging and type
+  use deed, pick a direction, and workmen knock a new room through. You
+  can also type use deed north (or south, east, west, up, down). Each
+  deed costs three times everything you have paid for rooms so far, so
+  the first is 1500 gold, the next 6000, and so on. A deed is made out
+  to you and works for nobody else.
+- **A Redecorating Voucher**, 500 gold. Use it in one of your rooms and
+  write how the room should look. Your description replaces the old one.
+
+Look at a deed or a voucher to read how it works. A lantern now hangs
+over the lodging house door, so you can read the list after dark.
+
 ## 2026-09-29: A room of your own
 
 There is now somewhere in New Plymouth to call home. West of the Back

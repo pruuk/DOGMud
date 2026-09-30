@@ -10,31 +10,41 @@ groups:
   - humanoid
   - np_commonfolk
 idlecommands:
-  - 'emote licks a thumb, turns a page of his ledger, and runs a finger
-    down a column of names as if checking that none of them has left.'
+  - 'emote yawns hugely, then looks faintly betrayed that nobody noticed.'
   - ''
-  - 'emote takes a stub of chalk from behind his ear and touches up a
-    number on the slate board that did not need touching up.'
+  - 'emote taps the painted price board beside the door without looking at
+    it. ROOMS TO LET. EXTENSIONS. REDECORATING. The paint is older than he is.'
   - ''
-  - 'emote lays his palm briefly on the brass plate of the green door,
-    the way another man might pat a dog, and goes back to his stool.'
+  - 'say Rooms to let. Extensions for the ones who have a room. Vouchers for
+    the ones who hate their walls. It is all on the list, if anyone can be
+    bothered to ask for it.'
   - ''
-  - 'emote sweeps a scatter of grit off the flagstones with the side of
-    his boot, frowns at the Back Court, and sweeps again.'
+  - 'emote turns a page of the ledger, reads a line, sighs, and turns the page
+    back.'
+  - ''
+  - 'emote stamps a blank sheet of paper, very carefully, then looks at it as
+    though it has disappointed him.'
+  - ''
+  - 'say The Widow Crewe owns this building. I only sit next to it. Type list
+    and I will tell you what she charges.'
+  - ''
+  - 'emote props his chin on his fist and watches the washing drip, with the
+    air of a man who has counted the drips before and will count them again.'
 activitylevel: 10
 character:
   name: Hobb Pennock
   description: |
-    Hobb Pennock keeps the lodging house at the blind end of the alley,
-    and he keeps it from a three-legged stool beside its door with a
-    ledger across his knees. He is a narrow, stooped man with ink in
-    the creases of his fingers and a patient, unhurried manner, as if
-    he has decided that everything worth doing can be done slowly.
-    His mutation is a quiet one. Whatever he makes with his hands
-    remembers who it was made for, and the lock on the green door is
-    his own work. It has never opened for a stranger. He lets rooms to
-    people the quarter will vouch for, and to nobody else, and he has
-    never once had to raise his voice about it.
+    Hobb Pennock is the letting clerk for Crewe Lettings, which is to say
+    the Widow Aldine Crewe, who owns the lodging house behind him, lives
+    somewhere with a garden, and has not set foot in the Back Court in
+    eleven years. Hobb sits on a three-legged stool beside her green door
+    with a ledger across his knees and a rubber stamp in his fist, and he
+    has the patient, glazed look of a man paid by the day and not by the
+    customer. A painted board at his elbow lists what the company sells:
+    rooms to let, deeds to knock a new room through a wall, and vouchers
+    for anyone who wants their walls to look like something. His mutation
+    is a memory for faces that he considers wasted on this job. He never
+    forgets a lodger, and he wishes, sometimes, that he could.
   speciesid: 1
   level: 1
   gold: 20
@@ -42,6 +52,6 @@ character:
     perception:
       base: 110
     charisma:
-      base: 104
+      base: 96
     willpower:
       base: 106

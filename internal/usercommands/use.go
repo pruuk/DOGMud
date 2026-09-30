@@ -71,6 +71,12 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	}
 
+	// Housing deeds and vouchers take arguments ("use deed north"), so they
+	// are matched on a leading run of words before the whole-text lookup.
+	if tryHousingItemUse(rest, user, room) {
+		return true, nil
+	}
+
 	// Check whether the user has an item in their inventory that matches
 	matchItem, found := user.Character.FindInBackpack(rest)
 

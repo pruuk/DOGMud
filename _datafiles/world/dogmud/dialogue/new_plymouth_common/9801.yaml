@@ -3,35 +3,32 @@ zone: New Plymouth Common
 defaultMood: neutral
 
 greetings:
-  - text: "Evening, or near enough. If it's a room you're after, ask me
-      about one. If it isn't, mind the washing on your way out."
+  - text: "Crewe Lettings. Rooms, extensions, redecorating. Type list if you
+      want prices. I'm not going to recite them."
     moods: ["neutral"]
-  - text: "There you are. Door's been expecting you."
+  - text: "Oh. You. Door's where you left it."
     moods: ["friendly"]
 
 patterns:
-  - keywords: ["plate", "brass", "touch", "palm", "mutation", "made"]
+  - keywords: ["plate", "brass", "touch", "palm", "mutation"]
     responses:
-      - "I made that lock with these hands, and what I make remembers
-        who it was made for. It knows every lodger's palm. It does not
-        know yours unless I tell it to, and I only tell it once you've
-        paid and the quarter's vouched."
-      - "People ask how it works. Honestly, I couldn't tell you. I only
-        know it has never once opened for the wrong hand."
+      - "The company's locksmith made that. It learns a lodger's palm when I
+        stamp them into the ledger. Don't ask me how. I just work the stamp."
+      - "No, it can't be picked. Yes, people try. Yes, I watch. It's the most
+        interesting thing that happens here."
 
   - keywords: ["quarter", "common", "vouch", "neighbours", "neighbors", "reputation", "standing"]
     responses:
-      - "The quarter talks, and I listen. Do a kindness for the folk
-        round the Rise and the Back Court, and I'll hear of it before
-        you're back here to tell me."
-      - "I don't take references on paper. I take them from the woman
-        who sells the bread and the boy who sweeps the corner."
+      - "The Widow only lets to people the Common Quarter will vouch for. Do
+        some good round the Rise and the Back Court. I'll hear. I always hear.
+        I have nothing else to do."
 
   - keywords: ["brisk", "tenement", "condemned", "tova"]
     responses:
-      - "Mother Brisk runs her block and I run my house, and we get on
-        by never once discussing each other's lodgers."
+      - "Mother Brisk runs her block and the Widow runs this one. I run the
+        stamp. We don't talk shop."
 
   - keywords: [""]
     responses:
-      - "I'm a landlord, not a gazetteer. Ask me about a room."
+      - "I sell rooms. Type list. That's the whole job."
+      - "Is this about a room? It had better be about a room."

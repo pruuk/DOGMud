@@ -162,6 +162,9 @@ func loadOneHouse(buildingDir string, path string, fileName string) bool {
 			return reject(fmt.Sprintf(`room %d is already owned by user %d`, roomId, other.OwnerUserId))
 		}
 	}
+	if err := h.checkLinks(); err != nil {
+		return reject(err.Error())
+	}
 	if other, dup := ownerHouse[ownerKey{h.BuildingId, h.OwnerUserId}]; dup {
 		return reject(fmt.Sprintf(`user %d already owns room %d in %s`, h.OwnerUserId, other.EntryRoom(), h.BuildingId))
 	}

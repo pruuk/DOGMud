@@ -20,6 +20,9 @@ const (
 	testUnitB  = 6471
 	testUnitC  = 6472
 	testBldgId = `test_lodgings`
+
+	testDeedId    = 55
+	testVoucherId = 56
 )
 
 func testBuilding() Building {
@@ -33,6 +36,14 @@ func testBuilding() Building {
 		MinRepTier:    `warm`,
 		Tiers:         []Tier{{TierId: `simple`, Name: `a simple room`, Price: 500, Rooms: 1}},
 		UnitRooms:     []int{testUnitA, testUnitB, testUnitC},
+
+		ExtensionItemId:          testDeedId,
+		ExtensionPriceMultiplier: 3,
+		MaxRooms:                 3,
+		ExtensionTitle:           `A Bare Back Room`,
+		ExtensionDescription:     `A plain room knocked through from the rest of the lodging.`,
+		RedecorateItemId:         testVoucherId,
+		RedecoratePrice:          500,
 	}
 }
 
@@ -49,7 +60,13 @@ func setup(t *testing.T) string {
 	isStaff = func(int) bool { return false }
 	ResetForTest()
 	AddBuildingForTest(testBuilding())
+	// Weightless, because a test character has no strength to carry with.
+	restoreItems := items.SeedItemsForTest(map[int]*items.ItemSpec{
+		testDeedId:    {ItemId: testDeedId, Name: `Room Extension Deed`, NameSimple: `deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		testVoucherId: {ItemId: testVoucherId, Name: `Redecorating Voucher`, NameSimple: `voucher`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+	})
 	t.Cleanup(func() {
+		restoreItems()
 		restoreDir()
 		restoreRep()
 		landlordName = prevName

@@ -314,6 +314,15 @@ func (i *Item) Validate() {
 }
 ```
 
+### Bound items
+
+`Item.BoundUserId` (yaml `bounduserid`) names the ACCOUNT an item instance
+works for; 0 means anyone. Nothing in this package enforces it: the system
+that sells and consumes the item checks it. Housing extension deeds
+(`internal/housing`) set it at sale, because their price depends on the
+buyer's own house, so a deed passed to another account would sell rooms at
+someone else's price.
+
 ### Item Identification and Matching
 ```go
 // Multiple identification methods

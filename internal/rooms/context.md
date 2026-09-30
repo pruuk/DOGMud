@@ -347,7 +347,16 @@ boot (`housing.RegisterRoomHooks` in `main.go`). Unset hooks are no-ops.
   message. A refused spawn (`MoveToRoom(..., true)`, login placement from
   `world.enterWorld`) is redirected to the guard's `redirectRoomId` instead.
 - **`SetPrivateRoomCheck(PrivateRoomCheck)` / `IsPrivateRoom`**:
-  `GetRoomWithMostItems` (the loot goblin's target) skips private rooms.
+  `GetRoomWithMostItems` (the loot goblin's target) skips private rooms, and
+  `SaveRoomTemplate` refuses one (logged), so the builder cannot write a
+  lodger's overlaid exits and text into authored content.
+- **`SetRoomOverlay(RoomOverlay)`**: `LoadRoomInstance` is now a wrapper that
+  builds the room from disk (`loadRoomInstanceFromDisk`, the old body) and
+  then runs the overlay, on every path (template only, good instance
+  overlay, quarantined overlay). It exists for `instance:"skip"` fields that
+  a subsystem owns per room: housing lays a house's doorways, title,
+  description, nouns and coordinates over its unit rooms. An overlay must be
+  idempotent and must not load another room.
 
 ## Hidden Object Discovery System
 

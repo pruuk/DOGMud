@@ -1,0 +1,24 @@
+roomid: 6514
+zone: New Plymouth Lodgings
+title: A Bare Lodging Room
+description: >
+  Four whitewashed walls, a plank floor scrubbed pale, and a single shuttered
+  <ansi fg="itemname">window</ansi> that lets a stripe of light in across
+  the boards. Nothing else. The room is empty, and it is yours, and there is
+  nothing in it yet but what you bring. The green
+  <ansi fg="itemname">door</ansi> behind you opens back onto the alley.
+biome: interior
+exits:
+  door:
+    roomid: 5625
+nouns:
+  window: A small window with a pair of wooden shutters, latched from the
+    inside. Through the slats you can see a strip of washing line and a
+    slice of the building opposite.
+  door: The inside of the green door. On this side it has an ordinary iron
+    latch, worn smooth. It opens for you, and it lets you back into the
+    alley whenever you like.
+x: 44
+y: 0
+z: 0
+plane: 14

@@ -1,11 +1,13 @@
-# The Back Court lodgings: Hobb Pennock's lodging house at the blind end of
-# Pennock's Alley (5625), west of the Back Court in New Plymouth Common.
+# The Back Court lodgings: the Crewe Lettings house at the blind end of
+# Pennock's Alley (5625), west of the Back Court in New Plymouth Common. Its
+# clerk, Hobb Pennock, sells everything below from a list.
 #
-# Authored content (internal/housing). Who owns which room is living state
-# under housing/back_court_lodgings/, never in this file.
+# Authored content (internal/housing). Who owns which room, their doorways
+# and their descriptions are living state under housing/back_court_lodgings/,
+# never in this file.
 #
 # To add capacity: run tools/housing_units.py over a new id range, then list
-# the new ids in unit_rooms below.
+# the new ids in unit_rooms below. Homes and extensions share the pool.
 building_id: back_court_lodgings
 name: the Back Court lodgings
 door_room: 5625
@@ -21,5 +23,31 @@ tiers:
     name: a simple room
     price: 500
     rooms: 1
+
+# Extensions. Each deed costs extension_price_multiplier times everything the
+# lodger has paid for rooms so far: 500 for the home makes the first deed
+# 1500, 500 + 1500 makes the second 6000, then 24000, and so on.
+extension_item_id: 55
+extension_price_multiplier: 3
+# A house can hold at most this many rooms, home included.
+max_rooms: 8
+extension_title: A Bare Back Room
+extension_description: >
+  A plain room knocked through from the rest of the lodging, the plaster on
+  the new doorway still paler than the walls around it. The floor is bare
+  planks, the walls are whitewashed, and a single shuttered window lets in a
+  stripe of light. It is empty, and it is yours.
+
+# Redecorating: a one-use voucher that rewrites one room's description.
+redecorate_item_id: 56
+redecorate_price: 500
+
 unit_rooms: [6470, 6471, 6472, 6473, 6474, 6475, 6476, 6477, 6478, 6479, 6480, 6481,
-  6482, 6483, 6484, 6485, 6486, 6487, 6488, 6489, 6490, 6491, 6492, 6493]
+  6482, 6483, 6484, 6485, 6486, 6487, 6488, 6489, 6490, 6491, 6492, 6493,
+  6494, 6495, 6496, 6497, 6498, 6499, 6500, 6501, 6502, 6503, 6504, 6505,
+  6506, 6507, 6508, 6509, 6510, 6511, 6512, 6513, 6514, 6515, 6516, 6517,
+  6518, 6519, 6520, 6521, 6522, 6523, 6524, 6525, 6526, 6527, 6528, 6529,
+  6530, 6531, 6532, 6533, 6534, 6535, 6536, 6537, 6538, 6539, 6540, 6541,
+  6542, 6543, 6544, 6545, 6546, 6547, 6548, 6549, 6550, 6551, 6552, 6553,
+  6554, 6555, 6556, 6557, 6558, 6559, 6560, 6561, 6562, 6563, 6564, 6565,
+  6566, 6567, 6568, 6569]

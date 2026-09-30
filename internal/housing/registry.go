@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -36,6 +37,11 @@ var (
 	// a house file for them could not be read or did not make sense, and
 	// selling the room again would hand a stranger someone else's things.
 	held = map[int]string{} // room id -> reason
+
+	// unitCoords are each unit room's authored coordinates (x, y, z, plane),
+	// read from its template at load. A house's rooms are placed relative to
+	// its entry room's, so the overlay never has to load a room.
+	unitCoords = map[int][4]int{}
 )
 
 // buildingsDirOverride is a test hook; empty uses config.
@@ -62,10 +68,11 @@ func SetBuildingsDirForTest(dir string) func() {
 func LoadDataFiles() {
 	start := time.Now()
 	loaded := loadBuildings()
-	validateBuildingsAgainstWorld(loaded)
+	coords := validateBuildingsAgainstWorld(loaded)
 
 	mu.Lock()
 	resetLocked()
+	unitCoords = coords
 	for id, b := range loaded {
 		bb := b
 		buildings[id] = &bb
@@ -77,6 +84,7 @@ func LoadDataFiles() {
 	mu.Unlock()
 
 	nHouses, nHeld := loadHouses()
+	applyAllOverlays()
 	mudlog.Info(`housing.LoadDataFiles()`, `buildings`, len(loaded), `houses`, nHouses, `heldRooms`, nHeld, `Time Taken`, time.Since(start))
 }
 
@@ -88,6 +96,7 @@ func resetLocked() {
 	roomHouse = map[int]*House{}
 	ownerHouse = map[ownerKey]*House{}
 	held = map[int]string{}
+	unitCoords = map[int][4]int{}
 }
 
 // ResetForTest clears all registry state.
@@ -125,9 +134,15 @@ func loadBuildings() map[string]Building {
 }
 
 // validateBuildingsAgainstWorld panics on authored data that points at rooms,
-// mobs or factions that do not exist, or at a door and units that do not
-// connect. Authored content fails loudly at boot, like rooms and ferries.
-func validateBuildingsAgainstWorld(loaded map[string]Building) {
+// mobs, factions or items that do not exist, or at a door and units that do
+// not connect. Authored content fails loudly at boot, like rooms and ferries.
+//
+// It reads room TEMPLATES, not live rooms: on a data reload the live units
+// already carry their houses' overlays (an extension has no door of its own),
+// and the authored shape is what is being checked. It returns every unit's
+// authored coordinates.
+func validateBuildingsAgainstWorld(loaded map[string]Building) map[int][4]int {
+	coords := map[int][4]int{}
 	unitOwner := map[int]string{}
 	ids := make([]string, 0, len(loaded))
 	for id := range loaded {
@@ -137,7 +152,7 @@ func validateBuildingsAgainstWorld(loaded map[string]Building) {
 
 	for _, id := range ids {
 		b := loaded[id]
-		door := rooms.LoadRoom(b.DoorRoom)
+		door := rooms.LoadRoomTemplate(b.DoorRoom)
 		if door == nil {
 			panic(fmt.Sprintf(`housing building %s: door_room %d does not exist`, id, b.DoorRoom))
 		}
@@ -156,12 +171,17 @@ func validateBuildingsAgainstWorld(loaded map[string]Building) {
 		if factions.GetDefinition(b.Faction) == nil {
 			panic(fmt.Sprintf(`housing building %s: faction %q does not exist`, id, b.Faction))
 		}
+		for _, itemId := range []int{b.ExtensionItemId, b.RedecorateItemId} {
+			if items.GetItemSpec(itemId) == nil {
+				panic(fmt.Sprintf(`housing building %s: item %d does not exist`, id, itemId))
+			}
+		}
 		for _, roomId := range b.UnitRooms {
 			if other, dup := unitOwner[roomId]; dup {
 				panic(fmt.Sprintf(`housing building %s: unit room %d is also a unit of %s`, id, roomId, other))
 			}
 			unitOwner[roomId] = id
-			unit := rooms.LoadRoom(roomId)
+			unit := rooms.LoadRoomTemplate(roomId)
 			if unit == nil {
 				panic(fmt.Sprintf(`housing building %s: unit room %d does not exist`, id, roomId))
 			}
@@ -172,8 +192,15 @@ func validateBuildingsAgainstWorld(loaded map[string]Building) {
 			if len(unit.SpawnInfo) > 0 {
 				panic(fmt.Sprintf(`housing building %s: unit room %d must not spawn mobs`, id, roomId))
 			}
+			for dir := range directionDeltas {
+				if _, taken := unit.Exits[dir]; taken {
+					panic(fmt.Sprintf(`housing building %s: unit room %d must not have an authored %s exit; extensions place those`, id, roomId, dir))
+				}
+			}
+			coords[roomId] = [4]int{unit.X, unit.Y, unit.Z, unit.Plane}
 		}
 	}
+	return coords
 }
 
 // Building returns a copy of the named building.
@@ -196,6 +223,33 @@ func BuildingForUnit(roomId int) (Building, bool) {
 		return Building{}, false
 	}
 	return *buildings[id], true
+}
+
+// LandlordBuildings returns the buildings a mob template lets, in id order.
+func LandlordBuildings(mobId int) []Building {
+	mu.RLock()
+	defer mu.RUnlock()
+	out := []Building{}
+	for _, b := range buildings {
+		if b.LandlordMobId == mobId {
+			out = append(out, *b)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].BuildingId < out[j].BuildingId })
+	return out
+}
+
+// IsHousingItem reports whether itemId is any building's extension deed or
+// redecorating voucher.
+func IsHousingItem(itemId int) bool {
+	mu.RLock()
+	defer mu.RUnlock()
+	for _, b := range buildings {
+		if itemId == b.ExtensionItemId || itemId == b.RedecorateItemId {
+			return true
+		}
+	}
+	return false
 }
 
 // IsUnitRoom reports whether roomId is one of any building's unit rooms,

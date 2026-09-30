@@ -1,8 +1,10 @@
 package rooms
 
 import (
+	"os"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/stretchr/testify/assert"
 )
@@ -93,4 +95,39 @@ func TestGetRoomWithMostItems_SkipsPrivateRooms(t *testing.T) {
 	roomId, itemCt := GetRoomWithMostItems(false, 1, 0)
 	assert.Equal(t, 4, roomId)
 	assert.Equal(t, 2, itemCt)
+}
+
+// Every room built from disk passes through the registered overlay, both
+// template-only and with an instance overlay, so a subsystem can keep
+// template-owned fields (exits, description) in its own state.
+func TestLoadRoomInstance_AppliesRoomOverlay(t *testing.T) {
+	tempDir := useTempDataFiles(t, true)
+	instancePath := seedTemplateRoom(t, tempDir, 100)
+
+	calls := 0
+	SetRoomOverlay(func(r *Room) {
+		calls++
+		r.Description = `overlaid`
+		r.Exits[`north`] = exit.RoomExit{RoomId: 101}
+	})
+	defer SetRoomOverlay(nil)
+
+	room := LoadRoomInstance(100)
+	assert.Equal(t, 1, calls)
+	assert.Equal(t, `overlaid`, room.Description)
+	assert.Equal(t, 101, room.Exits[`north`].RoomId)
+
+	assert.NoError(t, os.WriteFile(instancePath, []byte("roomid: 100\ngold: 5\n"), 0o644))
+	room = LoadRoomInstance(100)
+	assert.Equal(t, 2, calls)
+	assert.Equal(t, 5, room.Gold)
+	assert.Equal(t, `overlaid`, room.Description)
+}
+
+// A player's room must never be written back into authored content by the
+// builder: it carries that player's exits and text in memory.
+func TestSaveRoomTemplate_RefusesPrivateRooms(t *testing.T) {
+	SetPrivateRoomCheck(func(roomId int) bool { return roomId == 100 })
+	defer SetPrivateRoomCheck(nil)
+	assert.Error(t, SaveRoomTemplate(Room{RoomId: 100, Zone: `x`}))
 }

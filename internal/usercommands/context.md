@@ -407,6 +407,12 @@ What matters is the shape, not the list:
   defence, flee, and grapple maintenance explain the skill-less resolution once
   at their owning round/action boundary. Losing defence candidates never emit a
   line. NPC wrappers use the same mechanics without private output.
+- **Housing landlords are not shops** (`housing_shop.go`). `list` renders
+  each landlord's per-lodger offers in the shop table style before any real
+  merchant; `buy` tries `housing.MatchOffer` before `actions.Buy`; `use`
+  hands `use deed north` / `use voucher ...` to `housing.UseItem` when a
+  leading run of words names a housing item. See
+  `internal/housing/context.md`.
 - **Target resolution** uses the existing fuzzy matchers, which already handle
   multi-word input. Reach for `internal/parser` only when a command must
   *split* input into multiple slots (item vs. container, mob vs. player).

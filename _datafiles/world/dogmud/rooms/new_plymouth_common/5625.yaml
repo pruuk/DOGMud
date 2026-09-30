@@ -10,11 +10,18 @@ description: >
   <ansi fg="itemname">door</ansi>, painted a green touched up so many
   times it has taken on depth, with a
   <ansi fg="itemname">brass plate</ansi> set where a keyhole ought to be.
-  Beside it hangs a <ansi fg="itemname">slate board</ansi> chalked in a
-  square, careful hand. Above, the building climbs in a stack of windows,
-  lamplight in some and shutters in others, the rooms of people who have
-  somewhere to come home to.
+  Beside it hangs a painted <ansi fg="itemname">slate board</ansi>, and
+  over it all a <ansi fg="itemname">lantern</ansi> burns on an iron bracket,
+  kept lit by the letting company so that nobody can say they could not read
+  the prices. Above, the building climbs in a stack of windows, lamplight in
+  some and shutters in others, the rooms of people who have somewhere to
+  come home to.
 biome: city_backstreet
+# The company's lantern over the door, named in the description. The
+# backstreet biome's own lamp (35) is too dark after nightfall to make out
+# faces, so Hobb's list could not be read; 52 is the lamplit-street level of
+# city_thoroughfare, where night shopping works.
+lamp: 52
 exits:
   east:
     roomid: 5615
@@ -39,9 +46,12 @@ nouns:
     this house open it with a touch, and it has never once opened for
     anyone who does not live here.
   slate board: A slate in a wooden frame, hung on a nail beside the door.
-    Rooms are chalked on it by number in a square, careful hand, and most
-    of the numbers are crossed through. At the bottom, rewritten after
-    every rain, a line reads ROOMS TO LET. ASK PENNOCK.
+    Across the top, in paint that has outlived several clerks, it reads
+    CREWE LETTINGS. ROOMS TO LET. EXTENSIONS. REDECORATING. Below that,
+    in fresher chalk and a bored hand, someone has added TYPE LIST.
+  lantern: A tin lantern with glass panes gone amber with soot, hung on an
+    iron bracket above the green door. Somebody refills it every evening.
+    Nobody has ever seen who.
   washing: Shirts, sheets and a child's smock, pegged on lines strung
     window to window across the alley, dripping gently onto the swept
     stones.

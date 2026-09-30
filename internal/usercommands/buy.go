@@ -24,6 +24,12 @@ func Buy(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return true, nil
 	}
 
+	// A housing landlord's offers are priced per lodger, outside the shop
+	// system. Requests that do not name one fall through to the shop.
+	if tryHousingBuy(rest, user, room) {
+		return true, nil
+	}
+
 	actor := &actions.UserActor{User: user, Room: room}
 	actions.Buy(actor, actions.BuyOptions{Request: rest})
 	return true, nil
