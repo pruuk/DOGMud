@@ -4,9 +4,9 @@ defaultMood: neutral
 
 greetings:
   - text: "The Quillhouse. Rooms, extensions, redecoration. Type list for the
-      terms. I would rather not read them aloud; I wrote them."
+      terms. I would rather not read them aloud. I wrote them."
     moods: ["neutral"]
-  - text: "Ah. You. The plate knows you; go on in."
+  - text: "Ah. You. The plate knows you. Go on in."
     moods: ["friendly"]
 
 patterns:

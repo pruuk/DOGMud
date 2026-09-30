@@ -45,7 +45,7 @@ tree:
           keywords: [hello, hi, hey, greetings, who, name, aubric, sallow, job, work, venn, madam, owner, quillhouse]
         - type: action
           do: say
-          text: Aubric Sallow, under-clerk of the Quillhouse. Madam Venn owns it; I keep its accounts, in a hand that deserves better. Type list if you want to see what she lets.
+          text: Aubric Sallow, under-clerk of the Quillhouse. Madam Venn owns it. I keep its accounts, in a hand that deserves better. Type list if you want to see what she lets.
 
     # Silent player_enter no-op: claims the event so composition never falls
     # through to noncombat_passive's "pays you little mind." emote.

@@ -211,6 +211,11 @@ func (b Building) Validate() error {
 		if strings.TrimSpace(v) == `` {
 			return fmt.Errorf(`housing building %s: %s is required`, b.BuildingId, field)
 		}
+		// The landlord speaks these through the say command, where a
+		// semicolon ends the command and cuts the line short.
+		if strings.Contains(v, `;`) {
+			return fmt.Errorf(`housing building %s: %s must not contain ';' (the landlord says it, and ';' ends a spoken command)`, b.BuildingId, field)
+		}
 	}
 	if strings.TrimSpace(b.ExtensionTitle) == `` || strings.TrimSpace(b.ExtensionDescription) == `` {
 		return fmt.Errorf(`housing building %s: extension_title and extension_description are required`, b.BuildingId)
