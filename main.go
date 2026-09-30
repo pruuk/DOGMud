@@ -64,6 +64,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/economy/health"
 	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -291,6 +292,12 @@ func main() {
 	// Wire companion follow-movement into MoveToRoom. Avoids the
 	// internal/rooms → internal/hooks import cycle (hooks imports rooms).
 	rooms.SetCompanionTransport(hooks.CompanionTransportCallback)
+
+	// Wire player housing into the room layer: the shared door routes each
+	// lodger to their own room, unit rooms admit only their owner, and the
+	// loot goblin leaves them alone. Avoids an internal/rooms ->
+	// internal/housing import cycle (housing imports rooms).
+	housing.RegisterRoomHooks()
 
 	// Wire the sweep_companions btree action into
 	// hooks.PushCompanionsToRoom. Avoids the internal/behaviortree →
@@ -1879,6 +1886,7 @@ func loadAllDataFiles(isReload bool) {
 	achievements.LoadDataFiles()
 	guilds.LoadDataFiles()
 	moderation.LoadDataFiles()
+	housing.LoadDataFiles() // after rooms, mobs and factions: it validates against them
 	ferry.LoadDataFiles()
 	warehouse.LoadAll()
 	questengine.LoadDataFiles()

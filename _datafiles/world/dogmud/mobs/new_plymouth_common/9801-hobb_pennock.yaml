@@ -1,0 +1,47 @@
+mobid: 9801
+zone: New Plymouth Common
+behavior_archetype: noncombat_passive
+non_combatant: true
+charm_immune: true
+hostile: false
+statpool: 30
+maxwander: 0
+groups:
+  - humanoid
+  - np_commonfolk
+idlecommands:
+  - 'emote licks a thumb, turns a page of his ledger, and runs a finger
+    down a column of names as if checking that none of them has left.'
+  - ''
+  - 'emote takes a stub of chalk from behind his ear and touches up a
+    number on the slate board that did not need touching up.'
+  - ''
+  - 'emote lays his palm briefly on the brass plate of the green door,
+    the way another man might pat a dog, and goes back to his stool.'
+  - ''
+  - 'emote sweeps a scatter of grit off the flagstones with the side of
+    his boot, frowns at the Back Court, and sweeps again.'
+activitylevel: 10
+character:
+  name: Hobb Pennock
+  description: |
+    Hobb Pennock keeps the lodging house at the blind end of the alley,
+    and he keeps it from a three-legged stool beside its door with a
+    ledger across his knees. He is a narrow, stooped man with ink in
+    the creases of his fingers and a patient, unhurried manner, as if
+    he has decided that everything worth doing can be done slowly.
+    His mutation is a quiet one. Whatever he makes with his hands
+    remembers who it was made for, and the lock on the green door is
+    his own work. It has never opened for a stranger. He lets rooms to
+    people the quarter will vouch for, and to nobody else, and he has
+    never once had to raise his voice about it.
+  speciesid: 1
+  level: 1
+  gold: 20
+  stats:
+    perception:
+      base: 110
+    charisma:
+      base: 104
+    willpower:
+      base: 106

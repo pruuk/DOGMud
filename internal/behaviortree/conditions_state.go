@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -41,7 +42,15 @@ func condKeywordMatch(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 
+	// Players ask in sentences ("do you have a room?"), so trim punctuation
+	// off each word's edges before comparing. Inner punctuation is kept, so
+	// a hyphenated or apostrophised keyword still matches itself.
 	words := strings.Fields(strings.ToLower(ctx.Event.Text))
+	for i, w := range words {
+		words[i] = strings.TrimFunc(w, func(r rune) bool {
+			return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+		})
+	}
 	for _, kw := range keywordsRaw {
 		kwStr, ok := kw.(string)
 		if !ok {

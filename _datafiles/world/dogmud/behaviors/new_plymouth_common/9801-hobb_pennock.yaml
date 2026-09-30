@@ -1,0 +1,56 @@
+# Hobb Pennock, mob 9801, lets the Back Court lodgings (Pennock's Alley, 5625).
+# Buying and the terms are Go actions in internal/housing, so every price,
+# vacancy and standing check reads the authored building file
+# (housing_buildings/back_court_lodgings.yaml) and cannot drift from it.
+tree:
+  type: selector
+  children:
+
+    # PURCHASE. Sits first (grant-node-first SOP). Explicit buying words
+    # only, so asking about a room never charges anyone.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [buy, purchase]
+        - type: action
+          do: buy_housing
+          building: back_court_lodgings
+          tier: simple
+
+    # TERMS. Price, vacancy and what this player still needs. The how-to-buy
+    # hint is spoken by the landlord (housing.DescribeTerms), not a
+    # send_user_text node: that text is delivered at once while say lines
+    # are queued, so it would print above his answer.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [room, rooms, lodging, lodgings, let, rent, lease, price, cost, much, house, home, vacancy, vacancies, key, lock, door]
+        - type: action
+          do: housing_terms
+          building: back_court_lodgings
+          tier: simple
+
+    # Greetings and who-are-you.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [hello, hi, hey, greetings, who, name, pennock, hobb, job, work]
+        - type: action
+          do: say
+          text: Hobb Pennock. I keep the lodging house behind me and the ledger on my knee, and between the two I keep the rooms let to people who ought to have them. Ask me about a room, if that's your business.
+
+    # Silent player_enter no-op: claims the event so composition never falls
+    # through to noncombat_passive's "pays you little mind." emote.
+    - type: sequence
+      event: player_enter
+      children:
+        - type: action
+          do: set_state
+          key: pennock_player_enter_suppressed
+          value: "true"

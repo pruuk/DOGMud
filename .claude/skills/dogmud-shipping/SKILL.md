@@ -258,8 +258,10 @@ server **down**.
 
 Then restart the server. The engine will re-spawn mobs and re-build
 rooms from the (updated) templates. **Do NOT also wipe
-`_datafiles/world/dogmud/shops/` or `_datafiles/world/dogmud/guilds/`**, those
-are persistent living state (shop economy; player guilds), not
+`_datafiles/world/dogmud/shops/`, `_datafiles/world/dogmud/guilds/` or
+`_datafiles/world/dogmud/housing/`**, those
+are persistent living state (shop economy; player guilds; who owns which
+lodging room), not
 instance overrides (shop and guild state is living state, covered by the
 `dogmud-persistence` skill). Guild files are
 runtime-generated per-guild YAML (`guilds/<tag>.yaml`); a malformed one

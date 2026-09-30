@@ -18,7 +18,8 @@ description: >
   <ansi fg="itemname">chalk hopscotch</ansi> grid has
   been renewed so many times that the lines have pressed
   faintly into the stone itself, independent of whatever
-  chalk is currently on them.
+  chalk is currently on them. To the west, a narrow swept
+  alley slips off between two blocks toward a green door.
 biome: city_backstreet
 coord:
   x: -16
@@ -27,6 +28,8 @@ coord:
 exits:
   south:
     roomid: 5613
+  west:
+    roomid: 5625
   east:
     roomid: 5616
 nouns:

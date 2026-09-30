@@ -57,6 +57,25 @@
 - Picking something up by name that turns out to be stashed now refuses an
   item about to explode, the same as asking for it from your stash by name.
 
+## 2026-09-29: A room of your own
+
+There is now somewhere in New Plymouth to call home. West of the Back
+Court in the Common Quarter, a narrow alley ends at a green door, and
+Hobb Pennock sits beside it with his ledger. He lets simple rooms for
+500 gold, paid once, to people the Common Quarter can vouch for. If the
+quarter does not know you yet, do some good there first. Ask him about a
+room to hear his terms, and ask him to buy one when you are ready.
+
+Once the room is yours, the green door opens for you and nobody else.
+Every lodger goes through the same door and comes out in their own room.
+Anything you leave on the floor stays there, and if you log out inside,
+you wake up inside. The rooms are bare for now. Furnishing them, making
+them bigger and inviting guests will come later.
+
+Behind the scenes: `keyword_match` in NPC behavior now ignores
+punctuation at the edges of a word, so asking "do you have a room?"
+works the same as asking "do you have a room".
+
 ## 2026-09-29: Pockets, companions and trinkets
 
 - Companions can no longer be pickpocketed, whoever they belong to.

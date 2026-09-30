@@ -133,6 +133,20 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			return true, nil
 		}
 
+		// A routed exit (a housing door) sends each player to their own
+		// destination. The router has already decided who may pass, so the
+		// exit's authored lock, which only exists to keep mobs and strangers
+		// out, is not consulted for a player it lets through.
+		routed := false
+		if route, handled := rooms.RouteExit(user.UserId, room.RoomId, exitName); handled {
+			if route.RoomId == 0 {
+				user.SendText(messaging.CategorySystem, route.Refusal)
+				return true, nil
+			}
+			goRoomId = route.RoomId
+			routed = true
+		}
+
 		destRoom := rooms.LoadRoom(goRoomId)
 		if destRoom == nil {
 			return false, fmt.Errorf(`room %d not found`, goRoomId)
@@ -142,7 +156,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 		exitInfo, _ := room.GetExitInfo(exitName)
 
-		if exitInfo.Lock.IsLocked() {
+		if exitInfo.Lock.IsLocked() && !routed {
 
 			lockId := fmt.Sprintf(`%d-%s`, room.RoomId, exitName)
 
@@ -239,9 +253,26 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 		// Grab the exit in the target room that leads to this room (if any)
 		enterFromExit := destRoom.FindExitTo(room.RoomId)
+		enterFromRouted := false
+
+		// A routed exit (a housing door) has no authored destination that
+		// matches, so ask the router which of the far room's exits would have
+		// brought this player here. Its lock is the router's business and
+		// must NOT be opened by passing through from the far side.
+		if len(enterFromExit) < 1 {
+			for candidate := range destRoom.Exits {
+				if route, handled := rooms.RouteExit(user.UserId, destRoom.RoomId, candidate); handled && route.RoomId == room.RoomId {
+					enterFromExit = candidate
+					enterFromRouted = true
+					break
+				}
+			}
+		}
 
 		if len(enterFromExit) < 1 {
 			enterFromExit = "somewhere"
+		} else if enterFromRouted {
+			enterFromExit = fmt.Sprintf(`the <ansi fg="exit">%s</ansi>`, enterFromExit)
 		} else {
 
 			// Entering through the other side unlocks this side

@@ -1,0 +1,60 @@
+roomid: 5625
+zone: New Plymouth Common
+title: Pennock's Alley
+description: >
+  A slot of an alley runs west off the Back Court between two tenement
+  blocks, so narrow that the washing strung overhead nearly brushes both
+  walls. The flagstones are swept, which is more than can be said for most
+  of the quarter, and the air smells of lye and bread. The alley ends
+  blind against a single stout
+  <ansi fg="itemname">door</ansi>, painted a green touched up so many
+  times it has taken on depth, with a
+  <ansi fg="itemname">brass plate</ansi> set where a keyhole ought to be.
+  Beside it hangs a <ansi fg="itemname">slate board</ansi> chalked in a
+  square, careful hand. Above, the building climbs in a stack of windows,
+  lamplight in some and shutters in others, the rooms of people who have
+  somewhere to come home to.
+biome: city_backstreet
+exits:
+  east:
+    roomid: 5615
+  # The lodging-house door. It is a ROUTED exit (internal/housing): each
+  # lodger who goes through it arrives in their own room, and anyone else
+  # is turned away. It points back at this room only because an exit needs
+  # an authored destination; the router always decides. The lock keeps
+  # mobs, which never consult the router, from using it.
+  door:
+    roomid: 5625
+    lock:
+      difficulty: 255
+nouns:
+  door: A heavy door of old oak, painted green and repainted, its
+    hinges oiled so well they have never been heard. It has no keyhole
+    and no handle on this side. Where a keyhole should be is a palm-sized
+    brass plate, worn bright in the middle. Lodgers lay a hand on it and
+    go in. Everyone else waits.
+  brass plate: A plate of brass the size of an open hand, set flush in
+    the door. The center is polished pale by years of palms. There is
+    no seam, no pin, no mechanism you can see, and yet the lodgers of
+    this house open it with a touch, and it has never once opened for
+    anyone who does not live here.
+  slate board: A slate in a wooden frame, hung on a nail beside the door.
+    Rooms are chalked on it by number in a square, careful hand, and most
+    of the numbers are crossed through. At the bottom, rewritten after
+    every rain, a line reads ROOMS TO LET. ASK PENNOCK.
+  washing: Shirts, sheets and a child's smock, pegged on lines strung
+    window to window across the alley, dripping gently onto the swept
+    stones.
+idlemessages:
+- A window opens somewhere above, a basin is emptied carefully into the
+  gutter rather than the alley, and the window closes again.
+- Someone inside the lodging house is singing, not well, behind a closed
+  shutter.
+- The washing overhead lifts in a draft that never reaches the flagstones.
+- A lodger comes out of the green door, nods to nobody in particular, and
+  heads off east toward the Back Court.
+spawninfo:
+  - mobid: 9801
+    respawnrate: "15 real minutes"
+x: -7
+y: -81

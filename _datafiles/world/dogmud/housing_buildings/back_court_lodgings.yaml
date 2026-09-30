@@ -1,0 +1,25 @@
+# The Back Court lodgings: Hobb Pennock's lodging house at the blind end of
+# Pennock's Alley (5625), west of the Back Court in New Plymouth Common.
+#
+# Authored content (internal/housing). Who owns which room is living state
+# under housing/back_court_lodgings/, never in this file.
+#
+# To add capacity: run tools/housing_units.py over a new id range, then list
+# the new ids in unit_rooms below.
+building_id: back_court_lodgings
+name: the Back Court lodgings
+door_room: 5625
+door_exit: door
+landlord_mob_id: 9801
+# Standing with the Common Quarter. Warm (15+) means the quarter has vouched
+# for you: a new character starts at 10 (neutral), and one Common Quarter
+# quest such as The Street Sweeper's Secret (+15) is enough.
+faction: np_commonfolk
+min_rep_tier: warm
+tiers:
+  - tier_id: simple
+    name: a simple room
+    price: 500
+    rooms: 1
+unit_rooms: [6470, 6471, 6472, 6473, 6474, 6475, 6476, 6477, 6478, 6479, 6480, 6481,
+  6482, 6483, 6484, 6485, 6486, 6487, 6488, 6489, 6490, 6491, 6492, 6493]

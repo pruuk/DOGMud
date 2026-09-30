@@ -135,6 +135,8 @@ _datafiles/feedback/*
 !_datafiles/feedback/suggestions-prod.txt
 _datafiles/world/dogmud/moderation
 _datafiles/world/dogmud/moderation/**
+_datafiles/world/dogmud/housing
+_datafiles/world/dogmud/housing/**
 
 # Package-local test/runtime residue; no tracked files exist here as of 2026-08-07
 internal/**/_datafiles

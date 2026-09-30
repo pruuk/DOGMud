@@ -89,6 +89,13 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	} else if exitName != `` {
 
+		// "open door" on a routed exit (a housing door) is how a lodger lets
+		// themselves in: the door is theirs to open, so it behaves exactly
+		// like going through it, refusal and all.
+		if rooms.IsRoutedExit(user.UserId, room.RoomId, exitName) {
+			return Go(exitName, user, room, flags)
+		}
+
 		exitInfo, _ := room.GetExitInfo(exitName)
 
 		if !exitInfo.Lock.IsLocked() {

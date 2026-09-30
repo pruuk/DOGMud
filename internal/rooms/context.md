@@ -330,6 +330,25 @@ subsystem's release/despawn path). The `instance_jail_cell` zone template
 uses this pattern: its lifetime is owned entirely by `internal/justice`
 (arrest creates, release or player-despawn destroys).
 
+## Routing Hooks (`routing_hooks.go`)
+
+Three single registered funcs let a subsystem that `rooms` must not import
+take part in movement decisions. `internal/housing` registers all three at
+boot (`housing.RegisterRoomHooks` in `main.go`). Unset hooks are no-ops.
+
+- **`SetExitRouter(ExitRouter)` / `RouteExit` / `IsRoutedExit`**: a routed
+  exit sends each player to their own destination (`ExitRoute.RoomId`) or
+  refuses them (`ExitRoute.Refusal`). `usercommands.Go` consults it before
+  moving and skips the exit's authored lock for a routed pass; `unlock`,
+  `picklock` and `look` treat a routed exit as a door, not a lock or a view.
+  An empty exit name is never routed.
+- **`SetEntryGuard(EntryGuard)`**: `MoveToRoom` asks it right after the
+  instance access check. A refused ordinary move fails with the guard's
+  message. A refused spawn (`MoveToRoom(..., true)`, login placement from
+  `world.enterWorld`) is redirected to the guard's `redirectRoomId` instead.
+- **`SetPrivateRoomCheck(PrivateRoomCheck)` / `IsPrivateRoom`**:
+  `GetRoomWithMostItems` (the loot goblin's target) skips private rooms.
+
 ## Hidden Object Discovery System
 
 ### Overview
@@ -428,6 +447,7 @@ When writing hidden noun descriptions:
 | `baubles_untaken.go` | Found baubles left lying untaken for `BaubleUntakenHours` (24) vanish: `removeUntakenBaubles`, run from `RoundTick` (rooms with players) and `Prepare` (before a visitor sees the floor); records `baubles.MarkVanished` |
 | `spawninfo.go` / `spawninfo_validate.go` | Room spawn lists and their validation |
 | `instances.go` / `ephemeral.go` | Instanced and ephemeral rooms |
+| `routing_hooks.go` | Exit router, entry guard and private-room check registered by `internal/housing` |
 | `cubegen.go` | Generated cube/maze room structures |
 | `memory.go` | Memory reporting for the admin report |
 | `test_helpers.go` | Test fixtures |

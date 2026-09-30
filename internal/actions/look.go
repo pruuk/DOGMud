@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
 // LookKind is what a look resolved to.
@@ -82,6 +83,12 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 				res.LookAt = alias
 			}
 		}
+	}
+	// A routed exit (a housing door) leads each player somewhere different,
+	// so there is no one room to peer into. Looking at it looks at the door
+	// itself: drop the exit match and let the room's noun answer.
+	if exitName != `` && rooms.IsRoutedExit(actor.GetUserId(), room.RoomId, exitName) {
+		exitName = ``
 	}
 	if exitName == `` {
 		res.Kind = LookOther

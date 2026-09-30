@@ -1,0 +1,37 @@
+mobid: 9801
+zone: New Plymouth Common
+defaultMood: neutral
+
+greetings:
+  - text: "Evening, or near enough. If it's a room you're after, ask me
+      about one. If it isn't, mind the washing on your way out."
+    moods: ["neutral"]
+  - text: "There you are. Door's been expecting you."
+    moods: ["friendly"]
+
+patterns:
+  - keywords: ["plate", "brass", "touch", "palm", "mutation", "made"]
+    responses:
+      - "I made that lock with these hands, and what I make remembers
+        who it was made for. It knows every lodger's palm. It does not
+        know yours unless I tell it to, and I only tell it once you've
+        paid and the quarter's vouched."
+      - "People ask how it works. Honestly, I couldn't tell you. I only
+        know it has never once opened for the wrong hand."
+
+  - keywords: ["quarter", "common", "vouch", "neighbours", "neighbors", "reputation", "standing"]
+    responses:
+      - "The quarter talks, and I listen. Do a kindness for the folk
+        round the Rise and the Back Court, and I'll hear of it before
+        you're back here to tell me."
+      - "I don't take references on paper. I take them from the woman
+        who sells the bread and the boy who sweeps the corner."
+
+  - keywords: ["brisk", "tenement", "condemned", "tova"]
+    responses:
+      - "Mother Brisk runs her block and I run my house, and we get on
+        by never once discussing each other's lodgers."
+
+  - keywords: [""]
+    responses:
+      - "I'm a landlord, not a gazetteer. Ask me about a room."

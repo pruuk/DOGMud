@@ -153,6 +153,10 @@ Screenshot *.png
 # Moderation living state (petition queue + ban lists) — persist on prod, never commit
 _datafiles/world/dogmud/moderation/
 
+# Housing living state (who owns which lodging room). Persist on prod, never
+# commit. The authored buildings live in housing_buildings/, which IS tracked.
+_datafiles/world/dogmud/housing/
+
 
 # Test-run artifacts: some package tests write relative _datafiles/ paths
 # before chdir'ing (e.g. behaviortree crate persistence) — never commit them.

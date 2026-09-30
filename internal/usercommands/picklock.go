@@ -27,6 +27,17 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		return true, nil
 	}
 
+	// A routed exit (a housing door) is not a lock to be picked: it opens for
+	// the people who live behind it and for nobody else. Refuse before the
+	// lockpicks check, any skill roll, trap or unlock, so the authored lock
+	// stays shut and the answer is the true one.
+	if fields := strings.Fields(strings.ToLower(rest)); len(fields) > 0 {
+		if routedExit, _ := room.FindExitByName(fields[0]); routedExit != `` && rooms.IsRoutedExit(user.UserId, room.RoomId, routedExit) {
+			user.SendText(messaging.CategorySystem, util.SplitStringNL(fmt.Sprintf(`The lock on the <ansi fg="exit">%s</ansi> is the landlord's own work, and it has never once been picked. It opens for those who live here.`, routedExit), 80))
+			return true, nil
+		}
+	}
+
 	lockpickItm := items.Item{}
 	for _, itm := range user.Character.GetAllBackpackItems() {
 		if itm.GetSpec().Type == items.Lockpicks {

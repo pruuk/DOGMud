@@ -213,7 +213,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 
 | Condition | Params | Description |
 |-----------|--------|-------------|
-| `keyword_match` | `keywords` (list) | Matches any word in event Text. |
+| `keyword_match` | `keywords` (list) | Matches any whole word in event Text, case-insensitive. Punctuation at a word's edges is trimmed first, so `room?` and `"room",` match `room`; inner punctuation is kept. |
 
 ### Player State
 
@@ -832,6 +832,19 @@ zones:
   arena: "Instance Arena"
   oasis: "Instance Planar Oasis"
 ```
+
+### Player Housing (`actions_housing.go`)
+
+| Action | Params | Description |
+|--------|--------|-------------|
+| `buy_housing` | `building` (string, a housing `building_id`), `tier` (string, a `tier_id`) | The landlord's sale: delegates to `housing.Purchase`, which checks one house per account, faction standing, carried gold plus bank, and vacancy, writes the house, then charges. The mob speaks every refusal. Failure only when misconfigured or the actors are gone. |
+| `housing_terms` | same as `buy_housing` | The landlord states the price and, for this player, whether standing, gold or an existing room changes the answer (`housing.DescribeTerms`). Charges nothing. |
+
+Put `buy_housing` first and gate it on explicit buying words (`buy`,
+`purchase`), so asking about a room never charges anyone. Keep how-to hints
+in the landlord's own `say` lines: `send_user_text` is delivered at once
+while `say` is queued, so a hint node prints above the answer it follows.
+Example: `behaviors/new_plymouth_common/9801-hobb_pennock.yaml`.
 
 ### Updated: `add_temp_exit`
 
