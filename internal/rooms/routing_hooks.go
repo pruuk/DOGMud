@@ -76,13 +76,38 @@ type PrivateRoomCheck func(roomId int) bool
 // the template. It must be idempotent and must not load other rooms.
 type RoomOverlay func(r *Room)
 
+// RoomSaveHook runs on a loaded room just before a bulk save (the autosave
+// prepare and SaveAllRooms) reads it, so state kept outside the room files
+// can be brought up to date from the live room first. It must not load
+// other rooms.
+type RoomSaveHook func(r *Room)
+
 var (
 	routingHooksMu   sync.RWMutex
 	exitRouter       ExitRouter
 	entryGuard       EntryGuard
 	privateRoomCheck PrivateRoomCheck
 	roomOverlay      RoomOverlay
+	roomSaveHook     RoomSaveHook
 )
+
+// SetRoomSaveHook registers the room save hook. Passing nil clears it.
+func SetRoomSaveHook(fn RoomSaveHook) {
+	routingHooksMu.Lock()
+	defer routingHooksMu.Unlock()
+	roomSaveHook = fn
+}
+
+// runRoomSaveHook runs the registered save hook, if any, on a live room.
+func runRoomSaveHook(r *Room) {
+	routingHooksMu.RLock()
+	fn := roomSaveHook
+	routingHooksMu.RUnlock()
+	if fn == nil || r == nil {
+		return
+	}
+	fn(r)
+}
 
 // SetRoomOverlay registers the room overlay. Passing nil clears it.
 func SetRoomOverlay(fn RoomOverlay) {

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -11,13 +12,13 @@ import (
 )
 
 // baubleSweepSourceNames are every live store the bauble catalog sweep must
-// see before it may prune anything: the five registered below and the
+// see before it may prune anything: the six registered below and the
 // auction house, which registers itself in modules/auctions. A sweep that
 // runs while one of them is not registered fails closed
 // (baubles.ExpectLiveSources). TestBaubleSweepSourcesMatchTheGuardedRoots
 // holds this list, the registered sources and the guarded roots
 // (sweepRoots, item_walker_guard_test.go) to the same names.
-var baubleSweepSourceNames = []string{`auctions`, `guilds`, `mobs`, `rooms`, `shops`, `users`}
+var baubleSweepSourceNames = []string{`auctions`, `guilds`, `housing`, `mobs`, `rooms`, `shops`, `users`}
 
 // registerBaubleSweepSources tells the bauble catalog sweep
 // (internal/baubles/sweep.go) where the live world keeps items. Each walk
@@ -54,6 +55,12 @@ func registerBaubleSweepSources() {
 	baubles.RegisterLiveSource(`guilds`, func(visit func(*items.Item)) {
 		for _, g := range guilds.All() {
 			g.WalkItems(visit)
+		}
+	})
+	// House containers' contents live in the house records (internal/housing).
+	baubles.RegisterLiveSource(`housing`, func(visit func(*items.Item)) {
+		for _, h := range housing.AllHouses() {
+			h.WalkItems(visit)
 		}
 	})
 }

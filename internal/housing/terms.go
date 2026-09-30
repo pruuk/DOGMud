@@ -23,6 +23,7 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 		offers[o.Key] = o
 	}
 	home, ext, deco, key := offers[OfferHome], offers[OfferExtension], offers[OfferRedecorate], offers[OfferGuestKey]
+	box, safe := offers[OfferContainer], offers[OfferStrongbox]
 
 	if _, owns := HouseOf(user.UserId, b.BuildingId); owns {
 		say(`You've got a room already. Door's behind me, hand on the plate, same as always.`)
@@ -33,6 +34,9 @@ func DescribeTerms(user *users.UserRecord, say func(string), buildingId string, 
 		}
 		if key.Available {
 			say(fmt.Sprintf(`Want to let a friend in? A guest key's %d. Give it to them, they use it on the door, done. Type house to see who's got in.`, key.Price))
+		}
+		if box.Available {
+			say(fmt.Sprintf(`Somewhere to keep your things? A container deed's %d, a strongbox deed's %d. You name it, it turns up. Anyone you let in can use a container. A strongbox opens for you alone.`, box.Price, safe.Price))
 		}
 		return true
 	}

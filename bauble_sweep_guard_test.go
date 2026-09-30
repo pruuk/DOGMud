@@ -66,6 +66,9 @@ var transientItemHolders = map[string]string{
 // needs walking. Keyed "<dir>.<name>".
 var itemStoreVars = map[string]string{
 	`internal/guilds.byTag`:           `the guilds live source (guilds.All)`,
+	`internal/housing.houses`:         `the housing live source (AllHouses)`,
+	`internal/housing.roomHouse`:      `indexes the same *House values as houses, walked by the housing live source`,
+	`internal/housing.ownerHouse`:     `indexes the same *House values as houses, walked by the housing live source`,
 	`internal/mobs.mobInstances`:      `the mobs live source (GetAllMobInstanceIds, GetInstance)`,
 	`internal/rooms.roomManager`:      `the rooms live source (LoadedRooms)`,
 	`internal/shops.shopCache`:        `the shops live source (AllShops)`,

@@ -52,6 +52,12 @@ func renderHousingListings(user *users.UserRecord, room *rooms.Room) bool {
 			continue
 		}
 		rows := make([][]string, 0, len(offers))
+		// The footer names every offer's buy word, taken from the offers
+		// themselves so it cannot fall behind the list.
+		buyWords := make([]string, 0, len(offers))
+		for _, o := range offers {
+			buyWords = append(buyWords, `<ansi fg="command">buy `+o.Key+`</ansi>`)
+		}
 		for _, o := range offers {
 			price := `-`
 			if o.Price > 0 {
@@ -61,7 +67,7 @@ func renderHousingListings(user *users.UserRecord, room *rooms.Room) bool {
 		}
 		renderShopTable(user, `Lodgings and services`, `cyan`, l.mob.Character.Name, `mobname`,
 			[]string{`Name`, `Price`, `Note`}, rows,
-			`To buy, type: <ansi fg="command">buy home</ansi>, <ansi fg="command">buy deed</ansi>, <ansi fg="command">buy voucher</ansi> or <ansi fg="command">buy key</ansi>. Prices are in gold, and the bank counts.`)
+			`To buy, type: `+strings.Join(buyWords[:len(buyWords)-1], `, `)+` or `+buyWords[len(buyWords)-1]+`. Prices are in gold, and the bank counts.`)
 		listed = true
 	}
 	return listed
@@ -98,8 +104,10 @@ func tryHousingItemUse(rest string, user *users.UserRecord, room *rooms.Room) bo
 	if whole, found := user.Character.FindInBackpack(rest); found && !housing.IsHousingItem(whole.ItemId) {
 		return false
 	}
+	// Longest name first, so "use container deed mug" is the container deed
+	// named mug, not a "container" item given the words "deed mug".
 	words := strings.Fields(rest)
-	for i := 1; i <= len(words); i++ {
+	for i := len(words); i >= 1; i-- {
 		itm, found := user.Character.FindInBackpack(strings.Join(words[:i], ` `))
 		if !found || !housing.IsHousingItem(itm.ItemId) {
 			continue

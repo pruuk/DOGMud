@@ -497,6 +497,7 @@ func SaveAllRooms() error {
 			continue
 		}
 
+		runRoomSaveHook(r)
 		if err := SaveRoomInstance(*r); err != nil {
 			errCt++
 			if firstErr == nil {

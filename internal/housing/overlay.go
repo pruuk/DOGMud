@@ -24,16 +24,34 @@ import (
 //
 // It is idempotent, and it never loads another room.
 
-// ApplyOverlay is the rooms.RoomOverlay. Rooms that are not in a house are
+// ApplyOverlay is the rooms.RoomOverlay, run on every room built from disk:
+// the layout (doorways, text, coordinates) AND the containers with their
+// contents, which live in the house record. A vacant unit loses any
+// containers an old instance save left in it. Rooms that are not units are
 // left exactly as their template made them.
 func ApplyOverlay(r *rooms.Room) {
+	applyOverlay(r, true)
+}
+
+// applyLayout re-lays a LIVE room's doorways, text and coordinates after its
+// house changed, without touching its containers: their live contents are
+// newer than the record until Capture runs.
+func applyLayout(r *rooms.Room) {
+	applyOverlay(r, false)
+}
+
+func applyOverlay(r *rooms.Room, withContainers bool) {
 	if r == nil {
 		return
 	}
 	mu.RLock()
+	_, isUnit := unitBuilding[r.RoomId]
 	h, owned := roomHouse[r.RoomId]
 	if !owned {
 		mu.RUnlock()
+		if isUnit && withContainers && len(r.Containers) > 0 {
+			r.Containers = nil
+		}
 		return
 	}
 	house := h.clone()
@@ -44,6 +62,9 @@ func ApplyOverlay(r *rooms.Room) {
 		return
 	}
 	overlayRoom(r, house, *b, base, hasBase)
+	if withContainers {
+		hydrateContainers(r, house)
+	}
 }
 
 func overlayRoom(r *rooms.Room, house House, b Building, base [4]int, hasBase bool) {
@@ -81,12 +102,17 @@ func applyAllOverlays() {
 	}
 }
 
-// refreshHouse reapplies the overlay to a changed house's loaded rooms and
+// refreshHouse re-lays a changed house's loaded rooms (layout only) and
 // asks for its map to be rebuilt from both the entry and the newest room, so
 // every room of the house resolves to a map that includes the new one.
 func refreshHouse(h House, newestRoom int) {
 	for _, roomId := range h.RoomIds {
-		ApplyOverlay(rooms.LoadRoom(roomId))
+		r := rooms.LoadRoom(roomId)
+		if roomId == newestRoom {
+			ApplyOverlay(r) // a room just added to the house has no live containers yet
+		} else {
+			applyLayout(r)
+		}
 	}
 	events.AddToQueue(events.RebuildMap{MapRootRoomId: newestRoom})
 	events.AddToQueue(events.RebuildMap{MapRootRoomId: h.EntryRoom()})

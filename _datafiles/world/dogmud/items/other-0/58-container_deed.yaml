@@ -1,0 +1,18 @@
+itemid: 58
+name: Container Deed
+namesimple: container deed
+not_salable: true
+description: >
+  A card printed CREWE LETTINGS, ONE ARTICLE OF FURNITURE (STORAGE), with a
+  blank line where the article should be named. It places one container in
+  your lodging, and anyone you let in can use it. To use it, stand in the
+  room of your own lodging where it should go and type use container deed.
+  You will be asked for one word to call it, like chest, shelf, vase or mug.
+  You can also write the word straight after, as in use container deed
+  chest. Then look in chest, put things in chest and get them from chest.
+  What you keep in it stays there.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

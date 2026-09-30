@@ -221,7 +221,15 @@ The `internal/mobcommands` package implements the AI command system for non-play
 - **Conversation management**: Proper cleanup of dialogue states
 - **Resource pooling**: Shared resources for common AI operations
 
+## House strongboxes
+`TryCommand` asks `housing.GuardMobCommand` after alias handling and
+silently drops (as handled) any command naming a house strongbox, unless the
+mob is charmed by the house's owner. world.go then calls
+`housing.AfterMobCommand` so a companion's put or get lands in the house
+record. See `internal/housing/context.md`.
+
 ## Dependencies
+- `internal/housing`: House strongbox guard
 - `internal/mobs`: Core mob management and state
 - `internal/rooms`: Room system for spatial awareness
 - `internal/characters`: Character system for mob properties

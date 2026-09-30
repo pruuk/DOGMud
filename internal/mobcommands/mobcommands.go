@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -159,6 +160,11 @@ func TryCommand(cmd string, rest string, mobId int) (bool, error) {
 		} else {
 			cmd = alias
 		}
+	}
+
+	// A house strongbox opens for its owner (and the owner's companions) alone.
+	if housing.GuardMobCommand(mobId, mob.Character.RoomId, rest) {
+		return true, nil
 	}
 
 	if cmdInfo, ok := mobCommands[cmd]; ok {

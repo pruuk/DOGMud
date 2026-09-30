@@ -358,8 +358,15 @@ boot (`housing.RegisterRoomHooks` in `main.go`). Unset hooks are no-ops.
   then runs the overlay, on every path (template only, good instance
   overlay, quarantined overlay). It exists for `instance:"skip"` fields that
   a subsystem owns per room: housing lays a house's doorways, title,
-  description, nouns and coordinates over its unit rooms. An overlay must be
-  idempotent and must not load another room.
+  description, nouns and coordinates over its unit rooms, and fills their
+  containers from the house record. An overlay must be idempotent and must
+  not load another room.
+- **`SetRoomSaveHook(RoomSaveHook)`**: `PrepareAllInstanceWrites` (the
+  autosave) and `SaveAllRooms` run it on each loaded, non-ephemeral room
+  just before reading it, so a subsystem that keeps a room's state in its
+  own records can capture the live room first. Housing uses it as the
+  backstop that writes house container contents to the house file
+  (`housing.CaptureOnSave`). It must not load another room.
 
 ## Hidden Object Discovery System
 

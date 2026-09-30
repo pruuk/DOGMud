@@ -9,6 +9,7 @@ import (
 	"unsafe"
 
 	"github.com/GoMudEngine/GoMud/internal/guilds"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -49,6 +50,9 @@ func sweepRoots() []sweepRoot {
 		}},
 		{`guilds`, reflect.TypeOf((*guilds.Guild)(nil)).Elem(), func(v reflect.Value, fn func(*items.Item)) {
 			v.Addr().Interface().(*guilds.Guild).WalkItems(fn)
+		}},
+		{`housing`, reflect.TypeOf((*housing.House)(nil)).Elem(), func(v reflect.Value, fn func(*items.Item)) {
+			v.Addr().Interface().(*housing.House).WalkItems(fn)
 		}},
 		{`mobs`, reflect.TypeOf((*mobs.Mob)(nil)).Elem(), func(v reflect.Value, fn func(*items.Item)) {
 			v.Addr().Interface().(*mobs.Mob).WalkItems(fn)

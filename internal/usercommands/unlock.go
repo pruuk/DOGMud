@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -36,6 +37,13 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		container := room.Containers[containerName]
 
 		if !container.Lock.IsLocked() {
+			// "open mug" (open is an alias of unlock) on a lodging's own
+			// container shows what is in it: that is what a lodger means.
+			// Who may see into a strongbox was settled before this command
+			// ran (housing.GuardUserCommand).
+			if housing.IsUnitRoom(room.RoomId) {
+				return Look(containerName, user, room, flags)
+			}
 			user.SendText(messaging.CategorySystem, "That's not locked.")
 			return true, nil
 		}

@@ -414,7 +414,14 @@ What matters is the shape, not the list:
   leading run of words names a housing item. `Go` turns a routed exit's
   several `Choices` into a `Whose lodging?` menu (`pickRoutedDestination`),
   which `visit <name>` skips by pre-picking a destination in temp data.
-  `house` and `visit` (`house.go`) manage guest access. See
+  `house` and `visit` (`house.go`) manage guest access. `TryCommand` asks
+  `housing.GuardUserCommand` right after alias expansion and refuses any
+  container command that reaches a house strongbox for anyone but its owner
+  (or staff). House containers are ordinary room containers, so `look in`,
+  `put`, `get` work unchanged; for them `look` also accepts `in`, `into`,
+  `inside` and `my`, `open` (an alias of `unlock`) on an unlocked container
+  in a unit room shows its contents, and `remove X from Y` is a `get` when Y
+  names a container in the room (anywhere). See
   `internal/housing/context.md`.
 - **Target resolution** uses the existing fuzzy matchers, which already handle
   multi-word input. Reach for `internal/parser` only when a command must

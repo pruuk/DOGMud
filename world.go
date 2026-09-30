@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -1041,6 +1042,9 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 			if err != nil {
 				mudlog.Warn("user-TryCommand", "command", command, "remains", remains, "error", err.Error())
 			}
+			// Anything the command put into or took from a house container is
+			// written to the house record now, not at the next autosave.
+			housing.AfterUserCommand(userId)
 		}
 
 	} else {
@@ -1101,6 +1105,7 @@ func (w *World) processMobInput(mobInstanceId int, inputText string) {
 		if err != nil {
 			mudlog.Warn("mob-TryCommand", "command", command, "remains", remains, "error", err.Error())
 		}
+		housing.AfterMobCommand(mobInstanceId)
 
 	}
 

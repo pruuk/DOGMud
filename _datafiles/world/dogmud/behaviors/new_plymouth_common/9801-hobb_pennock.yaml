@@ -10,8 +10,8 @@ tree:
 
     # PURCHASE. Sits first (grant-node-first SOP). Explicit buying words
     # only, so asking about a room never charges anyone. The ask text picks
-    # the offer: home, deed or voucher ("buy a room" means an extension to
-    # someone who already lodges here).
+    # the offer: home, deed, voucher, key, container or strongbox ("buy a
+    # room" means an extension to someone who already lodges here).
     - type: sequence
       event: player_ask
       children:
@@ -29,7 +29,7 @@ tree:
       children:
         - type: condition
           check: keyword_match
-          keywords: [room, rooms, lodging, lodgings, let, rent, lease, price, prices, cost, much, house, home, vacancy, vacancies, key, lock, door, extension, extensions, deed, deeds, voucher, vouchers, redecorate, redecorating, decorate, list, sell, selling, guest, guests, friend, friends, visit, visitor, visitors, invite]
+          keywords: [room, rooms, lodging, lodgings, let, rent, lease, price, prices, cost, much, house, home, vacancy, vacancies, key, lock, door, extension, extensions, deed, deeds, voucher, vouchers, redecorate, redecorating, decorate, list, sell, selling, guest, guests, friend, friends, visit, visitor, visitors, invite, container, containers, chest, chests, storage, strongbox, strongboxes, safe, furniture]
         - type: action
           do: housing_terms
           building: back_court_lodgings

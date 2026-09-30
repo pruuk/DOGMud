@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -342,6 +343,13 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 		// two paths cannot drift apart on which verb a command resolves to.
 		cmd, rest = actions.ExpandAliases(cmd, rest, user.TryCommandAlias)
 		alias := cmd
+
+		// A house strongbox opens for its owner alone. Refused here, before
+		// room trees, scripts or the command itself can touch its contents.
+		if refusal, refused := housing.GuardUserCommand(user.UserId, user.Character.RoomId, cmd, rest); refused {
+			user.SendText(messaging.CategorySystem, refusal)
+			return true, nil
+		}
 
 		skipScript := flags.Has(events.CmdSkipScripts)
 		if info, ok := userCommands[alias]; ok && info.AdminOnly {

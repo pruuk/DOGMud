@@ -20,6 +20,8 @@ const (
 	OfferHome       = `home`
 	OfferExtension  = `deed`
 	OfferRedecorate = `voucher`
+	OfferContainer  = `container`
+	OfferStrongbox  = `strongbox`
 )
 
 // Offer is one line of a landlord's list for one player.
@@ -87,7 +89,22 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 		key.Note, key.Available = `Lets one friend in. Give it to them`, true
 	}
 
-	return []Offer{home, ext, deco, key}
+	box := Offer{Key: OfferContainer, Name: itemName(b.ContainerItemId, `Container Deed`)}
+	safe := Offer{Key: OfferStrongbox, Name: itemName(b.StrongboxItemId, `Strongbox Deed`)}
+	switch {
+	case !owns:
+		box.Note = `Needs a home here first`
+		safe.Note = box.Note
+	case len(house.Containers) >= b.MaxContainers:
+		box.Note = `Your lodging holds all the containers allowed`
+		safe.Note = box.Note
+	default:
+		box.Price, safe.Price = b.ContainerPrice, b.StrongboxPrice
+		box.Note, box.Available = `A container you name. Guests can use it`, true
+		safe.Note, safe.Available = `A container only you can open`, true
+	}
+
+	return []Offer{home, ext, deco, key, box, safe}
 }
 
 func extensionPrice(b Building, h House) int {
@@ -105,9 +122,29 @@ func itemName(itemId int, fallback string) string {
 // without one and an extension to someone with one. It returns false when the
 // request is not for anything a landlord sells, so the ordinary shop can try.
 func MatchOffer(request string, ownsHome bool) (string, bool) {
+	words := []string{}
 	for _, word := range strings.Fields(strings.ToLower(request)) {
 		word = strings.Trim(word, `.,!?"'()`)
-		word = strings.TrimSuffix(word, `s`)
+		if word != `strongbox` {
+			word = strings.TrimSuffix(word, `s`)
+		}
+		words = append(words, word)
+	}
+	// The container words win over "deed", so "container deed" and "deed
+	// for a strongbox" are not read as an extension deed.
+	for _, word := range words {
+		switch word {
+		case `strongbox`, `strongboxe`, `lockable`, `locked`, `lock`, `private`, `safe`:
+			return OfferStrongbox, true
+		}
+	}
+	for _, word := range words {
+		switch word {
+		case `container`, `box`, `storage`:
+			return OfferContainer, true
+		}
+	}
+	for _, word := range words {
 		switch word {
 		case `home`, `lodging`, `lease`:
 			return OfferHome, true
@@ -138,6 +175,55 @@ func Buy(user *users.UserRecord, say func(string), buildingId string, tierId str
 		buyRedecorate(user, say, buildingId)
 	case OfferGuestKey:
 		buyGuestKey(user, say, buildingId)
+	case OfferContainer:
+		buyContainerDeed(user, say, buildingId, false)
+	case OfferStrongbox:
+		buyContainerDeed(user, say, buildingId, true)
+	}
+}
+
+// buyContainerDeed sells a container deed (a strongbox deed when ownerOnly)
+// at the building's flat price. It is not bound: it can only be used inside
+// its holder's own lodging anyway.
+func buyContainerDeed(user *users.UserRecord, say func(string), buildingId string, ownerOnly bool) {
+	b, ok := GetBuilding(buildingId)
+	if !ok {
+		return
+	}
+	itemId, price, what := b.ContainerItemId, b.ContainerPrice, `container`
+	if ownerOnly {
+		itemId, price, what = b.StrongboxItemId, b.StrongboxPrice, `strongbox`
+	}
+	house, owns := HouseOf(user.UserId, b.BuildingId)
+	if !owns {
+		say(fmt.Sprintf(`A %s's no use without a room to put it in. Get a home first.`, what))
+		return
+	}
+	if len(house.Containers) >= b.MaxContainers {
+		say(`Your place is full of furniture already. The company won't allow more. Fire hazard, they say.`)
+		return
+	}
+	if user.Character.Gold+user.Character.Bank < price {
+		say(fmt.Sprintf(`It's %d gold for a %s. You haven't got it.`, price, what))
+		return
+	}
+	deed := items.New(itemId)
+	if deed.ItemId == 0 {
+		mudlog.Error(`housing.buyContainerDeed`, `building`, b.BuildingId, `error`, what+` item does not exist`)
+		return
+	}
+	if !user.Character.StoreItem(deed) {
+		say(`You're carrying too much to take a slip of paper. Put something down.`)
+		return
+	}
+	fromGold, fromBank := chargeGold(user, price)
+	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -fromGold, BankChange: -fromBank})
+	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: deed, Gained: true})
+	mudlog.Info(`housing.buyContainerDeed`, `user`, user.UserId, `building`, b.BuildingId, `ownerOnly`, ownerOnly, `price`, price)
+	if ownerOnly {
+		say(fmt.Sprintf(`%d gold. Stand where you want it and use the deed. Give it a one-word name when it asks. Only you'll get it open.`, price))
+	} else {
+		say(fmt.Sprintf(`%d gold. Stand where you want it and use the deed. Give it a one-word name when it asks. Mug, chest, whatever. Anyone you let in can use it.`, price))
 	}
 }
 

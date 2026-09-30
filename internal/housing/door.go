@@ -17,6 +17,7 @@ func RegisterRoomHooks() {
 	rooms.SetEntryGuard(GuardEntry)
 	rooms.SetPrivateRoomCheck(IsUnitRoom)
 	rooms.SetRoomOverlay(ApplyOverlay)
+	rooms.SetRoomSaveHook(CaptureOnSave)
 }
 
 // isStaff lets admins walk into any unit (teleport, to look into a report)

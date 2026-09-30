@@ -48,6 +48,10 @@ func UseItem(user *users.UserRecord, room *rooms.Room, itm items.Item, args stri
 	}
 
 	switch itm.ItemId {
+	case b.ContainerItemId:
+		useContainerDeed(user, room, itm, h, b, false, args, rest, send)
+	case b.StrongboxItemId:
+		useContainerDeed(user, room, itm, h, b, true, args, rest, send)
 	case b.ExtensionItemId:
 		useExtension(user, room, itm, h, b, args, rest, send)
 	case b.RedecorateItemId:
@@ -178,7 +182,7 @@ func useExtension(user *users.UserRecord, room *rooms.Room, itm items.Item, h Ho
 	if user.Character.RemoveItem(itm) {
 		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
 	}
-	ApplyOverlay(room) // the room the lodger stands in, whatever LoadRoom returns
+	applyLayout(room) // the room the lodger stands in, whatever LoadRoom returns
 	refreshHouse(next, newRoom)
 	mudlog.Info(`housing.useExtension`, `user`, user.UserId, `building`, b.BuildingId, `from`, room.RoomId, `direction`, dir, `newRoom`, newRoom)
 
@@ -253,7 +257,7 @@ func useRedecorate(user *users.UserRecord, room *rooms.Room, itm items.Item, h H
 	if user.Character.RemoveItem(itm) {
 		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
 	}
-	ApplyOverlay(room)
+	applyLayout(room)
 	mudlog.Info(`housing.useRedecorate`, `user`, user.UserId, `room`, room.RoomId, `length`, len(text))
 
 	send(`You hand the voucher to the decorator who has appeared at your elbow. She reads it, sniffs, and gets to work. By the time the paint smell fades, the room looks the way you wrote it.`)

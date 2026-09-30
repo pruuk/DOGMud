@@ -125,6 +125,13 @@ func loadOneHouse(buildingDir string, path string, fileName string) bool {
 		quarantineAndHold(path, entryFromName, fmt.Errorf(`%w: %v`, util.ErrStateCorrupt, uerr))
 		return false
 	}
+	// Item identities (UUIDs) are not written to disk; every loader mints
+	// them, as the room and user loaders do, so a loaded item is whole.
+	for ci := range h.Containers {
+		for ii := range h.Containers[ci].Items {
+			h.Containers[ci].Items[ii].Validate()
+		}
+	}
 
 	mu.Lock()
 	defer mu.Unlock()

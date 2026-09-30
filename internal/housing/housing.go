@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 )
 
@@ -90,6 +91,21 @@ type Building struct {
 	GuestKeyItemId int `yaml:"guest_key_item_id"`
 	GuestKeyPrice  int `yaml:"guest_key_price"`
 	MaxGuests      int `yaml:"max_guests"`
+
+	// Containers: a container deed (ContainerItemId) places a container the
+	// owner names with one word, usable by anyone let in; a strongbox deed
+	// (StrongboxItemId) places one only the owner can open. A house holds
+	// at most MaxContainers of both kinds together.
+	ContainerItemId int `yaml:"container_item_id"`
+	ContainerPrice  int `yaml:"container_price"`
+	StrongboxItemId int `yaml:"strongbox_item_id"`
+	StrongboxPrice  int `yaml:"strongbox_price"`
+	MaxContainers   int `yaml:"max_containers"`
+}
+
+// housingItemIds lists every item the building sells, for validation.
+func (b Building) housingItemIds() []int {
+	return []int{b.ExtensionItemId, b.RedecorateItemId, b.GuestKeyItemId, b.ContainerItemId, b.StrongboxItemId}
 }
 
 func (b Building) Id() string       { return b.BuildingId }
@@ -148,9 +164,15 @@ func (b Building) Validate() error {
 		}
 		seenRoom[id] = true
 	}
-	if b.ExtensionItemId <= 0 || b.RedecorateItemId <= 0 || b.GuestKeyItemId <= 0 ||
-		b.ExtensionItemId == b.RedecorateItemId || b.GuestKeyItemId == b.ExtensionItemId || b.GuestKeyItemId == b.RedecorateItemId {
-		return fmt.Errorf(`housing building %s: extension_item_id, redecorate_item_id and guest_key_item_id are required and must all differ`, b.BuildingId)
+	seenItem := map[int]bool{}
+	for _, id := range b.housingItemIds() {
+		if id <= 0 || seenItem[id] {
+			return fmt.Errorf(`housing building %s: extension_item_id, redecorate_item_id, guest_key_item_id, container_item_id and strongbox_item_id are required and must all differ`, b.BuildingId)
+		}
+		seenItem[id] = true
+	}
+	if b.ContainerPrice <= 0 || b.StrongboxPrice <= 0 || b.MaxContainers < 1 {
+		return fmt.Errorf(`housing building %s: container_price and strongbox_price must be positive and max_containers at least 1`, b.BuildingId)
 	}
 	if b.GuestKeyPrice <= 0 || b.MaxGuests < 1 {
 		return fmt.Errorf(`housing building %s: guest_key_price must be positive and max_guests at least 1`, b.BuildingId)
@@ -238,6 +260,42 @@ type House struct {
 	// Guests are the accounts the owner has let in with a guest key. Like
 	// the owner, a guest is an ACCOUNT, so a guest's alts share the access.
 	Guests []Guest `yaml:"guests,omitempty"`
+
+	// Containers are the owner-named containers placed by deeds, WITH their
+	// contents. This record, not the room's instance save, is where their
+	// items live: the overlay puts them into the room on load and Capture
+	// writes changes back.
+	Containers []HouseContainer `yaml:"containers,omitempty"`
+}
+
+// HouseContainer is one container placed in a house.
+type HouseContainer struct {
+	RoomId int    `yaml:"room_id"`
+	Name   string `yaml:"name"` // one word, lower case: what players type
+	// OwnerOnly marks a strongbox: nobody but the house owner may look in it,
+	// take from it or put into it.
+	OwnerOnly bool         `yaml:"owner_only,omitempty"`
+	Items     []items.Item `yaml:"items,omitempty"`
+	Gold      int          `yaml:"gold,omitempty"`
+}
+
+// WalkItems visits every item the house holds, for the bauble sweep and
+// TestItemWalkersVisitEveryItemField.
+func (h *House) WalkItems(visit func(*items.Item)) {
+	for ci := range h.Containers {
+		items.WalkSlice(h.Containers[ci].Items, visit)
+	}
+}
+
+// containersIn returns the house's containers placed in roomId.
+func (h House) containersIn(roomId int) []HouseContainer {
+	out := []HouseContainer{}
+	for _, c := range h.Containers {
+		if c.RoomId == roomId {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 // Guest is one account let into a house.
@@ -304,6 +362,14 @@ func (h House) clone() House {
 	c.RoomIds = append([]int(nil), h.RoomIds...)
 	c.Links = append([]RoomLink(nil), h.Links...)
 	c.Guests = append([]Guest(nil), h.Guests...)
+	c.Containers = make([]HouseContainer, len(h.Containers))
+	for i, hc := range h.Containers {
+		hc.Items = append([]items.Item(nil), hc.Items...)
+		c.Containers[i] = hc
+	}
+	if len(h.Containers) == 0 {
+		c.Containers = nil
+	}
 	if h.Descriptions != nil {
 		c.Descriptions = make(map[int]string, len(h.Descriptions))
 		for k, v := range h.Descriptions {
@@ -412,6 +478,20 @@ func (h House) checkLinks() error {
 		if !h.HasRoom(roomId) {
 			return fmt.Errorf(`description for room %d, which is not in this house`, roomId)
 		}
+	}
+	seenContainer := map[string]bool{}
+	for _, c := range h.Containers {
+		if !h.HasRoom(c.RoomId) {
+			return fmt.Errorf(`container %q is in room %d, which is not in this house`, c.Name, c.RoomId)
+		}
+		if err := validContainerName(c.Name); err != nil {
+			return fmt.Errorf(`container %q: %v`, c.Name, err)
+		}
+		key := fmt.Sprintf(`%d/%s`, c.RoomId, c.Name)
+		if seenContainer[key] {
+			return fmt.Errorf(`two containers called %q in room %d`, c.Name, c.RoomId)
+		}
+		seenContainer[key] = true
 	}
 	seenGuest := map[int]bool{}
 	for _, g := range h.Guests {

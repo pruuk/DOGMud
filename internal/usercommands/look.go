@@ -27,15 +27,18 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	isSneaking := user.Character.IsHidden()
 
-	// trim off some fluff
-	if len(rest) > 2 {
-		if rest[0:3] == `at ` {
-			rest = rest[3:]
+	// trim off some fluff: "look at the lantern", "look in the chest",
+	// "look into mug", "look inside my coffer".
+	for _, fluff := range []string{`at `, `into `, `inside `, `in `} {
+		if strings.HasPrefix(strings.ToLower(rest), fluff) {
+			rest = rest[len(fluff):]
+			break
 		}
 	}
-	if len(rest) > 3 {
-		if rest[0:4] == `the ` {
-			rest = rest[4:]
+	for _, fluff := range []string{`the `, `my `} {
+		if strings.HasPrefix(strings.ToLower(rest), fluff) {
+			rest = rest[len(fluff):]
+			break
 		}
 	}
 

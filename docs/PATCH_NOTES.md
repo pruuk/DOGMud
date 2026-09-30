@@ -57,6 +57,27 @@
 - Picking something up by name that turns out to be stashed now refuses an
   item about to explode, the same as asking for it from your stash by name.
 
+## 2026-09-30: Somewhere to keep things
+
+Hobb Pennock now sells furniture, of a sort. Lodgers can buy:
+
+- **A Container Deed**, 250 gold. Stand in one of your rooms and type use
+  container deed, and give it a one-word name when asked: chest, shelf,
+  vase, mug, whatever you like. You can also type use container deed chest.
+  After that, look in chest, put things in chest and get them from chest
+  (open chest works too, as does remove from chest). Anyone you let into
+  your lodging can use it.
+- **A Strongbox Deed**, 500 gold. The same, but it opens for you and
+  nobody else: not your guests and not their pets. Your own companions
+  can still use it for you.
+
+What you keep in them stays there through logouts and restarts. A lodging
+can hold up to ten, and each room can have several as long as the names
+differ. Look at a deed to read how it works.
+
+Also: look in, look into and look inside now work on any container, not
+just ones in your lodging.
+
 ## 2026-09-30: Letting friends in
 
 You can now let friends into your lodging. Buy a **Guest Key** from Hobb

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -296,5 +297,54 @@ func TestDeleteRoomTemplate_CancelsAPendingWrite(t *testing.T) {
 	autosaveQueue.Drain(10)
 	if _, err := os.Stat(p.Path); !os.IsNotExist(err) {
 		t.Error("an orphan instance overlay was written for a deleted room")
+	}
+}
+
+// The save hook sees every loaded room before a bulk save reads it, and what
+// it changes is what gets written: a subsystem that keeps a room's state in
+// its own records (housing containers) captures the live room first.
+func TestBulkSaves_RunTheRoomSaveHookFirst(t *testing.T) {
+	const roomId = 910002
+	restore := setupPrepareRoom(t, roomId)
+	defer restore()
+
+	r := LoadRoomInstance(roomId)
+	if r == nil {
+		t.Fatal("room load returned nil")
+	}
+	roomManager.rooms[roomId] = r
+	defer delete(roomManager.rooms, roomId)
+
+	seen := 0
+	SetRoomSaveHook(func(hooked *Room) {
+		if hooked.RoomId == roomId {
+			seen++
+			hooked.Gold = 77
+		}
+	})
+	defer SetRoomSaveHook(nil)
+
+	writes, err := PrepareAllInstanceWrites()
+	if err != nil {
+		t.Fatalf("PrepareAllInstanceWrites: %v", err)
+	}
+	if seen != 1 {
+		t.Fatalf("hook ran %d times in the autosave prepare, want 1", seen)
+	}
+	found := false
+	for _, p := range writes {
+		if strings.Contains(p.Path, fmt.Sprintf("%d", roomId)) {
+			found = strings.Contains(string(p.Data), "gold: 77")
+		}
+	}
+	if !found {
+		t.Error("the prepared write does not carry what the hook changed")
+	}
+
+	if err := SaveAllRooms(); err != nil {
+		t.Fatalf("SaveAllRooms: %v", err)
+	}
+	if seen != 2 {
+		t.Errorf("hook ran %d times after SaveAllRooms, want 2", seen)
 	}
 }

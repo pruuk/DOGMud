@@ -24,6 +24,8 @@ const (
 	testDeedId    = 55
 	testVoucherId = 56
 	testKeyId     = 57
+	testBoxId     = 58
+	testSafeId    = 59
 )
 
 func testBuilding() Building {
@@ -48,6 +50,11 @@ func testBuilding() Building {
 		GuestKeyItemId:           testKeyId,
 		GuestKeyPrice:            100,
 		MaxGuests:                2,
+		ContainerItemId:          testBoxId,
+		ContainerPrice:           250,
+		StrongboxItemId:          testSafeId,
+		StrongboxPrice:           500,
+		MaxContainers:            2,
 	}
 }
 
@@ -69,6 +76,8 @@ func setup(t *testing.T) string {
 		testDeedId:    {ItemId: testDeedId, Name: `Room Extension Deed`, NameSimple: `deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 		testVoucherId: {ItemId: testVoucherId, Name: `Redecorating Voucher`, NameSimple: `voucher`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 		testKeyId:     {ItemId: testKeyId, Name: `Guest Key`, NameSimple: `guest key`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		testBoxId:     {ItemId: testBoxId, Name: `Container Deed`, NameSimple: `container deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
+		testSafeId:    {ItemId: testSafeId, Name: `Strongbox Deed`, NameSimple: `strongbox deed`, Type: items.Object, Subtype: items.Usable, Uses: 1},
 	})
 	t.Cleanup(func() {
 		restoreItems()
@@ -409,35 +418,4 @@ func TestLoad_SecondHouseForSameOwnerIsHeld(t *testing.T) {
 	if _, isHeld := HeldRooms()[testUnitB]; !isHeld {
 		t.Error("the duplicate's room should be held")
 	}
-}
-
-// ── Guards ─────────────────────────────────────────────────────────────────
-
-// A house holds no items today. The day it does (furniture, a chest), the
-// items become a store the bauble sweep must see, or baubles kept at home are
-// pruned as lost. This test fails then, on purpose, as the reminder: add a
-// WalkItems, a live source in bauble_sweep.go, and a root in
-// item_walker_guard_test.go (internal/baubles/context.md).
-func TestHouseHoldsNoItemsYet(t *testing.T) {
-	itemType := reflect.TypeOf(items.Item{})
-	var walk func(reflect.Type, string)
-	walk = func(tp reflect.Type, path string) {
-		switch tp.Kind() {
-		case reflect.Ptr, reflect.Slice, reflect.Array, reflect.Map:
-			walk(tp.Elem(), path+`[]`)
-			return
-		case reflect.Struct:
-			if tp == itemType {
-				t.Errorf("%s holds items.Item: register the housing store with the bauble sweep, then update this test", path)
-				return
-			}
-			if tp.PkgPath() != reflect.TypeOf(House{}).PkgPath() {
-				return
-			}
-			for i := 0; i < tp.NumField(); i++ {
-				walk(tp.Field(i).Type, path+`.`+tp.Field(i).Name)
-			}
-		}
-	}
-	walk(reflect.TypeOf(House{}), `House`)
 }

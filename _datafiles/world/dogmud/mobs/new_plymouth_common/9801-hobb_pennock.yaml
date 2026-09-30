@@ -13,12 +13,13 @@ idlecommands:
   - 'emote yawns hugely, then looks faintly betrayed that nobody noticed.'
   - ''
   - 'emote taps the painted price board beside the door without looking at
-    it. ROOMS TO LET. EXTENSIONS. REDECORATING. GUEST KEYS. The paint is
-    older than he is.'
+    it. ROOMS TO LET. EXTENSIONS. REDECORATING. GUEST KEYS. STORAGE. The
+    paint is older than he is.'
   - ''
   - 'say Rooms to let. Extensions for the ones who have a room. Vouchers for
-    the ones who hate their walls. Keys for the ones with friends. It is all
-    on the list, if anyone can be bothered to ask for it.'
+    the ones who hate their walls. Keys for the ones with friends. Chests
+    and strongboxes for the ones with stuff. It is all on the list, if anyone
+    can be bothered to ask for it.'
   - ''
   - 'emote turns a page of the ledger, reads a line, sighs, and turns the page
     back.'
@@ -43,8 +44,9 @@ character:
     has the patient, glazed look of a man paid by the day and not by the
     customer. A painted board at his elbow lists what the company sells:
     rooms to let, deeds to knock a new room through a wall, vouchers for
-    anyone who wants their walls to look like something, and guest keys
-    for lodgers who, against all odds, have friends. His mutation
+    anyone who wants their walls to look like something, guest keys for
+    lodgers who, against all odds, have friends, and deeds for chests and
+    locked strongboxes to keep their things in. His mutation
     is a memory for faces that he considers wasted on this job. He never
     forgets a lodger, and he wishes, sometimes, that he could.
   speciesid: 1

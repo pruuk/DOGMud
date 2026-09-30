@@ -171,7 +171,7 @@ func validateBuildingsAgainstWorld(loaded map[string]Building) map[int][4]int {
 		if factions.GetDefinition(b.Faction) == nil {
 			panic(fmt.Sprintf(`housing building %s: faction %q does not exist`, id, b.Faction))
 		}
-		for _, itemId := range []int{b.ExtensionItemId, b.RedecorateItemId, b.GuestKeyItemId} {
+		for _, itemId := range b.housingItemIds() {
 			if items.GetItemSpec(itemId) == nil {
 				panic(fmt.Sprintf(`housing building %s: item %d does not exist`, id, itemId))
 			}
@@ -239,14 +239,17 @@ func LandlordBuildings(mobId int) []Building {
 	return out
 }
 
-// IsHousingItem reports whether itemId is any building's extension deed,
-// redecorating voucher or guest key.
+// IsHousingItem reports whether itemId is anything a building sells: an
+// extension deed, redecorating voucher, guest key, container deed or
+// strongbox deed.
 func IsHousingItem(itemId int) bool {
 	mu.RLock()
 	defer mu.RUnlock()
 	for _, b := range buildings {
-		if itemId == b.ExtensionItemId || itemId == b.RedecorateItemId || itemId == b.GuestKeyItemId {
-			return true
+		for _, id := range b.housingItemIds() {
+			if id == itemId {
+				return true
+			}
 		}
 	}
 	return false
