@@ -37,6 +37,9 @@ Branch `feature/merchant-shops-and-lights`, from `origin/master` at `66b529e49`.
   goes to 54, 57 and 59 (midwinter, equinox, midsummer) because the roof now cuts the sky:
   the open-sky rooms fall from 63, 70 and 74, and 5245 goes from 51, 58 and 62, so its
   midwinter noon rises.
+- **Whisper's gold** goes from 500 to 1000, what the back-alley lockpick dealers who share
+  Whisper's stock carry (9172 Sly Tam, 9215 A River-Road Smuggler, 9323 Ysolde), and the specialist
+  tier in `internal/mobs/crafter.go`. The 5000 of 102 and 104 is for a town's main counters.
 - **Pinned to the counter (`maxwander: 1` to `0`):** 9172 Sly Tam, 9209 A Market Hawker and
   9215 A River-Road Smuggler. A wandering keeper with no light of his own walked into dark
   rooms at night and refused trade there (Tam into 5375 to 5377 and 5379, the Hawker into

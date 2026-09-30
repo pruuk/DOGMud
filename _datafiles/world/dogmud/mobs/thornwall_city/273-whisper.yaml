@@ -39,7 +39,7 @@ character:
     your face and you cannot see theirs. This is probably intentional.
   speciesid: 1
   level: 1
-  gold: 500
+  gold: 1000
   equipment:
     light:
       itemid: 40038
