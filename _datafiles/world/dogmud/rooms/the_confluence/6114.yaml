@@ -33,8 +33,8 @@ spawninfo:
   - mobid: 9423
     respawnrate: "20 real minutes"
 idlemessages:
-- The smell of tar and linseed from the chandlery clings to the air here.
+- The smell of tar and linseed clings to everything in the shop.
 - A coil of dock rope shifts on its peg as someone brushes past it.
-- From inside, the sound of a measuring cord snapped taut and cut clean.
+- Behind the counter, a measuring cord snaps taut and is cut clean.
 x: 4
 y: 60

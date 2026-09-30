@@ -27,8 +27,8 @@ spawninfo:
   - mobid: 9424
     respawnrate: "20 real minutes"
 idlemessages:
-- Laughter breaks from a table inside, easy and brief, then settles back.
-- The smell of river-yeast and warm smoke drifts from the tavern doorway.
-- A stool scrapes on the stone floor inside; someone stands to leave.
+- Laughter breaks from a nearby table, easy and brief, then settles back.
+- The smell of river-yeast and warm smoke hangs over the long tables.
+- A stool scrapes on the stone floor as someone stands to leave.
 x: 4
 y: 62
