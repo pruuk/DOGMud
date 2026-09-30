@@ -56,7 +56,31 @@ lands on, measured from the receiver's round.
 Accepted forms:
 
 - `"10 days"` — quantity + unit. Units: `years`, `months`, `weeks`, `days`,
-  `hours`, `rounds`.
+  `hours`, `minutes`, `seconds`, `rounds`. The unit is matched on its first
+  three letters, so `second`, `seconds` and `secs` all work.
+- Seconds are ALWAYS real seconds, with or without `real`/`irl`, and a `game`
+  modifier does not change that: `"30 seconds"`, `"30 real seconds"` and
+  `"30 game seconds"` are all 8 rounds at `RoundSeconds: 4`. They go through
+  `Timing.SecondsToRounds`, which rounds UP to a whole round, so a seconds
+  period never ends before the time it names and is at least one round
+  (`"1 second"` is 1). `rooms.RealPeriodOK` rejects `game`/`gametime` on a
+  seconds unit so spawn data cannot claim a clock it does not get. History:
+  before 2026-09-30 there was no seconds branch and `"60 real seconds"` fell
+  through to the rounds failover as 60 ROUNDS (four minutes); for a while
+  after, bare seconds ran on the game clock, where `"30 seconds"` was one
+  round, about four real seconds.
+- Only seconds carry the never-early guarantee. Game minutes ROUND DOWN
+  (`math.Floor` of `qty * RoundsPerDay / 1440`), so at 900 rounds a day
+  `"48 minutes"` is exactly 30 rounds but `"1 minute"` is 0 rounds and ends at
+  once. Real minutes, hours, days, weeks, months and years multiply a per-unit round
+  count taken by integer division of the unit's seconds by `RoundSeconds`, so
+  they are exact only when `RoundSeconds` divides 60 (at 4, `"2 real
+  minutes"` is 30 rounds). Game hours, days, weeks, months and years step the
+  calendar through `Add`.
+- An unknown unit does not fail: it falls through to a failover that reads the
+  quantity as rounds (`"7 flurbles"` is 7 rounds). `rooms.RealPeriodOK` keeps
+  a copy of the unit vocabulary to catch typos in spawn data; add any new unit
+  there too.
 - bare period names such as `daily`, `weekly`, `noon`, `midnight`, `sunrise`,
   `sunset`.
 - `"2 irl days"` / `"2 real days"` — real-world time, converted through

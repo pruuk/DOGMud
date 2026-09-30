@@ -88,6 +88,8 @@ func TestRealPeriodOK(t *testing.T) {
 		"5 real minutes", "10 real minutes", "2 real hours", "2 real days",
 		"600 rounds", // the failover path, and the idiom used across the world
 		"1 game day", "daily", "hourly", "2 sunrises", "sunset",
+		// Seconds are always real seconds, with or without "real".
+		"90 real seconds", "30 seconds", "30 irl secs",
 	} {
 		if !RealPeriodOK(ok) {
 			t.Errorf("RealPeriodOK(%q) = false, want true", ok)
@@ -96,6 +98,9 @@ func TestRealPeriodOK(t *testing.T) {
 	for _, bad := range []string{
 		"banana", "soon", "5 bananas", "every so often",
 		"0 real minutes", "-3 rounds", "later on today please",
+		// There is no game-clock second: AddPeriod reads every second as a
+		// real one, so a "game" modifier on seconds would mislead the author.
+		"30 game seconds", "30 seconds gametime",
 	} {
 		if RealPeriodOK(bad) {
 			t.Errorf("RealPeriodOK(%q) = true, want false", bad)
@@ -113,17 +118,25 @@ func TestRealPeriodOK_VocabularyMatchesParser(t *testing.T) {
 	if got, want := gd.AddPeriod("7 flurbles"), gd.RoundNumber+7; got != want {
 		t.Errorf("AddPeriod failover changed: got %d want %d — re-check periodUnitPrefixes", got, want)
 	}
-	// Every prefix we accept as a REAL unit must advance by more than the
-	// failover would, i.e. it must hit a genuine branch. "rou" is excluded:
-	// it IS the failover.
+	// Every prefix we accept as a REAL unit must land somewhere other than
+	// the failover would, i.e. it must hit a genuine branch. "rou" is
+	// excluded: it IS the failover. Seconds land SHORT of the failover (eight
+	// real seconds is two rounds, not eight), so the test is inequality, not
+	// "further than".
 	for _, u := range periodUnitPrefixes {
 		if u == "rou" {
 			continue
 		}
-		p := "2 real " + u + "s"
-		if got := gd.AddPeriod(p); got <= gd.RoundNumber+2 {
-			t.Errorf("AddPeriod(%q) = %d, only failover-far from %d — %q may no longer be a real unit",
+		p := "8 real " + u + "s"
+		if got := gd.AddPeriod(p); got == gd.RoundNumber+8 {
+			t.Errorf("AddPeriod(%q) = %d, exactly failover-far from %d — %q may no longer be a real unit",
 				p, got, gd.RoundNumber, u)
 		}
+	}
+	// RealPeriodOK accepts a bare "30 seconds" because AddPeriod reads it as
+	// real seconds. If the parser ever grows a game-clock second again, bare
+	// seconds and real seconds part ways here.
+	if bare, realSecs := gd.AddPeriod("30 seconds"), gd.AddPeriod("30 real seconds"); bare != realSecs {
+		t.Errorf("AddPeriod(\"30 seconds\") = %d but \"30 real seconds\" = %d; bare seconds are no longer real seconds", bare, realSecs)
 	}
 }

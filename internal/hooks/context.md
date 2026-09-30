@@ -1208,7 +1208,7 @@ Cross-machine cleanup that fires on two Life transitions:
 | `Death_MobBehaviorTree.go` | Fires `mob_die` btree event with primary killer's `UserId` |
 | `Death_MobKillCredit.go` | `EndAggro` on killers, `KD.AddMobKill`, `OnFirstMobKill`, party kill credit |
 | `Death_MobCharmCleanup.go` | `TrackRecentDeath`, `RemoveCharm`, reverse-track player `TrackCharmed` |
-| `Death_MobTracking_Cleanup.go` | Clears `tracking-mob` / `shadow-target-mob` misc-data + condition 86/87 from all characters pointing to the dying mob (chunk 2.8) |
+| `MobDeath_TrackingCleanup.go` | Clears `tracking-mob` / `tracking-display-count` + condition 86, and drops any shadow on the dying mob through `actions.ClearShadow` (found with `actions.ShadowTargetOf`; no cooldown, no line), on every player and mob (chunk 2.8; parity slice 6) |
 
 ### Respawn observers
 
@@ -1216,7 +1216,7 @@ Cross-machine cleanup that fires on two Life transitions:
 |------|---------|
 | `Respawn_PlayerTeleport.go` | `rooms.MoveToRoom` to `c.ResolveRespawnRoom()` destination; belt-and-suspenders `EndAggro` |
 | `Respawn_PlayerAutoLook.go` | Fires `u.Command("look")` for room-render UX after respawn teleport |
-| `PlayerDespawn_TrackingCleanup.go` | Clears `tracking-user` / `shadow-target-user` misc-data + condition 86/87 from all characters pointing to the departing user (chunk 2.8) |
+| `PlayerDespawn_TrackingCleanup.go` | Clears `tracking-user` / `tracking-display-count` + condition 86, and drops any shadow on the departing user through `actions.ClearShadow` (no cooldown, no line), on every other player and every mob (chunk 2.8; parity slice 6) |
 
 ### Wiring pattern
 
@@ -1798,6 +1798,28 @@ through the `recognizeStolenBaubles` variable so tests can see the
 routing; `TestStolenBaubleRecognitionIsRegistered` reads `hooks.go` to
 guard the registration.
 
+### RoomChange_ShadowFollow.go
+
+Registered as a `RoomChange` event listener (player/mob parity slice 6); it
+replaced a loop in `usercommands/go.go` and `MobRoomChange_ShadowFollow.go`,
+which moved only player shadowers. `RoomChangeShadowFollow` runs two passes:
+
+- **Follow.** `shadowExitTo` resolves the exit's map key from `Exits`, then
+  `ExitsTemp`, then the active mutators' exits (not `Room.FindExitTo`, which
+  returns a temporary exit's title). No exit (a teleport): nothing. Otherwise
+  every player and mob in the old room whose `actions.ShadowTargetOf` names
+  the mover is checked: no condition 87 means stale, `actions.ClearShadow`;
+  not hidden, it stays; else it queues the exit through one `Command` call
+  (users and mobs share the signature).
+- **Arrival.** When the mover has a live shadow whose quarry is in the room
+  it entered: not hidden, `actions.EndShadow` with "You've been spotted --
+  your shadow ends."; still hidden, `actions.ShadowSenseRoll` in that room.
+
+It reads `IsHidden()` live, never `RoomChange.Unseen`: listeners run after the
+moving command returns, so entry detection has already run.
+`TestRoomChangeShadowFollowIsRegistered` reads `hooks.go`, and
+`shadow_follow_guard_test.go` keeps it the only follow site.
+
 ### Scheduler observer (in `validate.go` + `mobs.go`)
 
 NOT a hook file — registered inline at each Presence-machine
@@ -2154,21 +2176,22 @@ NPC speaker gets, rather than a hand-rolled room broadcast.
 - `internal/state/presence` - Presence state machine (chunk 5)
 ## Files: one handler per file
 
-135 non-test files (recounted for baubles Phase 6c, which added
-`RoomChange_StolenBaubleRecognition.go`). The filename **is** the index. Each is named for the event
-it handles and the job it does, so `NewRound_IdleMobs.go` is the idle-mob step
-of the new-round event.
+139 non-test files (recounted for parity slice 6, which replaced
+`MobRoomChange_ShadowFollow.go` with `RoomChange_ShadowFollow.go`). The
+filename **is** the index. Each is named for the event it handles and the job
+it does, so `NewRound_IdleMobs.go` is the idle-mob step of the new-round
+event.
 
-The prefix IS the event name, so there is no short list of them: 100 of the 135
+The prefix IS the event name, so there is no short list of them: 100 of the 139
 files carry one and they spell 42 distinct events. The big ones are
-`NewRound_*` (21 files), `Death_*` (11), `MobDeath_*` (7), `NewTurn_*` and
-`Position_*` (5 each), `CombatPhase_*` and `RoomChange_*` (4 each), and
-`Awareness_*`, `MobRoomChange_*` and `PlayerDespawn_*` (3 each); the other 32
+`NewRound_*` (21 files), `Death_*` (11), `MobDeath_*` (7), `NewTurn_*`,
+`Position_*` and `RoomChange_*` (5 each), `CombatPhase_*` (4), and
+`Awareness_*` and `PlayerDespawn_*` (3 each); the other 33
 prefixes carry one or two files apiece. Enumerate them with
 `ls internal/hooks/*.go | sed 's/_.*//' | sort -u` rather than trusting a list
 here. There is no `Input_*` or `Combat_*` prefix.
 
-The remaining 35 files are shared helpers rather than handlers and carry no
+The remaining 39 files are shared helpers rather than handlers and carry no
 prefix at all; they are the lowercase-named ones, for example
 `combat_shared_helpers.go`, `spell_resolution.go`, `item_procs.go`,
 `machine_resolver.go`, `tick_cause.go` (the death-cause tag a damaging

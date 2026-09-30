@@ -391,49 +391,6 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				}
 			}
 
-			// Shadow follow -- check if any hidden player in the OLD room was
-			// shadowing the mover (user). Auto-move them to the destination.
-			for _, pId := range room.GetPlayers(rooms.FindAll) {
-				if pId == user.UserId {
-					continue
-				}
-				shadowP := users.GetByUserId(pId)
-				if shadowP == nil {
-					continue
-				}
-				if !shadowP.Character.IsHidden() {
-					continue
-				}
-				if !shadowIsTargetingUser(shadowP, user.UserId) {
-					continue
-				}
-				// Condition-absent guard: misc data set but condition 87 gone means the
-				// shadow expired or was cancelled out-of-band. Clear stale state
-				// and skip the auto-follow so a dead/logged-off target can't drag
-				// the player to an unexpected room.
-				if !shadowP.Character.HasCondition(87) {
-					shadowP.Character.SetMiscData("shadow-target-user", nil)
-					shadowP.Character.SetMiscData("shadow-target-mob", nil)
-					continue
-				}
-				// Shadower is in the old room and tracking the mover -- follow.
-				shadowP.Command(rest)
-
-				// After the move attempt, check if the shadower is still hidden.
-				// The room-entry detection in go.go runs for the shadower's move,
-				// so if they were spotted their hidden condition will already be gone.
-				if !shadowP.Character.IsHidden() {
-					endShadow(shadowP, "You've been spotted -- your shadow ends.")
-					continue
-				}
-
-				// Target-specific detection roll: does the mover sense pursuit?
-				if shadowDetectionRoll(shadowP, user, destRoom) {
-					user.SendText(messaging.CategorySystem,
-						"You sense someone following close behind you.")
-				}
-			}
-
 			// Hidden detection on room entry, both directions: the sneaking
 			// mover against the room, then the newcomer against the room's
 			// hiders. Shared with mobs (movement parity 4b).

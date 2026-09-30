@@ -944,7 +944,7 @@ func handleMobFlee(mob *mobs.Mob, room *rooms.Room) bool {
 	room.SendTextVisual(messaging.CategoryRoomExit,
 		fmt.Sprintf(`<ansi fg="mobname">%s</ansi> flees!`, name))
 	if dest := rooms.LoadRoom(out.ExitRoomId); dest != nil {
-		actions.RelocateMob(mob, room, out.ExitName, dest)
+		actions.RelocateMob(mob, room, out.ExitName, dest, actions.MobIsSneaking(mob))
 	}
 	behaviortree.TryMobBehavior(mob.InstanceId, behaviortree.EventContext{
 		EventType: "mob_flee",

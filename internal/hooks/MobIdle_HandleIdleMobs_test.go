@@ -3,6 +3,9 @@ package hooks
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 )
 
@@ -89,6 +92,31 @@ func TestShouldRecoverDisplacedHome(t *testing.T) {
 				return m
 			}(),
 			want: false,
+		},
+		{
+			name: "shadowing mob displaced: guard SKIPPED (shadow is live)",
+			mob: func() *mobs.Mob {
+				restore := conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+					actions.ShadowingConditionId: {ConditionId: actions.ShadowingConditionId, Name: "Shadowing", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 25},
+				})
+				t.Cleanup(restore)
+				m := &mobs.Mob{HomeRoomId: 100, MaxWander: 0, Character: *characters.New()}
+				m.Character.RoomId = 200
+				if err := m.Character.AddCondition(actions.ShadowingConditionId, false); err != nil {
+					t.Fatalf("seed shadow condition: %v", err)
+				}
+				return m
+			}(),
+			want: false,
+		},
+		{
+			name: "same mob without a shadow: guard fires as before (shadow ended, recovery resumes)",
+			mob: func() *mobs.Mob {
+				m := &mobs.Mob{HomeRoomId: 100, MaxWander: 0}
+				m.Character.RoomId = 200
+				return m
+			}(),
+			want: true,
 		},
 	}
 

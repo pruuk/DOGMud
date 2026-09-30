@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
@@ -326,6 +327,13 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 // mobcommands.Pathto drains 10% max HP per tick until the factor dies
 // aboard, dropping all cargo + gold (2026-07-03 playtest, BUG-1: no
 // delivery had ever completed).
+//
+// A shadowing mob also opts out: hooks.RoomChangeShadowFollow is the
+// authority on where it goes while a shadow is live (condition 87, held by
+// actions.ShadowingConditionId), the same way a scheduled or patrolling mob's
+// own executor is. Recalling it home mid-shadow would fight the follow and
+// strand the shadow. Once the shadow ends (the condition clears) recovery
+// resumes as before.
 func shouldRecoverDisplacedHome(mob *mobs.Mob) bool {
 	if mob == nil {
 		return false
@@ -334,6 +342,9 @@ func shouldRecoverDisplacedHome(mob *mobs.Mob) bool {
 		return false
 	}
 	if ferry.IsFactorMobId(int(mob.MobId)) {
+		return false
+	}
+	if mob.Character.HasCondition(actions.ShadowingConditionId) {
 		return false
 	}
 	return mob.MaxWander == 0 && mob.Character.RoomId != mob.HomeRoomId

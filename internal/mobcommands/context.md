@@ -278,4 +278,11 @@ why a command available to both players and mobs must be registered twice
   the same call, uncharged. There is no `clearRoomAggroOnDeparture` in this
   package any more — aggro cleanup on departure moved to
   `actions.ClearRoomAggroOnDeparture` alongside `RelocateMob`, so both callers
-  share it.
+  share it. `Go` passes its `actions.MobIsSneaking(mob)` state, so a sneaking
+  mob's step is not announced (parity slice 6, ruling D1).
+- **`Go`'s forced path** (`rest` is a room id with no matching exit, used by
+  `callforhelp`) moves the mob directly with `room.RemoveMob`/
+  `destRoom.AddMob` instead of `actions.RelocateMob`, so it renders its own
+  exit and entry lines. It reads `actions.MobIsSneaking(mob)` before the
+  move and sends neither line when sneaking, matching the ordinary exit
+  path.

@@ -798,3 +798,31 @@ func TestPickpocketSleepingMarkSawNothing(t *testing.T) {
 		t.Fatalf("and learns nothing of the thief: %+v", r)
 	}
 }
+
+// A player's pickpocket of a mob spends the skullduggery cooldown at the
+// roll, not at the reveal: the steal returns pending with the cooldown
+// already armed for the configured 60 seconds, and a second try is refused.
+// The won/lost cooldown tests in steal_cooldown_test.go use a mob thief,
+// whose outcome is immediate; this is the player path through the pause.
+func TestPickpocketByAPlayerArmsTheStealCooldown(t *testing.T) {
+	h := setupPocket(t, 9617, 7617)
+	pinStealCooldown(t)
+	paused(50*time.Millisecond, 0)
+	util.LockMud()
+	res := Steal(h.thief, StealOptions{TargetMobInstanceId: h.mark.InstanceId})
+	armed := h.thief.char.GetCooldown(stealKey())
+	util.UnlockMud()
+	waitSettled(t)
+	if !res.Pending {
+		t.Fatalf("a player's pickpocket pauses: %+v", res)
+	}
+	if armed != 15 {
+		t.Fatalf("cooldown at the roll = %d rounds, want 15 (60 real seconds at 4-second rounds)", armed)
+	}
+	util.LockMud()
+	again := Steal(h.thief, StealOptions{TargetMobInstanceId: h.mark.InstanceId})
+	util.UnlockMud()
+	if !again.OnCooldown {
+		t.Fatalf("a second pickpocket inside the cooldown is refused: %+v", again)
+	}
+}

@@ -102,7 +102,12 @@ change (forager deliveries, NPC sells, player purchases) lives in
   `ceil(baseValue * BuyRatio * ScarcityMultiplier)`, floored at 1.
 - **`EvaluateBuyRules(item, si, crafterSkill, buysGeneral, cfg, worn) BuyOffer`**:
   Determines whether the merchant will buy an item and at what price. Returns
-  `offer.Price > 0` when the merchant accepts.
+  `offer.Price > 0` when the merchant accepts. A stocked item is priced by
+  `CalcBuyPrice`; an item the shop does not stock by the flat
+  `ceil(Value * BuyRatio)`, floored at 1. Every price a merchant pays a
+  player rounds UP to the next gold (owner ruling 2026-09-30): this, and in
+  `internal/actions` the affixed, bauble and fence prices. The flat price
+  truncated until then, so a 3-gold item at 0.5 paid 1 instead of 2.
 - **`ApplyBarterSellDiscount(price int, discount float64) int`**: Applies a
   caller-supplied fractional discount to a sell price (buyer side).
 - **`ApplyBarterBuyBonus(price int, bonus float64) int`**: Applies a

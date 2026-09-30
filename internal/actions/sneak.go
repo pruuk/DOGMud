@@ -33,6 +33,29 @@ type SneakResult struct {
 	RollHappened bool
 }
 
+// MobIsSneaking derives a mob's sneaking state the same way both mob
+// movement call sites must: hidden (the Awareness-backed condition), or the
+// misc-data "sneaking" flag set while not yet hidden (Sneak sets it
+// synchronously, ahead of the hidden condition's event landing). Walking
+// (internal/mobcommands/go.go) and a successful flee
+// (internal/hooks/NewRound_DoCombat_helpers.go, handleMobFlee) both call this
+// rather than each re-deriving it, so they cannot drift the way flee once
+// did by checking only IsHidden. Mirrors the player derivation in
+// internal/usercommands/go.go without sharing code with it, since that path
+// stays player-only.
+func MobIsSneaking(mob *mobs.Mob) bool {
+	if mob == nil {
+		return false
+	}
+	if mob.Character.IsHidden() {
+		return true
+	}
+	if flag, ok := mob.Character.GetMiscData(`sneaking`).(bool); ok && flag {
+		return true
+	}
+	return false
+}
+
 // Sneak attempts to put actor into the hidden (sneaking) state.
 //
 // It rolls the actor's sneak score against every observer in the room. A

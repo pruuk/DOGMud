@@ -1,6 +1,8 @@
 package shops
 
 import (
+	"math"
+
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -69,12 +71,14 @@ func EvaluateBuyRules(
 	//     PriceCeiling, which would push the price above the gold
 	//     reserve and self-reject. (Issue caught 2026-05-04 — Maren
 	//     rejecting cattail cloak, Kerra rejecting arena tower shield.)
+	// Both round UP to the next gold, as every sell price does (owner
+	// ruling 2026-09-30).
 	var price int
 	entry := shopInv.GetStock(spec.ItemId)
 	if entry != nil {
 		price = CalcBuyPrice(spec.Value, entry.Current, PricingBaseline(entry, cfg), cfg)
 	} else {
-		flat := int(float64(spec.Value) * cfg.BuyRatio)
+		flat := int(math.Ceil(float64(spec.Value) * cfg.BuyRatio))
 		if flat < 1 {
 			flat = 1
 		}

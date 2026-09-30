@@ -1,6 +1,7 @@
 package shops
 
 import (
+	"math"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -133,9 +134,27 @@ func TestBuyRules_UnstockedItem_FlatPrice(t *testing.T) {
 	// Empty stock list → item is unstocked.
 	cfg := DefaultPricingConfig()
 	offer := EvaluateBuyRules(item, shop, "", false, cfg, nil)
-	expected := int(60 * cfg.BuyRatio)
+	expected := int(math.Ceil(60 * cfg.BuyRatio))
 	assert.Equal(t, expected, offer.Price,
 		"unstocked items should price at flat value × BuyRatio, not the 5x scarcity ceiling")
+}
+
+// Every sell price rounds up to the next gold (owner ruling 2026-09-30), the
+// unstocked flat price included: it used to truncate, so a 3-gold item at a
+// 0.5 buy ratio paid 1 here and 2 on every other sell path.
+func TestBuyRules_UnstockedItem_FlatPriceRoundsUp(t *testing.T) {
+	item := makeItem(items.ItemSpec{
+		ItemId:           100,
+		Value:            3,
+		Type:             items.Offhand,
+		VendorCategories: []string{"blacksmithing"},
+	})
+	shop := baseShop()
+	shop.CraftSupport = CraftSupportBlacksmithing
+	cfg := DefaultPricingConfig()
+	cfg.BuyRatio = 0.5
+	offer := EvaluateBuyRules(item, shop, "", false, cfg, nil)
+	assert.Equal(t, 2, offer.Price, "3 gold x 0.5 is 1.5, which rounds up to 2")
 }
 
 func TestBuyRules_StockedItem_StillUsesScarcity(t *testing.T) {

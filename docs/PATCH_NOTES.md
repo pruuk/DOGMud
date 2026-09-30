@@ -41,6 +41,35 @@
   in New Plymouth's Outer Market and the smuggler at the Ford, who used to
   drift into the dark and turn customers away.
 
+## 2026-09-30: Shadows that follow
+
+- A creature that shadows someone now follows them from room to room, the
+  same way a player does.
+- A creature that is sneaking no longer announces itself as it comes and
+  goes, just as a sneaking player never has.
+- If you are shadowing someone and anyone in the room spots you when you
+  arrive, your shadow ends, and you must wait a little before you can
+  shadow again.
+- The feeling that someone is following close behind you now comes once
+  they have arrived, and it depends on the light where you both stand.
+- Every step you take while shadowing trains your skullduggery, whether or
+  not your quarry senses you.
+- A shadow now follows a quarry who flees, or who is moved to the next room
+  by other means.
+- Starting to shadow a creature is now a real test of your stealth against
+  its eyes, as it is against a player's.
+
+## 2026-09-30: A fairer wait for thieves
+
+- After you steal or plant something, you now wait about a minute before
+  you can try again, as intended. The wait was about four minutes.
+- The wait only starts when you really try. Being turned away no longer
+  starts it: when you are not yet skilled enough, when your mark is gone,
+  when you cannot steal from someone's companion, or when there is nothing
+  to take.
+- What a shop pays you now always rounds up to the next gold coin. A shop
+  buying something it does not usually stock used to round down.
+
 ## 2026-09-30: Voices in the dark
 
 - In a dark room you now hear who is speaking only as well as you can see

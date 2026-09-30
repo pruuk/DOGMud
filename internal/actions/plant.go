@@ -86,56 +86,37 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 		return PlantResult{Reason: "item not in backpack"}
 	}
 
-	cfg := configs.GetBalanceConfig()
-	// Shares the steal cooldown key — intentional (same skullduggery cooldown).
-	cooldownKey := skills.Skullduggery.String(`steal`)
-
-	// Check cooldown before doing target resolution.
-	if !char.TryCooldown(cooldownKey,
-		fmt.Sprintf(`%d real seconds`, int(cfg.StealCooldown))) {
+	// Shares the steal cooldown key, intentionally: one skullduggery
+	// cooldown. Only CHECKED here; the attempt arms it (theftAttempt.score),
+	// so a refusal below spends nothing.
+	if !char.CooldownReady(skullduggeryCooldownKey) {
 		return PlantResult{
 			OnCooldown: true,
-			Reason: fmt.Sprintf("%d rounds remaining",
-				char.GetCooldown(cooldownKey)),
+			Reason:     "still recovering",
 		}
 	}
 
-	isHidden := char.IsHidden()
-
-	// Compute attacker score (identical formula to steal). U6b Task 15:
-	// linear rank x SkillWeight; the sqrt-curve x25 regime and the
-	// steal-specific balance knob it multiplied by are both gone.
-	rank := char.GetSkillLevel(skills.Skullduggery)
-	attackerScore := float64(char.Stats.Dexterity.ValueAdj) +
-		float64(rank)*float64(cfg.SkillWeight)
-	if isHidden {
-		attackerScore += float64(cfg.StealHiddenBonus)
-	}
-	// sight ramp (plan 5b): the planter needs to see. Once here; the score
-	// feeds all three plant contests below.
-	attackerScore *= messaging.SightMult(char, room)
+	// The planter's score is the thief's (newTheftAttempt), sight ramp
+	// included.
+	t := newTheftAttempt(char, room, configs.GetBalanceConfig())
 
 	// Dispatch to the appropriate path.
 	if opts.TargetMobInstanceId > 0 {
-		return plantOnMob(actor, opts.TargetMobInstanceId, plantItem,
-			attackerScore, rank)
+		return plantOnMob(actor, opts.TargetMobInstanceId, plantItem, t)
 	}
 
 	if opts.TargetUserId > 0 {
-		return plantOnPlayer(actor, opts.TargetUserId, plantItem,
-			attackerScore, rank, cfg)
+		return plantOnPlayer(actor, opts.TargetUserId, plantItem, t)
 	}
 
 	// Container path.
-	return plantInContainer(actor, opts.ContainerNoun, plantItem,
-		attackerScore, rank)
+	return plantInContainer(actor, opts.ContainerNoun, plantItem, t)
 }
 
 // plantOnMob handles slipping an item into a creature's inventory.
-// attackerScore arrives with the planter's sight ramp already applied in
-// Plant; do not apply SightMult again.
-func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item,
-	attackerScore float64, rank int) PlantResult {
+// t.score() carries the planter's sight ramp already; do not apply
+// SightMult again.
+func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item, t theftAttempt) PlantResult {
 
 	m := mobs.GetInstance(mobInstanceId)
 	if m == nil {
@@ -157,7 +138,7 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item,
 	}
 
 	defenderScore := stealVictimScore(&m.Character, combat.SightRoom(actor.GetRoom()))
-	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
+	success := combat.RunContest(t.score(), []contest.Entry{{Score: defenderScore}}).Success
 	// U10b-1 Task 18: moved DOWN from before the contest, and it now carries
 	// the outcome. This fired unconditionally at full weight -- the comment
 	// it replaced said "always fire regardless of roll outcome" -- so a
@@ -279,10 +260,9 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item,
 // score is rolled against the target player's Perception. On
 // success, the item is slipped into the player's inventory. An
 // independent detection roll then decides whether the victim notices.
-// attackerScore arrives with the planter's sight ramp already applied in
-// Plant; do not apply SightMult again.
-func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item,
-	attackerScore float64, rank int, cfg configs.Balance) PlantResult {
+// t.score() carries the planter's sight ramp already; do not apply
+// SightMult again.
+func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftAttempt) PlantResult {
 
 	targetUser := users.GetByUserId(targetUserId)
 	if targetUser == nil {
@@ -291,7 +271,7 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item,
 	}
 
 	defenderScore := stealVictimScore(targetUser.Character, combat.SightRoom(actor.GetRoom()))
-	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
+	success := combat.RunContest(t.score(), []contest.Entry{{Score: defenderScore}}).Success
 	// U10b-1 Task 18: moved DOWN from before the contest, and it now carries
 	// the outcome. This fired unconditionally at full weight -- the comment
 	// it replaced said "always fire regardless of roll outcome" -- so a
@@ -361,10 +341,9 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item,
 }
 
 // plantInContainer handles slipping an item into a room container.
-// attackerScore arrives with the planter's sight ramp already applied in
-// Plant; do not apply SightMult again.
-func plantInContainer(actor Actor, containerName string, plantItem items.Item,
-	attackerScore float64, rank int) PlantResult {
+// t.score() carries the planter's sight ramp already; do not apply
+// SightMult again.
+func plantInContainer(actor Actor, containerName string, plantItem items.Item, t theftAttempt) PlantResult {
 
 	room := actor.GetRoom()
 	container, ok := room.Containers[containerName]
@@ -436,6 +415,9 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item,
 		}
 	}
 
+	// Read (and so arm) the score whether or not anyone watches: an
+	// unwatched plant is an uncontested attempt, not a refusal.
+	attackerScore := t.score()
 	success := true
 	if hasObserver {
 		success = combat.RunContest(attackerScore, []contest.Entry{{Score: highestObserverScore}}).Success

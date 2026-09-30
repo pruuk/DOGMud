@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -14,9 +16,9 @@ import (
 // State cleared per pointing character:
 //   - tracking-user misc (string match on CharacterName)
 //   - tracking-display-count misc (cleared alongside tracking-user)
-//   - shadow-target-user misc (int match on UserId)
 //   - condition 86 (Active Tracking) — only if tracking-user state was on this char
-//   - condition 87 (Shadowing) — only if shadow-target-user state was on this char
+//   - the shadow (actions.ClearShadow: target and Shadowing condition, no
+//     cooldown, no message), only if actions.ShadowTargetOf names this player
 func PlayerDespawnTrackingCleanup(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.PlayerDespawn)
 	if !ok {
@@ -26,11 +28,7 @@ func PlayerDespawnTrackingCleanup(e events.Event) events.ListenerReturn {
 	leavingName := evt.CharacterName
 	leavingUserId := evt.UserId
 
-	clearPointers := func(c interface {
-		GetMiscData(string) any
-		SetMiscData(string, any)
-		RemoveCondition(int)
-	}) {
+	clearPointers := func(c *characters.Character) {
 		// Tracking by name.
 		if leavingName != "" {
 			if v := c.GetMiscData("tracking-user"); v != nil {
@@ -42,11 +40,8 @@ func PlayerDespawnTrackingCleanup(e events.Event) events.ListenerReturn {
 			}
 		}
 		// Shadow by UserId.
-		if v := c.GetMiscData("shadow-target-user"); v != nil {
-			if id, ok := v.(int); ok && id == leavingUserId {
-				c.SetMiscData("shadow-target-user", nil)
-				c.RemoveCondition(shadowingCondition)
-			}
+		if userId, _ := actions.ShadowTargetOf(c); userId != 0 && userId == leavingUserId {
+			actions.ClearShadow(c)
 		}
 	}
 

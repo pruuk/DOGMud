@@ -1,7 +1,6 @@
 package usercommands
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -57,9 +56,8 @@ func Steal(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// actions.Steal emits player-facing text for every outcome except
 	// the cooldown case (which returns without calling SendText).
 	if result.OnCooldown {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			"You need to wait %s before you can do that again.",
-			result.Reason))
+		user.SendText(messaging.CategorySystem,
+			"You need a moment before you can try that again.")
 	}
 
 	return true, nil

@@ -81,7 +81,14 @@ func ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 // mob, narrates the exit and the entry (sight-gated, with a sound fallback),
 // plays the movement sounds, and pulls an NPC party's idle members after
 // their leader.
-func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.Room) {
+//
+// sneaking is the mover's sneaking state, read by the caller before the move
+// via MobIsSneaking (mirroring the derivation usercommands.Go reads a
+// player's with). A sneaking mob sends no exit line, no entry line and
+// nothing to the neighbouring rooms, as a sneaking player never has (parity
+// slice 6, owner ruling D1); the movement sounds play for both, as they do
+// on the player path.
+func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.Room, sneaking bool) {
 	enterFrom := `somewhere`
 	if back := dest.FindExitTo(from.RoomId); back != `` {
 		enterFrom = fmt.Sprintf(`the <ansi fg="exit">%s</ansi>`, back)
@@ -93,19 +100,21 @@ func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.R
 
 	c := configs.GetTextFormatsConfig()
 
-	from.SendTextVisualWithAudio(messaging.CategoryRoomExit,
-		fmt.Sprintf(string(c.ExitRoomMessageWrapper),
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaves towards the <ansi fg="exit">%s</ansi> exit.`, mob.Character.Name, exitName),
-		),
-		`You hear footsteps moving away.`)
+	if !sneaking {
+		from.SendTextVisualWithAudio(messaging.CategoryRoomExit,
+			fmt.Sprintf(string(c.ExitRoomMessageWrapper),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaves towards the <ansi fg="exit">%s</ansi> exit.`, mob.Character.Name, exitName),
+			),
+			`You hear footsteps moving away.`)
 
-	dest.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
-		fmt.Sprintf(string(c.EnterRoomMessageWrapper),
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> enters from %s.`, mob.Character.Name, enterFrom),
-		),
-		`You hear footsteps approaching.`)
+		dest.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
+			fmt.Sprintf(string(c.EnterRoomMessageWrapper),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> enters from %s.`, mob.Character.Name, enterFrom),
+			),
+			`You hear footsteps approaching.`)
 
-	dest.SendTextToExits(`You hear someone moving around.`, true, from.GetPlayers(rooms.FindAll)...)
+		dest.SendTextToExits(`You hear someone moving around.`, true, from.GetPlayers(rooms.FindAll)...)
+	}
 
 	from.PlaySound(`room-exit`, `movement`)
 	dest.PlaySound(`room-enter`, `movement`)

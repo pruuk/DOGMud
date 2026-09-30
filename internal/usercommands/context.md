@@ -275,13 +275,17 @@ fails if this file prices or detects a step itself again.
 - `internal/combat`: contest resolution. The movement contests (a sneaking
   mover against each occupant, and the mover spotting hidden players and
   mobs on arrival) moved out of `go.go` in movement parity 4b — they resolve
-  in `actions.EntryDetection`, shared with mobs. The one in
-  `skill.skullduggery.shadow.go` and the one in `throw.go` are still here and
-  all resolve through
+  in `actions.EntryDetection`, shared with mobs. The shadow contest moved to
+  `actions.ShadowSenseRoll` in parity slice 6. The one in `throw.go` is
+  still here and resolves through
   `combat.RunContest(attackScore, []contest.Entry{{Score: defenseScore}})`.
   U4 routed them to per-channel wrappers; U6 collapsed those into this single
   entry point. This package imports `internal/contest` for the `Entry` type
   only and must not call that package's roll functions directly.
+- `shadow` (`skill.skullduggery.shadow.go`) only resolves the target and calls
+  `actions.Shadow`; `shadow stop` reads `actions.ShadowTargetOf` and calls
+  `actions.EndShadow`. Following, the spotted end and the sense roll live in
+  `hooks.RoomChangeShadowFollow` (parity slice 6), not in `go.go`.
 
 ## Usage Patterns
 - Commands follow consistent signature and return conventions

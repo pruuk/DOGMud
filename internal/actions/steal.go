@@ -123,7 +123,6 @@ func Steal(actor Actor, opts StealOptions) StealResult {
 	}
 
 	cfg := configs.GetBalanceConfig()
-	cooldownKey := skills.Skullduggery.String(`steal`)
 
 	// One pickpocket at a time: a thief still in one's pause starts no other
 	// (the cooldown normally covers this, but it may be set to nothing).
@@ -132,55 +131,86 @@ func Steal(actor Actor, opts StealOptions) StealResult {
 		return StealResult{Reason: "busy"}
 	}
 
-	// Check cooldown before doing target resolution.
-	if !char.TryCooldown(cooldownKey,
-		fmt.Sprintf(`%d real seconds`, int(cfg.StealCooldown))) {
+	// Only CHECK the cooldown here. It is armed by the attempt itself
+	// (theftAttempt.score), so a refusal below spends nothing.
+	if !char.CooldownReady(skullduggeryCooldownKey) {
 		return StealResult{
 			OnCooldown: true,
-			Reason: fmt.Sprintf("%d rounds remaining",
-				char.GetCooldown(cooldownKey)),
+			Reason:     "still recovering",
 		}
 	}
 
-	isHidden := char.IsHidden()
-
-	// Compute attacker score. U6b Task 15: linear rank x SkillWeight, the
-	// same shape as every other contest in the game. The old regime was
-	// (Dex + sqrt-curve x25) times a steal-specific global balance knob;
-	// both the sqrt term and the knob (deleted from the balance config)
-	// die here.
-	rank := char.GetSkillLevel(skills.Skullduggery)
-	attackerScore := float64(char.Stats.Dexterity.ValueAdj) +
-		float64(rank)*float64(cfg.SkillWeight)
-	if isHidden {
-		attackerScore += float64(cfg.StealHiddenBonus)
-	}
-	// sight ramp (plan 5b): the thief needs to see. Once here; the score
-	// feeds all three theft contests below.
-	attackerScore *= messaging.SightMult(char, room)
+	t := newTheftAttempt(char, room, cfg)
 
 	// Dispatch to the appropriate path.
 	if opts.TargetMobInstanceId > 0 {
-		return stealFromMob(actor, opts.TargetMobInstanceId, attackerScore, rank, cfg)
+		return stealFromMob(actor, opts.TargetMobInstanceId, t)
 	}
 
 	if opts.TargetUserId > 0 {
-		return stealFromPlayer(actor, opts.TargetUserId, attackerScore, rank, cfg)
+		return stealFromPlayer(actor, opts.TargetUserId, t)
 	}
 
 	if opts.HouseholdItem.ItemId > 0 {
-		return stealHouseholdBauble(actor, opts.HouseholdItem, attackerScore, rank)
+		return stealHouseholdBauble(actor, opts.HouseholdItem, t)
 	}
 
 	// Container path.
-	return stealFromContainer(actor, opts.ContainerNoun, attackerScore, rank)
+	return stealFromContainer(actor, opts.ContainerNoun, t)
 }
 
-// stealFromMob handles the creature steal path. attackerScore arrives with
-// the thief's sight ramp already applied in Steal; do not apply SightMult
-// again.
-func stealFromMob(actor Actor, mobInstanceId int, attackerScore float64,
-	rank int, cfg configs.Balance) StealResult {
+// skullduggeryCooldownKey is the one cooldown steal and plant share.
+var skullduggeryCooldownKey = skills.Skullduggery.String(`steal`)
+
+// theftAttempt is a thief's (or planter's) side of a steal or plant contest,
+// carried from Steal and Plant down to the path that resolves the target.
+//
+// It exists to put the skullduggery cooldown in one place. Steal and Plant
+// only check the cooldown; each path then runs its own refusals (target
+// gone, a companion, an immune mob, rank below 2, an empty container) and
+// only then asks for the score to roll with. score() is the only way to
+// read it, and it arms the cooldown as it hands it over, so no refusal can
+// spend the cooldown and no contest can run without spending it.
+type theftAttempt struct {
+	char   *characters.Character
+	rank   int
+	points float64
+	period string
+}
+
+// newTheftAttempt computes the attacker's score once, for every theft and
+// plant contest. U6b Task 15: linear rank x SkillWeight, the same shape as
+// every other contest in the game; the old sqrt-curve x25 regime and the
+// steal-specific knob it multiplied by are both gone. The sight ramp (plan
+// 5b) is applied here too, once: the thief needs to see, and no path
+// applies SightMult again.
+func newTheftAttempt(char *characters.Character, room *rooms.Room, cfg configs.Balance) theftAttempt {
+	rank := char.GetSkillLevel(skills.Skullduggery)
+	points := float64(char.Stats.Dexterity.ValueAdj) +
+		float64(rank)*float64(cfg.SkillWeight)
+	if char.IsHidden() {
+		points += float64(cfg.StealHiddenBonus)
+	}
+	points *= messaging.SightMult(char, room)
+	return theftAttempt{
+		char:   char,
+		rank:   rank,
+		points: points,
+		period: fmt.Sprintf(`%d real seconds`, int(cfg.StealCooldown)),
+	}
+}
+
+// score arms the skullduggery cooldown and returns the attacker's score.
+// Call it once per attempt, immediately before the contest it feeds, and
+// after every refusal.
+func (t theftAttempt) score() float64 {
+	t.char.TryCooldown(skullduggeryCooldownKey, t.period)
+	return t.points
+}
+
+// stealFromMob handles the creature steal path. t.score() carries the
+// thief's sight ramp already; do not apply SightMult again.
+func stealFromMob(actor Actor, mobInstanceId int, t theftAttempt) StealResult {
 
 	m := mobs.GetInstance(mobInstanceId)
 	if m == nil {
@@ -218,7 +248,7 @@ func stealFromMob(actor Actor, mobInstanceId int, attackerScore float64,
 	// AFTER the immune gate so a low-rank thief targeting an immune mob
 	// gets the immune rebuff (which doesn't imply skill would help)
 	// rather than the skill rebuff (which does).
-	if rank < 2 {
+	if t.rank < 2 {
 		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{
 			DefenderName: m.Character.Name,
@@ -240,7 +270,7 @@ func stealFromMob(actor Actor, mobInstanceId int, attackerScore float64,
 	}
 
 	defenderScore := stealVictimScore(&m.Character, combat.SightRoom(actor.GetRoom()))
-	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
+	success := combat.RunContest(t.score(), []contest.Entry{{Score: defenderScore}}).Success
 	// A player's pickpocket takes a moment, Dexterity-scaled: the roll above
 	// is final, the outcome is revealed when the pause ends
 	// (steal_pocket.go), and it is awarded THERE, with the outcome: awarded
@@ -397,10 +427,9 @@ func caughtByMob(actor Actor, m *mobs.Mob, room *rooms.Room) StealResult {
 // score is rolled against the target player's Perception. On
 // success, gold is lifted (no item steal against players). An
 // independent detection roll then decides whether the victim
-// notices. attackerScore arrives with the thief's sight ramp already
-// applied in Steal; do not apply SightMult again.
-func stealFromPlayer(actor Actor, targetUserId int, attackerScore float64,
-	rank int, cfg configs.Balance) StealResult {
+// notices. t.score() carries the thief's sight ramp already; do not apply
+// SightMult again.
+func stealFromPlayer(actor Actor, targetUserId int, t theftAttempt) StealResult {
 
 	targetUser := users.GetByUserId(targetUserId)
 	if targetUser == nil {
@@ -409,7 +438,7 @@ func stealFromPlayer(actor Actor, targetUserId int, attackerScore float64,
 	}
 
 	// Skill rank 2 required.
-	if rank < 2 {
+	if t.rank < 2 {
 		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{
 			DefenderName: targetUser.Character.Name,
@@ -418,7 +447,7 @@ func stealFromPlayer(actor Actor, targetUserId int, attackerScore float64,
 	}
 
 	defenderScore := stealVictimScore(targetUser.Character, combat.SightRoom(actor.GetRoom()))
-	success := combat.RunContest(attackerScore, []contest.Entry{{Score: defenderScore}}).Success
+	success := combat.RunContest(t.score(), []contest.Entry{{Score: defenderScore}}).Success
 	// U10b-1 Task 18: moved DOWN from before the contest, and it now carries
 	// the outcome. This fired unconditionally at full weight -- the comment
 	// it replaced said "always fire regardless of roll outcome" -- so a
@@ -492,11 +521,9 @@ func stealFromPlayer(actor Actor, targetUserId int, attackerScore float64,
 	return result
 }
 
-// stealFromContainer handles the room-container steal path. attackerScore
-// arrives with the thief's sight ramp already applied in Steal; do not apply
-// SightMult again.
-func stealFromContainer(actor Actor, containerName string,
-	attackerScore float64, rank int) StealResult {
+// stealFromContainer handles the room-container steal path. t.score()
+// carries the thief's sight ramp already; do not apply SightMult again.
+func stealFromContainer(actor Actor, containerName string, t theftAttempt) StealResult {
 
 	room := actor.GetRoom()
 	container, ok := room.Containers[containerName]
@@ -508,7 +535,7 @@ func stealFromContainer(actor Actor, containerName string,
 	// Skill rank 2 required for the actual steal mechanic. Mirrors the
 	// gate in stealFromMob; checked AFTER target validation so the rebuff
 	// order is consistent.
-	if rank < 2 {
+	if t.rank < 2 {
 		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{Reason: "not advanced enough"}
 	}
@@ -533,7 +560,7 @@ func stealFromContainer(actor Actor, containerName string,
 		}
 	}
 
-	success, spotterName, _ := stealObserverPass(actor, room, attackerScore)
+	success, spotterName, _ := stealObserverPass(actor, room, t.score())
 	// U10b-1 Task 18: moved DOWN from before the contest. success here means
 	// NOT SPOTTED: it starts true (no observer present is an uncontested
 	// win) and only a lost observer contest clears it. Previously this
@@ -817,9 +844,10 @@ func stealObserverPass(actor Actor, room *rooms.Room, attackerScore float64) (su
 }
 
 // stealHouseholdBauble takes a bauble that belongs to this room's household
-// (`steal doll`): the steal checks throughout. The cooldown, the combat
-// gates and the thief's score (Dexterity + skullduggery, plus the hidden
-// bonus when sneaking) are Steal's; skullduggery rank 2 is required, as for
+// (`steal doll`): the steal checks throughout. The cooldown check, the
+// combat gates and the thief's score (Dexterity + skullduggery, plus the
+// hidden bonus when sneaking) are Steal's, and the cooldown is armed only
+// when the contest runs (theftAttempt.score); skullduggery rank 2 is required, as for
 // every theft; and the contest is the container theft's observer pass.
 //
 // Caught by one of the household (a resident, isResident) is caught
@@ -827,7 +855,7 @@ func stealObserverPass(actor Actor, room *rooms.Room, attackerScore float64) (su
 // their attack, exactly as stealing from a mob. Spotted by anyone else, the
 // thief is revealed, as in a container theft. Either way the bauble stays.
 // Taken unseen, it is marked stolen in the catalog.
-func stealHouseholdBauble(actor Actor, itm items.Item, attackerScore float64, rank int) StealResult {
+func stealHouseholdBauble(actor Actor, itm items.Item, t theftAttempt) StealResult {
 	room := actor.GetRoom()
 	char := actor.GetCharacter()
 	name := itm.DisplayName()
@@ -836,7 +864,7 @@ func stealHouseholdBauble(actor Actor, itm items.Item, attackerScore float64, ra
 		actor.SendText(messaging.CategorySystem, "You don't see that here.")
 		return StealResult{Reason: "not found"}
 	}
-	if rank < 2 {
+	if t.rank < 2 {
 		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{Reason: "not advanced enough"}
 	}
@@ -858,7 +886,7 @@ func stealHouseholdBauble(actor Actor, itm items.Item, attackerScore float64, ra
 		}
 	}
 
-	success, spotterName, spotterMob := stealObserverPass(actor, room, attackerScore)
+	success, spotterName, spotterMob := stealObserverPass(actor, room, t.score())
 	actor.AwardResolved(success, char.CandidateFor(string(skills.Skullduggery)))
 
 	if !success {

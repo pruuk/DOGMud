@@ -5,9 +5,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
-	"github.com/GoMudEngine/GoMud/internal/combat"
-	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -18,9 +15,10 @@ import (
 /*
 Skullduggery Skill
 Level 3 - Shadow: follow a target between rooms while remaining hidden.
-When the target moves, the shadower automatically moves with them.
-A target-specific detection roll alerts the target if they sense pursuit.
-Shadow ends if the shadower loses their hidden condition or manually stops.
+When the target moves through an exit, the shadower moves with them
+(hooks.RoomChangeShadowFollow). On each arrival the target may sense the
+shadower (actions.ShadowSenseRoll). The shadow ends if the shadower arrives
+no longer hidden, or on "shadow stop" (actions.EndShadow).
 */
 func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -39,9 +37,8 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	// "shadow stop" cancels an active shadow
 	if strings.ToLower(rest) == "stop" {
-		if user.Character.GetMiscData("shadow-target-user") != nil ||
-			user.Character.GetMiscData("shadow-target-mob") != nil {
-			endShadow(user, "You stop shadowing your target.")
+		if targetUserId, targetMobId := actions.ShadowTargetOf(user.Character); targetUserId != 0 || targetMobId != 0 {
+			actions.EndShadow(actions.NewUserActorInRoom(user, room), "You stop shadowing your target.")
 		} else {
 			user.SendText(messaging.CategorySystem, "You aren't shadowing anyone.")
 		}
@@ -85,62 +82,4 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	return true, nil
-}
-
-// endShadow clears the shadow target state, starts the cooldown, and
-// optionally sends a reason message to the shadower.
-func endShadow(user *users.UserRecord, reason string) {
-	user.Character.SetMiscData("shadow-target-user", nil)
-	user.Character.SetMiscData("shadow-target-mob", nil)
-	user.Character.RemoveCondition(87)
-
-	cfg := configs.GetBalanceConfig()
-	cooldownKey := skills.Skullduggery.String(`shadow`)
-	user.Character.TryCooldown(cooldownKey,
-		fmt.Sprintf(`%d rounds`, cfg.ShadowCooldown))
-
-	if reason != "" {
-		user.SendText(messaging.CategorySystem, reason)
-	}
-}
-
-// getShadowTargetUserId returns the player user ID being shadowed, or 0.
-func getShadowTargetUserId(user *users.UserRecord) int {
-	raw := user.Character.GetMiscData("shadow-target-user")
-	if raw == nil {
-		return 0
-	}
-	if uid, ok := raw.(int); ok {
-		return uid
-	}
-	return 0
-}
-
-// shadowIsTargetingUser returns true when the given shadower is tracking
-// the mover identified by moverId. Checks the "shadow-target-user" misc slot.
-func shadowIsTargetingUser(shadower *users.UserRecord, moverId int) bool {
-	raw := shadower.Character.GetMiscData("shadow-target-user")
-	if raw == nil {
-		return false
-	}
-	uid, ok := raw.(int)
-	return ok && uid == moverId
-}
-
-// shadowDetectionRoll performs a target-specific detection check.
-// Returns true if the target sensed the follower (shadower detected).
-// Uses Perception+Search vs Dex+Skullduggery (target is the attacker).
-// room is the current room in which the detection check occurs; used
-// to compute per-observer light conditions (NightVision, room darkness).
-func shadowDetectionRoll(shadower *users.UserRecord, target *users.UserRecord, room *rooms.Room) bool {
-	sight := combat.SightRoom(room)
-	sneakScore := actions.CalcSneakScoreVsObserver(shadower.Character, target.Character, sight)
-	// sight ramp (plan 5b): the shadower needs to see the quarry to keep on it.
-	sneakScore *= messaging.SightMult(shadower.Character, sight)
-	targetScore := actions.CalcDetectionScore(target.Character, sight)
-
-	// The target is the attacker in this contest: Success means they noticed.
-	// Target detects when targetScore beats sneakScore.
-	detected := combat.RunContest(targetScore, []contest.Entry{{Score: sneakScore}}).Success
-	return detected
 }

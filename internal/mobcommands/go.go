@@ -68,23 +68,30 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				return true, nil
 			}
 
+			// Captured before the move, matching ruling D1: a sneaking mob's
+			// forced relocation (callforhelp's `go <roomId>`) is as quiet as
+			// its ordinary step through actions.RelocateMob.
+			sneaking := actions.MobIsSneaking(mob)
+
 			room.RemoveMob(mob.InstanceId)
 			actions.ClearRoomAggroOnDeparture(room, mob.InstanceId)
 			destRoom.AddMob(mob.InstanceId)
 
-			// Tell the old room they are leaving
-			sendMovementMessage(room, messaging.CategoryRoomExit,
-				fmt.Sprintf(string(c.ExitRoomMessageWrapper),
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> runs off suddenly.`, mob.Character.Name),
-				),
-				`You hear hurried footsteps receding.`)
+			if !sneaking {
+				// Tell the old room they are leaving
+				sendMovementMessage(room, messaging.CategoryRoomExit,
+					fmt.Sprintf(string(c.ExitRoomMessageWrapper),
+						fmt.Sprintf(`<ansi fg="mobname">%s</ansi> runs off suddenly.`, mob.Character.Name),
+					),
+					`You hear hurried footsteps receding.`)
 
-			// Tell the new room they have arrived
-			sendMovementMessage(destRoom, messaging.CategoryRoomEntry,
-				fmt.Sprintf(string(c.EnterRoomMessageWrapper),
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> enters from nearby.`, mob.Character.Name),
-				),
-				`You hear footsteps approaching.`)
+				// Tell the new room they have arrived
+				sendMovementMessage(destRoom, messaging.CategoryRoomEntry,
+					fmt.Sprintf(string(c.EnterRoomMessageWrapper),
+						fmt.Sprintf(`<ansi fg="mobname">%s</ansi> enters from nearby.`, mob.Character.Name),
+					),
+					`You hear footsteps approaching.`)
+			}
 
 			return true, nil
 
@@ -132,12 +139,9 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			return true, nil
 		}
 
-		sneaking := mob.Character.IsHidden()
-		if flag, ok := mob.Character.GetMiscData(`sneaking`).(bool); ok && flag {
-			sneaking = true
-		}
+		sneaking := actions.MobIsSneaking(mob)
 
-		actions.RelocateMob(mob, room, exitName, destRoom)
+		actions.RelocateMob(mob, room, exitName, destRoom, sneaking)
 
 		// The rare Search roll and hidden detection on entry, both ways
 		// (owner ruling 3), shared with players.

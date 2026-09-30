@@ -608,6 +608,11 @@ text, so a test can also read `IsCommunication`. It matches on
 `Message` queued for `roomId` (`Room.SendTextCommunication`,
 `Room.SendTextToExits`) rather than a per-user one.
 
+`DrainQueuedUserInputsForTest(userId)` (parity slice 6) drains the `Input`
+events `UserRecord.Command` queued for a player (`MobInstanceId` 0, matched on
+`UserId`); `DrainQueuedInputsForTest` and `InspectQueuedInputForTest` match
+mobs only.
+
 `Message.HiddenFromDeafened(deafened bool) bool` (sight gates slice 5b) is
 the one statement of the Deafened moderation rule: true when `m` is player
 chatter (`IsCommunication`) and the reader is deafened.

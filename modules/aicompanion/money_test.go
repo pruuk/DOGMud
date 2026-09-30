@@ -18,7 +18,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
-	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -165,15 +164,15 @@ func TestUnstickHasACooldown(t *testing.T) {
 	}
 }
 
-// Character cooldowns count in rounds and read no seconds: cooldownFor
-// turns real seconds into the rounds that last as long.
-func TestCooldownForCountsRealSeconds(t *testing.T) {
+// A passer-by's pause lasts StrangerAskSeconds of real time, counted in the
+// rounds a character cooldown ticks in: thirty seconds, not thirty rounds.
+func TestStrangerAskCooldownCountsRealSeconds(t *testing.T) {
+	m, c, bram := strangerModule()
+	m.hearSaid(c, bram, `Bram`, `Mara, which way to the river?`, 7, true, time.Now().Unix())
 	rs := int(configs.GetTimingConfig().RoundSeconds)
-	if got := gametime.PeriodLength(cooldownFor(60)); int(got) != (60+rs-1)/rs {
-		t.Fatalf("sixty seconds is %d rounds of %d seconds, got %d", (60+rs-1)/rs, rs, got)
-	}
-	if got := gametime.PeriodLength(cooldownFor(0)); got != 1 {
-		t.Fatalf("at least one round, got %d", got)
+	want := (m.cfg.StrangerAskSeconds + rs - 1) / rs
+	if got := bram.Character.GetCooldown(fmt.Sprintf(`aicompanion-ask-%d`, c.instanceId)); got != want {
+		t.Fatalf("%d seconds is %d rounds of %d seconds, got %d", m.cfg.StrangerAskSeconds, want, rs, got)
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -173,6 +174,41 @@ func TestSneakMobCostRefusalPreservesAwarenessCooldownAndProgression(t *testing.
 	assertSneakRefusalPreservesCharacter(t, &mob.Character, result)
 	assert.Equal(t, cooldownsBefore, mob.Character.GetAllCooldowns())
 	assert.Zero(t, mob.Character.Stamina)
+}
+
+// TestMobIsSneaking guards the derivation both mob movement call sites
+// (mobcommands.Go and hooks.handleMobFlee) share: hidden, or the misc-data
+// "sneaking" flag set while not hidden, either one true; neither, false.
+func TestMobIsSneaking(t *testing.T) {
+	newMob := func() *mobs.Mob {
+		char := characters.New()
+		char.Name = "Lurker"
+		return &mobs.Mob{MobId: 1, InstanceId: 79073, Character: *char}
+	}
+
+	t.Run("neither hidden nor flagged is not sneaking", func(t *testing.T) {
+		mob := newMob()
+		assert.False(t, MobIsSneaking(mob))
+	})
+
+	t.Run("hidden is sneaking", func(t *testing.T) {
+		mob := newMob()
+		mob.Character.Awareness = awareness.NewMachine()
+		reason := state.TransitionReason{Trigger: "mob_is_sneaking_test"}
+		require.NoError(t, mob.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+		mob.Character.Awareness.ResolveConcealment(true, reason)
+		require.True(t, mob.Character.IsHidden())
+
+		assert.True(t, MobIsSneaking(mob))
+	})
+
+	t.Run("misc sneaking flag while not hidden is sneaking", func(t *testing.T) {
+		mob := newMob()
+		mob.Character.SetMiscData(`sneaking`, true)
+		require.False(t, mob.Character.IsHidden())
+
+		assert.True(t, MobIsSneaking(mob))
+	})
 }
 
 func task6FunctionAST(t *testing.T, path, name string) (*token.FileSet, *ast.FuncDecl) {

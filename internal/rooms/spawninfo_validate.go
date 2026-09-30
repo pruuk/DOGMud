@@ -95,7 +95,7 @@ func ValidateSpawnEntry(s SpawnInfo, v SpawnValidators) error {
 // failover and yields ONE round, roughly four seconds. A typo'd respawn rate
 // is therefore not a loud failure but a spawn that returns almost instantly.
 // Checking the vocabulary is the only way to catch it.
-var periodUnitPrefixes = []string{"yea", "mon", "wee", "day", "dai", "hou", "min", "noo", "mid", "rou"}
+var periodUnitPrefixes = []string{"yea", "mon", "wee", "day", "dai", "hou", "min", "sec", "noo", "mid", "rou"}
 
 // periodModifiers are the words AddPeriod accepts between quantity and unit.
 var periodModifiers = map[string]bool{"real": true, "irl": true, "game": true, "gametime": true}
@@ -114,8 +114,10 @@ func RealPeriodOK(period string) bool {
 	// Drop the real/irl/game modifier and any leading quantity; whatever
 	// remains must be the unit.
 	rest := []string{}
+	gameClock := false
 	for i, p := range parts {
 		if periodModifiers[p] {
+			gameClock = gameClock || p == "game" || p == "gametime"
 			continue
 		}
 		if i == 0 && len(parts) > 1 {
@@ -135,6 +137,11 @@ func RealPeriodOK(period string) bool {
 		return true
 	}
 	if len(unit) < 3 {
+		return false
+	}
+	// AddPeriod reads every second as a REAL second, so "30 game seconds"
+	// would not mean what its author wrote. Bare "30 seconds" is fine.
+	if gameClock && unit[0:3] == "sec" {
 		return false
 	}
 	return slices.Contains(periodUnitPrefixes, unit[0:3])

@@ -300,13 +300,16 @@ wrappers that render the outcome.
   because a player's move differs from a mob's (`Look`, charmed followers and
   `room_enter` for one; `RelocateMob` and the `mob_flee` behaviour event for
   the other).
-- **`RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.Room)`**
+- **`RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.Room, sneaking bool)`**
   is the mob's move with no gate and no charge: walking
-  (`mobcommands.Go`, after its own lock check) and a successful flee
-  (`hooks.handleMobFlee`) both end here. It removes the mob from `from`,
-  calls `ClearRoomAggroOnDeparture`, adds it to `dest`, narrates both sides
-  (sight-gated, with a sound fallback), plays the movement sounds, and pulls
-  an NPC party's idle (not in-combat) members through the same exit.
+  (`mobcommands.Go`, after its own lock check, passing `actions.MobIsSneaking(mob)`)
+  and a successful flee (`hooks.handleMobFlee`, passing
+  `actions.MobIsSneaking(mob)`) both end here. It removes the mob from `from`, calls
+  `ClearRoomAggroOnDeparture`, adds it to `dest`, narrates both sides
+  (sight-gated, with a sound fallback) unless `sneaking`, plays the movement
+  sounds either way, and pulls an NPC party's idle (not in-combat) members
+  through the same exit. A sneaking mob sends no exit, entry or next-room
+  line, as a sneaking player never has (parity slice 6, ruling D1).
 - **`ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int)`**
   moved here from the (still unexported at the call site) `mobcommands`
   version; retargets or releases players and mobs in `room` that were
@@ -707,6 +710,14 @@ itself.
 - **Mob wrapper ownership:** The mob command renders no refusal text and has no
   player failure cooldown. It returns immediately on `CostRefused`; only a
   successful paid attempt calls `OnSkillUse("skullduggery", 0)`.
+- **`MobIsSneaking(mob *mobs.Mob) bool`** (`sneak.go`) is the one derivation of
+  a mob's sneaking state: `IsHidden()` (the Awareness-backed condition), or
+  the `sneaking` misc-data flag set while not yet hidden (`Sneak` sets it
+  synchronously, ahead of the hidden condition's event landing). Walking
+  (`mobcommands.Go`, both its ordinary exit step and its forced
+  `go <roomId>` path used by `callforhelp`) and a successful flee
+  (`hooks.handleMobFlee`) all call this rather than re-deriving it, so they
+  cannot drift the way flee once did by checking only `IsHidden()`.
 
 ### Steal
 
@@ -802,17 +813,21 @@ Pickpockets a target mob or player, or robs an item from a room container.
 **Progression:** Triggers `actor.OnStatUse("dexterity")` and
 `actor.OnSkillUse("skullduggery")`.
 
-**Cooldown:** Shares the `skullduggery` cooldown key (10 rounds).
+**Cooldown:** One key, `skullduggery:steal` (`skullduggeryCooldownKey`),
+shared with Plant, lasting `StealCooldown` real seconds (60 shipped, 15
+rounds at `RoundSeconds: 4`). Steal only CHECKS it (`CooldownReady`); it is
+armed by the attempt itself. `newTheftAttempt` builds the thief's side once
+(`theftAttempt`: rank, score, cooldown period) and each path reads the score
+through `theftAttempt.score()` immediately before its contest, which arms the
+cooldown as it hands the score over. So every refusal (no target, target
+gone, a companion, an immune mob, rank below 2, an empty container, too
+heavy to lift) leaves the cooldown unarmed, and no contest runs without
+arming it. Before 2026-09-30 it was armed ahead of every refusal, so a fresh
+character (rank 1) was refused on the first try and then locked out.
 
-**Result struct:**
-```go
-type StealResult struct {
-	Success    bool
-	ItemId     int
-	ItemName   string
-	Message    string  // feedback message
-}
-```
+**Result struct:** `StealResult` (`Succeeded`, `Detected`, `StoleGold`,
+`StoleItemId`, `StoleItemName`, `DefenderName`, `OnCooldown`, `Reason`,
+`Pending`); read `steal.go` for the field comments.
 
 ### Plant
 
@@ -843,16 +858,14 @@ name / simple name.
 **Progression:** Triggers `actor.OnStatUse("dexterity")` and
 `actor.OnSkillUse("skullduggery")`.
 
-**Cooldown:** Shares the `skullduggery` cooldown key (10 rounds).
+**Cooldown:** Steal's (`skullduggery:steal`, `StealCooldown` real seconds),
+checked up front and armed only by the attempt, through the same
+`theftAttempt.score()`: a missing target or container spends nothing. An
+unwatched container plant is an uncontested attempt and does arm it.
 
-**Result struct:**
-```go
-type PlantResult struct {
-	Success bool
-	ItemId  int
-	Message string
-}
-```
+**Result struct:** `PlantResult` (`Succeeded`, `Detected`, `PlantedItemId`,
+`DefenderName`, `OnCooldown`, `Reason`); read `plant.go` for the field
+comments.
 
 ### Defuse
 
@@ -1259,38 +1272,45 @@ type SalvageResult struct {
 
 **Function:** `Shadow(actor, opts) ShadowResult`
 
-Follow a target while hidden. The actor must already be hidden (carries condition
-ID 9) for Shadow to succeed.
+Follow a quarry while hidden. Player and mob actors, player and mob quarries,
+all by the same rules (player/mob parity slice 6).
 
-**Mechanics:**
-- **Prerequisite:** `actor.HasCondition(9)` must be true. If not, returns
-  `Success = false`.
-- **Target resolution:** `opts.TargetUserId` or `opts.TargetMobId` sets the
-  follow target.
-- **Storage:** On success, stores the target ID in the actor's misc-data
-  under key `"shadow-target-mob"` or `"shadow-target-user"` depending on
-  target type. Also applies condition 87 (Shadow status condition).
-- **Auto-follow:** When the target moves to a new room, the actor's
-  auto-follow system (in `modules/follow/`) automatically moves the actor
-  with them if the actor carries condition 87 (`HasCondition(87)` gating in
-  `usercommands/go.go`), maintaining the hidden state.
-- **Reveal on attack:** If the hidden actor attacks before Shadow completes,
-  the Hidden condition is cancelled and Shadow ends.
-
-**Messaging:** On success, actor receives "You begin stalking [target]." On
-failure, "You are not hidden."
-
-**Progression:** No stat/skill use triggered (Shadow is a passive follow
-mechanic).
-
-**Cooldown:** No cooldown.
+- **Gates:** the actor must be hidden (`Character.IsHidden`), not in combat,
+  name a target, and be off the shadow cooldown (`Balance.ShadowCooldown`
+  rounds; the Go default is 0, which a cooldown rounds to one round, and
+  `config.yaml` ships 5).
+- **Start:** stores the quarry (read back with `ShadowTargetOf`), applies
+  `ShadowingConditionId` (condition 87, 25 rounds), sends the start line, and
+  runs `ShadowSenseRoll`: `Detected` reports it; the shadow starts either way.
+- **Following:** `hooks.RoomChangeShadowFollow` moves the shadower after its
+  quarry on any named-exit move and runs the arrival check. This package owns
+  no follow logic.
+- **`ShadowSenseRoll(shadower, target Actor, room *rooms.Room) bool`** is the
+  one shadow contest: the target's `CalcDetectionScore` (as attacker) against
+  the shadower's `CalcSneakScoreVsObserver` times its `SightMult`, through
+  `combat.RunContest`, in `room`'s light. It awards the shadower's
+  Skullduggery on both outcomes (a win when unsensed), sends a player target
+  "You sense someone following close behind you." when it senses the
+  shadower, shows a mob target nothing, reveals no one, and returns whether
+  the target sensed. Run at the start of a shadow and on each arrival.
+- **`ShadowTargetOf(c) (userId, mobInstanceId int)`** reads the quarry. The
+  two misc-data keys behind it are unexported constants, and nothing outside
+  this package names them (`shadow_follow_guard_test.go`).
+- **`ClearShadow(c)`** drops the quarry and condition 87 with no cooldown and
+  no line: the stale-state guard and the death and logoff cleanups.
+- **`EndShadow(actor, reason)`** is `ClearShadow` plus the cooldown plus
+  `reason` to the actor: `shadow stop` and the spotted end.
+- `RemoveCondition` only expires condition 87; it is pruned, and a player
+  reads its end line, at the next turn.
 
 **Result struct:**
 ```go
 type ShadowResult struct {
-	Success    bool
-	TargetName string
-	Message    string
+	Succeeded  bool   // target id was stored and shadow tracking began
+	Detected   bool   // target won the initial sense roll
+	TargetName string // display name of the target
+	OnCooldown bool   // attempt was blocked by shadow cooldown
+	Reason     string // when Succeeded==false and !OnCooldown, why
 }
 ```
 
@@ -1561,7 +1581,7 @@ taunt path's ordering).
 | Salvage | actions | self vs corpse/item | SalvageResult | varies | none |
 | Scan | actions | self → adjacent | ScanResult | user only | none |
 | Search | actions | self vs room | SearchResult | user only | shared |
-| Shadow | actions | self→target | ShadowResult | varies | none |
+| Shadow | actions | self→target | ShadowResult | varies | ShadowCooldown (start, stop, spotted) |
 | Sneak | actions | self vs room | SneakResult | silent | shared |
 | Steal | actions | self vs mob/player/container | StealResult | varies | shared |
 | ExecuteFire | actions | self vs target (same/adjacent room) | FireResult | both | shared (special-move), EVERY shot |
@@ -1603,9 +1623,9 @@ type SearchOptions struct {
 }
 
 type ShadowOptions struct {
-	TargetUserId string // player to shadow
-	TargetMobId  int    // mob to shadow
-	// Only one should be set; TargetUserId checked first
+	TargetMobInstanceId int // mob to shadow
+	TargetUserId        int // player to shadow
+	// Exactly one should be set; the mob id is checked first
 }
 
 // Sneak has NO options struct. Its entry point is Sneak(actor Actor)
@@ -1741,7 +1761,7 @@ tell you. `FireResult.Chambered` carries the auto-reload's outcome, and its
 - `internal/baubles`: Bauble catalog records, for pricing and marking sales (`sell_bauble.go`)
 - `internal/conditions` — Condition system (Hidden condition for Sneak/Shadow)
 - `internal/skills` — Skill progression and names
-- `internal/modules/follow` — Auto-follow (used by Shadow)
+- `internal/hooks`: `RoomChangeShadowFollow` moves a shadower after its quarry (Shadow sets the state it reads)
 
 ---
 

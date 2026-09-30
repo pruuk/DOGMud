@@ -1,15 +1,14 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-const (
-	activeTrackingCondition = 86
-	shadowingCondition      = 87
-)
+const activeTrackingCondition = 86
 
 // MobDeathTrackingCleanup clears tracking/shadow state on any character
 // (player or mob) that was tracking or shadowing the now-dead mob. Pairs
@@ -18,9 +17,9 @@ const (
 // State cleared per pointing character:
 //   - tracking-mob misc data (string match on CharacterName)
 //   - tracking-display-count misc data (cleared alongside tracking-mob)
-//   - shadow-target-mob misc data (int match on InstanceId)
 //   - condition 86 (Active Tracking) — only if tracking-mob pointed at this mob
-//   - condition 87 (Shadowing) — only if shadow-target-mob pointed at this mob
+//   - the shadow (actions.ClearShadow: target and Shadowing condition, no
+//     cooldown, no message), only if actions.ShadowTargetOf names this mob
 func MobDeathTrackingCleanup(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.MobDeath)
 	if !ok {
@@ -32,11 +31,7 @@ func MobDeathTrackingCleanup(e events.Event) events.ListenerReturn {
 	dyingName := evt.CharacterName
 	dyingInstanceId := evt.InstanceId
 
-	clearPointers := func(c interface {
-		GetMiscData(string) any
-		SetMiscData(string, any)
-		RemoveCondition(int)
-	}) {
+	clearPointers := func(c *characters.Character) {
 		// Tracking by name.
 		if dyingName != "" {
 			if v := c.GetMiscData("tracking-mob"); v != nil {
@@ -48,11 +43,8 @@ func MobDeathTrackingCleanup(e events.Event) events.ListenerReturn {
 			}
 		}
 		// Shadow by InstanceId.
-		if v := c.GetMiscData("shadow-target-mob"); v != nil {
-			if id, ok := v.(int); ok && id == dyingInstanceId {
-				c.SetMiscData("shadow-target-mob", nil)
-				c.RemoveCondition(shadowingCondition)
-			}
+		if _, mobInstanceId := actions.ShadowTargetOf(c); mobInstanceId != 0 && mobInstanceId == dyingInstanceId {
+			actions.ClearShadow(c)
 		}
 	}
 

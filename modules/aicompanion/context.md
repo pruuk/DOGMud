@@ -52,8 +52,9 @@ Roadmap and phase plan: `docs/aicompanion/`.
   her, `ask`, an emote, a gift, healing) is heard and remembered as usual
   but queued only if `strangerMayAsk` passes (their daily allowance,
   then what passers-by together may spend of this owner's companion,
-  then a per-companion cooldown that trying spends; `cooldownFor` turns
-  its seconds into the rounds a character cooldown counts), called once
+  then a per-companion cooldown that trying spends, passed to the
+  cooldown as `N real seconds`, which the period parser rounds up to
+  whole rounds), called once
   per thing, just before the push. Their stimuli carry `AskerUserId`.
   With strangers off she still hears them and answers with set lines,
   paced by the same cooldown, but `strangerMayPrompt` stops any call they

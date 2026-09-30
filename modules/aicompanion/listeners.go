@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/apiframework"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -578,27 +577,11 @@ func (m *AICompanionModule) strangerMayAsk(u *users.UserRecord, c *controller) b
 	}
 	if m.cfg.StrangerAskSeconds > 0 {
 		tag := fmt.Sprintf(`aicompanion-ask-%d`, c.instanceId)
-		if !u.Character.TryCooldown(tag, cooldownFor(m.cfg.StrangerAskSeconds)) {
+		if !u.Character.TryCooldown(tag, fmt.Sprintf(`%d real seconds`, m.cfg.StrangerAskSeconds)) {
 			return false
 		}
 	}
 	return true
-}
-
-// cooldownFor turns real seconds into the period a character cooldown
-// counts in, rounds. The cooldown's period parser knows no seconds: "30
-// seconds" falls through to thirty ROUNDS, four times the wait on a
-// four-second round. At least one round.
-func cooldownFor(seconds int) string {
-	rs := int(configs.GetTimingConfig().RoundSeconds)
-	if rs < 1 {
-		rs = 1
-	}
-	n := (seconds + rs - 1) / rs
-	if n < 1 {
-		n = 1
-	}
-	return fmt.Sprintf(`%d rounds`, n)
 }
 
 // calledBack is the companion hearing her own name from her owner while she
