@@ -1479,6 +1479,17 @@ the free supply-handoff paths — these are NOT routed through `actions.Sell`.
   checks it directly, right after its own sleep gate.
 - **`ShopSightRefusalText`**, the one line every refusing verb prints:
   "You can't make out the goods well enough to deal."
+- **Content keeps every shop above the gate at night** (merchants slice,
+  2026-09-30). Street and stall keepers wear an Oil Lantern (40038) in the
+  `light` equipment slot; shops inside buildings authored with an outdoor
+  biome carry room overrides `skylight: 0.15`, `lamp: 50`. The root guard
+  `shop_night_trade_guard_test.go` spawns every real shop keeper alone in
+  each room that spawns it and asserts `ShopSightRefusal` is false for a
+  bare `characters.Character` at every sunless hour of three sample days
+  while the keeper's schedule has it awake in that room. A new shop in a
+  dark room fails it. An equipped light also shines while its keeper
+  sleeps, which is harmless to trade because `ShopClosedForSleep` refuses
+  first.
 - **`barterDiscount(char *characters.Character, room *rooms.Room, maxFrac float64) float64`**,
   the ONE place the bartering discount is computed: skill-derived, capped at
   `maxFrac` (skill 50 reaches the cap), times `messaging.SightMult(char, room)`.

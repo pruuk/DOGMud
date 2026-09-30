@@ -162,8 +162,10 @@ YAML keys are `skylight` and `lamp`:
   this override in most of the cases that once seemed to need it: a brick
   sewer vault, a wrecked ship's interior and a web-choked lair each got
   their own biome (`sewer`, `interior`, `spiderweb`) rather than a
-  room-level number. **The `lamp` override ships on sixteen rooms** (grep
-  `^lamp:` under `_datafiles/world/dogmud/rooms`): the three-room Planar
+  room-level number. **The `lamp` override ships on twenty-seven rooms**
+  (grep `^lamp:` under `_datafiles/world/dogmud/rooms`): the eleven shop
+  rooms of the merchants slice described below, and sixteen older ones.
+  The sixteen older rooms are the three-room Planar
   Oasis (`instance_planar_oasis/500{3,4,5}.yaml`), which sets `lamp: 38`
   against `ether`'s biome lamp of `60` because its room text reads "Shapes
   move in the heat haze, some are mirages, some are not," so a fully lit
@@ -191,22 +193,36 @@ YAML keys are `skylight` and `lamp`:
   all open to the sky by day; the lamp on 5478 and 5480 only matters after
   dark.
 
-  **The `skylight` override ships on two rooms, both new in plan 3c-2 and
-  the package's first room-level `skylight` users** (grep `^skylight:`
-  under `_datafiles/world/dogmud/rooms` finds only these two): the holding
-  cells beneath Thornwall's guard barracks (`thornwall_city/5105.yaml`)
-  and Stillwater's constabulary (`stillwater/5106.yaml`), both `dungeon`
-  biome (`skylight: 0.0` by default) set to `skylight: 0.1`. Each cell's
-  own text names a window slit admitting a bar of daylight; the owner's
-  ruling was a room-level fraction rather than new code, since the
-  existing sky-tracking math already reads it as shapes by day and dark at
-  night.
+  **The `skylight` override ships on thirteen rooms** (grep `^skylight:`
+  under `_datafiles/world/dogmud/rooms`). The first two, new in plan 3c-2,
+  are the holding cells beneath Thornwall's guard barracks
+  (`thornwall_city/5105.yaml`) and Stillwater's constabulary
+  (`stillwater/5106.yaml`), both `dungeon` biome (`skylight: 0.0` by
+  default) set to `skylight: 0.1`. Each cell's own text names a window slit
+  admitting a bar of daylight; the owner's ruling was a room-level fraction
+  rather than new code, since the existing sky-tracking math already reads
+  it as shapes by day and dark at night.
+
+  **Shop rooms inside buildings (merchants slice, 2026-09-30).** Eleven
+  shops sit in inns, taverns, mills, a smithy, a chandlery and a trading
+  post whose rooms are authored with an outdoor biome, so the lighting 5b
+  shop sight gate refused their keepers at night. Each carries both
+  overrides at the `interior` biome's values, `skylight: 0.15` and
+  `lamp: 50`, with `biome:` left alone because the biome also drives
+  weather, map symbol and movement cost: 423, 424 (`watchers_crossing`),
+  4045 (`north_road`), 5245 (`pothole_coulee`), 5378 (`north_road_north`),
+  5448, 5449 (`kingsbarrow_vale`), 6114, 6116, 6252 (`the_confluence`) and
+  6280 (`greenford`). Street and stall keepers carry an Oil Lantern
+  instead, which is mob content, not a room override. The root guard
+  `shop_night_trade_guard_test.go` asserts every shop keeper can trade at
+  night while awake, so a new dark shop fails the build.
 
   `fort`'s old granularity gap, sharing one sky fraction between
   an open yard and a buried vault, is gone: plan 3c-1 moved fort's open
   portions (the burst-open watch room, the roofless shrine, the cracked
   dome) out to `ruins`, so the eight rooms still biomed `fort` are all
-  fully enclosed and need no room-level override.
+  fully enclosed. One of them, 5245 The Coulee Smithy, carries the shop
+  room override above, since `fort` ships no lamp.
 
 ### The shipped biome vocabulary (plan 3b)
 

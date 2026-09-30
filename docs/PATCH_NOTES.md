@@ -20,6 +20,25 @@
 - A shop keeps up to twelve secondhand pieces on show. When it has too
   many, the one that has been on show longest goes.
 
+## 2026-09-30: Lights in the shops, and seven new shops
+
+- Shopkeepers who trade in the street, at a stall, on a quay or by the
+  road now carry a lantern. You can make out their goods after dark, so
+  they trade at night whenever they are awake.
+- Shops inside a building, such as inns, taverns, mills and the Coulee
+  smithy, now keep their own lamps lit. They trade at night too. With a
+  roof over them they are a little dimmer at midday than before.
+- On a bright summer midday a lantern can make an open-air shop glaring,
+  and you haggle a little worse there. Come back in the afternoon.
+- Seven people who always talked about their wares now sell them. Try
+  `list` with the Market Merchant in Thornwall's market square, the
+  Traveling Merchant at the Crossing Inn, Whisper at the Listening Post,
+  Haral in the North Road common room, Miller Bram at Stillwater's
+  watermill, the Fishmonger at New Plymouth's fish market and Aldith the
+  Bookseller in Greenford.
+- The Market Merchant and the Traveling Merchant now stay at their posts
+  instead of wandering off.
+
 ## 2026-09-30: Voices in the dark
 
 - In a dark room you now hear who is speaking only as well as you can see
