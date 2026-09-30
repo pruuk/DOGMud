@@ -44,3 +44,22 @@ func TestRemoveUntakenBaubles(t *testing.T) {
 		t.Fatalf("the young one goes at 24 hours: %d %+v", n, r.Items)
 	}
 }
+
+// A player's own room keeps everything on its floor: a find left there never
+// expires.
+func TestRemoveUntakenBaubles_NeverInAPrivateRoom(t *testing.T) {
+	now := time.Unix(7_000_000, 0)
+	SetPrivateRoomCheck(func(roomId int) bool { return roomId == 6 })
+	defer SetPrivateRoomCheck(nil)
+
+	old := items.Item{ItemId: items.BaubleItemId, Bauble: `B0000009`}
+	old.LeaveBaubleAt(``, 0, now.Add(-100*time.Hour))
+	private := &Room{RoomId: 6, Items: []items.Item{old}}
+	if n := private.removeUntakenBaubles(now); n != 0 || len(private.Items) != 1 {
+		t.Fatalf("a private room lost its find: %d %+v", n, private.Items)
+	}
+	public := &Room{RoomId: 5, Items: []items.Item{old}}
+	if n := public.removeUntakenBaubles(now); n != 1 {
+		t.Fatal("an ordinary room kept an expired find")
+	}
+}

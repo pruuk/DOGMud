@@ -132,6 +132,14 @@ func loadOneHouse(buildingDir string, path string, fileName string) bool {
 			h.Containers[ci].Items[ii].Validate()
 		}
 	}
+	for fi := range h.Floors {
+		for ii := range h.Floors[fi].Items {
+			h.Floors[fi].Items[ii].Validate()
+		}
+		for ii := range h.Floors[fi].Stash {
+			h.Floors[fi].Stash[ii].Validate()
+		}
+	}
 
 	mu.Lock()
 	defer mu.Unlock()

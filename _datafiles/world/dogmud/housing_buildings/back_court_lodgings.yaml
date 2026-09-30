@@ -52,12 +52,13 @@ max_guests: 5
 # Containers: a deed places one container in the room it is used in, under a
 # one-word name the lodger chooses. A container deed's container can be used
 # by anyone in the room; a strongbox deed's opens for the owner alone. What
-# they hold lives in the house file. A house holds at most max_containers.
+# they hold lives in the house file. Each room of a house holds at most
+# max_containers_per_room; the house as a whole has no limit.
 container_item_id: 58
 container_price: 250
 strongbox_item_id: 59
 strongbox_price: 500
-max_containers: 10
+max_containers_per_room: 6
 
 unit_rooms: [6470, 6471, 6472, 6473, 6474, 6475, 6476, 6477, 6478, 6479, 6480, 6481,
   6482, 6483, 6484, 6485, 6486, 6487, 6488, 6489, 6490, 6491, 6492, 6493,

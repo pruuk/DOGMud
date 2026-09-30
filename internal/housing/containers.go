@@ -64,8 +64,8 @@ func useContainerDeed(user *users.UserRecord, room *rooms.Room, itm items.Item, 
 	if ownerOnly {
 		kind = `strongbox`
 	}
-	if false {
-		send(fmt.Sprintf(`Your lodging already holds as many containers as the letting company allows (%d). The deed stays folded.`, b.MaxContainers))
+	if len(h.containersIn(room.RoomId)) >= b.MaxContainersPerRoom {
+		send(fmt.Sprintf(`This room already holds as many containers as the letting company allows in one room (%d). Try another of your rooms. The deed stays folded.`, b.MaxContainersPerRoom))
 		return
 	}
 
@@ -107,9 +107,9 @@ func useContainerDeed(user *users.UserRecord, room *rooms.Room, itm items.Item, 
 		send(`This is not your lodging any more.`)
 		return
 	}
-	if len(cur.Containers) >= b.MaxContainers {
+	if len(cur.containersIn(room.RoomId)) >= b.MaxContainersPerRoom {
 		mu.Unlock()
-		send(`Your lodging already holds as many containers as the letting company allows.`)
+		send(`This room already holds as many containers as the letting company allows in one room. Try another of your rooms.`)
 		return
 	}
 	for _, c := range cur.containersIn(room.RoomId) {
@@ -174,11 +174,24 @@ func hydrateContainers(r *rooms.Room, house House) {
 	r.Containers = fresh
 }
 
-// Capture writes a house room's live container contents back into its house
-// record when they differ, and reports whether anything changed. It is
-// cheap when nothing did: one comparison per container. A container missing
-// from the live room (only something outside housing could remove one) is
-// put back from the record rather than lost.
+// hydrateFloor puts a room's recorded floor into the live room. A room whose
+// floor has never been captured keeps what its instance save held; the first
+// capture adopts it into the record.
+func hydrateFloor(r *rooms.Room, house House) {
+	f, _, ok := house.floorOf(r.RoomId)
+	if !ok {
+		return
+	}
+	r.Items = append([]items.Item(nil), f.Items...)
+	r.Stash = append([]items.Item(nil), f.Stash...)
+	r.Gold = f.Gold
+}
+
+// Capture writes a house room's live floor and container contents back into
+// its house record when they differ, and reports whether anything changed.
+// It is cheap when nothing did: one comparison per container and one for the
+// floor. A container missing from the live room (only something outside
+// housing could remove one) is put back from the record rather than lost.
 func Capture(r *rooms.Room) bool {
 	if r == nil {
 		return false
@@ -186,10 +199,18 @@ func Capture(r *rooms.Room) bool {
 	mu.Lock()
 	defer mu.Unlock()
 	cur, owned := roomHouse[r.RoomId]
-	if !owned || len(cur.Containers) == 0 {
+	if !owned {
 		return false
 	}
 	var next *House
+	change := func() *House {
+		if next == nil {
+			n := cur.clone()
+			next = &n
+		}
+		return next
+	}
+
 	for i, c := range cur.Containers {
 		if c.RoomId != r.RoomId {
 			continue
@@ -205,13 +226,29 @@ func Capture(r *rooms.Room) bool {
 		if live.Gold == c.Gold && sameItems(live.Items, c.Items) {
 			continue
 		}
-		if next == nil {
-			n := cur.clone()
-			next = &n
-		}
-		next.Containers[i].Items = append([]items.Item(nil), live.Items...)
-		next.Containers[i].Gold = live.Gold
+		n := change()
+		n.Containers[i].Items = append([]items.Item(nil), live.Items...)
+		n.Containers[i].Gold = live.Gold
 	}
+
+	floor, fi, recorded := cur.floorOf(r.RoomId)
+	liveEmpty := len(r.Items) == 0 && len(r.Stash) == 0 && r.Gold == 0
+	if (recorded && (floor.Gold != r.Gold || !sameItems(floor.Items, r.Items) || !sameItems(floor.Stash, r.Stash))) ||
+		(!recorded && !liveEmpty) {
+		n := change()
+		fresh := HouseFloor{
+			RoomId: r.RoomId,
+			Items:  append([]items.Item(nil), r.Items...),
+			Stash:  append([]items.Item(nil), r.Stash...),
+			Gold:   r.Gold,
+		}
+		if recorded {
+			n.Floors[fi] = fresh
+		} else {
+			n.Floors = append(n.Floors, fresh)
+		}
+	}
+
 	if next == nil {
 		return false
 	}
@@ -247,11 +284,12 @@ var saveUser = func(u *users.UserRecord) {
 	}
 }
 
-// Seams for tests: the live room, a mob's room and whether a mob is a
-// companion of a given player.
+// Seams for tests: the live room, whether a room is in memory, a mob's room
+// and whether a mob is a companion of a given player.
 var (
-	liveRoom = rooms.LoadRoom
-	mobRoom  = func(mobInstanceId int) (int, bool) {
+	liveRoom   = rooms.LoadRoom
+	roomLoaded = rooms.IsRoomLoaded
+	mobRoom    = func(mobInstanceId int) (int, bool) {
 		if m := mobs.GetInstance(mobInstanceId); m != nil {
 			return m.Character.RoomId, true
 		}
@@ -263,27 +301,62 @@ var (
 	}
 )
 
-// AfterUserCommand captures the room a player is in, if it is a house room.
-// world.go calls it after every player command.
-func AfterUserCommand(userId int) {
+// captureHouseAt captures every loaded room of the house that roomId belongs
+// to: a command can change a neighbouring room too (something thrown
+// through a doorway), and a player who has just walked out of a room left
+// its last change behind them. Rooms not in memory are skipped, never
+// loaded. It reports whether anything changed.
+func captureHouseAt(roomId int) bool {
+	h, owned := HouseForRoom(roomId)
+	if !owned {
+		return false
+	}
+	changed := false
+	for _, id := range h.RoomIds {
+		if !roomLoaded(id) {
+			continue
+		}
+		if Capture(liveRoom(id)) {
+			changed = true
+		}
+	}
+	return changed
+}
+
+// AfterUserCommand captures the house of the room a player is in, and of
+// the room they were in before the command if the command moved them (a
+// player who drops something and leaves in one line). world.go calls it
+// after every player command with the room from before the command.
+func AfterUserCommand(userId int, roomBefore int) {
 	u := onlineUser(userId)
-	if u == nil || !IsUnitRoom(u.Character.RoomId) {
+	if u == nil {
 		return
 	}
-	if Capture(liveRoom(u.Character.RoomId)) {
+	changed := false
+	if IsUnitRoom(u.Character.RoomId) {
+		changed = captureHouseAt(u.Character.RoomId)
+	}
+	if roomBefore != u.Character.RoomId && IsUnitRoom(roomBefore) {
+		if captureHouseAt(roomBefore) {
+			changed = true
+		}
+	}
+	if changed {
 		saveUser(u)
 	}
 }
 
-// AfterMobCommand captures the room a mob is in, if it is a house room (a
-// companion putting or taking something). world.go calls it after every mob
-// command.
-func AfterMobCommand(mobInstanceId int) {
+// AfterMobCommand captures the house of the room a mob is in, and of the
+// room it was in before the command (a companion putting down, picking up
+// or carrying something). world.go calls it after every mob command.
+func AfterMobCommand(mobInstanceId int, roomBefore int) {
 	roomId, ok := mobRoom(mobInstanceId)
-	if !ok || !IsUnitRoom(roomId) {
-		return
+	if ok && IsUnitRoom(roomId) {
+		captureHouseAt(roomId)
 	}
-	Capture(liveRoom(roomId))
+	if roomBefore != roomId && IsUnitRoom(roomBefore) {
+		captureHouseAt(roomBefore)
+	}
 }
 
 // ── Owner-only containers ──────────────────────────────────────────────────

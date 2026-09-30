@@ -29,6 +29,11 @@ func (r *Room) removeUntakenBaubles(now time.Time) int {
 	if len(r.Items) == 0 {
 		return 0
 	}
+	// A player's own room (a housing lodging) is not a roadside: anything
+	// on its floor stays until someone takes it.
+	if IsPrivateRoom(r.RoomId) {
+		return 0
+	}
 	limit := baubles.UntakenLimit()
 	if limit <= 0 {
 		return 0

@@ -671,7 +671,10 @@ func removeRoomFromMemory(r *Room) {
 		}
 	}
 
-	SaveRoomInstance(*room)
+	runRoomSaveHook(room)
+	if err := SaveRoomInstance(*room); err != nil {
+		mudlog.Error("removeRoomFromMemory", "roomId", room.RoomId, "error", err)
+	}
 
 	delete(roomManager.rooms, r.RoomId)
 }

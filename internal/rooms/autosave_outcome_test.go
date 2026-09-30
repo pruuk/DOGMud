@@ -55,3 +55,30 @@ func TestSaveAllRooms_ReportsFailureInsteadOfReturningNil(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to save",
 		"the error should say how many rooms failed, so the log is actionable")
 }
+
+// A room evicted from memory is saved on the way out, and the room save hook
+// runs first so state kept outside the room files (housing floors and
+// containers) is captured before the room is gone.
+func TestRemoveRoomFromMemory_RunsTheSaveHookFirst(t *testing.T) {
+	tempDir := useTempDataFiles(t, true)
+	seedTemplateRoom(t, tempDir, 100)
+
+	room := LoadRoomInstance(100)
+	require.NotNil(t, room)
+	require.NoError(t, addRoomToMemory(room))
+
+	seen := 0
+	SetRoomSaveHook(func(r *Room) {
+		if r.RoomId == 100 {
+			seen++
+			r.Gold = 41
+		}
+	})
+	defer SetRoomSaveHook(nil)
+
+	removeRoomFromMemory(room)
+	assert.Equal(t, 1, seen, "the hook must run once on unload")
+	data, err := os.ReadFile(filepath.Join(tempDir, "rooms.instances", "test_zone", "100.yaml"))
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "gold: 41", "what the hook changed must be what is saved")
+}

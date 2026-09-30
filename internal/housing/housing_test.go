@@ -54,7 +54,7 @@ func testBuilding() Building {
 		ContainerPrice:           250,
 		StrongboxItemId:          testSafeId,
 		StrongboxPrice:           500,
-		MaxContainers:            2,
+		MaxContainersPerRoom:     2,
 	}
 }
 

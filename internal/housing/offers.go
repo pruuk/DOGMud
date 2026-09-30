@@ -95,8 +95,8 @@ func Offers(user *users.UserRecord, buildingId string, tierId string) []Offer {
 	case !owns:
 		box.Note = `Needs a home here first`
 		safe.Note = box.Note
-	case len(house.Containers) >= b.MaxContainers:
-		box.Note = `Your lodging holds all the containers allowed`
+	case !house.hasRoomForContainer(b):
+		box.Note = `Every room holds all the containers allowed`
 		safe.Note = box.Note
 	default:
 		box.Price, safe.Price = b.ContainerPrice, b.StrongboxPrice
@@ -199,8 +199,8 @@ func buyContainerDeed(user *users.UserRecord, say func(string), buildingId strin
 		say(fmt.Sprintf(`A %s's no use without a room to put it in. Get a home first.`, what))
 		return
 	}
-	if len(house.Containers) >= b.MaxContainers {
-		say(`Your place is full of furniture already. The company won't allow more. Fire hazard, they say.`)
+	if !house.hasRoomForContainer(b) {
+		say(`Every room you've got is full of furniture already. The company won't allow more to a room. Fire hazard, they say. Get another room.`)
 		return
 	}
 	if user.Character.Gold+user.Character.Bank < price {

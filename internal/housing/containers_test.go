@@ -24,12 +24,15 @@ type containerWorld struct {
 func newContainerWorld(t *testing.T) *containerWorld {
 	t.Helper()
 	w := &containerWorld{guestWorld: newGuestWorld(t), rooms: map[int]*rooms.Room{}, mobAt: map[int]int{}, charmed: map[int]int{}, saved: map[int]bool{}}
-	prevRoom, prevMobRoom, prevCharm, prevSave := liveRoom, mobRoom, mobCharmedBy, saveUser
+	prevRoom, prevLoaded, prevMobRoom, prevCharm, prevSave := liveRoom, roomLoaded, mobRoom, mobCharmedBy, saveUser
 	liveRoom = func(id int) *rooms.Room { return w.rooms[id] }
+	roomLoaded = func(id int) bool { _, ok := w.rooms[id]; return ok }
 	mobRoom = func(id int) (int, bool) { r, ok := w.mobAt[id]; return r, ok }
 	mobCharmedBy = func(id, userId int) bool { return w.charmed[id] == userId }
 	saveUser = func(u *users.UserRecord) { w.saved[u.UserId] = true }
-	t.Cleanup(func() { liveRoom, mobRoom, mobCharmedBy, saveUser = prevRoom, prevMobRoom, prevCharm, prevSave })
+	t.Cleanup(func() {
+		liveRoom, roomLoaded, mobRoom, mobCharmedBy, saveUser = prevRoom, prevLoaded, prevMobRoom, prevCharm, prevSave
+	})
 	return w
 }
 
@@ -262,7 +265,7 @@ func TestUseContainerDeed_NameRules(t *testing.T) {
 	}
 }
 
-func TestUseContainerDeed_RespectsMaxContainers(t *testing.T) {
+func TestUseContainerDeed_LimitIsPerRoom(t *testing.T) {
 	setup(t)
 	w := newContainerWorld(t)
 	u := w.lodger(t, 1, `Alice`, OfferContainer)
@@ -271,13 +274,32 @@ func TestUseContainerDeed_RespectsMaxContainers(t *testing.T) {
 	buyKey(u, OfferStrongbox)
 	w.place(t, u, testSafeId, home, `safe`)
 
+	// The fixture allows 2 per room. A one-room lodging is now full.
 	if o := offerMap(u); o[OfferContainer].Available || o[OfferStrongbox].Available {
-		t.Error("still offered at the limit")
+		t.Error("still offered with every room full")
 	}
-	u.Character.StoreItem(items.New(testBoxId)) // one bought before the limit
+	u.Character.StoreItem(items.New(testBoxId)) // one bought before the room filled
 	UseItem(u, w.room(home), itemOf(u, testBoxId), `vase`, `container deed vase`)
 	if !has(u, testBoxId) || len(w.room(home).Containers) != 2 {
-		t.Error("a third container was placed past max_containers (2)")
+		t.Fatal("a third container was placed in a room past the per-room limit (2)")
+	}
+
+	// A second room has its own allowance: no limit for the house as a whole.
+	buyKey(u, OfferExtension)
+	UseItem(u, w.room(home), itemOf(u, testDeedId), `north`, `deed north`)
+	h, _ := HouseOf(1, testBldgId)
+	if len(h.RoomIds) != 2 {
+		t.Fatal("setup: no second room")
+	}
+	if o := offerMap(u); !o[OfferContainer].Available {
+		t.Error("not offered though the new room has space")
+	}
+	back := h.RoomIds[1]
+	w.place(t, u, testBoxId, back, `vase`)
+	buyKey(u, OfferContainer)
+	w.place(t, u, testBoxId, back, `shelf`)
+	if h, _ := HouseOf(1, testBldgId); len(h.Containers) != 4 {
+		t.Errorf("house holds %d containers, want 4 across two rooms", len(h.Containers))
 	}
 }
 
@@ -298,7 +320,7 @@ func TestCapture_WritesContentsToTheHouseAndSurvivesARestart(t *testing.T) {
 	mug.Items = append(mug.Items, spoon)
 	mug.Gold = 12
 	r.Containers[`mug`] = mug
-	AfterUserCommand(1)
+	AfterUserCommand(1, home)
 
 	c := houseContainer(t, 1, `mug`)
 	if len(c.Items) != 1 || !c.Items[0].Equals(spoon) || c.Gold != 12 {
@@ -321,7 +343,7 @@ func TestCapture_WritesContentsToTheHouseAndSurvivesARestart(t *testing.T) {
 	// Taking it out again is captured too.
 	back.Items, back.Gold = nil, 0
 	w.room(home).Containers[`mug`] = back
-	AfterUserCommand(1)
+	AfterUserCommand(1, home)
 	if c := houseContainer(t, 1, `mug`); len(c.Items) != 0 || c.Gold != 0 {
 		t.Errorf("record after emptying = %+v", c)
 	}
@@ -336,7 +358,7 @@ func TestCapture_NoChangeWritesNothing(t *testing.T) {
 	if Capture(w.room(home)) {
 		t.Error("capture reported a change when nothing changed")
 	}
-	AfterUserCommand(1)
+	AfterUserCommand(1, home)
 	if w.saved[1] {
 		t.Error("the player was saved though nothing changed")
 	}
@@ -361,7 +383,7 @@ func TestCapture_OnAutosaveAndForMobs(t *testing.T) {
 	w.mobAt[900] = home
 	mug.Gold = 9
 	r.Containers[`mug`] = mug
-	AfterMobCommand(900)
+	AfterMobCommand(900, home)
 	if houseContainer(t, 1, `mug`).Gold != 9 {
 		t.Error("a mob's command was not captured")
 	}

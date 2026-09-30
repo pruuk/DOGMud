@@ -64,6 +64,7 @@ func applyOverlay(r *rooms.Room, withContainers bool) {
 	overlayRoom(r, house, *b, base, hasBase)
 	if withContainers {
 		hydrateContainers(r, house)
+		hydrateFloor(r, house)
 	}
 }
 

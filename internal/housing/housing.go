@@ -95,12 +95,13 @@ type Building struct {
 	// Containers: a container deed (ContainerItemId) places a container the
 	// owner names with one word, usable by anyone let in; a strongbox deed
 	// (StrongboxItemId) places one only the owner can open. A house holds
-	// at most MaxContainers of both kinds together.
-	ContainerItemId int `yaml:"container_item_id"`
-	ContainerPrice  int `yaml:"container_price"`
-	StrongboxItemId int `yaml:"strongbox_item_id"`
-	StrongboxPrice  int `yaml:"strongbox_price"`
-	MaxContainers   int `yaml:"max_containers"`
+	// at most MaxContainersPerRoom of both kinds together in each ROOM;
+	// there is no limit for the house as a whole.
+	ContainerItemId      int `yaml:"container_item_id"`
+	ContainerPrice       int `yaml:"container_price"`
+	StrongboxItemId      int `yaml:"strongbox_item_id"`
+	StrongboxPrice       int `yaml:"strongbox_price"`
+	MaxContainersPerRoom int `yaml:"max_containers_per_room"`
 }
 
 // housingItemIds lists every item the building sells, for validation.
@@ -171,8 +172,8 @@ func (b Building) Validate() error {
 		}
 		seenItem[id] = true
 	}
-	if b.ContainerPrice <= 0 || b.StrongboxPrice <= 0 || b.MaxContainers < 1 {
-		return fmt.Errorf(`housing building %s: container_price and strongbox_price must be positive and max_containers at least 1`, b.BuildingId)
+	if b.ContainerPrice <= 0 || b.StrongboxPrice <= 0 || b.MaxContainersPerRoom < 1 {
+		return fmt.Errorf(`housing building %s: container_price and strongbox_price must be positive and max_containers_per_room at least 1`, b.BuildingId)
 	}
 	if b.GuestKeyPrice <= 0 || b.MaxGuests < 1 {
 		return fmt.Errorf(`housing building %s: guest_key_price must be positive and max_guests at least 1`, b.BuildingId)
@@ -266,6 +267,22 @@ type House struct {
 	// items live: the overlay puts them into the room on load and Capture
 	// writes changes back.
 	Containers []HouseContainer `yaml:"containers,omitempty"`
+
+	// Floors are what lies on each room's floor (items, stashed items,
+	// gold), for rooms whose floor has been captured. Like containers, this
+	// record, not the room's instance save, is the source of truth: the
+	// overlay puts a recorded floor into the room on load and Capture writes
+	// changes back. A room with no entry yet keeps whatever its instance save
+	// held until its first capture adopts it.
+	Floors []HouseFloor `yaml:"floors,omitempty"`
+}
+
+// HouseFloor is what lies on one room's floor.
+type HouseFloor struct {
+	RoomId int          `yaml:"room_id"`
+	Items  []items.Item `yaml:"items,omitempty"`
+	Stash  []items.Item `yaml:"stash,omitempty"` // hidden with the stash command
+	Gold   int          `yaml:"gold,omitempty"`
 }
 
 // HouseContainer is one container placed in a house.
@@ -285,6 +302,31 @@ func (h *House) WalkItems(visit func(*items.Item)) {
 	for ci := range h.Containers {
 		items.WalkSlice(h.Containers[ci].Items, visit)
 	}
+	for fi := range h.Floors {
+		items.WalkSlice(h.Floors[fi].Items, visit)
+		items.WalkSlice(h.Floors[fi].Stash, visit)
+	}
+}
+
+// hasRoomForContainer reports whether some room of the house can still take
+// a container under the building's per-room limit.
+func (h House) hasRoomForContainer(b Building) bool {
+	for _, roomId := range h.RoomIds {
+		if len(h.containersIn(roomId)) < b.MaxContainersPerRoom {
+			return true
+		}
+	}
+	return false
+}
+
+// floorOf returns the recorded floor of roomId and its index, if any.
+func (h House) floorOf(roomId int) (HouseFloor, int, bool) {
+	for i, f := range h.Floors {
+		if f.RoomId == roomId {
+			return f, i, true
+		}
+	}
+	return HouseFloor{}, -1, false
 }
 
 // containersIn returns the house's containers placed in roomId.
@@ -369,6 +411,12 @@ func (h House) clone() House {
 	}
 	if len(h.Containers) == 0 {
 		c.Containers = nil
+	}
+	c.Floors = nil
+	for _, f := range h.Floors {
+		f.Items = append([]items.Item(nil), f.Items...)
+		f.Stash = append([]items.Item(nil), f.Stash...)
+		c.Floors = append(c.Floors, f)
 	}
 	if h.Descriptions != nil {
 		c.Descriptions = make(map[int]string, len(h.Descriptions))
@@ -492,6 +540,16 @@ func (h House) checkLinks() error {
 			return fmt.Errorf(`two containers called %q in room %d`, c.Name, c.RoomId)
 		}
 		seenContainer[key] = true
+	}
+	seenFloor := map[int]bool{}
+	for _, f := range h.Floors {
+		if !h.HasRoom(f.RoomId) {
+			return fmt.Errorf(`floor of room %d, which is not in this house`, f.RoomId)
+		}
+		if seenFloor[f.RoomId] {
+			return fmt.Errorf(`two floors recorded for room %d`, f.RoomId)
+		}
+		seenFloor[f.RoomId] = true
 	}
 	seenGuest := map[int]bool{}
 	for _, g := range h.Guests {

@@ -1038,13 +1038,15 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 				command = inputText
 			}
 
+			roomBefore := user.Character.RoomId
 			handled, err = usercommands.TryCommand(command, remains, userId, flags)
 			if err != nil {
 				mudlog.Warn("user-TryCommand", "command", command, "remains", remains, "error", err.Error())
 			}
-			// Anything the command put into or took from a house container is
-			// written to the house record now, not at the next autosave.
-			housing.AfterUserCommand(userId)
+			// Anything the command left on or took from a lodging's floor or
+			// containers is written to the house record now, not at the next
+			// autosave.
+			housing.AfterUserCommand(userId, roomBefore)
 		}
 
 	} else {
@@ -1101,11 +1103,12 @@ func (w *World) processMobInput(mobInstanceId int, inputText string) {
 
 		//mudlog.Info("World received mob input", "InputText", (inputText))
 
+		roomBefore := mob.Character.RoomId
 		handled, err = mobcommands.TryCommand(command, remains, mobInstanceId)
 		if err != nil {
 			mudlog.Warn("mob-TryCommand", "command", command, "remains", remains, "error", err.Error())
 		}
-		housing.AfterMobCommand(mobInstanceId)
+		housing.AfterMobCommand(mobInstanceId, roomBefore)
 
 	}
 
