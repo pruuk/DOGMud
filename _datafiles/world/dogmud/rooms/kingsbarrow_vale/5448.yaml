@@ -24,6 +24,8 @@ description: >
   and diving in the race, sheets of water dropping from each
   board as it crests, the motion hypnotic and relentless.
 biome: farmland
+skylight: 0.15
+lamp: 50
 coord:
   x: -17
   y: 59

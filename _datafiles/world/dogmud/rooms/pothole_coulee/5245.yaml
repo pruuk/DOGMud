@@ -14,6 +14,8 @@ description: >
   iron and steam. Every surface is black with soot. This is a place
   where things are made.
 biome: fort
+skylight: 0.15
+lamp: 50
 coord:
   x: 40
   y: 0

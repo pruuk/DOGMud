@@ -25,6 +25,8 @@ description: >
   taken down. Far humbler than a coaching inn, and warmer
   for it.
 biome: farmland
+skylight: 0.15
+lamp: 50
 coord:
   x: -19
   y: 60

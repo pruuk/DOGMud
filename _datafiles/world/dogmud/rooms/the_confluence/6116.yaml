@@ -11,6 +11,8 @@ description: >
   use this place; the conversation is trade talk and river gossip,
   low and comfortable.
 biome: water
+skylight: 0.15
+lamp: 50
 coord: {x: -6, y: -57, z: 0}
 exits:
   north: {roomid: 6115}

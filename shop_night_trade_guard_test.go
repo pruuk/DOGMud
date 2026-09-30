@@ -204,6 +204,7 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 	if nightSamples == 0 {
 		t.Fatal("no awake night sample was taken: the guard checked nothing")
 	}
+	t.Logf("checked %d shop placements across %d awake night samples", len(placements), nightSamples)
 	if len(failures) > 0 {
 		t.Errorf("%d shopkeepers cannot trade at night while awake in their shop.\n"+
 			"A normal human cannot make out the goods below the faces band. Give a street\n"+

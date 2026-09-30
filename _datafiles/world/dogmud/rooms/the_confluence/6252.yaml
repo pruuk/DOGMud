@@ -13,6 +13,8 @@ description: >
   but clean and reliable, and the keeper knows which
   rooms face the road and which face the quiet yard.
 biome: city_backstreet
+skylight: 0.15
+lamp: 50
 coord:
   x: 9
   y: -68

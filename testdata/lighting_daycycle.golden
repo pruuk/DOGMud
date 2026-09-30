@@ -59,8 +59,8 @@ room 409 biome=plains light=34
 room 420 biome=river light=34
 room 421 biome=river light=34
 room 422 biome=river light=34
-room 423 biome=river light=34
-room 424 biome=river light=34
+room 423 biome=river light=50
+room 424 biome=river light=50
 room 425 biome=river light=34
 room 426 biome=river light=34
 room 427 biome=land light=34
@@ -292,7 +292,7 @@ room 4041 biome=farmland light=34
 room 4042 biome=farmland light=34
 room 4043 biome=farmland light=34
 room 4044 biome=farmland light=34
-room 4045 biome=farmland light=34
+room 4045 biome=farmland light=50
 room 4046 biome=farmland light=34
 room 4047 biome=farmland light=34
 room 4048 biome=farmland light=34
@@ -469,7 +469,7 @@ room 5241 biome=ruins light=31
 room 5242 biome=ruins light=31
 room 5243 biome=cliffs light=34
 room 5244 biome=mountains light=34
-room 5245 biome=fort light=22
+room 5245 biome=fort light=50
 room 5246 biome=interior light=50
 room 5247 biome=fort light=22
 room 5248 biome=mountains light=34
@@ -600,7 +600,7 @@ room 5374 biome=farmland light=34
 room 5375 biome=farmland light=34
 room 5376 biome=farmland light=34
 room 5377 biome=farmland light=34
-room 5378 biome=farmland light=34
+room 5378 biome=farmland light=50
 room 5379 biome=farmland light=34
 room 5380 biome=farmland light=34
 room 5381 biome=farmland light=34
@@ -670,8 +670,8 @@ room 5444 biome=farmland light=34
 room 5445 biome=farmland light=34
 room 5446 biome=farmland light=34
 room 5447 biome=farmland light=34
-room 5448 biome=farmland light=34
-room 5449 biome=farmland light=34
+room 5448 biome=farmland light=50
+room 5449 biome=farmland light=50
 room 5450 biome=land light=34
 room 5451 biome=land light=34
 room 5452 biome=city_thoroughfare light=54
@@ -948,9 +948,9 @@ room 6110 biome=water light=34
 room 6111 biome=water light=34
 room 6112 biome=water light=34
 room 6113 biome=water light=34
-room 6114 biome=water light=34
+room 6114 biome=water light=50
 room 6115 biome=water light=34
-room 6116 biome=water light=34
+room 6116 biome=water light=50
 room 6117 biome=water light=34
 room 6118 biome=water light=34
 room 6119 biome=water light=34
@@ -1086,7 +1086,7 @@ room 6248 biome=city_thoroughfare light=54
 room 6249 biome=city_thoroughfare light=54
 room 6250 biome=road light=44
 room 6251 biome=city_backstreet light=42
-room 6252 biome=city_backstreet light=42
+room 6252 biome=city_backstreet light=50
 room 6253 biome=city_backstreet light=42
 room 6254 biome=interior light=50
 room 6255 biome=interior light=50
@@ -1114,7 +1114,7 @@ room 6276 biome=farmland light=34
 room 6277 biome=farmland light=34
 room 6278 biome=city_thoroughfare light=54
 room 6279 biome=water light=34
-room 6280 biome=water light=34
+room 6280 biome=water light=50
 room 6281 biome=water light=34
 room 6282 biome=city_backstreet light=42
 room 6283 biome=water light=34
@@ -1365,8 +1365,8 @@ room 409 biome=plains light=34
 room 420 biome=river light=34
 room 421 biome=river light=34
 room 422 biome=river light=34
-room 423 biome=river light=34
-room 424 biome=river light=34
+room 423 biome=river light=50
+room 424 biome=river light=50
 room 425 biome=river light=34
 room 426 biome=river light=34
 room 427 biome=land light=34
@@ -1598,7 +1598,7 @@ room 4041 biome=farmland light=34
 room 4042 biome=farmland light=34
 room 4043 biome=farmland light=34
 room 4044 biome=farmland light=34
-room 4045 biome=farmland light=34
+room 4045 biome=farmland light=50
 room 4046 biome=farmland light=34
 room 4047 biome=farmland light=34
 room 4048 biome=farmland light=34
@@ -1775,7 +1775,7 @@ room 5241 biome=ruins light=30
 room 5242 biome=ruins light=30
 room 5243 biome=cliffs light=34
 room 5244 biome=mountains light=34
-room 5245 biome=fort light=21
+room 5245 biome=fort light=50
 room 5246 biome=interior light=50
 room 5247 biome=fort light=21
 room 5248 biome=mountains light=34
@@ -1906,7 +1906,7 @@ room 5374 biome=farmland light=34
 room 5375 biome=farmland light=34
 room 5376 biome=farmland light=34
 room 5377 biome=farmland light=34
-room 5378 biome=farmland light=34
+room 5378 biome=farmland light=50
 room 5379 biome=farmland light=34
 room 5380 biome=farmland light=34
 room 5381 biome=farmland light=34
@@ -1976,8 +1976,8 @@ room 5444 biome=farmland light=34
 room 5445 biome=farmland light=34
 room 5446 biome=farmland light=34
 room 5447 biome=farmland light=34
-room 5448 biome=farmland light=34
-room 5449 biome=farmland light=34
+room 5448 biome=farmland light=50
+room 5449 biome=farmland light=50
 room 5450 biome=land light=34
 room 5451 biome=land light=34
 room 5452 biome=city_thoroughfare light=54
@@ -2254,9 +2254,9 @@ room 6110 biome=water light=34
 room 6111 biome=water light=34
 room 6112 biome=water light=34
 room 6113 biome=water light=34
-room 6114 biome=water light=34
+room 6114 biome=water light=50
 room 6115 biome=water light=34
-room 6116 biome=water light=34
+room 6116 biome=water light=50
 room 6117 biome=water light=34
 room 6118 biome=water light=34
 room 6119 biome=water light=34
@@ -2392,7 +2392,7 @@ room 6248 biome=city_thoroughfare light=54
 room 6249 biome=city_thoroughfare light=54
 room 6250 biome=road light=44
 room 6251 biome=city_backstreet light=42
-room 6252 biome=city_backstreet light=42
+room 6252 biome=city_backstreet light=50
 room 6253 biome=city_backstreet light=42
 room 6254 biome=interior light=50
 room 6255 biome=interior light=50
@@ -2420,7 +2420,7 @@ room 6276 biome=farmland light=34
 room 6277 biome=farmland light=34
 room 6278 biome=city_thoroughfare light=54
 room 6279 biome=water light=34
-room 6280 biome=water light=34
+room 6280 biome=water light=50
 room 6281 biome=water light=34
 room 6282 biome=city_backstreet light=42
 room 6283 biome=water light=34
@@ -2671,8 +2671,8 @@ room 409 biome=plains light=63
 room 420 biome=river light=63
 room 421 biome=river light=63
 room 422 biome=river light=63
-room 423 biome=river light=63
-room 424 biome=river light=63
+room 423 biome=river light=54
+room 424 biome=river light=54
 room 425 biome=river light=63
 room 426 biome=river light=63
 room 427 biome=land light=63
@@ -2904,7 +2904,7 @@ room 4041 biome=farmland light=63
 room 4042 biome=farmland light=63
 room 4043 biome=farmland light=63
 room 4044 biome=farmland light=63
-room 4045 biome=farmland light=63
+room 4045 biome=farmland light=54
 room 4046 biome=farmland light=63
 room 4047 biome=farmland light=63
 room 4048 biome=farmland light=63
@@ -3081,7 +3081,7 @@ room 5241 biome=ruins light=60
 room 5242 biome=ruins light=60
 room 5243 biome=cliffs light=63
 room 5244 biome=mountains light=63
-room 5245 biome=fort light=51
+room 5245 biome=fort light=54
 room 5246 biome=interior light=54
 room 5247 biome=fort light=51
 room 5248 biome=mountains light=63
@@ -3212,7 +3212,7 @@ room 5374 biome=farmland light=63
 room 5375 biome=farmland light=63
 room 5376 biome=farmland light=63
 room 5377 biome=farmland light=63
-room 5378 biome=farmland light=63
+room 5378 biome=farmland light=54
 room 5379 biome=farmland light=63
 room 5380 biome=farmland light=63
 room 5381 biome=farmland light=63
@@ -3282,8 +3282,8 @@ room 5444 biome=farmland light=63
 room 5445 biome=farmland light=63
 room 5446 biome=farmland light=63
 room 5447 biome=farmland light=63
-room 5448 biome=farmland light=63
-room 5449 biome=farmland light=63
+room 5448 biome=farmland light=54
+room 5449 biome=farmland light=54
 room 5450 biome=land light=63
 room 5451 biome=land light=63
 room 5452 biome=city_thoroughfare light=66
@@ -3560,9 +3560,9 @@ room 6110 biome=water light=63
 room 6111 biome=water light=63
 room 6112 biome=water light=63
 room 6113 biome=water light=63
-room 6114 biome=water light=63
+room 6114 biome=water light=54
 room 6115 biome=water light=63
-room 6116 biome=water light=63
+room 6116 biome=water light=54
 room 6117 biome=water light=63
 room 6118 biome=water light=63
 room 6119 biome=water light=63
@@ -3698,7 +3698,7 @@ room 6248 biome=city_thoroughfare light=66
 room 6249 biome=city_thoroughfare light=66
 room 6250 biome=road light=64
 room 6251 biome=city_backstreet light=63
-room 6252 biome=city_backstreet light=63
+room 6252 biome=city_backstreet light=54
 room 6253 biome=city_backstreet light=63
 room 6254 biome=interior light=54
 room 6255 biome=interior light=54
@@ -3726,7 +3726,7 @@ room 6276 biome=farmland light=63
 room 6277 biome=farmland light=63
 room 6278 biome=city_thoroughfare light=66
 room 6279 biome=water light=63
-room 6280 biome=water light=63
+room 6280 biome=water light=54
 room 6281 biome=water light=63
 room 6282 biome=city_backstreet light=63
 room 6283 biome=water light=63
@@ -3977,8 +3977,8 @@ room 409 biome=plains light=31
 room 420 biome=river light=31
 room 421 biome=river light=31
 room 422 biome=river light=31
-room 423 biome=river light=31
-room 424 biome=river light=31
+room 423 biome=river light=50
+room 424 biome=river light=50
 room 425 biome=river light=31
 room 426 biome=river light=31
 room 427 biome=land light=31
@@ -4210,7 +4210,7 @@ room 4041 biome=farmland light=31
 room 4042 biome=farmland light=31
 room 4043 biome=farmland light=31
 room 4044 biome=farmland light=31
-room 4045 biome=farmland light=31
+room 4045 biome=farmland light=50
 room 4046 biome=farmland light=31
 room 4047 biome=farmland light=31
 room 4048 biome=farmland light=31
@@ -4387,7 +4387,7 @@ room 5241 biome=ruins light=28
 room 5242 biome=ruins light=28
 room 5243 biome=cliffs light=31
 room 5244 biome=mountains light=31
-room 5245 biome=fort light=19
+room 5245 biome=fort light=50
 room 5246 biome=interior light=50
 room 5247 biome=fort light=19
 room 5248 biome=mountains light=31
@@ -4518,7 +4518,7 @@ room 5374 biome=farmland light=31
 room 5375 biome=farmland light=31
 room 5376 biome=farmland light=31
 room 5377 biome=farmland light=31
-room 5378 biome=farmland light=31
+room 5378 biome=farmland light=50
 room 5379 biome=farmland light=31
 room 5380 biome=farmland light=31
 room 5381 biome=farmland light=31
@@ -4588,8 +4588,8 @@ room 5444 biome=farmland light=31
 room 5445 biome=farmland light=31
 room 5446 biome=farmland light=31
 room 5447 biome=farmland light=31
-room 5448 biome=farmland light=31
-room 5449 biome=farmland light=31
+room 5448 biome=farmland light=50
+room 5449 biome=farmland light=50
 room 5450 biome=land light=31
 room 5451 biome=land light=31
 room 5452 biome=city_thoroughfare light=54
@@ -4866,9 +4866,9 @@ room 6110 biome=water light=31
 room 6111 biome=water light=31
 room 6112 biome=water light=31
 room 6113 biome=water light=31
-room 6114 biome=water light=31
+room 6114 biome=water light=50
 room 6115 biome=water light=31
-room 6116 biome=water light=31
+room 6116 biome=water light=50
 room 6117 biome=water light=31
 room 6118 biome=water light=31
 room 6119 biome=water light=31
@@ -5004,7 +5004,7 @@ room 6248 biome=city_thoroughfare light=54
 room 6249 biome=city_thoroughfare light=54
 room 6250 biome=road light=43
 room 6251 biome=city_backstreet light=41
-room 6252 biome=city_backstreet light=41
+room 6252 biome=city_backstreet light=50
 room 6253 biome=city_backstreet light=41
 room 6254 biome=interior light=50
 room 6255 biome=interior light=50
@@ -5032,7 +5032,7 @@ room 6276 biome=farmland light=31
 room 6277 biome=farmland light=31
 room 6278 biome=city_thoroughfare light=54
 room 6279 biome=water light=31
-room 6280 biome=water light=31
+room 6280 biome=water light=50
 room 6281 biome=water light=31
 room 6282 biome=city_backstreet light=41
 room 6283 biome=water light=31
@@ -5283,8 +5283,8 @@ room 409 biome=plains light=21
 room 420 biome=river light=21
 room 421 biome=river light=21
 room 422 biome=river light=21
-room 423 biome=river light=21
-room 424 biome=river light=21
+room 423 biome=river light=50
+room 424 biome=river light=50
 room 425 biome=river light=21
 room 426 biome=river light=21
 room 427 biome=land light=21
@@ -5516,7 +5516,7 @@ room 4041 biome=farmland light=21
 room 4042 biome=farmland light=21
 room 4043 biome=farmland light=21
 room 4044 biome=farmland light=21
-room 4045 biome=farmland light=21
+room 4045 biome=farmland light=50
 room 4046 biome=farmland light=21
 room 4047 biome=farmland light=21
 room 4048 biome=farmland light=21
@@ -5693,7 +5693,7 @@ room 5241 biome=ruins light=17
 room 5242 biome=ruins light=17
 room 5243 biome=cliffs light=21
 room 5244 biome=mountains light=21
-room 5245 biome=fort light=9
+room 5245 biome=fort light=50
 room 5246 biome=interior light=50
 room 5247 biome=fort light=9
 room 5248 biome=mountains light=21
@@ -5824,7 +5824,7 @@ room 5374 biome=farmland light=21
 room 5375 biome=farmland light=21
 room 5376 biome=farmland light=21
 room 5377 biome=farmland light=21
-room 5378 biome=farmland light=21
+room 5378 biome=farmland light=50
 room 5379 biome=farmland light=21
 room 5380 biome=farmland light=21
 room 5381 biome=farmland light=21
@@ -5894,8 +5894,8 @@ room 5444 biome=farmland light=21
 room 5445 biome=farmland light=21
 room 5446 biome=farmland light=21
 room 5447 biome=farmland light=21
-room 5448 biome=farmland light=21
-room 5449 biome=farmland light=21
+room 5448 biome=farmland light=50
+room 5449 biome=farmland light=50
 room 5450 biome=land light=21
 room 5451 biome=land light=21
 room 5452 biome=city_thoroughfare light=53
@@ -6172,9 +6172,9 @@ room 6110 biome=water light=21
 room 6111 biome=water light=21
 room 6112 biome=water light=21
 room 6113 biome=water light=21
-room 6114 biome=water light=21
+room 6114 biome=water light=50
 room 6115 biome=water light=21
-room 6116 biome=water light=21
+room 6116 biome=water light=50
 room 6117 biome=water light=21
 room 6118 biome=water light=21
 room 6119 biome=water light=21
@@ -6310,7 +6310,7 @@ room 6248 biome=city_thoroughfare light=53
 room 6249 biome=city_thoroughfare light=53
 room 6250 biome=road light=40
 room 6251 biome=city_backstreet light=38
-room 6252 biome=city_backstreet light=38
+room 6252 biome=city_backstreet light=50
 room 6253 biome=city_backstreet light=38
 room 6254 biome=interior light=50
 room 6255 biome=interior light=50
@@ -6338,7 +6338,7 @@ room 6276 biome=farmland light=21
 room 6277 biome=farmland light=21
 room 6278 biome=city_thoroughfare light=53
 room 6279 biome=water light=21
-room 6280 biome=water light=21
+room 6280 biome=water light=50
 room 6281 biome=water light=21
 room 6282 biome=city_backstreet light=38
 room 6283 biome=water light=21
@@ -6589,8 +6589,8 @@ room 409 biome=plains light=22
 room 420 biome=river light=22
 room 421 biome=river light=22
 room 422 biome=river light=22
-room 423 biome=river light=22
-room 424 biome=river light=22
+room 423 biome=river light=50
+room 424 biome=river light=50
 room 425 biome=river light=22
 room 426 biome=river light=22
 room 427 biome=land light=22
@@ -6822,7 +6822,7 @@ room 4041 biome=farmland light=22
 room 4042 biome=farmland light=22
 room 4043 biome=farmland light=22
 room 4044 biome=farmland light=22
-room 4045 biome=farmland light=22
+room 4045 biome=farmland light=50
 room 4046 biome=farmland light=22
 room 4047 biome=farmland light=22
 room 4048 biome=farmland light=22
@@ -6999,7 +6999,7 @@ room 5241 biome=ruins light=18
 room 5242 biome=ruins light=18
 room 5243 biome=cliffs light=22
 room 5244 biome=mountains light=22
-room 5245 biome=fort light=9
+room 5245 biome=fort light=50
 room 5246 biome=interior light=50
 room 5247 biome=fort light=9
 room 5248 biome=mountains light=22
@@ -7130,7 +7130,7 @@ room 5374 biome=farmland light=22
 room 5375 biome=farmland light=22
 room 5376 biome=farmland light=22
 room 5377 biome=farmland light=22
-room 5378 biome=farmland light=22
+room 5378 biome=farmland light=50
 room 5379 biome=farmland light=22
 room 5380 biome=farmland light=22
 room 5381 biome=farmland light=22
@@ -7200,8 +7200,8 @@ room 5444 biome=farmland light=22
 room 5445 biome=farmland light=22
 room 5446 biome=farmland light=22
 room 5447 biome=farmland light=22
-room 5448 biome=farmland light=22
-room 5449 biome=farmland light=22
+room 5448 biome=farmland light=50
+room 5449 biome=farmland light=50
 room 5450 biome=land light=22
 room 5451 biome=land light=22
 room 5452 biome=city_thoroughfare light=53
@@ -7478,9 +7478,9 @@ room 6110 biome=water light=22
 room 6111 biome=water light=22
 room 6112 biome=water light=22
 room 6113 biome=water light=22
-room 6114 biome=water light=22
+room 6114 biome=water light=50
 room 6115 biome=water light=22
-room 6116 biome=water light=22
+room 6116 biome=water light=50
 room 6117 biome=water light=22
 room 6118 biome=water light=22
 room 6119 biome=water light=22
@@ -7616,7 +7616,7 @@ room 6248 biome=city_thoroughfare light=53
 room 6249 biome=city_thoroughfare light=53
 room 6250 biome=road light=40
 room 6251 biome=city_backstreet light=38
-room 6252 biome=city_backstreet light=38
+room 6252 biome=city_backstreet light=50
 room 6253 biome=city_backstreet light=38
 room 6254 biome=interior light=50
 room 6255 biome=interior light=50
@@ -7644,7 +7644,7 @@ room 6276 biome=farmland light=22
 room 6277 biome=farmland light=22
 room 6278 biome=city_thoroughfare light=53
 room 6279 biome=water light=22
-room 6280 biome=water light=22
+room 6280 biome=water light=50
 room 6281 biome=water light=22
 room 6282 biome=city_backstreet light=38
 room 6283 biome=water light=22
@@ -7895,8 +7895,8 @@ room 409 biome=plains light=70
 room 420 biome=river light=70
 room 421 biome=river light=70
 room 422 biome=river light=70
-room 423 biome=river light=70
-room 424 biome=river light=70
+room 423 biome=river light=57
+room 424 biome=river light=57
 room 425 biome=river light=70
 room 426 biome=river light=70
 room 427 biome=land light=70
@@ -8128,7 +8128,7 @@ room 4041 biome=farmland light=70
 room 4042 biome=farmland light=70
 room 4043 biome=farmland light=70
 room 4044 biome=farmland light=70
-room 4045 biome=farmland light=70
+room 4045 biome=farmland light=57
 room 4046 biome=farmland light=70
 room 4047 biome=farmland light=70
 room 4048 biome=farmland light=70
@@ -8305,7 +8305,7 @@ room 5241 biome=ruins light=67
 room 5242 biome=ruins light=67
 room 5243 biome=cliffs light=70
 room 5244 biome=mountains light=70
-room 5245 biome=fort light=58
+room 5245 biome=fort light=57
 room 5246 biome=interior light=57
 room 5247 biome=fort light=58
 room 5248 biome=mountains light=70
@@ -8436,7 +8436,7 @@ room 5374 biome=farmland light=70
 room 5375 biome=farmland light=70
 room 5376 biome=farmland light=70
 room 5377 biome=farmland light=70
-room 5378 biome=farmland light=70
+room 5378 biome=farmland light=57
 room 5379 biome=farmland light=70
 room 5380 biome=farmland light=70
 room 5381 biome=farmland light=70
@@ -8506,8 +8506,8 @@ room 5444 biome=farmland light=70
 room 5445 biome=farmland light=70
 room 5446 biome=farmland light=70
 room 5447 biome=farmland light=70
-room 5448 biome=farmland light=70
-room 5449 biome=farmland light=70
+room 5448 biome=farmland light=57
+room 5449 biome=farmland light=57
 room 5450 biome=land light=70
 room 5451 biome=land light=70
 room 5452 biome=city_thoroughfare light=72
@@ -8784,9 +8784,9 @@ room 6110 biome=water light=70
 room 6111 biome=water light=70
 room 6112 biome=water light=70
 room 6113 biome=water light=70
-room 6114 biome=water light=70
+room 6114 biome=water light=57
 room 6115 biome=water light=70
-room 6116 biome=water light=70
+room 6116 biome=water light=57
 room 6117 biome=water light=70
 room 6118 biome=water light=70
 room 6119 biome=water light=70
@@ -8922,7 +8922,7 @@ room 6248 biome=city_thoroughfare light=72
 room 6249 biome=city_thoroughfare light=72
 room 6250 biome=road light=71
 room 6251 biome=city_backstreet light=70
-room 6252 biome=city_backstreet light=70
+room 6252 biome=city_backstreet light=57
 room 6253 biome=city_backstreet light=70
 room 6254 biome=interior light=57
 room 6255 biome=interior light=57
@@ -8950,7 +8950,7 @@ room 6276 biome=farmland light=70
 room 6277 biome=farmland light=70
 room 6278 biome=city_thoroughfare light=72
 room 6279 biome=water light=70
-room 6280 biome=water light=70
+room 6280 biome=water light=57
 room 6281 biome=water light=70
 room 6282 biome=city_backstreet light=70
 room 6283 biome=water light=70
@@ -9201,8 +9201,8 @@ room 409 biome=plains light=26
 room 420 biome=river light=26
 room 421 biome=river light=26
 room 422 biome=river light=26
-room 423 biome=river light=26
-room 424 biome=river light=26
+room 423 biome=river light=50
+room 424 biome=river light=50
 room 425 biome=river light=26
 room 426 biome=river light=26
 room 427 biome=land light=26
@@ -9434,7 +9434,7 @@ room 4041 biome=farmland light=26
 room 4042 biome=farmland light=26
 room 4043 biome=farmland light=26
 room 4044 biome=farmland light=26
-room 4045 biome=farmland light=26
+room 4045 biome=farmland light=50
 room 4046 biome=farmland light=26
 room 4047 biome=farmland light=26
 room 4048 biome=farmland light=26
@@ -9611,7 +9611,7 @@ room 5241 biome=ruins light=22
 room 5242 biome=ruins light=22
 room 5243 biome=cliffs light=26
 room 5244 biome=mountains light=26
-room 5245 biome=fort light=13
+room 5245 biome=fort light=50
 room 5246 biome=interior light=50
 room 5247 biome=fort light=13
 room 5248 biome=mountains light=26
@@ -9742,7 +9742,7 @@ room 5374 biome=farmland light=26
 room 5375 biome=farmland light=26
 room 5376 biome=farmland light=26
 room 5377 biome=farmland light=26
-room 5378 biome=farmland light=26
+room 5378 biome=farmland light=50
 room 5379 biome=farmland light=26
 room 5380 biome=farmland light=26
 room 5381 biome=farmland light=26
@@ -9812,8 +9812,8 @@ room 5444 biome=farmland light=26
 room 5445 biome=farmland light=26
 room 5446 biome=farmland light=26
 room 5447 biome=farmland light=26
-room 5448 biome=farmland light=26
-room 5449 biome=farmland light=26
+room 5448 biome=farmland light=50
+room 5449 biome=farmland light=50
 room 5450 biome=land light=26
 room 5451 biome=land light=26
 room 5452 biome=city_thoroughfare light=53
@@ -10090,9 +10090,9 @@ room 6110 biome=water light=26
 room 6111 biome=water light=26
 room 6112 biome=water light=26
 room 6113 biome=water light=26
-room 6114 biome=water light=26
+room 6114 biome=water light=50
 room 6115 biome=water light=26
-room 6116 biome=water light=26
+room 6116 biome=water light=50
 room 6117 biome=water light=26
 room 6118 biome=water light=26
 room 6119 biome=water light=26
@@ -10228,7 +10228,7 @@ room 6248 biome=city_thoroughfare light=53
 room 6249 biome=city_thoroughfare light=53
 room 6250 biome=road light=41
 room 6251 biome=city_backstreet light=39
-room 6252 biome=city_backstreet light=39
+room 6252 biome=city_backstreet light=50
 room 6253 biome=city_backstreet light=39
 room 6254 biome=interior light=50
 room 6255 biome=interior light=50
@@ -10256,7 +10256,7 @@ room 6276 biome=farmland light=26
 room 6277 biome=farmland light=26
 room 6278 biome=city_thoroughfare light=53
 room 6279 biome=water light=26
-room 6280 biome=water light=26
+room 6280 biome=water light=50
 room 6281 biome=water light=26
 room 6282 biome=city_backstreet light=39
 room 6283 biome=water light=26
@@ -10507,8 +10507,8 @@ room 409 biome=plains light=31
 room 420 biome=river light=31
 room 421 biome=river light=31
 room 422 biome=river light=31
-room 423 biome=river light=31
-room 424 biome=river light=31
+room 423 biome=river light=50
+room 424 biome=river light=50
 room 425 biome=river light=31
 room 426 biome=river light=31
 room 427 biome=land light=31
@@ -10740,7 +10740,7 @@ room 4041 biome=farmland light=31
 room 4042 biome=farmland light=31
 room 4043 biome=farmland light=31
 room 4044 biome=farmland light=31
-room 4045 biome=farmland light=31
+room 4045 biome=farmland light=50
 room 4046 biome=farmland light=31
 room 4047 biome=farmland light=31
 room 4048 biome=farmland light=31
@@ -10917,7 +10917,7 @@ room 5241 biome=ruins light=27
 room 5242 biome=ruins light=27
 room 5243 biome=cliffs light=31
 room 5244 biome=mountains light=31
-room 5245 biome=fort light=19
+room 5245 biome=fort light=50
 room 5246 biome=interior light=50
 room 5247 biome=fort light=19
 room 5248 biome=mountains light=31
@@ -11048,7 +11048,7 @@ room 5374 biome=farmland light=31
 room 5375 biome=farmland light=31
 room 5376 biome=farmland light=31
 room 5377 biome=farmland light=31
-room 5378 biome=farmland light=31
+room 5378 biome=farmland light=50
 room 5379 biome=farmland light=31
 room 5380 biome=farmland light=31
 room 5381 biome=farmland light=31
@@ -11118,8 +11118,8 @@ room 5444 biome=farmland light=31
 room 5445 biome=farmland light=31
 room 5446 biome=farmland light=31
 room 5447 biome=farmland light=31
-room 5448 biome=farmland light=31
-room 5449 biome=farmland light=31
+room 5448 biome=farmland light=50
+room 5449 biome=farmland light=50
 room 5450 biome=land light=31
 room 5451 biome=land light=31
 room 5452 biome=city_thoroughfare light=54
@@ -11396,9 +11396,9 @@ room 6110 biome=water light=31
 room 6111 biome=water light=31
 room 6112 biome=water light=31
 room 6113 biome=water light=31
-room 6114 biome=water light=31
+room 6114 biome=water light=50
 room 6115 biome=water light=31
-room 6116 biome=water light=31
+room 6116 biome=water light=50
 room 6117 biome=water light=31
 room 6118 biome=water light=31
 room 6119 biome=water light=31
@@ -11534,7 +11534,7 @@ room 6248 biome=city_thoroughfare light=54
 room 6249 biome=city_thoroughfare light=54
 room 6250 biome=road light=43
 room 6251 biome=city_backstreet light=41
-room 6252 biome=city_backstreet light=41
+room 6252 biome=city_backstreet light=50
 room 6253 biome=city_backstreet light=41
 room 6254 biome=interior light=50
 room 6255 biome=interior light=50
@@ -11562,7 +11562,7 @@ room 6276 biome=farmland light=31
 room 6277 biome=farmland light=31
 room 6278 biome=city_thoroughfare light=54
 room 6279 biome=water light=31
-room 6280 biome=water light=31
+room 6280 biome=water light=50
 room 6281 biome=water light=31
 room 6282 biome=city_backstreet light=41
 room 6283 biome=water light=31
@@ -11813,8 +11813,8 @@ room 409 biome=plains light=61
 room 420 biome=river light=61
 room 421 biome=river light=61
 room 422 biome=river light=61
-room 423 biome=river light=61
-room 424 biome=river light=61
+room 423 biome=river light=54
+room 424 biome=river light=54
 room 425 biome=river light=61
 room 426 biome=river light=61
 room 427 biome=land light=61
@@ -12046,7 +12046,7 @@ room 4041 biome=farmland light=61
 room 4042 biome=farmland light=61
 room 4043 biome=farmland light=61
 room 4044 biome=farmland light=61
-room 4045 biome=farmland light=61
+room 4045 biome=farmland light=54
 room 4046 biome=farmland light=61
 room 4047 biome=farmland light=61
 room 4048 biome=farmland light=61
@@ -12223,7 +12223,7 @@ room 5241 biome=ruins light=58
 room 5242 biome=ruins light=58
 room 5243 biome=cliffs light=61
 room 5244 biome=mountains light=61
-room 5245 biome=fort light=49
+room 5245 biome=fort light=54
 room 5246 biome=interior light=54
 room 5247 biome=fort light=49
 room 5248 biome=mountains light=61
@@ -12354,7 +12354,7 @@ room 5374 biome=farmland light=61
 room 5375 biome=farmland light=61
 room 5376 biome=farmland light=61
 room 5377 biome=farmland light=61
-room 5378 biome=farmland light=61
+room 5378 biome=farmland light=54
 room 5379 biome=farmland light=61
 room 5380 biome=farmland light=61
 room 5381 biome=farmland light=61
@@ -12424,8 +12424,8 @@ room 5444 biome=farmland light=61
 room 5445 biome=farmland light=61
 room 5446 biome=farmland light=61
 room 5447 biome=farmland light=61
-room 5448 biome=farmland light=61
-room 5449 biome=farmland light=61
+room 5448 biome=farmland light=54
+room 5449 biome=farmland light=54
 room 5450 biome=land light=61
 room 5451 biome=land light=61
 room 5452 biome=city_thoroughfare light=65
@@ -12702,9 +12702,9 @@ room 6110 biome=water light=61
 room 6111 biome=water light=61
 room 6112 biome=water light=61
 room 6113 biome=water light=61
-room 6114 biome=water light=61
+room 6114 biome=water light=54
 room 6115 biome=water light=61
-room 6116 biome=water light=61
+room 6116 biome=water light=54
 room 6117 biome=water light=61
 room 6118 biome=water light=61
 room 6119 biome=water light=61
@@ -12840,7 +12840,7 @@ room 6248 biome=city_thoroughfare light=65
 room 6249 biome=city_thoroughfare light=65
 room 6250 biome=road light=62
 room 6251 biome=city_backstreet light=62
-room 6252 biome=city_backstreet light=62
+room 6252 biome=city_backstreet light=54
 room 6253 biome=city_backstreet light=62
 room 6254 biome=interior light=54
 room 6255 biome=interior light=54
@@ -12868,7 +12868,7 @@ room 6276 biome=farmland light=61
 room 6277 biome=farmland light=61
 room 6278 biome=city_thoroughfare light=65
 room 6279 biome=water light=61
-room 6280 biome=water light=61
+room 6280 biome=water light=54
 room 6281 biome=water light=61
 room 6282 biome=city_backstreet light=62
 room 6283 biome=water light=61
@@ -13119,8 +13119,8 @@ room 409 biome=plains light=74
 room 420 biome=river light=74
 room 421 biome=river light=74
 room 422 biome=river light=74
-room 423 biome=river light=74
-room 424 biome=river light=74
+room 423 biome=river light=59
+room 424 biome=river light=59
 room 425 biome=river light=74
 room 426 biome=river light=74
 room 427 biome=land light=74
@@ -13352,7 +13352,7 @@ room 4041 biome=farmland light=74
 room 4042 biome=farmland light=74
 room 4043 biome=farmland light=74
 room 4044 biome=farmland light=74
-room 4045 biome=farmland light=74
+room 4045 biome=farmland light=59
 room 4046 biome=farmland light=74
 room 4047 biome=farmland light=74
 room 4048 biome=farmland light=74
@@ -13529,7 +13529,7 @@ room 5241 biome=ruins light=70
 room 5242 biome=ruins light=70
 room 5243 biome=cliffs light=74
 room 5244 biome=mountains light=74
-room 5245 biome=fort light=62
+room 5245 biome=fort light=59
 room 5246 biome=interior light=59
 room 5247 biome=fort light=62
 room 5248 biome=mountains light=74
@@ -13660,7 +13660,7 @@ room 5374 biome=farmland light=74
 room 5375 biome=farmland light=74
 room 5376 biome=farmland light=74
 room 5377 biome=farmland light=74
-room 5378 biome=farmland light=74
+room 5378 biome=farmland light=59
 room 5379 biome=farmland light=74
 room 5380 biome=farmland light=74
 room 5381 biome=farmland light=74
@@ -13730,8 +13730,8 @@ room 5444 biome=farmland light=74
 room 5445 biome=farmland light=74
 room 5446 biome=farmland light=74
 room 5447 biome=farmland light=74
-room 5448 biome=farmland light=74
-room 5449 biome=farmland light=74
+room 5448 biome=farmland light=59
+room 5449 biome=farmland light=59
 room 5450 biome=land light=74
 room 5451 biome=land light=74
 room 5452 biome=city_thoroughfare light=75
@@ -14008,9 +14008,9 @@ room 6110 biome=water light=74
 room 6111 biome=water light=74
 room 6112 biome=water light=74
 room 6113 biome=water light=74
-room 6114 biome=water light=74
+room 6114 biome=water light=59
 room 6115 biome=water light=74
-room 6116 biome=water light=74
+room 6116 biome=water light=59
 room 6117 biome=water light=74
 room 6118 biome=water light=74
 room 6119 biome=water light=74
@@ -14146,7 +14146,7 @@ room 6248 biome=city_thoroughfare light=75
 room 6249 biome=city_thoroughfare light=75
 room 6250 biome=road light=74
 room 6251 biome=city_backstreet light=74
-room 6252 biome=city_backstreet light=74
+room 6252 biome=city_backstreet light=59
 room 6253 biome=city_backstreet light=74
 room 6254 biome=interior light=59
 room 6255 biome=interior light=59
@@ -14174,7 +14174,7 @@ room 6276 biome=farmland light=74
 room 6277 biome=farmland light=74
 room 6278 biome=city_thoroughfare light=75
 room 6279 biome=water light=74
-room 6280 biome=water light=74
+room 6280 biome=water light=59
 room 6281 biome=water light=74
 room 6282 biome=city_backstreet light=74
 room 6283 biome=water light=74
@@ -14425,8 +14425,8 @@ room 409 biome=plains light=61
 room 420 biome=river light=61
 room 421 biome=river light=61
 room 422 biome=river light=61
-room 423 biome=river light=61
-room 424 biome=river light=61
+room 423 biome=river light=54
+room 424 biome=river light=54
 room 425 biome=river light=61
 room 426 biome=river light=61
 room 427 biome=land light=61
@@ -14658,7 +14658,7 @@ room 4041 biome=farmland light=61
 room 4042 biome=farmland light=61
 room 4043 biome=farmland light=61
 room 4044 biome=farmland light=61
-room 4045 biome=farmland light=61
+room 4045 biome=farmland light=54
 room 4046 biome=farmland light=61
 room 4047 biome=farmland light=61
 room 4048 biome=farmland light=61
@@ -14835,7 +14835,7 @@ room 5241 biome=ruins light=58
 room 5242 biome=ruins light=58
 room 5243 biome=cliffs light=61
 room 5244 biome=mountains light=61
-room 5245 biome=fort light=49
+room 5245 biome=fort light=54
 room 5246 biome=interior light=54
 room 5247 biome=fort light=49
 room 5248 biome=mountains light=61
@@ -14966,7 +14966,7 @@ room 5374 biome=farmland light=61
 room 5375 biome=farmland light=61
 room 5376 biome=farmland light=61
 room 5377 biome=farmland light=61
-room 5378 biome=farmland light=61
+room 5378 biome=farmland light=54
 room 5379 biome=farmland light=61
 room 5380 biome=farmland light=61
 room 5381 biome=farmland light=61
@@ -15036,8 +15036,8 @@ room 5444 biome=farmland light=61
 room 5445 biome=farmland light=61
 room 5446 biome=farmland light=61
 room 5447 biome=farmland light=61
-room 5448 biome=farmland light=61
-room 5449 biome=farmland light=61
+room 5448 biome=farmland light=54
+room 5449 biome=farmland light=54
 room 5450 biome=land light=61
 room 5451 biome=land light=61
 room 5452 biome=city_thoroughfare light=65
@@ -15314,9 +15314,9 @@ room 6110 biome=water light=61
 room 6111 biome=water light=61
 room 6112 biome=water light=61
 room 6113 biome=water light=61
-room 6114 biome=water light=61
+room 6114 biome=water light=54
 room 6115 biome=water light=61
-room 6116 biome=water light=61
+room 6116 biome=water light=54
 room 6117 biome=water light=61
 room 6118 biome=water light=61
 room 6119 biome=water light=61
@@ -15452,7 +15452,7 @@ room 6248 biome=city_thoroughfare light=65
 room 6249 biome=city_thoroughfare light=65
 room 6250 biome=road light=62
 room 6251 biome=city_backstreet light=62
-room 6252 biome=city_backstreet light=62
+room 6252 biome=city_backstreet light=54
 room 6253 biome=city_backstreet light=62
 room 6254 biome=interior light=54
 room 6255 biome=interior light=54
@@ -15480,7 +15480,7 @@ room 6276 biome=farmland light=61
 room 6277 biome=farmland light=61
 room 6278 biome=city_thoroughfare light=65
 room 6279 biome=water light=61
-room 6280 biome=water light=61
+room 6280 biome=water light=54
 room 6281 biome=water light=61
 room 6282 biome=city_backstreet light=62
 room 6283 biome=water light=61

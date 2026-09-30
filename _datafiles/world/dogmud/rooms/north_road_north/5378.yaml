@@ -22,6 +22,8 @@ description: >
   beside the outer door, dense with traveler notices and a
   week-old market sheet from Thornwall.
 biome: farmland
+skylight: 0.15
+lamp: 50
 coord:
   x: -17
   y: 11

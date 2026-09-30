@@ -10,6 +10,8 @@ description: >
   of rope fiber — undercut by the river outside. A wide counter
   across the middle keeps the stock from the customers.
 biome: water
+skylight: 0.15
+lamp: 50
 coord: {x: -6, y: -55, z: 0}
 exits:
   north: {roomid: 6113}

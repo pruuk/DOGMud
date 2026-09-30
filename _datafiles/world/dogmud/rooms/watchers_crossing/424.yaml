@@ -9,6 +9,8 @@ description: A timber-framed building with wide shutters thrown open to the air,
   to the right. A scale and a set of weights sit on the counter beside an abacus
   whose beads have been worn smooth.
 biome: river
+skylight: 0.15
+lamp: 50
 coord:
   x: -7
   y: 1

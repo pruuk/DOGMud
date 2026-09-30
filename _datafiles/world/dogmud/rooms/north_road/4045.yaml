@@ -12,6 +12,8 @@ description: >
   years of smoke. It is the kind of room that has absorbed a
   great many conversations and remembers none of them.
 biome: farmland
+skylight: 0.15
+lamp: 50
 coord:
   x: -18
   y: -11
