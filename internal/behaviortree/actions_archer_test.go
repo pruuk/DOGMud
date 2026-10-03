@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -90,7 +91,7 @@ func TestActTryFire_SameRoomLoaded_FiresAndSucceeds(t *testing.T) {
 	if got := LookupAction("try_fire")(nil, ctx); got != Success {
 		t.Fatalf("try_fire = %v, want Success", got)
 	}
-	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, "shoot Target") {
+	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, fmt.Sprintf("shoot #%d", target.InstanceId)) {
 		t.Errorf("expected 'shoot Target' queued, got %v", cmds)
 	}
 }
@@ -146,7 +147,7 @@ func TestActTryFire_CrossRoomAdjacent_FiresDirectional(t *testing.T) {
 	if got := LookupAction("try_fire")(nil, ctx); got != Success {
 		t.Fatalf("try_fire cross-room = %v, want Success", got)
 	}
-	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, "shoot Target north") {
+	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, fmt.Sprintf("shoot #%d north", target.InstanceId)) {
 		t.Errorf("expected 'shoot Target north' queued, got %v", cmds)
 	}
 }
@@ -166,7 +167,7 @@ func TestActTryFire_NoAggroSameRoomMemory_FiresViaFallback(t *testing.T) {
 	if got := LookupAction("try_fire")(nil, ctx); got != Success {
 		t.Fatalf("try_fire (memory fallback) = %v, want Success", got)
 	}
-	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, "shoot Target") {
+	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, fmt.Sprintf("shoot #%d", target.InstanceId)) {
 		t.Errorf("expected 'shoot Target' queued via CombatMemory, got %v", cmds)
 	}
 }
@@ -197,7 +198,7 @@ func TestActTryFire_NoAggroCrossRoomMemory_FiresDirectional(t *testing.T) {
 	if got := LookupAction("try_fire")(nil, ctx); got != Success {
 		t.Fatalf("try_fire (cross-room memory) = %v, want Success", got)
 	}
-	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, "shoot Target north") {
+	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, fmt.Sprintf("shoot #%d north", target.InstanceId)) {
 		t.Errorf("expected 'shoot Target north' queued via CombatMemory, got %v", cmds)
 	}
 }

@@ -414,3 +414,38 @@ func newcomerSpots(mover Actor, dest *rooms.Room, light messaging.RoomVisibility
 		mover.AwardResolved(success, mc.CandidateFor(string(skills.Search)))
 	}
 }
+
+// SpotHiddenPlayer is a watcher standing in room looking for one hidden
+// player: the same contest entry detection rolls (the watcher's detection
+// score against the hider's sneak score, in the room's light). On success the
+// player is revealed (the Awareness machine, as when a newcomer spots them)
+// and told so; true. A player not hidden is already seen: true, no roll.
+// Used by watchers that stay put and keep looking (a rift's hunter).
+func SpotHiddenPlayer(watcher Actor, room *rooms.Room, userId int) bool {
+	u := users.GetByUserId(userId)
+	if u == nil || room == nil || u.Character.RoomId != room.RoomId {
+		return false
+	}
+	if !u.Character.IsHidden() {
+		return true
+	}
+	wc := watcher.GetCharacter()
+	light := messaging.FixedLight(room.LightLevel())
+	observerScore := CalcDetectionScore(wc, room)
+	hiddenScore := CalcSneakScoreVsObserver(u.Character, wc, light)
+	success := combat.RunContest(observerScore, []contest.Entry{{Score: hiddenScore}}).Success
+	watcher.AwardResolved(success, wc.CandidateFor(string(skills.Search)))
+	if !success {
+		return false
+	}
+	_ = u.Character.Awareness.TransitionToRevealing(
+		state.TransitionReason{Trigger: awareness.TriggerObserverSearch})
+	u.Character.SetMiscData(`sneaking`, nil)
+	hider := NewUserActor(u)
+	if messaging.CanSeeClearly(u.Character, room) {
+		hider.SendText(messaging.CategorySystem, fmt.Sprintf(`%s turns, and its attention settles on you.`, moverName(watcher)))
+	} else {
+		hider.SendText(messaging.CategorySystem, `Something in the dark turns, and its attention settles on you.`)
+	}
+	return true
+}

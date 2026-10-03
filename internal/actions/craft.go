@@ -229,17 +229,19 @@ func InitiateCraft(actor Actor, recipeName string) CraftResult {
 			char.Items, char.ComponentItems = crafting.ConsumeIngredients(
 				char.Items, char.ComponentItems, recipe)
 		}
-		newItem := items.New(recipe.Output.ItemId)
-		newItem.CraftSkill = char.CraftQualityLevel(skillLevel) // Faithwrought quality lift
-		// Maker's mark — same policy as the async completion path
-		// (crafting.ShouldStampMakerName): components stamp regardless of
-		// Type so require_own_components provenance works for
-		// TimeRounds<=0 sub-recipes too.
-		if crafting.ShouldStampMakerName(newItem.CraftSkill, newItem.GetSpec()) {
-			newItem.MakerName = char.Name
+		for n := 0; n < recipe.OutputCount(); n++ {
+			newItem := items.New(recipe.Output.ItemId)
+			newItem.CraftSkill = char.CraftQualityLevel(skillLevel) // Faithwrought quality lift
+			// Maker's mark — same policy as the async completion path
+			// (crafting.ShouldStampMakerName): components stamp regardless of
+			// Type so require_own_components provenance works for
+			// TimeRounds<=0 sub-recipes too.
+			if crafting.ShouldStampMakerName(newItem.CraftSkill, newItem.GetSpec()) {
+				newItem.MakerName = char.Name
+			}
+			char.StoreItem(newItem)
+			res.OutputName = newItem.DisplayName()
 		}
-		char.StoreItem(newItem)
-		res.OutputName = newItem.DisplayName()
 		res.ImmediateComplete = true
 		return res
 	}

@@ -1,0 +1,64 @@
+id: b-the-unfinished-workshop
+pool: B
+source: authored
+title: The Unfinished Workshop
+description: >-
+  This was a place of work, and the work was never put away. A great wheel of
+  pale crystal lies on its side on a low bench, its face scored in fine
+  circles, and resting against it at an angle is a blank of black glass half
+  ground into a lens: smooth and true on one side, rough as broken stone on
+  the other. A drift of grit, ground finer than flour, lies where it fell
+  beneath the wheel, and in it are the prints of three-toed feet, crossed and
+  recrossed, as though someone paced. Racks along the walls hold finished
+  lenses in graded sizes, the smallest no bigger than a fingernail, and one
+  rack hangs empty. Channels cut in the floor once carried something away
+  from the bench, toward a drain that is no longer there. The air smells of
+  nothing, but the stillness has the shape of a pause, a moment between one
+  turn of the wheel and the next that simply went on.
+nouns:
+  wheel: >-
+    The grinding face is crystal harder than the glass it shaped, and still
+    sharp. Its rim is set with small studs, each worn on one side only, where
+    something pressed against them to turn it. The wheel has stopped with one
+    stud raised higher than the rest, as if waiting to be pushed.
+  blank: >-
+    The finished half is good work, clear as held breath. Look through it and
+    the room behind is perfectly true. Look through the rough half and the
+    room is wrong: the racks lean, the doorways are in other places, and for
+    an instant something stands at the bench that is not you.
+  grit: >-
+    Grains of black crystal, fine as smoke when you stir them. The prints in
+    it are sharp-edged and undisturbed. They go back and forth between the
+    bench and the empty rack, many times, and then a single line of them
+    leads away toward the dark, spaced far apart, running.
+  racks: >-
+    Slender frames of crystal with a cupped niche for each lens, sizes
+    falling away in exact steps. Every niche is filled but one in each rack,
+    always the same size, as though a set had been chosen and carried off
+    together. The empty rack has had its niches scratched, hard, by something
+    with no fingers.
+  channels: >-
+    Shallow troughs leading from beneath the bench across the floor and into
+    the wall, where they stop at smooth crystal. A thin white frost lines the
+    deepest of them, the only frost in the room, and it is thicker where the
+    trough meets the wall.
+idlemessages:
+  - "Grit shifts beneath the wheel with a sound like a held breath let out."
+  - "The half-ground blank catches a glint of light that has no source."
+doors:
+  - exit: chute
+    description: >-
+      A smooth chute angles down from a hole low in the wall, its inside
+      polished by countless slides of grit and glass.
+  - exit: sill
+    description: >-
+      A wide sill under a dark opening, where finished lenses were perhaps set
+      to cool. Beyond it a passage climbs.
+  - exit: notch
+    description: >-
+      A narrow notch cut through the end wall, just broad enough to turn
+      sideways and slip into the dark beyond.
+  - exit: passage
+    description: >-
+      A low passage leading out beside the racks, its floor marked by the
+      single running line of prints.

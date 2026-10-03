@@ -1,0 +1,43 @@
+# companion_brawler archetype (Hal Grimsby, aicompanion)
+#
+# The old pit fighter. Bare hands, and he would rather hold a man down than
+# hurt him: he closes and grapples a lone foe, sweeps legs when there are
+# several, and puts the boot in only when something is already down. His
+# mob template's submission_policy is mercy. Running and the plan are the
+# aicompanion module's (see companion_archer.yaml).
+#
+# Decision order per mob_combat_round:
+#   1. A kick at a foe already on the ground.
+#   2. One foe: grapple.
+#   3. Trip.
+#   4. Kick.
+#   fall through to the ordinary attack.
+tree:
+  type: selector
+  children:
+    - type: selector
+      event: mob_combat_round
+      children:
+        - type: sequence
+          children:
+            - type: condition
+              check: target_not_standing
+            - type: action
+              do: command_best_of
+              cmds: [kick]
+        - type: sequence
+          children:
+            - type: decorator
+              mod: invert
+              child:
+                type: condition
+                check: multiple_foes
+            - type: action
+              do: command_best_of
+              cmds: [grapple]
+        - type: action
+          do: command_best_of
+          cmds: [trip]
+        - type: action
+          do: command_best_of
+          cmds: [kick]

@@ -1,0 +1,45 @@
+id: a-the-worn-ramp
+pool: A
+source: authored
+title: The Worn Ramp
+description: >-
+  A broad ramp sweeps down through the dark, wide enough for a crowd, and
+  the crowd is written into it. The floor is worn into channels three by
+  three, dozens of sets side by side, so deep in places that they form
+  troughs you could lay your arm in. The walls are scuffed at shoulder
+  height and polished where the press of bodies brushed them. The channels
+  run unbroken down the slope, and then, two thirds of the way down, they
+  turn. All of them, every set, curve the same way, toward a narrow opening
+  in the left wall. Below that turn the rest of the ramp is smooth and
+  untouched, as if no one ever went farther. It goes on into the dark
+  anyway.
+nouns:
+  channels: >-
+    Grooves worn by feet not shaped like yours, three to a stride. In some
+    troughs the three are evenly spaced; in others the middle groove runs
+    shallow and wavers, the gait of the old or the very young. Near the
+    top a smaller set runs close beside a larger one, keeping pace, all
+    the way down.
+  scuffs: >-
+    Along both walls the crystal is polished in a long band at shoulder
+    height, the mark of a crowd brushing past for an age. In places the
+    band is broken by small round marks pressed in at odd angles, as if
+    someone wrote in passing, without stopping, to say they had been here.
+  turn: >-
+    Where the channels bend, the wear is deepest of all and strangely
+    sharp-edged, as though it were made all at once rather than over
+    years. Every set turns. None go straight. The smooth floor beyond is
+    so clean it gives back your reflection, and your reflection stands
+    where the channels end, looking toward the opening.
+idlemessages:
+  - "A faint hiss runs up the ramp, like many soft feet passing, and fades."
+doors:
+  - exit: lintel
+    description: >-
+      In the left wall, where every worn channel turns, a narrow opening
+      under a heavy lintel, its edges polished bright by the passing of
+      many.
+  - exit: ramp
+    description: >-
+      The lower ramp runs on down into the dark, smooth and unworn,
+      where no one went.

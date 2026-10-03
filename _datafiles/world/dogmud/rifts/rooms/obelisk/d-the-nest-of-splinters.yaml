@@ -1,0 +1,50 @@
+id: d-the-nest-of-splinters
+pool: D
+source: authored
+title: The Nest of Splinters
+description: >-
+  The floor of this chamber sinks to a hollow in the middle, and the hollow
+  is full of splinters. Thousands of thin, sharp shards of black glass have
+  been gathered there and packed together in a rough bowl, all turned
+  inward, like the lining of a nest. The walls around it have been stripped:
+  their facets are chipped and broken, and pale scars show where pieces
+  were pried out and carried away. Trails of grit lead from the scars down
+  into the hollow. The splinters are not settled. Now and then the whole
+  bowl shifts with a sound like a slow exhalation, and a few of the shards near
+  the rim lift, turn their points toward you, and very slowly lie down again.
+nouns:
+  hollow: >-
+    A shallow basin in the floor, packed with splinters laid so their points
+    all lean toward the centre. At the very middle the shards are finer,
+    almost a dust, and that dust moves in a slow circle against the rest,
+    as though it were being stirred from beneath.
+  splinters: >-
+    Long thin shards of black glass, some fresh and bright, some dulled with
+    age. A few are not black at all but clear, and in those the faint light
+    of the room bends and slides as if something inside were turning to look.
+  scars: >-
+    Pale wounds in the walls where facets have been pried loose. The edges
+    are scored with fine scratches, and some of the scars are so fresh that
+    a little glittering dust still trickles from them.
+  trails: >-
+    Thin paths of grit run from the stripped walls down into the hollow, worn
+    smooth and narrow by many passages. One trail runs the other way, out of
+    the hollow, toward the door you came in by.
+idlemessages:
+  - The splinters in the hollow stir and settle with a sound like a breath.
+encounter:
+  tier: trash
+  count: {min: 2, max: 3}
+doors:
+  - exit: tunnel
+    description: >-
+      A rough tunnel bored into the stripped wall, its sides gouged where
+      facets were torn away, leading into the dark.
+  - exit: lip
+    description: >-
+      The high lip of the chamber on the far side, where the floor rises out
+      of the hollow toward a dim opening.
+  - exit: chute
+    description: >-
+      A chute of smooth crystal sloping down from the edge of the hollow,
+      dusted with grit and a few stray splinters.

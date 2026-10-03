@@ -1,0 +1,78 @@
+id: c-the-room-of-one-long-day
+pool: C
+source: authored
+title: The Room of One Long Day
+description: >-
+  Four lenses are set into the walls of this square room, one in each wall,
+  and each looks out on a different place in a different light. One is held
+  in a plain hoop of crystal, one in a tall oval frame, one behind a narrow
+  slot, and one deep in a hood of black crystal that shades it like a hand
+  over an eye. Their light, thin and coloured, crosses in the middle of the
+  floor and does not quite agree about where anything is. A rail of crystal
+  runs around the room at waist height, pressed along its whole length with
+  round marks, and its top is worn smooth in places where something rested
+  while it looked. The air is still and very cold. Two ways lead on, a
+  spiral and a shaft. Over the third doorway the lintel has sunk and fused
+  into the frame, and the way under it is sealed by a single dull facet of
+  dark glass.
+nouns:
+  hoop: >-
+    Through the plain hoop you see a stony plain under a sun standing
+    straight overhead. Nothing on the plain casts any shadow worth the name.
+    The light pouring out of the lens is hard and white, and the crystal
+    around the hoop is crazed with fine cracks, as if it had been looked at
+    too long.
+  oval: >-
+    In the tall oval a long shore stretches under a sky gone red and violet.
+    A great sun sits low on the edge of the world, half sunk, and the
+    shadows of a line of stones reach almost out of the frame toward you.
+  slot: >-
+    The slot is so narrow you must put your eye close. Behind it lies a
+    valley still grey with night, and along the rim of the hills a single
+    thin line of gold has only just appeared. A bird is caught in the act of
+    lifting from a branch.
+  hood: >-
+    Deep in the hood, a dark plain lies under a field of hard white stars and
+    no sun at all. The cold in the room comes from here; frost rims the hood
+    and the air in front of it smokes faintly against your face.
+  rail: >-
+    The round marks along the rail are the same line repeated again and
+    again in different hands, some careful, some worn almost away, as if
+    everyone who ever stood here added it in turn. The top of the rail is
+    worn smooth in four places, one before each lens.
+idlemessages:
+  - The light from the four lenses shifts, and for a moment every shadow in the room points a different way.
+trap:
+  difficulty: 115
+  condition_ids: [3]
+  triggered: >-
+    As you step into the middle of the floor the four beams cross on your
+    face, and the white glare of the hoop folds through the others into a
+    single flash that leaves you blind.
+  avoided: >-
+    You see the place where the four beams cross on the floor, crazed and
+    pale from long exposure, and you skirt around it with your eyes turned
+    away.
+puzzle:
+  kind: memory
+  sealed_door: lintel
+  hard: true
+  reward: key
+  solved: >-
+    As the last lenses lock on the table, the four lenses in the walls go
+    dark together, one long day ended. In the stillness the facet under the
+    sunken lintel clears like breath fading from glass, and a small cold
+    thing lies at its foot where none lay before.
+doors:
+  - exit: spiral
+    description: >-
+      A tight spiral of steps winding upward out of the room. The light of
+      the four lenses reaches only its first few turns.
+  - exit: shaft
+    description: >-
+      A square shaft dropping away through an opening in the floor, with
+      handholds cut into one side in rows of three.
+  - exit: lintel
+    description: >-
+      A doorway whose lintel has sunk and fused into its frame. The way
+      beneath is sealed by a single dull facet of dark glass.

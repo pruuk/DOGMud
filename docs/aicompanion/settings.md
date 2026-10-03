@@ -200,18 +200,32 @@ SnapshotRounds: 25
 # information (look closer at something, recall memories, search its map)
 # before it must answer. Main tier only. 0 = never.
 ToolRounds: 2
-# Meeting a companion. A new character meets one right after character
-# creation, once it has stood in its first real room for MeetDelayRounds
-# (not in the void, a skipped zone, a fight, or quitting). With
-# AutoBondExisting, a character that has never had one meets one on its
-# next login. If the player sends the companion away it does not come back
-# on its own (an admin can still use aicompanion grant).
-AutoBond: true
-AutoBondProfile: "mara"
-AutoBondExisting: false
-MeetDelayRounds: 3
-MeetSkipZones:
-  - "Newcomer Antechamber"
+# Meeting a companion. Nobody is handed one. There is one of each companion
+# on the server; a free one waits in their own room of the Waystone Hollow,
+# west of Scrub Draw above Pothole Coulee, and joins a player only once the
+# model, judging as that companion, decides they want to go with them, and
+# only after their opinion of the player has risen at least once. A new
+# character is told, once, where the Hollow is. See the "Companions are
+# one of a kind" section below.
+#
+# Companions speak only to players who run them on their own key (tier 2,
+# PlayerKeys and RelayOrigin below). Anyone else gets no answer at all, not
+# set lines, and the server's key is never used. Set false to let the
+# server's key pay as before.
+RequirePlayerKey: true
+# Days an owner may be away before their companion gives up waiting and
+# goes back to the Hollow, taking what they have learned with them.
+ReleaseAfterDays: 60
+# A companion whose trust AND affection for their owner have both fallen to
+# this or lower leaves them for good and goes back to the Hollow, without
+# being told twice. Held between -95 and -10.
+AbandonBelow: -50
+# The room whose board tells a player, the first time they step into it,
+# that the travellers in the Hollow are played by an AI, that they listen
+# only to those with their own key, and that speaking to one sends what is
+# said to that key's provider. Speaking to one after reading it is the
+# player's consent (RequireConsent); "companion-ai off" withdraws it.
+HollowSignRoom: 6880
 # Seconds the owner has to confirm with `companion-part` after a companion
 # asks to leave. The bond never ends on the model's word alone.
 LeaveConfirmSeconds: 120
@@ -233,6 +247,20 @@ IdlePastimeMinutes: 4
 # and four minutes, something happens every eight minutes on average, and
 # never on a predictable beat.
 IdlePastimeChance: 0.5
+# Seconds between a companion setting to work at her calling unprompted:
+# a trade her archetype cares about at least half as much as anything
+# (Hal's cooking, Liesl's alchemy). Idle at the right station with the
+# makings in her pack, she starts within this much of arriving, with her
+# drive as the chance each time. The craft takes its own time on top.
+IdleTradeSeconds: 60
+# Percent of a companion's searches that also roll for a bauble, on her
+# owner's behalf and under every rule a player's own roll has (rationed per
+# player per room, skill, sight, household). Only for an owner who has
+# agreed to the model and has one to use (their own key when
+# RequirePlayerKey). The find goes into her pack and she is told of it.
+# 15 means a companion turns up about 85% fewer baubles than a player
+# searching as often. 0 turns it off.
+CompanionBaubleChance: 15
 # Remember speech in the room that was not addressed to the companion. It is
 # what lets it overhear and react later; it also means other players' words
 # reach the API as context. Turn it off on a shared server.
@@ -267,9 +295,12 @@ RoadTalkLines: 3
 FollowOnFoot: true
 FollowDelayMin: 0.15
 FollowDelayMax: 0.45
-# A player is asked, in as many words, before anything they say is sent to
-# OpenAI. Until they answer "i agree" their companion behaves as a plain one.
-# Turning this off means players are never told; think hard before you do.
+# Nothing a player says is sent anywhere until they have agreed. They agree
+# by speaking to a traveller in the Waystone Hollow after the board at its
+# mouth (HollowSignRoom) has told them plainly what that sends and where, or
+# with "companion-ai on"; "companion-ai off" withdraws it. Until then their
+# companion behaves as a plain one. Turning this off means nobody needs to
+# have read the board; think hard before you do.
 RequireConsent: true
 # What a passer-by can ask of somebody else's companion: one question per
 # this many seconds each, and this many tokens a day each. Their asking is
@@ -299,10 +330,56 @@ RelayTimeoutSeconds: 30
 
 ```
 
+## Companions are one of a kind
+
+There is one of each companion on the server (one profile, one person), and
+`modules/aicompanion/roster.go` keeps who travels with whom in its `roster`
+plugin file. A free companion waits in their own room of the Waystone
+Hollow (rooms 6880 to 6885, west of Scrub Draw in Pothole Coulee), each
+room furnished to that companion's taste so no two wait together.
+
+- **Winning one over.** A player talks to them (`say`, `ask <name> ...`),
+  shows them things they brought (`show <item> <name>`), and asks them to
+  come along, all in their own words; there is no command. The model, playing that
+  companion, judges the player as an adventurer and a person from what it
+  can see: how they look and what they wear, their strongest skills, what
+  they have fought, the quests they have seen through and how the world's
+  factions regard them, against the profile's `hollow.appreciates` and
+  `hollow.wary_of`. It decides; nothing is counted. Two rules hold whatever
+  it says: its opinion of the player must have risen at least once in the
+  courtship, and it will not go with someone it distrusts or dislikes
+  (trust and affection both above half of `AbandonBelow`). When it has made
+  up its mind, the companion itself asks the player whether they would like
+  its company (verdict `offer`); only the player's yes to that, within 30
+  minutes, sets it out with them (verdict `join`). A yes with no standing
+  offer is a hesitation in the world, never a system line.
+- **Leaving.** A companion goes back to the Hollow when the owner parts
+  with them (`companion-part`, confirmed), when trust and affection have
+  both fallen to `AbandonBelow`, when the owner has been away
+  `ReleaseAfterDays`, or when an admin releases them (`aicompanion release
+  <profile>`). What they have learned (skills, trained stats, spells,
+  mutations) goes with them to whoever wins them next. What they carry is
+  handed to the person they leave, except their own starting kit.
+- **Who answers.** With `RequirePlayerKey` (the default) companions speak
+  only to players with their own key up, in the Hollow and on the road;
+  everyone else gets no answer and no notice. Consent is the board at the
+  Hollow's mouth (`HollowSignRoom`, its `board` noun): shown to each player
+  the first time they step into that room, and readable again with `look
+  board`. Speaking to a traveller after reading it is agreement; someone
+  who reached one without passing it is shown it then, and that first
+  utterance is not sent.
+- **The move to one of each.** The first boot with this roster frees every
+  companion. A character who still carries one (every Mara fielded before)
+  finds them gone at their next login, with a line saying where; their gear
+  is handed back, and the companion starts in the Hollow with nothing
+  learned.
+- `aicompanion claims` shows the roster.
+
 ## Who pays for a call: the three tiers
 
 Each model call is paid for by the first of these that is available for the
-companion's OWNER, even when a passer-by is the one talking to her:
+companion's OWNER, even when a passer-by is the one talking to her. With
+`RequirePlayerKey` on (the default), tier 3 is never used:
 
 1. **The owner's own key (tier 2).** The owner has the web client open with a
    key set up and unlocked (`Companion.Relay.Ready` received this session).

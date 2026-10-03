@@ -1,0 +1,39 @@
+# companion_healer archetype (Liesl Amberwyck, aicompanion)
+#
+# The healer. She is no fighter: she keeps herself standing and wards
+# herself once the fighting reaches her, and otherwise leaves the blows to
+# the ordinary attack. Mending and warding the person she travels with is
+# the aicompanion module's (profile mend_below and ward_owner), because a
+# behaviour tree's packmate healing never reaches a player. Running and the
+# plan are the module's too (see companion_archer.yaml).
+#
+# Decision order per mob_combat_round:
+#   1. Below 40% health: her best self_heal spell on herself.
+#   2. Being hit herself, and unwarded: her best self_defense spell.
+#   fall through to the ordinary attack.
+tree:
+  type: selector
+  children:
+    - type: selector
+      event: mob_combat_round
+      children:
+        - type: sequence
+          children:
+            - type: condition
+              check: mob_health_below
+              percent: 40
+            - type: action
+              do: cast_best_in_category
+              category: self_heal
+              target: self
+        - type: sequence
+          children:
+            - type: decorator
+              mod: invert
+              child:
+                type: condition
+                check: target_aggro_not_on_me
+            - type: action
+              do: cast_best_in_category
+              category: self_defense
+              target: self

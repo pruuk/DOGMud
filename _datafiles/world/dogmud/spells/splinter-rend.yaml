@@ -1,0 +1,27 @@
+spellid: splinter-rend
+name: Splinter Rend
+aliases: [splinterrend]
+description: >
+  A Glint Stalker comes out of the facets edge first and opens its quarry
+  with a sliver of black crystal that stays in the wound. Mob-castable only:
+  the Obelisk's security, not a spell any living caster could learn.
+attack_type: spell
+damage_type: physical
+targeting: single
+schools:
+  - elemental
+cost: 8
+waitrounds: 1
+difficulty: 30
+mob_only: true
+primarystat: dexterity
+base_folds: 1
+effect_type: dot   # the bleed: damage over effect_duration rounds
+effect_magnitude: 45
+damage_multiplier: 0.60
+effect_duration: 4
+ignore_move_cooldown: true
+categories:
+  - harm_single
+cast_actor: "You slide out of the facets, edge first."
+cast_observer: "{actor} slides out of the facets beside {actee}, edge first, and a sliver of black crystal flicks out."

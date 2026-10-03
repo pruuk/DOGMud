@@ -1,0 +1,45 @@
+mobid: 9825
+zone: New Plymouth Temple
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - temple_np
+idlecommands:
+  - 'emote murmurs a blessing over a chipped paving stone.'
+  - ''
+  - 'emote sweeps a scatter of petals into a neat pile with the side of his sandal.'
+  - 'emote folds his hands and gazes up at the bell tower.'
+  - ''
+  - 'emote adjusts the almoner''s bag and gives it a fond pat.'
+activitylevel: 8
+character:
+  name: Brother Amsel
+  description: |
+    A soft-spoken lay brother in a patched brown habit, assistant to the
+    sexton, with an almoner's bag slung across his chest. He holds that
+    anything left in the temple precinct was left as an offering, whether
+    its owner knew it or not, and he gathers such offerings for the Almonry
+    with gentle, unshakeable conviction.
+  speciesid: 1
+  level: 3
+  gold: 2
+  stats:
+    strength:
+      base: 104
+    vitality:
+      base: 108
+    perception:
+      base: 112
+    dexterity:
+      base: 98

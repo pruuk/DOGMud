@@ -1980,6 +1980,14 @@ sources clears. Uses `Conditions.TriggersLeft(id) > 0` rather than
 `HasCondition(id)` — see `internal/state/perception/context.md` for the
 implementation-detail rationale.
 
+`syncPerceptionWithBlindSources()` (unexported, same file) moves a Blinded
+machine back to Sighted once `HasAnyBlindSource()` is false. `Validate()`
+calls it, which covers the path `RemoveCondition` never sees: a blind
+condition running out and being pruned on the turn tick
+(`Conditions.Prune` in `hooks/NewTurn_PruneConditions.go` and
+`hooks/Life_Cascades.go`, both of which call `Validate` afterwards). Before
+this, a character blinded that way stayed blind until death reset them.
+
 ## Dependencies
 - `internal/stats`: Core statistics definitions
 - `internal/items`: Item system integration

@@ -40,6 +40,49 @@ type CombatProfile struct {
 	Style   string      `yaml:"style"`   // melee, ranged
 	Lines   CombatLines `yaml:"lines"`   // said or done at game speed
 	Refuse  []string    `yaml:"refuse"`  // words in names it will not fight unprovoked (merchant, child)
+
+	// How this particular companion fights. The engine's scripted combat AI
+	// (the mob template's behavior_archetype) does the blow by blow; these
+	// are what makes one companion's fight unlike another's on top of it.
+
+	// Stance is how they go into a fight before the model has said
+	// anything: fight, protect (between their companion and harm) or
+	// hold_back (only defending themselves). Empty means fight.
+	Stance string `yaml:"stance"`
+	// Moves are the special moves that suit them, in the order they reach
+	// for them. Only these are offered to the model; empty offers them all.
+	Moves []string `yaml:"moves"`
+	// MendBelow mends their companion mid-fight with a healing spell they
+	// know once the companion's health falls below this percentage. Zero
+	// never does.
+	MendBelow int `yaml:"mend_below"`
+	// WardOwner casts a warding spell they know on their companion once,
+	// as a fight opens.
+	WardOwner bool `yaml:"ward_owner"`
+	// Opener "surprise": from hiding, their first blow is a surprise attack
+	// at whatever is going for their companion. It needs them hidden
+	// (sneak) when the fight starts.
+	Opener string `yaml:"opener"`
+	// Approach is how they fight, in a sentence, for the model.
+	Approach string `yaml:"approach"`
+}
+
+// combatStanceDefaults are the stances a profile may go into a fight with.
+var combatStanceDefaults = []string{``, `fight`, `protect`, `hold_back`}
+
+// movesFor is the special moves offered to this companion: the profile's
+// own, or all of them when it says nothing (an explicit empty list offers
+// none: some people have no tricks of the body at all).
+func movesFor(p *Profile) []string {
+	if p == nil || p.Combat.Moves == nil {
+		return realMoves()
+	}
+	return p.Combat.Moves
+}
+
+// realMoves is combatMoves without unchanged and none, which are not moves.
+func realMoves() []string {
+	return combatMoves[2:]
 }
 
 // CombatLines are authored battle lines; each is emote text unless it
@@ -75,11 +118,26 @@ type fightState struct {
 	AmmoAtStart  int    // arrows in hand when it began, for gathering them afterwards
 	AmmoItemId   int    // which bundle they came out of, in case it emptied
 	Move         string // a special move the model called for, used once
+	Spell        *fightSpell
+	Warded       bool // ward_owner has been tried this fight
 	SaidHurt     bool
 	SaidOwnerHrt bool
 	SaidNoAmmo   bool
 	AssistWas    bool // the owner's AutoAssist setting before hold_back, to restore
 	AssistSet    bool
+}
+
+// fightSpell is a spell the model called for in a fight, used once, and
+// who it is for: her owner, herself, or one enemy (a mob instance id).
+type fightSpell struct {
+	Id      string
+	Name    string
+	Harm    bool
+	Area    bool
+	SelfOK  bool
+	AtOwner bool
+	AtSelf  bool
+	AtMob   int
 }
 
 const (
@@ -172,7 +230,7 @@ func enemiesIn(room *rooms.Room, mob *mobs.Mob, owner *users.UserRecord) (map[in
 }
 
 // fightLines describes the fight for the prompt, and assigns e-refs.
-func fightLines(f *fightState, room *rooms.Room, mob *mobs.Mob, owner *users.UserRecord) []string {
+func fightLines(f *fightState, room *rooms.Room, mob *mobs.Mob, owner *users.UserRecord, ammo string) []string {
 	f.Refs = map[string]int{}
 	var out []string
 	self := actions.NewMobActorInRoom(mob, room)
@@ -230,9 +288,9 @@ func fightLines(f *fightState, room *rooms.Room, mob *mobs.Mob, owner *users.Use
 	line := fmt.Sprintf(`Your stance: %s. You run when %s.`, stanceWords(f.Stance), fleeWords(f.FleeAt))
 	if hasShootingWeapon(mob) {
 		if hasAmmo(mob) {
-			line += ` You still have arrows.`
+			line += ` You still have ` + ammo + `.`
 		} else {
-			line += ` You are out of arrows; only hand to hand now.`
+			line += ` You are out of ` + ammo + `; only hand to hand now.`
 		}
 	}
 	out = append(out, line)
@@ -300,13 +358,19 @@ func (m *AICompanionModule) combatTick(c *controller, u *users.UserRecord, round
 	if f == nil {
 		f = &fightState{
 			StartRound: round, Enemies: map[int]string{}, EnemyUsers: map[int]string{},
-			Stance: `fight`, FleeAt: c.profile.Combat.FleeAt, Style: c.profile.Combat.Style,
+			Stance: c.profile.Combat.Stance, FleeAt: c.profile.Combat.FleeAt, Style: c.profile.Combat.Style,
 			WorstSelf: 100, WorstOwner: 100, LastReflex: round,
+		}
+		if f.Stance == `` {
+			f.Stance = `fight`
 		}
 		if f.FleeAt == `` {
 			f.FleeAt = `about_to_die`
 		}
 		c.fight = f
+		// Some go into a fight hanging back by nature (a healer behind the
+		// line); the model can change its mind once it has looked.
+		m.setHoldBack(c, u, f.Stance == `hold_back`)
 		for id, name := range enemies {
 			f.Enemies[id] = name
 		}
@@ -324,6 +388,7 @@ func (m *AICompanionModule) combatTick(c *controller, u *users.UserRecord, round
 			c.mind.addLine(Line{Kind: `event`, Text: `You sized this up as a fight you could lose.`}, m.cfg.WorkingMemoryLines)
 		}
 		m.combatLine(c, mob, round, c.profile.Combat.Lines.Start)
+		m.surpriseOpener(c, mob, u, room, round, enemies)
 		text := enemyNames(enemies, enemyUsers)
 		if name, unjust := unjustFight(c.profile, f); unjust {
 			text += `; you would never willingly fight ` + name + `, and you did not start this`
@@ -380,6 +445,16 @@ func (m *AICompanionModule) combatTick(c *controller, u *users.UserRecord, round
 	}
 	if ownerHere && ownerPct < 50 && !f.SaidOwnerHrt {
 		f.SaidOwnerHrt = m.combatLine(c, mob, round, c.profile.Combat.Lines.OwnerHurt)
+	}
+
+	// Holding back has to be kept, not just set: the engine's retargeting
+	// (a foe dies, the next one is picked) pulls her back into the fight
+	// each time. Unless her foe is fighting her, she steps out again.
+	if f.Stance == `hold_back` && mob.Character.IsInCombat() {
+		cur := mob.Character.CurrentCombatTarget()
+		if !foeFightingHer(u, room, mob, cur.MobInstanceId, cur.UserId) {
+			mob.Character.EndAggro()
+		}
 	}
 
 	m.reflex(c, mob, u, room, round, selfPct, ownerPct, ownerHere)
@@ -472,6 +547,16 @@ func (m *AICompanionModule) reflex(c *controller, mob *mobs.Mob, u *users.UserRe
 		}
 	}
 
+	// 2b. A healer's hands: mend her owner when they are hurt past her
+	// profile's line, and ward them once as the fight opens. These are her
+	// nature rather than a plan, so they hold in any stance but flight.
+	if ownerHere {
+		if cmd := m.tendOwner(c, mob, u, room, ownerPct); cmd != `` {
+			act(cmd)
+			return
+		}
+	}
+
 	// 3. Protect the owner (F13.3): go for whatever is hurting them, then
 	// draw its attention. Willingness rises with trust, affection and
 	// bravery; a "protect" stance always does it.
@@ -502,6 +587,18 @@ func (m *AICompanionModule) reflex(c *controller, mob *mobs.Mob, u *users.UserRe
 		return
 	}
 
+	// 4b. A spell the model called for, when it would start now and lands
+	// only where it may (fightCastCommand).
+	if f.Spell != nil {
+		if cmd, keep := fightCastCommand(c, mob, u, room, f.Spell); cmd != `` {
+			f.Spell = nil
+			act(cmd)
+			return
+		} else if !keep {
+			f.Spell = nil
+		}
+	}
+
 	// 5. The chosen target.
 	if f.Stance != `hold_back` && f.TargetId != 0 {
 		if t := mobs.GetInstance(f.TargetId); t != nil && t.Character.RoomId == room.RoomId && t.Character.Health > 0 &&
@@ -515,12 +612,23 @@ func (m *AICompanionModule) reflex(c *controller, mob *mobs.Mob, u *users.UserRe
 		}
 	}
 
+	// 5b. An archer with an empty chamber: one shot at whoever she is
+	// fighting. Firing chambers an unloaded bow itself and the next round
+	// after it, from which her archetype's try_fire keeps shooting.
+	if f.Style == `ranged` && f.Stance != `hold_back` && hasShootingWeapon(mob) && hasAmmo(mob) &&
+		!mob.Character.Equipment.Weapon.Loaded && mayStrikeCurrent(u, room, mob) {
+		if cur := mob.Character.CurrentCombatTarget(); cur.MobInstanceId > 0 && !mob.Character.IsActing() {
+			act(fmt.Sprintf(`fire #%d`, cur.MobInstanceId))
+			return
+		}
+	}
+
 	// 6. Out of arrows, with a bow in hand: say so, and close in from now on.
 	if f.Style == `ranged` && hasShootingWeapon(mob) && !hasAmmo(mob) && !f.SaidNoAmmo {
 		f.SaidNoAmmo = true
 		f.Style = `melee`
-		c.mind.addLine(Line{Kind: `event`, Text: `You loosed your last arrow and had to close in.`}, m.cfg.WorkingMemoryLines)
-		m.requestPlan(c, round, `no_ammo`, `you are out of arrows and fighting hand to hand now`)
+		c.mind.addLine(Line{Kind: `event`, Text: `You loosed the last of your ` + c.profile.ammoWord() + ` and had to close in.`}, m.cfg.WorkingMemoryLines)
+		m.requestPlan(c, round, `no_ammo`, `you are out of `+c.profile.ammoWord()+` and fighting hand to hand now`)
 	}
 
 	// Bringing a downed owner round is not done here: first aid needs a
@@ -642,7 +750,7 @@ func hasAmmo(mob *mobs.Mob) bool {
 // companion has depends on its body, its gear and the shared special-move
 // cooldown, not on its skills: skills decide how well a move lands.
 func moveReady(mob *mobs.Mob, room *rooms.Room, move string) bool {
-	if move == `` || move == `none` {
+	if move == `` || move == `none` || move == `unchanged` {
 		return false
 	}
 	return actions.CommandIsReady(actions.NewMobActorInRoom(mob, room), move)
@@ -710,11 +818,16 @@ func (m *AICompanionModule) applyCombatProposal(c *controller, p CombatProposal,
 			f.TargetId = id
 		}
 	}
-	if inSet(combatMoves, p.Move) {
-		if p.Move == `none` {
-			f.Move = `` // she has thought better of it
-		} else {
-			f.Move = p.Move
+	// Only a move that suits her: the profile's own list, so a healer is
+	// not sent to grapple and an archer is not sent to bash.
+	if p.Move == `none` {
+		f.Move = `` // she has thought better of it
+	} else if inSet(movesFor(c.profile), p.Move) {
+		f.Move = p.Move
+	}
+	if p.Spell != `` {
+		if mob := mobs.GetInstance(c.instanceId); mob != nil {
+			f.Spell = resolveFightSpell(mob, f, p.Spell, p.SpellAt)
 		}
 	}
 	m.setHoldBack(c, u, f.Stance == `hold_back`)
@@ -743,6 +856,15 @@ func (m *AICompanionModule) setHoldBack(c *controller, u *users.UserRecord, hold
 			c.mind.AssistToRestore = `on`
 		}
 		c.dirty = true
+		// Auto-assist may already have sent her in this very round. Holding
+		// back means stepping out again, unless her foe is fighting her, in
+		// which case she defends herself.
+		if mob := mobs.GetInstance(c.instanceId); mob != nil && mob.Character.IsInCombat() {
+			cur := mob.Character.CurrentCombatTarget()
+			if !foeFightingHer(u, rooms.LoadRoom(mob.Character.RoomId), mob, cur.MobInstanceId, cur.UserId) {
+				mob.Character.EndAggro()
+			}
+		}
 	} else if !hold && f.AssistSet {
 		comp.AutoAssist = f.AssistWas
 		f.AssistSet = false
@@ -793,7 +915,7 @@ func (m *AICompanionModule) endFight(c *controller, mob *mobs.Mob, u *users.User
 		parts = append(parts, `it was a long fight`)
 	}
 	if recovered := m.gatherArrows(c, mob, f); recovered > 0 {
-		parts = append(parts, fmt.Sprintf(`you got %d of your arrows back`, recovered))
+		parts = append(parts, fmt.Sprintf(`you got %d of your %s back`, recovered, c.profile.ammoWord()))
 	}
 	summary := `The fight with ` + enemyNames(f.Enemies, f.EnemyUsers) + ` is over`
 	if len(parts) > 0 {
@@ -1000,8 +1122,9 @@ func (m *AICompanionModule) gatherArrows(c *controller, mob *mobs.Mob, f *fightS
 // noteGathered shows the companion walking the ground afterwards, and
 // remembers it, so the arrows do not simply appear.
 func (m *AICompanionModule) noteGathered(c *controller, mob *mobs.Mob, found int) {
-	mob.Command(fmt.Sprintf(`emote walks the ground and works %d arrows loose from the dirt and the dead.`, found), 1.5)
-	c.mind.addLine(Line{Kind: `event`, Text: fmt.Sprintf(`You recovered %d arrows after the fight.`, found)}, m.cfg.WorkingMemoryLines)
+	ammo := c.profile.ammoWord()
+	mob.Command(fmt.Sprintf(`emote walks the ground and works %d %s loose from the dirt and the dead.`, found, ammo), 1.5)
+	c.mind.addLine(Line{Kind: `event`, Text: fmt.Sprintf(`You recovered %d %s after the fight.`, found, ammo)}, m.cfg.WorkingMemoryLines)
 	c.snapshotDue = true
 	c.dirty = true
 }

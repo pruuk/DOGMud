@@ -95,6 +95,25 @@ type ForageAttempt struct {
 	AtNight     bool
 	Zone        string // player-forage only; see ZoneForageYields
 	Weather     string // player-forage only; see StormForageYields
+	// RoomExtra is a per-room overlay (player-forage only), read from the
+	// room's RoomExtraYieldsKey temp data: item ids appended to the pool,
+	// duplicates raising their odds. A room with extras is forageable even
+	// when its biome is not.
+	RoomExtra []int
+}
+
+// RoomExtraYieldsKey is the room temp-data key ([]int of item ids) that adds
+// room-specific forageables on top of the biome table. Set at runtime by the
+// subsystem that builds the room (internal/rifts puts rare ore here).
+const RoomExtraYieldsKey = `forage_extra_yields`
+
+// IsForageable reports whether an attempt has anything to find: a biome in
+// the yield table, or room extras.
+func IsForageable(biome string, roomExtra []int) bool {
+	if _, ok := ForageYields[biome]; ok {
+		return true
+	}
+	return len(roomExtra) > 0
 }
 
 // ForageResult is the outcome of a single attempt. Caller is responsible
@@ -109,13 +128,14 @@ type ForageResult struct {
 // handles cooldowns, item creation, inventory storage, and any
 // quest-engine notifications.
 //
-// Returns Found=false (and ItemId=0) if the biome is unknown or the
-// roll missed difficulty.
+// Returns Found=false (and ItemId=0) if there is nothing to forage (an
+// unknown biome with no room extras) or the roll missed difficulty.
 func ForageCore(a ForageAttempt) ForageResult {
-	if _, ok := ForageYields[a.Biome]; !ok {
+	if !IsForageable(a.Biome, a.RoomExtra) {
 		return ForageResult{}
 	}
 	pool := buildForagePool(a.Biome, a.Zone, a.Weather, a.AtNight)
+	pool = append(pool, a.RoomExtra...)
 	if len(pool) == 0 {
 		return ForageResult{}
 	}

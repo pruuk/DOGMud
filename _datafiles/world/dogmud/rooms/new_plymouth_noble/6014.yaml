@@ -71,6 +71,8 @@ idlemessages:
   court's east wall — its contents received
   and distributed, waiting for collection.
 spawninfo:
+  - mobid: 9824
+    respawnrate: "30 real minutes"
   - mobid: 9377
     respawnrate: "10 real minutes"
 x: -2

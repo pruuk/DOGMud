@@ -1,0 +1,31 @@
+# Spine Lattice (9836): the Obelisk's ranged security.
+#
+# Looses a Shard Volley (three shards in quick succession, each its own hit:
+# spells hits: 3), then has to grow its spines back. The cooldown is the
+# pause: for the rounds after a volley it fights with what it has (plain
+# melee) and, now and then, the room sees it reforming.
+
+tree:
+  type: selector
+  children:
+    # ── Volley, whenever its spines are grown ──
+    - type: decorator
+      event: mob_combat_round
+      mod: cooldown
+      rounds: 4
+      child:
+        type: action
+        do: cast
+        spell: shard-volley
+
+    # ── Reforming (the pause), shown now and then; otherwise plain melee ──
+    - type: decorator
+      event: mob_combat_round
+      mod: random
+      percent: 40
+      child:
+        type: action
+        do: send_room_text
+        text: >-
+          The Spine Lattice comes apart and puts itself back together, its
+          spines growing out again one by one with a faint creak of glass.

@@ -165,3 +165,29 @@ func TestIntegration_MixedSourceOrder(t *testing.T) {
 		t.Errorf("after RemoveCondition (no sources left), state = %v, want Sighted", c.Perception.State())
 	}
 }
+
+// PE-INT-RIFT: a blind condition that simply runs out (triggered to zero and
+// pruned on the turn tick, never passing through RemoveCondition) returns the
+// character to Sighted once Validate runs, as every prune path does. Before
+// the fix the machine stayed Blinded until something reset it.
+func TestIntegration_ExpiredByPruneReturnsSighted(t *testing.T) {
+	defer seedBlindConditions(t)()
+
+	c := characters.New()
+	if err := c.AddCondition(perception.ConditionIdBlinded, false); err != nil {
+		t.Fatalf("AddCondition(3): %v", err)
+	}
+	if c.Perception.State() != perception.Blinded {
+		t.Fatalf("after AddCondition: state = %v, want Blinded", c.Perception.State())
+	}
+	for i := 0; i < 20 && c.Conditions.TriggersLeft(perception.ConditionIdBlinded) > 0; i++ {
+		c.Conditions.Trigger()
+	}
+	if pruned := c.Conditions.Prune(); len(pruned) == 0 {
+		t.Fatalf("expected the expired blind condition to be pruned")
+	}
+	_ = c.Validate()
+	if c.Perception.State() != perception.Sighted {
+		t.Fatalf("after prune + Validate: state = %v, want Sighted", c.Perception.State())
+	}
+}

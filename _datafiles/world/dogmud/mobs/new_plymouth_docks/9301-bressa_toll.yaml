@@ -57,7 +57,7 @@ character:
     charisma:
       base: 110
     perception:
-      base: 108
+      base: 111
     willpower:
       base: 104
   shop:

@@ -81,3 +81,6 @@ idlemessages:
   pool, indifferent to the quality of the water.
 x: -5
 y: -82
+spawninfo:
+  - mobid: 9820
+    respawnrate: "30 real minutes"

@@ -1,0 +1,35 @@
+speciesid: 25
+name: bird
+description: A small feathered creature of field, yard and riverbank,
+  quick on the wing and wary of anything larger than itself. Not a
+  hunter of other beasts; it pecks at seed, grub and fish, and would
+  rather fly than fight.
+body_parts: [legs, eyes, mouth, skin]
+intrinsic_mutations:
+  keen-senses: 1
+size: small
+unarmedname: beak and claws
+natural_attack: claws
+selectable: false
+tameable: true
+angrycommands:
+  - emote flaps its wings hard and squawks.
+  - emote ruffles its feathers and jabs with its beak.
+stats:
+  strength:
+    base: 30
+  dexterity:
+    base: 130
+  perception:
+    base: 120
+  vitality:
+    base: 30
+  willpower:
+    base: 10
+  charisma:
+    base: 10
+damage:
+  basedamage: 2
+  variance: 1
+damage_multiplier: 0.35
+disabledslots: ['weapon', 'offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet']

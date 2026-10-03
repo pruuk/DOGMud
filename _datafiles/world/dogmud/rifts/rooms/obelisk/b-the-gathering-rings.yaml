@@ -1,0 +1,63 @@
+id: b-the-gathering-rings
+pool: B
+source: authored
+title: The Gathering Rings
+description: >-
+  The floor of this wide low hall has been worn into rings. They are not
+  carved. They are trodden, shallow circular troughs one inside another,
+  smoothed by more feet over more years than the crystal could bear, so that
+  in places the rings have worn right through to a paler layer beneath. The
+  outermost ring is broad and deep; each one inward is narrower, until at
+  the centre there is only a small smooth spot that no foot seems to have
+  touched. Set into the walls all around are niches at a height for resting
+  against, each with its own small worn hollow at the back. A low ledge runs
+  beneath them. Look closely and the grooves of three-toed feet in the rings
+  all point the same way round, as though everyone here once walked
+  together in a slow turning crowd. The centre is where they were all
+  facing. Whatever stood there is gone, and the spot is only cold glass.
+nouns:
+  rings: >-
+    Kneel and run a hand along the outer trough. It is polished like the
+    inside of a cup. Count inward and there are eleven rings. The tenth has
+    been worn deeper than the others on one side only, as if, for a while,
+    someone walked it alone.
+  centre: >-
+    A spot of floor the size of a spread hand, untouched and perfectly
+    smooth. When you stand on it, the faint light of the walls seems to bend
+    toward you and gather. Step off, and it lets go. Nothing marks it; the
+    Watchers must have known where it was without being told.
+  niches: >-
+    Upright hollows in the wall, each shaped to an outline taller and
+    narrower than a person. The backs are worn, and above some of them a
+    short row of round marks has been pressed. The rows differ from niche to
+    niche, the way names do.
+  ledge: >-
+    A low shelf of crystal at knee height. Along it, at intervals, are small
+    clear lenses set into the stone, facing up. Look down into one and it
+    shows you the ceiling of a different room: much higher, ribbed, and
+    lit.
+  grooves: >-
+    The footprints in the troughs overlap so thickly that only the deepest
+    remain clear. All of them lead the same way round. In the innermost ring alone a
+    single set leads the other way, faint and recent-looking, and stops
+    halfway round.
+idlemessages:
+  - "For an instant the rings seem to turn beneath you, slowly, all one way."
+  - "A faint light gathers at the centre of the hall and drains away into the floor."
+doors:
+  - exit: way
+    description: >-
+      A broad way leaves the hall where the outer ring meets the wall, its
+      floor still faintly troughed.
+  - exit: landing
+    description: >-
+      A landing set a few steps above the floor, overlooking the rings, with
+      a passage leading back from it.
+  - exit: tunnel
+    description: >-
+      A round tunnel bored straight into the wall between two niches, smooth
+      and narrow and quite dark.
+  - exit: bridge
+    description: >-
+      A slender bridge of crystal leaves the far side of the hall and crosses
+      a cold gulf into shadow.

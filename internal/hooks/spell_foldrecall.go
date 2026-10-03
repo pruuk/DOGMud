@@ -67,6 +67,14 @@ func resolveFoldRecall(actor actions.Actor) {
 		return
 	}
 
+	// Checked again here, not only when the cast starts: walking does not
+	// interrupt a cast, so the caster may have stepped somewhere that holds
+	// them (a rift) while the fold gathered.
+	if rooms.NoRecall(currentRoomId) || (!actor.IsPlayer() && !rooms.MobMayMove(currentRoomId, anchorRoom)) {
+		actor.SendText(messaging.CategorySpellFold, "The fold gathers and slides off this place. Something here prevents you from recalling.")
+		return
+	}
+
 	// Clear combat state before teleporting.
 	targeting.Release(char, targeting.ReasonDisengage)
 

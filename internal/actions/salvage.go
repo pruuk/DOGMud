@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -307,6 +308,17 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 		return result
 	}
 
+	// Hot stolen goods (a merchant chest's) are not broken down while hot:
+	// the materials would come out clean and shed the heat.
+	if baubles.GoodsHot(targetItem, stolenNow()) {
+		if actor.IsPlayer() {
+			actor.SendText(messaging.CategoryError,
+				`<ansi fg="red">That was stolen too recently to break down. A fence will pay for it whole.</ansi>`)
+		}
+		result.Reason = "stolen"
+		return result
+	}
+
 	itemId := targetItem.ItemId
 	spec := items.GetItemSpec(itemId)
 	if spec == nil {
@@ -354,7 +366,9 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 		}
 		recipe := crafting.GetRecipeByOutputItemId(itemId)
 		if recipe != nil {
-			recovered = crafting.RollSalvageReturns(recipe.Ingredients, score, salvageDiff)
+			// One unit's share: a recipe that makes several gives each its
+			// part, so a salvage loop cannot multiply the material.
+			recovered = crafting.RollSalvageReturns(recipe.SalvageIngredients(util.Rand), score, salvageDiff)
 		} else if len(spec.SalvageReturns) > 0 {
 			recovered = crafting.RollSalvageReturnsFromSpec(spec.SalvageReturns, score, salvageDiff)
 		}

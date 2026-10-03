@@ -1,0 +1,53 @@
+################################################################################
+# If modified, these settings will be copied into your config overrides
+# folder under `Modules.rifts`:
+#
+# Modules:
+#   rifts:
+#     ExcludeZones: [Stillwater]
+################################################################################
+# - Enabled -
+#   When false, portal sites do not move on their own (today's stay until a
+#   restart on another day finds none). Admins can still place one with
+#   `rift open`, and runs in progress carry on.
+Enabled: true
+# - ExcludeZones -
+#   Zone names a portal site never appears in, on top of each rift profile's
+#   own rules (its portal biomes, and its skipped city and road zones). Use it
+#   for towns and villages whose zones are not built from city biomes, and for
+#   anywhere you want kept quiet.
+ExcludeZones:
+  - Newcomer Antechamber
+  - Pothole Coulee
+  - Stillwater
+  - Ashwick
+  - Thornwall Outskirts
+  - New Plymouth Outskirts
+# - Generate* - (generated rooms)
+#   Now and then, as a rift's rooms are built, a model writes a new room for
+#   one of the rift's pools in the background (the profile's `generation`
+#   block says which pools, and gives the model its canon and a guide for
+#   each), on the own key of a player in the run while they leave "Make the
+#   world livelier" ticked on the companion's key page. Never the server's
+#   key, which only moderates. A room that passes every check is saved
+#   beside the authored rooms (rift rooms folder, gen-*.yaml) and joins its
+#   pool at once and at every boot after, so the pools grow over time.
+#   Delete a gen-*.yaml file (and restart) to drop a room you do not like.
+GenerateEnabled: true
+#   Percent of rooms built that ask for a new room of their pool. Live.
+GenerateChance: 25
+#   Spacing between the rooms one player's key writes, in seconds. Live.
+GenerateMinSecondsPerPlayer: 300
+GenerateTimeoutSeconds: 75
+#   The relay's ceiling; a reasoning model's thinking counts against it.
+GenerateMaxCompletionTokens: 4000
+#   What one player's key may spend on rooms in a UTC day. 0 is no cap. Live.
+GenerateDailyTokensPerUser: 40000
+#   Most generated rooms one pool of a rift may hold. 0 is no cap. Live.
+GenerateMaxPerPool: 200
+#   Checked through the server's key: a flag or a failed check keeps the
+#   room out of the bank. With no way to check (no server key), no room is
+#   written at all, so no player's tokens are spent on one. Off: saved
+#   unchecked.
+GenerateModerateOutput: true
+GenerateLogRequests: false

@@ -70,6 +70,8 @@ func init() {
 	actionRegistry["create_instance"] = actCreateInstance
 	actionRegistry["open_instance_portal"] = actOpenInstancePortal
 	actionRegistry["board_ferry"] = actBoardFerry
+	actionRegistry["buy_housing"] = actBuyHousing
+	actionRegistry["housing_terms"] = actHousingTerms
 
 	// Beast special-move delegation (Phase 3/4 beast moves)
 	actionRegistry["try_special_move"] = actTrySpecialMove

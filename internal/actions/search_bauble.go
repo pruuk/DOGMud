@@ -11,10 +11,12 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -129,6 +131,12 @@ type BaubleDelivery struct {
 	// if nobody of the household is about by then: a richer find always has
 	// to be stolen.
 	Household bool
+
+	// ByMobInstanceId is the bonded companion who turned it up on UserId's
+	// behalf (companionSearchForBauble). It goes into her pack, UserId is
+	// still its finder, and the module hears of it so she can react. If she
+	// is gone by the time it is named, it is UserId's find as usual.
+	ByMobInstanceId int
 }
 
 // baubleNow is the clock for when a find is left lying. A variable for
@@ -337,7 +345,13 @@ func (d BaubleDelivery) deliver(res baubles.GenResult, randn func(n int) int) {
 				residentName = resident.Character.Name
 			}
 			mudlog.Info(`baubles`, `action`, `deliver`, `id`, rec.Id, `result`, `household; left in room`, `roomId`, foundRoom.RoomId, `resident`, residentName, `rolledAsHousehold`, d.Household)
-			if online {
+			if online && d.ByMobInstanceId > 0 {
+				byName := `Your companion`
+				if mob := mobs.GetInstance(d.ByMobInstanceId); mob != nil {
+					byName = mob.Character.Name
+				}
+				who.send(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> uncovers <ansi fg="itemname">%s</ansi>%s, but it belongs to this household, so it is left where it lies.`, byName, name, itm.BaubleSpotSuffix()))
+			} else if online {
 				where := itm.BaubleSpotSuffix() // " (on the bookshelf)", its own colour
 				if who.room != nil && who.room.RoomId == foundRoom.RoomId {
 					if resident != nil {
@@ -349,6 +363,31 @@ func (d BaubleDelivery) deliver(res baubles.GenResult, randn func(n int) int) {
 					who.send(fmt.Sprintf(`You had uncovered <ansi fg="itemname">%s</ansi>%s, but it belongs to that household, so you left it where it lay.`, name, where))
 				}
 			}
+			return
+		}
+	}
+
+	// A companion's find goes into her own pack, when she is still in the
+	// room she found it in.
+	if d.ByMobInstanceId > 0 && foundRoom != nil {
+		if mob := mobs.GetInstance(d.ByMobInstanceId); mob != nil && mob.Character.RoomId == foundRoom.RoomId {
+			pocketed := mob.Character.StoreItem(itm)
+			if pocketed {
+				events.AddToQueue(events.ItemOwnership{MobInstanceId: mob.InstanceId, Item: itm, Gained: true})
+				if online {
+					who.send(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> works it free: <ansi fg="itemname">%s</ansi>.`, mob.Character.Name, name))
+				}
+			} else {
+				itm.LeaveBaubleAt(d.Spot, 0, now)
+				foundRoom.AddItem(itm, false)
+				if online {
+					who.send(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> works it free: <ansi fg="itemname">%s</ansi>, but is carrying too much to take it, and leaves it%s.`, mob.Character.Name, name, leftWhere(d.Spot)))
+				}
+			}
+			foundRoom.SendTextVisual(messaging.CategoryMobEmote,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns up something small.`, mob.Character.Name), d.UserId)
+			// The model-safe name: it reaches her prompt and her speech.
+			companionai.RouteBaubleFound(mob.InstanceId, itm.ModelName(), pocketed)
 			return
 		}
 	}
@@ -496,15 +535,54 @@ func BaubleSkillFactor(char *characters.Character) float64 {
 
 // baubleRoomAllowed rules out the rooms that never offer baubles whatever
 // the config says: instance and other temporary rooms (they are rebuilt, and
-// a paid instance must not become a bauble farm), banks, storage rooms and
-// character rooms. Excluded zones are checked by the baubles package.
+// a paid instance must not become a bauble farm), banks, storage rooms,
+// character rooms, and private rooms (housing lodgings: bought, safe, and
+// furnished with as many searchable containers as the owner likes, so a farm
+// for the same reason). Excluded zones are checked by the baubles package.
 func baubleRoomAllowed(room *rooms.Room) bool {
 	if room.IsEphemeral() || room.IsBank || room.IsStorage || room.IsCharacterRoom {
+		return false
+	}
+	if rooms.IsPrivateRoom(room.RoomId) {
 		return false
 	}
 	if rooms.GetInstanceRegistry().FindByRoomId(room.RoomId) != nil {
 		return false
 	}
+	return true
+}
+
+// companionSearchForBauble is searchForBauble for a bonded companion
+// searching on her owner's behalf: the owner's roll (rationed per player per
+// room, exactly as their own search is), her search skill and her sight.
+// The owner, if online, is told she has spotted something; the find goes
+// into her pack (BaubleDelivery.ByMobInstanceId).
+func companionSearchForBauble(actor Actor, room *rooms.Room, ownerUserId int) bool {
+	if !baubleRoomAllowed(room) {
+		return false
+	}
+	household := householdFind(room)
+	tier, found := searchBaubleRoll(baubles.FindOpts{
+		Place:        BaublePlace(room),
+		UserId:       ownerUserId,
+		SkillFactor:  BaubleSkillFactor(actor.GetCharacter()),
+		SightPenalty: 1 - messaging.SightMult(actor.GetCharacter(), room),
+		Household:    household,
+	})
+	if !found {
+		return false
+	}
+	room.SendTextVisual(messaging.CategoryMobEmote,
+		fmt.Sprintf(`<ansi fg="mobname">%s</ansi> spots something glinting among the clutter and sets about working it loose.`, actor.GetName()))
+	req := BaubleRequest(room, tier, baubles.SourceSearch, ``)
+	req.FinderUserId = ownerUserId
+	startBaubleDelivery(BaubleDelivery{
+		Request:         req,
+		UserId:          ownerUserId,
+		ByMobInstanceId: actor.GetMobInstanceId(),
+		MinDelay:        baubles.RevealDelay(),
+		Household:       household,
+	})
 	return true
 }
 

@@ -1,0 +1,48 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">About the </ansi><ansi fg="command">Waystone Hollow</ansi>
+
+A handful of travellers between roads wait in the Waystone Hollow, a cave
+in the bluff west of Scrub Draw, above Pothole Coulee, for someone worth
+going with. Each has a corner of the cave to themselves. There is only one
+of each of them in the world: while one travels with somebody, nobody else
+can have them.
+
+Nobody is handed one. You have to win them over.
+
+<ansi fg="yellow">━━━ Winning one over ━━━</ansi>
+
+Talk to them. Tell them who you are and what you have done. Bring them
+things to show (<ansi fg="command">show</ansi> <ansi fg="yellow">item</ansi> <ansi fg="mobname">name</ansi>): something you made, something
+you found, proof of something you did. They can see how you look and what
+you wear, what you are good at, what you have fought, the tasks you have
+seen through and how the people of the world regard you. Each of them cares
+about different things, so ask.
+
+They decide for themselves, the way a person would. Try to talk them into
+coming with you, if you like, but nobody can sign them on: when one of them
+has made up their mind about you, they will ask you themselves whether you
+would like their company, and your answer is up to you. None of them will
+ask someone who has not yet given them a single reason to think well of
+them, or someone they distrust or dislike.
+
+<ansi fg="yellow">━━━ Who they will talk to ━━━</ansi>
+
+On this server the travellers in the Hollow talk only with players who
+bring their own key (the web client's Companion key button; see
+<ansi fg="command">help aicompanion</ansi>). Without one, they will not
+hear you. The board at the cave mouth says what speaking to them sends and
+where (<ansi fg="command">look board</ansi>); speaking to one after reading
+it is your agreement.
+
+<ansi fg="yellow">━━━ If it goes wrong ━━━</ansi>
+
+A companion who comes to distrust and dislike you badly enough will leave
+you and go back to the Hollow. So will one whose company you send away
+(<ansi fg="command">companion-part</ansi>), and one who has waited for you
+too long while you were away. They take what they have learned with them,
+and leave you what you gave them. You can go back and try to win them, or
+another, over again.
+
+<ansi fg="yellow">━━━ Related ━━━</ansi>
+
+  <ansi fg="command">help companion-part</ansi>      Part ways.
+  <ansi fg="command">help aicompanion</ansi>         What is sent, and your own key.

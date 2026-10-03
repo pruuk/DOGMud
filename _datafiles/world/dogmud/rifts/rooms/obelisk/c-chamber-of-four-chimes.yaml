@@ -1,0 +1,64 @@
+id: c-chamber-of-four-chimes
+pool: C
+source: authored
+title: Chamber of Four Chimes
+description: >-
+  Four pillars of crystal stand in a square at the centre of this small
+  chamber, each a different shade of black: one with a blue depth, one with a
+  green, one with a red, one so dark it barely holds a reflection at all.
+  Above each pillar a thin rod of glass hangs from the ceiling, close enough
+  to touch. On the floor between them a ring of marks has been cut, and the marks are worn smooth, as if the same feet went round and round a thousand times. Low benches of crystal line the walls,
+  worn smooth, as if those who came here sat and listened before they ever
+  touched anything. One of the ways out is sealed in a sheet of smooth dark
+  glass, and in it the four pillars stand reflected, dark and patient.
+nouns:
+  blue: >-
+    The blue-dark pillar. When you lean close, a low note sounds somewhere
+    inside it. Its note is the lowest of the four.
+  green: >-
+    The green-dark pillar, faintly warm, its sides polished by a great many
+    touches. A middling note waits inside it, soft and settled, like a voice
+    that has finished speaking.
+  red: >-
+    The red-dark pillar. It holds a high, thin note, like breath across a
+    bottle, and the note seems to shiver in the air after it has stopped.
+  black: >-
+    The darkest pillar. It gives back no reflection and no sound, though something in it hums, too low to hear.
+  ring: >-
+    A ring of shallow marks cut into the floor around the pillars, worn soft
+    by circling feet. Here and there a mark has been pressed beside one
+    pillar and then again, more deeply, beside the next, as though someone
+    walked round matching one note against another until they agreed.
+  rods: >-
+    Thin rods of glass hanging over each pillar. They tremble whenever a pillar hums, and for a moment after, all four shiver together as if
+    passing the sound between them.
+idlemessages:
+  - One of the glass rods trembles, though nothing has touched it.
+trap:
+  difficulty: 120
+  condition_ids: [108]
+  triggered: >-
+    A pane of the floor gives under your foot with a bright crack, and a
+    shock of cold light jumps up through your bones.
+  avoided: >-
+    You catch the faint seam in the floor ahead and step over a pane of
+    crystal thinner than the rest.
+puzzle:
+  kind: memory
+  sealed_door: seal
+  hard: true
+  reward: key
+  solved: >-
+    As the last pair of lenses locks, the four pillars answer the table
+    together in a chord you feel in your teeth. The sheet of dark glass
+    sealing the far way runs clear like melting ice.
+doors:
+  - exit: sill
+    description: A low doorway of crystal, its sill worn into a shallow dip.
+  - exit: seal
+    description: >-
+      A doorway filled edge to edge by a sheet of smooth dark glass. Your
+      reflection in it waits for something.
+  - exit: chute
+    description: >-
+      A sloping chute of polished crystal leading down and out of sight.

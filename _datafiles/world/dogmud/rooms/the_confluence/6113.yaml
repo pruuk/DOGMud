@@ -30,3 +30,6 @@ idlemessages:
 - A rat runs the length of the pallet stack and vanishes into a gap.
 x: 4
 y: 59
+spawninfo:
+  - mobid: 9828
+    respawnrate: "30 real minutes"

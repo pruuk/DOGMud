@@ -1,0 +1,53 @@
+mobid: 9804
+zone: South Road
+behavior_archetype: noncombat_passive
+non_combatant: true
+charm_immune: true
+hostile: false
+statpool: 30
+maxwander: 0
+groups:
+  - mustelid
+idlecommands:
+  - 'emote puts on his spectacles, reads a line of the ledger very slowly
+    with one claw under it, takes the spectacles off again, and sighs through
+    his nose.'
+  - ''
+  - 'say Hollows to let, in the Oak. Digging, for them as want more room.
+    Paint, for them as are particular. Acorns for your friends, and chests
+    for your things. It is all on the board. Type list, if you please.'
+  - ''
+  - 'emote scratches his ear with a hind foot, remembers he is at work, and
+    straightens the ledger.'
+  - ''
+  - 'say No vouching needed here. The Oak takes anybody who pays and does not
+    set fire to it. Mind you do not set fire to it.'
+  - ''
+  - 'emote sniffs the air in your direction, long and thoughtful, and seems
+    to come to a conclusion about you that he keeps to himself.'
+  - ''
+  - 'emote sweeps a scatter of acorns off the stump with one broad paw.'
+activitylevel: 10
+character:
+  name: Old Brock
+  description: |
+    Old Brock is a badger, and a large one, grizzled silver along the back
+    and white of muzzle, with the black-and-white stripes of his face gone
+    faded and soft with age. He sits up on his haunches behind a broad oak
+    stump as though it were a counting-house desk, a pair of small round
+    spectacles on his nose and a quill held, with some difficulty, in one
+    great digging claw. He speaks slowly, in a deep voice that seems to come
+    up from somewhere below the ground, and he has been letting the hollows
+    of the Hollow Oak, and digging new ones, for longer than anyone on the
+    road can remember. He is patient with fools, up to a point, and he will
+    tell you the point.
+  speciesid: 24
+  level: 1
+  gold: 0
+  stats:
+    perception:
+      base: 110
+    charisma:
+      base: 95
+    willpower:
+      base: 115

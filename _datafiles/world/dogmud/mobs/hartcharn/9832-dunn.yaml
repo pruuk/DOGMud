@@ -1,0 +1,45 @@
+mobid: 9832
+zone: Hartcharn
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - hartcharn_folk
+idlecommands:
+  - 'emote leans on his shovel and watches the road for coaches.'
+  - ''
+  - 'emote picks straw out of his hair and puts it in his mouth.'
+  - 'emote whistles to a horse that is not there.'
+  - ''
+  - 'emote scrapes his boots on the edge of the shovel.'
+activitylevel: 8
+character:
+  name: Dunn
+  description: |
+    The Coachman's Rest's yard boy, a stocky lad with straw in his hair and
+    a shovel he never puts down. His job is to keep the posting yard clear
+    of what the horses leave. He has quietly widened it to whatever the
+    travellers leave too, anywhere in town, and the landlord has decided not
+    to notice.
+  speciesid: 1
+  level: 3
+  gold: 3
+  stats:
+    strength:
+      base: 112
+    vitality:
+      base: 110
+    perception:
+      base: 106
+    dexterity:
+      base: 104

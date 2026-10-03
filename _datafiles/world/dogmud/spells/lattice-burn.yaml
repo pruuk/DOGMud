@@ -1,0 +1,29 @@
+spellid: lattice-burn
+name: Lattice Burn
+aliases: [latticeburn]
+description: >
+  The Facet Hunter draws a lattice of thin bright lines across the whole
+  room from wall to wall, then pulls it tight. Telegraphed. Mob-castable
+  only.
+attack_type: spell
+damage_type: physical
+targeting: area
+schools:
+  - elemental
+cost: 16
+waitrounds: 1
+difficulty: 40
+mob_only: true
+primarystat: willpower
+base_folds: 4
+effect_type: damage
+effect_magnitude: 160
+damage_multiplier: 0.80
+no_damage_interrupt: true
+ignore_move_cooldown: true
+spares_allies: true   # misses the other Lenses in the room
+categories:
+  - harm_multi
+cast_actor: "You lay a lattice of light across the room."
+cast_observer: "{actor} lays a hand of light against the wall, and thin bright lines begin to cross the room from wall to wall."
+wait_observer: "The lines of light draw tighter, closing on everything between them."

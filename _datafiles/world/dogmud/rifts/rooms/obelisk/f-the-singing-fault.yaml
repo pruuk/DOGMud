@@ -1,0 +1,50 @@
+id: f-the-singing-fault
+pool: F
+source: authored
+title: The Singing Fault
+description: >-
+  The first thing is a sound, and for a moment you cannot place it, because
+  nothing in the Obelisk makes it. Birdsong. Thin and far off and very
+  bright, a few rising notes and a trill, then another bird answering. It
+  comes from a fault that runs at a slant across the ceiling of this small
+  dark room, a hairline crack that widens over the far corner into a gap
+  you could climb into from the sill beneath it. No light comes through,
+  or almost none: only a faint green dimness, the colour of light under
+  trees. The air from it is soft and smells of moss. Frost clings along
+  the fault in a fine white thread. This is the <ansi fg="exit">breach</ansi>,
+  but the gap is sealed by a rounded plug of clouded crystal, its face
+  cut with a faceted keyhole. The plug hums faintly under the birdsong. In
+  the lintel of the way you came, a fresh cut gleams where your key was
+  turned.
+nouns:
+  fault: >-
+    A crack running crooked across the ceiling, so fine at its start that a
+    hair would not slip in. Follow it and it widens, and the birdsong grows
+    clearer, until at the corner you can almost tell one bird from another.
+  birdsong: >-
+    Listen long enough and you find there are three birds at least, one
+    high and quick, one low and patient, one that only ever repeats a
+    single note. The crystal around you gives no echo of their song at
+    all, as if it will not hear them.
+  plug: >-
+    A rounded stopper of clouded crystal wedged in the gap, its outer face
+    turned toward the world. Its inner face is cut with a keyhole of many
+    facets. Lay your palm on it and the hum stills, and the birds outside
+    seem to fall quiet too, listening.
+  sill: >-
+    A ledge of crystal beneath the corner, worn into shallow three-groove
+    hollows by feet that stood here and listened. Pressed into its edge is a
+    single short row of round marks, then a long smooth space, then one
+    more mark.
+idlemessages:
+  - "Outside, beyond the fault, a bird sings a rising phrase and stops."
+  - "A breath of moss-scented air drifts down from the ceiling and is gone."
+doors:
+  - exit: crawl
+    description: >-
+      A low crawl leads off from the foot of the wall, back into the dark,
+      where the birdsong cannot follow.
+  - exit: vault
+    description: >-
+      A vaulted way opens behind you, its arch stark and black, leading down
+      into the cold heart of the Obelisk.

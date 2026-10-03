@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -89,6 +90,13 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> shows their <ansi fg="item">%s</ansi> to <ansi fg="mobname">%s</ansi>.`, user.Character.Name, showItem.DisplayName(), targetMob.Character.Name),
 			user.UserId,
 		)
+
+		// An AI companion may want to see it (the aicompanion module: a
+		// companion waiting in the Waystone Hollow judges what a player
+		// brings). Only model-safe text crosses: never player-written
+		// bauble text. Every other mob ignores it, as before.
+		companionai.RouteShow(user.UserId, targetMob.InstanceId, showItem.ModelName(), showItem.ModelDescription(), showItem.MakerName,
+			showItem.CraftSkill > 0 || showItem.CraftedRound > 0)
 	}
 
 	return true, nil

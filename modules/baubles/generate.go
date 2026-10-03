@@ -242,7 +242,7 @@ func viaPlayer(ctx context.Context, cfg Config, r apiframework.Relay, userId int
 	// touched), so a provider that cannot serve finds stops being asked.
 	report := func(err error) {
 		if !canceled(ctx) {
-			r.Result(userId, err)
+			r.Result(userId, apiframework.PurposeFinds, err)
 		}
 	}
 	chat.Model, chat.Effort = model, ``

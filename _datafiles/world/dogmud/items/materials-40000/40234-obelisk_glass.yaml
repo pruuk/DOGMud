@@ -1,0 +1,19 @@
+itemid: 40234
+name: Obelisk Glass
+namesimple: glass
+vendor_categories:
+- jewelcrafting
+description: >-
+  A shard of the obelisk's black crystal, pried from a seam where it had
+  grown thicker than the wall around it. It drinks the light around it
+  instead of throwing it back, and when you turn it the darkness inside
+  seems to turn the other way. No forge in the Marches has ever melted it,
+  and jewelers pay well just to try.
+type: object
+subtype: mundane
+component_tag: obelisk-glass
+weight: 0.3
+value: 1200
+rarity_tier: 80
+is_component: true
+material_tier: 4

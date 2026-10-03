@@ -38,10 +38,9 @@ Roadmap and phase plan: `docs/aicompanion/`.
   attacks (`PlayerAttackedMob`), healing (`events.Healed`) and the `ask`
   hook; an owner speaking to the companion interrupts an errand. They record what the
   companion perceived and queue stimuli; they never call the model. The
-  per-companion halves (`hearSaid`, `seeEmote`, `hearAsked`) read the
-  owner's literal "i agree"/"i decline" first, and before consent write
-  nothing into the mind while still queueing the stimulus, so dispatch
-  answers with set lines. The same holds for every deed with a person's
+  per-companion halves (`hearSaid`, `seeEmote`, `hearAsked`) write
+  nothing into the mind before consent while still queueing the stimulus,
+  so dispatch answers with set lines. The same holds for every deed with a person's
   name in it (`mayRemember`, meeting.go): a gift, gold, an attack,
   healing, a witnessed crime, being called back, an errand interrupted,
   a party change, the first meeting (`firstMet`; agreeing later writes it
@@ -127,13 +126,32 @@ Roadmap and phase plan: `docs/aicompanion/`.
   regular stock (every bauble is item 900). So she can see shelf goods but
   cannot buy them.
 - **loot.go**: the module's own mob commands `companion-loot` (owner's loot
-  rights only) and `companion-takeout` (unhidden, unlocked containers).
+  rights only) and `companion-takeout` (unhidden, unlocked containers,
+  never a merchant's chest: `actions.IsMerchantChest`, since taking from
+  one is watched theft).
 - **cooking.go**: `craftableHere(mob, p, room)` lists what she knows, has the
   makings for, and has the place for. Slice 5a added a fourth gate ahead of
   the recipe walk: `cannotSee(mob, room)` (perception.go, `sightOf !=
   SightFull`) empties the list in the dark, so autonomy never proposes a
   craft that would not start and the prompt never lists a recipe she cannot
   see to make. Before 5a this function had no sight test at all.
+  `seedRecipes` teaches every recipe of her `crafts` her skill rank has
+  reached. Idle work at a trade: `tradeDrive` (her archetype's preference
+  for the skill), `bestCraft` (the trade that means most, then the highest
+  `skill_minimum`), `tradeAtHand` (a calling, drive at least
+  `callingDrive` 0.5, starts on her idle tick ahead of the pastime roll, at
+  most once every `IdleTradeSeconds`, with her drive as the chance) and
+  `startCraft` (the ordinary `craft` command). `craftableHere` mirrors all
+  of `actions.InitiateCraft`'s gates (skill minimum, own components, no
+  enchanting), and the command is `craftCommand`, by NAME: the engine finds
+  a recipe by name, never by id, so `craft grilled-meat` found nothing and
+  every companion craft quietly failed before this (`craftsAs` keeps out a
+  recipe whose name would resolve to another). `craftableElsewhere` lists
+what she has the makings for but not the station (prompt: RecipesAway),
+and `recordRoom` puts a room's station on her map (`stationWords`), so
+the model can say where it could be made and `go_to` there. Idle pastime
+weights are per profile (`Profile.Pastimes`, `pastimeWeight`,
+`pastimeDefaults`; 0 is never). Tests: `trade_test.go`.
 - **harm.go**: `harmAllowed` and `areaHarmAllowed`, the one gate on
   everything she starts: the engine's own player harm rules
   (`mobs.CheckPlayerHarm` for a creature; `(*Room).CanPvp` plus the party
@@ -148,8 +166,47 @@ Roadmap and phase plan: `docs/aicompanion/`.
   not fight (`refusesToFight`) who is not already fighting.
 - **goals.go**: goals, checks against live state, restock goals, the
   session agenda, and the model's goal proposals.
+- **finds.go**: what she turns up and butchers. `baubleSearchFor` (the
+  `companionai.BaubleSearchFor` seam): `CompanionBaubleChance` percent of
+  her searches also roll for a bauble on her owner's behalf, only for an
+  owner online, agreed, with a model to use and (with RequirePlayerKey)
+  their own key; `onSearched` (what the search turned up: kept for
+  `verifyPending` and put to her as a `searched` stimulus, once per room
+  for the same finds and counted against `NoticeCallsPerDay` through
+  `takeNotice`); `onBaubleFound` (a find worked free, by its model-safe
+  name, into her pack or left on the ground when she is overloaded: a
+  `found` stimulus under the same cap, and a snapshot to the owner's
+  record when pocketed); `butcherable`, `butcherHere`, `salvageHits`,
+  `salvageCommand`: the `salvage` verb (owner-driven, like `loot`, only a
+  body her owner could loot that is picked clean, aimed at that body) and
+  the `butcher` pastime (game only: groups animal and rodent, per profile,
+  Hal and Mara; under ask-first, never under leave-it). The idle `salvage`
+  pastime is aimed the same way now: never at a body her owner could not
+  loot, and never at the second of two alike killed in the same round,
+  since the engine's `salvage <mob>:<round>` takes the first
+  (`salvageHits`). Two failed tries in a room and both pastimes leave
+  bodies there alone (`lastInteraction` fails). Tests:
+  `finds_test.go`; engine side `internal/actions/companion_bauble_test.go`.
+- **combat_style.go**: what makes each companion fight differently on top
+  of the engine's scripted AI. The blow by blow is the mob template's
+  `behavior_archetype`, one `companion_*` tree each in
+  `_datafiles/world/dogmud/behaviors/archetypes` (archer, guardian,
+  healer, skirmisher, battlemage, brawler; no flee, no idle, no packmate
+  events: those are the module's). This file adds what no tree can see,
+  her owner: `tendOwner` (profile `mend_below`, `ward_owner`: a healer
+  mends and wards the person she travels with, since tree healing only
+  reaches packmates), `surpriseOpener` (profile `opener: surprise`: from
+  hiding, the first blow is an ordinary `attack #id` that the engine makes
+  a surprise attack), `fightCastCommand`/`resolveFightSpell` (the model's
+  `combat.spell` and `spell_at`, cast once, harm only where `mayStrike`
+  allows, never at her owner, none while holding back), `castReady`,
+  `canSneak` (the `sneak` verb, for a profile training skullduggery or
+  opening from hiding) and `combatRule` (the prompt's fighting paragraph,
+  written per profile from `approach`, `moves` and the above).
+  Tests: `combat_style_test.go`; the trees are tested in
+  `internal/behaviortree/companion_archetypes_test.go`.
 - **combat.go**: the fight from the companion's side: tracking, the
-  model's plan (stance, target, flee point, style), local reflexes at most
+  model's plan (stance, target, flee point, style, move, spell), local reflexes at most
   once a round, hold-back with the owner's auto-assist restored, authored
   battle lines (silent while her owner is muted), and the summary
   afterwards. Every plan is her owner's to pay for, whoever started the
@@ -159,11 +216,72 @@ Roadmap and phase plan: `docs/aicompanion/`.
   `fight` and `fight_over` to the owner, so a plan is never batched with
   a passer-by's words, never billed to them, and never refused because
   strangers are off.
-- **meeting.go**: meeting a companion after character creation (or at the
-  next login), the persisted bond state, parting ways, and consent:
-  `consented`, `answerConsent`, and `consentLedger`, the copy of who has
+- **meeting.go**: the persisted bond state (`bondRecord`, with `Notice`,
+  a line kept for a player's next login, `HollowHinted` and `SignRead`), the one-time
+  hint to a new character (`onCharacterCreated` marks them in `newcomers`,
+  `hintHollow` tells them in the Hollow's own zone), parting ways (`leave`
+  sends her back to the Hollow through `sendBack`), and consent:
+  `consented` and `consentLedger`, the copy of who has
   agreed that the model door reads off the mud lock (rebuilt by
-  `syncConsent` on every bond load and save).
+  `syncConsent` on every bond load and save). Nobody is handed a companion
+  any more: there is no auto-bond.
+- **roster.go**: one of each companion on the server. `rosterState` (the
+  `roster` plugin file) holds, per profile, who has her (`Owner`, 0 while
+  she waits in the Hollow), since when, when they were last seen together,
+  and what she has learned (`keptProgress`: skills, trained stats, spells,
+  mutations, never items, so the bauble sweep has nothing new to walk).
+  `claim` (refused while someone else has her, and one per account),
+  `unclaim` (marks her `returning`), `keepProgress`, `seeOwner`,
+  `releaseLapsed` (owner away `ReleaseAfterDays`; run at load and every 600
+  rounds; leaves a `Notice`), `reclaimFrom` (at login, a record the roster
+  does not give this player loses her, without carrying their progress:
+  the move to one of each and every release use it), `sendBack` (ends a
+  bond, keeps her progress when it was theirs to lose, hands her gear to the
+  owner through `handOver` minus her own starting kit, frees the claim,
+  resets the courtship), `abandons` (trust and affection both at or below
+  `AbandonBelow`), `progressOfMob`/`progressOfInfo`/`applyProgress` (mirror
+  the progression half of `internal/hooks`' `snapshotCompanionProgression`
+  and `applyCompanionState`; keep them in step), `learnStartingSpells`, and
+  the admin `rosterLines` and `release`.
+- **hollow.go**: the Waystone Hollow. A free companion waits in her own
+  room (`HollowProfile.RoomId`) as a plain, uncharmed mob (`waiter`), made
+  non-combatant, charm- and attack-immune and essential
+  (`mobs.HollowGroup`) by `spawnWaiting`; `tendHollow` (every round, from
+  `onNewRound`) keeps the Hollow in step with the roster (`ensureWaiting`,
+  `dismissWaiting`) and dispatches. A visitor's say (`hearInHollow`), `ask`
+  (`askInHollow`), `show <item> <her>` (`handleShow`, the
+  `companionai.RouteShow` seam: model-safe text only) and
+  pass `hollowMayTalk`: no key of their own (with `RequirePlayerKey`) is
+  no answer and no notice. Consent is the board at the Hollow's mouth:
+  `tendSign` shows it (`showSign`, the words from `signText`, the `board`
+  noun of `HollowSignRoom`, falling back to `hollowSignText`) to each
+  player the first time they stand in that room (`bondRecord.SignRead`);
+  speaking to a traveller after it records `Consented`; one who reached a
+  traveller without passing it is shown it then, and that utterance is not
+  sent. Having a companion is consent as well: `bondTo` calls
+  `consentByCompanionship`, and `consentHolders` (from `loadRoster`)
+  consents every roster owner, so admin grants and companions from before
+  the board are covered. The one thing neither overrides is
+  `companion-ai off` (`Refused`). `applyInterview` re-checks consent
+  before it records anything from an interview that comes back late. There is no recruit command. `dispatchHollow` builds one
+  `companion_interview` call (`buildInterviewMessages`, `visitorDossier`:
+  what anyone can see of them, their strongest skill, kills, quests seen
+  through, faction standing, skill in what she cares about), routed and
+  paid by the VISITOR, and carried in the mind she would have of them
+  (`mind-<visitor>-<mob>`, `Mind.Courtship`). `applyInterview` speaks
+  (`hollowSpeak`), remembers, bounds her opinion change
+  (`hollowEnvelopes`), counts a rise (`Courtship.Gains`), and acts on the
+  verdict: `offer` (she has asked them, in her own words, whether they would
+  like her company) stands (`Courtship.OfferedAt`, `offerStanding`,
+  `offerStandsFor`) only with a rise counted and `wouldTravelWith`; `join`
+  (their yes) reaches `considerJoining`, which requires a standing offer, a
+  rise in an EARLIER moment and `wouldTravelWith` before `recruit` (which
+  goes through `bondTo`), and otherwise has her hesitate with an emote and
+  no system line; `not_them` withdraws an offer. The dossier
+  (`visitorDossier`) adds plain hand-made gear, `fearedKills` (creatures
+  with a stat pool of `fearedStatPool` or more), killings of people, every
+  skill practised, up to `maxDossierQuests` quests seen through and
+  `maxDossierFactions` standings.
 - **tools.go**: the read-only questions the model may ask the game before
   answering (look closer, size up, wares, recall, find a place), answered
   under the mud lock from player-visible information only. For a call
@@ -321,7 +439,7 @@ Roadmap and phase plan: `docs/aicompanion/`.
   30 a minute and 40000 summed completion tokens a minute (excess is
   status 0 without a fetch), rewrites every body through `constrainBody`
   (stored model forced, token caps at 4000, `n` 1 and no streaming, one of
-  the four companion schema names, at most 256 KiB), aborts the fetch at
+  the five companion schema names, at most 256 KiB), aborts the fetch at
   the server's deadline (`fetchTimeout`, never past 90 s), binds the key
   window to the account it was opened for,, accepts messages
   only from its parent at the game origin and from the window it opened at
@@ -333,7 +451,8 @@ Roadmap and phase plan: `docs/aicompanion/`.
   `sanitizeDecision` and `cleanText`, which enforce everything the schema
   cannot.
 - **prompt.go**: `buildMessages` and pure helpers (`isAddressed`,
-  `humanizeElapsed`). Player text only ever appears quoted in the user
+  `humanizeElapsed`); `writeIdentity`, WHO YOU ARE, shared with the
+  Hollow's prompt. Player text only ever appears quoted in the user
   message. Trust-gated backstory is withheld from the model until earned.
   `relaySafeLines` and `relaySafeStimuli` are what a prompt carries when
   the call goes through her owner's own browser, where the owner can read
@@ -356,7 +475,15 @@ Roadmap and phase plan: `docs/aicompanion/`.
   (`capRunes`), since player text arrives whole and goes out in every
   prompt.
 - **profile.go**, **profiles/*.yaml**: authored companion definitions,
-  embedded in the binary.
+  embedded in the binary: mara, corvel, liesl, tobin, isaura, hal. Beyond
+  who they are: `specialty` (a WHO YOU ARE line), `starting_spells`
+  (checked against the game's spells at load, `spellsValid`), `ammo_word`
+  (what combat calls their ammunition), the fighting style in `combat`
+  (`stance` they go in with, the `moves` that suit them, an explicit empty
+  list for none, `mend_below`, `ward_owner`, `opener`, and `approach`, a
+  sentence for the model; see combat_style.go), and `hollow` (`HollowProfile`: their
+  room, what wins them over, what puts them off, how they wait, how they
+  come back). Duplicate ids, mob ids and Hollow rooms are refused at load.
 - **commands.go**: the admin-only `aicompanion` command, including
   `aicompanion mind <character>` and a status line per companion with its
   `tier=relay|server|none`; the player's `companion-ai` (consent, the
@@ -365,13 +492,19 @@ Roadmap and phase plan: `docs/aicompanion/`.
   category is never wrapped for the reader.
 - **primer.txt**: the common-knowledge world primer given to the model.
 - **relayfor.go**: `relayFor`, the `apiframework.Relay` the module lends to
-  other features. It answers only for `apiframework.PurposeFinds`, only for
-  an owner whose key page has "Also name things I find while searching"
-  ticked (`relayOwner.finds`, `liveFor`), sends through `sendRelay` with the
-  request's own `Carries`, and feeds that owner's FINDS breaker (`Result`,
-  `relayTable.findsResult`, `relayOwner.findsFailures`/`findsUntil`), never
-  the one she runs on: a bauble request the owner's provider will not serve
-  pauses naming on that key, not her. Tests: `relayfor_test.go`.
+  other features, per purpose. It answers for `apiframework.PurposeFinds`
+  only for an owner whose key page has "Also name things I find while
+  searching" ticked (`relayOwner.finds`), and for every lively purpose
+  (`apiframework.IsLively`, such as `PurposeNPCIdle`, townsfolk idle
+  moments) only for one who left "Make the world livelier" ticked
+  (`relayOwner.lively`, `relayOwner.allows`; the box starts ticked, and the
+  Ready message carries it as `lively`, `relayTable.readyFor`). It sends
+  through `sendRelay` with the request's own `Carries`, and feeds that
+  purpose's own breaker (`Result(userId, purpose, err)`,
+  `relayTable.purposeResult`, `relayOwner.lent`, a `lentBreaker` per
+  purpose, each lively feature its own), never the one she runs on nor any
+  other purpose's: a request the owner's provider will not serve pauses
+  that feature on that key, nothing else. Tests: `relayfor_test.go`.
 - **config.go**: every setting and its default (`buildConfig`). The API key,
   base URL, custom endpoint switch and daily token budget are no longer here:
   they are the `APIFramework` section's. Left in the old place (a server's
@@ -400,7 +533,29 @@ Roadmap and phase plan: `docs/aicompanion/`.
 
 One mind file per owner and companion, through the plugin store
 (`WriteStruct`, durable and autosave-queued): identifier
-`mind-<ownerUserId>-<mobId>`. The server key's day total is in
+`mind-<ownerUserId>-<mobId>`. A visitor courting a companion in the Hollow
+has one too, the same file, so it carries over if she joins them. The
+roster is `roster` (saved on every claim and release, at logout and at
+each autosave); a missing roster frees every companion. Each roster entry
+also keeps `OwnerName` and `Partings`: when she leaves someone (`unclaim`,
+every departure path), `partWith` (parting.go) keeps ONE sentence of them
+by account, wipes the rest of her mind of them (`forgetOwner`: memories,
+core memories, facts, promises, romance, courtship, keepsakes; Opinion and
+her world knowledge stay), and asks the model on that player's own route
+for the sentence in her own voice (`askParting`, `companion_parting`;
+`fallbackParting`, which does not name them, stands until it answers or
+if it never does). `forgetOwner` also puts `Autonomy` back to normal, drops
+`AssistToRestore`, and bumps `Mind.Wipes`; a core memory, reflection or
+conversation summary in flight when she left carries the count it started
+with and is thrown away on return if it differs (`applyCore`,
+`applyReflection`, `applyConversationSummary`), and `partWith` drops any
+deferred reflection or summary for that mind. One account, one holder:
+`holdsHer` matches the roster's `OwnerName` as well as the account, so
+another character on the same account cannot field her (`claim` refuses,
+`sync` reclaims), and a roster claim whose character has no record of her
+is released (`sync`, `cmdPart`). The Hollow interview shows it to her when that player
+comes to talk (`interviewInput.Parting`); `bondTo` deletes it when they
+win her back (`forgetParting`). Tests: `parting_test.go`. The server key's day total is in
 `apiframework`'s ledger (`<DataFiles>/apiframework/budget.yaml`); the
 per-owner and passer-by allowances are the ledger's too (`companion.owner`,
 `companion.stranger`, `companion.strangersfor`). The module's own budget
@@ -431,9 +586,31 @@ skills, health) is never in the mind file; it lives on the owner's
 ## Combat rules
 
 - The engine's combat AI does the fighting; the module never blocks it.
+- `combatTick` runs from `onCombatRound`, registered `events.First` on
+  `NewRound`, ahead of the engine's combat hook, for each controller the
+  previous round's `sync` found standing and not sneaking
+  (`controller.standRound`). Her `companion_*` tree runs inside that hook
+  and claims the shared special move cooldown, so a reflex chosen after it
+  would always be dropped.
+- A spell's `[m]` ref is its place in her whole spellbook
+  (`spellsReady`), not in the affordable list, so it does not drift when
+  her conviction changes between the prompt and the answer.
+- `move: unchanged` (the default for a plan that does not say) keeps the
+  move already planned; `none` drops it. `realMoves()` is the list of real
+  moves, used by `movesFor` and profile validation.
 - Plans come from the model in the background; reflexes run every round
   with `CombatReactionRounds` between moves, using only `attack #id`,
-  `fire #id`, `taunt`, `flee`, `drink` and `aid @id`.
+  `fire #id`, `taunt`, a special move, `cast <spell> [@id|#id]`, `flee`,
+  `drink` and `aid @id`. Order: flee, potion, tend owner (mend, ward),
+  protect, the model's move (only one in `movesFor(profile)`), the
+  model's spell, the chosen target, an archer's first shot from an empty
+  chamber (later shots are her tree's `try_fire`), out of ammunition.
+- Each companion's template names its own `companion_*` archetype,
+  `aiprofile`, `specialmovechance` and submission/surrender policies; the
+  template's `skills:` are the trade they arrive with (`applyProgress`
+  keeps the higher of that and what she has learned since), and
+  `seedRecipes` teaches every recipe her skill has reached, so a seasoned
+  cook knows more dishes.
 - The run reflex fires only when `actions.FleeGate` returns `FleeOK`, so a
   companion knocked down, grappled, rooted or frenzied does not speak its
   flee line or set `Fled` for a flee the engine would refuse. A flee
@@ -455,6 +632,11 @@ skills, health) is never in the mind file; it lives on the owner's
   separate call.
 - `refusesToFight` is personality only: shopkeepers and the profile's
   `refuse` words. What nobody may attack is the engine's to say.
+- A profile can go into a fight holding back (`combat.stance: hold_back`,
+  Liesl). If auto-assist already sent her at a foe that is not fighting
+  her, `setHoldBack` ends that engagement (`EndAggro`); a foe on her she
+  still answers. `combatTick` repeats that check every round, because the
+  engine's retargeting pulls her back in when a foe falls.
 - Holding back switches the owner's `AutoAssist` off for that fight only.
   The previous value is kept in `Mind.AssistToRestore` and put back when
   the fight ends, when the companion falls, when the session ends, or at
@@ -480,7 +662,7 @@ skills, health) is never in the mind file; it lives on the owner's
   (`callModel`: `apiframework.Allow` just before its first send) and keeps
   it across its retry and tool rounds
   (`modelCall.ticket`, `modelResult.Ticket`); `routeResult` hands it back.
-  Each of the four model goroutines also releases it last (`ticketOut`), a
+  Each of the five model goroutines also releases it last (`ticketOut`), a
   no-op once recorded, so a panic cannot hold a half-open breaker's probe.
   A call held back while another probes (`errServerResting`) falls back to
   set lines and is no error: not counted in the tier stats, `errorsToday`
@@ -570,12 +752,29 @@ skills, health) is never in the mind file; it lives on the owner's
 1. Author a mob template (see `_datafiles/world/dogmud/mobs/summons/9800-mara_venn.yaml`).
    It must carry **no items, equipment or gold**: a bonded companion that dies
    loses its gear to its corpse and respawns from the template, so template
-   gear would be free gear on every death.
-2. Author `profiles/<id>.yaml` with that `mob_id`.
-3. Rebuild. `aicompanion profiles` lists what loaded; `aicompanion grant
-   <character> <id>` bonds it to an online player.
+   gear would be free gear on every death. Give it a `behavior_archetype`
+   of its own (a `companion_*` tree with no flee, idle or packmate events),
+   an `aiprofile`, and `skills:` for the trade it arrives with.
+2. Author a room of their own in the Waystone Hollow (Pothole Coulee,
+   6880 onward), furnished to their taste; no two companions share one.
+3. Author `profiles/<id>.yaml` with that `mob_id` and `hollow.room_id`.
+4. Rebuild. `aicompanion profiles` lists what loaded, `aicompanion claims`
+   shows them waiting; `aicompanion grant <character> <id>` bonds a free
+   one to an online player.
 
 ## Gotchas
+
+- **One of each.** A companion is claimed for one account at a time
+  (roster.go). Never field one without `claim`: `sync` takes back, at the
+  next round, any bonded companion the roster does not give that player.
+- **Key-only speech.** With `RequirePlayerKey` (the default) `route` never
+  returns `routeServer`, `fallback` says nothing to a player without a key
+  of their own, and a passer-by without one prompts nothing
+  (`strangerMayPrompt`). Tests of the server-key path set it false
+  (`consentModule`).
+- **Waiting companions are not controllers.** They are in `waiting`, not
+  `ctrls`; `isBonded` is false for them, and every listener checks
+  `waiterForInstance` or `waiterInRoom` first.
 
 - **Bonded companions cannot be dismissed or renamed by command**, cost no
   Conviction reserve, and recover from death (see

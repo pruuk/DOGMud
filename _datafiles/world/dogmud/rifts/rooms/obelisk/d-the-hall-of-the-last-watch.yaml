@@ -1,0 +1,53 @@
+id: d-the-hall-of-the-last-watch
+pool: D
+source: authored
+title: The Hall of the Last Watch
+description: >-
+  The hall is high and round, and in its centre a dais rises in three steps
+  to an empty socket of crystal, deep and smooth, the size of a great lens
+  that is no longer there. The floor around the dais has been scoured into a
+  wide ring by something circling it, endlessly, at the same distance. The
+  scouring is fresh in places, the crystal still bright where it has been
+  ground. Along the walls, fallen panes lie where they were thrown, not
+  where they would have dropped, and some are cut cleanly through. High on
+  the wall above the dais, a facet catches your light and turns it back at
+  you a moment too long. The air carries a low hum that rises when you
+  step forward and settles when you stand still. Whatever keeps this hall
+  has not left it.
+nouns:
+  socket: >-
+    A deep cup of polished crystal at the top of the dais, made to hold a
+    lens larger than you are tall. Its inside is scratched in long spiral
+    lines, as if the lens were wrenched out turning. Frost lies along the
+    deepest of the scratches and has never melted.
+  ring: >-
+    The scoured ring around the dais is a stride wide and worn into the floor
+    deeper than a hand. In two places the wear swerves sharply outward and
+    then returns, where something left its circuit, fast, and came back.
+  panes: >-
+    Fallen panes, scattered against the walls far from their mounts. Several
+    are sheared through in a single smooth stroke, the cut edges still sharp
+    enough to whistle faintly when the air moves.
+  facet: >-
+    A single large facet high on the wall, angled down toward the floor.
+    Your reflection in it does not follow you. It stays where you first
+    stood, and when you move, the faint glow inside the facet moves to keep
+    you in view.
+idlemessages:
+  - The hum in the hall deepens, as though something has turned to face the door.
+encounter:
+  tier: elite
+  count: {min: 1, max: 1}
+doors:
+  - exit: gallery
+    description: >-
+      A wide gallery opening off the hall, lined with empty mounts, every one
+      of them knocked over toward the dais.
+  - exit: door
+    description: >-
+      A narrow door of crystal, standing ajar, its edge notched and chipped
+      by blows from inside the hall.
+  - exit: ramp
+    description: >-
+      A broad ramp climbing away from the hall, its surface scored by long
+      parallel scrapes leading up and out of sight.

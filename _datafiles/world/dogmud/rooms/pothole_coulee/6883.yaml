@@ -1,0 +1,45 @@
+roomid: 6883
+zone: Pothole Coulee
+title: The Fletcher's Ledge
+description: >
+  The cave narrows into a long rock shelf beneath a crack in the roof, and
+  through it a ragged strip of sky shows, pale by day and pricked with
+  stars by night. Someone has made the ledge tidy in the way of a person
+  who lives out of a pack: a bedroll rolled tight, a jar of grey goose
+  feathers sorted by length, a straight ash stave drying on two pegs, and
+  a hand-drawn chart pinned to the rock with a knife. A fire no bigger than
+  a pair of hands burns in a ring of pebbles. The hearth is back east, and
+  a passage drops away south toward a smell of chalk and ink.
+biome: cave
+lamp: 50
+coord:
+  x: 40
+  y: 1
+  z: 0
+mutators:
+- mutatorid: sanctuary
+exits:
+  east:
+    roomid: 6881
+  south:
+    roomid: 6884
+nouns:
+  crack: A long crack in the cave roof, wide enough to show a strip of sky.
+    Rain must come in through it; the rock beneath is worn smooth where it
+    falls. Whoever sleeps on this ledge chose it for the sky.
+  feathers: A clay jar of grey goose feathers, sorted by length and laid
+    the same way, with a little knife and a spool of waxed thread beside it.
+  stave: A straight length of ash, half-shaped, drying on two pegs driven
+    into the rock. It is going to be a bow one day, when its owner can
+    afford the time and the string.
+  chart: A chart of the Windward Marches drawn by hand on soft leather, the
+    roads marked in ink and the safe camps in charcoal. A stretch of the
+    Stillwater road has been circled hard, more than once, and a knife
+    pins it to the rock through that very spot.
+  bedroll: A bedroll rolled tight and strapped, ready to be shouldered at a
+    moment's notice.
+idlemessages:
+- A breath of cold air sighs down through the crack in the roof.
+- The small fire ticks and settles in its ring of pebbles.
+x: 39
+y: 20

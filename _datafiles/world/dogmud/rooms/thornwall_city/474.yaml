@@ -28,6 +28,8 @@ nouns:
     names, crude drawings, and what might be directional marks for those who
     know how to read them.
 spawninfo:
+- mobid: 9827
+  respawnrate: 30 real minutes
 - mobid: 105
   respawnrate: 5 real minutes
 idlemessages:

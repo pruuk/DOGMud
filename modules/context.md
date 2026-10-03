@@ -32,6 +32,7 @@ and rebuilding. There is no dynamic loading and no sandbox.
 | [`gmcp`](gmcp/context.md) | The GMCP protocol layer — the web client's entire data feed |
 | [`leaderboards`](leaderboards/context.md) | Ranked top-N tables for the command and the dashboard |
 | [`playtest`](playtest/context.md) | AI-playtest beacons, tester flagging, and safe mode |
+| [`rifts`](rifts/context.md) | Wires `internal/rifts` in: exit router and entry guard, event listeners, the sweep and portal spawner, `answer`, `touch` and admin `rift` |
 | [`time`](time/context.md) | The player-facing `time` command |
 | [`weather`](weather/context.md) | Weather simulation: fronts, seasons, and zone climate |
 | [`webhelp`](webhelp/context.md) | Help files rendered as web pages |

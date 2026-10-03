@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -234,7 +235,18 @@ func GetAllForSkill(skill string) []*RecipeSpec {
 // isn't tagged as a crafting component/material. Shared matcher used by
 // HasIngredients, ConsumeIngredients, and CheckOwnComponents so tag-matching
 // behavior stays consistent across all three.
+// componentTagOf is the tag an item counts as in a recipe. Hot stolen goods
+// (a merchant chest's, baubles.GoodsHot) count as nothing, so no counting,
+// selection, storage plan or consumption uses them while they are hot:
+// crafting them into something new would shed their heat. Once they have
+// cooled they are ordinary materials.
+// stolenNow is the clock for stolen goods' heat. A variable for tests.
+var stolenNow = time.Now
+
 func componentTagOf(item items.Item) string {
+	if baubles.GoodsHot(item, stolenNow()) {
+		return ""
+	}
 	return item.GetSpec().ComponentTag
 }
 
@@ -637,6 +649,40 @@ func SkillMinimumsFor(recipeIds []string) []int {
 	for i, id := range recipeIds {
 		if r := GetRecipe(id); r != nil {
 			out[i] = r.SkillMinimum
+		}
+	}
+	return out
+}
+
+// OutputCount is how many of its output item one successful craft of r makes:
+// output.quantity, at least 1 (a recipe that names an output makes one when
+// it does not say how many).
+func (r *RecipeSpec) OutputCount() int {
+	if r.Output.Quantity < 1 {
+		return 1
+	}
+	return r.Output.Quantity
+}
+
+// SalvageIngredients is what one unit of r's output is made of, the
+// ingredients salvage may give back: a recipe that makes several (three
+// lenses from one shard) gives each unit its share, a fraction becoming a
+// chance (rng(n) < remainder). On average salvaging every unit returns no
+// more than the craft consumed; each unit rolls on its own, so a lucky run
+// can return more, but never reliably (and salvage itself can fail).
+func (r *RecipeSpec) SalvageIngredients(rng func(int) int) []RecipeIngredient {
+	n := r.OutputCount()
+	if n == 1 {
+		return r.Ingredients
+	}
+	var out []RecipeIngredient
+	for _, ing := range r.Ingredients {
+		q := ing.Quantity / n
+		if rem := ing.Quantity % n; rem > 0 && rng(n) < rem {
+			q++
+		}
+		if q > 0 {
+			out = append(out, RecipeIngredient{ItemTag: ing.ItemTag, Quantity: q})
 		}
 	}
 	return out

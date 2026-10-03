@@ -1,0 +1,63 @@
+id: b-hall-of-frozen-light
+pool: B
+source: authored
+title: Hall of Frozen Light
+description: >-
+  Light is standing in the middle of this hall, and it does not move. It is
+  caught in the shape of something tall and narrow, leaning forward in the
+  act of turning, one long limb of brightness reaching back toward the way
+  it came. It gives no warmth. It lights nothing around it, so that the
+  floor beneath it is as dark as anywhere else, and the figure seems to
+  stand on nothing. Behind it a wake of fainter light hangs in the air in a
+  long curve, each part dimmer than the last, the record of where it was a
+  moment before it stopped. The crystal of the floor beneath the wake is
+  scored with grooves, three to a step, the stride lengthening toward the
+  figure. Scattered around its feet lie shards of black glass, and its
+  shadow, which ought not to exist, falls away from it across the floor
+  toward the far wall, long and sharp and pointing.
+nouns:
+  figure: >-
+    Close to, the light is not smooth but grained, like wood, and the grain
+    runs in swirls that bunch and knot along the reaching limb. At the tip of
+    that limb the brightness frays into threads, and the threads are darker
+    than the rest, as if something had been pulling at it.
+  wake: >-
+    The trail of fading light curves back across the hall, and at its far end
+    it is barely a glimmer. Walk along it and you can see the figure was not
+    walking but running, then turning, then reaching, each held moment a
+    little more bent than the last.
+  shadow: >-
+    The shadow lies on the floor like spilled ink, though there is nothing to
+    cast it from. It is longer than the figure is tall. Its edges are clean
+    except at one place, near the head, where the dark seems to have a second
+    shape folded in it, smaller, facing the other way.
+  grooves: >-
+    The three-groove prints are deep and fresh-edged, as though the crystal
+    had been soft when they were made. Between the last print and the
+    figure's foot is a gap of a single stride, and in that gap the floor is
+    cracked in a fine starburst.
+  shards: >-
+    Pieces of black glass scattered in a rough ring around the figure, every
+    one of them lying with its sharpest point turned toward the light. None
+    have moved in all this time. When you look away and back, you are not
+    entirely sure of that.
+idlemessages:
+  - "The frozen light flickers once along its reaching limb, then holds."
+  - "Among the shards around the figure, something settles with a faint tick of glass."
+doors:
+  - exit: threshold
+    description: >-
+      A raised threshold at the hall's end, toward which the figure was
+      running. The dark beyond it is very still.
+  - exit: vault
+    description: >-
+      A vaulted opening behind the far end of the wake, where the light was
+      when it began to run.
+  - exit: spiral
+    description: >-
+      A spiral of narrow steps winds up through the wall, each step cupped and
+      worn in its middle.
+  - exit: cleft
+    description: >-
+      A cleft in the wall at the end of the long shadow, its sides lined with
+      dull frost.

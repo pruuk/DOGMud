@@ -1,0 +1,17 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">visit</ansi> command
+
+The <ansi fg="command">visit</ansi> command takes you through a lodging-house
+door to a lodging of your choice.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">visit home</ansi>       Go to your own lodging
+  <ansi fg="command">visit [owner]</ansi>    Go to the lodging of someone who has let
+                   you in with a guest key
+  <ansi fg="command">visit</ansi>            Choose from a list
+
+Using the <ansi fg="exit">door</ansi> itself does the same. If you can go to
+only one lodging it takes you straight there. If you can go to
+several, it asks which.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help house</ansi>

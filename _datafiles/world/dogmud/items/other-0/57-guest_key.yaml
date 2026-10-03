@@ -1,0 +1,17 @@
+itemid: 57
+name: Guest Key
+namesimple: guest key
+not_salable: true
+description: >
+  A small brass token stamped CREWE LETTINGS, GUEST, with a lodging's number
+  scratched on the back. Its owner bought it to let a friend in. Whoever holds
+  it can present it at the green door in Pennock's Alley by typing use guest
+  key, and the lock will learn their palm and admit them to that lodging from
+  then on. The token is spent in the lock. A guest can walk every room of the
+  lodging and touch anything left lying about, so give it only to someone you
+  trust. The owner can take the access back at any time.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

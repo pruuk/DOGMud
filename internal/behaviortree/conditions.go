@@ -31,6 +31,7 @@ func init() {
 	conditionRegistry["player_has_misc_data"] = condPlayerHasMiscData
 	conditionRegistry["state_greater_than"] = condStateGreaterThan
 	conditionRegistry["multiple_enemies"] = condMultipleEnemies
+	conditionRegistry["multiple_foes"] = condMultipleFoes
 	conditionRegistry["command_matches"] = condCommandMatches
 	conditionRegistry["command_rest_contains"] = condCommandRestContains
 	conditionRegistry["mob_in_room"] = condMobInRoom

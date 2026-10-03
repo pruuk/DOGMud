@@ -1,0 +1,10 @@
+conditionid: 133
+name: Refraction
+description: Light bends around and through this creature. Blows that land on it come back as light.
+secret: true
+# Permanent on the Splitlight (mob conditionids): part of every blow that lands
+# on it is refracted back at the attacker (the same return-damage path as a
+# fire elemental's heat), and its bent light makes it hard to pin down.
+statmods:
+  return_damage: 30
+  dexterity: 20

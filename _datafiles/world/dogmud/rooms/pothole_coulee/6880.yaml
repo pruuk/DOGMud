@@ -1,0 +1,62 @@
+roomid: 6880
+zone: Pothole Coulee
+title: The Waystone Mouth
+description: >
+  A broad cleft opens into the bluff here and widens into a dry, lamplit
+  cave. Just inside stands a waystone taller than a man, its face scratched
+  over with the initials, tallies and road-marks of everyone who ever
+  waited here for company. A weathered board is nailed to its face. A
+  battered round shield leans against it beside a whetstone and a
+  three-legged stool set where whoever sits on it can see both the way in
+  and the way deeper. The cave runs on west toward
+  the smell of woodsmoke; daylight lies back east.
+biome: cave
+lamp: 50
+coord:
+  x: 42
+  y: 1
+  z: 0
+mutators:
+- mutatorid: sanctuary
+exits:
+  east:
+    roomid: 5223
+  west:
+    roomid: 6881
+nouns:
+  waystone: A tall stone of the coulee's dark basalt, set upright by hands
+    long gone. Its face is crowded with marks scratched in by travellers
+    waiting here for someone to take the road with, initials and dates and
+    little drawn roads, and at the bottom a newer line in a heavy hand that
+    reads only, Nobody goes out of here alone if I can help it.
+  board: |
+    A weathered board, lettered in a hand plainer than anything else in
+    Gaius. It reads:
+
+      THE TRAVELLERS WHO WAIT IN THIS HOLLOW ARE PLAYED BY AN AI.
+
+      They listen only to those who carry their own key (the web client's
+      Companion key button). Without one, they will not hear you.
+
+      If you speak to one of them, what you say to them, and what happens
+      around you both, is sent to the AI service your key belongs to so
+      that they can answer, and is kept on this server, where its keepers
+      can read it. Speaking to them is your agreement to that.
+
+      If you would rather not, say nothing to them and pass on. You can
+      change your mind at any time with "companion-ai off" or
+      "companion-ai on". "help companion-hollow" says more.
+  shield: A round shield of oak boards bound in iron, the face scarred and
+    dented and the rim hammered back into true more than once. Someone has
+    kept the straps oiled. It leans where it can be snatched up in one
+    movement.
+  stool: A plain three-legged stool, its seat worn smooth, set at exactly
+    the spot where a sitter can watch the cave mouth and the passage behind
+    at the same time without turning their head.
+  whetstone: A long grey whetstone, dished in the middle from years of use,
+    with a rag folded neatly beside it.
+idlemessages:
+- Wind from the coulee moans faintly across the cave mouth and dies away.
+- Somewhere deeper in the cave a kettle lid rattles.
+x: 41
+y: 20

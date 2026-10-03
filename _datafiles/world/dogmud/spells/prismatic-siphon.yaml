@@ -1,0 +1,26 @@
+spellid: prismatic-siphon
+name: Prismatic Siphon
+aliases: [prismsiphon]
+description: >
+  A Splitlight bends its light inward and pulls the warmth out of everything
+  living around it, feeding on what it takes. Telegraphed and interruptible.
+  Mob-castable only.
+attack_type: spell
+damage_type: physical
+targeting: area
+schools:
+  - vital
+cost: 12
+waitrounds: 1
+difficulty: 35
+mob_only: true
+primarystat: willpower
+base_folds: 2
+effect_type: drain_area   # every player in the room; heals the caster by what it takes
+effect_magnitude: 100
+ignore_move_cooldown: true
+categories:
+  - harm_multi
+cast_actor: "Your light bends inward."
+cast_observer: "{actor} dims, and its light bends inward, splitting into thin coloured threads that reach toward everything living in the room."
+wait_observer: "The threads of {actor}'s light draw taut. It will feed next."

@@ -1,0 +1,50 @@
+id: e-the-watching-well
+pool: E
+source: authored
+title: The Watching Well
+description: >-
+  The chamber is round and very tall, a well with no water in it, and its
+  walls are cut into a thousand small facets that each hold a point of cold
+  light. All of the points are turned toward the centre of the floor. Above
+  that spot, high up, something hangs in the air and turns: a ring of black
+  crystal, and inside the ring the far side of the chamber is not where it
+  should be. Every facet in the wall brightens as you step in. Around the
+  foot of the wall, three-groove prints crowd in a band many deep, all
+  pointing inward, as if a great assembly once stood here shoulder to
+  shoulder and looked up together. None of them lead away. The room has
+  been waiting a long time for someone to look at.
+nouns:
+  facets: >-
+    Thousands of small flat faces cut into the walls, each holding a point of
+    light. When you move, the points move with you. Some are brighter than
+    others, and the bright ones are not spread at random: they gather in
+    rough clusters, the way faces gather in a crowd.
+  floor: >-
+    The floor at the centre is scored with fine circular lines, like the
+    rings of a cut tree, all centred on the spot beneath the hanging ring.
+    The innermost rings are fresh and sharp. Something has been cutting them,
+    slowly, one at a time, for a very long time.
+  ring: >-
+    The hanging ring turns without a sound. Inside it the chamber is folded:
+    you see the floor, and the far wall, and the back of your own head, all
+    at once and all at the wrong distance. Looking too long, you feel it
+    looking back, and very tired.
+  prints: >-
+    Three-groove prints worn into a broad band around the wall, overlapping
+    so thickly that the floor there is soft-edged and milky. Every one points
+    toward the centre. There are no prints leaving: the band simply stops,
+    as though everyone who stood in it went up.
+idlemessages:
+  - Every point of light in the walls turns to follow you.
+  - The ring overhead slows, as if considering you, then turns on.
+doors:
+  - exit: spiral
+    description: >-
+      A spiral ramp cut into the wall of the well, climbing into darkness.
+  - exit: tunnel
+    description: >-
+      A round tunnel at floor level, its mouth ringed with faceted crystal.
+  - exit: chasm
+    description: >-
+      A split in the floor where the crystal has cracked open, with a cold
+      draft rising out of it.

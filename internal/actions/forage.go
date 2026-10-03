@@ -51,7 +51,15 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 	}
 
 	biome := room.GetBiome()
-	if _, ok := forager.ForageYields[biome.BiomeId]; !ok {
+	// Room extras (forager.RoomExtraYieldsKey) are a player-forage overlay,
+	// gated like the zone and weather overlays below.
+	var roomExtra []int
+	if actor.IsPlayer() {
+		if extra, ok := room.GetTempData(forager.RoomExtraYieldsKey).([]int); ok {
+			roomExtra = extra
+		}
+	}
+	if !forager.IsForageable(biome.BiomeId, roomExtra) {
 		if actor.IsPlayer() {
 			actor.SendText(messaging.CategorySystem,
 				`There is nothing here worth foraging. Try an outdoor area.`)
@@ -109,6 +117,7 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 	if actor.IsPlayer() {
 		attempt.Zone = room.Zone
 		attempt.Weather = currentWeatherType(room.Zone)
+		attempt.RoomExtra = roomExtra
 	}
 
 	coreResult := forager.ForageCore(attempt)

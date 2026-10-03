@@ -1,0 +1,37 @@
+mobid: 9807
+zone: Summons
+archetype: fighting
+behavior_archetype: companion_skirmisher
+statpool: 90
+itemdropchance: 0
+hostile: false
+maxwander: 0
+groups:
+  - humanoid
+activitylevel: 10
+aiprofile: brawler
+specialmovechance: 25
+surrender_policy: auto-tap-below 40
+character:
+  name: Tobin Nettlefold
+  description: |
+    A wiry young man of about twenty, all elbows and quick hands, with a
+    grin that arrives a moment before the rest of his face has decided
+    whether to trust you. His coat has a great many pockets, several of
+    them sewn on by someone who was not a tailor, and he never quite
+    stands still. He has the habit of knowing where every door in a room
+    is.
+  speciesid: 1
+  level: 1
+  skills:
+    skullduggery: 12
+    search: 8
+  stats:
+    dexterity:
+      base: 120
+    perception:
+      base: 110
+    charisma:
+      base: 105
+    vitality:
+      base: 90

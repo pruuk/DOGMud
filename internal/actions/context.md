@@ -969,7 +969,14 @@ see the searcher. A mob's find ends nothing (slice F).
   2 rounds).
 
 **Baubles (`search_bauble.go`, docs/baubles Phases 3, 4 and 5b).** After every
-contested tier, a PLAYER's search takes a bauble roll (`baubles.RollFind`): a
+contested tier, a PLAYER's search takes a bauble roll. So does a bonded AI
+companion's, when `SearchOptions.BaubleForUserId` names her owner
+(`companionSearchForBauble`: the owner's ration, her skill and sight; the find
+goes into her pack via `BaubleDelivery.ByMobInstanceId`, or onto the ground
+with a line to the owner when she is overloaded, and the module hears of it
+through `companionai.RouteBaubleFound` by its `ModelName`; if she is gone by
+delivery it is
+the owner's find as usual). Every other mob never rolls. The player's roll is (`baubles.RollFind`): a
 chance set by the room's biome (`BaubleBiomeChancePct`: buildings 5%, streets
 2 to 2.5%, wilderness 0.25%) and raised by the searcher's search skill
 (`BaubleSkillFactor`, up to `BaubleSkillMaxBonus`), rationed to
@@ -1066,6 +1073,13 @@ limit never locks a player out of a quest item. On a find the request names the 
 (`GenRequest.Container`), carries its authored description
 (`ContainerDescription`), and `SearchFeature.Spot()` ("on the bookshelf",
 "beside the chest" for a container) is where it lies if left in the room.
+A feature a subsystem owns as a cache (a rift's rubble pile) is settled by
+`SetFeatureCacheHook(FeatureCacheHook)` instead of the feature's roll: the
+hook is asked first for a player's feature search, and when it reports
+`handled` its `found` becomes `BaubleFound`, no roll is taken, and
+`SearchResult.FeatureSettled` keeps the generic "nothing of interest" line
+from following the hook's own line (the cache is in plain view, so that
+reveals nothing hidden). Unset, or `handled` false, changes nothing.
 Rules:
 
 - Anti-oracle: an undiscovered hidden noun or container never matches, so it
@@ -1158,6 +1172,25 @@ checks (skullduggery rank 2, the steal cooldown, the attacker score) and then
 `findHouseholdResidents`, `householdCaught`, `householdMember` and
 `baubleNow` are variables for tests.
 
+**Merchant chests (`merchant_chest.go`, `internal/merchantchests`).** Every
+merchant keeps a locked chest in its shop. `WatchMerchantChest(actor,
+containerName, act)` is the theft contest for working one: the thief's
+`thiefScore` (Steal's attack score) against `stealObserverPass`, so it adds
+no new contest site. It runs once per fresh `picklock` attempt
+(`MerchantChestPick`, no progression; picking trains already) and on the
+first take per lock cycle (`MerchantChestTake`, awards skullduggery like a
+container theft; the once-per-cycle memo is `usercommands/merchant_chest.go`,
+keyed on the lock's `RotationSeed`). Caught with the merchant present
+(whoever spotted it: a bystander's cry wakes a sleeping merchant too), it is
+`merchantCatchesThief`: `thiefCaught` against the merchant (wakes it,
+records the crime), its shout, and the chest slammed shut (`Lock.SetLocked`,
+rotating the combination); with the merchant away, the thief is only
+revealed. `stealFromContainer` now refuses a locked container, and a caught
+container theft from a merchant chest with its merchant present goes
+through `merchantCatchesThief` as well. The sleeping factor applies to
+merchant NPCs only (`IsMob` with a shop list), never a player's shop.
+`IsMerchantChest(room, name)` is the test the commands use.
+
 **Selling (`sell.go`, `sell_bauble.go`).** Both record the sale's progression
 through one helper, `saleProgression(seller, mob)`, the single seam the
 progression guard allows for a sale.
@@ -1191,6 +1224,12 @@ actor already has the Sleeping condition, returns `SleepResult.AlreadyAsleep
   goes to the room only.
 - **Progression:** No stat/skill progression triggered.
 - **Cooldown:** None.
+- **In a bed:** `SleepOptions{InBed: true}` (the player command passes
+  `housing.RoomHasBed`) also adds `BedSleepConditionId` (131, Sleeping in a
+  Bed) through `sleepInBed`, which sends its start line. Its recovery statmods
+  double the sleeping regen, and it carries the sleeping flag, so whatever
+  wakes the sleeper ends it too. The room sees "<Actor> lies down in the bed
+  to sleep."
 
 Entry points that call `Sleep`:
 - `usercommands/sleep.go` — player `sleep` command
@@ -1478,6 +1517,51 @@ above. `sellOneToMerchant` hands it to `sellBaubleToMerchant`, and
 - `sellNamed` names each sale by the item actually sold (not the probe), and
   sets `SellResult.Mixed` when they differ, so `sell all bauble` reports
   "3 items" rather than pluralising one bauble's name.
+- Stolen goods from merchant chests (`sell_stolen.go`,
+  `internal/merchantchests`), on the stolen-bauble rules. Taken out of a
+  chest (`MarkChestGoodsTaken`, or `MarkTaken` in `stealFromContainer`), a
+  merchant's goods are stolen (`items.Item.IsStolen`) and hot for
+  `BaubleStolenHeatHours` in the heat area they were taken in only
+  (`baubles.GoodsHotIn`, via `stolenGoodsHotHere` / `StolenGoodsHotHere`).
+  `resolveMerchant` sends them to a fence in the room when there is one
+  (`fenceInRoom`), and otherwise to an honest merchant only where they are
+  not hot. A fence pays `FencePrice`, hot or cold, and never shelves them
+  (`sellStolenToFence`); an honest merchant refuses them where they are hot
+  (`StolenGoodsRefusal`, "That's mine!" from the merchant robbed) and buys
+  them anywhere else, or once cooled, as ordinary goods through the normal
+  path. `fenceInRoom` / `FenceFor` skip a fence that is the merchant robbed
+  (it will not buy back its own goods; `sellStolenToFence` refuses one
+  resolved anyway), and `sellStolenToFence` applies the living-economy
+  reserve as `baubleOfferFor` does. A fence buys stolen goods ahead of the
+  `IsSpecial`/`Affixed` gates, at the base spec value. `offer` quotes the
+  fence `FenceFor` names first, so it names the buyer `sell` would use.
+  `sellFindItemInChar` (exported as `SellFindItemInChar`, which `offer`
+  uses so it quotes the copy `sell` would sell) prefers a clean copy over a
+  stolen one in the backpack, bandolier and component bag (`findCleanIn`),
+  unless the name picks its copy itself
+  (`explicitItemPick`: `2.ingot`, `ingot#2`, an `@<uuid>` handle).
+  `sellNamed` re-resolves the buyer when the next item is stolen and the
+  current buyer is honest; `sellSweep` sells each item by its handle.
+  `StolenGoodsHotNow` is the salvage command's heat check, on the
+  `stolenNow` clock.
+  Storage and the auction house refuse them where hot through
+  `baubles.ItemIsHotIn`; crafting (`crafting.componentTagOf`) and
+  `salvageItem` refuse them while hot anywhere.
+- Recognition and returns for them (`stolen_bauble.go`, after the bauble
+  pass in `recognizeOn`): `recognizeGoodsOn` looks through everything
+  carried, worn and wielded gear included (`carriedGoods`; `markGoodsSeen`
+  writes back through `Worn.GetAllItemPtrs`), for hot goods, never recognised since the theft (`StolenSeen`), on
+  their own thief (`StolenBy`); the merchant robbed (template
+  `StolenFromMob`) knows them anywhere, and a guard (`mobs.IsGuardMob`) or
+  catalog lookout (`merchantchests.IsLookout`) knows them in the heat area
+  of the theft. Same gates as a bauble (`canRecognize`,
+  `messaging.CanSeeShapes`, `recognitionRoll`). The merchant's catch is
+  `stolenCaught` (thiefCaught); a guard's or lookout's is `stolenReported`
+  (`theftReported`: thiefCaught without the attack, so the justice tick
+  decides warn or arrest). Goods a mob stole have `StolenBy` 0 and are never
+  recognised. `StolenBaubleGiven` routes
+  stolen goods to `stolenGoodsGiven`: given to the merchant robbed, the item
+  it now holds is cleared (`ClearStolen`); no reputation is credited.
 
 **See also:** `internal/forager/vendor_sell.go` (`forager.SellToVendor`) and
 `internal/forager/chest_backfill.go` (`forager.BackfillVendorFromChests`) for
@@ -1619,7 +1703,8 @@ type ScanOptions struct {
 }
 
 type SearchOptions struct {
-	Feature string // `search <feature>`; empty searches the room (search_feature.go)
+	Feature         string // `search <feature>`; empty searches the room (search_feature.go)
+	BaubleForUserId int    // a mob's search: roll for a bauble on this account's behalf (bonded companion)
 }
 
 type ShadowOptions struct {
@@ -1727,6 +1812,10 @@ tell you. `FireResult.Chambered` carries the auto-reload's outcome, and its
   `stealVictimScore(c, room)` does the same for the theft and plant
   victims and container bystanders: noticing is the victim's roll, so the
   victim pays their own eyes inside the helper.
+  Both helpers also scale the observer's Perception by
+  `sleepingMerchantPerceptionMult` (`merchant_chest.go`):
+  `merchantchests.SleepingPerceptionMult` (0.5 shipped) for a merchant NPC
+  (a mob with a shop list) that is asleep, 1 for everyone else.
   Actor-side sites multiply where the score is computed: the thief's and
   planter's attack score (once in `Steal`/`Plant`, feeding all three
   sub-paths), the shadower's sneak score, the defuser's score, the searcher's
@@ -1791,3 +1880,13 @@ the rest are ordinary verbs.
 **The actor seam is the point of this package.** `actions.Actor` lets one
 implementation serve both players and mobs, which is what keeps user and mob
 commands in parity instead of drifting apart.
+
+## SpotHiddenPlayer (move.go)
+
+`SpotHiddenPlayer(watcher, room, userId)`: a watcher standing in a room
+rolls to spot one hidden player, the same contest as entry detection
+(`CalcDetectionScore` against `CalcSneakScoreVsObserver`, the room's light).
+On success the player is revealed through the Awareness machine and told
+("... turns, and its attention settles on you."). True for a player not
+hidden. Used by the rift hunter, which stays put and keeps looking. The
+area drain (`ExecuteDrainArea`) also skips hidden players.

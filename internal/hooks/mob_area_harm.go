@@ -30,6 +30,13 @@ import (
 // every person. A charmed caster spares its owner and its owner's other
 // companions; a bonded one also spares whatever its owner could not harm.
 func mobAreaHarmTargets(caster *mobs.Mob, room *rooms.Room) (mobIds []int, userIds []int) {
+	return mobAreaHarmTargetsSparing(caster, room, false)
+}
+
+// mobAreaHarmTargetsSparing is mobAreaHarmTargets for a spell that may spare
+// its caster's own side (SpellData.SparesAllies, opt-in per spell: a boss
+// whose blast should miss its own adds).
+func mobAreaHarmTargetsSparing(caster *mobs.Mob, room *rooms.Room, spareAllies bool) (mobIds []int, userIds []int) {
 	charmedByUserId := caster.Character.GetCharmedUserId()
 	owner, bonded := bondedAreaHarmOwner(caster)
 
@@ -51,6 +58,12 @@ func mobAreaHarmTargets(caster *mobs.Mob, room *rooms.Room) (mobIds []int, userI
 			if bonded && !bondedMayHarmMob(m) {
 				continue
 			}
+			// A spell that spares allies misses the caster's own side: an
+			// uncharmed mob sharing one of its groups and not fighting it.
+			if spareAllies && charmedByUserId == 0 && !bonded && !m.Character.IsCharmed() &&
+				sharesGroup(caster, m) && m.Character.CurrentCombatTarget().MobInstanceId != caster.InstanceId {
+				continue
+			}
 		}
 		mobIds = append(mobIds, mId)
 	}
@@ -64,6 +77,12 @@ func mobAreaHarmTargets(caster *mobs.Mob, room *rooms.Room) (mobIds []int, userI
 		}
 		if bonded && !bondedMayHarmPlayer(owner, room, pId) {
 			continue
+		}
+		// A wild caster does not know an undetected sneaker is there.
+		if charmedByUserId == 0 && !bonded {
+			if u := users.GetByUserId(pId); u != nil && u.Character.IsHidden() {
+				continue
+			}
 		}
 		userIds = append(userIds, pId)
 	}
@@ -104,4 +123,20 @@ func bondedMayHarmPlayer(owner *users.UserRecord, room *rooms.Room, targetUserId
 		return false
 	}
 	return true
+}
+
+// sharesGroup reports whether two mobs name a group in common (mobs.Mob
+// Groups: the side a mob identifies with).
+func sharesGroup(a, b *mobs.Mob) bool {
+	for _, ga := range a.Groups {
+		if ga == `` {
+			continue
+		}
+		for _, gb := range b.Groups {
+			if ga == gb {
+				return true
+			}
+		}
+	}
+	return false
 }

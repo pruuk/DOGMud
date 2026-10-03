@@ -1,0 +1,266 @@
+# City scavengers (internal/scavenger). One per city, one per New Plymouth
+# district: the loot goblin's replacement. Each walks to a random room of its
+# pool, one step every ScavengerStepMinSeconds to ScavengerStepMaxSeconds,
+# picking up the litter it finds. Its haul is pickpocketable and is cleared at
+# each real-world day boundary (UTC midnight). The rooms in these pools are
+# exempt from the daily floor decay that keeps the rest of the world tidy.
+#
+# Each entry:
+#   mobid          the scavenger (behavior_archetype: scavenger)
+#   city           a label for logs and staff
+#   zones          the zones its pool is drawn from
+#   biomes         which biomes of those zones (default: city_thoroughfare,
+#                  city_backstreet, interior)
+#   include_rooms  or exactly these rooms, instead of the zone and biome scan
+#   exclude_rooms  rooms taken out (private quarters, cells, locked stores)
+#   home_room      where it spawns (the room's spawninfo); must be in the pool
+#   pickup_lines, gold_lines, reset_lines
+#                  its own voice; {actor} is the scavenger, {item} the thing
+#                  picked up, {gold} the coins.
+#
+# Rooms with no path from home_room are dropped from the pool at boot, with a
+# warning naming them.
+
+scavengers:
+  - mobid: 9820  # Old Mags
+    city: New Plymouth, the Common
+    zones: [New Plymouth Common]
+    exclude_rooms: [5620, 5623, 5624]
+    home_room: 5618
+    pickup_lines:
+      - '{actor} spears the {item} with a hooked stick and drops it in her cart.'
+      - '{actor} stoops with a creak of knees, takes the {item}, and tucks it under the rags in her cart.'
+      - '{actor} snatches up the {item}, turns it over twice, and decides it will do.'
+    gold_lines:
+      - '{actor} spots {gold} in the muck and has it in her fist before anyone else can look.'
+      - '{actor} scrapes up {gold} and bites a coin, just to be sure.'
+    reset_lines:
+      - '{actor} trundles her full cart off toward Tinker''s Lane and comes back with it empty.'
+      - '{actor} sells the day''s pickings to a tinker''s boy for a handful of copper and an argument.'
+
+  - mobid: 9821  # Tuck
+    city: New Plymouth, the Crafting Quarter
+    zones: [New Plymouth Crafting]
+    exclude_rooms: [5707, 5710, 5712, 5716, 5721]
+    home_room: 5723
+    pickup_lines:
+      - '{actor} darts in, grabs the {item}, and stuffs it in his sack.'
+      - '{actor} weighs the {item} in one hand, judges it worth a crust, and bags it.'
+      - '{actor} whistles, scoops up the {item}, and is gone from the spot in a blink.'
+    gold_lines:
+      - '{actor} goes very still, then pounces on {gold} and pockets it.'
+      - '{actor} palms {gold} off the ground and looks around to see who noticed.'
+    reset_lines:
+      - '{actor} drags his bulging sack off to the Forge Yard and trots back with it flat.'
+      - '{actor} trades the day''s scrap to the glassblowers for supper and comes back lighter.'
+
+  - mobid: 9822  # Jory
+    city: New Plymouth, the Docks
+    zones: [New Plymouth Docks]
+    exclude_rooms: [5513, 5524]
+    home_room: 5529
+    pickup_lines:
+      - '{actor} snags the {item} with his boathook and flips it into his basket.'
+      - '{actor} fishes up the {item}, shakes it dry, and adds it to the basket on his back.'
+      - '{actor} claims the {item} with a grin, as if the tide had brought it just for him.'
+    gold_lines:
+      - '{actor} hooks {gold} out of a crack in the boards and pockets it, grinning.'
+      - '{actor} scoops up {gold} and calls it wages.'
+    reset_lines:
+      - '{actor} hauls his basket off to Old Sable''s pawnshop and sells the lot, sight unseen.'
+      - '{actor} empties his basket at the Tar Yard and comes back whistling.'
+
+  - mobid: 9823  # Ambry
+    city: New Plymouth, the Merchant Quarter
+    zones: [New Plymouth Merchant]
+    exclude_rooms: [5809, 5811, 5813, 5815, 5816, 5818]
+    home_room: 5822
+    pickup_lines:
+      - '{actor} enters the {item} in his ledger, dates it, and takes it into custody.'
+      - '{actor} lifts the {item} between two fingers, writes ''unclaimed article'', and pockets it.'
+      - '{actor} tags the {item} with a paper label and tucks it into his satchel.'
+    gold_lines:
+      - '{actor} records {gold} as ''found, pending claim'' and pockets it.'
+      - '{actor} counts {gold} twice, notes it in the ledger, and takes charge of it.'
+    reset_lines:
+      - '{actor} carries the day''s unclaimed articles off to the Exchange and returns with a clean page.'
+      - '{actor} closes the ledger with a snap and delivers the day''s finds to the lost-property cupboard.'
+
+  - mobid: 9824  # Mistress Coombe
+    city: New Plymouth, the Noble Quarter
+    zones: [New Plymouth Noble]
+    exclude_rooms: [6003, 6013, 6017]
+    home_room: 6014
+    pickup_lines:
+      - '{actor} picks up the {item} as if it were a dead mouse and consigns it to her basket.'
+      - '{actor} removes the {item} from the cobbles with a small sound of disgust.'
+      - '{actor} tidies the {item} into her basket without breaking stride.'
+    gold_lines:
+      - '{actor} gathers up {gold} and remarks that it is not the sort of thing one leaves lying about.'
+      - '{actor} collects {gold} for safekeeping, by which she means her purse.'
+    reset_lines:
+      - '{actor} returns her basket to the service stair and comes back with an empty one.'
+      - '{actor} disposes of the day''s gatherings where no one of quality will ever see them.'
+
+  - mobid: 9825  # Brother Amsel
+    city: New Plymouth, the Temple Quarter
+    zones: [New Plymouth Temple]
+    exclude_rooms: [5908, 5909, 5912, 5913, 5914, 5918, 5919]
+    home_room: 5924
+    pickup_lines:
+      - '{actor} accepts the {item} as an offering and places it reverently in his bag.'
+      - '{actor} lifts the {item}, murmurs a word of thanks to whoever left it, and bags it.'
+      - '{actor} gathers up the {item} for the Almonry with a small bow.'
+    gold_lines:
+      - '{actor} gathers {gold} for the poor box, with a blessing for the giver.'
+      - '{actor} finds {gold} and counts it a sign.'
+    reset_lines:
+      - '{actor} carries the day''s offerings to the Almonry and returns with his bag empty and his heart full.'
+      - '{actor} hands the day''s gatherings in at the Almonry door.'
+
+  - mobid: 9826  # Nettle
+    city: New Plymouth, the Outskirts
+    zones: [New Plymouth Outskirts]
+    biomes: [city_thoroughfare, city_backstreet, interior, road]
+    home_room: 5474
+    pickup_lines:
+      - '{actor} is on the {item} before it stops rolling, and it vanishes into her shawl.'
+      - '{actor} scoops up the {item} and knots it into her shawl.'
+      - '{actor} glances left, glances right, and the {item} is gone.'
+    gold_lines:
+      - '{actor} snatches up {gold} and closes her fist tight around it.'
+      - '{actor} has {gold} off the ground and out of sight in one movement.'
+    reset_lines:
+      - '{actor} slips off to the refugee camp with a bulging shawl and comes back with an empty one.'
+      - '{actor} shares out the day''s finds at the camp and returns to the stalls.'
+
+  - mobid: 9827  # Grist
+    city: Thornwall
+    zones: [Thornwall City]
+    exclude_rooms: [473, 5101, 5102, 5103, 5104]
+    home_room: 474
+    pickup_lines:
+      - '{actor} clamps the {item} in his iron grab and drops it into his barrow.'
+      - '{actor} collects the {item} with a grunt and a clack of the grab.'
+      - '{actor} removes the {item} from the street without a word.'
+    gold_lines:
+      - '{actor} picks up {gold} and drops it in the Citizenry''s tin, more or less.'
+      - '{actor} collects {gold} and says nothing about it.'
+    reset_lines:
+      - '{actor} wheels his barrow off to the midden past the Gate Ward and comes back with it empty.'
+      - '{actor} tips the day''s barrow-load out behind the Records Office, where the Citizenry sorts it.'
+
+  - mobid: 9828  # Moll
+    city: The Confluence, the Quays
+    zones: [The Confluence]
+    biomes: [water]
+    home_room: 6113
+    pickup_lines:
+      - '{actor} sweeps the {item} into her dustpan and tips it into the sack at her belt.'
+      - '{actor} hooks the {item} with her boathook and bags it.'
+      - '{actor} picks up the {item} before someone trips on it, and keeps it.'
+    gold_lines:
+      - '{actor} sweeps up {gold} along with the straw and fishes the coins out.'
+      - '{actor} pockets {gold} with a wink at nobody in particular.'
+    reset_lines:
+      - '{actor} lugs her sack off to the Rivermen''s Guildhall and comes back with it flat.'
+      - '{actor} sells the day''s sweepings to a chandler on Warehouse Row.'
+
+  - mobid: 9829  # Odile
+    city: The Confluence, the Upper Town
+    zones: [The Confluence]
+    biomes: [city_thoroughfare, city_backstreet, interior, road]
+    exclude_rooms: [6148, 6194, 6195, 6196, 6199, 6227, 6230, 6440, 6452]
+    home_room: 6245
+    pickup_lines:
+      - '{actor} bags the {item} in a little paper sack and labels it with the time and place.'
+      - '{actor} examines the {item} closely, pronounces it a curiosity, and files it in her satchel.'
+      - '{actor} collects the {item} for the Margin with a small, satisfied noise.'
+    gold_lines:
+      - '{actor} bags {gold} and labels it ''currency, provenance unknown''.'
+      - '{actor} collects {gold} as a specimen of the local economy.'
+    reset_lines:
+      - '{actor} delivers the day''s curiosities to the Margin Hall and returns with fresh labels.'
+      - '{actor} hands in her satchel of specimens at the Scholars'' Gate and comes back with an empty one.'
+
+  - mobid: 9830  # Penhallow
+    city: Greenford
+    zones: [Greenford]
+    biomes: [city_thoroughfare, city_backstreet, interior, water]
+    exclude_rooms: [6292, 6304, 6305, 6315]
+    home_room: 6308
+    pickup_lines:
+      - '{actor} lifts the {item} onto his hand-truck and tags it for the Porters'' Lodge.'
+      - '{actor} retrieves the {item} with a sigh at the carelessness of the young.'
+      - '{actor} takes the {item} into the keeping of the Porters'' Lodge.'
+    gold_lines:
+      - '{actor} collects {gold} and notes it down as lost property.'
+      - '{actor} gathers {gold} with the air of a man who has seen it all before.'
+    reset_lines:
+      - '{actor} wheels the day''s lost property off to the Porters'' Lodge, as the rules require.'
+      - '{actor} delivers his hand-truck of lost property for disposal and comes back with it empty.'
+
+  - mobid: 9831  # Gull
+    city: Stillwater
+    zones: [Stillwater]
+    biomes: [city_thoroughfare, city_backstreet, interior, water, plains]
+    exclude_rooms: [4104, 4126, 4137]
+    home_room: 4117
+    pickup_lines:
+      - '{actor} swoops on the {item} and drops it into her clinking net bag.'
+      - '{actor} pounces on the {item}, delighted, and nets it.'
+      - '{actor} adds the {item} to the tangle in her net bag.'
+    gold_lines:
+      - '{actor} finds {gold} and holds the coins up to show the sky before pocketing them.'
+      - '{actor} scoops up {gold} along with a fistful of grit.'
+    reset_lines:
+      - '{actor} trades the day''s net bag of finds to the fishwives and comes back with it empty.'
+      - '{actor} tips her net bag out at the Net Yard and sorts the lot away.'
+
+  - mobid: 9832  # Dunn
+    city: Hartcharn
+    zones: [Hartcharn]
+    exclude_rooms: [5407]
+    home_room: 5408
+    pickup_lines:
+      - '{actor} shovels up the {item} and tips it into the barrow he pushes ahead of him.'
+      - '{actor} grabs the {item} and slings it into his barrow.'
+      - '{actor} claims the {item} for the yard.'
+    gold_lines:
+      - '{actor} spots {gold} in the straw and has it pocketed before the ostler sees.'
+      - '{actor} scoops up {gold} and pretends he did not.'
+    reset_lines:
+      - '{actor} barrows the day''s findings off behind the Coachman''s Rest and comes back empty.'
+      - '{actor} sells the day''s pickings to a carter bound for the south road.'
+
+  - mobid: 9833  # Ruck
+    city: Kilnreach
+    zones: [Kilnreach Works]
+    biomes: [city_thoroughfare, city_backstreet, interior, land]
+    home_room: 5464
+    pickup_lines:
+      - '{actor} tests the {item} with his magnet, grunts, and drops it in his clanking sack.'
+      - '{actor} hefts the {item}, guesses its weight in coppers, and sacks it.'
+      - '{actor} adds the {item} to his sack for the foundry scales.'
+    gold_lines:
+      - '{actor} tests {gold} with his magnet out of habit, then pockets it anyway.'
+      - '{actor} picks {gold} out of the cinders.'
+    reset_lines:
+      - '{actor} weighs in the day''s sack at the foundry scales and comes back with it empty.'
+      - '{actor} tips his sack onto the foundry''s scrap pile and collects his coppers.'
+
+  - mobid: 9834  # Widow Sallis
+    city: Amber Valley
+    zones: [Amber Valley]
+    include_rooms: [6055, 6056, 6057, 6058, 6059, 6060, 6061, 6062, 6063, 6064, 6065, 6066, 6067, 6068, 6069, 6070, 6071, 6072, 6073, 6074]
+    home_room: 6064
+    pickup_lines:
+      - '{actor} gleans the {item} into her apron pocket.'
+      - '{actor} stoops for the {item}, as she stoops for everything, and it goes in the apron.'
+      - '{actor} gathers up the {item} with a gleaner''s practised sweep.'
+    gold_lines:
+      - '{actor} gleans {gold} from the dust and thanks the valley for it.'
+      - '{actor} finds {gold} and ties it into the corner of her apron.'
+    reset_lines:
+      - '{actor} empties her apron at her cottage door and comes back out to glean again.'
+      - '{actor} trades the day''s gleanings at the General Store for flour and gossip.'

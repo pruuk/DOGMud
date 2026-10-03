@@ -151,7 +151,9 @@ LootGoblin:
   # - RoomId -
   #   The room the loot goblin spawns in (per its spawninfo). Also the room it returns
   #   to to drop off loot it finds. If zero (0), no loot goblin spawning.
-  RoomId: 139
+  #   Retired 2026-09-30: the city scavengers and the daily floor decay
+  #   (Balance: ScavengerStep*, FloorDecay*) keep item counts down instead.
+  RoomId: 0
   # - RoundCount -
   #   How often the Loot Goblin will spawn. It is a good idea to keep this
   #   number low to keep the game from getting bogged down with too many items
@@ -2054,6 +2056,28 @@ Balance:
   # (e.g., persistently full chest or unreachable chest room).
   ForagerStoringWatchdogRounds: 20
 
+  # ── CITY SCAVENGERS AND FLOOR DECAY ─────────────────────────────────────────
+  # The loot goblin's replacement. Each city (and each New Plymouth district)
+  # has a scavenger NPC that walks to random rooms of its city and picks up
+  # litter; its haul is pickpocketable and cleared every real-world day.
+  # Every other floor in the world thins out once a day instead.
+  # - ScavengerStepMinSeconds / ScavengerStepMaxSeconds -
+  #   Real seconds a scavenger lingers in each room before its next step,
+  #   picked uniformly in this range per room.
+  ScavengerStepMinSeconds: 30
+  ScavengerStepMaxSeconds: 150
+  # - FloorDecayBaseChancePct -
+  #   Percent chance a lone litter item on a floor outside the scavengers'
+  #   rounds is removed at each real-world day boundary (UTC midnight).
+  FloorDecayBaseChancePct: 10
+  # - FloorDecayPerExtraItemPct -
+  #   Added for every other litter item in the same room (5 items: 30% each).
+  FloorDecayPerExtraItemPct: 5
+  # - FloorDecayCheckRounds -
+  #   How often loaded rooms are checked for decay they still owe. Only sets
+  #   how soon after midnight (or after a player leaves) the pass is paid.
+  FloorDecayCheckRounds: 15
+
   # ── ECONOMY HEALTH DASHBOARD ────────────────────────────────────────────────
   # Wall-clock cadence for auto-snapshots (hours). Default 1.
   EconomySnapshotIntervalHours: 1
@@ -2618,9 +2642,10 @@ Modules:
     # owner per UTC day. Each is a call nobody asked for, so it is capped.
     # 0 is no cap.
     NoticeCallsPerDay: 40
-    # Ask the player, in as many words, before anything they say is sent to
-    # OpenAI. They answer "i agree" or "i decline"; until they agree their
-    # companion behaves as a plain one and nothing leaves the server.
+    # Nothing a player says leaves the server until they have agreed: by
+    # speaking to a traveller in the Waystone Hollow after the board at its
+    # mouth has told them what that sends and where, or with "companion-ai
+    # on". Until then their companion behaves as a plain one.
     RequireConsent: true
     # Check what a companion is about to say with OpenAI's moderation
     # endpoint. Speech a passer-by prompted is dropped when the check cannot
@@ -2628,13 +2653,22 @@ Modules:
     # call on a player's own key is not moderated (their provider may have
     # no such endpoint); it is logged as the owner's speech instead.
     ModerateOutput: true
-    # A new character meets a companion shortly after character creation.
-    # AutoBondExisting does the same for characters that already exist, at
-    # their next login: off by default, because it changes every player's
-    # game at once.
-    AutoBond: true
-    AutoBondExisting: false
-    AutoBondProfile: "mara"
+    # There is one of each companion on the server. Nobody is handed one: a
+    # free companion waits in their own room of the Waystone Hollow (west of
+    # Scrub Draw, Pothole Coulee) until a player wins them over. See
+    # docs/aicompanion/settings.md, "Companions are one of a kind".
+    #
+    # Companions speak only to players who run them on their own key
+    # (PlayerKeys and RelayOrigin below); anyone else gets no answer at all
+    # and the server's key is never used. Set false to let the server's key
+    # pay as before.
+    RequirePlayerKey: true
+    # Days an owner may be away before their companion gives up waiting and
+    # goes back to the Hollow, taking what they have learned with them.
+    ReleaseAfterDays: 60
+    # A companion whose trust AND affection for their owner have both fallen
+    # to this or lower leaves them and goes back to the Hollow.
+    AbandonBelow: -50
     # Treat anything the owner says as spoken to the companion when no other
     # player is in the room.
     RespondWhenAlone: true
@@ -2724,5 +2758,76 @@ Modules:
     # finder alone, a plain "Trinket" to everyone else. Either way it must
     # be plain ASCII letters and ' " - , . ! ? (curly quotes and dashes are
     # folded first); text that is not goes to the server's key.
+    ModerateOutput: true
+    LogRequests: false
+  # Townsfolk idle moments (modules/npcidle). Now and then, when an NPC is
+  # about to run one of its set idle emotes or says, a model writes it a
+  # fresh one from its own description, the room's, and who and what is
+  # there (wares too, for a merchant). Only ever on the own key of a player
+  # in the room who can see the NPC clearly, through the companion's key
+  # relay, and only while they leave "Make the world livelier" ticked on the
+  # key page (it starts ticked; every lively feature shares that one box).
+  # Never on the server's key, which only moderates. AI companions are never
+  # touched.
+  npcidle:
+    Enabled: true
+    # Percent of idle emotes and says, with such a player present, that are
+    # written fresh. Takes effect at the next round after a `server set`.
+    Chance: 5
+    # After one moment starts on a player's key, none other starts on it for
+    # this many seconds, however many NPCs share their room. Live.
+    MinSecondsPerPlayer: 30
+    TimeoutSeconds: 20
+    MaxCompletionTokens: 600
+    # Tokens per UTC day one player's key may spend on moments (each is a
+    # few hundred). Over it their NPCs keep their set lines. 0 is no cap.
+    # Live.
+    DailyTokensPerUser: 20000
+    # Check each moment with the moderation endpoint (needs the server's
+    # key) before the room reads it. A flag, or a check that fails, keeps it
+    # out and the set line runs. A moment that cannot be checked (no server
+    # key, a breaker open) is shown only to the player whose key wrote it.
+    # Off: shown to everyone unchecked.
+    ModerateOutput: true
+    LogRequests: false
+  # Ambient room events (modules/roomlife). When a room is due to show one of
+  # its set ambient lines (its own or its zone's idle messages, from the
+  # player round tick), this percent of the time a model writes a fresh event
+  # instead, seen or heard, from the room's text, the time of day, and who
+  # and what is there. Only on the own key of an awake player in the room
+  # who left "Make the world livelier" ticked on the key page; never the
+  # server's key, which only moderates. A seen event goes through the same
+  # sight-gated sender as the set lines; a heard one ("You hear...") through
+  # the room's audio sender, so it carries in the dark. A player who cannot
+  # see the room is only ever asked for a sound.
+  roomlife:
+    Enabled: true
+    Chance: 10                 # live
+    MinSecondsPerPlayer: 60    # live; spacing on one player's key
+    TimeoutSeconds: 20
+    MaxCompletionTokens: 600
+    DailyTokensPerUser: 20000  # live; 0 is no cap
+    # As npcidle: checked through the server's key when it can be; a flag or
+    # failed check shows the set line instead; an event that cannot be
+    # checked is shown only to the player whose key wrote it.
+    ModerateOutput: true
+    LogRequests: false
+  # Closer looks (modules/lookdetail). When a player's `look at X` finds
+  # nothing (no creature, container, carried or room noun, corpse or floor
+  # item) while they see the room clearly, and X is named in the room's
+  # description, a model writes what a closer look shows, on the looker's own
+  # key while they leave "Make the world livelier" ticked. A detail that can
+  # be shown to anyone is cached per room, description and phrase, so every
+  # later look at it, by anyone, reads the same detail at no cost; a changed
+  # description starts afresh. Never the server's key, which only moderates.
+  lookdetail:
+    Enabled: true
+    MinSecondsPerPlayer: 5     # live; spacing on one player's key
+    TimeoutSeconds: 20
+    MaxCompletionTokens: 800
+    DailyTokensPerUser: 20000  # live; 0 is no cap
+    # As npcidle: checked through the server's key when it can be; a flag or
+    # failed check says "nothing special"; a detail that cannot be checked is
+    # shown only to the looker and never cached.
     ModerateOutput: true
     LogRequests: false

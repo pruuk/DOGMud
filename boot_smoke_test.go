@@ -18,11 +18,13 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/scavenger"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -108,6 +110,7 @@ func TestSmoke_ServerBootsCleanWithRealData(t *testing.T) {
 		{"conditions", len(conditions.GetAllConditionIds())},
 		{"quests", len(quests.GetAllQuests())},
 		{"crafting recipes", len(crafting.GetAll())},
+		{"city scavengers", len(scavenger.All())},
 	}
 
 	for _, c := range categories {
@@ -118,6 +121,29 @@ func TestSmoke_ServerBootsCleanWithRealData(t *testing.T) {
 		}
 		t.Logf("%-18s %d loaded", c.name, c.count)
 	}
+	for _, p := range scavenger.All() {
+		t.Logf("scavenger %d %-36s pool %d rooms", p.MobId, p.City, len(p.Pool()))
+		for _, id := range p.Pool() {
+			if housing.IsUnitRoom(id) {
+				t.Errorf("scavenger %d patrols player-housing room %d", p.MobId, id)
+			}
+		}
+	}
+	// Every housing unit room, owned or vacant, is out of the daily floor
+	// decay's reach: a lodging's floor belongs to its lodger.
+	units := 0
+	for _, id := range rooms.GetAllRoomIds() {
+		if housing.IsUnitRoom(id) {
+			units++
+			if !rooms.IsFloorDecayExempt(id) {
+				t.Errorf("housing unit room %d is not exempt from floor decay", id)
+			}
+		}
+	}
+	if units == 0 {
+		t.Error("found no housing unit rooms; the exemption check proved nothing")
+	}
+	t.Logf("housing unit rooms exempt from floor decay: %d", units)
 }
 
 // TestSmoke_AllDialogueFilesParse eagerly parses every dialogue file.

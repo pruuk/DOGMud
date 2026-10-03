@@ -1,0 +1,21 @@
+itemid: 40235
+name: Obelisk Lens
+namesimple: lens
+vendor_categories:
+- jewelcrafting
+- blacksmithing
+description: >-
+  A small disc of the Obelisk's black glass, ground thin at the edge and
+  thick at the centre, no wider than a thumbnail. Held to the eye it bends
+  the room a little, the way the great lenses of the Obelisk once bent whole
+  worlds. Cut true, a lens sits flat against its neighbours like a fish's
+  scale; laid in their dozens, they turn a blow aside and send some of it
+  back as light.
+type: object
+subtype: mundane
+component_tag: obelisk-lens
+weight: 0.05
+value: 450
+rarity_tier: 10
+is_component: true
+material_tier: 4

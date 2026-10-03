@@ -3,14 +3,23 @@ package actions
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
 
-// SleepOptions is reserved for future authoring knobs (bed-item
-// bonus, custom emote prose, etc.). Empty for chunk 3.3.
-type SleepOptions struct{}
+// SleepOptions are the circumstances of a sleep.
+type SleepOptions struct {
+	// InBed is true when the sleeper lies down in a bed (a player-housing
+	// bed, housing.RoomHasBed). It adds condition BedSleepConditionId, whose
+	// recovery statmods double the sleeping regen.
+	InBed bool
+}
+
+// BedSleepConditionId is Sleeping in a Bed, applied alongside Sleeping (15)
+// to a sleeper in a bed.
+const BedSleepConditionId = 131
 
 // SleepResult is the structured outcome of a Sleep call.
 type SleepResult struct {
@@ -85,15 +94,44 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 		}
 	}
 
+	// A bed adds its own condition (sleepInBed). A failure there costs only
+	// the bonus: the sleeper is asleep either way.
+	inBed := opts.InBed && sleepInBed(actor, c)
+
 	// Emit third-person room visual to other occupants.
 	room := actor.GetRoom()
 	if room != nil {
+		where := ``
+		if inBed {
+			where = ` in the bed`
+		}
 		room.SendTextVisual(messaging.CategoryMobEmote,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lies down to sleep.`,
-				actor.GetName()),
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lies down%s to sleep.`,
+				actor.GetName(), where),
 			actor.GetUserId(),
 		)
 	}
 
 	return SleepResult{Success: true}
+}
+
+// sleepInBed adds Sleeping in a Bed to a sleeper lying down in a bed and
+// sends its start line (silent-start, applied synchronously, for the same
+// reasons as 15). It reports whether the bed took.
+func sleepInBed(actor Actor, c *characters.Character) bool {
+	if err := c.AddCondition(BedSleepConditionId, false); err != nil {
+		mudlog.Error("Sleep", "msg", "AddCondition(Sleeping in a Bed) failed", "actor", actor.GetName(), "error", err)
+		return false
+	}
+	if !actor.IsPlayer() {
+		return true
+	}
+	spec := conditions.GetConditionSpec(BedSleepConditionId)
+	if spec == nil {
+		return true
+	}
+	if line := spec.AuthoredStartLine(c.GetCharacterName(true), c.GetCharacterName(false)); line != "" {
+		actor.SendText(messaging.CategoryConditionApply, line)
+	}
+	return true
 }

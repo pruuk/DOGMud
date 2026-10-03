@@ -26,7 +26,7 @@ type consentWorld struct {
 func newConsentWorld(t *testing.T, agreed bool) *consentWorld {
 	t.Helper()
 	owner, _, room, her := harmWorld(t, `off`)
-	m, c := consentModule(consentWindowSeconds + 1)
+	m, c := consentModule()
 	m.cfg.Enabled = true
 	m.cfg.RecoverArrows = false
 	m.bonds.Users[1].Consented = agreed
@@ -138,9 +138,9 @@ func TestNothingNamingAnyoneIsWrittenBeforeConsent(t *testing.T) {
 			w.c.travel = &travelPlan{Purpose: `return`, DestName: `Corvin`}
 			w.m.advanceTravel(w.c, w.her, w.owner, 50)
 		}, ``},
-		{`parting ways`, func(t *testing.T, w *consentWorld) {
-			w.m.leave(w.c, w.owner, `It was time.`)
-		}, ``},
+		// Parting ways writes nothing into her mind of them: it is wiped,
+		// and the one sentence she keeps is in the roster
+		// (TestPartingKeepsOneSentenceAndWipesTheRest).
 		{`asking to leave`, func(t *testing.T, w *consentWorld) {
 			w.m.requestLeave(w.c, w.owner, `It was time.`)
 		}, ``},
@@ -196,15 +196,9 @@ func firstMetMemories(c *controller) int {
 
 // The first meeting happened before her owner agreed, so nothing naming
 // them was written and she did not introduce herself. When they agree,
-// by the spoken answer or by companion-ai on, both happen then, once.
+// with companion-ai on, both happen then, once.
 func TestConsentLaterKeepsTheFirstMeeting(t *testing.T) {
 	agree := map[string]func(w *consentWorld){
-		`spoken`: func(w *consentWorld) {
-			w.m.bonds.Users[1].AskedAt = time.Now().Unix() - 5
-			if !w.m.answerConsent(w.c, w.owner, `I agree.`) {
-				t.Fatal("fixture: the spoken answer must be read")
-			}
-		},
 		`companion-ai on`: func(w *consentWorld) {
 			if _, err := w.m.cmdAI(`on`, w.owner, w.room, 0); err != nil {
 				t.Fatal(err)

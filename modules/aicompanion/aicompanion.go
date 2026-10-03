@@ -22,6 +22,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -48,10 +50,14 @@ type controller struct {
 	profile     *Profile
 	mind        *Mind
 
-	instanceId   int    // live mob instance, 0 while fallen or not yet spawned
-	fellRound    uint64 // round the fall was noticed, 0 when standing
-	greeted      bool   // session greeting already queued this session
-	farewellSaid bool   // goodbye already queued for the owner's current quit
+	instanceId int    // live mob instance, 0 while fallen or not yet spawned
+	fellRound  uint64 // round the fall was noticed, 0 when standing
+	// standRound is the last round sync found her standing beside an owner
+	// she belongs to, not sneaking: the fight listener (onCombatRound) only
+	// acts for a controller the previous sync passed.
+	standRound   uint64
+	greeted      bool // session greeting already queued this session
+	farewellSaid bool // goodbye already queued for the owner's current quit
 
 	sessionStartUnix    int64         // when this session began (for reflection)
 	relaySeen           bool          // the owner's own key was live at some point this session
@@ -86,18 +92,21 @@ type controller struct {
 	partAskedAt  int64  // when the owner last typed companion-part
 	leaveWhy     string
 
-	lastRoomId    int             // room the companion was in last round
-	seenKeys      map[string]bool // notable scene things already noticed here
-	lastNotice    int64           // last "noticed" stimulus
-	lastAutonomy  int64           // last "idle" stimulus
-	lastIdleEmote int64           // last local idle emote
-	lastPastime   int64           // last time it found something to do with itself
-	lastGearUp    int64           // last time it sorted its gear out
-	lastSneakTry  uint64          // round it last tried to slip into the shadows
-	followPending bool            // a follow step is on its way and not yet taken
-	followSince   uint64          // the round that step was issued
-	calledAt      uint64          // the round its owner last called it back by name
-	lastErrand    string          // what the last trip was for, so an idle wander is not lingered over
+	lastRoomId      int             // room the companion was in last round
+	seenKeys        map[string]bool // notable scene things already noticed here
+	lastNotice      int64           // last "noticed" stimulus
+	lastAutonomy    int64           // last "idle" stimulus
+	lastIdleEmote   int64           // last local idle emote
+	lastPastime     int64           // last time it found something to do with itself
+	lastGearUp      int64           // last time it sorted its gear out
+	lastCraft       int64           // last time it set to work at its trade unprompted
+	lastSearchFound []string        // what its last search turned up (onSearched)
+	searchSaid      map[int]string  // per room, the finds last put to her (onSearched)
+	lastSneakTry    uint64          // round it last tried to slip into the shadows
+	followPending   bool            // a follow step is on its way and not yet taken
+	followSince     uint64          // the round that step was issued
+	calledAt        uint64          // the round its owner last called it back by name
+	lastErrand      string          // what the last trip was for, so an idle wander is not lingered over
 
 	askAuth         *askAuthority  // the owner's leave to put one question to one NPC
 	ownerWasDown    bool           // the owner was on the ground when last looked at
@@ -166,8 +175,11 @@ type AICompanionModule struct {
 
 	bonds         bondState             // who has met or turned away a companion
 	consent       consentLedger         // who has agreed, as the model door reads it
-	pendingMeet   map[int]*meetWait     // characters waiting to meet one
 	meetingPlace  map[int]string        // where each first meeting happened
+	newcomers     map[int]bool          // new characters not yet told where the Hollow is
+	roster        rosterState           // who travels with whom, and what each has learned (roster.go)
+	waiting       map[string]*waiter    // companions waiting in the Hollow, by profile id (hollow.go)
+	returning     map[string]bool       // companions on their way back to the Hollow, to be seen arriving
 	models        modelChooser          // automatic model choice per tier
 	stats         map[string]*tierStats // per model tier, since boot
 	noticesToday  map[int]int           // "you notice" moments today per owner (NoticeCallsPerDay)
@@ -210,8 +222,10 @@ func init() {
 		ctrls:    map[int]*controller{},
 		minds:    map[string]*Mind{},
 
-		pendingMeet:  map[int]*meetWait{},
 		meetingPlace: map[int]string{},
+		newcomers:    map[int]bool{},
+		waiting:      map[string]*waiter{},
+		returning:    map[string]bool{},
 		relays:       newRelayTable(),
 		relayCalls:   newPendingRelays(),
 	}
@@ -263,6 +277,15 @@ func (m *AICompanionModule) onLoad() {
 				`error`, fmt.Sprintf(`mob template %d does not exist; profile disabled`, p.MobId))
 			continue
 		}
+		if err := p.spellsValid(func(s string) bool { return spells.GetSpell(s) != nil }); err != nil {
+			mudlog.Error(`aicompanion`, `action`, `loadProfiles`, `profile`, id, `error`, err)
+			continue
+		}
+		if rooms.LoadRoom(p.Hollow.RoomId) == nil {
+			mudlog.Error(`aicompanion`, `action`, `loadProfiles`, `profile`, id,
+				`error`, fmt.Sprintf(`hollow room %d does not exist; profile disabled`, p.Hollow.RoomId))
+			continue
+		}
 		m.profiles[id] = p
 		m.byMob[p.MobId] = p
 	}
@@ -274,8 +297,15 @@ func (m *AICompanionModule) onLoad() {
 	m.registerCommands()
 
 	m.loadBonds()
+	m.loadRoster()
 	m.loadBudget()
+	m.releaseLapsed(time.Now())
 
+	// Her fight runs FIRST on the round, ahead of the combat hook, so a
+	// reflex she chose (a bash, a ward, a spell) claims the shared special
+	// move cooldown before her behaviour tree's own move can, and is not
+	// lost to it every round. Everything else waits for onNewRound.
+	events.RegisterListener(events.NewRound{}, m.onCombatRound, events.First)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.CharacterCreated{}, m.onCharacterCreated)
 	events.RegisterListener(events.PlayerDespawn{}, m.onPlayerDespawn)
@@ -285,6 +315,10 @@ func (m *AICompanionModule) onLoad() {
 	events.RegisterListener(events.MobDeath{}, m.onMobDeath)
 	events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
 	companionai.SetAskHandler(m.handleAsk)
+	companionai.SetShowHandler(m.handleShow)
+	companionai.SetBaubleSearcher(m.baubleSearchFor)
+	companionai.SetSearchedHandler(m.onSearched)
+	companionai.SetBaubleFoundHandler(m.onBaubleFound)
 	companionai.SetIdleHandler(m.handleIdle)
 	companionai.SetHolder(m.holdFollow)
 	companionai.SetBondedCheck(m.isBonded)
@@ -325,6 +359,7 @@ func (m *AICompanionModule) onSave() error {
 		return nil
 	}
 	m.saveBudget()
+	m.saveRoster()
 	var firstErr error
 	now := time.Now().Unix()
 	for _, c := range m.ctrls {
@@ -357,7 +392,15 @@ func (m *AICompanionModule) getMind(ownerUserId int, p *Profile) *Mind {
 	if mind, ok := m.minds[key]; ok {
 		return mind
 	}
-	mind := loadMind(m.plug, ownerUserId, p)
+	var mind *Mind
+	if m.plug == nil {
+		mind = newMind(ownerUserId, p) // built without storage, as the tests build her
+	} else {
+		mind = loadMind(m.plug, ownerUserId, p)
+	}
+	if m.minds == nil {
+		m.minds = map[string]*Mind{}
+	}
 	m.minds[key] = mind
 	return mind
 }
@@ -550,6 +593,9 @@ func (m *AICompanionModule) strangersOffOn(ownerId int, r route) bool {
 // call. With strangers off she still hears a passer-by and answers them
 // with her set lines, but nothing they say starts a call on anyone's key.
 func (m *AICompanionModule) strangerMayPrompt(ownerId int, askerId int) bool {
+	if askerId > 0 && m.cfg.RequirePlayerKey && !m.hasOwnKey(askerId) {
+		return false // she speaks only to players with a key of their own
+	}
 	return askerId <= 0 || !m.strangersOff(ownerId)
 }
 

@@ -284,6 +284,9 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 		if target == nil || target.Character.Health < 1 {
 			continue // skip vanished/downed players — already out of the fight
 		}
+		if target.Character.IsHidden() {
+			continue // an undetected sneaker is not reached for
+		}
 
 		// U6b Task 7: through the channel seam, same conversion as the
 		// single-target drain above — each player defends with their own

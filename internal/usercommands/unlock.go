@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -35,7 +36,19 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		container := room.Containers[containerName]
 
+		if container.IsSealedShut() {
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked, and it opens for its owner and nobody else.`, containerName))
+			return true, nil
+		}
+
 		if !container.Lock.IsLocked() {
+			// "open mug" (open is an alias of unlock) on a lodging's own
+			// container shows what is in it: that is what a lodger means.
+			// Who may see into a strongbox was settled before this command
+			// ran (housing.GuardUserCommand).
+			if housing.IsUnitRoom(room.RoomId) {
+				return Look(containerName, user, room, flags)
+			}
 			user.SendText(messaging.CategorySystem, "That's not locked.")
 			return true, nil
 		}
@@ -88,6 +101,13 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 
 	} else if exitName != `` {
+
+		// "open door" on a routed exit (a housing door) is how a lodger lets
+		// themselves in: the door is theirs to open, so it behaves exactly
+		// like going through it, refusal and all.
+		if rooms.IsRoutedExit(user.UserId, room.RoomId, exitName) {
+			return Go(exitName, user, room, flags)
+		}
 
 		exitInfo, _ := room.GetExitInfo(exitName)
 

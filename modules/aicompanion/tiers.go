@@ -83,40 +83,66 @@ type relayTable struct {
 type relayOwner struct {
 	model        string
 	finds        bool // the owner allowed their key to name what they find (apiframework.PurposeFinds)
+	lively       bool // the owner allowed "Make the world livelier": every apiframework.IsLively purpose
 	failures     int
 	breakerUntil time.Time
 	noticeSent   bool // the owner was told this relay session that she fell back
 
-	// The finds breaker: another feature's calls on this key (bauble
-	// naming) have their own, so a request the player's provider will not
-	// serve for them never pauses the companion, nor the other way round.
-	findsFailures int
-	findsUntil    time.Time
+	// One breaker per lent purpose (finds, and each lively feature's own):
+	// another feature's calls on this key have their own, so a request the
+	// player's provider will not serve for one never pauses the companion or
+	// any other, nor the other way round. Created on first failure.
+	lent map[string]*lentBreaker
+}
+
+// lentBreaker is one lent purpose's breaker on an owner's key.
+type lentBreaker struct {
+	failures int
+	until    time.Time
 }
 
 func newRelayTable() *relayTable { return &relayTable{owners: map[int]*relayOwner{}} }
 
-// ready records that the owner's relay is up with this model. A relay that
-// comes back keeps its breaker: reloading the page must not reset it. It
-// starts a new relay session for the fallback notice, which may be given
-// once more.
+// ready records that the owner's relay is up with this model, lending it
+// for finds when they allowed it and for nothing else. A relay that comes
+// back keeps its breaker: reloading the page must not reset it. It starts a
+// new relay session for the fallback notice, which may be given once more.
 func (t *relayTable) ready(userId int, model string, finds bool) {
+	t.readyFor(userId, model, finds, false)
+}
+
+// readyFor is ready with every permission the owner gave on the key page:
+// finds, and lively (every lively feature at once).
+func (t *relayTable) readyFor(userId int, model string, finds bool, lively bool) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if o := t.owners[userId]; o != nil {
 		o.model = strings.TrimSpace(model)
 		o.finds = finds
+		o.lively = lively
 		o.noticeSent = false
 		return
 	}
-	t.owners[userId] = &relayOwner{model: strings.TrimSpace(model), finds: finds}
+	t.owners[userId] = &relayOwner{model: strings.TrimSpace(model), finds: finds, lively: lively}
+}
+
+// allows reports whether the owner's key-page choices lend the key for
+// purpose: finds for apiframework.PurposeFinds, lively for every
+// apiframework.IsLively purpose, nothing for anything else.
+func (o *relayOwner) allows(purpose string) bool {
+	switch {
+	case purpose == apiframework.PurposeFinds:
+		return o.finds
+	case apiframework.IsLively(purpose):
+		return o.lively
+	}
+	return false
 }
 
 // liveFor is live for a purpose other than the companion herself: the
 // relay must be up, the companion's breaker and the purpose's own closed
 // (a key that is failing her is failing everything), and the owner must
-// have allowed that purpose on the key page. Only apiframework.PurposeFinds
-// exists.
+// have allowed that purpose on the key page (relayOwner.allows).
 func (t *relayTable) liveFor(userId int, purpose string, now time.Time) (string, bool) {
 	model, ok := t.live(userId, now)
 	if !ok {
@@ -125,7 +151,10 @@ func (t *relayTable) liveFor(userId int, purpose string, now time.Time) (string,
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	o := t.owners[userId]
-	if o == nil || purpose != apiframework.PurposeFinds || !o.finds || now.Before(o.findsUntil) {
+	if o == nil || !o.allows(purpose) {
+		return ``, false
+	}
+	if b := o.lent[purpose]; b != nil && now.Before(b.until) {
 		return ``, false
 	}
 	return model, true
@@ -134,20 +163,42 @@ func (t *relayTable) liveFor(userId int, purpose string, now time.Time) (string,
 // findsResult is one outcome of a finds call on the owner's key, for the
 // finds breaker only; the companion's is never touched by it.
 func (t *relayTable) findsResult(userId int, failed bool, now time.Time, cfg Config) {
+	t.purposeResult(userId, apiframework.PurposeFinds, failed, now, cfg)
+}
+
+// purposeResult is one outcome of a lent call on the owner's key, for that
+// purpose's breaker only; the companion's and every other purpose's are
+// never touched by it. A purpose no key-page choice covers counts against
+// nothing.
+func (t *relayTable) purposeResult(userId int, purpose string, failed bool, now time.Time, cfg Config) {
+	if purpose != apiframework.PurposeFinds && !apiframework.IsLively(purpose) {
+		return
+	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	o := t.owners[userId]
 	if o == nil {
 		return
 	}
+	b := o.lent[purpose]
+	if b == nil {
+		if !failed {
+			return
+		}
+		if o.lent == nil {
+			o.lent = map[string]*lentBreaker{}
+		}
+		b = &lentBreaker{}
+		o.lent[purpose] = b
+	}
 	if !failed {
-		o.findsFailures = 0
+		b.failures = 0
 		return
 	}
-	o.findsFailures++
-	if cfg.BreakerErrors > 0 && o.findsFailures >= cfg.BreakerErrors {
-		o.findsUntil = now.Add(time.Duration(cfg.BreakerSeconds) * time.Second)
-		o.findsFailures = 0
+	b.failures++
+	if cfg.BreakerErrors > 0 && b.failures >= cfg.BreakerErrors {
+		b.until = now.Add(time.Duration(cfg.BreakerSeconds) * time.Second)
+		b.failures = 0
 	}
 }
 
@@ -214,13 +265,17 @@ func (t *relayTable) success(userId int) {
 // relay first, then the server's key, else nothing and set lines. A
 // passer-by talking to her is still routed by her owner: the owner's key
 // pays, and StrangerDailyTokens bounds what the passer-by may spend of it.
+//
+// With RequirePlayerKey (the default) there is no server key route at all:
+// a companion speaks only on the key of the player she is speaking for,
+// and to anyone else she says nothing (fallback).
 func (m *AICompanionModule) route(ownerId int) route {
 	if ownerId > 0 && m.relays != nil && m.playerKeysOffered() {
 		if model, ok := m.relays.live(ownerId, time.Now()); ok {
 			return route{kind: routeRelay, model: model}
 		}
 	}
-	if m.cfg.Enabled && m.apiKey() != `` {
+	if m.cfg.Enabled && m.apiKey() != `` && !m.cfg.RequirePlayerKey {
 		return route{kind: routeServer}
 	}
 	return route{kind: routeNone}

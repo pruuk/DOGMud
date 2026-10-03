@@ -1,0 +1,49 @@
+id: a-the-fused-crawl
+pool: A
+source: authored
+title: The Fused Crawl
+description: >-
+  Two great panes of crystal have slumped together here and fused, leaving a
+  gap between them barely high enough to crawl through on your belly. The
+  upper pane presses close above your back, cold and faintly ridged, and the
+  lower is smooth as still water. Where they meet along the sides the
+  crystal has run like wax and set in drips and twisted ropes. Trapped
+  between the layers, inches from your face, are pockets of air like bubbles
+  in ice, and in one of them a mote of pale light drifts, slow, as if caught
+  in honey. Behind you the crawl looks a few yards long. Ahead it looks
+  longer than it did a moment ago. Scratches along the floor show that
+  something else came this way, and not easily.
+nouns:
+  panes: >-
+    The two panes were once standing walls; you can still see the outline
+    of a doorway in the upper one, lying sideways now. Something slumped
+    them, a heat or a weight long gone. Your breath fogs the crystal above
+    you, and the fog takes a moment too long to fade, as if it were being
+    looked at.
+  drips: >-
+    Along the edges the crystal ran and froze in long drips and ropes,
+    like candle wax. Some of the drips run upward. Touch one and it is
+    warmer than the rest of the crawl, by the smallest margin, the way a
+    seat stays warm for a little while after someone stands.
+  bubble: >-
+    A pocket of air the size of a fist, sealed in the crystal beside your
+    face. Inside it a single mote of pale light turns over and over. It is
+    very small and very faint. When you hold still it drifts toward you
+    and stops against the glass, as close as it can come, and stays there.
+  scratches: >-
+    Long scrapes in the lower pane, all running the same way, toward the
+    far end. They come in threes, close-spaced, and here and there they
+    break off into a smudge, as if whatever made them had to rest. None of
+    them come back the other way.
+idlemessages:
+  - "The mote of light in the bubble brightens for a heartbeat, then dims."
+doors:
+  - exit: crawl
+    description: >-
+      Ahead the gap narrows further, the panes pressing together until
+      you would have to breathe out to pass. Faint grey light shows at
+      the end.
+  - exit: hollow
+    description: >-
+      Behind you, the crawl opens into a low hollow where the fused
+      panes lift apart and you could almost sit up.

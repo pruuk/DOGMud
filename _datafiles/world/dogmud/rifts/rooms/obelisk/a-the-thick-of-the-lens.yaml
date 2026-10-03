@@ -1,0 +1,45 @@
+id: a-the-thick-of-the-lens
+pool: A
+source: authored
+title: The Thick of the Lens
+description: >-
+  The passage is cut through the body of an enormous lens, a slot no wider
+  than your shoulders running through glass that is clear, not black, for
+  the first time since you came here. The glass on either side is many yards
+  thick. Through it you see the halls around you, bent and swollen: a
+  corridor stretched thin as pulled thread, a distant room hung upside down,
+  a stair climbing into its own beginning. Every movement you make is
+  repeated in the glass by a hundred copies, small and curved. The walls of
+  the slot are perfectly smooth and faintly warm. Partway along, set deep in
+  the glass where no tool could reach, hangs a single flaw, a tiny dark
+  bubble that does not bend with the rest.
+nouns:
+  glass: >-
+    Clear glass, grey-green in its depths, so thick that light takes a
+    while to cross it. Lay your cheek against it and the halls beyond
+    lurch closer. The lens was ground from both faces; you can see the
+    faint spiral of the grinding, a single unbroken line laid down over
+    what must have been a very long time.
+  flaw: >-
+    A dark bubble no bigger than a seed, set deep in the clear glass.
+    Everything else in the lens bends; it does not. Look at it long enough
+    and it seems to look back, steady and small, and the glass around it
+    is faintly crazed, a web of tiny cracks spreading outward the way
+    frost spreads.
+  copies: >-
+    Your movements are echoed in the curve of the glass by a hundred tiny
+    figures. Most move when you move. A few, far down in the deepest part
+    of the lens, move a moment before you do, and one stands quite still
+    with its face pressed to the glass, very bright, as if lit from
+    within.
+idlemessages:
+  - "Deep in the lens, a distant room turns slowly over and rights itself."
+doors:
+  - exit: slit
+    description: >-
+      The slot runs on through the glass, narrowing to a pale slit where
+      the lens grows thin toward its edge.
+  - exit: window
+    description: >-
+      A round window is ground into the side of the slot, a small clear
+      eye looking out onto a dark hall below.

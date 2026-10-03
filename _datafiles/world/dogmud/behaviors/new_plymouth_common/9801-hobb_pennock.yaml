@@ -1,0 +1,57 @@
+# Hobb Pennock, mob 9801, letting clerk for the Back Court lodgings
+# (Pennock's Alley, 5625). What he sells is on his list (the list and buy
+# commands, internal/usercommands/housing_shop.go). This tree lets players ask
+# for the same things in words. Buying and the terms are Go actions in
+# internal/housing, so every price, vacancy and standing check reads the
+# authored building file (housing_buildings/back_court_lodgings.yaml).
+tree:
+  type: selector
+  children:
+
+    # PURCHASE. Sits first (grant-node-first SOP). Explicit buying words
+    # only, so asking about a room never charges anyone. The ask text picks
+    # the offer: home, deed, voucher, key, container or strongbox ("buy a
+    # room" means an extension to someone who already lodges here).
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [buy, purchase]
+        - type: action
+          do: buy_housing
+          building: back_court_lodgings
+          tier: simple
+
+    # TERMS. Price, vacancy and what this player still needs.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [room, rooms, lodging, lodgings, let, rent, lease, price, prices, cost, much, house, home, vacancy, vacancies, key, lock, door, extension, extensions, deed, deeds, voucher, vouchers, redecorate, redecorating, decorate, list, sell, selling, guest, guests, friend, friends, visit, visitor, visitors, invite, container, containers, chest, chests, storage, strongbox, strongboxes, safe, furniture, bed, beds, sleep, station, stations, craft, crafting, forge, loom, bench, workbench, workshop]
+        - type: action
+          do: housing_terms
+          building: back_court_lodgings
+          tier: simple
+
+    # Greetings and who-are-you.
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [hello, hi, hey, greetings, who, name, pennock, hobb, job, work, crewe, widow, company]
+        - type: action
+          do: say
+          text: Hobb Pennock, letting clerk, Crewe Lettings. The Widow Crewe owns the building. I sit here and write down who gives her money. Type list if you want to see what she sells. Please.
+
+    # Silent player_enter no-op: claims the event so composition never falls
+    # through to noncombat_passive's "pays you little mind." emote.
+    - type: sequence
+      event: player_enter
+      children:
+        - type: action
+          do: set_state
+          key: pennock_player_enter_suppressed
+          value: "true"

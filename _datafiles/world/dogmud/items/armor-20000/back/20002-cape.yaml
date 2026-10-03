@@ -4,6 +4,7 @@ vendor_categories:
 - tailoring
 description: A plain cape that protects (poorly) from the elements.
 type: back
+weight: 1.0
 value: 5
 rarity_tier: 50
 subtype: wearable

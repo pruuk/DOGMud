@@ -1,0 +1,31 @@
+# companion_archer archetype (Mara Venn, aicompanion)
+#
+# A bonded AI companion's blow-by-blow fighting. The aicompanion module
+# owns everything around it: when to run (the profile's flee_at, so there
+# is no flee here), who to protect, the model's plan, and the first shot of
+# a fight from an unloaded bow. Companions never hear packmate or
+# callforhelp events, and their idle time belongs to the module, so this
+# tree only answers mob_combat_round.
+#
+# Decision order per mob_combat_round:
+#   1. Shoot: a chambered bow fires at the current foe (fire re-chambers).
+#   2. A kick at a foe already on the ground.
+#   fall through to the ordinary attack.
+# No keep_distance: a companion stays in the room with the person she
+# travels with rather than retreating out of it, and no grapple, because
+# an archer does not wrestle.
+tree:
+  type: selector
+  children:
+    - type: selector
+      event: mob_combat_round
+      children:
+        - type: action
+          do: try_fire
+        - type: sequence
+          children:
+            - type: condition
+              check: target_not_standing
+            - type: action
+              do: command_best_of
+              cmds: [kick]

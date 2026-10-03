@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/apiframework"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -23,6 +24,8 @@ const aiCompanionUsage = `Usage:
   aicompanion profiles
   aicompanion grant <character> <profile>
   aicompanion revoke <character>
+  aicompanion claims
+  aicompanion release <profile>
   aicompanion pause <character>
   aicompanion resume <character>
   aicompanion mind <character>
@@ -59,6 +62,14 @@ func (m *AICompanionModule) cmdAICompanion(rest string, user *users.UserRecord, 
 			return true, nil
 		}
 		user.SendText(messaging.CategorySystem, m.revoke(args[1]))
+	case `claims`:
+		user.SendText(messaging.CategorySystem, "Who travels with whom:\n"+strings.Join(m.rosterLines(time.Now()), "\n"))
+	case `release`:
+		if len(args) < 2 {
+			user.SendText(messaging.CategorySystem, aiCompanionUsage)
+			return true, nil
+		}
+		user.SendText(messaging.CategorySystem, m.release(args[1]))
 	case `mind`:
 		if len(args) < 2 {
 			user.SendText(messaging.CategorySystem, aiCompanionUsage)
@@ -118,7 +129,7 @@ func (m *AICompanionModule) cmdStatus(user *users.UserRecord) {
 			m.cfg.DailyTokensPerCompanion)
 	}
 	if now := time.Now(); m.breakerOpen(now) {
-		which := `the companion's own (calls failing; check her model settings)`
+		which := `the companion's own (calls failing; check the model settings)`
 		if m.fw().BreakerOpen(now) {
 			which = `the provider's, shared by every feature (the provider or key is unwell)`
 		}
@@ -159,7 +170,7 @@ func (m *AICompanionModule) cmdStatus(user *users.UserRecord) {
 			b.WriteString(` strangers=off`)
 		}
 		if !m.consented(c.ownerUserId) {
-			b.WriteString(` NOT CONSENTED (they have not said "i agree", so she answers with set lines only)`)
+			b.WriteString(` NOT CONSENTED (they turned it off with "companion-ai off", so the companion answers with set lines only)`)
 		}
 		if c.budgetSpent {
 			b.WriteString(` BUDGET SPENT (set lines only until the day turns, or raise DailyTokensPerCompanion)`)
@@ -190,7 +201,9 @@ func (m *AICompanionModule) cmdProfiles(user *users.UserRecord) {
 	user.SendText(messaging.CategorySystem, strings.TrimRight(b.String(), "\n"))
 }
 
-// grant bonds a companion to an online player (admin). See bondTo.
+// grant bonds a companion to an online player (admin), as though they had
+// won them over in the Hollow. There is one of each: a companion who is
+// already with someone must be released first.
 func (m *AICompanionModule) grant(charName string, profileId string) string {
 	p, ok := m.profiles[strings.ToLower(profileId)]
 	if !ok {
@@ -200,6 +213,10 @@ func (m *AICompanionModule) grant(charName string, profileId string) string {
 	if owner == nil || owner.Character == nil {
 		return fmt.Sprintf(`%s is not online.`, charName)
 	}
+	if h := m.holderOf(p.Id); h != 0 && h != owner.UserId {
+		return fmt.Sprintf(`%s is with account %d. Use "aicompanion release %s" first.`, p.Name, h, p.Id)
+	}
+	m.dismissWaiting(p)
 	if err := m.bondTo(owner, p, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> falls into step beside <ansi fg="username">%s</ansi>.`,
 		p.Name, owner.Character.Name)); err != nil {
 		return err.Error()
@@ -209,7 +226,10 @@ func (m *AICompanionModule) grant(charName string, profileId string) string {
 
 // bondTo spawns a profile's companion in the owner's room and bonds it: the
 // same spawn a summon uses, but as CompanionBonded (no Conviction reserve,
-// no components). arrival is the line the room sees.
+// no components). She is one person on the server, so she is claimed for
+// the owner first (roster.go), and she brings everything she has learned
+// with whoever she was with before, her few starting things, and her
+// spells. arrival is the line the room sees.
 func (m *AICompanionModule) bondTo(owner *users.UserRecord, p *Profile, arrival string) error {
 	for i := range owner.Character.Companions {
 		if owner.Character.Companions[i].SourceType == characters.CompanionBonded {
@@ -220,12 +240,30 @@ func (m *AICompanionModule) bondTo(owner *users.UserRecord, p *Profile, arrival 
 	if room == nil {
 		return fmt.Errorf(`the player's room could not be loaded`)
 	}
+	wasFree := m.holderOf(p.Id) == 0
+	if err := m.claim(p, owner.UserId); err != nil {
+		return err
+	}
+	undo := func() {
+		if wasFree {
+			e := m.rosterFor(p.Id)
+			e.Owner, e.LastSeen = 0, 0
+			m.saveRoster()
+		}
+	}
 
 	mob := mobs.NewMobByIdFresh(mobs.MobId(p.MobId), room.RoomId)
 	if mob == nil {
+		undo()
 		return fmt.Errorf(`mob template %d could not be spawned`, p.MobId)
 	}
+	kept := m.rosterFor(p.Id).Kept
+	applyProgress(mob, kept)
 	mob.Character.Name = p.Name
+	// Fresh, and whole: what she has learned may have raised her maxima.
+	mob.Character.ApplyRestore(characters.PoolHealth, mob.Character.EffectivePoolMax(characters.PoolHealth))
+	mob.Character.ApplyRestore(characters.PoolStamina, mob.Character.EffectivePoolMax(characters.PoolStamina))
+	mob.Character.ApplyRestore(characters.PoolConviction, mob.Character.EffectivePoolMax(characters.PoolConviction))
 	room.AddMob(mob.InstanceId)
 
 	mob.Character.Charm(owner.UserId, -1, ``)
@@ -240,15 +278,24 @@ func (m *AICompanionModule) bondTo(owner *users.UserRecord, p *Profile, arrival 
 		BaseName:   p.Name,
 		AutoAssist: true,
 	}
+	kept.toInfo(&info)
 	if !owner.Character.AddCompanion(info) {
 		owner.Character.TrackCharmed(mob.InstanceId, false)
 		mob.Character.RemoveCharm()
 		room.RemoveMob(mob.InstanceId)
 		mobs.DestroyInstance(mob.InstanceId)
+		undo()
 		return fmt.Errorf(`%s cannot keep any more companions`, owner.Character.Name)
 	}
 	owner.Character.RecalculateStats()
 	events.AddToQueue(events.CharacterVitalsChanged{UserId: owner.UserId})
+
+	// Her own few things, every time she sets out with someone: a companion
+	// template carries nothing, and she leaves these behind with nobody
+	// (handOver takes them back), so setting out again cannot multiply
+	// them. Her spells are hers to keep.
+	equipStartingKit(mob, p)
+	learnStartingSpells(mob, p)
 
 	if err := users.SaveUser(owner); err != nil {
 		mudlog.Error(`aicompanion`, `action`, `bond`, `owner`, owner.UserId, `error`, err)
@@ -256,31 +303,40 @@ func (m *AICompanionModule) bondTo(owner *users.UserRecord, p *Profile, arrival 
 	if arrival != `` {
 		room.SendTextVisual(messaging.CategoryMobEmote, arrival)
 	}
-
-	// Her own few things, the first time she takes up with anyone: a
-	// companion template carries nothing, so this is where a starting kit
-	// belongs. A returning companion keeps what it already had.
-	if rec := m.bonds.Users[owner.UserId]; rec == nil || !rec.Met {
-		equipStartingKit(mob, p)
-	}
 	m.markBond(owner.UserId, p.Id, false)
+	if rec := m.bonds.Users[owner.UserId]; rec != nil && rec.Declined {
+		rec.Declined = false
+	}
+	// Travelling with her is their agreement (consentByCompanionship),
+	// before her controller first attaches, so her first meeting with them
+	// is kept with their name.
+	m.consentByCompanionship(owner.UserId)
+	m.saveBonds()
+	// What she now carries reaches the owner's record straight away.
+	companionai.Snapshot(owner.UserId)
 	mudlog.Info(`aicompanion`, `action`, `bond`, `owner`, owner.UserId, `profile`, p.Id, `instance`, mob.InstanceId)
+	// Won back: what she kept of them from last time is done with, and a
+	// new sentence is written the next time they part (parting.go).
+	m.forgetParting(p, owner.UserId)
 	return nil
 }
 
-// revoke removes a bonded companion from an online player (admin). The
-// mind file is kept on disk, so bonding the same profile again restores
-// their memories.
+// revoke removes a bonded companion from an online player (admin). She
+// goes back to the Hollow with what she has learned; of them she keeps
+// how she felt and one sentence of how it ended (parting.go).
 func (m *AICompanionModule) revoke(charName string) string {
 	owner := users.GetByCharacterName(charName)
 	if owner == nil || owner.Character == nil {
 		return fmt.Sprintf(`%s is not online.`, charName)
 	}
-	name, err := m.unbond(owner, `turns away and takes a different road.`)
-	if err != nil {
+	comp, p := m.bondedCompanionOf(owner)
+	if comp == nil {
+		return fmt.Sprintf(`%s has no bonded companion.`, owner.Character.Name)
+	}
+	if err := m.sendBack(owner, `turns away and takes the road back to the Waystone Hollow.`, m.holdsHer(p, owner), partReleased); err != nil {
 		return err.Error()
 	}
-	return fmt.Sprintf(`Removed %s from %s. Their memories are kept on disk.`, name, owner.Character.Name)
+	return fmt.Sprintf(`Sent %s back to the Hollow from %s. One line of them is kept; the rest of %s memories of them are gone.`, p.Name, owner.Character.Name, possessive(p))
 }
 
 // unbond ends a bond: the session is closed (and reflected on), the
@@ -513,7 +569,11 @@ func (m *AICompanionModule) cmdPart(rest string, user *users.UserRecord, room *r
 		// A bond with no mind behind it (the profile was removed, or the
 		// module never took it up) can still be ended, or the player is
 		// stuck with a companion nobody is driving.
+		_, held := m.bondedCompanionOf(user)
 		if name, err := m.unbond(user, `turns away and takes a different road.`); err == nil {
+			if held != nil && m.holdsHer(held, user) {
+				m.unclaim(held, partSentAway) // back to the Hollow, as any parting
+			}
 			user.SendText(messaging.CategorySystem, name+` has gone their own way.`)
 			return true, nil
 		}
@@ -688,22 +748,35 @@ func roamWords(level string) string {
 
 // cmdAI is how a player changes their mind about the model after the first
 // meeting: "companion-ai" says where things stand, "on" agrees, "off"
-// stops anything they say from leaving the server. The spoken "i agree" is
-// only read while the question is actually open, so an ordinary
-// conversation cannot flip this by accident; this command is the durable
-// way to set it.
+// stops anything they say from leaving the server. Speaking to one of them
+// after reading the board at the Hollow, or having one travel with you, is
+// agreement (consentByCompanionship); this command is the durable way to
+// change it, and "off" is never overridden by either.
 func (m *AICompanionModule) cmdAI(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	if !m.cfg.Enabled {
 		return false, nil
 	}
 	rec := m.bonds.Users[user.UserId]
 	if rec == nil {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
-		return true, nil
+		// Someone with no companion yet may still agree, or refuse, before
+		// talking to the ones waiting in the Hollow.
+		switch strings.ToLower(strings.TrimSpace(rest)) {
+		case `on`, `yes`, `enable`, `off`, `no`, `disable`:
+			if m.bonds.Users == nil {
+				m.bonds.Users = map[int]*bondRecord{}
+			}
+			rec = &bondRecord{}
+			m.bonds.Users[user.UserId] = rec
+		default:
+			user.SendText(messaging.CategorySystem, `You have no companion travelling with you. See "help companion-hollow".`)
+			return true, nil
+		}
 	}
 	name := `Your companion`
 	if c, ok := m.ctrls[user.UserId]; ok {
 		name = c.profile.Name
+	} else if m.heldBy(user.UserId) == nil {
+		name = `The travellers in the Waystone Hollow`
 	}
 	// The system category is never wrapped for the reader, so every line
 	// here is wrapped at 80 columns before it is sent.
@@ -730,6 +803,10 @@ func (m *AICompanionModule) cmdAI(rest string, user *users.UserRecord, room *roo
 	case `off`, `no`, `disable`:
 		rec.Consented, rec.Refused = false, true
 		m.saveBonds()
+		if _, ok := m.ctrls[user.UserId]; !ok {
+			tell(`(Stopped. Nothing you say leaves this server, and the travellers in the Waystone Hollow will not talk with you. "companion-ai on" starts it again.)`)
+			break
+		}
 		tell(`(Stopped. Nothing you say leaves this server. %s stays with you and answers with a few set lines. "companion-ai on" starts it again.)`, name)
 	case `strangers on`:
 		rec.StrangersOff, rec.StrangersOn = false, true

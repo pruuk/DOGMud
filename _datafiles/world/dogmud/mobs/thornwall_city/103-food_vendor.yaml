@@ -70,6 +70,8 @@ character:
       quantitymax: 0
       price: 2
   stats:
+    perception:
+      base: 118
     charisma:
       base: 108
     vitality:

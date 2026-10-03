@@ -1,0 +1,43 @@
+id: a-corridor-of-resonant-rods
+pool: A
+source: authored
+title: Corridor of Resonant Rods
+description: >-
+  Rods of clear glass stand floor to ceiling down both sides of this
+  corridor, slender as reeds and close as the bars of a cage. They are
+  silent while you walk past them. Only when you have gone on a few paces
+  does each rod sound, softly, one after another, so that a thread of notes
+  follows you down the passage like a second set of footsteps. Stop, and the
+  notes catch up and stop too. The rods are set in sockets in the floor, and
+  each socket is ringed with small round marks. One socket near the middle
+  stands empty, and in the line of notes that follows you there is a silence
+  where its note should be.
+nouns:
+  rods: >-
+    Each rod is a little thicker or thinner than its neighbour, and each
+    has been ground at the top to a careful slant. Fine scratches near the
+    tops show where someone took off a little more, and a little more,
+    tuning. Breathe on one and it gives a tone so low you feel it in your
+    chest a moment later.
+  sockets: >-
+    Round sockets cut into the floor, each ringed with marks. Read in
+    order down the corridor, the rings are counting, or naming, the notes.
+    The empty socket in the middle has its ring of marks too, worn soft,
+    and someone has pressed one more mark at its edge, small and alone.
+  notes: >-
+    Listen closely to the notes that follow you and they make a short
+    tune, rising and falling and rising again, broken by the silence. It
+    sounds like something sung to settle a restless child. Hum the missing
+    note yourself and the whole corridor goes quiet for a moment, as if
+    surprised.
+idlemessages:
+  - "A single rod sounds far down the corridor, though nothing has passed it."
+doors:
+  - exit: tunnel
+    description: >-
+      At the end the rods give way to a round tunnel of plain dark
+      crystal, where the notes that follow you fall silent.
+  - exit: gap
+    description: >-
+      Between two rods on the left there is a gap wide enough to slip
+      through sideways, into a colder dark beyond.

@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/roomlife"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -208,11 +209,19 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 							msg := idleMsgs[idleMsgIndex]
 							if msg != `` {
 								wrappedMsg := util.SplitStringNL(msg, 80)
-								// Idle flavor text is visual; the visual
-								// pipeline judges each reader's sight, dark room
-								// or lit. The dark-room branch that tested the
-								// nightvision FLAG is gone (lighting plan 5c).
-								sendVisualRoomText(room, messaging.CategoryRoomDescription, wrappedMsg)
+								// Now and then the event is written fresh by
+								// a model on the key of a player in the room
+								// (internal/roomlife), seen or heard, through
+								// these same room senders; the set line is
+								// then shown only if no event comes.
+								if !roomlife.TryReplace(room, wrappedMsg, idleMsgs) {
+									// Idle flavor text is visual; the visual
+									// pipeline judges each reader's sight, dark
+									// room or lit. The dark-room branch that
+									// tested the nightvision FLAG is gone
+									// (lighting plan 5c).
+									sendVisualRoomText(room, messaging.CategoryRoomDescription, wrappedMsg)
+								}
 							}
 
 						}
@@ -638,22 +647,25 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										if !user.Character.CraftMaterialsSaved() {
 											user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 										}
-										// Normal crafting: produce output item
-										newItem := items.New(recipe.Output.ItemId)
-										newItem.CraftedRound = util.GetRoundCount()
-										newItem.CraftSkill = user.Character.CraftQualityLevel(user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))) // Faithwrought quality lift
-										if bottleAgingMult > 0 {
-											newItem.BottleMultiplier = bottleAgingMult
+										// Normal crafting: produce the output, as many as
+										// the recipe makes (output.quantity).
+										for n := 0; n < recipe.OutputCount(); n++ {
+											newItem := items.New(recipe.Output.ItemId)
+											newItem.CraftedRound = util.GetRoundCount()
+											newItem.CraftSkill = user.Character.CraftQualityLevel(user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))) // Faithwrought quality lift
+											if bottleAgingMult > 0 {
+												newItem.BottleMultiplier = bottleAgingMult
+											}
+											// Maker's mark for skilled crafters — see
+											// crafting.ShouldStampMakerName for the policy (components
+											// stamp regardless of Type; plain Objects don't).
+											newSpec := newItem.GetSpec()
+											if crafting.ShouldStampMakerName(newItem.CraftSkill, newSpec) {
+												newItem.MakerName = user.Character.Name
+											}
+											user.Character.StoreItem(newItem)
+											events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
 										}
-										// Maker's mark for skilled crafters — see
-										// crafting.ShouldStampMakerName for the policy (components
-										// stamp regardless of Type; plain Objects don't).
-										newSpec := newItem.GetSpec()
-										if crafting.ShouldStampMakerName(newItem.CraftSkill, newSpec) {
-											newItem.MakerName = user.Character.Name
-										}
-										user.Character.StoreItem(newItem)
-										events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
 									}
 									successRoles := recipe.Narrate(crafting.PhaseSuccess, textutil.TokenContext{
 										ActorName:      user.Character.GetCharacterName(true),

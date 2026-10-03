@@ -1,0 +1,49 @@
+id: f-the-daylit-fissure
+pool: F
+source: authored
+title: The Daylit Fissure
+description: >-
+  A blade of daylight stands across this chamber from wall to wall. It
+  comes through a fissure high in the crystal, a crooked crack no wider
+  than a hand at its top and broadening as it falls to the floor, and the
+  light through it is so plain and ordinary that it hurts: honest yellow
+  sun, full of turning motes of dust, laying a bright warm stripe across
+  black glass that has not felt warmth in an age. Where the stripe touches,
+  the crystal sweats a thin mist and the frost along the fissure's lips
+  stands in long white feathers. This is the <ansi fg="exit">breach</ansi>,
+  the way back to the world, but it is bound. A lattice of dark crystal
+  threads has grown across the widest part of the crack, and set in the
+  lattice is a socket cut in the shape of a key's facets, waiting. On the
+  doorframe you came in by, a raw bright cut still shows where your key
+  went home.
+nouns:
+  fissure: >-
+    The crack runs crooked from the ceiling down, and its walls are not
+    black but grey, the crystal bleached by the light. Put your eye to the
+    narrow top and you see blue: a scrap of real sky, and the white edge of
+    a cloud moving slowly across it.
+  light: >-
+    The stripe of sun on the floor is warm to the palm, warmer than your own
+    skin. Dust drifts in it, ordinary dust from somewhere with roads and
+    hearths. Where it falls on the glass the faint glow of the crystal goes
+    out entirely, as though shamed.
+  socket: >-
+    A hollow in the lattice cut to an exact faceted shape, edges crisp and
+    new. Faint round marks ring it. The threads of the lattice draw tight
+    when your hand comes near, and slacken when it pulls away.
+  frost: >-
+    Long feathers of white frost grow from the fissure's lips, and they are
+    always melting at their tips and always growing back at their roots,
+    caught between the warmth outside and the cold within.
+idlemessages:
+  - "A mote of dust drifts in on the daylight and settles, glittering, on the black floor."
+  - "A cloud passes over the sun outside, and the stripe on the floor dims and returns."
+doors:
+  - exit: passage
+    description: >-
+      A passage leads away from the light, back into the Obelisk, its walls
+      growing darker and colder with every step.
+  - exit: stair
+    description: >-
+      A stair of crystal slabs winds down out of the daylight into the black,
+      its lowest steps lost in shadow.

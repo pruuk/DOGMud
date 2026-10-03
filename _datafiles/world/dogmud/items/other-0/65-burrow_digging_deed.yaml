@@ -1,0 +1,17 @@
+itemid: 65
+name: Burrow Digging Deed
+namesimple: deed
+not_salable: true
+description: >
+  A grubby scrap of paper with TORVAN, ONE HOLE MORE scrawled across it, a
+  thumbprint in lamp-black for a seal, and the name of the lodger who paid for
+  it underneath. It is no use to anybody else, and no use anywhere but the
+  Burrows. It gets a crew in to dig one more hide-out off your own. To use it,
+  stand in one of your hide-outs and type use deed to choose a wall from a
+  list. You can also name the wall straight away, north, south, east, west, up
+  or down. For example, use deed north.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

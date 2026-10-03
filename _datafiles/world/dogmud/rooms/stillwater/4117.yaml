@@ -64,5 +64,7 @@ idlemessages:
 - The smell of warm tallow drifts briefly across the yard from somewhere unseen.
 - A clutch of half-cured net-twine is stirred by the wind and clicks against itself.
 spawninfo:
+- mobid: 9831
+  respawnrate: 30 real minutes
 - mobid: 343
 x: -6

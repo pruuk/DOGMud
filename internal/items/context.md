@@ -314,6 +314,19 @@ func (i *Item) Validate() {
 }
 ```
 
+### Bound items
+
+`Item.BoundUserId` (yaml `bounduserid`) names the ACCOUNT an item instance
+works for; 0 means anyone. Nothing in this package enforces it: the system
+that sells and consumes the item checks it. Housing extension deeds
+(`internal/housing`) set it at sale, because their price depends on the
+buyer's own house, so a deed passed to another account would sell rooms at
+someone else's price.
+
+`Item.HouseKeyOwner` (yaml `housekeyowner`) marks a housing guest key: the
+account whose house the key opens. The holder, whoever they are, presents it
+at the building's door once to be added to that house's guest list.
+
 ### Item Identification and Matching
 ```go
 // Multiple identification methods
@@ -417,6 +430,19 @@ plain carrier ("Curious Trinket").
 - A bauble is never enchanted (`enchantments.ApplyTier` returns at once):
   an item with a `Spec` never consults the catalog again, so a baked
   bauble would outlive a retire and the finder-only view.
+- **Stolen goods** (merchant chests, `internal/merchantchests`). Instance
+  fields, saved wherever the item is: `StolenFrom` (the merchant's name) and
+  `StolenFromMob` (its template id), stamped when a restock puts the item in
+  its chest (`IsMerchantGoods`); `StolenBy`, `StolenAt` (unix seconds) and
+  `StolenZone`, set by `MarkTaken` when it leaves the chest (get or steal),
+  after which `IsStolen` is true; `StolenSeen`, once it has been recognised
+  on the thief. `ClearStolen` wipes them all (a return to the merchant).
+  Heat is the bauble rule, computed in `internal/baubles` (`GoodsHot`,
+  `GoodsHotIn`): hot for `BaubleStolenHeatHours`, only in the theft's heat
+  area. `AttrString` shows an `s` flag for stolen goods (colour alias
+  `item-stolen`). `SameStack` never stacks goods from different thefts, or
+  stolen with clean, because storage keeps one representative per stack.
+  `items.New(id)` never sets any of them.
 - `IsSpecial()` is false for a bauble. Any code that rebuilds an item from
   its ItemId alone (`items.New(id)`) drops the link; the sell path has its
   own bauble branch for this reason. Display code that groups items by
@@ -1361,6 +1387,7 @@ and `TestPreDetuneBowTable_MatchesTheRealTemplates` both fail otherwise.
 | `reach.go` | Weapon reach data |
 | `attack_messages.go` / `defensive_messages.go` | Combat message pools. Both render a coordinated triad through `narration.Render`; see below |
 | `memory.go` | Memory reporting |
+| `never_bought.go` | `SetNeverBought`, `IsNeverBought`: item ids no merchant buys whatever their value (housing deeds, vouchers and keys, registered by `internal/housing`; refused in `actions.sellOneToMerchant`). Note that the loader replaces an authored `value: 0` with an automatic value, so value 0 never makes an item unsellable |
 | `test_helpers.go` / `test_helpers_combat.go` | Test fixtures |
 
 Item ids at 40000+ live under `items/materials-40000/` — `Filepath()` routes by

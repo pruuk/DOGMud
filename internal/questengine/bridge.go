@@ -346,6 +346,10 @@ func (b *GameBridge) ApplyStatusCondition(bf StatusConditionDef) {
 
 // Teleport moves the player to the specified room.
 func (b *GameBridge) Teleport(roomId int) {
+	if rooms.NoRecall(b.user.Character.RoomId) {
+		mudlog.Info("GameBridge.Teleport", "room", roomId, "refused", "the player is in a no-recall room")
+		return
+	}
 	if err := rooms.MoveToRoom(b.user.UserId, roomId); err != nil {
 		mudlog.Error("GameBridge.Teleport", "room", roomId, "error", err)
 	}

@@ -110,6 +110,6 @@ func TestHandleMobCombat_ArcherKitesAndFiresAfterAggroLoss(t *testing.T) {
 	handleMobCombat(evt)
 
 	cmds := events.DrainQueuedInputsForTest(archer.InstanceId)
-	assert.Contains(t, cmds, "shoot Aliceia south",
+	assert.Contains(t, cmds, "shoot @1 south",
 		"archer with nil aggro + fresh CombatMemory must fire a directional shot, got %v", cmds)
 }

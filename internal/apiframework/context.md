@@ -3,8 +3,11 @@
 ## Purpose
 
 The one mechanism every model-backed feature uses to reach an
-OpenAI-compatible API: today the AI companion (`modules/aicompanion`) and
-bauble naming (`modules/baubles`). It owns the wire format, the HTTP
+OpenAI-compatible API: today the AI companion (`modules/aicompanion`),
+bauble naming (`modules/baubles`) and townsfolk idle moments
+(`modules/npcidle`), ambient room events (`modules/roomlife`) and closer
+looks (`modules/lookdetail`), all on players' own keys only, through
+`internal/lively`. It owns the wire format, the HTTP
 transport and its consent door, the server key and endpoint, one daily token
 budget shared by every feature, one circuit breaker for the server key, and
 the registry through which a player's own key (the companion's browser relay)
@@ -31,8 +34,11 @@ keep its own key, budget or breaker.
   `EndpointAllowed`, `ResolveKey`, `ServerSettings` (`HasKey`, `Legacy`),
   `Server`, `RefreshServer`, `SetServerForTest`.
 - **budget.go**: the shared daily ledger. `ConsumerCompanion`,
-  `ConsumerBaubles`, `Charge`, the dimension constants (`DimCompanionOwner`,
-  `DimCompanionStranger`, `DimCompanionStrangersFor`, `DimBaublesFinder`),
+  `ConsumerBaubles`, `ConsumerNPCIdle`, `ConsumerRoomLife`,
+  `ConsumerLookDetail`, `Charge`, the dimension constants
+  (`DimCompanionOwner`, `DimCompanionStranger`, `DimCompanionStrangersFor`,
+  `DimBaublesFinder`, `DimNPCIdleKeyholder`, `DimRoomLifeKeyholder`,
+  `DimLookDetailKeyholder`),
   `Hold`, `Reserve`, `Settle`, `HasRoom`, `Allowance`, `Allowances`, `Day`,
   `Usage`, `ConsumerUsage`, `Today`, `SeedTokens`, `SeedAllowances`,
   `SaveBudget`, `ErrOverBudget`, `ErrOverAllowance`, `ErrOverShare`,
@@ -51,7 +57,10 @@ keep its own key, budget or breaker.
   server's one set, which every package-level budget and breaker function
   uses) and `NewBooksForTest` (an isolated set). Each of those functions is
   also a `*Books` method.
-- **relay.go**: `Relay`, `PurposeFinds`, `SetRelay`, `PlayerRelay`.
+- **relay.go**: `Relay` (`Model`, `Send`, `Result(userId, purpose, err)`),
+  `PurposeFinds`, `PurposeLively`, `LivelyPurpose`, `IsLively`,
+  `PurposeNPCIdle`, `PurposeRoomLife`, `PurposeLookDetail`, `SetRelay`,
+  `PlayerRelay`.
 
 ## Config (`APIFramework` in config.yaml)
 
@@ -184,8 +193,20 @@ counters and consent, and a breaker per purpose: another feature's results
   directory is git- and Docker-ignored; keep it on the server like `shops/`.
 - **Relays are lent per purpose.** `Relay.Model(userId, PurposeFinds)` only
   answers when the player ticked "Also name things I find while searching" on
-  the key page; the companion enforces this, and the browser relay only
-  accepts the bauble schema from a key with that box ticked.
+  the key page. Every feature that makes the world livelier shares ONE
+  permission, "Make the world livelier" (`PurposeLively`, which starts
+  ticked), but lends the key under its own purpose (`LivelyPurpose(feature)`:
+  `PurposeNPCIdle`, `PurposeRoomLife`, `PurposeLookDetail`), so
+  `Relay.Model(userId, PurposeNPCIdle)`
+  answers while that box is ticked. The companion enforces this, and the
+  browser relay only accepts the bauble schema from a key with finds ticked,
+  and a `LIVELY_SCHEMAS` name from one with lively ticked. `Relay.Result`
+  names the purpose, and each purpose (each lively feature too) has its own
+  breaker on the player's key. A new lively feature needs a `LivelyPurpose`
+  constant, its own consumer and allowance dimension, and its schema name in
+  `LIVELY_SCHEMAS` (`modules/aicompanion/relayweb/relay.js`); no new box.
+  The call, turns and moderation every lively feature shares are
+  `internal/lively`'s.
 - **Global state in tests.** The shared books and the settings override are
   package globals. A caller that can leave calls in flight between tests
   should spend from its own `*Books` in tests (the AI companion gives every
@@ -197,4 +218,5 @@ counters and consent, and a breaker per purpose: another feature's results
 ## Dependencies
 
 `internal/configs`, `internal/util`, `internal/mudlog`. Imported by
-`modules/aicompanion` and `modules/baubles`.
+`modules/aicompanion`, `modules/baubles`, `internal/lively`,
+`modules/npcidle`, `modules/roomlife` and `modules/lookdetail`.

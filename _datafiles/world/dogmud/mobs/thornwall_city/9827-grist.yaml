@@ -1,0 +1,45 @@
+mobid: 9827
+zone: Thornwall City
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - thornwall_citizens
+idlecommands:
+  - 'emote leans on his barrow and looks at the street as if it had insulted him.'
+  - ''
+  - 'emote tests the jaws of his iron grab with a clack.'
+  - 'emote grumbles about the state of the Market Square.'
+  - ''
+  - 'emote wipes his brow with the corner of his tabard.'
+activitylevel: 8
+character:
+  name: Grist
+  description: |
+    A dour street-keeper in the Citizenry's faded green tabard, pushing a
+    barrow and carrying a long iron grab. Grist has kept Thornwall's streets
+    for twenty years and holds that the city would drown in its own leavings
+    within a week without him. He may be right. He says very little, and all
+    of it is about litter.
+  speciesid: 1
+  level: 3
+  gold: 5
+  stats:
+    strength:
+      base: 116
+    vitality:
+      base: 112
+    perception:
+      base: 106
+    dexterity:
+      base: 96

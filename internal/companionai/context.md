@@ -22,6 +22,20 @@ type HoldFunc func(userId int, mobInstanceId int) bool
 func SetAskHandler(f AskFunc)
 func RouteAsk(userId int, mobInstanceId int, text string) bool
 
+type ShowFunc func(userId int, mobInstanceId int, name string, description string, madeBy string, handMade bool) bool
+func SetShowHandler(f ShowFunc)
+func RouteShow(userId int, mobInstanceId int, name string, description string, madeBy string, handMade bool) bool
+
+type BaubleSearchFunc func(mobInstanceId int) (ownerUserId int)
+func SetBaubleSearcher(f BaubleSearchFunc)
+func BaubleSearchFor(mobInstanceId int) int
+type SearchedFunc func(mobInstanceId int, found []string)
+func SetSearchedHandler(f SearchedFunc)
+func RouteSearched(mobInstanceId int, found []string)
+type BaubleFoundFunc func(mobInstanceId int, name string, pocketed bool)
+func SetBaubleFoundHandler(f BaubleFoundFunc)
+func RouteBaubleFound(mobInstanceId int, name string, pocketed bool)
+
 func SetRespawner(f RespawnFunc)
 func RespawnBonded(userId int, mobId int) int
 
@@ -64,6 +78,22 @@ func RelayOrigin() string
 - `RouteAsk` is called by `internal/usercommands/ask.go` before the normal
   companion and NPC paths. The aicompanion module installs the handler and
   claims asks aimed at companions it drives.
+- `BaubleSearchFor` and `RouteSearched` are called by
+  `internal/mobcommands/search.go` (search.go here): whether this companion's
+  search also rolls for a bauble, and for which owner (0 for no roll, always
+  0 with no module), and what the search turned up, in plain words.
+  `RouteBaubleFound` is called by `internal/actions/search_bauble.go` when a
+  companion's find is worked free (`BaubleDelivery.ByMobInstanceId`):
+  `pocketed` is false when she was carrying too much and it was left on
+  the ground. `name` is the MODEL-SAFE name (`items.Item.ModelName`), never
+  the finder's view, since it reaches a prompt; the root
+  `bauble_finder_view_guard_test.go` lists it as a call beyond the reader.
+- `RouteShow` is called by `internal/usercommands/show.go` after a player
+  shows an item to a mob, with the item's model-safe name and description
+  (`items.Item.ModelName`, `ModelDescription`, never player-written bauble
+  text), its maker's mark, and whether it was crafted at all (`handMade`). The aicompanion module claims shows aimed at a
+  companion waiting in the Waystone Hollow, who weighs what they are shown;
+  the item never leaves the player.
 - `RouteIdle` is called by `internal/hooks/MobIdle_HandleIdleMobs.go` right
   after the sleeping check. The aicompanion module claims the idle tick of
   every companion it drives, so floor-loot grabs, behaviour-tree idle and

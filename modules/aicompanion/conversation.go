@@ -306,6 +306,7 @@ func (m *AICompanionModule) summariseFor(mind *Mind, p *Profile, ownerId int, co
 	m.countCall()
 	key := mindIdentifier(mind.OwnerUserId, mind.MobId)
 	partner := convo.Partner
+	wipes := mind.Wipes
 	place := convo.RoomId
 
 	go func() {
@@ -334,13 +335,13 @@ func (m *AICompanionModule) summariseFor(mind *Mind, p *Profile, ownerId int, co
 		util.LockMud()
 		defer util.UnlockMud()
 		applied = true
-		m.applyConversationSummary(key, call.OwnerUserId, partner, place, asker, held, rt, res)
+		m.applyConversationSummary(key, call.OwnerUserId, wipes, partner, place, asker, held, rt, res)
 	}()
 	return true
 }
 
 // applyConversationSummary stores the one memory a talk left behind.
-func (m *AICompanionModule) applyConversationSummary(key string, ownerId int, partner string, placeId int, asker int, held hold, rt route, res modelResult) {
+func (m *AICompanionModule) applyConversationSummary(key string, ownerId int, wipes int, partner string, placeId int, asker int, held hold, rt route, res modelResult) {
 	// Settled first, against whoever the reservation was held against
 	// (the owner the mind is keyed by, even when nobody is left to
 	// remember it), so nothing below can leave it held.
@@ -350,8 +351,8 @@ func (m *AICompanionModule) applyConversationSummary(key string, ownerId int, pa
 	m.routeResult(rt, ownerId, res.Ticket, res.Err, time.Now())
 
 	mind := m.minds[key]
-	if mind == nil {
-		return
+	if mind == nil || mind.Wipes != wipes {
+		return // gone, or wiped at a parting since this was asked for
 	}
 	mind.TokensLifetime += int64(res.Tokens)
 	if res.Err != nil {

@@ -9,7 +9,8 @@ to read code to find out.
 While you have agreed to it, the things you say to your companion, the
 things said around them, what you are both carrying and where you are, are
 sent to OpenAI so that they can decide what your companion says and does.
-Nothing is sent before you agree, and nothing is sent if you decline.
+Speaking to one of them, or having one travel with you, is your agreement.
+Nothing is sent after "companion-ai off", until you say "companion-ai on".
 
 <ansi fg="yellow">━━━ What is kept ━━━</ansi>
 
@@ -31,23 +32,23 @@ with a plain companion: only once you have agreed (see below).
 
 <ansi fg="yellow">━━━ Your choice ━━━</ansi>
 
-When a companion first comes to you they will ask. Answer
-<ansi fg="command">i agree</ansi> to travel with them as they are meant to be,
-or <ansi fg="command">i decline</ansi> to keep them as a plain companion:
-they still follow you, fight beside you and answer with a few set lines, and
-nothing you say is sent anywhere.
+A board at the mouth of the Waystone Hollow says all of this, and you are
+shown it the first time you step into the cave
+(<ansi fg="command">look board</ansi> reads it again). Speaking to one of the
+travellers there after reading it is your agreement. If you would rather
+not, say nothing to them: nothing you say is sent anywhere.
 
-You are asked once, when they first come to you, and those words count only
-while the question is open: saying "I agree" in ordinary conversation later
-changes nothing. To change your mind afterwards use
-<ansi fg="command">companion-ai on</ansi> or
-<ansi fg="command">companion-ai off</ansi>, or
-<ansi fg="command">companion-part</ansi> to send them away for good.
+To change your mind at any time, either way, use
+<ansi fg="command">companion-ai off</ansi> or
+<ansi fg="command">companion-ai on</ansi>.
+<ansi fg="command">companion-part</ansi> sends a companion back to the Hollow.
 
 <ansi fg="yellow">━━━ Your own key ━━━</ansi>
 
 Where this server offers it, you can have your companion think on your own
-key instead: set it up from the web client's Companion key button. Your key
+key instead: set it up from the web client's Companion key button. On a
+server that requires it, companions talk only with players who have their
+own key up; without one, they do not answer at all. Your key
 stays in your browser and never reaches this server; what would have gone
 to OpenAI goes to your key's provider instead, and you pay for it.
 
@@ -64,5 +65,6 @@ are muted, so are they, whichever key they answer on.
 
 <ansi fg="yellow">━━━ Related ━━━</ansi>
 
-  <ansi fg="command">help companion-part</ansi>      Part ways for good.
+  <ansi fg="command">help companion-hollow</ansi>    Where companions wait, and winning one over.
+  <ansi fg="command">help companion-part</ansi>      Part ways.
   <ansi fg="command">help companion-unstick</ansi>   Reset a companion that seems stuck.

@@ -1,0 +1,45 @@
+mobid: 9828
+zone: The Confluence
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - quayfolk
+idlecommands:
+  - 'emote sweeps a drift of straw off the edge of the quay into the river.'
+  - ''
+  - 'emote leans on her broom and swaps insults with a bargeman.'
+  - 'emote hooks a floating crate with her boathook, checks it, and lets it go.'
+  - ''
+  - 'emote spits on her palms and takes a fresh grip on the broom.'
+activitylevel: 8
+character:
+  name: Moll
+  description: |
+    A broad quay-sweeper with forearms like mooring posts, a stiff broom in
+    one hand and a boathook through her belt. The rivermen's guild pays her
+    to keep the quays clear so no one breaks an ankle on a dropped crate
+    hook. She keeps what she sweeps up, which the guild does not ask about
+    and she does not mention.
+  speciesid: 1
+  level: 3
+  gold: 4
+  stats:
+    strength:
+      base: 114
+    vitality:
+      base: 112
+    perception:
+      base: 108
+    dexterity:
+      base: 104

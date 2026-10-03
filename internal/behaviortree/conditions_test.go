@@ -327,7 +327,7 @@ func TestCondAllNewRegistered(t *testing.T) {
 	for _, name := range []string{
 		"mob_has_condition", "player_has_spell",
 		"player_has_misc_data", "state_greater_than",
-		"multiple_enemies",
+		"multiple_enemies", "multiple_foes",
 	} {
 		if LookupCondition(name) == nil {
 			t.Errorf("condition %q not registered", name)
@@ -739,4 +739,31 @@ func TestCondTargetNotStanding_TargetClinched_ReturnsSuccess(t *testing.T) {
 
 	ctx := &EvalContext{InstanceId: mob.InstanceId}
 	assert.Equal(t, Success, condTargetNotStanding(nil, ctx))
+}
+
+// multiple_foes counts only those in the fight: a companion beside her
+// owner, one wolf on the owner and one deer grazing, sees a single foe.
+func TestCondMultipleFoes_CountsOnlyThoseInTheFight(t *testing.T) {
+	defer seedMultipleEnemiesRoom(t, 7510,
+		[]int{501},
+		map[int][3]int{
+			9301: {9301, 501, 0}, // the companion, charmed by 501
+			9302: {9302, 0, 0},   // a wolf fighting her owner
+			9303: {9303, 0, 0},   // a deer, no part of it
+			9304: {9304, 0, 0},   // a second wolf, joins later
+		},
+		map[int]string{9301: "companion", 9302: "wolf", 9303: "deer", 9304: "wolf"},
+	)()
+	mobs.GetInstance(9302).Character.SetAggro(501, 0, characters.DefaultAttack)
+	ctx := &EvalContext{InstanceId: 9301, RoomId: 7510}
+	if got := condMultipleFoes(nil, ctx); got != Failure {
+		t.Fatalf("one foe and a bystander is not several foes, got %v", got)
+	}
+	if got := condMultipleEnemies(nil, ctx); got != Success {
+		t.Fatalf("multiple_enemies still counts the bystander, got %v", got)
+	}
+	mobs.GetInstance(9304).Character.SetAggro(0, 9301, characters.DefaultAttack)
+	if got := condMultipleFoes(nil, ctx); got != Success {
+		t.Fatalf("a second wolf on her makes two foes, got %v", got)
+	}
 }

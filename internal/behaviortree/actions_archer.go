@@ -202,6 +202,12 @@ func actTryFire(params map[string]any, ctx *EvalContext) Result {
 		}
 	}
 
+	// The shot names its target exactly (#instance or @user), so a room with
+	// two of the same creature in it is not a coin toss between them.
+	if ref := archerTargetRef(mob); ref != "" {
+		name = ref
+	}
+
 	// (a) Same-room target — fire straight away.
 	if targetRoomId == mob.Character.RoomId {
 		mob.Command("shoot " + name)
@@ -221,6 +227,29 @@ func actTryFire(params map[string]any, ctx *EvalContext) Result {
 	}
 	mob.Command(fmt.Sprintf("shoot %s %s", name, dir))
 	return Success
+}
+
+// archerTargetRef is the exact reference (#instance for a creature, @user
+// for a person) for the target try_fire resolved: the live aggro target,
+// else the remembered one. "" when neither names anyone.
+func archerTargetRef(mob *mobs.Mob) string {
+	if tgt := mob.Character.CurrentCombatTarget(); !tgt.IsZero() {
+		if tgt.MobInstanceId > 0 {
+			return fmt.Sprintf("#%d", tgt.MobInstanceId)
+		}
+		if tgt.UserId > 0 {
+			return fmt.Sprintf("@%d", tgt.UserId)
+		}
+	}
+	if mem := mob.CombatMemory; mem != nil {
+		if mem.TargetMobId > 0 {
+			return fmt.Sprintf("#%d", mem.TargetMobId)
+		}
+		if mem.TargetUserId > 0 {
+			return fmt.Sprintf("@%d", mem.TargetUserId)
+		}
+	}
+	return ""
 }
 
 // actKeepDistance kites the mob away from melee. It fires only when the mob is

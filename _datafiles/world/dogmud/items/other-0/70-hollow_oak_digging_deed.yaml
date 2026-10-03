@@ -1,0 +1,18 @@
+itemid: 70
+name: Hollow Oak Digging Deed
+namesimple: deed
+not_salable: true
+description: >
+  A curl of birch bark with ONE SETT MORE written across it in careful,
+  slightly crooked letters, a paw-print pressed into a blob of wax for a seal,
+  and the name of the lodger who paid for it underneath. It is no use to
+  anybody else, and no use anywhere but the Hollow Oak. It gets Old Brock and
+  his diggers to open one more hollow off your own. To use it, stand in one of
+  your hollows and type use deed to choose a wall from a list. You can also
+  name the wall straight away, north, south, east, west, up or down. For
+  example, use deed north.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

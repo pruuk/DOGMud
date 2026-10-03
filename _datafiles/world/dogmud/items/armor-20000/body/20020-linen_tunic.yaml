@@ -8,6 +8,7 @@ description: A simple tunic stitched from undyed linen panels. The seams are
   and light blows.
 type: body
 subtype: wearable
+weight: 1.0
 value: 4
 rarity_tier: 50
 physical_mitigation: 2

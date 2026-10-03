@@ -13,5 +13,6 @@ magical_mitigation: 2
 conviction_mitigation: 2
 statmods:
   willpower: 2
+weight: 0.5
 value: 8
 rarity_tier: 50

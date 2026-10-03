@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -62,6 +63,13 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	// is the case this guard is actually for.
 	if !salvageableSource(source) {
 		user.SendText(messaging.CategorySystem, `<ansi fg="red">You need to remove that before you can salvage it.</ansi>`)
+		return true, nil
+	}
+
+	// Hot stolen goods (a merchant chest's) stay whole: breaking them down
+	// would shed their heat. actions.salvageItem refuses too.
+	if actions.StolenGoodsHotNow(itm) {
+		user.SendText(messaging.CategorySystem, `<ansi fg="red">That was stolen too recently to break down. A fence will pay for it whole.</ansi>`)
 		return true, nil
 	}
 

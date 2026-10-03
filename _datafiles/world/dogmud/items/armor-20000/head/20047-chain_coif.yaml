@@ -9,5 +9,6 @@ description: A hood of interlocking iron rings that drapes over the head and
 type: head
 subtype: wearable
 physical_mitigation: 3
+weight: 2.5
 value: 10
 rarity_tier: 40

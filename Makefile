@@ -77,9 +77,9 @@ clean:
 
 # Mirrors the instance-save wipe in CLAUDE.md's smoke-test SOP: BOTH room and
 # mob instance saves for the live world, and nothing else. Deliberately does
-# NOT touch shops/, guilds/ or moderation/ — those are persistent living state,
-# not instance overrides, and deleting them resets the economy, dissolves
-# guilds, and resurrects unbanned accounts.
+# NOT touch shops/, guilds/, housing/ or moderation/ — those are persistent
+# living state, not instance overrides, and deleting them resets the economy,
+# dissolves guilds, evicts every lodger, and resurrects unbanned accounts.
 .PHONY: clean-instances
 clean-instances: ### Deletes room and mob instance data for the live world. Starts it fresh.
 	rm -Rf _datafiles/world/$(WORLD)/rooms.instances

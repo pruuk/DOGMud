@@ -1,0 +1,64 @@
+id: c-the-leaning-panes
+pool: C
+source: authored
+title: The Leaning Panes
+description: >-
+  Tall panes of black crystal once stood in two straight rows down the
+  length of this nave, like the leaves of a book held open. Now they lean.
+  Each one has tipped inward and come to rest against its opposite number,
+  so that the room is a long, narrow, pointed tunnel of glass, its ridge
+  lost in the dark overhead. The panes still reflect, though not well: your
+  image slides from one to the next half a step behind you, and the
+  reflections on the left disagree with those on the right about which way
+  you are facing. Some of the panes have cracked where they touch. A few
+  have slipped and lie flat across the floor in long splintered sheets, and
+  on the floor between them small fallen chips glitter faintly. Mounts of
+  crystal, empty, stand at the foot of each pane where it was once held
+  upright. Ways out lead along the nave, through a tunnel at the far end,
+  and into a cleft.
+nouns:
+  panes: >-
+    Up close, each leaning pane is marked near its foot with a short row of
+    round marks, the same pattern on every one, perhaps a number. The ones
+    nearest the door are pressed tightly together where they meet. Further in,
+    there is a finger's gap between some pairs, and grit trickles from the
+    gap now and then.
+  mounts: >-
+    Squat blocks of crystal that once held the panes upright. Every mount is
+    cracked along the same line, toward the middle of the room, as if
+    something heavy had pushed against all of them at once from outside.
+  chips: >-
+    Small pieces of black glass lying in a scatter down the middle of the
+    floor. They are thickest beneath the panes with gaps between them, where
+    they have fallen from above over a long time. Some are fresh and sharp,
+    and some are worn round as river stones.
+  sheets: >-
+    The fallen panes lie in long splintered sheets across the floor. Under
+    one of them a set of three-groove prints leads in and does not come out,
+    though there is nothing beneath the glass now but more glass.
+idlemessages:
+  - Somewhere overhead, two panes shift against each other with a long, grinding creak.
+  - A chip of glass falls from the dark ridge and rings on the floor.
+trap:
+  difficulty: 120
+  condition_ids: [2]
+  triggered: >-
+    Your shoulder brushes a pane where it leans, and above you a loose
+    wedge of glass slips free of the ridge and strikes your head with a
+    flat, ringing blow that leaves the world swimming.
+  avoided: >-
+    You notice where the chips lie thickest on the floor, beneath the gaps,
+    and you keep to the places where the panes are pressed tight overhead.
+doors:
+  - exit: nave
+    description: >-
+      The nave runs on beyond the last pair of leaning panes, its ridge
+      rising higher into the dark, the reflections thinning as it goes.
+  - exit: tunnel
+    description: >-
+      A rounded tunnel cut through the far wall, low and plain, a relief
+      after the tilted glass. It turns aside a few steps in.
+  - exit: cleft
+    description: >-
+      A narrow cleft where two panes have split apart along their length,
+      leaving a jagged opening you must turn sideways to pass.

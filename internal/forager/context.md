@@ -20,7 +20,11 @@ only pure state logic and I/O.
   `ForagerKind` enum (Marsh/Steppe/Fernway).
 - **forage_core.go**: `ForageDifficulty` + `ForageYields` + `NightForageYields`
   tables; `ForageAttempt`; pure roll logic shared by player and NPC forage
-  commands.
+  commands. `ForageAttempt.RoomExtra` is a per-room overlay (player forage
+  only), read by `actions.Forage` from the room temp data
+  `RoomExtraYieldsKey` (`[]int` item ids, duplicates raise odds) and appended
+  to the pool. `IsForageable(biome, roomExtra)`: a room with extras is
+  forageable even when its biome is not. `internal/rifts` puts rare ore here.
 - **vendor_sell.go**: `SellToVendor` — live delivery path.
 - **chest_backfill.go**: `BackfillVendorFromChests` + `selectBackfillTransfers`
   (pure) + `chestPoolFromRooms` / `chestPoolAll` / `chestPoolForZone` —

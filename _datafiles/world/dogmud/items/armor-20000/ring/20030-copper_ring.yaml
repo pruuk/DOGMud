@@ -10,5 +10,6 @@ type: ring
 subtype: wearable
 statmods:
   dexterity: 1
+weight: 0.1
 value: 3
 rarity_tier: 50

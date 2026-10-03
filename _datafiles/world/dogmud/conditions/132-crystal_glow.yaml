@@ -1,0 +1,8 @@
+conditionid: 132
+name: Crystal Glow
+description: Your glowstone casts a cold, steady light around you.
+secret: true
+triggerrate: 5 real minutes
+triggercount: 1
+effects:
+  light_strength: 46

@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -118,8 +119,12 @@ func condPlayersInRoom(params map[string]any, ctx *EvalContext) Result {
 	if !mobCanSee(mobs.GetInstance(ctx.InstanceId), room) {
 		return Failure
 	}
-	if len(room.GetPlayers()) > 0 {
-		return Success
+	// Only players it could know are there: an undetected sneaker is not
+	// found by looking (sneak, search and entry detection decide that).
+	for _, id := range room.GetPlayers() {
+		if u := users.GetByUserId(id); u != nil && !u.Character.IsHidden() {
+			return Success
+		}
 	}
 	return Failure
 }
@@ -233,6 +238,59 @@ func condMultipleEnemies(params map[string]any, ctx *EvalContext) Result {
 		}
 	}
 
+	if count > 1 {
+		return Success
+	}
+	return Failure
+}
+
+// condMultipleFoes succeeds when more than one creature or person in the
+// room is actually in the fight on the other side: fighting this mob or the
+// player who charmed it, or being fought by this mob. Unlike
+// multiple_enemies, a bystander does not count, so a companion does not
+// turn a room-wide spell or a sweep on a crowd that was never in her fight.
+func condMultipleFoes(params map[string]any, ctx *EvalContext) Result {
+	room := rooms.LoadRoom(ctx.RoomId)
+	mob := mobs.GetInstance(ctx.InstanceId)
+	if room == nil || mob == nil || !mobCanSee(mob, room) {
+		return Failure
+	}
+	charmer := mob.Character.GetCharmedUserId()
+	mine := mob.Character.CurrentCombatTarget()
+	onUs := func(c *characters.Character) bool {
+		if c == nil || !c.IsInCombat() {
+			return false
+		}
+		t := c.CurrentCombatTarget()
+		return (t.MobInstanceId != 0 && t.MobInstanceId == mob.InstanceId) ||
+			(charmer > 0 && t.UserId == charmer)
+	}
+
+	count := 0
+	for _, mId := range room.GetMobs() {
+		if mId == mob.InstanceId {
+			continue
+		}
+		m := mobs.GetInstance(mId)
+		if m == nil || (charmer > 0 && m.Character.IsCharmed(charmer)) {
+			continue
+		}
+		if onUs(&m.Character) || (mob.Character.IsInCombat() && mine.MobInstanceId == mId) {
+			count++
+		}
+	}
+	for _, pId := range room.GetPlayers() {
+		if pId == charmer {
+			continue
+		}
+		u := users.GetByUserId(pId)
+		if u == nil {
+			continue
+		}
+		if onUs(u.Character) || (mob.Character.IsInCombat() && mine.UserId == pId) {
+			count++
+		}
+	}
 	if count > 1 {
 		return Success
 	}

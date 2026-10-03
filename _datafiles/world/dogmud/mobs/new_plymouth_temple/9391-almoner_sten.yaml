@@ -45,6 +45,8 @@ character:
   level: 1
   gold: 30
   stats:
+    perception:
+      base: 110
     willpower:
       base: 110
     charisma:

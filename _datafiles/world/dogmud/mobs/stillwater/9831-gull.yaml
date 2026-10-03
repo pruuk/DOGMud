@@ -1,0 +1,44 @@
+mobid: 9831
+zone: Stillwater
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - stillwater_citizens
+idlecommands:
+  - 'emote turns over a stone with her toe to see what is under it.'
+  - ''
+  - 'emote holds a bit of sea glass up to the light and smiles at it.'
+  - 'emote shakes sand out of her net bag.'
+  - ''
+  - 'emote skips a flat stone across the nearest water, or tries to.'
+activitylevel: 8
+character:
+  name: Gull
+  description: |
+    A barefoot beachcomber girl with salt-stiff hair and a net bag slung
+    over her shoulder, named by the fishermen for the way she picks over
+    anything left on the shore. She has since extended the shore to cover
+    the whole town. The net bag clinks.
+  speciesid: 1
+  level: 3
+  gold: 2
+  stats:
+    strength:
+      base: 100
+    vitality:
+      base: 108
+    perception:
+      base: 114
+    dexterity:
+      base: 112

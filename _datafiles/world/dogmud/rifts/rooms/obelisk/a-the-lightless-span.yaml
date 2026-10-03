@@ -1,0 +1,50 @@
+id: a-the-lightless-span
+pool: A
+source: authored
+title: The Lightless Span
+description: >-
+  A bridge of black crystal no wider than a doorway crosses a gulf with no
+  bottom you can see. It has no rail on either side, only a low lip worn
+  smooth, and the bridge gives off the faintest glow, enough to show its own
+  edges and nothing else. Beyond those edges the drop is perfectly dark. It
+  does not look like a pit; it looks like the absence of a place. A word
+  spoken aloud here does not echo. It goes out over the void and does not
+  return. Halfway across, the span is cracked clean through and held
+  together only by its own weight, and beside the crack a little grit has
+  gathered along the lip, where someone once paused, often, to look down.
+nouns:
+  bridge: >-
+    The span is a single cast of crystal, without joints, curved slightly
+    upward in the middle like a held breath. Along its centre runs a line
+    of round marks pressed at regular intervals, perhaps a count of paces,
+    perhaps a warning. Near the far end the marks grow closer together and
+    crowd into a cluster, as if the writer hurried.
+  drop: >-
+    You lean over the lip and look down. Nothing. Then, very far below, a
+    single point of cold light that might be a facet, might be an eye,
+    might be the bridge's own glow coming back late. It blinks once and is
+    gone, and the dark resumes as if it had never been interrupted.
+  crack: >-
+    The break runs clean across the span, a line of white where the
+    crystal sheared. It has not fallen. On either side the surface is
+    furred with a faint rime, and when you step over it the whole bridge
+    gives the smallest dip, then steadies, like something holding still on
+    purpose.
+  grit: >-
+    A drift of fine black powder along the lip at the midpoint. It is
+    ground crystal, not dust; nothing here makes dust. Pressed into it,
+    faint and old, are the three-grooved prints of a foot turned outward,
+    toward the drop, standing in the same place again and again, as if
+    this were a favourite place to look.
+idlemessages:
+  - "A breath of cold rises out of the drop, and nothing at all comes up with it."
+  - "The bridge hums faintly underfoot, as though something far below has brushed it."
+doors:
+  - exit: arch
+    description: >-
+      The far end of the span meets a low arch in the wall, its keystone
+      pressed with a single deep round mark.
+  - exit: ledge
+    description: >-
+      Back the way you came, a narrow ledge runs along the edge of the
+      drop and turns out of sight around the curve of the wall.

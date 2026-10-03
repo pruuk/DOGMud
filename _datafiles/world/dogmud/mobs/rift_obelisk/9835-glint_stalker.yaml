@@ -1,0 +1,40 @@
+mobid: 9835
+zone: Rift Obelisk
+# Ambusher. Waits hidden in the facets, opens with a bleeding rend, strikes
+# once or twice, then breaks off and hides again where it stands (rift doors
+# refuse mobs, so it cannot flee). The whole fight is its per-mob tree,
+# behaviors/rift_obelisk/9835-glint_stalker.yaml; no archetype underneath.
+archetype: fighting
+hostile: false # engagement owned by the btree (hidden surprise strike)
+# Hidden by sneaking (its tree), not by a Hidden in conditionids: a permanent
+# Hidden outside the Awareness machine flickers off and on mid-fight.
+charm_immune: true
+pack_flee_immune: true # constructs: a fallen packmate is no reason to run
+submission_policy: lethal
+surrender_policy: never
+maxwander: 0
+groups:
+  - obelisk
+activitylevel: 10
+idlecommands:
+  - ''
+  - ''
+  - ''
+combatcommands:
+  - ''
+character:
+  name: Glint Stalker
+  description: >-
+    A sliver of the wall that has come loose and learned to move. It is all
+    edges: long blades of black crystal folded against each other like the
+    leaves of a closed knife, and when it holds still it is only another
+    reflection among the facets. Somewhere along one edge a single point of
+    light keeps watch.
+  speciesid: 46
+  level: 1
+  # Built to strike, not to watch: the easiest Lens to sneak past.
+  stats:
+    perception:
+      base: 50
+  gold: 0
+itemdropchance: 0

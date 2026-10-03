@@ -1,0 +1,43 @@
+roomid: 6885
+zone: Pothole Coulee
+title: The Squeeze
+description: >
+  Below the hearth, through a crack only a thin person would choose, lies a
+  cramped hollow kept warm by the fire overhead. It is a nest more than a
+  room: a heap of blankets of many different colours and owners, a row of
+  small bright trinkets laid out on a shelf of rock as if for sale, and a
+  stub of candle in a saucer. In the far wall a second, narrower crack
+  leads off into the dark, and a loose stone low down sits not quite flush
+  with the rest. The way out is back up.
+biome: cave
+lamp: 50
+coord:
+  x: 41
+  y: 1
+  z: -1
+mutators:
+- mutatorid: sanctuary
+exits:
+  up:
+    roomid: 6881
+nouns:
+  blankets: A great many blankets, no two alike, heaped into a nest. One
+    still has a laundry tag from a New Plymouth boarding house sewn into
+    the hem.
+  trinkets: A row of small bright things laid out on a shelf of rock, a
+    brass button, a cheap ring, a bone die, a tin soldier missing its gun,
+    each set exactly a finger's width from the next.
+  stone: A stone low in the wall that does not quite sit flush. Behind it
+    is a dry hollow the size of a fist, and nothing in it at all, which
+    its owner seems to find funny.
+  crack: A narrow crack leading off into the dark. Whoever lives here swears
+    it comes out somewhere useful. It is not wide enough for anyone else to
+    find out.
+  candle: A stub of tallow candle in a chipped saucer, burned down almost to
+    nothing and very carefully not wasted.
+idlemessages:
+- Warmth seeps down through the rock from the fire above.
+- Something small and metal ticks as it cools on the shelf.
+x: 40
+y: 20
+z: -1

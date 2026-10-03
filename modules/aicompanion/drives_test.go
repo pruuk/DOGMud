@@ -2,9 +2,9 @@ package aicompanion
 
 import (
 	"testing"
-	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 )
 
 // The engine's dismiss asks, per companion, whether this module drives it:
@@ -24,31 +24,30 @@ func TestDrivesBondedIsPerCompanion(t *testing.T) {
 	}
 }
 
-// A bonded companion her owner dismissed while the module was off does not
-// come back on its own when it is switched on: the owner parted with her,
-// which is what companion-part does while it is on, and that is for good.
-// The bond record's Met is what keeps her away (a character who never met
-// one is still met, AutoBondExisting).
-func TestDismissedWhileOffDoesNotReturnOnItsOwn(t *testing.T) {
+// Nobody is handed a companion any more: a new character is only marked to
+// be told where the Waystone Hollow is (hintHollow), and their record gains
+// nothing.
+func TestNewCharacterIsToldNotGiven(t *testing.T) {
 	owner, _, _, _ := harmWorld(t, configs.PVPDisabled)
-	m, _ := consentModule(0)
-	m.cfg.Enabled, m.cfg.AutoBond, m.cfg.AutoBondExisting = true, true, true
-	m.cfg.MeetDelayRounds = 0
+	m, _ := consentModule()
+	m.cfg.Enabled = true
+	m.newcomers = map[int]bool{}
 
-	// Met, and no bonded companion on the character any more.
-	m.bonds.Users[1] = &bondRecord{Profile: `mara`, Met: true, Unix: time.Now().Unix()}
-	// One round is enough to see it: a meeting starts by waiting on the
-	// room (pendingMeet); the fixture cannot field a companion, so a later
-	// round would drop the wait for that reason instead.
-	m.considerMeeting(owner, 1)
-	if _, waiting := m.pendingMeet[1]; waiting {
-		t.Fatal("a companion her owner parted with does not walk back up to them")
+	m.onCharacterCreated(events.CharacterCreated{UserId: owner.UserId})
+	if !m.newcomers[owner.UserId] {
+		t.Fatal("a new character is marked to hear about the Hollow")
+	}
+	if comp, _ := m.bondedCompanionOf(owner); comp != nil {
+		t.Fatal("a new character is not handed a companion")
+	}
+	if len(owner.Character.Companions) != 0 {
+		t.Fatalf("nothing is added to the new character's record: %+v", owner.Character.Companions)
 	}
 
-	// The control: a character who never met one is met.
-	delete(m.bonds.Users, 1)
-	m.considerMeeting(owner, 10)
-	if _, waiting := m.pendingMeet[1]; !waiting {
-		t.Fatal("control: a character with no bond at all is waited on for a meeting")
+	m.cfg.Enabled = false
+	m.newcomers = map[int]bool{}
+	m.onCharacterCreated(events.CharacterCreated{UserId: owner.UserId})
+	if m.newcomers[owner.UserId] {
+		t.Fatal("switched off, the module marks nobody")
 	}
 }

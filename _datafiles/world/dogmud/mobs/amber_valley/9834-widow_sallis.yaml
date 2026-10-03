@@ -1,0 +1,44 @@
+mobid: 9834
+zone: Amber Valley
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+idlecommands:
+  - 'emote shades her eyes under the straw hat and looks out over the orchards.'
+  - ''
+  - 'emote bends to pull a weed and tuck it into her apron for the goat.'
+  - 'emote hums an old harvest song under her breath.'
+  - ''
+  - 'emote pauses at the well to rest her back.'
+activitylevel: 8
+character:
+  name: Widow Sallis
+  description: |
+    A small, sun-browned widow in a wide straw hat with a gleaner's apron
+    tied over her skirts. By old valley custom the gleanings of a field
+    belong to whoever walks it after the harvest, and Widow Sallis has
+    decided that the whole valley is a field and every day is after the
+    harvest. The apron pocket is always full.
+  speciesid: 1
+  level: 3
+  gold: 4
+  stats:
+    strength:
+      base: 102
+    vitality:
+      base: 106
+    perception:
+      base: 112
+    dexterity:
+      base: 104

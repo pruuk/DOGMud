@@ -11,6 +11,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -97,5 +99,50 @@ func TestUnbondedAreaHarmIsUnchanged(t *testing.T) {
 	slices.Sort(mobIds)
 	if !slices.Equal(mobIds, []int{43, 44}) || !slices.Equal(userIds, []int{2}) {
 		t.Fatalf("an ordinary charmed caster spares only its owner: mobs %v users %v", mobIds, userIds)
+	}
+}
+
+// A spell that spares allies (SpellData.SparesAllies) misses its caster's own
+// side (a mob sharing one of its groups, a boss's adds) unless that mob is
+// fighting it, and still strikes every other creature and every player.
+// Without the flag, nothing is spared.
+func TestAllySparingAreaHarmSparesItsOwnSide(t *testing.T) {
+	caster, room := areaHarmWorld(t, configs.PVPDisabled)
+	caster.Character.RemoveCharm()
+	caster.Groups = []string{`obelisk`}
+	ally := mobs.GetInstance(43)
+	ally.Groups = []string{`obelisk`}
+
+	if mobIds, _ := mobAreaHarmTargets(caster, room); !slices.Contains(mobIds, 43) {
+		t.Fatalf("without the flag an ally is struck: %v", mobIds)
+	}
+	mobIds, userIds := mobAreaHarmTargetsSparing(caster, room, true)
+	slices.Sort(mobIds)
+	if !slices.Equal(mobIds, []int{44}) || !slices.Equal(userIds, []int{1, 2}) {
+		t.Fatalf("spares its own kind only: mobs %v users %v", mobIds, userIds)
+	}
+
+	// An ally turned on it is fair game.
+	ally.Character.SetAggro(0, caster.InstanceId, characters.DefaultAttack)
+	mobIds, _ = mobAreaHarmTargetsSparing(caster, room, true)
+	if !slices.Contains(mobIds, 43) {
+		t.Fatalf("a packmate fighting the caster is struck: %v", mobIds)
+	}
+}
+
+// A wild caster's area harm does not reach a player it has not detected.
+func TestWildAreaHarmMissesAnUndetectedSneaker(t *testing.T) {
+	caster, room := areaHarmWorld(t, configs.PVPDisabled)
+	caster.Character.RemoveCharm()
+	bram := users.GetByUserId(2)
+	reason := state.TransitionReason{Trigger: `area_test`}
+	if err := bram.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason); err != nil {
+		t.Fatal(err)
+	}
+	bram.Character.Awareness.ResolveConcealment(true, reason)
+
+	_, userIds := mobAreaHarmTargets(caster, room)
+	if !slices.Equal(userIds, []int{1}) {
+		t.Fatalf("only the player it can know of: %v", userIds)
 	}
 }

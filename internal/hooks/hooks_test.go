@@ -3129,3 +3129,42 @@ func TestProcessFoldRound_PositionBreakStillAwards(t *testing.T) {
 		t.Errorf("spellcasting use count rose by %d across %d breaks; every resolved position contest must award, including the ones that broke", got, breaks)
 	}
 }
+
+// A volley (SpellData.Hits) strikes its target that many times when a mob's
+// cast resolves: one contest per hit.
+func TestResolveMobSpell_VolleyHitsEachTime(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	mob := mobs.GetInstance(100)
+	room := rooms.LoadRoom(1)
+	base := spells.GetSpell("sparks")
+	if base == nil {
+		t.Fatal("sparks is seeded")
+	}
+
+	contests := 0
+	original := runSpellChannelAttack
+	runSpellChannelAttack = func(v messaging.RoomVisibility, a combatvocab.Attack, s combat.AttackSide, atk, def *characters.Character) combat.ChannelDefenceResult {
+		contests++
+		return original(v, a, s, atk, def)
+	}
+	t.Cleanup(func() { runSpellChannelAttack = original })
+
+	count := func(hits int) int {
+		volley := *base
+		volley.Hits = hits
+		users.GetByUserId(1).Character.Health = 1_000_000
+		contests = 0
+		resolveMobSpell(mob, activity.CastingData{SpellId: volley.SpellId, TargetUserIds: []int{1}}, &volley, room)
+		return contests
+	}
+	if n := count(1); n != 1 {
+		t.Fatalf("one hit, one contest: got %d", n)
+	}
+	if n := count(3); n != 3 {
+		t.Fatalf("a volley of three, three contests: got %d", n)
+	}
+	if n := count(0); n != 1 {
+		t.Fatalf("hits 0 is one hit: got %d", n)
+	}
+}

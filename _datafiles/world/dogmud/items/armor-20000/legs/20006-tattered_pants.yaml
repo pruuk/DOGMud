@@ -5,6 +5,7 @@ vendor_categories:
 namesimple: pants
 description: A pair of poorly held together pants.
 type: legs
+weight: 0.5
 value: 5
 rarity_tier: 50
 subtype: wearable

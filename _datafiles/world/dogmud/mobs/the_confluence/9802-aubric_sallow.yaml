@@ -1,0 +1,59 @@
+mobid: 9802
+zone: The Confluence
+behavior_archetype: noncombat_passive
+non_combatant: true
+charm_immune: true
+hostile: false
+statpool: 30
+maxwander: 0
+groups:
+  - humanoid
+  - margin
+idlecommands:
+  - 'emote copies a line of the ledger onto a fresh sheet in a beautiful hand,
+    compares the two, sighs, and throws the copy away.'
+  - ''
+  - 'emote taps the varnished notice board without looking at it. THE
+    QUILLHOUSE. ROOMS. EXTENSIONS. REDECORATION. GUEST KEYS. STORAGE. He could
+    recite it. He does not.'
+  - ''
+  - 'say Rooms for the respectable. Deeds for the ones who need more shelves
+    than walls. Vouchers for the ones who dislike the brick. Keys for the ones
+    with visitors. Chests and strongboxes for the ones with papers. It is all
+    on the list.'
+  - ''
+  - 'emote sharpens a quill he has no use for, very slowly, with a small
+    folding knife.'
+  - ''
+  - 'say Madam Pardew lets only to people the Margin will speak for. Type list,
+    and I will tell you what she charges.'
+  - ''
+  - 'emote watches the rainwater in the gutter carry a lost quill exactly
+    nowhere, with the air of a man who has been watching it all week.'
+activitylevel: 10
+character:
+  name: Aubric Sallow
+  description: |
+    Aubric Sallow is the under-clerk of the Quillhouse, which is to say of
+    Madam Orla Pardew, a retired chart-keeper of the Margin who owns the tall
+    house behind him, lets its rooms to scholars, copyists and clerks, and
+    now lives upriver with her charts and has not climbed its stairs in
+    years. Aubric sits on a high clerk's stool under the door lamp with a
+    ledger on a slanted board across his knees, ink on three fingers of each
+    hand, and the careful, faintly aggrieved look of a trained copyist who
+    has been set to keep accounts. A varnished board beside him lists what
+    the house sells: rooms, deeds to knock a new room through, vouchers for
+    anyone who wants the brick to read differently, guest keys for lodgers
+    with visitors, and deeds for chests and locked strongboxes to keep their
+    papers in. He writes the finest hand in the Confluence, and uses it to
+    record rents.
+  speciesid: 1
+  level: 1
+  gold: 0
+  stats:
+    perception:
+      base: 110
+    charisma:
+      base: 92
+    willpower:
+      base: 106

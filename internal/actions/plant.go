@@ -351,6 +351,10 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item, t
 		actor.SendText(messaging.CategorySystem, "You don't see that here.")
 		return PlantResult{Reason: "not found"}
 	}
+	if container.IsSealedShut() {
+		actor.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked, and it opens for its owner and nobody else.`, containerName))
+		return PlantResult{Reason: "sealed"}
+	}
 
 	// Quest engine notification — player actors only.
 	if actor.IsPlayer() {

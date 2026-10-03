@@ -5,6 +5,7 @@ vendor_categories:
 namesimple: belt
 description: Just enough to hold your pants up.
 type: belt
+weight: 0.2
 value: 5
 rarity_tier: 50
 subtype: wearable

@@ -11,5 +11,6 @@ subtype: wearable
 physical_mitigation: 1
 magical_mitigation: 2
 escapemodifier: 0.5
+weight: 2.0
 value: 8
 rarity_tier: 50

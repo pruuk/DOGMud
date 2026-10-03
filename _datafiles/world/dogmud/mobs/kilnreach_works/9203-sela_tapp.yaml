@@ -42,7 +42,7 @@ character:
     charisma:
       base: 112
     perception:
-      base: 110
+      base: 109
     dexterity:
       base: 106
   shop:

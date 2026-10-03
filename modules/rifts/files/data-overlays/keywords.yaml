@@ -1,0 +1,6 @@
+help:
+  command:
+    general:
+      - answer
+      - touch
+      - lenses

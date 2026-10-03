@@ -1,0 +1,42 @@
+id: a-the-returning-spiral
+pool: A
+source: authored
+title: The Returning Spiral
+description: >-
+  The passage curls gently to the left, always to the left, a spiral so wide
+  you barely feel it turning, and it neither climbs nor falls. After a while
+  you pass a small niche in the outer wall, with a row of round marks
+  pressed beneath it. After a while longer you pass it again. It is the same
+  niche, the chip in its rim the same chip, but the row of marks beneath has
+  grown by one. Each time round it is longer. The floor is worn into a
+  single set of three-grooved channels hugging the inner wall, and they too
+  go round and round. The walls give back no reflection here. There is a way
+  off the spiral, but only on the turns when you are not looking for it.
+nouns:
+  niche: >-
+    A small rounded niche, the size of a cupped hand, set at the height of
+    a tall figure's eye. Its back is worn bright, as if something rested
+    its brow there often. In the bottom lies a scatter of fine glass
+    beads, perfectly round, the kind you might keep to count with.
+  marks: >-
+    A row of small round marks beneath the niche. On your first pass there
+    were seven. Now there are more, and the newest is crisp and sharp
+    while the others are worn smooth. You did not see it made. The rows
+    have the shape of tallies, the kind kept by prisoners and by very
+    patient people.
+  channels: >-
+    One set of footworn channels, close to the inner wall, going round.
+    They are not a crowd's wear but one walker's, the same steps taken
+    over and over until the grooves are deep enough to fill with shadow.
+    There is no second set going the other way.
+idlemessages:
+  - "Somewhere ahead around the curve, a small mark is pressed into crystal with a soft tick."
+doors:
+  - exit: spiral
+    description: >-
+      The spiral curves on to the left, out of sight, and the niche is
+      surely somewhere ahead again.
+  - exit: shaft
+    description: >-
+      A narrow shaft opens in the inner wall where it was not before,
+      dropping steeply into darkness, its rim edged with frost.

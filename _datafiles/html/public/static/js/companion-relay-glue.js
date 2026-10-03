@@ -11,9 +11,9 @@
 //   server -> page  Companion.Relay.Request {id, body, deadlineMs?}
 //   page -> frame   {type:'hello', account} {type:'setup'}
 //                   {type:'request', id, body, deadlineMs?}
-//   frame -> page   {type:'status', ready, model?, locked}
+//   frame -> page   {type:'status', ready, model?, finds?, lively?, locked}
 //                   {type:'response', id, status, body} {type:'hide'}
-//   page -> server  Companion.Relay.Ready {model, finds} | Companion.Relay.Gone {}
+//   page -> server  Companion.Relay.Ready {model, finds, lively} | Companion.Relay.Gone {}
 //                   Companion.Relay.Response {id, status, body}
 //
 // Tests: tools/jstest/companion-relay-glue.test.js.
@@ -183,7 +183,9 @@
       if (d.ready === true && isValidModel(d.model)) {
         ready = true;
         // finds: the player allowed their key to name what they find.
-        send('Companion.Relay.Ready', { model: d.model, finds: d.finds === true });
+        // lively: the player allowed their key to make the world livelier
+        // around them (townsfolk idle moments and every such feature).
+        send('Companion.Relay.Ready', { model: d.model, finds: d.finds === true, lively: d.lively === true });
       } else {
         ready = false;
         send('Companion.Relay.Gone', {});

@@ -58,7 +58,7 @@ character:
     dexterity:
       base: 112
     perception:
-      base: 108
+      base: 116
     willpower:
       base: 105
   shop:

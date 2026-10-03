@@ -216,3 +216,20 @@ func RoomSearchFeatures(room *rooms.Room) []SearchFeature {
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
 }
+
+// FeatureCacheHook lets a subsystem own the find of one searchable feature:
+// a rift's rubble pile is a cache, searched once, not a feature with a bauble
+// roll window. It is asked whenever a player's `search <feature>` names a
+// feature, in place of that feature's bauble roll. handled false means "not
+// mine": the feature takes its ordinary roll. handled true means the hook has
+// dealt with the feature (delivering a find, or saying there is nothing left)
+// and found reports whether a find is on its way, which counts as a won search
+// like any bauble find. Set once at boot by the subsystem (modules/rifts).
+type FeatureCacheHook func(actor Actor, room *rooms.Room, feature SearchFeature) (found bool, handled bool)
+
+var featureCacheHook FeatureCacheHook
+
+// SetFeatureCacheHook registers the feature-cache hook. Passing nil clears it.
+func SetFeatureCacheHook(fn FeatureCacheHook) {
+	featureCacheHook = fn
+}

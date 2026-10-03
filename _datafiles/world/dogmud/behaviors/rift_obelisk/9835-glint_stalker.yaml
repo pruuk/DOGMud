@@ -1,0 +1,160 @@
+# Glint Stalker (9835): hit-and-hide ambusher of the Obelisk.
+#
+# Waits hidden: alone in its room it sneaks (the Awareness machine; rooms
+# are built a step ahead of the players, so it is usually hidden before
+# anyone arrives). When a player walks in, or now and then while one stands in the room, it attacks. In the
+# fight it strikes with Splinter Rend (a bleed), once or twice, then breaks
+# off with `vanish` and hides where it stands: rift doors refuse mobs, so it
+# cannot flee the room the way a land ambusher would. `strikes` counts the
+# rends since it last came out; `lurk` holds it hidden a couple of idle
+# rounds after it vanishes.
+#
+# No behavior_archetype: this tree is the whole brain. A round it returns
+# Success is a round it spent on its own move (no melee besides).
+
+tree:
+  type: selector
+  children:
+    # ── Ambush: a player walks in while it is hidden ──
+    - type: sequence
+      event: player_enter
+      children:
+        - type: condition
+          check: mob_is_hidden
+        - type: action
+          do: set_state
+          key: strikes
+          value: 0
+        - type: action
+          do: attack
+
+    # ── Just vanished: lie low a couple of rounds before striking again.
+    #    Not gated on being hidden: a vanish's hide is a roll that can
+    #    fail, and without this the branches below would take a Stalker that
+    #    failed it for one caught in the open and send it straight back in. ──
+    - type: sequence
+      event: mob_idle
+      children:
+        - type: condition
+          check: state_greater_than
+          key: lurk
+          value: 0
+        - type: action
+          do: decrement_state
+          key: lurk
+          amount: 1
+
+    # ── Ambush again from hiding, now and then (about one round in three) ──
+    - type: decorator
+      event: mob_idle
+      mod: random
+      percent: 35
+      child:
+        type: sequence
+        children:
+          - type: condition
+            check: mob_is_hidden
+          - type: condition
+            check: players_in_room
+          - type: action
+            do: set_state
+            key: strikes
+            value: 0
+          - type: action
+            do: attack
+
+    # ── Two strikes in: break off and hide ──
+    - type: sequence
+      event: mob_combat_round
+      children:
+        - type: condition
+          check: state_greater_than
+          key: strikes
+          value: 1
+        - type: action
+          do: vanish
+        - type: action
+          do: set_state
+          key: strikes
+          value: 0
+        - type: action
+          do: set_state
+          key: lurk
+          value: 2
+
+    # ── One strike in: half the time, break off already ──
+    - type: sequence
+      event: mob_combat_round
+      children:
+        - type: condition
+          check: state_greater_than
+          key: strikes
+          value: 0
+        - type: condition
+          check: random_chance
+          percent: 50
+        - type: action
+          do: vanish
+        - type: action
+          do: set_state
+          key: strikes
+          value: 0
+        - type: action
+          do: set_state
+          key: lurk
+          value: 2
+
+    # ── Strike: a rend that keeps bleeding ──
+    - type: sequence
+      event: mob_combat_round
+      children:
+        - type: action
+          do: cast
+          spell: splinter-rend
+        - type: action
+          do: increment_state
+          key: strikes
+          amount: 1
+
+    # ── Caught in the open with someone here (summoned as an add, or the
+    #    fight ended without it breaking off): go for them ──
+    - type: sequence
+      event: mob_idle
+      children:
+        - type: decorator
+          mod: invert
+          child:
+            type: condition
+            check: mob_is_hidden
+        - type: decorator
+          mod: invert
+          child:
+            type: condition
+            check: mob_in_combat
+        - type: condition
+          check: players_in_room
+        - type: action
+          do: set_state
+          key: strikes
+          value: 0
+        - type: action
+          do: attack
+
+    # ── Alone and seen: slip back into the facets to wait. Only with nobody
+    #    here: hiding in front of a player only to step out again a round
+    #    later reads as flicker, not as stealth. ──
+    - type: sequence
+      event: mob_idle
+      children:
+        - type: decorator
+          mod: invert
+          child:
+            type: condition
+            check: mob_is_hidden
+        - type: decorator
+          mod: invert
+          child:
+            type: condition
+            check: players_in_room
+        - type: action
+          do: try_sneak

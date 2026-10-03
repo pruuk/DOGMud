@@ -13,5 +13,6 @@ magical_mitigation: 3
 conviction_mitigation: 2
 statmods:
   perception: 3
+weight: 0.2
 value: 18
 rarity_tier: 40

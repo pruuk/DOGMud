@@ -187,3 +187,10 @@ Not `internal/combat`, by rule and by test.
 `target_weakest_mob_in_room`), `internal/actions` (`StageMeleeTarget`,
 `combat_taunt.go`), `internal/hooks` (`pinnacle_tick.go`), and
 `internal/combat` for the `init()` registration only.
+
+## Random player selection skips the unseen
+
+`RandomPlayer` picks only a player the picker could know is there: hidden
+(undetected sneakers) and downed players are skipped, as `lookfortrouble`
+already rules. This covers the behaviour tree `attack` fallback and
+`target_random_player_in_room`.

@@ -67,7 +67,7 @@ character:
     vitality:
       base: 110
     perception:
-      base: 105
+      base: 116
   shop:
     # Thornwall refined (in-shop crafted)
     - itemid: 40018    # steel ingot

@@ -45,7 +45,7 @@ character:
       itemid: 40038
   stats:
     perception:
-      base: 115
+      base: 117
     charisma:
       base: 110
     dexterity:

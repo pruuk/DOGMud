@@ -1,0 +1,44 @@
+id: a-the-leading-reflection
+pool: A
+source: authored
+title: The Leading Reflection
+description: >-
+  The walls of this passage are polished to a perfect black mirror, unbroken
+  by facets, and your reflections keep pace in them on both sides. Then they
+  do not. Somewhere along the way the figures in the glass begin to walk a
+  few steps ahead of you, so that you are always following yourself down the
+  corridor. If you stop, they stop a moment later and wait, half turned,
+  wearing your face. If you hurry, they keep their distance exactly. Low on
+  the walls, below the figures, runs a line of round marks pressed at the
+  height of a hip. Near the far end the mirror is cracked across, and there
+  the reflections pause before going on, as if they had to remember how to
+  step over it.
+nouns:
+  reflections: >-
+    Your two reflections are you in every detail but one: they walk with a
+    long sliding gait, the feet set wide and turned out, a step not quite
+    your own. When you look straight at one it corrects itself. When you
+    look away, you can feel it slip back into the other way of walking.
+  marks: >-
+    A row of round marks runs along both walls at hip height, the whole
+    length of the passage. It is the same short sequence over and over,
+    the way you might repeat a name. In the glass the marks appear
+    reversed, and reversed they are worn deeper, as though they were read
+    more often from that side.
+  crack: >-
+    A fine crack runs across both walls at the same point, a line of white
+    through the black. Your reflections stop on the far side of it and
+    look back at you. For a moment their faces are not quite yours:
+    longer, smoother, and filled with a faint, sad light. Then they are
+    yours again.
+idlemessages:
+  - "In the black glass, your reflection glances back over its shoulder at you."
+doors:
+  - exit: way
+    description: >-
+      Ahead, past the crack, the mirrored walls run on, and your
+      reflections are already walking that way without waiting.
+  - exit: sill
+    description: >-
+      A low doorway in one wall breaks the mirror, its sill worn hollow
+      in the middle. Nothing reflects in it.

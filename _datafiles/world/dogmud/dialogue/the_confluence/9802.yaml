@@ -1,0 +1,36 @@
+mobid: 9802
+zone: The Confluence
+defaultMood: neutral
+
+greetings:
+  - text: "The Quillhouse. Rooms, extensions, redecoration. Type list for the
+      terms. I would rather not read them aloud. I wrote them."
+    moods: ["neutral"]
+  - text: "Ah. You. The plate knows you. Go on in."
+    moods: ["friendly"]
+
+patterns:
+  - keywords: ["plate", "brass", "touch", "palm", "rivers", "engraving"]
+    responses:
+      - "Madam Pardew had it from the same locksmith as the Crewe house downriver.
+        It learns a lodger's palm when I enter them in the ledger. How, I could
+        not tell you. I only keep the ledger."
+      - "No, it cannot be picked. Yes, people try, usually at night, usually
+        badly. I watch. It is the most exciting part of my day."
+
+  - keywords: ["margin", "vouch", "scholars", "quist", "reputation", "standing"]
+    responses:
+      - "Madam Pardew lets only to people the Margin will speak for. Quist the
+        Elder at the Margin Hall usually has some old chart that needs a
+        second pair of eyes. Be the eyes. Then come back."
+
+  - keywords: ["temple", "keepers", "quay", "quayfolk", "river"]
+    responses:
+      - "The temple keeps the island and the quay keeps the water. The
+        Quillhouse keeps people who read. We do not quarrel. We do not visit."
+
+  - keywords: [""]
+    responses:
+      - "I let rooms. Type list. That is the entire job, and I have made my
+        peace with it."
+      - "Is this about a room? I do hope it is about a room."

@@ -77,10 +77,12 @@ The hooks system is built around several key categories:
 events.RegisterListener(events.NewRound{}, InactivePlayers)       // Handle AFK players
 events.RegisterListener(events.NewRound{}, UpdateZoneMutators)    // Update zone effects
 events.RegisterListener(events.NewRound{}, CheckNewDay)           // Day/night cycle
-events.RegisterListener(events.NewRound{}, SpawnLootGoblin)       // Special mob spawning
+events.RegisterListener(events.NewRound{}, SpawnLootGoblin)       // Special mob spawning (retired: LootGoblin.RoomId ships 0)
+events.RegisterListener(events.NewRound{}, DecayFloors)           // Daily floor decay outside the scavengers' rounds (NewRound_FloorDecay.go)
 events.RegisterListener(events.NewRound{}, UserRoundTick)         // Player round processing
 events.RegisterListener(events.NewRound{}, MobRoundTick)          // NPC round processing
 events.RegisterListener(events.NewRound{}, HandleRespawns)        // Mob respawning
+events.RegisterListener(events.NewRound{}, MerchantChestRestock)  // Merchant chests due a restock (internal/merchantchests)
 events.RegisterListener(events.NewRound{}, DoCombat)              // Combat resolution
 events.RegisterListener(events.NewRound{}, AutoHeal)              // Natural healing
 events.RegisterListener(events.NewRound{}, IdleMobs)              // Mob idle behavior
@@ -591,9 +593,11 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
         // Emit MobCraftedRare world event if SkillMinimum >= CrafterRareThreshold
     }
 
-    // Execute idle command (runs alongside crafting)
+    // Execute idle command (runs alongside crafting). An emote or say may
+    // be written fresh instead (internal/npcidle.TryReplace); the set line
+    // then runs only if no moment comes.
     idleCommand := mob.GetIdleCommand()
-    if idleCommand != "" {
+    if idleCommand != "" && !npcidle.TryReplace(mob, idleCommand) {
         mob.Command(idleCommand)
     }
 
@@ -1897,6 +1901,16 @@ discarded -- one cast resolved twice and the player saw both narrations. The
 flat reserve is deliberate (spec 3.8): a sewer rat and an Elemental King tie up
 the same conviction, because charm's price is the DANGER, not the invoice.
 
+### Ambient room lines (`NewRound_UserRoundTick.go`)
+
+Each round, for every room with players, a 5% roll (20% in room -1) picks one
+of the room's `IdleMessages`, else its zone's, and shows it through the
+sight-gated visual sender (`sendVisualRoomText`). Before sending, the line is
+offered to `roomlife.TryReplace(room, wrappedMsg, idleMsgs)`: a share of the
+time (`Modules.roomlife.Chance`) a model writes a fresh event, seen or heard,
+on the key of a player in the room, and the set line is shown only if no
+event comes. See `internal/roomlife/context.md`.
+
 ### Enchant tier-up and craft completion (`NewRound_UserRoundTick.go`)
 
 ```go
@@ -1940,6 +1954,18 @@ owner (`GetCharmedUserId`) could not harm: a creature `mobs.CheckPlayerHarm`
 blocks, and a person `(*rooms.Room).CanPvp` refuses to the owner or who is
 in the owner's party. With the aicompanion module off nothing is bonded and
 nothing changes.
+
+A wild caster's area harm (uncharmed, not bonded) also skips players who
+are hidden: it does not know an undetected sneaker is there.
+
+A spell with `spares_allies` (`mobAreaHarmTargetsSparing`, opt-in per spell)
+also misses the caster's own side: an uncharmed mob sharing one of its
+`Groups` and not fighting it (a rift boss's Convergence spares its adds).
+
+A mob's harmful cast with `hits` above 1 (a volley) resolves against each
+target that many times, one contest each; follow-up hits stop on a fallen
+target. While a mob channels, a spell's own `wait_observer` replaces the
+generic "weaves magic" line.
 
 ## Spell Duration System
 

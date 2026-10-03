@@ -827,6 +827,18 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 		}
 
 	case result.StillCasting:
+		// A spell that authors its own channel line (wait_observer) says that
+		// instead: a crystal construct gathering light does not weave magic.
+		if spellData := result.SpellData; spellData != nil && spellData.Narration(spells.PhaseWait).Len() > 0 {
+			roles := spellData.Narrate(spells.PhaseWait, textutil.TokenContext{
+				ActorName:      mobDisplayName(mob, mobRoom, 0),
+				ActorPlainName: mob.Character.GetCharacterName(false),
+			})
+			if roles.Observer != `` {
+				mobRoom.SendTextVisual(messaging.CategorySpellFold, roles.Observer)
+				break
+			}
+		}
 		mobRoom.SendText(messaging.CategorySpellFold, fmt.Sprintf(
 			`%s weaves magic with focused intent.`, mobDisplayName(mob, mobRoom, 0)))
 	}

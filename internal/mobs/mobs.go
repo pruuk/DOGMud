@@ -850,6 +850,20 @@ func FindLiveInstanceByHomeAndId(roomId int, mobId MobId) *Mob {
 	return nil
 }
 
+// RestoreInstance puts a mob taken out with DestroyInstance back into the
+// world registry under its own instance id, unchanged (health, conditions,
+// state): the same creature, back. A caller that parks a mob between rooms
+// (a rift's hunter following its quarry) uses the pair. Placing it in a room
+// is the caller's.
+func RestoreInstance(m *Mob) {
+	if m == nil || m.InstanceId == 0 {
+		return
+	}
+	mobInstancesMu.Lock()
+	mobInstances[m.InstanceId] = m
+	mobInstancesMu.Unlock()
+}
+
 func DestroyInstance(instanceId int) {
 	mobInstancesMu.Lock()
 	delete(mobInstances, instanceId)
@@ -1064,7 +1078,7 @@ func (m *Mob) Despawns() bool {
 }
 
 // IsEssential returns true when this mob drives a living-economy system
-// (foragers, caravan crew, or shopkeepers). Essential mobs persist in their
+// (foragers, caravan crew, city scavengers, or shopkeepers). Essential mobs persist in their
 // rooms so their BTree state survives unattended periods — the room manager
 // skips unloading rooms that contain them. Memory cost is small: typically
 // fewer than 20–50 rooms pinned across the world at any moment.
@@ -1075,12 +1089,25 @@ func (m *Mob) IsEssential() bool {
 		return true
 	}
 	for _, g := range m.Groups {
-		if g == "forager" || g == "caravan" {
+		// A city scavenger's walk and haul live in its instance; unloading
+		// its room would reset both (internal/scavenger).
+		if g == "forager" || g == "caravan" || g == "scavenger" {
+			return true
+		}
+		// An AI companion waiting in the Waystone Hollow (modules/aicompanion
+		// hollow.go) is one person on the server, with what she has learned
+		// restored onto her; she must not be unloaded or despawn from boredom.
+		if g == HollowGroup {
 			return true
 		}
 	}
 	return false
 }
+
+// HollowGroup marks an AI companion waiting in the Waystone Hollow for
+// someone to travel with. The aicompanion module adds it to that one
+// instance; no template carries it.
+const HollowGroup = "hollow"
 
 func (m *Mob) GetSellPrice(item items.Item) int {
 

@@ -94,6 +94,12 @@ recipe|flashbang|success_actor => <ansi fg="green">The mixture crystallizes into
 recipe|flashbang|failure_actor => <ansi fg="red">The compounds fizzle and separate. The materials are wasted.</ansi>
 recipe|gem-set-necklace|success_actor => <ansi fg="green">You twist silver wire into a delicate chain and seat the gem in a wire cradle. A gem-set necklace!</ansi>
 recipe|gem-set-necklace|failure_actor => <ansi fg="red">The gem slips from your grip and chips on the bench edge. The materials are ruined.</ansi>
+recipe|glass-facet-buckler|success_actor => <ansi fg="green">You dish the steel thin, set it on its grip, and face it edge to edge with black lenses, each turned a little from the next. A glass-facet buckler!</ansi>
+recipe|glass-facet-buckler|failure_actor => <ansi fg="red">The thin steel buckles under the weight of the lenses and the facing splits apart. The materials are ruined.</ansi>
+recipe|glass-scale-hauberk|success_actor => <ansi fg="green">You weave the chain, rivet the joins, and then begin the long work: lens after lens, wired into place row on row until they overlap like scales. When the last one sits flat the whole coat ripples like dark water. A glass-scale hauberk!</ansi>
+recipe|glass-scale-hauberk|failure_actor => <ansi fg="red">Halfway down the back the rows will not lie flat. One lens cracks against its neighbour, then the next, and the cracks run through the scales like frost. The work is lost.</ansi>
+recipe|glass-scale-helm|success_actor => <ansi fg="green">You raise a close steel cap and scale it over in black lenses, brow to nape, each one seated a hair's breadth over the last. A glass-scale helm!</ansi>
+recipe|glass-scale-helm|failure_actor => <ansi fg="red">The steel cools a breath too fast under the lenses and they spring loose one after another, ringing on the floor. The materials are ruined.</ansi>
 recipe|gold-signet-ring|success_actor => <ansi fg="green">You shape the gold into a heavy band and engrave a crest in gem dust. A gold signet ring!</ansi>
 recipe|gold-signet-ring|failure_actor => <ansi fg="red">The soft gold deforms under your tool and the engraving is ruined. The materials are wasted.</ansi>
 recipe|grilled-meat|success_actor => <ansi fg="green">You rub the meat with salt and sear it over the flames. Grilled meat!</ansi>
@@ -158,6 +164,8 @@ recipe|mutagen-brew|success_actor => <ansi fg="green">The brew shifts color cons
 recipe|mutagen-brew|failure_actor => <ansi fg="red">The mutation catalyst destabilizes violently. The materials are wasted.</ansi>
 recipe|nutrient-suspension|success_actor => <ansi fg="green">You brew the root down with moss and petal until it clouds thick and faintly sweet, enough to keep a hunger quiescent. A nutrient suspension!</ansi>
 recipe|nutrient-suspension|failure_actor => <ansi fg="red">The brew curdles and separates in the flask. The materials are wasted.</ansi>
+recipe|obelisk-lens|success_actor => <ansi fg="green">You score the black glass along its grain and it parts cleanly into three discs. Ground thin at the edges, each bends the bench a little when you look through it. Three Obelisk lenses!</ansi>
+recipe|obelisk-lens|failure_actor => <ansi fg="red">The glass will not part along the line you scored. It shatters into a dust that drinks the lamplight, and the shard is lost.</ansi>
 recipe|obsidian-edge-resin|success_actor => <ansi fg="green">You work coal-black pitch until it glasses over but never quite sets. Obsidian edge-resin!</ansi>
 recipe|obsidian-edge-resin|failure_actor => <ansi fg="red">The resin sets too fast and cracks in the jar. The materials are ruined.</ansi>
 recipe|pitsense-tincture|success_actor => <ansi fg="green">The heat-pit steeps into the moonpetal and the tincture darkens to red. A pitsense tincture!</ansi>

@@ -1,0 +1,48 @@
+id: d-shattered-gallery
+pool: D
+source: authored
+title: Shattered Gallery
+description: >-
+  This was a long gallery once, lined with tall standing panes of crystal like
+  the windows of a building that had no outside. Most of the panes are broken
+  now, and their pieces lie in drifts along the walls, glittering faintly in
+  the dark. The breaking was not an accident: every pane has been struck in
+  the same place, low and to the left, and the cracks spread from there like
+  frost. Some of the drifts are not still. Things move in the broken glass,
+  shards that click and turn and gather themselves together, and the light
+  in their cores swings toward you. Down the middle of the floor runs a clear
+  lane where nothing lies at all, swept clean, as if something patrols it.
+nouns:
+  panes: >-
+    Tall standing sheets of black crystal, most cracked or fallen. The few
+    left whole show the gallery behind you, but not you. Each broken one
+    bears the same starred blow low on its left side, at the height a Watcher
+    would have stood to look.
+  drifts: >-
+    Heaps of broken crystal swept against the walls. Some of the shards are
+    sharp enough to cut, and some of them are moving. Deep in the nearest
+    drift, pieces of a single pane lie fitted almost back together, as
+    though something had tried to mend it and given up.
+  lane: >-
+    A clean path down the centre of the gallery, the floor scoured bright
+    where shards have been dragged over it again and again. The scratches
+    run both ways. Whatever keeps this lane walks it often, turns at each
+    end, and walks it back.
+idlemessages:
+  - Glass shifts in one of the drifts with a sound like a breath.
+  - A shard skitters across the lane and is gone into the drift beyond.
+encounter:
+  tier: trash
+  count: {min: 2, max: 3}
+doors:
+  - exit: window
+    description: >-
+      An empty frame where a great pane once stood, opening onto darkness.
+  - exit: door
+    description: >-
+      A narrow door of crystal at the end of the gallery, standing slightly
+      open.
+  - exit: plunge
+    description: >-
+      A hole in the floor where the crystal has given way, with a slope of
+      broken glass leading down.

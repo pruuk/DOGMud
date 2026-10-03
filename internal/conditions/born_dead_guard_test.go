@@ -17,6 +17,9 @@ var bornDeadExceptions = map[int]string{
 	9: "Hidden is granted only by stealth paths that pass permanent=true " +
 		"(see internal/actions/shadow.go and the behaviortree skullduggery " +
 		"actions); an ordinary apply is not a supported way to become hidden",
+	133: "Refraction is a rift construct's nature, held permanently through " +
+		"its mob conditionids (the Splitlight, 9837); it is never applied " +
+		"for a time",
 }
 
 // TestNoShippedConditionIsBornDead pins the invariant that a condition you can

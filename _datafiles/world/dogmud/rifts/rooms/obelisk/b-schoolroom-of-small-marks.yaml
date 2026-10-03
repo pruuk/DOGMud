@@ -1,0 +1,63 @@
+id: b-schoolroom-of-small-marks
+pool: B
+source: authored
+title: Schoolroom of Small Marks
+description: >-
+  Low tiers of crystal step up from the floor in a half ring, each too short
+  for a grown Watcher to have stood on comfortably, and all of them face a
+  broad upright slab at the front of the room. The slab is pressed with
+  round marks in long, even, perfect rows. The tiers are pressed with marks
+  too, but these are another thing entirely: crooked, crowded, some too
+  deep and some barely there, rows that wander uphill and give up halfway.
+  Someone small sat here and tried to copy what was on the slab, and got it
+  wrong, and tried again. On the lowest tier lie a scatter of little lenses,
+  thick and clumsily ground, the kind a beginner makes. The floor in front
+  of the slab is worn by a single pair of feet that paced back and forth,
+  back and forth. High in one corner, out of reach of anyone short, a row of
+  marks has been pressed upside down, very neatly, as a joke.
+nouns:
+  tiers: >-
+    The tiers are scuffed at their edges by small three-toed feet that could
+    not keep still. On one, a little hollow has been worn where something
+    sat and rocked. On another, a row of marks has been rubbed away by
+    something patient, and pressed again more carefully beneath.
+  slab: >-
+    The rows on the slab are perfect and the marks are evenly spaced. Near
+    the bottom the lesson changes: the same short cluster of marks repeated
+    over and over, down to the floor, the way you would teach a word that
+    mattered more than the others.
+  marks: >-
+    The small marks are pressed by something blunt and uncertain. In one
+    place the rows break off and a single large round mark has been made
+    instead, surrounded by many small ones, like a picture of a big eye with
+    little ones gathered round it.
+  lenses: >-
+    Thick, lopsided lenses no wider than a thumb. Look through one and the
+    room ripples and swims. One, though, is ground true, and through it the
+    tiers are full: a crowd of small tall shapes of soft light, all turned
+    toward the slab. Lower it and they are gone.
+  corner: >-
+    The upside-down row sits high on the wall, its marks crisp and adult.
+    Below it, on the tier nearest the corner, someone small has tried to
+    copy it upside down too, and failed, and pressed a little cluster of
+    marks beside the attempt that might be laughter.
+idlemessages:
+  - "A tiny lens on the lowest tier rolls a finger's width and stops."
+  - "Pacing footsteps sound in front of the slab, back and forth, and there is no one there."
+doors:
+  - exit: stair
+    description: >-
+      A short stair leading up past the top tier, its steps cut low and close
+      together, for small feet.
+  - exit: arch
+    description: >-
+      A rounded arch beside the slab, its edge pressed with one neat row of
+      marks at a height for reading.
+  - exit: crawl
+    description: >-
+      A crawl at the back of the lowest tier, just big enough for a child,
+      and so for you on hands and knees.
+  - exit: loft
+    description: >-
+      A narrow loft above the tiers, reached by a ledge, with dark openings
+      leading off behind it.

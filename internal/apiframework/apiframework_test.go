@@ -727,3 +727,19 @@ func TestRecordConsumerFeedsOnlyItsOwnBreaker(t *testing.T) {
 		t.Fatal("a success resets the run")
 	}
 }
+
+// Lively features share one permission (PurposeLively) but each lends under
+// its own purpose.
+func TestLivelyPurposes(t *testing.T) {
+	if LivelyPurpose(`npcidle`) != PurposeNPCIdle || !IsLively(PurposeNPCIdle) ||
+		LivelyPurpose(`roomlife`) != PurposeRoomLife || !IsLively(PurposeRoomLife) ||
+		LivelyPurpose(`lookdetail`) != PurposeLookDetail || !IsLively(PurposeLookDetail) ||
+		LivelyPurpose(`rifts`) != PurposeRifts || !IsLively(PurposeRifts) || !IsLively(LivelyPurpose(`crier`)) {
+		t.Fatal("a lively feature's purpose is lively")
+	}
+	for _, p := range []string{PurposeLively, PurposeLively + `:`, PurposeFinds, `livelyx:npcidle`, ``} {
+		if IsLively(p) {
+			t.Fatalf("%q is not a lively feature's purpose", p)
+		}
+	}
+}

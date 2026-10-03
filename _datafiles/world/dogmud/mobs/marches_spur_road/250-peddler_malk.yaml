@@ -44,7 +44,7 @@ character:
       itemid: 40038
   stats:
     perception:
-      base: 108
+      base: 115
     charisma:
       base: 106
     willpower:

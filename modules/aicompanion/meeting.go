@@ -15,14 +15,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// Meeting a companion in the world. With AutoBond on (the default), a new
-// character meets its companion as soon as it steps into the world after
-// character creation: once it has stood in its first real room for a few
-// rounds (not the void, not the tutorial antechamber, not mid-fight), the
-// companion arrives, and its first words are its own introduction. An
-// existing character with no companion meets one the same way on its next
-// login (AutoBondExisting). The companion may part ways if the player
-// clearly asks it to, and then it does not come back on its own.
+// Meeting a companion. There is one of each companion on the server, and a
+// free one waits in the Waystone Hollow above Pothole Coulee (hollow.go)
+// until someone wins them over. Nobody is handed one: a new character is
+// told, once, where the Hollow is (onCharacterCreated, hintHollow). A
+// companion leaves when their owner sends them away (companion-part), when
+// the relationship has gone too far wrong (abandons), or when their owner
+// has been away too long (roster.go), and goes back to the Hollow each
+// time.
 
 // bondRecord is what the module remembers about one character's bond.
 type bondRecord struct {
@@ -30,13 +30,15 @@ type bondRecord struct {
 	Met      bool   `yaml:"met,omitempty"`
 	Declined bool   `yaml:"declined,omitempty"`
 	Unix     int64  `yaml:"t,omitempty"`
-	// Consented is the player having agreed, in as many words, that talking
-	// to this companion sends what they say to OpenAI. Until they do,
-	// nothing they say leaves the server: she falls back to her authored
-	// lines, which is also what she does for a player who says no.
-	Consented bool  `yaml:"consented,omitempty"`
-	Refused   bool  `yaml:"refused,omitempty"`
-	AskedAt   int64 `yaml:"asked_at,omitempty"`
+	// Consented is the player having agreed that talking to a companion
+	// sends what they say to the model: by speaking to one in the Hollow
+	// after reading its sign, by travelling with one at all (bondTo, and
+	// every holder when the roster loads: consentByCompanionship), or with
+	// companion-ai on. There is no typed "i agree" any more. Until then
+	// nothing they say leaves the server, and Refused (companion-ai off,
+	// their own later word) keeps it that way whatever else happens.
+	Consented bool `yaml:"consented,omitempty"`
+	Refused   bool `yaml:"refused,omitempty"`
 	// StrangersOff and StrangersOn are the owner's own word on whether
 	// passers-by may prompt a model call for their companion
 	// (companion-ai strangers off, or on); at most one is set. With
@@ -46,6 +48,16 @@ type bondRecord struct {
 	// own key, which is their money, and on for the server's key.
 	StrangersOff bool `yaml:"strangers_off,omitempty"`
 	StrangersOn  bool `yaml:"strangers_on,omitempty"`
+	// Notice is a line kept for this player's next login: why the
+	// companion they still had on their record has gone (reclaimFrom).
+	Notice string `yaml:"notice,omitempty"`
+	// HollowHinted is the new character having been told where the
+	// Waystone Hollow is.
+	HollowHinted bool `yaml:"hollow_hinted,omitempty"`
+	// SignRead is the player having been shown the board at the mouth of
+	// the Hollow, which says plainly what speaking to the travellers there
+	// sends and where. Speaking to one after it is their agreement.
+	SignRead bool `yaml:"sign_read,omitempty"`
 }
 
 type bondState struct {
@@ -78,6 +90,25 @@ func (m *AICompanionModule) saveBonds() {
 	}
 }
 
+// consentByCompanionship records consent for a player who travels with a
+// companion: they won her by talking to her in the Hollow after its board
+// told them what that means, so having one IS their agreement. It also
+// covers a companion an admin granted, and a holder from before the board.
+// An explicit companion-ai off (Refused) is their own later word and is
+// never overridden. Reports whether it changed anything.
+func (m *AICompanionModule) consentByCompanionship(userId int) bool {
+	if userId <= 0 {
+		return false
+	}
+	rec := m.bondRecordFor(userId)
+	if rec.Consented || rec.Refused {
+		return false
+	}
+	rec.Consented = true
+	mudlog.Info(`aicompanion`, `action`, `consent`, `owner`, userId, `how`, `travels with a companion`)
+	return true
+}
+
 // markBond records that a character has met (or parted from) a companion.
 func (m *AICompanionModule) markBond(userId int, profileId string, declined bool) {
 	if m.bonds.Users == nil {
@@ -95,125 +126,81 @@ func (m *AICompanionModule) markBond(userId int, profileId string, declined bool
 	m.saveBonds()
 }
 
-// onCharacterCreated queues a meeting for a brand-new character.
+// onCharacterCreated marks a brand-new character to be told, once, where
+// the companions wait (hintHollow).
 func (m *AICompanionModule) onCharacterCreated(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.CharacterCreated)
-	if !ok || !m.cfg.Enabled || !m.cfg.AutoBond {
+	if !ok || !m.cfg.Enabled {
 		return events.Continue
 	}
-	if m.pendingMeet == nil {
-		m.pendingMeet = map[int]*meetWait{}
+	if m.newcomers == nil {
+		m.newcomers = map[int]bool{}
 	}
-	m.pendingMeet[evt.UserId] = &meetWait{}
+	m.newcomers[evt.UserId] = true
 	return events.Continue
 }
 
-// meetWait tracks where a character is standing while it waits to meet.
-type meetWait struct {
-	RoomId int
-	Since  uint64
-}
-
-// meetingRoomOK reports whether a room is somewhere a companion can walk up
-// to a new arrival: a real room, outside the skipped zones.
-func (m *AICompanionModule) meetingRoomOK(room *rooms.Room) bool {
-	if room == nil || room.RoomId <= 0 {
-		return false
-	}
-	for _, z := range m.cfg.MeetSkipZones {
-		if strings.EqualFold(strings.TrimSpace(z), room.Zone) {
-			return false
-		}
-	}
-	return true
-}
-
-// considerMeeting runs in sync for an online character with no bonded
-// companion, and bonds one when the moment is right.
-func (m *AICompanionModule) considerMeeting(u *users.UserRecord, round uint64) {
-	if !m.cfg.AutoBond || u.Character == nil {
+// hintHollow tells a new character where the Waystone Hollow is, the first
+// time they stand in the Hollow's own zone (the village they start near),
+// once. It runs in sync.
+func (m *AICompanionModule) hintHollow(u *users.UserRecord) {
+	if !m.newcomers[u.UserId] || u.Character == nil {
 		return
+	}
+	zone := m.hollowZone()
+	room := rooms.LoadRoom(u.Character.RoomId)
+	if zone == `` || room == nil || !strings.EqualFold(room.Zone, zone) || u.Character.IsInCombat() {
+		return
+	}
+	delete(m.newcomers, u.UserId)
+	if rec := m.bonds.Users[u.UserId]; rec != nil && rec.HollowHinted {
+		return
+	}
+	if m.bonds.Users == nil {
+		m.bonds.Users = map[int]*bondRecord{}
 	}
 	rec := m.bonds.Users[u.UserId]
-	if rec != nil && rec.Declined {
-		// Sent away for good: the companion does not come back on its own.
-		return
+	if rec == nil {
+		rec = &bondRecord{}
+		m.bonds.Users[u.UserId] = rec
 	}
-	w, pending := m.pendingMeet[u.UserId]
-	if !pending {
-		// An existing character who has never met a companion.
-		if !m.cfg.AutoBondExisting || (rec != nil && rec.Met) {
-			return
-		}
-		if m.pendingMeet == nil {
-			m.pendingMeet = map[int]*meetWait{}
-		}
-		w = &meetWait{}
-		m.pendingMeet[u.UserId] = w
-	}
-
-	room := rooms.LoadRoom(u.Character.RoomId)
-	if !m.meetingRoomOK(room) || u.Character.IsInCombat() || u.Character.HasCondition(0) {
-		w.RoomId = 0
-		return
-	}
-	// Let the character take in the room before anyone walks up.
-	if w.RoomId != room.RoomId {
-		w.RoomId, w.Since = room.RoomId, round
-		return
-	}
-	if round < w.Since+uint64(m.cfg.MeetDelayRounds) {
-		return
-	}
-
-	p, ok := m.profiles[strings.ToLower(m.cfg.AutoBondProfile)]
-	if !ok {
-		mudlog.Error(`aicompanion`, `action`, `meet`, `error`, fmt.Sprintf(`AutoBondProfile %q is not loaded`, m.cfg.AutoBondProfile))
-		delete(m.pendingMeet, u.UserId)
-		return
-	}
-	arrival := p.Meeting
-	if arrival == `` {
-		arrival = `comes up the path and stops a few paces away, looking you over.`
-	}
-	line := fmt.Sprintf(`<ansi fg="mobname">%s</ansi> %s`, p.Name, util.EscapeAnsiTags(arrival))
-	if err := m.bondTo(u, p, line); err != nil {
-		mudlog.Error(`aicompanion`, `action`, `meet`, `owner`, u.UserId, `error`, err)
-		delete(m.pendingMeet, u.UserId)
-		return
-	}
-	delete(m.pendingMeet, u.UserId)
-	m.meetingPlace[u.UserId] = strings.TrimSpace(room.Title)
-	if m.cfg.RequireConsent {
-		if rec := m.bonds.Users[u.UserId]; rec != nil {
-			rec.AskedAt = time.Now().Unix()
-			m.saveBonds()
-		}
-		u.SendText(messaging.CategorySystem, consentQuestion(p.Name))
-	}
+	rec.HollowHinted = true
+	m.saveBonds()
+	m.tellOwner(u.UserId, `(Word in the village is that a few travellers between roads wait in the Waystone Hollow, a cave west of Scrub Draw, for someone worth going with. Each of them chooses for themselves. See "help companion-hollow".)`)
 }
 
 // leave ends the bond at the companion's own decision: the owner clearly
-// asked it to go, or it has come to dislike and distrust them completely
-// (F5.7). It says goodbye in its own words first (already spoken), walks
-// off, and will not come back on its own.
+// asked it to go and confirmed it, or it has come to dislike and distrust
+// them so much that it will not stay (abandons). It says goodbye in its own
+// words first (already spoken, or not at all), walks off, and goes back to
+// wait in the Waystone Hollow, taking what it has learned with it.
 func (m *AICompanionModule) leave(c *controller, owner *users.UserRecord, why string) {
 	if owner == nil || owner.Character == nil {
 		return
 	}
-	now := time.Now().Unix()
-	if m.mayRemember(c) {
-		c.mind.addMemory(Memory{Unix: now, Kind: `event`, Text: `I parted ways with ` + owner.Character.Name + `. ` + why,
-			Importance: 9, Emotion: `sadness`, People: []string{owner.Character.Name}}, m.cfg.MaxMemories)
-		c.dirty = true
+	if strings.TrimSpace(why) == `` {
+		why = partSentAway // her owner asked her to go, twice
 	}
-	profileId := c.profile.Id
-	if _, err := m.unbond(owner, `turns and walks away without looking back.`); err != nil {
+	p := c.profile
+	profileId := p.Id
+	// What she had with them comes down to one sentence (partWith, by way
+	// of unclaim); the rest of her mind of them is wiped.
+	if err := m.sendBack(owner, `turns and walks away without looking back, toward the Waystone Hollow.`, true, why); err != nil {
 		mudlog.Error(`aicompanion`, `action`, `leave`, `owner`, owner.UserId, `error`, err)
 		return
 	}
 	m.markBond(owner.UserId, profileId, true)
-	owner.SendText(messaging.CategorySystem, `Your companion has gone their own way.`)
+	owner.SendText(messaging.CategorySystem, fmt.Sprintf(
+		`%s has gone back to the Waystone Hollow. %s will not come back on %s own; you would have to go there and win %s over again.`,
+		p.Name, capitalize(subjectPronoun(p)), possessive(p), objectPronoun(p)))
+}
+
+// capitalize upper-cases the first letter of a word.
+func capitalize(s string) string {
+	if s == `` {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 // leaveRequestAllowed is the rule for a companion ASKING to part ways: its
@@ -259,31 +246,17 @@ func (m *AICompanionModule) confirmPart(c *controller, owner *users.UserRecord) 
 	asked := c.leaveAskedAt > 0 && now-c.leaveAskedAt <= int64(m.cfg.LeaveConfirmSeconds)
 	if !asked && (c.partAskedAt == 0 || now-c.partAskedAt > 60) {
 		c.partAskedAt = now
-		return fmt.Sprintf(`%s looks at you and waits. Type companion-part again within a minute to part ways for good; their memories are kept, but they will not come back on their own.`, c.profile.Name)
+		return fmt.Sprintf(`%s looks at you and waits. Type companion-part again within a minute to part ways; they go back to the Waystone Hollow, and only come with you again if you win them over.`, c.profile.Name)
 	}
 	m.leave(c, owner, c.leaveWhy)
 	return ``
 }
 
-// The consent question. It is authored text, not a model call, and the
-// answer is matched literally, so nothing a player says reaches OpenAI
-// before they have agreed that it may.
-
-const consentPhrase = `i agree`
-const refusePhrase = `i decline`
-
-// consentWindowSeconds is how long the question stays open after it is put.
-// Outside it, and once it has been answered either way, those words are
-// just words: the answer is only read when the question is on the table.
-const consentWindowSeconds = 600
-
-// consentQuestion is what she puts to a new companion, in brackets, as
-// plainly as it can be put.
-func consentQuestion(name string) string {
-	return fmt.Sprintf(
-		`(%s is driven by OpenAI. If you agree, what you say to %s, and what happens around you both, is sent to OpenAI to decide what %s says, and is kept on this server where administrators can read it. %s forms an opinion of you over time, and if you travel together long enough that may include becoming close to you, which only ever moves at your word. Say "%s" now to agree, or "%s" to keep %s as a plain companion: they will still travel with you, fight beside you and answer with a few set lines, and nothing you say will be sent anywhere. You can change your mind later with "companion-ai on" or "companion-ai off"; the question itself is only asked this once.)`,
-		name, name, name, name, consentPhrase, refusePhrase, name)
-}
+// Consent. A player agrees to the model by speaking to a traveller in the
+// Waystone Hollow after the board at its mouth has told them, plainly, what
+// that sends and where (hollow.go, showSign and hollowMayTalk), or with
+// "companion-ai on"; "companion-ai off" takes it back at any time. Nothing
+// of theirs is written into a mind or sent before then.
 
 // consented reports whether this owner has agreed to the model being used
 // for their companion. Without agreement she is an ordinary companion.
@@ -363,48 +336,4 @@ func (m *AICompanionModule) syncConsent() {
 	m.consent.open = !m.cfg.RequireConsent
 	m.consent.agreed = agreed
 	m.consent.mu.Unlock()
-}
-
-// answerConsent reads a literal yes or no from something the owner said. It
-// returns true when the words were an answer, so the speech is not passed
-// on as ordinary conversation.
-func (m *AICompanionModule) answerConsent(c *controller, u *users.UserRecord, said string) bool {
-	if !m.cfg.RequireConsent || m.consented(u.UserId) {
-		return false
-	}
-	rec := m.bonds.Users[u.UserId]
-	if rec == nil {
-		return false
-	}
-	// These words only mean anything while the question is actually open:
-	// asked, not yet answered, and answered soon. Otherwise "I agree" is an
-	// ordinary thing to say to someone, and a player would find their own
-	// conversation quietly swallowed by a settings prompt. Changing their
-	// mind later is what companion-ai is for.
-	if rec.Consented || rec.Refused || rec.AskedAt == 0 ||
-		time.Now().Unix()-rec.AskedAt > consentWindowSeconds {
-		return false
-	}
-	answer := strings.ToLower(strings.TrimSpace(said))
-	answer = strings.Trim(answer, `."!,`)
-	switch answer {
-	case consentPhrase:
-		rec.Consented, rec.Refused = true, false
-		m.saveBonds()
-		u.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`(Agreed. %s will answer in their own words from here on. "companion-ai off" stops it at any time, and "companion-part" ends the companionship altogether.)`, c.profile.Name))
-		// Anything still queued was said before they agreed, and a queued
-		// moment is exactly what the next call would carry.
-		c.pending = nil
-		m.keepFirstMeeting(c, u)
-		return true
-	case refusePhrase:
-		rec.Refused, rec.Consented = true, false
-		m.saveBonds()
-		u.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`(Understood. %s stays with you as a plain companion, and nothing you say is sent anywhere. Use "companion-ai on" if you ever change your mind.)`,
-			c.profile.Name))
-		return true
-	}
-	return false
 }

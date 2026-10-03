@@ -1,0 +1,45 @@
+mobid: 9833
+zone: Kilnreach Works
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - works_folk
+idlecommands:
+  - 'emote dangles his magnet over a heap of slag and watches it swing.'
+  - ''
+  - 'emote coughs grit out of his lungs and spits black.'
+  - 'emote hefts his sack to gauge its weight, and looks pleased.'
+  - ''
+  - 'emote kicks a clinker down Slag Lane.'
+activitylevel: 8
+character:
+  name: Ruck
+  description: |
+    A slag-picker as grey as the heaps he works, with a magnet on a cord
+    round his neck and a sack that clanks. The foundry pays by the pound for
+    scrap iron, and Ruck has long since stopped caring whether a thing is
+    scrap before he picks it up. He tests everything with the magnet first,
+    out of habit, even bread.
+  speciesid: 1
+  level: 3
+  gold: 3
+  stats:
+    strength:
+      base: 118
+    vitality:
+      base: 116
+    perception:
+      base: 104
+    dexterity:
+      base: 96

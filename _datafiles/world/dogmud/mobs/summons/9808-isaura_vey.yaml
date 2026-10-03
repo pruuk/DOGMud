@@ -1,0 +1,37 @@
+mobid: 9808
+zone: Summons
+archetype: casting
+behavior_archetype: companion_battlemage
+statpool: 90
+itemdropchance: 0
+hostile: false
+maxwander: 0
+groups:
+  - humanoid
+activitylevel: 10
+aiprofile: caster
+specialmovechance: 5
+surrender_policy: auto-tap-below 25
+character:
+  name: Isaura Vey
+  description: |
+    A thin, sharp-featured woman in her late twenties with ink on her
+    fingers, ink on her cuffs and, at the moment, a smudge of it on her
+    cheekbone she has not noticed. She wears a scholar's grey coat that
+    has been slept in more than once, and a pair of spectacles with one
+    cracked lens pushed up into hair she has given up arguing with. She
+    looks at everything as though it might be a question.
+  speciesid: 1
+  level: 1
+  skills:
+    enchanting: 5
+    search: 3
+  stats:
+    willpower:
+      base: 120
+    perception:
+      base: 115
+    charisma:
+      base: 95
+    vitality:
+      base: 85

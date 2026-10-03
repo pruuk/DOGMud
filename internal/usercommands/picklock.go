@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/merchantchests"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -25,6 +27,23 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	if refuseWhileBusy(user, `pick a lock`) {
 		return true, nil
+	}
+
+	// A routed exit (a housing door, a rift door) is not a lock to be picked:
+	// whoever routes it decides who passes. Refuse before the lockpicks check,
+	// any skill roll, trap or unlock, so the authored lock stays shut and the
+	// answer is the true one. A router may supply its own wording.
+	if fields := strings.Fields(strings.ToLower(rest)); len(fields) > 0 {
+		if routedExit, _ := room.FindExitByName(fields[0]); routedExit != `` {
+			if route, handled := rooms.RouteExit(user.UserId, room.RoomId, routedExit); handled {
+				refusal := route.PickRefusal
+				if refusal == `` {
+					refusal = fmt.Sprintf(`The lock on the <ansi fg="exit">%s</ansi> is the landlord's own work, and it has never once been picked. It opens for those who live here.`, routedExit)
+				}
+				user.SendText(messaging.CategorySystem, util.SplitStringNL(refusal, 80))
+				return true, nil
+			}
+		}
 	}
 
 	lockpickItm := items.Item{}
@@ -70,6 +89,11 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	if containerName != `` {
 
 		container := room.Containers[containerName]
+
+		if container.IsSealedShut() {
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> has no keyhole to pick. It opens for its owner and nobody else.`, containerName))
+			return true, nil
+		}
 
 		if !container.HasLock() {
 			user.SendText(messaging.CategorySystem, "There is no lock there.")
@@ -140,6 +164,13 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	if sequenceMatches(keyring_sequence, sequence) {
+		// A merchant's chest is watched: setting a pick to it, even one
+		// already solved, is a theft attempt the room may notice.
+		if containerName != `` && actions.WatchMerchantChest(actions.NewUserActorInRoom(user, room), containerName, actions.MerchantChestPick) {
+			user.ClearPrompt()
+			return true, nil
+		}
+
 		user.SendText(messaging.CategorySystem, "")
 		user.SendText(messaging.CategorySystem, "Your keyring already has this lock on it.")
 
@@ -168,6 +199,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			container := room.Containers[containerName]
 			container.Lock.SetUnlocked()
 			room.Containers[containerName] = container
+			merchantchests.MarkOpened(room.RoomId, containerName, util.GetRoundCount())
 		} else {
 
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> picks the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
@@ -182,6 +214,13 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	cmdPrompt, isNew := user.StartPrompt(`picklock`, rest)
 
 	if isNew {
+		// Each fresh attempt on a merchant's chest is watched once, when the
+		// pick first goes in (not on every pin, which would make a long lock
+		// a string of contests).
+		if containerName != `` && actions.WatchMerchantChest(actions.NewUserActorInRoom(user, room), containerName, actions.MerchantChestPick) {
+			user.ClearPrompt()
+			return true, nil
+		}
 		user.SendText(messaging.CategorySystem, GetLockRender(sequence, keyring_sequence, user.UserId))
 	}
 
@@ -284,6 +323,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			container := room.Containers[containerName]
 			container.Lock.SetUnlocked()
 			room.Containers[containerName] = container
+			merchantchests.MarkOpened(room.RoomId, containerName, util.GetRoundCount())
 		} else {
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> picks the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName), user.UserId)
 			room.SetExitLock(exitName, false)

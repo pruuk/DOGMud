@@ -1,0 +1,61 @@
+id: c-the-strung-room
+pool: C
+source: authored
+title: The Strung Room
+description: >-
+  Thin rods of crystal cross this chamber at every height, strung from wall
+  to wall like the strings of an instrument too large to play. Some run
+  level at the height of your chest, some slant down to the floor, some
+  cross so high overhead that you see them only by the faint blue glow that
+  crawls along their length. The glow moves. It runs out from the walls
+  along a rod, pauses, and leaps with a soft snap to the next one where they
+  cross. The air smells sharp, like struck flint. At the near
+  wall stands a tuning frame with a row of short rods racked in it, and a
+  set of three-groove footprints leads from it into the room by a winding
+  path that ducks and steps aside. Faint scorches darken the floor
+  under several of the crossings. Three ways lead on: an undercroft below,
+  a way across the far side, and a fissure opened in the wall.
+nouns:
+  rods: >-
+    The rods are no thicker than a finger and ring faintly when the glow
+    crosses them. Where two rods touch, the crystal is blackened and pitted,
+    and the glow jumps between them with a bright, dry crack. A few rods have
+    broken and hang loose, their ends twitching with small sparks.
+  frame: >-
+    A standing frame racked with short rods of graded lengths, as though
+    someone tuned the great strings from here. One slot is empty. The rod
+    nearest to it is scorched black along half its length and has a crack
+    in it the shape of a branching tree.
+  footprints: >-
+    The three-groove prints wind through the room in a careful path, never
+    passing beneath a crossing, stepping wide around the scorched places.
+    Followed exactly, they keep a body clear of every place the glow leaps.
+  scorches: >-
+    Dark smudges burned into the floor, each directly beneath a place where
+    two rods cross. The crystal under them is clouded and brittle, and when
+    you look closely, each scorch has a faint star-shaped crack at its heart.
+idlemessages:
+  - Blue light runs along a rod overhead and leaps to the next with a snap.
+trap:
+  difficulty: 115
+  condition_ids: [108]
+  triggered: >-
+    You step beneath a crossing just as the glow reaches it, and the charge
+    leaps down instead of across. It cracks into you and through you, and
+    every muscle jerks at once.
+  avoided: >-
+    You watch the blue glow leap from rod to rod and follow the old
+    footprints between the scorched places, ducking where they duck.
+doors:
+  - exit: undercroft
+    description: >-
+      A low opening in the floor leading down into an undercroft, beneath the
+      rods, where the air smells less sharp.
+  - exit: way
+    description: >-
+      A plain way out on the far side of the room, reached only by passing
+      under the last and lowest of the strung rods.
+  - exit: fissure
+    description: >-
+      A jagged fissure opened in the wall where a rod's anchor tore free, its
+      edges blackened by an old discharge.

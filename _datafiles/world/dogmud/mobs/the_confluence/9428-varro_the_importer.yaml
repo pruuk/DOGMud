@@ -48,7 +48,7 @@ character:
       itemid: 40038
   stats:
     perception:
-      base: 108
+      base: 112
     charisma:
       base: 104
   shop:

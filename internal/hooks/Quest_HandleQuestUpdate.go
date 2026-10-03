@@ -417,7 +417,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 			}
 		}
 		// Move them to another room/area?
-		if questInfo.Rewards.RoomId > 0 {
+		if questInfo.Rewards.RoomId > 0 && !rooms.NoRecall(questUser.Character.RoomId) {
 			questUser.SendText(messaging.CategorySystem, `You are suddenly moved to a new place!`)
 
 			if room := rooms.LoadRoom(questUser.Character.RoomId); room != nil {

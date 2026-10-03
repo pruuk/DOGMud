@@ -1,0 +1,44 @@
+id: a-the-walk-of-niches
+pool: A
+source: authored
+title: The Walk of Niches
+description: >-
+  Tall niches line this passage on both sides, deep and narrow and shaped
+  like nothing in your world: wider at the top than the bottom, the back
+  curved to cradle something that stood or leaned for a long while. There
+  are dozens of them, close together as cells in a hive. Each has a row of
+  round marks pressed above its mouth, and each row is different. The inner
+  walls of the niches are polished to a soft sheen, as if by long, gentle
+  contact. As you walk, a faint warmth comes and goes from them in turn, the
+  warmth of a place just left, though the grit inside lies undisturbed. Near
+  the end of the row is a little cradle of a niche, much smaller than the
+  rest.
+nouns:
+  niches: >-
+    Each niche is the height of a tall door and only as wide as a narrow
+    body. Its back is cupped and smooth, worn into a slight hollow at the
+    height of a head. At the bottom, three shallow grooves splay out where
+    feet rested. They were made for standing still in, a long time,
+    perhaps for what passed here as sleep.
+  marks: >-
+    The rows above the niches are each a little different, as names are.
+    Some are worn soft, some crisp. A few rows have been smoothed over and
+    rewritten, and above one niche the row has been smoothed away entirely
+    and never replaced, leaving only a pale scar in the black.
+  cradle: >-
+    The smallest niche, no taller than your chest, set low between two
+    tall ones. Its back is worn bright. Pressed into its inner wall are
+    many little round marks, uneven and scattered, not in rows: the
+    practice of someone learning to write, or the play of someone too
+    young to care.
+idlemessages:
+  - "A breath of warmth drifts from one of the niches, and fades."
+doors:
+  - exit: gallery
+    description: >-
+      The row of niches runs on into a gallery where the ceiling lifts
+      away and the warmth does not follow.
+  - exit: stair
+    description: >-
+      A short stair climbs from the end of the passage, each step worn
+      into a dip at its centre.

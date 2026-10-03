@@ -48,7 +48,7 @@ character:
   gold: 45
   stats:
     perception:
-      base: 111
+      base: 110
     charisma:
       base: 108
     willpower:

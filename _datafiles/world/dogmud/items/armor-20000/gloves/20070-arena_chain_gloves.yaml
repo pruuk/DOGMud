@@ -11,6 +11,6 @@ description: >-
 type: gloves
 subtype: wearable
 physical_mitigation: 3
-weight: 0.5
+weight: 1.5
 value: 20
 rarity_tier: 40

@@ -1,0 +1,147 @@
+# The Watching Obelisk (9838): the Obelisk's boss.
+#
+# Pattern after the Core Guardian (crash_site_interior/9562): one flat
+# selector, priority order, every cast on a cooldown, phase gates as one-shot
+# BehaviorState flags.
+#   - 75% HP: wakes two Glint Stalkers from its facets (they come hidden).
+#   - 40% HP: wakes a Spine Lattice.
+#   - 30% HP: overloads: Convergence comes twice as often.
+#   - Convergence: room-wide, four folds of warning, and damage breaks it.
+#   - Facet Lance: a single beam at its target between Convergences.
+# No behavior_archetype underneath, so it never flees.
+
+tree:
+  type: selector
+  children:
+    # ── 75%: two Glint Stalkers (one-shot) ──
+    - type: sequence
+      event: mob_hurt
+      children:
+        - type: condition
+          check: mob_health_below
+          percent: 75
+        - type: decorator
+          mod: invert
+          child:
+            type: condition
+            check: state_equals
+            key: woke_stalkers
+            value: "true"
+        - type: action
+          do: set_state
+          key: woke_stalkers
+          value: "true"
+        - type: action
+          do: send_room_text
+          text: >-
+            Two of the Watching Obelisk's facets loosen and fall away, and
+            do not land. They unfold into long blades of crystal and turn on
+            you.
+        - type: action
+          do: summon_companion
+          mob_id: 9835
+          count: 2
+          base_pool: 40
+          hostile: true
+
+    # ── 40%: a Spine Lattice (one-shot) ──
+    - type: sequence
+      event: mob_hurt
+      children:
+        - type: condition
+          check: mob_health_below
+          percent: 40
+        - type: decorator
+          mod: invert
+          child:
+            type: condition
+            check: state_equals
+            key: woke_lattice
+            value: "true"
+        - type: action
+          do: set_state
+          key: woke_lattice
+          value: "true"
+        - type: action
+          do: send_room_text
+          text: >-
+            The floor around the Watching Obelisk bristles, and a knot of
+            spines tears itself free of the crystal.
+        - type: action
+          do: summon_companion
+          mob_id: 9836
+          count: 1
+          base_pool: 40
+          hostile: true
+
+    # ── 30%: overload (one-shot) ──
+    - type: sequence
+      event: mob_hurt
+      children:
+        - type: condition
+          check: mob_health_below
+          percent: 30
+        - type: decorator
+          mod: invert
+          child:
+            type: condition
+            check: state_equals
+            key: overload
+            value: "true"
+        - type: action
+          do: set_state
+          key: overload
+          value: "true"
+        - type: action
+          do: send_room_text
+          text: >-
+            A crack runs up the Watching Obelisk from point to peak, and light
+            pours out of it. It no longer bothers to hold anything back.
+
+    # ── Convergence when overloaded: every 7 rounds ──
+    # Only one of the two Convergence branches is ever live (overload or
+    # not), and each cooldown is well past the four folds of the cast, so a
+    # round or two of Facet Lance always falls between Convergences.
+    - type: decorator
+      event: mob_combat_round
+      mod: cooldown
+      rounds: 7
+      child:
+        type: sequence
+        children:
+          - type: condition
+            check: state_equals
+            key: overload
+            value: "true"
+          - type: action
+            do: cast
+            spell: obelisk-convergence
+
+    # ── Convergence: every 11 rounds ──
+    - type: decorator
+      event: mob_combat_round
+      mod: cooldown
+      rounds: 11
+      child:
+        type: sequence
+        children:
+          - type: decorator
+            mod: invert
+            child:
+              type: condition
+              check: state_equals
+              key: overload
+              value: "true"
+          - type: action
+            do: cast
+            spell: obelisk-convergence
+
+    # ── Facet Lance between Convergences ──
+    - type: decorator
+      event: mob_combat_round
+      mod: cooldown
+      rounds: 3
+      child:
+        type: action
+        do: cast
+        spell: facet-lance

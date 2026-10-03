@@ -1,0 +1,49 @@
+id: a-corridor-of-hung-lenses
+pool: A
+source: authored
+title: Corridor of Hung Lenses
+description: >-
+  Small lenses hang the length of this corridor on threads of glass, each at
+  about the height of a tall figure's eyes, spaced so close that you must
+  turn sideways to pass between them. They sway as you go and touch with
+  tiny dry clicks. Each one shows the corridor differently: through one the
+  walls are near, through the next the far end swims miles away, through
+  another the passage is lit and full of soft moving brightness that is gone
+  when you look around the rim. The ceiling above is studded with hooks of
+  crystal, more hooks than lenses. On several of the lenses there is a
+  smudge at the centre, a dull round patch, as if a face had pressed there
+  to look, over and over.
+nouns:
+  lenses: >-
+    Each lens is no bigger than a palm and ground with great care, thin as
+    a leaf at the rim. No two are ground alike. A few carry a single round
+    mark at the edge, and lenses that share a mark show the same false
+    distance, as if they had once been sorted by what they were for.
+  hooks: >-
+    Little hooks of crystal grown from the ceiling in rows. Many are
+    empty. Beneath the empty ones the floor is scattered with fine
+    glittering grit, the remains of lenses that fell and broke. Nobody
+    came to sweep them, and nobody came to hang new ones in their place.
+  smudge: >-
+    At the centre of several lenses the glass is dulled in a soft round
+    patch, the size of a large eye. It is not dirt. The crystal itself has
+    changed, worn by light pressed against it for long hours. The patches
+    sit at different heights: tall, and taller, and one quite low, as if
+    lifted up to see.
+  threads: >-
+    Threads of glass finer than hair, nearly invisible. Pluck one and it
+    rings, and the note runs down the corridor from lens to lens and comes
+    back to you a breath late, changed a little, as though something
+    farther along had answered.
+idlemessages:
+  - "The lenses sway and click together, though there is no draft."
+  - "Through the nearest lens, something bright crosses the corridor and is gone."
+doors:
+  - exit: aisle
+    description: >-
+      The corridor narrows into an aisle between the last of the hanging
+      lenses, where the floor is thick with broken glass.
+  - exit: door
+    description: >-
+      A plain door of crystal, set flush in the side wall, marked with
+      one round hollow at the height of an eye.

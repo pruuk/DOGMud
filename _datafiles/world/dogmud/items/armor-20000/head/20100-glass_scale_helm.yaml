@@ -1,0 +1,19 @@
+itemid: 20100
+name: Glass-Scale Helm
+vendor_categories:
+- blacksmithing
+namesimple: helm
+description: >-
+  A close steel cap scaled over in small black lenses, row on row from brow
+  to nape, with an open face so the wearer sees the world unbent. The
+  lenses are harder than the steel beneath them and lighter than plate. Look
+  into them from the side and the room is repeated a dozen times in each,
+  very small, a moment late.
+type: head
+subtype: wearable
+physical_mitigation: 6
+weight: 1.5
+value: 6500
+rarity_tier: 5
+statmods:
+  return_damage: 3

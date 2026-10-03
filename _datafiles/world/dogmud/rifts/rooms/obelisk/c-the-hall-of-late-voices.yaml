@@ -1,0 +1,74 @@
+id: c-the-hall-of-late-voices
+pool: C
+source: authored
+title: The Hall of Late Voices
+description: >-
+  A long, narrow hall whose left wall curves inward overhead like the inside
+  of a cupped hand. Every sound you make here comes back late. Your footstep
+  returns after you have taken the next one, and a breath let out at the
+  door arrives at the far end before you do. Set into the curved wall at the
+  height of a head are funnels of black crystal, a dozen of them in a row,
+  their wide mouths turned to the room and their narrow ends sunk into the
+  wall. Beneath each one a short line of round marks has been pressed, and
+  beneath the last the line runs longer than the rest. The floor is tiled in
+  long panes of differing thickness, some of which ring faintly when trodden
+  on. At the far end a low bench of crystal faces the funnels. Of the three
+  ways out, a crawl and a landing stand open, but the third is a slit fused
+  shut, its facets run together into smooth dark glass.
+nouns:
+  funnels: >-
+    Each funnel is cut from a single piece and polished inside to a dull
+    shine. When you put your ear to one you hear the hall, but not as it is
+    now: a step, a murmur, the soft click of something set down, sounds that
+    happened here long ago and are only now arriving. The narrow ends vanish
+    into the wall at slightly different angles.
+  marks: >-
+    Most of the lines under the funnels are short and plain, perhaps names.
+    The line under the last funnel runs longer, and its marks are pressed
+    lightly and unevenly, as if by someone listening hard while they wrote,
+    waiting for something to arrive.
+  bench: >-
+    A long low block worn into three shallow troughs along its top, where
+    something without knees as you know them once rested facing the wall.
+    The troughs at either end are worn deep. The middle one is barely marked,
+    as if whoever sat there came rarely, or sat very lightly, or was small.
+  panes: >-
+    The floor panes are not all alike. Some are thick and dead underfoot.
+    Others are thin, and they ring with a low note that climbs slowly into
+    the bones of your feet. A path of the thick ones runs along the right
+    wall, narrow, and darker with wear than the rest.
+idlemessages:
+  - A footstep sounds near the door, though no one stands there. It is yours, from earlier.
+trap:
+  difficulty: 110
+  condition_ids: [102]
+  triggered: >-
+    A thin pane rings under your foot, and the funnels catch the note and
+    throw it back at you from twelve mouths at once, late and louder, until
+    it grinds inside your skull like stone on stone.
+  avoided: >-
+    You notice the path of dark, thick panes along the right wall and keep
+    to it. The thin panes beside you stay silent.
+puzzle:
+  kind: memory
+  sealed_door: slit
+  hard: true
+  reward: key
+  solved: >-
+    As the last lenses lock, the click comes back late from every funnel in
+    turn, and the last one gives it back a little changed, as if someone
+    else had set a lens down too. The fused glass in the slit cracks along
+    its facets and falls away in clean pieces.
+doors:
+  - exit: crawl
+    description: >-
+      A low crawlway at the foot of the curved wall, its floor polished by
+      long use. Your breathing comes back out of it a moment late.
+  - exit: landing
+    description: >-
+      A small square landing beyond an open doorway, where the hall's long
+      echoes finally die. Steps lead off it into darkness.
+  - exit: slit
+    description: >-
+      A tall narrow slit in the wall, sealed. Its facets have run together
+      into smooth dark glass that gives back no echo at all.

@@ -143,6 +143,7 @@ func PrepareAllInstanceWrites() ([]savequeue.PendingWrite, error) {
 		if r.IsEphemeral() {
 			continue
 		}
+		runRoomSaveHook(r)
 		p, err := PrepareInstanceWrite(*r)
 		if err != nil {
 			// One unpreparable room must not cost every other room its save.

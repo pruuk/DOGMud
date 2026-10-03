@@ -1,0 +1,46 @@
+id: f-the-breach
+pool: F
+source: authored
+title: The Breach
+description: >-
+  The crystal here is cracked straight through. A jagged split runs up one
+  wall from the floor to as high as you can see, and through it comes light
+  that is warm, and yellow, and smells of the world: dust and green things
+  and rain. The edges of the split are rimed with frost where the warmth
+  meets the cold, and the frost creeps a hand's width out across the black
+  before it gives up. This is the breach, and it is a way out, but it is
+  bound. Threads of dark glass are drawn across the gap like the strings of
+  a loom, humming faintly, and at the height of a hand there is a small
+  keyhole cut, a narrow slot worn smooth by keys that went in before. Beside
+  it, the obelisk goes on in the dark, uninterested.
+nouns:
+  split: >-
+    A crack in the obelisk wide enough to step through sideways once it is
+    open. On the far side is daylight, or something very like it, and a
+    shadow that might be a tree. The word for it here is the
+    <ansi fg="exit">breach</ansi>.
+  frost: >-
+    A rime of frost along the edges of the crack, where the warmth of the
+    world meets the cold of the crystal. It is thickest at the bottom, and
+    it is the only thing in the whole Obelisk that melts and freezes again,
+    over and over, like breathing.
+  threads: >-
+    Fine strands of dark glass strung across the gap, too many to count. They
+    hum when the warm air moves them. Up close you can see they grow from the
+    edges of the split, as if the crystal were trying to heal itself shut
+    and had only got this far.
+  keyhole: >-
+    A narrow slot cut into the dark glass at the height of a hand, its edges
+    polished by use. The cut is clean and deliberate. Around it, faint
+    scratches show where others fumbled, in the dark, with cold fingers.
+idlemessages:
+  - A breath of warm air drifts in through the breach and dies in the cold.
+  - The glass threads across the breach hum, and fall quiet.
+doors:
+  - exit: deeper
+    description: >-
+      A passage leading on into the obelisk, away from the light.
+  - exit: hollow
+    description: >-
+      A low hollow in the wall, curving off into the dark, the warm air
+      fading as it goes.

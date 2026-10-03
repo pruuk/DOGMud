@@ -42,7 +42,7 @@ character:
   gold: 15
   stats:
     perception:
-      base: 105
+      base: 111
     vitality:
       base: 104
   shop:

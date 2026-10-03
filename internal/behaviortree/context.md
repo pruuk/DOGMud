@@ -213,7 +213,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 
 | Condition | Params | Description |
 |-----------|--------|-------------|
-| `keyword_match` | `keywords` (list) | Matches any word in event Text. |
+| `keyword_match` | `keywords` (list) | Matches any whole word in event Text, case-insensitive. Punctuation at a word's edges is trimmed first, so `room?` and `"room",` match `room`; inner punctuation is kept. |
 
 ### Player State
 
@@ -247,11 +247,12 @@ Condition nodes use `type: condition` with `check: <name>`.
 | `time_of_day` | `period` ("day" or "night") OR `range` ("`<start>-<end>`", 24h format, e.g., `"9-17"`; wraps midnight when start > end). When both set, `range` takes precedence. | In-game time of day. Range uses `[start, end)` semantics (inclusive start, exclusive end). Empty range (`"5-5"`) always Failure; full-day range (`"0-24"`) always Success — both log a warning once. Malformed ranges log an error once and return Failure. |
 | `round_mod` | `n` (int) | `round % n == 0`. |
 | `random_chance` | `percent` (int) | N% probability. |
-| `players_in_room` | none | At least one player in the room. |
+| `players_in_room` | none | At least one player in the room the mob could know of: it must see the room, and hidden (undetected) players do not count. |
 | `player_in_room_missing_quest` | `quest` (string) | ANY player in the room lacks the token. For ambient/idle branches (`mob_idle` has no triggering player, so `player_missing_quest` can't gate them). |
 | `player_in_room_has_quest` | `quest` (string) | ANY player in the room holds the token. Mirror of the above. ANDing has/missing variants can match *different* players in a shared room — only pair them where the room is effectively single-player (e.g. the solo ephemeral newcomer antechamber). |
 | `item_matches` | `item_id` (int) | Event ItemId matches. `player_give` only. |
 | `multiple_enemies` | none | More than one player + charmed mob in room. |
+| `multiple_foes` | none | More than one creature or person actually in the fight against this mob or its charmer (fighting them, or fought by this mob); bystanders do not count. Used by `companion_brawler` and `companion_battlemage`. |
 
 ### Combat Assessment
 
@@ -354,8 +355,8 @@ are subject to perception-scaled reaction delays (see below).
 |--------|--------|-------------|
 | ⚠️ `try_reload` was REMOVED. Firing chambers its own next round, so an archer never needs a turn to reload. The node also made a skullduggery-capable archer `sneak` into cover first, which was the only place an archer took cover on its own; re-adding a "take cover" beat is worth more than it used to be, since hiding before a shot now earns the ambush. Left for the behaviour arc. | | |
 | `respond` | `user_text` (string), `room_text` (optional), `hints` (optional) | Sends text to triggering player; `room_text` to others; `hints` shown as a hint line. |
-| `say` | `text` (string) | Mob says text to the whole room. |
-| `emote` | `text` (string) | Mob emotes (no "says" prefix). |
+| `say` | `text` (string) | Mob says text to the whole room. On a `mob_idle` event only, it may be written fresh instead (`internal/npcidle.TryReplace`, through `idleOrSet`); every other event keeps the set line. |
+| `emote` | `text` (string) | Mob emotes (no "says" prefix). On a `mob_idle` event only, it may be written fresh instead, as `say`. |
 
 ### Quest & Flags — instant
 
@@ -399,6 +400,7 @@ are subject to perception-scaled reaction delays (see below).
 | `try_defuse` | none | Invoke `actions.Defuse` on the first trap found in room (delayed). Scans containers then exits. |
 | `try_plant` | `item_tag` (string, e.g. "copper coin") | Invoke `actions.Plant` with the named item from backpack (delayed). Failure if item not found or not in backpack. |
 | `try_sneak` | none | Invoke `actions.Sneak` (delayed). Success when self enters or is already in the hidden state. |
+| `vanish` | none | Break off a fight and try to hide where it stands (`actions_vanish.go`): releases the mob's target, clears everyone's aggro on it (`actions.ClearRoomAggroOnDeparture`), then `actions.Sneak` (a roll against everyone watching). Success whenever it broke off (the round is spent, hidden or not); Failure if already hidden. For mobs that cannot leave their room (rift constructs: the Glint Stalker). |
 | `try_steal` | none | Invoke `actions.Steal` against the resolved target (delayed). Target resolution uses Event.UserId or Aggro fallback. |
 | `try_shadow` | none | Invoke `actions.Shadow` against the resolved target (delayed). Requires self already hidden. |
 
@@ -425,11 +427,17 @@ are subject to perception-scaled reaction delays (see below).
 |--------|--------|-------------|
 | `try_store_excess` | `chest_room` (int, required) | Forager chest-deposit workflow. Multi-tick: each tick advances one step — pathto chest room → unlock lockbox → put items in lockbox → lock lockbox. Returns Failure if `chest_room` param is missing, satchel is empty, or the chest room has no lockbox container. Engine handles chest-full gracefully: failed puts are no-ops and items remain in satchel for the next cycle. |
 
+### City Scavengers (2026-09-30, `actions_scavenger.go`)
+
+| Action | Params | Description |
+|--------|--------|-------------|
+| `scavenger_step` | none | The whole idle tick of a city scavenger (`internal/scavenger`; archetype `scavenger`). In order: clears the day's haul once per real-world day (items, and gold above the mob spec's purse; the first tick ever only records the day, kept in MiscData `scavenger_day`); picks up ONE litter item underfoot (`rooms.Room.FloorItemIsLitter`, through `actions.TakeFloorItem`, so darkness, a full pack and household baubles refuse it as for a player), else the floor gold, each with a profile line; otherwise lingers until `Walk.NextMoveAt` (running an authored idle command at `ActivityLevel`), then takes one step toward a random pool room via `mapper.GetPath` and sets the next linger (the lingering idle command may be written fresh, `internal/npcidle.TryReplace`) (`ScavengerStepMinSeconds`..`ScavengerStepMaxSeconds`). Walk state is a `*scavenger.Walk` in TempData `scavenger_walk`; two steps in a row that leave it in place drop the target. Deliberately NOT `pathto`: the path walker steps every round and suppresses idle ticks until arrival. Success for a scavenger (it owns the tick), Failure for any other mob. Seams: `scavengerNow`, `scavengerRandn`, `scavengerNextStep`. |
+
 ### Archer / Ranged — varied delays (ranged-weapons feature)
 
 | Action | Params | Description |
 |--------|--------|-------------|
-| `try_fire` | none | Fire the mob's loaded ranged weapon at its current Aggro target (or CombatMemory target if Aggro just cleared). Issues `fire <targetName>` or `fire <targetName> <direction>` for cross-room shots. Returns Failure if no loaded weapon, no valid target, or shot resolution fails. |
+| `try_fire` | none | Fire the mob's loaded ranged weapon at its current Aggro target (or CombatMemory target if Aggro just cleared). Issues `shoot #<instanceId>` / `shoot @<userId>` (exact, so two alike in a room are not a coin toss), with `<direction>` appended for cross-room shots. Returns Failure if no loaded weapon, no valid target, or shot resolution fails. |
 | `keep_distance` | `min_room_distance` (int, default 1) | Kiting action. If an enemy is in the mob's room, the mob is not already fleeing melee, and (flee parity slice 4a) `actions.FleeGate` does not refuse (rooted, frenzied, knocked down or grappled falls through to fighting instead), retreats toward home by issuing `flee <dir>` — a real flee, gated, costed and blockable like a player kiting archer's disengage — instead of a free `go <dir>`. `dir` still comes from `pickRetreatExit` (unlocked, home first). Returns Success on retreat, Failure if no usable exit found or the flee gate refuses. |
 
 **Archer re-engagement exemption (DoCombat hook):** A mob with a loaded
@@ -833,6 +841,19 @@ zones:
   oasis: "Instance Planar Oasis"
 ```
 
+### Player Housing (`actions_housing.go`)
+
+| Action | Params | Description |
+|--------|--------|-------------|
+| `buy_housing` | `building` (string, a housing `building_id`), `tier` (string, the `tier_id` sold as a home) | The landlord's sale: picks home, extension deed, voucher or guest key from the ask text (`housing.MatchOffer`; "buy a room" means an extension to an owner) and delegates to `housing.Buy`, the same path as the `buy` command. The mob speaks every refusal. Failure only when misconfigured or the actors are gone. |
+| `housing_terms` | same as `buy_housing` | The landlord explains his list in words for this player: the home price and what stands in the way, or for an owner the next extension price and the voucher (`housing.DescribeTerms`, built from `housing.Offers`). Charges nothing. |
+
+Put `buy_housing` first and gate it on explicit buying words (`buy`,
+`purchase`), so asking about a room never charges anyone. Keep how-to hints
+in the landlord's own `say` lines: `send_user_text` is delivered at once
+while `say` is queued, so a hint node prints above the answer it follows.
+Example: `behaviors/new_plymouth_common/9801-hobb_pennock.yaml`.
+
 ### Updated: `add_temp_exit`
 
 When `room_id` is 0 or absent, `add_temp_exit` reads the entry room ID from
@@ -960,6 +981,31 @@ Added in the legacy tactics-engine sunset migration:
   target_casting → trip interrupt.
 
 Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tactics-engine-design.md`
+
+## AI Companion Archetypes
+
+The six bonded AI companions (modules/aicompanion) each fight with a tree
+of their own, answering only `mob_combat_round`:
+
+- **`companion_archer`** (Mara): `try_fire`, then a kick at a downed foe.
+  No `keep_distance`: a companion stays in the room with her owner.
+- **`companion_guardian`** (Corvel): bash a caster, taunt a foe that is on
+  someone else (`target_aggro_not_on_me`), rally, bash, kick a downed foe.
+- **`companion_healer`** (Liesl): self_heal below 40%, self_defense once
+  something is on her; otherwise the ordinary attack.
+- **`companion_skirmisher`** (Tobin): trip a caster, kick a downed foe, trip.
+- **`companion_battlemage`** (Isaura): self_heal, self_defense,
+  harm_multi on several foes, harm_single.
+- **`companion_brawler`** (Hal): kick a downed foe, grapple a lone foe,
+  trip, kick.
+
+No companion tree flees, calls for help, handles idle or reacts to
+packmates: a companion never hears packmate events, its idle time
+belongs to the module, and it runs by its own nerve (the profile's
+`flee_at`), not a fixed health line. Mending and warding the OWNER, a
+surprise opening blow from hiding, and the model's own spell choice are
+the module's (`modules/aicompanion/combat_style.go`). Tests:
+`companion_archetypes_test.go`.
 
 ## Files
 

@@ -61,7 +61,7 @@ character:
     alchemy: 1
   stats:
     perception:
-      base: 112
+      base: 123
     willpower:
       base: 108
     dexterity:

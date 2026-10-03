@@ -1,0 +1,63 @@
+id: b-archive-of-hanging-sheets
+pool: B
+source: authored
+title: Archive of Hanging Sheets
+description: >-
+  Sheets of crystal hang here in their hundreds, each thin as a fingernail
+  and tall as a door, suspended from rods that run the length of the hall in
+  long parallel rows. Every sheet is pressed full of round marks, edge to
+  edge, so many that from a distance they look like frost. They hang so
+  close that walking between them is like walking between the pages of a
+  closed book, and when you pass they turn, a little, all together, and
+  settle back. Here and there a sheet has fallen and lies in shards on
+  the floor, and in one row there is a gap where an entire run of sheets was
+  taken down with care and never returned. At the end of the hall stands a
+  reading frame, a slanted cradle at the height of an eye that does not
+  match yours, and in it a single sheet waits, half its marks filled and
+  the rest of it smooth and blank.
+nouns:
+  sheets: >-
+    The marks on each sheet run in tight spirals from the centre outward, not
+    in lines. Some spirals wind left, some right. Hold two sheets side by side
+    and you see the same small cluster of marks repeated in both, like a name
+    that kept turning up in every record.
+  rods: >-
+    Each rod is a single grown length of crystal, cold as winter iron. Along
+    its top a groove has been worn by the sliding of the hooks that hold the
+    sheets. The wear is heaviest near the reading frame, where the sheets
+    were taken down most often.
+  gap: >-
+    An empty stretch of rod perhaps twenty sheets long. The hooks have been
+    lifted away cleanly. Beneath the gap, the floor is clean too, with no
+    broken glass, as though whoever took these sheets carried them out
+    slowly, one by one, and none of them was dropped.
+  frame: >-
+    The cradle is slanted to catch a reader who stood tall and leaned
+    forward. The waiting sheet's marks grow smaller and more crowded toward
+    the end of its filled half, until the last row is pressed so close the
+    marks run together into a single long furrow.
+  shards: >-
+    The fallen sheets have broken into pieces with straight, clean edges. On
+    one large shard the marks are not pressed in but raised, standing out of
+    the glass, as though written from the other side, and the spiral turns
+    the wrong way.
+idlemessages:
+  - "A whole row of sheets turns at once, rustling like stiff paper, and settles."
+  - "Somewhere among the rows, a single sheet goes on swaying after the rest are still."
+doors:
+  - exit: nave
+    description: >-
+      Between the two longest rows a narrow nave runs off into darkness, the
+      sheets on either side closing in as it goes.
+  - exit: span
+    description: >-
+      Behind the reading frame, a thin span of crystal crosses a gulf so deep
+      no light reaches its floor.
+  - exit: lintel
+    description: >-
+      A low lintel in the side wall, its face pressed with one row of round
+      marks, marks the way into a smaller room.
+  - exit: slit
+    description: >-
+      A tall slit in the far wall where a sheet might be slid through. A body
+      can pass it, barely, edgewise.

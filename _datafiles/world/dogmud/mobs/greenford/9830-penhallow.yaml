@@ -1,0 +1,44 @@
+mobid: 9830
+zone: Greenford
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+idlecommands:
+  - 'emote touches the brim of his bowler to a passing student.'
+  - ''
+  - 'emote checks his pocket watch against the university clock and tuts.'
+  - 'emote rests on the handles of his hand-truck and surveys the street.'
+  - ''
+  - 'emote polishes a brass button with his thumb.'
+activitylevel: 8
+character:
+  name: Penhallow
+  description: |
+    A grey-whiskered university porter in a bowler hat and a black coat with
+    brass buttons, carrying a porter's hand-truck. Lost property is his
+    vocation: scarves in the Quadrangle, books by the river, the odd sword
+    in the Tea House. He returns it all to the Porters' Lodge, where it is
+    kept for a day and a night and then, as the rules say, disposed of.
+  speciesid: 1
+  level: 3
+  gold: 6
+  stats:
+    strength:
+      base: 106
+    vitality:
+      base: 108
+    perception:
+      base: 112
+    dexterity:
+      base: 100

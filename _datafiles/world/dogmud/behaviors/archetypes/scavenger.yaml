@@ -1,0 +1,42 @@
+# scavenger archetype
+#
+# The city scavengers (internal/scavenger), one per city and one per New
+# Plymouth district, the loot goblin's replacement. Every idle tick belongs
+# to scavenger_step: clear the day's haul at midnight, pick up the litter
+# underfoot, linger, then take one step toward a random room of the city.
+# They are ordinary townsfolk otherwise: they can be pickpocketed (that is
+# how a player gets the haul back) and they fight back or run when hurt.
+#
+# No try_goal_planner node: a planner goal would pull the scavenger off its
+# rounds, and scavenger_step returns Success on every idle tick so nothing
+# else runs.
+
+tree:
+  type: selector
+  children:
+
+    # 1. Badly hurt: run.
+    - type: sequence
+      event: mob_hurt
+      children:
+        - type: condition
+          check: mob_health_below
+          percent: 30
+        - type: action
+          do: flee
+
+    # 2. Otherwise fight back.
+    - type: sequence
+      event: mob_hurt
+      children:
+        - type: action
+          do: attack
+
+    # 3. The rounds.
+    - type: action
+      event: mob_idle
+      do: scavenger_step
+
+default_goals:
+  - type: survival
+    priority: 80

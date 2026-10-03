@@ -1,0 +1,50 @@
+id: d-the-sentry-walk
+pool: D
+source: authored
+title: The Sentry Walk
+description: >-
+  A long, straight walk of black crystal, made to be watched along. Tall
+  niches line both walls at even intervals, each just wide enough to hold
+  something standing upright, and most are empty now. The floor down the
+  middle is worn into a single smooth groove, not three, polished by
+  something that has paced this length over and over without ever setting
+  a foot outside the line. At the far end a raised step overlooks the whole
+  walk. Scraps of broken glass lie in the groove, and some of them are
+  newer than others. Faint light wells up in a niche ahead of you, then
+  fades, then wells up in one nearer. Somewhere along the walk, glass
+  clicks against glass and goes quiet, as though whatever made the sound
+  has stopped to listen.
+nouns:
+  niches: >-
+    Tall hollows cut into the walls, each fitted at the back with a cradle of
+    crystal arms. Most stand empty. In one, the arms are bent outward and
+    cracked, as if what they held had torn itself loose. In another, the
+    dark inside is deeper than the rest, and it does not stay quite still.
+  groove: >-
+    A single channel worn down the centre of the floor, smooth as the inside
+    of a bowl. It turns sharply at each end and runs back. Shards lie in it
+    here and there, and each one has been pushed aside to the same edge, as
+    though the pacing never stopped to step over anything.
+  step: >-
+    A low dais at the end of the walk with a clear view of every niche.
+    Its edge is scored with short scratches in uneven rows, not marks but
+    tallies, made by something that was keeping count of whoever came
+    along the walk.
+idlemessages:
+  - A point of cold light wakes in one of the niches, moves, and goes out.
+encounter:
+  tier: trash
+  count: {min: 2, max: 3}
+doors:
+  - exit: span
+    description: >-
+      A narrow span of crystal leading off from the raised step, out over a
+      drop into darkness, with no rail on either side.
+  - exit: hollow
+    description: >-
+      An empty niche at the start of the walk whose back has broken through,
+      leaving a hollow passage that leads on into the dark.
+  - exit: stairway
+    description: >-
+      A worn stairway descending from the near end of the walk, its steps
+      scraped in a single line down the middle.

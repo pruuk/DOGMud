@@ -60,6 +60,8 @@ idlemessages:
 - The alley ends at a plain timber wall — no exit,
   no gap. Just the end of the passage.
 spawninfo:
+  - mobid: 9821
+    respawnrate: "30 real minutes"
   - mobid: 9341
     respawnrate: "10 real minutes"
 x: -10

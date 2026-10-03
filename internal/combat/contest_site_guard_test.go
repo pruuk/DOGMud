@@ -71,6 +71,7 @@ var contestSiteOwners = map[string]string{
 	"internal/actions/sneak.go:Sneak":                           "U6b task 16 (two sites)",
 	"internal/actions/shadow.go:ShadowSenseRoll":                "U6b task 16 (parity slice 6 lifted the shadow sense contest out of shadowPlayer into this one body; it runs when a shadow starts and on each arrival)",
 	"internal/actions/move.go:sneakerSpotted":                   "U6b task 16 (hidden detection on room entry: a sneaking mover against the room's players and mobs; moved from usercommands/go.go by movement parity 4b)",
+	"internal/actions/move.go:SpotHiddenPlayer":                 "U6b task 16 (hidden detection, the same contest as newcomerSpots: a watcher standing in the room looks for one hidden player; the rift hunter)",
 	"internal/actions/move.go:newcomerSpots":                    "U6b task 16 (hidden detection on room entry: the newcomer against hidden players and mobs; moved from usercommands/go.go by movement parity 4b)",
 
 	// U10b-1b Phase A: the static-difficulty (category B) conversions. These are

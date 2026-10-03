@@ -614,6 +614,12 @@ func (c *Character) Validate(recalcPermanentConditions ...bool) error {
 	if c.Position == nil {
 		c.Position = position.NewMachine()
 	}
+	// A blind-source condition that runs out is pruned on the turn tick
+	// (Conditions.Prune), which never passes through RemoveCondition, so the
+	// Blinded -> Sighted flip there never fired and the character stayed
+	// blind until something reset the machine (death did). Every prune path
+	// calls Validate afterwards, so resync here.
+	c.syncPerceptionWithBlindSources()
 	if c.Presence == nil {
 		// Player default — mob.Validate() overwrites with NewMobPresence()
 		// AFTER calling this. Control intentionally lacks a parallel guard

@@ -1,0 +1,46 @@
+mobid: 9824
+zone: New Plymouth Noble
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - bloodline_domestic
+idlecommands:
+  - 'emote runs a gloved finger along a railing and inspects it.'
+  - ''
+  - 'emote sniffs at the state of the cobbles.'
+  - 'emote straightens the keys at her waist so they hang in order.'
+  - ''
+  - 'emote fixes a loitering servant with a look until he finds something to do.'
+activitylevel: 8
+character:
+  name: Mistress Coombe
+  description: |
+    An upright under-housekeeper in grey bombazine with a chatelaine of keys
+    at her waist and a basket over her arm. The great houses of the Noble
+    Quarter share her between them, and her charge is simple: nothing
+    unsightly is to be seen on the Noble Way. She picks up litter the way
+    other people swat flies, with a small noise of disgust, and nobody has
+    ever seen what becomes of it afterward.
+  speciesid: 1
+  level: 3
+  gold: 6
+  stats:
+    strength:
+      base: 100
+    vitality:
+      base: 104
+    perception:
+      base: 116
+    dexterity:
+      base: 100

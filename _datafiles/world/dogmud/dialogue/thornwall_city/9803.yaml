@@ -1,0 +1,34 @@
+mobid: 9803
+zone: Thornwall City
+defaultMood: neutral
+
+greetings:
+  - text: "What. Holes, digging, paint, keys. It is on the slate. Type list and
+      stop breathing on me."
+    moods: ["neutral"]
+  - text: "Oh. You again. The plate knows you. Go on, get in, shut the door."
+    moods: ["friendly"]
+
+patterns:
+  - keywords: ["plate", "brass", "touch", "palm", "lock"]
+    responses:
+      - "Torvan had it off the same locksmith the Crewe woman uses down in New
+        Plymouth. It learns your palm when I write you in the book. How? No
+        idea. Do I look like a locksmith?"
+      - "No, you cannot pick it. Yes, people try. Yes, I laugh."
+
+  - keywords: ["vouch", "upstairs", "citizens", "city", "reputation", "standing", "marek"]
+    responses:
+      - "Torvan only lets holes to people the folk upstairs will vouch for.
+        Keeps the Watch's little friends out. Marek at the Drowning Post has
+        got thugs leaning on him. Sort that out. Then come back and bother me."
+
+  - keywords: ["torvan", "cresk", "smuggling", "smugglers", "watch", "guards"]
+    responses:
+      - "Torvan pays me to sit here. He does not pay me to talk about Torvan."
+
+  - keywords: [""]
+    responses:
+      - "I let holes. Type list. That is it. That is the whole conversation."
+      - "Is this about a hole? It had better be about a hole."
+      - "You are still here. Why are you still here."

@@ -1,0 +1,64 @@
+id: b-the-inward-vigil
+pool: B
+source: authored
+title: The Inward Vigil
+description: >-
+  Every surface in this long narrow hall leans toward one end. The walls
+  slope inward, the ceiling tilts down, and the floor runs gently downhill,
+  so that standing still you feel drawn toward a tall dark slot in the far
+  wall, a window of black crystal no wider than a shoulder. Through it, very
+  far away, is a glow: pale, steady, round, unbearably patient. Along both
+  walls are niches, hundreds of them, each sized for one tall narrow
+  watcher, and each niche faces the slot. Their floors are worn into deep
+  three-groove hollows, the grooves of beings who stood and did not move
+  for a very long time. Above each niche is a short row of round marks.
+  Below the slot runs a ledge, and on the ledge, set in a careful line, lie
+  small clear lenses, one for each niche, left behind. The halls beyond
+  went dark long ago. This one feels as though it is still keeping watch,
+  with nobody left in it.
+nouns:
+  slot: >-
+    The window is thick dark crystal, cut true. It frames the far glow
+    exactly, as if built for it. Hold your eye close and the glow is not
+    one light but many, pressed together, each a faint bead of brightness.
+    Something about it reminds you of a pupil, looking back.
+  glow: >-
+    It does not flicker or warm. It is very far off, deeper in the Obelisk
+    than any path should go, and yet distinct. Around its edge there is a
+    darker ring that does not move, held in place, the way a hand holds a
+    door shut against wind.
+  niches: >-
+    Tall hollows in the walls, each worn smooth at the back where something
+    leaned forward to see. The nearer niches are worn deepest. The farthest
+    ones, nearest the doors, are hardly worn at all, as though the last to
+    come stood here only a short while before going on.
+  lenses: >-
+    Small clear lenses laid in a line, each with a round mark pressed in the
+    ledge beside it. They are set down, not dropped, in perfect order. The
+    line runs the full length of the ledge, and at its end there is one
+    space with a mark beside it and no lens.
+  marks: >-
+    The rows above the niches are all short, and all end in the same
+    cluster of marks, the same in every row, a word they all
+    shared. Here it is pressed hard, over and over, the last
+    thing each of them wrote.
+idlemessages:
+  - "The far glow in the slot seems, for an instant, to look back down the hall."
+  - "A faint pressure leans you a half step closer to the slot, and lets go."
+doors:
+  - exit: nave
+    description: >-
+      The nave of the hall runs back uphill away from the slot, lined with
+      empty niches on both sides.
+  - exit: ramp
+    description: >-
+      A narrow ramp curves away behind the last niche, climbing, its surface
+      worn by feet that all came down it.
+  - exit: span
+    description: >-
+      A span of crystal leaves the hall through a side opening, crossing dark
+      emptiness toward another tilted wall.
+  - exit: undercroft
+    description: >-
+      Steps beneath the ledge lead into a low undercroft, where the floor
+      tilts toward the glow even more steeply.

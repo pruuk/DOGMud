@@ -40,7 +40,7 @@ character:
   gold: 45
   stats:
     perception:
-      base: 104
+      base: 111
     dexterity:
       base: 104
   shop:

@@ -7,7 +7,9 @@ description: >
   and rises into darkness above. A draught of fresh air flows down from
   above -- this connects to the surface somewhere outside the city walls.
   Scuff marks on the rungs show regular use. This is the smugglers' escape
-  route -- and probably how goods enter the tunnel system from outside.
+  route -- and probably how goods enter the tunnel system from outside. At
+  the foot of the rungs a low crawlway runs off east, its floor worn smooth
+  by more feet than an escape route should need.
 biome: cave
 coord:
   x: 2
@@ -16,6 +18,8 @@ coord:
 exits:
   west:
     roomid: 498
+  east:
+    roomid: 6671
 nouns:
   rungs: Iron rungs driven into the stone at regular intervals, forming a
     crude ladder. The metal is worn smooth from climbing. The shaft above

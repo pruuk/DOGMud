@@ -610,10 +610,17 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 	magnitude := spellData.EffectMagnitude
 
 	if spellData.IsHarm() && spellData.Targeting == combatvocab.TargetArea {
-		cs.TargetMobInstanceIds, cs.TargetUserIds = mobAreaHarmTargets(mob, room)
+		cs.TargetMobInstanceIds, cs.TargetUserIds = mobAreaHarmTargetsSparing(mob, room, spellData.SparesAllies)
 	}
 	if !spellData.IsHarm() && spellData.Targeting == combatvocab.TargetArea {
 		cs.TargetUserIds, cs.TargetMobInstanceIds = spellHelpAreaTargets(actions.NewMobActorInRoom(mob, room), room)
+	}
+
+	// A volley (SpellData.Hits) strikes each target that many times, one
+	// contest each, stopping when the target falls or is gone.
+	hits := 1
+	if spellData.IsHarm() && spellData.Hits > 1 {
+		hits = spellData.Hits
 	}
 
 	for _, mobInstId := range cs.TargetMobInstanceIds {
@@ -629,13 +636,19 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 			}
 			continue
 		}
-		if target := mobs.GetInstance(mobInstId); target != nil && target.Character.Health > 0 && target.Character.RoomId == room.RoomId {
-			anyLanded = resolveMobSpellAgainstMob(mob, target, room, spellData, side, magnitude) || anyLanded
+		for h := 0; h < hits; h++ {
+			if target := mobs.GetInstance(mobInstId); target != nil && target.Character.Health > 0 && target.Character.RoomId == room.RoomId {
+				anyLanded = resolveMobSpellAgainstMob(mob, target, room, spellData, side, magnitude) || anyLanded
+			}
 		}
 	}
 	for _, userId := range cs.TargetUserIds {
-		if target := users.GetByUserId(userId); target != nil && target.Character.RoomId == room.RoomId {
-			anyLanded = resolveMobSpellAgainstPlayer(mob, target, room, spellData, side, magnitude) || anyLanded
+		for h := 0; h < hits; h++ {
+			// Follow-up hits stop on a fallen target; the first lands as
+			// any cast always has (a heal on a downed player included).
+			if target := users.GetByUserId(userId); target != nil && target.Character.RoomId == room.RoomId && (h == 0 || target.Character.Health > 0) {
+				anyLanded = resolveMobSpellAgainstPlayer(mob, target, room, spellData, side, magnitude) || anyLanded
+			}
 		}
 	}
 

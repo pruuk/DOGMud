@@ -1,0 +1,75 @@
+id: c-the-lensmakers-proving
+pool: C
+source: authored
+title: The Lensmakers' Proving
+description: >-
+  This was no workshop. It was a hall of proving, where a maker of lenses
+  showed the craft before the others and was judged. A long bench of black
+  crystal runs down the centre like an altar, its top scored with tool marks
+  kept as ornament, not use. Four stations stand along it, each with its
+  object set out as if for a ceremony. At the near end is a raw blank of
+  pale crystal, still rough from the cut. Beside it a grinding wheel stands
+  on its edge in a cradle. Further along, a lens is held half-shaped in a
+  clamp, one face clear, the other still dull. At the far end a rack holds a
+  row of finished lenses upright, each in its own slot. Tiers for watchers
+  rise along the walls, worn smooth where many sat. A passage and a culvert
+  lead away. The third way out, a square hatch in the wall, is sealed under
+  a fused sheet of dark glass with the shape of a lens pressed into its
+  middle.
+nouns:
+  bench: >-
+    Along the near edge of the bench, where the one being proved would
+    stand, the crystal is worn into a long shallow trough by three-groove
+    feet shifting from station to station. Beside each station a small mark has been scored, rubbed out and scored again, as if the makers argued for an age over what belonged where.
+  blank: >-
+    A lump of pale crystal the size of two fists, its faces still raw from
+    the cutting and edged with tiny chips. Someone has pressed a single round
+    mark into one face, as if to claim it. It is cold, and heavier than it
+    looks.
+  wheel: >-
+    A wheel of dark stone-like crystal set upright in a cradle, its face
+    crossed with fine radiating lines for grinding. Grey dust has dried hard
+    along its rim. It turns when you nudge it, very slowly, and makes a soft
+    rasping sound that lingers after it stops.
+  lens: >-
+    Held in a clamp, the half-ground lens shows two faces. The finished side
+    is clear and gently curved, and through it you see the bench behind
+    rather than the wall in front. The other side is still frosted and dull.
+    A tiny crack runs in from the edge, which may be why it was never done.
+  rack: >-
+    A frame of crystal with a dozen upright slots, eleven of them filled.
+    Each finished lens stands on its rim and looks a little differently at
+    the room: one shows it nearer, one farther, one from above. The empty
+    slot at the end is the size of the lens in the clamp.
+  tiers: >-
+    Low tiers of crystal rise along both walls, worn smooth in long hollows
+    where many sat and watched. In one place the hollows crowd together near
+    the front, as if a great many came to see one proving in particular. A
+    single round mark, pressed and then rubbed half away, sits at the end of
+    the front tier.
+idlemessages:
+  - The grinding wheel turns a quarter turn on its own and rasps softly.
+puzzle:
+  kind: memory
+  sealed_door: hatch
+  hard: true
+  reward: key
+  solved: >-
+    As the last lenses lock on the table, the empty slot in the rack fills
+    with a faint glow shaped like a finished lens, and every lens in the
+    room turns, very slightly, toward the hatch. The pressed shape in the
+    dark glass brightens and the sheet comes apart into dust. Something
+    small and hard has been left in the slot.
+doors:
+  - exit: passage
+    description: >-
+      A plain passage leading out past the end of the bench, its floor dusted
+      grey where the maker's feet carried grinding dust away.
+  - exit: culvert
+    description: >-
+      A low culvert at floor level, its round mouth lined with old dust and
+      chips of crystal swept into it long ago.
+  - exit: hatch
+    description: >-
+      A square hatch in the wall, sealed under a fused sheet of dark glass.
+      The shape of a lens is pressed into its middle, empty and waiting.

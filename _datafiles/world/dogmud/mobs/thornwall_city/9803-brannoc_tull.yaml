@@ -1,0 +1,55 @@
+mobid: 9803
+zone: Thornwall City
+behavior_archetype: noncombat_passive
+non_combatant: true
+charm_immune: true
+hostile: false
+statpool: 30
+maxwander: 0
+groups:
+  - humanoid
+  - smuggler
+idlecommands:
+  - 'emote picks at his teeth with the stub of a pencil, looks at the result,
+    and wipes it on the ledger.'
+  - ''
+  - 'say Holes to let. Digging, for them as want more hole. Paint, for them as
+    are fussy. Keys, for them as have friends, which is not you. It is on the
+    list. Read it.'
+  - ''
+  - 'emote kicks the crate so the slate stops sliding, then glares at you as if
+    you had done it.'
+  - ''
+  - 'say Chests and strongboxes, for them as have got something worth nicking.
+    Type list. I am not saying it twice.'
+  - ''
+  - 'emote tips his chair back against the rock, closes his eyes, and opens one
+    of them again the moment you move.'
+  - ''
+  - 'say Torvan owns the Burrows. I just sit here and get talked at. Type list,
+    or push off.'
+activitylevel: 10
+character:
+  name: Brannoc Tull
+  description: |
+    Brannoc Tull is Torvan Cresk's doorman at the mouth of the Burrows, and he
+    wants you to know that he did not ask for the job. He is a broad, scarred
+    slab of a man with a flattened nose and a smuggler's weathered hands,
+    sprawled on a chair he has plainly stolen, his boots up on an upturned
+    crate that serves as his desk and a greasy ledger somewhere beneath them.
+    He lets holes in the warren to people the city upstairs will vouch for,
+    because Torvan says so, and sells digging deeds, paint vouchers, keys and
+    lock-boxes off a chalked slate, because Torvan says so. He listens to
+    questions the way other men listen to a dripping tap, and his answers come
+    back short, loud and rude. He never forgets a face that has annoyed him.
+    Most faces have.
+  speciesid: 1
+  level: 1
+  gold: 0
+  stats:
+    perception:
+      base: 110
+    charisma:
+      base: 70
+    willpower:
+      base: 110

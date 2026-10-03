@@ -1,0 +1,79 @@
+roomid: 6570
+zone: The Confluence
+title: Quill Court
+description: >
+  Quill Court is hardly a court at all: a flagged pocket off the west end of
+  Hall Lane, shut in by the blind flank of the Municipal Hall on one side and
+  the backs of the scholars' quarter on the other, with a strip of sky
+  overhead and a stone gutter down the middle that carries the rain away
+  toward the rivers. At its end a tall, narrow house leans on its neighbours,
+  four storeys of dark river-brick and small leaded windows, a candle behind
+  most of them long into the night. Its
+  <ansi fg="itemname">door</ansi> is painted the blue of deep water under
+  cloud, with a <ansi fg="itemname">brass plate</ansi> set where a keyhole
+  ought to be. A varnished <ansi fg="itemname">notice board</ansi> is fixed
+  beside it, and a hooded <ansi fg="itemname">lamp</ansi> hangs over both
+  from an iron arm, kept trimmed by the house so that nobody can say they
+  could not read its terms.
+biome: city_backstreet
+coord:
+  x: -7
+  y: -68
+  z: 0
+# The house lamp over the door, named in the description. The backstreet
+# biome's own lamp is too dark after nightfall to make out faces, so the
+# clerk's list could not be read; 52 is the lamplit-street level, as in
+# Pennock's Alley (5625), New Plymouth's lodging house.
+lamp: 52
+exits:
+  east:
+    roomid: 6144
+  # The lodging-house door. It is a ROUTED exit (internal/housing): each
+  # lodger who goes through it arrives in their own room, and anyone else
+  # is turned away. It points back at this room only because an exit needs
+  # an authored destination; the router always decides. The lock keeps
+  # mobs, which never consult the router, from using it.
+  door:
+    roomid: 6570
+    lock:
+      difficulty: 255
+nouns:
+  door: A tall, narrow door of close-grained wood, painted river-blue and
+    varnished over so many times the blue has gone deep and glassy. It has
+    no keyhole and no handle on this side. Where a keyhole should be is a
+    palm-sized brass plate. Lodgers lay a hand on it and go in. Everyone
+    else waits, usually while the clerk watches.
+  brass plate: A plate of brass the size of an open hand, set flush in the
+    door and engraved, very small, with the three rivers meeting. The
+    engraving is worn nearly smooth at the centre by years of palms. There
+    is no seam and no mechanism you can see, and it opens for the lodgers of
+    this house and for nobody else.
+  notice board: A varnished board in a narrow frame, screwed to the brick
+    beside the door. In a copperplate hand too good for its job it reads
+    THE QUILLHOUSE. ROOMS LET TO SCHOLARS, COPYISTS, CLERKS AND THE
+    RESPECTABLE. EXTENSIONS. REDECORATION. GUEST KEYS. STORAGE. Beneath, in
+    smaller and crosser letters, someone has added ENQUIRE OF THE CLERK.
+    TYPE LIST.
+  lamp: A hooded brass lamp on a wrought-iron arm above the blue door, its
+    glass kept clean and its wick trimmed. It throws a neat circle of light
+    over the door, the notice board, and the clerk's stool.
+  gutter: A channel cut down the middle of the flags, worn smooth by
+    rainwater running east toward the lane and, eventually, the rivers.
+    Someone has dropped a quill in it. It has not moved in some time.
+  windows: Small leaded windows climbing the front of the house, four
+    storeys of them. Most have a candle behind them and a shadow bent over
+    a desk.
+idlemessages:
+- From somewhere high in the Quillhouse comes the patient scratch of a quill,
+  stops, and starts again.
+- A copyist with ink to the wrist lays a palm on the brass plate and slips
+  in through the blue door without looking up from the page in her hand.
+- A bell carries across the water from the temple, and the candles in the
+  Quillhouse windows do not so much as flicker.
+- Rain from some earlier shower still runs down the gutter, murmuring toward
+  the lane.
+spawninfo:
+  - mobid: 9802
+    respawnrate: "15 real minutes"
+x: 3
+y: 72

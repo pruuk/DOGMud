@@ -1,0 +1,22 @@
+itemid: 20099
+name: Glass-Scale Hauberk
+vendor_categories:
+- blacksmithing
+namesimple: hauberk
+description: >-
+  A shirt of fine chain, every link of it hidden under row on row of small
+  black lenses set like the scales of a fish. Each lens is ground thin at
+  the edge and overlaps the next, so the whole coat moves like water and
+  weighs a fraction of plate. The glass is harder than any steel in the
+  Marches. A blade that lands on it skates across the scales, and the light
+  caught in them throws a little of the blow back the way it came.
+type: body
+subtype: wearable
+physical_mitigation: 13
+magical_mitigation: 2
+escapemodifier: 0.5
+weight: 4.0
+value: 12500
+rarity_tier: 5
+statmods:
+  return_damage: 5

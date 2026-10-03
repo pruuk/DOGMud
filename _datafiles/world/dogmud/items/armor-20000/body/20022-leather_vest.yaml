@@ -8,6 +8,7 @@ description: A fitted vest of cured leather, stitched with bone needles and
   cuts with ease.
 type: body
 subtype: wearable
+weight: 4.0
 value: 10
 rarity_tier: 40
 physical_mitigation: 4

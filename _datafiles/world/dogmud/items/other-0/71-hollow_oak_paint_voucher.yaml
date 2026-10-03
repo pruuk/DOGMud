@@ -1,0 +1,14 @@
+itemid: 71
+name: Hollow Oak Paint Voucher
+namesimple: voucher
+not_salable: true
+description: >
+  An oak leaf, pressed flat and dried, with PAINT written on it in
+  oak-gall ink. It buys one hollow of your lodging in the Hollow Oak a new
+  look. Stand in the hollow you want changed and type use voucher. It is
+  spent when the new description is written.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

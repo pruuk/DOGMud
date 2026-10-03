@@ -23,12 +23,37 @@ models require on Chat Completions). Set `Model`, `FastModel` or `DeepModel`
 to override; for richer conversation at a higher cost, `Model: gpt-5.4`.
 `aicompanion models` shows what each tier is using.
 
-A new character meets its companion right after character creation: once
-it has stood in its first real room (not the void or the tutorial
-antechamber) for a few rounds, Mara walks up, introduces herself and asks
-whether it minds company. If the player sends her away, she goes, and does
-not come back on her own. An existing character with no companion meets her
-the same way on its next login. `AutoBond: false` turns this off.
+Nobody is handed a companion. There is one of each on the server (Mara,
+Corvel, Liesl, Tobin, Isaura and Hal), and a free one waits in their own
+room of the Waystone Hollow, west of Scrub Draw in Pothole Coulee. To test:
+set up your own key in the web client (companions speak only to players
+with one, `RequirePlayerKey`), walk in past the board at the mouth (it is
+shown to you once; speaking to a traveller after it is your consent),
+talk, `show <item> <name>` something, and try to talk them into coming.
+When the model decides they want to, they ask you whether you would like
+their company; say yes. Their opinion of you must have risen at least once
+first. `companion-part` (twice) sends them back. `aicompanion claims`
+shows who is with whom; `aicompanion grant <character> <profile>` skips the
+courtship for a free companion.
+
+## What is sent in the Hollow
+
+Each moment there (a `said`, `asked` or `shown`) builds one
+request on the **main** tier, schema `companion_interview`, routed by the
+VISITOR's own key and carried in the mind the companion keeps of them
+(`mind-<visitor>-<mob>`), so it is the same mind if they set out together.
+The system message holds the rules for a companion choosing who to travel
+with, what wins this one over and what puts them off
+(`hollow.appreciates`, `hollow.wary_of`), the world primer and WHO YOU ARE.
+The user message holds what the companion can see of the visitor (how they
+look and what they wear, things they made themselves, their strongest
+skill, what they have fought, quests seen through and in hand, how the
+factions regard them, their skill in what the companion cares about), how
+the companion feels about them, what they have shown, facts, memories,
+recent lines, and what just happened. The reply is speech, mood, a memory,
+facts, a bounded opinion change, and a verdict: `offer` (she asks them
+whether they would like her company), `join` (they said yes to that),
+`undecided` or `not_them`.
 
 ## What is sent when a player speaks
 
@@ -189,27 +214,63 @@ it. Her starting kit is handed over only the first time she takes up with
 someone, because a template that carried gear would hand out free gear every
 time she died.
 
-Mara cooks. Idle by a fire with raw ingredients in her pack, cooking
-outweighs everything else she might do; in a room that has yielded to
-foraging before, gathering outweighs the rest.
+Every companion works the trades in their profile's `crafts`, and how
+much a trade means to them is their archetype's preference for that skill.
+A trade they care about at least half as much as anything (`callingDrive`,
+0.5) is a calling: Hal's cooking and Liesl's alchemy. Idle at the right
+station with the makings in their pack, they set to work on their own,
+ahead of the pastime roll below: checked every idle moment, at most once
+every `IdleTradeSeconds` (sixty), with their drive as the chance, so Hal at
+a fire with meat and salt is cooking within a minute or two. For everyone
+else a trade is just one pastime among the rest, weighted by how much it
+means to them. Either way she makes the finest thing she can in the trade
+that means most to her (the highest `skill_minimum` her skill has reached),
+and the craft is the engine's own command. Corvel smiths at a forge now and
+then; Isaura's enchanting is not one of her crafts, since an enchantment
+needs an item to work on. In a room that has yielded to foraging before,
+gathering outweighs the other pastimes.
 
 ## When nothing is happening
 
 Every `IdlePastimeMinutes` (four), if nobody has spoken lately and she is
 not busy, she *may* do something: `IdlePastimeChance` (0.5) decides, so
 something happens every eight minutes on average and never on a beat. What
-she does is a weighted random pick from whatever fits where she stands:
+she does is a weighted random pick from whatever fits where she stands.
+The weights below are the defaults; each profile's `pastimes` sets its own
+(0 to 10, 0 for never), so each leans to what suits them: Tobin searches
+(7), Mara forages (6) and reads the ways out (4), Liesl forages (7), Hal
+forages for the pot (4), Corvel watches the ways out (4), Isaura pokes into
+corners (search 4). Foraging trains Search; there is no separate skill.
+All of this is local and calls no model. The model can choose the same
+things itself when it is answering someone (`forage`, `search`, `craft`
+and the rest are action verbs), so "cook this for me" is a craft it can
+start, and when she has the makings but not the place it is shown that
+too ("Roast (cooking), at a cooking fire"), with the stations she has seen
+on her map, so she can say so or take you to one.
 
 | Pastime | Weight | When it is offered | What it is good for |
 |---|---|---|---|
 | gesture | 4 | her own idle pool, matched to how she feels | character |
+| `craft` | 2, plus ten times her drive for the trade | a station here and the makings for something she knows (a calling skips the roll entirely) | food, salves, gear; raises the trade |
 | `search` | 2 | not searched here in half an hour | hidden things; raises Search |
 | `scan` | 2 | not scanned here in fifteen minutes | reads the ways out and what lies along them; a scout's habit |
-| `forage` | 2 | not foraged here in half an hour | gathering; biome-gated by the engine |
+| `forage` | 2, times three where it has yielded before | not foraged here in half an hour | gathering; biome-gated by the engine |
 | `salvage` | 2 | a body here, and the loot arrangement allows it | materials from the dead; raises Salvage |
 | `gearup` | 1 | something wearable in her pack, once an hour at most | puts her gear right |
 
 Anything that fails twice in a room is left alone there for a day.
+
+What a search turns up (a hidden way out, a hidden container, a stashed
+item, someone hiding, something worth a closer look) is put to her, so she
+can say so. `CompanionBaubleChance` (15) percent of her searches also roll
+for a bauble on her owner's behalf, under the player rules, and only for an
+owner with a model to use (their own key when `RequirePlayerKey`); the find
+goes into her pack and she is told of it. Hal and Mara also butcher (pastime
+`butcher`): game her owner could loot, already picked clean, even under the
+ask-first arrangement. Asked, any companion can `salvage` a body that is
+picked clean. The engine's corpse salvage table covers animal, rodent and
+humanoid groups only: a `beast` such as the pronghorn cannot be butchered by
+anyone, and drops its raw meat as loot instead.
 
 Searching and foraging are real commands, judged like any other action, and
 they are also how those skills grow: DOGMud has no practice command, skills
@@ -382,13 +443,44 @@ takes over and she does not attack again each moment.
 
 The engine's combat AI keeps swinging, casting and assisting as it always
 does. On top of it the companion sets a plan (stance, target, when to run,
-melee or ranged, and a special move to try), and local reflexes carry it
-out one ordinary command a round.
+melee or ranged, a special move to try, and a spell to cast), and local
+reflexes carry it out one ordinary command a round.
+
+- **Each companion fights in their own way.** Every mob template names its
+  own scripted archetype (`companion_archer`, `_guardian`, `_healer`,
+  `_skirmisher`, `_battlemage`, `_brawler`), and the prompt's fighting
+  paragraph is written per profile: their `approach` in a sentence, only
+  the moves that suit them, and what they do on their own.
+
+  | Companion | Goes in | Scripted rounds | On their own | Moves offered |
+  |-----------|---------|-----------------|--------------|---------------|
+  | Mara | fighting | shoots each round; kicks a downed foe | first shot from an empty bow | kick, trip |
+  | Corvel | protecting | bashes casters, taunts foes off his companion, rallies, bashes | | taunt, bash, rally, warcry, kick |
+  | Liesl | holding back | mends and wards herself when hit | mends her companion below 60%, wards them as a fight opens | trip |
+  | Tobin | fighting | trips casters and anyone standing, kicks the fallen | a surprise first blow if hidden (`sneak`) | trip, kick |
+  | Isaura | fighting | her strongest harm spell, then the cheaper one | | none |
+  | Hal | fighting | grapples a lone foe, trips, kicks the fallen | (submission policy mercy) | grapple, trip, kick |
 
 - **Special moves** are the engine's own: taunt, bash, kick, trip, grapple,
   hamstring, rally, warcry. Whether one lands is the engine's gate (a shield
   for a bash, legs for a kick, the shared cooldown), not a skill unlock.
   DOGMud has no skill-gated move list; skills decide how well a move goes.
+  The model is offered only the moves in the profile's `combat.moves`, and
+  one outside it is ignored. A plan that says `unchanged` (or nothing) keeps
+  the move already planned; `none` drops it. Her reflexes run first on the
+  round, before her scripted tree, so a move or spell she chose is not lost
+  to the tree's own move taking the shared cooldown.
+- **Holding back is kept**: every round, if the engine has pulled her into
+  a fight with a foe that is not fighting her, she steps out again.
+- **Crowds**: the brawler's grapple and the battlemage's room-wide spell
+  count only those actually in the fight (`multiple_foes`), never
+  bystanders.
+- **Spells in a fight**: `combat.spell` is an [m] ref and `spell_at` is
+  "owner", "self" or an [e] ref (an [m] ref is the spell's place in her
+  whole spellbook, so it does not shift when she runs low; empty: the foe she is fighting for a
+  harmful spell, herself for any other). It is cast once, when she is free
+  to act; a harmful one only at something her owner could harm, never at
+  her owner, and never while holding back.
 - **Arrows** are a bundle with shots left in it, and firing chambers the
   next one. The engine has no way to pick spent arrows back up, so the
   module adds one for a bonded companion only: what it looses in a fight is
@@ -508,16 +600,24 @@ she picks) is temperament, not capability.
 
 ## Consent
 
-Before anything a player says is sent to OpenAI, they are asked. The
-companion arrives and puts the question in brackets, in authored text with
-no model call behind it: what is sent, that it is kept on the server where
-administrators can read it, and that declining leaves them an ordinary
-companion who still follows, fights and answers with set lines. The answer
-is matched literally (`i agree`, `i decline`), so the answer itself never
-leaves the server either. Until they agree, every decision falls back to
-authored lines. `help aicompanion` says the same thing in the player's own
-time, and `RequireConsent: false` turns the question off for a server that
-has told its players some other way.
+Before anything a player says is sent anywhere, they have been told. The
+board at the mouth of the Waystone Hollow is shown to them the first time
+they step into that room, in authored text: that the travellers are played
+by an AI, that they listen only to players with their own key, that what is
+said to them is sent to that key's provider and kept on the server where
+its keepers can read it, and that speaking to them is agreement. Speaking
+to a traveller after reading it records consent; a player who reached one
+without passing the board is shown it then, and what they said is not sent.
+Having a companion is consent too: winning one in the Hollow records it, and
+at boot every roster holder is counted as agreed (an admin `grant`, or a
+companion held from before the board), unless they had said
+`companion-ai off`, which nothing overrides. With `RequirePlayerKey` off the
+board adds a paragraph saying the server's own key answers those without
+one, at the keepers' cost.
+`companion-ai off` withdraws it at any time, and until a player has agreed
+every decision falls back to authored lines. `help aicompanion` says the
+same thing in the player's own time, and `RequireConsent: false` turns the
+requirement off for a server that has told its players some other way.
 
 ## Passers-by
 
@@ -570,8 +670,9 @@ or "Bearer" followed by a key or a token-length string) is dropped unread
 and the call fails for that turn, without counting against the owner's
 breaker, since the guard refused it, not the provider.
 
-The consent question still gates every call: a player who has not said
-"i agree" sends nothing through their own key either.
+Consent still gates every call: a player who has not agreed (by the
+Hollow's board, or `companion-ai on`) sends nothing through their own key
+either.
 
 There is no output moderation on this tier. The player's provider may have
 none, and a reply from a browser can be forged by the player anyway, so a

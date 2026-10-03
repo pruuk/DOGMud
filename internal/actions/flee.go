@@ -188,7 +188,7 @@ func ResolveFlee(actor Actor, room *rooms.Room) FleeOutcome {
 		return out
 	}
 
-	exitName, exitRoomId := fleeExit(room, admission.PreferredExit)
+	exitName, exitRoomId := fleeExit(room, admission.PreferredExit, actor.GetUserId())
 	if exitName == `` {
 		out.NoExit = true
 		settleFlee(c, false)
@@ -207,13 +207,26 @@ func settleFlee(c *characters.Character, success bool) {
 	}
 }
 
-// fleeExit is the preferred exit when it is still there and unlocked, else a
-// random passable one (secret and locked exits excluded).
-func fleeExit(room *rooms.Room, preferred string) (string, int) {
+// fleeExit is the preferred exit when it is still there and passable, else a
+// random passable one (secret and locked exits excluded). A routed exit (a
+// housing or rift door) is passable only when its router lets this fleer
+// through, and then leads where the router says: fleeing is not a way past a
+// door that walking could not open. userId is zero for a mob.
+func fleeExit(room *rooms.Room, preferred string, userId int) (exitName string, roomId int) {
+	rooms.WhileFleeing(func() { exitName, roomId = fleeExitRouted(room, preferred, userId) })
+	return exitName, roomId
+}
+
+// fleeExitRouted is fleeExit's choice, made inside rooms.WhileFleeing.
+func fleeExitRouted(room *rooms.Room, preferred string, userId int) (string, int) {
 	if preferred != `` {
 		if info, ok := room.GetExitInfo(preferred); ok && !info.Lock.IsLocked() {
-			return preferred, info.RoomId
+			if route, routed := rooms.RouteExit(userId, room.RoomId, preferred); !routed {
+				return preferred, info.RoomId
+			} else if route.RoomId != 0 {
+				return preferred, route.RoomId
+			}
 		}
 	}
-	return room.GetRandomExit()
+	return room.GetRandomExitFor(userId)
 }

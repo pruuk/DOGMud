@@ -340,12 +340,25 @@ func storageFindAddable(user *users.UserRecord, itemName string, room *rooms.Roo
 		return itm, true, items.Item{}
 	}
 	if len(user.Character.ComponentItems) > 0 {
-		close, full := items.FindMatchIn(itemName, user.Character.ComponentItems...)
+		// The component bag holds stolen goods too (a merchant chest's
+		// ingots, herbs, cloth): pass over any hot here, as above.
+		cool := make([]items.Item, 0, len(user.Character.ComponentItems))
+		for _, c := range user.Character.ComponentItems {
+			if !baubles.ItemIsHotIn(c, room.Zone, now) {
+				cool = append(cool, c)
+			}
+		}
+		close, full := items.FindMatchIn(itemName, cool...)
 		if full.ItemId != 0 {
 			return full, true, items.Item{}
 		}
 		if close.ItemId != 0 {
 			return close, true, items.Item{}
+		}
+		if hotClose, hotFull := items.FindMatchIn(itemName, user.Character.ComponentItems...); hotFull.ItemId != 0 {
+			return items.Item{}, false, hotFull
+		} else if hotClose.ItemId != 0 {
+			return items.Item{}, false, hotClose
 		}
 	}
 	if stolen, ok := user.Character.FindInBackpack(itemName); ok {

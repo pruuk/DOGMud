@@ -1,0 +1,18 @@
+itemid: 67
+name: Burrow Guest Key
+namesimple: guest key
+not_salable: true
+description: >
+  A heavy iron washer with a notch filed in it and a number scratched on one
+  side. Its owner bought it to let a friend in. Whoever holds it can present
+  it at the iron-banded door at the Burrow Mouth, east off the smugglers'
+  escape shaft under Thornwall, by typing use guest key, and the lock will
+  learn their palm and admit them to that lodging from then on. The washer is
+  spent in the lock. A guest can walk every hide-out of the lodging and touch
+  anything left lying about, so give it only to someone you trust. The owner
+  can take the access back at any time.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

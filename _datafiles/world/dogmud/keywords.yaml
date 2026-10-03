@@ -60,9 +60,11 @@ help:
       - bank
       - buy
       - hire
+      - house
       - list
       - offer
       - sell
+      - visit
     quests:
       - ask
       - quests

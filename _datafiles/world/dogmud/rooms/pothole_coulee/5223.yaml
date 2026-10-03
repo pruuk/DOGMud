@@ -6,7 +6,9 @@ description: >
   grey-green brush threaded with the braided trails of game. A hunter's
   cairn of stacked stones marks the draw's mouth, fresh rock heaped beside
   it where someone is building the marker higher. Beyond, the trails run
-  off into country no map has caught up to yet.
+  off into country no map has caught up to yet. West, a lamplit cleft
+  opens in the foot of the bluff, and a thread of woodsmoke leaks out of
+  it.
 biome: shore
 coord:
   x: 43
@@ -19,6 +21,8 @@ exits:
     roomid: 5216
   south:
     roomid: 5282
+  west:
+    roomid: 6880
 nouns:
   brush: Dry grey-green brush covers the rising ground to the south, low
     and tough and smelling of dust and crushed sage. Game trails braid
@@ -29,5 +33,10 @@ nouns:
     mouth, the old way of marking a trailhead and a kill. Fresh rock lies
     heaped at its foot, half-set, where someone has lately set to building
     it taller -- a sign the way south is being opened to those who follow.
+  cleft: A cleft in the foot of the bluff, wide enough for two to walk
+    abreast, with lamplight inside and the smell of woodsmoke and onions
+    drifting out. Folk in the village call it the Waystone Hollow, and say
+    that travellers between roads wait there for someone worth going
+    with.
 x: 42
 y: 20

@@ -555,7 +555,12 @@ func (r *fakeRelay) Send(ctx context.Context, userId int, body []byte, carries a
 	return resp.StatusCode, raw, true, nil
 }
 
-func (r *fakeRelay) Result(userId int, err error) { r.results = append(r.results, err) }
+func (r *fakeRelay) Result(userId int, purpose string, err error) {
+	if purpose != apiframework.PurposeFinds {
+		panic(`baubles reported on a purpose other than finds: ` + purpose)
+	}
+	r.results = append(r.results, err)
+}
 
 func TestFindersOwnKeyNamesTheirFind(t *testing.T) {
 	serverSide := newFakeOpenAI(t)

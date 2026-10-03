@@ -8,5 +8,6 @@ description: A sturdy pouch of stitched leather with a wide strap, worn at the
   important things.
 type: belt
 subtype: wearable
+weight: 1.0
 value: 12
 rarity_tier: 40

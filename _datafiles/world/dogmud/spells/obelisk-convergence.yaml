@@ -1,0 +1,28 @@
+spellid: obelisk-convergence
+name: Convergence
+aliases: [obeliskconvergence]
+description: >
+  The Watching Obelisk gathers light up its facets to its peak and lets it
+  fall on everything below. Telegraphed over several rounds; strong enough
+  blows break its concentration. Mob-castable only.
+attack_type: spell
+damage_type: physical
+targeting: area
+schools:
+  - elemental
+cost: 20
+waitrounds: 1
+difficulty: 40
+mob_only: true
+primarystat: willpower
+base_folds: 4
+effect_type: damage
+effect_magnitude: 150
+damage_multiplier: 1.10
+ignore_move_cooldown: true
+spares_allies: true   # misses the other Lenses in the room
+categories:
+  - harm_multi
+cast_actor: "Light begins to climb your facets."
+cast_observer: "Every facet of {actor} begins to brighten, one after another, light running upward toward its peak."
+wait_observer: "Light climbs {actor} facet by facet. When it reaches the top it will come down on everyone here. Strike it hard enough and it may lose its hold."

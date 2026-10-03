@@ -9,5 +9,6 @@ type: offhand
 subtype: wearable
 physical_mitigation: 10
 blockrating: 18
+weight: 5.0
 value: 22
 rarity_tier: 40

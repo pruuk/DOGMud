@@ -1037,6 +1037,32 @@ type Balance struct {
 	// persistently full chest or unreachable chest room).
 	ForagerStoringWatchdogRounds ConfigInt `yaml:"ForagerStoringWatchdogRounds"`
 
+	// ── CITY SCAVENGERS AND FLOOR DECAY ──────────────────────────────────────
+	// The loot goblin's replacement (internal/scavenger, rooms/floor_decay.go).
+
+	// ScavengerStepMinSeconds and ScavengerStepMaxSeconds bound how long a
+	// city scavenger lingers in each room before its next step toward its
+	// target: a fresh uniform pick in [min, max] real seconds per room.
+	// Defaults 30 and 150.
+	ScavengerStepMinSeconds ConfigInt `yaml:"ScavengerStepMinSeconds"`
+	ScavengerStepMaxSeconds ConfigInt `yaml:"ScavengerStepMaxSeconds"`
+
+	// FloorDecayBaseChancePct is the percent chance that a lone litter item
+	// on a floor outside the scavengers' rounds is removed at each real-world
+	// day boundary. Default 10.
+	FloorDecayBaseChancePct ConfigInt `yaml:"FloorDecayBaseChancePct"`
+
+	// FloorDecayPerExtraItemPct is added to that chance for every other
+	// litter item in the same room, so 5 items roll at 10 + 4*5 = 30% each.
+	// The total is held to 100. Default 5.
+	FloorDecayPerExtraItemPct ConfigInt `yaml:"FloorDecayPerExtraItemPct"`
+
+	// FloorDecayCheckRounds is how often (in rounds) loaded rooms are checked
+	// for a day's decay they still owe. The decay itself happens once per day
+	// per room; this only sets how soon after midnight, or after a player
+	// leaves a room, it is paid. Default 15 (about a minute).
+	FloorDecayCheckRounds ConfigInt `yaml:"FloorDecayCheckRounds"`
+
 	// ── ECONOMY HEALTH DASHBOARD ─────────────────────────────────────────────
 	EconomySnapshotIntervalHours ConfigInt   `yaml:"EconomySnapshotIntervalHours"` // Wall-clock cadence (default 1)
 	EconomySnapshotRetentionDays ConfigInt   `yaml:"EconomySnapshotRetentionDays"` // Auto-snapshot retention (default 30)

@@ -73,3 +73,22 @@ func poolContains(p []int, id int) bool {
 	}
 	return false
 }
+
+// Room extras join the pool, and make an otherwise unforageable biome
+// forageable (rifts put rare ore in a room this way).
+func TestForageCore_RoomExtras(t *testing.T) {
+	if IsForageable("no-such-biome", nil) {
+		t.Fatal("unknown biome with no extras must not be forageable")
+	}
+	if !IsForageable("no-such-biome", []int{999003}) {
+		t.Fatal("room extras must make a room forageable")
+	}
+	found := false
+	for i := 0; i < 400 && !found; i++ {
+		r := ForageCore(ForageAttempt{Biome: "no-such-biome", SearchScore: 10000, RoomExtra: []int{999003}})
+		found = r.Found && r.ItemId == 999003
+	}
+	if !found {
+		t.Fatal("a room-extra item was never found in an extras-only pool")
+	}
+}

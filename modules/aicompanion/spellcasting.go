@@ -46,12 +46,18 @@ func spellsReady(mob *mobs.Mob) []spellOption {
 	}
 	sort.Strings(ids)
 
+	// A spell's [m] reference is its place in her whole spellbook, not in
+	// this round's list, so it does not drift between the prompt being
+	// built and the model's answer coming back: a spell she could pay for
+	// then and cannot now is refused, never mistaken for another one.
 	var out []spellOption
+	n := 0
 	for _, id := range ids {
 		sd := spells.GetSpell(id)
 		if sd == nil || sd.MobOnly {
 			continue
 		}
+		n++
 		if sd.Cost > 0 && mob.Character.Conviction < sd.Cost {
 			continue // not enough conviction to pay for it
 		}
@@ -59,7 +65,7 @@ func spellsReady(mob *mobs.Mob) []spellOption {
 			continue // it would kill her
 		}
 		out = append(out, spellOption{
-			Ref: fmt.Sprintf(`m%d`, len(out)+1), Id: sd.SpellId, Name: sd.Name,
+			Ref: fmt.Sprintf(`m%d`, n), Id: sd.SpellId, Name: sd.Name,
 			What: spellWhat(sd), Cost: sd.Cost, SelfOK: sd.Targeting == combatvocab.TargetSelf,
 			Harm: sd.IsHarm(), Area: sd.IsHarm() && sd.Targeting == combatvocab.TargetArea,
 		})

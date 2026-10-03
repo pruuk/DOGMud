@@ -1,0 +1,44 @@
+roomid: 6884
+zone: Pothole Coulee
+title: The Scribbled Gallery
+description: >
+  A low, dry gallery whose walls have been covered, floor to roof, in chalk.
+  Star charts, sums, sketched creatures with arrows pointing to their
+  joints, lists of questions with some crossed out and more written in
+  their place. An upturned crate serves as a desk under a mountain of
+  borrowed books, a ring of inkpots and a pair of cracked spectacles.
+  A lamp hangs from a nail on a length of string so it can be moved to
+  whichever wall is being argued with. The ledge lies back north.
+biome: cave
+lamp: 55
+coord:
+  x: 40
+  y: 2
+  z: 0
+mutators:
+- mutatorid: sanctuary
+exits:
+  north:
+    roomid: 6883
+nouns:
+  walls: Chalk, everywhere. The three moons drawn in their courses with
+    notes on when each is full; a wolf's skeleton labelled bone by bone;
+    a column of figures ending in a heavily underlined question mark; and
+    the words WHY DOES IT WORK written three times, each larger than the
+    last.
+  books: A teetering stack of books, every one with a lending slip from the
+    Greenford university library tucked inside it. Most of the slips are
+    long overdue.
+  desk: An upturned crate stamped with a vintner's mark, now a desk. It is
+    covered in loose pages, spilt ink, pen nibs and the crusts of meals
+    eaten without looking.
+  inkpots: Half a dozen inkpots in a ring, black, blue, a rusty red and one
+    whose label just says do not.
+  spectacles: A pair of wire spectacles with one lens cracked straight
+    across, folded carefully on top of the books.
+idlemessages:
+- A flake of chalk drifts down from the wall.
+- The hanging lamp turns slowly on its string, and the drawings swing with
+  its light.
+x: 39
+y: 21

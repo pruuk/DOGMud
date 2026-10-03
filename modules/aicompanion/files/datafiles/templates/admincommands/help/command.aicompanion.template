@@ -6,8 +6,10 @@ Administers bonded AI companions (modules/aicompanion).
 
   <ansi fg="command">aicompanion status</ansi>               Module state, today's usage, each companion.
   <ansi fg="command">aicompanion profiles</ansi>             Companion profiles that loaded.
-  <ansi fg="command">aicompanion grant <char> <profile></ansi>  Bond a companion to an online player.
-  <ansi fg="command">aicompanion revoke <char></ansi>        Remove it (its memories stay on disk).
+  <ansi fg="command">aicompanion grant <char> <profile></ansi>  Bond a free companion to an online player.
+  <ansi fg="command">aicompanion revoke <char></ansi>        Send theirs back to the Hollow.
+  <ansi fg="command">aicompanion claims</ansi>               Who travels with whom; who waits.
+  <ansi fg="command">aicompanion release <profile></ansi>    Free a companion (now or at next login).
   <ansi fg="command">aicompanion pause|resume <char></ansi>  Stop or restart its model calls.
   <ansi fg="command">aicompanion mind <char></ansi>          Opinion scores, memories, facts, promises.
   <ansi fg="command">aicompanion trace <char></ansi>         Its recent decisions: tier, model, intent.
@@ -16,3 +18,6 @@ Administers bonded AI companions (modules/aicompanion).
   <ansi fg="command">aicompanion breaker reset</ansi>        Resume model calls after repeated errors.
 
 The prompt view contains what players said. Treat it as private.
+
+There is one of each companion. A companion held by someone else must be
+released before it can be granted to anyone.

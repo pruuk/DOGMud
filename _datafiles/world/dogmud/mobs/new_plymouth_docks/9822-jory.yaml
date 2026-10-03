@@ -1,0 +1,45 @@
+mobid: 9822
+zone: New Plymouth Docks
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - np_dockfolk
+idlecommands:
+  - 'emote leans on his boathook and squints out at the water.'
+  - ''
+  - 'emote rummages in his basket, pulls out a whelk shell, and puts it back.'
+  - 'emote hooks a strand of weed off a piling and inspects it for anything shiny.'
+  - ''
+  - 'emote hums a sea shanty with most of the words wrong.'
+activitylevel: 8
+character:
+  name: Jory
+  description: |
+    A mudlark in waders patched at both knees, with a basket on his back and
+    a boathook he uses for everything from fishing out flotsam to scratching
+    his back. Jory has worked the tideline under the wharves since before he
+    could swim. The dockers call him the harbour's second tide, because
+    whatever the first one leaves, he takes.
+  speciesid: 1
+  level: 3
+  gold: 3
+  stats:
+    strength:
+      base: 108
+    vitality:
+      base: 112
+    perception:
+      base: 110
+    dexterity:
+      base: 104

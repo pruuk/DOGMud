@@ -91,11 +91,63 @@ type Profile struct {
 	// Crafts are the trades this companion works: recipe disciplines it
 	// knows the beginner recipes of (cooking, tailoring, alchemy...).
 	Crafts []string `yaml:"crafts"`
+	// Pastimes weigh what they do with themselves when nothing is
+	// happening (autonomy.go pastime): a thief searches, a herbalist
+	// forages, a scout reads the ways out. Keys from pastimeDefaults;
+	// anything left out keeps its default weight.
+	Pastimes map[string]int `yaml:"pastimes"`
 
 	Archetype Archetype     `yaml:"archetype"`
 	Supplies  []Supply      `yaml:"supplies"`
 	Purse     Purse         `yaml:"purse"`
 	Combat    CombatProfile `yaml:"combat"`
+
+	// Specialty is what this companion is good at, in a sentence or two of
+	// their own: it goes into WHO YOU ARE, so the model plays to it.
+	Specialty string `yaml:"specialty"`
+	// StartingSpells are spell ids put into the spellbook whenever this
+	// companion takes up with someone, beside the starting kit. Each must
+	// name a spell the game has (checked at load, see spellsValid).
+	StartingSpells []string `yaml:"starting_spells"`
+	// AmmoWord is what the companion calls its ammunition in a fight
+	// ("arrows", "bolts", "stones"). Empty is arrows.
+	AmmoWord string `yaml:"ammo_word"`
+
+	// Hollow is where and how this companion waits, in the Waystone
+	// Hollow, while nobody has them (hollow.go).
+	Hollow HollowProfile `yaml:"hollow"`
+}
+
+// HollowProfile is the authored half of a companion waiting in the
+// Waystone Hollow. Everything a passer-by meets there before they have a
+// key or have agreed to the model is here; what the companion says once
+// they have is the model's, judged against Appreciates and WaryOf.
+type HollowProfile struct {
+	// RoomId is the companion's own room in the Hollow, decorated to
+	// their taste. No two companions share one.
+	RoomId int `yaml:"room_id"`
+	// Appreciates are the things that would win this companion over: what
+	// a player could bring and show them, or do and bring back evidence
+	// of. They are judged by the model against what the companion can see
+	// of the player, never counted.
+	Appreciates []string `yaml:"appreciates"`
+	// WaryOf are the things that put this companion off a would-be
+	// travelling companion.
+	WaryOf []string `yaml:"wary_of"`
+	// Waiting is how the companion passes the time in the Hollow (emote
+	// text, the name is prepended), chosen locally.
+	Waiting []string `yaml:"waiting"`
+	// Returns is the emote the companion makes on getting back to the
+	// Hollow after parting from someone.
+	Returns string `yaml:"returns"`
+}
+
+// ammoWord is what the companion calls its ammunition.
+func (p *Profile) ammoWord() string {
+	if w := strings.TrimSpace(p.AmmoWord); w != `` {
+		return w
+	}
+	return `arrows`
 }
 
 // ProfileOpinion is the authored starting opinion and sensitivity.
@@ -196,9 +248,56 @@ func (p *Profile) validate() error {
 	default:
 		return fmt.Errorf(`profile %q: combat style must be melee or ranged`, p.Id)
 	}
+	if !inSet(combatStanceDefaults, p.Combat.Stance) {
+		return fmt.Errorf(`profile %q: combat stance must be fight, protect or hold_back`, p.Id)
+	}
+	for _, mv := range p.Combat.Moves {
+		if !inSet(realMoves(), mv) {
+			return fmt.Errorf(`profile %q: combat move %q is not one of %s`, p.Id, mv, strings.Join(realMoves(), `, `))
+		}
+	}
+	if p.Combat.MendBelow < 0 || p.Combat.MendBelow > 95 {
+		return fmt.Errorf(`profile %q: combat mend_below must be 0 to 95`, p.Id)
+	}
+	switch p.Combat.Opener {
+	case ``, `surprise`:
+	default:
+		return fmt.Errorf(`profile %q: combat opener must be empty or surprise`, p.Id)
+	}
+	for k, v := range p.Pastimes {
+		if _, ok := pastimeDefaults[k]; !ok || v < 0 || v > 10 {
+			return fmt.Errorf(`profile %q: pastime %q must be one of emote, search, scan, forage, salvage, butcher, gearup, weighted 0 to 10`, p.Id, k)
+		}
+	}
+	if (p.Combat.MendBelow > 0 || p.Combat.WardOwner) && len(p.StartingSpells) == 0 {
+		return fmt.Errorf(`profile %q: combat mend_below and ward_owner need starting_spells to mend and ward with`, p.Id)
+	}
 	for _, s := range p.Supplies {
 		if s.Name == `` || (s.Type == `` && s.Keyword == ``) || s.Min < 0 || s.Target < s.Min {
 			return fmt.Errorf(`profile %q: supply %q needs a name, a type or keyword, and target >= min`, p.Id, s.Name)
+		}
+	}
+	if p.Hollow.RoomId <= 0 {
+		return fmt.Errorf(`profile %q: hollow room_id is required; every companion waits in a room of their own`, p.Id)
+	}
+	if len(p.Hollow.Appreciates) == 0 {
+		return fmt.Errorf(`profile %q: hollow appreciates needs at least one entry`, p.Id)
+	}
+	for _, id := range p.StartingSpells {
+		if strings.TrimSpace(id) == `` {
+			return fmt.Errorf(`profile %q: starting_spells has an empty entry`, p.Id)
+		}
+	}
+	return nil
+}
+
+// spellsValid reports the first starting spell the game does not have.
+// It needs the spells loaded, so it is checked when the module loads its
+// profiles, not by validate.
+func (p *Profile) spellsValid(known func(string) bool) error {
+	for _, id := range p.StartingSpells {
+		if !known(id) {
+			return fmt.Errorf(`profile %q: starting spell %q does not exist`, p.Id, id)
 		}
 	}
 	return nil
@@ -218,10 +317,12 @@ func parseProfile(b []byte) (*Profile, error) {
 
 // loadProfiles reads every embedded profile. A bad profile is reported and
 // skipped; it never stops the others loading. Duplicate ids or mob ids are
-// errors because the mob id is how a live companion finds its profile.
+// errors because the mob id is how a live companion finds its profile, and
+// so is a shared Hollow room, because each companion waits in their own.
 func loadProfiles() (map[string]*Profile, []error) {
 	out := map[string]*Profile{}
 	byMob := map[int]string{}
+	byRoom := map[int]string{}
 	var errs []error
 
 	entries, err := profileFiles.ReadDir(`profiles`)
@@ -255,8 +356,13 @@ func loadProfiles() (map[string]*Profile, []error) {
 			errs = append(errs, fmt.Errorf(`%s: mob_id %d already used by profile %q`, n, p.MobId, other))
 			continue
 		}
+		if other, dup := byRoom[p.Hollow.RoomId]; dup {
+			errs = append(errs, fmt.Errorf(`%s: hollow room_id %d already used by profile %q`, n, p.Hollow.RoomId, other))
+			continue
+		}
 		out[p.Id] = p
 		byMob[p.MobId] = p.Id
+		byRoom[p.Hollow.RoomId] = p.Id
 	}
 	return out, errs
 }

@@ -1,0 +1,18 @@
+# Splitlight (9837): light that has passed through too much crystal.
+#
+# Refraction (condition 133, permanent) turns part of every blow that lands
+# on it back on the attacker. Every few rounds it casts Prismatic Siphon: a
+# two-fold, telegraphed drain on everyone in the room that heals it by what
+# it takes. Interrupt it, or spread out. Otherwise it fights in melee.
+
+tree:
+  type: selector
+  children:
+    - type: decorator
+      event: mob_combat_round
+      mod: cooldown
+      rounds: 4
+      child:
+        type: action
+        do: cast
+        spell: prismatic-siphon

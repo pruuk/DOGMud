@@ -15,5 +15,6 @@ conviction_mitigation: 3
 statmods:
   willpower: 4
   perception: 2
+weight: 0.4
 value: 35
 rarity_tier: 40

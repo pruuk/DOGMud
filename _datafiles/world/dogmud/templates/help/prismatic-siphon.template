@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">Prismatic Siphon</ansi>
+
+<ansi fg="command">Prismatic Siphon</ansi> is used by the Splitlights of the Obelisk. The Splitlight dims
+and bends its light inward, reaching for everything living in the room,
+and on the next round drains life from all of it to feed itself.
+
+<ansi fg="yellow">Counterplay: </ansi>
+
+  The dimming is the warning, and the drain can be interrupted before it
+  lands. Be careful how you strike a Splitlight at all: part of every blow
+  that lands on it is refracted back at whoever struck it.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>

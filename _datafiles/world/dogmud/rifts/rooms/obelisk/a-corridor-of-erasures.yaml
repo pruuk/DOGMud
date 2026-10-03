@@ -1,0 +1,49 @@
+id: a-corridor-of-erasures
+pool: A
+source: authored
+title: Corridor of Erasures
+description: >-
+  Both walls of this corridor were once written over from the floor to as
+  high as a tall figure could reach, row upon row of small round marks
+  pressed close as stitches. Most of them are gone. Long smooth swathes have
+  been rubbed across the writing, wiping it flat, and the swathes overlap
+  and cross like the strokes of a broom. Where the rubbing went deepest, a
+  grey clouding has crept into the crystal. Here and there remnants survive
+  at the edge of a swathe, the ends of rows that were not quite reached. At
+  the far end, where the erasing stops, one panel remains untouched, its
+  rows crisp and deep, as if pressed with great care by someone who knew it
+  would be the last.
+nouns:
+  swathes: >-
+    Each smoothed band is about the width of a forearm, though nothing
+    here had forearms. The strokes are long and even near the start of the
+    corridor and grow short and hurried toward the end, overlapping,
+    doubling back. Whoever cleaned these walls began patiently and
+    finished in haste.
+  panel: >-
+    The untouched panel at the end is set slightly apart from the rest,
+    bordered by a single unbroken line. Its rows are short and repeat the
+    same few shapes many times, the way you might write a farewell, or a
+    warning, or a name you were afraid to forget.
+  remnants: >-
+    At the ragged edge of the erasing, fragments of rows survive: three
+    marks, five, a single dot left alone. Some of them end in a cluster of
+    three, the same cluster that closes rows all through the Obelisk. Here
+    it has been pressed and pressed again until it is a hole.
+  clouding: >-
+    Where the rubbing went deepest the black crystal has turned a dull
+    smoky grey and lost its shine. Hold your hand near it and it gives
+    back no reflection at all. Faint threads of the same grey creep
+    outward into the clean crystal, very slowly, as if the forgetting had
+    kept going on its own.
+idlemessages:
+  - "A faint dry whisper runs along the wall, like a palm smoothing glass."
+doors:
+  - exit: chute
+    description: >-
+      Past the last panel a polished chute slopes away downward, its
+      sides pressed with marks that no one erased.
+  - exit: aisle
+    description: >-
+      A narrow aisle turns off between two walls of smoothed crystal,
+      back toward where the rubbing began.

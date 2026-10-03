@@ -1,0 +1,19 @@
+id: glass-facet-buckler
+name: Glass-Facet Buckler
+aliases: [glassbuckler]
+skill: blacksmithing
+skill_minimum: 42
+station: forge
+time_rounds: 8
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+  - item_tag: obelisk-lens
+    quantity: 15
+output:
+  item_id: 20101
+  quantity: 1
+success_actor: "You dish the steel thin, set it on its grip, and face it edge to edge with black lenses, each turned a little from the next. A glass-facet buckler!"
+failure_actor: "The thin steel buckles under the weight of the lenses and the facing splits apart. The materials are ruined."

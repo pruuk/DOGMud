@@ -251,13 +251,19 @@ func (m *AICompanionModule) onRelayInbound(userId int, command string, payload [
 			// searching" on the key page: their key may name their
 			// finds (baubles). Absent means no.
 			Finds bool `json:"finds"`
+			// Lively is the owner's "Make the world livelier" on the key
+			// page: their key may be lent to every feature that makes the
+			// world livelier around them (apiframework.IsLively purposes,
+			// such as townsfolk idle moments). The page starts it ticked
+			// and always sends it; absent (an older page) means no.
+			Lively bool `json:"lively"`
 		}
 		if json.Unmarshal(payload, &r) != nil {
 			return
 		}
 		model := strings.TrimSpace(r.Model)
 		if relayModelOK(model) {
-			m.relays.ready(userId, model, r.Finds)
+			m.relays.readyFor(userId, model, r.Finds, r.Lively)
 		}
 	case `Companion.Relay.Gone`:
 		m.relayGone(userId)

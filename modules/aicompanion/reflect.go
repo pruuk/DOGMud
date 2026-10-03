@@ -237,6 +237,7 @@ func (m *AICompanionModule) launchReflection(d *deferredReflection) {
 	m.countCall()
 	key := mindIdentifier(mind.OwnerUserId, mind.MobId)
 	session := d.session // the session reflected on, not the one running now
+	wipes := mind.Wipes
 
 	go func() {
 		// The breakers' leave is always handed back last: a no-op once its
@@ -264,12 +265,12 @@ func (m *AICompanionModule) launchReflection(d *deferredReflection) {
 		util.LockMud()
 		defer util.UnlockMud()
 		applied = true
-		m.applyReflection(key, call.OwnerUserId, session, call.Model, held, rt, res)
+		m.applyReflection(key, call.OwnerUserId, session, wipes, call.Model, held, rt, res)
 	}()
 }
 
 // applyReflection stores a reflection. Runs under the mud lock.
-func (m *AICompanionModule) applyReflection(key string, ownerId int, session int, model string, held hold, rt route, res modelResult) {
+func (m *AICompanionModule) applyReflection(key string, ownerId int, session int, wipes int, model string, held hold, rt route, res modelResult) {
 	// Settled first, to the owner it was held against, even when nobody is
 	// left to remember it, so nothing below can leave it held.
 	m.settleRoute(held, res.Tokens)
@@ -283,8 +284,8 @@ func (m *AICompanionModule) applyReflection(key string, ownerId int, session int
 	}
 
 	mind := m.minds[key]
-	if mind == nil {
-		return
+	if mind == nil || mind.Wipes != wipes {
+		return // gone, or wiped at a parting since this was asked for
 	}
 	mind.TokensLifetime += int64(res.Tokens)
 	if res.Err != nil {

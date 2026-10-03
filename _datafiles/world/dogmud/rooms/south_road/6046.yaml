@@ -11,7 +11,9 @@ description: >
   long straight pale furlong of it, dwindling to a point against the gold
   below. The only marks of man are a roadside <ansi fg="itemname">cairn</ansi>
   heaped at the verge and a leaning row of <ansi fg="itemname">withy
-  stakes</ansi> that once held a fence and now hold only the wind.
+  stakes</ansi> that once held a fence and now hold only the wind. Back up
+  the road to the north, an enormous oak crowns a green combe off the
+  eastern verge, the only tree for miles the wind has not beaten flat.
 biome: land
 coord: {x: -8, y: -20, z: 0}
 exits:
