@@ -3,6 +3,7 @@ name: Voice-Amber Housing
 aliases: [amber]
 skill: jewelcrafting
 skill_minimum: 50
+learn_only: true
 station: jeweler_bench
 time_rounds: 7
 ingredients:

@@ -3,6 +3,7 @@ name: Preservation Runes
 aliases: [runes]
 skill: enchanting
 skill_minimum: 50
+learn_only: true
 station: enchanting_circle
 time_rounds: 8
 ingredients:

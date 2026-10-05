@@ -22,7 +22,13 @@ import (
 // do. The exception is questExcluded, where the same reasoning runs the other
 // way — we cannot confirm the player holds the excluding token, so the node
 // stays available rather than silently vanishing.
-func checkQuestGate(questRequired, questExcluded []string, requiresItem int, flagRequired, flagExcluded map[string]string, masterworkRequired int, ps *PlayerState) bool {
+//
+// goldRequired is interrogative too and fails closed on a nil HasGold: a
+// priced node must never open for a player whose gold cannot be checked.
+// The gate only hides the node; it takes nothing. The charge is the node's
+// chargesGold, which the engine takes in the same step as this gate, before
+// the quest is granted.
+func checkQuestGate(questRequired, questExcluded []string, requiresItem int, flagRequired, flagExcluded map[string]string, masterworkRequired, goldRequired int, ps *PlayerState) bool {
 	if ps == nil {
 		return true
 	}
@@ -50,6 +56,12 @@ func checkQuestGate(questRequired, questExcluded []string, requiresItem int, fla
 		return false
 	}
 
+	if goldRequired > 0 {
+		if ps.HasGold == nil || !ps.HasGold(goldRequired) {
+			return false
+		}
+	}
+
 	// Quest flag checks
 	if ps.GetQuestFlag != nil {
 		for key, val := range flagRequired {
@@ -67,7 +79,35 @@ func checkQuestGate(questRequired, questExcluded []string, requiresItem int, fla
 	return true
 }
 
-// applyQuestEffects fires quest grants, item consumption, item giving, and flag sets after a node/pattern matches.
+// tryCharge takes an entry's chargesGold as part of matching it. A failed
+// charge makes the entry not match, so the caller moves on to the next one
+// (the authored refusal) and nothing of this entry is applied. It runs after
+// checkQuestGate in the same call, so the gold check and the charge happen
+// in one step of the player's input. Nil ps keeps the package's skip-checks
+// contract; a nil ChargeGold fails closed.
+func tryCharge(amount int, ps *PlayerState) bool {
+	if amount <= 0 || ps == nil {
+		return true
+	}
+	if ps.ChargeGold == nil {
+		return false
+	}
+	return ps.ChargeGold(amount)
+}
+
+// applyPaidEffects applies a matched entry's effects after tryCharge took
+// charged gold. If the effects abort (an item that could not be delivered),
+// the charge is given back so the player never pays for nothing.
+func applyPaidEffects(charged int, grantsQuest string, requiresItem int, givesItem int, flagSet *QuestFlagSet, bumpsRep []RepBump, givesGold int, ps *PlayerState) bool {
+	if applyQuestEffects(grantsQuest, requiresItem, givesItem, flagSet, bumpsRep, givesGold, ps) {
+		return true
+	}
+	if charged > 0 && ps != nil && ps.GiveGold != nil {
+		ps.GiveGold(charged)
+	}
+	return false
+}
+
 // applyQuestEffects fires a matched node's side effects. It returns false —
 // applying NOTHING else — when the node gives an item that could not be
 // delivered: granting the quest anyway would soft-lock the player (token
@@ -148,7 +188,7 @@ func MatchWithFallbackInfo(df *DialogueFile, mobInstanceId int, topic string, ps
 		}
 
 		// Apply quest/item gate
-		if !checkQuestGate(p.QuestRequired, p.QuestExcluded, p.RequiresItem, p.QuestFlagRequired, p.QuestFlagExcluded, p.MasterworkRequired, ps) {
+		if !checkQuestGate(p.QuestRequired, p.QuestExcluded, p.RequiresItem, p.QuestFlagRequired, p.QuestFlagExcluded, p.MasterworkRequired, p.GoldRequired, ps) {
 			continue
 		}
 
@@ -168,12 +208,20 @@ func MatchWithFallbackInfo(df *DialogueFile, mobInstanceId int, topic string, ps
 			}
 		}
 		if matched != nil {
+			// A pattern whose price cannot be taken does not match.
+			if len(matched.Responses) > 0 && !tryCharge(matched.ChargesGold, ps) {
+				matched = nil
+				continue
+			}
 			break
 		}
 	}
 
 	if matched == nil {
 		matched = defaultPattern
+		if matched != nil && len(matched.Responses) > 0 && !tryCharge(matched.ChargesGold, ps) {
+			matched = nil
+		}
 	}
 
 	if matched == nil || len(matched.Responses) == 0 {
@@ -182,7 +230,7 @@ func MatchWithFallbackInfo(df *DialogueFile, mobInstanceId int, topic string, ps
 
 	usedFallback := matched == defaultPattern
 
-	applyQuestEffects(matched.GrantsQuest, matched.RequiresItem, matched.GivesItem, matched.SetsQuestFlag, matched.BumpsRep, matched.GivesGold, ps)
+	applyPaidEffects(matched.ChargesGold, matched.GrantsQuest, matched.RequiresItem, matched.GivesItem, matched.SetsQuestFlag, matched.BumpsRep, matched.GivesGold, ps)
 
 	response := matched.Responses[util.Rand(len(matched.Responses))]
 	return response, matched.MoodChange, true, usedFallback
@@ -234,14 +282,20 @@ func TreeAdvance(df *DialogueFile, mobInstanceId, userId int, topic string, ps *
 		}
 
 		// Enforce quest/item gate
-		if !checkQuestGate(node.QuestRequired, node.QuestExcluded, node.RequiresItem, node.QuestFlagRequired, node.QuestFlagExcluded, node.MasterworkRequired, ps) {
+		if !checkQuestGate(node.QuestRequired, node.QuestExcluded, node.RequiresItem, node.QuestFlagRequired, node.QuestFlagExcluded, node.MasterworkRequired, node.GoldRequired, ps) {
+			continue
+		}
+
+		// A node whose price cannot be taken does not match; the next
+		// node with the same triggers (the refusal) answers instead.
+		if !tryCharge(node.ChargesGold, ps) {
 			continue
 		}
 
 		// Node matched — fire quest effects and update memory. A failed
 		// item delivery leaves memory untouched too, so the node is not
 		// consumed and re-fires once the player makes room.
-		if applyQuestEffects(node.GrantsQuest, node.RequiresItem, node.GivesItem, node.SetsQuestFlag, node.BumpsRep, node.GivesGold, ps) {
+		if applyPaidEffects(node.ChargesGold, node.GrantsQuest, node.RequiresItem, node.GivesItem, node.SetsQuestFlag, node.BumpsRep, node.GivesGold, ps) {
 			UpdateMemory(mobInstanceId, userId, node.Id, node.Unlocks, topic)
 		}
 
@@ -277,8 +331,8 @@ func Greet(df *DialogueFile, mobInstanceId, userId int, ps *PlayerState) (string
 	// Check quest-variant greetings first
 	if ps != nil {
 		for _, v := range df.Tree.Root.Variants {
-			if checkQuestGate(v.QuestRequired, v.QuestExcluded, 0, v.QuestFlagRequired, v.QuestFlagExcluded, v.MasterworkRequired, ps) {
-				applyQuestEffects(v.GrantsQuest, v.RequiresItem, v.GivesItem, v.SetsQuestFlag, v.BumpsRep, v.GivesGold, ps)
+			if checkQuestGate(v.QuestRequired, v.QuestExcluded, 0, v.QuestFlagRequired, v.QuestFlagExcluded, v.MasterworkRequired, v.GoldRequired, ps) && tryCharge(v.ChargesGold, ps) {
+				applyPaidEffects(v.ChargesGold, v.GrantsQuest, v.RequiresItem, v.GivesItem, v.SetsQuestFlag, v.BumpsRep, v.GivesGold, ps)
 				return v.Text, v.Hints, true
 			}
 		}

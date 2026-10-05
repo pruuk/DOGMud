@@ -2,7 +2,7 @@
 
 Veyra's masterwork assembly. The finished piece is joined here from four
 self-crafted components and its bulk stock. This recipe is taught by
-commission, never discovered at the bench, and it demands that every
+Veyra as a secret, never discovered at the bench, and it demands that every
 component be of your own making.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
@@ -12,6 +12,6 @@ component be of your own making.
   <ansi fg="yellow">Ingredients:</ansi> Barbed Spike-Plates (x1), Anti-Corrosion Quench (x1),
                Ironwood Thorn-Heart (x1), Scab-Chitin Plate (x1),
                Leather Strip (x8), Sinew (x6)
-  <ansi fg="yellow">Learned:</ansi>     by commission from Veyra (not self-taught)
+  <ansi fg="yellow">Learned:</ansi>     buy Veyra's secret: ask veyra teach thornwall
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>

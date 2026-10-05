@@ -3,6 +3,7 @@ name: Reinforced Harness
 aliases: [reinforcedharness]
 skill: tailoring
 skill_minimum: 50
+learn_only: true
 station: loom
 time_rounds: 7
 ingredients:

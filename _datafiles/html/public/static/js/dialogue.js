@@ -248,8 +248,12 @@
     body.appendChild(field("Gives item", givItem));
     var gold = numInput(g.givesGold);
     body.appendChild(field("Gives gold", gold));
+    var chargeGold = numInput(g.chargesGold);
+    body.appendChild(field("Charges gold", chargeGold, "taken when the entry matches, before its other effects; set Gold required to the same price"));
     var mw = numInput(g.masterworkRequired);
     body.appendChild(field("Masterwork required", mw));
+    var goldReq = numInput(g.goldRequired);
+    body.appendChild(field("Gold required", goldReq, "hidden from a player carrying less; pair with a later refusal node"));
     var rep = repRows(g.bumpsRep);
     body.appendChild(field("Bumps rep", rep.el));
 
@@ -265,7 +269,9 @@
         into.requiresItem = Math.round(parseFloat(reqItem.value) || 0);
         into.givesItem = Math.round(parseFloat(givItem.value) || 0);
         into.givesGold = Math.round(parseFloat(gold.value) || 0);
+        into.chargesGold = Math.round(parseFloat(chargeGold.value) || 0);
         into.masterworkRequired = Math.round(parseFloat(mw.value) || 0);
+        into.goldRequired = Math.round(parseFloat(goldReq.value) || 0);
         into.bumpsRep = rep.get();
         return into;
       }

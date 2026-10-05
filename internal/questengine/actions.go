@@ -21,7 +21,10 @@ type ActionContext interface {
 	// are abandoned rather than advancing a quest on an undelivered item.
 	GiveItem(itemId int) error
 	GiveGold(amount int)
-	ChargeGold(amount int)
+	// ChargeGold returns an error, taking nothing, when the player cannot
+	// cover the whole amount. ExecuteAction propagates it so the trigger's
+	// remaining actions are abandoned rather than run on an unpaid charge.
+	ChargeGold(amount int) error
 	// Narrate delivers a text action: the Actor line to the triggering player,
 	// the Observer line to the room. The implementation renders the tokens.
 	Narrate(v narration.Variants)
@@ -66,8 +69,7 @@ func ExecuteAction(a ActionDef, ctx ActionContext) error {
 	}
 	if a.ChargeGold > 0 {
 		LogVerboseF(ctx.GetUserId(), "charging %d gold", a.ChargeGold)
-		ctx.ChargeGold(a.ChargeGold)
-		return nil
+		return ctx.ChargeGold(a.ChargeGold)
 	}
 	if a.SendText != "" || a.RoomText != "" {
 		ctx.Narrate(a.Narration())

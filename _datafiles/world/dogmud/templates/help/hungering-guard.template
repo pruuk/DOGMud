@@ -11,5 +11,6 @@ something with no bottom. It was shaped to be gripped, and to grip back
   <ansi fg="yellow">Skill:</ansi>       jewelcrafting (minimum 50)
   <ansi fg="yellow">Station:</ansi>     jeweler_bench
   <ansi fg="yellow">Ingredients:</ansi> Raw Gem (x2), Gold Wire (x1), Splintered Pass-Apex Claw (x1)
+  <ansi fg="yellow">Learned:</ansi>     part of Veyra's secret: ask veyra teach blackrazor
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help craft</ansi>

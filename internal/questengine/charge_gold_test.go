@@ -16,14 +16,16 @@ func TestChargeGold_Deducts(t *testing.T) {
 	assert.Equal(t, 70, ctx.gold)
 }
 
-func TestChargeGold_ClampsAtZero(t *testing.T) {
+// A charge the player cannot cover takes nothing and fails, and ExecuteAction
+// surfaces the refusal so the engine abandons the trigger's remaining actions.
+func TestChargeGold_RefusesWhenShort(t *testing.T) {
 	ctx := newMockActionContext(1)
 	ctx.gold = 20
 
 	err := ExecuteAction(ActionDef{ChargeGold: 50}, ctx)
 
-	assert.NoError(t, err)
-	assert.Equal(t, 0, ctx.gold, "gold should clamp at 0, never go negative")
+	assert.Error(t, err)
+	assert.Equal(t, 20, ctx.gold, "a refused charge takes nothing")
 }
 
 func TestHasGold_Condition(t *testing.T) {

@@ -3,6 +3,7 @@ name: Barbed Spike-Plates
 aliases: [barbed]
 skill: blacksmithing
 skill_minimum: 50
+learn_only: true
 station: forge
 time_rounds: 7
 ingredients:

@@ -11,5 +11,6 @@ honest work, made for holding on.
   <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 50)
   <ansi fg="yellow">Station:</ansi>     forge
   <ansi fg="yellow">Ingredients:</ansi> Steel Ingot (x2), Chain Link (x1), Coal Dust (x1)
+  <ansi fg="yellow">Learned:</ansi>     part of Veyra's secret: ask veyra teach thornwall
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>

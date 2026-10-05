@@ -3,6 +3,7 @@ name: Reduction Base
 aliases: [reduction]
 skill: cooking
 skill_minimum: 50
+learn_only: true
 station: cooking_fire
 time_rounds: 6
 ingredients:

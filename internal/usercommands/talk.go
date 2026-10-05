@@ -207,7 +207,7 @@ func buildPlayerState(user *users.UserRecord) *dialogue.PlayerState {
 		},
 		GiveGold: func(amount int) {
 			user.Character.Gold += amount
-			user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="gold">%d gold</ansi>.`, amount))
+			user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(amount)))
 			events.AddToQueue(events.EquipmentChange{
 				UserId:     user.UserId,
 				GoldChange: amount,
@@ -215,6 +215,23 @@ func buildPlayerState(user *users.UserRecord) *dialogue.PlayerState {
 		},
 		HasOwnMasterwork: func(skillMin int) bool {
 			return user.Character.HasOwnMasterwork(skillMin)
+		},
+		HasGold: func(amount int) bool {
+			return user.Character.Gold >= amount
+		},
+		// ChargeGold backs dialogue chargesGold: the whole price or nothing,
+		// checked and taken in the same call, before the entry's other effects.
+		ChargeGold: func(amount int) bool {
+			if amount <= 0 || user.Character.Gold < amount {
+				return false
+			}
+			user.Character.Gold -= amount
+			user.SendText(messaging.CategoryLoot, fmt.Sprintf(`You pay <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(amount)))
+			events.AddToQueue(events.EquipmentChange{
+				UserId:     user.UserId,
+				GoldChange: -amount,
+			})
+			return true
 		},
 	}
 }

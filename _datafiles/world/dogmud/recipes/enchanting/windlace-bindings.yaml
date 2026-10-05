@@ -3,6 +3,7 @@ name: Windlace Bindings
 aliases: [windlace]
 skill: enchanting
 skill_minimum: 50
+learn_only: true
 station: enchanting_circle
 time_rounds: 7
 ingredients:

@@ -11,5 +11,6 @@ wind one speak of it like tuning rather than forging.
   <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 50)
   <ansi fg="yellow">Station:</ansi>     forge
   <ansi fg="yellow">Ingredients:</ansi> Silver Wire (x2), Steel Ingot (x1), Coal Dust (x1)
+  <ansi fg="yellow">Learned:</ansi>     part of Veyra's secret: ask veyra teach choir
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>

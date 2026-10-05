@@ -425,7 +425,7 @@ ordinary station, then hands those self-made components — plus the
 rare Stage-3 reagents and bulk stock — to a **quest-taught assembly
 recipe** (`skill_minimum: 65`, `learn_only: true`,
 `require_own_components: true`) to produce the legendary-BIS item.
-Stage 4b's commission quests are what teach the assembly slugs via
+Stage 4b's secret-recipe quests are what teach the assembly slugs via
 `learn_recipe`.
 
 ### The 9 assembly recipes (Stage 4b teaches these slugs)
@@ -484,7 +484,7 @@ All six craft stations the chain needs sit within one small
 workshop-plus-annexes hung off the Confluence craft row, so the whole
 backbone is reachable from one place. Veyra Coil-Tongue (mob **9584**,
 `crafter: true`, `non_combatant`, `schedule_id: veyra`) is the
-convergence-crafter who anchors it — Stage 4b's commissions run
+convergence-crafter who anchors it: Stage 4b's secret-recipe sales run
 through her.
 
 | Room | Title | Station |
@@ -507,7 +507,7 @@ the_confluence/veyra.yaml`) keeps her at the alchemy bench crafting
 - **`learn_only` (assembly recipes).** The nine assembly recipes are
   excluded from craft-discovery (`GetEligibleRecipes` skips
   `LearnOnly`), so a player can never stumble onto them at the bench.
-  They are taught only by quest `learn_recipe` (Stage 4b commissions)
+  They are taught only by quest `learn_recipe` (bought from Veyra)
   or admin `learn`. Help templates exist for every recipe (`help
   <slug>`) as reference — the help file is documentation, not the
   gate.
@@ -517,90 +517,104 @@ the_confluence/veyra.yaml`) keeps her at the alchemy bench crafting
   ordinary self-craftable recipes: the design intent is that the
   player who assembles a masterwork forged its subcomponents with
   their own hands. Bulk stock and Stage-3 reagents are exempt.
-- The 17 component recipes are plain discoverable recipes — no
-  `learn_only`, no `require_own_components` — so the everyday tier of
-  the chain needs no quest wiring at all.
+- The 17 component recipes have no `require_own_components`. As
+  authored they were plain discoverable recipes; since 2026-10-05 they
+  are `learn_only`, taught by buying the secret they belong to (each
+  one's output feeds only its own assembly, pinned by
+  `TestPinnacleSubRecipes_LearnOnly`).
 
-## Stage 4b: commissions
+## Stage 4b: Veyra's secret recipes
 
-Veyra's commission questline is the delivery mechanism for the nine
-`learn_only` assembly recipes from Stage 4a — without it, those slugs
-are unreachable by any player. Authored on branch
-`feature/pinnacle-stage4b-veyra-commissions`.
+Veyra sells the nine `learn_only` assembly recipes from Stage 4a, and
+buying a secret also teaches the sub-recipes it needs. Without the
+purchase those slugs are unreachable by any player.
 
 ### Quests
 
-Quest **78 "The Convergence"** is the masterwork-gated intro: it fires
-the instant `78-start` is granted, sets `78-commission=none`, and
-immediately grants `78-end` in the same beat (there is no separate
-player step — the quest only exists to declare the shared flag and
-give Veyra's dialogue a `questRequired` token to key on). Quests
-**79-87** are the nine commissions, one per pinnacle item.
+Quest **78 "The Convergence"** is the masterwork-gated introduction: it
+fires the instant `78-start` is granted and grants `78-end` in the same
+beat. There is no separate player step; the quest only gives Veyra's
+dialogue a `questRequired` token ("known to Veyra") to key on. Quests
+**79-87** are the nine secrets, one per pinnacle item, named "Secret of
+the ..." after the item. They charge nothing themselves: the gold is
+taken by the dialogue node that grants `{id}-start`, and the quest's
+`quest_granted` trigger then teaches the recipes.
 
-| Quest | Slug | Item (id) | Skill | Gold total |
-|-------|------|-----------|-------|------------|
-| 79 | bandolier | Vitalis Bandolier (40182) | alchemy | 35,000 |
-| 80 | blackrazor | The Blackrazor (40183) | blacksmithing | 50,000 |
-| 81 | wayfarer | Wayfarer's Bottomless Pack (40184) | tailoring | 25,000 |
-| 82 | aegis | Aegis of Mockery (40185) | blacksmithing | 40,000 |
-| 83 | thornwall | Thornwall Harness (40186) | tailoring | 30,000 |
-| 84 | prism | Seething Prism (40187) | jewelcrafting | 40,000 |
-| 85 | zephyr | Zephyr Treads (40188) | tailoring | 25,000 |
-| 86 | choir | Staff of the Hollow Choir (40189) | enchanting | 45,000 |
-| 87 | phial | Phial of Second Birth (40181) | alchemy | 30,000 |
+| Quest | Slug | Item (id) | Skill | Price |
+|-------|------|-----------|-------|-------|
+| 79 | bandolier | Vitalis Bandolier (40182) | alchemy | 17,500 |
+| 80 | blackrazor | The Blackrazor (40183) | blacksmithing | 25,000 |
+| 81 | wayfarer | Wayfarer's Bottomless Pack (40184) | tailoring | 12,500 |
+| 82 | aegis | Aegis of Mockery (40185) | blacksmithing | 20,000 |
+| 83 | thornwall | Thornwall Harness (40186) | tailoring | 15,000 |
+| 84 | prism | Seething Prism (40187) | jewelcrafting | 20,000 |
+| 85 | zephyr | Zephyr Treads (40188) | tailoring | 12,500 |
+| 86 | choir | Staff of the Hollow Choir (40189) | enchanting | 22,500 |
+| 87 | phial | Phial of Second Birth (40181) | alchemy | 15,000 |
 
-Each quest's gold total is split in half: half on `quest_granted`,
-half on the `item_gain` trigger that fires when the crafted pinnacle
-item lands in the player's inventory.
+Each secret has one price, paid in full when Veyra shares it. A player
+may buy any number of the nine, each once. All nine assembly recipes
+and the 17 sub-recipes are `learn_only`, so the purchase is the only
+way to learn the chain.
 
-### The commission flow
+### Buying a secret
 
 1. Player carries a self-crafted skill-50+ item (the masterwork gate,
    `HasOwnMasterwork`) and asks Veyra about the convergence. Her
    `convergence_intro` dialogue node grants `78-start`.
-2. Quest 78's `quest_granted` trigger sets `78-commission=none` and
-   grants `78-end` in the same beat — the player is now "known" to
-   Veyra.
-3. Player asks Veyra for a specific commission by item name (or reads
-   the `commission_list` node for all nine). The matching offer node
-   grants `{id}-start` and sets `78-commission=<slug>`.
-4. That quest's own `quest_granted` trigger charges the first half of
-   the gold (`charge_gold`), teaches the two component recipes plus
-   the one assembly recipe (`learn_recipe` x3, x1 for the phial which
-   only needs `reduction-base`), and has Veyra narrate the hand-off.
+2. Quest 78's `quest_granted` trigger grants `78-end` in the same beat;
+   the player is now "known" to Veyra.
+3. Each secret has four dialogue nodes, in this order:
+   - `owned_`: the player already holds `{id}-start`; she says she does
+     not sell a secret twice. It keys on the quest token, never on
+     recipe knowledge, so a player who found sub-recipes at the bench
+     can still buy the secret.
+   - `teach_`: the purchase, on "teach <name>". It carries
+     `goldRequired` and `chargesGold` at the price, so the engine
+     checks and takes the gold in one step, before it grants
+     `{id}-start`. It is excluded once `{id}-start` or `{id}-end` is
+     held.
+   - `refuse_`: the same teach phrases when the player lacks the gold.
+     It names the price and grants nothing.
+   - `price_`: the bare name. It states the price and the command to
+     buy, and never buys.
+4. The granted quest's `quest_granted` trigger teaches the two component
+   recipes plus the one assembly recipe (`learn_recipe` x3, x1 for the
+   phial which only needs `reduction-base`), and has Veyra narrate the
+   hand-off. It charges nothing.
 5. Player gathers the Stage-3 reagents, crafts the components
    themselves (so `require_own_components` accepts them), and
    assembles the pinnacle item at one of Veyra's stations.
 6. The crafted item's `item_gain` trigger (gated on `has: {id}-start`,
-   `missing: {id}-end`) charges the second half of the gold, grants
-   `{id}-end`, and resets `78-commission=none` — freeing the next
-   commission.
+   `missing: {id}-end`) grants `{id}-end` and has Veyra comment on the
+   finished piece.
 
-Only one commission runs at a time: every offer node requires
-`78-commission == "none"`, and the mid-commission root variant (gated
-on `78-commission != "none"`) tells the player to wait.
+`GameBridge.ChargeGold` refuses, taking nothing and failing the action,
+when the player holds less than the amount. The Phial (87) is sold once
+like the other eight; there is no repeat purchase.
 
 ### Veyra's dialogue gating (`dialogue/the_confluence/9584.yaml`)
 
-Root variants partition every player into exactly one state: unknown
-without a masterwork (flavor-only), unknown with a masterwork (the
-intro-grant variant), known and idle (the working greeting, with a
-truth-knower variant for players who've finished `77-end`), and known
-mid-commission (flavor, no grant). The `commission_list` node is the
-discoverability point for all nine learn_only item names — naming a
-commission item nowhere else in dialogue would make its recipe
-unreachable in practice — but it does not itself grant anything,
-unlike the nine offer nodes, which are keyed to item-name keywords
-only (`bandolier`, `blackrazor`, `pack`, etc.) and deliberately omit
-the generic `quest`/`task` triggers so the first ask doesn't
-auto-lock a random commission.
+Root variants partition every player into one state: unknown without a
+masterwork (flavor-only), unknown with a masterwork (the intro-grant
+variant), and known (the greeting that names all nine secrets, with a
+truth-knower variant for players who've finished `77-end`). Asking
+about a secret by name never buys it. The known greeting, the
+`secrets_list` node and a known-player fallback pattern name all nine
+secrets without prices, so the item names stay discoverable. The
+name triggers on the `owned_`, `teach_`, `refuse_` and `price_` nodes
+are distinctive words only (`bandolier`, `blackrazor`, `zephyr`, etc.),
+and the generic `quest`/`task` triggers appear only on the intro and
+`secrets_list` nodes, which grant nothing beyond `78-start`.
+`quest_charge_gold_gate_guard_test.go` and
+`veyra_secrets_dialogue_test.go` pin the purchase.
 
 ### Engine additions (Stage 4b)
 
 1. **`charge_gold` action + `has_gold` condition**
    (`internal/questengine/types.go`) — stages a gold fee on a quest
-   trigger or gates one on a minimum balance; the charge clamps at 0
-   rather than going negative.
+   trigger or gates one on a minimum balance. Since 2026-10-05 a charge
+   the player cannot cover is refused (nothing taken, trigger abandoned).
 2. **Masterwork entry gate** — `Character.HasOwnMasterwork(skillMin)`
    (`internal/characters/masterwork.go`) reports whether the player
    carries any item with `MakerName == their own Name` and
@@ -611,7 +625,7 @@ auto-lock a random commission.
    legacy path) now also fires the questengine's `quest_granted`
    triggers, notifying only on a fresh grant so questengine-initiated
    grants don't double-fire. Before this fix, dialogue-granted tokens
-   could not start a questengine quest at all — the entire commission
+   could not start a questengine quest at all, so the entire secret-recipe
    design (Veyra's dialogue grants `{id}-start`, the questengine quest
    reacts to it) depends on this bridge.
 4. **`require_own_components` scope fix**
@@ -623,7 +637,7 @@ auto-lock a random commission.
 
 ### Note
 
-The Phial of Second Birth (87) is non-repeatable, same as the other
-eight commissions — the questengine quest format has no `repeatable`
-field. Making it repeatable (so a player could re-roll a mutation more
-than once) is a deferred enhancement.
+The Phial of Second Birth (87) is sold once, same as the other eight
+secrets; the questengine quest format has no `repeatable` field. Making
+it repeatable (so a player could re-roll a mutation more than once) is a
+deferred enhancement.

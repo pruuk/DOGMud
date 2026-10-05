@@ -21,6 +21,16 @@ type PlayerState struct {
 	BumpRep          func(faction string, delta int)
 	GiveGold         func(amount int)
 	HasOwnMasterwork func(skillMin int) bool
+	// HasGold reports whether the player carries at least amount gold. It
+	// backs goldRequired, which hides a priced node (typically one that
+	// also carries chargesGold at the same price) from a player who cannot
+	// pay. Nil fails a goldRequired gate closed.
+	HasGold func(amount int) bool
+	// ChargeGold takes amount gold from the player and reports success. It
+	// must refuse, taking nothing, when the player holds less. It backs
+	// chargesGold, which is paid in the same step that matches the entry
+	// and before any of its other effects. Nil fails the charge closed.
+	ChargeGold func(amount int) bool
 }
 
 // QuestFlagSet describes a single key/value flag to write on the player's character.
@@ -64,7 +74,9 @@ type Pattern struct {
 	SetsQuestFlag      *QuestFlagSet     `yaml:"setsQuestFlag,omitempty" json:"setsQuestFlag,omitempty"`
 	BumpsRep           []RepBump         `yaml:"bumpsRep,omitempty" json:"bumpsRep,omitempty"`
 	GivesGold          int               `yaml:"givesGold,omitempty" json:"givesGold,omitempty"`
+	ChargesGold        int               `yaml:"chargesGold,omitempty" json:"chargesGold,omitempty"`
 	MasterworkRequired int               `yaml:"masterworkRequired,omitempty" json:"masterworkRequired,omitempty"`
+	GoldRequired       int               `yaml:"goldRequired,omitempty" json:"goldRequired,omitempty"`
 }
 
 // TreeNode is a stateful conversation node gated by triggers and unlock requirements.
@@ -86,7 +98,9 @@ type TreeNode struct {
 	SetsQuestFlag      *QuestFlagSet     `yaml:"setsQuestFlag,omitempty" json:"setsQuestFlag,omitempty"`
 	BumpsRep           []RepBump         `yaml:"bumpsRep,omitempty" json:"bumpsRep,omitempty"`
 	GivesGold          int               `yaml:"givesGold,omitempty" json:"givesGold,omitempty"`
+	ChargesGold        int               `yaml:"chargesGold,omitempty" json:"chargesGold,omitempty"`
 	MasterworkRequired int               `yaml:"masterworkRequired,omitempty" json:"masterworkRequired,omitempty"`
+	GoldRequired       int               `yaml:"goldRequired,omitempty" json:"goldRequired,omitempty"`
 }
 
 // QuestGreeting is an alternative greeting shown when the player matches quest conditions.
@@ -103,7 +117,9 @@ type QuestGreeting struct {
 	SetsQuestFlag      *QuestFlagSet     `yaml:"setsQuestFlag,omitempty" json:"setsQuestFlag,omitempty"`
 	BumpsRep           []RepBump         `yaml:"bumpsRep,omitempty" json:"bumpsRep,omitempty"`
 	GivesGold          int               `yaml:"givesGold,omitempty" json:"givesGold,omitempty"`
+	ChargesGold        int               `yaml:"chargesGold,omitempty" json:"chargesGold,omitempty"`
 	MasterworkRequired int               `yaml:"masterworkRequired,omitempty" json:"masterworkRequired,omitempty"`
+	GoldRequired       int               `yaml:"goldRequired,omitempty" json:"goldRequired,omitempty"`
 }
 
 // TreeRoot holds the greeting delivered when a player first uses 'talk'.
