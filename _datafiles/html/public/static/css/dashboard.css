@@ -129,6 +129,21 @@
 /* Feed + command (center stack) */
 #panel-feed { flex: 1 1 0; }                          /* dominant */
 #panel-feed .dash-panel-body { overflow: hidden; }   /* xterm manages its own scroll */
+/* Sight border (lighting plan 5d, Char.Sight): the Game window's border shows
+   how well the player can see. The class sits on #panel-feed, which a pop-out
+   moves into its WinBox, so the border follows it there. Faces is today's
+   antique gold, so a client without Char.Sight looks as it always did. */
+#panel-feed {
+  --sight-dark:    #3a2d17;   /* near black, a darkened antique gold */
+  --sight-shapes:  #7a6232;   /* dim, a muted gold */
+  --sight-faces:   var(--antique-gold, #b89047);
+  --sight-dazzled: #f6e7b0;   /* bright, a pale hot gold */
+  transition: border-color 0.4s ease;
+}
+#panel-feed.sight-dark    { border-color: var(--sight-dark); }
+#panel-feed.sight-shapes  { border-color: var(--sight-shapes); }
+#panel-feed.sight-faces   { border-color: var(--sight-faces); }
+#panel-feed.sight-dazzled { border-color: var(--sight-dazzled); box-shadow: 0 0 6px var(--sight-dazzled); }
 /* Terminal MUST be a bounded box, else xterm can't virtualize scrollback and
    re-renders every accumulated line on each write (progressive sluggishness). */
 #panel-feed #terminal { width: 100%; height: 100%; }
