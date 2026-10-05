@@ -133,14 +133,22 @@ removed, and every item left with its reason.
 
 Write or update the day's `project-session-handoff-YYYY-MM-DD` memory:
 what merged, what is open and on which branch, what is waiting on someone
-else, and every trap the day found.
+else, the issues filed or closed today, and every trap the day found.
 
 **Status lives in `status.md`, never in `MEMORY.md`** (owner, 2026-09-28).
 The memory index is pointers only, so it stops overflowing:
 
 - Rewrite the "Now" section of the `status` memory (`status.md`): what is
-  open, what merged, open owner calls, and the Remaining Work table. Retired
-  lines move to `STATUS-ARCHIVE.md` under a dated heading.
+  in flight, what merged, and open owner calls. Retired lines move to
+  `STATUS-ARCHIVE.md` under a dated heading.
+- **Bugs and planned work live in GitHub issues, not memory** (owner,
+  2026-10-05). Every defect or idea found today that is not already an issue
+  gets filed (`gh issue create --repo pruuk/DOGMud`, `bug` or `enhancement`
+  plus an `area:*` label; `owner-decision` when it needs a ruling; milestone
+  `1.0` when it blocks 1.0). Close issues that today's merges fixed, with the
+  PR number. `status.md` and the handoff cite issue numbers instead of
+  restating bugs. Exploit-class defects live on master stay out of public
+  issues: tell the owner and use a private security advisory.
 - In `MEMORY.md`, update only the one "Start here" line so it links the new
   handoff. Add a one-line pointer (about 200 characters) for each NEW memory
   file; never paste status, tables or long trap text into the index. Long

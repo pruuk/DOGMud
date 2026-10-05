@@ -1,6 +1,6 @@
 ---
 name: dogmud-playtesting
-description: Use when running the DOGMud playtest harness, writing a goals file, or triaging playtest findings. Covers the external harness location and how to restore it when missing, that local runs need an ephemeral goals file and a --checkout, that a combat fixture must survive several rounds or the run comes back partial, that reports are gitignored so findings must be extracted to memory, and the rule never to kill the user's running server.
+description: Use when running the DOGMud playtest harness, writing a goals file, or triaging playtest findings. Covers the external harness location and how to restore it when missing, that local runs need an ephemeral goals file and a --checkout, that a combat fixture must survive several rounds or the run comes back partial, that reports are gitignored so findings must be filed as GitHub issues, and the rule never to kill the user's running server.
 ---
 
 This skill covers running the GoMud playtest harness against DOGMud: which
@@ -211,10 +211,25 @@ suspicions as notes for the batch pass instead of blocking on them.
 
 ## After a run
 
-Playtest reports are gitignored. Extract findings to memory after each
-run, or they are lost once the report file is cleaned up or the working
-tree moves on. [[project-playtest-findings-not-yet-fixed]]
+Playtest reports are gitignored. Extract findings after each run, or they
+are lost once the report file is cleaned up or the working tree moves on.
+[[project-playtest-findings-not-yet-fixed]]
 [[project_playtest_findings_2026_08_08]]
+
+**Findings go to GitHub issues, not memory** (owner, 2026-10-05). For each
+defect, check it against current master, then search open issues first
+(`gh issue list --repo pruuk/DOGMud --search "<words>"`) and add to an
+existing one rather than filing a duplicate. File new ones with
+`gh issue create --repo pruuk/DOGMud`, labels `bug` and `from-playtest` plus
+an `area:*` label; group trivial copy nits from one run into a single
+checklist issue. Use `owner-decision` for anything that needs a ruling.
+
+The repo is public. A defect live on master that lets a player duplicate
+gold or items, create value from nothing, or bypass a permission does NOT go
+in a public issue: tell the owner and use a private security advisory.
+
+Memory keeps only what the next session needs to run the harness better
+(harness traps, fixture lessons), plus the issue numbers filed.
 
 ## Sources
 

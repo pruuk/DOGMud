@@ -23,6 +23,9 @@
   inconsistency as a follow-up.
 - The owner runs all deploys; Claude prepares and merges but never deploys.
 - Fable outranks Opus in capability and cost.
+- Known bugs and planned work live in GitHub issues on `pruuk/DOGMud`, not
+  in memory. Search before filing; exploit-class bugs live on master stay out
+  of public issues.
 - Every EOD runs `dogmud-end-of-day`: archive shipped specs and plans, tidy
   the repo root, sweep merged worktrees and stale scratch from `C:\tmp`,
   write the handoff.
