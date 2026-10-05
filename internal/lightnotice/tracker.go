@@ -142,8 +142,9 @@ func transitionOf(from, to messaging.Band) Transition {
 // counterfactual does not have that failure mode, because it holds the light
 // fixed at its OLD value and only varies the sight.
 //
-// Otherwise, the first term that moved, in the order carried darkness,
-// carried light, the room's own light, weather, sky. Darkness comes first
+// Otherwise, the first term that moved, in the order darkness (carried or a
+// fixture's), carried light (present, or its strength), the room's own light
+// (its lamp and its light fixtures), weather, sky. Darkness comes first
 // (lighting plan 5d, ruling D4): a darkness arriving or lapsing is the
 // deliberate act in the room, and a light that trims around it is not.
 func attribute(prev record, now observation) Cause {
@@ -157,9 +158,13 @@ func attribute(prev record, now observation) Cause {
 	switch {
 	case a.Darkened != b.Darkened || termMoved(a.Dark, b.Dark):
 		return CauseDarkness
-	case a.Carried != b.Carried:
+	// A carried light arriving or leaving, and one that changes while lit (a
+	// lantern its schedule dims, a second light joining one already here)
+	// (lighting 5e, X5).
+	case a.Carried != b.Carried || termMoved(a.CarriedLight, b.CarriedLight):
 		return CauseCarried
-	case a.HasLamp != b.HasLamp || a.Lamp != b.Lamp:
+	// The room's own light: its lamp, and its fixtures (lighting 5e).
+	case a.HasLamp != b.HasLamp || a.Lamp != b.Lamp || termMoved(a.Fixture, b.Fixture):
 		return CauseLamp
 	// Exact comparison is safe while the shipped fractions are 0.5 and 0.7:
 	// their products are identical in any order. Two different fractions
@@ -174,7 +179,8 @@ func attribute(prev record, now observation) Cause {
 }
 
 // termMoved reports whether a light-scale term changed: appeared, went Absent,
-// or moved by more than float noise. The sky and a carried darkness share it.
+// or moved by more than float noise. The sky, the darkness, the carried light
+// and the fixtures share it.
 func termMoved(a, b float64) bool {
 	aAbsent, bAbsent := math.IsInf(a, -1), math.IsInf(b, -1)
 	if aAbsent || bAbsent {

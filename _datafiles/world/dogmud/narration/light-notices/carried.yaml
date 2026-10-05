@@ -6,11 +6,11 @@ transitions:
       - 'With the bright light gone, your eyes stop aching.'
   darker_shapes:
     any:
-      - 'The carried light is gone, and faces blur into shapes.'
+      - 'The carried light fades, and faces blur into shapes.'
       - 'Without the carried light, you can make out shapes, not faces.'
   darker_dark:
     any:
-      - 'The carried light is gone, and darkness closes in.'
+      - 'The carried light fades, and darkness closes in.'
       - 'Without the carried light, you can see nothing.'
   lighter_shapes:
     any:
