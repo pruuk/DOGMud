@@ -228,8 +228,8 @@ func LoadTreeDef(path string) (TreeDef, error) {
 
 // TreeFileRow describes one on-disk behavior file for the editor's list.
 type TreeFileRow struct {
-	Kind   string // archetype | mob | room
-	Name   string // archetype name (archetype kind)
+	Kind   string // archetype | mob | room | item
+	Name   string // archetype or item tree name (archetype and item kinds)
 	MobId  int    // mob kind
 	RoomId int    // room kind
 	Zone   string // mob/room kinds
@@ -237,7 +237,8 @@ type TreeFileRow struct {
 }
 
 // ListTreeFiles walks the behaviors tree and returns every archetype,
-// per-mob, and room tree file.
+// item, per-mob, and room tree file. behaviors/items is the item kind, never
+// a mob zone (lighting 5e, X13).
 func ListTreeFiles() []TreeFileRow {
 	rows := []TreeFileRow{}
 	root := behaviorsRoot()
@@ -254,12 +255,24 @@ func ListTreeFiles() []TreeFileRow {
 		}
 	}
 
+	// items/<name>.yaml (lighting 5e): named item trees, the fourth kind.
+	if entries, err := os.ReadDir(filepath.Join(root, "items")); err == nil {
+		for _, e := range entries {
+			if e.IsDir() || filepath.Ext(e.Name()) != ".yaml" {
+				continue
+			}
+			name := strings.TrimSuffix(e.Name(), ".yaml")
+			rows = append(rows, TreeFileRow{Kind: "item", Name: name,
+				Path: filepath.Join(root, "items", e.Name())})
+		}
+	}
+
 	zoneDirs, err := os.ReadDir(root)
 	if err != nil {
 		return rows
 	}
 	for _, zd := range zoneDirs {
-		if !zd.IsDir() || zd.Name() == "archetypes" || zd.Name() == "rooms" {
+		if !zd.IsDir() || zd.Name() == "archetypes" || zd.Name() == "rooms" || zd.Name() == "items" {
 			continue
 		}
 		// <zone>/<mobId>-<name>.yaml

@@ -175,6 +175,7 @@ func (n *ActionNode) Evaluate(ctx *EvalContext) Result {
 				RoomId:      ctx.RoomId,
 				MobName:     ctx.MobName,
 				Intercepted: ctx.Intercepted,
+				Item:        ctx.Item,
 			}
 			dur := time.Duration(delaySec * float64(time.Second))
 			GetEngine().QueueDelayed(dur, func() {
@@ -196,12 +197,16 @@ func (n *ActionNode) Evaluate(ctx *EvalContext) Result {
 				RoomId:      ctx.RoomId,
 				MobName:     ctx.MobName,
 				Intercepted: ctx.Intercepted,
+				Item:        ctx.Item,
 			}
 			GetEngine().QueueDelayed(delay, func() {
 				fn(params, evalCtx)
 			})
 			return Success
 		}
+	}
+	if ctx != nil {
+		ctx.node = n.Name
 	}
 	return n.Fn(n.Params, ctx)
 }

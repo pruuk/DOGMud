@@ -70,6 +70,9 @@ type ConditionNode struct {
 }
 
 func (n *ConditionNode) Evaluate(ctx *EvalContext) Result {
+	if ctx != nil {
+		ctx.node = n.Name
+	}
 	return n.Fn(n.Params, ctx)
 }
 
