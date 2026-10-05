@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
 // ErrHouseholdBauble refuses taking a household's bauble off the floor: it
@@ -71,6 +72,31 @@ func TakeFloorItem(actor Actor, item items.Item, stash bool) error {
 	)
 }
 
+// FindTakeableOnFloor is room.FindOnFloor for a pickup: a match that is not
+// a fixture wins over a fixture the same words name, wherever the fixture
+// sits in floor order. Only when fixtures are all the words match does it
+// return one, so the caller can refuse it as fixed in place.
+func FindTakeableOnFloor(room *rooms.Room, itemName string, stash bool) (items.Item, bool) {
+	if !stash {
+		loose := make([]items.Item, 0, len(room.Items))
+		for _, it := range room.Items {
+			if !it.IsFixture() {
+				loose = append(loose, it)
+			}
+		}
+		if len(loose) != len(room.Items) {
+			closeMatch, match := items.FindMatchIn(itemName, loose...)
+			if match.ItemId != 0 {
+				return match, true
+			}
+			if closeMatch.ItemId != 0 {
+				return closeMatch, true
+			}
+		}
+	}
+	return room.FindOnFloor(itemName, stash)
+}
+
 // GetItemFromFloor searches the room floor (or stash) for an item matching
 // itemName and takes it through TakeFloorItem. In the dark it finds nothing
 // (Found false, ErrTooDark): the actor learns nothing about the floor. Every
@@ -79,7 +105,7 @@ func GetItemFromFloor(actor Actor, itemName string, stash bool) GetItemResult {
 	if TooDarkToGet(actor) {
 		return GetItemResult{Found: false, Err: ErrTooDark}
 	}
-	matchItem, found := actor.GetRoom().FindOnFloor(itemName, stash)
+	matchItem, found := FindTakeableOnFloor(actor.GetRoom(), itemName, stash)
 	if !found {
 		return GetItemResult{Found: false}
 	}

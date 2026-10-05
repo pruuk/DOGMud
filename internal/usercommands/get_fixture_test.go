@@ -133,3 +133,25 @@ func TestGetAllNamedSweepSkipsAShadowingFixture(t *testing.T) {
 	require.Len(t, user.Character.Items, 1)
 	assert.Equal(t, brassId, user.Character.Items[0].ItemId)
 }
+
+// A fixture first in floor order must not shadow a takeable item the word
+// names: `get lantern` takes the brass lantern rather than refusing.
+func TestGetPrefersATakeableOverAShadowingFixture(t *testing.T) {
+	user, room := seedFixtureRoom(t)
+	const brassId = 999994
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		fixtureCmdItemId: {ItemId: fixtureCmdItemId, Name: "Arch Lantern", NameSimple: "lantern", Type: items.Object,
+			Fixture: items.FixtureLight, Value: 1, NotSalable: true},
+		brassId: {ItemId: brassId, Name: "Brass Lantern", NameSimple: "lantern", Type: items.Object,
+			Weight: 0.1, Value: 1},
+	}))
+	brass := items.New(brassId)
+	room.AddItem(brass, false)
+	t.Cleanup(func() { room.RemoveItem(brass, false) })
+	events.DrainQueuedMessagesForTest(user.UserId)
+
+	Get("lantern", user, room, 0)
+	assert.NotContains(t, sentTo(user), "fixed in place")
+	require.Len(t, user.Character.Items, 1)
+	assert.Equal(t, brassId, user.Character.Items[0].ItemId)
+}
