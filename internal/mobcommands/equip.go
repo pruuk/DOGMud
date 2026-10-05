@@ -84,8 +84,13 @@ func Equip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 
 		if iSpec.Subtype == items.Wearable {
-			room.SendTextVisual(messaging.CategoryEquipment,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> puts on <ansi fg="item">%s</ansi>.`, mob.Character.Name, result.Item.DisplayName()))
+			putsOn := fmt.Sprintf(`<ansi fg="mobname">%s</ansi> puts on <ansi fg="item">%s</ansi>.`, mob.Character.Name, result.Item.DisplayName())
+			if conditions.AnyDarknessSource(iSpec.WornConditionIds) {
+				// Judged as lit (lighting plan 5d, ruling D6), as the player path.
+				room.SendTextVisualAsLit(messaging.CategoryEquipment, putsOn)
+			} else {
+				room.SendTextVisual(messaging.CategoryEquipment, putsOn)
+			}
 		} else {
 			room.SendTextVisual(messaging.CategoryEquipment,
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> wields <ansi fg="item">%s</ansi>.`, mob.Character.Name, result.Item.DisplayName()))

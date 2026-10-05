@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
@@ -153,10 +154,20 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				user.SendText(messaging.CategorySystem,
 					fmt.Sprintf(`You wear your <ansi fg="item">%s</ansi>.`, result.Item.DisplayName()),
 				)
-				room.SendTextVisual(messaging.CategoryEquipment,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> puts on their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName()),
-					user.UserId,
-				)
+				putsOn := fmt.Sprintf(`<ansi fg="username">%s</ansi> puts on their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName())
+				// A darkness is judged as lit (lighting plan 5d, ruling D6): it
+				// is already worn, and would silence its own arrival for
+				// everyone it has just blinded. Two else-less ifs rather than an
+				// if/else: messaging_surface_guard_test.go's walk splits an
+				// if/else into separate events and would lose this line's
+				// observer, which it tracks.
+				asLit := conditions.AnyDarknessSource(result.Item.GetSpec().WornConditionIds)
+				if asLit {
+					room.SendTextVisualAsLit(messaging.CategoryEquipment, putsOn, user.UserId)
+				}
+				if !asLit {
+					room.SendTextVisual(messaging.CategoryEquipment, putsOn, user.UserId)
+				}
 			} else {
 				user.SendText(messaging.CategorySystem,
 					fmt.Sprintf(`You wield your <ansi fg="item">%s</ansi>. You're feeling dangerous.`, result.Item.DisplayName()),

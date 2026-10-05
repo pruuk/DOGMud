@@ -172,7 +172,7 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 					// open, blood welling from ragged claw-wounds."), so it was
 					// live. Read in play 2026-09-21: "Cave Crawler is raked
 					// open..." among lines that otherwise all said "A figure".
-					r.SendTextVisualHidingNames(messaging.CategoryConditionApply,
+					sendConditionStartRoomText(r, conditionInfo,
 						roles.Observer, []string{charPlainName}, excludeId)
 				}
 			}
@@ -208,4 +208,22 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 	events.AddToQueue(events.ConditionsTriggered{UserId: evt.UserId, MobInstanceId: evt.MobInstanceId, ConditionIds: []int{evt.ConditionId}})
 
 	return events.Continue
+}
+
+// sendConditionStartRoomText sends a condition's start room line on the
+// visual channel. A darkness source's line is judged as if the room were lit
+// (lighting plan 5d, ruling D6): the record is already held when the line
+// goes out, so the room is judged with the new darkness in it, and the
+// observers it has just blinded would miss "a pall gathers around X". It is
+// the mirror of sendConditionEndRoomText's light end line. Every other start
+// line is judged by the room as it is.
+//
+// names is the holder's PLAIN name, handed to HideNames explicitly because a
+// start line may author a bare {actee_plain}.
+func sendConditionStartRoomText(r *rooms.Room, spec *conditions.ConditionSpec, msg string, names []string, skip ...int) {
+	if spec.IsDarknessSource() {
+		r.SendTextVisualAsLitHidingNames(messaging.CategoryConditionApply, msg, names, skip...)
+		return
+	}
+	r.SendTextVisualHidingNames(messaging.CategoryConditionApply, msg, names, skip...)
 }
