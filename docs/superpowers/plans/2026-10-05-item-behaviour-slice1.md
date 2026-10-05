@@ -24,11 +24,13 @@ Every commit names its paths (never `git add -A` or `git add .`) and ends with a
 
 **Dry run (2026-10-05).** Every code and content block of Tasks 1 to 14 was applied, in order, to a scratch worktree `C:/tmp/dogmud-itembeh-dry` detached at `origin/master` `6ae8bf5f6`, and the worktree was removed afterwards (`git worktree remove`, `git worktree prune`); nothing was committed from it. Each failing-first step was run and failed for the reason its step names; each "proven able to fail" probe was run, seen red, and restored. Then: `gofmt -l internal/ modules/ .` clean; `go vet ./...` clean; `go build ./...`; `go test ./... -count=1` 130 packages `ok`, 0 failing (23 with no test files); `golangci-lint run --new-from-merge-base=origin/master` `0 issues.` (one stale-cache warning naming another worktree's path, not an issue); `python tools/context_md_audit.py` byte-identical in its package list before and after Task 14's docs (13 pre-existing phantom packages, none this plan touches); every added line free of em and en dashes; a boot on private ports (telnet 33357, local 9957, http 8057) reached `Server Ready` with no panic and `mapper.ValidateZoneConsi errors=0 warnings=0 mode=panic`, stopped by PID. The Docker race run and the playtest were not part of the dry run; Tasks 14 and 15 run them.
 
+**Second dry run (2026-10-05, after the owner's guard (a) ruling).** The same blocks, with Task 13's reclassified guard (a), were applied to a fresh scratch worktree `C:/tmp/dogmud-itembeh-dry2` detached at `origin/master` `26dddeb33` (PR #406 merged), then removed and pruned. Task 13's failing-first step and every probe were re-run and seen red as written (including both new guard (a) probes); `gofmt -l` clean, `go vet .` clean, `go build ./...`, `go test -count=1 .` `ok`. The only conflict was `docs/PATCH_NOTES.md`, where #406's `## 2026-10-05: Veyra's secrets` entry now sits on top; Task 14 Step 5 places this slice's entry above it.
+
 ---
 
 ## Facts verified against source (2026-10-05, `origin/master` `6ae8bf5f6`)
 
-The spec's facts were read at `7e0748145`. `origin/master` is now `6ae8bf5f6` (#379, #380): `git diff --stat 7e0748145 6ae8bf5f6` touches only `docs/PATH_TO_1.0.md` and `internal/gamelock/` (4 files), so every spec row this plan leans on still holds; each was re-read at `6ae8bf5f6` and the line numbers below are master's. PR #406 (Veyra dialogue gold gates) is still OPEN (`gh pr view 406 --repo pruuk/DOGMud`: `state OPEN`); it touches `_datafiles/config.yaml`, `docs/PATCH_NOTES.md` and `docs/README.md` among 80 files and no Go file this plan edits, so if it merges first, Task 14's two docs edits rebase onto it and nothing else moves. Rows marked **NEW** are facts the spec does not state, or states wrongly, and that change the plan.
+The spec's facts were read at `7e0748145`. `origin/master` is now `6ae8bf5f6` (#379, #380): `git diff --stat 7e0748145 6ae8bf5f6` touches only `docs/PATH_TO_1.0.md` and `internal/gamelock/` (4 files), so every spec row this plan leans on still holds; each was re-read at `6ae8bf5f6` and the line numbers below are master's. **NEW:** PR #406 (Veyra dialogue gold gates) has since merged as `26dddeb33`. `git diff --name-only 6ae8bf5f6 26dddeb33` (81 files) touches no file this plan edits except `docs/PATCH_NOTES.md` (a new top entry, F31) and `docs/README.md` (two new rows elsewhere, no conflict); every line number below holds at `26dddeb33`. Rows marked **NEW** are facts the spec does not state, or states wrongly, and that change the plan.
 
 | # | Fact | Where (master `6ae8bf5f6`) |
 |---|---|---|
@@ -60,14 +62,14 @@ The spec's facts were read at `7e0748145`. `origin/master` is now `6ae8bf5f6` (#
 | F26 | Content: 40038 Oil Lantern (`items/materials-40000/40038-oil_lantern.yaml`, `wornconditionids: [125]`); 4111 has no `spawninfo`, its `nouns:` start at `:30` and the `lantern` noun is `:49-53`; 5000's `spawninfo:` is `:21-23` (Sable, 315); Rane's shop ends with 40053 at `mobs/stillwater/9588-enchanter_rane.yaml:83-86`; the sunstone, condition and fixture ids are free (`python tools/id_inventory.py --type items`: `light 20096-20098 ... 20099`, `other-0 ... gaps 3-9, 42-49, 55-899`; `--alloc conditions 1`: `134-134`; grep `^itemid: (55\|56\|20099)$` and `^conditionid: 134$` find nothing, the same greps for 54 and 133 find `54-sorens_iron_pin.yaml` and `133-phantom_heat_sense.yaml`) | files named |
 | F27 | **NEW.** `TestShippedLightItemsMatchTheLadder`'s table ends at `{20097, 54, true}` (`shipped_light_items_test.go:34`); `TestEveryShopkeeperCanTradeAtNightWhileAwake` declares `totalSamples, totalNight` at `:168`, computes `night` at `:210`, and checks `totalNight` at `:246`. Measured with this plan applied: 21 keepers carry 40038, so the lantern tree runs at 1512 samples, 216 of them asleep | files named; measured |
 | F28 | **NEW.** Measured: the lighting day-cycle and parity goldens do not move (they load no items and run no `Prepare` or tick), `light_notices.golden` moves by exactly the two R8 lines, and no other narration golden moves (condition 134 carries no start or end text). A root `Prepare(false)` of 4111 and 5000 with no mob templates loaded spawns the two fixtures and no mob | measured |
-| F29 | **NEW.** Measured with `go/types` over `go list -export` data (Task 13), non-test `internal/hooks` reads these `ItemSpec` members: the I6 knobs `VoiceId` 5, `HungerRounds` 6, `PreservesContents` 2, `HungerDrainPct` 2, `MutationTickInterval` 2, `AmbientPotions`, `MutationTickChance`, `MutationRarityFloor`, `ProcsFor`, `TauntPull` 1 each (the spec's 6 and 3 for `VoiceId` and `PreservesContents` were textual greps that also matched other structs), plus 15 data members (`Aging`, `BottleAgingMultiplier`, `BreakChance`, `ComponentTag`, `ConditionIds`, `Hands`, `ItemId`, `Name`, `NeverDrops`, `QuestToken`, `SpellDamageMultiplier`, `Subtype`, `Type`, `Value`, `WornConditionIds`). A name-uniqueness scan cannot replace the type check: `VoiceId` and `HungerRounds` are also field names on other types | measured |
+| F29 | **NEW.** `items.ItemSpec` has 73 exported fields (with this slice's `Behavior` and `Fixture`). Measured with `go/types` over `go list -export` data (Task 13), non-test `internal/hooks` reads the I6 behaviour fields at twelve file sites: `pinnacle_tick.go` (`AmbientPotions`, `HungerDrainPct`, `HungerRounds`, `MutationRarityFloor`, `MutationTickChance`, `MutationTickInterval`, `PreservesContents`, `TauntPull`, `VoiceId`), `MobDeath_ItemProcs.go` (`VoiceId`), `PlayerSpawn_HandleJoin.go` (`PreservesContents`), `item_procs.go` (`Procs`, through `ProcsFor`); it also reads 15 plain data fields. A name-uniqueness scan cannot replace the type check: `VoiceId` and `HungerRounds` are also field names on other types. The precedent for classifying every member exactly once is `TestEveryEffectKindIsClassifiedExactlyOnce` (`internal/conditions/effects_test.go:299`) | measured |
 | F30 | `NewRound` listeners register in `hooks.go`; `IdleMobs` is `:66`; `main.go` loads item voices at `:1672` and validates auto-aggro gates at `:1733` | files named |
-| F31 | `docs/PATCH_NOTES.md`'s newest entry is `## 2026-10-05: Darkness` (`:3`); `docs/README.md:158` (on the docs branch) is this slice's spec row | files named |
+| F31 | **NEW (after #406).** `docs/PATCH_NOTES.md`'s newest entry is `## 2026-10-05: Veyra's secrets` (`:3`), above `## 2026-10-05: Darkness`; the docs branch's README carries this slice's spec and plan rows together | files named |
 
 ## Where the spec could not be implemented as written
 
 1. **The rift stones are one item, the Rift Stone (56), and the fixture line reads "The {Name} is lit."** Rule 10 says "{Name} is lit." and the content row says "Rift stones, item 56 `rift_stones`". With a title-case name and no article the line reads "Rift Stones is lit.", ungrammatical, and "Arch Lantern is lit." reads oddly. The template adds "The" and the item is named singular (`56-rift_stone.yaml`, namesimple `stone`); its description says the stone is set into the wall. Named for the owner in the PR.
-2. **Guard (a) is type-aware and pins more than I6 (F29).** "The ItemSpec fields read in non-test `internal/hooks` are pinned to I6's list" cannot hold literally: hooks also read 15 plain data members. The guard type-checks `internal/hooks` (`go/types` over `go list -export`), pins I6's ten with their measured counts (each later slice shrinks them) and the data members by name, and fails on any member not pinned. The I6 counts are the type-checked 5 and 2, not the textual 6 and 3.
+2. **Guard (a) classifies every ItemSpec field once (owner ruling, 2026-10-05; F29).** "The ItemSpec fields read in non-test `internal/hooks` are pinned to I6's list" cannot hold literally: hooks also read plain data. Following `TestEveryEffectKindIsClassifiedExactlyOnce`, the guard classifies all 73 exported fields exactly once, as BEHAVIOUR (19, each with a reason: the Pinnacle block, `Behavior`, `Fixture`, the four `OnUse*` effects) or DATA (54); a new unclassified field fails. Hooks read data freely; a hook reading a behaviour field (directly or through `ProcsFor`) outside twelve allowlisted `file|field` sites fails, found by type-checking `internal/hooks` (`go/types` over `go list -export`). There are no read counts: the site allowlist does the job, and an allowlisted site nothing reads any more fails, so slices 2 and 3 can only shrink it.
 3. **The holder index is entered at fewer sites than W5 lists (F11).** `StoreItem` indexes before its capacity check, which covers `intoPocket`'s fallback; crafted output goes through `StoreItem`; the player appends need no index. Rooms are indexed at `AddItem`, `Prepare`'s append, `addRoomToMemory` (instance load), and once at boot by `rooms.IndexTreedFloors()` for rooms loaded before item specs (F12); they leave at `removeRoomFromMemory`.
 4. **"A fixture is evaluated once when its room is indexed" is a callback.** `rooms` cannot reach `behaviortree`, so `items.OnRoomHolderIndexed` (set by `hooks.RegisterListeners` to `hooks.EvaluateRoomFixtures`) runs the room's floor trees the moment the room enters the index.
 5. **Eviction reads "a full round with no visit" as "not visited in this round's tick".** `EnsureItemBTreeState` stamps the visit round; `EvictUnseenItemBTreeStates(round)` at the end of the tick drops entries stamped earlier. An item handed between holders between ticks is visited in the next tick and keeps its state.
@@ -127,7 +129,7 @@ Every new line is under 80 columns, carries no raw number and no em or en dash.
 | `lighting_daycycle_golden_test.go`, `lighting_parity_golden_test.go` | snapshot | Must NOT move (F28); if either moves, explain it with `tools/lighting_golden_diff.py` before any re-record | Tasks 8, 12, 14 |
 | `testdata/lighting_fixture_daycycle.golden` | snapshot | New: 4111 and 5000 at the twelve samples (X8) | Task 13 |
 | `shop_night_trade_guard_test.go` | content walk | Runs each keeper's light-slot tree at all 72 samples with the Sleeping flag set as the schedule would; asleep lanterns must be dark | Task 13 |
-| `item_behaviour_guard_test.go` (new) | type-checked `ItemSpec` reads; shipped trees, items and spawninfo | Rule 15 (a) to (e) | Task 13 |
+| `item_behaviour_guard_test.go` (new) | every exported `ItemSpec` field classified once (behaviour or data); type-checked behaviour reads in `internal/hooks` against a `file\|field` allowlist; shipped trees, items and spawninfo | Rule 15 (a) to (e) | Task 13 |
 
 No guard is weakened and no existing key is re-keyed.
 
@@ -5549,6 +5551,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"testing"
@@ -5573,83 +5576,171 @@ import (
 // _datafiles/world/dogmud/behaviors/items, not in another ItemSpec field that
 // a hook reads.
 
-// itemSpecReadsInHooks pins every ItemSpec field and method that non-test
-// internal/hooks reads, found by type-checking the package against the
-// compiler's export data, so a selector counts only when its receiver really
-// is an ItemSpec. The behaviour knobs (the ten I6 names of the spec's facts
-// table: procs, voices, hunger, the mutation drip, the bandolier) carry their
-// read counts, and each later slice shrinks them (slice 2 drops VoiceId and
-// TauntPull, slice 3 ProcsFor). Plain item data a hook reads is pinned by
-// name, at -1. A member not listed, or a behaviour count that grows, fails:
-// put the behaviour in a tree. Plain data a hook genuinely needs is added
-// at -1 with a reason.
-var itemSpecReadsInHooks = map[string]int{
-	// Behaviour knobs (spec fact I6), with their read counts.
-	"AmbientPotions":       1,
-	"HungerDrainPct":       2,
-	"HungerRounds":         6,
-	"MutationRarityFloor":  1,
-	"MutationTickChance":   1,
-	"MutationTickInterval": 2,
-	"PreservesContents":    2,
-	"ProcsFor":             1,
-	"TauntPull":            1,
-	"VoiceId":              5,
-
-	// Plain item data hooks read (names only).
-	"Aging":                 -1,
-	"BottleAgingMultiplier": -1,
-	"BreakChance":           -1,
-	"ComponentTag":          -1,
-	"ConditionIds":          -1,
-	"Hands":                 -1,
-	"ItemId":                -1,
-	"Name":                  -1,
-	"NeverDrops":            -1,
-	"QuestToken":            -1,
-	"SpellDamageMultiplier": -1,
-	"Subtype":               -1,
-	"Type":                  -1,
-	"Value":                 -1,
-	"WornConditionIds":      -1,
+// itemSpecBehaviourFields are the ItemSpec fields that make an item DO
+// something: per-item reactions a behaviour tree now owns, or the tree
+// machinery itself. Each carries the reason it is behaviour. A hook may read
+// one only at a site in itemSpecBehaviourReadSites. Every other exported
+// field is plain data (itemSpecDataFields), which hooks read freely. The
+// pattern is conditions' TestEveryEffectKindIsClassifiedExactlyOnce: every
+// field is classified exactly once, so a new field fails until someone says
+// which it is.
+var itemSpecBehaviourFields = map[string]string{
+	"Procs":                "combat procs; slice 3 moves them into proc nodes",
+	"ReserveHealthPct":     "Pinnacle reserve held while worn",
+	"ReserveStaminaPct":    "Pinnacle reserve held while worn",
+	"ReserveConvictionPct": "Pinnacle reserve held while worn",
+	"PreservesContents":    "bandolier: contents never age",
+	"AmbientPotions":       "bandolier: slotted potions tick while worn",
+	"MutationTickInterval": "Pinnacle mutation drip",
+	"MutationTickChance":   "Pinnacle mutation drip",
+	"MutationRarityFloor":  "Pinnacle mutation drip",
+	"VoiceId":              "sentient voice; slice 2 moves it into speak",
+	"HungerRounds":         "the Blackrazor's hunger",
+	"HungerDrainPct":       "the Blackrazor's hunger",
+	"TauntPull":            "the Aegis's taunt pull; slice 2 makes it a tree action",
+	"Behavior":             "the item's tree: hooks reach it through behaviortree.TryItemBehavior",
+	"Fixture":              "fixed to a floor: read through items.Item.IsFixture",
+	"OnUseTrainSkill":      "use effect, the YAML replacement for JS onUse",
+	"OnUseTrainAmount":     "use effect, the YAML replacement for JS onUse",
+	"OnUseUserText":        "use effect, the YAML replacement for JS onUse",
+	"OnUseRoomText":        "use effect, the YAML replacement for JS onUse",
 }
 
-// (a) Rule 15: the ItemSpec members internal/hooks reads are pinned.
-func TestItemSpecBehaviourReadsInHooksArePinned(t *testing.T) {
-	got := itemSpecSelectionsIn(t, "./internal/hooks")
-	if got["VoiceId"] == 0 {
-		t.Fatalf("the scan found no VoiceId read: it is not seeing internal/hooks (got %v)", got)
+// itemSpecDataFields are the ItemSpec fields that describe an item: what it
+// is, weighs, costs, protects, and how it is named and stored.
+var itemSpecDataFields = []string{
+	"ItemId", "Value", "Uses", "ConditionIds", "WornConditionIds", "Nouns",
+	"PhysicalMitigation", "MagicalMitigation", "ConvictionMitigation",
+	"DamageMultiplier", "SpellDamageMultiplier", "ParryRating", "BlockRating",
+	"AmmoTag", "MinStrength", "WaitRounds", "StaminaCost", "SpeedMultiplier",
+	"Weight", "GrappleModifier", "EscapeModifier", "Reach", "Hands", "Name",
+	"DisplayName", "NameSimple", "Description", "QuestToken", "Type",
+	"Subtype", "Damage", "Element", "StatMods", "BreakChance", "Cursed",
+	"KeyLockId", "ComponentTag", "IsComponent", "WeightReduction",
+	"BagCapacity", "Aging", "BottleAgingMultiplier", "Toxicity", "Magnitude",
+	"IsBandolier", "BandolierCapacity", "SalvageReturns", "RarityTier",
+	"MaterialTier", "VendorCategories", "NotSalable", "NeverDrops",
+	"Restricted",
+}
+
+// itemSpecBehaviourMethods maps an ItemSpec method to the behaviour field it
+// reads, so calling it counts as reading that field.
+var itemSpecBehaviourMethods = map[string]string{
+	"ProcsFor": "Procs",
+}
+
+// itemSpecBehaviourReadSites are the only places non-test internal/hooks
+// reads a behaviour field: "file|field". These are today's Pinnacle
+// mechanics. Slice 2 retires the VoiceId and TauntPull sites, slice 3 the
+// Procs ones; an entry nothing reads any more fails, so the list only
+// shrinks. A new site fails: put the behaviour in a tree.
+var itemSpecBehaviourReadSites = map[string]bool{
+	"MobDeath_ItemProcs.go|VoiceId":               true,
+	"PlayerSpawn_HandleJoin.go|PreservesContents": true,
+	"item_procs.go|Procs":                         true,
+	"pinnacle_tick.go|AmbientPotions":             true,
+	"pinnacle_tick.go|HungerDrainPct":             true,
+	"pinnacle_tick.go|HungerRounds":               true,
+	"pinnacle_tick.go|MutationRarityFloor":        true,
+	"pinnacle_tick.go|MutationTickChance":         true,
+	"pinnacle_tick.go|MutationTickInterval":       true,
+	"pinnacle_tick.go|PreservesContents":          true,
+	"pinnacle_tick.go|TauntPull":                  true,
+	"pinnacle_tick.go|VoiceId":                    true,
+}
+
+// (a) Rule 15, part one: every exported ItemSpec field is classified
+// exactly once, behaviour or data, and no classification names a field that
+// does not exist.
+func TestEveryItemSpecFieldIsClassifiedExactlyOnce(t *testing.T) {
+	data := map[string]bool{}
+	for _, f := range itemSpecDataFields {
+		if data[f] {
+			t.Errorf("ItemSpec field %s is listed twice as data", f)
+		}
+		data[f] = true
 	}
-	var problems []string
-	for name, n := range got {
-		want, ok := itemSpecReadsInHooks[name]
+	fields := map[string]bool{}
+	st := reflect.TypeOf(items.ItemSpec{})
+	for i := 0; i < st.NumField(); i++ {
+		f := st.Field(i)
+		if !f.IsExported() {
+			continue
+		}
+		fields[f.Name] = true
+		_, behaviour := itemSpecBehaviourFields[f.Name]
 		switch {
-		case !ok:
-			problems = append(problems, fmt.Sprintf("%s read %d times, not pinned", name, n))
-		case want >= 0 && n > want:
-			problems = append(problems, fmt.Sprintf("%s read %d times, pinned %d", name, n, want))
+		case behaviour && data[f.Name]:
+			t.Errorf("ItemSpec field %s is classified as both behaviour and data", f.Name)
+		case !behaviour && !data[f.Name]:
+			t.Errorf("ItemSpec field %s is not classified. If it makes an item DO something, it belongs "+
+				"in a behaviour tree (behaviors/items); if it only describes the item, list it in "+
+				"itemSpecDataFields", f.Name)
 		}
 	}
-	for name, want := range itemSpecReadsInHooks {
-		switch {
-		case got[name] == 0:
-			problems = append(problems, fmt.Sprintf("%s is pinned but no longer read: drop it from the pin", name))
-		case want >= 0 && got[name] < want:
-			problems = append(problems, fmt.Sprintf("%s read %d times, pinned %d: shrink the pin", name, got[name], want))
+	for name, reason := range itemSpecBehaviourFields {
+		if !fields[name] {
+			t.Errorf("itemSpecBehaviourFields names %s, which ItemSpec does not have", name)
+		}
+		if strings.TrimSpace(reason) == "" {
+			t.Errorf("behaviour field %s carries no reason", name)
+		}
+	}
+	for name := range data {
+		if !fields[name] {
+			t.Errorf("itemSpecDataFields names %s, which ItemSpec does not have", name)
+		}
+	}
+	for method, field := range itemSpecBehaviourMethods {
+		if _, ok := itemSpecBehaviourFields[field]; !ok {
+			t.Errorf("method %s maps to %s, which is not a behaviour field", method, field)
+		}
+	}
+}
+
+// (a) Rule 15, part two: internal/hooks reads a behaviour field only at an
+// allowlisted site. Data fields are free.
+func TestHooksReadItemBehaviourFieldsOnlyAtAllowlistedSites(t *testing.T) {
+	reads := itemSpecReadsIn(t, "./internal/hooks")
+	if len(reads["VoiceId"]) == 0 {
+		t.Fatalf("the scan found no VoiceId read: it is not seeing internal/hooks (got %v)", reads)
+	}
+	seen := map[string]bool{}
+	var problems []string
+	for member, files := range reads {
+		field := member
+		if f, ok := itemSpecBehaviourMethods[member]; ok {
+			field = f
+		}
+		if _, behaviour := itemSpecBehaviourFields[field]; !behaviour {
+			continue
+		}
+		for file := range files {
+			site := file + "|" + field
+			seen[site] = true
+			if !itemSpecBehaviourReadSites[site] {
+				problems = append(problems, fmt.Sprintf("%s reads behaviour field %s (via %s), not an allowlisted site", file, field, member))
+			}
+		}
+	}
+	for site := range itemSpecBehaviourReadSites {
+		if !seen[site] {
+			problems = append(problems, fmt.Sprintf("allowlisted site %s is no longer read: drop it", site))
 		}
 	}
 	sort.Strings(problems)
 	if len(problems) > 0 {
-		t.Errorf("internal/hooks reads ItemSpec members off their pin. New item behaviour goes in a tree "+
-			"(behaviors/items), not in a field a hook reads; a retired read shrinks the pin.\n%s", strings.Join(problems, "\n"))
+		t.Errorf("internal/hooks reads ItemSpec behaviour fields off the allowlist. New item behaviour goes "+
+			"in a tree (behaviors/items), not in a field a hook reads; a retired read drops its site.\n%s",
+			strings.Join(problems, "\n"))
 	}
 }
 
-// itemSpecSelectionsIn type-checks one package's non-test files and counts
-// every selector whose receiver is items.ItemSpec (or a pointer to it), by
-// member name. Dependencies come from the build cache's export data
-// (go list -export), so nothing is type-checked twice.
-func itemSpecSelectionsIn(t *testing.T, pkg string) map[string]int {
+// itemSpecReadsIn type-checks one package's non-test files and returns, for
+// every ItemSpec member a selector reads (field or method, through a value
+// or a pointer), the files that read it. Dependencies come from the build
+// cache's export data (go list -export), so nothing is type-checked twice.
+func itemSpecReadsIn(t *testing.T, pkg string) map[string]map[string]bool {
 	t.Helper()
 	out, err := exec.Command("go", "list", "-export", "-deps", "-f", "{{.ImportPath}}={{.Export}}", pkg).Output()
 	if err != nil {
@@ -5694,8 +5785,8 @@ func itemSpecSelectionsIn(t *testing.T, pkg string) map[string]int {
 		t.Fatalf("type-checking %s: %v", pkg, err)
 	}
 
-	got := map[string]int{}
-	for _, sel := range info.Selections {
+	got := map[string]map[string]bool{}
+	for expr, sel := range info.Selections {
 		recv := sel.Recv()
 		if p, ok := recv.(*types.Pointer); ok {
 			recv = p.Elem()
@@ -5705,7 +5796,11 @@ func itemSpecSelectionsIn(t *testing.T, pkg string) map[string]int {
 			named.Obj().Pkg().Path() != "github.com/GoMudEngine/GoMud/internal/items" {
 			continue
 		}
-		got[sel.Obj().Name()]++
+		member := sel.Obj().Name()
+		if got[member] == nil {
+			got[member] = map[string]bool{}
+		}
+		got[member][filepath.Base(fset.Position(expr.Pos()).Filename)] = true
 	}
 	return got
 }
@@ -5926,12 +6021,14 @@ func TestPulsingFixturesStayInsideOneBand(t *testing.T) {
 }
 ```
 
-Run: `go test . -run 'ItemSpecBehaviourReads|EveryShippedItemBehavior|LightWritingTrees|PulsingFixtures' -count=1`
+Run: `go test . -run 'ClassifiedExactlyOnce|AllowlistedSites|EveryShippedItemBehavior|LightWritingTrees|PulsingFixtures' -count=1`
 Expected: `ok  	github.com/GoMudEngine/GoMud`.
 
 - [ ] **Step 2: Prove each guard able to fail**
 
-(a) Create `internal/hooks/zz_probe.go` containing `package hooks`, `import "github.com/GoMudEngine/GoMud/internal/items"`, `var probeWeight = items.ItemSpec{}.Weight`; run `go test . -run ItemSpecBehaviourReads -count=1`. Expected: FAIL `Weight read 1 times, not pinned`. Delete the file.
+(a), the site check. Create `internal/hooks/zz_probe.go` containing `package hooks`, `import "github.com/GoMudEngine/GoMud/internal/items"`, `var probeWeight = items.ItemSpec{}.Weight` and `var probeVoice = items.ItemSpec{}.VoiceId`; run `go test . -run AllowlistedSites -count=1`. Expected: FAIL with exactly one problem, `zz_probe.go reads behaviour field VoiceId (via VoiceId), not an allowlisted site` (the `Weight` read is data and passes). Delete the file.
+
+(a), the classification. In `internal/items/itemspec.go` add a line `ProbeKnob int \`yaml:"probe_knob,omitempty"\`` directly after the `Fixture` field; run `go test . -run ClassifiedExactlyOnce -count=1`. Expected: FAIL `ItemSpec field ProbeKnob is not classified. If it makes an item DO something, it belongs in a behaviour tree (behaviors/items); if it only describes the item, list it in itemSpecDataFields`. Remove the line.
 
 (c) Delete `fixture: light` from `56-rift_stone.yaml`; run `go test . -run LightWritingTrees -count=1`. Expected: FAIL `item 56 (Rift Stone): tree "rift_pulse" writes light but the item is neither type light nor a fixture` and `room 5000 places item 56 (Rift Stone), whose tree writes light, on its floor, but it is not a fixture: anyone could take it`. Restore the line.
 
@@ -6574,7 +6671,7 @@ floor; a pulsing fixture must stay inside one light band
 
 - [ ] **Step 5: Patch notes**
 
-Add at the top of `docs/PATCH_NOTES.md`, directly under `# DOGMud Patch Notes` and its blank line, above the newest entry (`## 2026-10-05: Darkness` at the time of writing, F31; if #406 merged first, above its entry). Player-facing, no numbers, no dashes, 80 columns; the heading takes the date the PR merges:
+Add at the top of `docs/PATCH_NOTES.md`, directly under `# DOGMud Patch Notes` and its blank line, above the newest entry (`## 2026-10-05: Veyra's secrets` since #406 merged, F31). Player-facing, no numbers, no dashes, 80 columns; the heading takes the date the PR merges:
 
 ```markdown
 ## 2026-10-05: Lights that keep time
@@ -6684,7 +6781,7 @@ git push -u origin feature/item-behaviour-slice1
 gh pr create --repo pruuk/DOGMud --base master --head feature/item-behaviour-slice1 --title "feat(lighting): 5e slice 1, item behaviour engine and scheduled light" --body-file "$TMP/5e-pr-body.md"
 ```
 
-Body (`$TMP/5e-pr-body.md`): what ships (items as the third tree subject, the item tick and index, the five nodes and `after_dusk`, scheduled light through the record's existing trim state, fixtures, the content), one line each; the owner rulings it implements (R2, R3, R4, R7, R8, R9, R10) and the two later answers (the lantern relights on the first round after waking; the scheduled-off state survives a restart until the next round); the twelve items under "Where the spec could not be implemented as written", leading with the Rift Stone's singular name and the "The {Name} is lit." line, and guard (a)'s type-aware pin, both for the owner; the "Player-visible lines that change" table; the guards and goldens (the R8 two-line move, the new fixture day-cycle golden, the parity and day-cycle goldens unmoved, the shop guard now running 1512 lantern samples); gate results with counts; the race run; the boot check; the playtest outcome and where its findings live in memory; the spec and plan paths; references to #365 (this slice) and #372 (the lighting arc), closing nothing (slices 2 and 3 remain under #365). End with:
+Body (`$TMP/5e-pr-body.md`): what ships (items as the third tree subject, the item tick and index, the five nodes and `after_dusk`, scheduled light through the record's existing trim state, fixtures, the content), one line each; the owner rulings it implements (R2, R3, R4, R7, R8, R9, R10) and the two later answers (the lantern relights on the first round after waking; the scheduled-off state survives a restart until the next round); the twelve items under "Where the spec could not be implemented as written", leading with the Rift Stone's singular name and the "The {Name} is lit." line, and guard (a)'s field classification (owner ruling 2026-10-05), both as ruled; the "Player-visible lines that change" table; the guards and goldens (the R8 two-line move, the new fixture day-cycle golden, the parity and day-cycle goldens unmoved, the shop guard now running 1512 lantern samples); gate results with counts; the race run; the boot check; the playtest outcome and where its findings live in memory; the spec and plan paths; references to #365 (this slice) and #372 (the lighting arc), closing nothing (slices 2 and 3 remain under #365). End with:
 
 ```
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
@@ -6696,9 +6793,9 @@ Read back the URL `gh` prints and confirm it says `pruuk/DOGMud`. The owner runs
 
 ## Self-review
 
-- **Spec coverage.** Rule 1 (named trees, `behavior:`, root label `item`, boot failure, `ListTreeFiles` kind `item`): T3, T4, T6 boot index, T12. Rule 2 (`ItemSubject`, `MobState` is the item's state): T4. Rule 3 (`TryItemBehavior`, gone holder skips, recover): T4. Rule 4 (per-UUID state, `EnsureItemBTreeState`, `EvictItemBTreeState`, eviction after an unvisited round, not persisted): T4, T7. Rule 5 (the tick's order, the index of holders, entry at spawn, `StoreItem`, `Wear`, spills, companion restore, `AddItem`, the `Prepare` append, instance load and boot; drop when empty; first-visit evaluation; containers not visited): T3, T6, T7. Rule 6 (`item_idle` added with its dispatch site; the other events stay with slices 2 and 3): T7. Rule 7 (`time_of_day after_dusk` R7/X2, `holder_asleep` R2, `worn`, `in_combat`, `set_light`, `pulse_light`): T1, T5. Rule 8 (allowlist with paths, item-only nodes refused elsewhere, one writer per record): T4, T5, T13(b,e). Rule 9 (full / n / off through `LightFull` / `SetLightOutput`, write on change, adjustable skipped, entry trim cannot relight, `ResetLight` on equip is full until the next tick, backpack fails): T5, T12. Rule 10 (`fixture:`, `internal/itemlight`, fixture terms, `LightTerms.Fixture`, never trim, refused at every floor removal, off-floor drops output, the look line after the description under its colour rule, `look <name>`): T2, T3, T6, T8, T10, T11. Rule 11 (deterministic triangle wave; band-straddle guard at 72 samples with the 20-to-60 probe): T5, T13(d). Rule 12 (attribution, `lamp.yaml` header, cadence unchanged): T9. Rule 13 (no new room line): nothing added. Rule 14 (boot panic, skipped round, log once per tree and node): T4. Rule 15 (a) to (e): T13. Content table (arch lantern 55 in 4111 with the noun moved, the Rift Stone 56 in 5000 pulsing 20 to 36, the keeper lantern tree on 40038, the sunstone 20099 with condition 134 at 46, faint 30 for an hour after dusk, value 40, `vendor_categories: [enchanting]`, sold by Rane, the ladder row): T12. X8 fixture day-cycle: T13. Shop guard: T13. R8: T9. R9 siblings: T11. Testing and gates: T1 to T14. Playtest and PR: T15. Out of scope and untouched: slices 2 and 3, 5803 and street lighting (R4), sleeping schedules (#404), saving tree state, container trees, player-lit fixtures, the builder editing surface (#367).
+- **Spec coverage.** Rule 1 (named trees, `behavior:`, root label `item`, boot failure, `ListTreeFiles` kind `item`): T3, T4, T6 boot index, T12. Rule 2 (`ItemSubject`, `MobState` is the item's state): T4. Rule 3 (`TryItemBehavior`, gone holder skips, recover): T4. Rule 4 (per-UUID state, `EnsureItemBTreeState`, `EvictItemBTreeState`, eviction after an unvisited round, not persisted): T4, T7. Rule 5 (the tick's order, the index of holders, entry at spawn, `StoreItem`, `Wear`, spills, companion restore, `AddItem`, the `Prepare` append, instance load and boot; drop when empty; first-visit evaluation; containers not visited): T3, T6, T7. Rule 6 (`item_idle` added with its dispatch site; the other events stay with slices 2 and 3): T7. Rule 7 (`time_of_day after_dusk` R7/X2, `holder_asleep` R2, `worn`, `in_combat`, `set_light`, `pulse_light`): T1, T5. Rule 8 (allowlist with paths, item-only nodes refused elsewhere, one writer per record): T4, T5, T13(b,e). Rule 9 (full / n / off through `LightFull` / `SetLightOutput`, write on change, adjustable skipped, entry trim cannot relight, `ResetLight` on equip is full until the next tick, backpack fails): T5, T12. Rule 10 (`fixture:`, `internal/itemlight`, fixture terms, `LightTerms.Fixture`, never trim, refused at every floor removal, off-floor drops output, the look line after the description under its colour rule, `look <name>`): T2, T3, T6, T8, T10, T11. Rule 11 (deterministic triangle wave; band-straddle guard at 72 samples with the 20-to-60 probe): T5, T13(d). Rule 12 (attribution, `lamp.yaml` header, cadence unchanged): T9. Rule 13 (no new room line): nothing added. Rule 14 (boot panic, skipped round, log once per tree and node): T4. Rule 15 (a) to (e): T13, (a) as the owner ruled it (every exported `ItemSpec` field classified once as behaviour or data; behaviour reads in hooks only at twelve allowlisted sites, no read counts). Content table (arch lantern 55 in 4111 with the noun moved, the Rift Stone 56 in 5000 pulsing 20 to 36, the keeper lantern tree on 40038, the sunstone 20099 with condition 134 at 46, faint 30 for an hour after dusk, value 40, `vendor_categories: [enchanting]`, sold by Rane, the ladder row): T12. X8 fixture day-cycle: T13. Shop guard: T13. R8: T9. R9 siblings: T11. Testing and gates: T1 to T14. Playtest and PR: T15. Out of scope and untouched: slices 2 and 3, 5803 and street lighting (R4), sleeping schedules (#404), saving tree state, container trees, player-lit fixtures, the builder editing surface (#367).
 - **Beyond the spec, stated above.** `items.OnRoomHolderIndexed` and `hooks.EvaluateRoomFixtures`; `rooms.IndexTreedFloors`; `behaviortree.TreeWritesLight`, `PulseLightValue`, `LoadItemTreeForTest`, `ItemBTreeStateForTest`, `ResetItemBTreeStatesForTest`, `EvalContext.node`; `itemlight.ResetForTest`, `items.ResetHolderIndexForTest`; `composeWithFixtures`; the GMCP and tab-completion siblings; `look <fixture>` "here"; `get all <name>` naming a fixture; the separated `litAsleep` report in the shop guard.
-- **Names across tasks.** `ItemSubject{UUID, ItemId, UserId, MobInstanceId, RoomId, Slot, OnFloor}`, `TryItemBehavior`, `GetItemTreePath`, `ValidateItemBehaviors`, `LoadItemTreeFromFile`, `LoadItemTreeFromBytes`, `itemRootLabel`, `itemSafeConditions`, `itemSafeActions`, `itemOnlyNodes`, `checkNodeSubject`, `EnsureItemBTreeState`, `EvictUnseenItemBTreeStates` (T4); `condHolderAsleep`, `condWorn`, `condInCombat`, `actSetLight`, `actPulseLight`, `PulseLightValue`, `TreeWritesLight` (T5); `items.FixtureLight`, `FixtureDarkness`, `HasBehavior`, `IsFixture`, `IndexMobHolder`, `IndexRoomHolder`, `DropMobHolder`, `DropRoomHolder`, `MobHolders`, `RoomHolders`, `OnRoomHolderIndexed` (T3); `IndexTreedItem`, `IndexTreedItems`, `IndexTreedFloors` (T6); `ItemRoundTick`, `EvaluateRoomFixtures` (T7); `LightTerms.Fixture`, `CarriedLight`, `composeWithFixtures` (T8); `ErrFixture`, `fixedInPlace` (T10); `fixtureLines`, `fixtureLine`, `descriptions/fixtures` (T11); trees `dusk_to_dawn`, `rift_pulse`, `keeper_lantern`, `sunstone` (T12). Test helpers and ids (`engineProbe*` 9900 to 9903, `lightProbe*` 9921 to 9927, `seedFixtureRoom`, `sentTo`, `pinAfterDuskClock`, `loadItemBehaviourWorld`, item ids 999950 to 999994) collide with nothing in their packages (each package built and ran on the dry run).
+- **Names across tasks.** `ItemSubject{UUID, ItemId, UserId, MobInstanceId, RoomId, Slot, OnFloor}`, `TryItemBehavior`, `GetItemTreePath`, `ValidateItemBehaviors`, `LoadItemTreeFromFile`, `LoadItemTreeFromBytes`, `itemRootLabel`, `itemSafeConditions`, `itemSafeActions`, `itemOnlyNodes`, `checkNodeSubject`, `EnsureItemBTreeState`, `EvictUnseenItemBTreeStates` (T4); `condHolderAsleep`, `condWorn`, `condInCombat`, `actSetLight`, `actPulseLight`, `PulseLightValue`, `TreeWritesLight` (T5); `items.FixtureLight`, `FixtureDarkness`, `HasBehavior`, `IsFixture`, `IndexMobHolder`, `IndexRoomHolder`, `DropMobHolder`, `DropRoomHolder`, `MobHolders`, `RoomHolders`, `OnRoomHolderIndexed` (T3); `IndexTreedItem`, `IndexTreedItems`, `IndexTreedFloors` (T6); `ItemRoundTick`, `EvaluateRoomFixtures` (T7); `LightTerms.Fixture`, `CarriedLight`, `composeWithFixtures` (T8); `ErrFixture`, `fixedInPlace` (T10); `fixtureLines`, `fixtureLine`, `descriptions/fixtures` (T11); trees `dusk_to_dawn`, `rift_pulse`, `keeper_lantern`, `sunstone` (T12); `itemSpecBehaviourFields`, `itemSpecDataFields`, `itemSpecBehaviourMethods`, `itemSpecBehaviourReadSites`, `itemSpecReadsIn`, `TestEveryItemSpecFieldIsClassifiedExactlyOnce`, `TestHooksReadItemBehaviourFieldsOnlyAtAllowlistedSites` (T13). Test helpers and ids (`engineProbe*` 9900 to 9903, `lightProbe*` 9921 to 9927, `seedFixtureRoom`, `sentTo`, `pinAfterDuskClock`, `loadItemBehaviourWorld`, item ids 999950 to 999994) collide with nothing in their packages (each package built and ran on the dry run).
 - **Placeholder scan.** No TBD, no "similar to". The only fills are the playtest's live quotes and the PR body's live results, which only the executor can know.
 - **Order.** T1 before T5 and T12 (`after_dusk`, `pinAfterDuskClock`); T2 before T5, T6, T8 (`itemlight`); T3 before T4 (`Behavior`, `Fixture`) and T6 (the index); T4 before T5 (allowlist, engine); T5 before T7 (`set_light` in the tick test) and T12; T6 before T7 (indexing on `AddItem`); T8 before T9 (`Fixture`, `CarriedLight`); T10 before T11 (`seedFixtureRoom`); T12 before T13 (content the guards walk). Each task's end state passed its packages on the dry run, and the whole suite passed after T13.
 
