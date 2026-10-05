@@ -46,15 +46,16 @@ type DialogueFile struct {
 }
 ```
 
-`Pattern`, `TreeNode`, and `QuestGreeting` each carry the **same ten gating
+`Pattern`, `TreeNode`, and `QuestGreeting` each carry the **same gating
 fields**: `QuestRequired`, `QuestExcluded`, `GrantsQuest`, `RequiresItem`,
 `GivesItem`, `QuestFlagRequired`, `QuestFlagExcluded`, `SetsQuestFlag`,
-`BumpsRep`, `GivesGold`, `MasterworkRequired`. Two shared helpers do the work
-for all three:
+`BumpsRep`, `GivesGold`, `ChargesGold`, `MasterworkRequired`, `GoldRequired`. Two shared
+helpers do the work for all three:
 
 ```go
 func checkQuestGate(questRequired, questExcluded []string, requiresItem int,
-    flagRequired, flagExcluded map[string]string, masterworkRequired int, ps *PlayerState) bool
+    flagRequired, flagExcluded map[string]string, masterworkRequired, goldRequired int,
+    ps *PlayerState) bool
 func applyQuestEffects(grantsQuest string, requiresItem, givesItem int,
     flagSet *QuestFlagSet, bumpsRep []RepBump, givesGold int, ps *PlayerState) bool
 ```
@@ -127,6 +128,22 @@ The map is swept so it cannot grow for the life of the process:
 func SweepMemories() int              // drops entries idle > memorySweepIdleRounds
 func ForgetMobInstance(mobId int) int // drops every player's memory of one instance
 ```
+
+`goldRequired` (2026-10-05) hides an entry from a player carrying less than
+that much gold (`PlayerState.HasGold`; nil fails it closed). It takes
+nothing by itself. `chargesGold` takes the price as part of matching, right
+after the gate and before every other effect (`tryCharge`, backed by
+`PlayerState.ChargeGold`, all or nothing; nil fails closed). A failed charge
+makes the entry not match, so the next entry with the same triggers answers
+and nothing of the paid one is applied. If the paid entry's effects then
+abort (an undeliverable item), `applyPaidEffects` gives the gold back. Put
+`goldRequired` and `chargesGold` at the same price on a purchase node, and
+author the refusal as a later node with the same triggers and gates minus
+those two (first match wins, the same shape `masterworkRequired` uses). Do
+not sell a quest by charging in its `quest_granted` trigger: that runs later,
+outside the step that checked the gold. Veyra's nine `teach_` nodes in
+`the_confluence/9584.yaml` are the reference, and
+`quest_charge_gold_gate_guard_test.go` pins the rule for shipped content.
 
 `hooks.SweepDialogueMemory` runs the sweep every 500 turns. Call
 `ForgetMobInstance` when a mob despawns — instance ids are reused, and a new

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -178,25 +179,33 @@ func (b *GameBridge) GiveItem(itemId int) error {
 // GiveGold adds gold to the player's character and notifies the client.
 func (b *GameBridge) GiveGold(amount int) {
 	b.user.Character.Gold += amount
-	b.user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive <ansi fg=\"gold\">%d gold</ansi>.", amount))
+	b.user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive <ansi fg=\"gold\">%s gold</ansi>.", util.FormatNumber(amount)))
 	events.AddToQueue(events.EquipmentChange{
 		UserId:     b.user.UserId,
 		GoldChange: amount,
 	})
 }
 
-// ChargeGold deducts gold from the player's character, clamped so the
-// player's gold never goes negative, and notifies the client.
-func (b *GameBridge) ChargeGold(amount int) {
+// ChargeGold deducts gold from the player's character and notifies the
+// client. A charge larger than the player's gold takes nothing and fails the
+// action: nothing is said to the player, a warning is logged, and the
+// returned error makes the engine abandon the trigger's remaining actions.
+// Content that charges gold must gate the grant on the price first (a
+// has_gold condition); a dialogue purchase charges in the dialogue itself
+// with chargesGold.
+func (b *GameBridge) ChargeGold(amount int) error {
 	if amount > b.user.Character.Gold {
-		amount = b.user.Character.Gold
+		mudlog.Warn("GameBridge.ChargeGold", "msg", "charge_gold refused: player cannot cover the charge (content should gate on the price first)",
+			"userId", b.user.UserId, "amount", amount, "gold", b.user.Character.Gold)
+		return fmt.Errorf("charge_gold: player %d holds %d gold, cannot cover %d", b.user.UserId, b.user.Character.Gold, amount)
 	}
 	b.user.Character.Gold -= amount
-	b.user.SendText(messaging.CategoryLoot, fmt.Sprintf("You pay <ansi fg=\"gold\">%d gold</ansi>.", amount))
+	b.user.SendText(messaging.CategoryLoot, fmt.Sprintf("You pay <ansi fg=\"gold\">%s gold</ansi>.", util.FormatNumber(amount)))
 	events.AddToQueue(events.EquipmentChange{
 		UserId:     b.user.UserId,
 		GoldChange: -amount,
 	})
+	return nil
 }
 
 // Narrate delivers a text action to its audiences.
@@ -319,12 +328,21 @@ func (b *GameBridge) IncreaseStat(stat string, amount int) {
 }
 
 // LearnRecipe grants the player a new crafting recipe, notifying them if it
-// was newly learned. Silently skips recipes already in KnownRecipes.
+// was newly learned. Silently skips recipes already in KnownRecipes, and must
+// stay that way: a player buying one of Veyra's secrets may have discovered
+// some of its sub-recipes already, and a failure here would abandon the rest
+// of the trigger after they paid (TestSecretPurchase_WithAKnownSubRecipe).
+// The line names the recipe by its display name, as `craft list` does,
+// falling back to the slug for a recipe the registry does not know.
 func (b *GameBridge) LearnRecipe(recipe string) {
 	if b.user.Character.LearnRecipe(recipe) {
+		name := recipe
+		if spec := crafting.GetRecipe(recipe); spec != nil && spec.Name != "" {
+			name = spec.Name
+		}
 		b.user.SendText(messaging.CategorySkillProgress, fmt.Sprintf(
 			"<ansi fg=\"cyan\">You have learned the recipe for </ansi><ansi fg=\"itemname\">%s</ansi><ansi fg=\"cyan\">.</ansi>",
-			recipe))
+			name))
 	}
 }
 

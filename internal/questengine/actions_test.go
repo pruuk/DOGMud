@@ -1,6 +1,7 @@
 package questengine
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/narration"
@@ -56,11 +57,12 @@ func (m *mockActionContext) GiveItem(itemId int) error {
 	return nil
 }
 func (m *mockActionContext) GiveGold(amount int) { m.givenGold += amount }
-func (m *mockActionContext) ChargeGold(amount int) {
+func (m *mockActionContext) ChargeGold(amount int) error {
 	if amount > m.gold {
-		amount = m.gold
+		return fmt.Errorf("cannot cover %d with %d", amount, m.gold)
 	}
 	m.gold -= amount
+	return nil
 }
 
 // Narrate records the authored lines by role, so existing assertions on

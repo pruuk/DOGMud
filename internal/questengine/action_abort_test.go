@@ -31,7 +31,7 @@ func (c *recordingCtx) SetQuestFlag(key, value string) {
 func (c *recordingCtx) Narrate(v narration.Variants) { c.textsSent = append(c.textsSent, v.Actor...) }
 
 func (c *recordingCtx) ConsumeItem(int)                         {}
-func (c *recordingCtx) ChargeGold(int)                          {}
+func (c *recordingCtx) ChargeGold(int) error                    { return nil }
 func (c *recordingCtx) SpawnMob(SpawnDef)                       {}
 func (c *recordingCtx) SpawnItem(SpawnDef)                      {}
 func (c *recordingCtx) TeachSpell(string)                       {}

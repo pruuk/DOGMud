@@ -29,7 +29,7 @@ func TestCheckQuestGate_EmptyPlayerStateDoesNotPanic(t *testing.T) {
 					t.Fatalf("checkQuestGate panicked on a nil callback: %v", r)
 				}
 			}()
-			checkQuestGate(tc.questRequired, tc.questExcluded, tc.requiresItem, nil, nil, 0, ps)
+			checkQuestGate(tc.questRequired, tc.questExcluded, tc.requiresItem, nil, nil, 0, 0, ps)
 		})
 	}
 }
@@ -39,10 +39,10 @@ func TestCheckQuestGate_EmptyPlayerStateDoesNotPanic(t *testing.T) {
 func TestCheckQuestGate_MissingCallbackFailsClosed(t *testing.T) {
 	ps := &PlayerState{}
 
-	if checkQuestGate([]string{"10-start"}, nil, 0, nil, nil, 0, ps) {
+	if checkQuestGate([]string{"10-start"}, nil, 0, nil, nil, 0, 0, ps) {
 		t.Error("questRequired passed with no HasQuest callback; a gate must not open on missing information")
 	}
-	if checkQuestGate(nil, nil, 999, nil, nil, 0, ps) {
+	if checkQuestGate(nil, nil, 999, nil, nil, 0, 0, ps) {
 		t.Error("requiresItem passed with no HasItem callback")
 	}
 }
@@ -52,7 +52,7 @@ func TestCheckQuestGate_MissingCallbackFailsClosed(t *testing.T) {
 func TestCheckQuestGate_MissingCallbackKeepsExclusionOpen(t *testing.T) {
 	ps := &PlayerState{}
 
-	if !checkQuestGate(nil, []string{"10-end"}, 0, nil, nil, 0, ps) {
+	if !checkQuestGate(nil, []string{"10-end"}, 0, nil, nil, 0, 0, ps) {
 		t.Error("questExcluded hid the node with no HasQuest callback; exclusion should not fire on unknown state")
 	}
 }

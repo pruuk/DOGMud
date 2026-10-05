@@ -692,6 +692,8 @@ type PlayerState struct {
     BumpRep          func(faction string, delta int)
     GiveGold         func(amount int)
     HasOwnMasterwork func(skillMin int) bool
+    HasGold          func(amount int) bool     // backs goldRequired; nil fails the gate closed
+    ChargeGold       func(amount int) bool     // backs chargesGold: all or nothing; nil fails closed
 }
 ```
 `GiveItem` returning false aborts the node's OTHER effects too

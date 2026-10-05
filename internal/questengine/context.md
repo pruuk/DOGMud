@@ -96,6 +96,16 @@ gold, text, mob and item spawning, spell teaching, skill training, stat
 increases, recipe learning, conditions, teleport, exit locking, quest flags, faction
 rep, mutation grants, NPC dialogue queueing, and timed sequences.
 
+`ChargeGold(amount) error` takes the whole charge or nothing. A charge
+larger than the player's gold takes nothing, sends no "You pay" line, logs a
+warning, and its error makes `executeActions` abandon the rest of the
+trigger. Gate any trigger that runs `charge_gold` on the price first (a
+`has_gold` condition). A purchase made in dialogue should not use
+`charge_gold` at all: put `goldRequired` and `chargesGold` on the node so the
+check and the charge happen in the same step (see `internal/dialogue`).
+Gold amounts in the pay and receive lines use `util.FormatNumber`, and the
+learned-recipe line uses the recipe's display name.
+
 This is the seam that keeps the evaluator testable: tests supply a fake
 `ActionContext`/`PlayerState`, production supplies `GameBridge`.
 
