@@ -1,0 +1,20 @@
+# dusk_to_dawn: a fixed lamp lit from dusk to dawn (lighting 5e, item
+# behaviour slice 1). Item 55, the North Gate's arch lantern (room 4111).
+# 52 is the Oil Lantern's rung. A fixture's light lives in
+# internal/itemlight and never trims.
+notes: Lit at the oil lantern's 52 from dusk to dawn, dark by day.
+tree:
+  type: selector
+  event: item_idle
+  children:
+    - type: sequence
+      children:
+        - type: condition
+          check: time_of_day
+          period: night
+        - type: action
+          do: set_light
+          level: 52
+    - type: action
+      do: set_light
+      level: "off"

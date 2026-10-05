@@ -27,6 +27,10 @@ exits:
   north:
     roomid: 5372
     zone: North Road North
+# Lighting 5e: the arch lantern is a fixture (item 55), lit from dusk to
+# dawn by its tree; it replaced the old `lantern` noun.
+spawninfo:
+- itemid: 55
 nouns:
   arch: A simple timber arch — two upright squared posts
     of dark cedar with a single crossbeam, its bark long
@@ -46,11 +50,6 @@ nouns:
     but visibly thinning further north. Wagon ruts run
     deep in the verges; the road carries real traffic
     in spring and fall.
-  lantern: A small iron lantern hung from the arch's
-    crossbeam, the glass smoke-blackened along its
-    upper rim. It is lit at dusk and snuffed at first
-    light. Even unlit, the soot-smell of old oil
-    lingers faintly around it.
   view: From under the arch the country opens out —
     rolling pasture and hedgerow stretching north until
     the road bends out of sight behind a low rise. On

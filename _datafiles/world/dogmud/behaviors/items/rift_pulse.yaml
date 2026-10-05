@@ -1,0 +1,13 @@
+# rift_pulse: a slow pulse of faint light (lighting 5e, item behaviour
+# slice 1). Item 56, the Rift Stone in room 5000, whose text already says
+# the stone pulses with faint light. With the room's lamp 38 the room swings
+# 40 to 45, inside shapes for normal eyes, so no notice fires. A pulse may
+# not straddle a band edge: item_behaviour_guard_test.go checks it.
+notes: Pulses 20 to 36 and back every 12 rounds.
+tree:
+  type: action
+  event: item_idle
+  do: pulse_light
+  min: 20
+  max: 36
+  period_rounds: 12

@@ -84,3 +84,5 @@ character:
       quantity: 0
       quantitymax: 0
       price: 600
+    # Lighting 5e: a chrysalis-grown light that drinks the sun
+    - itemid: 20099    # Sunstone

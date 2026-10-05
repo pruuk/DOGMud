@@ -1,0 +1,29 @@
+# sunstone: a stone that drinks the sun (lighting 5e, item behaviour slice
+# 1). Item 20099, condition 134 (strength 46). Full by day, a faint 30 for
+# an hour after dusk (dusk moves with the season: time_of_day after_dusk),
+# dark the rest of the night.
+notes: Full by day, faint for an hour after dusk, dark through the night.
+tree:
+  type: selector
+  event: item_idle
+  children:
+    - type: sequence
+      children:
+        - type: condition
+          check: time_of_day
+          period: day
+        - type: action
+          do: set_light
+          level: full
+    - type: sequence
+      children:
+        - type: condition
+          check: time_of_day
+          period: after_dusk
+          hours: 1
+        - type: action
+          do: set_light
+          level: 30
+    - type: action
+      do: set_light
+      level: "off"

@@ -12,3 +12,5 @@ wornconditionids:
   - 125
 vendor_categories:
 - blacksmithing
+# Lighting 5e (owner rulings R2, R3): dark while its holder sleeps.
+behavior: keeper_lantern

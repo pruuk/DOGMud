@@ -32,6 +32,7 @@ func TestShippedLightItemsMatchTheLadder(t *testing.T) {
 		{40038, 52, false}, // Oil Lantern
 		{20096, 56, false}, // Torch
 		{20097, 54, true},  // Hooded Lantern
+		{20099, 46, false}, // Sunstone (lighting 5e)
 	}
 	for _, c := range cases {
 		spec := items.GetItemSpec(c.itemId)
@@ -96,5 +97,45 @@ func TestShippedLightItemsMatchTheLadder(t *testing.T) {
 	// stocks it, so the boss drop still sells.
 	if len(umbral.VendorCategories) != 1 || umbral.VendorCategories[0] != "blacksmithing" {
 		t.Errorf("Umbral Lantern vendor_categories = %v, want [blacksmithing], the hooded lantern's", umbral.VendorCategories)
+	}
+}
+
+// Lighting 5e: the trees and fixtures slice 1 ships. The Oil Lantern carries
+// the keeper lantern tree (owner ruling R3); the sunstone is worth 40 (between
+// the hooded lantern's 20 and the Umbral Lantern's 60) and sells to an
+// enchanter; the two fixtures are fixed lights nobody can sell.
+func TestShippedItemBehaviours(t *testing.T) {
+	mudlog.SetupLogger(nil, "", "", false)
+	cfg := configs.GetConfig()
+	cfg.FilePaths.DataFiles = configs.ConfigString(`../../_datafiles/world/dogmud`)
+	cfg.Network.LogoutRounds = 3
+	configs.SetConfigForTest(t, cfg)
+	conditions.LoadDataFiles()
+	items.LoadDataFiles()
+
+	for _, c := range []struct {
+		itemId   int
+		behavior string
+		fixture  string
+	}{
+		{40038, "keeper_lantern", ""},
+		{20099, "sunstone", ""},
+		{55, "dusk_to_dawn", items.FixtureLight},
+		{56, "rift_pulse", items.FixtureLight},
+	} {
+		spec := items.GetItemSpec(c.itemId)
+		if spec == nil {
+			t.Fatalf("item %d is not shipped", c.itemId)
+		}
+		if spec.Behavior != c.behavior || spec.Fixture != c.fixture {
+			t.Errorf("item %d: behavior %q fixture %q, want %q and %q", c.itemId, spec.Behavior, spec.Fixture, c.behavior, c.fixture)
+		}
+		if c.fixture != "" && !spec.NotSalable {
+			t.Errorf("fixture %d must be not_salable: it is never loot", c.itemId)
+		}
+	}
+	sun := items.GetItemSpec(20099)
+	if sun.Value != 40 || len(sun.VendorCategories) != 1 || sun.VendorCategories[0] != "enchanting" {
+		t.Errorf("sunstone value %d, vendor_categories %v; want 40 and [enchanting]", sun.Value, sun.VendorCategories)
 	}
 }
