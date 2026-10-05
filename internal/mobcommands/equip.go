@@ -61,6 +61,14 @@ func Equip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
+	// A darkness's "puts on" line is judged against the room as it was before
+	// the item goes on (owner rule, 2026-10-05), so the snapshot comes first.
+	// Only a darkness pays the room walk.
+	var beforeDark rooms.VisualSnapshot
+	if conditions.AnyDarknessSource(iSpec.WornConditionIds) {
+		beforeDark = room.VisualSnapshot()
+	}
+
 	actor := &actions.MobActor{Mob: mob, Room: room}
 	result := actions.EquipItem(actor, matchItem.Name())
 
@@ -85,9 +93,10 @@ func Equip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		if iSpec.Subtype == items.Wearable {
 			putsOn := fmt.Sprintf(`<ansi fg="mobname">%s</ansi> puts on <ansi fg="item">%s</ansi>.`, mob.Character.Name, result.Item.DisplayName())
-			if conditions.AnyDarknessSource(iSpec.WornConditionIds) {
-				// Judged as lit (lighting plan 5d, ruling D6), as the player path.
-				room.SendTextVisualAsLit(messaging.CategoryEquipment, putsOn)
+			if beforeDark != nil {
+				// Judged against the room before the darkness went on (owner
+				// rule, 2026-10-05), as the player path.
+				room.SendTextVisualToSnapshot(beforeDark, messaging.CategoryEquipment, putsOn, nil)
 			} else {
 				room.SendTextVisual(messaging.CategoryEquipment, putsOn)
 			}

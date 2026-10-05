@@ -14,7 +14,7 @@ import "regexp"
 // infrared-only observers in full. A foe fighting the viewer still renders it,
 // and `username-dead` never depended on the viewer, so the suffix branch stays.
 //
-// The adjective span has to go here too: rooms.go's sendTextVisualJudgedBy
+// The adjective span has to go here too: rooms.go's deliverVisual
 // deliberately runs `HideNames(Anonymize(txt), ...)`, Anonymize first, so by
 // the time HideNames would try to remove the span there is no tag left to
 // anchor on and an infrared observer reads "a figure (dead)".
@@ -37,7 +37,7 @@ func Anonymize(text string) string {
 	//
 	// 🪤 This used to substitute a flat lowercase "a figure" everywhere, and
 	// the difference shows in play because Anonymize runs BEFORE HideNames in
-	// the room pipeline (see rooms.sendTextVisualJudgedBy, where the ordering
+	// the room pipeline (see rooms.deliverVisual, where the ordering
 	// is deliberate so whole name tags are matched first). By the time
 	// HideNames runs the name is already gone, so its capitalisation never
 	// got a chance. Read in play on 2026-09-21, among correctly capitalised

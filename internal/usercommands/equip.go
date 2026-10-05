@@ -115,6 +115,14 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// set more of them aside.
 		beforeReservation := user.Character.ReservationTotals()
 
+		// A darkness's "puts on" line is judged against the room as it was
+		// before the item goes on (owner rule, 2026-10-05), so the snapshot is
+		// taken here, before the equip. Only a darkness pays the room walk.
+		var beforeDark rooms.VisualSnapshot
+		if conditions.AnyDarknessSource(iSpec.WornConditionIds) {
+			beforeDark = room.VisualSnapshot()
+		}
+
 		// One shared body for both spellings; a named arm only confines where
 		// the item goes (spec ruling 11), so the arm path meets Wear's
 		// MinStrength, reservation and curse gates like any other equip.
@@ -155,17 +163,20 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 					fmt.Sprintf(`You wear your <ansi fg="item">%s</ansi>.`, result.Item.DisplayName()),
 				)
 				putsOn := fmt.Sprintf(`<ansi fg="username">%s</ansi> puts on their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName())
-				// A darkness is judged as lit (lighting plan 5d, ruling D6): it
-				// is already worn, and would silence its own arrival for
-				// everyone it has just blinded. Two else-less ifs rather than an
-				// if/else: messaging_surface_guard_test.go's walk splits an
-				// if/else into separate events and would lose this line's
-				// observer, which it tracks.
-				asLit := conditions.AnyDarknessSource(result.Item.GetSpec().WornConditionIds)
-				if asLit {
-					room.SendTextVisualAsLit(messaging.CategoryEquipment, putsOn, user.UserId)
+				// A darkness is judged against the room before it went on (owner
+				// rule, 2026-10-05; lighting plan 5d, ruling D6 as amended): it
+				// is already worn, so the room as it is now would silence its
+				// arrival for everyone it has just blinded, and judging it as
+				// lit would name the wearer to someone already blind. Two
+				// else-less ifs rather than an if/else:
+				// messaging_surface_guard_test.go's walk splits an if/else into
+				// separate events and would lose this line's observer, which it
+				// tracks.
+				snapped := beforeDark != nil && conditions.AnyDarknessSource(result.Item.GetSpec().WornConditionIds)
+				if snapped {
+					room.SendTextVisualToSnapshot(beforeDark, messaging.CategoryEquipment, putsOn, nil, user.UserId)
 				}
-				if !asLit {
+				if !snapped {
 					room.SendTextVisual(messaging.CategoryEquipment, putsOn, user.UserId)
 				}
 			} else {

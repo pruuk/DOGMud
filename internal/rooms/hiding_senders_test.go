@@ -117,6 +117,9 @@ func TestVisualSendersStayOffTheDeafenFilter(t *testing.T) {
 		"SendTextVisualAsLitHidingNames": func() {
 			r.SendTextVisualAsLitHidingNames(messaging.CategoryEmote, "Aliceia waves.", []string{"Aliceia"}, 7411)
 		},
+		"SendTextVisualToSnapshot": func() {
+			r.SendTextVisualToSnapshot(r.VisualSnapshot(), messaging.CategoryEmote, "Aliceia waves.", []string{"Aliceia"}, 7411)
+		},
 	}
 	for name, send := range sends {
 		send()

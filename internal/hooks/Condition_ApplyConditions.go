@@ -98,6 +98,10 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 	// notice, no start_remove_conditions cure, no TrackConditionStarted, no ConditionsTriggered.
 	// The same refusal applies on the magnitude path, for a former condition
 	// applied through this door instead of synchronously.
+	//
+	// A darkness's start line is judged against the room as it was before the
+	// darkness lands (owner rule, 2026-10-05), so the snapshot comes first.
+	startSnap := darknessStartSnapshot(conditionInfo, targetChar, wasAlreadyActive)
 	var addErr error
 	if evt.Magnitude != 0 || evt.Triggers > 0 {
 		addErr = targetChar.AddConditionMagnitude(evt.ConditionId, evt.Triggers, evt.Magnitude, evt.Source)
@@ -172,7 +176,7 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 					// open, blood welling from ragged claw-wounds."), so it was
 					// live. Read in play 2026-09-21: "Cave Crawler is raked
 					// open..." among lines that otherwise all said "A figure".
-					sendConditionStartRoomText(r, conditionInfo,
+					sendConditionStartRoomText(r, startSnap,
 						roles.Observer, []string{charPlainName}, excludeId)
 				}
 			}
@@ -210,19 +214,36 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
+// darknessStartSnapshot is the holder's room as everyone in it could see it
+// BEFORE a darkness source lands, for that darkness's start line (owner rule,
+// 2026-10-05; lighting plan 5d, ruling D6 as amended). It is nil for any other
+// condition, for a refresh (which narrates nothing), and when the holder's
+// room is not loaded, so only a darkness pays the room walk.
+func darknessStartSnapshot(spec *conditions.ConditionSpec, holder *characters.Character, refresh bool) rooms.VisualSnapshot {
+	if refresh || !spec.IsDarknessSource() {
+		return nil
+	}
+	r := rooms.LoadRoom(holder.RoomId)
+	if r == nil {
+		return nil
+	}
+	return r.VisualSnapshot()
+}
+
 // sendConditionStartRoomText sends a condition's start room line on the
-// visual channel. A darkness source's line is judged as if the room were lit
-// (lighting plan 5d, ruling D6): the record is already held when the line
-// goes out, so the room is judged with the new darkness in it, and the
-// observers it has just blinded would miss "a pall gathers around X". It is
-// the mirror of sendConditionEndRoomText's light end line. Every other start
-// line is judged by the room as it is.
+// visual channel. With a snapshot (a darkness source's, from
+// darknessStartSnapshot) the line is judged against the room as it was
+// before the darkness landed: the record is already held when the line goes
+// out, so judged by the room as it now is, the observers it has just blinded
+// would miss "a pall gathers around X", while an observer already blind
+// before it learns nothing (owner rule, 2026-10-05). Every other start line
+// is judged by the room as it is.
 //
 // names is the holder's PLAIN name, handed to HideNames explicitly because a
 // start line may author a bare {actee_plain}.
-func sendConditionStartRoomText(r *rooms.Room, spec *conditions.ConditionSpec, msg string, names []string, skip ...int) {
-	if spec.IsDarknessSource() {
-		r.SendTextVisualAsLitHidingNames(messaging.CategoryConditionApply, msg, names, skip...)
+func sendConditionStartRoomText(r *rooms.Room, snap rooms.VisualSnapshot, msg string, names []string, skip ...int) {
+	if snap != nil {
+		r.SendTextVisualToSnapshot(snap, messaging.CategoryConditionApply, msg, names, skip...)
 		return
 	}
 	r.SendTextVisualHidingNames(messaging.CategoryConditionApply, msg, names, skip...)

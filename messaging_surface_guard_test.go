@@ -902,6 +902,9 @@ func narrationRecognizeCall(call *ast.CallExpr) (narrationCallViewpoint, bool) {
 			}
 		case "SendTextVisual", "SendTextVisualHidingNames",
 			"SendTextVisualAsLit", "SendTextVisualWithAudio",
+			// Lighting plan 5d (owner rule, 2026-10-05): a line judged
+			// against a snapshot of the room before a darkness landed.
+			"SendTextVisualToSnapshot",
 			// Sight gates slice 5b: the name-hiding room senders, audio and
 			// visual, are room broadcasts too.
 			"SendTextHidingNames", "SendCommunicationHidingNames",

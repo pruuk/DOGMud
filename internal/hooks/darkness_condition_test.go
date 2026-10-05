@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,9 +27,10 @@ func seedPallCondition() func() {
 	})
 }
 
-// Ruling D6: a darkness's start line is judged as lit. The record is already
-// held when the line goes out, so judged by the room as it now is, the
-// observers the darkness has just blinded would miss it.
+// Ruling D6 as amended: a darkness's start line is judged against the room
+// before it landed. The record is already held when the line goes out, so
+// judged by the room as it now is, the observers the darkness has just
+// blinded would miss it.
 func TestDarknessStartLineIsSeenBeforeTheDarkFalls(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -58,4 +60,27 @@ func TestDarknessSpellAppliesAtTheCastersScale(t *testing.T) {
 	if !ok || mag != 68 || trig != 6 {
 		t.Errorf("mid caster: (%v, %d, %v), want (68, 6, true)", mag, trig, ok)
 	}
+}
+
+// Owner rule, 2026-10-05: the start line is judged against the room as it was
+// BEFORE the darkness landed. An observer already blind in a pitch-dark room
+// (no sky, no lamp) learns nothing of who cast the pall; judged as lit, the
+// line named the caster to them.
+func TestDarknessStartLineIsNotSeenInARoomAlreadyDark(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedPallCondition()
+	defer restore()
+	room := rooms.LoadRoom(1)
+	zero := 0.0
+	room.SkyLight = &zero
+	room.Lamp = nil
+	require.Less(t, room.LightLevel(), configs.GetLightingConfig().BlindBelow, "fixture: the room must be dark before the pall")
+	drainPlain(2)
+
+	require.Equal(t, events.Continue, ApplyConditions(events.Condition{
+		UserId: 1, ConditionId: testPallConditionId, Magnitude: 90, Triggers: 4}))
+	require.True(t, users.GetByUserId(1).Character.HasCondition(testPallConditionId), "fixture: the pall must have landed")
+	assert.Zero(t, countContaining(drainPlain(2), "Aliceia"),
+		"an observer already blind in the dark was told who cast the pall")
 }

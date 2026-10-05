@@ -90,9 +90,9 @@ func TestDarknessIsNeverLight(t *testing.T) {
 	require.Contains(t, hoodTestText(user.UserId), "has no hood.", "hood must refuse a darkness in the light slot")
 }
 
-// Ruling D6: the equip room line of a darkness item is judged as lit. The
-// lantern takes the room from 50 to 0 as it goes on, and the observer, now in
-// the dark, still sees it put on.
+// Ruling D6 as amended: the equip room line of a darkness item is judged by
+// the room before it went on. The lantern takes the room from 50 to 0 as it
+// goes on, and the observer, now in the dark, still sees it put on.
 func TestEquippingADarknessIsSeenBeforeTheDarkFalls(t *testing.T) {
 	user, observer, room := darknessFixture(t)
 	user.Character.StoreItem(items.Item{ItemId: darkTestUmbralItem})
@@ -105,4 +105,26 @@ func TestEquippingADarknessIsSeenBeforeTheDarkFalls(t *testing.T) {
 	require.Less(t, room.LightLevel(), 25, "fixture: the lantern must have taken the room below normal sight")
 	require.Contains(t, hoodTestText(observer.UserId), "puts on their",
 		"the observer the lantern just blinded missed it being put on")
+}
+
+// Owner rule, 2026-10-05: the equip line is judged against the room as it was
+// BEFORE the lantern went on. An observer already blind in a pitch-dark room
+// (no sky, no lamp) learns nothing of who put it on; judged as lit, the line
+// named the wearer to them.
+func TestEquippingADarknessIsNotSeenInARoomAlreadyDark(t *testing.T) {
+	user, observer, room := darknessFixture(t)
+	zero := 0.0
+	room.SkyLight = &zero
+	room.Lamp = nil
+	require.Less(t, room.LightLevel(), 25, "fixture: the room must be dark before the lantern")
+	user.Character.StoreItem(items.Item{ItemId: darkTestUmbralItem})
+	events.DrainQueuedMessagesForTest(observer.UserId)
+
+	handled, err := Equip("test umbral lantern", user, room, 0)
+	require.NoError(t, err)
+	require.True(t, handled)
+	require.Equal(t, darkTestUmbralItem, user.Character.Equipment.Light.ItemId, "fixture: the lantern must be worn")
+	got := hoodTestText(observer.UserId)
+	require.NotContains(t, got, user.Character.Name, "an observer already blind in the dark was told who put on the lantern")
+	require.NotContains(t, got, "puts on their", "an observer already blind in the dark saw the lantern put on")
 }
