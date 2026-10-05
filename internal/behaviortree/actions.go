@@ -122,6 +122,10 @@ func init() {
 	actionRegistry["try_any_active_mutation"] = actTryAnyActiveMutation
 	// Single-target mutation dispatch with engaged-target resolution
 	actionRegistry["try_mutation_active_at_target"] = actTryMutationActiveAtTarget
+
+	// Item subject (lighting 5e): item trees only (Rule 8)
+	actionRegistry["set_light"] = actSetLight
+	actionRegistry["pulse_light"] = actPulseLight
 }
 
 // LookupAction returns the action function for the given name,

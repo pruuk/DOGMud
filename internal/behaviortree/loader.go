@@ -109,11 +109,25 @@ var (
 		"random_chance":      true,
 		"state_equals":       true,
 		"state_greater_than": true,
+		"holder_asleep":      true,
+		"worn":               true,
+		"in_combat":          true,
 	}
 	itemSafeActions = map[string]bool{
 		"set_state":       true,
 		"increment_state": true,
 		"decrement_state": true,
+		"set_light":       true,
+		"pulse_light":     true,
+	}
+	// itemOnlyNodes need an item subject, so a mob or room tree may not
+	// name them.
+	itemOnlyNodes = map[string]bool{
+		"holder_asleep": true,
+		"worn":          true,
+		"in_combat":     true,
+		"set_light":     true,
+		"pulse_light":   true,
 	}
 )
 
@@ -127,6 +141,10 @@ func checkNodeSubject(path, kind, name string) error {
 		if !safe[name] {
 			return fmt.Errorf("%s: %s %q is not allowed in an item tree (item-safe nodes only)", path, kind, name)
 		}
+		return nil
+	}
+	if itemOnlyNodes[name] {
+		return fmt.Errorf("%s: %s %q needs an item subject and is allowed only in an item tree", path, kind, name)
 	}
 	return nil
 }

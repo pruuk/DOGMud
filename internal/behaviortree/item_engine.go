@@ -3,10 +3,12 @@ package behaviortree
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -136,20 +138,55 @@ func ValidateItemBehaviors() error {
 
 	e := GetEngine()
 	loaded := map[string]error{}
+	writesLight := map[string]bool{}
 	var problems []string
 	for _, id := range ids {
 		spec := specs[id]
 		err, seen := loaded[spec.Behavior]
 		if !seen {
-			err = e.LoadItemTree(spec.Behavior, GetItemTreePath(spec.Behavior))
+			path := GetItemTreePath(spec.Behavior)
+			err = e.LoadItemTree(spec.Behavior, path)
 			loaded[spec.Behavior] = err
+			if err == nil {
+				if def, derr := LoadTreeDef(path); derr == nil {
+					writesLight[spec.Behavior] = TreeWritesLight(def.Tree)
+				}
+			}
 		}
 		if err != nil {
 			problems = append(problems, fmt.Sprintf("item %d (%s): behavior %q: %v", id, spec.Name, spec.Behavior, err))
+			continue
+		}
+		// One writer per record (Rule 8, X22): the trim owns an adjustable
+		// light, so no tree may schedule one.
+		if writesLight[spec.Behavior] {
+			for _, cid := range spec.WornConditionIds {
+				cspec := conditions.GetConditionSpec(cid)
+				if cspec != nil && (cspec.IsLightSource() || cspec.IsDarknessSource()) &&
+					slices.Contains(cspec.Flags, conditions.Adjustable) {
+					problems = append(problems, fmt.Sprintf(
+						"item %d (%s): behavior %q writes light, but worn condition %d is adjustable: the trim owns it, so no tree may schedule it",
+						id, spec.Name, spec.Behavior, cid))
+				}
+			}
 		}
 	}
 	if len(problems) > 0 {
 		return errors.New(strings.Join(problems, "; "))
 	}
 	return nil
+}
+
+// TreeWritesLight reports whether a tree names set_light or pulse_light
+// anywhere. The repo-root content guards read it too.
+func TreeWritesLight(def NodeDef) bool {
+	if def.Do == `set_light` || def.Do == `pulse_light` {
+		return true
+	}
+	for _, ch := range def.Children {
+		if TreeWritesLight(ch) {
+			return true
+		}
+	}
+	return def.Child != nil && TreeWritesLight(*def.Child)
 }
