@@ -95,3 +95,22 @@ func clampShift(strength int) int {
 func LightTrimTarget(strength, dazzleAbove int) float64 {
 	return float64(dazzleAbove - clampShift(strength) - 1)
 }
+
+// DarknessTrimTarget is the darkest room light an observer can still use: the
+// floor an adjustable darkness trims to (lighting plan 5d). With infravision
+// it is minus the reach, where heat still reads shapes; otherwise it is the
+// shifted blind edge, but never below windowFloor, where natural shapes need
+// light at least that high (SightThroughWindow). Exactly the edge, not a
+// point inside it: the edge counts as usable, and a solved room within
+// rounding of it rounds onto it. blindBelow is the caller's config knob
+// (Lighting.BlindBelow).
+func DarknessTrimTarget(strength, reach, blindBelow int) float64 {
+	if reach > 0 {
+		return float64(-reach)
+	}
+	floor := blindBelow - clampShift(strength)
+	if floor < windowFloor {
+		floor = windowFloor
+	}
+	return float64(floor)
+}
