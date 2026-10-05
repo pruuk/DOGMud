@@ -31,14 +31,16 @@ func (l Lock) IsLocked() bool {
 		return true
 	}
 
-	rndNow := util.GetRoundCount()
-	gd := gametime.GetDate(rndNow)
+	// The relock clock runs from the round the lock was opened, not from
+	// now: measured from now, the deadline always lies ahead and an opened
+	// lock never relocked until a restart.
+	gd := gametime.GetDate(l.UnlockedRound)
 
 	if l.RelockInterval == `` {
-		return rndNow >= gd.AddPeriod(DefaultRelockTime)
+		return util.GetRoundCount() >= gd.AddPeriod(DefaultRelockTime)
 	}
 
-	return rndNow >= gd.AddPeriod(l.RelockInterval)
+	return util.GetRoundCount() >= gd.AddPeriod(l.RelockInterval)
 }
 
 func (l *Lock) SetUnlocked() {
