@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
@@ -91,4 +92,44 @@ func TestStealAFixtureIsRefused(t *testing.T) {
 	Steal("lantern", user, room, 0)
 	assert.Contains(t, sentTo(user), "is fixed in place.")
 	assert.Empty(t, user.Character.Items, "nothing taken")
+}
+
+// X10: with no sight of the floor, `steal <fixture>` does not confirm an
+// unseen item by its name; it answers as it would for anything unknown.
+func TestStealAFixtureInTheDarkSaysNothingOfIt(t *testing.T) {
+	user, room := seedFixtureRoom(t)
+	user.Character.SetSkill(string(skills.Skullduggery), 2)
+	zero := 0.0
+	room.SkyLight = &zero
+	room.Lamp = nil
+	require.True(t, actions.TooDarkToGet(&actions.UserActor{User: user, Room: room}),
+		"fixture: the room must be too dark to see the floor")
+	Steal("lantern", user, room, 0)
+	out := sentTo(user)
+	assert.NotContains(t, out, "Arch Lantern")
+	assert.NotContains(t, out, "fixed in place")
+	assert.Contains(t, out, "Steal from whom?")
+}
+
+// A fixture that is first on the floor must not shadow an ordinary item the
+// same name matches: the sweep never offers the fixture at all.
+func TestGetAllNamedSweepSkipsAShadowingFixture(t *testing.T) {
+	user, room := seedFixtureRoom(t)
+	const brassId = 999993
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		fixtureCmdItemId: {ItemId: fixtureCmdItemId, Name: "Arch Lantern", NameSimple: "lantern", Type: items.Object,
+			Fixture: items.FixtureLight, Value: 1, NotSalable: true},
+		brassId: {ItemId: brassId, Name: "Brass Lantern", NameSimple: "lantern", Type: items.Object,
+			Weight: 0.1, Value: 1},
+	}))
+	brass := items.New(brassId)
+	room.AddItem(brass, false)
+	t.Cleanup(func() { room.RemoveItem(brass, false) })
+	events.DrainQueuedMessagesForTest(user.UserId)
+
+	Get("all lantern", user, room, 0)
+	out := sentTo(user)
+	assert.NotContains(t, out, "overloaded", "the fixture was offered to the sweep")
+	require.Len(t, user.Character.Items, 1)
+	assert.Equal(t, brassId, user.Character.Items[0].ItemId)
 }

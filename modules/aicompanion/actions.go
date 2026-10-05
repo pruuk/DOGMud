@@ -366,6 +366,11 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 		if t.Kind == `item` && t.Item.BaubleBelongsTo(room.RoomId) {
 			return actionOutcome{Refused: `it belongs to the household here`}
 		}
+		// A fixture is part of the room (actions.ErrFixture): the same
+		// up-front refusal.
+		if t.Kind == `item` && t.Item.IsFixture() {
+			return actionOutcome{Refused: `it is fixed in place`}
+		}
 		if reason := lootAllowedByArrangement(c.mind.LootRule, stims); reason != `` {
 			return actionOutcome{Refused: reason}
 		}

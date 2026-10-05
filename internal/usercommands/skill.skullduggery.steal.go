@@ -108,10 +108,13 @@ func parseStealArgs(args []string, room *rooms.Room, user *users.UserRecord) *ac
 		return &actions.StealOptions{HouseholdItem: itm}
 	}
 
-	// A fixture is part of the room: nothing to steal (lighting 5e).
-	if itm, ok := room.FindOnFloor(strings.Join(args, " "), false); ok && itm.IsFixture() {
-		fixedInPlace(user, itm)
-		return nil
+	// A fixture is part of the room: nothing to steal (lighting 5e). Named
+	// only to one who can see the floor, as `get` does (TooDarkToGet).
+	if !actions.TooDarkToGet(&actions.UserActor{User: user, Room: room}) {
+		if itm, ok := room.FindOnFloor(strings.Join(args, " "), false); ok && itm.IsFixture() {
+			fixedInPlace(user, itm)
+			return nil
+		}
 	}
 
 	user.SendText(messaging.CategorySystem, "Steal from whom?")

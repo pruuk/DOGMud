@@ -342,3 +342,25 @@ func TestHouseholdBaubleIsRefusedUpFront(t *testing.T) {
 		t.Fatalf("refused up front, with the reason: %+v", out)
 	}
 }
+
+// A fixture is part of the room (lighting 5e): the get is refused up front,
+// as for a household's bauble, rather than issued to quietly fail.
+func TestFixtureIsRefusedUpFront(t *testing.T) {
+	const fixtureId = 999994
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		fixtureId: {ItemId: fixtureId, Name: `Arch Lantern`, NameSimple: `lantern`, Type: items.Object,
+			Fixture: items.FixtureLight},
+	}))
+	owner, _, room, her := harmWorld(t, configs.PVPDisabled)
+	f := items.New(fixtureId)
+	room.Items = append(room.Items, f)
+	m, c, _ := strangerModule()
+	sc := &scene{RoomId: room.RoomId, byRef: map[string]*thing{}}
+	sc.byRef[`t1`] = &thing{Ref: `t1`, Kind: `item`, Name: `Arch Lantern`, Item: f, HasItem: true}
+
+	out := m.performAction(c, her, owner, sc, ActionProposal{Verb: `get`, Ref: `t1`},
+		[]stimulus{{Kind: `heard`, FromOwner: true}}, 0, 0)
+	if out.Issued || out.Refused != `it is fixed in place` {
+		t.Fatalf("refused up front, with the reason: %+v", out)
+	}
+}
