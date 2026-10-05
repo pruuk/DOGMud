@@ -482,3 +482,17 @@ func TestPulsingFixturesStayInsideOneBand(t *testing.T) {
 		t.Fatal("no pulsing fixture was checked: the Rift Stone in room 5000 should be")
 	}
 }
+
+// Issue #361: the sunstone ships with a rarity_tier, so the restock fallback
+// does not silently treat it as tier 50. Its value (40) sits in the armor
+// band that ships at tier 40.
+func TestSunstoneShipsWithARarityTier(t *testing.T) {
+	loadItemBehaviourWorld(t)
+	spec := items.GetItemSpec(20099)
+	if spec == nil {
+		t.Fatal("sunstone 20099 is not in the shipped items")
+	}
+	if spec.RarityTier != 40 {
+		t.Errorf("sunstone rarity_tier = %d, want 40", spec.RarityTier)
+	}
+}
