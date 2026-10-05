@@ -445,9 +445,14 @@ func (w *World) GetAutoComplete(userId int, inputText string) []string {
 
 		} else if cmd == `get` {
 
-			// all items on the floor
+			// all items on the floor, but a fixture, which cannot be taken
+			// (lighting 5e)
 			if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
-				itemList = room.GetAllFloorItems(false)
+				for _, itm := range room.GetAllFloorItems(false) {
+					if !itm.IsFixture() {
+						itemList = append(itemList, itm)
+					}
+				}
 			}
 
 			// Matches for things in containers

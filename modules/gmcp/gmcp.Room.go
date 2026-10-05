@@ -252,6 +252,10 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 	if all || g.wantsGMCPPayload(`Room.Info.Contents.Items`, gmcpModule) {
 		payload.Contents.Items = []GMCPRoomModule_Payload_Contents_Item{}
 		for _, itm := range room.Items {
+			// A fixture is part of the room, not on its floor (lighting 5e, R9).
+			if itm.IsFixture() {
+				continue
+			}
 			payload.Contents.Items = append(payload.Contents.Items, GMCPRoomModule_Payload_Contents_Item{
 				Id:        itm.ShorthandId(),
 				Name:      itm.NameFor(user.UserId), // their own view of a finder-only bauble

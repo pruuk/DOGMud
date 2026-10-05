@@ -1,0 +1,2 @@
+{{- range $index, $fixture := .Fixtures }}<ansi fg="room-description{{ if or $.IsNight $.IsDark }}-dark{{ end }}">The <ansi fg="item">{{ $fixture.Name }}</ansi> is {{ if $fixture.Lit }}lit{{ else }}unlit{{ end }}.</ansi>
+{{ end -}}

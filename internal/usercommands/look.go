@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/itemlight"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
@@ -492,6 +493,10 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if floorItem.IsBauble() && floorItem.BaubleSpot != `` {
 			where = floorItem.BaubleSpot
 		}
+		// A fixture is part of the room, not lying on its floor (R9).
+		if floorItem.IsFixture() {
+			where = `here`
+		}
 
 		user.SendText(messaging.CategoryRoomDescription, ``)
 		user.SendText(messaging.CategoryRoomDescription,
@@ -638,6 +643,18 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	textOut, _ = templates.Process("descriptions/room", details, user.UserId)
 	user.SendText(messaging.CategoryRoomDescription, textOut)
 
+	// Fixtures are part of the room, not things lying on its floor (lighting
+	// 5e, ruling R9): a line each, lit or unlit, right after the description
+	// and under its sight rule.
+	if lines := fixtureLines(room); len(lines) > 0 {
+		textOut, _ = templates.Process("descriptions/fixtures", map[string]any{
+			`Fixtures`: lines,
+			`IsDark`:   details.IsDark,
+			`IsNight`:  details.IsNight,
+		}, user.UserId)
+		user.SendText(messaging.CategoryRoomDescription, textOut)
+	}
+
 	// Append discovered hidden noun descriptions.
 	// No user nil check: command dispatch always supplies a live user, and
 	// user is already dereferenced above (mapper config, template calls).
@@ -726,6 +743,10 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 			room.RemoveItem(item, false)
 			continue
 		}
+		// A fixture shows as part of the room, above (R9).
+		if item.IsFixture() {
+			continue
+		}
 		// Baubles share one ItemId; each is its own object with its own name.
 		key := fmt.Sprintf("%d|%s|%d|%s", item.ItemId, item.EnchantType, item.EnchantTier, item.Bauble)
 		if entry, exists := groundStacks[key]; exists {
@@ -772,4 +793,23 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	textOut, _ = templates.Process("descriptions/exits", details, user.UserId)
 	user.SendText(messaging.CategoryRoomDescription, textOut)
 
+}
+
+// fixtureLine is one fixture in the room look's descriptions/fixtures
+// template (lighting 5e, R9).
+type fixtureLine struct {
+	Name string
+	Lit  bool
+}
+
+// fixtureLines lists the room's fixtures in floor order, each lit or unlit
+// from its current output (internal/itemlight).
+func fixtureLines(room *rooms.Room) []fixtureLine {
+	var out []fixtureLine
+	for _, it := range room.Items {
+		if it.IsFixture() {
+			out = append(out, fixtureLine{Name: it.DisplayName(), Lit: itemlight.Lit(room.RoomId, it.UUID)})
+		}
+	}
+	return out
 }
