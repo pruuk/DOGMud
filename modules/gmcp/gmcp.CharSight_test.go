@@ -57,6 +57,18 @@ func TestCharSightCarriesThePlayersBand(t *testing.T) {
 	}
 }
 
+// A viewer whose room is not loaded reads "faces", LightBand's answer for a
+// nil room, and does not panic: sightBand must hand LightBand an untyped nil,
+// never a nil *rooms.Room (plan fact F25).
+func TestCharSightWithNoLoadedRoom(t *testing.T) {
+	viewer := sightViewer(t, 60)
+	viewer.Character.RoomId = 9799 // not seeded
+	data, _ := (&GMCPCharModule{}).GetCharNode(viewer, `Char.Sight`)
+	sight, ok := data.(*GMCPCharModule_Payload_Sight)
+	require.True(t, ok, "Char.Sight payload type %T", data)
+	require.Equal(t, "faces", sight.Band)
+}
+
 // A full Char push carries Sight too, so a client that logs in or refreshes
 // draws the border without waiting for a band change.
 func TestFullCharPayloadCarriesSight(t *testing.T) {
