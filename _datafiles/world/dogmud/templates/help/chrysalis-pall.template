@@ -1,0 +1,24 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">chrysalis-pall</ansi> spell
+
+The <ansi fg="command">Chrysalis Pall</ansi> spell coaxes Chrysalis spores to drink the light
+around its target, the dark twin of Chrysalis Glow. It darkens the
+place for everyone there, the target included. The stronger your
+willpower and your spellcasting, the deeper the dark and the longer it
+lasts.
+
+A fresh pall is at full strength. Each time its holder moves, it eases
+to what their own eyes can still use there. Use <ansi fg="command">cancel pall</ansi> to end
+it early. It is found, never taught.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">cast chrysalis-pall</ansi> [target]
+
+<ansi fg="yellow">Details: </ansi>
+
+  <ansi fg="yellow">Type:        </ansi> Help Single
+  <ansi fg="yellow">School:      </ansi> Mental
+  <ansi fg="yellow">Conv. Cost:  </ansi> 50
+  <ansi fg="yellow">Effect:      </ansi> Takes the light away around its target
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help darkness</ansi>, <ansi fg="command">help chrysalis-glow</ansi>, <ansi fg="command">help spells</ansi>

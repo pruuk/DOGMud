@@ -1,0 +1,31 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">darkness</ansi>
+
+Darkness is light taken away. A darkness can make a place darker than
+the deepest cave, darker than any night, and it darkens it for everyone
+there, whoever brought it.
+
+Two darknesses together are darker than one, but not twice as dark,
+just as a second light adds less than the first did.
+
+<ansi fg="yellow">Where darkness comes from</ansi>
+
+  The <ansi fg="command">Chrysalis Pall</ansi> spell gathers dark spores that drink the light
+  around its target. The <ansi fg="command">Umbral Lantern</ansi>, a rare find, does the same
+  from the light slot. Both are darkest when they are new: a fresh pall
+  or a lantern just put on is at full strength. Each time you move, they
+  ease to what your own eyes can still use there.
+
+  Lights already in a place do not push back when a darkness arrives.
+  A light carried in afterwards adds to the room as it always does.
+
+<ansi fg="yellow">Seeing through it</ansi>
+
+  Night vision helps only a little: it cannot read what is not there.
+  Infravision is the answer. It sees the warmth of living things, not
+  light, so it shows you shapes in darkness no eye can use, as deep as
+  its reach.
+
+  A darkness is not a light. It never gives you away when you sneak.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help light</ansi>, <ansi fg="command">help chrysalis-pall</ansi>, <ansi fg="command">help heat-sight</ansi>,
+  <ansi fg="command">help night-vision</ansi>, <ansi fg="command">help seasons</ansi>, <ansi fg="command">help moons</ansi>

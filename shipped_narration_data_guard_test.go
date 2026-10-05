@@ -1059,6 +1059,11 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"conditions/128-night_sight.yaml":       true,
 	"conditions/129-heat_sight.yaml":        true,
 	"conditions/130-pitsense_tincture.yaml": true,
+	// Lighting plan 5d: Chrysalis Pall. Its start line goes out through
+	// sendConditionStartRoomText, which as a darkness routes it through
+	// SendTextVisualAsLitHidingNames (no SightShapes tier, ruling D6); its
+	// end line through sendConditionEndRoomText with the holder's plain name.
+	"conditions/131-chrysalis_pall.yaml": true,
 	// Special moves: messaging.SendTrio hides Audience ActorName and ActeeName
 	// from every reader by that reader's ParticipantSight. Applies to all
 	// fourteen shipped files, not only the two that author a `_plain` token;

@@ -55,4 +55,4 @@ with your voice are not affected.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help chrysalis-glow</ansi>, <ansi fg="command">help night-vision</ansi>, <ansi fg="command">help heat-sight</ansi>,
   <ansi fg="command">help hood</ansi>, <ansi fg="command">help weather</ansi>, <ansi fg="command">help seasons</ansi>, <ansi fg="command">help moons</ansi>,
-  <ansi fg="command">help biome</ansi>, <ansi fg="command">help equipment</ansi>
+  <ansi fg="command">help biome</ansi>, <ansi fg="command">help equipment</ansi>, <ansi fg="command">help darkness</ansi>

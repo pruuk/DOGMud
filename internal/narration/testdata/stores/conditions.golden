@@ -286,3 +286,7 @@ condition|130|start_actee => A dull heat spreads behind your eyes, and living wa
 condition|130|start_observer => A dull red sheen settles over <ansi fg="username">Aliceia</ansi>'s eyes.
 condition|130|end_actee => The heat behind your eyes cools, and the pale shapes fade.
 condition|130|end_observer => The red sheen fades from <ansi fg="username">Aliceia</ansi>'s eyes.
+condition|131|start_actee => A pall of dark spores gathers around you.
+condition|131|start_observer => A pall of dark spores gathers around Aliceia.
+condition|131|end_actee => Your pall thins, and the light comes back.
+condition|131|end_observer => The pall around Aliceia thins away.
