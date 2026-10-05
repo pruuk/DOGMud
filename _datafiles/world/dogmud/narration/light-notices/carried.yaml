@@ -15,7 +15,7 @@ transitions:
   lighter_shapes:
     any:
       - 'A light flares up close; shapes come out of the dark.'
-      - 'Light spills from a carried flame; you can make out shapes.'
+      - 'A carried light comes up; you can make out shapes.'
   lighter_faces:
     any:
       - 'A carried light spreads around you; faces are clear again.'
