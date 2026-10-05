@@ -29,6 +29,10 @@ func Get(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		if len(room.Items) > 0 {
 			iCopies := []items.Item{}
 			for _, item := range room.Items {
+				// A fixture is part of the room (lighting 5e): not swept.
+				if item.IsFixture() {
+					continue
+				}
 				iCopies = append(iCopies, item)
 			}
 

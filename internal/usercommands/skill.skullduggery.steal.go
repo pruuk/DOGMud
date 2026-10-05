@@ -108,6 +108,12 @@ func parseStealArgs(args []string, room *rooms.Room, user *users.UserRecord) *ac
 		return &actions.StealOptions{HouseholdItem: itm}
 	}
 
+	// A fixture is part of the room: nothing to steal (lighting 5e).
+	if itm, ok := room.FindOnFloor(strings.Join(args, " "), false); ok && itm.IsFixture() {
+		fixedInPlace(user, itm)
+		return nil
+	}
+
 	user.SendText(messaging.CategorySystem, "Steal from whom?")
 	return nil
 }

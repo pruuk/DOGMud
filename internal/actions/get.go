@@ -21,6 +21,12 @@ var ErrTooDark = errors.New(`too dark to find anything`)
 // ErrExploding refuses an item that is about to explode; a sweep stops on it.
 var ErrExploding = errors.New(`it is about to explode`)
 
+// ErrFixture refuses a fixture: an item fixed to the room's floor (ItemSpec
+// fixture, lighting 5e Rule 10). Every taker is held to it, a player's
+// `get`, a mob's, a companion's or a scavenger's; `get all`, `steal` and a
+// mob's floor equip never reach for one at all.
+var ErrFixture = errors.New(`it is fixed in place`)
+
 // TooDarkToGet is the one statement of the pickup sight rule, for both
 // actors. The player's `get` also asks it first, so its container, corpse
 // and bag branches stay refused in the dark.
@@ -37,11 +43,14 @@ type GetItemResult struct {
 
 // TakeFloorItem moves an item already found on the floor (or in the stash)
 // into the actor's backpack, through every pickup gate in the player's order:
-// ErrTooDark, ErrExploding, ErrHouseholdBauble, then the transfer (which
-// fires ItemOwnership, or rolls back on a full pack).
+// ErrTooDark, ErrFixture, ErrExploding, ErrHouseholdBauble, then the transfer
+// (which fires ItemOwnership, or rolls back on a full pack).
 func TakeFloorItem(actor Actor, item items.Item, stash bool) error {
 	if TooDarkToGet(actor) {
 		return ErrTooDark
+	}
+	if item.IsFixture() {
+		return ErrFixture
 	}
 	if item.HasAdjective(`exploding`) {
 		return ErrExploding
