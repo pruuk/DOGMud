@@ -5,10 +5,22 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// hasLootItems reports whether a floor holds anything a mob could scavenge.
+// A fixture is part of the room, not loot (lighting 5e, R9).
+func hasLootItems(floor []items.Item) bool {
+	for _, it := range floor {
+		if !it.IsFixture() {
+			return true
+		}
+	}
+	return false
+}
 
 // pickWanderExit chooses the exit a wandering mob should take.
 //
@@ -72,7 +84,7 @@ func Wander(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			if exitRoom == nil {
 				continue
 			}
-			if len(exitRoom.Items) > 0 || exitRoom.Gold > 0 {
+			if hasLootItems(exitRoom.Items) || exitRoom.Gold > 0 {
 				exitOptions = append(exitOptions, exitName)
 			}
 		}

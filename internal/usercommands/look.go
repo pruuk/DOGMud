@@ -798,8 +798,9 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 // fixtureLine is one fixture in the room look's descriptions/fixtures
 // template (lighting 5e, R9).
 type fixtureLine struct {
-	Name string
-	Lit  bool
+	Name     string
+	Lit      bool // gives light, or darkens, right now
+	Darkness bool // a darkness fixture: the template words it differently
 }
 
 // fixtureLines lists the room's fixtures in floor order, each lit or unlit
@@ -808,7 +809,11 @@ func fixtureLines(room *rooms.Room) []fixtureLine {
 	var out []fixtureLine
 	for _, it := range room.Items {
 		if it.IsFixture() {
-			out = append(out, fixtureLine{Name: it.DisplayName(), Lit: itemlight.Lit(room.RoomId, it.UUID)})
+			out = append(out, fixtureLine{
+				Name:     it.DisplayName(),
+				Lit:      itemlight.Lit(room.RoomId, it.UUID),
+				Darkness: it.GetSpec().Fixture == items.FixtureDarkness,
+			})
 		}
 	}
 	return out

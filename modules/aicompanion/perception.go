@@ -207,7 +207,7 @@ func describeSituation(mob *mobs.Mob, owner *users.UserRecord) string {
 func roomThings(room *rooms.Room) []string {
 	var out []string
 	for _, it := range room.Items {
-		if it.ItemId < 1 {
+		if it.ItemId < 1 || it.IsFixture() {
 			continue
 		}
 		out = append(out, it.ModelName())

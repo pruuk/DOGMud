@@ -141,7 +141,7 @@ func buildScene(mob *mobs.Mob, owner *users.UserRecord, p *Profile, mind *Mind, 
 	if !sc.Dark {
 		// Loose items.
 		for _, it := range room.Items {
-			if it.ItemId < 1 {
+			if it.ItemId < 1 || it.IsFixture() {
 				continue
 			}
 			item := it

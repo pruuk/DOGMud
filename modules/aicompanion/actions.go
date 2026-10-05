@@ -48,7 +48,11 @@ func snapshotOf(mob *mobs.Mob) worldSnapshot {
 	}
 	s.Worn = strings.Join(worn, `,`)
 	if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-		s.RoomItems = len(room.Items)
+		for _, it := range room.Items {
+			if !it.IsFixture() {
+				s.RoomItems++
+			}
+		}
 		s.RoomGold = room.Gold
 	}
 	return s
