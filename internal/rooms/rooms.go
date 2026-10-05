@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/itemlight"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -1190,6 +1191,7 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 
 					if item := items.New(spawnInfo.ItemId); item.ItemId != 0 {
 						r.Items = append(r.Items, item) // just append to avoid a mutex double lock
+						r.noteTreedFloorItem(item)
 					}
 
 				}
@@ -1343,6 +1345,7 @@ func (r *Room) AddItem(item items.Item, stash bool) {
 		r.Stash = append(r.Stash, item)
 	} else {
 		r.Items = append(r.Items, item)
+		r.noteTreedFloorItem(item)
 	}
 
 }
@@ -1510,6 +1513,9 @@ func (r *Room) RemoveItem(i items.Item, stash bool) {
 				break
 			}
 		}
+		// An item off the floor stops lighting the room (lighting 5e,
+		// Rule 10): a no-op for anything that is not a lit fixture.
+		itemlight.Clear(r.RoomId, i.UUID)
 	}
 
 }

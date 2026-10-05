@@ -1676,6 +1676,9 @@ func loadAllDataFiles(isReload bool) {
 	if err := behaviortree.ValidateItemBehaviors(); err != nil {
 		panic(err)
 	}
+	// Rooms loaded before item specs (faction holding cells, above) could
+	// not tell a treed floor item; index them now.
+	rooms.IndexTreedFloors()
 	// Messaging M3 item 7: gossip template store (loaded here, not lazily by
 	// the first gossiping NPC, so a broken file fails boot instead of silencing
 	// gossip).

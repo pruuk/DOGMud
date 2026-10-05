@@ -177,6 +177,10 @@ func (c *Character) StoreItem(i items.Item) bool {
 	// spot, belongs to no household and never vanishes (items/bauble_placement.go).
 	i.ClearBaublePlacement()
 
+	// A mob given a treed item joins the item tick (lighting 5e). Harmless
+	// when the store below refuses: the tick drops a holder with nothing.
+	c.IndexTreedItem(i)
+
 	// Check if adding this item would exceed carry capacity
 	newWeight := c.GetCarriedWeight() + i.GetSpec().GetWeight()
 	capacity := c.CarryCapacity()

@@ -784,6 +784,11 @@ func newMobByIdInternal(mobId MobId, homeRoomId int, skipInstanceLoad bool, forc
 		mobInstances[mob.InstanceId] = &mob
 		mobInstancesMu.Unlock()
 
+		// A mob spawned holding a treed item (a keeper's lantern) joins the
+		// item tick (lighting 5e), whichever of template or saved instance
+		// supplied the item.
+		mob.Character.IndexTreedItems()
+
 		return &mob
 	}
 	return nil

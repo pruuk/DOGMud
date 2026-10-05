@@ -15,6 +15,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/itemlight"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -648,6 +650,11 @@ func removeRoomFromMemory(r *Room) {
 
 	SaveRoomInstance(*room)
 
+	// Its fixtures stop lighting it and the item tick stops visiting it
+	// (lighting 5e); a reload mints fresh item UUIDs and re-indexes.
+	itemlight.ClearRoom(r.RoomId)
+	items.DropRoomHolder(r.RoomId)
+
 	delete(roomManager.rooms, r.RoomId)
 }
 
@@ -694,6 +701,11 @@ func addRoomToMemory(room *Room, forceOverWrite ...bool) error {
 	zoneInfo.RoomIds[room.RoomId] = struct{}{}
 
 	roomManager.zones[room.Zone] = zoneInfo
+
+	// A room loading with a treed item on its floor (a fixture kept by its
+	// instance file) joins the item tick, and its fixtures are evaluated at
+	// once (lighting 5e). Last, so the room is already findable.
+	room.indexTreedFloor()
 
 	return nil
 }
