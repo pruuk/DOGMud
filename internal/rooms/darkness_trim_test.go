@@ -101,14 +101,14 @@ func TestUmbralLanternTrimsToItsBearersEyes(t *testing.T) {
 		wantRoom  int
 	}{
 		{"normal eyes, cave: off", 0, nil, 0, true, 0, 0},
-		{"normal eyes, tavern 50", 50, nil, 0, false, 25, 25},
-		{"normal eyes, light 70", 70, nil, 0, false, 45, 25},
+		{"normal eyes, tavern 50", 50, nil, 0, false, 24, 26},
+		{"normal eyes, light 70", 70, nil, 0, false, 44, 26},
 		{"normal eyes, light 90: full", 90, nil, 0, false, 50, 40},
-		{"nightvision 24, light 50", 50, []int{darkSight24Id}, 0, false, 49, 1},
-		{"infravision 30, cave", 0, []int{darkInfra30Id}, 0, false, 30, -30},
-		{"infravision 50, cave: full", 0, []int{darkInfra50Id}, 0, false, 50, -50},
+		{"nightvision 24, light 50", 50, []int{darkSight24Id}, 0, false, 48, 2},
+		{"infravision 30, cave", 0, []int{darkInfra30Id}, 0, false, 29, -29},
+		{"infravision 50, cave", 0, []int{darkInfra50Id}, 0, false, 49, -49},
 		{"infravision 50, light 50: full", 50, []int{darkInfra50Id}, 0, false, 50, 0},
-		{"normal eyes, light 50, other darkness 20", 50, nil, 20, false, 12.93, 25},
+		{"normal eyes, light 50, other darkness 20", 50, nil, 20, false, 9.83, 26},
 		{"normal eyes, light 50, other darkness 30: off", 50, nil, 30, true, 0, 20},
 	}
 	for i, c := range cases {
@@ -138,10 +138,11 @@ func TestUmbralLanternTrimsToItsBearersEyes(t *testing.T) {
 	}
 }
 
-// A full-strength result is recorded as full, not as trimmed at 50.
+// A full-strength result is recorded as full, not as trimmed at 50. The lamp
+// of 1 puts the full darkness exactly on the infravision bearer's target (-49).
 func TestAnUncutDarknessStaysFull(t *testing.T) {
 	us := seedDarknessTrim(t)
-	room := &Room{RoomId: darkFirstRoom + 20, Biome: "cave"}
+	room := &Room{RoomId: darkFirstRoom + 20, Biome: "cave", Lamp: LampPtr(1)}
 	bearer := us.add(darkFirstUser+20, darkInfra50Id, darkUmbralId)
 	room.AddPlayer(bearer.UserId)
 	room.TrimLightFor(bearer.Character)
@@ -192,7 +193,7 @@ func TestALightTrimsAgainstTheRoomsDarkness(t *testing.T) {
 
 // A bearer's light and darkness trim in held order, each seeing the room as
 // the earlier ones left it. Glow first: the glow lights the cave to 74, then
-// the darkness cuts it to the bearer's floor. Darkness first: the cave is
+// the darkness cuts it to the bearer's target. Darkness first: the cave is
 // already below the floor, so the darkness goes off, then the glow runs to 74.
 func TestALightAndADarknessTrimInHeldOrder(t *testing.T) {
 	us := seedDarknessTrim(t)
@@ -206,11 +207,11 @@ func TestALightAndADarknessTrimInHeldOrder(t *testing.T) {
 	if v, ok := sourceNow(glowFirst.Character, darkGlowId); !ok || math.Abs(v-74) > darkTrimEpsilon {
 		t.Errorf("glow first: glow = (%v, %v), want 74", v, ok)
 	}
-	if v, ok := sourceNow(glowFirst.Character, darkUmbralId); !ok || math.Abs(v-49) > darkTrimEpsilon {
-		t.Errorf("glow first: darkness = (%v, %v), want 49", v, ok)
+	if v, ok := sourceNow(glowFirst.Character, darkUmbralId); !ok || math.Abs(v-48) > darkTrimEpsilon {
+		t.Errorf("glow first: darkness = (%v, %v), want 48", v, ok)
 	}
-	if got := room.LightLevel(); got != 25 {
-		t.Errorf("glow first: room = %d, want 25", got)
+	if got := room.LightLevel(); got != 26 {
+		t.Errorf("glow first: room = %d, want 26", got)
 	}
 
 	darkFirst := us.add(darkFirstUser+41, darkUmbralId)
@@ -236,8 +237,8 @@ func TestDarknessEntryOrderAcrossThreeBearers(t *testing.T) {
 	a := us.add(darkFirstUser+50, darkUmbralId)
 	room.AddPlayer(a.UserId)
 	room.TrimLightFor(a.Character)
-	if got := room.LightLevel(); got != 25 {
-		t.Fatalf("after the normal-eyed bearer: room %d, want 25", got)
+	if got := room.LightLevel(); got != 26 {
+		t.Fatalf("after the normal-eyed bearer: room %d, want 26", got)
 	}
 
 	b := us.add(darkFirstUser+51, darkInfra50Id, darkUmbralId)
@@ -261,8 +262,8 @@ func TestDarknessEntryOrderAcrossThreeBearers(t *testing.T) {
 		t.Errorf("after the glow: room %d, want 39", got)
 	}
 
-	if v, ok := sourceNow(a.Character, darkUmbralId); !ok || math.Abs(v-25) > darkTrimEpsilon {
-		t.Errorf("the first bearer re-trimmed to (%v, %v) when others entered, want 25", v, ok)
+	if v, ok := sourceNow(a.Character, darkUmbralId); !ok || math.Abs(v-24) > darkTrimEpsilon {
+		t.Errorf("the first bearer re-trimmed to (%v, %v) when others entered, want 24", v, ok)
 	}
 }
 

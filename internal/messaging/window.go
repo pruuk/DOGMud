@@ -96,21 +96,23 @@ func LightTrimTarget(strength, dazzleAbove int) float64 {
 	return float64(dazzleAbove - clampShift(strength) - 1)
 }
 
-// DarknessTrimTarget is the darkest room light an observer can still use: the
-// floor an adjustable darkness trims to (lighting plan 5d). With infravision
-// it is minus the reach, where heat still reads shapes; otherwise it is the
-// shifted blind edge, but never below windowFloor, where natural shapes need
-// light at least that high (SightThroughWindow). Exactly the edge, not a
-// point inside it: the edge counts as usable, and a solved room within
-// rounding of it rounds onto it. blindBelow is the caller's config knob
-// (Lighting.BlindBelow).
+// DarknessTrimTarget is the room light an adjustable darkness trims to
+// (lighting plan 5d): one point inside the darkest light an observer can still
+// use. The usable edge is minus the reach with infravision, where heat still
+// reads shapes; otherwise it is the shifted blind edge, but never below
+// windowFloor, where natural shapes need light at least that high
+// (SightThroughWindow). One point inside, mirroring LightTrimTarget: a room
+// parked exactly on the edge tips its bearer into the dark at the first
+// downward drift in sky light (the 5d playtest), and a solved room within
+// rounding of the edge could round past it. blindBelow is the caller's config
+// knob (Lighting.BlindBelow).
 func DarknessTrimTarget(strength, reach, blindBelow int) float64 {
 	if reach > 0 {
-		return float64(-reach)
+		return float64(-reach + 1)
 	}
-	floor := blindBelow - clampShift(strength)
-	if floor < windowFloor {
-		floor = windowFloor
+	edge := blindBelow - clampShift(strength)
+	if edge < windowFloor {
+		edge = windowFloor
 	}
-	return float64(floor)
+	return float64(edge + 1)
 }

@@ -53,8 +53,9 @@ func Trim(step, others, max, target float64) float64 {
 //
 // light is the room's combined light (Absent reads 0, an unlit cave),
 // otherDark the combine of every other darkness in the room (Absent when
-// there is none), max the source's full strength and floor the bottom of its
-// bearer's usable range (messaging.DarknessTrimTarget).
+// there is none), max the source's full strength and floor its bearer's trim
+// target, one point inside the bottom of the bearer's usable range
+// (messaging.DarknessTrimTarget).
 //
 // Keeping the room at or above floor means Combine(otherDark, d) <= light -
 // floor, which is Trim with others = otherDark and target = light - floor:

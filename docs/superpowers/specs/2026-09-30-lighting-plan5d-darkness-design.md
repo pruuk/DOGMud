@@ -363,6 +363,15 @@ windowFloor)` (S2: natural shapes need `light >= windowFloor`). Exactly the
 floor, not a point inside it: the band edge counts as usable, and a solved
 net within rounding of the floor rounds onto it.
 
+Amended (5d playtest, 2026-10-05): the target is one point INSIDE the floor
+(`-reach + 1`, else the clamped edge `+ 1`), mirroring `LightTrimTarget`. A
+room parked exactly on the floor tipped a still bearer on a sunlit street
+into the dark at the first downward drift of the afternoon sky. In the table
+below every row the trim cuts now leaves the room one point higher (25 reads
+26, 1 reads 2, -30 reads -29, a cave Phantom with no lamp -49) with the
+output cut to match; the "off" rows and the "full" row at light 90 and at
+infravision 50 in light 50 are unchanged.
+
 `TrimLightFor` (kept name; it now trims both kinds) collects the bearer's
 adjustable, unhooded light AND darkness records in held order, sets them all
 off, then solves each in turn against the room as the earlier ones left it:

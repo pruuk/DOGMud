@@ -190,11 +190,12 @@ Functions:
   (`internal/rooms.(*Room).TrimLightFor`) trims toward it. One point, not
   half, so a room at 74.5 cannot round up onto the edge.
 - `DarknessTrimTarget(strength, reach, blindBelow int) float64`
-  (`window.go`), lighting plan 5d: the darkest room light an observer can
-  still use, the floor an adjustable darkness trims to. `-reach` with
-  infravision, else `blindBelow - clampShift(strength)` floored at
-  `windowFloor`. Exactly the edge: the edge reads shapes, one point below
-  reads nothing.
+  (`window.go`), lighting plan 5d: the room light an adjustable darkness
+  trims to, one point inside the darkest light an observer can still use.
+  `-reach + 1` with infravision, else `blindBelow - clampShift(strength)`
+  floored at `windowFloor`, plus one. One point inside, mirroring
+  `LightTrimTarget`, so a small downward drift in sky light after the trim
+  does not tip the bearer into the dark (the 5d playtest).
 - `ComfortDistance(observer *characters.Character, room RoomVisibility)
   (dark, bright float64)` (`comfort.go`), lighting plan 5b: how far the
   room's light sits outside the observer's own comfortable band, as two
