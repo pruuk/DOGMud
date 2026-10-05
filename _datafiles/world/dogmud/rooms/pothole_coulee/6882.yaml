@@ -1,0 +1,43 @@
+roomid: 6882
+zone: Pothole Coulee
+title: The Lamplit Alcove
+description: >
+  A quiet niche off the hearth, scrubbed cleaner than anywhere else in the
+  cave. Two straw pallets lie along the wall with folded blankets at their
+  feet, ready for anyone who comes in hurt or sick. Bundles of drying herbs
+  hang from a cord strung between two pegs, a basin of clean water sits on
+  a flat stone with a cloth folded beside it, and on a ledge cut into the
+  rock a small chrysalis-shaped lamp burns before a worn ledger. The
+  hearth is back north.
+biome: cave
+lamp: 50
+coord:
+  x: 41
+  y: 2
+  z: 0
+mutators:
+- mutatorid: sanctuary
+exits:
+  north:
+    roomid: 6881
+nouns:
+  pallets: Two straw pallets laid along the wall on clean sacking, each
+    with a folded blanket at its foot. The straw is fresh. Someone changes
+    it often.
+  herbs: Feverfew, comfrey, yarrow and willow bark, tied in neat bundles and
+    hung to dry from a cord. Each bundle has a scrap of cloth tied to it
+    with its name written in a careful, upright hand.
+  basin: A wide clay basin of clean water, a folded cloth beside it and a
+    cake of hard grey soap that smells of ash.
+  lamp: A small brass lamp worked into the shape of a chrysalis, burning
+    with a steady low flame on its ledge. The sort of thing that hangs in
+    every temple, though this one has been dented and mended.
+  ledger: A worn ledger lying open beside the lamp. Every page is a list of
+    names, each with a date and a few words beside it, such as fever,
+    broken arm, childbirth. A great many of them have a small mark beside
+    them that means they lived.
+idlemessages:
+- The little chrysalis lamp gutters, and steadies.
+- A bundle of herbs turns slowly on its cord.
+x: 40
+y: 21

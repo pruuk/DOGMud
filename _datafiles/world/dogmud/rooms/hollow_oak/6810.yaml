@@ -1,0 +1,33 @@
+roomid: 6810
+zone: Hollow Oak
+title: A Hollow in the Oak
+description: >
+  A round room hollowed out of the living heartwood of the Hollow Oak, the
+  walls smooth and golden and ringed with a grain older than any city. The
+  floor is swept boards, the ceiling is low and curved, and a small round
+  <ansi fg="itemname">window</ansi> looks out through the bark on the green
+  of the combe. A <ansi fg="itemname">niche</ansi> worked into the wood holds
+  a candle, and an oak <ansi fg="itemname">peg</ansi> juts from the wall
+  beside it. Nothing else. The hollow is empty, and it is yours, and there is
+  nothing in it yet but what you bring. The round green
+  <ansi fg="itemname">door</ansi> behind you lets back out beneath the oak.
+biome: interior
+exits:
+  door:
+    roomid: 6773
+nouns:
+  window: A small round window of old, bubbled glass set deep in the bark. Through
+    it the combe is green and still, and on windy days you can hear the road
+    roaring up above and feel none of it.
+  niche: A hand-deep niche worked into the heartwood, darkened at the top by a
+    great many candles. There is always one burning in it. Old Brock says the
+    Oak sees to it.
+  peg: A stout oak peg grown, not driven, out of the wall, good for a coat, a
+    lantern or a satchel.
+  door: The inside of the round green door. On this side it has a plain wooden
+    latch, worn smooth. It opens for you, and it lets you back out beneath the
+    oak whenever you like.
+x: 36
+y: 0
+z: 0
+plane: 17

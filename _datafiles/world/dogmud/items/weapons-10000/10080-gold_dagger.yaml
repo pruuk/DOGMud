@@ -1,0 +1,23 @@
+itemid: 10080
+name: Gold Dagger
+vendor_categories:
+- blacksmithing
+namesimple: dagger
+description: >
+  A short, double-edged blade of heavy gold with a leather-wrapped grip.
+  Gold is soft and heavy and a poor thing to fight with, and worth a small
+  fortune: wealth worn openly.
+type: weapon
+hands: 1
+subtype: stabbing
+weight: 1.2
+speedmultiplier: 0.99
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.42
+parryrating: 4
+value: 225
+rarity_tier: 30
+statmods:
+  charisma: 2

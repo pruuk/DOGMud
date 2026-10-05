@@ -1,0 +1,12 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">alloy-bronze</ansi> (blacksmithing recipe)
+
+Alloy copper and tin into bronze.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 6)
+  <ansi fg="yellow">Station:</ansi>     forge
+  <ansi fg="yellow">Ingredients:</ansi> copper ingot (x2), tin ingot (x1)
+  <ansi fg="yellow">Makes:</ansi>       2
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help mining</ansi>, <ansi fg="command">help craft</ansi>

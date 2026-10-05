@@ -1,0 +1,15 @@
+itemid: 20113
+name: Kite Shield
+vendor_categories:
+- woodwork
+namesimple: shield
+description: >
+  A tall, tapering shield of glued hardwood boards faced with leather,
+  long enough to cover a knee as well as a chest.
+type: offhand
+subtype: wearable
+physical_mitigation: 7
+blockrating: 15
+weight: 6.5
+value: 45
+rarity_tier: 40

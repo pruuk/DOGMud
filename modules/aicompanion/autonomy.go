@@ -64,7 +64,7 @@ func (m *AICompanionModule) perceive(c *controller, u *users.UserRecord, round u
 
 	// Walked (or was taken) into a room: map it.
 	if enteredRoom && c.convo != nil {
-		m.closeConversation(c, `she moved on`)
+		m.closeConversation(c, `they moved on`)
 	}
 	if enteredRoom {
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil && !cannotSee(mob, room) {
@@ -178,19 +178,31 @@ func (m *AICompanionModule) notice(c *controller, things []thing, now time.Time)
 	if now.Unix()-c.lastNotice < int64(m.cfg.NoticeCooldownSeconds) {
 		return
 	}
-	m.rollCounters()
-	if m.cfg.NoticeCallsPerDay > 0 && m.noticesToday[c.ownerUserId] >= m.cfg.NoticeCallsPerDay {
-		return
-	}
-	if rt := m.route(c.ownerUserId); rt.kind == routeRelay && m.strangersOffOn(c.ownerUserId, rt) && m.otherPlayerHere(c) {
+	if !m.takeNotice(c) {
 		return
 	}
 	c.lastNotice = now.Unix()
+	c.push(stimulus{Kind: `noticed`, Text: thingNames(things)})
+}
+
+// takeNotice is the gate on a call she makes about something she came
+// across rather than something said to her (noticing, a search's finds):
+// the daily cap (NoticeCallsPerDay), and nothing while a stranger is here
+// on an owner's relay with strangers turned off. It counts the call when
+// it allows it.
+func (m *AICompanionModule) takeNotice(c *controller) bool {
+	m.rollCounters()
+	if m.cfg.NoticeCallsPerDay > 0 && m.noticesToday[c.ownerUserId] >= m.cfg.NoticeCallsPerDay {
+		return false
+	}
+	if rt := m.route(c.ownerUserId); rt.kind == routeRelay && m.strangersOffOn(c.ownerUserId, rt) && m.otherPlayerHere(c) {
+		return false
+	}
 	if m.noticesToday == nil {
 		m.noticesToday = map[int]int{}
 	}
 	m.noticesToday[c.ownerUserId]++
-	c.push(stimulus{Kind: `noticed`, Text: thingNames(things)})
+	return true
 }
 
 // otherPlayerHere reports whether anyone but her owner is in her room.
@@ -227,6 +239,9 @@ func (m *AICompanionModule) handleIdle(mobInstanceId int) bool {
 	if !m.cfg.Enabled {
 		return false
 	}
+	if w := m.waiterForInstance(mobInstanceId); w != nil {
+		return m.hollowIdle(w)
+	}
 	c := m.controllerForInstance(mobInstanceId)
 	if c == nil || c.paused {
 		// Paused: hand the tick back, so it behaves like any other
@@ -258,8 +273,20 @@ func (m *AICompanionModule) pastime(c *controller, mob *mobs.Mob) {
 	if m.sneaking(c, users.GetByUserId(c.ownerUserId)) {
 		return // still and quiet: they are not to be given away
 	}
+	if mob.Character.IsActing() {
+		return // already at work (a dish on the fire, a brew on the bench)
+	}
 	now := time.Now().Unix()
-	if now-c.lastSocialUnix < 60 || now-c.lastPastime < int64(m.cfg.IdlePastimeMinutes)*60 {
+	if now-c.lastSocialUnix < 60 {
+		return
+	}
+	// Her calling comes before idling: a cook beside a fire with something
+	// to cook gets on with it, without waiting for a quiet spell to come
+	// round (tradeAtHand).
+	if m.tradeAtHand(c, mob, now) {
+		return
+	}
+	if now-c.lastPastime < int64(m.cfg.IdlePastimeMinutes)*60 {
 		return
 	}
 	// A chance, not a schedule: she does not fidget on a timer.
@@ -279,46 +306,79 @@ func (m *AICompanionModule) pastime(c *controller, mob *mobs.Mob) {
 	opts := []option{}
 	if m.cfg.IdleEmoteMinutes > 0 && len(c.profile.idlePool(c.mind.Opinion)) > 0 &&
 		now-c.lastIdleEmote >= int64(m.cfg.IdleEmoteMinutes)*60 {
-		opts = append(opts, option{`emote`, 4})
+		opts = append(opts, option{`emote`, c.profile.pastimeWeight(`emote`)})
 	}
 	// Searching and foraging are also how a pair of hands gets better at
 	// them: DOGMud grows skills by use, and there is no practice command.
 	searchKey := fmt.Sprintf(`search@%d`, room.RoomId)
 	if last, fails := c.mind.lastInteraction(searchKey); fails < 2 && (last == 0 || now-last > 1800) {
-		opts = append(opts, option{`search`, 2})
+		opts = append(opts, option{`search`, c.profile.pastimeWeight(`search`)})
 	}
 	// Gathering comes first where there is something to gather: a room that
 	// has yielded before is worth working again.
 	forageKey := fmt.Sprintf(`forage@%d`, room.RoomId)
 	if last, fails := c.mind.lastInteraction(forageKey); fails < 2 && (last == 0 || now-last > 1800) {
-		weight := 2
+		weight := c.profile.pastimeWeight(`forage`)
 		if yielded, _ := c.mind.lastInteraction(forageKey); yielded > 0 && fails == 0 {
-			weight = 6
+			weight *= 3 // ground that has yielded before is worth working again
 		}
 		opts = append(opts, option{`forage`, weight})
 	}
-	// A fire and something to cook is worth more than idling by it.
-	if len(craftableHere(mob, c.profile, room)) > 0 && rawFoodCount(mob, c.profile) > 0 {
-		opts = append(opts, option{`craft`, 6})
+	// A station and the makings for something: worth as much as the trade
+	// means to her. A cook's calling is handled before any of this
+	// (tradeAtHand); this is the camp hand who cooks now and then.
+	if made := craftableHere(mob, c.profile, room); len(made) > 0 {
+		opts = append(opts, option{`craft`, 2 + int(bestCraft(c.profile, made).drive*10)})
 	}
 	// Reading the ways out is second nature to a scout.
 	scanKey := fmt.Sprintf(`scan@%d`, room.RoomId)
 	if last, _ := c.mind.lastInteraction(scanKey); last == 0 || now-last > 900 {
-		opts = append(opts, option{`scan`, 2})
+		opts = append(opts, option{`scan`, c.profile.pastimeWeight(`scan`)})
 	}
-	// Stripping a body for materials, when the arrangement allows it.
-	if len(room.Corpses) > 0 && lootAllowedByArrangement(c.mind.LootRule, nil) == `` {
-		opts = append(opts, option{`salvage`, 2})
+	// Stripping a body for materials, when the arrangement allows it: one
+	// her owner could loot, picked clean (salvage destroys the corpse).
+	// Two failed tries in a room (a body she could not work after all) and
+	// she leaves bodies there alone, as with searching and foraging.
+	var strip *rooms.Corpse
+	_, stripFails := c.mind.lastInteraction(fmt.Sprintf(`salvage@%d`, room.RoomId))
+	if stripFails < 2 && lootAllowedByArrangement(c.mind.LootRule, nil) == `` {
+		for i := range room.Corpses {
+			if butcherable(&room.Corpses[i], c.ownerUserId, false) && salvageHits(room, &room.Corpses[i]) {
+				strip = &room.Corpses[i]
+				break
+			}
+		}
+	}
+	if strip != nil {
+		opts = append(opts, option{`salvage`, c.profile.pastimeWeight(`salvage`)})
+	}
+	// Butchering game: a hunter's or a cook's habit, so it does not wait on
+	// the loot arrangement unless that is to leave things alone. Only a
+	// kill her owner could loot, already picked clean.
+	var game *rooms.Corpse
+	if _, fails := c.mind.lastInteraction(butcherKey(room.RoomId)); fails < 2 && c.mind.LootRule != lootLeaveIt {
+		game = butcherHere(room, c.ownerUserId)
+	}
+	if game != nil {
+		opts = append(opts, option{`butcher`, c.profile.pastimeWeight(`butcher`)})
 	}
 	// Putting her gear right: rare, and only when there is something in the
 	// pack that could be worn.
 	if now-c.lastGearUp > 3600 && hasWearableInPack(mob) {
-		opts = append(opts, option{`gearup`, 1})
+		opts = append(opts, option{`gearup`, c.profile.pastimeWeight(`gearup`)})
 	}
 	// Rarely, one of the few things she never forgets comes back to her.
 	if len(c.mind.CoreMemories) > 0 && c.mind.pickCoreToTell(now) != nil {
 		opts = append(opts, option{`reminisce`, 1})
 	}
+	// A pastime her profile weighs at nothing is not one of hers.
+	kept := opts[:0]
+	for _, o := range opts {
+		if o.weight > 0 {
+			kept = append(kept, o)
+		}
+	}
+	opts = kept
 	if len(opts) == 0 {
 		return
 	}
@@ -362,16 +422,19 @@ func (m *AICompanionModule) pastime(c *controller, mob *mobs.Mob) {
 			c.pendingAct = out.Pending
 		}
 	case `salvage`:
-		out := m.issue(c, mob, `salvage`, `salvage`, fmt.Sprintf(`salvage@%d`, room.RoomId), `what was left of the dead`, ``, 0.5, util.GetRoundCount())
+		out := m.issue(c, mob, `salvage`, salvageCommand(strip), fmt.Sprintf(`salvage@%d`, room.RoomId), strip.DisplayName(), ``, 0.5, util.GetRoundCount())
+		if out.Pending != nil {
+			c.pendingAct = out.Pending
+		}
+	case `butcher`:
+		out := m.issue(c, mob, `salvage`, salvageCommand(game), butcherKey(room.RoomId), game.DisplayName(), ``, 0.5, util.GetRoundCount())
 		if out.Pending != nil {
 			c.pendingAct = out.Pending
 		}
 	case `craft`:
+		seedRecipes(mob, c.profile)
 		if made := craftableHere(mob, c.profile, room); len(made) > 0 {
-			out := m.issue(c, mob, `craft`, `craft `+made[0].Id, `craft:`+made[0].Id, made[0].Name, ``, 0.5, util.GetRoundCount())
-			if out.Pending != nil {
-				c.pendingAct = out.Pending
-			}
+			m.startCraft(c, mob, bestCraft(c.profile, made).recipeOption, now)
 		}
 	case `reminisce`:
 		if cm := c.mind.pickCoreToTell(now); cm != nil {
@@ -718,4 +781,25 @@ func (m *AICompanionModule) followOnFoot(c *controller, u *users.UserRecord) boo
 	mob.Command(fmt.Sprintf(`%s %d %d`, cmdCompanionFollow, here.RoomId, u.Character.RoomId), delay)
 	c.followPending, c.followSince = true, util.GetRoundCount()
 	return true
+}
+
+// pastimeDefaults are the weights of the idle pastimes for a companion
+// whose profile says nothing about them.
+var pastimeDefaults = map[string]int{
+	`emote`: 4, `search`: 2, `scan`: 2, `forage`: 2, `salvage`: 2, `gearup`: 1,
+	// butcher: game her owner could loot, picked clean, even when the
+	// arrangement is to ask first. Nobody does it unless their profile says.
+	`butcher`: 0,
+}
+
+// pastimeWeight is how much a companion leans toward one idle pastime: her
+// profile's weight, else the default. Zero means she never does it idle;
+// she can still do it when asked or when the model decides to.
+func (p *Profile) pastimeWeight(kind string) int {
+	if p != nil {
+		if w, ok := p.Pastimes[kind]; ok {
+			return w
+		}
+	}
+	return pastimeDefaults[kind]
 }

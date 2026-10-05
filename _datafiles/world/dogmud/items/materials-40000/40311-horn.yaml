@@ -1,0 +1,18 @@
+itemid: 40311
+name: Horn
+namesimple: horn
+description: >
+  A curved animal horn, sawn off at the base. Bowyers want the springy
+  layers for composite bows; carvers want the rest.
+type: object
+subtype: mundane
+component_tag: horn
+weight: 0.6
+value: 12
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- jewelcrafting
+- woodwork
+- hunting
+material_tier: 2

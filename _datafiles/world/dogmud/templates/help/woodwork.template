@@ -1,0 +1,69 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">woodwork</ansi> (skill)
+
+Woodwork is the craft of turning logs and timber into weapons, shields,
+bows and arrows, furniture, fittings and tool hafts. It is governed by
+<ansi fg="yellow">Dexterity</ansi>, since joinery and shaping reward a steady, precise hand.
+
+<ansi fg="yellow">━━━ Requirements ━━━</ansi>
+
+  Station:   A <ansi fg="yellow">woodworking bench</ansi> must be in the room with you.
+             Look for one in the Craftsmen's Quarter (West) in Thornwall,
+             the Cooperage Floor in New Plymouth, the Cooperage at the
+             Confluence, the Woodworker's House in Amber Valley, the Timber
+             Yard at Kilnreach, the Lumber Camp on Cascade Pass Road, the
+             Woodcutter's Camp on the North Road, and the Fletcher's Ledge in
+             Pothole Coulee. You can also build your own for your lodging.
+  Materials: Logs you fell yourself (<ansi fg="command">help chop</ansi>) or buy, sawn into lumber.
+  Tools:     A saw for planks, boards and shafts, an axe to split staves, a
+             carving knife for bows and arrows (<ansi fg="command">help tools</ansi>).
+
+<ansi fg="yellow">━━━ Recipes ━━━</ansi>
+
+  <ansi fg="yellow">Lumber</ansi>      <ansi fg="command">saw-planks</ansi>, <ansi fg="command">saw-boards</ansi>, <ansi fg="command">split-staves</ansi>, <ansi fg="command">cut-shafts</ansi>,
+              <ansi fg="command">whittle-shafts</ansi> (from branches, anywhere),
+              <ansi fg="command">ironwood-haft</ansi> (for masterwork tools)
+  <ansi fg="yellow">Bows</ansi>        <ansi fg="command">self-bow</ansi>, <ansi fg="command">hunting-bow</ansi>, <ansi fg="command">longbow</ansi>, <ansi fg="command">horn-bow</ansi>
+  <ansi fg="yellow">Ammunition</ansi>  <ansi fg="command">fletch-arrows</ansi> (anywhere), <ansi fg="command">make-bolts</ansi>
+  <ansi fg="yellow">Arms</ansi>        <ansi fg="command">wooden-club</ansi>, <ansi fg="command">quarterstaff</ansi>, <ansi fg="command">wooden-shield</ansi>, <ansi fg="command">kite-shield</ansi>
+  <ansi fg="yellow">Furniture</ansi>   <ansi fg="command">wooden-chest</ansi>, <ansi fg="command">bed-frame</ansi>, <ansi fg="command">woodworking-bench</ansi>
+
+Furniture goes home with you: <ansi fg="command">use</ansi> a chest, bed frame or workbench inside your
+own lodging to set it up, the same as a deed from the letting agent.
+
+Bowstrings come from tailoring (sinew or horsehair), glue from cooking (bone),
+horn from butchering, feathers from birds, and arrowheads from a smith or a
+jeweler (iron or bone). The grade of your lumber, and of your tools, carries
+into what you make.
+
+<ansi fg="yellow">━━━ Woods ━━━</ansi>
+
+Staves and shafts remember the wood they were cut from, and so do the bows
+and arrows made from them: a longbow (yew), a quiver of arrows (cedar).
+
+  Bows       <ansi fg="yellow">ash</ansi>      quick to draw (+8% speed) and light
+             <ansi fg="yellow">elm</ansi>      steady (+5% accuracy), a little heavy
+             <ansi fg="yellow">yew</ansi>      the best: +6% speed, +6% accuracy, lighter
+  Arrows     <ansi fg="yellow">cedar</ansi>    +6% accuracy      <ansi fg="yellow">spruce</ansi>   +4% accuracy
+             <ansi fg="yellow">juniper</ansi>  +5% damage, tough <ansi fg="yellow">larch</ansi>    +4% damage, +2% accuracy
+             <ansi fg="yellow">birch</ansi>    +3% damage, tough <ansi fg="yellow">cypress</ansi>  +3% accuracy, tougher
+             <ansi fg="yellow">willow</ansi>   toughest, -3% accuracy
+             <ansi fg="yellow">alder</ansi>, <ansi fg="yellow">pine</ansi>  plain and cheap
+
+A tough arrow is often picked up whole after a shot instead of being used
+up. You cannot choose which staves or shafts a recipe takes, so carry only
+the wood you want to work. Yew needs an iron axe to fell.
+
+<ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
+
+Woodwork improves through use. Each completed craft attempt (success or
+failure) has a chance to advance the skill.
+
+<ansi fg="yellow">━━━ Commands ━━━</ansi>
+
+  <ansi fg="command">craft list</ansi>          Show all recipes, including woodwork ones, with status.
+  <ansi fg="command">craft <recipe></ansi>      Begin crafting a woodwork recipe.
+  <ansi fg="command">skills</ansi>              Check your current woodwork skill level.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help craft</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help tools</ansi>, <ansi fg="command">help lumberjacking</ansi>

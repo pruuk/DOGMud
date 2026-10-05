@@ -53,6 +53,10 @@ const (
 	DimCompanionStranger     = `companion.stranger`     // one passer-by, any companion
 	DimCompanionStrangersFor = `companion.strangersfor` // all passers-by, one owner's companion
 	DimBaublesFinder         = `baubles.finder`         // one finder's namings
+	DimNPCIdleKeyholder      = `npcidle.keyholder`      // townsfolk idle moments on one player's key
+	DimRoomLifeKeyholder     = `roomlife.keyholder`     // ambient room events on one player's key
+	DimLookDetailKeyholder   = `lookdetail.keyholder`   // closer looks on one player's key
+	DimRiftsKeyholder        = `rifts.keyholder`        // new rift rooms on one player's key
 )
 
 // Charge names one per-user daily allowance a reservation also counts
@@ -101,8 +105,12 @@ func RefusedBy(err error) string {
 
 // Consumer names who spends: the budget reports spending per consumer.
 const (
-	ConsumerCompanion = `companion`
-	ConsumerBaubles   = `baubles`
+	ConsumerCompanion  = `companion`
+	ConsumerBaubles    = `baubles`
+	ConsumerNPCIdle    = `npcidle`
+	ConsumerRoomLife   = `roomlife`
+	ConsumerLookDetail = `lookdetail`
+	ConsumerRifts      = `rifts`
 )
 
 // Hold is one call's reservation, returned by Reserve and given back to

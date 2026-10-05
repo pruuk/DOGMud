@@ -1,0 +1,16 @@
+itemid: 20109
+name: Scale Vest
+vendor_categories:
+- tailoring
+namesimple: vest
+description: >
+  A leather vest faced with rows of overlapping scales that click softly
+  when the wearer moves.
+type: body
+subtype: wearable
+weight: 3.5
+value: 90
+rarity_tier: 40
+physical_mitigation: 5
+statmods:
+  dexterity: 1

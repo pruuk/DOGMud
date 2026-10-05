@@ -5,6 +5,7 @@ vendor_categories:
 namesimple: ring
 description: A cheap ring.
 type: ring
+weight: 0.1
 value: 5
 rarity_tier: 50
 subtype: wearable

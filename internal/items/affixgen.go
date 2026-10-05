@@ -95,7 +95,7 @@ func GenerateAffixedItem(baseItemId int, goldPaid int, scalar float64, goldPerPo
 
 	// Fetch and copy the base spec so that our Spec field is a full snapshot —
 	// GetSpec() returns *i.Spec when non-nil, completely replacing the base.
-	baseSpec := item.GetSpec()
+	baseSpec := item.GetRawSpec() // never bake a grade into the override
 	specCopy := baseSpec
 	// Ensure the StatMods map is freshly allocated so we don't mutate shared data.
 	if specCopy.StatMods != nil {

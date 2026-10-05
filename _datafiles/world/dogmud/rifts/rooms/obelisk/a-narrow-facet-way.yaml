@@ -1,0 +1,43 @@
+id: a-narrow-facet-way
+pool: A
+source: authored
+title: A Narrow Facet Way
+description: >-
+  The passage is barely wider than your shoulders, cut through black crystal
+  so smooth it looks wet. The walls are made of flat faces set at angles that
+  almost agree with each other, and every one of them holds a dim, distorted
+  reflection of you, so that you walk in a crowd of yourself. Ahead the way
+  seems to run straight; when you look again it bends, and when you look a
+  third time it is straight again, as if it had not been caught. The floor is
+  ridged underfoot, worn into shallow grooves by feet that were not shaped
+  like yours. About halfway along, one facet is chipped at its corner, a
+  small pale wound in the black, and the faces around it hold no
+  reflections at all.
+nouns:
+  grooves: >-
+    Long shallow channels worn into the crystal floor, three to a set and
+    spaced wider than any human stride. Whatever walked here walked often,
+    and for a very long time. The sets hug the left wall, single file, as if
+    those who used this passage always kept to one side to let others by.
+  reflection: >-
+    In the facet nearest you, your reflection is a little too tall and turns
+    its head a moment after you do. In the next it is a moment early. Far
+    down the passage, in a facet you can barely see, one of them is not
+    looking at you at all, but back the way you came.
+  facet: >-
+    The chipped facet is the only flaw in the whole passage. The break is
+    clean and old, its edges dulled. Around it, the faces of the wall have
+    gone blind: no reflection, no glimmer, only flat black, as though the
+    crystal stopped looking when it was struck and has not started again.
+idlemessages:
+  - A faint chime runs along the walls, like a fingernail on a glass rim.
+  - In every facet at once, your reflections blink, a moment after you.
+doors:
+  - exit: onward
+    description: >-
+      The passage narrows onward until the walls nearly touch, then opens
+      into darkness.
+  - exit: cleft
+    description: >-
+      A cleft in the wall, angled like a broken tooth. Cold air breathes out
+      of it.

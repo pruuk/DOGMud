@@ -1,0 +1,29 @@
+roomid: 6661
+zone: Confluence Lodgings
+title: A Quillhouse Room
+description: >
+  A narrow room of dark river-brick, whitewashed to shoulder height and bare
+  above it, with a scrubbed plank floor and a small leaded
+  <ansi fg="itemname">window</ansi> set in a deep
+  <ansi fg="itemname">sill</ansi>, wide enough to write on. Nothing else. The
+  room is empty, and it is yours, and there is nothing in it yet but what you
+  bring. The blue <ansi fg="itemname">door</ansi> behind you opens back onto
+  Quill Court.
+biome: interior
+exits:
+  door:
+    roomid: 6570
+nouns:
+  window: A small window of leaded diamond panes, one of them newer and
+    clearer than the rest. Through it you can see a slice of the Municipal
+    Hall's blind brick flank and, above it, a strip of the Confluence sky.
+  sill: A deep stone sill, worn smooth and faintly ink-stained by the elbows
+    and inkpots of lodgers before you. It is exactly the right height for
+    writing, which is not an accident.
+  door: The inside of the blue door. On this side it has an ordinary iron
+    latch, worn smooth. It opens for you, and it lets you back out into Quill
+    Court whenever you like.
+x: 90
+y: 0
+z: 0
+plane: 15

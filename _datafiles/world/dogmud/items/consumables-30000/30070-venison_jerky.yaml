@@ -1,0 +1,16 @@
+itemid: 30070
+name: Venison Jerky
+vendor_categories:
+- cooking
+namesimple: jerky
+description: >
+  Thin, salt-cured strips of venison dried hard. A hunter can live on it
+  for days.
+type: food
+subtype: edible
+uses: 1
+conditionids:
+  - 45
+value: 4
+rarity_tier: 50
+weight: 0.2

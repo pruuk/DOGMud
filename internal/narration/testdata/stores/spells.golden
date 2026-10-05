@@ -57,6 +57,9 @@ spell|core-drain|cast_actor => Power gathers inward, filaments of cold light rea
 spell|core-drain|cast_observer => <ansi fg="username">Aliceia</ansi>'s chest-cavity irises open -- filaments of cold light reach toward you. It will feed on the room next round.
 spell|empathic-shroud|cast_actor => You weave a psionic shroud of unnoticability.
 spell|empathic-shroud|cast_observer => <ansi fg="username">Aliceia</ansi> traces patterns in the air that seem to blur reality.
+spell|facet-lance|cast_actor => One of your faces turns.
+spell|facet-lance|cast_observer => One face of <ansi fg="username">Aliceia</ansi> turns slowly until it looks straight at <ansi fg="mobname">Targetticus</ansi>.
+spell|facet-lance|cast_observer|notarget => One face of <ansi fg="username">Aliceia</ansi> turns slowly until it looks straight at .
 spell|fold-anchor|cast_actor => You weave a Chrysalis anchor into the fabric of this location.
 spell|fold-anchor|cast_observer => <ansi fg="username">Aliceia</ansi> traces a complex pattern in the air that briefly glows and fades.
 spell|fold-anchor|wait_actor => The anchor takes shape, binding to the Veil...
@@ -77,6 +80,9 @@ spell|kinetic-hurl|cast_actor => You gather telekinetic force, the air between y
 spell|kinetic-hurl|cast_observer => <ansi fg="username">Aliceia</ansi> gathers telekinetic force, the air distorting around their hands.
 spell|kinetic-shove|cast_actor => You gather telekinetic force and thrust it forward.
 spell|kinetic-shove|cast_observer => <ansi fg="username">Aliceia</ansi> thrusts their palm forward, the air distorting.
+spell|lattice-burn|cast_actor => You lay a lattice of light across the room.
+spell|lattice-burn|cast_observer => <ansi fg="username">Aliceia</ansi> lays a hand of light against the wall, and thin bright lines begin to cross the room from wall to wall.
+spell|lattice-burn|wait_observer => The lines of light draw tighter, closing on everything between them.
 spell|mass-mend|cast_actor => You gather deep Chrysalis energy and begin radiating it outward.
 spell|mass-mend|cast_observer => <ansi fg="username">Aliceia</ansi> raises both arms as waves of warm, green light pulse outward.
 spell|mend-all|cast_actor => You radiate Chrysalis healing energy outward to all nearby allies.
@@ -100,6 +106,12 @@ spell|neural-toxin|cast_observer => <ansi fg="username">Aliceia</ansi> focuses w
 spell|night-vision|cast_actor => You draw the faint light of this place into your eyes.
 spell|night-vision|cast_observer => <ansi fg="username">Aliceia</ansi> blinks slowly as their pupils widen.
 spell|night-vision|wait_actor => You hold the widening steady...
+spell|obelisk-convergence|cast_actor => Light begins to climb your facets.
+spell|obelisk-convergence|cast_observer => Every facet of <ansi fg="username">Aliceia</ansi> begins to brighten, one after another, light running upward toward its peak.
+spell|obelisk-convergence|wait_observer => Light climbs <ansi fg="username">Aliceia</ansi> facet by facet. When it reaches the top it will come down on everyone here. Strike it hard enough and it may lose its hold.
+spell|prismatic-siphon|cast_actor => Your light bends inward.
+spell|prismatic-siphon|cast_observer => <ansi fg="username">Aliceia</ansi> dims, and its light bends inward, splitting into thin coloured threads that reach toward everything living in the room.
+spell|prismatic-siphon|wait_observer => The threads of <ansi fg="username">Aliceia</ansi>'s light draw taut. It will feed next.
 spell|psychic-anchor|cast_actor => You drive a psionic anchor into the target's mind.
 spell|psychic-anchor|cast_observer => <ansi fg="username">Aliceia</ansi> stares at a target with piercing focus.
 spell|purge-affliction|cast_actor => You focus Chrysalis energy inward, seeking out foreign agents.
@@ -133,10 +145,16 @@ spell|sensory-overload|cast_actor => You unleash a barrage of sensory input at t
 spell|sensory-overload|cast_observer => <ansi fg="username">Aliceia</ansi> grimaces as they project overwhelming sensory energy.
 spell|sensory-veil|cast_actor => You weave a Chrysalis shroud toward your target's senses.
 spell|sensory-veil|cast_observer => <ansi fg="username">Aliceia</ansi> traces a shimmering veil in the air.
+spell|shard-volley|cast_actor => Your spines draw back, quivering.
+spell|shard-volley|cast_observer => <ansi fg="username">Aliceia</ansi>'s spines draw back and quiver, every point turning toward <ansi fg="mobname">Targetticus</ansi>.
+spell|shard-volley|cast_observer|notarget => <ansi fg="username">Aliceia</ansi>'s spines draw back and quiver, every point turning toward .
 spell|skill-attunement|cast_actor => You attune the target's mind for accelerated learning.
 spell|skill-attunement|cast_observer => <ansi fg="username">Aliceia</ansi> touches their temple and focuses deeply.
 spell|sparks|cast_actor => You shatter your conviction into razor-sharp fragments.
 spell|sparks|cast_observer => <ansi fg="username">Aliceia</ansi> clenches a fist as shards of light crackle around them.
+spell|splinter-rend|cast_actor => You slide out of the facets, edge first.
+spell|splinter-rend|cast_observer => <ansi fg="username">Aliceia</ansi> slides out of the facets beside <ansi fg="mobname">Targetticus</ansi>, edge first, and a sliver of black crystal flicks out.
+spell|splinter-rend|cast_observer|notarget => <ansi fg="username">Aliceia</ansi> slides out of the facets beside , edge first, and a sliver of black crystal flicks out.
 spell|summon-hive-swarm|cast_actor => You crush the Hive Fragment in your fist, feeling thousands of tiny lives stir within...
 spell|summon-hive-swarm|cast_observer => <ansi fg="username">Aliceia</ansi> crushes a chitinous fragment, a faint buzzing filling the air.
 spell|summon-hive-swarm|wait_actor => The buzzing intensifies as countless tiny organisms pour from the shattered fragment...
@@ -151,3 +169,7 @@ spell|veil-sight|cast_actor => You open your perception to the Veil, seeking wha
 spell|veil-sight|cast_observer => <ansi fg="username">Aliceia</ansi> narrows their eyes, peering at something unseen.
 spell|vital-surge|cast_actor => You channel a sustained pulse of healing energy.
 spell|vital-surge|cast_observer => <ansi fg="username">Aliceia</ansi> channels a warm, pulsing glow.
+spell|wall-lance|cast_actor => You turn the walls toward your quarry.
+spell|wall-lance|cast_observer => The crystal walls flush with light, and every facet in them swings to face <ansi fg="mobname">Targetticus</ansi>.
+spell|wall-lance|cast_observer|notarget => The crystal walls flush with light, and every facet in them swings to face .
+spell|wall-lance|wait_observer => Light pools in the walls, all of it aimed at one place.

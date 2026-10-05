@@ -1,0 +1,24 @@
+id: bear-fur-mantle
+name: Bear-Fur Mantle
+aliases: [bear-mantle]
+skill: tailoring
+skill_minimum: 25
+station: loom
+tool: scraper
+time_rounds: 8
+ingredients:
+  - item_tag: bear-fur
+    quantity: 2
+  - item_tag: salt-pouch
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+  - item_tag: thread-spool
+    quantity: 1
+  - item_tag: bone-needle
+    quantity: 1
+output:
+  item_id: 20105
+  quantity: 1
+success_actor: "You cure the heavy furs and build them into a mantle over a leather yoke. A bear-fur mantle!"
+failure_actor: "The heavy fur pulls the seams apart. The furs are ruined."

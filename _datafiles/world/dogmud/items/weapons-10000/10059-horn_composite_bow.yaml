@@ -1,0 +1,23 @@
+itemid: 10059
+name: Horn Composite Bow
+namesimple: bow
+description: >
+  A short, sharply recurved bow of wood laminated with horn and backed
+  with sinew. Quick to draw and powerful for its size.
+type: weapon
+hands: 2
+subtype: shooting
+weight: 2.0
+speedmultiplier: 0.55
+grapplemodifier: 0.2
+ammo_tag: arrows
+damage:
+  basedamage: 6
+  variance: 2
+damage_multiplier: 2.2
+parryrating: 1
+value: 320
+rarity_tier: 30
+vendor_categories:
+- woodwork
+carries_wood: true

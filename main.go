@@ -64,8 +64,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/economy/health"
 	"github.com/GoMudEngine/GoMud/internal/enchantments"
 	"github.com/GoMudEngine/GoMud/internal/guilds"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
+	"github.com/GoMudEngine/GoMud/internal/merchantchests"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mining"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/moderation"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -77,7 +80,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/relationships"
+	"github.com/GoMudEngine/GoMud/internal/rifts"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/scavenger"
 	"github.com/GoMudEngine/GoMud/internal/sealedcrate"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -85,6 +90,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/suggestions"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
+	"github.com/GoMudEngine/GoMud/internal/timber"
 	"github.com/GoMudEngine/GoMud/internal/tips"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -291,6 +297,12 @@ func main() {
 	// Wire companion follow-movement into MoveToRoom. Avoids the
 	// internal/rooms → internal/hooks import cycle (hooks imports rooms).
 	rooms.SetCompanionTransport(hooks.CompanionTransportCallback)
+
+	// Wire player housing into the room layer: the shared door routes each
+	// lodger to their own room, unit rooms admit only their owner, and the
+	// loot goblin leaves them alone. Avoids an internal/rooms ->
+	// internal/housing import cycle (housing imports rooms).
+	housing.RegisterRoomHooks()
 
 	// Wire the sweep_companions btree action into
 	// hooks.PushCompanionsToRoom. Avoids the internal/behaviortree →
@@ -1727,6 +1739,10 @@ func loadAllDataFiles(isReload bool) {
 	)
 	mobs.LoadDataFiles()
 
+	// Rifts: profiles and room templates (internal/rifts). After mobs, items
+	// and conditions, whose ids the profiles name; panics on bad data.
+	rifts.LoadDataFiles()
+
 	// Hostile mobs whose behavior tree gates engagement via a
 	// player_enter branch get that gate silently preempted by the
 	// entry auto-attack — warn at boot instead of during play.
@@ -1738,6 +1754,10 @@ func loadAllDataFiles(isReload bool) {
 	mutations.ValidateGraph()
 	species.ValidateBodyPartTags(mutations.HasSpec)
 	species.ValidateSpeciesConditionIds(conditions.HasSpec)
+	// Wilderness trades: every harvest entry on a species or a mob must name
+	// a material some item supplies.
+	species.ValidateSpeciesHarvest(mobs.HarvestTagExists, mobs.HarvestItemExists)
+	mobs.ValidateMobHarvest()
 
 	// Slice C: a non-secret condition without authored start/end text still speaks
 	// (the generic notice), but say so at boot. The root guard blocks a merge.
@@ -1879,12 +1899,61 @@ func loadAllDataFiles(isReload bool) {
 	achievements.LoadDataFiles()
 	guilds.LoadDataFiles()
 	moderation.LoadDataFiles()
+	housing.LoadDataFiles() // after rooms, mobs and factions: it validates against them
 	ferry.LoadDataFiles()
+	// Wilderness trades: tree species and the pools that say where they grow.
+	// After items (every log is checked) and rooms (every zone is checked).
+	timber.LoadDataFiles(timber.World{
+		ItemExists: func(itemId int) bool { return items.GetItemSpec(itemId) != nil },
+		ZoneExists: func(zone string) bool { return rooms.GetZoneConfig(zone) != nil },
+	})
+	// Wilderness trades: ores, gems and the pools that say where they lie.
+	// After items and rooms, for the same reasons as timber.
+	mining.LoadDataFiles(mining.World{
+		ItemExists: func(itemId int) bool { return items.GetItemSpec(itemId) != nil },
+		ZoneExists: func(zone string) bool { return rooms.GetZoneConfig(zone) != nil },
+		RoomExists: func(roomId int) bool { return rooms.LoadRoom(roomId) != nil },
+	})
+	// City scavengers (the loot goblin's replacement). After rooms and mobs,
+	// since every pool is resolved against the zones and the mapper. Their
+	// rooms are exempt from the daily floor decay: the scavengers keep them.
+	scavenger.LoadDataFiles(scavenger.World{
+		ZoneExists: func(zone string) bool { return rooms.GetZoneConfig(zone) != nil },
+		ZoneRooms:  rooms.GetAllZoneRoomsIds,
+		RoomBiome: func(roomId int) (string, bool) {
+			r := rooms.LoadRoom(roomId)
+			if r == nil {
+				return ``, false
+			}
+			if r.Biome == `` { // an unset biome is the zone's default
+				return rooms.GetZoneBiome(r.Zone), true
+			}
+			return r.Biome, true
+		},
+		Reachable: func(from, to int) bool {
+			_, err := mapper.GetPath(from, to)
+			return err == nil
+		},
+		MobExists: func(mobId int) bool { return mobs.GetMobSpec(mobs.MobId(mobId)) != nil },
+		// Player homes are never on a scavenger's rounds, even if a pool's
+		// zone or biome would take them in.
+		Private: housing.IsUnitRoom,
+	})
+	// Floors nobody may thin out: the rooms the scavengers keep, and every
+	// player-housing unit room, owned or vacant. A lodging's floor is the
+	// lodger's (internal/housing captures it into the house record), so the
+	// daily decay must never touch it.
+	rooms.SetFloorDecayExempt(func(roomId int) bool {
+		return scavenger.IsPatrolledRoom(roomId) || housing.IsUnitRoom(roomId)
+	})
 	warehouse.LoadAll()
 	questengine.LoadDataFiles()
 	templates.LoadAliases(plugins.GetPluginRegistry())
 	keywords.LoadAliases(plugins.GetPluginRegistry())
 	mutators.LoadDataFiles()
+	// Rift profiles name the mutator that shows a portal site; checked here,
+	// once mutators exist (internal/rifts).
+	rifts.ValidateMutators()
 
 	// Force-spawn long-running system NPCs at boot. The shop prewarm
 	// above seeds shop cache entries from spawninfo but does NOT call
@@ -1905,6 +1974,18 @@ func loadAllDataFiles(isReload bool) {
 		preparedAnchors++
 	}
 	mudlog.Info("system NPC anchor rooms prepared", "count", preparedAnchors)
+
+	// The city scavengers spawn in their home rooms; prepare those too so
+	// every scavenger is on its rounds from boot, not from the first time a
+	// player happens by.
+	preparedScavengerHomes := 0
+	for _, roomId := range scavenger.AnchorRooms() {
+		if room := rooms.LoadRoom(roomId); room != nil {
+			room.Prepare(false)
+			preparedScavengerHomes++
+		}
+	}
+	mudlog.Info("scavenger home rooms prepared", "count", preparedScavengerHomes)
 
 	// Eager-spawn all rooms whose SpawnInfo references a shop-bearing mob.
 	// Without this, shopkeeper mobs in unvisited zones are never instantiated,
@@ -1936,6 +2017,37 @@ func loadAllDataFiles(isReload bool) {
 	}
 	mudlog.Info("BOOT", "msg", "eager-spawned shop-bearing rooms",
 		"preparedCount", shopRoomsPrepared, "totalRoomsScanned", shopRoomsScanned)
+
+	// Merchant chests (internal/merchantchests): a locked chest in every
+	// merchant's shop, restocked on a timer. Placed after the eager spawn so
+	// every merchant room is loaded; the restock clock lives in each room's
+	// saved long-term data, so a reboot only restocks chests that are due.
+	merchantchests.Load()
+	chestErrs, chestWarnings := merchantchests.CheckWorld(func(mobId, roomId int) bool {
+		room := rooms.LoadRoom(roomId)
+		if room == nil {
+			return false
+		}
+		for _, si := range room.SpawnInfo {
+			if si.MobId == mobId {
+				return true
+			}
+		}
+		return false
+	})
+	for _, w := range chestWarnings {
+		mudlog.Warn("merchantchests", "check", w)
+	}
+	if len(chestErrs) > 0 {
+		msg := strings.Join(chestErrs, "\n")
+		if isReload {
+			mudlog.Error("merchantchests.CheckWorld failed on reload", "error", msg,
+				"remediation", "fix merchant_chests.yaml or the listed mobs and run /reload again")
+		} else {
+			panic(fmt.Sprintf("merchantchests.CheckWorld failed:\n%s", msg))
+		}
+	}
+	merchantchests.EnsureAll()
 
 	// Load sealed crates from disk and attach them to their rooms.
 	// The crates/ directory mirrors shops/ — one YAML per crate,

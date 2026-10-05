@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/species"
 )
 
 func TestLookupCorpseSalvage_Animal(t *testing.T) {
@@ -93,4 +94,49 @@ func equalReturns(a, b []items.SalvageReturn) bool {
 		}
 	}
 	return true
+}
+
+// A steppe wolf is grouped `steppe-wolf`/`canine`, which no table row names.
+// The species fallback must still give it the game returns.
+func TestLookupCorpseSalvageFor_SpeciesFallback(t *testing.T) {
+	got := LookupCorpseSalvageFor([]string{"steppe-wolf", "canine"}, "Canine")
+	if !equalReturns(got, corpseSalvageTable[1].Returns) {
+		t.Errorf("canine fallback = %v, want animal returns", got)
+	}
+}
+
+// Groups win over species: an authored `humanoid` tag on a canine-species mob
+// (a werewolf, say) keeps the humanoid returns.
+func TestLookupCorpseSalvageFor_GroupsWin(t *testing.T) {
+	got := LookupCorpseSalvageFor([]string{"humanoid"}, "canine")
+	if !equalReturns(got, corpseSalvageTable[2].Returns) {
+		t.Errorf("groups should win, got %v", got)
+	}
+}
+
+// Cold-blooded and chitinous species stay unsalvageable until phase 2.
+func TestLookupCorpseSalvageFor_NoFallbackForInsects(t *testing.T) {
+	for _, sp := range []string{"insectoid", "arachnid", "reptile", "fish", "worm", ""} {
+		if got := LookupCorpseSalvageFor([]string{"vermin"}, sp); got != nil {
+			t.Errorf("species %q should have no fallback, got %v", sp, got)
+		}
+	}
+}
+
+func TestLookupCorpseSalvageForMob_ResolvesSpeciesId(t *testing.T) {
+	restore := species.SeedSpeciesForTest(map[int]*species.Species{
+		2:  {SpeciesId: 2, Name: "canine"},
+		12: {SpeciesId: 12, Name: "insectoid"},
+	})
+	defer restore()
+
+	if got := LookupCorpseSalvageForMob([]string{"beast", "pack"}, 2); len(got) == 0 {
+		t.Error("beast-grouped canine should be salvageable")
+	}
+	if got := LookupCorpseSalvageForMob([]string{"beast", "cave"}, 12); got != nil {
+		t.Errorf("beast-grouped insectoid should not be salvageable yet, got %v", got)
+	}
+	if got := LookupCorpseSalvageForMob([]string{"beast"}, 999); got != nil {
+		t.Errorf("unknown species should not be salvageable, got %v", got)
+	}
 }

@@ -1,0 +1,17 @@
+itemid: 40318
+name: Talons
+namesimple: talons
+description: >
+  A raptor's hooked talons, still sharp enough to draw blood.
+type: object
+subtype: mundane
+component_tag: talons
+weight: 0.1
+value: 12
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- jewelcrafting
+- alchemy
+- hunting
+material_tier: 2

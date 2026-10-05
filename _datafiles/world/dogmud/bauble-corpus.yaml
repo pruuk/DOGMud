@@ -947,7 +947,7 @@ entries:
         A braid of wheat stalks, woven tight at the harvest for luck. The
         straw has dried pale gold, and a few stalks are starting to crumble.
     - name: Small Brass Shepherd Horn
-      name_simple: horn
+      name_simple: shepherd
       material: brass
       weight_lbs: 0.3
       value: 12
@@ -1826,7 +1826,7 @@ entries:
         swept back. Bands of blue and green shift across the stone in
         the light.
     - name: Engraved Silver Ibex Horn
-      name_simple: horn
+      name_simple: ibex
       material: silver
       weight_lbs: 0.5
       value: 150

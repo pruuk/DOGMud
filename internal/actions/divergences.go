@@ -42,6 +42,7 @@ var userOnlyCommands = map[string]string{
 	"relationship": "admin",
 	"reload":       "admin",
 	"renameitem":   "admin",
+	"rift":         "admin", // module: rifts (open, list, info, key, close)
 	"room":         "admin",
 	"server":       "admin",
 	"setcondition": "admin",
@@ -121,6 +122,7 @@ var userOnlyCommands = map[string]string{
 	"who":             "ui",
 
 	// --- Player-only mechanics ---
+	"answer":     "player-mechanic: rift riddle puzzles (module: rifts)",
 	"ask":        "player-mechanic",
 	"assess":     "player-mechanic",
 	"assist":     "player-mechanic",
@@ -128,6 +130,7 @@ var userOnlyCommands = map[string]string{
 	"fine":       "player-mechanic: jailed-player justice interaction (5.1)",
 	"gc":         "player-mechanic: guild chat",
 	"guild":      "player-mechanic",
+	"house":      "player-mechanic", // housing: guests, revoke, leave (state changes)
 	"offer":      "player-mechanic",
 	"payfine":    "player-mechanic: jailed-player justice interaction (5.1)",
 	"party":      "player-mechanic",
@@ -141,7 +144,9 @@ var userOnlyCommands = map[string]string{
 	"stash":      "player-mechanic",
 	"talk":       "player-mechanic",
 	"target":     "player-mechanic",
+	"touch":      "player-mechanic: rift sequence puzzles (module: rifts)",
 	"use":        "player-mechanic",
+	"visit":      "player-mechanic", // housing: walks into a lodging you may enter
 	"whisper":    "player-mechanic",
 	"zombieact":  "player-mechanic",
 

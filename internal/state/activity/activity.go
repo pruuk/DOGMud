@@ -62,6 +62,9 @@ type CraftingData struct {
 	RoundsTotal    int
 	RoundsComplete int
 	TargetSlot     string
+	// RoomId is where the work began. A crafter who ends up anywhere else
+	// before it finishes abandons it (wilderness trades review). 0 = any.
+	RoomId int
 }
 
 // SalvagingData is new — gives salvage its own state with its
@@ -72,6 +75,9 @@ type SalvagingData struct {
 	RoundsTotal    int
 	RoundsComplete int
 	SpoiledPotion  bool
+	// RoomId is where the job began; a job finishes only there (wilderness
+	// trades review). 0 = any room.
+	RoomId int
 }
 
 // Machine wraps state.Machine[State] with Activity-specific API.

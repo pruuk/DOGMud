@@ -601,8 +601,9 @@ func tickMobCrafting(mob *mobs.Mob) {
 				mob.Character.Items,
 				mob.Character.ComponentItems,
 				recipe)
-		newItem := items.New(recipe.Output.ItemId)
-		mob.Character.StoreItem(newItem)
+		for n := 0; n < recipe.OutputCount(); n++ {
+			mob.Character.StoreItem(items.New(recipe.Output.ItemId))
+		}
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
 			sendVisualRoomText(room, messaging.CategoryMobIdle, recipe.MobRoomLine(
 				crafting.PhaseSuccess, mob.Character.Name, fmt.Sprintf(

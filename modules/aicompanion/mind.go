@@ -95,6 +95,11 @@ type Mind struct {
 	// looked before any of it, so the stage line can be reapplied cleanly.
 	Romance      Romance      `yaml:"romance,omitempty"`
 	CoreMemories []CoreMemory `yaml:"core_memories,omitempty"`
+	// Wipes counts the times this mind was wiped at a parting
+	// (forgetOwner). A model reply launched before a wipe carries the
+	// count it saw, and is dropped if it changed: a reflection still in
+	// flight when she leaves must not write her old memories back.
+	Wipes int `yaml:"wipes,omitempty"`
 
 	// protectedInstances are the exact keepsakes, by item uuid. Uuids are
 	// not saved by the game, so this lasts a session and the counts in
@@ -105,6 +110,10 @@ type Mind struct {
 	// FallenUntilUnix is when it is back on its feet after being killed,
 	// kept across sessions so a relog cannot undo a death.
 	FallenUntilUnix int64 `yaml:"fallen_until,omitempty"`
+
+	// Courtship is her side of meeting this person in the Waystone Hollow,
+	// before they set out together (hollow.go).
+	Courtship Courtship `yaml:"courtship,omitempty"`
 
 	DeathCount     int   `yaml:"death_count,omitempty"`
 	LastDeathUnix  int64 `yaml:"last_death_unix,omitempty"`

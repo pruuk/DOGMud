@@ -1,0 +1,16 @@
+id: saw-boards
+name: "Hardwood Boards"
+aliases: [boards]
+skill: woodwork
+skill_minimum: 8
+station: "woodworking_bench"
+tool: saw
+time_rounds: 4
+ingredients:
+  - item_tag: hardwood-log
+    quantity: 1
+output:
+  item_id: 40418
+  quantity: 2
+success_actor: "You saw the dense log into two thick boards and plane a face flat. Hardwood boards!"
+failure_actor: "The blade overheats in the hard wood and the boards split."

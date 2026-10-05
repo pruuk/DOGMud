@@ -1,0 +1,24 @@
+itemid: 10076
+name: Masterwork Pick
+vendor_categories:
+- blacksmithing
+namesimple: pick
+description: >
+  A pick of crucible steel on an ironwood haft, balanced so that the swing
+  does half the work. It will open a gold seam as if it were chalk.
+type: weapon
+hands: 1
+subtype: piercing
+weight: 2.8
+speedmultiplier: 0.95
+damage:
+  basedamage: 7
+  variance: 2
+damage_multiplier: 0.7
+parryrating: 4
+value: 160
+rarity_tier: 15
+tool:
+  type: pick
+  tier: 4
+  speed: 1.3

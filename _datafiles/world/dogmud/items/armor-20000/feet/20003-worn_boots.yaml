@@ -5,6 +5,7 @@ vendor_categories:
 namesimple: boots
 description: Boots well past their usefulness.
 type: feet
+weight: 1.5
 value: 5
 rarity_tier: 50
 subtype: wearable

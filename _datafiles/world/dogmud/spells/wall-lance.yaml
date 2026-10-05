@@ -1,0 +1,28 @@
+spellid: wall-lance
+name: Wall Lance
+aliases: [walllance]
+description: >
+  The Facet Hunter turns the crystal walls themselves into lenses and burns
+  its quarry with the light they gather. Telegraphed; hitting the Hunter does
+  not stop it. Mob-castable only.
+attack_type: spell
+damage_type: physical
+targeting: single
+schools:
+  - elemental
+cost: 12
+waitrounds: 1
+difficulty: 45
+mob_only: true
+primarystat: willpower
+base_folds: 2
+effect_type: damage
+effect_magnitude: 220
+damage_multiplier: 1.20
+no_damage_interrupt: true
+ignore_move_cooldown: true
+categories:
+  - harm_single
+cast_actor: "You turn the walls toward your quarry."
+cast_observer: "The crystal walls flush with light, and every facet in them swings to face {actee}."
+wait_observer: "Light pools in the walls, all of it aimed at one place."

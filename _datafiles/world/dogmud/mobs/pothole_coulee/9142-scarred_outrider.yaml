@@ -54,8 +54,6 @@ character:
   speciesid: 2
   level: 1
   gold: 0
-  items:
-    - itemid: 40070   # pack-hide pelt — carried, always drops
   stats:
     dexterity:
       base: 170
@@ -69,3 +67,8 @@ character:
       base: 21
     charisma:
       base: 14
+# Wilderness trades: the pack-hide pelt comes off with a knife now (skin),
+# not as loot. The species table (canine) supplies the meat and bone.
+harvest:
+  skin:
+    - {item: pack-hide, qty: 1}

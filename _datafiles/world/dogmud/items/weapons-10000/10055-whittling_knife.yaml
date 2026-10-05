@@ -1,0 +1,24 @@
+itemid: 10055
+name: Whittling Knife
+vendor_categories:
+- blacksmithing
+- woodwork
+- jewelcrafting
+namesimple: knife
+description: >
+  A slim knife with a short, stiff blade and a fine point, made for whittling wood and working bone and horn into shape.
+type: weapon
+hands: 1
+subtype: stabbing
+weight: 0.5
+speedmultiplier: 1.0
+damage:
+  basedamage: 2
+  variance: 1
+damage_multiplier: 0.25
+parryrating: 3
+value: 10
+rarity_tier: 40
+tool:
+  type: carving_knife
+  tier: 2

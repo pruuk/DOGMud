@@ -51,6 +51,8 @@ var transientItemHolders = map[string]string{
 	`internal/combat.weaponSetup`:                `one attack's weapon, alive for one call`,
 	`internal/events.EquipmentChange`:            `an event carrying a copy of an item that lives in a store, handled within the tick`,
 	`internal/events.ItemOwnership`:              `an event carrying a copy of an item that lives in a store, handled within the tick`,
+	`internal/actions.HarvestResult`:             `a carcass job's result, alive for one call; the goods it lists are already stored in the inventory or on the floor`,
+	`internal/gather.Tool`:                       `a copy of the tool a gathering roll used, alive for one call; the tool itself stays in the character's inventory`,
 	`internal/events.StorageItemSeized`:          `an event moving a seized bank item to the auction queue within the tick`,
 	`internal/hooks.WeaponBreakResult`:           `a weapon break's result, alive for one call`,
 	`internal/hooks.plannedSeizure`:              `a storage fee's plan, alive for one call`,
@@ -66,6 +68,9 @@ var transientItemHolders = map[string]string{
 // needs walking. Keyed "<dir>.<name>".
 var itemStoreVars = map[string]string{
 	`internal/guilds.byTag`:           `the guilds live source (guilds.All)`,
+	`internal/housing.houses`:         `the housing live source (AllHouses)`,
+	`internal/housing.roomHouse`:      `indexes the same *House values as houses, walked by the housing live source`,
+	`internal/housing.ownerHouse`:     `indexes the same *House values as houses, walked by the housing live source`,
 	`internal/mobs.mobInstances`:      `the mobs live source (GetAllMobInstanceIds, GetInstance)`,
 	`internal/rooms.roomManager`:      `the rooms live source (LoadedRooms)`,
 	`internal/shops.shopCache`:        `the shops live source (AllShops)`,
@@ -75,6 +80,10 @@ var itemStoreVars = map[string]string{
 	`internal/pets.petTypes`:          `authored pet templates; no runtime item is ever put in one`,
 	`internal/rooms.templateCache`:    `authored room templates, cached read-only; no runtime item is ever put in one`,
 	`modules/auctions.npcBuyers`:      `NPC bidders; a shopkeeper's bound shop is in the shops registry, walked by the shops live source`,
+	`internal/rifts.runs`:             `rift runs: their rooms and mobs live in the rooms and mobs registries (walked there); the only mob a run holds itself is a hunter between rooms, which carries no items and is back in the mobs registry whenever it stands anywhere`,
+	`internal/rifts.runByRoom`:        `indexes the same *Run values as rifts.runs`,
+	`internal/rifts.lostItems`:        `the rifts live source (rifts.WalkLostItems)`,
+	`internal/rifts.sites`:            `portal sites: each points at its pending *Run, the same values as rifts.runs`,
 }
 
 // itemScan is what scanItemHolders finds in a source tree.

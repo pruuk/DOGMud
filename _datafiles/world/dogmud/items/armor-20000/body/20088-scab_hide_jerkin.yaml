@@ -9,6 +9,7 @@ description: A rugged jerkin sewn from cured pack-hide, the grey fur turned
   made for long days afield.
 type: body
 subtype: wearable
+weight: 5.0
 value: 14
 rarity_tier: 40
 physical_mitigation: 5

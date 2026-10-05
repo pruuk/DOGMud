@@ -18,6 +18,10 @@ var onboardingAllowedQuests = map[int]struct{}{30: {}, 31: {}, 21: {}}
 // mis-pick safety net. Refuses if the character has progress beyond the
 // onboarding quests.
 func Tutorial(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if rooms.NoRecall(user.Character.RoomId) {
+		user.SendText(messaging.CategorySystem, `Something about this place will not let you go that way.`)
+		return true, nil
+	}
 	for questId := range user.Character.QuestProgress {
 		if _, ok := onboardingAllowedQuests[questId]; !ok {
 			user.SendText(messaging.CategorySystem, `The newcomers' coulee is for those just arriving. You are past that now.`)

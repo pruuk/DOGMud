@@ -1,0 +1,44 @@
+speciesid: 26
+name: horse
+description: A large hoofed beast bred for pulling and carrying, broad
+  in the chest and patient by nature. A horse would sooner shy away
+  than fight, but a frightened one kicks hard enough to break bone.
+body_parts: [legs, eyes, mouth, skin, tail]
+intrinsic_mutations:
+  tail: 1
+size: large
+unarmedname: hooves
+natural_attack: slam
+selectable: false
+tameable: true
+angrycommands:
+  - emote stamps a heavy hoof and snorts.
+  - emote lays its ears back and tosses its head.
+stats:
+  strength:
+    base: 160
+  dexterity:
+    base: 80
+  perception:
+    base: 100
+  vitality:
+    base: 160
+  willpower:
+    base: 20
+  charisma:
+    base: 30
+damage:
+  basedamage: 5
+  variance: 3
+damage_multiplier: 0.50
+disabledslots: ['weapon', 'offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet']
+# Wilderness trades: what a carcass gives to skin and butcher. Quantities
+# are for a medium body (small halves, large doubles). See species/harvest.go.
+harvest:
+  skin:
+    - {itemid: 40304, qty: 1}                       # horsehide
+  butcher:
+    - {item: raw-meat, qty: 2}
+    - {item: sinew, qty: 1}
+    - {item: bone, qty: 2, tool: cleaver}
+    - {item: horsehair, qty: 2}

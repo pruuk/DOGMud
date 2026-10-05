@@ -1,0 +1,21 @@
+itemid: 20120
+name: Hunt-King's Pendant
+vendor_categories:
+- jewelcrafting
+namesimple: pendant
+description: >
+  The masterpiece of a hunter-jeweler: a gold pendant built around a carved
+  boss of trophy antler, flanked by two trophy tusks and set with a pair of
+  cut gems. Whoever wears it carries the whole hunt with them, the strength,
+  the eye and the speed.
+type: neck
+subtype: wearable
+weight: 0.7
+value: 560
+rarity_tier: 10
+physical_mitigation: 2
+magical_mitigation: 2
+statmods:
+  strength: 3
+  perception: 4
+  dexterity: 3

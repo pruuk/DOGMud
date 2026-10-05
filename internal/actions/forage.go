@@ -2,15 +2,18 @@ package actions
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/forager"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/gather"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // foragedSearchScore applies the Chrysifier forage-yield multiplier (Provident
@@ -51,7 +54,15 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 	}
 
 	biome := room.GetBiome()
-	if _, ok := forager.ForageYields[biome.BiomeId]; !ok {
+	// Room extras (forager.RoomExtraYieldsKey) are a player-forage overlay,
+	// gated like the zone and weather overlays below.
+	var roomExtra []int
+	if actor.IsPlayer() {
+		if extra, ok := room.GetTempData(forager.RoomExtraYieldsKey).([]int); ok {
+			roomExtra = extra
+		}
+	}
+	if !forager.IsForageable(biome.BiomeId, roomExtra) {
 		if actor.IsPlayer() {
 			actor.SendText(messaging.CategorySystem,
 				`There is nothing here worth foraging. Try an outdoor area.`)
@@ -106,14 +117,29 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 		SearchScore: searchScore * messaging.SightMult(char, room),
 		AtNight:     gametime.IsNight(),
 	}
+	var sickle gather.Tool
+	hasSickle := false
 	if actor.IsPlayer() {
 		attempt.Zone = room.Zone
 		attempt.Weather = currentWeatherType(room.Zone)
+		attempt.RoomExtra = roomExtra
+		// Wilderness trades review: a sickle helps. A good one finds more
+		// (its tier multiplier on the score, never below 1: foraging by hand
+		// is the baseline, not a handicap) and finds better (extra draws from
+		// the patch, keeping the dearest find).
+		if sickle, hasSickle = gather.BestTool(char, items.ToolSickle); hasSickle {
+			attempt.SearchScore *= math.Max(1.0, gather.TierMult(sickle.Tier))
+			attempt.ExtraDraws = SickleExtraDraws(sickle.Tier, util.Rand(100))
+			attempt.Prefer = betterForageFind
+		}
 	}
 
 	coreResult := forager.ForageCore(attempt)
 
 	result.RollHappened = true
+	if hasSickle {
+		defer WearUsedTool(actor, sickle, true)
+	}
 
 	// U10b-1 Task 15. Awarded HERE, on the resolved forage, rather than inside
 	// the success path further down where it used to sit.
@@ -168,6 +194,36 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 	result.ItemId = coreResult.ItemId
 	result.ItemName = newItem.DisplayName()
 	return result
+}
+
+// SickleExtraDraws is how many extra candidates a sickle of this tier draws
+// from the forage pool: the tier's rare-find multiplier above crude
+// (Balance.RareToolMult*), whole draws plus a percentage chance of one more.
+// With the shipped numbers: crude none, iron one in two, steel one, and
+// masterwork one plus one in two. roll is 0..99.
+func SickleExtraDraws(tier items.ToolTier, roll int) int {
+	extra := gather.RareMult(tier) - gather.RareMult(items.ToolTierCrude)
+	if extra <= 0 {
+		return 0
+	}
+	n := int(extra)
+	if roll < int((extra-float64(n))*100) {
+		n++
+	}
+	return n
+}
+
+// betterForageFind ranks two forage finds: the higher material tier, then
+// the dearer item.
+func betterForageFind(a, b int) bool {
+	sa, sb := items.GetItemSpec(a), items.GetItemSpec(b)
+	if sa == nil || sb == nil {
+		return sa != nil
+	}
+	if sa.MaterialTier != sb.MaterialTier {
+		return sa.MaterialTier > sb.MaterialTier
+	}
+	return sa.Value > sb.Value
 }
 
 // currentWeatherType returns the weather module's reported weather type for

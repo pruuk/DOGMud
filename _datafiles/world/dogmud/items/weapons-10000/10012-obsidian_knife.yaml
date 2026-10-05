@@ -23,3 +23,6 @@ damage:
   variance: 1
 damage_multiplier: 0.55
 parryrating: 8
+tool:
+  type: knife
+  tier: 2

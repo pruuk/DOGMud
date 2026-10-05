@@ -1980,6 +1980,14 @@ sources clears. Uses `Conditions.TriggersLeft(id) > 0` rather than
 `HasCondition(id)` — see `internal/state/perception/context.md` for the
 implementation-detail rationale.
 
+`syncPerceptionWithBlindSources()` (unexported, same file) moves a Blinded
+machine back to Sighted once `HasAnyBlindSource()` is false. `Validate()`
+calls it, which covers the path `RemoveCondition` never sees: a blind
+condition running out and being pruned on the turn tick
+(`Conditions.Prune` in `hooks/NewTurn_PruneConditions.go` and
+`hooks/Life_Cascades.go`, both of which call `Validate` afterwards). Before
+this, a character blinded that way stayed blind until death reset them.
+
 ## Dependencies
 - `internal/stats`: Core statistics definitions
 - `internal/items`: Item system integration
@@ -2090,3 +2098,19 @@ gear; owner 2026-09-29: no pre-detune bows are carried by companions on
 prod, so that closed a coverage gap with no live behaviour change). A new item field on Character, Worn, Pet or CompanionInfo must be
 walked here: `TestItemWalkersVisitEveryItemField` (repo root) fails naming
 it otherwise.
+
+## Skill rename: carpentry to woodwork
+
+`validateSkillMigrations` folds a saved `carpentry` rank (and use count)
+into `woodwork`, keeping the higher rank. It is idempotent and unmarked, so
+it is safe on every load.
+
+## Gear wear in a fight (gear_wear.go)
+
+`CritWearStriker(strike)` (the item that landed a critical hit: the weapon
+that swung or the shield of a bash; nil wears nothing; never a shooter),
+`EquippedItemPtr`, `WieldedWeaponPtr` and `ShieldPtr` (pointers into the
+equipment for it), `CritWearArmor` (one random worn armour piece
+or shield) and `WearBowOnShot` roll Balance `GearCritWearChance`,
+`GearArmorCritWearChance` and `BowShotWearChance` with `math/rand/v2` (not
+`util.Rand`, so seeded combat tests are undisturbed) and report a break.

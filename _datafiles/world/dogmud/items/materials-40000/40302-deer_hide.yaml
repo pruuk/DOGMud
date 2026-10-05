@@ -1,0 +1,18 @@
+itemid: 40302
+name: Deer Hide
+namesimple: hide
+description: >
+  A supple deer hide, short-haired and even in thickness, the best raw
+  stuff there is for soft leather once it has been cured and tanned.
+type: object
+subtype: mundane
+component_tag: hide
+weight: 1.5
+value: 10
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 2
+spoil_after: 4 days

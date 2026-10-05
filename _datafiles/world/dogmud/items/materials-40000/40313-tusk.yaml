@@ -1,0 +1,17 @@
+itemid: 40313
+name: Tusk
+namesimple: tusk
+description: >
+  A yellowed boar tusk, curved and sharp at the point, worth carving
+  into a charm or selling to someone who will.
+type: object
+subtype: mundane
+component_tag: tusk
+weight: 0.6
+value: 16
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- jewelcrafting
+- hunting
+material_tier: 2

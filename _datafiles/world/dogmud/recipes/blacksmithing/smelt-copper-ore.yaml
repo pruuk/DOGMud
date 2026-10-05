@@ -1,0 +1,15 @@
+id: smelt-copper-ore
+name: "Copper Ingot"
+aliases: [smeltcopper]
+skill: blacksmithing
+skill_minimum: 0
+station: forge
+time_rounds: 2
+ingredients:
+  - item_tag: copper-ore
+    quantity: 2
+output:
+  item_id: 40264
+  quantity: 1
+success_actor: "You melt the copper out of the rock and pour a small red ingot."
+failure_actor: "The melt slags over. The ore is wasted."

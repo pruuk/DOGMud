@@ -1,0 +1,17 @@
+itemid: 40317
+name: Flight Feathers
+namesimple: feathers
+description: >
+  Long, stiff primary feathers from a bird of prey, perfectly vaned. The
+  best fletching there is.
+type: object
+subtype: mundane
+component_tag: flight-feathers
+weight: 0.05
+value: 12
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+- hunting
+material_tier: 2

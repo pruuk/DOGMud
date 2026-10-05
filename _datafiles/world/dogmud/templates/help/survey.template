@@ -1,0 +1,17 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">survey</ansi>
+
+  <ansi fg="command">survey trees</ansi>     (or just <ansi fg="command">survey</ansi>)
+
+Look over the timber in a forest, deep woods or marsh: what grows here, what
+the wood is good for, and how many good trees are left. If the stand has been
+cut back, it tells you roughly when it will be ready again.
+
+Common woods anyone can name. The rare ones, yew, black walnut and ironwood,
+take a sharp eye to recognise: your <ansi fg="yellow">Perception</ansi> and <ansi fg="yellow">search</ansi> skill decide
+whether you know what you are looking at. You can fell a tree you cannot
+name; you just will not know what you have until it is down. Survey also
+tells you when the wood is too hard for your axe.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help chop</ansi>, <ansi fg="command">help lumberjacking</ansi>

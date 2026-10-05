@@ -1,0 +1,23 @@
+itemid: 10073
+name: Rough Pick
+vendor_categories:
+- blacksmithing
+namesimple: pick
+description: >
+  A soft iron pick head wedged onto a split haft. It will scratch out copper
+  and coal, and ring uselessly off anything harder.
+type: weapon
+hands: 1
+subtype: piercing
+weight: 3.0
+speedmultiplier: 0.85
+damage:
+  basedamage: 3
+  variance: 1
+damage_multiplier: 0.4
+parryrating: 2
+value: 5
+rarity_tier: 50
+tool:
+  type: pick
+  tier: 1

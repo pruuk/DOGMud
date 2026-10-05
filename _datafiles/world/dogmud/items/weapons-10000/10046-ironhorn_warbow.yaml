@@ -2,6 +2,7 @@ itemid: 10046
 name: Ironhorn Warbow
 namesimple: bow
 vendor_categories:
+- woodwork
 - blacksmithing
 description: >-
   A composite longbow strung with twisted sinew, its limbs built

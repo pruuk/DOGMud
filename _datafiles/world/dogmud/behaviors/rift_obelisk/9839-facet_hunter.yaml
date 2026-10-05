@@ -1,0 +1,28 @@
+# Facet Hunter (9839): sent after a player who flees a fight in the Obelisk.
+#
+# internal/rifts places it (never the room generator) and holds its quarry in
+# the room while it stands. It fights with the walls: Wall Lance, a heavy
+# two-fold beam at its target that damage cannot interrupt, and every so
+# often Lattice Burn, which crosses the whole room. Each cooldown runs well
+# past its cast, so there are rounds of plain melee between the beams. No archetype underneath: it never flees.
+
+tree:
+  type: selector
+  children:
+    - type: decorator
+      event: mob_combat_round
+      mod: cooldown
+      rounds: 11
+      child:
+        type: action
+        do: cast
+        spell: lattice-burn
+
+    - type: decorator
+      event: mob_combat_round
+      mod: cooldown
+      rounds: 5
+      child:
+        type: action
+        do: cast
+        spell: wall-lance

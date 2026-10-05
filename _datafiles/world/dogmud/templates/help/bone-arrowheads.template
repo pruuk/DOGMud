@@ -1,0 +1,12 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">bone-arrowheads</ansi> (jewelcrafting recipe)
+
+Grind arrowheads from bone. Needs a carving knife.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       jewelcrafting (minimum 5)
+  <ansi fg="yellow">Station:</ansi>     jeweler bench
+  <ansi fg="yellow">Tool:</ansi>        carving knife
+  <ansi fg="yellow">Ingredients:</ansi> bone (x2)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

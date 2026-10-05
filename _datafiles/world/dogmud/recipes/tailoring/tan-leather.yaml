@@ -1,0 +1,17 @@
+id: tan-leather
+name: Leather Hide
+aliases: [tan-hide]
+skill: tailoring
+skill_minimum: 3
+station: tanning_rack
+time_rounds: 6
+ingredients:
+  - item_tag: cured-hide
+    quantity: 1
+  - item_tag: tanning-liquor
+    quantity: 1
+output:
+  item_id: 40351
+  quantity: 1
+success_actor: "You soak the cured hide in bark liquor, work it soft and stretch it to dry. A leather hide!"
+failure_actor: "The hide sours in the vat and comes out brittle. It is ruined."

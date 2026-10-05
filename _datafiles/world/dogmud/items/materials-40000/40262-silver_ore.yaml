@@ -1,0 +1,17 @@
+itemid: 40262
+name: Silver Ore
+namesimple: ore
+description: >
+  Dark rock threaded with bright metallic flecks that tarnish where your
+  fingers touch them. Smelted with coal it gives silver.
+type: object
+subtype: mundane
+component_tag: silver-ore
+weight: 1.0
+value: 10
+rarity_tier: 30
+is_component: true
+vendor_categories:
+- blacksmithing
+- jewelcrafting
+material_tier: 3

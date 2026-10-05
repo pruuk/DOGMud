@@ -486,6 +486,7 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 		// Track per-weapon hits for skill progression
 		weaponHit := WeaponHitInfo{
 			SkillTag: string(characters.CombatSkillTagForItem(ws.weapon)),
+			Weapon:   ws.weapon,
 		}
 
 		swingCount := ws.swingCount

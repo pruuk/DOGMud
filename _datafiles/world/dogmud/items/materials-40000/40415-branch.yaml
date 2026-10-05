@@ -1,0 +1,16 @@
+itemid: 40415
+name: Branch
+namesimple: branch
+description: >
+  A straight branch trimmed from a felled tree, good for whittling into
+  arrow shafts or feeding a fire.
+type: object
+subtype: mundane
+component_tag: branch
+weight: 1.0
+value: 1
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+material_tier: 1

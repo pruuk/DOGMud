@@ -1,0 +1,16 @@
+id: whittle-shafts
+name: "Whittled Shafts"
+aliases: [whittle]
+skill: woodwork
+skill_minimum: 0
+station: ""
+tool: carving_knife
+time_rounds: 3
+ingredients:
+  - item_tag: branch
+    quantity: 2
+output:
+  item_id: 40420
+  quantity: 1
+success_actor: "You whittle the branches straight and round. Arrow shafts!"
+failure_actor: "Your knife slips and the shafts come out crooked."

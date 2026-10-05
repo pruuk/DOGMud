@@ -48,6 +48,8 @@ character:
     light:
       itemid: 40038
   stats:
+    perception:
+      base: 110
     strength:
       base: 114
     vitality:

@@ -1,0 +1,11 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">woodworking-bench</ansi> (woodwork recipe)
+
+A heavy workbench. Use it in your lodging to set it up as a woodworking bench.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       woodwork (minimum 30)
+  <ansi fg="yellow">Station:</ansi>     woodworking bench
+  <ansi fg="yellow">Ingredients:</ansi> hardwood board (x4), wooden plank (x4), iron ingot (x2)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help woodwork</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

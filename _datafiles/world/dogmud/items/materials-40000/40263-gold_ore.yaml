@@ -1,0 +1,17 @@
+itemid: 40263
+name: Gold Ore
+namesimple: ore
+description: >
+  Quartz shot through with soft yellow seams that will not tarnish. Rare,
+  and hard to get at: it takes a steel pick and a strong back.
+type: object
+subtype: mundane
+component_tag: gold-ore
+weight: 1.0
+value: 40
+rarity_tier: 15
+is_component: true
+vendor_categories:
+- blacksmithing
+- jewelcrafting
+material_tier: 4

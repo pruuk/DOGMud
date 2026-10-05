@@ -14,5 +14,6 @@ subtype: wearable
 physical_mitigation: 2
 statmods:
   skullduggery: 3
+weight: 1.0
 value: 28
 rarity_tier: 40

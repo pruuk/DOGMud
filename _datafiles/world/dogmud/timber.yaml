@@ -1,0 +1,49 @@
+# Lumberjacking (wilderness trades, phase 4; code: internal/timber).
+#
+# species: every tree that can be felled. log is the item a felled tree
+# gives; bark, when set, may come off with it (40% of fellings). tier 1..4
+# makes a tree harder to fell and its wood worth more; tiers 3 and 4 need a
+# keen eye to recognise when surveying. note is what `survey trees` says the
+# wood is good for.
+#
+# biomes: which room biomes grow timber, and what grows there by default.
+# zones: a zone's own pool, which replaces the biome pool in that zone's
+# choppable rooms. Weights are relative. A room's stand is drawn from its pool
+# when first surveyed or chopped and redrawn when it regrows after being felled
+# to the last tree, leaning toward its neighbours' species.
+#
+# bow and arrow (wilderness trades): what the wood gives a bow made from its
+# staves (speed, weight and accuracy multipliers) and arrows or bolts made
+# from its shafts (damage and accuracy multipliers, and recovery: the chance a
+# shot does not use up an arrow). Omitted means neutral. Only bow woods (ash,
+# elm, yew) make staves and only softwoods make shafts. Code: internal/timber/wood.go.
+
+species:
+  - {id: pine, name: pine, log: 40400, tier: 1, bark: 40067, note: "Light, straight and resinous: planks, shafts and pitch.", arrow: {recovery: 0.05}}
+  - {id: spruce, name: spruce, log: 40401, tier: 1, note: "Light and straight-grained: planks and arrow shafts.", arrow: {accuracy: 1.04}}
+  - {id: birch, name: birch, log: 40402, tier: 1, bark: 40416, note: "Pale and even, with papery bark that tans leather.", arrow: {damage: 1.03, recovery: 0.10}}
+  - {id: alder, name: alder, log: 40403, tier: 1, note: "Soft and easy to work, it turns orange where it is cut.", arrow: {damage: 1.02, recovery: 0.05}}
+  - {id: willow, name: willow, log: 40404, tier: 1, note: "Soft, light and pliant: planks and baskets.", arrow: {accuracy: 0.97, recovery: 0.20}}
+  - {id: juniper, name: juniper, log: 40405, tier: 1, note: "Twisted, fragrant and tough for its size.", arrow: {damage: 1.05, recovery: 0.10}}
+  - {id: oak, name: oak, log: 40406, tier: 2, bark: 40062, note: "Dense and strong: boards, shields, furniture."}
+  - {id: ash, name: ash, log: 40407, tier: 2, note: "Tough and springy: bow staves and tool handles.", bow: {speed: 1.08, weight: 0.95}}
+  - {id: elm, name: elm, log: 40408, tier: 2, note: "Interlocked grain that will not split: bows and hubs.", bow: {accuracy: 1.05, weight: 1.05}}
+  - {id: cedar, name: cedar, log: 40409, tier: 2, note: "Fragrant and rot-proof: chests and shafts.", arrow: {accuracy: 1.06, recovery: 0.05}}
+  - {id: larch, name: larch, log: 40410, tier: 2, note: "Heavy for a conifer and hard to rot: planks and posts.", arrow: {damage: 1.04, accuracy: 1.02}}
+  - {id: cypress, name: cypress, log: 40411, tier: 2, note: "Straight, light and close to rot-proof.", arrow: {accuracy: 1.03, recovery: 0.15}}
+  - {id: yew, name: yew, log: 40412, tier: 3, note: "The finest bow wood there is: springy heartwood backed by pale sapwood.", bow: {speed: 1.06, weight: 0.92, accuracy: 1.06}}
+  - {id: walnut, name: black walnut, log: 40413, tier: 3, note: "Dark, dense and handsome: fine furniture and stocks."}
+  - {id: ironwood, name: ironwood, log: 40414, tier: 4, note: "So dense it sinks: the hardest wood a woodworker will ever work."}
+
+biomes:
+  forest:       [{species: pine, weight: 4}, {species: birch, weight: 4}, {species: alder, weight: 3}, {species: oak, weight: 2}, {species: ash, weight: 1}, {species: yew, weight: 1}]
+  dense_forest: [{species: spruce, weight: 3}, {species: oak, weight: 3}, {species: elm, weight: 2}, {species: walnut, weight: 1}, {species: yew, weight: 1}]
+  swamp:        [{species: willow, weight: 5}, {species: alder, weight: 3}, {species: cypress, weight: 2}]
+
+zones:
+  The Fernway:       [{species: birch, weight: 4}, {species: oak, weight: 3}, {species: alder, weight: 2}, {species: ash, weight: 2}, {species: elm, weight: 1}, {species: walnut, weight: 1}]
+  The Fernway South: [{species: birch, weight: 3}, {species: oak, weight: 3}, {species: alder, weight: 2}, {species: ash, weight: 2}, {species: elm, weight: 2}, {species: walnut, weight: 1}, {species: ironwood, weight: 1}]
+  Cascade Pass Road: [{species: pine, weight: 4}, {species: spruce, weight: 3}, {species: larch, weight: 2}, {species: cedar, weight: 2}, {species: yew, weight: 1}]
+  Pothole Coulee:    [{species: juniper, weight: 4}, {species: pine, weight: 3}, {species: willow, weight: 3}, {species: alder, weight: 1}]
+  Ashwick:           [{species: elm, weight: 3}, {species: oak, weight: 2}, {species: birch, weight: 2}, {species: willow, weight: 2}]
+  Stillwater Marsh:  [{species: willow, weight: 4}, {species: alder, weight: 2}, {species: cypress, weight: 2}]

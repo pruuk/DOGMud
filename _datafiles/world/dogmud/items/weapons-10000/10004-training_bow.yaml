@@ -18,4 +18,5 @@ damage:
 damage_multiplier: 1.45
 parryrating: 0
 vendor_categories:
+- woodwork
 - blacksmithing

@@ -1,0 +1,17 @@
+id: steel-skinning-knife
+name: Steel Skinning Knife
+aliases: [steel-skinner]
+skill: blacksmithing
+skill_minimum: 15
+station: forge
+time_rounds: 4
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10051
+  quantity: 1
+success_actor: "You forge the steel thin, harden the curved edge, and polish it until it shaves. A steel skinning knife!"
+failure_actor: "The edge cracks in the hardening. The steel is ruined."

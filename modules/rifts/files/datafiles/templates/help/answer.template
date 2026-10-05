@@ -1,0 +1,10 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">answer</ansi>
+
+Some places ask a question and wait for a reply. The <ansi fg="command">answer</ansi>
+command gives one. Only the right answer opens what the room is keeping
+shut, and a wrong one is rarely free.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">answer the moon</ansi>
+  Answer the riddle in this room with "the moon".

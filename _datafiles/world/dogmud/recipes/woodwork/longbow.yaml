@@ -1,0 +1,18 @@
+id: longbow
+name: "Longbow"
+aliases: [long]
+skill: woodwork
+skill_minimum: 25
+station: "woodworking_bench"
+tool: carving_knife
+time_rounds: 8
+ingredients:
+  - item_tag: bow-stave
+    quantity: 2
+  - item_tag: bowstring
+    quantity: 1
+output:
+  item_id: 10058
+  quantity: 1
+success_actor: "You join the staves, tiller the long limbs for days and string it tall. A longbow!"
+failure_actor: "The long limbs twist out of true. The staves are ruined."

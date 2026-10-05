@@ -1,0 +1,17 @@
+itemid: 40355
+name: Tallow
+namesimple: tallow
+description: >
+  A cake of rendered tallow. Candles, waterproofing, salves.
+type: object
+subtype: mundane
+component_tag: tallow
+weight: 0.3
+value: 5
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- cooking
+- alchemy
+- tailoring
+material_tier: 1

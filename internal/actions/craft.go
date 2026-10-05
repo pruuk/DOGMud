@@ -4,13 +4,16 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/gather"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/timber"
 )
 
 // CraftResult describes the outcome of an InitiateCraft call.
@@ -35,6 +38,10 @@ type CraftResult struct {
 	WrongStation bool
 	// MissingIngredients is true when the actor lacks one or more ingredients.
 	MissingIngredients bool
+	// MissingTool is true when the recipe needs a tool (RecipeSpec.Tool) the
+	// actor is not carrying; ToolNeeded names it for the message.
+	MissingTool bool
+	ToolNeeded  string
 	// ForeignComponent is true when the recipe requires self-crafted
 	// components (RequireOwnComponents) and a matching ingredient in the
 	// actor's pools was made by someone else (or has no maker at all).
@@ -199,6 +206,13 @@ func InitiateCraft(actor Actor, recipeName string) CraftResult {
 		return res
 	}
 
+	// ── Tool check (wilderness trades) ────────────────────────────────────────
+	if !ToolSatisfied(char, recipe) {
+		res.ToolNeeded = ToolName(recipe.Tool)
+		res.MissingTool = true
+		return res
+	}
+
 	// ── Ingredient check ──────────────────────────────────────────────────────
 	ok, missingTag := crafting.HasIngredients(char.Items, char.ComponentItems, recipe)
 	if !ok {
@@ -224,22 +238,33 @@ func InitiateCraft(actor Actor, recipeName string) CraftResult {
 
 	// ── Immediate completion (TimeRounds <= 0) ────────────────────────────────
 	if recipe.TimeRounds <= 0 {
+		// An instant recipe runs no contest, so its grade comes from its
+		// inputs and tool alone (gather.CraftGrade with no result). Read the
+		// inputs BEFORE they are consumed.
+		selected := crafting.SelectIngredients(char.Items, char.ComponentItems, recipe)
+		grade := RecipeGrade(char, recipe, nil, selected)
+		wood := CraftWood(selected)
 		// Provident Hands may preserve the materials entirely (efficient craft).
 		if !char.CraftMaterialsSaved() {
 			char.Items, char.ComponentItems = crafting.ConsumeIngredients(
 				char.Items, char.ComponentItems, recipe)
 		}
-		newItem := items.New(recipe.Output.ItemId)
-		newItem.CraftSkill = char.CraftQualityLevel(skillLevel) // Faithwrought quality lift
-		// Maker's mark — same policy as the async completion path
-		// (crafting.ShouldStampMakerName): components stamp regardless of
-		// Type so require_own_components provenance works for
-		// TimeRounds<=0 sub-recipes too.
-		if crafting.ShouldStampMakerName(newItem.CraftSkill, newItem.GetSpec()) {
-			newItem.MakerName = char.Name
+		for n := 0; n < recipe.OutputCount(); n++ {
+			newItem := items.New(recipe.Output.ItemId)
+			newItem.Quality = grade
+			StampWood(&newItem, wood)
+			newItem.CraftSkill = char.CraftQualityLevel(skillLevel) // Faithwrought quality lift
+			// Maker's mark — same policy as the async completion path
+			// (crafting.ShouldStampMakerName): components stamp regardless of
+			// Type so require_own_components provenance works for
+			// TimeRounds<=0 sub-recipes too.
+			if crafting.ShouldStampMakerName(newItem.CraftSkill, newItem.GetSpec()) {
+				newItem.MakerName = char.Name
+			}
+			char.StoreItem(newItem)
+			res.OutputName = newItem.DisplayName()
 		}
-		char.StoreItem(newItem)
-		res.OutputName = newItem.DisplayName()
+		WearRecipeTool(actor, recipe)
 		res.ImmediateComplete = true
 		return res
 	}
@@ -248,6 +273,7 @@ func InitiateCraft(actor Actor, recipeName string) CraftResult {
 	craftData := activity.CraftingData{
 		RecipeId:    recipe.RecipeId,
 		RoundsTotal: recipe.TimeRounds,
+		RoomId:      char.RoomId,
 	}
 	actorRef := state.ActorRef{
 		UserId:        actor.GetUserId(),
@@ -266,4 +292,110 @@ func InitiateCraft(actor Actor, recipeName string) CraftResult {
 
 	res.Initiated = true
 	return res
+}
+
+// ToolSatisfied reports whether char carries the tool a recipe needs (or the
+// recipe needs none). The one statement of the rule: InitiateCraft, the craft
+// list status and the ready/locked buckets all ask it.
+func ToolSatisfied(char *characters.Character, recipe *crafting.RecipeSpec) bool {
+	if recipe == nil || recipe.Tool == `` {
+		return true
+	}
+	_, ok := gather.BestTool(char, recipe.Tool)
+	return ok
+}
+
+// RecipeToolTier is the tier of the best tool char has for the recipe, and
+// whether the recipe needs one.
+func RecipeToolTier(char *characters.Character, recipe *crafting.RecipeSpec) (items.ToolTier, bool) {
+	if recipe == nil || recipe.Tool == `` {
+		return items.ToolTierNone, false
+	}
+	t, ok := gather.BestTool(char, recipe.Tool)
+	if !ok {
+		return items.ToolTierNone, true
+	}
+	return t.Tier, true
+}
+
+// RecipeGrade is the grade a craft gives its output (gather.CraftGradeOutput):
+// graded inputs, a recipe tool, or an output that is a tool or a piece of
+// gear (a weapon, armour, a shield, jewelry: items.IsGearType) each make it
+// graded, so every crafted weapon and armour piece is graded by the
+// crafter's margin and works accordingly (items/grade_effects.go). cr is nil
+// for an instant recipe. consumed is what the craft will spend.
+func RecipeGrade(char *characters.Character, recipe *crafting.RecipeSpec, cr *contest.Result, consumed []items.Item) items.Quality {
+	toolTier, hasTool := RecipeToolTier(char, recipe)
+	alwaysGraded := false
+	if recipe != nil {
+		if spec := items.GetItemSpec(recipe.Output.ItemId); spec != nil && (spec.Tool != nil || items.IsGearType(spec.Type)) {
+			alwaysGraded = true
+		}
+	}
+	grade := gather.CraftGradeOutput(cr, consumed, hasTool, toolTier, alwaysGraded)
+	// An ungraded copy of a material the world grades (shop stock, which
+	// loses its grade) counts as standard for the input cap (review fix).
+	return capUngradedGradable(grade, consumed)
+}
+
+// CraftWood is the wood a crafted output inherits from what it was made of:
+// the first consumed item that carries a wood (a stave, a bundle of shafts),
+// else the first log of a known timber species. "" when nothing was wooden.
+func CraftWood(consumed []items.Item) string {
+	for _, itm := range consumed {
+		if itm.Wood != `` {
+			return itm.Wood
+		}
+	}
+	for _, itm := range consumed {
+		if sp := timber.SpeciesForLog(itm.ItemId); sp != nil {
+			return sp.Id
+		}
+	}
+	return ``
+}
+
+// StampWood gives a newly crafted item its wood when its spec carries one.
+func StampWood(itm *items.Item, wood string) {
+	if wood == `` || itm == nil {
+		return
+	}
+	if spec := items.GetItemSpec(itm.ItemId); spec != nil && spec.CarriesWood {
+		itm.Wood = wood
+	}
+}
+
+// WearRecipeTool wears the tool a finished craft used, if the recipe has one.
+func WearRecipeTool(actor Actor, recipe *crafting.RecipeSpec) {
+	if recipe == nil || recipe.Tool == `` || actor == nil {
+		return
+	}
+	t, ok := gather.BestTool(actor.GetCharacter(), recipe.Tool)
+	WearUsedTool(actor, t, ok)
+}
+
+// ToolName is a tool type as a player reads it ("bone saw").
+func ToolName(t items.ToolType) string {
+	return strings.ReplaceAll(string(t), `_`, ` `)
+}
+
+// AbandonCraft spends a craft's materials without making anything: the
+// crafter walked away from the work, or was carried off, before it was done
+// (wilderness trades review). The half-worked materials are ruined.
+func AbandonCraft(char *characters.Character, recipeId string) {
+	if char == nil {
+		return
+	}
+	recipe := crafting.GetRecipe(recipeId)
+	if recipe == nil {
+		return
+	}
+	char.Items, char.ComponentItems = crafting.ConsumeIngredients(char.Items, char.ComponentItems, recipe)
+}
+
+// JobLeftBehind reports whether an activity begun in startRoom must be given
+// up because the actor is now in a different room. startRoom 0 means the job
+// did not record one (any room will do).
+func JobLeftBehind(startRoom, currentRoom int) bool {
+	return startRoom != 0 && startRoom != currentRoom
 }

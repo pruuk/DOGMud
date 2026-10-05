@@ -35,9 +35,6 @@ combatcommands:
   - ''
 activitylevel: 25
 character:
-  items:
-    - itemid: 40163
-      dropchance: 65
   name: A Highland Stalker-Cat
   description: |
     Long and low, grey-dun with darker banding across the flanks
@@ -57,3 +54,8 @@ character:
     perception:
       base: 138
 itemdropchance: 65
+# Wilderness trades: the thick predator-pelt comes off with a knife now
+# (skin), not as loot. The species table supplies the meat and bone.
+harvest:
+  skin:
+    - {item: cascade-hide, qty: 1}

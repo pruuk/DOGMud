@@ -1,0 +1,17 @@
+id: alloy-bronze
+name: "Bronze Ingot"
+aliases: [bronze]
+skill: blacksmithing
+skill_minimum: 6
+station: forge
+time_rounds: 3
+ingredients:
+  - item_tag: copper-ingot
+    quantity: 2
+  - item_tag: tin-ingot
+    quantity: 1
+output:
+  item_id: 40266
+  quantity: 2
+success_actor: "You melt the copper, stir in the tin and pour two golden-brown ingots of bronze."
+failure_actor: "The alloy separates as it cools. The metal is wasted."

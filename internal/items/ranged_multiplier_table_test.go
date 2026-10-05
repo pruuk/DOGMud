@@ -39,6 +39,10 @@ func TestRangedWeaponMultipliers_MatchTheU10dTable(t *testing.T) {
 		10040: {"Primitive Pistol", 1.30},
 		10039: {"Hand Crossbow", 1.10},
 		10038: {"Sling", 0.75},
+		// Wilderness trades phase 5: woodwork bows, authored on the U10d line.
+		10058: {"Longbow", 2.30},
+		10059: {"Horn Composite Bow", 2.20},
+		10057: {"Self Bow", 1.70},
 	}
 
 	loadRealItemSpecsForTest(t)

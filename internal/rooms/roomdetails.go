@@ -109,18 +109,11 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		padding := 1
 		description := util.SplitString(details.Description, desclineWidth-padding)
 
-		for i := 0; i < len(tinymap[0]); i++ {
-			if i > len(description)-1 {
-				description = append(description, strings.Repeat(` `, desclineWidth))
-			}
-
-			padWidth := desclineWidth - util.VisibleWidth(description[i])
-			if padWidth < 0 {
-				padWidth = 0
-			}
-			description[i] += strings.Repeat(` `, padWidth) + tinymap[0][i]
-		}
-
+		// Nouns are highlighted in the prose BEFORE the tiny map is put
+		// beside it. Done after, a noun that is also a word inside the map's
+		// own markup ("map", "room", "cave", a legend name) was wrapped in a
+		// noun tag in the middle of an ansi attribute, and the map line
+		// rendered as raw markup.
 		if renderNouns && len(r.Nouns) > 0 {
 			for i := range description {
 				for noun, _ := range r.Nouns {
@@ -131,6 +124,18 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 					description[i] = strings.Replace(description[i], noun, `<ansi fg="noun">`+noun+`</ansi>`, 1)
 				}
 			}
+		}
+
+		for i := 0; i < len(tinymap[0]); i++ {
+			if i > len(description)-1 {
+				description = append(description, strings.Repeat(` `, desclineWidth))
+			}
+
+			padWidth := desclineWidth - util.VisibleWidth(description[i])
+			if padWidth < 0 {
+				padWidth = 0
+			}
+			description[i] += strings.Repeat(` `, padWidth) + tinymap[0][i]
 		}
 
 		details.Description = strings.Join(description, "\n")

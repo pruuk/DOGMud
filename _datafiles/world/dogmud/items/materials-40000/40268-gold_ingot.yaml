@@ -1,0 +1,17 @@
+itemid: 40268
+name: Gold Ingot
+namesimple: ingot
+description: >
+  A small, startlingly heavy bar of gold. It is soft as metals go and worth
+  a great deal.
+type: object
+subtype: mundane
+component_tag: gold-ingot
+weight: 0.15
+value: 160
+rarity_tier: 15
+is_component: true
+vendor_categories:
+- blacksmithing
+- jewelcrafting
+material_tier: 4

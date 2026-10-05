@@ -1,0 +1,16 @@
+id: rawhide-cord
+name: Rawhide Cord
+aliases: [cord]
+skill: tailoring
+skill_minimum: 0
+station: ""
+tool: knife
+time_rounds: 2
+ingredients:
+  - item_tag: gut
+    quantity: 2
+output:
+  item_id: 40353
+  quantity: 2
+success_actor: "You split the gut, twist it into cord and hang it to dry. Rawhide cord!"
+failure_actor: "The gut tears as you twist it. It is wasted."

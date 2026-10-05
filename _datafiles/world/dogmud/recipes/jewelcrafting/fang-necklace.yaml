@@ -1,0 +1,18 @@
+id: fang-necklace
+name: Fang Necklace
+aliases: [fangs]
+skill: jewelcrafting
+skill_minimum: 10
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 4
+ingredients:
+  - item_tag: fang
+    quantity: 3
+  - item_tag: cord
+    quantity: 1
+output:
+  item_id: 20112
+  quantity: 1
+success_actor: "You drill the fangs and string them on rawhide cord. A fang necklace!"
+failure_actor: "A fang splits under the drill and the set is spoiled."

@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -193,6 +194,14 @@ var (
 		`room`:            {Room, false, true, true},        // Admin only
 		`save`:            {Save, true, true, false},
 		`salvage`:         {Salvage, false, false, false}, // Can't salvage in combat
+		`skin`:            {Skin, false, false, false},    // Wilderness trades: not in combat
+		`butcher`:         {Butcher, false, false, false}, // Wilderness trades: not in combat
+		`harvest`:         {Harvest, false, false, false}, // Wilderness trades: not in combat
+		`chop`:            {Chop, false, false, false},    // Wilderness trades: fell a tree, not in combat
+		`survey`:          {Survey, false, true, false},   // Wilderness trades: read the timber here
+		`mine`:            {Mine, false, false, false},    // Wilderness trades: dig ore, not in combat
+		`prospect`:        {Prospect, false, true, false}, // Wilderness trades: read the ore here
+		`repair`:          {Repair, false, false, false},  // Wilderness trades: mend worn gear, not in combat
 		`say`:             {Say, true, true, false},
 		`scan`:            {Scan, false, true, false},
 		`search`:          {Search, false, true, false},
@@ -201,6 +210,8 @@ var (
 		`set`:             {Set, true, true, false},
 		`setdesc`:         {SetDesc, true, true, false},
 		`sethome`:         {SetHome, true, true, false},
+		`house`:           {House, true, false, false},
+		`visit`:           {Visit, false, false, false},
 		`setmotd`:         {SetMotd, true, true, true}, // Admin only
 		`share`:           {Share, false, true, false},
 		`fire`:            {Fire, false, true, false},
@@ -340,6 +351,10 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 		// two paths cannot drift apart on which verb a command resolves to.
 		cmd, rest = actions.ExpandAliases(cmd, rest, user.TryCommandAlias)
 		alias := cmd
+
+		// A house strongbox is kept locked; its owner's own command unlocks
+		// the strongboxes of the room they stand in for this command alone.
+		defer housing.OpenStrongboxesForUser(user.UserId, user.Character.RoomId)()
 
 		skipScript := flags.Has(events.CmdSkipScripts)
 		if info, ok := userCommands[alias]; ok && info.AdminOnly {
@@ -544,6 +559,16 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 		return Cast(castCmd, user, room, flags)
 	}
 
+	// A module's own words: a command nothing above claimed (a lens place
+	// typed at a rift's lens table, say), before it is tried as a way out.
+	if !userDisabled && !user.InputBlocked() {
+		for _, h := range fallbackHandlers {
+			if h(cmd, rest, user, room) {
+				return true, nil
+			}
+		}
+	}
+
 	// "go" attempt
 	start := time.Now()
 	defer func() {
@@ -557,6 +582,18 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 
 	return false, nil
 }
+
+// FallbackHandler gets a command no registered command, emote or spell
+// claimed, before it is tried as a way out. It returns true when it handled
+// it. It is for words a module recognises only in some places (a lens place
+// such as `1c` at a rift's lens table), which would otherwise have to be
+// registered as commands everywhere.
+type FallbackHandler func(cmd string, rest string, user *users.UserRecord, room *rooms.Room) bool
+
+var fallbackHandlers []FallbackHandler
+
+// AddFallbackHandler adds h (a module, at init).
+func AddFallbackHandler(h FallbackHandler) { fallbackHandlers = append(fallbackHandlers, h) }
 
 // GetAllUserCommands returns the names of all registered user commands.
 func GetAllUserCommands() []string {

@@ -1,0 +1,27 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">chop</ansi>
+
+Fell a tree and cut it into logs.
+
+  <ansi fg="command">chop</ansi>            fell whatever grows here
+  <ansi fg="command">chop <tree></ansi>     the same, checking the trees are what you expect
+
+You need an <ansi fg="yellow">axe</ansi>. A hatchet will do as a crude one, but a woodcutter's axe is
+far better and a steel felling axe better still (<ansi fg="command">help tools</ansi>). Felling takes
+a few rounds; harder woods take longer, and a better axe is quicker.
+
+Felling is labour: your <ansi fg="yellow">Strength</ansi> and <ansi fg="yellow">Vitality</ansi> and your axe decide how it
+goes, not any skill. A strong woodcutter gets more logs from each tree. The
+logs are graded like any other material, and your axe caps the grade.
+A felled tree may also give branches (whittle them into arrow shafts) and
+bark (oak bark and birch bark tan leather; pine gives pitch).
+
+Logs are heavy. You will not carry many at once, so plan the trip home, or
+sell them at the Cascade Pass lumber camp.
+
+Every forest room holds only so many good trees. Fell them all and the stand
+is cut back to stumps until it regrows, about one tree an hour, and it may
+grow back as something else. Woods next door tend to grow the same trees.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help survey</ansi>, <ansi fg="command">help lumberjacking</ansi>, <ansi fg="command">help woodwork</ansi>, <ansi fg="command">help tools</ansi>

@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"math"
+	"regexp"
 
 	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -129,6 +130,16 @@ func resolveMerchant(room *rooms.Room, probe items.Item, playerSale bool) (*mobs
 	if probe.IsBauble() {
 		return bestBaubleMerchant(room, probe, playerSale)
 	}
+	if probe.IsStolen() {
+		// Stolen goods go to a fence when there is one (it pays its cut,
+		// hot or cold); without one, only where they are not hot.
+		if mob, inv := fenceInRoom(room, probe); mob != nil {
+			return mob, inv
+		}
+		if stolenGoodsHotHere(probe, room) {
+			return nil, nil
+		}
+	}
 	for _, mobId := range room.GetMobs(rooms.FindMerchant) {
 		mob := mobs.GetInstance(mobId)
 		if mob == nil {
@@ -218,7 +229,13 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 			// more for stolen goods only; a merchant runs out of gold).
 			// A real item after a bauble gets its own merchant too, not
 			// the bauble's buyer; until then real items keep the probe's.
-			if out.Sold > 0 && (next.IsBauble() || baubleSold) {
+			// Clean copies sell before stolen ones (sellFindItemInChar), so
+			// once the next is stolen and the buyer is honest, the stolen
+			// ones go to a fence if one is here (resolveMerchant), else an
+			// honest merchant takes them where they are not hot and
+			// refuses them where they are.
+			needsFence := next.IsStolen() && !IsFence(mob)
+			if out.Sold > 0 && (next.IsBauble() || baubleSold || needsFence) {
 				if m, inv := resolveMerchant(room, next, seller.IsPlayer()); m != nil {
 					mob, shopInv = m, inv
 				} else if m, inv := firstMerchantInRoom(room); m != nil {
@@ -265,7 +282,13 @@ func sellSweep(seller Actor, room *rooms.Room) SellResult {
 		if mob == nil {
 			continue
 		}
-		value, res := sellOneToMerchant(seller, itm.Name(), room, mob, shopInv, !soldAny)
+		// Sell exactly this item: by name, the clean-copy preference could
+		// hand a fence the clean twin of a stolen item it was resolved for.
+		name := itm.Name()
+		if !itm.UUID.IsNil() {
+			name = characters.ItemHandleSigil + itm.UUID.String()
+		}
+		value, res := sellOneToMerchant(seller, name, room, mob, shopInv, !soldAny)
 		if res == SellStopSoldAll {
 			if soldAny && spec.Name != out.LastItemName {
 				out.Mixed = true
@@ -311,6 +334,12 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 		}
 		return 0, SellStopRejected
 	}
+	// Housing deeds, vouchers and keys: what was paid for them is gone for
+	// good, and no merchant gives any of it back (items.IsNeverBought).
+	if items.IsNeverBought(itemSpec.ItemId) {
+		merchantSay(room, mob, "That's lodging-house paper. It's no good to me, and I'll not give you a coin for it.")
+		return 0, SellStopRejected
+	}
 
 	char.CancelConditionsWithFlag(conditions.Hidden)
 	// Baubles (docs/baubles): catalog-priced; a player's average or rare one
@@ -318,6 +347,19 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 	// sell_bauble.go.
 	if item.IsBauble() {
 		return sellBaubleToMerchant(seller, item, room, mob, shopInv, awardProgression)
+	}
+	// Stolen goods (a merchant chest's, internal/merchantchests): a fence
+	// buys them at its cut; an honest merchant refuses them while they are
+	// hot here, and otherwise buys them as ordinary goods below. See
+	// sell_stolen.go.
+	if item.IsStolen() {
+		if IsFence(mob) {
+			return sellStolenToFence(seller, item, room, mob, shopInv, awardProgression)
+		}
+		if stolenGoodsHotHere(item, room) {
+			merchantSay(room, mob, StolenGoodsRefusal(mob, item))
+			return 0, SellStopRejected
+		}
 	}
 	// Affixed instance loot is sellable despite carrying a per-instance Spec;
 	// every other custom-spec item (enchanted / blob / uses) stays blocked.
@@ -388,6 +430,10 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 
 	// Stock update (merchant side). Living-economy shops store the exact affixed
 	// item for resale; legacy shops (shopInv == nil) melt it.
+	// Forged tools are never shelved; nor is broken or badly worn gear, which
+	// a shop buys as scrap: shelving it as a fresh copy laundered the wear
+	// away and made repair never worth paying for (review fix).
+	noResale := items.NeverResold(itemSpec) || item.WearFraction() >= items.BadlyWornFraction
 	if item.Affixed {
 		if shopInv != nil {
 			c := int(configs.GetBalanceConfig().ShopAffixedStockCap)
@@ -397,6 +443,16 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 			if err := shops.SaveShop(shopInv.Zone, shopInv.MobId, shopInv.RoomId); err != nil {
 				mudlog.Error("SELL", "msg", "SaveShop failed", "error", err)
 			}
+		}
+	} else if shopInv != nil && noResale {
+		// A forged tool (iron and better) is bought for its metal and never
+		// shelved: good tools come only from a smith's own hands. Broken
+		// gear is bought as scrap. The shop remembers the buy so the next
+		// one pays a little less (shops.ShopInventory.Scrap).
+		shopInv.AddScrap(item.ItemId, util.GetRoundCount())
+		shopInv.BuysCount++
+		if err := shops.SaveShop(mob.Zone, int(mob.MobId), mob.HomeRoomId); err != nil {
+			mudlog.Error("SELL", "msg", "SaveShop failed", "error", err)
 		}
 	} else if shopInv != nil {
 		shopInv.BuysCount++
@@ -436,7 +492,7 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 		if err := shops.SaveShop(mob.Zone, int(mob.MobId), mob.HomeRoomId); err != nil {
 			mudlog.Error("SELL", "msg", "SaveShop failed", "error", err)
 		}
-	} else {
+	} else if !noResale {
 		mob.Character.Shop.StockItem(item.ItemId)
 	}
 
@@ -456,9 +512,55 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 	return sellValue, SellStopSoldAll
 }
 
-// sellFindItemInChar searches backpack → potions → components for a match.
+// explicitItemPick matches a name that already says which copy it means:
+// an ordinal (`2.ingot`, `ingot#2`) or an item handle (`@<uuid>`).
+var explicitItemPick = regexp.MustCompile(`^\s*(\d+\.|` + regexp.QuoteMeta(characters.ItemHandleSigil) + `)|#\d+\s*$`)
+
+// findCleanIn matches name among the pool's items that are not stolen.
+func findCleanIn(name string, pool []items.Item) (items.Item, bool) {
+	clean := make([]items.Item, 0, len(pool))
+	for _, it := range pool {
+		if !it.IsStolen() {
+			clean = append(clean, it)
+		}
+	}
+	close, full := items.FindMatchIn(name, clean...)
+	if full.ItemId != 0 {
+		return full, true
+	}
+	if close.ItemId != 0 {
+		return close, true
+	}
+	return items.Item{}, false
+}
+
+// SellFindItemInChar searches backpack → potions → components for a match.
+// In the backpack a clean copy is preferred over a stolen one, so `sell
+// ingot` sells your own iron before the stolen bar that happens to sit
+// first. A name that picks its copy explicitly (explicitItemPick) is taken
+// at its word: `sell 2.ingot` is the second ingot in the pack, as ever.
+// offer resolves through this too, so it quotes the copy sell would sell.
+func SellFindItemInChar(char *characters.Character, name string) (items.Item, bool) {
+	return sellFindItemInChar(char, name)
+}
+
 func sellFindItemInChar(char *characters.Character, name string) (items.Item, bool) {
-	item, found := char.FindInBackpack(name)
+	var item items.Item
+	found := false
+	if !explicitItemPick.MatchString(name) {
+		// A clean copy anywhere the seller carries goods, before any stolen
+		// one: the backpack, then the bandolier and the component bag.
+		item, found = char.FindInBackpackWhere(name, func(i items.Item) bool { return !i.IsStolen() })
+		if !found {
+			item, found = findCleanIn(name, char.PotionItems)
+		}
+		if !found {
+			item, found = findCleanIn(name, char.ComponentItems)
+		}
+	}
+	if !found {
+		item, found = char.FindInBackpack(name)
+	}
 	if !found {
 		item, found = char.FindInPotions(name)
 	}

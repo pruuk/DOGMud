@@ -2191,3 +2191,11 @@ own identical terms (converging that is not Task 17's mandate).
 
 All damage flows through `damage_pipeline.go`. Never emit a raw number to a
 player — use `descriptions.go`.
+
+`OnCritLanded(attacker, defender, strikeWith)` (skill_moves.go) is called
+after a skill move or shot lands a damaging critical hit; `internal/hooks`
+sets it to wear gear (gear_wear.go). `SkillMoveParams.StrikeWith` names the
+attacker's item that delivered the move (the wielded weapon for a
+counter-swing, the shield for a bash); nil for body moves, which wear
+nothing of the attacker's. `WeaponHitInfo.Weapon` records which item each
+melee weapon entry swung. Nil in this package's tests.

@@ -1,0 +1,18 @@
+itemid: 40306
+name: Cat Pelt
+namesimple: pelt
+description: >
+  A tawny, close-furred pelt from one of the great cats, sleek and quiet
+  to the touch. Hunters say a hood of it walks softer than bare skin.
+type: object
+subtype: mundane
+component_tag: cat-pelt
+weight: 0.8
+value: 14
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 2
+spoil_after: 4 days

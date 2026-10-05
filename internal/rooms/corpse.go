@@ -32,6 +32,64 @@ type Corpse struct {
 	// maps to the leader. Layered on top of ownership (LootAllowed) via
 	// CanTakeItem.
 	RRAssignee map[string]int
+
+	// Wilderness trades: what has already been taken off the carcass.
+	// Skinned and Butchered close a whole section; HarvestedParts records
+	// single parts taken with `harvest <corpse> <part>` (component tags), so
+	// a later skin or butcher does not take them twice. A corpse that is both
+	// skinned and butchered, with no loot left, is removed.
+	Skinned        bool
+	Butchered      bool
+	HarvestedParts []string
+}
+
+// PartTaken reports whether a single part (component tag) has already been
+// taken off this carcass.
+func (c *Corpse) PartTaken(tag string) bool {
+	for _, t := range c.HarvestedParts {
+		if t == tag {
+			return true
+		}
+	}
+	return false
+}
+
+// Spent reports whether nothing is left to take from the carcass.
+func (c *Corpse) Spent() bool {
+	return c.Skinned && c.Butchered
+}
+
+// Staleness is how far through its decay this corpse is at round now, from
+// 0.0 (fresh) to 1.0 (about to crumble). decayRate is the CorpseDecayTime
+// period, as Update takes it. A carcass going off yields worse material.
+func (c *Corpse) Staleness(roundNow uint64, decayRate string) float64 {
+	if decayRate == `` {
+		decayRate = `1 week`
+	}
+	end := gametime.GetDate(c.RoundCreated).AddPeriod(decayRate)
+	if end <= c.RoundCreated || roundNow <= c.RoundCreated {
+		return 0
+	}
+	if roundNow >= end {
+		return 1
+	}
+	return float64(roundNow-c.RoundCreated) / float64(end-c.RoundCreated)
+}
+
+// ProcessedNote is the line `look` adds for a carcass that has been worked,
+// or "" for one that has not.
+func (c *Corpse) ProcessedNote() string {
+	switch {
+	case c.Skinned && c.Butchered:
+		return `It has been skinned and butchered; little is left but bone and scraps.`
+	case c.Skinned:
+		return `It has been skinned.`
+	case c.Butchered:
+		return `It has been butchered.`
+	case len(c.HarvestedParts) > 0:
+		return `Someone has already cut parts from it.`
+	}
+	return ``
 }
 
 // CanTakeItem reports whether userId may take this item now, layering loot-mode

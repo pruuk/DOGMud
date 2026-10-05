@@ -1,0 +1,17 @@
+id: masterwork-bone-saw
+name: Masterwork Bone Saw
+aliases: [mwbonesaw]
+skill: blacksmithing
+skill_minimum: 50
+station: forge
+time_rounds: 10
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 2
+  - item_tag: ironwood-haft
+    quantity: 1
+output:
+  item_id: 40249
+  quantity: 1
+success_actor: "You cut a hundred fine teeth into crucible steel, set and temper them and fit ironwood. A masterwork bone saw!"
+failure_actor: "The teeth shear off in the temper. The crucible steel is ruined."

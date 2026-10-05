@@ -1,0 +1,18 @@
+itemid: 20118
+name: Tuskbound Torc
+vendor_categories:
+- jewelcrafting
+namesimple: torc
+description: >
+  A heavy gold torc whose two ends are a matched pair of trophy tusks, sawn
+  out whole and polished to ivory. Only a steel saw takes tusks like these
+  without splitting them.
+type: neck
+subtype: wearable
+weight: 0.6
+value: 320
+rarity_tier: 15
+physical_mitigation: 2
+statmods:
+  strength: 4
+  vitality: 2

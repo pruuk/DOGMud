@@ -1,0 +1,59 @@
+mobid: 9840
+zone: Stillwater
+# Wilderness trades: a marsh trapper at the travelers' camp outside the north
+# gate. She buys anything off a carcass (hunting goods) and sells the crude
+# tools a beginner needs. Iron and better come only from a player's forge.
+craft_support: hunting
+behavior_archetype: noncombat_shopkeeper
+non_combatant: true
+charm_immune: true
+hostile: false
+statpool: 30
+maxwander: 0
+groups:
+  - humanoid
+idlecommands:
+  - 'emote turns a muskrat pelt on its stretcher and runs a thumb against the
+    lie of the fur.'
+  - ''
+  - 'emote re-twists a snare loop of brass wire and hangs it with the others
+    on the wagon wheel.'
+  - ''
+  - 'emote scrapes marsh mud from her boots with a flat stick, without much
+    hope.'
+  - ''
+  - 'emote holds a hide up to the light, looking for knife-scores.'
+  - ''
+activitylevel: 10
+character:
+  name: Trapper Maudry
+  description: |
+    A short, square woman in a waxed coat that has been patched with every
+    kind of leather the marsh has to offer. She works the reed-beds east of
+    Stillwater from autumn to thaw and sells what she takes from the back of
+    a borrowed cart at the travelers' camp. Pelts hang from its rails on
+    stretchers of bent willow; a crate of snares and crude blades sits on the
+    tailboard. She buys from anyone who brings in a clean hide, and she can
+    tell at a glance whether it was skinned with a good knife or a bad one.
+  speciesid: 1
+  level: 1
+  gold: 400
+  equipment:
+    light:
+      itemid: 40038   # oil lantern: a shop must be light enough to trade in at night
+  shop:
+    # Only crude tools: iron and better come from a player's forge.
+    - itemid: 10061   # flint skinning knife
+    - itemid: 10063   # butcher's chopper
+    - itemid: 40243   # flint scraper
+    - itemid: 40244   # flint sickle
+    - itemid: 40017   # salt pouch
+    # Fletching supplies for archers (review): feathers and arrowheads.
+    - itemid: 40316   # feathers
+    - itemid: 40421   # iron arrowheads
+    - itemid: 40357   # bone arrowheads
+  stats:
+    perception:
+      base: 106
+    dexterity:
+      base: 104

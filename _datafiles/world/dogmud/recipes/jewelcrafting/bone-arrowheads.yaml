@@ -1,0 +1,16 @@
+id: bone-arrowheads
+name: Bone Arrowheads
+aliases: [arrowheads]
+skill: jewelcrafting
+skill_minimum: 5
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 3
+ingredients:
+  - item_tag: bone
+    quantity: 2
+output:
+  item_id: 40357
+  quantity: 1
+success_actor: "You grind small barbed points from the bone. Bone arrowheads!"
+failure_actor: "The points chip as you grind them. The bone is wasted."

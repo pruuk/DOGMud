@@ -1,0 +1,15 @@
+id: draw-copper-wire
+name: "Copper Wire"
+aliases: [drawcopper]
+skill: jewelcrafting
+skill_minimum: 0
+station: jeweler_bench
+time_rounds: 2
+ingredients:
+  - item_tag: copper-ingot
+    quantity: 1
+output:
+  item_id: 40021
+  quantity: 3
+success_actor: "You draw the copper through the plate, finer each pass, into three coils of wire."
+failure_actor: "The wire snaps and tangles. The copper is wasted."

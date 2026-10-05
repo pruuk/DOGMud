@@ -1,0 +1,18 @@
+itemid: 40252
+name: Masterwork Sickle
+namesimple: sickle
+description: >
+  A sickle of crucible steel on an ironwood haft, its crescent edge keen
+  enough to take a single leaf from a stem.
+type: object
+subtype: mundane
+weight: 0.6
+value: 120
+rarity_tier: 15
+vendor_categories:
+- blacksmithing
+- alchemy
+tool:
+  type: sickle
+  tier: 4
+  speed: 1.3

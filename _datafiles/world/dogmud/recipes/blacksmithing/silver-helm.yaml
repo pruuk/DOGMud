@@ -1,0 +1,17 @@
+id: silver-helm
+name: "Silver Helm"
+aliases: [silverhelm]
+skill: blacksmithing
+skill_minimum: 22
+station: forge
+time_rounds: 6
+ingredients:
+  - item_tag: silver-ingot
+    quantity: 3
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 20131
+  quantity: 1
+success_actor: "You work the silver into shape. A silver helm!"
+failure_actor: "The silver tears as you work it. The metal is wasted."

@@ -34,3 +34,16 @@ damage:
   variance: 4
 damage_multiplier: 1.25
 disabledslots: ['weapon', 'offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet']
+# Wilderness trades: what a carcass gives to skin and butcher. Quantities
+# are for a medium body (small halves, large doubles). See species/harvest.go.
+harvest:
+  skin:
+    - {item: bear-fur, qty: 1}                      # large: two furs
+    - {itemid: 40257, qty: 1, rare: true, chance: 0.3, min_tool: 4}    # great bear pelt: masterwork knife
+  butcher:
+    - {item: raw-meat, qty: 2}
+    - {item: sinew, qty: 1}
+    - {item: bone, qty: 2, tool: cleaver}
+    - {item: animal-fat, qty: 1, tool: cleaver}
+    - {item: claw, qty: 1, tool: bone_saw, rare: true, chance: 0.3}
+    - {item: bear-gall, qty: 1, rare: true, chance: 0.1}

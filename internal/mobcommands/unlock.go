@@ -28,6 +28,10 @@ func Unlock(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	container := room.Containers[containerName]
 
+	if container.IsSealedShut() {
+		return true, nil // no key opens it
+	}
+
 	if !container.Lock.IsLocked() {
 		// Already unlocked — nothing to do, return silently.
 		return true, nil

@@ -49,3 +49,6 @@ idlemessages:
 - Dust rises from the yard's packed earth as a barrow is wheeled to a new spot.
 x: -7
 y: -69
+spawninfo:
+  - mobid: 9826
+    respawnrate: "30 real minutes"

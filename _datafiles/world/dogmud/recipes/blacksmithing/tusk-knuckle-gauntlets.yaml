@@ -1,0 +1,19 @@
+id: tusk-knuckle-gauntlets
+name: "Tusk-Knuckle Gauntlets"
+aliases: [tuskgauntlets]
+skill: blacksmithing
+skill_minimum: 48
+station: forge
+time_rounds: 10
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 2
+  - item_tag: trophy-tusks
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 2
+output:
+  item_id: 20122
+  quantity: 1
+success_actor: "You forge articulated crucible steel plates and set a ridge of tusk over the knuckles. Tusk-knuckle gauntlets!"
+failure_actor: "The plates bind and crack at the joints. The crucible steel is ruined."

@@ -1,0 +1,17 @@
+id: iron-sickle
+name: Iron Sickle
+aliases: [sickle]
+skill: blacksmithing
+skill_minimum: 2
+station: forge
+time_rounds: 2
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 1
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 40240
+  quantity: 1
+success_actor: "You hammer a crescent blade, grind the inner edge, and set it in a short handle. An iron sickle!"
+failure_actor: "The crescent warps in the quench. The iron is wasted."

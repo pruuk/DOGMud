@@ -1,0 +1,18 @@
+itemid: 20123
+name: Prime Wolf Cloak
+vendor_categories:
+- tailoring
+namesimple: cloak
+description: >
+  A cloak of two prime winter wolf pelts, masks and brushes still on,
+  stitched fur-in. It is warm, silent, and it makes its wearer feel the
+  night the way a wolf does.
+type: back
+subtype: wearable
+weight: 2.5
+value: 180
+rarity_tier: 15
+physical_mitigation: 2
+statmods:
+  perception: 3
+  dexterity: 2

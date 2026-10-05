@@ -1,0 +1,16 @@
+itemid: 40353
+name: Rawhide Cord
+namesimple: cord
+description: >
+  A length of tough twisted cord made from dried gut.
+type: object
+subtype: mundane
+component_tag: cord
+weight: 0.1
+value: 4
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- jewelcrafting
+material_tier: 1

@@ -44,7 +44,35 @@ func (m *AICompanionModule) onNewRound(e events.Event) events.ListenerReturn {
 	// config is written (apiframework.RefreshServer).
 	apiframework.RefreshServer()
 	m.sync(evt.RoundNumber)
+	if evt.RoundNumber%600 == 0 {
+		m.releaseLapsed(time.Now())
+	}
+	m.tendHollow(evt.RoundNumber)
 	m.dispatchAll()
+	return events.Continue
+}
+
+// onCombatRound runs each standing companion's fight. It is registered
+// First on the round, ahead of the engine's combat hook: her behaviour tree
+// runs inside that hook and claims the shared special move cooldown, so a
+// reflex chosen here after it would always find the cooldown spent and be
+// dropped. Only a controller the previous round's sync passed (owner online,
+// she is theirs, standing, not sneaking) is run.
+func (m *AICompanionModule) onCombatRound(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.NewRound)
+	if !ok || !m.cfg.Enabled {
+		return events.Continue
+	}
+	for userId, c := range m.ctrls {
+		if c.instanceId == 0 || c.standRound == 0 || c.standRound+1 < evt.RoundNumber {
+			continue
+		}
+		u := users.GetByUserId(userId)
+		if u == nil || u.Character == nil || m.sneaking(c, u) {
+			continue
+		}
+		m.combatTick(c, u, evt.RoundNumber)
+	}
 	return events.Continue
 }
 
@@ -68,13 +96,29 @@ func (m *AICompanionModule) sync(round uint64) {
 	seen := map[int]bool{}
 
 	for _, u := range users.GetAllActiveUsers() {
+		m.hintHollow(u)
 		comp, p := m.bondedCompanionOf(u)
 		if comp == nil {
-			if m.cfg.Enabled {
-				m.considerMeeting(u, round)
+			// The roster says this character has her, but it carries no
+			// record of her (dismissed while the module was off, or parted
+			// before her mind took her up): she would never come back to
+			// the Hollow, and they could never win anyone else. Free her.
+			if held := m.heldBy(u.UserId); held != nil && m.holdsHer(held, u) {
+				m.unclaim(held, partSentAway)
+				mudlog.Info(`aicompanion`, `action`, `release`, `profile`, held.Id, `owner`, u.UserId, `reason`, `no record of her`)
 			}
 			continue
 		}
+		// There is one of each companion, and the roster says who has her.
+		// A record that still carries one the roster gives to nobody else
+		// (an owner away too long, an admin release, a companion fielded
+		// before there was one of each, another character on the same
+		// account) loses her here.
+		if !m.holdsHer(p, u) {
+			m.reclaimFrom(u, p)
+			continue
+		}
+		m.seeOwner(p, now.Unix())
 		seen[u.UserId] = true
 
 		c := m.ctrls[u.UserId]
@@ -143,6 +187,14 @@ func (m *AICompanionModule) sync(round uint64) {
 			c.dirty = true
 		}
 
+		// Too far gone: trust and affection both at the bottom. She does
+		// not ask to go, she goes, a couple of rounds from now.
+		if c.leaveAt == 0 && m.abandons(c.mind.Opinion) {
+			c.leaveAt = round + 2
+			if c.leaveWhy == `` {
+				c.leaveWhy = partCantBear
+			}
+		}
 		if c.leaveAt > 0 && round >= c.leaveAt {
 			m.leave(c, u, c.leaveWhy)
 			continue
@@ -162,7 +214,7 @@ func (m *AICompanionModule) sync(round uint64) {
 		m.maybeThink(c, now)
 		m.watchParty(c, u)
 		m.tendPurpose(c, round, now)
-		m.combatTick(c, u, round)
+		c.standRound = round // her fight is run by onCombatRound
 		m.snapshotIfDue(c, round)
 
 		// Goodbye. `quit` starts condition 0 (a short meditation) and the
@@ -202,7 +254,7 @@ func (m *AICompanionModule) sync(round uint64) {
 // date is kept whatever they have agreed to, the memory (their name) only
 // once they have agreed, and she introduces herself in her own words only
 // then; agreeing later writes it and queues that introduction
-// (keepFirstMeeting, from answerConsent and companion-ai on).
+// (keepFirstMeeting, from companion-ai on).
 func (m *AICompanionModule) firstMet(c *controller, u *users.UserRecord, now int64) {
 	c.mind.FirstMetUnix = now
 	m.keepFirstMeeting(c, u)
@@ -349,6 +401,11 @@ func (m *AICompanionModule) detach(c *controller, ownerName string) {
 	}
 	now := time.Now().Unix()
 	c.mind.LastSeenUnix = now
+	m.keepFrom(c)
+	if c.profile != nil {
+		m.seeOwner(c.profile, now)
+	}
+	m.saveRoster()
 
 	// Time spent together (F5.2): a session of ten minutes or more nudges
 	// affection and trust up a little, only while they are still modest.
@@ -363,10 +420,12 @@ func (m *AICompanionModule) detach(c *controller, ownerName string) {
 		c.mind.applyOpinion(d, `time_together`, `rule`, `a session spent together`, false)
 	}
 
-	if err := saveMind(m.plug, c.mind); err != nil {
+	if m.plug == nil {
+		// built without storage, as the tests build her
+	} else if err := saveMind(m.plug, c.mind); err != nil {
 		mudlog.Error(`aicompanion`, `action`, `saveMind`, `owner`, c.ownerUserId, `error`, err)
 	}
-	if n := m.cfg.BackupEverySessions; n > 0 && c.mind.SessionCount%n == 0 {
+	if n := m.cfg.BackupEverySessions; m.plug != nil && n > 0 && c.mind.SessionCount%n == 0 {
 		if err := saveMindBackup(m.plug, c.mind); err != nil {
 			mudlog.Error(`aicompanion`, `action`, `saveMindBackup`, `owner`, c.ownerUserId, `error`, err)
 		}
@@ -519,6 +578,7 @@ func (m *AICompanionModule) dispatch(c *controller) {
 		OwnPhrases:   c.mind.OwnPhrases,
 		Craft:        craftLines(c.profile, skillWords(mob, &c.profile.Archetype)),
 		Recipes:      craftLinesFor(craftableHere(mob, c.profile, rooms.LoadRoom(mob.Character.RoomId))),
+		RecipesAway:  craftableElsewhere(mob, c.profile, rooms.LoadRoom(mob.Character.RoomId)),
 		Spells:       spellLines(spellsReady(mob)),
 		Pack:         packLines(mob, c.profile, c.mind),
 		Prices:       priceLines(mob, c.profile, c.mind, now.Unix()),
@@ -531,13 +591,13 @@ func (m *AICompanionModule) dispatch(c *controller) {
 		Talk:         talkLines(rooms.LoadRoom(mob.Character.RoomId), mob, m.cfg.RoadTalkLines),
 		Romance:      romanceLines(c.mind, c.profile, owner.Character.Name),
 		Intimacy:     intimacyGuidance(c.mind, c.profile),
-		Capabilities: capabilityWords(m.cfg),
+		Capabilities: capabilityWordsFor(m.cfg, c.profile),
 		LastIntent:   c.lastIntent,
 		Doing:        doingLines(c),
 	}
 	if c.fight != nil {
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-			in.Fight = fightLines(c.fight, room, mob, owner)
+			in.Fight = fightLines(c.fight, room, mob, owner, c.profile.ammoWord())
 		}
 	}
 
@@ -1147,6 +1207,17 @@ func (m *AICompanionModule) speak(c *controller, mob *mobs.Mob, lines []SpeechLi
 // fallback answers without a model: a short authored emote from the
 // profile, and only when something called for a response.
 func (m *AICompanionModule) fallback(c *controller, mob *mobs.Mob, stims []stimulus) {
+	// She speaks only to players who bring their own key: to anyone else,
+	// her owner included, she gives no answer at all, not even set lines.
+	if m.cfg.RequirePlayerKey {
+		who := strangerBehind(stims, c.ownerUserId)
+		if who == 0 {
+			who = c.ownerUserId
+		}
+		if !m.hasOwnKey(who) {
+			return
+		}
+	}
 	var pool []string
 	for _, s := range stims {
 		switch s.Kind {
@@ -1312,6 +1383,24 @@ func (m *AICompanionModule) snapshotIfDue(c *controller, round uint64) {
 	if companionai.Snapshot(c.ownerUserId) {
 		c.lastSnapshot = round
 		c.snapshotDue = false
+		m.keepFrom(c)
+	}
+}
+
+// keepFrom copies what a companion has learned into the roster, so it goes
+// with her if she leaves this owner while they are away (roster.go).
+func (m *AICompanionModule) keepFrom(c *controller) {
+	if c == nil || c.profile == nil || m.holderOf(c.profile.Id) != c.ownerUserId {
+		return
+	}
+	if mob := mobs.GetInstance(c.instanceId); c.instanceId > 0 && mob != nil {
+		m.keepProgress(c.profile, progressOfMob(mob))
+		return
+	}
+	if u := users.GetByUserId(c.ownerUserId); u != nil {
+		if comp, p := m.bondedCompanionOf(u); comp != nil && p.Id == c.profile.Id {
+			m.keepProgress(c.profile, progressOfInfo(comp))
+		}
 	}
 }
 

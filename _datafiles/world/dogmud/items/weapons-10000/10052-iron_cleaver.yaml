@@ -1,0 +1,23 @@
+itemid: 10052
+name: Iron Cleaver
+vendor_categories:
+- blacksmithing
+- cooking
+namesimple: cleaver
+description: >
+  A heavy rectangular blade on a stout wooden handle, its spine thick enough to drive through a joint with one stroke. Butchers swear by them; fighters do not.
+type: weapon
+hands: 1
+subtype: cleaving
+weight: 2.0
+speedmultiplier: 0.85
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.5
+parryrating: 3
+value: 12
+rarity_tier: 40
+tool:
+  type: cleaver
+  tier: 2

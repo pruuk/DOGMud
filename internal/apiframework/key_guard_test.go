@@ -87,7 +87,7 @@ func keyPrints(name string, src []byte, messages bool) ([]string, error) {
 
 func TestNoTestPrintsAKey(t *testing.T) {
 	checked := 0
-	for dir, messages := range map[string]bool{`.`: true, `../../modules/baubles`: true, `../../modules/aicompanion`: false} {
+	for dir, messages := range map[string]bool{`.`: true, `../../modules/baubles`: true, `../../modules/aicompanion`: false, `../../modules/npcidle`: true, `../../modules/roomlife`: true, `../../modules/lookdetail`: true, `../../modules/rifts`: true, `../lively`: true} {
 		files, err := filepath.Glob(filepath.Join(dir, `*_test.go`))
 		if err != nil || len(files) == 0 {
 			t.Fatalf("no test files found in %s", dir)

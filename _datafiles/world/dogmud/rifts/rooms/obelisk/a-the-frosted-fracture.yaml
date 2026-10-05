@@ -1,0 +1,48 @@
+id: a-the-frosted-fracture
+pool: A
+source: authored
+title: The Frosted Fracture
+description: >-
+  This is less a passage than a wound. A fracture splits the Obelisk here
+  from floor to ceiling, and you walk inside it, between two raw faces of
+  crystal that do not quite match. Frost coats everything. It grows in long
+  white feathers from every hairline crack, and all the feathers lean the
+  same way, deeper in, like grass in a steady wind. Your breath turns to a
+  fine glitter that falls and tinkles on the floor. Where you put your hand
+  the frost melts away, and when you lift it the rime has already grown
+  back, whole and unmarked, as though you were never there. Far above, the
+  fracture narrows to a line, and through that line comes no light at all.
+nouns:
+  frost: >-
+    The rime is thick and dry and very old. Scrape a little away and
+    beneath it the crystal is clouded and dull, no longer black but grey,
+    as if it had forgotten what it was. The clouding spreads outward from
+    each crack in fine veins. The frost seems to be all that holds it from
+    spreading farther.
+  feathers: >-
+    Each feather of frost is long and finely branched, and every one
+    points inward, toward the heart of the Obelisk, never toward the way
+    out. Breathe on one and it bends away from your breath, then swings
+    back to point the same way, patient as a compass needle.
+  faces: >-
+    The two walls of the fracture were once a single piece. Here and there
+    you can still match them: half a row of round marks on the left, the
+    other half on the right, a hand's breadth apart. Read together, the
+    marks run on unbroken. The fracture split a sentence in two.
+  glitter: >-
+    Your breath freezes as it leaves you and falls as a fine glitter that
+    rings faintly on the floor. Among it lie older flakes, larger and
+    paler, that do not melt when you warm them in your palm. They glow,
+    very faintly, the colour of a candle seen through ice.
+idlemessages:
+  - "Frost creeps across the place you last touched, and the wall is whole again."
+  - "A long crack in the wall ticks, and its feathers of frost tremble."
+doors:
+  - exit: fissure
+    description: >-
+      Deeper in, the fracture forks, and the larger branch, a rift
+      furred with white frost, leans away into a darker cold.
+  - exit: undercroft
+    description: >-
+      Below a lip of broken crystal a low undercroft opens where the
+      floor has dropped a little, its ceiling hung with rime.

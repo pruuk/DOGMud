@@ -1,0 +1,17 @@
+itemid: 40416
+name: Birch Bark
+namesimple: bark
+description: >
+  Curling sheets of white birch bark. Steeped, it tans leather; dry, it
+  catches fire from a spark.
+type: object
+subtype: mundane
+component_tag: birch-bark
+weight: 0.2
+value: 3
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+- tailoring
+material_tier: 1

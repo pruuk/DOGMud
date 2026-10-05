@@ -1,0 +1,18 @@
+itemid: 40253
+name: Crucible Steel
+namesimple: ingot
+description: >
+  A small, heavy ingot of steel melted down with basalt-iron in a sealed
+  crucible and cooled for a day. Its surface shows a faint watered pattern.
+  Only a master smith can work it, and only a master's tools are worth the
+  trouble.
+type: object
+subtype: mundane
+component_tag: crucible-steel
+weight: 0.2
+value: 45
+rarity_tier: 15
+is_component: true
+vendor_categories:
+- blacksmithing
+material_tier: 4

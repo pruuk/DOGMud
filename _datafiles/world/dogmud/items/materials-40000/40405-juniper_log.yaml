@@ -1,0 +1,15 @@
+itemid: 40405
+name: Juniper Log
+namesimple: log
+description: >
+  A twisted length of juniper, the reddish heartwood fragrant enough to
+  smell from a pace away.
+type: object
+subtype: mundane
+component_tag: softwood-log
+weight: 8
+value: 3
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 1

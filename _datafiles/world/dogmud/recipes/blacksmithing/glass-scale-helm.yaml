@@ -1,0 +1,19 @@
+id: glass-scale-helm
+name: Glass-Scale Helm
+aliases: [glasshelm]
+skill: blacksmithing
+skill_minimum: 48
+station: forge
+time_rounds: 9
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 3
+  - item_tag: coal-dust
+    quantity: 1
+  - item_tag: obelisk-lens
+    quantity: 12
+output:
+  item_id: 20100
+  quantity: 1
+success_actor: "You raise a close steel cap and scale it over in black lenses, brow to nape, each one seated a hair's breadth over the last. A glass-scale helm!"
+failure_actor: "The steel cools a breath too fast under the lenses and they spring loose one after another, ringing on the floor. The materials are ruined."

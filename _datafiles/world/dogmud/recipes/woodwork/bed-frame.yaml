@@ -1,0 +1,19 @@
+id: bed-frame
+name: "Bed Frame"
+aliases: [bed]
+skill: woodwork
+skill_minimum: 20
+station: "woodworking_bench"
+time_rounds: 8
+ingredients:
+  - item_tag: hardwood-board
+    quantity: 4
+  - item_tag: wooden-plank
+    quantity: 4
+  - item_tag: cord
+    quantity: 2
+output:
+  item_id: 40431
+  quantity: 1
+success_actor: "You mortise the posts and rails and lace the frame with cord. A bed frame!"
+failure_actor: "A mortise splits and the frame will not stand. The wood is wasted."

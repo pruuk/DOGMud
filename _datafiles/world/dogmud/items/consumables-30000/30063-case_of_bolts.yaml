@@ -9,4 +9,6 @@ weight: 2.0
 value: 70
 rarity_tier: 30
 vendor_categories:
+- woodwork
 - blacksmithing
+carries_wood: true

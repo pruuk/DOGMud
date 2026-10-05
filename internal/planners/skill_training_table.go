@@ -40,6 +40,7 @@ var skillTrainingTable = map[string]SkillTrainingContext{
 	"jewelcrafting":  TrainingCrafting,
 	"enchanting":     TrainingCrafting,
 	"salvage":        TrainingCrafting,
+	"woodwork":       TrainingCrafting,
 	"search":         TrainingForaging,
 }
 

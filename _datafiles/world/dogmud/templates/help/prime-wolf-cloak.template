@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">prime-wolf-cloak</ansi> (tailoring recipe)
+
+A cloak of two prime wolf pelts, which only a steel knife or better takes
+whole. +3 Perception, +2 Dexterity.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 35)
+  <ansi fg="yellow">Station:</ansi>     loom
+  <ansi fg="yellow">Tool:</ansi>        scraper
+  <ansi fg="yellow">Ingredients:</ansi> prime wolf pelt (x2), salt pouch (x1), thread spool (x1), bone needle (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

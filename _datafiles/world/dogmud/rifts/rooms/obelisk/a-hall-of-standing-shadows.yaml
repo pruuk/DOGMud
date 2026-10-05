@@ -1,0 +1,43 @@
+id: a-hall-of-standing-shadows
+pool: A
+source: authored
+title: Hall of Standing Shadows
+description: >-
+  Along both walls of this long corridor stand shadows. They are tall and
+  narrow, taller than any person, and they lie flat against the crystal as
+  shadows do, but there is nothing to cast them. The faint light of the
+  walls comes from everywhere at once, and your own shadow is too thin to
+  see. These are darker than the dark around them, sharp-edged, each in its
+  own place a few paces from the next. They do not move when you move. All
+  of them face the same way, along the corridor toward the heart of the
+  Obelisk, as if waiting in a line. At the foot of each, the floor is worn
+  into a small three-grooved hollow. Between two of them, one space stands
+  empty.
+nouns:
+  shadows: >-
+    Look closely and the shapes are not quite figures: too long in the
+    neck, nothing that could be called arms, a head that widens rather
+    than rounds. Their edges are perfectly crisp. Lay your palm on one and
+    the crystal there is colder than the wall beside it, cold as a stone
+    in a stream, and very slightly soft.
+  hollows: >-
+    At the foot of every shadow the floor is worn into a shallow hollow,
+    three grooves splayed like the print of a bird, worn deep by long
+    standing. The hollows are dusted with fine pale grit, and the grit
+    lies undisturbed. Nothing has stood here since the shadows came.
+  space: >-
+    Between two shadows, a gap in the line. The floor there is worn into
+    the same three-grooved hollow as the others, but the wall above is
+    bare and clear. Stand in the hollow and the wall at your back grows
+    cold, slowly, as if trying the shape of you.
+idlemessages:
+  - "When you look back, one of the shadows seems a little nearer the head of the line."
+doors:
+  - exit: nave
+    description: >-
+      The corridor opens ahead into a high nave, and the line of shadows
+      runs on into it, all still facing the same way.
+  - exit: threshold
+    description: >-
+      Behind you a worn threshold of crystal marks the way back, and no
+      shadows stand beyond it.

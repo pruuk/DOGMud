@@ -1,0 +1,15 @@
+id: obelisk-lens
+name: Obelisk Lens
+aliases: [lens, lenses]
+skill: jewelcrafting
+skill_minimum: 35
+station: jeweler_bench
+time_rounds: 4
+ingredients:
+  - item_tag: obelisk-glass
+    quantity: 1
+output:
+  item_id: 40235
+  quantity: 3
+success_actor: "You score the black glass along its grain and it parts cleanly into three discs. Ground thin at the edges, each bends the bench a little when you look through it. Three Obelisk lenses!"
+failure_actor: "The glass will not part along the line you scored. It shatters into a dust that drinks the lamplight, and the shard is lost."

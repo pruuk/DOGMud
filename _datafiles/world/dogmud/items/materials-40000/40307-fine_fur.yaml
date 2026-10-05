@@ -1,0 +1,18 @@
+itemid: 40307
+name: Fine Fur
+namesimple: fur
+description: >
+  A small, dense, glossy pelt from an otter or a badger, the kind of fur
+  merchants sell by the piece to people who do not need to be warm.
+type: object
+subtype: mundane
+component_tag: fine-fur
+weight: 0.4
+value: 22
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 3
+spoil_after: 4 days

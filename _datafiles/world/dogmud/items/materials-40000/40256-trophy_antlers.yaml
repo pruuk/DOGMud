@@ -1,0 +1,20 @@
+itemid: 40256
+name: Trophy Antlers
+namesimple: antlers
+description: >
+  A full, matched rack of antlers sawn off at the skull plate, every tine
+  intact. Lodges and great halls hang them over the hearth, and horn
+  carvers fight over the rest. It takes a steel bone saw or better to take
+  a rack off without cracking the plate.
+type: object
+subtype: mundane
+component_tag: trophy-antlers
+weight: 2.5
+value: 55
+rarity_tier: 15
+is_component: true
+vendor_categories:
+- jewelcrafting
+- woodwork
+- hunting
+material_tier: 3

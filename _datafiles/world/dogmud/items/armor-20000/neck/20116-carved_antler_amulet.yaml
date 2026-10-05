@@ -1,0 +1,18 @@
+itemid: 20116
+name: Carved Antler Amulet
+vendor_categories:
+- jewelcrafting
+- hunting
+namesimple: amulet
+description: >
+  A disc of antler carved with a running stag and set with a polished stone,
+  hung on silver wire. It steadies the hand and the nerve.
+type: neck
+subtype: wearable
+weight: 0.2
+value: 60
+rarity_tier: 35
+magical_mitigation: 2
+statmods:
+  willpower: 2
+  vitality: 1

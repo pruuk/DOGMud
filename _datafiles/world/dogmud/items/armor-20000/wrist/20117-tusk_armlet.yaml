@@ -1,0 +1,17 @@
+itemid: 20117
+name: Tusk Armlet
+vendor_categories:
+- jewelcrafting
+- hunting
+namesimple: armlet
+description: >
+  Two boar tusks shaped into a curved armlet and capped in gold. Heavy,
+  warlike, and good for a hard shove.
+type: wrist
+subtype: wearable
+weight: 0.4
+value: 160
+rarity_tier: 35
+physical_mitigation: 1
+statmods:
+  strength: 3

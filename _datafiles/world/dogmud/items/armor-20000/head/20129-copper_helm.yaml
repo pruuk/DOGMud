@@ -1,0 +1,15 @@
+itemid: 20129
+name: Copper Helm
+vendor_categories:
+- blacksmithing
+namesimple: helm
+description: >
+  A rounded open-faced helm beaten from soft red copper, with a leather
+  lining. Copper is soft: it dents, dulls and gives under a blow, but it is
+  cheap and easy to work.
+type: head
+subtype: wearable
+weight: 3.68
+physical_mitigation: 3
+value: 24
+rarity_tier: 40

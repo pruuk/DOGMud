@@ -33,3 +33,15 @@ damage:
   variance: 2
 damage_multiplier: 0.40
 disabledslots: ['weapon', 'offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet']
+# Wilderness trades: what a carcass gives to skin and butcher. Quantities
+# are for a medium body (small halves, large doubles). See species/harvest.go.
+harvest:
+  skin:
+    - {itemid: 40302, qty: 1}                       # deer hide
+  butcher:
+    - {item: venison, qty: 3}
+    - {item: sinew, qty: 1}
+    - {item: bone, qty: 2, tool: cleaver}
+    - {item: gut, qty: 1}
+    - {item: antler, qty: 1, tool: bone_saw, rare: true, chance: 0.5}
+    - {itemid: 40256, qty: 1, tool: bone_saw, rare: true, chance: 0.3, min_tool: 3}  # trophy antlers: steel saw or better

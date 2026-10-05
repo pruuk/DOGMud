@@ -219,6 +219,20 @@ async function main() {
     check('round trip: finds off unless allowed', opened.finds, false);
     var findsSealed = await Relay.seal(c, 'correct horse', Object.assign({}, STORED, { finds: true }), 'Alice');
     check('round trip: a remembered key keeps "name my finds"', (await Relay.unseal(c, 'correct horse', findsSealed, 'Alice')).finds, true);
+    check('round trip: a livelier world is allowed unless unticked', opened.lively, true);
+    var quietSealed = await Relay.seal(c, 'correct horse', Object.assign({}, STORED, { lively: false }), 'Alice');
+    check('round trip: a remembered key keeps a livelier world unticked', (await Relay.unseal(c, 'correct horse', quietSealed, 'Alice')).lively, false);
+    // A key sealed before the box existed has no lively field: it opens
+    // with a livelier world allowed, as a new key starts.
+    var oldSalt = c.getRandomValues(new Uint8Array(16)), oldIv = c.getRandomValues(new Uint8Array(12));
+    var oldBase = await c.subtle.importKey('raw', new TextEncoder().encode('correct horse'), 'PBKDF2', false, ['deriveKey']);
+    var oldKey = await c.subtle.deriveKey({ name: 'PBKDF2', salt: oldSalt, iterations: Relay.ITER, hash: 'SHA-256' },
+        oldBase, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+    var oldCt = await c.subtle.encrypt({ name: 'AES-GCM', iv: oldIv, additionalData: new TextEncoder().encode(Relay.storageKey('Alice')) },
+        oldKey, new TextEncoder().encode(JSON.stringify({ endpoint: STORED.endpoint, key: KEY, model: STORED.model, finds: false })));
+    var oldBlob = JSON.stringify({ v: 1, salt: Buffer.from(oldSalt).toString('base64'), iv: Buffer.from(oldIv).toString('base64'),
+        ct: Buffer.from(new Uint8Array(oldCt)).toString('base64') });
+    check('round trip: a key saved before the box existed allows a livelier world', (await Relay.unseal(c, 'correct horse', oldBlob, 'Alice')).lively, true);
     check('round trip: account name case does not matter', (await Relay.unseal(c, 'correct horse', sealed, 'ALICE')).key, KEY);
     var wrong = await Relay.unseal(c, 'wrong horse', sealed, 'Alice').then(function () { return 'opened'; }, function () { return 'rejected'; });
     check('a wrong passphrase rejects', wrong, 'rejected');
@@ -281,7 +295,10 @@ async function relayRules(c) {
 
     var ok = await win.setup({ endpoint: STORED.endpoint, key: KEY, model: 'gpt-4.1-mini', remember: true, pass: 'correct horse' }, 'Alice');
     check('setup with remember succeeds', ok.ok, true);
-    check('the settings message carries exactly account,endpoint,finds,key,model,remember,sealed,type', sortedKeys(ok.msg), 'account,endpoint,finds,key,model,remember,sealed,type');
+    check('the settings message carries exactly account,endpoint,finds,key,lively,model,remember,sealed,type', sortedKeys(ok.msg), 'account,endpoint,finds,key,lively,model,remember,sealed,type');
+    check('the settings message allows a livelier world unless unticked', ok.msg.lively, true);
+    var quiet = await win.setup({ endpoint: STORED.endpoint, key: KEY, model: 'gpt-4.1-mini', lively: false, remember: false }, 'Alice');
+    check('an unticked box reaches the settings message', quiet.msg.lively, false);
     check('the settings message names the account the window was shown', ok.msg.account, 'Alice');
     check('the settings message never carries the passphrase', JSON.stringify(ok.msg).indexOf('correct horse'), -1);
     check('the settings message carries a sealed blob when remembered', Relay.isSealedBlob(ok.msg.sealed), true);
@@ -389,8 +406,67 @@ function findsRules() {
         { response_format: { type: 'json_schema', json_schema: { name: 'other', strict: true, schema: {} } } }), 'm', true), null);
 }
 
+// livelyRules: every request that makes the world livelier goes through a
+// player's key only while they leave "Make the world livelier" ticked. The
+// frame refuses each LIVELY_SCHEMAS name otherwise, whatever the server
+// sends, and the box allows nothing else.
+function livelyRules() {
+    check('lively: townsfolk idle moments are listed', Relay.LIVELY_SCHEMAS.indexOf('npc_idle') !== -1, true);
+    check('lively: ambient room events are listed', Relay.LIVELY_SCHEMAS.indexOf('room_event') !== -1, true);
+    check('lively: closer looks are listed', Relay.LIVELY_SCHEMAS.indexOf('look_detail') !== -1, true);
+    check('lively: new rift rooms are listed', Relay.LIVELY_SCHEMAS.indexOf('rift_room') !== -1, true);
+    check('lively: no lively schema is also a companion schema or the finds schema',
+        Relay.LIVELY_SCHEMAS.filter(function (n) { return Relay.SCHEMA_NAMES.indexOf(n) !== -1 || n === Relay.FINDS_SCHEMA; }).length, 0);
+    Relay.LIVELY_SCHEMAS.forEach(function (name) {
+        var body = {
+            model: 'server-model', messages: [{ role: 'user', content: 'a tavern keeper' }],
+            response_format: { type: 'json_schema', json_schema: { name: name, strict: true, schema: {} } },
+            max_completion_tokens: 300
+        };
+        check('lively ' + name + ': refused without the player allowing it', Relay.constrainBody(body, 'player-model', false), null);
+        check('lively ' + name + ': refused with it explicitly off', Relay.constrainBody(body, 'player-model', false, false), null);
+        check('lively ' + name + ': finds alone does not allow it', Relay.constrainBody(body, 'player-model', true, false), null);
+        var c = Relay.constrainBody(body, 'player-model', false, true);
+        check('lively ' + name + ': relayed when allowed', !!c, true);
+        check('lively ' + name + ': with the player\'s own model', c && JSON.parse(c.text).model, 'player-model');
+    });
+    var bauble = { model: 'm', messages: [], max_completion_tokens: 300,
+        response_format: { type: 'json_schema', json_schema: { name: Relay.FINDS_SCHEMA, strict: true, schema: {} } } };
+    check('lively: allowing it does not allow finds', Relay.constrainBody(bauble, 'player-model', false, true), null);
+    var other = Object.assign({}, bauble, { response_format: { type: 'json_schema', json_schema: { name: 'not_listed', strict: true, schema: {} } } });
+    check('lively: a name outside every list stays refused', Relay.constrainBody(other, 'player-model', true, true), null);
+}
+
+// livelyFrame: a status tells the game page whether the world may be made
+// livelier, and the frame relays lively requests only then.
+async function livelyFrame() {
+    var posts = [];
+    var store = {};
+    var f = fakeFetch(textReply(200, '{"ok":1}'));
+    var r = Relay.createRelay({ post: function (m) { posts.push(m); }, fetchFn: f,
+        storage: { get: function (k) { return store[k] || null; }, set: function (k, v) { store[k] = v; return true; }, remove: function (k) { delete store[k]; } } });
+    r.handle({ type: 'hello', account: 'Alice' });
+    r.handlePopup({ type: 'settings', account: 'Alice', endpoint: STORED.endpoint, key: KEY, model: 'gpt-4.1-mini', finds: false, lively: true, remember: false, sealed: null });
+    var st = posts.filter(function (m) { return m.type === 'status'; }).pop();
+    check('frame: the status says the world may be made livelier', st.lively, true);
+    var idle = JSON.stringify({ model: 'x', messages: [], response_format: { type: 'json_schema', json_schema: { name: 'npc_idle', strict: true, schema: {} } }, max_completion_tokens: 300 });
+    await r.handle({ type: 'request', id: 'a1', body: idle });
+    check('frame: a lively request is relayed while allowed', f.calls.length, 1);
+    r.handlePopup({ type: 'settings', account: 'Alice', endpoint: STORED.endpoint, key: KEY, model: 'gpt-4.1-mini', finds: false, lively: false, remember: false, sealed: null });
+    st = posts.filter(function (m) { return m.type === 'status'; }).pop();
+    check('frame: the status says it may not', st.lively, false);
+    await r.handle({ type: 'request', id: 'a2', body: idle });
+    check('frame: a lively request is refused once unticked', f.calls.length, 1);
+    var answered = posts.filter(function (m) { return m.type === 'response' && m.id === 'a2'; }).pop();
+    check('frame: the refusal is answered as a failure', answered && answered.status, 0);
+    var popup = r.handlePopup({ type: 'popup-hello' });
+    check('frame: the popup is shown the box unticked', popup.lively, false);
+}
+
 async function bodyRules() {
     findsRules();
+    livelyRules();
+    await livelyFrame();
     // The schema names are the server's: every SchemaName in the module's
     // Go source, no more and no fewer.
     var modDir = path.join(__dirname, '..', '..', 'modules', 'aicompanion');

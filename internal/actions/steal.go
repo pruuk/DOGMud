@@ -86,8 +86,12 @@ type StealResult struct {
 // (messaging.SightMult) here, once. The thief pays theirs on the attack
 // score in Steal/Plant. A nil room is unity; pass combat.SightRoom for a
 // *rooms.Room that may be nil.
+//
+// A sleeping merchant's Perception counts at
+// merchantchests.SleepingPerceptionMult (sleepingMerchantPerceptionMult,
+// merchant_chest.go); CalcDetectionScore applies the same factor.
 func stealVictimScore(c *characters.Character, room messaging.RoomVisibility) float64 {
-	return (float64(c.Stats.Perception.ValueAdj) +
+	return (float64(c.Stats.Perception.ValueAdj)*sleepingMerchantPerceptionMult(c) +
 		float64(c.GetSkillLevel(skills.Skullduggery))*
 			float64(configs.GetBalanceConfig().SkillWeight)) *
 		messaging.SightMult(c, room)
@@ -531,6 +535,10 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 		actor.SendText(messaging.CategorySystem, "You don't see that here.")
 		return StealResult{Reason: "not found"}
 	}
+	if container.IsSealedShut() {
+		actor.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked, and it opens for its owner and nobody else.`, containerName))
+		return StealResult{Reason: "sealed"}
+	}
 
 	// Skill rank 2 required for the actual steal mechanic. Mirrors the
 	// gate in stealFromMob; checked AFTER target validation so the rebuff
@@ -538,6 +546,14 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 	if t.rank < 2 {
 		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{Reason: "not advanced enough"}
+	}
+
+	// A locked container has to be picked first, as for get, look and put:
+	// a quick hand is no way through a lock.
+	if container.Lock.IsLocked() {
+		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+			`The <ansi fg="container">%s</ansi> is locked.`, containerName))
+		return StealResult{Reason: "locked"}
 	}
 
 	if len(container.Items) == 0 && container.Gold == 0 {
@@ -585,6 +601,14 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 		actor.GetCharacter().Awareness.TransitionToRevealing(state.TransitionReason{
 			Trigger: awareness.TriggerSkullduggeryFailed,
 		})
+
+		// A merchant's chest (internal/merchantchests) with its merchant
+		// present: the theft is from the merchant, a crime as stealing from
+		// it would be (thiefCaught wakes it and records the crime).
+		if owner := merchantChestOwner(room, containerName); owner != nil {
+			merchantCatchesThief(actor, owner, room, containerName)
+		}
+
 		return StealResult{
 			Detected:     true,
 			DefenderName: spotterName,
@@ -602,6 +626,9 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 		stolen := container.Items[idx]
 		container.RemoveItem(stolen)
 		room.Containers[containerName] = container
+		// A merchant's goods leaving its chest are stolen from here on:
+		// hot in this area for a while (baubles.GoodsHotIn).
+		stolen.MarkTaken(actor.GetUserId(), room.Zone, stolenNow())
 		actor.GetCharacter().StoreItem(stolen)
 		result.StoleItemId = stolen.ItemId
 		result.StoleItemName = stolen.DisplayName()
@@ -624,6 +651,9 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 			`You quietly slip <ansi fg="itemname">%s</ansi> from the `+
 				`<ansi fg="itemname">%s</ansi>.`,
 			stolen.DisplayName(), containerName))
+		if stolen.IsStolen() {
+			actor.SendText(messaging.CategorySystem, StolenGoodsNote(stolen))
+		}
 	} else {
 		// Container only has gold.
 		quarterGold := container.Gold >> 2
@@ -658,14 +688,23 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 // attacks. Shared by stealFromMob and taking a household's bauble
 // (household_bauble.go); the caller sends its own "caught" messages first.
 func thiefCaught(actor Actor, m *mobs.Mob, room *rooms.Room) {
+	theftReported(actor, m, room)
+
+	markAttacksThief(actor, m)
+}
+
+// theftReported is thiefCaught without the attack: the thief revealed, a
+// sleeping m woken, and the theft recorded against m's factions with its
+// reputation, bounty and witnesses' knowledge. A guard who recognises stolen
+// goods on a thief uses it alone (stolen_bauble.go): what follows is the
+// justice tick's (warn, then arrest), not a brawl on the spot.
+func theftReported(actor Actor, m *mobs.Mob, room *rooms.Room) {
 	// Harmless if it fails (already revealed); combat_fire.go does the same.
 	_ = actor.GetCharacter().Awareness.TransitionToRevealing(state.TransitionReason{
 		Trigger: awareness.TriggerSkullduggeryFailed,
 	})
 
 	theftCrime(actor.GetUserId(), m, room, false, messaging.SightNone)
-
-	markAttacksThief(actor, m)
 }
 
 // markAttacksThief is a mark that caught actor stealing turning on them.

@@ -1,0 +1,15 @@
+itemid: 40411
+name: Cypress Log
+namesimple: log
+description: >
+  A length of marsh cypress, buttressed at the root end, the wood pale
+  and close-grained.
+type: object
+subtype: mundane
+component_tag: softwood-log
+weight: 10
+value: 6
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 2

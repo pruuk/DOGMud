@@ -1,0 +1,581 @@
+# Rift profile: the Obelisk.
+#
+# A maze inside a dark crystal obelisk that stands in another dimension, left
+# by an intelligent people long extinct (lore to come). Every room built for
+# this profile takes its zone, biome, light, monsters, ore and narration from
+# here; the rooms themselves are the templates in rifts/rooms/obelisk/.
+# Loader and contract: internal/rifts/data.go.
+id: obelisk
+name: the Obelisk
+zone: Rift Obelisk
+biome: cave
+lamp: 40
+exit_name: breach
+start_pool: B
+
+# The way in: a floating shard of dark crystal. Each real-world day every
+# region below gets 3 or 4 of them, in rooms of the listed biomes (cities and
+# roads are left out on purpose), and they move again the next day. A party
+# entering together has join_window_seconds to follow the first one in.
+portal_exit: crystal
+portal_title: crystal
+portal_mutator: rift-crystal
+portal_look: >-
+  A shard of black crystal as tall as a person, hanging in the air with
+  nothing beneath it and turning so slowly you have to watch to be sure it
+  moves. Light bends as it passes the shard, and the ground beneath it is
+  very slightly wrong, as if seen through water. When you lean close you can
+  feel it pulling, gently, the way a deep current pulls. You could <ansi
+  fg="command">enter</ansi> it, or simply <ansi fg="command">touch</ansi> it.
+portal_biomes: [forest, dense_forest, plains, land, farmland, mountains, cliffs, swamp, ruins, desert, snow, shore]
+portal_regions: [Windward Marches, Thornwall Region, The Tri-Rivers, The Eastern Reach, Channeled Scablands, Kilnreach]
+portal_sites_per_region: {min: 3, max: 4}
+portal_skip_zone_biomes: [city_thoroughfare, city_backstreet, road, interior, sewer]
+portal_skip_zone_words: [Road]
+join_window_seconds: 60
+
+# A glowing crystal left on the floor, by room pool (percent).
+light_item_id: 20098
+light_chance: {A: 30, B: 50, C: 100, D: 30, E: 100, F: 30}
+
+# Destination odds for every door, by the pool of the room behind it.
+weights: {A: 50, B: 20, C: 10, D: 10, E: 5, F: 5}
+# A pool is never rolled for a room shallower than this (the first room is
+# depth 0, the rooms its doors lead to are depth 1, and so on).
+min_depth: {D: 1, C: 1, E: 3, F: 2}
+# How many doors a room of each pool has.
+doors:
+  A: {min: 2, max: 2}
+  B: {min: 2, max: 4}
+  C: {min: 2, max: 3}
+  D: {min: 2, max: 3}
+  E: {min: 2, max: 3}
+  F: {min: 1, max: 2}
+
+# Rare ore: percent chance a room holds a seam, by pool, and how strongly the
+# ore weighs in that room's forage pool against the cave's commons.
+ore_chance: {A: 4, B: 12, C: 8, D: 8, E: 25, F: 0}
+ore_items: [40234]
+ore_weight: 6
+default_ore_noun: seam
+default_ore_look: >-
+  A seam where the black crystal has grown thick and clouded, deeper than
+  the wall around it. Something in it drinks the light. A careful forager
+  could work a piece of it loose.
+
+# The Lenses: the Obelisk's security, built by its makers and still running
+# (species 46, Lens; each kind's fight is its behaviour tree in
+# behaviors/rift_obelisk/).
+#   trash  9835 Glint Stalker  ambusher: hidden, bleeds, strikes once or twice, hides again
+#          9836 Spine Lattice  ranged: a volley of three shards, then a pause to regrow
+#   elite  9837 Splitlight     light: refracts blows back, drains the room's life
+#   boss   9838 The Watching Obelisk: lances, a telegraphed Convergence, wakes adds, overloads
+#   hunter 9839 Facet Hunter   sent after anyone who flees a fight (never placed by the generator)
+mobs:
+  trash: [9835, 9836]
+  elite: [9837]
+  boss: [9838]
+  hunter: 9839
+# Stat pool by tier, plus statpool_per_depth for every room of depth. For
+# scale: most of the world's fighters are 30, the Crash Site's adds 100, its
+# Warden-Prime 500. The hunter is meant to hurt.
+statpools: {trash: 40, elite: 90, boss: 300, hunter: 450}
+statpool_per_depth: 4
+# The hunter appears this long after its quarry comes into a room, if they
+# are still there; moving on starts the count again.
+hunter_delay_seconds: {min: 10, max: 60}
+
+# Lurkers: a Glint Stalker waiting in a passage now and then, so the halls
+# are not always safe. Low perception: the easiest Lens to sneak past.
+lurkers:
+  chance: {A: 10}
+  mobs: [9835]
+key_item_id: 83
+trap_condition_ids: [108]
+
+# Ambience: shown in every Obelisk room alongside the room's own lines, on
+# the same timing as ambient lines anywhere in the world (the player round
+# tick). Like the world's, one may instead be written fresh by a model on a
+# player's own key (Modules.roomlife, "Make the world livelier"): here
+# ambient_generated_chance percent of the time, for the setting below, with
+# no time of day. Nothing generated is kept.
+idlemessages:
+  - The walls hum, a note too low to hear and too steady to ignore.
+  - For a heartbeat the room is longer than it was. Then it is not.
+  - Your reflection in the nearest facet moves a moment after you do.
+  - Somewhere far off, glass settles against glass.
+  - >-
+    A fine dust of powdered crystal sifts down out of the dark overhead and
+    glitters as it falls, though there is no light here for it to catch.
+  - >-
+    A draught moves through the room from no direction at all, cold and
+    dry, smelling faintly of struck flint.
+  - >-
+    For an instant one of the facets shows a tall, narrow figure standing
+    where nobody stands. Then it shows only the room.
+  - >-
+    A crack runs a hand's width across the floor with a sound like ice
+    giving on a pond, and stops.
+  - >-
+    The far corners of the room lean inward when you look straight at
+    them, and straighten when you look away.
+  - >-
+    Far below, something vast and slow turns over, and every surface around
+    you rings faintly with it.
+  - >-
+    A row of worn round marks along the wall glimmers, one mark after
+    another, as if something unseen were reading along them.
+  - >-
+    The silence grows so complete that your own heartbeat comes back to
+    you from the crystal, a moment late.
+  - >-
+    A shard no bigger than a fingernail drops from somewhere above and rings
+    on the floor like a struck bell, long after it should have stopped.
+  - >-
+    Your shadow falls the wrong way for a breath, toward the light rather
+    than away from it.
+
+ambient_generated_chance: 20
+ambient_setting: >-
+  This place is not in Gaius. It is the Obelisk: a maze of black crystal
+  standing in another dimension, built by a people of great intelligence who
+  are long extinct. It is dark, silent and in ruin. The only light comes from
+  the crystal itself, faint and cold. Space and sight are warped here:
+  reflections lag or disagree, distances shift, angles almost meet, sounds
+  arrive late. Nothing lives here but things made of crystal. Ambient events
+  are small and uncanny: glass settling, a far chime, a lens turning, a
+  reflection out of step, a draught with no source, powdered crystal
+  drifting, worn carvings catching a glimmer. There are no people, animals,
+  birds, insects, plants, water, weather, sky, sun or moon, and no time of
+  day.
+
+# The lens table: the memory puzzle (puzzle kind `memory` in a room). A
+# fresh board is laid out each time such a room is built: 18 frequencies
+# (symbols) drawn from `symbols`, each on two of the 36 lenses, at random.
+# Players turn lenses by place (1c). The table bears `fails` mistakes per
+# stage: when a stage runs out every lens turns face down, the locked
+# pairs too, and the next stage bears fewer; when the last runs out the
+# table goes dark for good. Only a reader of the Watchers' marks can use it.
+memory:
+  noun: table
+  mention: >-
+    Near one wall stands a low table of black crystal, set with thirty-six
+    small lenses in six rows of six, every one turned face down.
+  look: >-
+    A low square table of black crystal, its top set with thirty-six small
+    round lenses in six rows of six. Each sits in its own socket and turns
+    at a touch, and every one is turned face down, showing only a dull back
+    marked with the same small whorl. Faint light runs in broken lines
+    through the crystal between the sockets, as if waiting to be joined up.
+    Round marks are pressed in a band along the table's edge, and a short
+    row of them stands beside each row and under each column of lenses.
+  rules: >-
+    The marks along the edge settle into meaning. Every lens is ground to a
+    frequency, and every frequency was ground twice. Turn two that agree and
+    the light between them clicks into place, and they hold. Turn two that
+    disagree and they turn their backs again. The table is patient, but not
+    forever: it bears a few mistakes, then forgets everything that was set
+    right and bears fewer, and in the end it goes dark. The marks beside the
+    rows count one to six; those under the columns run a to f. (Type a
+    lens's place to turn it, such as 1c, or two at once: 1c 4e.)
+  unreadable: >-
+    The lenses turn at a touch, but the marks along the table's edge and
+    beside its rows mean nothing to you, and the backs of the lenses are all
+    alike. Whoever made this thought in shapes you do not have yet. You
+    leave the lenses as they are.
+  symbols: "!#$%&*+-=?^~|/:;()[]{}"
+  fails: [8, 4, 2]
+  turned: You turn the lens at %s. It rings faintly, tuned to the frequency %s.
+  match: The light between %s and %s clicks into place, and both lenses hold, face up.
+  miss: >-
+    The frequencies at %s and %s grate against each other, and both lenses
+    turn their backs again.
+  seen: "%s turns a lens on the table."
+  reset: >-
+    The light across the whole table stutters and goes out. Every lens turns
+    face down, even the ones that held. The marks along the edge shift and
+    settle: this time %d mistakes will undo it.
+  dark: >-
+    The light drains out of the table for good. Every lens turns face down
+    and goes dull, and none of them will turn again. Whatever the table was
+    holding shut will stay shut. Another table, in another room, might be
+    kinder.
+  dark_look: >-
+    The lens table is dark. Its lenses lie face down and will not turn, and
+    the way it held shut stays shut.
+  done: >-
+    Every lens on the table lies face up, its light locked to its partner's.
+    There is nothing left to turn.
+  abandoned: >-
+    The lens left turned up by someone who has gone sinks face down again
+    before you begin.
+  seen_unread: "%s fiddles with the lenses on the table."
+  match_unread: Light flickers between two of the table's lenses, and holds.
+  reset_unread: >-
+    The faint light in the table stutters and goes out, and comes back
+    fainter.
+  dark_unread: The faint light drains out of the table, and it goes dull.
+
+# Losses. Dying in the Obelisk costs everything carried loose, all carried
+# gold, and each worn piece at worn_chance percent. Logging out inside costs
+# what is carried loose. Keys, quest items and tickets are never taken. Every
+# item taken goes into the lost-items record (the oldest drop off past
+# `keep`); the first search of a rubble pile has find_chance percent to
+# turn up 1 to find_max of them, which then leave the record for good.
+losses:
+  worn_chance: 25
+  gold_on_death: true
+  keep: 1000
+  find_chance: 5
+  find_max: 2
+  death: >-
+    The Obelisk keeps what you carried when you fell: %s.
+  gold: >-
+    The %d gold you carried is gone into the dark with it.
+  logout: >-
+    You left the Obelisk the hard way, and it kept what you carried loose:
+    %s.
+  found: >-
+    Among the shards lies something that was never the Obelisk's: %s.
+    Someone else lost it here.
+
+# Generated rooms (modules/rifts, on a player's own key, "Make the world
+# livelier"): now and then, as a room of one of `pools` is built, a model
+# writes a new room of that pool in the background, shown a few of the
+# pool's rooms as examples. A room that passes every check is saved beside
+# the authored ones (rooms/<profile>/gen-*.yaml) and joins the pool, so the
+# pools grow over time. `setting` is the canon the model must keep to,
+# `guides` what a room of each pool is, `effects` the words a trap or a
+# wrong answer may choose from and the condition each one applies, and
+# `seeds` words a few of which are offered per request for variety.
+generation:
+  pools: [A, B, C, D, F]
+  setting: >-
+    The Obelisk is a vast maze of black crystal standing in another
+    dimension, reached through a floating dark crystal in the world. It was
+    built by the Watchers, a people made of light, long extinct, as an eye
+    between worlds: through its lenses they looked at other worlds, watching
+    and never touching. A strange, hungry darkness on the far side looked
+    back. It warped their field of existence, the light that was their
+    bodies, and came through the gaps between the lenses; where it touched,
+    crystal forgot itself and broken glass learned to move. In the end the
+    Watchers turned the eye inward: all of them went into the great lens at
+    the heart and became its seeing, holding the darkness still with their
+    gaze, and the halls went dark. Their crystal security constructs, the
+    Lenses, still keep watch. Nothing lives here: no people, plants, water,
+    animals, insects, weather, sky, sun or moon, and no time of day. It is
+    dark; the little light comes from the crystal itself, faint and cold.
+    Space and sight are warped: reflections lag or disagree, distances lie,
+    angles almost meet, sounds arrive late, corridors bend when you look
+    away. The Watchers had no hands as we have: they pressed rows of small
+    round marks (their writing) into crystal and walked on feet not shaped
+    like yours, wearing three-groove channels into floors. They left lenses,
+    plinths, galleries, resonant rods, frames, niches and instruments of
+    looking. Ruin is everywhere: cracks, fallen panes, frost along
+    fractures. The tone is quiet, uncanny, melancholy and precise.
+  guides:
+    A: >-
+      A passage: a connective space such as a corridor, stair, bridge,
+      crawl, ramp or gallery. Short but strong, with one memorable oddity
+      of warped sight or of the Watchers' lives.
+    B: >-
+      A feature hall: a larger set-piece worth a long look, such as an
+      observatory, an archive of marks, a lens workshop, a hall of frozen
+      light, a garden of glass forms or a resonance chamber. It carries the
+      Watchers' lore most heavily, by implication rather than exposition.
+    C: >-
+      A puzzle or trap room. It has a puzzle, a trap, or both. The puzzle is
+      always a lens table, which the game places in the room and describes
+      itself: a low crystal table of thirty-six face-down lenses tuned in
+      pairs, which unseals one door when every pair is locked. Do not
+      describe the table or name it as a noun; build the room around it, a
+      place where the Watchers once tuned, matched or tested their lenses,
+      with things to look at that hint at its use. The description says
+      that one way out is sealed (dark glass, a fused facet, a shutter of
+      light), and that door's own description shows it. A trap is sprung on
+      entry unless the player notices it, and the room's details should let
+      a careful reader see why it was avoided.
+    D: >-
+      A monster room, shaped by violence or vigilance: a guard post, a
+      killing floor, a hall of broken sentries, a nest of shards. The game
+      places the creatures: hint at movement, never name a creature and
+      never say how many there are.
+    F: >-
+      An exit room, where the Obelisk is cracked through to the world. The
+      crack to the outside is vivid: warm light, the smell of the world,
+      frost where the warmth meets the cold. It says the way out, the
+      breach, is locked or bound and wants a key, and may notice the cut
+      where a key went in. The doors listed lead deeper.
+  effects:
+    flare: 3        # a flare of light, sight folding (Blinded)
+    resonance: 102  # a grinding resonance in the skull (Disrupted)
+    rimefrost: 107  # cold that numbs (Rimefrost)
+    static: 108     # a snapping charge (Static Shock)
+    stun: 2         # a blow that stops the body (Stunned); rarely
+  seeds:
+    - lag
+    - hinge
+    - lattice
+    - mirror
+    - threshold
+    - fracture
+    - hush
+    - gauge
+    - cradle
+    - procession
+    - tally
+    - eclipse
+    - splinter
+    - beacon
+    - tide line
+    - vigil
+    - spiral
+    - weight
+    - choir
+    - map
+    - debris
+    - pilgrimage
+    - frostline
+    - alcove
+    - census
+    - farewell
+    - compass
+    - margin
+    - kiln
+    - echo
+    - nursery
+    - signal
+    - mosaic
+    - quarantine
+    - orrery
+    - ledger
+    - grief
+    - polish
+    - balance
+    - descent
+
+# Lore: a memory prism, studied with `look prism`. Each distinct one a
+# player studies says `lore_progress`; the `needed`-th says `lore_unlocked`,
+# and from then on the player can read the writings below, permanently, in
+# every Obelisk after.
+lore:
+  chance: {B: 10, C: 10, D: 10}
+  noun: prism
+  mention: On the floor lies a small prism of clouded crystal, faintly warm.
+  look: >-
+    A prism of clouded crystal no bigger than your palm, warm in a place where
+    nothing else is. Look into it long enough and the cloud inside it moves,
+    and for a moment it is not cloud at all but a memory that is not yours.
+  needed: 5
+
+# Writings: ten objects that hold, in order, the story of what happened to
+# the obelisk's makers. Unreadable until the player has studied the lore.
+writing_chance: {A: 5, B: 12, C: 12, D: 8, E: 25, F: 10}
+writings:
+  - noun: stele
+    mention: A narrow stele of black crystal stands against one wall, covered in rows of round marks.
+    look: >-
+      A narrow slab of black crystal, waist high, its face pressed all over with
+      rows of small round marks like the ones on the plinths. They are worn
+      soft at the edges by long touching.
+    fragment: >-
+      We were the Watchers, and this was our eye. We raised it between the
+      places that are and the places that might be, and through its lenses we
+      saw every world turning in the dark like fish in a deep pool. We
+      watched, and we did not touch, and for longer than we could count, that
+      was enough.
+  - noun: frieze
+    mention: A low frieze runs along the base of one wall, a band of round marks between two lines of three-groove prints.
+    look: >-
+      A band of round marks pressed along the foot of the wall, framed above
+      and below by tiny three-groove prints, as if a crowd had walked the
+      wall's length. The marks are small, neat and many, a hand practising.
+    fragment: >-
+      Today the young were brought to the first lens and told only to look.
+      Most of them saw nothing and wept. One saw a world of blue sand under
+      two suns and would not stop talking of it, and we let her, because that
+      is how a Watcher begins: by being unable to keep it to herself. Tomorrow
+      we teach them not to reach.
+  - noun: plaque
+    mention: A plaque of black crystal is set into the wall at eye height, its marks laid out in tidy columns like a register.
+    look: >-
+      A square plaque fixed to the wall, its round marks arranged in short
+      columns, each ending in a single larger mark, like a list of names with
+      a number beside each.
+    fragment: >-
+      The far lenses go deeper every age. This season I counted four hundred
+      worlds no one had named, and I named eleven: the Singing Ice, the
+      Patient Sea, the Field Where Nothing Falls. In the last I watched a
+      small grey people bury their dead with lamps. I stayed with them for
+      a long time. Watching is not touching, but it is not nothing.
+  - noun: circle
+    mention: Set into the floor is a circle of marks, cut deep and crooked.
+    look: >-
+      A circle of round marks cut into the floor, deeper and rougher than the
+      rest, as though by a hand that was shaking or in a hurry.
+    fragment: >-
+      Then one of us looked too long into the farthest lens, and saw a world
+      that was looking back. It had no name we could give it. It was hungry
+      in the way a fire is hungry, without meaning anything by it. It learned
+      the shape of our eye from the far side.
+  - noun: spindle
+    mention: A thin spindle of crystal rises from the floor, twisted as though something wrung it, marks winding up it out of true.
+    look: >-
+      A tall, thin spindle of crystal, twisted along its length like wrung
+      cloth. The round marks that climb it start even and round, and grow
+      stretched and leaning toward the top.
+    fragment: >-
+      My light leans now. When I stand before the far lens it pulls toward
+      the glass, a little, the way a flame bends to a draught. Three of the
+      old ones have gone thin and dim and will not say why. Something on the
+      far side has learned the colour of us. I write this to remember that
+      I was whole once, and straight.
+  - noun: coil
+    mention: A coil of fused crystal lies against the wall, wound tight on itself, marks pressed into every turn.
+    look: >-
+      A heavy coil of crystal wound tight like a sleeping thing, fused where
+      its turns touch. The marks on the outer turns are careful. On the inner
+      turns they are cramped, hurried, and some are only half pressed.
+    fragment: >-
+      We tried to make guardians of the lenses, to stand at the gaps where it
+      gets in. They watch as we taught them, and they do not tire. But the
+      dark comes through anyway, and where it touches them some of them turn
+      and watch us instead. We no longer walk the outer halls alone. We no
+      longer walk the outer halls.
+  - noun: disc
+    mention: A small disc of crystal, a lens fallen from its thread, lies cracked on the floor with marks cut around its rim.
+    look: >-
+      A small lens of black crystal, cracked across, with a band of round
+      marks cut around its rim so finely you have to tilt it to see them.
+    fragment: >-
+      We closed the lenses one by one. It came through the gaps between them
+      instead. Where it touched the crystal, the crystal remembered nothing,
+      and the halls filled with things of broken glass that moved as it
+      wished. We understood then that an eye cannot be shut from the inside.
+  - noun: orb
+    mention: A small orb of clear crystal rests in a hollow in the floor, a single ring of marks circling it.
+    look: >-
+      A small, perfectly round orb of clear crystal resting in a worn hollow,
+      as though set down with care and never lifted. A single ring of marks
+      circles it, and a little light still moves inside, very slowly.
+    fragment: >-
+      We go into the great lens tomorrow, all of us. I came back to the
+      first lens tonight to see the blue sand world once more. It is still
+      there. The two suns are still rising. I did not reach. I have never
+      reached. I leave this here for whoever comes, so that someone knows it
+      was beautiful, and that we chose.
+  - noun: pillar
+    mention: A pillar near the wall is scored from floor to ceiling with spiralling marks.
+    look: >-
+      A slender pillar scored from floor to ceiling with a spiral of round
+      marks, so many that the crystal looks frosted.
+    fragment: >-
+      So we did the only thing an eye can do. We turned it inward. Every one
+      of us went into the great lens at the heart of the obelisk and became
+      its seeing, and we held the hungry world in our gaze so that it could
+      not move. The halls went dark. They will stay dark as long as we look.
+  - noun: tablet
+    mention: A flat tablet of crystal lies on the floor, its face cut with a single dense block of marks.
+    look: >-
+      A flat tablet of black crystal, its face filled edge to edge with a
+      single dense block of round marks, as if someone had a great deal to say
+      and very little room.
+    fragment: >-
+      If you can read this, you have walked our halls and learned our marks,
+      and the cracks in our eye have let you in. Do not pity the great Lens
+      that watches in the deepest room. It is all of us, and it is still
+      watching, and it is very tired. When the obelisk shows you a way out, take it.
+
+# Rubble: a searchable pile of broken crystal, the Obelisk's chest. The
+# first `search rubble` in a room turns up one find (for now a bauble of the
+# tier below, by the room's pool); later searches find it picked over.
+rubble:
+  chance: {A: 5, B: 15, C: 20, D: 25, E: 50, F: 10}
+  noun: rubble
+  mention: A heap of crystal rubble lies against one wall, sharp-edged and glinting.
+  look: >-
+    A heap of broken crystal, shards and slabs fallen from somewhere above
+    and piled where they landed. Things get lost in heaps like this. Things
+    get left in them, too. It might be worth a careful search.
+  tier: {A: cheap, B: cheap, C: average, D: average, E: rare, F: cheap}
+
+messages:
+  portal_dormant: >-
+    The crystal turns, slow and indifferent. Whatever way it leads, it is not
+    open to you just now.
+  lore_progress: You can understand a bit more of the strange writing.
+  lore_unlocked: You feel you can decipher their language now.
+  writing_unreadable: >-
+    The marks mean nothing to you. Whoever cut them thought in shapes you do
+    not have yet.
+  rubble_found: >-
+    You sift through the broken crystal, careful of the edges, and something
+    that is not crystal glints near the bottom of the heap.
+  rubble_empty: >-
+    You turn over the shards, but this heap has already been picked through.
+  portal_open: >-
+    The air tightens with a sound like a pane under strain, and a shard of
+    dark <ansi fg="exit">crystal</ansi> is hanging here that was not here a
+    moment ago.
+  portal_close: >-
+    The shard of dark crystal turns once more, and is simply no longer
+    there.
+  enter: >-
+    The world behind you closes like an eye. You stand inside dark crystal,
+    and the light here comes from nowhere you can find. There is no way back
+    the way you came. Somewhere in this place is a breach that leads out,
+    and it will want a key.
+  sealed_hostile: >-
+    The crystal of that doorway has run shut like water freezing. It will not
+    open while something here still means you harm.
+  sealed_puzzle: >-
+    That way is sealed. Something in this room has to be set right before it
+    opens.
+  locked: >-
+    The way through is closed by a facet of crystal with a narrow cut in its
+    face, the shape of a key you do not have.
+  unsettled: The way ahead is still shifting. Give it a moment.
+  key_used: >-
+    You fit your Facet Key into the cut in the <ansi fg="exit">%s</ansi>. The
+    key melts into the crystal, and the way opens.
+  key_used_room: >-
+    <ansi fg="username">%s</ansi> fits a shard of crystal into the <ansi
+    fg="exit">%s</ansi>, and the way opens.
+  doors_open: >-
+    With a sound like ice cracking on a pond, the doorways of the room run
+    clear again.
+  boss_key: >-
+    The light at the Lens's heart drops free as it falls, and rings on the
+    floor: a <ansi fg="item">Facet Key</ansi>.
+  puzzle_unsealed: One of the ways out, sealed until now, stands open.
+  puzzle_key: >-
+    A sliver of the room's crystal breaks away and settles into your hand,
+    cut to the shape of a key.
+  touch_progress: >-
+    You lay your hand on the <ansi fg="noun">%s</ansi>. It answers with a clear
+    note that hangs in the air, waiting for the next.
+  leave: >-
+    You step through the breach and the obelisk lets you go. The world is
+    very bright, and very ordinary, and nothing of the obelisk comes with
+    you.
+  hunted: >-
+    Somewhere in the walls behind you, something takes notice of you, and
+    does not look away.
+  hunter_arrives: >-
+    Every facet in the walls rings at once, one cold note, and something tall
+    and faceless steps out of the crystal as if out of water.
+  hunter_holds: >-
+    The crystal flows shut across the way out before you can reach it. The
+    thing that came out of the walls is not finished with you.
+  hunter_withdraws: >-
+    The Facet Hunter steps back into the wall and is gone. The facets keep
+    turning, searching.
+  hunter_destroyed: >-
+    The Facet Hunter comes apart into a rain of black glass. For a moment
+    every facet in the walls goes dark, and the quiet that follows feels like
+    something losing interest, for now.
+  pick_refusal: >-
+    There is no mechanism in the <ansi fg="exit">%s</ansi> to pick, only
+    crystal that knows what it is waiting for.
+  closed: >-
+    The rift you were in has closed, and it does not open for you again.

@@ -1,0 +1,5 @@
+name: New Plymouth Lodgings
+roomid: 6470
+defaultbiome: interior
+region: Windward Marches
+non_cartesian: true

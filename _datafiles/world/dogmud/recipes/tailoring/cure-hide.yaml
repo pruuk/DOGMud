@@ -1,0 +1,18 @@
+id: cure-hide
+name: Cured Hide
+aliases: [cure]
+skill: tailoring
+skill_minimum: 0
+station: tanning_rack
+tool: scraper
+time_rounds: 4
+ingredients:
+  - item_tag: hide
+    quantity: 1
+  - item_tag: salt-pouch
+    quantity: 1
+output:
+  item_id: 40350
+  quantity: 1
+success_actor: "You pin the hide, scrape it clean of flesh and fat, and pack it in salt. A cured hide!"
+failure_actor: "The scraper tears through the hide. It is ruined."

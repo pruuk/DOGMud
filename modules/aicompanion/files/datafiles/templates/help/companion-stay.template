@@ -9,7 +9,7 @@ plain switch, and it needs no conversation.
   <ansi fg="command">companion-stay</ansi>          What they are doing now.
   <ansi fg="command">companion-stay close</ansi>    At your side. They go nowhere unless you ask.
   <ansi fg="command">companion-stay normal</ansi>   With you, but they run errands when you ask.
-  <ansi fg="command">companion-stay free</ansi>     They go about their own business when nothing needs them.
+  <ansi fg="command">companion-stay free</ansi>     Their own business, when nothing needs them.
 
 Normal is the default. Whichever you choose, they still follow you from room
 to room, defend you, and come back on their own if you get separated.

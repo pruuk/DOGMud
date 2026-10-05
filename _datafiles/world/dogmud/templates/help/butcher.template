@@ -1,0 +1,21 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">butcher</ansi>
+
+Cut meat, bone, sinew, fat and the rest from a carcass.
+
+  <ansi fg="command">butcher <corpse></ansi>     (also <ansi fg="command">carve</ansi>)
+
+A knife takes the meat, sinew and gut. Bone and fat need a <ansi fg="yellow">cleaver</ansi>; horn,
+antler, tusk, fangs and claws need a <ansi fg="yellow">bone saw</ansi>. Whatever you have no tool
+for is left behind. Rare parts such as fangs, glands and organs are only
+found if you notice them: <ansi fg="yellow">Perception</ansi> decides that.
+
+Butchering is driven by <ansi fg="yellow">Strength</ansi> and <ansi fg="yellow">Dexterity</ansi>, then your tools, then a
+little <ansi fg="yellow">salvage</ansi> skill. A strong butcher gets more meat. A carcass that has lain
+too long has no meat worth taking.
+
+Butcher <ansi fg="yellow">after</ansi> you skin, or the hide is ruined. Meat and organs rot within a
+couple of days: smoke or salt them at a cooking fire, or sell them to a cook.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help skin</ansi>, <ansi fg="command">help harvest</ansi>, <ansi fg="command">help tools</ansi>, <ansi fg="command">help spoilage</ansi>

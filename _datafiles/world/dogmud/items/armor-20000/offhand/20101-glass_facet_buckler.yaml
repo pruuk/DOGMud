@@ -1,0 +1,20 @@
+itemid: 20101
+name: Glass-Facet Buckler
+vendor_categories:
+- blacksmithing
+namesimple: buckler
+description: >-
+  A steel buckler faced with black lenses laid edge to edge like scales on a
+  shield-backed fish, every one turned a little differently. A blow caught
+  on it does not ring; it slides, and the lenses flare, and some of its
+  force comes back along the arm that struck. It is half the weight of the
+  steel it covers.
+type: offhand
+subtype: wearable
+physical_mitigation: 10
+blockrating: 20
+weight: 2.0
+value: 7800
+rarity_tier: 5
+statmods:
+  return_damage: 4

@@ -1,0 +1,18 @@
+itemid: 40248
+name: Steel Sickle
+namesimple: sickle
+description: >
+  A hand sickle with a thin steel crescent that takes a keen edge. It cuts a
+  stem clean without bruising the leaf or pulling the root.
+type: object
+subtype: mundane
+weight: 0.6
+value: 30
+rarity_tier: 35
+vendor_categories:
+- blacksmithing
+- alchemy
+tool:
+  type: sickle
+  tier: 3
+  speed: 1.15

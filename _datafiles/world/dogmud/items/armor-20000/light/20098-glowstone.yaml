@@ -1,0 +1,15 @@
+itemid: 20098
+name: Glowstone
+namesimple: glowstone
+description: A finger-long shard of the Obelisk's crystal that has kept a light
+  of its own, a cold blue-white glow from somewhere deep inside it. It needs no
+  flame and gives off no heat, and nobody has ever found where the light comes
+  from. Hold it up and the dark draws back, a little.
+type: light
+subtype: wearable
+weight: 0.2
+value: 15
+vendor_categories:
+- jewelcrafting
+wornconditionids:
+  - 132

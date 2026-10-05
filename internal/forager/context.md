@@ -20,7 +20,11 @@ only pure state logic and I/O.
   `ForagerKind` enum (Marsh/Steppe/Fernway).
 - **forage_core.go**: `ForageDifficulty` + `ForageYields` + `NightForageYields`
   tables; `ForageAttempt`; pure roll logic shared by player and NPC forage
-  commands.
+  commands. `ForageAttempt.RoomExtra` is a per-room overlay (player forage
+  only), read by `actions.Forage` from the room temp data
+  `RoomExtraYieldsKey` (`[]int` item ids, duplicates raise odds) and appended
+  to the pool. `IsForageable(biome, roomExtra)`: a room with extras is
+  forageable even when its biome is not. `internal/rifts` puts rare ore here.
 - **vendor_sell.go**: `SellToVendor` — live delivery path.
 - **chest_backfill.go**: `BackfillVendorFromChests` + `selectBackfillTransfers`
   (pure) + `chestPoolFromRooms` / `chestPoolAll` / `chestPoolForZone` —
@@ -181,3 +185,16 @@ time; once fill drops to ≤ `ChestBackpressureResumePct`, the forager resumes.
 - `loadRoomFn` is a package-level seam (`var loadRoomFn = rooms.LoadRoom`)
   that tests override to inject fake rooms without touching the real room
   loader.
+
+## Biome fill and iron ore (wilderness trades phase 0)
+
+`plains`, `dense_forest` and `river` have forage difficulties and yields
+(plains and dense forest also get the night Moonpetal). Caves and mountains
+yield iron ore (40236) where they used to yield the finished iron ingot;
+ore is smelted at a forge (`smelt-iron-ore`) and sits in the base bucket.
+
+## Sickle draws (wilderness trades review)
+
+`ForageAttempt.ExtraDraws` and `Prefer` (player forage only, set by
+`actions.Forage` from a carried sickle) draw more candidates from the pool
+and keep the one `Prefer` ranks best. Zero or a nil `Prefer` draws once.

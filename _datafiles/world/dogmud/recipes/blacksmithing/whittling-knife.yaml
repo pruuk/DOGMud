@@ -1,0 +1,17 @@
+id: whittling-knife
+name: Whittling Knife
+aliases: [whittler]
+skill: blacksmithing
+skill_minimum: 3
+station: forge
+time_rounds: 2
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 1
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 10055
+  quantity: 1
+success_actor: "You forge a short, stiff blade with a fine point and set it in a wooden handle. A whittling knife!"
+failure_actor: "The point snaps off in the grinding. The materials are lost."

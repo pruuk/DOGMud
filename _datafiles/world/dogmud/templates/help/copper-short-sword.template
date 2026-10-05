@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">copper-short-sword</ansi> (blacksmithing recipe)
+
+A short sword of copper, against iron: damage x0.85, speed x1.0, weight
+x1.05. Copper is soft: it dents, dulls and gives under a blow, but it is
+cheap and easy to work.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 6)
+  <ansi fg="yellow">Station:</ansi>     forge
+  <ansi fg="yellow">Ingredients:</ansi> copper ingot (x2), leather strip (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help mining</ansi>, <ansi fg="command">help craft</ansi>

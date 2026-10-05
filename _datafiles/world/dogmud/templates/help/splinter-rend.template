@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">Splinter Rend</ansi>
+
+<ansi fg="command">Splinter Rend</ansi> is used by the Glint Stalkers of the Obelisk. A Stalker slides
+out of the facets beside its quarry, edge first, and leaves a sliver of
+black crystal in the wound that keeps bleeding for several rounds.
+
+<ansi fg="yellow">Counterplay: </ansi>
+
+  A Stalker strikes once or twice and then breaks off and hides where it
+  stands. It cannot leave the room. <ansi fg="command">search</ansi> for it, or be ready when it
+  comes out again: it lies low for a little while before it strikes.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>

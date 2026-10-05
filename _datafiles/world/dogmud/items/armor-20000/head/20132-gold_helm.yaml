@@ -1,0 +1,17 @@
+itemid: 20132
+name: Gold Helm
+vendor_categories:
+- blacksmithing
+namesimple: helm
+description: >
+  A rounded open-faced helm beaten from heavy gold, with a leather lining.
+  Gold is soft and heavy and a poor thing to fight with, and worth a small
+  fortune: wealth worn openly.
+type: head
+subtype: wearable
+weight: 5.25
+physical_mitigation: 2
+value: 627
+rarity_tier: 30
+statmods:
+  charisma: 2

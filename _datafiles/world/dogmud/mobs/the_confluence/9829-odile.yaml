@@ -1,0 +1,46 @@
+mobid: 9829
+zone: The Confluence
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - margin
+idlecommands:
+  - 'emote writes a tiny label and ties it to nothing in particular, then unties it.'
+  - ''
+  - 'emote squints at a gutter as though it owed her an explanation.'
+  - 'emote peers at a passer-by''s dropped glove, then at the passer-by, then writes something down.'
+  - ''
+  - 'emote reorganises the little paper bags in her satchel by some private system.'
+activitylevel: 8
+character:
+  name: Odile
+  description: |
+    A sharp-featured woman in a scholar's gown gone shiny at the elbows,
+    carrying a satchel full of labels, string and little paper bags. The
+    Margin employs her to gather 'curiosities of the street' for study,
+    which in practice means anything anyone drops between the Cross and the
+    Brenn Bridge. She labels each find with where and when she found it, in
+    handwriting too small for anyone but her to read.
+  speciesid: 1
+  level: 3
+  gold: 5
+  stats:
+    strength:
+      base: 96
+    vitality:
+      base: 100
+    perception:
+      base: 118
+    dexterity:
+      base: 106

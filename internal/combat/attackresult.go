@@ -25,6 +25,9 @@ import (
 // attacker-side progression keys on CleanHit).
 type WeaponHitInfo struct {
 	SkillTag string // e.g., "weapon-combat", "unarmed-combat", "ranged-combat"
+	// Weapon is the item that swung (ItemId 0 for a bare hand). Gear wear
+	// reads it to wear the weapon that actually landed a critical hit.
+	Weapon   items.Item
 	Hit      bool
 	CleanHit bool
 	Crit     bool

@@ -1,0 +1,17 @@
+id: miners-pick
+name: "Miner's Pick"
+aliases: [minerspick]
+skill: blacksmithing
+skill_minimum: 5
+station: forge
+time_rounds: 3
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 10074
+  quantity: 1
+success_actor: "You draw an iron head to a point and a chisel and hang it on an ash haft. A miner's pick!"
+failure_actor: "The head cracks in the quench. The iron is ruined."

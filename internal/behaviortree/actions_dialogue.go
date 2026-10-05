@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/npcidle"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -66,7 +67,7 @@ func actSay(params map[string]any, ctx *EvalContext) Result {
 	if text == "" {
 		return Failure
 	}
-	mob.Command("say " + text)
+	idleOrSet(mob, ctx, "say "+text)
 	return Success
 }
 
@@ -84,8 +85,18 @@ func actEmote(params map[string]any, ctx *EvalContext) Result {
 	if text == "" {
 		return Failure
 	}
-	mob.Command("emote " + text)
+	idleOrSet(mob, ctx, "emote "+text)
 	return Success
+}
+
+// idleOrSet runs a tree's say or emote line, except that on an idle tick
+// it may be written fresh instead (internal/npcidle), as any mob's idle
+// emote may. Greetings, answers and every other event keep their set line.
+func idleOrSet(mob *mobs.Mob, ctx *EvalContext, cmd string) {
+	if ctx.Event.EventType == "mob_idle" && npcidle.TryReplace(mob, cmd) {
+		return
+	}
+	mob.Command(cmd)
 }
 
 // actSendUserText sends a text message to the triggering player.

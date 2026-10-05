@@ -111,3 +111,6 @@ wiped by the smoke-test cleanup ritual.
 
 `internal/hooks` (event listener registration), the economy dashboard, and
 admin caravan inspection commands.
+
+Deliveries skip forged tools (`items.NeverResold`): iron and better tools
+never reach a shelf (wilderness trades review).

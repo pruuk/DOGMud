@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
@@ -77,10 +78,9 @@ func RegisterShop(zone string, mobId int, roomId int, template ShopInventory) *S
 	shopCacheMu.RLock()
 	if inv, ok := shopCache[key]; ok {
 		shopCacheMu.RUnlock()
-		if inv.CraftSupport == "" && template.CraftSupport != "" {
-			inv.CraftSupport = template.CraftSupport
+		if reconcileShop(inv, template) {
 			if err := SaveShop(zone, mobId, roomId); err != nil {
-				mudlog.Warn("RegisterShop CraftSupport migration save", "key", key, "error", err)
+				mudlog.Warn("RegisterShop reconcile save", "key", key, "error", err)
 			}
 		}
 		return inv
@@ -123,8 +123,8 @@ func RegisterShop(zone string, mobId int, roomId int, template ShopInventory) *S
 			seeded.Stock[i].Current = abundant
 		}
 		inv = &seeded
-	} else if inv.CraftSupport == "" && template.CraftSupport != "" {
-		// Flag for migration after cache insert so SaveShop can find the entry.
+	} else if reconcileShop(inv, template) {
+		// Save after cache insert so SaveShop can find the entry.
 		needsCraftMigration = true
 	}
 
@@ -137,13 +137,65 @@ func RegisterShop(zone string, mobId int, roomId int, template ShopInventory) *S
 	shopCacheMu.Unlock()
 
 	if needsCraftMigration {
-		inv.CraftSupport = template.CraftSupport
 		if err := SaveShop(zone, mobId, roomId); err != nil {
-			mudlog.Warn("RegisterShop CraftSupport migration save", "key", key, "error", err)
+			mudlog.Warn("RegisterShop reconcile save", "key", key, "error", err)
 		}
 	}
 
 	return inv
+}
+
+// reconcileShop brings a saved inventory up to date with its mob template,
+// which is the authored truth, and reports whether anything changed:
+//   - the craft support follows the template (an empty one, or one renamed:
+//     carpentry became woodwork);
+//   - a stock entry the template has gained since the save is added, seeded
+//     at abundance as a fresh shop would be, so new shop goods reach servers
+//     whose shops were saved before them;
+//   - a forged tool (items.NeverResold) is taken off the shelf: good tools
+//     come only from player smiths.
+//
+// Entries the template does not name are otherwise kept: they are walk-in
+// goods players sold.
+func reconcileShop(inv *ShopInventory, template ShopInventory) bool {
+	changed := false
+	if template.CraftSupport != "" && inv.CraftSupport != template.CraftSupport {
+		inv.CraftSupport = template.CraftSupport
+		changed = true
+	}
+
+	kept := inv.Stock[:0]
+	have := map[int]bool{}
+	for _, e := range inv.Stock {
+		if spec := items.GetItemSpec(e.ItemId); spec != nil && items.NeverResold(*spec) {
+			changed = true
+			continue
+		}
+		have[e.ItemId] = true
+		kept = append(kept, e)
+	}
+	inv.Stock = kept
+
+	cfg := PricingConfigFromBalance()
+	for _, e := range template.Stock {
+		if have[e.ItemId] {
+			continue
+		}
+		if spec := items.GetItemSpec(e.ItemId); spec != nil && items.NeverResold(*spec) {
+			continue
+		}
+		if e.RestockQty > 0 {
+			abundant := int(math.Ceil(float64(e.RestockQty) * cfg.AbundanceThreshold))
+			if e.MaxStock > 0 && abundant > e.MaxStock {
+				abundant = e.MaxStock
+			}
+			e.Current = abundant
+		}
+		inv.Stock = append(inv.Stock, e)
+		have[e.ItemId] = true
+		changed = true
+	}
+	return changed
 }
 
 // SaveShop writes the cached ShopInventory for the given location to disk.

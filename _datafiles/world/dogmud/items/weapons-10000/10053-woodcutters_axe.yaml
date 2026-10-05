@@ -1,0 +1,23 @@
+itemid: 10053
+name: Woodcutter's Axe
+vendor_categories:
+- blacksmithing
+- woodwork
+namesimple: axe
+description: >
+  A long-hafted single-bit axe with an iron head, balanced for the steady overhead swing that fells a tree rather than the quick chop of a fight.
+type: weapon
+hands: 1
+subtype: cleaving
+weight: 3.5
+speedmultiplier: 0.85
+damage:
+  basedamage: 6
+  variance: 2
+damage_multiplier: 0.6
+parryrating: 4
+value: 15
+rarity_tier: 40
+tool:
+  type: axe
+  tier: 2

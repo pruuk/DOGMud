@@ -68,6 +68,7 @@ type promptInput struct {
 	Capabilities string
 	Brief        bool
 	Recipes      []string
+	RecipesAway  []string // what she has the makings for but not the place
 	Romance      []string
 	Intimacy     string
 	Core         []string
@@ -103,8 +104,8 @@ func buildMessages(in promptInput) []chatMessage {
 		sys.WriteString("- When the two of you are alone together: " + strings.TrimSpace(in.Intimacy) + "\n")
 	}
 	sys.WriteString("- leave: only if " + owner + " clearly tells you to go away for good, or you truly cannot bear them any more. Say goodbye in the same reply. A joke, a bad mood or one argument is not a reason to leave. Leaving is not instant: you hang back, and it only becomes final if they mean it.\n")
-	sys.WriteString("- Fighting: your body fights on its own, as it always has. In a fight you choose the plan in combat: stance fight, protect (put yourself between " + owner + " and harm), hold_back (do not join in; you still defend yourself) or flee; which enemy to go for; when you would run; melee or ranged; and a special move to try next (taunt, bash, kick, trip, grapple, hamstring, rally, warcry) when one would help. Your body only manages a move when it can: a shield for a bash, legs for a kick, and not twice in a breath. Choose as the person you are: how brave you are, how you feel about " + owner + ", whether the fight is just. Keep speech in a fight to a few words. Outside a fight leave combat unchanged.\n")
-	sys.WriteString("- Money and goods: browse a merchant's wares (they then appear with [s] refs), buy one ([s] ref; query how many), or sell something from your pack. You keep an emergency reserve and do not spend it, or make a large purchase, unless it is something you need or " + owner + " asks. loot a body ([t] ref) under " + owner + "'s rights, or take_from a container (query: the item) once you have looked inside. The loot arrangement applies to both.\n")
+	sys.WriteString(combatRule(p, owner, len(in.Spells) > 0))
+	sys.WriteString("- Money and goods: browse a merchant's wares (they then appear with [s] refs), buy one ([s] ref; query how many), or sell something from your pack. You keep an emergency reserve and do not spend it, or make a large purchase, unless it is something you need or " + owner + " asks. loot a body ([t] ref) under " + owner + "'s rights, salvage a body that is picked clean to butcher it (it is destroyed), or take_from a container (query: the item) once you have looked inside. The loot arrangement applies to all three.\n")
 	sys.WriteString("- Goals: work toward your goals when it suits the moment, talk about them, ask for help. " + owner + "'s plans come first. goal: add one you have taken on, mark one done (only goals you cannot be checked on), or drop one. autonomy: only when " + owner + " has just told you how far to roam.\n")
 	sys.WriteString("- put (ref: an item in your pack, to: a container here) stores something. sayto (ref: someone here, query: your words) speaks to one person directly; ordinary say is still for everyone.\n")
 	sys.WriteString("- Act with purpose, like a real traveller: take an interest in what matters to you, and leave the rest. Most moments need no action at all (verb none).\n")
@@ -136,44 +137,7 @@ func buildMessages(in promptInput) []chatMessage {
 		sys.WriteString("\n\n")
 	}
 
-	sys.WriteString("WHO YOU ARE\n")
-	fmt.Fprintf(&sys, "Name: %s", p.Name)
-	if p.Pronouns != `` {
-		fmt.Fprintf(&sys, " (%s)", p.Pronouns)
-	}
-	if p.Age != `` {
-		fmt.Fprintf(&sys, ", %s", p.Age)
-	}
-	sys.WriteString("\n")
-	fmt.Fprintf(&sys, "%s\n", strings.TrimSpace(p.Summary))
-	writeList(&sys, `Personality`, p.Personality)
-	if p.SpeechStyle != `` {
-		fmt.Fprintf(&sys, "How you speak: %s\n", strings.TrimSpace(p.SpeechStyle))
-	}
-	writeList(&sys, `You like`, p.Likes)
-	writeList(&sys, `You dislike`, p.Dislikes)
-	writeList(&sys, `You fear`, p.Fears)
-	writeList(&sys, `You want`, p.Ambitions)
-	writeList(&sys, `Habits`, p.Habits)
-	if p.Knowledge != `` && !in.Brief {
-		fmt.Fprintf(&sys, "What you know: %s\n", strings.TrimSpace(p.Knowledge))
-	}
-
-	// Gradual self-disclosure (F2.6). A detail the owner has not earned is
-	// not given to the model at all.
-	var shareable []string
-	private := false
-	for _, b := range p.Backstory {
-		if b.Trust <= in.Opinion.Trust || b.Trust <= 0 {
-			shareable = append(shareable, b.Text)
-		} else {
-			private = true
-		}
-	}
-	writeList(&sys, `Your past, which you may share with `+owner+` when it fits`, shareable)
-	if private {
-		fmt.Fprintf(&sys, "There are other things in your past you do not talk about with %s yet.\n", owner)
-	}
+	writeIdentity(&sys, p, in.Opinion.Trust, owner, in.Brief)
 
 	var usr strings.Builder
 
@@ -410,6 +374,14 @@ func buildMessages(in promptInput) []chatMessage {
 		}
 		usr.WriteString("\n")
 	}
+	if len(in.RecipesAway) > 0 {
+		usr.WriteString("WHAT YOU HAVE THE MAKINGS FOR, BUT NOT THE PLACE (not here; somewhere that has one, which you may know of among your places)\n")
+		for _, l := range in.RecipesAway {
+			usr.WriteString(l)
+			usr.WriteString("\n")
+		}
+		usr.WriteString("\n")
+	}
 	if len(in.Recipes) > 0 {
 		usr.WriteString("WHAT YOU COULD MAKE HERE (craft with the [k] ref)\n")
 		for _, l := range in.Recipes {
@@ -547,6 +519,10 @@ func formatStimulus(s stimulus, ownerName string) string {
 		return fmt.Sprintf(`%s just attacked you!`, s.Speaker)
 	case `noticed`:
 		return fmt.Sprintf(`You notice: %s.`, s.Text)
+	case `searched`:
+		return fmt.Sprintf(`Searching here, you turned up: %s. Say so if it matters to you or to %s.`, s.Text, ownerName)
+	case `found`:
+		return fmt.Sprintf(`While searching you worked something small loose: %s. It is %s's find as much as yours; tell them, show it, or give it to them, as you see fit.`, s.Text, ownerName)
 	case `idle`:
 		return fmt.Sprintf(`Nothing much is happening. Nearby: %s. You may deal with something here if it suits you and the arrangement with %s allows it, work toward one of your goals, point something out, or leave it be.`, s.Text, ownerName)
 	case `looked`:
@@ -805,8 +781,9 @@ func capabilityWords(cfg Config) string {
 		`forage or search`,
 		`sayto one person`,
 		`loot a body or take_from an open container`,
+		`salvage a body already looted (butchering game for meat, hide and sinew), which destroys it`,
 		`browse a merchant's wares, buy or sell`,
-		`craft something you know how to make, where the place allows it`,
+		`craft something you know how to make, where the place allows it (with the makings but not the place, say so, and go where there is one if that suits you both)`,
 		`cast a spell you know ([m] ref) on someone here, on your companion, or on yourself. A spell that harms is like an attack: only when nobody else put you up to it, and only at something your companion could fight themselves`,
 		`rest when there is nothing to do and nowhere to be, and stand when there is`,
 		`attack someone or something here when your own companion asks you to: a practice dummy, a target, a beast, anything already fighting. Never anything your companion could not fight themselves. What you refuse is a person who has done no harm: a shopkeeper, a child, a bystander`,
@@ -816,4 +793,64 @@ func capabilityWords(cfg Config) string {
 		acts = append(acts, `go_to a place you know or back to your companion, and explore one step into the unknown`)
 	}
 	return strings.Join(acts, `; `)
+}
+
+// capabilityWordsFor is capabilityWords with what only some companions do:
+// slipping out of sight is a thief's or a scout's, not everyone's.
+func capabilityWordsFor(cfg Config, p *Profile) string {
+	out := capabilityWords(cfg)
+	if canSneak(p) {
+		out += `; sneak, to slip out of sight here (a blow struck from hiding takes its target by surprise)`
+	}
+	return out
+}
+
+// writeIdentity writes WHO YOU ARE: the profile's own words about who the
+// companion is, what they are good at, and as much of their past as
+// listener has earned (trust). A detail not yet earned is not given to the
+// model at all, only the fact that there is more. Shared by the road
+// prompt and the Hollow's (hollow.go), so a companion is the same person
+// in both.
+func writeIdentity(sys *strings.Builder, p *Profile, trust int, listener string, brief bool) {
+	sys.WriteString("WHO YOU ARE\n")
+	fmt.Fprintf(sys, "Name: %s", p.Name)
+	if p.Pronouns != `` {
+		fmt.Fprintf(sys, " (%s)", p.Pronouns)
+	}
+	if p.Age != `` {
+		fmt.Fprintf(sys, ", %s", p.Age)
+	}
+	sys.WriteString("\n")
+	fmt.Fprintf(sys, "%s\n", strings.TrimSpace(p.Summary))
+	writeList(sys, `Personality`, p.Personality)
+	if p.SpeechStyle != `` {
+		fmt.Fprintf(sys, "How you speak: %s\n", strings.TrimSpace(p.SpeechStyle))
+	}
+	writeList(sys, `You like`, p.Likes)
+	writeList(sys, `You dislike`, p.Dislikes)
+	writeList(sys, `You fear`, p.Fears)
+	writeList(sys, `You want`, p.Ambitions)
+	writeList(sys, `Habits`, p.Habits)
+	if strings.TrimSpace(p.Specialty) != `` {
+		fmt.Fprintf(sys, "What you are good at: %s\n", strings.TrimSpace(p.Specialty))
+	}
+	if p.Knowledge != `` && !brief {
+		fmt.Fprintf(sys, "What you know: %s\n", strings.TrimSpace(p.Knowledge))
+	}
+
+	// Gradual self-disclosure (F2.6). A detail the owner has not earned is
+	// not given to the model at all.
+	var shareable []string
+	private := false
+	for _, b := range p.Backstory {
+		if b.Trust <= trust || b.Trust <= 0 {
+			shareable = append(shareable, b.Text)
+		} else {
+			private = true
+		}
+	}
+	writeList(sys, `Your past, which you may share with `+listener+` when it fits`, shareable)
+	if private {
+		fmt.Fprintf(sys, "There are other things in your past you do not talk about with %s yet.\n", listener)
+	}
 }

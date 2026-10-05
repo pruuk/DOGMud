@@ -1,0 +1,45 @@
+mobid: 9826
+zone: New Plymouth Outskirts
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - new_plymouth_outskirts_folk
+idlecommands:
+  - 'emote sits on her heels and watches the stalls with total attention.'
+  - ''
+  - 'emote chews on a stalk of grass and counts the people going through the gate.'
+  - 'emote reties the knot in her shawl and pats whatever is inside it.'
+  - ''
+  - 'emote dodges a hawker''s cart without looking up.'
+activitylevel: 8
+character:
+  name: Nettle
+  description: |
+    A thin girl from the refugee camp, all elbows and quick eyes, in a shawl
+    knotted around her like a sling. She works the market sprawl outside the
+    walls, where the stallholders drop more than they sell, and she has
+    learned to be first to anything that falls. What she finds feeds the
+    camp. What she cannot use, she trades.
+  speciesid: 1
+  level: 3
+  gold: 1
+  stats:
+    strength:
+      base: 96
+    vitality:
+      base: 104
+    perception:
+      base: 114
+    dexterity:
+      base: 116

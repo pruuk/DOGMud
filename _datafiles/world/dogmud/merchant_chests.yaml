@@ -1,0 +1,783 @@
+# Merchant chests (internal/merchantchests).
+#
+# Every merchant keeps a locked chest in the room it trades from. The server
+# restocks each one on a timer (settings.restock_interval, game time): the
+# old contents are cleared, gold is set to the merchant's average stock value
+# x gold_value_ratio, +/- gold_spread, and 1-3 random goods are drawn from
+# the merchant's own shop list. Goods drawn into a chest are marked as that
+# merchant's property, so anything lifted out of one is stolen goods on the
+# stolen-bauble rules: hot for Balance.BaubleStolenHeatHours in the area it
+# was taken in (no honest merchant, storage or auction there), recognisable
+# on the thief by the merchant and that area's guards, and bought by a fence
+# anywhere at any time.
+#
+# The lock difficulty (pins) is derived from the average stock value unless a
+# chest sets `difficulty:`, and so is the Perception each merchant template
+# carries (docs/economy/merchant_chests.md has the roster and formula).
+#
+# `generic` is the generic chest: any field a chest leaves empty falls back
+# to it. Each entry under `chests` is the chest geared to one merchant in one
+# room; a merchant who trades from two rooms has one per room.
+settings:
+  # How often each chest is emptied and restocked (gametime period; one game
+  # day is Timing.RoundsPerDay rounds).
+  restock_interval: 1 day
+  # How long a picked chest stays open before it locks itself again.
+  relock_interval: 2 hours
+  # Gold stocked = average stock value x gold_value_ratio x (1 +/- gold_spread).
+  gold_value_ratio: 0.5
+  gold_spread: 0.5
+  # Goods stocked per restock, drawn from the merchant's shop list.
+  items_min: 1
+  items_max: 3
+  # Lock pins = lock_base + lock_per_doubling x log2(1 + average stock value),
+  # clamped to [lock_min, lock_max].
+  lock_base: 4
+  lock_per_doubling: 2
+  lock_min: 6
+  lock_max: 20
+  # Merchant Perception base = perception_base + perception_per_doubling x
+  # log2(1 + average stock value). Checked at boot against every template.
+  perception_base: 100
+  perception_per_doubling: 4
+  # A sleeping merchant's Perception counts for this fraction in every theft
+  # and detection contest.
+  sleeping_perception_mult: 0.5
+  # Town law-keepers outside the `guard` group who, like a guard, may
+  # recognise hot chest goods on the thief in their own heat area. A mob in
+  # the `guard` group needs no entry here.
+  lookout_mobs:
+    - 9316  # Dock Constable (New Plymouth Docks)
+    - 9352  # A Square Guard (New Plymouth Merchant)
+    - 9374  # Guard-Captain Doryn (New Plymouth Noble)
+    - 9378  # A Gatehouse Sentry (New Plymouth Noble)
+    - 9485  # A Gate Guard (The Confluence)
+    - 9419  # Holt the Gate-Warden (The Confluence)
+    - 9450  # A Processional Warden (The Confluence)
+    - 9459  # The Threshold Warden (The Confluence)
+    - 9501  # Oswin the Bridge-Warden (Greenford)
+    - 9530  # Garn the Road-Warden (Greenford)
+    - 9107  # Warden Esk (Pothole Coulee)
+    - 9192  # Warden Holt (Greywater Flats)
+
+generic:
+  name: chest
+  description: |
+    A stout, iron-banded chest, scuffed from years of use, where its owner
+    keeps the day's coin and a few of the better goods under lock.
+
+chests:
+  # East Road to Greenford
+  - mobid: 9492  # Mistress Odell the Victualler
+    roomid: 6268  # The Wheatside Hamlet
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Mistress
+      Odell the Victualler can reach it without stepping away from the food.
+  # Greenford
+  - mobid: 9502  # Maret the Miller
+    roomid: 6280  # The Watermill
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Maret the
+      Miller can reach it without stepping away from the food.
+  - mobid: 9505  # Fenn the Fishmonger
+    roomid: 6282  # Riverside Row
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Fenn the
+      Fishmonger can reach it without stepping away from the food.
+  - mobid: 9512  # A Produce-Seller
+    roomid: 6289  # The Market Cross
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where the
+      produce-seller can reach it without stepping away from the food.
+  - mobid: 9509  # Aldith the Bookseller
+    roomid: 6290  # The Bookshop
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Aldith the
+      Bookseller keeps the day's coin and a few of the better goods under
+      lock.
+  - mobid: 9510  # Daven the Innkeeper
+    roomid: 6291  # The Cartographer's Rest
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Daven the
+      Innkeeper can reach it without stepping away from the food.
+  - mobid: 9511  # Prue the Store-Keeper
+    roomid: 6293  # The General Store
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Prue the
+      Store-Keeper keeps the day's coin and a few of the better goods under
+      lock.
+  - mobid: 9525  # Ness the Tea-Keeper
+    roomid: 6312  # The Tea House
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Ness the
+      Tea-Keeper can reach it without stepping away from the food.
+  - mobid: 9531  # Wren the Ostler
+    roomid: 6319  # The Coaching Stable
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Wren the
+      Ostler can reach it without stepping away from the food.
+  - mobid: 9590  # Aldo the Smith
+    roomid: 6445  # The Guild Forge
+    name: strongbox
+    description: |
+      A squat iron strongbox bolted to the floor within reach of the anvil.
+      Aldo the Smith forged the hasp and the lock both, and neither looks
+      inclined to give.
+  - mobid: 9591  # Wenna the Weaver
+    roomid: 6446  # The Weaver's Loft
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that Wenna the Weaver can keep the takings beneath the good
+      fabric.
+  - mobid: 9592  # Hebb the Herbalist
+    roomid: 6447  # The Herbalist's Stall
+    name: cabinet
+    description: |
+      A narrow apothecary cabinet with a brass-plated door and a fussy little
+      lock. Hebb the Herbalist keeps the dearer tinctures and the coin box
+      behind it.
+  - mobid: 9593  # Cade the Enchanter
+    roomid: 6448  # The Sigil Room
+    name: coffer
+    description: |
+      A black oak coffer scored with warding runes that seem to shift when you
+      look away. Cade the Enchanter keeps the costliest reagents and the day's
+      takings in it.
+  - mobid: 9594  # Tibb the Jeweler
+    roomid: 6449  # The Jeweler's Bench
+    name: casket
+    description: |
+      A small brass-bound casket lined with faded velvet, where Tibb the
+      Jeweler locks away the best stones and settings at the end of each sale.
+  # Greywater Flats
+  - mobid: 9191  # Tamsin Reed
+    roomid: 5425  # Ford Approach
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Tamsin Reed
+      keeps the day's coin and a few of the better goods under lock.
+  # Hartcharn
+  - mobid: 9181  # Maret Cull
+    roomid: 5406  # The Coachman's Rest, Common Room
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Maret Cull
+      keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9182  # Severin Pell
+    roomid: 5409  # The Ferry and Coach Agent
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Severin
+      Pell keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9183  # Drostan
+    roomid: 5410  # The Smithy
+    name: strongbox
+    description: |
+      A squat iron strongbox bolted to the floor within reach of the anvil.
+      Drostan forged the hasp and the lock both, and neither looks inclined to
+      give.
+  - mobid: 9184  # Ondine
+    roomid: 5411  # The General Store
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Ondine
+      keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9185  # Wick Orrel
+    roomid: 5415  # The Tap and Trough
+    name: lockbox
+    description: |
+      A plain, battered lockbox fitted with a far better lock than it
+      deserves. Wick Orrel would swear it holds nothing worth the bother.
+  - mobid: 9600  # Bryd Harrow
+    roomid: 6455  # The Weaving Shed
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that Bryd Harrow can keep the takings beneath the good fabric.
+  - mobid: 9601  # Alard Fen
+    roomid: 6456  # The Apothecary's Hut
+    name: cabinet
+    description: |
+      A narrow apothecary cabinet with a brass-plated door and a fussy little
+      lock. Alard Fen keeps the dearer tinctures and the coin box behind it.
+  - mobid: 9602  # Sefa Crane
+    roomid: 6457  # The Rune-Carver's Hut
+    name: coffer
+    description: |
+      A black oak coffer scored with warding runes that seem to shift when you
+      look away. Sefa Crane keeps the costliest reagents and the day's takings
+      in it.
+  - mobid: 9603  # Til Marsh
+    roomid: 6458  # The Gem Hut
+    name: casket
+    description: |
+      A small brass-bound casket lined with faded velvet, where Til Marsh
+      locks away the best stones and settings at the end of each sale.
+  - mobid: 9604  # Gerta Crook
+    roomid: 6459  # The Cookhouse
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Gerta
+      Crook can reach it without stepping away from the food.
+  # Kilnreach Works
+  - mobid: 9203  # Sela Tapp
+    roomid: 5465  # The Furnace and Flagon
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Sela Tapp
+      keeps the day's coin and a few of the better goods under lock.
+  # Kingsbarrow Vale
+  - mobid: 9197  # Dawkin the Miller
+    roomid: 5448  # The Watermill
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Dawkin
+      the Miller can reach it without stepping away from the food.
+  - mobid: 9196  # Brannick Oats
+    roomid: 5449  # The Sheaf and Sickle
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Brannick
+      Oats keeps the day's coin and a few of the better goods under lock.
+  # Marches Spur Road
+  - mobid: 250  # Peddler Malk
+    roomid: 4003  # Peddler's Camp
+    name: lockbox
+    description: |
+      A plain, battered lockbox fitted with a far better lock than it
+      deserves. Peddler Malk would swear it holds nothing worth the bother.
+  # New Plymouth Common
+  - mobid: 9326  # Flower Seller
+    roomid: 5602  # Carter's Rise
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where the flower
+      seller keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9326  # Flower Seller
+    roomid: 5603  # The Flower Market
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where the flower
+      seller keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9390  # Mardle the Sundries-Seller
+    roomid: 5604  # The Common Market
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Mardle the
+      Sundries-Seller keeps the day's coin and a few of the better goods under
+      lock.
+  - mobid: 9321  # Marda
+    roomid: 5605  # Cookshop Row
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Marda can
+      reach it without stepping away from the food.
+  - mobid: 9322  # Renn Bowl
+    roomid: 5607  # The Brimming Bowl Taproom
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Renn Bowl
+      can reach it without stepping away from the food.
+  - mobid: 9323  # Ysolde
+    roomid: 5620  # Ysolde's Room
+    name: lockbox
+    description: |
+      A plain, battered lockbox fitted with a far better lock than it
+      deserves. Ysolde would swear it holds nothing worth the bother.
+  # New Plymouth Crafting
+  - mobid: 9332  # Orin the Bookseller
+    roomid: 5706  # Orin's Bookstall
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Orin the
+      Bookseller keeps the day's coin and a few of the better goods under
+      lock.
+  - mobid: 9333  # Master Halvard
+    roomid: 5709  # The Forge Yard
+    name: strongbox
+    description: |
+      A squat iron strongbox bolted to the floor within reach of the anvil.
+      Master Halvard forged the hasp and the lock both, and neither looks
+      inclined to give.
+  - mobid: 9334  # Vesna
+    roomid: 5711  # The Alchemist's Lab
+    name: cabinet
+    description: |
+      A narrow apothecary cabinet with a brass-plated door and a fussy little
+      lock. Vesna keeps the dearer tinctures and the coin box behind it.
+  - mobid: 9335  # Edda Glass
+    roomid: 5713  # The Glass Kiln
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Edda Glass
+      keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9336  # Nessa the Tailor
+    roomid: 5715  # The Tailor's Shop
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that Nessa the Tailor can keep the takings beneath the good
+      fabric.
+  - mobid: 9337  # Corwin the Tanner
+    roomid: 5717  # The Tannery
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that Corwin the Tanner can keep the takings beneath the good
+      fabric.
+  - mobid: 9610  # Ansel Rune
+    roomid: 6465  # The Enchanter's Atelier
+    name: coffer
+    description: |
+      A black oak coffer scored with warding runes that seem to shift when you
+      look away. Ansel Rune keeps the costliest reagents and the day's takings
+      in it.
+  - mobid: 9611  # Perla Gilt
+    roomid: 6466  # The Jeweler's Atelier
+    name: casket
+    description: |
+      A small brass-bound casket lined with faded velvet, where Perla Gilt
+      locks away the best stones and settings at the end of each sale.
+  # New Plymouth Docks
+  - mobid: 9309  # Fishmonger
+    roomid: 5504  # The Fish Market
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where the
+      fishmonger can reach it without stepping away from the food.
+  - mobid: 9303  # Dunmar Wells
+    roomid: 5505  # Warehouse Row
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Dunmar
+      Wells keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9307  # Chandler Voss
+    roomid: 5508  # The Chandlery
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Chandler
+      Voss keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9301  # Bressa Toll
+    roomid: 5512  # The Salt Cellar Taproom
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Bressa
+      Toll can reach it without stepping away from the food.
+  - mobid: 9311  # Corra
+    roomid: 5516  # The Cookshop
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Corra can
+      reach it without stepping away from the food.
+  - mobid: 9306  # Old Sable
+    roomid: 5518  # Old Sable's Pawnshop
+    name: safe
+    description: |
+      A heavy pawnbroker's safe with a brass dial, where Old Sable keeps the
+      pledges worth keeping and the coin to redeem them.
+  - mobid: 9305  # Marn the Draper
+    roomid: 5523  # Marn's Fabric-Remnants Shop
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that Marn the Draper can keep the takings beneath the good
+      fabric.
+  # New Plymouth Merchant
+  - mobid: 9345  # Falk the Auctioneer
+    roomid: 5808  # Falk's Auction House
+    name: vault
+    description: |
+      A squat iron vault door set into the wall behind the auction block. Falk
+      the Auctioneer locks consigned goods and the house's cut inside between
+      sales.
+  - mobid: 9347  # Dame Ostry
+    roomid: 5810  # Dame Ostry's Armoury
+    name: strongbox
+    description: |
+      A squat iron strongbox bolted to the floor within reach of the anvil.
+      Dame Ostry forged the hasp and the lock both, and neither looks inclined
+      to give.
+  - mobid: 9348  # Brun the Armorer
+    roomid: 5812  # Brun's Plate-Works
+    name: strongbox
+    description: |
+      A squat iron strongbox bolted to the floor within reach of the anvil.
+      Brun the Armorer forged the hasp and the lock both, and neither looks
+      inclined to give.
+  - mobid: 9350  # Madam Sephe
+    roomid: 5814  # The Gilt Threshold
+    name: coffer
+    description: |
+      A gilded coffer with a delicate but very good lock, set discreetly
+      beside the hearth where Madam Sephe can keep an eye on it.
+  # New Plymouth Noble
+  - mobid: 9373  # Modiste Aurel
+    roomid: 6010  # Modiste Aurel's Atelier
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that Modiste Aurel can keep the takings beneath the good fabric.
+  # New Plymouth Outskirts
+  - mobid: 9209  # A Market Hawker
+    roomid: 5467  # The Outer Market
+    name: lockbox
+    description: |
+      A plain, battered lockbox fitted with a far better lock than it
+      deserves. The market hawker would swear it holds nothing worth the
+      bother.
+  - mobid: 9213  # Mother Coyle
+    roomid: 5475  # The Broken Gate
+    name: lockbox
+    description: |
+      A plain, battered lockbox fitted with a far better lock than it
+      deserves. Mother Coyle would swear it holds nothing worth the bother.
+  - mobid: 9215  # A River-Road Smuggler
+    roomid: 5479  # The Ford
+    name: lockbox
+    description: |
+      A plain, battered lockbox fitted with a far better lock than it
+      deserves. The river-road smuggler would swear it holds nothing worth the
+      bother.
+  # New Plymouth Temple
+  - mobid: 9391  # Almoner Sten
+    roomid: 5903  # The Temple Gate Plaza
+    name: coffer
+    description: |
+      A carved offering coffer with a slotted lid and a heavy temple lock.
+      Almoner Sten empties the day's alms into it at every bell.
+  # North Road
+  - mobid: 278  # Haral
+    roomid: 4045  # Common Room
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Haral can
+      reach it without stepping away from the food.
+  # North Road North
+  - mobid: 9174  # Old Mabbot
+    roomid: 5373  # The Rolling Pasture Road
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Old Mabbot
+      keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9171  # Goodwife Pemberton
+    roomid: 5378  # The Lake & Ladle, Common Room
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Goodwife
+      Pemberton keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9172  # Sly Tam
+    roomid: 5378  # The Lake & Ladle, Common Room
+    name: lockbox
+    description: |
+      A plain, battered lockbox fitted with a far better lock than it
+      deserves. Sly Tam would swear it holds nothing worth the bother.
+  # Pothole Coulee
+  - mobid: 9104  # Trader Onna
+    roomid: 5207  # Coulee Provisions
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Trader Onna
+      keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9116  # Smith Rusk
+    roomid: 5245  # The Coulee Smithy
+    name: strongbox
+    description: |
+      A squat iron strongbox bolted to the floor within reach of the anvil.
+      Smith Rusk forged the hasp and the lock both, and neither looks inclined
+      to give.
+  - mobid: 9128  # Herbalist Birna
+    roomid: 5265  # The Sheltered Pool
+    name: cabinet
+    description: |
+      A narrow apothecary cabinet with a brass-plated door and a fussy little
+      lock. Herbalist Birna keeps the dearer tinctures and the coin box behind
+      it.
+  - mobid: 9605  # Stitcher Bex
+    roomid: 6460  # The Patch-Tent
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that Stitcher Bex can keep the takings beneath the good fabric.
+  - mobid: 9606  # Enchanter Skell
+    roomid: 6461  # The Warder's Dugout
+    name: coffer
+    description: |
+      A black oak coffer scored with warding runes that seem to shift when you
+      look away. Enchanter Skell keeps the costliest reagents and the day's
+      takings in it.
+  - mobid: 9607  # Jeweler Vurl
+    roomid: 6462  # The Gem Stall
+    name: casket
+    description: |
+      A small brass-bound casket lined with faded velvet, where Jeweler Vurl
+      locks away the best stones and settings at the end of each sale.
+  - mobid: 9608  # Cook Hesk
+    roomid: 6463  # The Cook-Fire
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Cook Hesk
+      can reach it without stepping away from the food.
+  # River Road
+  - mobid: 9412  # Birrel the Netmender
+    roomid: 6098  # Netmender's Row
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Birrel
+      the Netmender can reach it without stepping away from the food.
+  # Stillwater
+  - mobid: 336  # Fishmonger Tov Brann
+    roomid: 4102  # Lakefront Square
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where
+      Fishmonger Tov Brann can reach it without stepping away from the food.
+  - mobid: 341  # Storekeeper Wulf
+    roomid: 4105  # Tinder & Tackle
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Storekeeper
+      Wulf keeps the day's coin and a few of the better goods under lock.
+  - mobid: 337  # Smith Brindle
+    roomid: 4106  # Brindle's Smithy
+    name: strongbox
+    description: |
+      A squat iron strongbox bolted to the floor within reach of the anvil.
+      Smith Brindle forged the hasp and the lock both, and neither looks
+      inclined to give.
+  - mobid: 338  # Apothecary Ilsa
+    roomid: 4125  # Healer's Alcove
+    name: cabinet
+    description: |
+      A narrow apothecary cabinet with a brass-plated door and a fussy little
+      lock. Apothecary Ilsa keeps the dearer tinctures and the coin box behind
+      it.
+  - mobid: 340  # Pearl-carver Kess
+    roomid: 4126  # Pearl-Carver's Garret
+    name: casket
+    description: |
+      A small brass-bound casket lined with faded velvet, where Pearl-carver
+      Kess locks away the best stones and settings at the end of each sale.
+  - mobid: 348  # Miller Bram
+    roomid: 4135  # The Watermill
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Miller
+      Bram can reach it without stepping away from the food.
+  - mobid: 339  # Weaver Edda
+    roomid: 4143  # Tailor's Cottage
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that Weaver Edda can keep the takings beneath the good fabric.
+  - mobid: 9588  # Enchanter Rane
+    roomid: 6443  # The Chrysalis Workshop
+    name: coffer
+    description: |
+      A black oak coffer scored with warding runes that seem to shift when you
+      look away. Enchanter Rane keeps the costliest reagents and the day's
+      takings in it.
+  # The Confluence
+  - mobid: 9421  # Pella the Fish-Trader
+    roomid: 6110  # The Fish Quay
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Pella the
+      Fish-Trader can reach it without stepping away from the food.
+  - mobid: 9423  # Ferrick the Chandler
+    roomid: 6114  # The Chandlery
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Ferrick the
+      Chandler keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9424  # Sybba the Tavern-keeper
+    roomid: 6116  # The Quayside Tavern
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Sybba the
+      Tavern-keeper can reach it without stepping away from the food.
+  - mobid: 9429  # Lenne the Provisioner
+    roomid: 6127  # The River Market
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Lenne the
+      Provisioner keeps the day's coin and a few of the better goods under
+      lock.
+  - mobid: 9428  # Varro the Importer
+    roomid: 6128  # The Spice Quay
+    name: lockbox
+    description: |
+      A plain, battered lockbox fitted with a far better lock than it
+      deserves. Varro the Importer would swear it holds nothing worth the
+      bother.
+  - mobid: 9437  # Corliss the Shopkeeper
+    roomid: 6150  # The Civic Stores
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Corliss the
+      Shopkeeper keeps the day's coin and a few of the better goods under
+      lock.
+  - mobid: 9451  # The Offering-Seller
+    roomid: 6155  # Processional Avenue, Votive Stalls
+    name: coffer
+    description: |
+      A carved offering coffer with a slotted lid and a heavy temple lock. The
+      offering-seller keeps votives and the day's coin in it.
+  - mobid: 9452  # The Hospitaller
+    roomid: 6160  # The Pilgrim Hall
+    name: coffer
+    description: |
+      A plain pilgrim's coffer with an iron hasp, where the hospitaller keeps
+      the hall's small stores and whatever pilgrims can spare.
+  - mobid: 9444  # Drunn the Bookseller
+    roomid: 6226  # The Bookseller's
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Drunn the
+      Bookseller keeps the day's coin and a few of the better goods under
+      lock.
+  - mobid: 9473  # The Cooper
+    roomid: 6234  # The Cooperage
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where the cooper
+      keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9475  # The Weaver
+    roomid: 6235  # The Weaver's
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that the weaver can keep the takings beneath the good fabric.
+  - mobid: 9474  # The Potter
+    roomid: 6236  # The Potter's
+    name: cabinet
+    description: |
+      A narrow apothecary cabinet with a brass-plated door and a fussy little
+      lock. The potter keeps the dearer tinctures and the coin box behind it.
+  - mobid: 9472  # The Baker
+    roomid: 6238  # The Baker's
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where the baker
+      keeps the day's coin and a few of the better goods under lock.
+  - mobid: 9477  # The Craft-Supply Seller
+    roomid: 6240  # The Craft-Supply Stall
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where the craft-
+      supply seller keeps the day's coin and a few of the better goods under
+      lock.
+  - mobid: 9486  # The Innkeeper
+    roomid: 6252  # The Travelers' Inn
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where the
+      innkeeper can reach it without stepping away from the food.
+  - mobid: 9596  # Roan the Smith
+    roomid: 6451  # The Riverside Forge
+    name: strongbox
+    description: |
+      A squat iron strongbox bolted to the floor within reach of the anvil.
+      Roan the Smith forged the hasp and the lock both, and neither looks
+      inclined to give.
+  - mobid: 9597  # Merrow the Enchanter
+    roomid: 6452  # The Warded Alcove
+    name: coffer
+    description: |
+      A black oak coffer scored with warding runes that seem to shift when you
+      look away. Merrow the Enchanter keeps the costliest reagents and the
+      day's takings in it.
+  - mobid: 9598  # Bevan the Jeweler
+    roomid: 6453  # The Gemcutter's Nook
+    name: casket
+    description: |
+      A small brass-bound casket lined with faded velvet, where Bevan the
+      Jeweler locks away the best stones and settings at the end of each sale.
+  # Thornwall City
+  - mobid: 103  # Food Vendor
+    roomid: 464  # Market Square, West
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where the food
+      vendor can reach it without stepping away from the food.
+  - mobid: 102  # Market Merchant
+    roomid: 465  # Market Square, Center
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where the market
+      merchant keeps the day's coin and a few of the better goods under lock.
+  - mobid: 97  # Blacksmith Kerra
+    roomid: 470  # Craftsmen's Quarter, East
+    name: strongbox
+    description: |
+      A squat iron strongbox bolted to the floor within reach of the anvil.
+      Blacksmith Kerra forged the hasp and the lock both, and neither looks
+      inclined to give.
+  - mobid: 98  # Apothecary Voss
+    roomid: 471  # Apothecary Lane
+    name: cabinet
+    description: |
+      A narrow apothecary cabinet with a brass-plated door and a fussy little
+      lock. Apothecary Voss keeps the dearer tinctures and the coin box behind
+      it.
+  - mobid: 104  # Fence Dealer Siv
+    roomid: 475  # Back Alley, East
+    name: lockbox
+    description: |
+      A plain, battered lockbox fitted with a far better lock than it
+      deserves. Fence Dealer Siv would swear it holds nothing worth the
+      bother.
+  - mobid: 113  # Weaver Maren
+    roomid: 480  # Tailor's Workshop
+    name: trunk
+    description: |
+      A cedar trunk with a brass lock, folded bolts of cloth stacked on its
+      lid so that Weaver Maren can keep the takings beneath the good fabric.
+  - mobid: 248  # Tavern Cook Brynn
+    roomid: 481  # Tavern Kitchen
+    name: cashbox
+    description: |
+      A dented tin cashbox with a stubborn little lock, tucked where Tavern
+      Cook Brynn can reach it without stepping away from the food.
+  - mobid: 108  # Jeweler Tess
+    roomid: 482  # Jeweler's Workshop
+    name: casket
+    description: |
+      A small brass-bound casket lined with faded velvet, where Jeweler Tess
+      locks away the best stones and settings at the end of each sale.
+  - mobid: 109  # Enchanter Vael
+    roomid: 483  # Enchanter's Circle
+    name: coffer
+    description: |
+      A black oak coffer scored with warding runes that seem to shift when you
+      look away. Enchanter Vael keeps the costliest reagents and the day's
+      takings in it.
+  - mobid: 273  # Whisper
+    roomid: 507  # The Listening Post
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Whisper
+      keeps the day's coin and a few of the better goods under lock.
+  # Watchers Crossing
+  - mobid: 88  # Traveling Merchant
+    roomid: 423  # The Crossing Inn
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where the
+      traveling merchant keeps the day's coin and a few of the better goods
+      under lock.
+  - mobid: 85  # Merchant Brecca
+    roomid: 424  # Trading Post
+    name: chest
+    description: |
+      A stout, iron-banded chest, scuffed from years of use, where Merchant
+      Brecca keeps the day's coin and a few of the better goods under lock.

@@ -1,0 +1,17 @@
+id: bark-liquor
+name: Bark Liquor
+aliases: [liquor]
+skill: cooking
+skill_minimum: 0
+station: cooking_fire
+time_rounds: 3
+ingredients:
+  - item_tag: oak-bark
+    quantity: 1
+  - item_tag: water-flask
+    quantity: 1
+output:
+  item_id: 40356
+  quantity: 3
+success_actor: "You steep the bark in hot water until the liquor runs dark and sour. Bark liquor!"
+failure_actor: "You let it boil and the tannin goes bitter and weak."

@@ -1,7 +1,10 @@
 mobid: 9536
 zone: Cascade Pass Road
 schedule_id: cpr_foreman
-behavior_archetype: noncombat_passive
+# Wilderness trades: the lumber camp buys logs, branches and bark (any
+# woodwork goods) and sells what a woodcutter needs.
+craft_support: woodwork
+behavior_archetype: noncombat_shopkeeper
 non_combatant: true
 charm_immune: true
 hostile: false
@@ -42,7 +45,16 @@ character:
     counting that as unusual years ago.
   speciesid: 1
   level: 1
-  gold: 22
+  gold: 400
+  equipment:
+    light:
+      itemid: 40038   # oil lantern: a shop must be light enough to trade in at night
+  shop:
+    # Only crude tools: iron and better come from a player's forge.
+    - itemid: 10062   # camp hatchet
+    - itemid: 40242   # rough bucksaw
+    - itemid: 10064   # rough whittling blade
+    - itemid: 40003   # wooden plank
   stats:
     strength:
       base: 105

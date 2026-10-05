@@ -1,0 +1,16 @@
+itemid: 40266
+name: Bronze Ingot
+namesimple: ingot
+description: >
+  A bar of golden-brown bronze, copper hardened with tin: tougher than
+  copper, never quite as hard as iron.
+type: object
+subtype: mundane
+component_tag: bronze-ingot
+weight: 0.1
+value: 10
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- blacksmithing
+material_tier: 2

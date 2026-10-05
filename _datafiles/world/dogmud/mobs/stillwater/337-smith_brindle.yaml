@@ -66,10 +66,11 @@ character:
     vitality:
       base: 108
     perception:
-      base: 105
+      base: 127
     dexterity:
       base: 106
   shop:
+    - itemid: 10073    # rough pick (mining; only crude tools are sold)
     # Stillwater unique (forager-fed)
     - itemid: 40059    # lake-iron nodule
       quantity: 0

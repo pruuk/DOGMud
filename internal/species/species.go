@@ -63,6 +63,10 @@ type Species struct {
 	// intrinsic kits nor in-combat acquisition. Machines/constructs (the
 	// Chrysalis is a biological phenomenon; it does not touch the mechanical).
 	MutationImmune bool `yaml:"mutation_immune,omitempty"`
+	// Harvest is what a carcass of this species gives to skin and butcher
+	// (harvest.go). Nil means the species yields nothing; a mob may still
+	// author its own table.
+	Harvest *HarvestTable `yaml:"harvest,omitempty"`
 }
 
 func GetAllSpecies() []Species {

@@ -1,0 +1,21 @@
+itemid: 10072
+name: Stag-Hilted Crucible Blade
+vendor_categories:
+- blacksmithing
+namesimple: blade
+description: >
+  A long blade of crucible steel, the watered pattern running its whole
+  length, with a grip carved from a trophy antler. It is lighter than it
+  looks and keeps an edge through anything.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 6.0
+speedmultiplier: 0.75
+damage:
+  basedamage: 9
+  variance: 2
+damage_multiplier: 1.45
+parryrating: 16
+value: 300
+rarity_tier: 10

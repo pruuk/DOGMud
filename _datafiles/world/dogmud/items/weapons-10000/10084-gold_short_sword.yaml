@@ -1,0 +1,23 @@
+itemid: 10084
+name: Gold Short Sword
+vendor_categories:
+- blacksmithing
+namesimple: sword
+description: >
+  A broad-bladed short sword hammered from heavy gold, quick to draw in a
+  tight space. Gold is soft and heavy and a poor thing to fight with, and
+  worth a small fortune: wealth worn openly.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 4.5
+speedmultiplier: 0.9
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.49
+parryrating: 6
+value: 419
+rarity_tier: 30
+statmods:
+  charisma: 2

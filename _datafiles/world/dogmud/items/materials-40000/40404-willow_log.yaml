@@ -1,0 +1,15 @@
+itemid: 40404
+name: Willow Log
+namesimple: log
+description: >
+  A length of willow, soft and light, still wet from the ground it grew
+  in.
+type: object
+subtype: mundane
+component_tag: softwood-log
+weight: 8
+value: 3
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 1

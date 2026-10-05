@@ -1,0 +1,16 @@
+itemid: 40264
+name: Copper Ingot
+namesimple: ingot
+description: >
+  A small bar of soft red copper, easy to draw into wire or cast into rings.
+type: object
+subtype: mundane
+component_tag: copper-ingot
+weight: 0.1
+value: 5
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- blacksmithing
+- jewelcrafting
+material_tier: 1

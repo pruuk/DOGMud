@@ -4,6 +4,7 @@
 package characters
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 )
 
@@ -32,4 +33,17 @@ func (c *Character) HasAnyBlindSource() bool {
 		return true
 	}
 	return false
+}
+
+// syncPerceptionWithBlindSources moves a Blinded perception machine back to
+// Sighted once no blind source remains. AddCondition and RemoveCondition flip
+// the machine themselves; this covers the path that bypasses both, a blind
+// condition simply running out and being pruned on the turn tick. Called from
+// Validate, which every prune path runs afterwards.
+func (c *Character) syncPerceptionWithBlindSources() {
+	if c.Perception == nil || c.Perception.State() != perception.Blinded || c.HasAnyBlindSource() {
+		return
+	}
+	_ = c.Perception.TransitionTo(perception.Sighted,
+		state.TransitionReason{Trigger: perception.TriggerConditionExpired, Metadata: map[string]any{"via": "prune"}})
 }

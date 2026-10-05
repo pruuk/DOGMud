@@ -1,0 +1,17 @@
+itemid: 40327
+name: Venison
+namesimple: venison
+description: >
+  A cut of raw venison, dark red and lean.
+type: object
+subtype: mundane
+component_tag: venison
+weight: 0.6
+value: 6
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- cooking
+- hunting
+material_tier: 1
+spoil_after: 2 days

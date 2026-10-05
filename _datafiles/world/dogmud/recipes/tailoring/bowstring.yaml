@@ -1,0 +1,15 @@
+id: bowstring
+name: Bowstring
+aliases: [string]
+skill: tailoring
+skill_minimum: 0
+station: loom
+time_rounds: 2
+ingredients:
+  - item_tag: sinew
+    quantity: 2
+output:
+  item_id: 40352
+  quantity: 1
+success_actor: "You twist the sinew tight, wax it and loop the ends. A bowstring!"
+failure_actor: "The sinew frays as you twist it. It is wasted."

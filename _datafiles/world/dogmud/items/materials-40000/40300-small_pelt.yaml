@@ -1,0 +1,19 @@
+itemid: 40300
+name: Small Pelt
+namesimple: pelt
+description: >
+  A small, soft pelt taken from a hare, a rat or some other little
+  creature, the fur fine and close. Too small to make much on its own,
+  but a few together line a boot or a glove.
+type: object
+subtype: mundane
+component_tag: small-pelt
+weight: 0.3
+value: 4
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 1
+spoil_after: 4 days

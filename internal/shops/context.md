@@ -385,3 +385,37 @@ shelving a hot item: the bauble sale's offer in `internal/actions` refuses
 with it, and the auction shopkeeper's `Receive` skips the shelve and lets
 the item leave the world instead. Every mutation runs in a command or a
 sale under the mud lock; a caller that changes a living shop saves it.
+
+## Graded sell value and woodwork
+
+`GradedValue(item)` (buyrules.go) scales the spec value by the item's
+material grade before `EvaluateBuyRules` prices it, on both the stocked and
+the flat path. `CraftSupportWoodwork` is a valid craft support and vendor
+category.
+
+`EvaluateBuyRules` refuses rotten goods and scales spoiling ones by
+freshness. Items the shop does not authored-stock (no entry, or an entry with
+RestockQty 0) are priced by `WalkInBuyPrice`: flat value times BuyRatio, less
+`ShopWalkInDevaluePerUnit` per unit on hand, floored at PriceFloor. This
+replaced the scarcity curve for those entries, which priced the second unit
+of a walk-in good at about four times the first. The walk-in price is capped
+at `CalcBuyPrice(value, held + 1)` so a shop never pays more than BuyRatio of
+what it will charge for the unit (no buy-back profit). `ShopInventory.Scrap`
+(`ScrapHeld`, `AddScrap`) remembers recent buys it scrapped instead of
+shelving (forged tools, broken and badly worn gear) and counts them as held,
+one unit wearing off per Balance `ShopScrapDecayRounds`.
+
+## Hunting merchants and saved-shop reconcile (wilderness trades review)
+
+`CraftSupportHunting` (`hunting`) is a valid craft support and vendor
+category that no skill owns: the hunting camps and trappers buy anything off
+a carcass under it. `reconcileShop` (persistence.go) runs whenever
+`RegisterShop` finds a saved or cached inventory: the craft support follows
+the template, stock entries the template gained since the save are added at
+abundance, and `items.NeverResold` tools are taken off the shelf. Walk-in
+entries the template does not name are kept.
+`EvaluateCraftOptions` skips any recipe whose output is a forged tool
+(`items.NeverResold`), so an NPC crafter never makes one.
+
+`EvaluateBuyRules` pays less for worn gear: value x (1 - wear fraction x
+Balance.WornSellPenalty).

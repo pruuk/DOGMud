@@ -7,5 +7,6 @@ description: It just barely works as a helmet.
 type: head
 subtype: wearable
 physical_mitigation: 1
+weight: 2.0
 value: 1
 rarity_tier: 50

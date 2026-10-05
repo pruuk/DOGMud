@@ -1,0 +1,15 @@
+id: draw-silver-wire
+name: "Silver Wire"
+aliases: [drawsilver]
+skill: jewelcrafting
+skill_minimum: 10
+station: jeweler_bench
+time_rounds: 3
+ingredients:
+  - item_tag: silver-ingot
+    quantity: 1
+output:
+  item_id: 40022
+  quantity: 4
+success_actor: "You draw the silver into four fine, bright coils of wire."
+failure_actor: "The wire snaps and tangles. The silver is wasted."

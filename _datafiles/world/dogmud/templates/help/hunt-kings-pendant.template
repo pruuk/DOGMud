@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">hunt-kings-pendant</ansi> (jewelcrafting recipe)
+
+The hunter-jeweler's masterpiece: trophy antler and trophy tusks in gold.
++3 Strength, +4 Perception, +3 Dexterity.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       jewelcrafting (minimum 55)
+  <ansi fg="yellow">Station:</ansi>     jeweler bench
+  <ansi fg="yellow">Tool:</ansi>        carving knife
+  <ansi fg="yellow">Ingredients:</ansi> trophy antlers (x1), trophy tusks (x1), gold wire (x3), raw gem (x2)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

@@ -1,0 +1,12 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">steel-bow-saw</ansi> (blacksmithing recipe)
+
+A steel frame saw for boards, staves and shafts. A steel tool: work up to
+superb grade.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 22)
+  <ansi fg="yellow">Station:</ansi>     forge
+  <ansi fg="yellow">Ingredients:</ansi> steel ingot (x2), hardwood board (x2)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help tools</ansi>, <ansi fg="command">help craft</ansi>

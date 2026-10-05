@@ -373,3 +373,11 @@ of `internal/conditions`, where the holder a condition happens to is the
 - **Phase 25.2** (complete) — 12 new damage/heal/DoT/shield spells
 - **Phase 25.3** (complete) — 13 new conditions, 17 new condition/utility spells, hook integration
 - **Phase 25.4** (complete) — 2 summon spells with component items and permanent charm
+
+## Mob volleys and ally sparing
+
+- `hits` (int): a MOB's harmful cast strikes each target that many times on
+  resolution (a volley; `internal/hooks` resolveMobSpell). 0/1 = once.
+  Player casts ignore it.
+- `spares_allies` (bool): a MOB's area harm misses its own side (uncharmed
+  mobs sharing one of its groups and not fighting it). Opt-in per spell.

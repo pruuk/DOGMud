@@ -1,0 +1,63 @@
+id: b-the-resonance-chamber
+pool: B
+source: authored
+title: The Resonance Chamber
+description: >-
+  The chamber is round and very tall, and every sound you make in it comes
+  back changed. A footstep returns as a low bell; a breath returns as wind
+  through reeds, a moment too late. Rods of crystal rise from the floor in
+  concentric rings, the tallest at the centre and the shortest at the walls,
+  each one faintly humming, so that the room holds a chord that never quite
+  resolves. In the middle of the rings sits a broad shallow bowl of clear
+  crystal, and lying across its lip is a striker, a long smooth wand with a
+  rounded end, set down as though its user meant to come back. The walls are
+  ribbed like the inside of a shell, and pressed into the ribs at intervals
+  are round marks arranged not in rows but in little clusters, the way you
+  might mark a pitch. Beneath the chord there is another sound, so low you
+  feel it more than hear it, and it does not belong to any of the rods.
+nouns:
+  rods: >-
+    Each rod is a slightly different thickness, and the hum changes as you
+    walk among them. Near the centre several rods have cracked along their
+    length and fallen silent. The gaps they leave in the chord are what keep
+    it from resolving, like missing notes in a song everyone once knew.
+  bowl: >-
+    Clear crystal, wide as a cart wheel and only a hand deep. Its inner
+    surface is etched with a spiral of fine lines that may be a scale. The
+    bowl is perfectly dry, but the light in it moves like the light on still
+    water when someone has just touched it.
+  striker: >-
+    A wand of grey crystal, heavier than it looks, its rounded end worn
+    flat on one side. The handle is shaped for a grip with three points of
+    contact, not five. Where those three points rested, the crystal has gone
+    cloudy with use.
+  ribs: >-
+    The ribs run from floor to ceiling in gentle curves. Put your ear to one
+    and the chord is louder, and under it you hear the low sound clearly: a
+    slow throb, regular as breathing, coming from somewhere far off and
+    deep in the Obelisk.
+  marks: >-
+    Clusters of round marks, two or three or seven together, set beside each
+    rib at a height that matches a rod of the same note. One cluster has been
+    scraped half away, and beside it a newer one was pressed, lower and
+    heavier, by someone who wanted that note gone.
+idlemessages:
+  - "The chord of the rods swells, falters at its missing notes, and sinks back."
+  - "Your own last word returns from the ribs, late, in a voice not quite yours."
+doors:
+  - exit: culvert
+    description: >-
+      A low culvert opens at the base of the wall between two ribs, and the
+      deep throbbing sound grows louder inside it.
+  - exit: frame
+    description: >-
+      A tall narrow frame of crystal stands empty in the wall, its glass long
+      gone, opening onto a dim corridor.
+  - exit: plunge
+    description: >-
+      A sheer drop at the chamber's edge, with handholds cut into the face,
+      leading down to a ledge below.
+  - exit: hollow
+    description: >-
+      A shallow hollow between ribs that deepens into a curving way, ringing
+      softly with the chord.

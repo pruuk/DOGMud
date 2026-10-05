@@ -1,0 +1,17 @@
+id: tan-pack-hide
+name: Tanned Leather Strips
+aliases: [tan, tanning]
+skill: tailoring
+skill_minimum: 5
+station: tanning_rack
+time_rounds: 6
+ingredients:
+  - item_tag: pack-hide
+    quantity: 1
+  - item_tag: salt-pouch
+    quantity: 1
+output:
+  item_id: 40002
+  quantity: 2
+success_actor: "You salt the hide, work it soft, stretch it on the rack to dry, and cut the finished leather into strips. Leather strips!"
+failure_actor: "The salt cure fails and the hide sours on the rack. It is ruined."

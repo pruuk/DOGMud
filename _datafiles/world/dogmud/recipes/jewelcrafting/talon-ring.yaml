@@ -1,0 +1,18 @@
+id: talon-ring
+name: "Talon Ring"
+aliases: [talonring]
+skill: jewelcrafting
+skill_minimum: 16
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 4
+ingredients:
+  - item_tag: talons
+    quantity: 2
+  - item_tag: silver-wire
+    quantity: 1
+output:
+  item_id: 20115
+  quantity: 1
+success_actor: "You shape a silver band and set the talons to curl around it. A talon ring!"
+failure_actor: "A talon cracks as you seat it. The materials are wasted."

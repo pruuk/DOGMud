@@ -1,0 +1,17 @@
+itemid: 60
+name: Quillhouse Extension Deed
+namesimple: deed
+not_salable: true
+description: >
+  A deed on heavy cream paper headed THE QUILLHOUSE, engrossed in a copperplate
+  hand far too fine for its purpose and made out to the lodger who bought it and
+  to nobody else. It entitles the bearer to one more room, knocked through from
+  their own lodging in the Quillhouse, and is good nowhere else. To use it,
+  stand in one of your Quillhouse rooms and type use deed to choose a wall from
+  a list. You can also name the wall straight away, north, south, east, west,
+  up or down. For example, use deed north.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

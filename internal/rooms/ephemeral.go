@@ -77,10 +77,13 @@ func CreateEphemeralRoomIds(roomIds ...int) (map[int]int, error) {
 	// First reserve the chunk
 	chunkId := -1
 	for i := 0; i < ephemeralChunksLimit; i++ {
-		if len(ephemeralRoomChunks[i]) == 0 {
+		if chunkFree(i) {
 			chunkId = i
 			break
 		}
+	}
+	if chunkId < 0 {
+		return ephemeralRooms, errEphemeralChunkLimit
 	}
 
 	// Each live instance gets its own coordinate plane so its ephemeral rooms
@@ -177,6 +180,12 @@ func TryEphemeralCleanup(ephemeralRoomId int) []int {
 
 	chunkId := int(math.Floor(float64(ephemeralRoomId-ephemeralRoomIdMinimum) / ephemeralChunkSize))
 
+	// An owned chunk (ephemeral_owned.go) is unloaded by its owner, room by
+	// room, never by this sweep.
+	if isOwnedChunk(chunkId) {
+		return []int{}
+	}
+
 	for _, ephemeralRoomId := range ephemeralRoomChunks[chunkId] {
 
 		room := LoadRoom(ephemeralRoomId)
@@ -240,8 +249,10 @@ func EphemeralRoomMaintenance() []int {
 		return []int{}
 	}
 
+	// Owned chunks are skipped so that one long-lived owner at a low index
+	// does not stop every chunk after it from ever being considered.
 	for i := 0; i < ephemeralChunksLimit; i++ {
-		if len(ephemeralRoomChunks[i]) > 0 {
+		if len(ephemeralRoomChunks[i]) > 0 && !isOwnedChunk(i) {
 			return TryEphemeralCleanup(ephemeralRoomChunks[i][0])
 		}
 	}

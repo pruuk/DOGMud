@@ -1,0 +1,17 @@
+id: masterwork-bow-saw
+name: Masterwork Bow Saw
+aliases: [mwbowsaw]
+skill: blacksmithing
+skill_minimum: 52
+station: forge
+time_rounds: 12
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 2
+  - item_tag: ironwood-haft
+    quantity: 2
+output:
+  item_id: 40250
+  quantity: 1
+success_actor: "You draw a long crucible steel blade, set its teeth by hand and string it in ironwood. A masterwork bow saw!"
+failure_actor: "The blade cracks under tension. The crucible steel is ruined."

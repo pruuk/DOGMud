@@ -33,3 +33,10 @@ damage:
   variance: 2
 damage_multiplier: 0.50
 disabledslots: []  # companion-gearable (hive swarm summon); see PATCH_NOTES 2026-05-29
+# Wilderness trades: what a carcass gives to skin and butcher. Quantities
+# are for a medium body (small halves, large doubles). See species/harvest.go.
+harvest:
+  skin:
+    - {item: chitin, qty: 2}
+  butcher:
+    - {item: ichor, qty: 1, rare: true, chance: 0.3}

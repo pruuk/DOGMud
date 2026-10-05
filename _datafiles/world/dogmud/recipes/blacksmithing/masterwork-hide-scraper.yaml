@@ -1,0 +1,17 @@
+id: masterwork-hide-scraper
+name: Masterwork Hide Scraper
+aliases: [mwscraper]
+skill: blacksmithing
+skill_minimum: 45
+station: forge
+time_rounds: 10
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 1
+  - item_tag: ironwood-haft
+    quantity: 1
+output:
+  item_id: 40251
+  quantity: 1
+success_actor: "You grind a flawless crucible steel curve and fit two ironwood handles. A masterwork hide scraper!"
+failure_actor: "The curve cracks in the temper. The crucible steel is ruined."

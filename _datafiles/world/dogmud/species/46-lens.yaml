@@ -1,0 +1,38 @@
+speciesid: 46
+name: Lens
+description: The security of a people long extinct, still keeping watch. A Lens is a
+  construct of dark crystal with no flesh in it anywhere, built by the makers of the
+  Obelisk to guard its halls and left running when they were gone. Each kind was cut
+  for one task, and each still does that task with perfect, patient attention. Light
+  moves inside them the way thought moves in a living thing.
+# No limbs as the body-part system knows them: a Lens cannot trip, kick, bash or
+# grapple, and the legacy special-move AI finds nothing it can do. What each kind
+# does is authored in its own behaviour tree (behaviors/rift_obelisk/).
+body_parts: []
+size: medium
+unarmedname: crystal edge
+natural_attack: slam
+selectable: false
+tameable: false
+mutation_immune: true
+grapple_immune: true
+angrycommands:
+  - emote rings with a thin, rising note, like a wet finger on a glass rim.
+  - emote floods with cold light from somewhere deep inside it.
+stats:
+  strength:
+    base: 90
+  dexterity:
+    base: 110
+  perception:
+    base: 130
+  vitality:
+    base: 110
+  willpower:
+    base: 120
+  charisma:
+    base: 50
+damage:
+  basedamage: 4
+  variance: 2
+disabledslots: []

@@ -1,0 +1,16 @@
+itemid: 20105
+name: Bear-Fur Mantle
+vendor_categories:
+- tailoring
+namesimple: mantle
+description: >
+  A massive mantle of dark bear fur over the shoulders. Wearing it feels
+  like wearing the bear: harder to stop and harder to hurt.
+type: shoulders
+subtype: wearable
+weight: 4.0
+value: 160
+rarity_tier: 40
+physical_mitigation: 4
+statmods:
+  vitality: 3

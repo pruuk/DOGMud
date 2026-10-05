@@ -1,0 +1,17 @@
+itemid: 20103
+name: Skitter-Shell Bracer
+vendor_categories:
+- jewelcrafting
+namesimple: bracer
+description: A narrow bracer of overlapping skitter-shrimp shells, each one
+  pierced and laced onto a leather backing with fine copper wire. The shells
+  catch the light with a faint oily sheen, and the whole thing weighs almost
+  nothing on the wrist.
+type: wrist
+subtype: wearable
+weight: 0.3
+value: 120
+rarity_tier: 40
+physical_mitigation: 1
+statmods:
+  perception: 2

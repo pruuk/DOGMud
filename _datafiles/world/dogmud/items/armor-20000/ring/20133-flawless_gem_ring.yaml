@@ -1,0 +1,18 @@
+itemid: 20133
+name: Flawless Gem Ring
+vendor_categories:
+- jewelcrafting
+namesimple: ring
+description: >
+  A slender gold band holding a single flawless gem, clear as water and full
+  of light. The wearer stands straighter and speaks more surely, and others
+  find it hard to look away.
+type: ring
+subtype: wearable
+weight: 0.1
+value: 700
+rarity_tier: 10
+magical_mitigation: 3
+statmods:
+  charisma: 3
+  willpower: 3

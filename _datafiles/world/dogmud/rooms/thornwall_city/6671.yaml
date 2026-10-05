@@ -1,0 +1,70 @@
+roomid: 6671
+zone: Thornwall City
+title: The Burrow Mouth
+description: >
+  East of the escape shaft, a crawlway that looks as if it ought to end in a
+  rockfall opens out instead. The tunnel widens and lifts into a broad,
+  low-roofed chamber, its walls worn smooth at shoulder height by generations
+  of people squeezing past. This is the only way into the Burrows, a warren of
+  wide tunnels and hide-outs cut under Thornwall by smugglers, deserters and
+  anyone else who would rather not be found. The way on is shut by a single
+  iron-banded <ansi fg="itemname">door</ansi> set into the living rock, with a
+  <ansi fg="itemname">brass plate</ansi> where a keyhole should be. A
+  <ansi fg="itemname">lantern</ansi> on an iron spike lights a chalked
+  <ansi fg="itemname">slate</ansi> propped against an upturned
+  <ansi fg="itemname">crate</ansi>, which somebody uses as a desk.
+biome: cave
+coord:
+  x: 3
+  y: -8
+  z: -2
+# The lantern on its spike, named in the description. A cave is pitch dark,
+# and the doorman's list must be readable; 52 is the lamplit-street level
+# the other lodging-house doors use (5625 New Plymouth, 6570 the Confluence).
+lamp: 52
+exits:
+  west:
+    roomid: 499
+  # The door into the Burrows. It is a ROUTED exit (internal/housing): each
+  # lodger who goes through it arrives in their own hide-out, and anyone
+  # else is turned away. It points back at this room only because an exit
+  # needs an authored destination; the router always decides. The lock
+  # keeps mobs, which never consult the router, from using it.
+  door:
+    roomid: 6671
+    lock:
+      difficulty: 255
+nouns:
+  door: A squat door of black oak banded with iron, set so deep into the rock
+    that it looks grown there. It has no handle and no keyhole on this side,
+    only a brass plate. Lodgers slap a palm on it and shoulder through.
+    Everyone else gets looked at.
+  brass plate: A plate of brass the size of an open hand, bolted flush into the
+    iron bands of the door. It is scratched, dented and polished bright in the
+    middle by years of dirty palms, and it opens for the people who pay Torvan
+    for a hole in the Burrows and for nobody else.
+  slate: A cracked roofing slate propped against the crate, chalked in capitals
+    that have been rubbed out and redone more than once. HOLES TO LET. DIGGING.
+    PAINT. KEYS. STORAGE. Underneath, pressed hard enough to squeak, someone has
+    added TYPE LIST AND STOP ASKING.
+  crate: An upturned shipping crate, its stencil half scraped off. It holds a
+    greasy ledger, a stub of pencil and, most of the time, the doorman's boots.
+  lantern: A dented tin lantern hung on an iron spike driven into a crack in the
+    rock. Torvan's people keep it lit day and night, since down here there is
+    no difference.
+  crawlway: The low passage back west toward the escape shaft, its floor worn
+    smooth and its roof low enough that most people duck without being told.
+idlemessages:
+- Somewhere beyond the iron door, a laugh echoes down a tunnel and is cut off.
+- A draught from the escape shaft stirs the lantern flame, and every shadow in
+  the chamber lurches sideways and back.
+- Water drips from a crack in the roof into a dent in the floor it has spent a
+  long time making.
+- Muffled boots pass on the far side of the door, a door slams somewhere deeper
+  in, and it goes quiet again.
+spawninfo:
+  - mobid: 9803
+    respawnrate: "15 real minutes"
+x: 13
+y: 13
+z: -2

@@ -1,0 +1,17 @@
+id: bone-saw
+name: Bone Saw
+aliases: [saw]
+skill: blacksmithing
+skill_minimum: 8
+station: forge
+time_rounds: 3
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 40237
+  quantity: 1
+success_actor: "You cut fine teeth into a stiff iron blade, set them, and fit a wooden grip. A bone saw!"
+failure_actor: "The teeth crack as you set them. The blade is scrap."

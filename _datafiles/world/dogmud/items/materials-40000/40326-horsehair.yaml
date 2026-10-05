@@ -1,0 +1,18 @@
+itemid: 40326
+name: Horsehair
+namesimple: horsehair
+description: >
+  A hank of long, coarse tail hair from a horse, good for bowstrings and
+  brushes.
+type: object
+subtype: mundane
+component_tag: horsehair
+weight: 0.1
+value: 4
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- woodwork
+- hunting
+material_tier: 1

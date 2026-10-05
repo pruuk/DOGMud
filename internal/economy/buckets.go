@@ -16,7 +16,7 @@ package economy
 // map (quest/specialty items, defer-to-3.0e cloth/leather) return ""
 // from BucketFor.
 var itemBucket = map[int]string{
-	// Base bucket — universal feedstock (13 items)
+	// Base bucket — universal feedstock (14 items)
 	40001: "base", // iron ingot
 	40003: "base", // wooden plank
 	40006: "base", // glass vial
@@ -30,6 +30,7 @@ var itemBucket = map[int]string{
 	40043: "base", // clay flask
 	40044: "base", // sealed phial
 	40045: "base", // crystalline decanter
+	40236: "base", // iron ore (wilderness trades phase 0: replaces the ingot in cave/mountain forage)
 
 	// Stillwater bucket (6 items)
 	40051: "stillwater", // skitter-shrimp shell

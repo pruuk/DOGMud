@@ -1,0 +1,12 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">carve-bone-needles</ansi> (jewelcrafting recipe)
+
+Carve two bone needles from one bone. Needs a carving knife.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       jewelcrafting (minimum 0)
+  <ansi fg="yellow">Station:</ansi>     jeweler bench
+  <ansi fg="yellow">Tool:</ansi>        carving knife
+  <ansi fg="yellow">Ingredients:</ansi> bone (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

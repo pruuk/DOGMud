@@ -70,6 +70,9 @@ var tierOfKind = map[string]string{
 	`ailing`:      tierFast,
 	`trouble`:     tierFast,
 	`grew`:        tierFast,
+	// What a search turned up is a remark, not a decision.
+	`searched`: tierFast,
+	`found`:    tierFast,
 }
 
 // tierFor picks the tier for a batch of stimuli. A fight always goes fast,

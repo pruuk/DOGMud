@@ -1,0 +1,34 @@
+mobid: 9836
+zone: Rift Obelisk
+# Ranged. Looses its spines in a volley (shard-volley, three shards in quick
+# succession), then must grow them back before it can fire again. Per-mob
+# tree: behaviors/rift_obelisk/9836-spine_lattice.yaml.
+archetype: fighting
+hostile: true
+charm_immune: true
+pack_flee_immune: true # constructs: a fallen packmate is no reason to run
+submission_policy: lethal
+surrender_policy: never
+maxwander: 0
+groups:
+  - obelisk
+activitylevel: 15
+idlecommands:
+  - 'emote shifts, and its spines slide through one another into a new shape'
+  - ''
+  - 'emote lets one long spine grow out of it with a faint creak, then draws it back in'
+  - ''
+combatcommands:
+  - ''
+character:
+  name: Spine Lattice
+  description: >-
+    A knot of crystal spines held together by nothing at all, forever
+    coming apart and putting itself back together. The spines slide past one
+    another without touching, each one long and fine as a knitting needle,
+    and the shape they make is never quite the same twice. Every few heartbeats
+    all of them turn, together, to point at the same thing.
+  speciesid: 46
+  level: 1
+  gold: 0
+itemdropchance: 0

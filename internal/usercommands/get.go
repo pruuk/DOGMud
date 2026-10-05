@@ -146,6 +146,12 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 			if cName != `` {
 				container := room.Containers[cName]
+				// A locked container gives nothing away, not even how many
+				// things are inside it.
+				if container.Lock.IsLocked() {
+					user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, cName))
+					return true, nil
+				}
 				if container.Gold > 0 {
 					Get(fmt.Sprintf("gold %s", cName), user, room, flags)
 				}
@@ -502,6 +508,12 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	if containerName != `` {
 		container := room.Containers[containerName]
 
+		// Caught at a merchant's chest earlier this round (the rest of one
+		// `get all <chest>`): its merchant has already raised the alarm.
+		if merchantChestCaughtThisRound(user, room, containerName) {
+			return true, nil
+		}
+
 		// A locked container surrenders nothing until it is unlocked or picked.
 		// Mirrors the gate every sibling command applies (look.go, put.go,
 		// lock.go, unlock.go, picklock.go).
@@ -517,7 +529,11 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 			if container.Gold < 1 {
 				user.SendText(messaging.CategorySystem, "There's no gold to grab.")
+			} else if !merchantChestTakeWatched(user, room, containerName) {
+				// A merchant's chest is watched: taking from it is theft
+				// (merchant_chest.go). Caught, nothing is taken.
 			} else {
+				container = room.Containers[containerName]
 
 				user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
 
@@ -547,9 +563,21 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		if !found {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s in the <ansi fg="container">%s</ansi>.`, rest, containerName))
+		} else if !merchantChestTakeWatched(user, room, containerName) {
+			// A merchant's chest is watched: taking from it is theft
+			// (merchant_chest.go). Caught, nothing is taken.
 		} else {
+			container = room.Containers[containerName]
 
 			user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
+
+			// A merchant's goods leaving its chest are stolen from here on:
+			// hot in this area for a while (actions/sell_stolen.go). Only
+			// from the merchant's own chest: anywhere else the thief would be
+			// whoever happened to pick them up.
+			if actions.IsMerchantChest(room, containerName) {
+				actions.MarkChestGoodsTaken(&matchItem, user.UserId, room)
+			}
 
 			// Trigger onFound event
 			if user.Character.StoreItem(matchItem) {
@@ -567,6 +595,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				user.SendText(messaging.CategorySystem,
 					fmt.Sprintf(`You take the <ansi fg="itemname">%s</ansi> from the <ansi fg="container">%s</ansi>.`, matchItem.DisplayName(), containerName),
 				)
+				if matchItem.IsStolen() {
+					user.SendText(messaging.CategorySystem, actions.StolenGoodsNote(matchItem))
+				}
 				room.SendTextVisual(messaging.CategoryLoot,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> picks up the <ansi fg="itemname">%s</ansi> from the <ansi fg="container">%s</ansi>...`, user.Character.Name, matchItem.DisplayName(), containerName),
 					user.UserId,

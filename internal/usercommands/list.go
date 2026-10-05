@@ -42,6 +42,11 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
+	// Housing landlords list their offers, priced for this lodger.
+	if renderHousingListings(user, room) {
+		listedSomething = true
+	}
+
 	for _, mobId := range room.GetMobs(rooms.FindMerchant) {
 
 		mob := mobs.GetInstance(mobId)

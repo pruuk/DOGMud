@@ -38,6 +38,8 @@ type Config struct {
 	IdleEmoteMinutes             int
 	IdlePastimeMinutes           int
 	IdlePastimeChance            float64
+	IdleTradeSeconds             int
+	CompanionBaubleChance        int
 	OptionsInPrompt              int
 	AllowErrands                 bool
 	MaxErrandSteps               int
@@ -68,11 +70,6 @@ type Config struct {
 	BackupEverySessions          int
 	SnapshotRounds               int
 	ToolRounds                   int
-	AutoBond                     bool
-	AutoBondProfile              string
-	AutoBondExisting             bool
-	MeetDelayRounds              int
-	MeetSkipZones                []string
 	LeaveConfirmSeconds          int
 	RespondWhenAlone             bool
 	RecordBystanderSpeech        bool
@@ -98,6 +95,21 @@ type Config struct {
 	RelayOrigin string
 	// RelayTimeoutSeconds bounds how long a call waits for the browser.
 	RelayTimeoutSeconds int
+
+	// RequirePlayerKey: companions speak only to players who run them on
+	// their own key (tier 2, the relay). Anyone else gets no answer at
+	// all, not set lines, and the server's key is never spent on them.
+	RequirePlayerKey bool
+	// ReleaseAfterDays: a companion whose owner has not been seen for this
+	// many days goes back to the Waystone Hollow (roster.go).
+	ReleaseAfterDays int
+	// AbandonBelow: a companion whose trust AND affection for their owner
+	// have both fallen to this or lower leaves them and goes back to the
+	// Hollow, without being told twice.
+	AbandonBelow int
+	// HollowSignRoom is the room whose board tells players, the first time
+	// they step into it, what speaking to the travellers sends and where.
+	HollowSignRoom int
 }
 
 type getter func(string) any
@@ -209,6 +221,8 @@ func buildConfig(get getter) Config {
 		IdleEmoteMinutes:             asInt(get(`IdleEmoteMinutes`), 6),
 		IdlePastimeMinutes:           asInt(get(`IdlePastimeMinutes`), 4),
 		IdlePastimeChance:            asFloat(get(`IdlePastimeChance`), 0.5),
+		IdleTradeSeconds:             asInt(get(`IdleTradeSeconds`), 60),
+		CompanionBaubleChance:        asInt(get(`CompanionBaubleChance`), 15),
 		OptionsInPrompt:              asInt(get(`OptionsInPrompt`), 10),
 		AllowErrands:                 true,
 		MaxErrandSteps:               asInt(get(`MaxErrandSteps`), 15),
@@ -239,11 +253,6 @@ func buildConfig(get getter) Config {
 		BackupEverySessions:          asInt(get(`BackupEverySessions`), 1),
 		SnapshotRounds:               asInt(get(`SnapshotRounds`), 25),
 		ToolRounds:                   asInt(get(`ToolRounds`), 2),
-		AutoBond:                     true,
-		AutoBondProfile:              strings.TrimSpace(asString(get(`AutoBondProfile`))),
-		AutoBondExisting:             false,
-		MeetDelayRounds:              asInt(get(`MeetDelayRounds`), 3),
-		MeetSkipZones:                asStringList(get(`MeetSkipZones`)),
 		LeaveConfirmSeconds:          asInt(get(`LeaveConfirmSeconds`), 120),
 		RespondWhenAlone:             true,
 		RecordBystanderSpeech:        false,
@@ -261,6 +270,13 @@ func buildConfig(get getter) Config {
 		MinConversationExchanges:     asInt(get(`MinConversationExchanges`), 3),
 		RelayOrigin:                  strings.TrimRight(strings.TrimSpace(asString(get(`RelayOrigin`))), `/`),
 		RelayTimeoutSeconds:          asInt(get(`RelayTimeoutSeconds`), 30),
+		RequirePlayerKey:             true,
+		ReleaseAfterDays:             asInt(get(`ReleaseAfterDays`), 60),
+		AbandonBelow:                 asInt(get(`AbandonBelow`), -50),
+		HollowSignRoom:               asInt(get(`HollowSignRoom`), 6880),
+	}
+	if v := get(`RequirePlayerKey`); v != nil {
+		c.RequirePlayerKey = asBool(v)
 	}
 	if v := get(`PlayerKeys`); v != nil {
 		c.PlayerKeys = asBool(v)
@@ -276,9 +292,6 @@ func buildConfig(get getter) Config {
 	}
 	if v := get(`ReflectOnLogout`); v != nil {
 		c.ReflectOnLogout = asBool(v)
-	}
-	if v := get(`AutoBond`); v != nil {
-		c.AutoBond = asBool(v)
 	}
 	if v := get(`RespondWhenAlone`); v != nil {
 		c.RespondWhenAlone = asBool(v)
@@ -303,9 +316,6 @@ func buildConfig(get getter) Config {
 	}
 	if v := get(`ConversationSummaries`); v != nil {
 		c.ConversationSummaries = asBool(v)
-	}
-	if v := get(`AutoBondExisting`); v != nil {
-		c.AutoBondExisting = asBool(v)
 	}
 	if v := get(`AllowErrands`); v != nil {
 		c.AllowErrands = asBool(v)
@@ -382,6 +392,15 @@ func buildConfig(get getter) Config {
 	}
 	if c.IdlePastimeMinutes < 1 {
 		c.IdlePastimeMinutes = 1
+	}
+	if c.CompanionBaubleChance < 0 {
+		c.CompanionBaubleChance = 0
+	}
+	if c.CompanionBaubleChance > 100 {
+		c.CompanionBaubleChance = 100
+	}
+	if c.IdleTradeSeconds < 10 {
+		c.IdleTradeSeconds = 10
 	}
 	if c.IdlePastimeChance < 0 {
 		c.IdlePastimeChance = 0
@@ -476,17 +495,19 @@ func buildConfig(get getter) Config {
 	if c.ToolRounds > 4 {
 		c.ToolRounds = 4
 	}
-	if c.AutoBondProfile == `` {
-		c.AutoBondProfile = `mara`
-	}
-	if c.MeetDelayRounds < 1 {
-		c.MeetDelayRounds = 1
-	}
 	if c.LeaveConfirmSeconds < 30 {
 		c.LeaveConfirmSeconds = 30
 	}
-	if get(`MeetSkipZones`) == nil {
-		c.MeetSkipZones = []string{`Newcomer Antechamber`}
+	if c.ReleaseAfterDays < 1 {
+		c.ReleaseAfterDays = 1
+	}
+	// Abandoning has to sit below where a relationship merely sours, and
+	// above where nothing could ever reach it.
+	if c.AbandonBelow > -10 {
+		c.AbandonBelow = -10
+	}
+	if c.AbandonBelow < -95 {
+		c.AbandonBelow = -95
 	}
 	if c.MoodDecayMinutes < 0 {
 		c.MoodDecayMinutes = 0

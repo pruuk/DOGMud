@@ -1,0 +1,18 @@
+itemid: 20114
+name: Claw Bracelet
+vendor_categories:
+- jewelcrafting
+- hunting
+namesimple: bracelet
+description: >
+  Three curved claws drilled and bound on a band of silver wire and cord,
+  points outward. It sits light on the wrist and makes the hand behind it
+  quicker.
+type: wrist
+subtype: wearable
+weight: 0.2
+value: 60
+rarity_tier: 35
+physical_mitigation: 1
+statmods:
+  dexterity: 2

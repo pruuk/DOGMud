@@ -1,0 +1,22 @@
+id: fur-lined-boots
+name: Fur-Lined Boots
+aliases: [boots]
+skill: tailoring
+skill_minimum: 6
+station: loom
+tool: scraper
+time_rounds: 5
+ingredients:
+  - item_tag: small-pelt
+    quantity: 2
+  - item_tag: leather-strip
+    quantity: 2
+  - item_tag: thread-spool
+    quantity: 1
+  - item_tag: bone-needle
+    quantity: 1
+output:
+  item_id: 20111
+  quantity: 1
+success_actor: "You line a pair of leather boots with soft cured pelts. Fur-lined boots!"
+failure_actor: "The lining bunches and the boots will not close. The materials are wasted."

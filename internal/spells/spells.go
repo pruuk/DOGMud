@@ -52,6 +52,15 @@ type SpellData struct {
 	MobOnly            bool     `yaml:"mob_only,omitempty"`             // Boss/NPC signature ability: players may never DISCOVER it. See GetEligibleSpells.
 	NoDamageInterrupt  bool     `yaml:"no_damage_interrupt,omitempty"`  // Telegraphed casts: skip damage/position concentration-break (still interrupted by the disruptor system)
 	IgnoreMoveCooldown bool     `yaml:"ignore_move_cooldown,omitempty"` // Scripted boss abilities: bypass the shared special-move cast cooldown (btree controls cadence)
+	// Hits is how many times a MOB's harmful cast strikes each target when it
+	// resolves (a volley of shards: one cast, several hits in quick
+	// succession, each contested and narrated on its own). 0 and 1 are one.
+	// Player casts are unaffected.
+	Hits int `yaml:"hits,omitempty"`
+	// SparesAllies: a MOB's area harm misses mobs on its own side (sharing
+	// one of its groups, uncharmed, not fighting it): a boss's blast spares
+	// its adds. Off by default; area harm hits everything else in the room.
+	SparesAllies bool `yaml:"spares_allies,omitempty"`
 
 	// Companion summoning fields: replaces JS onMagic for summon spells
 	SummonMobId int `yaml:"summon_mob_id,omitempty"`

@@ -1,0 +1,22 @@
+id: hunting-bow
+name: "Hunting Bow"
+aliases: [recurve]
+skill: woodwork
+skill_minimum: 15
+station: "woodworking_bench"
+tool: carving_knife
+time_rounds: 6
+ingredients:
+  - item_tag: bow-stave
+    quantity: 1
+  - item_tag: bowstring
+    quantity: 1
+  - item_tag: glue
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10041
+  quantity: 1
+success_actor: "You glue and recurve the limbs, wrap the grip in leather and string it. A hunting bow!"
+failure_actor: "The glue lets go as you bend the tips. The bow is ruined."

@@ -441,3 +441,41 @@ func TestSell_AffixedItem_StocksForResale(t *testing.T) {
 	assert.Equal(t, 400, si.AffixedStock[0].Price, "relist price = AffixValue*1.0")
 	assert.Equal(t, 400, si.AffixedStock[0].Item.GetSpec().Value, "stored per-instance value preserved")
 }
+
+// An item marked never-bought (housing deeds, vouchers, keys) is refused by
+// a merchant who would otherwise pay for it, by name and in a sell-all sweep,
+// so the gold paid for it can never be recovered from a shop.
+func TestSell_NeverBoughtItemIsRefusedByAWillingMerchant(t *testing.T) {
+	defer seedSellItemSpecs()()
+	defer seedSellRoom(t)()
+	defer seedSellMerchant(t, 1000)()
+
+	// The control: this merchant does buy the sword.
+	control := newSellerActor(t, true, sellTestItemId)
+	if res := Sell(control, SellOptions{ItemName: "iron sword", Quantity: 1}); res.Sold != 1 {
+		t.Fatalf("setup: the merchant should buy an ordinary sword, got %+v", res)
+	}
+
+	items.SetNeverBought([]int{sellTestItemId})
+	defer items.SetNeverBought(nil)
+
+	seller := newSellerActor(t, true, sellTestItemId, sellTestItemId)
+	startGold := seller.GetCharacter().Gold
+	startMerchant := merchantInstance().Character.Gold
+
+	if res := Sell(seller, SellOptions{ItemName: "iron sword", Quantity: 1}); res.Sold != 0 || res.Reason != SellStopRejected {
+		t.Errorf("sold by name: %+v", res)
+	}
+	if res := Sell(seller, SellOptions{ItemName: "iron sword", Quantity: 1 << 30}); res.Sold != 0 {
+		t.Errorf("sold with sell all: %+v", res)
+	}
+	if res := Sell(seller, SellOptions{}); res.Sold != 0 {
+		t.Errorf("sold in the sweep: %+v", res)
+	}
+	if seller.GetCharacter().Gold != startGold || merchantInstance().Character.Gold != startMerchant {
+		t.Error("gold changed hands")
+	}
+	if len(seller.GetCharacter().Items) != 2 {
+		t.Error("the seller lost an item")
+	}
+}

@@ -1,0 +1,20 @@
+id: make-bolts
+name: "Case of Bolts"
+aliases: [bolts]
+skill: woodwork
+skill_minimum: 10
+station: "woodworking_bench"
+tool: carving_knife
+time_rounds: 4
+ingredients:
+  - item_tag: arrow-shafts
+    quantity: 1
+  - item_tag: arrowhead
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 30063
+  quantity: 1
+success_actor: "You cut the shafts short and stout, set the heads and pack them in a leather case. A case of bolts!"
+failure_actor: "The bolts come out unbalanced and tumble in flight."

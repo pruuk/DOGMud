@@ -167,6 +167,7 @@ func (m *AICompanionModule) recordCore(c *controller, ownerName string, stage st
 	}
 	m.countCall()
 	key := mindIdentifier(c.mind.OwnerUserId, c.mind.MobId)
+	wipes := c.mind.Wipes
 
 	go func() {
 		// The breakers' leave is always handed back last: a no-op once its
@@ -193,14 +194,14 @@ func (m *AICompanionModule) recordCore(c *controller, ownerName string, stage st
 		util.LockMud()
 		defer util.UnlockMud()
 		applied = true
-		m.applyCore(key, call.OwnerUserId, bare, held, rt, res)
+		m.applyCore(key, call.OwnerUserId, wipes, bare, held, rt, res)
 	}()
 }
 
 // applyCore writes the model's account of the moment. cm arrives holding
 // the bare fact, which is what is kept when the model gives no usable
 // account: the moment is never lost to a failed call.
-func (m *AICompanionModule) applyCore(key string, ownerId int, cm CoreMemory, held hold, rt route, res modelResult) {
+func (m *AICompanionModule) applyCore(key string, ownerId int, wipes int, cm CoreMemory, held hold, rt route, res modelResult) {
 	// Settled first, so nothing below can leave the reservation held.
 	m.settleRoute(held, res.Tokens)
 	m.rollCounters()
@@ -208,8 +209,8 @@ func (m *AICompanionModule) applyCore(key string, ownerId int, cm CoreMemory, he
 	m.routeResult(rt, ownerId, res.Ticket, res.Err, time.Now())
 
 	mind := m.minds[key]
-	if mind == nil {
-		return
+	if mind == nil || mind.Wipes != wipes {
+		return // gone, or wiped at a parting since this was asked for
 	}
 	keepBare := func() {
 		if cm.Text == `` {

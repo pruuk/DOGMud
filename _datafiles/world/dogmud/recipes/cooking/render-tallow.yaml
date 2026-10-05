@@ -1,0 +1,15 @@
+id: render-tallow
+name: Tallow
+aliases: [render]
+skill: cooking
+skill_minimum: 0
+station: cooking_fire
+time_rounds: 3
+ingredients:
+  - item_tag: animal-fat
+    quantity: 2
+output:
+  item_id: 40355
+  quantity: 1
+success_actor: "You melt the fat down slowly and pour off clean tallow. Tallow!"
+failure_actor: "The fat scorches and smokes."

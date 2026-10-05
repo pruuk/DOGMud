@@ -1,0 +1,18 @@
+itemid: 40308
+name: Scales
+namesimple: scales
+description: >
+  A handful of hard, overlapping scales stripped from a reptile, a
+  serpent or a fish. Laced onto leather they turn a blade.
+type: object
+subtype: mundane
+component_tag: scales
+weight: 0.3
+value: 6
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- blacksmithing
+- hunting
+material_tier: 2

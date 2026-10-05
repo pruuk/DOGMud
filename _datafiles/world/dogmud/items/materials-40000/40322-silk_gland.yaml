@@ -1,0 +1,19 @@
+itemid: 40322
+name: Silk Gland
+namesimple: gland
+description: >
+  A spider's silk gland, still full of the sticky stuff that becomes
+  thread.
+type: object
+subtype: mundane
+component_tag: silk-gland
+weight: 0.1
+value: 30
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- alchemy
+- hunting
+material_tier: 3
+spoil_after: 3 days

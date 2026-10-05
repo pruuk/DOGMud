@@ -1,0 +1,17 @@
+id: wooden-chest
+name: "Wooden Chest"
+aliases: [chest]
+skill: woodwork
+skill_minimum: 10
+station: "woodworking_bench"
+time_rounds: 6
+ingredients:
+  - item_tag: wooden-plank
+    quantity: 6
+  - item_tag: iron-ingot
+    quantity: 1
+output:
+  item_id: 40430
+  quantity: 1
+success_actor: "You dovetail the planks, fit a lid and hang it on iron hinges. A wooden chest!"
+failure_actor: "The joints will not close square. The wood is wasted."

@@ -1,0 +1,22 @@
+id: wolf-fur-cloak
+name: Wolf-Fur Cloak
+aliases: [wolf-cloak]
+skill: tailoring
+skill_minimum: 8
+station: loom
+tool: scraper
+time_rounds: 6
+ingredients:
+  - item_tag: wolf-pelt
+    quantity: 2
+  - item_tag: salt-pouch
+    quantity: 1
+  - item_tag: thread-spool
+    quantity: 1
+  - item_tag: bone-needle
+    quantity: 1
+output:
+  item_id: 20104
+  quantity: 1
+success_actor: "You scrape and salt the pelts and stitch them fur-in into a heavy cloak. A wolf-fur cloak!"
+failure_actor: "The pelts were not cured enough and the seams split. They are ruined."

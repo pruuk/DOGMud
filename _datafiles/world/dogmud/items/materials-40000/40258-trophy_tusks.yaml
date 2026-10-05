@@ -1,0 +1,18 @@
+itemid: 40258
+name: Trophy Tusks
+namesimple: tusks
+description: >
+  A matched pair of long, curling boar tusks, sawn out at the root with
+  their full length intact. Carvers pay well for them, and a steel bone saw
+  or better is the only way to get them out whole.
+type: object
+subtype: mundane
+component_tag: trophy-tusks
+weight: 0.8
+value: 45
+rarity_tier: 15
+is_component: true
+vendor_categories:
+- jewelcrafting
+- hunting
+material_tier: 3

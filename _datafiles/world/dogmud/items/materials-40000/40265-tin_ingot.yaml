@@ -1,0 +1,15 @@
+itemid: 40265
+name: Tin Ingot
+namesimple: ingot
+description: >
+  A small bar of pale tin, soft enough to scratch with a fingernail.
+type: object
+subtype: mundane
+component_tag: tin-ingot
+weight: 0.1
+value: 5
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- blacksmithing
+material_tier: 1

@@ -1,0 +1,15 @@
+id: smelt-tin-ore
+name: "Tin Ingot"
+aliases: [smelttin]
+skill: blacksmithing
+skill_minimum: 0
+station: forge
+time_rounds: 2
+ingredients:
+  - item_tag: tin-ore
+    quantity: 2
+output:
+  item_id: 40265
+  quantity: 1
+success_actor: "You melt the tin out of the rock and pour a pale ingot."
+failure_actor: "The melt slags over. The ore is wasted."

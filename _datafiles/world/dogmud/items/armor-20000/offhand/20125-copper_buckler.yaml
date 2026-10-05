@@ -1,0 +1,16 @@
+itemid: 20125
+name: Copper Buckler
+vendor_categories:
+- blacksmithing
+namesimple: buckler
+description: >
+  A small round shield faced with soft red copper over a wooden core. Copper
+  is soft: it dents, dulls and gives under a blow, but it is cheap and easy
+  to work.
+type: offhand
+subtype: wearable
+weight: 6.3
+physical_mitigation: 6
+blockrating: 12
+value: 15
+rarity_tier: 40

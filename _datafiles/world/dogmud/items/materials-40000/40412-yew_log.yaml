@@ -1,0 +1,15 @@
+itemid: 40412
+name: Yew Log
+namesimple: log
+description: >
+  A length of yew, the dark orange heartwood wrapped in a band of pale
+  sapwood. Bowyers would fight over it.
+type: object
+subtype: mundane
+component_tag: bow-wood-log
+weight: 11
+value: 18
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 3

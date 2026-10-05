@@ -1,0 +1,26 @@
+spellid: shard-volley
+name: Shard Volley
+aliases: [shardvolley]
+description: >
+  A Spine Lattice draws its spines back and looses them in quick succession,
+  shard after shard, then has to grow them again. Mob-castable only.
+attack_type: spell
+damage_type: physical
+targeting: single
+schools:
+  - elemental
+cost: 8
+waitrounds: 1
+difficulty: 25
+mob_only: true
+primarystat: dexterity
+base_folds: 1
+effect_type: damage
+effect_magnitude: 60
+damage_multiplier: 0.35
+hits: 3            # three shards in quick succession, each its own hit
+ignore_move_cooldown: true
+categories:
+  - harm_single
+cast_actor: "Your spines draw back, quivering."
+cast_observer: "{actor}'s spines draw back and quiver, every point turning toward {actee}."

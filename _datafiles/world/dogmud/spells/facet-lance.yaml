@@ -1,0 +1,25 @@
+spellid: facet-lance
+name: Facet Lance
+aliases: [facetlance]
+description: >
+  A narrow beam of cold light thrown from one of the Watching Obelisk's
+  faces. Mob-castable only.
+attack_type: spell
+damage_type: physical
+targeting: single
+schools:
+  - elemental
+cost: 10
+waitrounds: 1
+difficulty: 30
+mob_only: true
+primarystat: willpower
+base_folds: 1
+effect_type: damage
+effect_magnitude: 120
+damage_multiplier: 0.60
+ignore_move_cooldown: true
+categories:
+  - harm_single
+cast_actor: "One of your faces turns."
+cast_observer: "One face of {actor} turns slowly until it looks straight at {actee}."

@@ -1,0 +1,19 @@
+id: crucible-steel
+name: Crucible Steel
+aliases: [crucible]
+skill: blacksmithing
+skill_minimum: 40
+station: forge
+time_rounds: 6
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 2
+  - item_tag: basalt-iron
+    quantity: 2
+  - item_tag: coal-dust
+    quantity: 2
+output:
+  item_id: 40253
+  quantity: 1
+success_actor: "You seal steel and basalt-iron in a crucible, hold it white-hot for hours and let it cool slow. Crucible steel!"
+failure_actor: "The crucible cracks in the fire and the melt runs into the coals."

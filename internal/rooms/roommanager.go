@@ -427,6 +427,25 @@ func MoveToRoom(userId int, toRoomId int, isSpawn ...bool) error {
 		}
 	}
 
+	// Private room access (player housing, routing_hooks.go). A refused
+	// ordinary move fails with the guard's message. A refused SPAWN (login
+	// placement) is redirected instead, because a player who logs in must
+	// land somewhere: someone who logged out in a room they may no longer
+	// enter wakes outside its door.
+	if allowed, redirectRoomId, refusal := checkEntry(userId, toRoomId); !allowed {
+		spawning := len(isSpawn) > 0 && isSpawn[0]
+		if !spawning || redirectRoomId == 0 {
+			if user != nil && refusal != `` {
+				user.SendText(messaging.CategoryError, refusal)
+			}
+			return fmt.Errorf("private room access denied")
+		}
+		toRoomId = redirectRoomId
+		if newRoom = LoadRoom(toRoomId); newRoom == nil {
+			return fmt.Errorf(`room %d not found`, toRoomId)
+		}
+	}
+
 	// r.prepare locks, so do it before the upcoming lock
 	if len(newRoom.players) == 0 {
 		newRoom.Prepare(true)
@@ -508,6 +527,12 @@ func GetRoomWithMostItems(skipRecentlyVisited bool, minimumItemCt int, minimumGo
 	for cRoomId, cRoom := range roomManager.rooms {
 		// Don't include goblin trash zone items
 		if cRoom.Zone == goblinZone {
+			continue
+		}
+
+		// A player's own room (housing) is not a floor to be swept: what
+		// they leave there is theirs, not litter.
+		if IsPrivateRoom(cRoomId) {
 			continue
 		}
 
@@ -646,7 +671,10 @@ func removeRoomFromMemory(r *Room) {
 		}
 	}
 
-	SaveRoomInstance(*room)
+	runRoomSaveHook(room)
+	if err := SaveRoomInstance(*room); err != nil {
+		mudlog.Error("removeRoomFromMemory", "roomId", room.RoomId, "error", err)
+	}
 
 	delete(roomManager.rooms, r.RoomId)
 }

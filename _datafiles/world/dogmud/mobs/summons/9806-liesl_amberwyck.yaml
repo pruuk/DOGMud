@@ -1,0 +1,38 @@
+mobid: 9806
+zone: Summons
+archetype: casting
+behavior_archetype: companion_healer
+statpool: 90
+itemdropchance: 0
+hostile: false
+maxwander: 0
+groups:
+  - humanoid
+activitylevel: 10
+aiprofile: defensive
+specialmovechance: 5
+submission_policy: mercy
+surrender_policy: auto-tap-below 30
+character:
+  name: Liesl Amberwyck
+  description: |
+    A woman in her thirties with sleeves rolled to the elbow and the
+    raw-knuckled hands of someone who scrubs a great deal. Her dark hair
+    is pinned up out of the way with a bone needle, and a faded temple
+    sash is knotted at her waist, worn the way a soldier keeps an old
+    regiment's badge. Her eyes go to anyone who is limping before they go
+    anywhere else.
+  speciesid: 1
+  level: 1
+  skills:
+    alchemy: 10
+    cooking: 4
+  stats:
+    willpower:
+      base: 120
+    perception:
+      base: 105
+    charisma:
+      base: 105
+    vitality:
+      base: 95

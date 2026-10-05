@@ -1,0 +1,37 @@
+# companion_skirmisher archetype (Tobin Nettlefold, aicompanion)
+#
+# The knife in the dark. He fights dirty and low: legs out from under a
+# caster, a boot into anything on the floor, and a trip whenever it will
+# land. His surprise opening blow from hiding is the aicompanion module's
+# (profile opener: surprise), as are running and the plan (see
+# companion_archer.yaml).
+#
+# Decision order per mob_combat_round:
+#   1. Interrupt: trip a casting foe.
+#   2. A kick at a foe already on the ground.
+#   3. Trip.
+#   fall through to the ordinary attack.
+# No bash (no shield) and no grapple: he is not built to hold anything.
+tree:
+  type: selector
+  children:
+    - type: selector
+      event: mob_combat_round
+      children:
+        - type: sequence
+          children:
+            - type: condition
+              check: target_is_casting
+            - type: action
+              do: command_best_of
+              cmds: [trip]
+        - type: sequence
+          children:
+            - type: condition
+              check: target_not_standing
+            - type: action
+              do: command_best_of
+              cmds: [kick]
+        - type: action
+          do: command_best_of
+          cmds: [trip]

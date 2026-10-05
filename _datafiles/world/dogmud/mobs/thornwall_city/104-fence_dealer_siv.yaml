@@ -45,7 +45,7 @@ character:
     - itemid: 10013
   stats:
     perception:
-      base: 110
+      base: 114
     dexterity:
       base: 108
     charisma:

@@ -1,0 +1,43 @@
+mobid: 9839
+zone: Rift Obelisk
+# Hunter. Never placed in a room by the generator: internal/rifts sends one
+# after a player who flees a fight, and the same one follows them room by
+# room (appearing 10 s to 1 min after they stop in a room). It obeys stealth:
+# a hidden quarry is watched for, not attacked. While it stands with a quarry
+# it can see, they cannot leave. It burns with the walls themselves
+# (wall-lance, lattice-burn). Per-mob tree: behaviors/rift_obelisk/
+# 9839-facet_hunter.yaml.
+archetype: casting
+hostile: false # it hunts one quarry (internal/rifts), never whoever it sees
+charm_immune: true
+pack_flee_immune: true # constructs: a fallen packmate is no reason to run
+submission_policy: lethal
+surrender_policy: never
+maxwander: 0
+groups:
+  - obelisk
+activitylevel: 20
+idlecommands:
+  - 'emote stands half in the wall, as if the crystal were water'
+  - ''
+combatcommands:
+  - ''
+character:
+  name: Facet Hunter
+  description: >-
+    It steps out of the wall the way a reflection steps out of a mirror: a
+    tall, narrow shape of dark crystal with no face, only a smooth plane where
+    a face would be. It does not hurry. It does not need to. Wherever it
+    turns, the facets in the walls turn with it, and the light in them
+    sharpens into points.
+  speciesid: 46
+  level: 1
+  # Built to find: the keenest eyes in the Obelisk, and it searches as it
+  # watches (detection is perception plus search skill).
+  stats:
+    perception:
+      base: 230
+  skills:
+    search: 6
+  gold: 0
+itemdropchance: 0

@@ -1,0 +1,19 @@
+id: masterwork-felling-axe
+name: Masterwork Felling Axe
+aliases: [mwaxe]
+skill: blacksmithing
+skill_minimum: 55
+station: forge
+time_rounds: 12
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 3
+  - item_tag: ironwood-haft
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10069
+  quantity: 1
+success_actor: "You forge a great crucible steel head, thin behind the bit, and hang it on an ironwood haft. A masterwork felling axe!"
+failure_actor: "The eye of the axe splits as you drift it. The crucible steel is ruined."

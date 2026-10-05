@@ -1,0 +1,25 @@
+conditionid: 131
+name: Sleeping in a Bed
+description: You are sleeping in a proper bed, and resting twice as fast for it.
+triggerrate: 1 round
+triggercount: 100000
+start_actee: "The bed is soft and warm, and you sleep deeply."
+end_actee: "The warmth of the bed lets you go."
+# The regen a bed adds. Recovery statmods add a hundredth each to the per-round
+# regen fraction (characters.HealthPerRound and friends), and players regen
+# 0.02 of each pool a round (PlayerHealthRegenPct and friends in config.yaml),
+# so 2 doubles it; sleeping's SleepRegenMultiplier then multiplies the sum.
+statmods:
+  healthrecovery: 2
+  staminarecovery: 2
+  convictionrecovery: 2
+flags:
+# actions.Sleep applies this with Sleeping (15) when the sleeper is in a bed,
+# synchronously, and sends the start line itself. It carries the sleeping flag
+# so everything that wakes a sleeper (CancelConditionsWithFlag) ends it too,
+# and the same cancel flags, so it never outlasts the sleep.
+- silent-start
+- sleeping
+- cancel-on-action
+- cancel-on-combat
+- cancel-on-damage

@@ -1,0 +1,18 @@
+itemid: 40254
+name: Ironwood Haft
+namesimple: haft
+description: >
+  A short, straight length of ironwood sawn along the grain and shaved round,
+  nearly black and heavy as iron. It will not crack, swell or loosen in a
+  socket, which is why master smiths hang their best heads on nothing else.
+type: object
+subtype: mundane
+component_tag: ironwood-haft
+weight: 1.0
+value: 30
+rarity_tier: 15
+is_component: true
+vendor_categories:
+- woodwork
+- blacksmithing
+material_tier: 4

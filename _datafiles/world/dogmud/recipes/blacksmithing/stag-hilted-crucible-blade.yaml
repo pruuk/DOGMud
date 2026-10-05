@@ -1,0 +1,19 @@
+id: stag-hilted-crucible-blade
+name: "Stag-Hilted Crucible Blade"
+aliases: [stagblade]
+skill: blacksmithing
+skill_minimum: 52
+station: forge
+time_rounds: 12
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 3
+  - item_tag: trophy-antlers
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10072
+  quantity: 1
+success_actor: "You fold and draw the crucible steel into a long blade and carve its grip from a trophy antler. A stag-hilted crucible blade!"
+failure_actor: "The blade cracks in the temper. The crucible steel is ruined."

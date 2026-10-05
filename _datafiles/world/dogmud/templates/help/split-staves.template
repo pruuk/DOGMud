@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">split-staves</ansi> (woodwork recipe)
+
+Split a bow-wood log (ash, elm, yew) along the grain into two staves. Needs an
+axe.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       woodwork (minimum 5)
+  <ansi fg="yellow">Station:</ansi>     woodworking bench
+  <ansi fg="yellow">Tool:</ansi>        axe
+  <ansi fg="yellow">Ingredients:</ansi> bow wood log (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help woodwork</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

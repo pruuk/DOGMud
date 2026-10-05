@@ -1,0 +1,63 @@
+id: b-garden-of-grown-glass
+pool: B
+source: authored
+title: Garden of Grown Glass
+description: >-
+  Nothing grows here and nothing ever did, but someone made a garden all the
+  same. Raised beds of black crystal run in neat rows across the hall, and
+  from them rise forms of glass that were coaxed, not cut: slender stems
+  that branch and fork, tipped with clusters of thin curled blades that
+  could be leaves or flames. Some reach above your head. Others are no
+  taller than a hand, still crowded tight together, as though they had been
+  started late and never given time. At the head of each bed the forms open
+  into wide cupped blooms, and every bloom is turned the same way, toward a
+  bare patch of wall where nothing hangs. Along the edges of the beds lie
+  cuttings, small broken tips set down in careful lines. Between the rows,
+  shallow channels run with no water in them. When you move, the blooms
+  catch the faint glow of the walls and pass it from one to the next.
+nouns:
+  stems: >-
+    The stems are grown in layers, ring upon ring, like the inside of a
+    tree. Somewhere near the top of each, the layers change: they grow
+    darker and less even, and the stem twists, as though whatever was
+    tending it had been distracted or afraid.
+  blooms: >-
+    Wide cups of glass thin as soap film, each holding a tiny point of light
+    at its centre. Every one faces the bare wall. Stand between a bloom and
+    the wall and its light dims, as if you were in the way of something it
+    was trying to see.
+  beds: >-
+    Low troughs of black crystal filled with a coarse grey grit. Push your
+    fingers in and the grit is faintly warm, warmer than anything else in
+    the Obelisk. Near the bottom of one bed you find a small rounded lens,
+    buried deliberately, its face turned up.
+  cuttings: >-
+    Broken tips of glass laid out in rows along the bed edges, each one
+    beside a single round mark pressed into the rim. They were saved, not
+    swept. Some of the cuttings have fused to the crystal where they lie,
+    as if they had tried to take root.
+  wall: >-
+    The bare patch of wall the blooms face is smoother than the rest, a
+    perfect circle of polished black. Faint in its depths, very far off, is
+    a point of light, steady and pale. It does not move. The blooms seem to
+    lean toward it by a hair's breadth when you are not looking.
+idlemessages:
+  - "Light passes from bloom to bloom along a row, like a whisper, and fades."
+  - "A thin glass blade at the tip of a stem cracks softly and falls among the cuttings."
+doors:
+  - exit: gap
+    description: >-
+      A gap between the last two beds leads to a ragged opening in the wall,
+      fringed with stunted glass.
+  - exit: shaft
+    description: >-
+      A narrow shaft rises from a corner of the garden, its walls ridged with
+      small glass shoots.
+  - exit: window
+    description: >-
+      A round window in the side wall, empty of glass, low enough to climb
+      through into the dark beyond.
+  - exit: door
+    description: >-
+      A tall plain door frame of crystal at the garden's foot, opening onto a
+      corridor that slopes away.

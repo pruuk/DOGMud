@@ -5,6 +5,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/timber"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // ReloadResult holds the outcome of a reload attempt.
@@ -13,6 +15,7 @@ type ReloadResult struct {
 	AmmoTag       string // ammo type involved (set for NoAmmo messaging too)
 	AmmoName      string // display name of the bundle consumed from
 	BundleEmptied bool   // the bundle's last Use was consumed
+	Recovered     bool   // the wood's recovery kept the bundle's Use (timber.ArrowTraits.Recovery)
 	Cost          characters.CostCommitResult
 
 	Loaded        bool // success
@@ -127,12 +130,22 @@ func chamberNextRound(actor Actor) ReloadResult {
 	// There is no rollback path any more. The snapshot vars this used to keep
 	// (bundleBefore/bundleRemoved) existed only to undo the consume when the
 	// cooldown claim failed, and chambering no longer claims anything.
-	char.Items[bundleIdx].Uses--
-	if char.Items[bundleIdx].Uses <= 0 {
-		result.BundleEmptied = true
-		char.RemoveItem(char.Items[bundleIdx])
+	//
+	// Wood (wilderness trades): the weapon remembers the wood of the arrow it
+	// nocked (its bundle's Wood), for the shot's damage and accuracy, and a
+	// tough wood may give the Use back: the last arrow was picked up whole.
+	arrowWood := char.Items[bundleIdx].Wood
+	if rec := timber.ArrowWood(arrowWood).Recovery; rec > 0 && util.Rand(100) < int(rec*100) {
+		result.Recovered = true
+	} else {
+		char.Items[bundleIdx].Uses--
+		if char.Items[bundleIdx].Uses <= 0 {
+			result.BundleEmptied = true
+			char.RemoveItem(char.Items[bundleIdx])
+		}
 	}
 
+	weapon.LoadedWood = arrowWood
 	weapon.Loaded = true
 	result.Loaded = true
 	return result

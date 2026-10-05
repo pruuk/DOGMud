@@ -1,0 +1,5 @@
+name: Thornwall Burrows
+roomid: 6672
+defaultbiome: interior
+region: Thornwall Region
+non_cartesian: true

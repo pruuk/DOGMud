@@ -51,7 +51,7 @@ character:
     charisma:
       base: 110
     perception:
-      base: 108
+      base: 110
     willpower:
       base: 108
     strength:

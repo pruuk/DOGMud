@@ -1,0 +1,14 @@
+itemid: 40432
+name: Woodworking Bench
+namesimple: workbench
+description: >
+  The pieces of a heavy woodworking bench, with a vise and a rack
+  for tools. Use it in your lodging to set it up as a woodworking bench.
+type: object
+subtype: mundane
+weight: 30.0
+value: 150
+rarity_tier: 30
+vendor_categories:
+- woodwork
+furnishing: workbench

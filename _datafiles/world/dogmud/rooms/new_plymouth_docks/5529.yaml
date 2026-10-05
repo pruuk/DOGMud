@@ -56,3 +56,6 @@ idlemessages:
   hear it without it requiring anything of you.
 x: -10
 y: -80
+spawninfo:
+  - mobid: 9822
+    respawnrate: "30 real minutes"

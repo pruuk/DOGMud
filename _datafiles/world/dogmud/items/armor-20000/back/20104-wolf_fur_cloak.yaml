@@ -1,0 +1,16 @@
+itemid: 20104
+name: Wolf-Fur Cloak
+vendor_categories:
+- tailoring
+namesimple: cloak
+description: >
+  A cloak of wolf pelts stitched fur-in, grey and heavy. The wolf's keen
+  senses seem to come with it: the wearer hears more and notices more.
+type: back
+subtype: wearable
+weight: 2.5
+value: 70
+rarity_tier: 40
+physical_mitigation: 2
+statmods:
+  perception: 2

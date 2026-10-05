@@ -1,0 +1,16 @@
+itemid: 40325
+name: Ichor
+namesimple: ichor
+description: >
+  A vial's worth of thick, faintly glowing ichor drawn from an insect.
+type: object
+subtype: mundane
+component_tag: ichor
+weight: 0.2
+value: 18
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- alchemy
+material_tier: 2
+spoil_after: 3 days

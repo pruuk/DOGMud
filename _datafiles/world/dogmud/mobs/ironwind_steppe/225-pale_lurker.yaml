@@ -38,9 +38,6 @@ character:
     passes beneath.
   speciesid: 23
   level: 1
-  items:
-    - itemid: 40233
-      dropchance: 15
   stats:
     strength:
       base: 90
@@ -52,3 +49,7 @@ character:
       base: 125
   skills:
     skullduggery: 1
+# Wilderness trades: the heat-pit organ is cut from the carcass now.
+harvest:
+  butcher:
+    - {item: heat-pit, qty: 1, rare: true, chance: 0.2}

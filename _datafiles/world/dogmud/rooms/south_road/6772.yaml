@@ -1,0 +1,39 @@
+roomid: 6772
+zone: South Road
+title: The Combe Track
+description: >
+  The sheep-track drops off the road through waist-high bracken and into
+  the lee of a green combe, and the valley wind that owns the road above
+  simply stops, as if a door had shut on it. The air goes still and cool,
+  smelling of leaf-mould and wood-smoke. Ferns crowd the banks, a thread of
+  water talks to itself somewhere under the bracken, and hazel and blackthorn
+  close overhead into a green tunnel. At its far end, to the east, the
+  ground opens around the foot of the most enormous
+  <ansi fg="itemname">oak</ansi> you have ever seen. Up the slope to the
+  west, the road.
+biome: forest
+coord: {x: -7, y: -19, z: 0}
+exits:
+  west: {roomid: 6045}
+  east: {roomid: 6773}
+nouns:
+  oak: >
+    Even from here it fills the end of the combe: a trunk like a round tower,
+    roots like the backs of whales humped out of the turf, and a crown that
+    shuts out the sky. There are windows in it. Small, round, and lit.
+  bracken: >
+    Tall, curling bracken, bruised along the path where things have pushed
+    through. Some of the tracks are sheep. Some are much lower and wider, and
+    lead toward the oak.
+  hazel: >
+    Old hazel and blackthorn, grown together overhead into a tunnel. Somebody
+    has cut it back neatly to head height, which is thoughtful of them, since
+    they are clearly shorter than that.
+idlemessages:
+- A wren shouts at you from the bracken, far louder than anything that size
+  has any business being.
+- Up on the road, the wind roars past the lip of the combe. Down here, not a
+  fern moves.
+- Wood-smoke drifts up the combe from somewhere among the roots of the oak.
+x: 3
+y: 24

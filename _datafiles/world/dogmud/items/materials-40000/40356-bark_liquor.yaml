@@ -1,0 +1,16 @@
+itemid: 40356
+name: Bark Liquor
+namesimple: liquor
+description: >
+  A jug of dark, sour liquor steeped from oak bark. Tanners soak cured
+  hides in it until they turn to leather.
+type: object
+subtype: mundane
+component_tag: tanning-liquor
+weight: 0.5
+value: 8
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+material_tier: 1

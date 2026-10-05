@@ -402,10 +402,11 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 		// move executed AS a counter — consumed by Task 10 (a counter must
 		// never trigger another counter); behaviour-neutral until then.
 		bashResult := combat.ExecuteSkillMove(combat.SkillMoveParams{
-			Attacker: defender,
-			Defender: attacker,
-			Shape:    combatvocab.Melee(combatvocab.TargetSingle),
-			Room:     sightRoom,
+			Attacker:   defender,
+			Defender:   attacker,
+			Shape:      combatvocab.Melee(combatvocab.TargetSingle),
+			Room:       sightRoom,
+			StrikeWith: defender.ShieldPtr(),
 			Attack: combat.AttackSide{
 				Stat: defender.Stats.Strength.ValueAdj, StatName: "strength",
 				Skill: skills.WeaponCombat, SkillRank: defender.GetSkillLevel(skills.WeaponCombat),

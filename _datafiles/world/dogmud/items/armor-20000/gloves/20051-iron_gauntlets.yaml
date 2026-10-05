@@ -9,5 +9,6 @@ description: Heavy gauntlets of riveted iron plates over a leather frame.
 type: gloves
 subtype: wearable
 physical_mitigation: 3
+weight: 2.0
 value: 10
 rarity_tier: 40

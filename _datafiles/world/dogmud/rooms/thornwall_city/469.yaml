@@ -9,6 +9,7 @@ description: South of Main Street, the city takes on a different character. The
   and direct manner of those who make things for a living. An apothecary's shop
   is visible to the east, its window cluttered with bottles.
 biome: city_backstreet
+station: woodworking_bench
 coord:
   x: 2
   y: -1

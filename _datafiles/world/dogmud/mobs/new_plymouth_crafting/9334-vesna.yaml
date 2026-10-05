@@ -47,7 +47,7 @@ character:
     willpower:
       base: 114
     perception:
-      base: 108
+      base: 110
   shop:
     - itemid: 40006
     - itemid: 40004

@@ -387,6 +387,26 @@ func (b *Balance) validateMisc() {
 		b.ForagerStuckThresholdRounds = 600
 	}
 
+	// ── CITY SCAVENGERS AND FLOOR DECAY ──────────────────────────────────────
+	if b.ScavengerStepMinSeconds <= 0 {
+		b.ScavengerStepMinSeconds = 30
+	}
+	if b.ScavengerStepMaxSeconds <= 0 {
+		b.ScavengerStepMaxSeconds = 150
+	}
+	if b.ScavengerStepMaxSeconds < b.ScavengerStepMinSeconds {
+		b.ScavengerStepMaxSeconds = b.ScavengerStepMinSeconds
+	}
+	if b.FloorDecayBaseChancePct <= 0 {
+		b.FloorDecayBaseChancePct = 10
+	}
+	if b.FloorDecayPerExtraItemPct <= 0 {
+		b.FloorDecayPerExtraItemPct = 5
+	}
+	if b.FloorDecayCheckRounds <= 0 {
+		b.FloorDecayCheckRounds = 15
+	}
+
 	// ── ECONOMY HEALTH DASHBOARD ─────────────────────────────────────────────
 	if b.EconomySnapshotIntervalHours <= 0 {
 		b.EconomySnapshotIntervalHours = 1

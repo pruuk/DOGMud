@@ -1,0 +1,19 @@
+id: woodworking-bench
+name: "Woodworking Bench"
+aliases: [workbench]
+skill: woodwork
+skill_minimum: 30
+station: "woodworking_bench"
+time_rounds: 10
+ingredients:
+  - item_tag: hardwood-board
+    quantity: 4
+  - item_tag: wooden-plank
+    quantity: 4
+  - item_tag: iron-ingot
+    quantity: 2
+output:
+  item_id: 40432
+  quantity: 1
+success_actor: "You build a heavy bench, fit an iron vise and a tool rack. A woodworking bench!"
+failure_actor: "The top will not lie flat. The materials are wasted."

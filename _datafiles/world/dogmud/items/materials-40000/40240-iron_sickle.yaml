@@ -1,0 +1,16 @@
+itemid: 40240
+name: Iron Sickle
+namesimple: sickle
+description: >
+  A hand sickle with a crescent iron blade, for cutting herbs, reeds and fibre close to the ground without tearing the roots.
+type: object
+subtype: mundane
+weight: 0.6
+value: 8
+rarity_tier: 40
+vendor_categories:
+- blacksmithing
+- alchemy
+tool:
+  type: sickle
+  tier: 2

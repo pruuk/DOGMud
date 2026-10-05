@@ -1,0 +1,16 @@
+itemid: 78
+name: Quillhouse Crafting Station Deed
+namesimple: station deed
+not_salable: true
+description: >
+  A card headed THE QUILLHOUSE, ONE ARTICLE OF FURNITURE (WORKSHOP), with a
+  ruled line where the kind should be named. It installs one crafting station in a room of your Quillhouse lodging. To use it, stand
+  in the room where it should go and type use station deed, and choose which
+  station from a list: a forge, a loom, an alchemy bench, a jeweler bench, a cooking fire or an enchanting circle. You can also name it straight away, as in
+  use station deed forge. Anyone you let in can craft at it. A room takes one
+  station.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

@@ -23,6 +23,7 @@ coord:
   x: -16
   y: 90
   z: 0
+station: tanning_rack
 exits:
   west:
     roomid: 5715

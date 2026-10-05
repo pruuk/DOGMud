@@ -7,6 +7,7 @@ description: A small, round shield of hammered iron. Its face is dented from blo
   countless blows, but the metal holds firm.
 type: offhand
 subtype: wearable
+weight: 6.0
 value: 12
 rarity_tier: 40
 physical_mitigation: 8

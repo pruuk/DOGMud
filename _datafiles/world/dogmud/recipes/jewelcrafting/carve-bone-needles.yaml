@@ -1,0 +1,16 @@
+id: carve-bone-needles
+name: Bone Needles
+aliases: [needles]
+skill: jewelcrafting
+skill_minimum: 0
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 2
+ingredients:
+  - item_tag: bone
+    quantity: 1
+output:
+  item_id: 40013
+  quantity: 2
+success_actor: "You split the bone, grind two slim needles and drill their eyes. Bone needles!"
+failure_actor: "The bone splinters. It is wasted."

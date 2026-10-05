@@ -1,0 +1,21 @@
+itemid: 10081
+name: Copper Short Sword
+vendor_categories:
+- blacksmithing
+namesimple: sword
+description: >
+  A broad-bladed short sword hammered from soft red copper, quick to draw in
+  a tight space. Copper is soft: it dents, dulls and gives under a blow, but
+  it is cheap and easy to work.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 3.15
+speedmultiplier: 1.0
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.595
+parryrating: 6
+value: 22
+rarity_tier: 40

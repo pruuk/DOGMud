@@ -23,8 +23,6 @@ character:
   speciesid: 10
   level: 1
   gold: 0
-  items:
-    - itemid: 40064   # wild hare meat (drops on death)
   stats:
     dexterity:
       base: 66

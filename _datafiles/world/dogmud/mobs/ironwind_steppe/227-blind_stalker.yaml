@@ -39,10 +39,6 @@ character:
     intelligent, and very, very dangerous.
   speciesid: 23
   level: 1
-  items:
-    - itemid: 40048
-    - itemid: 40233
-      dropchance: 15
   stats:
     strength:
       base: 92
@@ -54,3 +50,9 @@ character:
       base: 128
   skills:
     skullduggery: 1
+# Wilderness trades: the venom sac and the heat-pit organ are cut from the
+# carcass now, not looted.
+harvest:
+  butcher:
+    - {item: venom-sac, qty: 1}
+    - {item: heat-pit, qty: 1, rare: true, chance: 0.2}

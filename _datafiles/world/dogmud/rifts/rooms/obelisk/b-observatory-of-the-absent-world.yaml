@@ -1,0 +1,65 @@
+id: b-observatory-of-the-absent-world
+pool: B
+source: authored
+title: Observatory of the Absent World
+description: >-
+  The hall rises in a single dome of black crystal, and at its centre a lens
+  taller than three men stands upright in a cradle of curved crystal arms,
+  tilted a little toward nothing. It is not dark. Inside the lens there is a
+  morning: a pale sky over low hills, a road of packed earth, a line of trees
+  bending under a wind that makes no sound. Nothing in the hall moves with
+  it. Around the cradle the floor rises in a shallow dais, and on its slope
+  three-groove tracks have been worn deep by feet that stood here a very long
+  time, shifting their weight and never leaving. Ledges ring the walls at
+  three heights, each set with smaller lenses aimed at the great one, as if
+  the room had been built to look at its own looking. Rows of round marks run
+  along the cradle's arms. The morning in the lens has been morning for as
+  long as anyone could say, and the shadows of its trees have never once
+  grown shorter.
+nouns:
+  lens: >-
+    Up close the world inside is sharper than your own eyes allow. You can
+    count the stones on the road. A gate stands in a hedge, half open, and a
+    dark shape lies across the path beyond it that might be a cart. There is
+    no one on the road. Where the grass meets the lens's rim, the colour
+    thins to grey, as though the view were wearing out at its edges.
+  cradle: >-
+    Four curved arms of crystal hold the lens at its rim, each ending in a
+    smooth cup where it touches the glass. One arm has been reset: a band of
+    newer, clearer crystal binds a break near its root, and the round marks
+    on it are pressed shallower, in a hurry.
+  dais: >-
+    The slope is gentle and the grooves on it are many, overlapping, some so
+    deep a foot would sink to the ankle. They all face the lens. None of them
+    turn back toward the doors. At the very top, nearest the glass, the
+    crystal is worn into a hollow the size of a body lying down.
+  ledges: >-
+    Each ledge carries a row of hand-sized lenses on small stands, angled at
+    the great lens from a different height. Bend to look through one and the
+    morning beyond seems farther off, a little smaller, as though each
+    watcher on the ledges had been given a more distant seat.
+  marks: >-
+    The round marks on the arms run in short rows, then stop, then begin
+    again lower down. The later rows are fewer and spaced wider apart. The
+    very last row is a single mark, pressed so hard that a fine crack has
+    spread out from it like a star.
+idlemessages:
+  - "In the great lens, the trees bend to a wind you cannot hear."
+  - "One of the small lenses on the ledges catches the morning and dims."
+doors:
+  - exit: ramp
+    description: >-
+      A broad ramp curving up behind the cradle, its surface scored with the
+      same three-groove tracks, all of them climbing.
+  - exit: loft
+    description: >-
+      A loft opens high in the wall above the uppermost ledge, reached by
+      shallow footholds cut into the dome.
+  - exit: aisle
+    description: >-
+      A straight aisle leads away between two banks of empty lens stands, its
+      far end lost in cold dark.
+  - exit: undercroft
+    description: >-
+      Steps drop beneath the dais into an undercroft, where the crystal of the
+      ceiling is so close it nearly brushes the head.

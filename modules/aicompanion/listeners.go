@@ -53,12 +53,24 @@ func (m *AICompanionModule) companionsInRoom(roomId int) []*controller {
 // response when it is addressed.
 func (m *AICompanionModule) onCommunication(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.Communication)
-	if !ok || !m.cfg.Enabled || evt.CommType != `say` || len(m.ctrls) == 0 {
+	if !ok || !m.cfg.Enabled || evt.CommType != `say` {
 		return events.Continue
 	}
 
-	// A companion's own speech comes back through here; ignore it.
-	if evt.SourceMobInstanceId > 0 && m.controllerForInstance(evt.SourceMobInstanceId) != nil {
+	// A companion's own speech comes back through here; ignore it, and a
+	// waiting companion's too.
+	if evt.SourceMobInstanceId > 0 && (m.controllerForInstance(evt.SourceMobInstanceId) != nil ||
+		m.waiterForInstance(evt.SourceMobInstanceId) != nil) {
+		return events.Continue
+	}
+
+	// A player speaking in the room of a companion waiting in the Hollow.
+	if evt.SourceUserId > 0 && strings.TrimSpace(evt.Message) != `` {
+		if u := users.GetByUserId(evt.SourceUserId); u != nil && u.Character != nil {
+			m.hearInHollow(u, u.Character.RoomId, evt.Message)
+		}
+	}
+	if len(m.ctrls) == 0 {
 		return events.Continue
 	}
 
@@ -116,6 +128,12 @@ func (m *AICompanionModule) onCommunication(e events.Event) events.ListenerRetur
 		fromOwner := speakerUserId > 0 && speakerUserId == c.ownerUserId
 		if speakerUserId > 0 {
 			direct = isAddressed(evt.Message, c.profile.Name, fromOwner, others, m.cfg.RespondWhenAlone)
+			// In the Hollow, words that name the companion waiting there and
+			// not her are for the one waiting.
+			if w := m.waiterInRoom(roomId); direct && w != nil && mentionsName(evt.Message, w.profile.Name) &&
+				!mentionsName(evt.Message, c.profile.Name) {
+				direct = false
+			}
 		}
 		m.hearSaid(c, users.GetByUserId(speakerUserId), heardFrom, evt.Message, roomId, direct, now)
 	}
@@ -132,13 +150,6 @@ func (m *AICompanionModule) hearSaid(c *controller, u *users.UserRecord, speaker
 	}
 	fromOwner := speakerUserId > 0 && speakerUserId == c.ownerUserId
 
-	// A literal "i agree" or "i decline" while the question is open is an
-	// answer, not conversation: it is not written down or answered, and it
-	// is read whether or not she was named, because the question asks for
-	// exactly those words and nothing else.
-	if fromOwner && m.answerConsent(c, u, text) {
-		return
-	}
 	// Nothing anyone says is written into her mind until her owner has
 	// agreed that what is said may leave the server. Her memory is the
 	// thing that gets sent, so recording first and gating later is the same
@@ -398,6 +409,15 @@ func (m *AICompanionModule) handleAsk(userId int, mobInstanceId int, text string
 	if !m.cfg.Enabled {
 		return false
 	}
+	if w := m.waiterForInstance(mobInstanceId); w != nil {
+		u := users.GetByUserId(userId)
+		text = strings.TrimSpace(text)
+		if u == nil || u.Character == nil || text == `` || u.Muted {
+			return false
+		}
+		m.askInHollow(w, u, text)
+		return true
+	}
 	c := m.controllerForInstance(mobInstanceId)
 	if c == nil {
 		return false
@@ -426,11 +446,6 @@ func (m *AICompanionModule) handleAsk(userId int, mobInstanceId int, text string
 func (m *AICompanionModule) hearAsked(c *controller, u *users.UserRecord, speaker string, text string, now int64) {
 	fromOwner := u.UserId == c.ownerUserId
 	if fromOwner {
-		// "ask <her> i agree" is as good an answer to the question as saying
-		// it aloud, and is not conversation either.
-		if m.answerConsent(c, u, text) {
-			return
-		}
 		m.interruptErrand(c, speaker)
 	}
 	// Heard, and answered below, but written down only once her owner has

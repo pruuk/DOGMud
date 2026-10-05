@@ -1,0 +1,14 @@
+itemid: 20108
+name: Hide Jerkin
+vendor_categories:
+- tailoring
+namesimple: jerkin
+description: >
+  A plain, sturdy jerkin of tanned hide, double-stitched at the seams.
+  Honest armour for people who work outdoors.
+type: body
+subtype: wearable
+weight: 4.5
+value: 60
+rarity_tier: 40
+physical_mitigation: 6

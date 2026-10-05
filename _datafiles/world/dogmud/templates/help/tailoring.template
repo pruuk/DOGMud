@@ -14,8 +14,18 @@ values mobility and grace over heavy protection. The skill is governed by
 
 <ansi fg="yellow">━━━ Known Recipes ━━━</ansi>
 
-The recipe list for tailoring is being documented as new recipes are added.
-Check back soon for updates on available items.
+Tailoring is also the tanner's trade. Raw hides from <ansi fg="command">skin</ansi> go through:
+
+  <ansi fg="command">cure-hide</ansi>    hide + salt, with a hide scraper, at a tanning rack
+  <ansi fg="command">tan-leather</ansi>  cured hide + bark liquor, at a tanning rack
+  <ansi fg="command">cut-leather</ansi>  leather hide into four strips, with a knife
+
+Furs go straight into garments: <ansi fg="command">wolf-fur-cloak</ansi>, <ansi fg="command">bear-fur-mantle</ansi>,
+<ansi fg="command">cat-pelt-hood</ansi>, <ansi fg="command">fine-fur-collar</ansi> and <ansi fg="command">fur-lined-boots</ansi>. Each fur lends the
+garment something of its animal. The finest furs only come off whole under
+a good knife: <ansi fg="command">prime-wolf-cloak</ansi> (35, prime wolf pelts: steel knife) and
+<ansi fg="command">great-bearskin-cloak</ansi> (55, a great bear pelt: masterwork knife).
+Sinew and horsehair make <ansi fg="command">bowstring</ansi>s.
 
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 

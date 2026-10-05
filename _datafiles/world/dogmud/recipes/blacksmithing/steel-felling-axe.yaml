@@ -1,0 +1,19 @@
+id: steel-felling-axe
+name: Steel Felling Axe
+aliases: [felling-axe]
+skill: blacksmithing
+skill_minimum: 20
+station: forge
+time_rounds: 6
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 3
+  - item_tag: wooden-plank
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10054
+  quantity: 1
+success_actor: "You forge a heavy wedge of steel, temper the bit, and hang it on a long hickory haft. A steel felling axe!"
+failure_actor: "The bit chips in the temper and the head is useless. The steel is lost."

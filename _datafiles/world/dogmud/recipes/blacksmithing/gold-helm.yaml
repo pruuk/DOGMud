@@ -1,0 +1,17 @@
+id: gold-helm
+name: "Gold Helm"
+aliases: [goldhelm]
+skill: blacksmithing
+skill_minimum: 32
+station: forge
+time_rounds: 6
+ingredients:
+  - item_tag: gold-ingot
+    quantity: 3
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 20132
+  quantity: 1
+success_actor: "You work the gold into shape. A gold helm!"
+failure_actor: "The gold tears as you work it. The metal is wasted."

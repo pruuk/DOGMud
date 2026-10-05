@@ -1,0 +1,12 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">steel-pick</ansi> (blacksmithing recipe)
+
+A steel pick. A steel tool: ore up to superb grade, gold seams, and
+flawless gems.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 18)
+  <ansi fg="yellow">Station:</ansi>     forge
+  <ansi fg="yellow">Ingredients:</ansi> steel ingot (x2), hardwood board (x1), leather strip (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help mining</ansi>, <ansi fg="command">help craft</ansi>

@@ -156,10 +156,11 @@ func ExecuteCounter(defender, attacker *characters.Character, shape combatvocab.
 	// side's sight row.
 	room := SightRoom(rooms.LoadRoom(defender.RoomId))
 	move := ExecuteSkillMove(SkillMoveParams{
-		Attacker: defender,
-		Defender: attacker,
-		Shape:    combatvocab.Melee(combatvocab.TargetSingle),
-		Room:     room,
+		Attacker:   defender,
+		Defender:   attacker,
+		Shape:      combatvocab.Melee(combatvocab.TargetSingle),
+		Room:       room,
+		StrikeWith: defender.WieldedWeaponPtr(),
 		Attack: AttackSide{
 			Stat: defender.Stats.Strength.ValueAdj, StatName: "strength",
 			Skill:     defender.GetCombatSkillTag(),

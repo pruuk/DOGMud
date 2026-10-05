@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">Wall Lance</ansi>
+
+<ansi fg="command">Wall Lance</ansi> is used by the Facet Hunter. The crystal walls flush with light,
+every facet swings to face its quarry, and a round later the gathered
+light burns them. Striking the Hunter does not stop it.
+
+<ansi fg="yellow">Counterplay: </ansi>
+
+  There is no running from a Facet Hunter: while it stands with you, the
+  way out is closed to you. The surest counter is not to give it a reason
+  to come. It is sent after those who flee a fight in the Obelisk.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>

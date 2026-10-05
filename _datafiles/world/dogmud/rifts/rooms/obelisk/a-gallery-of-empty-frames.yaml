@@ -1,0 +1,49 @@
+id: a-gallery-of-empty-frames
+pool: A
+source: authored
+title: Gallery of Empty Frames
+description: >-
+  Frames of black crystal line both walls of this long gallery, tall and
+  narrow, each wide enough to walk through. All of them are empty. Whatever
+  they once held was taken out cleanly; there is no broken glass, only a
+  fine groove inside each frame where a pane once sat. Beneath every frame
+  the floor is worn into a shallow dish, as if someone stood there a long
+  time, looking. Most of the frames show only the blank wall behind them.
+  One, halfway along, shows something else: a grey distance, a line that
+  might be hills, a faint movement like grass. Step to the side and the wall
+  comes back. Small round marks run along the top of each frame, a different
+  row for each.
+nouns:
+  frames: >-
+    Each frame is a single piece, its inner edge cut with a groove to hold
+    a pane. The groove is clean. The panes were lifted out with care, one
+    by one, and not one was dropped. Wherever they were carried, it was
+    not along this gallery; the floor shows no wear from heavy things
+    being dragged.
+  dishes: >-
+    Shallow hollows worn into the floor before each frame, smooth as the
+    inside of a bowl. Three overlapping channels mark each one, the prints
+    of a single stance repeated over years. One dish is worn twice as deep
+    as the rest, beneath the frame that still shows something.
+  hills: >-
+    Through the one frame that is not blank: a low grey country under a
+    pale, wide light. Grass, perhaps, moving in a wind you cannot feel.
+    Nothing walks there. It does not change while you watch, except that
+    once, very far off, a small light seems to turn toward you and go out.
+  marks: >-
+    Above each frame, a row of round marks pressed into the crystal. Each
+    row is different, and each ends with the same small cluster of three.
+    Above the frame that still sees, someone pressed a second row beneath
+    the first, shallower and less even, as if added later by a less
+    certain hand.
+idlemessages:
+  - "In the one frame that still sees, the grey grass bends, and settles."
+doors:
+  - exit: passage
+    description: >-
+      The gallery ends in a plain passage, its walls bare of frames,
+      running on into the dark.
+  - exit: vault
+    description: >-
+      A low vault opens in the side wall between two frames, its ceiling
+      ribbed with crystal like the inside of a shell.

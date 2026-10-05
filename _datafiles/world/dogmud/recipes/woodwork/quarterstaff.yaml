@@ -1,0 +1,15 @@
+id: quarterstaff
+name: "Quarterstaff"
+aliases: [staff]
+skill: woodwork
+skill_minimum: 5
+station: "woodworking_bench"
+time_rounds: 4
+ingredients:
+  - item_tag: hardwood-board
+    quantity: 2
+output:
+  item_id: 10060
+  quantity: 1
+success_actor: "You glue up the boards, turn them round and shoe both ends. A quarterstaff!"
+failure_actor: "The glue line opens when you test it. The staff is ruined."

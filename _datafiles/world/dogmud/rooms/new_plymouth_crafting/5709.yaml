@@ -18,6 +18,7 @@ description: >
   off the coals is a constant low presence, filling
   the yard from center to wall.
 biome: city_backstreet
+station: forge
 coord:
   x: -19
   y: 90

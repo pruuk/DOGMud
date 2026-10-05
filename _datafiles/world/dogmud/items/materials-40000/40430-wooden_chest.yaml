@@ -1,0 +1,14 @@
+itemid: 40430
+name: Wooden Chest
+namesimple: chest
+description: >
+  A stout wooden chest with iron hinges and a hasp. Carry it home and
+  use it in your lodging to set it down as a container.
+type: object
+subtype: mundane
+weight: 15.0
+value: 40
+rarity_tier: 30
+vendor_categories:
+- woodwork
+furnishing: chest

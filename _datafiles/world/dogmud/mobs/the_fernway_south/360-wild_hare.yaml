@@ -30,8 +30,6 @@ character:
   speciesid: 10
   level: 1
   gold: 0
-  items:
-    - itemid: 40064
   stats:
     strength:
       base: 25

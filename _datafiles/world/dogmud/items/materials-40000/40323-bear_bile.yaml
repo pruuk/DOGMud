@@ -1,0 +1,18 @@
+itemid: 40323
+name: Bear Bile
+namesimple: bile
+description: >
+  A bear's bile sac, dark and bitter. Old healers swear by it, and
+  it sells for its weight in silver.
+type: object
+subtype: mundane
+component_tag: bear-gall
+weight: 0.2
+value: 60
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- alchemy
+- hunting
+material_tier: 4
+spoil_after: 3 days

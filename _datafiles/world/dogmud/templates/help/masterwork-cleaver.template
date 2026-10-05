@@ -1,0 +1,12 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">masterwork-cleaver</ansi> (blacksmithing recipe)
+
+A cleaver of crucible steel. A masterwork tool: bone and fat up to
+pristine grade.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 48)
+  <ansi fg="yellow">Station:</ansi>     forge
+  <ansi fg="yellow">Ingredients:</ansi> crucible steel (x2), ironwood haft (x1), leather strip (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help tools</ansi>, <ansi fg="command">help craft</ansi>

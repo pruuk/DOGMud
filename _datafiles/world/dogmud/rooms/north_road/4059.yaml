@@ -17,6 +17,7 @@ coord:
   x: -17
   y: -3
   z: 0
+station: woodworking_bench
 exits:
   west:
     roomid: 4058

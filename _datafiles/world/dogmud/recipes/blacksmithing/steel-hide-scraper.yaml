@@ -1,0 +1,17 @@
+id: steel-hide-scraper
+name: Steel Hide Scraper
+aliases: [steelscraper]
+skill: blacksmithing
+skill_minimum: 15
+station: forge
+time_rounds: 3
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 1
+  - item_tag: hardwood-board
+    quantity: 1
+output:
+  item_id: 40247
+  quantity: 1
+success_actor: "You forge and grind a smooth steel curve and fit two hardwood handles. A steel hide scraper!"
+failure_actor: "The blade cracks in the quench. The steel is ruined."

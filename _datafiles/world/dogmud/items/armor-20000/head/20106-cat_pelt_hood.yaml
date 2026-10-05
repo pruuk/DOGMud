@@ -1,0 +1,16 @@
+itemid: 20106
+name: Cat-Pelt Hood
+vendor_categories:
+- tailoring
+namesimple: hood
+description: >
+  A close-fitting hood of tawny cat pelt. It drinks sound; hunters and
+  thieves alike swear it makes them quieter.
+type: head
+subtype: wearable
+weight: 0.6
+value: 90
+rarity_tier: 40
+physical_mitigation: 1
+statmods:
+  skullduggery: 3

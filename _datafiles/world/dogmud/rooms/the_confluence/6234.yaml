@@ -16,6 +16,7 @@ description: >
   door, waiting for its head. The row is east; the
   weaver's is south.
 biome: interior
+station: woodworking_bench
 coord:
   x: -15
   y: -68

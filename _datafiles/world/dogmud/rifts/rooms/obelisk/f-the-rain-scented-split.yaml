@@ -1,0 +1,48 @@
+id: f-the-rain-scented-split
+pool: F
+source: authored
+title: The Rain-Scented Split
+description: >-
+  You smell it before you see it: rain. Wet earth, wet stone, the green
+  bruised smell of leaves after a storm, rolling into the dry dead air of
+  the Obelisk so strongly that it catches in the throat. It comes from a
+  split low in the far wall, a long ragged mouth in the crystal at knee
+  height, and through it is grey light, soft and dim, and a sound of
+  dripping that you realise is happening somewhere else, outside, in the
+  world. The air near the split is cool and damp and the crystal around it
+  is furred with grey frost. This is the <ansi fg="exit">breach</ansi>, and
+  it is shut against you: a membrane of dark glass, thin as ice on a
+  puddle, stretches across the mouth, and at its centre is a faceted
+  socket where a key would turn. Behind you, at the threshold you crossed,
+  the crystal still bears the clean sharp wound of the key that let you in.
+nouns:
+  split: >-
+    A long low crack, wide enough to crawl through on your belly. Beyond the
+    membrane the grey light is moving, very slightly, the way light moves
+    under clouds. A single drop of water hangs on the outer face of the
+    glass and does not fall.
+  membrane: >-
+    The dark glass is so thin you can see light through it, and it flexes
+    when the outside air presses on it, like a held breath. Its surface is
+    covered in tiny round marks, so faint they might be beads of damp.
+  socket: >-
+    A faceted hollow at the heart of the membrane, its edges thicker and
+    harder than the glass around it. When you lean close, the rain smell is
+    strongest here, as though it were leaking around the shape waiting for
+    a key.
+  frost: >-
+    Grey frost, soft and wet-looking, grows thick around the split. Where
+    you touch it, it does not melt but crumbles, and the crumbs smell
+    faintly of rain too, as if the world had leaned in and left its breath here.
+idlemessages:
+  - "A gust of rain-cool air breathes through the split and the frost around it stirs."
+  - "Far off, outside, thunder rolls, so faint it is almost a feeling."
+doors:
+  - exit: tunnel
+    description: >-
+      A round tunnel leads back into the dry dark, and the smell of rain
+      fades within a few steps.
+  - exit: cleft
+    description: >-
+      A narrow cleft between two leaning faces of crystal, angling away from
+      the split into deeper cold.

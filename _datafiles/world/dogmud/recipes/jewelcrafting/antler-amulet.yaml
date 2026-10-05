@@ -1,0 +1,20 @@
+id: antler-amulet
+name: "Carved Antler Amulet"
+aliases: [antleramulet]
+skill: jewelcrafting
+skill_minimum: 18
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 5
+ingredients:
+  - item_tag: antler
+    quantity: 1
+  - item_tag: silver-wire
+    quantity: 1
+  - item_tag: polished-stone
+    quantity: 1
+output:
+  item_id: 20116
+  quantity: 1
+success_actor: "You carve a running stag into a disc of antler, set the stone and hang it on silver wire. A carved antler amulet!"
+failure_actor: "The antler splits along the grain. The materials are wasted."

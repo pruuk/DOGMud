@@ -1,0 +1,24 @@
+itemid: 10063
+name: Butcher's Chopper
+vendor_categories:
+- cooking
+- hunting
+namesimple: chopper
+description: >
+  A crude, heavy chopping blade of soft iron on a wooden grip. It goes through
+  a joint by weight rather than edge and leaves the bone splintered.
+type: weapon
+hands: 1
+subtype: cleaving
+weight: 1.6
+speedmultiplier: 0.85
+damage:
+  basedamage: 4
+  variance: 2
+damage_multiplier: 0.4
+parryrating: 2
+value: 4
+rarity_tier: 50
+tool:
+  type: cleaver
+  tier: 1

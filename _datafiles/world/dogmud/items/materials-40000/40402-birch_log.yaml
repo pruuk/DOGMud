@@ -1,0 +1,15 @@
+itemid: 40402
+name: Birch Log
+namesimple: log
+description: >
+  A length of birch with its white, papery bark still on, peeling in
+  thin curls.
+type: object
+subtype: mundane
+component_tag: softwood-log
+weight: 8
+value: 3
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 1

@@ -1,0 +1,15 @@
+id: draw-gold-wire
+name: "Gold Wire"
+aliases: [drawgold]
+skill: jewelcrafting
+skill_minimum: 24
+station: jeweler_bench
+time_rounds: 4
+ingredients:
+  - item_tag: gold-ingot
+    quantity: 1
+output:
+  item_id: 40023
+  quantity: 2
+success_actor: "You draw the gold into two soft, gleaming coils of wire."
+failure_actor: "The wire snaps and tangles. The gold is wasted."

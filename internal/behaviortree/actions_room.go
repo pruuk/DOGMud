@@ -99,6 +99,9 @@ func actMovePlayer(params map[string]any, ctx *EvalContext) Result {
 	if roomId == 0 {
 		return Failure
 	}
+	if u := users.GetByUserId(ctx.Event.UserId); u != nil && rooms.NoRecall(u.Character.RoomId) {
+		return Failure // nothing scripted pulls a player out of a no-recall room
+	}
 	if err := rooms.MoveToRoom(ctx.Event.UserId, roomId); err != nil {
 		return Failure
 	}

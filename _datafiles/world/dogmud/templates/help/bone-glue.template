@@ -1,0 +1,11 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">bone-glue</ansi> (cooking recipe)
+
+Boil bones down to glue.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       cooking (minimum 3)
+  <ansi fg="yellow">Station:</ansi>     cooking fire
+  <ansi fg="yellow">Ingredients:</ansi> bone (x3), water flask (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cooking</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

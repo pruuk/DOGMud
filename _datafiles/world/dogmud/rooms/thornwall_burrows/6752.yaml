@@ -1,0 +1,29 @@
+roomid: 6752
+zone: Thornwall Burrows
+title: A Hide-Out in the Burrows
+description: >
+  A hide-out hacked out of the rock, wider than anybody needs and taller than
+  you would expect this far down, the walls still scored with old pick-marks.
+  The floor is packed earth, swept dry. A <ansi fg="itemname">niche</ansi> cut
+  into one wall holds a stub of candle, and an iron
+  <ansi fg="itemname">hook</ansi> is driven into the rock beside it. Nothing
+  else. The hole is empty, and it is yours, and there is nothing in it yet but
+  what you bring. The iron-banded <ansi fg="itemname">door</ansi> behind you
+  lets back out into the Burrow Mouth.
+biome: interior
+exits:
+  door:
+    roomid: 6671
+nouns:
+  niche: A hand-deep niche chiselled into the rock, blackened at the top by a
+    great many candles. There is always one burning in it. Nobody admits to
+    lighting them.
+  hook: A thick iron hook hammered into a crack in the wall, good for a coat, a
+    lantern or a sack you do not want the rats in.
+  door: The inside of the iron-banded door. On this side it has a plain iron
+    latch, worn smooth. It opens for you, and it lets you back out into the
+    Burrow Mouth whenever you like.
+x: 80
+y: 0
+z: 0
+plane: 16

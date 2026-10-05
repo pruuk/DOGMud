@@ -28,3 +28,10 @@ stats:
     base: 10
   charisma:
     base: 5
+# Wilderness trades: what a carcass gives to skin and butcher. Quantities
+# are for a medium body (small halves, large doubles). See species/harvest.go.
+harvest:
+  skin:
+    - {item: small-pelt, qty: 1}
+  butcher:
+    - {item: fang, qty: 1, tool: bone_saw, rare: true, chance: 0.2}

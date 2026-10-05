@@ -1,0 +1,23 @@
+itemid: 10057
+name: Self Bow
+namesimple: bow
+description: >
+  A plain bow carved from a single stave and strung with sinew. It lacks
+  a hunting bow's snap, but it is honest and it shoots straight.
+type: weapon
+hands: 2
+subtype: shooting
+weight: 2.5
+speedmultiplier: 0.5
+grapplemodifier: 0.2
+ammo_tag: arrows
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 1.7
+parryrating: 1
+value: 40
+rarity_tier: 30
+vendor_categories:
+- woodwork
+carries_wood: true

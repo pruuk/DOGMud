@@ -1,0 +1,15 @@
+id: horsehair-bowstring
+name: Horsehair Bowstring
+aliases: [horsehair]
+skill: tailoring
+skill_minimum: 2
+station: loom
+time_rounds: 2
+ingredients:
+  - item_tag: horsehair
+    quantity: 3
+output:
+  item_id: 40352
+  quantity: 1
+success_actor: "You braid the horsehair into a tight bowstring. A bowstring!"
+failure_actor: "The braid slips loose. The hair is wasted."

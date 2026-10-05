@@ -1,0 +1,17 @@
+itemid: 40244
+name: Flint Sickle
+namesimple: sickle
+description: >
+  A crescent of flint blades set into a curved wooden haft with pitch. It cuts
+  herbs and reeds, though it bruises as much as it slices.
+type: object
+subtype: mundane
+weight: 0.5
+value: 3
+rarity_tier: 50
+vendor_categories:
+- alchemy
+- hunting
+tool:
+  type: sickle
+  tier: 1

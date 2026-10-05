@@ -1,0 +1,18 @@
+id: tusk-armlet
+name: "Tusk Armlet"
+aliases: [tuskarmlet]
+skill: jewelcrafting
+skill_minimum: 24
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 5
+ingredients:
+  - item_tag: tusk
+    quantity: 2
+  - item_tag: gold-wire
+    quantity: 1
+output:
+  item_id: 20117
+  quantity: 1
+success_actor: "You shape two tusks into a curve and cap the ends in gold. A tusk armlet!"
+failure_actor: "A tusk cracks as you bend the curve. The materials are wasted."

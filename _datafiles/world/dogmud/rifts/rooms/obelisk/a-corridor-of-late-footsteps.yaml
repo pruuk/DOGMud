@@ -1,0 +1,44 @@
+id: a-corridor-of-late-footsteps
+pool: A
+source: authored
+title: Corridor of Late Footsteps
+description: >-
+  The corridor is long and low and perfectly straight, its floor laid in
+  square tiles of black crystal that ring faintly underfoot. The ringing
+  does not come when you step. It comes later, two or three paces later, so
+  that you walk always just ahead of your own footsteps and hear them catch
+  up when you stop. Listen long enough and you notice the count is wrong.
+  There are more footfalls than you made, light and sliding, a gait of three
+  soft strikes to every step. They follow the path you took and stop where
+  you stop. The tiles along the middle of the floor are dimmed by wear; the
+  ones at the edges are still bright. Halfway along, a single tile is
+  cracked into a star.
+nouns:
+  tiles: >-
+    Each tile is a square of black crystal a pace across, set without
+    mortar. Their edges are bevelled so finely they catch what little
+    light there is. The middle tiles are dulled and the edge tiles bright,
+    the wear of walkers who kept to single file, one behind another, never
+    two abreast.
+  footfalls: >-
+    Stand still and listen. Your own steps arrive and end. Then, a breath
+    later, the others: three soft strikes, a pause, three more, coming up
+    the corridor from behind you. They stop just at your back. When you
+    turn, the tiles are empty, and the last of them is still faintly
+    ringing.
+  star: >-
+    One tile near the middle is cracked into a star of white lines. It
+    rings flat and dull when you step on it. The other footfalls step
+    around it, every time, swerving to the edge tiles and back. Whoever
+    walked here knew it was broken, and remembered.
+idlemessages:
+  - "Behind you, a tile rings, though you are standing still."
+doors:
+  - exit: culvert
+    description: >-
+      At the far end the corridor drops into a low culvert of curved
+      crystal, its floor slick and dark.
+  - exit: loft
+    description: >-
+      A short climb of footholds in the wall leads up to a narrow loft
+      above the corridor's mouth, where the ceiling opens.

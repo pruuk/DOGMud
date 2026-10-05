@@ -13,7 +13,7 @@ skill, the right ingredients, and in most cases a crafting station.
 
 <ansi fg="yellow">━━━ Crafting Skills ━━━</ansi>
 
-There are six crafting skills, each with its own station and recipes:
+There are eight crafting skills, each with its own station and recipes:
 
   <ansi fg="skill">blacksmithing</ansi>  Weapons, shields, heavy armor. Station: forge.
   <ansi fg="skill">alchemy</ansi>        Potions, salves, draughts. Station: alchemy bench.
@@ -21,11 +21,13 @@ There are six crafting skills, each with its own station and recipes:
   <ansi fg="skill">cooking</ansi>        Food and meals with temporary benefits. Station: hearth.
   <ansi fg="skill">jewelcrafting</ansi>  Rings, pendants, chrysalis settings. Station: jeweler bench.
   <ansi fg="skill">enchanting</ansi>     Chrysalis enchantments bound to gear. Station: enchanting circle.
+  <ansi fg="skill">woodwork</ansi>      Lumber, bows, arrows, shields, furniture.
+                 Station: woodworking bench.
 
-The first four are standalone trades. Jewelcrafting and enchanting
-together form the <ansi fg="yellow">artificer</ansi> profession — jewelcrafting produces
-chrysalis settings that enchanting consumes to bind living mutations
-into equipment.
+Blacksmithing, alchemy, tailoring, cooking and woodwork are standalone
+trades. Jewelcrafting and enchanting together form the <ansi fg="yellow">artificer</ansi>
+profession: jewelcrafting produces chrysalis settings that enchanting
+consumes to bind living mutations into equipment.
 
 <ansi fg="yellow">━━━ Enchanting Targets ━━━</ansi>
 
@@ -47,8 +49,33 @@ numbered list to choose from.
   4. Wait for the work to complete (several rounds).
   5. Use, equip, or enchant the result.
 
+Stay with the work. If you walk away, or are carried off, before it is
+done, the half-worked materials are ruined. The recipe's tool must still be
+in your hands when you finish.
+
 Higher skill means fewer wasted materials. A seasoned crafter rarely
 fails, but even masters are not perfect.
+
+<ansi fg="yellow">━━━ Grades ━━━</ansi>
+
+Every weapon, piece of armour, shield and piece of jewelry you craft comes
+out graded by how well the work went: <ansi fg="item-quality">crude</ansi>, standard, <ansi fg="item-quality">fine</ansi>,
+<ansi fg="item-quality">superb</ansi> or <ansi fg="item-quality">pristine</ansi>. Good materials and tools raise the ceiling.
+Goods bought from a shop have lost their grade and count as standard, so
+the finest work needs fine or better materials you gathered yourself.
+
+                 damage   speed   weight   protection
+  crude          -15%     -15%    +5%      -15%
+  fine           +8%      +5%     -3%      +8%
+  superb         +16%     +10%    -6%      +16%
+  pristine       +25%     +15%    -10%     +25%
+
+Damage and speed apply to weapons; protection (physical, magical and
+conviction mitigation, and a shield's block) to armour and shields;
+weight to all of them.
+
+A bow or a bundle of arrows also names its wood, as in a longbow (yew).
+Each wood has its own character (<ansi fg="command">help woodwork</ansi>).
 
 <ansi fg="yellow">━━━ Starting a Craft ━━━</ansi>
 
@@ -71,6 +98,10 @@ idea. The more you know, the harder new discoveries come.
   <ansi fg="yellow">hearth</ansi>             Kitchen or tavern hearth.
   <ansi fg="yellow">jeweler_bench</ansi>      Jeweler's Workshop — Thornwall City.
   <ansi fg="yellow">enchanting_circle</ansi>  Enchanter's Circle — east of Jeweler's Workshop.
+  <ansi fg="yellow">woodworking_bench</ansi>  Woodwork: Amber Valley, Kilnreach, Cascade Pass,
+                     North Road, Pothole Coulee.
+  <ansi fg="yellow">tanning_rack</ansi>       Tanning (tailoring): New Plymouth, Stillwater,
+                     Kilnreach, Amber Valley.
 
 <ansi fg="yellow">━━━ Getting Ingredients ━━━</ansi>
 
@@ -85,6 +116,7 @@ Materials come from many sources:
 
   <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help tailoring</ansi>,
   <ansi fg="command">help cooking</ansi>, <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help enchanting</ansi>,
+  <ansi fg="command">help woodwork</ansi>, <ansi fg="command">help tools</ansi>,
   <ansi fg="command">help foraging</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help inventory</ansi>,
   <ansi fg="command">help toxicity</ansi>
 

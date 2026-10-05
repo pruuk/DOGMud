@@ -208,6 +208,33 @@ The `internal/usercommands` package implements the complete command system for p
   `StealOptions.HouseholdItem` (the steal checks; see
   `internal/actions/context.md`).
 
+#### **Merchant chests** (`merchant_chest.go`, `get.go`, `picklock.go`, `look.go`, `offer.go`)
+- `picklock` on a merchant's chest (`actions.IsMerchantChest`) runs
+  `actions.WatchMerchantChest(..., MerchantChestPick)` once per attempt:
+  when the prompt is new, and on the keyring's instant solve. Caught, the
+  prompt is cleared and the lock stays shut. Opened, it calls
+  `merchantchests.MarkOpened` so the chest locks itself again later.
+- `get` from a merchant's chest runs `merchantChestTakeWatched`, only once
+  there is something to take (gold in it, or the named item found): the
+  take contest once per lock cycle (a pass is remembered in user temp data
+  against the lock's `RotationSeed`, so emptying the chest after one clean
+  take does not roll again). A thief caught is refused silently for the
+  rest of that round (`merchantChestCaughtThisRound`), so one
+  `get all <chest>` raises one alarm. The caught-this-round check runs
+  before the lock check, because the merchant has just locked the chest.
+- A take from a merchant's chest (only there: whoever picks the goods up
+  elsewhere is not made their thief) marks them taken
+  (`actions.MarkChestGoodsTaken`: thief, zone, time, so their heat starts) and adds `actions.StolenGoodsNote`; `look <container>`
+  prints `Container.Description` first; `offer` resolves its item with
+  `actions.SellFindItemInChar`; stolen goods are quoted by the fence
+  `actions.FenceFor` names, at its cut (`actions.FencePrice`), and
+  otherwise an honest merchant refuses them only where they are hot
+  (`actions.StolenGoodsHotHere`); `salvage` refuses them while hot
+  (`actions.StolenGoodsHotNow`). `put` refuses any merchant chest outright:
+  over-filling one spills a random item on the floor, which would pry its
+  goods out unwatched and unmarked. `storageFindAddable` passes over hot
+  goods in the component bag as well as the backpack.
+
 ### Special Features
 
 #### **Command Suggestions**
@@ -411,6 +438,29 @@ What matters is the shape, not the list:
   defence, flee, and grapple maintenance explain the skill-less resolution once
   at their owning round/action boundary. Losing defence candidates never emit a
   line. NPC wrappers use the same mechanics without private output.
+- **Housing landlords are not shops** (`housing_shop.go`). `list` renders
+  each landlord's per-lodger offers in the shop table style before any real
+  merchant; `buy` tries `housing.MatchOffer` before `actions.Buy`; `use`
+  hands `use deed north` / `use voucher ...` to `housing.UseItem` when a
+  leading run of words names a housing item, preferring one the player may
+  use that was issued by the building they stand in
+  (`housing.ItemIssuedHere`), since a lodger with homes in two cities
+  carries two sets. `house` lists each lodging and guest access by city
+  (`housing.AllBuildings`). `Go` turns a routed exit's
+  several `Choices` into a `Whose lodging?` menu (`pickRoutedDestination`),
+  which `visit <name>` skips by pre-picking a destination in temp data.
+  `house` and `visit` (`house.go`) manage guest access. `TryCommand` defers
+  `housing.OpenStrongboxesForUser` right after alias expansion: a house
+  strongbox is a sealed, always-locked container, unlocked only for its
+  owner's (or staff's) own command, so every command that honours container
+  locks refuses it to anyone else, and `picklock` and `unlock` refuse a
+  sealed one outright. House containers are ordinary room containers, so `look in`,
+  `put`, `get` work unchanged; for them `look` also accepts `in`, `into`,
+  `inside` and `my`, `open` (an alias of `unlock`) on an unlocked container
+  in a unit room shows its contents, and `remove X from Y` is a `get` when Y
+  names a container in the room the player can see (anywhere). A new command
+  that reads or moves container contents must honour the container lock. See
+  `internal/housing/context.md`.
 - **Target resolution** uses the existing fuzzy matchers, which already handle
   multi-word input. Reach for `internal/parser` only when a command must
   *split* input into multiple slots (item vs. container, mob vs. player).
@@ -645,3 +695,24 @@ Read that with the ordering rule above: running before the dispatch is
 necessary and not sufficient. A path below the pull still has to ask a
 storage-aware question, because all-or-nothing legitimately leaves a
 shortfall in place.
+
+## Fallback handlers
+
+`AddFallbackHandler(func(cmd, rest, user, room) bool)`: a module's hook for
+words it recognises only in some places. `TryCommand` consults them after
+registered commands, emotes and spells miss, before the `go` attempt, and
+not for a dead or input-blocked player. `modules/rifts` uses one for lens
+places (`1c`) at a rift's lens table.
+
+## Carcass commands (wilderness trades)
+
+**carcass.go**: `Skin`, `Butcher` and `Harvest` (registered as `skin`,
+`butcher`, `harvest`; not in combat). They validate the corpse (mob, loot
+rights, a harvest table), the knife and sight, then start the Salvaging
+activity for `actions.ResolveHarvestJob`. `harvest <corpse>` lists what is
+left; `harvest <part> from <corpse>` takes one part. `salvage <corpse>`
+redirects to them when the carcass has a harvest table. `craft` reports a
+missing recipe tool, and the list shows it.
+
+**chop.go**: `Chop` (`chop`, alias `fell`; needs an axe, sight, a stand with
+trees left) and `Survey` (`survey`, `survey trees`).

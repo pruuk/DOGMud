@@ -39,6 +39,12 @@ back room until it cools, and only then goes on the shelf. A
 back room holds only so much: a shop with a full one turns away
 hot goods until some of what it holds has cooled.
 
+Goods lifted from a merchant's chest, marked <ansi fg="item-stolen">s</ansi> in your pack,
+follow the same rules: no honest merchant in that town will buy
+them for three days, a merchant anywhere else will, and a fence
+will buy them anywhere, at any time. If you carry clean copies of
+the same thing, a sale takes the clean ones first.
+
 Find out more about referring to items by name by typing
 <ansi fg="command">help item-names</ansi>.
 

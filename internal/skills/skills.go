@@ -43,6 +43,7 @@ const (
 	Jewelcrafting SkillTag = `jewelcrafting` // Rings, pendants, gemwork
 	Enchanting    SkillTag = `enchanting`    // Imbuing items with magic (31.6)
 	Salvage       SkillTag = `salvage`       // Breaking down items for materials
+	Woodwork      SkillTag = `woodwork`      // Woodworking: lumber, bows and arrows, shields, furniture
 	Manifestation SkillTag = `manifestation` // Companion summoning, charming, necromancy
 )
 
@@ -66,6 +67,7 @@ var skillBlurbs = map[SkillTag]string{
 	Jewelcrafting: "Rings, pendants, and gemwork.",
 	Enchanting:    "Imbuing items with magic.",
 	Salvage:       "Breaking items down into materials.",
+	Woodwork:      "Woodworking: lumber, bows and arrows, shields and furniture.",
 	Manifestation: "Summoning companions, charming, and necromancy.",
 }
 
@@ -128,6 +130,13 @@ var (
 		"scavenger": {
 			Search,
 			Salvage,
+		},
+		"woodworker": {
+			Woodwork,
+		},
+		"bowyer": {
+			Woodwork,
+			RangedCombat,
 		},
 	}
 )
@@ -339,6 +348,7 @@ var SkillPrimaryStats = map[string]string{
 	"jewelcrafting":  "dexterity",
 	"enchanting":     "perception",
 	"salvage":        "perception",
+	"woodwork":       "dexterity",
 	"manifestation":  "charisma",
 }
 
@@ -434,6 +444,9 @@ var SkillProgressionMultipliers = map[SkillTag]float64{
 	Cooking:       1.56,
 	Jewelcrafting: 1.56,
 	Enchanting:    1.56,
+	// Woodwork is a craft like the others and takes the same anchor until
+	// play gives it its own rate.
+	Woodwork: 1.56,
 }
 
 // GetSkillRankDescription converts a numeric skill level to a qualitative
@@ -495,6 +508,7 @@ func init() {
 		WeaponCombat, UnarmedCombat, RangedCombat, Spellcasting, Rhetoric,
 		Skullduggery, Search, Bartering,
 		Blacksmithing, Alchemy, Tailoring, Cooking, Jewelcrafting, Enchanting, Salvage,
+		Woodwork,
 		Manifestation,
 	} {
 		if _, ok := skillNameSet[sk]; !ok {

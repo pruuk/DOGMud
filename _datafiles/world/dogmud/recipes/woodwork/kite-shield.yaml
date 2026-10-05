@@ -1,0 +1,19 @@
+id: kite-shield
+name: "Kite Shield"
+aliases: [kite]
+skill: woodwork
+skill_minimum: 20
+station: "woodworking_bench"
+time_rounds: 6
+ingredients:
+  - item_tag: hardwood-board
+    quantity: 3
+  - item_tag: leather-strip
+    quantity: 2
+  - item_tag: glue
+    quantity: 1
+output:
+  item_id: 20113
+  quantity: 1
+success_actor: "You glue the boards into a tall kite shape and face it with leather. A kite shield!"
+failure_actor: "The boards warp as the glue cures. The shield is ruined."

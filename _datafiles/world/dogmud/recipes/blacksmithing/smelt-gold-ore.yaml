@@ -1,0 +1,17 @@
+id: smelt-gold-ore
+name: "Gold Ingot"
+aliases: [smeltgold]
+skill: blacksmithing
+skill_minimum: 22
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: gold-ore
+    quantity: 2
+  - item_tag: coal-dust
+    quantity: 1
+output:
+  item_id: 40268
+  quantity: 1
+success_actor: "You melt the gold from the quartz and pour a small, heavy ingot."
+failure_actor: "The gold runs into the slag and is lost."

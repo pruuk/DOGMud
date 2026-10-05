@@ -1,0 +1,23 @@
+itemid: 10074
+name: Miner's Pick
+vendor_categories:
+- blacksmithing
+namesimple: pick
+description: >
+  A proper miner's pick: an iron head drawn to a point at one end and a
+  chisel at the other, on a straight ash haft.
+type: weapon
+hands: 1
+subtype: piercing
+weight: 3.2
+speedmultiplier: 0.85
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.5
+parryrating: 3
+value: 18
+rarity_tier: 40
+tool:
+  type: pick
+  tier: 2

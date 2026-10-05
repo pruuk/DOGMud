@@ -1,0 +1,44 @@
+id: a-the-meeting-narrows
+pool: A
+source: authored
+title: The Meeting Narrows
+description: >-
+  Two passages meet here and pinch together into one, a narrows so tight
+  that two walkers could only pass by turning to face each other. Many did.
+  Their worn channels come in from both sides and, at the narrowest point,
+  curl around one another in a tight swirl, two sets of three grooves
+  wheeling about a single centre like the marks of a slow dance. On either
+  wall, at the height of a tall head, the crystal is rubbed to a high gloss
+  in two matching patches that face each other across the gap. The light is
+  stronger here than anywhere nearby, as if a little of it was left behind
+  by everyone who stopped. Stand at the centre and something brushes past
+  you, warm, going the other way.
+nouns:
+  swirl: >-
+    At the pinch, the two sets of channels wind around each other in a
+    tight spiral before parting again. It is not the wear of a struggle.
+    It is too even, too graceful. Each passing turned the same way, a half
+    circle face to face, a moment's pause in the middle, and then on.
+  patches: >-
+    Two polished patches on opposite walls, worn by something that leaned
+    in close. Between them the gap is barely a stride. Stand between the
+    patches and both feel faintly warm at once, the way the air warms
+    between two people who are speaking quietly.
+  light: >-
+    The glow is brighter here, a soft pale haze gathered in the narrows
+    like mist in a hollow. It does not come from the walls. It hangs in
+    the air and drifts, and when you pass your hand through it, it parts
+    and closes slowly behind, unhurried, the way it might around one of
+    its own.
+idlemessages:
+  - "A faint warmth brushes past you in the narrows, and the pale haze stirs."
+  - "From one of the passages comes a soft sliding step, and then nothing."
+doors:
+  - exit: arch
+    description: >-
+      One way out of the narrows passes under a low arch, its sides
+      polished where many shoulders brushed through.
+  - exit: tunnel
+    description: >-
+      The other passage leaves as a round tunnel, the channels in its
+      floor running deep and straight into the dark.

@@ -1,0 +1,16 @@
+id: cut-leather
+name: Leather Strips
+aliases: [cut]
+skill: tailoring
+skill_minimum: 0
+station: ""
+tool: knife
+time_rounds: 2
+ingredients:
+  - item_tag: leather-hide
+    quantity: 1
+output:
+  item_id: 40002
+  quantity: 4
+success_actor: "You cut the hide into even strips. Leather strips!"
+failure_actor: "Your knife wanders and the strips come out ragged and useless."

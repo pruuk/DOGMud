@@ -1,0 +1,17 @@
+itemid: 69
+name: Burrow Strongbox Deed
+namesimple: strongbox deed
+not_salable: true
+description: >
+  A scrap of sacking stamped with a padlock and the word MINE. It gets a
+  container into your Burrows lodging that opens for you and nobody else, not
+  your guests and not their pets. To use it, stand in the hide-out where it
+  should go and type use strongbox deed. You will be asked for one word to call
+  it, like strongbox, lockbox or stash. You can also write the word straight
+  after, as in use strongbox deed stash. Then look in stash, put things in
+  stash and get them from stash. What you keep in it stays there.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

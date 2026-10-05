@@ -565,6 +565,155 @@ type Balance struct {
 	CraftFloor   ConfigFloat `yaml:"CraftFloor"`   // Mercy band for craft contests; reproduces the 5/95 clamp (default 0.05)
 	SalvageFloor ConfigFloat `yaml:"SalvageFloor"` // Mercy band for salvage contests; reproduces the 15/85 clamp (default 0.15)
 
+	// ── GATHERING (wilderness trades) ─────────────────────────────────────────
+	// Skinning, butchering, chopping and the other gathering jobs score
+	//   avg(two job stats) * toolMult + skill * GatherSkillWeight
+	// against GatherBaseDifficulty plus the target's own tier. The skill weight
+	// is deliberately far below SkillWeight (5.0): gathering is meant to be
+	// driven by the body and the tool, with skill a modest edge. At 1.5, thirty
+	// ranks are worth about what a better tool is worth.
+	GatherSkillWeight    ConfigFloat `yaml:"GatherSkillWeight"`    // Score per skill rank on a gathering roll (default 1.5)
+	GatherBaseDifficulty ConfigInt   `yaml:"GatherBaseDifficulty"` // Difficulty anchor before the target's tier; the human stat baseline (default 100)
+	// Each grade above standard needs this many roll standard deviations of
+	// margin: standard on any win, fine at 1x, superb at 2x, pristine at 3x.
+	GatherGradeStepSigma ConfigFloat `yaml:"GatherGradeStepSigma"` // Margin per grade step, in roll standard deviations (default 1.0)
+
+	// Tool tiers multiply the gatherer's stat term. Crude is below 1.0 on
+	// purpose: an improvised blade or a stone axe is a handicap, not neutral.
+	ToolMultCrude      ConfigFloat `yaml:"ToolMultCrude"`      // default 0.8
+	ToolMultIron       ConfigFloat `yaml:"ToolMultIron"`       // default 1.0
+	ToolMultSteel      ConfigFloat `yaml:"ToolMultSteel"`      // default 1.15
+	ToolMultMasterwork ConfigFloat `yaml:"ToolMultMasterwork"` // default 1.3
+
+	// Sell-value multiplier by material grade (items.Quality). An ungraded
+	// item (every item that predates grading) always sells at 1.0.
+	QualityValueCrude    ConfigFloat `yaml:"QualityValueCrude"`    // default 0.4
+	QualityValueStandard ConfigFloat `yaml:"QualityValueStandard"` // default 1.0
+	QualityValueFine     ConfigFloat `yaml:"QualityValueFine"`     // default 1.6
+	QualityValueSuperb   ConfigFloat `yaml:"QualityValueSuperb"`   // default 2.5
+	QualityValuePristine ConfigFloat `yaml:"QualityValuePristine"` // default 4.0
+
+	// Carcass work (skin, butcher, harvest). Difficulty for a carcass is
+	// GatherBaseDifficulty + mob statpool * GatherStatPoolDifficulty + a size
+	// term. Statpool is the mob template's power budget (a steppe wolf is 70),
+	// the closest thing a mob has to a level.
+	GatherStatPoolDifficulty ConfigFloat `yaml:"GatherStatPoolDifficulty"` // per point of mob statpool (default 0.2)
+	// GatherCarcassEase is subtracted from every carcass difficulty, so a
+	// baseline gatherer (stats 100, iron knife) wins about half the time on a
+	// steppe wolf (statpool 70, medium) and nearly always on a hare.
+	GatherCarcassEase          ConfigFloat `yaml:"GatherCarcassEase"`          // default 20
+	GatherSizeDifficultyMedium ConfigFloat `yaml:"GatherSizeDifficultyMedium"` // medium body (default 5); small adds 0
+	GatherSizeDifficultyLarge  ConfigFloat `yaml:"GatherSizeDifficultyLarge"`  // large body (default 15)
+	GatherTargetedDifficulty   ConfigFloat `yaml:"GatherTargetedDifficulty"`   // extra difficulty for `harvest <corpse> <part>`, which also lifts that part one grade (default 15)
+	GatherJobRoundsSmall       ConfigInt   `yaml:"GatherJobRoundsSmall"`       // rounds to skin or butcher a small body before tool speed (default 2)
+	GatherJobRoundsMedium      ConfigInt   `yaml:"GatherJobRoundsMedium"`      // default 4
+	GatherJobRoundsLarge       ConfigInt   `yaml:"GatherJobRoundsLarge"`       // default 6
+	// A rare part (fang, gland, organ) is noticed with chance
+	// entry.chance (or GatherRareBaseChance) * Perception/100, clamped 0.02..0.9.
+	GatherRareBaseChance ConfigFloat `yaml:"GatherRareBaseChance"` // default 0.15
+	// Every GatherStatPerBonusUnit points of the job's first stat above 100
+	// adds one unit to the first entry of the section (more meat for the strong).
+	GatherStatPerBonusUnit ConfigInt `yaml:"GatherStatPerBonusUnit"` // default 50
+	// A carcass this far through its decay gives one grade worse; past the
+	// second mark its meat and organs are gone.
+	CorpseStaleGradeAt ConfigFloat `yaml:"CorpseStaleGradeAt"` // default 0.5
+	CorpseMeatLostAt   ConfigFloat `yaml:"CorpseMeatLostAt"`   // default 0.75
+
+	// Shops: an item the shop does not authored-stock is priced flat
+	// (value * BuyRatio) minus this fraction per unit already on hand, floored
+	// at ShopPriceFloor. Raw goods arrive in bulk; the gentle slope (after
+	// CoffeeMud's raw-resource devaluation) keeps a hunter's tenth pelt worth
+	// selling and stops the second from paying four times the first.
+	ShopWalkInDevaluePerUnit ConfigFloat `yaml:"ShopWalkInDevaluePerUnit"` // default 0.02
+	// A shop scraps what it will not shelve (forged tools, broken and badly
+	// worn gear) but remembers recent scrap buys so their price slides per
+	// unit too; one remembered unit wears off per this many rounds.
+	ShopScrapDecayRounds ConfigInt `yaml:"ShopScrapDecayRounds"` // default 900
+
+	// Lumberjacking (wilderness trades, phase 4). A chop scores
+	// avg(strength, vitality) * axeMult against GatherBaseDifficulty -
+	// TimberEase + (species tier - 1) * TimberTierDifficulty. Each forest room
+	// holds a stand of TimberStandMin..TimberStandMax fellable trees that
+	// regrows one tree every TimberRegrowRounds (900 = one game day at the
+	// shipped Timing.RoundsPerDay).
+	TimberEase           ConfigFloat `yaml:"TimberEase"`           // default 10
+	TimberTierDifficulty ConfigFloat `yaml:"TimberTierDifficulty"` // default 15
+	TimberStandMin       ConfigInt   `yaml:"TimberStandMin"`       // default 6
+	TimberStandMax       ConfigInt   `yaml:"TimberStandMax"`       // default 10
+	TimberRegrowRounds   ConfigInt   `yaml:"TimberRegrowRounds"`   // default 900
+	TimberChopRoundsBase ConfigInt   `yaml:"TimberChopRoundsBase"` // rounds for a tier 1 tree before axe speed; +1 per tier (default 4)
+	TimberMaxLogs        ConfigInt   `yaml:"TimberMaxLogs"`        // most logs one felling yields (default 4)
+
+	// Tool wear (wilderness trades review). Every finished job a real tool
+	// does adds one point of wear; at its durability the tool breaks. A
+	// tool's durability is ToolDurability<Tier> (unless the item authors its
+	// own), scaled by the instance grade (crude 0.75 .. pristine 2.0).
+	// Improvised weapons never wear here.
+	ToolDurabilityCrude      ConfigInt `yaml:"ToolDurabilityCrude"`      // default 30
+	ToolDurabilityIron       ConfigInt `yaml:"ToolDurabilityIron"`       // default 80
+	ToolDurabilitySteel      ConfigInt `yaml:"ToolDurabilitySteel"`      // default 160
+	ToolDurabilityMasterwork ConfigInt `yaml:"ToolDurabilityMasterwork"` // default 320
+
+	// Rare finds by tool tier: the chance of a rare part (and of a rare
+	// forage find) is multiplied by the tool's RareToolMult<Tier>. Separately,
+	// a harvest entry or a timber species may set a minimum tool tier.
+	RareToolMultCrude      ConfigFloat `yaml:"RareToolMultCrude"`      // default 0.5
+	RareToolMultIron       ConfigFloat `yaml:"RareToolMultIron"`       // default 1.0
+	RareToolMultSteel      ConfigFloat `yaml:"RareToolMultSteel"`      // default 1.5
+	RareToolMultMasterwork ConfigFloat `yaml:"RareToolMultMasterwork"` // default 2.0
+
+	// Gear grades (wilderness trades): a graded weapon, armour piece or
+	// shield works better or worse than its template. Each knob is a
+	// multiplier on the template value for that grade; standard is 1.0 and
+	// has no knob. Damage scales the weapon damage multiplier, Speed its
+	// speed multiplier, Weight any graded gear's weight, Armor the physical,
+	// magical and conviction mitigation and a shield's block rating.
+	GradeDamageCrude    ConfigFloat `yaml:"GradeDamageCrude"`    // default 0.85
+	GradeDamageFine     ConfigFloat `yaml:"GradeDamageFine"`     // default 1.08
+	GradeDamageSuperb   ConfigFloat `yaml:"GradeDamageSuperb"`   // default 1.16
+	GradeDamagePristine ConfigFloat `yaml:"GradeDamagePristine"` // default 1.25
+	GradeSpeedCrude     ConfigFloat `yaml:"GradeSpeedCrude"`     // default 0.85
+	GradeSpeedFine      ConfigFloat `yaml:"GradeSpeedFine"`      // default 1.05
+	GradeSpeedSuperb    ConfigFloat `yaml:"GradeSpeedSuperb"`    // default 1.10
+	GradeSpeedPristine  ConfigFloat `yaml:"GradeSpeedPristine"`  // default 1.15
+	GradeWeightCrude    ConfigFloat `yaml:"GradeWeightCrude"`    // default 1.05
+	GradeWeightFine     ConfigFloat `yaml:"GradeWeightFine"`     // default 0.97
+	GradeWeightSuperb   ConfigFloat `yaml:"GradeWeightSuperb"`   // default 0.94
+	GradeWeightPristine ConfigFloat `yaml:"GradeWeightPristine"` // default 0.90
+	GradeArmorCrude     ConfigFloat `yaml:"GradeArmorCrude"`     // default 0.85
+	GradeArmorFine      ConfigFloat `yaml:"GradeArmorFine"`      // default 1.08
+	GradeArmorSuperb    ConfigFloat `yaml:"GradeArmorSuperb"`    // default 1.16
+	GradeArmorPristine  ConfigFloat `yaml:"GradeArmorPristine"`  // default 1.25
+
+	// Mining (wilderness trades). A mining job scores avg(strength,
+	// vitality) * pickMult against GatherBaseDifficulty - MiningEase + (ore
+	// tier - 1) * MiningTierDifficulty. Each mineable room holds a vein of
+	// MiningVeinMin..MiningVeinMax loads that refills one load per
+	// MiningRegrowRounds. A success also turns up a gem with chance
+	// MiningGemChance * Perception/100 * the pick's RareToolMult.
+	MiningEase           ConfigFloat `yaml:"MiningEase"`           // default 5
+	MiningTierDifficulty ConfigFloat `yaml:"MiningTierDifficulty"` // default 15
+	MiningVeinMin        ConfigInt   `yaml:"MiningVeinMin"`        // default 4
+	MiningVeinMax        ConfigInt   `yaml:"MiningVeinMax"`        // default 8
+	MiningRegrowRounds   ConfigInt   `yaml:"MiningRegrowRounds"`   // default 1800 (two game days)
+	MiningRoundsBase     ConfigInt   `yaml:"MiningRoundsBase"`     // rounds for a tier 1 ore before pick speed; +1 per tier (default 4)
+	MiningMaxOre         ConfigInt   `yaml:"MiningMaxOre"`         // most ore one job yields (default 3)
+	MiningGemChance      ConfigFloat `yaml:"MiningGemChance"`      // default 0.04
+
+	// Gear wear and repair (wilderness trades). Weapons wear on critical hits
+	// they deal, armour on critical hits taken, bows on shots fired; worn gear
+	// works a little worse and broken gear badly until repaired.
+	GearDurabilityWeapon    ConfigInt   `yaml:"GearDurabilityWeapon"`    // wear a weapon takes before it breaks (default 60)
+	GearDurabilityArmor     ConfigInt   `yaml:"GearDurabilityArmor"`     // wear an armour piece or shield takes (default 30)
+	GearCritWearChance      ConfigFloat `yaml:"GearCritWearChance"`      // chance a critical hit dealt wears the striking weapon (default 0.5)
+	GearArmorCritWearChance ConfigFloat `yaml:"GearArmorCritWearChance"` // chance a critical hit taken wears one armour piece (default 0.5)
+	BowShotWearChance       ConfigFloat `yaml:"BowShotWearChance"`       // chance each arrow fired wears the bow (default 0.04)
+	GearWornMult            ConfigFloat `yaml:"GearWornMult"`            // damage or protection of worn gear, past 60% wear (default 0.95)
+	GearBadlyWornMult       ConfigFloat `yaml:"GearBadlyWornMult"`       // past 85% wear (default 0.85)
+	GearBrokenMult          ConfigFloat `yaml:"GearBrokenMult"`          // broken gear (default 0.25)
+	RepairCostRatio         ConfigFloat `yaml:"RepairCostRatio"`         // an NPC repair costs value x wear fraction x this (default 0.5)
+	WornSellPenalty         ConfigFloat `yaml:"WornSellPenalty"`         // a shop pays value x (1 - wear fraction x this) for worn gear (default 0.6)
+
 	// Material tier band. items.MaterialTierMultiplier spreads the five authored
 	// buckets evenly between these, so tier 1 sits at Min and tier 5 at Max:
 	// 0.95 / 0.975 / 1.0 / 1.025 / 1.05.
@@ -1037,6 +1186,32 @@ type Balance struct {
 	// persistently full chest or unreachable chest room).
 	ForagerStoringWatchdogRounds ConfigInt `yaml:"ForagerStoringWatchdogRounds"`
 
+	// ── CITY SCAVENGERS AND FLOOR DECAY ──────────────────────────────────────
+	// The loot goblin's replacement (internal/scavenger, rooms/floor_decay.go).
+
+	// ScavengerStepMinSeconds and ScavengerStepMaxSeconds bound how long a
+	// city scavenger lingers in each room before its next step toward its
+	// target: a fresh uniform pick in [min, max] real seconds per room.
+	// Defaults 30 and 150.
+	ScavengerStepMinSeconds ConfigInt `yaml:"ScavengerStepMinSeconds"`
+	ScavengerStepMaxSeconds ConfigInt `yaml:"ScavengerStepMaxSeconds"`
+
+	// FloorDecayBaseChancePct is the percent chance that a lone litter item
+	// on a floor outside the scavengers' rounds is removed at each real-world
+	// day boundary. Default 10.
+	FloorDecayBaseChancePct ConfigInt `yaml:"FloorDecayBaseChancePct"`
+
+	// FloorDecayPerExtraItemPct is added to that chance for every other
+	// litter item in the same room, so 5 items roll at 10 + 4*5 = 30% each.
+	// The total is held to 100. Default 5.
+	FloorDecayPerExtraItemPct ConfigInt `yaml:"FloorDecayPerExtraItemPct"`
+
+	// FloorDecayCheckRounds is how often (in rounds) loaded rooms are checked
+	// for a day's decay they still owe. The decay itself happens once per day
+	// per room; this only sets how soon after midnight, or after a player
+	// leaves a room, it is paid. Default 15 (about a minute).
+	FloorDecayCheckRounds ConfigInt `yaml:"FloorDecayCheckRounds"`
+
 	// ── ECONOMY HEALTH DASHBOARD ─────────────────────────────────────────────
 	EconomySnapshotIntervalHours ConfigInt   `yaml:"EconomySnapshotIntervalHours"` // Wall-clock cadence (default 1)
 	EconomySnapshotRetentionDays ConfigInt   `yaml:"EconomySnapshotRetentionDays"` // Auto-snapshot retention (default 30)
@@ -1310,6 +1485,7 @@ func (b *Balance) Validate() {
 	b.validateSpells()
 	b.validateDiscovery()
 	b.validateShops()
+	b.validateGathering()
 	b.validateBaubles()
 	b.validateMisc()
 	b.validateLighting()

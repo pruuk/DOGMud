@@ -60,9 +60,11 @@ help:
       - bank
       - buy
       - hire
+      - house
       - list
       - offer
       - sell
+      - visit
     quests:
       - ask
       - quests
@@ -114,6 +116,14 @@ help:
       - disenchant
       - forage
       - salvage
+      - skin
+      - butcher
+      - harvest
+      - chop
+      - survey
+      - mine
+      - prospect
+      - repair
     information:
       - biome
       - exits
@@ -187,6 +197,7 @@ help:
       - cooking
       - jewelcrafting
       - enchanting
+      - woodwork
       - weapon-combat
       - unarmed-combat
       - ranged-combat
@@ -256,14 +267,23 @@ help-aliases:
   stamina:          [endurance, energy]
   bank:             [deposit, withdraw]
   mutations:        [mutation, chrysalis, mutate]
-  craft:            [crafting, recipes, recipe, make, create]
+  craft:            [crafting, recipes, recipe, make, create, grade, grades, quality]
   blacksmithing:    [blacksmith, smith, smithing, forge, metalwork]
   alchemy:          [alchemist, potion, potions, brewing, brew, herbalism]
   toxicity:         [toxic, poison, poisoned, tolerance]
-  foraging:         [forage, gather, gathering, harvest, harvesting]
+  foraging:         [forage, gather, gathering]
+  harvest:          [harvesting, carcass, corpse parts, parts]
+  skin:             [skinning, pelt, pelts, hides, fur, furs]
+  butcher:          [butchering, butchery, meat, bone, carve, carving]
+  spoilage:         [spoil, spoiled, rot, rotten, freshness, fresh]
+  lumberjacking:    [lumberjack, woodcutting, woodcutter, timber, logging, lumber, trees, wood]
+  mining:           [miner, ore, ores, smelting, smelt, metals, metal, gems, picks]
+  repair:           [mend, mending, durability, broken, worn]
   tailoring:        [tailor, sewing, weaving, clothwork]
   cooking:          [cook, baking, food, meals]
   jewelcrafting:    [jeweler, jewelry, gemwork, gemcutting, jewel]
+  woodwork:         [woodworker, woodworking, carpentry, carpenter, bowyer, fletching, joinery, woods]
+  tools:            [tool, tool quality, tool tier, skinning knife, felling axe]
   manifestation:    [manifest, summon, conjure, necromancy, raise]
   charm:            [mesmerize, dominate, control, bewitch, enthral]
   assess:           [examine corpse, study corpse, evaluate corpse, inspect corpse]
@@ -352,6 +372,8 @@ command-aliases:
   'rank back':        ['backrank']
   'rank front':       ['frontrank']
   defuse:             ['disarm']
+  butcher:            ['carve', 'dress']
+  chop:               ['fell']
   suggest:            ['idea']
   'help about':       ['about']
   'set screenreader': ['screenreader']

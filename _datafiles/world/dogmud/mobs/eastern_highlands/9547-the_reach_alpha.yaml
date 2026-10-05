@@ -36,9 +36,6 @@ combatcommands:
   - ''
 activitylevel: 30
 character:
-  items:
-    - itemid: 40163
-      dropchance: 70
   name: The Reach-Alpha
   description: |
     A bear -- or the scale of one -- that holds the highest
@@ -62,3 +59,8 @@ character:
     perception:
       base: 78
 itemdropchance: 70
+# Wilderness trades: the thick predator-pelt comes off with a knife now
+# (skin), not as loot. The species table supplies the meat and bone.
+harvest:
+  skin:
+    - {item: cascade-hide, qty: 1}

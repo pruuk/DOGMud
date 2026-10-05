@@ -1,0 +1,38 @@
+mobid: 9809
+zone: Summons
+archetype: fighting
+behavior_archetype: companion_brawler
+statpool: 90
+itemdropchance: 0
+hostile: false
+maxwander: 0
+groups:
+  - humanoid
+activitylevel: 10
+aiprofile: grappler
+specialmovechance: 40
+submission_policy: mercy
+surrender_policy: never
+character:
+  name: Hal Grimsby
+  description: |
+    A big, barrel-chested man in his fifties with a shaved head, a nose
+    that has been broken more times than it has been straight, and a
+    cook's apron tied over a chest crossed with old pit-fighter's scars.
+    His hands are enormous and surprisingly gentle with a knife. He smells
+    of woodsmoke and onions, and laughs from somewhere down near his
+    boots.
+  speciesid: 1
+  level: 1
+  skills:
+    cooking: 12
+    tailoring: 5
+  stats:
+    strength:
+      base: 115
+    vitality:
+      base: 120
+    dexterity:
+      base: 100
+    charisma:
+      base: 100

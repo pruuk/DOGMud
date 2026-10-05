@@ -5,7 +5,10 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -124,4 +127,30 @@ func TestSelect_UnknownKindFailsClosed(t *testing.T) {
 	_, ok := Select(Criteria{Kind: Kind(99)}, Scope{Room: room})
 
 	assert.False(t, ok)
+}
+
+// An undetected sneaker, or a player already down, is no one to pick: the
+// random player is only ever someone the picker could know is there.
+func TestSelect_RandomPlayerSkipsTheHiddenAndTheDown(t *testing.T) {
+	room := &rooms.Room{RoomId: 1}
+	hidden := users.NewTestUser(5, `hid`, `Hid`, 0)
+	down := users.NewTestUser(6, `down`, `Down`, 0)
+	seen := users.NewTestUser(7, `seen`, `Seen`, 0)
+	hidden.Character.Health, down.Character.Health, seen.Character.Health = 10, 0, 10
+	reason := state.TransitionReason{Trigger: `select_test`}
+	require.NoError(t, hidden.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+	hidden.Character.Awareness.ResolveConcealment(true, reason)
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{5: hidden, 6: down, 7: seen}))
+	room.AddPlayer(5)
+	room.AddPlayer(6)
+
+	_, ok := Select(Criteria{Kind: RandomPlayer}, Scope{Room: room})
+	assert.False(t, ok, `nobody it could know of`)
+
+	room.AddPlayer(7)
+	for i := 0; i < 20; i++ {
+		ref, ok := Select(Criteria{Kind: RandomPlayer}, Scope{Room: room})
+		require.True(t, ok)
+		assert.Equal(t, 7, ref.UserId)
+	}
 }

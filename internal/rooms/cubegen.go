@@ -70,7 +70,7 @@ func GenerateOasisCube(
 	// 1. Reserve a chunk of ephemeral IDs.
 	chunkId := -1
 	for i := 0; i < ephemeralChunksLimit; i++ {
-		if len(ephemeralRoomChunks[i]) == 0 {
+		if chunkFree(i) {
 			chunkId = i
 			break
 		}

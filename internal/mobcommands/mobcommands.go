@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/housing"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -160,6 +161,10 @@ func TryCommand(cmd string, rest string, mobId int) (bool, error) {
 			cmd = alias
 		}
 	}
+
+	// A house strongbox is kept locked; a companion of its owner may open it
+	// for the length of this one command.
+	defer housing.OpenStrongboxesForMob(mobId, mob.Character.RoomId)()
 
 	if cmdInfo, ok := mobCommands[cmd]; ok {
 		if mobDisabled && !cmdInfo.AllowedWhenDowned {

@@ -1,0 +1,37 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">repair</ansi>
+
+  <ansi fg="command">repair</ansi>           list your worn gear and where it can be mended
+  <ansi fg="command">repair <item></ansi>    mend one piece
+
+Weapons, armour, shields and tools wear out with use:
+
+  <ansi fg="yellow">Weapons</ansi>   wear a little when they land a critical hit.
+  <ansi fg="yellow">Bows</ansi>      never strike anything, so they wear a little with each arrow
+            fired instead (crossbows and slings too).
+  <ansi fg="yellow">Armour</ansi>    one piece wears a little when you take a critical hit.
+  <ansi fg="yellow">Tools</ansi>     wear with every job.
+
+Wear is slow. Well-made gear lasts longer: a pristine piece twice as long as
+a standard one. A piece shows <ansi fg="item-quality">(worn)</ansi> and then <ansi fg="item-quality">(badly worn)</ansi>, and works a
+little worse as it goes. When it shows <ansi fg="red">(broken)</ansi> a weapon hits feebly,
+armour barely protects, and a tool cannot be used at all, until it is mended.
+A merchant pays less for worn gear, and buys broken or badly worn gear
+only as scrap.
+
+<ansi fg="yellow">━━━ Who mends what ━━━</ansi>
+
+  <ansi fg="yellow">Yourself</ansi>   If you could craft the piece here, you can mend it, for free:
+             you know a recipe that makes it, your skill is high enough,
+             its workbench is in the room and you carry the recipe's tool.
+  <ansi fg="yellow">Merchants</ansi>  A merchant of the piece's trade mends it for gold, more the
+             worse the wear and the finer the piece:
+               a <ansi fg="yellow">smith</ansi> for metal weapons, armour, shields and tools
+               a <ansi fg="yellow">woodworker</ansi> for bows, staves and wooden shields
+               a <ansi fg="yellow">tailor</ansi> for leather, fur and cloth
+
+Type <ansi fg="command">repair</ansi> with no item to see what needs mending and who here will
+do it.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help tools</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help woodwork</ansi>

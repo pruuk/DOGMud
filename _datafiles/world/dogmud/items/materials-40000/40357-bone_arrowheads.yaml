@@ -1,0 +1,17 @@
+itemid: 40357
+name: Bone Arrowheads
+namesimple: arrowheads
+description: >
+  A handful of small arrowheads ground from bone, sharp and barbed.
+type: object
+subtype: mundane
+component_tag: arrowhead
+weight: 0.1
+value: 6
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+- blacksmithing
+- hunting
+material_tier: 1

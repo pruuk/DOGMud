@@ -1,0 +1,15 @@
+itemid: 79
+name: Burrow Bed Deed
+namesimple: bed deed
+not_salable: true
+description: >
+  A grubby scrap of paper with ONE BED scrawled across it and a lamp-black
+  thumbprint for a seal. It puts one bed in a room of your hide-out in the Burrows. Anyone who sleeps in it, you or
+  anyone you let in, rests twice as fast as on a floor. To use it, stand in the
+  room where the bed should go and type use bed deed, then sleep there. A room
+  takes one bed.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

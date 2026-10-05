@@ -1,0 +1,17 @@
+id: steel-whittling-knife
+name: Steel Whittling Knife
+aliases: [steelwhittler]
+skill: blacksmithing
+skill_minimum: 16
+station: forge
+time_rounds: 3
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 1
+  - item_tag: hardwood-board
+    quantity: 1
+output:
+  item_id: 10066
+  quantity: 1
+success_actor: "You forge a slim steel blade, harden the point and set it in hardwood. A steel whittling knife!"
+failure_actor: "The point snaps in the hardening. The steel is ruined."

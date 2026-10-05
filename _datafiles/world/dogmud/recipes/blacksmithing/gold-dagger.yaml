@@ -1,0 +1,17 @@
+id: gold-dagger
+name: "Gold Dagger"
+aliases: [golddagger]
+skill: blacksmithing
+skill_minimum: 24
+station: forge
+time_rounds: 4
+ingredients:
+  - item_tag: gold-ingot
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10080
+  quantity: 1
+success_actor: "You work the gold into shape. A gold dagger!"
+failure_actor: "The gold tears as you work it. The metal is wasted."

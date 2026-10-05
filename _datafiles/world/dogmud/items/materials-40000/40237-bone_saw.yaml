@@ -1,0 +1,16 @@
+itemid: 40237
+name: Bone Saw
+namesimple: saw
+description: >
+  A short, fine-toothed saw with a stiff iron blade, made for cutting through bone, horn and antler where a cleaver would shatter them.
+type: object
+subtype: mundane
+weight: 0.8
+value: 14
+rarity_tier: 40
+vendor_categories:
+- blacksmithing
+- cooking
+tool:
+  type: bone_saw
+  tier: 2

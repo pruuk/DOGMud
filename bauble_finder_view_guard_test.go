@@ -100,6 +100,9 @@ var beyondReaderCalls = map[string]bool{
 	"SendTextToExits": true, "SendTrio": true, "SendCounterTrio": true,
 	"SendMessage": true, "Command": true, "merchantSay": true,
 	"SendHeard": true, "SendSeen": true,
+	// The AI companion seam: what it is given reaches a model and her
+	// speech, so it must be the model-safe name (Item.ModelName).
+	"RouteBaubleFound": true,
 }
 
 // isSendToRoom matches any SendTo...Room callee.

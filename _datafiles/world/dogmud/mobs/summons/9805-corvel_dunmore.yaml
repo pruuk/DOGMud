@@ -1,0 +1,38 @@
+mobid: 9805
+zone: Summons
+archetype: fighting
+behavior_archetype: companion_guardian
+statpool: 90
+itemdropchance: 0
+hostile: false
+maxwander: 0
+groups:
+  - humanoid
+activitylevel: 10
+aiprofile: defensive
+specialmovechance: 35
+surrender_policy: never
+character:
+  name: Corvel Dunmore
+  description: |
+    A broad, heavy-shouldered man in his forties, built like the quarry
+    walls he used to stand watch under. His beard is going grey at the
+    corners and his knuckles are a map of old breaks. He moves slowly and
+    deliberately, as if he is always taking the weight of something, and
+    when he looks at a room he looks first at where the roof might come
+    down.
+  speciesid: 1
+  level: 1
+  skills:
+    blacksmithing: 5
+    search: 3
+    cooking: 2
+  stats:
+    strength:
+      base: 115
+    vitality:
+      base: 115
+    willpower:
+      base: 100
+    charisma:
+      base: 90

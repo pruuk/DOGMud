@@ -36,7 +36,12 @@ type CombatProposal struct {
 	Target string `json:"target"`  // e-ref of the enemy to go for, or empty
 	FleeAt string `json:"flee_at"` // unchanged, never, badly_hurt, about_to_die
 	Style  string `json:"style"`   // unchanged, melee, ranged
-	Move   string `json:"move"`    // a special move to try next, or none
+	Move   string `json:"move"`    // a special move to try next, none, or unchanged
+	// Spell is the [m] ref of a spell to cast next in the fight, and
+	// SpellAt who it is for: "owner", "self", an [e] ref, or empty (the
+	// enemy she is fighting for a harmful spell, herself otherwise).
+	Spell   string `json:"spell"`
+	SpellAt string `json:"spell_at"`
 }
 
 var (
@@ -49,8 +54,10 @@ var (
 	// fangs or claws and no hands. The engine decides whether one would
 	// land right now; skills decide how well it goes. A profile can point
 	// at any mob template, so the list is deliberately wider than the
-	// shipped humanoid can use.
-	combatMoves = []string{`none`, `taunt`, `bash`, `kick`, `trip`, `grapple`, `hamstring`, `rally`, `warcry`}
+	// shipped humanoid can use. The first two are not moves: unchanged
+	// keeps whatever move the plan already holds (a plan that says nothing
+	// about it is not a change of mind), none drops it.
+	combatMoves = []string{`unchanged`, `none`, `taunt`, `bash`, `kick`, `trip`, `grapple`, `hamstring`, `rally`, `warcry`}
 )
 
 // ActionProposal is at most one thing the companion does besides talking.
@@ -139,7 +146,7 @@ var actionVerbs = []string{
 	`equip`, `remove`, `eat`, `drink`, `forage`, `search`,
 	`go_to`, `explore`, `find_place`, `put`, `sayto`,
 	`browse`, `buy`, `sell`, `loot`, `take_from`, `craft`, `attack`,
-	`cast`, `rest`, `stand`,
+	`cast`, `rest`, `stand`, `sneak`, `salvage`,
 }
 
 var autonomyLevels = []string{`unchanged`, autonomyClose, autonomyNormal, autonomyFree}
@@ -206,12 +213,14 @@ func decisionSchema() map[string]any {
 				`level`:  map[string]any{`type`: `string`, `enum`: []string{`medium`, `long`}},
 				`ref`:    str(`For done or drop: the goal's [ref], e.g. g4. Otherwise empty.`),
 			}),
-			`combat`: object([]string{`stance`, `target`, `flee_at`, `style`, `move`}, map[string]any{
-				`stance`:  map[string]any{`type`: `string`, `enum`: combatStances},
-				`target`:  str(`During a fight: the [e] ref of the enemy to go for. Otherwise empty.`),
-				`flee_at`: map[string]any{`type`: `string`, `enum`: combatFleeAt},
-				`style`:   map[string]any{`type`: `string`, `enum`: combatStyles},
-				`move`:    map[string]any{`type`: `string`, `enum`: combatMoves},
+			`combat`: object([]string{`stance`, `target`, `flee_at`, `style`, `move`, `spell`, `spell_at`}, map[string]any{
+				`stance`:   map[string]any{`type`: `string`, `enum`: combatStances},
+				`target`:   str(`During a fight: the [e] ref of the enemy to go for. Otherwise empty.`),
+				`flee_at`:  map[string]any{`type`: `string`, `enum`: combatFleeAt},
+				`style`:    map[string]any{`type`: `string`, `enum`: combatStyles},
+				`move`:     map[string]any{`type`: `string`, `enum`: combatMoves},
+				`spell`:    str(`During a fight: the [m] ref of a spell you know to cast next. Otherwise empty.`),
+				`spell_at`: str(`Who that spell is for: "owner" for your companion, "self", or the [e] ref of an enemy. Empty means the enemy you are fighting for a spell that harms, and yourself for any other.`),
 			}),
 			`leave`: map[string]any{
 				`type`:        `boolean`,
@@ -414,7 +423,12 @@ func sanitizeDecision(d Decision, companionName string, prevMood string) Decisio
 	out.Combat.Target = strings.ToLower(strings.TrimSpace(d.Combat.Target))
 	out.Combat.Move = strings.ToLower(strings.TrimSpace(d.Combat.Move))
 	if !inSet(combatMoves, out.Combat.Move) {
-		out.Combat.Move = `none`
+		out.Combat.Move = `unchanged`
+	}
+	out.Combat.Spell = strings.ToLower(strings.TrimSpace(d.Combat.Spell))
+	out.Combat.SpellAt = strings.ToLower(strings.TrimSpace(d.Combat.SpellAt))
+	if out.Combat.Spell == `` {
+		out.Combat.SpellAt = ``
 	}
 
 	// Autonomy.

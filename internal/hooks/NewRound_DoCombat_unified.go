@@ -580,6 +580,12 @@ func dispatchCritAndMessaging(atk, def actions.Actor, res *combat.AttackResult) 
 	// Crit effects (riposte / sweep / bash) compute side-specific text.
 	critResult := applyCritEffects(atkChar, defChar, *res, atkRoom)
 
+	// Gear wear (wilderness trades): a critical hit this round may wear the
+	// attacker's weapon and one piece of the defender's armour.
+	if roundLandedCrit(res) {
+		gearWearOnMeleeCrit(atkChar, defChar, res)
+	}
+
 	// Crit message routing. Through the seam, so a reader who cannot see the
 	// other combatant reads "something" and the room line is sight-gated.
 	sendCritEffectTrio(atk, def, atkRoom, critResult)

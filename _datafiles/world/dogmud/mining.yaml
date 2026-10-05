@@ -1,0 +1,59 @@
+# Mining (wilderness trades; code: internal/mining, internal/actions/mine.go).
+#
+# ores: every vein a room can hold. item is what one load gives. tier 1..4
+# makes it harder to work (and its ore worth more); tiers 3 and 4 take a keen
+# eye (Perception) to name when prospecting. min_pick is the poorest pick
+# that can work it: 1 crude, 2 iron, 3 steel, 4 masterwork. note is what
+# `prospect` says the ore is good for.
+#
+# gems: what a successful mining job may also turn up (a small chance, raised
+# by Perception and a better pick). min_pick: the poorest pick that takes the
+# gem out whole.
+#
+# A room is mineable when its biome is listed under biomes and its zone is
+# not under exclude_zones, or when it has its own pool under rooms. A zone
+# pool replaces the biome pool in that zone; a room pool replaces both (the
+# deep drifts of the Pothole Coulee mine). Weights are relative. A room's vein
+# is drawn when first prospected or mined and redrawn when it refills after
+# being worked out, leaning toward its neighbours' ore.
+
+ores:
+  - {id: coal, name: coal, item: 40020, tier: 1, min_pick: 1, note: "Soft black seams: coal dust for the forge, the steel-maker and the smelter."}
+  - {id: copper, name: copper, item: 40260, tier: 1, min_pick: 1, note: "Green-stained rock: copper for wire and rings, and with tin, bronze."}
+  - {id: tin, name: tin, item: 40261, tier: 1, min_pick: 1, note: "Dull grey crystals: tin, alloyed with copper into bronze."}
+  - {id: iron, name: iron, item: 40236, tier: 2, min_pick: 1, note: "Rust-red rock: the iron every smith needs."}
+  - {id: lake-iron, name: lake-iron, item: 40059, tier: 3, min_pick: 2, note: "Dark nodules in water-worn rock: lake-iron, prized for spearheads."}
+  - {id: basalt-iron, name: basalt-iron, item: 40069, tier: 3, min_pick: 2, note: "Iron locked in black basalt: a harder edge than plain iron, and the heart of crucible steel."}
+  - {id: silver, name: silver, item: 40262, tier: 3, min_pick: 2, note: "Bright flecks that tarnish at a touch: silver, for jewelers and fine gear."}
+  - {id: gold, name: gold, item: 40263, tier: 4, min_pick: 3, note: "Soft yellow threads in white quartz: gold, rare and worth a fortune."}
+
+gems:
+  - {item: 40024, weight: 6}               # polished stone
+  - {item: 40026, weight: 4}               # gem dust
+  - {item: 40025, weight: 3, min_pick: 2}  # raw gem: an iron pick or better
+  - {item: 40269, weight: 1, min_pick: 3}  # flawless gem: a steel pick or better
+
+biomes:
+  cave:      [{ore: iron, weight: 3}, {ore: coal, weight: 3}, {ore: copper, weight: 2}, {ore: tin, weight: 2}, {ore: silver, weight: 1}]
+  mountains: [{ore: iron, weight: 3}, {ore: copper, weight: 2}, {ore: coal, weight: 2}, {ore: tin, weight: 1}, {ore: silver, weight: 1}]
+  cliffs:    [{ore: copper, weight: 3}, {ore: tin, weight: 3}, {ore: coal, weight: 2}, {ore: iron, weight: 1}]
+
+zones:
+  Pothole Coulee:           [{ore: iron, weight: 4}, {ore: coal, weight: 3}, {ore: basalt-iron, weight: 3}, {ore: copper, weight: 2}, {ore: tin, weight: 1}, {ore: silver, weight: 1}]
+  Labyrinth of Low Tunnels: [{ore: copper, weight: 4}, {ore: tin, weight: 4}, {ore: coal, weight: 3}, {ore: iron, weight: 2}, {ore: silver, weight: 1}]
+  Ironwind Steppe:          [{ore: iron, weight: 3}, {ore: coal, weight: 3}, {ore: copper, weight: 2}, {ore: tin, weight: 2}, {ore: silver, weight: 1}]
+  Eastern Highlands:        [{ore: iron, weight: 3}, {ore: silver, weight: 2}, {ore: copper, weight: 2}, {ore: coal, weight: 1}, {ore: gold, weight: 1}]
+  Cascade Pass Road:        [{ore: copper, weight: 3}, {ore: iron, weight: 3}, {ore: tin, weight: 2}, {ore: silver, weight: 1}, {ore: gold, weight: 1}]
+  Stillwater:               [{ore: lake-iron, weight: 4}, {ore: copper, weight: 2}, {ore: tin, weight: 2}, {ore: iron, weight: 1}]
+
+# The Pothole Coulee basalt-iron mine. Its drifts are guarded by what lives in
+# them, and they carry the richest ore.
+rooms:
+  5255: [{ore: iron, weight: 4}, {ore: basalt-iron, weight: 3}, {ore: coal, weight: 2}, {ore: silver, weight: 1}]                                   # Mine Head
+  5256: [{ore: basalt-iron, weight: 4}, {ore: iron, weight: 3}, {ore: silver, weight: 2}, {ore: gold, weight: 1}]                                   # Timbered Drift
+  5257: [{ore: silver, weight: 3}, {ore: basalt-iron, weight: 3}, {ore: gold, weight: 1}]   # Flooded Sump
+  5258: [{ore: silver, weight: 3}, {ore: gold, weight: 2}, {ore: basalt-iron, weight: 2}]                                                            # Lower Drift
+
+# Cave rooms that are cellars, drains and lairs, not rock worth digging:
+# Thornwall's undercity and a back room on the Marches spur.
+exclude_zones: [Thornwall City, Marches Spur Road]

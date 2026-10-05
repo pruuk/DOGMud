@@ -71,6 +71,7 @@ var contestSiteOwners = map[string]string{
 	"internal/actions/sneak.go:Sneak":                           "U6b task 16 (two sites)",
 	"internal/actions/shadow.go:ShadowSenseRoll":                "U6b task 16 (parity slice 6 lifted the shadow sense contest out of shadowPlayer into this one body; it runs when a shadow starts and on each arrival)",
 	"internal/actions/move.go:sneakerSpotted":                   "U6b task 16 (hidden detection on room entry: a sneaking mover against the room's players and mobs; moved from usercommands/go.go by movement parity 4b)",
+	"internal/actions/move.go:SpotHiddenPlayer":                 "U6b task 16 (hidden detection, the same contest as newcomerSpots: a watcher standing in the room looks for one hidden player; the rift hunter)",
 	"internal/actions/move.go:newcomerSpots":                    "U6b task 16 (hidden detection on room entry: the newcomer against hidden players and mobs; moved from usercommands/go.go by movement parity 4b)",
 
 	// U10b-1b Phase A: the static-difficulty (category B) conversions. These are
@@ -80,6 +81,7 @@ var contestSiteOwners = map[string]string{
 	"internal/actions/search.go:Search":            "U10b-1b Phase A: four static-difficulty search tiers (125/125/135/175)",
 	"internal/actions/search.go:spotsHider":        "U10b-1b Phase C: hidden detection reconciled onto the OPPOSED form usercommands/go.go already used — the flat 135 threshold never read the hider's score",
 	"internal/forager/forage_core.go:ForageCore":   "U10b-1b Phase A: the per-biome forage difficulty. ForageCore is pure, so this is the whole of its uncertainty",
+	"internal/actions/chop.go:SpeciesKnown":        "wilderness trades phase 4: survey's static-difficulty recognition of a rare tree, a read like search and forage",
 	"internal/actions/track.go:resolveTrailDetail": "U10b-1b: the nested 125/135/175 trail-read ladder, static difficulty like search and forage",
 	"internal/actions/track.go:Track":              "U10b-1b: the OPPOSED contest against a named quarry (owner ruling) — a careful mover is genuinely harder to follow",
 

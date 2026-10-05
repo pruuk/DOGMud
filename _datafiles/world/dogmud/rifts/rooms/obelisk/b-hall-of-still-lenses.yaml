@@ -1,0 +1,59 @@
+id: b-hall-of-still-lenses
+pool: B
+source: authored
+title: Hall of Still Lenses
+description: >-
+  The ceiling of this hall is lost in darkness, and from it hang lenses of
+  black crystal as broad as millstones, each on a thread of glass too fine to
+  see. They do not swing. Through the nearest one the floor below looks deep
+  as a well; through the next, the far wall is close enough to touch; through
+  a third, small and high, there is a grey shore you have never stood on,
+  and then only the dark again. Along the walls stand low plinths carved
+  with rows of small round marks, worn nearly smooth, and before each plinth
+  the floor is polished into a shallow pool of wear where someone stood to
+  look. Whoever made this place made it to look through, and the lenses
+  still hang where they left them, waiting for an eye. One thread at the
+  far end hangs empty, its glass snapped clean.
+nouns:
+  lenses: >-
+    Each lens is a disc of black crystal ground thin at the edge and thick at
+    the centre. Looking through one is like looking down a long tube that
+    someone has bent. Your eyes ache after a moment. The small high lens
+    shows the grey shore only when you stop trying to see it, a long flat
+    beach under no sun, and something far off on it that might be walking.
+  plinths: >-
+    Waist-high blocks of crystal, their tops covered in rows of shallow round
+    marks pressed in like fingertips. The rows repeat, almost, with small
+    changes, the way writing does. Each plinth faces one lens, and the marks
+    on it grow fewer toward the end, as though the watcher who kept it had
+    less and less to report.
+  marks: >-
+    Small round hollows in neat rows. Not decoration. Someone meant something
+    by them, and there is nobody left who knows what. On the plinth nearest
+    the empty thread the last row breaks off halfway, and the final mark is
+    pressed so deep it has cracked.
+  thread: >-
+    The empty thread hangs from the dark like a hair, ending in a clean snap
+    a little above head height. Beneath it the floor is unmarked: whatever
+    lens it held did not fall here. It was taken down, or it went somewhere
+    by itself.
+idlemessages:
+  - One of the hanging lenses turns, very slowly, and then is still again.
+  - Light that is not light gathers in the largest lens and drains away.
+doors:
+  - exit: arch
+    description: >-
+      A tall pointed arch at the end of the hall, its edges chipped and
+      crazed with fine white cracks.
+  - exit: stair
+    description: >-
+      A stair of crystal slabs spiralling down into the floor, each step a
+      little too high.
+  - exit: crack
+    description: >-
+      A crack in the wall where two great faces of crystal have pulled apart,
+      wide enough to squeeze through.
+  - exit: gallery
+    description: >-
+      A low gallery running off to one side, lined with more of the carved
+      plinths.

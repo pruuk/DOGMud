@@ -28,6 +28,12 @@ into items through long use.
   <ansi fg="yellow">Gold Signet Ring</ansi>      Skill 28  1x gold-wire, 1x gem-dust                   5 rounds
   <ansi fg="yellow">Masterwork Gem Pendant</ansi> Skill 35  2x gold-wire, 2x raw-gem                    6 rounds
 
+Hunter's work, carved with a carving knife from parts taken off a carcass:
+<ansi fg="command">claw-bracelet</ansi> (14), <ansi fg="command">talon-ring</ansi> (16), <ansi fg="command">antler-amulet</ansi> (18) and <ansi fg="command">tusk-armlet</ansi> (24) need
+parts a bone saw takes. The finest need trophies only a steel saw or better
+takes whole: <ansi fg="command">tuskbound-torc</ansi> (42), <ansi fg="command">antler-circlet</ansi> (45) and the
+<ansi fg="command">hunt-kings-pendant</ansi> (55). (<ansi fg="command">help tools</ansi>)
+
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 
 Jewelcrafting improves through use. Each completed craft attempt (success or

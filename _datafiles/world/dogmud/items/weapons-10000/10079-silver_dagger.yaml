@@ -1,0 +1,21 @@
+itemid: 10079
+name: Silver Dagger
+vendor_categories:
+- blacksmithing
+namesimple: dagger
+description: >
+  A short, double-edged blade of bright silver with a leather-wrapped grip.
+  Silver is too soft to be a soldier's metal, but it is quick in the hand
+  and it wards against what is not flesh.
+type: weapon
+hands: 1
+subtype: stabbing
+weight: 0.88
+speedmultiplier: 1.155
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.51
+parryrating: 4
+value: 90
+rarity_tier: 30

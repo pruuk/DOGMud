@@ -1,6 +1,7 @@
 itemid: 40179
 name: Old White's Fang
 namesimple: fang
+component_tag: old-white-fang
 vendor_categories:
 - jewelcrafting
 description: >-
@@ -17,3 +18,4 @@ subtype: mundane
 weight: 1.2
 value: 120
 rarity_tier: 65
+material_tier: 4

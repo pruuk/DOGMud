@@ -1,0 +1,19 @@
+id: masterwork-pick
+name: "Masterwork Pick"
+aliases: [mwpick]
+skill: blacksmithing
+skill_minimum: 50
+station: forge
+time_rounds: 10
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 2
+  - item_tag: ironwood-haft
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10076
+  quantity: 1
+success_actor: "You forge a crucible steel head, temper it to spring, and hang it on ironwood. A masterwork pick!"
+failure_actor: "The head checks in the temper. The crucible steel is ruined."

@@ -25,3 +25,6 @@ damage_multiplier: 0.75
 parryrating: 5
 value: 22
 rarity_tier: 40
+tool:
+  type: axe
+  tier: 2

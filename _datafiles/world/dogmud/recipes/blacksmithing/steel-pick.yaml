@@ -1,0 +1,19 @@
+id: steel-pick
+name: "Steel Pick"
+aliases: [steelpick]
+skill: blacksmithing
+skill_minimum: 18
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 2
+  - item_tag: hardwood-board
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10075
+  quantity: 1
+success_actor: "You forge a hardened steel head and fit it to a hardwood haft. A steel pick!"
+failure_actor: "The point snaps in the hardening. The steel is ruined."

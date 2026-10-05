@@ -106,6 +106,9 @@ var sightExemptSites = map[string]string{
 	// callers (salvage.go above), so the RunSalvageContest inside them is pure.
 	"internal/crafting/salvage.go|RollSalvageReturns":         "pure roller: callers pass a score already multiplied (actions.Salvage)",
 	"internal/crafting/salvage.go|RollSalvageReturnsFromSpec": "pure roller: callers pass a score already multiplied (actions.Salvage)",
+	// Gathering: rollInputs is the pure contest behind gather.Roll, which sets
+	// Inputs.SightMult from messaging.SightMult once; Score applies it.
+	"internal/gather/gather.go|rollInputs": "pure roller: gather.Roll sets Inputs.SightMult from messaging.SightMult once and Score multiplies it in",
 	// Track: the trail-read bands stay pure for their band tests; Track
 	// multiplies the search score once before calling in.
 	"internal/actions/track.go|resolveTrailDetail": "pure band ladder: Track multiplies the search score once before calling",

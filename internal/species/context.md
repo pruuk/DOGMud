@@ -130,3 +130,21 @@ Species are consulted at:
 ## Stage Roadmap
 
 - **chunk 2.5** (in progress) — body-plan gating, intrinsic mutations
+
+## Harvest tables (wilderness trades)
+
+**harvest.go**: `HarvestEntry` (component tag, quantity for a medium body,
+tool, rare flag; `ToolOrDefault` is knife), `HarvestTable` (skin and butcher
+sections, `Empty`, `Validate`), `MergeHarvest` (a mob's non-empty section
+replaces the species section), `ScaleHarvestQty` (small halves, large
+doubles, never below one) and `ValidateSpeciesHarvest`, called from main
+after items load. `Species.Harvest` is authored as `harvest:`.
+`HarvestEntry.ItemId` names an exact item (wins over the tag), `Key` names
+the entry for bookkeeping, and `Chance` is a rare entry's base chance.
+`Validate` and `ValidateSpeciesHarvest` take a tag and an item-id callback.
+Seventeen species ship a table (see the species yaml files).
+
+`HarvestEntry.MinTool` (`min_tool`, 2 iron to 4 masterwork, 0 any) is the
+poorest tool tier that can take a part; `Validate` rejects other values. The
+trophy parts (prime wolf pelt, trophy antlers and tusks at steel, great bear
+pelt at masterwork) use it.

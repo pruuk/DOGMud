@@ -1,0 +1,26 @@
+itemid: 10070
+name: Masterwork Whittling Knife
+vendor_categories:
+- blacksmithing
+- woodwork
+- jewelcrafting
+namesimple: knife
+description: >
+  A slender knife of crucible steel on an ironwood haft, its point fine enough
+  to cut a hair across the grain. Bowyers and horn-carvers covet them.
+type: weapon
+hands: 1
+subtype: stabbing
+weight: 0.4
+speedmultiplier: 1.05
+damage:
+  basedamage: 2
+  variance: 1
+damage_multiplier: 0.3
+parryrating: 3
+value: 120
+rarity_tier: 15
+tool:
+  type: carving_knife
+  tier: 4
+  speed: 1.3

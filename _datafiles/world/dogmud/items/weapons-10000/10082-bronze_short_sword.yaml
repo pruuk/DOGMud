@@ -1,0 +1,21 @@
+itemid: 10082
+name: Bronze Short Sword
+vendor_categories:
+- blacksmithing
+namesimple: sword
+description: >
+  A broad-bladed short sword hammered from golden-brown bronze, quick to
+  draw in a tight space. Bronze is nearly as good as iron and handsome with
+  it, if a little heavier.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 3.3
+speedmultiplier: 1.0
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.665
+parryrating: 6
+value: 29
+rarity_tier: 40

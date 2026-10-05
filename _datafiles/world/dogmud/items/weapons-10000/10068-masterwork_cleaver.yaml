@@ -1,0 +1,25 @@
+itemid: 10068
+name: Masterwork Cleaver
+vendor_categories:
+- blacksmithing
+- cooking
+namesimple: cleaver
+description: >
+  A cleaver of crucible steel, dark and close-grained, with an ironwood haft.
+  It goes through a stag's joints as if they were cheese and never chips.
+type: weapon
+hands: 1
+subtype: cleaving
+weight: 1.7
+speedmultiplier: 0.95
+damage:
+  basedamage: 7
+  variance: 2
+damage_multiplier: 0.6
+parryrating: 4
+value: 150
+rarity_tier: 15
+tool:
+  type: cleaver
+  tier: 4
+  speed: 1.3

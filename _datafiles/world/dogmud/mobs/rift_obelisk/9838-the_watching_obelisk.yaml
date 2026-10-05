@@ -1,0 +1,41 @@
+mobid: 9838
+zone: Rift Obelisk
+# Boss. A small obelisk of the Obelisk's own crystal, the eye at the heart of
+# its security. Lances single targets, gathers a Convergence that falls on the
+# whole room (telegraphed over rounds; heavy blows break it), wakes Glint
+# Stalkers and a Spine Lattice from its facets as it is hurt, and overloads
+# when nearly broken. No archetype underneath: the per-mob tree is the whole
+# brain (behaviors/rift_obelisk/9838-the_watching_obelisk.yaml), so it never
+# flees.
+archetype: casting
+hostile: true
+charm_immune: true
+pack_flee_immune: true # constructs: a fallen packmate is no reason to run
+submission_policy: lethal
+surrender_policy: never
+maxwander: 0
+groups:
+  - obelisk
+activitylevel: 10
+idlecommands:
+  - 'emote turns, very slowly, on its point, and every face of it catches the same light'
+  - ''
+  - 'emote hums, a note so low the floor feels it before you do'
+  - ''
+combatcommands:
+  - ''
+character:
+  name: The Watching Obelisk
+  description: >-
+    A needle of black crystal three times the height of a man, standing on its
+    point in the middle of the floor and touching nothing. It is the Obelisk
+    in small: the same dark facets, the same light moving somewhere inside it,
+    the same patience. This is where the place looks out from. Every face of it
+    is turned toward you, though it has not moved.
+  speciesid: 46
+  level: 1
+  stats:
+    perception:
+      base: 150
+  gold: 0
+itemdropchance: 0

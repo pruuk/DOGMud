@@ -120,6 +120,10 @@ func VisitVendorsInRoomOpts(
 				if bucket == "" || !slices.Contains(deliveryBuckets, bucket) {
 					continue
 				}
+				// A forged tool never goes on a shelf (items.NeverResold).
+				if spec := items.GetItemSpec(item.ItemId); spec != nil && items.NeverResold(*spec) {
+					continue
+				}
 				entry := shop.GetStock(item.ItemId)
 				if entry == nil {
 					if opts.CreateMissingSlots && opts.NewSlotMaxStock <= 0 && !warnedMisconfiguredCreate {

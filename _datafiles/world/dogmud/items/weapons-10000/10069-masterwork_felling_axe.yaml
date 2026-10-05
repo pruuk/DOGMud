@@ -1,0 +1,26 @@
+itemid: 10069
+name: Masterwork Felling Axe
+vendor_categories:
+- blacksmithing
+- woodwork
+namesimple: axe
+description: >
+  A great two-handed axe with a crucible steel head forged thin behind the bit
+  and an ironwood haft that never stings the hands. It bites into ironwood as
+  a common axe bites into pine.
+type: weapon
+hands: 2
+subtype: cleaving
+weight: 5.5
+speedmultiplier: 0.75
+damage:
+  basedamage: 10
+  variance: 3
+damage_multiplier: 0.95
+parryrating: 3
+value: 220
+rarity_tier: 15
+tool:
+  type: axe
+  tier: 4
+  speed: 1.4

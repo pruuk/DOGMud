@@ -10,7 +10,7 @@
 //                  {type:'request', id, body, deadlineMs?}
 //                                             one chat completions body, and
 //                                             how long the server waits for it
-//   frame -> game  {type:'status', ready, model?, finds?, locked}
+//   frame -> game  {type:'status', ready, model?, finds?, lively?, locked}
 //                  {type:'response', id, status, body}
 //                  {type:'hide'}
 //
@@ -23,14 +23,21 @@
 // the storage.
 //
 //   popup -> frame {type:'popup-hello'}
-//                  {type:'settings', account, endpoint, key, model, finds, sealed, remember}
+//                  {type:'settings', account, endpoint, key, model, finds, lively, sealed, remember}
 //                  {type:'forget', account}
-//   frame -> popup {type:'popup-state', account, view, endpoint, model, finds, sealed}
+//   frame -> popup {type:'popup-state', account, view, endpoint, model, finds, lively, sealed}
 //
 // finds is the player's "Also name things I find while searching": the
 // server may then send bauble-naming requests (schema FINDS_SCHEMA) through
 // this key as well as the companion's. Without it the frame refuses them,
 // whatever the server sends.
+//
+// lively is the player's "Make the world livelier": the server may then send
+// requests for every feature that makes the world livelier around the
+// player (each under a schema listed in LIVELY_SCHEMAS, such as townsfolk
+// idle moments) through this key, now and then. Unlike finds it starts
+// ticked, and a key saved before the box existed has it ticked; unticked,
+// the frame refuses them all.
 //                  {type:'popup-done', ok, message}
 //
 // The popup echoes the account it was shown, and the frame refuses a
@@ -78,11 +85,22 @@
   var MAX_TOKENS_PER_MINUTE = 40000; // summed max_completion_tokens
   // The response_format.json_schema.name of every call the server makes
   // (modules/aicompanion: runtime.go, conversation.go, reflect.go,
-  // corememory.go). A body naming any other schema is not the server's.
-  var SCHEMA_NAMES = ['companion_decision', 'companion_conversation', 'companion_reflection', 'companion_core_memory'];
+  // corememory.go, hollow.go, parting.go). A body naming any other schema is
+  // not the server's.
+  var SCHEMA_NAMES = ['companion_decision', 'companion_conversation', 'companion_reflection', 'companion_core_memory', 'companion_interview', 'companion_parting'];
   // FINDS_SCHEMA names a find while searching (internal/baubles
   // ReplySchemaName). Relayed only for a player who allowed it (finds).
   var FINDS_SCHEMA = 'bauble';
+  // LIVELY_SCHEMAS names every request that makes the world livelier, one
+  // per feature (apiframework.LivelyPurpose): 'npc_idle', an NPC's idle
+  // moment (internal/npcidle ReplySchemaName), 'room_event', a place's
+  // ambient event (internal/roomlife ReplySchemaName), 'look_detail', a
+  // closer look at something a room's description names
+  // (internal/lookdetail ReplySchemaName), and 'rift_room', a new room for a
+  // rift's pools (internal/rifts RoomSchemaName). Relayed only for a player who
+  // left "Make the world livelier" ticked (lively). A new lively feature
+  // adds its schema name here.
+  var LIVELY_SCHEMAS = ['npc_idle', 'room_event', 'look_detail', 'rift_room'];
 
   // isAllowedEndpoint accepts https anywhere, or http only on this
   // computer, with no user info, query or fragment.
@@ -136,14 +154,14 @@
       base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
   }
 
-  // seal encrypts {endpoint, key, model, finds} under the passphrase. The account's
+  // seal encrypts {endpoint, key, model, finds, lively} under the passphrase. The account's
   // storage key is bound in as additional data, so a blob copied to another
   // account's slot does not open.
   async function seal(cryptoObj, pass, secret, account) {
     var salt = cryptoObj.getRandomValues(new Uint8Array(SALT_BYTES));
     var iv = cryptoObj.getRandomValues(new Uint8Array(IV_BYTES));
     var k = await deriveKey(cryptoObj.subtle, pass, salt);
-    var plain = utf8(JSON.stringify({ endpoint: secret.endpoint, key: secret.key, model: secret.model, finds: secret.finds === true }));
+    var plain = utf8(JSON.stringify({ endpoint: secret.endpoint, key: secret.key, model: secret.model, finds: secret.finds === true, lively: secret.lively !== false }));
     var ct = await cryptoObj.subtle.encrypt({ name: 'AES-GCM', iv: iv, additionalData: utf8(storageKey(account)) }, k, plain);
     return JSON.stringify({ v: BLOB_VERSION, salt: b64(salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) });
   }
@@ -162,7 +180,9 @@
     if (!s || !isAllowedEndpoint(s.endpoint) || !isValidKey(s.key) || !isValidModel(s.model)) {
       throw new Error('unsupported');
     }
-    return { endpoint: s.endpoint, key: s.key, model: s.model, finds: s.finds === true };
+    // A key sealed before the lively box existed has it ticked, as a new
+    // one does.
+    return { endpoint: s.endpoint, key: s.key, model: s.model, finds: s.finds === true, lively: s.lively !== false };
   }
 
   // readCapped reads a reply's text, or returns null once it passes cap
@@ -200,8 +220,9 @@
   // capped at MAX_TOKENS (set to it when the body names no cap). tokens is
   // the cap the request carries, for the per-minute budget. finds allows
   // FINDS_SCHEMA as well: only a player who ticked it lends their key to
-  // naming what they find.
-  function constrainBody(body, model, finds) {
+  // naming what they find. lively allows every LIVELY_SCHEMAS name: only a
+  // player who left "Make the world livelier" ticked lends their key to it.
+  function constrainBody(body, model, finds, lively) {
     if (typeof body === 'string') {
       if (utf8(body).length > MAX_BODY_BYTES) { return null; }
       try { body = JSON.parse(body); } catch (e) { return null; }
@@ -212,7 +233,8 @@
     if (o.stream !== undefined && o.stream !== false) { return null; }
     var rf = o.response_format;
     var name = rf && typeof rf === 'object' && rf.json_schema && typeof rf.json_schema === 'object' ? rf.json_schema.name : undefined;
-    var allowed = typeof name === 'string' && (SCHEMA_NAMES.indexOf(name) !== -1 || (finds === true && name === FINDS_SCHEMA));
+    var allowed = typeof name === 'string' && (SCHEMA_NAMES.indexOf(name) !== -1 ||
+      (finds === true && name === FINDS_SCHEMA) || (lively === true && LIVELY_SCHEMAS.indexOf(name) !== -1));
     if (!allowed) { return null; }
     o.model = model;
     if (o.max_completion_tokens === undefined) {
@@ -247,7 +269,7 @@
   async function relayOne(fetchFn, settings, msg) {
     var fail = { id: msg.id, status: 0, body: '' };
     if (!settings || !isValidKey(settings.key) || !isAllowedEndpoint(settings.endpoint)) { return fail; }
-    var c = constrainBody(msg.body, settings.model, settings.finds === true);
+    var c = constrainBody(msg.body, settings.model, settings.finds === true, settings.lively === true);
     if (!c) { return fail; }
     var body = c.text;
     var ctl = typeof AbortController === 'function' ? new AbortController() : null;
@@ -301,7 +323,7 @@
 
     function status() {
       var s = { type: 'status', ready: !!settings, locked: !settings && !!stored() };
-      if (settings) { s.model = settings.model; s.finds = settings.finds === true; }
+      if (settings) { s.model = settings.model; s.finds = settings.finds === true; s.lively = settings.lively === true; }
       env.post(s);
     }
 
@@ -356,7 +378,7 @@
         case 'request': {
           if (!isValidId(data.id)) { return null; }
           // A refused body is never fetched and never counted.
-          var c = settings ? constrainBody(data.body, settings.model, settings.finds === true) : null;
+          var c = settings ? constrainBody(data.body, settings.model, settings.finds === true, settings.lively === true) : null;
           if (!c || overCap(c.tokens)) {
             fail(data.id);
             return null;
@@ -380,6 +402,7 @@
       return { type: 'popup-state', account: account, view: v,
         endpoint: settings ? settings.endpoint : '', model: settings ? settings.model : '',
         finds: settings ? settings.finds === true : false,
+        lively: settings ? settings.lively === true : true,
         sealed: v === 'unlock' ? stored() : null };
     }
 
@@ -400,7 +423,7 @@
       } else {
         env.storage.remove(storageKey(account));
       }
-      settings = { endpoint: data.endpoint, key: data.key, model: data.model, finds: data.finds === true };
+      settings = { endpoint: data.endpoint, key: data.key, model: data.model, finds: data.finds === true, lively: data.lively !== false };
       status();
       env.post({ type: 'hide' });
       return { type: 'popup-done', ok: true, message: note };
@@ -448,7 +471,7 @@
       }
       if (!isValidModel(model) || model === '') { return { ok: false, message: 'Enter a model name.' }; }
       if (!isValidKey(f.key)) { return { ok: false, message: 'Enter your key.' }; }
-      var msg = { type: 'settings', account: account, endpoint: endpoint, key: f.key, model: model, finds: f.finds === true, sealed: null, remember: false };
+      var msg = { type: 'settings', account: account, endpoint: endpoint, key: f.key, model: model, finds: f.finds === true, lively: f.lively !== false, sealed: null, remember: false };
       if (f.remember) {
         if (typeof f.pass !== 'string' || f.pass.length < MIN_PASS) {
           return { ok: false, message: 'Choose a passphrase of at least eight characters.' };
@@ -469,7 +492,7 @@
         return { ok: false, message: 'That passphrase did not open it.' };
       }
       return { ok: true, message: '', msg: { type: 'settings', account: account, endpoint: opened.endpoint, key: opened.key,
-        model: opened.model, finds: opened.finds === true, sealed: sealed, remember: true } };
+        model: opened.model, finds: opened.finds === true, lively: opened.lively !== false, sealed: sealed, remember: true } };
     }
 
     return { setup: setup, unlock: unlock };
@@ -599,6 +622,7 @@
     var endpointIn = el('endpoint'), keyIn = el('key'), modelIn = el('model');
     var rememberIn = el('remember'), passIn = el('pass'), passLabel = el('passlabel');
     var findsIn = el('finds');
+    var livelyIn = el('lively');
     var unlockIn = el('unlockpass'), statusEl = el('status'), unlockStatus = el('unlockstatus');
 
     var account = '';
@@ -648,6 +672,7 @@
           if (typeof d.endpoint === 'string' && d.endpoint !== '') { endpointIn.value = d.endpoint; }
           if (typeof d.model === 'string' && d.model !== '') { modelIn.value = d.model; }
           if (findsIn) { findsIn.checked = d.finds === true; }
+          if (livelyIn) { livelyIn.checked = d.lively !== false; }
           show(d.view);
           break;
         }
@@ -675,7 +700,8 @@
       busy = true;
       statusEl.textContent = 'Working...';
       var fields = { endpoint: endpointIn.value, key: keyIn.value, model: modelIn.value,
-        finds: !!(findsIn && findsIn.checked), remember: rememberIn.checked, pass: passIn.value };
+        finds: !!(findsIn && findsIn.checked), lively: livelyIn ? livelyIn.checked : true,
+        remember: rememberIn.checked, pass: passIn.value };
       setupLogic.setup(fields, account).then(function (r) {
         fields = null;
         if (!r.ok) {
@@ -727,6 +753,7 @@
     ITER: ITER, MAX_REPLY_BYTES: MAX_REPLY_BYTES, MAX_INFLIGHT: MAX_INFLIGHT, MAX_PER_MINUTE: MAX_PER_MINUTE,
     SETUP_PATH: SETUP_PATH, MAX_BODY_BYTES: MAX_BODY_BYTES, MAX_TOKENS: MAX_TOKENS,
     MAX_TOKENS_PER_MINUTE: MAX_TOKENS_PER_MINUTE, FETCH_TIMEOUT_MS: FETCH_TIMEOUT_MS, SCHEMA_NAMES: SCHEMA_NAMES, FINDS_SCHEMA: FINDS_SCHEMA,
+    LIVELY_SCHEMAS: LIVELY_SCHEMAS,
     constrainBody: constrainBody, fetchTimeout: fetchTimeout,
     isAllowedEndpoint: isAllowedEndpoint, endpointURL: endpointURL, storageKey: storageKey, isSealedBlob: isSealedBlob,
     seal: seal, unseal: unseal, relayOne: relayOne, acceptMessage: acceptMessage,

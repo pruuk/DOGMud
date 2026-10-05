@@ -1,0 +1,17 @@
+id: silver-short-sword
+name: "Silver Short Sword"
+aliases: [silvershortsword]
+skill: blacksmithing
+skill_minimum: 20
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: silver-ingot
+    quantity: 2
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10083
+  quantity: 1
+success_actor: "You work the silver into shape. A silver short sword!"
+failure_actor: "The silver tears as you work it. The metal is wasted."

@@ -1,0 +1,21 @@
+itemid: 10077
+name: Copper Dagger
+vendor_categories:
+- blacksmithing
+namesimple: dagger
+description: >
+  A short, double-edged blade of soft red copper with a leather-wrapped
+  grip. Copper is soft: it dents, dulls and gives under a blow, but it is
+  cheap and easy to work.
+type: weapon
+hands: 1
+subtype: stabbing
+weight: 0.84
+speedmultiplier: 1.1
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.51
+parryrating: 4
+value: 18
+rarity_tier: 40

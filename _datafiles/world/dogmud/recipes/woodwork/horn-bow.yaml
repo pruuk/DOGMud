@@ -1,0 +1,24 @@
+id: horn-bow
+name: "Horn Composite Bow"
+aliases: [composite]
+skill: woodwork
+skill_minimum: 30
+station: "woodworking_bench"
+tool: carving_knife
+time_rounds: 8
+ingredients:
+  - item_tag: bow-stave
+    quantity: 1
+  - item_tag: horn
+    quantity: 2
+  - item_tag: sinew
+    quantity: 2
+  - item_tag: glue
+    quantity: 1
+  - item_tag: bowstring
+    quantity: 1
+output:
+  item_id: 10059
+  quantity: 1
+success_actor: "You laminate horn to the belly and sinew to the back, cure it and string it. A horn composite bow!"
+failure_actor: "The laminations delaminate as the glue cures. The materials are lost."

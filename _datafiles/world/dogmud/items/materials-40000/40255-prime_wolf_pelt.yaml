@@ -1,0 +1,20 @@
+itemid: 40255
+name: Prime Wolf Pelt
+namesimple: pelt
+description: >
+  A winter wolf pelt taken whole, with the mask, the ears and the brush
+  still on it and not a single knife-score in the leather. Furriers pay
+  several times the price of a common pelt for one. It only comes off a
+  wolf whole under a steel edge or better.
+type: object
+subtype: mundane
+component_tag: prime-pelt
+weight: 1.2
+value: 60
+rarity_tier: 15
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 3
+spoil_after: 4 days

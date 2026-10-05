@@ -1,0 +1,15 @@
+id: iron-arrowheads
+name: "Iron Arrowheads"
+aliases: [heads]
+skill: blacksmithing
+skill_minimum: 3
+station: "forge"
+time_rounds: 2
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 1
+output:
+  item_id: 40421
+  quantity: 2
+success_actor: "You draw out the iron, cut small heads and punch their sockets. Iron arrowheads!"
+failure_actor: "The heads come out lopsided and blunt."

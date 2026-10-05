@@ -1,0 +1,17 @@
+id: woodcutters-axe
+name: Woodcutter's Axe
+aliases: [axe]
+skill: blacksmithing
+skill_minimum: 5
+station: forge
+time_rounds: 4
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 10053
+  quantity: 1
+success_actor: "You forge a single-bit axe head, punch the eye, and hang it on a long haft. A woodcutter's axe!"
+failure_actor: "The eye splits as you drift it open. The head is scrap."

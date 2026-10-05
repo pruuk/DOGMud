@@ -1,0 +1,18 @@
+itemid: 40245
+name: Steel Bone Saw
+namesimple: saw
+description: >
+  A fine-toothed bone saw with a hardened steel blade and a hardwood grip. It
+  cuts horn and antler clean and square, with no splintering.
+type: object
+subtype: mundane
+weight: 0.8
+value: 38
+rarity_tier: 35
+vendor_categories:
+- blacksmithing
+- cooking
+tool:
+  type: bone_saw
+  tier: 3
+  speed: 1.15

@@ -1,0 +1,20 @@
+id: tuskbound-torc
+name: "Tuskbound Torc"
+aliases: [torc]
+skill: jewelcrafting
+skill_minimum: 42
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 8
+ingredients:
+  - item_tag: trophy-tusks
+    quantity: 1
+  - item_tag: gold-wire
+    quantity: 2
+  - item_tag: gem-dust
+    quantity: 2
+output:
+  item_id: 20118
+  quantity: 1
+success_actor: "You twist the gold into a heavy torc and seat a matched pair of trophy tusks as its ends. A tuskbound torc!"
+failure_actor: "A tusk splits as you seat it in the gold. The materials are wasted."

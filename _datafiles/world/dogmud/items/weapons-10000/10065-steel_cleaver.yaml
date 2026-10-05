@@ -1,0 +1,26 @@
+itemid: 10065
+name: Steel Cleaver
+vendor_categories:
+- blacksmithing
+- cooking
+namesimple: cleaver
+description: >
+  A broad steel cleaver with a thick, hardened spine and a hardwood grip
+  riveted through the tang. It parts a joint cleanly in one stroke and leaves
+  the bone whole for the carver.
+type: weapon
+hands: 1
+subtype: cleaving
+weight: 1.8
+speedmultiplier: 0.9
+damage:
+  basedamage: 6
+  variance: 2
+damage_multiplier: 0.55
+parryrating: 3
+value: 40
+rarity_tier: 35
+tool:
+  type: cleaver
+  tier: 3
+  speed: 1.15

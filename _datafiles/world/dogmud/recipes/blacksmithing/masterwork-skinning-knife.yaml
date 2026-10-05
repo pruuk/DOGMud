@@ -1,0 +1,19 @@
+id: masterwork-skinning-knife
+name: Masterwork Skinning Knife
+aliases: [mwskinner]
+skill: blacksmithing
+skill_minimum: 45
+station: forge
+time_rounds: 10
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 1
+  - item_tag: ironwood-haft
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10067
+  quantity: 1
+success_actor: "You forge the crucible steel thin, temper it for an hour and polish it to a mirror. A masterwork skinning knife!"
+failure_actor: "The edge checks in the temper. The crucible steel is ruined."

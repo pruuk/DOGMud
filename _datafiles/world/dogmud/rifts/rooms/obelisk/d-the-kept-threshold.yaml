@@ -1,0 +1,52 @@
+id: d-the-kept-threshold
+pool: D
+source: authored
+title: The Kept Threshold
+description: >-
+  An antechamber, square and bare, built to stand in front of something.
+  Its far wall is a great sealed doorway of dark crystal that has not opened
+  in a very long time, and before that doorway the floor has been worn into
+  a shallow trough, a short straight line walked back and forth until the
+  crystal gave way. The side walls are cut with tall lenses, all of them
+  turned to watch the near door, the one you came through. Their light is
+  faint and steady. Old scratches cross the floor in front of you in a
+  rough arc, as if marking the edge of somewhere you were not meant to come.
+  Your reflection in the nearest lens has already stopped moving. Something
+  beyond your sight has stopped moving too.
+nouns:
+  doorway: >-
+    The great doorway is closed with a single fused slab of dark crystal,
+    pressed all over with round marks so dense they read as texture. At the
+    height of a head, a patch of the marks has been worn smooth by something
+    pressing against it, again and again, from this side.
+  trough: >-
+    A shallow channel worn into the floor before the sealed doorway, a few
+    strides long, squared off at each end. Its bottom is polished bright.
+    Fine grit lies along one edge where the pacing turned, fresh, as if it
+    had been walked very recently.
+  lenses: >-
+    Tall lenses set into the side walls, each in a frame of crystal and each
+    angled toward the door you came in by. As you cross the room, one after
+    another, they turn by the smallest amount to follow you.
+  scratches: >-
+    A rough arc of scratches cut across the floor at a stride's distance from
+    the door. They are not marks of writing. They are deep and uneven, made
+    with force, and the crystal around them is cracked as if struck.
+idlemessages:
+  - The lenses on the walls shift a fraction, following something you cannot see.
+encounter:
+  tier: elite
+  count: {min: 1, max: 1}
+doors:
+  - exit: archway
+    description: >-
+      A tall archway at the corner of the antechamber, its keystone cracked,
+      opening on a passage that bends out of sight.
+  - exit: loft
+    description: >-
+      A narrow loft above the near door, reached by a few worn footholds,
+      looking down over the whole of the antechamber.
+  - exit: undercroft
+    description: >-
+      A gap in the floor beside the trough opens into a cramped undercroft,
+      where the faint light of the lenses does not reach.

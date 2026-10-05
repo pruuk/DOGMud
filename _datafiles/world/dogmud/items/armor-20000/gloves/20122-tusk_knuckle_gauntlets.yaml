@@ -1,0 +1,16 @@
+itemid: 20122
+name: Tusk-Knuckle Gauntlets
+vendor_categories:
+- blacksmithing
+namesimple: gauntlets
+description: >
+  Crucible steel gauntlets with a ridge of trophy tusk set over the
+  knuckles. A punch in these lands like a boar's charge.
+type: gloves
+subtype: wearable
+weight: 1.5
+value: 220
+rarity_tier: 15
+physical_mitigation: 3
+statmods:
+  strength: 3

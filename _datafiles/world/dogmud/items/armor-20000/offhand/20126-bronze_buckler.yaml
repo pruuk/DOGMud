@@ -1,0 +1,16 @@
+itemid: 20126
+name: Bronze Buckler
+vendor_categories:
+- blacksmithing
+namesimple: buckler
+description: >
+  A small round shield faced with golden-brown bronze over a wooden core.
+  Bronze is nearly as good as iron and handsome with it, if a little
+  heavier.
+type: offhand
+subtype: wearable
+weight: 6.6
+physical_mitigation: 8
+blockrating: 14
+value: 28
+rarity_tier: 40

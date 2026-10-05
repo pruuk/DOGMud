@@ -1170,11 +1170,30 @@ func TestModelChooser(t *testing.T) {
 
 func TestMeetingDefaultsAndLeaving(t *testing.T) {
 	c := buildConfig(nil)
-	if !c.AutoBond || c.AutoBondProfile != `mara` || len(c.MeetSkipZones) != 1 {
-		t.Fatalf("meeting defaults: %+v", c)
+	if !c.RequirePlayerKey || c.ReleaseAfterDays != 60 || c.AbandonBelow != -50 {
+		t.Fatalf("roster defaults: %+v", c)
 	}
-	if c.AutoBondExisting {
-		t.Fatal("characters that already exist are left alone until an operator says otherwise")
+	clamped := buildConfig(func(k string) any {
+		switch k {
+		case `ReleaseAfterDays`:
+			return 0
+		case `AbandonBelow`:
+			return 5
+		case `RequirePlayerKey`:
+			return false
+		}
+		return nil
+	})
+	if clamped.ReleaseAfterDays != 1 || clamped.AbandonBelow != -10 || clamped.RequirePlayerKey {
+		t.Fatalf("roster floors: %+v", clamped)
+	}
+	if low := buildConfig(func(k string) any {
+		if k == `AbandonBelow` {
+			return -200
+		}
+		return nil
+	}); low.AbandonBelow != -95 {
+		t.Fatalf("AbandonBelow is held above where nothing could reach it: %d", low.AbandonBelow)
 	}
 	if got := asStringList([]any{`A`, `B`}); len(got) != 2 {
 		t.Fatal("list of any")
@@ -1322,7 +1341,7 @@ func TestCombatVarianceAndMoves(t *testing.T) {
 	if out.Combat.Move != `bash` {
 		t.Fatalf("move not normalised: %q", out.Combat.Move)
 	}
-	if sanitizeDecision(Decision{Combat: CombatProposal{Move: `fireball`}}, `Mara Venn`, `calm`).Combat.Move != `none` {
+	if sanitizeDecision(Decision{Combat: CombatProposal{Move: `fireball`}}, `Mara Venn`, `calm`).Combat.Move != `unchanged` {
 		t.Fatal("a move the engine does not have must be dropped")
 	}
 }
@@ -1975,10 +1994,9 @@ func TestConsentIsLiteralAndGatesEverything(t *testing.T) {
 	if !off.consented(1) {
 		t.Fatal("a server that has switched the question off does not ask it")
 	}
-	q := consentQuestion(`Mara Venn`)
-	for _, want := range []string{`OpenAI`, `i agree`, `i decline`, `administrators`} {
-		if !strings.Contains(q, want) {
-			t.Fatalf("the question must say %q plainly: %s", want, q)
+	for _, want := range []string{`AI`, `own key`, `kept on this server`, `agreement`, `companion-ai off`} {
+		if !strings.Contains(hollowSignText, want) {
+			t.Fatalf("the sign must say %q plainly: %s", want, hollowSignText)
 		}
 	}
 }
@@ -2057,10 +2075,13 @@ func consentOwner() *users.UserRecord {
 
 // consentModule is a module that asks for consent, with one bonded owner
 // whose question was put askedAgo seconds ago and not yet answered.
-func consentModule(askedAgo int64) (*AICompanionModule, *controller) {
+func consentModule() (*AICompanionModule, *controller) {
 	profiles, _ := loadProfiles()
 	p := profiles[`mara`]
 	m := &AICompanionModule{cfg: buildConfig(nil), bonds: bondState{Users: map[int]*bondRecord{}}}
+	// These tests are of the server key path, which RequirePlayerKey turns
+	// off by default; key-only speech has tests of its own (hollow_test.go).
+	m.cfg.RequirePlayerKey = false
 	// A developer's own OPENAI_API_KEY must never turn a test into a real,
 	// paid call: TestMain clears it, and there is no key unless a test
 	// points the module at one (pointAt).
@@ -2069,60 +2090,15 @@ func consentModule(askedAgo int64) (*AICompanionModule, *controller) {
 	m.fw().ResetBreaker()
 	apiframework.ResetBudgetForTest(``)
 	m.cfg.RequireConsent = true
-	m.bonds.Users[1] = &bondRecord{Profile: `mara`, Met: true, AskedAt: time.Now().Unix() - askedAgo}
+	m.bonds.Users[1] = &bondRecord{Profile: `mara`, Met: true}
 	m.syncConsent()
 	c := &controller{profile: p, mind: newMind(1, p), ownerUserId: 1}
 	return m, c
 }
 
-func TestSpokenConsentIsReadWhileTheQuestionIsOpen(t *testing.T) {
-	now := time.Now().Unix()
-
-	// "i agree", said aloud without naming her, inside the window.
-	m, c := consentModule(10)
-	c.mind.FirstMetUnix = now // she has met him: the answer comes after
-	m.hearSaid(c, consentOwner(), `Corvin`, `I agree.`, 7, false, now)
-	if !m.consented(1) || !m.consent.allows(1) {
-		t.Fatal("a spoken \"i agree\" while the question is open must consent, and the door must know it")
-	}
-	if len(c.mind.RecentLines) != 0 {
-		t.Fatalf("the answer is not conversation and is not written down: %+v", c.mind.RecentLines)
-	}
-	if len(c.pending) != 1 || c.pending[0].Kind != `first_meeting` {
-		t.Fatalf("agreeing lets her introduce herself, and nothing said before it is queued: %+v", c.pending)
-	}
-
-	// "i decline" refuses.
-	m, c = consentModule(10)
-	m.hearSaid(c, consentOwner(), `Corvin`, `i decline`, 7, true, now)
-	if m.consented(1) || !m.bonds.Users[1].Refused || m.consent.allows(1) {
-		t.Fatal("a spoken \"i decline\" must refuse")
-	}
-	if len(c.pending) != 0 {
-		t.Fatalf("the answer is not answered: %+v", c.pending)
-	}
-
-	// "ask <her> i agree" is an answer as well.
-	m, c = consentModule(10)
-	m.hearAsked(c, consentOwner(), `Corvin`, `i agree`, now)
-	if !m.consented(1) {
-		t.Fatal("asking her \"i agree\" must consent")
-	}
-
-	// Outside the window the words are only words.
-	m, c = consentModule(consentWindowSeconds + 1)
-	m.hearSaid(c, consentOwner(), `Corvin`, `i agree`, 7, true, now)
-	if m.consented(1) || m.bonds.Users[1].Refused {
-		t.Fatal("once the question has closed, \"i agree\" changes nothing")
-	}
-	if len(c.pending) != 1 || c.pending[0].Kind != `heard` {
-		t.Fatalf("outside the window it is ordinary speech, and she answers it: %+v", c.pending)
-	}
-}
-
 func TestUnconsentedSpeechIsAnsweredButNotWritten(t *testing.T) {
 	now := time.Now().Unix()
-	m, c := consentModule(consentWindowSeconds + 1)
+	m, c := consentModule()
 	m.cfg.RecordBystanderSpeech = true
 	u := consentOwner()
 
@@ -2232,7 +2208,7 @@ func driveEverySender(t *testing.T, m *AICompanionModule, c *controller, baseURL
 // senderModule is a module ready to call a model at baseURL for owner 1,
 // whose consent is as given.
 func senderModule(baseURL string, consented bool) (*AICompanionModule, *controller) {
-	m, c := consentModule(consentWindowSeconds + 1)
+	m, c := consentModule()
 	m.cfg.Enabled = true
 	pointAt(m, baseURL, `k`)
 	m.cfg.Model, m.cfg.FastModel, m.cfg.DeepModel = `m`, `m`, `m`
@@ -2326,7 +2302,7 @@ func TestMain(m *testing.M) {
 // strangerModule is consentModule with consent given, so a passer-by's
 // words are written down, and the stock pacing for passers-by.
 func strangerModule() (*AICompanionModule, *controller, *users.UserRecord) {
-	m, c := consentModule(consentWindowSeconds + 1)
+	m, c := consentModule()
 	m.bonds.Users[1].Consented = true
 	m.saveBonds()
 	m.cfg.StrangerAskSeconds = 30
@@ -2650,9 +2626,9 @@ func TestGoneMindStillRefundsItsOwner(t *testing.T) {
 	server := route{kind: routeServer} // reserved below on the server's key
 
 	for name, apply := range map[string]func(h hold){
-		`summary`:    func(h hold) { m.applyConversationSummary(`nobody`, 1, `Corvin`, 7, 0, h, server, failed) },
-		`core`:       func(h hold) { m.applyCore(`nobody`, 1, CoreMemory{}, h, server, failed) },
-		`reflection`: func(h hold) { m.applyReflection(`nobody`, 1, 0, `m`, h, server, failed) },
+		`summary`:    func(h hold) { m.applyConversationSummary(`nobody`, 1, 0, `Corvin`, 7, 0, h, server, failed) },
+		`core`:       func(h hold) { m.applyCore(`nobody`, 1, 0, CoreMemory{}, h, server, failed) },
+		`reflection`: func(h hold) { m.applyReflection(`nobody`, 1, 0, 0, `m`, h, server, failed) },
 	} {
 		h, ok := m.reserveRoute(server, 1, 0, 300)
 		if !ok {

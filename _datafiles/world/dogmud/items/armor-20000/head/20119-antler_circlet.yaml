@@ -1,0 +1,18 @@
+itemid: 20119
+name: Antler Circlet
+vendor_categories:
+- jewelcrafting
+namesimple: circlet
+description: >
+  A circlet woven of gold wire around a crown of trophy-antler tines, a
+  single cut gem at the brow. It sits on the head like a stag's rack in
+  miniature and seems to sharpen every sense.
+type: head
+subtype: wearable
+weight: 0.5
+value: 340
+rarity_tier: 15
+magical_mitigation: 3
+statmods:
+  perception: 4
+  willpower: 2

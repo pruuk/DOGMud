@@ -19,4 +19,5 @@ is_component: true
 component_tag: apex-claw
 vendor_categories:
 - jewelcrafting
+- hunting
 material_tier: 5

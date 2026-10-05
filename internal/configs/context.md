@@ -985,3 +985,10 @@ bit, stage your hunks, then set it again.
 **Override files are flat dot-separated keys** (`Network.TelnetPort: [33334]`)
 layered over `config.yaml` via `CONFIG_PATH`. That is how the pre-push boot
 test runs on alternate ports without touching the tracked config.
+
+## Gathering knobs
+
+`config.balance.gathering.go` validates the wilderness-trades knobs:
+`GatherSkillWeight`, `GatherBaseDifficulty`, `GatherGradeStepSigma`,
+`ToolMultCrude/Iron/Steel/Masterwork` and `QualityValueCrude/Standard/Fine/
+Superb/Pristine`. All use the `<=0` idiom.

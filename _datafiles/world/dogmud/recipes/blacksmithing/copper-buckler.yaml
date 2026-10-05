@@ -1,0 +1,17 @@
+id: copper-buckler
+name: "Copper Buckler"
+aliases: [copperbuckler]
+skill: blacksmithing
+skill_minimum: 4
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: copper-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 20125
+  quantity: 1
+success_actor: "You work the copper into shape. A copper buckler!"
+failure_actor: "The copper tears as you work it. The metal is wasted."

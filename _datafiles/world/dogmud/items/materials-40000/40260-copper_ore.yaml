@@ -1,0 +1,17 @@
+itemid: 40260
+name: Copper Ore
+namesimple: ore
+description: >
+  A lump of rock stained green and blue, heavy with copper. Smelted at a
+  forge it gives soft red copper for wire, rings and bronze.
+type: object
+subtype: mundane
+component_tag: copper-ore
+weight: 1.0
+value: 2
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- blacksmithing
+- jewelcrafting
+material_tier: 1

@@ -10,5 +10,6 @@ type: legs
 subtype: wearable
 physical_mitigation: 6
 escapemodifier: -0.5
+weight: 7.0
 value: 14
 rarity_tier: 40

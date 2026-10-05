@@ -156,3 +156,14 @@ When a character loads from disk:
 ## Dependencies
 
 - `strings` - String manipulation for skill tags and profession names
+
+## Woodwork
+
+`Woodwork` (`woodwork`, primary stat dexterity, progression 1.56) is the
+woodworking craft: lumber, bows and arrows, shields and furniture. It is in
+the woodworker and bowyer professions and is a valid vendor category. Adding
+a skill touches: skills.go, config.yaml SkillProgressionMultipliers,
+planners/skill_training_table.go, hooks/chrysifier_homunculus.go,
+mutations/graph.go, modules/aicompanion/archetype.go, shops/shopinventory.go,
+keywords.yaml, the help template and the devtools help completeness test.
+The 0.14.0 migration's craft list is historical and was left alone.

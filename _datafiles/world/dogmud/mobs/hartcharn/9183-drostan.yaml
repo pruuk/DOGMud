@@ -48,7 +48,7 @@ character:
     vitality:
       base: 108
     perception:
-      base: 104
+      base: 107
   shop:
     - itemid: 10021
     - itemid: 20004

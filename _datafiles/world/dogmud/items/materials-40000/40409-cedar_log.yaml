@@ -1,0 +1,15 @@
+itemid: 40409
+name: Cedar Log
+namesimple: log
+description: >
+  A length of cedar, red at the heart and smelling sharply sweet. Moths
+  hate it.
+type: object
+subtype: mundane
+component_tag: softwood-log
+weight: 10
+value: 6
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 2

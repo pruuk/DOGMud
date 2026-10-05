@@ -1,0 +1,18 @@
+id: chitin-bracers
+name: Chitin Bracers
+aliases: [bracers]
+skill: jewelcrafting
+skill_minimum: 8
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 5
+ingredients:
+  - item_tag: chitin
+    quantity: 4
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 20110
+  quantity: 1
+success_actor: "You drill and shape the chitin plates and lace them to leather. Chitin bracers!"
+failure_actor: "A plate cracks under the drill and the rest will not match. The chitin is wasted."

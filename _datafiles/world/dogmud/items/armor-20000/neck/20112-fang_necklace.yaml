@@ -1,0 +1,15 @@
+itemid: 20112
+name: Fang Necklace
+vendor_categories:
+- jewelcrafting
+namesimple: necklace
+description: >
+  A string of predators' fangs on a rawhide cord, worn by hunters to
+  show what they have killed.
+type: neck
+subtype: wearable
+weight: 0.2
+value: 50
+rarity_tier: 40
+statmods:
+  strength: 2

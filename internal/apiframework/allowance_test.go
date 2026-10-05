@@ -339,9 +339,17 @@ func TestSaveBudgetCopiesEveryMapUnderTheLock(t *testing.T) {
 		runtime.Gosched()
 	}
 	before := progress.Load()
-	for i := 0; i < 100; i++ {
+	// At least 100 saves, and more until a write has landed between them:
+	// on a fast machine the scheduler can let 100 saves finish before any
+	// writer runs again, which says nothing about the code under test. The
+	// time limit only keeps a real deadlock from hanging the suite.
+	start := time.Now()
+	for i := 0; i < 100 || (progress.Load() == before && time.Since(start) < 10*time.Second); i++ {
 		SaveBudget()
 		round.Add(1)
+		if i >= 100 {
+			runtime.Gosched()
+		}
 	}
 	during := progress.Load() - before
 	close(stop)

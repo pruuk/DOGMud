@@ -69,6 +69,7 @@ var skillClusters = map[string][]string{
 	"jewelcrafting": {"chrysifier"},
 	"enchanting":    {"chrysifier"},
 	"salvage":       {"chrysifier"},
+	"woodwork":      {"chrysifier"},
 }
 
 // OwnedGravity returns each cluster's pull from currently-owned mutations:

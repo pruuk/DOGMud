@@ -1,6 +1,7 @@
 itemid: 20004
 name: Wooden Shield
 vendor_categories:
+- woodwork
 - blacksmithing
 namesimple: shield
 description: A simple wooden shield.
@@ -8,5 +9,6 @@ type: offhand
 subtype: wearable
 physical_mitigation: 5
 blockrating: 12  # Stage 7.1: Block defense bonus
+weight: 4.0
 value: 2
 rarity_tier: 50

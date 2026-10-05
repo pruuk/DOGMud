@@ -1,0 +1,46 @@
+mobid: 9823
+zone: New Plymouth Merchant
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - np_commonfolk
+idlecommands:
+  - 'emote licks a pencil and makes a careful note in the ledger.'
+  - ''
+  - 'emote straightens a market stall''s awning that was not crooked.'
+  - 'emote consults the ledger, frowns, and consults it again.'
+  - ''
+  - 'emote clears his throat at a passing porter, who ignores him.'
+activitylevel: 8
+character:
+  name: Ambry
+  description: |
+    A narrow young clerk in an ink-stained waistcoat with a ledger under one
+    arm, employed by the Exchange to keep the Merchant Quarter free of
+    'unclaimed articles'. Anything left lying about is entered in the
+    ledger, described in painstaking detail, and taken to the lost-property
+    cupboard, from which nothing has ever been claimed. Ambry considers this
+    a civic service. Everyone else considers it Ambry.
+  speciesid: 1
+  level: 3
+  gold: 8
+  stats:
+    strength:
+      base: 98
+    vitality:
+      base: 100
+    perception:
+      base: 114
+    dexterity:
+      base: 108

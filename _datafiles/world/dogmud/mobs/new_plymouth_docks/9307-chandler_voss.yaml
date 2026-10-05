@@ -42,7 +42,7 @@ character:
   gold: 90
   stats:
     perception:
-      base: 108
+      base: 115
     strength:
       base: 106
     charisma:

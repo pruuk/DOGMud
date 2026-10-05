@@ -1,0 +1,17 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">prospect</ansi>
+
+  <ansi fg="command">prospect</ansi>
+
+Read the rock in a cave, on a mountainside or along a cliff: what ore runs
+here, what it is good for, and how much is left. If the seam is worked out,
+it tells you roughly when it will be worth digging again, and it tells you
+when the rock is too hard for your pick.
+
+Copper, tin, coal and iron anyone can name. Silver, basalt-iron and lake-iron
+take a sharp eye, and gold a sharper one: your <ansi fg="yellow">Perception</ansi> decides whether
+you know what you are looking at. You can mine an ore you cannot name; you
+just will not know what it is until it is out.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help mine</ansi>, <ansi fg="command">help mining</ansi>

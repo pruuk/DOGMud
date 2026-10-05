@@ -213,9 +213,15 @@ func TestPreDetuneBowTable_MatchesTheRealTemplates(t *testing.T) {
 		if spec.Subtype != Shooting {
 			continue
 		}
-		if _, ok := preDetuneBowMultipliers[spec.ItemId]; !ok {
+		_, pre := preDetuneBowMultipliers[spec.ItemId]
+		_, post := postDetuneBows[spec.ItemId]
+		if pre && post {
+			t.Errorf("shooting weapon %q (id %d) is in both preDetuneBowMultipliers and postDetuneBows", spec.Name, spec.ItemId)
+		}
+		if !pre && !post {
 			t.Errorf("shooting weapon %q (id %d) has no preDetuneBowMultipliers entry, "+
-				"so existing instances of it would never be migrated", spec.Name, spec.ItemId)
+				"so existing instances of it would never be migrated (a bow authored after "+
+				"U10d belongs in postDetuneBows instead)", spec.Name, spec.ItemId)
 		}
 	}
 }

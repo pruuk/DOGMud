@@ -7,6 +7,7 @@ package items
 // differentiates them visually or mechanically is equal:
 //   - ItemId
 //   - Uses
+//   - Quality (material grade; ungraded only stacks with ungraded)
 //   - EnchantType
 //   - EnchantTier
 //   - BottleMultiplier (different bottles age potions at different rates)
@@ -26,7 +27,35 @@ func SameStack(a, b Item) bool {
 	if a.Bauble != b.Bauble {
 		return false
 	}
+	// Stolen goods never share a stack with clean ones, or with goods from
+	// another theft: storage keeps one representative per stack, so merging
+	// them would hand a hot item back clean, or a clean one back hot.
+	if a.StolenFrom != b.StolenFrom || a.StolenFromMob != b.StolenFromMob ||
+		a.StolenBy != b.StolenBy || a.StolenAt != b.StolenAt ||
+		a.StolenZone != b.StolenZone || a.StolenSeen != b.StolenSeen {
+		return false
+	}
 	if a.Uses != b.Uses {
+		return false
+	}
+	// Material grade: a fine pelt and a crude one are different goods with
+	// different prices. Storage keeps one representative per stack, so
+	// merging them would re-grade every pelt in the stack.
+	if a.Quality != b.Quality {
+		return false
+	}
+	// Tool wear: a fresh knife and a worn one are not interchangeable.
+	if a.Wear != b.Wear {
+		return false
+	}
+	// Wood: yew shafts and pine shafts are different goods.
+	if a.Wood != b.Wood {
+		return false
+	}
+	// Spoiling raw goods: two cuts harvested at different times rot at
+	// different times, and storage keeps one representative per stack, so
+	// merging them would reset or advance every cut's clock.
+	if a.CraftedRound != b.CraftedRound && (a.Spoils() || b.Spoils()) {
 		return false
 	}
 	if a.EnchantType != b.EnchantType {

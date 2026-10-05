@@ -13,7 +13,9 @@ description: >
   it: staff, late deliveries, the occasional clerk
   taking a longer way around. The south edge of the
   square connects through it to the east, and the hall's
-  north entry above.
+  north entry above. To the west the lane pinches into
+  a small flagged court, where a tall narrow house keeps
+  a lamp lit over a blue door.
 biome: city_backstreet
 coord:
   x: -6
@@ -24,6 +26,8 @@ exits:
     roomid: 6141
   north:
     roomid: 6143
+  west:
+    roomid: 6570
 idlemessages:
 - The ventilation grate in the hall wall exhales a
   breath of old paper and lamp-oil into the lane.

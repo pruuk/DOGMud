@@ -1,0 +1,19 @@
+id: steel-cleaver
+name: Steel Cleaver
+aliases: [steelcleaver]
+skill: blacksmithing
+skill_minimum: 18
+station: forge
+time_rounds: 4
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10065
+  quantity: 1
+success_actor: "You draw out the steel, harden the spine and grind a clean edge. A steel cleaver!"
+failure_actor: "The blade warps in the quench. The steel is ruined."

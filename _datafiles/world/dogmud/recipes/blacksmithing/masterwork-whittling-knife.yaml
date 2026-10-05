@@ -1,0 +1,17 @@
+id: masterwork-whittling-knife
+name: Masterwork Whittling Knife
+aliases: [mwwhittler]
+skill: blacksmithing
+skill_minimum: 45
+station: forge
+time_rounds: 10
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 1
+  - item_tag: ironwood-haft
+    quantity: 1
+output:
+  item_id: 10070
+  quantity: 1
+success_actor: "You forge a slender crucible steel blade with a point fine as a needle and set it in ironwood. A masterwork whittling knife!"
+failure_actor: "The point snaps in the temper. The crucible steel is ruined."

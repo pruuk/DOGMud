@@ -22,7 +22,7 @@ const homunculusMobId = 9612
 // statpool (and which are NOT inherited by it — it's the bruiser, not the maker).
 var homunculusCraftSkills = []string{
 	"blacksmithing", "alchemy", "tailoring", "cooking",
-	"jewelcrafting", "enchanting", "salvage",
+	"jewelcrafting", "enchanting", "salvage", "woodwork",
 }
 
 // homunculusStatPool = round(craftSum * scale), floored so a novice still gets a

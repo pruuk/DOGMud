@@ -68,6 +68,12 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				return true, nil
 			}
 
+			// A rift (an owned ephemeral chunk) decides who passes its doors;
+			// a relocation that skips exits must not skip that.
+			if !rooms.MobMayMove(room.RoomId, destRoom.RoomId) {
+				return true, nil
+			}
+
 			// Captured before the move, matching ruling D1: a sneaking mob's
 			// forced relocation (callforhelp's `go <roomId>`) is as quiet as
 			// its ordinary step through actions.RelocateMob.
@@ -106,6 +112,18 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	exitResult := actions.FindExit(room, rest)
 	exitName := exitResult.ExitName
 	goRoomId := exitResult.RoomId
+
+	// A routed exit (a housing door, a rift door or portal) decides for itself
+	// who may pass. Its router is asked on behalf of a mob (user id 0); a
+	// refusal stops the mob silently, and a route replaces the destination.
+	if exitName != `` {
+		if route, routed := rooms.RouteExit(0, room.RoomId, exitName); routed {
+			if route.RoomId == 0 {
+				return true, nil
+			}
+			goRoomId = route.RoomId
+		}
+	}
 
 	exitInfo, _ := room.GetExitInfo(exitName)
 	if exitInfo.Lock.IsLocked() {

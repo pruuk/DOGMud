@@ -20,6 +20,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/npcidle"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -296,6 +297,12 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 			if idleCmd == `` {
 				idleCmd = `lookfortrouble`
 			}
+		}
+		// Now and then an emote or say is written fresh by a model on the
+		// key of a player in the room (internal/npcidle); the set line is
+		// then run only if no moment comes.
+		if npcidle.TryReplace(mob, idleCmd) {
+			return events.Continue
 		}
 		mob.Command(idleCmd)
 

@@ -1,0 +1,17 @@
+id: wooden-shield
+name: "Wooden Shield"
+aliases: [shield]
+skill: woodwork
+skill_minimum: 3
+station: "woodworking_bench"
+time_rounds: 4
+ingredients:
+  - item_tag: wooden-plank
+    quantity: 3
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 20004
+  quantity: 1
+success_actor: "You glue up the planks, cut them round and fit a leather strap. A wooden shield!"
+failure_actor: "The planks spring apart. The shield is ruined."

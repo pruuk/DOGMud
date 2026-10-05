@@ -166,6 +166,12 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			result.StationNeeded))
 		return true, nil
 
+	case result.MissingTool:
+		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
+			`<ansi fg="red">You need a %s to craft that.</ansi> (<ansi fg="command">help tools</ansi>)`,
+			result.ToolNeeded))
+		return true, nil
+
 	case result.MissingIngredients:
 		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">You are missing: %s.</ansi>`,
 			storageAwareMissingTag(user, result.Recipe, result.MissingTag)))
@@ -275,6 +281,7 @@ func ensureComponentsFromStorage(user *users.UserRecord, room *rooms.Room, recip
 	if recipe == nil ||
 		user.Character.IsCrafting() ||
 		!actions.StationSatisfied(user.Character, recipe.Station, room.Station) ||
+		!actions.ToolSatisfied(user.Character, recipe) ||
 		!user.Character.HasRecipe(recipe.RecipeId) {
 		return
 	}
@@ -414,6 +421,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 		RecipeId:    recipe.RecipeId,
 		RoundsTotal: recipe.TimeRounds,
 		TargetSlot:  slotLabel,
+		RoomId:      user.Character.RoomId,
 	}
 	if err := user.Character.Activity.TransitionToCrafting(
 		craftData,
@@ -451,6 +459,9 @@ func classifyRecipe(user *users.UserRecord, room *rooms.Room, r *crafting.Recipe
 	if !actions.StationSatisfied(user.Character, r.Station, room.Station) {
 		return "locked"
 	}
+	if !actions.ToolSatisfied(user.Character, r) {
+		return "locked"
+	}
 	if ok, _ := crafting.HasIngredients(user.Character.Items, user.Character.ComponentItems, r); ok {
 		return "ready"
 	}
@@ -469,6 +480,9 @@ func craftRecipeRow(r *crafting.RecipeSpec) string {
 	stationStr := ""
 	if r.Station != "" {
 		stationStr = fmt.Sprintf(" [%s]", strings.ReplaceAll(r.Station, "_", " "))
+	}
+	if r.Tool != "" {
+		stationStr += fmt.Sprintf(" (%s)", actions.ToolName(r.Tool))
 	}
 	displayName := r.Name
 	if crafting.IsEnchantingRecipe(r) && r.TargetType != "" {
@@ -635,6 +649,9 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 				if r.Station != "" {
 					stationStr = fmt.Sprintf(" [%s]", strings.ReplaceAll(r.Station, "_", " "))
 				}
+				if r.Tool != "" {
+					stationStr += fmt.Sprintf(" (%s)", actions.ToolName(r.Tool))
+				}
 				// Enchanting recipes target an equipped item; annotate the
 				// recipe name with the slot for at-a-glance lookup.
 				displayName := r.Name
@@ -691,6 +708,9 @@ func recipeStatus(user *users.UserRecord, room *rooms.Room, r *crafting.RecipeSp
 	}
 	if !actions.StationSatisfied(user.Character, r.Station, room.Station) {
 		return "X", fmt.Sprintf("need %s", strings.ReplaceAll(r.Station, "_", " "))
+	}
+	if !actions.ToolSatisfied(user.Character, r) {
+		return "X", fmt.Sprintf("need %s", actions.ToolName(r.Tool))
 	}
 	// Storage counts toward BOTH halves of this answer. Components are
 	// auto-pulled at craft time, so a recipe the bank can complete shows as

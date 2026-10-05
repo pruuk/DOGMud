@@ -1,0 +1,19 @@
+id: scale-vest
+name: Scale Vest
+aliases: [scales]
+skill: tailoring
+skill_minimum: 15
+station: loom
+time_rounds: 6
+ingredients:
+  - item_tag: scales
+    quantity: 6
+  - item_tag: leather-strip
+    quantity: 2
+  - item_tag: thread-spool
+    quantity: 1
+output:
+  item_id: 20109
+  quantity: 1
+success_actor: "You lace row after row of scales onto a leather vest. A scale vest!"
+failure_actor: "The scales will not lie flat and the lacing tears. The materials are lost."

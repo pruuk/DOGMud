@@ -1,0 +1,17 @@
+id: gold-buckler
+name: "Gold Buckler"
+aliases: [goldbuckler]
+skill: blacksmithing
+skill_minimum: 28
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: gold-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 20128
+  quantity: 1
+success_actor: "You work the gold into shape. A gold buckler!"
+failure_actor: "The gold tears as you work it. The metal is wasted."

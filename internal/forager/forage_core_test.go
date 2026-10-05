@@ -122,3 +122,23 @@ func TestForageCore_NightYieldsAppendedForForestAtNight(t *testing.T) {
 		t.Error("expected at least one moonpetal (40046) in 200 forest-night attempts")
 	}
 }
+
+// Extra draws keep the find Prefer ranks best.
+func TestForageCore_ExtraDrawsKeepPreferred(t *testing.T) {
+	best := 0
+	for i := 0; i < 50; i++ {
+		res := ForageCore(ForageAttempt{
+			Biome:       "no-such-biome", // the room extras are the whole pool
+			SearchScore: 100000,          // always finds
+			RoomExtra:   []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+			ExtraDraws:  30,
+			Prefer:      func(a, b int) bool { return a > b },
+		})
+		if res.ItemId > best {
+			best = res.ItemId
+		}
+	}
+	if best < 10 {
+		t.Errorf("thirty extra draws preferring the highest id never kept a high find (best %d)", best)
+	}
+}

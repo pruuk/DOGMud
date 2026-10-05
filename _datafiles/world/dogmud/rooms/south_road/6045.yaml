@@ -12,12 +12,17 @@ description: >
   spreading at the bottom. A <ansi fg="itemname">drystone fold</ansi> sits
   just off the road where the slope steepens, its gate a single hurdle of
   bound hazel, and a lone <ansi fg="itemname">whitethorn</ansi> leans over
-  the verge, its trunk rubbed smooth by generations of itching sheep.
+  the verge, its trunk rubbed smooth by generations of itching sheep. Across
+  the road to the east a sheep-<ansi fg="itemname">track</ansi> slips over
+  the verge into a green combe, and out of the hollow rises the crown of an
+  enormous <ansi fg="itemname">oak</ansi>, far broader than any tree has a
+  right to be this high on the road.
 biome: land
 coord: {x: -8, y: -19, z: 0}
 exits:
   north: {roomid: 6044}
   south: {roomid: 6046}
+  east: {roomid: 6772}
 nouns:
   drystone fold: >
     A round pen of mortarless fieldstone, chest-high, built to
@@ -32,6 +37,15 @@ nouns:
     wind, its bark polished glassy-smooth at sheep height where ten
     thousand flanks have scratched an itch against it. Tufts of greasy wool
     snag in the lower thorns, pale as the flowers it carried in spring.
+  track: >
+    A narrow path of bare earth worn by sheep and, lately, by boots, dropping
+    east off the verge through bracken into the combe below. Somebody has
+    set a flat stone at the top as a step.
+  oak: >
+    A great oak, its crown a dark green dome above the combe to the east,
+    wider than a barn and old beyond guessing. Smoke, thin as a thread,
+    rises from somewhere among its roots, and at dusk there are small
+    lights in its trunk that look very much like windows.
   pasture: >
     Sweet short turf running down the western slope, cropped to a
     lawn by the flocks and starred with the yellow of tormentil. From up

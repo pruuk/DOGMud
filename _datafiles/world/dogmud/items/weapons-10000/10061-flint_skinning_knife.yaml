@@ -1,0 +1,25 @@
+itemid: 10061
+name: Flint Skinning Knife
+vendor_categories:
+- tailoring
+- hunting
+namesimple: knife
+description: >
+  A leaf of knapped flint bound into a split antler grip with sinew. It parts
+  hide from flesh well enough, but it tears where a forged edge would cut, and
+  every hunter who carries one means to replace it.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 0.6
+speedmultiplier: 0.9
+damage:
+  basedamage: 2
+  variance: 1
+damage_multiplier: 0.25
+parryrating: 2
+value: 4
+rarity_tier: 50
+tool:
+  type: knife
+  tier: 1

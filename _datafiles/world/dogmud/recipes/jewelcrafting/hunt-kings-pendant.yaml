@@ -1,0 +1,22 @@
+id: hunt-kings-pendant
+name: "Hunt-King's Pendant"
+aliases: [huntking]
+skill: jewelcrafting
+skill_minimum: 55
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 12
+ingredients:
+  - item_tag: trophy-antlers
+    quantity: 1
+  - item_tag: trophy-tusks
+    quantity: 1
+  - item_tag: gold-wire
+    quantity: 3
+  - item_tag: raw-gem
+    quantity: 2
+output:
+  item_id: 20120
+  quantity: 1
+success_actor: "You carve the antler boss, set the tusks and gems in gold and polish it all to a glow. A Hunt-King's Pendant!"
+failure_actor: "The antler boss splits under the graver. The materials are wasted."

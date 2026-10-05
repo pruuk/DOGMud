@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/roomlife"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -208,11 +209,19 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 							msg := idleMsgs[idleMsgIndex]
 							if msg != `` {
 								wrappedMsg := util.SplitStringNL(msg, 80)
-								// Idle flavor text is visual; the visual
-								// pipeline judges each reader's sight, dark room
-								// or lit. The dark-room branch that tested the
-								// nightvision FLAG is gone (lighting plan 5c).
-								sendVisualRoomText(room, messaging.CategoryRoomDescription, wrappedMsg)
+								// Now and then the event is written fresh by
+								// a model on the key of a player in the room
+								// (internal/roomlife), seen or heard, through
+								// these same room senders; the set line is
+								// then shown only if no event comes.
+								if !roomlife.TryReplace(room, wrappedMsg, idleMsgs) {
+									// Idle flavor text is visual; the visual
+									// pipeline judges each reader's sight, dark
+									// room or lit. The dark-room branch that
+									// tested the nightvision FLAG is gone
+									// (lighting plan 5c).
+									sendVisualRoomText(room, messaging.CategoryRoomDescription, wrappedMsg)
+								}
 							}
 
 						}
@@ -501,20 +510,74 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 					}
 				}
 
+				// Wilderness trades: harvested raw goods rot on their clock.
+				sweepSpoiledGoods(user)
+
 				// Stage 13.1: Crafting/Salvaging tick — advance or complete via Activity machine.
 				if user.Character.Activity != nil {
 					switch user.Character.Activity.State() {
 					case activity.Salvaging:
 						// Salvaging tick — advance round via Activity machine.
 						sd, complete := user.Character.Activity.AdvanceSalvagingRound()
+						// Wilderness trades review: a job finishes only where
+						// it began. Recall, a teleport or a flee abandons it.
+						if actions.JobLeftBehind(sd.RoomId, user.Character.RoomId) {
+							_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
+								Trigger: activity.TriggerMovementInterrupt,
+								Actor:   user.Character.Activity.Self(),
+							})
+							user.SendText(messaging.CategorySystem, `<ansi fg="red">You are no longer where you were working, and the job is abandoned.</ansi>`)
+							break
+						}
+						isCarcassJob := strings.HasPrefix(sd.ItemUuid, actions.HarvestActivityPrefix)
+						isChopJob := strings.HasPrefix(sd.ItemUuid, actions.ChopActivityPrefix)
+						isMineJob := strings.HasPrefix(sd.ItemUuid, actions.MineActivityPrefix)
 						if !complete {
+							progress := `You continue salvaging...`
+							if isCarcassJob {
+								progress = `You keep working at the carcass...`
+							} else if isChopJob {
+								progress = `Chips fly as you keep chopping...`
+							} else if isMineJob {
+								progress = `Rock chips fly as you keep at the seam...`
+							}
 							user.SendText(messaging.CategorySystem, fmt.Sprintf(
-								`<ansi fg="yellow">You continue salvaging... (%d/%d)</ansi>`,
-								sd.RoundsComplete, sd.RoundsTotal))
+								`<ansi fg="yellow">%s (%d/%d)</ansi>`,
+								progress, sd.RoundsComplete, sd.RoundsTotal))
 						} else {
 							// Determine salvage type from ItemUuid prefix.
 							const corpsePrefix = "corpse:"
-							if strings.HasPrefix(sd.ItemUuid, corpsePrefix) {
+							if isMineJob {
+								// Wilderness trades: mining a load of ore.
+								_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
+									Trigger: activity.TriggerSalvageComplete,
+									Actor:   user.Character.Activity.Self(),
+								})
+								actions.ResolveMine(&actions.UserActor{
+									User: user,
+									Room: rooms.LoadRoom(user.Character.RoomId),
+								})
+							} else if isChopJob {
+								// Wilderness trades: felling a tree.
+								_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
+									Trigger: activity.TriggerSalvageComplete,
+									Actor:   user.Character.Activity.Self(),
+								})
+								actions.ResolveChop(&actions.UserActor{
+									User: user,
+									Room: rooms.LoadRoom(user.Character.RoomId),
+								})
+							} else if isCarcassJob {
+								// Wilderness trades: skin, butcher or harvest.
+								_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
+									Trigger: activity.TriggerSalvageComplete,
+									Actor:   user.Character.Activity.Self(),
+								})
+								actions.ResolveHarvestJob(&actions.UserActor{
+									User: user,
+									Room: rooms.LoadRoom(user.Character.RoomId),
+								}, strings.TrimPrefix(sd.ItemUuid, actions.HarvestActivityPrefix))
+							} else if strings.HasPrefix(sd.ItemUuid, corpsePrefix) {
 								mobIdStr := strings.TrimPrefix(sd.ItemUuid, corpsePrefix)
 								_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
 									Trigger: activity.TriggerSalvageComplete,
@@ -536,6 +599,17 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 					case activity.Crafting:
 						// Crafting tick — advance round via Activity machine.
 						cd, complete := user.Character.Activity.AdvanceCraftingRound()
+						// Wilderness trades review: leaving the work ruins it,
+						// materials and all.
+						if actions.JobLeftBehind(cd.RoomId, user.Character.RoomId) {
+							_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
+								Trigger: activity.TriggerMovementInterrupt,
+								Actor:   user.Character.Activity.Self(),
+							})
+							actions.AbandonCraft(user.Character, cd.RecipeId)
+							user.SendText(messaging.CategorySystem, `<ansi fg="red">You left your work unfinished, and the materials are ruined.</ansi>`)
+							break
+						}
 						if !complete {
 							user.SendText(messaging.CategorySystem, fmt.Sprintf(
 								`<ansi fg="yellow">You continue working on %s... (%d/%d)</ansi>`,
@@ -547,7 +621,14 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 								Trigger: activity.TriggerCraftComplete,
 								Actor:   user.Character.Activity.Self(),
 							})
-							if recipe != nil {
+							if recipe != nil && !actions.ToolSatisfied(user.Character, recipe) {
+								// Wilderness trades review: the tool is checked
+								// again at the end, so one tool cannot serve a
+								// crafter who handed it on mid-work.
+								user.SendText(messaging.CategorySystem, fmt.Sprintf(
+									`<ansi fg="red">You no longer have the %s this work needs, and you set the materials aside unfinished.</ansi>`,
+									actions.ToolName(recipe.Tool)))
+							} else if recipe != nil {
 								sl := user.Character.Skills[recipe.Skill]
 
 								// U10b-1b: craft is an ordinary contest. The
@@ -569,7 +650,17 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 								craftScore *= messaging.SightMult(user.Character, room)
 								craftDiff := crafting.CraftDifficulty(
 									recipe.SkillMinimum, crafting.DearestMaterialTier(consumed))
-								won := crafting.RunCraftContest(craftScore, craftDiff).Success
+								craftResult := crafting.RunCraftContest(craftScore, craftDiff)
+								won := craftResult.Success
+								// Wilderness trades: graded inputs or a tool
+								// give the output a grade (gather.CraftGrade;
+								// ungraded otherwise). Read from the same
+								// selection the roll priced, before it is spent.
+								craftGrade := actions.RecipeGrade(user.Character, recipe, &craftResult, consumed)
+								craftWood := actions.CraftWood(consumed)
+								// The recipe's tool wears whether the work
+								// came out or not.
+								actions.WearRecipeTool(&actions.UserActor{User: user, Room: room}, recipe)
 
 								// U10b-1 Task 16: awarded HERE, above the branch,
 								// so a FAILED craft trains at
@@ -638,22 +729,27 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										if !user.Character.CraftMaterialsSaved() {
 											user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 										}
-										// Normal crafting: produce output item
-										newItem := items.New(recipe.Output.ItemId)
-										newItem.CraftedRound = util.GetRoundCount()
-										newItem.CraftSkill = user.Character.CraftQualityLevel(user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))) // Faithwrought quality lift
-										if bottleAgingMult > 0 {
-											newItem.BottleMultiplier = bottleAgingMult
+										// Normal crafting: produce the output, as many as
+										// the recipe makes (output.quantity).
+										for n := 0; n < recipe.OutputCount(); n++ {
+											newItem := items.New(recipe.Output.ItemId)
+											newItem.Quality = craftGrade
+											actions.StampWood(&newItem, craftWood)
+											newItem.CraftedRound = util.GetRoundCount()
+											newItem.CraftSkill = user.Character.CraftQualityLevel(user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))) // Faithwrought quality lift
+											if bottleAgingMult > 0 {
+												newItem.BottleMultiplier = bottleAgingMult
+											}
+											// Maker's mark for skilled crafters — see
+											// crafting.ShouldStampMakerName for the policy (components
+											// stamp regardless of Type; plain Objects don't).
+											newSpec := newItem.GetSpec()
+											if crafting.ShouldStampMakerName(newItem.CraftSkill, newSpec) {
+												newItem.MakerName = user.Character.Name
+											}
+											user.Character.StoreItem(newItem)
+											events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
 										}
-										// Maker's mark for skilled crafters — see
-										// crafting.ShouldStampMakerName for the policy (components
-										// stamp regardless of Type; plain Objects don't).
-										newSpec := newItem.GetSpec()
-										if crafting.ShouldStampMakerName(newItem.CraftSkill, newSpec) {
-											newItem.MakerName = user.Character.Name
-										}
-										user.Character.StoreItem(newItem)
-										events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
 									}
 									successRoles := recipe.Narrate(crafting.PhaseSuccess, textutil.TokenContext{
 										ActorName:      user.Character.GetCharacterName(true),

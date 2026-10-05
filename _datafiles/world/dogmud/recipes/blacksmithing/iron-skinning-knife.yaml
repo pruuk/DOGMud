@@ -1,0 +1,17 @@
+id: iron-skinning-knife
+name: Iron Skinning Knife
+aliases: [skinner]
+skill: blacksmithing
+skill_minimum: 2
+station: forge
+time_rounds: 3
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10050
+  quantity: 1
+success_actor: "You draw the iron out thin, grind a long curved belly into the edge, and wrap the grip in leather. An iron skinning knife!"
+failure_actor: "The thin blade warps in the quench and will never hold an edge. The materials are lost."

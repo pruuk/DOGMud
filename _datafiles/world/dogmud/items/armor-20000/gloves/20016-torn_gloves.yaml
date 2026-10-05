@@ -5,6 +5,7 @@ vendor_categories:
 namesimple: gloves
 description: The gloves are in terrible shape.
 type: gloves
+weight: 0.3
 value: 8
 rarity_tier: 50
 subtype: wearable

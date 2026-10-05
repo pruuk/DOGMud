@@ -1,0 +1,17 @@
+itemid: 40269
+name: Flawless Gem
+namesimple: gem
+description: >
+  A gem without a single inclusion, as clear as water and twice as bright.
+  Miners find one in a lifetime, and only with a pick good enough to take it
+  out whole.
+type: object
+subtype: mundane
+component_tag: flawless-gem
+weight: 0.05
+value: 250
+rarity_tier: 10
+is_component: true
+vendor_categories:
+- jewelcrafting
+material_tier: 5

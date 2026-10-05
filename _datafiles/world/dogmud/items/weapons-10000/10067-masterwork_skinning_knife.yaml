@@ -1,0 +1,26 @@
+itemid: 10067
+name: Masterwork Skinning Knife
+vendor_categories:
+- blacksmithing
+- tailoring
+namesimple: knife
+description: >
+  A skinner's knife of crucible steel, the blade ground to a long belly with a
+  mirror polish, set on an ironwood haft wrapped in fine leather. In a
+  master's hand it lifts a pelt whole, without a nick or a tear.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 0.8
+speedmultiplier: 1.0
+damage:
+  basedamage: 4
+  variance: 1
+damage_multiplier: 0.45
+parryrating: 5
+value: 140
+rarity_tier: 15
+tool:
+  type: knife
+  tier: 4
+  speed: 1.3

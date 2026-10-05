@@ -1,0 +1,49 @@
+id: f-the-field-window
+pool: F
+source: authored
+title: The Field Window
+description: >-
+  A warm wind is blowing through the dark. It moves in long slow breaths
+  through a gash in the crystal at eye height, a ragged opening about the
+  size of a doorway's upper half, and through it you can see a field. Real
+  ground, gently sloped, tall gold grass bowing in waves under that same
+  wind, a dark hedge at the far edge, a sky the colour of late afternoon.
+  It is so close you could almost reach it. The wind carries the smell of
+  cut hay and warm earth into a place that has never known either, and
+  frost forms and flees along the gash's lips with every breath. This is
+  the <ansi fg="exit">breach</ansi>, and it is held shut: bands of black
+  crystal have grown across the opening like the bars of a shutter, and
+  where they meet in the middle there is a faceted lock waiting for its
+  key. The wall beside the way in shows a bright new wound where your key
+  last went home.
+nouns:
+  gash: >-
+    The opening's edges are sharp and splintered outward, as though the
+    Obelisk were struck from within. The crystal along them has gone pale
+    and cloudy for a hand's breadth, and is softer than glass should be,
+    warmed through by the world.
+  field: >-
+    The grass is tall and ripe, its heads heavy. Something moves through it,
+    a long way off, a low shape parting the stems, a dog or a fox. Nearer,
+    a single tree stands at the field's edge, leaning, and in its shade a
+    flat stone where someone might sit.
+  wind: >-
+    Warm and steady, smelling of hay and dust and sunlight. Wherever it
+    touches the crystal, faint light rises in the glass and fades, as
+    though the Obelisk remembered, very dimly, what warmth was.
+  bands: >-
+    Thick rods of black crystal grown across the gash, smooth as polished
+    bone. At their meeting point is a lock cut in facets. The bands are
+    pressed along their length with round marks, spaced like a slow count.
+idlemessages:
+  - "The warm wind gusts, and the gold grass beyond the bands bows all at once."
+  - "Frost creeps along the edge of the gash, and a warm breath melts it away."
+doors:
+  - exit: ramp
+    description: >-
+      A ramp leads down and away from the warm wind, back into the cold, dark
+      corridors of the Obelisk.
+  - exit: hollow
+    description: >-
+      A low hollow in the wall beside the gash curves off into blackness, the
+      warm air dying at its mouth.

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/lookdetail"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -27,15 +28,18 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	isSneaking := user.Character.IsHidden()
 
-	// trim off some fluff
-	if len(rest) > 2 {
-		if rest[0:3] == `at ` {
-			rest = rest[3:]
+	// trim off some fluff: "look at the lantern", "look in the chest",
+	// "look into mug", "look inside my coffer".
+	for _, fluff := range []string{`at `, `into `, `inside `, `in `} {
+		if strings.HasPrefix(strings.ToLower(rest), fluff) {
+			rest = rest[len(fluff):]
+			break
 		}
 	}
-	if len(rest) > 3 {
-		if rest[0:4] == `the ` {
-			rest = rest[4:]
+	for _, fluff := range []string{`the `, `my `} {
+		if strings.HasPrefix(strings.ToLower(rest), fluff) {
+			rest = rest[len(fluff):]
+			break
 		}
 	}
 
@@ -185,6 +189,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		itemNamesFormatted := []string{}
 
 		container := room.Containers[containerName]
+
+		if container.Description != `` {
+			user.SendText(messaging.CategorySystem, ``)
+			user.SendText(messaging.CategorySystem, container.Description)
+		}
 
 		if container.Lock.IsLocked() {
 			user.SendText(messaging.CategorySystem, ``)
@@ -438,6 +447,9 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				descTxt, _ := templates.Process("character/description-corpse", &corpse.Character, user.UserId)
 				user.SendText(messaging.CategoryRoomDescription, descTxt)
 			}
+			if note := corpse.ProcessedNote(); note != `` {
+				user.SendText(messaging.CategoryRoomDescription, note)
+			}
 
 			// Corpse-loot redesign (2026-07-07): show what can be looted,
 			// mirroring the room-container listing.
@@ -523,6 +535,14 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// was deliberately not resolved above; say why rather than deny it.
 	if sight == messaging.SightShapes {
 		user.SendText(messaging.CategorySystem, `You can only make out shapes here.`)
+		return true, nil
+	}
+
+	// Something the room's description names but nothing here answers to:
+	// a closer look may be written fresh (internal/lookdetail), on the
+	// looker's own key, or read from what an earlier look wrote. Only at
+	// clear sight, the case left once every sight rule above has run.
+	if sight == messaging.SightFull && lookdetail.TryLook(user, room, lookAt) {
 		return true, nil
 	}
 	user.SendText(messaging.CategorySystem, "Look at what???")

@@ -1,0 +1,17 @@
+id: crucible-plate-helm
+name: "Crucible Plate Helm"
+aliases: [cruciblehelm]
+skill: blacksmithing
+skill_minimum: 50
+station: forge
+time_rounds: 10
+ingredients:
+  - item_tag: crucible-steel
+    quantity: 3
+  - item_tag: great-bear-pelt
+    quantity: 1
+output:
+  item_id: 20121
+  quantity: 1
+success_actor: "You raise a helm from crucible steel and line it with great bear fur. A crucible plate helm!"
+failure_actor: "The crown of the helm cracks under the hammer. The crucible steel is ruined."

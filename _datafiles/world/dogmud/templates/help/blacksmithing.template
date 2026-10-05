@@ -24,6 +24,31 @@ by <ansi fg="yellow">Strength</ansi> — heavier work demands a stronger hand.
   <ansi fg="yellow">Steel Buckler</ansi>      Skill 30  2x steel-ingot, 1x wooden-plank      5 rounds
   <ansi fg="yellow">Masterwork Plate Helm</ansi>  Skill 38 3x steel-ingot, 1x coal-dust         8 rounds
 
+<ansi fg="yellow">━━━ Tools for the Wild ━━━</ansi>
+
+Merchants sell only crude tools. Every better skinning knife, cleaver, bone
+saw, axe, saw, scraper, sickle and whittling knife comes from a smith, and a
+forged tool comes out graded by how well the smith did: a pristine iron
+knife works like steel, a crude steel one like iron.
+
+  <ansi fg="yellow">Iron</ansi>        Skill 0-8    iron ingots and a plank or leather strip
+  <ansi fg="yellow">Steel</ansi>       Skill 15-22  steel ingots and hardwood boards
+  <ansi fg="yellow">Masterwork</ansi>  Skill 45-55  <ansi fg="command">crucible-steel</ansi> (skill 40: steel, basalt-iron
+              ore and coal dust) and an <ansi fg="command">ironwood-haft</ansi> (woodwork 35)
+
+Merchants buy forged tools for scrap but never resell them. Picks for mining
+are on the same ladder: <ansi fg="command">miners-pick</ansi> (5), <ansi fg="command">steel-pick</ansi> (18), <ansi fg="command">masterwork-pick</ansi> (50).
+
+Smelting and metals (<ansi fg="command">help mining</ansi>): ingots of copper, tin, silver and gold from
+mined ore, bronze from copper and tin, and a dagger, short sword, buckler
+or helm in copper, bronze, silver or gold (gold looks rich and fights poorly).
+
+The hunter's smithing: <ansi fg="command">antler-hilt-hunting-sword</ansi> (28) takes an antler grip;
+the best crucible steel pieces need trophies only good tools take whole:
+<ansi fg="command">tusk-knuckle-gauntlets</ansi> (48, trophy tusks), <ansi fg="command">crucible-plate-helm</ansi> (50, a
+great bear pelt) and <ansi fg="command">stag-hilted-crucible-blade</ansi> (52, trophy antlers). See
+<ansi fg="command">help tools</ansi> for what each tier does.
+
 <ansi fg="yellow">━━━ Skill Progression ━━━</ansi>
 
 Blacksmithing improves through use. Each successful craft has a chance to advance your

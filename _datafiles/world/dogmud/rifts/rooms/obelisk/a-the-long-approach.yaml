@@ -1,0 +1,43 @@
+id: a-the-long-approach
+pool: A
+source: authored
+title: The Long Approach
+description: >-
+  A corridor runs dead straight into the distance, and at the end of it,
+  small and clear, stands a tall pointed gate glowing faintly white. You
+  walk toward it. The walls slide past, the floor passes under you, and the
+  gate does not grow. It stays exactly as small and exactly as far, however
+  long you walk, while behind you the way you came stretches out long and
+  thin. Low stones of crystal stand along the right wall at intervals, each
+  the height of a knee, each topped with a shallow worn dish, and each
+  pressed with a different number of round marks. The marks go down as you
+  go on. Your legs tire. The gate waits at the end of walls that have
+  decided how long they want to be.
+nouns:
+  stones: >-
+    Knee-high blocks set at even intervals along the right wall. Each
+    carries a short row of round marks, and the rows shorten as you go:
+    seven, six, five. The last stone has none at all, only a smooth face
+    polished by contact, as if those who came this far always paused to
+    lean against it.
+  dishes: >-
+    The top of each stone is worn into a shallow dish, smooth and slightly
+    warm, just the size for something to sit or rest on. They are the
+    resting places of a long road. The wear is deepest on the last few,
+    where the walk, for whoever made it, began to tell.
+  walls: >-
+    The walls are plain black crystal, but if you watch them instead of
+    the gate, you see they are passing more slowly than your steps should
+    allow. Every so often a faint ripple runs along them toward the gate,
+    and the gate is very slightly nearer afterward, and then is not.
+idlemessages:
+  - "The gate at the end of the corridor flickers, and for an instant seems close enough to touch."
+doors:
+  - exit: gate
+    description: >-
+      The pointed gate at the far end, faint white light in its arch. It
+      looks a long way off. It always will, until it does not.
+  - exit: cleft
+    description: >-
+      A narrow cleft in the left wall beside the last stone, a shorter
+      way out of a corridor that is far too long.

@@ -1,0 +1,19 @@
+id: skitter-shell-bracer
+name: Skitter-Shell Bracer
+aliases: [shell-bracer]
+skill: jewelcrafting
+skill_minimum: 10
+station: jeweler_bench
+time_rounds: 4
+ingredients:
+  - item_tag: shrimp-chitin
+    quantity: 4
+  - item_tag: leather-strip
+    quantity: 1
+  - item_tag: copper-wire
+    quantity: 1
+output:
+  item_id: 20103
+  quantity: 1
+success_actor: "You pierce each shell, overlap them like scales, and lace them onto a leather backing with copper wire. A skitter-shell bracer!"
+failure_actor: "The brittle shells crack under the awl one after another. The materials are wasted."

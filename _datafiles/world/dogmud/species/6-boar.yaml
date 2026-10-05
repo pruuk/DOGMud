@@ -35,3 +35,15 @@ damage:
   variance: 3
 damage_multiplier: 0.75
 disabledslots: ['weapon', 'offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet']
+# Wilderness trades: what a carcass gives to skin and butcher. Quantities
+# are for a medium body (small halves, large doubles). See species/harvest.go.
+harvest:
+  skin:
+    - {itemid: 40303, qty: 1}                       # boar hide
+  butcher:
+    - {item: raw-meat, qty: 3}
+    - {item: sinew, qty: 1}
+    - {item: bone, qty: 2, tool: cleaver}
+    - {item: animal-fat, qty: 2, tool: cleaver}
+    - {item: tusk, qty: 1, tool: bone_saw, rare: true, chance: 0.4}
+    - {itemid: 40258, qty: 1, tool: bone_saw, rare: true, chance: 0.25, min_tool: 3}  # trophy tusks: steel saw or better

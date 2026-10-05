@@ -145,6 +145,12 @@ func EvaluateCraftOptions(recipes []string, shopInv *ShopInventory, cfg PricingC
 			continue
 		}
 
+		// Never a forged tool: iron and better tools come only from players
+		// (wilderness trades review, items.NeverResold).
+		if spec := items.GetItemSpec(recipe.Output.ItemId); spec != nil && items.NeverResold(*spec) {
+			continue
+		}
+
 		// Skip if output is already at max stock
 		entry := shopInv.GetStock(recipe.Output.ItemId)
 		if entry != nil && entry.Current >= entry.MaxStock {

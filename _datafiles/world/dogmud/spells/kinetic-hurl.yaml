@@ -15,5 +15,7 @@ base_folds: 4
 effect_type: damage
 effect_magnitude: 300
 damage_multiplier: 1.00
+categories:
+  - harm_single
 cast_actor: "You gather telekinetic force, the air between your hands distorting."
 cast_observer: "{actor} gathers telekinetic force, the air distorting around their hands."

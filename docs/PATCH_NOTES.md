@@ -1,5 +1,447 @@
 # DOGMud Patch Notes
 
+## 2026-10-04: Trade fixes
+
+- **Stay with your work.** A craft, mine, chop or carcass job now finishes
+  only where you started it. Walk away, recall, flee or get carried off and
+  the job ends; a craft's half-worked materials are ruined.
+- A craft also checks at the end that you still hold its tool.
+- **Shops no longer lose money to buy-and-sell-back loops.** A shop never
+  pays more for something than its own resale price justifies.
+- **Broken and badly worn gear sells only as scrap.** It is no longer put back
+  on the shelf as new. Shops remember the scrap and forged tools they buy
+  lately, so each one fetches a little less.
+- **Shop goods count as standard grade.** Materials bought from a shop have
+  lost their grade, so they make at most fine work; superb and pristine work
+  needs fine or better materials you gathered yourself.
+- A weapon wears only from critical hits it lands itself: a critical kick no
+  longer wears your sword, a shield bash wears the shield, and when you fight
+  with two weapons only the one that struck wears.
+- Rift rooms can no longer be mined or felled.
+- `harvest roe deer` now lists the deer instead of cutting its hide.
+- Trappers and hunters (Delk, Maudry, Ottar) sell feathers and iron and bone
+  arrowheads for fletching.
+
+## 2026-10-04: Gear wears out, and can be mended
+
+- **Weapons, armour, shields and tools now wear with use** (`help repair`).
+  A weapon wears a little when it lands a critical hit, and one piece of
+  your armour when you take one. Bows never strike, so they wear a little
+  with each arrow fired instead. Tools wear with every job. Wear is slow,
+  and well-made gear lasts longer.
+- Worn gear works a little worse, badly worn gear worse, and broken gear
+  barely at all: a broken weapon hits feebly, broken armour hardly protects,
+  and a broken tool cannot be used. Broken things are no longer lost; they
+  wait to be mended. Merchants pay less for worn gear.
+- **`repair`** lists what needs mending and who here can do it, and
+  **`repair <item>`** mends it. If you could craft the piece here (you know
+  its recipe, have the skill, and stand at its workbench with its tool), you
+  mend it yourself for free. Otherwise a merchant of its trade mends it for
+  gold: a smith for metal weapons, armour and tools, a woodworker for bows
+  and staves, a tailor for leather and cloth.
+
+## 2026-10-04: Mining
+
+Dig your own ore (`help mining`, `help mine`, `help prospect`).
+
+- **`prospect`** reads the rock in a cave, on a mountainside or along a cliff:
+  what ore runs there, how much is left, and whether your pick can work it.
+  Silver and basalt-iron take a sharp eye to recognise, and gold a sharper one.
+- **`mine`** needs a pick. Your Strength, your Vitality and your pick decide
+  how it goes; there is no mining skill. A strong miner brings out more ore,
+  and a better pick is quicker and digs better ore. Coal, copper, tin and iron
+  take any pick; silver, basalt-iron and lake-iron an iron pick; gold a steel
+  one. Now and then the rock gives up a gem, and very rarely a flawless one.
+- **Where**: Pothole Coulee (and the guarded drifts of its basalt-iron mine,
+  where the silver and gold are richest), the Low Tunnels, the Ironwind
+  Steppe, the Eastern Highlands, Cascade Pass Road and the Stillwater caves.
+  Seams run out and refill over a couple of days.
+- **Picks**: rough picks from Mine Foreman Dagna at the Pothole Coulee Mine
+  Mouth (new), Smith Rusk and Smith Brindle; miner's, steel and masterwork
+  picks only from a smith.
+- **Smelting**: copper, tin, silver and gold ingots, bronze from copper and
+  tin, and copper, silver and gold wire drawn at a jeweler's bench. Every
+  metal a smith or jeweler uses can now come from your own pick.
+- **Metal gear**: daggers, short swords, bucklers and helms in copper,
+  bronze, silver and gold. Copper is cheap and soft, bronze nearly iron,
+  silver quick in the hand and warding against magic, and gold a poor thing
+  to fight with that is worth a small fortune and makes its wearer more
+  charismatic.
+- A flawless gem ring for master jewelers.
+
+## 2026-10-04: Gear grades matter, and bows know their wood
+
+- **Grades now change how gear works**, not only what it sells for. Every
+  crafted weapon, armour piece, shield and piece of jewelry comes out graded
+  by how well the work went. A crude weapon hits 15% softer and swings 15%
+  slower; a pristine one hits 25% harder, swings 15% faster and weighs 10%
+  less. Armour and shields protect 15% less when crude and 25% more when
+  pristine. Fine and superb sit in between (`help craft`).
+- **Bows and arrows name their wood**: a longbow (yew), a quiver of arrows
+  (cedar). Staves and shafts remember the tree they came from. Ash bows draw
+  faster, elm bows aim steadier, and yew is the best of both. Cedar and spruce
+  arrows fly truer, juniper, larch and birch hit harder, and willow, cypress
+  and birch arrows are often picked up whole after a shot (`help woodwork`).
+
+## 2026-10-04: Hunter's gear: rare parts in jewelry, smithing and tailoring
+
+The rare parts you take off a carcass now go into some of the best gear in
+the game, and the very best needs trophies only a good tool takes whole.
+
+- **Jewelcrafting**: claw bracelet, talon ring, carved antler amulet and tusk
+  armlet (skill 14 to 24, from claws, talons, antler and tusks a bone saw
+  takes); the tuskbound torc, the antler circlet and the Hunt-King's Pendant
+  (skill 42 to 55) need trophy tusks and antlers, which only a steel bone saw
+  or better takes whole.
+- **Blacksmithing**: the antler-hilt hunting sword (skill 28); and from
+  crucible steel, tusk-knuckle gauntlets (48, trophy tusks), the crucible
+  plate helm (50, lined with a great bear pelt, which only a masterwork knife
+  takes) and the stag-hilted crucible blade (52, trophy antlers).
+- **Tailoring**: the prime wolf cloak (35, prime wolf pelts: steel knife) and
+  the great bearskin cloak (55, a great bear pelt: masterwork knife).
+
+## 2026-10-04: Wilderness trades review: tools, trappers and trophies
+
+- **Carpentry is now woodwork.** Your rank carries over automatically, and
+  the recipes, help and merchants follow the new name (`help woodwork`).
+- **Tools are made, not bought.** Merchants sell only crude tools: a flint
+  skinning knife, a camp hatchet, a butcher's chopper, a rough bone saw, a
+  rough bucksaw, a flint scraper, a flint sickle, a rough whittling blade.
+  Iron, steel and masterwork tools come only from a smith's forge, and
+  merchants who buy one sell it on for scrap, never to you. Forged tools come
+  out graded by the smith's skill: a pristine iron knife works like steel.
+- **New tools**: steel cleavers, bone saws, bow saws, hide scrapers, sickles
+  and whittling knives (blacksmithing 15 to 22), and masterwork versions of
+  every tool (blacksmithing 45 to 55) forged from **crucible steel** (steel,
+  basalt-iron ore and coal dust, blacksmithing 40) on **ironwood hafts**
+  (woodwork 35, from ironwood you need a steel axe to fell).
+- **Tools wear out.** Every job wears a tool; crude ones last about thirty
+  jobs, masterwork ones hundreds. They show `(worn)` and `(badly worn)`
+  before they break.
+- **Better tools, better finds.** A better tool raises your odds of rare
+  parts, and some prizes need one: a prime wolf pelt, trophy antlers and
+  trophy tusks need steel, a great bear pelt needs masterwork. Yew and black
+  walnut need an iron axe, ironwood a steel one. A sickle in your pack now
+  helps you forage more and rarer herbs.
+- **Trappers and hunting camps** buy anything off a carcass at the usual
+  shop prices and sell the crude tools: Hunter Delk at Hunter's Hollow in
+  Pothole Coulee, and two new traders, Trapper Maudry at the Stillwater
+  travelers' camp and Trapper Ottar at the Fernway's eastern trailhead.
+  Woodcutter Hagen on the North Road now buys logs and sells hatchets, saws
+  and planks.
+- **More workbenches**: a woodworking bench in Thornwall's Craftsmen's
+  Quarter, the New Plymouth cooperage and the Confluence cooperage, and a
+  forge in the New Plymouth forge yard.
+- Raw meat, hides and pelts left lying on the ground rot away once they
+  spoil.
+
+## 2026-10-04: Wilderness trades, phases 4 and 5: lumberjacking and woodwork
+
+Fell trees, haul the logs home, then sell them or work them yourself
+(`help lumberjacking`, `help chop`, `help woodwork`).
+
+- **`survey trees`** shows what grows in a forest, deep wood or marsh, what
+  the wood is good for and how many good trees are left. Rare woods (yew,
+  black walnut, ironwood) take a sharp eye to name.
+- **`chop`** (or `fell`) needs an axe. Your Strength, your Vitality and your
+  axe decide how it goes; a strong woodcutter gets more logs, and a better
+  axe is quicker and makes better logs. Felled trees also give branches and
+  sometimes bark. Logs are heavy.
+- Each stand of trees can be felled out. It regrows about a tree an hour, and
+  may come back as something else. The Fernway grows oak and ash, Cascade
+  Pass pine, spruce and the odd yew, the Fernway South a rare ironwood.
+- Camp-Foreman Bertt at the Cascade Pass lumber camp buys logs and sells
+  crude axes and saws and planks. Corwin Ashlade, Amber Valley's woodworker,
+  is now a bowyer: he buys bows and woodwork and sells shafts, bowstrings,
+  arrows, self bows and rough whittling blades.
+- **Woodwork** recipes: saw planks, boards and arrow shafts, split bow
+  staves, whittle shafts from branches; make a self bow, hunting bow, longbow
+  or horn composite bow; fletch arrows and bolts; make a quarterstaff, a
+  wooden shield or a kite shield. Smiths can forge iron arrowheads.
+- **Furniture**: a woodworker can make a wooden chest, a bed frame or a
+  workbench. Carry it home and `use` it in your lodging to set it up as a
+  container, a bed or a woodworking bench.
+
+## 2026-10-03: Wilderness trades, phases 2 and 3: hunting and processing
+
+Hunt it, skin it, butcher it, then sell it or make something of it
+(`docs/economy/wilderness-trades.md`, `help skin`, `help butcher`).
+
+- **`skin <corpse>`** takes the hide, pelt, fur, scales or chitin;
+  **`butcher <corpse>`** (or `carve`) takes the meat, bone, sinew, fat and
+  more; **`harvest <corpse>`** shows what is left, and **`harvest fang from
+  wolf`** takes one part with extra care for a better grade. You need a
+  knife; a cleaver gets bone and fat; a bone saw gets horn, antler, tusks,
+  fangs and claws. Skin before you butcher.
+- What comes off is graded crude to pristine. Your Dexterity, Strength and
+  Perception matter most, then your tools, then a little salvage skill.
+  Rare parts (fangs, glands, a bear's bile) are found only by a sharp eye.
+  An old carcass gives worse.
+- Every warm-blooded animal and most beasts now have hides and parts:
+  wolves, hounds, bears, boars, deer, cats, otters, horses, birds, snakes,
+  lizards, fish, insects and spiders. The pack-hide and predator pelts, the
+  apex claw and the heat-pit organ are cut from the carcass now rather than
+  dropped as loot.
+- Raw meat, organs and raw hides **spoil** after a day or a few of game
+  time. Cure, smoke or sell them. Shop-bought goods never spoil.
+- Merchants pay by grade and freshness. Selling several of the same thing
+  to a shop that does not normally stock it no longer pays more for the
+  second than the first.
+- Corwin the Tanner sells skinning knives, hide scrapers, salt and bark
+  liquor.
+- **Processing**: cure and tan hides into leather and cut it into strips;
+  twist sinew, horsehair or gut into bowstrings and cord; smoke meat, dry
+  jerky, roast fowl, render tallow, boil bone glue and steep bark liquor;
+  carve bone needles, arrowheads and fang necklaces; make wolf, bear, cat
+  and otter fur garments, fur-lined boots, a hide jerkin, a scale vest and
+  chitin bracers. Each fur lends its garment something of its animal.
+- Recipes can need a tool now, and a crafted item made with one, or from
+  graded materials, is graded too.
+
+## 2026-10-03: Wilderness trades, phases 0 and 1
+
+Groundwork for hunting, butchery and lumberjacking as ways to play
+(`docs/economy/wilderness-trades.md`).
+
+- Every warm-blooded animal can now be salvaged for meat, leather and sinew.
+  The steppe wolves, the boars, the pronghorn, the steppe hare and the
+  Pothole Coulee hounds used to leave a corpse with nothing on it.
+- Plains, deep forest and river banks can be foraged.
+- Caves and mountains give iron ore instead of finished iron ingots; smelt
+  two ore into an ingot at a forge (`craft smelt`).
+- The thick predator-pelt becomes a Predator-Pelt Mantle (tailoring 30),
+  and skitter-shrimp shells a Skitter-Shell Bracer (jewelcrafting 10).
+- Pack-hide pelts can be tanned into leather strips at a tanning rack
+  (tailoring 5). Tanning racks are in the New Plymouth tannery, the
+  Stillwater tannery shed, Kilnreach and Amber Valley.
+- New skill: **woodwork** (dexterity), worked at a woodworking bench in
+  Amber Valley, Kilnreach, the Cascade Pass lumber camp, the North Road
+  woodcutter's camp and the Fletcher's Ledge. First recipe: the wooden club.
+  Bows and arrows now count as woodwork goods as well as smithing goods.
+  New professions: woodworker, bowyer.
+- Tools: smiths can forge skinning knives, a cleaver, a bone saw, a hide
+  scraper, a woodcutter's axe, a steel felling axe, a bow saw, a whittling
+  knife and a sickle (`help tools`). The Fernway handaxe and the obsidian
+  knife count as iron tools. Nothing uses tools yet; skinning and
+  butchering arrive in phase 2.
+- Materials can now carry a grade (crude, standard, fine, superb,
+  pristine), shown after the name and paid for by merchants. Nothing is
+  graded yet; ungraded items sell exactly as before.
+
+## 2026-10-03: Animals are what they look like
+
+Thirty-two creatures had the wrong species, and since creatures hunt and
+ally by species, the coyote was prey to rat-hunting dogs and the wolf
+counted rats as kin. Each is now the kind of beast it is described as:
+
+- Fox, coyote, timber wolf and wild dog are canines; the feral hog a boar;
+  the farm cat a feline; the mouse, river rat and jackrabbit rodents.
+- The briar hawk, wheeling hawk and scavenger bird are raptors; the otters
+  mustelids; the river gar a fish; the river lurker and sun-lizard reptiles.
+- Grubs, crawlers and the cave and canal lurkers (all many-legged and
+  plated) are insectoids.
+- Two new species: **bird**, for the chicken, sparrow, herons, sage grouse
+  and crows (no longer allies of the hawks that hunt them), and **horse**,
+  for Hob and Bran, Thornwall's draught horses (they were human).
+
+## 2026-10-03: Rift fixes
+
+- A party invite nobody has accepted no longer lets the inviter's party
+  into the invitee's rift.
+- A fold-recall started before stepping into a rift no longer carries you
+  out of it when it finishes.
+- A companion left behind in a rift room goes to its owner when the room
+  closes, instead of being stranded in a room that no longer exists.
+- Rift doors are never named after a command: three "drop" doors are now
+  "plunge" and three "rift" doors "fissure", so `drop sword` drops the
+  sword. Generated rooms are held to the same rule.
+- The lens table now says plainly when the next mistake undoes it, and
+  will not pair two lenses at once while another already waits.
+- The glass armour is valued at what its lenses cost, and the Arena Iron
+  Greaves and Chain Gloves weigh what iron and chain should.
+
+## 2026-10-02: Rifts into the Obelisk
+
+- Shards of dark crystal now hang in the air in a handful of wild places
+  across the land, a few in each region. They are never in towns or on the
+  roads, and every day they are somewhere new. `enter crystal` or
+  `touch crystal` to step inside the Obelisk: a maze of dark crystal in a
+  place that is not quite anywhere, left behind by a people long gone.
+- Go in with friends: once the first of you is through, the rest have a
+  short while to follow before the way closes behind you.
+- There is no way back the way you came. Every room has several ways on,
+  and the rooms you leave are gone behind you. No map works in there.
+- Some rooms are quiet passages, some are halls worth a long look, some
+  hold a puzzle or a trap, some hold things that guard them, and a few hold
+  something far worse. A room with enemies in it keeps its doorways shut
+  until they are dealt with.
+- The only way out is a breach in the crystal, and every way into a breach
+  is locked. Facet Keys open them, one key per lock, and only the Obelisk's
+  great guardians and its hardest puzzles give them up. A Facet Key does not
+  survive outside the Obelisk. The breach always lets you out where you came
+  in, even if the crystal there has since moved on.
+- Glowstones, shards of the Obelisk's crystal that keep a light of their
+  own, lie here and there inside. Wear one to see by. Like the keys, they
+  crumble to nothing outside the Obelisk.
+- The Obelisk is never quite still. Glass settles, the walls hum, and your
+  reflection does not always keep up with you. If you have "Make the world
+  livelier" ticked, now and then something happens in there that nobody
+  wrote down beforehand.
+- Heaps of crystal rubble lie in some rooms, more often the deeper and more
+  dangerous the room. `search rubble` and you may turn up something left
+  behind. Each heap gives up its find only once.
+- The Obelisk is still guarded. Its makers' security, the Lenses, keeps
+  running: Glint Stalkers that wait in the facets, cut, and vanish again;
+  Spine Lattices that loose their shards in volleys; Splitlights that turn
+  your blows back on you and drink the life out of a room; and, at the
+  heart of it, the Watching Obelisk itself. Watch for what they are
+  gathering. Some of it can be broken off with a hard enough blow.
+- Rooms with guardians in them stay shut to anyone they know is there. You
+  can still flee. Something in the walls will notice if you do. It comes
+  for you room by room, and if you stop long enough it finds you, and while
+  it can see you there is no way out. Keep moving, or stay unseen.
+- Stealth works in the Obelisk. Sneak, and its guardians have to notice you
+  to fight you; slip through a guarded room unseen and nothing follows. The
+  Glint Stalkers, which sometimes wait in the passages too, are the easiest
+  to get past.
+- Rare Obelisk Glass can sometimes be foraged from seams in the crystal.
+- Some rooms hold a small clouded prism. Study enough of them and the round
+  marks carved all over the Obelisk start to make sense to you, for good.
+  After that, the writings you find tell what became of the people who
+  built the place.
+- The Obelisk now has many more rooms to find: twenty passages, eleven
+  great halls, ten rooms of puzzles and traps, five guarded rooms and five
+  breaches, each with things worth a closer look. And the writings now tell
+  a longer story, ten fragments in all, of the people of light who built
+  the place, what they saw through it, and what came back the other way.
+- The Obelisk grows. If you have "Make the world livelier" ticked, now and
+  then, while you explore, your key writes a brand new room in the
+  background, and once it is checked it stays in the Obelisk for good, for
+  everyone, to turn up in later runs.
+- Some rooms hold a lens table: thirty-six lenses face down, tuned in
+  pairs. Type a lens's place, like `1c`, to turn it, and find its partner.
+  Matched pairs stay up; mistakes cost you, and when the table's patience
+  runs out every lens turns back, even the pairs you found. It forgives
+  less each time, and in the end it goes dark for good. Lock every pair
+  and the sealed way opens. No two tables are laid out alike, and only
+  those who can read the Obelisk's marks can make sense of one. See
+  `help lenses`.
+- Every rift is yours alone. Go in on your own and nobody else will ever
+  be in there with you; go in with your party and only your party follows.
+- The only ways out are a breach opened with a Facet Key, and dying. Keys
+  come only from the Obelisk's great guardians and from its lens tables:
+  lock every pair on a table and it gives you one.
+- The Obelisk is not kind to the fallen. Die in there and it keeps
+  everything you carry, all the gold on you, and maybe some of what you
+  wear. Leave the game while inside and it keeps what you carry. Your keys,
+  quest items and things bound to you are never taken.
+- Obelisk Glass has a use at last. A jeweler can grind one shard into
+  three Obelisk Lenses (`craft obelisk lens`), and a smith can scale
+  armour with them by the dozen: the Glass-Scale Hauberk, Glass-Scale Helm
+  and Glass-Facet Buckler. Each is a fraction of the weight of the steel
+  piece it is built on and a little harder, and throws a little of every
+  blow back at whoever struck it. They take a great many lenses,
+  and a failed attempt loses them all.
+- Armour has weight now. About half of it, mostly the everyday and
+  starter pieces, weighed nothing at all. Every piece now weighs what its
+  material and make suggest: iron and chain the most, leather less, cloth
+  and jewellery hardly anything. Worn armour still counts at half its
+  weight, so most adventurers will barely notice; a full kit of iron is a
+  load you will feel.
+- Fixed: recipes that make more than one of something now do. Crafting
+  chain links gives the three links the recipe always promised. Salvaging
+  one of several made together gives back only its share.
+- What it keeps, it sometimes gives back: now and then a heap of rubble
+  holds something another adventurer lost in the dark. Once found, it is
+  gone for good.
+- Fixed: being blinded by a condition that simply ran out could leave you
+  unable to see anything until you died. Your sight now comes back when the
+  blindness ends.
+
+## 2026-10-01: Townsfolk and places with something new to do
+
+- Now and then, a shopkeeper, guard, barkeep or any other townsperson
+  will do or say something fresh instead of one of their usual idle lines:
+  chasing off a bird that has claimed their shelf, glaring at a jar that
+  will not stay put, muttering at a draught. Each moment fits who they are,
+  where they are, and what is around them, wares included.
+- This only happens with your own Companion key loaded, and it uses that
+  key, a little at a time. A new box on the Companion key page, "Make the
+  world livelier", is ticked for you; untick it to keep your key for your
+  companion alone. More ways for the world to come alive will use this same
+  box.
+- The places themselves come alive too. Now and then, instead of one of its
+  usual background lines, a street, tavern or wood shows you something of
+  its own: a rat darting along the foot of a wall, a gull making off with
+  a crust, an argument behind a closed door about whose turn it was to
+  fetch water.
+- Look at anything a room's description mentions. If nothing there answers
+  to it, you now get a closer look written for that very thing: the moss in
+  the fountain's cracks, the sign creaking over the cartwright's door.
+  Whoever looks after you sees the same detail.
+- These moments happen around you, never to you, and follow the same light
+  rules as everything else: in the dark you will not see them, though you
+  may still hear something.
+- AI companions are not affected: they already speak for themselves.
+- Fixed: a companion's farewell could not be written on your own key, so it
+  always fell back to a plain sentence.
+
+## 2026-10-01: City scavengers
+
+- The loot goblin is gone. It no longer steals everything left on the
+  ground across the world.
+- Every city now has a scavenger who walks its streets and picks up
+  whatever people leave lying on the ground: Old Mags the rag-and-bone
+  woman in the Common, Tuck in the Crafting Quarter, Jory the mudlark on
+  the docks, Ambry the lost-property clerk among the merchants, Mistress
+  Coombe in the Noble Quarter, Brother Amsel at the temple, Nettle in the
+  Outskirts, Grist in Thornwall, Moll on the Confluence quays, Odile in
+  the Confluence's upper town, Penhallow in Greenford, Gull in Stillwater,
+  Dunn in Hartcharn, Ruck in Kilnreach and Widow Sallis in Amber Valley.
+- A scavenger stops in each place for a while before moving on, so you
+  can catch up with one.
+- Lost something in town? The scavenger has it, and a skilled thief can
+  pick their pocket for it. Be quick: once a day, each scavenger gets rid
+  of everything they have found.
+- Outside the cities, things left on the ground slowly disappear, a little
+  every day. Big piles disappear faster than a single dropped item. Nothing
+  disappears while you are standing in the room.
+- Things that belong where they are, like a room's own props and quest
+  items, are never taken or removed.
+- Nothing is ever removed from inside your own home.
+
+## 2026-10-01: Merchant chests
+
+- Every merchant now keeps a locked chest in the shop: a smith's iron
+  strongbox, a jeweller's velvet-lined casket, a cook's tin cashbox, an
+  enchanter's warded coffer, and the auction house has a vault. Each one
+  is restocked from time to time with coin and a few of the merchant's
+  own goods.
+- Merchants with finer stock keep better locks and sharper eyes. Setting
+  a pick to a merchant's chest, or reaching into one you have opened, is
+  watched by everyone in the room. A merchant who catches you shouts
+  thief, slams the chest shut and locks it, and you are treated as caught
+  stealing from them.
+- A sleeping merchant notices far less, whether you are at the chest or
+  sneaking past, and one who has stepped out cannot notice at all.
+- Whatever comes out of a merchant's chest is stolen goods, and shows an
+  s beside its name in your pack. Like a stolen trinket, it is hot for
+  three days in the town you took it in: no honest merchant, storage or
+  auction house there will take it, and you cannot craft with it or
+  salvage it while it is hot. Carry it to another town, or wait it out,
+  and it sells like anything else.
+- A fence buys chest goods anywhere, at any time, and moves them on
+  rather than putting them on its shelf. A fence will not buy back goods
+  taken from its own chest.
+- While the goods are hot, the merchant you robbed may recognise them on
+  you wherever you meet, even if you are wearing them, and the town's
+  guards and watchmen may too while you are still in that town, and
+  report you to the law. Give them back to the merchant and they are
+  theirs again.
+- Stolen goods never merge with clean ones in storage, and when you carry
+  clean copies of the same thing, a sale takes those first.
+- Fixed: `steal` no longer reaches into a locked container.
+
 ## 2026-10-01: Secondhand shelves
 
 - A general store or jeweller that buys a trinket of some worth from you
@@ -106,6 +548,160 @@
   stays on.
 - Picking something up by name that turns out to be stashed now refuses an
   item about to explode, the same as asking for it from your stash by name.
+
+## 2026-09-30: Beds and workshops
+
+Every landlord now sells two more things. A bed deed (250 gold) puts a bed
+in a room of your lodging: sleep in it and you rest twice as fast as on the
+floor. A crafting station deed (1500 gold) installs the station of your
+choice, a forge, loom, alchemy bench, jeweler bench, cooking fire or
+enchanting circle, so you can craft at home. Each room takes one of each,
+and your guests can use them too. At the Hollow Oak they cost a quarter as
+much, as everything there does. Type list beside your landlord.
+
+## 2026-09-30: A hollow in the Oak
+
+Travellers on the South Road have been noticing a tree. Below the Lake &
+Ladle, at the Shepherd's Reach, a sheep-track drops east off the road into a
+green combe where an enormous oak stands, lit windows in its trunk and
+smoke rising from its roots. That is the Hollow Oak, and its hollows are to
+let. Old Brock, a badger of great age and some patience, keeps the ledger on
+a stump beneath it and sells everything the city landlords sell: homes,
+digging deeds, paint vouchers, guest acorns, and container and strongbox
+deeds. Type list beside him.
+
+Nobody needs to vouch for you under the Oak, and everything costs a quarter
+of what it does in a city. A home there is separate from your city homes,
+and its deeds and acorns are good only there.
+
+## 2026-09-30: A hole in Thornwall
+
+Thornwall has lodgings too, of a sort. Past Torvan Cresk's operations room,
+at the foot of the smugglers' escape shaft, a crawlway runs east to the
+Burrow Mouth: the one way into the Burrows, a warren of wide tunnels and
+hide-outs cut under the city. Brannoc Tull minds the iron-banded door for
+Torvan. He lets hide-outs and sells digging deeds, paint vouchers, guest
+keys, and container and strongbox deeds, all off a chalked slate. He will
+not be polite about it. Type list beside him.
+
+Torvan only lets holes to people the folk upstairs will vouch for. If the
+city doesn't know you yet, Marek at the Drowning Post could use some help.
+
+As with the other cities, a home in the Burrows is separate from your homes
+elsewhere, and its deeds and keys are good only there.
+
+Also: whatever you pay a landlord is gone for good. None of their deeds,
+vouchers or keys can be sold to a merchant.
+
+## 2026-09-30: A room in the Confluence
+
+The Confluence has a lodging house now. West off Hall Lane, behind the
+Municipal Hall, a small flagged court ends at the blue door of the
+Quillhouse, a tall narrow house of scholars, copyists and clerks. Its
+under-clerk, Aubric Sallow, sits beneath the door lamp with his ledger and
+sells everything Hobb Pennock sells in New Plymouth: homes, extension deeds,
+redecorating vouchers, guest keys, and container and strongbox deeds. Type
+list beside him.
+
+Madam Pardew, who owns the house, lets only to people the Margin will speak
+for. If the scholars don't know you yet, Quist the Elder at the Margin Hall
+usually has an old chart that needs a second pair of eyes.
+
+You can keep a home in both cities. They are entirely separate: each has its
+own rooms, guests, deeds and storage, and a deed or key from one lodging
+house is no good in the other. Type house to see all your lodgings; house
+revoke and house leave cover every lodging a guest or owner shares with you.
+
+## 2026-09-30: Somewhere to keep things
+
+Hobb Pennock now sells furniture, of a sort. Lodgers can buy:
+
+- **A Container Deed**, 250 gold. Stand in one of your rooms and type use
+  container deed, and give it a one-word name when asked: chest, shelf,
+  vase, mug, whatever you like. You can also type use container deed chest.
+  After that, look in chest, put things in chest and get them from chest
+  (open chest works too, as does remove from chest). Anyone you let into
+  your lodging can use it.
+- **A Strongbox Deed**, 500 gold. The same, but it opens for you and
+  nobody else: not your guests and not their pets. Your own companions
+  can still use it for you.
+
+What you keep in them stays there through logouts and restarts. Each room
+of your lodging can hold up to six, as long as the names differ, and there
+is no limit for the lodging as a whole. Look at a deed to read how it works.
+
+Anything you leave on the floor of your lodging stays there too, through
+restarts and all. A lodging is private, so searching there turns up no
+curios.
+
+Room Extension Deeds: you can hold one unused deed at a time. If you lose
+yours, Hobb hands you a fresh copy for nothing; whichever copy you use first
+counts. Asking Hobb how much something costs no longer buys it by mistake,
+nor does telling him you don't want something: only asking him plainly to
+buy a named thing does ("ask hobb buy a room"), and the list and buy
+commands work as before.
+
+Also: look in, look into and look inside now work on any container, not
+just ones in your lodging.
+
+## 2026-09-30: Letting friends in
+
+You can now let friends into your lodging. Buy a **Guest Key** from Hobb
+Pennock (buy key, 100 gold) and give it to a friend. They type use guest
+key at the green door once, and after that the door lets them in too,
+whether or not you are home. A lodging can have up to five guests.
+
+If you can go to more than one lodging, the door asks you which: your
+own home or one of the lodgings you have a key to. You can also type
+visit home, or visit and the owner's name, to go straight there.
+
+Type house to see your lodging, who can come in, and whose lodgings you
+can visit. Type house revoke and a name to take a guest's access away.
+If they are inside at the time, they find themselves back in the alley.
+Guests can give up their own access with house leave and the owner's
+name.
+
+Guests can walk every room and pick up anything left lying about, so
+only give keys to people you trust. They cannot extend or redecorate
+your lodging.
+
+## 2026-09-30: Bigger rooms, your own words
+
+Hobb Pennock, the letting clerk in Pennock's Alley, now keeps a proper
+list. Type list beside him to see what the lodging house sells:
+
+- **A home**, as before, for 500 gold, once the Common Quarter vouches
+  for you.
+- **A Room Extension Deed**, for lodgers. Stand in your lodging and type
+  use deed, pick a direction, and workmen knock a new room through. You
+  can also type use deed north (or south, east, west, up, down). Each
+  deed costs three times everything you have paid for rooms so far, so
+  the first is 1500 gold, the next 6000, and so on. A deed is made out
+  to you and works for nobody else.
+- **A Redecorating Voucher**, 500 gold. Use it in one of your rooms and
+  write how the room should look. Your description replaces the old one.
+
+Look at a deed or a voucher to read how it works. A lantern now hangs
+over the lodging house door, so you can read the list after dark.
+
+## 2026-09-29: A room of your own
+
+There is now somewhere in New Plymouth to call home. West of the Back
+Court in the Common Quarter, a narrow alley ends at a green door, and
+Hobb Pennock sits beside it with his ledger. He lets simple rooms for
+500 gold, paid once, to people the Common Quarter can vouch for. If the
+quarter does not know you yet, do some good there first. Ask him about a
+room to hear his terms, and ask him to buy one when you are ready.
+
+Once the room is yours, the green door opens for you and nobody else.
+Every lodger goes through the same door and comes out in their own room.
+Anything you leave on the floor stays there, and if you log out inside,
+you wake up inside. The rooms are bare for now. Furnishing them, making
+them bigger and inviting guests will come later.
+
+Behind the scenes: `keyword_match` in NPC behavior now ignores
+punctuation at the edges of a word, so asking "do you have a room?"
+works the same as asking "do you have a room".
 
 ## 2026-09-29: Pockets, companions and trinkets
 

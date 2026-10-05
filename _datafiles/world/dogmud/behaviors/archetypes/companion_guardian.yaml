@@ -1,0 +1,50 @@
+# companion_guardian archetype (Corvel Dunmore, aicompanion)
+#
+# The shield man. He holds the line: draws whatever is going for the person
+# he travels with onto himself, puts casters down with the shield, and
+# steadies himself with a rally. Running, protecting and the plan are the
+# aicompanion module's (see companion_archer.yaml); this tree only answers
+# mob_combat_round.
+#
+# Decision order per mob_combat_round:
+#   1. Interrupt: bash a casting foe (needs his shield).
+#   2. Taunt: the foe he is fighting is on someone else.
+#   3. Rally, when it is not already on him.
+#   4. Bash.
+#   5. A kick at a foe already on the ground.
+#   fall through to the ordinary attack.
+# No callforhelp (a companion has no pack to call) and no grapple: he
+# stands his ground rather than going to the floor with anything.
+tree:
+  type: selector
+  children:
+    - type: selector
+      event: mob_combat_round
+      children:
+        - type: sequence
+          children:
+            - type: condition
+              check: target_is_casting
+            - type: action
+              do: command_best_of
+              cmds: [bash]
+        - type: sequence
+          children:
+            - type: condition
+              check: target_aggro_not_on_me
+            - type: action
+              do: command_best_of
+              cmds: [taunt]
+        - type: action
+          do: command_best_of
+          cmds: [rally]
+        - type: action
+          do: command_best_of
+          cmds: [bash]
+        - type: sequence
+          children:
+            - type: condition
+              check: target_not_standing
+            - type: action
+              do: command_best_of
+              cmds: [kick]

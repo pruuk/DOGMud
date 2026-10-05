@@ -1,0 +1,16 @@
+id: ironwood-haft
+name: Ironwood Haft
+aliases: [haft]
+skill: woodwork
+skill_minimum: 35
+station: woodworking_bench
+tool: saw
+time_rounds: 6
+ingredients:
+  - item_tag: ironwood-log
+    quantity: 1
+output:
+  item_id: 40254
+  quantity: 2
+success_actor: "You saw the ironwood along its grain, slowly, and shave two hafts round and true."
+failure_actor: "The saw binds and splits the log across a check. The ironwood is wasted."

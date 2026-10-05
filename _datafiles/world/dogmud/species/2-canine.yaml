@@ -35,3 +35,15 @@ damage:
   variance: 2
 damage_multiplier: 0.65
 disabledslots: []  # companion-gearable (steppe spirit wolf summon); see PATCH_NOTES 2026-05-29
+# Wilderness trades: what a carcass gives to skin and butcher. Quantities
+# are for a medium body (small halves, large doubles). See species/harvest.go.
+harvest:
+  skin:
+    - {itemid: 40301, qty: 1}                       # wolf pelt
+    - {itemid: 40255, qty: 1, rare: true, chance: 0.25, min_tool: 3}   # prime wolf pelt: steel knife or better
+  butcher:
+    - {item: raw-meat, qty: 2}
+    - {item: sinew, qty: 1}
+    - {item: bone, qty: 2, tool: cleaver}
+    - {item: animal-fat, qty: 1, tool: cleaver}
+    - {item: fang, qty: 1, tool: bone_saw, rare: true}

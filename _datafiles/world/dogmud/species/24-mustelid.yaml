@@ -38,3 +38,11 @@ damage:
   variance: 2
 damage_multiplier: 0.55
 disabledslots: ['weapon', 'offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet']
+# Wilderness trades: what a carcass gives to skin and butcher. Quantities
+# are for a medium body (small halves, large doubles). See species/harvest.go.
+harvest:
+  skin:
+    - {item: fine-fur, qty: 1}
+  butcher:
+    - {item: raw-meat, qty: 1}
+    - {item: musk-gland, qty: 1, rare: true, chance: 0.4}

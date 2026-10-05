@@ -32,11 +32,9 @@ character:
     eyes are a dull yellow, adapted to the murky water beneath the bridge where
     it lairs. Claw marks on the bridge pilings mark its territory. The river
     lurker is patient, territorial, and thoroughly dangerous at close range.
-  speciesid: 1
+  speciesid: 21
   level: 1
   gold: 0
-  items:
-    - itemid: 40048
   stats:
     strength:
       base: 110
@@ -50,3 +48,9 @@ character:
       base: 85
     charisma:
       base: 80
+# Wilderness trades: the venom sac is cut from the carcass now (a sure
+# thing on this one, unlike common reptiles).
+harvest:
+  butcher:
+    - {item: raw-meat, qty: 1}
+    - {item: venom-sac, qty: 1}

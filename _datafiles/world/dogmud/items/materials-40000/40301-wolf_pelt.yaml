@@ -1,0 +1,18 @@
+itemid: 40301
+name: Wolf Pelt
+namesimple: pelt
+description: >
+  A grey wolf pelt, coarse guard hairs over a dense, warm underfur. Raw,
+  and still smelling of the animal; it needs salting before it rots.
+type: object
+subtype: mundane
+component_tag: wolf-pelt
+weight: 1.0
+value: 12
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 2
+spoil_after: 4 days

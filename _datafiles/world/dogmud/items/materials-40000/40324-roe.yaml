@@ -1,0 +1,16 @@
+itemid: 40324
+name: Roe
+namesimple: roe
+description: >
+  A sac of fresh fish eggs, glistening orange. A delicacy, for a day.
+type: object
+subtype: mundane
+component_tag: roe
+weight: 0.2
+value: 15
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- cooking
+material_tier: 2
+spoil_after: 1 day

@@ -1,7 +1,7 @@
 mobid: 9800
 zone: Summons
 archetype: fighting
-behavior_archetype: generic_fighter
+behavior_archetype: companion_archer
 statpool: 90
 itemdropchance: 0
 hostile: false
@@ -9,6 +9,9 @@ maxwander: 0
 groups:
   - humanoid
 activitylevel: 10
+aiprofile: tactical
+specialmovechance: 15
+surrender_policy: auto-tap-below 20
 character:
   name: Mara Venn
   description: |
@@ -20,6 +23,10 @@ character:
     very slightly, as though weighing every word for its true value.
   speciesid: 1
   level: 1
+  skills:
+    search: 8
+    cooking: 5
+    skullduggery: 4
   stats:
     dexterity:
       base: 110

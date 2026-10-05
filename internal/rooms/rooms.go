@@ -114,6 +114,7 @@ type Room struct {
 	Stash             []items.Item                      `yaml:"stash,omitempty"`                        // list of items in the room that are not visible to players
 	Corpses           []Corpse                          `yaml:"-"`                                      // Any corpses laying around from recent deaths
 	Gold              int                               `yaml:"gold,omitempty"`                         // How much gold is on the ground?
+	FloorDecayDay     int64                             `yaml:"floordecayday,omitempty"`                // Last real-world day (DecayDay) the floor was decayed through. Instance-persisted; see floor_decay.go.
 	SpawnInfo         []SpawnInfo                       `yaml:"spawninfo,omitempty" instance:"skip"`    // key is creature ID, value is spawn chance
 	Signs             []Sign                            `yaml:"sign,omitempty"`                         // list of scribbles in the room
 	IdleMessages      []string                          `yaml:"idlemessages,omitempty" instance:"skip"` // list of messages that can be displayed to players in the room
@@ -129,6 +130,10 @@ type Room struct {
 	visitors      map[VisitorType]map[int]uint64 // list of user IDs that have visited this room, and the last round they did
 	lastVisited   uint64                         // last round a visitor was in the room
 	tempDataStore map[string]any                 // Temporary data store for the room
+	// authoredItemIds are the item ids the room template itself lays on the
+	// floor, set by LoadRoomInstance. They are content, not litter: floor
+	// decay and the city scavengers leave them be (floor_decay.go).
+	authoredItemIds map[int]bool
 }
 
 func NewRoom(zone string) *Room {
@@ -1279,6 +1284,7 @@ func (r *Room) AddItem(item items.Item, stash bool) {
 	if stash {
 		r.Stash = append(r.Stash, item)
 	} else {
+		r.noteFloorItemAdded(item)
 		r.Items = append(r.Items, item)
 	}
 
@@ -2759,6 +2765,9 @@ func (r *Room) RoundTick() {
 
 	// Found baubles left untaken too long vanish (baubles_untaken.go).
 	r.removeUntakenBaubles(time.Now())
+
+	// Harvested raw goods left lying about rot away (spoilage.go).
+	r.removeSpoiledGoods(roundNow)
 }
 
 func (r *Room) AddPlayer(userId int) int {

@@ -1,0 +1,17 @@
+itemid: 40243
+name: Flint Scraper
+namesimple: scraper
+description: >
+  A palm-sized flint with one edge knapped blunt and round, for scraping flesh
+  and fat from a pinned hide. It works, if you have the afternoon.
+type: object
+subtype: mundane
+weight: 0.3
+value: 3
+rarity_tier: 50
+vendor_categories:
+- tailoring
+- hunting
+tool:
+  type: scraper
+  tier: 1

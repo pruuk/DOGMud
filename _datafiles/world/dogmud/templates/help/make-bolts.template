@@ -1,0 +1,12 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">make-bolts</ansi> (woodwork recipe)
+
+Short crossbow bolts from shafts and arrowheads.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       woodwork (minimum 10)
+  <ansi fg="yellow">Station:</ansi>     woodworking bench
+  <ansi fg="yellow">Tool:</ansi>        carving knife
+  <ansi fg="yellow">Ingredients:</ansi> arrow shafts (x1), arrowhead (x1), leather strip (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help woodwork</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

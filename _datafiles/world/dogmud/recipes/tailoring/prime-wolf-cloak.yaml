@@ -1,0 +1,22 @@
+id: prime-wolf-cloak
+name: "Prime Wolf Cloak"
+aliases: [primecloak]
+skill: tailoring
+skill_minimum: 35
+station: loom
+tool: scraper
+time_rounds: 8
+ingredients:
+  - item_tag: prime-pelt
+    quantity: 2
+  - item_tag: salt-pouch
+    quantity: 1
+  - item_tag: thread-spool
+    quantity: 1
+  - item_tag: bone-needle
+    quantity: 1
+output:
+  item_id: 20123
+  quantity: 1
+success_actor: "You flesh and salt the two prime pelts and stitch them fur-in into a cloak. A prime wolf cloak!"
+failure_actor: "The pelts tear along a seam. The materials are wasted."

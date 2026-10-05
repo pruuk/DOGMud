@@ -1,0 +1,16 @@
+itemid: 40261
+name: Tin Ore
+namesimple: ore
+description: >
+  Dull grey crystals locked in pale rock. Tin is little use alone, but a
+  smith alloys it with copper into bronze.
+type: object
+subtype: mundane
+component_tag: tin-ore
+weight: 1.0
+value: 2
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- blacksmithing
+material_tier: 1

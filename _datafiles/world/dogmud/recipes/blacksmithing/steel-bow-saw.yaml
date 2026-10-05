@@ -1,0 +1,17 @@
+id: steel-bow-saw
+name: Steel Bow Saw
+aliases: [steelbowsaw]
+skill: blacksmithing
+skill_minimum: 22
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 2
+  - item_tag: hardwood-board
+    quantity: 2
+output:
+  item_id: 40246
+  quantity: 1
+success_actor: "You draw a long steel blade, cut and set the teeth and string it in a hardwood frame. A steel bow saw!"
+failure_actor: "The blade kinks as you tension it. The materials are ruined."

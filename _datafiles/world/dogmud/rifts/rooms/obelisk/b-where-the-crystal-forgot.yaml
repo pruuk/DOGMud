@@ -1,0 +1,63 @@
+id: b-where-the-crystal-forgot
+pool: B
+source: authored
+title: Where the Crystal Forgot
+description: >-
+  Here the Obelisk does not remember what it is. Half the hall is ordinary
+  black crystal, cold and faceted and true. The other half has gone wrong:
+  the walls sag like wax in some places and bristle with spikes in others,
+  facets grow in on themselves, and the floor is soft-looking, folded and
+  rippled, though it is hard as ever underfoot. Between the two halves runs
+  a stain of deeper darkness in the glass, a ragged line wider than a road,
+  and frost lies thick along both its edges. At the wrong end of the hall
+  stands what is left of a lens, a great ring of crystal whose glass has
+  burst outward, its fragments strewn across the floor in a fan. Some of
+  the fragments are not where they were a moment ago. On the good side of
+  the stain, the walls are scarred with long gouges, many of them, deep and
+  close, as if something tried to hold the line by force.
+nouns:
+  stain: >-
+    The dark in the glass is not a colour. It is an absence that the eye
+    slides off. Look straight at it and it seems shallow; look aside and it
+    seems to go down forever. Its edge is ragged with small reaching threads,
+    and the nearest of them are a little longer than they were.
+  lens: >-
+    The ring that held the lens is intact, carved round with marks. The
+    glass burst from the far side toward this hall, not away from it. The
+    marks on the ring stop partway round, and the last few have been
+    pressed again and again in the same places, until they are deep holes.
+  fragments: >-
+    Shards of the burst lens, some as long as an arm, spread in a wide fan
+    across the floor. They have dragged faint lines in the frost behind
+    them. While you watch, one lies still. While you do not, you hear the
+    small dry sound of glass sliding on glass.
+  gouges: >-
+    Long scars in the sound crystal, each one made by something with three
+    points, pressed in and dragged. They cluster thickest right at the edge
+    of the stain. Some have been filled with clear new crystal, carefully,
+    to seal them, and the filling has itself begun to cloud.
+  frost: >-
+    The frost along the stain is white on the good side and grey on the
+    wrong side, and where the two meet it grows in fine branching patterns
+    that look almost like the round marks, almost in rows, saying nothing
+    anyone could read.
+idlemessages:
+  - "A fragment of the burst lens slides a hand's width across the frost when you glance away."
+  - "Along the stain's edge, the dark thickens for a breath and thins again."
+doors:
+  - exit: fissure
+    description: >-
+      A fissure splits the warped wall on the wrong side of the hall, its edges
+      soft-looking and slick with grey frost.
+  - exit: chute
+    description: >-
+      A chute drops away from the good side of the hall, its sides still
+      cleanly faceted and cold.
+  - exit: notch
+    description: >-
+      A narrow notch near the burst lens, half closed by spikes of crystal
+      that seem to have grown across it.
+  - exit: aisle
+    description: >-
+      An aisle running back along the sound half, its walls scored with more
+      long gouges as far as you can see.

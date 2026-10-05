@@ -1,0 +1,15 @@
+itemid: 20107
+name: Fine-Fur Collar
+vendor_categories:
+- tailoring
+namesimple: collar
+description: >
+  A glossy collar of otter or badger fur, more for show than warmth, and
+  it shows. People take the wearer seriously.
+type: neck
+subtype: wearable
+weight: 0.3
+value: 110
+rarity_tier: 40
+statmods:
+  charisma: 3

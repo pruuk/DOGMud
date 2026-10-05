@@ -1,0 +1,17 @@
+id: steel-bone-saw
+name: Steel Bone Saw
+aliases: [steelbonesaw]
+skill: blacksmithing
+skill_minimum: 20
+station: forge
+time_rounds: 4
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 2
+  - item_tag: hardwood-board
+    quantity: 1
+output:
+  item_id: 40245
+  quantity: 1
+success_actor: "You cut and set the teeth, harden the blade and fit the grip. A steel bone saw!"
+failure_actor: "The teeth crack as you set them. The steel is ruined."

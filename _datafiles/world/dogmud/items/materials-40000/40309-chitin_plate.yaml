@@ -1,0 +1,18 @@
+itemid: 40309
+name: Chitin Plate
+namesimple: chitin
+description: >
+  A curved plate of chitin pried from an insect or a spider, light and
+  hard as horn.
+type: object
+subtype: mundane
+component_tag: chitin
+weight: 0.5
+value: 7
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- blacksmithing
+- jewelcrafting
+- hunting
+material_tier: 2

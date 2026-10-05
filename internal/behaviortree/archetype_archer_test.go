@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -55,7 +56,7 @@ func TestArchetype_Archer_FiresRangedShot(t *testing.T) {
 	if result := arch.Evaluate(ctx); result != Success {
 		t.Fatalf("archer mob_combat_round should fire a ranged shot via try_fire (Success), got %v", result)
 	}
-	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, "shoot Target north") {
+	if cmds := queuedCmds(mob.InstanceId); !contains(cmds, fmt.Sprintf("shoot #%d north", target.InstanceId)) {
 		t.Errorf("expected 'shoot Target north' queued, got %v", cmds)
 	}
 }

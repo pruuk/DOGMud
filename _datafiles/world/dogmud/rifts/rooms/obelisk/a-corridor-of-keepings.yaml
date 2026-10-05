@@ -1,0 +1,49 @@
+id: a-corridor-of-keepings
+pool: A
+source: authored
+title: Corridor of Keepings
+description: >-
+  The walls of this corridor are honeycombed from floor to shoulder with
+  small round alcoves, hundreds of them, each sealed by a lid of crystal
+  ground so thin it is nearly clear. Behind every lid something is kept.
+  Most of the keepings are small and plain: a single cut facet, a row of
+  glass beads, a sliver of lens, a pebble of grey stone worn smooth by
+  turning. Each alcove has a short row of round marks pressed beside it, and
+  the lids are polished at the edge where they were opened and closed, again
+  and again, over a long time. Many lids are cracked now, and their keepings
+  have gone dull. One alcove near the end is empty, and when you look into
+  it, an eye looks back.
+nouns:
+  alcoves: >-
+    Round alcoves the size of a cupped hand, set so close together that
+    the walls look like the inside of a seed head. Their lids lift on no
+    hinge you can find; each simply sits in a groove and turns. The lowest
+    rows are the most worn, as if those were the ones most often reached.
+  keepings: >-
+    Behind the nearest lid lies a ring of glass the width of a finger, too
+    small to be any tool. Behind the next, a flake of black crystal with a
+    single round mark pressed into it, deep and careful. These are not
+    stores. They are the small things kept by people who had little else
+    that was their own.
+  lids: >-
+    Thin discs of crystal that seal each alcove. Most are cool. The edge
+    of each is polished bright where it was turned, and on some the polish
+    has worn a shallow notch, as if one lid in particular was opened every
+    day for years. A few lids are cracked through, and frost has crept in
+    to cover what they kept.
+  eye: >-
+    The empty alcove holds no keeping, only a curve of black crystal at
+    its back. In it is an eye. It is yours, you think, though it is larger
+    and paler, and it blinks a moment after you do. When you step back it
+    lingers, still looking out, before it fades into the black.
+idlemessages:
+  - "Somewhere along the wall, a lid turns in its groove with a faint, dry whisper."
+doors:
+  - exit: span
+    description: >-
+      At the end of the corridor a short span of crystal crosses a dark
+      gap in the floor to an opening beyond.
+  - exit: hollow
+    description: >-
+      Between two banks of alcoves a low hollow leads off into the wall,
+      its floor scattered with fallen lids.

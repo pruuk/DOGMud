@@ -1,0 +1,24 @@
+itemid: 10051
+name: Steel Skinning Knife
+vendor_categories:
+- blacksmithing
+- tailoring
+namesimple: knife
+description: >
+  A skinner's knife of good steel, the curved edge holding a razor polish long after an iron blade would have dulled. A hunter who uses one brings home clean, whole hides.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 0.9
+speedmultiplier: 0.95
+damage:
+  basedamage: 3
+  variance: 1
+damage_multiplier: 0.4
+parryrating: 5
+value: 35
+rarity_tier: 40
+tool:
+  type: knife
+  tier: 3
+  speed: 1.15

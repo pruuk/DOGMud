@@ -1,0 +1,36 @@
+mobid: 9837
+zone: Rift Obelisk
+# Light entity. Refracts blows back at whoever lands them (condition 133,
+# Refraction: return damage) and drains the life of everything around it
+# (prismatic-siphon, telegraphed and interruptible), healing itself. Per-mob
+# tree: behaviors/rift_obelisk/9837-splitlight.yaml.
+archetype: casting
+hostile: true
+conditionids: [133]
+charm_immune: true
+pack_flee_immune: true # constructs: a fallen packmate is no reason to run
+submission_policy: lethal
+surrender_policy: never
+maxwander: 0
+groups:
+  - obelisk
+activitylevel: 15
+idlecommands:
+  - 'emote drifts, and the walls behind it break into bands of colour'
+  - ''
+  - 'emote flickers and is briefly in two places at once'
+  - ''
+combatcommands:
+  - ''
+character:
+  name: Splitlight
+  description: >-
+    A shape made of light that has passed through too much crystal. It has
+    no body, only an outline drawn in cold white fire, and wherever the light
+    of it falls on a facet it splits into thin bands of colour that crawl
+    across the walls. Looking straight at it is like looking through a prism:
+    there are always two or three of it, and only one is where it seems.
+  speciesid: 46
+  level: 1
+  gold: 0
+itemdropchance: 0

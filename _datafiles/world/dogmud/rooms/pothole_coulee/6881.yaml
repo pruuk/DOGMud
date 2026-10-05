@@ -1,0 +1,50 @@
+roomid: 6881
+zone: Pothole Coulee
+title: The Hearth Nook
+description: >
+  The cave pinches and then opens into a smoky, warm chamber that somebody
+  has turned into a kitchen with more love than sense. A fire pit ringed
+  with flat stones holds a dented kettle and a blackened pot that is
+  always, somehow, nearly ready. Strings of dried onions, peppers and
+  bundled herbs hang from pegs driven into the rock, a scarred chopping
+  block stands by the fire, and nailed above it all, like a trophy nobody
+  is proud of, hangs a heavy leather fighter's belt. The Mouth lies east,
+  a lamplit alcove opens to the south, the cave goes on west, and a crack
+  in the floor by the woodpile leads down into the dark.
+biome: cave
+lamp: 55
+coord:
+  x: 41
+  y: 1
+  z: 0
+mutators:
+- mutatorid: sanctuary
+exits:
+  east:
+    roomid: 6880
+  west:
+    roomid: 6883
+  south:
+    roomid: 6882
+  down:
+    roomid: 6885
+nouns:
+  kettle: A copper kettle dented on three sides and polished on the fourth,
+    hung over the fire on an iron hook. It is never quite empty and never
+    quite boiling.
+  pot: A wide iron pot, blackened outside and scrubbed bright within, with
+    a long wooden spoon laid across its rim. Whatever is in it smells of
+    onions, barley and something smoked.
+  onions: Strings of dried onions, red peppers and bundled thyme and sage
+    hang from pegs hammered into the rock, swaying a little in the heat
+    from the fire.
+  belt: A pit-fighter's championship belt of thick black leather and brass
+    studs, hung on a nail above the fire. The brass plate in the middle has
+    been turned to face the wall.
+  block: A round chopping block cut from a single stump, its top scarred
+    into a shallow bowl by years of knife-work and scrubbed clean.
+idlemessages:
+- The fire pops and sends a curl of woodsmoke drifting up into the dark.
+- The pot gives a slow, contented blup.
+x: 40
+y: 20

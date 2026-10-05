@@ -1,0 +1,18 @@
+id: self-bow
+name: "Self Bow"
+aliases: [selfbow]
+skill: woodwork
+skill_minimum: 0
+station: "woodworking_bench"
+tool: carving_knife
+time_rounds: 4
+ingredients:
+  - item_tag: bow-stave
+    quantity: 1
+  - item_tag: bowstring
+    quantity: 1
+output:
+  item_id: 10057
+  quantity: 1
+success_actor: "You shape the stave, tiller the limbs until they bend evenly, and string it. A self bow!"
+failure_actor: "A limb cracks as you tiller it. The stave is ruined."

@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -66,7 +67,16 @@ func Select(c Criteria, s Scope) (state.ActorRef, bool) {
 }
 
 func selectRandomPlayer(s Scope) (state.ActorRef, bool) {
-	playerIds := s.Room.GetPlayers()
+	// Only a player the picker could know is there: not one hidden (an
+	// undetected sneaker is not a target, as lookfortrouble already rules)
+	// and not one already down.
+	playerIds := make([]int, 0, 4)
+	for _, id := range s.Room.GetPlayers() {
+		if u := users.GetByUserId(id); u != nil && (u.Character.IsHidden() || u.Character.Health < 1) {
+			continue
+		}
+		playerIds = append(playerIds, id)
+	}
 	if len(playerIds) == 0 {
 		return state.ActorRef{}, false
 	}

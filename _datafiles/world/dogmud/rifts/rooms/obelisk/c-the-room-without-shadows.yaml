@@ -1,0 +1,72 @@
+id: c-the-room-without-shadows
+pool: C
+source: authored
+title: The Room Without Shadows
+description: >-
+  The walls of this round chamber give off a cold, even glow, the same faint
+  grey from every side, from the floor and from the low dome overhead.
+  Nothing here casts a shadow. Hold up your hand and it is lit on both faces
+  at once, flat as a drawing, and your feet stand on the floor with no dark
+  place gathered beneath them. In the middle of the room a waist-high plinth
+  carries a slab of pale crystal pressed full of round marks, set in rows
+  that spiral inward toward a single empty dent. The floor around the plinth
+  is worn into grooves in threes, the tracks of feet that came and stood and
+  went away again. Beside it a shallow basin has been cut into the floor, and
+  something black and fine lies in the bottom. Two ways lead on, an arch and
+  a ramp. The third is sealed by a shutter of light, a flat bright pane
+  across the doorway that hums when you come near and will not let your hand
+  through.
+nouns:
+  walls: >-
+    The glow is not on the surface but a finger's depth inside, as if the
+    crystal were lit from within by something too faint to see directly. Here
+    and there a hairline crack runs through it, and along each crack the glow
+    is a little stronger, as though light leaked out of the walls the way
+    warmth leaks out of a sleeper.
+  plinth: >-
+    A squat block of black crystal with its top polished flat. Its sides are
+    smooth except for three shallow dips near the base, set at the height a
+    foot not shaped like yours might rest while its owner leaned in to read.
+    The slab of marks sits in a groove cut to hold it exactly.
+  marks: >-
+    The round marks run in a spiral from the rim of the slab inward, pressed
+    so finely that the slab looks frosted, and every turn of the spiral ends
+    at the same empty dent at the centre, as if the last word was never
+    pressed.
+  grooves: >-
+    Three-groove tracks, worn smooth and deep, crowd close around the plinth
+    and thin out toward the walls. Many of them face the slab. A few face
+    the other way, toward the empty floor behind the reader, as if someone
+    had once turned to look for a thing they had been told about and could
+    not find.
+  basin: >-
+    A bowl cut a hand deep into the floor. In the bottom lies a scatter of
+    fine black grit that shifts away from your fingertip without being
+    touched. Under the grit the crystal is cut with one small round mark, set
+    alone, like a word left at the end of a page for someone to finish.
+idlemessages:
+  - The glow in the walls swells and dims once, slow as breathing.
+  - You glance down and find nothing at your feet, again.
+puzzle:
+  kind: memory
+  sealed_door: shutter
+  hard: true
+  reward: key
+  solved: >-
+    The glow in the walls falters as the last lenses lock, and for one
+    moment a thin dark shape stretches out from your feet across the floor,
+    the first shadow this room has ever held. The shutter of light thins and
+    goes out, and in the basin the black grit stirs, and lies still.
+doors:
+  - exit: arch
+    description: >-
+      A plain round arch, its edges lit with the same faint grey as the walls.
+      Beyond it the glow gives out and the dark resumes.
+  - exit: ramp
+    description: >-
+      A ramp of black crystal climbing away at a gentle slope, its surface
+      grooved in threes for grip by feet that are long gone.
+  - exit: shutter
+    description: >-
+      A pane of flat bright light fills this doorway edge to edge. It hums
+      when you lean close, and your hand stops against it as against glass.

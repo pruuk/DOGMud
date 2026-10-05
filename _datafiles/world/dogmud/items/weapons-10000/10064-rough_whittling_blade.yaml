@@ -1,0 +1,24 @@
+itemid: 10064
+name: Rough Whittling Blade
+vendor_categories:
+- woodwork
+- hunting
+namesimple: blade
+description: >
+  A short, stubby blade of soft iron in a plain wooden grip, good enough to
+  shape a shaft or rough out a peg. Fine work wants a better knife.
+type: weapon
+hands: 1
+subtype: stabbing
+weight: 0.4
+speedmultiplier: 1.0
+damage:
+  basedamage: 1
+  variance: 1
+damage_multiplier: 0.2
+parryrating: 2
+value: 3
+rarity_tier: 50
+tool:
+  type: carving_knife
+  tier: 1

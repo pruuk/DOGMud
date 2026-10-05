@@ -1,0 +1,17 @@
+itemid: 20102
+name: Predator-Pelt Mantle
+vendor_categories:
+- tailoring
+namesimple: mantle
+description: A heavy shoulder-mantle made from the thick, dark pelts of the
+  high-forest hunters, the long fur left on and the hide cured stiff enough
+  to turn a claw. It sits heavy across the shoulders and sheds rain and wind
+  alike. High-country trappers once wore nothing else through the winter.
+type: back
+subtype: wearable
+weight: 3.0
+value: 140
+rarity_tier: 40
+physical_mitigation: 4
+statmods:
+  vitality: 2

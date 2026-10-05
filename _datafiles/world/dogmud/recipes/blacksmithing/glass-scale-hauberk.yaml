@@ -1,0 +1,19 @@
+id: glass-scale-hauberk
+name: Glass-Scale Hauberk
+aliases: [hauberk, glasshauberk]
+skill: blacksmithing
+skill_minimum: 45
+station: forge
+time_rounds: 12
+ingredients:
+  - item_tag: chain-link
+    quantity: 3
+  - item_tag: iron-ingot
+    quantity: 1
+  - item_tag: obelisk-lens
+    quantity: 24
+output:
+  item_id: 20099
+  quantity: 1
+success_actor: "You weave the chain, rivet the joins, and then begin the long work: lens after lens, wired into place row on row until they overlap like scales. When the last one sits flat the whole coat ripples like dark water. A glass-scale hauberk!"
+failure_actor: "Halfway down the back the rows will not lie flat. One lens cracks against its neighbour, then the next, and the cracks run through the scales like frost. The work is lost."

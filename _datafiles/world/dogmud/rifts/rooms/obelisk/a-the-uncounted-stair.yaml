@@ -1,0 +1,45 @@
+id: a-the-uncounted-stair
+pool: A
+source: authored
+title: The Uncounted Stair
+description: >-
+  A stair of black crystal climbs steeply between two walls close enough to
+  brush with both elbows. Each of its steps is shallow and very deep, made
+  for a long, gliding foot, and each carries a small round mark pressed into
+  its riser, as if someone once numbered them. Count them as you climb and
+  the count will not hold: thirty-one from the bottom, twenty-six from the
+  middle, forty when you look back down. The marks change with the count,
+  quietly, while your eyes are elsewhere. A worn groove runs along the left
+  wall at the height of your shoulder, polished by something that leaned
+  rather than gripped. Above and below, the dark is the same dark, and only
+  the slope tells you which way you are going.
+nouns:
+  steps: >-
+    Each step is far deeper than it is high, long enough to lie on. The
+    tread is worn into three faint channels, and the wear is heaviest at
+    the outer edges, as if those who climbed here kept to the sides to let
+    others pass down the middle. Courtesy, or habit, worn into the crystal
+    over an age.
+  marks: >-
+    One small round mark on each riser, pressed in cleanly. Read in order
+    they almost make a sequence: one dot, two, three, then a gap where a
+    number should be. Look away and back, and the gap has moved one step
+    higher. Someone has scratched a tiny line beside one mark, as if to
+    pin it in place.
+  groove: >-
+    A smooth channel cut along the left wall at shoulder height. It is no
+    rail for hands; its inside is polished bright and shallow, the shape
+    of something soft that leaned against it on the way up. In two places
+    the polish is worn deeper, where the climbers stopped to rest before
+    going on.
+idlemessages:
+  - "Somewhere above, a step that was not there a moment ago settles into place with a soft click."
+doors:
+  - exit: landing
+    description: >-
+      At the top of the stair a narrow landing opens to one side, its
+      floor flat at last and faintly lit by the walls.
+  - exit: notch
+    description: >-
+      Partway down, a notch is cut into the right wall, a low gap you
+      could duck through into cold darkness.

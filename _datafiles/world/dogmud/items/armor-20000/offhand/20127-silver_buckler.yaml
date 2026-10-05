@@ -1,0 +1,17 @@
+itemid: 20127
+name: Silver Buckler
+vendor_categories:
+- blacksmithing
+namesimple: buckler
+description: >
+  A small round shield faced with bright silver over a wooden core. Silver
+  is too soft to be a soldier's metal, but it is quick in the hand and it
+  wards against what is not flesh.
+type: offhand
+subtype: wearable
+weight: 6.6
+physical_mitigation: 7
+blockrating: 13
+magical_mitigation: 2
+value: 75
+rarity_tier: 30

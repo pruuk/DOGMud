@@ -80,6 +80,9 @@ var guardedRollExemptions = map[string]map[string]string{
 		// U10b-1b Phase A. Forage's per-biome difficulty, same category B
 		// reasoning. ForageCore is pure, so this is the whole of its uncertainty.
 		"internal/forager/forage_core.go": "U10b-1b: static-difficulty forage check, deliberately unfloored (category B)",
+		// Wilderness trades: survey's recognition of a rare tree (SpeciesKnown)
+		// is a static-difficulty read of the room like search and forage.
+		"internal/actions/chop.go": "wilderness trades: survey's static-difficulty species recognition, deliberately unfloored (category B)",
 		// U10b-1b. Track resolves TWO kinds of question. resolveTrailDetail's
 		// three bands are static-difficulty READS of the room, so they belong here
 		// with search and forage. The OPPOSED contest against a named quarry does

@@ -795,8 +795,8 @@ var ansiTag = regexp.MustCompile(`<[^>]*>`)
 func TestSyncStartsTheWaitingReflection(t *testing.T) {
 	owner, _, _, _ := harmWorld(t, `off`)
 	m, c, f := deferredModule(t)
-	m.cfg.AutoBond = false
 	m.byMob = map[int]*Profile{c.profile.MobId: c.profile}
+	m.roster = rosterState{Profiles: map[string]*rosterEntry{c.profile.Id: {Owner: 1}}}
 	owner.Character.Companions = []characters.CompanionInfo{{MobId: c.profile.MobId, SourceType: characters.CompanionBonded}}
 	m.relays.ready(1, `player-model`, false)
 	c.relaySeen = true

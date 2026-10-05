@@ -8,6 +8,17 @@ package items
 // instance keep the scaling it earned. The old value also serves as the
 // legacy-save threshold, and the key set decides which item ids New() stamps
 // as already-migrated (see MigrateDetunedBow).
+// postDetuneBows are shooting weapons authored AFTER the U10d detune, on the
+// new line from the start. No instance of them was ever minted at a pre-detune
+// value, so they have nothing to migrate and no entry above. Listing them here
+// keeps TestPreDetuneBowTable_MatchesTheRealTemplates honest: every shooting
+// weapon must be in exactly one of the two tables.
+var postDetuneBows = map[int]string{
+	10057: `Self Bow (wilderness trades phase 5)`,
+	10058: `Longbow (wilderness trades phase 5)`,
+	10059: `Horn Composite Bow (wilderness trades phase 5)`,
+}
+
 var preDetuneBowMultipliers = map[int]float64{
 	10046: 7.50, // Ironhorn Warbow
 	10042: 7.00, // Arbalest

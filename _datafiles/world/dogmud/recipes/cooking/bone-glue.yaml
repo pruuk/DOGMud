@@ -1,0 +1,17 @@
+id: bone-glue
+name: Bone Glue
+aliases: [glue]
+skill: cooking
+skill_minimum: 3
+station: cooking_fire
+time_rounds: 4
+ingredients:
+  - item_tag: bone
+    quantity: 3
+  - item_tag: water-flask
+    quantity: 1
+output:
+  item_id: 40354
+  quantity: 2
+success_actor: "You boil the bones for hours and reduce the broth to a thick glue. Bone glue!"
+failure_actor: "The pot boils dry and the glue burns."

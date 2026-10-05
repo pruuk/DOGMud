@@ -1,6 +1,9 @@
 package mobcommands
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -33,8 +36,19 @@ func Salvage(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	// Run the action.
+	// "salvage <mobId>:<roundCreated>" names one corpse (a bonded companion
+	// butchering the kill it was asked to, not whichever is first); a bare
+	// "salvage" takes the first eligible, as it always has.
+	opts := actions.SalvageOptions{TargetCorpse: true}
+	if id, round, ok := strings.Cut(strings.TrimSpace(rest), `:`); ok {
+		mobId, err1 := strconv.Atoi(id)
+		created, err2 := strconv.ParseUint(round, 10, 64)
+		if err1 == nil && err2 == nil && mobId > 0 {
+			opts.TargetCorpseMobId, opts.TargetCorpseRoundCreated = mobId, created
+		}
+	}
 	actor := actions.NewMobActorInRoom(mob, room)
-	_ = actions.Salvage(actor, actions.SalvageOptions{TargetCorpse: true})
+	_ = actions.Salvage(actor, opts)
 
 	// Return Activity machine to Free — single-tick resolution complete.
 	if mob.Character.Activity != nil {

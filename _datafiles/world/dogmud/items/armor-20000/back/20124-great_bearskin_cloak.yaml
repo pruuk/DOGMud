@@ -1,0 +1,19 @@
+itemid: 20124
+name: Great Bearskin Cloak
+vendor_categories:
+- tailoring
+namesimple: cloak
+description: >
+  A whole great bear pelt worn as a cloak, the head over the shoulder and
+  the claws at the clasp. Wearing it feels like being the bear: hard to stop
+  and harder to hurt.
+type: back
+subtype: wearable
+weight: 6.0
+value: 320
+rarity_tier: 10
+physical_mitigation: 4
+magical_mitigation: 1
+statmods:
+  vitality: 4
+  strength: 2

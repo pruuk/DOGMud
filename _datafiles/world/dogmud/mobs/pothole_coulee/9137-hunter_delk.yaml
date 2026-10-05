@@ -1,5 +1,8 @@
 mobid: 9137
 zone: Pothole Coulee
+# Wilderness trades: Hunter's Hollow is a hunting camp. Delk buys anything
+# off a carcass (hunting goods) and sells the crude tools a beginner needs.
+craft_support: hunting
 behavior_archetype: noncombat_questgiver
 statpool: 44
 hostile: false
@@ -43,7 +46,21 @@ character:
     straight. He does not teach twice.
   speciesid: 1
   level: 1
-  gold: 0
+  gold: 400
+  equipment:
+    light:
+      itemid: 40038   # oil lantern: a shop must be light enough to trade in at night
+  shop:
+    # Only crude tools: iron and better come from a player's forge.
+    - itemid: 10061   # flint skinning knife
+    - itemid: 10063   # butcher's chopper
+    - itemid: 40241   # rough bone saw
+    - itemid: 40243   # flint scraper
+    - itemid: 40017   # salt pouch
+    # Fletching supplies for archers (review): feathers and arrowheads.
+    - itemid: 40316   # feathers
+    - itemid: 40421   # iron arrowheads
+    - itemid: 40357   # bone arrowheads
   stats:
     perception:
       base: 112

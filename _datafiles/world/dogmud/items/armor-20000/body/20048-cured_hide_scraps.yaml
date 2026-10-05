@@ -11,5 +11,6 @@ type: body
 subtype: wearable
 physical_mitigation: 2
 escapemodifier: 0.5
+weight: 3.0
 value: 6
 rarity_tier: 50

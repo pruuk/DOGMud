@@ -1,0 +1,75 @@
+id: c-the-room-of-one-hand
+pool: C
+source: authored
+title: The Room of One Hand
+description: >-
+  A narrow room, plainer than the halls outside, and every surface in it was
+  written by one hand. You can tell by the marks: the same slight lean, the
+  same habit of pressing the last mark of a row a little deeper. Three
+  pieces of crystal are set into the walls at different heights. Near the
+  floor is a thick slab, cracked by marks pressed far too hard. At the
+  height of a half-grown reach is a sheet whose rows nearly hold their line.
+  Higher still is a clean pane, its marks even and sure. A long model strip of
+  perfect marks runs above them all, older than the rest and in another hand
+  entirely, the line this one hand spent its life learning to match. The
+  floor is worn in three-groove prints that grow longer from wall to wall. A
+  loft opens overhead and an aisle runs out between leaning panels. The
+  third way out is a threshold sealed with dark glass, and the same hand has
+  pressed a single mark into it, low down.
+nouns:
+  slab: >-
+    The lowest piece, set almost at the floor, where someone very young
+    would sit. The marks are pressed so hard that some have cracked the
+    crystal through, and the rows wander off level and drift downhill. One
+    mark has been pressed, rubbed out and pressed again so many times that
+    it is a small crater. Even here the last mark of each row is the
+    deepest.
+  sheet: >-
+    Set at the height of a half-grown reach. The rows nearly hold their line
+    now and most of the marks are the right size, though two sometimes sit
+    too close, as if a thought ran ahead of the pressing. The lean is the
+    same as below. The last row is better than the first, and the hand knew
+    it: the final mark is pressed with something like pride.
+  pane: >-
+    The highest piece, clean and even, set where a full-grown Watcher would
+    stand. Its marks match the old strip above almost exactly, row for row,
+    with the same lean as the slab far below. At the end of the last row
+    sits one small extra mark with a tiny tail, set apart, the way a maker
+    signs a finished thing, or the way someone says that this is where they
+    arrived.
+  model: >-
+    The strip of perfect marks is older than everything else here, pressed
+    in a different hand. It is the line the one hand was copying all its
+    life. Beneath it, smaller and in the familiar lean, a second line has
+    been added late, short and pressed very gently, the last thing in the
+    room to be written.
+  prints: >-
+    Three-groove prints worn into the floor, one walker's prints from one
+    end of a life to the other. Under the slab they are small and close,
+    scuffed as if by someone shifting from foot to foot. Under the sheet
+    they are a little longer. Under the pane they are full grown and worn
+    deep, as though the hand came back to stand there for a very long time.
+idlemessages:
+  - A faint tapping comes from inside the wall, slow and steady, one mark at a time.
+puzzle:
+  kind: memory
+  sealed_door: threshold
+  hard: true
+  reward: key
+  solved: >-
+    The pane warms faintly as the last lenses lock. Along the walls the
+    wandering marks seem, for a moment, to straighten into rows. The dark
+    glass across the threshold cracks around the single low mark and falls away, and the slab gives a small, clean crack, as if something inside it had been let go.
+doors:
+  - exit: loft
+    description: >-
+      A low loft opening in the ceiling, reached by three-groove footholds
+      cut into the wall. Leaning marks are scratched around its edge.
+  - exit: aisle
+    description: >-
+      A narrow aisle running out between leaning panels of crystal, each one
+      pressed with a few rows in the same leaning hand.
+  - exit: threshold
+    description: >-
+      A doorway sealed with smooth dark glass. A single round mark has been
+      pressed into it low down, in the familiar lean.

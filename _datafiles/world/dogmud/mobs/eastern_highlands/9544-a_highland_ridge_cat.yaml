@@ -35,9 +35,6 @@ combatcommands:
   - ''
 activitylevel: 25
 character:
-  items:
-    - itemid: 40163
-      dropchance: 60
   name: A Highland Ridge-Cat
   description: |
     A long-bodied cat, grey-black with darker banding across the
@@ -58,3 +55,8 @@ character:
     perception:
       base: 138
 itemdropchance: 60
+# Wilderness trades: the thick predator-pelt comes off with a knife now
+# (skin), not as loot. The species table supplies the meat and bone.
+harvest:
+  skin:
+    - {item: cascade-hide, qty: 1}

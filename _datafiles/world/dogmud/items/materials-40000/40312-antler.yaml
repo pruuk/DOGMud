@@ -1,0 +1,18 @@
+itemid: 40312
+name: Antler
+namesimple: antler
+description: >
+  A branched antler, dense and pale at the tines. Good for handles,
+  toggles and the grips of fine knives.
+type: object
+subtype: mundane
+component_tag: antler
+weight: 0.8
+value: 14
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- jewelcrafting
+- woodwork
+- hunting
+material_tier: 2

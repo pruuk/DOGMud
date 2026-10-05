@@ -1,0 +1,16 @@
+itemid: 40238
+name: Bow Saw
+namesimple: saw
+description: >
+  A long, thin iron saw blade held taut in a bent wooden frame. It rips logs into planks, staves and shafts far more cleanly than an axe.
+type: object
+subtype: mundane
+weight: 1.5
+value: 16
+rarity_tier: 40
+vendor_categories:
+- blacksmithing
+- woodwork
+tool:
+  type: saw
+  tier: 2

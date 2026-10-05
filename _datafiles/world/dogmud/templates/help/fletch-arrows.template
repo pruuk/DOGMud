@@ -1,0 +1,14 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">fletch-arrows</ansi> (woodwork recipe)
+
+Fletch a quiver of arrows from shafts, feathers and arrowheads, anywhere.
+Needs a carving knife. Feathers come from birds you skin; trappers and
+hunters also sell feathers and iron and bone arrowheads.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       woodwork (minimum 3)
+  <ansi fg="yellow">Station:</ansi>     none
+  <ansi fg="yellow">Tool:</ansi>        carving knife
+  <ansi fg="yellow">Ingredients:</ansi> arrow shafts (x1), feathers (x2), arrowhead (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help woodwork</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

@@ -1,0 +1,16 @@
+id: saw-planks
+name: "Sawn Planks"
+aliases: [planks]
+skill: woodwork
+skill_minimum: 0
+station: "woodworking_bench"
+tool: saw
+time_rounds: 3
+ingredients:
+  - item_tag: softwood-log
+    quantity: 1
+output:
+  item_id: 40003
+  quantity: 4
+success_actor: "You saw the log into four even planks. Wooden planks!"
+failure_actor: "The saw binds and wanders, and the planks come out warped and useless."

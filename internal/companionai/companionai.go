@@ -192,6 +192,32 @@ func RouteAsk(userId int, mobInstanceId int, text string) bool {
 	return askFunc(userId, mobInstanceId, text)
 }
 
+// ShowFunc is told about an item a player shows to a mob: its name and
+// description as a model may read them (items.Item ModelName and
+// ModelDescription, never player-written bauble text), who made it when the
+// item carries a maker's mark, and whether it was crafted at all (handMade:
+// a crafter below the maker's-mark skill leaves no name). It returns true
+// when the mob is one the handler speaks for. The item never leaves the
+// player.
+type ShowFunc func(userId int, mobInstanceId int, name string, description string, madeBy string, handMade bool) bool
+
+var showFunc ShowFunc
+
+// SetShowHandler installs the show handler. Called by the aicompanion
+// module, which lets a companion waiting in the Waystone Hollow see what a
+// player brings to show them.
+func SetShowHandler(f ShowFunc) {
+	showFunc = f
+}
+
+// RouteShow offers a shown item to the installed handler.
+func RouteShow(userId int, mobInstanceId int, name string, description string, madeBy string, handMade bool) bool {
+	if showFunc == nil {
+		return false
+	}
+	return showFunc(userId, mobInstanceId, name, description, madeBy, handMade)
+}
+
 // SetRespawner installs the respawn implementation. Called by internal/hooks,
 // which owns the companion spawn and state-restore code.
 func SetRespawner(f RespawnFunc) {

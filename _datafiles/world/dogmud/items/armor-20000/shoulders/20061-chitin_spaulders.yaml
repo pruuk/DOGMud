@@ -13,5 +13,6 @@ subtype: wearable
 physical_mitigation: 9
 statmods:
   strength: 5
+weight: 3.0
 value: 35
 rarity_tier: 40

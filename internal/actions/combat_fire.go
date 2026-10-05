@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -17,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
+	"github.com/GoMudEngine/GoMud/internal/timber"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -366,7 +368,13 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 	}
 
 	// The shot: unload first (fires even on a miss), then resolve.
+	// Wood (wilderness trades): the bow's wood steadies the aim, and the
+	// arrow's wood (nocked with it, Item.LoadedWood) its aim and its bite.
+	bowWood := timber.BowWood(weapon.Wood)
+	arrowWood := timber.ArrowWood(weapon.LoadedWood)
+	woodAccuracy := bowWood.AccuracyMult() * arrowWood.AccuracyMult()
 	weapon.Loaded = false
+	weapon.LoadedWood = ``
 
 	// U10d. The bow's flat damage_multiplier came down onto the melee band, and
 	// the compensation it was carrying moved here, where it is situational: a
@@ -381,7 +389,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		result.AimedWhileEngaged = true
 	}
 
-	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale) * unengagedMult
+	shotMult := weapon.GetSpec().DamageMultiplier * float64(cfg.RangedShotScale) * unengagedMult * arrowWood.DamageMult()
 	rangedRank := char.GetSkillLevel(skills.RangedCombat)
 
 	// U6b Tasks 7+8: fire routes through the channel seam. combatvocab.Ranged
@@ -403,7 +411,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		Attack: combat.AttackSide{
 			Stat: char.GetEffectivePerception(), StatName: "perception",
 			Skill: skills.RangedCombat, SkillRank: rangedRank,
-			Mult:      combat.SituationalAttackMult(char, targetRoom, combatvocab.Ranged(combatvocab.TargetSingle)),
+			Mult:      combat.SituationalAttackMult(char, targetRoom, combatvocab.Ranged(combatvocab.TargetSingle)) * woodAccuracy,
 			ForceCrit: combat.SleepingForceCrit(defChar),
 			CritOnWin: surpriseShot,
 		},
@@ -414,6 +422,15 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		MitigationMultiplier: 1.0,
 	})
 	result.Executed = true
+
+	// Gear wear (wilderness trades): a bow never strikes, so it wears per
+	// shot rather than on critical hits. Only players' bows wear.
+	if actor.IsPlayer() {
+		if name, broke := char.WearBowOnShot(weapon); broke {
+			actor.SendText(messaging.CategoryWarning, fmt.Sprintf(
+				`<ansi fg="red">Your <ansi fg="itemname">%s</ansi> is broken!</ansi> It will serve you poorly until it is repaired. (<ansi fg="command">help repair</ansi>)`, name))
+		}
+	}
 
 	// U6b Task 10: a crit-defended shot earns the defender a counter-swing,
 	// REACH-GATED — only when the shooter shares the room. The cross-room

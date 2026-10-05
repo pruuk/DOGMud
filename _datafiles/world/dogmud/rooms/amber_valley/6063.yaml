@@ -21,6 +21,7 @@ description: >
   steam <ansi fg="itemname">the dye-vats</ansi>.
 biome: land
 coord: {x: -7, y: -31, z: 0}
+station: tanning_rack
 exits:
   north: {roomid: 6058}
   south: {roomid: 6064}

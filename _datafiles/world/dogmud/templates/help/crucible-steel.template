@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">crucible-steel</ansi> (blacksmithing recipe)
+
+The steel every masterwork tool is forged from: steel and basalt-iron
+melted together in a sealed crucible. Basalt-iron ore comes from the smith
+at Pothole Coulee.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 40)
+  <ansi fg="yellow">Station:</ansi>     forge
+  <ansi fg="yellow">Ingredients:</ansi> steel ingot (x2), basalt-iron ore (x2), coal dust (x2)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help tools</ansi>, <ansi fg="command">help craft</ansi>

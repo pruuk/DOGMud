@@ -1,0 +1,17 @@
+itemid: 40328
+name: Fowl
+namesimple: fowl
+description: >
+  A plucked game bird, ready for the spit.
+type: object
+subtype: mundane
+component_tag: fowl
+weight: 0.5
+value: 4
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- cooking
+- hunting
+material_tier: 1
+spoil_after: 2 days

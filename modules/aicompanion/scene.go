@@ -177,7 +177,11 @@ func buildScene(mob *mobs.Mob, owner *users.UserRecord, p *Profile, mind *Mind, 
 			if name == `` {
 				name = `the body of ` + c.Character.Name
 			}
-			add(thing{Kind: `corpse`, Name: name, Class: `a body`, CorpseRef: corpseRef(c),
+			class := `a body`
+			if !c.HasLoot() {
+				class = `a body, picked clean` // nothing to loot; it could be butchered
+			}
+			add(thing{Kind: `corpse`, Name: name, Class: class, CorpseRef: corpseRef(c),
 				Key: `corpse:` + corpseRef(c), Score: 0.35})
 		}
 

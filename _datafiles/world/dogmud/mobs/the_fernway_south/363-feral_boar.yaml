@@ -28,8 +28,6 @@ character:
   speciesid: 6
   level: 4
   gold: 0
-  items:
-    - itemid: 40068
   stats:
     strength:
       base: 138

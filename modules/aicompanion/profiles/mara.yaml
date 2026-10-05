@@ -142,6 +142,12 @@ starting_items:
   - 10009 # an iron dagger: everything she has left after the Stillwater road
 starting_goals:
   - Get hold of a bow again, and arrows to go with it
+# What they do with themselves when nothing is happening, as a scout: she reads the ways out and lives off the land.
+pastimes:
+  butcher: 5
+  forage: 6
+  scan: 4
+  search: 3
 crafts:
   - cooking
 archetype:
@@ -185,6 +191,12 @@ combat:
   flee_at: about_to_die
   bravery: 0.4
   style: ranged
+  stance: fight
+  moves: [kick, trip]
+  approach: >
+    with the bow, from where you stand, picking off whatever is going for
+    your companion and calling out what you see; up close you have only a
+    knife and a hard boot for anything already down
   refuse:
     - child
     - merchant
@@ -272,3 +284,30 @@ romance:
     never coy about wanting it. Keep it between the two of them, keep the
     morning after in it as much as the night, and let what it costs her to
     be seen like that come through.
+specialty: >
+  The bow, and the road. You read ground, weather and people before they
+  read you, you see trouble coming a long way off, and you keep a pair of
+  eyes on the edges of every room. Up close you are only fair with a knife.
+ammo_word: arrows
+hollow:
+  room_id: 6883
+  appreciates:
+    - a hunting bow or a quiver of arrows taken off an archer worth fearing, such as Bowmaster Skell, who holds the raider overlook above the canyon, shown to you
+    - proof they know the wild country and how to read it, such as Scout Tarn's trail on the scrub steppe, Hunter Delk's loop on the fringe, or breaking the predator pack
+    - having put Bowmaster Skell or the bandit captain of the wash tower down, so the roads near the coulee are safer
+    - standing well with the Road Wardens or the Dustwalk Caravans, the people who keep the roads open
+    - herbs they foraged themselves on the road, such as healer's root, bitter thistle or moonpetal, shown to you
+    - a well-kept bow or good leathers worn, and gear looked after
+    - people who listen more than they talk, and ask good questions about the road
+  wary_of:
+    - boasting, bluster and big promises with nothing to show for them
+    - a trail of slaughtered animals killed for no reason, many beasts and little else
+    - recklessness that gets other people hurt
+    - anyone the Road Bandits count as a friend
+    - anyone who treats her like a hired bow
+  waiting:
+    - sorts a handful of feathers by length, then sorts them again.
+    - looks up through the crack in the roof at the strip of sky.
+    - turns the ash stave on its pegs to dry evenly.
+    - runs a thumb along a road on the pinned chart, and stops at the same place as always.
+  returns: comes in from the coulee with her pack on one shoulder, looks at the ledge for a long moment, and sets her things down where they were before.

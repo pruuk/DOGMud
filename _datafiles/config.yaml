@@ -151,7 +151,9 @@ LootGoblin:
   # - RoomId -
   #   The room the loot goblin spawns in (per its spawninfo). Also the room it returns
   #   to to drop off loot it finds. If zero (0), no loot goblin spawning.
-  RoomId: 139
+  #   Retired 2026-09-30: the city scavengers and the daily floor decay
+  #   (Balance: ScavengerStep*, FloorDecay*) keep item counts down instead.
+  RoomId: 0
   # - RoundCount -
   #   How often the Loot Goblin will spawn. It is a good idea to keep this
   #   number low to keep the game from getting bogged down with too many items
@@ -1406,6 +1408,7 @@ Balance:
     cooking: 1.56
     jewelcrafting: 1.56
     enchanting: 1.56
+    woodwork: 1.56
 
   # ── SALVAGE ────────────────────────────────────────────────────────────────
   SalvageMinChance: 0.15      # Per-ingredient recovery chance at skill 1
@@ -1794,6 +1797,121 @@ Balance:
   CraftFloor: 0.05
   SalvageFloor: 0.15
 
+  # ── GATHERING (wilderness trades) ──────────────────────────────────────────
+  # Skin, butcher, chop and the other gathering jobs score
+  #   avg(two job stats) * toolMult + skill * GatherSkillWeight
+  # against GatherBaseDifficulty plus the target's tier. Skill is a light edge
+  # (1.5 per rank, against SkillWeight 5.0 for crafts): stats and the tool do
+  # most of the work. Each grade above standard needs GatherGradeStepSigma
+  # roll standard deviations of margin, and the tool's tier caps the grade.
+  GatherSkillWeight: 1.5
+  GatherBaseDifficulty: 100
+  GatherGradeStepSigma: 1.0
+  ToolMultCrude: 0.8
+  ToolMultIron: 1.0
+  ToolMultSteel: 1.15
+  ToolMultMasterwork: 1.3
+  # Sell value by material grade. Ungraded items always sell at 1.0.
+  QualityValueCrude: 0.4
+  QualityValueStandard: 1.0
+  QualityValueFine: 1.6
+  QualityValueSuperb: 2.5
+  QualityValuePristine: 4.0
+  # Carcass work: difficulty = GatherBaseDifficulty - GatherCarcassEase + mob
+  # statpool * GatherStatPoolDifficulty + size (medium/large). A baseline
+  # gatherer with an iron knife wins about half the time on a steppe wolf. `harvest <corpse> <part>` adds GatherTargetedDifficulty
+  # and lifts that part one grade. Rare parts: chance * Perception/100.
+  GatherStatPoolDifficulty: 0.2
+  GatherCarcassEase: 20
+  GatherSizeDifficultyMedium: 5
+  GatherSizeDifficultyLarge: 15
+  GatherTargetedDifficulty: 15
+  GatherJobRoundsSmall: 2
+  GatherJobRoundsMedium: 4
+  GatherJobRoundsLarge: 6
+  GatherRareBaseChance: 0.15
+  GatherStatPerBonusUnit: 50
+  # Corpse freshness (fraction of CorpseDecayTime): one grade worse at the
+  # first mark, meat and organs gone at the second.
+  CorpseStaleGradeAt: 0.5
+  CorpseMeatLostAt: 0.75
+  # Shops price an item they do not stock flat, less this per unit on hand
+  # (floored at ShopPriceFloor), so bulk raw goods slide gently.
+  ShopWalkInDevaluePerUnit: 0.02
+  # Forged tools and broken or badly worn gear are bought as scrap, never
+  # shelved; the shop remembers recent scrap buys so their price slides per
+  # unit too. One remembered unit wears off per this many rounds.
+  ShopScrapDecayRounds: 900
+  # Lumberjacking: a chop scores avg(strength, vitality) * axe multiplier
+  # against GatherBaseDifficulty - TimberEase + (tier - 1) * TimberTierDifficulty.
+  # Each forest room holds TimberStandMin..TimberStandMax trees, regrowing one
+  # every TimberRegrowRounds (900 = one game day).
+  TimberEase: 10
+  TimberTierDifficulty: 15
+  TimberStandMin: 6
+  TimberStandMax: 10
+  TimberRegrowRounds: 900
+  TimberChopRoundsBase: 4
+  TimberMaxLogs: 4
+  # Tool wear: each finished job adds one wear; the tool breaks at its
+  # durability (by tier, times the tool's grade: crude 0.75 .. pristine 2.0).
+  ToolDurabilityCrude: 30
+  ToolDurabilityIron: 80
+  ToolDurabilitySteel: 160
+  ToolDurabilityMasterwork: 320
+  # Rare finds: rare part and rare forage chances times this, by tool tier.
+  RareToolMultCrude: 0.5
+  RareToolMultIron: 1.0
+  RareToolMultSteel: 1.5
+  RareToolMultMasterwork: 2.0
+  # Gear grades: multipliers on a crafted weapon's damage and speed, any
+  # graded gear's weight, and armour and shield protection. Standard is 1.0.
+  GradeDamageCrude: 0.85
+  GradeDamageFine: 1.08
+  GradeDamageSuperb: 1.16
+  GradeDamagePristine: 1.25
+  GradeSpeedCrude: 0.85
+  GradeSpeedFine: 1.05
+  GradeSpeedSuperb: 1.1
+  GradeSpeedPristine: 1.15
+  GradeWeightCrude: 1.05
+  GradeWeightFine: 0.97
+  GradeWeightSuperb: 0.94
+  GradeWeightPristine: 0.9
+  GradeArmorCrude: 0.85
+  GradeArmorFine: 1.08
+  GradeArmorSuperb: 1.16
+  GradeArmorPristine: 1.25
+  # Mining: avg(strength, vitality) * pick multiplier against
+  # GatherBaseDifficulty - MiningEase + (ore tier - 1) * MiningTierDifficulty.
+  # Veins of MiningVeinMin..MiningVeinMax loads refill one per
+  # MiningRegrowRounds (1800 = two game days). A success finds a gem with
+  # chance MiningGemChance * Perception/100 * the pick's RareToolMult.
+  MiningEase: 5
+  MiningTierDifficulty: 15
+  MiningVeinMin: 4
+  MiningVeinMax: 8
+  MiningRegrowRounds: 1800
+  MiningRoundsBase: 4
+  MiningMaxOre: 3
+  MiningGemChance: 0.04
+  # Gear wear: a weapon wears on critical hits it deals (GearCritWearChance),
+  # one armour piece on critical hits taken (GearArmorCritWearChance), a bow
+  # on each arrow fired (BowShotWearChance). Past 60% / 85% wear and when
+  # broken, gear works at the Worn / BadlyWorn / Broken multiplier. An NPC
+  # repair costs value x wear fraction x RepairCostRatio.
+  GearDurabilityWeapon: 60
+  GearDurabilityArmor: 30
+  GearCritWearChance: 0.5
+  GearArmorCritWearChance: 0.5
+  BowShotWearChance: 0.04
+  GearWornMult: 0.95
+  GearBadlyWornMult: 0.85
+  GearBrokenMult: 0.25
+  RepairCostRatio: 0.5
+  # A shop pays value x (1 - wear fraction x WornSellPenalty) for worn gear.
+  WornSellPenalty: 0.6
+
   # ── RECIPE DISCOVERY ──────────────────────────────────────────────────────
   # Chance to learn a new recipe on a successful craft.
   # Formula: chance = BaseChance / (1 + knownRecipes × DecayRate)
@@ -2053,6 +2171,28 @@ Balance:
   # to StateRecalling. Prevents infinite loops if the chest workflow stalls
   # (e.g., persistently full chest or unreachable chest room).
   ForagerStoringWatchdogRounds: 20
+
+  # ── CITY SCAVENGERS AND FLOOR DECAY ─────────────────────────────────────────
+  # The loot goblin's replacement. Each city (and each New Plymouth district)
+  # has a scavenger NPC that walks to random rooms of its city and picks up
+  # litter; its haul is pickpocketable and cleared every real-world day.
+  # Every other floor in the world thins out once a day instead.
+  # - ScavengerStepMinSeconds / ScavengerStepMaxSeconds -
+  #   Real seconds a scavenger lingers in each room before its next step,
+  #   picked uniformly in this range per room.
+  ScavengerStepMinSeconds: 30
+  ScavengerStepMaxSeconds: 150
+  # - FloorDecayBaseChancePct -
+  #   Percent chance a lone litter item on a floor outside the scavengers'
+  #   rounds is removed at each real-world day boundary (UTC midnight).
+  FloorDecayBaseChancePct: 10
+  # - FloorDecayPerExtraItemPct -
+  #   Added for every other litter item in the same room (5 items: 30% each).
+  FloorDecayPerExtraItemPct: 5
+  # - FloorDecayCheckRounds -
+  #   How often loaded rooms are checked for decay they still owe. Only sets
+  #   how soon after midnight (or after a player leaves) the pass is paid.
+  FloorDecayCheckRounds: 15
 
   # ── ECONOMY HEALTH DASHBOARD ────────────────────────────────────────────────
   # Wall-clock cadence for auto-snapshots (hours). Default 1.
@@ -2618,9 +2758,10 @@ Modules:
     # owner per UTC day. Each is a call nobody asked for, so it is capped.
     # 0 is no cap.
     NoticeCallsPerDay: 40
-    # Ask the player, in as many words, before anything they say is sent to
-    # OpenAI. They answer "i agree" or "i decline"; until they agree their
-    # companion behaves as a plain one and nothing leaves the server.
+    # Nothing a player says leaves the server until they have agreed: by
+    # speaking to a traveller in the Waystone Hollow after the board at its
+    # mouth has told them what that sends and where, or with "companion-ai
+    # on". Until then their companion behaves as a plain one.
     RequireConsent: true
     # Check what a companion is about to say with OpenAI's moderation
     # endpoint. Speech a passer-by prompted is dropped when the check cannot
@@ -2628,13 +2769,22 @@ Modules:
     # call on a player's own key is not moderated (their provider may have
     # no such endpoint); it is logged as the owner's speech instead.
     ModerateOutput: true
-    # A new character meets a companion shortly after character creation.
-    # AutoBondExisting does the same for characters that already exist, at
-    # their next login: off by default, because it changes every player's
-    # game at once.
-    AutoBond: true
-    AutoBondExisting: false
-    AutoBondProfile: "mara"
+    # There is one of each companion on the server. Nobody is handed one: a
+    # free companion waits in their own room of the Waystone Hollow (west of
+    # Scrub Draw, Pothole Coulee) until a player wins them over. See
+    # docs/aicompanion/settings.md, "Companions are one of a kind".
+    #
+    # Companions speak only to players who run them on their own key
+    # (PlayerKeys and RelayOrigin below); anyone else gets no answer at all
+    # and the server's key is never used. Set false to let the server's key
+    # pay as before.
+    RequirePlayerKey: true
+    # Days an owner may be away before their companion gives up waiting and
+    # goes back to the Hollow, taking what they have learned with them.
+    ReleaseAfterDays: 60
+    # A companion whose trust AND affection for their owner have both fallen
+    # to this or lower leaves them and goes back to the Hollow.
+    AbandonBelow: -50
     # Treat anything the owner says as spoken to the companion when no other
     # player is in the room.
     RespondWhenAlone: true
@@ -2724,5 +2874,76 @@ Modules:
     # finder alone, a plain "Trinket" to everyone else. Either way it must
     # be plain ASCII letters and ' " - , . ! ? (curly quotes and dashes are
     # folded first); text that is not goes to the server's key.
+    ModerateOutput: true
+    LogRequests: false
+  # Townsfolk idle moments (modules/npcidle). Now and then, when an NPC is
+  # about to run one of its set idle emotes or says, a model writes it a
+  # fresh one from its own description, the room's, and who and what is
+  # there (wares too, for a merchant). Only ever on the own key of a player
+  # in the room who can see the NPC clearly, through the companion's key
+  # relay, and only while they leave "Make the world livelier" ticked on the
+  # key page (it starts ticked; every lively feature shares that one box).
+  # Never on the server's key, which only moderates. AI companions are never
+  # touched.
+  npcidle:
+    Enabled: true
+    # Percent of idle emotes and says, with such a player present, that are
+    # written fresh. Takes effect at the next round after a `server set`.
+    Chance: 5
+    # After one moment starts on a player's key, none other starts on it for
+    # this many seconds, however many NPCs share their room. Live.
+    MinSecondsPerPlayer: 30
+    TimeoutSeconds: 20
+    MaxCompletionTokens: 600
+    # Tokens per UTC day one player's key may spend on moments (each is a
+    # few hundred). Over it their NPCs keep their set lines. 0 is no cap.
+    # Live.
+    DailyTokensPerUser: 20000
+    # Check each moment with the moderation endpoint (needs the server's
+    # key) before the room reads it. A flag, or a check that fails, keeps it
+    # out and the set line runs. A moment that cannot be checked (no server
+    # key, a breaker open) is shown only to the player whose key wrote it.
+    # Off: shown to everyone unchecked.
+    ModerateOutput: true
+    LogRequests: false
+  # Ambient room events (modules/roomlife). When a room is due to show one of
+  # its set ambient lines (its own or its zone's idle messages, from the
+  # player round tick), this percent of the time a model writes a fresh event
+  # instead, seen or heard, from the room's text, the time of day, and who
+  # and what is there. Only on the own key of an awake player in the room
+  # who left "Make the world livelier" ticked on the key page; never the
+  # server's key, which only moderates. A seen event goes through the same
+  # sight-gated sender as the set lines; a heard one ("You hear...") through
+  # the room's audio sender, so it carries in the dark. A player who cannot
+  # see the room is only ever asked for a sound.
+  roomlife:
+    Enabled: true
+    Chance: 10                 # live
+    MinSecondsPerPlayer: 60    # live; spacing on one player's key
+    TimeoutSeconds: 20
+    MaxCompletionTokens: 600
+    DailyTokensPerUser: 20000  # live; 0 is no cap
+    # As npcidle: checked through the server's key when it can be; a flag or
+    # failed check shows the set line instead; an event that cannot be
+    # checked is shown only to the player whose key wrote it.
+    ModerateOutput: true
+    LogRequests: false
+  # Closer looks (modules/lookdetail). When a player's `look at X` finds
+  # nothing (no creature, container, carried or room noun, corpse or floor
+  # item) while they see the room clearly, and X is named in the room's
+  # description, a model writes what a closer look shows, on the looker's own
+  # key while they leave "Make the world livelier" ticked. A detail that can
+  # be shown to anyone is cached per room, description and phrase, so every
+  # later look at it, by anyone, reads the same detail at no cost; a changed
+  # description starts afresh. Never the server's key, which only moderates.
+  lookdetail:
+    Enabled: true
+    MinSecondsPerPlayer: 5     # live; spacing on one player's key
+    TimeoutSeconds: 20
+    MaxCompletionTokens: 800
+    DailyTokensPerUser: 20000  # live; 0 is no cap
+    # As npcidle: checked through the server's key when it can be; a flag or
+    # failed check says "nothing special"; a detail that cannot be checked is
+    # shown only to the looker and never cached.
     ModerateOutput: true
     LogRequests: false

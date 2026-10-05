@@ -1,0 +1,61 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">house</ansi> command
+
+The <ansi fg="command">house</ansi> command shows your lodgings and who can
+come into them, and lets you take access away.
+
+Lodging houses let rooms in three cities, each to people the city's own
+folk will vouch for:
+
+  New Plymouth    Hobb Pennock, Pennock's Alley, west of the Back Court
+  The Confluence  Aubric Sallow, Quill Court, west off Hall Lane
+  Thornwall       Brannoc Tull, the Burrow Mouth, in the tunnels past
+                  the smugglers' escape shaft
+
+Out on the South Road, between Thornwall and the Confluence, the Hollow
+Oak lets hollows to anybody, at a quarter of a city's prices:
+
+  The Hollow Oak  Old Brock, beneath the great oak, east off the road
+                  at the Shepherd's Reach
+
+You may keep one home in each. Each is separate: its own rooms, deeds,
+guests and storage, and its landlord's deeds work only in his house.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">house</ansi>                  Your lodging, its guests, and the
+                         lodgings you may visit
+  <ansi fg="command">house revoke [name]</ansi>    Take a guest's access away, from
+                         every lodging of yours they may enter.
+                         If they are inside, they are put out.
+  <ansi fg="command">house leave [owner]</ansi>    Give up your own access to someone
+                         else's lodging
+
+<ansi fg="yellow">Letting a friend in:</ansi>
+
+  Buy a <ansi fg="item">Guest Key</ansi> from your landlord
+  (<ansi fg="command">buy key</ansi>) and give it to your friend. They type
+  <ansi fg="command">use guest key</ansi> at that lodging house's door, once, and can come
+  and go from then on, whether or not you are there. Guests can walk
+  every room of your lodging and take anything left lying about, so
+  only let in people you trust.
+
+<ansi fg="yellow">Keeping things:</ansi>
+
+  A <ansi fg="item">Container Deed</ansi> (<ansi fg="command">buy container</ansi>) places a
+  container you name with one word: type <ansi fg="command">use container deed chest</ansi>
+  in one of your rooms. Then <ansi fg="command">look in chest</ansi>, <ansi fg="command">put [item] in chest</ansi>
+  and <ansi fg="command">get [item] from chest</ansi>. Guests can use it too. A
+  <ansi fg="item">Strongbox Deed</ansi> (<ansi fg="command">buy strongbox</ansi>) places one that opens
+  for you alone. A room takes up to six. What they hold, and anything
+  left on your floors, is kept for good.
+
+<ansi fg="yellow">Furnishing:</ansi>
+
+  A <ansi fg="item">Bed Deed</ansi> (<ansi fg="command">buy bed</ansi>) puts a bed in the room you use it
+  in. Anyone who <ansi fg="command">sleep</ansi>s in it rests twice as fast as on a floor.
+  A <ansi fg="item">Crafting Station Deed</ansi> (<ansi fg="command">buy station</ansi>) installs a forge, loom,
+  alchemy bench, jeweler bench, cooking fire or enchanting circle, your
+  choice: type <ansi fg="command">use station deed</ansi> to pick one. A room takes one
+  bed and one station, and your guests can use both.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help visit</ansi>, <ansi fg="command">help list</ansi>

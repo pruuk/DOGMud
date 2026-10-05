@@ -11,6 +11,7 @@ description: >
   tools no hand has lifted in a long while.
 biome: land
 coord: {x: -8, y: -34, z: 0}
+station: woodworking_bench
 exits:
   north: {roomid: 6065}
   south: {roomid: 6067}

@@ -1,0 +1,17 @@
+id: hide-scraper
+name: Hide Scraper
+aliases: [scraper]
+skill: blacksmithing
+skill_minimum: 0
+station: forge
+time_rounds: 2
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 1
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 40239
+  quantity: 1
+success_actor: "You bend a strip of iron into a shallow curve, dull the edge, and fit a handle to each end. A hide scraper!"
+failure_actor: "The strip cracks at the bend. The iron is wasted."

@@ -128,12 +128,13 @@ returns 0, loader falls back to legacy hardcoded values.
 | **40124** | **freshwater mussels** | **Confluence** | **River Road water forageable** | **NEW (ferry Stage 2); is_component: true, cooking demand; River Road/Confluence origin** |
 | **40125** | **smoked river-fish** | **Confluence** | **Confluence river-trade goods** | **NEW (ferry Stage 2); is_component: true, cooking demand, tradable per string; river-town trade good** |
 | **40126** | **fresh river catch** | **Confluence** | **Confluence river-trade goods** | **NEW (ferry Stage 2); is_component: true, cooking demand; fresh-caught river fish** |
+| **40236** | **iron ore** | **Base** | **foraged in caves and mountains** | **NEW (wilderness trades phase 0); replaces the iron ingot in the cave and mountain forage tables; smelted 2:1 into 40001 at a forge** |
 
 ## Bucket summary
 
 | Bucket | Count | IDs |
 |---|---|---|
-| Base | 13 | 40001, 40003, 40006, 40012, 40013, 40014, 40015, 40016, 40017, 40019, 40043, 40044, 40045 |
+| Base | 14 | 40001, 40003, 40006, 40012, 40013, 40014, 40015, 40016, 40017, 40019, 40043, 40044, 40045, 40236 |
 | Stillwater | 6 | 40051, 40053, 40056, 40057, 40058, 40059 |
 | Thornwall | 13 | 40010, 40011, 40018, 40021, 40022, 40023, 40024, 40025, 40026, 40027, 40028, 40029, 40030 |
 | Fernway | 8 | 40046, 40049, 40062, 40063, 40064, 40065, 40066, 40067 |
@@ -142,7 +143,8 @@ returns 0, loader falls back to legacy hardcoded values.
 | Defer to 3.0e | 2 | 40052, 40055 |
 | Quest/specialty | 15 | 40031, 40032, 40033, 40034, 40035, 40036, 40037, 40038, 40039, 40040, 40041, 40042, 40054, 40060, 40061 |
 
-> Row count: 72 total. 40001-40067 = 67 existing mats; 40068 added by
+> Row count: 73 total. 40236 (iron ore) added by wilderness trades phase 0.
+> Previously: 72 total. 40001-40067 = 67 existing mats; 40068 added by
 > Stage 3.0e (corpse salvage); 40123-40126 added by ferry Stage 2
 > (Confluence bucket). All 72 rows appear in the audit table above,
 > including 15 quest/specialty items that are out of the supply

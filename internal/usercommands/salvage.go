@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -62,6 +63,13 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	// is the case this guard is actually for.
 	if !salvageableSource(source) {
 		user.SendText(messaging.CategorySystem, `<ansi fg="red">You need to remove that before you can salvage it.</ansi>`)
+		return true, nil
+	}
+
+	// Hot stolen goods (a merchant chest's) stay whole: breaking them down
+	// would shed their heat. actions.salvageItem refuses too.
+	if actions.StolenGoodsHotNow(itm) {
+		user.SendText(messaging.CategorySystem, `<ansi fg="red">That was stolen too recently to break down. A fence will pay for it whole.</ansi>`)
 		return true, nil
 	}
 
@@ -149,7 +157,17 @@ func startCorpseSalvage(user *users.UserRecord, corpse rooms.Corpse) (bool, erro
 		return true, nil
 	}
 
-	returns := crafting.LookupCorpseSalvage(mobSpec.Groups)
+	// Wilderness trades: a carcass with a harvest table is skinned and
+	// butchered, not salvaged. Salvage stays for bodies with no table
+	// (humanoids, whose cloth and leather come off their gear).
+	if table, _, ok := actions.CarcassTable(corpse); ok && !table.Empty() {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			`A carcass is worked with a knife: try <ansi fg="command">skin %s</ansi> and <ansi fg="command">butcher %s</ansi>, or <ansi fg="command">harvest %s</ansi> to see what it holds.`,
+			strings.ToLower(corpse.Character.Name), strings.ToLower(corpse.Character.Name), strings.ToLower(corpse.Character.Name)))
+		return true, nil
+	}
+
+	returns := crafting.LookupCorpseSalvageForMob(mobSpec.Groups, mobSpec.Character.SpeciesId)
 	if len(returns) == 0 {
 		user.SendText(messaging.CategorySystem, `<ansi fg="red">There's nothing useful to recover here.</ansi>`)
 		return true, nil
@@ -173,6 +191,7 @@ func startCorpseSalvage(user *users.UserRecord, corpse rooms.Corpse) (bool, erro
 	corpseData := activity.SalvagingData{
 		ItemUuid:    fmt.Sprintf("corpse:%d", corpse.MobId),
 		RoundsTotal: rounds,
+		RoomId:      user.Character.RoomId,
 	}
 	if err := user.Character.Activity.TransitionToSalvaging(
 		corpseData,

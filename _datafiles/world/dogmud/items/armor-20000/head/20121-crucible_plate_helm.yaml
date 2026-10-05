@@ -1,0 +1,18 @@
+itemid: 20121
+name: Crucible Plate Helm
+vendor_categories:
+- blacksmithing
+namesimple: helm
+description: >
+  A full helm of crucible steel, dark and close-grained, lined with the
+  thick fur of a great bear. It turns a blow that would split an ordinary
+  helm and keeps its wearer on their feet.
+type: head
+subtype: wearable
+weight: 4.0
+value: 420
+rarity_tier: 15
+physical_mitigation: 7
+magical_mitigation: 1
+statmods:
+  vitality: 2

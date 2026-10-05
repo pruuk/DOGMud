@@ -1,7 +1,10 @@
 mobid: 9399
 schedule_id: av_corwin
 zone: Amber Valley
-behavior_archetype: noncombat_questgiver
+# Wilderness trades: the valley woodworker is the bowyer. He buys staves,
+# shafts, bows and woodwork goods, and sells a bowyer's makings.
+craft_support: woodwork
+behavior_archetype: noncombat_shopkeeper
 non_combatant: true
 hostile: false
 statpool: 24
@@ -37,7 +40,16 @@ character:
     ache under the warmth that he does not trouble to hide.
   speciesid: 1
   level: 1
-  gold: 10
+  gold: 400
+  equipment:
+    light:
+      itemid: 40038   # oil lantern: a shop must be light enough to trade in at night
+  shop:
+    - itemid: 40420   # arrow shafts
+    - itemid: 40352   # bowstring
+    - itemid: 30062   # quiver of arrows
+    - itemid: 10057   # self bow
+    - itemid: 10064   # rough whittling blade (only crude tools in shops)
   stats:
     perception:
       base: 104

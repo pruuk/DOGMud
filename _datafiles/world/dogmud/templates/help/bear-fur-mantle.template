@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">bear-fur-mantle</ansi> (tailoring recipe)
+
+Two bear furs over a leather yoke. Warm, heavy and hard to stop.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 25)
+  <ansi fg="yellow">Station:</ansi>     loom
+  <ansi fg="yellow">Tool:</ansi>        scraper
+  <ansi fg="yellow">Ingredients:</ansi> bear fur (x2), salt pouch (x1), leather strip (x1),
+               thread spool (x1), bone needle (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

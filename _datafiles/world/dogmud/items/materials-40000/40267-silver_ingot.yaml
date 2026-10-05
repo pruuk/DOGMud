@@ -1,0 +1,17 @@
+itemid: 40267
+name: Silver Ingot
+namesimple: ingot
+description: >
+  A bar of bright silver, soft and heavy, ready to be drawn into wire or
+  worked into fine gear.
+type: object
+subtype: mundane
+component_tag: silver-ingot
+weight: 0.1
+value: 28
+rarity_tier: 30
+is_component: true
+vendor_categories:
+- blacksmithing
+- jewelcrafting
+material_tier: 3

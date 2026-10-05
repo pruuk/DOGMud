@@ -32,9 +32,6 @@ combatcommands:
   - hamstring
 activitylevel: 25
 character:
-  items:
-    - itemid: 40163
-      dropchance: 65
   name: A Lone Hunter-Wolf
   description: |
     Grey-black through the shoulders, lighter at the flanks -- a
@@ -55,3 +52,8 @@ character:
     perception:
       base: 146
 itemdropchance: 65
+# Wilderness trades: the thick predator-pelt comes off with a knife now
+# (skin), not as loot. The species table supplies the meat and bone.
+harvest:
+  skin:
+    - {item: cascade-hide, qty: 1}

@@ -1,0 +1,25 @@
+itemid: 10058
+name: Longbow
+namesimple: longbow
+description: >
+  A tall bow nearly the height of a man, cut from a single stave.
+  It takes a strong back to draw and drives an arrow through a hide at
+  long range.
+type: weapon
+hands: 2
+subtype: shooting
+weight: 3.0
+speedmultiplier: 0.45
+grapplemodifier: 0.2
+ammo_tag: arrows
+min_strength: 110
+damage:
+  basedamage: 7
+  variance: 2
+damage_multiplier: 2.3
+parryrating: 1
+value: 300
+rarity_tier: 30
+vendor_categories:
+- woodwork
+carries_wood: true

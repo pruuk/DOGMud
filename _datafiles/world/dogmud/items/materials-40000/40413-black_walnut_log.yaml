@@ -1,0 +1,15 @@
+itemid: 40413
+name: Black Walnut Log
+namesimple: log
+description: >
+  A length of black walnut, heavy, the heartwood a deep chocolate brown
+  that polishes to a shine.
+type: object
+subtype: mundane
+component_tag: hardwood-log
+weight: 11
+value: 18
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 3

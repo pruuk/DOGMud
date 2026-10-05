@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">great-bearskin-cloak</ansi> (tailoring recipe)
+
+A whole great bear pelt as a cloak, which only a masterwork knife takes
+whole. +4 Vitality, +2 Strength, 4 physical protection.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 55)
+  <ansi fg="yellow">Station:</ansi>     loom
+  <ansi fg="yellow">Tool:</ansi>        scraper
+  <ansi fg="yellow">Ingredients:</ansi> great bear pelt (x1), bear fur (x2), salt pouch (x2), thread spool (x1), bone needle (x1)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

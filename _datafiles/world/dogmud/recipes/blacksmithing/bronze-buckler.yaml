@@ -1,0 +1,17 @@
+id: bronze-buckler
+name: "Bronze Buckler"
+aliases: [bronzebuckler]
+skill: blacksmithing
+skill_minimum: 8
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: bronze-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 20126
+  quantity: 1
+success_actor: "You work the bronze into shape. A bronze buckler!"
+failure_actor: "The bronze tears as you work it. The metal is wasted."

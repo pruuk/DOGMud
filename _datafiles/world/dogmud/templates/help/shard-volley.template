@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">Shard Volley</ansi>
+
+<ansi fg="command">Shard Volley</ansi> is used by the Spine Lattices of the Obelisk. The Lattice draws
+its spines back, every point turning toward its target, then looses them
+in quick succession: three shards, each a separate hit.
+
+<ansi fg="yellow">Counterplay: </ansi>
+
+  The draw-back is your warning. A hard enough blow while its spines are
+  drawn back can break the volley. After a volley the Lattice has to grow
+  its spines again, and for a few rounds it can only fight up close.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>

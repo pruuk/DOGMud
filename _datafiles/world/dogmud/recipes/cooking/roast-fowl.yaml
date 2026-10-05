@@ -1,0 +1,15 @@
+id: roast-fowl
+name: Roast Fowl
+aliases: [roast]
+skill: cooking
+skill_minimum: 0
+station: cooking_fire
+time_rounds: 3
+ingredients:
+  - item_tag: fowl
+    quantity: 1
+output:
+  item_id: 30071
+  quantity: 1
+success_actor: "You spit the bird and turn it over the fire until the skin crackles. Roast fowl!"
+failure_actor: "The bird falls into the fire."

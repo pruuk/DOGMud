@@ -1,0 +1,16 @@
+itemid: 40352
+name: Bowstring
+namesimple: bowstring
+description: >
+  A tightly twisted bowstring with a loop at each end.
+type: object
+subtype: mundane
+component_tag: bowstring
+weight: 0.05
+value: 8
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+- tailoring
+material_tier: 2

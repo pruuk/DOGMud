@@ -1,0 +1,34 @@
+mobid: 9801
+zone: New Plymouth Common
+defaultMood: neutral
+
+greetings:
+  - text: "Crewe Lettings. Rooms, extensions, redecorating. Type list if you
+      want prices. I'm not going to recite them."
+    moods: ["neutral"]
+  - text: "Oh. You. Door's where you left it."
+    moods: ["friendly"]
+
+patterns:
+  - keywords: ["plate", "brass", "touch", "palm", "mutation"]
+    responses:
+      - "The company's locksmith made that. It learns a lodger's palm when I
+        stamp them into the ledger. Don't ask me how. I just work the stamp."
+      - "No, it can't be picked. Yes, people try. Yes, I watch. It's the most
+        interesting thing that happens here."
+
+  - keywords: ["quarter", "common", "vouch", "neighbours", "neighbors", "reputation", "standing"]
+    responses:
+      - "The Widow only lets to people the Common Quarter will vouch for. Do
+        some good round the Rise and the Back Court. I'll hear. I always hear.
+        I have nothing else to do."
+
+  - keywords: ["brisk", "tenement", "condemned", "tova"]
+    responses:
+      - "Mother Brisk runs her block and the Widow runs this one. I run the
+        stamp. We don't talk shop."
+
+  - keywords: [""]
+    responses:
+      - "I sell rooms. Type list. That's the whole job."
+      - "Is this about a room? It had better be about a room."

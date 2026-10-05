@@ -46,6 +46,8 @@ idlemessages:
 - A ripe fig drops from the leaning tree and bursts soft on the stones.
 - A single drowsy fly circles and settles in the warm quiet.
 spawninfo:
+  - mobid: 9834
+    respawnrate: "30 real minutes"
   - mobid: 9403
     respawnrate: "20 real minutes"
 x: 3

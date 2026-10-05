@@ -43,6 +43,17 @@ func corpseRef(c *rooms.Corpse) string {
 	return fmt.Sprintf(`%d:%d:%d`, c.MobId, c.UserId, c.RoundCreated)
 }
 
+// corpseAt is the corpse with this identity in the room, or nil.
+func corpseAt(room *rooms.Room, ref string) *rooms.Corpse {
+	if room == nil {
+		return nil
+	}
+	if i := findCorpseByRef(room, ref); i >= 0 {
+		return &room.Corpses[i]
+	}
+	return nil
+}
+
 // findCorpseByRef returns the index of the corpse with this identity.
 func findCorpseByRef(room *rooms.Room, ref string) int {
 	for i := range room.Corpses {
@@ -127,6 +138,12 @@ func mobCompanionTakeout(rest string, mob *mobs.Mob, room *rooms.Room) (bool, er
 	name := parts[1]
 	container, ok := room.Containers[name]
 	if !ok || container.Hidden || container.Lock.IsLocked() {
+		return true, nil
+	}
+	// A merchant's chest is not the companion's to empty: taking from it is
+	// theft, watched by the room (actions.WatchMerchantChest), and a
+	// companion errand must not be a way around that.
+	if actions.IsMerchantChest(room, name) {
 		return true, nil
 	}
 	it, found := findContainerItem(container, itemId, uuidPart)

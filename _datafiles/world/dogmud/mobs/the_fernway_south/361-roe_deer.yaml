@@ -29,8 +29,6 @@ character:
   speciesid: 7
   level: 2
   gold: 0
-  items:
-    - itemid: 40014
   stats:
     strength:
       base: 80

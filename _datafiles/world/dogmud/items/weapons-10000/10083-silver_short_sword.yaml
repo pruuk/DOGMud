@@ -1,0 +1,21 @@
+itemid: 10083
+name: Silver Short Sword
+vendor_categories:
+- blacksmithing
+namesimple: sword
+description: >
+  A broad-bladed short sword hammered from bright silver, quick to draw in a
+  tight space. Silver is too soft to be a soldier's metal, but it is quick
+  in the hand and it wards against what is not flesh.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 3.3
+speedmultiplier: 1.05
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.595
+parryrating: 6
+value: 108
+rarity_tier: 30

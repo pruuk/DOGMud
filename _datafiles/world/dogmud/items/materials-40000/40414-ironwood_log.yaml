@@ -1,0 +1,15 @@
+itemid: 40414
+name: Ironwood Log
+namesimple: log
+description: >
+  A short, brutally heavy length of ironwood, almost black at the heart.
+  It dulls an axe just to look at it.
+type: object
+subtype: mundane
+component_tag: ironwood-log
+weight: 14
+value: 40
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 4

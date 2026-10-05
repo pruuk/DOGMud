@@ -1,0 +1,16 @@
+itemid: 40351
+name: Leather Hide
+namesimple: leather
+description: >
+  A whole tanned hide, supple and brown. Cut it into strips or work it
+  whole into armour.
+type: object
+subtype: mundane
+component_tag: leather-hide
+weight: 1.0
+value: 28
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+material_tier: 2

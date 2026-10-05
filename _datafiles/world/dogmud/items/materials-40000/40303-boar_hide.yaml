@@ -1,0 +1,18 @@
+itemid: 40303
+name: Boar Hide
+namesimple: hide
+description: >
+  A thick, bristled boar hide, heavy and tough as boot sole. It tans
+  into a stiff, hard-wearing leather.
+type: object
+subtype: mundane
+component_tag: hide
+weight: 1.8
+value: 9
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 2
+spoil_after: 4 days

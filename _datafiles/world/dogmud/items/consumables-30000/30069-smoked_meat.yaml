@@ -1,0 +1,16 @@
+itemid: 30069
+name: Smoked Meat
+vendor_categories:
+- cooking
+namesimple: meat
+description: >
+  Strips of game meat salted and smoked dark over a slow fire. It keeps
+  for weeks and tastes of woodsmoke.
+type: food
+subtype: edible
+uses: 1
+conditionids:
+  - 45
+value: 3
+rarity_tier: 50
+weight: 0.4

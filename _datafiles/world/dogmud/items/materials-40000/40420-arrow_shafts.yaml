@@ -1,0 +1,17 @@
+itemid: 40420
+name: Arrow Shafts
+namesimple: shafts
+description: >
+  A bundle of straight, round shafts, enough to fletch a quiver of
+  arrows.
+type: object
+subtype: mundane
+component_tag: arrow-shafts
+weight: 0.4
+value: 3
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+material_tier: 1
+carries_wood: true

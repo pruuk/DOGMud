@@ -1,0 +1,16 @@
+itemid: 40354
+name: Bone Glue
+namesimple: glue
+description: >
+  A pot of brown glue boiled down from bone. Strong when it sets.
+type: object
+subtype: mundane
+component_tag: glue
+weight: 0.2
+value: 4
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+- tailoring
+material_tier: 1

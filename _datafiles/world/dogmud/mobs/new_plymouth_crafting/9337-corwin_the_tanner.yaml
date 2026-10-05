@@ -41,9 +41,18 @@ character:
   level: 1
   gold: 35
   stats:
+    perception:
+      base: 113
     strength:
       base: 110
     vitality:
       base: 108
   shop:
     - itemid: 40002
+    # Wilderness trades: the tannery is the hunter's hub. It buys raw hides
+    # and pelts (any tailoring-tagged goods) and sells what the next trip needs.
+    # Only crude tools: iron and better come from a player's forge.
+    - itemid: 10061   # flint skinning knife
+    - itemid: 40243   # flint scraper
+    - itemid: 40017   # salt pouch
+    - itemid: 40356   # bark liquor

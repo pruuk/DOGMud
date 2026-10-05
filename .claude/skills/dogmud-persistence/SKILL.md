@@ -25,7 +25,8 @@ from the (possibly updated) template on the next load. They are not
 deployed to prod and are exactly what the `dogmud-shipping` smoke-test wipe
 targets.
 
-**Living state**: `_datafiles/world/dogmud/shops/`, `guilds/`, and
+**Living state**: `_datafiles/world/dogmud/shops/`, `guilds/`, `housing/`
+(who owns which lodging room; see `internal/housing/context.md`), and
 `moderation/` (`petitions.yaml`, `bans.yaml`). CLAUDE.md's "Shop Persistence"
 section states shop economic state (stock levels, NPC gold, restock timers)
 lives at `_datafiles/world/dogmud/shops/{zone}/{mobid}-room{roomid}.yaml`,

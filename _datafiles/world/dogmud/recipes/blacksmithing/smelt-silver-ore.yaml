@@ -1,0 +1,17 @@
+id: smelt-silver-ore
+name: "Silver Ingot"
+aliases: [smeltsilver]
+skill: blacksmithing
+skill_minimum: 12
+station: forge
+time_rounds: 4
+ingredients:
+  - item_tag: silver-ore
+    quantity: 2
+  - item_tag: coal-dust
+    quantity: 1
+output:
+  item_id: 40267
+  quantity: 1
+success_actor: "You smelt the silver out over a hot coal fire and pour a bright ingot."
+failure_actor: "The silver burns off in the slag. The ore is wasted."

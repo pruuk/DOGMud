@@ -1,0 +1,20 @@
+id: antler-circlet
+name: "Antler Circlet"
+aliases: [circlet]
+skill: jewelcrafting
+skill_minimum: 45
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 8
+ingredients:
+  - item_tag: trophy-antlers
+    quantity: 1
+  - item_tag: gold-wire
+    quantity: 2
+  - item_tag: raw-gem
+    quantity: 1
+output:
+  item_id: 20119
+  quantity: 1
+success_actor: "You weave gold around a crown of antler tines and set the gem at the brow. An antler circlet!"
+failure_actor: "The tines snap as you weave them. The materials are wasted."

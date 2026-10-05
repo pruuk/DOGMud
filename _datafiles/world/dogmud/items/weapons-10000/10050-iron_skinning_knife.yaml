@@ -1,0 +1,23 @@
+itemid: 10050
+name: Iron Skinning Knife
+vendor_categories:
+- blacksmithing
+- tailoring
+namesimple: knife
+description: >
+  A short, broad-bellied knife with an iron blade ground thin along a long curve, made for parting hide from flesh rather than for fighting. The wooden grip is wrapped in leather for a sure hold on a wet job.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 1.0
+speedmultiplier: 0.9
+damage:
+  basedamage: 3
+  variance: 1
+damage_multiplier: 0.35
+parryrating: 4
+value: 15
+rarity_tier: 40
+tool:
+  type: knife
+  tier: 2

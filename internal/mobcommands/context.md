@@ -160,6 +160,12 @@ The `internal/mobcommands` package implements the AI command system for non-play
   taking no step on a refusal — a mob has no one to tell), then
   `actions.RelocateMob`, then rolls `actions.EntryDetection` on arrival and
   the rare `actions.TrainSearchOnMove`, both ways, same as a player.
+- A routed exit (`rooms.RouteExit`: a housing door, a rift door or portal)
+  is asked on the mob's behalf (user id 0): a refusal stops the mob
+  silently, a route replaces the destination. A forced `go <roomId>` with no
+  exit to it is refused into, out of or within an owned ephemeral chunk
+  (`rooms.MobMayMove`), so callforhelp cannot carry a mob through a rift's
+  walls.
 
 #### **Dynamic Conversations** (`converse.go`)
 - **Context-aware dialogue**: Conversations based on mob types and situations
@@ -221,7 +227,16 @@ The `internal/mobcommands` package implements the AI command system for non-play
 - **Conversation management**: Proper cleanup of dialogue states
 - **Resource pooling**: Shared resources for common AI operations
 
+## House strongboxes
+A house strongbox is a sealed, always-locked container. `TryCommand` defers
+`housing.OpenStrongboxesForMob` after alias handling, which unlocks the
+strongboxes of the mob's room for that one command only when the mob is
+charmed by the house's owner; `unlock` never keys a sealed container open.
+world.go then calls `housing.AfterMobCommand` so a companion's put, get or
+drop lands in the house record. See `internal/housing/context.md`.
+
 ## Dependencies
+- `internal/housing`: House strongbox window, floor and container capture
 - `internal/mobs`: Core mob management and state
 - `internal/rooms`: Room system for spatial awareness
 - `internal/characters`: Character system for mob properties
@@ -286,3 +301,19 @@ why a command available to both players and mobs must be registered twice
   exit and entry lines. It reads `actions.MobIsSneaking(mob)` before the
   move and sends neither line when sneaking, matching the ordinary exit
   path.
+
+## Search and salvage for bonded companions
+
+- `Search` passes `companionai.BaubleSearchFor(mob)` as
+  `actions.SearchOptions.BaubleForUserId` and reports what the search turned
+  up through `companionai.RouteSearched` (`searchFoundWords`). For every
+  other mob both are no-ops.
+- `Salvage` takes an optional `<mobId>:<roundCreated>` naming one corpse
+  (`actions.SalvageOptions.TargetCorpseMobId`/`TargetCorpseRoundCreated`); a
+  bare `salvage` takes the first eligible corpse, as before.
+
+#### Cast narration (`cast.go`)
+- A spell's authored `cast_observer` names its target by the bare coloured
+  name (not the formatted one, which carries adjectives such as "(Lit)"), and
+  when a spell authors that line the generic "begins weaving a spell" is not
+  added after it.

@@ -73,16 +73,51 @@ func EvaluateBuyRules(
 	//     rejecting cattail cloak, Kerra rejecting arena tower shield.)
 	// Both round UP to the next gold, as every sell price does (owner
 	// ruling 2026-09-30).
+	//
+	// The material grade scales the base value before either path: a pristine
+	// pelt is worth four standard ones whether or not the shop stocks pelts.
+	// Ungraded items (everything that predates grading) scale by 1.0.
+	//
+	// Raw goods on a spoilage clock: rotten ones are not bought at all, and a
+	// fresh one pays full price sliding to half as it nears spoiling.
+	now := util.GetRoundCount()
+	if item.IsSpoiled(now) {
+		return BuyOffer{}
+	}
+	value := GradedValue(item)
+	// Worn gear sells for less: down to 1 - WornSellPenalty when broken.
+	if f := item.WearFraction(); f > 0 {
+		value = int(math.Ceil(float64(value) * (1 - f*float64(configs.GetBalanceConfig().WornSellPenalty))))
+	}
+	if item.Spoils() {
+		value = int(math.Ceil(float64(value) * item.FreshnessValueMultiplier(now)))
+	}
+
 	var price int
 	entry := shopInv.GetStock(spec.ItemId)
-	if entry != nil {
-		price = CalcBuyPrice(spec.Value, entry.Current, PricingBaseline(entry, cfg), cfg)
+	if entry != nil && entry.RestockQty > 0 {
+		price = CalcBuyPrice(value, entry.Current, PricingBaseline(entry, cfg), cfg)
 	} else {
-		flat := int(math.Ceil(float64(spec.Value) * cfg.BuyRatio))
-		if flat < 1 {
-			flat = 1
+		// Walk-in goods: the shop does not authored-stock this item, though it
+		// may be holding some it bought or made (an entry with RestockQty 0).
+		// These used to fall onto the scarcity curve once the first unit was
+		// sold, whose baseline of 3 priced the SECOND unit at about four times
+		// the first. Now they stay flat, sliding gently per unit on hand.
+		current := 0
+		if entry != nil {
+			current = entry.Current
 		}
-		price = flat
+		// Goods it bought and scrapped (forged tools, broken gear) weigh
+		// on the price too, so they slide like shelved ones (review fix).
+		current += shopInv.ScrapHeld(spec.ItemId, now)
+		price = WalkInBuyPrice(value, current, cfg)
+		// Never pay more than the shop's own resale would justify: once it
+		// holds this unit it sells at the scarcity price for current+1, and
+		// paying above BuyRatio of that let a player buy one back cheaply
+		// and sell it again at a profit, round after round (review fix).
+		if limit := CalcBuyPrice(value, current+1, PricingBaseline(entry, cfg), cfg); price > limit {
+			price = limit
+		}
 	}
 
 	// Gold-reserve gate.
@@ -144,4 +179,36 @@ func isPotionDeclining(item items.Item, spec *items.ItemSpec) bool {
 	effectiveSpeed := items.CalcEffectiveAgingSpeed(bottleMult, item.CraftSkill)
 	phase, _ := items.GetAgingPhase(elapsed, spec.Aging, effectiveSpeed)
 	return phase == items.PhaseDeclining || phase == items.PhaseSpoiled
+}
+
+// GradedValue is the item's spec value scaled by its material grade
+// (items.QualityValueMultiplier), rounded up. Ungraded items return the spec
+// value unchanged. A graded item never prices below 1 gold.
+func GradedValue(item items.Item) int {
+	base := item.GetSpec().Value
+	if !item.Quality.Valid() {
+		return base
+	}
+	v := int(math.Ceil(float64(base) * items.QualityValueMultiplier(item.Quality)))
+	if v < 1 && base > 0 {
+		v = 1
+	}
+	return v
+}
+
+// WalkInBuyPrice is what a shop pays for an item it does not authored-stock:
+// value * BuyRatio, less Balance.ShopWalkInDevaluePerUnit for each unit it
+// already holds, never below PriceFloor of the flat price and never below 1.
+// Rounded up, as every sell price is.
+func WalkInBuyPrice(value int, current int, cfg PricingConfig) int {
+	per := float64(configs.GetBalanceConfig().ShopWalkInDevaluePerUnit)
+	mult := 1.0 - per*float64(current)
+	if mult < cfg.PriceFloor {
+		mult = cfg.PriceFloor
+	}
+	price := int(math.Ceil(float64(value) * cfg.BuyRatio * mult))
+	if price < 1 {
+		price = 1
+	}
+	return price
 }

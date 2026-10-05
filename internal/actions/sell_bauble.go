@@ -72,7 +72,8 @@ func IsFence(mob *mobs.Mob) bool {
 	return mob.IsFence()
 }
 
-// FencePrice is the gold a fence pays for a stolen bauble worth value:
+// FencePrice is the gold a fence pays for stolen goods worth value (a
+// stolen bauble, or goods from a merchant's chest, sell_stolen.go):
 // BaubleFenceBuyPct percent of it, rounded up, at least 1.
 func FencePrice(value int) int {
 	pct := float64(configs.GetBalanceConfig().BaubleFenceBuyPct)

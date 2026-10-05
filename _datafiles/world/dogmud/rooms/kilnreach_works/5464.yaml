@@ -73,3 +73,6 @@ idlemessages:
   a drip falls onto the cobblestones.
 x: -7
 y: -61
+spawninfo:
+  - mobid: 9833
+    respawnrate: "30 real minutes"

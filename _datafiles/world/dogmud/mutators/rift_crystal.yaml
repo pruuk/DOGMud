@@ -1,0 +1,5 @@
+mutatorid: rift-crystal
+decayrate: 24 real hours
+descriptionmodifier:
+  behavior: append
+  text: " A shard of dark crystal hangs in the air here, turning slowly, held up\nby nothing. You could <ansi fg=\"command\">enter</ansi> or <ansi fg=\"command\">touch</ansi> the <ansi fg=\"exit\">crystal</ansi>."

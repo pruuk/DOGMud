@@ -1,0 +1,17 @@
+itemid: 20115
+name: Talon Ring
+vendor_categories:
+- jewelcrafting
+- hunting
+namesimple: ring
+description: >
+  A silver band set with a pair of raptor talons that curl around the
+  finger. Those who wear one swear they see movement sooner.
+type: ring
+subtype: wearable
+weight: 0.1
+value: 55
+rarity_tier: 35
+statmods:
+  perception: 2
+  dexterity: 1

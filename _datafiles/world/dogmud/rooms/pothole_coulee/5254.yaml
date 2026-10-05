@@ -57,3 +57,6 @@ idlemessages:
 - The <ansi fg="itemname">torchlight</ansi> deep in the <ansi fg="itemname">dark</ansi> wavers once and holds, and the <ansi fg="itemname">shoring</ansi> timbers tick with some slow internal settling.
 x: 34
 y: 18
+spawninfo:
+  - mobid: 9842
+    respawnrate: "15 real minutes"

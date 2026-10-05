@@ -1,0 +1,14 @@
+itemid: 40431
+name: Bed Frame
+namesimple: frame
+description: >
+  The parts of a sturdy bed frame, laced with cord for the mattress. Use
+  it in your lodging to set it up.
+type: object
+subtype: mundane
+weight: 25.0
+value: 80
+rarity_tier: 30
+vendor_categories:
+- woodwork
+furnishing: bed

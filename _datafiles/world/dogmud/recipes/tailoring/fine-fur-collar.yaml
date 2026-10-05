@@ -1,0 +1,22 @@
+id: fine-fur-collar
+name: Fine-Fur Collar
+aliases: [collar]
+skill: tailoring
+skill_minimum: 20
+station: loom
+tool: scraper
+time_rounds: 5
+ingredients:
+  - item_tag: fine-fur
+    quantity: 2
+  - item_tag: salt-pouch
+    quantity: 1
+  - item_tag: thread-spool
+    quantity: 1
+  - item_tag: bone-needle
+    quantity: 1
+output:
+  item_id: 20107
+  quantity: 1
+success_actor: "You cure the glossy furs and sew a handsome collar. A fine-fur collar!"
+failure_actor: "You cut the fur against the nap and spoil it."

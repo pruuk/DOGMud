@@ -1,0 +1,19 @@
+itemid: 40320
+name: Gut
+namesimple: gut
+description: >
+  Cleaned animal gut, slick and pale. Twisted and dried it makes a
+  strong cord.
+type: object
+subtype: mundane
+component_tag: gut
+weight: 0.2
+value: 2
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- woodwork
+- hunting
+material_tier: 1
+spoil_after: 2 days

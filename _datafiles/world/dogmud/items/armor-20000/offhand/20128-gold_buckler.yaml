@@ -1,0 +1,18 @@
+itemid: 20128
+name: Gold Buckler
+vendor_categories:
+- blacksmithing
+namesimple: buckler
+description: >
+  A small round shield faced with heavy gold over a wooden core. Gold is
+  soft and heavy and a poor thing to fight with, and worth a small fortune:
+  wealth worn openly.
+type: offhand
+subtype: wearable
+weight: 9.0
+physical_mitigation: 5
+blockrating: 9
+value: 418
+rarity_tier: 30
+statmods:
+  charisma: 2

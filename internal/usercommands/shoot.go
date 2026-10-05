@@ -682,7 +682,9 @@ func resolveShootTarget(room *rooms.Room, rest string, viewer *characters.Charac
 	targetRoom = room
 	targetWords := args
 	if len(args) >= 2 {
-		if name, roomId := room.FindExitByName(args[len(args)-1]); name != "" {
+		// A routed exit (a rift's crystal or breach, a housing door) leads
+		// somewhere different for each traveller: nothing is shot through it.
+		if name, roomId := room.FindExitByName(args[len(args)-1]); name != "" && !rooms.IsRoutedExit(viewer.GetUserId(), room.RoomId, name) {
 			if adj := rooms.LoadRoom(roomId); adj != nil {
 				crossRoom = true
 				targetRoom = adj

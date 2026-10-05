@@ -1,0 +1,15 @@
+itemid: 73
+name: Hollow Oak Container Deed
+namesimple: container deed
+not_salable: true
+description: >
+  A strip of bark tied with grass, marked with a drawing of a chest.
+  Stand where you want it in one of your hollows in the Hollow Oak and type
+  use container deed, and a chest of oak-wood is carried in and set down
+  there under a one-word name you choose. Anyone you let into your lodging
+  can open it.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

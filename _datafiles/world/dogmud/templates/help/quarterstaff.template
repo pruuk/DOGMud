@@ -1,0 +1,11 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">quarterstaff</ansi> (woodwork recipe)
+
+A long, heavy staff of hardwood.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       woodwork (minimum 5)
+  <ansi fg="yellow">Station:</ansi>     woodworking bench
+  <ansi fg="yellow">Ingredients:</ansi> hardwood board (x2)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help woodwork</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

@@ -1,0 +1,17 @@
+itemid: 40242
+name: Rough Bucksaw
+namesimple: bucksaw
+description: >
+  A coarse iron blade strung in a frame of green branches. It rips a log into
+  something like planks, slowly, and leaves every face to be planed.
+type: object
+subtype: mundane
+weight: 1.6
+value: 5
+rarity_tier: 50
+vendor_categories:
+- woodwork
+- hunting
+tool:
+  type: saw
+  tier: 1

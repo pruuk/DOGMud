@@ -1,0 +1,16 @@
+itemid: 20131
+name: Silver Helm
+vendor_categories:
+- blacksmithing
+namesimple: helm
+description: >
+  A rounded open-faced helm beaten from bright silver, with a leather
+  lining. Silver is too soft to be a soldier's metal, but it is quick in the
+  hand and it wards against what is not flesh.
+type: head
+subtype: wearable
+weight: 3.85
+physical_mitigation: 3
+magical_mitigation: 2
+value: 120
+rarity_tier: 30

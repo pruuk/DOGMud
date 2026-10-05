@@ -1,0 +1,47 @@
+mobid: 9820
+zone: New Plymouth Common
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - np_commonfolk
+idlecommands:
+  - 'emote gives the handcart''s wobbling wheel a kick, and it wobbles on regardless.'
+  - ''
+  - 'emote holds a scrap of cloth up to the light, sniffs it, and drops it in the cart.'
+  - 'emote mutters to the cart about the price of rags these days.'
+  - ''
+  - 'emote peers into the gutter with the patience of someone fishing.'
+activitylevel: 8
+character:
+  name: Old Mags
+  description: |
+    A stooped rag-and-bone woman in a coat made mostly of other coats,
+    pushing a handcart with one wobbling wheel. Everything the Common drops
+    ends up in that cart sooner or later: bent nails, odd boots, a spoon
+    with somebody's initials on it. She sorts as she walks and talks to the
+    cart while she does it. By nightfall she has sold the lot to the tinkers
+    on Tinker's Lane, and by morning she is out again with an empty cart and
+    the same bad wheel.
+  speciesid: 1
+  level: 3
+  gold: 4
+  stats:
+    strength:
+      base: 112
+    vitality:
+      base: 108
+    perception:
+      base: 112
+    dexterity:
+      base: 96

@@ -1,0 +1,16 @@
+itemid: 82
+name: Hollow Oak Crafting Station Deed
+namesimple: station deed
+not_salable: true
+description: >
+  A strip of bark tied with grass, marked with a drawing of an anvil and a
+  paw-print in wax. It installs one crafting station in a room of your lodging in the Hollow Oak. To use it, stand
+  in the room where it should go and type use station deed, and choose which
+  station from a list: a forge, a loom, an alchemy bench, a jeweler bench, a cooking fire or an enchanting circle. You can also name it straight away, as in
+  use station deed forge. Anyone you let in can craft at it. A room takes one
+  station.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

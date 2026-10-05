@@ -23,6 +23,8 @@ exits:
   north:
     roomid: 6242
 spawninfo:
+  - mobid: 9829
+    respawnrate: "30 real minutes"
   - mobid: 9481
     respawnrate: "20 real minutes"
 nouns:

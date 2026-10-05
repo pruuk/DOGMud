@@ -1,0 +1,19 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">spoilage</ansi>
+
+Raw goods you cut from a carcass do not keep. Meat, fat, gut and organs go
+off in a day or two of game time; raw hides and pelts in four or five. Rotten
+goods are thrown out, and merchants pay less the closer something is to
+turning. (A game day is about an hour of real time.)
+
+Stop the clock by processing:
+
+  <ansi fg="yellow">hides</ansi>    cure them with a hide scraper and salt at a tanning rack
+  <ansi fg="yellow">furs</ansi>     make them into garments (the recipe cures them)
+  <ansi fg="yellow">meat</ansi>     smoke it, dry it into jerky or cook it at a cooking fire
+  <ansi fg="yellow">fat</ansi>      render it into tallow
+
+Shop-bought goods never spoil, and goods kept in bank storage do not rot.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help skin</ansi>, <ansi fg="command">help butcher</ansi>, <ansi fg="command">help cure-hide</ansi>, <ansi fg="command">help smoke-meat</ansi>

@@ -1,0 +1,54 @@
+mobid: 9841
+zone: The Fernway
+# Wilderness trades: a forest trapper at the Fernway's eastern trailhead. He
+# buys anything off a carcass (hunting goods) and sells crude tools for the
+# woods. Iron and better come only from a player's forge.
+craft_support: hunting
+behavior_archetype: noncombat_shopkeeper
+non_combatant: true
+charm_immune: true
+hostile: false
+statpool: 30
+maxwander: 0
+groups:
+  - humanoid
+idlecommands:
+  - 'emote ties a bundle of fox pelts together by the hind legs and hangs it
+    from the trail marker.'
+  - ''
+  - 'emote whittles a trigger stick for a deadfall, checks the notch, and
+    whittles a little more.'
+  - ''
+  - 'emote tips his head to listen to the bracken, then goes back to work.'
+  - ''
+activitylevel: 10
+character:
+  name: Trapper Ottar
+  description: |
+    A long, stooped man with a grey-shot beard and a fox-fur hat, sitting on
+    an upturned crate at the mouth of the trail with his goods spread on an
+    oiled hide at his feet: snares, crude blades, a hatchet, a coil of cord.
+    He runs a trapline the length of the Fernway and comes out to the
+    trailhead to trade with the hunters going in. He pays fair for pelts,
+    meat and horn, and less fair for anything hacked about.
+  speciesid: 1
+  level: 1
+  gold: 400
+  equipment:
+    light:
+      itemid: 40038   # oil lantern: a shop must be light enough to trade in at night
+  shop:
+    # Only crude tools: iron and better come from a player's forge.
+    - itemid: 10061   # flint skinning knife
+    - itemid: 10062   # camp hatchet
+    - itemid: 40243   # flint scraper
+    - itemid: 40244   # flint sickle
+    # Fletching supplies for archers (review): feathers and arrowheads.
+    - itemid: 40316   # feathers
+    - itemid: 40421   # iron arrowheads
+    - itemid: 40357   # bone arrowheads
+  stats:
+    perception:
+      base: 108
+    dexterity:
+      base: 104

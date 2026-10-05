@@ -1,0 +1,25 @@
+itemid: 10062
+name: Camp Hatchet
+vendor_categories:
+- woodwork
+- hunting
+namesimple: hatchet
+description: >
+  A small hatchet with a soft iron head wedged onto an ash handle. It will
+  fell a pine with patience and a great deal of sweat, and it loses its edge
+  on anything harder.
+type: weapon
+hands: 1
+subtype: cleaving
+weight: 2.0
+speedmultiplier: 0.9
+damage:
+  basedamage: 4
+  variance: 2
+damage_multiplier: 0.45
+parryrating: 3
+value: 5
+rarity_tier: 50
+tool:
+  type: axe
+  tier: 1

@@ -1,0 +1,14 @@
+itemid: 20110
+name: Chitin Bracers
+vendor_categories:
+- jewelcrafting
+namesimple: bracers
+description: >
+  A pair of bracers made of curved chitin plates laced to leather.
+  Light, hard and slightly iridescent.
+type: wrist
+subtype: wearable
+weight: 0.6
+value: 55
+rarity_tier: 40
+physical_mitigation: 2

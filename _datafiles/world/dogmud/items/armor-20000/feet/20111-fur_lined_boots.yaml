@@ -1,0 +1,15 @@
+itemid: 20111
+name: Fur-Lined Boots
+vendor_categories:
+- tailoring
+namesimple: boots
+description: >
+  Leather boots lined with soft pelts. Warm, quiet and dry.
+type: feet
+subtype: wearable
+weight: 1.5
+value: 45
+rarity_tier: 40
+physical_mitigation: 2
+statmods:
+  vitality: 1

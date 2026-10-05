@@ -1,0 +1,18 @@
+itemid: 40310
+name: Bone
+namesimple: bone
+description: >
+  A clean length of animal bone, scraped of meat. Carvers make needles,
+  handles and arrowheads from it.
+type: object
+subtype: mundane
+component_tag: bone
+weight: 0.5
+value: 2
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- jewelcrafting
+- woodwork
+- hunting
+material_tier: 1

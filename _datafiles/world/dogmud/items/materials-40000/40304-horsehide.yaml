@@ -1,0 +1,18 @@
+itemid: 40304
+name: Horsehide
+namesimple: hide
+description: >
+  A broad horsehide, close-grained and strong, the kind tanners prize
+  for straps and harness leather.
+type: object
+subtype: mundane
+component_tag: hide
+weight: 2.0
+value: 11
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 2
+spoil_after: 4 days

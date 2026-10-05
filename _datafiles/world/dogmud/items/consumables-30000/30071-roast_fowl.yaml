@@ -1,0 +1,15 @@
+itemid: 30071
+name: Roast Fowl
+vendor_categories:
+- cooking
+namesimple: fowl
+description: >
+  A whole game bird roasted on a spit until the skin crackles.
+type: food
+subtype: edible
+uses: 1
+conditionids:
+  - 45
+value: 5
+rarity_tier: 50
+weight: 0.6

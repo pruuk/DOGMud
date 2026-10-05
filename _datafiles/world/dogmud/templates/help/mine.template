@@ -1,0 +1,29 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">mine</ansi>
+
+Dig a load of ore out of the rock.
+
+  <ansi fg="command">mine</ansi>            work whatever vein runs here
+  <ansi fg="command">mine <ore></ansi>      the same, checking the ore is what you expect
+
+You need a <ansi fg="yellow">pick</ansi>. Smiths and the Pothole Coulee mine foreman sell rough picks;
+an iron miner's pick, a steel pick and a masterwork pick come only from a
+smith's forge (<ansi fg="command">help tools</ansi>). Mining takes a few rounds; harder ores take
+longer, and a better pick is quicker.
+
+Mining is labour: your <ansi fg="yellow">Strength</ansi> and <ansi fg="yellow">Vitality</ansi> and your pick decide how it
+goes, not any skill. A strong miner brings out more ore with each load. Ore
+is graded like any other material, your pick caps the grade, and the grade
+carries through smelting into what a smith makes from it.
+
+The harder ores need a better pick: silver, basalt-iron and lake-iron an iron
+pick, gold a steel one. Now and then the rock gives up a gem as well, more
+often for a sharp-eyed miner (<ansi fg="yellow">Perception</ansi>) with a good pick: raw gems need
+an iron pick to take out whole, and a flawless gem a steel one.
+
+Every mineable room holds only so much ore. Work it out and the seam is
+spent until it refills, about a load every two game days, and it may come
+back as another ore. Rock next door tends to carry the same ore.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help prospect</ansi>, <ansi fg="command">help mining</ansi>, <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help tools</ansi>

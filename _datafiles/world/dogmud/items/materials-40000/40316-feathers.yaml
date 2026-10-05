@@ -1,0 +1,18 @@
+itemid: 40316
+name: Feathers
+namesimple: feathers
+description: >
+  A bundle of ordinary feathers plucked from a bird. Fletchers sort the
+  straight ones for arrows.
+type: object
+subtype: mundane
+component_tag: feathers
+weight: 0.05
+value: 3
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+- tailoring
+- hunting
+material_tier: 1

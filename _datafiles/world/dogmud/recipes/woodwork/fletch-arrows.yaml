@@ -1,0 +1,20 @@
+id: fletch-arrows
+name: "Quiver of Arrows"
+aliases: [arrows, fletch]
+skill: woodwork
+skill_minimum: 3
+station: ""
+tool: carving_knife
+time_rounds: 4
+ingredients:
+  - item_tag: arrow-shafts
+    quantity: 1
+  - item_tag: feathers
+    quantity: 2
+  - item_tag: arrowhead
+    quantity: 1
+output:
+  item_id: 30062
+  quantity: 1
+success_actor: "You set the heads, fletch the shafts and fill a quiver. A quiver of arrows!"
+failure_actor: "The fletching goes on crooked and the arrows will never fly true."

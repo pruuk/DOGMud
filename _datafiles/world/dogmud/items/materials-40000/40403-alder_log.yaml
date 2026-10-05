@@ -1,0 +1,15 @@
+itemid: 40403
+name: Alder Log
+namesimple: log
+description: >
+  A length of alder trunk. Where the axe bit, the pale wood has already
+  turned a rusty orange.
+type: object
+subtype: mundane
+component_tag: softwood-log
+weight: 8
+value: 3
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 1

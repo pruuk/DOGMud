@@ -1,0 +1,18 @@
+itemid: 40314
+name: Fang
+namesimple: fang
+description: >
+  A long, curved fang pulled from a predator's jaw. Hunters string them;
+  apothecaries grind them.
+type: object
+subtype: mundane
+component_tag: fang
+weight: 0.1
+value: 10
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- jewelcrafting
+- alchemy
+- hunting
+material_tier: 2

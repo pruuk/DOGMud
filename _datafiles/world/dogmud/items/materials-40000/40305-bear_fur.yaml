@@ -1,0 +1,18 @@
+itemid: 40305
+name: Bear Fur
+namesimple: fur
+description: >
+  A heavy bear pelt, the fur long, dark and deep enough to bury a hand
+  in. Cured, it keeps out a cold that would kill.
+type: object
+subtype: mundane
+component_tag: bear-fur
+weight: 3.0
+value: 30
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 3
+spoil_after: 5 days

@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -96,6 +97,12 @@ type SkillMoveParams struct {
 	// BonusCritMultiplier scales the crit mean only. 0 means 1.0.
 	BonusCritMultiplier float64
 
+	// StrikeWith points at the attacker's item that delivers the move (the
+	// sword of a counter-swing, the shield of a bash), so a critical hit
+	// wears that item. nil for moves made with the body (kick, trip, bite):
+	// those wear nothing of the attacker's (wilderness trades review).
+	StrikeWith *items.Item
+
 	// KnockdownToSupine: false (default) → defender falls face-forward
 	// to Prone (TriggerKnockdownFaceForward). true → defender knocked
 	// backward to Supine (TriggerKnockdownFaceBackward). Bash + charge
@@ -135,6 +142,7 @@ type SkillMoveParams struct {
 // The validator forces the value into (0, 1], so an absent or zero key reads as
 // 1.0 (unchanged) rather than as "disable all knockdowns". The guards below are
 // defensive only.
+
 func knockdownSurvivesGlobalDamper() bool {
 	return rollKnockdownDamper(float64(configs.GetBalanceConfig().KnockdownFrequencyScale))
 }
@@ -251,6 +259,9 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 	if result.Damage > 0 {
 		p.Defender.ApplyHarm(characters.PoolHealth, result.Damage,
 			state.ActorRef{UserId: p.Attacker.GetUserId(), MobInstanceId: p.Attacker.MobInstanceId})
+		if result.Crit && OnCritLanded != nil {
+			OnCritLanded(p.Attacker, p.Defender, p.StrikeWith)
+		}
 	}
 
 	if result.Hit {
@@ -327,3 +338,10 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 
 	return result
 }
+
+// OnCritLanded, when set, runs after a skill move or shot lands a critical
+// hit that dealt damage. internal/hooks sets it to wear the striking item
+// (SkillMoveParams.StrikeWith; nil for a kick or a bite) and the defender's
+// armour (wilderness trades gear wear); it is nil in this package's own
+// tests.
+var OnCritLanded func(attacker, defender *characters.Character, strikeWith *items.Item)

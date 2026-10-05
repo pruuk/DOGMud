@@ -64,7 +64,7 @@ func TestLentRelayDoorAndBreaker(t *testing.T) {
 	}
 
 	for i := 0; i < m.cfg.BreakerErrors; i++ {
-		r.Result(5, errors.New(`provider said no`))
+		r.Result(5, apiframework.PurposeFinds, errors.New(`provider said no`))
 	}
 	if _, ok := r.Model(5, apiframework.PurposeFinds); ok {
 		t.Fatal("failures feed the player's own breaker")
@@ -81,7 +81,7 @@ func TestLentRelayCountsOnlyWhatTheCompanionCounts(t *testing.T) {
 	r := relayFor{m: m}
 	for i := 0; i < m.cfg.BreakerErrors+2; i++ {
 		for _, err := range []error{errRelayGone, errRelayKeyShaped, errNoConsent, context.Canceled} {
-			r.Result(5, err)
+			r.Result(5, apiframework.PurposeFinds, err)
 		}
 	}
 	if _, ok := r.Model(5, apiframework.PurposeFinds); !ok {
@@ -111,7 +111,7 @@ func TestFindsFailuresNeverPauseTheCompanion(t *testing.T) {
 	m.relays.ready(5, `player-model`, true)
 	r := relayFor{m: m}
 	for i := 0; i < m.cfg.BreakerErrors+2; i++ {
-		r.Result(5, &apiframework.StatusError{Status: 400})
+		r.Result(5, apiframework.PurposeFinds, &apiframework.StatusError{Status: 400})
 	}
 	if _, ok := r.Model(5, apiframework.PurposeFinds); ok {
 		t.Fatal("naming on this key is paused")
@@ -173,5 +173,85 @@ func TestAHeldBackCallIsNoError(t *testing.T) {
 	m.breakerResult(res.Ticket, res.Err, time.Now())
 	if m.fw().ConsumerFailures(apiframework.ConsumerCompanion) != 0 {
 		t.Fatal("and it is no failure")
+	}
+}
+
+// Every feature that makes the world livelier is lent the key by the one
+// "Make the world livelier" box, apart from finds: each box lends its own
+// purposes and nothing more.
+func TestRelayIsLentForLivelyFeaturesOnlyWhenAllowed(t *testing.T) {
+	m := relayModule(t)
+	r := relayFor{m: m}
+	other := apiframework.LivelyPurpose(`another-feature`)
+	m.relays.readyFor(5, `player-model`, false, false)
+	if _, ok := r.Model(5, apiframework.PurposeNPCIdle); ok {
+		t.Fatal("a player who unticked it lends nothing to a lively feature")
+	}
+	m.relays.readyFor(5, `player-model`, false, true)
+	for _, p := range []string{apiframework.PurposeNPCIdle, other} {
+		if model, ok := r.Model(5, p); !ok || model != `player-model` {
+			t.Fatalf("allowed: every lively feature gets their model (%s %q %v)", p, model, ok)
+		}
+	}
+	if _, ok := r.Model(5, apiframework.PurposeFinds); ok {
+		t.Fatal("allowing a livelier world does not lend the key for finds")
+	}
+	if _, ok := r.Model(5, apiframework.PurposeLively); ok {
+		t.Fatal("the bare permission is no feature's purpose")
+	}
+	m.relays.ready(5, `player-model`, true)
+	if _, ok := r.Model(5, apiframework.PurposeNPCIdle); ok {
+		t.Fatal("a Ready without the lively choice lends nothing to lively features")
+	}
+	if _, ok := r.Model(5, apiframework.PurposeFinds); !ok {
+		t.Fatal("and still lends it for finds")
+	}
+}
+
+// Lively features share a permission but not a breaker: a player's provider
+// that will not serve one pauses that one on that key only, never another
+// lively feature, never finds, never the companion; and the reverse.
+func TestEachLivelyFeatureHasItsOwnBreaker(t *testing.T) {
+	m := relayModule(t)
+	m.relays.readyFor(5, `player-model`, true, true)
+	r := relayFor{m: m}
+	other := apiframework.LivelyPurpose(`another-feature`)
+	for i := 0; i < m.cfg.BreakerErrors+2; i++ {
+		r.Result(5, apiframework.PurposeNPCIdle, &apiframework.StatusError{Status: 400})
+	}
+	if _, ok := r.Model(5, apiframework.PurposeNPCIdle); ok {
+		t.Fatal("idle moments on this key are paused")
+	}
+	if _, ok := r.Model(5, other); !ok {
+		t.Fatal("another lively feature is untouched")
+	}
+	if _, ok := r.Model(5, apiframework.PurposeFinds); !ok {
+		t.Fatal("finds are untouched")
+	}
+	if _, ok := m.relays.live(5, time.Now()); !ok {
+		t.Fatal("the companion is untouched")
+	}
+
+	m.relays.readyFor(6, `player-model`, true, true)
+	for i := 0; i < m.cfg.BreakerErrors+2; i++ {
+		r.Result(6, apiframework.PurposeFinds, &apiframework.StatusError{Status: 400})
+	}
+	if _, ok := r.Model(6, apiframework.PurposeNPCIdle); !ok {
+		t.Fatal("finds failing does not pause lively features")
+	}
+	for i := 0; i < m.cfg.BreakerErrors+2; i++ {
+		r.Result(6, `no such purpose`, errors.New(`x`))
+		r.Result(6, apiframework.PurposeLively, errors.New(`x`))
+	}
+	if _, ok := r.Model(6, apiframework.PurposeNPCIdle); !ok {
+		t.Fatal("a purpose no box covers counts against nothing")
+	}
+	r.Result(6, apiframework.PurposeNPCIdle, errors.New(`x`))
+	r.Result(6, apiframework.PurposeNPCIdle, nil)
+	for i := 0; i < m.cfg.BreakerErrors-1; i++ {
+		r.Result(6, apiframework.PurposeNPCIdle, errors.New(`x`))
+	}
+	if _, ok := r.Model(6, apiframework.PurposeNPCIdle); !ok {
+		t.Fatal("a success resets the run of failures")
 	}
 }

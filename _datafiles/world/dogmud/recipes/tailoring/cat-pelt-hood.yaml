@@ -1,0 +1,22 @@
+id: cat-pelt-hood
+name: Cat-Pelt Hood
+aliases: [hood]
+skill: tailoring
+skill_minimum: 12
+station: loom
+tool: scraper
+time_rounds: 5
+ingredients:
+  - item_tag: cat-pelt
+    quantity: 2
+  - item_tag: salt-pouch
+    quantity: 1
+  - item_tag: thread-spool
+    quantity: 1
+  - item_tag: bone-needle
+    quantity: 1
+output:
+  item_id: 20106
+  quantity: 1
+success_actor: "You cure the pelts and shape a close hood that hardly rustles. A cat-pelt hood!"
+failure_actor: "The pelts stretch out of shape. They are wasted."

@@ -1,0 +1,66 @@
+id: c-the-floor-that-looks-up
+pool: C
+source: authored
+title: The Floor That Looks Up
+description: >-
+  Most of this chamber's floor is a single sheet of polished black glass, so
+  dark and so smooth that it seems to drop away beneath you. Your reflection
+  stands in it upside down, and it is a beat behind you: when you lift a
+  hand, it lifts its own a breath later, and once, when you turn your head,
+  it seems to finish turning before you begin. A low rim of rougher crystal
+  runs all the way round the glass, and round marks are pressed along its
+  inner edge. Set into the rim at intervals are hollows worn in threes, where
+  feet once stood at the very edge and leaned out over the dark. Frost lines
+  a long crack in the glass near one wall. A stair and a gap lead on. The
+  third way, a vault cut low in the far wall, is sealed behind a fused facet
+  of dark glass that your reflection, in the floor, seems to be able to walk
+  straight through.
+nouns:
+  floor: >-
+    The glass is cold and perfectly hard. Looking down into it you see the
+    ceiling, far below, and yourself standing on it. The reflected room is
+    the same as this one in every detail but one: in the floor, the sealed
+    vault stands open, and the dark beyond it is lit.
+  rim: >-
+    A band of unpolished crystal, rough enough to stand on without slipping.
+    Its inner edge is pressed with round marks in a single long line that
+    runs all the way around and meets itself, so there is no telling where it
+    begins, only that one stretch has been worn smooth by long reading.
+  marks: >-
+    The worn stretch of the line is dense and careful, the same short run of
+    marks pressed over and over by many hands, as if every visitor had added the same short thing before leaning out over the glass. Some of the
+    repetitions are tiny and wobbling, set low on the rim.
+  hollows: >-
+    Three-groove hollows sunk into the rim, a dozen of them, each worn deep at
+    the front as if the weight of whoever stood there leaned out over the
+    glass. In one hollow the grooves are tiny, half the size of the rest, set
+    close beside a full-sized pair.
+  crack: >-
+    A long fracture runs through the glass near the wall, white with frost.
+    On either side of it your reflection does not agree with itself: on one
+    side it is watching you, and on the other it is watching the vault.
+idlemessages:
+  - Your reflection in the floor glances toward the vault, then back at you.
+puzzle:
+  kind: memory
+  sealed_door: vault
+  hard: true
+  reward: key
+  solved: >-
+    As the last lenses lock, your reflection stops. For a moment it stands
+    still while you move, and then it bows its head and steps aside, out of
+    the glass. The fused facet over the vault clears, and the way behind it
+    is the same dark as yours.
+doors:
+  - exit: stair
+    description: >-
+      A narrow stair climbing out of the chamber, its first steps reflected
+      in the floor glass so that it seems to lead both up and down.
+  - exit: gap
+    description: >-
+      A rough gap where two wall panes have pulled apart, wide enough to
+      pass sideways. Cold air moves through it, slow.
+  - exit: vault
+    description: >-
+      A low vaulted doorway, sealed with a fused facet of dark glass. In the
+      floor below it, its reflection stands open.

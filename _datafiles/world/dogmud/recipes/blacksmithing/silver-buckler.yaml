@@ -1,0 +1,17 @@
+id: silver-buckler
+name: "Silver Buckler"
+aliases: [silverbuckler]
+skill: blacksmithing
+skill_minimum: 18
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: silver-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 20127
+  quantity: 1
+success_actor: "You work the silver into shape. A silver buckler!"
+failure_actor: "The silver tears as you work it. The metal is wasted."

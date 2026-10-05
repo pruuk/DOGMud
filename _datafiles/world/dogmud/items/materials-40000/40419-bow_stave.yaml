@@ -1,0 +1,17 @@
+itemid: 40419
+name: Bow Stave
+namesimple: stave
+description: >
+  A long, split stave of springy wood, roughly shaped and left to
+  season. A bowyer sees a bow in it.
+type: object
+subtype: mundane
+component_tag: bow-stave
+weight: 1.5
+value: 10
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+material_tier: 2
+carries_wood: true

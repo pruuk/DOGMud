@@ -1,0 +1,17 @@
+id: flawless-gem-ring
+name: "Flawless Gem Ring"
+aliases: [flawlessring]
+skill: jewelcrafting
+skill_minimum: 50
+station: jeweler_bench
+time_rounds: 10
+ingredients:
+  - item_tag: flawless-gem
+    quantity: 1
+  - item_tag: gold-wire
+    quantity: 2
+output:
+  item_id: 20133
+  quantity: 1
+success_actor: "You set the flawless gem in a gold band so fine it seems to float. A flawless gem ring!"
+failure_actor: "The setting slips and the stone is chipped. The materials are wasted."

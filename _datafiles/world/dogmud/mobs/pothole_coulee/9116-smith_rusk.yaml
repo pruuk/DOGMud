@@ -49,12 +49,13 @@ character:
     dexterity:
       base: 106
     perception:
-      base: 106
+      base: 110
     willpower:
       base: 104
     charisma:
       base: 104
   shop:
+    - itemid: 10073    # rough pick (mining; only crude tools are sold)
     - itemid: 40001    # iron ingot
       quantity: 0
       quantitymax: 0

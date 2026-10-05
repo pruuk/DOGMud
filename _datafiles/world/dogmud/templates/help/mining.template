@@ -1,0 +1,58 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">mining</ansi>
+
+Ore is a trade. Go out with a pick, dig ore, haul it to a forge, then sell it
+or smelt it and make something.
+
+<ansi fg="yellow">━━━ Where the ore is ━━━</ansi>
+
+Caves, mountainsides and cliffs carry ore (<ansi fg="command">prospect</ansi> to read them).
+
+  <ansi fg="yellow">Pothole Coulee</ansi>       iron, coal, basalt-iron, copper, some silver;
+                       the basalt-iron mine's guarded drifts carry the richest
+                       silver and gold
+  <ansi fg="yellow">Low Tunnels</ansi>          copper, tin and coal in the goblin warrens
+  <ansi fg="yellow">Ironwind Steppe</ansi>      iron and coal in the caves, copper and tin on the cliffs
+  <ansi fg="yellow">Eastern Highlands</ansi>    iron, silver, copper, and rarely gold
+  <ansi fg="yellow">Cascade Pass Road</ansi>    copper, iron, tin, silver and rarely gold
+  <ansi fg="yellow">Stillwater caves</ansi>     lake-iron, copper and tin
+
+Thornwall's drains and cellars hold nothing worth digging.
+
+<ansi fg="yellow">━━━ Ores ━━━</ansi>
+
+  <ansi fg="yellow">coal, copper, tin</ansi>    common; any pick
+  <ansi fg="yellow">iron</ansi>                 common; any pick
+  <ansi fg="yellow">lake-iron, basalt-iron, silver</ansi>   uncommon; an iron pick or better
+  <ansi fg="yellow">gold</ansi>                 rare; a steel pick or better, and a strong back
+
+A lucky load may hold a gem: polished stone, gem dust, a raw gem (iron pick)
+or, very rarely, a flawless gem (steel pick).
+
+<ansi fg="yellow">━━━ From ore to metal ━━━</ansi>
+
+At a forge (blacksmithing): <ansi fg="command">smelt-iron-ore</ansi>, <ansi fg="command">smelt-copper-ore</ansi>, <ansi fg="command">smelt-tin-ore</ansi>,
+<ansi fg="command">smelt-silver-ore</ansi> (12) and <ansi fg="command">smelt-gold-ore</ansi> (22) make ingots; <ansi fg="command">alloy-bronze</ansi> (6) makes
+bronze from copper and tin; <ansi fg="command">steel-ingot</ansi> and <ansi fg="command">crucible-steel</ansi> refine iron further.
+At a jeweler's bench (jewelcrafting): <ansi fg="command">draw-copper-wire</ansi>, <ansi fg="command">draw-silver-wire</ansi> (10) and
+<ansi fg="command">draw-gold-wire</ansi> (24).
+
+<ansi fg="yellow">━━━ Metals in gear ━━━</ansi>
+
+Smiths can make a dagger, short sword, buckler or helm in copper, bronze,
+silver or gold as well as iron. Against iron:
+
+  <ansi fg="yellow">copper</ansi>   soft and cheap: hits and protects less
+  <ansi fg="yellow">bronze</ansi>   nearly iron, a little heavier, handsome
+  <ansi fg="yellow">silver</ansi>   soft but quick in the hand; silver armour wards against magic
+  <ansi fg="yellow">gold</ansi>     a poor thing to fight with and heavy, but worth a small fortune
+           and it makes its wearer more charismatic
+
+<ansi fg="yellow">━━━ Buying and selling ━━━</ansi>
+
+  Mine Foreman Dagna at the Pothole Coulee Mine Mouth buys ore, ingots and
+  coal and sells rough picks. Smith Rusk (Pothole Coulee) and Smith Brindle
+  (Stillwater) sell rough picks too. Better picks come only from a smith.
+
+<ansi fg="yellow">See Also:</ansi>
+
+  <ansi fg="command">help mine</ansi>, <ansi fg="command">help prospect</ansi>, <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help tools</ansi>

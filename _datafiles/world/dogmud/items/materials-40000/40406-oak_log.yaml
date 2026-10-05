@@ -1,0 +1,15 @@
+itemid: 40406
+name: Oak Log
+namesimple: log
+description: >
+  A heavy length of oak, the bark deeply furrowed, the wood beneath it
+  hard and pale brown.
+type: object
+subtype: mundane
+component_tag: hardwood-log
+weight: 10
+value: 6
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 2

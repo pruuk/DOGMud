@@ -12,7 +12,9 @@ description: >
   inside; a water-trough and hitching rail line the yard for the teams
   that stop here. Above the door, an <ansi fg="itemname">inn-sign</ansi>
   creaks on its iron bracket, and a chalked <ansi fg="itemname">slate</ansi>
-  by the threshold lists what the kitchen has today.
+  by the threshold lists what the kitchen has today. Down the road to the
+  south, past the next bend, the dark crown of a great tree stands up out of
+  a fold in the land to the east.
 biome: land
 coord: {x: -8, y: -18, z: 0}
 exits:

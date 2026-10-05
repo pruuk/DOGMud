@@ -1,0 +1,16 @@
+itemid: 61
+name: Quillhouse Redecorating Voucher
+namesimple: voucher
+not_salable: true
+description: >
+  A slip of card printed THE QUILLHOUSE, ONE REDECORATION, initialled A.S. with
+  a flourish. It is good for one room of a Quillhouse lodging, once. To use it,
+  stand in the room you want changed and type use voucher. You will be asked to
+  write how the room should look, as one paragraph. You can also write it
+  straight after the word voucher. A new description replaces any you wrote for
+  that room before.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

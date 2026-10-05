@@ -36,11 +36,6 @@ combatcommands:
   - ''
 activitylevel: 30
 character:
-  items:
-    - itemid: 40163
-      dropchance: 65
-    - itemid: 40164
-      dropchance: 50
   name: The Pass-Apex
   description: |
     A bear -- or the shape of one -- that holds the top of the
@@ -69,3 +64,13 @@ character:
     perception:
       base: 76
 itemdropchance: 75
+# Wilderness trades: the pelt and the apex claw are cut from the carcass now.
+harvest:
+  skin:
+    - {item: cascade-hide, qty: 1}
+  butcher:
+    - {item: raw-meat, qty: 2}
+    - {item: sinew, qty: 1}
+    - {item: bone, qty: 2, tool: cleaver}
+    - {item: animal-fat, qty: 1, tool: cleaver}
+    - {item: apex-claw, qty: 1, tool: bone_saw, rare: true, chance: 0.6}

@@ -1,0 +1,18 @@
+itemid: 40321
+name: Musk Gland
+namesimple: gland
+description: >
+  A small, pungent gland from a mustelid. Perfumers and alchemists pay
+  well for the oil in it.
+type: object
+subtype: mundane
+component_tag: musk-gland
+weight: 0.1
+value: 30
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- alchemy
+- hunting
+material_tier: 3
+spoil_after: 3 days

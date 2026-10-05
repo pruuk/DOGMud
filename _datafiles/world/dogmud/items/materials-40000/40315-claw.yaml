@@ -1,0 +1,17 @@
+itemid: 40315
+name: Claw
+namesimple: claw
+description: >
+  A hooked claw, black and sharp, cut from a big predator's paw.
+type: object
+subtype: mundane
+component_tag: claw
+weight: 0.1
+value: 10
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- jewelcrafting
+- alchemy
+- hunting
+material_tier: 2

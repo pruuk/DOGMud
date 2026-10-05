@@ -1,0 +1,46 @@
+mobid: 9821
+zone: New Plymouth Crafting
+# A city scavenger (internal/scavenger, scavengers.yaml): walks to random
+# rooms of its city one step at a time and picks up the litter it finds.
+# Its haul is pickpocketable and cleared at each real-world day boundary.
+behavior_archetype: scavenger
+archetype: fighting
+statpool: 60
+itemdropchance: 100
+hostile: false
+non_combatant: false
+charm_immune: true
+maxwander: -1
+groups:
+  - humanoid
+  - scavenger
+  - np_commonfolk
+idlecommands:
+  - 'emote rattles his sack to hear what is in it.'
+  - ''
+  - 'emote watches a smith at work with open envy, then remembers himself.'
+  - 'emote wipes his nose on his sleeve and leaves a streak of soot across his face.'
+  - ''
+  - 'emote counts on his fingers, loses his place, and starts again.'
+activitylevel: 8
+character:
+  name: Tuck
+  description: |
+    A soot-smudged boy of twelve or so with a sack over one shoulder and a
+    leather apron that belonged to someone twice his size. The smiths and
+    glassblowers pay him in heels of bread to clear their yards of offcuts,
+    and he has taken the job as a licence to pick up anything left lying
+    anywhere in the quarter. He knows which forge throws out the best scrap
+    and which apprentice drops things when the master shouts.
+  speciesid: 1
+  level: 3
+  gold: 2
+  stats:
+    strength:
+      base: 100
+    vitality:
+      base: 104
+    perception:
+      base: 110
+    dexterity:
+      base: 112

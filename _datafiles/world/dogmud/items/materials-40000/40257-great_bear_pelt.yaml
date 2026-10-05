@@ -1,0 +1,19 @@
+itemid: 40257
+name: Great Bear Pelt
+namesimple: pelt
+description: >
+  A whole bearskin, head and claws and all, the fur thick enough to lose
+  an arm in. Only a masterwork knife lifts a hide this size off without a
+  tear, and only the richest houses can afford to lay one before the fire.
+type: object
+subtype: mundane
+component_tag: great-bear-pelt
+weight: 6.0
+value: 160
+rarity_tier: 10
+is_component: true
+vendor_categories:
+- tailoring
+- hunting
+material_tier: 4
+spoil_after: 5 days

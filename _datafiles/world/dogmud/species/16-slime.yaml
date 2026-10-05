@@ -34,3 +34,8 @@ damage:
   variance: 3
 damage_multiplier: 0.65
 disabledslots: ['weapon', 'offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet', 'body']
+# Wilderness trades: what a carcass gives to skin and butcher. Quantities
+# are for a medium body (small halves, large doubles). See species/harvest.go.
+harvest:
+  butcher:
+    - {item: putrid-residue, qty: 1}

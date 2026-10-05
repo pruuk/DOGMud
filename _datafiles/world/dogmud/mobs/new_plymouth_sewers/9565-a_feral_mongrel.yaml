@@ -31,9 +31,6 @@ combatcommands:
   - ''
 activitylevel: 25
 character:
-  items:
-    - itemid: 40070
-      dropchance: 50
   name: A Feral Mongrel
   description: |
     Dock stock gone wrong -- a rangy, scar-hided dog that came
@@ -56,3 +53,8 @@ character:
     perception:
       base: 144
 itemdropchance: 50
+# Wilderness trades: the pack-hide pelt comes off with a knife now (skin),
+# not as loot. The species table (canine) supplies the meat and bone.
+harvest:
+  skin:
+    - {item: pack-hide, qty: 1}

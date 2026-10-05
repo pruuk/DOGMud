@@ -1,0 +1,17 @@
+id: copper-helm
+name: "Copper Helm"
+aliases: [copperhelm]
+skill: blacksmithing
+skill_minimum: 8
+station: forge
+time_rounds: 6
+ingredients:
+  - item_tag: copper-ingot
+    quantity: 3
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 20129
+  quantity: 1
+success_actor: "You work the copper into shape. A copper helm!"
+failure_actor: "The copper tears as you work it. The metal is wasted."

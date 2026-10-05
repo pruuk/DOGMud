@@ -1,0 +1,16 @@
+itemid: 40239
+name: Hide Scraper
+namesimple: scraper
+description: >
+  A two-handled iron blade with a blunt, curved edge, drawn along a pinned hide to strip away flesh and fat before curing.
+type: object
+subtype: mundane
+weight: 0.6
+value: 6
+rarity_tier: 40
+vendor_categories:
+- blacksmithing
+- tailoring
+tool:
+  type: scraper
+  tier: 2

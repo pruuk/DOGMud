@@ -123,14 +123,17 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			ActorPlainName: mob.Character.GetCharacterName(false),
 		}
 		if len(result.TargetUserIds) > 0 {
+			// The bare coloured name: the formatted one carries adjectives
+			// (a lit player reads "Name (Lit)"), which do not belong in a
+			// sentence about them.
 			if tUser := users.GetByUserId(result.TargetUserIds[0]); tUser != nil {
-				tCtx.ActeeName = tUser.Character.GetCharacterName(true)
-				tCtx.ActeePlainName = tUser.Character.GetCharacterName(false)
+				tCtx.ActeeName = fmt.Sprintf(`<ansi fg="username">%s</ansi>`, tUser.Character.Name)
+				tCtx.ActeePlainName = tUser.Character.Name
 			}
 		} else if len(result.TargetMobInstanceIds) > 0 {
 			if tMob := mobs.GetInstance(result.TargetMobInstanceIds[0]); tMob != nil {
-				tCtx.ActeeName = tMob.Character.GetCharacterName(true)
-				tCtx.ActeePlainName = tMob.Character.GetCharacterName(false)
+				tCtx.ActeeName = fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, tMob.Character.Name)
+				tCtx.ActeePlainName = tMob.Character.Name
 			}
 		}
 		roles := spellInfo.Narrate(spells.PhaseCast, tCtx)
@@ -169,8 +172,12 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
-	room.SendTextVisual(messaging.CategorySpellFold, fmt.Sprintf(
-		`<ansi fg="mobname">%s</ansi> begins weaving a spell.`, mob.Character.Name))
+	// A spell that authors its own cast line has said what is happening
+	// above; the generic line is for the rest.
+	if spellInfo.Narration(spells.PhaseCast).Len() == 0 {
+		room.SendTextVisual(messaging.CategorySpellFold, fmt.Sprintf(
+			`<ansi fg="mobname">%s</ansi> begins weaving a spell.`, mob.Character.Name))
+	}
 
 	// Initiate combat aggro immediately when targeting a player with an offensive spell.
 	// This ensures the mob enters the combat loop so the player is flagged as in combat.

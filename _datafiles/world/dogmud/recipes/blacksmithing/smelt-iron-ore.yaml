@@ -1,0 +1,15 @@
+id: smelt-iron-ore
+name: Smelted Iron Ingot
+aliases: [smelt]
+skill: blacksmithing
+skill_minimum: 0
+station: forge
+time_rounds: 2
+ingredients:
+  - item_tag: iron-ore
+    quantity: 2
+output:
+  item_id: 40001
+  quantity: 1
+success_actor: "You bed the ore in the coals and work the bellows until slag runs off and a rough bar of iron is left behind. An iron ingot!"
+failure_actor: "The fire never gets hot enough, and the ore crumbles into useless slag."

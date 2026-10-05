@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/baubles"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -136,7 +137,7 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 		if mobSpec == nil {
 			continue
 		}
-		if len(crafting.LookupCorpseSalvage(mobSpec.Groups)) > 0 {
+		if len(crafting.LookupCorpseSalvageForMob(mobSpec.Groups, mobSpec.Character.SpeciesId)) > 0 {
 			target = c
 			found = true
 			break
@@ -177,7 +178,7 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 	result.RollHappened = true
 
 	mobSpec := mobs.GetMobSpec(mobs.MobId(target.MobId))
-	returns := crafting.LookupCorpseSalvage(mobSpec.Groups)
+	returns := crafting.LookupCorpseSalvageForMob(mobSpec.Groups, mobSpec.Character.SpeciesId)
 	// A corpse was never crafted, so there is no recipe to derive a difficulty
 	// from. Uses the documented fallback, which is deliberately untuned.
 	recovered := crafting.RollSalvageReturnsFromSpec(returns, score, crafting.FallbackSalvageDifficulty())
@@ -307,6 +308,17 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 		return result
 	}
 
+	// Hot stolen goods (a merchant chest's) are not broken down while hot:
+	// the materials would come out clean and shed the heat.
+	if baubles.GoodsHot(targetItem, stolenNow()) {
+		if actor.IsPlayer() {
+			actor.SendText(messaging.CategoryError,
+				`<ansi fg="red">That was stolen too recently to break down. A fence will pay for it whole.</ansi>`)
+		}
+		result.Reason = "stolen"
+		return result
+	}
+
 	itemId := targetItem.ItemId
 	spec := items.GetItemSpec(itemId)
 	if spec == nil {
@@ -354,7 +366,9 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 		}
 		recipe := crafting.GetRecipeByOutputItemId(itemId)
 		if recipe != nil {
-			recovered = crafting.RollSalvageReturns(recipe.Ingredients, score, salvageDiff)
+			// One unit's share: a recipe that makes several gives each its
+			// part, so a salvage loop cannot multiply the material.
+			recovered = crafting.RollSalvageReturns(recipe.SalvageIngredients(util.Rand), score, salvageDiff)
 		} else if len(spec.SalvageReturns) > 0 {
 			recovered = crafting.RollSalvageReturnsFromSpec(spec.SalvageReturns, score, salvageDiff)
 		}

@@ -1,0 +1,63 @@
+id: c-the-rimed-fault
+pool: C
+source: authored
+title: The Rimed Fault
+description: >-
+  A great fracture splits this chamber from wall to wall, and the two halves
+  of the room no longer quite agree. The far side has dropped a hand's width
+  and turned a few degrees, so that its walls stand at angles that almost
+  meet the near ones and never do. Thick frost furs the edges of the fault,
+  white and feathered, and a cold breath rises out of it steadily, as if the
+  crack went down a very long way. A plinth that once stood in the middle of
+  the room has broken across the fault, half on either side, and the round
+  marks on its faces no longer line up. The floor on the near side is cut
+  with three-groove tracks that lead straight to the edge and stop. On the
+  far side the same tracks begin again, a little to the left. Ways lead on
+  across the room to a ledge, a bridge and a notch in the wall, all of them
+  on the far side.
+nouns:
+  fault: >-
+    The fracture is narrow enough to step across, but its lips are glazed
+    with old frost that has built up layer on layer. Looking down, you see
+    the crack go on far past where the floor should end, its sides faintly
+    lit, narrowing to a thread of cold light at a depth you cannot judge.
+  frost: >-
+    The frost grows in feathers along the fault and creeps out across the
+    floor in fine branching lines. Near the plinth it has grown thinner,
+    rubbed away in a narrow strip, as though this was always the place to
+    cross. Elsewhere it lies thick and smooth over the glassy lip.
+  plinth: >-
+    The two halves of the plinth lean apart across the crack. The round
+    marks on each half are clear, but the rows have slipped against each
+    other, so that every line now reads as the start of one sentence and the
+    end of another.
+  tracks: >-
+    Three-groove tracks lead to the fault on the near side and resume on the
+    far side, offset to the left. Followed exactly, they meet at the strip
+    of thin frost beside the plinth, where whoever walked here went on
+    walking long after the floor had broken beneath their path.
+idlemessages:
+  - A breath of cold rises out of the fault and frost creaks along its edge.
+trap:
+  difficulty: 100
+  condition_ids: [107]
+  triggered: >-
+    Your foot lands on the thick frost at the lip of the fault and slides,
+    and you drop to one knee astride the crack. Cold pours up out of it
+    into you, and your hands and legs go numb and slow.
+  avoided: >-
+    You follow the old tracks to the strip of thin frost beside the broken
+    plinth and step across there, where the lip of the fault is sound.
+doors:
+  - exit: ledge
+    description: >-
+      A narrow ledge runs out along the far wall beyond the fault, its edge
+      silvered with frost, curving away out of sight.
+  - exit: bridge
+    description: >-
+      A thin bridge of crystal arches away from the far side of the room
+      over a darkness whose bottom you cannot see.
+  - exit: notch
+    description: >-
+      A notch cut into the far wall at an angle that does not match the near
+      side, leading into a cramped dark passage.

@@ -1,0 +1,14 @@
+itemid: 83
+name: Facet Key
+not_salable: true
+namesimple: key
+description: >-
+  A sliver of black crystal no longer than your finger, cut with flat faces
+  that do not quite meet. It is cold in a way that does not warm in the hand.
+  Held up to the eye it shows a door you have not seen yet. Whatever it
+  opens is somewhere inside the obelisk; out here in the world it is only a
+  pretty shard, and it will not last.
+type: key
+subtype: mundane
+weight: 0.1
+value: 0

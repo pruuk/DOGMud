@@ -1,0 +1,19 @@
+id: antler-hilt-hunting-sword
+name: "Antler-Hilt Hunting Sword"
+aliases: [huntsword]
+skill: blacksmithing
+skill_minimum: 28
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 2
+  - item_tag: antler
+    quantity: 1
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10071
+  quantity: 1
+success_actor: "You forge a short, broad blade and fit an antler grip to the tang. An antler-hilt hunting sword!"
+failure_actor: "The blade warps in the quench. The steel is ruined."

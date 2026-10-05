@@ -1,0 +1,17 @@
+id: copper-short-sword
+name: "Copper Short Sword"
+aliases: [coppershortsword]
+skill: blacksmithing
+skill_minimum: 6
+station: forge
+time_rounds: 5
+ingredients:
+  - item_tag: copper-ingot
+    quantity: 2
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10081
+  quantity: 1
+success_actor: "You work the copper into shape. A copper short sword!"
+failure_actor: "The copper tears as you work it. The metal is wasted."

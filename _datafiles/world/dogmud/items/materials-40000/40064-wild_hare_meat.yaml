@@ -17,4 +17,6 @@ is_component: true
 vendor_categories:
 - alchemy
 - cooking
+- hunting
 material_tier: 1
+spoil_after: 2 days

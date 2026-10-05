@@ -122,6 +122,11 @@ func (m *Mind) recordRoom(room *rooms.Room, sc *scene, prevRoomId int, nowUnix i
 				people = append(people, t.Name)
 			}
 		}
+		// A place to work (a cooking fire, a forge) is worth remembering:
+		// it is where she can make what she has the makings for.
+		if st := strings.TrimSpace(room.Station); st != `` {
+			features = append([]string{stationWords(st)}, features...)
+		}
 		rec.Features = capStrings(features, 12)
 		rec.People = capStrings(people, 8)
 	}
@@ -571,4 +576,10 @@ func frontierPlaces(mp map[int]*RoomRecord, from int, max int) []string {
 			placeRef(c.id), mp[c.id].Title, away, strings.Join(c.ways, `, `)))
 	}
 	return out
+}
+
+// stationWords names a room's crafting station the way she would think of
+// it: "a cooking fire", "a forge".
+func stationWords(station string) string {
+	return `a ` + strings.ReplaceAll(strings.TrimSpace(station), `_`, ` `)
 }

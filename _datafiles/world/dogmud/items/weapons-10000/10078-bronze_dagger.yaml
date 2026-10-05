@@ -1,0 +1,21 @@
+itemid: 10078
+name: Bronze Dagger
+vendor_categories:
+- blacksmithing
+namesimple: dagger
+description: >
+  A short, double-edged blade of golden-brown bronze with a leather-wrapped
+  grip. Bronze is nearly as good as iron and handsome with it, if a little
+  heavier.
+type: weapon
+hands: 1
+subtype: stabbing
+weight: 0.88
+speedmultiplier: 1.1
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.57
+parryrating: 4
+value: 24
+rarity_tier: 40

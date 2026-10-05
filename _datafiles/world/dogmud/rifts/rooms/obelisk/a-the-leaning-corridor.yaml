@@ -1,0 +1,43 @@
+id: a-the-leaning-corridor
+pool: A
+source: authored
+title: The Leaning Corridor
+description: >-
+  Everything in this corridor leans. The walls slope hard to the right, the
+  ceiling slants with them, and the floor tilts so steeply that your eyes
+  tell you to brace and grab for a hold. Your feet do not agree. They report
+  a level floor, firm and flat, and when you walk you do not slide.
+  Somewhere between your eyes and your feet, one of them is lying. Along the
+  left wall runs a shelf of crystal set with a row of shallow cups, and each
+  cup holds a skin of something clear and still that lies level with the
+  shelf, not with the world. A few chips of broken crystal rest against the
+  uphill wall, where they have rolled.
+nouns:
+  shelf: >-
+    A narrow shelf runs the length of the left wall, cut from the same
+    piece as the wall itself. Its front edge is lined with round marks at
+    even intervals, like the ticks of a rule. Read along the shelf, the
+    spacing slowly changes, wider at one end than the other, though the
+    shelf itself is straight.
+  cups: >-
+    Shallow cups set into the shelf, a dozen or more. Each holds a clear
+    substance that is not water and not glass, and does not ripple when
+    you breathe on it. It lies tilted in its cup. Look at it long enough
+    and the surface rights itself, and the whole corridor lurches the
+    other way.
+  chips: >-
+    A scatter of broken crystal heaped against the foot of the uphill
+    wall. Nudge one with your toe and it rolls, slowly and deliberately,
+    back up the slope to join the others. They have been gathering here a
+    long time. Some are worn as round as river pebbles.
+idlemessages:
+  - "One of the crystal chips rolls uphill and clicks against the wall."
+doors:
+  - exit: landing
+    description: >-
+      Uphill, as your eyes insist, the corridor ends on a landing that
+      your feet say is no higher at all.
+  - exit: plunge
+    description: >-
+      Downhill, the corridor ends in a square hole in the floor with
+      cold air rising out of it, looking steeper than it can be.

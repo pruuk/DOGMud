@@ -14,5 +14,7 @@ uses: 0
 weight: 0.3
 value: 12
 rarity_tier: 40
+component_tag: spore-sac
 vendor_categories:
 - alchemy
+material_tier: 2

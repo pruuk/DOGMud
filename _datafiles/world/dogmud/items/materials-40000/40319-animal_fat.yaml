@@ -1,0 +1,19 @@
+itemid: 40319
+name: Animal Fat
+namesimple: fat
+description: >
+  A lump of raw white fat cut from a carcass. Rendered down it makes
+  tallow; left alone it goes rancid.
+type: object
+subtype: mundane
+component_tag: animal-fat
+weight: 0.4
+value: 3
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- cooking
+- alchemy
+- hunting
+material_tier: 1
+spoil_after: 3 days

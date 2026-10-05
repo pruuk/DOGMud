@@ -100,7 +100,10 @@ the Presence machine's transition itself provides the state boundary.
 **Essential-mob veto (T5):** `hooks.Presence_MobVetoes.go` registers
 `Active→Dormant` and `Active→Despawning` vetoes that return `ErrVetoed`
 when `mob.IsEssential() || mob.Character.IsCharmed()`. Shopkeepers,
-foragers, caravan crew, and charmed companions never leave Active.
+foragers, caravan crew, city scavengers (group `scavenger`), charmed
+companions, and AI companions waiting in the Waystone Hollow (the
+`HollowGroup` group, which the aicompanion module adds to that one
+instance; no template carries it) never leave Active.
 
 **Spawning state:** `NewMobPresence()` starts in `Spawning`. On the
 next `NewRound_PresenceTick`, the mob advances `Spawning→Active`. This
@@ -1173,3 +1176,18 @@ the copies.
 `(*Mob).WalkItems` walks the mob's character (`Character.WalkItems`). A
 mob's pack exists only in memory (instance files keep equipment only), so
 the bauble sweep sees it through this live walk alone.
+
+## RestoreInstance
+
+`RestoreInstance(m)` puts a mob taken out with `DestroyInstance` back into
+the registry under its own instance id, unchanged. With `DestroyInstance` it
+lets a caller park a mob out of the world and bring the same creature back
+(internal/rifts: the Facet Hunter following its quarry room to room).
+Placing it in a room is the caller's.
+
+## Harvest (wilderness trades)
+
+`Mob.Harvest` (`harvest:`) overrides the species harvest table per section.
+**harvest.go**: `HarvestTagExists`, `HarvestItemExists`, `ResolveHarvest` (species table merged
+with the mob's) and `ValidateMobHarvest`, called from main after mobs load.
+`ValidateMobSpec` also validates the table for builder saves.

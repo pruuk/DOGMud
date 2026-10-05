@@ -1,0 +1,12 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">tusk-knuckle-gauntlets</ansi> (blacksmithing recipe)
+
+Crucible steel gauntlets set with trophy tusks. 3 physical protection, +3
+Strength.
+
+<ansi fg="yellow">━━━ Crafting ━━━</ansi>
+
+  <ansi fg="yellow">Skill:</ansi>       blacksmithing (minimum 48)
+  <ansi fg="yellow">Station:</ansi>     forge
+  <ansi fg="yellow">Ingredients:</ansi> crucible steel (x2), trophy tusks (x1), leather strip (x2)
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help blacksmithing</ansi>, <ansi fg="command">help craft</ansi>, <ansi fg="command">help tools</ansi>

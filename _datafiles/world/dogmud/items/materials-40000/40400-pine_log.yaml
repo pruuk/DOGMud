@@ -1,0 +1,15 @@
+itemid: 40400
+name: Pine Log
+namesimple: log
+description: >
+  A length of pine trunk, pale and sticky with resin where the bark has
+  split, light for its size.
+type: object
+subtype: mundane
+component_tag: softwood-log
+weight: 8
+value: 3
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 1

@@ -40,6 +40,8 @@ idlemessages:
 - A driver climbs to the box seat and gathers the reins, sizing up the team.
 - The creak of wheels and hoofbeats — a coach rolls in from the road, muddy.
 spawninfo:
+  - mobid: 9832
+    respawnrate: "30 real minutes"
   - mobid: 9186
     respawnrate: "15 real minutes"
 x: -9

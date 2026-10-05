@@ -1,5 +1,9 @@
 mobid: 328
 zone: North Road
+# Wilderness trades: the woodcutter's camp buys logs, bark and lumber
+# (woodwork goods) and sells crude woodcutting tools.
+craft_support: woodwork
+maxwander: 0
 behavior_archetype: noncombat_questgiver
 statpool: 80
 hostile: false
@@ -26,7 +30,15 @@ character:
     efficiency of someone who has done this for decades.
     His clothes are patched and practical. He speaks slowly
     and looks at you directly when he does — the honesty of
-    someone with nothing to sell and nothing to hide.
+    someone who sells by the cord and has nothing to hide.
   speciesid: 1
   level: 1
-  gold: 5
+  gold: 400
+  equipment:
+    light:
+      itemid: 40038   # oil lantern: a shop must be light enough to trade in at night
+  shop:
+    # Only crude tools: iron and better come from a player's forge.
+    - itemid: 10062   # camp hatchet
+    - itemid: 40242   # rough bucksaw
+    - itemid: 40003   # wooden plank

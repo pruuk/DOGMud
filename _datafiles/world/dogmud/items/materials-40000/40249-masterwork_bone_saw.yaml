@@ -1,0 +1,18 @@
+itemid: 40249
+name: Masterwork Bone Saw
+namesimple: saw
+description: >
+  A bone saw of crucible steel on an ironwood grip, the teeth so fine they
+  sing. It takes a full rack of antlers off whole.
+type: object
+subtype: mundane
+weight: 0.8
+value: 130
+rarity_tier: 15
+vendor_categories:
+- blacksmithing
+- cooking
+tool:
+  type: bone_saw
+  tier: 4
+  speed: 1.3

@@ -1,0 +1,17 @@
+id: iron-cleaver
+name: Iron Cleaver
+aliases: [cleaver]
+skill: blacksmithing
+skill_minimum: 5
+station: forge
+time_rounds: 3
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 1
+output:
+  item_id: 10052
+  quantity: 1
+success_actor: "You hammer out a broad, thick-spined blade and fit it to a stout wooden handle. An iron cleaver!"
+failure_actor: "The blade splits along a cold shut. The materials are lost."

@@ -1,0 +1,17 @@
+id: steel-sickle
+name: Steel Sickle
+aliases: [steelsickle]
+skill: blacksmithing
+skill_minimum: 15
+station: forge
+time_rounds: 3
+ingredients:
+  - item_tag: steel-ingot
+    quantity: 1
+  - item_tag: hardwood-board
+    quantity: 1
+output:
+  item_id: 40248
+  quantity: 1
+success_actor: "You draw out a thin steel crescent, harden it and fit the haft. A steel sickle!"
+failure_actor: "The crescent warps in the quench. The steel is ruined."

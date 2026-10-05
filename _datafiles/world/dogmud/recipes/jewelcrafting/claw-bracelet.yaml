@@ -1,0 +1,20 @@
+id: claw-bracelet
+name: "Claw Bracelet"
+aliases: [clawband]
+skill: jewelcrafting
+skill_minimum: 14
+station: jeweler_bench
+tool: carving_knife
+time_rounds: 4
+ingredients:
+  - item_tag: claw
+    quantity: 3
+  - item_tag: silver-wire
+    quantity: 1
+  - item_tag: cord
+    quantity: 1
+output:
+  item_id: 20114
+  quantity: 1
+success_actor: "You drill three claws, bind them on silver wire and cord, and close the band. A claw bracelet!"
+failure_actor: "A claw splits under the drill and the set is spoiled."

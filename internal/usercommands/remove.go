@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -13,6 +14,18 @@ import (
 )
 
 func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	// "remove ring from chest" takes from a container, the way get does. Only
+	// when the words after "from" name a container here; anything else is
+	// taking off equipment, as always.
+	if i := strings.LastIndex(strings.ToLower(rest), ` from `); i > 0 {
+		if name := room.FindContainerByName(strings.TrimSpace(rest[i+len(` from `):])); name != `` {
+			// A hidden container nobody has found is not there to take from.
+			if c := room.Containers[name]; !c.Hidden || user.Character.HasDiscovery(room.RoomId, name) {
+				return Get(rest, user, room, flags)
+			}
+		}
+	}
+
 	actor := &actions.UserActor{User: user, Room: room}
 
 	// Snapshot reservation BEFORE anything leaves the body, so the disclosure

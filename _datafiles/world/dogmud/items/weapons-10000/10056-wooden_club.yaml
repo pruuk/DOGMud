@@ -1,0 +1,21 @@
+itemid: 10056
+name: Wooden Club
+vendor_categories:
+- woodwork
+namesimple: club
+description: >
+  A length of seasoned hardwood shaped to a heavy head and a narrow grip,
+  the handle wrapped in a strip of leather. Simple, cheap and honest, it is
+  the first thing most woodworkers' apprentices learn to make.
+type: weapon
+hands: 1
+subtype: bludgeoning
+weight: 2.5
+speedmultiplier: 0.85
+damage:
+  basedamage: 4
+  variance: 2
+damage_multiplier: 0.4
+parryrating: 4
+value: 6
+rarity_tier: 50

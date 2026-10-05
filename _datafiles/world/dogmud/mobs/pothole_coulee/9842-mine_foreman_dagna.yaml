@@ -1,0 +1,52 @@
+mobid: 9842
+zone: Pothole Coulee
+# Wilderness trades: the basalt-iron mine's foreman keeps the mouth of the
+# adit. She buys ore, ingots and coal (blacksmithing goods) and sells rough
+# picks. Better picks come only from a player's forge.
+craft_support: blacksmithing
+behavior_archetype: noncombat_shopkeeper
+non_combatant: true
+charm_immune: true
+hostile: false
+statpool: 30
+maxwander: 0
+groups:
+  - humanoid
+  - coulee_folk
+idlecommands:
+  - 'emote turns a lump of ore over in her hand, spits on it, and squints at
+    the colour that comes up.'
+  - ''
+  - 'emote chalks a tally on the shoring post: loads in, loads out.'
+  - ''
+  - 'emote listens to the adit for a long moment, head tilted, then nods to
+    herself and goes back to her ledger.'
+  - ''
+  - 'emote knocks the dust off a row of pick heads hanging from a peg rail.'
+  - ''
+activitylevel: 10
+character:
+  name: Mine Foreman Dagna
+  description: |
+    A broad, short woman in a leather apron gone stiff with rock dust, with
+    a miner's lamp hooked to her belt and a tally stick behind one ear. She
+    runs the basalt-iron mine from its mouth: what goes down, what comes up,
+    and who does not come back. She buys any ore a digger carries out and
+    pays fair for it, sells rough picks off a peg rail to anyone willing to
+    go down, and will tell you without being asked that the richest seams
+    are in the lower drifts, and so is everything that lives down there.
+  speciesid: 1
+  level: 1
+  gold: 500
+  equipment:
+    light:
+      itemid: 40038   # oil lantern: a shop must be light enough to trade in at night
+  shop:
+    # Only crude tools: iron and better come from a player's forge.
+    - itemid: 10073   # rough pick
+    - itemid: 40020   # coal dust
+  stats:
+    strength:
+      base: 110
+    vitality:
+      base: 108

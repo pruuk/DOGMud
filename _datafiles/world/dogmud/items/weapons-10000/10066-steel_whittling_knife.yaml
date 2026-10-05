@@ -1,0 +1,26 @@
+itemid: 10066
+name: Steel Whittling Knife
+vendor_categories:
+- blacksmithing
+- woodwork
+- jewelcrafting
+namesimple: knife
+description: >
+  A slim steel knife with a stiff, fine-pointed blade set in hardwood. It
+  holds an edge through a long evening's work on horn and hardwood alike.
+type: weapon
+hands: 1
+subtype: stabbing
+weight: 0.45
+speedmultiplier: 1.0
+damage:
+  basedamage: 2
+  variance: 1
+damage_multiplier: 0.3
+parryrating: 3
+value: 32
+rarity_tier: 35
+tool:
+  type: carving_knife
+  tier: 3
+  speed: 1.15

@@ -92,6 +92,13 @@ type SearchOptions struct {
 	// `search under the table`). Empty searches the whole room. Only players
 	// search features; a mob's search ignores it. See search_feature.go.
 	Feature string
+	// BaubleForUserId, for a mob's search, is the account its bauble roll is
+	// made for: a bonded AI companion searching on its owner's behalf
+	// (companionai.BaubleSearchFor decides whether it rolls at all). The
+	// roll is that account's, under every rule a player's is (rationed per
+	// player per room, skill, sight, household); the find goes into the
+	// companion's pack. 0, as for every other mob, is no roll.
+	BaubleForUserId int
 }
 
 // SearchStashedItem represents a stashed item discovered by Tier 2.
@@ -119,6 +126,12 @@ type SearchResult struct {
 	Feature         string
 	FeatureNotFound bool
 	FeatureSearched bool
+	// FeatureSettled is a feature a subsystem owns as a cache (FeatureCacheHook)
+	// that has answered the search itself, with a line of its own ("this heap
+	// has already been picked through"), so the generic "nothing of interest"
+	// is not added after it. The cache is in plain view, so its answer gives
+	// nothing hidden away.
+	FeatureSettled bool
 
 	OnCooldown bool
 	Reason     string
@@ -412,15 +425,25 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 	// per BaubleFeatureWindowMinutes, apart from the room's two). When the
 	// feature's roll is spent, the room's is taken, exactly as a plain
 	// search would.
+	// A feature that a subsystem owns as a cache (a rift's rubble pile,
+	// FeatureCacheHook) is that subsystem's to settle, and takes no roll.
 	if actor.IsPlayer() {
 		used := false
-		if hasFeature {
+		if hasFeature && featureCacheHook != nil {
+			if found, handled := featureCacheHook(actor, room, feature); handled {
+				result.BaubleFound, used = found, true
+				result.FeatureSettled = true
+			}
+		}
+		if hasFeature && !used {
 			result.BaubleFound, used = searchFeatureForBauble(actor, room, feature)
 			result.FeatureSearched = !used
 		}
 		if !used {
 			result.BaubleFound = searchForBauble(actor, room)
 		}
+	} else if opts.BaubleForUserId > 0 && actor.GetMobInstanceId() > 0 {
+		result.BaubleFound = companionSearchForBauble(actor, room, opts.BaubleForUserId)
 	}
 
 	// ── Skill progression (anti-botting gate) ───────────────────
@@ -459,7 +482,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 	// made a fruitless-but-resolved search pay ProgressionFailureFraction, and
 	// that award is INVISIBLE here on purpose. Progression must not leak level
 	// design.
-	if actor.IsPlayer() && !result.FoundAnything() {
+	if actor.IsPlayer() && !result.FoundAnything() && !result.FeatureSettled {
 		actor.SendText(messaging.CategorySystem, "You find nothing of interest.\n")
 	}
 

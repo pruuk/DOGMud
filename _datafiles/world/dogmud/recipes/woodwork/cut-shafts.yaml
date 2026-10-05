@@ -1,0 +1,16 @@
+id: cut-shafts
+name: "Arrow Shafts"
+aliases: [shafts]
+skill: woodwork
+skill_minimum: 0
+station: "woodworking_bench"
+tool: saw
+time_rounds: 3
+ingredients:
+  - item_tag: softwood-log
+    quantity: 1
+output:
+  item_id: 40420
+  quantity: 3
+success_actor: "You rip the log into blanks and round them into shafts. Arrow shafts!"
+failure_actor: "The blanks twist as they dry and none of them are straight."

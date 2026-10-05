@@ -1,0 +1,18 @@
+itemid: 40241
+name: Rough Bone Saw
+namesimple: saw
+description: >
+  A short saw of soft iron in a crude wooden frame, its teeth filed by hand
+  and none of them quite alike. It will get through a horn eventually and chew
+  the edges on the way.
+type: object
+subtype: mundane
+weight: 0.8
+value: 4
+rarity_tier: 50
+vendor_categories:
+- cooking
+- hunting
+tool:
+  type: bone_saw
+  tier: 1

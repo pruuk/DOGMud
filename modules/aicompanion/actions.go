@@ -148,7 +148,7 @@ type actionOutcome struct {
 // belongings.
 var ownerDrivenOnly = map[string]bool{
 	`give`: true, `drop`: true, `put`: true, `sell`: true, `buy`: true,
-	`loot`: true, `take_from`: true, `get`: true,
+	`loot`: true, `take_from`: true, `get`: true, `salvage`: true,
 	// Starting a fight is the owner's call and nobody else's. A stranger
 	// cannot point a companion at something and watch it go.
 	`attack`: true,
@@ -253,6 +253,16 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 	if mob.Character.IsInCombat() && a.Verb != `consider` && a.Verb != `look_at` && a.Verb != `find_place` {
 		return actionOutcome{Refused: `in a fight`}
 	}
+	// In the middle of something (a craft, a salvage, a cast): the engine
+	// would drop or tangle a second thing, so only looking, thinking and
+	// talking are taken until her hands are free.
+	if mob.Character.IsActing() {
+		switch a.Verb {
+		case `look_at`, `consider`, `find_place`, `sayto`, `browse`:
+		default:
+			return actionOutcome{Refused: `busy with something already; wait until it is done`}
+		}
+	}
 	if c.travel != nil {
 		switch a.Verb {
 		case `look_at`, `consider`, `find_place`, `go_to`, `sayto`:
@@ -275,6 +285,16 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 		return m.issue(c, mob, `rest`, `sleep`, `rest`, `down for a while`, ``, delay, round)
 	case `stand`:
 		return m.issue(c, mob, `stand`, `stand`, `stand`, `on your feet`, ``, delay, round)
+	case `sneak`:
+		// Slipping out of sight is the engine's sneak: its roll against
+		// everyone watching, its stamina cost, and no hiding mid-fight.
+		if !canSneak(c.profile) {
+			return actionOutcome{Refused: `that is not something you know how to do`}
+		}
+		if mob.Character.IsHidden() {
+			return actionOutcome{Refused: `you are already out of sight`}
+		}
+		return m.issue(c, mob, `sneak`, `sneak`, `sneak`, `out of sight`, ``, delay, round)
 	}
 
 	// A spell she knows, cast at something she can see or at herself. The
@@ -297,7 +317,9 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 				`cast:`+opt.Id, opt.Name, owner.Character.Name, delay, round)
 		}
 		var target *thing
-		if !opt.SelfOK {
+		// No one named, or "self": a helping spell lands on herself, as
+		// the engine casts a mob's single-target help with no target named.
+		if !opt.SelfOK && a.To != `` && a.To != `self` && a.To != `yourself` {
 			if target = sc.get(a.To); target == nil || !stillThere(target, mob, room) {
 				return actionOutcome{Refused: `there is nobody like that here to cast it at`}
 			}
@@ -316,7 +338,7 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 		if !ok {
 			return actionOutcome{Refused: `you cannot make that here`}
 		}
-		return m.issue(c, mob, `craft`, `craft `+opt.Id, `craft:`+opt.Id, opt.Name, ``, delay, round)
+		return m.issue(c, mob, `craft`, craftCommand(opt), `craft:`+opt.Id, opt.Name, ``, delay, round)
 	}
 
 	// Remembering the way somewhere, and going there (phase 4).
@@ -395,7 +417,7 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 		// and the gate in front of it has been wrong twice. She hands
 		// things to her owner and to nobody else.
 		if a.Verb == `give` && a.To != `owner` {
-			return actionOutcome{Refused: `she hands things to her own companion, not to strangers`}
+			return actionOutcome{Refused: `you hand things to your own companion, not to strangers`}
 		}
 		return m.issue(c, mob, a.Verb, a.Verb+` `+target+` `+to, t.Key, t.Name, toName, delay, round, t.Item.ItemId)
 
@@ -499,6 +521,31 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 			return actionOutcome{Refused: reason}
 		}
 		return m.issue(c, mob, `loot`, cmdCompanionLoot+` `+t.CorpseRef, t.Key, t.Name, ``, delay, round)
+
+	case `salvage`:
+		// Butchering a body: the engine's corpse salvage, aimed at this one.
+		// Only a body her owner could loot, with nothing left on it, since
+		// salvage destroys the corpse (loot it first).
+		if t.Kind != `corpse` {
+			return actionOutcome{Refused: `not a body`}
+		}
+		if reason := lootAllowedByArrangement(c.mind.LootRule, stims); reason != `` {
+			return actionOutcome{Refused: reason}
+		}
+		corpse := corpseAt(room, t.CorpseRef)
+		if corpse == nil {
+			return actionOutcome{Refused: `that body is gone`}
+		}
+		if corpse.HasLoot() {
+			return actionOutcome{Refused: `there is still something on it to loot first`}
+		}
+		if owner == nil || !butcherable(corpse, owner.UserId, false) {
+			return actionOutcome{Refused: `there is nothing there you may take or use`}
+		}
+		if !salvageHits(room, corpse) {
+			return actionOutcome{Refused: `there are two alike and you cannot tell which is which; deal with the other first`}
+		}
+		return m.issue(c, mob, `salvage`, salvageCommand(corpse), fmt.Sprintf(`salvage@%d`, room.RoomId), t.Name, ``, delay, round)
 
 	case `take_from`:
 		if t.Kind != `container` {
@@ -873,6 +920,12 @@ func (m *AICompanionModule) verifyPending(c *controller, mob *mobs.Mob, ownerNam
 	case `stand`:
 		ok = !mob.Character.HasConditionFlag(conditions.Sleeping)
 		text = `You got back on your feet.`
+	case `sneak`:
+		ok = mob.Character.IsHidden()
+		text = `You slipped out of sight.`
+		if !ok {
+			text = `You tried to slip out of sight, and were seen.`
+		}
 	case `craft`:
 		ok = after.Items > b.Items
 		text = fmt.Sprintf(`You made %s.`, p.Name)
@@ -882,7 +935,11 @@ func (m *AICompanionModule) verifyPending(c *controller, mob *mobs.Mob, ownerNam
 		}
 	case `search`:
 		ok = true
-		text = `You searched the area.`
+		text = `You searched the area and turned up nothing.`
+		if len(c.lastSearchFound) > 0 {
+			text = `You searched the area and turned up: ` + strings.Join(c.lastSearchFound, `; `) + `.`
+		}
+		c.lastSearchFound = nil
 	case `scan`:
 		ok = true
 		text = `You read the ways out of here and what lies along them.`

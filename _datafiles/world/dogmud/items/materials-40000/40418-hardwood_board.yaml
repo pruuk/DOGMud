@@ -1,0 +1,17 @@
+itemid: 40418
+name: Hardwood Board
+namesimple: board
+description: >
+  A thick, sawn board of hardwood, planed flat on one face. Strong
+  enough for shields and bed frames.
+type: object
+subtype: mundane
+component_tag: hardwood-board
+weight: 2.0
+value: 4
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- woodwork
+- blacksmithing
+material_tier: 2

@@ -1,0 +1,17 @@
+id: bow-saw
+name: Bow Saw
+aliases: [frame-saw]
+skill: blacksmithing
+skill_minimum: 8
+station: forge
+time_rounds: 4
+ingredients:
+  - item_tag: iron-ingot
+    quantity: 2
+  - item_tag: wooden-plank
+    quantity: 2
+output:
+  item_id: 40238
+  quantity: 1
+success_actor: "You draw out a long thin blade, cut and set the teeth, and tension it in a bent wooden frame. A bow saw!"
+failure_actor: "The thin blade kinks under tension and snaps. The materials are lost."

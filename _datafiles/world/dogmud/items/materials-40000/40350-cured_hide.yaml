@@ -1,0 +1,16 @@
+itemid: 40350
+name: Cured Hide
+namesimple: hide
+description: >
+  A hide that has been scraped and salted, stiff and stable now. It will
+  keep, and it is ready for the tanning vat.
+type: object
+subtype: mundane
+component_tag: cured-hide
+weight: 1.2
+value: 14
+rarity_tier: 40
+is_component: true
+vendor_categories:
+- tailoring
+material_tier: 2

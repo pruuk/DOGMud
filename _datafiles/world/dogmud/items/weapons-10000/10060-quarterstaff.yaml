@@ -1,0 +1,21 @@
+itemid: 10060
+name: Quarterstaff
+namesimple: staff
+description: >
+  A long, heavy staff of seasoned hardwood, shod at both ends. Plain,
+  cheap and surprisingly hard to get past.
+type: weapon
+hands: 2
+subtype: bludgeoning
+weight: 5.0
+speedmultiplier: 0.8
+grapplemodifier: 0.2
+damage:
+  basedamage: 7
+  variance: 2
+damage_multiplier: 0.75
+parryrating: 14
+value: 25
+rarity_tier: 30
+vendor_categories:
+- woodwork

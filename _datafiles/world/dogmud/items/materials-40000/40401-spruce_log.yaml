@@ -1,0 +1,15 @@
+itemid: 40401
+name: Spruce Log
+namesimple: log
+description: >
+  A straight length of spruce, the wood white and even, the bark scaly
+  and grey.
+type: object
+subtype: mundane
+component_tag: softwood-log
+weight: 8
+value: 3
+rarity_tier: 40
+vendor_categories:
+- woodwork
+material_tier: 1

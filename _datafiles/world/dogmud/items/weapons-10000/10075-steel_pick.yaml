@@ -1,0 +1,24 @@
+itemid: 10075
+name: Steel Pick
+vendor_categories:
+- blacksmithing
+namesimple: pick
+description: >
+  A miner's pick with a hardened steel head that bites into silver-bearing
+  rock and holds its point through a long shift.
+type: weapon
+hands: 1
+subtype: piercing
+weight: 3.0
+speedmultiplier: 0.9
+damage:
+  basedamage: 6
+  variance: 2
+damage_multiplier: 0.6
+parryrating: 3
+value: 45
+rarity_tier: 35
+tool:
+  type: pick
+  tier: 3
+  speed: 1.15

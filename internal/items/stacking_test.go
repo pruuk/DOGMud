@@ -110,3 +110,22 @@ func TestIsStackable_Botanical(t *testing.T) {
 	spec := GetItemSpec(507)
 	assert.True(t, spec.IsStackable())
 }
+
+func TestSameStack_StolenNeverStacksWithClean(t *testing.T) {
+	clean := Item{ItemId: 40018}
+	stolen := Item{ItemId: 40018, StolenFrom: "Smith Brindle"}
+	other := Item{ItemId: 40018, StolenFrom: "Blacksmith Kerra"}
+	if SameStack(clean, stolen) {
+		t.Fatal("a stolen item merged into a clean stack comes back out clean")
+	}
+	if SameStack(stolen, other) {
+		t.Fatal("goods stolen from different merchants are different stacks")
+	}
+	hot := Item{ItemId: 40018, StolenFrom: "Smith Brindle", StolenAt: 1000, StolenBy: 1, StolenZone: "Stillwater"}
+	if SameStack(stolen, hot) || SameStack(hot, Item{ItemId: 40018, StolenFrom: "Smith Brindle", StolenAt: 2000, StolenBy: 1, StolenZone: "Stillwater"}) {
+		t.Fatal("goods from different thefts are different stacks: one may be hot when the other is not")
+	}
+	if !SameStack(stolen, Item{ItemId: 40018, StolenFrom: "Smith Brindle"}) {
+		t.Fatal("two items stolen from the same merchant still stack")
+	}
+}

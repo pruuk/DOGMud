@@ -104,10 +104,11 @@ func ExecuteBash(actor Actor) BashResult {
 	// Lighting plan 5b: the actor's room feeds both sight rows.
 	sightRoom := combat.SightRoom(actor.GetRoom())
 	result := combat.ExecuteSkillMove(combat.SkillMoveParams{
-		Attacker: char,
-		Defender: target.Char,
-		Shape:    combatvocab.Melee(combatvocab.TargetSingle),
-		Room:     sightRoom,
+		Attacker:   char,
+		Defender:   target.Char,
+		Shape:      combatvocab.Melee(combatvocab.TargetSingle),
+		Room:       sightRoom,
+		StrikeWith: char.ShieldPtr(),
 		Attack: combat.AttackSide{
 			Stat: char.Stats.Strength.ValueAdj, StatName: "strength",
 			Skill: skills.WeaponCombat, SkillRank: char.GetSkillLevel(skills.WeaponCombat),

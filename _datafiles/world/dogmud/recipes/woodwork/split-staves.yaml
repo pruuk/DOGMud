@@ -1,0 +1,16 @@
+id: split-staves
+name: "Bow Staves"
+aliases: [staves]
+skill: woodwork
+skill_minimum: 5
+station: "woodworking_bench"
+tool: axe
+time_rounds: 3
+ingredients:
+  - item_tag: bow-wood-log
+    quantity: 1
+output:
+  item_id: 40419
+  quantity: 2
+success_actor: "You split the log along the grain into two clean staves. Bow staves!"
+failure_actor: "The split runs out of the grain and the staves are ruined."

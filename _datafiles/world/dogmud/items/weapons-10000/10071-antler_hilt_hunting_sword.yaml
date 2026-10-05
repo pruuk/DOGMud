@@ -1,0 +1,21 @@
+itemid: 10071
+name: Antler-Hilt Hunting Sword
+vendor_categories:
+- blacksmithing
+- hunting
+namesimple: sword
+description: >
+  A short, broad steel sword with an antler grip and a clipped point, light
+  enough to carry all day and heavy enough to finish what an arrow started.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 3.0
+speedmultiplier: 0.9
+damage:
+  basedamage: 7
+  variance: 2
+damage_multiplier: 1.15
+parryrating: 10
+value: 60
+rarity_tier: 35

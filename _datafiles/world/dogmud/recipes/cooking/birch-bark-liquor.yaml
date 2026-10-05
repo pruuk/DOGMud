@@ -1,0 +1,17 @@
+id: birch-bark-liquor
+name: "Birch-Bark Liquor"
+aliases: [birch-liquor]
+skill: cooking
+skill_minimum: 0
+station: "cooking_fire"
+time_rounds: 3
+ingredients:
+  - item_tag: birch-bark
+    quantity: 2
+  - item_tag: water-flask
+    quantity: 1
+output:
+  item_id: 40356
+  quantity: 2
+success_actor: "You steep the birch bark until the liquor runs dark. Bark liquor!"
+failure_actor: "The pot boils over and the liquor is weak and bitter."

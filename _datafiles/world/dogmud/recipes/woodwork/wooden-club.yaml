@@ -1,0 +1,17 @@
+id: wooden-club
+name: Wooden Club
+aliases: [club]
+skill: woodwork
+skill_minimum: 0
+station: woodworking_bench
+time_rounds: 3
+ingredients:
+  - item_tag: wooden-plank
+    quantity: 2
+  - item_tag: leather-strip
+    quantity: 1
+output:
+  item_id: 10056
+  quantity: 1
+success_actor: "You glue up the planks, shape a heavy head and a narrow grip, and wrap the handle in leather. A wooden club!"
+failure_actor: "The glue line splits as you shape the head. The wood is wasted."

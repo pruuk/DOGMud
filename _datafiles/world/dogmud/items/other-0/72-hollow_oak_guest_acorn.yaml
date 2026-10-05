@@ -1,0 +1,17 @@
+itemid: 72
+name: Hollow Oak Guest Acorn
+namesimple: guest key
+not_salable: true
+description: >
+  A fat acorn, polished to a shine, with a tiny leaf burnt into its cap.
+  Its owner bought it to let a friend in. Whoever holds it can press it to the
+  brass plate on the round green door under the great oak in the combe east of the Shepherd's Reach, on the South Road, by typing use guest key, and
+  the door will learn their palm and admit them to that lodging from then on.
+  The acorn is spent in the plate. A guest can walk every hollow of the
+  lodging and touch anything left lying about, so give it only to someone you
+  trust. The owner can take the access back at any time.
+type: object
+subtype: usable
+uses: 1
+weight: 0.1
+value: 0

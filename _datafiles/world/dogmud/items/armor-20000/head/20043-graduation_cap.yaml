@@ -2,6 +2,7 @@ itemid: 20043
 name: Graduation Cap
 description: A special hat signifying that you've completed the tutorial.
 type: head
+weight: 0.3
 value: 11
 rarity_tier: 40
 subtype: wearable

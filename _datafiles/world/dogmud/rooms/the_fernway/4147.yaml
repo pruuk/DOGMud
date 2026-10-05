@@ -56,3 +56,6 @@ idlemessages:
 - A small dry crackle from the underbrush — something small, moving away.
 x: 1
 y: 18
+spawninfo:
+  - mobid: 9841
+    respawnrate: "15 real minutes"
