@@ -1,0 +1,36 @@
+== midwinter-midnight (round 319500)
+room 4111 light=54 fixtures=[55 lit 52.0]
+room 5000 light=40 fixtures=[56 lit 20.0]
+== midwinter-dawn (round 319725)
+room 4111 light=54 fixtures=[55 lit 52.0]
+room 5000 light=42 fixtures=[56 lit 28.0]
+== midwinter-noon (round 319950)
+room 4111 light=63 fixtures=[55 unlit]
+room 5000 light=45 fixtures=[56 lit 36.0]
+== midwinter-dusk (round 320175)
+room 4111 light=54 fixtures=[55 lit 52.0]
+room 5000 light=42 fixtures=[56 lit 28.0]
+== equinox-midnight (round 72000)
+room 4111 light=53 fixtures=[55 lit 52.0]
+room 5000 light=40 fixtures=[56 lit 20.0]
+== equinox-dawn (round 72225)
+room 4111 light=53 fixtures=[55 lit 52.0]
+room 5000 light=42 fixtures=[56 lit 28.0]
+== equinox-noon (round 72450)
+room 4111 light=70 fixtures=[55 unlit]
+room 5000 light=45 fixtures=[56 lit 36.0]
+== equinox-dusk (round 72675)
+room 4111 light=53 fixtures=[55 lit 52.0]
+room 5000 light=42 fixtures=[56 lit 28.0]
+== midsummer-midnight (round 153900)
+room 4111 light=54 fixtures=[55 lit 52.0]
+room 5000 light=40 fixtures=[56 lit 20.0]
+== midsummer-dawn (round 154125)
+room 4111 light=61 fixtures=[55 unlit]
+room 5000 light=42 fixtures=[56 lit 28.0]
+== midsummer-noon (round 154350)
+room 4111 light=74 fixtures=[55 unlit]
+room 5000 light=45 fixtures=[56 lit 36.0]
+== midsummer-dusk (round 154575)
+room 4111 light=61 fixtures=[55 unlit]
+room 5000 light=42 fixtures=[56 lit 28.0]
