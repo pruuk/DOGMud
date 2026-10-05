@@ -102,10 +102,12 @@ The `internal/mobcommands` package implements the AI command system for non-play
   (`remove all`); the busy and cursed-item gates live in those shared bodies
   in `internal/actions/remove_equip.go`, and a mob is silent on every refusal
   (a cursed item simply stays on, with no line). `equip` judges its
-  wearable room line ("X puts on Y.") as lit when the item's worn conditions
-  include a darkness source (`conditions.AnyDarknessSource`, lighting plan
-  5d, ruling D6), the sibling of the player's `equip`; so does the idle
-  floor pickup, `hooks.EquipBestFloorItem`.
+  wearable room line ("X puts on Y.") against a `rooms.VisualSnapshot` of
+  the room taken before the equip when the item's worn conditions include a
+  darkness source (`conditions.AnyDarknessSource`, lighting plan 5d, ruling
+  D6 as amended by the owner on 2026-10-05), sent with
+  `Room.SendTextVisualToSnapshot`, the sibling of the player's `equip`; so
+  does the idle floor pickup, `hooks.EquipBestFloorItem`.
 - **Resource consumption**: `eat`, `drink` - Survival behaviors. `Drink`
   (`drink.go`) is a wrapper over `actions.Drink`, the same body a player drinks
   through (drink path unification 2026-09-28), so a mob pays toxicity, reads

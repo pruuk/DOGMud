@@ -246,6 +246,13 @@ end-line problem R16 already solves. **Ruled (owner, 2026-09-30):** a darkness s
 room line, and the equip room line of an item whose worn condition is a
 darkness source, are judged as lit (`SendTextVisualAsLitHidingNames` /
 `SendTextVisualAsLit`). End lines need nothing: the room is lighter by then.
+**Amended (owner, 2026-10-05):** the start and equip lines are judged against
+a snapshot of the room taken before the darkness lands, not as lit
+(`Room.VisualSnapshot` before the condition is added or the item worn,
+`Room.SendTextVisualToSnapshot` after). Judged as lit, the line named the
+caster to an observer who was already blind in a pitch-dark room; this is an
+order of operations, not a new rule. `SendTextVisualAsLit*` stays for the
+light end line (R16) only.
 
 **D7. No GMCP field exists (G1 to G3).** **Ruled (owner, 2026-09-30):** a NEW package
 `Char.Sight` with one field, `{"band": "dark" | "shapes" | "faces" |

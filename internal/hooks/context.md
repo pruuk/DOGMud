@@ -1092,12 +1092,17 @@ or trimmed-off light's end line is judged as lit too (accepted, as the retired
 flag was spec-level as well).
 
 `sendConditionStartRoomText` (`Condition_ApplyConditions.go`, lighting plan
-5d, ruling D6) is its mirror for start lines: a darkness source's start line
-("A pall of dark spores gathers around X.") is judged as lit by
-`spec.IsDarknessSource()`, because the record is already held when the line
-goes out and the observers it has just blinded would otherwise miss it.
-Every other start line is judged by the room as it is. A darkness's end
-line needs nothing: the room is lighter by then.
+5d, ruling D6 as amended by the owner on 2026-10-05) is its counterpart for
+start lines: a darkness source's start line ("A pall of dark spores gathers
+around X.") is judged against a snapshot of the room taken BEFORE the
+condition is added (`darknessStartSnapshot`, a `rooms.VisualSnapshot` taken
+only when `spec.IsDarknessSource()` and not a refresh) and sent with
+`Room.SendTextVisualToSnapshot`. The record is already held when the line
+goes out, so the observers it has just blinded still see it, and one who was
+already blind in a dark room learns nothing. Every other start line is judged
+by the room as it is. A darkness's end line needs nothing: the room is
+lighter by then. `EquipBestFloorItem` (`mob_equip_best_floor_item.go`) takes
+the same snapshot before a mob picks a darkness off the floor and dons it.
 
 ### Logout_AwarenessCleanup.go
 

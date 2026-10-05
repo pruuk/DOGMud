@@ -20,6 +20,16 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   line is sent, such as a light condition's end text (the light stops counting when
   the condition expires, a round before the prune sends the line). Blinded and
   sleeping observers still get nothing from it.
+  `VisualSnapshot()` returns a `VisualSnapshot` (user id to
+  `messaging.SightDecision`) of what every player in the room can see now;
+  `SendTextVisualToSnapshot(snap, cat, txt, names, excludeUserIds...)`
+  delivers a line to exactly the players in the room now who were in the
+  snapshot, each at their recorded decision, names hidden at shapes. Owner
+  rule (2026-10-05): a line announcing a change to the room's light lands
+  with the state everyone was in BEFORE the change, so take the snapshot
+  first, make the change, then send. Lighting plan 5d uses it for a
+  darkness's start line and its equip lines. All the visual senders share
+  one per-recipient body, `deliverVisual`.
   `SendTextVisualHidingNames` is `SendTextVisual` for a line that names an
   event's parties: a shapes-only observer reads each name as "a figure". It is
   the observer half of `messaging.SendTrio`; `ParticipantSight(userId)` is the
