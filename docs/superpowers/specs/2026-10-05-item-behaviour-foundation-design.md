@@ -13,7 +13,10 @@ One spec, three plans and three PRs:
 |---|---|---|
 | 1 | Items as the third behaviour-tree subject, the item tick, light nodes, fixtures, scheduled carried light; lamp-posts, a pulsing rune stone, keeper lanterns, a sunstone | #365 slice 1 |
 | 2 | `speak(pool)`, chattiness levels, a per-listener ambient cap; Aegis and Blackrazor rebuilt as trees | #222 |
-| 3 | `proc(effect, params)`; the four Pinnacle proc items rebuilt as trees | #223 (owner decision O1) |
+| 3 | `proc(effect, params)`; the four Pinnacle proc items rebuilt as trees | #223 (ruled R1: per template) |
+
+The owner ruled on every open item on 2026-10-05; see "Owner rulings". Where
+a ruling overrides the approved design (A1 to A9), the ruling wins.
 
 ## Facts verified against source (2026-10-05, master `7e0748145`)
 
@@ -124,6 +127,8 @@ default is live.
 | L9 | Biome lamps: `city_thoroughfare` 52, `interior` 50, `ether` 60, `spiderweb` 45, `city_backstreet` 35. Room overrides ship as `lamp: 38` (16 rooms) and `lamp: 50` (11); no room ships `lamp: 0` | `biomes/*.yaml`; grep |
 | L10 | `TrimLightFor(c)` trims only the bearer's adjustable, unhooded records, against `composeLightExcluding`; its callers are `MoveToRoom` and `Room.AddMob` | `internal/rooms/light_trim.go:35-93`; `roommanager.go:474`; `rooms.go:1316` |
 | L11 | `EmitsLight()` is `len(LightTerms()) > 0` from `LightNow`, so any change to `LightNow` reaches sneak, the `lit` adjective and waking sleepers | `characters/light.go:7-36` |
+| L13 | `TrimLightFor` skips every record whose spec lacks the `Adjustable` flag (`light_trim.go:47`). The records today's and slice 1's scheduled items carry are not adjustable: 125 Lantern Light (40038's, `light_strength: 52`, no `flags`), and the new 134. The hooded lantern (127), Umbral Lantern (132) and glow (1) are adjustable | `conditions/125-lantern_light.yaml`; 5d facts R14, R15 |
+| L14 | `SetLightOutput(out)` is the one writer of `LightTrim`/`LightOutput` besides `ResetLight` and the trim's full-strength branch; `-Inf` lands on `LightOff`. The worn-item refresh re-adds a held record without touching these fields, so a state written on the record survives an unrelated equipment change | `light.go:74-80`; `light_trim.go:86-91`; `conditions.go:37-40` |
 | L12 | Band edges for a normal observer: `LightBlindBelow` 25, `LightDimBelow` 50 (both absent, Go defaults), `LightDazzleAbove` 75 (shipped 75); `LightDoublingStep` 8 (absent) | `config.balance.go:1150-1158,1196`; blob `:946` |
 
 ### Notices and the band
@@ -173,7 +178,7 @@ default is live.
 | # | Id | Evidence |
 |---|---|---|
 | F1 | Item **20099** (sunstone) in `armor-20000/light/` | `id_inventory.py --type items`: `light 20096-20098 ... next-in-zone 20099`; grep `^itemid: 20099$` finds nothing, the same grep for 20098 finds the Umbral Lantern |
-| F2 | Items **55, 56, 57** (fixtures) in `other-0/`, beside the Mosaic Map | `id_inventory.py`: `other-0 ... gaps 55-899`; grep `^itemid: (55\|56\|57)$` finds nothing, the same for 54 finds `54-sorens_iron_pin.yaml` |
+| F2 | Items **55, 56** (fixtures) in `other-0/`, beside the Mosaic Map; 57 was reserved for the dropped 5803 lamp and is released | `id_inventory.py` re-run after the rulings: `other-0 ... gaps 55-899`; grep `^itemid: (55\|56\|57)$` finds nothing, the same for 54 finds `54-sorens_iron_pin.yaml` |
 | F3 | Condition **134** (sunstone glow) | `id_inventory.py --alloc conditions 1`: "reserve IDs 134-134 ... past current global max (133)"; grep `^conditionid: 13[45]$` finds nothing, the same for 133 finds `133-phantom_heat_sense.yaml` |
 
 ## The approved design (owner, 2026-10-05; rulings)
@@ -195,7 +200,8 @@ persisted; a restart resets cooldowns and schedules recompute from the hour.
 A4. Nodes: `hour_between`, `is_night`, `holder_asleep`, `worn`, `in_combat`;
 `set_light(n | off)`, `pulse_light(min, max, period_rounds)`, `speak(pool)`,
 `proc(effect, params)`. Mob-only actions refuse an item subject, and a
-validator rejects an item tree naming one.
+validator rejects an item tree naming one. *Amended by R7: the hour and night
+nodes are `time_of_day`, extended with `period: after_dusk`.*
 
 A5. **Light.** Worn and carried lights keep the record model; the schedule
 writes a new `Scheduled` value, `LightNow = min(full, Scheduled, trim)`,
@@ -204,11 +210,13 @@ tick; two items sharing one light condition on one bearer share a record.
 **Fixtures are items**: untakeable floor items whose output lives in tree
 state, one term per lit fixture, a fixture may be a darkness, **fixtures do
 not trim**. A pulse may not straddle a band edge. Fixture changes notify as
-`lamp`, scheduled carried light as `carried`; cadence unchanged.
+`lamp`, scheduled carried light as `carried`; cadence unchanged. *Amended by
+R3: there is no new `Scheduled` value; the scheduler writes the record's
+existing trimmed-output state (Rule 9).*
 
 A6. **Content slice 1**: lamp-posts in 5803 and 4111, dusk to dawn; one
 pulsing rune stone; the #207 keeper lanterns snuffed while their schedule
-says they sleep; one sunstone.
+says they sleep; one sunstone. *Amended by R4: 4111 only; 5803 is untouched.*
 
 A7. **Voices (slice 2)**: `speak(pool)` with pools authored with the tree,
 replacing `itemvoices/`; shared narration senders; `on_equip`/`on_unequip`
@@ -231,13 +239,13 @@ round; a tree error is logged and the item does nothing.
 
 ## Where the facts push back
 
-Each item names the facts, the smallest change, and whether it needs the
-owner (then it is repeated under "Open owner decisions").
+Each item names the facts, the smallest change, and, where the owner was
+asked, the ruling (table under "Owner rulings").
 
-**X1. `hour_between` and `is_night` already exist as `time_of_day` (E19).**
+**X1. The design's hour and night nodes already exist as `time_of_day` (E19).**
 `time_of_day range: "18-6"` and `period: night` are subject-free. House rule 1
-says reuse. **Change:** item trees use `time_of_day`; no new hour or night
-node. Owner decision O7.
+says reuse. **Ruled (R7):** item trees use `time_of_day`; no new hour or
+night node.
 
 **X2. "An hour after dusk" is not an hour range (T1).** Dusk moves with the
 season (latitude-derived boundary), so the sunstone's faint hour cannot be a
@@ -249,17 +257,19 @@ uses.
 **X3. `holder_asleep` from the schedule disagrees with the shop gate
 (T6, T7, C7).** A keeper roused inside a sleeping segment stays awake for at
 least 50 rounds; a schedule reading would snuff an awake keeper who can
-trade, and the shop gate keys on the `Sleeping` flag. **Change:**
+trade, and the shop gate keys on the `Sleeping` flag. **Ruled (R2):**
 `holder_asleep` reads `actions.TargetAsleep` (the flag), the same predicate as
-`ShopClosedForSleep`; it then works for any holder. Owner decision O2.
+`ShopClosedForSleep`; it works for any holder. Where keepers sleep, how they
+wake and off-duty refusals belong to the behaviour arc, issue #404 (under
+#374).
 
 **X4. A tree belongs to an item template, and 40038 is everyone's lantern
 (C3 to C5).** A tree on 40038 snuffs every sleeping bearer: the nine
 scheduled keepers, never the twelve unscheduled ones (they never sleep), and
 any player who sleeps with a lantern in the light slot. A separate keeper
 lantern item would reach no keeper that has a saved instance (C5).
-**Recommendation:** the tree on 40038 itself, keyed on X3's flag. Owner
-decision O3.
+**Ruled (R3):** the tree goes on 40038, keyed on X3's flag, and a sleeping
+holder's lantern goes fully dark.
 
 **X5. Notice attribution cannot see these changes (N2, L6, L7).** `carried`
 keys on presence only, so a lantern dimming while still lit, or a second
@@ -281,32 +291,32 @@ tree's other state stays in the `behaviortree` map.
 
 **X7. 5803 is already lamp-lit at every hour (C1, L8, L9).** Its biome lamp 52
 burns by day too ("Lamps burn here all night"); a dusk-to-dawn fixture on top
-double-counts at night and leaves the lamps lit at noon. **Change:** 5803
-gets the room override `lamp: 0`, and `lampValue` reads an authored 0 as no
-lamp term (no room ships `lamp: 0` today, L9). Night stays at today's level
-(fixture 52 for lamp 52); the day loses a lamp the sky dwarfs. The other 97
-thoroughfare rooms keep their static lamp. Owner decision O4.
+would double-count at night and leave the lamps lit at noon. **Ruled (R4):**
+5803 is untouched (it keeps its biome lamp, no `lamp: 0`, no `lampValue`
+change), and the slice 1 lamp-post goes in 4111 only, whose own text says it
+is lit at dusk and snuffed at first light. City street lighting by the hour
+is a plan 6 balance question (#372), not 5e.
 
 **X8. The day-cycle golden cannot see fixtures (C8).** It loads no items and
-runs no `Prepare` or tick, so 4111 does not move and 5803 moves only because
-of X7. **Change:** slice 1 adds a fixture day-cycle test that loads items,
-prepares the fixture rooms and runs the item tick at the golden's twelve
-samples; the existing golden's 5803 rows are re-recorded with the move
-explained.
+runs no `Prepare` or tick, so neither 4111 nor 5000 moves in it, and with 5803
+untouched nothing in it moves. **Change:** slice 1 adds a fixture day-cycle
+test that loads items, prepares 4111 and 5000 and runs the item tick at the
+golden's twelve samples.
 
 **X9. A per-instance identity resets on every load, not only on restart
 (I2).** Light and chatter do not care. Proc cooldowns do: today they persist
 in the bearer's MiscData (P5); per-instance tree state would let a relog clear
-an Aegis stun cooldown. Owner decision O1, with the options there.
+an Aegis stun cooldown. **Ruled (R1, answers #223):** per template, in the
+bearer's MiscData (Rule 22).
 
 **X10. No untakeable mechanism exists, and floors are removed from in five
 places (W6, W7, W8).** **Change:** ItemSpec gains `fixture: light |
 darkness`. A fixture is refused by `actions.TakeFloorItem` (new `ErrFixture`
 beside `ErrHouseholdBauble`, covering player and mob `get`),
 `takeableOnFloor` (`get all`), the floor branch of `steal`, and
-`EquipBestFloorItem`; `look` leaves fixtures out of "On the Ground" (the room
-text describes them) and `look <name>` still finds them. Owner decision O9
-for the ground list.
+`EquipBestFloorItem`. **Ruled (R9):** `look` leaves fixtures out of "On the
+Ground" and shows them as part of the room instead (Rule 10); `look <name>`
+still finds them.
 
 **X11. Nothing marks an action as mob-only (E17, E18).** 77 of 84 mob lookups
 fail cleanly with no mob, but the rest were not read and room actions act on
@@ -332,7 +342,7 @@ the way `pickVoiceEvent` does), ordered taunt, hunger, idle as today;
 trees moves its trigger. **Change:** an item action `taunt_pull` placed after
 `speak(taunt)` in the Aegis tree keeps today's pacing exactly, and
 `taunt_pull:` is retired. This moves one taunt mechanic off the Pinnacle tick,
-against A7's wording. Owner decision O5.
+against A7's wording. **Ruled (R5):** a tree action after the taunt line.
 
 **X16. `SentientChatterCooldownRounds` also paces the hunger feeding line
 (V7).** **Change:** a new knob `HungerFeedingLineCooldownRounds` (shipped 20,
@@ -356,26 +366,40 @@ use the existing `narration.Picker` seam (V11) plus the same seam for the
 chance roll.
 
 **X20. Only players' items speak today (V1).** The item tick also reaches
-mob-held items, so a mob wielding the Blackrazor would chatter. Owner
-decision O6.
+mob-held items, so a mob wielding the Blackrazor would chatter. **Ruled
+(R6):** mob-held sentient items speak (room line only), bounded by the
+listener cap.
 
 **X21. The web builder edits the fields slices 2 and 3 retire (I8).**
 **Change:** those slices remove `Procs`, `VoiceId`, `TauntPull` from
 `gmcp.Item.go` and `items.js` (sibling path); editing trees stays #367.
 
-## Open owner decisions
+**X22. A schedule needs no second light mechanism (L1, L13, L14; ruling
+R3).** The approved design added a `Scheduled` value beside the trim. The
+record already holds "where this light's output stands" (`LightTrim`,
+`LightOutput`), and the trim only ever writes adjustable records (L13).
+**Change:** no new field and no new state value. The scheduler writes the
+same state through `SetLightOutput`, and the two writers never share a
+record: the trim owns adjustable records, the scheduler owns the
+non-adjustable records of treed items, and a validator refuses a
+light-writing tree on an item whose worn light condition is adjustable
+(Rule 8). "Off by schedule" is therefore plain `LightOff` on a record the
+trim never visits, so an entry trim cannot relight it.
 
-| # | Decision | Recommendation |
+## Owner rulings (2026-10-05)
+
+| # | Question | Ruling |
 |---|---|---|
-| O1 | #223: proc cooldown per instance or per template? Per instance resets on every relog (X9) | Per template in the bearer's MiscData, keyed by item id and tree branch: today's behaviour, relog-proof. Per instance would need the item UUID saved (`items.go:43`), a larger change |
-| O2 | `holder_asleep`: the `Sleeping` flag or the schedule's segment (X3) | The flag |
-| O3 | Tree on 40038 (players' lanterns also go dark while they sleep) or a keeper-only lantern (misses saved instances) (X4) | 40038 |
-| O4 | 5803: `lamp: 0` plus "authored 0 is no lamp", or keep the static lamp and add the fixture (X7) | `lamp: 0` |
-| O5 | `taunt_pull` as a tree action after the taunt line, or a separate Pinnacle-tick pull with its own knob (X15) | Tree action |
-| O6 | Do mob-held sentient items speak (room line only)? (X20) | Yes; the listener cap bounds it |
-| O7 | Reuse `time_of_day` instead of new `hour_between` / `is_night` (X1) | Reuse |
-| O8 | Reword `carried.yaml`'s two darker lines so a fading light reads right ("fades" for "is gone") | Yes, slice 1 |
-| O9 | Leave fixtures out of "On the Ground" (X10) | Yes |
+| R1 | #223: proc cooldown per instance or per template (X9) | Per **template**, in the bearer's MiscData keyed by item id and tree branch: today's behaviour, survives relog. Answers #223 |
+| R2 | `holder_asleep`: the `Sleeping` flag or the schedule (X3) | The `Sleeping` flag for now. Sleeping schedules, where keepers sleep, how they wake and off-duty refusals go to the behaviour arc: #404 (under #374) |
+| R3 | Tree on 40038 or a keeper-only lantern (X4); how a schedule writes light | The shared Oil Lantern 40038. A sleeping holder's lantern goes **fully dark**. Do not split light into two mechanisms: no `Scheduled` value; the scheduler writes the existing trimmed-output state (X22, Rule 9). Fixtures keep their output in item tree state via `internal/itemlight` and do not trim |
+| R4 | 5803 `lamp: 0` (X7) | **Dropped.** 5803 untouched; the lamp-post goes in 4111 only. Street lighting by hour is plan 6 (#372) |
+| R5 | Home of `taunt_pull` (X15) | A tree action after the taunt line |
+| R6 | Do mob-held sentient items speak (X20) | Yes, the room line, bounded by the listener cap |
+| R7 | New hour and night nodes or `time_of_day` (X1) | Reuse `time_of_day`, adding `period: after_dusk` with `hours` |
+| R8 | Reword `carried.yaml`'s two darker lines to "fades" | Yes, slice 1 |
+| R9 | Fixtures in "On the Ground" (X10) | Left out of the ground list; shown as part of the room's look (Rule 10) |
+| R10 | The spec's own picks | All accepted: rift stones in 5000 pulsing 20 to 36 (room 40 to 45); fixture ids from 55; sunstone 20099 with condition 134, strength 46, faint 30 for an hour after dusk, value 40, sold by Enchanter Rane; chatter quiet 40 rounds/10%, normal 20/15%, chatty 10/25%, listener cap 10 rounds |
 
 ## The rules
 
@@ -423,7 +447,7 @@ that fires it: `item_idle` (slice 1); `on_equip`, `on_unequip` (X18),
 `on_taunt` and `on_hunger_warning` become conditions (X14).
 
 **Rule 7, item nodes.** Conditions: `time_of_day` with the new
-`period: after_dusk` + `hours` (X1, X2); `holder_asleep` (X3, O2); `worn` (the
+`period: after_dusk` + `hours` (X1, X2, R7); `holder_asleep` (X3, R2); `worn` (the
 item is in an equipment slot); `in_combat` (the holder `IsInCombat()`);
 slice 2 adds `hunger_overdue(fraction)`. Actions: `set_light` and
 `pulse_light` (slice 1), `speak` and `taunt_pull` (slice 2), `proc` (slice 3).
@@ -433,26 +457,41 @@ allowlist: the item nodes of Rule 7, the subject-free `time_of_day`,
 `round_mod`, `random_chance`, `state_equals`, `state_greater_than`,
 `set_state`, `increment_state`, `decrement_state`, and every decorator. Any
 other node refuses with its path (X11). A mob or room tree naming an item-only
-node refuses too.
+node refuses too. An item tree using `set_light` or `pulse_light` on an item
+whose `WornConditionIds` include an `Adjustable` light or darkness condition
+refuses (X22): one writer per record.
 
-**Rule 9, scheduled carried light.** `conditions.Condition` gains
-`Scheduled float64` and `ScheduledSet bool`, both `yaml:"-"`. `LightNow`
-returns `min(full, Scheduled, trimmed)` when set; `Scheduled <= 0` returns
-false, like a hood, without touching `Hooded`. `ResetLight` clears it, so an
-equip is full until the next tick (A5). `set_light(n | full | off)` and
-`pulse_light` on a worn item write every light or darkness record of its
-`WornConditionIds`; on an item that is neither worn nor a fixture they return
-`Failure` and change nothing. Two items sharing one condition on one bearer
-share the record (known limit). The trim keeps solving against `full`
-(L10); the schedule only caps.
+**Rule 9, scheduled carried light: one mechanism (R3, X22).** No new field
+and no new state. `set_light` and `pulse_light` on a worn item write each
+light or darkness record of its `WornConditionIds` through the record's
+existing trimmed-output state, the same state `TrimLightFor` writes on entry:
+`full` sets `LightFull` (the trim's own full branch, `light_trim.go:86-89`);
+`n` calls `SetLightOutput(n)` (`LightTrimmed`, and `LightNow` caps it at full,
+L2); `off` calls `SetLightOutput(lightscale.Absent())` (`LightOff`: fully
+dark, `EmitsLight()` false, L11). The scheduler writes only when the state
+changes. These records are never adjustable (Rule 8), so `TrimLightFor`
+never visits them (L13) and an entry trim cannot relight a lantern the
+scheduler put out; `hood` refuses them too (5d fact I8). `ResetLight` on
+equip makes the light full until the next tick (A5). The state is saved with
+the record (L1), which is harmless: the next tick rewrites it from the hour
+and the holder. On an item that is neither worn nor a fixture both actions
+return `Failure` and change nothing. Two items sharing one condition on one
+bearer share the record (known limit).
 
 **Rule 10, fixtures.** ItemSpec gains `Fixture string` (`yaml:"fixture"`,
 `light` or `darkness`). A fixture's output (from `set_light`/`pulse_light`)
 lives in `internal/itemlight` per room and UUID (X6). `composeWith` adds lit
 light fixtures to the light combine and darkness fixtures to the darkness
 combine; `LightTerms.Fixture` reports the light fixtures' combine (X5).
-Fixtures never trim and are never reset by a bearer. A fixture is refused at
-every floor removal (X10). An item moved off a floor (admin) drops its output.
+Fixtures never trim and are never reset by a bearer (R3). A fixture is
+refused at every floor removal (X10). An item moved off a floor (admin) drops
+its output.
+
+Where a fixture shows (R9): not under "On the Ground" (W8). `look` renders a
+new `descriptions/fixtures` template right after `descriptions/room`
+(`look.go:638`), one line per fixture in the room, "{Name} is lit." or
+"{Name} is unlit." from its current output, under the same sight rule as the
+room description. `look <name>` finds a fixture as it finds any floor item.
 
 **Rule 11, `pulse_light(min, max, period_rounds)`.** A triangle wave from the
 round count, `min` to `max` and back over `period_rounds` (at least 2):
@@ -481,16 +520,16 @@ list, and each slice shrinks it; a new field fails ("new item behaviour goes
 in a tree"); (b) every `behavior:` resolves; (c) an item whose tree uses
 `set_light` or `pulse_light` is `type: light` or a fixture, and an item placed
 by `spawninfo` with such a tree is a fixture (the takeable-fixture check);
-(d) Rule 11's band check.
+(d) Rule 11's band check; (e) Rule 8's one-writer check over every shipped
+item.
 
 ### Slice 1: content
 
 | Piece | What | Values |
 |---|---|---|
-| Civic lamp, item **55** `civic_lamp` | `type: object`, `fixture: light`, `not_salable`, `behavior: dusk_to_dawn`; placed in 5803 by `spawninfo` | `set_light 52` at night, `off` by day; 5803 `lamp: 0` (X7, O4); the `civic lamps` noun moves into the item; the "unlit in the daytime" idle line is replaced by one true at any hour |
-| Arch lantern, item **56** `arch_lantern` | Same shape, placed in 4111 | `set_light 52` at night (the oil lantern's rung), `off` by day; the `lantern` noun moves into the item. At the golden's midwinter midnight 4111 goes from 34 (moonlight, shapes) to 54 (faces) |
-| Rift stones, item **57** `rift_stones` | `fixture: light`, `behavior: rift_pulse`, placed in 5000, whose text already says the stone "pulse[s] with faint light" (C9); a dungeon, no sky, so the pulse is the same at every hour | `pulse_light 20 36 12`: with the room's lamp 38 the room swings 40 to 45, inside shapes for normal eyes, so no notice fires |
-| Keeper lanterns | `behavior: keeper_lantern` on 40038 (O3): `holder_asleep` then `set_light off`, else `set_light full` | Snuffs the nine scheduled keepers of C3 while asleep; the twelve unscheduled keepers never sleep and are unchanged |
+| Arch lantern, item **55** `arch_lantern` | `type: object`, `fixture: light`, `not_salable`, `behavior: dusk_to_dawn`; placed in 4111 by `spawninfo` | `time_of_day period: night` then `set_light 52` (the oil lantern's rung), else `off`; the `lantern` noun moves into the item. At the golden's midwinter midnight 4111 goes from 34 (moonlight, shapes) to 54 (faces) |
+| Rift stones, item **56** `rift_stones` | `fixture: light`, `behavior: rift_pulse`, placed in 5000, whose text already says the stone "pulse[s] with faint light" (C9); a dungeon, no sky, so the pulse is the same at every hour | `pulse_light 20 36 12`: with the room's lamp 38 the room swings 40 to 45, inside shapes for normal eyes, so no notice fires |
+| Keeper lanterns | `behavior: keeper_lantern` on the shared 40038 (R3): `holder_asleep` then `set_light off`, else `set_light full`. Condition 125 is not adjustable (L13), so Rule 8 accepts it | Fully dark while the holder sleeps: the nine scheduled keepers of C3, and any player asleep with one in the light slot; the twelve unscheduled keepers never sleep and are unchanged. Room 5803 and every other street keep their static lamps (R4) |
 | Sunstone, item **20099** | `type: light`, `subtype: wearable`, `wornconditionids: [134]`, `behavior: sunstone`; a chrysalis-grown stone that drinks the sun. Stocked by 9588 Enchanter Rane (C10) as a bare `- itemid:` entry; value 40 (between the hooded lantern's 20 and the Umbral Lantern's 60); `vendor_categories: [enchanting]` (19 shipped items use it) | Condition **134** "Sunstone Glow": secret, `light_strength: 46`, not adjustable, the torch's shape (`triggerrate: 5 real minutes`, `triggercount: 1`). Tree: `period: day` then `full`; `after_dusk hours: 1` then `set_light 30`; else `off` |
 
 Fixtures follow house rule 7: a fixture is not loot, because it cannot be
@@ -503,7 +542,7 @@ taken (Rule 10). `TestShippedLightItemsMatchTheLadder` gains the sunstone row.
 through `narration.Render` (the picker seam, V11), sends the holder
 `<Item> says, "..."` and the room `<Name>'s <Item> mutters, "..."` through
 `SendTextHidingNames` / `HideSpeakerNames` (X17). A mob holder gets the room
-line only (O6). Gated by `PinnacleItemsEnabled`.
+line only (R6). Gated by `PinnacleItemsEnabled`.
 
 **Rule 17, pacing.** An `item_idle` line is ambient: it needs the item's
 cooldown open (the level's rounds), the level's chance, and every listener in
@@ -514,7 +553,7 @@ memory (item state; a per-listener map in `behaviortree`).
 
 **Rule 18, the two voices as trees.** `behaviors/items/blackrazor.yaml` and
 `aegis.yaml` carry the pools of `itemvoices/*.yaml` byte for byte, a
-selector of `in_combat` (taunt, then `taunt_pull` for the Aegis, O5),
+selector of `in_combat` (taunt, then `taunt_pull` for the Aegis, R5),
 `hunger_overdue 0.75` (warning), else idle, and the four event branches.
 `tickHunger` fires `on_hunger_feeding`; when the tree does not handle it, the
 fallback line goes out paced by `HungerFeedingLineCooldownRounds` (X16).
@@ -539,9 +578,11 @@ the event for the items `procBearingItems` names today (P3). The roll stays a
 plain random, not a contest. A proc at chance 100 has no `random` decorator
 (X19).
 
-**Rule 22, cooldown store.** As ruled on O1. Under the recommendation, a proc
-branch's cooldown is read from and written to the bearer's MiscData keyed by
-item id and branch path, so it survives relog as today.
+**Rule 22, cooldown store (R1, answers #223).** Per template: a proc
+branch's `cooldown` decorator reads and writes the bearer's MiscData, keyed by
+item id and branch path, instead of the item's tree state, so two copies of
+one item share a cooldown and it survives relog, as today (P5). Every other
+item cooldown stays in tree state.
 
 **Rule 23, retire.** `dispatchItemProcs`, `procGateOpen`, `markProcCooldown`,
 `procBearingItems` (folded into dispatch), `ItemProc`, `procs:` keys, the
@@ -552,15 +593,15 @@ item id and branch path, so it survives relog as today.
 | Where | Today | After | Slice |
 |---|---|---|---|
 | `lamp` notices (N4) | Unreachable | Fire when a fixture crosses a band, e.g. 4111 at dusk on a moonless night | 1 |
-| `carried` notices (N5) | Arrival or departure only; a second light reads as `eyes` | Also a keeper's lantern going out, a sunstone fading; O8 rewords the two darker lines to "fades" | 1 |
-| "On the Ground" | Lists every floor item | Leaves fixtures out (O9) | 1 |
+| `carried` notices (N5) | Arrival or departure only; a second light reads as `eyes` | Also a lantern going dark as its holder sleeps, a sunstone fading; the two darker lines reworded to "fades" (R8) | 1 |
+| "On the Ground" | Lists every floor item | Leaves fixtures out (R9) | 1 |
+| Room look | No fixture line | "{Name} is lit." / "{Name} is unlit." after the room description (Rule 10) | 1 |
 | `get` / `steal` a fixture | No such item | New refusal: "The {item} is fixed in place." | 1 |
-| 5803 idle line, nouns (C1) | "unlit in the daytime" at any hour | A line true at any hour; noun text moves into item 55 | 1 |
-| 4111 noun `lantern` (C2) | Room noun | Item 56's description | 1 |
-| Sunstone, condition 134, three fixtures | None | New descriptions | 1 |
+| 4111 noun `lantern` (C2) | Room noun | Item 55's description | 1 |
+| Sunstone, condition 134, two fixtures | None | New descriptions | 1 |
 | Item room line | `<Name>'s <Item> mutters, "..."`, sight only, raw name | Heard by all, name hidden by sight (X17) | 2 |
 | `on_equip` / `on_unequip` | Never fire (#222) | The authored 10 and 11 lines fire | 2 |
-| Mob-held voiced items | Silent | Room line (O6) | 2 |
+| Mob-held voiced items | Silent | Room line, bounded by the listener cap (R6) | 2 |
 
 Every new line: hard-wrapped at 80 columns, no raw numbers, no em or en
 dashes, plain English (`dogmud-player-copy`). Lines an item speaks may use
@@ -586,8 +627,11 @@ from disk (`dogmud-balance-config`).
 
 ## Out of scope
 
-The builder editing surface (#367, under #377). Turning the other 97
-thoroughfare rooms' static lamps into fixtures. Snuffing keeper lanterns by
+The builder editing surface (#367, under #377). City street lighting by the
+hour, including 5803 and the other thoroughfare rooms' static lamps: a plan 6
+balance question (#372, R4). Sleeping schedules, where keepers sleep, how they
+wake, off-duty refusals (#404, R2). Scheduling an adjustable light (Rule 8).
+Snuffing keeper lanterns by
 day (the merchant spec's dazzle cost). The mutation drip, hunger drain,
 reserves and bandolier mechanics. `on_grudge`. Saving tree state. Trees on
 items inside containers. Fixtures a player can light or snuff. The rest of
@@ -597,9 +641,12 @@ carrying light" line for the scheduled keepers.
 ## Testing and gates
 
 **Slice 1.**
-- Record: `LightNow` is `min(full, Scheduled, trim)`; `Scheduled <= 0` is off
-  and leaves `Hooded` alone; `ResetLight` clears it; an equip is full until
-  the next tick.
+- Record (Rule 9): `set_light off` leaves the record `LightOff` and
+  `EmitsLight()` false, `n` leaves it `LightTrimmed` at `n`, `full` leaves it
+  `LightFull`; a move into a new room (`TrimLightFor`) does not relight a
+  scheduled-off lantern (shown to fail if condition 125 were made
+  adjustable); `ResetLight` on equip is full until the next tick; Rule 8
+  refuses a light-writing tree on the hooded lantern.
 - Composition: a fixture table through `composeWith` (alone, with a lamp,
   with carried light, a darkness fixture); fixtures never set `Carried`.
 - Notices: `attribute` names `lamp` for a fixture change, `carried` for a
@@ -620,13 +667,13 @@ carrying light" line for the scheduled keepers.
   keeper's light-slot tree at every sample with the `Sleeping` flag set as the
   schedule would, and still passes; a keeper flagged asleep reads its lantern
   off.
-- Goldens: the fixture day-cycle test (X8) is recorded new; the day-cycle
-  golden moves only on 5803's rows, explained with
-  `tools/lighting_golden_diff.py`; the parity golden does not move;
-  `light_notices.golden` moves only for O8.
+- Goldens: the fixture day-cycle test (X8) is recorded new for 4111 and
+  5000; the day-cycle and parity goldens do not move (any move is explained
+  with `tools/lighting_golden_diff.py` before re-recording);
+  `light_notices.golden` moves only for R8.
 - Playtest (`playtest-scenario`, multi-agent, ending with the adversarial
-  content gate): `server night` and `server day` at 4111 and 5803, reporting
-  the band and notices; two agents in 5000 report a steady band; one agent
+  content gate): `server night` and `server day` at 4111, reporting the band,
+  the notices and the arch lantern's room line; two agents in 5000 report a steady band; one agent
   waits in Blacksmith Kerra's sleeping room (5101) across 22:00, reports the
   lantern going out and `list` refused for sleep, wakes her with a shout and
   reports the light back; one carries a sunstone into a cave by day and past
@@ -646,8 +693,8 @@ room and a dark one; equip, remove, fight, go hungry.
 **Slice 3.** Before deleting: a proc outcome golden for the four items under
 X19's seam (on_hit, on_block, on_grapple, on_spell_hit, on_kill; hits and
 misses; cooldown windows) on both paths, identical. Then: a 100% proc draws
-no random number; `ItemProcsEnabled` off stops every proc; O1's cooldown
-store survives (or does not survive) a relog as ruled. Playtest: the four
+no random number; `ItemProcsEnabled` off stops every proc; a proc cooldown
+survives a relog and is shared by two copies of one item (R1). Playtest: the four
 items in real fights, an agent relogging mid-cooldown.
 
 **Every slice.** `context.md` for each package touched (`behaviortree`,
