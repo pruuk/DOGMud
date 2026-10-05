@@ -194,6 +194,8 @@ func (b *Balance) validateLighting() {
 		{&b.LightSpellDurationBase, 2}, {&b.LightSpellDurationStatDivisor, 50}, {&b.LightSpellDurationSkillDivisor, 20},
 		{&b.LightNightVisionSpellBase, 4}, {&b.LightNightVisionSpellStatDivisor, 12.5}, {&b.LightNightVisionSpellSkillDivisor, 6.5},
 		{&b.LightInfraSpellBase, 5}, {&b.LightInfraSpellStatDivisor, 7}, {&b.LightInfraSpellSkillDivisor, 3},
+		{&b.LightDarknessSpellStrengthBase, 40}, {&b.LightDarknessSpellStrengthStatDivisor, 10}, {&b.LightDarknessSpellStrengthSkillDivisor, 2},
+		{&b.LightDarknessSpellDurationBase, 2}, {&b.LightDarknessSpellDurationStatDivisor, 50}, {&b.LightDarknessSpellDurationSkillDivisor, 20},
 	} {
 		if !(*k.v > 0) {
 			*k.v = k.def
