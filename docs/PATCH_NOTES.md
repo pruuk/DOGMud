@@ -9,8 +9,8 @@
   `cancel pall` to end it early.
 - A pall, or the rare Umbral Lantern, is darkest when it is new. Each time
   you move, it eases to what your own eyes can still use.
-- Lights already in a place do not push back when a darkness arrives. A
-  light carried in afterwards still helps.
+- When a darkness arrives, the lights already there keep their strength.
+  A light carried in afterwards still helps.
 - Infravision sees through darkness to the warmth of living things.
 - The Chitin Throne is black while its master lives, and its master can
   see you there. It sometimes drops the Umbral Lantern.
@@ -18,7 +18,7 @@
   creature no longer needs to see your face to come for you.
 - A darkness never gives you away when you sneak.
 - In the web client, the Game window's border now shows how well you can
-  see. Hover over its title for a word on it.
+  see. Hover over its title to read what the colour means.
 - `help darkness` explains it all.
 
 ## 2026-10-01: Secondhand shelves
