@@ -336,6 +336,15 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	//
+	// A floor item named in full, in more than one word ("arch lantern"),
+	// beats a room noun one of those words matches ("arch").
+	//
+	if floorItem, found := floorItemNamedInFull(room, lookAt); found {
+		lookAtFloorItem(user, room, floorItem, isSneaking)
+		return true, nil
+	}
+
+	//
 	// Look for any nouns in the room info
 	//
 	foundNoun, foundDesc := room.FindNoun(lookAt)
@@ -487,40 +496,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// listing shows can be looked at.
 	//
 	if floorItem, found := room.FindOnFloor(lookAt, false); found {
-
-		// A found bauble lies somewhere in particular ("on the bookshelf").
-		where := `on the ground`
-		if floorItem.IsBauble() && floorItem.BaubleSpot != `` {
-			where = floorItem.BaubleSpot
-		}
-		// A fixture is part of the room, not lying on its floor (R9).
-		if floorItem.IsFixture() {
-			where = `here`
-		}
-
-		user.SendText(messaging.CategoryRoomDescription, ``)
-		user.SendText(messaging.CategoryRoomDescription,
-			fmt.Sprintf(`You look at the <ansi fg="item">%s</ansi> %s:`, floorItem.DisplayNameFor(user.UserId), where),
-		)
-		user.SendText(messaging.CategoryRoomDescription, ``)
-
-		if !isSneaking {
-			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at the <ansi fg="item">%s</ansi> %s.`, user.Character.Name, floorItem.DisplayName(), where),
-				[]string{user.Character.Name},
-				user.UserId,
-			)
-		}
-
-		user.SendText(messaging.CategoryRoomDescription,
-			util.SplitStringNL(floorItem.LongDescriptionFor(user.UserId), 80),
-		)
-		if floorItem.BaubleBelongsTo(room.RoomId) {
-			user.SendText(messaging.CategoryRoomDescription,
-				`It belongs to this household. Taking it would be theft.`)
-		}
-		user.SendText(messaging.CategoryRoomDescription, ``)
-
+		lookAtFloorItem(user, room, floorItem, isSneaking)
 		return true, nil
 	}
 
@@ -534,6 +510,57 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	return true, nil
 
+}
+
+// floorItemNamedInFull finds a floor item the words name in full, as more
+// than one word ("arch lantern"). A multi-word full name is specific: it
+// outranks a room noun or a carried item that only one of its words matches.
+func floorItemNamedInFull(room *rooms.Room, lookAt string) (items.Item, bool) {
+	if !strings.Contains(strings.TrimSpace(lookAt), ` `) {
+		return items.Item{}, false
+	}
+	for i := range room.Items {
+		if _, full := room.Items[i].NameMatch(lookAt, false); full {
+			return room.Items[i], true
+		}
+	}
+	return items.Item{}, false
+}
+
+// lookAtFloorItem shows an item lying on (or fixed in) the room's floor.
+func lookAtFloorItem(user *users.UserRecord, room *rooms.Room, floorItem items.Item, isSneaking bool) {
+	// A found bauble lies somewhere in particular ("on the bookshelf").
+	where := `on the ground`
+	if floorItem.IsBauble() && floorItem.BaubleSpot != `` {
+		where = floorItem.BaubleSpot
+	}
+	// A fixture is part of the room, not lying on its floor (R9).
+	if floorItem.IsFixture() {
+		where = `here`
+	}
+
+	user.SendText(messaging.CategoryRoomDescription, ``)
+	user.SendText(messaging.CategoryRoomDescription,
+		fmt.Sprintf(`You look at the <ansi fg="item">%s</ansi> %s:`, floorItem.DisplayNameFor(user.UserId), where),
+	)
+	user.SendText(messaging.CategoryRoomDescription, ``)
+
+	if !isSneaking {
+		room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at the <ansi fg="item">%s</ansi> %s.`, user.Character.Name, floorItem.DisplayName(), where),
+			[]string{user.Character.Name},
+			user.UserId,
+		)
+	}
+
+	user.SendText(messaging.CategoryRoomDescription,
+		util.SplitStringNL(floorItem.LongDescriptionFor(user.UserId), 80),
+	)
+	if floorItem.BaubleBelongsTo(room.RoomId) {
+		user.SendText(messaging.CategoryRoomDescription,
+			`It belongs to this household. Taking it would be theft.`)
+	}
+	user.SendText(messaging.CategoryRoomDescription, ``)
 }
 
 func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
