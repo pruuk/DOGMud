@@ -8,6 +8,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/lightscale"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/perception"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 const noticePallId = 9791 // magnitude darkness: the pall's shape
@@ -107,5 +110,54 @@ func TestCheckQueuesSightBandChangedOnlyOnAChange(t *testing.T) {
 	Check(u, TriggerQuiet)
 	if got := events.DrainQueuedSightBandChangedForTest(u.UserId); len(got) != 1 {
 		t.Fatalf("after Forget (logout) the next check must report the band again, got %d", len(got))
+	}
+}
+
+// Ruling D7 (plan fact F21): decide keeps the old record, and sends no
+// notice, while a player sleeps or is blinded, but the band handed to GMCP
+// still follows the light, so the web client's border does too.
+func TestSightBandFollowsTheLightWhileAsleep(t *testing.T) {
+	cases := []struct {
+		name  string
+		setup func(t *testing.T, u *users.UserRecord)
+	}{
+		{"asleep", func(t *testing.T, u *users.UserRecord) {
+			t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+				901: {ConditionId: 901, Name: "Test Sleep", Flags: []conditions.Flag{conditions.Sleeping}, TriggerCount: 5},
+			}))
+			if err := u.Character.AddCondition(901, false); err != nil {
+				t.Fatal(err)
+			}
+			if !u.Character.HasConditionFlag(conditions.Sleeping) {
+				t.Fatal("fixture: the player must read as sleeping")
+			}
+		}},
+		{"blinded", func(t *testing.T, u *users.UserRecord) {
+			u.Character.Perception = perception.NewMachine()
+			if err := u.Character.Perception.TransitionTo(perception.Blinded, state.TransitionReason{Trigger: "test"}); err != nil {
+				t.Fatal(err)
+			}
+		}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			u, r1, _ := seedLampWorld(t)
+			drain := captureFor(t, 1)
+			events.DrainQueuedSightBandChangedForTest(u.UserId)
+
+			Check(u, TriggerQuiet) // lamp 60: faces
+			if got := events.DrainQueuedSightBandChangedForTest(u.UserId); len(got) != 1 {
+				t.Fatalf("the first check must report the band once, got %d", len(got))
+			}
+			c.setup(t, u)
+			r1.Lamp = rooms.LampPtr(30) // shapes
+			Check(u, TriggerCommand)
+			if got := events.DrainQueuedSightBandChangedForTest(u.UserId); len(got) != 1 {
+				t.Fatalf("a change of light must queue one band update even %s, got %d", c.name, len(got))
+			}
+			if got := drain(); len(got) != 0 {
+				t.Fatalf("the light notice must stay suppressed %s, got %q", c.name, got)
+			}
+		})
 	}
 }
