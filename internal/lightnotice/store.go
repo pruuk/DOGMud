@@ -27,6 +27,11 @@ const (
 	CauseWeather  Cause = "weather"  // weather filtering the sky
 	CauseSky      Cause = "sky"      // the sky itself: dusk, dawn, moons
 	CauseEyes     Cause = "eyes"     // no light term explains it; the observer's sight changed
+	// CauseDarkness is a carried darkness arriving, lapsing or changing
+	// strength (lighting plan 5d, ruling D4). Without it such a change moves
+	// no light term and falls to CauseEyes, and carried's lines ("The
+	// carried light is gone") are wrong for it.
+	CauseDarkness Cause = "darkness"
 )
 
 // Transition names the band change a line narrates.
@@ -41,7 +46,7 @@ const (
 	IntoDazzle    Transition = "dazzled"        // up into dazzle
 )
 
-var allCauses = []Cause{CauseMovement, CauseCarried, CauseLamp, CauseWeather, CauseSky, CauseEyes}
+var allCauses = []Cause{CauseMovement, CauseCarried, CauseLamp, CauseWeather, CauseSky, CauseEyes, CauseDarkness}
 
 var allTransitions = []Transition{DarkerFaces, DarkerShapes, DarkerDark, LighterShapes, LighterFaces, IntoDazzle}
 

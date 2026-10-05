@@ -437,6 +437,16 @@ type CharacterVitalsChanged struct {
 
 func (p CharacterVitalsChanged) Type() string { return `CharacterVitalsChanged` }
 
+// SightBandChanged says a player's light band (messaging.LightBand: dark,
+// shapes, faces or dazzled) differs from the one last reported. Queued by
+// lightnotice.Check; the GMCP module answers it with Char.Sight, the web
+// client's Game-window border (lighting plan 5d, ruling D7).
+type SightBandChanged struct {
+	UserId int
+}
+
+func (p SightBandChanged) Type() string { return `SightBandChanged` }
+
 // Health, mana, etc.
 type CharacterTrained struct {
 	UserId int

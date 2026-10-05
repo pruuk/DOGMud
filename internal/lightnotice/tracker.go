@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
@@ -141,8 +142,10 @@ func transitionOf(from, to messaging.Band) Transition {
 // counterfactual does not have that failure mode, because it holds the light
 // fixed at its OLD value and only varies the sight.
 //
-// Otherwise, the first term that moved, in the order carried light, the
-// room's own light, weather, sky.
+// Otherwise, the first term that moved, in the order carried darkness,
+// carried light, the room's own light, weather, sky. Darkness comes first
+// (lighting plan 5d, ruling D4): a darkness arriving or lapsing is the
+// deliberate act in the room, and a light that trims around it is not.
 func attribute(prev record, now observation) Cause {
 	if prev.roomId != now.roomId {
 		return CauseMovement
@@ -152,6 +155,8 @@ func attribute(prev record, now observation) Cause {
 		return CauseEyes
 	}
 	switch {
+	case a.Darkened != b.Darkened || termMoved(a.Dark, b.Dark):
+		return CauseDarkness
 	case a.Carried != b.Carried:
 		return CauseCarried
 	case a.HasLamp != b.HasLamp || a.Lamp != b.Lamp:
@@ -162,13 +167,15 @@ func attribute(prev record, now observation) Cause {
 	// mutator list reordered.
 	case a.SkyFilter != b.SkyFilter:
 		return CauseWeather
-	case skyMoved(a.Sky, b.Sky):
+	case termMoved(a.Sky, b.Sky):
 		return CauseSky
 	}
 	return CauseEyes
 }
 
-func skyMoved(a, b float64) bool {
+// termMoved reports whether a light-scale term changed: appeared, went Absent,
+// or moved by more than float noise. The sky and a carried darkness share it.
+func termMoved(a, b float64) bool {
 	aAbsent, bAbsent := math.IsInf(a, -1), math.IsInf(b, -1)
 	if aAbsent || bAbsent {
 		return aAbsent != bAbsent
@@ -177,9 +184,15 @@ func skyMoved(a, b float64) bool {
 }
 
 // Per-player state, in memory only: cleared on logout, never saved.
+//
+// sentBands is the band last handed to GMCP (Char.Sight), kept apart from
+// records because a record deliberately keeps its old band while its player
+// sleeps or is blinded (decide), and the Game-window border must still follow
+// what LightBand reads (lighting plan 5d, ruling D7).
 var (
-	mu      sync.Mutex
-	records = map[int]record{}
+	mu        sync.Mutex
+	records   = map[int]record{}
+	sentBands = map[int]messaging.Band{}
 )
 
 // Check compares the player's current band with the last one recorded for
@@ -198,7 +211,20 @@ func Check(user *users.UserRecord, trigger Trigger) {
 	prev, known := records[user.UserId]
 	n, speak, next := decide(prev, known, now, trigger)
 	records[user.UserId] = next
+	sent, hadSent := sentBands[user.UserId]
+	bandMoved := !hadSent || sent != now.band
+	if bandMoved {
+		sentBands[user.UserId] = now.band
+	}
 	mu.Unlock()
+
+	// The Game-window border (lighting plan 5d, ruling D7) rides this check,
+	// which already computes the band on the 3d cadence: every command, every
+	// combat round, every move, login, and the light commands. Only a change
+	// is queued, so a repeat check costs GMCP nothing.
+	if bandMoved {
+		events.AddToQueue(events.SightBandChanged{UserId: user.UserId})
+	}
 
 	if !speak {
 		return
@@ -228,6 +254,7 @@ func NoteAttention(user *users.UserRecord) {
 func Forget(userId int) {
 	mu.Lock()
 	delete(records, userId)
+	delete(sentBands, userId)
 	mu.Unlock()
 }
 
@@ -235,6 +262,7 @@ func Forget(userId int) {
 func ResetForTest() {
 	mu.Lock()
 	records = map[int]record{}
+	sentBands = map[int]messaging.Band{}
 	mu.Unlock()
 	loaded = nil
 }

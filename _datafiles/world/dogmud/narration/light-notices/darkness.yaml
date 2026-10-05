@@ -1,0 +1,26 @@
+cause: darkness
+transitions:
+  darker_faces:
+    any:
+      - 'Something drinks the glare away, and your eyes ease.'
+      - 'A darkness dims the glaring light; your eyes stop aching.'
+  darker_shapes:
+    any:
+      - 'A darkness drinks the light, and faces blur into shapes.'
+      - 'The light thins as something drinks it; you make out only shapes.'
+  darker_dark:
+    any:
+      - 'A darkness swallows the light, and you can see nothing.'
+      - 'The light is drunk away, and darkness closes over you.'
+  lighter_shapes:
+    any:
+      - 'The darkness thins; shapes come back out of the black.'
+      - 'The unnatural dark lifts a little; you can make out shapes.'
+  lighter_faces:
+    any:
+      - 'The darkness lifts, and faces are clear again.'
+      - 'The drinking dark falls away; you can make out faces again.'
+  dazzled:
+    any:
+      - 'The darkness lifts all at once, and the glare stabs at your eyes.'
+      - 'With the dark gone, the light floods back into a glare that hurts.'
