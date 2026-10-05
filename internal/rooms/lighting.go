@@ -24,6 +24,9 @@ import (
 //     double-count.
 //  3. Everything anyone in the room carries, one term per light.
 //
+// Every carried darkness is then combined on the same operator and taken
+// away from the result, so a room can read below 0 (lighting plan 5d).
+//
 // Weather attenuates the SKY only, through each active mutator's skylight
 // fraction: a blizzard does not dim a lantern.
 func (r *Room) LightLevel() int {
@@ -59,9 +62,18 @@ func (r *Room) lightLevelWithSkyFilter(cfg configs.Lighting, celestial, skyFilte
 type LightTerms struct {
 	// Level is exactly LightLevel(): both come from composeLight.
 	Level int
-	// Raw is the combined light before rounding and clamping; Absent when
-	// nothing lights the room. A trim solves against it.
+	// Raw is the net light Level rounds and clamps: Light (read as 0 when
+	// Absent) minus Dark (read as 0 when Absent). An unlit room with no
+	// darkness is 0 (lighting plan 5d, ruling D3).
 	Raw float64
+	// Light is the combined light of the sky, the lamp and every carried
+	// light; lightscale.Absent() when nothing lights the room. A light's trim
+	// solves against it.
+	Light float64
+	// Dark is the combined darkness every carried darkness takes away, by the
+	// same halving rule; lightscale.Absent() when nobody carries one
+	// (lighting plan 5d).
+	Dark float64
 	// Sky is the sky term after the sky fraction and the weather filter, in
 	// light-scale units; lightscale.Absent() when the room has no sky.
 	Sky float64
@@ -73,6 +85,8 @@ type LightTerms struct {
 	HasLamp bool
 	// Carried reports that someone in the room carries a light.
 	Carried bool
+	// Darkened reports that someone in the room carries a darkness.
+	Darkened bool
 }
 
 // LightTerms reports the terms behind LightLevel, from the same single
@@ -86,15 +100,22 @@ func (r *Room) composeLight(cfg configs.Lighting, celestial, skyFilter float64) 
 	return r.composeLightExcluding(cfg, celestial, skyFilter, nil)
 }
 
-// composeLightExcluding is composeLight with one carried record left out, which
-// is the room a trimming source sees: everything except itself.
+// composeLightExcluding is composeLight with one carried record left out of
+// whichever combine it belongs to, which is the room a trimming source sees:
+// everything except itself.
 func (r *Room) composeLightExcluding(cfg configs.Lighting, celestial, skyFilter float64, exclude *conditions.Condition) LightTerms {
-	return r.composeWith(cfg, celestial, skyFilter, r.carriedLight(exclude))
+	carried, dark := r.carriedTerms(exclude)
+	return r.composeWith(cfg, celestial, skyFilter, carried, dark)
 }
 
-// composeWith is the composition with the carried terms supplied, so a test
-// needs no users or mobs.
-func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, carried []float64) LightTerms {
+// composeWith is the composition with the carried light and darkness terms
+// supplied, so a test needs no users or mobs.
+//
+// Lights combine as they always have; darknesses combine among themselves by
+// the same halving rule; the net light is the combined light (0 when none)
+// minus the combined darkness (0 when none), clamped to [-100, 100]
+// (lighting plan 5d, owner decision 1).
+func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, carried, dark []float64) LightTerms {
 	step := cfg.DoublingStep
 	if !(step > 0) {
 		step = 1
@@ -126,14 +147,26 @@ func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, c
 		terms = append(terms, carried...)
 	}
 
-	v := lightscale.Combine(step, terms...)
-	out.Raw = v
+	out.Light = lightscale.Combine(step, terms...)
+	v := out.Light
 	if math.IsInf(v, -1) {
 		// No light of any kind. Zero is the darkest light that NATURALLY
-		// occurs, which is what an unlit cave is. Magical darkness goes below
-		// this and arrives in plan 5d.
+		// occurs, which is what an unlit cave is. Only magical darkness goes
+		// below it.
 		v = 0
 	}
+
+	// 4. Every darkness anyone here carries (lighting plan 5d), combined
+	// among themselves by the same halving rule and taken away from the
+	// light. Two darknesses of 50 take 58, not 100.
+	out.Dark = lightscale.Combine(step, dark...)
+	if len(dark) > 0 {
+		out.Darkened = true
+	}
+	if !math.IsInf(out.Dark, -1) {
+		v -= out.Dark
+	}
+	out.Raw = v
 
 	n := int(math.Round(v))
 	if n < -100 {
@@ -145,18 +178,25 @@ func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, c
 	return out
 }
 
-// carriedLight is every carried light term in the room, leaving out one record
-// (the source being trimmed) when exclude is non-nil. One pass over the room's
-// occupants: each bearer's records are read exactly once.
-func (r *Room) carriedLight(exclude *conditions.Condition) []float64 {
-	var terms []float64
+// carriedTerms is every carried light term and every carried darkness term in
+// the room, leaving out one record (the source being trimmed) when exclude is
+// non-nil. One pass over the room's occupants: each bearer's records are read
+// exactly once.
+func (r *Room) carriedTerms(exclude *conditions.Condition) (light, dark []float64) {
 	add := func(c *characters.Character) {
-		for _, rec := range c.Conditions.LightSources() {
+		for _, rec := range c.Conditions.LightAndDarknessSources() {
 			if rec == exclude {
 				continue
 			}
-			if v, ok := rec.LightNow(conditions.GetConditionSpec(rec.ConditionId)); ok {
-				terms = append(terms, v)
+			spec := conditions.GetConditionSpec(rec.ConditionId)
+			v, ok := rec.LightNow(spec)
+			if !ok {
+				continue
+			}
+			if spec.IsDarknessSource() {
+				dark = append(dark, v)
+			} else {
+				light = append(light, v)
 			}
 		}
 	}
@@ -170,7 +210,7 @@ func (r *Room) carriedLight(exclude *conditions.Condition) []float64 {
 			add(u.Character)
 		}
 	}
-	return terms
+	return light, dark
 }
 
 // mutatorSkyFilter multiplies the skylight fraction of every active mutator
