@@ -6,7 +6,9 @@ import "github.com/GoMudEngine/GoMud/internal/items"
 // index when the item names a behaviour tree (lighting 5e, Rule 5). A player
 // is never indexed: the tick walks every online player anyway. Called from
 // every path that hands a mob an item: StoreItem, Wear, the spills in
-// RemoveFromBody, and the direct appends outside this package.
+// RemoveFromBody. The only direct append outside this package
+// (internal/actions/steal_pocket.go) is covered through StoreItem, which
+// indexes before its capacity check.
 func (c *Character) IndexTreedItem(i items.Item) {
 	if c.MobInstanceId > 0 && i.HasBehavior() {
 		items.IndexMobHolder(c.MobInstanceId)

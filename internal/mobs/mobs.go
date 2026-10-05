@@ -1593,4 +1593,5 @@ func (m *Mob) AdoptCharacter(c characters.Character) {
 	m.Character.MobInstanceId = m.InstanceId
 	m.Character.IsMob = true
 	m.Character.SyncMachineSelf()
+	m.Character.IndexTreedItems()
 }

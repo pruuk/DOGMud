@@ -3,6 +3,7 @@ package mobs
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
@@ -33,5 +34,25 @@ func TestSpawnIndexesAMobHoldingATreedItem(t *testing.T) {
 	got := items.MobHolders()
 	if len(got) != 1 || got[0] != keeper.InstanceId {
 		t.Errorf("MobHolders = %v, want only the keeper %d", got, keeper.InstanceId)
+	}
+}
+
+// Rule 5: a mob that adopts a whole Character (the admin view and hire
+// paths) joins the holder index when that character carries a treed item.
+func TestAdoptCharacterIndexesATreedItem(t *testing.T) {
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		999971: {ItemId: 999971, Name: "test adopted lantern", Type: items.Light, Subtype: items.Wearable,
+			Behavior: "keeper_lantern"},
+	}))
+	t.Cleanup(items.ResetHolderIndexForTest())
+
+	m := &Mob{MobId: 1, InstanceId: 4343}
+	c := characters.Character{Name: "Adopter"}
+	c.Equipment.Light = items.Item{ItemId: 999971}
+	m.AdoptCharacter(c)
+
+	got := items.MobHolders()
+	if len(got) != 1 || got[0] != 4343 {
+		t.Errorf("MobHolders = %v, want only the adopting mob 4343", got)
 	}
 }
