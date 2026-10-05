@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/itemvalue"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -69,9 +70,15 @@ func EquipBestFloorItem(mob *mobs.Mob, room *rooms.Room) bool {
 	// the loot-pickup origin.
 	spec := result.Item.GetSpec()
 	if spec.Subtype == items.Wearable {
-		room.SendTextVisual(messaging.CategoryEquipment, fmt.Sprintf(
+		dons := fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> picks up <ansi fg="item">%s</ansi> and dons it.`,
-			mob.Character.Name, result.Item.DisplayName()))
+			mob.Character.Name, result.Item.DisplayName())
+		if conditions.AnyDarknessSource(spec.WornConditionIds) {
+			// Judged as lit (lighting plan 5d, ruling D6), as the equip command.
+			room.SendTextVisualAsLit(messaging.CategoryEquipment, dons)
+		} else {
+			room.SendTextVisual(messaging.CategoryEquipment, dons)
+		}
 	} else {
 		room.SendTextVisual(messaging.CategoryEquipment, fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> picks up <ansi fg="item">%s</ansi> and wields it.`,
