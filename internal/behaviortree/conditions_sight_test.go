@@ -16,10 +16,10 @@ func TestCondPlayersInRoomNeedsSight(t *testing.T) {
 	ctx := &EvalContext{InstanceId: m.InstanceId, RoomId: room.RoomId}
 	require.Equal(t, Failure, condPlayersInRoom(nil, ctx), "a blind mob finds nobody")
 
-	// GRADED LIGHTING PLAN 2: this rides mobCanSee, which requires SightFull
-	// specifically. A shifted window is still blind below its floor at
-	// light 0, so night vision alone no longer restores sight in true
-	// darkness; see sight.go's doc comment.
+	// GRADED LIGHTING PLAN 2: this rides mobCanSee. A shifted window is
+	// still blind below its floor at light 0, so night vision alone does
+	// not restore sight in true darkness, not even shapes (which mobCanSee
+	// accepts since lighting plan 5d); see sight.go's doc comment.
 	require.NoError(t, m.Character.AddCondition(sightNightVisionConditionId, true))
 	require.Equal(t, Failure, condPlayersInRoom(nil, ctx), "night vision alone still cannot see in true darkness")
 }

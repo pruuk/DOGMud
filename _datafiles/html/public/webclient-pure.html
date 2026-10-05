@@ -710,6 +710,13 @@
                     GMCPUpdateHandlers['Char.Quests']();
                 }
 
+                // Char.Sight rides the full payload too, so the Game window's
+                // border is right on login and refresh, not only after the
+                // next change of light.
+                if ( obj.Sight ) {
+                    GMCPUpdateHandlers['Char.Sight']();
+                }
+
                 // NOTE: do NOT refresh the automation panel or tick timers here.
                 // Automation (macros/aliases/ticks/triggers) is a separate module
                 // pushed as "Char.Automation"; it never arrives in the full "Char"
@@ -730,6 +737,34 @@
             },
             "Char.Vitals": function() {
                 updateVitalsWindow();
+            },
+            // How well the player can see, as the Game window's border
+            // (lighting plan 5d). The band is the player's own; the class
+            // goes on #panel-feed itself, which a pop-out MOVES into its
+            // window (WinBox mount), so the border follows it there.
+            "Char.Sight": function() {
+                var sight = (GMCPStructs["Char"] || {}).Sight;
+                var band = sight ? sight.band : "";
+                var tips = {
+                    "dark":    "Too dark to see.",
+                    "shapes":  "Dim light: shapes, not faces.",
+                    "faces":   "Good light.",
+                    "dazzled": "Too bright: the glare hurts."
+                };
+                var panel = document.getElementById("panel-feed");
+                if ( !panel ) {
+                    return;
+                }
+                for ( var b in tips ) {
+                    panel.classList.remove("sight-" + b);
+                }
+                var head = panel.querySelector(".dash-panel-head");
+                if ( !tips.hasOwnProperty(band) ) {
+                    if ( head ) head.removeAttribute("title");
+                    return;
+                }
+                panel.classList.add("sight-" + band);
+                if ( head ) head.title = tips[band];
             },
             "Party": function() {
                 updateVitalsWindow();

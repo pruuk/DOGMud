@@ -402,37 +402,100 @@ func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat mes
 		if u == nil {
 			continue
 		}
-		decision := messaging.SightNone
-		switch {
-		case messaging.CanSeeClearly(u.Character, lighting):
-			decision = messaging.SightFull
-		case messaging.CanSeeShapes(u.Character, lighting):
-			decision = messaging.SightShapes
-		}
-		text := txt
-		if decision == messaging.SightShapes && len(names) > 0 {
-			// Anonymize first: it replaces whole name tags. Hiding first could
-			// nest a combat-anon tag inside a name tag that holds more than the
-			// name ("the goblin"), and the pipeline's Anonymize would then no
-			// longer match that tag and leak the rest of it.
-			text = messaging.HideNames(messaging.Anonymize(txt), names, messaging.SightShapes)
-		}
-		rendered := messaging.RenderForRecipient(messaging.RenderInput{
-			Category:      cat,
-			Text:          text,
-			Channel:       messaging.ChannelVisual,
-			SightDecision: decision,
-			LineWidth:     u.GetLineWidth(),
-		})
-		if rendered == "" {
+		deliverVisual(u, visualDecision(u.Character, lighting), cat, txt, names, communication)
+	}
+}
+
+// VisualSnapshot is what each player in a room could see at one moment: user
+// id to the sight decision a visual line would have been judged at then.
+// Room.VisualSnapshot takes it; Room.SendTextVisualToSnapshot delivers a line
+// against it.
+type VisualSnapshot map[int]messaging.SightDecision
+
+// VisualSnapshot records, for every player in the room now, the sight decision
+// SendTextVisual would judge them at now, with this room as the lighting.
+//
+// Owner rule (2026-10-05): a line announcing a change to the room's light
+// lands with the state the room and everyone in it were in BEFORE the change;
+// only after it resolves do they work from the new state. Take the snapshot
+// before the change (a darkness worn or applied), make the change, then send
+// with SendTextVisualToSnapshot. It replaced judging those lines as lit, which
+// named the caster to an observer already blind in a pitch-dark room.
+func (r *Room) VisualSnapshot() VisualSnapshot {
+	snap := VisualSnapshot{}
+	for _, uid := range r.GetPlayers() {
+		u := users.GetByUserId(uid)
+		if u == nil {
 			continue
 		}
-		events.AddToQueue(events.Message{
-			UserId:          u.UserId,
-			Text:            rendered + "\n",
-			IsCommunication: communication,
-		})
+		snap[uid] = visualDecision(u.Character, r)
 	}
+	return snap
+}
+
+// SendTextVisualToSnapshot delivers a sight-gated line to exactly the players
+// who are in the room now AND were in snap, each judged at the decision snap
+// recorded for them rather than at the room as it is now (the owner rule on
+// VisualSnapshot). A player who has left since gets nothing, and so does one
+// who arrived since: they were not there to see the moment the line
+// describes. names are hidden from a player recorded at SightShapes, as
+// SendTextVisualHidingNames does.
+func (r *Room) SendTextVisualToSnapshot(snap VisualSnapshot, cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
+	for _, uid := range r.GetPlayers() {
+		if excluded(uid, excludeUserIds) {
+			continue
+		}
+		decision, ok := snap[uid]
+		if !ok {
+			continue
+		}
+		u := users.GetByUserId(uid)
+		if u == nil {
+			continue
+		}
+		deliverVisual(u, decision, cat, txt, names, false)
+	}
+}
+
+// visualDecision is the sight decision a visual line is judged at for c under
+// lighting: faces, shapes or nothing.
+func visualDecision(c *characters.Character, lighting messaging.RoomVisibility) messaging.SightDecision {
+	switch {
+	case messaging.CanSeeClearly(c, lighting):
+		return messaging.SightFull
+	case messaging.CanSeeShapes(c, lighting):
+		return messaging.SightShapes
+	}
+	return messaging.SightNone
+}
+
+// deliverVisual is the one per-recipient body of the visual senders: hide
+// names at SightShapes, render on the visual channel at decision, and queue
+// the message unless the render suppressed it.
+func deliverVisual(u *users.UserRecord, decision messaging.SightDecision, cat messaging.Category, txt string, names []string, communication bool) {
+	text := txt
+	if decision == messaging.SightShapes && len(names) > 0 {
+		// Anonymize first: it replaces whole name tags. Hiding first could
+		// nest a combat-anon tag inside a name tag that holds more than the
+		// name ("the goblin"), and the pipeline's Anonymize would then no
+		// longer match that tag and leak the rest of it.
+		text = messaging.HideNames(messaging.Anonymize(txt), names, messaging.SightShapes)
+	}
+	rendered := messaging.RenderForRecipient(messaging.RenderInput{
+		Category:      cat,
+		Text:          text,
+		Channel:       messaging.ChannelVisual,
+		SightDecision: decision,
+		LineWidth:     u.GetLineWidth(),
+	})
+	if rendered == "" {
+		return
+	}
+	events.AddToQueue(events.Message{
+		UserId:          u.UserId,
+		Text:            rendered + "\n",
+		IsCommunication: communication,
+	})
 }
 
 // SendTextVisualWithAudio delivers visualTxt to everyone who can see and

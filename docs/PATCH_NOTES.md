@@ -1,5 +1,26 @@
 # DOGMud Patch Notes
 
+## 2026-10-05: Darkness
+
+- A place can now be darker than any cave. A darkness takes light away,
+  and it darkens a place for everyone there, whoever brought it.
+- A new spell, Chrysalis Pall, gathers dark spores that drink the light.
+  It is found, never taught, once your spellcasting is good enough. Use
+  `cancel pall` to end it early.
+- A pall, or the rare Umbral Lantern, is darkest when it is new. Each time
+  you move, it eases to what your own eyes can still use.
+- When a darkness arrives, the lights already there keep their strength.
+  A light carried in afterwards still helps.
+- Infravision sees through darkness to the warmth of living things.
+- The Chitin Throne is black while its master lives, and its master can
+  see you there. It sometimes drops the Umbral Lantern.
+- Creatures now act on any figure they can make out. In dim light a
+  creature no longer needs to see your face to come for you.
+- A darkness never gives you away when you sneak.
+- In the web client, the Game window's border now shows how well you can
+  see. Hover over its title to read what the colour means.
+- `help darkness` explains it all.
+
 ## 2026-10-01: Secondhand shelves
 
 - A general store or jeweller that buys a trinket of some worth from you

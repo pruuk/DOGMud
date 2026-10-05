@@ -388,6 +388,24 @@ Item names in the backpack, the bandolier, the component bag and
 (`items.Item.NameFor(user.UserId)`), so a finder reads their own
 finder-only bauble; every other payload uses the viewer-agnostic name.
 
+## Char.Sight: the player's light band (lighting plan 5d, 2026-09-30)
+
+`Char.Sight` is one field, `{"band": "dark" | "shapes" | "faces" |
+"dazzled"}` (`GMCPCharModule_Payload_Sight`), built in `GetCharNode` from
+`messaging.LightBand` for the player in their current room (`sightBand`; an
+unloaded room reads faces, passed as an untyped nil) and carried in the full
+`Char` payload. The web client tints the Game window's border by it
+(`webclient-pure.html`, `"Char.Sight"` handler; `dashboard.css`
+`#panel-feed.sight-*`; `tools/webclient-tests/sight-border.js`).
+
+- **Push trigger.** `sightBandChangedHandler` answers
+  `events.SightBandChanged`, which `internal/lightnotice.Check` queues only
+  when the band changes: the 3d notice cadence (every command, combat round,
+  move, login, and the light commands). Not on `Char.Vitals`, which rides
+  every pool change and would recompute the room's light on each.
+- **No room contents.** The band is the player's own, and the text already
+  tells them how well they see.
+
 ## Module index
 
 Every `gmcp.<Name>.go` file follows the same shape: register in `init()`, emit

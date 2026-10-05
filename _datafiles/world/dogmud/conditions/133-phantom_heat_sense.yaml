@@ -1,0 +1,14 @@
+conditionid: 133
+name: Phantom Heat Sense
+description: "You sense the warmth of living things through any darkness."
+# The Chrysalis Phantom's heat sense (lighting plan 5d, ruling D9): reach 50,
+# so it reads shapes at exactly the -50 its own Umbral Lantern makes of its
+# lair. No nightvision_strength, so it is dazzled no sooner than anyone.
+# A pure flag, the shape of condition 85: no trigger rate, so it never ticks,
+# and triggercount 1 so it is not born expired.
+triggercount: 1
+effects:
+  infra_reach: 50
+flags:
+  - infraredvision
+secret: true

@@ -980,6 +980,22 @@ Balance:
   LightInfraReachCap: 50
   LightInfraPenaltyFloor: 0.90
 
+  # ── LIGHT: DARKNESS SPELL (lighting plan 5d) ───────────────────────────────
+  # Chrysalis Pall (condition darkness_strength: magnitude) scales like the
+  # light spells above, and on its own knobs so darkness can be retuned apart
+  # from light:
+  #   base + stat/StatDivisor + spellcasting/SkillDivisor
+  # for the same shape of duration. Shipped at glow's values: a new (100, 0),
+  # mid (130, 30) and endgame (175, 65) caster darkens by 50 / 68 / 90, the
+  # new caster for 20 minutes and the endgame caster for about 45. Not capped:
+  # the scale clamps the room at -100. Zero or negative reverts to the default.
+  LightDarknessSpellStrengthBase: 40
+  LightDarknessSpellStrengthStatDivisor: 10
+  LightDarknessSpellStrengthSkillDivisor: 2
+  LightDarknessSpellDurationBase: 2
+  LightDarknessSpellDurationStatDivisor: 50
+  LightDarknessSpellDurationSkillDivisor: 20
+
   # ── COMBAT: DAMAGE ────────────────────────────────────────────────────────
   # Global panic buttons. 1.0 = no change. GlobalDamageMultiplier is
   # applied to ALL damage channels in CalcRawDamage().

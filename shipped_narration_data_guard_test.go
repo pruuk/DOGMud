@@ -960,7 +960,7 @@ var observerIdentityGuardRoots = []string{
 //	                                    internal/conditions/narration.go:45-50),
 //	                                    and all three phases pass that same
 //	                                    holder plain name to HideNames: start
-//	                                    Condition_ApplyConditions.go:175,
+//	                                    Condition_ApplyConditions.go:179,
 //	                                    trigger NewRound_UserRoundTick.go:302
 //	                                    and NewRound_MobRoundTick.go:287, end
 //	                                    sendConditionEndRoomText
@@ -1015,7 +1015,7 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"defense-messages/counter-quell.yaml": true,
 	"defense-messages/counter-defy.yaml":  true,
 	// Conditions: all three narration phases pass the holder's plain name
-	// into HideNames (start Condition_ApplyConditions.go:175, trigger
+	// into HideNames (start Condition_ApplyConditions.go:179, trigger
 	// NewRound_UserRoundTick.go:302 and NewRound_MobRoundTick.go:287, end
 	// sendConditionEndRoomText). Applies to the store's every
 	// name-referencing observer line, not only the ones that author a
@@ -1059,6 +1059,13 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"conditions/128-night_sight.yaml":       true,
 	"conditions/129-heat_sight.yaml":        true,
 	"conditions/130-pitsense_tincture.yaml": true,
+	// Lighting plan 5d: Chrysalis Pall. Its start line goes out through
+	// sendConditionStartRoomText, which as a darkness routes it through
+	// SendTextVisualToSnapshot with the holder's plain name, judged against
+	// the room before the pall landed (ruling D6 as amended by the owner,
+	// 2026-10-05); its end line through sendConditionEndRoomText with the
+	// holder's plain name.
+	"conditions/131-chrysalis_pall.yaml": true,
 	// Special moves: messaging.SendTrio hides Audience ActorName and ActeeName
 	// from every reader by that reader's ParticipantSight. Applies to all
 	// fourteen shipped files, not only the two that author a `_plain` token;

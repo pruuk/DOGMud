@@ -1301,6 +1301,21 @@ type Balance struct {
 	// reach 25 reads 0.95. Infravision only ever eases the DARK side.
 	LightInfraReachCap     ConfigInt   `yaml:"LightInfraReachCap"`     // default 50
 	LightInfraPenaltyFloor ConfigFloat `yaml:"LightInfraPenaltyFloor"` // default 0.90
+
+	// Darkness-spell scaling (lighting plan 5d), the light trio's shape: a
+	// spell whose condition declares darkness_strength: magnitude is cast at
+	//   LightDarknessSpellStrengthBase + stat/LightDarknessSpellStrengthStatDivisor + spellcasting/LightDarknessSpellStrengthSkillDivisor
+	// for
+	//   LightDarknessSpellDurationBase + stat/LightDarknessSpellDurationStatDivisor + spellcasting/LightDarknessSpellDurationSkillDivisor
+	// triggers (rounded, at least 1). Shipped at glow's values: a new caster
+	// (100, 0) casts 50 for 4 triggers, a mid caster (130, 30) 68, an endgame
+	// caster (175, 65) 90 for 9. Not capped: the scale clamps the room.
+	LightDarknessSpellStrengthBase         ConfigFloat `yaml:"LightDarknessSpellStrengthBase"`         // default 40
+	LightDarknessSpellStrengthStatDivisor  ConfigFloat `yaml:"LightDarknessSpellStrengthStatDivisor"`  // default 10
+	LightDarknessSpellStrengthSkillDivisor ConfigFloat `yaml:"LightDarknessSpellStrengthSkillDivisor"` // default 2
+	LightDarknessSpellDurationBase         ConfigFloat `yaml:"LightDarknessSpellDurationBase"`         // default 2
+	LightDarknessSpellDurationStatDivisor  ConfigFloat `yaml:"LightDarknessSpellDurationStatDivisor"`  // default 50
+	LightDarknessSpellDurationSkillDivisor ConfigFloat `yaml:"LightDarknessSpellDurationSkillDivisor"` // default 20
 }
 
 func (b *Balance) Validate() {

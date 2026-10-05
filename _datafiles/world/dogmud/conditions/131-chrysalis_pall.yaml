@@ -1,0 +1,20 @@
+conditionid: 131
+name: Chrysalis Pall
+description: Dark spores drink the light around you. The place grows darker
+  for everyone, you included. Each time you move, the pall eases to what your
+  own eyes can still use, and a fresh pall starts at full strength. The warmth
+  of living things still shows through it to eyes that see heat.
+secret: false
+triggerrate: 5 real minutes
+triggercount: 4
+# darkness_strength: magnitude, scaled by the Chrysalis Pall spell
+# (LightDarknessSpell*); not capped, the scale clamps the room at -100.
+effects:
+  darkness_strength: magnitude
+flags:
+  - adjustable
+  - cancellable
+start_actee: "A pall of dark spores gathers around you."
+start_observer: "A pall of dark spores gathers around {actee_plain}."
+end_actee: "Your pall thins, and the light comes back."
+end_observer: "The pall around {actee_plain} thins away."

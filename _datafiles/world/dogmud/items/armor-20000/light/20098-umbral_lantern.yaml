@@ -1,0 +1,16 @@
+itemid: 20098
+name: Umbral Lantern
+namesimple: lantern
+description: A lantern of black glass and tarnished iron. Inside it a knot of
+  dark spores drinks the light instead of giving it. It trims its darkness to
+  your eyes each time you step somewhere new.
+type: light
+subtype: wearable
+weight: 0.3
+value: 60
+# A boss drop, never stocked: vendor_categories says who BUYS it (items
+# ValidateVendorCategories refuses an empty list at boot), not who sells it.
+vendor_categories:
+- blacksmithing
+wornconditionids:
+  - 132

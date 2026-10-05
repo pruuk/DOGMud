@@ -364,7 +364,7 @@ func (bs *Conditions) AddConditionMagnitude(conditionId int, triggers int, magni
 			// The magnitude IS the signed per-round amount; see tickAmountFor.
 			bs.List[idx].TickAmount = tickAmountFor(magnitude)
 		}
-		if spec.IsLightSource() {
+		if spec.IsLightSource() || spec.IsDarknessSource() {
 			// A fresh magnitude is a fresh cast: full strength, hood open.
 			bs.List[idx].ResetLight()
 		}

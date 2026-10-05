@@ -618,6 +618,33 @@ func DrainQueuedVitalsChangedForTest(userId int) []CharacterVitalsChanged {
 	return found
 }
 
+// DrainQueuedSightBandChangedForTest removes all SightBandChanged events from
+// the global queue for the given userId and returns them. Pass 0 to drain
+// every SightBandChanged event regardless of user.
+//
+// FOR TEST USE ONLY. Mutates the queue.
+func DrainQueuedSightBandChangedForTest(userId int) []SightBandChanged {
+	qLock.Lock()
+	defer qLock.Unlock()
+	var found []SightBandChanged
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		sc, ok := pe.event.(SightBandChanged)
+		if !ok {
+			remaining = append(remaining, pe)
+			continue
+		}
+		if userId == 0 || sc.UserId == userId {
+			found = append(found, sc)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // DrainQueuedSkillUsedForTest removes all SkillUsed events from the global
 // queue for the given userId and returns them. Pass 0 to drain every SkillUsed
 // event regardless of user.

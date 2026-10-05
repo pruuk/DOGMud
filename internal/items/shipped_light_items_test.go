@@ -63,4 +63,38 @@ func TestShippedLightItemsMatchTheLadder(t *testing.T) {
 	if spec := items.GetItemSpec(20097); spec == nil || spec.Nouns["hood"] == "" {
 		t.Error("the hooded lantern must carry a hood noun")
 	}
+
+	// Lighting plan 5d: the Umbral Lantern is the ladder's one darkness, a
+	// light-slot item whose one secret condition takes 50 away, adjustable,
+	// with no hood and never a light.
+	umbral := items.GetItemSpec(20098)
+	if umbral == nil {
+		t.Fatal("item 20098 (Umbral Lantern) is not shipped")
+	}
+	if umbral.Type != items.Light || umbral.Subtype != items.Wearable || len(umbral.WornConditionIds) != 1 {
+		t.Fatalf("Umbral Lantern is %s/%s with %d conditions, want light/wearable with 1", umbral.Type, umbral.Subtype, len(umbral.WornConditionIds))
+	}
+	dark := conditions.GetConditionSpec(umbral.WornConditionIds[0])
+	if dark == nil || !dark.Secret || dark.IsLightSource() || !dark.IsDarknessSource() {
+		t.Fatalf("the Umbral Lantern's condition must exist, be secret, and be a darkness and not a light: %+v", dark)
+	}
+	if v := dark.Effects[conditions.EffectDarknessStrength]; v.UsesMagnitude || v.Literal != 50 {
+		t.Errorf("Umbral Lantern darkens at %+v, want 50", v)
+	}
+	adjustable := false
+	for _, f := range dark.Flags {
+		adjustable = adjustable || f == conditions.Adjustable
+	}
+	if !adjustable {
+		t.Error("the Umbral Lantern's darkness must be adjustable")
+	}
+	if len(umbral.Nouns) != 0 {
+		t.Errorf("the Umbral Lantern carries nouns %v, want none (it has no hood)", umbral.Nouns)
+	}
+	// Boot refuses an economy item with no vendor_categories
+	// (items.ValidateVendorCategories); the list says who buys it, not who
+	// stocks it, so the boss drop still sells.
+	if len(umbral.VendorCategories) != 1 || umbral.VendorCategories[0] != "blacksmithing" {
+		t.Errorf("Umbral Lantern vendor_categories = %v, want [blacksmithing], the hooded lantern's", umbral.VendorCategories)
+	}
 }

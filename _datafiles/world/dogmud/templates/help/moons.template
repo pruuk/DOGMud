@@ -13,4 +13,5 @@ most: when it is dark, the other two cannot show you even shapes.
 
 Cloud and trees take away what little moonlight there is.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help light</ansi>, <ansi fg="command">help seasons</ansi>, <ansi fg="command">help weather</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help light</ansi>, <ansi fg="command">help seasons</ansi>, <ansi fg="command">help weather</ansi>,
+  <ansi fg="command">help darkness</ansi>

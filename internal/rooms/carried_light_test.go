@@ -14,22 +14,24 @@ func TestCarriedSourcesEachJoinTheCombine(t *testing.T) {
 	zero := 0.0
 	cave := Room{SkyLight: &zero}
 
-	one := cave.composeWith(cfg, 60, 1, []float64{56})
-	two := cave.composeWith(cfg, 60, 1, []float64{56, 56})
+	one := cave.composeWith(cfg, 60, 1, []float64{56}, nil)
+	two := cave.composeWith(cfg, 60, 1, []float64{56, 56}, nil)
 	if one.Level != 56 {
 		t.Errorf("one torch in a cave = %d, want 56", one.Level)
 	}
 	if two.Level != 64 {
 		t.Errorf("two torches in a cave = %d, want 64 (one step of 8 brighter)", two.Level)
 	}
-	if !one.Carried || cave.composeWith(cfg, 60, 1, nil).Carried {
+	if !one.Carried || cave.composeWith(cfg, 60, 1, nil, nil).Carried {
 		t.Error("Carried must be true exactly when a carried term is present")
 	}
 	if want := lightscale.Combine(cfg.DoublingStep, 56, 56); math.Abs(two.Raw-want) > 1e-9 {
 		t.Errorf("Raw = %v, want %v", two.Raw, want)
 	}
-	if empty := cave.composeWith(cfg, 60, 1, nil); !math.IsInf(empty.Raw, -1) || empty.Level != 0 {
-		t.Errorf("an empty cave: Raw %v Level %d, want -Inf and 0", empty.Raw, empty.Level)
+	// Since lighting plan 5d, Raw is the net light (Absent light reads 0), and
+	// the light combine alone is Light.
+	if empty := cave.composeWith(cfg, 60, 1, nil, nil); !math.IsInf(empty.Light, -1) || empty.Raw != 0 || empty.Level != 0 {
+		t.Errorf("an empty cave: Light %v Raw %v Level %d, want -Inf, 0 and 0", empty.Light, empty.Raw, empty.Level)
 	}
 }
 
@@ -40,7 +42,7 @@ func TestCarriedTermOfZeroIsPresent(t *testing.T) {
 	zero := 0.0
 	cave := Room{SkyLight: &zero}
 
-	got := cave.composeWith(cfg, 60, 1, []float64{0})
+	got := cave.composeWith(cfg, 60, 1, []float64{0}, nil)
 	if got.Raw != 0 || got.Level != 0 || !got.Carried {
 		t.Errorf("a zero carried term in a cave: Raw %v Level %d Carried %v, want 0, 0, true", got.Raw, got.Level, got.Carried)
 	}

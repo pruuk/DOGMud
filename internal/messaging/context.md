@@ -189,6 +189,13 @@ Functions:
   (`dazzleAbove - clampShift(strength) - 1`). An adjustable light
   (`internal/rooms.(*Room).TrimLightFor`) trims toward it. One point, not
   half, so a room at 74.5 cannot round up onto the edge.
+- `DarknessTrimTarget(strength, reach, blindBelow int) float64`
+  (`window.go`), lighting plan 5d: the room light an adjustable darkness
+  trims to, one point inside the darkest light an observer can still use.
+  `-reach + 1` with infravision, else `blindBelow - clampShift(strength)`
+  floored at `windowFloor`, plus one. One point inside, mirroring
+  `LightTrimTarget`, so a small downward drift in sky light after the trim
+  does not tip the bearer into the dark (the 5d playtest).
 - `ComfortDistance(observer *characters.Character, room RoomVisibility)
   (dark, bright float64)` (`comfort.go`), lighting plan 5b: how far the
   room's light sits outside the observer's own comfortable band, as two
@@ -334,6 +341,13 @@ Functions:
     nobody asked for. M4d closed that gap for good: combat no longer reads
     a messaging predicate by name at all (see `internal/combat/context.md`,
     "Sight: the verdict and the ramp").
+  - Its non-test readers are the round's combat sight gates in
+    `internal/hooks` (`NewRound_DoCombat_resolution.go`,
+    `NewRound_DoCombat_unified.go`), which gate
+    `Balance.DarknessCombatPenalty`. `internal/behaviortree`'s `mobCanSee`
+    stopped reading it in lighting plan 5d (ruling D8): mob decisions accept
+    `SightShapes` from `ParticipantSight` directly, and this predicate stays
+    `SightFull` only so the combat penalty does not move.
   - `sleep_policy_test.go` pins the contract by absence: a sleeper reads
     NOTHING from `CanSeeClearly`/`CanSeeShapes` (both false regardless of
     light), and `CanSeeSightImpairedOnly` ignores sleep entirely.
@@ -481,7 +495,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `hidenames_tagged.go` | Identity-tag-aware name replacement `HideNames` and `Anonymize` share, including the trailing adjective span |
 | `wrap.go` | `WrapAnsi`, ANSI-aware folding at a caller-supplied width measured in visible runes; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
 | `predicates.go` | `ParticipantSight` (the optics primitive) plus `CanSeeClearly`/`CanSeeShapes`/`CanSeeSightImpairedOnly`, the one-line attention policies built on it; `SeesThroughExit` and `FixedLight` (lighting plan 5c) |
-| `window.go` | `SightThroughWindow`, the pure window-model function `ParticipantSight` calls, `clampShift`, `ExitThroughWindow` (lighting plan 5c), `LightTrimTarget` (lighting plan 5a, reparameterized in 5b to take `dazzleAbove` instead of reading the now-retired `windowDazzleEdge` constant), plus its two remaining unexported constants (`windowShiftCap`, `windowFloor`) |
+| `window.go` | `SightThroughWindow`, the pure window-model function `ParticipantSight` calls, `clampShift`, `ExitThroughWindow` (lighting plan 5c), `LightTrimTarget` (lighting plan 5a, reparameterized in 5b to take `dazzleAbove` instead of reading the now-retired `windowDazzleEdge` constant), `DarknessTrimTarget` (lighting plan 5d), plus its two remaining unexported constants (`windowShiftCap`, `windowFloor`) |
 | `band.go` | `Band`, `BandThroughWindow`, `LightBand` (lighting plan 3d): the band-grained twin of `SightDecision`/`SightThroughWindow`/`ParticipantSight`, adding the dazzled tier for `internal/lightnotice` |
 | `comfort.go` | `ComfortDistance` (lighting plan 5b): how far a room's light sits outside the observer's comfortable band, as dark/bright fractions of the way to the cap; `infraDarkCap` (lighting plan 5c), the unexported cap it applies to the dark fraction for an observer with infra reach |
 | `sight_mult.go` | `SightScoreMultiplier` and `SightMult` (lighting plan 5b): the sight ramp as a score multiplier, replacing the deleted `DarknessScoreMultiplier` |

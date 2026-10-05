@@ -78,6 +78,11 @@ func init() {
 
 	events.RegisterListener(events.Quest{}, g.questProgressHandler)
 
+	// Char.Sight: the player's light band for the web client's Game-window
+	// border (lighting plan 5d, ruling D7). lightnotice.Check queues the
+	// event only when the band changes.
+	events.RegisterListener(events.SightBandChanged{}, g.sightBandChangedHandler)
+
 }
 
 type GMCPCharModule struct {
@@ -107,6 +112,28 @@ func (g *GMCPCharModule) questProgressHandler(e events.Event) events.ListenerRet
 	events.AddToQueue(GMCPCharUpdate{
 		UserId:     evt.UserId,
 		Identifier: `Char.Quests`,
+	})
+
+	return events.Continue
+}
+
+// sightBandChangedHandler pushes Char.Sight when a player's light band
+// changes. Not on Char.Vitals: that rides every pool change and would
+// recompute the room's light on each.
+func (g *GMCPCharModule) sightBandChangedHandler(e events.Event) events.ListenerReturn {
+
+	evt, typeOk := e.(events.SightBandChanged)
+	if !typeOk {
+		return events.Continue
+	}
+
+	if evt.UserId == 0 {
+		return events.Continue
+	}
+
+	events.AddToQueue(GMCPCharUpdate{
+		UserId:     evt.UserId,
+		Identifier: `Char.Sight`,
 	})
 
 	return events.Continue
@@ -684,6 +711,15 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 		}
 	}
 
+	if all || g.wantsGMCPPayload(`Char.Sight`, gmcpModule) {
+
+		payload.Sight = &GMCPCharModule_Payload_Sight{Band: sightBand(user.Character)}
+
+		if !all {
+			return payload.Sight, `Char.Sight`
+		}
+	}
+
 	// If we reached this point and Char wasn't requested, we have a problem.
 	if !all {
 		mudlog.Error(`gmcp.Char`, `error`, `Bad module requested`, `module`, gmcpModule)
@@ -721,6 +757,7 @@ type GMCPCharModule_Payload struct {
 	Pets       []GMCPCharModule_Payload_Pet      `json:"Pets,omitempty"`
 	Skills     map[string]string                 `json:"Skills,omitempty"`
 	Conditions map[string]GMCPCondition          `json:"Conditions,omitempty"`
+	Sight      *GMCPCharModule_Payload_Sight     `json:"Sight,omitempty"`
 }
 
 // /////////////////
@@ -1112,4 +1149,27 @@ type GMCPCharModule_Payload_Pet struct {
 	Name   string `json:"name"`
 	Type   string `json:"type"`
 	Hunger string `json:"hunger"`
+}
+
+// /////////////////
+// Char.Sight
+// /////////////////
+//
+// The player's own light band, one field (lighting plan 5d, ruling D7):
+// "dark", "shapes", "faces" or "dazzled" (messaging.Band.String()). The web
+// client tints the Game window's border by it. It carries nothing about the
+// room's contents: the text already tells the player how well they see.
+type GMCPCharModule_Payload_Sight struct {
+	Band string `json:"band"`
+}
+
+// sightBand is messaging.LightBand for a character in its current room. A
+// room that is not loaded reads as faces, LightBand's own nil-room default;
+// the nil is passed as an untyped nil, never a typed nil *rooms.Room, which
+// LightBand would dereference.
+func sightBand(c *characters.Character) string {
+	if room := rooms.LoadRoom(c.RoomId); room != nil {
+		return messaging.LightBand(c, room).String()
+	}
+	return messaging.LightBand(c, nil).String()
 }

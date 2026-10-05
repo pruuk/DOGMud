@@ -108,9 +108,9 @@ var (
 // for internal/hooks/light_spell.go.
 var conditionApplyPathAllowlist = map[string]string{
 	// ── The sanctioned consumer of the event ────────────────────────────────
-	"internal/hooks/Condition_ApplyConditions.go|103": "this IS the hook the event feeds; it is where every routed condition is finally applied",
-	"internal/hooks/Condition_ApplyConditions.go|105": "this IS the hook the event feeds; it is where every routed condition is finally applied",
 	"internal/hooks/Condition_ApplyConditions.go|107": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|109": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|111": "this IS the hook the event feeds; it is where every routed condition is finally applied",
 
 	// ── silent-start conditions whose applier narrates the moment itself ────
 	"internal/actions/combat_throttle.go|149": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
@@ -260,7 +260,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// moved to conditions.SpellScaledMagnitude, and again when the
 	// spellConditionTarget interface gained AddConditionTickScaled (parity
 	// slice 2).
-	"internal/hooks/light_spell.go|63": "light or sight spell at the caster's scaled magnitude and triggers: the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
+	"internal/hooks/light_spell.go|58": "light, sight or darkness spell at the caster's scaled magnitude and triggers: the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
 
 	// ── magnitude potions (lighting plan 5c): the player's and the mob's drink
 	// each carried this call (usercommands/drink.go and mobcommands/drink.go)

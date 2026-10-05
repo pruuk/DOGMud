@@ -1,0 +1,11 @@
+conditionid: 132
+name: Umbral Dark
+description: Your Umbral Lantern drinks the light around you, trimmed to your
+  eyes.
+secret: true
+triggerrate: 5 real minutes
+triggercount: 1
+effects:
+  darkness_strength: 50
+flags:
+  - adjustable

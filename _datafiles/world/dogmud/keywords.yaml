@@ -165,6 +165,7 @@ help:
       - light
       - moons
       - seasons
+      - darkness
     parties:
       - party
       - share
@@ -301,7 +302,8 @@ help-aliases:
   arena:            [arena instance, pit, fighting pit, gauntlet]
   oasis:            [oasis instance, planar oasis, elemental oasis, cube, elemental cube]
   light:            [lighting, lantern, lanterns, torch, torches, candle, candles,
-                     dazzle, dazzled, dark, darkness]
+                     dazzle, dazzled, dark]
+  darkness:         [umbral, pall]
   seasons:          [season, winter, summer, spring, autumn, calendar]
   moons:            [moon, swiftmoon, wanderer, eye]
 

@@ -833,6 +833,28 @@ copied onto `Lighting`, because `internal/messaging.infraDarkCap` expresses
 the infravision penalty as a dark fraction against it and reads it off the
 narrow `Lighting` struct rather than the 400-field `Balance` copy.
 
+**Darkness-spell scaling (lighting plan 5d).** Six more knobs in
+`validateLighting`, the light trio's idiom on their own names so darkness can
+be retuned apart from light (owner ruling D9): the yaml keep the `Light`
+family prefix, and `configs.Lighting` drops it (`DarknessSpellStrengthBase`,
+`DarknessSpellStrengthStatDivisor`, `DarknessSpellStrengthSkillDivisor`,
+`DarknessSpellDurationBase`, `DarknessSpellDurationStatDivisor`,
+`DarknessSpellDurationSkillDivisor`). `conditions.SpellScaledMagnitude` reads
+the strength trio and `conditions.SpellScaledTriggers` the duration trio for
+a `darkness_strength: magnitude` condition (Chrysalis Pall, 131). Zero or
+negative reverts to the default. All six ship in `_datafiles/config.yaml` at
+glow's values, in the "LIGHT: DARKNESS SPELL (lighting plan 5d)" block after
+the 5c block.
+
+| Knob | Type | Default and shipped |
+|------|------|---------|
+| `LightDarknessSpellStrengthBase` | ConfigFloat | 40 |
+| `LightDarknessSpellStrengthStatDivisor` | ConfigFloat | 10 |
+| `LightDarknessSpellStrengthSkillDivisor` | ConfigFloat | 2 |
+| `LightDarknessSpellDurationBase` | ConfigFloat | 2 |
+| `LightDarknessSpellDurationStatDivisor` | ConfigFloat | 50 |
+| `LightDarknessSpellDurationSkillDivisor` | ConfigFloat | 20 |
+
 `LightBlindBelow` and `LightDimBelow` validate as a PAIR, the
 `LightStarlight`/`LightMoonsFull` precedent below: an inverted or
 out-of-range pair reverts both to their defaults rather than leaving one

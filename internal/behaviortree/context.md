@@ -247,11 +247,23 @@ Condition nodes use `type: condition` with `check: <name>`.
 | `time_of_day` | `period` ("day" or "night") OR `range` ("`<start>-<end>`", 24h format, e.g., `"9-17"`; wraps midnight when start > end). When both set, `range` takes precedence. | In-game time of day. Range uses `[start, end)` semantics (inclusive start, exclusive end). Empty range (`"5-5"`) always Failure; full-day range (`"0-24"`) always Success — both log a warning once. Malformed ranges log an error once and return Failure. |
 | `round_mod` | `n` (int) | `round % n == 0`. |
 | `random_chance` | `percent` (int) | N% probability. |
-| `players_in_room` | none | At least one player in the room. |
+| `players_in_room` | none | At least one player in the room, and the mob can make out the room (`mobCanSee`, below). |
 | `player_in_room_missing_quest` | `quest` (string) | ANY player in the room lacks the token. For ambient/idle branches (`mob_idle` has no triggering player, so `player_missing_quest` can't gate them). |
 | `player_in_room_has_quest` | `quest` (string) | ANY player in the room holds the token. Mirror of the above. ANDing has/missing variants can match *different* players in a shared room — only pair them where the room is effectively single-player (e.g. the solo ephemeral newcomer antechamber). |
 | `item_matches` | `item_id` (int) | Event ItemId matches. `player_give` only. |
-| `multiple_enemies` | none | More than one player + charmed mob in room. |
+| `multiple_enemies` | none | More than one player + charmed mob in room, gated on `mobCanSee` like `players_in_room`. |
+
+**The sight gate (`sight.go`).** `mobCanSee(mob, room)` gates target
+acquisition (`condPlayersInRoom`), the enemy count (`condMultipleEnemies`) and
+party aggro (`engageHostilePlayerInRoom` in `actions_party.go`). Since
+lighting plan 5d (ruling D8, owner 2026-09-30) it is true at `SightFull` AND
+at `SightShapes` from any cause, natural dim light or infravision, read from
+`messaging.ParticipantSight` directly: a mob acts on a figure it can make
+out, so every mob in a dim room now engages, and a heat-sensing mob (the
+Chrysalis Phantom, the condition-85 mobs) acts in darkness its reach covers.
+This overturns slice F's `SightFull`-only ruling. It deliberately does NOT
+call `messaging.CanSeeSightImpairedOnly` any more: that stays `SightFull`
+only because combat's darkness penalty reads it. A nil mob or room reads true.
 
 ### Combat Assessment
 

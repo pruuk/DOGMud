@@ -1,0 +1,22 @@
+# Found by discovery, never taught (lighting plan 5d). Glow's twin: spores
+# that drink light where glow's spores give it. Costs more and needs more
+# spellcasting than Night Vision, less than Heat Sight (owner ruling D9).
+spellid: chrysalis-pall
+name: Chrysalis Pall
+aliases: [pall]
+description: Coaxes Chrysalis spores to drink the light around the target.
+attack_type: none
+damage_type: non_harm
+targeting: single
+schools:
+  - mental
+cost: 50
+waitrounds: 3
+difficulty: 25
+primarystat: willpower
+effect_type: condition
+condition_ids:
+  - 131
+cast_actor: "You coax the Chrysalis spores around you to drink the light."
+cast_observer: "{actor} concentrates as the air around them dims and thickens."
+wait_actor: "You hold the image steady as the spores darken..."

@@ -18,8 +18,8 @@ shipped at 8, and it is passed in rather than read here.
 | `Absent() float64` | A term that is not present at all, distinct from a dark term |
 | `Combine(step float64, terms ...float64) float64` | Every present term together |
 | `Attenuate(step, light, fraction float64) float64` | A transmission fraction applied to one term |
-| `Polarity` (`Brightens`, `Darkens`) | Which way an adjustable source pushes its room (`trim.go`, lighting plan 5a) |
-| `Trim(step, others, max, target float64, p Polarity) float64` | The one adjustment function: the output an adjustable source runs at so the room lands on `target` (`trim.go`) |
+| `Trim(step, others, max, target float64) float64` | The one solve: the output an adjustable source runs at so the combine of `others` and itself lands on `target` (`trim.go`) |
+| `TrimDarkness(step, light, otherDark, max, floor float64) float64` | A darkness's trim (lighting plan 5d, ruling D2): `Trim(step, otherDark, max, light - floor)`, Absent light read as 0, Absent when the budget is 0 or less (`trim.go`) |
 
 ## Traps
 
@@ -30,17 +30,19 @@ shipped at 8, and it is passed in rather than read here.
 - `Combine` skips NaN as well as -Inf, so one bad caller cannot poison a room.
 - Both functions coerce a non-positive step to 1 rather than dividing by zero.
   `Trim` does the same.
-- **`Trim` for a light solves the combine exactly; it is not `target - others`.**
-  It returns `Absent()` when the room already reaches `target` without the
-  source, or when the needed term would fall below 0 (a light never runs at a
-  negative term). A NaN `target` or `max` returns `Absent()` for a light and 0
-  for a darkness.
-- **`Darkens` is the inverted subtraction** (points cut from the combined
-  light, an Absent room counting as 0). Plan 5a ships only the light half;
-  darkness sources wire it in a later slice.
+- **`Trim` solves the combine exactly; it is not `target - others`.** It
+  returns `Absent()` when the combine already reaches `target` without the
+  source, or when the needed term would fall below 0. A NaN `target` or `max`
+  returns `Absent()`.
+- **Darkness uses the same solve (lighting plan 5d).** Darknesses combine among
+  themselves by the halving rule and the result is subtracted from the light,
+  so keeping the room at or above `floor` is `Combine(otherDark, d) <= light -
+  floor`: `Trim` with that budget as its target. The old linear `Darkens`
+  branch and the `Polarity` type are DELETED; one solve serves both.
 
 ## Who uses it
 
 `internal/gametime` (sun plus moons), `internal/rooms` (ambient plus lamp plus
-carried light; `Trim` from `light_trim.go`). Plan 4 added weather occlusion;
-later plan 5 slices add darkness sources on the same functions.
+carried light, minus carried darkness; `Trim` and `TrimDarkness` from
+`light_trim.go`). Plan 4 added weather occlusion; plan 5d added darkness on
+the same functions.

@@ -246,6 +246,13 @@ end-line problem R16 already solves. **Ruled (owner, 2026-09-30):** a darkness s
 room line, and the equip room line of an item whose worn condition is a
 darkness source, are judged as lit (`SendTextVisualAsLitHidingNames` /
 `SendTextVisualAsLit`). End lines need nothing: the room is lighter by then.
+**Amended (owner, 2026-10-05):** the start and equip lines are judged against
+a snapshot of the room taken before the darkness lands, not as lit
+(`Room.VisualSnapshot` before the condition is added or the item worn,
+`Room.SendTextVisualToSnapshot` after). Judged as lit, the line named the
+caster to an observer who was already blind in a pitch-dark room; this is an
+order of operations, not a new rule. `SendTextVisualAsLit*` stays for the
+light end line (R16) only.
 
 **D7. No GMCP field exists (G1 to G3).** **Ruled (owner, 2026-09-30):** a NEW package
 `Char.Sight` with one field, `{"band": "dark" | "shapes" | "faces" |
@@ -363,6 +370,16 @@ windowFloor)` (S2: natural shapes need `light >= windowFloor`). Exactly the
 floor, not a point inside it: the band edge counts as usable, and a solved
 net within rounding of the floor rounds onto it.
 
+Amended (5d playtest, 2026-10-05): the target is one point INSIDE the floor
+(`-reach + 1`, else the clamped edge `+ 1`), mirroring `LightTrimTarget`. A
+room parked exactly on the floor tipped a still bearer on a sunlit street
+into the dark at the first downward drift of the afternoon sky. The table
+below shows the amended targets: every row the trim cuts leaves the room one
+point higher than the original design did (25 became 26, 1 became 2, -30
+became -29, a cave Phantom with no lamp -49), with the output cut to match;
+the "off" rows and the "full" rows at light 90 and at infravision 50 in light
+50 are unchanged.
+
 `TrimLightFor` (kept name; it now trims both kinds) collects the bearer's
 adjustable, unhooded light AND darkness records in held order, sets them all
 off, then solves each in turn against the room as the earlier ones left it:
@@ -377,18 +394,18 @@ does not trim (L13).
 
 Trim table for an Umbral Lantern (full 50) entering alone:
 
-| Bearer's eyes | Floor | Room light | Other darkness | Output | Room after |
+| Bearer's eyes | Target | Room light | Other darkness | Output | Room after |
 |---|---|---|---|---|---|
-| normal | 25 | 0 (cave) | none | off | 0 |
-| normal | 25 | 50 (tavern) | none | 25 | 25 |
-| normal | 25 | 70 (noon) | none | 45 | 25 |
-| normal | 25 | 90 | none | 50 (full) | 40 |
-| nightvision 24 | 1 | 50 | none | 49 | 1 |
-| infravision 30 | -30 | 0 | none | 30 | -30 |
-| infravision 50 (the Phantom) | -50 | 0 | none | 50 (full) | -50 |
-| infravision 50 | -50 | 50 | none | 50 (full) | 0 |
-| normal | 25 | 50 | 20 | 12.9 | 25 |
-| normal | 25 | 50 | 30 | off | 20 |
+| normal | 26 | 0 (cave) | none | off | 0 |
+| normal | 26 | 50 (tavern) | none | 24 | 26 |
+| normal | 26 | 70 (noon) | none | 44 | 26 |
+| normal | 26 | 90 | none | 50 (full) | 40 |
+| nightvision 24 | 2 | 50 | none | 48 | 2 |
+| infravision 30 | -29 | 0 | none | 29 | -29 |
+| infravision 50 (the Phantom) | -49 | 0 | none | 49 | -49 |
+| infravision 50 | -49 | 50 | none | 50 (full) | 0 |
+| normal | 26 | 50 | 20 | 9.8 | 26 |
+| normal | 26 | 50 | 30 | off | 20 |
 
 And one light row: a hooded lantern (54) on normal eyes entering open ground
 at equinox noon (70) where someone's darkness 50 already sits solves against

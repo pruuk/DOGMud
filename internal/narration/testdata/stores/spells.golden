@@ -20,6 +20,9 @@ spell|chrysalis-glow|cast_observer => <ansi fg="username">Aliceia</ansi> concent
 spell|chrysalis-glow|wait_actor => You hold the image steady, coaxing more spores to glow...
 spell|chrysalis-haste|cast_actor => You channel Chrysalis energy into accelerating the target.
 spell|chrysalis-haste|cast_observer => <ansi fg="username">Aliceia</ansi> weaves quickening energy through the air.
+spell|chrysalis-pall|cast_actor => You coax the Chrysalis spores around you to drink the light.
+spell|chrysalis-pall|cast_observer => <ansi fg="username">Aliceia</ansi> concentrates as the air around them dims and thickens.
+spell|chrysalis-pall|wait_actor => You hold the image steady as the spores darken...
 spell|chrysalis-regeneration|cast_actor => You call upon deep Chrysalis energy to wrap the target in regenerative power.
 spell|chrysalis-regeneration|cast_observer => <ansi fg="username">Aliceia</ansi> draws deep Chrysalis energy, a vivid green glow pulsing.
 spell|cleansing-wave|cast_actor => You send a purifying wave of Chrysalis energy outward.

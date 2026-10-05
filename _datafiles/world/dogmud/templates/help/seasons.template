@@ -14,4 +14,5 @@ dazzle you.
 Weather dims the sky in any season, and a roof, a canopy or rock shuts
 it out altogether.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help light</ansi>, <ansi fg="command">help moons</ansi>, <ansi fg="command">help weather</ansi>, <ansi fg="command">help biome</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help light</ansi>, <ansi fg="command">help moons</ansi>, <ansi fg="command">help weather</ansi>, <ansi fg="command">help biome</ansi>,
+  <ansi fg="command">help darkness</ansi>
