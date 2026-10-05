@@ -15,15 +15,15 @@ just as a second light adds less than the first did.
   or a lantern just put on is at full strength. Each time you move, they
   ease to what your own eyes can still use there.
 
-  Lights already in a place do not push back when a darkness arrives.
+  When a darkness arrives, the lights already there keep their strength.
   A light carried in afterwards adds to the room as it always does.
 
 <ansi fg="yellow">Seeing through it</ansi>
 
-  Night vision helps only a little: it cannot read what is not there.
+  Night vision helps only a little, because it still needs some light.
   Infravision is the answer. It sees the warmth of living things, not
-  light, so it shows you shapes in darkness no eye can use, as deep as
-  its reach.
+  light, so it shows you shapes in darkness no eye can use. The stronger
+  your infravision, the deeper the darkness it can see through.
 
   A darkness is not a light. It never gives you away when you sneak.
 
