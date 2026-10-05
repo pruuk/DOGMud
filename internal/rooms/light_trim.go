@@ -61,7 +61,7 @@ func (r *Room) TrimLightFor(c *characters.Character) {
 	for _, t := range todo {
 		others := r.composeLightExcluding(cfg, celestial, skyFilter, t.rec).Raw
 		full := t.rec.LightMax(t.spec)
-		out := lightscale.Trim(cfg.DoublingStep, others, full, target, lightscale.Brightens)
+		out := lightscale.Trim(cfg.DoublingStep, others, full, target)
 		if out >= full {
 			// No cut at all: the source runs at full strength, so it is not "trimmed".
 			t.rec.LightTrim, t.rec.LightOutput = conditions.LightFull, 0
