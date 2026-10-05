@@ -932,8 +932,8 @@ The owner's review list, less items 2, 4, 6 and 8 (the owner's to do).
 
 ### Phase 6e: Fallback corpus (hardening slice C) (written)
 
-Design: `docs/superpowers/specs/2026-09-28-baubles-hardening-and-corpus-design.md`,
-slice C. Plan: `docs/superpowers/plans/2026-09-28-slice-c-bauble-corpus.md`.
+Design: `docs/superpowers/specs/completed/2026-09-28-baubles-hardening-and-corpus-design.md`,
+slice C. Plan: `docs/superpowers/plans/completed/2026-09-28-slice-c-bauble-corpus.md`.
 
 - **No key no longer means "Trinket".** A find no model names takes
   hand-written text from the fallback corpus, chosen by where it was found:
@@ -955,8 +955,8 @@ slice C. Plan: `docs/superpowers/plans/2026-09-28-slice-c-bauble-corpus.md`.
 
 ### Phase 6f: Shelf resale (slice D) (written)
 
-Design: `docs/superpowers/specs/2026-09-30-baubles-shelf-resale-design.md`.
-Plan: `docs/superpowers/plans/2026-09-30-baubles-shelf-resale.md`.
+Design: `docs/superpowers/specs/completed/2026-09-30-baubles-shelf-resale-design.md`.
+Plan: `docs/superpowers/plans/completed/2026-09-30-baubles-shelf-resale.md`.
 
 - **Sold baubles can come back.** A player's sale of an average or rare,
   non-retired bauble to a living-economy shop puts it on the shop's
