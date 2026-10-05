@@ -10,6 +10,10 @@ first hour and a reason to come back.
 
 Living document. Started 2026-07-13.
 
+**Tracking moved to GitHub (2026-10-05):** open 1.0 work is filed as issues on
+the [`1.0` milestone](https://github.com/pruuk/DOGMud/milestone/1). This page
+keeps the history and the reasoning; the milestone is the live list.
+
 ---
 
 ## 0. Where we already are (the good news)
@@ -22,7 +26,8 @@ experience just passed a full feel-test — so the hill is shorter than it looks
   recipient's **bank** and the item in their backpack (`internal/usercommands/
   inbox.go`, `admin.mudmail.go`). Bank tie-in exists. → Reclassified to "verify +
   polish," not "build."
-- 🟡 **Auction house** — `modules/auctions/` is a working player auction system
+- ✅ **Auction house** (done: NPC bidders shipped in the §1 econ loop arc; marker
+  corrected 2026-10-05) — `modules/auctions/` is a working player auction system
   (list lots, bid, winner + sales-history tracking). → The net-new work is your
   "**NPCs bid with their gold**" behavior + confirming it's enabled/tuned, not
   building the house.
@@ -43,7 +48,10 @@ experience just passed a full feel-test — so the hill is shorter than it looks
   behavior trees), NPC greetings revival, quest-parse unification, and the
   consolidated `/build-help` admin manual. All browser/smoke gates cleared.
   Detail: memory topic `project_admin_web_building_epic` + PATCH_NOTES 07-23..27.
-- 🟡 **Weather / seasons polish** — the systems exist (`modules/weather/`); finish
+- ✅ **Weather / seasons polish** (done: the owner passed both owed checks on
+  2026-08-30, "Weather tempo, FINE" and "ANSI recolors, GOOD", per
+  `docs/roadmaps/CURRENT_BACKLOG.md`; cave prose fixed in e704d0163; marker
+  corrected 2026-10-05) — the systems exist (`modules/weather/`); finish
   and polish. **Sub-project A DONE 2026-07-22** (merged to master `8d2dd32cb`,
   spec+plan `2026-07-22-weather-ux-polish-*`): six threads — charset-safe
   decorative glyphs (ASCII-mode mojibake fix), intensity-scaled emote cadence,
@@ -53,7 +61,8 @@ experience just passed a full feel-test — so the hill is shorter than it looks
   distinctly; glyphs convert in ASCII mode). **Owed before/at prod push:** user
   web-client eyeball of the recolors (Thread 6) + slowed-tempo feel (Thread 5) —
   the harness strips color and tempo is a long-session feel. Not yet on prod.
-- 🟡 **Econ loop — a 4-part living-marketplace arc** (bigger than the original "NPC bidders +
+- ✅ (every sub-project below is done; NPC-buyer numbers are still provisional;
+  marker corrected 2026-10-05) **Econ loop — a 4-part living-marketplace arc** (bigger than the original "NPC bidders +
   mudmail verify"; the exploration found mudmail's player-to-player send doesn't exist and the
   auction house had a gold-faucet bug). Sub-projects, in order:
   - ✅ **#1 Auction mechanics core** — DONE 2026-07-14 (local master, unpushed; spec+plan
@@ -165,7 +174,8 @@ experience just passed a full feel-test — so the hill is shorter than it looks
 
 ## 3. Retention / stickiness
 
-- 🟡 **Player guilds / clans** — **membership core DONE 2026-07-15** (local, unpushed;
+- ✅ **Player guilds / clans** (social guilds arc complete; perks, leaderboard and
+  achievements were not selected; marker corrected 2026-10-05) — **membership core DONE 2026-07-15** (local, unpushed;
   spec+plan `2026-07-15-guild-membership-core-*`). Social guilds (no territory/upkeep/PvP —
   dropped the stub's territorial vision). `internal/guilds` durable per-guild YAML registry;
   member/officer/leader ranks; invite-only join; `guild` command
