@@ -15,6 +15,7 @@ import "sort"
 
 var KnownBehaviorEvents = map[string]bool{
 	"heard_callforhelp":      true, // a routine-matched packmate in an adjacent room called for help
+	"item_idle":              true, // item trees: once a round, from the item tick (lighting 5e)
 	"mob_combat_round":       true, // fires each combat round for a fighting mob
 	"mob_die":                true, // the mob just died (instant actions only — no respond)
 	"mob_flee":               true, // the mob is fleeing
