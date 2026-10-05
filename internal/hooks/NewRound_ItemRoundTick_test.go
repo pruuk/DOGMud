@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/itemlight"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -45,6 +46,15 @@ type tickWorld struct {
 // seedTickWorld: user 1 wears a treed item and carries one; mob 9982
 // carries one; room A has a treed item on the floor and room B a fixture;
 // both rooms are loaded and every holder is indexed.
+// newProbeRoom is rooms.NewRoom with the config isolated: NewRoom persists
+// Server.NextRoomId, and without a scratch CONFIG_PATH that write lands in the
+// real world's config-overrides.yaml.
+func newProbeRoom(t *testing.T) *rooms.Room {
+	t.Helper()
+	configs.SetConfigWithLookupsForTest(t, configs.GetConfig())
+	return rooms.NewRoom("probe")
+}
+
 func seedTickWorld(t *testing.T) *tickWorld {
 	t.Helper()
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{}))
@@ -66,9 +76,9 @@ func seedTickWorld(t *testing.T) *tickWorld {
 		worn: items.New(tickTreedItem), pack: items.New(tickTreedItem), mobHeld: items.New(tickTreedItem),
 		floor: items.New(tickTreedItem), fixture: items.New(tickFixtureItem),
 	}
-	w.roomA = rooms.NewRoom("probe")
+	w.roomA = newProbeRoom(t)
 	w.roomA.RoomId = tickRoomA
-	w.roomB = rooms.NewRoom("probe")
+	w.roomB = newProbeRoom(t)
 	w.roomB.RoomId = tickRoomB
 	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{tickRoomA: w.roomA, tickRoomB: w.roomB}, map[string]*rooms.ZoneConfig{}))
 
@@ -173,7 +183,7 @@ func TestItemStateFollowsTheItem(t *testing.T) {
 func TestAFixtureIsLitTheMomentItsRoomIsIndexed(t *testing.T) {
 	w := seedTickWorld(t)
 	items.OnRoomHolderIndexed = EvaluateRoomFixtures
-	r := rooms.NewRoom("probe")
+	r := newProbeRoom(t)
 	r.RoomId = 9983
 	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{tickRoomA: w.roomA, tickRoomB: w.roomB, 9983: r}, map[string]*rooms.ZoneConfig{}))
 	post := items.New(tickFixtureItem)

@@ -53,7 +53,7 @@ func seedItemLightWorld(t *testing.T) *users.UserRecord {
 		lightProbeDarkFixture: {ItemId: lightProbeDarkFixture, Name: "Probe Shadow Stone", Type: items.Object,
 			Fixture: items.FixtureDarkness, Behavior: "light_probe"},
 	}))
-	room := rooms.NewRoom("probe")
+	room := newProbeRoom(t)
 	room.RoomId = engineProbeRoomId
 	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{engineProbeRoomId: room}, map[string]*rooms.ZoneConfig{}))
 	u := users.NewTestUser(1, "probe", "Probe", 0)

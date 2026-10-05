@@ -36,7 +36,7 @@ func loadShippedItemWorld(t *testing.T) uint64 {
 	}
 	t.Cleanup(ResetItemBTreeStatesForTest())
 	t.Cleanup(itemlight.ResetForTest())
-	room := rooms.NewRoom("probe")
+	room := newProbeRoom(t)
 	room.RoomId = engineProbeRoomId
 	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{engineProbeRoomId: room}, map[string]*rooms.ZoneConfig{}))
 	return pinAfterDuskClock(t)

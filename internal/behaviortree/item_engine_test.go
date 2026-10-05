@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -36,7 +37,7 @@ func seedItemEngineWorld(t *testing.T) *users.UserRecord {
 		engineProbeItemId: {ItemId: engineProbeItemId, Name: "Probe Lamp", Behavior: "engine_probe"},
 	}))
 	LoadItemTreeForTest(t, "engine_probe", countingTree)
-	room := rooms.NewRoom("probe")
+	room := newProbeRoom(t)
 	room.RoomId = engineProbeRoomId
 	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{engineProbeRoomId: room}, map[string]*rooms.ZoneConfig{}))
 	u := users.NewTestUser(1, "probe", "Probe", 0)
@@ -44,6 +45,16 @@ func seedItemEngineWorld(t *testing.T) *users.UserRecord {
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{1: u}))
 	t.Cleanup(seedTestMob(t, engineProbeMobId, engineProbeInstId, engineProbeRoomId, "Probe Keeper"))
 	return u
+}
+
+// newProbeRoom is rooms.NewRoom with the config isolated: NewRoom persists
+// Server.NextRoomId, and without a scratch CONFIG_PATH that write lands in the
+// real world's config-overrides.yaml, carrying whatever DataFiles an earlier
+// test's override left behind into every other package's test binary.
+func newProbeRoom(t *testing.T) *rooms.Room {
+	t.Helper()
+	configs.SetConfigWithLookupsForTest(t, configs.GetConfig())
+	return rooms.NewRoom("probe")
 }
 
 func idleEvent() EventContext { return EventContext{EventType: "item_idle"} }
