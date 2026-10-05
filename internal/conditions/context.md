@@ -114,7 +114,8 @@ to plug into.
   "Stacking records (`stacks.go`)" below.
 - `adjustable` (lighting plan 5a): a light source that trims itself to its
   bearer's eyes on each room entry (`internal/rooms.(*Room).TrimLightFor`).
-  `validateEffects` refuses it without `light_strength`.
+  `validateEffects` refuses it without `light_strength` or (lighting plan 5d)
+  `darkness_strength`.
 - `cancellable` (lighting plan 5a): the holder may end the record early with
   `cancel <spell>` (`internal/usercommands/cancel.go`). Opt-in; the Cat's Eye
   Draught is ruled uncancellable.
@@ -130,6 +131,22 @@ light is its own term in the room's combine, found through
 `(*Conditions).LightSources() []*Condition` (held, unexpired, in held order).
 `validateEffects` refuses a literal `light_strength` of 0 or less, `adjustable`
 without `light_strength`, and a `stacking` record that is also a light.
+
+**Darkness sources (lighting plan 5d, ruling D1).** `effects:
+{darkness_strength: N}` (`EffectDarknessStrength`, in `AllEffectKinds` and
+`ScaledKinds`) makes a record a darkness: light taken away from its room, a
+literal for an item (132 Umbral Dark), `magnitude` for a spell (131 Chrysalis
+Pall). It is a light record with darkening polarity: it shares `LightTrim`,
+`LightOutput` and `ResetLight`, and `LightMax` / `LightNow` read whichever of
+the two kinds the spec declares. It is NOT a light: `IsLightSource()` stays
+light-only, so `LightSources`, `EmitsLight`, `hood` and the as-lit end line
+exclude it by construction. Ask `ConditionSpec.IsDarknessSource()`, walk
+`(*Conditions).DarknessSources()`, or `(*Conditions).LightAndDarknessSources()`
+for both kinds in one held order (the trim's walk). `AnyDarknessSource(ids)`
+reports whether any condition id names a darkness (the equip line's as-lit
+test). `Effect(EffectDarknessStrength)` returns 0. `validateEffects` also
+refuses a literal `darkness_strength` of 0 or less, a spec declaring both
+kinds, and a `stacking` darkness; `AddConditionMagnitude` resets either kind.
 
 Per-record state lives on `Condition`: `LightTrim` (`LightFull`,
 `LightTrimmed`, `LightOff`; an explicit state so a save never encodes -Inf),
@@ -1272,8 +1289,8 @@ they live downstream, in the damage pipeline.
 | `tick.go` | `ComputeTickAmount`, the tick-pool amount formula |
 | `stacks.go` | `Stack`, the stacking tick (`addStack`, `syncStacks`, `tickStacks`), `tickAmountFor`, `DisplayName` |
 | `effects.go` | `EffectKind`, the closed effects vocabulary, `Conditions.Effect` / `Conditions.HasEffect` / `Conditions.EffectValues` (lighting plan 5c), `ScaledKinds` / `ConditionSpec.ScaledKind` (lighting plan 5c) |
-| `scaled_magnitude.go` | `SpellScaledMagnitude` (lighting plan 5c): the base + stat/D1 + skill/D2 value a spell applies a scaled kind at, capped; `CapScaledMagnitude`, the cap both spell and potion apply (infra reach at `LightInfraReachCap`, nightvision at `configs.LightWindowShiftCap`); `NewCharacterSpellStat` / `NewCharacterSpellSkill`, the numbers the admin `setcondition` command evaluates it at |
-| `light.go` | Lighting plan 5a: `LightTrim`, `Condition.LightMax` / `LightNow` / `SetLightOutput` / `ResetLight`, `Conditions.LightSources` |
+| `scaled_magnitude.go` | `SpellScaledMagnitude` (lighting plan 5c): the base + stat/D1 + skill/D2 value a spell applies a scaled kind at, capped; `CapScaledMagnitude`, the cap both spell and potion apply (infra reach at `LightInfraReachCap`, nightvision at `configs.LightWindowShiftCap`); `SpellScaledTriggers` (lighting plan 5d), the trigger count, where darkness reads its own `LightDarknessSpellDuration*` trio and the other kinds share the light trio; `NewCharacterSpellStat` / `NewCharacterSpellSkill`, the numbers the admin `setcondition` command evaluates it at |
+| `light.go` | Lighting plan 5a: `LightTrim`, `Condition.LightMax` / `LightNow` / `SetLightOutput` / `ResetLight`, `Conditions.LightSources`; plan 5d: `Conditions.DarknessSources`, `Conditions.LightAndDarknessSources` |
 | `ids.go` | The record ids the engine names in code: `ConditionIdWarcry` (79) through `ConditionIdEnchantWithdrawal` (123) |
 | `test_helpers.go` | Test fixtures: `SeedConditionsForTest` (replaces the registry) and `SeedConditionRecordsForTest` (adds 79, 80 and 117 to 123 on top of whatever is already seeded) |
 

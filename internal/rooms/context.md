@@ -93,24 +93,35 @@ of term on one logarithmic operator (`internal/lightscale.Combine`):
    mutator's `SkyLight` fraction (1 when clear; weather multiplies it down).
 2. **The room's own lamp**, if it has one.
 3. **Every light anyone present carries, one term each** (lighting plan 5a).
-   `carriedLight(exclude)` makes one pass over `r.mobs` and `r.players`,
-   reading each bearer's `Conditions.LightSources()` through
+   `carriedTerms(exclude)` makes one pass over `r.mobs` and `r.players`,
+   reading each bearer's `Conditions.LightAndDarknessSources()` through
    `Condition.LightNow`, so a hooded or trimmed-off source adds nothing and
    two torches are one doubling step brighter than one. Before 5a any light
    lifted the room to a flat `DimBelow`; the `FindHasLight` find flag that
    test used is DELETED.
+4. **Every darkness anyone present carries** (lighting plan 5d), from the
+   same pass. Darknesses combine among themselves by the same halving rule
+   (two of 50 take 58) and the combined darkness is SUBTRACTED from the
+   combined light (Absent light reads 0), so a room can read below 0, down
+   to the -100 clamp. An unlit room with no darkness is still 0.
 
 The composition is layered so a trim can leave one source out: `composeLight`
 calls `composeLightExcluding(cfg, celestial, skyFilter, exclude)`, which calls
-`composeWith(cfg, celestial, skyFilter, carried)` (the pure core a test can feed
-carried terms without users or mobs).
+`composeWith(cfg, celestial, skyFilter, carried, dark)` (the pure core a test
+can feed carried light and darkness terms without users or mobs).
 
-**Trimming (`light_trim.go`, plan 5a).** `(*Room).TrimLightFor(c)` trims every
-adjustable, unhooded light record `c` holds to `c`'s own eyes: the least cut
-from full strength that keeps the room under
-`messaging.LightTrimTarget(c.NightVisionStrength())`, solved by
-`lightscale.Trim` against `LightTerms.Raw` with that record excluded. Several
-sources trim in held order after a pre-pass sets them all off. It is the ONLY
+**Trimming (`light_trim.go`, plan 5a; darkness plan 5d).** `(*Room).TrimLightFor(c)`
+trims every adjustable, unhooded light AND darkness record `c` holds to `c`'s
+own eyes. A light takes the least cut from full strength that keeps the room
+under `messaging.LightTrimTarget(c.NightVisionStrength(), cfg.DazzleAbove)`,
+solved by `lightscale.Trim` against `LightTerms.Light` with the target raised
+by `LightTerms.Dark` (a light in a darkened room may run brighter before it
+dazzles, ruling D3). A darkness takes the least cut that keeps the room at or
+above `messaging.DarknessTrimTarget(strength, InfraReach(), cfg.BlindBelow)`,
+solved by `lightscale.TrimDarkness` against the light and the other darkness
+(ruling D2). A fresh cast or equip is full strength until the next move.
+Sources trim in held order, whatever their kind, after a pre-pass sets them
+all off. It is the ONLY
 trim trigger: `MoveToRoom` (`roommanager.go`) and `AddMob` (`rooms.go`) call it
 once the mover is in the room. Nobody already present re-trims when someone
 arrives, and nothing re-trims on a round tick, so a room that brightens or
@@ -138,8 +149,12 @@ needs to know WHY the light is what it is: `Level` (identical to
 term after fraction and the weather filter, `lightscale.Absent()` when the
 room has no sky), `SkyFilter` (the product of the active mutators'
 `SkyLight` fractions, 1 when clear), `Lamp`/`HasLamp`, `Carried`, and (plan
-5a) `Raw`, the combined light before rounding and clamping (`Absent` when
-nothing lights the room), which a trim solves against.
+5a) `Raw`. Since lighting plan 5d `Raw` is the NET light `Level` rounds
+(`Light` read as 0 when Absent, minus `Dark`), and three fields carry the
+parts: `Light` (the combined light, `Absent` when nothing lights the room;
+the light trim solves against it), `Dark` (the combined darkness, `Absent`
+when nobody carries one) and `Darkened` (someone carries a darkness, as
+`Carried` means someone carries a light).
 `internal/lightnotice` is the one consumer: it compares two `LightTerms`
 snapshots to name which term moved and so which cause to report for a band
 change. `LightTerms` and `LightLevel` share one computation
@@ -425,8 +440,8 @@ When writing hidden noun descriptions:
 |------|---------|
 | `rooms.go` | The `Room` type and its core behaviour |
 | `roommanager.go` | The room registry, load/unload, and lookup |
-| `lighting.go` | `Room.LightLevel()`, `Room.IsLit()`, `Room.LightTerms()` (plan 3d), and the sky/lamp/mutator/carried-light composition (`composeLight`, `composeLightExcluding`, `composeWith`, `carriedLight`) |
-| `light_trim.go` | `Room.TrimLightFor` (lighting plan 5a): trims an arrival's adjustable lights to their eyes; called from `MoveToRoom` and `AddMob` only |
+| `lighting.go` | `Room.LightLevel()`, `Room.IsLit()`, `Room.LightTerms()` (plan 3d), and the sky/lamp/mutator/carried-light and carried-darkness composition (`composeLight`, `composeLightExcluding`, `composeWith`, `carriedTerms`; darkness plan 5d) |
+| `light_trim.go` | `Room.TrimLightFor` (lighting plan 5a, darkness 5d): trims an arrival's adjustable lights and darknesses to their eyes; called from `MoveToRoom` and `AddMob` only |
 | `save_and_load.go` | Room YAML + instance-save persistence, `restoreSkipTaggedFields` |
 | `prose_wrap.go` | Re-folds long prose into wrapped `>` block scalars on template save |
 | `roomdetails.go` | Assembled per-look detail payload |

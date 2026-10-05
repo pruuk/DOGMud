@@ -98,6 +98,12 @@ type CharacterVitalsChanged struct {
     UserId int
 }
 
+// lighting plan 5d: a player's light band changed (lightnotice.Check);
+// modules/gmcp answers with Char.Sight
+type SightBandChanged struct {
+    UserId int
+}
+
 type CharacterStatsChanged struct {
     UserId int
 }
@@ -612,6 +618,10 @@ text, so a test can also read `IsCommunication`. It matches on
 events `UserRecord.Command` queued for a player (`MobInstanceId` 0, matched on
 `UserId`); `DrainQueuedInputsForTest` and `InspectQueuedInputForTest` match
 mobs only.
+
+`DrainQueuedSightBandChangedForTest(userId)` (lighting plan 5d) drains the
+`SightBandChanged` events queued for a player (0 drains every one), the
+`DrainQueuedVitalsChangedForTest` shape.
 
 `Message.HiddenFromDeafened(deafened bool) bool` (sight gates slice 5b) is
 the one statement of the Deafened moderation rule: true when `m` is player

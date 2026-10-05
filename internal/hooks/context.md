@@ -1043,7 +1043,8 @@ flag.
 ### Vision-scaled spells (`light_spell.go`, lighting plan 5a; generalised lighting plan 5c)
 
 A spell condition whose spec declares one of `conditions.ScaledKinds`
-(`light_strength`, `nightvision_strength`, `infra_reach`) as `magnitude` (via
+(`light_strength`, `nightvision_strength`, `infra_reach`, and since lighting
+plan 5d `darkness_strength`) as `magnitude` (via
 `ConditionSpec.ScaledKind`) is applied at a value and duration scaled from the
 CASTER's primary stat and Spellcasting skill:
 `magnitudeSpellApplication(spellData, caster, conditionId) (magnitude float64,
@@ -1052,11 +1053,13 @@ plan 5c, when it stopped being light-only. Its magnitude comes from
 `conditions.SpellScaledMagnitude(kind, stat, skill)`, shared with the admin
 `setcondition` command, which picks the scaled kind's own
 base/stat-divisor/skill-divisor trio (`SpellStrength*` for light,
-`NightVisionSpell*` for nightvision, `InfraSpell*` for infra reach, all on
-`configs.Lighting`), caps an infra-reach result at `Lighting.InfraReachCap`
-and a nightvision result at `configs.LightWindowShiftCap`
-(`conditions.CapScaledMagnitude`), and computes duration from
-the shared `SpellDuration*` trio all three kinds use (triggers floored at 1).
+`NightVisionSpell*` for nightvision, `InfraSpell*` for infra reach,
+`DarknessSpellStrength*` for darkness, all on `configs.Lighting`), caps an
+infra-reach result at `Lighting.InfraReachCap` and a nightvision result at
+`configs.LightWindowShiftCap` (`conditions.CapScaledMagnitude`). Its duration
+comes from `conditions.SpellScaledTriggers(kind, stat, skill)` (lighting plan
+5d): darkness reads its own `DarknessSpellDuration*` trio, the other three
+kinds share `SpellDuration*` (triggers floored at 1).
 `ok` is false for any other condition, which keeps its authored application.
 `applySpellCondition(target, spellData, caster, conditionId)` is the one door
 the one spell-condition applier, `applySpellConditionEffect`
@@ -1087,6 +1090,14 @@ is computed once `TickScale` reaches `hooks.setTickAmountAtApply` in
 line as lit by `spec.IsLightSource()`; the judgement is per spec, so a hooded
 or trimmed-off light's end line is judged as lit too (accepted, as the retired
 flag was spec-level as well).
+
+`sendConditionStartRoomText` (`Condition_ApplyConditions.go`, lighting plan
+5d, ruling D6) is its mirror for start lines: a darkness source's start line
+("A pall of dark spores gathers around X.") is judged as lit by
+`spec.IsDarknessSource()`, because the record is already held when the line
+goes out and the observers it has just blinded would otherwise miss it.
+Every other start line is judged by the room as it is. A darkness's end
+line needs nothing: the room is lighter by then.
 
 ### Logout_AwarenessCleanup.go
 

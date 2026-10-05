@@ -55,9 +55,14 @@ either state; see "The seams" below.
    observer's CURRENT sight, already give the NEW band? If `now.bandAt`
    reports that band for `prev.terms.Level`, the light never had to move;
    the observer's own sight did (a draught wearing off, or taking hold).
-3. Otherwise, the first light term that moved: **carried**, then the
-   **room's own lamp**, then **weather** filtering the sky, then the
-   **sky** itself.
+3. Otherwise, the first light term that moved: **darkness** (lighting plan
+   5d: `Darkened` flipped or `Dark` moved, a carried darkness arriving,
+   lapsing or changing strength), then **carried**, then the **room's own
+   lamp**, then **weather** filtering the sky, then the **sky** itself.
+   Darkness comes first because without its own cause a darkness moves no
+   light term and fell to `CauseEyes`. Its lines live in
+   `narration/light-notices/darkness.yaml`, all six transitions, like every
+   cause (`LoadFrom` refuses a missing file).
 4. **Eyes**, as a fallback, if nothing above explains it.
 
 Step 2 runs BEFORE step 3 on purpose. A plain direction test (did the light
@@ -76,6 +81,13 @@ execution, `9e03c4e20`).
 player's room, computes an `observation`, runs `decide` against the stored
 `record`, and sends through `internal/narration` on `messaging.CategoryLight`
 when `decide` says to speak.
+
+It also feeds the web client's Game-window border (lighting plan 5d, ruling
+D7): when the band it computed differs from the one last handed on (kept in
+`sentBands`, apart from `records`, because a record keeps its old band while
+its player sleeps), or none was, it queues `events.SightBandChanged`, which
+`modules/gmcp` answers with `Char.Sight`. A repeat check in the same band
+queues nothing; `Forget` clears it with the record.
 
 | Seam | File | Trigger / call |
 |---|---|---|
@@ -136,7 +148,7 @@ Verified against source 2026-09-25 with
 
 | Symbol | Kind | Notes |
 |---|---|---|
-| `Cause` | type | `string`. `CauseMovement`, `CauseCarried`, `CauseLamp`, `CauseWeather`, `CauseSky`, `CauseEyes` |
+| `Cause` | type | `string`. `CauseMovement`, `CauseCarried`, `CauseLamp`, `CauseWeather`, `CauseSky`, `CauseEyes`, `CauseDarkness` (lighting plan 5d) |
 | `Transition` | type | `string`. `DarkerFaces`, `DarkerShapes`, `DarkerDark`, `LighterShapes`, `LighterFaces`, `IntoDazzle` |
 | `Causes() []Cause` | func | Copy of the full cause vocabulary, fixed order, for tests and the narration snapshot |
 | `Transitions() []Transition` | func | Copy of the full transition vocabulary, same purpose |
