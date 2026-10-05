@@ -22,8 +22,8 @@ type PlayerState struct {
 	GiveGold         func(amount int)
 	HasOwnMasterwork func(skillMin int) bool
 	// HasGold reports whether the player carries at least amount gold. It
-	// backs goldRequired, which hides a priced node (typically one whose
-	// granted quest charges gold on quest_granted) from a player who cannot
+	// backs goldRequired, which hides a priced node (typically one that
+	// also carries chargesGold at the same price) from a player who cannot
 	// pay. Nil fails a goldRequired gate closed.
 	HasGold func(amount int) bool
 	// ChargeGold takes amount gold from the player and reports success. It

@@ -25,8 +25,9 @@ import (
 //
 // goldRequired is interrogative too and fails closed on a nil HasGold: a
 // priced node must never open for a player whose gold cannot be checked.
-// The gate only hides the node; it takes nothing. The charge itself belongs
-// to the granted quest's charge_gold action.
+// The gate only hides the node; it takes nothing. The charge is the node's
+// chargesGold, which the engine takes in the same step as this gate, before
+// the quest is granted.
 func checkQuestGate(questRequired, questExcluded []string, requiresItem int, flagRequired, flagExcluded map[string]string, masterworkRequired, goldRequired int, ps *PlayerState) bool {
 	if ps == nil {
 		return true

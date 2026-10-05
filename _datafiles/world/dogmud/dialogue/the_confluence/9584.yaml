@@ -399,7 +399,7 @@ tree:
       goldRequired: 12500
       chargesGold: 12500
       grantsQuest: "85-start"
-      text: "The Zephyr Treads, then. Listen closely. I say it once."
+      text: "The Zephyr Treads, then. Listen closely. I will say it once."
       hints: "Veyra has shared her secret recipe for the Zephyr Treads.
         Gather the materials and craft them by your own hand."
     - id: refuse_zephyr
@@ -418,7 +418,7 @@ tree:
       text: "Zephyr Treads. Tailoring and windlace bindings, soled
         with quicksilver. You'll forget what it cost to run before you
         wore them. 12,500 gold, all of it up front. If you mean it, ask
-        me to teach you the Zephyr Treads."
+        me to teach you the Treads."
       hints: "To buy this secret, type: ask veyra teach zephyr"
 
     # ══ STAFF OF THE HOLLOW CHOIR (86, enchanting), 22,500 ═══════
