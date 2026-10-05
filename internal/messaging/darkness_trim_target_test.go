@@ -24,6 +24,11 @@ func TestDarknessTrimTarget(t *testing.T) {
 			t.Errorf("%s: DarknessTrimTarget(%d, %d, 25) = %v, want %v", c.name, c.strength, c.reach, got, c.want)
 		}
 	}
+	// A blind edge low enough that the shift passes the window floor: the
+	// clamp, not the shift, sets the floor.
+	if got := DarknessTrimTarget(24, 0, 10); got != windowFloor {
+		t.Errorf("DarknessTrimTarget(24, 0, 10) = %v, want the window floor %v", got, windowFloor)
+	}
 }
 
 // The floor is a usable edge: an observer standing exactly on it still reads
