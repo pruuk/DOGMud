@@ -14,14 +14,21 @@ const (
 )
 
 // LightMax is the record's full strength: the applier's magnitude for a spell
-// source, the authored number for an item. 0 when spec declares no light. A
-// magnitude light added with no magnitude (an admin setcondition) is 0 and
-// sheds nothing; cast the spell instead.
+// source, the authored number for an item. It reads whichever of
+// light_strength and darkness_strength the spec declares (validateEffects
+// refuses both), so one record shape and one trim state serve either
+// polarity (lighting plan 5d, ruling D1); the caller knows which it holds
+// from IsLightSource / IsDarknessSource. 0 when spec declares neither. A
+// magnitude source added with no magnitude (an admin setcondition) is 0 and
+// adds nothing; cast the spell instead.
 func (b *Condition) LightMax(spec *ConditionSpec) float64 {
 	if spec == nil {
 		return 0
 	}
 	v, ok := spec.Effects[EffectLightStrength]
+	if !ok {
+		v, ok = spec.Effects[EffectDarknessStrength]
+	}
 	if !ok {
 		return 0
 	}
@@ -91,6 +98,38 @@ func (bs *Conditions) LightSources() []*Condition {
 			continue
 		}
 		if spec := GetConditionSpec(b.ConditionId); spec != nil && spec.IsLightSource() {
+			out = append(out, b)
+		}
+	}
+	return out
+}
+
+// DarknessSources returns every held, unexpired record whose spec declares a
+// darkness strength, in held order (lighting plan 5d). It is LightSources'
+// twin: a darkness is never in LightSources.
+func (bs *Conditions) DarknessSources() []*Condition {
+	var out []*Condition
+	for _, b := range bs.List {
+		if b.Expired() {
+			continue
+		}
+		if spec := GetConditionSpec(b.ConditionId); spec != nil && spec.IsDarknessSource() {
+			out = append(out, b)
+		}
+	}
+	return out
+}
+
+// LightAndDarknessSources returns every held, unexpired light or darkness
+// record in one held order, for the one trim pass that solves both
+// polarities in turn (internal/rooms.(*Room).TrimLightFor, lighting plan 5d).
+func (bs *Conditions) LightAndDarknessSources() []*Condition {
+	var out []*Condition
+	for _, b := range bs.List {
+		if b.Expired() {
+			continue
+		}
+		if spec := GetConditionSpec(b.ConditionId); spec != nil && (spec.IsLightSource() || spec.IsDarknessSource()) {
 			out = append(out, b)
 		}
 	}

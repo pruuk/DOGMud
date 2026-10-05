@@ -104,8 +104,9 @@ const (
 	Stacking Flag = `stacking`
 
 	// Adjustable marks a light source that trims itself to its bearer's eyes
-	// each time the bearer enters a room (lighting plan 5a). It requires the
-	// light_strength effect.
+	// each time the bearer enters a room (lighting plan 5a), or a darkness
+	// source that trims itself to its bearer's usable range (5d). It requires
+	// the light_strength or the darkness_strength effect.
 	Adjustable Flag = `adjustable`
 	// Cancellable marks a condition its holder may end early with
 	// `cancel <spell>`. Opt-in: the Cat's Eye Draught is ruled uncancellable.
@@ -244,10 +245,31 @@ func (b *ConditionSpec) Listed() bool {
 	return !b.Secret && !slices.Contains(b.Flags, Hidden)
 }
 
-// IsLightSource reports whether a record of this spec sheds light.
+// IsLightSource reports whether a record of this spec sheds light. A darkness
+// source is not a light (lighting plan 5d, ruling D1): this stays light-only,
+// so every light reader excludes darkness by construction.
 func (b *ConditionSpec) IsLightSource() bool {
 	_, ok := b.Effects[EffectLightStrength]
 	return ok
+}
+
+// IsDarknessSource reports whether a record of this spec takes light away
+// from its room (lighting plan 5d).
+func (b *ConditionSpec) IsDarknessSource() bool {
+	_, ok := b.Effects[EffectDarknessStrength]
+	return ok
+}
+
+// AnyDarknessSource reports whether any of the condition ids names a
+// darkness source: an item whose worn conditions darken its room announces
+// itself as lit (lighting plan 5d, ruling D6). Unknown ids are skipped.
+func AnyDarknessSource(conditionIds []int) bool {
+	for _, id := range conditionIds {
+		if spec := GetConditionSpec(id); spec != nil && spec.IsDarknessSource() {
+			return true
+		}
+	}
+	return false
 }
 
 type ConditionMessage struct {

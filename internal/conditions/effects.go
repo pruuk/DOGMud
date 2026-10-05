@@ -39,6 +39,15 @@ const (
 	// every held light record is its own term in the room's combine, read
 	// through Conditions.LightSources. See light.go.
 	EffectLightStrength EffectKind = `light_strength`
+	// EffectDarknessStrength is a darkness source's full strength: light
+	// taken away from the room, a literal for an item, "magnitude" for a
+	// spell (lighting plan 5d, ruling D1). It is a light record with
+	// darkening polarity: it shares the record's trim state (LightTrim,
+	// LightOutput, ResetLight) and is read through LightMax and LightNow, but
+	// IsLightSource stays false for it, so EmitsLight, hood, the as-lit end
+	// line and every other light reader exclude it by construction. Read
+	// through Conditions.DarknessSources, never Effect().
+	EffectDarknessStrength EffectKind = `darkness_strength`
 )
 
 // AllEffectKinds is the closed set, for validation and docs.
@@ -46,6 +55,7 @@ var AllEffectKinds = []EffectKind{
 	EffectDamageMult, EffectDefenseMult, EffectDodgeMult, EffectRegenMult,
 	EffectMitigationFlat, EffectPoolMaxPct, EffectAttacksCap,
 	EffectNightVisionStrength, EffectInfraReach, EffectLightStrength,
+	EffectDarknessStrength,
 }
 
 func (k EffectKind) isMultiplier() bool {
@@ -67,10 +77,11 @@ func (k EffectKind) isMax() bool {
 }
 
 // ScaledKinds are the effect kinds a spell or potion scales from its source
-// (lighting plan 5c): a light's strength, nightvision's strength, and infra's
-// reach. A record carries one Magnitude, so a condition may declare at most
-// one of them as "magnitude" (validateEffects refuses two).
-var ScaledKinds = []EffectKind{EffectLightStrength, EffectNightVisionStrength, EffectInfraReach}
+// (lighting plan 5c): a light's strength, nightvision's strength, infra's
+// reach, and a darkness's strength (5d). A record carries one Magnitude, so a
+// condition may declare at most one of them as "magnitude" (validateEffects
+// refuses two).
+var ScaledKinds = []EffectKind{EffectLightStrength, EffectNightVisionStrength, EffectInfraReach, EffectDarknessStrength}
 
 // ScaledKind reports which of ScaledKinds this condition reads from its
 // record's magnitude, if any.
@@ -121,9 +132,10 @@ func (v EffectValue) MarshalYAML() (interface{}, error) {
 
 // validateEffects refuses an unknown key, a magnitude-bound tick without a
 // pool, a record reading more than one of ScaledKinds from its magnitude, a
-// literal light_strength of zero or less, an adjustable record that
-// declares no light_strength, and a stacking record that is also a light
-// source (a stack's summed magnitude is not a light strength, and
+// literal light_strength or darkness_strength of zero or less, a record
+// declaring both (lighting plan 5d: one polarity per record), an adjustable
+// record that declares neither, and a stacking record that is also a light
+// or darkness source (a stack's summed magnitude is not a light strength, and
 // AddConditionMagnitude takes the addStack path for a stacking spec, so a
 // recast would never reset the light). It is called from
 // ConditionSpec.Validate.
@@ -171,13 +183,20 @@ func (b *ConditionSpec) validateEffects() error {
 	if v, ok := b.Effects[EffectLightStrength]; ok && !v.UsesMagnitude && v.Literal <= 0 {
 		return fmt.Errorf("conditionId %d (%s) declares light_strength %v; a light must be brighter than nothing", b.ConditionId, b.Name, v.Literal)
 	}
-	if slices.Contains(b.Flags, Adjustable) {
-		if _, ok := b.Effects[EffectLightStrength]; !ok {
-			return fmt.Errorf("conditionId %d (%s) is adjustable but declares no light_strength", b.ConditionId, b.Name)
-		}
+	if v, ok := b.Effects[EffectDarknessStrength]; ok && !v.UsesMagnitude && v.Literal <= 0 {
+		return fmt.Errorf("conditionId %d (%s) declares darkness_strength %v; a darkness must take some light away", b.ConditionId, b.Name, v.Literal)
+	}
+	if b.IsLightSource() && b.IsDarknessSource() {
+		return fmt.Errorf("conditionId %d (%s) declares both light_strength and darkness_strength; a record has one polarity", b.ConditionId, b.Name)
+	}
+	if slices.Contains(b.Flags, Adjustable) && !b.IsLightSource() && !b.IsDarknessSource() {
+		return fmt.Errorf("conditionId %d (%s) is adjustable but declares no light_strength or darkness_strength", b.ConditionId, b.Name)
 	}
 	if b.IsStacking() && b.IsLightSource() {
 		return fmt.Errorf("conditionId %d (%s) is a stacking record and a light source; a stack's summed magnitude is not a light strength", b.ConditionId, b.Name)
+	}
+	if b.IsStacking() && b.IsDarknessSource() {
+		return fmt.Errorf("conditionId %d (%s) is a stacking record and a darkness source; a stack's summed magnitude is not a darkness strength", b.ConditionId, b.Name)
 	}
 	if b.TickFromMagnitude {
 		if b.TickPool == "" {
@@ -198,8 +217,8 @@ func (b *ConditionSpec) validateEffects() error {
 // combat was its first reader, and optics (the vision window) is now another.
 // It never calls HasFlag with expire=true, which mutates.
 func (bs *Conditions) Effect(kind EffectKind) float64 {
-	if kind == EffectLightStrength {
-		// Per-record, never aggregated: see LightSources.
+	if kind == EffectLightStrength || kind == EffectDarknessStrength {
+		// Per-record, never aggregated: see LightSources and DarknessSources.
 		return 0
 	}
 	product := 1.0

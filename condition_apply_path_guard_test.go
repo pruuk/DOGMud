@@ -260,7 +260,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// moved to conditions.SpellScaledMagnitude, and again when the
 	// spellConditionTarget interface gained AddConditionTickScaled (parity
 	// slice 2).
-	"internal/hooks/light_spell.go|63": "light or sight spell at the caster's scaled magnitude and triggers: the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
+	"internal/hooks/light_spell.go|58": "light, sight or darkness spell at the caster's scaled magnitude and triggers: the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
 
 	// ── magnitude potions (lighting plan 5c): the player's and the mob's drink
 	// each carried this call (usercommands/drink.go and mobcommands/drink.go)

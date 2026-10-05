@@ -1,11 +1,8 @@
 package hooks
 
 import (
-	"math"
-
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 )
@@ -13,10 +10,12 @@ import (
 // magnitudeSpellApplication reports how a spell's condition should be applied
 // when it reads one of conditions.ScaledKinds from its magnitude: at a value
 // and a duration scaled from the CASTER's primary stat and spellcasting skill
-// (lighting plan 5a for light, 5c for nightvision and infra reach). Each kind
-// has its own base + stat/D1 + skill/D2 trio (conditions.SpellScaledMagnitude,
-// shared with the admin setcondition command); all three share the light
-// duration trio. Infra reach is capped at LightInfraReachCap and nightvision
+// (lighting plan 5a for light, 5c for nightvision and infra reach, 5d for
+// darkness). Each kind has its own base + stat/D1 + skill/D2 trio
+// (conditions.SpellScaledMagnitude, shared with the admin setcondition
+// command); the duration comes from conditions.SpellScaledTriggers, where
+// darkness reads its own trio and the other three share the light duration
+// trio. Infra reach is capped at LightInfraReachCap and nightvision
 // at the window shift cap there, so the record holds the value it acts at.
 // ok is false for any other condition, which keeps its authored
 // application. A light then trims to its HOLDER's eyes, who may not be the
@@ -33,14 +32,10 @@ func magnitudeSpellApplication(spellData *spells.SpellData, caster *characters.C
 	if !scaled {
 		return 0, 0, false
 	}
-	cfg := configs.GetLightingConfig()
 	stat := float64(spellData.CasterStatValue(caster.Stats))
 	skill := float64(caster.GetSkillLevel(skills.Spellcasting))
 	magnitude = conditions.SpellScaledMagnitude(kind, stat, skill)
-	triggers = int(math.Round(cfg.SpellDurationBase + stat/cfg.SpellDurationStatDivisor + skill/cfg.SpellDurationSkillDivisor))
-	if triggers < 1 {
-		triggers = 1
-	}
+	triggers = conditions.SpellScaledTriggers(kind, stat, skill)
 	return magnitude, triggers, true
 }
 
