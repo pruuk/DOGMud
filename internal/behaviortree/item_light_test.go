@@ -268,3 +268,68 @@ func TestValidateItemBehaviorsRefusesALightTreeOnAnAdjustableLight(t *testing.T)
 		t.Errorf("the plain lantern was refused too: %v", err)
 	}
 }
+
+// X22 at run time: a tree that reaches a worn item whose light is adjustable
+// (the trim owns it) fails and leaves the record untouched, for both actions.
+func TestLightActionsLeaveAnAdjustableRecordToTheTrim(t *testing.T) {
+	u := seedItemLightWorld(t)
+	hoodedUUID := uuid.UUID{0x58}
+	u.Character.Equipment.Light = items.Item{ItemId: lightProbeHoodedId, UUID: hoodedUUID}
+	u.Character.Conditions.AddCondition(lightProbeHoodedCond, true)
+	recs := u.Character.Conditions.GetConditions(lightProbeHoodedCond)
+	if len(recs) != 1 {
+		t.Fatalf("holder carries %d hooded records, want 1", len(recs))
+	}
+	rec := recs[0]
+	before := *rec
+	hooded := ItemSubject{UUID: hoodedUUID, ItemId: lightProbeHoodedId, UserId: 1, Slot: "light"}
+	for _, tree := range []string{
+		"tree:\n  type: action\n  do: set_light\n  level: \"off\"\n",
+		"tree:\n  type: action\n  do: set_light\n  level: 30\n",
+		"tree:\n  type: action\n  do: pulse_light\n  min: 10\n  max: 20\n  period_rounds: 4\n",
+	} {
+		if runLightTree(t, tree, hooded) {
+			t.Errorf("%q succeeded on an adjustable record", tree)
+		}
+		if rec.LightTrim != before.LightTrim || rec.LightOutput != before.LightOutput || rec.Hooded != before.Hooded {
+			t.Errorf("%q moved the record: trim %q->%q output %v->%v hooded %v->%v", tree,
+				before.LightTrim, rec.LightTrim, before.LightOutput, rec.LightOutput, before.Hooded, rec.Hooded)
+		}
+	}
+}
+
+// The one-writer boot check finds a writer wherever it sits in the tree:
+// pulse_light as well as set_light, and nested under composites.
+func TestValidateItemBehaviorsFindsTheLightWriterWhereverItSits(t *testing.T) {
+	trees := map[string]string{
+		"pulse at root": "tree:\n  type: action\n  do: pulse_light\n  min: 10\n  max: 20\n  period_rounds: 4\n",
+		"set under selector": "tree:\n  type: selector\n  children:\n" +
+			"    - type: condition\n      check: worn\n" +
+			"    - type: action\n      do: set_light\n      level: full\n",
+		"pulse under sequence under selector": "tree:\n  type: selector\n  children:\n" +
+			"    - type: condition\n      check: in_combat\n" +
+			"    - type: sequence\n      children:\n" +
+			"        - type: condition\n          check: worn\n" +
+			"        - type: action\n          do: pulse_light\n          min: 10\n          max: 20\n          period_rounds: 4\n",
+	}
+	for name, body := range trees {
+		t.Run(name, func(t *testing.T) {
+			dir := overrideBTDataFilesDir(t)
+			if err := os.MkdirAll(filepath.Join(dir, "behaviors", "items"), 0o755); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(dir, "behaviors", "items", "light_probe.yaml"), []byte(body), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			seedItemLightWorld(t)
+			t.Cleanup(func() { GetEngine().EvictItemTree("light_probe") })
+			err := ValidateItemBehaviors()
+			if err == nil || !strings.Contains(err.Error(), "item 9922") || !strings.Contains(err.Error(), "adjustable") {
+				t.Fatalf("err = %v, want item 9922 refused for an adjustable light", err)
+			}
+			if strings.Contains(err.Error(), "item 9921") {
+				t.Errorf("the plain lantern was refused too: %v", err)
+			}
+		})
+	}
+}
