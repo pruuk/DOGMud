@@ -471,3 +471,8 @@ payloads carry ids that index into it.
 - **An inbound web socket frame is capped at 64 KiB** (`wsMaxMessageBytes`
   in `internal/web/web.go`); a bigger one closes the player's connection.
   Anything a client sends back, such as a relay reply, must stay under it.
+
+## Room.Info.Contents.Items leaves out fixtures (lighting 5e)
+
+The GMCP twin of "On the Ground" skips fixtures (`items.Item.IsFixture`,
+owner ruling R9): a fixture is part of the room, shown in its look.

@@ -1,5 +1,21 @@
 # DOGMud Patch Notes
 
+## 2026-10-05: Lights that keep time
+
+- Some lights now keep their own hours. The lantern on the arch at
+  Stillwater's North Gate is lit at dusk and snuffed at first light.
+- A shopkeeper's oil lantern goes dark while they sleep and is lit again
+  when they wake. So is yours, if you sleep with one in hand.
+- A Rift Stone in Thornwall's Rift Chamber pulses with a slow, faint
+  light.
+- A light that is part of a place is fixed there: nobody can take it or
+  steal it. Look around and you will see whether it is lit.
+- Enchanter Rane in Stillwater sells the sunstone, a light that drinks the
+  sun. It glows by day, keeps a faint glow for a while after dusk, and is
+  dark through the night.
+- When a light you carry dims, or a second light joins it, the message now
+  says so instead of blaming your eyes.
+
 ## 2026-10-05: Veyra's secrets
 
 - Veyra Coil-Tongue no longer takes commissions. She now sells the secret

@@ -623,3 +623,24 @@ floor finds that old and may prune their records. At boot,
 `factions.ValidateHoldingCells` loads some rooms before `baubles.Load`; a
 find removed then is not marked vanished (no record is loaded yet) and the
 sweep prunes its record later as lost.
+## Fixtures and the item index (lighting 5e)
+
+- **Composition.** `composeLightExcluding` reads the room's fixture outputs
+  from `internal/itemlight` (`Terms(r.RoomId)`) and composes through
+  `composeWithFixtures(cfg, celestial, skyFilter, carried, dark,
+  fixtureLight, fixtureDark)`; `composeWith` is the same with no fixtures,
+  so every older test reads the same terms. A lit light fixture is one term
+  in the light combine, a darkness fixture one in the darkness combine.
+  Fixtures never trim; a carried adjustable light trims against them.
+- **`LightTerms.Fixture`** is the combine of the lit light fixtures (Absent
+  when none) and never sets `Carried`; **`LightTerms.CarriedLight`** is the
+  combine of carried light alone (Absent when none). `Darkened` still means a
+  CARRIED darkness; a darkness fixture moves `Dark`. `internal/lightnotice`
+  reads all three to name a cause.
+- **The item index.** A room joins `items`' holder index when a treed item
+  lands on its floor (`AddItem`, Prepare's spawn append), when it loads into
+  memory holding one (`addRoomToMemory`), and at boot through
+  `IndexTreedFloors()` for rooms loaded before item specs. It leaves on
+  unload (`removeRoomFromMemory`, which also clears its fixture outputs).
+  `RemoveItem` clears the removed item's fixture output. Stashed items are
+  never visited and never index a room.

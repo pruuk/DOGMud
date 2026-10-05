@@ -178,6 +178,7 @@ tree:
 | `mob_die` | Mob's health reaches zero | `UserId` = killing player |
 | `mob_flee` | Mob successfully flees combat | No player context |
 | `player_enter` | A player enters the mob's room | `UserId` = player |
+| `item_idle` | Item trees only: once a round from the item tick (`hooks.ItemRoundTick`, lighting 5e) | `RoomId` = the item's room; the subject is `ctx.Item` |
 
 Any node may include `event: <type>` to skip that branch when the event
 does not match. Nodes without an `event` field evaluate on all events.
@@ -244,7 +245,7 @@ Condition nodes use `type: condition` with `check: <name>`.
 
 | Condition | Params | Description |
 |-----------|--------|-------------|
-| `time_of_day` | `period` ("day" or "night") OR `range` ("`<start>-<end>`", 24h format, e.g., `"9-17"`; wraps midnight when start > end). When both set, `range` takes precedence. | In-game time of day. Range uses `[start, end)` semantics (inclusive start, exclusive end). Empty range (`"5-5"`) always Failure; full-day range (`"0-24"`) always Success — both log a warning once. Malformed ranges log an error once and return Failure. |
+| `time_of_day` | `period` ("day", "night", or "after_dusk" with `hours` N) OR `range` ("`<start>-<end>`", 24h format, e.g., `"9-17"`; wraps midnight when start > end). When both set, `range` takes precedence. | In-game time of day. Range uses `[start, end)` semantics (inclusive start, exclusive end). Empty range (`"5-5"`) always Failure; full-day range (`"0-24"`) always Success; both log a warning once. `after_dusk` (lighting 5e) is true from the unrounded night boundary until N game hours later (`gametime.GameDate.HoursAfterDusk`); a missing or non-positive `hours` logs once and fails. Malformed ranges log an error once and return Failure. |
 | `round_mod` | `n` (int) | `round % n == 0`. |
 | `random_chance` | `percent` (int) | N% probability. |
 | `players_in_room` | none | At least one player in the room, and the mob can make out the room (`mobCanSee`, below). |
@@ -702,6 +703,8 @@ current event type does not match, short-circuiting the entire subtree.
   to the declared archetype (see Composition rule in the Overview; Running
   owns the event and returns false without consulting the archetype).
   Returns true when either evaluation returned Success.
+- `TryItemBehavior(event EventContext, subject ItemSubject) bool`: the item
+  entry point (lighting 5e); see "Item behaviour trees" below.
 - `TryRoomBehavior(roomId int, event EventContext) bool` — room entry point.
   For `room_command` events returns `ctx.Intercepted`; for all others returns
   `true` on Success.
@@ -986,6 +989,7 @@ Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tact
 | Actions — other | `actions_dialogue.go`, `actions_quest.go`, `actions_progression.go`, `actions_mutation.go`, `actions_scout.go`, `actions_skullduggery.go` |
 | Conditions | `conditions.go`, `conditions_combat.go`, `conditions_mob.go`, `conditions_player.go`, `conditions_party.go`, `conditions_position.go`, `conditions_room.go`, `conditions_state.go`, `conditions_scout.go`, `conditions_forager.go`, `conditions_skullduggery.go`, `conditions_submission.go` |
 | Misc | `archetype_shift.go`, `room_state.go` |
+| Items (lighting 5e) | `item_engine.go`, `item_state.go`, `conditions_item.go`, `actions_item_light.go` |
 
 The `actions_*` / `conditions_*` split is the whole architecture: a tree is
 authored data, and extending the engine means adding a named action or
@@ -994,3 +998,55 @@ condition to one of these files, not writing tree logic.
 **Behaviour-tree combat events fire before the legacy AI**, and `mob_die`
 handlers must use instant actions (`send_room_text`, not `respond`) because the
 mob is already gone by the time a queued action would run.
+
+## Item behaviour trees (lighting 5e, item behaviour slice 1)
+
+Items are the third subject of the engine, beside mobs and rooms (spec
+`docs/superpowers/specs/2026-10-05-item-behaviour-foundation-design.md`).
+
+- **Files.** Named trees `behaviors/items/<name>.yaml` (`GetItemTreePath`),
+  the archetype pattern: several items share one tree. An item names its tree
+  with `behavior:` (`items.ItemSpec.Behavior`); the tree belongs to the
+  TEMPLATE, never an instance's override spec. `ListTreeFiles` lists them as
+  kind `item` and never reads `behaviors/items` as a mob zone.
+- **Boot.** `ValidateItemBehaviors()` (main.go, after items load) loads and
+  compiles every named tree and returns one error naming every item whose
+  tree is missing, does not compile, or writes light on an adjustable worn
+  condition; main.go panics on it (X12, the `voice_id` precedent).
+- **Compile.** Item trees compile under root label `item`
+  (`LoadItemTreeFromFile` / `LoadItemTreeFromBytes`), so their decorator keys
+  never meet a mob's (`root`) or archetype's (`arch`). An item tree may name
+  only the item-safe allowlist (`itemSafeConditions`, `itemSafeActions` in
+  `loader.go`): `time_of_day`, `round_mod`, `random_chance`, `state_equals`,
+  `state_greater_than`, `holder_asleep`, `worn`, `in_combat`; `set_state`,
+  `increment_state`, `decrement_state`, `set_light`, `pulse_light`; every
+  decorator and composite. Anything else refuses with its path. The item-only
+  nodes (`itemOnlyNodes`) refuse in a mob or room tree.
+- **Subject.** `EvalContext.Item *ItemSubject{UUID, ItemId, UserId,
+  MobInstanceId, RoomId, Slot, OnFloor}`; `Slot` is the `characters.Worn`
+  `AllSlots` key, empty in a backpack or on a floor. For an item, `MobState`
+  is the item's own state and `MobId` / `InstanceId` are 0.
+- **`TryItemBehavior(event, subject)`** resolves the tree, then the holder
+  (player, mob, or a loaded room for a floor item; gone: false, the round is
+  skipped), evaluates, and returns true on Success. A panic in a node is
+  recovered and logged once per tree and node (`EvalContext.node`); the item
+  does nothing that round.
+- **State** (`item_state.go`): `map[uuid.UUID]` behind an RWMutex,
+  `EnsureItemBTreeState` (marks the visit round), `EvictItemBTreeState`,
+  `EvictUnseenItemBTreeStates(round)` (the tick evicts what it did not reach
+  this round). Not persisted; a UUID is re-minted on every load, so state
+  resets on restart, login and mob instance restore.
+- **Nodes.** `holder_asleep` reads the Sleeping flag through
+  `actions.TargetAsleep`, the shop sleep gate's predicate (owner ruling R2).
+  `set_light` takes `level: full | off | <n>` (an unquoted `off` reads as
+  YAML false and still means off). `pulse_light` takes `min`, `max`,
+  `period_rounds` (at least 2): `PulseLightValue`, a triangle wave from the
+  round count. Both write a WORN item's light and darkness records through
+  their existing trimmed-output state (`SetLightOutput`, `LightOff`,
+  `LightFull`; one mechanism with the trim, owner ruling R3), skip adjustable
+  records (the trim owns those), and write only on a change; a FIXTURE's
+  output goes to `internal/itemlight` (`full` fails there: a fixture names a
+  number); anything else fails and changes nothing. `TreeWritesLight` reports
+  a tree that names either.
+- **Tests.** `LoadItemTreeForTest`, `ItemBTreeStateForTest` and
+  `ResetItemBTreeStatesForTest` let other packages drive the engine.

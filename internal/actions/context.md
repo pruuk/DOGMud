@@ -1791,3 +1791,13 @@ the rest are ordinary verbs.
 **The actor seam is the point of this package.** `actions.Actor` lets one
 implementation serve both players and mobs, which is what keeps user and mob
 commands in parity instead of drifting apart.
+
+## Fixtures (lighting 5e)
+
+`TakeFloorItem` refuses a fixture (`items.Item.IsFixture`) with `ErrFixture`
+right after `ErrTooDark`, for every taker: a player's `get`, a mob's, a
+companion's, a scavenger's. `steal`'s floor branch only ever takes a
+household bauble, and the player command names a fixture as fixed in place
+before it gets there, but only to one who can see the floor
+(`TooDarkToGet`). `TargetAsleep` is also the predicate the item condition
+`holder_asleep` reads (owner ruling R2).

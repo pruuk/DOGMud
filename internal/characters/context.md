@@ -2094,3 +2094,14 @@ gear; owner 2026-09-29: no pre-detune bows are carried by companions on
 prod, so that closed a coverage gap with no live behaviour change). A new item field on Character, Worn, Pet or CompanionInfo must be
 walked here: `TestItemWalkersVisitEveryItemField` (repo root) fails naming
 it otherwise.
+
+## The item tick's holder index (lighting 5e)
+
+`IndexTreedItem(i)` enters this character's MOB in `items`' holder index
+when the item names a behaviour tree; `IndexTreedItems()` does it when any
+worn or backpack item does. `StoreItem` (before its capacity check, so a
+refused or fallback store is covered too), `Wear` and the two spills in
+`RemoveFromBody` call the first; mob spawn, `Mob.AdoptCharacter` and the
+companion gear restore call the second. A player is never indexed: the tick
+walks every online player. Equipping a light still resets its records to full
+(`ResetLight`), so a scheduled light is full until the next item tick.

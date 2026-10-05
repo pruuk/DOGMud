@@ -261,3 +261,13 @@ almost anywhere.
 
 `mutators` (decay/respawn), `shops` (restock), `mobs` (schedules), `conditions`,
 `rooms`, `usercommands`, `internal/hooks`, and `modules/weather`.
+
+## `GameDate.HoursAfterDusk` (lighting 5e)
+
+`HoursAfterDusk()` is how many game hours have passed since dusk, in
+[0, 24), read from the same unrounded night boundary `Night` uses (the
+world's latitude and the day of the year; kept in two unexported fields so
+the struct's serialised shape does not change). Before dusk it reads more
+than the day's daylight, so it never reads "just after dusk" in the
+afternoon. The behaviour-tree condition `time_of_day` reads it for
+`period: after_dusk` with `hours: N` (the sunstone's faint hour).

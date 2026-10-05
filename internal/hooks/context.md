@@ -2225,3 +2225,19 @@ Conventions:
 - Behaviour-tree combat events fire **before** the legacy AI.
 - A handler returns `events.Continue` unless it genuinely means to stop the
   event reaching later listeners.
+
+## The item tick (`NewRound_ItemRoundTick.go`, lighting 5e)
+
+`ItemRoundTick`, a `NewRound` listener, fires `item_idle` through
+`behaviortree.TryItemBehavior` once a round for every item with a behaviour
+tree that it reaches: every online player's worn slots then backpack; the
+indexed mobs' worn slots then backpack (`items.MobHolders`); the indexed
+rooms' floors (`items.RoomHolders`). Never a world walk. A visited holder
+with nothing treed left drops out of the index; a room no longer loaded loses
+its fixture outputs. Container contents are not visited. Last,
+`behaviortree.EvictUnseenItemBTreeStates` drops the state of every item not
+visited this round. `RegisterListeners` also sets `items.OnRoomHolderIndexed
+= EvaluateRoomFixtures`, so a room's fixtures are lit the moment the room
+joins the index (a fixture spawned, or a room loaded holding one).
+`HandleJoin`'s companion gear restore re-indexes the companion
+(`IndexTreedItems`). `EquipBestFloorItem` skips fixtures.

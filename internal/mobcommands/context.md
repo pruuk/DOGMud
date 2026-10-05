@@ -292,3 +292,10 @@ why a command available to both players and mobs must be registered twice
   exit and entry lines. It reads `actions.MobIsSneaking(mob)` before the
   move and sends neither line when sneaking, matching the ordinary exit
   path.
+
+## Fixtures (lighting 5e)
+
+A mob's `get all` skips fixtures; a single `get` of one is refused by
+`actions.TakeFloorItem` (`ErrFixture`). `hasLootItems` (`wander.go`) does not
+count a fixture as loot, so a floor holding only a fixture does not draw a
+scavenger.

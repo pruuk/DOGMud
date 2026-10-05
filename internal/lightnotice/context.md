@@ -210,3 +210,16 @@ next check after reconnect is a fresh `TriggerQuiet` login record.
 - `internal/movenarration` - the store shape this package's data and loader
   are modelled on
 - `internal/hooks/LightNotice_Triggers.go` - the four event seams
+
+## Fixtures and scheduled carried light (lighting 5e, spec X5)
+
+`attribute` names `carried` when a carried light arrives or leaves
+(`Carried`) OR changes strength while lit (`LightTerms.CarriedLight`: a
+lantern its schedule dims, a sunstone fading, a second light joining one
+already here; all of these used to fall to `eyes`), and `lamp` when the
+room's lamp OR its light fixtures move (`LightTerms.Fixture`: the North
+Gate's arch lantern at dusk and dawn). A darkness fixture moves `Dark` and
+reads `darkness`, checked first. Cadence is unchanged: an idle player learns
+of dusk on their next command, move or combat round. `lamp.yaml`'s header
+names fixtures; `carried.yaml`'s two darker "is gone" lines read "fades"
+(owner ruling R8).

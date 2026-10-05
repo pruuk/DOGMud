@@ -98,7 +98,7 @@ node.
 
 | Condition | Params | Description |
 |-----------|--------|-------------|
-| `time_of_day` | `period` ("day" or "night") | Checks in-game time of day. |
+| `time_of_day` | `period` ("day", "night", or "after_dusk" with `hours` N), or `range` ("`<start>-<end>`") | Checks in-game time of day. `after_dusk` is true from the night boundary until N game hours later (lighting 5e). |
 | `round_mod` | `n` (int) | Succeeds when current round % n == 0. |
 | `random_chance` | `percent` (int) | Succeeds with N% probability. |
 | `players_in_room` | none | At least one player is in the mob's room. |
@@ -534,3 +534,35 @@ zones:
 | `move_player` | No |
 | `create_instance` | No |
 | `open_instance_portal` | No |
+
+## Item Behavior Trees (lighting 5e)
+
+Items are the third tree subject. A tree lives at
+`behaviors/items/<name>.yaml` and an item names it with `behavior: <name>`
+in its YAML; several may share one. The boot fails on a name with no
+file or a tree that does not compile. Item trees fire `item_idle` once a
+round for every treed item a player wears or carries, a mob wears or
+carries, or a room has on its floor.
+
+An item tree may name only these nodes (anything else refuses at load):
+
+| Kind | Nodes |
+|---|---|
+| Conditions | `time_of_day`, `round_mod`, `random_chance`, `state_equals`, `state_greater_than`, `holder_asleep`, `worn`, `in_combat` |
+| Actions | `set_state`, `increment_state`, `decrement_state`, `set_light`, `pulse_light` |
+| Decorators | all |
+
+| Node | Params | Description |
+|---|---|---|
+| `holder_asleep` | none | The player or mob holding the item has the Sleeping flag. |
+| `worn` | none | The item is in an equipment slot. |
+| `in_combat` | none | The holder is in combat. |
+| `set_light` | `level`: `full`, `"off"`, or a number | A worn light's record at full strength, off, or that strength; a fixture's output (a number or off). Fails on anything else. |
+| `pulse_light` | `min`, `max`, `period_rounds` (at least 2) | A triangle wave from `min` to `max` and back over the period, from the round count. |
+
+The item-only nodes (`holder_asleep`, `worn`, `in_combat`, `set_light`,
+`pulse_light`) refuse in a mob or room tree. A tree that writes light may
+not sit on an item whose worn light is `adjustable` (the trim owns it). A
+fixture (`fixture: light` or `darkness` on the item) cannot be taken off the
+floor; a pulsing fixture must stay inside one light band
+(`item_behaviour_guard_test.go`).
