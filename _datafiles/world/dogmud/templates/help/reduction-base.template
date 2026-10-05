@@ -12,5 +12,6 @@ open.
   <ansi fg="yellow">Skill:</ansi>       cooking (minimum 50)
   <ansi fg="yellow">Station:</ansi>     cooking_fire
   <ansi fg="yellow">Ingredients:</ansi> Bowl of River Broth (x2), Salt Pouch (x1), Wild Vegetables (x1)
+  <ansi fg="yellow">Learned:</ansi>     part of Veyra's secret: ask veyra teach phial
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cooking</ansi>, <ansi fg="command">help craft</ansi>

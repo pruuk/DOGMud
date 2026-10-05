@@ -11,5 +11,6 @@ keep their hands quick and their windows open.
   <ansi fg="yellow">Skill:</ansi>       alchemy (minimum 50)
   <ansi fg="yellow">Station:</ansi>     alchemy_bench
   <ansi fg="yellow">Ingredients:</ansi> Moonpetal (x2), Serpent Venom Sac (x1), Coal Dust (x1)
+  <ansi fg="yellow">Learned:</ansi>     part of Veyra's secret: ask veyra teach zephyr
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help craft</ansi>

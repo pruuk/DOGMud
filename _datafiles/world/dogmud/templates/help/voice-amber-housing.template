@@ -12,5 +12,6 @@ closer.
   <ansi fg="yellow">Skill:</ansi>       jewelcrafting (minimum 50)
   <ansi fg="yellow">Station:</ansi>     jeweler_bench
   <ansi fg="yellow">Ingredients:</ansi> Polished Stone (x2), Gold Wire (x1), Gem Dust (x1)
+  <ansi fg="yellow">Learned:</ansi>     part of Veyra's secret: ask veyra teach aegis
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jewelcrafting</ansi>, <ansi fg="command">help craft</ansi>

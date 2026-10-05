@@ -2,7 +2,7 @@
 
 Veyra's masterwork assembly. The finished piece is joined here from four
 self-crafted components and its bulk stock. This recipe is taught by
-commission, never discovered at the bench, and it demands that every
+Veyra as a secret, never discovered at the bench, and it demands that every
 component be of your own making.
 
 <ansi fg="yellow">━━━ Crafting ━━━</ansi>
@@ -12,6 +12,6 @@ component be of your own making.
   <ansi fg="yellow">Ingredients:</ansi> Reinforced Harness (x1), Preservation Runes (x1),
                Chrysalis Filter-Membrane (x1), Still-Glass Rosette (x1),
                Pine Pitch (x6), Salt Pouch (x6), Beeswax (x4)
-  <ansi fg="yellow">Learned:</ansi>     by commission from Veyra (not self-taught)
+  <ansi fg="yellow">Learned:</ansi>     buy Veyra's secret: ask veyra teach bandolier
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help craft</ansi>

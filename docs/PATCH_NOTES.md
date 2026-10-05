@@ -1,5 +1,25 @@
 # DOGMud Patch Notes
 
+## 2026-10-05: Veyra's secrets
+
+- Veyra Coil-Tongue no longer takes commissions. She now sells the secret
+  recipes for the nine Pinnacle works.
+- Each secret has one price, paid in full when she shares it. The prices
+  are lower than the old total.
+- You must carry the full price to buy a secret. If you do not, she tells
+  you the price and you keep your gold.
+- Buy as many secrets as you can afford. She sells each one only once.
+- She still deals only with crafters who first show her a masterwork of
+  their own making.
+- Talk to her to hear which secrets she knows. Ask her about one by name
+  to hear its price, for example `ask veyra blackrazor`. Asking never buys
+  anything.
+- To buy a secret, ask her to teach it: `ask veyra teach blackrazor`.
+- The parts of each secret are now part of the secret too. You learn them
+  when you buy it, not by experimenting at a bench. Parts you already
+  learned stay yours.
+- Gold amounts now show a thousands separator, for example 25,000 gold.
+
 ## 2026-10-05: Darkness
 
 - A place can now be darker than any cave. A darkness takes light away,

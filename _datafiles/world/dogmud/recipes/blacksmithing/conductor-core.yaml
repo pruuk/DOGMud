@@ -3,6 +3,7 @@ name: Conductor Core
 aliases: [conductor]
 skill: blacksmithing
 skill_minimum: 50
+learn_only: true
 station: forge
 time_rounds: 8
 ingredients:

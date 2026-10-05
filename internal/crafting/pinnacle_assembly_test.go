@@ -241,6 +241,57 @@ func TestPinnacleAssemblies_FlagsIntact(t *testing.T) {
 	}
 }
 
+// pinnacleSubRecipes are the 17 component recipes that feed only the nine
+// assemblies. Since 2026-10-05 they are part of Veyra's secrets: taught by
+// the purchase, never discovered at the bench.
+var pinnacleSubRecipes = []string{
+	"reinforced-harness", "preservation-runes", "hungering-guard",
+	"obsidian-edge-resin", "reinforced-frame", "spatial-stitching",
+	"voice-amber-housing", "resonance-lacquer", "barbed-spike-plates",
+	"anti-corrosion-quench", "containment-lattice", "nutrient-suspension",
+	"quicksilver-soles", "windlace-bindings", "conductor-core",
+	"choir-focus-gems", "reduction-base",
+}
+
+// TestPinnacleSubRecipes_LearnOnly pins that every sub-recipe is learn_only
+// and that its output is consumed by no recipe outside the nine assemblies,
+// so hiding it from discovery cannot strand another recipe.
+func TestPinnacleSubRecipes_LearnOnly(t *testing.T) {
+	root := repoDataRoot(t)
+	recipes := loadRealRecipes(t, root)
+	specs := loadRealItemSpecs(t, root)
+
+	assembly := map[string]bool{}
+	for _, s := range stage4aAssemblies {
+		assembly[s] = true
+	}
+	for _, slug := range pinnacleSubRecipes {
+		r := recipes[slug]
+		if r == nil {
+			t.Errorf("sub-recipe %q missing from shipped data", slug)
+			continue
+		}
+		if !r.LearnOnly {
+			t.Errorf("%s: learn_only must be true", slug)
+		}
+		out := specs[r.Output.ItemId]
+		if out == nil || out.ComponentTag == "" {
+			t.Errorf("%s: output %d has no component tag", slug, r.Output.ItemId)
+			continue
+		}
+		for id, other := range recipes {
+			if assembly[id] || id == slug {
+				continue
+			}
+			for _, ing := range other.Ingredients {
+				if ing.ItemTag == out.ComponentTag {
+					t.Errorf("%s: output tag %q is also used by %s", slug, out.ComponentTag, id)
+				}
+			}
+		}
+	}
+}
+
 // TestPinnacleAssemblies_IngredientTags mirrors the boot-time
 // ValidateRecipeIngredientTags invariant at the Go level for the nine
 // assembly recipes: every ingredient tag must resolve to at least one

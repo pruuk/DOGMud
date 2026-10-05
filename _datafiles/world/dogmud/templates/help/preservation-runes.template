@@ -12,5 +12,6 @@ perfection, once reached, need not be temporary.
   <ansi fg="yellow">Skill:</ansi>       enchanting (minimum 50)
   <ansi fg="yellow">Station:</ansi>     enchanting_circle
   <ansi fg="yellow">Ingredients:</ansi> Healer's Root (x2), Chrysalis Setting (x1), Binding Paste (x1)
+  <ansi fg="yellow">Learned:</ansi>     part of Veyra's secret: ask veyra teach bandolier
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help enchanting</ansi>, <ansi fg="command">help craft</ansi>

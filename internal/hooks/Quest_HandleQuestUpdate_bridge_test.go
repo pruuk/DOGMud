@@ -17,7 +17,7 @@ import (
 // legacy quests.Quest loader (questid/name/steps/flags — parsed by
 // quests.LoadDataFiles) and the questengine.QuestDef loader
 // (questid/name/steps/flags/triggers — parsed by questengine.LoadDataFiles).
-// Real quests in this repo (e.g. 79-commission_vitalis_bandolier.yaml) are
+// Real quests in this repo (e.g. 79-secret_of_the_vitalis_bandolier.yaml) are
 // exactly this shape: a quest_granted trigger on "<id>-start" that only a
 // dialogue grantsQuest can ever satisfy, which is the exact bug this test
 // guards against.

@@ -517,9 +517,11 @@ the_confluence/veyra.yaml`) keeps her at the alchemy bench crafting
   ordinary self-craftable recipes: the design intent is that the
   player who assembles a masterwork forged its subcomponents with
   their own hands. Bulk stock and Stage-3 reagents are exempt.
-- The 17 component recipes are plain discoverable recipes — no
-  `learn_only`, no `require_own_components` — so the everyday tier of
-  the chain needs no quest wiring at all.
+- The 17 component recipes have no `require_own_components`. As
+  authored they were plain discoverable recipes; since 2026-10-05 they
+  are `learn_only`, taught by buying the secret they belong to (each
+  one's output feeds only its own assembly, pinned by
+  `TestPinnacleSubRecipes_LearnOnly`).
 
 ## Stage 4b: commissions
 
@@ -527,6 +529,33 @@ Veyra's commission questline is the delivery mechanism for the nine
 `learn_only` assembly recipes from Stage 4a — without it, those slugs
 are unreachable by any player. Authored on branch
 `feature/pinnacle-stage4b-veyra-commissions`.
+
+> **Revised 2026-10-05 (owner ruling): commissions became secret recipes.**
+> The sections below describe the original 2026-07-05 design. What ships
+> now: quests 79-87 are named "Secret of the ..." after Veyra's item
+> names, and each secret has ONE price, the old first half (the "Price"
+> column below). Asking Veyra about a secret by name (`price_` node) only
+> states the price and how to buy. Buying is `ask veyra teach <name>`
+> (`teach_` node), which carries `goldRequired` and `chargesGold` at the
+> price: the dialogue checks and takes the gold in the same step, before
+> it grants `{id}-start`, and a failed charge falls through to the
+> `refuse_` node, which names the price and grants nothing. The quests'
+> `quest_granted` triggers no longer charge anything; they only teach the
+> recipes. A `charge_gold` larger than the player's gold takes nothing and
+> fails the action. The 17 sub-recipes are `learn_only` too, so the whole
+> chain is taught by the purchase. The one-at-a-time limit is gone too: the `78-commission`
+> flag, its declaration on quest 78, the mid-commission root variant and
+> every write of the flag were removed, so a player may buy any number
+> of the nine, each once (`questExcluded: [{id}-start, {id}-end]`). The
+> Phial (87) is no longer repeatable: every secret is sold once, and an
+> `owned_` node keyed on `{id}-start` tells an owner they already have it.
+> It keys on the quest token, never on recipe knowledge, so a player who
+> discovered sub-recipes at the bench can still buy the secret.
+> Veyra's known greeting, the `secrets_list` node and a known-player
+> fallback pattern name all nine without prices; asking about one by
+> name gives its price. `quest_charge_gold_gate_guard_test.go` and
+> `veyra_secrets_dialogue_test.go` pin the purchase. Saves already holding
+> `{id}-start` under the old design simply never pay the second half.
 
 ### Quests
 
@@ -537,17 +566,17 @@ player step — the quest only exists to declare the shared flag and
 give Veyra's dialogue a `questRequired` token to key on). Quests
 **79-87** are the nine commissions, one per pinnacle item.
 
-| Quest | Slug | Item (id) | Skill | Gold total |
-|-------|------|-----------|-------|------------|
-| 79 | bandolier | Vitalis Bandolier (40182) | alchemy | 35,000 |
-| 80 | blackrazor | The Blackrazor (40183) | blacksmithing | 50,000 |
-| 81 | wayfarer | Wayfarer's Bottomless Pack (40184) | tailoring | 25,000 |
-| 82 | aegis | Aegis of Mockery (40185) | blacksmithing | 40,000 |
-| 83 | thornwall | Thornwall Harness (40186) | tailoring | 30,000 |
-| 84 | prism | Seething Prism (40187) | jewelcrafting | 40,000 |
-| 85 | zephyr | Zephyr Treads (40188) | tailoring | 25,000 |
-| 86 | choir | Staff of the Hollow Choir (40189) | enchanting | 45,000 |
-| 87 | phial | Phial of Second Birth (40181) | alchemy | 30,000 |
+| Quest | Slug | Item (id) | Skill | Old total | Price (since 2026-10-05) |
+|-------|------|-----------|-------|-----------|--------------------------|
+| 79 | bandolier | Vitalis Bandolier (40182) | alchemy | 35,000 | 17,500 |
+| 80 | blackrazor | The Blackrazor (40183) | blacksmithing | 50,000 | 25,000 |
+| 81 | wayfarer | Wayfarer's Bottomless Pack (40184) | tailoring | 25,000 | 12,500 |
+| 82 | aegis | Aegis of Mockery (40185) | blacksmithing | 40,000 | 20,000 |
+| 83 | thornwall | Thornwall Harness (40186) | tailoring | 30,000 | 15,000 |
+| 84 | prism | Seething Prism (40187) | jewelcrafting | 40,000 | 20,000 |
+| 85 | zephyr | Zephyr Treads (40188) | tailoring | 25,000 | 12,500 |
+| 86 | choir | Staff of the Hollow Choir (40189) | enchanting | 45,000 | 22,500 |
+| 87 | phial | Phial of Second Birth (40181) | alchemy | 30,000 | 15,000 |
 
 Each quest's gold total is split in half: half on `quest_granted`,
 half on the `item_gain` trigger that fires when the crafted pinnacle
@@ -599,8 +628,8 @@ auto-lock a random commission.
 
 1. **`charge_gold` action + `has_gold` condition**
    (`internal/questengine/types.go`) — stages a gold fee on a quest
-   trigger or gates one on a minimum balance; the charge clamps at 0
-   rather than going negative.
+   trigger or gates one on a minimum balance. Since 2026-10-05 a charge
+   the player cannot cover is refused (nothing taken, trigger abandoned).
 2. **Masterwork entry gate** — `Character.HasOwnMasterwork(skillMin)`
    (`internal/characters/masterwork.go`) reports whether the player
    carries any item with `MakerName == their own Name` and

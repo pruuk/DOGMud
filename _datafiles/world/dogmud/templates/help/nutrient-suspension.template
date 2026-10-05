@@ -11,5 +11,6 @@ themselves -- it is not brewed for a mouth.
   <ansi fg="yellow">Skill:</ansi>       alchemy (minimum 50)
   <ansi fg="yellow">Station:</ansi>     alchemy_bench
   <ansi fg="yellow">Ingredients:</ansi> Healer's Root (x2), Blood-moss (x1), Veilbloom Petal (x1)
+  <ansi fg="yellow">Learned:</ansi>     part of Veyra's secret: ask veyra teach prism
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help alchemy</ansi>, <ansi fg="command">help craft</ansi>

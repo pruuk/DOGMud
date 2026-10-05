@@ -12,5 +12,6 @@ to disappear under whatever it is asked to carry.
   <ansi fg="yellow">Skill:</ansi>       tailoring (minimum 50)
   <ansi fg="yellow">Station:</ansi>     loom
   <ansi fg="yellow">Ingredients:</ansi> Leather Strip (x3), Thread Spool (x2), Sinew (x1)
+  <ansi fg="yellow">Learned:</ansi>     part of Veyra's secret: ask veyra teach bandolier
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help tailoring</ansi>, <ansi fg="command">help craft</ansi>
