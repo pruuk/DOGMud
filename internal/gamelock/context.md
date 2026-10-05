@@ -36,7 +36,10 @@ Represents a game lock with the following features:
   - Returns false if difficulty is 0 (no lock)
   - Returns true if never unlocked (UnlockedRound == 0)
   - Calculates time-based relocking using game time system
-  - Uses RelockInterval or DefaultRelockTime for timing
+  - Uses RelockInterval or DefaultRelockTime for timing, measured from
+    UnlockedRound (it once measured from the current round, so an opened
+    lock never relocked until a restart; `TestLock_RelocksAfterInterval`
+    pins the fix)
 
 - **SetUnlocked()**: Marks lock as unlocked
   - Sets UnlockedRound to current game round
