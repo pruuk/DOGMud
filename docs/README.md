@@ -28,6 +28,9 @@ setting, or [`schemas/`](schemas/) if you want to author content.
 
 | Path | What's in it |
 |------|--------------|
+| [`../.github/CONTRIBUTING.md`](../.github/CONTRIBUTING.md) | How outside work gets merged: spec before a new system, one system per PR, green before opening, outside APIs off by default, self-review notes attached |
+| [`guides/HOUSE_RULES.md`](guides/HOUSE_RULES.md) | The hard rules every PR is reviewed against: reuse existing mechanisms (with a job-to-mechanism table), balance numbers in config, persistence, security and economy, player-facing text, world flavour, content YAML, tests, docs. Each rule points to its `.claude/skills/` file |
+| [`guides/SPEC_TEMPLATE.md`](guides/SPEC_TEMPLATE.md) | The one-page spec a contributor writes before building a new system: a template to copy, and a worked example (fishing) showing which existing mechanisms it reuses, its gold and item sinks, its balance knobs and its tests |
 | [`guides/CONTENT_GENERATION_GUIDE.md`](guides/CONTENT_GENERATION_GUIDE.md) | How the content-generation workflow fits together |
 | [`guides/github_guide.md`](guides/github_guide.md) | Branch strategy and Git workflow |
 | [`guides/DEPLOYMENT_GUIDE.md`](guides/DEPLOYMENT_GUIDE.md) | Deploying to the production droplet |

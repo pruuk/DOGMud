@@ -1,39 +1,136 @@
-# Contributing to GoMud
+# Contributing to DOGMud
 
-Want to add code to GoMud? First off, thank you! Contributions from you or people like you gives GoMud the opportunity to be the absolute best it can.
+Thank you for building on Delusions of Grandeur. This page covers how work
+gets from your fork into `pruuk/DOGMud`. The rules for what the code and text
+must look like live in [`docs/guides/HOUSE_RULES.md`](../docs/guides/HOUSE_RULES.md).
+Read both before you start a new system.
 
-There aren't a ton of rules, but here are some good guidelines to follow when suggesting changes, additions, or reviewing code.
+DOGMud is a fork of [GoMud](https://github.com/GoMudEngine/GoMud). Open
+DOGMud pull requests against `pruuk/DOGMud`, never against
+`GoMudEngine/GoMud`. The `gh` CLI defaults to the upstream parent, so pass
+`--repo pruuk/DOGMud` on every `gh pr` command.
 
-## Quicklinks
+## The short version
 
-- [Contributing to GoMud](#contributing-to-gomud)
-  - [Quicklinks](#quicklinks)
-    - [Pull Requests](#pull-requests)
-    - [Pull Request Reviews](#pull-request-reviews)
-  - [Getting Help](#getting-help)
+1. Talk about a new system before you build it (a one-page spec).
+2. One system per pull request.
+3. The pull request is green before you open it.
+4. Anything that calls an outside API ships switched off.
+5. Run your own review first and attach the notes.
 
-### Pull Requests
+## 1. Spec before code for a new system
 
-If you have planned changes that will have a wide-spread impact, break current functionality meaningfully, or change core ways the code operates, make sure it is discussed fully and agreed upon as an actionable item in an issue discussion.
+A new system is anything that adds a package, a player command family, a
+persistent store, a new kind of room or item behaviour, or a call to an
+outside service. Before writing it, open a GitHub issue or a draft PR holding
+a one-page spec. [`docs/guides/SPEC_TEMPLATE.md`](../docs/guides/SPEC_TEMPLATE.md)
+has a template to copy and a worked example. It covers:
 
-In general, PRs should:
+- What the player sees and does, in a few sentences.
+- What existing systems it touches, and which existing mechanisms it reuses
+  (see "Reuse before you build" in the house rules).
+- What it persists, and where.
+- Any new gold or item sources and sinks.
+- Any outside API use, and what player data it would send.
 
-- Attempt to limit the size and scope of the code change. Grouping a number of small changes is fine if complexity is also small. 
-- Include unit tests for any packages you are adding or changing.
-  - Unit tests should use [testify](https://github.com/stretchr/testify). Do not auto generate/commit mocks with the mockery tool.
-- Include reasonable code documentation as well as update relevant markdown documentation.
-- A PR template will automatically pre-populate your Pull Request. Fill in the fields requested, as they are required.
-  - Additional sections can be added to a PR, such as screenshots, or other named sections of your choosing. Include these after the required sections.
+The owner answers with yes, no, or changes. This is quick, and it is much
+cheaper than reviewing 15,000 lines built in a direction the game is not
+taking. Bug fixes, content additions inside an existing system, and small
+improvements do not need a spec.
 
-### Pull Request Reviews
+## 2. One system per pull request
 
-Some general guidelines when reviewing PR's:
+- A pull request carries one system or one coherent change. Housing, rifts
+  and crafting are three pull requests, even when one builds on another;
+  stack them and say which one comes first.
+- Aim for a diff a reviewer can hold in their head. As a guide, keep Go
+  changes under roughly 5,000 lines per pull request. Generated content
+  (blank unit rooms, item YAML) does not count toward that, but say how it was
+  generated and include the generator.
+- Rebase onto current `master` before opening, and keep the branch rebased
+  while it is in review.
+- A system that needs a hook in shared engine code (`internal/rooms`,
+  `internal/actions`, `internal/usercommands`, `world.go`) should land that
+  hook in its own small pull request first, or call it out at the top of the
+  description.
 
-1. Do not review PR's marked as DRAFT's.
-2. Reviewers should be clear about the reason for requesting a change if it is contrary to the current implementation.
-3. Try to be clear about whether a comment on code is intended as a suggestion vs. a change request. In fact, prefixing with `SUGGESTION:` or `CONSIDER:` makes this very clear that it is not a blocking issue.
-4. Be clear, direct, even terse - but be respectful. Disrespectful or confrontational reviews are a quick way to end up excluded.
+## 3. Green before you open
 
-## Getting Help
+Run the full local gate from the repo root and paste the result into the
+pull request description:
 
-Unsure about something? Create a discussion thread about it, or join the [Discord Server](https://discord.gg/cjukKvQWyy) for live discussion about features, code, and other questions you may have.
+```
+gofmt -l internal/ modules/ *.go        # must print nothing
+go vet ./...
+go build ./...
+go test ./... -count=1                  # every package, including the repo root
+golangci-lint run --new-from-merge-base=origin/master   # must report 0 issues
+```
+
+Then boot the server once and confirm it reaches the login prompt with no
+panic. CI runs the same checks (`.github/workflows/validate.yml` and
+`run-tests.yml`); a pull request with red checks is not ready for review.
+
+The repo root holds about 34 guard tests (`*_guard_test.go`) that enforce
+project rules, such as: every item holder is reachable by the bauble sweep,
+every narration site has a viewpoint verdict, shops refuse to trade in the
+dark. `internal/templates` checks that help text shows no raw tuning numbers.
+When one fails, it names the rule and the fix. Fix the
+code or register the new site as its message says; do not delete or loosen
+the guard.
+
+## 4. Outside APIs ship switched off
+
+DOGMud can call a language model through `internal/apiframework`. Every
+feature that does, or that sends any player text or data anywhere, follows
+these rules:
+
+- Off by default, in both the Go default and the shipped
+  `_datafiles/config.yaml`. The server operator turns it on.
+- Players opt in. Any consent box a player sees starts unticked, and consent
+  given for one feature never carries over to a new one. Keys saved before a
+  feature existed are not opted in to it.
+- Model output is untrusted input. It never reaches `mob.Command`,
+  `user.Command`, a file path, or a template without passing the existing
+  allowlist for player-key text (`baubles.CheckPlayerKeyText`). A reply
+  that comes through a player's own key is controlled by that player.
+- Text one player can influence never becomes world text other players see
+  (room descriptions, cached details, saved rooms) unless it passes the
+  same checks and is attributable.
+- Spend is bounded and survives a restart.
+
+## 5. Review your own work first
+
+Before opening, review the diff adversarially, by hand or with your own
+tools, against the house rules: look for gold or item duplication, permission
+bypasses, input that reaches commands or files, places where you rebuilt
+something the engine already has, and hardcoded balance numbers. Put the
+notes, and what you fixed, in the description. Our review then checks yours
+rather than starting from nothing, and your pull request moves faster.
+
+## Writing the pull request
+
+The template asks for a description, the changes, and a checklist. Also
+include:
+
+- Which spec or issue it implements.
+- New config keys with their shipped values.
+- New commands players can type.
+- Anything you are unsure of. Saying so is welcome.
+
+## If you work with Claude Code
+
+This repo ships the project instructions in `CLAUDE.md` and detailed
+procedures in `.claude/skills/` (balance config, persistence, player copy,
+content authoring, tests, shipping and more). They load automatically when
+you work in a checkout of this repo, and they are the same rules our reviewers
+apply. Keep your fork current so you get the latest ones.
+
+## Reviews
+
+Review comments say whether they block: a comment prefixed `SUGGESTION:` or
+`CONSIDER:` does not. Reviews are direct and respectful in both directions.
+
+## Getting help
+
+Ask in the pull request or an issue, or reach the owner directly.
