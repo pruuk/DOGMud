@@ -549,7 +549,7 @@ An item tree may name only these nodes (anything else refuses at load):
 | Kind | Nodes |
 |---|---|
 | Conditions | `time_of_day`, `round_mod`, `random_chance`, `state_equals`, `state_greater_than`, `holder_asleep`, `worn`, `in_combat`, `chatter_ready`, `hunger_overdue` |
-| Actions | `set_state`, `increment_state`, `decrement_state`, `set_light`, `pulse_light`, `speak`, `taunt_pull` |
+| Actions | `set_state`, `increment_state`, `decrement_state`, `set_light`, `pulse_light`, `speak`, `taunt_pull`, `proc` |
 | Decorators | all |
 
 | Node | Params | Description |
@@ -563,9 +563,10 @@ An item tree may name only these nodes (anything else refuses at load):
 | `hunger_overdue` | `fraction` (default 0.75) | The holder's hunger anchor is more than that fraction of the item's `hunger_rounds` behind. |
 | `speak` | `pool`; `to`: `all` (default) or `holder`; `paced`: true (default) or false | Says a line from the tree's `speech:` pool: the holder reads "<Item> says", the room hears "<Name>'s <Item> mutters" with the holder's name hidden by sight. Paced: refuses while the item's cooldown is closed, then arms it. |
 | `taunt_pull` | none | The holder's foe, a mob fighting someone else, turns on the holder. Always succeeds. |
+| `proc` | `effect`: `lifesteal`, `steal_pool`, `aoe_stun` or `apply_condition`, plus that effect's number params | Runs a combat effect for the holder against the event's opponent. Succeeds only when the effect did something. Only under a proc event. |
 
 The item-only nodes (`holder_asleep`, `worn`, `in_combat`, `chatter_ready`,
-`hunger_overdue`, `set_light`, `pulse_light`, `speak`, `taunt_pull`) refuse in a mob or room tree. A tree that writes light may
+`hunger_overdue`, `set_light`, `pulse_light`, `speak`, `taunt_pull`, `proc`) refuse in a mob or room tree. A tree that writes light may
 not sit on an item whose worn light is `adjustable` (the trim owns it). A
 fixture (`fixture: light` or `darkness` on the item) cannot be taken off the
 floor; a pulsing fixture must stay inside one light band
@@ -584,3 +585,19 @@ by `HungerFeedingLineCooldownRounds`). Gate ambient lines with
 `chatter_ready`; an event branch speaks straight, skipping the listener
 cap and the chance. `behaviors/items/blackrazor.yaml` and `aegis.yaml` are
 the worked examples.
+
+### Item procs (item behaviour slice 3)
+
+A proc is a branch under one of the proc events: `on_hit` and
+`on_spell_hit` reach the weapon, `on_block` the offhand, `on_grapple` the
+body armour (both sides of a hold fire), and `on_kill` every worn item.
+Wrap the chance in a `random` decorator (1 to 99; leave it out at 100, so
+nothing is drawn) and the cooldown in a `cooldown` decorator, then end in
+`proc`. A `cooldown` over a `proc` is kept on the bearer, per item
+template, so two copies share it and it survives a relog; every other
+item cooldown is the item's own. `GamePlay.ItemProcsEnabled` off stops
+every proc and draws nothing. The loader refuses a `proc` outside a proc
+event, an unknown effect, a param its effect does not read or that is not
+a number, and a `random` over a proc outside 1 to 99. The effects and
+their params are in `docs/schemas/pinnacle-items.md`; `aegis.yaml`,
+`thornwall_harness.yaml` and `hollow_choir.yaml` are the worked examples.

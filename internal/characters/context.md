@@ -496,7 +496,8 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
 - **A green pool-mutation guard does not mean every pool write is routed.**
   `resources.go` is exempt as a FILE, so `Heal()`'s writes are invisible and so
   are its three production callers (`actions/combat_drain.go:126`, `:281`,
-  `hooks/item_procs.go:99`). They retire with `Heal` in U5c.
+  `behaviortree/actions_item_proc.go:213`, the lifesteal proc). They retire
+  with `Heal` in U5c.
 - **`CostCommitResult.Short()` strips only the governing skill term** for a
   partially paid autoattack, winning defence, flee, or grapple participant. The
   action still resolves and does not inherit unpaid debt.

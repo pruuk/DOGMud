@@ -12,76 +12,91 @@ spec), on branch `feature/pinnacle-stage1-engine-primitives`.
 All fields live on `ItemSpec` (`internal/items/itemspec.go`) unless
 noted otherwise.
 
-## 1. Procs (`procs:`)
+## 1. Procs (item tree `proc` branches)
+
+Since item behaviour slice 3 a proc is a branch of the item's behaviour
+tree (`behaviors/items/<name>.yaml`, named by `behavior:` on the item), not
+a `procs:` list on the item. The branch sits under a proc event, wraps the
+chance in a `random` decorator and the cooldown in a `cooldown` decorator,
+and ends in a `proc` action naming the effect and its params:
 
 ```yaml
-procs:
-  - trigger: on_hit           # on_hit | on_kill | on_block | on_grapple | on_spell_hit
-    chance: 25                # 1-100, percent per trigger event
-    cooldown_rounds: 0        # 0 = no cooldown
-    effect: lifesteal         # lifesteal | steal_pool | aoe_stun | apply_condition
-    params:
-      ratio: 0.25
+tree:
+  type: decorator
+  event: on_block          # on_hit | on_kill | on_block | on_grapple | on_spell_hit
+  mod: cooldown
+  rounds: 20               # the proc's cooldown; leave the decorator out for none
+  child:
+    type: decorator
+    mod: random
+    percent: 10            # 1-99; leave the decorator out at 100 (nothing is drawn)
+    child:
+      type: action
+      do: proc
+      effect: aoe_stun     # lifesteal | steal_pool | aoe_stun | apply_condition
 ```
 
-`Validate()` rejects unknown `trigger`/`effect` values and requires
-`chance` in 1-100 — bad data panics at boot, not at first swing.
+The tree loader refuses (and the boot panics on) a `proc` outside a proc
+event, an unknown effect, a param its effect does not read or that is not
+a number, and a `random` over a proc outside 1 to 99.
 
-**Which equipment slot is consulted, per trigger**
-(`procBearingItems` in `internal/hooks/item_procs.go`):
+**Which equipment slot each event reaches** (`fireItemProc` in
+`internal/hooks/item_proc_dispatch.go`):
 
-| Trigger        | Slot consulted |
-|----------------|----------------|
+| Event          | Slot reached |
+|----------------|--------------|
 | `on_hit`       | Weapon |
-| `on_kill`      | Weapon |
 | `on_spell_hit` | Weapon |
 | `on_block`     | Offhand |
-| `on_grapple`   | Body |
+| `on_grapple`   | Body (both sides of the hold fire, each into its own body armour) |
+| `on_kill`      | Every worn item with a tree (owner ruling S4, the reach kill lines have) |
 
-Only one item per trigger is ever consulted (the cost discipline is
-1-2 spec lookups per swing) — a proc authored on the wrong slot for
-its trigger simply never fires.
+A proc authored under an event its item's slot never hears simply never
+fires.
 
-**Gate order** (`procGateOpen`): `GamePlay.ItemProcsEnabled` kill
-switch → per-(item, proc-index) cooldown check → chance roll. The
-cooldown is marked **only when the effect actually executed** (e.g. a
-`lifesteal` proc that rolls on a 0-damage hit does not burn its
-cooldown) — see `dispatchItemProcs`'s `executed` flag.
+**Gate order.** `GamePlay.ItemProcsEnabled` first (`fireItemProc` reads it
+before running the tree, and a `random` over a proc reads it again, so a
+disabled proc draws no number on any event), then the branch's cooldown,
+then its chance. A `proc` succeeds only when the effect did something, and
+only then is the cooldown armed (a `lifesteal` on a 0-damage hit does not
+burn it).
+
+**The cooldown is per template, on the bearer** (ruling R1, #223). A
+`cooldown` decorator over a proc keeps its round in the holder's MiscData
+under `item_proc_cd_<itemId>_<branch path>` (`ProcCooldownDecorator`), not
+in the item's tree state, so two copies of one item share it and it
+survives a relog. Every other item cooldown stays in tree state.
 
 **`on_kill` fires once per player with damage attribution on the
 kill**, not just the killing blow (`MobDeathItemProcs` iterates
 `evt.PlayerDamage`). This is a deliberate party-friendly design
-decision, not an oversight — it also resets every such player's
+decision, not an oversight. It also resets every such player's
 Blackrazor-style hunger anchor (`pinnacle_last_kill_round`).
 
-### Per-effect `params`
+### Per-effect params
 
-- **`lifesteal`** — `{ratio: <fraction>}`. Heals the attacker
-  `ratio * damage` (floored, minimum 1 if ratio*damage rounds to 0),
-  clamped to `HealthMax` by `Character.Heal`.
-- **`steal_pool`** — `{pool: 3, amount_pct: <fraction>}`. Only
-  `pool: 3` (conviction) is wired; `1` (health) and `2` (stamina) are
-  reserved but **unimplemented** (YAGNI until an item needs them —
-  they silently no-op). `amount_pct` is a fraction of the **target's**
-  pool max, capped by what the target actually has; drains the target
-  and adds to the owner (clamped to the owner's max).
-- **`aoe_stun`** — `{}` (no params consumed; `stun_rounds` is
-  intentionally ignored — see below). Applies condition **84** (a fixed
-  1-round stagger/stun) to every hostile mob in the owner's room.
-  Non-combatants, `PlayerAttackImmune` mobs, and **any** charmed mob
-  (not just the owner's own charm) are always skipped — sparing
-  bystanders' companions, matching the `HarmArea` precedent. Mob
-  owners (no `GetUserId()`) are a no-op — no Stage-2 mob wields one of
-  these. `stun_rounds` is ignored by design: condition 84 is a fixed
-  1-round stagger baked into its own YAML (`triggercount: 1`) and
-  cannot be duration-scaled from proc params without hacking condition
-  internals; tune an aoe_stun item's strength via `chance`/
-  `cooldown_rounds` instead.
-- **`apply_condition`** — `{condition: 1, duration: <rounds>,
-  magnitude: <per-tick>}`. Only `condition: 1` (bleeding) is wired.
-  `duration` defaults to 4 rounds, `magnitude` defaults to 2 per tick,
-  when unset or < 1. Unknown condition ids no-op (cooldown not
-  burned).
+The effects are `internal/behaviortree/actions_item_proc.go`'s
+`procLifesteal`, `procStealPool`, `procAoeStun` and `procApplyCondition`,
+moved unchanged from the retired `internal/hooks/item_procs.go`.
+
+- **`lifesteal`**: `ratio`. Heals the bearer `ratio * damage` (floored,
+  minimum 1 if it rounds to 0), clamped to `HealthMax` by `Character.Heal`.
+- **`steal_pool`**: `pool: 3`, `amount_pct`. Only `pool: 3` (conviction)
+  is wired; `1` (health) and `2` (stamina) are reserved but
+  **unimplemented** (they no-op). `amount_pct` is a fraction of the
+  **target's** pool max, capped by what the target has; it drains the
+  target and adds exactly the drained amount to the bearer.
+- **`aoe_stun`**: no params consumed (`stun_rounds` is accepted and
+  ignored). Applies condition **84** (a fixed 1-round stagger) to every
+  hostile mob in the bearer's room. Non-combatants, `PlayerAttackImmune`
+  mobs and **any** charmed mob are skipped, matching the `HarmArea`
+  precedent. A mob bearer is a no-op. Condition 84 is fixed at one round
+  in its own YAML (`triggercount: 1`), so tune an aoe_stun item through its
+  branch's chance and cooldown instead.
+- **`apply_condition`**: `condition: 1`, `duration`, `magnitude`. Only
+  `condition: 1` (bleeding) is wired; each firing adds a stack. `duration`
+  defaults to 4 rounds and `magnitude` to 2 per tick when unset or below
+  1. Unknown condition ids no-op (the cooldown is not armed).
 
 ## 2. Pool reservations
 
@@ -277,7 +292,7 @@ special-case branch never fires. Drinking it:
 | Knob | Location | Default | Purpose |
 |------|----------|---------|---------|
 | `GamePlay.PinnacleItemsEnabled` | config.gameplay.go | `true` | Master toggle for the whole per-round pinnacle tick (hunger/ambient/mutation-drip); `pinnacleUserTick` early-returns entirely when off. It also silences item tree voices: `chatter_ready`, `speak` and `taunt_pull` each check it. |
-| `GamePlay.ItemProcsEnabled` | config.gameplay.go | `true` | Kill switch for proc firing (`on_hit`/`on_block`/etc.); checked in `procGateOpen`. |
+| `GamePlay.ItemProcsEnabled` | config.gameplay.go | `true` | Kill switch for proc firing (`on_hit`/`on_block`/etc.); read by `fireItemProc`, `proc` and a `random` over a proc, so a disabled proc draws nothing. |
 | `Balance.BandolierAttuneRounds` | config.balance.go | `100` | Re-attunement cooldown length after bandolier contents change. |
 | `Balance.ItemChatterQuietCooldownRounds` / `...ChancePct` | config.balance.go | `40` / `10` | A quiet item tree's rounds between lines and chance on an open round. |
 | `Balance.ItemChatterNormalCooldownRounds` / `...ChancePct` | config.balance.go | `20` / `15` | The same for a normal tree (the default level; the shipped voices). |
@@ -296,7 +311,8 @@ YAML (numeric values round-trip through YAML as `int`/`int64`/
 
 | Key | Set by | Meaning |
 |-----|--------|---------|
-| `pinnacle_proc_cd_<itemId>_<procIdx>` | `markProcCooldown` | Round at which this item's Nth proc may fire again. |
+| `item_proc_cd_<itemId>_<branch path>` | `ProcCooldownDecorator` (behaviortree) | Round at which this item template's proc branch may fire again (ruling R1: per template, shared by copies, kept across relog). |
+| `pinnacle_proc_cd_<itemId>_<procIdx>` | (retired) | Inert in old saves: the proc cooldown moved to `item_proc_cd_*` in item behaviour slice 3, so a cooldown running at that deploy starts fresh once. |
 | `pinnacle_last_kill_round` | `MobDeathItemProcs` | Last round this player got damage-attribution credit on a kill (drives hunger reset). |
 | `pinnacle_hunger_anchor` | `tickHunger` | Round the current hunger weapon's clock is anchored to. |
 | `pinnacle_hunger_msg_next_round` | `tickHunger` | Cooldown gate for the repeated feeding message. |
@@ -305,9 +321,9 @@ YAML (numeric values round-trip through YAML as `int`/`int64`/
 | `pinnacle_bandolier_fingerprint` | `tickAmbientPotions` | Last-seen `beltId:potionId,potionId,...` fingerprint, used to detect any content change. |
 | `pinnacle_voice_next_round` | (retired) | Inert in old saves: the voice cooldown is item tree state since item behaviour slice 2. |
 
-Cooldown keys (`pinnacle_proc_cd_*` in particular) are **intentionally
+Cooldown keys (`item_proc_cd_*` in particular) are **intentionally
 never pruned** when an item is unequipped or lost — the key space is
-bounded (per item id x proc index) and a stale cooldown is harmless
+bounded (per item id x proc branch) and a stale cooldown is harmless
 (it just means that exact item, if re-equipped, resumes mid-cooldown
 rather than fresh). This is a deliberate simplicity trade-off, not an
 oversight.
@@ -333,13 +349,13 @@ starting values; combat/economy tuning is a later stage.
 |----|------|-------------|----------------------------------------|-----------------|
 | 40181 | Phial of Second Birth | consumable (potion) | `40181-phial_of_second_birth.yaml` | remort (`drink.go` hardcodes id 40181 → `ScourMutations` + rarity-floored grant) |
 | 40182 | Vitalis Bandolier | belt | `40182-vitalis_bandolier.yaml` | `preserves_contents`, `ambient_potions`, `is_bandolier`/`bandolier_capacity` |
-| 40183 | The Blackrazor | weapon (2H slashing) | `40183-the_blackrazor.yaml` | `reserve_health_pct`, `hunger_rounds`/`hunger_drain_pct`, `procs` (on_hit lifesteal), `behavior: blackrazor` (voice, slice 2) |
+| 40183 | The Blackrazor | weapon (2H slashing) | `40183-the_blackrazor.yaml` | `reserve_health_pct`, `hunger_rounds`/`hunger_drain_pct`, `behavior: blackrazor` (voice, slice 2; on_hit lifesteal proc, slice 3) |
 | 40184 | Wayfarer's Bottomless Pack | back | `40184-wayfarers_bottomless_pack.yaml` | `weight_reduction` (0.99) |
-| 40185 | Aegis of Mockery | offhand (shield) | `40185-aegis_of_mockery.yaml` | `procs` (on_block aoe_stun), `behavior: aegis` (voice and taunt pull, slice 2) |
-| 40186 | Thornwall Harness | body | `40186-thornwall_harness.yaml` | `procs` (on_grapple apply_condition bleed) |
+| 40185 | Aegis of Mockery | offhand (shield) | `40185-aegis_of_mockery.yaml` | `behavior: aegis` (voice and taunt pull, slice 2; on_block aoe_stun proc, slice 3) |
+| 40186 | Thornwall Harness | body | `40186-thornwall_harness.yaml` | `behavior: thornwall_harness` (on_grapple bleed proc, slice 3) |
 | 40187 | Seething Prism | neck | `40187-seething_prism.yaml` | `reserve_*_pct` (all three pools), `mutation_tick_interval`/`_chance`/`_rarity_floor` |
 | 40188 | Zephyr Treads | feet | `40188-zephyr_treads.yaml` | `wornconditionids: [98]`, `staminamax` statmod |
-| 40189 | Staff of the Hollow Choir | weapon (2H staff) | `40189-staff_of_the_hollow_choir.yaml` | `spell_damage_multiplier`, `procs` (on_spell_hit steal_pool), `casting`/`manifestation` statmods |
+| 40189 | Staff of the Hollow Choir | weapon (2H staff) | `40189-staff_of_the_hollow_choir.yaml` | `spell_damage_multiplier`, `behavior: hollow_choir` (on_spell_hit steal_pool proc, slice 3), `casting`/`manifestation` statmods |
 
 **Condition (worn):**
 

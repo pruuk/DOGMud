@@ -180,7 +180,10 @@ tree:
 | `player_enter` | A player enters the mob's room | `UserId` = player |
 | `item_idle` | Item trees only: once a round from the item tick (`hooks.ItemRoundTick`, lighting 5e) | `RoomId` = the item's room; the subject is `ctx.Item` |
 | `on_equip` / `on_unequip` | Item trees only: the item was put on / taken off (`hooks.ItemEquipEvents`, item behaviour slice 2) | `ctx.Item.Slot` = its slot on equip, "" on removal |
-| `on_kill` | Item trees only: the holder had a hand in a kill; every worn treed item (`hooks.MobDeathItemProcs`) | `ctx.Item.Slot` = its slot |
+| `on_kill` | Item trees only: the holder had a hand in a kill; every worn treed item (`hooks.MobDeathItemProcs`); kill lines and `on_kill` procs (ruling S4) | `ctx.Item.Slot` = its slot; `Proc` nil |
+| `on_hit` / `on_spell_hit` | Item trees only: the holder's weapon hit, or its spell landed (`hooks.fireItemProc`, item behaviour slice 3) | `ctx.Item.Slot` = `weapon`; `Proc` = opponent, room, damage |
+| `on_block` | Item trees only: the holder blocked (`hooks.fireItemProc`) | `ctx.Item.Slot` = `offhand`; `Proc` |
+| `on_grapple` | Item trees only: a grapple round, each side of the hold (`hooks.fireItemProc`) | `ctx.Item.Slot` = `body`; `Proc` |
 | `on_hunger_feeding` | Item trees only: a hungry weapon fed on its holder (`hooks.tickHunger`), paced by `HungerFeedingLineCooldownRounds` | `ctx.Item.Slot` = `weapon` |
 
 Any node may include `event: <type>` to skip that branch when the event
@@ -992,7 +995,7 @@ Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tact
 | Actions — other | `actions_dialogue.go`, `actions_quest.go`, `actions_progression.go`, `actions_mutation.go`, `actions_scout.go`, `actions_skullduggery.go` |
 | Conditions | `conditions.go`, `conditions_combat.go`, `conditions_mob.go`, `conditions_player.go`, `conditions_party.go`, `conditions_position.go`, `conditions_room.go`, `conditions_state.go`, `conditions_scout.go`, `conditions_forager.go`, `conditions_skullduggery.go`, `conditions_submission.go` |
 | Misc | `archetype_shift.go`, `room_state.go` |
-| Items (lighting 5e) | `item_engine.go`, `item_state.go`, `conditions_item.go`, `actions_item_light.go`, `item_voice.go`, `actions_item_voice.go` |
+| Items (lighting 5e) | `item_engine.go`, `item_state.go`, `conditions_item.go`, `actions_item_light.go`, `item_voice.go`, `actions_item_voice.go`, `actions_item_proc.go` |
 
 The `actions_*` / `conditions_*` split is the whole architecture: a tree is
 authored data, and extending the engine means adding a named action or
@@ -1024,7 +1027,7 @@ Items are the third subject of the engine, beside mobs and rooms (spec
   `loader.go`): `time_of_day`, `round_mod`, `random_chance`, `state_equals`,
   `state_greater_than`, `holder_asleep`, `worn`, `in_combat`, `chatter_ready`,
   `hunger_overdue`; `set_state`, `increment_state`, `decrement_state`,
-  `set_light`, `pulse_light`, `speak`, `taunt_pull`; every
+  `set_light`, `pulse_light`, `speak`, `taunt_pull`, `proc`; every
   decorator and composite. Anything else refuses with its path. The item-only
   nodes (`itemOnlyNodes`) refuse in a mob or room tree.
 - **Subject.** `EvalContext.Item *ItemSubject{UUID, ItemId, UserId,
@@ -1106,3 +1109,41 @@ the `SentientChatter*` knobs are retired.
 - **Shipped trees.** `blackrazor.yaml` and `aegis.yaml`: worn, then
   `chatter_ready`, then taunt in combat (the Aegis pulls), a hunger warning
   past 0.75 (the Blackrazor), else idle; the event branches beside it.
+
+## Item procs (item behaviour slice 3)
+
+A combat proc is an item tree branch (`actions_item_proc.go`); the
+Pinnacle proc path (`hooks/item_procs.go`, `items.ItemProc`, `procs:`,
+`ProcsFor`, the builder's proc editor) is retired.
+
+- **`proc(effect, ...)`** runs `procLifesteal`, `procStealPool`,
+  `procAoeStun` or `procApplyCondition` (moved unchanged from hooks) for
+  `itemHolder(ctx)` against `ctx.Event.Proc` (`ProcEvent{Other, Room,
+  Damage}`; nil on a kill, read as zero). The other params are the
+  effect's numbers. It returns Success only when the effect did something
+  and refuses while `ItemProcsOn()` (`GamePlay.ItemProcsEnabled`) is off.
+- **Compile.** `checkProcNodes` refuses a `proc` whose nearest `event:` is
+  not `on_hit`, `on_kill`, `on_block`, `on_grapple` or `on_spell_hit`, an
+  unknown effect, a param its effect does not read (`procEffectParams`) or
+  that is not a number, and a `random` over a proc outside 1 to 99 (X19:
+  at 100 the branch omits it, so nothing is drawn). In an item tree,
+  `compileDecorator` turns a `cooldown` whose subtree names `proc` into a
+  `ProcCooldownDecorator` and such a `random` into a `ProcRandomDecorator`.
+- **`ProcCooldownDecorator`** (Rule 22, ruling R1) keeps the round the
+  branch may fire again in the HOLDER's MiscData,
+  `item_proc_cd_<itemId>_<compile path>` (`procCooldownKey`), read through
+  `characters.MiscRound`: per template, shared by two copies, kept across a
+  relog. It arms only on Success. Every other item cooldown stays in tree
+  state.
+- **`ProcRandomDecorator`** draws only while procs are on: a kill reaches a
+  proc branch through `fireWornItemEvent`, without the dispatcher's gate.
+- **Events.** `hooks.fireItemProc` fires `on_hit`, `on_spell_hit` (weapon),
+  `on_block` (offhand) and `on_grapple` (body, both sides) into the one
+  item the event reaches, after reading `ItemProcsOn()`; `on_kill` procs
+  ride `MobDeathItemProcs`' event into every worn treed item (ruling S4).
+- **Shipped trees.** `blackrazor.yaml` (on_hit lifesteal 0.25),
+  `aegis.yaml` (on_block aoe_stun, 10%, cooldown 20),
+  `thornwall_harness.yaml` (on_grapple bleed, 50%, cooldown 5),
+  `hollow_choir.yaml` (on_spell_hit conviction steal 0.08, cooldown 3).
+  `hooks/testdata/item_proc_parity.golden` is the retired path's record;
+  `TestItemProcParity` holds the trees to it.

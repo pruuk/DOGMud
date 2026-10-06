@@ -2209,7 +2209,7 @@ here. There is no `Input_*` or `Combat_*` prefix.
 
 The remaining 39 files are shared helpers rather than handlers and carry no
 prefix at all; they are the lowercase-named ones, for example
-`combat_shared_helpers.go`, `spell_resolution.go`, `item_procs.go`,
+`combat_shared_helpers.go`, `spell_resolution.go`, `item_proc_dispatch.go`,
 `machine_resolver.go`, `tick_cause.go` (the death-cause tag a damaging
 health tick stamps; see "The damaging condition tick" above), and
 `light_spell.go` (see "Vision-scaled spells" below). `hooks.go` is in that
@@ -2259,3 +2259,22 @@ you" fallback when no tree handles it. `pinnacle_voice_next_round` is inert
 in old saves. `testdata/item_voice_parity.golden` is the Pinnacle voice
 path's 200-round record, frozen before the move; `TestItemVoiceParity`
 holds the tree path to it.
+
+**Item procs (item behaviour slice 3).** `item_procs.go` is deleted
+(`dispatchItemProcs`, `procGateOpen`, `markProcCooldown`,
+`procBearingItems`, `readMiscRound`; the four effects moved to
+`behaviortree/actions_item_proc.go`). `fireItemProc(event, owner, other,
+room, damage)` (`item_proc_dispatch.go`) reads `ItemProcsEnabled` first,
+picks the one item the event reaches (`on_hit` and `on_spell_hit` the
+weapon, `on_block` the offhand, `on_grapple` the body) and runs its tree
+with `EventContext.Proc`. Its six call sites spell their `EventType`
+literal: `NewRound_DoCombat_unified.go` (on_hit, on_block),
+`Position_GrappleTick.go` (on_grapple, both sides),
+`spell_effects.go` (on_spell_hit, two). `MobDeathItemProcs` no longer
+dispatches a separate on_kill proc: its one `on_kill` event carries kill
+lines and procs to every worn treed item (ruling S4). The Pinnacle tick
+reads MiscData rounds through `characters.MiscRound`. The proc cooldown
+key `pinnacle_proc_cd_*` is inert in old saves.
+`testdata/item_proc_parity.golden` is the retired path's record (four
+items, five events, hits, misses, cooldown windows and a probe draw each
+round); `TestItemProcParity` holds the tree path to it.
