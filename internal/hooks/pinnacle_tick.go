@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -182,8 +183,13 @@ func tickHunger(c *characters.Character, user *users.UserRecord, now uint64) {
 	// debt doesn't spam the player every round.
 	if user != nil {
 		if next, ok := readMiscRound(c.GetMiscData("pinnacle_hunger_msg_next_round")); !ok || now >= next {
-			emitVoiceLine(user, nil, spec, "on_hunger_feeding",
-				`<ansi fg="red">The blade feeds on you — a cold pull beneath your grip.</ansi>`)
+			// The weapon's tree speaks the line when it has one (item
+			// behaviour slice 2); otherwise the plain fallback goes out.
+			if !fireItemEvent(behaviortree.EventContext{EventType: "on_hunger_feeding"},
+				c.Equipment.Weapon, "weapon", c, user.UserId, 0) {
+				emitVoiceLine(user, nil, spec, "on_hunger_feeding",
+					`<ansi fg="red">The blade feeds on you — a cold pull beneath your grip.</ansi>`)
+			}
 			c.SetMiscData("pinnacle_hunger_msg_next_round",
 				now+uint64(configs.GetBalanceConfig().HungerFeedingLineCooldownRounds))
 		}

@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -22,6 +23,10 @@ func MobDeathItemProcs(e events.Event) events.ListenerReturn {
 		}
 		user.Character.SetMiscData("pinnacle_last_kill_round", util.GetRoundCount())
 		dispatchItemProcs("on_kill", user.Character, nil, nil, 0)
+
+		// Every worn treed item hears of the kill (item behaviour slice 2,
+		// ruling S3: the shield's kill lines too, not the weapon's alone).
+		fireWornItemEvent(behaviortree.EventContext{EventType: "on_kill"}, user.Character, uid, 0)
 
 		// Sentient weapons savor the kill (paced by the shared chatter cooldown,
 		// so this doesn't spam on multi-kill rounds). Sentient chatter is the
