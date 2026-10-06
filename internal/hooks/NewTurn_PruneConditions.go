@@ -50,7 +50,7 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 							}
 							if roles.Observer != "" {
 								if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-									sendConditionEndRoomText(r, takeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
+									sendConditionEndRoomText(r, rooms.TakeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
 										[]string{user.Character.GetCharacterName(false)}, user.UserId)
 								}
 							}
@@ -109,7 +109,7 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 						holderName, mob.Character.GetCharacterName(false))
 					if roles.Observer != "" {
 						if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
-							sendConditionEndRoomText(r, takeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
+							sendConditionEndRoomText(r, rooms.TakeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
 								[]string{mob.Character.GetCharacterName(false)})
 						}
 					}
@@ -122,8 +122,8 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 	}
 
 	// Every snapshot this prune did not narrate is stale: its record was
-	// revived, pruned by some other path, or silent. See endLineSnapshots.
-	clear(endLineSnapshots)
+	// revived, pruned by some other path, or silent. See rooms.endLineSnapshots.
+	rooms.ClearEndLineSnapshots()
 
 	return events.Continue
 
@@ -131,12 +131,15 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 
 // sendConditionEndRoomText sends a condition's end room line on the visual
 // channel. With a snapshot (a light or darkness record that ran out on the
-// round tick, from takeEndLineSnapshot) the line is judged against the room
-// as it was just before the record ran out: the owner rule of 2026-10-05, a
-// line announcing a change is judged by the state before it. So a light's end
-// line reaches the watchers who saw by it and not one who never could, and a
-// darkness's does not reach a watcher who was blind in it. Every other end
-// line is judged by the room as it is.
+// round tick or was cancelled, from rooms.TakeEndLineSnapshot) the line is
+// judged against the room as it was just before the record ended: the owner
+// rule of 2026-10-05, a line announcing a change is judged by the state
+// before it. So a light's end line reaches the watchers who saw by it and not
+// one who never could, and a darkness's does not reach a watcher who was
+// blind in it. Every other end line is judged by the room as it is: right
+// for a condition that is no light or darkness, and for a holder who moved
+// since; for a light or darkness removed by a path that keeps no snapshot it
+// is a known gap (see rooms.endLineSnapshots).
 //
 // names is the holder's PLAIN name. An end line may author a bare
 // {actee_plain} (shipped conditions 1 and 9 both do), which tag-based

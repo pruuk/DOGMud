@@ -1101,21 +1101,24 @@ is computed once `TickScale` reaches `hooks.setTickAmountAtApply` in
 
 `sendConditionEndRoomText(r, snap, msg, names, skip...)`
 (`NewTurn_PruneConditions.go`, #220) judges a light's or a darkness's end
-line against the room as it was just before the record ran out. The record
-expires inside `Conditions.Trigger` on the round tick, and its light stops
-counting at once, but the line goes out at the next turn's prune; judged by
-the room then, a light's line met a room already dark and a darkness's a
-room already lit. So both round ticks call `keepEndLineSnapshots(c, room)`
-just before `Trigger`: for every held light or darkness record whose
-`ExpiresOnNextTrigger(spec)` is true it stores `room.VisualSnapshot()` in
-`endLineSnapshots`, keyed by the record's pointer
-(`condition_end_snapshot.go`). The prune takes it with
-`takeEndLineSnapshot(rec, roomId)` and sends with
-`Room.SendTextVisualToSnapshot`; with none kept (a record removed some other
-way), or when the holder has moved rooms between the tick and the prune (the
-snapshot belongs to the room the record ran out in), the line is judged by
-the room as it is. The prune clears whatever it did not take, so no entry
-outlives the turn after its round.
+line against the room as it was just before the record ended. The record
+expires inside `Conditions.Trigger` on the round tick (or a player cancels
+it), and its light stops counting at once, but the line goes out at the next
+turn's prune; judged by the room then, a light's line met a room already
+dark and a darkness's a room already lit. So both round ticks call
+`keepEndLineSnapshots(c, room)` (`condition_end_snapshot.go`) just before
+`Trigger`: for every held light or darkness record whose
+`ExpiresOnNextTrigger(spec)` is true it keeps a `rooms.VisualSnapshot` with
+`rooms.KeepEndLineSnapshot`, keyed by the record's pointer; `usercommands`
+cancel keeps one with `rooms.KeepEndLineSnapshotsBeforeRemoval` before it
+removes the record. The store lives in package `rooms` so both can reach
+it. The prune takes it with `rooms.TakeEndLineSnapshot(rec, roomId)` and
+sends with `Room.SendTextVisualToSnapshot`; with none kept (a record removed
+by a path the store's doc comment lists), or when the holder has moved rooms
+between the snapshot and the prune (the snapshot belongs to the room the
+record ended in), the line is judged by the room as it is. The prune calls
+`rooms.ClearEndLineSnapshots()` for whatever it did not take, so no entry
+outlives the turn after it was kept.
 
 `sendConditionStartRoomText` (`Condition_ApplyConditions.go`, lighting plan
 5d, ruling D6 as amended by the owner on 2026-10-05) is its counterpart for

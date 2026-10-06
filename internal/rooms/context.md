@@ -24,8 +24,18 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   with the state everyone was in BEFORE the change, so take the snapshot
   first, make the change, then send. Lighting plan 5d uses it for a
   darkness's start line and its equip lines; #220 added `hood` and the end
-  line of a light or darkness that runs out (the hooks round ticks snapshot
-  the room just before the record expires, and the prune sends against it).
+  line of a light or darkness that runs out or is cancelled. Those end lines
+  go out at the next prune, after the record has stopped counting, so the
+  snapshot is kept in this package's end-line store
+  (`end_line_snapshot.go`): `KeepEndLineSnapshot(rec, roomId, snap)` keeps
+  one for a record (the hooks round ticks call it just before the Trigger the
+  record runs out on), `KeepEndLineSnapshotsBeforeRemoval(c, conditionId)`
+  snapshots the holder's room for a record about to be removed early
+  (`usercommands` cancel calls it), `TakeEndLineSnapshot(rec, roomId)` hands
+  it to the prune (nil when none was kept or the holder is now in another
+  room), and `ClearEndLineSnapshots()` drops the rest at the end of the
+  prune. The store's doc comment lists the removal paths that keep no
+  snapshot and why.
   The two as-lit senders this replaced, which judged every reader against a
   stand-in lit room, are deleted. All the
   visual senders share one per-recipient body, `deliverVisual`.
@@ -449,6 +459,7 @@ When writing hidden noun descriptions:
 |------|---------|
 | `rooms.go` | The `Room` type and its core behaviour |
 | `roommanager.go` | The room registry, load/unload, and lookup |
+| `end_line_snapshot.go` | The end-line snapshot store (#220): a `VisualSnapshot` kept per light or darkness record that ran out or was cancelled, for its end line at the prune |
 | `lighting.go` | `Room.LightLevel()`, `Room.IsLit()`, `Room.LightTerms()` (plan 3d), and the sky/lamp/mutator/carried-light and carried-darkness composition (`composeLight`, `composeLightExcluding`, `composeWith`, `carriedTerms`; darkness plan 5d) |
 | `light_trim.go` | `Room.TrimLightFor` (lighting plan 5a, darkness 5d): trims an arrival's adjustable lights and darknesses to their eyes; called from `MoveToRoom` and `AddMob` only |
 | `save_and_load.go` | Room YAML + instance-save persistence, `restoreSkipTaggedFields` |

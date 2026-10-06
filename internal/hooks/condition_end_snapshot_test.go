@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -212,11 +213,69 @@ func TestEndLineSnapshots_DoNotOutliveThePrune(t *testing.T) {
 	holder := users.GetByUserId(1)
 	require.True(t, holder.Character.Conditions.AddCondition(lanternConditionId, false))
 	expireOnNextTick(t, holder.Character.Conditions.List, lanternConditionId)
+	rec := holder.Character.Conditions.GetConditions(lanternConditionId)[0]
 
 	UserRoundTick(events.NewRound{RoundNumber: 1})
-	require.Len(t, endLineSnapshots, 1, "the tick must keep a snapshot for the expiring lantern")
+	snap := rooms.TakeEndLineSnapshot(rec, 1)
+	require.NotNil(t, snap, "the tick must keep a snapshot for the expiring lantern")
+	rooms.KeepEndLineSnapshot(rec, 1, snap) // put it back for the prune to drop
 	require.True(t, holder.Character.Conditions.AddCondition(lanternConditionId, false), "revive it before the prune")
 
 	PruneConditions(events.NewTurn{TurnNumber: 1})
-	assert.Empty(t, endLineSnapshots)
+	assert.Nil(t, rooms.TakeEndLineSnapshot(rec, 1), "the prune left an unconsumed snapshot behind")
+}
+
+// A cancelled light goes out at once, but its end line waits for the prune.
+// The watcher who saw the holder by it must still be told it went out: the
+// line is judged against the room as it was before the cancel, not the dark
+// room the prune finds. Judged by the room as it is, nobody was told.
+func TestLightEndLine_CancelledLightIsJudgedBeforeItWentOut(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedNarrationConditions()
+	defer restore()
+	darken(t, 1)
+	room := rooms.LoadRoom(1)
+	holder := users.GetByUserId(1)
+	watcher := users.GetByUserId(2)
+	require.True(t, holder.Character.Conditions.AddCondition(radianceConditionId, false))
+	require.Equal(t, messaging.SightFull, messaging.ParticipantSight(watcher.Character, room),
+		"fixture: the watcher must see by the radiance")
+
+	_, err := usercommands.Cancel("test radiance", holder, room, 0)
+	require.NoError(t, err)
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(watcher.Character, room),
+		"fixture: the room must be dark once the radiance is cancelled")
+	drainPlain(2)
+
+	PruneConditions(events.NewTurn{TurnNumber: 1})
+	assert.Equal(t, 1, countContaining(drainPlain(2), "radiance around Aliceia fades"),
+		"a watcher who saw by the cancelled light was not told it went out")
+}
+
+// The darkness side: a watcher blind inside a cancelled pall is not told it
+// thinned, though the room is lit again by the time the prune sends the line.
+func TestDarknessEndLine_CancelledDarknessIsJudgedBeforeItLifted(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedNarrationConditions()
+	defer restore()
+	darken(t, 1)
+	room := rooms.LoadRoom(1)
+	room.Lamp = rooms.LampPtr(50)
+	holder := users.GetByUserId(1)
+	watcher := users.GetByUserId(2)
+	require.True(t, holder.Character.Conditions.AddCondition(pallConditionId, false))
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(watcher.Character, room),
+		"fixture: the pall must blind the watcher")
+
+	_, err := usercommands.Cancel("test pall", holder, room, 0)
+	require.NoError(t, err)
+	require.NotEqual(t, messaging.SightNone, messaging.ParticipantSight(watcher.Character, room),
+		"fixture: the room must be lit again once the pall is cancelled")
+	drainPlain(2)
+
+	PruneConditions(events.NewTurn{TurnNumber: 1})
+	assert.Zero(t, countContaining(drainPlain(2), "thins away"),
+		"a watcher blind in the cancelled pall was told it thinned")
 }

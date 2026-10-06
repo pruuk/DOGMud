@@ -121,6 +121,10 @@ func cancelCondition(name string, user *users.UserRecord) (bool, error) {
 		if !matched {
 			continue
 		}
+		// The end line waits for the prune, but it announces a change to the
+		// room's light, so it is judged against the room as it is now,
+		// before the record stops counting (#220).
+		rooms.KeepEndLineSnapshotsBeforeRemoval(user.Character, rec.ConditionId)
 		user.Character.RemoveCondition(rec.ConditionId)
 		user.SendText(messaging.CategorySystem, `You let the spell go.`)
 		// A cancelled glow darkens the room at once; say so with this
