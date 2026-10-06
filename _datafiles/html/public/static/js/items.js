@@ -456,7 +456,6 @@
 
     // A sentient item's voice and taunt pull live in its behaviour tree
     // (behaviors/items/) since item behaviour slice 2; tree editing is #367.
-
     body.appendChild(sectionTitle("Hunger"));
     body.appendChild(ce("div", { "class": "row" }, [
       numField("Hunger rounds", "hungerRounds", detail.hungerRounds),

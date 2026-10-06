@@ -21,20 +21,20 @@ import (
 // pinnacle_tick.go — the always-on per-round layer for pinnacle items
 // (Stage 1, Task 11). Procs (item_procs.go) are event-driven off combat
 // chokepoints; THIS file is the passive upkeep that runs once per player per
-// round from UserRoundTick: hunger drain, ambient-potion conditions, aging freeze,
-// mutation drip, and sentient chatter.
+// round from UserRoundTick: hunger drain, ambient-potion conditions, aging freeze
+// and mutation drip. Sentient voices are item trees (the item tick) since slice 2.
 //
 // Per-round cost discipline: the whole thing is gated by PinnacleItemsEnabled,
 // and each sub-tick reads only the belt/weapon/worn slots it needs (GetSpec on
 // an empty slot returns a zero ItemSpec, so the flag checks short-circuit for
 // players wearing nothing pinnacle-flagged). Real cost on the common path: one
-// GetAllWornItems() slice allocation (built once here, shared by the mutation
-// and voice sub-ticks) plus a few MiscData map lookups. The bandolier
+// GetAllWornItems() slice allocation (built once here, read by the mutation
+// sub-tick) plus a few MiscData map lookups. The bandolier
 // fingerprint build only runs for players wearing an ambient_potions belt.
 //
 // NOTE (GetSpec semantics): items.Item.GetSpec() returns an ItemSpec *value*,
 // never nil (an unknown/empty item yields a zero ItemSpec). So every guard here
-// is a field check (`!spec.PreservesContents`, `spec.VoiceId == ""`), not a nil
+// is a field check (`!spec.PreservesContents`, `spec.HungerRounds <= 0`), not a nil
 // check — the plan's `spec == nil` sketch would not compile against the real API.
 
 // pinnacleUserTick runs once per player per round from UserRoundTick.
@@ -45,7 +45,7 @@ func pinnacleUserTick(user *users.UserRecord, room *rooms.Room) {
 	}
 	c := user.Character
 	now := util.GetRoundCount()
-	worn := c.GetAllWornItems() // one pass, shared by the sub-ticks below
+	worn := c.GetAllWornItems() // one pass, for the mutation sub-tick
 
 	tickPreserveContents(c)
 	tickAmbientPotions(user, now)
