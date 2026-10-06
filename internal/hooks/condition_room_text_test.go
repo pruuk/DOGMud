@@ -246,7 +246,9 @@ func TestMobConditionTriggerRoomText(t *testing.T) {
 // sent later, at the turn's prune. So a plain visual send judged sight in a
 // room that was already dark, and silenced the line for exactly the people
 // who had been seeing by that light. Found by the Task 2 review against
-// shipped condition 1, Illumination.
+// shipped condition 1, Illumination. Since #220 the round tick snapshots the
+// room just before the light runs out and the prune sends against that, so
+// these tests run the tick rather than expiring the record by hand.
 
 func TestConditionEndRoomText_LightConditionEndIsSeenByItsOwnLight_Player(t *testing.T) {
 	cleanup := seedAllRegistries()
@@ -258,10 +260,11 @@ func TestConditionEndRoomText_LightConditionEndIsSeenByItsOwnLight_Player(t *tes
 	holder := users.GetByUserId(1)
 	require.True(t, holder.Character.Conditions.AddCondition(lanternConditionId, false))
 	require.Greater(t, room.LightLevel(), 0, "the lantern must light the cave, or this test proves nothing")
-	expire(t, holder.Character.Conditions.List, lanternConditionId)
-	require.Equal(t, 0, room.LightLevel(), "the light is already out once the condition expires, before any prune")
+	expireOnNextTick(t, holder.Character.Conditions.List, lanternConditionId)
 	drainPlain(2)
 
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	require.Equal(t, 0, room.LightLevel(), "the light is already out once the condition expires, before any prune")
 	PruneConditions(events.NewTurn{TurnNumber: 1})
 	assert.Equal(t, 1, countContaining(drainPlain(2), "Aliceia's light gutters out."))
 }
@@ -278,9 +281,10 @@ func TestConditionEndRoomText_LightConditionEnd_SleeperStillGetsNothing(t *testi
 	holder := users.GetByUserId(1)
 	require.True(t, holder.Character.Conditions.AddCondition(lanternConditionId, false))
 	require.True(t, users.GetByUserId(2).Character.Conditions.AddCondition(dozeConditionId, true))
-	expire(t, holder.Character.Conditions.List, lanternConditionId)
+	expireOnNextTick(t, holder.Character.Conditions.List, lanternConditionId)
 	drainPlain(2)
 
+	UserRoundTick(events.NewRound{RoundNumber: 1})
 	PruneConditions(events.NewTurn{TurnNumber: 1})
 	assert.Equal(t, 0, countContaining(drainPlain(2), "light gutters out"))
 }
@@ -295,9 +299,10 @@ func TestConditionEndRoomText_LightConditionEndIsSeenByItsOwnLight_Mob(t *testin
 	mob := mobs.GetInstance(100)
 	require.True(t, mob.Character.Conditions.AddCondition(lanternConditionId, false))
 	require.Greater(t, room.LightLevel(), 0, "the lantern must light the cave, or this test proves nothing")
-	expire(t, mob.Character.Conditions.List, lanternConditionId)
+	expireOnNextTick(t, mob.Character.Conditions.List, lanternConditionId)
 	drainPlain(2)
 
+	tickMobConditions(mob, 100)
 	PruneConditions(events.NewTurn{TurnNumber: 1})
 	assert.Equal(t, 1, countContaining(drainPlain(2), "Skeleton's light gutters out."))
 }
@@ -328,17 +333,14 @@ func TestConditionEndRoomText_InfraredObserverDoesNotReadABareHolderName(t *test
 		"an infrared-only observer read the holder's bare name: %v", lines)
 }
 
-// TestConditionEndRoomText_LightPathHasNoShapesTier pins the structural reason
-// shipped condition 1 ("The glow surrounding {actee_plain} fades away.") does
-// not leak despite authoring a bare name: SendTextVisualAsLit judges sight
-// against litRoom{}, and ParticipantSight returns SightShapes only for an
-// UNLIT room, so no reader of that path is ever at the one tier HideNames acts
-// on. An infrared observer therefore reads the real name here, correctly, and
-// a blind or sleeping one reads nothing.
-//
-// If this test ever fails, SendTextVisualAsLit has grown a shapes tier and
-// every light condition authoring a bare _plain token became a live leak.
-func TestConditionEndRoomText_LightPathHasNoShapesTier(t *testing.T) {
+// TestConditionEndRoomText_LightEndNamesTheHolderToWhoSawThemByIt is the
+// faces side of shipped condition 1 ("The glow surrounding {actee_plain}
+// fades away."): a heat-eyed observer who saw the holder clearly by the ember
+// itself reads the name, because the line is judged against the room just
+// before the ember went out. It replaces LightPathHasNoShapesTier, which
+// pinned the old as-lit judgement; the shapes side, where the bare name is
+// hidden, is TestLightEndLine_ShapesWatcherDoesNotReadABareHolderName.
+func TestConditionEndRoomText_LightEndNamesTheHolderToWhoSawThemByIt(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	restore := seedNarrationConditions()
@@ -347,14 +349,15 @@ func TestConditionEndRoomText_LightPathHasNoShapesTier(t *testing.T) {
 	holder := users.GetByUserId(1)
 	require.True(t, holder.Character.Conditions.AddCondition(emberConditionId, false))
 	require.True(t, users.GetByUserId(2).Character.Conditions.AddCondition(heatEyesConditionId, true))
-	expire(t, holder.Character.Conditions.List, emberConditionId)
+	expireOnNextTick(t, holder.Character.Conditions.List, emberConditionId)
 	drainPlain(2)
 
+	UserRoundTick(events.NewRound{RoundNumber: 1})
 	PruneConditions(events.NewTurn{TurnNumber: 1})
 
 	lines := drainPlain(2)
 	require.Equal(t, 1, countContaining(lines, "fades away"),
 		"the light line must reach the observer, or this test proves nothing: %v", lines)
 	assert.Equal(t, 1, countContaining(lines, "Aliceia"),
-		"the lit path has no shapes tier, so the name is expected here: %v", lines)
+		"the observer saw the holder clearly by the ember, so the name is expected: %v", lines)
 }

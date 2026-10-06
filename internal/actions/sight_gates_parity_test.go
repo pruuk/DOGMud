@@ -207,9 +207,12 @@ func TestGateParity_ResolveLook(t *testing.T) {
 				assert.Equal(t, LookRoom, room.Kind, who)
 				assert.Equal(t, LookOther, creature.Kind, "%s: at shapes a creature is not named", who)
 				assert.False(t, creature.NamesCreatures, who)
-			default:
-				assert.Equal(t, LookDark, room.Kind, "%s at %s", who, light)
-				assert.Equal(t, LookDark, creature.Kind, "%s at %s", who, light)
+			case gateDark:
+				assert.Equal(t, LookTooDark, room.Kind, "%s at %s", who, light)
+				assert.Equal(t, LookTooDark, creature.Kind, "%s at %s", who, light)
+			case gateBlinded:
+				assert.Equal(t, LookBlind, room.Kind, "%s at %s", who, light)
+				assert.Equal(t, LookBlind, creature.Kind, "%s at %s", who, light)
 			}
 		}
 	}

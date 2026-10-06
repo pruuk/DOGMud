@@ -506,3 +506,96 @@ func flushBlindCombatNotices() {
 		u.SendText(messaging.CategoryCombatBlindWarning, blindCombatNoticeText)
 	}
 }
+
+// ── The once-per-fight glare notice (#319) ─────────────────────────────
+
+// glareCombatNoticeText is the once-per-fight reminder sent to a player who
+// fights in light too bright for their eyes. A dazzled fighter sees every
+// face (SightFull), so the blind notice above never speaks for them, yet
+// the glare lowers their messaging.SightMult exactly as darkness does. It
+// names the cause and the cost without a number, as the blind notice does.
+const glareCombatNoticeText = "The glare is too bright, so your attacks and defense are weaker."
+
+// roundGlareCombatants is the per-round set of player userIds who took part
+// in combat this round at SightFull while glare cost them. Membership
+// answers "fought this round" exactly as roundBlindCombatants does, and for
+// the same reason it is a bool set. Game-loop goroutine only.
+var roundGlareCombatants = map[int]bool{}
+
+// glareToldThisFight is the set of players already told in the fight they
+// are in now. Unlike the blind notice, which speaks every round, the glare
+// notice speaks once per fight: a fighter who stays in the same light
+// learns nothing new from it the second time. flushGlareCombatNotices
+// drops a player from the set once they are out of combat, which is where
+// a fight ends, so a later fight tells them again. Game-loop goroutine only.
+var glareToldThisFight = map[int]bool{}
+
+// markGlareCombatant records a player-controlled combatant who sees
+// clearly (canSeeClearly, the caller's CanSeeSightImpairedOnly verdict, as
+// markBlindCombatant takes it) while glare costs them: the bright fraction
+// of messaging.ComfortDistance is above 0 and their SightMult in the room
+// is below 1.0. Both are asked because the line makes two claims: the
+// bright fraction says the light is too bright (SightMult alone would also
+// fall for a dark ramp), and SightMult says it costs (a Balance.DazzleCap
+// of 1.0 makes glare free, and then the line would be false).
+//
+// The blind and glare notices never mark the same player in one swing:
+// this one needs canSeeClearly and markBlindCombatant needs its negation.
+func markGlareCombatant(actor actions.Actor, canSeeClearly bool) {
+	if !actor.IsPlayer() || !canSeeClearly {
+		return
+	}
+	// The same typed-nil guard as markBlindCombatant: with no room there is
+	// no light to be dazzled by.
+	room := actor.GetRoom()
+	if room == nil {
+		return
+	}
+	char := actor.GetCharacter()
+	if _, bright := messaging.ComfortDistance(char, room); bright <= 0 {
+		return
+	}
+	if messaging.SightMult(char, room) >= 1.0 {
+		return
+	}
+	roundGlareCombatants[actor.GetUserId()] = true
+}
+
+// flushGlareCombatNotices sends the glare notice to every player marked
+// this round who has not yet been told in this fight, then clears the
+// round set and forgets every player no longer in combat. Called once at
+// the end of DoCombat each round, beside flushBlindCombatNotices.
+//
+// Same category and verbosity gate as the blind notice
+// (CategoryCombatBlindWarning, suppressible at Light only; see
+// flushBlindCombatNotices for the ruling). A suppressed notice is not
+// counted as told, so a player who turns verbosity up mid-fight reads it.
+//
+// "A fight ends" is read from Character.IsInCombat at the end of the round
+// (the combat phase is back to Idle). A player who leaves combat and enters
+// a new one between two flushes is still in combat at the second flush, so
+// that reads as the same fight and is not told again; the cost of that
+// window is one notice withheld, never one repeated.
+func flushGlareCombatNotices() {
+	for userId := range roundGlareCombatants {
+		delete(roundGlareCombatants, userId)
+		if glareToldThisFight[userId] {
+			continue
+		}
+		u := users.GetByUserId(userId)
+		if u == nil {
+			// Logged off mid-round; nothing to deliver.
+			continue
+		}
+		if u.GetCombatVerbosity().Suppresses(messaging.CategoryCombatBlindWarning) {
+			continue
+		}
+		u.SendText(messaging.CategoryCombatBlindWarning, glareCombatNoticeText)
+		glareToldThisFight[userId] = true
+	}
+	for userId := range glareToldThisFight {
+		if u := users.GetByUserId(userId); u == nil || !u.Character.IsInCombat() {
+			delete(glareToldThisFight, userId)
+		}
+	}
+}

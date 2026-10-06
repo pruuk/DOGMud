@@ -343,10 +343,13 @@ Hand candidates (`handCandidates`): a two-hander only offers whole pairs, ordere
   `internal/rooms` feeds into the room's combine.
 - `EmitsLight() bool` (`light.go`): any term at all. A shut hood or a source
   trimmed to nothing does not count. It replaced the retired `lightsource` flag.
-- `DarknessTerms() []float64` (`light.go`, lighting plan 5d): `LightTerms`'
-  twin, one term per held darkness record (`Conditions.DarknessSources`). A
-  darkness is never a light term, so a darkness bearer does not `EmitsLight`:
-  no sneak beacon, no `lit` adjective, no woken sleepers.
+- A darkness record (lighting plan 5d) is never a light term, so a darkness
+  bearer does not `EmitsLight`: no sneak beacon, no `lit` adjective, no woken
+  sleepers. There is no darkness twin of `LightTerms` on `Character` (#221
+  deleted the unused one); read the records with
+  `Conditions.DarknessSources()` and `Condition.LightNow`. `internal/rooms`
+  walks `Conditions.LightAndDarknessSources()` the same way when it composes
+  a room's light.
 - `FindItemNoun(word) (noun, desc string, ok bool)` (`itemnouns.go`): an EXACT
   match on `ItemSpec.Nouns` across worn items first, then the backpack and
   bandolier. Exact on purpose: `look` runs it before item matching, and a prefix
@@ -2021,7 +2024,7 @@ disk. Grouped by what they own:
 |-------|-------|
 | Core | `character.go`, `validate.go`, `migrations.go`, `overrides.go`, `description.go`, `formattedname.go`, `actor_identity.go` |
 | Stats & progression | `progression.go`, `progression_award_resolved.go` (`AwardResolved`, the U10b-1 firing rule), `progression_notify.go` (`SetProgressionNotifier`, the injected notify-text callback), `skills.go`, `effective_stats.go`, `mobmastery.go`, `kdstats.go` |
-| Resources & timed state | `pools.go`, `reservation.go`, `resources.go`, `cooldowns.go`, `conditions.go` (holds `Character.AddCondition`, `AddConditionScaled` and the `AddConditionMagnitude` writer door), `sight.go`, `vision.go` (`NightVisionStrength`, `InfraReach`, the window model's two observer numbers), `light.go` (`LightTerms`, `EmitsLight`, plan 5a; `DarknessTerms`, plan 5d) |
+| Resources & timed state | `pools.go`, `reservation.go`, `resources.go`, `cooldowns.go`, `conditions.go` (holds `Character.AddCondition`, `AddConditionScaled` and the `AddConditionMagnitude` writer door), `sight.go`, `vision.go` (`NightVisionStrength`, `InfraReach`, the window model's two observer numbers), `light.go` (`LightTerms`, `EmitsLight`, plan 5a) |
 | Inventory & gear | `inventory.go`, `inventory_handle.go`, `itemnouns.go` (`FindItemNoun`, plan 5a), `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go`, `migrate_detuned_bows.go` |
 | Combat | `combat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go`, `engagement_storage.go` (was `combat_state_compat.go`; renamed by U12c-2 when the struct it kept compatible was deleted), `flee_admission.go` (`FleeAdmission`, `PublishFleeAdmission`, `TakeFleeAdmission`, `CancelFleeAdmission`, slice 4a) |
 | Casting | `cast_helpers.go`, `spells.go` |

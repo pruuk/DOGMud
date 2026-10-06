@@ -270,14 +270,14 @@ func (r *Room) SendText(cat messaging.Category, txt string, excludeUserIds ...in
 // is computed via messaging.CanSeeClearly / CanSeeShapes; infrared
 // observers get an anonymized render.
 func (r *Room) SendTextVisual(cat messaging.Category, txt string, excludeUserIds ...int) {
-	r.sendTextVisualJudgedBy(r, cat, txt, nil, false, excludeUserIds...)
+	r.sendTextVisualJudgedBy(cat, txt, nil, false, excludeUserIds...)
 }
 
 // SendTextVisualHidingNames is SendTextVisual for a line that names the
 // parties to an event: an observer who makes out shapes only reads each of
 // names as "a figure". It is the observer half of messaging.SendTrio.
 func (r *Room) SendTextVisualHidingNames(cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
-	r.sendTextVisualJudgedBy(r, cat, txt, names, false, excludeUserIds...)
+	r.sendTextVisualJudgedBy(cat, txt, names, false, excludeUserIds...)
 }
 
 // SendVisualCommunicationHidingNames is SendTextVisualHidingNames for a
@@ -286,7 +286,7 @@ func (r *Room) SendTextVisualHidingNames(cat messaging.Category, txt string, nam
 // so the Deafened moderation filter spares a deafened player. Only the shared
 // bodies in internal/actions call it (speech_wrapper_guard_test.go).
 func (r *Room) SendVisualCommunicationHidingNames(cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
-	r.sendTextVisualJudgedBy(r, cat, txt, names, true, excludeUserIds...)
+	r.sendTextVisualJudgedBy(cat, txt, names, true, excludeUserIds...)
 }
 
 // SendTextHidingNames is SendText for an authored line that names who made
@@ -352,49 +352,15 @@ func (r *Room) ParticipantSight(userId int) messaging.SightDecision {
 	return messaging.ParticipantSight(u.Character, r)
 }
 
-// SendTextVisualAsLit delivers a sight-gated message judged as if the room
-// were lit. Use it ONLY for an event that is itself a light and whose light is
-// already gone when the line is sent: a light condition's end text ("The glow
-// surrounding X fades away"). Conditions.HasFlag stops counting a light the moment
-// its condition expires, on the round tick, but the end text goes out at the turn's
-// prune, so SendTextVisual judged a room that was already dark and silenced
-// the line for everyone who had been seeing by that light.
-//
-// It is still a sight line: blinded and sleeping observers get nothing.
-func (r *Room) SendTextVisualAsLit(cat messaging.Category, txt string, excludeUserIds ...int) {
-	r.sendTextVisualJudgedBy(litRoom{}, cat, txt, nil, false, excludeUserIds...)
-}
-
-// SendTextVisualAsLitHidingNames is SendTextVisualAsLit for a line that names
-// the parties to an event.
-//
-// ⚠️ NO READER OF THIS PATH IS EVER AT SightShapes, so names is never
-// consulted today: litRoom{} reports the room lit, and ParticipantSight only
-// returns SightShapes for an unblinded observer in an UNLIT room. It exists so
-// that the light and non-light end-text paths are threaded identically, and so
-// that if SendTextVisualAsLit ever grows a shapes tier, the names are already
-// there rather than newly missing. TestConditionEndRoomText_LightPathHasNoShapesTier
-// pins the reason.
-func (r *Room) SendTextVisualAsLitHidingNames(cat messaging.Category, txt string, names []string, excludeUserIds ...int) {
-	r.sendTextVisualJudgedBy(litRoom{}, cat, txt, names, false, excludeUserIds...)
-}
-
-// litRoom is a messaging.RoomVisibility test stand-in that always reports a
-// lit room. 60 is not a scale constant (LightLevel now computes a continuous
-// value; there is no fixed point to name), it is simply a value that sits at
-// or above LightDimBelow (default 50) and below LightExitsAbove (default 65),
-// so ParticipantSight reads it as SightFull for the room itself.
-type litRoom struct{}
-
-func (litRoom) LightLevel() int { return 60 }
-
-// sendTextVisualJudgedBy is SendTextVisual with the lighting it judges sight
-// against passed in, so SendTextVisualAsLit shares one delivery path. names,
-// when given, are hidden from an observer who makes out shapes only, including
-// bare names Anonymize cannot see. communication marks every message as player
-// chatter for the Deafened filter; only SendVisualCommunicationHidingNames
-// sets it.
-func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat messaging.Category, txt string, names []string, communication bool, excludeUserIds ...int) {
+// sendTextVisualJudgedBy is the one delivery body of the visual senders that
+// judge each reader by the room as it is now. A line announcing a change to
+// the room's light is judged by the moment before instead, through
+// VisualSnapshot and SendTextVisualToSnapshot (#220 retired the as-lit
+// senders that used to share this body). names, when given, are hidden from
+// an observer who makes out shapes only, including bare names Anonymize
+// cannot see. communication marks every message as player chatter for the
+// Deafened filter; only SendVisualCommunicationHidingNames sets it.
+func (r *Room) sendTextVisualJudgedBy(cat messaging.Category, txt string, names []string, communication bool, excludeUserIds ...int) {
 	for _, uid := range r.GetPlayers() {
 		if excluded(uid, excludeUserIds) {
 			continue
@@ -403,7 +369,7 @@ func (r *Room) sendTextVisualJudgedBy(lighting messaging.RoomVisibility, cat mes
 		if u == nil {
 			continue
 		}
-		deliverVisual(u, visualDecision(u.Character, lighting), cat, txt, names, communication)
+		deliverVisual(u, visualDecision(u.Character, r), cat, txt, names, communication)
 	}
 }
 

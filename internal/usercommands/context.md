@@ -31,7 +31,17 @@ The `internal/usercommands` package implements the complete command system for p
     shut or open the hood of the `adjustable` light in the `Light` slot. A
     hooded record stays held and lit but sheds nothing (`Condition.Hooded`).
     `hoodedLight` sends its own refusal and tells an empty slot apart from a
-    light with no hood.
+    light with no hood. `Hood` takes `room.VisualSnapshot()` before setting
+    `Hooded` and sends the room line with `SendTextVisualToSnapshot`, so it
+    is judged by what each watcher could see just before the light went
+    (#220): it reaches those who saw by the lantern and nobody who could not.
+    `Unhood` takes the same snapshot before `ResetLight` and splits the room
+    line by it (owner ruling 2026-10-06): a watcher who could see before
+    (not `SightNone`) reads "throws back the hood", one who could not reads
+    "A light flares to life, revealing <name> standing there, holding a
+    lantern." Both are judged after the light is back (`SendTextVisual`,
+    `SendTextVisualHidingNames`), so a watcher who still sees nothing gets
+    neither and shapes read "a figure".
   - `cancel <spell>` (`cancel.go`: `Cancel`, `cancelCondition`,
     `cancelNameMatches`): an activity in progress ALWAYS wins, whatever the
     argument; only a free user reaches `cancelCondition`, which ends the first
@@ -39,7 +49,10 @@ The `internal/usercommands` package implements the complete command system for p
     `conditions.Cancellable` and whose condition name, or a granting spell's
     id, alias or name, matches exactly or by a prefix of at least
     `cancelMinPrefix` (3) characters. A spell whose condition is not held can
-    never be reached.
+    never be reached. Before a light or darkness record is removed,
+    `rooms.KeepEndLineSnapshotsBeforeRemoval` keeps the room's snapshot, so
+    its end line at the prune is judged by what each watcher could see just
+    before it went out (#220).
   - `look` (`look.go`) tries `Character.FindItemNoun` (exact noun on a worn or
     carried item) BEFORE item matching, so `look hood` reaches the lantern's
     hood; looking at an item highlights its `ItemSpec.Nouns` before wrapping.
@@ -538,8 +551,11 @@ a gate.
 - **`Look`** (`look.go`): every sight rule (no-sight refusal, a creature named
   only at clear sight and only if perceived, an exit's through-sight and
   lock, the pet at clear sight) lives in `actions.ResolveLook`, shared with
-  the mob look; this function switches on `res.Kind` (`actions.LookDark`,
-  `LookRoom`, `LookCreature`, ...) and only words the answer.
+  the mob look; this function switches on `res.Kind` (`actions.LookBlind`,
+  `LookTooDark`, `LookRoom`, `LookCreature`, ...) and only words the answer.
+  `noSightRefusal` words the two no-sight kinds for `look` and `Who`: a
+  blinded looker reads "You can't see anything!", one in a room too dark
+  is told light or other eyes would help (#364).
 - **`Remove`** (`remove.go`): the `all` branch calls
   `actions.RemoveAllEquipment(actor)`, which owns the busy gate, the curse
   gate per item and one `EquipmentChange` event per removal; the wrapper

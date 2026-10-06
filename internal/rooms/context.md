@@ -15,11 +15,6 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   sight-gated. `SendTextVisual` gates each recipient by
   `messaging.CanSeeClearly` / `CanSeeShapes` and anonymizes for infrared-only
   observers. `SendTextVisualWithAudio` gives the unsighted an audio variant.
-  `SendTextVisualAsLit` judges sight as if the room were lit, and exists for one
-  case: an event that is itself a light whose light is already gone when the
-  line is sent, such as a light condition's end text (the light stops counting when
-  the condition expires, a round before the prune sends the line). Blinded and
-  sleeping observers still get nothing from it.
   `VisualSnapshot()` returns a `VisualSnapshot` (user id to
   `messaging.SightDecision`) of what every player in the room can see now;
   `SendTextVisualToSnapshot(snap, cat, txt, names, excludeUserIds...)`
@@ -28,8 +23,26 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   rule (2026-10-05): a line announcing a change to the room's light lands
   with the state everyone was in BEFORE the change, so take the snapshot
   first, make the change, then send. Lighting plan 5d uses it for a
-  darkness's start line and its equip lines. All the visual senders share
-  one per-recipient body, `deliverVisual`.
+  darkness's start line and its equip lines; #220 added `hood` and the end
+  line of a light or darkness that runs out or is cancelled. Those end lines
+  go out at the next prune, after the record has stopped counting, so the
+  snapshot is kept in this package's end-line store
+  (`end_line_snapshot.go`): `KeepEndLineSnapshot(rec, roomId, snap)` keeps
+  one for a record (the hooks round ticks call it just before the Trigger the
+  record runs out on, with `Room.EndLineRoundSnapshot()`, the one snapshot
+  of that room per round, taken before any light or darkness in it has run
+  out that round and shared by every record that runs out there that round),
+  `KeepEndLineSnapshotsBeforeRemoval(c, conditionId)`
+  snapshots the holder's room for a record about to be removed early
+  (`usercommands` cancel calls it), `TakeEndLineSnapshot(rec, roomId)` hands
+  it to the prune (nil when none was kept or the holder is now in another
+  room), and `ClearEndLineSnapshots()` drops the rest (and the round's room
+  snapshots) at the end of the prune. A watcher's decision is frozen from
+  the snapshot until the line is sent. The store's doc comment lists the
+  removal paths that keep no snapshot and why.
+  The two as-lit senders this replaced, which judged every reader against a
+  stand-in lit room, are deleted. All the
+  visual senders share one per-recipient body, `deliverVisual`.
   `SendTextVisualHidingNames` is `SendTextVisual` for a line that names an
   event's parties: a shapes-only observer reads each name as "a figure". It is
   the observer half of `messaging.SendTrio`; `ParticipantSight(userId)` is the
@@ -450,6 +463,7 @@ When writing hidden noun descriptions:
 |------|---------|
 | `rooms.go` | The `Room` type and its core behaviour |
 | `roommanager.go` | The room registry, load/unload, and lookup |
+| `end_line_snapshot.go` | The end-line snapshot store (#220): a `VisualSnapshot` kept per light or darkness record that ran out or was cancelled, for its end line at the prune |
 | `lighting.go` | `Room.LightLevel()`, `Room.IsLit()`, `Room.LightTerms()` (plan 3d), and the sky/lamp/mutator/carried-light and carried-darkness composition (`composeLight`, `composeLightExcluding`, `composeWith`, `carriedTerms`; darkness plan 5d) |
 | `light_trim.go` | `Room.TrimLightFor` (lighting plan 5a, darkness 5d): trims an arrival's adjustable lights and darknesses to their eyes; called from `MoveToRoom` and `AddMob` only |
 | `save_and_load.go` | Room YAML + instance-save persistence, `restoreSkipTaggedFields` |

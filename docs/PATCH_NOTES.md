@@ -1,5 +1,21 @@
 # DOGMud Patch Notes
 
+## 2026-10-06: Clearer in the dark
+
+- When the room is too dark for you, `look` and `who` now say so: "It is
+  too dark to see. You need light, or eyes that do not need it." If you are
+  blinded, they still say "You can't see anything!", since light will not
+  help.
+- Fighting in light too bright for your eyes now tells you, once per
+  fight, that the glare is weakening your attacks and defense. With combat
+  messages set to light, you will not see it.
+- When a lantern is hooded, or a light or a darkness runs out, the line
+  about it now reaches exactly the people who could see just before it
+  changed. You no longer read that a light went out if you could not see
+  by it, or that a darkness lifted while it still blinded you.
+- Someone standing in the dark who uncovers a lantern now appears out of
+  the gloom to those who could not see them a moment before.
+
 ## 2026-10-06: Gear that strikes back
 
 - The Blackrazor's life drain, the Aegis of Mockery's shockwave, the

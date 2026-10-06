@@ -481,18 +481,22 @@ see. `GetGoldFromFloor(actor, amount) error` (`:83`) refuses the same way
 before `FloorPickupGold`.
 
 **`look.go`** (new file, slice 5a): `ResolveLook(actor Actor, lookAt string)
-LookResolution` (`:47`) is the shared look body, in the player's exact order:
+LookResolution` (`:49`) is the shared look body, in the player's exact order:
 sight first, then no-target (the room), then a creature (resolved with the
 looker itself as `ResolveTargetOptions.Viewer`, so nothing it does not
 perceive can be named), then a sealed crate or a known room container
-(`lookNamesAnObject`, `:108`), then an exit (direction alias resolved, then
-through-sight, then lock). `LookKind` (`:11`) is `LookDark`, `LookRoom`,
-`LookCreature`, `LookExit`, `LookExitTooDark`, `LookExitLocked`, `LookOther`.
+(`lookNamesAnObject`, `:116`), then an exit (direction alias resolved, then
+through-sight, then lock). `LookKind` (`:12`) is `LookBlind`, `LookTooDark`,
+`LookRoom`, `LookCreature`, `LookExit`, `LookExitTooDark`, `LookExitLocked`,
+`LookOther`. Sight `SightNone` splits by cause (#364): `LookBlind` for a
+looker whose `Perception` is `Blinded` (the same check `ParticipantSight`
+answers `SightNone` on first), `LookTooDark` for one the room is too dark
+for, so a caller can say that light would help.
 `LookOther` is deliberately one bucket for "anything else": the crate and
 container case defers to it rather than getting its own kind, so each
 wrapper's own noun and item resolution (which differs between the player and
 a mob) runs in its own order afterward, exactly as it does today.
-`LookResolution.PetUserId` (`:38`) is set only at `NamesCreatures` (clear
+`LookResolution.PetUserId` (`:40`) is set only at `NamesCreatures` (clear
 sight) and is NOT a `LookKind`: the player resolves a pet AFTER carried items
 and room nouns, so turning it into a kind would move the pet check ahead of
 those and change look order. Each wrapper reads `PetUserId` at its own

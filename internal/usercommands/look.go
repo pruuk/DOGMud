@@ -47,8 +47,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// clear sight and only if perceived, the exit's through-sight and lock,
 	// the pet at clear sight. This function only words the answer.
 	res := actions.ResolveLook(&actions.UserActor{User: user, Room: room}, lookAt)
-	if res.Kind == actions.LookDark {
-		user.SendText(messaging.CategorySystem, `You can't see anything!`)
+	if line, refused := noSightRefusal(res.Kind); refused {
+		user.SendText(messaging.CategorySystem, line)
 		return true, nil
 	}
 	sight := res.Sight
@@ -510,6 +510,20 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	return true, nil
 
+}
+
+// noSightRefusal words the refusal of a looker who sees nothing here, shared
+// by look and who. A looker in the dark is told that light, or other eyes,
+// would help; a blinded one is not, since light would not (#364). refused is
+// false for every kind that sees something.
+func noSightRefusal(kind actions.LookKind) (line string, refused bool) {
+	switch kind {
+	case actions.LookBlind:
+		return `You can't see anything!`, true
+	case actions.LookTooDark:
+		return `It is too dark to see. You need light, or eyes that do not need it.`, true
+	}
+	return ``, false
 }
 
 // floorItemNamedInFull finds a floor item the words name in full, as more

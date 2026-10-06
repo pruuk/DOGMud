@@ -45,13 +45,22 @@ const (
 	dozeConditionId      = 7007 // puts the bearer to sleep; RoundInterval 0, so it never ticks
 	shadeConditionId     = 7008 // end_observer with a BARE {actee_plain}, mirrors shipped condition 9
 	emberConditionId     = 7009 // a light source whose end_observer has a BARE {actee_plain}, mirrors shipped condition 1
+	gloomConditionId     = 7010 // a darkness source with end_observer
+	wickConditionId      = 7011 // a light too faint for normal eyes, end_observer with a BARE {actee_plain}
+	radianceConditionId  = 7012 // a cancellable light with end_observer, mirrors shipped condition 1
+	pallConditionId      = 7013 // a cancellable darkness with end_observer, mirrors shipped condition 131
 )
 
 // seedNarrationConditions installs the narration test conditions and returns the restore
 // func. Call it AFTER `defer cleanup()` and `defer` its result, so it restores
 // before the fixture does: SeedConditionsForTest replaces the whole registry.
+//
+// It also empties the end-line snapshot store (rooms.ClearEndLineSnapshots)
+// on the way in and out, so a test that ticks without pruning cannot hand a
+// later test a snapshot of the same fixture room from another fixture.
 func seedNarrationConditions() func() {
-	return conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+	rooms.ClearEndLineSnapshots()
+	restore := conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
 		glowConditionId: {ConditionId: glowConditionId, Name: "Test Glow", RoundInterval: 5, TriggerCount: 3,
 			StartRoomText: "{actee} glows."},
 		shiverConditionId: {ConditionId: shiverConditionId, Name: "Test Shiver", RoundInterval: 1, TriggerCount: 3,
@@ -77,7 +86,25 @@ func seedNarrationConditions() func() {
 		emberConditionId: {ConditionId: emberConditionId, Name: "Test Ember", RoundInterval: 5, TriggerCount: 3,
 			EndRoomText: "The glow surrounding {actee_plain} fades away.",
 			Effects:     map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 50}}},
+		gloomConditionId: {ConditionId: gloomConditionId, Name: "Test Gloom", RoundInterval: 5, TriggerCount: 3,
+			EndRoomText: "The gloom around {actee} lifts.",
+			Effects:     map[conditions.EffectKind]conditions.EffectValue{conditions.EffectDarknessStrength: {Literal: 90}}},
+		wickConditionId: {ConditionId: wickConditionId, Name: "Test Wick", RoundInterval: 5, TriggerCount: 3,
+			EndRoomText: "The wick held by {actee_plain} gutters out.",
+			Effects:     map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 10}}},
+		radianceConditionId: {ConditionId: radianceConditionId, Name: "Test Radiance", RoundInterval: 5, TriggerCount: 3,
+			Flags:       []conditions.Flag{conditions.Cancellable},
+			EndRoomText: "The radiance around {actee_plain} fades away.",
+			Effects:     map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 50}}},
+		pallConditionId: {ConditionId: pallConditionId, Name: "Test Pall", RoundInterval: 5, TriggerCount: 3,
+			Flags:       []conditions.Flag{conditions.Cancellable},
+			EndRoomText: "The pall around {actee} thins away.",
+			Effects:     map[conditions.EffectKind]conditions.EffectValue{conditions.EffectDarknessStrength: {Literal: 90}}},
 	})
+	return func() {
+		restore()
+		rooms.ClearEndLineSnapshots()
+	}
 }
 
 // darken turns a fixture room into an unlit cave. The fixture seeds `cave`

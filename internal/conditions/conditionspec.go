@@ -261,8 +261,9 @@ func (b *ConditionSpec) IsDarknessSource() bool {
 }
 
 // AnyDarknessSource reports whether any of the condition ids names a
-// darkness source: an item whose worn conditions darken its room announces
-// itself as lit (lighting plan 5d, ruling D6). Unknown ids are skipped.
+// darkness source: an item whose worn conditions darken its room has its
+// equip line judged against the room before it went on (lighting plan 5d,
+// ruling D6 as amended 2026-10-05). Unknown ids are skipped.
 func AnyDarknessSource(conditionIds []int) bool {
 	for _, id := range conditionIds {
 		if spec := GetConditionSpec(id); spec != nil && spec.IsDarknessSource() {

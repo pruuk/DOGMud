@@ -959,14 +959,15 @@ var observerIdentityGuardRoots = []string{
 //	                                    and all three phases pass that same
 //	                                    holder plain name to HideNames: start
 //	                                    Condition_ApplyConditions.go:179,
-//	                                    trigger NewRound_UserRoundTick.go:302
-//	                                    and NewRound_MobRoundTick.go:287, end
+//	                                    trigger UserRoundTick
+//	                                    and MobRoundTick, end
 //	                                    sendConditionEndRoomText
-//	                                    (NewTurn_PruneConditions.go:137).
-//	                                    1-illumination.yaml is safe for a
-//	                                    second reason as well: its light flag
-//	                                    routes it through SendTextVisualAsLit,
-//	                                    which has no SightShapes tier at all.
+//	                                    (NewTurn_PruneConditions.go), which
+//	                                    since #220 judges a light's or a
+//	                                    darkness's end line against a snapshot
+//	                                    of the room before it ran out, shapes
+//	                                    tier included, so 1-illumination.yaml
+//	                                    relies on HideNames like the rest.
 //	                                    inObserverRole was widened from an
 //	                                    exact "observer"/"remote_observer"
 //	                                    match to a suffix match, because
@@ -1014,12 +1015,12 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"defense-messages/counter-defy.yaml":  true,
 	// Conditions: all three narration phases pass the holder's plain name
 	// into HideNames (start Condition_ApplyConditions.go:179, trigger
-	// NewRound_UserRoundTick.go:302 and NewRound_MobRoundTick.go:287, end
+	// UserRoundTick and MobRoundTick, end
 	// sendConditionEndRoomText). Applies to the store's every
 	// name-referencing observer line, not only the ones that author a
 	// `_plain` token; see the doc comment above.
 	"conditions/0-meditating.yaml":         true,
-	"conditions/1-illumination.yaml":       true, // also routed through SendTextVisualAsLit, which has no SightShapes tier
+	"conditions/1-illumination.yaml":       true, // a light: its end line is judged against the room before it ran out (#220)
 	"conditions/2-stunned.yaml":            true,
 	"conditions/3-blinded.yaml":            true,
 	"conditions/9-hidden.yaml":             true,

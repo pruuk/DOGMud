@@ -932,9 +932,10 @@ medium / light). Touch-points live in `dispatchCritAndMessaging`
   booleans (`srcCanSee`/`tgtCanSee`) that section already computes.
   Shapes-only viewers are included, not just fully blind ones: the
   notice keys on the sight VERDICT, while the score rides the sight ramp
-  (lighting plan 5b, `internal/combat/context.md`). Dazzle has its own
-  plan 3d notices, so a dazzled combatant with full sight gets no blind
-  notice, by design. Membership in this set is
+  (lighting plan 5b, `internal/combat/context.md`), and only when the
+  player's `messaging.SightMult` in the room is below 1.0 (lighting plan
+  5c). A dazzled combatant with full sight gets no blind notice, by
+  design: the glare notice below is theirs. Membership in this set is
   the "fought this round" signal; `roundTallies` cannot serve that role
   because it only contains Light-verbosity viewers who could ALSO see
   clearly (recording is skipped for a blind participant precisely to
@@ -943,11 +944,23 @@ medium / light). Touch-points live in `dispatchCritAndMessaging`
   `DoCombat` beside `flushCombatTallies`, sends
   `messaging.CategoryCombatBlindWarning` once per blind combatant and
   clears the set. Not floor-protected: it goes through the viewer's
-  ordinary `Verbosity.Suppresses` gate, but the category is
-  deliberately absent from both suppression tables (see
-  `internal/messaging/verbosity.go`), so it currently passes at every
-  verbosity level; it is the only combat text a blind Light-verbosity
-  combatant receives at all.
+  ordinary `Verbosity.Suppresses` gate, and the category is in
+  `suppressibleAtLight` only (`internal/messaging/verbosity.go`, owner
+  ruling): it passes at Full and Medium and is suppressed at Light.
+- **`markGlareCombatant` / `flushGlareCombatNotices`** (#319): the blind
+  notice's twin for glare. A dazzled fighter is `SightFull`, so the blind
+  notice never speaks for them, yet glare lowers their `SightMult` all the
+  same. `markGlareCombatant`, called beside `markBlindCombatant` in
+  `dispatchCritAndMessaging` with the same verdicts, records a player who
+  sees clearly while `messaging.ComfortDistance`'s bright fraction is above
+  0 and `SightMult` is below 1.0 (`roundGlareCombatants`).
+  `flushGlareCombatNotices`, called right after `flushBlindCombatNotices` at
+  the end of `DoCombat`, sends `glareCombatNoticeText` ("The glare is too
+  bright, so your attacks and defense are weaker.") on the same category and
+  verbosity gate, but ONCE PER FIGHT: `glareToldThisFight` remembers who was
+  told, and the flush forgets every player no longer
+  `Character.IsInCombat()`, so a later fight tells them again. A notice
+  suppressed at Light is not counted as told.
 
 ### Attacker progression firing (U10b-1 Task 10)
 
@@ -1086,10 +1099,29 @@ is computed once `TickScale` reaches `hooks.setTickAmountAtApply` in
 `Condition_ApplyConditions`, where the record is guaranteed to exist; see
 "The damaging condition tick" below.
 
-`sendConditionEndRoomText` (`NewTurn_PruneConditions.go`) judges a light's end
-line as lit by `spec.IsLightSource()`; the judgement is per spec, so a hooded
-or trimmed-off light's end line is judged as lit too (accepted, as the retired
-flag was spec-level as well).
+`sendConditionEndRoomText(r, snap, msg, names, skip...)`
+(`NewTurn_PruneConditions.go`, #220) judges a light's or a darkness's end
+line against the room as it was just before the record ended. The record
+expires inside `Conditions.Trigger` on the round tick (or a player cancels
+it), and its light stops counting at once, but the line goes out at the next
+turn's prune; judged by the room then, a light's line met a room already
+dark and a darkness's a room already lit. So both round ticks call
+`keepEndLineSnapshots(c, room)` (`condition_end_snapshot.go`) just before
+`Trigger`: for every held light or darkness record whose
+`ExpiresOnNextTrigger(spec)` is true it keeps the room's snapshot for this
+round (`Room.EndLineRoundSnapshot()`, one per room per round, taken before
+any light or darkness there has run out, so two lights going out together
+are judged against the same moment) with `rooms.KeepEndLineSnapshot`, keyed
+by the record's pointer; `usercommands`
+cancel keeps one with `rooms.KeepEndLineSnapshotsBeforeRemoval` before it
+removes the record. The store lives in package `rooms` so both can reach
+it. The prune takes it with `rooms.TakeEndLineSnapshot(rec, roomId)` and
+sends with `Room.SendTextVisualToSnapshot`; with none kept (a record removed
+by a path the store's doc comment lists), or when the holder has moved rooms
+between the snapshot and the prune (the snapshot belongs to the room the
+record ended in), the line is judged by the room as it is. The prune calls
+`rooms.ClearEndLineSnapshots()` for whatever it did not take, so no entry
+outlives the turn after it was kept.
 
 `sendConditionStartRoomText` (`Condition_ApplyConditions.go`, lighting plan
 5d, ruling D6 as amended by the owner on 2026-10-05) is its counterpart for

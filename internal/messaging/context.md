@@ -60,7 +60,8 @@ Types and constants:
   the per-round compact tally emitted by the light-verbosity path, and
   `CategoryCombatBlindWarning` for the per-round "you can't see clearly"
   notice, M4d PR 2 Task 4, sent by `internal/hooks`'
-  `flushBlindCombatNotices`). `CategoryCombatBlindWarning` is in
+  `flushBlindCombatNotices`, and for the once-per-fight glare notice, #319,
+  sent by `flushGlareCombatNotices`). `CategoryCombatBlindWarning` is in
   `verbosity.go`'s `suppressibleAtLight` only (owner ruling, M4d PR 2
   followup): suppressible at Light, not at Medium, since at Medium the
   player still reads the swing prose the notice explains, while Light is

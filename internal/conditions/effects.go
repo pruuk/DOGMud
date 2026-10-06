@@ -44,8 +44,8 @@ const (
 	// spell (lighting plan 5d, ruling D1). It is a light record with
 	// darkening polarity: it shares the record's trim state (LightTrim,
 	// LightOutput, ResetLight) and is read through LightMax and LightNow, but
-	// IsLightSource stays false for it, so EmitsLight, hood, the as-lit end
-	// line and every other light reader exclude it by construction. Read
+	// IsLightSource stays false for it, so EmitsLight, hood and every other
+	// light reader exclude it by construction. Read
 	// through Conditions.DarknessSources, never Effect().
 	EffectDarknessStrength EffectKind = `darkness_strength`
 )
