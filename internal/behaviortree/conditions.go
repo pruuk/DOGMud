@@ -59,6 +59,9 @@ func init() {
 	conditionRegistry["holder_asleep"] = condHolderAsleep
 	conditionRegistry["worn"] = condWorn
 	conditionRegistry["in_combat"] = condInCombat
+	// Item voices (item behaviour slice 2)
+	conditionRegistry["chatter_ready"] = condChatterReady
+	conditionRegistry["hunger_overdue"] = condHungerOverdue
 }
 
 // LookupCondition returns the condition function for the given name,

@@ -108,6 +108,9 @@ func loadItemTreeDef(data []byte) (Node, *ItemVoice, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	if err := checkSpeakNodes(def.Tree, voice, itemRootLabel); err != nil {
+		return nil, nil, err
+	}
 	node, err := compileNode(def.Tree, itemRootLabel)
 	if err != nil {
 		return nil, nil, err
@@ -134,6 +137,8 @@ var (
 		"holder_asleep":      true,
 		"worn":               true,
 		"in_combat":          true,
+		"chatter_ready":      true,
+		"hunger_overdue":     true,
 	}
 	itemSafeActions = map[string]bool{
 		"set_state":       true,
@@ -141,15 +146,21 @@ var (
 		"decrement_state": true,
 		"set_light":       true,
 		"pulse_light":     true,
+		"speak":           true,
+		"taunt_pull":      true,
 	}
 	// itemOnlyNodes need an item subject, so a mob or room tree may not
 	// name them.
 	itemOnlyNodes = map[string]bool{
-		"holder_asleep": true,
-		"worn":          true,
-		"in_combat":     true,
-		"set_light":     true,
-		"pulse_light":   true,
+		"holder_asleep":  true,
+		"worn":           true,
+		"in_combat":      true,
+		"set_light":      true,
+		"pulse_light":    true,
+		"chatter_ready":  true,
+		"hunger_overdue": true,
+		"speak":          true,
+		"taunt_pull":     true,
 	}
 )
 

@@ -17,18 +17,19 @@ import (
 // could pass the default picker and consume a global random draw per
 // narrated phase (see narration.FirstPicker), which no golden can see.
 var narrationRenderCallers = map[string]string{
-	"internal/combat/grapple_narration.go":    "Kind A: grapple's crit-failure and disarm events, the special-move store's only internal/combat consumer (both are shared with internal/mobcommands/usercommands twins, so they cannot live in move_narration.go without a cycle) (M4e-1)",
-	"internal/combat/taunt_messages.go":       "Kind A: the taunt store's coordinated triad",
-	"internal/gossip/gossip.go":               "Kind A: gossip template pools, single role (the gossiping NPC)",
-	"internal/grapplemessaging/render.go":     "Kind A: the grapple store's coordinated triad",
-	"internal/items/defensive_messages.go":    "Kind A: the defence store's coordinated triad",
-	"internal/items/attack_messages.go":       "Kind A: the combat-message store's coordinated triad and ranged quartet (M3 item 8)",
-	"internal/itemvoices/itemvoices.go":       "Kind A: sentient item voices, single role",
-	"internal/lightnotice/store.go":           "Kind A: light-band change notices, single role (the observer is told); the default picker is deliberate, a notice is rare and variety is the point (lighting plan 3d)",
-	"internal/mobcommands/move_narration.go":  "Kind A: the special-move store's per-event triad, shared call-site helper for kick and the twelve mob verbs after it (M4e-1 Task 7)",
-	"internal/usercommands/move_narration.go": "Kind A: the special-move store's per-event triad, the player-side twin of mobcommands/move_narration.go, shared call-site helper for the player special-move verbs (M4e-1b)",
-	"internal/spells/casting_messages.go":     "Kind A: the caster-only casting pools",
-	"internal/textutil/narrate.go":            "the ONE door for the Kind B stores; must pass narration.FirstPicker",
+	"internal/behaviortree/actions_item_voice.go": "Kind A: item tree speech pools (item behaviour slice 2), single role (the item speaks); the default picker is deliberate, so a seeded util.Rand replays it",
+	"internal/combat/grapple_narration.go":        "Kind A: grapple's crit-failure and disarm events, the special-move store's only internal/combat consumer (both are shared with internal/mobcommands/usercommands twins, so they cannot live in move_narration.go without a cycle) (M4e-1)",
+	"internal/combat/taunt_messages.go":           "Kind A: the taunt store's coordinated triad",
+	"internal/gossip/gossip.go":                   "Kind A: gossip template pools, single role (the gossiping NPC)",
+	"internal/grapplemessaging/render.go":         "Kind A: the grapple store's coordinated triad",
+	"internal/items/defensive_messages.go":        "Kind A: the defence store's coordinated triad",
+	"internal/items/attack_messages.go":           "Kind A: the combat-message store's coordinated triad and ranged quartet (M3 item 8)",
+	"internal/itemvoices/itemvoices.go":           "Kind A: sentient item voices, single role",
+	"internal/lightnotice/store.go":               "Kind A: light-band change notices, single role (the observer is told); the default picker is deliberate, a notice is rare and variety is the point (lighting plan 3d)",
+	"internal/mobcommands/move_narration.go":      "Kind A: the special-move store's per-event triad, shared call-site helper for kick and the twelve mob verbs after it (M4e-1 Task 7)",
+	"internal/usercommands/move_narration.go":     "Kind A: the special-move store's per-event triad, the player-side twin of mobcommands/move_narration.go, shared call-site helper for the player special-move verbs (M4e-1b)",
+	"internal/spells/casting_messages.go":         "Kind A: the caster-only casting pools",
+	"internal/textutil/narrate.go":                "the ONE door for the Kind B stores; must pass narration.FirstPicker",
 
 	// The first and only entry outside internal/. Weather is a module, and
 	// modules/weather/content carries its own purity rule (arch_test.go) that

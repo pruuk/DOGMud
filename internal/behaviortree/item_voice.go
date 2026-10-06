@@ -63,6 +63,32 @@ func itemVoiceFrom(def TreeDef) (*ItemVoice, error) {
 	return &ItemVoice{Speech: def.Speech, Chatter: chatter}, nil
 }
 
+// checkSpeakNodes refuses a speak node that names a pool the tree's speech
+// lacks (voice nil: no speech at all) or an audience other than all or
+// holder, wherever the node sits.
+func checkSpeakNodes(def NodeDef, voice *ItemVoice, path string) error {
+	if def.Do == `speak` {
+		pool := getStringParam(def.Params, `pool`)
+		if voice == nil || len(voice.Speech[pool]) == 0 {
+			return fmt.Errorf("%s: speak pool %q is not in the tree's speech", path, pool)
+		}
+		switch getStringParam(def.Params, `to`) {
+		case ``, speakToAll, speakToHolder:
+		default:
+			return fmt.Errorf("%s: speak to %q: want %s or %s", path, getStringParam(def.Params, `to`), speakToAll, speakToHolder)
+		}
+	}
+	for i, ch := range def.Children {
+		if err := checkSpeakNodes(ch, voice, fmt.Sprintf("%s.%d", path, i)); err != nil {
+			return err
+		}
+	}
+	if def.Child != nil {
+		return checkSpeakNodes(*def.Child, voice, path+".child")
+	}
+	return nil
+}
+
 // refuseItemVoice is the mob, room and archetype loaders' check: only an
 // item tree has a voice.
 func refuseItemVoice(def TreeDef) error {

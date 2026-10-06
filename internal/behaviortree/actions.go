@@ -126,6 +126,9 @@ func init() {
 	// Item subject (lighting 5e): item trees only (Rule 8)
 	actionRegistry["set_light"] = actSetLight
 	actionRegistry["pulse_light"] = actPulseLight
+	// Item voices (item behaviour slice 2)
+	actionRegistry["speak"] = actSpeak
+	actionRegistry["taunt_pull"] = actTauntPull
 }
 
 // LookupAction returns the action function for the given name,
