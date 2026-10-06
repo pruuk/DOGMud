@@ -179,6 +179,9 @@ tree:
 | `mob_flee` | Mob successfully flees combat | No player context |
 | `player_enter` | A player enters the mob's room | `UserId` = player |
 | `item_idle` | Item trees only: once a round from the item tick (`hooks.ItemRoundTick`, lighting 5e) | `RoomId` = the item's room; the subject is `ctx.Item` |
+| `on_equip` / `on_unequip` | Item trees only: the item was put on / taken off (`hooks.ItemEquipEvents`, item behaviour slice 2) | `ctx.Item.Slot` = its slot on equip, "" on removal |
+| `on_kill` | Item trees only: the holder had a hand in a kill; every worn treed item (`hooks.MobDeathItemProcs`) | `ctx.Item.Slot` = its slot |
+| `on_hunger_feeding` | Item trees only: a hungry weapon fed on its holder (`hooks.tickHunger`), paced by `HungerFeedingLineCooldownRounds` | `ctx.Item.Slot` = `weapon` |
 
 Any node may include `event: <type>` to skip that branch when the event
 does not match. Nodes without an `event` field evaluate on all events.
@@ -989,7 +992,7 @@ Spec: `docs/superpowers/specs/completed/2026-05-12-mob-aliveness-2.6-sunset-tact
 | Actions — other | `actions_dialogue.go`, `actions_quest.go`, `actions_progression.go`, `actions_mutation.go`, `actions_scout.go`, `actions_skullduggery.go` |
 | Conditions | `conditions.go`, `conditions_combat.go`, `conditions_mob.go`, `conditions_player.go`, `conditions_party.go`, `conditions_position.go`, `conditions_room.go`, `conditions_state.go`, `conditions_scout.go`, `conditions_forager.go`, `conditions_skullduggery.go`, `conditions_submission.go` |
 | Misc | `archetype_shift.go`, `room_state.go` |
-| Items (lighting 5e) | `item_engine.go`, `item_state.go`, `conditions_item.go`, `actions_item_light.go` |
+| Items (lighting 5e) | `item_engine.go`, `item_state.go`, `conditions_item.go`, `actions_item_light.go`, `item_voice.go`, `actions_item_voice.go` |
 
 The `actions_*` / `conditions_*` split is the whole architecture: a tree is
 authored data, and extending the engine means adding a named action or
@@ -1011,15 +1014,17 @@ Items are the third subject of the engine, beside mobs and rooms (spec
   kind `item` and never reads `behaviors/items` as a mob zone.
 - **Boot.** `ValidateItemBehaviors()` (main.go, after items load) loads and
   compiles every named tree and returns one error naming every item whose
-  tree is missing, does not compile, or writes light on an adjustable worn
-  condition; main.go panics on it (X12, the `voice_id` precedent).
+  tree is missing, does not compile (a malformed voice included), or writes
+  light on an adjustable worn condition; main.go panics on it (X12, the
+  precedent the retired `voice_id` check set).
 - **Compile.** Item trees compile under root label `item`
   (`LoadItemTreeFromFile` / `LoadItemTreeFromBytes`), so their decorator keys
   never meet a mob's (`root`) or archetype's (`arch`). An item tree may name
   only the item-safe allowlist (`itemSafeConditions`, `itemSafeActions` in
   `loader.go`): `time_of_day`, `round_mod`, `random_chance`, `state_equals`,
-  `state_greater_than`, `holder_asleep`, `worn`, `in_combat`; `set_state`,
-  `increment_state`, `decrement_state`, `set_light`, `pulse_light`; every
+  `state_greater_than`, `holder_asleep`, `worn`, `in_combat`, `chatter_ready`,
+  `hunger_overdue`; `set_state`, `increment_state`, `decrement_state`,
+  `set_light`, `pulse_light`, `speak`, `taunt_pull`; every
   decorator and composite. Anything else refuses with its path. The item-only
   nodes (`itemOnlyNodes`) refuse in a mob or room tree.
 - **Subject.** `EvalContext.Item *ItemSubject{UUID, ItemId, UserId,
@@ -1048,5 +1053,56 @@ Items are the third subject of the engine, beside mobs and rooms (spec
   output goes to `internal/itemlight` (`full` fails there: a fixture names a
   number); anything else fails and changes nothing. `TreeWritesLight` reports
   a tree that names either.
-- **Tests.** `LoadItemTreeForTest`, `ItemBTreeStateForTest` and
-  `ResetItemBTreeStatesForTest` let other packages drive the engine.
+- **Tests.** `LoadItemTreeForTest` (installs the tree and its voice),
+  `ItemBTreeStateForTest`, `ResetItemBTreeStatesForTest` and
+  `ResetItemListenerCapsForTest` let other packages drive the engine.
+
+## Item voices (item behaviour slice 2)
+
+A sentient item's voice lives in its tree file (`item_voice.go`,
+`actions_item_voice.go`); `internal/itemvoices`, `voice_id`, `taunt_pull` and
+the `SentientChatter*` knobs are retired.
+
+- **Data.** `TreeDef.Speech map[pool][]string` and `TreeDef.Chatter`
+  (`quiet`, `normal` default, `chatty`). `loadItemTreeDef` turns them into an
+  `ItemVoice` and refuses an unknown level, a level with no speech, an empty
+  pool, a blank line, a `speak` naming a pool the tree lacks, a `speak`
+  `to:` other than `all` / `holder`, or a `paced` that is not a YAML bool.
+  `refuseItemVoice` stops a mob, room or archetype tree carrying either. The
+  engine keeps the voice beside the tree (`GetItemVoice(name)`); `speak` finds
+  it through the item's template, so `EvalContext` needs no new field.
+- **Pacing (Rule 17).** `chatter_ready` gates an AMBIENT line: it fails first
+  for an item with no holder (a floor item has nothing to speak through),
+  then needs Pinnacle on, the item's cooldown open (item state
+  `speak_next_round`), at least one player in the room and every one past
+  their listener cap (`listenerCapNext`, in memory, across every item), then
+  the level's chance, drawn LAST so a closed round draws nothing. `speak`
+  re-checks and arms the item's cooldown (`ItemChatter<Level>CooldownRounds`)
+  and, for an `item_idle` line, starts every listener's cap
+  (`ItemChatterListenerCapRounds`). An event branch (`on_equip`,
+  `on_unequip`, `on_kill`) speaks without `chatter_ready`: no cap, no chance,
+  cooldown still. `paced: false` skips the cooldown entirely (the feeding
+  line, owner ruling S1).
+- **`speak(pool, to, paced)`** picks through `narration.Render` with the
+  default picker (a seeded `util.SetRandForTest` replays it), sends a player
+  holder `<Item> says, "..."`, and with `to: all` (default) the room
+  `<Name>'s <Item> mutters, "..."` through `SendTextHidingNames` /
+  `HideSpeakerNames`: heard by everyone, the holder's name hidden at each
+  listener's sight, never deafen-filtered (spec X17, ruling 6). A mob holder
+  gets the room line only (ruling R6); a mob holder with `to: holder` has no
+  audience, so `speak` fails and arms nothing; a floor item has no voice. The
+  listener caps start only when the room line was actually sent.
+- **`taunt_pull`** (ruling R5) makes a player holder's foe, a mob fighting
+  someone else, fight the holder through `targeting.CommitTaunt`. It always
+  returns Success, so a taunt branch never falls through to another line.
+- **`hunger_overdue(fraction)`** is the Pinnacle tick's old warning state:
+  the holder's `pinnacle_hunger_anchor` more than `fraction` of the item's
+  `HungerRounds` behind.
+- **Events** fired into item trees: `item_idle` (the item tick), `on_equip` /
+  `on_unequip` (`hooks.ItemEquipEvents`, players and mobs), `on_kill`
+  (`hooks.MobDeathItemProcs`, every worn treed item, ruling S3),
+  `on_hunger_feeding` (`hooks.tickHunger`, the weapon, paced by
+  `HungerFeedingLineCooldownRounds`).
+- **Shipped trees.** `blackrazor.yaml` and `aegis.yaml`: worn, then
+  `chatter_ready`, then taunt in combat (the Aegis pulls), a hunger warning
+  past 0.75 (the Blackrazor), else idle; the event branches beside it.

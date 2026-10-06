@@ -602,3 +602,9 @@ effect to absorb into a darkness fix.
 |---|---|
 | `hooks/NewRound_DoCombat_helpers.go` `<ansi fg="red-bold"><ansi fg="%s">%s</ansi> blocks you from fleeing!</ansi>` (verdictCorrect, actor+actee) | The room line beside it moved to `uRoom.SendTextVisualHidingNames`, so it no longer registers as a phantom actee and the site drops out of the walk's candidate set. The verdict still holds on its own terms: the actor is told, the room is told, and the BLOCKER gets no line of their own. Whether the blocker should be told they blocked someone is a real question, unchanged by this slice and left where it was. |
 | `hooks/NewRound_DoCombat_helpers.go` `You flee to the <ansi fg="exit">%s</ansi> exit!` (verdictCorrect, actor+actee) | Same move, same reason. The flee is now visual: a reader who cannot see does not learn that someone broke away or which way they went, per the owner's ruling. |
+
+### Retirement from item behaviour slice 2, 2026-10-06
+
+| Retired entry | Why |
+|---|---|
+| `hooks/pinnacle_tick.go` `<ansi fg="item">%s</ansi> says, "<ansi fg="yellow">%s</ansi>"` (verdictCorrect, actor+observer) | Sentient item chatter moved into item trees: `emitVoiceLine` is deleted and the line is sent by the `speak` node (`behaviortree/actions_item_voice.go`), which tells the bearer and sends the room line through `SendTextHidingNames`, heard by everyone with the bearer's name hidden by sight. The verdict holds: an item's speech has no actee. The row for `hooks/pinnacle_tick.go:527` above is the record of the site as audited. |

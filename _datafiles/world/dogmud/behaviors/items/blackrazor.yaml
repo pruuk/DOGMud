@@ -1,5 +1,13 @@
-voiceid: blackrazor
-lines:
+# blackrazor: the Blackrazor's voice (40183; item behaviour slice 2, spec
+# Rule 18). Ambient lines while worn: a taunt in combat, a hunger warning
+# past three quarters of its hunger window, else idle chatter, paced by
+# chatter_ready (the normal level's cooldown and chance, and the listener
+# cap). Event lines on equip, removal and a kill need only the cooldown.
+# The feeding line goes to the bearer alone, paced by the hunger tick
+# (HungerFeedingLineCooldownRounds), not by the cooldown (owner ruling S1).
+notes: Ancient, vain, starving aristocrat.
+chatter: normal
+speech:
   on_equip:
     - "Ahhhh. A hand again. Do keep it moving."
     - "So. They send me another footman. Grip tighter, boy."
@@ -47,3 +55,51 @@ lines:
     - "More! Harder! I did not wake for a fair fight."
     - "Open it up. I want to see the color it keeps inside."
     - "Don't you dare miss. I am so very, very hungry."
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: item_idle
+      children:
+        - type: condition
+          check: worn
+        - type: condition
+          check: chatter_ready
+        - type: selector
+          children:
+            - type: sequence
+              children:
+                - type: condition
+                  check: in_combat
+                - type: action
+                  do: speak
+                  pool: on_taunt
+            - type: sequence
+              children:
+                - type: condition
+                  check: hunger_overdue
+                  fraction: 0.75
+                - type: action
+                  do: speak
+                  pool: on_hunger_warning
+            - type: action
+              do: speak
+              pool: on_idle
+    - type: action
+      event: on_equip
+      do: speak
+      pool: on_equip
+    - type: action
+      event: on_unequip
+      do: speak
+      pool: on_unequip
+    - type: action
+      event: on_kill
+      do: speak
+      pool: on_kill
+    - type: action
+      event: on_hunger_feeding
+      do: speak
+      pool: on_hunger_feeding
+      to: holder
+      paced: false

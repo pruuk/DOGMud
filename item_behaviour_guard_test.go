@@ -57,10 +57,8 @@ var itemSpecBehaviourFields = map[string]string{
 	"MutationTickInterval": "Pinnacle mutation drip",
 	"MutationTickChance":   "Pinnacle mutation drip",
 	"MutationRarityFloor":  "Pinnacle mutation drip",
-	"VoiceId":              "sentient voice; slice 2 moves it into speak",
 	"HungerRounds":         "the Blackrazor's hunger",
 	"HungerDrainPct":       "the Blackrazor's hunger",
-	"TauntPull":            "the Aegis's taunt pull; slice 2 makes it a tree action",
 	"Behavior":             "the item's tree: hooks reach it through behaviortree.TryItemBehavior",
 	"Fixture":              "fixed to a floor: read through items.Item.IsFixture",
 	"OnUseTrainSkill":      "use effect, the YAML replacement for JS onUse",
@@ -94,11 +92,11 @@ var itemSpecBehaviourMethods = map[string]string{
 
 // itemSpecBehaviourReadSites are the only places non-test internal/hooks
 // reads a behaviour field: "file|field". These are today's Pinnacle
-// mechanics. Slice 2 retires the VoiceId and TauntPull sites, slice 3 the
-// Procs ones; an entry nothing reads any more fails, so the list only
-// shrinks. A new site fails: put the behaviour in a tree.
+// mechanics. Slice 2 retired the VoiceId and TauntPull sites (voices are
+// item trees), slice 3 retires the Procs ones; an entry nothing reads any
+// more fails, so the list only shrinks. A new site fails: put the
+// behaviour in a tree.
 var itemSpecBehaviourReadSites = map[string]bool{
-	"MobDeath_ItemProcs.go|VoiceId":               true,
 	"PlayerSpawn_HandleJoin.go|PreservesContents": true,
 	"item_procs.go|Procs":                         true,
 	"pinnacle_tick.go|AmbientPotions":             true,
@@ -108,8 +106,6 @@ var itemSpecBehaviourReadSites = map[string]bool{
 	"pinnacle_tick.go|MutationTickChance":         true,
 	"pinnacle_tick.go|MutationTickInterval":       true,
 	"pinnacle_tick.go|PreservesContents":          true,
-	"pinnacle_tick.go|TauntPull":                  true,
-	"pinnacle_tick.go|VoiceId":                    true,
 }
 
 // (a) Rule 15, part one: every exported ItemSpec field is classified
@@ -165,8 +161,8 @@ func TestEveryItemSpecFieldIsClassifiedExactlyOnce(t *testing.T) {
 // allowlisted site. Data fields are free.
 func TestHooksReadItemBehaviourFieldsOnlyAtAllowlistedSites(t *testing.T) {
 	reads := itemSpecReadsIn(t, "./internal/hooks")
-	if len(reads["VoiceId"]) == 0 {
-		t.Fatalf("the scan found no VoiceId read: it is not seeing internal/hooks (got %v)", reads)
+	if len(reads["HungerRounds"]) == 0 {
+		t.Fatalf("the scan found no HungerRounds read: it is not seeing internal/hooks (got %v)", reads)
 	}
 	seen := map[string]bool{}
 	var problems []string

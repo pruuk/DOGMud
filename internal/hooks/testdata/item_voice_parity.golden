@@ -1,0 +1,21 @@
+## blackrazor (40183, weapon)
+2: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">I remember banquets. I remember screaming. This is neither.</ansi>"</ansi>
+25: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">Mm. Hmm. Dull. Everything here is so dreadfully dull.</ansi>"</ansi>
+45: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">I begin to consider the nearest throat. Yours is nearest.</ansi>"</ansi>
+51: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">I would rather it were someone else's. But you were here.</ansi>"</ansi>
+69: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">Yes! Closer! Let me taste what it is so proud of.</ansi>"</ansi>
+71: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">You left me no choice. I take only a little. This time.</ansi>"</ansi>
+91: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">Hold still. It is easier for us both if you hold still.</ansi>"</ansi>
+103: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">Yes! Closer! Let me taste what it is so proud of.</ansi>"</ansi>
+111: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">Hold still. It is easier for us both if you hold still.</ansi>"</ansi>
+138: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">I hunger, bearer.</ansi>"</ansi>
+165: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">Yes... YES. Another.</ansi>"</ansi>
+197: <ansi fg="system"><ansi fg="item">The Blackrazor</ansi> says, "<ansi fg="yellow">Do something. Anything. I rust with boredom, not with air.</ansi>"</ansi>
+## aegis (40185, offhand)
+2: <ansi fg="system"><ansi fg="item">Aegis of Mockery</ansi> says, "<ansi fg="yellow">Ahem. Testing. Is this thing pointed at anyone I may abuse?</ansi>"</ansi>
+25: <ansi fg="system"><ansi fg="item">Aegis of Mockery</ansi> says, "<ansi fg="yellow">Do you see this one's stance? A scarecrow would be ashamed.</ansi>"</ansi>
+45: <ansi fg="system"><ansi fg="item">Aegis of Mockery</ansi> says, "<ansi fg="yellow">Ahem. Testing. Is this thing pointed at anyone I may abuse?</ansi>"</ansi>
+70: <ansi fg="system"><ansi fg="item">Aegis of Mockery</ansi> says, "<ansi fg="yellow">You reek of defeat and, I regret to add, of yesterday's fish!</ansi>"</ansi>
+106: <ansi fg="system"><ansi fg="item">Aegis of Mockery</ansi> says, "<ansi fg="yellow">You reek of defeat and, I regret to add, of yesterday's fish!</ansi>"</ansi>
+142: <ansi fg="system"><ansi fg="item">Aegis of Mockery</ansi> says, "<ansi fg="yellow">That fellow yonder walks like a duck apologizing to a puddle.</ansi>"</ansi>
+183: <ansi fg="system"><ansi fg="item">Aegis of Mockery</ansi> says, "<ansi fg="yellow">Do you see this one's stance? A scarecrow would be ashamed.</ansi>"</ansi>

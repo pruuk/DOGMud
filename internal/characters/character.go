@@ -605,6 +605,23 @@ func (c *Character) GetMiscData(key string) any {
 	return nil
 }
 
+// MiscRound reads a round number stored in MiscData. A value saved as a
+// uint64 comes back from YAML as an int, int64 or float64, so all four are
+// read; anything else, nil included, is not a round.
+func MiscRound(v any) (uint64, bool) {
+	switch n := v.(type) {
+	case uint64:
+		return n, true
+	case int:
+		return uint64(n), true
+	case int64:
+		return uint64(n), true
+	case float64:
+		return uint64(n), true
+	}
+	return 0, false
+}
+
 func (c *Character) GetMiscDataKeys(prefixMatch ...string) []string {
 
 	if c.MiscData == nil {

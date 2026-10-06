@@ -36,19 +36,10 @@ func procCooldownKey(itemId, procIdx int) string {
 
 // readMiscRound tolerates int/uint64/float64 from yaml round-tripping —
 // MiscData persists to player YAML and numeric types are not stable across a
-// save/load cycle.
+// save/load cycle. The one reader is characters.MiscRound, which the item
+// tree nodes read too.
 func readMiscRound(v any) (uint64, bool) {
-	switch n := v.(type) {
-	case uint64:
-		return n, true
-	case int:
-		return uint64(n), true
-	case int64:
-		return uint64(n), true
-	case float64:
-		return uint64(n), true
-	}
-	return 0, false
+	return characters.MiscRound(v)
 }
 
 // procGateOpen rolls chance and checks the cooldown. It does NOT mark the

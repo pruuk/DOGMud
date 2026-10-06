@@ -135,7 +135,7 @@ var conditionApplyPathAllowlist = map[string]string{
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
 	"internal/usercommands/character.go|423":     "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
-	"internal/hooks/item_procs.go|265":           "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
+	"internal/hooks/item_procs.go|256":           "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40": "the holder is a MOB (a summoned companion), not a player",
 
 	// ── secret conditions: silence is the authored intent ───────────────────
@@ -145,8 +145,8 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/hooks/Awareness_Cascades.go|57": "condition 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",
 
 	// ── routing would narrate the wrong thing, or narrate it repeatedly ─────
-	"internal/hooks/pinnacle_tick.go|335": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
-	"internal/hooks/pinnacle_tick.go|349": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
+	"internal/hooks/pinnacle_tick.go|339": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
+	"internal/hooks/pinnacle_tick.go|353": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
 	"internal/justice/arrest.go|639":      "RestoreJailOnLogin re-applies an already-running sentence after the RemoveCondition above, so the hook would read it as a fresh application and clang the cell door shut on every login",
 
 	// ── the condition must be in place before the function returns ─────────
@@ -292,7 +292,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/actions/combat_maul.go|132":      "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_rake.go|132":      "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_throttle.go|146":  "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/hooks/item_procs.go|215":         "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
+	"internal/hooks/item_procs.go|206":         "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
 }
 
 // primitivePackages define Character.AddCondition / Conditions.AddCondition

@@ -22,8 +22,7 @@ procs:
     chance: 10
     cooldown_rounds: 20
     effect: aoe_stun
-voice_id: aegis
-taunt_pull: true
+behavior: aegis
 weight: 8.0
 rarity_tier: 82
 value: 40000

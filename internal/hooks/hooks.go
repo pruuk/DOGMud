@@ -69,6 +69,8 @@ func RegisterListeners() {
 	// a room's fixtures lit the moment the room joins the item index.
 	events.RegisterListener(events.NewRound{}, ItemRoundTick)
 	items.OnRoomHolderIndexed = EvaluateRoomFixtures
+	// Item behaviour slice 2: equip and remove fire on_equip / on_unequip.
+	events.RegisterListener(events.EquipmentChange{}, ItemEquipEvents)
 	events.RegisterListener(events.NewRound{}, LightNoticeAttention)
 	events.RegisterListener(events.MobIdle{}, HandleIdleMobs)
 	events.RegisterListener(events.NewRound{}, FerryTick)     // Ferry vessels: schedule reconcile

@@ -3,7 +3,7 @@
  * items.js — the item-template editor (admin web-building 2), a second mode of
  * the /build page. Consumes Build.Items (list) + Build.Item (detail) GMCP and
  * drives Build.Item.Create/Update/Delete. The form morphs by item type; fields
- * the form doesn't cover (procs, sentient/voice, hunger) round-trip untouched
+ * the form doesn't cover (procs, hunger, the behaviour tree) round-trip untouched
  * because the server rebuilds the spec from the loaded copy.
  */
 (function () {
@@ -424,9 +424,9 @@
 
   Panel.buildAdvancedSection = function (insp, detail, F, markDirty, field, numField, textField, checkField, selectField, hintFor) {
     var self = this;
-    var hasAdv = (detail.procs && detail.procs.length) || detail.voiceId ||
+    var hasAdv = (detail.procs && detail.procs.length) ||
       detail.reserveHealthPct || detail.reserveStaminaPct || detail.reserveConvictionPct ||
-      detail.hungerRounds || detail.hungerDrainPct || detail.tauntPull ||
+      detail.hungerRounds || detail.hungerDrainPct ||
       detail.mutationTickInterval || detail.mutationTickChance || detail.mutationRarityFloor ||
       (detail.wornConditionIds && detail.wornConditionIds.length);
     // Recompute open state only when a different item is selected; preserve the
@@ -454,10 +454,8 @@
       numField("Reserve SP", "reserveStaminaPct", detail.reserveStaminaPct, "0.05")]));
     body.appendChild(numField("Reserve CP", "reserveConvictionPct", detail.reserveConvictionPct, "0.05"));
 
-    body.appendChild(sectionTitle("Sentient"));
-    body.appendChild(selectField("Voice", "voiceId", detail.voiceId, [""].concat(detail.voices || [])));
-    body.appendChild(ce("div", { "class": "flags" }, [checkField("taunt-pull", "tauntPull", detail.tauntPull)]));
-
+    // A sentient item's voice and taunt pull live in its behaviour tree
+    // (behaviors/items/) since item behaviour slice 2; tree editing is #367.
     body.appendChild(sectionTitle("Hunger"));
     body.appendChild(ce("div", { "class": "row" }, [
       numField("Hunger rounds", "hungerRounds", detail.hungerRounds),
@@ -560,7 +558,6 @@
       bagCapacity: g("bagCapacity", 0), salvageReturns: g("salvageReturns", []), keyLockId: g("keyLockId", ""),
       procs: g("procs", []),
       reserveHealthPct: g("reserveHealthPct", 0), reserveStaminaPct: g("reserveStaminaPct", 0), reserveConvictionPct: g("reserveConvictionPct", 0),
-      voiceId: g("voiceId", ""), tauntPull: g("tauntPull", false),
       hungerRounds: g("hungerRounds", 0), hungerDrainPct: g("hungerDrainPct", 0),
       mutationTickInterval: g("mutationTickInterval", 0), mutationTickChance: g("mutationTickChance", 0), mutationRarityFloor: g("mutationRarityFloor", 0),
       wornConditionIds: g("wornConditionIds", [])

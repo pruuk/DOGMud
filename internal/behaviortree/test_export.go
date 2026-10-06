@@ -92,22 +92,27 @@ func (e *Engine) SetMobTreeForTest(mobId int, n Node) func() {
 // to drive TryItemBehavior without a behaviors/items file.
 func LoadItemTreeForTest(t *testing.T, name string, yamlText string) {
 	t.Helper()
-	node, err := LoadItemTreeFromBytes([]byte(yamlText))
+	node, voice, err := loadItemTreeDef([]byte(yamlText))
 	if err != nil {
 		t.Fatalf("LoadItemTreeForTest(%s): %v", name, err)
 	}
 	e := GetEngine()
 	e.mu.Lock()
 	prev, hadPrev := e.itemTrees[name]
-	e.itemTrees[name] = node
-	delete(e.noItemTree, name)
+	prevVoice, hadVoice := e.itemVoices[name]
 	e.mu.Unlock()
+	e.installItemTree(name, node, voice)
 	t.Cleanup(func() {
 		e.mu.Lock()
 		if hadPrev {
 			e.itemTrees[name] = prev
 		} else {
 			delete(e.itemTrees, name)
+		}
+		if hadVoice {
+			e.itemVoices[name] = prevVoice
+		} else {
+			delete(e.itemVoices, name)
 		}
 		e.mu.Unlock()
 	})

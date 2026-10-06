@@ -18,7 +18,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gossip"
 	"github.com/GoMudEngine/GoMud/internal/grapplemessaging"
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/itemvoices"
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/quests"
@@ -120,13 +119,10 @@ func TestShippedNarrationDataValidates(t *testing.T) {
 		checkFlatStore[items.ItemSubType, *items.WeaponAttackMessageGroup](t, "combat-messages", shippedWorldRoot+"/combat-messages")
 	})
 
-	t.Run("itemvoices", func(t *testing.T) {
-		// Production additionally cross-checks every ItemSpec.VoiceId against
-		// this map and panics on a dangling reference. That check needs the
-		// whole 429-file item tree loaded and is about item data, not about
-		// this store's own text, so it stays at boot.
-		checkFlatStore[string, *itemvoices.VoiceSpec](t, "itemvoices", shippedWorldRoot+"/itemvoices")
-	})
+	// Sentient item speech lives in item trees since item behaviour slice 2
+	// (behaviors/items/<tree>.yaml speech:). ValidateItemBehaviors checks
+	// every pool at boot, and TestEveryShippedItemBehaviorResolves runs it
+	// over the shipped world.
 
 	t.Run("casting", func(t *testing.T) {
 		path := shippedWorldRoot + "/casting-messages.yaml"
@@ -277,12 +273,14 @@ func TestShippedNarrationDataValidates(t *testing.T) {
 // behaviors/ (internal/behaviortree/actions_dialogue.go:40), and
 // internal/items reads `on_use_room_text`. Those are different stores in a
 // different arc. Naming the narration stores keeps them out by construction,
-// which cannot rot the way a path exemption can.
+// which cannot rot the way a path exemption can. behaviors/items is the one
+// part of behaviors/ that is a narration store: since item behaviour slice 2
+// it holds the sentient item speech pools itemvoices/ used to.
 var narrationStoreWalkRoots = []string{
 	shippedWorldRoot + "/taunt-messages",
 	shippedWorldRoot + "/combat-messages",
 	shippedWorldRoot + "/defense-messages",
-	shippedWorldRoot + "/itemvoices",
+	shippedWorldRoot + "/behaviors/items", // sentient item speech (item behaviour slice 2)
 	shippedWorldRoot + "/conditions",
 	shippedWorldRoot + "/spells",
 	shippedWorldRoot + "/quests",

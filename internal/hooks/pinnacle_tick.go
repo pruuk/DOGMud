@@ -5,17 +5,15 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/itemvoices"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
-	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -23,20 +21,20 @@ import (
 // pinnacle_tick.go — the always-on per-round layer for pinnacle items
 // (Stage 1, Task 11). Procs (item_procs.go) are event-driven off combat
 // chokepoints; THIS file is the passive upkeep that runs once per player per
-// round from UserRoundTick: hunger drain, ambient-potion conditions, aging freeze,
-// mutation drip, and sentient chatter.
+// round from UserRoundTick: hunger drain, ambient-potion conditions, aging freeze
+// and mutation drip. Sentient voices are item trees (the item tick) since slice 2.
 //
 // Per-round cost discipline: the whole thing is gated by PinnacleItemsEnabled,
 // and each sub-tick reads only the belt/weapon/worn slots it needs (GetSpec on
 // an empty slot returns a zero ItemSpec, so the flag checks short-circuit for
 // players wearing nothing pinnacle-flagged). Real cost on the common path: one
-// GetAllWornItems() slice allocation (built once here, shared by the mutation
-// and voice sub-ticks) plus a few MiscData map lookups. The bandolier
+// GetAllWornItems() slice allocation (built once here, read by the mutation
+// sub-tick) plus a few MiscData map lookups. The bandolier
 // fingerprint build only runs for players wearing an ambient_potions belt.
 //
 // NOTE (GetSpec semantics): items.Item.GetSpec() returns an ItemSpec *value*,
 // never nil (an unknown/empty item yields a zero ItemSpec). So every guard here
-// is a field check (`!spec.PreservesContents`, `spec.VoiceId == ""`), not a nil
+// is a field check (`!spec.PreservesContents`, `spec.HungerRounds <= 0`), not a nil
 // check — the plan's `spec == nil` sketch would not compile against the real API.
 
 // pinnacleUserTick runs once per player per round from UserRoundTick.
@@ -47,13 +45,14 @@ func pinnacleUserTick(user *users.UserRecord, room *rooms.Room) {
 	}
 	c := user.Character
 	now := util.GetRoundCount()
-	worn := c.GetAllWornItems() // one pass, shared by the sub-ticks below
+	worn := c.GetAllWornItems() // one pass, for the mutation sub-tick
 
 	tickPreserveContents(c)
 	tickAmbientPotions(user, now)
 	tickHunger(c, user, now)
 	tickMutationItems(user, worn, now)
-	tickVoices(user, room, worn, now)
+	// Sentient voices are item trees since item behaviour slice 2: the item
+	// tick (ItemRoundTick) speaks their ambient lines.
 }
 
 // readMiscIntSlice tolerantly reads a []int from MiscData. Like readMiscRound,
@@ -178,14 +177,19 @@ func tickHunger(c *characters.Character, user *users.UserRecord, now uint64) {
 	// applier the pool primitives can attribute to.
 	c.ApplyHarm(characters.PoolHealth, drain, state.ActorRef{})
 	// The drain repeats every overdue round, but the feeding LINE is paced by
-	// its own cooldown (reusing the chatter knob) so an ignored hunger debt
-	// doesn't spam the player every round.
+	// its own cooldown (HungerFeedingLineCooldownRounds) so an ignored hunger
+	// debt doesn't spam the player every round.
 	if user != nil {
 		if next, ok := readMiscRound(c.GetMiscData("pinnacle_hunger_msg_next_round")); !ok || now >= next {
-			emitVoiceLine(user, nil, spec, "on_hunger_feeding",
-				`<ansi fg="red">The blade feeds on you — a cold pull beneath your grip.</ansi>`)
+			// The weapon's tree speaks the line when it has one (item
+			// behaviour slice 2); otherwise the plain fallback goes out.
+			if !fireItemEvent(behaviortree.EventContext{EventType: "on_hunger_feeding"},
+				c.Equipment.Weapon, "weapon", c, user.UserId, 0) {
+				user.SendText(messaging.CategorySystem,
+					`<ansi fg="red">The blade feeds on you, a cold pull beneath your grip.</ansi>`)
+			}
 			c.SetMiscData("pinnacle_hunger_msg_next_round",
-				now+uint64(configs.GetBalanceConfig().SentientChatterCooldownRounds))
+				now+uint64(configs.GetBalanceConfig().HungerFeedingLineCooldownRounds))
 		}
 	}
 }
@@ -386,150 +390,4 @@ func revokeAmbient(c *characters.Character, applied []int) {
 	if len(applied) > 0 {
 		c.SetMiscData("pinnacle_bandolier_conditions", []int{})
 	}
-}
-
-// ── Sentient chatter (Blackrazor / Aegis voices) ────────────────────────────
-
-// pickVoiceEvent selects which voice event a worn sentient item should speak
-// this round. Pure (no side effects) so it can be unit-tested directly:
-// combat → taunt; a hungry weapon past 3/4 of its hunger window → hunger
-// warning; otherwise idle.
-func pickVoiceEvent(c *characters.Character, spec items.ItemSpec, now uint64) string {
-	if c.IsInCombat() {
-		return "on_taunt"
-	}
-	if spec.HungerRounds > 0 {
-		if anchor, ok := readMiscRound(c.GetMiscData("pinnacle_hunger_anchor")); ok {
-			if now > anchor && now-anchor > uint64(spec.HungerRounds)*3/4 {
-				return "on_hunger_warning"
-			}
-		}
-	}
-	return "on_idle"
-}
-
-// tickVoices lets sentient items speak, paced by SentientChatterCooldownRounds
-// and limited to one line per round across all worn sentient items.
-//
-// The fire chance (SentientChatterChancePct) is rolled ONCE per round (a single
-// roll gating the whole voice tick), only after we confirm a speakable line
-// exists — so quiet gear pays no RNG. This is the simpler of the two options in
-// the spec and it inherently enforces the one-line-per-round rule. worn is the
-// caller's single GetAllWornItems() pass.
-//
-// First-slot precedence is intentional: when a player wears MULTIPLE sentient
-// items, the first one in slot order with a speakable line always wins the
-// round (the later ones never roll). Dual-sentient loadouts are rare enough
-// that round-robin fairness isn't worth the bookkeeping — revisit if a second
-// wearable voice item ships.
-func tickVoices(user *users.UserRecord, room *rooms.Room, worn []items.Item, now uint64) {
-	c := user.Character
-	if next, ok := readMiscRound(c.GetMiscData("pinnacle_voice_next_round")); ok && now < next {
-		return
-	}
-	cool := uint64(configs.GetBalanceConfig().SentientChatterCooldownRounds)
-	for _, itm := range worn {
-		spec := itm.GetSpec()
-		if spec.VoiceId == "" {
-			continue
-		}
-		v := itemvoices.GetVoice(spec.VoiceId)
-		if v == nil {
-			continue
-		}
-		event := pickVoiceEvent(c, spec, now)
-		// Cheap check for authored lines (no RNG pick) before the fire gate.
-		if len(v.Lines[event]) == 0 {
-			continue
-		}
-		// Occasional chatter: one roll for the whole tick.
-		if util.Rand(100) >= int(configs.GetBalanceConfig().SentientChatterChancePct) {
-			return
-		}
-		if emitVoiceLine(user, room, spec, event, "") {
-			// The Aegis's tank loop: a taunt line also yanks the bearer's
-			// current target's aggro onto them (paced by the same cooldown
-			// that just fired the line).
-			if event == "on_taunt" && spec.TauntPull {
-				applyTauntPull(user)
-			}
-			c.SetMiscData("pinnacle_voice_next_round", now+cool)
-		}
-		return // one line per round across all sentient items
-	}
-}
-
-// applyTauntPull forces the bearer's current combat target (a mob) to aggro
-// the bearer, if it isn't already fighting them. The Aegis's tank loop: taunt
-// the mob off your ally. Uses the taunt-hold plumbing (targeting.CommitTaunt) so
-// reactive per-round re-aggro can't immediately flip the target back. No-ops
-// when the bearer isn't fighting a mob, the mob is gone/non-combatant, or the
-// mob is already fighting the bearer. The TauntPull gate lives at the call
-// site — this helper only performs the pull.
-func applyTauntPull(user *users.UserRecord) {
-	c := user.Character
-	target := c.CurrentCombatTarget()
-	if target.MobInstanceId <= 0 {
-		return
-	}
-	mob := mobs.GetInstance(target.MobInstanceId)
-	if mob == nil || mob.IsNonCombatant() {
-		return
-	}
-	if mob.Character.CurrentCombatTarget().UserId == user.UserId {
-		return // already fighting the bearer — nothing to force
-	}
-	holdRounds := int(configs.GetBalanceConfig().TauntHoldRounds)
-	targeting.CommitTaunt(&mob.Character, state.ActorRef{UserId: user.UserId}, holdRounds)
-}
-
-// tryEmitVoice emits an authored voice line for `event` from `spec` when the
-// item has a voice with an authored line and the chatter cooldown is open.
-// Silent (returns false) otherwise — no fallback. Arms the chatter cooldown on
-// a real emit. This is the cooldown-paced entry point for event-driven voice
-// lines fired OUTSIDE the per-round tick (e.g. on_kill from MobDeath); it
-// shares emitVoiceLine's formatting with tickVoices but keeps its own
-// GetRoundCount-based cooldown bookkeeping so callers don't need a round arg.
-func tryEmitVoice(user *users.UserRecord, room *rooms.Room, spec items.ItemSpec, event string) bool {
-	c := user.Character
-	now := util.GetRoundCount()
-	if next, ok := readMiscRound(c.GetMiscData("pinnacle_voice_next_round")); ok && now < next {
-		return false
-	}
-	if !emitVoiceLine(user, room, spec, event, "") {
-		return false
-	}
-	c.SetMiscData("pinnacle_voice_next_round",
-		now+uint64(configs.GetBalanceConfig().SentientChatterCooldownRounds))
-	return true
-}
-
-// emitVoiceLine sends an authored voice line for `event` from `spec` to the
-// user, and — when room != nil — a muttered visual variant to the rest of the
-// room. When the item has no voice or no authored line for the event it emits
-// `fallback` (used by tickHunger's guaranteed feeding flavor); an empty
-// fallback means "say nothing". Returns true iff something was actually sent
-// (tickVoices uses this to arm the chatter cooldown only on a real utterance).
-func emitVoiceLine(user *users.UserRecord, room *rooms.Room, spec items.ItemSpec, event, fallback string) bool {
-	line := ""
-	if spec.VoiceId != "" {
-		if v := itemvoices.GetVoice(spec.VoiceId); v != nil {
-			line = v.Line(event)
-		}
-	}
-	if line == "" {
-		if fallback == "" {
-			return false
-		}
-		user.SendText(messaging.CategorySystem, fallback)
-		return true
-	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
-		`<ansi fg="item">%s</ansi> says, "<ansi fg="yellow">%s</ansi>"`, spec.Name, line))
-	if room != nil {
-		room.SendTextVisual(messaging.CategorySystem, fmt.Sprintf(
-			`<ansi fg="username">%s</ansi>'s <ansi fg="item">%s</ansi> mutters, "<ansi fg="yellow">%s</ansi>"`,
-			user.Character.Name, spec.Name, line), user.UserId)
-	}
-	return true
 }

@@ -4,12 +4,9 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/itemvoices"
 )
 
 func TestBuildItemGet_ShipsAdvancedEnums(t *testing.T) {
-	restore := itemvoices.SeedVoicesForTest(map[string]*itemvoices.VoiceSpec{"blackrazor": {VoiceId: "blackrazor"}})
-	defer restore()
 	w := newFakeItemWorld()
 	w.specs[10005] = &items.ItemSpec{ItemId: 10005, Name: "Sword", Type: items.Weapon}
 	d, ok := buildItemGet(w.deps(), 10005)
@@ -18,9 +15,6 @@ func TestBuildItemGet_ShipsAdvancedEnums(t *testing.T) {
 	}
 	if len(d.ProcTriggers) == 0 || len(d.ProcEffects) == 0 {
 		t.Error("detail must ship proc trigger/effect enums")
-	}
-	if len(d.Voices) == 0 || d.Voices[0] != "blackrazor" {
-		t.Errorf("detail must ship the voice list, got %v", d.Voices)
 	}
 }
 
@@ -84,13 +78,13 @@ func TestBuildItemUpdate_RoundTripsFields(t *testing.T) {
 
 func TestBuildItemUpdate_RoundTripsAdvancedFields(t *testing.T) {
 	w := newFakeItemWorld()
-	w.specs[10001] = &items.ItemSpec{ItemId: 10001, Name: "Old", Type: items.Weapon, Hands: 2}
+	w.specs[10001] = &items.ItemSpec{ItemId: 10001, Name: "Old", Type: items.Weapon, Hands: 2, Behavior: "blackrazor"}
 	res := buildItemUpdate(w.deps(), itemUpdateReq{
 		ItemId: 10001, Name: "Blackrazor", Type: "weapon", Description: "d", NotSalable: true,
 		Procs: []procRow{{Trigger: "on_hit", Effect: "lifesteal", Chance: 100, CooldownRounds: 2,
 			Params: map[string]float64{"ratio": 0.25}}},
-		ReserveHealthPct: 0.25, VoiceId: "blackrazor", TauntPull: true,
-		HungerRounds: 50, HungerDrainPct: 0.01,
+		ReserveHealthPct: 0.25,
+		HungerRounds:     50, HungerDrainPct: 0.01,
 		MutationTickInterval: 10, MutationTickChance: 5, MutationRarityFloor: 3,
 		WornConditionIds: []int{7, 9},
 	})
@@ -102,7 +96,12 @@ func TestBuildItemUpdate_RoundTripsAdvancedFields(t *testing.T) {
 		got.Procs[0].Chance != 100 || got.Procs[0].CooldownRounds != 2 || got.Procs[0].Params["ratio"] != 0.25 {
 		t.Errorf("proc not round-tripped: %+v", got.Procs)
 	}
-	if got.ReserveHealthPct != 0.25 || got.VoiceId != "blackrazor" || !got.TauntPull ||
+	// The form has no tree field (editing trees is #367), so a save keeps
+	// the item's behavior: from the loaded spec.
+	if got.Behavior != "blackrazor" {
+		t.Errorf("a save dropped the item's behavior tree: got %q", got.Behavior)
+	}
+	if got.ReserveHealthPct != 0.25 ||
 		got.HungerRounds != 50 || got.HungerDrainPct != 0.01 ||
 		got.MutationTickInterval != 10 || got.MutationTickChance != 5 || got.MutationRarityFloor != 3 {
 		t.Errorf("advanced scalars not round-tripped: %+v", got)

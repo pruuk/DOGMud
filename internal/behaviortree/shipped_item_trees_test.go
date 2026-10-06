@@ -25,6 +25,10 @@ func loadShippedItemWorld(t *testing.T) uint64 {
 	configs.SetConfigForTest(t, cfg)
 	t.Cleanup(conditions.SeedConditionsForTest(nil))
 	t.Cleanup(items.SeedItemsForTest(nil))
+	// items.LoadDataFiles also replaces the combat and defence message
+	// stores; snapshot them so later tests read their own seeds.
+	t.Cleanup(items.SeedAttackMessagesForTest(nil))
+	t.Cleanup(items.SeedDefenseMessagesForTest(nil))
 	conditions.LoadDataFiles()
 	items.LoadDataFiles()
 	for _, name := range []string{"keeper_lantern", "sunstone", "dusk_to_dawn", "rift_pulse"} {

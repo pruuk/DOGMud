@@ -548,8 +548,8 @@ An item tree may name only these nodes (anything else refuses at load):
 
 | Kind | Nodes |
 |---|---|
-| Conditions | `time_of_day`, `round_mod`, `random_chance`, `state_equals`, `state_greater_than`, `holder_asleep`, `worn`, `in_combat` |
-| Actions | `set_state`, `increment_state`, `decrement_state`, `set_light`, `pulse_light` |
+| Conditions | `time_of_day`, `round_mod`, `random_chance`, `state_equals`, `state_greater_than`, `holder_asleep`, `worn`, `in_combat`, `chatter_ready`, `hunger_overdue` |
+| Actions | `set_state`, `increment_state`, `decrement_state`, `set_light`, `pulse_light`, `speak`, `taunt_pull` |
 | Decorators | all |
 
 | Node | Params | Description |
@@ -559,10 +559,28 @@ An item tree may name only these nodes (anything else refuses at load):
 | `in_combat` | none | The holder is in combat. |
 | `set_light` | `level`: `full`, `"off"`, or a number | A worn light's record at full strength, off, or that strength; a fixture's output (a number or off). Fails on anything else. |
 | `pulse_light` | `min`, `max`, `period_rounds` (at least 2) | A triangle wave from `min` to `max` and back over the period, from the round count. |
+| `chatter_ready` | none | An ambient line may go out: the item's cooldown is open, everyone in the room is past their listener cap, and the tree's chatter chance rolls true (drawn last). |
+| `hunger_overdue` | `fraction` (default 0.75) | The holder's hunger anchor is more than that fraction of the item's `hunger_rounds` behind. |
+| `speak` | `pool`; `to`: `all` (default) or `holder`; `paced`: true (default) or false | Says a line from the tree's `speech:` pool: the holder reads "<Item> says", the room hears "<Name>'s <Item> mutters" with the holder's name hidden by sight. Paced: refuses while the item's cooldown is closed, then arms it. |
+| `taunt_pull` | none | The holder's foe, a mob fighting someone else, turns on the holder. Always succeeds. |
 
-The item-only nodes (`holder_asleep`, `worn`, `in_combat`, `set_light`,
-`pulse_light`) refuse in a mob or room tree. A tree that writes light may
+The item-only nodes (`holder_asleep`, `worn`, `in_combat`, `chatter_ready`,
+`hunger_overdue`, `set_light`, `pulse_light`, `speak`, `taunt_pull`) refuse in a mob or room tree. A tree that writes light may
 not sit on an item whose worn light is `adjustable` (the trim owns it). A
 fixture (`fixture: light` or `darkness` on the item) cannot be taken off the
 floor; a pulsing fixture must stay inside one light band
 (`item_behaviour_guard_test.go`).
+
+### Item voices (item behaviour slice 2)
+
+An item tree may carry a voice: `speech:` maps pool names to lines, and
+`chatter:` sets how often its ambient lines come (`quiet`, `normal` by
+default, `chatty`; the cooldown and chance per level are the
+`ItemChatter*` knobs in `config.yaml`). Only an item tree may carry them.
+Besides `item_idle`, item trees hear `on_equip` and `on_unequip` (put on,
+taken off), `on_kill` (the holder had a hand in a kill; every worn item
+hears it) and `on_hunger_feeding` (a hungry weapon fed on its holder, paced
+by `HungerFeedingLineCooldownRounds`). Gate ambient lines with
+`chatter_ready`; an event branch speaks straight, skipping the listener
+cap and the chance. `behaviors/items/blackrazor.yaml` and `aegis.yaml` are
+the worked examples.

@@ -94,8 +94,10 @@ behaviour change and belonged to M4, not to this package.
 
 ## Consumers
 
-`internal/items` (defence and combat-message stores), `internal/itemvoices`,
-`internal/spells` (casting), `internal/combat` (taunt),
+`internal/items` (defence and combat-message stores), `internal/behaviortree`
+(an item tree's speech pools, through the `speak` node; item behaviour slice 2
+retired `internal/itemvoices`), `internal/spells` (casting), `internal/combat`
+(taunt),
 `internal/grapplemessaging`, `internal/gossip` (gossip template pools, single
 role), `internal/movenarration` (special moves), `internal/lightnotice`
 (lighting plan 3d's transition notices, single role, `line()` calls
@@ -115,7 +117,8 @@ happening to the player right now, so a store that loads empty does not read as
 fight, a silent grapple or a silent submission misleads a player mid-action,
 and the operator sees nothing but a log line nobody is watching. Members:
 combat messages, defence, taunt, grapple outcomes, spells, conditions, quests,
-crafting, casting, itemvoices, position_control. Each panics from its loader,
+crafting, casting, item tree speech (`behaviortree.ValidateItemBehaviors`),
+position_control. Each panics from its loader,
 and each loader is CALLED FROM `main.go` so that "fails at boot" means the boot,
 not the first cast: a check that runs inside a package `init()` or inside a
 `sync.Once` a test may already have spent is not a boot check. `hooks.LoadGrappleMessaging`
@@ -236,9 +239,9 @@ independent check that every group is equal.
 `Render` always calls `pick(n)`, `DefaultPicker` always calls `util.Rand`, and
 `util.Rand(1)` still calls `rand.Intn`, so a one-line pool rendered through the
 default picker consumes a global random draw and shifts every later combat
-roll. `Render` cannot special-case `n == 1` because itemvoices never validates
-its pool sizes and legitimately holds one-line pools whose draw count must not
-change. The condition, spell, quest and crafting stores reach `Render` only
+roll. `Render` cannot special-case `n == 1` because an item tree's speech pool
+may legitimately hold one line, and its draw count must not change (a seeded
+run replays it). The condition, spell, quest and crafting stores reach `Render` only
 through `textutil.Narrate`, which passes `FirstPicker`; the root guard
 `narration_render_callers_guard_test.go` pins both facts.
 

@@ -1108,9 +1108,20 @@ type Balance struct {
 	FactsHeardEventsMax ConfigInt `yaml:"FactsHeardEventsMax"` // Max facts_heard events per mobs instance (default 32)
 
 	// ── PINNACLE ITEMS ───────────────────────────────────────────────────
-	BandolierAttuneRounds         ConfigInt `yaml:"BandolierAttuneRounds"`         // Rounds of re-attunement after bandolier contents change (default 100)
-	SentientChatterCooldownRounds ConfigInt `yaml:"SentientChatterCooldownRounds"` // Min rounds between sentient item lines (default 20)
-	SentientChatterChancePct      ConfigInt `yaml:"SentientChatterChancePct"`      // Percent chance per eligible round that a sentient item speaks (default 15)
+	BandolierAttuneRounds ConfigInt `yaml:"BandolierAttuneRounds"` // Rounds of re-attunement after bandolier contents change (default 100)
+
+	// Item tree chatter (item behaviour slice 2): a tree's `chatter:` level
+	// picks its cooldown and chance for an ambient (item_idle) line; event
+	// lines need the cooldown only. The listener cap is one ambient item
+	// line per listener per that many rounds, across every item.
+	ItemChatterQuietCooldownRounds  ConfigInt `yaml:"ItemChatterQuietCooldownRounds"`  // Rounds between a quiet item's lines (default 40)
+	ItemChatterQuietChancePct       ConfigInt `yaml:"ItemChatterQuietChancePct"`       // Percent chance a quiet item speaks on an open round (default 10)
+	ItemChatterNormalCooldownRounds ConfigInt `yaml:"ItemChatterNormalCooldownRounds"` // Rounds between a normal item's lines (default 20)
+	ItemChatterNormalChancePct      ConfigInt `yaml:"ItemChatterNormalChancePct"`      // Percent chance a normal item speaks on an open round (default 15)
+	ItemChatterChattyCooldownRounds ConfigInt `yaml:"ItemChatterChattyCooldownRounds"` // Rounds between a chatty item's lines (default 10)
+	ItemChatterChattyChancePct      ConfigInt `yaml:"ItemChatterChattyChancePct"`      // Percent chance a chatty item speaks on an open round (default 25)
+	ItemChatterListenerCapRounds    ConfigInt `yaml:"ItemChatterListenerCapRounds"`    // A listener hears at most one ambient item line per this many rounds (default 10)
+	HungerFeedingLineCooldownRounds ConfigInt `yaml:"HungerFeedingLineCooldownRounds"` // Rounds between a hungry weapon's feeding lines; the drain itself runs every round (default 20)
 
 	// ── GRADED LIGHTING ───────────────────────────────────────────────────
 	// Graded room lighting thresholds, on the -100 to 100 light scale

@@ -119,6 +119,7 @@ space-form query matches the underscore filename form.
 
 ```go
 func Rand(maxInt int) int
+func SetRandForTest(seed int64) func() // tests only: Rand draws from a seeded source until restore
 func LogRoll(name string, rollResult, targetNumber int)
 func RollDice(dice, sides int) int
 func ParseDiceRoll(dRoll string) (attacks, dCount, dSides, bonus int, conditionOnCrit []int)

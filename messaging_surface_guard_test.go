@@ -178,24 +178,13 @@ var textSurfaceRegistry = map[string]surfaceEntry{
 	// entries here either, as predicted: its keys folded into actor, actee and
 	// observer above. --
 
-	// -- Sentient item voice narration: internal/itemvoices/itemvoices.go
-	// VoiceSpec, one YAML per voice, consumed by the pinnacle per-round tick
-	// for items with a voice_id. --
-	"lines":    {narration, "Overloaded but every schema hit is narration: itemvoices.go VoiceSpec.Lines (sentient-item chatter pools), quests/triggers.go NpcSayDef.Lines (npc_say scripted speech), and conversations/conversation.go ConversationDef.Lines (ambient NPC-NPC exchange, see CLAUDE.md NPC<->NPC Conversations). A handful of room `nouns:` children (e.g. \"flood lines\") coincidentally reuse this spelling as author content and are a known false positive of the 2-file heuristic -- see washing lines below for the same pattern."},
-	"on_taunt": {narration, "internal/itemvoices/itemvoices.go validVoiceEvents[\"on_taunt\"] -- an event-name key nested under a VoiceSpec's lines: map, selecting the line pool played when a sentient item's bearer taunts. A selector key like optionid, not prose itself, but part of the same narration shape."},
-
-	// -- voice_id / voiceid: TWO SPELLINGS OF THE SAME CONCEPT, drifted
-	// between two schemas that must agree for sentient-item chatter to
-	// resolve. Neither value is prose -- both are foreign-key identifiers --
-	// so both file as config. This drift is a consolidation target for a
-	// later stage of the messaging arc, not fixed here. --
-	"voice_id": {config, "internal/items/itemspec.go ItemSpec.VoiceId, yaml tag \"voice_id\" (with underscore) -- a sentient item's reference to its itemvoices/<id>.yaml file. Same concept as voiceid below, spelled differently; not player prose, an identifier."},
-	"voiceid":  {config, "internal/itemvoices/itemvoices.go VoiceSpec.VoiceId, yaml tag \"voiceid\" (no underscore) -- the voice file's own self-identifying id, matched against items' voice_id. Same concept as voice_id above, spelled differently; not player prose, an identifier."},
-
-	// taunt_pull: matched by the "taunt" stem but is a plain bool toggle, not
-	// prose -- promoted to schema by Method E (found in exactly one data
-	// file, materials-40000/40185-aegis_of_mockery.yaml).
-	"taunt_pull": {config, "internal/items/itemspec.go ItemSpec.TauntPull (bool) -- \"sentient chatter on_taunt also pulls the bearer's target's aggro (Aegis)\"; a toggle, not player-facing text, despite matching the taunt stem. Found in exactly ONE data file, promoted to schema by Method E (Go yaml struct tag)."},
+	// -- Sentient item speech: an item tree's speech: map
+	// (behaviors/items/<tree>.yaml, internal/behaviortree TreeDef.Speech),
+	// spoken by the speak node. Item behaviour slice 2 (2026-10-06) moved it
+	// there from internal/itemvoices and retired voice_id, voiceid and
+	// taunt_pull. --
+	"lines":    {narration, "Overloaded but every schema hit is narration: quests/triggers.go NpcSayDef.Lines (npc_say scripted speech) and conversations/conversation.go ConversationDef.Lines (ambient NPC-NPC exchange, see CLAUDE.md NPC<->NPC Conversations). A handful of room `nouns:` children (e.g. \"flood lines\") coincidentally reuse this spelling as author content and are a known false positive of the 2-file heuristic -- see washing lines below for the same pattern."},
+	"on_taunt": {narration, "a pool name under an item tree's speech: map (behaviors/items/aegis.yaml, blackrazor.yaml), the lines a sentient item speaks while its bearer fights, named by a speak node's pool param. A selector key like optionid, not prose itself, but part of the same narration shape."},
 
 	// emote: a genuine Method E COLLISION, not a real hit. internal/quests/
 	// triggers.go SayLineDef.Emote (bool, dash-prefixed under an npc_say
@@ -1293,7 +1282,6 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"hooks/NewRound_UserRoundTick.go|You attempt to stand, but slip back down in the chaos of battle!":                      {verdictCorrect, true, false, true, "automatic recovery from prone fails; same shape as the success case above, actor+observer via sendVisualRoomText, no actee."},
 	"hooks/NewRound_UserRoundTick.go|You scramble to your feet!":                                                            {verdictCorrect, true, false, true, "automatic recovery from prone succeeds; the room sees it via sendVisualRoomText, actor+observer, no actee since recovering from prone is self-only."},
 	"hooks/charm_spell.go|<ansi fg=\"cyan\">%s's eyes glaze as your will takes hold. It is yours.</ansi>":                   {verdictCorrect, true, false, true, "a charm spell binds a mob; sendVisualRoomText broadcasts it to the room two lines below, actee is a mob."},
-	"hooks/pinnacle_tick.go|<ansi fg=\"item\">%s</ansi> says, \"<ansi fg=\"yellow\">%s</ansi>\"":                            {verdictCorrect, true, false, true, "audit: sentient item chatter -- item speech has no actee (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, hooks/pinnacle_tick.go:527)"},
 	"hooks/spell_foldanchor.go|A Chrysalis anchor locks into place here.":                                                   {verdictCorrect, true, false, true, "audit: Chrysalis fold anchor set -- self-targeted spell (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, hooks/spell_foldanchor.go:18)"},
 	"hooks/spell_foldrecall.go|<ansi fg=\"username\">%s</ansi> folds through the Veil and vanishes!":                        {verdictCorrect, true, true, false, "the departure broadcast on the room the caster LEFT; oldRoom.SendText is a genuine room broadcast this walk cannot see under that identifier (see the guard's header comment on the room-variable-name blind spot), so this walk reads it as actor+actee when it is really actor+observer."},
 	"hooks/spell_purgeaffliction.go|<ansi fg=\"green\">You purge the afflictions from your body.</ansi>":                    {verdictCorrect, true, false, true, "self-cast purge (caster targets themselves); sendVisualRoomText broadcasts to the room two lines below, no actee since there is no separate target. Sibling of the audited spell_purgeaffliction.go row for the other-target branch, which the audit already ruled full trio."},

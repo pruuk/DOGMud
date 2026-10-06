@@ -124,8 +124,9 @@ func TryItemBehavior(event EventContext, subject ItemSubject) (handled bool) {
 
 // ValidateItemBehaviors loads and compiles every item tree a template names
 // and returns one error listing every problem, or nil. main.go panics on it
-// after items load (X12, the voice_id precedent): a missing or broken tree
-// fails the boot instead of leaving an item silently inert.
+// after items load (X12, the precedent the retired voice_id check set): a
+// missing or broken tree, or a malformed voice (slice 2), fails the boot
+// instead of leaving an item silently inert.
 func ValidateItemBehaviors() error {
 	specs := items.GetAllItemSpecsMap()
 	ids := make([]int, 0, len(specs))

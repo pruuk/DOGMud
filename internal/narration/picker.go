@@ -45,7 +45,7 @@ func SequencePicker() Picker {
 // util.Rand(n) for n >= 1, and util.Rand(1) still calls rand.Intn. Rendering a
 // one-variant pool through DefaultPicker would therefore consume one GLOBAL
 // random draw per narrated condition, spell or quest phase and shift every later
-// combat roll. Render cannot special-case a pool of one instead: itemvoices
-// never validates its pool sizes, so a one-line voice pool is legitimate and
-// its draw count must not change either.
+// combat roll. Render cannot special-case a pool of one instead: an item
+// tree's speech pool may legitimately hold one line, and its draw count must
+// not change either (a seeded run replays those draws).
 func FirstPicker(n int) int { return 0 }

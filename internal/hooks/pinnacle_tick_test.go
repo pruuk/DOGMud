@@ -9,7 +9,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/itemvoices"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -17,15 +16,20 @@ import (
 
 // setPinnacleEnabled flips the PinnacleItemsEnabled master toggle in-memory for
 // the test process (AddOverlayOverrides, the same file-free mechanism
-// enableItemProcs uses). The gate-off test relies on being able to set it back
-// to false explicitly, since overlay overrides persist across tests.
+// enableItemProcs uses). Overlay overrides persist across tests, so the value
+// the test found is put back when it ends; a test that flips it twice ends
+// with both cleanups run, last first, back at that value.
 func setPinnacleEnabled(t *testing.T, on bool) {
 	t.Helper()
+	prev := bool(configs.GetConfig().GamePlay.PinnacleItemsEnabled)
 	if err := configs.AddOverlayOverrides(map[string]any{
 		"GamePlay.PinnacleItemsEnabled": on,
 	}); err != nil {
 		t.Fatalf("failed to set PinnacleItemsEnabled=%v: %v", on, err)
 	}
+	t.Cleanup(func() {
+		_ = configs.AddOverlayOverrides(map[string]any{"GamePlay.PinnacleItemsEnabled": prev})
+	})
 }
 
 // ─── Hunger ───────────────────────────────────────────────────────────────────
@@ -103,7 +107,7 @@ func TestPinnacleHunger_NeverLethalAndKillReset(t *testing.T) {
 
 // TestPinnacleHunger_FeedingLineCooldown proves the drain repeats every overdue
 // round but the feeding LINE is paced by pinnacle_hunger_msg_next_round
-// (SentientChatterCooldownRounds): two consecutive overdue ticks both drain,
+// (HungerFeedingLineCooldownRounds): two consecutive overdue ticks both drain,
 // only the first messages.
 func TestPinnacleHunger_FeedingLineCooldown(t *testing.T) {
 	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
@@ -275,221 +279,11 @@ func TestPinnacleMutationTick(t *testing.T) {
 	}
 }
 
-// ─── Voices ─────────────────────────────────────────────────────────────────
-
-// TestPinnaclePickVoiceEvent unit-tests the pure event-selection logic (no RNG,
-// no side effects).
-func TestPinnaclePickVoiceEvent(t *testing.T) {
-	hungerSpec := items.ItemSpec{HungerRounds: 10}
-	plainSpec := items.ItemSpec{}
-
-	// In combat → taunt (takes precedence over everything).
-	c := characters.New()
-	c.SetAggro(1, 0, characters.DefaultAttack)
-	if ev := pickVoiceEvent(c, hungerSpec, 100); ev != "on_taunt" {
-		t.Fatalf("in combat should pick on_taunt, got %q", ev)
-	}
-
-	// Hungry weapon past 3/4 of its window (anchor 0, now 8 > 7.5) → warning.
-	c2 := characters.New()
-	c2.SetMiscData("pinnacle_hunger_anchor", uint64(0))
-	if ev := pickVoiceEvent(c2, hungerSpec, 8); ev != "on_hunger_warning" {
-		t.Fatalf("hungry weapon near feeding should pick on_hunger_warning, got %q", ev)
-	}
-
-	// Well within the hunger window → idle.
-	c3 := characters.New()
-	c3.SetMiscData("pinnacle_hunger_anchor", uint64(0))
-	if ev := pickVoiceEvent(c3, hungerSpec, 3); ev != "on_idle" {
-		t.Fatalf("early in the hunger window should pick on_idle, got %q", ev)
-	}
-
-	// Non-hunger, non-combat item → idle.
-	if ev := pickVoiceEvent(characters.New(), plainSpec, 100); ev != "on_idle" {
-		t.Fatalf("plain sentient item should pick on_idle, got %q", ev)
-	}
-}
-
-// TestPinnacleVoiceCooldownGates proves the chatter-cooldown MiscData gates
-// re-entry deterministically: when pinnacle_voice_next_round is in the future,
-// tickVoices returns before any RNG and emits nothing.
-func TestPinnacleVoiceCooldownGates(t *testing.T) {
-	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
-		999957: {ItemId: 999957, Name: "whispering blade", Type: items.Weapon, Hands: 1,
-			VoiceId: "test-voice"},
-	})()
-	defer itemvoices.SeedVoicesForTest(map[string]*itemvoices.VoiceSpec{
-		"test-voice": {VoiceId: "test-voice", Lines: map[string][]string{
-			"on_idle": {"I thirst."},
-		}},
-	})()
-
-	u := users.NewTestUser(705, "whisper", "Whisperer", 7705)
-	c := u.Character
-	c.Equipment.Weapon = items.New(999957)
-	room := &rooms.Room{RoomId: 500, Zone: "TestZone"}
-
-	// Cooldown active (next round far in the future).
-	c.SetMiscData("pinnacle_voice_next_round", uint64(1000))
-	_ = events.DrainQueuedMessagesForTest(705) // clear the queue
-	tickVoices(u, room, c.GetAllWornItems(), 100)
-	if msgs := events.DrainQueuedMessagesForTest(705); len(msgs) != 0 {
-		t.Fatalf("active chatter cooldown must gate all output, got %v", msgs)
-	}
-}
-
-// TestPinnacleEmitVoiceLine covers the shared emit helper: authored line vs
-// fallback vs silent.
-func TestPinnacleEmitVoiceLine(t *testing.T) {
-	defer itemvoices.SeedVoicesForTest(map[string]*itemvoices.VoiceSpec{
-		"blade-voice": {VoiceId: "blade-voice", Lines: map[string][]string{
-			"on_hunger_feeding": {"Yesss."},
-		}},
-	})()
-
-	u := users.NewTestUser(706, "voice", "Voicer", 7706)
-
-	// Item with a voice + authored line → emits it, returns true.
-	voiced := items.ItemSpec{Name: "hungry blade", VoiceId: "blade-voice"}
-	_ = events.DrainQueuedMessagesForTest(706)
-	if !emitVoiceLine(u, nil, voiced, "on_hunger_feeding", "fallback flavor") {
-		t.Fatal("emitVoiceLine should return true when an authored line exists")
-	}
-	if msgs := events.DrainQueuedMessagesForTest(706); len(msgs) == 0 {
-		t.Fatal("authored-line emit should queue a message")
-	}
-
-	// No authored line for the event, but a fallback → emits the fallback.
-	if !emitVoiceLine(u, nil, voiced, "on_idle", "fallback flavor") {
-		t.Fatal("emitVoiceLine should return true when falling back")
-	}
-	if msgs := events.DrainQueuedMessagesForTest(706); len(msgs) == 0 {
-		t.Fatal("fallback emit should queue a message")
-	}
-
-	// No voice and empty fallback → says nothing, returns false.
-	plain := items.ItemSpec{Name: "plain sword"}
-	if emitVoiceLine(u, nil, plain, "on_idle", "") {
-		t.Fatal("emitVoiceLine should return false with no line and no fallback")
-	}
-	if msgs := events.DrainQueuedMessagesForTest(706); len(msgs) != 0 {
-		t.Fatalf("silent emit should queue nothing, got %v", msgs)
-	}
-}
-
-// ─── Taunt pull (Aegis) ─────────────────────────────────────────────────────
-
-// TestApplyTauntPull covers the on_taunt aggro-pull: the happy path (mob fighting
-// a different player is yanked onto the bearer) plus the three no-op guards
-// (bearer not fighting a mob, mob already on the bearer, non-combatant mob).
-func TestApplyTauntPull(t *testing.T) {
-	defer seedAllRegistries()()
-
-	// Happy path: bearer is fighting a hostile mob that is currently fighting a
-	// DIFFERENT player (id 2). The pull forces the mob onto the bearer.
-	u := users.NewTestUser(710, "aegis", "Aegisbearer", 7710)
-	mob := addTestMob(210, false)
-	u.Character.SetAggro(0, mob.InstanceId, characters.DefaultAttack)
-	mob.Character.SetAggro(2, 0, characters.DefaultAttack)
-	applyTauntPull(u)
-	if !mob.Character.IsInCombat() || mob.Character.CurrentCombatTarget().UserId != u.UserId {
-		t.Fatalf("taunt pull should force the mob onto the bearer (%d), got %+v", u.UserId, mob.Character.CurrentCombatTarget())
-	}
-
-	// No-op 1: bearer has no aggro at all → nothing to pull.
-	u2 := users.NewTestUser(711, "idle", "Idler", 7711)
-	mob2 := addTestMob(211, false)
-	// U12c-2: the no-op used to be proved by POINTER IDENTITY on the Aggro
-	// struct. With the field gone the equivalent is that the engagement's
-	// target is unchanged, which is what the pointer check was standing in for.
-	mob2.Character.SetAggro(2, 0, characters.DefaultAttack)
-	sentinel := mob2.Character.CurrentCombatTarget()
-	applyTauntPull(u2) // u2 is not in combat, so there is nothing to pull
-	if mob2.Character.CurrentCombatTarget() != sentinel {
-		t.Fatalf("no bearer aggro must not touch any mob, got %+v", mob2.Character.CurrentCombatTarget())
-	}
-
-	// No-op 2: the mob is ALREADY fighting the bearer → no re-force. The
-	// original proved this by pointer identity on the Aggro struct; the target
-	// ref is the equivalent now.
-	u3 := users.NewTestUser(712, "tank", "Tanker", 7712)
-	mob3 := addTestMob(212, false)
-	u3.Character.SetAggro(0, mob3.InstanceId, characters.DefaultAttack)
-	mob3.Character.SetAggro(u3.UserId, 0, characters.DefaultAttack)
-	already := mob3.Character.CurrentCombatTarget()
-	applyTauntPull(u3)
-	if mob3.Character.CurrentCombatTarget() != already {
-		t.Fatalf("a mob already on the bearer must not be re-forced, got %+v", mob3.Character.CurrentCombatTarget())
-	}
-
-	// No-op 3: a non-combatant mob is never pulled.
-	u4 := users.NewTestUser(713, "peace", "Peacer", 7713)
-	nonCombatant := addTestMob(213, true)
-	u4.Character.SetAggro(0, nonCombatant.InstanceId, characters.DefaultAttack)
-	applyTauntPull(u4)
-	if nonCombatant.Character.IsInCombat() {
-		t.Fatalf("non-combatant mob must not be pulled, got %+v", nonCombatant.Character.CurrentCombatTarget())
-	}
-}
-
-// ─── on_kill voice ──────────────────────────────────────────────────────────
-
-// TestMobDeathItemProcs_OnKillVoice proves a sentient weapon speaks its on_kill
-// line on a kill, that the whole voice block honors the PinnacleItemsEnabled
-// master toggle, and that a second immediate kill is silenced by the shared
-// chatter cooldown. Overlay note: AddOverlayOverrides overwrites the same key
-// on repeat calls (TestPinnacleUserTick_MasterGate relies on the same false→
-// true flip); this test deliberately ends with the toggle ON — the same
-// terminal state the master-gate test leaves.
-func TestMobDeathItemProcs_OnKillVoice(t *testing.T) {
-	defer seedAllRegistries()()
-	enableItemProcs(t)
-	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
-		999961: {ItemId: 999961, Name: "the blackrazor", Type: items.Weapon, Hands: 1,
-			VoiceId: "kill-voice"},
-	})()
-	defer itemvoices.SeedVoicesForTest(map[string]*itemvoices.VoiceSpec{
-		"kill-voice": {VoiceId: "kill-voice", Lines: map[string][]string{
-			"on_kill": {"Another soul for the blade."},
-		}},
-	})()
-
-	const killLine = "Another soul for the blade."
-	u := users.GetByUserId(1)
-	u.Character.Equipment.Weapon = items.New(999961)
-	// Clear any chatter cooldown a sibling test may have left on this shared user.
-	u.Character.SetMiscData("pinnacle_voice_next_round", nil)
-
-	evt := events.MobDeath{MobId: 1, PlayerDamage: map[int]int{1: 50}}
-
-	// Feature flag OFF → the voice block is gated; a kill emits NO line (and
-	// arms no cooldown — the block never runs).
-	setPinnacleEnabled(t, false)
-	_ = events.DrainQueuedMessagesForTest(1)
-	if ret := MobDeathItemProcs(evt); ret != events.Continue {
-		t.Fatalf("expected events.Continue, got %v", ret)
-	}
-	if containsLine(events.DrainQueuedMessagesForTest(1), killLine) {
-		t.Fatal("PinnacleItemsEnabled=false must silence the on_kill voice")
-	}
-
-	// Feature flag ON → the kill line fires.
-	setPinnacleEnabled(t, true)
-	if ret := MobDeathItemProcs(evt); ret != events.Continue {
-		t.Fatalf("expected events.Continue, got %v", ret)
-	}
-	if !containsLine(events.DrainQueuedMessagesForTest(1), killLine) {
-		t.Fatal("on_kill should emit the weapon's kill line")
-	}
-
-	// A second immediate kill is inside the chatter cooldown → silent.
-	if ret := MobDeathItemProcs(evt); ret != events.Continue {
-		t.Fatalf("expected events.Continue, got %v", ret)
-	}
-	if containsLine(events.DrainQueuedMessagesForTest(1), killLine) {
-		t.Fatal("second immediate kill must be chatter-cooldown silent")
-	}
-}
+// Voices moved into item trees (item behaviour slice 2): the event pick,
+// pacing, sender, taunt pull and kill line are tested in
+// internal/behaviortree/item_voice_nodes_test.go and
+// item_voice_events_test.go, and the old path is pinned by
+// item_voice_parity_test.go.
 
 // containsLine reports whether any queued message contains substr.
 func containsLine(msgs []string, substr string) bool {
