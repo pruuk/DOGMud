@@ -201,11 +201,30 @@ func (t *Accumulator) Record(nextValue float64) {
 	}
 }
 
+// randSource is where Rand draws: the math/rand global, unless a test has
+// swapped in a seeded source with SetRandForTest. Atomic so a -race run
+// sees no data race on the swap.
+var randSource atomic.Pointer[func(int) int]
+
 func Rand(maxInt int) int {
 	if maxInt < 1 {
 		return 0
 	}
+	if src := randSource.Load(); src != nil {
+		return (*src)(maxInt)
+	}
 	return rand.Intn(maxInt)
+}
+
+// SetRandForTest makes Rand draw from a source seeded with seed, so a test
+// can replay every random draw a run makes (item behaviour slice 2, spec
+// X19). Returns a restore func. The seeded source is not safe for
+// concurrent draws: use it only in a test that draws from one goroutine.
+func SetRandForTest(seed int64) func() {
+	r := rand.New(rand.NewSource(seed))
+	draw := func(n int) int { return r.Intn(n) }
+	prev := randSource.Swap(&draw)
+	return func() { randSource.Store(prev) }
 }
 
 func LogRoll(name string, rollResult int, targetNumber int) {
