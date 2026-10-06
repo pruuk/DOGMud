@@ -64,8 +64,10 @@ func itemVoiceFrom(def TreeDef) (*ItemVoice, error) {
 }
 
 // checkSpeakNodes refuses a speak node that names a pool the tree's speech
-// lacks (voice nil: no speech at all) or an audience other than all or
-// holder, wherever the node sits.
+// lacks (voice nil: no speech at all), an audience other than all or
+// holder, or a paced that is present but not a YAML bool (getBoolParam
+// would read a misspelling as false and silently drop the pacing), wherever
+// the node sits.
 func checkSpeakNodes(def NodeDef, voice *ItemVoice, path string) error {
 	if def.Do == `speak` {
 		pool := getStringParam(def.Params, `pool`)
@@ -76,6 +78,11 @@ func checkSpeakNodes(def NodeDef, voice *ItemVoice, path string) error {
 		case ``, speakToAll, speakToHolder:
 		default:
 			return fmt.Errorf("%s: speak to %q: want %s or %s", path, getStringParam(def.Params, `to`), speakToAll, speakToHolder)
+		}
+		if v, ok := def.Params[`paced`]; ok {
+			if _, isBool := v.(bool); !isBool {
+				return fmt.Errorf("%s: speak paced %v: want true or false", path, v)
+			}
 		}
 	}
 	for i, ch := range def.Children {

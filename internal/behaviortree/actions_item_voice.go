@@ -96,9 +96,14 @@ func itemCooldownOpen(ctx *EvalContext, now uint64) bool {
 	return !ok || now >= next
 }
 
-// condChatterReady: an ambient line may go out this round.
+// condChatterReady: an ambient line may go out this round. An item with no
+// holder (on a floor) has nothing to speak through, so it fails before any
+// roll is drawn.
 func condChatterReady(_ map[string]any, ctx *EvalContext) Result {
 	if !pinnacleItemsOn() {
+		return Failure
+	}
+	if ctx == nil || ctx.Item == nil || (ctx.Item.UserId == 0 && ctx.Item.MobInstanceId == 0) {
 		return Failure
 	}
 	voice := itemVoiceOf(ctx)
@@ -162,8 +167,11 @@ func condHungerOverdue(params map[string]any, ctx *EvalContext) Result {
 // util.Rand replays it), sends the holder "<Item> says" and, for `all`,
 // the room "<Name>'s <Item> mutters" heard by everyone with the holder's
 // name hidden at each listener's sight (spec X17; never deafen-filtered,
-// owner ruling 6). A mob holder gets the room line only (ruling R6).
-// Paced: refuses while the item's cooldown is closed, and arms it.
+// owner ruling 6). A mob holder gets the room line only (ruling R6), so a
+// mob holder with `to: holder` has no audience: Failure, nothing sent or
+// armed. Paced: refuses while the item's cooldown is closed, and arms it.
+// An item_idle line starts every listener's cap only when the room line was
+// actually sent.
 func actSpeak(params map[string]any, ctx *EvalContext) Result {
 	if !pinnacleItemsOn() {
 		return Failure
@@ -209,12 +217,18 @@ func actSpeak(params map[string]any, ctx *EvalContext) Result {
 		return Failure // a floor item has no holder to speak through
 	}
 
+	toRoom := getStringParam(params, `to`) != speakToHolder
+	if holderUser == nil && !toRoom {
+		return Failure // a mob holder has no one to hear a holder-only line
+	}
+
 	if holderUser != nil {
 		holderUser.SendText(messaging.CategorySystem, fmt.Sprintf(
 			`<ansi fg="item">%s</ansi> says, "<ansi fg="yellow">%s</ansi>"`, spec.Name, line))
 	}
 	room := rooms.LoadRoom(ctx.RoomId)
-	if getStringParam(params, `to`) != speakToHolder && room != nil {
+	roomHeard := toRoom && room != nil
+	if roomHeard {
 		exclude := []int{}
 		if holderUser != nil {
 			exclude = append(exclude, holderUser.UserId)
@@ -229,7 +243,7 @@ func actSpeak(params map[string]any, ctx *EvalContext) Result {
 		cooldown, _ := chatterPacing(voice.Chatter)
 		ctx.MobState.Set(speakNextRoundKey, now+cooldown)
 	}
-	if ctx.Event.EventType == `item_idle` && room != nil {
+	if ctx.Event.EventType == `item_idle` && roomHeard {
 		capRounds := uint64(configs.GetBalanceConfig().ItemChatterListenerCapRounds)
 		listenerCapMu.Lock()
 		for _, uid := range room.GetPlayers() {

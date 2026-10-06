@@ -311,6 +311,8 @@ func TestSpeakRefusesAtLoad(t *testing.T) {
 		"unknown pool":     "speech:\n  on_idle: [\"Hm.\"]\ntree:\n  type: action\n  do: speak\n  pool: on_kill\n",
 		"no speech":        "tree:\n  type: action\n  do: speak\n  pool: on_idle\n",
 		"unknown audience": "speech:\n  on_idle: [\"Hm.\"]\ntree:\n  type: action\n  do: speak\n  pool: on_idle\n  to: everyone\n",
+		"paced misspelt":   "speech:\n  on_idle: [\"Hm.\"]\ntree:\n  type: action\n  do: speak\n  pool: on_idle\n  paced: flase\n",
+		"paced quoted":     "speech:\n  on_idle: [\"Hm.\"]\ntree:\n  type: action\n  do: speak\n  pool: on_idle\n  paced: \"no\"\n",
 	}
 	for name, src := range bad {
 		if _, _, err := loadItemTreeDef([]byte(src)); err == nil {
@@ -321,5 +323,89 @@ func TestSpeakRefusesAtLoad(t *testing.T) {
 		if _, err := LoadTreeFromBytes([]byte("tree:\n" + node)); err == nil || !strings.Contains(err.Error(), "item") {
 			t.Errorf("a mob tree naming an item voice node: err = %v, want a refusal", err)
 		}
+	}
+}
+
+// holderIdleTree speaks an idle line to the holder alone, and an event line
+// to the room.
+const holderIdleTree = `
+speech:
+  on_idle: ["Mm."]
+  on_equip: ["Up we go."]
+tree:
+  type: selector
+  children:
+    - type: action
+      event: item_idle
+      do: speak
+      pool: on_idle
+      to: holder
+    - type: action
+      event: on_equip
+      do: speak
+      pool: on_equip
+`
+
+// An idle line to the holder alone is not heard by the room, so it starts
+// no listener's cap: a second item's ambient line the same round still goes
+// out.
+func TestSpeakToHolderIdleArmsNoListenerCap(t *testing.T) {
+	seedVoiceWorld(t)
+	LoadItemTreeForTest(t, "holder_idle_probe", holderIdleTree)
+	items.GetItemSpec(voiceProbeItemId).Behavior = "holder_idle_probe"
+	t.Cleanup(func() { items.GetItemSpec(voiceProbeItemId).Behavior = "voice_nodes_probe" })
+
+	if !TryItemBehavior(voiceEvent("item_idle"), wornProbe(voiceProbeItemId, 1)) {
+		t.Fatal("the holder's idle line must go out")
+	}
+	if got := drained(voiceListenerId); got != "" {
+		t.Fatalf("to: holder sends the room nothing, got %q", got)
+	}
+	if !TryItemBehavior(voiceEvent("item_idle"), wornProbe(voiceProbeItemId2, 2)) {
+		t.Error("the room heard nothing, so no listener is inside a cap: the blade's ambient line goes out")
+	}
+}
+
+// A mob holder has no one to hear a to: holder line: it fails and arms no
+// cooldown.
+func TestSpeakToAMobHolderAloneFails(t *testing.T) {
+	seedVoiceWorld(t)
+	LoadItemTreeForTest(t, "holder_idle_probe", holderIdleTree)
+	items.GetItemSpec(voiceProbeItemId).Behavior = "holder_idle_probe"
+	t.Cleanup(func() { items.GetItemSpec(voiceProbeItemId).Behavior = "voice_nodes_probe" })
+	t.Cleanup(seedTestMob(t, voiceMobTemplateId, voiceMobInstanceId, voiceLitRoom, "ogre"))
+	rooms.LoadRoom(voiceLitRoom).AddMob(voiceMobInstanceId)
+	held := ItemSubject{UUID: uuid.UUID{3}, ItemId: voiceProbeItemId, MobInstanceId: voiceMobInstanceId, Slot: "offhand"}
+
+	if TryItemBehavior(voiceEvent("item_idle"), held) {
+		t.Fatal("nobody receives a to: holder line from a mob holder: it must fail")
+	}
+	if got := drained(voiceListenerId); got != "" {
+		t.Errorf("the room reads %q, want nothing", got)
+	}
+	if !TryItemBehavior(voiceEvent("on_equip"), held) {
+		t.Error("the failed line armed the item's cooldown")
+	}
+}
+
+// A voiced item on the floor has no holder: chatter_ready fails before it
+// draws a roll, and so does the speak after it.
+func TestChatterReadyNeedsAHolder(t *testing.T) {
+	seedVoiceWorld(t)
+	// A voiced tree (an item with no voice fails chatter_ready anyway).
+	items.GetItemSpec(voiceProbeItemId2).Behavior = "chatter_only_probe"
+	t.Cleanup(func() { items.GetItemSpec(voiceProbeItemId2).Behavior = "voice_nodes_probe" })
+	LoadItemTreeForTest(t, "chatter_only_probe", "speech:\n  on_idle: [\"Hm.\"]\ntree:\n  type: condition\n  check: chatter_ready\n")
+
+	floor := ItemSubject{UUID: uuid.UUID{4}, ItemId: voiceProbeItemId2, RoomId: voiceLitRoom, OnFloor: true}
+	if TryItemBehavior(voiceEvent("item_idle"), floor) {
+		t.Error("a floor item has no holder: chatter_ready must fail")
+	}
+	floorShield := ItemSubject{UUID: uuid.UUID{5}, ItemId: voiceProbeItemId, RoomId: voiceLitRoom, OnFloor: true}
+	if TryItemBehavior(voiceEvent("item_idle"), floorShield) {
+		t.Error("a floor item must not speak")
+	}
+	if got := drained(voiceBearerId) + drained(voiceListenerId); got != "" {
+		t.Errorf("a floor item sent %q", got)
 	}
 }
