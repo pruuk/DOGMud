@@ -231,6 +231,20 @@ func (c *Character) StoreItem(i items.Item) bool {
 	return true
 }
 
+// ReturnToPack puts an item the character was already carrying (one just
+// taken off the body) back into its pack. It never refuses: StoreItem's
+// weight limit guards against picking up more, not against keeping what the
+// character already held, so when StoreItem would refuse the item goes into
+// the backpack anyway. Never the ground (owner, 2026-10-06: a disarmed
+// weapon stays with its owner).
+func (c *Character) ReturnToPack(i items.Item) {
+	if i.ItemId < 1 || c.StoreItem(i) {
+		return
+	}
+	c.Items = append(c.Items, i)
+	c.IndexTreedItem(i)
+}
+
 func (c *Character) RemoveItem(i items.Item) bool {
 	for j := len(c.Items) - 1; j >= 0; j-- {
 		if c.Items[j].Equals(i) {

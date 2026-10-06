@@ -2113,3 +2113,11 @@ uint64 saved to a player file comes back from YAML as an int, int64 or
 float64, so all four read; anything else (nil included) is not a round. It is
 the one reader: `hooks.readMiscRound` delegates to it, and the item tree node
 `hunger_overdue` reads the `pinnacle_hunger_anchor` through it.
+
+## `ReturnToPack` (2026-10-06, #413)
+
+`ReturnToPack(i)` puts an item the character was already carrying, one just
+taken off the body, back into its pack, and never refuses: when `StoreItem`'s
+weight limit would refuse, the item goes into the backpack anyway. It never
+drops to the ground (owner, 2026-10-06). The crit disarm
+(`combat.AttemptCritDisarm`) uses it; before, a full pack lost the weapon.

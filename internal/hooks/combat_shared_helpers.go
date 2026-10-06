@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -249,6 +250,14 @@ func tryWeaponBreak(defender *characters.Character, roundResult combat.AttackRes
 			room.AddItem(itm, false)
 		}
 	}
+	// The shield left the body: queue the EquipmentChange every other
+	// equipment change queues (#413), so item trees hear on_unequip and the
+	// GMCP equipment panel refreshes.
+	events.AddToQueue(events.EquipmentChange{
+		UserId:        defender.GetUserId(),
+		MobInstanceId: defender.GetMobInstanceId(),
+		ItemsRemoved:  []items.Item{result.BrokenItem},
+	})
 
 	return result
 }

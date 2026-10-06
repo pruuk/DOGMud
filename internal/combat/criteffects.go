@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/dice"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
 )
@@ -57,9 +58,17 @@ func AttemptCritDisarm(source *characters.Character, target *characters.Characte
 		result.RoomMessage = roles.Observer
 	}
 
-	// Remove weapon from equipped and put in inventory
+	// Remove the weapon from the hand and return it to the pack: never the
+	// ground, and never lost to a full pack (owner, 2026-10-06). Queue the
+	// EquipmentChange every other equipment change queues (#413), so item
+	// trees hear on_unequip and the GMCP equipment panel refreshes.
 	target.RemoveFromBody(result.Weapon)
-	target.StoreItem(result.Weapon)
+	target.ReturnToPack(result.Weapon)
+	events.AddToQueue(events.EquipmentChange{
+		UserId:        target.GetUserId(),
+		MobInstanceId: target.GetMobInstanceId(),
+		ItemsRemoved:  []items.Item{result.Weapon},
+	})
 
 	return result
 }
