@@ -106,6 +106,27 @@ func TestFireItemProc_HitAndBlockReachTheirSlot(t *testing.T) {
 
 // A grapple fires for both sides; each reaches its own body armour and
 // wounds the other.
+// A mob's weapon procs through the same entry: the holder resolves from the
+// mob instance id, not a user id.
+func TestFireItemProc_MobWeaponProcs(t *testing.T) {
+	_, bob := seedDispatchProbe(t)
+	const instId = 5150
+	mob := &mobs.Mob{MobId: 2, InstanceId: instId}
+	mob.Character.Name = "Brute"
+	mob.Character.Conditions = conditions.New()
+	mob.Character.MobInstanceId = instId
+	mob.Character.HealthMax.Value = 200
+	mob.Character.Health = 100
+	mob.Character.Equipment.Weapon = items.New(dispatchProbeWeapon)
+	mobs.SetInstanceForTest(instId, mob)
+	t.Cleanup(func() { mobs.SetInstanceForTest(instId, nil) })
+
+	fireItemProc(behaviortree.EventContext{EventType: "on_hit"}, &mob.Character, bob, nil, 80)
+	if mob.Character.Health != 140 {
+		t.Fatalf("a mob's on_hit lifesteal: health %d, want 140", mob.Character.Health)
+	}
+}
+
 func TestFireItemProc_GrappleReachesTheBody(t *testing.T) {
 	alice, bob := seedDispatchProbe(t)
 	t.Cleanup(conditions.SeedConditionRecordsForTest())
