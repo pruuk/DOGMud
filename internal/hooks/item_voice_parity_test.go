@@ -15,7 +15,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/itemvoices"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -227,28 +226,6 @@ func TestItemVoiceParity(t *testing.T) {
 			if !found {
 				t.Errorf("%s: no kill line on the kill round %d", s.name, s.divertAt)
 			}
-		}
-	}
-}
-
-// The tree pools carry the voice files' lines byte for byte (spec Rule
-// 18), checked while both exist. The retire task deletes this test with
-// internal/itemvoices.
-func TestItemTreePoolsMatchTheVoiceFiles(t *testing.T) {
-	loadVoiceParityWorld(t)
-	t.Cleanup(itemvoices.SeedVoicesForTest(nil))
-	itemvoices.LoadDataFiles()
-	for _, id := range itemvoices.AllVoiceIds() {
-		if err := behaviortree.GetEngine().LoadItemTree(id, behaviortree.GetItemTreePath(id)); err != nil {
-			t.Fatalf("item tree %s: %v", id, err)
-		}
-		tree := behaviortree.GetEngine().GetItemVoice(id)
-		if tree == nil {
-			t.Fatalf("item tree %s has no speech", id)
-		}
-		if !reflect.DeepEqual(tree.Speech, itemvoices.GetVoice(id).Lines) {
-			t.Errorf("item tree %s's pools differ from itemvoices/%s.yaml:\n tree:  %q\n voice: %q",
-				id, id, tree.Speech, itemvoices.GetVoice(id).Lines)
 		}
 	}
 }

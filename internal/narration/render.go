@@ -9,7 +9,7 @@ import (
 // Selector names which variant group an event draws from.
 //
 // It is an OPAQUE STRING on purpose. Whether the groups are ordered (defence's
-// weak, normal, heavy) or merely named (itemvoices' on_equip, casting's
+// weak, normal, heavy) or merely named (an item tree's on_equip, casting's
 // cast_started) is a property of the function that COMPUTES the selector, not
 // of the pool it selects. Keeping that distinction outside the core is what
 // leaves M4 a parameter flip instead of a core rewrite.

@@ -24,7 +24,6 @@ var narrationRenderCallers = map[string]string{
 	"internal/grapplemessaging/render.go":         "Kind A: the grapple store's coordinated triad",
 	"internal/items/defensive_messages.go":        "Kind A: the defence store's coordinated triad",
 	"internal/items/attack_messages.go":           "Kind A: the combat-message store's coordinated triad and ranged quartet (M3 item 8)",
-	"internal/itemvoices/itemvoices.go":           "Kind A: sentient item voices, single role",
 	"internal/lightnotice/store.go":               "Kind A: light-band change notices, single role (the observer is told); the default picker is deliberate, a notice is rare and variety is the point (lighting plan 3d)",
 	"internal/mobcommands/move_narration.go":      "Kind A: the special-move store's per-event triad, shared call-site helper for kick and the twelve mob verbs after it (M4e-1 Task 7)",
 	"internal/usercommands/move_narration.go":     "Kind A: the special-move store's per-event triad, the player-side twin of mobcommands/move_narration.go, shared call-site helper for the player special-move verbs (M4e-1b)",

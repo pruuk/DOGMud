@@ -194,8 +194,7 @@ func GetTauntTriad(intensity TauntIntensity, source, target, sourceType, targetT
 }
 
 // SeedTauntMessagesForTest swaps the store for a test-supplied set of bands,
-// returning a restore func for the caller to defer. Mirrors
-// itemvoices.SeedVoicesForTest.
+// returning a restore func for the caller to defer.
 //
 // It exists so tests OUTSIDE this package can exercise taunt rendering without
 // loading world data, which is what lets internal/usercommands assert that a

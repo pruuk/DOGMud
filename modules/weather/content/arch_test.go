@@ -15,8 +15,9 @@ import (
 // core: it picks a coordinated index across roles and substitutes tokens, and
 // imports nothing but stdlib plus internal/util's low-level helpers (no game
 // state, no rooms/mobs/players). Weather is the arc's actorless store and
-// item 9 joins it to that core the same way internal/itemvoices and
-// internal/items already do, so this is a deliberate widening of the
+// item 9 joins it to that core the same way internal/items already does
+// (and internal/itemvoices did until item behaviour slice 2 moved its
+// pools into item trees), so this is a deliberate widening of the
 // boundary, not a hole in it — every other internal/ package stays forbidden.
 var allowedInternalImports = map[string]bool{
 	"github.com/GoMudEngine/GoMud/internal/narration": true,

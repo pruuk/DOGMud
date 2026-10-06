@@ -34,7 +34,6 @@ procs:
     effect: lifesteal
     params:
       ratio: 0.25
-voice_id: blackrazor
 behavior: blackrazor
 statmods:
   strength: 6

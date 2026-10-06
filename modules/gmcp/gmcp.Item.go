@@ -11,7 +11,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/itemvoices"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 )
@@ -103,8 +102,6 @@ type itemUpdateReq struct {
 	ReserveHealthPct     float64   `json:"reserveHealthPct"`
 	ReserveStaminaPct    float64   `json:"reserveStaminaPct"`
 	ReserveConvictionPct float64   `json:"reserveConvictionPct"`
-	VoiceId              string    `json:"voiceId"`
-	TauntPull            bool      `json:"tauntPull"`
 	HungerRounds         int       `json:"hungerRounds"`
 	HungerDrainPct       float64   `json:"hungerDrainPct"`
 	MutationTickInterval int       `json:"mutationTickInterval"`
@@ -123,7 +120,6 @@ type itemDetail struct {
 	VendorCats    []string              `json:"vendorCats"`       // valid vendor categories for the checkboxes
 	ProcTriggers  []string              `json:"procTriggers"`     // valid proc trigger ids for the dropdown
 	ProcEffects   []string              `json:"procEffects"`      // valid proc effect ids for the dropdown
-	Voices        []string              `json:"voices"`           // valid sentient voice ids
 	Ranges        map[string][2]float64 `json:"ranges,omitempty"` // observed min–max per numeric field, across items of this type
 }
 
@@ -198,7 +194,6 @@ func specToReq(s *items.ItemSpec) itemUpdateReq {
 		req.SalvageReturns = append(req.SalvageReturns, itemSalvageRow{sr.ItemTag, sr.Quantity})
 	}
 	req.ReserveHealthPct, req.ReserveStaminaPct, req.ReserveConvictionPct = s.ReserveHealthPct, s.ReserveStaminaPct, s.ReserveConvictionPct
-	req.VoiceId, req.TauntPull = s.VoiceId, s.TauntPull
 	req.HungerRounds, req.HungerDrainPct = s.HungerRounds, s.HungerDrainPct
 	req.MutationTickInterval, req.MutationTickChance, req.MutationRarityFloor = s.MutationTickInterval, s.MutationTickChance, s.MutationRarityFloor
 	req.WornConditionIds = s.WornConditionIds
@@ -221,14 +216,13 @@ func buildItemGet(d itemDeps, itemId int) (itemDetail, bool) {
 		itemUpdateReq: specToReq(s),
 		Types:         itemTypeIds(), Subtypes: itemSubtypeIds(), Elements: itemElementIds(), Stats: statModNames(),
 		VendorCats:   shops.ValidVendorCategories,
-		ProcTriggers: procTriggerIds(), ProcEffects: procEffectIds(), Voices: itemVoiceIds(),
+		ProcTriggers: procTriggerIds(), ProcEffects: procEffectIds(),
 		Ranges: ranges,
 	}, true
 }
 
 func procTriggerIds() []string { return items.ValidProcTriggers() }
 func procEffectIds() []string  { return items.ValidProcEffects() }
-func itemVoiceIds() []string   { return itemvoices.AllVoiceIds() }
 
 // reqToSpec starts from the loaded spec so fields the form does NOT cover
 // (procs, reserves, worn-conditions, mutation drip, etc.) survive a Save untouched.
@@ -257,7 +251,6 @@ func reqToSpec(base *items.ItemSpec, req itemUpdateReq) items.ItemSpec {
 		}
 	}
 	s.ReserveHealthPct, s.ReserveStaminaPct, s.ReserveConvictionPct = req.ReserveHealthPct, req.ReserveStaminaPct, req.ReserveConvictionPct
-	s.VoiceId, s.TauntPull = req.VoiceId, req.TauntPull
 	s.HungerRounds, s.HungerDrainPct = req.HungerRounds, req.HungerDrainPct
 	s.MutationTickInterval, s.MutationTickChance, s.MutationRarityFloor = req.MutationTickInterval, req.MutationTickChance, req.MutationRarityFloor
 	s.WornConditionIds = req.WornConditionIds

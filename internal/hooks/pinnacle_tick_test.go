@@ -107,7 +107,7 @@ func TestPinnacleHunger_NeverLethalAndKillReset(t *testing.T) {
 
 // TestPinnacleHunger_FeedingLineCooldown proves the drain repeats every overdue
 // round but the feeding LINE is paced by pinnacle_hunger_msg_next_round
-// (SentientChatterCooldownRounds): two consecutive overdue ticks both drain,
+// (HungerFeedingLineCooldownRounds): two consecutive overdue ticks both drain,
 // only the first messages.
 func TestPinnacleHunger_FeedingLineCooldown(t *testing.T) {
 	defer items.SeedItemsForTest(map[int]*items.ItemSpec{

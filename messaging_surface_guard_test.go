@@ -178,24 +178,13 @@ var textSurfaceRegistry = map[string]surfaceEntry{
 	// entries here either, as predicted: its keys folded into actor, actee and
 	// observer above. --
 
-	// -- Sentient item voice narration: internal/itemvoices/itemvoices.go
-	// VoiceSpec, one YAML per voice, consumed by the pinnacle per-round tick
-	// for items with a voice_id. --
-	"lines":    {narration, "Overloaded but every schema hit is narration: itemvoices.go VoiceSpec.Lines (sentient-item chatter pools), quests/triggers.go NpcSayDef.Lines (npc_say scripted speech), and conversations/conversation.go ConversationDef.Lines (ambient NPC-NPC exchange, see CLAUDE.md NPC<->NPC Conversations). A handful of room `nouns:` children (e.g. \"flood lines\") coincidentally reuse this spelling as author content and are a known false positive of the 2-file heuristic -- see washing lines below for the same pattern."},
-	"on_taunt": {narration, "internal/itemvoices/itemvoices.go validVoiceEvents[\"on_taunt\"] -- an event-name key nested under a VoiceSpec's lines: map, selecting the line pool played when a sentient item's bearer taunts. A selector key like optionid, not prose itself, but part of the same narration shape."},
-
-	// -- voice_id / voiceid: TWO SPELLINGS OF THE SAME CONCEPT, drifted
-	// between two schemas that must agree for sentient-item chatter to
-	// resolve. Neither value is prose -- both are foreign-key identifiers --
-	// so both file as config. This drift is a consolidation target for a
-	// later stage of the messaging arc, not fixed here. --
-	"voice_id": {config, "internal/items/itemspec.go ItemSpec.VoiceId, yaml tag \"voice_id\" (with underscore) -- a sentient item's reference to its itemvoices/<id>.yaml file. Same concept as voiceid below, spelled differently; not player prose, an identifier."},
-	"voiceid":  {config, "internal/itemvoices/itemvoices.go VoiceSpec.VoiceId, yaml tag \"voiceid\" (no underscore) -- the voice file's own self-identifying id, matched against items' voice_id. Same concept as voice_id above, spelled differently; not player prose, an identifier."},
-
-	// taunt_pull: matched by the "taunt" stem but is a plain bool toggle, not
-	// prose -- promoted to schema by Method E (found in exactly one data
-	// file, materials-40000/40185-aegis_of_mockery.yaml).
-	"taunt_pull": {config, "internal/items/itemspec.go ItemSpec.TauntPull (bool) -- \"sentient chatter on_taunt also pulls the bearer's target's aggro (Aegis)\"; a toggle, not player-facing text, despite matching the taunt stem. Found in exactly ONE data file, promoted to schema by Method E (Go yaml struct tag)."},
+	// -- Sentient item speech: an item tree's speech: map
+	// (behaviors/items/<tree>.yaml, internal/behaviortree TreeDef.Speech),
+	// spoken by the speak node. Item behaviour slice 2 (2026-10-06) moved it
+	// there from internal/itemvoices and retired voice_id, voiceid and
+	// taunt_pull. --
+	"lines":    {narration, "Overloaded but every schema hit is narration: quests/triggers.go NpcSayDef.Lines (npc_say scripted speech) and conversations/conversation.go ConversationDef.Lines (ambient NPC-NPC exchange, see CLAUDE.md NPC<->NPC Conversations). A handful of room `nouns:` children (e.g. \"flood lines\") coincidentally reuse this spelling as author content and are a known false positive of the 2-file heuristic -- see washing lines below for the same pattern."},
+	"on_taunt": {narration, "a pool name under an item tree's speech: map (behaviors/items/aegis.yaml, blackrazor.yaml), the lines a sentient item speaks while its bearer fights, named by a speak node's pool param. A selector key like optionid, not prose itself, but part of the same narration shape."},
 
 	// emote: a genuine Method E COLLISION, not a real hit. internal/quests/
 	// triggers.go SayLineDef.Emote (bool, dash-prefixed under an npc_say

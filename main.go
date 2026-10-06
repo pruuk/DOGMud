@@ -46,7 +46,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/inputhandlers"
 	"github.com/GoMudEngine/GoMud/internal/integrations/discord"
 	"github.com/GoMudEngine/GoMud/internal/items"
-	"github.com/GoMudEngine/GoMud/internal/itemvoices"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/language"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
@@ -1667,12 +1666,10 @@ func loadAllDataFiles(isReload bool) {
 	// seed takes effect. It never fails: a broken seed is logged at ERROR
 	// and a corrupt overlay is quarantined.
 	baubles.LoadCorpus()
-	// Pinnacle Stage 1: sentient item voices. Must load AFTER items so the
-	// voice_id cross-validation can see every item's ItemSpec.
-	itemvoices.LoadDataFiles()
 	// Lighting 5e (item behaviour slice 1): every item's behavior: must name
 	// a tree under behaviors/items/ that loads and compiles, or the boot fails
-	// here rather than leave the item silently inert (spec X12).
+	// here rather than leave the item silently inert (spec X12). A sentient
+	// item's voice lives in its tree since slice 2.
 	if err := behaviortree.ValidateItemBehaviors(); err != nil {
 		panic(err)
 	}

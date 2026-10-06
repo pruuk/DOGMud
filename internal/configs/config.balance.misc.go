@@ -482,12 +482,6 @@ func (b *Balance) validateMisc() {
 	if b.BandolierAttuneRounds <= 0 {
 		b.BandolierAttuneRounds = 10
 	}
-	if b.SentientChatterCooldownRounds <= 0 {
-		b.SentientChatterCooldownRounds = 20
-	}
-	if b.SentientChatterChancePct < 1 || b.SentientChatterChancePct > 100 {
-		b.SentientChatterChancePct = 15
-	}
 	// Item tree chatter (item behaviour slice 2). `<= 0` and `< 1`, not
 	// `< 0`: an absent key reads 0, and a `< 0` check cannot repair it (the
 	// trap noted at KnockdownFrequencyScale). So 0 is not an off switch for

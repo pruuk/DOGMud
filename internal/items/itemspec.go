@@ -291,10 +291,8 @@ type ItemSpec struct {
 	MutationTickInterval  int        `yaml:"mutation_tick_interval,omitempty"`  // rounds between mutation rolls while worn (0 = never)
 	MutationTickChance    int        `yaml:"mutation_tick_chance,omitempty"`    // percent chance per roll
 	MutationRarityFloor   int        `yaml:"mutation_rarity_floor,omitempty"`   // min mutation rarity in the pool (0 = no floor)
-	VoiceId               string     `yaml:"voice_id,omitempty"`                // sentient item voice file id (itemvoices/)
 	HungerRounds          int        `yaml:"hunger_rounds,omitempty"`           // rounds without a kill before the item feeds on the wielder (0 = never)
 	HungerDrainPct        float64    `yaml:"hunger_drain_pct,omitempty"`        // fraction of HealthMax drained per hungry round
-	TauntPull             bool       `yaml:"taunt_pull,omitempty"`              // sentient chatter on_taunt also pulls the bearer's target's aggro (Aegis)
 	PhysicalMitigation    int        `yaml:"physical_mitigation,omitempty"`     // % physical damage reduction (Stage 34)
 	MagicalMitigation     int        `yaml:"magical_mitigation,omitempty"`      // % magical damage reduction (Stage 34)
 	ConvictionMitigation  int        `yaml:"conviction_mitigation,omitempty"`   // % conviction damage reduction (Stage 34)
