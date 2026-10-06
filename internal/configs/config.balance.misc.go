@@ -488,4 +488,32 @@ func (b *Balance) validateMisc() {
 	if b.SentientChatterChancePct < 1 || b.SentientChatterChancePct > 100 {
 		b.SentientChatterChancePct = 15
 	}
+	// Item tree chatter (item behaviour slice 2). `<= 0` and `< 1`, not
+	// `< 0`: an absent key reads 0, and a `< 0` check cannot repair it (the
+	// trap noted at KnockdownFrequencyScale). So 0 is not an off switch for
+	// these; PinnacleItemsEnabled is.
+	if b.ItemChatterQuietCooldownRounds <= 0 {
+		b.ItemChatterQuietCooldownRounds = 40
+	}
+	if b.ItemChatterQuietChancePct < 1 || b.ItemChatterQuietChancePct > 100 {
+		b.ItemChatterQuietChancePct = 10
+	}
+	if b.ItemChatterNormalCooldownRounds <= 0 {
+		b.ItemChatterNormalCooldownRounds = 20
+	}
+	if b.ItemChatterNormalChancePct < 1 || b.ItemChatterNormalChancePct > 100 {
+		b.ItemChatterNormalChancePct = 15
+	}
+	if b.ItemChatterChattyCooldownRounds <= 0 {
+		b.ItemChatterChattyCooldownRounds = 10
+	}
+	if b.ItemChatterChattyChancePct < 1 || b.ItemChatterChattyChancePct > 100 {
+		b.ItemChatterChattyChancePct = 25
+	}
+	if b.ItemChatterListenerCapRounds <= 0 {
+		b.ItemChatterListenerCapRounds = 10
+	}
+	if b.HungerFeedingLineCooldownRounds <= 0 {
+		b.HungerFeedingLineCooldownRounds = 20
+	}
 }

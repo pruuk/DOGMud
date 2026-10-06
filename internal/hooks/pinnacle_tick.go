@@ -178,14 +178,14 @@ func tickHunger(c *characters.Character, user *users.UserRecord, now uint64) {
 	// applier the pool primitives can attribute to.
 	c.ApplyHarm(characters.PoolHealth, drain, state.ActorRef{})
 	// The drain repeats every overdue round, but the feeding LINE is paced by
-	// its own cooldown (reusing the chatter knob) so an ignored hunger debt
-	// doesn't spam the player every round.
+	// its own cooldown (HungerFeedingLineCooldownRounds) so an ignored hunger
+	// debt doesn't spam the player every round.
 	if user != nil {
 		if next, ok := readMiscRound(c.GetMiscData("pinnacle_hunger_msg_next_round")); !ok || now >= next {
 			emitVoiceLine(user, nil, spec, "on_hunger_feeding",
 				`<ansi fg="red">The blade feeds on you — a cold pull beneath your grip.</ansi>`)
 			c.SetMiscData("pinnacle_hunger_msg_next_round",
-				now+uint64(configs.GetBalanceConfig().SentientChatterCooldownRounds))
+				now+uint64(configs.GetBalanceConfig().HungerFeedingLineCooldownRounds))
 		}
 	}
 }

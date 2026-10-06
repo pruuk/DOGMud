@@ -2102,6 +2102,18 @@ Balance:
   BandolierAttuneRounds: 10           # Rounds of re-attunement after bandolier contents change
   SentientChatterCooldownRounds: 20   # Min rounds between sentient item lines
   SentientChatterChancePct: 15        # Percent chance per eligible round that a sentient item speaks
+  # Item tree chatter: a tree's chatter level (quiet, normal, chatty) sets
+  # the rounds between its lines and its chance on an open round. A
+  # listener hears at most one ambient item line per ItemChatterListenerCapRounds.
+  # 0 reads as unset and takes the default; PinnacleItemsEnabled is the off switch.
+  ItemChatterQuietCooldownRounds: 40
+  ItemChatterQuietChancePct: 10
+  ItemChatterNormalCooldownRounds: 20
+  ItemChatterNormalChancePct: 15
+  ItemChatterChattyCooldownRounds: 10
+  ItemChatterChattyChancePct: 25
+  ItemChatterListenerCapRounds: 10
+  HungerFeedingLineCooldownRounds: 20 # Rounds between a hungry weapon's feeding lines (the drain runs every round)
 
 
   # ── TOXICITY ──────────────────────────────────────────────────────────────
