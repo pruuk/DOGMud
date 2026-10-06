@@ -69,7 +69,12 @@ func TestDarknessIsNeverLight(t *testing.T) {
 	_, ok, why := user.Character.Wear(items.New(darkTestUmbralItem))
 	require.True(t, ok, why)
 	require.True(t, user.Character.Conditions.AddConditionMagnitude(darkTestPallCond, 4, 50))
-	require.Len(t, user.Character.DarknessTerms(), 2, "fixture: both darknesses must be held and on")
+	held := user.Character.Conditions.DarknessSources()
+	require.Len(t, held, 2, "fixture: both darknesses must be held")
+	for _, rec := range held {
+		_, on := rec.LightNow(conditions.GetConditionSpec(rec.ConditionId))
+		require.True(t, on, "fixture: darkness %d must be on", rec.ConditionId)
+	}
 
 	require.Empty(t, user.Character.LightTerms(), "a darkness is not a light term")
 	require.False(t, user.Character.EmitsLight(), "a darkness bearer must not shed light")
