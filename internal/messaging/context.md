@@ -385,6 +385,12 @@ Functions:
   quoted speech itself is untouched ("I am Kesh" stays "I am Kesh"), and a
   player's words cannot forge an identity tag because the wrappers escape
   them first (`util.EscapeAnsiTags`). Clear sight returns `text` unchanged.
+- `StripNameAdjectives(text string) string` (#415): drops the adjective span
+  ("(dead)", "(♥friend)") after every identity tag, keeping the tag, for a
+  narrated line that names a creature rather than lists it.
+  `combat.RenderChannelDefenceMessages` applies it to both identities; the
+  melee and counter paths build their names without adjectives instead
+  (`combat.meleeIdentityTag`).
 - `Normalize(cat Category, text string) string`
 - `Anonymize(text string) string`: the pipeline's infrared fallback for every
   visual line. Replaces each identity tag with "a figure" and takes the

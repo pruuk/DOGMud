@@ -297,6 +297,10 @@ func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDe
 	if !out.Defended {
 		return items.DefenseMessageTriad{}
 	}
+	// Callers pass formatted names; a narrated line names the creature, not
+	// its status (#415).
+	identities.Attacker = messaging.StripNameAdjectives(identities.Attacker)
+	identities.Defender = messaging.StripNameAdjectives(identities.Defender)
 	triad := items.RenderDefenseMessage(items.DefencePoolFor(out.Defence), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
 		items.TokenActor:  identities.Attacker,
 		items.TokenActee:  identities.Defender,
