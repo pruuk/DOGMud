@@ -40,6 +40,14 @@ The tree loader refuses (and the boot panics on) a `proc` outside a proc
 event, an unknown effect, a param its effect does not read or that is not
 a number, and a `random` over a proc outside 1 to 99.
 
+**One proc branch per event per item tree**, and it does not share its
+event with a line or any other branch in the same selector. A selector
+runs only the first child that succeeds, so of two branches on one event
+the second would never run (two procs, or a proc and an `on_kill` line).
+The loader refuses such a tree. The retired `procs:` list fired every
+proc for a trigger; a tree that wants two effects on one event is not
+expressible yet.
+
 **Which equipment slot each event reaches** (`fireItemProc` in
 `internal/hooks/item_proc_dispatch.go`):
 

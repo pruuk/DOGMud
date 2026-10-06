@@ -601,7 +601,11 @@ event, an unknown effect, a param its effect does not read or that is not
 a number, and a `random` over a proc outside 1 to 99. It also refuses a
 `cooldown` or `random` over a proc unless it wraps the proc alone: its
 child must be the `proc` or another decorator that ends in the `proc`,
-never a selector, sequence or condition in between. The cooldown key names
+never a selector, sequence or condition in between. Give an item tree one
+proc branch per event, and do not share that event with a line or any
+other branch in the same selector: a selector runs only the first child
+that succeeds, so the second of two branches on one event would never
+run, and the loader refuses it. The cooldown key names
 the branch's place in the tree, so moving or reordering a proc branch (or
 inserting a branch before it in the same selector) starts every bearer's
 running cooldown fresh once, and the old key stays inert in saves. The

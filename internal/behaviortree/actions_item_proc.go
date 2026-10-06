@@ -169,7 +169,8 @@ func wrapsProcAlone(child *NodeDef) bool {
 // would arm the cooldown on a sibling's success or gate a sibling's chance),
 // one not under a proc event, an unknown effect, a param its effect does
 // not read or that is not a number, and a `random` decorator over a proc
-// outside 1 to 99 (at 100 the branch omits it, so nothing is drawn; X19).
+// outside 1 to 99 (at 100 the branch omits it, so nothing is drawn; X19),
+// and a proc branch that shares its event with a sibling in one selector.
 // event is the nearest enclosing event.
 func checkProcNodes(def NodeDef, event, path string) error {
 	if def.Event != `` {
@@ -206,6 +207,11 @@ func checkProcNodes(def NodeDef, event, path string) error {
 			}
 		}
 	}
+	if def.Type == `selector` {
+		if err := checkProcSiblings(def.Children, event, path); err != nil {
+			return err
+		}
+	}
 	for i, ch := range def.Children {
 		if err := checkProcNodes(ch, event, fmt.Sprintf("%s.%d", path, i)); err != nil {
 			return err
@@ -213,6 +219,30 @@ func checkProcNodes(def NodeDef, event, path string) error {
 	}
 	if def.Child != nil {
 		return checkProcNodes(*def.Child, event, path+".child")
+	}
+	return nil
+}
+
+// checkProcSiblings refuses a selector in which a branch naming a proc
+// shares its event with a sibling. A selector stops at the first child that
+// succeeds, so of two branches on one event the first shadows the second:
+// two procs, or a proc and a line, could never both run. A branch's event
+// is its own `event:` field, else the enclosing one; only siblings that
+// carry an `event:` field are compared.
+func checkProcSiblings(children []NodeDef, event, path string) error {
+	for i, ch := range children {
+		if !nodeDefNamesAction(ch, `proc`) {
+			continue
+		}
+		own := event
+		if ch.Event != `` {
+			own = ch.Event
+		}
+		for j, sib := range children {
+			if j != i && sib.Event != `` && sib.Event == own {
+				return fmt.Errorf("%s.%d: a proc branch shares its event %q with sibling %s.%d (a selector runs only the first that succeeds)", path, i, own, path, j)
+			}
+		}
 	}
 	return nil
 }
