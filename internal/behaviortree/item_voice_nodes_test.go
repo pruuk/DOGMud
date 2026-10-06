@@ -123,6 +123,25 @@ func TestSpeakSendsTheHolderAndTheRoom(t *testing.T) {
 	}
 }
 
+// An item named with a leading article reads "Kesh's Blackrazor mutters",
+// not "Kesh's The Blackrazor mutters"; its bearer still reads the full name
+// (playtest 2026-10-06).
+func TestSpeakDropsTheArticleAfterAPossessive(t *testing.T) {
+	seedVoiceWorld(t)
+	items.GetItemSpec(voiceProbeItemId).Name = "The Probe Shield"
+	t.Cleanup(func() { items.GetItemSpec(voiceProbeItemId).Name = "Probe Shield" })
+	if !TryItemBehavior(voiceEvent("item_idle"), wornProbe(voiceProbeItemId, 1)) {
+		t.Fatal("the idle line must go out")
+	}
+	if got := drained(voiceBearerId); !strings.Contains(got, `The Probe Shield</ansi> says`) {
+		t.Errorf("the bearer reads %q, want the item's full name", got)
+	}
+	got := drained(voiceListenerId)
+	if !strings.Contains(got, `Kesh</ansi>'s <ansi fg="item">Probe Shield</ansi> mutters`) || strings.Contains(got, "The Probe Shield") {
+		t.Errorf("the listener reads %q, want the possessive without the article", got)
+	}
+}
+
 // Spec X17: the room line is heard, and the bearer's name is hidden by each
 // listener's sight. Shown to fail against the Pinnacle tick's sender
 // (room.SendTextVisual), which sends a listener in the dark nothing.

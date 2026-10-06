@@ -24,11 +24,11 @@ goals:
     Go `down` to the Rift Chamber (5000). `look`. `remove aegis` and
     `equip aegis` once each. Quote what you and the listener read.
   - >-
-    When the Blackrazor bearer is ready, `ask sable arena 50` and lead the
-    fight: `attack` the arena mob. During the fight quote each taunt line
-    from your shield, and after each one check whether the mob turned to
-    fight you (look at who it attacks). Keep fighting until it dies, and
-    quote the kill line from your shield and the one from the Blackrazor.
+    `ask sable arena 100` (Sable wants at least 100 gold, and each asker
+    gets a private arena, so you fight without the Blackrazor bearer). Enter
+    and `attack` the arena mob. During the fight quote each taunt line from
+    your shield, and after each one check whether the mob turned to fight
+    you. Keep fighting until it dies, and quote the kill line.
   - >-
     reads-well: report any raw number in an item line, any line over 80
     columns, any em dash, and any item line that appeared twice.

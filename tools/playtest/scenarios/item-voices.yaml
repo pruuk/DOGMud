@@ -10,8 +10,11 @@
 #   5000 The Rift Chamber, one level down (dungeon, no sky, room lamp 38 plus
 #     the pulsing Rift Stone): shapes only for normal eyes, so a listener
 #     there should read "A figure's ..." or "Someone's ...", never a name.
-#     Sable is here: `ask sable arena <gold>` opens a lit arena fight that
-#     lasts several rounds (interior rooms, lamp 50).
+#     Sable is here: `ask sable arena <gold>` (at least 100) opens a lit
+#     arena fight (interior rooms, lamp 50). Each asker gets a PRIVATE
+#     arena, so two bearers cannot fight one mob together there, and a
+#     strong character kills each mob in a few rounds, too fast for a taunt
+#     (a rare idle line) to come. The 2026-10-06 run hit both.
 # The Blackrazor grows hungry after about 50 rounds (a few real minutes)
 # without a kill: a warning, then feeding lines to its bearer alone.
 name: item-voices

@@ -2,6 +2,7 @@ package behaviortree
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -235,7 +236,7 @@ func actSpeak(params map[string]any, ctx *EvalContext) Result {
 		}
 		room.SendTextHidingNames(messaging.CategorySystem, fmt.Sprintf(
 			`<ansi fg="%s">%s</ansi>'s <ansi fg="item">%s</ansi> mutters, "<ansi fg="yellow">%s</ansi>"`,
-			nameTag, holderName, spec.Name, line),
+			nameTag, holderName, possessedItemName(spec.Name), line),
 			[]string{holderName}, messaging.HideSpeakerNames, exclude...)
 	}
 
@@ -252,6 +253,19 @@ func actSpeak(params map[string]any, ctx *EvalContext) Result {
 		listenerCapMu.Unlock()
 	}
 	return Success
+}
+
+// possessedItemName is an item's name after a possessive: a leading article
+// goes, so the room reads "Kesh's Blackrazor mutters", not "Kesh's The
+// Blackrazor mutters" (playtest 2026-10-06). The bearer's own line keeps the
+// full name.
+func possessedItemName(name string) string {
+	for _, article := range []string{`The `, `An `, `A `} {
+		if rest, ok := strings.CutPrefix(name, article); ok && rest != `` {
+			return rest
+		}
+	}
+	return name
 }
 
 // actTauntPull: the Aegis's tank loop (spec X15, ruling R5). A player

@@ -34,10 +34,10 @@ goals:
     warning and each feeding line, and say whether your health dropped.
     Ask the listener whether they read any of it (they should not).
   - >-
-    Then fight together with the shield bearer: `ask sable arena 50`, follow
-    the shield bearer into the arena, and `attack` the arena mob. Quote any
-    taunt line from your blade. Fight until the mob dies; quote the kill
-    lines from both items.
+    Then fight: `ask sable arena 100` (Sable wants at least 100 gold, and
+    each asker gets a private arena), enter it and `attack` the arena mob.
+    Fight slowly enough for taunts to come (they are rare idle lines, so a
+    fight of a few rounds may show none). Quote any taunt and kill line.
   - >-
     reads-well: report any raw number in an item line, any line over 80
     columns, any em dash, and any item line that appeared twice.
