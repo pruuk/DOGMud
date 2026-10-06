@@ -276,7 +276,7 @@ special-case branch never fires. Drinking it:
 
 | Knob | Location | Default | Purpose |
 |------|----------|---------|---------|
-| `GamePlay.PinnacleItemsEnabled` | config.gameplay.go | `true` | Master toggle for the whole per-round pinnacle tick (hunger/ambient/mutation-drip/voices); `pinnacleUserTick` early-returns entirely when off. |
+| `GamePlay.PinnacleItemsEnabled` | config.gameplay.go | `true` | Master toggle for the whole per-round pinnacle tick (hunger/ambient/mutation-drip); `pinnacleUserTick` early-returns entirely when off. It also silences item tree voices: `chatter_ready`, `speak` and `taunt_pull` each check it. |
 | `GamePlay.ItemProcsEnabled` | config.gameplay.go | `true` | Kill switch for proc firing (`on_hit`/`on_block`/etc.); checked in `procGateOpen`. |
 | `Balance.BandolierAttuneRounds` | config.balance.go | `100` | Re-attunement cooldown length after bandolier contents change. |
 | `Balance.ItemChatterQuietCooldownRounds` / `...ChancePct` | config.balance.go | `40` / `10` | A quiet item tree's rounds between lines and chance on an open round. |
