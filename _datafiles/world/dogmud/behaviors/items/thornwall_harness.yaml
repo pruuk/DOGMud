@@ -1,0 +1,22 @@
+# thornwall_harness: the Thornwall Harness's barbs (40186; item behaviour
+# slice 3, spec Rule 20). In a grapple, whichever side the wearer is on, the
+# barbs may open a bleeding wound on the other: half the time, at most once
+# every 5 rounds. The cooldown is the wearer's, shared by every copy and kept
+# across a relog (ruling R1).
+notes: Barbs that punish anything that closes in.
+tree:
+  type: decorator
+  event: on_grapple
+  mod: cooldown
+  rounds: 5
+  child:
+    type: decorator
+    mod: random
+    percent: 50
+    child:
+      type: action
+      do: proc
+      effect: apply_condition
+      condition: 1
+      duration: 10
+      magnitude: 7

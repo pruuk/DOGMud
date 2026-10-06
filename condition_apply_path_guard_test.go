@@ -136,7 +136,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// ── mob holders: no client, so no line could reach anyone ───────────────
 	"internal/usercommands/character.go|423":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
 	"internal/hooks/item_procs.go|256":               "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
-	"internal/behaviortree/actions_item_proc.go|308": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
+	"internal/behaviortree/actions_item_proc.go|324": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40":     "the holder is a MOB (a summoned companion), not a player",
 
 	// ── secret conditions: silence is the authored intent ───────────────────
@@ -248,7 +248,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// case, and again Task 3 when it gained its heal case, and again Task 4
 	// when it gained its shield case, and again Task 5 when its doc comment
 	// grew and the per-pairing fallthrough became the default arm) ──────
-	"internal/hooks/spell_effects.go|321": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
+	"internal/hooks/spell_effects.go|322": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
 
 	// ── light spells (lighting plan 5a): an EVENT door, not the silent
 	// character door. applySpellCondition's target is a spellConditionTarget,
@@ -294,7 +294,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/actions/combat_rake.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_throttle.go|146":        "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/hooks/item_procs.go|206":               "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
-	"internal/behaviortree/actions_item_proc.go|258": "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
+	"internal/behaviortree/actions_item_proc.go|274": "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
 }
 
 // primitivePackages define Character.AddCondition / Conditions.AddCondition

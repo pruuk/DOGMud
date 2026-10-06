@@ -119,6 +119,22 @@ func (d *ProcCooldownDecorator) Evaluate(ctx *EvalContext) Result {
 	return result
 }
 
+// ProcRandomDecorator is a `random` decorator over a proc branch: the
+// proc's chance. It draws only while ItemProcsEnabled is on, as the old
+// gate did, because a kill reaches a proc branch without the dispatcher
+// reading the switch first.
+type ProcRandomDecorator struct {
+	Percent int
+	Child   Node
+}
+
+func (d *ProcRandomDecorator) Evaluate(ctx *EvalContext) Result {
+	if !ItemProcsOn() || util.Rand(100) >= d.Percent {
+		return Failure
+	}
+	return d.Child.Evaluate(ctx)
+}
+
 // nodeDefNamesAction reports whether a tree names the action anywhere.
 func nodeDefNamesAction(def NodeDef, action string) bool {
 	if def.Do == action {

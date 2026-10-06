@@ -49,6 +49,9 @@ type procDispatch func(trigger string, owner, other *characters.Character, room 
 // procParityPaths are the dispatchers the record is checked against.
 var procParityPaths = map[string]procDispatch{
 	"pinnacle": dispatchItemProcs,
+	"tree": func(trigger string, owner, other *characters.Character, room *rooms.Room, damage int) {
+		fireItemProc(behaviortree.EventContext{EventType: trigger}, owner, other, room, damage)
+	},
 }
 
 // loadProcParityWorld loads the shipped conditions and items, points the

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -241,7 +242,7 @@ func applySpellDamage(c spellEffectCtx) int {
 		// on_spell_hit item procs fire only on a harm hit that dealt damage;
 		// the proc's own chance and cooldown pace an area cast.
 		if dmg > 0 {
-			dispatchItemProcs("on_spell_hit", c.casterChar, tc, nil, dmg)
+			fireItemProc(behaviortree.EventContext{EventType: "on_spell_hit"}, c.casterChar, tc, nil, dmg)
 		}
 	}
 	commitHarmfulSpellAggro(c, fresh)
@@ -354,7 +355,7 @@ func applySpellKnockdown(c spellEffectCtx) int {
 		tc.ApplyHarm(characters.PoolHealth, dmg, c.casterRef())
 		cancelDamageConditions(tc)
 		if dmg > 0 {
-			dispatchItemProcs("on_spell_hit", c.casterChar, tc, nil, dmg)
+			fireItemProc(behaviortree.EventContext{EventType: "on_spell_hit"}, c.casterChar, tc, nil, dmg)
 		}
 	}
 	// Spell knockdowns put the target on its back (Supine); a target already

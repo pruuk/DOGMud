@@ -158,12 +158,12 @@ func handleCombatRound(
 
 	// Pinnacle item procs: attacker's weapon on_hit. Fires for all four
 	// quadrants (player and mob attackers) — the point of hooking the unified
-	// orchestrator. Gated internally by ItemProcsEnabled + the per-proc
-	// chance/cooldown; a no-op when the attacker carries no proc weapon.
+	// orchestrator. Gated by ItemProcsEnabled, then the weapon's tree (its
+	// proc branch's chance and cooldown); a no-op when the weapon has no tree.
 	// Decision (U6 Task 14): res.Hit, not CleanHit, on purpose — on-hit procs
 	// read the damage actually dealt, and a deflected swing deals real damage.
 	if res.Hit {
-		dispatchItemProcs("on_hit", atk.GetCharacter(), def.GetCharacter(), atk.GetRoom(), res.DamageToTarget)
+		fireItemProc(behaviortree.EventContext{EventType: "on_hit"}, atk.GetCharacter(), def.GetCharacter(), atk.GetRoom(), res.DamageToTarget)
 	}
 
 	// Pinnacle item procs: defender's shield on_block. A "successful block" in
@@ -177,7 +177,7 @@ func handleCombatRound(
 	// CRITS only. rollCombatAttack has already resolved defense into res by
 	// this point, so DefenseUsed is populated.
 	if res.DefenseUsed == combatvocab.DefenceBlock {
-		dispatchItemProcs("on_block", def.GetCharacter(), atk.GetCharacter(), atk.GetRoom(), onBlockProcDamage(res))
+		fireItemProc(behaviortree.EventContext{EventType: "on_block"}, def.GetCharacter(), atk.GetCharacter(), atk.GetRoom(), onBlockProcDamage(res))
 	}
 
 	// Combat analytics (shared across all four quadrants).

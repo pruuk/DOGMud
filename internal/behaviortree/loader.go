@@ -316,6 +316,14 @@ func compileDecorator(def NodeDef, path string) (Node, error) {
 			Child: child,
 		}, nil
 	case "random":
+		// A proc branch's chance draws nothing while procs are off; a kill
+		// reaches a proc branch without the dispatcher's gate (Rule 21).
+		if isItemTreePath(path) && nodeDefNamesAction(*def.Child, "proc") {
+			return &ProcRandomDecorator{
+				Percent: getIntParam(params, "percent"),
+				Child:   child,
+			}, nil
+		}
 		return &RandomDecorator{
 			Percent: getIntParam(params, "percent"),
 			Child:   child,

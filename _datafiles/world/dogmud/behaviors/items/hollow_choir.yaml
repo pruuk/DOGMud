@@ -1,0 +1,18 @@
+# hollow_choir: the Staff of the Hollow Choir's hunger for conviction
+# (40189; item behaviour slice 3, spec Rule 20). Every spell that lands
+# drains a share of the target's conviction into the caster, at most once
+# every 3 rounds. Always on a hit, so no random decorator: nothing is drawn
+# (X19). The cooldown is the caster's, shared by every copy and kept across
+# a relog (ruling R1).
+notes: A choir of stolen will.
+tree:
+  type: decorator
+  event: on_spell_hit
+  mod: cooldown
+  rounds: 3
+  child:
+    type: action
+    do: proc
+    effect: steal_pool
+    pool: 3
+    amount_pct: 0.08

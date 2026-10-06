@@ -33,6 +33,7 @@ procs:
     params:
       pool: 3
       amount_pct: 0.08
+behavior: hollow_choir
 weight: 4.0
 rarity_tier: 82
 value: 45000
