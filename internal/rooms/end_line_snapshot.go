@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // endLineSnapshot is the holder's room as everyone in it could see it just
@@ -56,7 +57,39 @@ type endLineSnapshot struct {
 var (
 	endLineMu        sync.Mutex
 	endLineSnapshots = map[*conditions.Condition]endLineSnapshot{}
+
+	// endLineRoundSnaps is the one snapshot per room the round ticks take
+	// this round (endLineRound), shared by every record that runs out in that
+	// room on that round. See Room.EndLineRoundSnapshot.
+	endLineRound      uint64
+	endLineRoundSnaps = map[int]VisualSnapshot{}
 )
+
+// EndLineRoundSnapshot returns this round's end-line snapshot of r, taking it
+// the first time any holder in r asks this round and handing the same one to
+// every later ask. The round ticks call it just before a holder's Trigger, so
+// the first ask in a room comes before any light or darkness in it has run
+// out this round. Snapshotted per holder instead, a second light running out
+// in the same room on the same round was judged by a room the first had
+// already left dark, and a watcher who saw its holder only by the first was
+// never told. Keyed by util.GetRoundCount(), which holds still through one
+// round's user and mob ticks; a new round, or ClearEndLineSnapshots, starts
+// afresh.
+func (r *Room) EndLineRoundSnapshot() VisualSnapshot {
+	round := util.GetRoundCount()
+	endLineMu.Lock()
+	defer endLineMu.Unlock()
+	if round != endLineRound {
+		clear(endLineRoundSnaps)
+		endLineRound = round
+	}
+	if snap, ok := endLineRoundSnaps[r.RoomId]; ok {
+		return snap
+	}
+	snap := r.VisualSnapshot()
+	endLineRoundSnaps[r.RoomId] = snap
+	return snap
+}
 
 // KeepEndLineSnapshot keeps snap, taken of room roomId, for rec's end line.
 // Take snap just before rec stops counting (before the Trigger it runs out
@@ -93,13 +126,14 @@ func TakeEndLineSnapshot(rec *conditions.Condition, endRoomId int) VisualSnapsho
 	return kept.snap
 }
 
-// ClearEndLineSnapshots drops every kept snapshot. The prune calls it once it
-// has narrated what it will, so no entry outlives it; tests call it to start
-// clean.
+// ClearEndLineSnapshots drops every kept snapshot and this round's room
+// snapshots. The prune calls it once it has narrated what it will, so no
+// entry outlives it; tests call it to start clean.
 func ClearEndLineSnapshots() {
 	endLineMu.Lock()
 	defer endLineMu.Unlock()
 	clear(endLineSnapshots)
+	clear(endLineRoundSnaps)
 }
 
 // KeepEndLineSnapshotsBeforeRemoval snapshots c's room for every held light

@@ -279,3 +279,40 @@ func TestDarknessEndLine_CancelledDarknessIsJudgedBeforeItLifted(t *testing.T) {
 	assert.Zero(t, countContaining(drainPlain(2), "thins away"),
 		"a watcher blind in the cancelled pall was told it thinned")
 }
+
+// Two lights running out in one room on one round are judged against one
+// snapshot taken before either went out. The watcher sees the mob's faint
+// wick-holder only by the player's lantern; the lantern runs out on the user
+// tick, before the mob tick reaches the wick. Snapshotted per holder, the
+// wick's snapshot met a room the lantern no longer lit, and the watcher who
+// had seen the mob was never told its wick went out.
+func TestLightEndLine_TwoLightsOutInOneRoundShareOneSnapshot(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedNarrationConditions()
+	defer restore()
+	darken(t, 1)
+	room := rooms.LoadRoom(1)
+	holder := users.GetByUserId(1)
+	watcher := users.GetByUserId(2)
+	mob := mobs.GetInstance(100)
+	require.Equal(t, 1, mob.Character.RoomId, "fixture: the mob must share the watcher's room")
+	require.True(t, holder.Character.Conditions.AddCondition(lanternConditionId, false))
+	require.True(t, mob.Character.Conditions.AddCondition(wickConditionId, false))
+	require.Equal(t, messaging.SightFull, messaging.ParticipantSight(watcher.Character, room),
+		"fixture: the watcher must see by the lantern")
+	expireOnNextTick(t, holder.Character.Conditions.List, lanternConditionId)
+	expireOnNextTick(t, mob.Character.Conditions.List, wickConditionId)
+	drainPlain(2)
+
+	UserRoundTick(events.NewRound{RoundNumber: 1})
+	tickMobConditions(mob, 100)
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(watcher.Character, room),
+		"fixture: both lights must be out after the round")
+	PruneConditions(events.NewTurn{TurnNumber: 1})
+
+	lines := drainPlain(2)
+	assert.Equal(t, 1, countContaining(lines, "light gutters out"), "the lantern's end line: %v", lines)
+	assert.Equal(t, 1, countContaining(lines, "wick held by"),
+		"a watcher who saw the mob by the lantern was not told its wick went out: %v", lines)
+}

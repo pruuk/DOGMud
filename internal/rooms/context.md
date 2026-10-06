@@ -29,13 +29,17 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   snapshot is kept in this package's end-line store
   (`end_line_snapshot.go`): `KeepEndLineSnapshot(rec, roomId, snap)` keeps
   one for a record (the hooks round ticks call it just before the Trigger the
-  record runs out on), `KeepEndLineSnapshotsBeforeRemoval(c, conditionId)`
+  record runs out on, with `Room.EndLineRoundSnapshot()`, the one snapshot
+  of that room per round, taken before any light or darkness in it has run
+  out that round and shared by every record that runs out there that round),
+  `KeepEndLineSnapshotsBeforeRemoval(c, conditionId)`
   snapshots the holder's room for a record about to be removed early
   (`usercommands` cancel calls it), `TakeEndLineSnapshot(rec, roomId)` hands
   it to the prune (nil when none was kept or the holder is now in another
-  room), and `ClearEndLineSnapshots()` drops the rest at the end of the
-  prune. The store's doc comment lists the removal paths that keep no
-  snapshot and why.
+  room), and `ClearEndLineSnapshots()` drops the rest (and the round's room
+  snapshots) at the end of the prune. A watcher's decision is frozen from
+  the snapshot until the line is sent. The store's doc comment lists the
+  removal paths that keep no snapshot and why.
   The two as-lit senders this replaced, which judged every reader against a
   stand-in lit room, are deleted. All the
   visual senders share one per-recipient body, `deliverVisual`.

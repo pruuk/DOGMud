@@ -1108,8 +1108,11 @@ turn's prune; judged by the room then, a light's line met a room already
 dark and a darkness's a room already lit. So both round ticks call
 `keepEndLineSnapshots(c, room)` (`condition_end_snapshot.go`) just before
 `Trigger`: for every held light or darkness record whose
-`ExpiresOnNextTrigger(spec)` is true it keeps a `rooms.VisualSnapshot` with
-`rooms.KeepEndLineSnapshot`, keyed by the record's pointer; `usercommands`
+`ExpiresOnNextTrigger(spec)` is true it keeps the room's snapshot for this
+round (`Room.EndLineRoundSnapshot()`, one per room per round, taken before
+any light or darkness there has run out, so two lights going out together
+are judged against the same moment) with `rooms.KeepEndLineSnapshot`, keyed
+by the record's pointer; `usercommands`
 cancel keeps one with `rooms.KeepEndLineSnapshotsBeforeRemoval` before it
 removes the record. The store lives in package `rooms` so both can reach
 it. The prune takes it with `rooms.TakeEndLineSnapshot(rec, roomId)` and
