@@ -149,13 +149,14 @@ func nodeDefNamesAction(def NodeDef, action string) bool {
 }
 
 // wrapsProcAlone reports whether a decorator's child is the proc action, or
-// another decorator whose own chain of decorators ends in the proc action.
+// a chain of only `cooldown` and `random` decorators that ends in it. An
+// invert, repeat or delay between them would arm the cooldown on a no-op.
 func wrapsProcAlone(child *NodeDef) bool {
 	for child != nil {
 		if child.Type == `action` && child.Do == `proc` {
 			return true
 		}
-		if child.Type != `decorator` {
+		if child.Type != `decorator` || (child.Mod != `cooldown` && child.Mod != `random`) {
 			return false
 		}
 		child = child.Child
@@ -177,7 +178,7 @@ func checkProcNodes(def NodeDef, event, path string) error {
 		event = def.Event
 	}
 	if def.Type == `decorator` && (def.Mod == `cooldown` || def.Mod == `random`) && nodeDefNamesAction(def, `proc`) && !wrapsProcAlone(def.Child) {
-		return fmt.Errorf("%s: a %s over a proc must wrap the proc alone (only decorators between them)", path, def.Mod)
+		return fmt.Errorf("%s: a %s over a proc must wrap the proc alone (only a cooldown or random between them)", path, def.Mod)
 	}
 	if def.Type == `decorator` && def.Mod == `random` && nodeDefNamesAction(def, `proc`) {
 		if pct := getIntParam(def.Params, `percent`); pct < 1 || pct > 99 {

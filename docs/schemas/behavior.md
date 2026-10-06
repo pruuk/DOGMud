@@ -600,8 +600,9 @@ every proc and draws nothing. The loader refuses a `proc` outside a proc
 event, an unknown effect, a param its effect does not read or that is not
 a number, and a `random` over a proc outside 1 to 99. It also refuses a
 `cooldown` or `random` over a proc unless it wraps the proc alone: its
-child must be the `proc` or another decorator that ends in the `proc`,
-never a selector, sequence or condition in between. Give an item tree one
+child must be the `proc` or another `cooldown` or `random` that ends in
+the `proc`, never a selector, sequence, condition, `invert`, `repeat` or
+`delay` in between (those would arm the cooldown on a no-op). Give an item tree one
 proc branch per event, and do not share that event with a line or any
 other branch in the same selector: a selector runs only the first child
 that succeeds, so the second of two branches on one event would never

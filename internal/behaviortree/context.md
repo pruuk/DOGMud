@@ -1128,7 +1128,9 @@ Pinnacle proc path (`hooks/item_procs.go`, `items.ItemProc`, `procs:`,
   that is not a number, and a `random` over a proc outside 1 to 99 (X19:
   at 100 the branch omits it, so nothing is drawn). It also refuses a
   `cooldown` or `random` whose subtree names `proc` unless its child is the
-  `proc` action or a chain of decorators ending in it (`wrapsProcAlone`).
+  `proc` action or a chain of only `cooldown` and `random` decorators
+  ending in it (`wrapsProcAlone`; an `invert`, `repeat` or `delay` between
+  them would arm the cooldown on a no-op).
   `checkProcSiblings` refuses a selector in which a branch naming `proc`
   shares its event (its own `event:`, else the enclosing one) with a
   sibling carrying that `event:`: a selector runs only the first child
