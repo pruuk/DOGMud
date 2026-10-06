@@ -1,0 +1,305 @@
+## blackrazor_on_hit
+0: hp=103 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=18
+1: hp=103 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=327
+2: hp=113 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=649
+3: hp=114 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=680
+4: hp=115 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=951
+5: hp=118 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=353
+6: hp=118 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=857
+7: hp=128 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=991
+8: hp=129 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=281
+9: hp=130 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=679
+10: hp=133 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=871
+11: hp=133 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=251
+12: hp=143 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=115
+13: hp=144 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=620
+14: hp=145 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=439
+15: hp=148 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=355
+16: hp=148 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=927
+17: hp=158 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=260
+18: hp=159 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=573
+19: hp=160 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=575
+20: hp=163 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=558
+21: hp=163 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=999
+22: hp=173 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=92
+23: hp=174 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=897
+24: hp=175 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=71
+25: hp=178 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=866
+26: hp=178 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=864
+27: hp=188 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=997
+28: hp=189 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=235
+29: hp=190 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=124
+30: hp=193 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=324
+31: hp=193 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=14
+32: hp=203 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=296
+33: hp=204 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=185
+34: hp=205 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=688
+35: hp=208 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=510
+36: hp=208 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=701
+37: hp=218 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=746
+38: hp=219 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=612
+39: hp=220 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=144
+40: hp=223 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=280
+41: hp=223 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=572
+42: hp=233 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=637
+43: hp=234 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=349
+44: hp=235 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=644
+45: hp=238 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=934
+46: hp=238 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=814
+47: hp=248 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=577
+48: hp=249 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=257
+49: hp=250 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=87
+50: hp=253 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=226
+51: hp=253 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=681
+52: hp=263 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=623
+53: hp=264 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=169
+54: hp=265 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=454
+55: hp=268 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=215
+56: hp=268 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=661
+57: hp=278 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=813
+58: hp=279 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=141
+59: hp=280 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=357
+## aegis_on_block
+0: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=327
+1: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=680
+2: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=353
+3: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=991
+4: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=679
+5: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=251
+6: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=620
+7: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=355
+8: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=260
+9: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=575
+10: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=999
+11: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=897
+12: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=866
+13: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=997
+14: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=124
+15: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=14
+16: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=185
+17: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false | Parity Beast hp=500 conv=30 stun=false probe=510
+18: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=true | Parity Beast hp=1 conv=1 stun=true probe=746
+19: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=612
+20: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=144
+21: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=280
+22: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=572
+23: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=637
+24: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=349
+25: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=644
+26: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=934
+27: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=814
+28: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=577
+29: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=257
+30: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=87
+31: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=226
+32: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=681
+33: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=623
+34: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=169
+35: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=454
+36: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=215
+37: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=661
+38: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=141
+39: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=3
+40: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=695
+41: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=476
+42: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=348
+43: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=118
+44: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=121
+45: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=776
+46: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=906
+47: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=577
+48: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=843
+49: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=136
+50: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=57
+51: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=850
+52: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=492
+53: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=397
+54: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=692
+55: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=305
+56: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=true | Parity Beast hp=1 conv=1 stun=true probe=17
+57: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=385
+58: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=743
+59: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false | Parity Beast hp=1 conv=1 stun=false probe=235
+## harness_on_grapple
+0: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=1/10/-7 probe=327
+1: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=1/10/-7 probe=649
+2: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=1/10/-7 probe=680
+3: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=1/10/-7 probe=951
+4: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=1/10/-7 probe=353
+5: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=1/10/-7 probe=991
+6: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=1/10/-7 probe=679
+7: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=1/10/-7 probe=251
+8: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=620
+9: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=439
+10: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=355
+11: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=927
+12: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=260
+13: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=575
+14: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=999
+15: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=897
+16: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=866
+17: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=2/10/-14 probe=997
+18: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=3/10/-21 probe=124
+19: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=3/10/-21 probe=324
+20: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=3/10/-21 probe=14
+21: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=3/10/-21 probe=296
+22: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=3/10/-21 probe=185
+23: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=3/10/-21 probe=510
+24: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=4/10/-28 probe=746
+25: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=4/10/-28 probe=612
+26: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=4/10/-28 probe=144
+27: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=4/10/-28 probe=280
+28: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=4/10/-28 probe=572
+29: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=5/10/-35 probe=349
+30: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=5/10/-35 probe=644
+31: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=5/10/-35 probe=934
+32: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=5/10/-35 probe=814
+33: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=5/10/-35 probe=577
+34: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=5/10/-35 probe=87
+35: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=6/10/-42 probe=681
+36: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=6/10/-42 probe=623
+37: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=6/10/-42 probe=169
+38: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=6/10/-42 probe=454
+39: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=6/10/-42 probe=215
+40: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=6/10/-42 probe=813
+41: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=7/10/-49 probe=357
+42: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=7/10/-49 probe=3
+43: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=7/10/-49 probe=733
+44: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=7/10/-49 probe=695
+45: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=7/10/-49 probe=461
+46: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=7/10/-49 probe=156
+47: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=8/10/-56 probe=188
+48: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=8/10/-56 probe=118
+49: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=8/10/-56 probe=352
+50: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=8/10/-56 probe=121
+51: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=8/10/-56 probe=74
+52: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=8/10/-56 probe=106
+53: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=9/10/-63 probe=671
+54: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=9/10/-63 probe=577
+55: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=9/10/-63 probe=514
+56: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=9/10/-63 probe=843
+57: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=9/10/-63 probe=127
+58: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=10/10/-70 probe=775
+59: hp=100 conv=50 | Parity Beast hp=1 conv=1 stun=false bleed=10/10/-70 probe=57
+## staff_on_spell_hit
+0: hp=100 conv=8 | Parity Beast hp=500 conv=22 stun=false probe=18
+1: hp=100 conv=8 | Parity Beast hp=500 conv=22 stun=false probe=327
+2: hp=100 conv=8 | Parity Beast hp=500 conv=22 stun=false probe=649
+3: hp=100 conv=16 | Parity Beast hp=500 conv=14 stun=false probe=680
+4: hp=100 conv=16 | Parity Beast hp=500 conv=14 stun=false probe=951
+5: hp=100 conv=16 | Parity Beast hp=500 conv=14 stun=false probe=353
+6: hp=100 conv=24 | Parity Beast hp=500 conv=6 stun=false probe=857
+7: hp=100 conv=24 | Parity Beast hp=500 conv=6 stun=false probe=991
+8: hp=100 conv=24 | Parity Beast hp=500 conv=6 stun=false probe=281
+9: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=679
+10: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=871
+11: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=251
+12: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=115
+13: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=620
+14: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=439
+15: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=355
+16: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=927
+17: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=260
+18: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=573
+19: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=575
+20: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=558
+21: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=999
+22: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=92
+23: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=897
+24: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=71
+25: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=866
+26: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=864
+27: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=997
+28: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=235
+29: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=124
+30: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=324
+31: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=14
+32: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=296
+33: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=185
+34: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=688
+35: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=510
+36: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=701
+37: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=746
+38: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=612
+39: hp=100 conv=30 | Parity Beast hp=500 conv=0 stun=false probe=144
+40: hp=100 conv=38 | Parity Beast hp=500 conv=22 stun=false probe=280
+41: hp=100 conv=38 | Parity Beast hp=500 conv=22 stun=false probe=572
+42: hp=100 conv=38 | Parity Beast hp=500 conv=22 stun=false probe=637
+43: hp=100 conv=46 | Parity Beast hp=500 conv=14 stun=false probe=349
+44: hp=100 conv=46 | Parity Beast hp=500 conv=14 stun=false probe=644
+45: hp=100 conv=46 | Parity Beast hp=500 conv=14 stun=false probe=934
+46: hp=100 conv=54 | Parity Beast hp=500 conv=6 stun=false probe=814
+47: hp=100 conv=54 | Parity Beast hp=500 conv=6 stun=false probe=577
+48: hp=100 conv=54 | Parity Beast hp=500 conv=6 stun=false probe=257
+49: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=87
+50: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=226
+51: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=681
+52: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=623
+53: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=169
+54: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=454
+55: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=215
+56: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=661
+57: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=813
+58: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=141
+59: hp=100 conv=60 | Parity Beast hp=500 conv=0 stun=false probe=357
+## all_on_kill
+0: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=18
+1: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=327
+2: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=649
+3: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=680
+4: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=951
+5: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=353
+6: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=857
+7: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=991
+8: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=281
+9: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=679
+10: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=871
+11: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=251
+12: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=115
+13: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=620
+14: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=439
+15: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=355
+16: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=927
+17: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=260
+18: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=573
+19: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=575
+20: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=558
+21: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=999
+22: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=92
+23: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=897
+24: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=71
+25: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=866
+26: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=864
+27: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=997
+28: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=235
+29: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=124
+30: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=324
+31: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=14
+32: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=296
+33: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=185
+34: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=688
+35: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=510
+36: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=701
+37: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=746
+38: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=612
+39: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=144
+40: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=280
+41: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=572
+42: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=637
+43: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=349
+44: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=644
+45: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=934
+46: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=814
+47: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=577
+48: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=257
+49: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=87
+50: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=226
+51: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=681
+52: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=623
+53: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=169
+54: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=454
+55: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=215
+56: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=661
+57: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=813
+58: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=141
+59: hp=100 conv=50 | Parity Beast hp=500 conv=30 stun=false probe=357
