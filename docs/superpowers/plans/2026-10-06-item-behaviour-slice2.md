@@ -3748,3 +3748,8 @@ If GitHub Actions runners stall (jobs cancelled with no steps run), the owner's 
 **Placeholder scan.** Every code step shows the code. Task 7 Step 4 and Task 8 Steps 4, 7 describe two deletions by their bounds (a 145-line tail of `pinnacle_tick.go`, the snapshot's builder) rather than reprinting deleted code; both bounds are unique strings and the compiler confirms them.
 
 **Consistency.** `chatter_ready`, `hunger_overdue`, `speak`, `taunt_pull`, `ItemVoice`, `GetItemVoice`, `installItemTree`, `loadItemTreeDef`, `checkSpeakNodes`, `refuseItemVoice`, `ResetItemListenerCapsForTest`, `ItemEquipEvents`, `fireWornItemEvent`, `fireItemEvent`, `MiscRound`, `SetRandForTest` and the eight knob names are spelled the same in every task that uses them, and the line-keyed guard numbers follow each task's own edit (206/256 after Task 5; 341/355 after Task 6; 339/353 after Task 7).
+
+## Execution notes (2026-10-06)
+
+- **Task 5 registers the `narration.Render` caller.** The dry run ran the root guards only at Task 7, so the plan put the `narration_render_callers_guard_test.go` entry for `actions_item_voice.go` in Task 7 Step 8 item 3. The caller exists from Task 5, whose root run fails without it; execution added it in Task 5 and skipped it in Task 7.
+- **Review fixes.** `setPinnacleEnabled` (hooks tests) restores the switch when the test ends; `speak` starts the listener caps only for a room line actually sent and fails for a mob holder with `to: holder`; `checkSpeakNodes` refuses a non-bool `paced`; `chatter_ready` fails for an item with no holder; `pinnacle_tick.go`'s header no longer names a voice sub-tick.

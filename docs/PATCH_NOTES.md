@@ -1,5 +1,17 @@
 # DOGMud Patch Notes
 
+## 2026-10-06: Talking gear
+
+- The Blackrazor and the Aegis of Mockery now speak up when you put them
+  on and when you take them off.
+- The Aegis now has something to say about a kill too, not only the
+  Blackrazor.
+- Everyone nearby hears a talking item, even in the dark. Someone who
+  cannot see you hears whose item it is as "Someone's".
+- A monster carrying a talking item talks too.
+- If several talking items share a room, you hear at most one idle remark
+  every little while, so the chatter never piles up.
+
 ## 2026-10-05: Lights that keep time
 
 - Some lights now keep their own hours. The lantern on the arch at

@@ -2105,3 +2105,11 @@ refused or fallback store is covered too), `Wear` and the two spills in
 companion gear restore call the second. A player is never indexed: the tick
 walks every online player. Equipping a light still resets its records to full
 (`ResetLight`), so a scheduled light is full until the next item tick.
+
+## `MiscRound` (item behaviour slice 2)
+
+`MiscRound(v any) (uint64, bool)` reads a round number stored in MiscData. A
+uint64 saved to a player file comes back from YAML as an int, int64 or
+float64, so all four read; anything else (nil included) is not a round. It is
+the one reader: `hooks.readMiscRound` delegates to it, and the item tree node
+`hunger_overdue` reads the `pinnacle_hunger_anchor` through it.

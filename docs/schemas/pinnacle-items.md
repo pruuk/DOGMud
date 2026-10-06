@@ -163,58 +163,76 @@ hard cap of **3x** the base `hunger_drain_pct * HealthMax`, and
 is applied directly to `Health`, **bypassing the damage hooks
 entirely** (no sleep-wake, no aggro, no mitigation) — it's non-combat
 attrition, not an attack. The feeding message is cooldown-gated
-(reuses `Balance.SentientChatterCooldownRounds`) so an ignored hunger
-debt doesn't spam a line every single overdue round. Swapping away
+(`Balance.HungerFeedingLineCooldownRounds`, default 20) so an ignored
+hunger debt doesn't spam a line every single overdue round. When the
+line is due, `tickHunger` fires `on_hunger_feeding` into the weapon's
+item tree, which speaks to the bearer alone; a hunger weapon with no
+tree sends the plain "The blade feeds on you" line instead. Swapping away
 from a hunger weapon leaves its anchor stale but inert; re-wielding it
 later re-bases the clock off the next kill/tick, with no separate
 cleanup step.
 
-## 6. Voices (`voice_id:`)
+## 6. Voices (an item tree's `speech:`)
+
+Since item behaviour slice 2 (2026-10-06) a sentient item speaks
+through its behaviour tree; `voice_id:`, `taunt_pull:`, the
+`itemvoices/` folder and the `SentientChatter*` knobs are gone. The
+item names its tree:
 
 ```yaml
-voice_id: blackrazor
+behavior: blackrazor
 ```
 
-References `_datafiles/world/dogmud/itemvoices/<voiceid>.yaml`:
+and `_datafiles/world/dogmud/behaviors/items/blackrazor.yaml` carries
+the pools beside the tree that speaks them:
 
 ```yaml
-voiceid: blackrazor
-lines:
-  on_equip: ["..."]
-  on_unequip: ["..."]
-  on_kill: ["..."]
+chatter: normal          # quiet | normal (default) | chatty
+speech:
   on_idle: ["..."]
-  on_hunger_warning: ["..."]
-  on_hunger_feeding: ["..."]
   on_taunt: ["..."]
-  on_grudge: ["..."]
+  on_kill: ["..."]
+tree:
+  type: selector
+  children:
+    - type: sequence
+      event: item_idle
+      children:
+        - {type: condition, check: worn}
+        - {type: condition, check: chatter_ready}
+        - type: action
+          do: speak
+          pool: on_idle
+    - type: action
+      event: on_kill
+      do: speak
+      pool: on_kill
 ```
 
-The `lines` map may use **exactly** these eight event keys
-(`internal/itemvoices/itemvoices.go`'s `validVoiceEvents`) — any other
-key panics at boot, and every key present must have a non-empty line
-list. `itemvoices.LoadDataFiles()` also cross-validates every loaded
-`ItemSpec.VoiceId` against the voice registry — a dangling `voice_id`
-(referencing a voice file that doesn't exist) panics at boot, same as
-`schedule_id`/`patrol_id`. `itemvoices.LoadDataFiles()` must run
-**after** `items.LoadDataFiles()` for that cross-validation to see
-every item. An empty `itemvoices/` directory is expected and correct
-through the end of Stage 1 (`loadedCount=0` at boot is not an error).
+Pool names are free; every pool needs at least one non-blank line, and
+every `speak` must name a pool its tree has, or the boot panics
+(`behaviortree.ValidateItemBehaviors`). The shipped trees keep the old
+event names as pool names. See `internal/behaviortree/context.md`,
+"Item voices", for the nodes.
 
-**Pacing**: `pickVoiceEvent` picks `on_taunt` when the wearer is in
-combat, `on_hunger_warning` when a hunger weapon has crossed 3/4 of its
-hunger window, else `on_idle` — `on_equip`/`on_unequip`/`on_kill`/
-`on_grudge` are authored slots for callers outside the tick (or future
-wiring) to use via `emitVoiceLine` directly. Each eligible round rolls
-once at `Balance.SentientChatterChancePct` (default 15) — only after
-confirming a speakable line exists for the picked event, so quiet gear
-never rolls. A successful line is paced by
-`Balance.SentientChatterCooldownRounds` (default 20) between lines.
-**Exactly one line per round, across all worn sentient items** — when
-multiple voiced items are worn, the tick walks worn-slot order and the
-first item with both a `voice_id` and a non-empty line pool for its
-picked event wins the round; later sentient items never even roll
-that round.
+**Pacing**: an ambient line (the `item_idle` branch) passes
+`chatter_ready`: the item's own cooldown open, everyone in the room
+past their listener cap, then one roll at the level's chance. The
+levels are `Balance.ItemChatter{Quiet,Normal,Chatty}CooldownRounds` and
+`...ChancePct` (40/10, 20/15, 10/25); a listener hears at most one
+ambient item line per `Balance.ItemChatterListenerCapRounds` (10),
+across every item. Event lines (`on_equip`, `on_unequip`, `on_kill`)
+skip the cap and the roll but still need the item's cooldown; the
+feeding line ignores it (§5). Each item keeps its own cooldown, so a
+player wearing two sentient items can hear both, bounded by the cap.
+
+**Who hears it**: the bearer reads `<Item> says, "..."`; everyone else
+in the room hears `<Name>'s <Item> mutters, "..."`, the bearer's name
+hidden by each listener's sight ("Someone's Aegis of Mockery mutters"
+in the dark). A mob holding a sentient item speaks the room line. A
+kill reaches every worn sentient item, the shield's too. The Aegis's
+taunt line is followed by `taunt_pull`, which pulls the bearer's foe
+onto the bearer.
 
 ## 7. Recipes: `require_own_components`
 
@@ -261,8 +279,14 @@ special-case branch never fires. Drinking it:
 | `GamePlay.PinnacleItemsEnabled` | config.gameplay.go | `true` | Master toggle for the whole per-round pinnacle tick (hunger/ambient/mutation-drip/voices); `pinnacleUserTick` early-returns entirely when off. |
 | `GamePlay.ItemProcsEnabled` | config.gameplay.go | `true` | Kill switch for proc firing (`on_hit`/`on_block`/etc.); checked in `procGateOpen`. |
 | `Balance.BandolierAttuneRounds` | config.balance.go | `100` | Re-attunement cooldown length after bandolier contents change. |
-| `Balance.SentientChatterCooldownRounds` | config.balance.go | `20` | Minimum rounds between sentient item lines (also reused to pace the hunger-feeding message). |
-| `Balance.SentientChatterChancePct` | config.balance.go | `15` | Percent chance per eligible round that a sentient item speaks. |
+| `Balance.ItemChatterQuietCooldownRounds` / `...ChancePct` | config.balance.go | `40` / `10` | A quiet item tree's rounds between lines and chance on an open round. |
+| `Balance.ItemChatterNormalCooldownRounds` / `...ChancePct` | config.balance.go | `20` / `15` | The same for a normal tree (the default level; the shipped voices). |
+| `Balance.ItemChatterChattyCooldownRounds` / `...ChancePct` | config.balance.go | `10` / `25` | The same for a chatty tree. |
+| `Balance.ItemChatterListenerCapRounds` | config.balance.go | `10` | A listener hears at most one ambient item line per this many rounds, across every item. |
+| `Balance.HungerFeedingLineCooldownRounds` | config.balance.go | `20` | Rounds between a hungry weapon's feeding lines; the drain runs every overdue round. |
+
+The item chatter knobs read 0 as unset (the default applies), so 0 is
+not an off switch for them; `GamePlay.PinnacleItemsEnabled` is.
 
 ## 10. MiscData key registry (admin/debugging)
 
@@ -279,7 +303,7 @@ YAML (numeric values round-trip through YAML as `int`/`int64`/
 | `pinnacle_bandolier_attune_round` | `tickAmbientPotions` | Round at which ambient conditions may resume after a content change. |
 | `pinnacle_bandolier_conditions` | `tickAmbientPotions` | The set of condition ids currently applied as ambience (so removal/rotation can be revoked cleanly). |
 | `pinnacle_bandolier_fingerprint` | `tickAmbientPotions` | Last-seen `beltId:potionId,potionId,...` fingerprint, used to detect any content change. |
-| `pinnacle_voice_next_round` | `tickVoices` | Cooldown gate between sentient item lines. |
+| `pinnacle_voice_next_round` | (retired) | Inert in old saves: the voice cooldown is item tree state since item behaviour slice 2. |
 
 Cooldown keys (`pinnacle_proc_cd_*` in particular) are **intentionally
 never pruned** when an item is unequipped or lost — the key space is
@@ -309,9 +333,9 @@ starting values; combat/economy tuning is a later stage.
 |----|------|-------------|----------------------------------------|-----------------|
 | 40181 | Phial of Second Birth | consumable (potion) | `40181-phial_of_second_birth.yaml` | remort (`drink.go` hardcodes id 40181 → `ScourMutations` + rarity-floored grant) |
 | 40182 | Vitalis Bandolier | belt | `40182-vitalis_bandolier.yaml` | `preserves_contents`, `ambient_potions`, `is_bandolier`/`bandolier_capacity` |
-| 40183 | The Blackrazor | weapon (2H slashing) | `40183-the_blackrazor.yaml` | `reserve_health_pct`, `hunger_rounds`/`hunger_drain_pct`, `procs` (on_hit lifesteal), `voice_id: blackrazor` |
+| 40183 | The Blackrazor | weapon (2H slashing) | `40183-the_blackrazor.yaml` | `reserve_health_pct`, `hunger_rounds`/`hunger_drain_pct`, `procs` (on_hit lifesteal), `behavior: blackrazor` (voice, slice 2) |
 | 40184 | Wayfarer's Bottomless Pack | back | `40184-wayfarers_bottomless_pack.yaml` | `weight_reduction` (0.99) |
-| 40185 | Aegis of Mockery | offhand (shield) | `40185-aegis_of_mockery.yaml` | `procs` (on_block aoe_stun), `taunt_pull`, `voice_id: aegis` |
+| 40185 | Aegis of Mockery | offhand (shield) | `40185-aegis_of_mockery.yaml` | `procs` (on_block aoe_stun), `behavior: aegis` (voice and taunt pull, slice 2) |
 | 40186 | Thornwall Harness | body | `40186-thornwall_harness.yaml` | `procs` (on_grapple apply_condition bleed) |
 | 40187 | Seething Prism | neck | `40187-seething_prism.yaml` | `reserve_*_pct` (all three pools), `mutation_tick_interval`/`_chance`/`_rarity_floor` |
 | 40188 | Zephyr Treads | feet | `40188-zephyr_treads.yaml` | `wornconditionids: [98]`, `staminamax` statmod |
@@ -323,12 +347,13 @@ starting values; combat/economy tuning is a later stage.
 |----|------|------|-------------|
 | 98 | Zephyr's Alacrity | `conditions/98-zephyrs_alacrity.yaml` | Zephyr Treads `wornconditionids` (permanent-haste-while-worn) |
 
-**Sentient item voices** (`itemvoices/<voice_id>.yaml`):
+**Sentient item voices** (item trees, `behaviors/items/<tree>.yaml`, since
+item behaviour slice 2):
 
-| voice_id | File | Item | Character |
-|----------|------|------|-----------|
-| blackrazor | `itemvoices/blackrazor.yaml` | The Blackrazor (40183) | Ancient, vain, starving aristocrat |
-| aegis | `itemvoices/aegis.yaml` | Aegis of Mockery (40185) | Period insult-comic |
+| Tree | File | Item | Character |
+|------|------|------|-----------|
+| blackrazor | `behaviors/items/blackrazor.yaml` | The Blackrazor (40183) | Ancient, vain, starving aristocrat |
+| aegis | `behaviors/items/aegis.yaml` | Aegis of Mockery (40185) | Period insult-comic |
 
 ## Stage 3 reagents
 

@@ -2241,3 +2241,21 @@ visited this round. `RegisterListeners` also sets `items.OnRoomHolderIndexed
 joins the index (a fixture spawned, or a room loaded holding one).
 `HandleJoin`'s companion gear restore re-indexes the companion
 (`IndexTreedItems`). `EquipBestFloorItem` skips fixtures.
+
+**Item voices (item behaviour slice 2).** The tick's `item_idle` speaks a
+sentient item's ambient lines; the Pinnacle tick no longer has a voice
+sub-tick (`tickVoices`, `pickVoiceEvent`, `tryEmitVoice`, `emitVoiceLine`,
+`applyTauntPull` are deleted). Event lines fire from three sites, each
+spelling its `EventType` literal so `behaviortree`'s vocabulary test sees
+it: `ItemEquipEvents` (`EquipmentChange_ItemEvents.go`, an
+`events.EquipmentChange` listener) fires `on_equip` into every treed item put
+on, found in its slot by UUID, and `on_unequip` into every one taken off,
+players and mobs alike; `MobDeathItemProcs` fires `on_kill` into every worn
+treed item of each player with damage on the kill (`fireWornItemEvent`);
+`tickHunger` fires `on_hunger_feeding` into the weapon's tree when
+`HungerFeedingLineCooldownRounds` allows a line (MiscData
+`pinnacle_hunger_msg_next_round`) and sends the plain "The blade feeds on
+you" fallback when no tree handles it. `pinnacle_voice_next_round` is inert
+in old saves. `testdata/item_voice_parity.golden` is the Pinnacle voice
+path's 200-round record, frozen before the move; `TestItemVoiceParity`
+holds the tree path to it.
