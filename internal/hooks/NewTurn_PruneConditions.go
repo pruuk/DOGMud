@@ -50,7 +50,7 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 							}
 							if roles.Observer != "" {
 								if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-									sendConditionEndRoomText(r, endConditionSpec, roles.Observer,
+									sendConditionEndRoomText(r, takeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
 										[]string{user.Character.GetCharacterName(false)}, user.UserId)
 								}
 							}
@@ -109,7 +109,7 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 						holderName, mob.Character.GetCharacterName(false))
 					if roles.Observer != "" {
 						if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
-							sendConditionEndRoomText(r, endConditionSpec, roles.Observer,
+							sendConditionEndRoomText(r, takeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
 								[]string{mob.Character.GetCharacterName(false)})
 						}
 					}
@@ -121,25 +121,30 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 
 	}
 
+	// Every snapshot this prune did not narrate is stale: its record was
+	// revived, pruned by some other path, or silent. See endLineSnapshots.
+	clear(endLineSnapshots)
+
 	return events.Continue
 
 }
 
-// sendConditionEndRoomText sends a condition's end room line on the visual channel. A
-// light condition's line is judged as if the room were still lit, because its light
-// went out when the condition expired, a round before this prune: see
-// Room.SendTextVisualAsLit. The judgement is per spec, so a hooded or
-// trimmed-off light's end line is judged as lit too; accepted for now, as the
-// retired lightsource flag was spec-level as well. Every other end line is
-// judged by the room as it is.
+// sendConditionEndRoomText sends a condition's end room line on the visual
+// channel. With a snapshot (a light or darkness record that ran out on the
+// round tick, from takeEndLineSnapshot) the line is judged against the room
+// as it was just before the record ran out: the owner rule of 2026-10-05, a
+// line announcing a change is judged by the state before it. So a light's end
+// line reaches the watchers who saw by it and not one who never could, and a
+// darkness's does not reach a watcher who was blind in it. Every other end
+// line is judged by the room as it is.
 //
 // names is the holder's PLAIN name. An end line may author a bare
 // {actee_plain} (shipped conditions 1 and 9 both do), which tag-based
 // Anonymize cannot see, so the name must be handed to HideNames explicitly.
-// This is the End-phase twin of the start and trigger senders.
-func sendConditionEndRoomText(r *rooms.Room, spec *conditions.ConditionSpec, msg string, names []string, skip ...int) {
-	if spec.IsLightSource() {
-		r.SendTextVisualAsLitHidingNames(messaging.CategoryConditionExpire, msg, names, skip...)
+// This is the End-phase twin of sendConditionStartRoomText.
+func sendConditionEndRoomText(r *rooms.Room, snap rooms.VisualSnapshot, msg string, names []string, skip ...int) {
+	if snap != nil {
+		r.SendTextVisualToSnapshot(snap, messaging.CategoryConditionExpire, msg, names, skip...)
 		return
 	}
 	r.SendTextVisualHidingNames(messaging.CategoryConditionExpire, msg, names, skip...)

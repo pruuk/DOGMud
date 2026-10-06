@@ -139,12 +139,12 @@ literal for an item (132 Umbral Dark), `magnitude` for a spell (131 Chrysalis
 Pall). It is a light record with darkening polarity: it shares `LightTrim`,
 `LightOutput` and `ResetLight`, and `LightMax` / `LightNow` read whichever of
 the two kinds the spec declares. It is NOT a light: `IsLightSource()` stays
-light-only, so `LightSources`, `EmitsLight`, `hood` and the as-lit end line
-exclude it by construction. Ask `ConditionSpec.IsDarknessSource()`, walk
+light-only, so `LightSources`, `EmitsLight` and `hood` exclude it by
+construction. Ask `ConditionSpec.IsDarknessSource()`, walk
 `(*Conditions).DarknessSources()`, or `(*Conditions).LightAndDarknessSources()`
 for both kinds in one held order (the trim's walk). `AnyDarknessSource(ids)`
-reports whether any condition id names a darkness (the equip line's as-lit
-test). `Effect(EffectDarknessStrength)` returns 0. `validateEffects` also
+reports whether any condition id names a darkness (the equip line's test for
+taking a `rooms.VisualSnapshot` first). `Effect(EffectDarknessStrength)` returns 0. `validateEffects` also
 refuses a literal `darkness_strength` of 0 or less, a spec declaring both
 kinds, and a `stacking` darkness; `AddConditionMagnitude` resets either kind.
 
@@ -1011,6 +1011,13 @@ func LoadDataFiles() {
 - character.Conditions.Trigger()                    // Round-based processing
 - character.Conditions.Prune()                      // Cleanup expired conditions
 ```
+
+`(*Condition).ExpiresOnNextTrigger(spec)` asks Trigger's own arithmetic one
+round early: true when the next `Trigger` leaves the record expired (its last
+trigger lands, or a stacking record's last stack drops). It must change
+whenever `Trigger` does; `TestExpiresOnNextTriggerAgreesWithTrigger` pins the
+two together. The hooks round ticks use it to snapshot a room just before a
+light or darkness runs out, for its end line (#220).
 
 ### Combat System Integration
 ```go

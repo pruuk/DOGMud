@@ -216,6 +216,10 @@ func tickMobCharmDuration(mob *mobs.Mob) {
 
 // tickMobConditions — current inline block at lines 124–160.
 func tickMobConditions(mob *mobs.Mob, mobInstanceId int) {
+	// #220: a light or darkness about to run out on this Trigger has its
+	// room snapshotted first, for its end line at the prune.
+	keepEndLineSnapshots(&mob.Character, rooms.LoadRoom(mob.Character.RoomId))
+
 	if triggeredConditions := mob.Character.Conditions.Trigger(); len(triggeredConditions) > 0 {
 		triggeredConditionIds := []int{}
 		for _, condition := range triggeredConditions {

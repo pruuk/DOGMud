@@ -15,11 +15,6 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   sight-gated. `SendTextVisual` gates each recipient by
   `messaging.CanSeeClearly` / `CanSeeShapes` and anonymizes for infrared-only
   observers. `SendTextVisualWithAudio` gives the unsighted an audio variant.
-  `SendTextVisualAsLit` judges sight as if the room were lit, and exists for one
-  case: an event that is itself a light whose light is already gone when the
-  line is sent, such as a light condition's end text (the light stops counting when
-  the condition expires, a round before the prune sends the line). Blinded and
-  sleeping observers still get nothing from it.
   `VisualSnapshot()` returns a `VisualSnapshot` (user id to
   `messaging.SightDecision`) of what every player in the room can see now;
   `SendTextVisualToSnapshot(snap, cat, txt, names, excludeUserIds...)`
@@ -28,8 +23,12 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   rule (2026-10-05): a line announcing a change to the room's light lands
   with the state everyone was in BEFORE the change, so take the snapshot
   first, make the change, then send. Lighting plan 5d uses it for a
-  darkness's start line and its equip lines. All the visual senders share
-  one per-recipient body, `deliverVisual`.
+  darkness's start line and its equip lines; #220 added `hood` and the end
+  line of a light or darkness that runs out (the hooks round ticks snapshot
+  the room just before the record expires, and the prune sends against it).
+  The two as-lit senders this replaced, which judged every reader against a
+  stand-in lit room, are deleted. All the
+  visual senders share one per-recipient body, `deliverVisual`.
   `SendTextVisualHidingNames` is `SendTextVisual` for a line that names an
   event's parties: a shapes-only observer reads each name as "a figure". It is
   the observer half of `messaging.SendTrio`; `ParticipantSight(userId)` is the

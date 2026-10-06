@@ -48,17 +48,23 @@ func Hood(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, `Your lantern is already hooded.`)
 		return true, nil
 	}
+	// Judged against the room just before the hood goes down (owner rule,
+	// 2026-10-05; #220): the hood is the end of a light, and judged by the
+	// room after it, the line would be silenced for everyone who was seeing
+	// by the lantern, while a watcher who could not see even by it learns
+	// nothing.
+	var beforeHood rooms.VisualSnapshot
+	if room != nil {
+		beforeHood = room.VisualSnapshot()
+	}
 	for _, rec := range recs {
 		rec.Hooded = true
 	}
 	user.SendText(messaging.CategorySystem, `You lower the hood over your lantern, and its light narrows to nothing.`)
 	if room != nil {
-		// Judged as if lit: the hood is the end of a light, and the room may
-		// already be dark by the time this line goes out, which would silence
-		// it for everyone who was seeing by the lantern.
-		room.SendTextVisualAsLit(messaging.CategoryMobEmote,
+		room.SendTextVisualToSnapshot(beforeHood, messaging.CategoryMobEmote,
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> lowers the hood of their lantern, and its glow goes dark.`, user.Character.Name),
-			user.UserId)
+			[]string{user.Character.Name}, user.UserId)
 	}
 	// The band notice rides this command's own output. Left to the next
 	// command's pre-check, "darkness closes in" arrives after whatever the

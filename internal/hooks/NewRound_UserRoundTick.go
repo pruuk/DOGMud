@@ -239,6 +239,10 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 					user.Character.Charmed.RoundsRemaining--
 				}
 
+				// #220: a light or darkness about to run out on this Trigger
+				// has its room snapshotted first, for its end line at the prune.
+				keepEndLineSnapshots(user.Character, room)
+
 				if triggeredConditions := user.Character.Conditions.Trigger(); len(triggeredConditions) > 0 {
 
 					//

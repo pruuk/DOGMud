@@ -890,9 +890,10 @@ func narrationRecognizeCall(call *ast.CallExpr) (narrationCallViewpoint, bool) {
 				return viewpointObserver, true
 			}
 		case "SendTextVisual", "SendTextVisualHidingNames",
-			"SendTextVisualAsLit", "SendTextVisualWithAudio",
+			"SendTextVisualWithAudio",
 			// Lighting plan 5d (owner rule, 2026-10-05): a line judged
-			// against a snapshot of the room before a darkness landed.
+			// against a snapshot of the room before its light changed. #220
+			// moved the last as-lit senders onto it and deleted them.
 			"SendTextVisualToSnapshot",
 			// Sight gates slice 5b: the name-hiding room senders, audio and
 			// visual, are room broadcasts too.
@@ -1367,7 +1368,7 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"usercommands/go.go|messaging.CategorySystem, playerMsg":                                                       {verdictCorrect, true, false, true, "audit: player unlocks a door -- acts on an exit, not a character (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/go.go:98)"},
 	"usercommands/guild.go|<ansi fg=\"username\">%s</ansi> invites you to join <ansi fg=\"yellow-bold\">%s</ans":   {verdictCorrect, true, true, false, "a guild invite is sent privately to the invitee (actee); guild management has no room-facing component anywhere in this file."},
 	"usercommands/guild.go|You have been removed from <ansi fg=\"yellow-bold\">%s</ansi>.":                         {verdictCorrect, true, true, false, "a guild kick notifies the removed member privately (actee); same no-room-component reasoning as the invite."},
-	"usercommands/hood.go|You lower the hood over your lantern, and its light narrows to nothing.":                 {verdictCorrect, true, false, true, "hood closes the lantern in the actor's own light slot -- self-targeted, no actee; the room gets the third-person line from the room.SendTextVisualAsLit just below. Lighting plan 5a, read against source for this guard."},
+	"usercommands/hood.go|You lower the hood over your lantern, and its light narrows to nothing.":                 {verdictCorrect, true, false, true, "hood closes the lantern in the actor's own light slot -- self-targeted, no actee; the room gets the third-person line from the room.SendTextVisualToSnapshot just below, judged by the room before the hood went down (#220). Lighting plan 5a, read against source for this guard."},
 	"usercommands/hood.go|You throw back the hood of your lantern, and light floods out around you.":               {verdictCorrect, true, false, true, "unhood opens the lantern in the actor's own light slot -- self-targeted, no actee; the room gets the third-person line from the room.SendTextVisual just below. Lighting plan 5a, read against source for this guard."},
 	"usercommands/inventory.go|<ansi fg=\"yellow\">%d grenade(s) have destabilized and dissolved into putrid resi": {verdictCorrect, true, false, true, "audit: own grenades destabilize in the backpack -- self-directed accident (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/inventory.go:94)"},
 	"usercommands/lock.go|You use a key to relock the <ansi fg=\"container\">%s</ansi>.":                           {verdictCorrect, true, false, true, "audit: relocks a container with a key -- target is an object (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/lock.go:63)"},

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -131,9 +132,10 @@ func TestHood_NonAdjustableLightRefuses(t *testing.T) {
 	require.Equal(t, conditions.LightFull, rec.LightTrim)
 }
 
-// The room line for hood is sent judged as if lit: in a dark room the lantern
-// is the only light, so by the time the line goes out the room is dark and a
-// plain SendTextVisual would hide it from the very people who saw by it.
+// The room line for hood is judged against the room just before the hood went
+// down (#220): in a dark room the lantern is the only light, so by the time
+// the line goes out the room is dark and a plain SendTextVisual would hide it
+// from the very people who saw by it.
 func TestHood_ObserverSeesBothLinesInADarkRoom(t *testing.T) {
 	user, room := hoodFixture(t)
 	room.Biome = "cave"
@@ -157,6 +159,40 @@ func TestHood_ObserverSeesBothLinesInADarkRoom(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, hoodTestText(observer.UserId), "throws back the hood of their lantern, and light floods out.",
 		"an observer missed the unhood line")
+}
+
+// The other side of the same judgement (#220): a watcher who could not see
+// even with the lantern lit, here because they hold a darkness deeper than
+// the lantern's light, is not told the hood went down. Judged as if lit,
+// they were, and read the hooder's name.
+func TestHood_ObserverWhoCouldNotSeeBeforeIsNotTold(t *testing.T) {
+	const hoodTestGloomCond = 9753
+	user, room := hoodFixture(t)
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		hoodTestAdjustableCond: conditions.GetConditionSpec(hoodTestAdjustableCond),
+		hoodTestGloomCond: {ConditionId: hoodTestGloomCond, Name: "Test Hood Gloom", Secret: true,
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectDarknessStrength: {Literal: 90}}},
+	}))
+	room.Biome = "cave"
+
+	observer := users.GetByUserId(2)
+	require.NotNil(t, observer)
+	observer.Character.RoomId = room.RoomId
+	room.AddPlayer(observer.UserId)
+	require.True(t, observer.Character.Conditions.AddCondition(hoodTestGloomCond, true))
+
+	_, ok, why := user.Character.Wear(items.New(hoodTestLanternItem))
+	require.True(t, ok, why)
+	require.True(t, user.Character.EmitsLight(), "fixture: the lantern must be lit")
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(observer.Character, room),
+		"fixture: the gloom must leave the observer blind even by the lantern")
+	events.DrainQueuedMessagesForTest(observer.UserId)
+
+	_, err := Hood("", user, room, 0)
+	require.NoError(t, err)
+	require.False(t, user.Character.EmitsLight(), "fixture: the hood must have gone dark")
+	require.NotContains(t, hoodTestText(observer.UserId), "lowers the hood of their lantern",
+		"an observer blind before the hood went down was told of it")
 }
 
 func TestHood_TwiceSaysAlreadyHooded(t *testing.T) {

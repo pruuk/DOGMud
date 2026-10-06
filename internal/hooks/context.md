@@ -1086,10 +1086,23 @@ is computed once `TickScale` reaches `hooks.setTickAmountAtApply` in
 `Condition_ApplyConditions`, where the record is guaranteed to exist; see
 "The damaging condition tick" below.
 
-`sendConditionEndRoomText` (`NewTurn_PruneConditions.go`) judges a light's end
-line as lit by `spec.IsLightSource()`; the judgement is per spec, so a hooded
-or trimmed-off light's end line is judged as lit too (accepted, as the retired
-flag was spec-level as well).
+`sendConditionEndRoomText(r, snap, msg, names, skip...)`
+(`NewTurn_PruneConditions.go`, #220) judges a light's or a darkness's end
+line against the room as it was just before the record ran out. The record
+expires inside `Conditions.Trigger` on the round tick, and its light stops
+counting at once, but the line goes out at the next turn's prune; judged by
+the room then, a light's line met a room already dark and a darkness's a
+room already lit. So both round ticks call `keepEndLineSnapshots(c, room)`
+just before `Trigger`: for every held light or darkness record whose
+`ExpiresOnNextTrigger(spec)` is true it stores `room.VisualSnapshot()` in
+`endLineSnapshots`, keyed by the record's pointer
+(`condition_end_snapshot.go`). The prune takes it with
+`takeEndLineSnapshot(rec, roomId)` and sends with
+`Room.SendTextVisualToSnapshot`; with none kept (a record removed some other
+way), or when the holder has moved rooms between the tick and the prune (the
+snapshot belongs to the room the record ran out in), the line is judged by
+the room as it is. The prune clears whatever it did not take, so no entry
+outlives the turn after its round.
 
 `sendConditionStartRoomText` (`Condition_ApplyConditions.go`, lighting plan
 5d, ruling D6 as amended by the owner on 2026-10-05) is its counterpart for

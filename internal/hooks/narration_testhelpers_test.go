@@ -45,6 +45,8 @@ const (
 	dozeConditionId      = 7007 // puts the bearer to sleep; RoundInterval 0, so it never ticks
 	shadeConditionId     = 7008 // end_observer with a BARE {actee_plain}, mirrors shipped condition 9
 	emberConditionId     = 7009 // a light source whose end_observer has a BARE {actee_plain}, mirrors shipped condition 1
+	gloomConditionId     = 7010 // a darkness source with end_observer
+	wickConditionId      = 7011 // a light too faint for normal eyes, end_observer with a BARE {actee_plain}
 )
 
 // seedNarrationConditions installs the narration test conditions and returns the restore
@@ -77,6 +79,12 @@ func seedNarrationConditions() func() {
 		emberConditionId: {ConditionId: emberConditionId, Name: "Test Ember", RoundInterval: 5, TriggerCount: 3,
 			EndRoomText: "The glow surrounding {actee_plain} fades away.",
 			Effects:     map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 50}}},
+		gloomConditionId: {ConditionId: gloomConditionId, Name: "Test Gloom", RoundInterval: 5, TriggerCount: 3,
+			EndRoomText: "The gloom around {actee} lifts.",
+			Effects:     map[conditions.EffectKind]conditions.EffectValue{conditions.EffectDarknessStrength: {Literal: 90}}},
+		wickConditionId: {ConditionId: wickConditionId, Name: "Test Wick", RoundInterval: 5, TriggerCount: 3,
+			EndRoomText: "The wick held by {actee_plain} gutters out.",
+			Effects:     map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 10}}},
 	})
 }
 

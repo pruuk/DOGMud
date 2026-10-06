@@ -526,6 +526,32 @@ func (bs *Conditions) Trigger(conditionId ...int) (triggeredConditions []*Condit
 	return triggeredConditions
 }
 
+// ExpiresOnNextTrigger reports whether the next Trigger will leave this record
+// expired. It is Trigger's own arithmetic asked one round early, and must
+// change whenever Trigger does: a record with no spec or no interval is never
+// ticked, the round counter has to land on the interval, a non-stacking
+// record runs out on its last trigger, and a stacking one when tickStacks
+// drops its last stack. The round ticks use it to snapshot the room just
+// before a light or darkness runs out (#220). An unlimited record never
+// expires here.
+func (b *Condition) ExpiresOnNextTrigger(spec *ConditionSpec) bool {
+	if spec == nil || spec.RoundInterval < 1 || b.TriggersLeft <= 0 {
+		return false
+	}
+	if (b.RoundCounter+1)%spec.RoundInterval != 0 {
+		return false
+	}
+	if spec.IsStacking() {
+		for _, s := range b.Stacks {
+			if s.RoundsLeft > 1 {
+				return false
+			}
+		}
+		return true
+	}
+	return b.TriggersLeft == 1
+}
+
 func (bs *Conditions) GetConditions(conditionId ...int) []*Condition {
 	retConditions := []*Condition{}
 	for _, b := range bs.List {
