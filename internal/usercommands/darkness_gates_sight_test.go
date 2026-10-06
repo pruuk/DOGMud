@@ -84,7 +84,7 @@ func gateOutputs(t *testing.T, user *users.UserRecord, room *rooms.Room) map[str
 }
 
 var gateRefusals = map[string]string{
-	"look": "You can't see anything!",
+	"look": tooDarkToSeeLine,
 	"get":  "You can't see anything to pick up!",
 	"loot": "You can't see anything to loot!",
 }
@@ -146,11 +146,11 @@ func TestLookDirection_ExitThresholdShiftsWithNightVisionStrength(t *testing.T) 
 			}
 			out := runGate(t, user, func() (bool, error) { return Look("south", user, room, 0) })
 			if c.refused {
-				require.True(t, strings.Contains(out, tooDark) || strings.Contains(out, "You can't see anything!"),
+				require.True(t, strings.Contains(out, tooDark) || strings.Contains(out, tooDarkToSeeLine),
 					"must refuse; got:\n%s", out)
 			} else {
 				require.NotContains(t, out, tooDark)
-				require.NotContains(t, out, "You can't see anything!")
+				require.NotContains(t, out, tooDarkToSeeLine)
 				require.Contains(t, out, "You peer toward the south")
 			}
 		})

@@ -63,11 +63,11 @@ func TestLookAtCreature_ClearViewerStillLooks(t *testing.T) {
 	require.NotContains(t, out, "Look at what???")
 }
 
-func TestWho_BlindViewerIsRefused(t *testing.T) {
+func TestWho_ViewerInTheDarkIsRefused(t *testing.T) {
 	viewer, room := seedShapesRosterRoom(t, 10, 0)
 
 	out := runGate(t, viewer, func() (bool, error) { return Who("", viewer, room, 0) })
-	require.Contains(t, out, "You can't see anything!")
+	require.Contains(t, out, tooDarkToSeeLine)
 	require.NotContains(t, out, "Bobrick")
 }
 
@@ -79,7 +79,8 @@ func TestWho_SightedViewerIsNotRefused(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			viewer, room := seedShapesRosterRoom(t, c.lamp, c.condition)
 			out := runGate(t, viewer, func() (bool, error) { return Who("", viewer, room, 0) })
-			require.NotContains(t, out, "You can't see anything!")
+			require.NotContains(t, out, tooDarkToSeeLine)
+			require.NotContains(t, out, blindLookLine)
 		})
 	}
 }

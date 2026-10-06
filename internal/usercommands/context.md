@@ -538,8 +538,11 @@ a gate.
 - **`Look`** (`look.go`): every sight rule (no-sight refusal, a creature named
   only at clear sight and only if perceived, an exit's through-sight and
   lock, the pet at clear sight) lives in `actions.ResolveLook`, shared with
-  the mob look; this function switches on `res.Kind` (`actions.LookDark`,
-  `LookRoom`, `LookCreature`, ...) and only words the answer.
+  the mob look; this function switches on `res.Kind` (`actions.LookBlind`,
+  `LookTooDark`, `LookRoom`, `LookCreature`, ...) and only words the answer.
+  `noSightRefusal` words the two no-sight kinds for `look` and `Who`: a
+  blinded looker reads "You can't see anything!", one in a room too dark
+  is told light or other eyes would help (#364).
 - **`Remove`** (`remove.go`): the `all` branch calls
   `actions.RemoveAllEquipment(actor)`, which owns the busy gate, the curse
   gate per item and one `EquipmentChange` event per removal; the wrapper

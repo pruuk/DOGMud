@@ -5,13 +5,15 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/state/perception"
 )
 
 // LookKind is what a look resolved to.
 type LookKind int
 
 const (
-	LookDark        LookKind = iota // the looker sees nothing at all here
+	LookBlind       LookKind = iota // the looker is blinded and sees nothing anywhere
+	LookTooDark                     // the room is too dark for the looker's eyes
 	LookRoom                        // no target: the room itself
 	LookCreature                    // a creature the looker perceives, at clear sight
 	LookExit                        // an exit the looker can see through
@@ -51,7 +53,13 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 	res.NamesCreatures = res.Sight == messaging.SightFull
 
 	if res.Sight == messaging.SightNone {
-		res.Kind = LookDark
+		// The cause, told apart by the same Perception check that
+		// ParticipantSight answers SightNone on first: light helps a looker
+		// in the dark and does nothing for a blinded one (#364).
+		res.Kind = LookTooDark
+		if char.Perception != nil && char.Perception.State() == perception.Blinded {
+			res.Kind = LookBlind
+		}
 		return res
 	}
 	if lookAt == `` {
