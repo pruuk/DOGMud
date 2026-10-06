@@ -157,8 +157,8 @@ func TestHood_ObserverSeesBothLinesInADarkRoom(t *testing.T) {
 
 	_, err = Unhood("", user, room, 0)
 	require.NoError(t, err)
-	require.Contains(t, hoodTestText(observer.UserId), "throws back the hood of their lantern, and light floods out.",
-		"an observer missed the unhood line")
+	require.Contains(t, hoodTestText(observer.UserId), "A light flares to life, revealing",
+		"an observer who could not see before the unhood missed the reveal line")
 }
 
 // The other side of the same judgement (#220): a watcher who could not see
@@ -278,4 +278,69 @@ func TestHood_BandNoticeFollowsTheActionLine(t *testing.T) {
 	require.GreaterOrEqual(t, at, 0, out)
 	require.GreaterOrEqual(t, laterIndex(out, at, lighter), 0,
 		"unhood must be followed by its light-returns notice in the same output:\n%s", out)
+}
+
+// hoodedDarkRoomWithWatcher wears the lantern, hoods it, and returns the
+// bearer, the room and a second watcher standing in it, all queues drained.
+// In a cave nothing else lights the room, so the hooded lantern leaves it dark.
+func hoodedDarkRoomWithWatcher(t *testing.T, biome string) (*users.UserRecord, *rooms.Room, *users.UserRecord) {
+	t.Helper()
+	user, room := hoodFixture(t)
+	room.Biome = biome
+	watcher := users.GetByUserId(2)
+	require.NotNil(t, watcher)
+	watcher.Character.RoomId = room.RoomId
+	room.AddPlayer(watcher.UserId)
+	_, ok, why := user.Character.Wear(items.New(hoodTestLanternItem))
+	require.True(t, ok, why)
+	_, err := Hood("", user, room, 0)
+	require.NoError(t, err)
+	events.DrainQueuedMessagesForTest(user.UserId)
+	events.DrainQueuedMessagesForTest(watcher.UserId)
+	return user, room, watcher
+}
+
+const (
+	hoodThrowsBackLine = "throws back the hood of their lantern, and light floods out."
+	hoodRevealLine     = "A light flares to life, revealing"
+)
+
+// Owner ruling 2026-10-06: a watcher who could not see a moment before and
+// can now is told the bearer appeared, not that a hood was thrown back.
+func TestUnhood_WatcherInTheDarkReadsTheReveal(t *testing.T) {
+	user, room, watcher := hoodedDarkRoomWithWatcher(t, "cave")
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(watcher.Character, room),
+		"fixture: the room must be dark to the watcher before the unhood")
+
+	_, err := Unhood("", user, room, 0)
+	require.NoError(t, err)
+	out := hoodTestText(watcher.UserId)
+	require.Contains(t, out, hoodRevealLine)
+	require.Contains(t, out, user.Character.Name)
+	require.Contains(t, out, "standing there, holding a lantern.")
+	require.NotContains(t, out, hoodThrowsBackLine)
+}
+
+func TestUnhood_WatcherInALitRoomReadsThrowsBack(t *testing.T) {
+	user, room, watcher := hoodedDarkRoomWithWatcher(t, "city")
+	require.NotEqual(t, messaging.SightNone, messaging.ParticipantSight(watcher.Character, room),
+		"fixture: the room must be lit to the watcher before the unhood")
+
+	_, err := Unhood("", user, room, 0)
+	require.NoError(t, err)
+	out := hoodTestText(watcher.UserId)
+	require.Contains(t, out, hoodThrowsBackLine)
+	require.NotContains(t, out, hoodRevealLine)
+}
+
+func TestUnhood_BlindedWatcherInTheDarkReadsNeither(t *testing.T) {
+	user, room, watcher := hoodedDarkRoomWithWatcher(t, "cave")
+	blindForSpeechTest(t, watcher)
+	events.DrainQueuedMessagesForTest(watcher.UserId)
+
+	_, err := Unhood("", user, room, 0)
+	require.NoError(t, err)
+	out := hoodTestText(watcher.UserId)
+	require.NotContains(t, out, hoodRevealLine)
+	require.NotContains(t, out, hoodThrowsBackLine)
 }

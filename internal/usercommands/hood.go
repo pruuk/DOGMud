@@ -84,14 +84,35 @@ func Unhood(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		user.SendText(messaging.CategorySystem, `Your lantern's hood is already open.`)
 		return true, nil
 	}
+	var beforeUnhood rooms.VisualSnapshot
+	if room != nil {
+		beforeUnhood = room.VisualSnapshot()
+	}
 	for _, rec := range recs {
 		rec.ResetLight()
 	}
 	user.SendText(messaging.CategorySystem, `You throw back the hood of your lantern, and light floods out around you.`)
 	if room != nil {
+		// Judged by the room after the light is back (owner ruling,
+		// 2026-10-06), but worded by what each watcher experienced: one who
+		// could see a moment ago watches the hood go back; one who could not
+		// sees the bearer appear out of the gloom. A watcher who still sees
+		// nothing gets neither line, and shapes read "a figure" in both.
+		skipThrowsBack := []int{user.UserId}
+		skipReveal := []int{user.UserId}
+		for _, uid := range room.GetPlayers() {
+			if decision, ok := beforeUnhood[uid]; ok && decision != messaging.SightNone {
+				skipReveal = append(skipReveal, uid)
+			} else {
+				skipThrowsBack = append(skipThrowsBack, uid)
+			}
+		}
 		room.SendTextVisual(messaging.CategoryMobEmote,
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> throws back the hood of their lantern, and light floods out.`, user.Character.Name),
-			user.UserId)
+			skipThrowsBack...)
+		room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
+			fmt.Sprintf(`A light flares to life, revealing <ansi fg="username">%s</ansi> standing there, holding a lantern.`, user.Character.Name),
+			[]string{user.Character.Name}, skipReveal...)
 	}
 	lightnotice.Check(user, lightnotice.TriggerCommand)
 	return true, nil

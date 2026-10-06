@@ -35,6 +35,13 @@ The `internal/usercommands` package implements the complete command system for p
     `Hooded` and sends the room line with `SendTextVisualToSnapshot`, so it
     is judged by what each watcher could see just before the light went
     (#220): it reaches those who saw by the lantern and nobody who could not.
+    `Unhood` takes the same snapshot before `ResetLight` and splits the room
+    line by it (owner ruling 2026-10-06): a watcher who could see before
+    (not `SightNone`) reads "throws back the hood", one who could not reads
+    "A light flares to life, revealing <name> standing there, holding a
+    lantern." Both are judged after the light is back (`SendTextVisual`,
+    `SendTextVisualHidingNames`), so a watcher who still sees nothing gets
+    neither and shapes read "a figure".
   - `cancel <spell>` (`cancel.go`: `Cancel`, `cancelCondition`,
     `cancelNameMatches`): an activity in progress ALWAYS wins, whatever the
     argument; only a free user reaches `cancelCondition`, which ends the first

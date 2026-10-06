@@ -13,6 +13,8 @@
   about it now reaches exactly the people who could see just before it
   changed. You no longer read that a light went out if you could not see
   by it, or that a darkness lifted while it still blinded you.
+- Someone standing in the dark who uncovers a lantern now appears out of
+  the gloom to those who could not see them a moment before.
 
 ## 2026-10-06: Gear that strikes back
 
