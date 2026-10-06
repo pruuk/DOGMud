@@ -2,15 +2,14 @@ package hooks
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// MobDeathItemProcs fires on_kill procs and records the last-kill round
-// (the Blackrazor hunger anchor — Task 11) for every player with damage
-// attribution on the kill.
+// MobDeathItemProcs fires on_kill procs, records the last-kill round (the
+// Blackrazor hunger anchor, Task 11) and fires on_kill into every worn
+// treed item, for every player with damage attribution on the kill.
 func MobDeathItemProcs(e events.Event) events.ListenerReturn {
 	evt, typeOk := e.(events.MobDeath)
 	if !typeOk {
@@ -26,17 +25,9 @@ func MobDeathItemProcs(e events.Event) events.ListenerReturn {
 
 		// Every worn treed item hears of the kill (item behaviour slice 2,
 		// ruling S3: the shield's kill lines too, not the weapon's alone).
+		// Its speak node is paced by the item's cooldown, so a multi-kill
+		// round does not spam, and gated by PinnacleItemsEnabled.
 		fireWornItemEvent(behaviortree.EventContext{EventType: "on_kill"}, user.Character, uid, 0)
-
-		// Sentient weapons savor the kill (paced by the shared chatter cooldown,
-		// so this doesn't spam on multi-kill rounds). Sentient chatter is the
-		// PinnacleItemsEnabled toggle's domain — same gate pinnacleUserTick reads.
-		if bool(configs.GetConfig().GamePlay.PinnacleItemsEnabled) &&
-			user.Character.Equipment.Weapon.ItemId > 0 {
-			if wspec := user.Character.Equipment.Weapon.GetSpec(); wspec.VoiceId != "" {
-				tryEmitVoice(user, nil, wspec, "on_kill")
-			}
-		}
 	}
 	return events.Continue
 }

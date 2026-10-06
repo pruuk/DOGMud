@@ -35,6 +35,7 @@ procs:
     params:
       ratio: 0.25
 voice_id: blackrazor
+behavior: blackrazor
 statmods:
   strength: 6
 weight: 6.0
