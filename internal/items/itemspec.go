@@ -252,24 +252,6 @@ type AttackMessageOptions []ItemMessage
 type AttackEffects map[Intensity]AttackMessageOptions
 type AttackMessages map[ItemSubType]AttackEffects
 
-// ItemProc is a data-driven proc an item fires from a combat/round trigger.
-// Dispatch lives in internal/hooks (import direction: hooks → items).
-type ItemProc struct {
-	Trigger        string             `yaml:"trigger"`                   // on_hit | on_kill | on_block | on_grapple | on_spell_hit
-	Chance         int                `yaml:"chance"`                    // percent per trigger event (1-100)
-	CooldownRounds int                `yaml:"cooldown_rounds,omitempty"` // internal cooldown, 0 = none
-	Effect         string             `yaml:"effect"`                    // lifesteal | steal_pool | aoe_stun | apply_condition
-	Params         map[string]float64 `yaml:"params,omitempty"`
-}
-
-var validProcTriggers = map[string]bool{
-	"on_hit": true, "on_kill": true, "on_block": true, "on_grapple": true, "on_spell_hit": true,
-}
-
-var validProcEffects = map[string]bool{
-	"lifesteal": true, "steal_pool": true, "aoe_stun": true, "apply_condition": true,
-}
-
 // The blueprint for an item
 type ItemSpec struct {
 	ItemId           int
@@ -281,28 +263,28 @@ type ItemSpec struct {
 	// in the item's description the way a room's nouns are (lighting plan 5a:
 	// the hooded lantern's hood).
 	Nouns map[string]string `yaml:"nouns,omitempty"`
-	// ── Pinnacle Stage 1: procs, reserves, bandolier, mutation drip, hunger, voice ──
-	Procs                 []ItemProc `yaml:"procs,omitempty"`                   // data-driven combat procs
-	ReserveHealthPct      float64    `yaml:"reserve_health_pct,omitempty"`      // 0-1 fraction of HealthMax reserved while equipped
-	ReserveStaminaPct     float64    `yaml:"reserve_stamina_pct,omitempty"`     // 0-1 fraction of StaminaMax reserved while equipped
-	ReserveConvictionPct  float64    `yaml:"reserve_conviction_pct,omitempty"`  // 0-1 fraction of ConvictionMax reserved while equipped
-	PreservesContents     bool       `yaml:"preserves_contents,omitempty"`      // bandolier: contents never age
-	AmbientPotions        bool       `yaml:"ambient_potions,omitempty"`         // bandolier: slotted potion conditions always-on at Peak
-	MutationTickInterval  int        `yaml:"mutation_tick_interval,omitempty"`  // rounds between mutation rolls while worn (0 = never)
-	MutationTickChance    int        `yaml:"mutation_tick_chance,omitempty"`    // percent chance per roll
-	MutationRarityFloor   int        `yaml:"mutation_rarity_floor,omitempty"`   // min mutation rarity in the pool (0 = no floor)
-	HungerRounds          int        `yaml:"hunger_rounds,omitempty"`           // rounds without a kill before the item feeds on the wielder (0 = never)
-	HungerDrainPct        float64    `yaml:"hunger_drain_pct,omitempty"`        // fraction of HealthMax drained per hungry round
-	PhysicalMitigation    int        `yaml:"physical_mitigation,omitempty"`     // % physical damage reduction (Stage 34)
-	MagicalMitigation     int        `yaml:"magical_mitigation,omitempty"`      // % magical damage reduction (Stage 34)
-	ConvictionMitigation  int        `yaml:"conviction_mitigation,omitempty"`   // % conviction damage reduction (Stage 34)
-	DamageMultiplier      float64    `yaml:"damage_multiplier,omitempty"`       // Weapon damage multiplier for new pipeline (Stage 34)
-	SpellDamageMultiplier float64    `yaml:"spell_damage_multiplier,omitempty"` // Spell damage multiplier for caster weapons (wand/sceptre/staff)
-	ParryRating           int        `yaml:"parryrating,omitempty"`             // Weapon parry bonus (Stage 7.1)
-	BlockRating           int        `yaml:"blockrating,omitempty"`             // Shield block bonus (Stage 7.1)
-	AmmoTag               string     `yaml:"ammo_tag,omitempty"`                // Ranged weapons: ammo type required (arrows/bolts/shot). Ammo items: type provided.
-	MinStrength           int        `yaml:"min_strength,omitempty"`            // Minimum Strength to wield (heavy bows/arbalest)
-	WaitRounds            int        `yaml:"waitrounds,omitempty"`              // How many extra rounds each combat requires
+	// ── Pinnacle Stage 1: reserves, bandolier, mutation drip, hunger. Procs
+	// and voices live in the item's behaviour tree (item behaviour slices 2, 3).
+	ReserveHealthPct      float64 `yaml:"reserve_health_pct,omitempty"`      // 0-1 fraction of HealthMax reserved while equipped
+	ReserveStaminaPct     float64 `yaml:"reserve_stamina_pct,omitempty"`     // 0-1 fraction of StaminaMax reserved while equipped
+	ReserveConvictionPct  float64 `yaml:"reserve_conviction_pct,omitempty"`  // 0-1 fraction of ConvictionMax reserved while equipped
+	PreservesContents     bool    `yaml:"preserves_contents,omitempty"`      // bandolier: contents never age
+	AmbientPotions        bool    `yaml:"ambient_potions,omitempty"`         // bandolier: slotted potion conditions always-on at Peak
+	MutationTickInterval  int     `yaml:"mutation_tick_interval,omitempty"`  // rounds between mutation rolls while worn (0 = never)
+	MutationTickChance    int     `yaml:"mutation_tick_chance,omitempty"`    // percent chance per roll
+	MutationRarityFloor   int     `yaml:"mutation_rarity_floor,omitempty"`   // min mutation rarity in the pool (0 = no floor)
+	HungerRounds          int     `yaml:"hunger_rounds,omitempty"`           // rounds without a kill before the item feeds on the wielder (0 = never)
+	HungerDrainPct        float64 `yaml:"hunger_drain_pct,omitempty"`        // fraction of HealthMax drained per hungry round
+	PhysicalMitigation    int     `yaml:"physical_mitigation,omitempty"`     // % physical damage reduction (Stage 34)
+	MagicalMitigation     int     `yaml:"magical_mitigation,omitempty"`      // % magical damage reduction (Stage 34)
+	ConvictionMitigation  int     `yaml:"conviction_mitigation,omitempty"`   // % conviction damage reduction (Stage 34)
+	DamageMultiplier      float64 `yaml:"damage_multiplier,omitempty"`       // Weapon damage multiplier for new pipeline (Stage 34)
+	SpellDamageMultiplier float64 `yaml:"spell_damage_multiplier,omitempty"` // Spell damage multiplier for caster weapons (wand/sceptre/staff)
+	ParryRating           int     `yaml:"parryrating,omitempty"`             // Weapon parry bonus (Stage 7.1)
+	BlockRating           int     `yaml:"blockrating,omitempty"`             // Shield block bonus (Stage 7.1)
+	AmmoTag               string  `yaml:"ammo_tag,omitempty"`                // Ranged weapons: ammo type required (arrows/bolts/shot). Ammo items: type provided.
+	MinStrength           int     `yaml:"min_strength,omitempty"`            // Minimum Strength to wield (heavy bows/arbalest)
+	WaitRounds            int     `yaml:"waitrounds,omitempty"`              // How many extra rounds each combat requires
 	// StaminaCost is DEPRECATED and no longer read for cost. U7 Task 7 replaced
 	// the per-weapon attack charge with a config base (AttackBaseStaminaCost)
 	// times the encumbrance multiplier, charged per swing. A heavy weapon already
@@ -776,17 +758,6 @@ func (i *ItemSpec) Validate() error {
 		i.AutoCalculateValue()
 	}
 
-	for idx, p := range i.Procs {
-		if !validProcTriggers[p.Trigger] {
-			return fmt.Errorf("item %d proc %d: invalid trigger %q", i.ItemId, idx, p.Trigger)
-		}
-		if !validProcEffects[p.Effect] {
-			return fmt.Errorf("item %d proc %d: invalid effect %q", i.ItemId, idx, p.Effect)
-		}
-		if p.Chance < 1 || p.Chance > 100 {
-			return fmt.Errorf("item %d proc %d: chance must be 1-100, got %d", i.ItemId, idx, p.Chance)
-		}
-	}
 	for name, v := range map[string]float64{
 		"reserve_health_pct": i.ReserveHealthPct, "reserve_stamina_pct": i.ReserveStaminaPct, "reserve_conviction_pct": i.ReserveConvictionPct,
 		"hunger_drain_pct": i.HungerDrainPct,
@@ -817,20 +788,6 @@ func (i *ItemSpec) Validate() error {
 	}
 
 	return nil
-}
-
-// ProcsFor returns the procs matching a trigger. Cheap; no allocation when empty.
-func (i *ItemSpec) ProcsFor(trigger string) []ItemProc {
-	if len(i.Procs) == 0 {
-		return nil
-	}
-	var out []ItemProc
-	for _, p := range i.Procs {
-		if p.Trigger == trigger {
-			out = append(out, p)
-		}
-	}
-	return out
 }
 
 func (i *ItemSpec) Filename() string {

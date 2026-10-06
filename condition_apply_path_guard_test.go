@@ -135,7 +135,6 @@ var conditionApplyPathAllowlist = map[string]string{
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
 	"internal/usercommands/character.go|423":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
-	"internal/hooks/item_procs.go|256":               "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/behaviortree/actions_item_proc.go|324": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40":     "the holder is a MOB (a summoned companion), not a player",
 
@@ -293,7 +292,6 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/actions/combat_maul.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_rake.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
 	"internal/actions/combat_throttle.go|146":        "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/hooks/item_procs.go|206":               "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
 	"internal/behaviortree/actions_item_proc.go|274": "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
 }
 

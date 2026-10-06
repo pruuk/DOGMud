@@ -28,12 +28,6 @@ staminacost: 9
 reserve_health_pct: 0.25
 hunger_rounds: 50
 hunger_drain_pct: 0.01
-procs:
-  - trigger: on_hit
-    chance: 100
-    effect: lifesteal
-    params:
-      ratio: 0.25
 behavior: blackrazor
 statmods:
   strength: 6

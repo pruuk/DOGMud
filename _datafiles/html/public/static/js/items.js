@@ -3,8 +3,9 @@
  * items.js — the item-template editor (admin web-building 2), a second mode of
  * the /build page. Consumes Build.Items (list) + Build.Item (detail) GMCP and
  * drives Build.Item.Create/Update/Delete. The form morphs by item type; fields
- * the form doesn't cover (procs, hunger, the behaviour tree) round-trip untouched
- * because the server rebuilds the spec from the loaded copy.
+ * the form doesn't cover (the behaviour tree, which carries an item's voice and
+ * procs) round-trip untouched because the server rebuilds the spec from the
+ * loaded copy.
  */
 (function () {
   var ARMOR_SLOTS = ["offhand", "head", "neck", "body", "belt", "gloves", "ring",
@@ -78,25 +79,6 @@
   }
   function gmcp(pkg, obj) { if (window.Builder && window.Builder.sendGMCP) window.Builder.sendGMCP(pkg, obj); }
   function toast(m, e) { if (window.Builder && window.Builder.toast) window.Builder.toast(m, e); }
-
-  // Bare DOM builders used by the proc-row editor (which lives outside the
-  // renderForm closure that owns numField/selectField).
-  function selBox(opts, val) {
-    var s = document.createElement("select");
-    opts.forEach(function (o) {
-      var op = document.createElement("option"); op.value = o; op.textContent = o === "" ? "(none)" : o;
-      if (o === val) op.selected = true; s.appendChild(op);
-    });
-    return s;
-  }
-  function numBox(val, step) {
-    var i = document.createElement("input"); i.type = "number"; i.step = step || "1";
-    i.value = (val === 0 ? "0" : (val || "")); return i;
-  }
-  function labelWrap(text, input) {
-    var d = document.createElement("div"); d.style.flex = "1 1 auto"; d.style.minWidth = "0";
-    var l = document.createElement("label"); l.textContent = text; d.appendChild(l); d.appendChild(input); return d;
-  }
 
   var Panel = {
     rows: [],
@@ -330,7 +312,8 @@
     function rerenderTypeSections(type) { self.buildTypeSections(self.typeSections, type, detail, F, markDirty, field, numField, textField, checkField, selectField, hintFor); }
     rerenderTypeSections(detail.type);
 
-    // Advanced (sentient & procs) — collapsible, auto-open when populated.
+    // Advanced (reserves, hunger, mutation drip, worn conditions): collapsible,
+    // auto-open when populated.
     this.buildAdvancedSection(insp, detail, F, markDirty, field, numField, textField, checkField, selectField, hintFor);
 
     // Save + delete row
@@ -424,8 +407,7 @@
 
   Panel.buildAdvancedSection = function (insp, detail, F, markDirty, field, numField, textField, checkField, selectField, hintFor) {
     var self = this;
-    var hasAdv = (detail.procs && detail.procs.length) ||
-      detail.reserveHealthPct || detail.reserveStaminaPct || detail.reserveConvictionPct ||
+    var hasAdv = detail.reserveHealthPct || detail.reserveStaminaPct || detail.reserveConvictionPct ||
       detail.hungerRounds || detail.hungerDrainPct ||
       detail.mutationTickInterval || detail.mutationTickChance || detail.mutationRarityFloor ||
       (detail.wornConditionIds && detail.wornConditionIds.length);
@@ -433,7 +415,7 @@
     // author's toggle across same-item re-renders (e.g. the post-save re-Get).
     if (detail.itemId !== this._advItemId) { this.advancedOpen = !!hasAdv; this._advItemId = detail.itemId; }
 
-    function headText() { return (self.advancedOpen ? "▾ " : "▸ ") + "Advanced — sentient & procs"; }
+    function headText() { return (self.advancedOpen ? "▾ " : "▸ ") + "Advanced: reserves, hunger, mutation"; }
     var head = ce("h3", { text: headText() });
     head.style.cursor = "pointer";
     var body = ce("div", {});
@@ -446,8 +428,8 @@
     insp.appendChild(head);
     insp.appendChild(body);
 
-    this.buildProcEditor(body, detail, F, markDirty);
-
+    // An item's procs live in its behaviour tree (behaviors/items/) since item
+    // behaviour slice 3; tree editing is #367.
     body.appendChild(sectionTitle("Reserves"));
     body.appendChild(ce("div", { "class": "row" }, [
       numField("Reserve HP", "reserveHealthPct", detail.reserveHealthPct, "0.05"),
@@ -475,63 +457,6 @@
     body.appendChild(field("Worn condition ids", wb, hintFor("wornConditionIds", false)));
   };
 
-  Panel.buildProcEditor = function (body, detail, F, markDirty) {
-    body.appendChild(sectionTitle("Procs"));
-    var procBox = ce("div", {});
-    body.appendChild(procBox);
-    var procRows = [];
-
-    function addProc(p) {
-      p = p || { trigger: "", effect: "", chance: 100, cooldownRounds: 0, params: {} };
-      var trig = selBox([""].concat(detail.procTriggers || []), p.trigger);
-      var eff = selBox([""].concat(detail.procEffects || []), p.effect);
-      var chance = numBox(p.chance, "1"); chance.style.width = "60px";
-      var cd = numBox(p.cooldownRounds, "1"); cd.style.width = "60px";
-      var rm = ce("button", { "class": "mini rm", text: "✕ proc" });
-
-      var paramBox = ce("div", { style: "margin:3px 0 3px 10px;" });
-      var paramRows = [];
-      function addParam(k, v) {
-        var name = ce("input", { type: "text", placeholder: "param" }); name.value = k || ""; name.style.flex = "1";
-        var val = ce("input", { type: "number", step: "0.05" }); val.value = (v === 0 ? "0" : (v || "")); val.style.width = "70px";
-        var prm = ce("button", { "class": "mini rm", text: "✕" });
-        var prow = ce("div", { "class": "kv" }, [name, val, prm]);
-        name.addEventListener("input", markDirty); val.addEventListener("input", markDirty);
-        prm.addEventListener("click", function () { paramBox.removeChild(prow); paramRows.splice(paramRows.indexOf(prow), 1); markDirty(); });
-        prow._name = name; prow._val = val; paramRows.push(prow); paramBox.appendChild(prow);
-      }
-      Object.keys(p.params || {}).forEach(function (k) { addParam(k, p.params[k]); });
-      var addParamBtn = ce("button", { "class": "mini", text: "+ param" });
-      addParamBtn.addEventListener("click", function () { addParam("", 0); markDirty(); });
-
-      var row = ce("div", { style: "border:1px solid var(--tooled);border-radius:4px;padding:6px;margin:4px 0;" }, [
-        ce("div", { "class": "row" }, [labelWrap("Trigger", trig), labelWrap("Effect", eff)]),
-        ce("div", { "class": "row" }, [labelWrap("Chance", chance), labelWrap("Cooldown", cd)]),
-        ce("div", {}, [ce("label", { text: "Params (e.g. ratio 0.25)" }), paramBox, addParamBtn]),
-        rm
-      ]);
-      trig.addEventListener("change", markDirty); eff.addEventListener("change", markDirty);
-      chance.addEventListener("input", markDirty); cd.addEventListener("input", markDirty);
-      rm.addEventListener("click", function () { procBox.removeChild(row); procRows.splice(procRows.indexOf(row), 1); markDirty(); });
-      row._get = function () {
-        var params = {};
-        paramRows.forEach(function (pr) { var n = pr._name.value.trim(); if (n) params[n] = parseFloat(pr._val.value) || 0; });
-        return { trigger: trig.value, effect: eff.value, chance: parseInt(chance.value, 10) || 0, cooldownRounds: parseInt(cd.value, 10) || 0, params: params };
-      };
-      procRows.push(row); procBox.appendChild(row);
-    }
-
-    (detail.procs || []).forEach(addProc);
-    var addBtn = ce("button", { "class": "mini", text: "+ proc" });
-    addBtn.addEventListener("click", function () { addProc(); markDirty(); });
-    body.appendChild(addBtn);
-
-    F.procs = function () {
-      return procRows.map(function (r) { return r._get(); })
-        .filter(function (p) { return p.trigger || p.effect; });
-    };
-  };
-
   // ---- mutations ----
   Panel.gather = function () {
     var F = this.fields || {};
@@ -556,7 +481,6 @@
       bottleAgingMultiplier: g("bottleAgingMultiplier", 0), isBandolier: g("isBandolier", false), bandolierCapacity: g("bandolierCapacity", 0),
       isComponent: g("isComponent", false), componentTag: g("componentTag", ""), weightReduction: g("weightReduction", 0),
       bagCapacity: g("bagCapacity", 0), salvageReturns: g("salvageReturns", []), keyLockId: g("keyLockId", ""),
-      procs: g("procs", []),
       reserveHealthPct: g("reserveHealthPct", 0), reserveStaminaPct: g("reserveStaminaPct", 0), reserveConvictionPct: g("reserveConvictionPct", 0),
       hungerRounds: g("hungerRounds", 0), hungerDrainPct: g("hungerDrainPct", 0),
       mutationTickInterval: g("mutationTickInterval", 0), mutationTickChance: g("mutationTickChance", 0), mutationRarityFloor: g("mutationRarityFloor", 0),

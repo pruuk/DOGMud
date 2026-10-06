@@ -25,14 +25,6 @@ statmods:
   casting: 10
   spellcasting: 5
   manifestation: 5
-procs:
-  - trigger: on_spell_hit
-    chance: 100
-    cooldown_rounds: 3
-    effect: steal_pool
-    params:
-      pool: 3
-      amount_pct: 0.08
 behavior: hollow_choir
 weight: 4.0
 rarity_tier: 82

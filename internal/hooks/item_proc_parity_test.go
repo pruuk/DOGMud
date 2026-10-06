@@ -20,17 +20,16 @@ import (
 )
 
 // The proc parity record (item behaviour slice 3, spec "Slice 3" gates).
-// testdata/item_proc_parity.golden was recorded on the Pinnacle proc path
-// (dispatchItemProcs) BEFORE the procs moved into item trees, and is
-// frozen: the tree path must reproduce it, the same outcomes on the same
+// testdata/item_proc_parity.golden was recorded on the retired Pinnacle
+// proc path (dispatchItemProcs) BEFORE the procs moved into item trees, and
+// is frozen: the tree path must reproduce it, the same outcomes on the same
 // rounds, under one seeded random source (util.SetRandForTest). One
 // scenario per shipped proc item and trigger, hits and misses, cooldown
 // windows and rounds where the effect has nothing to act on, plus a kill
 // scenario with every proc item worn. After each round a probe draw is
 // recorded, so a path that draws more or fewer numbers moves the record.
-//
-// Set DOGMUD_RECORD_PROC_PARITY=1 to rewrite the record. It was written
-// once, on the Pinnacle path; do not rewrite it on the tree path.
+// Both paths matched it before the old one was deleted; do not re-record
+// it on the tree path.
 
 const (
 	procParityUserId = 1
@@ -42,16 +41,12 @@ const (
 	procParityMobB   = 9802 // a second hostile in the room (aoe_stun)
 )
 
-// procDispatch fires a trigger's procs for owner against other: the
-// dispatcher under test.
+// procDispatch fires a trigger's procs for owner against other.
 type procDispatch func(trigger string, owner, other *characters.Character, room *rooms.Room, damage int)
 
-// procParityPaths are the dispatchers the record is checked against.
-var procParityPaths = map[string]procDispatch{
-	"pinnacle": dispatchItemProcs,
-	"tree": func(trigger string, owner, other *characters.Character, room *rooms.Room, damage int) {
-		fireItemProc(behaviortree.EventContext{EventType: trigger}, owner, other, room, damage)
-	},
+// treeProcDispatch fires a trigger through the item trees.
+func treeProcDispatch(trigger string, owner, other *characters.Character, room *rooms.Room, damage int) {
+	fireItemProc(behaviortree.EventContext{EventType: trigger}, owner, other, room, damage)
 }
 
 // loadProcParityWorld loads the shipped conditions and items, points the
@@ -290,20 +285,11 @@ func runProcParity(t *testing.T, fire procDispatch) string {
 }
 
 func TestItemProcParity(t *testing.T) {
-	path := filepath.Join("testdata", "item_proc_parity.golden")
-	if os.Getenv("DOGMUD_RECORD_PROC_PARITY") == "1" {
-		if err := os.WriteFile(path, []byte(runProcParity(t, dispatchItemProcs)), 0o644); err != nil {
-			t.Fatal(err)
-		}
-		t.Skip("recorded " + path)
-	}
-	want, err := os.ReadFile(path)
+	want, err := os.ReadFile(filepath.Join("testdata", "item_proc_parity.golden"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for name, fire := range procParityPaths {
-		if got := runProcParity(t, fire); got != string(want) {
-			t.Errorf("%s path moved off the record.\n--- want\n%s\n--- got\n%s", name, want, got)
-		}
+	if got := runProcParity(t, treeProcDispatch); got != string(want) {
+		t.Errorf("the tree path moved off the record.\n--- want\n%s\n--- got\n%s", want, got)
 	}
 }
