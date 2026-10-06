@@ -33,6 +33,22 @@ var procEffectParams = map[string]map[string]bool{
 	"apply_condition": {"condition": true, "duration": true, "magnitude": true},
 }
 
+// procEffectRequired are the params without which an effect does nothing.
+var procEffectRequired = map[string][]string{
+	"lifesteal":       {"ratio"},
+	"steal_pool":      {"pool", "amount_pct"},
+	"apply_condition": {"condition"},
+}
+
+// procEffectDeadEvents are the events under which an effect can never fire:
+// a kill has no opponent and no damage (its ProcEvent is nil), and a grapple
+// deals no damage.
+var procEffectDeadEvents = map[string]map[string]bool{
+	"lifesteal":       {"on_kill": true, "on_grapple": true},
+	"steal_pool":      {"on_kill": true},
+	"apply_condition": {"on_kill": true},
+}
+
 // ProcEvent carries a proc trigger's participants: the bearer's opponent
 // (nil on a kill), the room (nil where the caller does not know it) and
 // the damage the trigger dealt.
@@ -164,14 +180,23 @@ func wrapsProcAlone(child *NodeDef) bool {
 	return false
 }
 
-// checkProcNodes refuses a proc node that would never fire or fire wrongly:
-// a `cooldown` or `random` decorator that names a proc but does not wrap it
-// alone (the compiler swaps every such decorator for its proc variant, which
-// would arm the cooldown on a sibling's success or gate a sibling's chance),
-// one not under a proc event, an unknown effect, a param its effect does
-// not read or that is not a number, and a `random` decorator over a proc
-// outside 1 to 99 (at 100 the branch omits it, so nothing is drawn; X19),
-// and a proc branch that shares its event with a sibling in one selector.
+// checkProcNodes refuses an item tree whose proc would never fire or would
+// fire wrongly. It refuses:
+//   - a `cooldown` or `random` decorator that names a proc but does not wrap
+//     it alone, through only `cooldown` and `random` decorators (the compiler
+//     swaps every such decorator for its proc variant, which would arm the
+//     cooldown on a sibling's success or gate a sibling's chance);
+//   - a `random` decorator over a proc outside 1 to 99 (at 100 the branch
+//     omits it, so nothing is drawn; X19);
+//   - a proc branch that shares its event with a sibling in one selector
+//     (checkProcSiblings);
+//   - a `proc` not under a proc event, with an unknown effect, with a param
+//     its effect does not read or that is not a number, or missing a param
+//     its effect needs (procEffectRequired);
+//   - a `proc` whose effect can never fire under its event
+//     (procEffectDeadEvents: lifesteal, steal_pool or apply_condition under
+//     on_kill, lifesteal under on_grapple).
+//
 // event is the nearest enclosing event.
 func checkProcNodes(def NodeDef, event, path string) error {
 	if def.Event != `` {
@@ -206,6 +231,14 @@ func checkProcNodes(def NodeDef, event, path string) error {
 			default:
 				return fmt.Errorf("%s: proc param %s %v: want a number", path, k, v)
 			}
+		}
+		for _, k := range procEffectRequired[effect] {
+			if _, ok := def.Params[k]; !ok {
+				return fmt.Errorf("%s: proc effect %s needs %q", path, effect, k)
+			}
+		}
+		if procEffectDeadEvents[effect][event] {
+			return fmt.Errorf("%s: proc effect %s under %s can never fire (no opponent or no damage there)", path, effect, event)
 		}
 	}
 	if def.Type == `selector` {

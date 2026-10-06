@@ -205,7 +205,15 @@ func TestProcLoadChecks(t *testing.T) {
 	}{
 		{"idle event", branch("item_idle", "      effect: lifesteal\n"), `proc under event "item_idle"`},
 		{"unknown effect", branch("on_hit", "      effect: explode\n"), `proc effect "explode"`},
-		{"foreign param", branch("on_hit", "      effect: lifesteal\n      pool: 3\n"), `does not read "pool"`},
+		{"foreign param", branch("on_hit", "      effect: lifesteal\n      ratio: 0.5\n      pool: 3\n"), `does not read "pool"`},
+		{"lifesteal on a kill", branch("on_kill", "      effect: lifesteal\n      ratio: 0.5\n"), `proc effect lifesteal under on_kill can never fire`},
+		{"steal_pool on a kill", branch("on_kill", "      effect: steal_pool\n      pool: 3\n      amount_pct: 0.1\n"), `proc effect steal_pool under on_kill can never fire`},
+		{"apply_condition on a kill", branch("on_kill", "      effect: apply_condition\n      condition: 1\n"), `proc effect apply_condition under on_kill can never fire`},
+		{"lifesteal on a grapple", branch("on_grapple", "      effect: lifesteal\n      ratio: 0.5\n"), `proc effect lifesteal under on_grapple can never fire`},
+		{"lifesteal without ratio", branch("on_hit", "      effect: lifesteal\n"), `proc effect lifesteal needs "ratio"`},
+		{"steal_pool without pool", branch("on_spell_hit", "      effect: steal_pool\n      amount_pct: 0.1\n"), `proc effect steal_pool needs "pool"`},
+		{"steal_pool without amount_pct", branch("on_spell_hit", "      effect: steal_pool\n      pool: 3\n"), `proc effect steal_pool needs "amount_pct"`},
+		{"apply_condition without condition", branch("on_grapple", "      effect: apply_condition\n      duration: 6\n"), `proc effect apply_condition needs "condition"`},
 		{"non-number", branch("on_hit", "      effect: lifesteal\n      ratio: lots\n"), `want a number`},
 		{"random 100", "tree:\n  type: decorator\n  event: on_hit\n  mod: random\n  percent: 100\n  child:\n    type: action\n    do: proc\n    effect: lifesteal\n", `random percent 100`},
 		{"cooldown over a mixed selector", "tree:\n  type: decorator\n  event: on_hit\n  mod: cooldown\n  rounds: 3\n  child:\n    type: selector\n    children:\n      - type: action\n        do: set_state\n        key: k\n        value: v\n      - type: action\n        do: proc\n        effect: lifesteal\n", `cooldown over a proc must wrap the proc alone`},
@@ -220,12 +228,12 @@ func TestProcLoadChecks(t *testing.T) {
 			t.Errorf("%s: err %v, want %q", c.name, err, c.want)
 		}
 	}
-	if _, _, err := loadItemTreeDef([]byte(branch("on_kill", "      effect: lifesteal\n      ratio: 0.5\n"))); err != nil {
+	if _, _, err := loadItemTreeDef([]byte(branch("on_kill", "      effect: aoe_stun\n"))); err != nil {
 		t.Errorf("a well-formed on_kill proc was refused: %v", err)
 	}
 	for name, y := range map[string]string{
-		"cooldown > random > proc":  "tree:\n  type: decorator\n  event: on_hit\n  mod: cooldown\n  rounds: 3\n  child:\n    type: decorator\n    mod: random\n    percent: 50\n    child:\n      type: action\n      do: proc\n      effect: lifesteal\n",
-		"cooldown > proc":           "tree:\n  type: decorator\n  event: on_hit\n  mod: cooldown\n  rounds: 3\n  child:\n    type: action\n    do: proc\n    effect: lifesteal\n",
+		"cooldown > random > proc":  "tree:\n  type: decorator\n  event: on_hit\n  mod: cooldown\n  rounds: 3\n  child:\n    type: decorator\n    mod: random\n    percent: 50\n    child:\n      type: action\n      do: proc\n      effect: lifesteal\n      ratio: 0.5\n",
+		"cooldown > proc":           "tree:\n  type: decorator\n  event: on_hit\n  mod: cooldown\n  rounds: 3\n  child:\n    type: action\n    do: proc\n    effect: lifesteal\n    ratio: 0.5\n",
 		"procs on different events": "tree:\n  type: selector\n  children:\n    - type: action\n      event: on_hit\n      do: proc\n      effect: lifesteal\n      ratio: 0.5\n    - type: action\n      event: on_block\n      do: proc\n      effect: aoe_stun\n    - type: action\n      event: on_kill\n      do: set_state\n      key: k\n      value: v\n",
 	} {
 		if _, _, err := loadItemTreeDef([]byte(y)); err != nil {

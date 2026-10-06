@@ -598,7 +598,12 @@ template, so two copies share it and it survives a relog; every other
 item cooldown is the item's own. `GamePlay.ItemProcsEnabled` off stops
 every proc and draws nothing. The loader refuses a `proc` outside a proc
 event, an unknown effect, a param its effect does not read or that is not
-a number, and a `random` over a proc outside 1 to 99. It also refuses a
+a number, a missing required param (`lifesteal` needs `ratio`,
+`steal_pool` needs `pool` and `amount_pct`, `apply_condition` needs
+`condition`), an effect that can never fire under its event (`lifesteal`,
+`steal_pool` or `apply_condition` under `on_kill`, which has no opponent
+and no damage; `lifesteal` under `on_grapple`, which deals no damage), and
+a `random` over a proc outside 1 to 99. It also refuses a
 `cooldown` or `random` over a proc unless it wraps the proc alone: its
 child must be the `proc` or another `cooldown` or `random` that ends in
 the `proc`, never a selector, sequence, condition, `invert`, `repeat` or

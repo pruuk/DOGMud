@@ -1125,7 +1125,11 @@ Pinnacle proc path (`hooks/item_procs.go`, `items.ItemProc`, `procs:`,
 - **Compile.** `checkProcNodes` refuses a `proc` whose nearest `event:` is
   not `on_hit`, `on_kill`, `on_block`, `on_grapple` or `on_spell_hit`, an
   unknown effect, a param its effect does not read (`procEffectParams`) or
-  that is not a number, and a `random` over a proc outside 1 to 99 (X19:
+  that is not a number, a missing required param (`procEffectRequired`),
+  an effect that can never fire under its event (`procEffectDeadEvents`:
+  `lifesteal`, `steal_pool` or `apply_condition` under `on_kill`, which has
+  no opponent and no damage; `lifesteal` under `on_grapple`, which deals
+  none), and a `random` over a proc outside 1 to 99 (X19:
   at 100 the branch omits it, so nothing is drawn). It also refuses a
   `cooldown` or `random` whose subtree names `proc` unless its child is the
   `proc` action or a chain of only `cooldown` and `random` decorators

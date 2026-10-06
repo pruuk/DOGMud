@@ -38,7 +38,12 @@ tree:
 
 The tree loader refuses (and the boot panics on) a `proc` outside a proc
 event, an unknown effect, a param its effect does not read or that is not
-a number, and a `random` over a proc outside 1 to 99.
+a number, a missing required param (`lifesteal` needs `ratio`,
+`steal_pool` needs `pool` and `amount_pct`, `apply_condition` needs
+`condition`), an effect that can never fire under its event, and a
+`random` over a proc outside 1 to 99. A kill has no opponent and no
+damage, so only `aoe_stun` may sit under `on_kill`; a grapple deals no
+damage, so `lifesteal` may not sit under `on_grapple`.
 
 **One proc branch per event per item tree**, and it does not share its
 event with a line or any other branch in the same selector. A selector
