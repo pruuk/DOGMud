@@ -598,6 +598,12 @@ template, so two copies share it and it survives a relog; every other
 item cooldown is the item's own. `GamePlay.ItemProcsEnabled` off stops
 every proc and draws nothing. The loader refuses a `proc` outside a proc
 event, an unknown effect, a param its effect does not read or that is not
-a number, and a `random` over a proc outside 1 to 99. The effects and
-their params are in `docs/schemas/pinnacle-items.md`; `aegis.yaml`,
+a number, and a `random` over a proc outside 1 to 99. It also refuses a
+`cooldown` or `random` over a proc unless it wraps the proc alone: its
+child must be the `proc` or another decorator that ends in the `proc`,
+never a selector, sequence or condition in between. The cooldown key names
+the branch's place in the tree, so moving or reordering a proc branch (or
+inserting a branch before it in the same selector) starts every bearer's
+running cooldown fresh once, and the old key stays inert in saves. The
+effects and their params are in `docs/schemas/pinnacle-items.md`; `aegis.yaml`,
 `thornwall_harness.yaml` and `hollow_choir.yaml` are the worked examples.

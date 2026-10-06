@@ -65,7 +65,12 @@ burn it).
 `cooldown` decorator over a proc keeps its round in the holder's MiscData
 under `item_proc_cd_<itemId>_<branch path>` (`ProcCooldownDecorator`), not
 in the item's tree state, so two copies of one item share it and it
-survives a relog. Every other item cooldown stays in tree state.
+survives a relog. Every other item cooldown stays in tree state. A
+`cooldown` or `random` over a proc must wrap the proc alone (only other
+decorators between them), or the loader refuses the item. The key names the
+branch's place in the tree, so moving or reordering a proc branch (or
+inserting a branch before it in the same selector) starts every bearer's
+running cooldown fresh once, and the old key stays inert in saves.
 
 **`on_kill` fires once per player with damage attribution on the
 kill**, not just the killing blow (`MobDeathItemProcs` iterates
