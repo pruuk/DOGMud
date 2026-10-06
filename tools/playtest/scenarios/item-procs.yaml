@@ -1,0 +1,68 @@
+# Item behaviour slice 3: item procs. The four proc items fire through their
+# behaviour trees now, with the same numbers as before: the Blackrazor
+# (40183) heals its wielder by a quarter of each hit's damage; the Aegis of
+# Mockery (40185) staggers every hostile in the room on a block, one time in
+# ten, then rests 20 rounds (about 80 seconds); the Thornwall Harness
+# (40186) opens a bleeding wound on whatever grapples its wearer, half the
+# time, at most once every 5 rounds; the Staff of the Hollow Choir (40189)
+# drains a share of a spell target's conviction into its caster, at most
+# once every 3 rounds. A proc's rest still lives on the character, as
+# before, so it survives a relog (ruling R1): the shield bearer relogs
+# inside the Aegis's rest to show it.
+#
+# Fixtures (verified against room YAML 2026-10-06):
+#   5000 The Rift Chamber (dungeon, room lamp 38 plus the Rift Stone). Sable
+#     is here: `ask sable arena <gold>` (at least 100) opens a lit arena
+#     fight. Each asker gets a PRIVATE arena, so the three actors fight
+#     apart; no actor can see another's fight.
+#   Rounds are 4 seconds (Timing.RoundSeconds).
+name: item-procs
+mode: party
+summary: >-
+  A Blackrazor wielder, an Aegis-and-Harness bearer and a Hollow Choir caster
+  each fight in their own arena and report what their gear does; the shield
+  bearer relogs inside the Aegis's rest.
+on_actor_stop: continue
+budgets:
+  wall_clock: 25m
+requires:
+  max_connections: 20
+roster:
+  - id: blade
+    personality: bug-finder
+    goals: goals/scenarios/item-procs/blade.yaml
+  - id: shield
+    personality: bug-finder
+    goals: goals/scenarios/item-procs/shield.yaml
+  - id: caster
+    personality: bug-finder
+    goals: goals/scenarios/item-procs/caster.yaml
+
+group_goals:
+  - id: lifesteal
+    do: The blade bearer fights an arena mob with the Blackrazor.
+    verify: >-
+      The wielder's health rises a little after hits that land, and never
+      above its maximum.
+  - id: shockwave
+    do: The shield bearer blocks an arena mob's attacks with the Aegis.
+    verify: >-
+      Now and then "A jarring shockwave ripples outward, staggering the
+      hostile creatures nearby!" appears, never twice within about 80
+      seconds.
+  - id: relog-rest
+    do: The shield bearer quits and logs back in right after a shockwave.
+    verify: >-
+      No second shockwave comes within about 80 seconds of the first, the
+      relog included.
+  - id: bleed
+    do: The shield bearer grapples an arena mob while wearing the Harness.
+    verify: The mob starts bleeding during the hold.
+  - id: conviction-drain
+    do: The caster lands damaging spells while wielding the Staff.
+    verify: >-
+      The caster's conviction rises a little after a spell lands, and the
+      target's falls, not more often than every few rounds.
+  - id: reads-well
+    do: Everyone judges every gear line as prose.
+    verify: No raw numbers, no em dashes, nothing over 80 columns, no doubled line.

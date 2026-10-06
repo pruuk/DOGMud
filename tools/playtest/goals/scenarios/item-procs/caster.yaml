@@ -1,0 +1,31 @@
+# Item procs: the HOLLOW CHOIR caster. You are Fold Adept, starting in the
+# Rift Chamber (5000). The Staff of the Hollow Choir, which drinks the will
+# of whatever your spells strike, is in your pack. Report your conviction
+# VERBATIM as the game shows it, with the round or time.
+ephemeral:
+  profile: specialist-caster
+  start_room: 5000
+  overlays:
+    grant_items: [40189]
+    grant_spells:
+      conviction-spike: 1
+    set_gold: 500
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    `look`, `inventory`, `equipment`. Then `equip staff`. Report your
+    current and maximum conviction.
+  - >-
+    `ask sable arena 100`. In the fight, `cast conviction-spike` at the
+    arena mob every round you can. After each cast report your conviction
+    and whether the spell landed. Conviction should rise a little after a
+    spell lands (the staff drains the target), but not after every single
+    landed spell: it rests a few rounds between drains.
+  - >-
+    Fight until the mob dies or you run low; `flee` if you are losing. Run a
+    second fight if the first was short.
+  - >-
+    reads-well: report any raw number in a line about your staff, any line
+    over 80 columns, any em dash, and any line that appeared twice.

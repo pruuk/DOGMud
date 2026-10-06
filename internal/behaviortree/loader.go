@@ -111,6 +111,9 @@ func loadItemTreeDef(data []byte) (Node, *ItemVoice, error) {
 	if err := checkSpeakNodes(def.Tree, voice, itemRootLabel); err != nil {
 		return nil, nil, err
 	}
+	if err := checkProcNodes(def.Tree, ``, itemRootLabel); err != nil {
+		return nil, nil, err
+	}
 	node, err := compileNode(def.Tree, itemRootLabel)
 	if err != nil {
 		return nil, nil, err
@@ -148,6 +151,7 @@ var (
 		"pulse_light":     true,
 		"speak":           true,
 		"taunt_pull":      true,
+		"proc":            true,
 	}
 	// itemOnlyNodes need an item subject, so a mob or room tree may not
 	// name them.
@@ -161,6 +165,7 @@ var (
 		"hunger_overdue": true,
 		"speak":          true,
 		"taunt_pull":     true,
+		"proc":           true,
 	}
 )
 
@@ -287,6 +292,15 @@ func compileDecorator(def NodeDef, path string) (Node, error) {
 
 	switch def.Mod {
 	case "cooldown":
+		// A proc branch's cooldown lives on the holder, not the item's
+		// tree state (item behaviour slice 3, Rule 22).
+		if isItemTreePath(path) && nodeDefNamesAction(*def.Child, "proc") {
+			return &ProcCooldownDecorator{
+				Rounds: getIntParam(params, "rounds"),
+				Path:   path,
+				Child:  child,
+			}, nil
+		}
 		return &CooldownDecorator{
 			Rounds:   getIntParam(params, "rounds"),
 			StateKey: path + "_cooldown",
@@ -302,6 +316,14 @@ func compileDecorator(def NodeDef, path string) (Node, error) {
 			Child: child,
 		}, nil
 	case "random":
+		// A proc branch's chance draws nothing while procs are off; a kill
+		// reaches a proc branch without the dispatcher's gate (Rule 21).
+		if isItemTreePath(path) && nodeDefNamesAction(*def.Child, "proc") {
+			return &ProcRandomDecorator{
+				Percent: getIntParam(params, "percent"),
+				Child:   child,
+			}, nil
+		}
 		return &RandomDecorator{
 			Percent: getIntParam(params, "percent"),
 			Child:   child,

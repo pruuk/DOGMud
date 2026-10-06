@@ -26,6 +26,7 @@ import (
 	"math"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -405,8 +406,8 @@ func processGrapplePairWithContest(
 	// directly off outcome.Kind instead of re-deriving "did they stay
 	// grappling" from the pre-roll state.
 	if outcome.Kind != position.OutcomeEscape {
-		dispatchItemProcs("on_grapple", controller, controlled, nil, 0)
-		dispatchItemProcs("on_grapple", controlled, controller, nil, 0)
+		fireItemProc(behaviortree.EventContext{EventType: "on_grapple"}, controller, controlled, nil, 0)
+		fireItemProc(behaviortree.EventContext{EventType: "on_grapple"}, controlled, controller, nil, 0)
 	}
 
 	fireStaminaWarningIfLow(controller)

@@ -16,7 +16,7 @@ import (
 
 // setPinnacleEnabled flips the PinnacleItemsEnabled master toggle in-memory for
 // the test process (AddOverlayOverrides, the same file-free mechanism
-// enableItemProcs uses). Overlay overrides persist across tests, so the value
+// setItemProcsEnabled uses). Overlay overrides persist across tests, so the value
 // the test found is put back when it ends; a test that flips it twice ends
 // with both cleanups run, last first, back at that value.
 func setPinnacleEnabled(t *testing.T, on bool) {
@@ -53,7 +53,7 @@ func TestPinnacleHunger_DrainAndClock(t *testing.T) {
 	if c.Health != 100 {
 		t.Fatalf("first tick should not drain, health=%d", c.Health)
 	}
-	if a, ok := readMiscRound(c.GetMiscData("pinnacle_hunger_anchor")); !ok || a != 50 {
+	if a, ok := characters.MiscRound(c.GetMiscData("pinnacle_hunger_anchor")); !ok || a != 50 {
 		t.Fatalf("first tick should set anchor to 50, got %v (ok=%v)", a, ok)
 	}
 
@@ -100,7 +100,7 @@ func TestPinnacleHunger_NeverLethalAndKillReset(t *testing.T) {
 	if c.Health != 100 {
 		t.Fatalf("recent kill should reset the hunger clock, health=%d", c.Health)
 	}
-	if a, _ := readMiscRound(c.GetMiscData("pinnacle_hunger_anchor")); a != 60 {
+	if a, _ := characters.MiscRound(c.GetMiscData("pinnacle_hunger_anchor")); a != 60 {
 		t.Fatalf("kill should advance anchor to 60, got %d", a)
 	}
 }
@@ -132,7 +132,7 @@ func TestPinnacleHunger_FeedingLineCooldown(t *testing.T) {
 	if msgs := events.DrainQueuedMessagesForTest(708); len(msgs) == 0 {
 		t.Fatal("first overdue tick should emit the feeding line")
 	}
-	if _, ok := readMiscRound(c.GetMiscData("pinnacle_hunger_msg_next_round")); !ok {
+	if _, ok := characters.MiscRound(c.GetMiscData("pinnacle_hunger_msg_next_round")); !ok {
 		t.Fatal("feeding line should arm pinnacle_hunger_msg_next_round")
 	}
 

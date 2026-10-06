@@ -6,18 +6,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
-func TestBuildItemGet_ShipsAdvancedEnums(t *testing.T) {
-	w := newFakeItemWorld()
-	w.specs[10005] = &items.ItemSpec{ItemId: 10005, Name: "Sword", Type: items.Weapon}
-	d, ok := buildItemGet(w.deps(), 10005)
-	if !ok {
-		t.Fatal("expected found")
-	}
-	if len(d.ProcTriggers) == 0 || len(d.ProcEffects) == 0 {
-		t.Error("detail must ship proc trigger/effect enums")
-	}
-}
-
 // fakeItemWorld is an in-memory stand-in for the items package.
 type fakeItemWorld struct {
 	specs   map[int]*items.ItemSpec
@@ -81,8 +69,6 @@ func TestBuildItemUpdate_RoundTripsAdvancedFields(t *testing.T) {
 	w.specs[10001] = &items.ItemSpec{ItemId: 10001, Name: "Old", Type: items.Weapon, Hands: 2, Behavior: "blackrazor"}
 	res := buildItemUpdate(w.deps(), itemUpdateReq{
 		ItemId: 10001, Name: "Blackrazor", Type: "weapon", Description: "d", NotSalable: true,
-		Procs: []procRow{{Trigger: "on_hit", Effect: "lifesteal", Chance: 100, CooldownRounds: 2,
-			Params: map[string]float64{"ratio": 0.25}}},
 		ReserveHealthPct: 0.25,
 		HungerRounds:     50, HungerDrainPct: 0.01,
 		MutationTickInterval: 10, MutationTickChance: 5, MutationRarityFloor: 3,
@@ -92,12 +78,9 @@ func TestBuildItemUpdate_RoundTripsAdvancedFields(t *testing.T) {
 		t.Fatalf("update should succeed, got %+v", res)
 	}
 	got := w.saved[0]
-	if len(got.Procs) != 1 || got.Procs[0].Trigger != "on_hit" || got.Procs[0].Effect != "lifesteal" ||
-		got.Procs[0].Chance != 100 || got.Procs[0].CooldownRounds != 2 || got.Procs[0].Params["ratio"] != 0.25 {
-		t.Errorf("proc not round-tripped: %+v", got.Procs)
-	}
 	// The form has no tree field (editing trees is #367), so a save keeps
-	// the item's behavior: from the loaded spec.
+	// the item's behavior: from the loaded spec, and with it the item's
+	// voice and procs (item behaviour slices 2, 3).
 	if got.Behavior != "blackrazor" {
 		t.Errorf("a save dropped the item's behavior tree: got %q", got.Behavior)
 	}

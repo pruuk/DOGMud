@@ -19,7 +19,7 @@ import (
 )
 
 // pinnacle_tick.go — the always-on per-round layer for pinnacle items
-// (Stage 1, Task 11). Procs (item_procs.go) are event-driven off combat
+// (Stage 1, Task 11). Procs (item trees, item_proc_dispatch.go) fire off combat
 // chokepoints; THIS file is the passive upkeep that runs once per player per
 // round from UserRoundTick: hunger drain, ambient-potion conditions, aging freeze
 // and mutation drip. Sentient voices are item trees (the item tick) since slice 2.
@@ -55,7 +55,7 @@ func pinnacleUserTick(user *users.UserRecord, room *rooms.Room) {
 	// tick (ItemRoundTick) speaks their ambient lines.
 }
 
-// readMiscIntSlice tolerantly reads a []int from MiscData. Like readMiscRound,
+// readMiscIntSlice tolerantly reads a []int from MiscData. Like characters.MiscRound,
 // it copes with yaml round-tripping: a persisted []int comes back as []any of
 // int/int64/float64. Returns nil for absent/other values.
 func readMiscIntSlice(v any) []int {
@@ -65,7 +65,7 @@ func readMiscIntSlice(v any) []int {
 	case []any:
 		out := make([]int, 0, len(s))
 		for _, e := range s {
-			if n, ok := readMiscRound(e); ok {
+			if n, ok := characters.MiscRound(e); ok {
 				out = append(out, int(n))
 			}
 		}
@@ -137,14 +137,14 @@ func tickHunger(c *characters.Character, user *users.UserRecord, now uint64) {
 	if spec.HungerRounds <= 0 || spec.HungerDrainPct <= 0 {
 		return
 	}
-	anchor, ok := readMiscRound(c.GetMiscData("pinnacle_hunger_anchor"))
+	anchor, ok := characters.MiscRound(c.GetMiscData("pinnacle_hunger_anchor"))
 	if !ok {
 		// First tick wielding it — the hunger clock starts now.
 		c.SetMiscData("pinnacle_hunger_anchor", now)
 		return
 	}
 	// A kill since the anchor resets the clock (the blade was recently fed).
-	if kill, ok := readMiscRound(c.GetMiscData("pinnacle_last_kill_round")); ok && kill > anchor {
+	if kill, ok := characters.MiscRound(c.GetMiscData("pinnacle_last_kill_round")); ok && kill > anchor {
 		anchor = kill
 		c.SetMiscData("pinnacle_hunger_anchor", kill)
 	}
@@ -180,7 +180,7 @@ func tickHunger(c *characters.Character, user *users.UserRecord, now uint64) {
 	// its own cooldown (HungerFeedingLineCooldownRounds) so an ignored hunger
 	// debt doesn't spam the player every round.
 	if user != nil {
-		if next, ok := readMiscRound(c.GetMiscData("pinnacle_hunger_msg_next_round")); !ok || now >= next {
+		if next, ok := characters.MiscRound(c.GetMiscData("pinnacle_hunger_msg_next_round")); !ok || now >= next {
 			// The weapon's tree speaks the line when it has one (item
 			// behaviour slice 2); otherwise the plain fallback goes out.
 			if !fireItemEvent(behaviortree.EventContext{EventType: "on_hunger_feeding"},
@@ -333,7 +333,7 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 
 	// Contents unchanged. While a new potion is still attuning, keep the
 	// already-active conditions refreshed but hold the pending one back.
-	if attune, ok := readMiscRound(c.GetMiscData("pinnacle_bandolier_attune_round")); ok && now < attune {
+	if attune, ok := characters.MiscRound(c.GetMiscData("pinnacle_bandolier_attune_round")); ok && now < attune {
 		for _, id := range applied {
 			if desired[id] && !c.Conditions.HasCondition(id) {
 				_ = c.AddConditionScaled(id, 1.30)
@@ -353,7 +353,7 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 			_ = c.AddConditionScaled(id, 1.30)
 		}
 	}
-	if _, ok := readMiscRound(c.GetMiscData("pinnacle_bandolier_attune_round")); ok {
+	if _, ok := characters.MiscRound(c.GetMiscData("pinnacle_bandolier_attune_round")); ok {
 		if newlyApplied {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(
 				`<ansi fg="magenta">The %s settles into resonance — its stored virtues suffuse you.</ansi>`,

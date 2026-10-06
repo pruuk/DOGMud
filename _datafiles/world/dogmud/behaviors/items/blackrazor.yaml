@@ -103,3 +103,8 @@ tree:
       pool: on_hunger_feeding
       to: holder
       paced: false
+    - type: action
+      event: on_hit
+      do: proc
+      effect: lifesteal
+      ratio: 0.25

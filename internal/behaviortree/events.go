@@ -21,9 +21,13 @@ var KnownBehaviorEvents = map[string]bool{
 	"mob_flee":               true, // the mob is fleeing
 	"mob_hurt":               true, // the mob took damage
 	"mob_idle":               true, // idle tick (out of combat)
+	"on_block":               true, // item trees: the bearer blocked with the offhand item (item behaviour slice 3)
 	"on_equip":               true, // item trees: the item was put on (item behaviour slice 2)
+	"on_grapple":             true, // item trees: a grapple round, either side of the hold, into the body armour
+	"on_hit":                 true, // item trees: the bearer's weapon hit
 	"on_hunger_feeding":      true, // item trees: a hungry weapon fed on its bearer, paced by HungerFeedingLineCooldownRounds
 	"on_kill":                true, // item trees: the bearer had a hand in a kill (every worn treed item)
+	"on_spell_hit":           true, // item trees: the bearer's spell hit, into the weapon
 	"on_unequip":             true, // item trees: the item was taken off
 	"packmate_hurt":          true, // a same-room routine-matched packmate was attacked
 	"player_ask":             true, // a player asked this mob about a topic

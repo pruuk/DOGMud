@@ -17,11 +17,6 @@ blockrating: 30
 physical_mitigation: 14
 magical_mitigation: 10
 conviction_mitigation: 8
-procs:
-  - trigger: on_block
-    chance: 10
-    cooldown_rounds: 20
-    effect: aoe_stun
 behavior: aegis
 weight: 8.0
 rarity_tier: 82

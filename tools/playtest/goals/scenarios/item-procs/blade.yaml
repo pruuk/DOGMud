@@ -1,0 +1,28 @@
+# Item procs: the BLACKRAZOR wielder. You are Sil Vantage, starting in the
+# Rift Chamber (5000). The Blackrazor, a two-handed sword that drinks its
+# victims' life, is in your pack. Report your health VERBATIM as the game
+# shows it, with the round or time.
+ephemeral:
+  profile: m2-actor
+  start_room: 5000
+  overlays:
+    grant_items: [40183]
+    set_gold: 500
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    `look`, `inventory`, `equipment`. Then `equip blackrazor`. Report your
+    current and maximum health.
+  - >-
+    `ask sable arena 100` and `attack` the arena mob. After every round,
+    report your health and whether your swing landed. Health should rise a
+    little after a hit that lands (the blade heals you by a share of the
+    damage), never after a miss, and never above your maximum.
+  - >-
+    Fight until the mob dies or you are below a third of your health (then
+    `flee`). Run a second arena fight if the first was short.
+  - >-
+    reads-well: report any raw number in a line about your blade, any line
+    over 80 columns, any em dash, and any line that appeared twice.

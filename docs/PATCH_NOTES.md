@@ -1,5 +1,12 @@
 # DOGMud Patch Notes
 
+## 2026-10-06: Gear that strikes back
+
+- The Blackrazor's life drain, the Aegis of Mockery's shockwave, the
+  Thornwall Harness's barbs and the Staff of the Hollow Choir's hunger for
+  conviction now run on the same system as talking gear. They work
+  exactly as before.
+
 ## 2026-10-06: Small fixes
 
 - A disarmed weapon now always goes back into your pack, even when your

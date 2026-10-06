@@ -129,6 +129,8 @@ func init() {
 	// Item voices (item behaviour slice 2)
 	actionRegistry["speak"] = actSpeak
 	actionRegistry["taunt_pull"] = actTauntPull
+	// Item procs (item behaviour slice 3)
+	actionRegistry["proc"] = actProc
 }
 
 // LookupAction returns the action function for the given name,

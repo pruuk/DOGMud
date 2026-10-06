@@ -48,7 +48,6 @@ import (
 // field is classified exactly once, so a new field fails until someone says
 // which it is.
 var itemSpecBehaviourFields = map[string]string{
-	"Procs":                "combat procs; slice 3 moves them into proc nodes",
 	"ReserveHealthPct":     "Pinnacle reserve held while worn",
 	"ReserveStaminaPct":    "Pinnacle reserve held while worn",
 	"ReserveConvictionPct": "Pinnacle reserve held while worn",
@@ -85,20 +84,18 @@ var itemSpecDataFields = []string{
 }
 
 // itemSpecBehaviourMethods maps an ItemSpec method to the behaviour field it
-// reads, so calling it counts as reading that field.
-var itemSpecBehaviourMethods = map[string]string{
-	"ProcsFor": "Procs",
-}
+// reads, so calling it counts as reading that field. Empty since slice 3
+// retired ProcsFor with the Procs field.
+var itemSpecBehaviourMethods = map[string]string{}
 
 // itemSpecBehaviourReadSites are the only places non-test internal/hooks
 // reads a behaviour field: "file|field". These are today's Pinnacle
 // mechanics. Slice 2 retired the VoiceId and TauntPull sites (voices are
-// item trees), slice 3 retires the Procs ones; an entry nothing reads any
-// more fails, so the list only shrinks. A new site fails: put the
-// behaviour in a tree.
+// item trees), slice 3 the Procs one (procs are item trees); an entry
+// nothing reads any more fails, so the list only shrinks. A new site
+// fails: put the behaviour in a tree.
 var itemSpecBehaviourReadSites = map[string]bool{
 	"PlayerSpawn_HandleJoin.go|PreservesContents": true,
-	"item_procs.go|Procs":                         true,
 	"pinnacle_tick.go|AmbientPotions":             true,
 	"pinnacle_tick.go|HungerDrainPct":             true,
 	"pinnacle_tick.go|HungerRounds":               true,

@@ -78,3 +78,15 @@ tree:
       event: on_kill
       do: speak
       pool: on_kill
+    - type: decorator
+      event: on_block
+      mod: cooldown
+      rounds: 20
+      child:
+        type: decorator
+        mod: random
+        percent: 10
+        child:
+          type: action
+          do: proc
+          effect: aoe_stun

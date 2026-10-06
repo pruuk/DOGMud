@@ -1357,7 +1357,6 @@ and `TestPreDetuneBowTable_MatchesTheRealTemplates` both fail otherwise.
 | `bauble_placement.go` | Where a found bauble lies: `LeaveBaubleAt`, `ClearBaublePlacement`, `BaubleBelongsTo`, `BaubleUntakenFor`, `BaubleSpotSuffix` |
 | `spec_baseline.go` | `SpecBaseline`: pre-enchant numeric snapshot, so a tier re-apply cannot wipe affix scaling |
 | `detune_migration.go` | U10d ranged-weapon rescale (`MigrateDetunedBow`); idempotent by value threshold, no run-once marker |
-| `proc_accessors.go` | On-hit proc access |
 | `reach.go` | Weapon reach data |
 | `attack_messages.go` / `defensive_messages.go` | Combat message pools. Both render a coordinated triad through `narration.Render`; see below |
 | `memory.go` | Memory reporting |

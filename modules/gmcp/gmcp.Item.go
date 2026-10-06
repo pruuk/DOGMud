@@ -32,14 +32,6 @@ type itemSalvageRow struct {
 	Quantity int    `json:"quantity"`
 }
 
-type procRow struct {
-	Trigger        string             `json:"trigger"`
-	Effect         string             `json:"effect"`
-	Chance         int                `json:"chance"`
-	CooldownRounds int                `json:"cooldownRounds"`
-	Params         map[string]float64 `json:"params"`
-}
-
 // itemUpdateReq is both the Save payload and (embedded) the echoed detail.
 type itemUpdateReq struct {
 	ItemId           int            `json:"itemId"`
@@ -97,17 +89,16 @@ type itemUpdateReq struct {
 	SalvageReturns  []itemSalvageRow `json:"salvageReturns"`
 	// key
 	KeyLockId string `json:"keyLockId"`
-	// advanced / pinnacle
-	Procs                []procRow `json:"procs"`
-	ReserveHealthPct     float64   `json:"reserveHealthPct"`
-	ReserveStaminaPct    float64   `json:"reserveStaminaPct"`
-	ReserveConvictionPct float64   `json:"reserveConvictionPct"`
-	HungerRounds         int       `json:"hungerRounds"`
-	HungerDrainPct       float64   `json:"hungerDrainPct"`
-	MutationTickInterval int       `json:"mutationTickInterval"`
-	MutationTickChance   int       `json:"mutationTickChance"`
-	MutationRarityFloor  int       `json:"mutationRarityFloor"`
-	WornConditionIds     []int     `json:"wornConditionIds"`
+	// advanced / pinnacle (procs live in the item's behaviour tree, slice 3)
+	ReserveHealthPct     float64 `json:"reserveHealthPct"`
+	ReserveStaminaPct    float64 `json:"reserveStaminaPct"`
+	ReserveConvictionPct float64 `json:"reserveConvictionPct"`
+	HungerRounds         int     `json:"hungerRounds"`
+	HungerDrainPct       float64 `json:"hungerDrainPct"`
+	MutationTickInterval int     `json:"mutationTickInterval"`
+	MutationTickChance   int     `json:"mutationTickChance"`
+	MutationRarityFloor  int     `json:"mutationRarityFloor"`
+	WornConditionIds     []int   `json:"wornConditionIds"`
 }
 
 // ---- server -> client detail (Build.Item) ----
@@ -118,8 +109,6 @@ type itemDetail struct {
 	Elements      []string              `json:"elements"`
 	Stats         []string              `json:"stats"`
 	VendorCats    []string              `json:"vendorCats"`       // valid vendor categories for the checkboxes
-	ProcTriggers  []string              `json:"procTriggers"`     // valid proc trigger ids for the dropdown
-	ProcEffects   []string              `json:"procEffects"`      // valid proc effect ids for the dropdown
 	Ranges        map[string][2]float64 `json:"ranges,omitempty"` // observed min–max per numeric field, across items of this type
 }
 
@@ -197,9 +186,6 @@ func specToReq(s *items.ItemSpec) itemUpdateReq {
 	req.HungerRounds, req.HungerDrainPct = s.HungerRounds, s.HungerDrainPct
 	req.MutationTickInterval, req.MutationTickChance, req.MutationRarityFloor = s.MutationTickInterval, s.MutationTickChance, s.MutationRarityFloor
 	req.WornConditionIds = s.WornConditionIds
-	for _, p := range s.Procs {
-		req.Procs = append(req.Procs, procRow{Trigger: p.Trigger, Effect: p.Effect, Chance: p.Chance, CooldownRounds: p.CooldownRounds, Params: p.Params})
-	}
 	return req
 }
 
@@ -215,17 +201,14 @@ func buildItemGet(d itemDeps, itemId int) (itemDetail, bool) {
 	return itemDetail{
 		itemUpdateReq: specToReq(s),
 		Types:         itemTypeIds(), Subtypes: itemSubtypeIds(), Elements: itemElementIds(), Stats: statModNames(),
-		VendorCats:   shops.ValidVendorCategories,
-		ProcTriggers: procTriggerIds(), ProcEffects: procEffectIds(),
-		Ranges: ranges,
+		VendorCats: shops.ValidVendorCategories,
+		Ranges:     ranges,
 	}, true
 }
 
-func procTriggerIds() []string { return items.ValidProcTriggers() }
-func procEffectIds() []string  { return items.ValidProcEffects() }
-
 // reqToSpec starts from the loaded spec so fields the form does NOT cover
-// (procs, reserves, worn-conditions, mutation drip, etc.) survive a Save untouched.
+// (the behaviour tree, reserves, worn-conditions, mutation drip, etc.)
+// survive a Save untouched.
 func reqToSpec(base *items.ItemSpec, req itemUpdateReq) items.ItemSpec {
 	s := *base
 	s.Name, s.DisplayName, s.NameSimple, s.Description = req.Name, req.DisplayName, req.NameSimple, req.Description
@@ -254,13 +237,6 @@ func reqToSpec(base *items.ItemSpec, req itemUpdateReq) items.ItemSpec {
 	s.HungerRounds, s.HungerDrainPct = req.HungerRounds, req.HungerDrainPct
 	s.MutationTickInterval, s.MutationTickChance, s.MutationRarityFloor = req.MutationTickInterval, req.MutationTickChance, req.MutationRarityFloor
 	s.WornConditionIds = req.WornConditionIds
-	s.Procs = nil
-	for _, p := range req.Procs {
-		if p.Trigger == "" && p.Effect == "" {
-			continue // skip blank rows the form may emit
-		}
-		s.Procs = append(s.Procs, items.ItemProc{Trigger: p.Trigger, Chance: p.Chance, CooldownRounds: p.CooldownRounds, Effect: p.Effect, Params: p.Params})
-	}
 	return s
 }
 

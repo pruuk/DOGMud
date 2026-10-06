@@ -18,15 +18,7 @@ conviction_mitigation: 6
 statmods:
   strength: 6
   vitality: 6
-procs:
-  - trigger: on_grapple
-    chance: 50
-    cooldown_rounds: 5
-    effect: apply_condition
-    params:
-      condition: 1
-      duration: 10
-      magnitude: 7
+behavior: thornwall_harness
 weight: 11.0
 rarity_tier: 82
 value: 30000
