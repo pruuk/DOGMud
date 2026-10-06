@@ -42,7 +42,10 @@ The `internal/usercommands` package implements the complete command system for p
     `conditions.Cancellable` and whose condition name, or a granting spell's
     id, alias or name, matches exactly or by a prefix of at least
     `cancelMinPrefix` (3) characters. A spell whose condition is not held can
-    never be reached.
+    never be reached. Before a light or darkness record is removed,
+    `rooms.KeepEndLineSnapshotsBeforeRemoval` keeps the room's snapshot, so
+    its end line at the prune is judged by what each watcher could see just
+    before it went out (#220).
   - `look` (`look.go`) tries `Character.FindItemNoun` (exact noun on a worn or
     carried item) BEFORE item matching, so `look hood` reaches the lantern's
     hood; looking at an item highlights its `ItemSpec.Nouns` before wrapping.

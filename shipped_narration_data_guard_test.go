@@ -959,10 +959,10 @@ var observerIdentityGuardRoots = []string{
 //	                                    and all three phases pass that same
 //	                                    holder plain name to HideNames: start
 //	                                    Condition_ApplyConditions.go:179,
-//	                                    trigger NewRound_UserRoundTick.go:302
-//	                                    and NewRound_MobRoundTick.go:287, end
+//	                                    trigger UserRoundTick
+//	                                    and MobRoundTick, end
 //	                                    sendConditionEndRoomText
-//	                                    (NewTurn_PruneConditions.go:145), which
+//	                                    (NewTurn_PruneConditions.go), which
 //	                                    since #220 judges a light's or a
 //	                                    darkness's end line against a snapshot
 //	                                    of the room before it ran out, shapes
@@ -1015,7 +1015,7 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"defense-messages/counter-defy.yaml":  true,
 	// Conditions: all three narration phases pass the holder's plain name
 	// into HideNames (start Condition_ApplyConditions.go:179, trigger
-	// NewRound_UserRoundTick.go:302 and NewRound_MobRoundTick.go:287, end
+	// UserRoundTick and MobRoundTick, end
 	// sendConditionEndRoomText). Applies to the store's every
 	// name-referencing observer line, not only the ones that author a
 	// `_plain` token; see the doc comment above.
