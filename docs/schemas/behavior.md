@@ -590,7 +590,8 @@ the worked examples.
 
 A proc is a branch under one of the proc events: `on_hit` and
 `on_spell_hit` reach the weapon, `on_block` the offhand, `on_grapple` the
-body armour (both sides of a hold fire), and `on_kill` every worn item.
+body armour (both sides of a hold fire), and `on_kill` every worn item of
+each player who damaged the victim (a mob's gear never hears `on_kill`).
 Wrap the chance in a `random` decorator (1 to 99; leave it out at 100, so
 nothing is drawn) and the cooldown in a `cooldown` decorator, then end in
 `proc`. A `cooldown` over a `proc` is kept on the bearer, per item

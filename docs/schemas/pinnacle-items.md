@@ -62,7 +62,7 @@ expressible yet.
 | `on_spell_hit` | Weapon |
 | `on_block`     | Offhand |
 | `on_grapple`   | Body (both sides of the hold fire, each into its own body armour) |
-| `on_kill`      | Every worn item with a tree (owner ruling S4, the reach kill lines have) |
+| `on_kill`      | Every worn item with a tree, on each PLAYER who damaged the victim (owner ruling S4, the reach kill lines have); a mob's gear never hears `on_kill` |
 
 A proc authored under an event its item's slot never hears simply never
 fires.
@@ -88,7 +88,8 @@ running cooldown fresh once, and the old key stays inert in saves.
 **`on_kill` fires once per player with damage attribution on the
 kill**, not just the killing blow (`MobDeathItemProcs` iterates
 `evt.PlayerDamage`). This is a deliberate party-friendly design
-decision, not an oversight. It also resets every such player's
+decision, not an oversight. Only the worn items of the PLAYERS who damaged
+the victim hear it; a mob's gear never hears `on_kill`. It also resets every such player's
 Blackrazor-style hunger anchor (`pinnacle_last_kill_round`).
 
 ### Per-effect params

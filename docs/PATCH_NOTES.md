@@ -6,9 +6,6 @@
   Thornwall Harness's barbs and the Staff of the Hollow Choir's hunger for
   conviction now run on the same system as talking gear. They work
   exactly as before.
-- When one of these effects has to wait before it can strike again,
-  logging out does not end the wait, and neither does swapping to another
-  copy of the same item.
 
 ## 2026-10-06: Small fixes
 

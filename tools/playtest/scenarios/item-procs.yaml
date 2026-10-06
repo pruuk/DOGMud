@@ -6,9 +6,9 @@
 # (40186) opens a bleeding wound on whatever grapples its wearer, half the
 # time, at most once every 5 rounds; the Staff of the Hollow Choir (40189)
 # drains a share of a spell target's conviction into its caster, at most
-# once every 3 rounds. A proc's rest now lives on the character, so it
-# survives a relog (ruling R1): the shield bearer relogs inside the Aegis's
-# rest to show it.
+# once every 3 rounds. A proc's rest still lives on the character, as
+# before, so it survives a relog (ruling R1): the shield bearer relogs
+# inside the Aegis's rest to show it.
 #
 # Fixtures (verified against room YAML 2026-10-06):
 #   5000 The Rift Chamber (dungeon, room lamp 38 plus the Rift Stone). Sable
