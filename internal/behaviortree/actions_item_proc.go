@@ -148,7 +148,25 @@ func nodeDefNamesAction(def NodeDef, action string) bool {
 	return def.Child != nil && nodeDefNamesAction(*def.Child, action)
 }
 
+// wrapsProcAlone reports whether a decorator's child is the proc action, or
+// another decorator whose own chain of decorators ends in the proc action.
+func wrapsProcAlone(child *NodeDef) bool {
+	for child != nil {
+		if child.Type == `action` && child.Do == `proc` {
+			return true
+		}
+		if child.Type != `decorator` {
+			return false
+		}
+		child = child.Child
+	}
+	return false
+}
+
 // checkProcNodes refuses a proc node that would never fire or fire wrongly:
+// a `cooldown` or `random` decorator that names a proc but does not wrap it
+// alone (the compiler swaps every such decorator for its proc variant, which
+// would arm the cooldown on a sibling's success or gate a sibling's chance),
 // one not under a proc event, an unknown effect, a param its effect does
 // not read or that is not a number, and a `random` decorator over a proc
 // outside 1 to 99 (at 100 the branch omits it, so nothing is drawn; X19).
@@ -156,6 +174,9 @@ func nodeDefNamesAction(def NodeDef, action string) bool {
 func checkProcNodes(def NodeDef, event, path string) error {
 	if def.Event != `` {
 		event = def.Event
+	}
+	if def.Type == `decorator` && (def.Mod == `cooldown` || def.Mod == `random`) && nodeDefNamesAction(def, `proc`) && !wrapsProcAlone(def.Child) {
+		return fmt.Errorf("%s: a %s over a proc must wrap the proc alone (only decorators between them)", path, def.Mod)
 	}
 	if def.Type == `decorator` && def.Mod == `random` && nodeDefNamesAction(def, `proc`) {
 		if pct := getIntParam(def.Params, `percent`); pct < 1 || pct > 99 {

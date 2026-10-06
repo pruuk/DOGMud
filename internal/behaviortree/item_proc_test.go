@@ -208,6 +208,8 @@ func TestProcLoadChecks(t *testing.T) {
 		{"foreign param", branch("on_hit", "      effect: lifesteal\n      pool: 3\n"), `does not read "pool"`},
 		{"non-number", branch("on_hit", "      effect: lifesteal\n      ratio: lots\n"), `want a number`},
 		{"random 100", "tree:\n  type: decorator\n  event: on_hit\n  mod: random\n  percent: 100\n  child:\n    type: action\n    do: proc\n    effect: lifesteal\n", `random percent 100`},
+		{"cooldown over a mixed selector", "tree:\n  type: decorator\n  event: on_hit\n  mod: cooldown\n  rounds: 3\n  child:\n    type: selector\n    children:\n      - type: action\n        do: set_state\n        key: k\n        value: v\n      - type: action\n        do: proc\n        effect: lifesteal\n", `cooldown over a proc must wrap the proc alone`},
+		{"random over a mixed selector", "tree:\n  type: decorator\n  event: on_hit\n  mod: random\n  percent: 50\n  child:\n    type: selector\n    children:\n      - type: action\n        do: set_state\n        key: k\n        value: v\n      - type: action\n        do: proc\n        effect: lifesteal\n", `random over a proc must wrap the proc alone`},
 	}
 	for _, c := range cases {
 		_, _, err := loadItemTreeDef([]byte(c.yaml))
@@ -217,6 +219,14 @@ func TestProcLoadChecks(t *testing.T) {
 	}
 	if _, _, err := loadItemTreeDef([]byte(branch("on_kill", "      effect: lifesteal\n      ratio: 0.5\n"))); err != nil {
 		t.Errorf("a well-formed on_kill proc was refused: %v", err)
+	}
+	for name, y := range map[string]string{
+		"cooldown > random > proc": "tree:\n  type: decorator\n  event: on_hit\n  mod: cooldown\n  rounds: 3\n  child:\n    type: decorator\n    mod: random\n    percent: 50\n    child:\n      type: action\n      do: proc\n      effect: lifesteal\n",
+		"cooldown > proc":          "tree:\n  type: decorator\n  event: on_hit\n  mod: cooldown\n  rounds: 3\n  child:\n    type: action\n    do: proc\n    effect: lifesteal\n",
+	} {
+		if _, _, err := loadItemTreeDef([]byte(y)); err != nil {
+			t.Errorf("%s was refused: %v", name, err)
+		}
 	}
 }
 

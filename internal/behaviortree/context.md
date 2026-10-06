@@ -1126,7 +1126,10 @@ Pinnacle proc path (`hooks/item_procs.go`, `items.ItemProc`, `procs:`,
   not `on_hit`, `on_kill`, `on_block`, `on_grapple` or `on_spell_hit`, an
   unknown effect, a param its effect does not read (`procEffectParams`) or
   that is not a number, and a `random` over a proc outside 1 to 99 (X19:
-  at 100 the branch omits it, so nothing is drawn). In an item tree,
+  at 100 the branch omits it, so nothing is drawn). It also refuses a
+  `cooldown` or `random` whose subtree names `proc` unless its child is the
+  `proc` action or a chain of decorators ending in it (`wrapsProcAlone`).
+  In an item tree,
   `compileDecorator` turns a `cooldown` whose subtree names `proc` into a
   `ProcCooldownDecorator` and such a `random` into a `ProcRandomDecorator`.
 - **`ProcCooldownDecorator`** (Rule 22, ruling R1) keeps the round the
