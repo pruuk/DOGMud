@@ -1,0 +1,70 @@
+# Item behaviour slice 2: sentient item voices. The Blackrazor (40183) and the
+# Aegis of Mockery (40185) speak through behaviour trees now: equip and remove
+# lines, idle chatter paced per item with a per-listener cap, combat taunts
+# (the Aegis also pulls the foe onto its bearer), a hunger warning and
+# feeding lines for the Blackrazor, and kill lines from every worn talking
+# item, heard by the room with the bearer's name hidden by sight.
+#
+# Fixtures (verified against room YAML 2026-10-06):
+#   467 Temple District, Thornwall (city_backstreet, lamp 35): open sky by day.
+#   5000 The Rift Chamber, one level down (dungeon, no sky, room lamp 38 plus
+#     the pulsing Rift Stone): shapes only for normal eyes, so a listener
+#     there should read "A figure's ..." or "Someone's ...", never a name.
+#     Sable is here: `ask sable arena <gold>` opens a lit arena fight that
+#     lasts several rounds (interior rooms, lamp 50).
+# The Blackrazor grows hungry after about 50 rounds (a few real minutes)
+# without a kill: a warning, then feeding lines to its bearer alone.
+name: item-voices
+mode: party
+summary: >-
+  A Blackrazor wielder and an Aegis bearer equip, idle, fight, go hungry and
+  kill, while a third player only listens, in daylight and in the dim Rift
+  Chamber; everyone quotes every item line verbatim.
+on_actor_stop: continue
+budgets:
+  wall_clock: 25m
+requires:
+  max_connections: 20
+roster:
+  - id: blade
+    personality: bug-finder
+    goals: goals/scenarios/item-voices/blade.yaml
+  - id: shield
+    personality: bug-finder
+    goals: goals/scenarios/item-voices/shield.yaml
+  - id: listener
+    personality: bug-finder
+    goals: goals/scenarios/item-voices/listener.yaml
+
+group_goals:
+  - id: equip-lines
+    do: Blade and shield equip and remove their items, in daylight and in 5000.
+    verify: >-
+      Each bearer reads "<Item> says, ..." with an equip or a removal line;
+      everyone else reads "<Name>'s <Item> mutters, ..." in daylight and, in
+      5000, "A figure's ..." or "Someone's ..." with no name.
+  - id: idle-cap
+    do: Everyone idles together for several minutes in one room.
+    verify: >-
+      Idle lines come, but the listener never reads two ambient item lines
+      within a few rounds of each other, and the two items do not speak in
+      the same round.
+  - id: taunt-and-pull
+    do: Blade and shield fight one arena mob together.
+    verify: >-
+      Taunt lines come in combat; after an Aegis taunt the mob turns on the
+      shield bearer.
+  - id: hunger
+    do: Blade goes several minutes without a kill.
+    verify: >-
+      A hunger warning, then feeding lines that only the blade bearer reads;
+      the listener reads none of them.
+  - id: kill-lines
+    do: The arena mob dies with both bearers in the fight.
+    verify: Both items speak a kill line; the room hears both.
+  - id: no-spam
+    do: Bearers re-equip quickly several times.
+    verify: The item cooldown holds; no line repeats every command.
+  - id: reads-well
+    do: Everyone judges every item line as prose.
+    verify: No raw numbers, no em dashes, nothing over 80 columns, no doubled line.

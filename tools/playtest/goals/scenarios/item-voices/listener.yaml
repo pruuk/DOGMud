@@ -1,0 +1,37 @@
+# Item voices: the LISTENER. You are Ordel Quist, starting in the Temple
+# District, Thornwall (467). You carry no talking item. Two other players
+# here carry talking gear: a sword (the Blackrazor) and a shield (the Aegis
+# of Mockery). Your job is to report exactly what you read from their items,
+# VERBATIM, with the round or time, and never to fight.
+ephemeral:
+  profile: m2-witness
+  start_room: 467
+  overlays:
+    set_gold: 100
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    `look`. When the others equip their items, quote every item line you
+    read. You should read "<Name>'s <Item> mutters, ..." with their names.
+  - >-
+    Idle with them for about four minutes (`look` now and then). Quote every
+    item line. Report the shortest gap between two IDLE item lines you read:
+    you should never get two within a few rounds of each other.
+  - >-
+    Follow them `down` to the Rift Chamber (5000). `look` and describe how
+    well you can see. Quote what you read when they remove and re-equip
+    their items: here the bearer's name should be hidden ("A figure's ..."
+    or "Someone's ..."). Report any line that shows a name you should not
+    be able to see.
+  - >-
+    Stay in the Rift Chamber while the Blackrazor bearer goes hungry. Report
+    any line you read about the blade feeding: you should read NONE (that is
+    private to its bearer).
+  - >-
+    Do not enter the arena or fight. If you still read lines from the fight,
+    quote them.
+  - >-
+    reads-well: report any raw number in an item line, any line over 80
+    columns, any em dash, and any item line that appeared twice.

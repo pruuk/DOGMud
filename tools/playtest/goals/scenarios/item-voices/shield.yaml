@@ -1,0 +1,34 @@
+# Item voices: the AEGIS bearer. You are Veteran Pathfinder, starting in the
+# Temple District, Thornwall (467). The Aegis of Mockery, a talking shield,
+# is in your pack. Quote every line an item speaks VERBATIM, with the round
+# or time you saw it, and say what you were doing then.
+ephemeral:
+  profile: veteran
+  start_room: 467
+  overlays:
+    grant_items: [40185]
+    set_gold: 500
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    `look`, `inventory`, `equipment`, `time`. Then `equip aegis`. Quote what
+    the shield says to you and what you read from the Blackrazor when its
+    bearer equips it.
+  - >-
+    Idle in this room for about four minutes with the others (`look` now
+    and then). Quote every idle line from your shield and from the
+    Blackrazor. Did the two items ever speak in the same round?
+  - >-
+    Go `down` to the Rift Chamber (5000). `look`. `remove aegis` and
+    `equip aegis` once each. Quote what you and the listener read.
+  - >-
+    When the Blackrazor bearer is ready, `ask sable arena 50` and lead the
+    fight: `attack` the arena mob. During the fight quote each taunt line
+    from your shield, and after each one check whether the mob turned to
+    fight you (look at who it attacks). Keep fighting until it dies, and
+    quote the kill line from your shield and the one from the Blackrazor.
+  - >-
+    reads-well: report any raw number in an item line, any line over 80
+    columns, any em dash, and any item line that appeared twice.

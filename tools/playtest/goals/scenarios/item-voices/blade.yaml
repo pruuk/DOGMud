@@ -1,0 +1,43 @@
+# Item voices: the BLACKRAZOR bearer. You are Sil Vantage, starting in the
+# Temple District, Thornwall (467). The Blackrazor, a two-handed talking
+# sword, is in your pack. Quote every line an item speaks VERBATIM, with the
+# round or time you saw it, and say what you were doing then.
+ephemeral:
+  profile: m2-actor
+  start_room: 467
+  overlays:
+    grant_items: [40183]
+    set_gold: 500
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    `look`, `inventory`, `equipment`, `time`. Then `equip blackrazor`. Quote
+    what the blade says to you. Wait for the shield bearer and the listener
+    (they are in this room); `say` when you are ready.
+  - >-
+    `remove blackrazor`, then `equip blackrazor` again right away, three
+    times in a row. Report which of those produced a line: the blade should
+    NOT speak on every one (it has a cooldown of a couple of minutes).
+  - >-
+    Idle in this room for about four minutes (`look` now and then, nothing
+    else). Quote every idle line from your blade and every line you read
+    from anyone else's item. Note the gaps between lines.
+  - >-
+    Go `down` to the Rift Chamber (5000) with the others. `look`. There,
+    `remove blackrazor` and `equip blackrazor` once each (after the cooldown
+    has passed). Ask the listener what they read.
+  - >-
+    Keep the blade on and stay out of fights until it warns you it is
+    hungry and then feeds on you (a few minutes without a kill). Quote the
+    warning and each feeding line, and say whether your health dropped.
+    Ask the listener whether they read any of it (they should not).
+  - >-
+    Then fight together with the shield bearer: `ask sable arena 50`, follow
+    the shield bearer into the arena, and `attack` the arena mob. Quote any
+    taunt line from your blade. Fight until the mob dies; quote the kill
+    lines from both items.
+  - >-
+    reads-well: report any raw number in an item line, any line over 80
+    columns, any em dash, and any item line that appeared twice.
