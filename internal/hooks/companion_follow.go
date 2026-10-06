@@ -78,11 +78,14 @@ func TransportCompanions(owner *users.UserRecord, oldRoomId, newRoomId int) {
 		if curRoom != nil {
 			curRoom.RemoveMob(mob.InstanceId)
 			// COMPANION-NAME-LEAK FIX (T11c): named companion mention is
-			// visual content — route through SendTextVisual so infrared
-			// observers see the anonymized form, and blind observers don't
-			// see a free identification.
-			curRoom.SendTextVisual(messaging.CategoryMobEmote,
-				fmt.Sprintf("%s follows %s.", mob.Character.Name, owner.Character.Name),
+			// visual content. Both names are identity-tagged and hidden per
+			// observer (#414): an observer who makes out only shapes reads
+			// "A figure follows a figure.", one who sees nothing reads
+			// nothing. Plain names slipped past the shapes-level hiding.
+			curRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> follows <ansi fg="username">%s</ansi>.`,
+					mob.Character.Name, owner.Character.Name),
+				[]string{mob.Character.Name, owner.Character.Name},
 				owner.UserId,
 			)
 		}
