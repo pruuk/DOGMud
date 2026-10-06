@@ -31,7 +31,10 @@ The `internal/usercommands` package implements the complete command system for p
     shut or open the hood of the `adjustable` light in the `Light` slot. A
     hooded record stays held and lit but sheds nothing (`Condition.Hooded`).
     `hoodedLight` sends its own refusal and tells an empty slot apart from a
-    light with no hood.
+    light with no hood. `Hood` takes `room.VisualSnapshot()` before setting
+    `Hooded` and sends the room line with `SendTextVisualToSnapshot`, so it
+    is judged by what each watcher could see just before the light went
+    (#220): it reaches those who saw by the lantern and nobody who could not.
   - `cancel <spell>` (`cancel.go`: `Cancel`, `cancelCondition`,
     `cancelNameMatches`): an activity in progress ALWAYS wins, whatever the
     argument; only a free user reaches `cancelCondition`, which ends the first
