@@ -1,0 +1,34 @@
+# Item procs: the AEGIS and HARNESS bearer. You are Veteran Pathfinder,
+# starting in the Rift Chamber (5000). The Aegis of Mockery (a shield) and
+# the Thornwall Harness (barbed body armour) are in your pack. Quote every
+# line about your gear VERBATIM, with the round or the clock time.
+ephemeral:
+  profile: veteran
+  start_room: 5000
+  overlays:
+    grant_items: [40185, 40186]
+    set_gold: 1000
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    `look`, `inventory`, `equipment`. `equip aegis` and `equip harness`
+    (remove whatever is in those slots first). Report your equipment.
+  - >-
+    SHOCKWAVE. `ask sable arena 100` and fight the arena mob, letting it
+    attack you. Quote every "A jarring shockwave ripples outward ..." line
+    with its clock time, and say whether the mob seemed staggered after it.
+    It comes about one block in ten, then not again for about 80 seconds.
+  - >-
+    RELOG. Right after a shockwave, note the clock time, type `quit`, log
+    back in at once, go back to Sable and start another arena fight. Report
+    the time of the next shockwave. It must be at least 80 seconds after
+    the one before you quit; sooner is the defect to report.
+  - >-
+    BLEED. In an arena fight, `grapple` the mob and hold it for several
+    rounds. Quote every line saying the mob bleeds or is wounded by your
+    barbs, with the round. If `grapple` is refused, quote the refusal.
+  - >-
+    reads-well: report any raw number in a line about your gear, any line
+    over 80 columns, any em dash, and any line that appeared twice.
