@@ -134,9 +134,10 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/usercommands/skill.disenchant.go|71": "former combat condition (withdrawal): the disenchant command narrates; must apply synchronously so Validate clamps the pool now",
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
-	"internal/usercommands/character.go|423":     "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
-	"internal/hooks/item_procs.go|256":           "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
-	"internal/hooks/manifester_companions.go|40": "the holder is a MOB (a summoned companion), not a player",
+	"internal/usercommands/character.go|423":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
+	"internal/hooks/item_procs.go|256":               "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
+	"internal/behaviortree/actions_item_proc.go|308": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
+	"internal/hooks/manifester_companions.go|40":     "the holder is a MOB (a summoned companion), not a player",
 
 	// ── secret conditions: silence is the authored intent ───────────────────
 	"internal/hooks/Life_Cascades.go|131": "condition 81 Respawn Grace is secret:true, so StartUserNotice is empty by design and the event would narrate nothing anyway",
@@ -286,13 +287,14 @@ var conditionApplyPathAllowlist = map[string]string{
 	// ── former combat condition: Bleeding is now one stacking record (Task 9;
 	// re-keyed slice 1b; re-keyed again counters slice Task 3 when the
 	// drain-area counter field and its exit call were deleted) ───────────
-	"internal/actions/combat_drain.go|147":     "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/actions/combat_drain.go|314":     "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/actions/combat_hamstring.go|138": "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/actions/combat_maul.go|132":      "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/actions/combat_rake.go|132":      "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/actions/combat_throttle.go|146":  "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
-	"internal/hooks/item_procs.go|206":         "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_drain.go|147":           "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_drain.go|314":           "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_hamstring.go|138":       "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_maul.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_rake.go|132":            "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/actions/combat_throttle.go|146":        "former combat condition (bleed): silent-start record, the move narrates; must apply synchronously within the move's resolution",
+	"internal/hooks/item_procs.go|206":               "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
+	"internal/behaviortree/actions_item_proc.go|258": "former combat condition (bleed): silent-start record, the proc's item narrates; must apply synchronously within the move's resolution",
 }
 
 // primitivePackages define Character.AddCondition / Conditions.AddCondition

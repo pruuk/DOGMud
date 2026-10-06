@@ -31,6 +31,9 @@ type EventContext struct {
 	Command   string         // Command name for room command interception
 	Rest      string         // Command arguments
 	Direction string         // Direction for movement events
+	// Proc carries a proc event's participants into an item tree (item
+	// behaviour slice 3). Nil for every other event.
+	Proc *ProcEvent
 }
 
 // Node is the interface all behavior tree nodes implement.
