@@ -17,15 +17,20 @@ import (
 
 // setPinnacleEnabled flips the PinnacleItemsEnabled master toggle in-memory for
 // the test process (AddOverlayOverrides, the same file-free mechanism
-// enableItemProcs uses). The gate-off test relies on being able to set it back
-// to false explicitly, since overlay overrides persist across tests.
+// enableItemProcs uses). Overlay overrides persist across tests, so the value
+// the test found is put back when it ends; a test that flips it twice ends
+// with both cleanups run, last first, back at that value.
 func setPinnacleEnabled(t *testing.T, on bool) {
 	t.Helper()
+	prev := bool(configs.GetConfig().GamePlay.PinnacleItemsEnabled)
 	if err := configs.AddOverlayOverrides(map[string]any{
 		"GamePlay.PinnacleItemsEnabled": on,
 	}); err != nil {
 		t.Fatalf("failed to set PinnacleItemsEnabled=%v: %v", on, err)
 	}
+	t.Cleanup(func() {
+		_ = configs.AddOverlayOverrides(map[string]any{"GamePlay.PinnacleItemsEnabled": prev})
+	})
 }
 
 // ─── Hunger ───────────────────────────────────────────────────────────────────
