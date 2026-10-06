@@ -60,6 +60,15 @@ type EvalContext struct {
 	// Setting Aggro for non-combat purposes is the chunk-2.7 bug class
 	// that this slot exists to prevent.
 	SoftTarget state.ActorRef
+
+	// Item is the subject when an ITEM's tree runs (lighting 5e, Rule 2):
+	// the instance and where it is. Nil for mob and room trees. For an item,
+	// MobState is the item's own state and MobId / InstanceId are 0.
+	Item *ItemSubject
+
+	// node is the name of the condition or action evaluating now, so a
+	// recovered panic can name it (TryItemBehavior, Rule 14).
+	node string
 }
 
 // NodeDef is the raw YAML definition of a node, parsed before

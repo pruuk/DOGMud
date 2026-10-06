@@ -114,6 +114,27 @@ func condTimeOfDay(params map[string]any, ctx *EvalContext) Result {
 
 	// Existing binary form (period: day / period: night) — unchanged.
 	period := getStringParam(params, "period")
+
+	// period: after_dusk with hours: N (lighting 5e, X2): true from the
+	// night boundary until N game hours later. Dusk moves with the season,
+	// so this cannot be a fixed `range`; it reads the same unrounded
+	// boundary IsNight does.
+	if strings.ToLower(period) == "after_dusk" {
+		hours := getFloatParam(params, "hours", 0)
+		if !(hours > 0) {
+			if _, already := loggedTimeOfDayMisconfigs.LoadOrStore("after_dusk:hours", true); !already {
+				mudlog.Error("time_of_day",
+					"error", "period: after_dusk needs a positive `hours`",
+					"value", params["hours"])
+			}
+			return Failure
+		}
+		if gametime.GetDate().HoursAfterDusk() < hours {
+			return Success
+		}
+		return Failure
+	}
+
 	isNight := gametime.IsNight()
 	switch strings.ToLower(period) {
 	case "night":

@@ -105,6 +105,27 @@ type GameDate struct {
 
 	DayStart   int
 	NightStart int
+
+	// hourOfDay and duskHour are the unrounded clock and night boundary
+	// Night is computed from, kept for HoursAfterDusk (lighting 5e). Not
+	// exported, so never serialised.
+	hourOfDay float64
+	duskHour  float64
+}
+
+// HoursAfterDusk is how many game hours have passed since dusk, read from
+// the same unrounded boundary Night uses (the world's latitude and the day of
+// the year), in [0, 24). Past midnight it keeps counting from the evening's
+// dusk; before dusk it reads the hours since dusk a day earlier, which is
+// more than a day's daylight, so it never reads "just after dusk" in the
+// afternoon. The behaviour-tree condition time_of_day reads it for
+// `period: after_dusk`.
+func (g GameDate) HoursAfterDusk() float64 {
+	h := g.hourOfDay - g.duskHour
+	if h < 0 {
+		h += 24
+	}
+	return h
 }
 
 func (gd GameDate) String(symbolOnly ...bool) string {
@@ -303,6 +324,7 @@ func (g *GameDate) ReCalculate() {
 	// boolean above is computed from the unrounded boundaries.
 	g.NightStart = int(math.Round(nightStartHour))
 	g.DayStart = int(math.Round(nightEndHour))
+	g.hourOfDay, g.duskHour = hourOfDay, nightStartHour
 }
 
 func (g GameDate) Add(adjustHours int, adjustDays int, adjustYears int) GameDate {

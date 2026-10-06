@@ -1,0 +1,10 @@
+conditionid: 134
+name: Sunstone Glow
+description: Your sunstone gives back the daylight it drank.
+secret: true
+triggerrate: 5 real minutes
+triggercount: 1
+# Lighting 5e: the sunstone's light, the torch's shape. Not adjustable: the
+# sunstone's tree (behaviors/items/sunstone.yaml) is its only writer.
+effects:
+  light_strength: 46

@@ -1,0 +1,20 @@
+# keeper_lantern: the Oil Lantern (40038), shared by shopkeepers and
+# players (lighting 5e, owner rulings R2 and R3). Fully dark while its
+# holder sleeps (the Sleeping flag, the predicate the shop's sleep gate
+# reads), full strength otherwise. Condition 125 is not adjustable, so this
+# tree is its record's only writer and an entry trim cannot relight it.
+notes: Dark while the holder sleeps, full otherwise.
+tree:
+  type: selector
+  event: item_idle
+  children:
+    - type: sequence
+      children:
+        - type: condition
+          check: holder_asleep
+        - type: action
+          do: set_light
+          level: "off"
+    - type: action
+      do: set_light
+      level: full

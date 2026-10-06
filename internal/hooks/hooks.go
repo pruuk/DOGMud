@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/forager"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/splash"
 )
@@ -64,6 +65,10 @@ func RegisterListeners() {
 	events.RegisterListener(events.NewRound{}, BloomTick) // Bloom drug: Crash, Withdrawal, decay
 	events.RegisterListener(events.NewRound{}, BroadcastTips)
 	events.RegisterListener(events.NewRound{}, IdleMobs)
+	// Lighting 5e: item behaviour trees (worn, carried, mob-held, floor), and
+	// a room's fixtures lit the moment the room joins the item index.
+	events.RegisterListener(events.NewRound{}, ItemRoundTick)
+	items.OnRoomHolderIndexed = EvaluateRoomFixtures
 	events.RegisterListener(events.NewRound{}, LightNoticeAttention)
 	events.RegisterListener(events.MobIdle{}, HandleIdleMobs)
 	events.RegisterListener(events.NewRound{}, FerryTick)     // Ferry vessels: schedule reconcile

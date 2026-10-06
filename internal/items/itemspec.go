@@ -379,6 +379,19 @@ type ItemSpec struct {
 	NeverDrops       bool     `yaml:"never_drops,omitempty"`       // Equipped-only: this item is skipped entirely by mob death-loot drops (boss-only gear that must never reach players). Does not affect carried Character.Items — use a separate mechanism (loot_pool / character.items) for guaranteed loot on the same mob.
 	Restricted       bool     `yaml:"restricted,omitempty"`        // Contraband: bid on by the auction Official (The Crown Assessor, econ #2.5). Interest tag only — no other mechanics.
 
+	// Behavior names the item's behaviour tree,
+	// behaviors/items/<name>.yaml (lighting 5e, item behaviour slice 1,
+	// Rule 1). Several items may share one tree. The tree belongs to the
+	// template: read it through GetItemSpec or Item.HasBehavior, never an
+	// instance's override spec. The boot panics on a name that does not
+	// resolve (behaviortree.ValidateItemBehaviors).
+	Behavior string `yaml:"behavior,omitempty"`
+	// Fixture marks an item fixed to a room's floor: FixtureLight or
+	// FixtureDarkness (Rule 10). No path takes it off the floor, "On the
+	// Ground" leaves it out, and its tree's set_light / pulse_light output
+	// lights (or darkens) the room through internal/itemlight.
+	Fixture string `yaml:"fixture,omitempty"`
+
 	// YAML-driven use effects — replaces JS onUse/onCommand_use
 	OnUseTrainSkill  string `yaml:"on_use_train_skill,omitempty"`
 	OnUseTrainAmount int    `yaml:"on_use_train_amount,omitempty"`
@@ -798,6 +811,11 @@ func (i *ItemSpec) Validate() error {
 	}
 	if i.MutationRarityFloor < 0 || i.MutationRarityFloor > 10 {
 		return fmt.Errorf("item %d: mutation_rarity_floor must be 0-10, got %d", i.ItemId, i.MutationRarityFloor)
+	}
+	switch i.Fixture {
+	case ``, FixtureLight, FixtureDarkness:
+	default:
+		return fmt.Errorf("item %d: fixture must be %q or %q, got %q", i.ItemId, FixtureLight, FixtureDarkness, i.Fixture)
 	}
 
 	return nil

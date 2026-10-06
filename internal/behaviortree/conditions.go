@@ -54,6 +54,11 @@ func init() {
 
 	// Schedule suite (3.2)
 	conditionRegistry["mob_at_target_room"] = condMobAtTargetRoom
+
+	// Item subject (lighting 5e): item trees only (Rule 8)
+	conditionRegistry["holder_asleep"] = condHolderAsleep
+	conditionRegistry["worn"] = condWorn
+	conditionRegistry["in_combat"] = condInCombat
 }
 
 // LookupCondition returns the condition function for the given name,
@@ -70,6 +75,9 @@ type ConditionNode struct {
 }
 
 func (n *ConditionNode) Evaluate(ctx *EvalContext) Result {
+	if ctx != nil {
+		ctx.node = n.Name
+	}
 	return n.Fn(n.Params, ctx)
 }
 

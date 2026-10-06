@@ -1427,3 +1427,26 @@ built on it: `characters.Character` and `Worn`, `users.UserRecord`,
 `rooms.Room`, `mobs.Mob`, `shops.ShopInventory`, `guilds.Guild`,
 `sealedcrate.Crate`, `modules/auctions.AuctionManager`. The bauble catalog
 sweep (`internal/baubles/sweep.go`) reads every live item through them.
+
+## Item behaviour: `behavior:`, fixtures and the holder index (lighting 5e)
+
+- **`ItemSpec.Behavior`** (`behavior:`) names a tree under
+  `behaviors/items/` (see `internal/behaviortree/context.md`). It belongs to
+  the template: read it through `Item.HasBehavior()` or `GetItemSpec`, never
+  an instance's override spec. The boot refuses a name that does not resolve.
+- **`ItemSpec.Fixture`** (`fixture: light | darkness`, constants
+  `FixtureLight` and `FixtureDarkness`, checked by `Validate`) fixes an item
+  to a room's floor. `Item.IsFixture()` reads the template. Every
+  floor-removal path refuses a fixture (`actions.ErrFixture`, the `get all`
+  and mob sweeps, `steal`, the mob idle floor equip), "On the Ground" and the
+  GMCP room contents leave it out, and its tree's output lights the room
+  through `internal/itemlight`. Ship a fixture `not_salable`: it is never
+  loot.
+- **The holder index** (`item_behavior.go`) holds HOLDERS, not items: mob
+  instances (`IndexMobHolder`, `DropMobHolder`, `MobHolders`) and rooms
+  (`IndexRoomHolder`, `DropRoomHolder`, `RoomHolders`) that may hold a treed
+  item. The item tick (`hooks.ItemRoundTick`) visits only these plus every
+  online player. `OnRoomHolderIndexed`, set by `internal/hooks`, is called
+  once each time a room enters the index, outside the lock, so its fixtures
+  are lit before anyone reads the room. `ResetHolderIndexForTest` swaps in an
+  empty index.

@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/itemlight"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
@@ -335,6 +336,15 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	//
+	// A floor item named in full, in more than one word ("arch lantern"),
+	// beats a room noun one of those words matches ("arch").
+	//
+	if floorItem, found := floorItemNamedInFull(room, lookAt); found {
+		lookAtFloorItem(user, room, floorItem, isSneaking)
+		return true, nil
+	}
+
+	//
 	// Look for any nouns in the room info
 	//
 	foundNoun, foundDesc := room.FindNoun(lookAt)
@@ -486,36 +496,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// listing shows can be looked at.
 	//
 	if floorItem, found := room.FindOnFloor(lookAt, false); found {
-
-		// A found bauble lies somewhere in particular ("on the bookshelf").
-		where := `on the ground`
-		if floorItem.IsBauble() && floorItem.BaubleSpot != `` {
-			where = floorItem.BaubleSpot
-		}
-
-		user.SendText(messaging.CategoryRoomDescription, ``)
-		user.SendText(messaging.CategoryRoomDescription,
-			fmt.Sprintf(`You look at the <ansi fg="item">%s</ansi> %s:`, floorItem.DisplayNameFor(user.UserId), where),
-		)
-		user.SendText(messaging.CategoryRoomDescription, ``)
-
-		if !isSneaking {
-			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at the <ansi fg="item">%s</ansi> %s.`, user.Character.Name, floorItem.DisplayName(), where),
-				[]string{user.Character.Name},
-				user.UserId,
-			)
-		}
-
-		user.SendText(messaging.CategoryRoomDescription,
-			util.SplitStringNL(floorItem.LongDescriptionFor(user.UserId), 80),
-		)
-		if floorItem.BaubleBelongsTo(room.RoomId) {
-			user.SendText(messaging.CategoryRoomDescription,
-				`It belongs to this household. Taking it would be theft.`)
-		}
-		user.SendText(messaging.CategoryRoomDescription, ``)
-
+		lookAtFloorItem(user, room, floorItem, isSneaking)
 		return true, nil
 	}
 
@@ -529,6 +510,57 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	return true, nil
 
+}
+
+// floorItemNamedInFull finds a floor item the words name in full, as more
+// than one word ("arch lantern"). A multi-word full name is specific: it
+// outranks a room noun or a carried item that only one of its words matches.
+func floorItemNamedInFull(room *rooms.Room, lookAt string) (items.Item, bool) {
+	if !strings.Contains(strings.TrimSpace(lookAt), ` `) {
+		return items.Item{}, false
+	}
+	for i := range room.Items {
+		if _, full := room.Items[i].NameMatch(lookAt, false); full {
+			return room.Items[i], true
+		}
+	}
+	return items.Item{}, false
+}
+
+// lookAtFloorItem shows an item lying on (or fixed in) the room's floor.
+func lookAtFloorItem(user *users.UserRecord, room *rooms.Room, floorItem items.Item, isSneaking bool) {
+	// A found bauble lies somewhere in particular ("on the bookshelf").
+	where := `on the ground`
+	if floorItem.IsBauble() && floorItem.BaubleSpot != `` {
+		where = floorItem.BaubleSpot
+	}
+	// A fixture is part of the room, not lying on its floor (R9).
+	if floorItem.IsFixture() {
+		where = `here`
+	}
+
+	user.SendText(messaging.CategoryRoomDescription, ``)
+	user.SendText(messaging.CategoryRoomDescription,
+		fmt.Sprintf(`You look at the <ansi fg="item">%s</ansi> %s:`, floorItem.DisplayNameFor(user.UserId), where),
+	)
+	user.SendText(messaging.CategoryRoomDescription, ``)
+
+	if !isSneaking {
+		room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at the <ansi fg="item">%s</ansi> %s.`, user.Character.Name, floorItem.DisplayName(), where),
+			[]string{user.Character.Name},
+			user.UserId,
+		)
+	}
+
+	user.SendText(messaging.CategoryRoomDescription,
+		util.SplitStringNL(floorItem.LongDescriptionFor(user.UserId), 80),
+	)
+	if floorItem.BaubleBelongsTo(room.RoomId) {
+		user.SendText(messaging.CategoryRoomDescription,
+			`It belongs to this household. Taking it would be theft.`)
+	}
+	user.SendText(messaging.CategoryRoomDescription, ``)
 }
 
 func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
@@ -638,6 +670,18 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	textOut, _ = templates.Process("descriptions/room", details, user.UserId)
 	user.SendText(messaging.CategoryRoomDescription, textOut)
 
+	// Fixtures are part of the room, not things lying on its floor (lighting
+	// 5e, ruling R9): a line each, lit or unlit, right after the description
+	// and under its sight rule.
+	if lines := fixtureLines(room); len(lines) > 0 {
+		textOut, _ = templates.Process("descriptions/fixtures", map[string]any{
+			`Fixtures`: lines,
+			`IsDark`:   details.IsDark,
+			`IsNight`:  details.IsNight,
+		}, user.UserId)
+		user.SendText(messaging.CategoryRoomDescription, textOut)
+	}
+
 	// Append discovered hidden noun descriptions.
 	// No user nil check: command dispatch always supplies a live user, and
 	// user is already dereferenced above (mapper config, template calls).
@@ -726,6 +770,10 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 			room.RemoveItem(item, false)
 			continue
 		}
+		// A fixture shows as part of the room, above (R9).
+		if item.IsFixture() {
+			continue
+		}
 		// Baubles share one ItemId; each is its own object with its own name.
 		key := fmt.Sprintf("%d|%s|%d|%s", item.ItemId, item.EnchantType, item.EnchantTier, item.Bauble)
 		if entry, exists := groundStacks[key]; exists {
@@ -772,4 +820,28 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	textOut, _ = templates.Process("descriptions/exits", details, user.UserId)
 	user.SendText(messaging.CategoryRoomDescription, textOut)
 
+}
+
+// fixtureLine is one fixture in the room look's descriptions/fixtures
+// template (lighting 5e, R9).
+type fixtureLine struct {
+	Name     string
+	Lit      bool // gives light, or darkens, right now
+	Darkness bool // a darkness fixture: the template words it differently
+}
+
+// fixtureLines lists the room's fixtures in floor order, each lit or unlit
+// from its current output (internal/itemlight).
+func fixtureLines(room *rooms.Room) []fixtureLine {
+	var out []fixtureLine
+	for _, it := range room.Items {
+		if it.IsFixture() {
+			out = append(out, fixtureLine{
+				Name:     it.DisplayName(),
+				Lit:      itemlight.Lit(room.RoomId, it.UUID),
+				Darkness: it.GetSpec().Fixture == items.FixtureDarkness,
+			})
+		}
+	}
+	return out
 }

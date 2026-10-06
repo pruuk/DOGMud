@@ -32,14 +32,21 @@ func getAllMatchingFromFloor(user *users.UserRecord, room *rooms.Room, itemName 
 	// `steal <name>` attempts that. Each one the name matches is left, and
 	// said so, once; the sweep goes on past it to everything else.
 	left := 0
+	var fixed []items.Item // fixtures the name matches: never swept (lighting 5e)
 	for _, it := range room.Items {
+		part, full := it.NameMatch(itemName, true)
+		if !part && !full {
+			continue
+		}
+		if it.IsFixture() {
+			fixed = append(fixed, it)
+			continue
+		}
 		if !it.BaubleBelongsTo(room.RoomId) {
 			continue
 		}
-		if part, full := it.NameMatch(itemName, true); part || full {
-			leaveHouseholdBauble(user, it)
-			left++
-		}
+		leaveHouseholdBauble(user, it)
+		left++
 	}
 
 	picked := 0
@@ -63,7 +70,13 @@ func getAllMatchingFromFloor(user *users.UserRecord, room *rooms.Room, itemName 
 		picked++
 	}
 	if picked == 0 {
-		if left == 0 {
+		switch {
+		case left > 0:
+		case len(fixed) > 0:
+			// The name only matched what is fixed in place: say so rather
+			// than deny there is anything there.
+			fixedInPlace(user, fixed[0])
+		default:
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see any "%s" to pick up.`, itemName))
 		}
 		return
@@ -222,6 +235,11 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			iCopies := append([]items.Item{}, room.Items...)
 
 			for _, item := range iCopies {
+				// A fixture is part of the room: a sweep passes it without a
+				// word (lighting 5e).
+				if item.IsFixture() {
+					continue
+				}
 				// Never by accident: see getAllMatchingFromFloor.
 				if item.BaubleBelongsTo(room.RoomId) {
 					leaveHouseholdBauble(user, item)
@@ -631,6 +649,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				case errors.Is(result.Err, actions.ErrExploding):
 					user.SendText(messaging.CategorySystem, `You can't pick that up, it's about to explode!`)
 					return true, nil
+				case errors.Is(result.Err, actions.ErrFixture):
+					fixedInPlace(user, matchItem)
+					return true, nil
 				case errors.Is(result.Err, actions.ErrHouseholdBauble):
 					// A bauble found in this household belongs to it.
 					// `get` never commits a crime: the shared pickup
@@ -807,11 +828,12 @@ func grantCorpseGold(user *users.UserRecord, amt int) {
 }
 
 // takeableOnFloor is room.FindOnFloor over what may be swept up: the floor
-// without this room's household baubles.
+// without this room's household baubles and without its fixtures (lighting
+// 5e).
 func takeableOnFloor(room *rooms.Room, itemName string) (items.Item, bool) {
 	takeable := make([]items.Item, 0, len(room.Items))
 	for _, it := range room.Items {
-		if !it.BaubleBelongsTo(room.RoomId) {
+		if !it.BaubleBelongsTo(room.RoomId) && !it.IsFixture() {
 			takeable = append(takeable, it)
 		}
 	}
@@ -823,6 +845,12 @@ func takeableOnFloor(room *rooms.Room, itemName string) (items.Item, bool) {
 		return closeMatch, true
 	}
 	return items.Item{}, false
+}
+
+// fixedInPlace tells a player a fixture cannot be taken (lighting 5e).
+func fixedInPlace(user *users.UserRecord, itm items.Item) {
+	user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		`The <ansi fg="itemname">%s</ansi> is fixed in place.`, itm.DisplayName()))
 }
 
 // leaveHouseholdBauble tells a player sweeping the floor with `get all` that

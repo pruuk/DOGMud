@@ -43,6 +43,10 @@ func EquipBestFloorItem(mob *mobs.Mob, room *rooms.Room) bool {
 	var bestItem items.Item
 	bestScore := 0.0
 	for _, floorItem := range room.Items {
+		// A fixture is part of the room, never loot (lighting 5e, X10).
+		if floorItem.IsFixture() {
+			continue
+		}
 		delta := itemvalue.ItemValueDelta(&mob.Character, profile, floorItem)
 		if delta.Score > bestScore {
 			bestScore = delta.Score

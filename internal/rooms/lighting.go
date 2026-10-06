@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/itemlight"
 	"github.com/GoMudEngine/GoMud/internal/lightscale"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -87,6 +88,16 @@ type LightTerms struct {
 	Carried bool
 	// Darkened reports that someone in the room carries a darkness.
 	Darkened bool
+	// Fixture is the combined light of the room's lit light fixtures (items
+	// with `fixture: light`, internal/itemlight); lightscale.Absent() when
+	// none is lit. A fixture is part of the room, never a carried light, so
+	// it never sets Carried (lighting 5e, X5).
+	Fixture float64
+	// CarriedLight is the combine of carried light alone;
+	// lightscale.Absent() when nobody here carries a lit light. A lantern
+	// dimming while still lit, or a second light arriving, moves it where
+	// Carried does not (lighting 5e, X5).
+	CarriedLight float64
 }
 
 // LightTerms reports the terms behind LightLevel, from the same single
@@ -105,24 +116,32 @@ func (r *Room) composeLight(cfg configs.Lighting, celestial, skyFilter float64) 
 // everything except itself.
 func (r *Room) composeLightExcluding(cfg configs.Lighting, celestial, skyFilter float64, exclude *conditions.Condition) LightTerms {
 	carried, dark := r.carriedTerms(exclude)
-	return r.composeWith(cfg, celestial, skyFilter, carried, dark)
+	fxLight, fxDark := itemlight.Terms(r.RoomId)
+	return r.composeWithFixtures(cfg, celestial, skyFilter, carried, dark, fxLight, fxDark)
 }
 
 // composeWith is the composition with the carried light and darkness terms
-// supplied, so a test needs no users or mobs.
+// supplied and no fixtures, so a test needs no users, mobs or items.
+func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, carried, dark []float64) LightTerms {
+	return r.composeWithFixtures(cfg, celestial, skyFilter, carried, dark, nil, nil)
+}
+
+// composeWithFixtures is the composition itself, with every term supplied.
 //
 // Lights combine as they always have; darknesses combine among themselves by
 // the same halving rule; the net light is the combined light (0 when none)
 // minus the combined darkness (0 when none), clamped to [-100, 100]
-// (lighting plan 5d, owner decision 1).
-func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, carried, dark []float64) LightTerms {
+// (lighting plan 5d, owner decision 1). A lit light fixture is one term in
+// the light combine and a darkness fixture one in the darkness combine,
+// beside what people carry (lighting 5e, Rule 10). Fixtures never trim.
+func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial, skyFilter float64, carried, dark, fixtureLight, fixtureDark []float64) LightTerms {
 	step := cfg.DoublingStep
 	if !(step > 0) {
 		step = 1
 	}
 
 	out := LightTerms{SkyFilter: skyFilter}
-	terms := make([]float64, 0, 2+len(carried))
+	terms := make([]float64, 0, 2+len(fixtureLight)+len(carried))
 
 	// 1. The sky, attenuated by this room's fraction and then by any weather
 	// filtering it. A filter multiplies the fraction, which on this log scale
@@ -139,9 +158,15 @@ func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, c
 		terms = append(terms, float64(lamp))
 	}
 
-	// 3. Every light anyone here carries, each its own term (lighting plan 5a):
+	// 3. Every lit light fixture, each its own term (lighting 5e): part of
+	// the room, like its lamp, never a carried light.
+	out.Fixture = lightscale.Combine(step, fixtureLight...)
+	terms = append(terms, fixtureLight...)
+
+	// 4. Every light anyone here carries, each its own term (lighting plan 5a):
 	// a candle and a torch are different sources, and two torches are one
 	// doubling step brighter than one.
+	out.CarriedLight = lightscale.Combine(step, carried...)
 	if len(carried) > 0 {
 		out.Carried = true
 		terms = append(terms, carried...)
@@ -156,10 +181,14 @@ func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, c
 		v = 0
 	}
 
-	// 4. Every darkness anyone here carries (lighting plan 5d), combined
-	// among themselves by the same halving rule and taken away from the
-	// light. Two darknesses of 50 take 58, not 100.
-	out.Dark = lightscale.Combine(step, dark...)
+	// 5. Every darkness anyone here carries (lighting plan 5d), and every
+	// darkness fixture (lighting 5e), combined among themselves by the same
+	// halving rule and taken away from the light. Two darknesses of 50 take
+	// 58, not 100. Darkened still means a CARRIED darkness.
+	darkTerms := make([]float64, 0, len(dark)+len(fixtureDark))
+	darkTerms = append(darkTerms, dark...)
+	darkTerms = append(darkTerms, fixtureDark...)
+	out.Dark = lightscale.Combine(step, darkTerms...)
 	if len(dark) > 0 {
 		out.Darkened = true
 	}

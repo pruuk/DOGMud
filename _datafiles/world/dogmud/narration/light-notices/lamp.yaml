@@ -1,6 +1,7 @@
-# The room's own lamp. Lamps do not change at runtime yet and no mutator
-# adds light any more, so nothing reaches these lines until runtime lamps
-# arrive (scheduled light sources).
+# The room's own light: its lamp, and its fixtures (lighting 5e). A room's
+# lamp does not change at runtime, but a fixture does: the North Gate's arch
+# lantern lit at dusk and snuffed at dawn, a pulsing stone. These lines fire
+# when one moves the observer's band.
 cause: lamp
 transitions:
   darker_faces:

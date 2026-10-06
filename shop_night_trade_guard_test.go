@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/behaviortree"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -166,6 +167,8 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 	lighting := configs.GetLightingConfig()
 	observer := &characters.Character{}
 	totalSamples, totalNight := 0, 0
+	treedSamples, asleepSamples := 0, 0
+	var litAsleep []string // keepers asleep with their lantern still lit
 	nightByKeeper := map[int]int{}
 	keeperNames := map[int]string{}
 	var failures []string
@@ -209,6 +212,34 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 				sun := gametime.SunLight(lighting, gd.Day, float64(gd.Hour24)+gd.MinuteFloat/60)
 				night := math.IsInf(sun, -1)
 
+				// Lighting 5e (owner rulings R2, R3): the keeper's light-slot
+				// tree runs at every sample, with the Sleeping flag set as
+				// the schedule would set it. Asleep, its lantern must be
+				// dark; awake, the samples below must still pass.
+				asleep := false
+				if sched != nil {
+					if seg := sched.CurrentSegment(hour); seg != nil && seg.Activity == "sleeping" {
+						asleep = true
+					}
+				}
+				if asleep {
+					inst.Character.Conditions.AddCondition(15, false) // Sleeping
+				} else {
+					inst.Character.Conditions.RemoveCondition(15)
+				}
+				if lamp := inst.Character.Equipment.Light; lamp.ItemId > 0 && lamp.HasBehavior() {
+					behaviortree.TryItemBehavior(behaviortree.EventContext{EventType: "item_idle"}, behaviortree.ItemSubject{
+						UUID: lamp.UUID, ItemId: lamp.ItemId, MobInstanceId: inst.InstanceId, Slot: "light"})
+					treedSamples++
+					if asleep {
+						asleepSamples++
+						if inst.Character.EmitsLight() {
+							litAsleep = append(litAsleep, fmt.Sprintf("mob %d %s at %s %02d:00",
+								p.mob.MobId, p.mob.Character.Name, d.Name, hour))
+						}
+					}
+				}
+
 				here := roamRooms
 				if sched != nil {
 					here = scheduledRoom(t, sched, hour, mobId)
@@ -246,8 +277,17 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 	if totalNight == 0 {
 		t.Fatal("no awake night sample was taken: the guard checked nothing")
 	}
-	t.Logf("checked %d shop placements across %d awake samples, %d of them at night",
-		len(placements), totalSamples, totalNight)
+	// Nine scheduled keepers carry the Oil Lantern and sleep (spec C3).
+	if treedSamples == 0 || asleepSamples == 0 {
+		t.Fatalf("the keepers' lantern tree ran at %d samples, %d of them asleep: the 5e check saw nothing", treedSamples, asleepSamples)
+	}
+	t.Logf("checked %d shop placements across %d awake samples, %d of them at night; the lantern tree ran at %d samples, %d asleep",
+		len(placements), totalSamples, totalNight, treedSamples, asleepSamples)
+	if len(litAsleep) > 0 {
+		t.Errorf("%d samples found a keeper asleep with its lantern still lit. The Oil Lantern's tree\n"+
+			"(behaviors/items/keeper_lantern.yaml) must put it out while its holder sleeps (owner\n"+
+			"ruling R3).\n\n%s", len(litAsleep), strings.Join(litAsleep, "\n"))
+	}
 
 	// Every keeper is looked at in the dark at least once, or says why not.
 	var unseen []string

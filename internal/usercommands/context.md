@@ -656,3 +656,15 @@ Read that with the ordering rule above: running before the dispatch is
 necessary and not sufficient. A path below the pull still has to ask a
 storage-aware question, because all-or-nothing legitimately leaves a
 shortfall in place.
+
+## Fixtures (lighting 5e, ruling R9)
+
+A fixture is part of the room. `look` leaves it out of "On the Ground" and
+renders `descriptions/fixtures` right after the room description: one line
+each, "The <Name> is lit." or "is unlit." from `itemlight.Lit`, coloured by
+the description's own day/dark rule (`fixtureLines`). A darkness fixture
+reads "The <Name> swallows the light." while it darkens and "The <Name> is
+still." while it does not. `look <name>` still finds it ("You look at the
+<Name> here:"). `get <fixture>` and `steal <fixture>` answer "The <Name> is
+fixed in place." (`fixedInPlace`); `get all` passes fixtures without a word,
+and `get all <name>` that only matches a fixture says it is fixed in place.

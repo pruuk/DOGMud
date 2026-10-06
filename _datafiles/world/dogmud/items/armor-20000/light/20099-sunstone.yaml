@@ -1,0 +1,19 @@
+itemid: 20099
+name: Sunstone
+namesimple: sunstone
+# Lighting 5e: a light whose tree follows the sun (behaviors/items/
+# sunstone.yaml). Condition 134 is not adjustable, so the tree is its only
+# writer. Sold by Enchanter Rane in Stillwater.
+description: A pale gold stone grown in a chrysalis vat. It soaks up
+  sunlight, so it glows by day, keeps a faint glow for a short while after
+  dusk, and is dark through the night.
+type: light
+subtype: wearable
+weight: 0.1
+value: 40
+rarity_tier: 40
+vendor_categories:
+- enchanting
+wornconditionids:
+  - 134
+behavior: sunstone

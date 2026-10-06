@@ -48,7 +48,11 @@ func snapshotOf(mob *mobs.Mob) worldSnapshot {
 	}
 	s.Worn = strings.Join(worn, `,`)
 	if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-		s.RoomItems = len(room.Items)
+		for _, it := range room.Items {
+			if !it.IsFixture() {
+				s.RoomItems++
+			}
+		}
 		s.RoomGold = room.Gold
 	}
 	return s
@@ -365,6 +369,11 @@ func (m *AICompanionModule) performAction(c *controller, mob *mobs.Mob, owner *u
 		// issuing a get that quietly does nothing.
 		if t.Kind == `item` && t.Item.BaubleBelongsTo(room.RoomId) {
 			return actionOutcome{Refused: `it belongs to the household here`}
+		}
+		// A fixture is part of the room (actions.ErrFixture): the same
+		// up-front refusal.
+		if t.Kind == `item` && t.Item.IsFixture() {
+			return actionOutcome{Refused: `it is fixed in place`}
 		}
 		if reason := lootAllowedByArrangement(c.mind.LootRule, stims); reason != `` {
 			return actionOutcome{Refused: reason}

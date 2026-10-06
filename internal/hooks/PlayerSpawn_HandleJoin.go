@@ -166,6 +166,8 @@ func applyCompanionState(mob *mobs.Mob, comp *characters.CompanionInfo) {
 	if compHasEquipment(comp) {
 		mob.Character.Equipment = comp.Equipment
 	}
+	// The restored gear may hold a treed item (lighting 5e).
+	mob.Character.IndexTreedItems()
 
 	// A bonded companion's purse is its own and replaces any template gold.
 	if comp.SourceType == characters.CompanionBonded {

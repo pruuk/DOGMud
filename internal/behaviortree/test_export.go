@@ -85,3 +85,30 @@ func (e *Engine) SetMobTreeForTest(mobId int, n Node) func() {
 		e.mu.Unlock()
 	}
 }
+
+// LoadItemTreeForTest compiles yamlText as an item tree (the item root label
+// and the item-safe allowlist, exactly as a file would load) and installs it
+// under name for the rest of the test. hooks and the repo-root guards use it
+// to drive TryItemBehavior without a behaviors/items file.
+func LoadItemTreeForTest(t *testing.T, name string, yamlText string) {
+	t.Helper()
+	node, err := LoadItemTreeFromBytes([]byte(yamlText))
+	if err != nil {
+		t.Fatalf("LoadItemTreeForTest(%s): %v", name, err)
+	}
+	e := GetEngine()
+	e.mu.Lock()
+	prev, hadPrev := e.itemTrees[name]
+	e.itemTrees[name] = node
+	delete(e.noItemTree, name)
+	e.mu.Unlock()
+	t.Cleanup(func() {
+		e.mu.Lock()
+		if hadPrev {
+			e.itemTrees[name] = prev
+		} else {
+			delete(e.itemTrees, name)
+		}
+		e.mu.Unlock()
+	})
+}

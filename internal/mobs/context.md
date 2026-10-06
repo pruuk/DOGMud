@@ -1173,3 +1173,11 @@ the copies.
 `(*Mob).WalkItems` walks the mob's character (`Character.WalkItems`). A
 mob's pack exists only in memory (instance files keep equipment only), so
 the bauble sweep sees it through this live walk alone.
+
+## The item tick (lighting 5e)
+
+A spawned mob holding an item with a behaviour tree (a keeper's Oil Lantern,
+from the template or the saved instance) joins `items`' holder index at the
+end of `newMobByIdInternal` (`Character.IndexTreedItems`), so the item tick
+reaches it. `Mob.AdoptCharacter` does the same for a character swapped in
+afterwards.

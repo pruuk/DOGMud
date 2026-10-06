@@ -1670,6 +1670,15 @@ func loadAllDataFiles(isReload bool) {
 	// Pinnacle Stage 1: sentient item voices. Must load AFTER items so the
 	// voice_id cross-validation can see every item's ItemSpec.
 	itemvoices.LoadDataFiles()
+	// Lighting 5e (item behaviour slice 1): every item's behavior: must name
+	// a tree under behaviors/items/ that loads and compiles, or the boot fails
+	// here rather than leave the item silently inert (spec X12).
+	if err := behaviortree.ValidateItemBehaviors(); err != nil {
+		panic(err)
+	}
+	// Rooms loaded before item specs (faction holding cells, above) could
+	// not tell a treed floor item; index them now.
+	rooms.IndexTreedFloors()
 	// Messaging M3 item 7: gossip template store (loaded here, not lazily by
 	// the first gossiping NPC, so a broken file fails boot instead of silencing
 	// gossip).

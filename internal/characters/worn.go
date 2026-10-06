@@ -599,6 +599,7 @@ func (c *Character) wear(i items.Item, place func(items.Item, items.ItemSpec) ([
 			}
 		}
 	}
+	c.IndexTreedItem(i)
 	return returnItems, newItemWorn, failureReason
 }
 
@@ -624,6 +625,7 @@ func (c *Character) RemoveFromBody(i items.Item) bool {
 		if beltSpec.IsBandolier && len(c.PotionItems) > 0 {
 			for _, pi := range c.PotionItems {
 				c.Items = append(c.Items, pi)
+				c.IndexTreedItem(pi)
 			}
 			c.PotionItems = nil
 		}
@@ -664,6 +666,7 @@ func (c *Character) RemoveFromBody(i items.Item) bool {
 		// Spill component bag contents back to backpack
 		for _, ci := range c.ComponentItems {
 			c.Items = append(c.Items, ci)
+			c.IndexTreedItem(ci)
 		}
 		c.ComponentItems = nil
 		c.Equipment.ComponentBag = items.Item{}

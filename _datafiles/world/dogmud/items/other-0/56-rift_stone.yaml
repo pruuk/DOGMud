@@ -1,0 +1,16 @@
+itemid: 56
+name: Rift Stone
+namesimple: stone
+# A fixture (lighting 5e): set into the wall of the Rift Chamber (room
+# 5000), placed there by spawninfo, and cannot be taken. Its tree pulses it
+# between 20 and 36, inside one band for normal eyes.
+description: A slab of dark stone set into the chamber wall and etched in
+  geometric patterns. A faint light moves through the grooves, swelling and
+  ebbing like slow breath, and never quite goes out.
+type: object
+subtype: mundane
+weight: 0.1
+value: 1
+not_salable: true
+fixture: light
+behavior: rift_pulse

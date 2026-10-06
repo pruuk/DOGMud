@@ -3,6 +3,7 @@ package behaviortree
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -67,6 +68,87 @@ func LoadTreeFromBytes(data []byte) (Node, error) {
 	return compileNode(def.Tree, "root")
 }
 
+// itemRootLabel is the root label item trees compile under (lighting 5e,
+// Rule 1), so their decorator state keys can never meet a mob's ("root")
+// or an archetype's ("arch"), and so the compiler knows which subject a
+// node is being compiled for.
+const itemRootLabel = "item"
+
+// LoadItemTreeFromFile reads an item tree YAML file and compiles it.
+func LoadItemTreeFromFile(path string) (Node, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return LoadItemTreeFromBytes(data)
+}
+
+// LoadItemTreeFromBytes parses an item tree and compiles it under the item
+// root label, which holds every node to the item-safe allowlist (Rule 8).
+func LoadItemTreeFromBytes(data []byte) (Node, error) {
+	var def TreeDef
+	if err := yaml.Unmarshal(data, &def); err != nil {
+		return nil, fmt.Errorf("parse error: %w", err)
+	}
+	return compileNode(def.Tree, itemRootLabel)
+}
+
+// isItemTreePath reports whether a compile path belongs to an item tree.
+func isItemTreePath(path string) bool {
+	return path == itemRootLabel || strings.HasPrefix(path, itemRootLabel+".")
+}
+
+// Rule 8: the nodes an item tree may name. An allowlist, not a blocklist
+// (X11): the 87 mob and room actions and 66 conditions carry no subject
+// metadata, and a node not read for an item subject is refused rather than
+// trusted. Decorators and composites are always allowed.
+var (
+	itemSafeConditions = map[string]bool{
+		"time_of_day":        true,
+		"round_mod":          true,
+		"random_chance":      true,
+		"state_equals":       true,
+		"state_greater_than": true,
+		"holder_asleep":      true,
+		"worn":               true,
+		"in_combat":          true,
+	}
+	itemSafeActions = map[string]bool{
+		"set_state":       true,
+		"increment_state": true,
+		"decrement_state": true,
+		"set_light":       true,
+		"pulse_light":     true,
+	}
+	// itemOnlyNodes need an item subject, so a mob or room tree may not
+	// name them.
+	itemOnlyNodes = map[string]bool{
+		"holder_asleep": true,
+		"worn":          true,
+		"in_combat":     true,
+		"set_light":     true,
+		"pulse_light":   true,
+	}
+)
+
+// checkNodeSubject refuses a node the tree's subject may not name.
+func checkNodeSubject(path, kind, name string) error {
+	if isItemTreePath(path) {
+		safe := itemSafeConditions
+		if kind == "action" {
+			safe = itemSafeActions
+		}
+		if !safe[name] {
+			return fmt.Errorf("%s: %s %q is not allowed in an item tree (item-safe nodes only)", path, kind, name)
+		}
+		return nil
+	}
+	if itemOnlyNodes[name] {
+		return fmt.Errorf("%s: %s %q needs an item subject and is allowed only in an item tree", path, kind, name)
+	}
+	return nil
+}
+
 // compileNode recursively converts a NodeDef into a concrete Node.
 func compileNode(def NodeDef, path string) (Node, error) {
 	var node Node
@@ -129,6 +211,9 @@ func compileCondition(def NodeDef, path string) (Node, error) {
 	if fn == nil {
 		return nil, fmt.Errorf("%s: unknown condition %q", path, def.Check)
 	}
+	if err := checkNodeSubject(path, "condition", def.Check); err != nil {
+		return nil, err
+	}
 	return &ConditionNode{
 		Name:   def.Check,
 		Params: cleanParams(def),
@@ -143,6 +228,9 @@ func compileAction(def NodeDef, path string) (Node, error) {
 	fn := LookupAction(def.Do)
 	if fn == nil {
 		return nil, fmt.Errorf("%s: unknown action %q", path, def.Do)
+	}
+	if err := checkNodeSubject(path, "action", def.Do); err != nil {
+		return nil, err
 	}
 	return &ActionNode{
 		Name:   def.Do,

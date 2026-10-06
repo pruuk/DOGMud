@@ -20,6 +20,8 @@ type Engine struct {
 	noArchetype           map[string]bool               // archetype name → no archetype file exists on disk
 	archetypeGoalWeights  map[string]map[string]float64 // chunk 4.2 — per-archetype goal-type weight multipliers
 	archetypeDefaultGoals map[string][]GoalDefault      // chunk 4.3 — per-archetype default goals
+	itemTrees             map[string]Node               // item tree name → compiled root node (lighting 5e)
+	noItemTree            map[string]bool               // item tree name → its file failed to load
 	queue                 []DelayedAction
 }
 
@@ -40,6 +42,8 @@ func init() {
 		noArchetype:           make(map[string]bool),
 		archetypeGoalWeights:  make(map[string]map[string]float64),
 		archetypeDefaultGoals: make(map[string][]GoalDefault),
+		itemTrees:             make(map[string]Node),
+		noItemTree:            make(map[string]bool),
 	}
 	// A mob rename/re-zone moves its behavior file (the path embeds both) —
 	// registered here because mobs cannot import behaviortree.
@@ -198,6 +202,52 @@ func (e *Engine) EvictRoomTree(roomId int) {
 	e.mu.Lock()
 	delete(e.roomTrees, roomId)
 	e.noRoomTree[roomId] = true
+	e.mu.Unlock()
+}
+
+// LoadItemTree loads and caches a named item tree (lighting 5e), compiled
+// under the root label "item" and the item-safe allowlist. Clears any
+// negative entry.
+func (e *Engine) LoadItemTree(name string, path string) error {
+	node, err := LoadItemTreeFromFile(path)
+	if err != nil {
+		return err
+	}
+	e.mu.Lock()
+	e.itemTrees[name] = node
+	delete(e.noItemTree, name)
+	e.mu.Unlock()
+	return nil
+}
+
+// GetItemTree returns the cached item tree by name, or nil.
+func (e *Engine) GetItemTree(name string) Node {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.itemTrees[name]
+}
+
+// HasNoItemTree reports whether the named item tree failed to load.
+func (e *Engine) HasNoItemTree(name string) bool {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.noItemTree[name]
+}
+
+// SetNoItemTree records that the named item tree failed to load, so the
+// tick does not re-read the file every round.
+func (e *Engine) SetNoItemTree(name string) {
+	e.mu.Lock()
+	e.noItemTree[name] = true
+	e.mu.Unlock()
+}
+
+// EvictItemTree removes an item tree and its negative entry, so the next
+// request reads the file again.
+func (e *Engine) EvictItemTree(name string) {
+	e.mu.Lock()
+	delete(e.itemTrees, name)
+	delete(e.noItemTree, name)
 	e.mu.Unlock()
 }
 

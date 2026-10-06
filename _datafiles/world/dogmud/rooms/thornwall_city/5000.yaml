@@ -21,6 +21,8 @@ exits:
 spawninfo:
   - mobid: 315
     respawnrate: "1s"
+  # Lighting 5e: the pulsing Rift Stone, a fixture (item 56).
+  - itemid: 56
 x: 12
 y: 4
 z: -1
