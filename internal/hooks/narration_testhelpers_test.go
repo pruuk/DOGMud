@@ -54,8 +54,13 @@ const (
 // seedNarrationConditions installs the narration test conditions and returns the restore
 // func. Call it AFTER `defer cleanup()` and `defer` its result, so it restores
 // before the fixture does: SeedConditionsForTest replaces the whole registry.
+//
+// It also empties the end-line snapshot store (rooms.ClearEndLineSnapshots)
+// on the way in and out, so a test that ticks without pruning cannot hand a
+// later test a snapshot of the same fixture room from another fixture.
 func seedNarrationConditions() func() {
-	return conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+	rooms.ClearEndLineSnapshots()
+	restore := conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
 		glowConditionId: {ConditionId: glowConditionId, Name: "Test Glow", RoundInterval: 5, TriggerCount: 3,
 			StartRoomText: "{actee} glows."},
 		shiverConditionId: {ConditionId: shiverConditionId, Name: "Test Shiver", RoundInterval: 1, TriggerCount: 3,
@@ -96,6 +101,10 @@ func seedNarrationConditions() func() {
 			EndRoomText: "The pall around {actee} thins away.",
 			Effects:     map[conditions.EffectKind]conditions.EffectValue{conditions.EffectDarknessStrength: {Literal: 90}}},
 	})
+	return func() {
+		restore()
+		rooms.ClearEndLineSnapshots()
+	}
 }
 
 // darken turns a fixture room into an unlit cave. The fixture seeds `cave`

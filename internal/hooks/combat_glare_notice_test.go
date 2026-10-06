@@ -24,6 +24,10 @@ import (
 // glareNoticeNeedle is a substring unique to glareCombatNoticeText.
 const glareNoticeNeedle = "glare is too bright"
 
+// dimGlareLamp is a lamp level below the dim edge, where ordinary eyes pay
+// SightMult for the dark ramp and the bright fraction is 0.
+const dimGlareLamp = 30
+
 type glareScene struct {
 	u1       *users.UserRecord
 	atk, def actions.Actor
@@ -115,6 +119,30 @@ func TestGlareCombatNotice(t *testing.T) {
 			"precondition: a comfortable room costs nothing")
 		assert.Equal(t, 0, s.round())
 		assert.Equal(t, 0, s.round())
+	})
+
+	// SightMult falls for a dark ramp too, but the line blames glare, so a
+	// dim room's cost must never send it. Only the bright fraction tells the
+	// two apart. Through the round seam the dark case cannot reach
+	// markGlareCombatant with a clear-sight verdict today: SightFull needs the
+	// light at or above the dim edge, where the dark fraction is 0. So the
+	// test hands markGlareCombatant the verdict directly, pinning its own
+	// guard for the day a caller's verdict and the room's ramp disagree, and
+	// then checks the seam stays silent too.
+	t.Run("a fighter in a dim room is never told of glare", func(t *testing.T) {
+		s := newGlareScene(t, dimGlareLamp)
+		room := s.atk.GetRoom()
+		_, bright := messaging.ComfortDistance(s.u1.Character, room)
+		require.Equal(t, 0.0, bright, "precondition: the dim room is nowhere near too bright")
+		require.Less(t, messaging.SightMult(s.u1.Character, room), 1.0,
+			"precondition: the dim room costs sight, or this proves nothing about the bright check")
+
+		markGlareCombatant(s.atk, true)
+		flushGlareCombatNotices()
+		events.ProcessEvents()
+		assert.Equal(t, 0, countContaining(textsForUser(*s.captured, 1), glareNoticeNeedle),
+			"a fighter in a dim room was told the glare was too bright")
+		assert.Equal(t, 0, s.round(), "the round seam must stay silent in a dim room as well")
 	})
 
 	t.Run("light verbosity suppresses it like the blind notice", func(t *testing.T) {
