@@ -34,6 +34,18 @@ const adjectiveSpanBody = ` <ansi fg="black-bold">\((?:[^<]|<ansi fg="[^"]*">[^<
 
 var adjectiveSpan = regexp.MustCompile(`^` + adjectiveSpanBody)
 
+// taggedNameAdjectives matches an identity tag and the adjective span right
+// after it; StripNameAdjectives keeps the tag (group 1).
+var taggedNameAdjectives = regexp.MustCompile(`(<ansi fg="(?:(?:username|mobname)(?:-[A-Za-z0-9_-]+)?|petname)">[^<]*</ansi>)` + adjectiveSpanBody)
+
+// StripNameAdjectives removes the adjective span ("(dead)", "(♥friend)")
+// from every identity tag in text, keeping the tag itself, so sight-based
+// name hiding still finds the name. The span belongs in a room listing, not
+// in a narrated line about what a creature did (#415).
+func StripNameAdjectives(text string) string {
+	return taggedNameAdjectives.ReplaceAllString(text, `$1`)
+}
+
 // hideTaggedName replaces a whole identity tag whose content is this name,
 // ignoring case and any duplicate index, and one adjective span directly
 // after it.

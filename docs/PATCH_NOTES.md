@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-10-06: Small fixes
+
+- A disarmed weapon now always goes back into your pack, even when your
+  pack is full. It used to vanish if you were carrying too much.
+- Watching from the dark, you no longer learn who a companion follows out
+  of the room: you see "A figure follows a figure."
+- Combat lines no longer tack status tags such as "(dead)" or "(friend)"
+  onto names.
+- Fixed the unarmed critical-hit line that read "Your fists flies wide".
+
 ## 2026-10-06: Talking gear
 
 - The Blackrazor and the Aegis of Mockery now speak up when you put them

@@ -1302,10 +1302,14 @@ func meleeDefenceMargin(best bestDefenseResult) float64 {
 // docstring: "non-zero for mobs, zero for players" on GetMobInstanceId, the
 // mirror check).
 func meleeIdentityTag(c *characters.Character) string {
+	name := c.GetMobName(0)
 	if c.GetUserId() > 0 {
-		return c.GetPlayerName(0).String()
+		name = c.GetPlayerName(0)
 	}
-	return c.GetMobName(0).String()
+	// A narrated line names the creature, not its status: no "(dead)" or
+	// "(friend)" span (#415).
+	name.Adjectives = nil
+	return name.String()
 }
 
 // sendDefenseMessages sends narrative messages for a successful defense.

@@ -1,11 +1,13 @@
 package hooks
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -234,6 +236,49 @@ func TestTransportCompanions_MovesCompanionAndClearsAggro(t *testing.T) {
 		"companion must be in destination room")
 	assert.False(t, mob.Character.IsInCombat(),
 		"aggro must be cleared because target (99) is not in dest room")
+}
+
+// #414: the "follows" line is visual and names two creatures; a watcher who
+// makes out only shapes must not read either name, and one who sees clearly
+// still reads both.
+func TestTransportCompanions_FollowLineHidesNamesFromAWatcherInTheDim(t *testing.T) {
+	for _, c := range []struct {
+		name  string
+		lamp  int
+		names bool
+	}{
+		{"lit room", 60, true},
+		{"dim room", 38, false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			cleanup := seedFollowRegistries(t)
+			defer cleanup()
+			old := rooms.LoadRoom(1)
+			old.SkyLight = rooms.SkyLightPtr(0)
+			old.Lamp = rooms.LampPtr(c.lamp)
+
+			owner := newOwnerWithCompanion(1, 2)
+			watcher := users.NewTestUser(2, "watcher", "Watcher", 9001)
+			watcher.Character.RoomId = 1
+			defer users.SeedUsersForTest(map[int]*users.UserRecord{1: owner, 2: watcher})()
+			old.AddPlayer(2)
+			_ = events.DrainQueuedMessagesForTest(2)
+
+			TransportCompanions(owner, 1, 2)
+
+			got := strings.Join(events.DrainQueuedMessagesForTest(2), "")
+			if !strings.Contains(got, "follows") {
+				t.Fatalf("the watcher read no follow line: %q", got)
+			}
+			hasNames := strings.Contains(got, "Wolf") && strings.Contains(got, "Owner")
+			if hasNames != c.names {
+				t.Errorf("names shown = %v, want %v: %q", hasNames, c.names, got)
+			}
+			if !c.names && (strings.Contains(got, "Wolf") || strings.Contains(got, "Owner")) {
+				t.Errorf("a watcher who sees only shapes read a name: %q", got)
+			}
+		})
+	}
 }
 
 // ─── PushCompanionsToRoom tests ───────────────────────────────────────────────

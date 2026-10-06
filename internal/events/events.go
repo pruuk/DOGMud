@@ -591,6 +591,27 @@ func DrainQueuedItemOwnershipForTest(userId int) []ItemOwnership {
 	return found
 }
 
+// DrainQueuedEquipmentChangesForTest removes every EquipmentChange event from
+// the global queue and returns them.
+//
+// FOR TEST USE ONLY. Mutates the queue.
+func DrainQueuedEquipmentChangesForTest() []EquipmentChange {
+	qLock.Lock()
+	defer qLock.Unlock()
+	var found []EquipmentChange
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if ec, ok := pe.event.(EquipmentChange); ok {
+			found = append(found, ec)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // DrainQueuedVitalsChangedForTest removes all CharacterVitalsChanged events
 // from the global queue for the given userId and returns them. Pass 0 to drain
 // every CharacterVitalsChanged event regardless of user.
