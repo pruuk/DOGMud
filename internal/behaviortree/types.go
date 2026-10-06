@@ -111,6 +111,12 @@ type TreeDef struct {
 	Tree         NodeDef            `yaml:"tree" json:"tree"`
 	GoalWeights  map[string]float64 `yaml:"goal_weights,omitempty" json:"goal_weights,omitempty"`   // chunk 4.2
 	DefaultGoals []GoalDefault      `yaml:"default_goals,omitempty" json:"default_goals,omitempty"` // chunk 4.3
+
+	// Speech and Chatter are an item tree's voice (item behaviour slice 2,
+	// Rule 16): line pools by name, read by `speak`, and the pacing level
+	// of its ambient lines. Only an item tree may carry them.
+	Speech  map[string][]string `yaml:"speech,omitempty" json:"speech,omitempty"`
+	Chatter string              `yaml:"chatter,omitempty" json:"chatter,omitempty"`
 }
 
 // GoalDefault declares one default goal to seed on a fresh mob whose

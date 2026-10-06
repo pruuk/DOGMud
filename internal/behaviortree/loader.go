@@ -42,6 +42,9 @@ func LoadArchetypeYAMLFromFile(path string) (Node, map[string]float64, []GoalDef
 	if err := yaml.Unmarshal(data, &def); err != nil {
 		return nil, nil, nil, fmt.Errorf("parse error: %w", err)
 	}
+	if err := refuseItemVoice(def); err != nil {
+		return nil, nil, nil, err
+	}
 	// Archetype trees compile under the root label "arch" (per-mob and
 	// room trees use "root"). Cooldown/delay decorator state keys are
 	// positional (path + "_cooldown" / "_delay"), and a composed mob
@@ -65,6 +68,9 @@ func LoadTreeFromBytes(data []byte) (Node, error) {
 	if err := yaml.Unmarshal(data, &def); err != nil {
 		return nil, fmt.Errorf("parse error: %w", err)
 	}
+	if err := refuseItemVoice(def); err != nil {
+		return nil, err
+	}
 	return compileNode(def.Tree, "root")
 }
 
@@ -74,23 +80,39 @@ func LoadTreeFromBytes(data []byte) (Node, error) {
 // node is being compiled for.
 const itemRootLabel = "item"
 
-// LoadItemTreeFromFile reads an item tree YAML file and compiles it.
-func LoadItemTreeFromFile(path string) (Node, error) {
+// LoadItemTreeFromFile reads an item tree YAML file and compiles it,
+// returning its voice too (nil when it has no speech).
+func LoadItemTreeFromFile(path string) (Node, *ItemVoice, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return LoadItemTreeFromBytes(data)
+	return loadItemTreeDef(data)
 }
 
 // LoadItemTreeFromBytes parses an item tree and compiles it under the item
 // root label, which holds every node to the item-safe allowlist (Rule 8).
 func LoadItemTreeFromBytes(data []byte) (Node, error) {
+	node, _, err := loadItemTreeDef(data)
+	return node, err
+}
+
+// loadItemTreeDef parses an item tree, checks its voice (item behaviour
+// slice 2) and compiles its tree.
+func loadItemTreeDef(data []byte) (Node, *ItemVoice, error) {
 	var def TreeDef
 	if err := yaml.Unmarshal(data, &def); err != nil {
-		return nil, fmt.Errorf("parse error: %w", err)
+		return nil, nil, fmt.Errorf("parse error: %w", err)
 	}
-	return compileNode(def.Tree, itemRootLabel)
+	voice, err := itemVoiceFrom(def)
+	if err != nil {
+		return nil, nil, err
+	}
+	node, err := compileNode(def.Tree, itemRootLabel)
+	if err != nil {
+		return nil, nil, err
+	}
+	return node, voice, nil
 }
 
 // isItemTreePath reports whether a compile path belongs to an item tree.

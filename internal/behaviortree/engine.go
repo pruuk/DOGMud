@@ -22,6 +22,7 @@ type Engine struct {
 	archetypeDefaultGoals map[string][]GoalDefault      // chunk 4.3 — per-archetype default goals
 	itemTrees             map[string]Node               // item tree name → compiled root node (lighting 5e)
 	noItemTree            map[string]bool               // item tree name → its file failed to load
+	itemVoices            map[string]*ItemVoice         // item tree name → its voice, when it has speech (item behaviour slice 2)
 	queue                 []DelayedAction
 }
 
@@ -44,6 +45,7 @@ func init() {
 		archetypeDefaultGoals: make(map[string][]GoalDefault),
 		itemTrees:             make(map[string]Node),
 		noItemTree:            make(map[string]bool),
+		itemVoices:            make(map[string]*ItemVoice),
 	}
 	// A mob rename/re-zone moves its behavior file (the path embeds both) —
 	// registered here because mobs cannot import behaviortree.
@@ -209,15 +211,26 @@ func (e *Engine) EvictRoomTree(roomId int) {
 // under the root label "item" and the item-safe allowlist. Clears any
 // negative entry.
 func (e *Engine) LoadItemTree(name string, path string) error {
-	node, err := LoadItemTreeFromFile(path)
+	node, voice, err := LoadItemTreeFromFile(path)
 	if err != nil {
 		return err
 	}
+	e.installItemTree(name, node, voice)
+	return nil
+}
+
+// installItemTree caches a compiled item tree and its voice (nil when it
+// has no speech) and clears any negative entry.
+func (e *Engine) installItemTree(name string, node Node, voice *ItemVoice) {
 	e.mu.Lock()
 	e.itemTrees[name] = node
+	if voice != nil {
+		e.itemVoices[name] = voice
+	} else {
+		delete(e.itemVoices, name)
+	}
 	delete(e.noItemTree, name)
 	e.mu.Unlock()
-	return nil
 }
 
 // GetItemTree returns the cached item tree by name, or nil.
@@ -225,6 +238,14 @@ func (e *Engine) GetItemTree(name string) Node {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.itemTrees[name]
+}
+
+// GetItemVoice returns the named item tree's voice, or nil when the tree is
+// not loaded or has no speech (item behaviour slice 2).
+func (e *Engine) GetItemVoice(name string) *ItemVoice {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.itemVoices[name]
 }
 
 // HasNoItemTree reports whether the named item tree failed to load.
@@ -247,6 +268,7 @@ func (e *Engine) SetNoItemTree(name string) {
 func (e *Engine) EvictItemTree(name string) {
 	e.mu.Lock()
 	delete(e.itemTrees, name)
+	delete(e.itemVoices, name)
 	delete(e.noItemTree, name)
 	e.mu.Unlock()
 }
