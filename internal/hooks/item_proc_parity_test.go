@@ -254,6 +254,10 @@ var procParityScenarios = []procParityScenario{
 			fire("on_spell_hit", c, &foe.Character, nil, 20)
 		}, func() string { return procParityState(c, foe) })
 	}},
+	// all_on_kill fires the kill through MobDeathItemProcs on both paths and
+	// ignores the dispatcher it is given. It proves only that a kill with
+	// these items worn changes nothing and draws nothing: no shipped item
+	// has an on_kill proc.
 	{"all_on_kill", func(t *testing.T, room *rooms.Room, fire procDispatch) string {
 		u := procParityBearer(t, room, 40183, 40185, 40186)
 		c := u.Character
