@@ -106,6 +106,9 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// (M4d PR 2, Task 4).
 	flushBlindCombatNotices()
 
+	// Once-per-fight glare notice for dazzled combatants (#319).
+	flushGlareCombatNotices()
+
 	return events.Continue
 }
 

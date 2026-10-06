@@ -576,6 +576,11 @@ func dispatchCritAndMessaging(atk, def actions.Actor, res *combat.AttackResult) 
 	// sent until flushBlindCombatNotices runs at end of round.
 	markBlindCombatant(atk, srcCanSee)
 	markBlindCombatant(def, tgtCanSee)
+	// #319: the once-per-fight glare notice, for a player who sees clearly
+	// while too much light costs them. Same verdicts, same record-only seam;
+	// flushGlareCombatNotices sends.
+	markGlareCombatant(atk, srcCanSee)
+	markGlareCombatant(def, tgtCanSee)
 
 	// Crit effects (riposte / sweep / bash) compute side-specific text.
 	critResult := applyCritEffects(atkChar, defChar, *res, atkRoom)
