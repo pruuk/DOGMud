@@ -95,7 +95,7 @@ func TestCanonicalizeItemNames_PreservesMinorWords(t *testing.T) {
 	}
 }
 
-// SaveItemSpec calls Validate(), which rejects an invalid spec — so a bad
+// SaveItemSpec calls Validate(), which rejects an invalid spec, so a bad
 // value from the web editor returns an error (red toast) instead of
 // persisting. If this ever fails, SaveItemSpec has stopped validating.
 func TestSaveItemSpec_RejectsInvalidSpec(t *testing.T) {

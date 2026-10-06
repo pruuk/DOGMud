@@ -104,10 +104,7 @@ func TestFireItemProc_HitAndBlockReachTheirSlot(t *testing.T) {
 	}
 }
 
-// A grapple fires for both sides; each reaches its own body armour and
-// wounds the other.
-// A mob's weapon procs through the same entry: the holder resolves from the
-// mob instance id, not a user id.
+// A mob's weapon procs through the same entry, its holder found by instance id.
 func TestFireItemProc_MobWeaponProcs(t *testing.T) {
 	_, bob := seedDispatchProbe(t)
 	const instId = 5150
@@ -127,6 +124,8 @@ func TestFireItemProc_MobWeaponProcs(t *testing.T) {
 	}
 }
 
+// A grapple fires for both sides; each reaches its own body armour and
+// wounds the other.
 func TestFireItemProc_GrappleReachesTheBody(t *testing.T) {
 	alice, bob := seedDispatchProbe(t)
 	t.Cleanup(conditions.SeedConditionRecordsForTest())

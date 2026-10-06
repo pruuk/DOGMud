@@ -299,7 +299,7 @@ func procLifesteal(attacker *characters.Character, damage int, params map[string
 }
 
 // procStealPool drains a pool from the target into the owner. Params:
-// pool (3=conviction; 1=health/2=stamina reserved, unimplemented — YAGNI
+// pool (3=conviction; 1=health/2=stamina reserved, unimplemented: YAGNI
 // until an item needs them), amount_pct (fraction of the TARGET's pool
 // max, capped by what they actually have). Executes only when something
 // was actually stolen (so an empty-pool target does not burn the cooldown).
@@ -336,7 +336,7 @@ func procStealPool(owner, other *characters.Character, params map[string]float64
 }
 
 // procApplyCondition applies the Bleeding record to the target. Params:
-// condition (1=bleeding — the switch is the extension point for future
+// condition (1=bleeding; the switch is the extension point for future
 // condition ids; only bleeding is wired here, YAGNI), duration (the stack's
 // rounds, default 4 if unset/<1), magnitude (per-round health loss, default 2
 // if unset/<1). Each proc that fires adds one stack; see the Stacking flag.
@@ -361,9 +361,9 @@ func procApplyCondition(target *characters.Character, params map[string]float64)
 	return false
 }
 
-// procAoeStun applies the stagger-stun condition (84 — a 1-round Stunned) to every
+// procAoeStun applies the stagger-stun condition (84, a 1-round Stunned) to every
 // hostile, stun-eligible mob in the owner's room. Non-combatants,
-// attack-immune, and charmed mobs are never targeted — stunning someone's
+// attack-immune, and charmed mobs are never targeted: stunning someone's
 // companion or a town NPC would be a prod incident. Returns true if
 // at least one target was stunned (only then is the branch's cooldown armed).
 //
@@ -381,7 +381,7 @@ func procAoeStun(owner *characters.Character, room *rooms.Room, params map[strin
 	}
 	ownerUserId := owner.GetUserId()
 	if ownerUserId <= 0 {
-		// Mob (or unassigned) owner — no-op, see doc comment.
+		// Mob (or unassigned) owner: no-op, see doc comment.
 		return false
 	}
 
@@ -399,7 +399,7 @@ func procAoeStun(owner *characters.Character, room *rooms.Room, params map[strin
 			continue
 		}
 		// Spare non-combatants, attack-immune mobs, and ALL charmed
-		// companions whoever their master is — a non-party bystander's
+		// companions whoever their master is: a non-party bystander's
 		// companion caught in the shockwave would be a prod incident just as
 		// surely as a party member's. mobs.CheckPlayerHarm is the same policy
 		// the player-cast HarmArea path applies in resolveSpell.
