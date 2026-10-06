@@ -18,7 +18,7 @@ playtest instead (owner, 2026-10-06).
 | F7 | A light or darkness record expires inside `Conditions.Trigger` on the round tick (`TriggersLeft` reaches 0), after which `LightNow` stops counting it; its end line goes out at the next turn's prune through `sendConditionEndRoomText`, which judges a light source "as lit" (`SendTextVisualAsLitHidingNames`) and everything else, darkness included, by the room as it is after the change | `internal/conditions/conditions.go:470-516`; `conditions/light.go:43-48`; `hooks/NewRound_UserRoundTick.go:242`; `NewRound_MobRoundTick.go:219`; `hooks/NewTurn_PruneConditions.go:53,112,128-146` |
 | F8 | `Room.VisualSnapshot()` and `Room.SendTextVisualToSnapshot(snap, cat, txt, names, exclude...)` implement the owner rule of 2026-10-05 (a line announcing a change is judged against the state before it resolves); 5d's four darkness sites use them | `internal/rooms/rooms.go:414-470` |
 | F9 | `SendTextVisualAsLit` and `SendTextVisualAsLitHidingNames` have exactly two production callers, F6 and F7; tests and guards name them | `rooms.go:364-380`; `hiding_senders_test.go:116-118`; `hooks/condition_room_text_test.go:331-341`; `messaging_surface_guard_test.go:880,893`; `bauble_finder_view_guard_test.go:99` |
-| F10 | `Character.DarknessTerms` has no production caller; two tests call it | `internal/characters/light.go:17-30`; `rooms/darkness_compose_test.go:49`; `usercommands/darkness_test.go:72` |
+| F10 | `Character.DarknessTerms` has no production caller; one test calls it (corrected in the plan's dry run: `rooms/darkness_compose_test.go:49` only has it in a test name) | `internal/characters/light.go:17-30`; `usercommands/darkness_test.go:72` |
 | F11 | `carriedTerms` looks up a spec once and calls `rec.LightNow(spec)` before `spec.IsDarknessSource()`; `LightNow` with a nil spec returns false (`LightMax(nil)` is 0), so the nil dereference in #221 cannot happen | `internal/rooms/lighting.go:214-230`; `conditions/light.go:24-27,43-52` |
 
 ## Design
@@ -57,7 +57,7 @@ notice itself is unchanged.
 - `SendTextVisualAsLit` and `SendTextVisualAsLitHidingNames` lose their last
   callers and are deleted, with the tests and guard entries that name them.
 
-**4. #221: tidy-ups.** Delete `DarknessTerms`; its two tests read the
+**4. #221: tidy-ups.** Delete `DarknessTerms`; its one test caller reads the
 darkness records another way. The nil guard needs no code (F11); the issue
 records why.
 
