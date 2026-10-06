@@ -275,7 +275,7 @@ options:
         beginner:
         - 'You throw a desperate swing that <ansi fg="cyan-bold">CONNECTS PERFECTLY</ansi> with <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You stumble forward and accidentally deliver a <ansi fg="cyan-bold">CRUSHING BLOW</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> flies wide but somehow lands a <ansi fg="cyan-bold">BONE RATTLING HIT</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You swing wild with your <ansi fg="item">{itemname}</ansi> but somehow land a <ansi fg="cyan-bold">BONE RATTLING HIT</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You flail with your <ansi fg="item">{itemname}</ansi> and by pure luck land a <ansi fg="cyan-bold">DEVASTATING BLOW</ansi>!'
         expert:
         - 'You time a perfect counter and <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -291,7 +291,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CONNECTS PERFECTLY</ansi> with a wild swing!'
         - 'A lucky hit from <ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s wild <ansi fg="item">{itemname}</ansi> somehow lands a <ansi fg="cyan-bold">BONE RATTLING HIT</ansi> on you!'
+        - 'Swinging wild with their <ansi fg="item">{itemname}</ansi>, <ansi fg="{actortype}">{actor}</ansi> somehow lands a <ansi fg="cyan-bold">BONE RATTLING HIT</ansi> on you!'
         - 'By pure luck, <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING BLOW</ansi> on you!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">DEVASTATING COUNTER</ansi>!'
@@ -307,7 +307,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CONNECTS PERFECTLY</ansi> with <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s wild swing somehow <ansi fg="cyan-bold">CRUSHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s wild <ansi fg="item">{itemname}</ansi> somehow lands a <ansi fg="cyan-bold">BONE RATTLING HIT</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Swinging wild with their <ansi fg="item">{itemname}</ansi>, <ansi fg="{actortype}">{actor}</ansi> somehow lands a <ansi fg="cyan-bold">BONE RATTLING HIT</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'By pure luck, <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING BLOW</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">DEVASTATING COUNTER</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
