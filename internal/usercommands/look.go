@@ -512,8 +512,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 }
 
-// noSightRefusal words the refusal of a looker who sees nothing here, shared
-// by look and who. A looker in the dark is told that light, or other eyes,
+// noSightRefusal words the refusal of a looker who sees nothing here. A
+// looker in the dark is told that light, or other eyes,
 // would help; a blinded one is not, since light would not (#364). refused is
 // false for every kind that sees something.
 func noSightRefusal(kind actions.LookKind) (line string, refused bool) {

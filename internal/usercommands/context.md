@@ -19,7 +19,7 @@ The `internal/usercommands` package implements the complete command system for p
 #### **Basic Interaction Commands**
 - **Movement**: `go`, `flee` - Navigation and escape mechanics
 - **Communication**: `say`, `shout`, `whisper`, `emote`, `broadcast` - Player communication
-- **Observation**: `look`, `inspect`, `consider`, `who`, `online` - Information gathering
+- **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering
 - **Inventory**: `inventory`, `get`, `drop`, `give`, `put` - Item management
 - **Drink** (`drink.go`, drink path unification 2026-09-28): `Drink` is a
   wrapper over `actions.Drink`, which holds every drink rule (toxicity, aging,
@@ -553,7 +553,7 @@ a gate.
   lock, the pet at clear sight) lives in `actions.ResolveLook`, shared with
   the mob look; this function switches on `res.Kind` (`actions.LookBlind`,
   `LookTooDark`, `LookRoom`, `LookCreature`, ...) and only words the answer.
-  `noSightRefusal` words the two no-sight kinds for `look` and `Who`: a
+  `noSightRefusal` words the two no-sight kinds for `look`: a
   blinded looker reads "You can't see anything!", one in a room too dark
   is told light or other eyes would help (#364).
 - **`Remove`** (`remove.go`): the `all` branch calls

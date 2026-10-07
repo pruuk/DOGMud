@@ -240,7 +240,6 @@ var (
 		`unmute`:          {UnMute, true, true, true},   // Admin only
 		`use`:             {Use, false, true, false},
 		`whisper`:         {Whisper, true, true, false},
-		`who`:             {Who, true, true, false},
 		`zap`:             {Zap, true, true, true},   // Admin only
 		`zone`:            {Zone, false, true, true}, // Admin only
 		// Special command only used upon creating a new account

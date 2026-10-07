@@ -2,10 +2,11 @@
 
 ## 2026-10-06: Clearer in the dark
 
-- When the room is too dark for you, `look` and `who` now say so: "It is
-  too dark to see. You need light, or eyes that do not need it." If you are
-  blinded, they still say "You can't see anything!", since light will not
-  help.
+- When the room is too dark for you, `look` now says so: "It is too dark
+  to see. You need light, or eyes that do not need it." If you are blinded,
+  it still says "You can't see anything!", since light will not help.
+- `who` now lists everyone who is online, the same as `online`. To see who
+  is in the room with you, use `look`.
 - Fighting in light too bright for your eyes now tells you, once per
   fight, that the glare is weakening your attacks and defense. With combat
   messages set to light, you will not see it.

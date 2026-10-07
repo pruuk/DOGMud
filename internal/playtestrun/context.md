@@ -91,7 +91,8 @@ go run ./cmd/playtestrun scenario `
 Ready JSON includes `blackboard_dir`, `on_actor_stop`, and `actors[]` with
 per-actor `bridge_dir` / `creds` / `username` (login name). Login multi-agent
 characters via **`actor_id`**, never profile-only. In-game targeting (party
-invite, tell, etc.) still uses **character names** from `who`/`look`.
+invite, tell, etc.) still uses **character names** from `online` (or its
+alias `who`) and `look`.
 
 Default scenario wall-clock is **45m**. Lease = wall_clock + ≥5m.
 
