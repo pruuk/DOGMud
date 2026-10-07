@@ -158,9 +158,18 @@ func TestBuyRules_UnstockedItem_FlatPriceRoundsUp(t *testing.T) {
 	assert.Equal(t, 2, offer.Price, "3 gold x 0.5 is 1.5, which rounds up to 2")
 }
 
-// A 1-gold item bought at the price floor from a stocking shop, then sold to a
-// shop that does not stock it, with both barter caps at their shipped maximum,
-// comes back at no more gold than it cost.
+// What this pins, and only this: barter rounding cannot turn a 1-gold item
+// into profit. Bought at the price floor from an overstocked shop and sold to
+// a shop that does not stock it, with both barter caps at their shipped
+// maximum, it comes back at no more gold than it cost: the discounted buy
+// price rounds up and never drops below 1, and the sell bonus adds whole gold
+// rounded down, so a 1-gold offer stays 1.
+//
+// It is NOT a no-arbitrage guarantee. Buying from an overstocked shop and
+// selling to an empty shop that stocks the item, with barter skill, can clear
+// a margin, and the owner ruled on 2026-10-07 that this is intended:
+// realistic arbitrage, short lived because caravans move goods around. Do
+// not tighten this test into a cross-shop invariant.
 func TestBuyRules_FloorPricedItem_MaxBarterSellNoGain(t *testing.T) {
 	cfg := PricingConfigFromBalance()
 	b := configs.GetBalanceConfig()
