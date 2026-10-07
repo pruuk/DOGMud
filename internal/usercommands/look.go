@@ -444,25 +444,33 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
 
 			corpseColor := `mob-corpse`
-			// A player corpse is named "<name> corpse" inside a user-corpse
-			// tag, which Anonymize does not strip, so the dead player's name
-			// is hidden from a shapes-only observer by name. The observer
-			// line calls it "the corpse of <name>" so the hidden form reads
-			// "the corpse of a figure" (not "the a figure corpse").
-			hidden := []string{user.Character.Name}
-			observedCorpse := corpse.DisplayName()
 			if corpse.UserId > 0 {
 				corpseColor = `user-corpse`
-				if corpse.CorpseName == "" {
-					observedCorpse = `corpse of ` + corpse.Character.Name
-				}
-				hidden = append(hidden, corpse.Character.Name)
 			}
+			// A corpse is named inside a mob-corpse or user-corpse tag,
+			// neither an identity tag Anonymize strips, so the dead one's
+			// name, mob or player, is hidden from a shapes-only observer by
+			// name (#428 review). The observer line uses ObservedName ("the
+			// corpse of <name>") so the hidden form reads "the corpse of a
+			// figure", not "the a figure corpse".
+			hidden := []string{user.Character.Name, corpse.Character.Name}
+			observedCorpse := corpse.ObservedName()
 
-			user.SendText(messaging.CategoryRoomDescription, fmt.Sprintf(`You look at the <ansi fg="%s">%s</ansi>.`, corpseColor, corpse.DisplayName()))
+			// The looker's own line follows the looker's sight (#428 review):
+			// FindCorpse matches the word "corpse" by substring, so a
+			// shapes-only looker reaches any corpse and must not be told whose
+			// it is, nor shown a description that would say. The hidden form
+			// is uncolored by kind, as the ground listing is.
+			selfCorpse := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, corpseColor, corpse.DisplayName())
+			if sight != messaging.SightFull {
+				selfCorpse = corpse.NameAt(sight)
+			}
+			user.SendText(messaging.CategoryRoomDescription, fmt.Sprintf(`You look at the %s.`, selfCorpse))
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at the <ansi fg="%s">%s</ansi>.`, user.Character.Name, corpseColor, observedCorpse), hidden, user.UserId)
 
-			if corpse.CorpseDescription != "" {
+			if sight != messaging.SightFull {
+				user.SendText(messaging.CategoryRoomDescription, `You can make out no more than its shape.`)
+			} else if corpse.CorpseDescription != "" {
 				user.SendText(messaging.CategoryRoomDescription, corpse.CorpseDescription)
 			} else {
 				descTxt, _ := templates.Process("character/description-corpse", &corpse.Character, user.UserId)

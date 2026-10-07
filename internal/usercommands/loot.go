@@ -55,6 +55,19 @@ func Loot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	return true, nil
 }
 
+// corpseNameFor is a corpse's name in a line written for user alone (their
+// own loot or get line): the colored DisplayName at clear sight, else
+// Corpse.NameAt's hidden form, uncolored by kind as the ground listing is
+// (#428 review). A shapes-only looker reaches a corpse by the word "corpse"
+// and must not be told whose it is.
+func corpseNameFor(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corpse) string {
+	sight := messaging.ParticipantSight(user.Character, room)
+	if sight == messaging.SightFull {
+		return `<ansi fg="mob-corpse">` + corpse.DisplayName() + `</ansi>`
+	}
+	return corpse.NameAt(sight)
+}
+
 // lootCorpseAll transfers every item and all gold the looter is entitled to
 // from room.Corpses[corpseIdx] into the looter's inventory. It operates on a
 // POINTER into the slice so the loot container mutations persist.
@@ -75,10 +88,11 @@ func lootCorpseAll(user *users.UserRecord, room *rooms.Room, corpseIdx int) {
 	}
 
 	if !corpse.HasLoot() {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`There's nothing to loot from the <ansi fg="mob-corpse">%s</ansi>.`, corpse.DisplayName()))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`There's nothing to loot from the %s.`, corpseNameFor(user, room, corpse)))
 		return
 	}
 
+	corpseName := corpseNameFor(user, room, corpse)
 	tookSomething := false
 
 	// Items first. Copy the slice so removal during iteration is safe.
@@ -98,7 +112,7 @@ func lootCorpseAll(user *users.UserRecord, room *rooms.Room, corpseIdx int) {
 			corpse.Loot.RemoveItem(it)
 
 			user.SendText(messaging.CategorySystem,
-				fmt.Sprintf(`You take the <ansi fg="itemname">%s</ansi> from the <ansi fg="mob-corpse">%s</ansi>.`, it.DisplayName(), corpse.DisplayName()),
+				fmt.Sprintf(`You take the <ansi fg="itemname">%s</ansi> from the %s.`, it.DisplayName(), corpseName),
 			)
 			tookSomething = true
 		} else {
@@ -116,15 +130,18 @@ func lootCorpseAll(user *users.UserRecord, room *rooms.Room, corpseIdx int) {
 		grantCorpseGold(user, amt)
 
 		user.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`You take <ansi fg="gold">%d gold</ansi> from the <ansi fg="mob-corpse">%s</ansi>.`, amt, corpse.DisplayName()),
+			fmt.Sprintf(`You take <ansi fg="gold">%d gold</ansi> from the %s.`, amt, corpseName),
 		)
 		tookSomething = true
 	}
 
 	if tookSomething {
 		user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
-		room.SendTextVisual(messaging.CategoryLoot,
-			fmt.Sprintf(`<ansi fg="username">%s</ansi> loots the <ansi fg="mob-corpse">%s</ansi>.`, user.Character.Name, corpse.DisplayName()),
+		// Both names hidden per bystander: a mob-corpse tag is not an
+		// identity tag, so a plain SendTextVisual named the corpse (#428).
+		room.SendTextVisualHidingNames(messaging.CategoryLoot,
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> loots the <ansi fg="mob-corpse">%s</ansi>.`, user.Character.Name, corpse.ObservedName()),
+			[]string{user.Character.Name, corpse.Character.Name},
 			user.UserId,
 		)
 		sendEncumbranceWarning(user)
@@ -200,7 +217,7 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 	}
 
 	if reassigned == 0 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You have no share to pass on the <ansi fg="mob-corpse">%s</ansi>.`, corpse.DisplayName()))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You have no share to pass on the %s.`, corpseNameFor(user, room, corpse)))
 		return true, nil
 	}
 
@@ -209,7 +226,7 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 		nextName = u.Character.Name
 	}
 	user.SendText(messaging.CategorySystem,
-		fmt.Sprintf(`You pass your share of the <ansi fg="mob-corpse">%s</ansi> to <ansi fg="username">%s</ansi>.`, corpse.DisplayName(), nextName),
+		fmt.Sprintf(`You pass your share of the %s to <ansi fg="username">%s</ansi>.`, corpseNameFor(user, room, corpse), nextName),
 	)
 
 	return true, nil

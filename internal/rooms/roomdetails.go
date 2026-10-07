@@ -373,7 +373,8 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// that color alone would sort them. The count stays. None: nobody is
 	// listed. look refuses before it gets here, but who and peering into
 	// the next room do not.
-	switch messaging.ParticipantSight(user.Character, r) {
+	sight := messaging.ParticipantSight(user.Character, r)
+	switch sight {
 	case messaging.SightShapes:
 		figures := make([]string, 0, len(details.VisiblePlayers)+len(details.VisibleMobs))
 		for range len(details.VisiblePlayers) + len(details.VisibleMobs) {
@@ -412,6 +413,22 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 	for _, c := range r.Corpses {
 		if c.Prunable {
+			continue
+		}
+
+		// Corpses follow the viewer's sight as the roster does (#428, and
+		// the ground-listing half of #276). Shapes: one entry per corpse in
+		// Corpse.NameAt's hidden form ("corpse of a figure"), the form every
+		// corpse line takes for a reader who cannot see clearly, uncolored
+		// by kind and never counted by name, so a mob's corpse and a
+		// player's read alike. None: no corpses listed.
+		switch sight {
+		case messaging.SightShapes:
+			if c.MobId > 0 || c.UserId > 0 {
+				details.VisibleCorpses = append(details.VisibleCorpses, c.NameAt(messaging.SightShapes))
+			}
+			continue
+		case messaging.SightNone:
 			continue
 		}
 

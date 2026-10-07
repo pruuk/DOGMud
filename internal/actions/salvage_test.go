@@ -156,6 +156,8 @@ func TestSalvage_CorpseVanished_NamesTheMob(t *testing.T) {
 	defer cleanup()
 
 	room := newSalvageTestRoom(t, 9405) // no corpses present
+	// Lit: below clear sight the line no longer names the mob (#428 review).
+	room.Lamp = rooms.LampPtr(90)
 	user := newSalvageFakeActor(t, "SalvageTester3", room, true, 3)
 
 	result := Salvage(user, SalvageOptions{

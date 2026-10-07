@@ -43,7 +43,7 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 				`<ansi fg="red">You don't have "%s" and there's no corpse of that name here.</ansi>`, rest))
 			return true, nil
 		}
-		return startCorpseSalvage(user, corpse)
+		return startCorpseSalvage(user, room, corpse)
 	}
 
 	// Require the item to be CARRIED rather than worn or wielded.
@@ -135,7 +135,7 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 // startCorpseSalvage initiates a corpse salvage activity. Called from
 // Salvage when the player's argument matches a room corpse rather than
 // an inventory item.
-func startCorpseSalvage(user *users.UserRecord, corpse rooms.Corpse) (bool, error) {
+func startCorpseSalvage(user *users.UserRecord, room *rooms.Room, corpse rooms.Corpse) (bool, error) {
 
 	// Player corpses are out of scope for v1.
 	if corpse.MobId <= 0 {
@@ -194,9 +194,10 @@ func startCorpseSalvage(user *users.UserRecord, corpse rooms.Corpse) (bool, erro
 	}
 	user.Character.SetMiscData("salvage_corpse_round_created", int(corpse.RoundCreated))
 
+	// Named by the salvager's sight (#428 review), as loot names it.
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(
-		`<ansi fg="yellow">You begin carefully working over the <ansi fg="mobname">%s corpse</ansi>...</ansi>`,
-		corpse.Character.Name))
+		`<ansi fg="yellow">You begin carefully working over the %s...</ansi>`,
+		corpseNameFor(user, room, &corpse)))
 
 	return true, nil
 }

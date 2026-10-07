@@ -34,7 +34,7 @@ func Consume(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
-	corpseName := room.Corpses[corpseIdx].Character.Name
+	corpse := room.Corpses[corpseIdx]
 
 	// Remove the corpse
 	room.Corpses = append(room.Corpses[:corpseIdx], room.Corpses[corpseIdx+1:]...)
@@ -44,11 +44,14 @@ func Consume(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if isGolem {
 		// Flesh golems graft fallen flesh onto themselves — stronger and longer regen.
 		_ = mob.Character.AddConditionMagnitude(conditions.ConditionIdRegenerating, 10, 3.0, "grafted corpse")
-		room.SendTextVisual(messaging.CategoryMobIdle,
+		// The corpse's name is hidden by name from a shapes-only watcher: a
+		// mob-corpse tag is not an identity tag Anonymize strips (#428).
+		room.SendTextVisualHidingNames(messaging.CategoryMobIdle,
 			fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi> rips a piece from the fallen <ansi fg="mob-corpse">%s</ansi> and grafts it onto itself! Its form grows more massive.`,
-				mob.Character.Name, corpseName,
+				`<ansi fg="mobname">%s</ansi> rips a piece from the <ansi fg="mob-corpse">%s</ansi> and grafts it onto itself! Its form grows more massive.`,
+				mob.Character.Name, corpse.ObservedName(),
 			),
+			[]string{mob.Character.Name, corpse.Character.Name},
 		)
 	} else {
 		// Standard consume: magnitude 2.0 (2x base regen) for 6 rounds

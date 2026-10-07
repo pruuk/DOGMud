@@ -152,8 +152,11 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 		if actor.IsPlayer() && opts.TargetCorpseMobId != 0 {
 			// Name the mob if we can resolve its spec (corpses inherit the
 			// mob's name), restoring the pre-2.9 "The <mob> corpse is no longer
-			// here." message; fall back to the generic line otherwise.
-			if spec := mobs.GetMobSpec(mobs.MobId(opts.TargetCorpseMobId)); spec != nil && spec.Character.Name != "" {
+			// here." message; fall back to the generic line otherwise, and
+			// for a salvager below clear sight, who is not told whose corpse
+			// it was (#428 review).
+			if spec := mobs.GetMobSpec(mobs.MobId(opts.TargetCorpseMobId)); spec != nil && spec.Character.Name != "" &&
+				messaging.ParticipantSight(actor.GetCharacter(), room) == messaging.SightFull {
 				actor.SendText(messaging.CategoryError, fmt.Sprintf(
 					`<ansi fg="red">The <ansi fg="mobname">%s corpse</ansi> is no longer here.</ansi>`,
 					spec.Character.Name))
@@ -202,17 +205,26 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 
 	storeRecovered(actor, recovered, &result)
 
+	// The corpse is named by sight (#428 review): the salvager's own line
+	// reads Corpse.NameAt at the salvager's sight, and the room line reads
+	// ObservedName with the dead one's name hidden per observer (ActeeName
+	// below). A mobname tag around "<name> corpse" Anonymized to "the a
+	// figure", so the corpse takes the mob-corpse color as elsewhere.
 	salvagerLine := messaging.NoLine
 	if actor.IsPlayer() {
+		corpseName := `<ansi fg="mob-corpse">` + target.DisplayName() + `</ansi>`
+		if sight := messaging.ParticipantSight(actor.GetCharacter(), room); sight != messaging.SightFull {
+			corpseName = target.NameAt(sight)
+		}
 		if len(recovered) > 0 {
 			salvagerLine = messaging.Say(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="green">You salvage the <ansi fg="mobname">%s corpse</ansi> and recover: %s.</ansi>`,
-				target.Character.Name,
+				`<ansi fg="green">You salvage the %s and recover: %s.</ansi>`,
+				corpseName,
 				formatRecovered(recovered)))
 		} else {
 			salvagerLine = messaging.Say(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="red">You attempt to salvage the <ansi fg="mobname">%s corpse</ansi> but recover nothing useful.</ansi>`,
-				target.Character.Name))
+				`<ansi fg="red">You attempt to salvage the %s but recover nothing useful.</ansi>`,
+				corpseName))
 		}
 	}
 
@@ -236,8 +248,8 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 			nameTag = "username"
 		}
 		salvageObserver = messaging.Say(messaging.CategoryMobIdle, fmt.Sprintf(
-			`<ansi fg="%s">%s</ansi> kneels over the <ansi fg="mobname">%s corpse</ansi> and works it for salvage.`,
-			nameTag, actor.GetName(), target.Character.Name))
+			`<ansi fg="%s">%s</ansi> kneels over the <ansi fg="mob-corpse">%s</ansi> and works it for salvage.`,
+			nameTag, actor.GetName(), target.ObservedName()))
 	}
 
 	messaging.SendTrio(messaging.Trio{
@@ -249,7 +261,9 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 		Actor:     actor,
 		ActorId:   actor.GetUserId(),
 		ActorName: actor.GetName(),
-		ActeeName: messaging.NoName,
+		// Nobody receives an actee line, but the dead one's name is still
+		// a name in the lines, hidden from a reader who cannot see it.
+		ActeeName: target.Character.Name,
 		Room:      room,
 	})
 

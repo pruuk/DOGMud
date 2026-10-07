@@ -70,7 +70,9 @@ the destination is short of rather than a fixed manifest. Leftovers are banked
 at the dock rather than carried indefinitely.
 
 Factors are moved with `moveFactorSilently` when they should not be seen
-walking, and `transportFactor` when depart/arrive emotes should fire.
+walking, and `transportFactor` when depart/arrive emotes should fire. The
+emotes go out on `SendTextVisualHidingNames` with the factor's name hidden,
+so a viewer at shapes reads a figure and one who sees nothing reads nothing.
 
 ## Public API
 

@@ -426,7 +426,7 @@ are subject to perception-scaled reaction delays (see below).
 | Action | Params | Description |
 |--------|--------|-------------|
 | `move_toward_tracked` | none | Reads condition 86 + tracking misc data; dispatches `go <direction>` toward the tracked entity (delayed). Fails silently if condition/data missing. |
-| `try_scan` | none | Invoke `actions.Scan` (no delay). Sweeps adjacent rooms; on hostile sighting sets ctx.SoftTarget; returns Success on any sighting (Failure when HostileOnly and no hostile found). |
+| `try_scan` | none | Invoke `actions.Scan` (no delay). Sweeps adjacent rooms (nobody behind a locked exit, #427); on hostile sighting sets ctx.SoftTarget; returns Success on any sighting (Failure when HostileOnly and no hostile found). |
 | `try_search` | none | Invoke `actions.Search` (no delay). Three-tier discovery (exits/stashed/hidden nouns); promotes first hidden hostile to ctx.SoftTarget; ignores Tier-1/Tier-3 non-hostiles. |
 | `try_track` | `target_from` (optional string: "event" or "aggro") | Invoke `actions.Track` (no delay). Reads trail from target (trail-sniff); or activates tracking on resolved target. On adjacent-trail hit applies condition 86; seeds ctx.SoftTarget. |
 

@@ -93,7 +93,7 @@ func Portal(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	newPortal.RoomId = mob.Character.RoomId
 	targetRoom.AddTemporaryExit(newPortalExitName, newPortal)
 
-	room.SendTextVisual(messaging.CategorySpellManifestation,
+	targetRoom.SendTextVisual(messaging.CategorySpellManifestation,
 		fmt.Sprintf(`A %s appears!`, newPortal.Title),
 	)
 

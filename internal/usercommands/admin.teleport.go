@@ -90,6 +90,12 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	if gotoRoomId != 0 || rest == `0` {
 
+		// The room the target leaves, captured before the move. The party
+		// follows from HERE, not from the admin's room: `teleport Bob 500`
+		// used to move the admin's roommates and their charmed mobs (#428
+		// review).
+		fromRoom := rooms.LoadRoom(targetUser.Character.RoomId)
+
 		if err := rooms.MoveToRoom(targetUser.UserId, gotoRoomId); err != nil {
 			user.SendText(messaging.CategorySystem, err.Error())
 
@@ -97,19 +103,22 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 			user.SendText(messaging.CategorySystem, fmt.Sprintf("Moved to room %d.", gotoRoomId))
 
+			// The arrival is seen: the destination room's sight path, so a
+			// viewer who makes out shapes only reads a figure (#428).
 			gotoRoom := rooms.LoadRoom(gotoRoomId)
-			gotoRoom.SendText(messaging.CategorySystem,
+			gotoRoom.SendTextVisualHidingNames(messaging.CategorySystem,
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, targetUser.Character.Name),
+				[]string{targetUser.Character.Name},
 				targetUser.UserId,
 			)
 
 			if party := parties.Get(targetUser.UserId); party != nil {
 
 				// Party leaders can move the whole party.
-				if party.LeaderUserId == targetUser.UserId {
+				if party.LeaderUserId == targetUser.UserId && fromRoom != nil {
 
 					newRoom := rooms.LoadRoom(gotoRoomId)
-					for _, uid := range room.GetPlayers() {
+					for _, uid := range fromRoom.GetPlayers() {
 						if party.IsMember(uid) {
 
 							partyUser := users.GetByUserId(uid)
@@ -117,20 +126,20 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 								continue
 							}
 
-							if partyUser.Character.RoomId != room.RoomId {
+							if partyUser.Character.RoomId != fromRoom.RoomId {
 								continue
 							}
 
 							rooms.MoveToRoom(partyUser.UserId, gotoRoomId)
 							partyUser.SendText(messaging.CategorySystem, fmt.Sprintf("Moved to room %d.", gotoRoomId))
-							room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, partyUser.Character.Name), partyUser.UserId)
+							gotoRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, partyUser.Character.Name), []string{partyUser.Character.Name}, partyUser.UserId)
 
 							Look(``, partyUser, gotoRoom, flags)
 
-							for _, mInstanceId := range room.GetMobs(rooms.FindCharmed) {
+							for _, mInstanceId := range fromRoom.GetMobs(rooms.FindCharmed) {
 								if mob := mobs.GetInstance(mInstanceId); mob != nil {
 									if mob.Character.IsCharmed(partyUser.UserId) {
-										room.RemoveMob(mob.InstanceId)
+										fromRoom.RemoveMob(mob.InstanceId)
 										newRoom.AddMob(mob.InstanceId)
 									}
 								}

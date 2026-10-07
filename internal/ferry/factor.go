@@ -360,16 +360,22 @@ func moveFactorSilently(factor *mobs.Mob, oldRoomId, newRoomId int) {
 // transportFactor is moveFactorSilently plus a departure emote in the old
 // room and an arrival emote in the new room — the visible "the factor is
 // alive" narration for boarding/disembarking.
+//
+// Both emotes describe something seen, so they take the room's sight path
+// with the factor's name hidden (#428 review): a figure at shapes, nothing to
+// a viewer who sees nothing. The plain SendText they used named the factor to
+// everyone, a viewer in the dark included.
 func transportFactor(factor *mobs.Mob, oldRoomId, newRoomId int, departEmote, arriveEmote string) {
 	if oldRoomId == newRoomId {
 		return
 	}
+	names := []string{factor.Character.Name}
 	if curRoom := rooms.LoadRoom(oldRoomId); curRoom != nil {
-		curRoom.SendText(messaging.CategoryMobEmote, departEmote)
+		curRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote, departEmote, names)
 	}
 	moveFactorSilently(factor, oldRoomId, newRoomId)
 	if destRoom := rooms.LoadRoom(newRoomId); destRoom != nil {
-		destRoom.SendText(messaging.CategoryMobEmote, arriveEmote)
+		destRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote, arriveEmote, names)
 	}
 }
 

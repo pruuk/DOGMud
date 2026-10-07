@@ -196,7 +196,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					Get(fmt.Sprintf("%s from %s", item.Name(), corpseName), user, room, flags)
 				}
 				if !hadGold && len(iCopies) == 0 {
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`There's nothing left on the <ansi fg="mob-corpse">%s</ansi>.`, corpseName))
+					user.SendText(messaging.CategorySystem, fmt.Sprintf(`There's nothing left on the %s.`, corpseNameFor(user, room, corpse)))
 				}
 				return true, nil
 			}
@@ -424,10 +424,12 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				grantCorpseGold(user, amt)
 
 				user.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`You take <ansi fg="gold">%d gold</ansi> from the <ansi fg="mob-corpse">%s</ansi>.`, amt, corpse.DisplayName()),
+					fmt.Sprintf(`You take <ansi fg="gold">%d gold</ansi> from the %s.`, amt, corpseNameFor(user, room, corpse)),
 				)
-				room.SendTextVisual(messaging.CategoryLoot,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> loots some <ansi fg="gold">gold</ansi> from the <ansi fg="mob-corpse">%s</ansi>.`, user.Character.Name, corpse.DisplayName()),
+				// Both names hidden per bystander, as loot's room line (#428).
+				room.SendTextVisualHidingNames(messaging.CategoryLoot,
+					fmt.Sprintf(`<ansi fg="username">%s</ansi> loots some <ansi fg="gold">gold</ansi> from the <ansi fg="mob-corpse">%s</ansi>.`, user.Character.Name, corpse.ObservedName()),
+					[]string{user.Character.Name, corpse.Character.Name},
 					user.UserId,
 				)
 			}
@@ -437,7 +439,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		matchItem, found := corpse.Loot.FindItem(rest)
 		if !found {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s in the <ansi fg="mob-corpse">%s</ansi>.`, rest, corpse.DisplayName()))
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s in the %s.`, rest, corpseNameFor(user, room, corpse)))
 			return true, nil
 		}
 
@@ -460,10 +462,11 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			corpse.Loot.RemoveItem(matchItem)
 
 			user.SendText(messaging.CategorySystem,
-				fmt.Sprintf(`You take the <ansi fg="itemname">%s</ansi> from the <ansi fg="mob-corpse">%s</ansi>.`, matchItem.DisplayName(), corpse.DisplayName()),
+				fmt.Sprintf(`You take the <ansi fg="itemname">%s</ansi> from the %s.`, matchItem.DisplayName(), corpseNameFor(user, room, corpse)),
 			)
-			room.SendTextVisual(messaging.CategoryLoot,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> loots the <ansi fg="itemname">%s</ansi> from the <ansi fg="mob-corpse">%s</ansi>...`, user.Character.Name, matchItem.DisplayName(), corpse.DisplayName()),
+			room.SendTextVisualHidingNames(messaging.CategoryLoot,
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> loots the <ansi fg="itemname">%s</ansi> from the <ansi fg="mob-corpse">%s</ansi>...`, user.Character.Name, matchItem.DisplayName(), corpse.ObservedName()),
+				[]string{user.Character.Name, corpse.Character.Name},
 				user.UserId,
 			)
 

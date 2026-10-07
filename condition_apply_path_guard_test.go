@@ -226,7 +226,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// same import shift as above) ───────
 	"internal/hooks/spell_help_effects.go|141": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 	"internal/mobcommands/consume.go|46":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
-	"internal/mobcommands/consume.go|55":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/mobcommands/consume.go|58":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 
 	// ── former combat condition: the spell dot is now one record (Task 8;
 	// re-keyed slice 1b when the dot moved to every round; re-keyed again
