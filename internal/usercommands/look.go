@@ -758,7 +758,7 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 		user.SendText(messaging.CategoryRoomDescription, "")
 	}
 
-	textOut, _ = templates.Process("descriptions/who", details, user.UserId)
+	textOut = actions.RenderRoster(details, user.UserId)
 	if len(textOut) > 0 {
 		user.SendText(messaging.CategoryRoomDescription, textOut)
 	}

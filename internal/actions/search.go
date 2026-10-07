@@ -82,8 +82,7 @@ func showFoundHiders(actor Actor, room *rooms.Room, names []string, kind string)
 			details.VisiblePlayers = append(details.VisiblePlayers, entry)
 		}
 	}
-	text, _ := templates.Process("descriptions/who", details, actor.GetUserId())
-	actor.SendText(messaging.CategorySystem, text)
+	actor.SendText(messaging.CategorySystem, RenderRoster(details, actor.GetUserId()))
 }
 
 // SearchOptions selects what is searched.
