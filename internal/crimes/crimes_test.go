@@ -589,3 +589,51 @@ func TestParallelRecordsConverge(t *testing.T) {
 		}
 	}
 }
+
+// An assault by an unknown perpetrator stores no player id, so the kill
+// finds it by victim instead: same victim template and instance, unresolved,
+// inside the window, and recorded with an unknown perpetrator.
+func TestFindRecentUnknownAssault_MatchesVictim(t *testing.T) {
+	setupTestCrimes(t)
+	victim := &mobs.Mob{MobId: 100}
+	roundForTest = func() uint64 { return 1000 }
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, victim, 250, 467, "z", false)
+
+	got := FindRecentUnknownAssault("f", 100, 250, 100)
+	if got == nil || got.Id != 1 || got.Perpetrator.Type != PerpUnknown {
+		t.Fatalf("FindRecentUnknownAssault: %+v", got)
+	}
+}
+
+func TestFindRecentUnknownAssault_IgnoresOtherVictimsAndIdentified(t *testing.T) {
+	setupTestCrimes(t)
+	roundForTest = func() uint64 { return 1000 }
+	// Unknown assault on a different instance of the same template.
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, &mobs.Mob{MobId: 100}, 251, 467, "z", false)
+	// Unknown assault on a different template with the same instance id.
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, &mobs.Mob{MobId: 101}, 250, 467, "z", false)
+	// Identified assault on the victim: FindRecentAssault's job, not this one.
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpPlayer, Id: 17}, &mobs.Mob{MobId: 100}, 250, 467, "z", false)
+
+	if got := FindRecentUnknownAssault("f", 100, 250, 100); got != nil {
+		t.Errorf("expected nil, got %+v", got)
+	}
+}
+
+func TestFindRecentUnknownAssault_NilWhenOutsideWindowOrResolved(t *testing.T) {
+	setupTestCrimes(t)
+	victim := &mobs.Mob{MobId: 100}
+	roundForTest = func() uint64 { return 1000 }
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, victim, 250, 467, "z", false)
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, victim, 260, 467, "z", false)
+	Resolve("f", 2, "fine")
+
+	roundForTest = func() uint64 { return 1050 }
+	if got := FindRecentUnknownAssault("f", 100, 260, 100); got != nil {
+		t.Errorf("resolved row matched: %+v", got)
+	}
+	roundForTest = func() uint64 { return 2000 }
+	if got := FindRecentUnknownAssault("f", 100, 250, 100); got != nil {
+		t.Errorf("out-of-window row matched: %+v", got)
+	}
+}

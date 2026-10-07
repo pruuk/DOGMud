@@ -312,6 +312,52 @@ func FindRecentAssault(factionId string, userId int, lookbackRounds uint64) *Cri
 	return nil
 }
 
+// FindRecentUnknownAssault returns the most recent unresolved assault
+// against factionId whose perpetrator was recorded as unknown and whose
+// victim is the given mob template + instance, within lookbackRounds.
+//
+// An unknown-perpetrator row stores no player id (that is what keeps the
+// identity out of the log), so FindRecentAssault can never match it and the
+// kill used to write a second, separate murder row (#431). This matches on
+// the victim instead. It cannot attach a kill to an assault on a different
+// mob: the instance id names one living mob, and the template id plus the
+// short window cover an instance id reused after a restart. It can match an
+// unknown assault on the same victim by a different player, but such a row
+// carries no identity and charged nobody rep, so upgrading it in place
+// records the same fact (an unknown hand assaulted, then killed, this mob)
+// and the row count still matches the number of killers.
+//
+// The room is deliberately not matched: a victim that flees after the first
+// blow dies somewhere else, and UpgradeAssaultToMurder refreshes the room.
+func FindRecentUnknownAssault(factionId string, victimMobId int, victimInstanceId int, lookbackRounds uint64) *Crime {
+	fc := loadOrLazyInit(factionId)
+	now := currentRound()
+	if now < lookbackRounds {
+		lookbackRounds = now
+	}
+	cutoff := now - lookbackRounds
+
+	crimeCacheMu.RLock()
+	defer crimeCacheMu.RUnlock()
+	for i := len(fc.Crimes) - 1; i >= 0; i-- {
+		c := fc.Crimes[i]
+		if c.Round < cutoff {
+			break // log is append-order, anything older is older
+		}
+		if c.Kind != KindAssault || c.ResolvedRound != 0 {
+			continue
+		}
+		if c.Perpetrator.Type != PerpUnknown {
+			continue
+		}
+		if c.VictimMobId != victimMobId || c.VictimInstanceId != victimInstanceId {
+			continue
+		}
+		return c
+	}
+	return nil
+}
+
 // UpgradeAssaultToMurder mutates an existing assault crime row to
 // kind=murder, refreshing room + round to the death event. Idempotent
 // — a no-op if the crime is already not an assault. Persists

@@ -127,6 +127,24 @@ func MobDeathFactionRep(e events.Event) events.ListenerReturn {
 				continue
 			}
 
+			// Unknown-perpetrator assault on this victim (#431). The row
+			// stores no player id, so it is found by victim rather than by
+			// userId (see crimes.FindRecentUnknownAssault for why that
+			// cannot attach to a different mob's assault). Nobody
+			// identified the assault, so it charged no rep: the kill pays
+			// the full murder delta if it is identified now, and refunds
+			// nothing if it is not.
+			if assault := crimes.FindRecentUnknownAssault(fid, evt.MobId, evt.InstanceId, 100); assault != nil {
+				crimes.UpgradeAssaultToMurder(fid, assault.Id, perp,
+					evt.InstanceId, evt.RoomId, spec.Zone, false)
+				if perp.Type == crimes.PerpPlayer {
+					factions.BumpRep(fid, userId, deltaMurder)
+					justice.MaybeDeclareBounty(fid, userId, crimes.KindMurder)
+				}
+				writeKnowledgeForWitnesses(witnesses, perp, []int{assault.Id}, evt.RoomId)
+				continue
+			}
+
 			// Fresh murder record (no prior assault row).
 			// hadExternalWitness is false — this is a direct murder,
 			// not an assault-that-escalated.

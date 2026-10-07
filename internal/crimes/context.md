@@ -8,7 +8,7 @@ The `internal/crimes` package maintains per-faction crime logs tracking harmful 
 
 ### Core Files
 - **types.go**: Data structures (`Kind`, `PerpType`, `Perpetrator`, `Crime`, `FactionCrimes`)
-- **crimes.go**: Public API (`Record`, `Resolve`, `FindRecentAssault`, `AllForFaction`, `AllForPlayer`, `WitnessesInRoom`, `IdentifiedPerp`, `UpgradeAssaultToMurder`, `PruneStale`); lazy cache initialization; test seams
+- **crimes.go**: Public API (`Record`, `Resolve`, `FindRecentAssault`, `FindRecentUnknownAssault`, `AllForFaction`, `AllForPlayer`, `WitnessesInRoom`, `IdentifiedPerp`, `UpgradeAssaultToMurder`, `PruneStale`); lazy cache initialization; test seams
 - **persistence.go**: Disk I/O (`loadCrimesFromDisk`, `saveCrimesToDisk`, `SaveAllCrimes`, `ClearCache`); cache management; file path generation; test overrides
 - **crimes_test.go**: Unit tests for all public functions, four-case murder upgrade logic, witness detection, and persistence
 - **persistence_test.go**: Tests for disk I/O, cache lifecycle, and concurrent saves
@@ -23,6 +23,8 @@ The `internal/crimes` package maintains per-faction crime logs tracking harmful 
 
 ### Querying and Resolution
 - **FindRecentAssault(factionId string, userId int, lookbackRounds uint64) \*Crime**: Returns the most recent unresolved assault crime committed by userId against factionId within lookbackRounds. Returns nil if no match. Murder rows and resolved rows are ignored. Used by combat-death hookup to detect assault-to-murder escalation.
+
+- **FindRecentUnknownAssault(factionId string, victimMobId int, victimInstanceId int, lookbackRounds uint64) \*Crime**: Returns the most recent unresolved assault against factionId whose perpetrator is `unknown` and whose victim is that mob template + instance, within lookbackRounds. An unknown row stores no player id, so `FindRecentAssault` can never match it; the death hook falls back to this so an unknown assault upgrades in place instead of the kill writing a second murder row (#431). The room is not matched (a fleeing victim dies elsewhere). It cannot attach to another mob's assault; it can attach to a different player's unknown assault on the same victim, which is harmless because that row carries no identity and charged no rep.
 
 - **AllForFaction(factionId string, includeResolved bool) \[\]\*Crime**: Returns all crimes against the given faction. Pass `includeResolved=false` to skip cleared records.
 
@@ -183,6 +185,11 @@ When a player kills a faction-member mob in `MobDeath_FactionRep.go`, the engine
 - **Condition**: `currentExternal = false` AND `assault.HadExternalWitness = false`
 - **Action**: Upgrade the assault to murder. Set perpetrator to unknown (no one witnessed either blow). Refund the assault rep delta.
 - **Rationale**: The fight was private from start to finish. Record the murder (for future forensic/rumor systems) but clear the rep penalty since no witness was present to establish guilt.
+
+### Unknown-Perpetrator Assault
+- **Condition**: No identified assault by this player, but `FindRecentUnknownAssault` finds an unknown assault on this victim
+- **Action**: Upgrade that row to murder with the kill's perpetrator (identified if an identifying witness is present now, else unknown). Pay the full murder rep delta only if identified; refund nothing, since the unknown assault charged nothing.
+- **Rationale**: One fight, one row per killer, as for an identified assault (#431). Before this the kill left the unknown assault row in place and wrote a second murder row.
 
 ### Fresh Murder (No Prior Assault)
 - **Condition**: No unresolved assault row found
