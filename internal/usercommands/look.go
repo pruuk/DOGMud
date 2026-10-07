@@ -166,8 +166,9 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if len(figures) == 0 {
 			user.SendText(messaging.CategorySystem, `It's too dark to see that way, and nothing warm moves there.`)
 		} else {
-			user.SendText(messaging.CategorySystem, `It's too dark to see that way, but you sense the warmth of:`)
-			user.SendText(messaging.CategorySystem, `  `+strings.Join(figures, `, `))
+			// One sentence: a trailing colon would pick up a period from
+			// messaging.Normalize (appendEndPunct).
+			user.SendText(messaging.CategorySystem, `It's too dark to see that way, but you sense the warmth of `+strings.Join(figures, `, `)+`.`)
 		}
 		return true, nil
 

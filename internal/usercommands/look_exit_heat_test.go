@@ -34,8 +34,8 @@ func TestLookExit_HeatShowsFiguresThroughAnExit(t *testing.T) {
 		{
 			name: "infravision, too dark to see through: two figures by heat",
 			lamp: 30, condition: gateInfraConditionId,
-			want:    []string{"You peer toward the south.", "but you sense the warmth of:", "a figure</ansi>, <ansi fg=\"combat-anon\">a figure"},
-			wantNot: []string{"Bobrick", "Skeleton", "Town Square", "bustling", "too dark to see anything in that direction"},
+			want:    []string{"You peer toward the south.", "but you sense the warmth of <ansi", "a figure</ansi>, <ansi fg=\"combat-anon\">a figure"},
+			wantNot: []string{"Bobrick", "Skeleton", "Town Square", "bustling", "too dark to see anything in that direction", "warmth of:"},
 		},
 		{
 			name: "normal eyes, too dark to see through: nothing",
@@ -154,7 +154,7 @@ func TestLookExit_HeatCountsTheRostersOccupants(t *testing.T) {
 		user, room := seedDarknessGateRoom(t, 0)
 		require.True(t, user.Character.Conditions.AddCondition(gateInfraConditionId, true))
 		out := runGate(t, user, func() (bool, error) { return Look("south", user, room, 0) })
-		require.Contains(t, out, "but you sense the warmth of:")
+		require.Contains(t, out, "but you sense the warmth of <ansi")
 		require.Equal(t, 2, strings.Count(out, "a figure"), "got:\n%s", out)
 		require.NotContains(t, out, "Bobrick")
 		require.NotContains(t, out, "Skeleton")
