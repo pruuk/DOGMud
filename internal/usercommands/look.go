@@ -153,6 +153,24 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("The %s exit is locked.", res.ExitName))
 		return true, nil
 
+	case actions.LookExitShapes:
+		// Too dark to see through, but heat shows the next room's
+		// occupants (lighting plan 6, owner ruling O6): the roster's
+		// anonymous figures, never a name, the room's description or its
+		// items.
+		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer toward the %s.", res.ExitName))
+		if !isSneaking {
+			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> peers toward the %s.`, user.Character.Name, res.ExitName), []string{user.Character.Name}, user.UserId)
+		}
+		figures := actions.FiguresSensedIn(user.Character, rooms.LoadRoom(res.ExitRoomId), user.UserId)
+		if len(figures) == 0 {
+			user.SendText(messaging.CategorySystem, `It's too dark to see that way, and nothing warm moves there.`)
+		} else {
+			user.SendText(messaging.CategorySystem, `It's too dark to see that way, but you sense the warmth of:`)
+			user.SendText(messaging.CategorySystem, `  `+strings.Join(figures, `, `))
+		}
+		return true, nil
+
 	case actions.LookExit:
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer toward the %s.", res.ExitName))
 		if !isSneaking {

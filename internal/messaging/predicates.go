@@ -103,6 +103,31 @@ func SeesThroughExit(observer *characters.Character, room RoomVisibility) bool {
 	return ExitThroughWindow(room.LightLevel(), observer.NightVisionStrength(), configs.GetLightingConfig().ExitsAbove)
 }
 
+// SensesHeatThroughExit reports whether an observer whose light test through
+// an exit failed (SeesThroughExit false) still makes out the next room's
+// occupants as shapes by their heat (lighting plan 6, owner ruling O6). It
+// needs infra reach, some sight here (ParticipantSight not SightNone, so a
+// blinded observer senses nothing), and the next room's light at or above
+// minus the reach, the same depth own-room infravision reads to
+// (SightThroughWindow).
+//
+// Heat shows bodies, never names, a room's description or its items, and it
+// never upgrades a view: a caller asks it only after SeesThroughExit has
+// refused. A nil observer or room senses nothing.
+func SensesHeatThroughExit(observer *characters.Character, here, next RoomVisibility) bool {
+	if observer == nil || here == nil || next == nil {
+		return false
+	}
+	reach := observer.InfraReach()
+	if reach <= 0 {
+		return false
+	}
+	if ParticipantSight(observer, here) == SightNone {
+		return false
+	}
+	return next.LightLevel() >= -reach
+}
+
 // FixedLight is a RoomVisibility at one light value. A caller judging many
 // observers in one room reads room.LightLevel() once and passes FixedLight,
 // rather than recomposing the room's light per observer.

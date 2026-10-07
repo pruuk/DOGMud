@@ -133,8 +133,9 @@ func TestDarknessGates_ReadSightNotTheNightVisionFlag(t *testing.T) {
 
 // Seeing THROUGH an exit keeps LightExitsAbove as its threshold for normal
 // eyes. Nightvision shifts that edge down exactly as it shifts the blind and
-// dim edges (by its strength, capped at the window shift cap); infra reach
-// reads heat in the observer's own room and does not reach the next one.
+// dim edges (by its strength, capped at the window shift cap). Infra reach
+// does not pass the light test; since lighting plan 6 (owner ruling O6) heat
+// shows the next room's occupants as figures instead (look_exit_heat_test.go).
 func TestLookDirection_ExitThresholdShiftsWithNightVisionStrength(t *testing.T) {
 	const tooDark = "too dark to see anything in that direction"
 	cases := []struct {
@@ -146,7 +147,7 @@ func TestLookDirection_ExitThresholdShiftsWithNightVisionStrength(t *testing.T) 
 		{"normal eyes at 45 are refused (edge 65)", 45, 0, true},
 		{"strength 24 at 45 peers (edge 41)", 45, gateNightConditionId, false},
 		{"bare flag at 45 is refused (edge 53)", 45, gateNightFlagOnlyId, true},
-		{"infravision at 45 is refused (heat does not reach the next room)", 45, gateInfraConditionId, true},
+		{"infravision at 45 fails the light test and senses heat instead", 45, gateInfraConditionId, true},
 		{"strength 24 at light 0 is refused (it could see nothing here)", 0, gateNightConditionId, true},
 	}
 	for _, c := range cases {
@@ -157,7 +158,8 @@ func TestLookDirection_ExitThresholdShiftsWithNightVisionStrength(t *testing.T) 
 			}
 			out := runGate(t, user, func() (bool, error) { return Look("south", user, room, 0) })
 			if c.refused {
-				require.True(t, strings.Contains(out, tooDark) || strings.Contains(out, tooDarkToSeeLine),
+				require.True(t, strings.Contains(out, tooDark) || strings.Contains(out, tooDarkToSeeLine) ||
+					strings.Contains(out, "It's too dark to see that way"),
 					"must refuse; got:\n%s", out)
 			} else {
 				require.NotContains(t, out, tooDark)

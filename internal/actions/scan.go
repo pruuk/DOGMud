@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -113,11 +114,19 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			// 5c): out through the exit from here, then into the next room.
 			// With faces, names; with shapes, the anonymous figure the room
 			// roster uses, one per creature and uncolored so a mob and a
-			// player read alike; with neither, nobody. The structured
-			// result is left whole for the mob callers.
+			// player read alike; with neither, nobody. When the light here
+			// refuses, heat may still show the next room's occupants as
+			// shapes (lighting plan 6, owner ruling O6); it never upgrades a
+			// view the light grants. The structured result is left whole
+			// for the mob callers.
 			sight := messaging.SightNone
-			if adjRoom := rooms.LoadRoom(s.RoomId); seesOut && adjRoom != nil {
-				sight = messaging.ParticipantSight(viewer, adjRoom)
+			if adjRoom := rooms.LoadRoom(s.RoomId); adjRoom != nil {
+				switch {
+				case seesOut:
+					sight = messaging.ParticipantSight(viewer, adjRoom)
+				case messaging.SensesHeatThroughExit(viewer, room, adjRoom):
+					sight = messaging.SightShapes
+				}
 			}
 			parts := []string{}
 			for _, m := range s.Mobs {
@@ -160,4 +169,36 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 	}
 
 	return result
+}
+
+// FiguresSensedIn is one anonymous figure (messaging.UnseenFigure at
+// SightShapes, the room roster's shapes vocabulary) per creature in room that
+// a viewer would list there: every mob that is not hidden and every player the
+// viewer perceives, leaving out selfUserId. It is what heat shows through an
+// exit (lighting plan 6): a count of bodies, never a name.
+func FiguresSensedIn(viewer *characters.Character, room *rooms.Room, selfUserId int) []string {
+	if room == nil {
+		return nil
+	}
+	n := 0
+	for _, id := range room.GetMobs(rooms.FindAll) {
+		if m := mobs.GetInstance(id); m != nil && !m.Character.IsHidden() {
+			n++
+		}
+	}
+	for _, id := range room.GetPlayers(rooms.FindAll) {
+		if id == selfUserId {
+			continue
+		}
+		u := users.GetByUserId(id)
+		if u == nil || (viewer != nil && !viewer.Perceives(u.Character)) {
+			continue
+		}
+		n++
+	}
+	out := make([]string, 0, n)
+	for range n {
+		out = append(out, messaging.UnseenFigure(messaging.SightShapes))
+	}
+	return out
 }
