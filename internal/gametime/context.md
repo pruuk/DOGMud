@@ -135,6 +135,7 @@ func NightHoursAt(latitudeDegrees float64, dayOfYear int) float64
 func NightAt(latitudeDegrees float64, dayOfYear int, hour float64) bool
 func SunLight(cfg configs.Lighting, dayOfYear int, hour float64) float64
 func MoonLight(cfg configs.Lighting, swiftmoon, wanderer, eye float64) float64
+func CelestialLightAt(cfg configs.Lighting, dayOfYear int, hour, swiftmoon, wanderer, eye float64) float64
 func CelestialLight() float64
 func LampsLitAt(night bool, celestial, streetSky float64, cfg configs.Lighting) bool
 func LampsLit() bool
@@ -179,6 +180,11 @@ func StreetLampSkyFraction() float64
 - `MoonLight` is the three moons' combined contribution (each moon's phase
   from `PhasesAtRound`/`GetAllPhases`, below), interpolated between a
   starlight anchor and a full-moon anchor on a logarithmic intensity axis.
+- `CelestialLightAt` (lighting plan 6) is the pure combine of `SunLight`
+  and `MoonLight` for a day, an hour and three moon fullnesses.
+  `CelestialLight` calls it, and the light goldens and the world guard call
+  it directly for moments no round gives (every moon new, or every moon
+  full), so they cannot drift from the live sky.
 - `CelestialLight` combines both into the sky's light for the whole world at
   the current round, memoized per round so 500 `Room.LightLevel()` calls in
   one round compute it once. It reads `PhasesAtRound(round)`, never

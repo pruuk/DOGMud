@@ -7,7 +7,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
-	"github.com/GoMudEngine/GoMud/internal/lightscale"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -28,8 +27,9 @@ import (
 //
 // It loads the real world the way the night-trade guard
 // (shop_night_trade_guard_test.go) and the lighting goldens do, and composes
-// every room through rooms.LightTermsAtForTest with the celestial term built
-// on the same operator gametime.CelestialLight uses. Nothing is prepared, so
+// every room through rooms.LightTermsAtForTest with the celestial term from
+// gametime.CelestialLightAt, the function gametime.CelestialLight calls.
+// Nothing is prepared, so
 // no mob, carried source or fixture (light or darkness) is in any room: the
 // only terms are the sky, the room's own lamp and the weather.
 //
@@ -108,9 +108,7 @@ func TestNoShippedRoomReadsBelowZeroWithoutDarkness(t *testing.T) {
 	for _, doy := range []int{356, 81, 172} {
 		for hour := 0; hour < 24; hour++ {
 			for _, m := range []float64{0, 0.5, 1} {
-				celestial := lightscale.Combine(cfg.DoublingStep,
-					gametime.SunLight(cfg, doy, float64(hour)),
-					gametime.MoonLight(cfg, m, m, m))
+				celestial := gametime.CelestialLightAt(cfg, doy, float64(hour), m, m, m)
 				samples = append(samples, sample{
 					celestial: celestial,
 					lampsLit: gametime.LampsLitAt(

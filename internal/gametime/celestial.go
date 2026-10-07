@@ -261,8 +261,22 @@ var (
 	celestialKnown bool
 )
 
+// CelestialLightAt is the sky's light for a day of the year, an hour and the
+// three moons' fullness (each in [0,1], as PhasesAtRound reports them): the
+// sun and the moons combined on the light scale, before any sky fraction,
+// lamp or weather. Pure; CelestialLight is it on the current round, and a
+// caller that needs a moment no round of the clock gives (every moon new, or
+// every moon full) calls it directly.
+func CelestialLightAt(cfg configs.Lighting, dayOfYear int, hour, swiftmoon, wanderer, eye float64) float64 {
+	return lightscale.Combine(cfg.DoublingStep,
+		SunLight(cfg, dayOfYear, hour),
+		MoonLight(cfg, swiftmoon, wanderer, eye),
+	)
+}
+
 // CelestialLight is the sky's light at the current round: sun and moons
-// combined, before any sky fraction, lamp or weather is applied.
+// combined, before any sky fraction, lamp or weather is applied
+// (CelestialLightAt on the round's own date and moons).
 func CelestialLight() float64 {
 	round := util.GetRoundCount()
 
@@ -282,10 +296,7 @@ func CelestialLight() float64 {
 	// so it cannot be pinned; this one takes the round we already captured.
 	swift, wander, eye := PhasesAtRound(round)
 
-	celestialValue = lightscale.Combine(cfg.DoublingStep,
-		SunLight(cfg, gd.Day, hour),
-		MoonLight(cfg, swift, wander, eye),
-	)
+	celestialValue = CelestialLightAt(cfg, gd.Day, hour, swift, wander, eye)
 	celestialRound = round
 	celestialKnown = true
 	return celestialValue

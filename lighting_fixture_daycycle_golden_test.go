@@ -46,23 +46,29 @@ func TestLightingFixtureDayCycle(t *testing.T) {
 	t.Cleanup(func() { items.OnRoomHolderIndexed = prevHook })
 
 	prepared := map[int]*rooms.Room{}
+	spawnInfo := map[int][]rooms.SpawnInfo{}
 	for _, id := range fixtureDaycycleRooms {
 		r := rooms.LoadRoom(id)
 		if r == nil {
 			t.Fatalf("room %d failed to load", id)
 		}
+		// Prepare stamps each item spawn's DespawnedRound, and the loaded
+		// room outlives the test, so without restoring it a second run
+		// (-count=2) finds the spawn on its respawn timer and places nothing.
+		spawnInfo[id] = append([]rooms.SpawnInfo(nil), r.SpawnInfo...)
 		r.Prepare(false)
 		prepared[id] = r
 	}
 	// Leave the shared rooms as the other root tests expect them: no
-	// fixture on the floor, nothing lit.
+	// fixture on the floor, nothing lit, and the spawn bookkeeping as loaded.
 	t.Cleanup(func() {
-		for _, r := range prepared {
+		for id, r := range prepared {
 			for _, it := range append([]items.Item(nil), r.Items...) {
 				if it.IsFixture() {
 					r.RemoveItem(it, false)
 				}
 			}
+			r.SpawnInfo = spawnInfo[id]
 		}
 	})
 

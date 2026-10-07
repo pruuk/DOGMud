@@ -70,6 +70,31 @@ func TestStreetLampSkyFractionRegistration(t *testing.T) {
 	}
 }
 
+// CelestialLight is CelestialLightAt on the round's own date and moons, bit
+// for bit, so a golden that calls CelestialLightAt reads the live sky's
+// arithmetic.
+func TestCelestialLightIsCelestialLightAtOnTheRound(t *testing.T) {
+	pinTiming(t, 46.5)
+	original := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCount(original) })
+	t.Cleanup(ClearCelestialMemoForTest)
+	cfg := configs.GetLightingConfig()
+	for _, doy := range []int{356, 81, 172} {
+		for _, hour := range []float64{0, 6, 8.5, 12, 18, 21} {
+			r := roundFor(doy, hour)
+			util.SetRoundCount(r)
+			ClearDateCacheForTest()
+			ClearCelestialMemoForTest()
+			gd := GetDate(r)
+			swift, wander, eye := PhasesAtRound(r)
+			want := CelestialLightAt(cfg, gd.Day, float64(gd.Hour24)+gd.MinuteFloat/60, swift, wander, eye)
+			if got := CelestialLight(); got != want {
+				t.Errorf("day %d hour %v: CelestialLight %v, CelestialLightAt %v", doy, hour, got, want)
+			}
+		}
+	}
+}
+
 // LampsLit reads the live clock: midwinter 08:00 is day (IsNight false) but
 // its clear sky is below the faces edge, so the lamps still burn; noon puts
 // them out; midnight lights them.

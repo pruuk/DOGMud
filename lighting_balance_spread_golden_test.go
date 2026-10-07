@@ -12,7 +12,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
-	"github.com/GoMudEngine/GoMud/internal/lightscale"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -24,8 +23,10 @@ var updateBalanceSpread = flag.Bool("update-lighting-balance-spread", false,
 // balanceSpreadReviewRooms are the 45 rooms of the plan 6 review page (rooms
 // whose text promises light), plus 5105 and 5106 (the holding cells whose
 // night reading went negative under the old arithmetic), 5803 (a room whose
-// text says the street lamps are lit in the evening) and 4111 (the North Gate,
-// home of the arch lantern).
+// text says the street lamps are lit in the evening) and 4111 (the North Gate).
+// Fixtures are deliberately unlit here: nothing is prepared, so 4111 reads
+// without its arch lantern, and the fixture day-cycle golden
+// (lighting_fixture_daycycle_golden_test.go) covers the lantern.
 var balanceSpreadReviewRooms = []int{
 	// Room lamp proposals.
 	3109, 301, 310, 314, 317, 6032, 204, 6200, 488, 493, 496, 497, 498, 503,
@@ -81,9 +82,9 @@ func balanceSpreadSamples() []balanceSpreadSample {
 //
 // The spread is every biome's lowest-numbered room, every room with its own
 // lamp or skylight override, and balanceSpreadReviewRooms. The celestial term
-// is composed here from gametime.SunLight and gametime.MoonLight on the same
-// operator gametime.CelestialLight uses, because no round of the real clock
-// gives all three moons new (or all full) at once.
+// comes from gametime.CelestialLightAt, the pure function gametime.CelestialLight
+// itself calls, at pinned moons, because no round of the real clock gives all
+// three moons new (or all full) at once.
 //
 // It is allowed to move, but only by a diff whose shape was predicted first:
 // see the failure message.
@@ -143,10 +144,7 @@ func TestLightingBalanceSpread(t *testing.T) {
 	cfg := configs.GetLightingConfig()
 	var b strings.Builder
 	for _, s := range balanceSpreadSamples() {
-		celestial := lightscale.Combine(cfg.DoublingStep,
-			gametime.SunLight(cfg, s.Doy, s.Hour),
-			gametime.MoonLight(cfg, s.Moons, s.Moons, s.Moons),
-		)
+		celestial := gametime.CelestialLightAt(cfg, s.Doy, s.Hour, s.Moons, s.Moons, s.Moons)
 		// The lamps follow the sky being composed: the lamplighter sees
 		// this sample's moons, not the live clock's.
 		lampsLit := gametime.LampsLitAt(gametime.NightAt(cfg.WorldLatitude, s.Doy, s.Hour), celestial, gametime.StreetLampSkyFraction(), cfg)
@@ -161,6 +159,14 @@ func TestLightingBalanceSpread(t *testing.T) {
 				biome = bi.BiomeId
 			}
 			terms := r.LightTermsAtForTest(celestial, lampsLit, 1)
+			// The spread records the sky, the lamp and the weather only:
+			// nothing is prepared, so a carried light, a carried darkness
+			// or a lit fixture here means the world load changed under
+			// the golden and the readings no longer mean what they say.
+			if terms.Carried || terms.CarriedLight != 0 || terms.Darkened || terms.Dark != 0 || terms.Fixture != 0 {
+				t.Fatalf("room %d at %s carries light %v (%v), darkness %v (%v) or a fixture %v: the spread must hold none",
+					id, s.Label, terms.Carried, terms.CarriedLight, terms.Darkened, terms.Dark, terms.Fixture)
+			}
 			fmt.Fprintf(&b, "room %d %s biome=%s raw=%.3f level=%d\n", id, want[id], biome, terms.Raw, terms.Level)
 		}
 	}
