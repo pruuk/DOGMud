@@ -78,7 +78,7 @@ func MobDeathFactionRep(e events.Event) events.ListenerReturn {
 		perp := crimes.IdentifiedPerp(userId, witnesses)
 		for _, fid := range factionIds {
 			// Upgrade-in-place if a recent unresolved assault exists.
-			if assault := crimes.FindRecentAssault(fid, userId, 100); assault != nil {
+			if assault := crimes.FindRecentAssault(fid, userId, evt.MobId, evt.InstanceId, 100); assault != nil {
 				// Four-case model for assault → murder upgrade:
 				//
 				// Case A — external witness now: upgrade perp to

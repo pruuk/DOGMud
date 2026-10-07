@@ -275,14 +275,20 @@ func IdentifiedPerp(userId int, w Witnesses) Perpetrator {
 }
 
 // FindRecentAssault returns the most recent unresolved assault
-// crime committed by `userId` against `factionId` within
-// `lookbackRounds`. Used by the combat-death hookup to upgrade
-// in place when a fight escalates from assault to murder.
+// crime committed by `userId` against `factionId`, on the victim mob
+// template + instance given, within `lookbackRounds`. Used by the
+// combat-death hookup to upgrade in place when a fight escalates from
+// assault to murder.
+//
+// The victim is matched the same way FindRecentUnknownAssault matches it,
+// so a player who assaulted guard X and then kills guard Y never turns X's
+// assault row into Y's murder: Y's death finds no row of its own and
+// records a fresh murder, and X's row stays an assault.
 //
 // Returns nil if no match. Murder rows and resolved rows are
 // ignored. Searches in reverse order so the most recent matching
 // assault wins.
-func FindRecentAssault(factionId string, userId int, lookbackRounds uint64) *Crime {
+func FindRecentAssault(factionId string, userId int, victimMobId int, victimInstanceId int, lookbackRounds uint64) *Crime {
 	fc := loadOrLazyInit(factionId)
 	now := currentRound()
 	if now < lookbackRounds {
@@ -302,6 +308,9 @@ func FindRecentAssault(factionId string, userId int, lookbackRounds uint64) *Cri
 			continue
 		}
 		if c.Perpetrator.Type != PerpPlayer || c.Perpetrator.Id != userId {
+			continue
+		}
+		if c.VictimMobId != victimMobId || c.VictimInstanceId != victimInstanceId {
 			continue
 		}
 		if c.Round < cutoff {

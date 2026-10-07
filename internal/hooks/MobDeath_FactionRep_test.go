@@ -629,3 +629,53 @@ func TestMobDeathFactionRep_UnknownAssaultsOnTwoVictimsStaySeparate(t *testing.T
 		}
 	}
 }
+
+// A player who assaulted guard X and then kills guard Y (who has no assault
+// row) must not turn X's assault into Y's murder: X's row stays an assault
+// and Y gets a murder row of its own.
+func TestMobDeathFactionRep_IdentifiedAssaultOnOtherVictimStaysAssault(t *testing.T) {
+	setupFactionsForHookTest(t)
+	const roomId = 467
+	room, cleanupRoom := seedHookRoom(t, roomId)
+	defer cleanupRoom()
+
+	witnessSpec, witnessInst := makeCitizenMob(101, 201, roomId, "witness")
+	xSpec, xInst := makeCitizenMob(100, 200, roomId, "guard x")
+	ySpec, yInst := makeCitizenMob(102, 202, roomId, "guard y")
+	cleanupMobs := mobs.SeedMobsForTest(
+		map[int]*mobs.Mob{100: xSpec, 101: witnessSpec, 102: ySpec},
+		map[int]*mobs.Mob{200: xInst, 201: witnessInst, 202: yInst},
+	)
+	defer cleanupMobs()
+	room.AddMob(201)
+
+	// Player 17 assaulted X; X is still alive.
+	crimes.Record([]string{"thornwall_citizens"}, crimes.KindAssault,
+		crimes.Perpetrator{Type: crimes.PerpPlayer, Id: 17},
+		&mobs.Mob{MobId: 100}, 200, roomId, "Thornwall City", true)
+
+	// Player 17 kills Y outright.
+	MobDeathFactionRep(events.MobDeath{
+		MobId: 102, InstanceId: 202, RoomId: roomId,
+		PlayerDamage: map[int]int{17: 50},
+	})
+
+	got := crimes.AllForFaction("thornwall_citizens", true)
+	if len(got) != 2 {
+		t.Fatalf("expected 2 crimes, got %d: %+v", len(got), got)
+	}
+	for _, c := range got {
+		switch c.VictimInstanceId {
+		case 200:
+			if c.Kind != crimes.KindAssault {
+				t.Errorf("X's row = %+v, want it left as assault", c)
+			}
+		case 202:
+			if c.Kind != crimes.KindMurder {
+				t.Errorf("Y's row = %+v, want murder", c)
+			}
+		default:
+			t.Errorf("unexpected row %+v", c)
+		}
+	}
+}
