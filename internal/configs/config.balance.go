@@ -1208,9 +1208,10 @@ type Balance struct {
 	// LightDoublingStep is how many points on the -100..100 light scale are
 	// worth TWICE as much physical light. It is the single constant relating
 	// the perceptual scale to real light, and it governs three things at once:
-	// combining sources (two equal lamps read one step brighter), applying a
-	// sky fraction (half the light is minus one step) and the shape of the
-	// daylight curve.
+	// combining sources (since lighting plan 6 they add as linear brightness,
+	// so two equal lamps read nearly one step brighter), applying a sky
+	// fraction (half the light is nearly minus one step well above the dim
+	// end) and the shape of the daylight curve.
 	//
 	// Eight means the 100-point span covers about 12.5 doublings, and the
 	// 25-point sight bands are about three doublings wide, so climbing from
@@ -1230,10 +1231,11 @@ type Balance struct {
 	//
 	// 🔴 An earlier draft honoured zero as "this world has no latitude", with
 	// night length falling back to Timing.NightHours. That could not work. Go
-	// cannot distinguish an unset float from an authored zero, and none of the
-	// lighting knobs appear in config.yaml, so the shipped configuration IS a
-	// bare Balance. Honouring zero would have shipped DOGMud at no latitude:
-	// a flat eight-hour night, no seasons, and this entire model unreachable.
+	// cannot distinguish an unset float from an authored zero, and until
+	// lighting plan 6 surfaced it this key was absent from config.yaml, so the
+	// shipped configuration read a bare zero. Honouring zero would have
+	// shipped DOGMud at no latitude: a flat eight-hour night, no seasons, and
+	// this entire model unreachable.
 	//
 	// There is therefore NO path from day length back to Timing.NightHours.
 	// That knob still exists for upstream compatibility but nothing reads it

@@ -137,10 +137,12 @@ func (b *Balance) validateLighting() {
 	// 🔴 An earlier draft had zero HONOURED, meaning "this world has no
 	// latitude, fall back to Timing.NightHours". That was incoherent, and the
 	// incoherence was not academic. Go cannot distinguish an unset float from
-	// an authored zero, and none of these knobs appear in config.yaml, so the
-	// shipped configuration IS a bare Balance. Honouring zero would therefore
-	// have shipped DOGMud at no latitude: a flat eight-hour night, no seasons,
-	// and the entire celestial model built and never once reached.
+	// an authored zero, and until lighting plan 6 surfaced it, WorldLatitude
+	// was absent from config.yaml, so the shipped configuration read a bare
+	// zero. Honouring zero would therefore have shipped DOGMud at no
+	// latitude: a flat eight-hour night, no seasons, and the entire celestial
+	// model built and never once reached. Any config file that omits the key
+	// is in the same position today.
 	//
 	// So zero is unset, and the NightHours fallback is deleted rather than
 	// repaired. An operator who wants an equator-like world of twelve-hour

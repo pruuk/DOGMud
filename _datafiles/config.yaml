@@ -939,11 +939,50 @@ Balance:
   DazzleCap: 0.80
 
   # ── LIGHT: THRESHOLDS ─────────────────────────────────────────────────────
+  # The sight bands of a normal observer on the -100..100 light scale. Below
+  #   LightBlindBelow they see nothing; below LightDimBelow shapes but not
+  #   faces. The pair must be ordered; an invalid pair reverts both to 25/50.
+  LightBlindBelow: 25
+  LightDimBelow: 50
+  # LightExitsAbove: at or above this light a normal observer can look and
+  #   scan through an exit into the next room (lighting plan 6: 55, so a
+  #   lamplit street at night needs a candle or better). Never below
+  #   LightBlindBelow; out of range reverts to 65.
+  LightExitsAbove: 55
+  # LightRealMinimum: the least a room with any real light reads before
+  #   magical darkness is subtracted (lighting plan 6), so a sliver of light
+  #   never rounds to the same 0 as a sealed cave. 1 to LightBlindBelow - 1;
+  #   zero reverts to 3.
+  LightRealMinimum: 3
   # LightDazzleAbove: where the comfortable band ends and too-bright begins
   #   for a normal observer, on the same -100..100 scale. Must sit above
-  #   LightDimBelow (default 50; not set in this file) and at most 100; zero
-  #   reverts to 75.
+  #   LightDimBelow and at most 100; zero reverts to 75.
   LightDazzleAbove: 75
+  # LightDefaultVisionStrength: the window shift of a night vision flag that
+  #   declares no strength of its own. 1 to 24; zero reverts to 12.
+  LightDefaultVisionStrength: 12
+
+  # ── LIGHT: SCALE, SUN AND MOONS ───────────────────────────────────────────
+  # LightDoublingStep: scale points per doubling of light. It governs how
+  #   sources combine, how a sky fraction or weather dims, and the daylight
+  #   curve. Zero or negative reverts to 8.
+  LightDoublingStep: 8
+  # WorldLatitude: degrees north the whole world sits at; it sets day length
+  #   and the seasons. Zero means unset and reverts to 46.5.
+  WorldLatitude: 46.5
+  # LightEquinoxNoon: the open sky's light at noon on an equinox, the sun's
+  #   one calibration point. Zero reverts to 70.
+  LightEquinoxNoon: 70
+  # LightStarlight / LightMoonsFull: the night sky with every moon new and
+  #   with every moon full. Starlight must sit below the full value; an
+  #   invalid pair reverts both to 10/35.
+  LightStarlight: 10
+  LightMoonsFull: 35
+  # The three moons' relative light at full, The Wanderer as 1.0. All three
+  #   at zero reverts the set to 4.0 / 1.0 / 0.5.
+  LightMoonWeightSwiftmoon: 4.0
+  LightMoonWeightWanderer: 1.0
+  LightMoonWeightEye: 0.5
 
   # ── LIGHT: SPELL SCALING (lighting plan 5a) ─────────────────────────────────
   # A light spell (condition with light_strength: magnitude) is cast at
