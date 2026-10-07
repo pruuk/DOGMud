@@ -11,11 +11,10 @@ description: >
   shoring frames the entrance in a timber arch, the posts set in rock
   and spiked crosswise, dark with age and with the slow moisture that
   seeps through basalt from above. The wood has checked and greyed but
-  it holds. Past the frame the dark is complete, a blackness that does
-  not invite the eye further, and out of it the cold keeps coming, steady
-  and unresting, the breath of the ground. Torchlight from somewhere
-  below catches the near wall of the adit and throws shifting orange
-  across the shoring's inner face. The only way on is down. East runs
+  it holds. Past the frame, grey daylight follows the tunnel floor a
+  little way down and then gives out, and out of the dark beyond it the
+  cold keeps coming, steady and unresting, the breath of the ground.
+  The only way on is down. East runs
   back to the high shoulder of the talus; west, a rough trail crests
   the coulee rim and drops into open badland country.
 biome: mountains
@@ -34,26 +33,20 @@ nouns:
   adit: The squared-off entrance to the mine, cut wide enough for two
     abreast and framed in old timber. It is a working mouth -- the
     proportions say extraction, not exploration. The cold air pours
-    out of it without pause, and the dark inside swallows the eye
-    immediately past the shoring. What lies below it is real mine
-    work -- weight-bearing stone, old workings, and no ambient light.
+    out of it without pause. Daylight reaches only the first stretch
+    of tunnel; what lies past that is real mine work, weight-bearing
+    stone and old workings, and no light at all.
   shoring: The timber arch framing the entrance, posts set deep in the
     bluff and crosspieces spiked through them, the whole frame dark
     with age and the seeping moisture from above. The wood has checked
     and greyed but has not given up its hold. Someone drove these
     timbers to last, and so far they have.
-  dark: The absolute blackness inside the adit, a wall of no-light
-    that begins just past the shoring frame and does not relent. The
-    eyes find nothing to work with in it. Only the cold comes out --
-    that, and the faint shifting torchlight from far below that says
-    the dark is not empty, only deep.
-  torchlight: A warm orange shift of light visible on the near wall of
-    the adit, coming from somewhere below the first bend -- too far
-    down to illuminate the entrance, just close enough to say something
-    moves down there, or that someone left a torch burning and has not
-    come back to collect it.
+  dark: The blackness deeper in the adit, past the point where the
+    daylight from the mouth thins out on the tunnel floor. Beyond it
+    the eyes find nothing to work with. Only the cold comes out, steady
+    enough to say the dark is not empty, only deep.
 idlemessages:
 - Cold air pushes steadily out of the <ansi fg="itemname">adit</ansi>, smelling of wet clay and old stone, and raises the fine hairs on your arms.
-- The <ansi fg="itemname">torchlight</ansi> deep in the <ansi fg="itemname">dark</ansi> wavers once and holds, and the <ansi fg="itemname">shoring</ansi> timbers tick with some slow internal settling.
+- Somewhere in the <ansi fg="itemname">dark</ansi> below, loose grit trickles down the tunnel, and the <ansi fg="itemname">shoring</ansi> timbers tick with some slow internal settling.
 x: 34
 y: 18
