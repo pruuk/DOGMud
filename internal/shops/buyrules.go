@@ -67,10 +67,11 @@ func EvaluateBuyRules(
 	//     (scarcity multiplier from current vs RestockQty).
 	//   - Item is NOT in the stock list → flat value × BuyRatio. The
 	//     scarcity concept only makes sense for items the shop actively
-	//     stocks; one-off offhand items shouldn't trigger the 5×
-	//     PriceCeiling, which would push the price above the gold
-	//     reserve and self-reject. (Issue caught 2026-05-04 — Maren
-	//     rejecting cattail cloak, Kerra rejecting arena tower shield.)
+	//     stocks; one-off offhand items shouldn't trigger the
+	//     PriceCeiling (1.5x; it was 5x when this was written), which
+	//     could push the price above the gold reserve and self-reject.
+	//     (Issue caught 2026-05-04: Maren rejecting cattail cloak, Kerra
+	//     rejecting arena tower shield.)
 	// Both round UP to the next gold, as every sell price does (owner
 	// ruling 2026-09-30).
 	var price int

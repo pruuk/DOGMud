@@ -499,3 +499,273 @@ func TestMobDeathFactionRep_CaseC_LoneAssaultLoneMurder(t *testing.T) {
 // configsAlive avoids unused-import warning if configs isn't
 // referenced in an active test body.
 var _ = configs.GetBalanceConfig
+
+// #431: an assault by an unknown perpetrator upgrades in place on the kill,
+// like an identified one, instead of the kill writing a second murder row.
+// Nobody identified the assault, so it charged no rep and nothing is
+// refunded; the murder row stays unknown when the kill is unseen too.
+func TestMobDeathFactionRep_UnknownAssaultUpgradesInPlace_LoneKill(t *testing.T) {
+	setupFactionsForHookTest(t)
+	const roomId = 467
+	_, cleanupRoom := seedHookRoom(t, roomId)
+	defer cleanupRoom()
+
+	victimSpec, victimInst := makeCitizenMob(100, 200, roomId, "victim")
+	cleanupMobs := mobs.SeedMobsForTest(
+		map[int]*mobs.Mob{100: victimSpec},
+		map[int]*mobs.Mob{200: victimInst},
+	)
+	defer cleanupMobs()
+
+	crimes.Record([]string{"thornwall_citizens"}, crimes.KindAssault,
+		crimes.Perpetrator{Type: crimes.PerpUnknown},
+		&mobs.Mob{MobId: 100}, 200, roomId, "Thornwall City", false)
+
+	MobDeathFactionRep(events.MobDeath{
+		MobId: 100, InstanceId: 200, RoomId: roomId,
+		PlayerDamage: map[int]int{17: 50},
+	})
+
+	got := crimes.AllForFaction("thornwall_citizens", true)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 crime (upgraded in place), got %d: %+v", len(got), got)
+	}
+	if got[0].Kind != crimes.KindMurder || got[0].Perpetrator.Type != crimes.PerpUnknown {
+		t.Errorf("row = %+v, want an unknown-perpetrator murder", got[0])
+	}
+	if got[0].Perpetrator.Id != 0 {
+		t.Errorf("unknown row must not carry an id: %+v", got[0].Perpetrator)
+	}
+	if rep := factions.GetRep("thornwall_citizens", 17); rep != 0 {
+		t.Errorf("rep = %d, want 0 (no assault charge, nothing to refund)", rep)
+	}
+}
+
+// An unknown assault followed by a witnessed kill: one row, now identified,
+// and the killer pays the full murder delta because the assault charged
+// nothing.
+func TestMobDeathFactionRep_UnknownAssaultUpgradesInPlace_WitnessedKill(t *testing.T) {
+	setupFactionsForHookTest(t)
+	const roomId = 467
+	room, cleanupRoom := seedHookRoom(t, roomId)
+	defer cleanupRoom()
+
+	witnessSpec, witnessInst := makeCitizenMob(101, 201, roomId, "witness")
+	victimSpec, victimInst := makeCitizenMob(100, 200, roomId, "victim")
+	cleanupMobs := mobs.SeedMobsForTest(
+		map[int]*mobs.Mob{100: victimSpec, 101: witnessSpec},
+		map[int]*mobs.Mob{200: victimInst, 201: witnessInst},
+	)
+	defer cleanupMobs()
+	room.AddMob(201)
+
+	crimes.Record([]string{"thornwall_citizens"}, crimes.KindAssault,
+		crimes.Perpetrator{Type: crimes.PerpUnknown},
+		&mobs.Mob{MobId: 100}, 200, roomId, "Thornwall City", false)
+
+	MobDeathFactionRep(events.MobDeath{
+		MobId: 100, InstanceId: 200, RoomId: roomId,
+		PlayerDamage: map[int]int{17: 50},
+	})
+
+	got := crimes.AllForFaction("thornwall_citizens", true)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 crime (upgraded in place), got %d: %+v", len(got), got)
+	}
+	if got[0].Kind != crimes.KindMurder ||
+		got[0].Perpetrator.Type != crimes.PerpPlayer || got[0].Perpetrator.Id != 17 {
+		t.Errorf("row = %+v, want murder by player 17", got[0])
+	}
+	want := int(configs.GetBalanceConfig().CrimeRepDeltaMurder)
+	if rep := factions.GetRep("thornwall_citizens", 17); rep != want {
+		t.Errorf("rep = %d, want the full murder delta %d", rep, want)
+	}
+}
+
+// Two unknown assaults on two different victims stay separate: killing one
+// victim upgrades only that victim's row.
+func TestMobDeathFactionRep_UnknownAssaultsOnTwoVictimsStaySeparate(t *testing.T) {
+	setupFactionsForHookTest(t)
+	const roomId = 467
+	_, cleanupRoom := seedHookRoom(t, roomId)
+	defer cleanupRoom()
+
+	victimSpec, victimInst := makeCitizenMob(100, 200, roomId, "victim")
+	otherSpec, otherInst := makeCitizenMob(102, 202, roomId, "other")
+	cleanupMobs := mobs.SeedMobsForTest(
+		map[int]*mobs.Mob{100: victimSpec, 102: otherSpec},
+		map[int]*mobs.Mob{200: victimInst, 202: otherInst},
+	)
+	defer cleanupMobs()
+
+	unknown := crimes.Perpetrator{Type: crimes.PerpUnknown}
+	crimes.Record([]string{"thornwall_citizens"}, crimes.KindAssault, unknown,
+		&mobs.Mob{MobId: 100}, 200, roomId, "Thornwall City", false)
+	// The other victim's assault is the most recent row.
+	crimes.Record([]string{"thornwall_citizens"}, crimes.KindAssault, unknown,
+		&mobs.Mob{MobId: 102}, 202, roomId, "Thornwall City", false)
+
+	MobDeathFactionRep(events.MobDeath{
+		MobId: 100, InstanceId: 200, RoomId: roomId,
+		PlayerDamage: map[int]int{17: 50},
+	})
+
+	got := crimes.AllForFaction("thornwall_citizens", true)
+	if len(got) != 2 {
+		t.Fatalf("expected 2 crimes, got %d: %+v", len(got), got)
+	}
+	for _, c := range got {
+		switch c.VictimInstanceId {
+		case 200:
+			if c.Kind != crimes.KindMurder {
+				t.Errorf("killed victim's row = %+v, want murder", c)
+			}
+		case 202:
+			if c.Kind != crimes.KindAssault {
+				t.Errorf("other victim's row = %+v, want it left as assault", c)
+			}
+		default:
+			t.Errorf("unexpected row %+v", c)
+		}
+	}
+}
+
+// A player who assaulted guard X and then kills guard Y (who has no assault
+// row) must not turn X's assault into Y's murder: X's row stays an assault
+// and Y gets a murder row of its own.
+func TestMobDeathFactionRep_IdentifiedAssaultOnOtherVictimStaysAssault(t *testing.T) {
+	setupFactionsForHookTest(t)
+	const roomId = 467
+	room, cleanupRoom := seedHookRoom(t, roomId)
+	defer cleanupRoom()
+
+	witnessSpec, witnessInst := makeCitizenMob(101, 201, roomId, "witness")
+	xSpec, xInst := makeCitizenMob(100, 200, roomId, "guard x")
+	ySpec, yInst := makeCitizenMob(102, 202, roomId, "guard y")
+	cleanupMobs := mobs.SeedMobsForTest(
+		map[int]*mobs.Mob{100: xSpec, 101: witnessSpec, 102: ySpec},
+		map[int]*mobs.Mob{200: xInst, 201: witnessInst, 202: yInst},
+	)
+	defer cleanupMobs()
+	room.AddMob(201)
+
+	// Player 17 assaulted X; X is still alive.
+	crimes.Record([]string{"thornwall_citizens"}, crimes.KindAssault,
+		crimes.Perpetrator{Type: crimes.PerpPlayer, Id: 17},
+		&mobs.Mob{MobId: 100}, 200, roomId, "Thornwall City", true)
+
+	// Player 17 kills Y outright.
+	MobDeathFactionRep(events.MobDeath{
+		MobId: 102, InstanceId: 202, RoomId: roomId,
+		PlayerDamage: map[int]int{17: 50},
+	})
+
+	got := crimes.AllForFaction("thornwall_citizens", true)
+	if len(got) != 2 {
+		t.Fatalf("expected 2 crimes, got %d: %+v", len(got), got)
+	}
+	for _, c := range got {
+		switch c.VictimInstanceId {
+		case 200:
+			if c.Kind != crimes.KindAssault {
+				t.Errorf("X's row = %+v, want it left as assault", c)
+			}
+		case 202:
+			if c.Kind != crimes.KindMurder {
+				t.Errorf("Y's row = %+v, want murder", c)
+			}
+		default:
+			t.Errorf("unexpected row %+v", c)
+		}
+	}
+}
+
+// Two players in the kill's bump set and one unknown-perpetrator assault row
+// on the victim. The hook ranges over toBump, a map, so which player reaches
+// FindRecentUnknownAssault first (and upgrades the row in place) and which
+// gets a fresh murder row is decided by map order, and a party member who
+// never struck can be the one who takes the row over.
+//
+// That order does not change the record, which is why it is left to map
+// order rather than fixed. An unknown-perp assault never carries
+// HadExternalWitness (actions.RecordAssaultCrime sets it only when an
+// external witness identified the striker, which would have made the perp a
+// player), and UpgradeAssaultToMurder overwrites kind, perp, room, round,
+// instance and zone. The upgraded row therefore matches a fresh
+// crimes.Record murder row field for field except its Id, whichever player
+// it ends up naming. The rows are checked as a set, repeatedly, so a run in
+// either order is exercised.
+func TestMobDeathFactionRep_UnknownAssaultTwoKillers(t *testing.T) {
+	for _, witnessed := range []bool{true, false} {
+		name := "lone kill"
+		if witnessed {
+			name = "witnessed kill"
+		}
+		t.Run(name, func(t *testing.T) {
+			for run := 0; run < 20; run++ {
+				setupFactionsForHookTest(t)
+				const roomId = 467
+				room, cleanupRoom := seedHookRoom(t, roomId)
+
+				witnessSpec, witnessInst := makeCitizenMob(101, 201, roomId, "witness")
+				victimSpec, victimInst := makeCitizenMob(100, 200, roomId, "victim")
+				cleanupMobs := mobs.SeedMobsForTest(
+					map[int]*mobs.Mob{100: victimSpec, 101: witnessSpec},
+					map[int]*mobs.Mob{200: victimInst, 201: witnessInst},
+				)
+				if witnessed {
+					room.AddMob(201)
+				}
+
+				crimes.Record([]string{"thornwall_citizens"}, crimes.KindAssault,
+					crimes.Perpetrator{Type: crimes.PerpUnknown},
+					&mobs.Mob{MobId: 100}, 200, roomId, "Thornwall City", false)
+
+				killers := map[int]int{17: 50, 18: 30}
+				MobDeathFactionRep(events.MobDeath{
+					MobId: 100, InstanceId: 200, RoomId: roomId,
+					PlayerDamage: killers,
+				})
+
+				got := crimes.AllForFaction("thornwall_citizens", true)
+				if len(got) != len(killers) {
+					t.Fatalf("run %d: expected %d crimes (one per killer), got %d: %+v",
+						run, len(killers), len(got), got)
+				}
+				named := map[int]int{}
+				for _, c := range got {
+					if c.Kind != crimes.KindMurder || c.VictimInstanceId != 200 ||
+						c.RoomId != roomId || c.HadExternalWitness {
+						t.Errorf("run %d: row = %+v, want a murder of instance 200 in room %d",
+							run, c, roomId)
+					}
+					switch {
+					case witnessed && c.Perpetrator.Type == crimes.PerpPlayer:
+						named[c.Perpetrator.Id]++
+					case !witnessed && c.Perpetrator.Type == crimes.PerpUnknown:
+					default:
+						t.Errorf("run %d: row perp = %+v, witnessed=%v", run, c.Perpetrator, witnessed)
+					}
+				}
+
+				wantRep := 0
+				if witnessed {
+					wantRep = int(configs.GetBalanceConfig().CrimeRepDeltaMurder)
+					for userId := range killers {
+						if named[userId] != 1 {
+							t.Errorf("run %d: player %d named on %d rows, want 1", run, userId, named[userId])
+						}
+					}
+				}
+				for userId := range killers {
+					if rep := factions.GetRep("thornwall_citizens", userId); rep != wantRep {
+						t.Errorf("run %d: player %d rep = %d, want %d (charged once)", run, userId, rep, wantRep)
+					}
+				}
+
+				cleanupMobs()
+				cleanupRoom()
+			}
+		})
+	}
+}

@@ -11,7 +11,8 @@ groups:
   - thief
   - fence
 idlecommands:
-  - 'emote rolls a trinket across his knuckles and murmurs that he buys what others will not'
+  - 'emote rolls a trinket across his knuckles and murmurs that he buys
+    what others will not.'
   - ''
   - 'emote leans against the wall with his arms folded, eyes tracing
     the room at belt height.'

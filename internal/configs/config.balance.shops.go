@@ -8,10 +8,10 @@ func (b *Balance) validateShops() {
 		b.ShopBuyRatio = 0.50
 	}
 	if b.ShopPriceFloor <= 0 {
-		b.ShopPriceFloor = 0.25
+		b.ShopPriceFloor = 0.75
 	}
 	if b.ShopPriceCeiling <= 0 {
-		b.ShopPriceCeiling = 5.0
+		b.ShopPriceCeiling = 1.5
 	}
 	if b.ShopAbundanceThreshold <= 0 {
 		b.ShopAbundanceThreshold = 3.0

@@ -316,7 +316,7 @@ func TickMobCraft(mob *Mob, room messaging.RoomVisibility) *CraftResult {
 			}
 		}
 
-		cfg := shops.DefaultPricingConfig()
+		cfg := shops.PricingConfigFromBalance()
 		// Per-ingredient reserve: the crafter will not consume an ingredient
 		// if doing so would drop its stock below MaxStock×reservePct (floor 1).
 		// This keeps at least 25% (by default) of each ingredient available

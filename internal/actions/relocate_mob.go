@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -89,9 +90,9 @@ func ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 // slice 6, owner ruling D1); the movement sounds play for both, as they do
 // on the player path.
 func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.Room, sneaking bool) {
-	enterFrom := `somewhere`
+	enterFrom := `from somewhere`
 	if back := dest.FindExitTo(from.RoomId); back != `` {
-		enterFrom = fmt.Sprintf(`the <ansi fg="exit">%s</ansi>`, back)
+		enterFrom = exit.FromPhrase(back)
 	}
 
 	from.RemoveMob(mob.InstanceId)
@@ -103,13 +104,13 @@ func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.R
 	if !sneaking {
 		from.SendTextVisualWithAudio(messaging.CategoryRoomExit,
 			fmt.Sprintf(string(c.ExitRoomMessageWrapper),
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaves towards the <ansi fg="exit">%s</ansi> exit.`, mob.Character.Name, exitName),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaves %s.`, mob.Character.Name, exit.DeparturePhrase(exitName)),
 			),
 			`You hear footsteps moving away.`)
 
 		dest.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
 			fmt.Sprintf(string(c.EnterRoomMessageWrapper),
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> enters from %s.`, mob.Character.Name, enterFrom),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> enters %s.`, mob.Character.Name, enterFrom),
 			),
 			`You hear footsteps approaching.`)
 

@@ -2,6 +2,7 @@ package justice
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -1003,5 +1004,67 @@ func TestExecuteArrest_PlayerReadsTheJailStartLineAndHoldsTheCondition(t *testin
 	}
 	if count != 1 {
 		t.Errorf("the arrested player read the jail start line %d times, want exactly 1", count)
+	}
+}
+
+// #430: the arrest flavor line is CategorySystem, which the messaging pipeline
+// never wraps (it is a mixed bucket of one-liners and tables), so the two
+// sentences went out as one 107-column line. Every line the player reads
+// must fit their line width.
+func TestExecuteArrest_ArrestFlavorFitsTheLineWidth(t *testing.T) {
+	const arrestedUserId = 8802
+
+	origCell := cellRoomFn
+	origMove := aMoveFn
+	origDecay := aDecayFn
+	origNow := bNowFn
+	t.Cleanup(func() {
+		cellRoomFn = origCell
+		aMoveFn = origMove
+		aDecayFn = origDecay
+		bNowFn = origNow
+	})
+	aMoveFn = func(userId int, toRoomId int, isSpawn ...bool) error { return nil }
+	cellRoomFn = func(faction string) int { return 5106 }
+	aDecayFn = func() int { return 5 }
+	bNowFn = func() uint64 { return 100 }
+
+	restoreConditions := conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		jailedConditionId: {
+			ConditionId:   jailedConditionId,
+			Name:          "Jailed",
+			Flags:         []conditions.Flag{conditions.SilentStart},
+			TriggerCount:  1,
+			RoundInterval: 1,
+		},
+	})
+	defer restoreConditions()
+
+	u := users.NewTestUser(arrestedUserId, "jailbird2", "Jailbird", 0)
+	u.LineWidth = 80
+	restoreUsers := users.SeedUsersForTest(map[int]*users.UserRecord{arrestedUserId: u})
+	defer restoreUsers()
+	events.DrainQueuedMessagesForTest(arrestedUserId)
+
+	// A long faction slug stands in for a long display name.
+	if ok := ExecuteArrest(u.Character, arrestedUserId, "thornwall_guards", false); !ok {
+		t.Fatalf("ExecuteArrest should succeed when the faction has a cell")
+	}
+
+	tags := regexp.MustCompile(`<[^>]*>`)
+	found := false
+	for _, msg := range events.DrainQueuedMessagesForTest(arrestedUserId) {
+		if !strings.Contains(msg, "A guard seizes you") {
+			continue
+		}
+		found = true
+		for _, line := range strings.Split(strings.TrimRight(tags.ReplaceAllString(msg, ""), "\n"), "\n") {
+			if n := len([]rune(line)); n > 80 {
+				t.Errorf("arrest line runs %d columns, want <= 80: %q", n, line)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("the arrested player never read the arrest line")
 	}
 }

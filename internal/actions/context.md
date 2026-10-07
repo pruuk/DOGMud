@@ -630,6 +630,13 @@ hand-rolls a room line any more. `internal/hooks/justice_wiring.go`'s guard
 The `Social` files row (`say.go`, `emote.go`, `emote_aliases.go`) gains
 `shout.go` and `room_lines.go`.
 
+`emote.go` has two formatters. `FormatEmoteText` hard-wraps at 80 with CRLF,
+for the player `CategoryEmote`, which the messaging pipeline does not wrap.
+`FormatMobEmoteText` is the same line unwrapped, for a mob's
+`CategoryMobEmote`, which the pipeline does wrap at each reader's width.
+Using the pre-wrapped one for a mob wrapped the line twice and stranded a
+word on its own line (#430).
+
 ---
 
 ## Naming and aiming in the dark (follow-up slice A)
@@ -1800,6 +1807,7 @@ the rest are ordinary verbs.
 | Casting | `cast.go`, `cast_interrupt.go` |
 | Flee | `flee.go`, `relocate_mob.go` |
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |
+| Room roster | `roster.go` (`RenderRoster`: the "Also here:" line from `descriptions/who`, wrapped to the reader's width because neither of its categories is pipeline-wrapped; `look` and a search's find both send it) |
 | Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `search_bauble.go` (roll and delayed delivery), `search_feature.go` (`search <feature>`), `scan.go`, `track.go`, `steal.go`, `steal_pocket.go` (a player's pickpocket pause and bauble) |
 | Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |

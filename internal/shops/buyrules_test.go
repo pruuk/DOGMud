@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
@@ -119,8 +120,8 @@ func TestBuyRules_GeneralStoreRejectsUntagged(t *testing.T) {
 
 func TestBuyRules_UnstockedItem_FlatPrice(t *testing.T) {
 	// Regression for the 2026-05-04 hotfix: vendors used to price
-	// items they don't normally stock at the 5x scarcity ceiling
-	// (current=0, restock=1 → ratio=0 → PriceCeiling=5.0), which
+	// items they don't normally stock at the scarcity ceiling
+	// (current=0, restock=1 → ratio=0 → PriceCeiling), which
 	// could push the offer above the gold reserve and self-reject.
 	// New rule: unstocked items get flat value × BuyRatio.
 	item := makeItem(items.ItemSpec{
@@ -136,7 +137,7 @@ func TestBuyRules_UnstockedItem_FlatPrice(t *testing.T) {
 	offer := EvaluateBuyRules(item, shop, "", false, cfg, nil)
 	expected := int(math.Ceil(60 * cfg.BuyRatio))
 	assert.Equal(t, expected, offer.Price,
-		"unstocked items should price at flat value × BuyRatio, not the 5x scarcity ceiling")
+		"unstocked items should price at flat value × BuyRatio, not the scarcity ceiling")
 }
 
 // Every sell price rounds up to the next gold (owner ruling 2026-09-30), the
@@ -155,6 +156,46 @@ func TestBuyRules_UnstockedItem_FlatPriceRoundsUp(t *testing.T) {
 	cfg.BuyRatio = 0.5
 	offer := EvaluateBuyRules(item, shop, "", false, cfg, nil)
 	assert.Equal(t, 2, offer.Price, "3 gold x 0.5 is 1.5, which rounds up to 2")
+}
+
+// What this pins, and only this: barter rounding cannot turn a 1-gold item
+// into profit. Bought at the price floor from an overstocked shop and sold to
+// a shop that does not stock it, with both barter caps at their shipped
+// maximum, it comes back at no more gold than it cost: the discounted buy
+// price rounds up and never drops below 1, and the sell bonus adds whole gold
+// rounded down, so a 1-gold offer stays 1.
+//
+// It is NOT a no-arbitrage guarantee. Buying from an overstocked shop and
+// selling to an empty shop that stocks the item, with barter skill, can clear
+// a margin, and the owner ruled on 2026-10-07 that this is intended:
+// realistic arbitrage, short lived because caravans move goods around. Do
+// not tighten this test into a cross-shop invariant.
+func TestBuyRules_FloorPricedItem_MaxBarterSellNoGain(t *testing.T) {
+	cfg := PricingConfigFromBalance()
+	b := configs.GetBalanceConfig()
+	maxDiscount := float64(b.BarterMaxDiscount)
+	maxBonus := float64(b.BarterMaxBonus)
+	assert.Greater(t, maxBonus, 0.0)
+
+	item := makeItem(items.ItemSpec{
+		ItemId:           100,
+		Value:            1,
+		Type:             items.Object,
+		VendorCategories: []string{"alchemy"},
+	})
+
+	// The stocking shop is overstocked: its sell price sits at the floor.
+	stockEntry := &StockEntry{ItemId: 100, RestockQty: 1, MaxStock: 50, Current: 20}
+	paid := ApplyBarterSellDiscount(
+		CalcSellPrice(1, stockEntry.Current, PricingBaseline(stockEntry, cfg), cfg), maxDiscount)
+	assert.Equal(t, 1, paid)
+
+	other := baseShop()
+	other.CraftSupport = CraftSupportAlchemy
+	offer := EvaluateBuyRules(item, other, "", false, cfg, nil)
+	assert.Equal(t, 1, offer.Price)
+	received := ApplyBarterBuyBonus(offer.Price, maxBonus)
+	assert.LessOrEqual(t, received, paid)
 }
 
 func TestBuyRules_StockedItem_StillUsesScarcity(t *testing.T) {

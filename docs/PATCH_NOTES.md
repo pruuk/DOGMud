@@ -29,6 +29,10 @@
   snow.
 - Two weak lights, or two weak sources of heat sight, now add up to a
   little less than before. Strong ones add up as they always did.
+- Shop prices now move gently with supply. A cook or smith who has just
+  restocked no longer gives food or gear away, and an empty shelf no
+  longer sends the price soaring. Buying and selling both feel steadier
+  from one visit to the next.
 
 ## 2026-10-06: Clearer in the dark
 

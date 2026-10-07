@@ -78,7 +78,7 @@ func MobDeathFactionRep(e events.Event) events.ListenerReturn {
 		perp := crimes.IdentifiedPerp(userId, witnesses)
 		for _, fid := range factionIds {
 			// Upgrade-in-place if a recent unresolved assault exists.
-			if assault := crimes.FindRecentAssault(fid, userId, 100); assault != nil {
+			if assault := crimes.FindRecentAssault(fid, userId, evt.MobId, evt.InstanceId, 100); assault != nil {
 				// Four-case model for assault → murder upgrade:
 				//
 				// Case A — external witness now: upgrade perp to
@@ -124,6 +124,24 @@ func MobDeathFactionRep(e events.Event) events.ListenerReturn {
 					// anyway; remove the call to avoid misleading "what does this do?"
 					// confusion during future reads.
 				}
+				continue
+			}
+
+			// Unknown-perpetrator assault on this victim (#431). The row
+			// stores no player id, so it is found by victim rather than by
+			// userId (see crimes.FindRecentUnknownAssault for why that
+			// cannot attach to a different mob's assault). Nobody
+			// identified the assault, so it charged no rep: the kill pays
+			// the full murder delta if it is identified now, and refunds
+			// nothing if it is not.
+			if assault := crimes.FindRecentUnknownAssault(fid, evt.MobId, evt.InstanceId, 100); assault != nil {
+				crimes.UpgradeAssaultToMurder(fid, assault.Id, perp,
+					evt.InstanceId, evt.RoomId, spec.Zone, false)
+				if perp.Type == crimes.PerpPlayer {
+					factions.BumpRep(fid, userId, deltaMurder)
+					justice.MaybeDeclareBounty(fid, userId, crimes.KindMurder)
+				}
+				writeKnowledgeForWitnesses(witnesses, perp, []int{assault.Id}, evt.RoomId)
 				continue
 			}
 

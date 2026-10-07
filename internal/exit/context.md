@@ -8,6 +8,25 @@ The `internal/exit` package provides data structures for managing room exits in 
 
 ### Core Files
 - **exit.go**: Exit data structures and functionality
+- **phrase.go**: Narration phrasing for an exit name, so up and down read as
+  directions (#430). `FromPhrase(name)` gives "from above" / "from below" /
+  `from the <exit>` (coloured); `TowardPhrase(name)` gives "up" / "down" /
+  "toward the <exit>" (uncoloured, for the peer lines); `DeparturePhrase(name)`
+  gives "upward" / "downward" / `towards the <exit> exit` (coloured). Used by
+  the player and mob movement lines (`usercommands/go.go`,
+  `actions.RelocateMob`) and the look lines (`usercommands/look.go`,
+  `mobcommands/look.go`). `PhraseVerticalExits(line, exitNames...)` rewrites
+  an already rendered combat or shooting line whose template put the exit
+  after "the": "from the up (direction)" becomes "from above", "from beyond
+  the up" becomes "from somewhere above", "through/towards/toward the up"
+  becomes "upward", "on/watching the up" becomes "on/watching the way up".
+  It only touches a phrase whose direction is one of the passed exit names,
+  so "from the north" and "through the trapdoor" stay as rendered. Called by
+  `items.SeparateMessages.Render` (every cross-room combat-messages line, with
+  `{exitname}` and `{entrancename}`) and by `renderMoveEvent` in
+  `usercommands/move_narration.go` and `mobcommands/move_narration.go` (the
+  shoot store's `{exitname}` lines). Lines of the form "the <exit> exit"
+  (lock, unlock, flee) read correctly for up and down and use none of these.
 
 ### Key Structures
 

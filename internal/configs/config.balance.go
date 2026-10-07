@@ -867,8 +867,8 @@ type Balance struct {
 
 	// ── SHOP ECONOMY ─────────────────────────────────────────────────────────
 	ShopBuyRatio              ConfigFloat `yaml:"ShopBuyRatio,omitempty"`              // Base buy/sell spread: NPC buy offer = baseValue * BuyRatio * scarcityMult (default 0.50)
-	ShopPriceFloor            ConfigFloat `yaml:"ShopPriceFloor,omitempty"`            // Minimum scarcity multiplier when stock is very high (default 0.25)
-	ShopPriceCeiling          ConfigFloat `yaml:"ShopPriceCeiling,omitempty"`          // Maximum scarcity multiplier when stock is zero (default 5.0)
+	ShopPriceFloor            ConfigFloat `yaml:"ShopPriceFloor,omitempty"`            // Minimum scarcity multiplier when stock is very high (default 0.75)
+	ShopPriceCeiling          ConfigFloat `yaml:"ShopPriceCeiling,omitempty"`          // Maximum scarcity multiplier when stock is zero (default 1.5)
 	ShopAbundanceThreshold    ConfigFloat `yaml:"ShopAbundanceThreshold,omitempty"`    // Stock/restock ratio at which price hits the floor (default 3.0)
 	ShopMaterialReserve       ConfigInt   `yaml:"ShopMaterialReserve,omitempty"`       // Units of each material a crafter mob reserves before selling (default 1)
 	DefaultPricingBaselineQty ConfigInt   `yaml:"DefaultPricingBaselineQty,omitempty"` // Pricing baseline (scarcity-curve denominator) for stock entries with RestockQty==0, e.g. crafted/caravan-delivered goods (default 3)

@@ -279,7 +279,7 @@ func TestFindRecentAssault_ReturnsMatch(t *testing.T) {
 	roundForTest = func() uint64 { return 1000 }
 	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpPlayer, Id: 17}, victim, 250, 467, "z", false)
 
-	got := FindRecentAssault("f", 17, 100)
+	got := FindRecentAssault("f", 17, 100, 250, 100)
 	if got == nil || got.Id != 1 || got.Kind != KindAssault {
 		t.Errorf("FindRecentAssault: %+v", got)
 	}
@@ -293,7 +293,7 @@ func TestFindRecentAssault_NilWhenOutsideWindow(t *testing.T) {
 	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpPlayer, Id: 17}, victim, 250, 467, "z", false)
 
 	roundForTest = func() uint64 { return 2000 } // 1000 rounds later
-	if got := FindRecentAssault("f", 17, 100); got != nil {
+	if got := FindRecentAssault("f", 17, 100, 250, 100); got != nil {
 		t.Errorf("expected nil for out-of-window; got %+v", got)
 	}
 }
@@ -304,7 +304,7 @@ func TestFindRecentAssault_NilWhenResolved(t *testing.T) {
 	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpPlayer, Id: 17}, victim, 250, 467, "z", false)
 	Resolve("f", 1, "fine")
 
-	if got := FindRecentAssault("f", 17, 100); got != nil {
+	if got := FindRecentAssault("f", 17, 100, 250, 100); got != nil {
 		t.Errorf("expected nil for resolved assault; got %+v", got)
 	}
 }
@@ -314,7 +314,7 @@ func TestFindRecentAssault_NilWhenAlreadyMurder(t *testing.T) {
 	victim := &mobs.Mob{MobId: 100}
 	Record([]string{"f"}, KindMurder, Perpetrator{Type: PerpPlayer, Id: 17}, victim, 250, 467, "z", false)
 
-	if got := FindRecentAssault("f", 17, 100); got != nil {
+	if got := FindRecentAssault("f", 17, 100, 250, 100); got != nil {
 		t.Errorf("FindRecentAssault should ignore murder rows; got %+v", got)
 	}
 }
@@ -324,7 +324,7 @@ func TestFindRecentAssault_NilWhenWrongPlayer(t *testing.T) {
 	victim := &mobs.Mob{MobId: 100}
 	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpPlayer, Id: 99}, victim, 250, 467, "z", false)
 
-	if got := FindRecentAssault("f", 17, 100); got != nil {
+	if got := FindRecentAssault("f", 17, 100, 250, 100); got != nil {
 		t.Errorf("FindRecentAssault wrong player: %+v", got)
 	}
 }
@@ -587,5 +587,75 @@ func TestParallelRecordsConverge(t *testing.T) {
 		if !seen[i] {
 			t.Errorf("missing id %d", i)
 		}
+	}
+}
+
+// An assault by an unknown perpetrator stores no player id, so the kill
+// finds it by victim instead: same victim template and instance, unresolved,
+// inside the window, and recorded with an unknown perpetrator.
+func TestFindRecentUnknownAssault_MatchesVictim(t *testing.T) {
+	setupTestCrimes(t)
+	victim := &mobs.Mob{MobId: 100}
+	roundForTest = func() uint64 { return 1000 }
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, victim, 250, 467, "z", false)
+
+	got := FindRecentUnknownAssault("f", 100, 250, 100)
+	if got == nil || got.Id != 1 || got.Perpetrator.Type != PerpUnknown {
+		t.Fatalf("FindRecentUnknownAssault: %+v", got)
+	}
+}
+
+func TestFindRecentUnknownAssault_IgnoresOtherVictimsAndIdentified(t *testing.T) {
+	setupTestCrimes(t)
+	roundForTest = func() uint64 { return 1000 }
+	// Unknown assault on a different instance of the same template.
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, &mobs.Mob{MobId: 100}, 251, 467, "z", false)
+	// Unknown assault on a different template with the same instance id.
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, &mobs.Mob{MobId: 101}, 250, 467, "z", false)
+	// Identified assault on the victim: FindRecentAssault's job, not this one.
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpPlayer, Id: 17}, &mobs.Mob{MobId: 100}, 250, 467, "z", false)
+
+	if got := FindRecentUnknownAssault("f", 100, 250, 100); got != nil {
+		t.Errorf("expected nil, got %+v", got)
+	}
+}
+
+func TestFindRecentUnknownAssault_NilWhenOutsideWindowOrResolved(t *testing.T) {
+	setupTestCrimes(t)
+	victim := &mobs.Mob{MobId: 100}
+	roundForTest = func() uint64 { return 1000 }
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, victim, 250, 467, "z", false)
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpUnknown}, victim, 260, 467, "z", false)
+	Resolve("f", 2, "fine")
+
+	roundForTest = func() uint64 { return 1050 }
+	if got := FindRecentUnknownAssault("f", 100, 260, 100); got != nil {
+		t.Errorf("resolved row matched: %+v", got)
+	}
+	roundForTest = func() uint64 { return 2000 }
+	if got := FindRecentUnknownAssault("f", 100, 250, 100); got != nil {
+		t.Errorf("out-of-window row matched: %+v", got)
+	}
+}
+
+// The identified lookup matches the victim as well as the player: a player
+// who assaulted mob X and then kills mob Y must not find X's row.
+func TestFindRecentAssault_NilWhenOtherVictim(t *testing.T) {
+	setupTestCrimes(t)
+	roundForTest = func() uint64 { return 1000 }
+	// Assault on mob 100 instance 250.
+	Record([]string{"f"}, KindAssault, Perpetrator{Type: PerpPlayer, Id: 17}, &mobs.Mob{MobId: 100}, 250, 467, "z", false)
+
+	// Different instance of the same template.
+	if got := FindRecentAssault("f", 17, 100, 251, 100); got != nil {
+		t.Errorf("other instance matched: %+v", got)
+	}
+	// Different template with the same instance id.
+	if got := FindRecentAssault("f", 17, 101, 250, 100); got != nil {
+		t.Errorf("other template matched: %+v", got)
+	}
+	// The assaulted mob still matches.
+	if got := FindRecentAssault("f", 17, 100, 250, 100); got == nil || got.Id != 1 {
+		t.Errorf("assaulted victim not matched: %+v", got)
 	}
 }

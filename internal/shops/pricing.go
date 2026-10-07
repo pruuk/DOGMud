@@ -9,8 +9,8 @@ import (
 // PricingConfig holds the tunable knobs for dynamic pricing.
 type PricingConfig struct {
 	BuyRatio           float64 // Base buy/sell spread (default 0.50)
-	PriceFloor         float64 // Min scarcity multiplier (default 0.25)
-	PriceCeiling       float64 // Max scarcity multiplier (default 5.0)
+	PriceFloor         float64 // Min scarcity multiplier (default 0.75)
+	PriceCeiling       float64 // Max scarcity multiplier (default 1.5)
 	AbundanceThreshold float64 // Stock/restock ratio for full abundance (default 3.0)
 	DefaultBaselineQty int     // Pricing baseline for RestockQty==0 entries (default 3)
 }
@@ -42,8 +42,8 @@ func PricingConfigFromBalance() PricingConfig {
 func DefaultPricingConfig() PricingConfig {
 	return PricingConfig{
 		BuyRatio:           0.50,
-		PriceFloor:         0.25,
-		PriceCeiling:       5.0,
+		PriceFloor:         0.75,
+		PriceCeiling:       1.5,
 		AbundanceThreshold: 3.0,
 		DefaultBaselineQty: 3,
 	}
@@ -124,7 +124,14 @@ func ApplyBarterSellDiscount(price int, discount float64) int {
 
 // ApplyBarterBuyBonus increases a buy price based on bartering skill.
 // bonus is 0.0–1.0 representing percentage increase.
+// The bonus adds whole gold only, rounded down, so the offer never exceeds
+// price * (1 + bonus): rounding up would turn a 15% bonus on a 1-gold offer
+// into 2 gold. The small epsilon absorbs float error (100 * 0.15 can land a
+// hair under 15).
 func ApplyBarterBuyBonus(price int, bonus float64) int {
-	adjusted := float64(price) * (1.0 + bonus)
-	return int(math.Ceil(adjusted))
+	bonusGold := math.Floor(float64(price)*bonus + 1e-9)
+	if bonusGold < 0 {
+		bonusGold = 0
+	}
+	return price + int(bonusGold)
 }

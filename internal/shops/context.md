@@ -72,6 +72,9 @@ change (forager deliveries, NPC sells, player purchases) lives in
 - **`PricingConfigFromBalance() PricingConfig`**: Builds a `PricingConfig`
   snapshot from the current balance config; used by both pricing and buy-rules.
   Falls back to `DefaultPricingConfig()` for any field that reads as zero.
+  Every production pricing path uses this; `DefaultPricingConfig()` is only
+  its starting point and test scaffolding (guarded by
+  `pricing_balance_guard_test.go`).
 - **`PricingBaseline(entry *StockEntry, cfg PricingConfig) int`**: The single
   normalizer (scarcity-curve denominator) used by every pricing path, both
   player buy/sell and the NPC craft/salvage/gear-upgrade decisions. Returns
@@ -82,7 +85,7 @@ change (forager deliveries, NPC sells, player purchases) lives in
   from player-facing pricing.
 - **`ScarcityMultiplier(current, restockQty int, cfg PricingConfig) float64`**:
   The dynamic-pricing core. Computes `ratio = current / restockQty` and maps
-  it onto `[PriceFloor, PriceCeiling]`, shipped **0.25x to 5.0x** (see Config
+  it onto `[PriceFloor, PriceCeiling]`, shipped **0.75x to 1.5x** (see Config
   Knobs below). At `ratio <= 0` (out of stock) returns `PriceCeiling`; at
   `ratio >= AbundanceThreshold` (fully restocked, or better) returns
   `PriceFloor`; in between it follows an inverse-quadratic curve
@@ -111,8 +114,11 @@ change (forager deliveries, NPC sells, player purchases) lives in
 - **`ApplyBarterSellDiscount(price int, discount float64) int`**: Applies a
   caller-supplied fractional discount to a sell price (buyer side).
 - **`ApplyBarterBuyBonus(price int, bonus float64) int`**: Applies a
-  caller-supplied fractional bonus to a buy price (seller side). Neither
-  barter function reads a config knob itself; see Gotchas.
+  caller-supplied fractional bonus to a buy price (seller side). The bonus
+  adds whole gold only, rounded down, so the result never exceeds
+  `price * (1 + bonus)`: a 15% bonus on a 1-gold offer stays 1 (it used to
+  round up to 2). Neither barter function reads a config knob itself; see
+  Gotchas.
 
 ### Pricing Config Knobs
 Declared in `internal/configs/config.balance.go`; defaulted/validated in
@@ -126,9 +132,9 @@ triggers in production today. The same holds for every live knob below.
 **Live** (read by `pricing.go` / `buyrules.go`):
 - **`ShopBuyRatio`**: shipped `0.50`, Go default `0.50`. Feeds
   `PricingConfig.BuyRatio`, the multiplier in `CalcBuyPrice` above.
-- **`ShopPriceFloor`**: shipped `0.25`, Go default `0.25`. The scarcity
+- **`ShopPriceFloor`**: shipped `0.75`, Go default `0.75`. The scarcity
   floor (overstocked items sell cheapest here).
-- **`ShopPriceCeiling`**: shipped `5.0`, Go default `5.0`. The scarcity
+- **`ShopPriceCeiling`**: shipped `1.5`, Go default `1.5`. The scarcity
   ceiling (out-of-stock items are priced highest here).
 - **`ShopAbundanceThreshold`**: shipped `3.0`, Go default `3.0`. The
   `current/restockQty` ratio at which `ScarcityMultiplier` reaches
@@ -316,7 +322,7 @@ type ShopInventory struct {
 - **`ScarcityMultiplier`'s curve is inverse-quadratic, not linear.** Price
   rises slowly while stock is still comfortably above the abundance
   threshold and accelerates sharply only in the last stretch toward zero.
-  A linear mental model of the 0.25x-5.0x range will underestimate price
+  A linear mental model of the 0.75x-1.5x range will underestimate price
   spikes on nearly-depleted stock.
 - **`PricingConfigFromBalance()` silently keeps the Go default for any
   knob that reads as zero or less**, rather than erroring. This is

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/itemlight"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -158,9 +159,9 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// occupants (lighting plan 6, owner ruling O6): the roster's
 		// anonymous figures, never a name, the room's description or its
 		// items.
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer toward the %s.", res.ExitName))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer %s.", exit.TowardPhrase(res.ExitName)))
 		if !isSneaking {
-			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> peers toward the %s.`, user.Character.Name, res.ExitName), []string{user.Character.Name}, user.UserId)
+			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> peers %s.`, user.Character.Name, exit.TowardPhrase(res.ExitName)), []string{user.Character.Name}, user.UserId)
 		}
 		figures := actions.FiguresSensedIn(user.Character, rooms.LoadRoom(res.ExitRoomId), user.UserId)
 		if len(figures) == 0 {
@@ -173,9 +174,9 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 
 	case actions.LookExit:
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer toward the %s.", res.ExitName))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf("You peer %s.", exit.TowardPhrase(res.ExitName)))
 		if !isSneaking {
-			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> peers toward the %s.`, user.Character.Name, res.ExitName), []string{user.Character.Name}, user.UserId)
+			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> peers %s.`, user.Character.Name, exit.TowardPhrase(res.ExitName)), []string{user.Character.Name}, user.UserId)
 		}
 
 		lookRoom(user, res.ExitRoomId, secretLook || isSneaking)
@@ -620,7 +621,7 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 			)
 		} else {
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking into the room from the <ansi fg="exit">%s</ansi> exit`, user.Character.Name, lookFromName),
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking into the room %s.`, user.Character.Name, exit.FromPhrase(lookFromName)),
 				[]string{user.Character.Name},
 				user.UserId,
 			)
@@ -757,7 +758,7 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 		user.SendText(messaging.CategoryRoomDescription, "")
 	}
 
-	textOut, _ = templates.Process("descriptions/who", details, user.UserId)
+	textOut = actions.RenderRoster(details, user.UserId)
 	if len(textOut) > 0 {
 		user.SendText(messaging.CategoryRoomDescription, textOut)
 	}

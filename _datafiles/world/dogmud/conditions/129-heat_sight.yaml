@@ -1,10 +1,10 @@
 conditionid: 129
 name: Heat Sight
 description: You see the warmth of living things as pale shapes, in any
-  darkness short of the deepest magic. Heat shows a shape, never a face.
-  Your eyes are also a little sharper for faint light, so daylight or any
-  bright lamp dazzles you, and everything you do by sight suffers until the
-  light fades or the spell wears off.
+  darkness short of the deepest magic. Where your eyes fail, heat shows a
+  shape, never a face. Your eyes are also a little sharper for faint
+  light, so daylight or any bright lamp dazzles you, and everything you do
+  by sight suffers until the light fades or the spell wears off.
 start_actee: Warmth blooms into pale shapes wherever something lives.
 end_actee: The pale shapes of warmth fade from your sight.
 start_observer: "A dull red sheen settles over {actee}'s eyes."

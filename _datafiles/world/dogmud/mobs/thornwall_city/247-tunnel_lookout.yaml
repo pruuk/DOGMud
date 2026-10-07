@@ -12,14 +12,14 @@ groups:
   - humanoid
   - smuggler
 idlecommands:
-  - 'emote peers into the darkness, listening intently'
-  - 'emote adjusts a signal lantern, shielding the flame'
+  - 'emote peers into the darkness, listening intently.'
+  - 'emote adjusts a signal lantern, shielding the flame.'
   - ''
   - ''
 combatcommands:
-  - 'emote stabs quickly with a short blade'
+  - 'emote stabs quickly with a short blade.'
   - ''
-  - 'emote darts back and strikes again'
+  - 'emote darts back and strikes again.'
   - ''
 activitylevel: 20
 character:

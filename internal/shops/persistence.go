@@ -93,7 +93,7 @@ func RegisterShop(zone string, mobId int, roomId int, template ShopInventory) *S
 	if inv == nil {
 		// Seed from template at the ABUNDANCE level, not the restock-batch
 		// level. A newly opened merchant is fully provisioned: floor-priced
-		// (0.25x) abundant stock is the long-run steady state of every
+		// (the price floor) abundant stock is the long-run steady state of every
 		// established shop (restock ticks accumulate toward MaxStock), so a
 		// fresh shop should start there too.
 		//

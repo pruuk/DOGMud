@@ -1057,7 +1057,7 @@ theft, and harmful spell targeting. Intended for shop NPCs and other
 peaceful characters the player should never be able to kill outright.
 
 ### Dynamic Pricing
-Prices range from 0.25x (overstocked) to 5.0x (out of stock), driven by
+Prices range from 0.75x (overstocked) to 1.5x (out of stock), driven by
 the `ShopAbundanceThreshold` config knob and normalized per item by restock
 quantity.
 

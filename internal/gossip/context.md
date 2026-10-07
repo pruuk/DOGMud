@@ -19,6 +19,7 @@ func Validate(templates map[string][]string) error
 func Pool(key string) []string
 func Keys() []string
 func Render(pool []string, token, value string) string
+func LowerLeadingArticle(s string) string
 
 // test helpers, in test_helpers.go
 func SeedForTest(m map[string][]string) func()
@@ -44,6 +45,14 @@ func RenderWithForTest(pool []string, token, value string, pick narration.Picker
   matching the pre-store code's `strings.Replace(..., 1)` byte for byte: with
   no repeats, replacing once and replacing every occurrence produce the same
   line.
+- **A rumour dropped mid-sentence loses its leading article's capital.**
+  When the token follows a lead-in ("I heard {desc}", "Traders brought news
+  -- {desc}", anything not ending in `.`, `!`, `?`, `:` or a quote), a value
+  starting "A ", "An " or "The " is substituted with that word lowercased
+  (`LowerLeadingArticle`), so it reads "I heard a caravan" (#430). No other
+  word is touched, since it may be a proper noun. The lines are adjusted
+  before the pick, so the one-draw rule above still holds. The hooks-side
+  "I heard that ..." fallback uses `LowerLeadingArticle` too.
 
 ## Consumers
 

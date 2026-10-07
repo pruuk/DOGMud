@@ -413,9 +413,13 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 				u.SendText(messaging.CategoryConditionApply, line)
 			}
 		}
-		u.SendText(messaging.CategorySystem,
+		// CategorySystem is never wrapped by the pipeline (it also carries
+		// tables), so this two-sentence line wraps itself to the reader's
+		// width; unwrapped it ran past 100 columns (#430).
+		u.SendText(messaging.CategorySystem, messaging.WrapAnsi(
 			fmt.Sprintf("A guard seizes you and hauls you to the holding cell. "+
-				"You have been placed under arrest by the %s.", factionName))
+				"You have been placed under arrest by the %s.", factionName),
+			u.GetLineWidth()))
 	} else {
 		// The condition landed on the character either way; only the prose is lost.
 		mudlog.Warn("justice", "msg", "ExecuteArrest: no user record for the arrested player, so the jail start line and arrest flavor could not be sent", "userId", userId)

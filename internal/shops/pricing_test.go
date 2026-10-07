@@ -1,8 +1,11 @@
 package shops
 
 import (
+	"path/filepath"
+	"runtime"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,19 +55,19 @@ func TestScarcityMultiplier_Baseline3_LastUnitBounded(t *testing.T) {
 func TestScarcityMultiplier_OutOfStock(t *testing.T) {
 	cfg := DefaultPricingConfig()
 	mult := ScarcityMultiplier(0, 5, cfg)
-	assert.Equal(t, 5.0, mult)
+	assert.Equal(t, 1.5, mult)
 }
 
 func TestScarcityMultiplier_FullyAbundant(t *testing.T) {
 	cfg := DefaultPricingConfig()
 	mult := ScarcityMultiplier(15, 5, cfg) // ratio = 3.0 = threshold
-	assert.Equal(t, 0.25, mult)
+	assert.Equal(t, 0.75, mult)
 }
 
 func TestScarcityMultiplier_OverAbundant(t *testing.T) {
 	cfg := DefaultPricingConfig()
 	mult := ScarcityMultiplier(20, 5, cfg) // ratio = 4.0 > threshold
-	assert.Equal(t, 0.25, mult)
+	assert.Equal(t, 0.75, mult)
 }
 
 func TestScarcityMultiplier_AtRestock(t *testing.T) {
@@ -93,18 +96,18 @@ func TestScarcityMultiplier_ZeroRestock(t *testing.T) {
 
 func TestCalcSellPrice_OutOfStock(t *testing.T) {
 	cfg := DefaultPricingConfig()
-	assert.Equal(t, 50, CalcSellPrice(10, 0, 5, cfg))
+	assert.Equal(t, 15, CalcSellPrice(10, 0, 5, cfg))
 }
 
 func TestCalcBuyPrice_OutOfStock(t *testing.T) {
 	cfg := DefaultPricingConfig()
-	assert.Equal(t, 25, CalcBuyPrice(10, 0, 5, cfg))
+	assert.Equal(t, 8, CalcBuyPrice(10, 0, 5, cfg))
 }
 
 func TestCalcBuyPrice_Abundant(t *testing.T) {
 	cfg := DefaultPricingConfig()
 	price := CalcBuyPrice(10, 15, 5, cfg)
-	assert.LessOrEqual(t, price, 2)
+	assert.Equal(t, 4, price)
 }
 
 func TestCalcSellPrice_MinimumOne(t *testing.T) {
@@ -122,6 +125,24 @@ func TestBarterBuyBonus(t *testing.T) {
 	assert.Equal(t, 115, ApplyBarterBuyBonus(100, 0.15))
 }
 
+// The bonus adds whole gold only: 15% of a 1-gold offer is not a gold, so the
+// offer stays 1 instead of rounding up to 2 (a 100% bonus under a 15% cap).
+func TestBarterBuyBonus_SmallOfferNeverExceedsCap(t *testing.T) {
+	assert.Equal(t, 1, ApplyBarterBuyBonus(1, 0.15))
+	assert.Equal(t, 6, ApplyBarterBuyBonus(6, 0.15), "0.9 gold of bonus is not a whole gold")
+	assert.Equal(t, 8, ApplyBarterBuyBonus(7, 0.15), "1.05 gold of bonus adds one gold")
+	for price := 1; price <= 200; price++ {
+		got := ApplyBarterBuyBonus(price, 0.15)
+		assert.LessOrEqual(t, float64(got), float64(price)*1.15+1e-9, "price %d", price)
+		assert.GreaterOrEqual(t, got, price, "price %d", price)
+	}
+}
+
+func TestBarterBuyBonus_LargeOfferKeepsBonus(t *testing.T) {
+	assert.Equal(t, 1150, ApplyBarterBuyBonus(1000, 0.15))
+	assert.Equal(t, 130, ApplyBarterBuyBonus(100, 0.30))
+}
+
 func TestBarterSellDiscount_MinimumOne(t *testing.T) {
 	assert.Equal(t, 1, ApplyBarterSellDiscount(1, 0.99))
 }
@@ -133,4 +154,27 @@ func TestSpread_BuyAlwaysLessThanSell(t *testing.T) {
 		buy := CalcBuyPrice(10, stock, 5, cfg)
 		assert.LessOrEqual(t, buy, sell, "buy should be <= sell at stock=%d", stock)
 	}
+}
+
+// TestPricingConfigFromBalance_ShippedBand pins the shop scarcity band the
+// shipped config.yaml carries (owner ruling 2026-10-07: 0.75 to 1.5). Test
+// binaries load Go defaults, not config.yaml, so this loads the real file;
+// without that the Go default and the shipped value could drift apart unseen.
+func TestPricingConfigFromBalance_ShippedBand(t *testing.T) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed")
+	}
+	t.Chdir(filepath.Join(filepath.Dir(thisFile), "..", ".."))
+
+	configs.SetConfigForTest(t, configs.GetConfig())
+	if err := configs.ReloadConfig(); err != nil {
+		t.Fatalf("ReloadConfig: %v", err)
+	}
+
+	cfg := PricingConfigFromBalance()
+	assert.Equal(t, 0.75, cfg.PriceFloor)
+	assert.Equal(t, 1.5, cfg.PriceCeiling)
+	assert.Equal(t, 3.0, cfg.AbundanceThreshold)
+	assert.Equal(t, 0.50, cfg.BuyRatio)
 }

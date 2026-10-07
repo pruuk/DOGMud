@@ -1146,13 +1146,13 @@ to avoid an import cycle (mobs imports shops). Callers pass
 
 The `value` field on ItemSpec is the **base gold price**. Final shop
 prices are dynamic — `internal/shops/pricing.go` computes a scarcity
-multiplier that swings 0.25x (overstocked) to 5.0x (out of stock):
+multiplier that swings 0.75x (overstocked) to 1.5x (out of stock):
 
 ```
 ratio = current / restock_qty
-ratio >= 3.0          →  0.25x  (PriceFloor)
-ratio == 0            →  5.0x   (PriceCeiling)
-otherwise             →  0.25 + 4.75 × (1 - ratio/3)²
+ratio >= 3.0          →  0.75x  (PriceFloor)
+ratio == 0            →  1.5x   (PriceCeiling)
+otherwise             →  0.75 + 0.75 × (1 - ratio/3)²
 ```
 
 Because the multiplier already encodes scarcity, base values shouldn't
@@ -1378,7 +1378,10 @@ func (m SeparateMessages) Render(skillLevel int, tokens map[TokenName]string, pi
 `PoolFor` assembles the cumulative tier union (beginner always, plus expert at
 skill 34, plus master at 67) and hands it to the core as plain strings.
 Assembly stays here; the core only coordinates the index and substitutes
-tokens.
+tokens. `SeparateMessages.Render` then passes each role through
+`exit.PhraseVerticalExits` with the `{exitname}` and `{entrancename}` values,
+so a blow through an up or down exit reads "from above" or "upward" rather
+than "from the up" (#430).
 
 Role mapping, and getting it wrong inverts every combat message in the game:
 
