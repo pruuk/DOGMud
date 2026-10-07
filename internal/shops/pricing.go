@@ -42,8 +42,8 @@ func PricingConfigFromBalance() PricingConfig {
 func DefaultPricingConfig() PricingConfig {
 	return PricingConfig{
 		BuyRatio:           0.50,
-		PriceFloor:         0.25,
-		PriceCeiling:       5.0,
+		PriceFloor:         0.75,
+		PriceCeiling:       1.5,
 		AbundanceThreshold: 3.0,
 		DefaultBaselineQty: 3,
 	}

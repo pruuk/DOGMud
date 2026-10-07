@@ -120,8 +120,8 @@ func TestBuyRules_GeneralStoreRejectsUntagged(t *testing.T) {
 
 func TestBuyRules_UnstockedItem_FlatPrice(t *testing.T) {
 	// Regression for the 2026-05-04 hotfix: vendors used to price
-	// items they don't normally stock at the 5x scarcity ceiling
-	// (current=0, restock=1 → ratio=0 → PriceCeiling=5.0), which
+	// items they don't normally stock at the scarcity ceiling
+	// (current=0, restock=1 → ratio=0 → PriceCeiling), which
 	// could push the offer above the gold reserve and self-reject.
 	// New rule: unstocked items get flat value × BuyRatio.
 	item := makeItem(items.ItemSpec{
@@ -137,7 +137,7 @@ func TestBuyRules_UnstockedItem_FlatPrice(t *testing.T) {
 	offer := EvaluateBuyRules(item, shop, "", false, cfg, nil)
 	expected := int(math.Ceil(60 * cfg.BuyRatio))
 	assert.Equal(t, expected, offer.Price,
-		"unstocked items should price at flat value × BuyRatio, not the 5x scarcity ceiling")
+		"unstocked items should price at flat value × BuyRatio, not the scarcity ceiling")
 }
 
 // Every sell price rounds up to the next gold (owner ruling 2026-09-30), the

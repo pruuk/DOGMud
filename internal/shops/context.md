@@ -85,7 +85,7 @@ change (forager deliveries, NPC sells, player purchases) lives in
   from player-facing pricing.
 - **`ScarcityMultiplier(current, restockQty int, cfg PricingConfig) float64`**:
   The dynamic-pricing core. Computes `ratio = current / restockQty` and maps
-  it onto `[PriceFloor, PriceCeiling]`, shipped **0.25x to 5.0x** (see Config
+  it onto `[PriceFloor, PriceCeiling]`, shipped **0.75x to 1.5x** (see Config
   Knobs below). At `ratio <= 0` (out of stock) returns `PriceCeiling`; at
   `ratio >= AbundanceThreshold` (fully restocked, or better) returns
   `PriceFloor`; in between it follows an inverse-quadratic curve
@@ -132,9 +132,9 @@ triggers in production today. The same holds for every live knob below.
 **Live** (read by `pricing.go` / `buyrules.go`):
 - **`ShopBuyRatio`**: shipped `0.50`, Go default `0.50`. Feeds
   `PricingConfig.BuyRatio`, the multiplier in `CalcBuyPrice` above.
-- **`ShopPriceFloor`**: shipped `0.25`, Go default `0.25`. The scarcity
+- **`ShopPriceFloor`**: shipped `0.75`, Go default `0.75`. The scarcity
   floor (overstocked items sell cheapest here).
-- **`ShopPriceCeiling`**: shipped `5.0`, Go default `5.0`. The scarcity
+- **`ShopPriceCeiling`**: shipped `1.5`, Go default `1.5`. The scarcity
   ceiling (out-of-stock items are priced highest here).
 - **`ShopAbundanceThreshold`**: shipped `3.0`, Go default `3.0`. The
   `current/restockQty` ratio at which `ScarcityMultiplier` reaches
@@ -322,7 +322,7 @@ type ShopInventory struct {
 - **`ScarcityMultiplier`'s curve is inverse-quadratic, not linear.** Price
   rises slowly while stock is still comfortably above the abundance
   threshold and accelerates sharply only in the last stretch toward zero.
-  A linear mental model of the 0.25x-5.0x range will underestimate price
+  A linear mental model of the 0.75x-1.5x range will underestimate price
   spikes on nearly-depleted stock.
 - **`PricingConfigFromBalance()` silently keeps the Go default for any
   knob that reads as zero or less**, rather than erroring. This is
