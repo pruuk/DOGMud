@@ -236,7 +236,12 @@ YAML keys are `skylight` and `lamp`:
 - `Room.SkyLight *float64` / `Room.Lamp *int` (`rooms.go`) **override** the
   room's biome when set. Both carry `instance:"skip"`, matching `Biome`, so
   an ephemeral instance of a room inherits its template's lighting rather
-  than persisting its own.
+  than persisting its own. `Room.Validate` holds them to the biome's rules
+  (`BiomeInfo.Validate`): a sky fraction is 0 to 1 and a lamp 0 to 100,
+  because a lamp is light and below 0 is magical darkness only (lighting
+  plan 6, owner ruling O1); a negative lamp would silently read as unlit, so
+  it fails the load. `lighting_no_natural_negative_test.go` pins the shipped
+  data too.
 
   Plan 3b gave the world a wider biome vocabulary instead of reaching for
   this override in most of the cases that once seemed to need it: a brick

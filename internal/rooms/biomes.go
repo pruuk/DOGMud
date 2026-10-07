@@ -175,8 +175,11 @@ func (bi *BiomeInfo) Validate() error {
 	if bi.SkyLight != nil && (*bi.SkyLight < 0 || *bi.SkyLight > 1) {
 		return fmt.Errorf("biome '%s' skylight %v is outside 0.0 to 1.0", bi.BiomeId, *bi.SkyLight)
 	}
-	if bi.Lamp != nil && (*bi.Lamp < -100 || *bi.Lamp > 100) {
-		return fmt.Errorf("biome '%s' lamp %d is off the -100 to 100 light scale", bi.BiomeId, *bi.Lamp)
+	// A lamp is light, and light is never negative: below 0 is magical
+	// darkness only (lighting plan 6, owner ruling O1), and a negative light
+	// term would silently read as unlit.
+	if bi.Lamp != nil && (*bi.Lamp < 0 || *bi.Lamp > 100) {
+		return fmt.Errorf("biome '%s' lamp %d is outside 0 to 100 (a lamp is light; negative is magical darkness only)", bi.BiomeId, *bi.Lamp)
 	}
 	return nil
 }

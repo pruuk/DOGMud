@@ -18,6 +18,14 @@ import (
 // active magical darkness, so with no darkness source present no shipped room
 // may read below 0 at any hour, season, moon state or weather.
 //
+// It guards both halves of that promise: the ARITHMETIC (no sum or fraction
+// of real light composes below 0) and the DATA (no shipped room or biome
+// authors a negative lamp). A negative lamp would not read below 0, the
+// composition reads it as no light at all, so the arithmetic half alone
+// cannot see one: a lamp is light, and an authored negative one is a room
+// silently unlit. Validate refuses one at load (BiomeInfo.Validate,
+// Room.Validate); this pins the shipped data as well.
+//
 // It loads the real world the way the night-trade guard
 // (shop_night_trade_guard_test.go) and the lighting goldens do, and composes
 // every room through rooms.LightTermsAtForTest with the celestial term built
@@ -48,6 +56,28 @@ func TestNoShippedRoomReadsBelowZeroWithoutDarkness(t *testing.T) {
 		t.Fatalf("loaded only %d rooms: the walk is not seeing the world, so a green run proves nothing", len(ids))
 	}
 	sort.Ints(ids)
+
+	// The data: no shipped biome or room lamp is negative.
+	biomeLamps, roomLamps := 0, 0
+	for _, b := range rooms.GetAllBiomes() {
+		if v, ok := b.LampValue(); ok {
+			biomeLamps++
+			if v < 0 {
+				t.Errorf("biome %s ships lamp %d: a lamp is light, never negative", b.BiomeId, v)
+			}
+		}
+	}
+	for _, id := range ids {
+		if r := rooms.LoadRoom(id); r != nil && r.Lamp != nil {
+			roomLamps++
+			if *r.Lamp < 0 {
+				t.Errorf("room %d ships lamp %d: a lamp is light, never negative", id, *r.Lamp)
+			}
+		}
+	}
+	if biomeLamps == 0 || roomLamps == 0 {
+		t.Fatalf("found %d biome lamps and %d room lamps: the lamp walk is not seeing the world", biomeLamps, roomLamps)
+	}
 
 	filterSet := map[float64]bool{1: true, 0.001: true}
 	worst := 1.0
