@@ -838,17 +838,18 @@ type narrationCall struct {
 //     "Confirmed defects" #5).
 //   - observer: room.SendText / SendTextVisual / SendTextToUser on a
 //     receiver literally named "room", or a call to the free function
-//     sendVisualRoomText (internal/hooks/NewRound_DoCombat_helpers.go:401).
+//     sendVisualRoomText (internal/hooks/NewRound_DoCombat_helpers.go:402).
 //
 // KNOWN BLIND SPOT, same shape as tools/narration_viewpoint_scan.py's own
 // ACTOR/OBSERVER regexes: a send whose receiver is a room or actor value
-// under a DIFFERENT name (destRoom, oldRoom, uRoom, gotoRoom; buyer, caster)
+// under a DIFFERENT name (destRoom, oldRoom, uRoom, r; buyer, caster)
 // is invisible to the matching role and falls into the broad "any other
 // identifier" actee bucket instead. A handful of registered entries below
-// are affected -- e.g. usercommands/admin.teleport.go:98's `gotoRoom.SendText`
-// really is an observer line, just not one this walk's Observer recognizer
-// can see -- and their Reason says so rather than letting the raw
-// Actor/Actee/Observer booleans misstate what the code actually does.
+// are affected -- e.g. hooks/NewRound_DoCombat_helpers.go:551's
+// `r.SendText(..., roles.Observer, ...)` really is an observer line, just not
+// one this walk's Observer recognizer can see -- and their Reason says so
+// rather than letting the raw Actor/Actee/Observer booleans misstate what the
+// code actually does.
 func narrationRecognizeCall(call *ast.CallExpr) (narrationCallViewpoint, bool) {
 	switch fun := call.Fun.(type) {
 	case *ast.SelectorExpr:
