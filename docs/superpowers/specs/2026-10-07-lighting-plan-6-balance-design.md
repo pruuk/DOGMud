@@ -201,8 +201,10 @@ say cave trims never fire: a glow spell cast at 75 or more trims to 74 on entry.
   value, except `LightExitsAbove` at 55, each with a one-line comment in the
   file's existing style.
 - Add `LightRealMinimum: 3` (declared, validated, default 3). A missing key
-  reads as 0, so 0 means "unset, use 3"; the authored range is 1 to
-  `LightBlindBelow - 1`, clamped there.
+  reads as 0, so 0 means "unset, use 3"; a negative value also reverts to 3.
+  The authored range is 1 to `LightBlindBelow - 1`: a value at or above
+  `LightBlindBelow` is clamped down to `LightBlindBelow - 1` (or 0, no floor,
+  when `LightBlindBelow` is 1 or below).
 - Delete the stale comment in `config.balance.lighting.go` claiming no lighting
   knobs appear in `config.yaml`.
 - `config.yaml` carries skip-worktree: build the commit from the
