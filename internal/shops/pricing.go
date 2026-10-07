@@ -9,8 +9,8 @@ import (
 // PricingConfig holds the tunable knobs for dynamic pricing.
 type PricingConfig struct {
 	BuyRatio           float64 // Base buy/sell spread (default 0.50)
-	PriceFloor         float64 // Min scarcity multiplier (default 0.25)
-	PriceCeiling       float64 // Max scarcity multiplier (default 5.0)
+	PriceFloor         float64 // Min scarcity multiplier (default 0.75)
+	PriceCeiling       float64 // Max scarcity multiplier (default 1.5)
 	AbundanceThreshold float64 // Stock/restock ratio for full abundance (default 3.0)
 	DefaultBaselineQty int     // Pricing baseline for RestockQty==0 entries (default 3)
 }
