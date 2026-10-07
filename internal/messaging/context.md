@@ -155,11 +155,27 @@ Functions:
   lighting plan 5c): whether an observer sees THROUGH an exit.
   `exitsAbove` (`LightExitsAbove`) is the normal-eyes edge; night-vision
   strength moves it down exactly as it moves the blind and dim edges. Infra
-  reach plays no part.
+  reach plays no part in this light test; heat has its own path,
+  `SensesHeatThroughExit`. Shipped edge: 55 (lighting plan 6, owner ruling
+  O5; the Go default stays 65).
 - `SeesThroughExit(observer, room) bool` (`predicates.go`, lighting plan
   5c): `ParticipantSight` is not `SightNone` AND `ExitThroughWindow` at
-  the room's light and the observer's strength. `look <direction>` gates on
-  it; it replaced a nightvision-FLAG waiver.
+  the room's light and the observer's strength. `look <direction>` and
+  `scan` gate on it; it replaced a nightvision-FLAG waiver.
+- `SensesHeatThroughExit(observer, here, next RoomVisibility) bool`
+  (`predicates.go`, lighting plan 6, owner ruling O6): infravision through an
+  exit. True when the observer has infra reach, some sight `here` (not
+  `SightNone`, so a blinded observer senses nothing) and the `next` room's
+  light is at or above minus the reach. A caller asks it only after
+  `SeesThroughExit` refused, so it never upgrades a view the light grants,
+  and renders shapes only: the roster's `UnseenFigure(SightShapes)` per
+  occupant the roster would list (`actions.FiguresSensedIn`, the same
+  `Character.Perceives` filter scan uses), never a name, the room's
+  description or its items. `look <exit>` by heat omits the room's title
+  too; `scan` keeps its existing direction label, `north (Town Square): a
+  figure`, exactly as its lit-but-too-dark line already named the title.
+  Every occupant counts as warm: the codebase has no cold-body concept, and
+  own-room infravision shows everyone too.
 - `FixedLight` (`predicates.go`, lighting plan 5c): an `int` that
   satisfies `RoomVisibility`. A caller judging many observers in one room
   reads `room.LightLevel()` once and passes `FixedLight`, as
@@ -501,7 +517,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `hidenames.go` | `HideNames`, `NameHider`, `HideSpeakerNames` (sight gates slice 5b): replacing specific names in bare prose, longest-first, whole-word |
 | `hidenames_tagged.go` | Identity-tag-aware name replacement `HideNames` and `Anonymize` share, including the trailing adjective span |
 | `wrap.go` | `WrapAnsi`, ANSI-aware folding at a caller-supplied width measured in visible runes; called by the pipeline for the categories `shouldWrap` admits, and directly by `motd.go` for its box-bordered banner |
-| `predicates.go` | `ParticipantSight` (the optics primitive) plus `CanSeeClearly`/`CanSeeShapes`/`CanSeeSightImpairedOnly`, the one-line attention policies built on it; `SeesThroughExit` and `FixedLight` (lighting plan 5c) |
+| `predicates.go` | `ParticipantSight` (the optics primitive) plus `CanSeeClearly`/`CanSeeShapes`/`CanSeeSightImpairedOnly`, the one-line attention policies built on it; `SeesThroughExit` and `FixedLight` (lighting plan 5c); `SensesHeatThroughExit` (lighting plan 6) |
 | `window.go` | `SightThroughWindow`, the pure window-model function `ParticipantSight` calls, `clampShift`, `ExitThroughWindow` (lighting plan 5c), `LightTrimTarget` (lighting plan 5a, reparameterized in 5b to take `dazzleAbove` instead of reading the now-retired `windowDazzleEdge` constant), `DarknessTrimTarget` (lighting plan 5d), plus its two remaining unexported constants (`windowShiftCap`, `windowFloor`) |
 | `band.go` | `Band`, `BandThroughWindow`, `LightBand` (lighting plan 3d): the band-grained twin of `SightDecision`/`SightThroughWindow`/`ParticipantSight`, adding the dazzled tier for `internal/lightnotice` |
 | `comfort.go` | `ComfortDistance` (lighting plan 5b): how far a room's light sits outside the observer's comfortable band, as dark/bright fractions of the way to the cap; `infraDarkCap` (lighting plan 5c), the unexported cap it applies to the dark fraction for an observer with infra reach |

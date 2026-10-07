@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 )
 
@@ -19,6 +20,7 @@ const (
 	LookExit                        // an exit the looker can see through
 	LookExitTooDark                 // an exit, but too dark to see through it
 	LookExitLocked                  // an exit that is locked
+	LookExitShapes                  // an exit too dark to see through, whose occupants heat shows as shapes (lighting plan 6)
 	LookOther                       // anything else: each wrapper's own objects, in its own order
 )
 
@@ -32,7 +34,7 @@ type LookResolution struct {
 	Target         Actor  // LookCreature
 	LookAt         string // the target, after a direction alias resolved to an exit
 	ExitName       string // the LookExit kinds
-	ExitRoomId     int    // LookExit
+	ExitRoomId     int    // LookExit, LookExitShapes
 	// PetUserId is the owner of a pet the looker may name here (clear sight
 	// only), 0 otherwise. It is not a kind because the player resolves the
 	// pet AFTER carried items and room nouns; each wrapper reads it at its
@@ -98,9 +100,18 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 	res.ExitName, res.ExitRoomId = exitName, exitRoomId
 
 	// Seeing THROUGH an exit needs more light than seeing the room you are
-	// standing in (messaging.SeesThroughExit; infra reach does not help).
+	// standing in (messaging.SeesThroughExit). When the light refuses, heat
+	// may still show the next room's occupants as shapes (lighting plan 6,
+	// owner ruling O6), through an exit that is not locked.
 	if !messaging.SeesThroughExit(char, room) {
 		res.Kind = LookExitTooDark
+		if next := rooms.LoadRoom(exitRoomId); next != nil && messaging.SensesHeatThroughExit(char, room, next) {
+			if info, _ := room.GetExitInfo(exitName); info.Lock.IsLocked() {
+				res.Kind = LookExitLocked
+			} else {
+				res.Kind = LookExitShapes
+			}
+		}
 		return res
 	}
 	if info, _ := room.GetExitInfo(exitName); info.Lock.IsLocked() {

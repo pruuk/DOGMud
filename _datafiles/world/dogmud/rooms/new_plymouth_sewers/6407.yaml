@@ -14,6 +14,7 @@ description: >
   very far at once, the way a shore feels from under water. The trunk
   continues north, and a lower passage angles away southwest.
 biome: sewer
+skylight: 0.15
 coord:
   x: -15
   y: 87

@@ -3,11 +3,18 @@ name: City Thoroughfare
 symbol: •
 description: The main ways through a city, its squares, markets, gates and
   bridges. Law enforcement will attempt to subdue those who murder or steal.
-  Lamps burn here all night, so faces can be read at any hour. That makes a
-  thoroughfare the safest place in a city to be seen, and the worst place to
+  Lamps burn here after dark and daylight serves the rest, so in clear
+  weather faces can be read at any hour. That makes a thoroughfare the safest place in a city to be seen, and the worst place to
   go unseen.
 skylight: 0.95
 lamp: 52
+# Street lamps (lighting plan 6): lit at night and while the clear sky, seen
+# through the dimmest street-lamp biome's skylight (this 0.95), would leave
+# a street too dim to read a face, like a lamplighter working by eye, so a
+# dim midwinter morning keeps them. They go out only once the street shows
+# faces by its daylight alone, so in clear weather it never dips below
+# faces. Weather never lights them.
+streetlamp: true
 requireditemid: 0
 usesitem: false
 burns: false

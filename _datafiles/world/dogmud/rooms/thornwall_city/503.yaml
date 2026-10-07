@@ -12,6 +12,7 @@ description: >
   the chest for itself. A rough stone shelf protrudes from the east wall,
   holding a scatter of small objects barely visible under the fungi.
 biome: cave
+lamp: 45
 coord:
   x: 2
   y: -1

@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/pkg/errors"
 )
@@ -24,7 +25,8 @@ type BiomeInfo struct {
 	// SkyLight is the fraction of the open sky's light that reaches this
 	// biome's floor: 1.0 for a desert dune, about 0.45 under forest canopy,
 	// 0.0 at the back of a cave. It is applied as an attenuation on the
-	// logarithmic light scale, so it is the SAME operator weather occlusion
+	// light scale (a multiplier on linear brightness since lighting plan 6),
+	// so it is the SAME operator weather occlusion
 	// uses in plan 4. Canopy, roof, drain-cap and blizzard are one idea.
 	//
 	// 🔑 It is a POINTER because zero is meaningful. A cave's sky fraction is
@@ -48,6 +50,25 @@ type BiomeInfo struct {
 	// above it means full sight all night, which is what a main street or an
 	// inn should do.
 	Lamp *int `yaml:"lamp,omitempty"`
+
+	// StreetLamp makes the biome's Lamp a street lamp, lit and put out by a
+	// lamplighter working by eye: it joins the room's light while
+	// gametime.LampsLit() is true, which is at night OR while the clear sky
+	// (the celestial light before weather), seen through the smallest sky
+	// fraction among the street-lamp biomes, would read a level below
+	// LightDimBelow, so a midwinter morning too dim to read a face keeps its
+	// lamps and no street dips below faces for the round they go out
+	// (lighting plan 6, owner ruling O4 as amended; registerStreetLampSky
+	// hands gametime that fraction). The North Gate
+	// arch lantern's dusk_to_dawn tree reads the same test (`time_of_day
+	// period: lamplit`), and weather never enters it, so every street lamp
+	// in the world lights and goes out at the same moment. Unset, the lamp
+	// burns at all hours, which is right for an inn's lamps, a cave's glow
+	// or the ether.
+	//
+	// It governs the BIOME lamp only. A room's own `lamp:` override is an
+	// all-hours lamp whatever its biome says.
+	StreetLamp bool `yaml:"streetlamp,omitempty"`
 
 	// Indoor marks a room as sheltered from weather; outdoor-only mutators
 	// don't render here.
@@ -93,12 +114,23 @@ func (bi *BiomeInfo) SkyLightFraction() float64 {
 	return *bi.SkyLight
 }
 
-// LampValue is the biome's own light source and whether it declares one at all.
+// LampValue is the biome's own light source and whether it declares one at
+// all, whatever the hour. LampAt is the lamp as it burns at a given hour.
 func (bi *BiomeInfo) LampValue() (int, bool) {
 	if bi.Lamp == nil {
 		return 0, false
 	}
 	return *bi.Lamp, true
+}
+
+// LampAt is the biome's lamp as it burns when the street lamps are (or are
+// not) lit, the value gametime.LampsLit reports: a StreetLamp lamp is out
+// while they are out, every other lamp burns at all hours.
+func (bi *BiomeInfo) LampAt(lampsLit bool) (int, bool) {
+	if bi.StreetLamp && !lampsLit {
+		return 0, false
+	}
+	return bi.LampValue()
 }
 
 // HasLamp reports whether this biome carries a light source that actually
@@ -143,8 +175,11 @@ func (bi *BiomeInfo) Validate() error {
 	if bi.SkyLight != nil && (*bi.SkyLight < 0 || *bi.SkyLight > 1) {
 		return fmt.Errorf("biome '%s' skylight %v is outside 0.0 to 1.0", bi.BiomeId, *bi.SkyLight)
 	}
-	if bi.Lamp != nil && (*bi.Lamp < -100 || *bi.Lamp > 100) {
-		return fmt.Errorf("biome '%s' lamp %d is off the -100 to 100 light scale", bi.BiomeId, *bi.Lamp)
+	// A lamp is light, and light is never negative: below 0 is magical
+	// darkness only (lighting plan 6, owner ruling O1), and a negative light
+	// term would silently read as unlit.
+	if bi.Lamp != nil && (*bi.Lamp < 0 || *bi.Lamp > 100) {
+		return fmt.Errorf("biome '%s' lamp %d is outside 0 to 100 (a lamp is light; negative is magical darkness only)", bi.BiomeId, *bi.Lamp)
 	}
 	return nil
 }
@@ -195,7 +230,35 @@ func LoadBiomeDataFiles() {
 		}
 	}
 
+	registerStreetLampSky()
+
 	mudlog.Info("biomes.LoadBiomeDataFiles()", "loadedCount", len(biomes), "Time Taken", time.Since(start))
+}
+
+// streetLampSkyFraction is the smallest sky fraction among the biomes whose
+// lamp is a street lamp (StreetLamp with a lamp declared), and false when no
+// biome has one.
+func streetLampSkyFraction() (float64, bool) {
+	best, found := 1.0, false
+	for _, b := range biomes {
+		if b == nil || !b.StreetLamp || b.Lamp == nil {
+			continue
+		}
+		if f := b.SkyLightFraction(); !found || f < best {
+			best, found = f, true
+		}
+	}
+	return best, found
+}
+
+// registerStreetLampSky hands gametime the dimmest street-lamp biome's sky
+// fraction, which gametime.LampsLitAt reads so the lamps stay lit until that
+// street reads faces by daylight alone (lighting plan 6, owner ruling O4 and
+// the review fix after it). With no street-lamp biome it registers 1, the
+// open sky. Called whenever the biome registry is replaced.
+func registerStreetLampSky() {
+	f, _ := streetLampSkyFraction()
+	gametime.SetStreetLampSkyFraction(f)
 }
 
 func GetBiome(name string) (*BiomeInfo, bool) {

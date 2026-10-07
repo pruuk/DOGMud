@@ -1,5 +1,35 @@
 # DOGMud Patch Notes
 
+## 2026-10-07: Light, balanced
+
+- City street lamps are now lit when the light fails and put out once the
+  day is bright, like a lamplighter working by eye. They burn all night,
+  and on a dim winter morning or evening they stay lit, so faces can still
+  be read in the street. They go out only once daylight alone lets you
+  read a face there, so a clear morning never leaves a street dim for a
+  moment. A storm does not light them. Every street lamp,
+  and the lantern on Stillwater's North Gate, changes at the same moment.
+  On a bright day a street is lit by the sky alone, so a main street at
+  noon no longer dazzles. At night the streets are as bright as before.
+- Seeing into the next room needs a little less light. A lamplit street at
+  night is still not enough by itself, but carry a candle there, or a
+  brighter light anywhere, and you can look and scan through an exit.
+- Heat sight now works through an exit. When it is too dark to see that
+  way, you still sense the warmth of whoever stands in the next room, as
+  figures, never by name.
+- No place is darker than a sealed cave unless magic makes it so. A cell
+  with a window slit at night is now barely lit, not blacker than stone.
+  Faint light at dusk, under thick trees or in a swamp reads a little
+  brighter than before.
+- Rooms whose descriptions speak of light now have it: the glowing fungi
+  and fires of the low tunnels, the oil lamps of the Thornwall
+  underground, the Champion's Pit, a drowned court's doorway lamps and
+  more. Cave mouths, mine entrances and sewer grates let in daylight.
+- Moving through dense forest now costs as much effort as wading through
+  snow.
+- Two weak lights, or two weak sources of heat sight, now add up to a
+  little less than before. Strong ones add up as they always did.
+
 ## 2026-10-06: Clearer in the dark
 
 - When the room is too dark for you, `look` now says so: "It is too dark

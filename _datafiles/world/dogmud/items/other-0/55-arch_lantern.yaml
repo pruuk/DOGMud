@@ -2,11 +2,13 @@ itemid: 55
 name: Arch Lantern
 namesimple: lantern
 # A fixture (lighting 5e): hangs from the North Gate's arch (room 4111),
-# placed there by spawninfo, and cannot be taken. Its tree lights it from
-# dusk to dawn at the oil lantern's rung.
+# placed there by spawninfo, and cannot be taken. Its tree lights it with
+# the street lamps (period: lamplit) at the oil lantern's rung: at night and
+# while the dimmest lamplit street is too dim to read a face by its sky.
 description: A small iron lantern hung from the arch's crossbeam, the glass
-  smoke-blackened along its upper rim. It is lit at dusk and snuffed at
-  first light. Even unlit, the smell of old oil lingers faintly around it.
+  smoke-blackened along its upper rim. It is lit when the light fails and
+  snuffed once the day is bright. Even unlit, the smell of old oil lingers
+  faintly around it.
 type: object
 subtype: mundane
 weight: 0.1

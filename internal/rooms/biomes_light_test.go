@@ -87,8 +87,11 @@ func TestBiomeValidateRejectsSkyLightOutOfRange(t *testing.T) {
 	}
 }
 
+// A lamp is light, and light is never negative (lighting plan 6, owner
+// ruling O1: negative is magical darkness only). A negative lamp would
+// silently read as unlit, so it is refused at load.
 func TestBiomeValidateRejectsLampOffScale(t *testing.T) {
-	for _, v := range []int{-101, 101} {
+	for _, v := range []int{-101, -1, 101} {
 		n := v
 		b := BiomeInfo{BiomeId: "x", Name: "X", Symbol: ".", Lamp: &n}
 		if err := b.Validate(); err == nil {

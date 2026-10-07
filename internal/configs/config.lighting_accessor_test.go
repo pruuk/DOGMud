@@ -8,9 +8,10 @@ func TestLightingDefaultsAreTheShippedCalibration(t *testing.T) {
 	if b.LightDoublingStep != 8 {
 		t.Errorf("LightDoublingStep = %v, want 8", b.LightDoublingStep)
 	}
-	// 🔴 This assertion is the one that matters most in this test. None of the
-	// lighting knobs appear in config.yaml, so a bare Balance is not a test
-	// fixture, it is the SHIPPED configuration. If this ever reads zero,
+	// 🔴 This assertion is the one that matters most in this test. A config
+	// file that omits WorldLatitude (as config.yaml did until lighting plan 6)
+	// arrives at a bare Balance, so this is not only a test fixture. If this
+	// ever reads zero,
 	// DOGMud is running with no latitude: a flat night, no seasons, and the
 	// whole celestial model unreachable.
 	if b.WorldLatitude != 46.5 {
@@ -47,8 +48,8 @@ func TestDoublingStepRejectsNonPositive(t *testing.T) {
 // reverts. Zero means UNSET and is coerced to the default.
 //
 // 🔴 This is the load-bearing assertion of the whole celestial model, not a
-// boundary nicety. None of the lighting knobs appear in config.yaml, so the
-// SHIPPED configuration is a bare Balance, whose WorldLatitude is zero. If zero
+// boundary nicety. A config file that omits WorldLatitude (as config.yaml did
+// until lighting plan 6) runs a bare Balance, whose WorldLatitude is zero. If zero
 // were honoured as "no latitude", DOGMud would ship with a flat night, no
 // seasons, and the entire model unreachable. Do not "fix" this test by making
 // zero survive.
@@ -119,6 +120,7 @@ func TestGetLightingConfigMirrorsBalance(t *testing.T) {
 	c.Balance.LightDimBelow = 31
 	c.Balance.LightExitsAbove = 32
 	c.Balance.LightDefaultVisionStrength = 13
+	c.Balance.LightRealMinimum = 7
 	c.Balance.LightDoublingStep = 11
 	c.Balance.WorldLatitude = 12.5
 	c.Balance.LightEquinoxNoon = 14.5
@@ -140,6 +142,7 @@ func TestGetLightingConfigMirrorsBalance(t *testing.T) {
 		{"DimBelow", float64(got.DimBelow), 31},
 		{"ExitsAbove", float64(got.ExitsAbove), 32},
 		{"DefaultVisionStrength", float64(got.DefaultVisionStrength), 13},
+		{"RealMinimum", float64(got.RealMinimum), 7},
 		{"DoublingStep", got.DoublingStep, 11},
 		{"WorldLatitude", got.WorldLatitude, 12.5},
 		{"EquinoxNoon", got.EquinoxNoon, 14.5},

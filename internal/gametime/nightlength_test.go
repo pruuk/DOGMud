@@ -51,8 +51,8 @@ func TestNightLengthVariesWithTheSeason(t *testing.T) {
 
 // 🔴 REPLACES TestZeroLatitudeFallsBackToNightHours, deleted 2026-09-23.
 // There is no NightHours fallback any more: zero is coerced to the default in
-// validation, because the shipped config is a bare Balance and honouring zero
-// would have shipped DOGMud with a flat night and no seasons.
+// validation, because a config without WorldLatitude reads zero, and honouring
+// zero would have shipped DOGMud with a flat night and no seasons.
 //
 // A near-equatorial latitude is the replacement for that behaviour, and gives
 // a flat twelve-hour night all year, which is what an operator asking for "no
@@ -74,16 +74,18 @@ func TestNearEquatorialLatitudeGivesAFlatTwelveHourNight(t *testing.T) {
 	}
 }
 
-// 🔴 The load-bearing test of this task. The shipped config is a bare Balance,
-// so if validation ever stops coercing a zero latitude, DOGMud runs with no
-// seasons and every other test here still passes because they all pin a
-// latitude explicitly. This one deliberately does not.
+// 🔴 The load-bearing test of this task. A config without WorldLatitude (an
+// older config.yaml, or this test binary, which loads Go defaults; the shipped
+// file has set it since lighting plan 6) reads zero, so if validation ever
+// stops coercing a zero latitude, such a world runs with no seasons and every
+// other test here still passes because they all pin a latitude explicitly.
+// This one deliberately does not.
 func TestShippedConfigHasASeasonalNight(t *testing.T) {
 	c := configs.GetConfig()
 	c.Timing.RoundsPerDay = 900
 	c.Timing.RoundSeconds = 4
 	c.Timing.Validate()
-	c.Balance.Validate() // no latitude authored: this is what ships
+	c.Balance.Validate() // no latitude authored: a config that omits the key
 	configs.SetConfigForTest(t, c)
 
 	// 🔴 THIS LINE IS THE TEST. Without it this test is a fraud, and was

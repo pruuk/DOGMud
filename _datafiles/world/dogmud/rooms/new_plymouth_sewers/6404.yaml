@@ -13,6 +13,7 @@ description: >
   thin ghost of music from some high room. Whatever goes on up there,
   it goes on without reference to you. The only way out is back south.
 biome: sewer
+skylight: 0.10
 coord:
   x: -15
   y: 91

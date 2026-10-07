@@ -6,12 +6,11 @@ description: >
   the quarter's underside. A raised <ansi fg="itemname">walkway</ansi>
   of worn brick keeps you a hand's width above the channel, which
   slides past dark and businesslike on its way south. The rats own
-  this stretch and have not troubled to hide it — <ansi
+  this stretch and have not troubled to hide it: <ansi
   fg="itemname">droppings</ansi> line the walkway's edge in drifts,
   the <ansi fg="itemname">gnawed timber</ansi> of an old shoring post
-  has been chiseled nearly through by generations of teeth, and at
-  the far edge of your lamplight the shadows along the walkway's
-  edge are never quite empty.
+  has been chiseled nearly through by generations of teeth, and the
+  shadows along the walkway's far edge are never quite empty.
 biome: sewer
 coord:
   x: -15

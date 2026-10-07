@@ -30,7 +30,7 @@ func TestLightTermsReportEachTerm(t *testing.T) {
 	lamp := 40
 
 	lit := Room{SkyLight: &open, Lamp: &lamp}
-	got := lit.composeLight(cfg, 60, 0.25)
+	got := lit.composeLight(cfg, 60, true, 0.25)
 	if !got.HasLamp || got.Lamp != 40 {
 		t.Errorf("lamp = (%v, %d), want (true, 40)", got.HasLamp, got.Lamp)
 	}
@@ -46,7 +46,7 @@ func TestLightTermsReportEachTerm(t *testing.T) {
 	}
 
 	cave := Room{SkyLight: &zero}
-	if c := cave.composeLight(cfg, 60, 1); !math.IsInf(c.Sky, -1) || c.HasLamp {
-		t.Errorf("a cave has no sky term and no lamp, got Sky=%v HasLamp=%v", c.Sky, c.HasLamp)
+	if c := cave.composeLight(cfg, 60, true, 1); c.Sky != 0 || c.HasLamp {
+		t.Errorf("a cave has no sky light (0) and no lamp, got Sky=%v HasLamp=%v", c.Sky, c.HasLamp)
 	}
 }

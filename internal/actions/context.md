@@ -488,7 +488,22 @@ perceive can be named), then a sealed crate or a known room container
 (`lookNamesAnObject`, `:116`), then an exit (direction alias resolved, then
 through-sight, then lock). `LookKind` (`:12`) is `LookBlind`, `LookTooDark`,
 `LookRoom`, `LookCreature`, `LookExit`, `LookExitTooDark`, `LookExitLocked`,
-`LookOther`. Sight `SightNone` splits by cause (#364): `LookBlind` for a
+`LookExitShapes`, `LookOther`. `LookExitShapes` (lighting plan 6, owner
+ruling O6) is an exit the light here is too poor to see through
+(`messaging.SeesThroughExit` false) whose next room heat still reaches
+(`messaging.SensesHeatThroughExit`); a locked exit under heat is still
+`LookExitLocked`. The player wrapper prints one `messaging.UnseenFigure`
+per occupant from `FiguresSensedIn(viewer, room, selfUserId)` (`scan.go`),
+never a name, the room's title or its description; the mob wrapper is
+silent on it, as on every refusal. `Scan` takes the same heat path per
+exit, listing figures where the light test fails, under its usual
+`north (Town Square):` direction label. Both read one occupant filter,
+`listedOccupants` (`scan.go`), the room roster's rule (`rooms.GetDetails`):
+a mob actually in the room that the viewer `Perceives`, and every other
+player the viewer `Perceives`, so a hidden mob shows to see-hidden and a
+stale listing never. Scan's player-facing name list uses it too; its
+structured `ScanResult` (for mob callers) still lists every mob not
+`IsHidden`. Sight `SightNone` splits by cause (#364): `LookBlind` for a
 looker whose `Perception` is `Blinded` (the same check `ParticipantSight`
 answers `SightNone` on first), `LookTooDark` for one the room is too dark
 for, so a caller can say that light would help.

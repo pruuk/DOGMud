@@ -89,9 +89,13 @@ func TestStormNeverHidesFacesAtNoon(t *testing.T) {
 	}
 }
 
-// Heavy weather takes one full step off every night, so a night readable in
-// clear weather goes blind under a storm unless the moons are near their
-// brightest.
+// Heavy weather halves the night sky, so a night readable in clear weather
+// goes blind under a storm unless the moons are near their brightest.
+//
+// Since lighting plan 6 a halving is a whole doubling step only well above the
+// dim end: on the linear sum it takes less as the light nears 0, because there
+// is less light left to take (a clear 20 halves to about 14, a clear 10 to
+// about 6). So a night storm takes between 3 and 8 points, never more.
 func TestStormTakesAStepOffTheNight(t *testing.T) {
 	room := openSkyUnder(t)
 	blind := configs.GetLightingConfig().BlindBelow
@@ -103,8 +107,8 @@ func TestStormTakesAStepOffTheNight(t *testing.T) {
 			clear := room.LightLevel()
 			setWeather(t, room, "weather-storm")
 			stormy := room.LightLevel()
-			if drop := clear - stormy; clear > 8 && (drop < 7 || drop > 9) {
-				t.Errorf("day %d midnight: storm took %d points, want 8", d, drop)
+			if drop := clear - stormy; clear > 8 && (drop < 3 || drop > 8) {
+				t.Errorf("day %d midnight: storm took %d points from %d, want 3 to 8", d, drop, clear)
 			}
 			if clear >= blind && stormy < blind {
 				flipped++

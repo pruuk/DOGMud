@@ -175,8 +175,9 @@ consumer until this plan.
 LevelMultiplier(level)` scaling, but it appends every matching pro's or con's
 scaled `Value` (nonzero only) instead of keeping just the largest. It exists
 for a reader that combines sources some other way than MAX:
-`internal/characters.Character.InfraReach` log-sums every entry it returns
-(alongside every held condition's reach) through `lightscale.Combine`
+`internal/characters.Character.InfraReach` combines every entry it returns
+(alongside every held condition's reach) through `lightscale.Combine` (a
+sum of linear brightness since lighting plan 6)
 (lighting plan 5c, owner ruling: infra reach sources combine, unlike
 nightvision strength, which still reads `FlagValue`'s max).
 

@@ -122,8 +122,9 @@ func TestShippedSunstoneFollowsTheSun(t *testing.T) {
 	}
 }
 
-// The arch lantern (55) is lit at 52 from dusk to dawn; the Rift Stone (56)
-// pulses within 20 to 36.
+// The arch lantern (55) is lit at 52 while the street lamps burn (period:
+// lamplit: at night, and while the clear sky is too dim to read a face, so a
+// midwinter 08:00 keeps it lit); the Rift Stone (56) pulses within 20 to 36.
 func TestShippedFixtureTrees(t *testing.T) {
 	dusk := loadShippedItemWorld(t)
 	idle := EventContext{EventType: "item_idle"}
@@ -139,6 +140,11 @@ func TestShippedFixtureTrees(t *testing.T) {
 	TryItemBehavior(idle, arch)
 	if v, _ := itemlight.Get(engineProbeRoomId, arch.UUID); v != 52 {
 		t.Errorf("dusk: the arch lantern reads %v, want 52", v)
+	}
+	util.SetRoundCountForTest(355*900 + 300) // 08:00, day but a dim sky
+	TryItemBehavior(idle, arch)
+	if v, _ := itemlight.Get(engineProbeRoomId, arch.UUID); v != 52 {
+		t.Errorf("midwinter 08:00: the arch lantern reads %v, want 52 with the street lamps", v)
 	}
 	for r := uint64(0); r < 24; r++ {
 		util.SetRoundCountForTest(dusk + r)

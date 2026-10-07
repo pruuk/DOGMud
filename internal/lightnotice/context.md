@@ -59,6 +59,14 @@ either state; see "The seams" below.
    5d: `Darkened` flipped or `Dark` moved, a carried darkness arriving,
    lapsing or changing strength), then **carried**, then the **room's own
    lamp**, then **weather** filtering the sky, then the **sky** itself.
+   The lamp is named only when it moved the same way as the room
+   (`lampAgrees`, lighting plan 6): street lamps now light when the clear
+   sky, as the dimmest lamplit street sees it, grows too dim to read a face
+   and go out once it is bright again
+   (`gametime.LampsLit`), so across a long gap (noon to midnight) the lamp
+   can come on while the room darkens, and that change belongs to the sky.
+   A lamp whose light did not move at all (an authored `lamp: 0` switching)
+   is never named either.
    Darkness comes first because without its own cause a darkness moves no
    light term and fell to `CauseEyes`. Its lines live in
    `narration/light-notices/darkness.yaml`, all six transitions, like every
@@ -218,7 +226,7 @@ next check after reconnect is a fresh `TriggerQuiet` login record.
 lantern its schedule dims, a sunstone fading, a second light joining one
 already here; all of these used to fall to `eyes`), and `lamp` when the
 room's lamp OR its light fixtures move (`LightTerms.Fixture`: the North
-Gate's arch lantern at dusk and dawn). A darkness fixture moves `Dark` and
+Gate's arch lantern as it is lit and snuffed with the street lamps). A darkness fixture moves `Dark` and
 reads `darkness`, checked first. Cadence is unchanged: an idle player learns
 of dusk on their next command, move or combat round. `lamp.yaml`'s header
 names fixtures; `carried.yaml`'s two darker "is gone" lines read "fades"

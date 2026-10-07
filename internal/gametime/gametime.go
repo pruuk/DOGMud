@@ -274,8 +274,10 @@ func (g *GameDate) ReCalculate() {
 
 	// Night length is derived from the world's latitude on this day of the
 	// year. 🔴 CORRECTED 2026-09-23: there is NO NightHours fallback. Zero is
-	// coerced to the default in validation, because the shipped config is a
-	// bare Balance and honouring zero would have shipped a flat night with no
+	// coerced to the default in validation, because a config that omits
+	// WorldLatitude reads it as zero (the shipped config.yaml has set it since
+	// lighting plan 6, but an older file or a bare test config does not), and
+	// honouring zero would ship a flat night with no
 	// seasons. Timing.NightHours is no longer read for the day/night boundary
 	// at all; it stays only for upstream compatibility.
 	//
@@ -285,12 +287,13 @@ func (g *GameDate) ReCalculate() {
 	// nearest hour and lose up to half an hour of night at each end.
 	hourOfDay := float64(roundOfDay) / float64(g.RoundsPerDay) * 24
 
-	nightHours := NightHoursAt(configs.GetLightingConfig().WorldLatitude, int(day))
+	latitude := configs.GetLightingConfig().WorldLatitude
+	nightHours := NightHoursAt(latitude, int(day))
 	halfNight := nightHours / 2
 	nightStartHour := 24 - halfNight
 	nightEndHour := halfNight
 
-	night := hourOfDay >= nightStartHour || hourOfDay < nightEndHour
+	night := NightAt(latitude, int(day), hourOfDay)
 
 	ampm := `AM`
 	if hour >= 12 {

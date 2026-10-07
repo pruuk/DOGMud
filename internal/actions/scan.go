@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -113,23 +114,31 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			// 5c): out through the exit from here, then into the next room.
 			// With faces, names; with shapes, the anonymous figure the room
 			// roster uses, one per creature and uncolored so a mob and a
-			// player read alike; with neither, nobody. The structured
-			// result is left whole for the mob callers.
+			// player read alike; with neither, nobody. When the light here
+			// refuses, heat may still show the next room's occupants as
+			// shapes (lighting plan 6, owner ruling O6); it never upgrades a
+			// view the light grants. Whom it lists is the roster's rule
+			// (listedOccupants), the same one look's heat uses. The
+			// structured result is left whole for the mob callers.
 			sight := messaging.SightNone
-			if adjRoom := rooms.LoadRoom(s.RoomId); seesOut && adjRoom != nil {
-				sight = messaging.ParticipantSight(viewer, adjRoom)
+			adjRoom := rooms.LoadRoom(s.RoomId)
+			if adjRoom != nil {
+				switch {
+				case seesOut:
+					sight = messaging.ParticipantSight(viewer, adjRoom)
+				case messaging.SensesHeatThroughExit(viewer, room, adjRoom):
+					sight = messaging.SightShapes
+				}
 			}
 			parts := []string{}
-			for _, m := range s.Mobs {
+			listedMobs, listedPlayers := listedOccupants(viewer, adjRoom, actor.GetUserId())
+			for _, m := range listedMobs {
 				parts = append(parts,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Name))
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Character.Name))
 			}
-			for _, p := range s.Players {
-				if u := users.GetByUserId(p.Id); viewer != nil && u != nil && !viewer.Perceives(u.Character) {
-					continue
-				}
+			for _, u := range listedPlayers {
 				parts = append(parts,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi>`, p.Name))
+					fmt.Sprintf(`<ansi fg="username">%s</ansi>`, u.Character.Name))
 			}
 			switch sight {
 			case messaging.SightShapes:
@@ -160,4 +169,62 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 	}
 
 	return result
+}
+
+// listedOccupants is every creature in room that the viewer's room roster
+// would list there (rooms.GetDetails): each mob actually in the room (a stale
+// listing, a mob whose RoomId says it has left, never shows) that the viewer
+// Perceives, and each player other than selfUserId that the viewer Perceives.
+// Perceives is the one hidden rule: a sneaking or camouflaged creature is
+// left out unless the viewer has see-hidden. A nil viewer perceives whoever is
+// not hidden.
+//
+// It is the one occupant filter behind what a player sees of the next room:
+// scan's list, by name or as shapes, and the figures heat shows through an
+// exit for scan and for look (FiguresSensedIn).
+func listedOccupants(viewer *characters.Character, room *rooms.Room, selfUserId int) ([]*mobs.Mob, []*users.UserRecord) {
+	if room == nil {
+		return nil, nil
+	}
+	perceives := func(c *characters.Character) bool {
+		if viewer == nil {
+			return c != nil && !c.IsHidden()
+		}
+		return viewer.Perceives(c)
+	}
+	var ms []*mobs.Mob
+	for _, id := range room.GetMobs(rooms.FindAll) {
+		m := mobs.GetInstance(id)
+		if m == nil || m.Character.RoomId != room.RoomId || !perceives(&m.Character) {
+			continue
+		}
+		ms = append(ms, m)
+	}
+	var us []*users.UserRecord
+	for _, id := range room.GetPlayers(rooms.FindAll) {
+		if id == selfUserId {
+			continue
+		}
+		u := users.GetByUserId(id)
+		if u == nil || u.Character == nil || !perceives(u.Character) {
+			continue
+		}
+		us = append(us, u)
+	}
+	return ms, us
+}
+
+// FiguresSensedIn is one anonymous figure (messaging.UnseenFigure at
+// SightShapes, the room roster's shapes vocabulary) per creature in room that
+// the viewer's roster would list there (listedOccupants), leaving out
+// selfUserId. It is what heat shows through an exit (lighting plan 6): a
+// count of bodies, never a name.
+func FiguresSensedIn(viewer *characters.Character, room *rooms.Room, selfUserId int) []string {
+	ms, us := listedOccupants(viewer, room, selfUserId)
+	n := len(ms) + len(us)
+	out := make([]string, 0, n)
+	for range n {
+		out = append(out, messaging.UnseenFigure(messaging.SightShapes))
+	}
+	return out
 }

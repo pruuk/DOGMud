@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/itemlight"
-	"github.com/GoMudEngine/GoMud/internal/lightscale"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
 )
 
@@ -25,19 +24,19 @@ func TestFixtureComposition(t *testing.T) {
 		carried, dark    []float64
 		fxLight, fxDark  []float64
 		want             int
-		wantFixture      float64 // Absent when none
-		wantCarriedLight float64 // Absent when none
+		wantFixture      float64 // 0 when none (lighting plan 6: Combine of nothing reads 0)
+		wantCarriedLight float64 // 0 when none (lighting plan 6: Combine of nothing reads 0)
 	}{
-		{"a fixture alone", cave, nil, nil, []float64{52}, nil, 52, 52, lightscale.Absent()},
-		{"5000: lamp 38, stones at their trough", tavern, nil, nil, []float64{20}, nil, 40, 20, lightscale.Absent()},
-		{"5000: lamp 38, stones at their crest", tavern, nil, nil, []float64{36}, nil, 45, 36, lightscale.Absent()},
+		{"a fixture alone", cave, nil, nil, []float64{52}, nil, 52, 52, 0},
+		{"5000: lamp 38, stones at their trough", tavern, nil, nil, []float64{20}, nil, 40, 20, 0},
+		{"5000: lamp 38, stones at their crest", tavern, nil, nil, []float64{36}, nil, 45, 36, 0},
 		{"a fixture and a carried torch", cave, []float64{56}, nil, []float64{52}, nil, 62, 52, 56},
-		{"two fixtures", cave, nil, nil, []float64{52, 52}, nil, 60, 60, lightscale.Absent()},
-		{"a darkness fixture under a lamp", tavern, nil, nil, nil, []float64{30}, 8, lightscale.Absent(), lightscale.Absent()},
-		{"a darkness fixture and a carried darkness", cave, nil, []float64{50}, nil, []float64{50}, -58, lightscale.Absent(), lightscale.Absent()},
+		{"two fixtures", cave, nil, nil, []float64{52, 52}, nil, 60, 60, 0},
+		{"a darkness fixture under a lamp", tavern, nil, nil, nil, []float64{30}, 8, 0, 0},
+		{"a darkness fixture and a carried darkness", cave, nil, []float64{50}, nil, []float64{50}, -58, 0, 0},
 	}
 	for _, c := range cases {
-		got := c.room.composeWithFixtures(cfg, 60, 1, c.carried, c.dark, c.fxLight, c.fxDark)
+		got := c.room.composeWithFixtures(cfg, 60, true, 1, c.carried, c.dark, c.fxLight, c.fxDark)
 		if got.Level != c.want {
 			t.Errorf("%s: Level = %d, want %d", c.name, got.Level, c.want)
 		}
@@ -60,7 +59,7 @@ func TestComposeWithIsFixtureFree(t *testing.T) {
 	zero := 0.0
 	cave := Room{SkyLight: &zero, Lamp: LampPtr(50)}
 	a := cave.composeWith(cfg, 60, 1, []float64{56}, []float64{20})
-	b := cave.composeWithFixtures(cfg, 60, 1, []float64{56}, []float64{20}, nil, nil)
+	b := cave.composeWithFixtures(cfg, 60, true, 1, []float64{56}, []float64{20}, nil, nil)
 	if a != b {
 		t.Errorf("composeWith %+v != composeWithFixtures with none %+v", a, b)
 	}

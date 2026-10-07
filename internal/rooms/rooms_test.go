@@ -818,6 +818,37 @@ func TestRoom_Validate(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "description")
 	})
+
+	// A room's lamp override is light, so it is 0 to 100 (lighting plan 6,
+	// owner ruling O1: negative is magical darkness only); its sky override
+	// is a fraction, 0 to 1, as a biome's is.
+	t.Run("lamp and skylight overrides", func(t *testing.T) {
+		for _, c := range []struct {
+			name    string
+			lamp    *int
+			sky     *float64
+			wantErr string
+		}{
+			{"lamp 0", LampPtr(0), nil, ""},
+			{"lamp 100", LampPtr(100), nil, ""},
+			{"negative lamp", LampPtr(-1), nil, "lamp"},
+			{"lamp above the scale", LampPtr(101), nil, "lamp"},
+			{"skylight 0", nil, SkyLightPtr(0), ""},
+			{"skylight 1", nil, SkyLightPtr(1), ""},
+			{"negative skylight", nil, SkyLightPtr(-0.1), "skylight"},
+			{"skylight above 1", nil, SkyLightPtr(1.1), "skylight"},
+		} {
+			r := &Room{RoomId: 99, Title: "Test Room", Description: "A test room.", Lamp: c.lamp, SkyLight: c.sky}
+			err := r.Validate()
+			if c.wantErr == "" {
+				assert.NoError(t, err, c.name)
+				continue
+			}
+			if assert.Error(t, err, c.name) {
+				assert.Contains(t, err.Error(), c.wantErr, c.name)
+			}
+		}
+	})
 }
 
 // ─── Room.GetMapSymbol ──────────────────────────────────────────────────────

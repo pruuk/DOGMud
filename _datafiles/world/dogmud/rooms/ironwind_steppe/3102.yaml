@@ -9,6 +9,7 @@ description: A long, narrow passage where the wind is channeled to
   the wind stings exposed skin. The passage curves gently, and
   the light from outside is reduced to a dim glow.
 biome: cave
+skylight: 0.20
 coord:
   x: 12
   y: 8

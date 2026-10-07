@@ -108,7 +108,7 @@ func TestUmbralLanternTrimsToItsBearersEyes(t *testing.T) {
 		{"infravision 30, cave", 0, []int{darkInfra30Id}, 0, false, 29, -29},
 		{"infravision 50, cave", 0, []int{darkInfra50Id}, 0, false, 49, -49},
 		{"infravision 50, light 50: full", 50, []int{darkInfra50Id}, 0, false, 50, 0},
-		{"normal eyes, light 50, other darkness 20", 50, nil, 20, false, 9.83, 26},
+		{"normal eyes, light 50, other darkness 20", 50, nil, 20, false, 13.93, 26},
 		{"normal eyes, light 50, other darkness 30: off", 50, nil, 30, true, 0, 20},
 	}
 	for i, c := range cases {

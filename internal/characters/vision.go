@@ -37,11 +37,12 @@ func (c *Character) NightVisionStrength() int {
 //
 // Unlike nightvision it COMBINES its sources (lighting plan 5c, owner ruling):
 // every held condition's reach and every mutation's rank-scaled reach are
-// log-summed through lightscale.Combine at the light scale's doubling step,
-// the rule room light already uses, so two equal sources read one step above
-// one and a much weaker source adds almost nothing. The result is capped at
-// LightInfraReachCap and rounded once. A bare infrared flag with no number
-// still reads zero.
+// combined through lightscale.Combine at the light scale's doubling step,
+// the rule room light already uses (since lighting plan 6 a sum of linear
+// brightness), so a single source reads its own value, two equal sources
+// read a little under one step above one, and a much weaker source adds
+// almost nothing. The result is capped at LightInfraReachCap and rounded
+// once. A bare infrared flag with no number still reads zero.
 func (c *Character) InfraReach() int {
 	var vals []float64
 	for _, v := range c.Conditions.EffectValues(conditions.EffectInfraReach) {

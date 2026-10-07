@@ -132,22 +132,59 @@ and 15h37m at midwinter.
 
 ```go
 func NightHoursAt(latitudeDegrees float64, dayOfYear int) float64
+func NightAt(latitudeDegrees float64, dayOfYear int, hour float64) bool
 func SunLight(cfg configs.Lighting, dayOfYear int, hour float64) float64
 func MoonLight(cfg configs.Lighting, swiftmoon, wanderer, eye float64) float64
+func CelestialLightAt(cfg configs.Lighting, dayOfYear int, hour, swiftmoon, wanderer, eye float64) float64
 func CelestialLight() float64
+func LampsLitAt(night bool, celestial, streetSky float64, cfg configs.Lighting) bool
+func LampsLit() bool
+func SetStreetLampSkyFraction(f float64) float64
+func StreetLampSkyFraction() float64
 ```
 
 - `NightHoursAt` is how `GameDate.ReCalculate` places the day/night boundary,
   replacing the old flat `Timing.NightHours` cutoff. It clamps to 12 (polar
   day) or 0 (polar night) rather than returning NaN beyond the polar circles.
+- `NightAt` (lighting plan 6) is that boundary as a predicate: night is
+  centred on midnight and `NightHoursAt` long. `GameDate.Night` (and so
+  `IsNight`) is computed through it, so a caller holding a day and an hour
+  (the light goldens, the street lamp's tests) asks the same question
+  without moving the round counter.
+- `LampsLitAt` (lighting plan 6, owner ruling O4 as amended) is the street
+  lamps' rule, pure: lit while `night` OR the clear-sky `celestial`,
+  attenuated by `streetSky` (the dimmest street-lamp biome's sky fraction)
+  and rounded as a room level is, reads below `cfg.DimBelow` (the faces
+  edge, `LightDimBelow`), a lamplighter working by eye, so a midwinter 08:00
+  (day, sky about 40) keeps its lamps. 🔑 Testing the street's view of the
+  sky rather than the sky itself is what stops a street dipping to 49
+  (shapes) for the round its lamps go out, which the first rule did about
+  240 times a year at its 0.95 fraction. Absent celestial is below any edge;
+  NaN leaves it to `night`. `LampsLit` is it on the current round:
+  `IsNight()`, `CelestialLight()`, `StreetLampSkyFraction()` and
+  `configs.GetLightingConfig()`. `internal/rooms` registers the fraction
+  through `SetStreetLampSkyFraction` whenever the biome registry loads or a
+  test seeds it (rooms imports gametime, never the reverse); unregistered it
+  is 1, the open sky. 🔑 Its input is the clear sky, before weather, so a
+  storm lights no lamp and every street lamp in the world changes in the
+  same round. Two readers share it:
+  the biome street lamp (`rooms.BiomeInfo.StreetLamp` through
+  `Room.LightLevel`) and the behaviour condition `time_of_day period:
+  lamplit` (the North Gate arch lantern's `dusk_to_dawn` tree).
 - `SunLight` is the sun's own contribution to the sky, calibrated so an
   equinox noon reads exactly `cfg.EquinoxNoon`. 🔑 **The sun is Absent below
   the horizon, not zero.** `sin(altitude) <= 0` returns `lightscale.Absent()`
-  directly, so night needs no separate branch: Absent already composes
-  correctly through `lightscale.Combine`.
+  directly, so night needs no separate branch: since lighting plan 6
+  `lightscale.Combine` reads Absent as a term of 0, which adds nothing.
+  The night-trade guard still reads `SunLight` Absent as "the sun is down".
 - `MoonLight` is the three moons' combined contribution (each moon's phase
   from `PhasesAtRound`/`GetAllPhases`, below), interpolated between a
   starlight anchor and a full-moon anchor on a logarithmic intensity axis.
+- `CelestialLightAt` (lighting plan 6) is the pure combine of `SunLight`
+  and `MoonLight` for a day, an hour and three moon fullnesses.
+  `CelestialLight` calls it, and the light goldens and the world guard call
+  it directly for moments no round gives (every moon new, or every moon
+  full), so they cannot drift from the live sky.
 - `CelestialLight` combines both into the sky's light for the whole world at
   the current round, memoized per round so 500 `Room.LightLevel()` calls in
   one round compute it once. It reads `PhasesAtRound(round)`, never
@@ -158,9 +195,10 @@ func CelestialLight() float64
 
 - **A bare `Balance{}` has `WorldLatitude` zero, and validation COERCES that
   to 46.5** (`internal/configs/config.balance.lighting.go`) rather than
-  honouring it. Right for production, where a bare struct never ships and
-  none of the lighting knobs appear in `_datafiles/config.yaml` today so
-  production genuinely runs one. A test that wants a specific latitude must
+  honouring it. Right for production: until lighting plan 6 surfaced the
+  lighting knobs in `_datafiles/config.yaml`, production genuinely ran a bare
+  latitude, and any config file that omits the key still does. A test that
+  wants a specific latitude must
   set `Balance.WorldLatitude` and call `Validate()` explicitly.
 - **A test binary's `Timing` defaults are not the shipped ones.** Any test
   that touches night must pin BOTH `Timing` (`RoundsPerDay`, `NightHours`,

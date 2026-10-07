@@ -37,18 +37,88 @@ func TestTrimLightGoesDarkWhenTheRoomIsAlreadyBright(t *testing.T) {
 	}
 }
 
-// A room within a hair of the target needs a term below zero, the darkest
-// natural light, so the source is not needed at all rather than "lit" at a
-// meaningless negative value.
-func TestTrimLightJustBelowTargetIsAbsent(t *testing.T) {
+// A room within a hair of the target needs only a sliver of light. On the
+// linear sum that sliver is a small positive term, never a negative one (the
+// old log-domain solve needed a term below zero here and switched the source
+// off). Either way the combine lands on the target, and when float rounding
+// leaves no brightness to supply at all, the source is off.
+func TestTrimLightJustBelowTargetNeedsOnlyASliver(t *testing.T) {
+	slivers := 0
 	for _, d := range []float64{1e-3, 1e-9, 1e-14, 1e-15} {
-		if got := Trim(8, 74-d, 90, 74); !math.IsInf(got, -1) {
-			t.Errorf("others 74-%v: Trim = %v, want Absent", d, got)
+		got := Trim(8, 74-d, 90, 74)
+		if math.IsInf(got, -1) {
+			continue
+		}
+		slivers++
+		if !(got > 0 && got < 1) {
+			t.Errorf("others 74-%v: Trim = %v, want a sliver in (0, 1) or Absent", d, got)
+		}
+		if c := Combine(8, 74-d, got); math.Abs(c-74) > 1e-6 {
+			t.Errorf("others 74-%v: Combine(others, Trim) = %v, want 74", d, c)
 		}
 	}
-	// Just far enough below that a real (non-negative) term is needed.
-	if got := Trim(8, 70, 90, 74); !(got >= 0 && got < 74) {
-		t.Errorf("others 70: Trim = %v, want a term in [0, 74)", got)
+	// The near misses well clear of float rounding must solve to a sliver,
+	// or the loop above proved nothing.
+	if slivers < 2 {
+		t.Errorf("only %d of the near misses solved to a sliver; want at least the 1e-3 and 1e-9 ones", slivers)
+	}
+	if got := Trim(8, 74-1e-3, 90, 74); math.IsInf(got, -1) {
+		t.Errorf("others 74-1e-3: Trim is Absent, want a sliver")
+	}
+	if got := Trim(8, 70, 90, 74); !(got > 0 && got < 74) {
+		t.Errorf("others 70: Trim = %v, want a term in (0, 74)", got)
+	}
+}
+
+// The solve round-trips on the linear sum for every other light and target.
+func TestTrimRoundTripsOnTheLinearSum(t *testing.T) {
+	for others := 1.0; others < 90; others += 3 {
+		for target := others + 0.5; target <= 100; target += 7 {
+			out := Trim(8, others, 200, target)
+			if math.IsInf(out, -1) {
+				t.Errorf("others %v target %v: Trim is Absent, want a term", others, target)
+				continue
+			}
+			if out < 0 {
+				t.Errorf("others %v target %v: Trim = %v, below 0", others, target, out)
+			}
+			if got := Combine(8, others, out); math.Abs(got-target) > 1e-9 {
+				t.Errorf("others %v target %v: Combine(others, Trim) = %v", others, target, got)
+			}
+		}
+	}
+}
+
+// TrimDarkness round-trips the same way: the room it leaves sits on the floor.
+//
+// A case is Absent exactly when the room already sits at or below the floor
+// without this source (light - Combine(otherDark) <= floor): that is asserted
+// too, so a solve that went Absent everywhere fails rather than skipping.
+func TestTrimDarknessRoundTripsOnTheFloor(t *testing.T) {
+	solved := 0
+	for light := 0.0; light <= 90; light += 10 {
+		for _, otherDark := range []float64{0, 5, 12} {
+			for _, floor := range []float64{-50, -30, 1, 25} {
+				out := TrimDarkness(8, light, otherDark, 200, floor)
+				alreadyAtFloor := light-Combine(8, otherDark) <= floor
+				if math.IsInf(out, -1) {
+					if !alreadyAtFloor {
+						t.Errorf("light %v otherDark %v floor %v: Absent, but the room sits above the floor", light, otherDark, floor)
+					}
+					continue
+				}
+				if alreadyAtFloor {
+					t.Errorf("light %v otherDark %v floor %v: Trim = %v, want Absent (already at the floor)", light, otherDark, floor, out)
+				}
+				solved++
+				if got := light - Combine(8, otherDark, out); math.Abs(got-floor) > 1e-9 {
+					t.Errorf("light %v otherDark %v floor %v: room = %v", light, otherDark, floor, got)
+				}
+			}
+		}
+	}
+	if solved == 0 {
+		t.Fatal("every case was Absent: the round trip tested nothing")
 	}
 }
 
@@ -126,12 +196,12 @@ func TestTrimDarknessKeepsTheRoomOnTheFloor(t *testing.T) {
 	}
 }
 
-// Other darkness below the budget: the source solves the halving rule, not a
-// linear cut. Two darknesses of 20 and 12.9 combine to 25, not 32.9.
+// Other darkness below the budget: the source solves the darkness combine, not
+// a point cut. Two darknesses of 20 and 16.2 combine to 25, not 36.2.
 func TestTrimDarknessSolvesTheDarknessCombine(t *testing.T) {
 	out := TrimDarkness(8, 50, 20, 50, 25)
-	if !(out > 12.9 && out < 13.0) {
-		t.Fatalf("TrimDarkness(light 50, other 20, floor 25) = %v, want about 12.9", out)
+	if !(out > 16.1 && out < 16.3) {
+		t.Fatalf("TrimDarkness(light 50, other 20, floor 25) = %v, want about 16.2", out)
 	}
 	if got := 50 - Combine(8, 20, out); math.Abs(got-25) > 1e-9 {
 		t.Errorf("room after = %v, want exactly the floor 25", got)
@@ -157,5 +227,69 @@ func TestTrimDarknessNaNFloorOrMaxIsAbsent(t *testing.T) {
 func TestTrimDarknessNaNLightReadsAsAnUnlitRoom(t *testing.T) {
 	if got, want := TrimDarkness(8, math.NaN(), Absent(), 50, -30), TrimDarkness(8, Absent(), Absent(), 50, -30); got != want {
 		t.Errorf("NaN light: TrimDarkness = %v, want %v", got, want)
+	}
+}
+
+// Trim never hands back a negative light: its result is Absent (off) or a
+// term in (0, max]. A target at or below 0 needs no light, and a
+// strengthless source (max at or below 0) has none to give, whatever the
+// other light.
+func TestTrimNeverReturnsANegativeLight(t *testing.T) {
+	for _, others := range []float64{Absent(), 0, 10, 50, 80} {
+		for _, max := range []float64{-20, 0, 30, 90} {
+			for _, target := range []float64{-30, 0, 20, 74, math.Inf(1)} {
+				got := Trim(8, others, max, target)
+				if math.IsInf(got, -1) {
+					continue
+				}
+				if !(got > 0 && got <= max) || math.IsNaN(got) {
+					t.Errorf("Trim(others %v, max %v, target %v) = %v, want Absent or a term in (0, max]",
+						others, max, target, got)
+				}
+			}
+		}
+	}
+	for _, c := range []struct{ others, max, target float64 }{
+		{Absent(), 90, 0},
+		{Absent(), 90, -5},
+		{0, 90, -5},
+		{Absent(), -5, 74},
+		{20, -5, 74},
+		{80, 0, 74},
+	} {
+		if got := Trim(8, c.others, c.max, c.target); !math.IsInf(got, -1) {
+			t.Errorf("Trim(others %v, max %v, target %v) = %v, want Absent", c.others, c.max, c.target, got)
+		}
+	}
+}
+
+// An unbounded target (or an unbounded budget for a darkness) needs the
+// source at full strength, other light or not.
+func TestTrimToAnUnboundedTargetRunsAtFullStrength(t *testing.T) {
+	for _, others := range []float64{Absent(), 0, 20, 99} {
+		if got := Trim(8, others, 90, math.Inf(1)); got != 90 {
+			t.Errorf("others %v, target +Inf: Trim = %v, want the full 90", others, got)
+		}
+	}
+	for _, otherDark := range []float64{Absent(), 20} {
+		if got := TrimDarkness(8, math.Inf(1), otherDark, 50, 25); got != 50 {
+			t.Errorf("light +Inf, other dark %v: TrimDarkness = %v, want the full 50", otherDark, got)
+		}
+	}
+}
+
+// A target whose brightness overflows still solves on the linear sum, rather
+// than reading as "unbounded" and running the source at full strength.
+func TestTrimSolvesAnOverflowingTarget(t *testing.T) {
+	out := Trim(8, 50, 1e4, 9000)
+	if math.Abs(out-9000) > 1e-6 {
+		t.Fatalf("Trim(others 50, max 1e4, target 9000) = %v, want about 9000", out)
+	}
+	if got := Combine(8, 50, out); math.Abs(got-9000) > 1e-6 {
+		t.Errorf("Combine(50, Trim) = %v, want 9000", got)
+	}
+	out = Trim(8, 8990, 1e4, 9000)
+	if got := Combine(8, 8990, out); math.Abs(got-9000) > 1e-6 {
+		t.Errorf("Combine(8990, Trim = %v) = %v, want 9000", out, got)
 	}
 }

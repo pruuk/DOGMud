@@ -3,6 +3,7 @@ package gametime
 import (
 	"math"
 	"sync"
+	"sync/atomic"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/lightscale"
@@ -79,6 +80,82 @@ func halfDayHours(latitudeDegrees float64, dayOfYear int) float64 {
 // runs from 8h23m at midsummer to 15h37m at midwinter.
 func NightHoursAt(latitudeDegrees float64, dayOfYear int) float64 {
 	return 24 - 2*halfDayHours(latitudeDegrees, dayOfYear)
+}
+
+// NightAt reports whether an hour of a day of the year is night at a latitude:
+// the night is centred on midnight and NightHoursAt long. It is the one
+// boundary GameDate.Night (and so IsNight) uses, exposed so a caller holding a
+// day and an hour (a light golden, the street lamp's tests) can ask
+// without moving the round counter.
+func NightAt(latitudeDegrees float64, dayOfYear int, hour float64) bool {
+	halfNight := NightHoursAt(latitudeDegrees, dayOfYear) / 2
+	return hour >= 24-halfNight || hour < halfNight
+}
+
+// LampsLitAt reports whether the world's street lamps burn, given whether it
+// is night, the clear-sky celestial light (CelestialLight: sun and moons
+// before any sky fraction or weather), the sky fraction of the dimmest
+// street-lamp street (StreetLampSkyFraction) and the lighting config. A lamp
+// burns while it is night OR while that clear sky, seen through that
+// fraction, would read a level below the faces edge LightDimBelow, the way a
+// lamplighter works by eye (lighting plan 6, owner ruling O4 as amended): a
+// midwinter morning still too dim to read a face keeps its lamps.
+//
+// The level is rounded the way a room's is, so the round the lamps go out
+// every street-lamp street already reads faces by its sky alone, and no
+// street dips below faces between lamplight and daylight. The input is the
+// clear sky, never the weathered one, so a storm lights no lamp and every
+// lamp in the world changes at the same moment.
+//
+// An Absent celestial (-Inf) is below any edge; a NaN one, which only an
+// arithmetic mistake produces, leaves the lamps to the night alone.
+func LampsLitAt(night bool, celestial, streetSky float64, cfg configs.Lighting) bool {
+	if night {
+		return true
+	}
+	if math.IsNaN(celestial) {
+		return false
+	}
+	street := lightscale.Attenuate(cfg.DoublingStep, celestial, streetSky)
+	return math.Round(street) < float64(cfg.DimBelow)
+}
+
+// LampsLit is LampsLitAt on the current round: IsNight, CelestialLight, the
+// registered StreetLampSkyFraction and the shipped lighting config. The
+// street lamps (rooms.BiomeInfo.StreetLamp) and the `time_of_day period:
+// lamplit` behaviour condition both read it, so a biome lamp and a lantern
+// fixture light and go out together.
+func LampsLit() bool {
+	return LampsLitAt(IsNight(), CelestialLight(), StreetLampSkyFraction(), configs.GetLightingConfig())
+}
+
+// streetLampSky holds the float64 bits of the registered street-lamp sky
+// fraction. It is written when biomes load and read every round.
+var streetLampSky atomic.Uint64
+
+func init() { streetLampSky.Store(math.Float64bits(1)) }
+
+// SetStreetLampSkyFraction registers the sky fraction of the dimmest biome
+// that carries a street lamp: the street that reads its daylight lowest once
+// the lamps are out. internal/rooms calls it whenever the biome registry
+// changes (rooms imports gametime, never the reverse). A NaN or a value above
+// 1 registers 1, the open sky, and a negative value 0. It returns the value
+// it replaced, so a test can put it back.
+func SetStreetLampSkyFraction(f float64) float64 {
+	switch {
+	case math.IsNaN(f) || f > 1:
+		f = 1
+	case f < 0:
+		f = 0
+	}
+	return math.Float64frombits(streetLampSky.Swap(math.Float64bits(f)))
+}
+
+// StreetLampSkyFraction is the registered fraction, 1 (the open sky itself)
+// when nothing has registered one: with no street-lamp biome there is no
+// street to dip.
+func StreetLampSkyFraction() float64 {
+	return math.Float64frombits(streetLampSky.Load())
 }
 
 // solarSinAltitude is the sine of the sun's altitude above the horizon, which
@@ -184,8 +261,22 @@ var (
 	celestialKnown bool
 )
 
+// CelestialLightAt is the sky's light for a day of the year, an hour and the
+// three moons' fullness (each in [0,1], as PhasesAtRound reports them): the
+// sun and the moons combined on the light scale, before any sky fraction,
+// lamp or weather. Pure; CelestialLight is it on the current round, and a
+// caller that needs a moment no round of the clock gives (every moon new, or
+// every moon full) calls it directly.
+func CelestialLightAt(cfg configs.Lighting, dayOfYear int, hour, swiftmoon, wanderer, eye float64) float64 {
+	return lightscale.Combine(cfg.DoublingStep,
+		SunLight(cfg, dayOfYear, hour),
+		MoonLight(cfg, swiftmoon, wanderer, eye),
+	)
+}
+
 // CelestialLight is the sky's light at the current round: sun and moons
-// combined, before any sky fraction, lamp or weather is applied.
+// combined, before any sky fraction, lamp or weather is applied
+// (CelestialLightAt on the round's own date and moons).
 func CelestialLight() float64 {
 	round := util.GetRoundCount()
 
@@ -205,10 +296,7 @@ func CelestialLight() float64 {
 	// so it cannot be pinned; this one takes the round we already captured.
 	swift, wander, eye := PhasesAtRound(round)
 
-	celestialValue = lightscale.Combine(cfg.DoublingStep,
-		SunLight(cfg, gd.Day, hour),
-		MoonLight(cfg, swift, wander, eye),
-	)
+	celestialValue = CelestialLightAt(cfg, gd.Day, hour, swift, wander, eye)
 	celestialRound = round
 	celestialKnown = true
 	return celestialValue

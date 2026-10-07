@@ -28,10 +28,10 @@ func TestCarriedSourcesEachJoinTheCombine(t *testing.T) {
 	if want := lightscale.Combine(cfg.DoublingStep, 56, 56); math.Abs(two.Raw-want) > 1e-9 {
 		t.Errorf("Raw = %v, want %v", two.Raw, want)
 	}
-	// Since lighting plan 5d, Raw is the net light (Absent light reads 0), and
+	// Since lighting plan 5d, Raw is the net light; since plan 6 no light reads 0, and
 	// the light combine alone is Light.
-	if empty := cave.composeWith(cfg, 60, 1, nil, nil); !math.IsInf(empty.Light, -1) || empty.Raw != 0 || empty.Level != 0 {
-		t.Errorf("an empty cave: Light %v Raw %v Level %d, want -Inf, 0 and 0", empty.Light, empty.Raw, empty.Level)
+	if empty := cave.composeWith(cfg, 60, 1, nil, nil); empty.Light != 0 || empty.Raw != 0 || empty.Level != 0 {
+		t.Errorf("an empty cave: Light %v Raw %v Level %d, want 0, 0 and 0", empty.Light, empty.Raw, empty.Level)
 	}
 }
 

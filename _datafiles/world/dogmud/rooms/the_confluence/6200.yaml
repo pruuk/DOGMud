@@ -12,6 +12,7 @@ description: >
   and carries the smell of still water from the west.
   The stair goes back up; the undercroft opens west.
 biome: dungeon
+lamp: 30
 coord:
   x: 10
   y: -78

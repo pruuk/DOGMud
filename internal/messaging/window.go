@@ -66,8 +66,9 @@ func SightThroughWindow(light, strength, reach int, blindBelow, dimBelow int) Si
 // ExitThroughWindow reports whether an observer sees THROUGH an exit into the
 // next room at a given light. exitsAbove (Balance.LightExitsAbove) is the edge
 // for normal eyes; night-vision strength moves it down exactly as it moves the
-// blind and dim edges, clamped the same way. Infra reach plays no part: heat
-// shows shapes in the observer's own room, not in the room beyond an exit.
+// blind and dim edges, clamped the same way. Infra reach plays no part in this
+// light test; heat has its own path through an exit, shapes only
+// (SensesHeatThroughExit, lighting plan 6).
 // The caller still refuses first when the observer reads nothing at all here.
 func ExitThroughWindow(light, strength, exitsAbove int) bool {
 	return light >= exitsAbove-clampShift(strength)

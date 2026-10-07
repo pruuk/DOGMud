@@ -1,7 +1,6 @@
 package rooms
 
 import (
-	"math"
 	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -57,6 +56,7 @@ func (r *Room) TrimLightFor(c *characters.Character) {
 
 	cfg := configs.GetLightingConfig()
 	celestial := gametime.CelestialLight()
+	lampsLit := gametime.LampsLitAt(gametime.IsNight(), celestial, gametime.StreetLampSkyFraction(), cfg)
 	skyFilter := r.mutatorSkyFilter()
 	strength := c.NightVisionStrength()
 	lightTarget := messaging.LightTrimTarget(strength, cfg.DazzleAbove)
@@ -71,17 +71,23 @@ func (r *Room) TrimLightFor(c *characters.Character) {
 		t.rec.SetLightOutput(lightscale.Absent())
 	}
 	for _, t := range todo {
-		terms := r.composeLightExcluding(cfg, celestial, skyFilter, t.rec)
+		terms := r.composeLightExcluding(cfg, celestial, lampsLit, skyFilter, t.rec)
 		full := t.rec.LightMax(t.spec)
+		if !(full > 0) {
+			// A strengthless source adds nothing (LightNow refuses it) and
+			// has nothing to trim; lightscale.Trim refuses it with Absent. It
+			// stays at full strength, so it lights untrimmed once it has
+			// strength again, as it did before Trim refused it.
+			t.rec.LightTrim, t.rec.LightOutput = conditions.LightFull, 0
+			continue
+		}
 		var out float64
 		if t.dark {
 			out = lightscale.TrimDarkness(cfg.DoublingStep, terms.Light, terms.Dark, full, darkFloor)
 		} else {
-			dark := terms.Dark
-			if math.IsInf(dark, -1) {
-				dark = 0
-			}
-			out = lightscale.Trim(cfg.DoublingStep, terms.Light, full, lightTarget+dark)
+			// terms.Dark is 0 when the room holds no darkness (lighting
+			// plan 6: a combine of nothing reads 0, never Absent).
+			out = lightscale.Trim(cfg.DoublingStep, terms.Light, full, lightTarget+terms.Dark)
 		}
 		if out >= full {
 			// No cut at all: the source runs at full strength, so it is not "trimmed".

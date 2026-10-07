@@ -135,6 +135,19 @@ func condTimeOfDay(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 
+	// period: lamplit (lighting plan 6, owner ruling O4 as amended): true
+	// while the street lamps burn, at night or while the clear sky, as the
+	// dimmest street-lamp street sees it, would read below faces. It is the
+	// same gametime.LampsLit the biome street
+	// lamps read, so a lantern fixture on this tree lights and goes out in
+	// the same round as every street lamp.
+	if strings.ToLower(period) == "lamplit" {
+		if gametime.LampsLit() {
+			return Success
+		}
+		return Failure
+	}
+
 	isNight := gametime.IsNight()
 	switch strings.ToLower(period) {
 	case "night":

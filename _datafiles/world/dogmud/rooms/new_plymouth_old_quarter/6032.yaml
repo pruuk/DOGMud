@@ -21,6 +21,7 @@ description: >
   recording the flood's highest historical reach in a
   thin pale band of mineral deposit.
 biome: dungeon
+lamp: 45
 coord:
   x: -23
   y: 81

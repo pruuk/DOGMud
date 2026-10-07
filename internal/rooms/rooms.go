@@ -2937,6 +2937,16 @@ func (r *Room) Validate() error {
 	if r.GetDescription() == "" {
 		return errors.New("description cannot be empty")
 	}
+	// The light overrides follow the biome's rules (BiomeInfo.Validate): a
+	// sky fraction is 0 to 1, and a lamp is light, 0 to 100, because below 0
+	// is magical darkness only (lighting plan 6, owner ruling O1) and a
+	// negative light term would silently read as unlit.
+	if r.SkyLight != nil && (*r.SkyLight < 0 || *r.SkyLight > 1) {
+		return fmt.Errorf("room %d skylight %v is outside 0.0 to 1.0", r.RoomId, *r.SkyLight)
+	}
+	if r.Lamp != nil && (*r.Lamp < 0 || *r.Lamp > 100) {
+		return fmt.Errorf("room %d lamp %d is outside 0 to 100 (a lamp is light; negative is magical darkness only)", r.RoomId, *r.Lamp)
+	}
 
 	if len(r.SpawnInfo) > 0 {
 

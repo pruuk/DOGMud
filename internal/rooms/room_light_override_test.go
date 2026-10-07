@@ -30,11 +30,11 @@ func TestRoomOverridesBiomeSkyAndLamp(t *testing.T) {
 		t.Errorf("overridden skylight = %v, want 1.0", got)
 	}
 
-	if got, ok := r.lampValue(); ok {
+	if got, ok := r.lampValue(true); ok {
 		t.Errorf("cave room lamp = (%v,%v), want none", got, ok)
 	}
 	r.Lamp = &lamp
-	got, ok := r.lampValue()
+	got, ok := r.lampValue(true)
 	if !ok || got != 55 {
 		t.Errorf("overridden lamp = (%v,%v), want (55,true)", got, ok)
 	}

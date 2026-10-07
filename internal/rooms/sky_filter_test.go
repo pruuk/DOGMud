@@ -16,18 +16,18 @@ func TestSkyFilterSubtractsFromTheSkyOnly(t *testing.T) {
 	lamp := 40
 
 	sky := Room{SkyLight: &open}
-	clear := sky.lightLevelWithSkyFilter(cfg, 60, 1)
+	clear := sky.lightLevelWithSkyFilter(cfg, 60, true, 1)
 	for _, c := range []struct {
 		filter float64
 		drop   int
 	}{{0.7, 4}, {0.5, 8}, {0.35, 12}} {
-		if got := clear - sky.lightLevelWithSkyFilter(cfg, 60, c.filter); got != c.drop {
+		if got := clear - sky.lightLevelWithSkyFilter(cfg, 60, true, c.filter); got != c.drop {
 			t.Errorf("filter %v dropped the sky by %d, want %d", c.filter, got, c.drop)
 		}
 	}
 
 	lampOnly := Room{SkyLight: &zero, Lamp: &lamp}
-	if a, b := lampOnly.lightLevelWithSkyFilter(cfg, 60, 1), lampOnly.lightLevelWithSkyFilter(cfg, 60, 0.35); a != b {
+	if a, b := lampOnly.lightLevelWithSkyFilter(cfg, 60, true, 1), lampOnly.lightLevelWithSkyFilter(cfg, 60, true, 0.35); a != b {
 		t.Errorf("a filter moved a lamp: %d clear, %d filtered", a, b)
 	}
 }

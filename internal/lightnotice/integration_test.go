@@ -76,16 +76,20 @@ func logLightAt(t *testing.T, label string, roomId int) {
 }
 
 // A backstreet loses faces between noon and midnight on midsummer day; a
-// thoroughfare never drops below faces, but it does not stay comfortable
-// either: measured against the real biome files, a normal observer on a main
-// street at midsummer noon reads BandDazzled (sky 73 combined with the
-// thoroughfare's lamp 52 clears the 75 dazzle edge). The owner ruled this is
-// intended, not a bug: a normal observer CAN be dazzled by a torch or a main
-// street at midsummer noon, which is what makes a hooded lantern or a spell
-// worth having. So the thoroughfare's dusk is not silent: the glare easing as
-// dazzle gives way to faces at midnight is exactly the DarkerFaces notice, and
-// faces are kept the rest of the night (never DarkerShapes or DarkerDark).
-func TestDuskTakesFacesFromTheBackstreetButOnlyGlareFromTheThoroughfare(t *testing.T) {
+// thoroughfare keeps faces from noon to midnight and says nothing.
+//
+// Before lighting plan 6 the street lamps burned at all hours, so a main
+// street at midsummer noon read sky 73 combined with lamp 52, past the 75
+// dazzle edge, and its dusk was the glare easing (DarkerFaces). Since plan 6
+// (owner ruling O4 as amended) the lamps burn only while it is night or the
+// clear sky is too dim to read a face: at noon the street
+// reads its daylight alone, 73, faces and not dazzled, and at midnight its
+// lamp, 54, still faces. No band moves, so no line.
+//
+// The backstreet's lamp lights between the two checks while its band drops:
+// a lamp that brightened cannot have darkened the room, so the line blames
+// the sky (lampAgrees), not "the lamplight fades".
+func TestDuskTakesFacesFromTheBackstreetButNotTheThoroughfare(t *testing.T) {
 	withShippedWorld(t)
 	seedCity(t)
 	lane := users.NewTestUser(1, "alice", "Aliceia", 1001)
@@ -114,13 +118,8 @@ func TestDuskTakesFacesFromTheBackstreetButOnlyGlareFromTheThoroughfare(t *testi
 		t.Fatalf("backstreet at midnight: want one sky darker_shapes line, got %q", got)
 	}
 
-	gotStreet := drainStreet()
-	if len(gotStreet) != 1 || !containsAny(gotStreet[0], Pool(CauseSky, DarkerFaces, false)) {
-		t.Fatalf("thoroughfare at midnight: want one sky darker_faces (glare easing) line, got %q", gotStreet)
-	}
-	if containsAny(gotStreet[0], Pool(CauseSky, DarkerShapes, false)) ||
-		containsAny(gotStreet[0], Pool(CauseSky, DarkerDark, false)) {
-		t.Fatalf("thoroughfare at midnight: faces are kept all night, got a darker-than-faces line %q", gotStreet)
+	if gotStreet := drainStreet(); len(gotStreet) != 0 {
+		t.Fatalf("thoroughfare at midnight: faces kept from noon, want no line, got %q", gotStreet)
 	}
 
 	Check(lane, TriggerCommand)
