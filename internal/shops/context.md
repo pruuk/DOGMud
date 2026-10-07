@@ -72,6 +72,9 @@ change (forager deliveries, NPC sells, player purchases) lives in
 - **`PricingConfigFromBalance() PricingConfig`**: Builds a `PricingConfig`
   snapshot from the current balance config; used by both pricing and buy-rules.
   Falls back to `DefaultPricingConfig()` for any field that reads as zero.
+  Every production pricing path uses this; `DefaultPricingConfig()` is only
+  its starting point and test scaffolding (guarded by
+  `pricing_balance_guard_test.go`).
 - **`PricingBaseline(entry *StockEntry, cfg PricingConfig) int`**: The single
   normalizer (scarcity-curve denominator) used by every pricing path, both
   player buy/sell and the NPC craft/salvage/gear-upgrade decisions. Returns
