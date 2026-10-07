@@ -65,6 +65,8 @@ either state; see "The seams" below.
    and go out once it is bright again
    (`gametime.LampsLit`), so across a long gap (noon to midnight) the lamp
    can come on while the room darkens, and that change belongs to the sky.
+   A lamp whose light did not move at all (an authored `lamp: 0` switching)
+   is never named either.
    Darkness comes first because without its own cause a darkness moves no
    light term and fell to `CauseEyes`. Its lines live in
    `narration/light-notices/darkness.yaml`, all six transitions, like every

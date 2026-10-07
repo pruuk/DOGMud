@@ -2,7 +2,9 @@ package main
 
 import (
 	"os"
+	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -14,18 +16,37 @@ import (
 // shipped _datafiles/config.yaml, so none of them silently runs its Go
 // default, and the two the plan retunes ship at their new values:
 // LightExitsAbove 55 (owner ruling O5) and LightRealMinimum 3 (O3).
+//
+// "Every lighting knob" is read off configs.Balance itself: each field whose
+// yaml key starts with Light (the edges, the celestial knobs, and the
+// Light*Spell* scaling for glow, night vision, heat sight and darkness),
+// plus the three lighting knobs named otherwise. A knob added later is
+// guarded without editing this list.
 func TestShippedConfigSurfacesEveryLightingKnob(t *testing.T) {
 	raw, err := os.ReadFile("_datafiles/config.yaml")
 	if err != nil {
 		t.Fatalf("read config.yaml: %v", err)
 	}
-	for _, key := range []string{
-		"LightBlindBelow", "LightDimBelow", "LightExitsAbove", "LightRealMinimum",
-		"LightDazzleAbove", "LightDefaultVisionStrength", "LightDoublingStep",
-		"WorldLatitude", "LightEquinoxNoon", "LightStarlight", "LightMoonsFull",
-		"LightMoonWeightSwiftmoon", "LightMoonWeightWanderer", "LightMoonWeightEye",
-		"LightInfraReachCap", "LightInfraPenaltyFloor", "DarknessCombatPenalty", "DazzleCap",
-	} {
+	keys := []string{"WorldLatitude", "DarknessCombatPenalty", "DazzleCap"}
+	bt := reflect.TypeOf(configs.Balance{})
+	for i := 0; i < bt.NumField(); i++ {
+		name, _, _ := strings.Cut(bt.Field(i).Tag.Get("yaml"), ",")
+		if strings.HasPrefix(name, "Light") {
+			keys = append(keys, name)
+		}
+	}
+	spells := 0
+	for _, key := range keys {
+		if strings.Contains(key, "Spell") {
+			spells++
+		}
+	}
+	// 33 Light* keys at plan 6, 18 of them spell scaling: a walk that found
+	// far fewer is not reading the struct.
+	if len(keys) < 30 || spells < 18 {
+		t.Fatalf("found %d lighting keys (%d spell scaling): the Balance walk is not seeing the knobs", len(keys), spells)
+	}
+	for _, key := range keys {
 		if !regexp.MustCompile(`(?m)^\s+` + key + `:\s*\S`).Match(raw) {
 			t.Errorf("config.yaml does not set %s: it runs its Go default unseen", key)
 		}

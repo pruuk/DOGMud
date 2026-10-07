@@ -101,21 +101,48 @@ func TestLampsLitOnTheClock(t *testing.T) {
 		}
 	}
 
-	// Every round of midwinter day: LampsLit is exactly the pure rule on
-	// the clock's own reads, and there is dim daylight where it differs from
-	// IsNight alone (else this test proves nothing about the new half).
-	dimDay := 0
-	for r := roundFor(356, 0); r < roundFor(357, 0); r++ {
-		util.SetRoundCount(r)
-		night, cel := IsNight(), CelestialLight()
-		if got, want := LampsLit(), LampsLitAt(night, cel, StreetLampSkyFraction(), configs.GetLightingConfig()); got != want {
-			t.Fatalf("round %d: LampsLit %v, LampsLitAt on the same reads %v", r, got, want)
+	// Every round of three days, with a street fraction of 0.95 registered:
+	// LampsLit matches an expectation built independently of lightscale and
+	// LampsLitAt, the street's reading written out from the definition,
+	// p = step*log2(1 + f*(2^(sky/step) - 1)), rounded. There must be dim
+	// daylight with the lamps lit (else the sky half is untested), and each
+	// day the lamps must change exactly twice, out in the morning and lit
+	// in the evening, like a lamplighter's round.
+	prev := SetStreetLampSkyFraction(0.95)
+	t.Cleanup(func() { SetStreetLampSkyFraction(prev) })
+	step := configs.GetLightingConfig().DoublingStep
+	street := func(sky float64) float64 {
+		if !(sky > 0) {
+			return 0
 		}
-		if !night && LampsLit() {
-			dimDay++
+		return step * math.Log2(1+0.95*(math.Pow(2, sky/step)-1))
+	}
+	dimDay := 0
+	for _, doy := range []int{356, 81, 172} {
+		changes := 0
+		var last bool
+		for r := roundFor(doy, 0); r < roundFor(doy+1, 0); r++ {
+			util.SetRoundCount(r)
+			night, cel := IsNight(), CelestialLight()
+			want := night || math.Round(street(cel)) < float64(dim)
+			got := LampsLit()
+			if got != want {
+				t.Fatalf("day %d round %d: LampsLit %v, want %v (night %v, sky %.3f, street %.3f)",
+					doy, r, got, want, night, cel, street(cel))
+			}
+			if !night && got {
+				dimDay++
+			}
+			if r > roundFor(doy, 0) && got != last {
+				changes++
+			}
+			last = got
+		}
+		if changes != 2 {
+			t.Errorf("day %d: the lamps changed %d times, want 2 (out at dawn, lit at dusk)", doy, changes)
 		}
 	}
 	if dimDay == 0 {
-		t.Errorf("midwinter has no dim daylight round with the lamps lit; the sky-dim half is untested")
+		t.Errorf("no dim daylight round with the lamps lit; the sky-dim half is untested")
 	}
 }

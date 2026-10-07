@@ -43,17 +43,27 @@ func TestTrimLightGoesDarkWhenTheRoomIsAlreadyBright(t *testing.T) {
 // off). Either way the combine lands on the target, and when float rounding
 // leaves no brightness to supply at all, the source is off.
 func TestTrimLightJustBelowTargetNeedsOnlyASliver(t *testing.T) {
+	slivers := 0
 	for _, d := range []float64{1e-3, 1e-9, 1e-14, 1e-15} {
 		got := Trim(8, 74-d, 90, 74)
 		if math.IsInf(got, -1) {
 			continue
 		}
+		slivers++
 		if !(got > 0 && got < 1) {
 			t.Errorf("others 74-%v: Trim = %v, want a sliver in (0, 1) or Absent", d, got)
 		}
 		if c := Combine(8, 74-d, got); math.Abs(c-74) > 1e-6 {
 			t.Errorf("others 74-%v: Combine(others, Trim) = %v, want 74", d, c)
 		}
+	}
+	// The near misses well clear of float rounding must solve to a sliver,
+	// or the loop above proved nothing.
+	if slivers < 2 {
+		t.Errorf("only %d of the near misses solved to a sliver; want at least the 1e-3 and 1e-9 ones", slivers)
+	}
+	if got := Trim(8, 74-1e-3, 90, 74); math.IsInf(got, -1) {
+		t.Errorf("others 74-1e-3: Trim is Absent, want a sliver")
 	}
 	if got := Trim(8, 70, 90, 74); !(got > 0 && got < 74) {
 		t.Errorf("others 70: Trim = %v, want a term in (0, 74)", got)
@@ -80,19 +90,35 @@ func TestTrimRoundTripsOnTheLinearSum(t *testing.T) {
 }
 
 // TrimDarkness round-trips the same way: the room it leaves sits on the floor.
+//
+// A case is Absent exactly when the room already sits at or below the floor
+// without this source (light - Combine(otherDark) <= floor): that is asserted
+// too, so a solve that went Absent everywhere fails rather than skipping.
 func TestTrimDarknessRoundTripsOnTheFloor(t *testing.T) {
+	solved := 0
 	for light := 0.0; light <= 90; light += 10 {
 		for _, otherDark := range []float64{0, 5, 12} {
 			for _, floor := range []float64{-50, -30, 1, 25} {
 				out := TrimDarkness(8, light, otherDark, 200, floor)
+				alreadyAtFloor := light-Combine(8, otherDark) <= floor
 				if math.IsInf(out, -1) {
+					if !alreadyAtFloor {
+						t.Errorf("light %v otherDark %v floor %v: Absent, but the room sits above the floor", light, otherDark, floor)
+					}
 					continue
 				}
+				if alreadyAtFloor {
+					t.Errorf("light %v otherDark %v floor %v: Trim = %v, want Absent (already at the floor)", light, otherDark, floor, out)
+				}
+				solved++
 				if got := light - Combine(8, otherDark, out); math.Abs(got-floor) > 1e-9 {
 					t.Errorf("light %v otherDark %v floor %v: room = %v", light, otherDark, floor, got)
 				}
 			}
 		}
+	}
+	if solved == 0 {
+		t.Fatal("every case was Absent: the round trip tested nothing")
 	}
 }
 

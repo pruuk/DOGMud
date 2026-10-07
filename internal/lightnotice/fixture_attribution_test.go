@@ -8,6 +8,47 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
+// lampAgrees (lighting plan 6): the room's own light is blamed only when it
+// moved the same way as the room. Each row is checked on lampAgrees itself
+// and on the cause attribute then names.
+func TestLampAgreesOnlyWhenTheLampMovedWithTheRoom(t *testing.T) {
+	base := rooms.LightTerms{SkyFilter: 1, Dark: 0, Fixture: 0, CarriedLight: 0}
+	terms := func(level int, sky float64, hasLamp bool, lamp int, fixture float64) rooms.LightTerms {
+		x := base
+		x.Level, x.Sky, x.HasLamp, x.Lamp, x.Fixture = level, sky, hasLamp, lamp, fixture
+		return x
+	}
+	cases := []struct {
+		name       string
+		a, b       rooms.LightTerms
+		wantAgrees bool
+		wantCause  Cause
+	}{
+		{"room lighter, lamp dimmer: the sky brightened past a dimming lamp",
+			terms(40, 30, true, 52, 0), terms(60, 60, true, 35, 0), false, CauseSky},
+		{"room darker, lamp brighter: noon to midnight on a backstreet",
+			terms(69, 69, false, 0, 0), terms(40, 10, true, 35, 0), false, CauseSky},
+		{"both brighter: the lamps light on a dark street",
+			terms(30, 30, false, 0, 0), terms(54, 30, true, 52, 0), true, CauseLamp},
+		{"both darker: the lamps go out",
+			terms(54, 30, true, 52, 0), terms(30, 30, false, 0, 0), true, CauseLamp},
+		{"a lamp that changed but contributes nothing: an authored lamp 0 lit as the sky fell",
+			terms(60, 60, false, 0, 0), terms(40, 40, true, 0, 0), false, CauseSky},
+		{"a move both ways agrees: the lamp out, a fixture up, the room darker",
+			terms(54, 30, true, 52, 0), terms(45, 30, false, 0, 44), true, CauseLamp},
+	}
+	for _, c := range cases {
+		if got := lampAgrees(c.a, c.b); got != c.wantAgrees {
+			t.Errorf("%s: lampAgrees = %v, want %v", c.name, got, c.wantAgrees)
+		}
+		prev := record{roomId: 1, terms: c.a}
+		now := observation{roomId: 1, terms: c.b}
+		if got := attribute(prev, now); got != c.wantCause {
+			t.Errorf("%s: attribute = %q, want %q", c.name, got, c.wantCause)
+		}
+	}
+}
+
 // X5 and Rule 12: a fixture changing notifies as lamp; a carried light that
 // dims while still lit, or a second carried light arriving, notifies as
 // carried. Each case reads eyes against the pre-5e attribute, which keyed

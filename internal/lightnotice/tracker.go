@@ -189,8 +189,9 @@ func attribute(prev record, now observation) Cause {
 // lampAgrees reports whether the room's own light (its lamp and its light
 // fixtures) moved the same way as the room: a lamp that only brightened
 // cannot explain a darker room, and one that only dimmed cannot explain a
-// lighter one. A move both ways (one fixture up, the lamp out) agrees, so the
-// lamp keeps the blame it had before lighting plan 6.
+// lighter one, and one whose light did not move at all (an authored lamp 0
+// switching) cannot explain either. A move both ways (one fixture up, the
+// lamp out) agrees, so the lamp keeps the blame it had before lighting plan 6.
 func lampAgrees(a, b rooms.LightTerms) bool {
 	lampOf := func(t rooms.LightTerms) float64 {
 		if !t.HasLamp {
@@ -206,13 +207,15 @@ func lampAgrees(a, b rooms.LightTerms) bool {
 	if math.IsInf(fb, -1) {
 		fb = 0
 	}
+	// A lamp that "changed" without moving its light (an authored lamp 0
+	// lit or put out) moved neither way, so it explains nothing.
 	up := lb > la || fb > fa
 	down := lb < la || fb < fa
 	switch {
 	case b.Level < a.Level:
-		return down || !up
+		return down
 	case b.Level > a.Level:
-		return up || !down
+		return up
 	}
 	return true
 }
