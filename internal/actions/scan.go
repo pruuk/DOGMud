@@ -132,6 +132,11 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			// (listedOccupants), the same one look's heat uses. The
 			// structured result is left whole for the mob callers.
 			//
+			// The next room's title shows only when the light here sees out
+			// (#428). When it refuses, by heat-only figures or nothing at
+			// all, the line names the direction alone, as look <exit> names
+			// no room under heat.
+			//
 			// A locked exit (#427) reads as look reads it: locked whenever
 			// light or heat would reach through it, with nobody listed; too
 			// dark when neither would.
@@ -172,20 +177,22 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			case messaging.SightNone:
 				parts = nil
 			}
-			titleLabel := fmt.Sprintf(`<ansi fg="room-title">%s</ansi>`,
-				s.RoomTitle)
+			// The next room's title belongs to a view the light grants
+			// (#428): heat or nothing names a direction, never a room.
+			label := dirLabel
+			if seesOut {
+				label = fmt.Sprintf(`%s (<ansi fg="room-title">%s</ansi>)`,
+					dirLabel, s.RoomTitle)
+			}
 			if sight == messaging.SightNone {
 				actor.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`  %s (%s): too dark to make anything out`,
-						dirLabel, titleLabel))
+					fmt.Sprintf(`  %s: too dark to make anything out`, label))
 			} else if len(parts) > 0 {
 				actor.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`  %s (%s): %s`,
-						dirLabel, titleLabel, strings.Join(parts, `, `)))
+					fmt.Sprintf(`  %s: %s`, label, strings.Join(parts, `, `)))
 			} else {
 				actor.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`  %s (%s): nothing of interest`,
-						dirLabel, titleLabel))
+					fmt.Sprintf(`  %s: nothing of interest`, label))
 			}
 		}
 		actor.SendText(messaging.CategorySystem, ``)

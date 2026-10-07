@@ -496,8 +496,10 @@ ruling O6) is an exit the light here is too poor to see through
 per occupant from `FiguresSensedIn(viewer, room, selfUserId)` (`scan.go`),
 never a name, the room's title or its description; the mob wrapper is
 silent on it, as on every refusal. `Scan` takes the same heat path per
-exit, listing figures where the light test fails, under its usual
-`north (Town Square):` direction label. Both read one occupant filter,
+exit, listing figures where the light test fails, under a bare `north:`
+direction label: the next room's title (`north (Town Square):`) shows only
+when the light here sees out (#428), never with heat-only figures or
+`too dark to make anything out`. Both read one occupant filter,
 `listedOccupants` (`scan.go`), the room roster's rule (`rooms.GetDetails`):
 a mob actually in the room that the viewer `Perceives`, and every other
 player the viewer `Perceives`, so a hidden mob shows to see-hidden and a

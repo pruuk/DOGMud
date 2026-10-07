@@ -124,3 +124,29 @@ func TestScan_LockedExitHidesOccupantsFromMobs(t *testing.T) {
 	require.False(t, result.Sightings[0].Locked)
 	require.Len(t, result.Sightings[0].Mobs, 1, "an open exit still shows the mob caller who is there")
 }
+
+// #428: the next room's title shows only when the scanner sees out by light.
+func TestScan_RoomTitleOnlyWhenTheLightSeesOut(t *testing.T) {
+	for _, c := range []struct {
+		name      string
+		hereLamp  int
+		infra     bool
+		wantTitle bool
+		wantLine  string
+	}{
+		{"light sees out: the title", 90, false, true, `<ansi fg="exit">north</ansi> (<ansi fg="room-title">` + scanLockTitle + `</ansi>): <ansi fg="mobname">Midroad Scout</ansi>`},
+		{"too dark to see out, no heat: no title", 30, false, false, `<ansi fg="exit">north</ansi>: too dark to make anything out`},
+		{"own room too dark: no title", 10, false, false, `<ansi fg="exit">north</ansi>: too dark to make anything out`},
+		{"too dark to see out, heat: figures, no title", 30, true, false, `<ansi fg="exit">north</ansi>: <ansi fg="combat-anon">a figure</ansi>`},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			actor := scanLockScene(t, c.hereLamp, false, c.infra, true)
+			Scan(actor, ScanOptions{})
+			sent := strings.Join(actor.sent, "\n")
+			if got := strings.Contains(sent, scanLockTitle); got != c.wantTitle {
+				t.Errorf("title shown = %v, want %v: %q", got, c.wantTitle, sent)
+			}
+			require.Contains(t, sent, c.wantLine)
+		})
+	}
+}
