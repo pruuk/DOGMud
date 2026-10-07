@@ -119,6 +119,51 @@ func renderWith(pool []string, token, value string, pick narration.Picker) strin
 	var subs map[string]string
 	if token != "" {
 		subs = map[string]string{token: value}
+		// A line whose token follows a lead-in ("I heard {desc}") takes the
+		// value with its leading article lowercased, so it reads "I heard a
+		// caravan", not "I heard A caravan" (#430). The lines are adjusted
+		// before the pick, so the draw count and the line drawn are unchanged.
+		if lowered := LowerLeadingArticle(value); lowered != value {
+			adjusted := make([]string, len(pool))
+			for i, line := range pool {
+				adjusted[i] = line
+				if tokenFollowsLeadIn(line, token) {
+					adjusted[i] = strings.Replace(line, token, lowered, 1)
+				}
+			}
+			pool = adjusted
+		}
 	}
 	return narration.Render(narration.Variants{Actor: pool}, subs, pick).Actor
+}
+
+// LowerLeadingArticle lowercases a leading "A", "An" or "The" in s, for a
+// rumour dropped into the middle of a sentence. Only those three words: any
+// other capital may be a proper noun ("Thornwall closed its gates"), so it
+// stays.
+func LowerLeadingArticle(s string) string {
+	for _, article := range []string{"A ", "An ", "The "} {
+		if strings.HasPrefix(s, article) {
+			return strings.ToLower(s[:1]) + s[1:]
+		}
+	}
+	return s
+}
+
+// tokenFollowsLeadIn reports whether token sits mid-sentence in line: some
+// text comes before it, and that text does not end a sentence.
+func tokenFollowsLeadIn(line, token string) bool {
+	idx := strings.Index(line, token)
+	if idx < 0 {
+		return false
+	}
+	before := strings.TrimRight(line[:idx], " ")
+	if before == "" {
+		return false
+	}
+	switch before[len(before)-1] {
+	case '.', '!', '?', ':', '"':
+		return false
+	}
+	return true
 }

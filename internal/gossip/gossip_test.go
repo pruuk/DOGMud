@@ -126,3 +126,42 @@ func TestLoad_ReadsAndValidatesTheFile(t *testing.T) {
 		t.Errorf("Keys() = %q, want sorted [X-Local fallback]", keys)
 	}
 }
+
+// #430: "I heard A caravan runs..." kept the rumour's capital mid-sentence.
+// A leading article (A, An, The) is lowercased when the token follows a
+// lead-in; a proper noun keeps its capital, and a token that starts the line
+// or a new sentence keeps the article capitalized.
+func TestRenderWith_LowersALeadingArticleAfterALeadIn(t *testing.T) {
+	first := func(int) int { return 0 }
+	cases := []struct {
+		line, value, want string
+	}{
+		{"I heard {desc}", "A caravan runs late.", "I heard a caravan runs late."},
+		{"They say {desc} Rare work, if true.", "The Thornwall mayor is ill.", "They say the Thornwall mayor is ill. Rare work, if true."},
+		{"Word is {desc}", "An ogre walks the road.", "Word is an ogre walks the road."},
+		{"Traders brought news -- {desc}", "The ford is out.", "Traders brought news -- the ford is out."},
+		{"I heard {desc}", "Thornwall closed its gates.", "I heard Thornwall closed its gates."},
+		{"I heard {desc}", "Anders left town.", "I heard Anders left town."},
+		{"{desc} Imagine that.", "A caravan runs late.", "A caravan runs late. Imagine that."},
+		{"I heard something from the road. {desc}", "The ford is out.", "I heard something from the road. The ford is out."},
+	}
+	for _, c := range cases {
+		if got := renderWith([]string{c.line}, "{desc}", c.value, first); got != c.want {
+			t.Errorf("renderWith(%q, %q) = %q, want %q", c.line, c.value, got, c.want)
+		}
+	}
+	if got := LowerLeadingArticle("The Thornwall mayor"); got != "the Thornwall mayor" {
+		t.Errorf("LowerLeadingArticle = %q", got)
+	}
+}
+
+// Lowering one line does not change how many draws a render makes, or which
+// line a given draw picks.
+func TestRenderWith_ArticleLoweringKeepsTheDraw(t *testing.T) {
+	pool := []string{"{desc} Imagine that.", "I heard {desc}"}
+	calls := 0
+	second := func(n int) int { calls++; return 1 }
+	if got := renderWith(pool, "{desc}", "A caravan runs late.", second); got != "I heard a caravan runs late." || calls != 1 {
+		t.Errorf("got %q with %d draws", got, calls)
+	}
+}

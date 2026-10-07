@@ -518,7 +518,7 @@ func buildGossipLine(mob *mobs.Mob) string {
 
 	if len(templates) == 0 {
 		// Final fallback: just say the description
-		return fmt.Sprintf("I heard that %s", evt.Description)
+		return fmt.Sprintf("I heard that %s", gossip.LowerLeadingArticle(evt.Description))
 	}
 
 	return gossip.Render(templates, "{desc}", evt.Description)
