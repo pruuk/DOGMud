@@ -164,8 +164,9 @@ func attribute(prev record, now observation) Cause {
 	case a.Carried != b.Carried || termMoved(a.CarriedLight, b.CarriedLight):
 		return CauseCarried
 	// The room's own light: its lamp, and its fixtures (lighting 5e). Since
-	// street lamps light when the clear sky grows too dim to read a face and
-	// go out once it is bright again (lighting plan 6, gametime.LampsLit), the
+	// street lamps light when the clear sky, as the dimmest lamplit street
+	// sees it, grows too dim to read a face and go out once it is bright
+	// again (lighting plan 6, gametime.LampsLit), the
 	// lamp can move the opposite way to the band across a long gap (noon to
 	// midnight: the sky went out, the lamp came on). A lamp that brightened
 	// cannot have darkened the room, nor one that dimmed lightened it, so

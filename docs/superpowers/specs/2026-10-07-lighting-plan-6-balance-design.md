@@ -54,9 +54,14 @@ ABSENT from `config.yaml` (Go default applies): `LightBlindBelow` 25,
   the rebuild.
 - **O4 City lamps by hour: option A.** Street lamps burn from dusk to dawn as a
   biome property, not 98 placed lamp-post items. Revised after the dry run: a
-  lamp burns while it is night OR while the clear-sky celestial light reads
-  below `LightDimBelow` (a lamplighter working by eye), so midwinter 08:00 and
-  16:00 stay lit. The 4111 arch lantern follows the same rule.
+  lamp burns while it is night OR while the clear-sky celestial light, as the
+  dimmest street-lamp biome sees it through its sky fraction, would read a
+  level below `LightDimBelow` (a lamplighter working by eye), so midwinter
+  08:00 and 16:00 stay lit. Revised again after code review (owner ruled):
+  the first version tested the clear sky itself, so a street seeing it
+  through 0.95 read 49 (shapes) for a round at every lamp change, about 240
+  dips a year; testing the street's view of the sky removes the dip. The
+  4111 arch lantern follows the same rule.
 - **O10 Infra reach moves are accepted** as the linear sum gives them (the only
   move past a point is a mob's raw Pitsense 20 stacked with Heat Sight, -1.10).
 - **O5 Seeing through an exit needs 55** for normal eyes (was 65). Night vision
@@ -122,8 +127,14 @@ by more than one point.
 - Biomes gain a street lamp flag (`streetlamp: true`, `BiomeInfo.StreetLamp`).
   When set, the biome's `lamp` joins the composition only
   while the lamps are lit: `gametime.IsNight()`, or the clear-sky celestial
-  light below `LightDimBelow` (O4 as revised). Weather does not light them, so
-  every lamp in the world changes at the same moment. The arch lantern's
+  light, attenuated by the smallest `SkyLightFraction` among the biomes with
+  `StreetLamp` and rounded as a room level is, below `LightDimBelow` (O4 as
+  revised after the dry run and again after code review). `internal/rooms`
+  registers that fraction with `gametime.SetStreetLampSkyFraction` when
+  biomes load (1, the open sky, when none is registered). So in clear weather
+  the round the lamps go out every street already reads faces by its sky
+  alone, and no street dips below faces at a lamp change. Weather does not
+  light them, so every lamp in the world changes at the same moment. The arch lantern's
   `dusk_to_dawn` tree switches to a new `time_of_day period: lamplit` that
   reads the same test.
 - `city_thoroughfare` (52) and `city_backstreet` (35) set it. `interior` (50),

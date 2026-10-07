@@ -123,13 +123,19 @@ fraction of real light can read below 0):
    (`BiomeInfo.StreetLamp`, `BiomeInfo.LampAt(lampsLit)`; lighting plan 6,
    owner ruling O4 as amended): then it joins only while
    `gametime.LampsLit()`, which is night OR the clear-sky
-   `CelestialLight()` below `LightDimBelow`, a lamplighter working by eye,
-   so a midwinter 08:00 (day, sky about 40) keeps its lamps. Weather never
+   `CelestialLight()`, attenuated by the dimmest street-lamp biome's sky
+   fraction, rounding to a level below `LightDimBelow`, a lamplighter
+   working by eye, so a midwinter 08:00 (day, sky about 40) keeps its lamps
+   and a street never reads below faces for the round its lamps go out.
+   `LoadBiomeDataFiles` and `SeedBiomesForTest` register that fraction with
+   `gametime.SetStreetLampSkyFraction` (`registerStreetLampSky`; the
+   smallest `SkyLightFraction` among biomes with `StreetLamp` and a lamp, 1
+   when there is none). Weather never
    enters it, so every street lamp lights and goes out in the same round,
    and the North Gate arch lantern's `dusk_to_dawn` tree reads the same
    test (`time_of_day period: lamplit`). `city_thoroughfare` (52) and
    `city_backstreet` (35) set it; `interior`, `ether` and `spiderweb` do
-   not. Once the clear sky shows faces a street reads its daylight alone.
+   not. Once its sky shows faces a street reads its daylight alone.
 3. **Every light anyone present carries, one term each** (lighting plan 5a).
    `carriedTerms(exclude)` makes one pass over `r.mobs` and `r.players`,
    reading each bearer's `Conditions.LightAndDarknessSources()` through
@@ -164,7 +170,8 @@ celestial, skyFilter, carried, dark)` is the fixture-free test core and
 composes with every street lamp lit. `LightTermsAtForTest(celestial,
 lampsLit, skyFilter)` (`test_helpers.go`) exposes the composition to a
 cross-package golden, whose caller works out `lampsLit` with
-`gametime.LampsLitAt(night, celestial, cfg.DimBelow)` on its own sample.
+`gametime.LampsLitAt(night, celestial, gametime.StreetLampSkyFraction(), cfg)`
+on its own sample.
 
 **Trimming (`light_trim.go`, plan 5a; darkness plan 5d).** `(*Room).TrimLightFor(c)`
 trims every adjustable, unhooded light AND darkness record `c` holds to `c`'s
@@ -205,8 +212,8 @@ needs to know WHY the light is what it is: `Level` (identical to
 term after fraction and the weather filter, 0 when the room has no sky),
 `SkyFilter` (the product of the active mutators' `SkyLight` fractions, 1
 when clear), `Lamp`/`HasLamp` (the lamp as it burns now: a street lamp is
-`HasLamp` false while `gametime.LampsLit()` is false, a day whose clear sky
-shows faces), `Carried`, and (plan 5a) `Raw`. Since lighting plan
+`HasLamp` false while `gametime.LampsLit()` is false, a day whose sky
+shows faces on every lamplit street), `Carried`, and (plan 5a) `Raw`. Since lighting plan
 5d `Raw` is the NET light `Level` rounds (`Light` minus `Dark`), and three
 fields carry the parts: `Light` (the combined light after the plan 6 floor,
 0 when nothing lights the room; both trims solve against it), `Dark` (the
@@ -327,7 +334,7 @@ carried light or the room adds).
 | `river` | `1.0` | none | Flowing water, fully open sky |
 | `ether` | `0.0` | `60` | Outside the world; time-invariant. Character creation, the shadow realm, the planar oasis |
 | `spiderweb` | `0.0` | `45` | A web-choked lair. Declared before plan 3b but held zero rooms until this plan gave it the Foldweave |
-| `city_thoroughfare` | `0.95` | `52` | A city's main streets, squares, markets and gates. Street lamps (`streetlamp: true`, lit at night and while the clear sky is too dim for faces) hold it in the faces band at any hour, day or night. Added by plan 3c-1 |
+| `city_thoroughfare` | `0.95` | `52` | A city's main streets, squares, markets and gates. Street lamps (`streetlamp: true`, lit at night and while its clear sky is too dim for faces) hold it in the faces band at any hour in clear weather, day or night: the lamps go out only once its daylight alone reads faces (`lighting_street_lamp_no_dip_test.go`). Added by plan 3c-1 |
 | `city_backstreet` | `0.95` | `35` | A city's lanes, alleys, courts and yards off the main ways. No main-street lamp reaches them; their own dim street lamps (`streetlamp: true`, lit with the main streets') leave a normal eye reading shapes, not faces, after dark. Added by plan 3c-1 |
 | `ruins` | `0.75` | none | A roofless building: takes weather and sky like open ground, a little shaded by whatever walls still stand, dark at night. `movementcost: 1.0` for the rubble underfoot. Added by plan 3c-1 |
 

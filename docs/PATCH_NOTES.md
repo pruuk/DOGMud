@@ -5,7 +5,9 @@
 - City street lamps are now lit when the light fails and put out once the
   day is bright, like a lamplighter working by eye. They burn all night,
   and on a dim winter morning or evening they stay lit, so faces can still
-  be read in the street. A storm does not light them. Every street lamp,
+  be read in the street. They go out only once daylight alone lets you
+  read a face there, so a clear morning never leaves a street dim for a
+  moment. A storm does not light them. Every street lamp,
   and the lantern on Stillwater's North Gate, changes at the same moment.
   On a bright day a street is lit by the sky alone, so a main street at
   noon no longer dazzles. At night the streets are as bright as before.

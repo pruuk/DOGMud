@@ -149,7 +149,7 @@ func TestLightingBalanceSpread(t *testing.T) {
 		)
 		// The lamps follow the sky being composed: the lamplighter sees
 		// this sample's moons, not the live clock's.
-		lampsLit := gametime.LampsLitAt(gametime.NightAt(cfg.WorldLatitude, s.Doy, s.Hour), celestial, cfg.DimBelow)
+		lampsLit := gametime.LampsLitAt(gametime.NightAt(cfg.WorldLatitude, s.Doy, s.Hour), celestial, gametime.StreetLampSkyFraction(), cfg)
 		fmt.Fprintf(&b, "== %s\n", s.Label)
 		for _, id := range spread {
 			r := rooms.LoadRoom(id)

@@ -41,8 +41,10 @@ func MarkRoomOccupancy(roomId int, playerCt int, mobCt int) {
 func SeedBiomesForTest(biomeMap map[string]*BiomeInfo) func() {
 	orig := biomes
 	biomes = biomeMap
+	registerStreetLampSky()
 	return func() {
 		biomes = orig
+		registerStreetLampSky()
 	}
 }
 

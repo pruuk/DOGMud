@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
+	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/pkg/errors"
 )
@@ -53,9 +54,12 @@ type BiomeInfo struct {
 	// StreetLamp makes the biome's Lamp a street lamp, lit and put out by a
 	// lamplighter working by eye: it joins the room's light while
 	// gametime.LampsLit() is true, which is at night OR while the clear sky
-	// (the celestial light before any sky fraction or weather) reads below
+	// (the celestial light before weather), seen through the smallest sky
+	// fraction among the street-lamp biomes, would read a level below
 	// LightDimBelow, so a midwinter morning too dim to read a face keeps its
-	// lamps (lighting plan 6, owner ruling O4 as amended). The North Gate
+	// lamps and no street dips below faces for the round they go out
+	// (lighting plan 6, owner ruling O4 as amended; registerStreetLampSky
+	// hands gametime that fraction). The North Gate
 	// arch lantern's dusk_to_dawn tree reads the same test (`time_of_day
 	// period: lamplit`), and weather never enters it, so every street lamp
 	// in the world lights and goes out at the same moment. Unset, the lamp
@@ -223,7 +227,35 @@ func LoadBiomeDataFiles() {
 		}
 	}
 
+	registerStreetLampSky()
+
 	mudlog.Info("biomes.LoadBiomeDataFiles()", "loadedCount", len(biomes), "Time Taken", time.Since(start))
+}
+
+// streetLampSkyFraction is the smallest sky fraction among the biomes whose
+// lamp is a street lamp (StreetLamp with a lamp declared), and false when no
+// biome has one.
+func streetLampSkyFraction() (float64, bool) {
+	best, found := 1.0, false
+	for _, b := range biomes {
+		if b == nil || !b.StreetLamp || b.Lamp == nil {
+			continue
+		}
+		if f := b.SkyLightFraction(); !found || f < best {
+			best, found = f, true
+		}
+	}
+	return best, found
+}
+
+// registerStreetLampSky hands gametime the dimmest street-lamp biome's sky
+// fraction, which gametime.LampsLitAt reads so the lamps stay lit until that
+// street reads faces by daylight alone (lighting plan 6, owner ruling O4 and
+// the review fix after it). With no street-lamp biome it registers 1, the
+// open sky. Called whenever the biome registry is replaced.
+func registerStreetLampSky() {
+	f, _ := streetLampSkyFraction()
+	gametime.SetStreetLampSkyFraction(f)
 }
 
 func GetBiome(name string) (*BiomeInfo, bool) {

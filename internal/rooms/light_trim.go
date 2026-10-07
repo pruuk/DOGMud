@@ -56,7 +56,7 @@ func (r *Room) TrimLightFor(c *characters.Character) {
 
 	cfg := configs.GetLightingConfig()
 	celestial := gametime.CelestialLight()
-	lampsLit := gametime.LampsLitAt(gametime.IsNight(), celestial, cfg.DimBelow)
+	lampsLit := gametime.LampsLitAt(gametime.IsNight(), celestial, gametime.StreetLampSkyFraction(), cfg)
 	skyFilter := r.mutatorSkyFilter()
 	strength := c.NightVisionStrength()
 	lightTarget := messaging.LightTrimTarget(strength, cfg.DazzleAbove)

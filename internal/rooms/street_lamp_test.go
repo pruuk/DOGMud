@@ -1,6 +1,7 @@
 package rooms
 
 import (
+	"math"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -56,6 +57,34 @@ func TestStreetLampJoinsOnlyWhileLampsAreLit(t *testing.T) {
 	}
 }
 
+// Loading or seeding biomes registers the dimmest street-lamp sky fraction
+// with gametime: only biomes with a street lamp count, and with none it is
+// the open sky. The cleanup puts back the registry's own value.
+func TestBiomesRegisterTheDimmestStreetLampSky(t *testing.T) {
+	before := gametime.StreetLampSkyFraction()
+	cleanup := SeedBiomesForTest(map[string]*BiomeInfo{
+		"main":   {BiomeId: "main", Name: "Main", SkyLight: SkyLightPtr(0.95), Lamp: LampPtr(52), StreetLamp: true},
+		"lane":   {BiomeId: "lane", Name: "Lane", SkyLight: SkyLightPtr(0.8), Lamp: LampPtr(35), StreetLamp: true},
+		"inn":    {BiomeId: "inn", Name: "Inn", SkyLight: SkyLightPtr(0.15), Lamp: LampPtr(50)},
+		"noLamp": {BiomeId: "noLamp", Name: "Flag only", SkyLight: SkyLightPtr(0.1), StreetLamp: true},
+	})
+	if got := gametime.StreetLampSkyFraction(); got != 0.8 {
+		t.Errorf("registered %v, want the lane's 0.8", got)
+	}
+	cleanup()
+	if got := gametime.StreetLampSkyFraction(); got != before {
+		t.Errorf("after cleanup registered %v, want %v back", got, before)
+	}
+
+	cleanup = SeedBiomesForTest(map[string]*BiomeInfo{
+		"inn": {BiomeId: "inn", Name: "Inn", SkyLight: SkyLightPtr(0.15), Lamp: LampPtr(50)},
+	})
+	defer cleanup()
+	if got := gametime.StreetLampSkyFraction(); got != 1 {
+		t.Errorf("with no street-lamp biome registered %v, want 1", got)
+	}
+}
+
 // setRound moves the world to an exact round, clearing the per-round memos.
 func setRound(r uint64) {
 	util.SetRoundCountForTest(r)
@@ -64,13 +93,19 @@ func setRound(r uint64) {
 }
 
 // The street lamp on the real clock. Every round of three sample days: the
-// lamp is lit exactly while it is night or the clear sky reads below
-// LightDimBelow, so it is lit all night. At each end of the day the lamp
-// changes in the round the clear sky crosses the faces edge, not the round
-// night ends or begins: lit one round before the morning crossing and out at
-// it, out one round before the evening crossing and lit at it, and both
-// crossings fall in daylight (IsNight false), which is the lamplighter's
-// half of the rule that IsNight alone would get wrong.
+// lamp is lit exactly while it is night or the street's own sky (the clear
+// sky through its 0.95 fraction, rounded as its level is) reads below
+// LightDimBelow, so it is lit all night and the street never reads below
+// faces with its lamp out. At each end of the day the lamp changes in the
+// round the street's sky crosses the faces edge, not the round night ends or
+// begins: lit one round before the morning crossing and out at it, out one
+// round before the evening crossing and lit at it, and both crossings fall
+// in daylight (IsNight false), which is the lamplighter's half of the rule
+// that IsNight alone would get wrong.
+//
+// The expectation is read from the street room's own Sky term, not from
+// gametime's registered fraction, so it is independent of the rule under
+// test: the thoroughfare is the dimmest street-lamp biome shipped.
 func TestStreetLampFollowsTheDimSkyAtTheBoundary(t *testing.T) {
 	withShippedBiomesAndClock(t)
 	requireBiome(t, "city_thoroughfare")
@@ -86,17 +121,21 @@ func TestStreetLampFollowsTheDimSkyAtTheBoundary(t *testing.T) {
 		day := make([]reading, roundsPerDay)
 		for i := range day {
 			setRound(base + uint64(i))
+			terms := street.LightTerms()
 			day[i] = reading{
 				night:  gametime.IsNight(),
-				dimSky: gametime.CelestialLight() < dim,
-				lamp:   street.LightTerms().HasLamp,
+				dimSky: math.Round(terms.Sky) < dim,
+				lamp:   terms.HasLamp,
 			}
 			if want := day[i].night || day[i].dimSky; day[i].lamp != want {
-				t.Errorf("day %d round %d: lamp lit %v, want %v (night %v, clear sky below %v: %v)",
-					doy, i, day[i].lamp, want, day[i].night, dim, day[i].dimSky)
+				t.Errorf("day %d round %d: lamp lit %v, want %v (night %v, street sky %.3f below %v: %v)",
+					doy, i, day[i].lamp, want, day[i].night, terms.Sky, dim, day[i].dimSky)
 			}
 			if day[i].night && !day[i].lamp {
 				t.Errorf("day %d round %d: night with the street lamp out", doy, i)
+			}
+			if !terms.HasLamp && float64(terms.Level) < dim {
+				t.Errorf("day %d round %d: lamp out and the street reads %d, below faces", doy, i, terms.Level)
 			}
 		}
 

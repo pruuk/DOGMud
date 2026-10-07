@@ -84,7 +84,8 @@ func TestNoShippedRoomReadsBelowZeroWithoutDarkness(t *testing.T) {
 				samples = append(samples, sample{
 					celestial: celestial,
 					lampsLit: gametime.LampsLitAt(
-						gametime.NightAt(cfg.WorldLatitude, doy, float64(hour)), celestial, cfg.DimBelow),
+						gametime.NightAt(cfg.WorldLatitude, doy, float64(hour)), celestial,
+						gametime.StreetLampSkyFraction(), cfg),
 				})
 			}
 		}

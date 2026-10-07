@@ -9,7 +9,8 @@ description: The side streets, lanes, alleys, courts and yards off a city's
 skylight: 0.95
 lamp: 35
 # Street lamps, lit and put out with the main streets' (lighting plan 6):
-# at night and while the clear sky is too dim to read a face.
+# at night and while the clear sky, seen through the dimmest street-lamp
+# biome's skylight, would leave a street too dim to read a face.
 streetlamp: true
 requireditemid: 0
 usesitem: false

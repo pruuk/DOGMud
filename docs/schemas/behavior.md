@@ -98,7 +98,7 @@ node.
 
 | Condition | Params | Description |
 |-----------|--------|-------------|
-| `time_of_day` | `period` ("day", "night", "lamplit", or "after_dusk" with `hours` N), or `range` ("`<start>-<end>`") | Checks in-game time of day. `after_dusk` is true from the night boundary until N game hours later (lighting 5e). `lamplit` is true while the city's street lamps burn: at night, and while the clear sky is too dim to read a face (lighting plan 6); a lantern on it changes with every street lamp. |
+| `time_of_day` | `period` ("day", "night", "lamplit", or "after_dusk" with `hours` N), or `range` ("`<start>-<end>`") | Checks in-game time of day. `after_dusk` is true from the night boundary until N game hours later (lighting 5e). `lamplit` is true while the city's street lamps burn: at night, and while the clear sky, as the dimmest lamplit street sees it, is too dim to read a face (lighting plan 6); a lantern on it changes with every street lamp. |
 | `round_mod` | `n` (int) | Succeeds when current round % n == 0. |
 | `random_chance` | `percent` (int) | Succeeds with N% probability. |
 | `players_in_room` | none | At least one player is in the mob's room. |

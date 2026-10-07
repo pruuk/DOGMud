@@ -16,7 +16,7 @@ func withShippedBiomesAndClock(t *testing.T) {
 	t.Helper()
 
 	origBiomes := biomes
-	t.Cleanup(func() { biomes = origBiomes })
+	t.Cleanup(func() { biomes = origBiomes; registerStreetLampSky() })
 
 	cfg := configs.GetConfig()
 	cfg.FilePaths.DataFiles = `../../_datafiles/world/dogmud`

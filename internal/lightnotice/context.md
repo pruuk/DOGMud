@@ -61,7 +61,8 @@ either state; see "The seams" below.
    lamp**, then **weather** filtering the sky, then the **sky** itself.
    The lamp is named only when it moved the same way as the room
    (`lampAgrees`, lighting plan 6): street lamps now light when the clear
-   sky grows too dim to read a face and go out once it is bright again
+   sky, as the dimmest lamplit street sees it, grows too dim to read a face
+   and go out once it is bright again
    (`gametime.LampsLit`), so across a long gap (noon to midnight) the lamp
    can come on while the room darkens, and that change belongs to the sky.
    Darkness comes first because without its own cause a darkness moves no
