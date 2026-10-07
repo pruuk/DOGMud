@@ -51,6 +51,14 @@ terms read about 1.4 lower than before).
 - `Combine` skips NaN and reads negative light terms as 0, so one bad caller
   cannot poison a room and a light term can never darken one.
 - Every function coerces a non-positive step to 1 rather than dividing by zero.
+- **`Combine` and `Attenuate` always return a finite number.** `B(p)`
+  overflows a float64 once `p/step` passes about 1024 (an uncapped Glow, or a
+  tiny authored `LightDoublingStep`); both then fall back to the log domain
+  relative to the brightest term, which is the linear sum to rounding at that
+  magnitude. `B` and `p` use `Expm1` and `Log1p` so a sliver near 0 keeps its
+  precision. The room still clamps in floating point before its int
+  conversion (`rooms.levelOfRaw`), so nothing that slips past here can wrap a
+  blinding room round to -100.
 - **`Trim` solves the linear sum exactly; it is not `target - others`.** It
   returns `Absent()` when `others` already reaches `target`, or when the
   needed term has no brightness. With no other light it returns

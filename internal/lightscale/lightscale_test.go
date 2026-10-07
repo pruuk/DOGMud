@@ -220,3 +220,91 @@ func TestNonPositiveStepDoesNotPanicOrNaN(t *testing.T) {
 		t.Fatalf("Attenuate at step -4 = %v", got)
 	}
 }
+
+// finiteAndAtLeast fails unless got is a finite number at or above floor.
+func finiteAndAtLeast(t *testing.T, what string, got, floor float64) {
+	t.Helper()
+	if math.IsNaN(got) || math.IsInf(got, 0) {
+		t.Errorf("%s = %v, want a finite reading", what, got)
+		return
+	}
+	if got < floor-1e-9 {
+		t.Errorf("%s = %v, want at least %v", what, got, floor)
+	}
+}
+
+// A term so bright its brightness overflows a float64 (p/step past 1024, an
+// uncapped Glow or a tiny authored LightDoublingStep) must still read as a
+// bright light, never +Inf, and never the NaN that +Inf minus +Inf gives.
+func TestCombineSurvivesHugeTerms(t *testing.T) {
+	for _, c := range []struct {
+		step  float64
+		terms []float64
+	}{
+		{8, []float64{9000}},
+		{8, []float64{9000, 9000}},
+		{8, []float64{9000, 50}},
+		{8, []float64{1e300, 1e300, 3}},
+		{1e-3, []float64{52}},
+		{1e-3, []float64{52, 35}},
+		{1e-300, []float64{52, 52}},
+		{5e-324, []float64{10, 20}},
+	} {
+		got := Combine(c.step, c.terms...)
+		best := 0.0
+		for _, v := range c.terms {
+			best = math.Max(best, v)
+		}
+		finiteAndAtLeast(t, "Combine", got, best)
+		// Two terms add at most one step to the brightest.
+		if got > best+c.step*math.Log2(float64(len(c.terms)))+1e-9*best {
+			t.Errorf("Combine(step %v, %v) = %v, more than log2(n) steps above %v", c.step, c.terms, got, best)
+		}
+	}
+	// Two equal huge terms read exactly one step brighter than one.
+	if got := Combine(8, 9000, 9000); math.Abs(got-9008) > 1e-9 {
+		t.Errorf("Combine(9000, 9000) = %v, want 9008", got)
+	}
+	// At a tiny step a weaker term is invisible beside a brighter one.
+	if got := Combine(1e-3, 52, 35); math.Abs(got-52) > 1e-9 {
+		t.Errorf("Combine(step 1e-3, 52, 35) = %v, want 52", got)
+	}
+}
+
+func TestAttenuateSurvivesHugeTerms(t *testing.T) {
+	for _, c := range []struct{ step, light, fraction float64 }{
+		{8, 9000, 0.5},
+		{8, 9000, 0.95},
+		{8, 9000, 1e-300},
+		{8, 1e300, 0.5},
+		{1e-3, 52, 0.95},
+		{1e-3, 52, 1e-9},
+		{5e-324, 52, 0.5},
+	} {
+		got := Attenuate(c.step, c.light, c.fraction)
+		finiteAndAtLeast(t, "Attenuate", got, 0)
+		if got > c.light+1e-9 {
+			t.Errorf("Attenuate(step %v, %v, %v) = %v, above the light", c.step, c.light, c.fraction, got)
+		}
+	}
+	// Far above the dim end a halving is exactly one step down.
+	if got := Attenuate(8, 9000, 0.5); math.Abs(got-8992) > 1e-9 {
+		t.Errorf("Attenuate(9000, 0.5) = %v, want 8992", got)
+	}
+}
+
+// Near 0 the arithmetic must not lose the light to cancellation: a sliver
+// still reads itself and two slivers read about twice one.
+func TestTinyTermsKeepTheirPrecision(t *testing.T) {
+	for _, x := range []float64{1e-12, 1e-9, 1e-6} {
+		if got := Combine(8, x); math.Abs(got-x) > x*1e-9 {
+			t.Errorf("Combine(%v) = %v", x, got)
+		}
+		if got := Combine(8, x, x); math.Abs(got-2*x) > x*1e-6 {
+			t.Errorf("Combine(%v, %v) = %v, want about %v", x, x, got, 2*x)
+		}
+		if got := Attenuate(8, x, 0.5); math.Abs(got-x/2) > x*1e-6 {
+			t.Errorf("Attenuate(%v, 0.5) = %v, want about %v", x, got, x/2)
+		}
+	}
+}

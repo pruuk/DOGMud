@@ -3,6 +3,8 @@ package rooms
 import (
 	"math"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/configs"
 )
 
 // The floor (lighting plan 6, owner ruling O3): any real light reads at least
@@ -82,5 +84,61 @@ func TestTheHoldingCellAtANewMoonMidnightIsBarelyLit(t *testing.T) {
 	}
 	if got.Level != 3 {
 		t.Errorf("Level = %d, want 3", got.Level)
+	}
+}
+
+// A blinding room must read blinding. Before the overflow fix a light whose
+// brightness overflowed (a huge Glow, or a tiny authored doubling step) came
+// back +Inf, int(math.Round(+Inf)) is the most negative int, and the clamp
+// turned the brightest room in the world into maximal magical darkness.
+func TestAnOverflowingLightReadsBlindingNotDark(t *testing.T) {
+	zero := 0.0
+	cave := Room{SkyLight: &zero}
+	tiny := modelCfg()
+	tiny.DoublingStep = 1e-3
+	cases := []struct {
+		name    string
+		cfg     configs.Lighting
+		carried []float64
+		dark    []float64
+		want    int
+	}{
+		{"a huge carried light", modelCfg(), []float64{9000}, nil, 100},
+		{"two huge carried lights", modelCfg(), []float64{9000, 9000}, nil, 100},
+		{"a huge light against a huge darkness", modelCfg(), []float64{9000}, []float64{9000}, 0},
+		{"a huge darkness", modelCfg(), []float64{30}, []float64{9000}, -100},
+		{"a lantern at a tiny step", tiny, []float64{52}, nil, 52},
+		{"two lanterns at a tiny step", tiny, []float64{52, 52}, nil, 52},
+	}
+	for _, c := range cases {
+		got := cave.composeWith(c.cfg, 0, 1, c.carried, c.dark)
+		if got.Level != c.want {
+			t.Errorf("%s: Level = %d, want %d (Raw %v)", c.name, got.Level, c.want, got.Raw)
+		}
+	}
+}
+
+// The int conversion itself is safe for every float, so no future term that
+// slips past lightscale can wrap around to -100.
+func TestLevelOfRawIsSafeForEveryFloat(t *testing.T) {
+	cases := []struct {
+		raw  float64
+		want int
+	}{
+		{math.Inf(1), 100},
+		{math.Inf(-1), -100},
+		{math.NaN(), 0},
+		{1e300, 100},
+		{-1e300, -100},
+		{float64(math.MaxInt64), 100},
+		{100.4, 100},
+		{-100.4, -100},
+		{49.5, 50},
+		{-0.4, 0},
+	}
+	for _, c := range cases {
+		if got := levelOfRaw(c.raw); got != c.want {
+			t.Errorf("levelOfRaw(%v) = %d, want %d", c.raw, got, c.want)
+		}
 	}
 }

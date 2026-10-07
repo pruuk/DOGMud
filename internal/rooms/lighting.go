@@ -206,15 +206,28 @@ func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial float64, lamp
 	}
 	v -= out.Dark
 	out.Raw = v
-
-	n := int(math.Round(v))
-	if n < -100 {
-		n = -100
-	} else if n > 100 {
-		n = 100
-	}
-	out.Level = n
+	out.Level = levelOfRaw(v)
 	return out
+}
+
+// levelOfRaw rounds a net light reading to a level and clamps it to the
+// scale's [-100, 100]. The clamp happens in floating point BEFORE the int
+// conversion, because int() of a float beyond the int range (or of +Inf) is
+// implementation-defined in Go and on amd64 yields the most negative int,
+// which would turn a blinding room into maximal magical darkness. +Inf reads
+// 100 and -Inf -100. NaN (an arithmetic mistake upstream, which
+// lightscale already refuses to produce) reads 0, the darkest natural dark,
+// rather than either extreme.
+func levelOfRaw(v float64) int {
+	switch {
+	case math.IsNaN(v):
+		return 0
+	case v >= 100:
+		return 100
+	case v <= -100:
+		return -100
+	}
+	return int(math.Round(v))
 }
 
 // carriedTerms is every carried light term and every carried darkness term in
