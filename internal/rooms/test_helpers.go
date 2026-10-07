@@ -1,5 +1,7 @@
 package rooms
 
+import "github.com/GoMudEngine/GoMud/internal/configs"
+
 // SeedRoomsForTest replaces the global roomManager with a fresh instance
 // populated from the supplied maps and returns a cleanup function.
 // Intended for cross-package integration tests (hooks, commands).
@@ -51,3 +53,13 @@ func SeedBiomesForTest(biomeMap map[string]*BiomeInfo) func() {
 // doc comments), so a plain literal cannot express "authored as 0".
 func SkyLightPtr(f float64) *float64 { return &f }
 func LampPtr(n int) *int             { return &n }
+
+// LightTermsAtForTest composes this room's light with the celestial term and
+// the weather sky filter supplied, rather than read from the clock and the
+// active mutators. A cross-package golden uses it to pin moon states that no
+// single round of the real clock can produce (every moon new, or every moon
+// full). Everything else (lamp, fixtures, carried light) is read as
+// LightTerms reads it.
+func (r *Room) LightTermsAtForTest(celestial, skyFilter float64) LightTerms {
+	return r.composeLight(configs.GetLightingConfig(), celestial, skyFilter)
+}
