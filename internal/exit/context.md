@@ -8,6 +8,15 @@ The `internal/exit` package provides data structures for managing room exits in 
 
 ### Core Files
 - **exit.go**: Exit data structures and functionality
+- **phrase.go**: Narration phrasing for an exit name, so up and down read as
+  directions (#430). `FromPhrase(name)` gives "from above" / "from below" /
+  `from the <exit>` (coloured); `TowardPhrase(name)` gives "up" / "down" /
+  "toward the <exit>" (uncoloured, for the peer lines); `DeparturePhrase(name)`
+  gives "upward" / "downward" / `towards the <exit> exit` (coloured). Used by
+  the player and mob movement lines (`usercommands/go.go`,
+  `actions.RelocateMob`) and the look lines (`usercommands/look.go`,
+  `mobcommands/look.go`). Lines of the form "the <exit> exit" (lock, unlock,
+  flee) read correctly for up and down and do not use them.
 
 ### Key Structures
 

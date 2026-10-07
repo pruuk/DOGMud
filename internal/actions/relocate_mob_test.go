@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -59,6 +60,13 @@ func TestRelocateMob_MovesTheMobBetweenRooms(t *testing.T) {
 // it, and toWatcher never was its target).
 func relocateWatchers(t *testing.T, sneaking bool) (fromMsgs, toMsgs, exitMsgs []string) {
 	t.Helper()
+	return relocateWatchersVia(t, sneaking, "north", "south")
+}
+
+// relocateWatchersVia is relocateWatchers with the exit names chosen: out
+// leads from the first room to dest, back leads from dest to the first room.
+func relocateWatchersVia(t *testing.T, sneaking bool, out, back string) (fromMsgs, toMsgs, exitMsgs []string) {
+	t.Helper()
 	// Room.AddMob (below, and inside RelocateMob's move to dest) queues a
 	// RoomChange event as a side effect. Nothing in this file calls
 	// events.ProcessEvents to drain it, so left alone it sits in the shared
@@ -69,8 +77,8 @@ func relocateWatchers(t *testing.T, sneaking bool) (fromMsgs, toMsgs, exitMsgs [
 	const fromWatcher, toWatcher = 99431, 99432
 	const exitRoom, exitWatcher = 99423, 99433
 	cleanupRooms := rooms.SeedRoomsForTest(map[int]*rooms.Room{
-		from:     {RoomId: from, Zone: "test", Exits: map[string]exit.RoomExit{"north": {RoomId: to}}},
-		to:       {RoomId: to, Zone: "test", Exits: map[string]exit.RoomExit{"south": {RoomId: from}, "east": {RoomId: exitRoom}}},
+		from:     {RoomId: from, Zone: "test", Exits: map[string]exit.RoomExit{out: {RoomId: to}}},
+		to:       {RoomId: to, Zone: "test", Exits: map[string]exit.RoomExit{back: {RoomId: from}, "east": {RoomId: exitRoom}}},
 		exitRoom: {RoomId: exitRoom, Zone: "test", Exits: map[string]exit.RoomExit{"west": {RoomId: to}}},
 	}, map[string]*rooms.ZoneConfig{})
 	defer cleanupRooms()
@@ -101,7 +109,7 @@ func relocateWatchers(t *testing.T, sneaking bool) (fromMsgs, toMsgs, exitMsgs [
 	events.DrainQueuedRoomMessagesForTest(from)
 	events.DrainQueuedRoomMessagesForTest(exitRoom)
 
-	RelocateMob(m, fromRoom, "north", toRoom, sneaking)
+	RelocateMob(m, fromRoom, out, toRoom, sneaking)
 
 	fromMsgs = events.DrainQueuedMessagesForTest(fromWatcher)
 	toMsgs = events.DrainQueuedMessagesForTest(toWatcher)
@@ -130,5 +138,29 @@ func TestRelocateMob_ASneakingMobMovesUnannounced(t *testing.T) {
 	fromMsgs, toMsgs, exitMsgs = relocateWatchers(t, true)
 	if len(fromMsgs) != 0 || len(toMsgs) != 0 || len(exitMsgs) != 0 {
 		t.Errorf("a sneaking mob was announced: from=%q to=%q exits=%q", fromMsgs, toMsgs, exitMsgs)
+	}
+}
+
+// #430: a move through a vertical exit reads as a direction, not a place.
+// "Prowler enters from the up" became "Prowler enters from below" (it came
+// up from the room beneath), and the departure "leaves upward". A level
+// move keeps "towards the north exit" and "from the south".
+func TestRelocateMob_VerticalExitsReadNaturally(t *testing.T) {
+	joined := func(msgs []string) string { return strings.Join(msgs, "\n") }
+
+	fromMsgs, toMsgs, _ := relocateWatchersVia(t, false, "up", "down")
+	if got := joined(fromMsgs); !strings.Contains(got, "leaves upward.") {
+		t.Errorf("departure line = %q, want it to say the mob leaves upward", got)
+	}
+	if got := joined(toMsgs); !strings.Contains(got, "enters from below.") || strings.Contains(got, "the down") {
+		t.Errorf("arrival line = %q, want \"enters from below.\"", got)
+	}
+
+	fromMsgs, toMsgs, _ = relocateWatchersVia(t, false, "north", "south")
+	if got := joined(fromMsgs); !strings.Contains(got, `towards the <ansi fg="exit">north</ansi> exit.`) {
+		t.Errorf("level departure line = %q", got)
+	}
+	if got := joined(toMsgs); !strings.Contains(got, `enters from the <ansi fg="exit">south</ansi>.`) {
+		t.Errorf("level arrival line = %q", got)
 	}
 }

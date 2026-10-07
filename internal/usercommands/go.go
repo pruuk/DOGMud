@@ -237,12 +237,13 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			user.SendText(messaging.CategorySystem, "<ansi fg=\"yellow\">You're feeling winded. Consider resting to recover your stamina.</ansi>")
 		}
 
-		// Grab the exit in the target room that leads to this room (if any)
+		// Grab the exit in the target room that leads to this room (if any).
+		// enterFrom is the whole "from ..." phrase: "from above" reads
+		// where "from the up" did not (#430).
 		enterFromExit := destRoom.FindExitTo(room.RoomId)
+		enterFrom := "from somewhere"
 
-		if len(enterFromExit) < 1 {
-			enterFromExit = "somewhere"
-		} else {
+		if len(enterFromExit) > 0 {
 
 			// Entering through the other side unlocks this side
 			exitInfo := destRoom.Exits[enterFromExit]
@@ -251,7 +252,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				destRoom.SetExitLock(enterFromExit, false)
 			}
 
-			enterFromExit = fmt.Sprintf(`the <ansi fg="exit">%s</ansi>`, enterFromExit)
+			enterFrom = exit.FromPhrase(enterFromExit)
 		}
 
 		behaviortree.TryRoomBehavior(room.RoomId, behaviortree.EventContext{
@@ -296,12 +297,12 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			if isSneaking {
 				user.SendText(messaging.CategoryRoomExit,
 					fmt.Sprintf(string(c.ExitRoomMessageWrapper),
-						fmt.Sprintf(`You <ansi fg="black-bold">sneak</ansi> towards the <ansi fg="exit">%s</ansi> exit.`, exitName),
+						fmt.Sprintf(`You <ansi fg="black-bold">sneak</ansi> %s.`, exit.DeparturePhrase(exitName)),
 					))
 			} else {
 				user.SendText(messaging.CategoryRoomExit,
 					fmt.Sprintf(string(c.ExitRoomMessageWrapper),
-						fmt.Sprintf(`You head towards the <ansi fg="exit">%s</ansi> exit.`, exitName),
+						fmt.Sprintf(`You head %s.`, exit.DeparturePhrase(exitName)),
 					))
 
 				// Tell the old room they are leaving
@@ -309,7 +310,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 					room.SendTextVisualWithAudio(messaging.CategoryRoomExit,
 						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
-							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s leave towards the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, user.Character.Pet.DisplayName(), exitName),
+							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s leave %s.`, user.Character.Name, user.Character.Pet.DisplayName(), exit.DeparturePhrase(exitName)),
 						),
 						`You hear someone leave the room.`,
 						user.UserId)
@@ -317,7 +318,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				} else {
 					room.SendTextVisualWithAudio(messaging.CategoryRoomExit,
 						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
-							fmt.Sprintf(`<ansi fg="username">%s</ansi> leaves towards the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, exitName),
+							fmt.Sprintf(`<ansi fg="username">%s</ansi> leaves %s.`, user.Character.Name, exit.DeparturePhrase(exitName)),
 						),
 						`You hear someone leave the room.`,
 						user.UserId)
@@ -334,8 +335,8 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					// lines above were already sight-gated, so entry and exit
 					// disagreed about the same event.
 					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
-						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
-							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s enters from <ansi fg="exit">%s</ansi>.`, user.Character.Name, user.Character.Pet.DisplayName(), exitName),
+						fmt.Sprintf(string(c.EnterRoomMessageWrapper),
+							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s enter %s.`, user.Character.Name, user.Character.Pet.DisplayName(), enterFrom),
 						),
 						`You hear someone enter the room.`,
 						user.UserId)
@@ -345,7 +346,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 					// Tell the new room they have arrived
 					destRoom.SendTextVisualWithAudio(messaging.CategoryRoomEntry,
 						fmt.Sprintf(string(c.EnterRoomMessageWrapper),
-							fmt.Sprintf(`<ansi fg="username">%s</ansi> enters from <ansi fg="exit">%s</ansi>.`, user.Character.Name, enterFromExit),
+							fmt.Sprintf(`<ansi fg="username">%s</ansi> enters %s.`, user.Character.Name, enterFrom),
 						),
 						`You hear someone enter the room.`,
 						user.UserId)

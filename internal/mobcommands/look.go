@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -56,7 +57,7 @@ func Look(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	case actions.LookExit:
 		if !isSneaking {
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> peers toward the %s.`, name, res.ExitName), []string{name})
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> peers %s.`, name, exit.TowardPhrase(res.ExitName)), []string{name})
 		}
 		lookRoom(mob, res.ExitRoomId, secretLook || isSneaking)
 		return true, nil
@@ -135,7 +136,7 @@ func lookRoom(mob *mobs.Mob, roomId int, secretLook bool) {
 			)
 		} else {
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is looking into the room from the <ansi fg="exit">%s</ansi> exit`, mob.Character.Name, lookFromName),
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is looking into the room %s.`, mob.Character.Name, exit.FromPhrase(lookFromName)),
 				[]string{mob.Character.Name},
 			)
 		}
