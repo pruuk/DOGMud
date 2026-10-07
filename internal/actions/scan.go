@@ -31,8 +31,11 @@ type ScanSighting struct {
 	ExitName  string
 	RoomId    int
 	RoomTitle string
-	Mobs      []ScanEntity
-	Players   []ScanEntity
+	// Locked: the exit is locked (#427). A locked door blocks scan as it
+	// blocks look, so Mobs and Players stay empty for it.
+	Locked  bool
+	Mobs    []ScanEntity
+	Players []ScanEntity
 }
 
 // ScanResult is the structured outcome of a Scan call.
@@ -67,6 +70,14 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			ExitName:  exitName,
 			RoomId:    adjRoom.RoomId,
 			RoomTitle: adjRoom.Title,
+		}
+
+		// A locked door blocks scan as it blocks look (#427, owner ruling
+		// 2026-10-07): the direction stays, marked locked, with nobody.
+		if info, _ := room.GetExitInfo(exitName); info.Lock.IsLocked() {
+			sighting.Locked = true
+			result.Sightings = append(result.Sightings, sighting)
+			continue
 		}
 
 		for _, mobInstId := range adjRoom.GetMobs(rooms.FindAll) {
@@ -120,15 +131,28 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			// view the light grants. Whom it lists is the roster's rule
 			// (listedOccupants), the same one look's heat uses. The
 			// structured result is left whole for the mob callers.
+			//
+			// A locked exit (#427) reads as look reads it: locked whenever
+			// light or heat would reach through it, with nobody listed; too
+			// dark when neither would.
 			sight := messaging.SightNone
+			reaches := false
 			adjRoom := rooms.LoadRoom(s.RoomId)
 			if adjRoom != nil {
 				switch {
 				case seesOut:
 					sight = messaging.ParticipantSight(viewer, adjRoom)
+					reaches = true
 				case messaging.SensesHeatThroughExit(viewer, room, adjRoom):
 					sight = messaging.SightShapes
+					reaches = true
 				}
+			}
+			dirLabel := fmt.Sprintf(`<ansi fg="exit">%s</ansi>`, s.ExitName)
+			if s.Locked && reaches {
+				actor.SendText(messaging.CategorySystem,
+					fmt.Sprintf(`  %s: the exit is locked`, dirLabel))
+				continue
 			}
 			parts := []string{}
 			listedMobs, listedPlayers := listedOccupants(viewer, adjRoom, actor.GetUserId())
@@ -148,7 +172,6 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			case messaging.SightNone:
 				parts = nil
 			}
-			dirLabel := fmt.Sprintf(`<ansi fg="exit">%s</ansi>`, s.ExitName)
 			titleLabel := fmt.Sprintf(`<ansi fg="room-title">%s</ansi>`,
 				s.RoomTitle)
 			if sight == messaging.SightNone {

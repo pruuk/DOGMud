@@ -936,21 +936,27 @@ type DefuseResult struct {
 
 **Function:** `Scan(actor, opts) ScanResult`
 
-Sweeps adjacent rooms for visible entities (non-hidden mobs/players).
+Sweeps the rooms one step away for occupants (`scan.go`).
 
 **Mechanics:**
-- **Adjacent rooms:** Scans in all four cardinal directions; lists any
-  non-hidden mobs and players in the returned room descriptions.
-- **Visibility:** Does not bypass hidden state — only visible entities are
-  reported. Mobs/players who are hidden (condition 9) are not seen.
-- **UserActor behavior:** Renders a "You sense:" list of adjacent-room
-  entities with flavor text.
-- **MobActor behavior:** Silent (no feedback).
-- **Hostile-only mode:** `opts.HostileOnly = true` filters results to only
-  entities the actor hates.
-
-**Messaging:** UserActor receives "You sense: [adjacent rooms with entities]."
-MobActor silent.
+- **Adjacent rooms:** one `ScanSighting` per non-secret exit in
+  `room.Exits` whose room loads.
+- **Locked exits (#427, owner ruling 2026-10-07):** a locked door blocks
+  scan as it blocks look, by sight and by heat. The sighting stays, with
+  `Locked` true and `Mobs` / `Players` empty, so a mob caller (the
+  `try_scan` btree action) gets nobody behind it.
+- **Structured result:** `Mobs` lists every mob in the room not
+  `IsHidden`; `Players` every other player. It does not follow sight; the
+  player rendering does.
+- **UserActor behavior:** prints `You scan the surrounding area...` then
+  one line per exit, following the player's sight (see the look section
+  above): names with faces, `messaging.UnseenFigure` per creature with
+  shapes or heat, `too dark to make anything out` with neither. A locked
+  exit reads `north: the exit is locked` when light or heat would reach
+  through it, and too dark otherwise, as `ResolveLook` answers.
+- **MobActor behavior:** silent (`SendText` is a no-op).
+- **Hostile-only mode:** `opts.HostileOnly` is not applied by `Scan`; the
+  caller filters.
 
 **Progression:** No stat/skill use triggered.
 
@@ -958,10 +964,17 @@ MobActor silent.
 
 **Result struct:**
 ```go
+type ScanSighting struct {
+	ExitName  string
+	RoomId    int
+	RoomTitle string
+	Locked    bool // locked exit: Mobs and Players stay empty
+	Mobs      []ScanEntity
+	Players   []ScanEntity
+}
+
 type ScanResult struct {
-	Success        bool
-	SightingFound  bool  // true if at least one entity seen
-	Message        string
+	Sightings []ScanSighting
 }
 ```
 
@@ -1641,7 +1654,7 @@ type PlantOptions struct {
 }
 
 type ScanOptions struct {
-	HostileOnly bool // if true, only return entities actor hates
+	HostileOnly bool // a hint for the caller; Scan itself does not filter by it
 }
 
 type SearchOptions struct {
