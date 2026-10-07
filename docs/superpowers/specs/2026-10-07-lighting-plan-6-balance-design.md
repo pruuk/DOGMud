@@ -53,7 +53,12 @@ ABSENT from `config.yaml` (Go default applies): `LightBlindBelow` 25,
 - **O3 Minimum reading for real light is 3**, kept as a rounding guard on top of
   the rebuild.
 - **O4 City lamps by hour: option A.** Street lamps burn from dusk to dawn as a
-  biome property, not 98 placed lamp-post items.
+  biome property, not 98 placed lamp-post items. Revised after the dry run: a
+  lamp burns while it is night OR while the clear-sky celestial light reads
+  below `LightDimBelow` (a lamplighter working by eye), so midwinter 08:00 and
+  16:00 stay lit. The 4111 arch lantern follows the same rule.
+- **O10 Infra reach moves are accepted** as the linear sum gives them (the only
+  move past a point is a mob's raw Pitsense 20 stacked with Heat Sight, -1.10).
 - **O5 Seeing through an exit needs 55** for normal eyes (was 65). Night vision
   lowers it as it already does.
 - **O6 Infravision shows shapes through exits**, never names.
@@ -91,12 +96,14 @@ Properties the tests pin:
 - Combine never reads below its brightest term, and two equal terms read one
   step brighter (52 + 52 = 59.9, rounds 60).
 - Attenuate never reads below 0 for any fraction in (0, 1].
-- Above 25, every reading differs from today's by under 0.5 points
-  (the difference shrinks as 2^(-p/step)).
+- Above about 37, every reading differs from today's by under 0.5 points
+  (the difference shrinks as 2^(-p/step); two equal terms at 17 read 25 before
+  and 23.6 now). Dry run: one shipped sample moves 0.66 above 25 (forest 4029,
+  full moon, 25.78 to 26.45, level unchanged).
 - With no darkness source, no room at any hour, season or weather reads below 0.
 
 Expected changes, only at the dim end: cell 5105 at night with no moons goes
-from -16.6 to 2.4 (then floored to 3); starlight alone stays 10; a window's
+from -16.6 to 1.49 (then floored to 3); starlight alone stays 10; a window's
 light at noon is unchanged to within half a point.
 
 **Trim and TrimDarkness** are re-derived for the linear sum (solve
@@ -112,17 +119,20 @@ by more than one point.
 
 ## 2. Street lamps from dusk to dawn (O4)
 
-- Biomes gain a night-only lamp flag (YAML name settled in the plan, e.g.
-  `lampatnight: true`). When set, the biome's `lamp` joins the composition only
-  while `gametime.IsNight()` is true, the same test the arch lantern's
-  `dusk_to_dawn` tree uses, so every lamp in the world lights and goes out
-  together.
+- Biomes gain a street lamp flag (`streetlamp: true`, `BiomeInfo.StreetLamp`).
+  When set, the biome's `lamp` joins the composition only
+  while the lamps are lit: `gametime.IsNight()`, or the clear-sky celestial
+  light below `LightDimBelow` (O4 as revised). Weather does not light them, so
+  every lamp in the world changes at the same moment. The arch lantern's
+  `dusk_to_dawn` tree switches to a new `time_of_day period: lamplit` that
+  reads the same test.
 - `city_thoroughfare` (52) and `city_backstreet` (35) set it. `interior` (50),
   `ether` (60) and `spiderweb` (45) do not: indoor lamps and magical glows burn
   at all hours.
 - A room `lamp:` override stays an all-hours lamp (an inn's lamps, a cell's
   torch), whatever its biome.
-- Effect: by day the streets read their daylight alone (equinox noon about 72,
+- Effect: by day the streets read their daylight alone (equinox noon about 69.4
+  at the shipped `LightEquinoxNoon` 70,
   solstice noon about 73.6, so no street dazzles); at night they read as today
   (52 to 54 main streets, 36 to 43 backstreets).
 - Room text that already says lamps are lit in the evening (5803 and kin) now
@@ -137,8 +147,9 @@ by more than one point.
   cave 56 yes.
 - **Infravision through an exit.** When the light test fails but the viewer has
   infra reach, they see the next room's occupants as shapes ("a figure", the
-  same anonymous form the room roster uses) for warm bodies whose room light is
-  at or above `-reach`, never names, never the room's description or items.
+  same anonymous form the room roster uses) for every occupant (the codebase
+  has no warm or cold body concept, matching own-room infravision) when that
+  room's light is at or above `-reach`, never names, never the room's description or items.
   This covers `scan` and `look <exit>`. It never upgrades a view the light test
   already grants. The exact rendering of `look <exit>` with shapes only follows
   the existing shapes vocabulary and is fixed in the plan.
@@ -152,10 +163,12 @@ The review page's 45 rooms, as approved:
   496 28.
 - **Room `skylight:` (daylight through an opening), 9 rooms:** 3101 0.50,
   5255 0.50, 6403 0.35, 6411 0.25, 490 0.25, 4127 0.25, 3102 0.20, 6407 0.15,
-  6404 0.10. Equinox noon readings about 64, 64, 60, 56, 56, 56, 53, 50, 45.
+  6404 0.10. Equinox noon readings (dry run, shipped noon 70): 62, 62, 58, 54,
+  54, 54, 52, 48, 44.
 - **Text edits:** 5255 rewords "the daylight dies behind you ... the way a door
   shuts" to fit a partly lit entrance, and fixes "The world you came from lies
-  back east" (the way out is `up`, to 5254 Mine Mouth). 6405 rewords "at the
+  back east" (the way out is `up`, to 5254 Mine Mouth), and its `dark` noun
+  ("the abrupt death of the daylight") is reworded to match. 6405 rewords "at the
   far edge of your lamplight" so it does not assume a carried light. All copy
   follows `dogmud-player-copy` (80-column wrap, no numbers).
 - **No change, 22 rooms:** the rest, including 507 (lit while Whisper, mob 273,
@@ -176,8 +189,9 @@ say cave trims never fire: a glow spell cast at 75 or more trims to 74 on entry.
 - Add every knob in the ABSENT list above to `config.yaml` at its current
   value, except `LightExitsAbove` at 55, each with a one-line comment in the
   file's existing style.
-- Add `LightRealMinimum: 3` (declared, validated: 0 to `LightBlindBelow - 1`,
-  default 3).
+- Add `LightRealMinimum: 3` (declared, validated, default 3). A missing key
+  reads as 0, so 0 means "unset, use 3"; the authored range is 1 to
+  `LightBlindBelow - 1`, clamped there.
 - Delete the stale comment in `config.balance.lighting.go` claiming no lighting
   knobs appear in `config.yaml`.
 - `config.yaml` carries skip-worktree: build the commit from the
@@ -186,7 +200,7 @@ say cave trims never fire: a glow spell cast at 75 or more trims to 74 on entry.
 ## 8. Housekeeping
 
 - Update `internal/lightscale/context.md` (new arithmetic, no `-Inf`
-  sentinel), `internal/rooms/context.md` (night-only lamp, no `v = 0` branch),
+  sentinel), `internal/rooms/context.md` (street lamp, no `v = 0` branch),
   `internal/messaging/context.md` (infra through exits).
 - PATCH_NOTES entry in player terms.
 - Refresh the stale checklist in the #372 body.
@@ -207,7 +221,9 @@ reach a target hour by advancing rounds, not `server set day`.
    Siv and the other lantern keepers, keepers show by name, pinned keepers stay
    put.
 3. **Street lamps:** a main street reads daylight only at noon and lamplit after
-   dusk; lamps change at the same moment as the 4111 arch lantern.
+   dusk; lamps change at the same moment as the 4111 arch lantern; on a
+   midwinter morning at 08:00 the lamps are still lit and a stall keeper
+   trades.
 4. **Through exits:** bare lamplit street at night cannot `look` through an
    exit; with a lantern it can; an infravision character sees "a figure" in the
    next room, never a name.
@@ -224,12 +240,14 @@ Findings go to GitHub issues (`--repo pruuk/DOGMud`).
   (every biome, every room with a `lamp` or `skylight` override, the 45 review
   rooms), hours (midnight, dawn, noon, dusk), seasons (both solstices, an
   equinox) and moon states. After the rebuild every diff against it must be a
-  predicted one: rises at the dim end, nothing above 25 moving 0.5 or more.
+  predicted one: rises at the dim end, nothing above 37 moving 0.5 or more.
 - Unit tests for section 1's properties, the floor, Trim and TrimDarkness
-  round-trips, and the night-only lamp at the IsNight boundary.
+  round-trips, and the street lamp at its lit boundary (night or dim sky).
 - A world test: with no darkness source present, no shipped room reads below 0
   at any sampled hour, season, moon state or weather.
-- The #207 night-trade guard test stays green (night streets are unchanged).
+- The #207 night-trade guard test stays green (night streets are unchanged,
+  and the dim-sky lamp rule covers winter dawn and dusk; the dry run showed it
+  red under an IsNight-only lamp).
 
 ## Out of scope
 
