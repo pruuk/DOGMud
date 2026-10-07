@@ -1,7 +1,6 @@
 package rooms
 
 import (
-	"math"
 	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -77,11 +76,9 @@ func (r *Room) TrimLightFor(c *characters.Character) {
 		if t.dark {
 			out = lightscale.TrimDarkness(cfg.DoublingStep, terms.Light, terms.Dark, full, darkFloor)
 		} else {
-			dark := terms.Dark
-			if math.IsInf(dark, -1) {
-				dark = 0
-			}
-			out = lightscale.Trim(cfg.DoublingStep, terms.Light, full, lightTarget+dark)
+			// terms.Dark is 0 when the room holds no darkness (lighting
+			// plan 6: a combine of nothing reads 0, never Absent).
+			out = lightscale.Trim(cfg.DoublingStep, terms.Light, full, lightTarget+terms.Dark)
 		}
 		if out >= full {
 			// No cut at all: the source runs at full strength, so it is not "trimmed".

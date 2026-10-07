@@ -24,7 +24,8 @@ type BiomeInfo struct {
 	// SkyLight is the fraction of the open sky's light that reaches this
 	// biome's floor: 1.0 for a desert dune, about 0.45 under forest canopy,
 	// 0.0 at the back of a cave. It is applied as an attenuation on the
-	// logarithmic light scale, so it is the SAME operator weather occlusion
+	// light scale (a multiplier on linear brightness since lighting plan 6),
+	// so it is the SAME operator weather occlusion
 	// uses in plan 4. Canopy, roof, drain-cap and blizzard are one idea.
 	//
 	// 🔑 It is a POINTER because zero is meaningful. A cave's sky fraction is

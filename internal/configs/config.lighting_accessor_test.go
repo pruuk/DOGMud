@@ -119,6 +119,7 @@ func TestGetLightingConfigMirrorsBalance(t *testing.T) {
 	c.Balance.LightDimBelow = 31
 	c.Balance.LightExitsAbove = 32
 	c.Balance.LightDefaultVisionStrength = 13
+	c.Balance.LightRealMinimum = 7
 	c.Balance.LightDoublingStep = 11
 	c.Balance.WorldLatitude = 12.5
 	c.Balance.LightEquinoxNoon = 14.5
@@ -140,6 +141,7 @@ func TestGetLightingConfigMirrorsBalance(t *testing.T) {
 		{"DimBelow", float64(got.DimBelow), 31},
 		{"ExitsAbove", float64(got.ExitsAbove), 32},
 		{"DefaultVisionStrength", float64(got.DefaultVisionStrength), 13},
+		{"RealMinimum", float64(got.RealMinimum), 7},
 		{"DoublingStep", got.DoublingStep, 11},
 		{"WorldLatitude", got.WorldLatitude, 12.5},
 		{"EquinoxNoon", got.EquinoxNoon, 14.5},

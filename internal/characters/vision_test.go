@@ -175,12 +175,22 @@ func TestInfraReachCombinesAndCaps(t *testing.T) {
 		t.Errorf("one source 30 = %d, want 30", got)
 	}
 	if got := seed(30, 30).InfraReach(); got != 38 {
-		t.Errorf("two equal sources 30 = %d, want 38 (one doubling step)", got)
+		t.Errorf("two equal sources 30 = %d, want 38 (a little under one doubling step)", got)
 	}
 	if got := seed(40, 30, 25).InfraReach(); got != 46 {
 		t.Errorf("40 + 30 + 25 = %d, want 46", got)
 	}
 	if got := seed(48, 48).InfraReach(); got != 50 {
 		t.Errorf("48 + 48 = %d, want the cap 50", got)
+	}
+	// Lighting plan 6: the combine is a sum of linear brightness, so small
+	// reaches add less than the old log-domain step did (13 before, 8.5 now).
+	if got := seed(5, 5).InfraReach(); got != 8 {
+		t.Errorf("5 + 5 = %d, want 8 (the linear sum; 13 under the old combine)", got)
+	}
+	// Heat Sight from a new caster (19.29) beside a fresh Pitsense Tincture
+	// (26): 31 before plan 6, 30 now.
+	if got := seed(19.29, 26).InfraReach(); got != 30 {
+		t.Errorf("19.29 + 26 = %d, want 30", got)
 	}
 }

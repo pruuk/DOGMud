@@ -52,19 +52,19 @@ func TestDarknessTermsAreReported(t *testing.T) {
 	cave := Room{SkyLight: &zero}
 
 	dark := cave.composeWith(cfg, 60, 1, nil, []float64{50, 50})
-	if !math.IsInf(dark.Light, -1) || dark.Carried {
-		t.Errorf("darkness alone: Light %v Carried %v, want -Inf and false", dark.Light, dark.Carried)
+	if dark.Light != 0 || dark.Carried {
+		t.Errorf("darkness alone: Light %v Carried %v, want 0 and false", dark.Light, dark.Carried)
 	}
 	if want := lightscale.Combine(cfg.DoublingStep, 50, 50); math.Abs(dark.Dark-want) > 1e-9 || !dark.Darkened {
 		t.Errorf("darkness alone: Dark %v Darkened %v, want %v and true", dark.Dark, dark.Darkened, want)
 	}
 	if math.Abs(dark.Raw-(-dark.Dark)) > 1e-9 {
-		t.Errorf("darkness alone: Raw %v, want %v (Absent light reads 0)", dark.Raw, -dark.Dark)
+		t.Errorf("darkness alone: Raw %v, want %v (no light reads 0)", dark.Raw, -dark.Dark)
 	}
 
 	lit := cave.composeWith(cfg, 60, 1, []float64{56}, nil)
-	if !lit.Carried || lit.Darkened || !math.IsInf(lit.Dark, -1) || lit.Light != 56 || lit.Raw != 56 {
-		t.Errorf("a torch alone: %+v, want Carried, not Darkened, Dark -Inf, Light and Raw 56", lit)
+	if !lit.Carried || lit.Darkened || lit.Dark != 0 || lit.Light != 56 || lit.Raw != 56 {
+		t.Errorf("a torch alone: %+v, want Carried, not Darkened, Dark 0, Light and Raw 56", lit)
 	}
 
 	both := cave.composeWith(cfg, 60, 1, []float64{56}, []float64{50})

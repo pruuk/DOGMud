@@ -37,18 +37,62 @@ func TestTrimLightGoesDarkWhenTheRoomIsAlreadyBright(t *testing.T) {
 	}
 }
 
-// A room within a hair of the target needs a term below zero, the darkest
-// natural light, so the source is not needed at all rather than "lit" at a
-// meaningless negative value.
-func TestTrimLightJustBelowTargetIsAbsent(t *testing.T) {
+// A room within a hair of the target needs only a sliver of light. On the
+// linear sum that sliver is a small positive term, never a negative one (the
+// old log-domain solve needed a term below zero here and switched the source
+// off). Either way the combine lands on the target, and when float rounding
+// leaves no brightness to supply at all, the source is off.
+func TestTrimLightJustBelowTargetNeedsOnlyASliver(t *testing.T) {
 	for _, d := range []float64{1e-3, 1e-9, 1e-14, 1e-15} {
-		if got := Trim(8, 74-d, 90, 74); !math.IsInf(got, -1) {
-			t.Errorf("others 74-%v: Trim = %v, want Absent", d, got)
+		got := Trim(8, 74-d, 90, 74)
+		if math.IsInf(got, -1) {
+			continue
+		}
+		if !(got > 0 && got < 1) {
+			t.Errorf("others 74-%v: Trim = %v, want a sliver in (0, 1) or Absent", d, got)
+		}
+		if c := Combine(8, 74-d, got); math.Abs(c-74) > 1e-6 {
+			t.Errorf("others 74-%v: Combine(others, Trim) = %v, want 74", d, c)
 		}
 	}
-	// Just far enough below that a real (non-negative) term is needed.
-	if got := Trim(8, 70, 90, 74); !(got >= 0 && got < 74) {
-		t.Errorf("others 70: Trim = %v, want a term in [0, 74)", got)
+	if got := Trim(8, 70, 90, 74); !(got > 0 && got < 74) {
+		t.Errorf("others 70: Trim = %v, want a term in (0, 74)", got)
+	}
+}
+
+// The solve round-trips on the linear sum for every other light and target.
+func TestTrimRoundTripsOnTheLinearSum(t *testing.T) {
+	for others := 1.0; others < 90; others += 3 {
+		for target := others + 0.5; target <= 100; target += 7 {
+			out := Trim(8, others, 200, target)
+			if math.IsInf(out, -1) {
+				t.Errorf("others %v target %v: Trim is Absent, want a term", others, target)
+				continue
+			}
+			if out < 0 {
+				t.Errorf("others %v target %v: Trim = %v, below 0", others, target, out)
+			}
+			if got := Combine(8, others, out); math.Abs(got-target) > 1e-9 {
+				t.Errorf("others %v target %v: Combine(others, Trim) = %v", others, target, got)
+			}
+		}
+	}
+}
+
+// TrimDarkness round-trips the same way: the room it leaves sits on the floor.
+func TestTrimDarknessRoundTripsOnTheFloor(t *testing.T) {
+	for light := 0.0; light <= 90; light += 10 {
+		for _, otherDark := range []float64{0, 5, 12} {
+			for _, floor := range []float64{-50, -30, 1, 25} {
+				out := TrimDarkness(8, light, otherDark, 200, floor)
+				if math.IsInf(out, -1) {
+					continue
+				}
+				if got := light - Combine(8, otherDark, out); math.Abs(got-floor) > 1e-9 {
+					t.Errorf("light %v otherDark %v floor %v: room = %v", light, otherDark, floor, got)
+				}
+			}
+		}
 	}
 }
 
@@ -126,12 +170,12 @@ func TestTrimDarknessKeepsTheRoomOnTheFloor(t *testing.T) {
 	}
 }
 
-// Other darkness below the budget: the source solves the halving rule, not a
-// linear cut. Two darknesses of 20 and 12.9 combine to 25, not 32.9.
+// Other darkness below the budget: the source solves the darkness combine, not
+// a point cut. Two darknesses of 20 and 16.2 combine to 25, not 36.2.
 func TestTrimDarknessSolvesTheDarknessCombine(t *testing.T) {
 	out := TrimDarkness(8, 50, 20, 50, 25)
-	if !(out > 12.9 && out < 13.0) {
-		t.Fatalf("TrimDarkness(light 50, other 20, floor 25) = %v, want about 12.9", out)
+	if !(out > 16.1 && out < 16.3) {
+		t.Fatalf("TrimDarkness(light 50, other 20, floor 25) = %v, want about 16.2", out)
 	}
 	if got := 50 - Combine(8, 20, out); math.Abs(got-25) > 1e-9 {
 		t.Errorf("room after = %v, want exactly the floor 25", got)

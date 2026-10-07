@@ -8,7 +8,7 @@ import (
 
 func modelCfg() configs.Lighting {
 	return configs.Lighting{
-		BlindBelow: 25, DimBelow: 50, ExitsAbove: 65,
+		BlindBelow: 25, DimBelow: 50, ExitsAbove: 65, RealMinimum: 3,
 		DoublingStep: 8, WorldLatitude: 46.5, EquinoxNoon: 70,
 		Starlight: 10, MoonsFull: 35,
 		MoonWeightSwiftmoon: 4, MoonWeightWanderer: 1, MoonWeightEye: 0.5,

@@ -1162,6 +1162,20 @@ type Balance struct {
 	LightDimBelow   ConfigInt `yaml:"LightDimBelow"`   // Below this a normal observer reads shapes only (default 50)
 	LightExitsAbove ConfigInt `yaml:"LightExitsAbove"` // At or above this, exits into adjacent rooms are visible (default 65)
 
+	// LightRealMinimum is the least a room with ANY real light reads, before
+	// darkness is subtracted (lighting plan 6, owner ruling O3). The light
+	// arithmetic already cannot go below 0 without a darkness source; this is
+	// a rounding guard on top, so a sliver of starlight through a crack never
+	// rounds to the same 0 as a sealed cave. A room with no light at all still
+	// reads 0.
+	//
+	// Zero means unset and is coerced to the default, the house idiom for a
+	// knob a test binary would otherwise see as zero (LightDefaultVisionStrength
+	// above). The accepted authored range is therefore [1, LightBlindBelow-1]:
+	// at or above LightBlindBelow a sliver of light would let a normal
+	// observer see, which is not a rounding guard but a lamp.
+	LightRealMinimum ConfigInt `yaml:"LightRealMinimum"` // Least reading of a room with any real light (default 3)
+
 	// LightDazzleAbove is where the comfortable band ends and too-bright
 	// begins for a normal observer; a vision ability moves it down by its
 	// strength. It was the constant windowDazzleEdge until plan 5b gave dazzle

@@ -14,6 +14,9 @@ type Lighting struct {
 	ExitsAbove            int
 	DazzleAbove           int
 	DefaultVisionStrength int
+	// RealMinimum is Balance.LightRealMinimum: the least a room with any real
+	// light reads before darkness (lighting plan 6).
+	RealMinimum int
 
 	DoublingStep  float64
 	WorldLatitude float64
@@ -55,6 +58,7 @@ func GetLightingConfig() Lighting {
 		ExitsAbove:            int(b.LightExitsAbove),
 		DazzleAbove:           int(b.LightDazzleAbove),
 		DefaultVisionStrength: int(b.LightDefaultVisionStrength),
+		RealMinimum:           int(b.LightRealMinimum),
 
 		DoublingStep:  float64(b.LightDoublingStep),
 		WorldLatitude: float64(b.WorldLatitude),

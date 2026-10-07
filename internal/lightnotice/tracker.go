@@ -178,7 +178,9 @@ func attribute(prev record, now observation) Cause {
 	return CauseEyes
 }
 
-// termMoved reports whether a light-scale term changed: appeared, went Absent,
+// termMoved reports whether a light-scale term changed: appeared, went out
+// (0 since lighting plan 6, when a combine of nothing reads 0; Absent is still
+// accepted from a caller that passes one),
 // or moved by more than float noise. The sky, the darkness, the carried light
 // and the fixtures share it.
 func termMoved(a, b float64) bool {

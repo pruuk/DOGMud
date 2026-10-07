@@ -6,19 +6,18 @@ import "math"
 // smallest cut from its full strength that keeps the combined light at or
 // below target.
 //
-// others is the combine of every other term the source joins, Absent when
-// there is none. max and the result are light-scale terms fed to Combine.
+// others is the combine of every other term the source joins, Absent (or 0)
+// when there is none. max and the result are light-scale terms fed to Combine.
 //
-// The result solves Combine(others, out) == target analytically; in floating
-// point to rounding, capped at max. A non-positive max is passed through
-// unchanged, because 0 (or below) is a legitimate light term and the caller,
-// not Trim, is responsible for refusing a strengthless source. The result is
-// Absent when others already reaches target without this source, or when the
-// term the arithmetic needs would fall below 0, the darkest light that occurs
-// naturally: such a source would have to be darker than an unlit cave to
-// matter, so it is not needed at all rather than "lit" at a meaningless
-// negative value. A linear "target - others" is wrong here: on a log scale
-// adding a source does not add its value. With others Absent the result is
+// The result solves Combine(others, out) == target on the linear sum,
+// B(out) = B(target) - B(others), analytically; in floating point to rounding,
+// capped at max. A non-positive max is passed through unchanged, because the
+// caller, not Trim, is responsible for refusing a strengthless source. The
+// result is Absent when others already reaches target without this source, or
+// when the term needed has no brightness at all: the source is not needed, so
+// it is switched off rather than "lit" at nothing. A linear "target - others"
+// is wrong here: adding a source does not add its value in points. With no
+// other light (others Absent, or at or below 0) the result is
 // min(target, max).
 //
 // A NaN target or max cannot produce a meaningful term; Trim returns Absent
@@ -31,17 +30,16 @@ func Trim(step, others, max, target float64) float64 {
 	if math.IsNaN(target) || math.IsNaN(max) {
 		return Absent()
 	}
-	if !(step > 0) {
-		step = 1
-	}
-	if !present(others) {
+	step = coerceStep(step)
+	bo := brightness(step, others)
+	if bo == 0 {
 		return math.Min(target, max)
 	}
 	if others >= target {
 		return Absent()
 	}
-	need := target + step*math.Log2(1-math.Exp2((others-target)/step))
-	if need < 0 {
+	need := level(step, brightness(step, target)-bo)
+	if !(need > 0) {
 		return Absent()
 	}
 	return math.Min(need, max)
@@ -52,16 +50,16 @@ func Trim(step, others, max, target float64) float64 {
 // that keeps light - Combine(otherDark, out) >= floor.
 //
 // light is the room's combined light (Absent reads 0, an unlit cave),
-// otherDark the combine of every other darkness in the room (Absent when
+// otherDark the combine of every other darkness in the room (Absent or 0 when
 // there is none), max the source's full strength and floor its bearer's trim
 // target, one point inside the bottom of the bearer's usable range
 // (messaging.DarknessTrimTarget).
 //
 // Keeping the room at or above floor means Combine(otherDark, d) <= light -
 // floor, which is Trim with others = otherDark and target = light - floor:
-// darkness sources combine among themselves by the same halving rule lights
-// do (lighting plan 5d, owner decision 1). A budget at or below 0 means the
-// room already sits at or below floor without this source, so it is not
+// darkness sources combine among themselves on the same linear sum lights do
+// (lighting plan 5d, owner decision 1; plan 6). A budget at or below 0 means
+// the room already sits at or below floor without this source, so it is not
 // needed and the result is Absent. That is the caller-side floor Trim's low
 // targets need, applied once here.
 func TrimDarkness(step, light, otherDark, max, floor float64) float64 {

@@ -6,8 +6,10 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/itemlight"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -53,7 +55,16 @@ func seedDarknessGateRoom(t *testing.T, lamp int) (*users.UserRecord, *rooms.Roo
 	room := rooms.LoadRoom(2)
 	require.NotNil(t, room)
 	room.Biome = "cave"
-	room.Lamp = rooms.LampPtr(lamp)
+	if lamp >= 0 {
+		room.Lamp = rooms.LampPtr(lamp)
+	} else {
+		// Since lighting plan 6 a light term below 0 is not light: it reads
+		// 0, and only darkness takes a room below 0 (owner ruling O1). A
+		// negative pin is an unlit room under a darkness of that strength.
+		room.Lamp = nil
+		t.Cleanup(itemlight.ResetForTest())
+		itemlight.Set(room.RoomId, uuid.New(), itemlight.Darkness, float64(-lamp))
+	}
 
 	rooms.LoadRoom(1).RemovePlayer(user.UserId)
 	user.Character.RoomId = 2

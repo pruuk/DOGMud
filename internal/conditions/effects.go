@@ -29,7 +29,7 @@ const (
 	// scale (lighting plan 5c). Independent of strength: a creature can sense
 	// heat deeply while being no better than anyone else at using faint
 	// light. Effect() aggregates it by MAX (isMax) for any reader that calls
-	// Effect(); Character.InfraReach does not, it log-sums every held
+	// Effect(); Character.InfraReach does not, it combines every held
 	// source's value through Conditions.EffectValues instead (owner ruling:
 	// reach sources combine).
 	EffectInfraReach EffectKind = `infra_reach`
@@ -273,7 +273,7 @@ func (bs *Conditions) Effect(kind EffectKind) float64 {
 // EffectValues returns every held, unexpired record's value for one kind,
 // magnitude-aware exactly as Effect reads it, in list order. It exists for a
 // reader that combines values some other way than Effect's own rule:
-// Character.InfraReach log-sums reach through lightscale.Combine (lighting
+// Character.InfraReach combines reach through lightscale.Combine (lighting
 // plan 5c). Records that do not declare the kind contribute nothing.
 func (bs *Conditions) EffectValues(kind EffectKind) []float64 {
 	var out []float64

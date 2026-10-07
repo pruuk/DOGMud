@@ -2115,12 +2115,12 @@ room 5104 biome=interior
   blinded      sight=none   clear=false shapes=false
 room 5105 biome=dungeon
   plain        sight=none   clear=false shapes=false
-  nightvision  sight=none   clear=false shapes=false
+  nightvision  sight=shapes clear=false shapes=true
   infrared     sight=shapes clear=false shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5106 biome=dungeon
   plain        sight=none   clear=false shapes=false
-  nightvision  sight=none   clear=false shapes=false
+  nightvision  sight=shapes clear=false shapes=true
   infrared     sight=shapes clear=false shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5107 biome=dungeon

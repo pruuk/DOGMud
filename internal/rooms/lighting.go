@@ -15,18 +15,20 @@ import (
 
 // LightLevel reports the room's light on the graded -100 to 100 scale.
 //
-// Three kinds of term compose it, all on one logarithmic operator:
+// Three kinds of term compose it, all on one operator, the sum of linear
+// brightness (lightscale.Combine, lighting plan 6):
 //
 //  1. The sky, which is the celestial term attenuated by this room's sky
-//     fraction. A room with no sky receives no term at all, which is not the
-//     same as receiving a term of zero.
+//     fraction. A room with no sky receives a term of 0, which adds nothing.
 //  2. The room's own lamp, if it has one, joining the combine rather than
 //     acting as a floor, so a lantern-lit tavern plus a carried torch does not
 //     double-count.
 //  3. Everything anyone in the room carries, one term per light.
 //
-// Every carried darkness is then combined on the same operator and taken
-// away from the result, so a room can read below 0 (lighting plan 5d).
+// Any real light then reads at least LightRealMinimum (plan 6, ruling O3).
+// Every carried darkness is combined on the same operator and taken away
+// from the result in points, which is the only way a room reads below 0
+// (lighting plan 5d; plan 6, ruling O1).
 //
 // Weather attenuates the SKY only, through each active mutator's skylight
 // fraction: a blizzard does not dim a lantern.
@@ -63,20 +65,19 @@ func (r *Room) lightLevelWithSkyFilter(cfg configs.Lighting, celestial, skyFilte
 type LightTerms struct {
 	// Level is exactly LightLevel(): both come from composeLight.
 	Level int
-	// Raw is the net light Level rounds and clamps: Light (read as 0 when
-	// Absent) minus Dark (read as 0 when Absent). An unlit room with no
-	// darkness is 0 (lighting plan 5d, ruling D3).
+	// Raw is the net light Level rounds and clamps: Light minus Dark. An
+	// unlit room with no darkness is 0 (lighting plan 5d, ruling D3).
 	Raw float64
 	// Light is the combined light of the sky, the lamp and every carried
-	// light; lightscale.Absent() when nothing lights the room. A light's trim
-	// solves against it.
+	// light, raised to LightRealMinimum when it is above 0 but below it
+	// (lighting plan 6, ruling O3); 0 when nothing lights the room, and never
+	// below 0. A light's or a darkness's trim solves against it.
 	Light float64
-	// Dark is the combined darkness every carried darkness takes away, by the
-	// same halving rule; lightscale.Absent() when nobody carries one
-	// (lighting plan 5d).
+	// Dark is the combined darkness every carried darkness takes away, on
+	// the same combine; 0 when nobody carries one (lighting plan 5d).
 	Dark float64
 	// Sky is the sky term after the sky fraction and the weather filter, in
-	// light-scale units; lightscale.Absent() when the room has no sky.
+	// light-scale units; 0 when the room has no sky.
 	Sky float64
 	// SkyFilter is the fraction of the sky active weather lets through: the
 	// product of the active mutators' skylight values, 1 when clear.
@@ -89,12 +90,12 @@ type LightTerms struct {
 	// Darkened reports that someone in the room carries a darkness.
 	Darkened bool
 	// Fixture is the combined light of the room's lit light fixtures (items
-	// with `fixture: light`, internal/itemlight); lightscale.Absent() when
+	// with `fixture: light`, internal/itemlight); 0 when
 	// none is lit. A fixture is part of the room, never a carried light, so
 	// it never sets Carried (lighting 5e, X5).
 	Fixture float64
-	// CarriedLight is the combine of carried light alone;
-	// lightscale.Absent() when nobody here carries a lit light. A lantern
+	// CarriedLight is the combine of carried light alone; 0 when nobody
+	// here carries a lit light. A lantern
 	// dimming while still lit, or a second light arriving, moves it where
 	// Carried does not (lighting 5e, X5).
 	CarriedLight float64
@@ -128,10 +129,10 @@ func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, c
 
 // composeWithFixtures is the composition itself, with every term supplied.
 //
-// Lights combine as they always have; darknesses combine among themselves by
-// the same halving rule; the net light is the combined light (0 when none)
-// minus the combined darkness (0 when none), clamped to [-100, 100]
-// (lighting plan 5d, owner decision 1). A lit light fixture is one term in
+// Lights combine on the linear sum; darknesses combine among themselves the
+// same way; the net light is the combined light (0 when none, at least
+// LightRealMinimum when any) minus the combined darkness (0 when none),
+// clamped to [-100, 100] (lighting plan 5d, owner decision 1; plan 6). A lit light fixture is one term in
 // the light combine and a darkness fixture one in the darkness combine,
 // beside what people carry (lighting 5e, Rule 10). Fixtures never trim.
 func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial, skyFilter float64, carried, dark, fixtureLight, fixtureDark []float64) LightTerms {
@@ -144,11 +145,11 @@ func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial, skyFilter fl
 	terms := make([]float64, 0, 2+len(fixtureLight)+len(carried))
 
 	// 1. The sky, attenuated by this room's fraction and then by any weather
-	// filtering it. A filter multiplies the fraction, which on this log scale
-	// is a fixed subtraction: 0.5 removes one doubling step at any hour, so a
-	// storm is merely gloomy at noon and blinding at midnight. Attenuate
-	// returns Absent for a fraction of zero, so a cave contributes no term
-	// rather than a term of zero.
+	// filtering it. A filter multiplies the fraction, and the fraction
+	// multiplies the sky's brightness: 0.5 removes very nearly one doubling
+	// step by day and less at night, where there is less light to take, so a
+	// storm is merely gloomy at noon and blinding at midnight. A fraction of
+	// zero reads 0, which adds nothing, so a cave needs no special case.
 	out.Sky = lightscale.Attenuate(step, celestial, r.skyLightFraction()*skyFilter)
 	terms = append(terms, out.Sky)
 
@@ -172,18 +173,24 @@ func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial, skyFilter fl
 		terms = append(terms, carried...)
 	}
 
+	// The combined light. It cannot read below 0 (lighting plan 6): no light
+	// at all reads exactly 0, an unlit cave, and only magical darkness goes
+	// below it.
+	//
+	// The floor (lighting plan 6, owner ruling O3): any real light reads at
+	// least LightRealMinimum before darkness is subtracted, so a sliver of
+	// starlight through a crack never rounds to the same 0 as a sealed cave.
+	// Light carries the floored value, because it is the light darkness
+	// subtracts from, and so the light a darkness trim must solve against.
 	out.Light = lightscale.Combine(step, terms...)
-	v := out.Light
-	if math.IsInf(v, -1) {
-		// No light of any kind. Zero is the darkest light that NATURALLY
-		// occurs, which is what an unlit cave is. Only magical darkness goes
-		// below it.
-		v = 0
+	if floor := float64(cfg.RealMinimum); out.Light > 0 && out.Light < floor {
+		out.Light = floor
 	}
+	v := out.Light
 
 	// 5. Every darkness anyone here carries (lighting plan 5d), and every
-	// darkness fixture (lighting 5e), combined among themselves by the same
-	// halving rule and taken away from the light. Two darknesses of 50 take
+	// darkness fixture (lighting 5e), combined among themselves on the same
+	// linear sum and taken away from the light in points. Two darknesses of 50 take
 	// 58, not 100. Darkened still means a CARRIED darkness.
 	darkTerms := make([]float64, 0, len(dark)+len(fixtureDark))
 	darkTerms = append(darkTerms, dark...)
@@ -192,9 +199,7 @@ func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial, skyFilter fl
 	if len(dark) > 0 {
 		out.Darkened = true
 	}
-	if !math.IsInf(out.Dark, -1) {
-		v -= out.Dark
-	}
+	v -= out.Dark
 	out.Raw = v
 
 	n := int(math.Round(v))
