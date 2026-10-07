@@ -14,7 +14,7 @@ events:
       - '{actor} fires their {weapon} at {actee}!'
   fire_depart:
     observer:
-      - '{actor} fires their {weapon} {exitname}ward.'
+      - '{actor} fires their {weapon} towards the <ansi fg="exit">{exitname}</ansi>.'
   # The defender's room sees the shot arrive. Go picks the key from two axes --
   # whether an exit back to the shooter is known, and the outcome -- so each of
   # the six is a COMPLETE sentence. An earlier draft composed this from
@@ -75,7 +75,7 @@ events:
       - '{actor} fires their {weapon} at {actee}!'
   player_fire_depart:
     observer:
-      - '{actor} fires their {weapon} {exitname}ward.'
+      - '{actor} fires their {weapon} towards the <ansi fg="exit">{exitname}</ansi>.'
   player_arrival_unknown_hit:
     remote_observer:
       - 'A shot streaks in from somewhere nearby and strikes {actee}!'

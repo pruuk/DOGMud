@@ -3143,7 +3143,7 @@
     "event": "fire_depart",
     "role": "observer",
     "index": 0,
-    "format": "%s fires their %s %sward.",
+    "format": "%s fires their %s towards the <ansi fg=\"exit\">%s</ansi>.",
     "args": [
       "actor_tagged",
       "weapon",

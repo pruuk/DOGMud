@@ -1378,7 +1378,10 @@ func (m SeparateMessages) Render(skillLevel int, tokens map[TokenName]string, pi
 `PoolFor` assembles the cumulative tier union (beginner always, plus expert at
 skill 34, plus master at 67) and hands it to the core as plain strings.
 Assembly stays here; the core only coordinates the index and substitutes
-tokens.
+tokens. `SeparateMessages.Render` then passes each role through
+`exit.PhraseVerticalExits` with the `{exitname}` and `{entrancename}` values,
+so a blow through an up or down exit reads "from above" or "upward" rather
+than "from the up" (#430).
 
 Role mapping, and getting it wrong inverts every combat message in the game:
 

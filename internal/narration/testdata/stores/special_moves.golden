@@ -608,7 +608,7 @@ shoot|fire_announce|0|observer= <ansi fg="mobname">ACTOR</ansi> fires their WEAP
 shoot|fire_announce|0|remote_observer= 
 shoot|fire_depart|0|actor= 
 shoot|fire_depart|0|actee= 
-shoot|fire_depart|0|observer= <ansi fg="mobname">ACTOR</ansi> fires their WEAPON EXITNAMEward.
+shoot|fire_depart|0|observer= <ansi fg="mobname">ACTOR</ansi> fires their WEAPON towards the <ansi fg="exit">EXITNAME</ansi>.
 shoot|fire_depart|0|remote_observer= 
 shoot|hit|0|actor= 
 shoot|hit|0|actee= <ansi fg="mobname">ACTOR</ansi>'s shot strikes you!
@@ -652,7 +652,7 @@ shoot|player_fire_announce|0|observer= <ansi fg="mobname">ACTOR</ansi> fires the
 shoot|player_fire_announce|0|remote_observer= 
 shoot|player_fire_depart|0|actor= 
 shoot|player_fire_depart|0|actee= 
-shoot|player_fire_depart|0|observer= <ansi fg="mobname">ACTOR</ansi> fires their WEAPON EXITNAMEward.
+shoot|player_fire_depart|0|observer= <ansi fg="mobname">ACTOR</ansi> fires their WEAPON towards the <ansi fg="exit">EXITNAME</ansi>.
 shoot|player_fire_depart|0|remote_observer= 
 shoot|player_hit|0|actor= Your shot takes <ansi fg="username">ACTEE</ansi> (<ansi fg="damage">DAMAGE</ansi>)!
 shoot|player_hit|0|actee= <ansi fg="mobname">ACTOR</ansi>'s shot strikes you (<ansi fg="damage">DAMAGE</ansi>)!

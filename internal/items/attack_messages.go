@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/narration"
 )
 
@@ -164,9 +165,13 @@ func (m TogetherMessages) Render(skillLevel int, tokenReplacements map[TokenName
 // The two room roles are different audiences seeing different things and must
 // never be treated as interchangeable.
 //
+// The lines put the exit after "the" ("from the {entrancename} direction"),
+// so each role goes through exit.PhraseVerticalExits and an up or down exit
+// reads "from above" or "upward" rather than "from the up" (#430).
+//
 // A nil picker means production behaviour (narration.DefaultPicker).
 func (m SeparateMessages) Render(skillLevel int, tokenReplacements map[TokenName]string, pick narration.Picker) narration.Roles {
-	return narration.Render(
+	roles := narration.Render(
 		narration.Variants{
 			Actor:         m.ToAttacker.PoolFor(skillLevel),
 			Actee:         m.ToDefender.PoolFor(skillLevel),
@@ -176,6 +181,12 @@ func (m SeparateMessages) Render(skillLevel int, tokenReplacements map[TokenName
 		TokenStrings(tokenReplacements),
 		pick,
 	)
+	exits := []string{tokenReplacements[TokenExitName], tokenReplacements[TokenEntranceName]}
+	roles.Actor = exit.PhraseVerticalExits(roles.Actor, exits...)
+	roles.Actee = exit.PhraseVerticalExits(roles.Actee, exits...)
+	roles.Observer = exit.PhraseVerticalExits(roles.Observer, exits...)
+	roles.ActeeObserver = exit.PhraseVerticalExits(roles.ActeeObserver, exits...)
+	return roles
 }
 
 // Presumably to ensure the datafile hasn't messed something up.

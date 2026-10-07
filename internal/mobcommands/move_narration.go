@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -49,7 +50,15 @@ func renderMoveEvent(verb string, event movenarration.EventKey, ids moveIdentiti
 	for k, val := range extra {
 		tokens[k] = val
 	}
-	return narration.Render(v, tokens, narration.DefaultPicker), true
+	roles := narration.Render(v, tokens, narration.DefaultPicker)
+	// "from beyond the {exitname}" reads "from somewhere above" for up (#430).
+	if name := tokens[movenarration.TokenExitName]; name != "" {
+		roles.Actor = exit.PhraseVerticalExits(roles.Actor, name)
+		roles.Actee = exit.PhraseVerticalExits(roles.Actee, name)
+		roles.Observer = exit.PhraseVerticalExits(roles.Observer, name)
+		roles.ActeeObserver = exit.PhraseVerticalExits(roles.ActeeObserver, name)
+	}
+	return roles, true
 }
 
 // sendMoveEvent renders one special-move event from the shipped store and
