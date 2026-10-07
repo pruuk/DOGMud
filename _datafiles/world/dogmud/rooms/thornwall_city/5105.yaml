@@ -5,9 +5,9 @@ description: A cramped cell carved into the stone foundations beneath the guard
   barracks, reached by a short flight of worn steps. Iron bars set deep into
   the rock form the front wall, their lock heavy and well-oiled. A thin pallet
   of straw lies in one corner beside a battered tin bucket, and a high, narrow
-  slit near the ceiling lets in a grudging bar of daylight. The air is cool and
-  close, smelling of damp stone and old straw. Footsteps and muffled voices
-  drift down from the duty room above.
+  slit near the ceiling grudgingly admits whatever light the hour allows. The
+  air is cool and close, smelling of damp stone and old straw. Footsteps and
+  muffled voices drift down from the duty room above.
 biome: dungeon
 skylight: 0.1
 coord:
@@ -30,8 +30,8 @@ nouns:
   bucket: A battered tin bucket in the corner. Its purpose requires no
     explanation, and one hopes the guards empty it between occupants.
   slit: A narrow slit of a window near the ceiling, too high and too small to
-    be any use for escape, but it lets in a thin bar of daylight and a little
-    air.
+    be any use for escape, but it lets in a little air and a thin bar of
+    whatever light is outside.
 idlemessages:
 - Footsteps cross the duty room floor above, then fade.
 - A draft from the high window stirs the straw on the floor.
