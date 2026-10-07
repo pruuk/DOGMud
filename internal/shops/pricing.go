@@ -124,7 +124,14 @@ func ApplyBarterSellDiscount(price int, discount float64) int {
 
 // ApplyBarterBuyBonus increases a buy price based on bartering skill.
 // bonus is 0.0–1.0 representing percentage increase.
+// The bonus adds whole gold only, rounded down, so the offer never exceeds
+// price * (1 + bonus): rounding up would turn a 15% bonus on a 1-gold offer
+// into 2 gold. The small epsilon absorbs float error (100 * 0.15 can land a
+// hair under 15).
 func ApplyBarterBuyBonus(price int, bonus float64) int {
-	adjusted := float64(price) * (1.0 + bonus)
-	return int(math.Ceil(adjusted))
+	bonusGold := math.Floor(float64(price)*bonus + 1e-9)
+	if bonusGold < 0 {
+		bonusGold = 0
+	}
+	return price + int(bonusGold)
 }

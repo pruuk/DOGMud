@@ -122,6 +122,24 @@ func TestBarterBuyBonus(t *testing.T) {
 	assert.Equal(t, 115, ApplyBarterBuyBonus(100, 0.15))
 }
 
+// The bonus adds whole gold only: 15% of a 1-gold offer is not a gold, so the
+// offer stays 1 instead of rounding up to 2 (a 100% bonus under a 15% cap).
+func TestBarterBuyBonus_SmallOfferNeverExceedsCap(t *testing.T) {
+	assert.Equal(t, 1, ApplyBarterBuyBonus(1, 0.15))
+	assert.Equal(t, 6, ApplyBarterBuyBonus(6, 0.15), "0.9 gold of bonus is not a whole gold")
+	assert.Equal(t, 8, ApplyBarterBuyBonus(7, 0.15), "1.05 gold of bonus adds one gold")
+	for price := 1; price <= 200; price++ {
+		got := ApplyBarterBuyBonus(price, 0.15)
+		assert.LessOrEqual(t, float64(got), float64(price)*1.15+1e-9, "price %d", price)
+		assert.GreaterOrEqual(t, got, price, "price %d", price)
+	}
+}
+
+func TestBarterBuyBonus_LargeOfferKeepsBonus(t *testing.T) {
+	assert.Equal(t, 1150, ApplyBarterBuyBonus(1000, 0.15))
+	assert.Equal(t, 130, ApplyBarterBuyBonus(100, 0.30))
+}
+
 func TestBarterSellDiscount_MinimumOne(t *testing.T) {
 	assert.Equal(t, 1, ApplyBarterSellDiscount(1, 0.99))
 }

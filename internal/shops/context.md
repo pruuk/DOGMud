@@ -111,8 +111,11 @@ change (forager deliveries, NPC sells, player purchases) lives in
 - **`ApplyBarterSellDiscount(price int, discount float64) int`**: Applies a
   caller-supplied fractional discount to a sell price (buyer side).
 - **`ApplyBarterBuyBonus(price int, bonus float64) int`**: Applies a
-  caller-supplied fractional bonus to a buy price (seller side). Neither
-  barter function reads a config knob itself; see Gotchas.
+  caller-supplied fractional bonus to a buy price (seller side). The bonus
+  adds whole gold only, rounded down, so the result never exceeds
+  `price * (1 + bonus)`: a 15% bonus on a 1-gold offer stays 1 (it used to
+  round up to 2). Neither barter function reads a config knob itself; see
+  Gotchas.
 
 ### Pricing Config Knobs
 Declared in `internal/configs/config.balance.go`; defaulted/validated in

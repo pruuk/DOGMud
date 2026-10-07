@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
@@ -155,6 +156,37 @@ func TestBuyRules_UnstockedItem_FlatPriceRoundsUp(t *testing.T) {
 	cfg.BuyRatio = 0.5
 	offer := EvaluateBuyRules(item, shop, "", false, cfg, nil)
 	assert.Equal(t, 2, offer.Price, "3 gold x 0.5 is 1.5, which rounds up to 2")
+}
+
+// A 1-gold item bought at the price floor from a stocking shop, then sold to a
+// shop that does not stock it, with both barter caps at their shipped maximum,
+// comes back at no more gold than it cost.
+func TestBuyRules_FloorPricedItem_MaxBarterSellNoGain(t *testing.T) {
+	cfg := PricingConfigFromBalance()
+	b := configs.GetBalanceConfig()
+	maxDiscount := float64(b.BarterMaxDiscount)
+	maxBonus := float64(b.BarterMaxBonus)
+	assert.Greater(t, maxBonus, 0.0)
+
+	item := makeItem(items.ItemSpec{
+		ItemId:           100,
+		Value:            1,
+		Type:             items.Object,
+		VendorCategories: []string{"alchemy"},
+	})
+
+	// The stocking shop is overstocked: its sell price sits at the floor.
+	stockEntry := &StockEntry{ItemId: 100, RestockQty: 1, MaxStock: 50, Current: 20}
+	paid := ApplyBarterSellDiscount(
+		CalcSellPrice(1, stockEntry.Current, PricingBaseline(stockEntry, cfg), cfg), maxDiscount)
+	assert.Equal(t, 1, paid)
+
+	other := baseShop()
+	other.CraftSupport = CraftSupportAlchemy
+	offer := EvaluateBuyRules(item, other, "", false, cfg, nil)
+	assert.Equal(t, 1, offer.Price)
+	received := ApplyBarterBuyBonus(offer.Price, maxBonus)
+	assert.LessOrEqual(t, received, paid)
 }
 
 func TestBuyRules_StockedItem_StillUsesScarcity(t *testing.T) {
