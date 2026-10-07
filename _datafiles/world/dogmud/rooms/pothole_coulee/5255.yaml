@@ -2,18 +2,21 @@ roomid: 5255
 zone: Pothole Coulee
 title: Mine Head
 description: >
-  The adit punches through the talus and the daylight dies behind you
-  between one step and the next -- not fading but cut, the way a door
-  shuts. The tunnel is raw basalt, crack-edged and close, just wide
-  enough to work by, and the footing beneath it is broken stone and
-  wet grit, uneven and treacherous at every step. Old score-marks on
-  the walls show where picks bit at this rock a long time ago; a
-  split timber overhead has been shored up with a wedge of basalt and
+  The adit punches down through the talus, and the daylight follows
+  you only a little way: grey light from the mouth above lies across
+  the first stretch of tunnel and thins to nothing a few steps on.
+  The tunnel is raw basalt, crack-edged and close, just wide enough
+  to work by, and the footing beneath it is broken stone and wet
+  grit, uneven and treacherous at every step. Old score-marks on the
+  walls show where picks bit at this rock a long time ago; a split
+  timber overhead has been shored up with a wedge of basalt and
   holds -- for now. The air has already changed, cool and mineral and
   with the faint of old powder at the back of it. Somewhere deeper
-  in the dark a footfall echoes that is not your own. The world you
-  came from lies back east; the mine goes west.
+  in the dark a footfall echoes that is not your own. The way back
+  to the world you came from climbs up to the mine mouth; the mine
+  goes west.
 biome: cave
+skylight: 0.50
 coord:
   x: 35
   y: -1
@@ -29,11 +32,11 @@ nouns:
     sits level; every step finds a different angle. Moving fast in
     here means falling, and falling means bleeding on rock that does
     not give.
-  dark: The abrupt death of the daylight past the adit mouth -- not
-    a gradual dimming but a hard threshold where the outside simply
-    ends. Past it the eye finds nothing it can use, only shapes
-    suggested by the cold air moving. Whatever lives deeper in has
-    lived in this a long time and can navigate it better than you.
+  dark: Past the grey wash of light from the mouth above, the dark
+    begins -- not a wall but a quick thinning, a few steps where
+    shapes still hold, then nothing the eye can use, only the cold
+    air moving. Whatever lives deeper in has lived in this a long
+    time and can navigate it better than you.
 spawninfo:
 - mobid: 9120
   message: A pale mine crawler pours out of a crack in the wall, too many legs finding purchase.

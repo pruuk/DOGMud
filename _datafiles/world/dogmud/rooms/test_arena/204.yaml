@@ -7,6 +7,7 @@ description: A deep, stone-walled pit serves as the proving ground for the arena
   eyes locked on anyone who dares enter. This is no place for the unprepared. The
   training yard lies to the east.
 biome: dungeon
+lamp: 60
 exits:
   east:
     roomid: 201

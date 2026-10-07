@@ -10,6 +10,7 @@ description: >
   for maintenance access. The passage continues east through a low archway
   and south into a narrowing tunnel.
 biome: cave
+lamp: 30
 coord:
   x: 1
   y: -3

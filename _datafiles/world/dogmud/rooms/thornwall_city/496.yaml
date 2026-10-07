@@ -9,6 +9,7 @@ description: >
   worn smooth by the passage of heavy loads dragged along it. The tunnel
   continues south toward a faint glow.
 biome: cave
+lamp: 28
 coord:
   x: 1
   y: -6

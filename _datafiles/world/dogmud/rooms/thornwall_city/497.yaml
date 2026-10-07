@@ -9,6 +9,7 @@ description: >
   the outer office of whoever runs the operation -- a place for receiving
   reports and issuing orders before visitors are allowed further in.
 biome: cave
+lamp: 60
 coord:
   x: 1
   y: -7

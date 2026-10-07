@@ -13,6 +13,7 @@ description: Beyond the barricade, the tunnel opens into a chamber that feels al
   is a palpable presence -- the ceiling so low and the walls so close that the chamber
   feels like the inside of a clenched fist.
 biome: cave
+lamp: 50
 coord:
   x: -12
   y: 2

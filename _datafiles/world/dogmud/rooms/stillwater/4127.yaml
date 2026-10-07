@@ -15,6 +15,7 @@ description: >
   deeper darkness, and a smaller side passage opens west,
   the water there shallower.
 biome: cave
+skylight: 0.25
 coord:
   x: -14
   y: 6

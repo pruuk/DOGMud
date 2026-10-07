@@ -9,6 +9,7 @@ description: >
   counting hours on watch. A narrow passage opens east into a storage
   alcove, and the main tunnel continues south.
 biome: cave
+lamp: 30
 coord:
   x: 2
   y: -5

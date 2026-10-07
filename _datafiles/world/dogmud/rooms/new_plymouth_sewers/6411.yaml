@@ -15,6 +15,7 @@ description: >
   appointment. The trunk continues north; everything south of here
   belongs to the sea twice a day.
 biome: sewer
+skylight: 0.25
 coord:
   x: -17
   y: 83

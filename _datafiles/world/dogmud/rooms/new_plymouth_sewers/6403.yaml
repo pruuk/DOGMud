@@ -14,6 +14,7 @@ description: >
   The vault carries on north and south into a darkness the drain-light
   does not negotiate with.
 biome: sewer
+skylight: 0.35
 coord:
   x: -15
   y: 90

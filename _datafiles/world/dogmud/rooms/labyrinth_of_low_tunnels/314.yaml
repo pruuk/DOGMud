@@ -11,6 +11,7 @@ description: The tunnels open into the largest chamber you have encountered down
   is so thick with smoke, sweat, and the reek of communal habitation that it feels
   like breathing through a damp cloth pressed against your face.
 biome: cave
+lamp: 40
 coord:
   x: -12
   y: 4

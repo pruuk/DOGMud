@@ -10,6 +10,7 @@ description: A damp, warm cave chamber where pale fungi grow in
   and movement. The air is thick with spores and smells of
   damp earth and decay.
 biome: cave
+lamp: 35
 coord:
   x: 13
   y: 10

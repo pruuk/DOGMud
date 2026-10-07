@@ -9,6 +9,7 @@ description: >
   someone has climbed up and down here before, but there is no rope now.
   The shaft is a dead end without equipment.
 biome: cave
+skylight: 0.25
 coord:
   x: 3
   y: -3
