@@ -53,3 +53,38 @@ func TestLookCorpse_ShapesOnlyObserverDoesNotReadTheDeadPlayersName(t *testing.T
 	require.Equal(t, []string{"A figure is looking at the corpse of a figure."}, watcherLines,
 		"the hidden line must still read as English")
 }
+
+// #428: the room look's "On the Ground" line named a dead mob (and a dead
+// player) to a viewer who makes out shapes only. It now reads one "corpse
+// of a figure" per corpse, the same hidden form as the observer line above.
+func TestLookRoom_ShapesViewerReadsCorpsesOnTheGroundAsFigures(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreCond := seedCraftHidingCondition()
+	defer restoreCond()
+	useDogmudTemplates(t)
+	darkenCraftRoom(t, 1)
+
+	looker := users.GetByUserId(1)
+	require.True(t, looker.Character.Conditions.AddCondition(craftHidingInfraredConditionId, true))
+
+	room := rooms.LoadRoom(1)
+	origCorpses := room.Corpses
+	defer func() { room.Corpses = origCorpses }()
+	beggar := rooms.Corpse{MobId: 12}
+	beggar.Character.Name = "City Beggar"
+	deadric := rooms.Corpse{UserId: 777}
+	deadric.Character.Name = "Deadric"
+	room.Corpses = []rooms.Corpse{beggar, deadric}
+
+	craftPlainLines(1)
+	handled, err := Look(``, looker, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+
+	lines := craftPlainLines(1)
+	require.Equal(t, 1, craftCountContaining(lines, "On the Ground: corpse of a figure and corpse of a figure"),
+		"the ground line must list both corpses as figures: got %v", lines)
+	require.Equal(t, 0, craftCountContaining(lines, "Beggar"), "a dead mob was named: %v", lines)
+	require.Equal(t, 0, craftCountContaining(lines, "Deadric"), "a dead player was named: %v", lines)
+}

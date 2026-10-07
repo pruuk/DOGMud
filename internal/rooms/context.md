@@ -81,7 +81,12 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   `messaging.ParticipantSight` in the room (lighting plan 5c): at shapes every
   entry, players, mobs and pet alike, is `messaging.UnseenFigure(SightShapes)`
   with no adjective, all in `VisiblePlayers` so the template's mob color
-  cannot sort them; at none both lists are empty.
+  cannot sort them; at none both lists are empty. `VisibleCorpses` (the
+  "On the Ground" corpses) follows the same sight (#428, #276): at shapes one
+  entry per corpse, mob or player, reading `corpse of` plus
+  `messaging.HideNames` of the dead one's name ("corpse of a figure", the form
+  look's corpse observer line writes), with no corpse-kind color and no count
+  by name; at none no corpses.
 
 ### Room Management System (`roommanager.go`)
 - **RoomManager**: Singleton manager for all room operations and caching
