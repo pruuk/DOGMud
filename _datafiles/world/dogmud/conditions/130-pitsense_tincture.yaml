@@ -1,10 +1,10 @@
 conditionid: 130
 name: Pitsense Tincture
 description: The warmth of living things shows as pale shapes in any
-  darkness short of the deepest magic, though never clearly enough to know
-  a face. Your eyes are also a little sharper for faint light, so daylight
-  or any bright lamp dazzles you, and everything you do by sight suffers
-  until the light fades or the tincture wears off.
+  darkness short of the deepest magic. Where your eyes fail, heat shows a
+  shape, never a face. Your eyes are also a little sharper for faint
+  light, so daylight or any bright lamp dazzles you, and everything you do
+  by sight suffers until the light fades or the tincture wears off.
 start_actee: A dull heat spreads behind your eyes, and living warmth shows
   as pale shapes.
 end_actee: The heat behind your eyes cools, and the pale shapes fade.
