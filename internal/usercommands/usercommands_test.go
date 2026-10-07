@@ -438,16 +438,6 @@ func TestCooldowns(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestWho(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	user, room := getTestUserAndRoom(t)
-	handled, err := Who("", user, room, 0)
-	assert.True(t, handled)
-	assert.NoError(t, err)
-}
-
 func TestOnline(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -6538,8 +6528,8 @@ func TestTryCommandMoreBranches(t *testing.T) {
 		_ = err
 	})
 
-	t.Run("who_via_trycommand", func(t *testing.T) {
-		handled, err := TryCommand("who", "", 1, events.CmdSkipScripts)
+	t.Run("online_via_trycommand", func(t *testing.T) {
+		handled, err := TryCommand("online", "", 1, events.CmdSkipScripts)
 		assert.True(t, handled)
 		_ = err
 	})
@@ -6745,21 +6735,6 @@ func TestListCommand(t *testing.T) {
 	handled, err := List("", user, room, 0)
 	assert.True(t, handled)
 	_ = err
-}
-
-// ─── Who deeper ─────────────────────────────────────────────────────────────
-
-func TestWhoDeeper(t *testing.T) {
-	cleanup := seedAllRegistries()
-	defer cleanup()
-
-	user, room := getTestUserAndRoom(t)
-
-	t.Run("who_with_arg", func(t *testing.T) {
-		handled, err := Who("alice", user, room, 0)
-		assert.True(t, handled)
-		_ = err
-	})
 }
 
 // ─── Storage command ────────────────────────────────────────────────────────
@@ -7004,7 +6979,7 @@ func TestHelpVariousTopics(t *testing.T) {
 
 	user, room := getTestUserAndRoom(t)
 
-	topics := []string{"emote", "say", "inventory", "go", "attack", "status", "set", "who", "exits"}
+	topics := []string{"emote", "say", "inventory", "go", "attack", "status", "set", "online", "exits"}
 	for _, topic := range topics {
 		t.Run("help_"+topic, func(t *testing.T) {
 			handled, err := Help(topic, user, room, 0)

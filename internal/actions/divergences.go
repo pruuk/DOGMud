@@ -118,7 +118,6 @@ var userOnlyCommands = map[string]string{
 	"suggest":         "ui",
 	"time":            "ui", // module: time
 	"title":           "ui",
-	"who":             "ui",
 
 	// --- Player-only mechanics ---
 	"ask":        "player-mechanic",

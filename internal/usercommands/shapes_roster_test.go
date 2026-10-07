@@ -15,8 +15,9 @@ import (
 // The roster itself is pinned at its source, rooms.GetDetails
 // (internal/rooms/roomdetails_sight_test.go): the test binary here does not
 // load the world's templates, so a rendered roster cannot be read back in
-// this package. What is pinned here is what these commands say themselves:
-// `who` at none refuses, and `look <creature>` at shapes names nobody.
+// this package. What is pinned here is what look says itself: `look
+// <creature>` at shapes names nobody. (`who` is an alias of `online` since
+// #421, so it has no room roster to gate.)
 
 // seedShapesRosterRoom is seedDarknessGateRoom with Bobrick (user 2, who
 // starts in room 1) moved into the viewer's room, so there is somebody to name.
@@ -61,26 +62,4 @@ func TestLookAtCreature_ClearViewerStillLooks(t *testing.T) {
 	out := runGate(t, viewer, func() (bool, error) { return Look("bobrick", viewer, room, 0) })
 	require.NotContains(t, out, shapesLookHint)
 	require.NotContains(t, out, "Look at what???")
-}
-
-func TestWho_ViewerInTheDarkIsRefused(t *testing.T) {
-	viewer, room := seedShapesRosterRoom(t, 10, 0)
-
-	out := runGate(t, viewer, func() (bool, error) { return Who("", viewer, room, 0) })
-	require.Contains(t, out, tooDarkToSeeLine)
-	require.NotContains(t, out, "Bobrick")
-}
-
-func TestWho_SightedViewerIsNotRefused(t *testing.T) {
-	for name, c := range map[string]struct{ lamp, condition int }{
-		"shapes": {10, gateInfraConditionId},
-		"clear":  {60, 0},
-	} {
-		t.Run(name, func(t *testing.T) {
-			viewer, room := seedShapesRosterRoom(t, c.lamp, c.condition)
-			out := runGate(t, viewer, func() (bool, error) { return Who("", viewer, room, 0) })
-			require.NotContains(t, out, tooDarkToSeeLine)
-			require.NotContains(t, out, blindLookLine)
-		})
-	}
 }

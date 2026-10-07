@@ -2,7 +2,7 @@
 
 The <ansi fg="command">online</ansi> command shows who is currently online.
 It also tells you how long they are online, their role, and some other
-information about their character in game.
+information about their character in game. <ansi fg="command">who</ansi> does the same.
 
 <ansi fg="yellow">Example: </ansi>
 
