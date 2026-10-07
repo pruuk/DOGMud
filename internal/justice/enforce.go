@@ -199,7 +199,7 @@ func RunGuardEnforcement(mob *mobs.Mob, room *rooms.Room, nowRound uint64) []Enf
 			warnedRound, warned := miscDataRound(mob.Character.MiscData, key)
 			switch resolveWarn(warned, warnedRound, nowRound, grace) {
 			case warnOutcomeWarn:
-				guardSayFn(room, mob, "Move along — you're not welcome here.")
+				guardSayFn(room, mob, "Move along. You're not welcome here.")
 				mob.Character.SetMiscData(key, nowRound)
 				acts = append(acts, EnforceAction{uid, SeverityWarn, false})
 			case warnOutcomeAttack:
@@ -216,7 +216,7 @@ func RunGuardEnforcement(mob *mobs.Mob, room *rooms.Room, nowRound uint64) []Enf
 				acts = append(acts, EnforceAction{uid, SeverityAttack, false})
 			case arrestOutcomeDeclare:
 				guardSayFn(room, mob,
-					"Move along is past — you're under arrest. Come quietly.")
+					"No more moving along. You're under arrest. Come quietly.")
 				mob.Character.SetMiscData(pendingKey, nowRound)
 				acts = append(acts, EnforceAction{uid, SeverityArrest, false})
 			case arrestOutcomeHaul:
