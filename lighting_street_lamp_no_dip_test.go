@@ -128,3 +128,51 @@ func TestStreetLampsNeverLeaveAStreetBelowFaces(t *testing.T) {
 		t.Fatalf("the street lamps never went out across three days; the guard tested only lamplight")
 	}
 }
+
+// TestShadedStreetLampRoomsCarryTheirOwnLamp guards the case the no-dip test
+// skips. The registered street-lamp sky fraction (the dimmest street-lamp
+// biome's, which gametime.LampsLit reads) assumes every street-lamp room sees
+// at least that much sky. A room in such a biome whose own skylight is below
+// it (an inn under eaves, say) can read dark while the lamps are out, so it
+// must carry its own lamp: override and lamp, not the biome's alone.
+func TestShadedStreetLampRoomsCarryTheirOwnLamp(t *testing.T) {
+	mudlog.SetupLogger(nil, `LOW`, ``, false)
+	configs.SetConfigForTest(t, configs.GetConfig())
+	if err := configs.ReloadConfig(); err != nil {
+		t.Fatalf("ReloadConfig: %v", err)
+	}
+	rooms.LoadBiomeDataFiles()
+	rooms.LoadDataFiles()
+
+	fraction := gametime.StreetLampSkyFraction()
+	if fraction >= 1 {
+		t.Fatalf("registered street-lamp sky fraction is %v; no street-lamp biome loaded", fraction)
+	}
+
+	ids := rooms.GetAllRoomIds()
+	sort.Ints(ids)
+	shaded := 0
+	for _, id := range ids {
+		r := rooms.LoadRoom(id)
+		if r == nil || r.SkyLight == nil {
+			continue
+		}
+		b := r.GetBiome()
+		if b == nil || !b.StreetLamp || b.Lamp == nil {
+			continue
+		}
+		if *r.SkyLight >= fraction {
+			continue
+		}
+		shaded++
+		if r.Lamp == nil {
+			t.Errorf("room %d (%s) is in street-lamp biome %s with skylight %v, below the street-lamp fraction %v, but has no lamp of its own",
+				r.RoomId, r.Title, b.BiomeId, *r.SkyLight, fraction)
+		}
+	}
+	// At least one shaded room ships today (the Travelers' Inn, 6252); if
+	// none is found the walk tested nothing.
+	if shaded == 0 {
+		t.Fatalf("found no shaded street-lamp room; the guard tested nothing")
+	}
+}
