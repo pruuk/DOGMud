@@ -12,8 +12,8 @@
   On a bright day a street is lit by the sky alone, so a main street at
   noon no longer dazzles. At night the streets are as bright as before.
 - Seeing into the next room needs a little less light. A lamplit street at
-  night is still not enough, but a candle or anything brighter lets you
-  look and scan through an exit.
+  night is still not enough by itself, but carry a candle there, or a
+  brighter light anywhere, and you can look and scan through an exit.
 - Heat sight now works through an exit. When it is too dark to see that
   way, you still sense the warmth of whoever stands in the next room, as
   figures, never by name.
