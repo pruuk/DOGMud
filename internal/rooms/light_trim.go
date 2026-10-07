@@ -73,6 +73,14 @@ func (r *Room) TrimLightFor(c *characters.Character) {
 	for _, t := range todo {
 		terms := r.composeLightExcluding(cfg, celestial, lampsLit, skyFilter, t.rec)
 		full := t.rec.LightMax(t.spec)
+		if !(full > 0) {
+			// A strengthless source adds nothing (LightNow refuses it) and
+			// has nothing to trim; lightscale.Trim refuses it with Absent. It
+			// stays at full strength, so it lights untrimmed once it has
+			// strength again, as it did before Trim refused it.
+			t.rec.LightTrim, t.rec.LightOutput = conditions.LightFull, 0
+			continue
+		}
 		var out float64
 		if t.dark {
 			out = lightscale.TrimDarkness(cfg.DoublingStep, terms.Light, terms.Dark, full, darkFloor)

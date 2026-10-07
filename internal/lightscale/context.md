@@ -60,9 +60,15 @@ terms read about 1.4 lower than before).
   conversion (`rooms.levelOfRaw`), so nothing that slips past here can wrap a
   blinding room round to -100.
 - **`Trim` solves the linear sum exactly; it is not `target - others`.** It
-  returns `Absent()` when `others` already reaches `target`, or when the
-  needed term has no brightness. With no other light it returns
-  `min(target, max)`. A NaN `target` or `max` returns `Absent()`.
+  never returns a negative light: the result is `Absent()` or a term in
+  `(0, max]`. It is `Absent()` when `target` or `max` is at or below 0 or
+  NaN, when `others` already reaches `target`, or when the needed term has
+  no brightness. With no other light it returns `min(target, max)`; a
+  `+Inf` target returns `max`; a target whose brightness overflows is
+  solved in the log domain. `TrimDarkness` reads a `+Inf` light as an
+  unbounded budget (the source runs at `max`) and an Absent or NaN one as 0.
+  A strengthless source is the caller's call: `rooms.TrimLightFor` leaves
+  its record at full strength.
 - **Darkness uses the same solve (lighting plan 5d).** Darknesses combine
   among themselves on the same sum and the room subtracts the result in
   points, so keeping the room at or above `floor` is

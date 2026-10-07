@@ -52,9 +52,11 @@ func (b *Condition) LightNow(spec *ConditionSpec) (float64, bool) {
 	case LightOff:
 		return 0, false
 	case LightTrimmed:
-		// lightscale.Trim never produces a negative output or one above full
-		// strength, but a hand-edited or future save could. Neither may
-		// enter the combine as stored.
+		// lightscale.Trim and TrimDarkness return Absent or a term in
+		// (0, max], and SetLightOutput lands Absent on LightOff, so a trim
+		// never stores a negative output or one above full strength. A
+		// hand-edited or future save could, or the source's strength could
+		// fall after the trim. Neither may enter the combine as stored.
 		if b.LightOutput < 0 {
 			return 0, false
 		}

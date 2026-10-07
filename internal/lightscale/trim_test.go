@@ -203,3 +203,67 @@ func TestTrimDarknessNaNLightReadsAsAnUnlitRoom(t *testing.T) {
 		t.Errorf("NaN light: TrimDarkness = %v, want %v", got, want)
 	}
 }
+
+// Trim never hands back a negative light: its result is Absent (off) or a
+// term in (0, max]. A target at or below 0 needs no light, and a
+// strengthless source (max at or below 0) has none to give, whatever the
+// other light.
+func TestTrimNeverReturnsANegativeLight(t *testing.T) {
+	for _, others := range []float64{Absent(), 0, 10, 50, 80} {
+		for _, max := range []float64{-20, 0, 30, 90} {
+			for _, target := range []float64{-30, 0, 20, 74, math.Inf(1)} {
+				got := Trim(8, others, max, target)
+				if math.IsInf(got, -1) {
+					continue
+				}
+				if !(got > 0 && got <= max) || math.IsNaN(got) {
+					t.Errorf("Trim(others %v, max %v, target %v) = %v, want Absent or a term in (0, max]",
+						others, max, target, got)
+				}
+			}
+		}
+	}
+	for _, c := range []struct{ others, max, target float64 }{
+		{Absent(), 90, 0},
+		{Absent(), 90, -5},
+		{0, 90, -5},
+		{Absent(), -5, 74},
+		{20, -5, 74},
+		{80, 0, 74},
+	} {
+		if got := Trim(8, c.others, c.max, c.target); !math.IsInf(got, -1) {
+			t.Errorf("Trim(others %v, max %v, target %v) = %v, want Absent", c.others, c.max, c.target, got)
+		}
+	}
+}
+
+// An unbounded target (or an unbounded budget for a darkness) needs the
+// source at full strength, other light or not.
+func TestTrimToAnUnboundedTargetRunsAtFullStrength(t *testing.T) {
+	for _, others := range []float64{Absent(), 0, 20, 99} {
+		if got := Trim(8, others, 90, math.Inf(1)); got != 90 {
+			t.Errorf("others %v, target +Inf: Trim = %v, want the full 90", others, got)
+		}
+	}
+	for _, otherDark := range []float64{Absent(), 20} {
+		if got := TrimDarkness(8, math.Inf(1), otherDark, 50, 25); got != 50 {
+			t.Errorf("light +Inf, other dark %v: TrimDarkness = %v, want the full 50", otherDark, got)
+		}
+	}
+}
+
+// A target whose brightness overflows still solves on the linear sum, rather
+// than reading as "unbounded" and running the source at full strength.
+func TestTrimSolvesAnOverflowingTarget(t *testing.T) {
+	out := Trim(8, 50, 1e4, 9000)
+	if math.Abs(out-9000) > 1e-6 {
+		t.Fatalf("Trim(others 50, max 1e4, target 9000) = %v, want about 9000", out)
+	}
+	if got := Combine(8, 50, out); math.Abs(got-9000) > 1e-6 {
+		t.Errorf("Combine(50, Trim) = %v, want 9000", got)
+	}
+	out = Trim(8, 8990, 1e4, 9000)
+	if got := Combine(8, 8990, out); math.Abs(got-9000) > 1e-6 {
+		t.Errorf("Combine(8990, Trim = %v) = %v, want 9000", out, got)
+	}
+}

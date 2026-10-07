@@ -102,6 +102,30 @@ func TestAHoodedSourceIsNotTrimmed(t *testing.T) {
 	}
 }
 
+// A strengthless adjustable source (a Glow cast at magnitude 0) has nothing
+// to trim: lightscale.Trim refuses it, and the record stays at full strength
+// rather than being switched off, whether or not the room is already bright.
+func TestAStrengthlessSourceStaysAtFullStrength(t *testing.T) {
+	_, _ = seedTrimFixture(t)
+	requireBiome(t, "cave")
+	requireBiome(t, "interior")
+	weak := users.NewTestUser(7723, "glowz", "Glowz", 97723)
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{7723: weak}))
+	weak.Character.Conditions.AddConditionMagnitude(trimGlowId, 4, 0)
+	for _, biome := range []string{"cave", "interior"} {
+		room := &Room{RoomId: 7726, Biome: biome}
+		room.AddPlayer(weak.UserId)
+		room.TrimLightFor(weak.Character)
+		rec := weak.Character.Conditions.LightSources()[0]
+		if rec.LightTrim != conditions.LightFull {
+			t.Errorf("%s: a strengthless glow landed on %q, want full", biome, rec.LightTrim)
+		}
+		if _, ok := glowOutput(weak); ok {
+			t.Errorf("%s: a strengthless glow adds light", biome)
+		}
+	}
+}
+
 // One bearer's several sources trim in held order, each seeing the room
 // without itself but with the earlier trims: the first carries the room to 74
 // and the second finds nothing left to do.
