@@ -169,9 +169,13 @@ Functions:
   light is at or above minus the reach. A caller asks it only after
   `SeesThroughExit` refused, so it never upgrades a view the light grants,
   and renders shapes only: the roster's `UnseenFigure(SightShapes)` per
-  occupant (`actions.FiguresSensedIn`), never a name, the room's title,
-  description or items. Every occupant counts as warm: the codebase has no
-  cold-body concept, and own-room infravision shows everyone too.
+  occupant the roster would list (`actions.FiguresSensedIn`, the same
+  `Character.Perceives` filter scan uses), never a name, the room's
+  description or its items. `look <exit>` by heat omits the room's title
+  too; `scan` keeps its existing direction label, `north (Town Square): a
+  figure`, exactly as its lit-but-too-dark line already named the title.
+  Every occupant counts as warm: the codebase has no cold-body concept, and
+  own-room infravision shows everyone too.
 - `FixedLight` (`predicates.go`, lighting plan 5c): an `int` that
   satisfies `RoomVisibility`. A caller judging many observers in one room
   reads `room.LightLevel()` once and passes `FixedLight`, as

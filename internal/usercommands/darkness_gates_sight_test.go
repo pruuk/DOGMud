@@ -137,18 +137,25 @@ func TestDarknessGates_ReadSightNotTheNightVisionFlag(t *testing.T) {
 // does not pass the light test; since lighting plan 6 (owner ruling O6) heat
 // shows the next room's occupants as figures instead (look_exit_heat_test.go).
 func TestLookDirection_ExitThresholdShiftsWithNightVisionStrength(t *testing.T) {
-	const tooDark = "too dark to see anything in that direction"
+	const (
+		tooDark  = "too dark to see anything in that direction"
+		heatLine = "It's too dark to see that way"
+	)
+	// Each refusal names the ONE line it must give, and the others it must
+	// not, so a case cannot pass on the wrong refusal (infravision used to
+	// pass on the plain "too dark" line it no longer gives).
+	allRefusals := []string{tooDark, tooDarkToSeeLine, heatLine}
 	cases := []struct {
 		name      string
 		lamp      int
 		condition int
-		refused   bool
+		refusal   string // "" = sees through
 	}{
-		{"normal eyes at 45 are refused (edge 65)", 45, 0, true},
-		{"strength 24 at 45 peers (edge 41)", 45, gateNightConditionId, false},
-		{"bare flag at 45 is refused (edge 53)", 45, gateNightFlagOnlyId, true},
-		{"infravision at 45 fails the light test and senses heat instead", 45, gateInfraConditionId, true},
-		{"strength 24 at light 0 is refused (it could see nothing here)", 0, gateNightConditionId, true},
+		{"normal eyes at 45 are refused (edge 65)", 45, 0, tooDark},
+		{"strength 24 at 45 peers (edge 41)", 45, gateNightConditionId, ""},
+		{"bare flag at 45 is refused (edge 53)", 45, gateNightFlagOnlyId, tooDark},
+		{"infravision at 45 fails the light test and senses heat instead", 45, gateInfraConditionId, heatLine},
+		{"strength 24 at light 0 is refused (it could see nothing here)", 0, gateNightConditionId, tooDarkToSeeLine},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -157,10 +164,14 @@ func TestLookDirection_ExitThresholdShiftsWithNightVisionStrength(t *testing.T) 
 				require.True(t, user.Character.Conditions.AddCondition(c.condition, true))
 			}
 			out := runGate(t, user, func() (bool, error) { return Look("south", user, room, 0) })
-			if c.refused {
-				require.True(t, strings.Contains(out, tooDark) || strings.Contains(out, tooDarkToSeeLine) ||
-					strings.Contains(out, "It's too dark to see that way"),
-					"must refuse; got:\n%s", out)
+			if c.refusal != "" {
+				require.Contains(t, out, c.refusal, "must refuse with its own line")
+				for _, other := range allRefusals {
+					if other != c.refusal {
+						require.NotContains(t, out, other, "must not give another refusal")
+					}
+				}
+				require.NotContains(t, out, "room-description", "a refusal must not show the next room")
 			} else {
 				require.NotContains(t, out, tooDark)
 				require.NotContains(t, out, tooDarkToSeeLine)
