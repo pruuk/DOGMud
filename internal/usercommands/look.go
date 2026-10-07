@@ -444,20 +444,17 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
 
 			corpseColor := `mob-corpse`
-			// A player corpse is named "<name> corpse" inside a user-corpse
-			// tag, which Anonymize does not strip, so the dead player's name
-			// is hidden from a shapes-only observer by name. The observer
-			// line calls it "the corpse of <name>" so the hidden form reads
-			// "the corpse of a figure" (not "the a figure corpse").
-			hidden := []string{user.Character.Name}
-			observedCorpse := corpse.DisplayName()
 			if corpse.UserId > 0 {
 				corpseColor = `user-corpse`
-				if corpse.CorpseName == "" {
-					observedCorpse = `corpse of ` + corpse.Character.Name
-				}
-				hidden = append(hidden, corpse.Character.Name)
 			}
+			// A corpse is named inside a mob-corpse or user-corpse tag,
+			// neither an identity tag Anonymize strips, so the dead one's
+			// name, mob or player, is hidden from a shapes-only observer by
+			// name (#428 review). The observer line uses ObservedName ("the
+			// corpse of <name>") so the hidden form reads "the corpse of a
+			// figure", not "the a figure corpse".
+			hidden := []string{user.Character.Name, corpse.Character.Name}
+			observedCorpse := corpse.ObservedName()
 
 			// The looker's own line follows the looker's sight (#428 review):
 			// FindCorpse matches the word "corpse" by substring, so a

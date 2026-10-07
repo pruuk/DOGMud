@@ -77,6 +77,32 @@ func TestLookCorpse_ClearLookerAndWatcherReadTheName(t *testing.T) {
 		"a clear-sighted looker reads the corpse by name: got %v", lookerLines)
 	require.Equal(t, 1, craftCountContaining(lookerLines, "ragged"),
 		"a clear-sighted looker reads the description: got %v", lookerLines)
-	require.Equal(t, 1, craftCountContaining(watcherLines, "City Beggar"),
-		"a clear-sighted watcher reads the dead mob's name: got %v", watcherLines)
+	require.Equal(t, []string{"Aliceia is looking at the corpse of City Beggar."}, watcherLines,
+		"a clear-sighted watcher reads both names")
+}
+
+// #428 review: a mob corpse's name sits in a mob-corpse tag, which is not an
+// identity tag, so Anonymize leaves it and the observer line must hide it by
+// name, the same as a player corpse.
+func TestLookCorpse_ShapesWatcherDoesNotReadTheDeadMobsName(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreCond := seedCraftHidingCondition()
+	defer restoreCond()
+	useDogmudTemplates(t)
+	darkenCraftRoom(t, 1)
+	defer lookCorpseFixture(t)()
+
+	looker, watcher := users.GetByUserId(1), users.GetByUserId(2)
+	require.True(t, looker.Character.Conditions.AddCondition(craftHidingInfraredConditionId, true))
+	require.True(t, watcher.Character.Conditions.AddCondition(craftHidingInfraredConditionId, true))
+
+	craftPlainLines(1)
+	craftPlainLines(2)
+	handled, err := Look("corpse", looker, rooms.LoadRoom(1), 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"A figure is looking at the corpse of a figure."}, craftPlainLines(2),
+		"a shapes-only watcher must not read the dead mob's name")
 }
