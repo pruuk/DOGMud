@@ -151,42 +151,74 @@ func (gd GameDate) String(symbolOnly ...bool) string {
 	return fmt.Sprintf("<ansi fg=\"%s\">%d:%02d%s</ansi>", dayNight, gd.Hour, gd.Minute, gd.AmPm)
 }
 
-// Jumps the clock foward to the next night
-// If a roundAdjustment is provided, it will be added to the offset
-// This is useful to set to the round right before the rollover
+// SetToNight jumps the clock forward to the next sunset: the first round of
+// night strictly after now. Before today's dusk that is today's; after it,
+// tomorrow's. If a roundAdjustment is provided, it is added to that round;
+// -1 lands on the round right before the rollover.
 func SetToNight(roundAdjustment ...int) {
-
-	dayRound := GetLastPeriod(`sunset`, util.GetRoundCount())
-
-	if len(roundAdjustment) > 0 {
-		if roundAdjustment[0] < 0 {
-			dayRound -= uint64(-1 * roundAdjustment[0])
-		} else {
-			dayRound += uint64(roundAdjustment[0])
-		}
-	}
-
-	gd := GetDate(dayRound).Add(0, 1, 0)
-	util.SetRoundCount(gd.RoundNumber)
+	setToNextBoundary(`sunset`, true, roundAdjustment...)
 }
 
-// Jumps the clock forward to the next day
-// If a roundAdjustment is provided, it will be added to the offset
-// This is useful to set to the round right before the rollover
+// SetToDay jumps the clock forward to the next sunrise: the first round of
+// day strictly after now. If a roundAdjustment is provided, it is added to
+// that round; -1 lands on the round right before the rollover.
+//
+// Both setters used to build from GetLastPeriod and add one day, which
+// always landed on TODAY's boundary, so `set day` at 10PM rewound to that
+// morning and `set night` after dusk rewound to that evening (#408).
 func SetToDay(roundAdjustment ...int) {
+	setToNextBoundary(`sunrise`, false, roundAdjustment...)
+}
 
-	dayRound := GetLastPeriod(`sunrise`, util.GetRoundCount())
-
+func setToNextBoundary(periodName string, wantNight bool, roundAdjustment ...int) {
+	target := nextBoundaryRound(periodName, wantNight, util.GetRoundCount())
 	if len(roundAdjustment) > 0 {
 		if roundAdjustment[0] < 0 {
-			dayRound -= uint64(-1 * roundAdjustment[0])
+			target -= uint64(-1 * roundAdjustment[0])
 		} else {
-			dayRound += uint64(roundAdjustment[0])
+			target += uint64(roundAdjustment[0])
 		}
 	}
+	util.SetRoundCount(target)
+}
 
-	gd := GetDate(dayRound).Add(0, 1, 0)
-	util.SetRoundCount(gd.RoundNumber)
+// nextBoundaryRound returns the first round strictly after `now` at which
+// the named boundary (`sunrise` or `sunset`) begins: GameDate.Night turns
+// false for sunrise (wantNight false) or true for sunset (wantNight true).
+//
+// GetLastPeriod gives the boundary's estimate for a day, but it reads the
+// raw round (no dayResetOffset) and rounds half a night up, which can leave
+// its sunset a round before the dusk Night reports. So the estimate is
+// taken in clock time (round + dayResetOffset, the same wrap ReCalculate
+// uses) and then settled on the exact round by the Night predicate itself.
+func nextBoundaryRound(periodName string, wantNight bool, now uint64) uint64 {
+	rpd := uint64(configs.GetTimingConfig().RoundsPerDay)
+	if rpd == 0 {
+		return now
+	}
+	offset := uint64(dayResetOffset) // wraps for a negative offset, as in ReCalculate
+
+	settle := func(r uint64) uint64 {
+		for i := uint64(0); i < rpd && GetDate(r).Night != wantNight; i++ {
+			r++
+		}
+		for i := uint64(0); i < rpd && r > 0 && GetDate(r-1).Night == wantNight; i++ {
+			r--
+		}
+		return r
+	}
+
+	clockNow := now + offset
+	// GetLastPeriod(day d) + one day is day d's boundary: today's, then
+	// tomorrow's (measured from tomorrow so its own night length applies).
+	for _, base := range []uint64{clockNow, clockNow + rpd} {
+		r := settle(GetLastPeriod(periodName, base) + rpd - offset)
+		if r > now {
+			return r
+		}
+	}
+	// Unreachable for a real day/night cycle; fall back to a day ahead.
+	return settle(GetLastPeriod(periodName, clockNow+2*rpd) + rpd - offset)
 }
 
 // Jumps the clock forward a specific hour/minutes

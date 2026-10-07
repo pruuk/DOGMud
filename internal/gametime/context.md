@@ -111,6 +111,13 @@ func SetTime(setToHour int, setToMinutes ...int)
 ```
 
 The three setters shift the world clock and back the admin `time` command.
+`SetToDay` / `SetToNight` (admin `server set day` / `server set night`, and
+the fresh-world boot) always move FORWARD, to the first sunrise / sunset
+strictly after now, plus the optional round adjustment (`-1` is the round
+before the rollover). They find it in clock time (round plus the `settime`
+offset) and settle on the exact round by `GameDate.Night` itself. Before
+#408 they built from `GetLastPeriod` plus one day, which always landed on
+the same day's boundary and so rewound the clock after it had passed.
 Day/night is a **derived** property (`GameDate.Night`), recomputed per query —
 there is no transition callback and no cached state to invalidate.
 
