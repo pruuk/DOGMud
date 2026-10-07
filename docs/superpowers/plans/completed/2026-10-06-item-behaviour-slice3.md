@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25, YAML world data, the existing behaviour-tree engine.
 
-**Spec (binding):** `docs/superpowers/specs/2026-10-05-item-behaviour-foundation-design.md`, slice 3 (Rules 20 to 23, ruling R1, X19, X21, the "Slice 3" gates), plus owner ruling S4 of 2026-10-06 below.
+**Spec (binding):** `docs/superpowers/specs/completed/2026-10-05-item-behaviour-foundation-design.md`, slice 3 (Rules 20 to 23, ruling R1, X19, X21, the "Slice 3" gates), plus owner ruling S4 of 2026-10-06 below.
 
 **Branch:** implementation branch `feature/item-behaviour-slice3`, cut from master AFTER the docs branch `docs/item-behaviour-slice3-plan` (this plan) merges, in the worktree `C:/tmp/dogmud-itembeh3`:
 
