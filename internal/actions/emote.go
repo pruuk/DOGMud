@@ -30,6 +30,19 @@ func FormatEmoteText(name string, emoteText string, nameColor string) string {
 	// especially on a laptop in a bright room (2026-07-18 accessibility report),
 	// and 137 is the palette's intended `mob-emote` tone that this formatter had
 	// never actually used.
-	msg := fmt.Sprintf(`<ansi fg="%s">%s</ansi> <ansi fg="137">%s</ansi>`, nameColor, name, emoteText)
-	return util.SplitStringNL(msg, 80)
+	return util.SplitStringNL(emoteLine(name, emoteText, nameColor), 80)
+}
+
+// FormatMobEmoteText formats a mob's emote for room display, unwrapped. A
+// mob emote goes out as CategoryMobEmote, which the messaging pipeline
+// wraps at each reader's width; FormatEmoteText's own 80-column CRLF wrap
+// (kept for the player CategoryEmote, which the pipeline does not wrap)
+// made it wrap twice, and the second pass counted the carriage return as a
+// column and stranded a word on a line of its own (#430).
+func FormatMobEmoteText(name string, emoteText string) string {
+	return emoteLine(name, emoteText, "mobname")
+}
+
+func emoteLine(name, emoteText, nameColor string) string {
+	return fmt.Sprintf(`<ansi fg="%s">%s</ansi> <ansi fg="137">%s</ansi>`, nameColor, name, emoteText)
 }

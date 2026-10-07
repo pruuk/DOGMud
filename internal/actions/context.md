@@ -630,6 +630,13 @@ hand-rolls a room line any more. `internal/hooks/justice_wiring.go`'s guard
 The `Social` files row (`say.go`, `emote.go`, `emote_aliases.go`) gains
 `shout.go` and `room_lines.go`.
 
+`emote.go` has two formatters. `FormatEmoteText` hard-wraps at 80 with CRLF,
+for the player `CategoryEmote`, which the messaging pipeline does not wrap.
+`FormatMobEmoteText` is the same line unwrapped, for a mob's
+`CategoryMobEmote`, which the pipeline does wrap at each reader's width.
+Using the pre-wrapped one for a mob wrapped the line twice and stranded a
+word on its own line (#430).
+
 ---
 
 ## Naming and aiming in the dark (follow-up slice A)

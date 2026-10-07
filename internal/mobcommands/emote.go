@@ -34,7 +34,7 @@ func Emote(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	actions.SendSeen(actor, messaging.CategoryMobEmote,
-		actions.FormatEmoteText(mob.Character.Name, emoteText, "mobname"), false)
+		actions.FormatMobEmoteText(mob.Character.Name, emoteText), false)
 
 	return true, nil
 }
