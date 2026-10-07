@@ -418,15 +418,14 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 		// Corpses follow the viewer's sight as the roster does (#428, and
 		// the ground-listing half of #276). Shapes: one entry per corpse in
-		// the hidden form look's corpse observer line writes ("corpse of a
-		// figure", messaging.HideNames on the dead one's name), uncolored
+		// Corpse.NameAt's hidden form ("corpse of a figure"), the form every
+		// corpse line takes for a reader who cannot see clearly, uncolored
 		// by kind and never counted by name, so a mob's corpse and a
 		// player's read alike. None: no corpses listed.
 		switch sight {
 		case messaging.SightShapes:
 			if c.MobId > 0 || c.UserId > 0 {
-				details.VisibleCorpses = append(details.VisibleCorpses,
-					messaging.HideNames(`corpse of `+c.Character.Name, []string{c.Character.Name}, messaging.SightShapes))
+				details.VisibleCorpses = append(details.VisibleCorpses, c.NameAt(messaging.SightShapes))
 			}
 			continue
 		case messaging.SightNone:

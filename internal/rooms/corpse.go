@@ -3,6 +3,7 @@ package rooms
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 )
 
 type Corpse struct {
@@ -73,6 +74,28 @@ func (c Corpse) DisplayName() string {
 		return c.CorpseName
 	}
 	return c.Character.Name + " corpse"
+}
+
+// ObservedName is the corpse's name for a line that a name hider rewrites per
+// reader (SendTextVisualHidingNames, SendTrio) with Character.Name among the
+// hidden names. A corpse without a CorpseName reads "corpse of <name>", so the
+// hidden form reads "corpse of a figure" and not "a figure corpse".
+func (c Corpse) ObservedName() string {
+	if c.CorpseName != "" {
+		return c.CorpseName
+	}
+	return `corpse of ` + c.Character.Name
+}
+
+// NameAt is what a reader at sight d calls this corpse in a line written for
+// that reader alone (their own look, loot or get line). Clear sight reads
+// DisplayName. Below it every corpse, mob or player, special or not, reads
+// the ground listing's hidden form: "corpse of a figure" at shapes (#428).
+func (c Corpse) NameAt(d messaging.SightDecision) string {
+	if d == messaging.SightFull {
+		return c.DisplayName()
+	}
+	return messaging.HideNames(`corpse of `+c.Character.Name, []string{c.Character.Name}, d)
 }
 
 func (c *Corpse) Update(roundNow uint64, decayRate string) {

@@ -44,8 +44,10 @@ func TestLookCorpse_ShapesOnlyObserverDoesNotReadTheDeadPlayersName(t *testing.T
 	require.NoError(t, err)
 
 	lookerLines, watcherLines := craftPlainLines(1), craftPlainLines(2)
-	require.Equal(t, 1, craftCountContaining(lookerLines, "You look at the Deadric corpse."),
-		"precondition: the looker must reach the corpse branch: got %v", lookerLines)
+	require.Equal(t, 1, craftCountContaining(lookerLines, "You look at the corpse of a figure."),
+		"precondition: the looker must reach the corpse branch, and at shapes reads it hidden: got %v", lookerLines)
+	require.Equal(t, 0, craftCountContaining(lookerLines, "Deadric"),
+		"a shapes-only looker must not read the dead player's name: got %v", lookerLines)
 	require.Equal(t, 1, craftCountContaining(watcherLines, "is looking at the"),
 		"the watcher must get the observer line: got %v", watcherLines)
 	require.Equal(t, 0, craftCountContaining(watcherLines, "Deadric"),
