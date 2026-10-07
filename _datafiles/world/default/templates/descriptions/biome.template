@@ -1,6 +1,6 @@
 ┌─ <ansi fg="black-bold">.:</ansi> Biome Info ─────────────────────────────────────────────────────────┐
   <ansi fg="yellow">Name:</ansi>        {{ .Name }}
   <ansi fg="yellow">Symbol:</ansi>      {{ .SymbolString }}
-  <ansi fg="yellow">Lighting:</ansi>    {{ if le .SkyLightFraction 0.0 }}No sky reaches this place at all.{{ else if ge .SkyLightFraction 0.8 }}The open sky reaches this place freely.{{ else }}Only a little sky reaches here, filtered and dim.{{ end }}{{ if .HasLamp }} A lamp keeps it lit after dark.{{ end }}
+  <ansi fg="yellow">Lighting:</ansi>    {{ if le .SkyLightFraction 0.0 }}No sky reaches this place at all.{{ else if ge .SkyLightFraction 0.8 }}The open sky reaches this place freely.{{ else }}Only a little sky reaches here, filtered and dim.{{ end }}{{ if .HasLamp }}{{ if .StreetLamp }} Street lamps keep it lit from dusk to dawn.{{ else }} A lamp keeps it lit after dark.{{ end }}{{ end }}
   <ansi fg="yellow">Description:</ansi> {{ splitstring .Description 59 "               " }}
 └─────────────────────────────────────────────────────────────────────────┘

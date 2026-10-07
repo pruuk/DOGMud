@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -134,4 +135,30 @@ func TestWireFreeze_SpellCategoryStillGroupsConditionEffectType(t *testing.T) {
 	got := spellCategory(&spells.SpellData{EffectType: "condition", AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSelf})
 	assert.Equal(t, 2, got,
 		"an effect_type: condition spell must still sort into the condition/shield/purge display category (usercommands/spells.go's spellCategory)")
+}
+
+// The biome template names a street lamp apart from an all-hours lamp, so a
+// rename of BiomeInfo.StreetLamp or HasLamp would otherwise fail only at
+// render time, in the player's biome command.
+func TestTemplateFreeze_BiomeSaysWhenLampsBurn(t *testing.T) {
+	useDogmudTemplates(t)
+	lamp := 40
+
+	cases := []struct {
+		name       string
+		biome      rooms.BiomeInfo
+		want, deny string
+	}{
+		{"street lamp", rooms.BiomeInfo{Name: "Probe", StreetLamp: true, Lamp: &lamp},
+			"Street lamps keep it lit from dusk to dawn.", "after dark"},
+		{"all-hours lamp", rooms.BiomeInfo{Name: "Probe", Lamp: &lamp},
+			"A lamp keeps it lit after dark.", "dusk to dawn"},
+		{"no lamp", rooms.BiomeInfo{Name: "Probe"}, "The open sky reaches", "lamp"},
+	}
+	for _, c := range cases {
+		out, err := templates.Process("descriptions/biome", &c.biome, 0)
+		require.NoError(t, err, c.name)
+		assert.Contains(t, out, c.want, c.name)
+		assert.NotContains(t, out, c.deny, c.name)
+	}
 }

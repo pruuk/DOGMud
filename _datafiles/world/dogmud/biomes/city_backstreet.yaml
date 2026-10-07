@@ -3,9 +3,9 @@ name: City Backstreet
 symbol: •
 description: The side streets, lanes, alleys, courts and yards off a city's
   main ways. Law enforcement will attempt to subdue those who murder or steal,
-  when it can see them. The lamps do not reach here. After dark a normal eye
-  makes out shapes but not faces, which is why thieves prefer backstreets, and
-  why those who hunt thieves do too.
+  when it can see them. The lamps here burn dim. After dark a normal eye
+  makes out shapes more than faces, which is why thieves prefer backstreets,
+  and why those who hunt thieves do too.
 skylight: 0.95
 lamp: 35
 # Street lamps, lit and put out with the main streets' (lighting plan 6):

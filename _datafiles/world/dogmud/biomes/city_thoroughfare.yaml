@@ -3,8 +3,8 @@ name: City Thoroughfare
 symbol: •
 description: The main ways through a city, its squares, markets, gates and
   bridges. Law enforcement will attempt to subdue those who murder or steal.
-  Lamps burn here all night, so faces can be read at any hour. That makes a
-  thoroughfare the safest place in a city to be seen, and the worst place to
+  Lamps burn here after dark and daylight serves the rest, so in clear
+  weather faces can be read at any hour. That makes a thoroughfare the safest place in a city to be seen, and the worst place to
   go unseen.
 skylight: 0.95
 lamp: 52
