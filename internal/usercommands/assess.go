@@ -68,7 +68,11 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		essenceDesc = `barely a trace of essence in these remains`
 	}
 
-	user.SendText(messaging.CategorySystem, `You study the remains of <ansi fg="mob-corpse">`+corpse.Character.Name+`</ansi>.`)
+	// The remains are named only at clear sight (#428 review): FindCorpse
+	// matches the word "corpse", so a shapes-only player reaches any corpse.
+	user.SendText(messaging.CategorySystem, messaging.HideNames(
+		`You study the remains of <ansi fg="mob-corpse">`+corpse.Character.Name+`</ansi>.`,
+		[]string{corpse.Character.Name}, messaging.ParticipantSight(user.Character, room)))
 	user.SendText(messaging.CategorySystem, `You sense `+essenceDesc+`.`)
 
 	// A player's remains never answer the call: selectRaiseCorpse skips any
