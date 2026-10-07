@@ -3,6 +3,7 @@ package usercommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -54,4 +55,41 @@ func TestTeleport_ArrivalHidesNamesFromAShapesViewer(t *testing.T) {
 	require.Equal(t, 0, craftCountContaining(seen, "Bobrick"), "arrival named the member: %v", seen)
 	require.Equal(t, 2, craftCountContaining(seen, "figure appears in a flash of light!"),
 		"both arrivals land in the destination room as figures: %v", seen)
+}
+
+// The unchanged case: a viewer who sees clearly in the destination still
+// reads both arrivals by name.
+func TestTeleport_ArrivalNamesTheArriversToAClearViewer(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	useDogmudTemplates(t)
+	dest := rooms.LoadRoom(2)
+	dest.Lamp = rooms.LampPtr(90)
+
+	leader := users.GetByUserId(1)
+	leader.Role = users.RoleAdmin
+	member := users.GetByUserId(2)
+	watcher := users.NewTestUser(3, "cara", "Carrow", 1003)
+	watcher.Character.RoomId = 2
+	restoreUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: leader, 2: member, 3: watcher})
+	defer restoreUsers()
+	dest.AddPlayer(3)
+	require.Equal(t, messaging.SightFull, messaging.ParticipantSight(watcher.Character, dest), "precondition: the watcher sees clearly")
+
+	party := parties.New(1)
+	require.NotNil(t, party)
+	defer party.Disband()
+	require.True(t, party.InvitePlayer(2))
+	require.True(t, party.AcceptInvite(2))
+
+	craftPlainLines(1)
+	craftPlainLines(2)
+	craftPlainLines(3)
+
+	_, err := Teleport(`2`, leader, rooms.LoadRoom(1), 0)
+	require.NoError(t, err)
+
+	seen := craftPlainLines(3)
+	require.Equal(t, 1, craftCountContaining(seen, "Aliceia appears in a flash of light!"), "leader arrival: %v", seen)
+	require.Equal(t, 1, craftCountContaining(seen, "Bobrick appears in a flash of light!"), "member arrival: %v", seen)
 }
