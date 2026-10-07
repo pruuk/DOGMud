@@ -104,34 +104,67 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Item requirements**: Biomes that require specific items to navigate safely
 - **Dynamic loading**: File-based biome definitions with validation
 
-### Room Lighting (`lighting.go`, `light_trim.go`, graded scale, plans 1 through 5a of the lighting arc)
+### Room Lighting (`lighting.go`, `light_trim.go`, graded scale, plans 1 through 6 of the lighting arc)
 
 `Room.LightLevel() int` is the light accessor every consumer reads. It
 reports light on a continuous -100 to 100 scale, composed from three kinds
-of term on one logarithmic operator (`internal/lightscale.Combine`):
+of term on one operator, the sum of linear brightness
+(`internal/lightscale.Combine`, rebuilt by lighting plan 6 so no sum or
+fraction of real light can read below 0):
 
 1. **The sky**: `internal/gametime.CelestialLight()` (sun plus moons, one
    value for the whole world per round), attenuated by this room's sky
    fraction and then by `mutatorSkyFilter()`, the product of every active
    mutator's `SkyLight` fraction (1 when clear; weather multiplies it down).
-2. **The room's own lamp**, if it has one.
+   A room with no sky gets a term of 0, which adds nothing.
+2. **The room's own lamp**, if it has one, as it burns at this hour
+   (`lampValue(lampsLit)`). A room's `lamp:` override burns at all hours. A
+   biome lamp burns at all hours unless the biome sets `streetlamp: true`
+   (`BiomeInfo.StreetLamp`, `BiomeInfo.LampAt(lampsLit)`; lighting plan 6,
+   owner ruling O4 as amended): then it joins only while
+   `gametime.LampsLit()`, which is night OR the clear-sky
+   `CelestialLight()` below `LightDimBelow`, a lamplighter working by eye,
+   so a midwinter 08:00 (day, sky about 40) keeps its lamps. Weather never
+   enters it, so every street lamp lights and goes out in the same round,
+   and the North Gate arch lantern's `dusk_to_dawn` tree reads the same
+   test (`time_of_day period: lamplit`). `city_thoroughfare` (52) and
+   `city_backstreet` (35) set it; `interior`, `ether` and `spiderweb` do
+   not. Once the clear sky shows faces a street reads its daylight alone.
 3. **Every light anyone present carries, one term each** (lighting plan 5a).
    `carriedTerms(exclude)` makes one pass over `r.mobs` and `r.players`,
    reading each bearer's `Conditions.LightAndDarknessSources()` through
    `Condition.LightNow`, so a hooded or trimmed-off source adds nothing and
-   two torches are one doubling step brighter than one. Before 5a any light
-   lifted the room to a flat `DimBelow`; the `FindHasLight` find flag that
-   test used is DELETED.
-4. **Every darkness anyone present carries** (lighting plan 5d), from the
-   same pass. Darknesses combine among themselves by the same halving rule
-   (two of 50 take 58) and the combined darkness is SUBTRACTED from the
-   combined light (Absent light reads 0), so a room can read below 0, down
-   to the -100 clamp. An unlit room with no darkness is still 0.
+   two torches are a little under one doubling step brighter than one.
+   Before 5a any light lifted the room to a flat `DimBelow`; the
+   `FindHasLight` find flag that test used is DELETED.
 
-The composition is layered so a trim can leave one source out: `composeLight`
-calls `composeLightExcluding(cfg, celestial, skyFilter, exclude)`, which calls
-`composeWith(cfg, celestial, skyFilter, carried, dark)` (the pure core a test
-can feed carried light and darkness terms without users or mobs).
+**The floor (lighting plan 6, owner ruling O3).** The combined light of any
+real light (above 0) reads at least `LightRealMinimum` (3) before darkness
+is subtracted, so a sliver of starlight through a crack never rounds to the
+same 0 as a sealed cave. `LightTerms.Light` carries the floored value. A room
+with no light at all reads exactly 0; the old `-Inf` branch that turned "no
+light" into 0 is gone, because a combine of nothing already reads 0.
+
+4. **Every darkness anyone present carries** (lighting plan 5d), from the
+   same pass. Darknesses combine among themselves on the same sum (two of 50
+   take 58) and the combined darkness is SUBTRACTED from the combined light
+   in points. That subtraction is the only way a room reads below 0 (owner
+   ruling O1), down to the -100 clamp. The root guard
+   `lighting_no_natural_negative_test.go` holds every shipped room at 0 or
+   above at every sampled hour, season, moon and weather with no darkness
+   present.
+
+The composition is layered so a trim can leave one source out, and both
+clock reads (the celestial light and `gametime.LampsLit()`) are injected so a
+test needs no global clock: `composeLight(cfg, celestial, lampsLit,
+skyFilter)` calls `composeLightExcluding(cfg, celestial, lampsLit, skyFilter,
+exclude)`, which calls `composeWithFixtures(cfg, celestial, lampsLit,
+skyFilter, carried, dark, fixtureLight, fixtureDark)`. `composeWith(cfg,
+celestial, skyFilter, carried, dark)` is the fixture-free test core and
+composes with every street lamp lit. `LightTermsAtForTest(celestial,
+lampsLit, skyFilter)` (`test_helpers.go`) exposes the composition to a
+cross-package golden, whose caller works out `lampsLit` with
+`gametime.LampsLitAt(night, celestial, cfg.DimBelow)` on its own sample.
 
 **Trimming (`light_trim.go`, plan 5a; darkness plan 5d).** `(*Room).TrimLightFor(c)`
 trims every adjustable, unhooded light AND darkness record `c` holds to `c`'s
@@ -169,15 +202,17 @@ onto itself.
 same light broken into the terms `LightLevel` combines, for a caller that
 needs to know WHY the light is what it is: `Level` (identical to
 `LightLevel()`, both come from the shared `composeLight`), `Sky` (the sky
-term after fraction and the weather filter, `lightscale.Absent()` when the
-room has no sky), `SkyFilter` (the product of the active mutators'
-`SkyLight` fractions, 1 when clear), `Lamp`/`HasLamp`, `Carried`, and (plan
-5a) `Raw`. Since lighting plan 5d `Raw` is the NET light `Level` rounds
-(`Light` read as 0 when Absent, minus `Dark`), and three fields carry the
-parts: `Light` (the combined light, `Absent` when nothing lights the room;
-the light trim solves against it), `Dark` (the combined darkness, `Absent`
-when nobody carries one) and `Darkened` (someone carries a darkness, as
-`Carried` means someone carries a light).
+term after fraction and the weather filter, 0 when the room has no sky),
+`SkyFilter` (the product of the active mutators' `SkyLight` fractions, 1
+when clear), `Lamp`/`HasLamp` (the lamp as it burns now: a street lamp is
+`HasLamp` false while `gametime.LampsLit()` is false, a day whose clear sky
+shows faces), `Carried`, and (plan 5a) `Raw`. Since lighting plan
+5d `Raw` is the NET light `Level` rounds (`Light` minus `Dark`), and three
+fields carry the parts: `Light` (the combined light after the plan 6 floor,
+0 when nothing lights the room; both trims solve against it), `Dark` (the
+combined darkness, 0 when nobody carries one) and `Darkened` (someone
+carries a darkness, as `Carried` means someone carries a light). Since plan
+6 no `LightTerms` field is ever `-Inf`.
 `internal/lightnotice` is the one consumer: it compares two `LightTerms`
 snapshots to name which term moved and so which cause to report for a band
 change. `LightTerms` and `LightLevel` share one computation
@@ -200,9 +235,10 @@ YAML keys are `skylight` and `lamp`:
   this override in most of the cases that once seemed to need it: a brick
   sewer vault, a wrecked ship's interior and a web-choked lair each got
   their own biome (`sewer`, `interior`, `spiderweb`) rather than a
-  room-level number. **The `lamp` override ships on twenty-seven rooms**
+  room-level number. **The `lamp` override ships on forty-one rooms**
   (grep `^lamp:` under `_datafiles/world/dogmud/rooms`): the eleven shop
-  rooms of the merchants slice described below, and sixteen older ones.
+  rooms of the merchants slice described below, the fourteen "rooms that
+  promise light" of lighting plan 6 (below), and sixteen older ones.
   The sixteen older rooms are the three-room Planar
   Oasis (`instance_planar_oasis/500{3,4,5}.yaml`), which sets `lamp: 38`
   against `ether`'s biome lamp of `60` because its room text reads "Shapes
@@ -231,8 +267,18 @@ YAML keys are `skylight` and `lamp`:
   all open to the sky by day; the lamp on 5478 and 5480 only matters after
   dark.
 
-  **The `skylight` override ships on thirteen rooms** (grep `^skylight:`
-  under `_datafiles/world/dogmud/rooms`). The first two, new in plan 3c-2,
+  **Rooms that promise light (lighting plan 6, owner ruling O7).** Rooms
+  that are structurally dark but whose text names a light got one, as the
+  owner's review page approved: fourteen room lamps at all hours (3109 35,
+  310 35, 503 45, 488 30, 317 50, 314 40, 6032 45, 204 60, 497 60, 498 64,
+  493 30, 6200 30, 301 28, 496 28) and nine sky fractions for openings that
+  let daylight in (3101 0.50, 5255 0.50, 6403 0.35, 6411 0.25, 490 0.25,
+  4127 0.25, 3102 0.20, 6407 0.15, 6404 0.10). The root test
+  `lighting_promised_light_rooms_test.go` pins every value.
+
+  **The `skylight` override ships on twenty-two rooms** (grep `^skylight:`
+  under `_datafiles/world/dogmud/rooms`): the nine of plan 6 above and the
+  thirteen before it. The first two, new in plan 3c-2,
   are the holding cells beneath Thornwall's guard barracks
   (`thornwall_city/5105.yaml`) and Stillwater's constabulary
   (`stillwater/5106.yaml`), both `dungeon` biome (`skylight: 0.0` by
@@ -281,8 +327,8 @@ carried light or the room adds).
 | `river` | `1.0` | none | Flowing water, fully open sky |
 | `ether` | `0.0` | `60` | Outside the world; time-invariant. Character creation, the shadow realm, the planar oasis |
 | `spiderweb` | `0.0` | `45` | A web-choked lair. Declared before plan 3b but held zero rooms until this plan gave it the Foldweave |
-| `city_thoroughfare` | `0.95` | `52` | A city's main streets, squares, markets and gates. Lamps hold it in the faces band at any hour, day or night. Added by plan 3c-1 |
-| `city_backstreet` | `0.95` | `35` | A city's lanes, alleys, courts and yards off the main ways. No lamp reaches them, so a normal eye reads shapes, not faces, after dark. Added by plan 3c-1 |
+| `city_thoroughfare` | `0.95` | `52` | A city's main streets, squares, markets and gates. Street lamps (`streetlamp: true`, lit at night and while the clear sky is too dim for faces) hold it in the faces band at any hour, day or night. Added by plan 3c-1 |
+| `city_backstreet` | `0.95` | `35` | A city's lanes, alleys, courts and yards off the main ways. No main-street lamp reaches them; their own dim street lamps (`streetlamp: true`, lit with the main streets') leave a normal eye reading shapes, not faces, after dark. Added by plan 3c-1 |
 | `ruins` | `0.75` | none | A roofless building: takes weather and sky like open ground, a little shaded by whatever walls still stand, dark at night. `movementcost: 1.0` for the rubble underfoot. Added by plan 3c-1 |
 
 **`city` is gone from the dogmud world.** Plan 3c-1 split New Plymouth's

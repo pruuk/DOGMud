@@ -748,20 +748,23 @@ See the live config and validation code for tuning values.
 
 ### Graded room lighting (plans 1, 2, 3a, 5a, 5b and 5c of the graded lighting arc)
 
-Thirteen knobs, validated in their own file (`config.balance.lighting.go`)
+Fourteen knobs, validated in their own file (`config.balance.lighting.go`)
 rather than folded into `validateMisc`, because the arc kept adding more
 here across plans: plan 1 shipped the three band thresholds, plan 2 added
 the vision-strength fallback, plan 3a added the eight knobs that turn the
-sky itself into a solar and lunar model, and plan 5b added the dazzle
-edge. Twelve of the thirteen are absent from `_datafiles/config.yaml`, so
-the shipped value is the Go default in every case; `LightDazzleAbove` is
-the exception, shipped in the file at its default of 75.
+sky itself into a solar and lunar model, plan 5b added the dazzle edge, and
+plan 6 added the real-light floor. Since lighting plan 6 every one of them
+ships in `_datafiles/config.yaml` (before it, twelve ran unseen at their Go
+defaults); the root guard `lighting_config_surface_test.go` fails if a key
+goes missing. Every shipped value is the Go default except
+`LightExitsAbove`, shipped at 55 (owner ruling O5).
 
 | Knob | Type | Default | Effect |
 |------|------|---------|--------|
 | `LightBlindBelow` | ConfigInt | 25 | Below this, a normal observer is blind. |
 | `LightDimBelow` | ConfigInt | 50 | Below this, a normal observer reads shapes only. |
-| `LightExitsAbove` | ConfigInt | 65 | At or above this, exits into adjacent rooms are visible. |
+| `LightExitsAbove` | ConfigInt | 65 | At or above this, exits into adjacent rooms are visible. Ships at 55. |
+| `LightRealMinimum` | ConfigInt | 3 | The least a room with any real light reads before darkness is subtracted (`rooms.composeWithFixtures`). Zero is unset and takes 3; clamped below `LightBlindBelow`. Plan 6. |
 | `LightDazzleAbove` | ConfigInt | 75 | Where the comfortable band ends and too-bright begins for a normal observer; a vision ability moves it down by its strength. Plan 5b. |
 | `LightDefaultVisionStrength` | ConfigInt | 12 | Window shift (`internal/messaging.SightThroughWindow`'s `strength`) for a vision flag that declares no strength of its own. Plan 2. |
 | `LightDoublingStep` | ConfigFloat | 8 | Scale points per doubling of physical light; the one constant `internal/lightscale.Combine`/`Attenuate` take as `step`. Plan 3a. |
