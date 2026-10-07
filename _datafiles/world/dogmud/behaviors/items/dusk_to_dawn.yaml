@@ -1,8 +1,11 @@
-# dusk_to_dawn: a fixed lamp lit from dusk to dawn (lighting 5e, item
-# behaviour slice 1). Item 55, the North Gate's arch lantern (room 4111).
-# 52 is the Oil Lantern's rung. A fixture's light lives in
-# internal/itemlight and never trims.
-notes: Lit at the oil lantern's 52 from dusk to dawn, dark by day.
+# dusk_to_dawn: a fixed lamp lit with the street lamps (lighting 5e, item
+# behaviour slice 1; lighting plan 6). Item 55, the North Gate's arch lantern
+# (room 4111). `period: lamplit` is gametime.LampsLit, the same test the
+# city's biome street lamps read: lit at night and while the clear sky is too
+# dim to read a face, so a dim midwinter morning keeps it, and it changes in
+# the same round as every street lamp. 52 is the Oil Lantern's rung. A
+# fixture's light lives in internal/itemlight and never trims.
+notes: Lit at the oil lantern's 52 with the street lamps, at night and while the sky is too dim to read a face; dark otherwise.
 tree:
   type: selector
   event: item_idle
@@ -11,7 +14,7 @@ tree:
       children:
         - type: condition
           check: time_of_day
-          period: night
+          period: lamplit
         - type: action
           do: set_light
           level: 52

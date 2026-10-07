@@ -81,6 +81,39 @@ func NightHoursAt(latitudeDegrees float64, dayOfYear int) float64 {
 	return 24 - 2*halfDayHours(latitudeDegrees, dayOfYear)
 }
 
+// NightAt reports whether an hour of a day of the year is night at a latitude:
+// the night is centred on midnight and NightHoursAt long. It is the one
+// boundary GameDate.Night (and so IsNight) uses, exposed so a caller holding a
+// day and an hour (a light golden, the street lamp's tests) can ask
+// without moving the round counter.
+func NightAt(latitudeDegrees float64, dayOfYear int, hour float64) bool {
+	halfNight := NightHoursAt(latitudeDegrees, dayOfYear) / 2
+	return hour >= 24-halfNight || hour < halfNight
+}
+
+// LampsLitAt reports whether the world's street lamps burn, given whether it
+// is night, the clear-sky celestial light (CelestialLight: sun and moons
+// before any sky fraction or weather) and the faces edge LightDimBelow. A
+// lamp burns while it is night OR while that clear sky reads below the faces
+// edge, the way a lamplighter works by eye (lighting plan 6, owner ruling
+// O4 as amended): a midwinter morning still too dim to read a face keeps its
+// lamps. The input is the clear sky, never the weathered one, so a storm
+// lights no lamp and every lamp in the world changes at the same moment.
+//
+// An Absent celestial (-Inf) is below any edge; a NaN one, which only an
+// arithmetic mistake produces, leaves the lamps to the night alone.
+func LampsLitAt(night bool, celestial float64, dimBelow int) bool {
+	return night || celestial < float64(dimBelow)
+}
+
+// LampsLit is LampsLitAt on the current round: IsNight, CelestialLight and
+// the shipped LightDimBelow. The street lamps (rooms.BiomeInfo.StreetLamp)
+// and the `time_of_day period: lamplit` behaviour condition both read it, so
+// a biome lamp and a lantern fixture light and go out together.
+func LampsLit() bool {
+	return LampsLitAt(IsNight(), CelestialLight(), configs.GetLightingConfig().DimBelow)
+}
+
 // solarSinAltitude is the sine of the sun's altitude above the horizon, which
 // is also the share of its light falling on level ground. Negative means below
 // the horizon.

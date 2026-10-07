@@ -21,10 +21,14 @@ func pinAfterDuskClock(t *testing.T) uint64 {
 	c.Balance.Validate()
 	configs.SetConfigForTest(t, c)
 	gametime.ClearDateCacheForTest()
+	// The celestial memo is keyed on the round alone, like the date cache;
+	// period: lamplit reads it (lighting plan 6).
+	gametime.ClearCelestialMemoForTest()
 	prev := util.GetRoundCount()
 	t.Cleanup(func() {
 		util.SetRoundCountForTest(prev)
 		gametime.ClearDateCacheForTest()
+		gametime.ClearCelestialMemoForTest()
 	})
 	for r := uint64(355*900 + 450); r < 356*900; r++ {
 		if gametime.GetDate(r).Night {

@@ -72,15 +72,19 @@ func TestNoShippedRoomReadsBelowZeroWithoutDarkness(t *testing.T) {
 	floor := float64(cfg.RealMinimum)
 	type sample struct {
 		celestial float64
+		lampsLit  bool
 	}
 	var samples []sample
 	for _, doy := range []int{356, 81, 172} {
 		for hour := 0; hour < 24; hour++ {
 			for _, m := range []float64{0, 0.5, 1} {
+				celestial := lightscale.Combine(cfg.DoublingStep,
+					gametime.SunLight(cfg, doy, float64(hour)),
+					gametime.MoonLight(cfg, m, m, m))
 				samples = append(samples, sample{
-					celestial: lightscale.Combine(cfg.DoublingStep,
-						gametime.SunLight(cfg, doy, float64(hour)),
-						gametime.MoonLight(cfg, m, m, m)),
+					celestial: celestial,
+					lampsLit: gametime.LampsLitAt(
+						gametime.NightAt(cfg.WorldLatitude, doy, float64(hour)), celestial, cfg.DimBelow),
 				})
 			}
 		}
@@ -94,7 +98,7 @@ func TestNoShippedRoomReadsBelowZeroWithoutDarkness(t *testing.T) {
 		}
 		for si, s := range samples {
 			for f := range filterSet {
-				terms := r.LightTermsAtForTest(s.celestial, f)
+				terms := r.LightTermsAtForTest(s.celestial, s.lampsLit, f)
 				checked++
 				bad := terms.Raw < 0 || terms.Level < 0 || (terms.Raw > 0 && terms.Raw < floor)
 				if bad {

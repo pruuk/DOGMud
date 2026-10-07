@@ -147,6 +147,9 @@ func TestLightingBalanceSpread(t *testing.T) {
 			gametime.SunLight(cfg, s.Doy, s.Hour),
 			gametime.MoonLight(cfg, s.Moons, s.Moons, s.Moons),
 		)
+		// The lamps follow the sky being composed: the lamplighter sees
+		// this sample's moons, not the live clock's.
+		lampsLit := gametime.LampsLitAt(gametime.NightAt(cfg.WorldLatitude, s.Doy, s.Hour), celestial, cfg.DimBelow)
 		fmt.Fprintf(&b, "== %s\n", s.Label)
 		for _, id := range spread {
 			r := rooms.LoadRoom(id)
@@ -157,7 +160,7 @@ func TestLightingBalanceSpread(t *testing.T) {
 			if bi := r.GetBiome(); bi != nil {
 				biome = bi.BiomeId
 			}
-			terms := r.LightTermsAtForTest(celestial, 1)
+			terms := r.LightTermsAtForTest(celestial, lampsLit, 1)
 			fmt.Fprintf(&b, "room %d %s biome=%s raw=%.3f level=%d\n", id, want[id], biome, terms.Raw, terms.Level)
 		}
 	}
@@ -180,8 +183,8 @@ func TestLightingBalanceSpread(t *testing.T) {
 			"This golden was recorded before lighting plan 6 rebuilt the light " +
 			"arithmetic. It is allowed to move, but every move must be one you " +
 			"predicted: the rebuild only raises the dim end (a reading at or above " +
-			"37 moves by under 0.5), the night-only street lamp drops street rooms " +
-			"to daylight alone by day, and the room data pass relights the rooms " +
+			"37 moves by under 0.5), the street lamp drops street rooms to daylight " +
+			"alone while the clear sky shows faces, and the room data pass relights the rooms " +
 			"the review page approved.\n\n" +
 			"Work out the expected diff first, compare, and only then:\n" +
 			"  go test . -run TestLightingBalanceSpread -update-lighting-balance-spread -v")

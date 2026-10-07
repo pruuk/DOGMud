@@ -163,8 +163,15 @@ func attribute(prev record, now observation) Cause {
 	// (lighting 5e, X5).
 	case a.Carried != b.Carried || termMoved(a.CarriedLight, b.CarriedLight):
 		return CauseCarried
-	// The room's own light: its lamp, and its fixtures (lighting 5e).
-	case a.HasLamp != b.HasLamp || a.Lamp != b.Lamp || termMoved(a.Fixture, b.Fixture):
+	// The room's own light: its lamp, and its fixtures (lighting 5e). Since
+	// street lamps light when the clear sky grows too dim to read a face and
+	// go out once it is bright again (lighting plan 6, gametime.LampsLit), the
+	// lamp can move the opposite way to the band across a long gap (noon to
+	// midnight: the sky went out, the lamp came on). A lamp that brightened
+	// cannot have darkened the room, nor one that dimmed lightened it, so
+	// such a move falls through to the sky.
+	case (a.HasLamp != b.HasLamp || a.Lamp != b.Lamp || termMoved(a.Fixture, b.Fixture)) &&
+		lampAgrees(a, b):
 		return CauseLamp
 	// Exact comparison is safe while the shipped fractions are 0.5 and 0.7:
 	// their products are identical in any order. Two different fractions
@@ -176,6 +183,37 @@ func attribute(prev record, now observation) Cause {
 		return CauseSky
 	}
 	return CauseEyes
+}
+
+// lampAgrees reports whether the room's own light (its lamp and its light
+// fixtures) moved the same way as the room: a lamp that only brightened
+// cannot explain a darker room, and one that only dimmed cannot explain a
+// lighter one. A move both ways (one fixture up, the lamp out) agrees, so the
+// lamp keeps the blame it had before lighting plan 6.
+func lampAgrees(a, b rooms.LightTerms) bool {
+	lampOf := func(t rooms.LightTerms) float64 {
+		if !t.HasLamp {
+			return 0
+		}
+		return float64(t.Lamp)
+	}
+	la, lb := lampOf(a), lampOf(b)
+	fa, fb := a.Fixture, b.Fixture
+	if math.IsInf(fa, -1) {
+		fa = 0
+	}
+	if math.IsInf(fb, -1) {
+		fb = 0
+	}
+	up := lb > la || fb > fa
+	down := lb < la || fb < fa
+	switch {
+	case b.Level < a.Level:
+		return down || !up
+	case b.Level > a.Level:
+		return up || !down
+	}
+	return true
 }
 
 // termMoved reports whether a light-scale term changed: appeared, went out

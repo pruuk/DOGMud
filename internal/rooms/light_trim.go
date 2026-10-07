@@ -56,6 +56,7 @@ func (r *Room) TrimLightFor(c *characters.Character) {
 
 	cfg := configs.GetLightingConfig()
 	celestial := gametime.CelestialLight()
+	lampsLit := gametime.LampsLitAt(gametime.IsNight(), celestial, cfg.DimBelow)
 	skyFilter := r.mutatorSkyFilter()
 	strength := c.NightVisionStrength()
 	lightTarget := messaging.LightTrimTarget(strength, cfg.DazzleAbove)
@@ -70,7 +71,7 @@ func (r *Room) TrimLightFor(c *characters.Character) {
 		t.rec.SetLightOutput(lightscale.Absent())
 	}
 	for _, t := range todo {
-		terms := r.composeLightExcluding(cfg, celestial, skyFilter, t.rec)
+		terms := r.composeLightExcluding(cfg, celestial, lampsLit, skyFilter, t.rec)
 		full := t.rec.LightMax(t.spec)
 		var out float64
 		if t.dark {

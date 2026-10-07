@@ -36,7 +36,7 @@ func TestFixtureComposition(t *testing.T) {
 		{"a darkness fixture and a carried darkness", cave, nil, []float64{50}, nil, []float64{50}, -58, 0, 0},
 	}
 	for _, c := range cases {
-		got := c.room.composeWithFixtures(cfg, 60, 1, c.carried, c.dark, c.fxLight, c.fxDark)
+		got := c.room.composeWithFixtures(cfg, 60, true, 1, c.carried, c.dark, c.fxLight, c.fxDark)
 		if got.Level != c.want {
 			t.Errorf("%s: Level = %d, want %d", c.name, got.Level, c.want)
 		}
@@ -59,7 +59,7 @@ func TestComposeWithIsFixtureFree(t *testing.T) {
 	zero := 0.0
 	cave := Room{SkyLight: &zero, Lamp: LampPtr(50)}
 	a := cave.composeWith(cfg, 60, 1, []float64{56}, []float64{20})
-	b := cave.composeWithFixtures(cfg, 60, 1, []float64{56}, []float64{20}, nil, nil)
+	b := cave.composeWithFixtures(cfg, 60, true, 1, []float64{56}, []float64{20}, nil, nil)
 	if a != b {
 		t.Errorf("composeWith %+v != composeWithFixtures with none %+v", a, b)
 	}

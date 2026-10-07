@@ -385,9 +385,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == midwinter-noon-moons-new
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=62.036 level=62
-room 200 biome biome=city_thoroughfare raw=65.625 level=66
+room 200 biome biome=city_thoroughfare raw=61.447 level=61
 room 201 biome biome=ruins raw=58.734 level=59
-room 202 biome biome=city_backstreet raw=62.508 level=63
+room 202 biome biome=city_backstreet raw=61.447 level=61
 room 203 biome biome=interior raw=54.077 level=54
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -443,7 +443,7 @@ room 5449 override biome=farmland raw=54.077 level=54
 room 5478 biome biome=road raw=63.344 level=63
 room 5480 override biome=road raw=63.344 level=63
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=65.625 level=66
+room 5803 review biome=city_thoroughfare raw=61.447 level=61
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0
@@ -481,9 +481,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == midwinter-noon-moons-full
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=62.979 level=63
-room 200 biome biome=city_thoroughfare raw=66.289 level=66
+room 200 biome biome=city_thoroughfare raw=62.389 level=62
 room 201 biome biome=ruins raw=59.675 level=60
-room 202 biome biome=city_backstreet raw=63.370 level=63
+room 202 biome biome=city_backstreet raw=62.389 level=62
 room 203 biome biome=interior raw=54.366 level=54
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -539,7 +539,7 @@ room 5449 override biome=farmland raw=54.366 level=54
 room 5478 biome biome=road raw=64.189 level=64
 room 5480 override biome=road raw=64.189 level=64
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=66.289 level=66
+room 5803 review biome=city_thoroughfare raw=62.389 level=62
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0
@@ -1153,9 +1153,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == equinox-noon-moons-new
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=70.016 level=70
-room 200 biome biome=city_thoroughfare raw=71.706 level=72
+room 200 biome biome=city_thoroughfare raw=69.425 level=69
 room 201 biome biome=ruins raw=66.704 level=67
-room 202 biome biome=city_backstreet raw=69.968 level=70
+room 202 biome biome=city_backstreet raw=69.425 level=69
 room 203 biome biome=interior raw=57.086 level=57
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -1211,7 +1211,7 @@ room 5449 override biome=farmland raw=57.086 level=57
 room 5478 biome biome=road raw=70.689 level=71
 room 5480 override biome=road raw=70.689 level=71
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=71.706 level=72
+room 5803 review biome=city_thoroughfare raw=69.425 level=69
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0
@@ -1249,9 +1249,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == equinox-noon-moons-full
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=70.497 level=70
-room 200 biome biome=city_thoroughfare raw=72.103 level=72
+room 200 biome biome=city_thoroughfare raw=69.906 level=70
 room 201 biome biome=ruins raw=67.185 level=67
-room 202 biome biome=city_backstreet raw=70.428 level=70
+room 202 biome biome=city_backstreet raw=69.906 level=70
 room 203 biome biome=interior raw=57.310 level=57
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -1307,7 +1307,7 @@ room 5449 override biome=farmland raw=57.310 level=57
 room 5478 biome biome=road raw=71.144 level=71
 room 5480 override biome=road raw=71.144 level=71
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=72.103 level=72
+room 5803 review biome=city_thoroughfare raw=69.906 level=70
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0
@@ -1729,9 +1729,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == midsummer-dawn-moons-new
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=60.053 level=60
-room 200 biome biome=city_thoroughfare raw=64.281 level=64
+room 200 biome biome=city_thoroughfare raw=59.464 level=59
 room 201 biome biome=ruins raw=56.753 level=57
-room 202 biome biome=city_backstreet raw=60.713 level=61
+room 202 biome biome=city_backstreet raw=59.464 level=59
 room 203 biome biome=interior raw=53.518 level=54
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -1787,7 +1787,7 @@ room 5449 override biome=farmland raw=53.518 level=54
 room 5478 biome biome=road raw=61.590 level=62
 room 5480 override biome=road raw=61.590 level=62
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=64.281 level=64
+room 5803 review biome=city_thoroughfare raw=59.464 level=59
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0
@@ -1825,9 +1825,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == midsummer-dawn-moons-full
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=61.163 level=61
-room 200 biome biome=city_thoroughfare raw=65.025 level=65
+room 200 biome biome=city_thoroughfare raw=60.574 level=61
 room 201 biome biome=ruins raw=57.862 level=58
-room 202 biome biome=city_backstreet raw=61.714 level=62
+room 202 biome biome=city_backstreet raw=60.574 level=61
 room 203 biome biome=interior raw=53.822 level=54
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -1883,7 +1883,7 @@ room 5449 override biome=farmland raw=53.822 level=54
 room 5478 biome biome=road raw=62.568 level=63
 room 5480 override biome=road raw=62.568 level=63
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=65.025 level=65
+room 5803 review biome=city_thoroughfare raw=60.574 level=61
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0
@@ -1921,9 +1921,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == midsummer-noon-moons-new
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=73.377 level=73
-room 200 biome biome=city_thoroughfare raw=74.532 level=75
+room 200 biome biome=city_thoroughfare raw=72.786 level=73
 room 201 biome biome=ruins raw=70.063 level=70
-room 202 biome biome=city_backstreet raw=73.194 level=73
+room 202 biome biome=city_backstreet raw=72.786 level=73
 room 203 biome biome=interior raw=58.754 level=59
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -1979,7 +1979,7 @@ room 5449 override biome=farmland raw=58.754 level=59
 room 5478 biome biome=road raw=73.884 level=74
 room 5480 override biome=road raw=73.884 level=74
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=74.532 level=75
+room 5803 review biome=city_thoroughfare raw=72.786 level=73
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0
@@ -2017,9 +2017,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == midsummer-noon-moons-full
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=73.738 level=74
-room 200 biome biome=city_thoroughfare raw=74.843 level=75
+room 200 biome biome=city_thoroughfare raw=73.147 level=73
 room 201 biome biome=ruins raw=70.425 level=70
-room 202 biome biome=city_backstreet raw=73.544 level=74
+room 202 biome biome=city_backstreet raw=73.147 level=73
 room 203 biome biome=interior raw=58.948 level=59
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -2075,7 +2075,7 @@ room 5449 override biome=farmland raw=58.948 level=59
 room 5478 biome biome=road raw=74.230 level=74
 room 5480 override biome=road raw=74.230 level=74
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=74.843 level=75
+room 5803 review biome=city_thoroughfare raw=73.147 level=73
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0
@@ -2113,9 +2113,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == midsummer-dusk-moons-new
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=60.053 level=60
-room 200 biome biome=city_thoroughfare raw=64.281 level=64
+room 200 biome biome=city_thoroughfare raw=59.464 level=59
 room 201 biome biome=ruins raw=56.753 level=57
-room 202 biome biome=city_backstreet raw=60.713 level=61
+room 202 biome biome=city_backstreet raw=59.464 level=59
 room 203 biome biome=interior raw=53.518 level=54
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -2171,7 +2171,7 @@ room 5449 override biome=farmland raw=53.518 level=54
 room 5478 biome biome=road raw=61.590 level=62
 room 5480 override biome=road raw=61.590 level=62
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=64.281 level=64
+room 5803 review biome=city_thoroughfare raw=59.464 level=59
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0
@@ -2209,9 +2209,9 @@ room 6469 review biome=cave raw=0.000 level=0
 == midsummer-dusk-moons-full
 room 75 biome biome=ether raw=60.000 level=60
 room 139 biome biome=land raw=61.163 level=61
-room 200 biome biome=city_thoroughfare raw=65.025 level=65
+room 200 biome biome=city_thoroughfare raw=60.574 level=61
 room 201 biome biome=ruins raw=57.862 level=58
-room 202 biome biome=city_backstreet raw=61.714 level=62
+room 202 biome biome=city_backstreet raw=60.574 level=61
 room 203 biome biome=interior raw=53.822 level=54
 room 204 review biome=dungeon raw=0.000 level=0
 room 300 biome biome=cave raw=0.000 level=0
@@ -2267,7 +2267,7 @@ room 5449 override biome=farmland raw=53.822 level=54
 room 5478 biome biome=road raw=62.568 level=63
 room 5480 override biome=road raw=62.568 level=63
 room 5509 biome biome=sewer raw=38.000 level=38
-room 5803 review biome=city_thoroughfare raw=65.025 level=65
+room 5803 review biome=city_thoroughfare raw=60.574 level=61
 room 6021 override biome=dungeon raw=38.000 level=38
 room 6024 review biome=dungeon raw=0.000 level=0
 room 6025 review biome=dungeon raw=0.000 level=0

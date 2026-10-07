@@ -1,7 +1,10 @@
-# The room's own light: its lamp, and its fixtures (lighting 5e). A room's
-# lamp does not change at runtime, but a fixture does: the North Gate's arch
-# lantern lit at dusk and snuffed at dawn, a pulsing stone. These lines fire
-# when one moves the observer's band.
+# The room's own light: its lamp, and its fixtures (lighting 5e). A street
+# lamp is lit when the clear sky grows too dim to read a face and put out
+# once it is bright again, at night and on a dim winter morning or evening
+# alike (lighting plan 6, gametime.LampsLit), and the North Gate's arch
+# lantern with it; a pulsing stone rises and falls. These lines fire when one
+# moves the observer's band, so none may name the hour: each must read true
+# at a dim morning as well as at nightfall.
 cause: lamp
 transitions:
   darker_faces:

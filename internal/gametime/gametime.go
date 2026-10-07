@@ -285,12 +285,13 @@ func (g *GameDate) ReCalculate() {
 	// nearest hour and lose up to half an hour of night at each end.
 	hourOfDay := float64(roundOfDay) / float64(g.RoundsPerDay) * 24
 
-	nightHours := NightHoursAt(configs.GetLightingConfig().WorldLatitude, int(day))
+	latitude := configs.GetLightingConfig().WorldLatitude
+	nightHours := NightHoursAt(latitude, int(day))
 	halfNight := nightHours / 2
 	nightStartHour := 24 - halfNight
 	nightEndHour := halfNight
 
-	night := hourOfDay >= nightStartHour || hourOfDay < nightEndHour
+	night := NightAt(latitude, int(day), hourOfDay)
 
 	ampm := `AM`
 	if hour >= 12 {

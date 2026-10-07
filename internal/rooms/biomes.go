@@ -50,6 +50,22 @@ type BiomeInfo struct {
 	// inn should do.
 	Lamp *int `yaml:"lamp,omitempty"`
 
+	// StreetLamp makes the biome's Lamp a street lamp, lit and put out by a
+	// lamplighter working by eye: it joins the room's light while
+	// gametime.LampsLit() is true, which is at night OR while the clear sky
+	// (the celestial light before any sky fraction or weather) reads below
+	// LightDimBelow, so a midwinter morning too dim to read a face keeps its
+	// lamps (lighting plan 6, owner ruling O4 as amended). The North Gate
+	// arch lantern's dusk_to_dawn tree reads the same test (`time_of_day
+	// period: lamplit`), and weather never enters it, so every street lamp
+	// in the world lights and goes out at the same moment. Unset, the lamp
+	// burns at all hours, which is right for an inn's lamps, a cave's glow
+	// or the ether.
+	//
+	// It governs the BIOME lamp only. A room's own `lamp:` override is an
+	// all-hours lamp whatever its biome says.
+	StreetLamp bool `yaml:"streetlamp,omitempty"`
+
 	// Indoor marks a room as sheltered from weather; outdoor-only mutators
 	// don't render here.
 	//
@@ -94,12 +110,23 @@ func (bi *BiomeInfo) SkyLightFraction() float64 {
 	return *bi.SkyLight
 }
 
-// LampValue is the biome's own light source and whether it declares one at all.
+// LampValue is the biome's own light source and whether it declares one at
+// all, whatever the hour. LampAt is the lamp as it burns at a given hour.
 func (bi *BiomeInfo) LampValue() (int, bool) {
 	if bi.Lamp == nil {
 		return 0, false
 	}
 	return *bi.Lamp, true
+}
+
+// LampAt is the biome's lamp as it burns when the street lamps are (or are
+// not) lit, the value gametime.LampsLit reports: a StreetLamp lamp is out
+// while they are out, every other lamp burns at all hours.
+func (bi *BiomeInfo) LampAt(lampsLit bool) (int, bool) {
+	if bi.StreetLamp && !lampsLit {
+		return 0, false
+	}
+	return bi.LampValue()
 }
 
 // HasLamp reports whether this biome carries a light source that actually

@@ -33,7 +33,7 @@ import (
 // Weather attenuates the SKY only, through each active mutator's skylight
 // fraction: a blizzard does not dim a lantern.
 func (r *Room) LightLevel() int {
-	return r.lightLevel(configs.GetLightingConfig(), gametime.CelestialLight())
+	return r.lightLevel(configs.GetLightingConfig(), gametime.CelestialLight(), gametime.LampsLit())
 }
 
 // IsLit reports whether a normal observer can see anything at all here.
@@ -44,19 +44,21 @@ func (r *Room) LightLevel() int {
 // reads the narrow lighting config once.
 func (r *Room) IsLit() bool {
 	cfg := configs.GetLightingConfig()
-	return r.lightLevel(cfg, gametime.CelestialLight()) >= cfg.BlindBelow
+	return r.lightLevel(cfg, gametime.CelestialLight(), gametime.LampsLit()) >= cfg.BlindBelow
 }
 
-// lightLevel is LightLevel with its two reads injected, so it is testable
-// without global state and so a caller holding both can avoid reading twice.
-func (r *Room) lightLevel(cfg configs.Lighting, celestial float64) int {
-	return r.lightLevelWithSkyFilter(cfg, celestial, r.mutatorSkyFilter())
+// lightLevel is LightLevel with its clock reads (the celestial light and
+// whether the street lamps are lit, gametime.LampsLit) injected, so it is
+// testable without global state and so a caller holding both can avoid
+// reading twice.
+func (r *Room) lightLevel(cfg configs.Lighting, celestial float64, lampsLit bool) int {
+	return r.lightLevelWithSkyFilter(cfg, celestial, lampsLit, r.mutatorSkyFilter())
 }
 
 // lightLevelWithSkyFilter is the composition itself, with the active mutators'
 // sky filter already multiplied out, so tests can drive it directly.
-func (r *Room) lightLevelWithSkyFilter(cfg configs.Lighting, celestial, skyFilter float64) int {
-	return r.composeLight(cfg, celestial, skyFilter).Level
+func (r *Room) lightLevelWithSkyFilter(cfg configs.Lighting, celestial float64, lampsLit bool, skyFilter float64) int {
+	return r.composeLight(cfg, celestial, lampsLit, skyFilter).Level
 }
 
 // LightTerms is the room's light broken into the terms LightLevel combines,
@@ -104,27 +106,30 @@ type LightTerms struct {
 // LightTerms reports the terms behind LightLevel, from the same single
 // computation.
 func (r *Room) LightTerms() LightTerms {
-	return r.composeLight(configs.GetLightingConfig(), gametime.CelestialLight(), r.mutatorSkyFilter())
+	return r.composeLight(configs.GetLightingConfig(), gametime.CelestialLight(), gametime.LampsLit(), r.mutatorSkyFilter())
 }
 
 // composeLight is the one computation behind LightLevel and LightTerms.
-func (r *Room) composeLight(cfg configs.Lighting, celestial, skyFilter float64) LightTerms {
-	return r.composeLightExcluding(cfg, celestial, skyFilter, nil)
+func (r *Room) composeLight(cfg configs.Lighting, celestial float64, lampsLit bool, skyFilter float64) LightTerms {
+	return r.composeLightExcluding(cfg, celestial, lampsLit, skyFilter, nil)
 }
 
 // composeLightExcluding is composeLight with one carried record left out of
 // whichever combine it belongs to, which is the room a trimming source sees:
 // everything except itself.
-func (r *Room) composeLightExcluding(cfg configs.Lighting, celestial, skyFilter float64, exclude *conditions.Condition) LightTerms {
+func (r *Room) composeLightExcluding(cfg configs.Lighting, celestial float64, lampsLit bool, skyFilter float64, exclude *conditions.Condition) LightTerms {
 	carried, dark := r.carriedTerms(exclude)
 	fxLight, fxDark := itemlight.Terms(r.RoomId)
-	return r.composeWithFixtures(cfg, celestial, skyFilter, carried, dark, fxLight, fxDark)
+	return r.composeWithFixtures(cfg, celestial, lampsLit, skyFilter, carried, dark, fxLight, fxDark)
 }
 
 // composeWith is the composition with the carried light and darkness terms
-// supplied and no fixtures, so a test needs no users, mobs or items.
+// supplied and no fixtures, so a test needs no users, mobs or items. It
+// composes with every street lamp lit, which is what every test written
+// before the street lamp's hours (lighting plan 6) assumed; a test of the
+// lamp's hours calls composeWithFixtures with lampsLit set.
 func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, carried, dark []float64) LightTerms {
-	return r.composeWithFixtures(cfg, celestial, skyFilter, carried, dark, nil, nil)
+	return r.composeWithFixtures(cfg, celestial, true, skyFilter, carried, dark, nil, nil)
 }
 
 // composeWithFixtures is the composition itself, with every term supplied.
@@ -135,7 +140,7 @@ func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, c
 // clamped to [-100, 100] (lighting plan 5d, owner decision 1; plan 6). A lit light fixture is one term in
 // the light combine and a darkness fixture one in the darkness combine,
 // beside what people carry (lighting 5e, Rule 10). Fixtures never trim.
-func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial, skyFilter float64, carried, dark, fixtureLight, fixtureDark []float64) LightTerms {
+func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial float64, lampsLit bool, skyFilter float64, carried, dark, fixtureLight, fixtureDark []float64) LightTerms {
 	step := cfg.DoublingStep
 	if !(step > 0) {
 		step = 1
@@ -154,7 +159,7 @@ func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial, skyFilter fl
 	terms = append(terms, out.Sky)
 
 	// 2. The room's own lamp.
-	if lamp, ok := r.lampValue(); ok {
+	if lamp, ok := r.lampValue(lampsLit); ok {
 		out.Lamp, out.HasLamp = lamp, true
 		terms = append(terms, float64(lamp))
 	}
@@ -279,14 +284,17 @@ func (r *Room) skyLightFraction() float64 {
 	return 1.0
 }
 
-// lampValue is this room's own light source, and whether it has one at all.
-// Nil-safe for the same reason as skyLightFraction.
-func (r *Room) lampValue() (int, bool) {
+// lampValue is this room's own light source as it burns when the street lamps
+// are (or are not) lit, and whether it burns at all. A room's own `lamp:`
+// override burns at all hours; a biome lamp marked streetlamp only while
+// gametime.LampsLit (lighting plan 6, owner ruling O4 as amended). Nil-safe
+// for the same reason as skyLightFraction.
+func (r *Room) lampValue(lampsLit bool) (int, bool) {
 	if r.Lamp != nil {
 		return *r.Lamp, true
 	}
 	if b := r.GetBiome(); b != nil {
-		return b.LampValue()
+		return b.LampAt(lampsLit)
 	}
 	return 0, false
 }
