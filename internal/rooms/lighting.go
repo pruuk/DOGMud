@@ -124,10 +124,14 @@ func (r *Room) composeLightExcluding(cfg configs.Lighting, celestial float64, la
 }
 
 // composeWith is the composition with the carried light and darkness terms
-// supplied and no fixtures, so a test needs no users, mobs or items. It
-// composes with every street lamp lit, which is what every test written
-// before the street lamp's hours (lighting plan 6) assumed; a test of the
-// lamp's hours calls composeWithFixtures with lampsLit set.
+// supplied and no fixtures, so a test needs no users, mobs or items.
+//
+// ⚠️ It composes with every street lamp LIT, whatever the celestial term says,
+// which is what every test written before the street lamp's hours (lighting
+// plan 6) assumed. A street-lamp biome room composed here at a noon sky still
+// has its lamp, which the live clock would have put out. A test of the
+// lamp's hours, or of a street by day, calls composeWithFixtures with
+// lampsLit set as gametime.LampsLitAt would set it.
 func (r *Room) composeWith(cfg configs.Lighting, celestial, skyFilter float64, carried, dark []float64) LightTerms {
 	return r.composeWithFixtures(cfg, celestial, true, skyFilter, carried, dark, nil, nil)
 }
@@ -170,8 +174,9 @@ func (r *Room) composeWithFixtures(cfg configs.Lighting, celestial float64, lamp
 	terms = append(terms, fixtureLight...)
 
 	// 4. Every light anyone here carries, each its own term (lighting plan 5a):
-	// a candle and a torch are different sources, and two torches are one
-	// doubling step brighter than one.
+	// a candle and a torch are different sources, and two torches are a
+	// little under one doubling step brighter than one (56 and 56 read 63.96
+	// at step 8).
 	out.CarriedLight = lightscale.Combine(step, carried...)
 	if len(carried) > 0 {
 		out.Carried = true

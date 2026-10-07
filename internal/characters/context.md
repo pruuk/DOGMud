@@ -1960,8 +1960,9 @@ rather than checking flags directly:
   magnitude-aware exactly as `Effect` reads it) and every mutation's
   rank-scaled value from `mutations.FlagValues(c.Mutations,
   string(conditions.InfraredVision))` (new, one entry per matching pro or
-  con), log-sums them through `lightscale.Combine(cfg.DoublingStep, ...)`
-  (the same combine rule room light already uses), caps the result at
+  con), combines them through `lightscale.Combine(cfg.DoublingStep, ...)`
+  (the same combine rule room light already uses, a sum of linear
+  brightness since lighting plan 6), caps the result at
   `configs.GetLightingConfig().InfraReachCap` (default 50), and rounds
   once with `math.Round`. Example: mutation 40 + spell 30 + potion 25
   reads about 46, not 40. A bare infrared flag with no number still reads

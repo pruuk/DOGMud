@@ -349,7 +349,8 @@ remaining 268 across `the_confluence`, `greenford`, `thornwall_city`,
 `stillwater`, `hartcharn`, `kilnreach_works` and `pothole_coulee` into
 `city_thoroughfare`, `city_backstreet`, `interior`, `dungeon`, `road` or
 `ruins`. `city_thoroughfare` and `city_backstreet` are the vocabulary now:
-a thoroughfare's lamp holds it in the faces band at any hour, a backstreet
+a thoroughfare reads faces at any hour in clear weather (its street lamp
+while the lamps are lit, its own daylight once they are out), a backstreet
 has none and reads shapes after dark. `biomes/city.yaml`,
 `weather/climate/city.yaml` and the `city:` emote pool key are all deleted
 from `_datafiles/world/dogmud`, and all 12 zone-configs that defaulted an

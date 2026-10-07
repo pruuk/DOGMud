@@ -946,13 +946,15 @@ Balance:
   LightDimBelow: 50
   # LightExitsAbove: at or above this light a normal observer can look and
   #   scan through an exit into the next room (lighting plan 6: 55, so a
-  #   lamplit street at night needs a candle or better). Never below
-  #   LightBlindBelow; out of range reverts to 65.
+  #   lamplit street at night needs a candle or better). Zero, a value off
+  #   the -100..100 scale, or one below LightBlindBelow falls back to 65 (or
+  #   to LightBlindBelow, if that is above 65).
   LightExitsAbove: 55
   # LightRealMinimum: the least a room with any real light reads before
   #   magical darkness is subtracted (lighting plan 6), so a sliver of light
   #   never rounds to the same 0 as a sealed cave. 1 to LightBlindBelow - 1;
-  #   zero reverts to 3.
+  #   zero or a negative value reverts to 3, and a value at or above
+  #   LightBlindBelow clamps to LightBlindBelow - 1.
   LightRealMinimum: 3
   # LightDazzleAbove: where the comfortable band ends and too-bright begins
   #   for a normal observer, on the same -100..100 scale. Must sit above

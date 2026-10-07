@@ -911,9 +911,10 @@ than reverts for its own out-of-range case above.
 honouring it: zero divides by zero inside `internal/lightscale.Combine`.
 `WorldLatitude` treats zero as UNSET and coerces it to 46.5, the same idiom
 as `LightDefaultVisionStrength`, because Go cannot distinguish an unset
-float from an authored zero and none of these knobs ship in
-`_datafiles/config.yaml` today: a bare `Balance{}` is what production
-actually runs on. Honouring zero would have shipped a world with no
+float from an authored zero. Since lighting plan 6 every one of these knobs
+ships in `_datafiles/config.yaml`, but a config that omits one (an older
+deployment's file, or a test binary, which loads Go defaults) still reads
+it as zero. Honouring zero would have shipped a world with no
 latitude at all, no seasons, and the celestial model never reached. An
 operator wanting equator-like twelve-hour nights all year authors a
 latitude near zero (e.g. `0.001`), not exactly zero. `LightEquinoxNoon`

@@ -689,8 +689,9 @@ still does take the best). It instead calls `Conditions.EffectValues(kind
 EffectKind) []float64` (new, `effects.go`): every held, unexpired record's
 value for one kind, magnitude-aware exactly as `Effect` reads it, in list
 order, so a reader can combine them some other way than `Effect`'s own rule.
-See `internal/characters/context.md` for how `InfraReach` log-sums the
-result through `lightscale.Combine`.
+See `internal/characters/context.md` for how `InfraReach` combines the
+result through `lightscale.Combine` (a sum of linear brightness since
+lighting plan 6).
 
 Which predicate a kind matches is closed and mutually exclusive:
 `EffectKind.isMultiplier()`, `.isCap()` and `.isMax()` are checked in that
