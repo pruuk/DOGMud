@@ -78,20 +78,22 @@ func resolveFoldRecall(actor actions.Actor) {
 	}
 
 	// Departure broadcast on the room the actor LEFT (use the snapshotted
-	// currentRoomId — char.RoomId has been updated by teleport).
+	// currentRoomId, since char.RoomId has been updated by teleport). Both
+	// broadcasts are seen, so they go through the room's sight path, and a
+	// bystander who makes out shapes only reads a figure, not the name (#428).
 	if oldRoom := rooms.LoadRoom(currentRoomId); oldRoom != nil {
-		oldRoom.SendText(messaging.CategorySpellManifestation, fmt.Sprintf(
+		oldRoom.SendTextVisualHidingNames(messaging.CategorySpellManifestation, fmt.Sprintf(
 			`<ansi fg="username">%s</ansi> folds through the Veil and vanishes!`,
-			actor.GetName()), actor.GetUserId())
+			actor.GetName()), []string{actor.GetName()}, actor.GetUserId())
 	}
 
 	actor.SendText(messaging.CategorySpellFold, "You fold through the Veil and arrive at your anchor point!")
 
 	// Arrival broadcast on the new room.
 	if newRoom := rooms.LoadRoom(anchorRoom); newRoom != nil {
-		newRoom.SendText(messaging.CategorySpellManifestation, fmt.Sprintf(
+		newRoom.SendTextVisualHidingNames(messaging.CategorySpellManifestation, fmt.Sprintf(
 			`<ansi fg="username">%s</ansi> folds through the Veil and appears!`,
-			actor.GetName()), actor.GetUserId())
+			actor.GetName()), []string{actor.GetName()}, actor.GetUserId())
 	}
 
 	// Auto-look so the player sees their new room without typing it manually.

@@ -97,9 +97,12 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 			user.SendText(messaging.CategorySystem, fmt.Sprintf("Moved to room %d.", gotoRoomId))
 
+			// The arrival is seen: the destination room's sight path, so a
+			// viewer who makes out shapes only reads a figure (#428).
 			gotoRoom := rooms.LoadRoom(gotoRoomId)
-			gotoRoom.SendText(messaging.CategorySystem,
+			gotoRoom.SendTextVisualHidingNames(messaging.CategorySystem,
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, targetUser.Character.Name),
+				[]string{targetUser.Character.Name},
 				targetUser.UserId,
 			)
 
@@ -123,7 +126,7 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 							rooms.MoveToRoom(partyUser.UserId, gotoRoomId)
 							partyUser.SendText(messaging.CategorySystem, fmt.Sprintf("Moved to room %d.", gotoRoomId))
-							room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, partyUser.Character.Name), partyUser.UserId)
+							gotoRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, partyUser.Character.Name), []string{partyUser.Character.Name}, partyUser.UserId)
 
 							Look(``, partyUser, gotoRoom, flags)
 
