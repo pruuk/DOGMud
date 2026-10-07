@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25, YAML world data, `go/types` over the compiler's export data for one repo-root guard.
 
-**Spec (binding):** `docs/superpowers/specs/2026-10-05-item-behaviour-foundation-design.md` (merged with this plan from `docs/item-behaviour-spec`), its facts table, "Where the facts push back" X1 to X22 and the owner rulings R1 to R10. Two later owner answers (2026-10-05) also bind: a sleeping player's Oil Lantern relighting by itself on the first round after waking is fine, and the scheduled-off record state surviving a restart until the next round is fine. Slices 2 (voices) and 3 (procs) are out of this plan; this slice builds the engine they plug into.
+**Spec (binding):** `docs/superpowers/specs/completed/2026-10-05-item-behaviour-foundation-design.md` (merged with this plan from `docs/item-behaviour-spec`), its facts table, "Where the facts push back" X1 to X22 and the owner rulings R1 to R10. Two later owner answers (2026-10-05) also bind: a sleeping player's Oil Lantern relighting by itself on the first round after waking is fine, and the scheduled-off record state surviving a restart until the next round is fine. Slices 2 (voices) and 3 (procs) are out of this plan; this slice builds the engine they plug into.
 
 **Branch:** implementation branch `feature/item-behaviour-slice1`, cut from master AFTER the docs branch `docs/item-behaviour-spec` (this plan and the spec) merges, in the worktree `C:/tmp/dogmud-itembeh1`:
 
@@ -6379,7 +6379,7 @@ Append at the end of the file:
 ## Item behaviour trees (lighting 5e, item behaviour slice 1)
 
 Items are the third subject of the engine, beside mobs and rooms (spec
-`docs/superpowers/specs/2026-10-05-item-behaviour-foundation-design.md`).
+`docs/superpowers/specs/completed/2026-10-05-item-behaviour-foundation-design.md`).
 
 - **Files.** Named trees `behaviors/items/<name>.yaml` (`GetItemTreePath`),
   the archetype pattern: several items share one tree. An item names its tree

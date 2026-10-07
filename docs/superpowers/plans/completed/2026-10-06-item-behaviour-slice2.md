@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25, YAML world data, the existing behaviour-tree engine.
 
-**Spec (binding):** `docs/superpowers/specs/2026-10-05-item-behaviour-foundation-design.md`, slice 2 (Rules 16 to 19, X14 to X17, X19 to X21, rulings R5, R6, R10), plus three owner rulings of 2026-10-06 recorded below as S1 to S3.
+**Spec (binding):** `docs/superpowers/specs/completed/2026-10-05-item-behaviour-foundation-design.md`, slice 2 (Rules 16 to 19, X14 to X17, X19 to X21, rulings R5, R6, R10), plus three owner rulings of 2026-10-06 recorded below as S1 to S3.
 
 **Branch:** implementation branch `feature/item-behaviour-slice2`, cut from master AFTER the docs branch `docs/item-behaviour-slice2-plan` (this plan) merges, in the worktree `C:/tmp/dogmud-itembeh2`:
 

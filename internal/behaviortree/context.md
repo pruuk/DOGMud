@@ -1008,7 +1008,7 @@ mob is already gone by the time a queued action would run.
 ## Item behaviour trees (lighting 5e, item behaviour slice 1)
 
 Items are the third subject of the engine, beside mobs and rooms (spec
-`docs/superpowers/specs/2026-10-05-item-behaviour-foundation-design.md`).
+`docs/superpowers/specs/completed/2026-10-05-item-behaviour-foundation-design.md`).
 
 - **Files.** Named trees `behaviors/items/<name>.yaml` (`GetItemTreePath`),
   the archetype pattern: several items share one tree. An item names its tree

@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.25.
 
-**Spec (binding):** `docs/superpowers/specs/2026-10-06-lighting-small-fixes-design.md` (owner-approved 2026-10-06), with the corrections under "Where the spec could not be implemented as written" below.
+**Spec (binding):** `docs/superpowers/specs/completed/2026-10-06-lighting-small-fixes-design.md` (owner-approved 2026-10-06), with the corrections under "Where the spec could not be implemented as written" below.
 
 **Branch:** implementation branch `fix/lighting-small-fixes`, cut from master AFTER the docs branch `docs/lighting-small-fixes` (the spec and this plan) merges, in the worktree `C:/tmp/dogmud-lightfix`:
 
