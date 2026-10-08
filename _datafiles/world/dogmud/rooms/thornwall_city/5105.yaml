@@ -5,11 +5,13 @@ description: A cramped cell carved into the stone foundations beneath the guard
   barracks, reached by a short flight of worn steps. Iron bars set deep into
   the rock form the front wall, their lock heavy and well-oiled. A thin pallet
   of straw lies in one corner beside a battered tin bucket, and a high, narrow
-  slit near the ceiling grudgingly admits whatever light the hour allows. The
-  air is cool and close, smelling of damp stone and old straw. Footsteps and
+  slit near the ceiling grudgingly admits whatever light the hour allows. A
+  lamp on the steps outside the bars throws a dim glow over it all. The air
+  is cool and close, smelling of damp stone and old straw. Footsteps and
   muffled voices drift down from the duty room above.
 biome: dungeon
 skylight: 0.1
+lamp: 35
 coord:
   x: 0
   y: 1
@@ -18,9 +20,11 @@ exits:
   up:
     roomid: 473
 nouns:
+  lamp: A shuttered oil lamp on the steps beyond the bars, turned low. It
+    lights the cell just enough to see the walls by, and no more.
   bars: Thick iron bars set into the stone, spaced too narrow to squeeze
     through and too solid to bend. The lock is a heavy iron affair, recently
-    oiled -- these cells see regular use.
+    oiled. These cells see regular use.
   lock: A heavy iron lock on the cell door, oiled and well maintained. Only the
     guards carry the key, and they open it on their own schedule, not yours.
   pallet: A thin pallet of straw in the corner, flattened by many previous

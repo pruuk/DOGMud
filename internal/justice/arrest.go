@@ -414,11 +414,13 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 			}
 		}
 		// CategorySystem is never wrapped by the pipeline (it also carries
-		// tables), so this two-sentence line wraps itself to the reader's
-		// width; unwrapped it ran past 100 columns (#430).
+		// tables), so this line wraps itself to the reader's width; unwrapped
+		// it ran past 100 columns (#430). It names `fine`, which names
+		// `payfine`: a new prisoner otherwise had to guess the way out (#298).
 		u.SendText(messaging.CategorySystem, messaging.WrapAnsi(
 			fmt.Sprintf("A guard seizes you and hauls you to the holding cell. "+
-				"You have been placed under arrest by the %s.", factionName),
+				"You have been placed under arrest by the %s. "+
+				`Type <ansi fg="command">fine</ansi> to see what you owe.`, factionName),
 			u.GetLineWidth()))
 	} else {
 		// The condition landed on the character either way; only the prose is lost.

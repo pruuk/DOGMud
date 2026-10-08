@@ -273,6 +273,19 @@ func AnyDarknessSource(conditionIds []int) bool {
 	return false
 }
 
+// AnyLightSource reports whether any of the condition ids names a light
+// source: an item whose worn conditions shed light says so as it goes on
+// (#260). A darkness is never a light (IsLightSource). Unknown ids are
+// skipped.
+func AnyLightSource(conditionIds []int) bool {
+	for _, id := range conditionIds {
+		if spec := GetConditionSpec(id); spec != nil && spec.IsLightSource() {
+			return true
+		}
+	}
+	return false
+}
+
 type ConditionMessage struct {
 	User string
 	Room string

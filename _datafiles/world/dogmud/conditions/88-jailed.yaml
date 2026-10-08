@@ -1,7 +1,7 @@
 conditionid: 88
 name: Jailed
 description: You are locked in a holding cell. You cannot leave until your
-  sentence is served or your fine is paid.
+  sentence is served or your fine is paid. Type fine to see what you owe.
 triggerrate: 1 round
 triggercount: 1
 flags:

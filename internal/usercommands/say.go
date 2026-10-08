@@ -20,6 +20,13 @@ func Say(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return true, nil
 	}
 
+	// Nothing to say: refuse rather than speak a blank line to the room
+	// (#260).
+	if strings.TrimSpace(rest) == `` {
+		user.SendText(messaging.CategorySystem, `Say what?`)
+		return true, nil
+	}
+
 	if user.Character.HasConditionFlag(conditions.Drunk) {
 		rest = drunkify(rest)
 	}

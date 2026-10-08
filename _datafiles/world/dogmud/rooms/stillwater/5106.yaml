@@ -4,9 +4,10 @@ title: Holding Cell
 description: >
   A single stone cell behind the constabulary's iron bars, barely wide
   enough to pace. The walls are mortared lake-stone gone green at the
-  joints, and the only light comes from a narrow
-  <ansi fg="itemname">window</ansi> slit set high near the ceiling, too
-  small for anything but a wrist. A low wooden
+  joints. A <ansi fg="itemname">lamp</ansi> hung outside the bars keeps
+  the cell in a dim glow, and a narrow <ansi fg="itemname">window</ansi>
+  slit set high near the ceiling is too small for anything but a wrist.
+  A low wooden
   <ansi fg="itemname">bench</ansi> runs along one wall, a fitted slop
   <ansi fg="itemname">bucket</ansi> in the corner, and clean straw
   scattered on the packed-earth floor. Someone has left their mark in
@@ -16,6 +17,7 @@ description: >
   the office above.
 biome: dungeon
 skylight: 0.1
+lamp: 35
 allow_recall: false
 coord:
   x: -17
@@ -25,6 +27,8 @@ exits:
   up:
     roomid: 4110
 nouns:
+  lamp: A small oil lamp on a hook outside the bars, kept low. It gives
+    enough light to see the walls by, and the guards refill it each morning.
   window: A slit of a window high in the stone, no wider than a hand and
     crossed by a single iron bar. It lets in a grey wedge of outside light and
     the smell of the lake, and nothing else.

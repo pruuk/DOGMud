@@ -34,7 +34,7 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 	if user.Character.IsGrappling() {
-		user.SendText(messaging.CategorySystem, "You're locked in a grapple — you'll need to break free first.")
+		user.SendText(messaging.CategorySystem, "You're locked in a grapple. You'll need to break free first.")
 		return true, nil
 	}
 	if !user.Character.IsProne() && !user.Character.IsSupine() {

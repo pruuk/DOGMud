@@ -515,7 +515,7 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 	case result.GrappleBroke:
 		// Chunk 4e T4: grapple breaks concentration same as Prone (spec §4.2).
 		recordConcentrationFailure(combat.User, combat.Mob, user.Character, castingTargetChar(csBeforeProcess))
-		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your concentration shatters — you cannot hold the fold while grappled!</ansi>`)
+		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your concentration shatters. You cannot hold the fold while grappled!</ansi>`)
 		room := rooms.LoadRoom(user.Character.RoomId)
 		if room != nil {
 			sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
@@ -524,14 +524,14 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 
 	case result.TargetGone:
 		recordConcentrationFailure(combat.User, combat.Mob, user.Character, castingTargetChar(csBeforeProcess))
-		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your spell fizzles — the target is gone.</ansi>`)
+		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your spell fizzles. The target is gone.</ansi>`)
 
 	case result.SpellDataMissing:
-		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">The spell dissipates — its data cannot be found.</ansi>`)
+		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">The spell dissipates. Its data cannot be found.</ansi>`)
 
 	case result.InsufficientConviction:
 		recordConcentrationFailure(combat.User, combat.Mob, user.Character, castingTargetChar(csBeforeProcess))
-		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your conviction wavers — the fold collapses.</ansi>`)
+		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your conviction wavers, and the fold collapses.</ansi>`)
 
 	case result.CastComplete:
 		cs := result.CastingData

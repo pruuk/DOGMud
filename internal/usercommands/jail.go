@@ -39,7 +39,7 @@ func Fine(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if fine <= 0 {
-		user.SendText(messaging.CategorySystem, "Your sentence is all but served — you'll be released shortly.")
+		user.SendText(messaging.CategorySystem, "Your sentence is all but served. You'll be released shortly.")
 		return true, nil
 	}
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(

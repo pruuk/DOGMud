@@ -18,8 +18,8 @@ transitions:
       - 'A carried light comes up; you can make out shapes.'
   lighter_faces:
     any:
-      - 'A carried light spreads around you; faces are clear again.'
-      - 'By the carried light, you can make out faces again.'
+      - 'A carried light spreads around you; faces are clear now.'
+      - 'By the carried light, you can make out faces.'
   dazzled:
     any:
       - 'With the carried light added, the glare stabs at your eyes.'
