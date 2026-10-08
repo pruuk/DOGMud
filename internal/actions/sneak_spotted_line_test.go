@@ -66,3 +66,36 @@ func TestSpottedLine_HiddenSpotterIsNotNamed(t *testing.T) {
 	require.Equal(t, "You try to blend into the shadows but something notices you.",
 		hearTag.ReplaceAllString(line, ""))
 }
+
+// A mob spotter keeps the mob tag: the sneaker at clear sight reads the name
+// in mobname, not username. At shapes HideNames takes the whole identity tag
+// with the name, so no mobname tag is left wrapping "a figure".
+func TestSpottedLine_MobSpotterKeepsTheMobTag(t *testing.T) {
+	cases := []struct {
+		name  string
+		lamp  int
+		infra bool
+		want  string
+	}{
+		{"clear sight names it in the mob tag", 80, false,
+			`You try to blend into the shadows but <ansi fg="mobname">Guard</ansi> notices you.`},
+		{"shapes reads a figure with no mob tag left", 0, true,
+			`You try to blend into the shadows but <ansi fg="combat-anon">a figure</ansi> notices you.`},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			w := newDarkDetectWorld(t, 0.75)
+			w.dest.Lamp = rooms.LampPtr(c.lamp)
+			_, spotter := w.place(t, "mob", 9851, "Guard")
+			_, mc := w.place(t, "player", 9810, "Sneak")
+			if c.infra {
+				require.True(t, mc.Conditions.AddCondition(hearInfraCond, true))
+				require.Equal(t, messaging.SightShapes, messaging.ParticipantSight(mc, w.dest))
+			} else {
+				require.Equal(t, messaging.SightFull, messaging.ParticipantSight(mc, w.dest))
+			}
+
+			require.Equal(t, c.want, SpottedLine(mc, w.dest, spotter))
+		})
+	}
+}
