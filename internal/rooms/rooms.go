@@ -201,11 +201,20 @@ func (r *Room) UpdateCorpses(roundNow uint64) {
 				}
 				r.Gold += corpse.Loot.Gold
 			}
-			if corpse.MobId > 0 {
-				r.SendText(messaging.CategoryRoomDescription, fmt.Sprintf(`A <ansi fg="mob-corpse">%s</ansi> crumbles to dust.`, corpse.DisplayName()))
-			}
-			if corpse.UserId > 0 {
-				r.SendText(messaging.CategoryRoomDescription, fmt.Sprintf(`A <ansi fg="user-corpse">%s corpse</ansi> crumbles to dust.`, corpse.Character.Name))
+			// Seen, not heard, and named per reader (#276), the shape of
+			// every corpse line since #428: ObservedName with the dead one's
+			// name hidden, so a shapes reader reads "The corpse of a figure
+			// crumbles to dust." and a reader who sees nothing reads nothing.
+			// A corpse tag is not an identity tag, so Anonymize alone would
+			// leave the name.
+			if corpse.MobId > 0 || corpse.UserId > 0 {
+				corpseColor := `mob-corpse`
+				if corpse.UserId > 0 {
+					corpseColor = `user-corpse`
+				}
+				r.SendTextVisualHidingNames(messaging.CategoryRoomDescription,
+					fmt.Sprintf(`The <ansi fg="%s">%s</ansi> crumbles to dust.`, corpseColor, corpse.ObservedName()),
+					[]string{corpse.Character.Name})
 			}
 		}
 		r.Corpses[idx] = corpse
