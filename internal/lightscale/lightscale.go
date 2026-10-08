@@ -18,8 +18,8 @@
 //
 // The same step governs three things, which is why it is ONE config knob:
 // combining sources, applying a sky fraction, and the shape of the daylight
-// curve. See docs/superpowers/specs/2026-09-23-graded-room-lighting-amendment-celestial.md
-// and docs/superpowers/specs/2026-10-07-lighting-plan-6-balance-design.md.
+// curve. See docs/superpowers/specs/completed/2026-09-23-graded-room-lighting-amendment-celestial.md
+// and docs/superpowers/specs/completed/2026-10-07-lighting-plan-6-balance-design.md.
 //
 // This package is deliberately pure: no config reads, no globals, no locks. Its
 // callers own the config read, the same discipline messaging.SightThroughWindow
