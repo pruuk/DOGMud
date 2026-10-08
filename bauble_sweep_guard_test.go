@@ -40,6 +40,7 @@ var transientItemHolders = map[string]string{
 	`internal/actions.EquipItemResult`:           `an action's result, alive for one call`,
 	`internal/actions.GetItemResult`:             `an action's result, alive for one call`,
 	`internal/actions.GiveItemResult`:            `an action's result, alive for one call`,
+	`internal/actions.LookResolution`:            `a look's result, alive for one call (TouchItem, #218)`,
 	`internal/actions.RemoveAllResult`:           `an action's result, alive for one call`,
 	`internal/actions.RemoveEquipResult`:         `an action's result, alive for one call`,
 	`internal/actions.StealOptions`:              `a steal's arguments, alive for one call`,

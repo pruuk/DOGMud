@@ -48,6 +48,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// clear sight and only if perceived, the exit's through-sight and lock,
 	// the pet at clear sight. This function only words the answer.
 	res := actions.ResolveLook(&actions.UserActor{User: user, Room: room}, lookAt)
+	if res.Kind == actions.LookOwnGearByTouch {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			`You run your hands over your <ansi fg="item">%s</ansi>.`, res.TouchItem.DisplayNameFor(user.UserId)))
+		return true, nil
+	}
 	if line, refused := noSightRefusal(res.Kind); refused {
 		user.SendText(messaging.CategorySystem, line)
 		return true, nil
