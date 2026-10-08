@@ -3,9 +3,12 @@ package hooks
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -111,4 +114,42 @@ func TestMobShiftsFocus_IsSightOnlyAndHidesBothNames(t *testing.T) {
 	require.Zero(t, countContaining(shapes, "Skeleton"), "%v", shapes)
 	require.Zero(t, countContaining(shapes, target.Character.Name), "%v", shapes)
 	require.Empty(t, blind, "a reader who sees nothing gets nothing for a focus shift")
+}
+
+// A hidden mob caster is unseen in its own spell-channel lines by every
+// reader, even one who reads faces in a lit room: the line names
+// "Something", never the mob, as sendSpoken does for a speaker still hidden
+// and as SendSeen's silence does for a hidden emote (#274, owner R3).
+func TestMobSpellChannel_HiddenCasterIsNeverNamed(t *testing.T) {
+	cases := []struct {
+		name string
+		send func(*mobs.Mob, *rooms.Room)
+		want string
+	}{
+		{"concentration breaks", sendMobConcentrationBroke, "Something's concentration breaks."},
+		{"spell fizzles", func(m *mobs.Mob, r *rooms.Room) { sendMobSpellFailed(m, r, "fizzles") }, "Something's spell fizzles."},
+		{"spell falters", func(m *mobs.Mob, r *rooms.Room) { sendMobSpellFailed(m, r, "falters") }, "Something's spell falters."},
+		{"weave", sendMobWeaving, "Something weaves magic with focused intent."},
+		{"focus shift", func(m *mobs.Mob, r *rooms.Room) { sendMobShiftsFocus(m, r, users.GetByUserId(1)) }, "Something shifts focus to"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			room := seedFallbackRoom(t, 60, heatEyesConditionId)
+			require.Equal(t, messaging.SightFull, messaging.ParticipantSight(users.GetByUserId(2).Character, room))
+			m := spellChannelMob(t)
+			m.Character.Validate()
+			reason := state.TransitionReason{Trigger: "spell_channel_hidden_test"}
+			require.NoError(t, m.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+			m.Character.Awareness.ResolveConcealment(true, reason)
+			require.True(t, m.Character.IsHidden())
+			events.DrainQueuedMessagesForTest(1)
+			events.DrainQueuedMessagesForTest(2)
+
+			tc.send(m, room)
+
+			got := drainPlain(2)
+			require.Zero(t, countContaining(got, "Skeleton"), "a faces reader must not see a hidden caster's name: %v", got)
+			require.Equal(t, 1, countContaining(got, tc.want), "%v", got)
+		})
+	}
 }

@@ -467,13 +467,26 @@ const (
 	spellSputtersOutSound    = `A half-formed spell sputters out.`
 )
 
+// mobCasterName is a mob caster's name in its own spell-channel line. A
+// hidden caster is unseen by every reader, whatever they can see: its name is
+// rewritten at messaging.SightNone ("Something"), as sendSpoken does for a
+// speaker still hidden and as a hidden actor's emote is silent (#274, owner
+// R3). mobDisplayName alone ignores hiding and named it to a faces reader.
+func mobCasterName(mob *mobs.Mob, room *rooms.Room) string {
+	if mob.Character.IsHidden() {
+		name := mob.Character.Name
+		return messaging.HideNames(`<ansi fg="mobname">`+name+`</ansi>`, []string{name}, messaging.SightNone)
+	}
+	return mobDisplayName(mob, room, 0)
+}
+
 // sendMobConcentrationBroke narrates a mob caster's broken concentration:
 // seen by sight (a figure at shapes), heard by a reader who sees nothing.
 // It used plain Room.SendText, the unfiltered channel, which named the
 // caster to everyone (#242).
 func sendMobConcentrationBroke(mob *mobs.Mob, room *rooms.Room) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-		`%s's concentration breaks.`, mobDisplayName(mob, room, 0)),
+		`%s's concentration breaks.`, mobCasterName(mob, room)),
 		spellChantBreaksOffSound)
 }
 
@@ -481,7 +494,7 @@ func sendMobConcentrationBroke(mob *mobs.Mob, room *rooms.Room) {
 // falters (not enough conviction); verb is "fizzles" or "falters".
 func sendMobSpellFailed(mob *mobs.Mob, room *rooms.Room, verb string) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-		`%s's spell %s.`, mobDisplayName(mob, room, 0), verb),
+		`%s's spell %s.`, mobCasterName(mob, room), verb),
 		spellSputtersOutSound)
 }
 
@@ -489,7 +502,7 @@ func sendMobSpellFailed(mob *mobs.Mob, room *rooms.Room, verb string) {
 // weave makes no sound (owner ruling R4).
 func sendMobWeaving(mob *mobs.Mob, room *rooms.Room) {
 	sendVisualRoomText(room, messaging.CategorySpellFold, fmt.Sprintf(
-		`%s weaves magic with focused intent.`, mobDisplayName(mob, room, 0)))
+		`%s weaves magic with focused intent.`, mobCasterName(mob, room)))
 }
 
 // sendPlayerConcentrationBroke narrates a player caster's broken
@@ -508,7 +521,7 @@ func sendPlayerConcentrationBroke(caster *users.UserRecord, room *rooms.Room) {
 // sight, as target.go's player shift-focus line does.
 func sendMobShiftsFocus(mob *mobs.Mob, room *rooms.Room, newTarget *users.UserRecord) {
 	room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
-		fmt.Sprintf("%s shifts focus to <ansi fg=\"username\">%s</ansi>!", mobDisplayName(mob, room, 0), newTarget.Character.Name),
+		fmt.Sprintf("%s shifts focus to <ansi fg=\"username\">%s</ansi>!", mobCasterName(mob, room), newTarget.Character.Name),
 		[]string{mob.Character.Name, newTarget.Character.Name},
 	)
 }
