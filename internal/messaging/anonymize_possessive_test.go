@@ -3,8 +3,8 @@ package messaging
 import "testing"
 
 // #246: the combat templates write the possessive INSIDE the name tag, so a
-// rendered line reads <ansi fg="username">Calabe's</ansi> (about 275 lines
-// across _datafiles/world/*/combat-messages). Anonymize replaced the whole tag body,
+// rendered line reads <ansi fg="username">Calabe's</ansi> (many
+// lines across _datafiles/world/*/combat-messages). Anonymize replaced the whole tag body,
 // so a shapes reader read "A figure Iron Longsword delivers..." with the 's
 // gone. The possessive belongs to the sentence, not the name: keep it.
 func TestAnonymizeKeepsAPossessiveInsideTheTag(t *testing.T) {

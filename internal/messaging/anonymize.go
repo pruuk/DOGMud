@@ -20,7 +20,7 @@ import "regexp"
 // anchor on and an infrared observer reads "a figure (dead)".
 //
 // The `poss` group (#246) captures a possessive written INSIDE the tag, the
-// shape about 275 combat template lines use (the YAML puts the doubled
+// shape the combat template lines use (the YAML puts the doubled
 // quote of {actor}'s before the closing tag). The body
 // is lazy so the optional group gets the 's rather than the body swallowing
 // it; Anonymize re-emits it after the figure word.
