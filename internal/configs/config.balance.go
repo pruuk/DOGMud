@@ -295,6 +295,7 @@ type Balance struct {
 	SneakModEmitsLightDarkRoom  ConfigFloat `yaml:"SneakModEmitsLightDarkRoom"`  // Sneak score multiplier: sneaker emits light, room dark (default 0.5)
 	SneakModEmitsLightLitRoom   ConfigFloat `yaml:"SneakModEmitsLightLitRoom"`   // Sneak score multiplier: sneaker emits light, room lit (default 0.85)
 	SneakModNoLightLitRoom      ConfigFloat `yaml:"SneakModNoLightLitRoom"`      // Sneak score multiplier: sneaker dark, room lit (default 0.9)
+	SneakHearingMult            ConfigFloat `yaml:"SneakHearingMult"`            // Detection multiplier for an observer who sees nothing and can only hear a sneaker; superhearing skips it (default 0.75)
 
 	// ── COMBAT: SPELL COSTS ──────────────────────────────────────────────────
 	SpellConvictionCostMultiplier ConfigFloat `yaml:"SpellConvictionCostMultiplier"` // Global multiplier for spell conviction costs (default 1.0)

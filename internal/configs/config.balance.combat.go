@@ -283,6 +283,12 @@ func (b *Balance) validateCombat() {
 	if b.SneakModNoLightLitRoom <= 0 {
 		b.SneakModNoLightLitRoom = 0.9
 	}
+	// An observer who sees nothing hears a sneaker at this fraction of its
+	// detection score (sight gates close-out, #333, owner 2026-10-08). Above
+	// 1 the ear would beat the eye, so it is rejected like an absent key.
+	if !(b.SneakHearingMult > 0) || b.SneakHearingMult > 1 {
+		b.SneakHearingMult = 0.75
+	}
 
 	// ── REACH UTILITY CURVE (chunk 4c) ───────────────────────────────────────
 	if b.ReachStandingGrappleRadius <= 0 {

@@ -901,6 +901,13 @@ Balance:
   SneakModEmitsLightDarkRoom: 0.5   # Beacon penalty: emitting light in a dark room
   SneakModEmitsLightLitRoom: 0.85   # Blend-in modifier: emitting light in a lit room
   SneakModNoLightLitRoom: 0.9       # Alert-observer modifier: dark sneaker in lit room
+  # SneakHearingMult: an observer who sees nothing (pitch dark, blinded) can
+  #   still HEAR a sneak or a sneaking arrival, at this fraction of its
+  #   detection score (Perception + Search). The superhearing condition flag
+  #   skips it. Opposed rolls make a low value a severe penalty, so the owner
+  #   started it at 0.75 (sight gates close-out, #333, 2026-10-08). Range
+  #   (0, 1]; anything else falls back to 0.75.
+  SneakHearingMult: 0.75
 
   # ── SKULLDUGGERY: COOLDOWNS AND THE HIDDEN BONUS ──────────────────────────
   # ⚠️ These four were ABSENT from this file until 2026-08-30, and absence did
