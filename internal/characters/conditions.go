@@ -101,6 +101,28 @@ func (c *Character) CancelCombatConditions() {
 	c.CancelConditionsWithFlag(conditions.CancelIfCombat)
 }
 
+// RevealForCombat is what being attacked does to a defender: its
+// combat-cancel conditions strip, and a hidden defender is forced visible.
+// handleCombatRound calls it before a melee swing's lines; the special-move
+// seams (combat.ExecuteSkillMove, combat.ExecuteGrappleMove) and the taunt
+// call it before theirs, so no attack names a mob the room cannot see.
+//
+// The Awareness FSM is the canonical source of truth for IsHidden. Its
+// cascade (Awareness_Cascades.go) fires only when the defender's OWN
+// CombatPhase goes Idle to Engaging, which does not happen when a defender
+// is targeted but never SetAggro's the attacker (e.g. a hidden mob grappled
+// while it has no aggro of its own). So the FSM is forced out of Hidden here
+// if the condition strip left it stale; the cascade re-strips the condition
+// (a no-op, since it is already gone).
+func (c *Character) RevealForCombat() {
+	c.CancelCombatConditions()
+	if c.Awareness != nil && c.IsHidden() {
+		c.Awareness.ForceVisible(state.TransitionReason{
+			Trigger: awareness.TriggerCombatEntered,
+		})
+	}
+}
+
 func (c *Character) HasCondition(conditionId int) bool {
 	return c.Conditions.HasCondition(conditionId)
 }

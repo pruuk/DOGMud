@@ -186,6 +186,10 @@ var knockdownContestRunner defenceContestRunner = RunContest
 func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) SkillMoveResult {
 	result := SkillMoveResult{IsCounter: p.IsCounter}
 
+	// A special move reveals its target as a combat round does, before the
+	// caller builds any line that names it (#382).
+	p.Defender.RevealForCombat()
+
 	// Get target's max HP for damage descriptions
 	result.TargetMaxHP = p.Defender.HealthMax.Value
 

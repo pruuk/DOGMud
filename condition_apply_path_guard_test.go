@@ -162,7 +162,7 @@ var conditionApplyPathAllowlist = map[string]string{
 
 	// ── former combat conditions: grapple exposure and prone recovery are now
 	// quiet one-round records (Task 5) ──────────────────────────────────────
-	"internal/combat/grapple_move.go|59": "former combat condition (one-round penalty): quiet record; must apply synchronously inside the round tick",
+	"internal/combat/grapple_move.go|63": "former combat condition (one-round penalty): quiet record; must apply synchronously inside the round tick",
 
 	// ── former combat condition: Minor Shield is now one record (Task 6;
 	// re-keyed messaging M4b-2 Task 7 when spellAttackShape's deletion

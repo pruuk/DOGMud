@@ -1433,6 +1433,15 @@ stays synchronized with the Awareness machine:
 This maintains backward compatibility with systems that check for condition #9
 while keeping the Awareness machine as the canonical state source.
 
+### Being attacked reveals: RevealForCombat()
+
+`RevealForCombat()` (`conditions.go`) is what being attacked does to a
+defender: `CancelCombatConditions()`, then a hidden character is forced
+visible (`ForceVisible`, trigger `TriggerCombatEntered`). It is the one reveal
+for every attack: `handleCombatRound` calls it on the defender, and so do the
+special-move seams `combat.ExecuteSkillMove` and `combat.ExecuteGrappleMove`
+and `actions.ExecuteTaunt`, before any line names the target (#382).
+
 ### Hidden movement stamina scaling
 
 When a character is `Hidden`, movement stamina cost is multiplied by
