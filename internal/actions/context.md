@@ -603,7 +603,9 @@ into, never its own room line:
   see. `chatter` is true only for a player's free-form line, which routes
   through `Room.SendVisualCommunicationHidingNames` to keep the deafen
   filter; every other line (empty, alias, and every mob emote) goes through
-  `Room.SendTextVisualHidingNames` unfiltered (owner ruling 6).
+  `Room.SendTextVisualHidingNames` unfiltered (owner ruling 6). A hidden
+  actor's emote reaches no one (#274, owner R3, 2026-10-08): silence, not an
+  anonymous line. The player `emote` command tells its own hider so.
 - `sendSpoken(actor, room, cat, line, stillHidden)` (unexported) is what
   `Say` and `Shout` share: every listener hears the words, the speaker's
   name hidden per listener. A player's line goes through

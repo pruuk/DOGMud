@@ -29,9 +29,16 @@ func SendHeard(actor Actor, cat messaging.Category, text string) {
 // a listener who cannot see. chatter marks a player's free text, which keeps
 // the deafen filter; a mob's line never meets it, whatever chatter says
 // (owner ruling 6).
+//
+// A hidden actor's emote reaches no one (#274, owner R3, 2026-10-08): an
+// emote would give its hider away, so it is silence rather than an anonymous
+// line. The player emote command tells its own hider why.
 func SendSeen(actor Actor, cat messaging.Category, text string, chatter bool) {
 	room := actor.GetRoom()
 	if room == nil {
+		return
+	}
+	if c := actor.GetCharacter(); c != nil && c.IsHidden() {
 		return
 	}
 	names := []string{actor.GetName()}
