@@ -17,6 +17,13 @@ import (
 
 func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Below the faces band you can't make out the goods (lighting plan 5b,
+	// #272): appraising is dealing, as list, buy and sell are.
+	if actions.ShopSightRefusal(user.Character, room) {
+		user.SendText(messaging.CategorySystem, actions.ShopSightRefusalText)
+		return true, nil
+	}
+
 	merchantMobs := room.GetMobs(rooms.FindMerchant)
 	if len(merchantMobs) == 0 {
 		user.SendText(messaging.CategorySystem, `You need to be at a merchant to appraise items.`)
