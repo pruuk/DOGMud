@@ -951,7 +951,13 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 		if blocker.IsPlayer() {
 			targetTag = "username"
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="%s">%s</ansi> blocks you from fleeing!</ansi>`, targetTag, blocker.Name))
+		// The fleer reads the blocker at their own sight, as the room line
+		// below does for everyone else. The literal stays INLINE for the root
+		// viewpoint guard.
+		user.SendText(messaging.CategorySystem, messaging.HideNames(
+			fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="%s">%s</ansi> blocks you from fleeing!</ansi>`, targetTag, blocker.Name),
+			[]string{blocker.Name},
+			messaging.ParticipantSight(user.Character, uRoom)))
 		excludes := []int{user.UserId}
 		if blocker.IsPlayer() {
 			excludes = append(excludes, blocker.UserId)
