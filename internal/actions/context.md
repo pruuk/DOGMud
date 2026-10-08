@@ -1843,7 +1843,7 @@ the rest are ordinary verbs.
 | Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `search_bauble.go` (roll and delayed delivery), `search_feature.go` (`search <feature>`), `scan.go`, `track.go`, `steal.go`, `steal_pocket.go` (a player's pickpocket pause and bauble) |
 | Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
-| Movement & state | `go.go`, `sleep.go`, `consider.go` |
+| Movement & state | `go.go`, `sleep.go`, `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
 | Social | `say.go`, `emote.go`, `emote_aliases.go` |
 | Divergences | `divergences.go` — deliberate departures from upstream behaviour |
 

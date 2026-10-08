@@ -3,6 +3,7 @@ package gmcp
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -121,4 +122,20 @@ func TestRoomInfoContentsPlayers_DarkViewerGetsNone(t *testing.T) {
 	got, ok := data.([]GMCPRoomModule_Payload_Contents_Character)
 	require.True(t, ok, "payload is %T", data)
 	require.Empty(t, got)
+}
+
+// A band change maps the room the player now makes out (#252, R5): lighting a
+// torch in a room entered in the dark puts it on the map.
+func TestRoomSightBandChanged_MapsTheRoomOnceSeen(t *testing.T) {
+	viewer := roomSightFixture(t, 30)
+	require.False(t, viewer.Character.HasVisitedRoom("SightZone", 9720))
+	(&GMCPRoomModule{}).sightBandChangedHandler(events.SightBandChanged{UserId: viewer.UserId})
+	require.True(t, viewer.Character.HasVisitedRoom("SightZone", 9720))
+}
+
+// Still dark: the band changed but nothing is seen, so nothing is mapped.
+func TestRoomSightBandChanged_DarkMapsNothing(t *testing.T) {
+	viewer := roomSightFixture(t, 0)
+	(&GMCPRoomModule{}).sightBandChangedHandler(events.SightBandChanged{UserId: viewer.UserId})
+	require.False(t, viewer.Character.HasVisitedRoom("SightZone", 9720))
 }

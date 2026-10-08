@@ -280,13 +280,10 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				RoomId: matchRoom,
 			}, bridge, bridge)
 
-			// Record this room as visited for fog-of-war web map. Use the
-			// TEMPLATE id (matchRoom) for ephemeral rooms -- otherwise the raw,
-			// unauthorable instance id (e.g. 1000000000) is permanently baked
-			// into the saved VisitedRooms set and leaks onto the Zone.Map
-			// snapshot. OriginalRoomId returns the room's own id for
-			// non-ephemeral rooms, so this is a no-op there.
-			user.Character.MarkRoomVisited(destRoom.Zone, matchRoom)
+			// Record this room on the fog-of-war web map, by its template id,
+			// only if the player can make anything out there: a room walked
+			// through in the dark stays off the map (#252, ruling R5).
+			actions.MarkRoomMappedIfSeen(user.Character, destRoom)
 
 			// U7 Task 10: a completed move rarely trains search. Inside the
 			// MoveToRoom success branch on purpose: a refused or locked move

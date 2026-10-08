@@ -446,7 +446,11 @@ payloads carry ids that index into it.
   change is a client change; check `_datafiles/html/public/static/js/gmcp.js`
   before altering a field name.
 - **`Zone.Map` is fog-of-war filtered** by `Character.VisitedRooms` before it is
-  sent — see `internal/mapper`'s `Snapshot`.
+  sent — see `internal/mapper`'s `Snapshot`. A room joins `VisitedRooms` only
+  when the player makes something out there (`actions.MarkRoomMappedIfSeen`,
+  #252 R5). `gmcp.Room.go`'s `sightBandChangedHandler` answers
+  `events.SightBandChanged` too: it maps the room if now seen, re-sends the
+  map, and re-sends `Room.Info`, so lighting a torch in place refreshes both.
 - **Emit only on change where you can.** These push on room change and round
   boundaries; adding an unconditional per-round emit to a large payload is a
   bandwidth regression that will not show up in a local test.

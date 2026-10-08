@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
@@ -37,7 +38,39 @@ func init() {
 	events.RegisterListener(events.RoomChange{}, g.roomChangeHandler)
 	events.RegisterListener(events.PlayerDespawn{}, g.despawnHandler)
 	events.RegisterListener(GMCPRoomUpdate{}, g.buildAndSendGMCPPayload)
+	events.RegisterListener(events.SightBandChanged{}, g.sightBandChangedHandler)
 
+}
+
+// sightBandChangedHandler re-sends Room.Info when a player's light band
+// changes, since the payload follows sight (#252): lighting a torch in a dark
+// room fills in the room, and losing the light empties it. A room the player
+// now makes out joins their map, and the map is re-sent, so a room entered in
+// the dark is mapped the moment it is seen.
+func (g *GMCPRoomModule) sightBandChangedHandler(e events.Event) events.ListenerReturn {
+
+	evt, typeOk := e.(events.SightBandChanged)
+	if !typeOk || evt.UserId == 0 {
+		return events.Continue
+	}
+
+	user := users.GetByUserId(evt.UserId)
+	if user == nil {
+		return events.Continue
+	}
+
+	if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
+		if actions.MarkRoomMappedIfSeen(user.Character, room) {
+			events.AddToQueue(GMCPZoneUpdate{UserId: evt.UserId})
+		}
+	}
+
+	events.AddToQueue(GMCPRoomUpdate{
+		UserId:     evt.UserId,
+		Identifier: `Room.Info`,
+	})
+
+	return events.Continue
 }
 
 type GMCPRoomModule struct {
