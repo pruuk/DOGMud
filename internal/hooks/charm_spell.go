@@ -49,9 +49,15 @@ func applyMobEffect_charm(
 	// uses, so defy renders its own triad to the caster, the target and the
 	// room. The old code sent a bespoke pair of lines here and the seam sent
 	// another, which is where the double narration came from.
+	//
+	// The defender is named as every other triad names it
+	// (spellDefenceIdentity): mName is the caster's own rendering, which
+	// names a hidden mob the caster sees, and the triad's room line reused it
+	// (#382).
 	if out.Defended {
 		sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), out,
-			spellDefenceIdentity(ch, user, room), mName, spellData.Name, user, nil)
+			spellDefenceIdentity(ch, user, room), spellDefenceIdentity(&targetMob.Character, nil, room),
+			spellData.Name, user, nil)
 		return 0
 	}
 
@@ -139,9 +145,10 @@ func applyMobEffect_charm(
 	user.SendText(messaging.CategorySpellMental, fmt.Sprintf(
 		`<ansi fg="cyan">%s's eyes glaze as your will takes hold. It is yours.</ansi>`,
 		mName))
+	// The room never reads a hidden mob's name, though the caster may (#382).
 	sendVisualRoomText(room, messaging.CategorySpellMental, fmt.Sprintf(
 		`<ansi fg="cyan"><ansi fg="username">%s</ansi> bends %s to their will!</ansi>`,
-		user.Character.Name, mName), user.UserId)
+		user.Character.Name, roomName(mobHiddenFrom(targetMob, 0), mName)), user.UserId)
 
 	return 0
 }

@@ -200,7 +200,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// imports shifted spell_help_effects.go; re-keyed again 3b playtest fix,
 	// when the party rule moved to actions.HelpCharmAlly and the parties
 	// import left spell_help_effects.go) ────
-	"internal/hooks/spell_help_effects.go|190": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
+	"internal/hooks/spell_help_effects.go|195": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
 
 	// ── former combat condition: Regenerating is now one record (Task 7;
 	// re-keyed slice 1b, same shift as above; re-keyed again Task 10 and
@@ -224,7 +224,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// self-cast heal now reaching applySpellHeal's row; re-keyed again
 	// Task 7, same import shift as above; re-keyed again 3b playtest fix,
 	// same import shift as above) ───────
-	"internal/hooks/spell_help_effects.go|141": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/hooks/spell_help_effects.go|144": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 	"internal/mobcommands/consume.go|46":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 	"internal/mobcommands/consume.go|58":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 
@@ -247,7 +247,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// case, and again Task 3 when it gained its heal case, and again Task 4
 	// when it gained its shield case, and again Task 5 when its doc comment
 	// grew and the per-pairing fallthrough became the default arm) ──────
-	"internal/hooks/spell_effects.go|322": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
+	"internal/hooks/spell_effects.go|348": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
 
 	// ── light spells (lighting plan 5a): an EVENT door, not the silent
 	// character door. applySpellCondition's target is a spellConditionTarget,

@@ -118,6 +118,30 @@ func spellEffectName(a actions.Actor, room *rooms.Room, viewerId int) string {
 func (c spellEffectCtx) casterName() string { return spellEffectName(c.caster, c.room, c.viewerId()) }
 func (c spellEffectCtx) targetName() string { return spellEffectName(c.target, c.room, c.viewerId()) }
 
+// hiddenFromRoom reports which parties are hidden mobs, unseen by every
+// observer of a room line (mobDisplayName's room-wide rule, #382). Read it
+// when the line's names are read: a harmful spell's commit can reveal the
+// target between the two, and the line then still prints the name it read.
+func (c spellEffectCtx) hiddenFromRoom() (caster, target bool) {
+	return actorHiddenFromRoom(c.caster), actorHiddenFromRoom(c.target)
+}
+
+func actorHiddenFromRoom(a actions.Actor) bool {
+	m := actorMob(a)
+	return m != nil && mobHiddenFrom(m, 0)
+}
+
+// roomName is a party's name in a spell's room line: printed, the name the
+// caster's own line prints, unless the party was hidden (hiddenFromRoom). A
+// player caster who sees the hidden reads a hidden mob's name in its own
+// line, and the room line reused that string, naming the mob to the room.
+func roomName(hidden bool, printed string) string {
+	if hidden {
+		return messaging.UnseenFigure(messaging.SightNone)
+	}
+	return printed
+}
+
 func (c spellEffectCtx) critTag() string {
 	if c.out.AttackerCrit {
 		return ` <ansi fg="yellow">[CRIT!]</ansi>`
@@ -250,6 +274,7 @@ func applySpellDamage(c spellEffectCtx) int {
 		return dmg // the defence triad above already told everyone
 	}
 	dmgDesc := combat.GetDamageDescription(dmg, tc.HealthMax.Value)
+	casterHidden, targetHidden := c.hiddenFromRoom()
 	messaging.SendTrio(messaging.Trio{
 		Actor: messaging.Say(c.category(), fmt.Sprintf(
 			`Your %s strikes %s! (<ansi fg="damage">%s</ansi>)%s`,
@@ -259,7 +284,7 @@ func applySpellDamage(c spellEffectCtx) int {
 			c.casterName(), c.spell.Name, dmgDesc, c.critTag())),
 		Observer: messaging.Say(c.category(), fmt.Sprintf(
 			`%s's <ansi fg="cyan">%s</ansi> strikes %s!`,
-			c.casterName(), c.spell.Name, c.targetName())),
+			roomName(casterHidden, c.casterName()), c.spell.Name, roomName(targetHidden, c.targetName()))),
 	}, c.audience())
 	return dmg
 }
@@ -317,6 +342,7 @@ func applySpellDot(c spellEffectCtx) int {
 	// can add the "poisoned" adjective to the target's own rendered name, and
 	// SendTrio's redaction must see the exact string the line prints.
 	casterName, targetName := c.casterName(), c.targetName()
+	casterHidden, targetHidden := c.hiddenFromRoom()
 	// The character door, on purpose: an immune target refuses the record,
 	// and nothing that did not happen may be narrated.
 	afflicted := tc.AddConditionMagnitude(conditions.ConditionIdPoisoned, dotDuration, -float64(dotAmount), "spell") == nil
@@ -330,7 +356,8 @@ func applySpellDot(c spellEffectCtx) int {
 		Actee: messaging.Say(c.category(), fmt.Sprintf(
 			`%s's <ansi fg="cyan">%s</ansi> afflicts you!%s`, casterName, c.spell.Name, c.critTag())),
 		Observer: messaging.Say(c.category(), fmt.Sprintf(
-			`%s's <ansi fg="cyan">%s</ansi> afflicts %s!`, casterName, c.spell.Name, targetName)),
+			`%s's <ansi fg="cyan">%s</ansi> afflicts %s!`,
+			roomName(casterHidden, casterName), c.spell.Name, roomName(targetHidden, targetName))),
 	}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 	return 0
 }
@@ -348,6 +375,7 @@ func applySpellKnockdown(c spellEffectCtx) int {
 	// adds the "dead" adjective to the target's own rendered name, and
 	// SendTrio's redaction must see the exact string the line prints.
 	casterName, targetName := c.casterName(), c.targetName()
+	casterHidden, targetHidden := c.hiddenFromRoom()
 	if c.out.DefensiveCrit {
 		dmg = 0
 	} else {
@@ -389,7 +417,7 @@ func applySpellKnockdown(c spellEffectCtx) int {
 				casterName, c.spell.Name, dmgDesc, c.critTag())),
 			Observer: messaging.Say(c.category(), fmt.Sprintf(
 				`%s's <ansi fg="cyan">%s</ansi> knocks %s to the ground!`,
-				casterName, c.spell.Name, targetName)),
+				roomName(casterHidden, casterName), c.spell.Name, roomName(targetHidden, targetName))),
 		}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 		return dmg
 	}
@@ -489,6 +517,6 @@ func interruptSpellTarget(c spellEffectCtx) {
 			`<ansi fg="cyan-bold">%s's %s scrambles your focus. Your spell collapses!</ansi>`,
 			c.casterName(), c.spell.Name)),
 		Observer: messaging.Say(messaging.CategorySpellDisruption, fmt.Sprintf(
-			`<ansi fg="cyan">%s's spell collapses!</ansi>`, c.targetName())),
+			`<ansi fg="cyan">%s's spell collapses!</ansi>`, roomName(actorHiddenFromRoom(c.target), c.targetName()))),
 	}, c.audience())
 }

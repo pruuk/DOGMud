@@ -489,6 +489,11 @@ func spellDefenceIdentity(char *characters.Character, user *users.UserRecord, ro
 			return mobDisplayName(mob, room, 0)
 		}
 	}
+	// A mob whose Character carries no instance id still follows the
+	// room-wide rule mobDisplayName applies: a hidden mob is unseen (#382).
+	if char.IsHidden() {
+		return messaging.UnseenFigure(messaging.SightNone)
+	}
 	return char.GetMobName(0).String()
 }
 
