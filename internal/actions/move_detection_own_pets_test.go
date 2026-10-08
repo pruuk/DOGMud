@@ -70,7 +70,7 @@ func TestSneak_OwnPetDoesNotNoticePlayer(t *testing.T) {
 
 	got := Sneak(actor)
 
-	require.Empty(t, got.SpottedByName, "your own pet never notices you")
+	require.Nil(t, got.SpottedBy, "your own pet never notices you")
 	require.True(t, got.Success)
 	require.True(t, mc.IsHidden())
 }
@@ -87,5 +87,6 @@ func TestSneak_OtherPlayersPetStillNoticesPlayer(t *testing.T) {
 	got := Sneak(actor)
 
 	require.False(t, got.Success, "someone else's pet still notices you")
-	require.Equal(t, "Rocky", got.SpottedByName)
+	require.NotNil(t, got.SpottedBy)
+	require.Equal(t, "Rocky", got.SpottedBy.Name)
 }

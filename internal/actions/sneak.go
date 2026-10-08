@@ -19,9 +19,10 @@ type SneakResult struct {
 	Cost characters.CostCommitResult
 	// Success is true when the actor entered the hidden state.
 	Success bool
-	// SpottedByName is the name of the observer who detected the actor.
-	// Empty when Success is true.
-	SpottedByName string
+	// SpottedBy is the observer who detected the actor; nil when Success is
+	// true. It is the observer itself, not a name, so the caller words it at
+	// the sneaker's own sight (SpottedLine, #215).
+	SpottedBy *characters.Character
 	// AlreadyHidden is true when the actor already has the hidden condition.
 	AlreadyHidden bool
 	// InCombat is true when the actor could not attempt the action because
@@ -57,6 +58,25 @@ func sneakNoticeLine(seen, sneakerName string, sight messaging.SightDecision) st
 	return messaging.HideNames(seen, []string{sneakerName}, sight)
 }
 
+// SpottedLine is what a sneaker reads when spotter catches the attempt, the
+// spotter named only as far as the SNEAKER's own sight allows (#215): the
+// name at clear sight, "a figure" at shapes, "something" when the sneaker
+// sees nothing or cannot perceive the spotter (a hidden spotter is never
+// named).
+func SpottedLine(sneaker *characters.Character, room messaging.RoomVisibility, spotter *characters.Character) string {
+	tag := `mobname`
+	if spotter.GetUserId() > 0 {
+		tag = `username`
+	}
+	line := `You try to blend into the shadows but <ansi fg="` + tag + `">` +
+		spotter.Name + `</ansi> notices you.`
+	sight := messaging.ParticipantSight(sneaker, room)
+	if !sneaker.Perceives(spotter) {
+		sight = messaging.SightNone
+	}
+	return messaging.HideNames(line, []string{spotter.Name}, sight)
+}
+
 // MobIsSneaking derives a mob's sneaking state the same way both mob
 // movement call sites must: hidden (the Awareness-backed condition), or the
 // misc-data "sneaking" flag set while not yet hidden (Sneak sets it
@@ -85,7 +105,7 @@ func MobIsSneaking(mob *mobs.Mob) bool {
 // It rolls the actor's sneak score against every observer in the room. A
 // player actor's party members and own charmed mobs and companions are
 // excluded from the observer checks (alliesOf). If any observer wins the
-// opposed roll the attempt fails and SpottedByName is set.
+// opposed roll the attempt fails and SpottedBy is set.
 //
 // On success the hidden condition (id 9) is applied via the event queue and the
 // "sneaking" misc-data key is set immediately so other systems can react
@@ -175,7 +195,7 @@ func Sneak(actor Actor) SneakResult {
 			char.Awareness.ResolveConcealment(false, state.TransitionReason{
 				Trigger: awareness.TriggerSneakFailed,
 			})
-			return SneakResult{Cost: cost, SpottedByName: observer.Character.Name, RollHappened: true}
+			return SneakResult{Cost: cost, SpottedBy: observer.Character, RollHappened: true}
 		}
 	}
 
@@ -196,7 +216,7 @@ func Sneak(actor Actor) SneakResult {
 			char.Awareness.ResolveConcealment(false, state.TransitionReason{
 				Trigger: awareness.TriggerSneakFailed,
 			})
-			return SneakResult{Cost: cost, SpottedByName: m.Character.Name, RollHappened: true}
+			return SneakResult{Cost: cost, SpottedBy: &m.Character, RollHappened: true}
 		}
 	}
 

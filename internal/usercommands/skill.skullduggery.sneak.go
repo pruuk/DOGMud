@@ -60,15 +60,15 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		user.SendText(messaging.CategorySystem, "You can't do that while in combat!")
 		return true, nil
 
-	case result.SpottedByName != "":
+	case result.SpottedBy != nil:
 		// Apply failure cooldown so the player can't spam sneak
 		if cfg.SneakFailCooldown > 0 {
 			user.Character.TryCooldown(sneakCooldownKey,
 				fmt.Sprintf(`%d rounds`, cfg.SneakFailCooldown))
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`You try to blend into the shadows but <ansi fg="mobname">%s</ansi> notices you.`,
-			result.SpottedByName))
+		// The spotter is named only as far as the sneaker can see (#215).
+		user.SendText(messaging.CategorySystem,
+			actions.SpottedLine(user.Character, room, result.SpottedBy))
 
 		// U10b-1 Task 18: the SPOTTED branch, so won is false -- this is the
 		// loss half of the sneak contest and now pays
