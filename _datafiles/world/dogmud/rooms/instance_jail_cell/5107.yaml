@@ -2,11 +2,15 @@ roomid: 5107
 zone: Instance Jail Cell
 title: A Holding Cell
 biome: dungeon
+lamp: 35
 description: >-
   Four close walls of cold, mortared stone press in around a single
   iron-strapped door with no handle on this side. A narrow pallet, a tin
   cup, and a barred slit too high to see through are the only furnishings.
+  A small oil lamp gutters in a caged niche above the door, out of reach.
   There is no way out but the law's mercy and the slow passage of time.
 nouns:
   door: A heavy iron-strapped door, barred from the far side.
+  lamp: A small oil lamp behind an iron cage, set high above the door. It
+    gives just enough light to make out the walls, and no more.
   pallet: A thin straw pallet against the wall.
