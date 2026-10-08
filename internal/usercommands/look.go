@@ -48,6 +48,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// clear sight and only if perceived, the exit's through-sight and lock,
 	// the pet at clear sight. This function only words the answer.
 	res := actions.ResolveLook(&actions.UserActor{User: user, Room: room}, lookAt)
+	if res.Kind == actions.LookOwnGearByTouch {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			`You run your hands over your <ansi fg="item">%s</ansi>.`, res.TouchItem.DisplayNameFor(user.UserId)))
+		return true, nil
+	}
 	if line, refused := noSightRefusal(res.Kind); refused {
 		user.SendText(messaging.CategorySystem, line)
 		return true, nil
@@ -441,7 +446,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// deduplicating index was built here (two maps and two slices) whose
 		// only consumers were each other, so it computed a lookup table and
 		// then threw it away on every look. Removed; see review finding 31.
-		if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
+		if corpse, corpseFound := room.FindCorpse(rest, user.Character); corpseFound {
 
 			corpseColor := `mob-corpse`
 			if corpse.UserId > 0 {
@@ -457,9 +462,10 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			observedCorpse := corpse.ObservedName()
 
 			// The looker's own line follows the looker's sight (#428 review):
-			// FindCorpse matches the word "corpse" by substring, so a
-			// shapes-only looker reaches any corpse and must not be told whose
-			// it is, nor shown a description that would say. The hidden form
+			// below clear sight FindCorpse matches only the word "corpse"
+			// (#435), so a shapes-only looker reaches a corpse without naming
+			// it and must not be told whose it is, nor shown a description
+			// that would say. The hidden form
 			// is uncolored by kind, as the ground listing is.
 			selfCorpse := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, corpseColor, corpse.DisplayName())
 			if sight != messaging.SightFull {

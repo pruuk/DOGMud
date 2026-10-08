@@ -20,7 +20,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
-	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -68,27 +67,13 @@ func handleCombatRound(
 		return
 	}
 
-	// Defender's combat-cancel conditions always strip on combat engagement.
-	// CancelCombatConditions also strips permanent condition entries so Validate() won't
-	// re-apply them (notably: Hidden seeded via conditionids on ambushers).
-	def.GetCharacter().CancelCombatConditions()
-
-	// Chunk 1 follow-up (surfaced by chunk 4b smoke 2026-05-16):
-	// CancelCombatConditions strips condition #9 but the Awareness FSM is the
-	// canonical source of truth for IsHidden post-chunk-1. The cascade
-	// in Awareness_Cascades.go fires only when the defender's OWN
-	// CombatPhase transitions Idle→Engaging — which doesn't happen
-	// when a defender is targeted but never SetAggro's the attacker
-	// (e.g. a hidden mob grappled while it has no aggro of its own).
-	// Force the FSM out of Hidden if the condition strip left it stale; the
-	// cascade re-strips the condition (no-op since already gone). Without
-	// this, hidden ambushers stay stuck Hidden and the IsHidden check
-	// below fires "can't seem to find your target" on every round.
-	if defChar := def.GetCharacter(); defChar.Awareness != nil && defChar.IsHidden() {
-		defChar.Awareness.ForceVisible(state.TransitionReason{
-			Trigger: awareness.TriggerCombatEntered,
-		})
-	}
+	// Defender's combat-cancel conditions always strip on combat engagement,
+	// including permanent entries so Validate() won't re-apply them (notably:
+	// Hidden seeded via conditionids on ambushers), and a hidden defender is
+	// forced visible. Without the force, hidden ambushers stay stuck Hidden
+	// and the IsHidden check below fires "can't seem to find your target"
+	// on every round. The special-move seams share this same call.
+	def.GetCharacter().RevealForCombat()
 
 	// Phase 1: wait-round short-circuit.
 	if phase1WaitRound(atk, def) {
@@ -852,7 +837,7 @@ func emitMobStatGains(atk actions.Actor, before map[string]int) {
 			// in a pitch-dark cave read "Cave Crawler moves with increasing
 			// swiftness" while every combat line in the same round called the
 			// same mob "something" (found in play, 2026-09-21).
-			name := mobDisplayName(mob, atkRoom, 0)
+			name := mobSubjectName(mob, atkRoom)
 			atkRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote,
 				fmt.Sprintf(tmpl, name), []string{mob.Character.Name})
 		}

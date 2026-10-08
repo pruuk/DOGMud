@@ -3,6 +3,7 @@ package actions
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -85,10 +86,28 @@ func CalcSneakScoreVsObserver(sneaker, observer *characters.Character, room mess
 // the same way. A nil room is unity; pass combat.SightRoom for a *rooms.Room
 // that may be nil.
 func CalcDetectionScore(c *characters.Character, room messaging.RoomVisibility) float64 {
-	return (float64(c.Stats.Perception.ValueAdj) +
+	return detectionBase(c) * messaging.SightMult(c, room)
+}
+
+// CalcHearingScore is CalcDetectionScore for an observer who sees nothing
+// (sight gates close-out, #333, owner 2026-10-08): no sight ramp, since there
+// is no sight to price, but Balance.SneakHearingMult instead. The superhearing
+// condition flag skips that multiplier. Only the sneak contests ask for it,
+// through sneakObserverScore.
+func CalcHearingScore(c *characters.Character) float64 {
+	base := detectionBase(c)
+	if c.HasConditionFlag(conditions.SuperHearing) {
+		return base
+	}
+	return base * float64(configs.GetBalanceConfig().SneakHearingMult)
+}
+
+// detectionBase is an observer's detection before any sense prices it:
+// Perception + rank(search)*SkillWeight.
+func detectionBase(c *characters.Character) float64 {
+	return float64(c.Stats.Perception.ValueAdj) +
 		float64(c.GetSkillLevel(skills.Search))*
-			float64(configs.GetBalanceConfig().SkillWeight)) *
-		messaging.SightMult(c, room)
+			float64(configs.GetBalanceConfig().SkillWeight)
 }
 
 // CalcSearchScore returns the observation score for a character detecting

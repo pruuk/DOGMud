@@ -27,6 +27,7 @@ func Emote(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> emotes.`, user.Character.Name),
 			false,
 		)
+		hiddenEmoteNote(user)
 		return true, nil
 	}
 
@@ -36,6 +37,7 @@ func Emote(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		aliasMsg := actions.FormatEmoteText(user.Character.Name, result.AliasText, "username")
 		user.SendText(messaging.CategoryEmote, fmt.Sprintf(`You Emote: %s`, aliasMsg))
 		actions.SendSeen(actor, messaging.CategoryEmote, aliasMsg, false)
+		hiddenEmoteNote(user)
 		events.AddToQueue(events.Emote{UserId: user.UserId, RoomId: room.RoomId, Text: result.AliasText})
 		return true, nil
 	}
@@ -62,7 +64,17 @@ func Emote(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		actions.FormatEmoteText(user.Character.Name, rest, "username"),
 		true,
 	)
+	hiddenEmoteNote(user)
 	events.AddToQueue(events.Emote{UserId: user.UserId, RoomId: room.RoomId, Text: rest})
 
 	return true, nil
+}
+
+// hiddenEmoteNote tells a hidden player that their emote reached no one.
+// actions.SendSeen sends nothing for a hidden actor (#274, owner R3,
+// 2026-10-08), and without this line the silence would be a mystery.
+func hiddenEmoteNote(user *users.UserRecord) {
+	if user.Character.IsHidden() {
+		user.SendText(messaging.CategoryEmote, `No one sees it; you are hidden.`)
+	}
 }

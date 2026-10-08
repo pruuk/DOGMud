@@ -128,6 +128,10 @@ Roadmap and phase plan: `docs/aicompanion/`.
   cannot buy them.
 - **loot.go**: the module's own mob commands `companion-loot` (owner's loot
   rights only) and `companion-takeout` (unhidden, unlocked containers).
+  The companion-loot room line follows each reader's sight like the player
+  `loot` line (#428, #276): `SendTextVisualHidingNames` with the corpse's
+  `ObservedName()` and both her name and the dead one's hidden, so a
+  shapes-only reader reads "A figure loots the corpse of a figure."
 - **cooking.go**: `craftableHere(mob, p, room)` lists what she knows, has the
   makings for, and has the place for. Slice 5a added a fourth gate ahead of
   the recipe walk: `cannotSee(mob, room)` (perception.go, `sightOf !=

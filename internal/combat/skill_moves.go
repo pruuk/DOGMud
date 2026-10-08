@@ -186,6 +186,16 @@ var knockdownContestRunner defenceContestRunner = RunContest
 func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) SkillMoveResult {
 	result := SkillMoveResult{IsCounter: p.IsCounter}
 
+	// A special move reveals its target as a combat round does, before the
+	// caller builds any line that names it (#382). An area move does not:
+	// it sweeps the room without picking anyone out, so a hidden player the
+	// boss's area drain clips takes the damage and stays hidden. The shape's
+	// targeting is the switch, so every single-target caller reveals with no
+	// flag of its own.
+	if p.Shape.Targeting != combatvocab.TargetArea {
+		p.Defender.RevealForCombat()
+	}
+
 	// Get target's max HP for damage descriptions
 	result.TargetMaxHP = p.Defender.HealthMax.Value
 

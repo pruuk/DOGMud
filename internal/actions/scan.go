@@ -44,7 +44,9 @@ type ScanResult struct {
 }
 
 // Scan walks each visible (non-secret) exit from the actor's room, loads
-// the adjacent room, and lists non-hidden mobs and players in each.
+// the adjacent room, and lists the mobs and players the actor makes out in
+// each (scanReach, then listedOccupants: nobody through darkness, never a
+// hidden creature the actor does not perceive).
 // No skill check or cooldown is applied. UserActor receives a rendered
 // text list via SendText; MobActor.SendText is a no-op (silent). The
 // structured result is returned in both cases.
@@ -80,31 +82,28 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			continue
 		}
 
-		for _, mobInstId := range adjRoom.GetMobs(rooms.FindAll) {
-			m := mobs.GetInstance(mobInstId)
-			if m == nil || m.Character.IsHidden() {
-				continue
+		// Whom the scanner makes out there follows the scanner's sight, by
+		// the rule the player's text below uses (#251): nobody when neither
+		// light nor heat reaches, and only those the roster would list
+		// (listedOccupants), so a hidden player is never a scout's sighting.
+		// A shape counts: a mob acts on a figure it can make out (lighting 5d
+		// ruling D8), and the player text, not this list, hides the names.
+		if sight, _ := scanReach(actor.GetCharacter(), room, adjRoom); sight != messaging.SightNone {
+			listedMobs, listedPlayers := listedOccupants(actor.GetCharacter(), adjRoom, actor.GetUserId())
+			for _, m := range listedMobs {
+				sighting.Mobs = append(sighting.Mobs, ScanEntity{
+					Id:    m.InstanceId,
+					Name:  m.Character.Name,
+					IsMob: true,
+				})
 			}
-			sighting.Mobs = append(sighting.Mobs, ScanEntity{
-				Id:    mobInstId,
-				Name:  m.Character.Name,
-				IsMob: true,
-			})
-		}
-
-		for _, pId := range adjRoom.GetPlayers(rooms.FindAll) {
-			if pId == actor.GetUserId() {
-				continue
+			for _, u := range listedPlayers {
+				sighting.Players = append(sighting.Players, ScanEntity{
+					Id:    u.UserId,
+					Name:  u.Character.Name,
+					IsMob: false,
+				})
 			}
-			u := users.GetByUserId(pId)
-			if u == nil {
-				continue
-			}
-			sighting.Players = append(sighting.Players, ScanEntity{
-				Id:    pId,
-				Name:  u.Character.Name,
-				IsMob: false,
-			})
 		}
 
 		result.Sightings = append(result.Sightings, sighting)
@@ -130,7 +129,8 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			// shapes (lighting plan 6, owner ruling O6); it never upgrades a
 			// view the light grants. Whom it lists is the roster's rule
 			// (listedOccupants), the same one look's heat uses. The
-			// structured result is left whole for the mob callers.
+			// structured result already holds exactly those occupants, by
+			// the same scanReach (#251), so the text reads it.
 			//
 			// The next room's title shows only when the light here sees out
 			// (#428). When it refuses, by heat-only figures or nothing at
@@ -140,19 +140,7 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 			// A locked exit (#427) reads as look reads it: locked whenever
 			// light or heat would reach through it, with nobody listed; too
 			// dark when neither would.
-			sight := messaging.SightNone
-			reaches := false
-			adjRoom := rooms.LoadRoom(s.RoomId)
-			if adjRoom != nil {
-				switch {
-				case seesOut:
-					sight = messaging.ParticipantSight(viewer, adjRoom)
-					reaches = true
-				case messaging.SensesHeatThroughExit(viewer, room, adjRoom):
-					sight = messaging.SightShapes
-					reaches = true
-				}
-			}
+			sight, reaches := scanReach(viewer, room, rooms.LoadRoom(s.RoomId))
 			dirLabel := fmt.Sprintf(`<ansi fg="exit">%s</ansi>`, s.ExitName)
 			if s.Locked && reaches {
 				actor.SendText(messaging.CategorySystem,
@@ -160,14 +148,13 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 				continue
 			}
 			parts := []string{}
-			listedMobs, listedPlayers := listedOccupants(viewer, adjRoom, actor.GetUserId())
-			for _, m := range listedMobs {
+			for _, m := range s.Mobs {
 				parts = append(parts,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Character.Name))
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Name))
 			}
-			for _, u := range listedPlayers {
+			for _, u := range s.Players {
 				parts = append(parts,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi>`, u.Character.Name))
+					fmt.Sprintf(`<ansi fg="username">%s</ansi>`, u.Name))
 			}
 			switch sight {
 			case messaging.SightShapes:
@@ -201,6 +188,27 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 	return result
 }
 
+// scanReach is how well a scanner standing in here makes out the room next
+// through an exit, and whether anything reaches through at all. Light first:
+// when the scanner sees out of here (messaging.SeesThroughExit), the answer is
+// their sight in next. When the light here refuses, heat may still show next's
+// occupants as shapes (lighting plan 6, owner ruling O6); it never upgrades a
+// view the light grants. Neither: SightNone, nothing reaches. A nil next room
+// reaches nothing. It is the one rule behind both halves of Scan: the player's
+// text and the structured sightings a scout mob acts on (#251).
+func scanReach(viewer *characters.Character, here, next *rooms.Room) (sight messaging.SightDecision, reaches bool) {
+	if next == nil {
+		return messaging.SightNone, false
+	}
+	if messaging.SeesThroughExit(viewer, here) {
+		return messaging.ParticipantSight(viewer, next), true
+	}
+	if messaging.SensesHeatThroughExit(viewer, here, next) {
+		return messaging.SightShapes, true
+	}
+	return messaging.SightNone, false
+}
+
 // listedOccupants is every creature in room that the viewer's room roster
 // would list there (rooms.GetDetails): each mob actually in the room (a stale
 // listing, a mob whose RoomId says it has left, never shows) that the viewer
@@ -209,9 +217,10 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 // left out unless the viewer has see-hidden. A nil viewer perceives whoever is
 // not hidden.
 //
-// It is the one occupant filter behind what a player sees of the next room:
-// scan's list, by name or as shapes, and the figures heat shows through an
-// exit for scan and for look (FiguresSensedIn).
+// It is the one occupant filter behind what anyone makes out of the next room:
+// scan's player list, by name or as shapes, the structured sightings a scout
+// mob acts on (both behind scanReach, #251), and the figures heat shows
+// through an exit for scan and for look (FiguresSensedIn).
 func listedOccupants(viewer *characters.Character, room *rooms.Room, selfUserId int) ([]*mobs.Mob, []*users.UserRecord) {
 	if room == nil {
 		return nil, nil

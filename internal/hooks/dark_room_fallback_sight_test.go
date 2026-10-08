@@ -11,7 +11,7 @@ import (
 )
 
 // Lighting plan 5c final review, finding 1: the dark-room fallbacks (the
-// "sounds of fighting" line, a mob's death, room and crafter idle flavour)
+// "You hear fighting close by." line, a mob's death, room and crafter idle flavour)
 // chose between the visual line and the audible one by the nightvision FLAG.
 // An infravision holder the Game window gives shapes was sent the sound, and a
 // nightvision holder in a room its window reads as blind was sent the visual
@@ -44,8 +44,18 @@ func seedFallbackRoom(t *testing.T, lamp, eyesConditionId int) *rooms.Room {
 	return room2
 }
 
+// #216: every caller passes the fight's OWN room, so the blind reader is in
+// the room with the fight. "nearby" told them it was somewhere else.
+func TestDarkRoomCombatFallback_SaysCloseByNotNearby(t *testing.T) {
+	room := seedFallbackRoom(t, 0, nightEyesConditionId)
+	sendDarkRoomCombatFallback(room)
+	got := drainPlain(1)
+	require.Equal(t, 1, countContaining(got, "You hear fighting close by."), "%v", got)
+	require.Zero(t, countContaining(got, "nearby"), "%v", got)
+}
+
 func TestDarkRoomCombatFallback_FollowsSight(t *testing.T) {
-	const needle = "sounds of fighting"
+	const needle = "You hear fighting"
 
 	t.Run("infravision at light 10 sees shapes, no fallback", func(t *testing.T) {
 		room := seedFallbackRoom(t, 10, heatEyesConditionId)

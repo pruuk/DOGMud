@@ -79,6 +79,7 @@ func applySpellConditionEffect(c spellEffectCtx) int {
 	// adjective to the target's rendered name, and SendTrio's redaction must
 	// see the exact string the line prints.
 	casterName, targetName := c.casterName(), c.targetName()
+	casterHidden, targetHidden := c.hiddenFromRoom()
 	if target := spellConditionTargetOf(c.target); target != nil {
 		for _, conditionId := range c.spell.ConditionIds {
 			applySpellCondition(target, c.spell, c.casterChar, conditionId)
@@ -106,7 +107,8 @@ func applySpellConditionEffect(c spellEffectCtx) int {
 		Actee: messaging.Say(c.category(), fmt.Sprintf(
 			`%s's <ansi fg="cyan">%s</ansi> takes effect on you!%s`, casterName, c.spell.Name, c.critTag())),
 		Observer: messaging.Say(c.category(), fmt.Sprintf(
-			`%s's <ansi fg="cyan">%s</ansi> settles over %s.`, casterName, c.spell.Name, targetName)),
+			`%s's <ansi fg="cyan">%s</ansi> settles over %s.`,
+			roomName(casterHidden, casterName), c.spell.Name, roomName(targetHidden, targetName))),
 	}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 	return 0
 }
@@ -135,6 +137,7 @@ func applySpellHeal(c spellEffectCtx) int {
 		durationRounds = 6
 	}
 	casterName, targetName := c.casterName(), c.targetName()
+	casterHidden, targetHidden := c.hiddenFromRoom()
 	if u, m := c.casterUser(), c.targetMob(); u != nil && m != nil {
 		events.AddToQueue(events.Healed{HealerUserId: u.UserId, MobInstanceId: m.InstanceId})
 	}
@@ -156,7 +159,8 @@ func applySpellHeal(c spellEffectCtx) int {
 			`<ansi fg="green">%s's %s envelops you in healing energy. Your wounds begin to mend.</ansi>`,
 			casterName, c.spell.Name)),
 		Observer: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
-			`%s's <ansi fg="cyan">%s</ansi> envelops %s in healing light.`, casterName, c.spell.Name, targetName)),
+			`%s's <ansi fg="cyan">%s</ansi> envelops %s in healing light.`,
+			roomName(casterHidden, casterName), c.spell.Name, roomName(targetHidden, targetName))),
 	}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 	return 0
 }
@@ -187,6 +191,7 @@ func applySpellShield(c spellEffectCtx) int {
 	}
 	duration := calcSpellDuration(c.spell.BaseFolds, skill, stat)
 	casterName, targetName := c.casterName(), c.targetName()
+	_, targetHidden := c.hiddenFromRoom()
 	_ = c.targetChar().AddConditionMagnitude(conditions.ConditionIdMinorShield, duration, float64(shieldBonus), "spell")
 	if c.selfCast() {
 		messaging.SendTrio(messaging.Trio{
@@ -204,7 +209,7 @@ func applySpellShield(c spellEffectCtx) int {
 		Actee: messaging.Say(c.category(),
 			`A shimmering magical barrier forms around you, bolstering your defenses.`),
 		Observer: messaging.Say(c.category(), fmt.Sprintf(
-			`A shimmering barrier surrounds %s.`, targetName)),
+			`A shimmering barrier surrounds %s.`, roomName(targetHidden, targetName))),
 	}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 	return 0
 }
@@ -221,6 +226,7 @@ func applySpellPurge(c spellEffectCtx) int {
 	// Names are read BEFORE the cure: cancelling the poison can drop an
 	// adjective from the target's rendered name.
 	casterName, targetName := c.casterName(), c.targetName()
+	casterHidden, targetHidden := c.hiddenFromRoom()
 	c.targetChar().CancelConditionsWithFlag(conditions.Poison)
 	if c.selfCast() {
 		messaging.SendTrio(messaging.Trio{
@@ -238,7 +244,8 @@ func applySpellPurge(c spellEffectCtx) int {
 		Actee: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
 			`<ansi fg="green">%s's %s purges the toxins from your body.</ansi>`, casterName, c.spell.Name)),
 		Observer: messaging.Say(messaging.CategorySpellVital, fmt.Sprintf(
-			`%s's <ansi fg="cyan">%s</ansi> cleanses %s of afflictions.`, casterName, c.spell.Name, targetName)),
+			`%s's <ansi fg="cyan">%s</ansi> cleanses %s of afflictions.`,
+			roomName(casterHidden, casterName), c.spell.Name, roomName(targetHidden, targetName))),
 	}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 	return 0
 }

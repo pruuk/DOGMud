@@ -27,6 +27,13 @@ func merchantSay(room *rooms.Room, mob *mobs.Mob, line string) {
 
 func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Below the faces band you can't make out the goods (lighting plan 5b,
+	// #272): asking for an offer is dealing, as list, buy and sell are.
+	if actions.ShopSightRefusal(user.Character, room) {
+		user.SendText(messaging.CategorySystem, actions.ShopSightRefusalText)
+		return true, nil
+	}
+
 	item, found := user.Character.FindInBackpack(rest)
 	if !found {
 		user.SendText(messaging.CategorySystem, "You don't have that item.")

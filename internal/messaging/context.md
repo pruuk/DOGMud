@@ -402,6 +402,9 @@ Functions:
   quoted speech itself is untouched ("I am Kesh" stays "I am Kesh"), and a
   player's words cannot forge an identity tag because the wrappers escape
   them first (`util.EscapeAnsiTags`). Clear sight returns `text` unchanged.
+- `SpeakerNoun(d SightDecision) string`: the word `HideSpeakerNames`
+  substitutes, "a figure" at shapes and "someone" otherwise; exported for
+  GMCP say's `sender` (#252).
 - `StripNameAdjectives(text string) string` (#415): drops the adjective span
   ("(dead)", "(♥friend)") after every identity tag, keeping the tag, for a
   narrated line that names a creature rather than lists it.

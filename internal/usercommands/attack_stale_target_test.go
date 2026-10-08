@@ -100,7 +100,7 @@ func TestAttack_StaleTargetPlayerId_MessagesInsteadOfSilence(t *testing.T) {
 
 	msgs := events.DrainQueuedMessagesForTest(user.UserId)
 	require.NotEmpty(t, msgs, "a failed resolution must always message the player")
-	assert.True(t, strings.Contains(strings.Join(msgs, "\n"), "don't see them"),
+	assert.True(t, strings.Contains(strings.Join(msgs, "\n"), attackNoSuchNameLine),
 		"expected the not-found family message, got: %q", msgs)
 	assert.False(t, user.Character.IsInCombat(), "no engagement may happen on a vanished target")
 }

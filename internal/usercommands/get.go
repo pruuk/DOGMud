@@ -186,23 +186,25 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		// get all <corpse> — sweep every item + gold from a corpse's loot.
 		// Corpses aren't room Containers, so FindContainerByName above misses
-		// them; resolve via FindCorpseIndex and recurse with the explicit
-		// "from" form so each item flows through the ownership/loot-mode gates.
+		// them; resolve via FindCorpseIndex and take from THAT corpse through
+		// the same helpers as `get <item> from <corpse>`, so each item flows
+		// through the loot-mode gate. Never re-resolve it by its full name:
+		// below clear sight the lookup refuses the name, and the refusal
+		// would print it (#435).
 		if len(args) >= 2 {
-			if cIdx := room.FindCorpseIndex(args[len(args)-1]); cIdx >= 0 {
+			if cIdx := room.FindCorpseIndex(args[len(args)-1], user.Character); cIdx >= 0 {
 				corpse := &room.Corpses[cIdx]
 				if !canLootCorpse(user, corpse) {
 					user.SendText(messaging.CategorySystem, `This isn't your kill.`)
 					return true, nil
 				}
-				corpseName := corpse.DisplayName()
 				hadGold := corpse.Loot.Gold > 0
 				iCopies := append([]items.Item{}, corpse.Loot.Items...)
 				if hadGold {
-					Get(fmt.Sprintf("gold from %s", corpseName), user, room, flags)
+					takeCorpseGold(user, room, corpse)
 				}
 				for _, item := range iCopies {
-					Get(fmt.Sprintf("%s from %s", item.Name(), corpseName), user, room, flags)
+					takeCorpseItem(user, room, corpse, item.Name())
 				}
 				if !hadGold && len(iCopies) == 0 {
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(`There's nothing left on the %s.`, corpseNameFor(user, room, corpse)))
@@ -431,70 +433,11 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		goldName := `gold`
 		if args[0] == goldName || (len(args[0]) < 5 && goldName[0:len(args[0])-1] == args[0]) {
-
-			if corpse.Loot.Gold < 1 {
-				user.SendText(messaging.CategorySystem, "There's no gold to grab.")
-			} else {
-				user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
-
-				amt := corpse.Loot.Gold
-				corpse.Loot.Gold -= amt
-				grantCorpseGold(user, amt)
-
-				user.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`You take <ansi fg="gold">%d gold</ansi> from the %s.`, amt, corpseNameFor(user, room, corpse)),
-				)
-				// Both names hidden per bystander, as loot's room line (#428).
-				room.SendTextVisualHidingNames(messaging.CategoryLoot,
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> loots some <ansi fg="gold">gold</ansi> from the <ansi fg="mob-corpse">%s</ansi>.`, user.Character.Name, corpse.ObservedName()),
-					[]string{user.Character.Name, corpse.Character.Name},
-					user.UserId,
-				)
-			}
-
+			takeCorpseGold(user, room, corpse)
 			return true, nil
 		}
 
-		matchItem, found := corpse.Loot.FindItem(rest)
-		if !found {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s in the %s.`, rest, corpseNameFor(user, room, corpse)))
-			return true, nil
-		}
-
-		// Loot-mode gate (round-robin / leader-hold): ownership already passed
-		// above; this reserves specific items to specific members until the
-		// free-for-all timeout.
-		if !corpse.CanTakeItem(matchItem.UUID.String(), user.UserId, util.GetRoundCount()) {
-			user.SendText(messaging.CategorySystem, corpseItemGateMessage(corpse.LootMode))
-			return true, nil
-		}
-
-		user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
-
-		if user.Character.StoreItem(matchItem) {
-			events.AddToQueue(events.ItemOwnership{
-				UserId: user.UserId,
-				Item:   matchItem,
-				Gained: true,
-			})
-			corpse.Loot.RemoveItem(matchItem)
-
-			user.SendText(messaging.CategorySystem,
-				fmt.Sprintf(`You take the <ansi fg="itemname">%s</ansi> from the %s.`, matchItem.DisplayName(), corpseNameFor(user, room, corpse)),
-			)
-			room.SendTextVisualHidingNames(messaging.CategoryLoot,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> loots the <ansi fg="itemname">%s</ansi> from the <ansi fg="mob-corpse">%s</ansi>...`, user.Character.Name, matchItem.DisplayName(), corpse.ObservedName()),
-				[]string{user.Character.Name, corpse.Character.Name},
-				user.UserId,
-			)
-
-			sendEncumbranceWarning(user)
-		} else {
-			user.SendText(messaging.CategorySystem,
-				fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
-			)
-		}
-
+		takeCorpseItem(user, room, corpse, rest)
 		return true, nil
 	}
 
@@ -764,7 +707,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	}
 
-	if _, corpseFound := room.FindCorpse(rest); corpseFound {
+	if _, corpseFound := room.FindCorpse(rest, user.Character); corpseFound {
 		user.SendText(messaging.CategorySystem, `You can't pick up corpses. What would people think?`)
 		return true, nil
 	}
@@ -811,6 +754,75 @@ func sendEncumbranceWarning(user *users.UserRecord) {
 // round-robin/leaderhold gating (Task 10) layers on top of this.
 func canLootCorpse(user *users.UserRecord, corpse *rooms.Corpse) bool {
 	return corpse.LootAllowed(user.UserId, util.GetRoundCount())
+}
+
+// takeCorpseGold moves a corpse's gold to user. The caller has found the
+// corpse and passed canLootCorpse; nothing here re-resolves it by name, so
+// `get all <corpse>` works at any sight the lookup itself allowed (#435).
+func takeCorpseGold(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corpse) {
+	if corpse.Loot.Gold < 1 {
+		user.SendText(messaging.CategorySystem, "There's no gold to grab.")
+		return
+	}
+	user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
+
+	amt := corpse.Loot.Gold
+	corpse.Loot.Gold -= amt
+	grantCorpseGold(user, amt)
+
+	user.SendText(messaging.CategorySystem,
+		fmt.Sprintf(`You take <ansi fg="gold">%d gold</ansi> from the %s.`, amt, corpseNameFor(user, room, corpse)),
+	)
+	// Both names hidden per bystander, as loot's room line (#428).
+	room.SendTextVisualHidingNames(messaging.CategoryLoot,
+		fmt.Sprintf(`<ansi fg="username">%s</ansi> loots some <ansi fg="gold">gold</ansi> from the <ansi fg="mob-corpse">%s</ansi>.`, user.Character.Name, corpse.ObservedName()),
+		[]string{user.Character.Name, corpse.Character.Name},
+		user.UserId,
+	)
+}
+
+// takeCorpseItem moves the loot item matching itemName from a corpse to
+// user, through the loot-mode gate. Same contract as takeCorpseGold.
+func takeCorpseItem(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corpse, itemName string) {
+	matchItem, found := corpse.Loot.FindItem(itemName)
+	if !found {
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s in the %s.`, itemName, corpseNameFor(user, room, corpse)))
+		return
+	}
+
+	// Loot-mode gate (round-robin / leader-hold): ownership already passed
+	// in the caller; this reserves specific items to specific members until
+	// the free-for-all timeout.
+	if !corpse.CanTakeItem(matchItem.UUID.String(), user.UserId, util.GetRoundCount()) {
+		user.SendText(messaging.CategorySystem, corpseItemGateMessage(corpse.LootMode))
+		return
+	}
+
+	user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
+
+	if !user.Character.StoreItem(matchItem) {
+		user.SendText(messaging.CategorySystem,
+			fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
+		)
+		return
+	}
+	events.AddToQueue(events.ItemOwnership{
+		UserId: user.UserId,
+		Item:   matchItem,
+		Gained: true,
+	})
+	corpse.Loot.RemoveItem(matchItem)
+
+	user.SendText(messaging.CategorySystem,
+		fmt.Sprintf(`You take the <ansi fg="itemname">%s</ansi> from the %s.`, matchItem.DisplayName(), corpseNameFor(user, room, corpse)),
+	)
+	room.SendTextVisualHidingNames(messaging.CategoryLoot,
+		fmt.Sprintf(`<ansi fg="username">%s</ansi> loots the <ansi fg="itemname">%s</ansi> from the <ansi fg="mob-corpse">%s</ansi>...`, user.Character.Name, matchItem.DisplayName(), corpse.ObservedName()),
+		[]string{user.Character.Name, corpse.Character.Name},
+		user.UserId,
+	)
+
+	sendEncumbranceWarning(user)
 }
 
 // corpseItemGateMessage returns the refusal shown when a loot item is reserved

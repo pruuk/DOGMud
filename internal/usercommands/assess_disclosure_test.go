@@ -54,7 +54,9 @@ func seedAssessFixture(t *testing.T, convictionMax int) (*users.UserRecord, *roo
 	corpse.Character.Stats.Strength.Training = 20
 	corpse.Character.Stats.Vitality.Training = 20 // total 40 → skeleton only
 
-	room := &rooms.Room{RoomId: 999901, Corpses: []rooms.Corpse{corpse}}
+	// Lit, so the assessor sees clearly and reaches the corpse by name: below
+	// clear sight only the word "corpse" matches one (#435).
+	room := &rooms.Room{RoomId: 999901, Lamp: rooms.LampPtr(90), Corpses: []rooms.Corpse{corpse}}
 
 	events.DrainQueuedMessagesForTest(adUserId)
 	return u, room, func() {

@@ -18,9 +18,17 @@ import "regexp"
 // deliberately runs `HideNames(Anonymize(txt), ...)`, Anonymize first, so by
 // the time HideNames would try to remove the span there is no tag left to
 // anchor on and an infrared observer reads "a figure (dead)".
+//
+// The `poss` group (#246) captures a possessive written INSIDE the tag, the
+// shape the combat template lines use (the YAML puts the doubled quote of
+// {actor}'s before the closing tag). The body is lazy so the optional group
+// gets the 's rather than the body swallowing it; Anonymize re-emits it
+// after the figure word.
 var nameTagPattern = regexp.MustCompile(
-	`<ansi fg="((?:username|mobname)(?:-[A-Za-z0-9_-]+)?|petname)">[^<]+</ansi>(?:` + adjectiveSpanBody + `)?`,
+	`<ansi fg="((?:username|mobname)(?:-[A-Za-z0-9_-]+)?|petname)">[^<]+?(?P<poss>'s|’s)?</ansi>(?:` + adjectiveSpanBody + `)?`,
 )
+
+var nameTagPossIdx = nameTagPattern.SubexpIndex("poss")
 
 // Anonymize strips player/mob/pet name ANSI tags and replaces them
 // with a `combat-anon`-colored "a figure" placeholder. Used by the
@@ -46,13 +54,16 @@ func Anonymize(text string) string {
 	// "*** a figure lands a DEVASTATING SNAP on you! ***".
 	out := make([]byte, 0, len(text))
 	last := 0
-	for _, loc := range nameTagPattern.FindAllStringIndex(text, -1) {
+	for _, loc := range nameTagPattern.FindAllStringSubmatchIndex(text, -1) {
 		out = append(out, text[last:loc[0]]...)
 		word := "a figure"
 		if atSentenceStart(text, loc[0]) {
 			word = "A figure"
 		}
 		out = append(out, `<ansi fg="combat-anon">`+word+`</ansi>`...)
+		if ps := loc[2*nameTagPossIdx]; ps >= 0 {
+			out = append(out, text[ps:loc[2*nameTagPossIdx+1]]...)
+		}
 		last = loc[1]
 	}
 	if last == 0 {

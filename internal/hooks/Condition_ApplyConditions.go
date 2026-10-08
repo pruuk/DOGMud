@@ -149,7 +149,7 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 				if r := rooms.LoadRoom(m.Character.RoomId); r != nil {
 					charName = mobDisplayName(m, r, 0)
 				}
-				charPlainName = m.Character.GetCharacterName(false)
+				charPlainName = mobPlainName(m)
 				roomId = m.Character.RoomId
 			}
 		}

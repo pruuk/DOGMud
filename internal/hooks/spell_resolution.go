@@ -489,6 +489,11 @@ func spellDefenceIdentity(char *characters.Character, user *users.UserRecord, ro
 			return mobDisplayName(mob, room, 0)
 		}
 	}
+	// A mob whose Character carries no instance id still follows the
+	// room-wide rule mobDisplayName applies: a hidden mob is unseen (#382).
+	if char.IsHidden() {
+		return messaging.UnseenFigure(messaging.SightNone)
+	}
 	return char.GetMobName(0).String()
 }
 
@@ -663,7 +668,7 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	if !result.Executed {
 		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 			`%s's <ansi fg="cyan">%s</ansi> crackles through the air, finding no one to drain.`,
-			mobDisplayName(mob, room, 0), spellData.Name))
+			mobSubjectName(mob, room), spellData.Name))
 		return
 	}
 
@@ -703,10 +708,12 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 		if !pr.MoveResult.Hit && pr.MoveResult.Damage == 0 {
 			// Defended with zero damage (a defensive crit). This used to be a
 			// silent miss; U6b Task 9 speaks the defence triad so the player
-			// who fully stopped the pull learns what saved them.
+			// who fully stopped the pull learns what saved them. The area
+			// drain reveals no one, so a player still hidden is unseen in
+			// the room line, as a hidden mob is (roomName).
 			sendSpellChannelDefenceMessages(room, spellSchoolCategory(spellData), pr.MoveResult.Defence,
 				spellDefenceIdentity(&mob.Character, nil, room),
-				spellDefenceIdentity(target.Character, target, room),
+				roomName(target.Character.IsHidden(), spellDefenceIdentity(target.Character, target, room)),
 				spellData.Name, nil, target)
 			continue
 		}
@@ -739,7 +746,7 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 
 	sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
 		`%s's <ansi fg="cyan">%s</ansi> tears the life from everyone in the room!`,
-		mobDisplayName(mob, room, 0), spellData.Name))
+		mobSubjectName(mob, room), spellData.Name))
 }
 
 // landed carries the same meaning as on the player path: the contest was WON

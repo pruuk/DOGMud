@@ -146,6 +146,9 @@ func ExecuteTaunt(actor Actor) TauntResult {
 			Metadata: map[string]any{"command": "taunt"},
 		})
 	}
+	// The taunted target is revealed as a combat round's defender is, before
+	// any line names it (#382), as the skill-move and grapple seams do.
+	target.Char.RevealForCombat()
 
 	// ONE contest (U6b Task 5): Charisma + rhetoric x SkillWeight, conviction-
 	// depleted, against the target's defy (Willpower + rhetoric x SkillWeight).

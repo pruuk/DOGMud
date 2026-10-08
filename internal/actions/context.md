@@ -488,7 +488,7 @@ perceive can be named), then a sealed crate or a known room container
 (`lookNamesAnObject`, `:116`), then an exit (direction alias resolved, then
 through-sight, then lock). `LookKind` (`:12`) is `LookBlind`, `LookTooDark`,
 `LookRoom`, `LookCreature`, `LookExit`, `LookExitTooDark`, `LookExitLocked`,
-`LookExitShapes`, `LookOther`. `LookExitShapes` (lighting plan 6, owner
+`LookExitShapes`, `LookOther`, `LookOwnGearByTouch`. `LookExitShapes` (lighting plan 6, owner
 ruling O6) is an exit the light here is too poor to see through
 (`messaging.SeesThroughExit` false) whose next room heat still reaches
 (`messaging.SensesHeatThroughExit`); a locked exit under heat is still
@@ -503,12 +503,16 @@ when the light here sees out (#428), never with heat-only figures or
 `listedOccupants` (`scan.go`), the room roster's rule (`rooms.GetDetails`):
 a mob actually in the room that the viewer `Perceives`, and every other
 player the viewer `Perceives`, so a hidden mob shows to see-hidden and a
-stale listing never. Scan's player-facing name list uses it too; its
-structured `ScanResult` (for mob callers) still lists every mob not
-`IsHidden`. Sight `SightNone` splits by cause (#364): `LookBlind` for a
+stale listing never. Scan's structured `ScanResult` (for mob callers) and
+its player-facing list both read it, behind one reach rule, `scanReach`
+(#251). Sight `SightNone` splits by cause (#364): `LookBlind` for a
 looker whose `Perception` is `Blinded` (the same check `ParticipantSight`
 answers `SightNone` on first), `LookTooDark` for one the room is too dark
-for, so a caller can say that light would help.
+for, so a caller can say that light would help. At `SightNone` a `lookAt`
+naming an item the looker wears or carries (`Character.FindItem`) resolves
+first to `LookOwnGearByTouch` with `LookResolution.TouchItem` (#218): the
+player reads "You run your hands over your <item>." (name only, never the
+description), the mob is silent.
 `LookOther` is deliberately one bucket for "anything else": the crate and
 container case defers to it rather than getting its own kind, so each
 wrapper's own noun and item resolution (which differs between the player and
@@ -603,7 +607,9 @@ into, never its own room line:
   see. `chatter` is true only for a player's free-form line, which routes
   through `Room.SendVisualCommunicationHidingNames` to keep the deafen
   filter; every other line (empty, alias, and every mob emote) goes through
-  `Room.SendTextVisualHidingNames` unfiltered (owner ruling 6).
+  `Room.SendTextVisualHidingNames` unfiltered (owner ruling 6). A hidden
+  actor's emote reaches no one (#274, owner R3, 2026-10-08): silence, not an
+  anonymous line. The player `emote` command tells its own hider so.
 - `sendSpoken(actor, room, cat, line, stillHidden)` (unexported) is what
   `Say` and `Shout` share: every listener hears the words, the speaker's
   name hidden per listener. A player's line goes through
@@ -721,13 +727,21 @@ itself.
   a zero-value cost result.
 - **Roll:** The sneaker uses effective Dexterity plus the Skullduggery skill
   multiplier and stealth bonuses, modified by light conditions per observer.
-  Each observer uses effective Perception plus the Search skill multiplier.
-  Resolution flows through `combat.RunContest`.
+  Each observer uses effective Perception plus the Search skill multiplier,
+  priced by `sneakObserverScore`: by sight (`CalcDetectionScore`) when it
+  makes out anything, by ear (`CalcHearingScore`, `Balance.SneakHearingMult`,
+  skipped for the superhearing flag) when it sees nothing (#333, owner
+  2026-10-08). A sneaking arrival (`sneakerSpotted`) prices observers the same
+  way. Resolution flows through `combat.RunContest`.
 - **Success/failure:** Success resolves Concealing to Hidden, queues the Hidden
   condition mirror, sets the `sneaking` misc key, and returns `Success`. The first
   observer who wins resolves the actor back to Visible and populates
-  `SpottedByName`. `RollHappened` distinguishes a contested attempt from an
-  empty-room success.
+  `SpottedBy` (the observer's character, not a name). The observer's notice
+  (`sneakNoticeLine`) names the sneaker only as far as the observer sees, and
+  says only "You hear someone trying to move quietly." when it sees nothing;
+  the sneaker's line (`SpottedLine`) names the spotter only as far as the
+  sneaker sees (#215). `RollHappened` distinguishes a contested attempt from
+  an empty-room success.
 - **Player wrapper ownership:** The user command owns the skill gate, busy and
   prior-failure-cooldown messages, stamina-refusal text, and player-facing
   success/failure text. It checks the prior failure cooldown with read-only
@@ -947,15 +961,22 @@ Sweeps the rooms one step away for occupants (`scan.go`).
   scan as it blocks look, by sight and by heat. The sighting stays, with
   `Locked` true and `Mobs` / `Players` empty, so a mob caller (the
   `try_scan` btree action) gets nobody behind it.
-- **Structured result:** `Mobs` lists every mob in the room not
-  `IsHidden`; `Players` every other player. It does not follow sight; the
-  player rendering does.
+- **Structured result (#251):** follows the scanner's sight.
+  `scanReach(viewer, here, next)` is the one reach rule: the scanner's
+  `ParticipantSight` in the next room when they see out of this one
+  (`SeesThroughExit`), shapes by heat when only `SensesHeatThroughExit`
+  reaches, else `SightNone`. At anything but `SightNone`, `Mobs` and
+  `Players` are `listedOccupants` (the roster's rule: no hidden creature the
+  scanner does not `Perceives`, no stale listing). A shape counts, so a scout
+  mob acts on a figure (lighting 5d ruling D8); names stay in the struct and
+  the player text hides them below clear sight.
 - **UserActor behavior:** prints `You scan the surrounding area...` then
-  one line per exit, following the player's sight (see the look section
-  above): names with faces, `messaging.UnseenFigure` per creature with
-  shapes or heat, `too dark to make anything out` with neither. A locked
-  exit reads `north: the exit is locked` when light or heat would reach
-  through it, and too dark otherwise, as `ResolveLook` answers.
+  one line per exit, rendered from the structured sighting at the same
+  `scanReach` (see the look section above): names with faces,
+  `messaging.UnseenFigure` per creature with shapes or heat, `too dark to
+  make anything out` with neither. A locked exit reads `north: the exit is
+  locked` when light or heat would reach through it, and too dark
+  otherwise, as `ResolveLook` answers.
 - **MobActor behavior:** silent (`SendText` is a no-op).
 - **Hostile-only mode:** `opts.HostileOnly` is not applied by `Scan`; the
   caller filters.
@@ -1826,7 +1847,7 @@ the rest are ordinary verbs.
 | Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `search_bauble.go` (roll and delayed delivery), `search_feature.go` (`search <feature>`), `scan.go`, `track.go`, `steal.go`, `steal_pocket.go` (a player's pickpocket pause and bauble) |
 | Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
-| Movement & state | `go.go`, `sleep.go`, `consider.go` |
+| Movement & state | `go.go`, `sleep.go`, `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
 | Social | `say.go`, `emote.go`, `emote_aliases.go` |
 | Divergences | `divergences.go` — deliberate departures from upstream behaviour |
 

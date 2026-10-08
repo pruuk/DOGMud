@@ -156,6 +156,7 @@ type Communication struct {
 	CommType            string // say, party, broadcast, whisper, shout
 	Name                string
 	Message             string
+	SpeakerHidden       bool // a say spoken while still hidden: no listener but the speaker learns who (#252)
 }
 
 func (m Communication) Type() string { return `Communication` }

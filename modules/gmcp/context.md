@@ -406,6 +406,33 @@ unloaded room reads faces, passed as an untyped nil) and carried in the full
 - **No room contents.** The band is the player's own, and the text already
   tells them how well they see.
 
+## Room.Info and Comm say follow sight (sight gates close-out, #252, 2026-10-08)
+
+`GetRoomNode` (`gmcp.Room.go`) reads `messaging.ParticipantSight(user.Character, room)` once per
+call, for every lane including the sub-module requests:
+
+- **SightNone:** `name` and `description` are empty; `exits` and `exitsv2` are empty maps;
+  `Contents.Items`, `Containers`, `Players` and `Npcs` are empty lists. Empty, not omitted, the
+  Char.Enemies rule, so a merging client drops the last sighted reading. The room id, `area`,
+  `environment`, `symbol` and `coords` stay: they place the player on a map they hold.
+- **SightShapes:** the room reads, but every occupant is `unseenOccupant`: name `a figure`
+  (`messaging.UnseenNoun`), empty `id` and `adjectives`, `aggro` kept.
+- **Rosters and containers follow the text lane:** players and NPCs are listed only when
+  `Character.Perceives` them (the `rooms.GetDetails` rule), and a hidden container the viewer has
+  not discovered (`HasDiscovery`) is not listed, as in `look`.
+- **Re-push on light:** `sightBandChangedHandler` (`gmcp.Room.go`) answers
+  `events.SightBandChanged` with Room.Info, and, when the player now makes out the room,
+  `actions.MarkRoomMappedIfSeen` plus a `GMCPZoneUpdate`. `gmcp.Char.go` answers the same event
+  with Char.Sight; both listeners run.
+- **Map (owner ruling R5):** `go.go` maps a room only through `actions.MarkRoomMappedIfSeen`, so
+  a room walked in the dark stays off `Zone.Map` until seen; rooms already mapped stay.
+
+`Comm.Channel` say goes through `sayDeliveries` (`gmcp.Comm.go`), one payload per listener,
+matching the text lane (`actions.sendSpoken`): `sender` is the name at clear sight, `A figure`
+at shapes, `Someone` at none or when `events.Communication.SpeakerHidden`; a player speaker's
+words skip deafened listeners, an NPC's do not (ruling 6); a say with `TargetUserId` reaches
+only that player. Other channels are unchanged.
+
 ## Module index
 
 Every `gmcp.<Name>.go` file follows the same shape: register in `init()`, emit
@@ -446,7 +473,11 @@ payloads carry ids that index into it.
   change is a client change; check `_datafiles/html/public/static/js/gmcp.js`
   before altering a field name.
 - **`Zone.Map` is fog-of-war filtered** by `Character.VisitedRooms` before it is
-  sent — see `internal/mapper`'s `Snapshot`.
+  sent; see `internal/mapper`'s `Snapshot`. A room joins `VisitedRooms` only
+  when the player makes something out there (`actions.MarkRoomMappedIfSeen`,
+  #252 R5). `gmcp.Room.go`'s `sightBandChangedHandler` answers
+  `events.SightBandChanged` too: it maps the room if now seen, re-sends the
+  map, and re-sends `Room.Info`, so lighting a torch in place refreshes both.
 - **Emit only on change where you can.** These push on room change and round
   boundaries; adding an unconditional per-round emit to a large payload is a
   bandwidth regression that will not show up in a local test.

@@ -99,8 +99,12 @@ func mobCompanionLoot(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error
 	}
 	if took {
 		mob.Character.CancelConditionsWithFlag(conditions.Hidden)
-		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi> loots the <ansi fg="mob-corpse">%s</ansi>.`, mob.Character.Name, corpse.DisplayName()))
+		// Both names hidden per reader, as the player's loot room line
+		// (#428, #276): a mob-corpse tag is not an identity tag, so a plain
+		// SendTextVisual named the dead one to a shapes-only reader.
+		room.SendTextVisualHidingNames(messaging.CategoryLoot,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> loots the <ansi fg="mob-corpse">%s</ansi>.`, mob.Character.Name, corpse.ObservedName()),
+			[]string{mob.Character.Name, corpse.Character.Name})
 	}
 	return true, nil
 }

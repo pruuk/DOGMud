@@ -1065,22 +1065,22 @@ func TestRoom_FindCorpse(t *testing.T) {
 	r.AddCorpse(mobCorpse)
 
 	// Exact search
-	found, ok := r.FindCorpse("PlayerOne corpse")
+	found, ok := r.FindCorpse("PlayerOne corpse", nil)
 	assert.True(t, ok, "Expected to find player corpse by exact name")
 	assert.Equal(t, "PlayerOne", found.Character.Name, "Expected found corpse to match the correct character")
 
 	// Searching for mob
-	found, ok = r.FindCorpse("MobOne corpse")
+	found, ok = r.FindCorpse("MobOne corpse", nil)
 	assert.True(t, ok, "Expected to find mob corpse by exact name")
 	assert.Equal(t, "MobOne", found.Character.Name, "Expected found corpse to match the correct character")
 
 	// Searching partial name (depends on your util.FindMatchIn logic)
-	found, ok = r.FindCorpse("player")
+	found, ok = r.FindCorpse("player", nil)
 	assert.True(t, ok, "Expected to find a close match for player corpse")
 	assert.Equal(t, "PlayerOne", found.Character.Name, "Expected found corpse to be the player's")
 
 	// Non-existent
-	found, ok = r.FindCorpse("NonExistent")
+	found, ok = r.FindCorpse("NonExistent", nil)
 	assert.False(t, ok, "Expected not to find a missing corpse")
 }
 
@@ -1830,7 +1830,7 @@ func TestRoom_Validate_ContainerItems(t *testing.T) {
 
 func TestRoom_FindCorpse_Empty(t *testing.T) {
 	r := &Room{}
-	_, ok := r.FindCorpse("anything")
+	_, ok := r.FindCorpse("anything", nil)
 	assert.False(t, ok)
 }
 
@@ -2184,15 +2184,15 @@ func TestRoom_FindCorpse_Multiple(t *testing.T) {
 	r.AddCorpse(Corpse{MobId: 1, Character: characters.Character{Name: "Goblin"}, RoundCreated: 5})
 	r.AddCorpse(Corpse{MobId: 2, Character: characters.Character{Name: "Orc"}, RoundCreated: 6})
 
-	found, ok := r.FindCorpse("Goblin corpse")
+	found, ok := r.FindCorpse("Goblin corpse", nil)
 	assert.True(t, ok)
 	assert.Equal(t, "Goblin", found.Character.Name)
 
-	found, ok = r.FindCorpse("Orc corpse")
+	found, ok = r.FindCorpse("Orc corpse", nil)
 	assert.True(t, ok)
 	assert.Equal(t, "Orc", found.Character.Name)
 
-	_, ok = r.FindCorpse("Dragon corpse")
+	_, ok = r.FindCorpse("Dragon corpse", nil)
 	assert.False(t, ok)
 }
 

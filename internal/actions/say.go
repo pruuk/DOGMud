@@ -46,6 +46,7 @@ func Say(actor Actor, text string) SayResult {
 		CommType:            `say`,
 		Name:                actor.GetName(),
 		Message:             text,
+		SpeakerHidden:       isSneaking,
 	})
 
 	nameColor, textColor := "mobname", "saytext-mob"

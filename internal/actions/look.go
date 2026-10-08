@@ -3,6 +3,7 @@ package actions
 import (
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -13,15 +14,16 @@ import (
 type LookKind int
 
 const (
-	LookBlind       LookKind = iota // the looker is blinded and sees nothing anywhere
-	LookTooDark                     // the room is too dark for the looker's eyes
-	LookRoom                        // no target: the room itself
-	LookCreature                    // a creature the looker perceives, at clear sight
-	LookExit                        // an exit the looker can see through
-	LookExitTooDark                 // an exit, but too dark to see through it
-	LookExitLocked                  // an exit that is locked
-	LookExitShapes                  // an exit too dark to see through, whose occupants heat shows as shapes (lighting plan 6)
-	LookOther                       // anything else: each wrapper's own objects, in its own order
+	LookBlind          LookKind = iota // the looker is blinded and sees nothing anywhere
+	LookTooDark                        // the room is too dark for the looker's eyes
+	LookRoom                           // no target: the room itself
+	LookCreature                       // a creature the looker perceives, at clear sight
+	LookExit                           // an exit the looker can see through
+	LookExitTooDark                    // an exit, but too dark to see through it
+	LookExitLocked                     // an exit that is locked
+	LookExitShapes                     // an exit too dark to see through, whose occupants heat shows as shapes (lighting plan 6)
+	LookOther                          // anything else: each wrapper's own objects, in its own order
+	LookOwnGearByTouch                 // sees nothing, but names an item it wears or carries: known by touch (#218)
 )
 
 // LookResolution carries every sight rule of both looks (slice 5a).
@@ -40,6 +42,9 @@ type LookResolution struct {
 	// pet AFTER carried items and room nouns; each wrapper reads it at its
 	// own pet step.
 	PetUserId int
+	// TouchItem is the worn or carried item a looker who sees nothing found
+	// by touch (LookOwnGearByTouch).
+	TouchItem items.Item
 }
 
 // ResolveLook is the shared look resolution for players and mobs. Order is
@@ -55,6 +60,15 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 	res.NamesCreatures = res.Sight == messaging.SightFull
 
 	if res.Sight == messaging.SightNone {
+		// Your own gear needs no light: a looker who sees nothing still
+		// knows by touch what it wears or carries (#218). Only the item, by
+		// name: its description is what sight reads.
+		if lookAt != `` {
+			if item, _, found := char.FindItem(lookAt); found {
+				res.Kind, res.TouchItem = LookOwnGearByTouch, item
+				return res
+			}
+		}
 		// The cause, told apart by the same Perception check that
 		// ParticipantSight answers SightNone on first: light helps a looker
 		// in the dark and does nothing for a blinded one (#364).

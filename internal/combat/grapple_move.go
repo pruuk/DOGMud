@@ -25,6 +25,10 @@ func ExecuteGrappleMove(attacker, defender *characters.Character,
 
 	result := GrappleMoveResult{}
 
+	// A grapple reveals its target as a combat round does, before the caller
+	// builds any line that names it (#382).
+	defender.RevealForCombat()
+
 	// Attempt the grapple
 	result.GrappleResult = AttemptGrapple(attacker, defender, SightRoom(room))
 

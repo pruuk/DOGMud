@@ -44,7 +44,7 @@ func Loot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		rest = strings.Join(args[1:], " ")
 	}
 
-	corpseIdx := room.FindCorpseIndex(rest)
+	corpseIdx := room.FindCorpseIndex(rest, user.Character)
 	if corpseIdx < 0 {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see a %s to loot.", rest))
 		return true, nil
@@ -158,7 +158,7 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 		return true, nil
 	}
 
-	corpseIdx := room.FindCorpseIndex(rest)
+	corpseIdx := room.FindCorpseIndex(rest, user.Character)
 	if corpseIdx < 0 {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see a %s to loot.", rest))
 		return true, nil
@@ -225,8 +225,11 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 	if u := users.GetByUserId(next); u != nil {
 		nextName = u.Character.Name
 	}
-	user.SendText(messaging.CategorySystem,
+	// Whom the share goes to follows the looter's sight, as the corpse's
+	// name does (#435): a shapes-only looter passes it "to a figure".
+	user.SendText(messaging.CategorySystem, messaging.HideNames(
 		fmt.Sprintf(`You pass your share of the %s to <ansi fg="username">%s</ansi>.`, corpseNameFor(user, room, corpse), nextName),
+		[]string{nextName}, messaging.ParticipantSight(user.Character, room)),
 	)
 
 	return true, nil

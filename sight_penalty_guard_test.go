@@ -87,6 +87,11 @@ var sightPenaltyHelpers = map[string]bool{
 	"SituationalDefenceMult": true,
 	"CalcDetectionScore":     true,
 	"stealVictimScore":       true,
+	// The sneak contests' observer side (Sneak, sneakerSpotted). It prices an
+	// observer who sees anything through CalcDetectionScore; one who sees
+	// nothing has no sight to price and rolls by ear instead (#333, owner
+	// 2026-10-08).
+	"sneakObserverScore": true,
 }
 
 // sightExemptSites are the roll sites whose multiply happens somewhere the

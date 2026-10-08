@@ -41,7 +41,13 @@ func corpseAdapter(s Scope, candidate string) (Match, bool) {
 	if s.Room == nil {
 		return Match{}, false
 	}
-	idx := s.Room.FindCorpseIndex(candidate)
+	// The corpse is matched at the looker's sight (#435): below clear sight
+	// only the word "corpse" reaches one.
+	var viewer *characters.Character
+	if s.User != nil {
+		viewer = s.User.Character
+	}
+	idx := s.Room.FindCorpseIndex(candidate, viewer)
 	if idx < 0 {
 		return Match{}, false
 	}

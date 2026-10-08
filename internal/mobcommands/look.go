@@ -41,7 +41,7 @@ func Look(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// observer's sight, as the player's do.
 	res := actions.ResolveLook(actions.NewMobActorInRoom(mob, room), rest)
 	switch res.Kind {
-	case actions.LookBlind, actions.LookTooDark, actions.LookExitTooDark, actions.LookExitLocked, actions.LookExitShapes:
+	case actions.LookBlind, actions.LookTooDark, actions.LookOwnGearByTouch, actions.LookExitTooDark, actions.LookExitLocked, actions.LookExitShapes:
 		return true, nil
 
 	case actions.LookRoom:
