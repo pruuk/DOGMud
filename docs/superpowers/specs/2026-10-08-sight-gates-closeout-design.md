@@ -1,6 +1,6 @@
 # Sight gates close-out (#382): the last names that leak in the dark
 
-**Status:** DRAFT for owner review, 2026-10-08.
+**Status:** APPROVED by the owner, 2026-10-08. The R3 extension to player emotes stands (owner approved the spec with it flagged).
 **Epic:** #382. **Parents:** `specs/completed/2026-09-29-sight-and-gates-parity-design.md`
 (slices 5a/5b) and `specs/completed/2026-09-22-graded-room-lighting-design.md`. Lighting arc
 #372 closed 2026-10-07; this slice clears what is left under #382 and ends with the adversarial
