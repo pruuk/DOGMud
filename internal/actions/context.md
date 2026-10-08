@@ -488,7 +488,7 @@ perceive can be named), then a sealed crate or a known room container
 (`lookNamesAnObject`, `:116`), then an exit (direction alias resolved, then
 through-sight, then lock). `LookKind` (`:12`) is `LookBlind`, `LookTooDark`,
 `LookRoom`, `LookCreature`, `LookExit`, `LookExitTooDark`, `LookExitLocked`,
-`LookExitShapes`, `LookOther`. `LookExitShapes` (lighting plan 6, owner
+`LookExitShapes`, `LookOther`, `LookOwnGearByTouch`. `LookExitShapes` (lighting plan 6, owner
 ruling O6) is an exit the light here is too poor to see through
 (`messaging.SeesThroughExit` false) whose next room heat still reaches
 (`messaging.SensesHeatThroughExit`); a locked exit under heat is still
@@ -508,7 +508,11 @@ its player-facing list both read it, behind one reach rule, `scanReach`
 (#251). Sight `SightNone` splits by cause (#364): `LookBlind` for a
 looker whose `Perception` is `Blinded` (the same check `ParticipantSight`
 answers `SightNone` on first), `LookTooDark` for one the room is too dark
-for, so a caller can say that light would help.
+for, so a caller can say that light would help. At `SightNone` a `lookAt`
+naming an item the looker wears or carries (`Character.FindItem`) resolves
+first to `LookOwnGearByTouch` with `LookResolution.TouchItem` (#218): the
+player reads "You run your hands over your <item>." (name only, never the
+description), the mob is silent.
 `LookOther` is deliberately one bucket for "anything else": the crate and
 container case defers to it rather than getting its own kind, so each
 wrapper's own noun and item resolution (which differs between the player and

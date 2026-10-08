@@ -162,6 +162,7 @@ type Communication struct {
     CommType            string // say, party, broadcast, whisper, shout
     Name                string
     Message             string
+    SpeakerHidden       bool // a say spoken while still hidden (#252)
 }
 
 type Broadcast struct {
