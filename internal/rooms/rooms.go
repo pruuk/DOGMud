@@ -1513,7 +1513,34 @@ func (r *Room) FindCorpse(searchName string, viewer *characters.Character) (Corp
 // FindCorpseIndex returns the slice index of the non-prunable corpse
 // searchName names (or -1), newest first. Callers mutate r.Corpses[idx] in
 // place via a pointer.
+//
+// The match follows viewer's sight in this room (#435). Every corpse line
+// hides the dead one's name below clear sight (Corpse.NameAt, #428), so a
+// name that matched would confirm whose corpse it is: below SightFull each
+// corpse, mob or player, answers only to the word "corpse", newest first and
+// countable ("2.corpse"). A nil viewer (a system lookup, a test) matches by
+// name as clear sight does.
 func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) int {
+
+	if viewer != nil && messaging.ParticipantSight(viewer, r) != messaging.SightFull {
+		candidates := []string{}
+		indexes := []int{}
+		for idx := len(r.Corpses) - 1; idx >= 0; idx-- {
+			if r.Corpses[idx].Prunable {
+				continue
+			}
+			candidates = append(candidates, `corpse`)
+			indexes = append(indexes, idx)
+		}
+		match, closeMatch := util.FindMatchIndexIn(searchName, candidates...)
+		if match < 0 {
+			match = closeMatch
+		}
+		if match < 0 {
+			return -1
+		}
+		return indexes[match]
+	}
 
 	playerCorpseLookup := map[string]int{}
 	playerCorpses := []string{}

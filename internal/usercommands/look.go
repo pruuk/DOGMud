@@ -457,9 +457,10 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			observedCorpse := corpse.ObservedName()
 
 			// The looker's own line follows the looker's sight (#428 review):
-			// FindCorpse matches the word "corpse" by substring, so a
-			// shapes-only looker reaches any corpse and must not be told whose
-			// it is, nor shown a description that would say. The hidden form
+			// below clear sight FindCorpse matches only the word "corpse"
+			// (#435), so a shapes-only looker reaches a corpse without naming
+			// it and must not be told whose it is, nor shown a description
+			// that would say. The hidden form
 			// is uncolored by kind, as the ground listing is.
 			selfCorpse := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, corpseColor, corpse.DisplayName())
 			if sight != messaging.SightFull {

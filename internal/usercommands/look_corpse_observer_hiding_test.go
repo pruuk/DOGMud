@@ -39,7 +39,9 @@ func TestLookCorpse_ShapesOnlyObserverDoesNotReadTheDeadPlayersName(t *testing.T
 	craftPlainLines(1)
 	craftPlainLines(2)
 
-	handled, err := Look("deadric corpse", looker, room, 0)
+	// A shapes-only looker reaches the corpse by the word "corpse" alone; its
+	// name would confirm whose it is (#435).
+	handled, err := Look("corpse", looker, room, 0)
 	require.True(t, handled)
 	require.NoError(t, err)
 

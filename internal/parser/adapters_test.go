@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,6 +58,30 @@ func TestCorpseAdapter(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, KindCorpse, m.Kind)
 	assert.Equal(t, 0, m.CorpseIdx)
+}
+
+// #435: the parser's corpse lookup matches at the looker's sight. In the
+// dark only the word "corpse" reaches the remains; by name, only in light.
+func TestCorpseAdapter_FollowsTheLookersSight(t *testing.T) {
+	s, cleanup := seedParserTest(t)
+	defer cleanup()
+	s.Room.Corpses = []rooms.Corpse{{
+		MobId:     1,
+		Character: characters.Character{Name: "Skeleton"},
+	}}
+
+	s.Room.Lamp = rooms.LampPtr(-50)
+	require.NotEqual(t, messaging.SightFull, messaging.ParticipantSight(s.User.Character, s.Room), "precondition: dark")
+	_, ok := corpseAdapter(s, "skeleton corpse")
+	assert.False(t, ok, "in the dark the name must not confirm whose corpse it is")
+	m, ok := corpseAdapter(s, "corpse")
+	require.True(t, ok, "the word corpse still reaches it")
+	assert.Equal(t, 0, m.CorpseIdx)
+
+	s.Room.Lamp = rooms.LampPtr(90)
+	require.Equal(t, messaging.SightFull, messaging.ParticipantSight(s.User.Character, s.Room), "precondition: lit")
+	_, ok = corpseAdapter(s, "skeleton corpse")
+	assert.True(t, ok, "in light the name matches")
 }
 
 func TestFloorItemAdapter(t *testing.T) {

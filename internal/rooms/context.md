@@ -94,6 +94,12 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   with `Character.Name` among the hidden names: "corpse of <name>", or the
   special `CorpseName`. A mob-corpse or user-corpse tag is not an identity
   tag, so `Anonymize` never hides a corpse name; pass the name.
+- **Corpse matching by sight (#435):** `FindCorpseIndex(searchName, viewer)`
+  and its value-copy twin `FindCorpse(searchName, viewer)` match at the
+  viewer's `ParticipantSight` in the room. At clear sight (or a nil viewer, a
+  system lookup) by name, newest first, as before. Below it every corpse, mob
+  or player, answers only to the word "corpse", newest first and countable
+  (`2.corpse`), so typing a name cannot confirm whose corpse it is.
 
 ### Room Management System (`roommanager.go`)
 - **RoomManager**: Singleton manager for all room operations and caching
