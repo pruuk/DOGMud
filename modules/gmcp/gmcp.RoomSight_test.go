@@ -139,3 +139,25 @@ func TestRoomSightBandChanged_DarkMapsNothing(t *testing.T) {
 	(&GMCPRoomModule{}).sightBandChangedHandler(events.SightBandChanged{UserId: viewer.UserId})
 	require.False(t, viewer.Character.HasVisitedRoom("SightZone", 9720))
 }
+
+// A hidden container stays out of Room.Info until the viewer discovers it,
+// the rule text look and search use (look.go, search_feature.go).
+func TestRoomInfo_HiddenContainerListedOnlyOnceDiscovered(t *testing.T) {
+	viewer := roomSightFixture(t, 60)
+	room := rooms.LoadRoom(9720)
+	room.Containers = map[string]rooms.Container{
+		"crate":       {},
+		"loose stone": {Hidden: true},
+	}
+	names := func() []string {
+		out := []string{}
+		for _, c := range roomInfoFor(t, viewer).Contents.Containers {
+			out = append(out, c.Name)
+		}
+		return out
+	}
+	require.ElementsMatch(t, []string{"crate"}, names())
+
+	viewer.Character.AddDiscovery(9720, "loose stone")
+	require.ElementsMatch(t, []string{"crate", "loose stone"}, names())
+}

@@ -271,6 +271,12 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 				break
 			}
 
+			// A hidden container the viewer has not discovered is not listed,
+			// the rule text look and search use (look.go, search_feature.go).
+			if container.Hidden && !user.Character.HasDiscovery(room.RoomId, name) {
+				continue
+			}
+
 			c := GMCPRoomModule_Payload_Contents_Container{
 				Name:   name,
 				Usable: len(container.Recipes) > 0,
