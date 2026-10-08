@@ -1,6 +1,7 @@
 # Messaging M6 slice 1: condition casters, one line per audience, shield and heal identities
 
-Status: design approved by the owner 2026-10-07, spec awaiting owner review.
+Status: APPROVED by the owner 2026-10-07 (design and written spec). Next: the
+implementation plan, with a dry run that sets the ward and heal numbers.
 Issues: #370 (M6 ledger rows 1 and 2), #338 (shield and heal identities), #240 (DoT kills credit nobody).
 
 ## Goal
