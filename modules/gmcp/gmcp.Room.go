@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -213,6 +214,13 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 
 	payload := GMCPRoomModule_Payload{}
 
+	// The payload shows what the room text shows (#252): a viewer who sees
+	// nothing gets no title, description, exits, items or occupants; a viewer
+	// who sees shapes gets every occupant as the roster's anonymous figure.
+	// One verdict per call: it depends only on the viewer and the room.
+	sight := messaging.ParticipantSight(user.Character, room)
+	seesNothing := sight == messaging.SightNone
+
 	////////////////////////////////////////////////
 	// Room.Contents
 	// Note: Process this first since we might be
@@ -226,6 +234,9 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 
 		payload.Contents.Containers = []GMCPRoomModule_Payload_Contents_Container{}
 		for name, container := range room.Containers {
+			if seesNothing {
+				break
+			}
 
 			c := GMCPRoomModule_Payload_Contents_Container{
 				Name:   name,
@@ -252,6 +263,9 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 	if all || g.wantsGMCPPayload(`Room.Info.Contents.Items`, gmcpModule) {
 		payload.Contents.Items = []GMCPRoomModule_Payload_Contents_Item{}
 		for _, itm := range room.Items {
+			if seesNothing {
+				break
+			}
 			// A fixture is part of the room, not on its floor (lighting 5e, R9).
 			if itm.IsFixture() {
 				continue
@@ -274,6 +288,9 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 	if all || g.wantsGMCPPayload(`Room.Info.Contents.Players`, gmcpModule) {
 		payload.Contents.Players = []GMCPRoomModule_Payload_Contents_Character{}
 		for _, uId := range room.GetPlayers() {
+			if seesNothing {
+				break
+			}
 
 			// Exclude viewing player
 			if uId == user.UserId {
@@ -286,6 +303,11 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 			}
 
 			if u.Character.HasConditionFlag(conditions.Hidden) {
+				continue
+			}
+
+			if sight == messaging.SightShapes {
+				payload.Contents.Players = append(payload.Contents.Players, unseenOccupant(u.Character.IsInCombat()))
 				continue
 			}
 
@@ -308,12 +330,20 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 	if all || g.wantsGMCPPayload(`Room.Info.Contents.Npcs`, gmcpModule) {
 		payload.Contents.Npcs = []GMCPRoomModule_Payload_Contents_Character{}
 		for _, mIId := range room.GetMobs() {
+			if seesNothing {
+				break
+			}
 			mob := mobs.GetInstance(mIId)
 			if mob == nil {
 				continue
 			}
 
 			if mob.Character.HasConditionFlag(conditions.Hidden) {
+				continue
+			}
+
+			if sight == messaging.SightShapes {
+				payload.Contents.Npcs = append(payload.Contents.Npcs, unseenOccupant(mob.Character.IsInCombat()))
 				continue
 			}
 
@@ -352,10 +382,13 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 	////////////////////////////////////////////////
 	if all || g.wantsGMCPPayload(`Room.Info`, gmcpModule) {
 
-		// Basic details
+		// Basic details. The id, area, environment and coordinates stay in the
+		// dark: they place the player on a map they already hold.
 		payload.Id = room.RoomId
-		payload.Name = room.Title
-		payload.Description = room.Description
+		if !seesNothing {
+			payload.Name = room.Title
+			payload.Description = room.Description
+		}
 		payload.Area = room.Zone
 		payload.Environment = room.GetBiome().Name
 		if room.MapSymbol != `` {
@@ -380,6 +413,11 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 		payload.ExitsV2 = map[string]GMCPRoomModule_Payload_Contents_ExitInfo{}
 
 		for exitName, exitInfo := range room.Exits {
+			// Empty maps, not omitted, in the dark, so a client merging
+			// payloads drops the last sighted exits (the Char.Enemies rule).
+			if seesNothing {
+				break
+			}
 
 			if exitInfo.Secret {
 				if exitRoom := rooms.LoadRoom(exitInfo.RoomId); exitRoom != nil {
@@ -461,6 +499,18 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 	}
 
 	return payload, `Room.Info`
+}
+
+// unseenOccupant is a roster entry for a creature the viewer makes out only as
+// a shape: the room roster's "a figure" (messaging.UnseenNoun), no id and no
+// adjectives, since either would name it. Whether it is fighting stays: the
+// motion is what a shape shows.
+func unseenOccupant(inCombat bool) GMCPRoomModule_Payload_Contents_Character {
+	return GMCPRoomModule_Payload_Contents_Character{
+		Name:       messaging.UnseenNoun(messaging.SightShapes),
+		Adjectives: []string{},
+		Aggro:      inCombat,
+	}
 }
 
 // wantsGMCPPayload(`Room.Info.Contents`, `Room.Info`)
