@@ -159,8 +159,14 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 					user.UserId,
 				)
 			} else if result.Item.GetSpec().Subtype == items.Wearable {
+				// A light says it is lit as it goes on (#260); the light
+				// notice that may follow speaks of the room, not the item.
+				lightNote := ``
+				if conditions.AnyLightSource(result.Item.GetSpec().WornConditionIds) {
+					lightNote = ` It casts light around you.`
+				}
 				user.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`You wear your <ansi fg="item">%s</ansi>.`, result.Item.DisplayName()),
+					fmt.Sprintf(`You wear your <ansi fg="item">%s</ansi>.%s`, result.Item.DisplayName(), lightNote),
 				)
 				putsOn := fmt.Sprintf(`<ansi fg="username">%s</ansi> puts on their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName())
 				// A darkness is judged against the room before it went on (owner
