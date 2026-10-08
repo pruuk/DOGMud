@@ -316,7 +316,7 @@ command-aliases:
   broadcast:          ['`']
   status:             ['sta', 'stat', 'stats', 'score', 'info']
   online:             ['who']
-  inventory:          ['i', 'inv', 'eq']
+  inventory:          ['i', 'inv', 'eq', 'equipment']
   look:               ['l', 'examine']
   go:                 ['enter']
   map:                ['m']
