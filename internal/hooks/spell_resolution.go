@@ -663,7 +663,7 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	if !result.Executed {
 		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 			`%s's <ansi fg="cyan">%s</ansi> crackles through the air, finding no one to drain.`,
-			mobDisplayName(mob, room, 0), spellData.Name))
+			mobSubjectName(mob, room), spellData.Name))
 		return
 	}
 
@@ -739,7 +739,7 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 
 	sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
 		`%s's <ansi fg="cyan">%s</ansi> tears the life from everyone in the room!`,
-		mobDisplayName(mob, room, 0), spellData.Name))
+		mobSubjectName(mob, room), spellData.Name))
 }
 
 // landed carries the same meaning as on the player path: the contest was WON

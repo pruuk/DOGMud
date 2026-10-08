@@ -106,7 +106,7 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 						holderName = mobDisplayName(mob, r, 0)
 					}
 					roles := endConditionSpec.Narrate(conditions.PhaseEnd,
-						holderName, mob.Character.GetCharacterName(false))
+						holderName, mobPlainName(mob))
 					if roles.Observer != "" {
 						if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
 							sendConditionEndRoomText(r, rooms.TakeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,

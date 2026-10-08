@@ -388,9 +388,43 @@ func attackerBonusSkillAndStat(res combat.AttackResult, atkChar *characters.Char
 
 // mobDisplayName returns the formatted display name for a mob in combat text,
 // including duplicate index coloring when multiple mobs share the same name.
+//
+// A mob hidden from the viewer reads as "something" (lowercase: the line may
+// put it mid-sentence; mobSubjectName is the line-opening form). Viewer 0 is
+// a room-wide line, which has no one reader to ask Perceives of, so a hidden
+// mob is unseen in it by every reader, as a hidden caster is in its
+// spell-channel lines (#274, owner R3). GetMobNameIndexed alone named it to
+// every faces reader as "Skeleton (hidden)" (#382).
 func mobDisplayName(mob *mobs.Mob, room *rooms.Room, viewingUserId int) string {
+	if mobHiddenFrom(mob, viewingUserId) {
+		return messaging.UnseenFigure(messaging.SightNone)
+	}
 	dupIdx := room.GetMobDuplicateIndex(mob.InstanceId)
 	return mob.Character.GetMobNameIndexed(viewingUserId, dupIdx).String()
+}
+
+// mobPlainName is mobDisplayName's untagged twin, for a condition line's
+// {actee_plain}: the bare name, or "something" for a hidden mob. A room line
+// is the only place it is read, so it never asks a viewer.
+func mobPlainName(mob *mobs.Mob) string {
+	if mobHiddenFrom(mob, 0) {
+		return messaging.UnseenNoun(messaging.SightNone)
+	}
+	return mob.Character.GetCharacterName(false)
+}
+
+// mobHiddenFrom reports whether a line about mob must not name it to
+// viewingUserId: the mob is hidden and the viewer does not Perceive it. Viewer
+// 0 (a room-wide line) perceives no hidden mob.
+func mobHiddenFrom(mob *mobs.Mob, viewingUserId int) bool {
+	if !mob.Character.IsHidden() {
+		return false
+	}
+	if viewingUserId == 0 {
+		return true
+	}
+	u := users.GetByUserId(viewingUserId)
+	return u == nil || !u.Character.Perceives(&mob.Character)
 }
 
 // sendVisualRoomText sends a visual message that requires sight.
@@ -467,13 +501,15 @@ const (
 	spellSputtersOutSound    = `A half-formed spell sputters out.`
 )
 
-// mobCasterName is a mob caster's name in its own spell-channel line. A
-// hidden caster is unseen by every reader, whatever they can see: its name is
-// rewritten at messaging.SightNone ("Something"), as sendSpoken does for a
-// speaker still hidden and as a hidden actor's emote is silent (#274, owner
-// R3). mobDisplayName alone ignores hiding and named it to a faces reader.
-func mobCasterName(mob *mobs.Mob, room *rooms.Room) string {
-	if mob.Character.IsHidden() {
+// mobSubjectName is a mob's name at the start of a room-wide line (a caster's
+// spell-channel line, a mob emote): mobDisplayName for viewer 0, capitalized.
+// A hidden mob is unseen by every reader, whatever they can see, and reads
+// "Something", as sendSpoken does for a speaker still hidden and as a hidden
+// actor's emote is silent (#274, owner R3). The capital is spelled here, not
+// left to the pipeline, because the mob emote categories skip
+// sentence-start capitalization.
+func mobSubjectName(mob *mobs.Mob, room *rooms.Room) string {
+	if mobHiddenFrom(mob, 0) {
 		name := mob.Character.Name
 		return messaging.HideNames(`<ansi fg="mobname">`+name+`</ansi>`, []string{name}, messaging.SightNone)
 	}
@@ -486,7 +522,7 @@ func mobCasterName(mob *mobs.Mob, room *rooms.Room) string {
 // caster to everyone (#242).
 func sendMobConcentrationBroke(mob *mobs.Mob, room *rooms.Room) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-		`%s's concentration breaks.`, mobCasterName(mob, room)),
+		`%s's concentration breaks.`, mobSubjectName(mob, room)),
 		spellChantBreaksOffSound)
 }
 
@@ -494,7 +530,7 @@ func sendMobConcentrationBroke(mob *mobs.Mob, room *rooms.Room) {
 // falters (not enough conviction); verb is "fizzles" or "falters".
 func sendMobSpellFailed(mob *mobs.Mob, room *rooms.Room, verb string) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-		`%s's spell %s.`, mobCasterName(mob, room), verb),
+		`%s's spell %s.`, mobSubjectName(mob, room), verb),
 		spellSputtersOutSound)
 }
 
@@ -502,7 +538,7 @@ func sendMobSpellFailed(mob *mobs.Mob, room *rooms.Room, verb string) {
 // weave makes no sound (owner ruling R4).
 func sendMobWeaving(mob *mobs.Mob, room *rooms.Room) {
 	sendVisualRoomText(room, messaging.CategorySpellFold, fmt.Sprintf(
-		`%s weaves magic with focused intent.`, mobCasterName(mob, room)))
+		`%s weaves magic with focused intent.`, mobSubjectName(mob, room)))
 }
 
 // sendPlayerConcentrationBroke narrates a player caster's broken
@@ -521,7 +557,7 @@ func sendPlayerConcentrationBroke(caster *users.UserRecord, room *rooms.Room) {
 // sight, as target.go's player shift-focus line does.
 func sendMobShiftsFocus(mob *mobs.Mob, room *rooms.Room, newTarget *users.UserRecord) {
 	room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
-		fmt.Sprintf("%s shifts focus to <ansi fg=\"username\">%s</ansi>!", mobCasterName(mob, room), newTarget.Character.Name),
+		fmt.Sprintf("%s shifts focus to <ansi fg=\"username\">%s</ansi>!", mobSubjectName(mob, room), newTarget.Character.Name),
 		[]string{mob.Character.Name, newTarget.Character.Name},
 	)
 }

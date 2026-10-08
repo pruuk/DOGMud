@@ -852,7 +852,7 @@ func emitMobStatGains(atk actions.Actor, before map[string]int) {
 			// in a pitch-dark cave read "Cave Crawler moves with increasing
 			// swiftness" while every combat line in the same round called the
 			// same mob "something" (found in play, 2026-09-21).
-			name := mobDisplayName(mob, atkRoom, 0)
+			name := mobSubjectName(mob, atkRoom)
 			atkRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote,
 				fmt.Sprintf(tmpl, name), []string{mob.Character.Name})
 		}

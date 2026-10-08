@@ -196,7 +196,7 @@ func expireMobCombatMemory(mob *mobs.Mob) {
 func tickMobProneRecovery(mob *mobs.Mob) {
 	if attemptMade, success := mob.Character.AttemptRecovery(recoveryContest(&mob.Character)); attemptMade {
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-			mName := mobDisplayName(mob, room, 0)
+			mName := mobSubjectName(mob, room)
 			if success {
 				sendVisualRoomText(room, messaging.CategoryMobEmote, mName+" clambers to their feet in a rushed panic.")
 			} else {
@@ -288,7 +288,7 @@ func tickMobConditions(mob *mobs.Mob, mobInstanceId int) {
 				if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
 					roles := trigSpec.Narrate(conditions.PhaseTrigger,
 						mobDisplayName(mob, room, 0),
-						mob.Character.GetCharacterName(false))
+						mobPlainName(mob))
 					if roles.Observer != "" {
 						// HidingNames: see the user-side twin and
 						// Condition_ApplyConditions.go. A bare {actee_plain} is
