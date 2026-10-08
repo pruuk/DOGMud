@@ -33,6 +33,30 @@ type SneakResult struct {
 	RollHappened bool
 }
 
+// sneakObserverScore is an observer's side of a sneak contest, the sneak
+// command's and a sneaking arrival's alike, and the sight it was priced at.
+// An observer who sees nothing hears for the sneaker (CalcHearingScore); one
+// who makes out anything looks (CalcDetectionScore). Sight gates close-out,
+// #333, owner 2026-10-08.
+func sneakObserverScore(observer *characters.Character, room messaging.RoomVisibility) (float64, messaging.SightDecision) {
+	sight := messaging.ParticipantSight(observer, room)
+	if sight == messaging.SightNone {
+		return CalcHearingScore(observer), sight
+	}
+	return CalcDetectionScore(observer, room), sight
+}
+
+// sneakNoticeLine is what an observer who wins a sneak contest reads. seen
+// is the line with the sneaker's name tagged (moverName); the name follows
+// the observer's sight (HideNames), and an observer who sees nothing only
+// heard someone (#215, #333).
+func sneakNoticeLine(seen, sneakerName string, sight messaging.SightDecision) string {
+	if sight == messaging.SightNone {
+		return `You hear someone trying to move quietly.`
+	}
+	return messaging.HideNames(seen, []string{sneakerName}, sight)
+}
+
 // MobIsSneaking derives a mob's sneaking state the same way both mob
 // movement call sites must: hidden (the Awareness-backed condition), or the
 // misc-data "sneaking" flag set while not yet hidden (Sneak sets it
@@ -141,14 +165,13 @@ func Sneak(actor Actor) SneakResult {
 			continue
 		}
 		sneakScore := CalcSneakScoreVsObserver(char, observer.Character, roomLight)
-		observerScore := CalcDetectionScore(observer.Character, room)
+		observerScore, sight := sneakObserverScore(observer.Character, room)
 		rollHappened = true
 		success := combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success
 		if !success {
-			// Notify the observing player.
-			observer.SendText(messaging.CategorySystem,
-				`<ansi fg="username">`+actor.GetName()+`</ansi> tries to hide but you notice them.`,
-			)
+			// Notify the observing player, as far as its sight allows.
+			observer.SendText(messaging.CategorySystem, sneakNoticeLine(
+				moverName(actor)+` tries to hide but you notice them.`, actor.GetName(), sight))
 			char.Awareness.ResolveConcealment(false, state.TransitionReason{
 				Trigger: awareness.TriggerSneakFailed,
 			})
@@ -166,7 +189,7 @@ func Sneak(actor Actor) SneakResult {
 			continue
 		}
 		sneakScore := CalcSneakScoreVsObserver(char, &m.Character, roomLight)
-		observerScore := CalcDetectionScore(&m.Character, room)
+		observerScore, _ := sneakObserverScore(&m.Character, room)
 		rollHappened = true
 		success := combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success
 		if !success {

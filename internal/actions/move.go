@@ -303,10 +303,10 @@ func sneakerSpotted(mover Actor, dest *rooms.Room, light messaging.RoomVisibilit
 			continue
 		}
 		sneakScore := CalcSneakScoreVsObserver(mc, p.Character, light)
-		observerScore := CalcDetectionScore(p.Character, dest)
+		observerScore, sight := sneakObserverScore(p.Character, dest)
 		if !combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success {
-			NewUserActor(p).SendText(messaging.CategorySystem, fmt.Sprintf(
-				`%s slips into the room but you notice them.`, moverName(mover)))
+			NewUserActor(p).SendText(messaging.CategorySystem, sneakNoticeLine(
+				moverName(mover)+` slips into the room but you notice them.`, mover.GetName(), sight))
 			return true
 		}
 	}
@@ -320,7 +320,7 @@ func sneakerSpotted(mover Actor, dest *rooms.Room, light messaging.RoomVisibilit
 			continue
 		}
 		sneakScore := CalcSneakScoreVsObserver(mc, &m.Character, light)
-		observerScore := CalcDetectionScore(&m.Character, dest)
+		observerScore, _ := sneakObserverScore(&m.Character, dest)
 		if !combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success {
 			return true
 		}

@@ -721,13 +721,21 @@ itself.
   a zero-value cost result.
 - **Roll:** The sneaker uses effective Dexterity plus the Skullduggery skill
   multiplier and stealth bonuses, modified by light conditions per observer.
-  Each observer uses effective Perception plus the Search skill multiplier.
-  Resolution flows through `combat.RunContest`.
+  Each observer uses effective Perception plus the Search skill multiplier,
+  priced by `sneakObserverScore`: by sight (`CalcDetectionScore`) when it
+  makes out anything, by ear (`CalcHearingScore`, `Balance.SneakHearingMult`,
+  skipped for the superhearing flag) when it sees nothing (#333, owner
+  2026-10-08). A sneaking arrival (`sneakerSpotted`) prices observers the same
+  way. Resolution flows through `combat.RunContest`.
 - **Success/failure:** Success resolves Concealing to Hidden, queues the Hidden
   condition mirror, sets the `sneaking` misc key, and returns `Success`. The first
   observer who wins resolves the actor back to Visible and populates
-  `SpottedByName`. `RollHappened` distinguishes a contested attempt from an
-  empty-room success.
+  `SpottedBy` (the observer's character, not a name). The observer's notice
+  (`sneakNoticeLine`) names the sneaker only as far as the observer sees, and
+  says only "You hear someone trying to move quietly." when it sees nothing;
+  the sneaker's line (`SpottedLine`) names the spotter only as far as the
+  sneaker sees (#215). `RollHappened` distinguishes a contested attempt from
+  an empty-room success.
 - **Player wrapper ownership:** The user command owns the skill gate, busy and
   prior-failure-cooldown messages, stamina-refusal text, and player-facing
   success/failure text. It checks the prior failure cooldown with read-only
