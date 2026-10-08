@@ -177,3 +177,43 @@ goldens (#216, #242). `SneakHearingMult` gets a test that reads the shipped `con
 value, since test binaries load Go defaults. #251 gets a scan test for a hidden player and for
 both dark directions, plus the playtest. GMCP gets payload tests at each sight tier and for a
 deafened recipient.
+
+## Dry-run amendments (2026-10-08)
+
+The plan was dry-run on `f50400bf7` before it was written. These findings override the
+sections above where they differ; the plan carries them.
+
+- **A, #214:** two more raw-name lines join the fix: the non-combatant refusal
+  (`attack.go:179`) and the PvP target's own "prepares to fight you!" (`attack.go:345`), the
+  latter judged at the target's sight.
+- **A, #242:** the player prone and grapple breaks (`helpers.go:511`, `:521`) also move to the
+  sound-backed sender, so mob and player casters read alike. `sendVisualElseAudible` gains an
+  exclude list. The focus-shift line names two people and uses `SendTextVisualHidingNames`.
+- **B, #333 and #215:** the same contest runs a second time for a sneaking arrival
+  (`sneakerSpotted`, `internal/actions/move.go:293-330`, "slips into the room but you notice
+  them."). Both share one score helper and one notice helper. The sneaker's line at
+  `SightNone` keeps its opening: "You try to blend into the shadows but something notices
+  you."
+- **B, new:** a mob's `sayto` line goes to the room on plain `SendText`
+  (`mobcommands/sayto.go:50`, `:68`) and names both parties in the dark. It is fixed in the
+  same PR.
+- **C, #276:** `nameTagPattern` does NOT learn the corpse tags. Corpse lines carry "corpse of
+  <name>" inside the tag and `Anonymize` runs before `HideNames`, so the change would turn
+  "loots the corpse of Deadric" into "loots the A figure" and break #428. The decay line goes
+  out through `SendTextVisualHidingNames` instead; its wording becomes "The corpse of Deadric
+  crumbles to dust." for every reader, matching every other corpse line, and a reader who sees
+  nothing gets no line.
+- **C, #435:** the bare-word rule covers mob corpses too; `NameAt` already hides both kinds
+  below clear sight. `FindCorpse` becomes a wrapper over `FindCorpseIndex`.
+- **D, #252:** at `SightNone` Room.Info also drops the title, items and containers, as the
+  text `look` refuses them. A light-band change in the room re-sends Room.Info and the map, so
+  lighting a torch updates the panel and maps the room. A hidden mob's `sayto` also sent its
+  real name over GMCP; the say rework covers it (new `Communication.SpeakerHidden`).
+- **D, #218:** implemented as a new `LookOwnGearByTouch` result in `actions.ResolveLook`; a mob
+  looker gets nothing from it.
+- **E, #298:** the lamp is `lamp: 35` (shapes band 25 to 49 under shipped `LightBlindBelow: 25`,
+  `LightDimBelow: 50`), and it goes on the two static fallback cells 5105 and 5106 as well as
+  5107. The `fine` hint goes on the arrest line and the Jailed condition's `description`, not
+  `start_actee`, which prints back to back with the arrest line.
+- **E, #219 and #409:** a seventh dash (`jail.go:42`) and the mirror "item(s)" in `drop all`
+  (`drop.go:127`) are fixed too.
