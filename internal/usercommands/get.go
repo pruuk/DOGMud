@@ -189,7 +189,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		// them; resolve via FindCorpseIndex and recurse with the explicit
 		// "from" form so each item flows through the ownership/loot-mode gates.
 		if len(args) >= 2 {
-			if cIdx := room.FindCorpseIndex(args[len(args)-1]); cIdx >= 0 {
+			if cIdx := room.FindCorpseIndex(args[len(args)-1], user.Character); cIdx >= 0 {
 				corpse := &room.Corpses[cIdx]
 				if !canLootCorpse(user, corpse) {
 					user.SendText(messaging.CategorySystem, `This isn't your kill.`)
@@ -764,7 +764,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	}
 
-	if _, corpseFound := room.FindCorpse(rest); corpseFound {
+	if _, corpseFound := room.FindCorpse(rest, user.Character); corpseFound {
 		user.SendText(messaging.CategorySystem, `You can't pick up corpses. What would people think?`)
 		return true, nil
 	}

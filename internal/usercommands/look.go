@@ -441,7 +441,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// deduplicating index was built here (two maps and two slices) whose
 		// only consumers were each other, so it computed a lookup table and
 		// then threw it away on every look. Removed; see review finding 31.
-		if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
+		if corpse, corpseFound := room.FindCorpse(rest, user.Character); corpseFound {
 
 			corpseColor := `mob-corpse`
 			if corpse.UserId > 0 {

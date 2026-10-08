@@ -37,7 +37,7 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	// inventory match.
 	itm, source, found := user.Character.FindItem(rest)
 	if !found {
-		corpse, corpseFound := room.FindCorpse(rest)
+		corpse, corpseFound := room.FindCorpse(rest, user.Character)
 		if !corpseFound {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(
 				`<ansi fg="red">You don't have "%s" and there's no corpse of that name here.</ansi>`, rest))

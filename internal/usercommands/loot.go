@@ -44,7 +44,7 @@ func Loot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		rest = strings.Join(args[1:], " ")
 	}
 
-	corpseIdx := room.FindCorpseIndex(rest)
+	corpseIdx := room.FindCorpseIndex(rest, user.Character)
 	if corpseIdx < 0 {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see a %s to loot.", rest))
 		return true, nil
@@ -158,7 +158,7 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 		return true, nil
 	}
 
-	corpseIdx := room.FindCorpseIndex(rest)
+	corpseIdx := room.FindCorpseIndex(rest, user.Character)
 	if corpseIdx < 0 {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see a %s to loot.", rest))
 		return true, nil

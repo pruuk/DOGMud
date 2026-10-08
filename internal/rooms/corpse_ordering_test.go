@@ -15,7 +15,7 @@ func TestFindCorpse_SameName_ResolvesNewest(t *testing.T) {
 	r.AddCorpse(Corpse{MobId: 1, Character: characters.Character{Name: "goblin"}, RoundCreated: 1})
 	r.AddCorpse(Corpse{MobId: 1, Character: characters.Character{Name: "goblin"}, RoundCreated: 2}) // newest
 
-	got, ok := r.FindCorpse("goblin corpse")
+	got, ok := r.FindCorpse("goblin corpse", nil)
 	if !ok {
 		t.Fatal("expected to find a goblin corpse")
 	}
@@ -23,7 +23,7 @@ func TestFindCorpse_SameName_ResolvesNewest(t *testing.T) {
 		t.Errorf("FindCorpse resolved RoundCreated=%d, want 2 (newest)", got.RoundCreated)
 	}
 
-	idx := r.FindCorpseIndex("goblin corpse")
+	idx := r.FindCorpseIndex("goblin corpse", nil)
 	if idx < 0 {
 		t.Fatal("FindCorpseIndex found nothing")
 	}
@@ -38,7 +38,7 @@ func TestFindCorpse_GenericQuery_ResolvesNewest(t *testing.T) {
 	r.AddCorpse(Corpse{MobId: 2, Character: characters.Character{Name: "rat"}, RoundCreated: 2}) // newest
 
 	// A generic "corpse" query should inspect the most recent kill (the rat).
-	got, ok := r.FindCorpse("corpse")
+	got, ok := r.FindCorpse("corpse", nil)
 	if !ok {
 		t.Fatal("expected a generic corpse match")
 	}

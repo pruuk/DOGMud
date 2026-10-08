@@ -24,7 +24,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
-	corpse, found := room.FindCorpse(rest)
+	corpse, found := room.FindCorpse(rest, user.Character)
 	if !found {
 		user.SendText(messaging.CategorySystem, `You don't see those remains here.`)
 		return true, nil

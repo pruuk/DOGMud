@@ -1499,67 +1499,21 @@ func (r *Room) GetAllFloorItems(stash bool) []items.Item {
 	return found
 }
 
-func (r *Room) FindCorpse(searchName string) (Corpse, bool) {
-
-	// First search for player corpses that match
-
-	playerCorpseLookup := map[string]int{}
-	playerCorpses := []string{}
-
-	mobCorpseLookup := map[string]int{}
-	mobCorpses := []string{}
-
-	// Iterate newest-first (corpses are appended on death) so a same-name
-	// lookup keeps the most recent corpse and the generic-match candidate list
-	// is newest-first — `look/loot corpse` inspects the last thing that died.
-	for idx := len(r.Corpses) - 1; idx >= 0; idx-- {
-		c := r.Corpses[idx]
-
-		if c.Prunable {
-			continue
-		}
-
-		if c.UserId > 0 {
-			name := c.Character.Name + ` corpse`
-			if _, ok := playerCorpseLookup[name]; !ok {
-				playerCorpseLookup[name] = idx
-				playerCorpses = append(playerCorpses, name)
-			}
-		}
-
-		if c.MobId > 0 {
-			name := c.Character.Name + ` corpse`
-			if _, ok := mobCorpseLookup[name]; !ok {
-				mobCorpseLookup[name] = idx
-				mobCorpses = append(mobCorpses, name)
-			}
-		}
+// FindCorpse is FindCorpseIndex returning a value copy of the corpse. A caller
+// that changes the corpse (loot, ownership) must use FindCorpseIndex and work
+// on r.Corpses[idx], since a copy silently drops the mutation.
+func (r *Room) FindCorpse(searchName string, viewer *characters.Character) (Corpse, bool) {
+	idx := r.FindCorpseIndex(searchName, viewer)
+	if idx < 0 {
+		return Corpse{}, false
 	}
-
-	userMatch, closeUserMatch := util.FindMatchIn(searchName, playerCorpses...)
-	if userMatch != `` {
-		return r.Corpses[playerCorpseLookup[userMatch]], true
-	}
-
-	mobMatch, closeMobMatch := util.FindMatchIn(searchName, mobCorpses...)
-	if mobMatch != `` {
-		return r.Corpses[mobCorpseLookup[mobMatch]], true
-	}
-
-	if closeUserMatch != `` {
-		return r.Corpses[playerCorpseLookup[closeUserMatch]], true
-	} else if closeMobMatch != `` {
-		return r.Corpses[mobCorpseLookup[closeMobMatch]], true
-	}
-
-	return Corpse{}, false
+	return r.Corpses[idx], true
 }
 
-// FindCorpseIndex mirrors FindCorpse's name-matching but returns the slice
-// index of the first non-prunable matching corpse (or -1). Callers mutate
-// r.Corpses[idx] in place via a pointer (FindCorpse returns a value copy,
-// which silently drops loot mutations).
-func (r *Room) FindCorpseIndex(searchName string) int {
+// FindCorpseIndex returns the slice index of the non-prunable corpse
+// searchName names (or -1), newest first. Callers mutate r.Corpses[idx] in
+// place via a pointer.
+func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) int {
 
 	playerCorpseLookup := map[string]int{}
 	playerCorpses := []string{}
