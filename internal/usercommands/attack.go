@@ -171,12 +171,22 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			dupIdx := room.GetMobDuplicateIndex(m.InstanceId)
 			mName := m.Character.GetMobNameIndexed(user.UserId, dupIdx).String()
 
+			// #214: the attacker's own lines ride raw SendText, which
+			// bypasses the sight gate, so each hides the target's name at
+			// the attacker's sight here. Wrap the Sprintf in place: the
+			// viewpoint audit keys on the literal (see target.go).
+			attackerSight := messaging.ParticipantSight(user.Character, room)
+
 			switch mobs.CheckPlayerHarm(m) {
 			case mobs.HarmBlockedCompanion:
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s is someone's companion!`, mName))
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf(`%s is someone's companion!`, mName),
+					[]string{m.Character.Name}, attackerSight))
 				return true, nil
 			case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, m.Character.Name))
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, m.Character.Name),
+					[]string{m.Character.Name}, attackerSight))
 				mobs.FireAttackRejected(m, user.UserId)
 				return true, nil
 			}
@@ -248,9 +258,9 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			}
 
 			if engaged {
-				user.SendText(messaging.CategoryHitMelee,
+				user.SendText(messaging.CategoryHitMelee, messaging.HideNames(
 					fmt.Sprintf(`You prepare to enter into mortal combat with %s.`, mName),
-				)
+					[]string{m.Character.Name}, attackerSight))
 			}
 
 			sendMeleeAmbushDenial(user, ambushDenied)
@@ -335,17 +345,21 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				state.ActorRef{UserId: attackPlayerId},
 				targeting.ReasonForAggroType(pvpAggroType))
 
-			user.SendText(messaging.CategoryHitMelee,
+			// #214: each side's own line hides the other's name at the
+			// READER's sight, as target.go's shift-focus lines do.
+			user.SendText(messaging.CategoryHitMelee, messaging.HideNames(
 				fmt.Sprintf(`You prepare to enter into mortal combat with <ansi fg="username">%s</ansi>.`, p.Character.Name),
-			)
+				[]string{p.Character.Name},
+				messaging.ParticipantSight(user.Character, room)))
 
 			sendMeleeAmbushDenial(user, pvpAmbushDenied)
 
 			if !isSneaking {
 
-				p.SendText(messaging.CategoryHitMelee,
+				p.SendText(messaging.CategoryHitMelee, messaging.HideNames(
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> prepares to fight you!`, user.Character.Name),
-				)
+					[]string{user.Character.Name},
+					messaging.ParticipantSight(p.Character, room)))
 
 				room.SendTextVisual(messaging.CategoryHitMelee,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> prepares to fight <ansi fg="mobname">%s</ansi>.`, user.Character.Name, p.Character.Name),
