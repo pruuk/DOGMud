@@ -81,12 +81,21 @@ func getAllMatchingFromFloor(user *users.UserRecord, room *rooms.Room, itemName 
 		}
 		return
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You pick up %d item(s).`, picked))
+	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You pick up %s.`, itemCount(picked)))
 	room.SendTextVisual(messaging.CategoryLoot,
 		fmt.Sprintf(`<ansi fg="username">%s</ansi> picks up some items.`, user.Character.Name),
 		user.UserId,
 	)
 	sendEncumbranceWarning(user)
+}
+
+// itemCount words a count of items for a sweep's summary line: "1 item",
+// "2 items" (#409: "item(s)" read machine-made).
+func itemCount(n int) string {
+	if n == 1 {
+		return `1 item`
+	}
+	return fmt.Sprintf(`%d items`, n)
 }
 
 func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -130,7 +139,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					ct := len(user.Character.ComponentItems)
 					user.Character.Items = append(user.Character.Items, user.Character.ComponentItems...)
 					user.Character.ComponentItems = nil
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You move %d item(s) from your component bag to your backpack.`, ct))
+					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You move %s from your component bag to your backpack.`, itemCount(ct)))
 				}
 				return true, nil
 			}
@@ -227,7 +236,11 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		}
 
 		// get all — grab everything from the floor
+		// offered counts what the sweep answered for, so a floor with
+		// nothing to take still gets a reply (#409).
+		offered := 0
 		if room.Gold > 0 {
+			offered++
 			Get(`gold`, user, room, flags)
 		}
 
@@ -240,6 +253,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				if item.IsFixture() {
 					continue
 				}
+				offered++
 				// Never by accident: see getAllMatchingFromFloor.
 				if item.BaubleBelongsTo(room.RoomId) {
 					leaveHouseholdBauble(user, item)
@@ -247,6 +261,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				}
 				Get(item.Name(), user, room, flags)
 			}
+		}
+
+		if offered == 0 {
+			user.SendText(messaging.CategorySystem, `There is nothing here to pick up.`)
 		}
 
 		return true, nil

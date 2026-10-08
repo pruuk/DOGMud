@@ -124,7 +124,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if dropped == 0 {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have any "%s" to drop.`, itemName))
 		} else {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You drop %d item(s).`, dropped))
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You drop %s.`, itemCount(dropped)))
 			room.SendTextVisual(messaging.CategoryLoot,
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> drops some items.`, user.Character.Name),
 				user.UserId,

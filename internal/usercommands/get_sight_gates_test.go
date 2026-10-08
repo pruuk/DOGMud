@@ -27,7 +27,7 @@ func TestGet_SweepStopsSilentlyOnAnExplodingItem(t *testing.T) {
 		items.Item{ItemId: 96203, Spec: &items.ItemSpec{ItemId: 96203, Name: "stone"}, Adjectives: []string{`exploding`}},
 	)
 	out := runGate(t, user, func() (bool, error) { return Get("all stone", user, room, 0) })
-	assert.Contains(t, out, "You pick up 1 item(s).")
+	assert.Contains(t, out, "You pick up 1 item.")
 	_, carried := user.Character.FindInBackpack("stone")
 	require.True(t, carried)
 }
