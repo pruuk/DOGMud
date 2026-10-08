@@ -225,8 +225,11 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 	if u := users.GetByUserId(next); u != nil {
 		nextName = u.Character.Name
 	}
-	user.SendText(messaging.CategorySystem,
+	// Whom the share goes to follows the looter's sight, as the corpse's
+	// name does (#435): a shapes-only looter passes it "to a figure".
+	user.SendText(messaging.CategorySystem, messaging.HideNames(
 		fmt.Sprintf(`You pass your share of the %s to <ansi fg="username">%s</ansi>.`, corpseNameFor(user, room, corpse), nextName),
+		[]string{nextName}, messaging.ParticipantSight(user.Character, room)),
 	)
 
 	return true, nil
