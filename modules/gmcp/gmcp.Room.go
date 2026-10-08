@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
-	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -341,7 +340,9 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 				continue
 			}
 
-			if u.Character.HasConditionFlag(conditions.Hidden) {
+			// The text roster's rule (rooms.GetDetails): hidden unless the
+			// viewer has see-hidden.
+			if !user.Character.Perceives(u.Character) {
 				continue
 			}
 
@@ -377,7 +378,9 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 				continue
 			}
 
-			if mob.Character.HasConditionFlag(conditions.Hidden) {
+			// The text roster's rule (rooms.GetDetails): hidden unless the
+			// viewer has see-hidden.
+			if !user.Character.Perceives(&mob.Character) {
 				continue
 			}
 

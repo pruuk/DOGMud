@@ -3,12 +3,15 @@ package gmcp
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -160,4 +163,36 @@ func TestRoomInfo_HiddenContainerListedOnlyOnceDiscovered(t *testing.T) {
 
 	viewer.Character.AddDiscovery(9720, "loose stone")
 	require.ElementsMatch(t, []string{"crate", "loose stone"}, names())
+}
+
+// Room.Info's rosters use the text roster's rule, Character.Perceives
+// (rooms.GetDetails): a hidden occupant is left out unless the viewer has
+// see-hidden, and then it is listed.
+func TestRoomInfo_SeeHiddenViewerListsAHiddenMob(t *testing.T) {
+	const veilId, cloakId = 97291, 97292
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		veilId:  {ConditionId: veilId, Name: "Test Veil", Flags: []conditions.Flag{conditions.SeeHidden}},
+		cloakId: {ConditionId: cloakId, Name: "Test Cloak", Flags: []conditions.Flag{conditions.Hidden}},
+	}))
+	viewer := roomSightFixture(t, 60)
+	wight := mobs.GetInstance(721)
+	wight.Character.Conditions = conditions.New()
+	wight.Character.Awareness = awareness.NewMachine()
+	reason := state.TransitionReason{Trigger: "gmcp_room_sight_test"}
+	require.NoError(t, wight.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+	wight.Character.Awareness.ResolveConcealment(true, reason)
+	require.NoError(t, wight.Character.AddCondition(cloakId, true))
+	require.True(t, wight.Character.IsHidden(), "precondition: the wight is hidden")
+
+	npcNames := func() []string {
+		out := []string{}
+		for _, c := range roomInfoFor(t, viewer).Contents.Npcs {
+			out = append(out, c.Name)
+		}
+		return out
+	}
+	require.Empty(t, npcNames(), "no see-hidden: the hidden wight is not listed")
+
+	require.NoError(t, viewer.Character.AddCondition(veilId, true))
+	require.Equal(t, []string{"Grave Wight"}, npcNames(), "see-hidden lists the hidden wight")
 }
