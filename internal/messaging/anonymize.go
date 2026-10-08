@@ -20,10 +20,10 @@ import "regexp"
 // anchor on and an infrared observer reads "a figure (dead)".
 //
 // The `poss` group (#246) captures a possessive written INSIDE the tag, the
-// shape the combat template lines use (the YAML puts the doubled
-// quote of {actor}'s before the closing tag). The body
-// is lazy so the optional group gets the 's rather than the body swallowing
-// it; Anonymize re-emits it after the figure word.
+// shape the combat template lines use (the YAML puts the doubled quote of
+// {actor}'s before the closing tag). The body is lazy so the optional group
+// gets the 's rather than the body swallowing it; Anonymize re-emits it
+// after the figure word.
 var nameTagPattern = regexp.MustCompile(
 	`<ansi fg="((?:username|mobname)(?:-[A-Za-z0-9_-]+)?|petname)">[^<]+?(?P<poss>'s|’s)?</ansi>(?:` + adjectiveSpanBody + `)?`,
 )

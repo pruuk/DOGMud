@@ -4,8 +4,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -84,4 +87,36 @@ func TestAttack_Lit_StillNamesTheMob(t *testing.T) {
 
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
 	require.Contains(t, out, "Skeleton", "a sighted attacker reads the name: %q", out)
+}
+
+// The PvP target's "prepares to fight you!" is judged at the TARGET's sight,
+// not the attacker's: a blinded target must not learn who is swinging at them
+// while the attacker, in a lit room, sees everything.
+func TestAttack_PvP_BlindedTargetDoesNotReadTheAttackersName(t *testing.T) {
+	t.Cleanup(seedAllRegistries())
+	user, room := getTestUserAndRoom(t)
+	target := users.GetByUserId(2)
+	require.NotNil(t, target)
+	require.Equal(t, user.Character.RoomId, target.Character.RoomId, "fixture: same room")
+	user.Character.EndAggro()
+
+	orig := target.Character.Perception
+	t.Cleanup(func() { target.Character.Perception = orig })
+	target.Character.Perception = characters.New().Perception
+	require.NoError(t, target.Character.Perception.TransitionTo(perception.Blinded, state.TransitionReason{Trigger: "test"}))
+
+	events.DrainQueuedMessagesForTest(user.UserId)
+	events.DrainQueuedMessagesForTest(target.UserId)
+
+	handled, err := Attack(target.Character.Name, user, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+
+	attackerOut := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
+	require.Contains(t, attackerOut, target.Character.Name, "the sighted attacker reads the name: %q", attackerOut)
+
+	out := strings.Join(events.DrainQueuedMessagesForTest(target.UserId), "\n")
+	require.Contains(t, out, "prepares to fight you", "the line must still be sent: %q", out)
+	require.NotContains(t, out, user.Character.Name,
+		"a blinded target must not learn the attacker's name: %q", out)
 }
