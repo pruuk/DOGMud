@@ -99,6 +99,7 @@ func TestAttack_PvP_BlindedTargetDoesNotReadTheAttackersName(t *testing.T) {
 	require.NotNil(t, target)
 	require.Equal(t, user.Character.RoomId, target.Character.RoomId, "fixture: same room")
 	user.Character.EndAggro()
+	t.Cleanup(func() { user.Character.EndAggro() })
 
 	orig := target.Character.Perception
 	t.Cleanup(func() { target.Character.Perception = orig })
