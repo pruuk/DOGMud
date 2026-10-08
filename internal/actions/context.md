@@ -503,9 +503,9 @@ when the light here sees out (#428), never with heat-only figures or
 `listedOccupants` (`scan.go`), the room roster's rule (`rooms.GetDetails`):
 a mob actually in the room that the viewer `Perceives`, and every other
 player the viewer `Perceives`, so a hidden mob shows to see-hidden and a
-stale listing never. Scan's player-facing name list uses it too; its
-structured `ScanResult` (for mob callers) still lists every mob not
-`IsHidden`. Sight `SightNone` splits by cause (#364): `LookBlind` for a
+stale listing never. Scan's structured `ScanResult` (for mob callers) and
+its player-facing list both read it, behind one reach rule, `scanReach`
+(#251). Sight `SightNone` splits by cause (#364): `LookBlind` for a
 looker whose `Perception` is `Blinded` (the same check `ParticipantSight`
 answers `SightNone` on first), `LookTooDark` for one the room is too dark
 for, so a caller can say that light would help.
@@ -957,12 +957,18 @@ Sweeps the rooms one step away for occupants (`scan.go`).
   scan as it blocks look, by sight and by heat. The sighting stays, with
   `Locked` true and `Mobs` / `Players` empty, so a mob caller (the
   `try_scan` btree action) gets nobody behind it.
-- **Structured result:** `Mobs` lists every mob in the room not
-  `IsHidden`; `Players` every other player. It does not follow sight; the
-  player rendering does.
+- **Structured result (#251):** follows the scanner's sight.
+  `scanReach(viewer, here, next)` is the one reach rule: the scanner's
+  `ParticipantSight` in the next room when they see out of this one
+  (`SeesThroughExit`), shapes by heat when only `SensesHeatThroughExit`
+  reaches, else `SightNone`. At anything but `SightNone`, `Mobs` and
+  `Players` are `listedOccupants` (the roster's rule: no hidden creature the
+  scanner does not `Perceives`, no stale listing). A shape counts, so a scout
+  mob acts on a figure (lighting 5d ruling D8); names stay in the struct and
+  the player text hides them below clear sight.
 - **UserActor behavior:** prints `You scan the surrounding area...` then
-  one line per exit, following the player's sight (see the look section
-  above): names with faces, `messaging.UnseenFigure` per creature with
+  one line per exit, rendered from the structured sighting at the same
+  `scanReach` (see the look section above): names with faces, `messaging.UnseenFigure` per creature with
   shapes or heat, `too dark to make anything out` with neither. A locked
   exit reads `north: the exit is locked` when light or heat would reach
   through it, and too dark otherwise, as `ResolveLook` answers.
