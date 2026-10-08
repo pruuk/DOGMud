@@ -24,6 +24,13 @@ func Shout(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
+	// Nothing to shout: refuse rather than broadcast a blank line to this
+	// room and the next (#260).
+	if strings.TrimSpace(rest) == `` {
+		user.SendText(messaging.CategorySystem, `Shout what?`)
+		return true, nil
+	}
+
 	rest = strings.ToUpper(rest)
 
 	if user.Character.HasConditionFlag(conditions.Drunk) {
