@@ -61,6 +61,7 @@ func SayTo(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				CommType:            `say`,
 				Name:                mob.Character.Name,
 				Message:             rest,
+				SpeakerHidden:       true,
 			})
 
 		} else {
@@ -132,6 +133,7 @@ func SayToOnly(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		CommType:            `say`,
 		Name:                mob.Character.Name,
 		Message:             rest,
+		SpeakerHidden:       isSneaking,
 	})
 
 	return true, nil

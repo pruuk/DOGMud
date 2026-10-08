@@ -70,11 +70,11 @@ func HideNames(text string, names []string, d SightDecision) string {
 // roar!") and a speaker ("Someone says, ...") share one delivery path.
 type NameHider func(text string, names []string, d SightDecision) string
 
-// speakerNoun is what a listener at d calls a speaker it cannot make out: "a
+// SpeakerNoun is what a listener at d calls a speaker it cannot make out: "a
 // figure" at shapes, "someone" otherwise. A voice belongs to a person, so the
 // unseen word is "someone" where UnseenNoun says "something" (owner ruling 3,
 // sight gates slice 5b).
-func speakerNoun(d SightDecision) string {
+func SpeakerNoun(d SightDecision) string {
 	if d == SightShapes {
 		return "a figure"
 	}
@@ -95,7 +95,7 @@ func HideSpeakerNames(text string, names []string, d SightDecision) string {
 	if d == SightFull || text == "" {
 		return text
 	}
-	word := speakerNoun(d)
+	word := SpeakerNoun(d)
 	for _, name := range longestFirst(names) {
 		text = hideTaggedName(text, name, word)
 	}
