@@ -79,3 +79,32 @@ func TestScan_MobSightingsSkipHiddenAndStale(t *testing.T) {
 	require.Len(t, result.Sightings[0].Mobs, 1)
 	require.Equal(t, "Midroad Scout", result.Sightings[0].Mobs[0].Name)
 }
+
+// A heat-sensing scout standing where the light is too poor to see out still
+// makes out the next room's occupants by heat, by the rule a player's scan
+// uses (scanReach's SensesHeatThroughExit branch, lighting plan 6 ruling O6):
+// whom FiguresSensedIn would show a player, and no hidden player. Without
+// infra the same scout makes out nobody. Fixture from scanOccupantScene, both
+// rooms lit at 30.
+func TestScan_HeatSensingScoutSightsThroughTheDark(t *testing.T) {
+	for _, infra := range []bool{true, false} {
+		actor, there := scanOccupantScene(t, 30, 30)
+		actor.isPlayer, actor.userId, actor.mobInstId = false, 0, scanMobSelfId
+		if !infra {
+			actor.char.Conditions = conditions.New()
+		}
+		require.Equal(t, infra, actor.char.InfraReach() > 0, "fixture: infra %v", infra)
+
+		result := Scan(actor, ScanOptions{HostileOnly: true})
+		require.Len(t, result.Sightings, 1, "the exit is still listed")
+		require.Empty(t, result.Sightings[0].Players, "a hidden player is never a scout's sighting")
+		if !infra {
+			require.Empty(t, result.Sightings[0].Mobs, "no infra, too dark to see out: nobody")
+			continue
+		}
+		require.Len(t, result.Sightings[0].Mobs, 1, "heat shows the scout the next room's creature")
+		require.Equal(t, "Midroad Scout", result.Sightings[0].Mobs[0].Name)
+		require.Len(t, FiguresSensedIn(actor.char, there, 0), 1,
+			"the scout senses whom a player's heat would show")
+	}
+}

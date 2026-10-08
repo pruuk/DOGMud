@@ -217,9 +217,10 @@ func scanReach(viewer *characters.Character, here, next *rooms.Room) (sight mess
 // left out unless the viewer has see-hidden. A nil viewer perceives whoever is
 // not hidden.
 //
-// It is the one occupant filter behind what a player sees of the next room:
-// scan's list, by name or as shapes, and the figures heat shows through an
-// exit for scan and for look (FiguresSensedIn).
+// It is the one occupant filter behind what anyone makes out of the next room:
+// scan's player list, by name or as shapes, the structured sightings a scout
+// mob acts on (both behind scanReach, #251), and the figures heat shows
+// through an exit for scan and for look (FiguresSensedIn).
 func listedOccupants(viewer *characters.Character, room *rooms.Room, selfUserId int) ([]*mobs.Mob, []*users.UserRecord) {
 	if room == nil {
 		return nil, nil

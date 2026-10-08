@@ -968,10 +968,11 @@ Sweeps the rooms one step away for occupants (`scan.go`).
   the player text hides them below clear sight.
 - **UserActor behavior:** prints `You scan the surrounding area...` then
   one line per exit, rendered from the structured sighting at the same
-  `scanReach` (see the look section above): names with faces, `messaging.UnseenFigure` per creature with
-  shapes or heat, `too dark to make anything out` with neither. A locked
-  exit reads `north: the exit is locked` when light or heat would reach
-  through it, and too dark otherwise, as `ResolveLook` answers.
+  `scanReach` (see the look section above): names with faces,
+  `messaging.UnseenFigure` per creature with shapes or heat, `too dark to
+  make anything out` with neither. A locked exit reads `north: the exit is
+  locked` when light or heat would reach through it, and too dark
+  otherwise, as `ResolveLook` answers.
 - **MobActor behavior:** silent (`SendText` is a no-op).
 - **Hostile-only mode:** `opts.HostileOnly` is not applied by `Scan`; the
   caller filters.
