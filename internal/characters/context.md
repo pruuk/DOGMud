@@ -1441,6 +1441,9 @@ visible (`ForceVisible`, trigger `TriggerCombatEntered`). It is the one reveal
 for every attack: `handleCombatRound` calls it on the defender, and so do the
 special-move seams `combat.ExecuteSkillMove` and `combat.ExecuteGrappleMove`
 and `actions.ExecuteTaunt`, before any line names the target (#382).
+`ExecuteSkillMove` skips it for an area shape (`Shape.Targeting ==
+TargetArea`, the boss area drain `actions.ExecuteDrainArea`): a sweep picks no
+one out, so a hidden player it clips stays hidden and keeps its conditions.
 
 ### Hidden movement stamina scaling
 
