@@ -18,7 +18,7 @@ transitions:
       - 'There is a little light here; you can make out shapes.'
   lighter_faces:
     any:
-      - 'You step into the light; faces are clear again.'
+      - 'You step into the light; faces are clear now.'
       - 'The light is better here; you can make out faces.'
   dazzled:
     any:

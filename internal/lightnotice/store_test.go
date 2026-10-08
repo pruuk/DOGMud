@@ -133,3 +133,26 @@ func TestCarriedLighterLinesNeverSayAgain(t *testing.T) {
 		}
 	}
 }
+
+// #409 sibling: stepping into a new room is also a first sight of that room,
+// so the movement cause's arrival-into-light lines never say "again" either.
+// (Leaving glare, DarkerFaces, is a return to ease and may say it.)
+func TestMovementLighterLinesNeverSayAgain(t *testing.T) {
+	t.Cleanup(ResetForTest)
+	if err := LoadFrom(shippedDir); err != nil {
+		t.Fatalf("shipped light notices refused: %v", err)
+	}
+	for _, tr := range []Transition{LighterShapes, LighterFaces} {
+		for _, indoor := range []bool{false, true} {
+			lines := Pool(CauseMovement, tr, indoor)
+			if len(lines) == 0 {
+				t.Fatalf("movement %s indoor=%v: no lines; the walk tested nothing", tr, indoor)
+			}
+			for _, l := range lines {
+				if strings.Contains(strings.ToLower(l), "again") {
+					t.Errorf("movement %s line says again: %q", tr, l)
+				}
+			}
+		}
+	}
+}
