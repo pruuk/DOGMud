@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/stretchr/testify/require"
@@ -55,6 +56,37 @@ func TestLook_OwnGearWhileBlindedIsKnownByTouch(t *testing.T) {
 func TestLook_NotYourGearInTheDarkStillRefuses(t *testing.T) {
 	look, _ := seedTouchGear(t, 0)
 	out := look("lantern")
+	require.Contains(t, out, tooDarkToSeeLine)
+	require.NotContains(t, out, "You run your hands over your")
+}
+
+const touchFloorItemId = 99219
+
+// A floor item sharing a carried item's name must not win in the dark: the
+// looker reads the touch line about their own item, and nothing about the
+// floor item is revealed.
+func TestLook_OwnGearWinsOverSameNamedFloorItemInTheDark(t *testing.T) {
+	look, _ := seedTouchGear(t, 0)
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		touchGearItemId: {ItemId: touchGearItemId, Name: "Oak Staff", Type: items.Weapon,
+			Description: "A staff carved with running hares."},
+		touchFloorItemId: {ItemId: touchFloorItemId, Name: "Oak Staff", Type: items.Weapon,
+			Description: "A staff gnawed by rats."},
+	}))
+	rooms.LoadRoom(2).AddItem(items.New(touchFloorItemId), false)
+
+	out := look("staff")
+	require.Contains(t, out, "You run your hands over your")
+	require.Contains(t, out, "Oak Staff")
+	require.NotContains(t, out, "gnawed by rats", "the floor item must stay unrevealed")
+	require.NotContains(t, out, "running hares", "touch reads the name, not the description")
+	require.NotContains(t, out, tooDarkToSeeLine)
+}
+
+// Bare look in the dark still refuses: touch needs a name.
+func TestLook_BareLookInTheDarkStillRefuses(t *testing.T) {
+	look, _ := seedTouchGear(t, 0)
+	out := look("")
 	require.Contains(t, out, tooDarkToSeeLine)
 	require.NotContains(t, out, "You run your hands over your")
 }
