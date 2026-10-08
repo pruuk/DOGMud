@@ -416,8 +416,8 @@ func isExcludedUser(uid int, excludeIds []int) bool {
 	return false
 }
 
-// sendDarkRoomCombatFallback sends a one-time "sounds of fighting" message
-// in a dark room to every player who cannot follow the fight by eye: one the
+// sendDarkRoomCombatFallback sends a one-time "You hear fighting close by."
+// line in a dark room to every player who cannot follow the fight by eye: one the
 // visual pipeline delivers nothing to (messaging.CanSeeShapes is false).
 // It used to test the nightvision FLAG, which sent the sound to an
 // infravision holder reading shapes and withheld it from a nightvision

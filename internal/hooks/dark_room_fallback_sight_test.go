@@ -11,7 +11,7 @@ import (
 )
 
 // Lighting plan 5c final review, finding 1: the dark-room fallbacks (the
-// "sounds of fighting" line, a mob's death, room and crafter idle flavour)
+// "You hear fighting close by." line, a mob's death, room and crafter idle flavour)
 // chose between the visual line and the audible one by the nightvision FLAG.
 // An infravision holder the Game window gives shapes was sent the sound, and a
 // nightvision holder in a room its window reads as blind was sent the visual
