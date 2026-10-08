@@ -1068,3 +1068,62 @@ func TestExecuteArrest_ArrestFlavorFitsTheLineWidth(t *testing.T) {
 		t.Fatalf("the arrested player never read the arrest line")
 	}
 }
+
+// #298: a new prisoner was never told how to buy their way out. The arrest
+// line names the `fine` command (which in turn names `payfine`), so the
+// player learns the price and the way out from the line they read last.
+func TestExecuteArrest_ArrestLineNamesTheFineCommand(t *testing.T) {
+	const arrestedUserId = 8803
+
+	origCell := cellRoomFn
+	origMove := aMoveFn
+	origDecay := aDecayFn
+	origNow := bNowFn
+	t.Cleanup(func() {
+		cellRoomFn = origCell
+		aMoveFn = origMove
+		aDecayFn = origDecay
+		bNowFn = origNow
+	})
+	aMoveFn = func(userId int, toRoomId int, isSpawn ...bool) error { return nil }
+	cellRoomFn = func(faction string) int { return 5106 }
+	aDecayFn = func() int { return 5 }
+	bNowFn = func() uint64 { return 100 }
+
+	restoreConditions := conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		jailedConditionId: {
+			ConditionId:   jailedConditionId,
+			Name:          "Jailed",
+			Flags:         []conditions.Flag{conditions.SilentStart},
+			TriggerCount:  1,
+			RoundInterval: 1,
+		},
+	})
+	defer restoreConditions()
+
+	u := users.NewTestUser(arrestedUserId, "jailbird3", "Jailbird", 0)
+	u.LineWidth = 80
+	restoreUsers := users.SeedUsersForTest(map[int]*users.UserRecord{arrestedUserId: u})
+	defer restoreUsers()
+	events.DrainQueuedMessagesForTest(arrestedUserId)
+
+	if ok := ExecuteArrest(u.Character, arrestedUserId, "stillwater_guards", false); !ok {
+		t.Fatalf("ExecuteArrest should succeed when the faction has a cell")
+	}
+
+	tags := regexp.MustCompile(`<[^>]*>`)
+	for _, msg := range events.DrainQueuedMessagesForTest(arrestedUserId) {
+		if !strings.Contains(msg, "A guard seizes you") {
+			continue
+		}
+		plain := strings.Join(strings.Fields(tags.ReplaceAllString(msg, "")), " ")
+		if !strings.Contains(plain, "Type fine to see what you owe.") {
+			t.Errorf("the arrest line does not name the fine command: %q", plain)
+		}
+		if !strings.Contains(msg, `<ansi fg="command">fine</ansi>`) {
+			t.Errorf("the fine command is not marked as a command: %q", msg)
+		}
+		return
+	}
+	t.Fatalf("the arrested player never read the arrest line")
+}

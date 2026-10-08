@@ -147,7 +147,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// ── routing would narrate the wrong thing, or narrate it repeatedly ─────
 	"internal/hooks/pinnacle_tick.go|339": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
 	"internal/hooks/pinnacle_tick.go|353": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
-	"internal/justice/arrest.go|643":      "RestoreJailOnLogin re-applies an already-running sentence after the RemoveCondition above, so the hook would read it as a fresh application and clang the cell door shut on every login",
+	"internal/justice/arrest.go|645":      "RestoreJailOnLogin re-applies an already-running sentence after the RemoveCondition above, so the hook would read it as a fresh application and clang the cell door shut on every login",
 
 	// ── the condition must be in place before the function returns ─────────
 	"internal/justice/arrest.go|395": "silent-start, the arrest narrates; no-go and no-aggro-target are read in the same round dispatch",
