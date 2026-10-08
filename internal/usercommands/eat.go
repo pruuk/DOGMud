@@ -19,7 +19,7 @@ func Eat(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	// Chunk 4e: can't eat while grappled — both hands committed.
 	if user.Character.Position != nil && user.Character.Position.IsGrappling() {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Your hands are committed to the grapple — you can't reach for that.</ansi>`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="red">Your hands are committed to the grapple, so you can't reach for that.</ansi>`)
 		return true, nil
 	}
 
