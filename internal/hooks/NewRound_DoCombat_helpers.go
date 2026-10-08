@@ -432,7 +432,9 @@ func sendDarkRoomCombatFallback(room *rooms.Room, excludeUserIds ...int) {
 		}
 		u := users.GetByUserId(uid)
 		if u != nil && !messaging.CanSeeShapes(u.Character, room) {
-			u.SendText(messaging.CategoryDefault, `<ansi fg="yellow">You hear the sounds of fighting nearby.</ansi>`)
+			// #216: every caller passes the fight's own room, so the
+			// reader is IN the fight's room; "nearby" said otherwise.
+			u.SendText(messaging.CategoryDefault, `<ansi fg="yellow">You hear fighting close by.</ansi>`)
 		}
 	}
 }

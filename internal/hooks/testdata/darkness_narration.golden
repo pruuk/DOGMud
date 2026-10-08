@@ -15,163 +15,163 @@
 
 atk=full|def=full|hit|attacker => AUTHORED|hit|actor.
 atk=full|def=full|hit|defender => AUTHORED|hit|actee.
-atk=full|def=full|hit|spectator => You hear the sounds of fighting nearby.
+atk=full|def=full|hit|spectator => You hear fighting close by.
 atk=full|def=full|crit|attacker => AUTHORED|crit|actor.
 atk=full|def=full|crit|defender => AUTHORED|crit|actee.
-atk=full|def=full|crit|spectator => You hear the sounds of fighting nearby.
+atk=full|def=full|crit|spectator => You hear fighting close by.
 atk=full|def=full|deflected|attacker => AUTHORED|deflected|actor.
 atk=full|def=full|deflected|defender => AUTHORED|deflected|actee.
-atk=full|def=full|deflected|spectator => You hear the sounds of fighting nearby.
+atk=full|def=full|deflected|spectator => You hear fighting close by.
 atk=full|def=full|defense_crit|attacker => AUTHORED|defense_crit|actor.
 atk=full|def=full|defense_crit|defender => AUTHORED|defense_crit|actee.
-atk=full|def=full|defense_crit|spectator => You hear the sounds of fighting nearby.
+atk=full|def=full|defense_crit|spectator => You hear fighting close by.
 atk=full|def=full|miss|attacker => AUTHORED|miss|actor.
 atk=full|def=full|miss|defender => AUTHORED|miss|actee.
-atk=full|def=full|miss|spectator => You hear the sounds of fighting nearby.
+atk=full|def=full|miss|spectator => You hear fighting close by.
 atk=full|def=full|fumble|attacker => AUTHORED|fumble|actor.
 atk=full|def=full|fumble|defender => AUTHORED|fumble|actee.
-atk=full|def=full|fumble|spectator => You hear the sounds of fighting nearby.
+atk=full|def=full|fumble|spectator => You hear fighting close by.
 atk=full|def=shapes|hit|attacker => AUTHORED|hit|actor.
 atk=full|def=shapes|hit|defender => AUTHORED|hit|actee.
-atk=full|def=shapes|hit|spectator => You hear the sounds of fighting nearby.
+atk=full|def=shapes|hit|spectator => You hear fighting close by.
 atk=full|def=shapes|crit|attacker => AUTHORED|crit|actor.
 atk=full|def=shapes|crit|defender => AUTHORED|crit|actee.
-atk=full|def=shapes|crit|spectator => You hear the sounds of fighting nearby.
+atk=full|def=shapes|crit|spectator => You hear fighting close by.
 atk=full|def=shapes|deflected|attacker => AUTHORED|deflected|actor.
 atk=full|def=shapes|deflected|defender => AUTHORED|deflected|actee.
-atk=full|def=shapes|deflected|spectator => You hear the sounds of fighting nearby.
+atk=full|def=shapes|deflected|spectator => You hear fighting close by.
 atk=full|def=shapes|defense_crit|attacker => AUTHORED|defense_crit|actor.
 atk=full|def=shapes|defense_crit|defender => AUTHORED|defense_crit|actee.
-atk=full|def=shapes|defense_crit|spectator => You hear the sounds of fighting nearby.
+atk=full|def=shapes|defense_crit|spectator => You hear fighting close by.
 atk=full|def=shapes|miss|attacker => AUTHORED|miss|actor.
 atk=full|def=shapes|miss|defender => AUTHORED|miss|actee.
-atk=full|def=shapes|miss|spectator => You hear the sounds of fighting nearby.
+atk=full|def=shapes|miss|spectator => You hear fighting close by.
 atk=full|def=shapes|fumble|attacker => AUTHORED|fumble|actor.
 atk=full|def=shapes|fumble|defender => AUTHORED|fumble|actee.
-atk=full|def=shapes|fumble|spectator => You hear the sounds of fighting nearby.
+atk=full|def=shapes|fumble|spectator => You hear fighting close by.
 atk=full|def=none|hit|attacker => AUTHORED|hit|actor.
 atk=full|def=none|hit|defender => AUTHORED|hit|actee.
-atk=full|def=none|hit|spectator => You hear the sounds of fighting nearby.
+atk=full|def=none|hit|spectator => You hear fighting close by.
 atk=full|def=none|crit|attacker => AUTHORED|crit|actor.
 atk=full|def=none|crit|defender => AUTHORED|crit|actee.
-atk=full|def=none|crit|spectator => You hear the sounds of fighting nearby.
+atk=full|def=none|crit|spectator => You hear fighting close by.
 atk=full|def=none|deflected|attacker => AUTHORED|deflected|actor.
 atk=full|def=none|deflected|defender => AUTHORED|deflected|actee.
-atk=full|def=none|deflected|spectator => You hear the sounds of fighting nearby.
+atk=full|def=none|deflected|spectator => You hear fighting close by.
 atk=full|def=none|defense_crit|attacker => AUTHORED|defense_crit|actor.
 atk=full|def=none|defense_crit|defender => AUTHORED|defense_crit|actee.
-atk=full|def=none|defense_crit|spectator => You hear the sounds of fighting nearby.
+atk=full|def=none|defense_crit|spectator => You hear fighting close by.
 atk=full|def=none|miss|attacker => AUTHORED|miss|actor.
 atk=full|def=none|miss|defender => AUTHORED|miss|actee.
-atk=full|def=none|miss|spectator => You hear the sounds of fighting nearby.
+atk=full|def=none|miss|spectator => You hear fighting close by.
 atk=full|def=none|fumble|attacker => AUTHORED|fumble|actor.
 atk=full|def=none|fumble|defender => AUTHORED|fumble|actee.
-atk=full|def=none|fumble|spectator => You hear the sounds of fighting nearby.
+atk=full|def=none|fumble|spectator => You hear fighting close by.
 atk=shapes|def=full|hit|attacker => AUTHORED|hit|actor.
 atk=shapes|def=full|hit|defender => AUTHORED|hit|actee.
-atk=shapes|def=full|hit|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=full|hit|spectator => You hear fighting close by.
 atk=shapes|def=full|crit|attacker => AUTHORED|crit|actor.
 atk=shapes|def=full|crit|defender => AUTHORED|crit|actee.
-atk=shapes|def=full|crit|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=full|crit|spectator => You hear fighting close by.
 atk=shapes|def=full|deflected|attacker => AUTHORED|deflected|actor.
 atk=shapes|def=full|deflected|defender => AUTHORED|deflected|actee.
-atk=shapes|def=full|deflected|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=full|deflected|spectator => You hear fighting close by.
 atk=shapes|def=full|defense_crit|attacker => AUTHORED|defense_crit|actor.
 atk=shapes|def=full|defense_crit|defender => AUTHORED|defense_crit|actee.
-atk=shapes|def=full|defense_crit|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=full|defense_crit|spectator => You hear fighting close by.
 atk=shapes|def=full|miss|attacker => AUTHORED|miss|actor.
 atk=shapes|def=full|miss|defender => AUTHORED|miss|actee.
-atk=shapes|def=full|miss|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=full|miss|spectator => You hear fighting close by.
 atk=shapes|def=full|fumble|attacker => AUTHORED|fumble|actor.
 atk=shapes|def=full|fumble|defender => AUTHORED|fumble|actee.
-atk=shapes|def=full|fumble|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=full|fumble|spectator => You hear fighting close by.
 atk=shapes|def=shapes|hit|attacker => AUTHORED|hit|actor.
 atk=shapes|def=shapes|hit|defender => AUTHORED|hit|actee.
-atk=shapes|def=shapes|hit|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=shapes|hit|spectator => You hear fighting close by.
 atk=shapes|def=shapes|crit|attacker => AUTHORED|crit|actor.
 atk=shapes|def=shapes|crit|defender => AUTHORED|crit|actee.
-atk=shapes|def=shapes|crit|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=shapes|crit|spectator => You hear fighting close by.
 atk=shapes|def=shapes|deflected|attacker => AUTHORED|deflected|actor.
 atk=shapes|def=shapes|deflected|defender => AUTHORED|deflected|actee.
-atk=shapes|def=shapes|deflected|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=shapes|deflected|spectator => You hear fighting close by.
 atk=shapes|def=shapes|defense_crit|attacker => AUTHORED|defense_crit|actor.
 atk=shapes|def=shapes|defense_crit|defender => AUTHORED|defense_crit|actee.
-atk=shapes|def=shapes|defense_crit|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=shapes|defense_crit|spectator => You hear fighting close by.
 atk=shapes|def=shapes|miss|attacker => AUTHORED|miss|actor.
 atk=shapes|def=shapes|miss|defender => AUTHORED|miss|actee.
-atk=shapes|def=shapes|miss|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=shapes|miss|spectator => You hear fighting close by.
 atk=shapes|def=shapes|fumble|attacker => AUTHORED|fumble|actor.
 atk=shapes|def=shapes|fumble|defender => AUTHORED|fumble|actee.
-atk=shapes|def=shapes|fumble|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=shapes|fumble|spectator => You hear fighting close by.
 atk=shapes|def=none|hit|attacker => AUTHORED|hit|actor.
 atk=shapes|def=none|hit|defender => AUTHORED|hit|actee.
-atk=shapes|def=none|hit|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=none|hit|spectator => You hear fighting close by.
 atk=shapes|def=none|crit|attacker => AUTHORED|crit|actor.
 atk=shapes|def=none|crit|defender => AUTHORED|crit|actee.
-atk=shapes|def=none|crit|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=none|crit|spectator => You hear fighting close by.
 atk=shapes|def=none|deflected|attacker => AUTHORED|deflected|actor.
 atk=shapes|def=none|deflected|defender => AUTHORED|deflected|actee.
-atk=shapes|def=none|deflected|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=none|deflected|spectator => You hear fighting close by.
 atk=shapes|def=none|defense_crit|attacker => AUTHORED|defense_crit|actor.
 atk=shapes|def=none|defense_crit|defender => AUTHORED|defense_crit|actee.
-atk=shapes|def=none|defense_crit|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=none|defense_crit|spectator => You hear fighting close by.
 atk=shapes|def=none|miss|attacker => AUTHORED|miss|actor.
 atk=shapes|def=none|miss|defender => AUTHORED|miss|actee.
-atk=shapes|def=none|miss|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=none|miss|spectator => You hear fighting close by.
 atk=shapes|def=none|fumble|attacker => AUTHORED|fumble|actor.
 atk=shapes|def=none|fumble|defender => AUTHORED|fumble|actee.
-atk=shapes|def=none|fumble|spectator => You hear the sounds of fighting nearby.
+atk=shapes|def=none|fumble|spectator => You hear fighting close by.
 atk=none|def=full|hit|attacker => AUTHORED|hit|actor.
 atk=none|def=full|hit|defender => AUTHORED|hit|actee.
-atk=none|def=full|hit|spectator => You hear the sounds of fighting nearby.
+atk=none|def=full|hit|spectator => You hear fighting close by.
 atk=none|def=full|crit|attacker => AUTHORED|crit|actor.
 atk=none|def=full|crit|defender => AUTHORED|crit|actee.
-atk=none|def=full|crit|spectator => You hear the sounds of fighting nearby.
+atk=none|def=full|crit|spectator => You hear fighting close by.
 atk=none|def=full|deflected|attacker => AUTHORED|deflected|actor.
 atk=none|def=full|deflected|defender => AUTHORED|deflected|actee.
-atk=none|def=full|deflected|spectator => You hear the sounds of fighting nearby.
+atk=none|def=full|deflected|spectator => You hear fighting close by.
 atk=none|def=full|defense_crit|attacker => AUTHORED|defense_crit|actor.
 atk=none|def=full|defense_crit|defender => AUTHORED|defense_crit|actee.
-atk=none|def=full|defense_crit|spectator => You hear the sounds of fighting nearby.
+atk=none|def=full|defense_crit|spectator => You hear fighting close by.
 atk=none|def=full|miss|attacker => AUTHORED|miss|actor.
 atk=none|def=full|miss|defender => AUTHORED|miss|actee.
-atk=none|def=full|miss|spectator => You hear the sounds of fighting nearby.
+atk=none|def=full|miss|spectator => You hear fighting close by.
 atk=none|def=full|fumble|attacker => AUTHORED|fumble|actor.
 atk=none|def=full|fumble|defender => AUTHORED|fumble|actee.
-atk=none|def=full|fumble|spectator => You hear the sounds of fighting nearby.
+atk=none|def=full|fumble|spectator => You hear fighting close by.
 atk=none|def=shapes|hit|attacker => AUTHORED|hit|actor.
 atk=none|def=shapes|hit|defender => AUTHORED|hit|actee.
-atk=none|def=shapes|hit|spectator => You hear the sounds of fighting nearby.
+atk=none|def=shapes|hit|spectator => You hear fighting close by.
 atk=none|def=shapes|crit|attacker => AUTHORED|crit|actor.
 atk=none|def=shapes|crit|defender => AUTHORED|crit|actee.
-atk=none|def=shapes|crit|spectator => You hear the sounds of fighting nearby.
+atk=none|def=shapes|crit|spectator => You hear fighting close by.
 atk=none|def=shapes|deflected|attacker => AUTHORED|deflected|actor.
 atk=none|def=shapes|deflected|defender => AUTHORED|deflected|actee.
-atk=none|def=shapes|deflected|spectator => You hear the sounds of fighting nearby.
+atk=none|def=shapes|deflected|spectator => You hear fighting close by.
 atk=none|def=shapes|defense_crit|attacker => AUTHORED|defense_crit|actor.
 atk=none|def=shapes|defense_crit|defender => AUTHORED|defense_crit|actee.
-atk=none|def=shapes|defense_crit|spectator => You hear the sounds of fighting nearby.
+atk=none|def=shapes|defense_crit|spectator => You hear fighting close by.
 atk=none|def=shapes|miss|attacker => AUTHORED|miss|actor.
 atk=none|def=shapes|miss|defender => AUTHORED|miss|actee.
-atk=none|def=shapes|miss|spectator => You hear the sounds of fighting nearby.
+atk=none|def=shapes|miss|spectator => You hear fighting close by.
 atk=none|def=shapes|fumble|attacker => AUTHORED|fumble|actor.
 atk=none|def=shapes|fumble|defender => AUTHORED|fumble|actee.
-atk=none|def=shapes|fumble|spectator => You hear the sounds of fighting nearby.
+atk=none|def=shapes|fumble|spectator => You hear fighting close by.
 atk=none|def=none|hit|attacker => AUTHORED|hit|actor.
 atk=none|def=none|hit|defender => AUTHORED|hit|actee.
-atk=none|def=none|hit|spectator => You hear the sounds of fighting nearby.
+atk=none|def=none|hit|spectator => You hear fighting close by.
 atk=none|def=none|crit|attacker => AUTHORED|crit|actor.
 atk=none|def=none|crit|defender => AUTHORED|crit|actee.
-atk=none|def=none|crit|spectator => You hear the sounds of fighting nearby.
+atk=none|def=none|crit|spectator => You hear fighting close by.
 atk=none|def=none|deflected|attacker => AUTHORED|deflected|actor.
 atk=none|def=none|deflected|defender => AUTHORED|deflected|actee.
-atk=none|def=none|deflected|spectator => You hear the sounds of fighting nearby.
+atk=none|def=none|deflected|spectator => You hear fighting close by.
 atk=none|def=none|defense_crit|attacker => AUTHORED|defense_crit|actor.
 atk=none|def=none|defense_crit|defender => AUTHORED|defense_crit|actee.
-atk=none|def=none|defense_crit|spectator => You hear the sounds of fighting nearby.
+atk=none|def=none|defense_crit|spectator => You hear fighting close by.
 atk=none|def=none|miss|attacker => AUTHORED|miss|actor.
 atk=none|def=none|miss|defender => AUTHORED|miss|actee.
-atk=none|def=none|miss|spectator => You hear the sounds of fighting nearby.
+atk=none|def=none|miss|spectator => You hear fighting close by.
 atk=none|def=none|fumble|attacker => AUTHORED|fumble|actor.
 atk=none|def=none|fumble|defender => AUTHORED|fumble|actee.
-atk=none|def=none|fumble|spectator => You hear the sounds of fighting nearby.
+atk=none|def=none|fumble|spectator => You hear fighting close by.
