@@ -109,3 +109,27 @@ func TestShippedStoreLoads(t *testing.T) {
 		t.Fatalf("shipped light notices refused: %v", err)
 	}
 }
+
+// #409: a lantern lit in a cave the player had just walked into said "you can
+// make out faces again", though they never saw faces there. A carried light
+// coming up is often the first light a player has in that room, so its
+// lighter lines never say "again".
+func TestCarriedLighterLinesNeverSayAgain(t *testing.T) {
+	t.Cleanup(ResetForTest)
+	if err := LoadFrom(shippedDir); err != nil {
+		t.Fatalf("shipped light notices refused: %v", err)
+	}
+	for _, tr := range []Transition{LighterShapes, LighterFaces} {
+		for _, indoor := range []bool{false, true} {
+			lines := Pool(CauseCarried, tr, indoor)
+			if len(lines) == 0 {
+				t.Fatalf("carried %s indoor=%v: no lines; the walk tested nothing", tr, indoor)
+			}
+			for _, l := range lines {
+				if strings.Contains(strings.ToLower(l), "again") {
+					t.Errorf("carried %s line says again: %q", tr, l)
+				}
+			}
+		}
+	}
+}
