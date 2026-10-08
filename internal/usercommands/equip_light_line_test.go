@@ -13,6 +13,7 @@ import (
 
 const (
 	equipLightTestCond  = 9771 // a carried light, literal strength 40
+	equipLightTestDark  = 9772 // a darkness, literal strength 50
 	equipLightTestTorch = 999975
 	equipLightTestHat   = 999976
 )
@@ -28,6 +29,8 @@ func equipLightFixture(t *testing.T) *users.UserRecord {
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
 		equipLightTestCond: {ConditionId: equipLightTestCond, Name: "Test Torchlight", Secret: true, TriggerCount: 1, RoundInterval: 1,
 			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 40}}},
+		equipLightTestDark: {ConditionId: equipLightTestDark, Name: "Test Darkness", Secret: true, TriggerCount: 1, RoundInterval: 1,
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectDarknessStrength: {Literal: 50}}},
 	}))
 	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
 		equipLightTestTorch: {ItemId: equipLightTestTorch, Name: "test torch", NameSimple: "torch",
@@ -68,6 +71,7 @@ func TestEquippingALightSaysItCastsLight(t *testing.T) {
 func TestAnyLightSource(t *testing.T) {
 	equipLightFixture(t)
 	require.True(t, conditions.AnyLightSource([]int{equipLightTestCond}))
+	require.False(t, conditions.AnyLightSource([]int{equipLightTestDark}), "a darkness is never a light")
 	require.False(t, conditions.AnyLightSource(nil))
 	require.False(t, conditions.AnyLightSource([]int{987654}), "an unknown id is not a light")
 }
