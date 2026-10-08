@@ -442,18 +442,75 @@ func sendDarkRoomCombatFallback(room *rooms.Room, excludeUserIds ...int) {
 // sendVisualElseAudible sends visualMsg through the visual pipeline, which
 // delivers it to every reader who makes out at least shapes (anonymising
 // names for a shapes reader), and soundMsg to every player the pipeline
-// skipped. Every player in the room reads exactly one of the two.
-func sendVisualElseAudible(room *rooms.Room, cat messaging.Category, visualMsg, soundMsg string) {
+// skipped. Every player in the room reads exactly one of the two, except
+// excludeUserIds, who read neither (a caster reads its own line).
+func sendVisualElseAudible(room *rooms.Room, cat messaging.Category, visualMsg, soundMsg string, excludeUserIds ...int) {
 	if room == nil {
 		return
 	}
-	room.SendTextVisual(cat, visualMsg)
+	room.SendTextVisual(cat, visualMsg, excludeUserIds...)
 	for _, uid := range room.GetPlayers() {
+		if isExcludedUser(uid, excludeUserIds) {
+			continue
+		}
 		u := users.GetByUserId(uid)
 		if u != nil && !messaging.CanSeeShapes(u.Character, room) {
 			u.SendText(cat, soundMsg)
 		}
 	}
+}
+
+// The sound lines a reader who sees nothing gets for a spell-channel
+// disruption (#242, owner ruling R4). Mob and player casters share them.
+const (
+	spellChantBreaksOffSound = `Someone's chant breaks off.`
+	spellSputtersOutSound    = `A half-formed spell sputters out.`
+)
+
+// sendMobConcentrationBroke narrates a mob caster's broken concentration:
+// seen by sight (a figure at shapes), heard by a reader who sees nothing.
+// It used plain Room.SendText, the unfiltered channel, which named the
+// caster to everyone (#242).
+func sendMobConcentrationBroke(mob *mobs.Mob, room *rooms.Room) {
+	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
+		`%s's concentration breaks.`, mobDisplayName(mob, room, 0)),
+		spellChantBreaksOffSound)
+}
+
+// sendMobSpellFailed narrates a mob's spell that fizzles (target gone) or
+// falters (not enough conviction); verb is "fizzles" or "falters".
+func sendMobSpellFailed(mob *mobs.Mob, room *rooms.Room, verb string) {
+	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
+		`%s's spell %s.`, mobDisplayName(mob, room, 0), verb),
+		spellSputtersOutSound)
+}
+
+// sendMobWeaving narrates a mob still holding its fold. Sight only: a quiet
+// weave makes no sound (owner ruling R4).
+func sendMobWeaving(mob *mobs.Mob, room *rooms.Room) {
+	sendVisualRoomText(room, messaging.CategorySpellFold, fmt.Sprintf(
+		`%s weaves magic with focused intent.`, mobDisplayName(mob, room, 0)))
+}
+
+// sendPlayerConcentrationBroke narrates a player caster's broken
+// concentration to the rest of the room, as sendMobConcentrationBroke does
+// for a mob: seen by sight, heard by a reader who sees nothing. The caster
+// reads its own line. The pain-of-a-hit path used plain Room.SendText and
+// named the caster to everyone (#242).
+func sendPlayerConcentrationBroke(caster *users.UserRecord, room *rooms.Room) {
+	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
+		`<ansi fg="username">%s</ansi>'s concentration breaks.`, caster.Character.Name),
+		spellChantBreaksOffSound, caster.UserId)
+}
+
+// sendMobShiftsFocus narrates a mob switching its attack to a new player.
+// Sight only (owner ruling R4); each reader sees both names at its own
+// sight, as target.go's player shift-focus line does.
+func sendMobShiftsFocus(mob *mobs.Mob, room *rooms.Room, newTarget *users.UserRecord) {
+	room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
+		fmt.Sprintf("%s shifts focus to <ansi fg=\"username\">%s</ansi>!", mobDisplayName(mob, room, 0), newTarget.Character.Name),
+		[]string{mob.Character.Name, newTarget.Character.Name},
+	)
 }
 
 // castingTargetChar returns the first target character from a CastingData, or nil.
@@ -508,21 +565,13 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 	case result.ProneBroke:
 		recordConcentrationFailure(combat.User, combat.Mob, user.Character, castingTargetChar(csBeforeProcess))
 		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">You lose your concentration as you hit the ground!</ansi>`)
-		room := rooms.LoadRoom(user.Character.RoomId)
-		if room != nil {
-			sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s concentration breaks.`, user.Character.Name), user.UserId)
-		}
+		sendPlayerConcentrationBroke(user, rooms.LoadRoom(user.Character.RoomId))
 
 	case result.GrappleBroke:
 		// Chunk 4e T4: grapple breaks concentration same as Prone (spec §4.2).
 		recordConcentrationFailure(combat.User, combat.Mob, user.Character, castingTargetChar(csBeforeProcess))
 		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your concentration shatters. You cannot hold the fold while grappled!</ansi>`)
-		room := rooms.LoadRoom(user.Character.RoomId)
-		if room != nil {
-			sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s concentration breaks.`, user.Character.Name), user.UserId)
-		}
+		sendPlayerConcentrationBroke(user, rooms.LoadRoom(user.Character.RoomId))
 
 	case result.TargetGone:
 		recordConcentrationFailure(combat.User, combat.Mob, user.Character, castingTargetChar(csBeforeProcess))
@@ -729,27 +778,23 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 	switch {
 	case result.ProneBroke:
 		recordConcentrationFailure(combat.Mob, combat.User, &mob.Character, castingTargetChar(csBeforeProcess))
-		mobRoom.SendText(messaging.CategorySpellDisruption, fmt.Sprintf(
-			`%s's concentration breaks.`, mobDisplayName(mob, mobRoom, 0)))
+		sendMobConcentrationBroke(mob, mobRoom)
 
 	case result.GrappleBroke:
 		// Chunk 4e T4: grapple breaks concentration same as Prone (spec §4.2).
 		recordConcentrationFailure(combat.Mob, combat.User, &mob.Character, castingTargetChar(csBeforeProcess))
-		mobRoom.SendText(messaging.CategorySpellDisruption, fmt.Sprintf(
-			`%s's concentration breaks.`, mobDisplayName(mob, mobRoom, 0)))
+		sendMobConcentrationBroke(mob, mobRoom)
 
 	case result.TargetGone:
 		recordConcentrationFailure(combat.Mob, combat.User, &mob.Character, castingTargetChar(csBeforeProcess))
-		mobRoom.SendText(messaging.CategorySpellDisruption, fmt.Sprintf(
-			`%s's spell fizzles.`, mobDisplayName(mob, mobRoom, 0)))
+		sendMobSpellFailed(mob, mobRoom, "fizzles")
 
 	case result.SpellDataMissing:
 		// Silent failure — no message for missing spell data on mobs.
 
 	case result.InsufficientConviction:
 		recordConcentrationFailure(combat.Mob, combat.User, &mob.Character, castingTargetChar(csBeforeProcess))
-		mobRoom.SendText(messaging.CategorySpellDisruption, fmt.Sprintf(
-			`%s's spell falters.`, mobDisplayName(mob, mobRoom, 0)))
+		sendMobSpellFailed(mob, mobRoom, "falters")
 
 	case result.CastComplete:
 		cs := result.CastingData
@@ -829,8 +874,7 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 		}
 
 	case result.StillCasting:
-		mobRoom.SendText(messaging.CategorySpellFold, fmt.Sprintf(
-			`%s weaves magic with focused intent.`, mobDisplayName(mob, mobRoom, 0)))
+		sendMobWeaving(mob, mobRoom)
 	}
 
 	return true
@@ -1078,9 +1122,7 @@ func handlePlayerConcentrationBreak(defUser *users.UserRecord, roundResult comba
 		clearCastingActivity(defUser.Character, activity.TriggerConcentrationBreak)
 		events.AddToQueue(events.CastInterrupted{UserId: defUser.UserId, SpellId: csSnap.SpellId})
 		defUser.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">The pain shatters your concentration!</ansi>`)
-		defRoom.SendText(messaging.CategorySpellDisruption, fmt.Sprintf(
-			`<ansi fg="username">%s</ansi>'s concentration breaks.`,
-			defUser.Character.Name), defUser.UserId)
+		sendPlayerConcentrationBroke(defUser, defRoom)
 	}
 }
 
@@ -1219,9 +1261,7 @@ func handleMobTargetSwitch(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 			targeting.ReasonAttack, 1)
 
 		if newTarget := users.GetByUserId(newTargetId); newTarget != nil {
-			mobRoom.SendText(messaging.CategoryMobEmote,
-				fmt.Sprintf("%s shifts focus to <ansi fg=\"username\">%s</ansi>!", mobDisplayName(mob, mobRoom, 0), newTarget.Character.Name),
-			)
+			sendMobShiftsFocus(mob, mobRoom, newTarget)
 		}
 		return true
 	}
