@@ -262,6 +262,11 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			Direction: exitName,
 		})
 
+		// #456, owner ruling 2026-10-09: a mover is seen by the light they
+		// carry on their own way out, so the departure line below is judged
+		// by the room before the move. Arrivals keep being judged after it.
+		departSnap := room.VisualSnapshot()
+
 		if err := rooms.MoveToRoom(user.UserId, destRoom.RoomId); err != nil {
 			user.SendText(messaging.CategorySystem, "Oops, couldn't move there!")
 		} else {
@@ -305,7 +310,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				// Tell the old room they are leaving
 				if user.Character.Pet.Exists() {
 
-					room.SendTextVisualWithAudio(messaging.CategoryRoomExit,
+					room.SendTextVisualWithAudioToSnapshot(departSnap, messaging.CategoryRoomExit,
 						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> and %s leave %s.`, user.Character.Name, user.Character.Pet.DisplayName(), exit.DeparturePhrase(exitName)),
 						),
@@ -313,7 +318,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						user.UserId)
 
 				} else {
-					room.SendTextVisualWithAudio(messaging.CategoryRoomExit,
+					room.SendTextVisualWithAudioToSnapshot(departSnap, messaging.CategoryRoomExit,
 						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
 							fmt.Sprintf(`<ansi fg="username">%s</ansi> leaves %s.`, user.Character.Name, exit.DeparturePhrase(exitName)),
 						),

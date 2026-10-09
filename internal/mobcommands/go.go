@@ -73,13 +73,18 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			// its ordinary step through actions.RelocateMob.
 			sneaking := actions.MobIsSneaking(mob)
 
+			// #456, owner ruling 2026-10-09: a mover is seen by the light
+			// they carry on their own way out, so the exit line is judged
+			// by the room before the move; the entry line, after it.
+			departSnap := room.VisualSnapshot()
+
 			room.RemoveMob(mob.InstanceId)
 			actions.ClearRoomAggroOnDeparture(room, mob.InstanceId)
 			destRoom.AddMob(mob.InstanceId)
 
 			if !sneaking {
 				// Tell the old room they are leaving
-				sendMovementMessage(room, messaging.CategoryRoomExit,
+				room.SendTextVisualWithAudioToSnapshot(departSnap, messaging.CategoryRoomExit,
 					fmt.Sprintf(string(c.ExitRoomMessageWrapper),
 						fmt.Sprintf(`<ansi fg="mobname">%s</ansi> runs off suddenly.`, mob.Character.Name),
 					),

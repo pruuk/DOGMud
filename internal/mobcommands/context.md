@@ -292,7 +292,9 @@ why a command available to both players and mobs must be registered twice
   `destRoom.AddMob` instead of `actions.RelocateMob`, so it renders its own
   exit and entry lines. It reads `actions.MobIsSneaking(mob)` before the
   move and sends neither line when sneaking, matching the ordinary exit
-  path.
+  path. Its exit line is judged by the room before the move
+  (`Room.VisualSnapshot`, then `SendTextVisualWithAudioToSnapshot`, #456);
+  the entry line still goes through `sendMovementMessage`, judged after it.
 
 ## Fixtures (lighting 5e)
 

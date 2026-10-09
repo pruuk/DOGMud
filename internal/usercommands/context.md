@@ -287,7 +287,12 @@ the mover spotting a hidden occupant) runs through `actions.EntryDetection`
 instead of `go.go`'s own inline rolls; the rare Search-training call
 (`actions.TrainSearchOnMove`) still fires from here, inside the
 `rooms.MoveToRoom` success branch. `move_wrapper_guard_test.go` (repo root)
-fails if this file prices or detects a step itself again.
+fails if this file prices or detects a step itself again. The departure line
+("X leaves to the north.") is judged by the room before the move: `Go` takes
+`room.VisualSnapshot()` just before `rooms.MoveToRoom` and sends with
+`SendTextVisualWithAudioToSnapshot`, so a mover is seen leaving by the light
+they carry out (#456, owner ruling 2026-10-09). Arrival lines are judged
+after the move.
 
 ## Dependencies
 - `internal/users`: User management and character data

@@ -309,7 +309,10 @@ wrappers that render the outcome.
   (sight-gated, with a sound fallback) unless `sneaking`, plays the movement
   sounds either way, and pulls an NPC party's idle (not in-combat) members
   through the same exit. A sneaking mob sends no exit, entry or next-room
-  line, as a sneaking player never has (parity slice 6, ruling D1).
+  line, as a sneaking player never has (parity slice 6, ruling D1). The exit
+  line is judged by `from` before the move (`Room.VisualSnapshot`, then
+  `SendTextVisualWithAudioToSnapshot`), so a mob is seen leaving by the light
+  it carries out with it (#456); the entry line is judged after the move.
 - **`ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int)`**
   moved here from the (still unexported at the call site) `mobcommands`
   version; retargets or releases players and mobs in `room` that were
