@@ -1,6 +1,6 @@
 # Sight gates wrap-up (#382)
 
-**Status:** DRAFT for the owner, 2026-10-09.
+**Status:** Owner calls answered 2026-10-09 (arrivals keep; voice names gated); revised draft for review.
 **Parent:** `specs/2026-10-09-sight-gates-followups-design.md` (shipped in #452, master
 `b1c1829ec`). Its verification playtest (run `7ab93bb8f9c52e52`) closed #446, #447, #448, #216
 and #444, and filed #453, #454, #455 and #456. Still open under the epic: #242, #251, #449 and
@@ -13,6 +13,11 @@ passes.
 broadcast stays global; R8 a weapon is named only at full sight; the owner rule of 2026-10-05,
 a line announcing a change is judged against the state before it (`Room.VisualSnapshot`,
 `SendTextVisualToSnapshot`); 0 light is natural dark; one hide at a time, the stronger wins (#444).
+New, 2026-10-09: a mover is seen by the light they carry on their own way in and out. A person
+entering with a light is seen as they walk in (arrivals keep being judged after the move), and
+a person leaving with a light is seen as they walk out (departures are judged before it). The
+2026-10-05 rule is about a change to the room's light, such as a darkness put on. It does not
+govern a mover's own arrival or departure line.
 
 ## Facts verified against source (master `b1c1829ec`)
 
@@ -64,13 +69,15 @@ a line announcing a change is judged against the state before it (`Room.VisualSn
   foe resolve; a typed name gets the hint. With no sight, nothing resolves. `cast` keeps its
   behaviour on the shared code. It also applies to: `attack <name>`, `StageMeleeTarget`,
   `give`, `shoot` and `fire` (judged by `scanReach` into the target's room), `show`, `steal`,
-  `plant`, `consider` and `follow`. Player actors only, since mobs act on shapes (D8). The give
+  `plant`, `consider` and `follow`. Owner call 2 adds `talk`, `ask`, `party invite` and `rep`:
+  typing a name there also confirms that the person is present. Player actors only, since mobs
+  act on shapes (D8). The give
   lines and the quest NPC's return line hide names at each reader's sight with `HideNames`, as
   `attack.go:192-203` does.
 - **H3 Departures judged before the move (#456).** The quit line takes `VisualSnapshot` before
   `RemovePlayer`. It is sent with `SendTextVisualToSnapshot`, and readers who did not perceive
   the quitter are excluded. The four departure lines take a snapshot before the move and use a
-  new `SendTextVisualWithAudioToSnapshot`, the sound twin. Arrivals wait for Owner call 1.
+  new `SendTextVisualWithAudioToSnapshot`, the sound twin. Arrivals are unchanged (Owner call 1).
 - **H4 The sneak hide survives a reload (#451).** `reconcileSneakHide` runs beside
   `reconcileShroudHide`. A Visible holder of a live record 9 re-enters through
   `hideForStealthRecord(9)`, so the rebuild keeps the 9. The saved `sneaking` flag then matches.
@@ -95,18 +102,15 @@ a line announcing a change is judged against the state before it (`Room.VisualSn
 ## Out of scope
 
 Room prose dashes (#248). Crit disarm stays the accepted known limit (playtest-fixes spec).
-Arrival lines wait for Owner call 1.
+Arrival lines, by Owner call 1.
 
-## Owner calls
+## Owner calls (answered 2026-10-09)
 
-1. **Arrivals under the before rule.** The arrival line now goes out after the mover is in the
-   room, lit by their own light. (a) Judge it before: a dark room hears "someone enter", and the
-   next look shows them. (b) Keep it as is, so the arrival is seen by the light it brings.
-   *Recommend (a)*, since your rule of 2026-10-05 has no exceptions and H3 already applies it
-   to departures.
-2. **Addressing by voice in the dark.** `talk`, `ask`, `party` and `report` resolve names
-   today. *Recommend* they keep doing so: a name called aloud is heard, replies already read
-   "Someone says", and `report` is a safety tool. Everything that acts on a body follows H2.
+1. **Arrivals: keep as is.** A person entering with a light is seen as they walk in. In the
+   owner's words: "Logically, a person entering with a light would be seen as they walk in."
+2. **Names typed in the dark: gated.** `talk <npc>`, `ask <npc> about`, `party invite <player>`
+   and `rep <player>` (whisper your health report) resolve their target by name among the room's
+   occupants. Today that confirms someone is present even when you see nothing. They follow H2.
 
 ## Testing and close
 
