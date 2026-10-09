@@ -1430,6 +1430,29 @@ stays synchronized with the Awareness machine:
   to the character (providing stat mods and room broadcast text).
 - When Awareness transitions away from `Hidden`, the hook removes condition #9.
 
+**Empathic Shroud is a real hide (#444, `shroud_hide.go`).** Record 31 landing
+on a Visible holder enters Hidden as a shroud (`hideForStealthRecord`, through
+`awareness.ResolveConcealmentAs`), and the cascade adds NO record 9 for it: a
+shroud hide is Hidden plus a live 31. Its score is the record's magnitude,
+which the spell stamps as the CASTER's `ShroudScore(stat, spellcastingRank)`
+(spell stat plus Spellcasting x `SkillWeight`); a 31 with none uses the
+holder's `OwnShroudScore()`. `HideBaseScore()` is what `actions.CalcSneakScore`
+starts from: the shroud's score while `HiddenByShroud()`, else
+`SneakBaseScore()` (Dexterity plus Skullduggery x `SkillWeight`).
+
+One hide at a time, the stronger (owner, 2026-10-09). A 9 or a 31 landing on a
+holder already Hidden goes through `settleHide`: the same kind keeps the hide
+(a re-cast 31 takes its new score), a different kind keeps the higher base
+score, the incumbent winning a tie. The loser's record goes by
+`Conditions.Discard`, so no end line is told; a dropped incoming record makes
+its add door return an error so no start line is told either.
+`SneakOverShroud()` is the sneak command's takeover. `Validate` calls
+`reconcileShroudHide()` beside `reconcilePerception()`: a shroud hide with no
+live 31 (expired, removed, purged, cancelled) is revealed with
+`awareness.TriggerShroudEnded`. Breaking: an observer winning a roll, combat
+(31 carries `cancel-on-combat`), death and logout reveal it like a sneak hide,
+and the reveal cascade cancels 31.
+
 This maintains backward compatibility with systems that check for condition #9
 while keeping the Awareness machine as the canonical state source.
 

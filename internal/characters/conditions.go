@@ -154,9 +154,12 @@ func (c *Character) AddCondition(conditionId int, isPermanent bool) error {
 	if !c.Conditions.AddCondition(conditionId, isPermanent) {
 		return fmt.Errorf(`failed to add condition. target: "%s" conditionId: %d`, c.Name, conditionId)
 	}
-	c.hideForStealthRecord(conditionId)
+	refused := c.hideForStealthRecord(conditionId)
 	// Validate brings Perception in line with the blind sources.
 	_ = c.Validate()
+	if refused {
+		return errStealthRecordRefused(c.Name, conditionId)
+	}
 	return nil
 }
 
@@ -164,31 +167,61 @@ func (c *Character) AddCondition(conditionId int, isPermanent bool) error {
 // (Awareness_Cascades.go): entering Hidden adds it, leaving Hidden cancels it.
 const conditionIdHidden = 9
 
-// hideForStealthRecord is the other half of that mirror. Record 9 added to a
-// Visible character (a mob's spawn-time conditionids, an admin setcondition)
-// drives Awareness into Hidden, so IsHidden agrees with the record. Before,
-// only the sneak command entered Hidden, and an ambusher spawned with 9 was
-// listed in the room and emoted (sight gates playtest fixes, F5). The
-// cascade's own re-add arrives while the machine is already Hidden, and a
-// sneak in flight is Concealing, so neither is driven twice.
+// hideForStealthRecord is the other half of that mirror, for both stealth
+// records. Record 9 (a mob's spawn-time conditionids, an admin setcondition)
+// or record 31 (Empathic Shroud, #444) added to a Visible character drives
+// Awareness into Hidden, so IsHidden agrees with the record (sight gates
+// playtest fixes, F5). The hide's data says which: a 9 hides as a sneak, a
+// 31 as a shroud at shroudRecordScore. A sneak in flight is Concealing and
+// is left alone.
 //
-// Only record 9: another hidden-flag record (Empathic Shroud, 31) is timed,
-// and the cascade would pin a permanent 9 that outlives it.
+// On a character already Hidden, settleHide keeps one hide, the stronger
+// (owner, 2026-10-09). The cascade's own re-add of 9 arrives while the
+// machine is Hidden as a sneak, so it settles as "same kind" and is not
+// driven twice.
 //
-// A refused hide (a busy character's Visible to Concealing is vetoed) takes
-// the record back off, so no record 9 claims hidden on a character the
-// machine kept Visible. A permanent 9 stays in the id list and tries again at
-// the next Validate(true).
-func (c *Character) hideForStealthRecord(conditionId int) {
-	if conditionId != conditionIdHidden || c.Awareness == nil || c.Awareness.State() != awareness.Visible {
-		return
+// A refused hide (a busy character's Visible to Concealing is vetoed): a 9
+// is taken back off, so no record 9 claims hidden on a character the machine
+// kept Visible, and a permanent 9 stays in the id list and tries again at the
+// next Validate(true); a 31 is discarded and reported refused.
+//
+// refused is true when the incoming record was dropped; the add doors then
+// return an error so the event path tells no start line for it.
+func (c *Character) hideForStealthRecord(conditionId int) (refused bool) {
+	if c.Awareness == nil {
+		return false
 	}
-	reason := state.TransitionReason{Trigger: awareness.TriggerConditionApplied}
-	if err := c.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason); err != nil {
-		c.Conditions.RemoveCondition(conditionIdHidden)
-		return
+	var incoming awareness.HiddenData
+	switch conditionId {
+	case conditionIdHidden:
+		incoming = awareness.HiddenData{Source: awareness.HideSneak}
+	case conditions.ConditionIdEmpathicShroud:
+		incoming = awareness.HiddenData{Source: awareness.HideShroud, Score: c.shroudRecordScore()}
+	default:
+		return false
 	}
-	c.Awareness.ResolveConcealment(true, reason)
+	switch c.Awareness.State() {
+	case awareness.Visible:
+		reason := state.TransitionReason{Trigger: awareness.TriggerConditionApplied}
+		if err := c.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason); err != nil {
+			if conditionId == conditionIdHidden {
+				c.Conditions.RemoveCondition(conditionIdHidden)
+				return false
+			}
+			c.Conditions.Discard(conditionId)
+			return true
+		}
+		c.Awareness.ResolveConcealmentAs(incoming, reason)
+	case awareness.Hidden:
+		return c.settleHide(conditionId, incoming)
+	}
+	return false
+}
+
+// errStealthRecordRefused is what an add door returns when hideForStealthRecord
+// dropped the record it was adding.
+func errStealthRecordRefused(name string, conditionId int) error {
+	return fmt.Errorf(`stealth record dropped, a stronger hide holds. target: "%s" conditionId: %d`, name, conditionId)
 }
 
 // holdsLiveStealthRecord reports a live (unexpired) record 9. HasCondition
@@ -204,9 +237,12 @@ func (c *Character) AddConditionScaled(conditionId int, durationMult float64) er
 	if !c.Conditions.AddConditionScaled(conditionId, durationMult) {
 		return fmt.Errorf(`failed to add condition. target: "%s" conditionId: %d`, c.Name, conditionId)
 	}
-	c.hideForStealthRecord(conditionId)
+	refused := c.hideForStealthRecord(conditionId)
 	// Validate brings Perception in line with the blind sources.
 	_ = c.Validate()
+	if refused {
+		return errStealthRecordRefused(c.Name, conditionId)
+	}
 	return nil
 }
 
@@ -228,8 +264,11 @@ func (c *Character) AddConditionMagnitude(conditionId int, triggers int, magnitu
 	for _, b := range c.Conditions.GetConditions(conditionId) {
 		b.Source = source
 	}
-	c.hideForStealthRecord(conditionId)
+	refused := c.hideForStealthRecord(conditionId)
 	_ = c.Validate()
+	if refused {
+		return errStealthRecordRefused(c.Name, conditionId)
+	}
 	return nil
 }
 
