@@ -1,0 +1,129 @@
+package follow
+
+import (
+	"regexp"
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// #454: `follow <name>` resolves a typed name only at full sight, as every
+// other command that names a creature does (actions.AimBySight). The scene is
+// room 1 with Aliceia (user 1, the follower) and Bobrick (user 2, the target).
+
+const followInfraredConditionId = 9455
+
+type followBand int
+
+const (
+	followFull followBand = iota
+	followShapes
+	followDark
+)
+
+var followTagPattern = regexp.MustCompile(`<[^>]*>`)
+
+func followTold(userId int) string {
+	return followTagPattern.ReplaceAllString(strings.Join(events.DrainQueuedMessagesForTest(userId), ""), "")
+}
+
+func followScene(t *testing.T, band followBand) (*FollowModule, *users.UserRecord, *users.UserRecord, *rooms.Room) {
+	t.Helper()
+	t.Cleanup(keywords.SeedKeywordsForTest())
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		followInfraredConditionId: {ConditionId: followInfraredConditionId, Name: "Test Infrared",
+			RoundInterval: 1, TriggerCount: 1, Flags: []conditions.Flag{conditions.InfraredVision},
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectInfraReach: {Literal: 30}}},
+	}))
+	u1 := users.NewTestUser(1, "alice", "Aliceia", 1001)
+	u1.Character.RoomId = 1
+	u2 := users.NewTestUser(2, "bob", "Bobrick", 1002)
+	u2.Character.RoomId = 1
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{1: u1, 2: u2}))
+	room := &rooms.Room{RoomId: 1, Zone: "TestZone", Title: "Square", Biome: "default"}
+	t.Cleanup(rooms.SeedRoomsForTest(map[int]*rooms.Room{1: room}, map[string]*rooms.ZoneConfig{
+		"TestZone": {Name: "TestZone", RoomId: 1, RoomIds: map[int]struct{}{1: {}}},
+	}))
+	t.Cleanup(rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
+		"default": {BiomeId: "default", Name: "Default", Symbol: ".", MovementCost: 1.0, SkyLight: rooms.SkyLightPtr(0.0)},
+	}))
+	room.AddPlayer(1)
+	room.AddPlayer(2)
+	if band == followFull {
+		room.Lamp = rooms.LampPtr(60)
+	} else {
+		room.SkyLight, room.Lamp = rooms.SkyLightPtr(0), rooms.LampPtr(0)
+		require.Equal(t, 0, room.LightLevel(), "the dark bands need a pitch-dark room")
+	}
+	if band == followShapes {
+		require.True(t, u1.Character.Conditions.AddCondition(followInfraredConditionId, true))
+	}
+	f := &FollowModule{
+		plug:         plugins.New(`followsighttest`, `1.0`),
+		followed:     make(map[followId][]followId),
+		followers:    make(map[followId]followId),
+		followLimits: make(map[followId]uint64),
+	}
+	events.DrainQueuedMessagesForTest(1)
+	events.DrainQueuedMessagesForTest(2)
+	return f, u1, u2, room
+}
+
+func TestFollowSight_ClearSightStartsTheFollow(t *testing.T) {
+	f, u1, _, room := followScene(t, followFull)
+	_, _ = f.followUserCommand("bobrick", u1, room, events.EventFlag(0))
+	assert.True(t, f.isFollowing(followId{userId: 1}), "a lit room follows a named player")
+	assert.Contains(t, followTold(1), "You start following Bobrick.")
+	assert.Contains(t, followTold(2), "Aliceia is following you.")
+}
+
+func TestFollowSight_NoSightFollowsNoOneAndNamesNoOne(t *testing.T) {
+	f, u1, _, room := followScene(t, followDark)
+	_, _ = f.followUserCommand("bobrick", u1, room, events.EventFlag(0))
+	assert.False(t, f.isFollowing(followId{userId: 1}), "a follow started in the dark")
+	told := followTold(1)
+	assert.Contains(t, told, actions.AimNotHereLine)
+	assert.NotContains(t, told, "Bobrick")
+	assert.Empty(t, followTold(2), "the target was told someone followed them")
+}
+
+func TestFollowSight_ShapesHintsAName(t *testing.T) {
+	f, u1, _, room := followScene(t, followShapes)
+	_, _ = f.followUserCommand("bobrick", u1, room, events.EventFlag(0))
+	assert.False(t, f.isFollowing(followId{userId: 1}), "a typed name followed at shapes")
+	told := followTold(1)
+	assert.Contains(t, told, "You can only make out shapes here.")
+	assert.Contains(t, told, "follow 2.shape")
+	assert.NotContains(t, told, "Bobrick")
+}
+
+func TestFollowSight_ShapesFollowsAShapeAndNamesNoOne(t *testing.T) {
+	f, u1, _, room := followScene(t, followShapes)
+	_, _ = f.followUserCommand("1.shape", u1, room, events.EventFlag(0))
+	assert.True(t, f.isFollowing(followId{userId: 1}), "shape 1 is Bobrick")
+	told := followTold(1)
+	assert.Contains(t, told, "You start following a figure.")
+	assert.NotContains(t, told, "Bobrick")
+	// Bobrick has no infrared: he sees nothing, and reads "Someone".
+	recipient := followTold(2)
+	assert.Contains(t, recipient, "Someone is following you.")
+	assert.NotContains(t, recipient, "Aliceia")
+}
+
+// stop and lose resolve no target, so they work in the dark.
+func TestFollowSight_StopAndLoseNeedNoSight(t *testing.T) {
+	f, u1, _, room := followScene(t, followDark)
+	_, _ = f.followUserCommand("stop", u1, room, events.EventFlag(0))
+	assert.Contains(t, followTold(1), "You aren't following anyone.")
+	_, _ = f.followUserCommand("lose", u1, room, events.EventFlag(0))
+	assert.Contains(t, followTold(1), "Nobody is following you.")
+}

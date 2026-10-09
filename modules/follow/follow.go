@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -405,6 +406,19 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 	// removed 2026-04-30 (Stage 3.4 era) — annoying mid-walk drops with
 	// no in-fiction trigger weren't worth the implementation defense.
 
+	// #454: a typed name resolves only at full sight, as for every command
+	// that names a creature (actions.AimBySight). `stop` and `lose` name no
+	// one and need no sight. A shape becomes the "@id" or "#id" it stands for.
+	if len(followTargetName) > 0 {
+		name, refusal := actions.AimBySight(user.Character, user.UserId, room, followTargetName, `follow`)
+		if refusal != `` {
+			user.SendText(messaging.CategorySystem, refusal)
+			return true, nil
+		}
+		followTargetName = name
+	}
+	followerSight := messaging.ParticipantSight(user.Character, room)
+
 	userId, mobInstId := 0, 0
 	if len(followTargetName) > 0 {
 		userId, mobInstId = room.FindByNameSeenBy(user.Character, followTargetName)
@@ -477,9 +491,16 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 
 		targetUser := users.GetByUserId(followCommandTarget.userId)
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You start following <ansi fg="username">%s</ansi>.`, targetUser.Character.Name))
+		// Each side's line hides the other's name at that reader's sight: a
+		// follower who aimed at a shape never learned the name, and a target
+		// who cannot see reads "Someone".
+		user.SendText(messaging.CategorySystem, messaging.HideNames(
+			fmt.Sprintf(`You start following <ansi fg="username">%s</ansi>.`, targetUser.Character.Name),
+			[]string{targetUser.Character.Name}, followerSight))
 
-		targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is following you.`, user.Character.Name))
+		targetUser.SendText(messaging.CategorySystem, messaging.HideSpeakerNames(
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> is following you.`, user.Character.Name),
+			[]string{user.Character.Name}, messaging.ParticipantSight(targetUser.Character, room)))
 
 		return true, nil
 	}
@@ -490,7 +511,9 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 
 		f.startFollow(followCommandTarget, followCommandSource, followEndRound)
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You start following <ansi fg="mobname">%s</ansi>.`, targetMob.Character.Name))
+		user.SendText(messaging.CategorySystem, messaging.HideNames(
+			fmt.Sprintf(`You start following <ansi fg="mobname">%s</ansi>.`, targetMob.Character.Name),
+			[]string{targetMob.Character.Name}, followerSight))
 
 		return true, nil
 	}
