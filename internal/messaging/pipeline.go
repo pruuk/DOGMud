@@ -145,7 +145,9 @@ func shouldWrap(cat Category) bool {
 		CategoryWeather, CategoryTimeOfDay, CategoryLight,
 		// Other narration plus tips.
 		CategoryLoot, CategoryEquipment, CategoryConditionApply,
-		CategoryConditionExpire, CategoryMutation, CategoryTip:
+		CategoryConditionExpire, CategoryMutation, CategoryTip,
+		// The quit line (#449): one sentence of narration to the room.
+		CategoryLogout:
 		return true
 	}
 	return false

@@ -13,14 +13,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// bashCategories: the player's own actor/actee feedback is CategorySystem;
-// the room's line carries CategoryBash (colour + light-verbosity gate).
+// bashCategories: every role rides CategoryBash, the player's own lines
+// included, so they wrap and colour like the room's (#449).
 //
 // Kept on ONE line (rather than the more usual one-field-per-line struct
 // literal): send_trio_only_guard_test.go scans line by line for a guarded
 // category (Kick/Trip/Bash) paired with a recognised producer shape on that
 // SAME line, and moveCategories{...} is one of those shapes.
-var bashCategories = moveCategories{Actor: messaging.CategorySystem, Actee: messaging.CategorySystem, Observer: messaging.CategoryBash}
+var bashCategories = moveCategories{Actor: messaging.CategoryBash, Actee: messaging.CategoryBash, Observer: messaging.CategoryBash}
 
 var stageSpecialMoveTarget = actions.StageMeleeTarget
 
@@ -110,8 +110,8 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			sendMoveDefenceShortage(targetUser, defence)
 		}
 		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(messaging.CategorySystem, roles.Actor),
-			Actee:    lineOrNone(messaging.CategorySystem, roles.Actee),
+			Actor:    lineOrNone(bashCategories.Actor, roles.Actor),
+			Actee:    lineOrNone(bashCategories.Actee, roles.Actee),
 			Observer: observer,
 		}, aud)
 	} else if defence, defended := moveDefenceLines(user, room, target, result.Defence, "shield bash"); defended {

@@ -331,7 +331,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		ActorPlain: user.Character.Name,
 	}
 	sendMoveEvent("throw", "player_hurl", playerIds, aud,
-		moveCategories{Actor: messaging.CategorySystem, Observer: messaging.CategoryHitRanged},
+		moveCategories{Actor: messaging.CategoryHitRanged, Observer: messaging.CategoryHitRanged},
 		map[string]string{movenarration.TokenItem: matchItem.DisplayName()})
 
 	hasDamage := spec.DamageMultiplier > 0
@@ -363,7 +363,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		if out.AttackerFumble {
 			fumbled = true
 			sendMoveEvent("throw", "player_fumble", playerIds, aud,
-				moveCategories{Actor: messaging.CategorySystem, Observer: messaging.CategoryHitRanged}, nil)
+				moveCategories{Actor: messaging.CategoryHitRanged, Observer: messaging.CategoryHitRanged}, nil)
 
 			// Apply effects to thrower
 			if hasDamage {
@@ -443,7 +443,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				partialRoles, _ := renderMoveEvent("throw", "player_partial_hit",
 					moveIdentities{Actee: fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, mob.Character.Name)},
 					map[string]string{movenarration.TokenDamage: dmgDesc})
-				throwerLine = lineOrNone(messaging.CategorySystem, partialRoles.Actor)
+				throwerLine = lineOrNone(messaging.CategoryHitRanged, partialRoles.Actor)
 			} else if triad.ToAttacker != "" {
 				throwerLine = messaging.Say(messaging.CategoryDodge, string(triad.ToAttacker))
 			}

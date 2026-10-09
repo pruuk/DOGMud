@@ -14,14 +14,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// tripCategories: the player's own actor/actee feedback is CategorySystem;
-// the room's line carries CategoryTrip (colour + light-verbosity gate).
+// tripCategories: every role rides CategoryTrip, the player's own lines
+// included, so they wrap and colour like the room's (#449).
 //
 // Kept on ONE line (rather than the more usual one-field-per-line struct
 // literal): send_trio_only_guard_test.go scans line by line for a guarded
 // category (Kick/Trip/Bash) paired with a recognised producer shape on that
 // SAME line, and moveCategories{...} is one of those shapes.
-var tripCategories = moveCategories{Actor: messaging.CategorySystem, Actee: messaging.CategorySystem, Observer: messaging.CategoryTrip}
+var tripCategories = moveCategories{Actor: messaging.CategoryTrip, Actee: messaging.CategoryTrip, Observer: messaging.CategoryTrip}
 
 func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
@@ -136,8 +136,8 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			observer = messaging.Say(messaging.CategoryTrip, defence.ToRoom)
 		}
 		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(messaging.CategorySystem, roles.Actor),
-			Actee:    lineOrNone(messaging.CategorySystem, roles.Actee),
+			Actor:    lineOrNone(tripCategories.Actor, roles.Actor),
+			Actee:    lineOrNone(tripCategories.Actee, roles.Actee),
 			Observer: observer,
 		}, aud)
 	} else {

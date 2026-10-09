@@ -13,10 +13,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// pounceCategories: the player's own actor/actee feedback is CategorySystem;
-// the room's line carries CategoryHitNaturalSharp, matching every branch's
-// pre-migration Observer category.
-var pounceCategories = moveCategories{Actor: messaging.CategorySystem, Actee: messaging.CategorySystem, Observer: messaging.CategoryHitNaturalSharp}
+// pounceCategories: every role rides CategoryHitNaturalSharp, the room's
+// pre-migration category, the player's own lines included, so they wrap
+// and colour like the room's (#449).
+var pounceCategories = moveCategories{Actor: messaging.CategoryHitNaturalSharp, Actee: messaging.CategoryHitNaturalSharp, Observer: messaging.CategoryHitNaturalSharp}
 
 func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
@@ -105,8 +105,8 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			sendMoveDefenceShortage(targetChar, defence)
 		}
 		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(messaging.CategorySystem, roles.Actor),
-			Actee:    lineOrNone(messaging.CategorySystem, roles.Actee),
+			Actor:    lineOrNone(pounceCategories.Actor, roles.Actor),
+			Actee:    lineOrNone(pounceCategories.Actee, roles.Actee),
 			Observer: observer,
 		}, aud)
 	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "pounce"); defended {

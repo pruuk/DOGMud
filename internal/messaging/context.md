@@ -24,7 +24,7 @@ the recipient's connection.
 5. **Apply category color tag** — `<ansi fg="<category-alias>">…</ansi>`.
 6. **Wrap** at recipient's `UserRecord.LineWidth` (default 80, range
    40-240), ANSI-aware, but only for the narration categories
-   `shouldWrap` admits (45 of the 62 `Category` values as of this
+   `shouldWrap` admits (46 of the 62 `Category` values as of this
    writing, `CategoryLight` among them: lighting plan 3d's transition
    notices wrap exactly as `CategoryTimeOfDay` does). Pre-formatted
    output is excluded by category: mixed

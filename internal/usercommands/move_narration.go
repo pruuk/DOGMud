@@ -31,18 +31,17 @@ type moveIdentities struct {
 
 // moveCategories lets each rendered role ride its own messaging.Category.
 //
-// The player-side pre-migration call sites split their categories by
-// viewpoint rather than sharing one: the actor's own feedback and the
-// actee's personal line went out as CategorySystem, while the room's
-// observer line (and a cross-room shot's remote_observer line) carried the
-// verb's own category (CategoryBash, CategoryTrip, CategoryGrappleFlow,
-// CategoryHitRanged, ...). A Category decides a line's colour
-// (messaging/pipeline.go applyCategoryColor) and whether a light-verbosity
-// player sees it at all (messaging/verbosity.go allowlists), so collapsing
-// this to one shared category the way the mob-side helper does would be a
-// silent routing change, not a refactor. sameMoveCategory below covers the
-// handful of call sites whose pre-migration lines really did share one
-// category throughout.
+// Each special move's personal lines ride the move's own category, the same
+// as its room line (#449): CategorySystem never wraps (messaging.shouldWrap),
+// so a long actor or actee line ran past 80 columns while the command's
+// defence lines, already on the move category, wrapped. A Category decides a
+// line's colour (messaging/pipeline.go applyCategoryColor) and whether it
+// wraps; combat verbosity (messaging.Verbosity.Suppresses) is applied only to
+// the round's combat drains in internal/hooks, never to SendTrio's seats, so
+// a light-verbosity player still reads their own move. The struct stays
+// because the roles can still differ (throw's actee-less events,
+// RemoteObserver). sameMoveCategory below covers a call site whose lines
+// share one category throughout.
 type moveCategories struct {
 	Actor          messaging.Category
 	Actee          messaging.Category

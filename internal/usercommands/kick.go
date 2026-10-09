@@ -14,9 +14,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// kickCategories: the player's own actor/actee feedback is CategorySystem;
-// the room's line carries CategoryKick (colour + light-verbosity gate).
-var kickCategories = moveCategories{Actor: messaging.CategorySystem, Actee: messaging.CategorySystem, Observer: messaging.CategoryKick}
+// kickCategories: every role rides CategoryKick, the player's own lines
+// included, so they wrap and colour like the room's (#449).
+var kickCategories = moveCategories{Actor: messaging.CategoryKick, Actee: messaging.CategoryKick, Observer: messaging.CategoryKick}
 
 func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
@@ -129,8 +129,8 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			sendMoveDefenceShortage(targetChar, defence)
 		}
 		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(messaging.CategorySystem, roles.Actor),
-			Actee:    lineOrNone(messaging.CategorySystem, roles.Actee),
+			Actor:    lineOrNone(kickCategories.Actor, roles.Actor),
+			Actee:    lineOrNone(kickCategories.Actee, roles.Actee),
 			Observer: observer,
 		}, aud)
 	} else if defence, defended := moveDefenceLines(user, room, target, result.Defence, attackName); defended {
