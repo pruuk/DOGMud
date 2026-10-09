@@ -70,9 +70,16 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	}
 
-	// #454: a typed name resolves only at full sight. The word "pet" is the
-	// giver's own pet, always at hand.
-	if giveWho != `pet` {
+	// The giver's own pet, by the word "pet" or by its name, is always at
+	// hand: it goes before any room lookup, so a player named "Petra" never
+	// takes it, and before the sight gate, so it needs no shape (#454).
+	if giveToOwnPet(giveWho, user) {
+		giveToPet(user, user, room, giveItem, giveGoldAmount)
+		return true, nil
+	}
+
+	// #454: a typed name resolves only at full sight.
+	{
 		name, refusal := actions.AimBySight(user.Character, user.UserId, room, giveWho, `give `+giveWhat)
 		if refusal != `` {
 			user.SendText(messaging.CategorySystem, refusal)
@@ -312,11 +319,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	//
 	// Look for any pets in the room
 	//
-	petUserId := room.FindByPetName(giveWho)
-	if petUserId == 0 && giveWho == `pet` && user.Character.Pet.Exists() {
-		petUserId = user.UserId
-	}
-	if petUserId > 0 {
+	if petUserId := room.FindByPetName(giveWho); petUserId > 0 {
 
 		petUser := users.GetByUserId(petUserId)
 		if petUser == nil {
@@ -324,33 +327,51 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			return true, nil
 		}
 
-		if giveGoldAmount > 0 {
-			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`What would %s do with <ansi fg="gold">%d gold</ansi>?`, petUser.Character.Pet.DisplayName(), giveGoldAmount))
-			return true, nil
-		}
-
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You give the <ansi fg="itemname">%s</ansi> to %s.`, giveItem.DisplayName(), petUser.Character.Pet.DisplayName()))
-		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> gives their <ansi fg="itemname">%s</ansi> to %s...`, user.Character.Name, giveItem.DisplayName(), petUser.Character.Pet.DisplayName()), user.UserId)
-
-		user.Character.RemoveItem(giveItem)
-
-		events.AddToQueue(events.ItemOwnership{
-			UserId: user.UserId,
-			Item:   giveItem,
-			Gained: false,
-		})
-
-		if len(petUser.Character.Pet.Items) >= petUser.Character.Pet.Capacity || !petUser.Character.Pet.StoreItem(giveItem) {
-			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`%s throws the <ansi fg="itemname">%s</ansi> onto the ground.`, petUser.Character.Pet.DisplayName(), giveItem.DisplayName()))
-			room.AddItem(giveItem, false)
-		}
-
+		giveToPet(user, petUser, room, giveItem, giveGoldAmount)
 		return true, nil
 	}
 
 	user.SendText(messaging.CategorySystem, `Who??? (<ansi fg="command">give {object-name} {receiver-name}</ansi>)`)
 
 	return true, nil
+}
+
+// giveToOwnPet reports whether who names the giver's own pet: the word "pet",
+// or the pet's own name in full.
+func giveToOwnPet(who string, user *users.UserRecord) bool {
+	pet := user.Character.Pet
+	if !pet.Exists() {
+		return false
+	}
+	if who == `pet` {
+		return true
+	}
+	match, _ := util.FindMatchIn(who, pet.PlainName())
+	return match != ``
+}
+
+// giveToPet hands giveItem to petUser's pet. Gold a pet has no use for.
+func giveToPet(user, petUser *users.UserRecord, room *rooms.Room, giveItem items.Item, giveGoldAmount int) {
+	if giveGoldAmount > 0 {
+		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`What would %s do with <ansi fg="gold">%d gold</ansi>?`, petUser.Character.Pet.DisplayName(), giveGoldAmount))
+		return
+	}
+
+	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You give the <ansi fg="itemname">%s</ansi> to %s.`, giveItem.DisplayName(), petUser.Character.Pet.DisplayName()))
+	room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> gives their <ansi fg="itemname">%s</ansi> to %s...`, user.Character.Name, giveItem.DisplayName(), petUser.Character.Pet.DisplayName()), user.UserId)
+
+	user.Character.RemoveItem(giveItem)
+
+	events.AddToQueue(events.ItemOwnership{
+		UserId: user.UserId,
+		Item:   giveItem,
+		Gained: false,
+	})
+
+	if len(petUser.Character.Pet.Items) >= petUser.Character.Pet.Capacity || !petUser.Character.Pet.StoreItem(giveItem) {
+		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`%s throws the <ansi fg="itemname">%s</ansi> onto the ground.`, petUser.Character.Pet.DisplayName(), giveItem.DisplayName()))
+		room.AddItem(giveItem, false)
+	}
 }
 
 // splitGiveArgs separates the give command's arguments into an object phrase
@@ -360,12 +381,26 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 // amount) AND the recipient resolves (player, mob, or pet in the room). If no
 // split fully resolves, it falls back to treating the last single token as the
 // recipient — preserving legacy behavior and the downstream not-found errors.
+//
+// Below full sight the room is never asked who is there for a typed name
+// (#454): a recipient the giver cannot pick out does not resolve, and the
+// split falls to the first one whose object alone resolves, so the sight
+// gate's refusal reads the same whether the named recipient is present or
+// not.
 func splitGiveArgs(args []string, user *users.UserRecord, room *rooms.Room) (giveWhat, giveWho string) {
 	for k := 1; k < len(args); k++ {
 		who := strings.Join(args[len(args)-k:], " ")
 		what := strings.Join(args[:len(args)-k], " ")
 		if giveObjectResolves(what, user) && giveTargetResolves(who, user, room) {
 			return what, who
+		}
+	}
+	if messaging.ParticipantSight(user.Character, room) != messaging.SightFull {
+		for k := 1; k < len(args); k++ {
+			what := strings.Join(args[:len(args)-k], " ")
+			if giveObjectResolves(what, user) {
+				return what, strings.Join(args[len(args)-k:], " ")
+			}
 		}
 	}
 	return strings.Join(args[:len(args)-1], " "), args[len(args)-1]
@@ -403,17 +438,20 @@ func giveObjectResolves(what string, user *users.UserRecord) bool {
 	return found
 }
 
-// giveTargetResolves reports whether the recipient phrase names a player, mob,
-// or pet present in the room (or the player's own pet via the literal "pet").
+// giveTargetResolves reports whether the recipient phrase names the player's
+// own pet, or a player, mob or pet in the room that actions.AimBySight admits
+// at the giver's sight (#454): a typed name only at full sight, a shape or id
+// form at shapes, nothing with no sight.
 func giveTargetResolves(who string, user *users.UserRecord, room *rooms.Room) bool {
-	if playerId, mobInstanceId := room.FindByNameSeenBy(user.Character, who); playerId > 0 || mobInstanceId > 0 {
+	if giveToOwnPet(who, user) {
 		return true
 	}
-	if room.FindByPetName(who) > 0 {
+	name, refusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
+	if refusal != `` {
+		return false
+	}
+	if playerId, mobInstanceId := room.FindByNameSeenBy(user.Character, name); playerId > 0 || mobInstanceId > 0 {
 		return true
 	}
-	if who == "pet" && user.Character.Pet.Exists() {
-		return true
-	}
-	return false
+	return room.FindByPetName(name) > 0
 }

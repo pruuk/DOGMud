@@ -80,7 +80,10 @@ The `internal/usercommands` package implements the complete command system for p
 Every command that names a creature in the room runs the typed name through
 `actions.AimBySight` before it resolves: `attack` (a `*` wildcard needs some
 sight), `target`, the melee specials (through `actions.StageMeleeTarget`),
-`give` (the word `pet` is exempt), `show`, `consider`, `steal` and `plant`
+`give` (the giver's own pet, named `pet` or by its own name, is exempt and
+resolves before any room lookup; the item and recipient split admits only a
+recipient `AimBySight` admits, and below full sight falls to the first split
+whose item alone resolves, so a refusal never tells who is there), `show`, `consider`, `steal` and `plant`
 (a refused noun may still be a container), `shadow`, `talk`, `ask`,
 `party invite` and `rep`. `fire` refuses below full sight of the room it is
 aimed into (`actions.ShotSight`) before any name resolves. Lines that follow

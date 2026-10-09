@@ -10,7 +10,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/pets"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
@@ -274,4 +276,59 @@ func TestShotSight_ThroughAnExitReadsTheRoomBeyond(t *testing.T) {
 	require.Equal(t, 0, rooms.LoadRoom(2).LightLevel())
 	assert.Equal(t, messaging.SightFull, actions.ShotSight(user.Character, room, "skeleton"))
 	assert.Equal(t, messaging.SightNone, actions.ShotSight(user.Character, room, "skeleton north"))
+}
+
+// #454 review F1: give's split between item and recipient must not ask the
+// room who is there below full sight. A two-word recipient that is present
+// and one that is absent read the same refusal in the dark.
+func TestGiveSight_DarkSplitReadsTheSameWhetherPresentOrNot(t *testing.T) {
+	told := map[bool]string{}
+	for _, present := range []bool{true, false} {
+		user, room := aimScene(t, aimDark)
+		mobs.GetInstance(100).Character.Name = "Smith Rusk"
+		if !present {
+			room.RemoveMob(100)
+		}
+		user.Character.StoreItem(items.New(10001))
+		_, _ = Give("sword smith rusk", user, room, events.EventFlag(0))
+		told[present] = aimTold(1)
+		_, has := user.Character.FindInBackpack("sword")
+		assert.True(t, has, "present=%v: the sword left the giver in the dark", present)
+	}
+	assert.Equal(t, told[true], told[false], "the refusal told a present recipient from an absent one")
+	assert.Contains(t, told[true], actions.AimNotHereLine)
+}
+
+// The lit control: at full sight the two-word recipient resolves.
+func TestGiveSight_LitSplitTakesATwoWordRecipient(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	mobs.GetInstance(100).Character.Name = "Smith Rusk"
+	user.Character.StoreItem(items.New(10001))
+	_, _ = Give("sword smith rusk", user, room, events.EventFlag(0))
+	_, has := user.Character.FindInBackpack("sword")
+	assert.False(t, has, "a lit giver could not hand a sword to Smith Rusk")
+	assert.Contains(t, aimTold(1), "to Smith Rusk.")
+}
+
+// #454 review F5: `give X pet` is the giver's own pet, even with a player
+// whose name starts "pet" standing there.
+func TestGiveSight_PetWordIsTheOwnPetBeforeAPlayer(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	users.GetByUserId(2).Character.Name = "Petra"
+	user.Character.Pet = pets.Pet{Name: "Fang", Type: "dog", Capacity: 5}
+	user.Character.StoreItem(items.New(10001))
+	_, _ = Give("sword pet", user, room, events.EventFlag(0))
+	assert.Len(t, user.Character.Pet.Items, 1, "the sword did not reach the giver's pet")
+	_, petraHas := users.GetByUserId(2).Character.FindInBackpack("sword")
+	assert.False(t, petraHas, "`give sword pet` went to Petra")
+}
+
+// The own pet by its own name is at hand at shapes: no hint.
+func TestGiveSight_OwnPetByNameAtShapes(t *testing.T) {
+	user, room := aimScene(t, aimShapes)
+	user.Character.Pet = pets.Pet{Name: "Fang", Type: "dog", Capacity: 5}
+	user.Character.StoreItem(items.New(10001))
+	_, _ = Give("sword fang", user, room, events.EventFlag(0))
+	assert.Len(t, user.Character.Pet.Items, 1, "the own pet by name was refused at shapes")
+	assert.NotContains(t, aimTold(1), "make out shapes")
 }
