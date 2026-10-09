@@ -1,19 +1,20 @@
 ---
 name: dogmud-balance-config
-description: Use before hardcoding any balance number, or when retuning how something feels. Covers that 390 balance knobs are declared in internal/configs/config.balance.go and surfaced through _datafiles/config.yaml, that retuning is a config edit rather than a code change, that a Go default is never a live value because several shipped knobs differ sharply, that an absent key is meaningful because 0 is a legal shipped value, and that config.yaml carries skip-worktree so it desyncs in both directions.
+description: Use before hardcoding any balance number, or when retuning how something feels. Covers that 472 balance knobs are declared in internal/configs/config.balance.go and surfaced through _datafiles/config.yaml, that retuning is a config edit rather than a code change, that a Go default is never a live value because several shipped knobs differ sharply, that an absent key is meaningful because 0 is a legal shipped value, and that config.yaml carries skip-worktree so it desyncs in both directions.
 ---
 
 ## Look for the knob before editing a literal
 
-Lifted verbatim from CLAUDE.md, "Balance Lives in config.yaml, Not in Code"
-(lines 454-487 as of this skill's authoring):
+Lifted from CLAUDE.md's former "Balance Lives in config.yaml, Not in Code"
+section, with the counts recounted 2026-10-08:
 
 **Before hardcoding any balance number, check whether a knob already exists.**
-There are **352 balance knobs**, all declared in the single file
-`internal/configs/config.balance.go` (466 `Config*`-typed fields across the
-whole config package), surfaced through a 1506 line `_datafiles/config.yaml`.
-The seven sibling `config.balance.*.go` files (`combat`, `discovery`, `misc`,
-`mobs`, `progression`, `shops`, `spells`) declare **no fields at all**; they
+There are **472 balance knobs**, all declared in the single file
+`internal/configs/config.balance.go` (612 `Config*`-typed fields across the
+whole config package), surfaced through a 2802 line `_datafiles/config.yaml`.
+The nine sibling `config.balance.*.go` files (`baubles`, `combat`, `discovery`,
+`lighting`, `misc`, `mobs`, `progression`, `shops`, `spells`) declare **no
+fields at all**; they
 hold only defaulting and validation logic, so look in `config.balance.go` for
 the field and in the sibling named for its subsystem (`config.balance.shops.go`
 for shop knobs, and so on) for its default. If you cannot tell which subsystem
@@ -133,8 +134,8 @@ field directly as `b.FieldName`.
 `config.yaml` itself.** Most fields share their PascalCase Go name with
 their yaml tag, but not all of them do, and a field-name grep against
 `config.yaml` finds nothing for the ones that differ. Verified 2026-09-08,
-count rechecked 2026-09-15 (slice 3 deleted the dead broken-limb duration
-knob): of the 389 `Config*`-typed fields in `config.balance.go`, exactly **7**
+count rechecked 2026-10-08: of the 472 `Config*`-typed fields in
+`config.balance.go`, exactly **7**
 carry a yaml tag that does not match the Go field name, all snake_case:
 `ReachStandingGrappleRadius` (`internal/configs/config.balance.go:191`)
 carries the tag `` yaml:"reach_standing_grapple_radius" ``, and
@@ -146,17 +147,17 @@ present and shipped. The other six are `ReachGroundGrappleRadius`,
 `SubBadZThreshold`, and `SubGoldLossFraction`, all in the same
 grapple/submission cluster.
 
-**CLAUDE.md's counts are stale, verified against source 2026-09-14:**
+**How the counts were taken (recounted 2026-10-08, on master `c7520f387`):**
 
-| Claim | CLAUDE.md figure | Actual, verified 2026-09-14 |
+| Claim | Old figure | Actual, 2026-10-08 |
 |---|---|---|
-| Fields in `config.balance.go` | 352 | **389** `Config*`-typed fields, recounted 2026-09-15 after slice 3 deleted the dead broken-limb duration knob (`grep -cE '^\s*[A-Za-z_]+\s+Config[A-Za-z]+\b' internal/configs/config.balance.go`) |
-| `Config*`-typed fields across the whole `internal/configs` package | 466 | **520**, recounted 2026-09-15 after slice 3 also deleted the dead item removal and Death's Shadow id knobs (527 raw matches of the same pattern across all non-test `.go` files in the package, minus 7 false positives in `config_types.go` where the pattern matches the `type ConfigInt int` style declarations, not struct fields) |
-| `_datafiles/config.yaml` line count | 1506 | **2327** lines in the committed blob (`git show HEAD:_datafiles/config.yaml \| wc -l`); the on-disk working copy reads 2331, a few lines longer from the local, uncommitted skip-worktree divergence described below |
-| Seven sibling `config.balance.*.go` files declare no fields | (same claim) | **Confirmed correct**, 0 fields in each of the seven, matching CLAUDE.md exactly |
+| Fields in `config.balance.go` | 352, then 389 (2026-09-15) | **472** (`grep -cE '^\s*[A-Za-z_]+\s+Config[A-Za-z]+\b' internal/configs/config.balance.go`) |
+| `Config*`-typed fields across the whole `internal/configs` package | 466, then 520 | **612**: 620 raw matches of the same pattern across the non-test `.go` files, minus 7 false positives in `config_types.go` (the `type ConfigInt int` style declarations) and 1 in `config.balance.lighting.go:207` (a local `def ConfigFloat`) |
+| `_datafiles/config.yaml` line count | 1506, then 2327 | **2802** lines in the committed blob (`git show HEAD:_datafiles/config.yaml \| wc -l`) |
+| Sibling `config.balance.*.go` files declare no fields | seven siblings | **Nine** siblings now (`baubles` and `lighting` added); still 0 fields in each |
 
-The 352/466/1506 figures were accurate when CLAUDE.md's balance section was
-written but the config surface has grown since. Do not carry the old numbers
+Each earlier figure was accurate when written, and the config surface keeps
+growing. Do not carry the old numbers
 forward, and do not assume today's verified numbers stay correct either: the
 whole point of this skill is that a knob count is exactly the kind of fact
 that must be re-read from source, not recalled, every time it matters.
