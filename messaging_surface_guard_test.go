@@ -896,6 +896,9 @@ func narrationRecognizeCall(call *ast.CallExpr) (narrationCallViewpoint, bool) {
 			// against a snapshot of the room before its light changed. #220
 			// moved the last as-lit senders onto it and deleted them.
 			"SendTextVisualToSnapshot",
+			// Its sound twin (#456): a departure judged by the room before
+			// the mover left with their own light.
+			"SendTextVisualWithAudioToSnapshot",
 			// Sight gates slice 5b: the name-hiding room senders, audio and
 			// visual, are room broadcasts too.
 			"SendTextHidingNames", "SendCommunicationHidingNames",

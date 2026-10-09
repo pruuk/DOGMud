@@ -1151,6 +1151,16 @@ Registers an `OnPlayerDespawn` listener that calls `character.Awareness.ForceVis
 to ensure the awareness machine is reset on logout. Prevents stale awareness
 state or leaks if a character is reused or respawned.
 
+Before it forces the quitter visible, `onPlayerDespawnForAwareness` stores
+under the user temp-data key `despawnUnseenByKey` the players in the room
+who could not make them out (`playersNotPerceiving`, by
+`Character.Perceives`). `HandleLeave` runs after it (`events.Last`) and its
+`removeAndAnnounceDespawn` takes `Room.VisualSnapshot()` before
+`RemovePlayer`, then sends the `player-despawn` line with
+`SendTextVisualToSnapshot`, excluding those players (#456): the quitter is
+seen going by their own light, and a hidden quitter is not named to a room
+that never saw them.
+
 ## Attributed death routing (U5c)
 
 `CharacterDied_RouteDeath.go` is the **single place a harm-driven death is

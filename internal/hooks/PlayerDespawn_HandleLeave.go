@@ -147,10 +147,8 @@ func HandleLeave(e events.Event) events.ListenerReturn {
 		}
 	}
 
-	if _, ok := room.RemovePlayer(evt.UserId); ok {
-		tplTxt, _ := templates.Process("player-despawn", user.Character.Name)
-		sendVisualRoomText(room, messaging.CategoryLogout, tplTxt)
-	}
+	despawnTxt, _ := templates.Process("player-despawn", user.Character.Name)
+	removeAndAnnounceDespawn(room, user, despawnTxt)
 
 	tplTxt, _ := templates.Process("goodbye", nil, evt.UserId)
 	connections.SendTo([]byte(templates.AnsiParse(tplTxt)), connId)
@@ -173,4 +171,17 @@ func HandleLeave(e events.Event) events.ListenerReturn {
 	users.SaveUser(user)
 
 	return events.Continue
+}
+
+// removeAndAnnounceDespawn takes the quitter out of room and tells the room,
+// judged by the room BEFORE they left (#456, owner ruling 2026-10-09: a mover
+// is seen by the light they carry on their own way out). Readers listed under
+// despawnUnseenByKey, who could not make out a hidden quitter before logout
+// forced them visible, read nothing.
+func removeAndAnnounceDespawn(room *rooms.Room, user *users.UserRecord, line string) {
+	snap := room.VisualSnapshot()
+	if _, ok := room.RemovePlayer(user.UserId); ok {
+		unseenBy, _ := user.GetTempData(despawnUnseenByKey).([]int)
+		room.SendTextVisualToSnapshot(snap, messaging.CategoryLogout, line, nil, unseenBy...)
+	}
 }

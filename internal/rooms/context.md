@@ -26,7 +26,14 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   snapshot, each at their recorded decision, names hidden at shapes. Owner
   rule (2026-10-05): a line announcing a change to the room's light lands
   with the state everyone was in BEFORE the change, so take the snapshot
-  first, make the change, then send. Lighting plan 5d uses it for a
+  first, make the change, then send. Its sound twin,
+  `SendTextVisualWithAudioToSnapshot(snap, cat, visualTxt, audioTxt,
+  excludeUserIds...)`, is `SendTextVisualWithAudio` judged against a
+  snapshot: a reader recorded at `SightNone` hears `audioTxt`. The departure
+  lines use it (#456, owner ruling 2026-10-09: a mover is seen by the light
+  they carry on their own way out; arrivals stay judged after the move). Both
+  visual-with-audio senders share one per-reader body,
+  `deliverVisualElseAudio`. Lighting plan 5d uses `SendTextVisualToSnapshot` for a
   darkness's start line, #447 for every equip and remove room line; #220
   added `hood` and the end line of a light or darkness that runs out or is
   cancelled. Those end lines go out at the next prune, after the record has stopped counting, so the
