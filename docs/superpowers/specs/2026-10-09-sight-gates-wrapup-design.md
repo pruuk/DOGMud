@@ -1,6 +1,6 @@
 # Sight gates wrap-up (#382)
 
-**Status:** Owner calls answered 2026-10-09 (arrivals keep; voice names gated); revised draft for review.
+**Status:** APPROVED by the owner, 2026-10-09. Owner calls: arrivals keep their behaviour, and names typed in the dark are gated.
 **Parent:** `specs/2026-10-09-sight-gates-followups-design.md` (shipped in #452, master
 `b1c1829ec`). Its verification playtest (run `7ab93bb8f9c52e52`) closed #446, #447, #448, #216
 and #444, and filed #453, #454, #455 and #456. Still open under the epic: #242, #251, #449 and
