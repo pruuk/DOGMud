@@ -19,7 +19,11 @@ The `internal/usercommands` package implements the complete command system for p
 #### **Basic Interaction Commands**
 - **Movement**: `go`, `flee` - Navigation and escape mechanics
 - **Communication**: `say`, `shout`, `whisper`, `emote`, `broadcast` - Player communication
-- **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering
+- **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering.
+  The admin `online` table swaps Title for UserId, Zone and RoomId, and
+  `fitOnlineEntries` keeps it within 80 columns: it trims the Zone cell
+  first (RoomId still names the room), then the character name, keeping
+  its `[AI]` tag (#449). The player table is not trimmed.
 - **Inventory**: `inventory`, `get`, `drop`, `give`, `put` - Item management
 - **Drink** (`drink.go`, drink path unification 2026-09-28): `Drink` is a
   wrapper over `actions.Drink`, which holds every drink rule (toxicity, aging,
