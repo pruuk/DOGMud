@@ -17,7 +17,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -118,11 +117,11 @@ func canRecognize(m *mobs.Mob) bool {
 // carrierScore is how well the carrier keeps a stolen bauble out of sight:
 // the steal score (Dexterity plus skullduggery rank times SkillWeight, and
 // the hidden bonus), without the carrier's own sight, which does not help
-// them hide anything.
+// them hide anything. While Empathic Shroud hides the carrier, the shroud's
+// score stands in for Dexterity plus Skullduggery (HideBaseScore, #444).
 func carrierScore(c *characters.Character) float64 {
 	cfg := configs.GetBalanceConfig()
-	score := float64(c.Stats.Dexterity.ValueAdj) +
-		float64(c.GetSkillLevel(skills.Skullduggery))*float64(cfg.SkillWeight)
+	score := c.HideBaseScore()
 	if c.IsHidden() {
 		score += float64(cfg.StealHiddenBonus)
 	}

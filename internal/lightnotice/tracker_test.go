@@ -29,6 +29,22 @@ func obs(room int, b messaging.Band, terms rooms.LightTerms, bandAt ...func(int)
 	return observation{roomId: room, band: b, terms: terms, bandAt: f}
 }
 
+// recSight is rec read through a night-sight window of strength (no infra
+// reach).
+func recSight(room int, b messaging.Band, terms rooms.LightTerms, strength int) record {
+	r := rec(room, b, terms)
+	r.sight = sightWindow{strength: strength}
+	return r
+}
+
+// obsSight is obs for an observer whose window is strength (no infra reach):
+// bandAt reads through it and the observation carries it.
+func obsSight(room int, b messaging.Band, terms rooms.LightTerms, strength int) observation {
+	o := obs(room, b, terms, sight(strength))
+	o.sight = sightWindow{strength: strength}
+	return o
+}
+
 // sight returns a bandAt for an observer with the given night-sight strength
 // and the shipped 25/50 edges (LightBlindBelow, LightDimBelow).
 func sight(strength int) func(int) messaging.Band {
@@ -206,6 +222,24 @@ func TestAttribution(t *testing.T) {
 			rec(1, messaging.BandFaces, rooms.LightTerms{Level: 60, Sky: lightscale.Absent(), Lamp: 40, HasLamp: true}),
 			obs(1, messaging.BandShapes, rooms.LightTerms{Level: 40, Sky: lightscale.Absent(), Lamp: 20, HasLamp: true}, sight(0)),
 			CauseLamp},
+
+		// #448: the record keeps the sight window. When the eyes changed and
+		// the OLD light through the NEW eyes moves the band the way it went
+		// (not necessarily all the way), the eyes take the blame even though
+		// a light drifted at the same moment.
+
+		{"eyes moved the band and a carried light drifted the same way: eyes",
+			recSight(1, messaging.BandFaces, rooms.LightTerms{Level: 40, Carried: true, CarriedLight: 40}, 24),
+			obsSight(1, messaging.BandDark, rooms.LightTerms{Level: 20, Carried: true, CarriedLight: 20}, 0),
+			CauseEyes},
+		{"eyes changed but read the old light the same: the light is named",
+			recSight(1, messaging.BandFaces, rooms.LightTerms{Level: 60, Carried: true, CarriedLight: 60}, 10),
+			obsSight(1, messaging.BandDark, rooms.LightTerms{Level: 20, Carried: true, CarriedLight: 20}, 0),
+			CauseCarried},
+		{"eyes moved the band the other way: the light is named",
+			recSight(1, messaging.BandFaces, rooms.LightTerms{Level: 60, Sky: 60}, 0),
+			obsSight(1, messaging.BandShapes, rooms.LightTerms{Level: 10, Sky: 10}, 24),
+			CauseSky},
 	}
 	for _, c := range cases {
 		if got := c.now.bandAt(c.now.terms.Level); got != c.now.band {
@@ -214,5 +248,16 @@ func TestAttribution(t *testing.T) {
 		if got := attribute(c.prev, c.now); got != c.want {
 			t.Errorf("%s: cause = %q, want %q", c.name, got, c.want)
 		}
+	}
+}
+
+// The record keeps the sight window it was read through (#448), so the next
+// check can tell the eyes changed.
+func TestDecideRecordsTheSightWindow(t *testing.T) {
+	now := obsSight(1, messaging.BandShapes, termsDim, 12)
+	now.sight.reach = 30
+	_, _, next := decide(record{}, false, now, TriggerCommand)
+	if next.sight != (sightWindow{strength: 12, reach: 30}) {
+		t.Errorf("the record must keep the window, got %+v", next.sight)
 	}
 }

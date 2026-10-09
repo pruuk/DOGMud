@@ -55,6 +55,16 @@ type observation struct {
 	// not the light. A nil bandAt skips that check entirely (it is optional
 	// so decide's other rules stay testable without it).
 	bandAt func(light int) messaging.Band
+	// sight is the window bandAt reads through. The record keeps it, so
+	// attribute can tell that the observer's eyes changed (#448).
+	sight sightWindow
+}
+
+// sightWindow is an observer's sight inputs: night-sight strength
+// (Character.NightVisionStrength) and infra reach (Character.InfraReach).
+type sightWindow struct {
+	strength int
+	reach    int
 }
 
 // record is what was last announced (or silently recorded) to a player.
@@ -62,6 +72,8 @@ type record struct {
 	roomId int
 	band   messaging.Band
 	terms  rooms.LightTerms
+	// sight is the window the band was read through.
+	sight sightWindow
 	// quiet says the player was asleep or blinded since the last record, so
 	// the next attentive check re-records silently. Their end must never read
 	// as the light changing.
@@ -94,7 +106,7 @@ func decide(prev record, known bool, now observation, trigger Trigger) (notice, 
 		prev.quiet = true
 		return notice{}, false, prev
 	}
-	next := record{roomId: now.roomId, band: now.band, terms: now.terms}
+	next := record{roomId: now.roomId, band: now.band, terms: now.terms, sight: now.sight}
 	if !known || prev.quiet || trigger == TriggerQuiet || now.band == prev.band {
 		return notice{}, false, next
 	}
@@ -135,12 +147,16 @@ func transitionOf(from, to messaging.Band) Transition {
 // band? If so the light never had to move; the observer's own sight did (a
 // draught wearing off or taking hold), and that is checked BEFORE the terms.
 //
-// A plain direction test (did Level move the way the band moved) is not
-// enough: the sky drifts a little almost every round, and when it drifts the
-// same direction as an eyes-caused change, a direction test blames the sky
-// for a change the observer's sight alone already explains. The
-// counterfactual does not have that failure mode, because it holds the light
-// fixed at its OLD value and only varies the sight.
+// A plain direction test on the LIGHT level (did Level move the way the band
+// moved) is not enough: the sky drifts a little almost every round, and when
+// it drifts the same direction as an eyes-caused change, a direction test
+// blames the sky for a change the observer's sight alone already explains.
+// The counterfactual does not have that failure mode, because it holds the
+// light fixed at its OLD value and only varies the sight.
+//
+// Step 2b (added for #448) is a direction test on the observer's EYES, not on
+// the light level: it only runs when the recorded sight window changed, and
+// otherwise the light terms below decide.
 //
 // Otherwise, the first term that moved, in the order darkness (carried or a
 // fixture's), carried light (present, or its strength), the room's own light
@@ -153,6 +169,14 @@ func attribute(prev record, now observation) Cause {
 	}
 	a, b := prev.terms, now.terms
 	if now.bandAt != nil && now.bandAt(prev.terms.Level) == now.band {
+		return CauseEyes
+	}
+	// The eyes changed too, and on their own they move the band the way it
+	// went, even if not all the way: a light that drifted at the same moment
+	// does not take the blame (#448). Read through the window the record
+	// kept, so a light that moved while the eyes held still is never eyes.
+	if now.bandAt != nil && prev.sight != now.sight &&
+		movedSameWay(prev.band, now.bandAt(prev.terms.Level), now.band) {
 		return CauseEyes
 	}
 	switch {
@@ -184,6 +208,13 @@ func attribute(prev record, now observation) Cause {
 		return CauseSky
 	}
 	return CauseEyes
+}
+
+// movedSameWay reports whether via moved off from in the same direction as
+// to did. Bands run darkest to brightest (messaging.Band). to differs from
+// from: decide filters an unchanged band before attribute runs.
+func movedSameWay(from, via, to messaging.Band) bool {
+	return via != from && (via > from) == (to > from)
 }
 
 // lampAgrees reports whether the room's own light (its lamp and its light
@@ -346,5 +377,6 @@ func observe(c *characters.Character, room *rooms.Room) observation {
 		bandAt: func(light int) messaging.Band {
 			return messaging.BandThroughWindow(light, strength, reach, cfg.BlindBelow, cfg.DimBelow, cfg.DazzleAbove)
 		},
+		sight: sightWindow{strength: strength, reach: reach},
 	}
 }

@@ -450,27 +450,23 @@ func isExcludedUser(uid int, excludeIds []int) bool {
 	return false
 }
 
-// sendDarkRoomCombatFallback sends a one-time "You hear fighting close by."
-// line in a dark room to every player who cannot follow the fight by eye: one the
-// visual pipeline delivers nothing to (messaging.CanSeeShapes is false).
-// It used to test the nightvision FLAG, which sent the sound to an
-// infravision holder reading shapes and withheld it from a nightvision
-// holder whose window reads the room as blind (lighting plan 5c).
-func sendDarkRoomCombatFallback(room *rooms.Room, excludeUserIds ...int) {
-	if room == nil || room.IsLit() {
+// sendUnsightedCombatSound sends "You hear fighting close by." (once per
+// attack result, since each result calls it) to every player who cannot follow
+// the fight by eye: one the visual
+// pipeline delivers nothing to (Room.SendTextUnsighted, the same audience as
+// !messaging.CanSeeShapes, a sleeper included). It used to test the
+// nightvision FLAG, which sent the sound to an infravision holder reading
+// shapes and withheld it from a nightvision holder whose window reads the
+// room as blind (lighting plan 5c). It also skipped every lit room, so a
+// Blinded reader in a lit room heard nothing of a fight beside them (#216).
+//
+// #216: every caller passes the fight's own room, so the reader is IN the
+// fight's room; "nearby" said otherwise.
+func sendUnsightedCombatSound(room *rooms.Room, excludeUserIds ...int) {
+	if room == nil {
 		return
 	}
-	for _, uid := range room.GetPlayers() {
-		if isExcludedUser(uid, excludeUserIds) {
-			continue
-		}
-		u := users.GetByUserId(uid)
-		if u != nil && !messaging.CanSeeShapes(u.Character, room) {
-			// #216: every caller passes the fight's own room, so the
-			// reader is IN the fight's room; "nearby" said otherwise.
-			u.SendText(messaging.CategoryDefault, `<ansi fg="yellow">You hear fighting close by.</ansi>`)
-		}
-	}
+	room.SendTextUnsighted(messaging.CategoryDefault, `<ansi fg="yellow">You hear fighting close by.</ansi>`, excludeUserIds...)
 }
 
 // sendVisualElseAudible sends visualMsg through the visual pipeline, which

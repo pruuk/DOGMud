@@ -24,7 +24,7 @@ the recipient's connection.
 5. **Apply category color tag** — `<ansi fg="<category-alias>">…</ansi>`.
 6. **Wrap** at recipient's `UserRecord.LineWidth` (default 80, range
    40-240), ANSI-aware, but only for the narration categories
-   `shouldWrap` admits (45 of the 62 `Category` values as of this
+   `shouldWrap` admits (46 of the 62 `Category` values as of this
    writing, `CategoryLight` among them: lighting plan 3d's transition
    notices wrap exactly as `CategoryTimeOfDay` does). Pre-formatted
    output is excluded by category: mixed
@@ -425,15 +425,17 @@ Functions:
   adjective span behind it (same pattern as `HideNames`), because
   `rooms.go` anonymizes BEFORE it hides names and the span would otherwise
   survive as "a figure (dead)".
-- `HideWeapons(text string, d SightDecision, keep []string) string`
+- `HideWeapons(text string, d SightDecision) string`
   (`hideweapons.go`, owner ruling R8, 2026-10-08): below `SightFull` every
   `fg="item"` or `fg="itemname"` tag in a combat line becomes `WeaponWord`
   ("weapon"), nested display-name tags included, with "an" before it turned
-  to "a". It keeps a natural weapon ("fists", any species' `UnarmedName`)
-  and any name in `keep` (a participant's own held gear). The pipeline runs
-  it at `SightShapes` for `isCombatNarration` categories only, so every
-  spectator combat line is covered and a non-combat item line is not;
-  `combat.hideIdentitiesInPersonalLines` runs it on the personal lines.
+  to "a". It keeps a natural weapon ("fists", any species' `UnarmedName`),
+  and nothing else (since #446 `combat.hideIdentitiesInPersonalLines`
+  skips the attacker's own lines instead). The pipeline runs it at
+  `SightShapes` for `isCombatNarration` categories only, so every spectator
+  combat line is covered and a non-combat item line is not;
+  `combat.hideIdentitiesInPersonalLines` runs it on the defender's personal
+  lines.
   Untagged item names pass through, which is why the combat templates tag
   every weapon token. The converse holds too: a non-item must not wear the
   item tag. A move name in `{attack}` renders untagged through
@@ -469,13 +471,15 @@ with **zero new imports**, using the same minimal-interface trick
 `predicates.go:11` documents.
 
 ⚠️ **The category rides on the `Line`, not on the `Trio`, and that is
-load-bearing.** The three roles of one event routinely differ: ten of
-twelve player-side special-move verbs send personal lines as
-`CategorySystem` and the room line as something verb-specific, `shoot`
-uses four categories on the personal side, and `throw` uses three on
-each side. A single-`Category` seam would silently recategorise
-them, and category decides both the line's colour and whether a
-light-verbosity player sees it at all.
+load-bearing.** The three roles of one event routinely differ: `shoot`
+uses four categories on the personal side and `throw` uses three on
+each side (hit, dodge, interrupt). A single-`Category` seam would
+silently recategorise them. Category decides the line's colour and
+whether it wraps at 80 (`CategorySystem` never wraps, which is why #449
+moved the special-move actor and actee lines off it onto the move's own
+category; only refusals and cost notices stay on `CategorySystem`).
+Verbosity suppression is NOT driven by a Trio line's category: it applies
+only to the combat-round drains in `internal/hooks/combat_verbosity.go`.
 
 ## Import-direction discipline
 

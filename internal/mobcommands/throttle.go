@@ -82,7 +82,7 @@ func Throttle(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// actor roles silent, matching today's behaviour of never broadcasting
 		// this to the room.
 		if res.InterruptedCast && targetUser != nil {
-			sendMoveEvent("throttle", "cast_interrupt", ids, aud, messaging.CategorySystem, nil)
+			sendMoveEvent("throttle", "cast_interrupt", ids, aud, messaging.CategorySpellDisruption, nil)
 		}
 	} else if result.Damage > 0 {
 		// Defended-partial: the actee line still carries the damage from the

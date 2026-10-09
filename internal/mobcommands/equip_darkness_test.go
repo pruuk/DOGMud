@@ -72,3 +72,35 @@ func TestMobEquippingADarknessIsNotSeenInARoomAlreadyDark(t *testing.T) {
 	require.NotContains(t, got, mob.Character.Name, "a player already blind in the dark was told who put on the lantern")
 	require.NotContains(t, got, "puts on", "a player already blind in the dark saw the lantern put on")
 }
+
+// #447 on the mob path: a mob taking off the room's only light is seen by the
+// players it leaves in the dark, judged by the room before it came off.
+func TestMobRemovingTheOnlyLightIsSeenBeforeTheDarkFalls(t *testing.T) {
+	const torchCond, torchItem = 9773, 999973
+	t.Cleanup(seedAllRegistries())
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		torchCond: {ConditionId: torchCond, Name: "Test Torchlight", Secret: true, TriggerCount: 1, RoundInterval: 1,
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 40}}},
+	}))
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		torchItem: {ItemId: torchItem, Name: "test torch", NameSimple: "torch",
+			Type: items.Light, Subtype: items.Wearable, WornConditionIds: []int{torchCond}},
+	}))
+	mob, room := getTestMobAndRoom(t)
+	zero := 0.0
+	room.SkyLight = &zero
+	room.Lamp = nil
+	require.True(t, mob.Character.StoreItem(items.Item{ItemId: torchItem}))
+	_, err := Equip(fmt.Sprintf("!%d", torchItem), mob, room)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, room.LightLevel(), 25, "fixture: the torch must light the room")
+	// A mob lighting a torch in a room dark before it is not seen: nothing to see by.
+	require.NotContains(t, strings.Join(events.DrainQueuedMessagesForTest(1), "\n"), "puts on",
+		"a player in the dark saw the mob light the torch")
+
+	_, err = Remove("test torch", mob, room)
+	require.NoError(t, err)
+	require.Less(t, room.LightLevel(), 25, "fixture: the room must go dark")
+	require.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(1), "\n"), "removes their",
+		"the player the mob just left in the dark missed it taking the torch off")
+}

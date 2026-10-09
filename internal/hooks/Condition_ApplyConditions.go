@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -84,6 +86,11 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 	// already-active condition (e.g. ambusher's mob_idle → add_condition 9 tick)
 	// shouldn't re-fire "{actee} disappears into the shadows." every round.
 	wasAlreadyActive := targetChar.HasCondition(evt.ConditionId)
+	// A hide landing on a holder already hidden (Empathic Shroud taking over
+	// a sneak, #444) is seen by nobody: no one watched them vanish, so its
+	// start room line ("seems to shimmer and fade from view") would only
+	// give the hidden holder away.
+	hideOnHidden := targetChar.IsHidden() && slices.Contains(conditionInfo.Flags, conditions.Hidden)
 
 	// Apply the condition. A DurationMult of 0 or 1 means the authored duration, and
 	// for 1.0 AddConditionScaled is equivalent to AddCondition(id, false): both set
@@ -165,7 +172,7 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 			// ("A warm glow surrounds Alice"), and Room.SendText is never
 			// sight-gated, so it reached blind and unsighted observers. M2
 			// fixed the same defect for a spell's cast_observer line.
-			if roles.Observer != "" {
+			if roles.Observer != "" && !hideOnHidden {
 				if r := rooms.LoadRoom(roomId); r != nil {
 					// HidingNames, not plain SendTextVisual. Sight-gating alone
 					// leaves the line leaning on tag-based Anonymize, which by

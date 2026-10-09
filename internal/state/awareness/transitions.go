@@ -35,4 +35,8 @@ const (
 	// Visible character by anything but the sneak command: a mob's
 	// spawn-time conditionids, an admin setcondition.
 	TriggerConditionApplied = "condition_applied"
+	// TriggerShroudEnded is a shroud hide ending because no live Empathic
+	// Shroud record (condition 31) remains: it ran out, was purged or
+	// removed. Character.Validate reveals it.
+	TriggerShroudEnded = "shroud_ended"
 )

@@ -55,6 +55,14 @@ either state; see "The seams" below.
    observer's CURRENT sight, already give the NEW band? If `now.bandAt`
    reports that band for `prev.terms.Level`, the light never had to move;
    the observer's own sight did (a draught wearing off, or taking hold).
+   **2b. Eyes (direction, #448):** each record keeps the sight window it
+   was read through (`sightWindow`: night-sight strength and infra reach).
+   If the window changed AND the OLD light through the CURRENT sight moves
+   the band off the old one in the same direction the band moved
+   (`movedSameWay`), the cause is the eyes even when a light term drifted
+   too and the eyes alone fall short of the new band. A window that did not
+   change never takes this step, so a light moving while the eyes hold
+   still is never blamed on them.
 3. Otherwise, the first light term that moved: **darkness** (lighting plan
    5d: `Darkened` flipped or `Dark` moved, a carried darkness arriving,
    lapsing or changing strength), then **carried**, then the **room's own

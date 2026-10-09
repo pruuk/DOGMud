@@ -53,7 +53,7 @@ verbs.
 | Enchant withdrawal | Enchant Withdrawal | 123 |
 | Blinded | nothing; it had no producer, and perception rides records 3 and 77 | |
 
-`ids.go` holds those ids as constants (`ConditionIdWarcry` through
+`ids.go` holds those ids as constants (`ConditionIdEmpathicShroud`, then `ConditionIdWarcry` through
 `ConditionIdEnchantWithdrawal`) so a producer or a reader never spells a bare
 number. Warcry and rally used to apply a combat condition AND a display-only
 mirror record side by side; there is one record now, and the
@@ -142,10 +142,8 @@ the two kinds the spec declares. It is NOT a light: `IsLightSource()` stays
 light-only, so `LightSources`, `EmitsLight` and `hood` exclude it by
 construction. Ask `ConditionSpec.IsDarknessSource()`, walk
 `(*Conditions).DarknessSources()`, or `(*Conditions).LightAndDarknessSources()`
-for both kinds in one held order (the trim's walk). `AnyDarknessSource(ids)`
-reports whether any condition id names a darkness (the equip line's test for
-taking a `rooms.VisualSnapshot` first). `Effect(EffectDarknessStrength)` returns 0. `validateEffects` also
-refuses a literal `darkness_strength` of 0 or less, a spec declaring both
+for both kinds in one held order (the trim's walk).
+`Effect(EffectDarknessStrength)` returns 0. `validateEffects` also refuses a literal `darkness_strength` of 0 or less, a spec declaring both
 kinds, and a `stacking` darkness; `AddConditionMagnitude` resets either kind.
 
 Per-record state lives on `Condition`: `LightTrim` (`LightFull`,
@@ -207,6 +205,11 @@ tripled the spell dot's total, so the owner halved the two spell dot
   had the defect. Fixed in slice 1, which means every player-held tick record
   now lands one more tick than it did before. The owner ruled this extra
   final tick intended behaviour, not a side effect to correct (2026-09-14).
+- **`Discard` drops a record with no end line.** `RemoveCondition` only marks
+  a record expired, and the prune pass then narrates its end. `Discard`
+  deletes it outright and rebuilds the lookups, so nothing is told. It exists
+  for one hide handing over to another (#444): the loser's record (9 or 31)
+  goes without telling the room of a reveal that did not happen.
 
 ## Architecture
 

@@ -3,11 +3,14 @@ package hooks
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -152,4 +155,110 @@ func TestMobSpellChannel_HiddenCasterIsNeverNamed(t *testing.T) {
 			require.Equal(t, 1, countContaining(got, tc.want), "%v", got)
 		})
 	}
+}
+
+// testHarmSpell is a single-target harm spell with nothing authored beyond
+// its axes, enough for resolveSpell to reach its no-target lines.
+func testHarmSpell() *spells.SpellData {
+	return &spells.SpellData{SpellId: "test-bolt", Name: "Test Bolt", AttackType: combatvocab.AttackSpell,
+		DamageType: combatvocab.DamageMental, Targeting: combatvocab.TargetSingle, EffectType: "damage"}
+}
+
+// #242 residue: the target-gone line named the target raw, to a caster who
+// could not make out their own room.
+func TestPlayerSpellTargetGone_NamedOnlyAsFarAsTheCasterSees(t *testing.T) {
+	room := seedFallbackRoom(t, 0, nightEyesConditionId)
+	caster, target := users.GetByUserId(2), users.GetByUserId(1)
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(caster.Character, room))
+	room.RemovePlayer(target.UserId)
+	target.Character.RoomId = 1
+	rooms.LoadRoom(1).AddPlayer(target.UserId)
+	drainPlain(caster.UserId)
+
+	resolveSpell(caster, activity.CastingData{SpellId: "test-bolt", TargetUserIds: []int{target.UserId}}, testHarmSpell(), room)
+
+	got := drainPlain(caster.UserId)
+	require.Equal(t, 1, countContaining(got, "Your spell dissipates, unspent. Something is no longer here."), "%v", got)
+	require.Zero(t, countContaining(got, target.Character.Name), "%v", got)
+}
+
+// #242 residue: "crackles through the air harmlessly" went out visual only,
+// so a reader who saw nothing heard nothing of a spell spent in the room.
+func TestPlayerSpellFindsNothing_HeardByAReaderWhoSeesNothing(t *testing.T) {
+	t.Run("sees nothing, hears it sputter out", func(t *testing.T) {
+		room := seedFallbackRoom(t, 0, nightEyesConditionId)
+		caster := users.GetByUserId(2)
+		resolveSpell(caster, activity.CastingData{SpellId: "test-bolt"}, testHarmSpell(), room)
+		got := drainPlain(1)
+		require.Equal(t, 1, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+		require.Zero(t, countContaining(got, "crackles"), "%v", got)
+		require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
+	})
+	t.Run("shapes reader sees a figure, hears no sound line", func(t *testing.T) {
+		room := seedFallbackRoom(t, 10, heatEyesConditionId)
+		caster := users.GetByUserId(2)
+		resolveSpell(caster, activity.CastingData{SpellId: "test-bolt"}, testHarmSpell(), room)
+		got := drainPlain(1)
+		require.Equal(t, 1, countContaining(got, "crackles through the air harmlessly"), "%v", got)
+		require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
+		require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+	})
+}
+
+// #242: the drain-area "finding no one to drain" line went out visual only, so
+// a reader who saw nothing heard nothing of the spell spent in the room.
+func TestMobDrainAreaFindsNoOne_HeardByAReaderWhoSeesNothing(t *testing.T) {
+	// Downed players are skipped by the drain, so with everyone here at 0
+	// health it finds no one.
+	downAll := func(t *testing.T) {
+		t.Helper()
+		for _, uid := range []int{1, 2} {
+			c := users.GetByUserId(uid).Character
+			saved := c.Health
+			c.Health = 0
+			t.Cleanup(func() { c.Health = saved })
+		}
+		events.DrainQueuedMessagesForTest(1)
+		events.DrainQueuedMessagesForTest(2)
+	}
+	spell := &spells.SpellData{SpellId: "test-drain", Name: "Core Recharge", EffectType: "drain_area"}
+
+	t.Run("sees nothing, hears it sputter out", func(t *testing.T) {
+		room := seedFallbackRoom(t, 0, nightEyesConditionId)
+		downAll(t)
+		resolveMobDrainArea(spellChannelMob(t), room, spell)
+		got := drainPlain(1)
+		require.Equal(t, 1, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+		require.Zero(t, countContaining(got, "finding no one"), "%v", got)
+		require.Zero(t, countContaining(got, "Skeleton"), "%v", got)
+	})
+	t.Run("shapes reader sees a figure, hears no sound line", func(t *testing.T) {
+		room := seedFallbackRoom(t, 10, heatEyesConditionId)
+		downAll(t)
+		resolveMobDrainArea(spellChannelMob(t), room, spell)
+		got := drainPlain(1)
+		require.Equal(t, 1, countContaining(got, "finding no one to drain"), "%v", got)
+		require.Zero(t, countContaining(got, "Skeleton"), "%v", got)
+		require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+	})
+}
+
+// A hidden player caster is unseen by every reader, even one who reads faces
+// in a lit room (#274, owner R3): the harmless line says "Something's".
+func TestPlayerSpellFindsNothing_HiddenCasterIsNeverNamed(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	reader, caster := users.GetByUserId(1), users.GetByUserId(2)
+	require.Equal(t, messaging.SightFull, messaging.ParticipantSight(reader.Character, room))
+	caster.Character.Validate()
+	reason := state.TransitionReason{Trigger: "spell_channel_hidden_test"}
+	require.NoError(t, caster.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+	caster.Character.Awareness.ResolveConcealment(true, reason)
+	require.True(t, caster.Character.IsHidden())
+	events.DrainQueuedMessagesForTest(1)
+
+	resolveSpell(caster, activity.CastingData{SpellId: "test-bolt"}, testHarmSpell(), room)
+
+	got := drainPlain(1)
+	require.Equal(t, 1, countContaining(got, "Something's spell crackles through the air harmlessly."), "%v", got)
+	require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
 }

@@ -41,8 +41,8 @@ import (
 // would never render; leaving the tag off also avoids guessing between
 // mobname and username for an attacker who may be either.
 const (
-	waitRoundDarkAttackerLine = `<ansi fg="yellow">You bide your time, straining to place %s in the dark.</ansi>`
-	waitRoundDarkDefenderLine = `<ansi fg="attack-bad">%s hangs back in the dark, biding its time.</ansi>`
+	waitRoundDarkAttackerLine = `<ansi fg="yellow">You bide your time, straining to place %s.</ansi>`
+	waitRoundDarkDefenderLine = `<ansi fg="attack-bad">%s hangs back, biding its time.</ansi>`
 )
 
 // handleCombatWaitRound handles the RoundsWaiting > 0 short-circuit
@@ -51,10 +51,8 @@ const (
 // attacker is still waiting).
 //
 // attackerUser is non-nil when the attacker is a player (PvM/PvP).
-// defenderUser is non-nil when the defender is a player (MvP/PvP).
-// viewerUserId is the user ID passed to sendVisualRoomText and
-// sendDarkRoomCombatFallback — always the user participant (0 if neither
-// side is a player, e.g. MvM).
+// The fight sound (sendUnsightedCombatSound) excludes BOTH combatants, since
+// in PvP each already reads their own wait line.
 //
 // The authored MessagesToSource/MessagesToTarget lines from
 // combat.GetWaitMessages name the weapon as well as the foe (e.g. "Something
@@ -78,7 +76,6 @@ func handleCombatWaitRound(
 	defenderUser *users.UserRecord,
 	attackerRoom *rooms.Room,
 	defenderRoom *rooms.Room,
-	viewerUserId int,
 ) bool {
 	// U12c-2: the guard and the decrement are ONE call now, so they cannot
 	// drift apart. Note the debug line logs the value AFTER the decrement,
@@ -127,9 +124,23 @@ func handleCombatWaitRound(
 	// own sight can hide names -- a raw drain through sendVisualRoomText
 	// could not do that. That is why a room-line handler has no room-line
 	// handling of its own here.
-	sendDarkRoomCombatFallback(attackerRoom, viewerUserId)
+	excludes := playerExcludeIdsFromUsers(attackerUser, defenderUser)
+	sendUnsightedCombatSound(attackerRoom, excludes...)
 	if defenderRoom != attackerRoom {
-		sendDarkRoomCombatFallback(defenderRoom, viewerUserId)
+		sendUnsightedCombatSound(defenderRoom, excludes...)
 	}
 	return true
+}
+
+// playerExcludeIdsFromUsers is the user ids of whichever of the two combatants
+// are players, for a room broadcast that must skip both.
+func playerExcludeIdsFromUsers(attackerUser, defenderUser *users.UserRecord) []int {
+	excludes := []int{}
+	if attackerUser != nil {
+		excludes = append(excludes, attackerUser.UserId)
+	}
+	if defenderUser != nil {
+		excludes = append(excludes, defenderUser.UserId)
+	}
+	return excludes
 }

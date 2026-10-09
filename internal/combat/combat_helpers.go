@@ -885,24 +885,24 @@ var doubleFumbleMessages = []struct {
 		toRoom:     `%s and %s both stumble in a spectacular display of ineptitude.`,
 	},
 	{
-		toAttacker: `You swing wildly and lose your balance — %s flails just as badly!`,
-		toDefender: `%s swings wildly and loses balance — and you flail just as badly!`,
+		toAttacker: `You swing wildly and lose your balance, and %s flails just as badly!`,
+		toDefender: `%s swings wildly and loses balance, and you flail just as badly!`,
 		toRoom:     `%s and %s both flail about in an embarrassing tangle of limbs.`,
 	},
 	{
 		toAttacker: `Your weapon slips at the exact moment %s trips over their own guard!`,
 		toDefender: `Your guard tangles at the exact moment %s's weapon slips free!`,
-		toRoom:     `%s's weapon slips and %s's guard tangles — both stumble to the ground!`,
+		toRoom:     `%s's weapon slips and %s's guard tangles; both stumble to the ground!`,
 	},
 	{
-		toAttacker: `You overcommit and tumble forward — %s overreacts and falls too!`,
-		toDefender: `%s overcommits and tumbles forward — you overreact and fall too!`,
-		toRoom:     `%s overcommits and %s overreacts — both crash to the ground!`,
+		toAttacker: `You overcommit and tumble forward, and %s overreacts and falls too!`,
+		toDefender: `%s overcommits and tumbles forward, and you overreact and fall too!`,
+		toRoom:     `%s overcommits and %s overreacts; both crash to the ground!`,
 	},
 	{
 		toAttacker: `You slip on something and %s panics into a heap beside you!`,
 		toDefender: `%s slips on something and you panic into a heap beside them!`,
-		toRoom:     `%s slips and %s panics — both end up in a heap on the ground!`,
+		toRoom:     `%s slips and %s panics; both end up in a heap on the ground!`,
 	},
 }
 

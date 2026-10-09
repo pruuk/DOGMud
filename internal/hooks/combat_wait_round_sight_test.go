@@ -6,8 +6,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
@@ -97,13 +100,13 @@ func TestWaitRound_DarkRoomHidesAttackerName(t *testing.T) {
 
 	armWait(&mob.Character, 1)
 
-	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room, 1)
+	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
 	require.Len(t, lines, 1, "dark room: defender should receive exactly the dark line: %v", lines)
 	// Fully blind: SightNone, so the attacker reads as "something".
-	require.Equal(t, "Something hangs back in the dark, biding its time.", lines[0])
+	require.Equal(t, "Something hangs back, biding its time.", lines[0])
 	require.Zero(t, countContaining(lines, "Skeleton"), "dark room: defender must not read the mob's name: %v", lines)
 	require.Zero(t, countContaining(lines, "Rusted Cleaver"), "dark room: defender must not read the weapon: %v", lines)
 }
@@ -129,7 +132,7 @@ func TestWaitRound_LitRoomShowsAttackerName(t *testing.T) {
 
 	armWait(&mob.Character, 1)
 
-	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room, 1)
+	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
@@ -164,13 +167,13 @@ func TestWaitRound_DarkRoomHidesTargetNameFromAttacker(t *testing.T) {
 
 	armWaitOnMob(user1.Character, 100)
 
-	handled := handleCombatWaitRound(user1.Character, &mob.Character, combat.User, combat.Mob, user1, nil, room, room, 1)
+	handled := handleCombatWaitRound(user1.Character, &mob.Character, combat.User, combat.Mob, user1, nil, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
 	require.Len(t, lines, 1, "dark room: attacker should receive exactly the dark line: %v", lines)
 	// Fully blind: SightNone, and mid-sentence so the word is not capitalised.
-	require.Equal(t, "You bide your time, straining to place something in the dark.", lines[0])
+	require.Equal(t, "You bide your time, straining to place something.", lines[0])
 	require.Zero(t, countContaining(lines, "Skeleton"), "dark room: attacker must not read the target's name: %v", lines)
 	require.Zero(t, countContaining(lines, "Rusted Cleaver"), "dark room: attacker must not read the weapon: %v", lines)
 }
@@ -204,7 +207,7 @@ func TestWaitRound_DarkRoomInfraredDefenderStillGetsDarkLine(t *testing.T) {
 
 	armWait(&mob.Character, 1)
 
-	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room, 1)
+	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
@@ -216,7 +219,7 @@ func TestWaitRound_DarkRoomInfraredDefenderStillGetsDarkLine(t *testing.T) {
 	// shapes and a reader who was fully blind got the identical text. It now
 	// runs through HideNames by the reader's own sight, so shapes reads
 	// "A figure" and only true blindness reads "Something".
-	require.Equal(t, "A figure hangs back in the dark, biding its time.", lines[0])
+	require.Equal(t, "A figure hangs back, biding its time.", lines[0])
 	require.Zero(t, countContaining(lines, "Skeleton"), "infrared: still must not read the mob's name: %v", lines)
 }
 
@@ -243,9 +246,47 @@ func TestWaitRound_EmptyAuthoredListStaysSilentInTheDark(t *testing.T) {
 
 	armWait(&mob.Character, 1)
 
-	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room, 1)
+	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
 	require.Empty(t, lines, "no authored line means no invented dark line either: %v", lines)
+}
+
+// #216: in PvP a defender who sees nothing already reads the fixed dark line
+// for the wait round; the room's fight sound must not reach them as well.
+// The fallback has to exclude both combatants itself.
+func TestWaitRound_PvPBlindedDefenderHearsNoFightSound(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restoreMsgs := seedWaitMessageFixture()
+	defer restoreMsgs()
+
+	util.SetRoundCountForTest(100)
+	defer util.ResetRoundCountForTest()
+
+	attacker := users.GetByUserId(2)
+	defender := users.GetByUserId(1)
+	require.NotNil(t, attacker)
+	require.NotNil(t, defender)
+	room := rooms.LoadRoom(1)
+	require.NotNil(t, room)
+	room.Lamp = rooms.LampPtr(90)
+
+	saved := defender.Character.Perception
+	t.Cleanup(func() { defender.Character.Perception = saved })
+	defender.Character.Perception = perception.NewMachine()
+	require.NoError(t, defender.Character.Perception.TransitionTo(perception.Blinded, state.TransitionReason{Trigger: "test"}))
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(defender.Character, room))
+
+	attacker.Character.SetAggro(1, 0, characters.DefaultAttack, 3)
+	drainPlain(1)
+	drainPlain(2)
+
+	handled := handleCombatWaitRound(attacker.Character, defender.Character, combat.User, combat.User, attacker, defender, room, room)
+	require.True(t, handled)
+
+	lines := drainPlain(1)
+	require.Zero(t, countContaining(lines, "You hear fighting"), "the blinded defender already reads the wait line: %v", lines)
+	require.Equal(t, 1, countContaining(lines, "hangs back"), "%v", lines)
 }

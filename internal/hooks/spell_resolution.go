@@ -145,7 +145,12 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 			continue
 		}
 		if targetUser.Character.RoomId != room.RoomId {
-			user.SendText(messaging.CategorySpellDisruption, fmt.Sprintf(`Your spell dissipates, unspent. <ansi fg="username">%s</ansi> is no longer here.`, targetUser.Character.Name))
+			// Named only as far as the caster can see in the caster's room
+			// (#242): a caster who cannot make the room out reads
+			// "Something is no longer here."
+			user.SendText(messaging.CategorySpellDisruption, messaging.HideNames(
+				fmt.Sprintf(`Your spell dissipates, unspent. <ansi fg="username">%s</ansi> is no longer here.`, targetUser.Character.Name),
+				[]string{targetUser.Character.Name}, messaging.ParticipantSight(user.Character, room)))
 			continue // target left the room before spell resolved
 		}
 		// Skip downed players for harm spells — they're already down.
@@ -178,8 +183,12 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 		} else {
 			user.SendText(messaging.CategorySpellDisruption, `Your spell erupts outward but finds no targets.`)
 			sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s spell crackles through the air harmlessly.`,
-				user.Character.Name), user.UserId)
+				`%s's spell crackles through the air harmlessly.`,
+				playerSubjectName(user)), user.UserId)
+			// The sound half (#242, owner ruling R4), for a reader who sees
+			// nothing: what sendVisualElseAudible sends, kept as two calls so
+			// the narration guard still sees this event's observer line.
+			room.SendTextUnsighted(messaging.CategorySpellDisruption, messaging.SoundSpellSputtersOut, user.UserId)
 		}
 	}
 
@@ -219,7 +228,7 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	if castFumbled && spellData != nil &&
 		(spellData.SummonMobId > 0 || spellData.EffectType == "charm" ||
 			cs.SpellId == "fold-anchor" || cs.SpellId == "fold-recall" || cs.SpellId == "purge-affliction") {
-		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">The weave unravels — the spell fails to take shape.</ansi>`)
+		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">The weave unravels, and the spell fails to take shape.</ansi>`)
 	}
 
 	// Resolve companion summon (if configured)
@@ -666,9 +675,10 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	result := actions.ExecuteDrainArea(actions.NewMobActorInRoom(mob, room))
 
 	if !result.Executed {
-		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
+		sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 			`%s's <ansi fg="cyan">%s</ansi> crackles through the air, finding no one to drain.`,
-			mobSubjectName(mob, room), spellData.Name))
+			mobSubjectName(mob, room), spellData.Name),
+			messaging.SoundSpellSputtersOut)
 		return
 	}
 

@@ -69,7 +69,7 @@ func RenderForRecipient(in RenderInput) string {
 			// spectator drain and the Trio observer seats both render
 			// through this stage.
 			if isCombatNarration(in.Category) {
-				text = HideWeapons(text, SightShapes, nil)
+				text = HideWeapons(text, SightShapes)
 			}
 		}
 	}
@@ -145,7 +145,9 @@ func shouldWrap(cat Category) bool {
 		CategoryWeather, CategoryTimeOfDay, CategoryLight,
 		// Other narration plus tips.
 		CategoryLoot, CategoryEquipment, CategoryConditionApply,
-		CategoryConditionExpire, CategoryMutation, CategoryTip:
+		CategoryConditionExpire, CategoryMutation, CategoryTip,
+		// The quit line (#449): one sentence of narration to the room.
+		CategoryLogout:
 		return true
 	}
 	return false

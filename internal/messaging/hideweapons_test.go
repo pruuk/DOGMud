@@ -13,7 +13,7 @@ const sword = `<ansi fg="item">Iron Longsword</ansi>`
 
 func TestHideWeapons_FullSightUnchanged(t *testing.T) {
 	in := `Kesh slashes you with their ` + sword + `!`
-	if got := HideWeapons(in, SightFull, nil); got != in {
+	if got := HideWeapons(in, SightFull); got != in {
 		t.Fatalf("full sight changed the line: %q", got)
 	}
 }
@@ -21,7 +21,7 @@ func TestHideWeapons_FullSightUnchanged(t *testing.T) {
 func TestHideWeapons_BelowFullSightReadsWeapon(t *testing.T) {
 	for _, d := range []SightDecision{SightShapes, SightNone} {
 		in := `something slashes you with their ` + sword + `!`
-		got := HideWeapons(in, d, nil)
+		got := HideWeapons(in, d)
 		want := `something slashes you with their <ansi fg="combat-anon">weapon</ansi>!`
 		if got != want {
 			t.Fatalf("sight %d:\n got %q\nwant %q", d, got, want)
@@ -31,7 +31,7 @@ func TestHideWeapons_BelowFullSightReadsWeapon(t *testing.T) {
 
 func TestHideWeapons_ParryAttackToken(t *testing.T) {
 	in := `You smoothly sweep aside the fumbled ` + sword + `!`
-	got := HideWeapons(in, SightNone, nil)
+	got := HideWeapons(in, SightNone)
 	if strings.Contains(got, "Longsword") || !strings.Contains(got, "the fumbled <ansi fg=\"combat-anon\">weapon</ansi>!") {
 		t.Fatalf("parry line kept the weapon: %q", got)
 	}
@@ -39,7 +39,7 @@ func TestHideWeapons_ParryAttackToken(t *testing.T) {
 
 func TestHideWeapons_ArticleAgreesWithWeapon(t *testing.T) {
 	in := `A figure draws an <ansi fg="item">Ivory Dagger</ansi>.`
-	got := HideWeapons(in, SightShapes, nil)
+	got := HideWeapons(in, SightShapes)
 	want := `A figure draws a <ansi fg="combat-anon">weapon</ansi>.`
 	if got != want {
 		t.Fatalf("\n got %q\nwant %q", got, want)
@@ -50,7 +50,7 @@ func TestHideWeapons_NestedDisplayNameTags(t *testing.T) {
 	// DisplayName can carry a quest star before the name and an adjective
 	// span after it, both inside the item tag.
 	in := `something hits you with their <ansi fg="item"><ansi fg="questflag">★</ansi>Iron Longsword <ansi fg="black-bold">(cursed)</ansi></ansi> hard.`
-	got := HideWeapons(in, SightNone, nil)
+	got := HideWeapons(in, SightNone)
 	want := `something hits you with their <ansi fg="combat-anon">weapon</ansi> hard.`
 	if got != want {
 		t.Fatalf("\n got %q\nwant %q", got, want)
@@ -59,7 +59,7 @@ func TestHideWeapons_NestedDisplayNameTags(t *testing.T) {
 
 func TestHideWeapons_ShootItemnameTag(t *testing.T) {
 	in := `A figure fires their <ansi fg="itemname">Longbow</ansi> at a figure!`
-	got := HideWeapons(in, SightShapes, nil)
+	got := HideWeapons(in, SightShapes)
 	if strings.Contains(got, "Longbow") {
 		t.Fatalf("fg=itemname weapon survived: %q", got)
 	}
@@ -72,26 +72,15 @@ func TestHideWeapons_UnarmedNamesStay(t *testing.T) {
 	defer restore()
 	for _, natural := range []string{"fists", "fangs", "Fangs"} {
 		in := `something bites you with their <ansi fg="item">` + natural + `</ansi>!`
-		if got := HideWeapons(in, SightNone, nil); got != in {
+		if got := HideWeapons(in, SightNone); got != in {
 			t.Fatalf("natural weapon %q was hidden: %q", natural, got)
 		}
 	}
 }
 
-func TestHideWeapons_KeepsTheReadersOwnWeapon(t *testing.T) {
-	in := `You slash something with your ` + sword + `, and it parries with their <ansi fg="item">Buckler Blade</ansi>.`
-	got := HideWeapons(in, SightNone, []string{`<ansi fg="item">Iron Longsword</ansi>`})
-	if !strings.Contains(got, "Iron Longsword") {
-		t.Fatalf("reader's own weapon was hidden: %q", got)
-	}
-	if strings.Contains(got, "Buckler Blade") {
-		t.Fatalf("the other party's weapon survived: %q", got)
-	}
-}
-
 func TestHideWeapons_SentenceStartCapitalised(t *testing.T) {
 	in := `The blow lands. ` + sword + ` bites deep.`
-	got := HideWeapons(in, SightShapes, nil)
+	got := HideWeapons(in, SightShapes)
 	if !strings.Contains(got, `<ansi fg="combat-anon">Weapon</ansi> bites deep.`) {
 		t.Fatalf("sentence-start word not capitalised: %q", got)
 	}

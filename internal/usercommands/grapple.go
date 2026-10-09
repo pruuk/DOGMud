@@ -12,11 +12,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// grappleCategories: the player's own actor/actee feedback is CategorySystem;
-// the room's line carries CategoryGrappleFlow (colour + light-verbosity gate).
+// grappleCategories: every role rides CategoryGrappleFlow, so the player's
+// own lines wrap and colour like the room's (#449).
 var grappleCategories = moveCategories{
-	Actor:    messaging.CategorySystem,
-	Actee:    messaging.CategorySystem,
+	Actor:    messaging.CategoryGrappleFlow,
+	Actee:    messaging.CategoryGrappleFlow,
 	Observer: messaging.CategoryGrappleFlow,
 }
 
@@ -143,8 +143,8 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		// it already did before the migration.
 		if result.DisarmResult != nil {
 			messaging.SendTrio(messaging.Trio{
-				Actor:    messaging.Say(messaging.CategorySystem, result.DisarmResult.Message),
-				Actee:    messaging.Say(messaging.CategorySystem, result.DisarmResult.TargetMsg),
+				Actor:    messaging.Say(grappleCategories.Actor, result.DisarmResult.Message),
+				Actee:    messaging.Say(grappleCategories.Actee, result.DisarmResult.TargetMsg),
 				Observer: messaging.Say(messaging.CategoryGrappleFlow, result.DisarmResult.RoomMessage),
 			}, aud)
 		}
@@ -159,8 +159,8 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		// Critical failure: a world event, full trio, as before.
 		if result.CritFailure != nil {
 			messaging.SendTrio(messaging.Trio{
-				Actor:    messaging.Say(messaging.CategorySystem, result.CritFailure.Message),
-				Actee:    messaging.Say(messaging.CategorySystem, result.CritFailure.TargetMessage),
+				Actor:    messaging.Say(grappleCategories.Actor, result.CritFailure.Message),
+				Actee:    messaging.Say(grappleCategories.Actee, result.CritFailure.TargetMessage),
 				Observer: messaging.Say(messaging.CategoryGrappleFlow, result.CritFailure.RoomMessage),
 			}, aud)
 		}

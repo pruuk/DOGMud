@@ -26,10 +26,13 @@ func Remove(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
+	// Judged against the room before the item comes off (owner rule,
+	// 2026-10-05; #447), as the player path.
+	before := room.VisualSnapshot()
 	result := actions.RemoveEquipment(actor, rest)
 	if result.Removed {
-		room.SendTextVisual(messaging.CategoryEquipment,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> removes their <ansi fg="item">%s</ansi> and stores it away.`, mob.Character.Name, result.Item.DisplayName()))
+		room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment,
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> removes their <ansi fg="item">%s</ansi> and stores it away.`, mob.Character.Name, result.Item.DisplayName()), nil)
 	}
 	return true, nil
 }

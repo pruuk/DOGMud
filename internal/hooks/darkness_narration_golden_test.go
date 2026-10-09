@@ -77,7 +77,7 @@ var updateDarkness = flag.Bool("update-darkness", false, "rewrite testdata/darkn
 // depending on WHO the darkness gate blocks.
 //
 // Since lighting plan 5c the spectator reads the audible fallback ("You hear
-// fighting close by.") in every cell. sendDarkRoomCombatFallback
+// fighting close by.") in every cell. sendUnsightedCombatSound
 // used to skip anyone holding the nightvision FLAG, so this blind-in-fact
 // spectator read nothing at all; it now follows sight (CanSeeShapes).
 

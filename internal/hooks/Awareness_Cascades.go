@@ -45,6 +45,13 @@ func wireAwarenessFromCombatPhase(c *characters.Character) {
 		func(from, to awareness.State, r state.TransitionReason) {
 			switch {
 			case to == awareness.Hidden:
+				// A shroud hide carries record 31, not 9 (#444): its end
+				// is told once, by 31's own end line, and a timed 31 must
+				// not pin a permanent 9 that outlives it. Its data is
+				// stored before this cascade runs (ResolveConcealmentAs).
+				if d, ok := c.Awareness.HiddenData(); ok && d.Source == awareness.HideShroud {
+					return
+				}
 				// Apply condition #9 as permanent — the awareness state
 				// machine owns lifecycle. Condition #9 has no triggerrate
 				// (dropped in d282c4ab), so TriggerCount=0 would
@@ -62,6 +69,11 @@ func wireAwarenessFromCombatPhase(c *characters.Character) {
 				// before its Validate(true), so the record is not revived
 				// on the now visible mob (sight gates playtest fixes, F5).
 				c.CancelConditionsWithFlag(conditions.Hidden)
+				// The sneak is over however it ended (combat, a cancel, a
+				// spot, a shroud running out): usercommands.Go reads this
+				// flag and would otherwise move a visible player as a
+				// sneaker. Sneak sets it again on its next success (#444).
+				c.SetMiscData(`sneaking`, nil)
 			}
 		})
 }

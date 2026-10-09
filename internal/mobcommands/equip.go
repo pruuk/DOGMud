@@ -61,13 +61,10 @@ func Equip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
-	// A darkness's "puts on" line is judged against the room as it was before
-	// the item goes on (owner rule, 2026-10-05), so the snapshot comes first.
-	// Only a darkness pays the room walk.
-	var beforeDark rooms.VisualSnapshot
-	if conditions.AnyDarknessSource(iSpec.WornConditionIds) {
-		beforeDark = room.VisualSnapshot()
-	}
+	// Every equip line is judged against the room as it was before the item
+	// goes on (owner rule, 2026-10-05; #447), as the player path: a light or
+	// darkness put on, or a light displaced, changes what the room can see.
+	before := room.VisualSnapshot()
 
 	actor := &actions.MobActor{Mob: mob, Room: room}
 	result := actions.EquipItem(actor, matchItem.Name())
@@ -86,23 +83,17 @@ func Equip(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if result.Equipped {
 		for _, oldItem := range result.DisplacedItems {
 			if oldItem.ItemId != 0 {
-				room.SendTextVisual(messaging.CategoryEquipment,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> removes their <ansi fg="item">%s</ansi> and stores it away.`, mob.Character.Name, oldItem.DisplayName()))
+				room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment,
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> removes their <ansi fg="item">%s</ansi> and stores it away.`, mob.Character.Name, oldItem.DisplayName()), nil)
 			}
 		}
 
 		if iSpec.Subtype == items.Wearable {
-			putsOn := fmt.Sprintf(`<ansi fg="mobname">%s</ansi> puts on <ansi fg="item">%s</ansi>.`, mob.Character.Name, result.Item.DisplayName())
-			if beforeDark != nil {
-				// Judged against the room before the darkness went on (owner
-				// rule, 2026-10-05), as the player path.
-				room.SendTextVisualToSnapshot(beforeDark, messaging.CategoryEquipment, putsOn, nil)
-			} else {
-				room.SendTextVisual(messaging.CategoryEquipment, putsOn)
-			}
+			room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> puts on <ansi fg="item">%s</ansi>.`, mob.Character.Name, result.Item.DisplayName()), nil)
 		} else {
-			room.SendTextVisual(messaging.CategoryEquipment,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> wields <ansi fg="item">%s</ansi>.`, mob.Character.Name, result.Item.DisplayName()))
+			room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> wields <ansi fg="item">%s</ansi>.`, mob.Character.Name, result.Item.DisplayName()), nil)
 		}
 	}
 

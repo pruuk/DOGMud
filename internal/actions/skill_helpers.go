@@ -29,9 +29,9 @@ import (
 func CalcSneakScore(c *characters.Character, effectiveLit bool) float64 {
 	cfg := configs.GetBalanceConfig()
 
-	base := float64(c.Stats.Dexterity.ValueAdj) +
-		float64(c.GetSkillLevel(skills.Skullduggery))*float64(cfg.SkillWeight) +
-		mutations.GetStealthBonus(c.Mutations)
+	// HideBaseScore is Dexterity plus Skullduggery x SkillWeight, or, while
+	// Empathic Shroud hides c, the shroud's score in their place (#444).
+	base := c.HideBaseScore() + mutations.GetStealthBonus(c.Mutations)
 
 	emits := c.EmitsLight()
 

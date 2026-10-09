@@ -25,6 +25,11 @@ type SneakResult struct {
 	SpottedBy *characters.Character
 	// AlreadyHidden is true when the actor already has the hidden condition.
 	AlreadyHidden bool
+	// ReplacedShroud is true when the actor was hidden by Empathic Shroud and
+	// their own sneak is the stronger, so the sneak took the hide over with
+	// no reveal and no roll (#444). Success is true with it, RollHappened
+	// false: there was no contest, so no practice.
+	ReplacedShroud bool
 	// InCombat is true when the actor could not attempt the action because
 	// they were engaged in combat.
 	InCombat bool
@@ -132,16 +137,23 @@ func MobIsSneaking(mob *mobs.Mob) bool {
 func Sneak(actor Actor) SneakResult {
 	char := actor.GetCharacter()
 
-	// Already hidden — nothing to do.
+	// Already hidden: nothing to do, unless the shroud hides the actor and
+	// their own sneak is the stronger (owner, 2026-10-09: one hide, the
+	// strongest). Then the sneak takes the hide over for the normal sneak
+	// cost, with no reveal and no roll.
+	takeOver := false
 	if char.IsHidden() {
-		return SneakResult{AlreadyHidden: true}
+		if !char.HiddenByShroud() || char.SneakBaseScore() <= char.HideBaseScore() {
+			return SneakResult{AlreadyHidden: true}
+		}
+		takeOver = true
 	}
 
 	// Can't hide while fighting.
 	if char.IsInCombat() {
 		return SneakResult{InCombat: true}
 	}
-	if !char.IsFree() || char.Awareness == nil || char.Awareness.State() != awareness.Visible {
+	if !char.IsFree() || char.Awareness == nil || (!takeOver && char.Awareness.State() != awareness.Visible) {
 		return SneakResult{}
 	}
 
@@ -159,6 +171,11 @@ func Sneak(actor Actor) SneakResult {
 		float64(cfg.SneakBaseStaminaCost))
 	if cost.Status == characters.CostRefused {
 		return SneakResult{Cost: cost}
+	}
+	if takeOver {
+		char.SneakOverShroud()
+		char.SetMiscData(`sneaking`, true)
+		return SneakResult{Cost: cost, Success: true, ReplacedShroud: true}
 	}
 
 	// Transition to Concealing; the activity veto fires here if the actor

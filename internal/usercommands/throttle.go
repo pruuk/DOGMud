@@ -13,10 +13,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// throttleCategories: the player's own actor/actee feedback is
-// CategorySystem; the room's line carries CategoryHitNaturalSharp, matching
-// every branch's pre-migration Observer category.
-var throttleCategories = moveCategories{Actor: messaging.CategorySystem, Actee: messaging.CategorySystem, Observer: messaging.CategoryHitNaturalSharp}
+// throttleCategories: every role rides CategoryHitNaturalSharp, the room's
+// pre-migration category, the player's own lines included, so they wrap
+// and colour like the room's (#449).
+var throttleCategories = moveCategories{Actor: messaging.CategoryHitNaturalSharp, Actee: messaging.CategoryHitNaturalSharp, Observer: messaging.CategoryHitNaturalSharp}
 
 // throttleCastInterruptCategories: player_cast_interrupt's own room line
 // deliberately rides CategorySpellDisruption rather than
@@ -27,7 +27,7 @@ var throttleCategories = moveCategories{Actor: messaging.CategorySystem, Actee: 
 //
 // A disruption is heard as well as seen (#242, owner ruling R4), so a reader
 // who sees nothing hears the chant break off.
-var throttleCastInterruptCategories = moveCategories{Actor: messaging.CategorySystem, Actee: messaging.CategorySystem, Observer: messaging.CategorySpellDisruption,
+var throttleCastInterruptCategories = moveCategories{Actor: messaging.CategorySpellDisruption, Actee: messaging.CategorySpellDisruption, Observer: messaging.CategorySpellDisruption,
 	ObserverSound: messaging.SoundChantBreaksOff}
 
 func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -116,8 +116,8 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			sendMoveDefenceShortage(targetChar, defence)
 		}
 		messaging.SendTrio(messaging.Trio{
-			Actor:    lineOrNone(messaging.CategorySystem, roles.Actor),
-			Actee:    lineOrNone(messaging.CategorySystem, roles.Actee),
+			Actor:    lineOrNone(throttleCategories.Actor, roles.Actor),
+			Actee:    lineOrNone(throttleCategories.Actee, roles.Actee),
 			Observer: observer,
 		}, aud)
 	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "throttle lunge"); defended {

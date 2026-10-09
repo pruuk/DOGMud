@@ -4,16 +4,17 @@ package messaging
 // category.
 //
 // THE CATEGORY RIDES ON THE LINE, NOT ON THE TRIO, because the three roles of
-// one event do not share one. Counted across the twelve player-side special
-// move verbs on 2026-09-08: ten send their personal lines as CategorySystem
-// and the room line as something verb-specific (CategoryBash, CategoryKick,
-// CategoryTrip, CategoryGrappleFlow, CategoryHitNaturalSharp); shoot uses four
-// categories on the personal side; throw uses three on each side.
+// one event do not always share one: shoot uses four categories on the
+// personal side and throw uses three on each side (hit, dodge, interrupt).
+// Before #449 most player-side special moves sent their personal lines as
+// CategorySystem, which never wraps; they now ride the move's own category
+// (bash, kick, trip, grapple, throttle, taunt, throw, rally, warcry), and only
+// refusals and cost notices stay on CategorySystem.
 //
-// A single-Category seam would have silently recategorised two verbs while
-// claiming to change nothing. Category feeds the verbosity suppression
-// allowlists in verbosity.go, so that reaches any player not on full
-// verbosity.
+// A single-Category seam would have silently recategorised verbs while
+// claiming to change nothing. The category decides a line's colour and
+// whether it wraps. It does not drive verbosity suppression: that applies
+// only to the combat-round drains in internal/hooks/combat_verbosity.go.
 type Line struct {
 	Text string
 	Cat  Category

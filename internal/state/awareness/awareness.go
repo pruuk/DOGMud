@@ -48,10 +48,29 @@ type ConcealingData struct {
 	RoundsUntil int
 }
 
-// HiddenData carries hidden-state metadata.
-// Today empty; reserved for future light-source tracking or
-// per-observer awareness lists.
-type HiddenData struct{}
+// HideSource says what keeps a Hidden character hidden. Empathic Shroud is a
+// real hide (#444, owner 2026-10-09), and only one hide holds at a time: the
+// stronger of the two.
+type HideSource uint8
+
+const (
+	// HideSneak is the default: the sneak command, or a record 9 from a
+	// mob's spawn-time conditionids or an admin. It hides at the holder's
+	// Dexterity plus Skullduggery x SkillWeight.
+	HideSneak HideSource = iota
+	// HideShroud is Empathic Shroud (condition 31). It hides at Score: the
+	// caster's spell stat plus Spellcasting x SkillWeight.
+	HideShroud
+)
+
+// HiddenData carries hidden-state metadata: what is hiding the character,
+// and for a shroud the score it hides at.
+type HiddenData struct {
+	Source HideSource
+	// Score is a shroud hide's base score, in place of Dexterity plus
+	// Skullduggery x SkillWeight. Unused for HideSneak.
+	Score float64
+}
 
 // RevealingData captures the in-flight reveal cascade.
 // Reason carries context for subscribers ("why is this character
@@ -180,6 +199,42 @@ func (m *Machine) ResolveConcealment(success bool, r state.TransitionReason) {
 	} else {
 		m.hidden = nil
 	}
+}
+
+// ResolveConcealmentAs is ResolveConcealment(true, r) for a hide whose data
+// matters. d is stored BEFORE the move to Hidden, so the Hidden cascade
+// (internal/hooks/Awareness_Cascades.go) can read what is hiding the
+// character. No-op if not currently Concealing.
+func (m *Machine) ResolveConcealmentAs(d HiddenData, r state.TransitionReason) {
+	if m.State() != Concealing {
+		return
+	}
+	m.hidden = &d
+	if err := m.inner.TransitionTo(Hidden, r); err != nil {
+		m.hidden = nil
+		return
+	}
+	m.concealing = nil
+}
+
+// HiddenData returns the hide's data while Hidden. ok is false in any other
+// state, and inside ResolveConcealment's own Hidden cascade, which runs
+// before that call stores its data; a caller reads a missing value as a
+// sneak.
+func (m *Machine) HiddenData() (HiddenData, bool) {
+	if m.State() != Hidden || m.hidden == nil {
+		return HiddenData{}, false
+	}
+	return *m.hidden, true
+}
+
+// SetHiddenData replaces the hide's data while Hidden, for one hide taking
+// over from another without a reveal. A no-op in any other state.
+func (m *Machine) SetHiddenData(d HiddenData) {
+	if m.State() != Hidden {
+		return
+	}
+	m.hidden = &d
 }
 
 // TransitionToRevealing transitions Hidden → Revealing → Visible

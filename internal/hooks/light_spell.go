@@ -39,6 +39,19 @@ func magnitudeSpellApplication(spellData *spells.SpellData, caster *characters.C
 	return magnitude, triggers, true
 }
 
+// shroudSpellApplication reports the magnitude Empathic Shroud's record 31
+// carries: the CASTER's shroud score, the spell's stat plus Spellcasting rank
+// x SkillWeight (#444, owner 2026-10-09). The holder hides at it in place of
+// Dexterity plus Skullduggery (characters.HideBaseScore). The duration stays
+// the authored one (triggers 0 on AddConditionMagnitude). ok is false for
+// every other condition.
+func shroudSpellApplication(spellData *spells.SpellData, caster *characters.Character, conditionId int) (magnitude float64, ok bool) {
+	if conditionId != conditions.ConditionIdEmpathicShroud || spellData == nil || caster == nil {
+		return 0, false
+	}
+	return characters.ShroudScore(spellData.CasterStatValue(caster.Stats), caster.GetSkillLevel(skills.Spellcasting)), true
+}
+
 // spellConditionTarget is what a spell condition lands on: a player record or
 // a mob, both of which queue the narrating events.Condition.
 type spellConditionTarget interface {
@@ -54,6 +67,10 @@ type spellConditionTarget interface {
 // Every door queues events.Condition, so the holder reads the start notice
 // either way.
 func applySpellCondition(target spellConditionTarget, spellData *spells.SpellData, caster *characters.Character, conditionId int) {
+	if mag, ok := shroudSpellApplication(spellData, caster, conditionId); ok {
+		target.AddConditionMagnitude(conditionId, 0, mag, "spell")
+		return
+	}
 	if mag, trig, ok := magnitudeSpellApplication(spellData, caster, conditionId); ok {
 		target.AddConditionMagnitude(conditionId, trig, mag, "spell")
 		return

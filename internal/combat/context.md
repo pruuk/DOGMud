@@ -1133,11 +1133,12 @@ combat reads its own copy of the verdict, stored typed on `combatContext`.
 
 ### Personal-line identity hiding (M4d PR 2)
 
-Weapons too, since the sight-gates playtest fixes (spec F2, ruling R8):
-after hiding names, each side's lines go through `messaging.HideWeapons`
-at that reader's sight, keeping `heldWeaponNames(reader)` (every arm's
-`DisplayName` and spec `Name`), so a reader below full sight learns no
-weapon but their own.
+Weapons too, since the sight-gates playtest fixes (spec F2, ruling R8) and
+#446: every weapon token in one `AttackResult` is the attacker's, so the
+attacker's own lines (`MessagesToSource`) keep every weapon and the
+defender's lines (`MessagesToTarget`) go through `messaging.HideWeapons` at
+the defender's sight. Weapons are kept by owner, never by
+name: a defender holding a same-named weapon learns nothing more.
 
 `hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar
 *characters.Character, ctx combatContext)` (`combat.go`) is the M4d PR 2
@@ -1847,7 +1848,7 @@ values directly.
 | `combat/taunt_messages.go` | Taunt/conviction combat messages |
 | `combat/analytics.go` | Ring buffer, `CombatEvent`, `AnalyticsSummary`, recording + query functions |
 | `hooks/NewRound_DoCombat.go` | `DoCombat`, `handlePlayerCombat`, `handleMobCombat`, `archerReengageable`, `handleAffected`, `applyMoonMods`, `snapshotSleepingVictims` |
-| `hooks/NewRound_DoCombat_helpers.go` | The extracted helpers. Rebuild this list with `grep -n "^func " internal/hooks/NewRound_DoCombat_helpers.go` rather than trusting it; as of M4d PR 2 (which deleted `replaceDarknessMessages` — identity hiding moved into `internal/combat.hideIdentitiesInPersonalLines`, above) it defines, in file order: `processAttackerProgression`, `attackerCandidates`, `processDefenderProgression`, `bestSwingDefence`, `defenceTypesUsed`, `defenceSkillFor`, `defenceStatFor`, `attackerBonusSkillAndStat`, `mobDisplayName`, `sendVisualRoomText`, `isExcludedUser`, `sendDarkRoomCombatFallback`, `sendVisualElseAudible`, `castingTargetChar`, `recordConcentrationFailure`, `handlePlayerFoldCasting`, `handleMobFoldCasting`, `handlePlayerFlee`, `handleCompanionOwnerAssist`, `handleCharmedMobAssist`, `handleOffhandBreakUserDef`, `handleOffhandBreakMobDef`, `handlePlayerConcentrationBreak`, `ordinaryMeleeEngagement`, `handleMobAIDecision`, `handleMobTargetSwitch`, `handleMobWeaponPickup`, `handlePartyAutoAttack`, `surpriseCandidate` |
+| `hooks/NewRound_DoCombat_helpers.go` | The extracted helpers. Rebuild this list with `grep -n "^func " internal/hooks/NewRound_DoCombat_helpers.go` rather than trusting it; as of M4d PR 2 (which deleted `replaceDarknessMessages` — identity hiding moved into `internal/combat.hideIdentitiesInPersonalLines`, above) it defines, in file order: `processAttackerProgression`, `attackerCandidates`, `processDefenderProgression`, `bestSwingDefence`, `defenceTypesUsed`, `defenceSkillFor`, `defenceStatFor`, `attackerBonusSkillAndStat`, `mobDisplayName`, `sendVisualRoomText`, `isExcludedUser`, `sendUnsightedCombatSound`, `sendVisualElseAudible`, `castingTargetChar`, `recordConcentrationFailure`, `handlePlayerFoldCasting`, `handleMobFoldCasting`, `handlePlayerFlee`, `handleCompanionOwnerAssist`, `handleCharmedMobAssist`, `handleOffhandBreakUserDef`, `handleOffhandBreakMobDef`, `handlePlayerConcentrationBreak`, `ordinaryMeleeEngagement`, `handleMobAIDecision`, `handleMobTargetSwitch`, `handleMobWeaponPickup`, `handlePartyAutoAttack`, `surpriseCandidate` |
 | `hooks/combat_shared_helpers.go` | `simulateFoldRound`, `calcFoldConvictionCost`, `checkConcentrationBreak`, `concentrationScore`, `tryWeaponBreak`, `applyCritEffects`, `CritEffectResult`, `calcSpellDamageForCharacter` |
 | `hooks/spell_resolution.go` | `resolveSpell`, `resolveAgainstMob`, `resolveAgainstPlayer` (effects apply through `applySpellEffect` in `hooks/spell_effects.go`) |
 

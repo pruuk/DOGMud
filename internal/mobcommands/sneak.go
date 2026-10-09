@@ -14,6 +14,12 @@ func Sneak(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
+	// A sneak that took over a weaker Empathic Shroud ran no contest (#444),
+	// so there is nothing to practise, as on the player path.
+	if result.ReplacedShroud {
+		return true, nil
+	}
+
 	// U10b-1 Task 18. ⚠️ THIS SITE IS NOT IN THE PLAN'S LIST OF SIXTEEN -- the
 	// count was seventeen. Found by sweeping every production progression call
 	// rather than trusting the enumeration.

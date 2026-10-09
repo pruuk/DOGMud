@@ -167,7 +167,7 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 	corpse := &room.Corpses[corpseIdx]
 
 	if corpse.LootMode != "roundrobin" || len(corpse.RRAssignee) == 0 {
-		user.SendText(messaging.CategorySystem, "There's nothing to pass — loot passing only applies to round-robin looting.")
+		user.SendText(messaging.CategorySystem, "There's nothing to pass. Loot passing only applies to round-robin looting.")
 		return true, nil
 	}
 

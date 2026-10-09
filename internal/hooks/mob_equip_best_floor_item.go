@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
-	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/itemvalue"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -57,13 +56,10 @@ func EquipBestFloorItem(mob *mobs.Mob, room *rooms.Room) bool {
 		return false // nothing was an upgrade
 	}
 
-	// A darkness's "dons it" line is judged against the room as it was before
-	// the item is picked up and worn (owner rule, 2026-10-05), so the snapshot
-	// comes first. Only a darkness pays the room walk.
-	var beforeDark rooms.VisualSnapshot
-	if conditions.AnyDarknessSource(bestItem.GetSpec().WornConditionIds) {
-		beforeDark = room.VisualSnapshot()
-	}
+	// The pickup line is judged against the room as it was before the item
+	// is picked up and worn (owner rule, 2026-10-05; #447), as the equip
+	// command: a light or darkness donned changes what the room can see.
+	before := room.VisualSnapshot()
 
 	// Remove from floor and into backpack so EquipItem can find it.
 	room.RemoveItem(bestItem, false)
@@ -82,20 +78,13 @@ func EquipBestFloorItem(mob *mobs.Mob, room *rooms.Room) bool {
 	// the loot-pickup origin.
 	spec := result.Item.GetSpec()
 	if spec.Subtype == items.Wearable {
-		dons := fmt.Sprintf(
+		room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment, fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> picks up <ansi fg="item">%s</ansi> and dons it.`,
-			mob.Character.Name, result.Item.DisplayName())
-		if beforeDark != nil && conditions.AnyDarknessSource(spec.WornConditionIds) {
-			// Judged against the room before the darkness went on (owner
-			// rule, 2026-10-05), as the equip command.
-			room.SendTextVisualToSnapshot(beforeDark, messaging.CategoryEquipment, dons, nil)
-		} else {
-			room.SendTextVisual(messaging.CategoryEquipment, dons)
-		}
+			mob.Character.Name, result.Item.DisplayName()), nil)
 	} else {
-		room.SendTextVisual(messaging.CategoryEquipment, fmt.Sprintf(
+		room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment, fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> picks up <ansi fg="item">%s</ansi> and wields it.`,
-			mob.Character.Name, result.Item.DisplayName()))
+			mob.Character.Name, result.Item.DisplayName()), nil)
 	}
 
 	return true
