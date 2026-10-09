@@ -142,10 +142,8 @@ the two kinds the spec declares. It is NOT a light: `IsLightSource()` stays
 light-only, so `LightSources`, `EmitsLight` and `hood` exclude it by
 construction. Ask `ConditionSpec.IsDarknessSource()`, walk
 `(*Conditions).DarknessSources()`, or `(*Conditions).LightAndDarknessSources()`
-for both kinds in one held order (the trim's walk). `AnyDarknessSource(ids)`
-reports whether any condition id names a darkness (the equip line's test for
-taking a `rooms.VisualSnapshot` first). `Effect(EffectDarknessStrength)` returns 0. `validateEffects` also
-refuses a literal `darkness_strength` of 0 or less, a spec declaring both
+for both kinds in one held order (the trim's walk).
+`Effect(EffectDarknessStrength)` returns 0. `validateEffects` also refuses a literal `darkness_strength` of 0 or less, a spec declaring both
 kinds, and a `stacking` darkness; `AddConditionMagnitude` resets either kind.
 
 Per-record state lives on `Condition`: `LightTrim` (`LightFull`,

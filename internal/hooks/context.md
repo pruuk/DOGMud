@@ -1134,7 +1134,8 @@ goes out, so the observers it has just blinded still see it, and one who was
 already blind in a dark room learns nothing. Every other start line is judged
 by the room as it is. A darkness's end line needs nothing: the room is
 lighter by then. `EquipBestFloorItem` (`mob_equip_best_floor_item.go`) takes
-the same snapshot before a mob picks a darkness off the floor and dons it.
+the same snapshot before every floor pickup it equips (#447), not only a
+darkness.
 
 ### Logout_AwarenessCleanup.go
 

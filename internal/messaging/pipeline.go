@@ -69,7 +69,7 @@ func RenderForRecipient(in RenderInput) string {
 			// spectator drain and the Trio observer seats both render
 			// through this stage.
 			if isCombatNarration(in.Category) {
-				text = HideWeapons(text, SightShapes, nil)
+				text = HideWeapons(text, SightShapes)
 			}
 		}
 	}

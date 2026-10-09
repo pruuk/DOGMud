@@ -759,7 +759,7 @@ func hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar 
 	}
 	for i := range result.MessagesToTarget {
 		text := messaging.HideNames(result.MessagesToTarget[i].Text, targetHides, ctx.targetSight)
-		result.MessagesToTarget[i].Text = messaging.HideWeapons(text, ctx.targetSight, nil)
+		result.MessagesToTarget[i].Text = messaging.HideWeapons(text, ctx.targetSight)
 	}
 }
 

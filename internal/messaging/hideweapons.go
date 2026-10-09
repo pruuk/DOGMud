@@ -22,13 +22,11 @@ var itemTagOpen = regexp.MustCompile(`<ansi fg="item(?:name)?">`)
 var anyAnsiTag = regexp.MustCompile(`<ansi[^>]*>|</ansi>`)
 
 // HideWeapons hides the weapons in a combat line from a reader at d. Below
-// SightFull every item-tagged name becomes WeaponWord, except:
-//
-//   - a natural weapon: "fists" or any species' UnarmedName. Templates tag
-//     {itemname} whether it holds an item or a body part, and a body part is
-//     not a weapon a reader learns anything from (spec F2: unarmed names stay);
-//   - a name in keep, which a participant passes for their own gear: the
-//     reader knows what is in their own hand, as `look` by touch does (#218).
+// SightFull every item-tagged name becomes WeaponWord, except a natural
+// weapon: "fists" or any species' UnarmedName. Templates tag {itemname}
+// whether it holds an item or a body part, and a body part is not a weapon a
+// reader learns anything from (spec F2: unarmed names stay). A participant's
+// own weapons are kept by the caller not passing their lines here (#446).
 //
 // A preceding "an" becomes "a", because the pipeline's a/an stage runs
 // before the sight stage and has already agreed the article with the real
@@ -36,7 +34,7 @@ var anyAnsiTag = regexp.MustCompile(`<ansi[^>]*>|</ansi>`)
 //
 // Clear sight returns text unchanged. Untagged item names are not touched;
 // spec F2 tags the combat templates that left a weapon token bare.
-func HideWeapons(text string, d SightDecision, keep []string) string {
+func HideWeapons(text string, d SightDecision) string {
 	if d == SightFull || text == "" || !strings.Contains(text, `<ansi fg="item`) {
 		return text
 	}
@@ -51,7 +49,7 @@ func HideWeapons(text string, d SightDecision, keep []string) string {
 			continue
 		}
 		plain := strings.TrimSpace(anyAnsiTag.ReplaceAllString(text[loc[1]:end], ""))
-		if plain == "" || isNaturalWeapon(plain) || namedIn(plain, keep) {
+		if plain == "" || isNaturalWeapon(plain) {
 			continue
 		}
 		word := WeaponWord
@@ -120,16 +118,6 @@ func isNaturalWeapon(plain string) bool {
 	}
 	for _, s := range species.GetAllSpecies() {
 		if s.UnarmedName != "" && strings.EqualFold(plain, s.UnarmedName) {
-			return true
-		}
-	}
-	return false
-}
-
-// namedIn reports whether plain matches one of names, ignoring case and tags.
-func namedIn(plain string, names []string) bool {
-	for _, n := range names {
-		if n != "" && strings.EqualFold(plain, strings.TrimSpace(anyAnsiTag.ReplaceAllString(n, ""))) {
 			return true
 		}
 	}

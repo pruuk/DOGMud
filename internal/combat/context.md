@@ -1137,7 +1137,7 @@ Weapons too, since the sight-gates playtest fixes (spec F2, ruling R8) and
 #446: every weapon token in one `AttackResult` is the attacker's, so the
 attacker's own lines (`MessagesToSource`) keep every weapon and the
 defender's lines (`MessagesToTarget`) go through `messaging.HideWeapons` at
-the defender's sight with no keep-list. Weapons are kept by owner, never by
+the defender's sight. Weapons are kept by owner, never by
 name: a defender holding a same-named weapon learns nothing more.
 
 `hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar

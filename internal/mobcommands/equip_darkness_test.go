@@ -94,7 +94,9 @@ func TestMobRemovingTheOnlyLightIsSeenBeforeTheDarkFalls(t *testing.T) {
 	_, err := Equip(fmt.Sprintf("!%d", torchItem), mob, room)
 	require.NoError(t, err)
 	require.GreaterOrEqual(t, room.LightLevel(), 25, "fixture: the torch must light the room")
-	events.DrainQueuedMessagesForTest(1)
+	// A mob lighting a torch in a room dark before it is not seen: nothing to see by.
+	require.NotContains(t, strings.Join(events.DrainQueuedMessagesForTest(1), "\n"), "puts on",
+		"a player in the dark saw the mob light the torch")
 
 	_, err = Remove("test torch", mob, room)
 	require.NoError(t, err)

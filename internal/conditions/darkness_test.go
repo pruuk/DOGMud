@@ -48,9 +48,6 @@ func TestDarknessIsItsOwnKindOfSource(t *testing.T) {
 	if !GetConditionSpec(testDarkLanternId).IsDarknessSource() || GetConditionSpec(testDarkLanternId).IsLightSource() {
 		t.Error("the dark lantern must be a darkness source and not a light source")
 	}
-	if !AnyDarknessSource([]int{testLanternId, testDarkLanternId}) || AnyDarknessSource([]int{testLanternId, 424242}) {
-		t.Error("AnyDarknessSource must find the dark lantern and skip lights and unknown ids")
-	}
 }
 
 // LightMax and LightNow read darkness_strength for a darkness record, through

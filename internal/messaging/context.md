@@ -425,15 +425,17 @@ Functions:
   adjective span behind it (same pattern as `HideNames`), because
   `rooms.go` anonymizes BEFORE it hides names and the span would otherwise
   survive as "a figure (dead)".
-- `HideWeapons(text string, d SightDecision, keep []string) string`
+- `HideWeapons(text string, d SightDecision) string`
   (`hideweapons.go`, owner ruling R8, 2026-10-08): below `SightFull` every
   `fg="item"` or `fg="itemname"` tag in a combat line becomes `WeaponWord`
   ("weapon"), nested display-name tags included, with "an" before it turned
-  to "a". It keeps a natural weapon ("fists", any species' `UnarmedName`)
-  and any name in `keep` (no production caller passes one since #446: `combat.hideIdentitiesInPersonalLines` skips the attacker's own lines and passes nil for the defender's). The pipeline runs
-  it at `SightShapes` for `isCombatNarration` categories only, so every
-  spectator combat line is covered and a non-combat item line is not;
-  `combat.hideIdentitiesInPersonalLines` runs it on the personal lines.
+  to "a". It keeps a natural weapon ("fists", any species' `UnarmedName`),
+  and nothing else (since #446 `combat.hideIdentitiesInPersonalLines`
+  skips the attacker's own lines instead). The pipeline runs it at
+  `SightShapes` for `isCombatNarration` categories only, so every spectator
+  combat line is covered and a non-combat item line is not;
+  `combat.hideIdentitiesInPersonalLines` runs it on the defender's personal
+  lines.
   Untagged item names pass through, which is why the combat templates tag
   every weapon token. The converse holds too: a non-item must not wear the
   item tag. A move name in `{attack}` renders untagged through

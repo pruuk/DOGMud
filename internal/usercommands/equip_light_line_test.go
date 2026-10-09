@@ -68,7 +68,7 @@ func TestEquippingALightSaysItCastsLight(t *testing.T) {
 	require.NotContains(t, hoodTestText(user.UserId), "casts light", "a hat sheds no light")
 }
 
-// AnyLightSource is the light twin of AnyDarknessSource: a darkness is never
+// AnyLightSource reports light sources only: a darkness is never
 // a light (lighting plan 5d, ruling D1), and an unknown id is skipped.
 func TestAnyLightSource(t *testing.T) {
 	equipLightFixture(t)
