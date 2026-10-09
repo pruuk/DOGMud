@@ -156,3 +156,34 @@ func TestFollowSight_StopReadsSomeoneInTheDark(t *testing.T) {
 	assert.NotContains(t, followed, "Aliceia")
 	assert.NotContains(t, followed, "Bobrick")
 }
+
+// A lost follower reads the leader's name hidden at the follower's own sight.
+func TestFollowSight_LoseHidesTheLeaderFromADarkFollower(t *testing.T) {
+	f, u1, _, room := followScene(t, followDark)
+	f.startFollow(followId{userId: 1}, followId{userId: 2}, 0)
+	_, _ = f.followUserCommand("lose", u1, room, events.EventFlag(0))
+	assert.False(t, f.isFollowing(followId{userId: 2}))
+	told := followTold(2)
+	assert.Contains(t, told, "You are no longer following")
+	assert.NotContains(t, told, "Aliceia")
+}
+
+func TestFollowSight_LoseNamesTheLeaderInALitRoom(t *testing.T) {
+	f, u1, _, room := followScene(t, followFull)
+	f.startFollow(followId{userId: 1}, followId{userId: 2}, 0)
+	_, _ = f.followUserCommand("lose", u1, room, events.EventFlag(0))
+	assert.Contains(t, followTold(2), "You are no longer following Aliceia.")
+}
+
+// Stop after following a shape: the follower never learned the name.
+func TestFollowSight_StopAfterFollowingAShapeReadsAFigure(t *testing.T) {
+	f, u1, _, room := followScene(t, followShapes)
+	_, _ = f.followUserCommand("1.shape", u1, room, events.EventFlag(0))
+	require.True(t, f.isFollowing(followId{userId: 1}))
+	followTold(1)
+	followTold(2)
+	_, _ = f.followUserCommand("stop", u1, room, events.EventFlag(0))
+	told := followTold(1)
+	assert.Contains(t, told, "You are no longer following a figure.")
+	assert.NotContains(t, told, "Bobrick")
+}

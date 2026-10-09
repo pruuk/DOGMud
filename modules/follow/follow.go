@@ -444,7 +444,10 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 				}
 
 				if followerUser := users.GetByUserId(fId.userId); followerUser != nil {
-					followerUser.SendText(messaging.CategorySystem, fmt.Sprintf(`You are no longer following <ansi fg="username">%s</ansi>.`, user.Character.Name))
+					lostSight := messaging.ParticipantSight(followerUser.Character, rooms.LoadRoom(followerUser.Character.RoomId))
+					followerUser.SendText(messaging.CategorySystem, messaging.HideNames(
+						fmt.Sprintf(`You are no longer following <ansi fg="username">%s</ansi>.`, user.Character.Name),
+						[]string{user.Character.Name}, lostSight))
 				}
 			}
 
@@ -482,7 +485,9 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 		if wasFollowing.mobInstanceId > 0 {
 
 			if followMob := mobs.GetInstance(wasFollowing.mobInstanceId); followMob != nil {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You are no longer following <ansi fg="mobname">%s</ansi>.`, followMob.Character.Name))
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf(`You are no longer following <ansi fg="mobname">%s</ansi>.`, followMob.Character.Name),
+					[]string{followMob.Character.Name}, followerSight))
 				return true, nil
 			}
 
