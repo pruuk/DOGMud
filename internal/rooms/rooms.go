@@ -537,6 +537,40 @@ func (r *Room) SendTextVisualWithAudio(cat messaging.Category, visualTxt string,
 	}
 }
 
+// SendTextUnsighted delivers txt on the audio channel to every player in the
+// room who cannot make out even shapes: the sound half of an event that is
+// both seen and heard, for a caller whose visual half travels on its own
+// (messaging.SendTrio's ObserverSound, the spell-disruption senders in
+// internal/hooks). txt must name nobody: the audio channel skips the sight
+// gate and the anonymizer, as SendTextVisualWithAudio's audio half does.
+func (r *Room) SendTextUnsighted(cat messaging.Category, txt string, excludeUserIds ...int) {
+	if txt == "" {
+		return
+	}
+	for _, uid := range r.GetPlayers() {
+		if excluded(uid, excludeUserIds) {
+			continue
+		}
+		u := users.GetByUserId(uid)
+		if u == nil || visualDecision(u.Character, r) != messaging.SightNone {
+			continue
+		}
+		rendered := messaging.RenderForRecipient(messaging.RenderInput{
+			Category:  cat,
+			Text:      txt,
+			Channel:   messaging.ChannelAudio,
+			LineWidth: u.GetLineWidth(),
+		})
+		if rendered == "" {
+			continue
+		}
+		events.AddToQueue(events.Message{
+			UserId: u.UserId,
+			Text:   rendered + "\n",
+		})
+	}
+}
+
 // SendTextVisualToUser delivers a sight-gated message to a single
 // user, gated by their character's vision in this room. Use this
 // from sites that previously called user.SendText with visual

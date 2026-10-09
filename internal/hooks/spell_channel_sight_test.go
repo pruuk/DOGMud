@@ -38,9 +38,9 @@ func TestMobSpellDisruption_ShapesReadAFigure_BlindHearTheSound(t *testing.T) {
 		seen  string
 		sound string
 	}{
-		{"concentration breaks", sendMobConcentrationBroke, "concentration breaks", spellChantBreaksOffSound},
-		{"spell fizzles", func(m *mobs.Mob, r *rooms.Room) { sendMobSpellFailed(m, r, "fizzles") }, "spell fizzles", spellSputtersOutSound},
-		{"spell falters", func(m *mobs.Mob, r *rooms.Room) { sendMobSpellFailed(m, r, "falters") }, "spell falters", spellSputtersOutSound},
+		{"concentration breaks", sendMobConcentrationBroke, "concentration breaks", messaging.SoundChantBreaksOff},
+		{"spell fizzles", func(m *mobs.Mob, r *rooms.Room) { sendMobSpellFailed(m, r, "fizzles") }, "spell fizzles", messaging.SoundSpellSputtersOut},
+		{"spell falters", func(m *mobs.Mob, r *rooms.Room) { sendMobSpellFailed(m, r, "falters") }, "spell falters", messaging.SoundSpellSputtersOut},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestPlayerConcentrationBroke_FollowsTheObserversSight(t *testing.T) {
 		caster := users.GetByUserId(2)
 		sendPlayerConcentrationBroke(caster, room)
 		got := drainPlain(1)
-		require.Equal(t, 1, countContaining(got, spellChantBreaksOffSound), "%v", got)
+		require.Equal(t, 1, countContaining(got, messaging.SoundChantBreaksOff), "%v", got)
 		require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
 	})
 }

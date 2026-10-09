@@ -121,10 +121,18 @@ Types and constants:
   "wired the mechanism, dropped the narration" defect class the M1
   viewpoint audit found repeatedly. Proved capable of failing with a
   probe in `internal/combat/combat.go`; see the M4d Task 5 report.
+  A fifth field, `ObserverSound`, is what an observer who sees nothing
+  hears of an event heard as well as seen (a spell disruption, #242 owner
+  ruling R4). It names nobody; `NoLine`, the usual case, keeps the event
+  silent to such a reader.
+- `SoundChantBreaksOff`, `SoundSpellSputtersOut` (`disruption_sounds.go`):
+  the two sound lines every spell-disruption path shares, mob and player
+  caster alike (broken concentration or interrupt; fizzle or falter).
 - `Recipient` — minimal interface (`SendText(cat, text)`) satisfied by
   `*users.UserRecord` and by `actions.Actor`.
 - `Broadcaster`: interface satisfied by `*rooms.Room`:
-  `SendTextVisualHidingNames(cat, txt, names, excludeUserIds ...int)` and
+  `SendTextVisualHidingNames(cat, txt, names, excludeUserIds ...int)`,
+  `SendTextUnsighted(cat, txt, excludeUserIds ...int)` and
   `ParticipantSight(userId int) SightDecision`.
 - `Audience`: who is present for one event: `Actor`/`ActorId`/`ActorName`,
   `Actee`/`ActeeId`/`ActeeName`, `Room`, and `RemoteRoom`. Ids are passed
@@ -438,7 +446,9 @@ Functions:
   exclude the actor and the actee. Each role is rendered for its reader: the
   actor's line hides `ActeeName` and the actee's hides `ActorName` by that
   reader's `ParticipantSight`; the observer and remote-observer lines hide
-  both, judged per-observer by their own room's `ParticipantSight`.
+  both, judged per-observer by their own room's `ParticipantSight`. An
+  `ObserverSound` goes to `aud.Room.SendTextUnsighted` with the same
+  exclusions, reaching only the observers who see nothing.
 
 ## Two jobs, not one
 
@@ -538,6 +548,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `sight_mult.go` | `SightScoreMultiplier` and `SightMult` (lighting plan 5b): the sight ramp as a score multiplier, replacing the deleted `DarknessScoreMultiplier` |
 | `verbosity.go` | Per-player verbosity filtering |
 | `trio.go` | `Line`/`Trio`/`Audience`/`SendTrio` — fan-out of one narrated event to its four audiences |
+| `disruption_sounds.go` | `SoundChantBreaksOff`, `SoundSpellSputtersOut`: the shared sound lines of a spell disruption (#242, owner ruling R4) |
 
 Adding a transformation means adding a stage here, not special-casing at a call
 site — that centralisation is the point of the package.

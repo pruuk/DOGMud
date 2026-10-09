@@ -477,29 +477,17 @@ func sendDarkRoomCombatFallback(room *rooms.Room, excludeUserIds ...int) {
 // delivers it to every reader who makes out at least shapes (anonymising
 // names for a shapes reader), and soundMsg to every player the pipeline
 // skipped. Every player in the room reads exactly one of the two, except
-// excludeUserIds, who read neither (a caster reads its own line).
+// excludeUserIds, who read neither (a caster reads its own line). The sound
+// lines for a spell disruption are messaging.SoundChantBreaksOff and
+// messaging.SoundSpellSputtersOut (#242, owner ruling R4), shared with the
+// flee, throw, throttle and boss-interrupt paths.
 func sendVisualElseAudible(room *rooms.Room, cat messaging.Category, visualMsg, soundMsg string, excludeUserIds ...int) {
 	if room == nil {
 		return
 	}
 	room.SendTextVisual(cat, visualMsg, excludeUserIds...)
-	for _, uid := range room.GetPlayers() {
-		if isExcludedUser(uid, excludeUserIds) {
-			continue
-		}
-		u := users.GetByUserId(uid)
-		if u != nil && !messaging.CanSeeShapes(u.Character, room) {
-			u.SendText(cat, soundMsg)
-		}
-	}
+	room.SendTextUnsighted(cat, soundMsg, excludeUserIds...)
 }
-
-// The sound lines a reader who sees nothing gets for a spell-channel
-// disruption (#242, owner ruling R4). Mob and player casters share them.
-const (
-	spellChantBreaksOffSound = `Someone's chant breaks off.`
-	spellSputtersOutSound    = `A half-formed spell sputters out.`
-)
 
 // mobSubjectName is a mob's name at the start of a room-wide line (a caster's
 // spell-channel line, a mob emote): mobDisplayName for viewer 0, capitalized.
@@ -523,7 +511,7 @@ func mobSubjectName(mob *mobs.Mob, room *rooms.Room) string {
 func sendMobConcentrationBroke(mob *mobs.Mob, room *rooms.Room) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 		`%s's concentration breaks.`, mobSubjectName(mob, room)),
-		spellChantBreaksOffSound)
+		messaging.SoundChantBreaksOff)
 }
 
 // sendMobSpellFailed narrates a mob's spell that fizzles (target gone) or
@@ -531,7 +519,7 @@ func sendMobConcentrationBroke(mob *mobs.Mob, room *rooms.Room) {
 func sendMobSpellFailed(mob *mobs.Mob, room *rooms.Room, verb string) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 		`%s's spell %s.`, mobSubjectName(mob, room), verb),
-		spellSputtersOutSound)
+		messaging.SoundSpellSputtersOut)
 }
 
 // sendMobWeaving narrates a mob still holding its fold. Sight only: a quiet
@@ -549,7 +537,7 @@ func sendMobWeaving(mob *mobs.Mob, room *rooms.Room) {
 func sendPlayerConcentrationBroke(caster *users.UserRecord, room *rooms.Room) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 		`<ansi fg="username">%s</ansi>'s concentration breaks.`, caster.Character.Name),
-		spellChantBreaksOffSound, caster.UserId)
+		messaging.SoundChantBreaksOff, caster.UserId)
 }
 
 // sendMobShiftsFocus narrates a mob switching its attack to a new player.

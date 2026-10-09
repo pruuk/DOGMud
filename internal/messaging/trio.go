@@ -39,7 +39,12 @@ var NoLine = Line{}
 // else in the room. RemoteObserver is the SECOND room: ranged combat narrates
 // to the attacker's room and the defender's room, and until M4d that second
 // audience had no seat here at all, so it travelled outside the pipeline.
-type Trio struct{ Actor, Actee, Observer, RemoteObserver Line }
+//
+// ObserverSound is what an observer who sees nothing hears of the event, for
+// one that is heard as well as seen (a spell disruption, #242 owner ruling
+// R4). It must name nobody. NoLine, the usual case, keeps the event silent to
+// a reader who cannot see it.
+type Trio struct{ Actor, Actee, Observer, RemoteObserver, ObserverSound Line }
 
 // Recipient is anything that can be sent a categorized line. Satisfied by
 // *users.UserRecord and by actions.Actor without either changing.
@@ -54,6 +59,10 @@ type Broadcaster interface {
 	// user ids. An observer who makes out shapes only reads each of names as
 	// "a figure".
 	SendTextVisualHidingNames(cat Category, txt string, names []string, excludeUserIds ...int)
+	// SendTextUnsighted sends a line that names nobody to every player who
+	// cannot make out even shapes, excluding some user ids: the sound half of
+	// an event the observer line shows to those who can see.
+	SendTextUnsighted(cat Category, txt string, excludeUserIds ...int)
 	// ParticipantSight is ParticipantSight for the user in this room.
 	ParticipantSight(userId int) SightDecision
 }
@@ -115,6 +124,9 @@ func SendTrio(t Trio, aud Audience) {
 	if aud.Room != nil && t.Observer.Text != "" {
 		aud.Room.SendTextVisualHidingNames(t.Observer.Cat, t.Observer.Text,
 			[]string{aud.ActorName, aud.ActeeName}, trioExclusions(aud)...)
+	}
+	if aud.Room != nil && t.ObserverSound.Text != "" {
+		aud.Room.SendTextUnsighted(t.ObserverSound.Cat, t.ObserverSound.Text, trioExclusions(aud)...)
 	}
 	if aud.RemoteRoom != nil && t.RemoteObserver.Text != "" {
 		aud.RemoteRoom.SendTextVisualHidingNames(t.RemoteObserver.Cat, t.RemoteObserver.Text,
