@@ -1,10 +1,11 @@
 # Sight gates follow-ups (#382)
 
-**Status:** DRAFT for owner review, 2026-10-09.
+**Status:** G1-G6 APPROVED by the owner, 2026-10-09; G7 written from the owner's ruling, under review.
 **Parent:** `specs/completed/2026-10-08-sight-gates-playtest-fixes-design.md` (shipped in #445).
 The re-run playtest (run `a7219436241e24e7`, master `c7520f387`) left #446, #447, #448 and
-#449, and the residue of #242 and #216. This slice fixes all six in one PR. #251 needs only a
-scout playtest case, run in this slice's playtest. #444 is an owner call (below).
+#449, and the residue of #242 and #216. This slice fixes all six in one PR, and adds the owner's
+Empathic Shroud ruling (#444) as G7. #251 needs only a scout playtest case, run in this slice's
+playtest.
 
 ## Facts verified against source (master `7463f7be6`)
 
@@ -28,6 +29,12 @@ scout playtest case, run in this slice's playtest. #444 is an owner call (below)
 | Em dash at `loot.go:170`; the dash guard is a hand list of 8 files that omits loot | `copy_no_dash_test.go` |
 | Special moves send the player's own lines as `CategorySystem`, which never wraps; the same command's defence lines already use the move category | `usercommands/kick.go:19` vs `:140`; peers `bash, drain, gore, maul, pounce, rake, throttle, trip, throw` |
 | Quit line goes out as `CategoryLogout`, not in `shouldWrap` | `hooks/PlayerDespawn_HandleLeave.go:151-152`; `messaging/pipeline.go:122` |
+| Condition 31: `hidden` flag, 16 rounds, cast by `empathic-shroud` (willpower, mental) | `conditions/31-empathic_shroud.yaml`; `spells/empathic-shroud.yaml` |
+| Only record 9 enters Hidden on apply; 31 is excluded on purpose | `characters/conditions.go:163-192` (`hideForStealthRecord`) |
+| Entering Hidden adds a permanent 9; leaving cancels every hidden-flag record | `hooks/Awareness_Cascades.go` (`awareness_condition_mirror`) |
+| `HiddenData` is empty today; `ResolveConcealment(true)` sets it | `state/awareness/awareness.go:168-183` |
+| Hider score is Dex + Skullduggery × `SkillWeight` + mutation stealth, then light modifiers | `actions/skill_helpers.go:29-49` (`CalcSneakScore`) |
+| A spell condition can carry a caster-derived magnitude: `CasterStatValue` + Spellcasting | `hooks/light_spell.go:23-40`, `:56-66` |
 
 ## Fixes
 
@@ -56,18 +63,23 @@ scout playtest case, run in this slice's playtest. #444 is an owner call (below)
   - `CategoryLogout` wraps.
   - The admin echoes over 80 stay open in #449.
 
-**Out of scope:** #444 (owner call below), room prose dashes (#248), and the table separators
-in `achievements` and `craft list`.
+- **G7 Empathic Shroud is a real hide (#444, owner ruling 2026-10-09).** The ruling: "a real
+  hide/sneak with the spellcasting rank and stat replacing dex + skullduggery for the future
+  opposed rolls."
+  - **Entering.** Record 31 landing on a Visible holder enters Hidden, as F5 does for 9.
+    The Hidden data notes that the shroud is the source.
+  - **Score.** At cast, the record's magnitude takes the CASTER's shroud score: the spell's
+    stat (`CasterStatValue`, willpower) plus Spellcasting rank × `SkillWeight`. While
+    hidden by the shroud, `CalcSneakScore` uses that score in place of Dex plus
+    Skullduggery × `SkillWeight`. Mutation stealth and the light modifiers still apply. A 31
+    with no magnitude (admin `setcondition`) uses the holder's own spell score.
+  - **Ending.** When no live 31 remains (expiry, purge, death), `Validate` reveals a
+    shroud-sourced hide, and the cascade cancels the permanent 9 with it. A hide the holder
+    made by sneaking is not a shroud hide and does not end with it. Combat still reveals, as
+    for any hide.
 
-## Owner call: #444 Empathic Shroud
-
-Pick one:
-- **(a)** Make it a real hide that ends when the shroud ends.
-- **(b)** Drop the `hidden` flag.
-- **(c)** Leave it for later.
-
-The recommendation is (a). Applying condition 31 enters Hidden the way F5 does for 9, and
-its expiry leaves Hidden unless a sneak is also active.
+**Out of scope:** room prose dashes (#248), and the table separators in `achievements` and
+`craft list`.
 
 ## Testing and close
 
@@ -78,6 +90,9 @@ Each fix gets a failing test first:
 - G4: `hooks/spell_channel_sight_test.go`.
 - G5: a Blinded reader in a lit room.
 - G6: the dash guard, plus a wrap test on a kick line.
+- G7: in `characters`, 31 enters Hidden and its end reveals, while a sneak hide survives it.
+  In `actions`, the shroud score replaces Dex plus Skullduggery.
 
-One PR. The playtest re-runs the failing cases, adds a scout case (#251), and a TargetGone
-fizzle. If no leak is found, #446-#448, #242, #216 and #251 close, along with #382.
+One PR. The playtest re-runs the failing cases. It adds a scout case (#251), a TargetGone
+fizzle, and a shroud cast: hidden, then visible when the shroud ends. If no leak is found,
+#446-#448, #242, #216, #251 and #444 close, along with #382.
