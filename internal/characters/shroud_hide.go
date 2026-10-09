@@ -237,11 +237,17 @@ func (c *Character) DiscardEndedStealthRecords() {
 // a sneak-hidden holder) and the saved `sneaking` flag matches the hide.
 // Every exit from Hidden cancels 9 with the other hidden-flag records
 // (Awareness_Cascades.go), so a revealed hide does not come back here.
+//
+// Both records live (#451 review): reconcileShroudHide runs first, so a
+// reload holding a live 9 and a live 31 comes back shroud-hidden whatever the
+// scores. A live 9 on a shroud-hidden holder lands through the same door,
+// whose settleHide keeps the stronger hide and discards the other record
+// without its end line (owner, 2026-10-09: one hide, the strongest).
 func (c *Character) reconcileSneakHide() {
-	if c.Awareness == nil {
+	if c.Awareness == nil || !c.holdsLiveStealthRecord() {
 		return
 	}
-	if c.Awareness.State() == awareness.Visible && c.holdsLiveStealthRecord() {
+	if c.Awareness.State() == awareness.Visible || c.HiddenByShroud() {
 		c.hideForStealthRecord(conditionIdHidden)
 	}
 }

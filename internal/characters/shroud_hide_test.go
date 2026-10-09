@@ -371,6 +371,45 @@ func TestEndedStealthRecord_InPlayStillTellsItsEndLine(t *testing.T) {
 	require.True(t, told, "an in-play reveal must still prune record 9 with its end line")
 }
 
+// #451 review G6: a save holding both a live 9 and a live 31 reloaded into the
+// shroud hide whatever the scores, because reconcileShroudHide runs first and
+// reconcileSneakHide only acted on a Visible holder. The stronger hide holds
+// (owner, 2026-10-09: one hide, the strongest) and the other record goes
+// silently.
+func TestReload_BothStealthRecordsKeepTheStronger(t *testing.T) {
+	load := func(t *testing.T, dex int, shroud float64) *Character {
+		t.Helper()
+		seedStealthRecords(t)
+		c := newHider(dex)
+		require.True(t, c.Conditions.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, shroud))
+		require.True(t, c.Conditions.AddCondition(conditionIdHidden, true))
+		c.Awareness = nil // what a load builds: no machine until Validate
+		saved, err := yaml.Marshal(c)
+		require.NoError(t, err)
+		loaded := &Character{}
+		require.NoError(t, yaml.Unmarshal(saved, loaded))
+		require.NoError(t, loaded.Validate(true))
+		return loaded
+	}
+	t.Run("stronger sneak holds", func(t *testing.T) {
+		c := load(t, 300, 100)
+		require.True(t, c.IsHidden())
+		require.False(t, c.HiddenByShroud(), "the weaker shroud took the hide")
+		require.False(t, c.holdsLiveShroudRecord(), "the weaker 31 stays")
+		for _, p := range c.Conditions.Prune() {
+			require.NotEqual(t, conditions.ConditionIdEmpathicShroud, p.ConditionId, "31 must go silently")
+		}
+	})
+	t.Run("stronger shroud holds", func(t *testing.T) {
+		c := load(t, 50, 300)
+		require.True(t, c.HiddenByShroud())
+		require.False(t, c.holdsLiveStealthRecord(), "the weaker 9 stays")
+		for _, p := range c.Conditions.Prune() {
+			require.NotEqual(t, conditionIdHidden, p.ConditionId, "9 must go silently")
+		}
+	})
+}
+
 // The sibling: a 9 that a reveal already cancelled stays cancelled.
 func TestSneakHide_CancelledRecordStaysVisibleOnReload(t *testing.T) {
 	seedStealthRecords(t)

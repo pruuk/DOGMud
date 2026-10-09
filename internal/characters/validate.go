@@ -693,14 +693,18 @@ func (c *Character) Validate(recalcPermanentConditions ...bool) error {
 	}
 	c.Conditions.Validate()
 	c.reconcilePerception()
-	c.reconcileShroudHide()
-	c.reconcileSneakHide()
 
 	// Ensure all known skills exist at rank 1 minimum.
 	c.Skills = ensureAllSkills(c.Skills)
 
 	// Stats recalc based on equipment, race, level, etc.
 	c.RecalculateStats()
+
+	// After the stats recalc: settling two hides compares scores built on
+	// ValueAdj, which a load does not save (#451 review), so before the
+	// recalc a reloaded sneak scored as Dexterity 0.
+	c.reconcileShroudHide()
+	c.reconcileSneakHide()
 
 	// Pool clamping after recalc.
 	c.validatePoolClamps()

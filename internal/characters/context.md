@@ -1460,7 +1460,9 @@ Hidden. For the same reason `reapplyPermanentConditions` (the
 `Validate(true)` rebuild) counts a LIVE 9 on a sneak-hidden holder as
 sourced; a 9 a cancel just expired is not live, so a cancel is not undone.
 `SneakOverShroud()` is the sneak command's takeover. `Validate` calls
-`reconcileShroudHide()` beside `reconcilePerception()`: a shroud hide with no
+`reconcileShroudHide()` and then `reconcileSneakHide()` right after
+`RecalculateStats()` (scores are built on `ValueAdj`, which a load does not
+save, so before the recalc a reloaded sneak scored as Dexterity 0): a shroud hide with no
 live 31 (expired, removed, purged, cancelled) is revealed with
 `awareness.TriggerShroudEnded`; and a Visible holder of a live 31 (a reload,
 whose Awareness machine is built fresh and Visible) re-enters the shroud hide
@@ -1468,7 +1470,10 @@ through `hideForStealthRecord` at the record's score. `reconcileSneakHide()`
 runs right after it and does the same for a sneak hide (#451): a Visible
 holder of a live record 9 (a reload) re-enters the sneak hide through
 `hideForStealthRecord(9)`, so the `Validate(true)` rebuild keeps the 9, no end
-line is told, and the saved `sneaking` misc key matches. Breaking: an observer
+line is told, and the saved `sneaking` misc key matches. A live 9 on a
+shroud-hidden holder (a save that held both records) lands through the same
+door, so `settleHide` keeps the stronger hide and discards the other record
+silently. Breaking: an observer
 winning a roll, combat (31 carries `cancel-on-combat`), death and logout
 reveal it like a sneak hide, and the reveal cascade cancels 31, so a revealed
 hide is never re-entered.
