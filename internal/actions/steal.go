@@ -184,10 +184,13 @@ type theftAttempt struct {
 // steal-specific knob it multiplied by are both gone. The sight ramp (plan
 // 5b) is applied here too, once: the thief needs to see, and no path
 // applies SightMult again.
+//
+// The base is HideBaseScore: Dexterity plus rank x SkillWeight, or, while
+// Empathic Shroud hides the thief, the shroud's score in their place (#444,
+// owner 2026-10-09). rank stays the Skullduggery rank: it gates the attempt.
 func newTheftAttempt(char *characters.Character, room *rooms.Room, cfg configs.Balance) theftAttempt {
 	rank := char.GetSkillLevel(skills.Skullduggery)
-	points := float64(char.Stats.Dexterity.ValueAdj) +
-		float64(rank)*float64(cfg.SkillWeight)
+	points := char.HideBaseScore()
 	if char.IsHidden() {
 		points += float64(cfg.StealHiddenBonus)
 	}

@@ -870,7 +870,11 @@ Pickpockets a target mob or player, or robs an item from a room container.
 shared with Plant, lasting `StealCooldown` real seconds (60 shipped, 15
 rounds at `RoundSeconds: 4`). Steal only CHECKS it (`CooldownReady`); it is
 armed by the attempt itself. `newTheftAttempt` builds the thief's side once
-(`theftAttempt`: rank, score, cooldown period) and each path reads the score
+(`theftAttempt`: rank, score, cooldown period; the score's base is
+`Character.HideBaseScore()`, Dexterity + Skullduggery x SkillWeight, or the
+shroud's score while Empathic Shroud hides the thief, #444, owner
+2026-10-09; rank stays the Skullduggery rank that gates the attempt) and
+each path reads the score
 through `theftAttempt.score()` immediately before its contest, which arms the
 cooldown as it hands the score over. So every refusal (no target, target
 gone, a companion, an immune mob, rank below 2, an empty container, too
@@ -1172,8 +1176,9 @@ Selling is `sell_bauble.go`'s (above); storage (`usercommands/storage.go`,
   (`StolenByUserId`) is ever accused, so nobody can be framed and the
   recognition cannot be spent on a friend.
   `stolenRecognitionRoll` pits `stealVictimScore` (the owner's own sight
-  ramp included) against `carrierScore` (Dexterity + skullduggery ×
-  SkillWeight + the hidden bonus). Recognised: `MarkRecognized`, the owner
+  ramp included) against `carrierScore` (`Character.HideBaseScore()`:
+  Dexterity + skullduggery × SkillWeight, or the shroud's score while
+  Empathic Shroud hides the carrier; plus the hidden bonus). Recognised: `MarkRecognized`, the owner
   says so, then `thiefCaught` (the `stolenCaught` seam): the crime, its
   reputation and bounty, the attack. Once per theft
   (`Record.RecognizedSinceTheft`).

@@ -5,6 +5,8 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -80,4 +82,33 @@ func TestSneak_WhileShroudedStrongerSneakTakesOver(t *testing.T) {
 	assert.False(t, c.HiddenByShroud())
 	assert.False(t, c.Conditions.HasCondition(conditions.ConditionIdEmpathicShroud), "31 is discarded, not cancelled")
 	assert.Equal(t, true, c.GetMiscData("sneaking"))
+}
+
+// Steal and plant roll the shroud's score while the shroud hides the thief
+// (owner, 2026-10-09), in the theft contest and in keeping a stolen bauble
+// out of sight; a visible thief keeps Dexterity plus Skullduggery.
+func TestTheftScores_ShroudScoreWhileShroudHidden(t *testing.T) {
+	seedShroudRecords(t)
+	full := configs.GetConfig()
+	full.Balance.StealHiddenBonus = 25
+	configs.SetConfigForTest(t, full)
+	cfg := configs.GetBalanceConfig()
+	room := newSearchTestRoom(9702)
+
+	plain := newTestChar()
+	plain.Stats.Dexterity.Base = 40
+	plain.SetSkill("skullduggery", 4)
+	require.NoError(t, plain.Validate())
+	sneakBase := float64(plain.Stats.Dexterity.ValueAdj) + 4*float64(cfg.SkillWeight)
+	assert.Equal(t, sneakBase*messaging.SightMult(plain, room), newTheftAttempt(plain, room, cfg).points,
+		"a visible thief is unchanged")
+	assert.Equal(t, sneakBase, carrierScore(plain), "a visible carrier is unchanged")
+
+	shrouded := shroudedChar(t, 40, 250)
+	shrouded.SetSkill("skullduggery", 4)
+	require.NotEqual(t, 250.0, shrouded.SneakBaseScore(), "fixture: the shroud must differ from the sneak base")
+	want := 250 + float64(cfg.StealHiddenBonus)
+	assert.Equal(t, want*messaging.SightMult(shrouded, room), newTheftAttempt(shrouded, room, cfg).points,
+		"the shroud's score, plus the hidden bonus")
+	assert.Equal(t, want, carrierScore(shrouded))
 }
