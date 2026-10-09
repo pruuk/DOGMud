@@ -38,7 +38,7 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="cyan-bold">You rally your allies with an inspiring shout that steadies their resolve!</ansi>`)
+	user.SendText(messaging.CategoryRally, `<ansi fg="cyan-bold">You rally your allies with an inspiring shout that steadies their resolve!</ansi>`)
 	// Heard, not seen: the name follows each listener's sight (sight gates 5b).
 	actions.SendHeard(&actions.UserActor{User: user, Room: room}, messaging.CategoryRally,
 		fmt.Sprintf(`<ansi fg="cyan-bold"><ansi fg="username">%s</ansi> rallies everyone with an inspiring shout!</ansi>`, user.Character.Name),
@@ -55,7 +55,7 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				continue
 			}
 			_ = memberUser.Character.AddConditionMagnitude(conditions.ConditionIdRally, result.Duration, 1.0+result.Bonus, "rally")
-			memberUser.SendText(messaging.CategorySystem,
+			memberUser.SendText(messaging.CategoryRally,
 				fmt.Sprintf(`<ansi fg="cyan-bold"><ansi fg="username">%s</ansi>'s rallying cry steadies your nerves!</ansi>`, user.Character.Name))
 			applyRallyToCompanions(memberUser, room, result.Bonus, result.Duration)
 		}
@@ -69,7 +69,7 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// cry to the caster; fan it to the same allies the rally reached.
 	if mutations.HasMutationFlag(user.Character.Mutations, "shout-stacking") {
 		wb, wd := actions.ApplyWarcryEffect(user.Character)
-		user.SendText(messaging.CategorySystem, `<ansi fg="red-bold">Your layered voice looses a thunderous warcry in the same breath!</ansi>`)
+		user.SendText(messaging.CategoryWarcry, `<ansi fg="red-bold">Your layered voice looses a thunderous warcry in the same breath!</ansi>`)
 		// Heard, not seen, like the rally line above.
 		actions.SendHeard(&actions.UserActor{User: user, Room: room}, messaging.CategoryWarcry,
 			fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi>'s shout hardens into a warcry in the same breath!</ansi>`, user.Character.Name),
@@ -88,7 +88,7 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				// party loop above that kept the condition apply and dropped the
 				// line telling the member. Wording matches warcry.go's own
 				// member line, because what is being applied here IS a war cry.
-				memberUser.SendText(messaging.CategorySystem,
+				memberUser.SendText(messaging.CategoryWarcry,
 					fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi>'s warcry stirs your blood!</ansi>`, user.Character.Name))
 				applyWarcryToCompanions(memberUser, room, wb, wd)
 			}

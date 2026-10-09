@@ -88,7 +88,10 @@ recipient (the acting player has a client), and its pre-migration call sites
 split categories by viewpoint (`CategorySystem` for the actor/actee lines,
 the verb's own category for the room line) rather than sharing one, so its
 `sendMoveEvent` takes a `moveCategories` (one category per role) instead of
-a single `messaging.Category`.
+a single `messaging.Category`. Since #449 every role of a special move rides
+the move's own category (the actor and actee lines no longer use
+`CategorySystem`, which never wraps); only refusals and cost notices stay
+on `CategorySystem`.
 
 The one exception is `internal/combat/grapple_narration.go`
 (`renderGrappleEvent`), added by M4e-1's grapple slice. Grapple's crit-failure

@@ -175,7 +175,7 @@ func sendAggroPullMessages(user *users.UserRecord, room *rooms.Room, sourceName,
 		`Your mockery is unbearable -- <ansi fg="mobname">%s</ansi> wheels around to face you!`,
 		`<ansi fg="mobname">%s</ansi> snarls and shifts its full attention to you.`,
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(pullMsgs[util.Rand(len(pullMsgs))], targetName))
+	user.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(pullMsgs[util.Rand(len(pullMsgs))], targetName))
 
 	roomPullMsgs := []string{
 		`<ansi fg="mobname">%s</ansi> breaks off and turns its fury on <ansi fg="username">%s</ansi>!`,
@@ -215,10 +215,19 @@ func sendTauntMessages(intensity combat.TauntIntensity, dmgDesc, source, target,
 		}
 	}
 
-	user.SendText(messaging.CategorySystem, atkMsg)
+	// The category follows the outcome, as the mob side's sendMobTauntTriad
+	// callers do, so the personal lines wrap and colour like the room's.
+	cat := messaging.CategoryTauntSuccess
+	switch intensity {
+	case combat.TauntMiss:
+		cat = messaging.CategoryTauntResist
+	case combat.TauntFumble:
+		cat = messaging.CategoryTauntFailure
+	}
+	user.SendText(cat, atkMsg)
 
 	if targetPlayer != nil && defMsg != "" {
-		targetPlayer.SendText(messaging.CategorySystem, defMsg)
+		targetPlayer.SendText(cat, defMsg)
 	}
 
 	if roomMsg != "" {

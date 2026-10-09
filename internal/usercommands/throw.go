@@ -375,7 +375,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				user.Character.ApplyHarm(characters.PoolHealth, dmg,
 					state.ActorRef{UserId: user.UserId})
 				dmgDesc := combat.GetDamageDescription(dmg, user.Character.HealthMax.Value)
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(
 					`<ansi fg="red">The explosion sears you! (%s)</ansi>`, dmgDesc))
 			}
 			if hasConditions {
@@ -463,7 +463,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 			if hasDamage {
 				dmgDesc := combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(
 					`The explosion catches <ansi fg="mobname">%s</ansi>! (<ansi fg="damage">%s</ansi>)`,
 					mob.Character.Name, dmgDesc))
 			}
@@ -472,7 +472,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				for _, conditionId := range spec.ConditionIds {
 					mob.AddCondition(conditionId, `grenade`)
 				}
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(
 					`<ansi fg="mobname">%s</ansi> is caught in the blast!`,
 					mob.Character.Name))
 			}
@@ -493,12 +493,12 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		if len(hitMobs) == 0 {
 			// Nothing was hit and nothing was even clipped — a defended
 			// partial no longer reads as "harmlessly".
-			user.SendText(messaging.CategorySystem, "The projectile misses everything and shatters harmlessly.")
+			user.SendText(messaging.CategoryHitRanged, "The projectile misses everything and shatters harmlessly.")
 		} else if hitCount == 1 {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryHitRanged,
 				`<ansi fg="green">Your throw strikes true!</ansi>`)
 		} else if hitCount > 1 {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryHitRanged,
 				`<ansi fg="green">Your throw catches multiple targets!</ansi>`)
 		}
 	}
