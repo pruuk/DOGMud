@@ -138,9 +138,35 @@ func (c *Character) AddCondition(conditionId int, isPermanent bool) error {
 	if !c.Conditions.AddCondition(conditionId, isPermanent) {
 		return fmt.Errorf(`failed to add condition. target: "%s" conditionId: %d`, c.Name, conditionId)
 	}
+	c.hideForStealthRecord(conditionId)
 	// Validate brings Perception in line with the blind sources.
 	_ = c.Validate()
 	return nil
+}
+
+// conditionIdHidden is the stealth record the Awareness machine mirrors
+// (Awareness_Cascades.go): entering Hidden adds it, leaving Hidden cancels it.
+const conditionIdHidden = 9
+
+// hideForStealthRecord is the other half of that mirror. Record 9 added to a
+// Visible character (a mob's spawn-time conditionids, an admin setcondition)
+// drives Awareness into Hidden, so IsHidden agrees with the record. Before,
+// only the sneak command entered Hidden, and an ambusher spawned with 9 was
+// listed in the room and emoted (sight gates playtest fixes, F5). The
+// cascade's own re-add arrives while the machine is already Hidden, and a
+// sneak in flight is Concealing, so neither is driven twice.
+//
+// Only record 9: another hidden-flag record (Empathic Shroud, 31) is timed,
+// and the cascade would pin a permanent 9 that outlives it.
+func (c *Character) hideForStealthRecord(conditionId int) {
+	if conditionId != conditionIdHidden || c.Awareness == nil || c.Awareness.State() != awareness.Visible {
+		return
+	}
+	reason := state.TransitionReason{Trigger: awareness.TriggerConditionApplied}
+	if err := c.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason); err != nil {
+		return
+	}
+	c.Awareness.ResolveConcealment(true, reason)
 }
 
 // AddConditionScaled adds a condition with its duration scaled by durationMult.
@@ -149,6 +175,7 @@ func (c *Character) AddConditionScaled(conditionId int, durationMult float64) er
 	if !c.Conditions.AddConditionScaled(conditionId, durationMult) {
 		return fmt.Errorf(`failed to add condition. target: "%s" conditionId: %d`, c.Name, conditionId)
 	}
+	c.hideForStealthRecord(conditionId)
 	// Validate brings Perception in line with the blind sources.
 	_ = c.Validate()
 	return nil
