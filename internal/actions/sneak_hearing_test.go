@@ -96,6 +96,7 @@ func TestSneak_BlindObserverRollsByEar(t *testing.T) {
 	obs.Stats.Perception.ValueAdj = 1000
 	actor, mc := w.place(t, "player", 9810, "Sneak")
 	mc.Stats.Dexterity.ValueAdj = 100
+	events.DrainQueuedMessageEventsForTest(9811)
 
 	got := Sneak(actor)
 
