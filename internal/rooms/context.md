@@ -130,6 +130,11 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Environmental context**: Day/night cycles, lighting, biome effects
 - **User-specific views**: Personalized room information based on character state
 - **Room alerts**: Special notifications for banks, training, storage, etc.
+- **Description modifiers**: `descriptionWithModifiers` applies each active
+  mutator's prepend, append or replace text BEFORE the wrap, and
+  `wrapDescriptionParts` wraps each part as plain text then colours each
+  line, so a long modifier (the sanctuary line) wraps with the description
+  and beside the minimap (#455).
 
 ### Biome System (`biomes.go`)
 - **BiomeInfo**: Environmental definitions affecting room behavior

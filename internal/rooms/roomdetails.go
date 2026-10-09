@@ -14,7 +14,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
-	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -104,10 +103,14 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// vestigial perk.
 	renderNouns := true
 
+	// A mutator's description modifier joins the description BEFORE the
+	// wrap, so a long modifier wraps with the rest (#455).
+	descParts := descriptionWithModifiers(r, details.Description)
+
 	if len(tinymap) > 0 {
 		desclineWidth := 80 - 7 // 7 is the width of the tinymap
 		padding := 1
-		description := util.SplitString(details.Description, desclineWidth-padding)
+		description := wrapDescriptionParts(descParts, desclineWidth-padding)
 
 		for i := 0; i < len(tinymap[0]); i++ {
 			if i > len(description)-1 {
@@ -136,7 +139,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		details.Description = strings.Join(description, "\n")
 	} else {
 
-		roomDesc := util.SplitString(details.Description, 80)
+		roomDesc := wrapDescriptionParts(descParts, 80)
 
 		if renderNouns && len(r.Nouns) > 0 {
 			for i := range roomDesc {
@@ -182,39 +185,8 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 		}
 
-		if mutSpec.DescriptionModifier != nil {
-
-			// Handle any text changes
-			if mutSpec.DescriptionModifier.Behavior == mutators.TextPrepend {
-
-				if mutSpec.DescriptionModifier.Text != `` {
-
-					details.Description = colorpatterns.ApplyColorPattern(mutSpec.DescriptionModifier.Text, mutSpec.DescriptionModifier.ColorPattern) +
-						term.CRLFStr +
-						details.Description
-
-				}
-
-			} else if mutSpec.DescriptionModifier.Behavior == mutators.TextReplace {
-
-				if mutSpec.DescriptionModifier.Text != `` {
-					details.Description = colorpatterns.ApplyColorPattern(mutSpec.DescriptionModifier.Text, mutSpec.DescriptionModifier.ColorPattern)
-				} else {
-					details.Description = colorpatterns.ApplyColorPattern(details.Description, mutSpec.DescriptionModifier.ColorPattern)
-				}
-
-			} else if mutSpec.DescriptionModifier.Behavior == mutators.TextAppend {
-
-				if mutSpec.DescriptionModifier.Text != `` {
-
-					details.Description = details.Description +
-						term.CRLFStr +
-						colorpatterns.ApplyColorPattern(mutSpec.DescriptionModifier.Text, mutSpec.DescriptionModifier.ColorPattern)
-
-				}
-			}
-
-		}
+		// Description modifiers were applied before the wrap; see
+		// descriptionWithModifiers.
 
 		// Alert modifiers can only add to the list.
 		// No current plans to allow them to overwrite existing alerts.
@@ -616,4 +588,63 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 	return details
 
+}
+
+// descriptionPart is one block of a room description: the room's own text
+// or a mutator's description modifier, with the colour pattern to apply
+// after it is wrapped.
+type descriptionPart struct {
+	text         string
+	colorPattern string
+}
+
+// descriptionWithModifiers applies every active mutator's description
+// modifier (prepend, append or replace) to the room's description, as
+// parts still to be wrapped. GetDetails used to add them after the wrap,
+// so a long modifier printed as one unwrapped line (#455). A replace with
+// no text recolours every part that has no pattern of its own yet, as the
+// old in-place ApplyColorPattern left already coloured text alone.
+func descriptionWithModifiers(r *Room, description string) []descriptionPart {
+	parts := []descriptionPart{{text: description}}
+	for mut := range r.ActiveMutators {
+		mutSpec := mut.GetSpec()
+		if mutSpec == nil || mutSpec.DescriptionModifier == nil {
+			continue
+		}
+		mod := mutSpec.DescriptionModifier
+		switch mod.Behavior {
+		case mutators.TextPrepend:
+			if mod.Text != `` {
+				parts = append([]descriptionPart{{text: mod.Text, colorPattern: mod.ColorPattern}}, parts...)
+			}
+		case mutators.TextReplace:
+			if mod.Text != `` {
+				parts = []descriptionPart{{text: mod.Text, colorPattern: mod.ColorPattern}}
+				continue
+			}
+			for i := range parts {
+				if parts[i].colorPattern == `` {
+					parts[i].colorPattern = mod.ColorPattern
+				}
+			}
+		case mutators.TextAppend:
+			if mod.Text != `` {
+				parts = append(parts, descriptionPart{text: mod.Text, colorPattern: mod.ColorPattern})
+			}
+		}
+	}
+	return parts
+}
+
+// wrapDescriptionParts wraps each part to width as plain text, then colours
+// each wrapped line. A colour pattern tags every rune, so wrapping the
+// tagged text could break a word in two; colouring after the wrap cannot.
+func wrapDescriptionParts(parts []descriptionPart, width int) []string {
+	var lines []string
+	for _, p := range parts {
+		for _, line := range util.SplitString(p.text, width) {
+			lines = append(lines, colorpatterns.ApplyColorPattern(line, p.colorPattern))
+		}
+	}
+	return lines
 }
