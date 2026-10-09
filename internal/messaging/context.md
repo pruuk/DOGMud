@@ -15,6 +15,9 @@ the recipient's connection.
    and the noun (`a <ansi fg="itemname">Ivory Fan</ansi>` becomes
    `an …`), keeping the tags byte for byte. It tests the first letter,
    not the sound, so "a useful" becomes "an useful"; a known limitation.
+   `CategoryMobEmote` skips every stage except sentence-end punctuation,
+   so authored mob emotes keep their own words but end with a stop
+   (#455); the player-typed `CategoryEmote` skips every stage.
 3. **Sight gate** (visual channel only) — per-recipient: CanSeeClearly,
    CanSeeShapes, or skip-visual-deliver-audio. Consumes the chunk-6
    Perception FSM (see `internal/state/perception/`).
