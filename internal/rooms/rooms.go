@@ -1104,7 +1104,7 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 					// template's ids. Reapply now so the entry's conditions
 					// are live at spawn: a room entry carrying 9 spawns a
 					// hidden mob, not one that hides at its next refresh.
-					mob.Character.Validate(true)
+					_ = mob.Character.Validate(true)
 				}
 
 				// If there are idle commands for this spawn, overwrite.
