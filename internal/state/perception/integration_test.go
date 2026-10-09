@@ -165,3 +165,66 @@ func TestIntegration_MixedSourceOrder(t *testing.T) {
 		t.Errorf("after RemoveCondition (no sources left), state = %v, want Sighted", c.Perception.State())
 	}
 }
+
+// expireCondition marks a held record spent, as the round tick does when its
+// last trigger fires, without going through RemoveCondition.
+func expireCondition(t *testing.T, c *characters.Character, conditionId int) {
+	t.Helper()
+	for _, b := range c.Conditions.List {
+		if b.ConditionId == conditionId {
+			b.TriggersLeft = conditions.TriggersLeftExpired
+			return
+		}
+	}
+	t.Fatalf("condition %d not held", conditionId)
+}
+
+// PE-INT-008: natural expiry. The prune pass drops a spent record and then
+// calls Validate; it never calls RemoveCondition. Sight must still come back.
+func TestIntegration_NaturalExpiryReturnsSighted(t *testing.T) {
+	defer seedBlindConditions(t)()
+
+	for _, id := range []int{perception.ConditionIdBlinded, perception.ConditionIdFlashbangBlindness} {
+		c := characters.New()
+		if err := c.AddCondition(id, false); err != nil {
+			t.Fatalf("AddCondition(%d): %v", id, err)
+		}
+		expireCondition(t, c, id)
+		c.Conditions.Prune()
+		_ = c.Validate()
+		if c.Perception.State() != perception.Sighted {
+			t.Errorf("condition %d expired and pruned, state = %v, want Sighted", id, c.Perception.State())
+		}
+	}
+}
+
+// PE-INT-009: a fresh load. Perception is runtime only (yaml:"-"), so a load
+// builds a Sighted machine; Validate must blind a holder whose blind
+// condition is still live, or a relog cures blindness.
+func TestIntegration_ReloadKeepsLiveBlindness(t *testing.T) {
+	defer seedBlindConditions(t)()
+
+	c := characters.New()
+	if err := c.AddCondition(perception.ConditionIdBlinded, false); err != nil {
+		t.Fatalf("AddCondition(3): %v", err)
+	}
+	c.Perception = nil // what a load from YAML hands Validate
+	_ = c.Validate()
+	if c.Perception.State() != perception.Blinded {
+		t.Errorf("reloaded with condition 3 live, state = %v, want Blinded", c.Perception.State())
+	}
+}
+
+// PE-INT-010: every door that adds a record blinds, including the
+// magnitude door, which had no Perception flip of its own.
+func TestIntegration_MagnitudeDoorBlinds(t *testing.T) {
+	defer seedBlindConditions(t)()
+
+	c := characters.New()
+	if err := c.AddConditionMagnitude(perception.ConditionIdFlashbangBlindness, 0, 1, "test"); err != nil {
+		t.Fatalf("AddConditionMagnitude(77): %v", err)
+	}
+	if c.Perception.State() != perception.Blinded {
+		t.Errorf("after AddConditionMagnitude(77), state = %v, want Blinded", c.Perception.State())
+	}
+}

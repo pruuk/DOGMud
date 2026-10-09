@@ -9,7 +9,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
-	"github.com/GoMudEngine/GoMud/internal/state/perception"
 )
 
 func (c *Character) IsDisabled() bool {
@@ -139,13 +138,7 @@ func (c *Character) AddCondition(conditionId int, isPermanent bool) error {
 	if !c.Conditions.AddCondition(conditionId, isPermanent) {
 		return fmt.Errorf(`failed to add condition. target: "%s" conditionId: %d`, c.Name, conditionId)
 	}
-	// Chunk 6 (Perception): blind-source conditions trigger Sighted → Blinded.
-	// Guard against re-entry: only fire if state is currently Sighted.
-	if (conditionId == perception.ConditionIdBlinded || conditionId == perception.ConditionIdFlashbangBlindness) &&
-		c.Perception != nil && c.Perception.State() == perception.Sighted {
-		_ = c.Perception.TransitionTo(perception.Blinded,
-			state.TransitionReason{Trigger: perception.TriggerConditionApplied, Metadata: map[string]any{"conditionId": conditionId}})
-	}
+	// Validate brings Perception in line with the blind sources.
 	_ = c.Validate()
 	return nil
 }
@@ -156,12 +149,7 @@ func (c *Character) AddConditionScaled(conditionId int, durationMult float64) er
 	if !c.Conditions.AddConditionScaled(conditionId, durationMult) {
 		return fmt.Errorf(`failed to add condition. target: "%s" conditionId: %d`, c.Name, conditionId)
 	}
-	// Chunk 6 (Perception): see AddCondition above.
-	if (conditionId == perception.ConditionIdBlinded || conditionId == perception.ConditionIdFlashbangBlindness) &&
-		c.Perception != nil && c.Perception.State() == perception.Sighted {
-		_ = c.Perception.TransitionTo(perception.Blinded,
-			state.TransitionReason{Trigger: perception.TriggerConditionApplied, Metadata: map[string]any{"conditionId": conditionId}})
-	}
+	// Validate brings Perception in line with the blind sources.
 	_ = c.Validate()
 	return nil
 }
@@ -199,13 +187,7 @@ func (c *Character) GetConditions(conditionId ...int) []*conditions.Condition {
 func (c *Character) RemoveCondition(conditionId int) {
 	conditionId = int(math.Abs(float64(conditionId)))
 	c.Conditions.RemoveCondition(conditionId)
-	// Chunk 6 (Perception): clearing a blind-source condition may flip
-	// Blinded → Sighted, but only if no other blind source remains.
-	if (conditionId == perception.ConditionIdBlinded || conditionId == perception.ConditionIdFlashbangBlindness) &&
-		c.Perception != nil && c.Perception.State() == perception.Blinded && !c.HasAnyBlindSource() {
-		_ = c.Perception.TransitionTo(perception.Sighted,
-			state.TransitionReason{Trigger: perception.TriggerConditionExpired, Metadata: map[string]any{"conditionId": conditionId}})
-	}
+	// Validate brings Perception in line with the blind sources that remain.
 	_ = c.Validate()
 }
 

@@ -692,6 +692,7 @@ func (c *Character) Validate(recalcPermanentConditions ...bool) error {
 		c.Name = defaultName
 	}
 	c.Conditions.Validate()
+	c.reconcilePerception()
 
 	// Ensure all known skills exist at rank 1 minimum.
 	c.Skills = ensureAllSkills(c.Skills)
