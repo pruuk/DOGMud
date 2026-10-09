@@ -12,7 +12,6 @@ groups:
   - humanoid
 idlecommands:
   - 'emote traces a circle in the air with one finger, murmuring softly'
-  - 'cast empathic-shroud'
   - ''
   - 'emote kneels to press a palm against the bare earth'
   - 'cast vital-surge'
