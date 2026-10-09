@@ -369,7 +369,7 @@ func recordSpectatorTallies(atkRoom, defRoom *rooms.Room, atk, def actions.Actor
 			if u == nil {
 				continue
 			}
-			// Sight gate: a spectator in darkness receives the generic
+			// Sight gate: a spectator who cannot see receives the generic
 			// sounds-of-fighting fallback but must not receive a named
 			// tally summary, which would leak combatant identities they
 			// cannot see. Shapes-only (infrared) viewers are treated the

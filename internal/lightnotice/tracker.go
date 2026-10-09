@@ -147,12 +147,16 @@ func transitionOf(from, to messaging.Band) Transition {
 // band? If so the light never had to move; the observer's own sight did (a
 // draught wearing off or taking hold), and that is checked BEFORE the terms.
 //
-// A plain direction test (did Level move the way the band moved) is not
-// enough: the sky drifts a little almost every round, and when it drifts the
-// same direction as an eyes-caused change, a direction test blames the sky
-// for a change the observer's sight alone already explains. The
-// counterfactual does not have that failure mode, because it holds the light
-// fixed at its OLD value and only varies the sight.
+// A plain direction test on the LIGHT level (did Level move the way the band
+// moved) is not enough: the sky drifts a little almost every round, and when
+// it drifts the same direction as an eyes-caused change, a direction test
+// blames the sky for a change the observer's sight alone already explains.
+// The counterfactual does not have that failure mode, because it holds the
+// light fixed at its OLD value and only varies the sight.
+//
+// Step 2b (added for #448) is a direction test on the observer's EYES, not on
+// the light level: it only runs when the recorded sight window changed, and
+// otherwise the light terms below decide.
 //
 // Otherwise, the first term that moved, in the order darkness (carried or a
 // fixture's), carried light (present, or its strength), the room's own light

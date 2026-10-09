@@ -50,7 +50,7 @@ func seedFallbackRoom(t *testing.T, lamp, eyesConditionId int) *rooms.Room {
 // the room with the fight. "nearby" told them it was somewhere else.
 func TestDarkRoomCombatFallback_SaysCloseByNotNearby(t *testing.T) {
 	room := seedFallbackRoom(t, 0, nightEyesConditionId)
-	sendDarkRoomCombatFallback(room)
+	sendUnsightedCombatSound(room)
 	got := drainPlain(1)
 	require.Equal(t, 1, countContaining(got, "You hear fighting close by."), "%v", got)
 	require.Zero(t, countContaining(got, "nearby"), "%v", got)
@@ -61,7 +61,7 @@ func TestDarkRoomCombatFallback_FollowsSight(t *testing.T) {
 
 	t.Run("infravision at light 10 sees shapes, no fallback", func(t *testing.T) {
 		room := seedFallbackRoom(t, 10, heatEyesConditionId)
-		sendDarkRoomCombatFallback(room)
+		sendUnsightedCombatSound(room)
 		require.Zero(t, countContaining(drainPlain(1), needle), "the shapes reader follows the fight by eye")
 		require.Equal(t, 1, countContaining(drainPlain(2), needle), "the normal reader hears it")
 	})
@@ -69,7 +69,7 @@ func TestDarkRoomCombatFallback_FollowsSight(t *testing.T) {
 	t.Run("nightvision at light 0 sees nothing, hears the fight", func(t *testing.T) {
 		room := seedFallbackRoom(t, 0, nightEyesConditionId)
 		require.Equal(t, messaging.SightNone, messaging.ParticipantSight(users.GetByUserId(1).Character, room))
-		sendDarkRoomCombatFallback(room)
+		sendUnsightedCombatSound(room)
 		require.Equal(t, 1, countContaining(drainPlain(1), needle))
 	})
 }
@@ -111,7 +111,7 @@ func TestDarkRoomCombatFallback_BlindedReaderInALitRoomHearsIt(t *testing.T) {
 	require.NoError(t, blind.Character.Perception.TransitionTo(perception.Blinded, state.TransitionReason{Trigger: "test"}))
 	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(blind.Character, room))
 
-	sendDarkRoomCombatFallback(room)
+	sendUnsightedCombatSound(room)
 
 	require.Equal(t, 1, countContaining(drainPlain(2), "You hear fighting close by."), "the blinded reader hears the fight")
 	require.Zero(t, countContaining(drainPlain(1), "You hear fighting"), "a reader who sees the fight reads it by eye")

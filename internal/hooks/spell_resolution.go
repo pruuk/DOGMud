@@ -675,9 +675,10 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	result := actions.ExecuteDrainArea(actions.NewMobActorInRoom(mob, room))
 
 	if !result.Executed {
-		sendVisualRoomText(room, messaging.CategorySpellDisruption, fmt.Sprintf(
+		sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 			`%s's <ansi fg="cyan">%s</ansi> crackles through the air, finding no one to drain.`,
-			mobSubjectName(mob, room), spellData.Name))
+			mobSubjectName(mob, room), spellData.Name),
+			messaging.SoundSpellSputtersOut)
 		return
 	}
 

@@ -450,8 +450,9 @@ func isExcludedUser(uid int, excludeIds []int) bool {
 	return false
 }
 
-// sendDarkRoomCombatFallback sends a one-time "You hear fighting close by."
-// line to every player who cannot follow the fight by eye: one the visual
+// sendUnsightedCombatSound sends "You hear fighting close by." (once per
+// attack result, since each result calls it) to every player who cannot follow
+// the fight by eye: one the visual
 // pipeline delivers nothing to (Room.SendTextUnsighted, the same audience as
 // !messaging.CanSeeShapes, a sleeper included). It used to test the
 // nightvision FLAG, which sent the sound to an infravision holder reading
@@ -461,7 +462,7 @@ func isExcludedUser(uid int, excludeIds []int) bool {
 //
 // #216: every caller passes the fight's own room, so the reader is IN the
 // fight's room; "nearby" said otherwise.
-func sendDarkRoomCombatFallback(room *rooms.Room, excludeUserIds ...int) {
+func sendUnsightedCombatSound(room *rooms.Room, excludeUserIds ...int) {
 	if room == nil {
 		return
 	}

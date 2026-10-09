@@ -617,9 +617,9 @@ func dispatchCritAndMessaging(atk, def actions.Actor, res *combat.AttackResult) 
 	drainSpectatorLines(atkRoom, res.MessagesToSourceRoom, excludes)
 	drainSpectatorLines(defRoom, res.MessagesToTargetRoom, excludes)
 	recordSpectatorTallies(atkRoom, defRoom, atk, def, res, excludes)
-	sendDarkRoomCombatFallback(atkRoom, excludes...)
+	sendUnsightedCombatSound(atkRoom, excludes...)
 	if defRoom != atkRoom {
-		sendDarkRoomCombatFallback(defRoom, excludes...)
+		sendUnsightedCombatSound(defRoom, excludes...)
 	}
 }
 
