@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -50,9 +51,16 @@ func Pet(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return true, nil
 	}
 
-	petUserId := room.FindByPetName(rest)
-	if petUserId == 0 && rest == `pet` && user.Character.Pet.Exists() {
+	petUserId := 0
+	if ownPetNamed(rest, user) {
 		petUserId = user.UserId
+	} else if messaging.ParticipantSight(user.Character, room) != messaging.SightFull {
+		// Another player's pet is named, never a shape: below full sight
+		// the name is refused the same whether the pet is there or not.
+		user.SendText(messaging.CategorySystem, actions.AimNotHereLine)
+		return true, nil
+	} else {
+		petUserId = petOwnerInSight(rest, user, room)
 	}
 	if petUserId == 0 {
 		user.SendText(messaging.CategorySystem, `Can't find that to pet.`)
@@ -78,4 +86,38 @@ func Pet(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	return true, nil
+}
+
+// ownPetNamed reports whether who names user's own pet: the word "pet", or
+// the pet's own name in full. The own pet is always at hand, so naming it
+// needs no sight and confirms nothing about the room (#454).
+func ownPetNamed(who string, user *users.UserRecord) bool {
+	pet := user.Character.Pet
+	if !pet.Exists() {
+		return false
+	}
+	if who == `pet` {
+		return true
+	}
+	match, _ := util.FindMatchIn(who, pet.PlainName())
+	return match != ``
+}
+
+// petOwnerInSight is the user id of the player in room whose pet who names,
+// or 0. Naming another player's pet is a typed name, so it resolves only at
+// full sight (#454), and only when the viewer perceives the pet's owner, as
+// a named creature must be perceived.
+func petOwnerInSight(who string, user *users.UserRecord, room *rooms.Room) int {
+	if messaging.ParticipantSight(user.Character, room) != messaging.SightFull {
+		return 0
+	}
+	ownerId := room.FindByPetName(who)
+	if ownerId == 0 || ownerId == user.UserId {
+		return ownerId
+	}
+	owner := users.GetByUserId(ownerId)
+	if owner == nil || !user.Character.Perceives(owner.Character) {
+		return 0
+	}
+	return ownerId
 }

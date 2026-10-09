@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/apiframework"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -624,7 +625,14 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 		return true, nil
 	}
 	// Seen by the owner: they cannot send their companion to question
-	// somebody they themselves cannot see.
+	// somebody they themselves cannot see. The typed name goes through the
+	// shared sight rule first (#454), so in the dark a name that is there
+	// and one that is not read the same refusal.
+	who, refusal := actions.AimBySight(user.Character, user.UserId, room, who, `companion-ask`)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return true, nil
+	}
 	_, mobInstanceId := room.FindByNameSeenBy(user.Character, who)
 	target := mobs.GetInstance(mobInstanceId)
 	if target == nil || target.Character.IsCharmed() {

@@ -323,6 +323,44 @@ func TestGiveSight_PetWordIsTheOwnPetBeforeAPlayer(t *testing.T) {
 	assert.False(t, petraHas, "`give sword pet` went to Petra")
 }
 
+// #454 review F6: `pet <name>` and `get x from <name>` find another player's
+// pet by name. Below full sight a pet that is there and one that is not read
+// the same line. Lit control: the pet is found.
+func TestPetSight_OthersPetReadsTheSameWhetherPresentOrNot(t *testing.T) {
+	for _, band := range []aimBand{aimShapes, aimDark} {
+		told := map[bool][2]string{}
+		for _, present := range []bool{true, false} {
+			user, room := aimScene(t, band)
+			if present {
+				users.GetByUserId(2).Character.Pet = pets.Pet{Name: "Rex", Type: "dog", Capacity: 5}
+			}
+			_, _ = Pet("rex", user, room, events.EventFlag(0))
+			petTold := aimTold(1)
+			_, _ = Get("sword from rex", user, room, events.EventFlag(0))
+			told[present] = [2]string{petTold, aimTold(1)}
+		}
+		assert.Equal(t, told[true][0], told[false][0], "band %d: `pet rex` told a present pet from an absent one", band)
+		assert.Equal(t, told[true][1], told[false][1], "band %d: `get sword from rex` told a present pet from an absent one", band)
+	}
+}
+
+func TestPetSight_LitFindsOthersPet(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	users.GetByUserId(2).Character.Pet = pets.Pet{Name: "Rex", Type: "dog", Capacity: 5}
+	_, _ = Pet("rex", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), "You pet Rex")
+	_, _ = Get("sword from rex", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), "You can't do that!")
+}
+
+// The own pet is at hand in the dark too.
+func TestPetSight_OwnPetInTheDark(t *testing.T) {
+	user, room := aimScene(t, aimDark)
+	user.Character.Pet = pets.Pet{Name: "Fang", Type: "dog", Capacity: 5}
+	_, _ = Pet("fang", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), "You pet Fang")
+}
+
 // #454 review F4: the sleep refusal named a sleeper the asker aimed at as a
 // shape. Lit control: at full sight it names them.
 func TestAskSight_SleepRefusalHidesAShapesName(t *testing.T) {

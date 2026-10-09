@@ -85,7 +85,12 @@ resolves before any room lookup; the item and recipient split admits only a
 recipient `AimBySight` admits, and below full sight falls to the first split
 whose item alone resolves, so a refusal never tells who is there), `show`, `consider`, `steal` and `plant`
 (a refused noun may still be a container), `shadow`, `talk`, `ask`,
-`party invite` and `rep`. `fire` refuses below full sight of the room it is
+`party invite` and `rep`. A pet is named, never a shape: `ownPetNamed`
+(`pet.go`) admits the player's own pet (`pet` or its name) at any sight, and
+`petOwnerInSight` finds another player's pet only at full sight of a
+perceived owner, so `pet <name>` (`AimNotHereLine` below full sight),
+`get x from <pet>` and `give x <pet>` never confirm a pet in the dark.
+`fire` refuses below full sight of the room it is
 aimed into (`actions.ShotSight`) before any name resolves. Lines that follow
 a shape name no one: `give`, `show`, `party invite` and `rep` hide each name
 at its reader's sight with `messaging.HideNames` (an invitation or a report

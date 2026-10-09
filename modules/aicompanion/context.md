@@ -366,7 +366,10 @@ Roadmap and phase plan: `docs/aicompanion/`.
   `tier=relay|server|none`; the player's `companion-ai` (consent, the
   `strangers on|off` toggle, and which tier is answering, `tierWords`).
   Its lines are wrapped at 80 columns before sending, since the system
-  category is never wrapped for the reader.
+  category is never wrapped for the reader. `companion-ask <who>` runs the
+  owner's typed name through `actions.AimBySight` before it looks the NPC
+  up (#454), so in the dark a name that is there and one that is not read
+  the same refusal, and at shapes the owner aims with `shape` / `N.shape`.
 - **primer.txt**: the common-knowledge world primer given to the model.
 - **relayfor.go**: `relayFor`, the `apiframework.Relay` the module lends to
   other features. It answers only for `apiframework.PurposeFinds`, only for

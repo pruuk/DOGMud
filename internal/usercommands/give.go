@@ -73,7 +73,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// The giver's own pet, by the word "pet" or by its name, is always at
 	// hand: it goes before any room lookup, so a player named "Petra" never
 	// takes it, and before the sight gate, so it needs no shape (#454).
-	if giveToOwnPet(giveWho, user) {
+	if ownPetNamed(giveWho, user) {
 		giveToPet(user, user, room, giveItem, giveGoldAmount)
 		return true, nil
 	}
@@ -282,7 +282,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	//
 	// Look for any pets in the room
 	//
-	if petUserId := room.FindByPetName(giveWho); petUserId > 0 {
+	if petUserId := petOwnerInSight(giveWho, user, room); petUserId > 0 {
 
 		petUser := users.GetByUserId(petUserId)
 		if petUser == nil {
@@ -344,19 +344,6 @@ func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount
 		targetUser.UserId)
 }
 
-// giveToOwnPet reports whether who names the giver's own pet: the word "pet",
-// or the pet's own name in full.
-func giveToOwnPet(who string, user *users.UserRecord) bool {
-	pet := user.Character.Pet
-	if !pet.Exists() {
-		return false
-	}
-	if who == `pet` {
-		return true
-	}
-	match, _ := util.FindMatchIn(who, pet.PlainName())
-	return match != ``
-}
 
 // giveToPet hands giveItem to petUser's pet. Gold a pet has no use for.
 func giveToPet(user, petUser *users.UserRecord, room *rooms.Room, giveItem items.Item, giveGoldAmount int) {
@@ -451,7 +438,7 @@ func giveObjectResolves(what string, user *users.UserRecord) bool {
 // at the giver's sight (#454): a typed name only at full sight, a shape or id
 // form at shapes, nothing with no sight.
 func giveTargetResolves(who string, user *users.UserRecord, room *rooms.Room) bool {
-	if giveToOwnPet(who, user) {
+	if ownPetNamed(who, user) {
 		return true
 	}
 	name, refusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
@@ -461,5 +448,5 @@ func giveTargetResolves(who string, user *users.UserRecord, room *rooms.Room) bo
 	if playerId, mobInstanceId := room.FindByNameSeenBy(user.Character, name); playerId > 0 || mobInstanceId > 0 {
 		return true
 	}
-	return room.FindByPetName(name) > 0
+	return petOwnerInSight(name, user, room) > 0
 }

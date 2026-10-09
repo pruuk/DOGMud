@@ -393,10 +393,14 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		// trailing target. Kept as-is to preserve the literal "pet" keyword case
 		// that the parser's name-based pet lookup doesn't cover.
 		//
+		// The own pet is always at hand; another player's pet is a typed
+		// name, found only at full sight of its owner (#454), so below that
+		// `get x from <their pet>` reads as if no pet were there.
 		if containerName == `` && corpseIdx < 0 {
-			petUserId = room.FindByPetName(args[len(args)-1])
-			if petUserId == 0 && args[len(args)-1] == `pet` && user.Character.Pet.Exists() {
+			if ownPetNamed(args[len(args)-1], user) {
 				petUserId = user.UserId
+			} else {
+				petUserId = petOwnerInSight(args[len(args)-1], user, room)
 			}
 			if petUserId > 0 {
 

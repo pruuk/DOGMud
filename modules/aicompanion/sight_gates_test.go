@@ -1,13 +1,16 @@
 package aicompanion
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // Her `remove` refuses a cursed worn item up front, as `get` refuses a
@@ -23,6 +26,51 @@ func TestCompanionRemoveRefusesACursedItem(t *testing.T) {
 		[]stimulus{{Kind: `heard`, FromOwner: true}}, 0, 0)
 	if out.Issued || out.Refused != `it will not come off` {
 		t.Fatalf("want a refusal before any command, got %+v", out)
+	}
+}
+
+// askForScene is an owner with a companion module enabled in harmWorld's room,
+// with a Smith there or not, lit or pitch dark.
+func askForScene(t *testing.T, smithHere, lit bool) (*AICompanionModule, *controller, *users.UserRecord, *rooms.Room) {
+	t.Helper()
+	owner, _, room, _ := harmWorld(t, configs.PVPDisabled)
+	if smithHere {
+		harmMob(t, room, 300, `Smith`)
+	}
+	if !lit {
+		room.SkyLight, room.Lamp = rooms.SkyLightPtr(0), rooms.LampPtr(0)
+	}
+	m, c, _ := strangerModule()
+	m.cfg.Enabled = true
+	m.ctrls = map[int]*controller{owner.UserId: c}
+	events.DrainQueuedMessagesForTest(owner.UserId)
+	return m, c, owner, room
+}
+
+// #454 review F6: companion-ask finds its NPC through the owner's sight rule.
+// In the dark a Smith who is there and one who is not read the same refusal,
+// and the companion is sent to neither.
+func TestCompanionAskSight_DarkReadsTheSameWhetherPresentOrNot(t *testing.T) {
+	told := map[bool]string{}
+	for _, here := range []bool{true, false} {
+		m, c, owner, room := askForScene(t, here, false)
+		_, _ = m.cmdAskFor(`smith about the ore`, owner, room, events.EventFlag(0))
+		told[here] = strings.Join(events.DrainQueuedMessagesForTest(owner.UserId), ``)
+		if c.askAuth != nil {
+			t.Fatalf("here=%v: the companion was sent to ask someone the owner cannot see", here)
+		}
+	}
+	if told[true] != told[false] {
+		t.Fatalf("the refusal told a present Smith from an absent one:\n here: %q\n gone: %q", told[true], told[false])
+	}
+}
+
+// The lit control: the owner can see the Smith, so the companion is sent.
+func TestCompanionAskSight_LitSendsTheCompanion(t *testing.T) {
+	m, c, owner, room := askForScene(t, true, true)
+	_, _ = m.cmdAskFor(`smith about the ore`, owner, room, events.EventFlag(0))
+	if c.askAuth == nil || c.askAuth.MobInstanceId != 300 {
+		t.Fatalf("a lit owner could not send the companion to the Smith: %+v", c.askAuth)
 	}
 }
 
