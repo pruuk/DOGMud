@@ -5,6 +5,8 @@ triggerrate: 1 round
 triggercount: 16
 flags:
   - hidden
+  # A real hide (#444): it breaks on combat the way the sneak's record 9 does.
+  - cancel-on-combat
 start_actee: You wrap yourself in a psionic shroud, fading from perception.
 start_observer: "{actee} seems to shimmer and fade from view."
 # No end_user_text — like the Hidden condition, you are NOT told when the shroud

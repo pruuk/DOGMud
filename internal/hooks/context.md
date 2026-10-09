@@ -1021,6 +1021,14 @@ the machine transitions away from or into the `Hidden` state, the hook
 applies or removes condition #9 to keep the visible effect synchronized with
 the invisible state.
 
+A shroud hide (#444) is the exception: when the hide's data says
+`awareness.HideShroud` (stored by `ResolveConcealmentAs` before the
+transition), the Hidden cascade adds no record 9, so the hide is Hidden plus
+record 31 and its end is told once, by 31's end line. `light_spell.go`'s
+`shroudSpellApplication` stamps the caster's `characters.ShroudScore` on
+record 31 as its magnitude, and `ApplyConditions` tells no start room line
+for a hidden-flag record landing on a holder already hidden.
+
 Also registers an `AfterTransition` callback on the Combat Phase machine
 that reveals a hidden character on `Idle → Engaging`. A surprise attack is
 **not** exempt: stealth breaks the instant the ambusher engages. The
@@ -1038,7 +1046,7 @@ transition. That order matters for anything observing `Idle → Engaging`
 the opening strike, which reads `Aggro.Type` later in the round.
 
 Events and cascades (per state transition, not per round):
-- Awareness `Visible → Hidden`: apply condition #9 + room text "sneaks away"
+- Awareness `Visible → Hidden`: apply condition #9 (not for a shroud hide) + room text "sneaks away"
 - Awareness `Hidden → Visible`: remove condition #9 + room text "emerges from hiding"
 - Combat Phase `Idle → Engaging`: trigger Awareness reveal cascade
 

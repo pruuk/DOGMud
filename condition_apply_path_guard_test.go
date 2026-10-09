@@ -108,9 +108,9 @@ var (
 // for internal/hooks/light_spell.go.
 var conditionApplyPathAllowlist = map[string]string{
 	// ── The sanctioned consumer of the event ────────────────────────────────
-	"internal/hooks/Condition_ApplyConditions.go|107": "this IS the hook the event feeds; it is where every routed condition is finally applied",
-	"internal/hooks/Condition_ApplyConditions.go|109": "this IS the hook the event feeds; it is where every routed condition is finally applied",
-	"internal/hooks/Condition_ApplyConditions.go|111": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|114": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|116": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|118": "this IS the hook the event feeds; it is where every routed condition is finally applied",
 
 	// ── silent-start conditions whose applier narrates the moment itself ────
 	"internal/actions/combat_throttle.go|149": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
@@ -142,7 +142,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/hooks/Life_Cascades.go|131": "condition 81 Respawn Grace is secret:true, so StartUserNotice is empty by design and the event would narrate nothing anyway",
 
 	// ── the event path cannot express what the call needs ───────────────────
-	"internal/hooks/Awareness_Cascades.go|57": "condition 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",
+	"internal/hooks/Awareness_Cascades.go|64": "condition 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",
 
 	// ── routing would narrate the wrong thing, or narrate it repeatedly ─────
 	"internal/hooks/pinnacle_tick.go|339": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
@@ -260,7 +260,8 @@ var conditionApplyPathAllowlist = map[string]string{
 	// moved to conditions.SpellScaledMagnitude, and again when the
 	// spellConditionTarget interface gained AddConditionTickScaled (parity
 	// slice 2).
-	"internal/hooks/light_spell.go|58": "light, sight or darkness spell at the caster's scaled magnitude and triggers: the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
+	"internal/hooks/light_spell.go|71": "Empathic Shroud at the caster's shroud score (#444): the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
+	"internal/hooks/light_spell.go|75": "light, sight or darkness spell at the caster's scaled magnitude and triggers: the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
 
 	// ── magnitude potions (lighting plan 5c): the player's and the mob's drink
 	// each carried this call (usercommands/drink.go and mobcommands/drink.go)
