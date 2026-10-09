@@ -344,7 +344,6 @@ func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount
 		targetUser.UserId)
 }
 
-
 // giveToPet hands giveItem to petUser's pet. Gold a pet has no use for.
 func giveToPet(user, petUser *users.UserRecord, room *rooms.Room, giveItem items.Item, giveGoldAmount int) {
 	if giveGoldAmount > 0 {
