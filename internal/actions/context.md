@@ -673,6 +673,9 @@ word on its own line (#430).
   its action. At shapes only it anonymizes every identity tag in the lines
   the action tells the player ("a figure"), since they aimed at a shape and
   never learned the name; otherwise it is a plain `*UserActor`.
+- **`RefuseIfAsleep` / `RefuseMobIfAsleep`** (`sleeping_target.go`) hide the
+  sleeper's name at the player's sight in their own room ("A figure is fast
+  asleep."), since an `ask` or `give` aimed at a shape never learned it.
 - **`ShotSight(viewer, room, rest) messaging.SightDecision`**
   (`combat_fire.go`): what a shooter makes out of the room a shot is aimed
   into, parsing `rest` as `ExecuteFire` does: their own room, or `scanReach`

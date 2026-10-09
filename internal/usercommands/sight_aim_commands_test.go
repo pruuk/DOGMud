@@ -323,6 +323,37 @@ func TestGiveSight_PetWordIsTheOwnPetBeforeAPlayer(t *testing.T) {
 	assert.False(t, petraHas, "`give sword pet` went to Petra")
 }
 
+// #454 review F4: the sleep refusal named a sleeper the asker aimed at as a
+// shape. Lit control: at full sight it names them.
+func TestAskSight_SleepRefusalHidesAShapesName(t *testing.T) {
+	const sleepId = 9455
+	for _, band := range []aimBand{aimFull, aimShapes} {
+		user, room := aimScene(t, band)
+		t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+			sleepId: {ConditionId: sleepId, Name: "Test Sleep", RoundInterval: 1, TriggerCount: 100,
+				Flags: []conditions.Flag{conditions.Sleeping}},
+			// Reseeding replaces the registry: keep aimScene's infrared.
+			aimInfraredConditionId: {ConditionId: aimInfraredConditionId, Name: "Test Infrared",
+				RoundInterval: 1, TriggerCount: 1, Flags: []conditions.Flag{conditions.InfraredVision},
+				Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectInfraReach: {Literal: 30}}},
+		}))
+		require.NoError(t, mobs.GetInstance(100).Character.AddCondition(sleepId, true))
+		aim := "skeleton quest"
+		if band == aimShapes {
+			aim = "2.shape quest"
+		}
+		_, _ = Ask(aim, user, room, events.EventFlag(0))
+		told := aimTold(1)
+		assert.Contains(t, told, "is fast asleep.", "band %d", band)
+		if band == aimFull {
+			assert.Contains(t, told, "Skeleton is fast asleep.")
+		} else {
+			assert.NotContains(t, told, "Skeleton", "an asker who aimed at a shape read its name")
+			assert.Contains(t, told, "A figure is fast asleep.")
+		}
+	}
+}
+
 // #454 review F2: share pays the party members in the room directly. It typed
 // `give N gold to @uid` per member, which the sight gate refused in the dark.
 // Party membership is known, so paying a member tells no one who is there;
