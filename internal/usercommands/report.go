@@ -23,7 +23,10 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	cpBar := users.RenderVitalBar(c.Conviction, c.ConvictionMax.Value,
 		c.GetPoolReservation("conviction", c.ConvictionMax.Value))
 
-	barText := fmt.Sprintf(`HP %s  SP %s  CP %s`, hpBar, spBar, cpBar)
+	// Each bar is bracketed. Every report line ends in the CP bar, and a
+	// closing bracket is a terminator the end-punctuation stage leaves
+	// alone, so no stop is written inside the bar's colour (#455).
+	barText := fmt.Sprintf(`HP [%s]  SP [%s]  CP [%s]`, hpBar, spBar, cpBar)
 
 	rest = strings.TrimSpace(strings.ToLower(rest))
 

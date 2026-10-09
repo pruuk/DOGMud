@@ -45,7 +45,9 @@ func Pet(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		user.EventLog.Add(`pet`, `Named your pet: `+user.Character.Pet.DisplayName())
 
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You name your pet: %s.`, user.Character.Pet.DisplayName()))
-		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> names their pet %s`, user.Character.Name, user.Character.Pet.DisplayName()), user.UserId)
+		// Lines ending in the pet's coloured name author their own stop, so
+		// the end-punctuation stage does not write one inside the name (#455).
+		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> names their pet %s.`, user.Character.Name, user.Character.Pet.DisplayName()), user.UserId)
 
 		// rename their pet?
 		return true, nil
@@ -73,9 +75,9 @@ func Pet(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You pet %s`, petUser.Character.Pet.DisplayName()))
+	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You pet %s.`, petUser.Character.Pet.DisplayName()))
 
-	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> pets %s`, user.Character.Name, petUser.Character.Pet.DisplayName()), user.UserId)
+	room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> pets %s.`, user.Character.Name, petUser.Character.Pet.DisplayName()), user.UserId)
 
 	roll := util.RollDice(1, 4)
 

@@ -40,9 +40,12 @@ func AFK(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		state.TransitionReason{Trigger: presence.TriggerManualAFK})
 
 	if msg != "" {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You are now AFK: %s`, msg))
+		// The message is the player's own words, quoted: a closing quote is
+		// a terminator the end-punctuation stage leaves alone, so no stop is
+		// written into what they typed (#455).
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You are now AFK: "%s"`, msg))
 		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
-			`<ansi fg="username">%s</ansi> goes AFK: %s`,
+			`<ansi fg="username">%s</ansi> goes AFK: "%s"`,
 			user.Character.Name, msg), user.UserId)
 	} else {
 		user.SendText(messaging.CategorySystem, `You are now AFK. Type <ansi fg="command">afk</ansi> again to return.`)

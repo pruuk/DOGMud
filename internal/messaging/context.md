@@ -18,6 +18,14 @@ the recipient's connection.
    `CategoryMobEmote` skips every stage except sentence-end punctuation,
    so authored mob emotes keep their own words but end with a stop
    (#455); the player-typed `CategoryEmote` skips every stage.
+   The stop goes INSIDE any trailing `</ansi>` closers, which is right
+   for a coloured clause or a whole-line wrapper (the stop keeps the
+   clause's colour) and wrong for a trailing name span. The stage cannot
+   tell the two apart, so it stays inside (decision, #455 review), and a
+   line that ends in a coloured name authors its own stop after the name
+   (`pet.go`: "You pet %s."). A line that ends in text the stage must
+   not touch ends in a terminator it already honours (`.!?,)]"'*`): the
+   afk message is quoted and the report's vital bars are bracketed.
 3. **Sight gate** (visual channel only) — per-recipient: CanSeeClearly,
    CanSeeShapes, or skip-visual-deliver-audio. Consumes the chunk-6
    Perception FSM (see `internal/state/perception/`).
