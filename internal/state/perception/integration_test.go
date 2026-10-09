@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
+	"gopkg.in/yaml.v2"
 )
 
 // seedBlindConditions registers minimal ConditionSpec entries for the two blind-source
@@ -208,7 +209,20 @@ func TestIntegration_ReloadKeepsLiveBlindness(t *testing.T) {
 	if err := c.AddCondition(perception.ConditionIdBlinded, false); err != nil {
 		t.Fatalf("AddCondition(3): %v", err)
 	}
-	c.Perception = nil // what a load from YAML hands Validate
+	// Round-trip through YAML so the unexported condition lookups start empty,
+	// exactly as a real load hands them to Validate.
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		t.Fatalf("yaml.Marshal: %v", err)
+	}
+	loaded := &characters.Character{}
+	if err := yaml.Unmarshal(data, loaded); err != nil {
+		t.Fatalf("yaml.Unmarshal: %v", err)
+	}
+	c = loaded
+	if c.Perception != nil {
+		t.Fatalf("Perception survived the YAML round trip; test would prove nothing")
+	}
 	_ = c.Validate()
 	if c.Perception.State() != perception.Blinded {
 		t.Errorf("reloaded with condition 3 live, state = %v, want Blinded", c.Perception.State())

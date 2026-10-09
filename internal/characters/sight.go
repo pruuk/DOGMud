@@ -30,9 +30,9 @@ func (c *Character) reconcilePerception() {
 }
 
 // HasAnyBlindSource returns true if any active blind source is currently
-// affecting this character. Used by Perception expire-paths in AddCondition and
-// RemoveCondition to decide whether to fire the Blinded→Sighted transition when
-// one of multiple overlapping sources clears.
+// affecting this character. Used by reconcilePerception, which Validate calls,
+// to decide whether Perception should be Blinded or Sighted once overlapping
+// sources are counted together.
 //
 // Sources checked:
 //   - Condition 3 (Blinded) — _datafiles/world/dogmud/conditions/3-blinded.yaml
