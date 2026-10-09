@@ -176,6 +176,16 @@ func (f followId) getFollowIdInstance() (user *users.UserRecord, mob *mobs.Mob) 
 	return nil, nil
 }
 
+// readerSight is what u makes out of their own room, the sight a follow line
+// told to u hides the other party's name at (#454).
+func readerSight(u *users.UserRecord) messaging.SightDecision {
+	room := rooms.LoadRoom(u.Character.RoomId)
+	if room == nil {
+		return messaging.SightNone
+	}
+	return messaging.ParticipantSight(u.Character, room)
+}
+
 // Does a cleanup check every round for any follows that have expired.
 func (f *FollowModule) onNewRound(e events.Event) events.ListenerReturn {
 
@@ -194,16 +204,23 @@ func (f *FollowModule) onNewRound(e events.Event) events.ListenerReturn {
 		// user being followed?
 		if followTargetUser != nil {
 
-			// user doing the following? Tell both users
+			// user doing the following? Tell both users, each with the
+			// other's name hidden at their own sight, as `follow stop` does.
 			if followSourceUser != nil {
-				followTargetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> stopped following you.`, followSourceUser.Character.Name))
-				followSourceUser.SendText(messaging.CategorySystem, fmt.Sprintf(`You are no longer following <ansi fg="username">%s</ansi>.`, followTargetUser.Character.Name))
+				followTargetUser.SendText(messaging.CategorySystem, messaging.HideSpeakerNames(
+					fmt.Sprintf(`<ansi fg="username">%s</ansi> stopped following you.`, followSourceUser.Character.Name),
+					[]string{followSourceUser.Character.Name}, readerSight(followTargetUser)))
+				followSourceUser.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf(`You are no longer following <ansi fg="username">%s</ansi>.`, followTargetUser.Character.Name),
+					[]string{followTargetUser.Character.Name}, readerSight(followSourceUser)))
 				continue
 			}
 
 			// mob doing the following? tell the target user
 			if followSourceMob != nil {
-				followTargetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> stopped following you.`, followSourceMob.Character.Name))
+				followTargetUser.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> stopped following you.`, followSourceMob.Character.Name),
+					[]string{followSourceMob.Character.Name}, readerSight(followTargetUser)))
 				continue
 			}
 
@@ -215,7 +232,9 @@ func (f *FollowModule) onNewRound(e events.Event) events.ListenerReturn {
 
 			// user doing the following? Tell the following user
 			if followSourceUser != nil {
-				followSourceUser.SendText(messaging.CategorySystem, fmt.Sprintf(`You are no longer following <ansi fg="mobname">%s</ansi>.`, followTargetMob.Character.Name))
+				followSourceUser.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf(`You are no longer following <ansi fg="mobname">%s</ansi>.`, followTargetMob.Character.Name),
+					[]string{followTargetMob.Character.Name}, readerSight(followSourceUser)))
 			}
 
 			continue
@@ -444,7 +463,7 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 				}
 
 				if followerUser := users.GetByUserId(fId.userId); followerUser != nil {
-					lostSight := messaging.ParticipantSight(followerUser.Character, rooms.LoadRoom(followerUser.Character.RoomId))
+					lostSight := readerSight(followerUser)
 					followerUser.SendText(messaging.CategorySystem, messaging.HideNames(
 						fmt.Sprintf(`You are no longer following <ansi fg="username">%s</ansi>.`, user.Character.Name),
 						[]string{user.Character.Name}, lostSight))
@@ -470,7 +489,7 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 				// followed user's own sight in their own room (#454); the
 				// follower's line hides the followed name at the follower's
 				// sight, as the start line does.
-				followedSight := messaging.ParticipantSight(followUser.Character, rooms.LoadRoom(followUser.Character.RoomId))
+				followedSight := readerSight(followUser)
 				followUser.SendText(messaging.CategorySystem, messaging.HideSpeakerNames(
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> stopped following you.`, user.Character.Name),
 					[]string{user.Character.Name}, followedSight))
@@ -592,7 +611,9 @@ func (f *FollowModule) followMobCommand(rest string, mob *mobs.Mob, room *rooms.
 				}
 
 				if followerUser := users.GetByUserId(fId.userId); followerUser != nil {
-					followerUser.SendText(messaging.CategorySystem, fmt.Sprintf(`You are no longer following <ansi fg="mobname">%s</ansi>.`, mob.Character.Name))
+					followerUser.SendText(messaging.CategorySystem, messaging.HideNames(
+						fmt.Sprintf(`You are no longer following <ansi fg="mobname">%s</ansi>.`, mob.Character.Name),
+						[]string{mob.Character.Name}, readerSight(followerUser)))
 				}
 			}
 
@@ -610,7 +631,11 @@ func (f *FollowModule) followMobCommand(rest string, mob *mobs.Mob, room *rooms.
 		if wasFollowing.userId > 0 {
 
 			if followUser := users.GetByUserId(wasFollowing.userId); followUser != nil {
-				followUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> stopped following you.`, followUser.Character.Name))
+				// The MOB's name, hidden at the followed player's sight. It
+				// used to print the player's own name (#454).
+				followUser.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> stopped following you.`, mob.Character.Name),
+					[]string{mob.Character.Name}, readerSight(followUser)))
 				return true, nil
 			}
 

@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -173,6 +175,92 @@ func TestFollowSight_LoseNamesTheLeaderInALitRoom(t *testing.T) {
 	f.startFollow(followId{userId: 1}, followId{userId: 2}, 0)
 	_, _ = f.followUserCommand("lose", u1, room, events.EventFlag(0))
 	assert.Contains(t, followTold(2), "You are no longer following Aliceia.")
+}
+
+// followMob puts a mob named Rat (instance 700) in the scene room.
+func followMob(t *testing.T, room *rooms.Room) *mobs.Mob {
+	t.Helper()
+	m := &mobs.Mob{InstanceId: 700, Character: characters.Character{Name: "Rat", RoomId: room.RoomId, Conditions: conditions.New()}}
+	mobs.SetInstanceForTest(700, m)
+	t.Cleanup(func() { mobs.SetInstanceForTest(700, nil) })
+	room.AddMob(700)
+	return m
+}
+
+// #454 review G1: a mob's `follow stop` told the followed player their OWN
+// name ("Bobrick stopped following you."). It names the mob, hidden at the
+// player's sight.
+func TestFollowSight_MobStopNamesTheMobHiddenAtSight(t *testing.T) {
+	for _, band := range []followBand{followFull, followDark} {
+		f, _, _, room := followScene(t, band)
+		rat := followMob(t, room)
+		f.startFollow(followId{userId: 2}, followId{mobInstanceId: 700}, 0)
+		_, _ = f.followMobCommand("stop", rat, room)
+		told := followTold(2)
+		assert.NotContains(t, told, "Bobrick", "band %d: the followed player read their own name", band)
+		if band == followFull {
+			assert.Contains(t, told, "Rat stopped following you.")
+		} else {
+			assert.Contains(t, told, "Something stopped following you.")
+			assert.NotContains(t, told, "Rat")
+		}
+	}
+}
+
+// A mob's `follow lose` tells each lost player the mob's name at their sight.
+func TestFollowSight_MobLoseHidesTheMobFromADarkFollower(t *testing.T) {
+	for _, band := range []followBand{followFull, followDark} {
+		f, _, _, room := followScene(t, band)
+		rat := followMob(t, room)
+		f.startFollow(followId{mobInstanceId: 700}, followId{userId: 2}, 0)
+		_, _ = f.followMobCommand("lose", rat, room)
+		told := followTold(2)
+		if band == followFull {
+			assert.Contains(t, told, "You are no longer following Rat.")
+		} else {
+			assert.Contains(t, told, "You are no longer following something.")
+			assert.NotContains(t, told, "Rat")
+		}
+	}
+}
+
+// A follow that runs out on a new round tells each side the other's name at
+// its own sight: player following player, mob following player, player
+// following mob.
+func TestFollowSight_ExpiryLinesHideNamesAtSight(t *testing.T) {
+	for _, band := range []followBand{followFull, followDark} {
+		f, _, _, room := followScene(t, band)
+		followMob(t, room)
+		f.startFollow(followId{userId: 2}, followId{userId: 1}, 1)
+		f.onNewRound(events.NewRound{RoundNumber: 2})
+		follower, followed := followTold(1), followTold(2)
+		if band == followFull {
+			assert.Contains(t, follower, "You are no longer following Bobrick.")
+			assert.Contains(t, followed, "Aliceia stopped following you.")
+		} else {
+			assert.NotContains(t, follower, "Bobrick", "a dark follower read the name at expiry")
+			assert.Contains(t, followed, "Someone stopped following you.")
+			assert.NotContains(t, followed, "Aliceia")
+		}
+
+		f.startFollow(followId{userId: 2}, followId{mobInstanceId: 700}, 1)
+		f.onNewRound(events.NewRound{RoundNumber: 2})
+		followed = followTold(2)
+		if band == followFull {
+			assert.Contains(t, followed, "Rat stopped following you.")
+		} else {
+			assert.Contains(t, followed, "Something stopped following you.")
+		}
+
+		f.startFollow(followId{mobInstanceId: 700}, followId{userId: 1}, 1)
+		f.onNewRound(events.NewRound{RoundNumber: 2})
+		follower = followTold(1)
+		if band == followFull {
+			assert.Contains(t, follower, "You are no longer following Rat.")
+		} else {
+			assert.Contains(t, follower, "You are no longer following something.")
+		}
+	}
 }
 
 // Stop after following a shape: the follower never learned the name.
