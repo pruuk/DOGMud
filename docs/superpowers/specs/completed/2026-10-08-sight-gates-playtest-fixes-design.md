@@ -1,7 +1,7 @@
 # Sight gates close-out: playtest fixes (#382)
 
 **Status:** APPROVED by the owner, 2026-10-08.
-**Parent:** `specs/2026-10-08-sight-gates-closeout-design.md` (approved; shipped in #441 and
+**Parent:** `specs/completed/2026-10-08-sight-gates-closeout-design.md` (approved; shipped in #441 and
 #443, master `f508db20b`). Its closing playtest (task P2, run `6b3b017287df1ded`) found the
 defects below. #382 closes when a re-run of the failed and unrun cases finds no leak.
 

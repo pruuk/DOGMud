@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, YAML content under `_datafiles/world/dogmud`, GMCP module, repo-root guard tests.
 
-**Spec:** `docs/superpowers/specs/2026-10-08-sight-gates-playtest-fixes-design.md` (owner approved 2026-10-08).
+**Spec:** `docs/superpowers/specs/completed/2026-10-08-sight-gates-playtest-fixes-design.md` (owner approved 2026-10-08).
 
 ---
 
