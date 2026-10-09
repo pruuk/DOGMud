@@ -840,6 +840,12 @@ Behavioral parity with the old polling path in `NewRound_DoCombat`:
 - Same `NoAggroTarget` grace-period guard on the owner
 - Sibling companions in the same room are also assisted
 
+An owner who sees nothing in their room is not sent to `attack @<id>` /
+`attack #<id>` (#454): the sight gate would refuse the id form and tell them
+"You don't see them here." every round. This path and
+`handleCompanionOwnerAssist` (`NewRound_DoCombat_helpers.go`) both skip such
+an owner through `memberSeesSomething`, the check party auto-assist uses.
+
 The polling `CompanionAutoTarget` in `combat_retarget.go` remains as a
 fallback. Duplicate attack commands are benign (second attempt is vetoed
 by the already-fighting state).

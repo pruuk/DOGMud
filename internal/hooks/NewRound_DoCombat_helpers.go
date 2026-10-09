@@ -1099,8 +1099,11 @@ func handleCompanionOwnerAssist(defMob *mobs.Mob, attackerDesc string) {
 
 	// Owner fights back if not already in combat. The round claim stops this
 	// duplicating the reactive path in CombatPhase_CompanionAssist.go, which
-	// fires a round earlier and leaves IsInCombat() still false.
+	// fires a round earlier and leaves IsInCombat() still false. An owner who
+	// sees nothing cannot pick the attacker out (#454), as a party member
+	// cannot, and is skipped.
 	if !owner.Character.IsInCombat() &&
+		memberSeesSomething(owner) &&
 		owner.Character.TryClaimAssistCommand(util.GetRoundCount()) {
 		owner.Command(fmt.Sprintf("attack %s", attackerDesc))
 	}
