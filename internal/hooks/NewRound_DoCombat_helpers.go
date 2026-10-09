@@ -518,6 +518,20 @@ func sendMobSpellFailed(mob *mobs.Mob, room *rooms.Room, verb string) {
 		messaging.SoundSpellSputtersOut)
 }
 
+// fizzleMobFold ends a mob's fold whose target is gone and tells the room
+// (#242): the casting is cleared (a no-op when the fold step already
+// cleared it), the concentration failure is recorded against the fold's
+// target, and the room reads "<caster>'s spell fizzles." by sight or hears
+// the sputter. It is the one ending for every way a mob's target goes: the
+// fold step's TargetGone (dead or logged out), IdleMobs releasing a mob whose
+// target walked out mid-fold, and a fold that completes with no target left
+// in the room (resolveMobSpell).
+func fizzleMobFold(mob *mobs.Mob, room *rooms.Room, cs activity.CastingData) {
+	clearCastingActivity(&mob.Character, activity.TriggerConcentrationBreak)
+	recordConcentrationFailure(combat.Mob, combat.User, &mob.Character, castingTargetChar(cs))
+	sendMobSpellFailed(mob, room, "fizzles")
+}
+
 // sendMobWeaving narrates a mob still holding its fold. Sight only: a quiet
 // weave makes no sound (owner ruling R4).
 func sendMobWeaving(mob *mobs.Mob, room *rooms.Room) {
@@ -845,8 +859,7 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 		sendMobConcentrationBroke(mob, mobRoom)
 
 	case result.TargetGone:
-		recordConcentrationFailure(combat.Mob, combat.User, &mob.Character, castingTargetChar(csBeforeProcess))
-		sendMobSpellFailed(mob, mobRoom, "fizzles")
+		fizzleMobFold(mob, mobRoom, csBeforeProcess)
 
 	case result.SpellDataMissing:
 		// Silent failure — no message for missing spell data on mobs.

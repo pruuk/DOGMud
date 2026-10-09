@@ -1763,6 +1763,16 @@ does not have a concept of "already broke this round" — two breaks in one
 round simply fire `TransitionToFree` twice; the second call is a no-op from
 the `Free` state.
 
+**Target gone, mob caster (#242):** `fizzleMobFold(mob, room, cs)`
+(`NewRound_DoCombat_helpers.go`) is the one ending for a mob fold whose target
+is gone: it clears the cast, records the concentration failure and calls
+`sendMobSpellFailed(mob, room, "fizzles")` (seen, or heard as
+`messaging.SoundSpellSputtersOut`). Three paths reach it: the fold step's
+`TargetGone` (a dead or logged-out target), `IdleMobs` releasing a mob whose
+target walked out mid-fold (the fold ends before the release; outside combat
+no fold step would run again), and `resolveMobSpell` completing with no target
+left in the room.
+
 Cross-references:
 - `internal/state/position/disruption.go` — per-position dmg%-equivalent table
 - `internal/state/position/context.md` — chunk 4f status + Guard inversion note

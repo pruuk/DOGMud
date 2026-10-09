@@ -66,6 +66,14 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 			if mob.Character.CurrentCombatTarget().UserId > 0 {
 				user := users.GetByUserId(mob.Character.CurrentCombatTarget().UserId)
 				if user == nil || user.Character.RoomId != mob.Character.RoomId {
+					// A fold in progress ends first (#242): released, the mob
+					// leaves combat, the fold step never runs for it again,
+					// and the spell would hang unspoken.
+					if cs, ok := mob.Character.CastingData(); ok {
+						if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+							fizzleMobFold(mob, room, cs)
+						}
+					}
 					mob.Command(`emote mumbles about losing their quarry.`)
 					targeting.Release(&mob.Character, targeting.ReasonDisengage)
 				}
