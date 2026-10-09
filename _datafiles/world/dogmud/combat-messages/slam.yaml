@@ -170,7 +170,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your {itemname} glances off <ansi fg="{acteetype}">{actee}</ansi>.'
+        - 'You glance your {itemname} off <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You brush <ansi fg="{acteetype}">{actee}</ansi> with your bulk, barely connecting.'
         - 'Your charge lacks force and only grazes <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You make awkward contact with <ansi fg="{acteetype}">{actee}</ansi>, achieving little.'
@@ -227,7 +227,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your {itemname} smashes into <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You smash your {itemname} into <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You crash into <ansi fg="{acteetype}">{actee}</ansi> with your bulk!'
         - 'Your body slam connects solidly with <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You barrel into <ansi fg="{acteetype}">{actee}</ansi> with crushing force!'
@@ -244,7 +244,7 @@ options:
         - 'From your {stance} stance, you exploit an opening and crash decisively into their {bodypart}!'
         - 'Following through, you drive your full weight into <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You capitalize on your momentum and slam with perfect timing!'
-        - 'Your {itemname} crashes home as you maintain pressure with masterful control!'
+        - 'You crash your {itemname} home and maintain pressure with masterful control!'
         - '{position}, you slam decisively into <ansi fg="{acteetype}">{actee}</ansi>!'
         - '{momentum}, you smash through with overwhelming brute skill!'
       actee:
@@ -266,7 +266,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> reads your stance and crashes through with purpose!'
         - '<ansi fg="{actortype}">{actor}</ansi> follows through with a devastating driving crash!'
         - '<ansi fg="{actortype}">{actor}</ansi> capitalizes on momentum with perfect timing!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s {itemname} crashes home with masterful control!'
+        - '<ansi fg="{actortype}">{actor}</ansi> crashes their {itemname} home with masterful control!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits an opening and slams decisively!'
         - '<ansi fg="{actortype}">{actor}</ansi> smashes through with overwhelming brute skill!'
       observer:
@@ -288,7 +288,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> reads the stance and crashes through with purpose!'
         - '<ansi fg="{actortype}">{actor}</ansi> follows through with a solid driving crash!'
         - '<ansi fg="{actortype}">{actor}</ansi> capitalizes on momentum with perfect timing!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s {itemname} crashes home with unstoppable control!'
+        - '<ansi fg="{actortype}">{actor}</ansi> crashes their {itemname} home with unstoppable control!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits an opening and slams decisively!'
         - '<ansi fg="{actortype}">{actor}</ansi> smashes through with overwhelming brute skill!'
   heavy:
@@ -296,7 +296,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your {itemname} smashes violently into <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You smash your {itemname} violently into <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You deliver a brutal body slam to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your full weight crashes into <ansi fg="{acteetype}">{actee}</ansi> with devastating force!'
         - 'You hurl yourself into <ansi fg="{acteetype}">{actee}</ansi> with overwhelming rage!'
@@ -319,7 +319,7 @@ options:
         - 'From your {stance} stance, {momentum}, you crash devastatingly while {position}!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s {itemname} smashes violently into you!'
+        - '<ansi fg="{actortype}">{actor}</ansi> smashes their {itemname} violently into you!'
         - 'You are hit hard as <ansi fg="{actortype}">{actor}</ansi> delivers a brutal body slam!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s full weight crashes into you with devastating force!'
         - '<ansi fg="{actortype}">{actor}</ansi> hurls themselves into you with overwhelming rage!'
@@ -342,7 +342,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> crashes into you devastatingly with masterful {stance} timing!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s {itemname} smashes violently into <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> smashes their {itemname} violently into <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a brutal body slam to <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s full weight crashes into <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> hurls themselves into <ansi fg="{acteetype}">{actee}</ansi> with overwhelming rage!'
@@ -368,12 +368,12 @@ options:
     together:
       actor:
         beginner:
-        - 'Your {itemname} <ansi fg="cyan-bold">CRITICALLY SMASHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You <ansi fg="cyan-bold">CRITICALLY SMASH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your {itemname}!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL BODY SLAM</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your bulk <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You land a <ansi fg="cyan-bold">CRUSHING IMPACT</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
-        - 'You surge and your {itemname} <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You surge and <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your {itemname}!'
         - 'Charging while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT SLAM</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You crash like a living avalanche and <ansi fg="cyan-bold">PULVERIZE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely and you <ansi fg="cyan-bold">SHATTER</ansi> them from your {stance} stance!'
@@ -384,13 +384,13 @@ options:
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">BONE-SHATTERING STRIKE</ansi> from the perfect angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">CRUSH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with masterful force!'
-        - 'Your positioning is flawless, and your {itemname} <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your positioning is flawless, and you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your {itemname}!'
         - 'Your unstoppable charge culminates in a <ansi fg="cyan-bold">CRITICAL BODY SLAM</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">CRASH THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with devastating fury!'
         - 'The tide of battle favors you, and your bulk <ansi fg="cyan-bold">DEMOLISHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s {itemname} <ansi fg="cyan-bold">CRITICALLY SMASHES</ansi> into you!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY SMASHES</ansi> their {itemname} into you!'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL BODY SLAM</ansi>!'
         - 'You are <ansi fg="cyan-bold">DEVASTATED</ansi> by <ansi fg="{actortype}">{actor}</ansi>''s crushing bulk!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">CRUSHING IMPACT</ansi> on you!'
@@ -412,7 +412,7 @@ options:
         - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their bulk <ansi fg="cyan-bold">DEMOLISHES</ansi> you!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s {itemname} <ansi fg="cyan-bold">CRITICALLY SMASHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY SMASHES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their {itemname}!'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL BODY SLAM</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with crushing bulk!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">CRUSHING IMPACT</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'

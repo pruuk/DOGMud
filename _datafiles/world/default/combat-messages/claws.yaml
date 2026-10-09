@@ -73,7 +73,7 @@ options:
     # messages for when they are in the same room
     together:
       toattacker:
-      - 'Your <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi> for <ansi fg="damage">{damage} damage</ansi>.'
+      - 'You graze <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>.'
       - 'You scratch <ansi fg="{acteetype}">{actee}</ansi> lightly with your <ansi fg="item">{itemname}</ansi>, causing <ansi fg="damage">{damage} damage</ansi>.'
       - 'Your claws barely nick <ansi fg="{acteetype}">{actee}</ansi>, dealing minor damage of <ansi fg="damage">{damage}</ansi>.'
       todefender:
@@ -88,7 +88,7 @@ options:
     # messages for when they are in the same room
     together:
       toattacker:
-      - 'Your <ansi fg="item">{itemname}</ansi> rends <ansi fg="{acteetype}">{actee}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
+      - 'You rend <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
       - 'You slash <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>, causing <ansi fg="damage">{damage} damage</ansi>!'
       - 'Your claws tear into <ansi fg="{acteetype}">{actee}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>!'
       todefender:
@@ -103,29 +103,29 @@ options:
     # messages for when they are in the same room
     together:
       toattacker:
-      - 'Your <ansi fg="item">{itemname}</ansi> bites into <ansi fg="{acteetype}">{actee}</ansi> causing <ansi fg="damage">{damage} damage</ansi>!'
+      - 'You sink your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> causing <ansi fg="damage">{damage} damage</ansi>!'
       - 'You deliver a powerful slash to <ansi fg="{acteetype}">{actee}</ansi>, causing <ansi fg="damage">{damage} damage</ansi>!'
       - 'Your claws sink deeply into <ansi fg="{acteetype}">{actee}</ansi>, dealing significant damage of <ansi fg="damage">{damage}</ansi>!'
       todefender:
-      - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> bites into you for <ansi fg="damage">{damage} damage</ansi>!'
+      - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> into you for <ansi fg="damage">{damage} damage</ansi>!'
       - 'You are hit hard as <ansi fg="{actortype}">{actor}</ansi> delivers a powerful slash for <ansi fg="damage">{damage} damage</ansi>!'
       - '<ansi fg="{actortype}">{actor}</ansi>''s claws sink deeply into you, dealing significant damage of <ansi fg="damage">{damage}</ansi>!'
       toroom:
-      - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> bites into <ansi fg="{acteetype}">{actee}</ansi>!'
+      - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
       - '<ansi fg="{actortype}">{actor}</ansi> delivers a powerful slash to <ansi fg="{acteetype}">{actee}</ansi>!'
       - '<ansi fg="{actortype}">{actor}</ansi>''s claws sink deeply into <ansi fg="{acteetype}">{actee}</ansi>!'
   critical:
     # messages for when they are in the same room
     together:
       toattacker:
-      - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
+      - 'You <ansi fg="cyan-bold">CRITICALLY EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
       - 'You deliver a <ansi fg="cyan-bold">CRITICAL REND</ansi> to <ansi fg="{acteetype}">{actee}</ansi>, causing <ansi fg="damage">{damage} damage</ansi>!'
       - 'Your claws <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>, dealing a massive <ansi fg="damage">{damage} damage</ansi>!'
       todefender:
-      - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> you for <ansi fg="damage">{damage} damage</ansi>!'
+      - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> you with their <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
       - 'You are <ansi fg="cyan-bold">CRITICALLY RENDED</ansi> by <ansi fg="{actortype}">{actor}</ansi>, taking <ansi fg="damage">{damage} damage</ansi>!'
       - '<ansi fg="{actortype}">{actor}</ansi>''s claws <ansi fg="cyan-bold">DEVASTATE</ansi> you, dealing a massive <ansi fg="damage">{damage} damage</ansi>!'
       toroom:
-      - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+      - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
       - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL REND</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
       - '<ansi fg="{actortype}">{actor}</ansi>''s claws <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'

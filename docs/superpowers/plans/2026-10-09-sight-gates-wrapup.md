@@ -128,6 +128,7 @@ Built by grepping and reading for this plan, not copied from the spec. One table
 | `claws.yaml` makes `{itemname}` the subject of a singular verb on 13 lines: 173, 230, 247, 305, 329, 353, 380, 385, 396, 402, 403, 424, 425; `bite.yaml` on line 173 | grep |
 | Natural attacks render through the species' `unarmedname` ("claws", "fangs", "jaws", "teeth", "maw", ...) on its `natural_attack` pool | `combat/combat_helpers.go:373-400`; `species/*.yaml` |
 | `bite.yaml` is otherwise authored plural ("clack", "find", "CRITICALLY MAUL") | grep |
+| Review fix: the defect is not claws-only. `slam` (pseudopods, stone fists, abrasive whirl), `gore`, `sting`, the plural-authored `bite` (a singular "maw") and the default world's `claws.yaml` all made `{itemname}` a verb's subject; 115 lines were reworded so the attacker does the verb, and `TestNaturalWeaponPoolsNeverPutAVerbAfterTheWeapon` now covers every natural-attack pool in both worlds and any verb, singular or plural | `internal/items/natural_weapon_agreement_test.go` |
 | `internal/narration/testdata/stores/combat_messages.golden` snapshots the combat-message pools; `-update` regenerates | `internal/narration/snapshot_test.go:111`, `:188` |
 | Description modifiers are applied in the mutator loop AFTER the wrap; the wrap is `util.SplitString` at `:110` (minimap) and `:139` | `internal/rooms/roomdetails.go:110`, `:139`, `:185-215` |
 | `colorpatterns.ApplyColorPattern` tags every rune, so wrapping coloured text can break inside a word | `internal/colorpatterns/colorpatterns.go:54-104` |
