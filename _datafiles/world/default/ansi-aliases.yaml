@@ -37,6 +37,7 @@ colors:
   map-forest: 2
   map-trainer: 12 # Bright blue
   map-player: 11 # Bright yellow
+  map-party-member: 11 # Bright yellow; legend "Party Member" (map command)
   map-friend: 11 # Bright green
   map-mob: 9 # Bright red
   map-npc: 6 # Bright cyan

@@ -105,9 +105,13 @@ tag's attribute (`fg="map-deep-<ansi fg="noun">water</ansi>"`);
 minimap joins the line. `ColorizeLegendLine` walks a line
 once, rune by rune, so a symbol inside a tag it already wrote is never
 rewritten. `usercommands/look.go` (minimap), `usercommands/skill.map.go` and
-the `mapslug` template function in `maps/map.template` all use it. A new
-multi-word biome needs a `map-<slug>` alias in `ansi-aliases.yaml`
-(`TestMultiWordBiomesHaveSlugAliases`).
+the `mapslug` template function use it; `maps/map.template`,
+`descriptions/room-title.template` and `admincommands/ingame/roominfo.template`
+call `mapslug` in both worlds, and `TestMapTagTemplatesUseMapslug` fails any
+template that builds a `map-` tag with `lowercase`. A new multi-word legend
+needs a `map-<slug>` alias in each world's `ansi-aliases.yaml`: a biome name
+(`TestMultiWordBiomesHaveSlugAliases`), or a room `maplegend` or a name the
+code writes such as "Party Member" (`TestEveryMultiWordLegendHasSlugAlias`).
 
 `GetLimitedMap` is the player-facing one — the visible radius scales with
 Perception. `GetFullMap` is unbounded and used by admin tooling.

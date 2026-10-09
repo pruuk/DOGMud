@@ -46,7 +46,9 @@ colors:
   map-forest: 2
   map-dense-forest: 2 # legend "Dense Forest"
   map-trainer: 12 # Bright blue
+  map-training-yard: 12 # Bright blue; legend "Training Yard"
   map-player: 11 # Bright yellow
+  map-party-member: 11 # Bright yellow; legend "Party Member" (map command)
   map-friend: 11 # Bright green
   map-mob: 9 # Bright red
   map-npc: 6 # Bright cyan
