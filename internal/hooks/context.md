@@ -2107,7 +2107,11 @@ the contest, the only source of a crit (owner ruling, 2026-09-28). A player
 healing a mob queues `events.Healed` for the AI companion. Every applier
 narrates through `messaging.SendTrio` (players in the username tag, mobs
 through `mobDisplayName`), so a mob's spell on a mob reaches the room and a
-reader in the dark reads "something".
+reader in the dark reads "something". `mobDisplayName` and the player branch
+of `spellDefenceIdentity` are narration names (#453, #454 review): the
+identity tag with its duplicate index and suffix colour, never an adjective
+span, quest star or " and <pet>", so a recoil, spell or defence line never
+reads "Skeleton (charmed)" or "Aliceia and Fang".
 
 Every resolver takes a help spell (`attack_type: none`) through
 `resolveHelpSpell` with `uncontestedSpellResult()`: no contest, no fumble,

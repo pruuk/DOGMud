@@ -491,7 +491,14 @@ func spellDefenceIdentity(char *characters.Character, user *users.UserRecord, ro
 		return ""
 	}
 	if user != nil {
-		return char.GetPlayerName(user.UserId).String()
+		// A narration name (#453): no adjective span and no " and <pet>",
+		// which RenderChannelDefenceMessages' StripNameAdjectives does not
+		// remove ("Aliceia and Fang dodges").
+		f := char.GetPlayerName(user.UserId)
+		f.Adjectives = nil
+		f.QuestAlert = false
+		f.PetName = ``
+		return f.String()
 	}
 	if room != nil && char.MobInstanceId > 0 {
 		if mob := mobs.GetInstance(char.MobInstanceId); mob != nil {

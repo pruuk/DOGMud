@@ -395,12 +395,23 @@ func attackerBonusSkillAndStat(res combat.AttackResult, atkChar *characters.Char
 // mob is unseen in it by every reader, as a hidden caster is in its
 // spell-channel lines (#274, owner R3). GetMobNameIndexed alone named it to
 // every faces reader as "Skeleton (hidden)" (#382).
+//
+// It is a NARRATION name, as characters.GetCharacterName(true) is (#453): the
+// identity tag with its duplicate index and suffix colour, but no adjective
+// span, quest star or " and <pet>". Every caller puts it in a line about what
+// the mob did or had done to it (recoil, spell, condition and defence
+// lines), where "You recoil from striking Skeleton (charmed)!" told a state
+// tag (#454 review).
 func mobDisplayName(mob *mobs.Mob, room *rooms.Room, viewingUserId int) string {
 	if mobHiddenFrom(mob, viewingUserId) {
 		return messaging.UnseenFigure(messaging.SightNone)
 	}
 	dupIdx := room.GetMobDuplicateIndex(mob.InstanceId)
-	return mob.Character.GetMobNameIndexed(viewingUserId, dupIdx).String()
+	f := mob.Character.GetMobNameIndexed(viewingUserId, dupIdx)
+	f.Adjectives = nil
+	f.QuestAlert = false
+	f.PetName = ``
+	return f.String()
 }
 
 // mobPlainName is mobDisplayName's untagged twin, for a condition line's
