@@ -882,9 +882,15 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 	case result.CastComplete:
 		cs := result.CastingData
 		spellData := result.SpellData
-		castLanded := false
+		castLanded, fizzled := false, false
 		if resolveRoom := rooms.LoadRoom(mob.Character.RoomId); resolveRoom != nil {
-			castLanded = resolveMobSpell(mob, cs, spellData, resolveRoom)
+			castLanded, fizzled = resolveMobSpell(mob, cs, spellData, resolveRoom)
+		}
+		// A fold that completed on a room its targets had left fizzled:
+		// nothing resolved, so no award and no discovery, as for TargetGone
+		// above (#242).
+		if fizzled {
+			return true
 		}
 		// Stage 38.3: Mob spellcasting progression.
 		//

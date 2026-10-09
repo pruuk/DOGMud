@@ -1797,8 +1797,12 @@ is gone: it clears the cast, records the concentration failure and calls
 `messaging.SoundSpellSputtersOut`). Three paths reach it: the fold step's
 `TargetGone` (a dead or logged-out target), `IdleMobs` releasing a mob whose
 target walked out mid-fold (the fold ends before the release; outside combat
-no fold step would run again), and `resolveMobSpell` completing with no target
-left in the room.
+no fold step would run again), the `IdleMobs` sweep of any harmful fold a mob
+out of combat still holds (a mob target that walked or fled out releases the
+caster through `actions.ClearRoomAggroOnDeparture`), and `resolveMobSpell`
+completing with no target left in the room. `resolveMobSpell` reports that
+last case as `fizzled`, and `handleMobFoldCasting` then pays no progression
+award and rolls no spell discovery, as for `TargetGone`.
 
 Cross-references:
 - `internal/state/position/disruption.go` — per-position dmg%-equivalent table

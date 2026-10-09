@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -374,6 +375,34 @@ func TestMobFold_MobTargetRelocatesOut_Fizzles(t *testing.T) {
 	require.Equal(t, 1, countContaining(got, "Skeleton's spell fizzles."), "%v", got)
 }
 
+// #242 review G5: a fold that completes on a room its target left fizzles in
+// resolveMobSpell, but handleMobFoldCasting still paid the cast's
+// progression award (and rolled spell discovery) as for a resolved cast. A
+// fizzle resolves nothing, as the fold step's TargetGone fizzle does, and
+// awards neither.
+func TestMobFold_CompletingOnAnEmptyRoom_AwardsNothing(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": testHarmSpell()}))
+	m := spellChannelMob(t)
+	rooms.LoadRoom(m.Character.RoomId).RemoveMob(m.InstanceId)
+	room.AddMob(m.InstanceId)
+	m.Character.RoomId = room.RoomId
+	m.Character.Validate()
+	m.Character.ConvictionMax.Value, m.Character.Conviction = 1000, 1000
+	m.Character.SetAggro(2, 0, characters.DefaultAttack)
+	require.NoError(t, m.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-bolt", FoldsNeeded: 1, FoldsPerRound: 1, TargetUserIds: []int{2}},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+	walkOut(t, room, 2)
+	before := m.Character.SkillUseCount[string(skills.Spellcasting)]
+
+	handleMobFoldCasting(m, room)
+
+	got := drainPlain(1)
+	require.Equal(t, 1, countContaining(got, "Skeleton's spell fizzles."), "fixture: the fold completed and fizzled: %v", got)
+	require.Equal(t, before, m.Character.SkillUseCount[string(skills.Spellcasting)], "a fizzled cast paid a progression award")
+}
+
 // The sweep ends harmful folds only. An idle self-buff (shipped idle
 // commands such as `cast conviction-ward`) is not fizzled every time it is
 // begun; that it never resolves out of combat is a separate problem.
@@ -420,9 +449,10 @@ func TestMobFold_CompletesWithNoTargetLeft_Fizzles(t *testing.T) {
 			walkOut(t, room, 2)
 			require.Equal(t, tc.sight, messaging.ParticipantSight(users.GetByUserId(1).Character, room))
 
-			landed := resolveMobSpell(m, activity.CastingData{SpellId: "test-bolt", TargetUserIds: []int{2}}, testHarmSpell(), room)
+			landed, fizzled := resolveMobSpell(m, activity.CastingData{SpellId: "test-bolt", TargetUserIds: []int{2}}, testHarmSpell(), room)
 
 			require.False(t, landed)
+			require.True(t, fizzled, "a fold with no target left reports the fizzle")
 			got := drainPlain(1)
 			require.Equal(t, 1, countContaining(got, tc.want), "%v", got)
 			if tc.sight != messaging.SightFull {
