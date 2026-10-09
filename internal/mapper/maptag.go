@@ -7,9 +7,10 @@ import (
 
 // LegendSlug turns a map legend name into the slug its colour aliases are
 // keyed by: lower case, every space a hyphen ("Deep Water" is "deep-water").
-// A space inside fg="map-..." stops the tag parser, and the raw tag then
-// prints as text (#455). The room minimap (look), the map command and the
-// map legend template (templates funcMap "mapslug") all use this one slug.
+// The colour aliases are keyed by this slug, so a spaced name would match no
+// alias and the tile would lose its colour. The room minimap (look), the map
+// command and the map legend template (templates funcMap "mapslug") all use
+// this one slug.
 func LegendSlug(name string) string {
 	return strings.ReplaceAll(strings.ToLower(name), " ", "-")
 }

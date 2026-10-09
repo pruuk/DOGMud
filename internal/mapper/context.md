@@ -96,8 +96,13 @@ func ColorizeLegendLine(line string, legend map[rune]string) string
 ```
 
 A legend name becomes a colour tag through `LegendSlug` only: lower case,
-spaces as hyphens (`map-deep-water`). A space inside `fg="..."` stops the tag
-parser and prints the tag as text (#455). `ColorizeLegendLine` walks a line
+spaces as hyphens (`map-deep-water`). The colour aliases are keyed by that
+slug; with ansitags v1.1.0 a spaced `fg="map-deep water"` matches no alias
+and the tile only loses its colour. The tags that printed as raw text in the
+#455 playtest came from room noun highlighting rewriting a word inside a map
+tag's attribute (`fg="map-deep-<ansi fg="noun">water</ansi>"`);
+`rooms.highlightNouns` now matches visible text only and runs before the
+minimap joins the line. `ColorizeLegendLine` walks a line
 once, rune by rune, so a symbol inside a tag it already wrote is never
 rewritten. `usercommands/look.go` (minimap), `usercommands/skill.map.go` and
 the `mapslug` template function in `maps/map.template` all use it. A new

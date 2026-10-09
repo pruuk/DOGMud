@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -112,6 +113,15 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		padding := 1
 		description := wrapDescriptionParts(descParts, desclineWidth-padding)
 
+		// Highlight nouns before the minimap joins each line: a noun the
+		// description lacks ("water") otherwise matched inside a map tag's
+		// attribute and broke the tag (#455).
+		if renderNouns && len(r.Nouns) > 0 {
+			for i := range description {
+				description[i] = highlightNouns(description[i], r.Nouns)
+			}
+		}
+
 		for i := 0; i < len(tinymap[0]); i++ {
 			if i > len(description)-1 {
 				description = append(description, strings.Repeat(` `, desclineWidth))
@@ -124,18 +134,6 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 			description[i] += strings.Repeat(` `, padWidth) + tinymap[0][i]
 		}
 
-		if renderNouns && len(r.Nouns) > 0 {
-			for i := range description {
-				for noun, _ := range r.Nouns {
-					// Skip if noun is already inside an ANSI tag to avoid nested tags
-					if strings.Contains(description[i], `>`+noun+`</ansi>`) {
-						continue
-					}
-					description[i] = strings.Replace(description[i], noun, `<ansi fg="noun">`+noun+`</ansi>`, 1)
-				}
-			}
-		}
-
 		details.Description = strings.Join(description, "\n")
 	} else {
 
@@ -143,13 +141,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 		if renderNouns && len(r.Nouns) > 0 {
 			for i := range roomDesc {
-				for noun, _ := range r.Nouns {
-					// Skip if noun is already inside an ANSI tag to avoid nested tags
-					if strings.Contains(roomDesc[i], `>`+noun+`</ansi>`) {
-						continue
-					}
-					roomDesc[i] = strings.Replace(roomDesc[i], noun, `<ansi fg="noun">`+noun+`</ansi>`, 1)
-				}
+				roomDesc[i] = highlightNouns(roomDesc[i], r.Nouns)
 			}
 		}
 
@@ -647,4 +639,88 @@ func wrapDescriptionParts(parts []descriptionPart, width int) []string {
 		}
 	}
 	return lines
+}
+
+// highlightNouns wraps the first visible occurrence of each room noun on one
+// description line in a noun colour tag. Only text outside tag markup can
+// match, so a noun never lands inside an attribute such as
+// fg="map-deep-water" (#455). Longer nouns claim their span first, so "deep
+// water" is not split by "water", and a noun an author already tagged
+// (">noun</ansi>") is left alone.
+func highlightNouns(line string, nouns map[string]string) string {
+	if len(nouns) == 0 {
+		return line
+	}
+
+	// blocked marks every byte that is tag markup or already claimed.
+	blocked := make([]bool, len(line))
+	inTag := false
+	for i := 0; i < len(line); i++ {
+		if line[i] == '<' {
+			inTag = true
+		}
+		blocked[i] = inTag
+		if line[i] == '>' {
+			inTag = false
+		}
+	}
+
+	ordered := make([]string, 0, len(nouns))
+	for noun := range nouns {
+		if noun != `` {
+			ordered = append(ordered, noun)
+		}
+	}
+	sort.Slice(ordered, func(a, b int) bool {
+		if len(ordered[a]) != len(ordered[b]) {
+			return len(ordered[a]) > len(ordered[b])
+		}
+		return ordered[a] < ordered[b]
+	})
+
+	type span struct{ start, end int }
+	var spans []span
+	for _, noun := range ordered {
+		if strings.Contains(line, `>`+noun+`</ansi>`) {
+			continue
+		}
+		for from := 0; from <= len(line)-len(noun); {
+			idx := strings.Index(line[from:], noun)
+			if idx < 0 {
+				break
+			}
+			start, end := from+idx, from+idx+len(noun)
+			free := true
+			for j := start; j < end; j++ {
+				if blocked[j] {
+					free = false
+					break
+				}
+			}
+			if free {
+				for j := start; j < end; j++ {
+					blocked[j] = true
+				}
+				spans = append(spans, span{start, end})
+				break
+			}
+			from = start + 1
+		}
+	}
+	if len(spans) == 0 {
+		return line
+	}
+
+	sort.Slice(spans, func(a, b int) bool { return spans[a].start < spans[b].start })
+	var b strings.Builder
+	last := 0
+	for _, s := range spans {
+		b.WriteString(line[last:s.start])
+		b.WriteString(`<ansi fg="noun">`)
+		b.WriteString(line[s.start:s.end])
+		b.WriteString(`</ansi>`)
+		last = s.end
+	}
+	b.WriteString(line[last:])
+	return b.String()
 }
