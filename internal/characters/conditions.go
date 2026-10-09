@@ -228,6 +228,7 @@ func (c *Character) AddConditionMagnitude(conditionId int, triggers int, magnitu
 	for _, b := range c.Conditions.GetConditions(conditionId) {
 		b.Source = source
 	}
+	c.hideForStealthRecord(conditionId)
 	_ = c.Validate()
 	return nil
 }

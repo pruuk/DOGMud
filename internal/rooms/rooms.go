@@ -1100,6 +1100,11 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 
 				if len(spawnInfo.ConditionIds) > 0 {
 					mob.Character.SetPermanentConditions(spawnInfo.ConditionIds)
+					// NewMobById already ran its Validate(true) on the
+					// template's ids. Reapply now so the entry's conditions
+					// are live at spawn: a room entry carrying 9 spawns a
+					// hidden mob, not one that hides at its next refresh.
+					mob.Character.Validate(true)
 				}
 
 				// If there are idle commands for this spawn, overwrite.
