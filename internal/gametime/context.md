@@ -146,6 +146,7 @@ func CelestialLightAt(cfg configs.Lighting, dayOfYear int, hour, swiftmoon, wand
 func CelestialLight() float64
 func LampsLitAt(night bool, celestial, streetSky float64, cfg configs.Lighting) bool
 func LampsLit() bool
+func DayPeriod(night bool, lampsLit bool, hour24 int) string
 func SetStreetLampSkyFraction(f float64) float64
 func StreetLampSkyFraction() float64
 ```
@@ -174,10 +175,16 @@ func StreetLampSkyFraction() float64
   test seeds it (rooms imports gametime, never the reverse); unregistered it
   is 1, the open sky. 🔑 Its input is the clear sky, before weather, so a
   storm lights no lamp and every street lamp in the world changes in the
-  same round. Two readers share it:
+  same round. Three readers share it:
   the biome street lamp (`rooms.BiomeInfo.StreetLamp` through
-  `Room.LightLevel`) and the behaviour condition `time_of_day period:
-  lamplit` (the North Gate arch lantern's `dusk_to_dawn` tree).
+  `Room.LightLevel`), the behaviour condition `time_of_day period:
+  lamplit` (the North Gate arch lantern's `dusk_to_dawn` tree), and the
+  `time` command through `DayPeriod`.
+- `DayPeriod` names the part of the day for the `time` command: "night"
+  while it is night, "dusk" (from noon) or "dawn" (before noon) while the
+  lamps are lit but it is not yet night, else "day". Before it, `time`
+  said "daytime" at a 4PM winter dusk the street already read as dim
+  (#382 playtest).
 - `SunLight` is the sun's own contribution to the sky, calibrated so an
   equinox noon reads exactly `cfg.EquinoxNoon`. 🔑 **The sun is Absent below
   the horizon, not zero.** `sin(altitude) <= 0` returns `lightscale.Absent()`
