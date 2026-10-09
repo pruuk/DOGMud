@@ -164,7 +164,10 @@ Roadmap and phase plan: `docs/aicompanion/`.
   a passer-by's words, never billed to them, and never refused because
   strangers are off.
 - **meeting.go**: meeting a companion after character creation (or at the
-  next login), the persisted bond state, parting ways, and consent:
+  next login), the persisted bond state, parting ways (`unbond`, in
+  commands.go, judges the parting line by the room before she leaves with
+  her own light: `VisualSnapshot` then `SendTextVisualToSnapshot`, #456),
+  and consent:
   `consented`, `answerConsent`, and `consentLedger`, the copy of who has
   agreed that the model door reads off the mud lock (rebuilt by
   `syncConsent` on every bond load and save).

@@ -1180,6 +1180,14 @@ who could not make them out (`playersNotPerceiving`, by
 seen going by their own light, and a hidden quitter is not named to a room
 that never saw them.
 
+The same rule holds for every other departure line in this package: take
+`VisualSnapshot()` of the room being left before the mover goes, then send
+with `SendTextVisualToSnapshot`. `resolveFoldRecall` ("folds through the
+Veil and vanishes!", visual only: no sound exists for a fold),
+`TransportCompanions` ("X follows Y.") and `PushCompanionsToRoom` ("X is
+swept out of the room!", whose name is now identity-tagged and hidden at
+shapes) all do. Arrival lines stay judged after the move.
+
 ## Attributed death routing (U5c)
 
 `CharacterDied_RouteDeath.go` is the **single place a harm-driven death is

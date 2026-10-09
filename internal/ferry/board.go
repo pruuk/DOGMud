@@ -71,6 +71,14 @@ func Board(user *users.UserRecord, mob *mobs.Mob, roomId int, routeId string) Bo
 
 	dockRoom := rooms.LoadRoom(roomId)
 
+	// #456, owner ruling 2026-10-09: a mover is seen by the light they carry
+	// on their own way out, so the dock's line is judged by the dock before
+	// the boarder left it.
+	var departSnap rooms.VisualSnapshot
+	if dockRoom != nil {
+		departSnap = dockRoom.VisualSnapshot()
+	}
+
 	if err := rooms.MoveToRoom(user.UserId, r.DeckRoom); err != nil {
 		user.Character.Gold += r.Fare // refund
 		mob.Command(`say Trouble at the gangplank. Your coin is returned.`)
@@ -78,8 +86,9 @@ func Board(user *users.UserRecord, mob *mobs.Mob, roomId int, routeId string) Bo
 	}
 
 	if dockRoom != nil {
-		dockRoom.SendTextVisual(messaging.CategoryRoomExit,
+		dockRoom.SendTextVisualToSnapshot(departSnap, messaging.CategoryRoomExit,
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> pays the fare and crosses the gangplank aboard %s.`, user.Character.Name, r.Name),
+			[]string{user.Character.Name},
 			user.UserId)
 	}
 	user.SendText(messaging.CategoryRoomDescription,

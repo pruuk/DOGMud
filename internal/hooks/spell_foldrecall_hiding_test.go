@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -48,6 +49,36 @@ func TestFoldRecall_ShapesOnlyBystandersReadAFigure(t *testing.T) {
 	require.Equal(t, 0, countContaining(arrived, "Aliceia"), "arrival named the caster: %v", arrived)
 	require.Equal(t, 1, countContaining(left, "figure folds through the Veil and vanishes!"), "departure: %v", left)
 	require.Equal(t, 1, countContaining(arrived, "figure folds through the Veil and appears!"), "arrival: %v", arrived)
+}
+
+const foldRecallLightCond = 9782 // a carried light, literal strength 60
+
+// #456 review G3, owner ruling 2026-10-09: a mover is seen by the light they
+// carry on their own way out. Aliceia carries the only light in dark room 1
+// and folds away; Bobrick, left in the dark, saw her vanish by her own light.
+// The line was judged after the teleport, when the light had gone with her.
+func TestFoldRecall_DepartureIsJudgedByTheCastersOwnLight(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		foldRecallLightCond: {ConditionId: foldRecallLightCond, Name: "Test Torchlight", Secret: true, TriggerCount: 1, RoundInterval: 1,
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 60}}},
+	}))
+	from := rooms.LoadRoom(1)
+	from.Lamp = nil
+	darken(t, 1)
+	caster, watcher := users.GetByUserId(1), users.GetByUserId(2)
+	require.True(t, caster.Character.Conditions.AddCondition(foldRecallLightCond, false))
+	require.Equal(t, messaging.SightFull, from.ParticipantSight(watcher.UserId), "fixture: the caster's light lights the room")
+	caster.Character.SetMiscData("fold-anchor-room", 2)
+	drainPlain(2)
+
+	resolveFoldRecall(actions.NewUserActorInRoom(caster, from))
+	require.Equal(t, 2, caster.Character.RoomId, "fixture: the recall must land")
+	require.Equal(t, messaging.SightNone, from.ParticipantSight(watcher.UserId), "fixture: the light left with the caster")
+
+	left := drainPlain(2)
+	require.Equal(t, 1, countContaining(left, "Aliceia folds through the Veil and vanishes!"), "departure: %v", left)
 }
 
 // The unchanged case: bystanders who see clearly still read the caster's name

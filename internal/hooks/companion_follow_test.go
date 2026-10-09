@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -114,6 +115,58 @@ func newOwnerWithCompanion(userId int, roomId int) *users.UserRecord {
 		{InstanceId: 200, Name: "Wolf", MobId: 10},
 	}
 	return u
+}
+
+const companionDepartLightCond = 9784 // a carried light, literal strength 60
+
+// companionDepartScene darkens room 1, lights it only by the Wolf's own
+// light, and puts a watcher (user 3) there. The owner (user 1) has already
+// moved to room 2.
+func companionDepartScene(t *testing.T) (*users.UserRecord, *users.UserRecord, *rooms.Room) {
+	t.Helper()
+	t.Cleanup(seedFollowRegistries(t))
+	t.Cleanup(rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
+		"cave": {BiomeId: "cave", SkyLight: rooms.SkyLightPtr(0.0)},
+	}))
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		companionDepartLightCond: {ConditionId: companionDepartLightCond, Name: "Test Torchlight", Secret: true, TriggerCount: 1, RoundInterval: 1,
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 60}}},
+	}))
+	from := rooms.LoadRoom(1)
+	from.Biome = "cave"
+	rooms.LoadRoom(2).Biome = "cave"
+	owner := newOwnerWithCompanion(1, 2)
+	watcher := users.NewTestUser(3, "watch", "Watcher", 9003)
+	watcher.Character.RoomId = 1
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{1: owner, 3: watcher}))
+	rooms.LoadRoom(2).AddPlayer(1)
+	from.AddPlayer(3)
+	require.NoError(t, mobs.GetInstance(200).Character.AddCondition(companionDepartLightCond, false))
+	require.Equal(t, messaging.SightFull, from.ParticipantSight(3), "fixture: the Wolf's light lights room 1")
+	events.DrainQueuedMessagesForTest(3)
+	return owner, watcher, from
+}
+
+// #456 review G3, owner ruling 2026-10-09: a mover is seen by the light they
+// carry on their own way out. The Wolf carries the only light in room 1; the
+// watcher saw it follow its owner, or get swept out, by that light. Both
+// lines were judged after RemoveMob, when the light had gone.
+func TestCompanionFollow_DepartureIsJudgedByTheCompanionsOwnLight(t *testing.T) {
+	owner, watcher, from := companionDepartScene(t)
+	TransportCompanions(owner, 1, 2)
+	require.Equal(t, 2, mobs.GetInstance(200).Character.RoomId, "fixture: the Wolf followed")
+	require.Equal(t, messaging.SightNone, from.ParticipantSight(watcher.UserId), "fixture: the light left with the Wolf")
+	got := drainPlain(watcher.UserId)
+	require.Equal(t, 1, countContaining(got, "Wolf follows Owner."), "%v", got)
+}
+
+func TestCompanionSweep_DepartureIsJudgedByTheCompanionsOwnLight(t *testing.T) {
+	owner, watcher, from := companionDepartScene(t)
+	PushCompanionsToRoom(owner, 2)
+	require.Equal(t, 2, mobs.GetInstance(200).Character.RoomId, "fixture: the Wolf was swept")
+	require.Equal(t, messaging.SightNone, from.ParticipantSight(watcher.UserId), "fixture: the light left with the Wolf")
+	got := drainPlain(watcher.UserId)
+	require.Equal(t, 1, countContaining(got, "Wolf is swept out of the room!"), "%v", got)
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

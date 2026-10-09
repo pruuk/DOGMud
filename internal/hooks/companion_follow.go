@@ -76,13 +76,17 @@ func TransportCompanions(owner *users.UserRecord, oldRoomId, newRoomId int) {
 		// Remove from current room.
 		curRoom := rooms.LoadRoom(mob.Character.RoomId)
 		if curRoom != nil {
+			// #456, owner ruling 2026-10-09: a mover is seen by the light
+			// they carry on their own way out, so the line is judged by the
+			// room before the companion left it.
+			departSnap := curRoom.VisualSnapshot()
 			curRoom.RemoveMob(mob.InstanceId)
 			// COMPANION-NAME-LEAK FIX (T11c): named companion mention is
 			// visual content. Both names are identity-tagged and hidden per
 			// observer (#414): an observer who makes out only shapes reads
 			// "A figure follows a figure.", one who sees nothing reads
 			// nothing. Plain names slipped past the shapes-level hiding.
-			curRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote,
+			curRoom.SendTextVisualToSnapshot(departSnap, messaging.CategoryMobEmote,
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> follows <ansi fg="username">%s</ansi>.`,
 					mob.Character.Name, owner.Character.Name),
 				[]string{mob.Character.Name, owner.Character.Name},
@@ -187,13 +191,18 @@ func PushCompanionsToRoom(owner *users.UserRecord, destRoomId int) {
 		curRoomId := mob.Character.RoomId
 		curRoom := rooms.LoadRoom(curRoomId)
 		if curRoom != nil {
+			// #456: judged by the room before the companion (and its own
+			// light) left it.
+			departSnap := curRoom.VisualSnapshot()
 			curRoom.RemoveMob(mob.InstanceId)
 			// COMPANION-NAME-LEAK FIX (T11c): named companion mention is
-			// visual content — route through SendTextVisual so infrared
-			// observers see the anonymized form, and blind observers don't
-			// see a free identification.
-			curRoom.SendTextVisual(messaging.CategoryMobEmote,
-				fmt.Sprintf("%s is swept out of the room!", mob.Character.Name),
+			// visual content, so infrared observers see the anonymized form
+			// and blind observers get no free identification. The name is
+			// identity-tagged and hidden at shapes; the bare name it used to
+			// print slipped past the anonymizer.
+			curRoom.SendTextVisualToSnapshot(departSnap, messaging.CategoryMobEmote,
+				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is swept out of the room!`, mob.Character.Name),
+				[]string{mob.Character.Name},
 				owner.UserId,
 			)
 		}

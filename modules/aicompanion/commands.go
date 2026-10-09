@@ -308,10 +308,15 @@ func (m *AICompanionModule) unbond(owner *users.UserRecord, departure string) (s
 		if mob := mobs.GetInstance(comp.InstanceId); mob != nil {
 			mob.Character.RemoveCharm()
 			if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
+				// #456, owner ruling 2026-10-09: a mover is seen by the light
+				// she carries on her own way out, so the parting line is
+				// judged by the room before she left it.
+				departSnap := r.VisualSnapshot()
 				r.RemoveMob(mob.InstanceId)
 				if departure != `` {
-					r.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
-						`<ansi fg="mobname">%s</ansi> %s`, comp.Name, util.EscapeAnsiTags(departure)))
+					r.SendTextVisualToSnapshot(departSnap, messaging.CategoryMobEmote, fmt.Sprintf(
+						`<ansi fg="mobname">%s</ansi> %s`, comp.Name, util.EscapeAnsiTags(departure)),
+						[]string{comp.Name})
 				}
 			}
 			mobs.DestroyInstance(mob.InstanceId)

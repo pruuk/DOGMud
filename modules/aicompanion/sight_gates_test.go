@@ -1,14 +1,17 @@
 package aicompanion
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -71,6 +74,42 @@ func TestCompanionAskSight_LitSendsTheCompanion(t *testing.T) {
 	_, _ = m.cmdAskFor(`smith about the ore`, owner, room, events.EventFlag(0))
 	if c.askAuth == nil || c.askAuth.MobInstanceId != 300 {
 		t.Fatalf("a lit owner could not send the companion to the Smith: %+v", c.askAuth)
+	}
+}
+
+const unbondLightCond = 9785 // a carried light, literal strength 60
+
+// #456 review G3, owner ruling 2026-10-09: a mover is seen by the light they
+// carry on their own way out. Mara carries the only light in the room; when
+// the bond ends, Bram, left in the dark, saw her go by that light. The line
+// was judged after RemoveMob, when the light had gone with her.
+func TestUnbondPartingLineIsJudgedByHerOwnLight(t *testing.T) {
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		unbondLightCond: {ConditionId: unbondLightCond, Name: "Test Torchlight", Secret: true, TriggerCount: 1, RoundInterval: 1,
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 60}}},
+	}))
+	owner, bram, room, her := harmWorld(t, configs.PVPDisabled)
+	room.SkyLight, room.Lamp = rooms.SkyLightPtr(0), rooms.LampPtr(0)
+	if err := her.Character.AddCondition(unbondLightCond, false); err != nil {
+		t.Fatalf("could not light her: %v", err)
+	}
+	if got := room.ParticipantSight(bram.UserId); got != messaging.SightFull {
+		t.Fatalf("fixture: her light must light the room, got %v", got)
+	}
+	owner.Character.Companions = []characters.CompanionInfo{{InstanceId: her.InstanceId, Name: `Mara`, SourceType: characters.CompanionBonded}}
+	m, _, _ := strangerModule()
+	m.ctrls = map[int]*controller{}
+	events.DrainQueuedMessagesForTest(bram.UserId)
+
+	if _, err := m.unbond(owner, `waves once and walks away.`); err != nil {
+		t.Fatalf("unbond: %v", err)
+	}
+	if got := room.ParticipantSight(bram.UserId); got != messaging.SightNone {
+		t.Fatalf("fixture: the light must leave with her, got %v", got)
+	}
+	got := regexp.MustCompile(`<[^>]*>`).ReplaceAllString(strings.Join(events.DrainQueuedMessagesForTest(bram.UserId), ``), ``)
+	if !strings.Contains(got, `Mara waves once and walks away.`) {
+		t.Fatalf("Bram saw her go by her own light, got %q", got)
 	}
 }
 
