@@ -741,39 +741,26 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 // (Type != "") is that guard's value-type equivalent, true only once a
 // player has actually bonded a pet.
 //
-// Weapons follow the same rule (spec F2, ruling R8): below full sight a
-// reader's line names no weapon but their own, which they hold.
+// Weapons follow by OWNER (spec F2, ruling R8; #446). Every weapon token in
+// one AttackResult is the ATTACKER's: {itemname} is the swing's weapon,
+// {weapon} and {attack} are sourceChar.Equipment.Weapon. So the attacker's
+// own lines keep every weapon, and below full sight the defender's lines
+// keep none. Matching the defender's own gear by NAME leaked the attacker's
+// weapon whenever both held a weapon of the same name. The crit disarm line
+// names the victim's weapon outside any AttackResult (criteffects.go) and
+// is the accepted known limit.
 func hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar *characters.Character, ctx combatContext) {
-	sourceKeeps := heldWeaponNames(sourceChar)
 	for i := range result.MessagesToSource {
-		text := messaging.HideNames(result.MessagesToSource[i].Text, []string{targetChar.Name}, ctx.sourceSight)
-		result.MessagesToSource[i].Text = messaging.HideWeapons(text, ctx.sourceSight, sourceKeeps)
+		result.MessagesToSource[i].Text = messaging.HideNames(result.MessagesToSource[i].Text, []string{targetChar.Name}, ctx.sourceSight)
 	}
 	targetHides := []string{sourceChar.Name}
 	if sourceChar.Pet.Exists() {
 		targetHides = append(targetHides, sourceChar.Pet.PlainName())
 	}
-	targetKeeps := heldWeaponNames(targetChar)
 	for i := range result.MessagesToTarget {
 		text := messaging.HideNames(result.MessagesToTarget[i].Text, targetHides, ctx.targetSight)
-		result.MessagesToTarget[i].Text = messaging.HideWeapons(text, ctx.targetSight, targetKeeps)
+		result.MessagesToTarget[i].Text = messaging.HideWeapons(text, ctx.targetSight, nil)
 	}
-}
-
-// heldWeaponNames lists every name a combat line can print for what c holds
-// in any arm: DisplayName for {itemname}, the spec Name for {weapon} and
-// {attack}. messaging.HideWeapons keeps these on c's own lines.
-func heldWeaponNames(c *characters.Character) []string {
-	var names []string
-	for _, pair := range c.GetHandPairs() {
-		for _, slot := range []characters.HandSlot{pair.First, pair.Second} {
-			if slot.ItemPtr == nil || slot.ItemPtr.ItemId < 1 {
-				continue
-			}
-			names = append(names, slot.ItemPtr.DisplayName(), slot.ItemPtr.GetSpec().Name)
-		}
-	}
-	return names
 }
 
 // applyPositionHitModifiers returns the combined position-based hit

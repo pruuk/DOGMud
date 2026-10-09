@@ -338,3 +338,34 @@ func TestCalculateCombat_HidesIdentitiesInPersonalLines(t *testing.T) {
 		}
 	})
 }
+
+// #446: weapons are kept by OWNER, not by name. Every weapon in one
+// AttackResult is the attacker's, so a defender holding a weapon of the same
+// name learned nothing new and still read the attacker's weapon by name.
+func TestHideIdentitiesInPersonalLines_SameNamedWeaponsHideByOwner(t *testing.T) {
+	atk := characters.New()
+	atk.Name = "Ordel"
+	atk.Equipment.Weapon = items.Item{ItemId: 999901, Spec: &items.ItemSpec{Name: "iron longsword"}}
+	def := characters.New()
+	def.Name = "Fold"
+	def.Equipment.Weapon = items.Item{ItemId: 999903, Spec: &items.ItemSpec{Name: "iron longsword"}}
+
+	for _, d := range []messaging.SightDecision{messaging.SightShapes, messaging.SightNone} {
+		res := &AttackResult{
+			MessagesToSource: []TaggedMessage{
+				{Category: messaging.CategoryHitMelee, Text: `You slash <ansi fg="username">Fold</ansi> with your <ansi fg="item">iron longsword</ansi>!`},
+			},
+			MessagesToTarget: []TaggedMessage{
+				{Category: messaging.CategoryHitMelee, Text: `<ansi fg="username">Ordel</ansi> slashes you with their <ansi fg="item">iron longsword</ansi>!`},
+			},
+		}
+		hideIdentitiesInPersonalLines(res, atk, def, combatContext{sourceSight: d, targetSight: d})
+
+		if strings.Contains(strings.ToLower(res.MessagesToTarget[0].Text), "longsword") {
+			t.Fatalf("sight %d: the defender read the attacker's weapon through their own same-named one: %q", d, res.MessagesToTarget[0].Text)
+		}
+		if !strings.Contains(res.MessagesToSource[0].Text, `your <ansi fg="item">iron longsword</ansi>`) {
+			t.Fatalf("sight %d: the attacker lost their own weapon: %q", d, res.MessagesToSource[0].Text)
+		}
+	}
+}

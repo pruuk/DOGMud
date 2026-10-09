@@ -430,7 +430,7 @@ Functions:
   `fg="item"` or `fg="itemname"` tag in a combat line becomes `WeaponWord`
   ("weapon"), nested display-name tags included, with "an" before it turned
   to "a". It keeps a natural weapon ("fists", any species' `UnarmedName`)
-  and any name in `keep` (a participant's own held gear). The pipeline runs
+  and any name in `keep` (no production caller passes one since #446: `combat.hideIdentitiesInPersonalLines` skips the attacker's own lines and passes nil for the defender's). The pipeline runs
   it at `SightShapes` for `isCombatNarration` categories only, so every
   spectator combat line is covered and a non-combat item line is not;
   `combat.hideIdentitiesInPersonalLines` runs it on the personal lines.

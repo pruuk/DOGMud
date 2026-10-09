@@ -1133,11 +1133,12 @@ combat reads its own copy of the verdict, stored typed on `combatContext`.
 
 ### Personal-line identity hiding (M4d PR 2)
 
-Weapons too, since the sight-gates playtest fixes (spec F2, ruling R8):
-after hiding names, each side's lines go through `messaging.HideWeapons`
-at that reader's sight, keeping `heldWeaponNames(reader)` (every arm's
-`DisplayName` and spec `Name`), so a reader below full sight learns no
-weapon but their own.
+Weapons too, since the sight-gates playtest fixes (spec F2, ruling R8) and
+#446: every weapon token in one `AttackResult` is the attacker's, so the
+attacker's own lines (`MessagesToSource`) keep every weapon and the
+defender's lines (`MessagesToTarget`) go through `messaging.HideWeapons` at
+the defender's sight with no keep-list. Weapons are kept by owner, never by
+name: a defender holding a same-named weapon learns nothing more.
 
 `hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar
 *characters.Character, ctx combatContext)` (`combat.go`) is the M4d PR 2
