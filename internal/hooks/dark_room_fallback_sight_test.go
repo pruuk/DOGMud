@@ -6,6 +6,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -94,4 +96,23 @@ func TestVisualElseAudible_FollowsSight(t *testing.T) {
 		require.Equal(t, 1, countContaining(got1, "collapse"), "%v", got1)
 		require.Zero(t, countContaining(got1, "has died"))
 	})
+}
+
+// #216: the fight sound skipped every lit room, so a Blinded reader beside a
+// fight in a lit room heard nothing. It goes to every reader who cannot make
+// out shapes, whatever the room's light.
+func TestDarkRoomCombatFallback_BlindedReaderInALitRoomHearsIt(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	require.True(t, room.IsLit(), "fixture: the room must be lit")
+	blind := users.GetByUserId(2)
+	saved := blind.Character.Perception
+	t.Cleanup(func() { blind.Character.Perception = saved })
+	blind.Character.Perception = perception.NewMachine()
+	require.NoError(t, blind.Character.Perception.TransitionTo(perception.Blinded, state.TransitionReason{Trigger: "test"}))
+	require.Equal(t, messaging.SightNone, messaging.ParticipantSight(blind.Character, room))
+
+	sendDarkRoomCombatFallback(room)
+
+	require.Equal(t, 1, countContaining(drainPlain(2), "You hear fighting close by."), "the blinded reader hears the fight")
+	require.Zero(t, countContaining(drainPlain(1), "You hear fighting"), "a reader who sees the fight reads it by eye")
 }
