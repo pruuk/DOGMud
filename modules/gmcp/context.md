@@ -478,6 +478,9 @@ payloads carry ids that index into it.
   #252 R5). `gmcp.Room.go`'s `sightBandChangedHandler` answers
   `events.SightBandChanged` too: it maps the room if now seen, re-sends the
   map, and re-sends `Room.Info`, so lighting a torch in place refreshes both.
+  `zoneMapVisited` (`gmcp.Zone.go`) builds the snapshot's room set and adds
+  the current room only when the player's `ParticipantSight` is not
+  `SightNone`, so a login in the dark does not name the room (#382 playtest).
 - **Emit only on change where you can.** These push on room change and round
   boundaries; adding an unconditional per-round emit to a large payload is a
   bandwidth regression that will not show up in a local test.

@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -77,21 +78,7 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
-	// Every visited room, not just this zone's — a zone boundary is an engine
-	// concept the player cannot see, and blanking the map on crossing one reads
-	// as amnesia. HasRoom bounds this to rooms THIS zone's crawl reached, which
-	// is the zone itself plus the ring of neighbours just over its edges; the
-	// crawl already spans boundaries (it is how the builder finds foreign rooms
-	// to dim), and those neighbours carry positions in this zone's frame, so
-	// they place correctly with no coordinate translation.
-	visited := map[int]struct{}{}
-	for _, id := range user.Character.GetAllVisitedRooms() {
-		if m.HasRoom(id) {
-			visited[id] = struct{}{}
-		}
-	}
-	// Always include the current room even before the move-handler marks it.
-	visited[room.RoomId] = struct{}{}
+	visited := zoneMapVisited(user, room, m.HasRoom)
 
 	// Current floor (z) so the client shows only the level the player is on.
 	_, _, cz, _ := m.GetCoordinates(room.RoomId)
@@ -133,6 +120,32 @@ func (g *GMCPZoneModule) buildAndSend(e events.Event) events.ListenerReturn {
 
 	mudlog.Debug("gmcp.Zone", "userId", evt.UserId, "zone", room.Zone, "rooms", len(payload.Rooms))
 	return events.Continue
+}
+
+// zoneMapVisited is the room set a Zone.Map snapshot draws.
+//
+// Every visited room, not just this zone's — a zone boundary is an engine
+// concept the player cannot see, and blanking the map on crossing one reads
+// as amnesia. inCrawl (the zone mapper's HasRoom) bounds this to rooms THIS
+// zone's crawl reached, which is the zone itself plus the ring of neighbours
+// just over its edges; the crawl already spans boundaries (it is how the
+// builder finds foreign rooms to dim), and those neighbours carry positions in
+// this zone's frame, so they place correctly with no coordinate translation.
+func zoneMapVisited(user *users.UserRecord, room *rooms.Room, inCrawl func(int) bool) map[int]struct{} {
+	visited := map[int]struct{}{}
+	for _, id := range user.Character.GetAllVisitedRooms() {
+		if inCrawl(id) {
+			visited[id] = struct{}{}
+		}
+	}
+	// Include the current room even before the move-handler marks it, but
+	// only when the player can see it: the fog map adds no room while the
+	// player sees nothing (#252, R5), and a login in the dark used to name the
+	// room here (#382 playtest).
+	if messaging.ParticipantSight(user.Character, room) != messaging.SightNone {
+		visited[room.RoomId] = struct{}{}
+	}
+	return visited
 }
 
 // ---- Build.Zone.* (admin web-building 4) --------------------------------
