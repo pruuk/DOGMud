@@ -540,6 +540,17 @@ func sendPlayerConcentrationBroke(caster *users.UserRecord, room *rooms.Room) {
 		messaging.SoundChantBreaksOff, caster.UserId)
 }
 
+// sendPlayerSpellFailed narrates a player's spell that fizzles (target gone)
+// or falters (not enough conviction) to the rest of the room, as
+// sendMobSpellFailed does for a mob; verb is "fizzles" or "falters". The
+// caster reads its own line. Before the closing playtest of #382 the player
+// versions told the room nothing.
+func sendPlayerSpellFailed(caster *users.UserRecord, room *rooms.Room, verb string) {
+	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
+		`<ansi fg="username">%s</ansi>'s spell %s.`, caster.Character.Name, verb),
+		messaging.SoundSpellSputtersOut, caster.UserId)
+}
+
 // sendMobShiftsFocus narrates a mob switching its attack to a new player.
 // Sight only (owner ruling R4); each reader sees both names at its own
 // sight, as target.go's player shift-focus line does.
@@ -585,6 +596,7 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 		recordConcentrationFailure(combat.User, combat.Mob, user.Character, castingTargetChar(csBeforeProcess))
 		clearCastingActivity(user.Character, activity.TriggerConcentrationBreak)
 		events.AddToQueue(events.CastInterrupted{UserId: user.UserId, SpellId: csBeforeProcess.SpellId})
+		sendPlayerConcentrationBroke(user, rooms.LoadRoom(user.Character.RoomId))
 		return true
 	}
 
@@ -613,6 +625,7 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 	case result.TargetGone:
 		recordConcentrationFailure(combat.User, combat.Mob, user.Character, castingTargetChar(csBeforeProcess))
 		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your spell fizzles. The target is gone.</ansi>`)
+		sendPlayerSpellFailed(user, rooms.LoadRoom(user.Character.RoomId), "fizzles")
 
 	case result.SpellDataMissing:
 		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">The spell dissipates. Its data cannot be found.</ansi>`)
@@ -620,6 +633,7 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 	case result.InsufficientConviction:
 		recordConcentrationFailure(combat.User, combat.Mob, user.Character, castingTargetChar(csBeforeProcess))
 		user.SendText(messaging.CategorySpellDisruption, `<ansi fg="red">Your conviction wavers, and the fold collapses.</ansi>`)
+		sendPlayerSpellFailed(user, rooms.LoadRoom(user.Character.RoomId), "falters")
 
 	case result.CastComplete:
 		cs := result.CastingData
