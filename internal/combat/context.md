@@ -1065,15 +1065,19 @@ and `Deprecated:` markers; the deletion U6 owed is still outstanding.
 ## Sight: the verdict and the ramp (M4d, lighting plan 5b)
 
 `combatContext` (`combat_helpers.go`) carries two kinds of sight field, set
-once per round in `combat.go` at each of the four `calculateCombat` call
-sites (player-vs-mob, player-vs-player, mob-vs-player, mob-vs-mob), one
-call per side:
+once per attack by `newCombatContext` (`combat_helpers.go`), which each of
+the four `calculateCombat` call sites in `combat.go` (player-vs-mob,
+player-vs-player, mob-vs-player, mob-vs-mob) calls, one call per side:
 
 - `sourceSight` / `targetSight`, both `messaging.SightDecision`
   (`SightFull` / `SightShapes` / `SightNone`), from
-  `messaging.ParticipantSight(character, room)`. Since plan 5b these are
-  the NARRATION gate only: personal-line identity hiding (below) reads
-  them, and no score does.
+  `messaging.ReaderSight(character, room)`, which adds the sleep test to
+  the optics. Since plan 5b these are the NARRATION gate only:
+  personal-line identity hiding (below) reads them, and no score does. A
+  sleeping defender is attacked (the sleeping auto-crit) and reads the
+  first hit while still asleep, so they read "something", as the prompt
+  and GMCP already said (#455 review; it was `ParticipantSight`, optics
+  only, and named the attacker to a sleeper).
 - `sourceDark` / `sourceBright` and `targetDark` / `targetBright`, from
   `messaging.ComfortDistance(character, room)`: how far the room's light
   sits outside that side's own comfortable band, as fractions of the way
@@ -1127,9 +1131,9 @@ Before M4d (`b7acfc018`), this context carried `sourceCanSee`/`targetCanSee`
 messaging PREDICATE BY NAME, one of three that all differed only in their
 attention (sleep) handling; see `internal/messaging/context.md`'s
 `ParticipantSight` entry for why that split existed and why combat
-specifically needed the sleep-blind one. Combat no longer calls a
-messaging predicate at all: `ParticipantSight` is the shared primitive, and
-combat reads its own copy of the verdict, stored typed on `combatContext`.
+specifically needed the sleep-blind one. The scoring no longer reads any
+sight predicate (only the comfort distances), so the sleep-blind concern is
+gone, and the stored verdict is the narration gate, `ReaderSight`.
 
 ### Personal-line identity hiding (M4d PR 2)
 
@@ -2174,7 +2178,7 @@ own identical terms (converging that is not Task 17's mandate).
 
 | File | Purpose |
 |------|---------|
-| `combat.go` | Round resolution entry points. `resolveCombatRound` builds and admits one aggregate attack plan before resolution, then passes the committed short state into hit scoring. **`calculateCombat` takes both combatants as POINTERS (U7 Task 1). See the gotcha under "Contest core"; value parameters silently switched the whole melee defence cost model off.** Fills `combatContext.sourceSight`/`targetSight` from `messaging.ParticipantSight` and the comfort fields `sourceDark`/`sourceBright`/`targetDark`/`targetBright` from `messaging.ComfortDistance`, once per side, at each of the four call sites; see "Sight: the verdict and the ramp". |
+| `combat.go` | Round resolution entry points. `resolveCombatRound` builds and admits one aggregate attack plan before resolution, then passes the committed short state into hit scoring. **`calculateCombat` takes both combatants as POINTERS (U7 Task 1). See the gotcha under "Contest core"; value parameters silently switched the whole melee defence cost model off.** Each of the four call sites builds its `combatContext` with `newCombatContext` (`combat_helpers.go`): `sourceSight`/`targetSight` from `messaging.ReaderSight` and the comfort fields `sourceDark`/`sourceBright`/`targetDark`/`targetBright` from `messaging.ComfortDistance`, once per side; see "Sight: the verdict and the ramp". |
 | `combat_helpers.go` | Extracted helpers, including the immutable-ish `attackPlan` snapshot consumed by `calculateCombat`. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** `combatContext` itself lives here: its `sourceSight`/`targetSight` verdicts only hide names, and the attack and defence scores multiply by `messaging.SightScoreMultiplier` on its comfort fields; see "Sight: the verdict and the ramp". |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |

@@ -51,17 +51,7 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 	}
 
 	room := rooms.LoadRoom(user.Character.RoomId)
-	sd, sb := messaging.ComfortDistance(user.Character, room)
-	td, tb := messaging.ComfortDistance(&mob.Character, room)
-	ctx := combatContext{
-		sourceSight:  messaging.ParticipantSight(user.Character, room),
-		targetSight:  messaging.ParticipantSight(&mob.Character, room),
-		sourceDark:   sd,
-		sourceBright: sb,
-		targetDark:   td,
-		targetBright: tb,
-		forceCrit:    forceCrit,
-	}
+	ctx := newCombatContext(user.Character, &mob.Character, room, forceCrit)
 	attackResult, _ := resolveCombatRound(user.Character, &mob.Character, User, Mob, ctx)
 
 	if attackResult.DamageToSource != 0 {
@@ -108,17 +98,7 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob, forceCrit bool) At
 func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, forceCrit bool) AttackResult {
 
 	room := rooms.LoadRoom(userAtk.Character.RoomId)
-	sd, sb := messaging.ComfortDistance(userAtk.Character, room)
-	td, tb := messaging.ComfortDistance(userDef.Character, room)
-	ctx := combatContext{
-		sourceSight:  messaging.ParticipantSight(userAtk.Character, room),
-		targetSight:  messaging.ParticipantSight(userDef.Character, room),
-		sourceDark:   sd,
-		sourceBright: sb,
-		targetDark:   td,
-		targetBright: tb,
-		forceCrit:    forceCrit,
-	}
+	ctx := newCombatContext(userAtk.Character, userDef.Character, room, forceCrit)
 	attackResult, _ := resolveCombatRound(userAtk.Character, userDef.Character, User, User, ctx)
 
 	if attackResult.DamageToSource != 0 {
@@ -158,17 +138,7 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord, 
 func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord, forceCrit bool) AttackResult {
 
 	room := rooms.LoadRoom(mob.Character.RoomId)
-	sd, sb := messaging.ComfortDistance(&mob.Character, room)
-	td, tb := messaging.ComfortDistance(user.Character, room)
-	ctx := combatContext{
-		sourceSight:  messaging.ParticipantSight(&mob.Character, room),
-		targetSight:  messaging.ParticipantSight(user.Character, room),
-		sourceDark:   sd,
-		sourceBright: sb,
-		targetDark:   td,
-		targetBright: tb,
-		forceCrit:    forceCrit,
-	}
+	ctx := newCombatContext(&mob.Character, user.Character, room, forceCrit)
 	attackResult, _ := resolveCombatRound(&mob.Character, user.Character, Mob, User, ctx)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{UserId: user.UserId})
@@ -213,17 +183,7 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob, forceCrit bool) AttackRe
 	}
 
 	room := rooms.LoadRoom(mobAtk.Character.RoomId)
-	sd, sb := messaging.ComfortDistance(&mobAtk.Character, room)
-	td, tb := messaging.ComfortDistance(&mobDef.Character, room)
-	ctx := combatContext{
-		sourceSight:  messaging.ParticipantSight(&mobAtk.Character, room),
-		targetSight:  messaging.ParticipantSight(&mobDef.Character, room),
-		sourceDark:   sd,
-		sourceBright: sb,
-		targetDark:   td,
-		targetBright: tb,
-		forceCrit:    forceCrit,
-	}
+	ctx := newCombatContext(&mobAtk.Character, &mobDef.Character, room, forceCrit)
 	attackResult, _ := resolveCombatRound(&mobAtk.Character, &mobDef.Character, Mob, Mob, ctx)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource*-1, state.ActorRef{MobInstanceId: mobDef.InstanceId})

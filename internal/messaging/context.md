@@ -371,6 +371,11 @@ Functions:
     decision (full, shapes, none). `rooms.visualDecision` is this
     function; the fight prompt's `{target}` and GMCP `Char.Enemies` name an
     unseen foe with `UnseenNoun` of it, as the combat lines do (#455).
+    The combat personal lines' name gate (`combat.newCombatContext`'s
+    `sourceSight`/`targetSight`) is also `ReaderSight`: a sleeping
+    defender is reachable (the sleeping-victim auto-crit) and reads the
+    first hit while still asleep, so it names "something", as the prompt
+    does. Combat scoring reads `ComfortDistance`, never this verdict.
   - `CanSeeSightImpairedOnly(observer, room) bool` = `ParticipantSight ==
     SightFull`, WITHOUT the sleep gate. This is the one `internal/combat`
     used to read (as `CanSeeClearly`, before M4d) to drive

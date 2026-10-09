@@ -33,7 +33,8 @@ const unloadedMeleeDamageCap = 0.30
 
 // combatContext carries per-round environmental info into the combat engine.
 type combatContext struct {
-	// sourceSight and targetSight are the OPTICS VERDICT, and since lighting
+	// sourceSight and targetSight are the READER verdict (messaging.ReaderSight:
+	// optics plus the sleep test; see newCombatContext), and since lighting
 	// plan 5b they are the narration gate only: they decide whether a
 	// combatant's name is hidden (messaging.HideNames in combat.go) and no
 	// longer feed any score. They carry the full SightDecision rather than a
@@ -56,6 +57,29 @@ type combatContext struct {
 	// Uses combatContext (not a separate parameter) so it threads through
 	// calculateCombat without touching Attack*Vs* signatures.
 	forceCrit bool
+}
+
+// newCombatContext builds one attack's context in room: each side's sight
+// verdict (the narration gate) and comfort distances (the scoring input).
+//
+// The verdict is messaging.ReaderSight, which carries the sleep test, as
+// the prompt and GMCP do: a sleeping defender is attacked (the sleeping
+// auto-crit) and reads the first hit's personal line while still asleep,
+// judged before the hit wakes them, so it names "something", not the
+// attacker (#455). The comfort distances stay optics only, so sleep never
+// adds a darkness term to the score.
+func newCombatContext(source, target *characters.Character, room messaging.RoomVisibility, forceCrit bool) combatContext {
+	sd, sb := messaging.ComfortDistance(source, room)
+	td, tb := messaging.ComfortDistance(target, room)
+	return combatContext{
+		sourceSight:  messaging.ReaderSight(source, room),
+		targetSight:  messaging.ReaderSight(target, room),
+		sourceDark:   sd,
+		sourceBright: sb,
+		targetDark:   td,
+		targetBright: tb,
+		forceCrit:    forceCrit,
+	}
 }
 
 // weaponSetup holds pre-computed weapon info for a single weapon swing.
