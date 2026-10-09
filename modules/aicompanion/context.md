@@ -164,7 +164,10 @@ Roadmap and phase plan: `docs/aicompanion/`.
   a passer-by's words, never billed to them, and never refused because
   strangers are off.
 - **meeting.go**: meeting a companion after character creation (or at the
-  next login), the persisted bond state, parting ways, and consent:
+  next login), the persisted bond state, parting ways (`unbond`, in
+  commands.go, judges the parting line by the room before she leaves with
+  her own light: `VisualSnapshot` then `SendTextVisualToSnapshot`, #456),
+  and consent:
   `consented`, `answerConsent`, and `consentLedger`, the copy of who has
   agreed that the model door reads off the mud lock (rebuilt by
   `syncConsent` on every bond load and save).
@@ -366,7 +369,13 @@ Roadmap and phase plan: `docs/aicompanion/`.
   `tier=relay|server|none`; the player's `companion-ai` (consent, the
   `strangers on|off` toggle, and which tier is answering, `tierWords`).
   Its lines are wrapped at 80 columns before sending, since the system
-  category is never wrapped for the reader.
+  category is never wrapped for the reader. `companion-ask <who>` runs the
+  owner's typed name through `actions.AimBySight` before it looks the NPC
+  up (#454), so in the dark a name that is there and one that is not read
+  the same refusal, and at shapes the owner aims with `shape` / `N.shape`.
+  The errand's memory line and prompt stimulus name the NPC as the owner
+  perceives it (`messaging.UnseenNoun`, "a figure" at shapes), never its
+  real name, which the companion could otherwise say aloud.
 - **primer.txt**: the common-knowledge world primer given to the model.
 - **relayfor.go**: `relayFor`, the `apiframework.Relay` the module lends to
   other features. It answers only for `apiframework.PurposeFinds`, only for

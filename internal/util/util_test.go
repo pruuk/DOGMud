@@ -1209,6 +1209,9 @@ func TestConvertToAscii(t *testing.T) {
 		{"weather glyphs", "⚡❄", "!*"},
 		{"map glyphs", "▲▼≈⌂", "^v~#"},
 		{"unmapped high rune passthrough", "café", "café"},
+		// The crit banners hold a no-break space so the wrap keeps the
+		// banner words together; an ASCII-mode client gets a plain space.
+		{"no-break space", "CRITICAL HIT", "CRITICAL HIT"},
 	}
 
 	for _, tt := range tests {

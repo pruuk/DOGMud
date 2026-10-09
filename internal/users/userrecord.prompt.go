@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
@@ -33,34 +34,32 @@ var (
 	promptFindTagsRegex        = regexp.MustCompile(`\{[a-zA-Z%:\-]+\}`)
 )
 
-// canSeeInRoomFn reports whether a character can clearly see in the
-// room they currently occupy (composes blindness, room lighting, and
-// NightVision — see messaging.CanSeeClearly). Registered at boot from
-// main.go, which can import rooms/ + messaging/ (users/ cannot import
-// rooms/ — that would be an import cycle). nil = "can see" (boot- and
-// test-safe default). Follows the same callback pattern as
-// characters.SetUserUntargetableCheck.
+// promptSightFn reports the sight decision a character reads the room they
+// occupy at (messaging.ReaderSight: blindness, sleep, room light, night
+// sight and heat sight). Registered at boot from main.go, which can import
+// rooms/ + messaging/ (users/ cannot import rooms/, an import cycle). nil
+// means full sight (the boot- and test-safe default). Follows the same
+// callback pattern as characters.SetUserUntargetableCheck.
 //
-// The fight prompt uses this to hide the combat target's identity,
-// health, and position from blind / dark-room players, matching the
-// combat-text darkness gating in NewRound_DoCombat.
-var canSeeInRoomFn func(c *characters.Character) bool
+// The fight prompt uses this to hide the combat target's identity, health
+// and position below full sight, matching the combat-text darkness gating
+// in NewRound_DoCombat, and to name the target as those lines do: "a
+// figure" at shapes, "something" with no sight (#455).
+var promptSightFn func(c *characters.Character) messaging.SightDecision
 
-// SetCanSeeInRoomCheck registers the prompt visibility check. Repeated
+// SetPromptSightCheck registers the prompt sight check. Repeated
 // registrations overwrite; pass nil to disable (tests).
-func SetCanSeeInRoomCheck(fn func(c *characters.Character) bool) {
-	canSeeInRoomFn = fn
+func SetPromptSightCheck(fn func(c *characters.Character) messaging.SightDecision) {
+	promptSightFn = fn
 }
 
-// canSeeTargetForPrompt returns whether the player can currently see
-// well enough for the fight prompt to reveal the combat target's
-// identity / health / position. Defaults to true when no check is
-// registered (boot, tests).
-func (u *UserRecord) canSeeTargetForPrompt() bool {
-	if canSeeInRoomFn == nil {
-		return true
+// promptTargetSight returns the sight decision the fight prompt renders the
+// combat target at. SightFull when no check is registered (boot, tests).
+func (u *UserRecord) promptTargetSight() messaging.SightDecision {
+	if promptSightFn == nil {
+		return messaging.SightFull
 	}
-	return canSeeInRoomFn(u.Character)
+	return promptSightFn(u.Character)
 }
 
 // RenderVitalBar is the exported version of renderVitalBar.
@@ -370,15 +369,16 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 	// dark room without special vision). Computed at most once per render
 	// and only when a target-derived token is actually present, so the
 	// out-of-combat default prompt pays no room-lookup cost.
-	canSeeChecked := false
-	canSeeTarget := true
-	sees := func() bool {
-		if !canSeeChecked {
-			canSeeTarget = u.canSeeTargetForPrompt()
-			canSeeChecked = true
+	sightChecked := false
+	targetSight := messaging.SightFull
+	sight := func() messaging.SightDecision {
+		if !sightChecked {
+			targetSight = u.promptTargetSight()
+			sightChecked = true
 		}
-		return canSeeTarget
+		return targetSight
 	}
+	sees := func() bool { return sight() == messaging.SightFull }
 
 	promptLen := len(promptStr)
 	tagStartPos := -1
@@ -533,10 +533,11 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 				// Robust against transient Aggro=nil between rounds.
 				//
 				// Hide the target's identity when the player can't see it
-				// (blind / dark room without special vision) — the name is
-				// info they don't have. Matches combat-text darkness gating.
+				// clearly: the name is info they don't have. The target is
+				// what the combat lines call it at this sight, "a figure" or
+				// "something", in the same colour (#455).
 				if !sees() {
-					promptOut.WriteString(`<ansi fg="mobname">an unseen foe</ansi>`)
+					promptOut.WriteString(messaging.UnseenFigure(sight()))
 				} else {
 					tRef := u.Character.CurrentCombatTarget()
 					if tRef.MobInstanceId > 0 {

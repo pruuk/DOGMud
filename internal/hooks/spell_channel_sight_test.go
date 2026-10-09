@@ -3,11 +3,16 @@ package hooks
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -261,4 +266,405 @@ func TestPlayerSpellFindsNothing_HiddenCasterIsNeverNamed(t *testing.T) {
 	got := drainPlain(1)
 	require.Equal(t, 1, countContaining(got, "Something's spell crackles through the air harmlessly."), "%v", got)
 	require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
+}
+
+// foldingMobInRoom puts the test mob in room, mid-fold on a harm spell aimed
+// at targetUserId, and in combat with that player, as a mob caster stands
+// when its target walks out.
+func foldingMobInRoom(t *testing.T, room *rooms.Room, targetUserId int) *mobs.Mob {
+	t.Helper()
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": testHarmSpell()}))
+	m := spellChannelMob(t)
+	rooms.LoadRoom(m.Character.RoomId).RemoveMob(m.InstanceId)
+	room.AddMob(m.InstanceId)
+	m.Character.Validate()
+	m.Character.SetAggro(targetUserId, 0, characters.DefaultAttack)
+	require.True(t, m.Character.IsInCombat(), "fixture: the mob fights its target")
+	require.NoError(t, m.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-bolt", FoldsNeeded: 3, TargetUserIds: []int{targetUserId}},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+	return m
+}
+
+// walkOut moves a player from room to room 1, as a target leaving mid-fold.
+func walkOut(t *testing.T, room *rooms.Room, userId int) {
+	t.Helper()
+	room.RemovePlayer(userId)
+	users.GetByUserId(userId).Character.RoomId = 1
+	rooms.LoadRoom(1).AddPlayer(userId)
+	events.DrainQueuedMessagesForTest(1)
+	events.DrainQueuedMessagesForTest(2)
+}
+
+// #242: a mob's target who walked out is not "gone" to the fold step (only a
+// dead or logged-out one is), so IdleMobs released the mob mid-fold: it left
+// combat, the fold step never ran again, and the spell ended with no line at
+// all. The fold now ends first, told as the TargetGone fizzle is: by sight to
+// a reader who sees (a figure at shapes), by sound to one who sees nothing.
+func TestMobFold_TargetWalksOut_FizzlesAtEachReadersSight(t *testing.T) {
+	cases := []struct {
+		name  string
+		lamp  int
+		eyes  int
+		sight messaging.SightDecision
+		want  string
+	}{
+		{"faces read the caster", 60, heatEyesConditionId, messaging.SightFull, "Skeleton's spell fizzles."},
+		{"shapes read a figure", 10, heatEyesConditionId, messaging.SightShapes, "spell fizzles."},
+		{"sees nothing, hears it", 0, nightEyesConditionId, messaging.SightNone, messaging.SoundSpellSputtersOut},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			room := seedFallbackRoom(t, tc.lamp, tc.eyes)
+			m := foldingMobInRoom(t, room, 2)
+			walkOut(t, room, 2)
+			require.Equal(t, tc.sight, messaging.ParticipantSight(users.GetByUserId(1).Character, room))
+
+			IdleMobs(events.NewRound{RoundNumber: 1})
+
+			require.False(t, m.Character.IsCasting(), "the fold ends with the release")
+			require.False(t, m.Character.IsInCombat(), "and the mob is released")
+			got := drainPlain(1)
+			require.Equal(t, 1, countContaining(got, tc.want), "%v", got)
+			if tc.sight != messaging.SightFull {
+				require.Zero(t, countContaining(got, "Skeleton"), "%v", got)
+			}
+			require.Empty(t, drainPlain(2), "the player who left reads nothing of the room")
+		})
+	}
+}
+
+// #242 review G2: a mob folding at a MOB that walks or flees out is released
+// by actions.ClearRoomAggroOnDeparture, not by IdleMobs' player-target check,
+// so it left combat still casting, the fold step never ran for it again, and
+// the spell hung unspoken. IdleMobs now ends every fold a mob out of combat
+// still holds.
+func TestMobFold_MobTargetRelocatesOut_Fizzles(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": testHarmSpell()}))
+	caster := spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	room.AddMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+
+	target := &mobs.Mob{MobId: 2, InstanceId: 101, Character: characters.Character{
+		Name: "Rat", RoomId: room.RoomId, Health: 10, Conditions: conditions.New()}}
+	target.Character.HealthMax.Value = 10
+	mobs.SetInstanceForTest(101, target)
+	t.Cleanup(func() { mobs.SetInstanceForTest(101, nil) })
+	room.AddMob(101)
+
+	caster.Character.Validate()
+	caster.Character.SetAggro(0, 101, characters.DefaultAttack)
+	require.True(t, caster.Character.IsInCombat(), "fixture: the caster fights the rat")
+	require.NoError(t, caster.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-bolt", FoldsNeeded: 3, TargetMobInstanceIds: []int{101}},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+
+	// The rat walks out: the departure releases whoever was fighting it.
+	room.RemoveMob(101)
+	target.Character.RoomId = 1
+	rooms.LoadRoom(1).AddMob(101)
+	actions.ClearRoomAggroOnDeparture(room, 101)
+	require.False(t, caster.Character.IsInCombat(), "fixture: the departure released the caster")
+	require.True(t, caster.Character.IsCasting(), "fixture: still folding after the release")
+	events.DrainQueuedMessagesForTest(1)
+
+	IdleMobs(events.NewRound{RoundNumber: 1})
+
+	require.False(t, caster.Character.IsCasting(), "the stranded fold ends")
+	got := drainPlain(1)
+	require.Equal(t, 1, countContaining(got, "Skeleton's spell fizzles."), "%v", got)
+}
+
+// #242 review G5: a fold that completes on a room its target left fizzles in
+// resolveMobSpell, but handleMobFoldCasting still paid the cast's
+// progression award (and rolled spell discovery) as for a resolved cast. A
+// fizzle resolves nothing, as the fold step's TargetGone fizzle does, and
+// awards neither.
+func TestMobFold_CompletingOnAnEmptyRoom_AwardsNothing(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": testHarmSpell()}))
+	m := spellChannelMob(t)
+	rooms.LoadRoom(m.Character.RoomId).RemoveMob(m.InstanceId)
+	room.AddMob(m.InstanceId)
+	m.Character.RoomId = room.RoomId
+	m.Character.Validate()
+	m.Character.ConvictionMax.Value, m.Character.Conviction = 1000, 1000
+	m.Character.SetAggro(2, 0, characters.DefaultAttack)
+	require.NoError(t, m.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-bolt", FoldsNeeded: 1, FoldsPerRound: 1, TargetUserIds: []int{2}},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+	walkOut(t, room, 2)
+	before := m.Character.SkillUseCount[string(skills.Spellcasting)]
+
+	handleMobFoldCasting(m, room)
+
+	got := drainPlain(1)
+	require.Equal(t, 1, countContaining(got, "Skeleton's spell fizzles."), "fixture: the fold completed and fizzled: %v", got)
+	require.Equal(t, before, m.Character.SkillUseCount[string(skills.Spellcasting)], "a fizzled cast paid a progression award")
+}
+
+// The sweep ends harmful folds only. An idle self-buff (shipped idle
+// commands such as `cast conviction-ward`) is not fizzled every time it is
+// begun; that it never resolves out of combat is a separate problem.
+func TestMobFold_IdleHelpFoldIsNotSwept(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-ward": {SpellId: "test-ward", Name: "Test Ward",
+		AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSelf}}))
+	caster := spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	room.AddMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+	caster.Character.Validate()
+	require.NoError(t, caster.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-ward", FoldsNeeded: 3, TargetMobInstanceIds: []int{caster.InstanceId}},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+	require.False(t, caster.Character.IsInCombat())
+	events.DrainQueuedMessagesForTest(1)
+
+	IdleMobs(events.NewRound{RoundNumber: 1})
+
+	require.True(t, caster.Character.IsCasting(), "an idle help fold was swept")
+	require.Zero(t, countContaining(drainPlain(1), "fizzles"))
+}
+
+// idleFoldCaster puts mob 100 in the fallback room, out of combat, folding
+// spellId on itself.
+func idleFoldCaster(t *testing.T, room *rooms.Room, spellId string, targetMobs []int) *mobs.Mob {
+	t.Helper()
+	caster := spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	room.AddMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+	caster.Character.Validate()
+	require.NoError(t, caster.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: spellId, FoldsNeeded: 2, FoldsPerRound: 1, TargetMobInstanceIds: targetMobs},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+	require.False(t, caster.Character.IsInCombat(), "fixture: the caster is not fighting")
+	events.DrainQueuedMessagesForTest(1)
+	return caster
+}
+
+// #242 review K9: a mob's fold step ran only in the combat round, so a
+// shipped idle buff (Seren's `cast conviction-ward`, Rhett's
+// `conviction-armor`) never resolved and left the mob casting for good. The
+// combat round now steps a help fold out of combat too, as a player's fold
+// steps whether or not they fight: it weaves, then resolves, its effect
+// lands and the cast clears.
+func TestMobFold_IdleHelpFoldResolvesOutOfCombat(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-mend": {SpellId: "test-mend", Name: "Test Mend",
+		AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSelf,
+		EffectType: "heal", EffectMagnitude: 5}}))
+	t.Cleanup(conditions.SeedConditionRecordsForTest()) // the heal's regenerating condition
+	caster := idleFoldCaster(t, room, "test-mend", []int{100})
+
+	handleMobCombat(events.NewRound{RoundNumber: 1})
+	require.True(t, caster.Character.IsCasting(), "one fold of two: still weaving")
+	require.False(t, caster.Character.HasCondition(conditions.ConditionIdRegenerating), "the heal landed before the fold completed")
+
+	handleMobCombat(events.NewRound{RoundNumber: 2})
+	require.False(t, caster.Character.IsCasting(), "the completed help fold clears the cast")
+	require.True(t, caster.Character.HasCondition(conditions.ConditionIdRegenerating), "the heal landed")
+	got := drainPlain(1)
+	require.Equal(t, 1, countContaining(got, "Skeleton channels restorative magic."), "%v", got)
+	require.Zero(t, countContaining(got, "fizzles"), "%v", got)
+}
+
+// #242 final review: IdleMobs' quarry release (a player foe who left the
+// room) ended any fold the mob held, so a mob mid-fold on a help spell on
+// itself (Seren or Olen's `cast heal`) read "spell fizzles" when its foe
+// walked out. A help fold is left to its fold step, which now runs out of
+// combat: the release keeps it, and it resolves.
+func TestMobFold_QuarryLeaves_HelpFoldResolvesWithoutFizzle(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-mend": {SpellId: "test-mend", Name: "Test Mend",
+		AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSelf,
+		EffectType: "heal", EffectMagnitude: 5}}))
+	t.Cleanup(conditions.SeedConditionRecordsForTest()) // the heal's regenerating condition
+	caster := idleFoldCaster(t, room, "test-mend", []int{100})
+	caster.Character.SetAggro(2, 0, characters.DefaultAttack)
+	require.True(t, caster.Character.IsInCombat(), "fixture: the caster fights player 2")
+	walkOut(t, room, 2)
+
+	IdleMobs(events.NewRound{RoundNumber: 1})
+	require.False(t, caster.Character.IsInCombat(), "the quarry release still happens")
+	require.True(t, caster.Character.IsCasting(), "the release ended a help fold")
+
+	handleMobCombat(events.NewRound{RoundNumber: 1})
+	handleMobCombat(events.NewRound{RoundNumber: 2})
+	require.False(t, caster.Character.IsCasting(), "the help fold resolves and clears")
+	require.True(t, caster.Character.HasCondition(conditions.ConditionIdRegenerating), "the heal landed")
+	got := drainPlain(1)
+	require.Zero(t, countContaining(got, "fizzles"), "%v", got)
+	require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+	require.Equal(t, 1, countContaining(got, "Skeleton channels restorative magic."), "%v", got)
+}
+
+// mobCastAtRat puts the test mob (100) and a rat (101) in room, out of
+// combat, and has the mob begin `cast test-bolt rat` through its own cast
+// command.
+func mobCastAtRat(t *testing.T, room *rooms.Room, mutate func(caster, rat *mobs.Mob)) (caster, rat *mobs.Mob) {
+	t.Helper()
+	bolt := testHarmSpell()
+	bolt.BaseFolds = 1
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": bolt}))
+	caster = spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	room.AddMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+	caster.Character.Validate()
+	caster.Character.ConvictionMax.Value, caster.Character.Conviction = 1000, 1000
+	caster.Character.Cooldowns = nil
+
+	rat = &mobs.Mob{MobId: 2, InstanceId: 101, Character: characters.Character{
+		Name: "Rat", RoomId: room.RoomId, Health: 10, Conditions: conditions.New()}}
+	rat.Character.HealthMax.Value = 10
+	mobs.SetInstanceForTest(101, rat)
+	t.Cleanup(func() { mobs.SetInstanceForTest(101, nil) })
+	room.AddMob(101)
+	t.Cleanup(func() { room.RemoveMob(101) })
+	if mutate != nil {
+		mutate(caster, rat)
+	}
+	require.False(t, caster.Character.IsInCombat(), "fixture: the caster is not fighting")
+	events.DrainQueuedMessagesForTest(1)
+
+	_, err := mobcommands.Cast("test-bolt rat", caster, room)
+	require.NoError(t, err)
+	require.True(t, caster.Character.IsCasting(), "fixture: the cast began")
+	return caster, rat
+}
+
+// #242 final review: a mob's harmful cast committed aggro only at a player
+// target, so a harm spell a mob aimed at another mob out of combat (a bonded
+// companion's `cast sparks #<goblin>`) began a fold the IdleMobs sweep
+// fizzled a round later (and hung for good before that sweep). The cast now
+// commits the caster to its mob target as it does to a player: it fights,
+// and the fold resolves.
+func TestMobCastHarmAtMob_EntersCombatAndResolves(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	caster, _ := mobCastAtRat(t, room, nil)
+
+	require.True(t, caster.Character.IsInCombat(), "the harmful cast did not commit the caster")
+	require.Equal(t, 101, caster.Character.CurrentCombatTarget().MobInstanceId)
+
+	for round := uint64(1); round <= 8 && caster.Character.IsCasting(); round++ {
+		IdleMobs(events.NewRound{RoundNumber: round})
+		handleMobCombat(events.NewRound{RoundNumber: round})
+	}
+	require.False(t, caster.Character.IsCasting(), "the fold never resolved")
+	got := drainPlain(1)
+	require.Zero(t, countContaining(got, "fizzles"), "%v", got)
+	require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+}
+
+// An area harm spell's targets are every mob in the room. The commit goes
+// to one the caster can fight: a non-combatant ahead of the rat in the room
+// is passed over (the combat-phase veto would refuse it and leave the caster
+// uncommitted, its fold to fizzle).
+func TestMobCastAreaHarm_CommitsPastANonCombatant(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	for _, uid := range []int{1, 2} { // a room of mobs only
+		walkOut(t, room, uid)
+	}
+	burst := testHarmSpell()
+	burst.SpellId, burst.Targeting = "test-burst", combatvocab.TargetArea
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-burst": burst}))
+
+	caster := spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+	caster.Character.Validate()
+	caster.Character.ConvictionMax.Value, caster.Character.Conviction = 1000, 1000
+	caster.Character.Cooldowns = nil
+	for _, m := range []*mobs.Mob{
+		{MobId: 3, InstanceId: 102, NonCombatant: true, Character: characters.Character{Name: "Clerk", NonCombatant: true}},
+		{MobId: 2, InstanceId: 101, Character: characters.Character{Name: "Rat"}},
+	} {
+		m.Character.RoomId, m.Character.Health, m.Character.Conditions = room.RoomId, 10, conditions.New()
+		m.Character.HealthMax.Value = 10
+		mobs.SetInstanceForTest(m.InstanceId, m)
+		id := m.InstanceId
+		t.Cleanup(func() { mobs.SetInstanceForTest(id, nil); room.RemoveMob(id) })
+		room.AddMob(id)
+	}
+	room.AddMob(caster.InstanceId)
+	require.Equal(t, []int{102, 101, caster.InstanceId}, room.GetMobs(), "fixture: the clerk is listed first")
+
+	_, err := mobcommands.Cast("test-burst", caster, room)
+	require.NoError(t, err)
+	require.True(t, caster.Character.IsCasting(), "fixture: the cast began")
+	require.True(t, caster.Character.IsInCombat(), "the caster committed to nobody")
+	require.Equal(t, 101, caster.Character.CurrentCombatTarget().MobInstanceId)
+}
+
+// The commit is bounded: a non-combatant caster (a quest giver, a merchant)
+// starts no fight by casting, as it starts none by any other route (the
+// combat-phase veto, CombatPhase_Vetoes).
+func TestMobCastHarmAtMob_NonCombatantCasterStartsNoFight(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	caster, _ := mobCastAtRat(t, room, func(caster, _ *mobs.Mob) {
+		caster.Character.NonCombatant = true
+		t.Cleanup(func() { caster.Character.NonCombatant = false })
+	})
+	require.False(t, caster.Character.IsInCombat(), "a non-combatant caster started a fight")
+}
+
+// The combat round leaves a harmful fold held out of combat to IdleMobs'
+// sweep, which fizzles it at once (#242 G2): its target is gone, and a
+// harmful spell never resolves out of combat.
+func TestMobFold_StaleHarmFoldStillFizzlesAfterTheCombatRound(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": testHarmSpell()}))
+	caster := idleFoldCaster(t, room, "test-bolt", []int{101})
+	target := &mobs.Mob{MobId: 2, InstanceId: 101, Character: characters.Character{
+		Name: "Rat", RoomId: 1, Health: 10, Conditions: conditions.New()}}
+	target.Character.HealthMax.Value = 10
+	mobs.SetInstanceForTest(101, target)
+	t.Cleanup(func() { mobs.SetInstanceForTest(101, nil) })
+	rooms.LoadRoom(1).AddMob(101)
+
+	handleMobCombat(events.NewRound{RoundNumber: 1})
+	require.True(t, caster.Character.IsCasting(), "the combat round must not step a stale harmful fold")
+	IdleMobs(events.NewRound{RoundNumber: 1})
+
+	require.False(t, caster.Character.IsCasting(), "the stranded fold ends")
+	require.Equal(t, 1, countContaining(drainPlain(1), "Skeleton's spell fizzles."))
+}
+
+// #242: the fold step can also complete the cast in the round the target
+// walked out, before IdleMobs releases the mob. resolveMobSpell then found
+// no target in the room, resolved nothing and said nothing.
+func TestMobFold_CompletesWithNoTargetLeft_Fizzles(t *testing.T) {
+	cases := []struct {
+		name  string
+		lamp  int
+		eyes  int
+		sight messaging.SightDecision
+		want  string
+	}{
+		{"faces read the caster", 60, heatEyesConditionId, messaging.SightFull, "Skeleton's spell fizzles."},
+		{"shapes read a figure", 10, heatEyesConditionId, messaging.SightShapes, "spell fizzles."},
+		{"sees nothing, hears it", 0, nightEyesConditionId, messaging.SightNone, messaging.SoundSpellSputtersOut},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			room := seedFallbackRoom(t, tc.lamp, tc.eyes)
+			m := spellChannelMob(t)
+			walkOut(t, room, 2)
+			require.Equal(t, tc.sight, messaging.ParticipantSight(users.GetByUserId(1).Character, room))
+
+			landed, fizzled := resolveMobSpell(m, activity.CastingData{SpellId: "test-bolt", TargetUserIds: []int{2}}, testHarmSpell(), room)
+
+			require.False(t, landed)
+			require.True(t, fizzled, "a fold with no target left reports the fizzle")
+			got := drainPlain(1)
+			require.Equal(t, 1, countContaining(got, tc.want), "%v", got)
+			if tc.sight != messaging.SightFull {
+				require.Zero(t, countContaining(got, "Skeleton"), "%v", got)
+			}
+		})
+	}
 }

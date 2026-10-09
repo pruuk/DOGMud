@@ -108,7 +108,10 @@ func wireCompanionAssist(c *characters.Character) {
 
 		// Owner: if Idle, direct them to attack. Use CombatPhase predicate
 		// (IsInCombat) so we read from the state machine, not legacy Aggro.
+		// An owner who sees nothing cannot pick the attacker out (#454) and
+		// would be told so every round, as a party member would.
 		if !owner.Character.IsInCombat() &&
+			memberSeesSomething(owner) &&
 			owner.Character.TryClaimAssistCommand(util.GetRoundCount()) {
 			owner.Command(fmt.Sprintf("attack %s", attackCmd))
 		}

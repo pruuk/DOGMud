@@ -169,6 +169,16 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 		return nil, true
 	}
 
+	// #454: a typed name resolves only at full sight. A shape becomes the
+	// "@id" or "#id" it stands for.
+	name, refusal := AimBySight(user.Character, user.UserId, room, rest, opts.Verb)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return nil, true
+	}
+	rest = name
+	sight := messaging.ParticipantSight(user.Character, room)
+
 	target, err := ResolveTargetActor(room, rest, ResolveTargetOptions{ExcludeUserId: user.UserId, Viewer: user.Character})
 	if err != nil {
 		// Self-exclusion collapses to NotFound, so distinguish the two here.
@@ -191,8 +201,9 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 			user.SendText(messaging.CategorySystem, opts.charmedMsg())
 			return nil, true
 		case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
-			user.SendText(messaging.CategorySystem,
-				fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, mob.Character.Name))
+			user.SendText(messaging.CategorySystem, messaging.HideNames(
+				fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, mob.Character.Name),
+				[]string{mob.Character.Name}, sight))
 			return nil, true
 		}
 		// Judge fresh aggression HERE, at staging time, and capture the verdict
@@ -235,8 +246,9 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 	// grapple or trip their own party member, while `attack` and `shoot` both
 	// refused. Same bypass shape as the charmed-companion gate above.
 	if partyInfo := parties.Get(user.UserId); partyInfo != nil && partyInfo.IsMember(p.UserId) {
-		user.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name))
+		user.SendText(messaging.CategorySystem, messaging.HideNames(
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name),
+			[]string{p.Character.Name}, sight))
 		return nil, true
 	}
 

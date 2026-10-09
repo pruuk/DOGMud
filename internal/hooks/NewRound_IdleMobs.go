@@ -24,6 +24,18 @@ import (
 // Handle mobs that are bored
 //
 
+// endStrandedFold ends a fold mob holds through fizzleMobFold, told at each
+// reader's sight in the mob's room. A no-op when the mob is not casting.
+func endStrandedFold(mob *mobs.Mob) {
+	cs, ok := mob.Character.CastingData()
+	if !ok {
+		return
+	}
+	if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+		fizzleMobFold(mob, room, cs)
+	}
+}
+
 func IdleMobs(e events.Event) events.ListenerReturn {
 
 	mc := configs.GetMemoryConfig()
@@ -66,11 +78,31 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 			if mob.Character.CurrentCombatTarget().UserId > 0 {
 				user := users.GetByUserId(mob.Character.CurrentCombatTarget().UserId)
 				if user == nil || user.Character.RoomId != mob.Character.RoomId {
+					// A harmful fold in progress ends first (#242), so its
+					// fizzle reads before the mumble; endStrandedFold below
+					// would only catch it a round later. A help fold (a
+					// self-heal mid-fight) is kept: the combat round steps
+					// it out of combat and it resolves.
+					if !mobHoldsHelpFold(mob) {
+						endStrandedFold(mob)
+					}
 					mob.Command(`emote mumbles about losing their quarry.`)
 					targeting.Release(&mob.Character, targeting.ReasonDisengage)
 				}
 			}
 			continue
+		}
+
+		// Out of combat, the combat round steps only a help fold (an idle
+		// self-buff, see handleMobCombat), so a harmful fold a mob still
+		// holds would hang unspoken. One sweep for every way a caster is
+		// released mid-fold (#242): a mob target that walked or fled out
+		// (actions.ClearRoomAggroOnDeparture) and any other release. A
+		// harmful spell never resolves out of combat, so it fizzles at once.
+		// A help fold is left to its fold step, which resolves it, or
+		// fizzles it when its target is gone; so every stale fold ends.
+		if mob.Character.IsCasting() && !mobHoldsHelpFold(mob) {
+			endStrandedFold(mob)
 		}
 
 		// Chunk 5.14: a mob someone is swinging at must not wander off before

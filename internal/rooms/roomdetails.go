@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -14,7 +15,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutators"
-	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -102,12 +102,21 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// dogmud-world condition carries see-nouns, so the gate made the feature
 	// admin-only by accident. Discoverability for everyone beats a
 	// vestigial perk.
-	renderNouns := true
+	//
+	// Nouns are highlighted on each wrapped plain line, before any colour
+	// pattern and before the minimap joins the line: a noun the description
+	// lacks ("water") otherwise matched inside a map tag's attribute and
+	// broke the tag (#455).
+	nouns := r.Nouns
+
+	// A mutator's description modifier joins the description BEFORE the
+	// wrap, so a long modifier wraps with the rest (#455).
+	descParts := descriptionWithModifiers(r, details.Description)
 
 	if len(tinymap) > 0 {
 		desclineWidth := 80 - 7 // 7 is the width of the tinymap
 		padding := 1
-		description := util.SplitString(details.Description, desclineWidth-padding)
+		description := wrapDescriptionParts(descParts, desclineWidth-padding, nouns)
 
 		for i := 0; i < len(tinymap[0]); i++ {
 			if i > len(description)-1 {
@@ -121,34 +130,10 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 			description[i] += strings.Repeat(` `, padWidth) + tinymap[0][i]
 		}
 
-		if renderNouns && len(r.Nouns) > 0 {
-			for i := range description {
-				for noun, _ := range r.Nouns {
-					// Skip if noun is already inside an ANSI tag to avoid nested tags
-					if strings.Contains(description[i], `>`+noun+`</ansi>`) {
-						continue
-					}
-					description[i] = strings.Replace(description[i], noun, `<ansi fg="noun">`+noun+`</ansi>`, 1)
-				}
-			}
-		}
-
 		details.Description = strings.Join(description, "\n")
 	} else {
 
-		roomDesc := util.SplitString(details.Description, 80)
-
-		if renderNouns && len(r.Nouns) > 0 {
-			for i := range roomDesc {
-				for noun, _ := range r.Nouns {
-					// Skip if noun is already inside an ANSI tag to avoid nested tags
-					if strings.Contains(roomDesc[i], `>`+noun+`</ansi>`) {
-						continue
-					}
-					roomDesc[i] = strings.Replace(roomDesc[i], noun, `<ansi fg="noun">`+noun+`</ansi>`, 1)
-				}
-			}
-		}
+		roomDesc := wrapDescriptionParts(descParts, 80, nouns)
 
 		details.Description = strings.Join(roomDesc, "\n")
 	}
@@ -182,39 +167,8 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 		}
 
-		if mutSpec.DescriptionModifier != nil {
-
-			// Handle any text changes
-			if mutSpec.DescriptionModifier.Behavior == mutators.TextPrepend {
-
-				if mutSpec.DescriptionModifier.Text != `` {
-
-					details.Description = colorpatterns.ApplyColorPattern(mutSpec.DescriptionModifier.Text, mutSpec.DescriptionModifier.ColorPattern) +
-						term.CRLFStr +
-						details.Description
-
-				}
-
-			} else if mutSpec.DescriptionModifier.Behavior == mutators.TextReplace {
-
-				if mutSpec.DescriptionModifier.Text != `` {
-					details.Description = colorpatterns.ApplyColorPattern(mutSpec.DescriptionModifier.Text, mutSpec.DescriptionModifier.ColorPattern)
-				} else {
-					details.Description = colorpatterns.ApplyColorPattern(details.Description, mutSpec.DescriptionModifier.ColorPattern)
-				}
-
-			} else if mutSpec.DescriptionModifier.Behavior == mutators.TextAppend {
-
-				if mutSpec.DescriptionModifier.Text != `` {
-
-					details.Description = details.Description +
-						term.CRLFStr +
-						colorpatterns.ApplyColorPattern(mutSpec.DescriptionModifier.Text, mutSpec.DescriptionModifier.ColorPattern)
-
-				}
-			}
-
-		}
+		// Description modifiers were applied before the wrap; see
+		// descriptionWithModifiers.
 
 		// Alert modifiers can only add to the list.
 		// No current plans to allow them to overwrite existing alerts.
@@ -616,4 +570,152 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 
 	return details
 
+}
+
+// descriptionPart is one block of a room description: the room's own text
+// or a mutator's description modifier, with the colour pattern to apply
+// after it is wrapped.
+type descriptionPart struct {
+	text         string
+	colorPattern string
+}
+
+// descriptionWithModifiers applies every active mutator's description
+// modifier (prepend, append or replace) to the room's description, as
+// parts still to be wrapped. GetDetails used to add them after the wrap,
+// so a long modifier printed as one unwrapped line (#455). A replace with
+// no text recolours every part that has no pattern of its own yet, as the
+// old in-place ApplyColorPattern left already coloured text alone.
+func descriptionWithModifiers(r *Room, description string) []descriptionPart {
+	parts := []descriptionPart{{text: description}}
+	for mut := range r.ActiveMutators {
+		mutSpec := mut.GetSpec()
+		if mutSpec == nil || mutSpec.DescriptionModifier == nil {
+			continue
+		}
+		mod := mutSpec.DescriptionModifier
+		switch mod.Behavior {
+		case mutators.TextPrepend:
+			if mod.Text != `` {
+				parts = append([]descriptionPart{{text: mod.Text, colorPattern: mod.ColorPattern}}, parts...)
+			}
+		case mutators.TextReplace:
+			if mod.Text != `` {
+				parts = []descriptionPart{{text: mod.Text, colorPattern: mod.ColorPattern}}
+				continue
+			}
+			for i := range parts {
+				if parts[i].colorPattern == `` {
+					parts[i].colorPattern = mod.ColorPattern
+				}
+			}
+		case mutators.TextAppend:
+			if mod.Text != `` {
+				parts = append(parts, descriptionPart{text: mod.Text, colorPattern: mod.ColorPattern})
+			}
+		}
+	}
+	return parts
+}
+
+// wrapDescriptionParts wraps each part to width as plain text, highlights
+// the room nouns on each wrapped line, then colours it. A colour pattern
+// tags every rune, so wrapping the tagged text could break a word in two
+// and highlighting it could never match a noun; doing both on the plain
+// line cannot. ApplyColorPattern leaves the noun tags it finds alone, so a
+// noun keeps its highlight in the description and in any modifier, coloured
+// or not (#455).
+func wrapDescriptionParts(parts []descriptionPart, width int, nouns map[string]string) []string {
+	var lines []string
+	for _, p := range parts {
+		for _, line := range util.SplitString(p.text, width) {
+			line = highlightNouns(line, nouns)
+			lines = append(lines, colorpatterns.ApplyColorPattern(line, p.colorPattern))
+		}
+	}
+	return lines
+}
+
+// highlightNouns wraps the first visible occurrence of each room noun on one
+// description line in a noun colour tag. Only text outside tag markup can
+// match, so a noun never lands inside an attribute such as
+// fg="map-deep-water" (#455). Longer nouns claim their span first, so "deep
+// water" is not split by "water", and a noun an author already tagged
+// (">noun</ansi>") is left alone.
+func highlightNouns(line string, nouns map[string]string) string {
+	if len(nouns) == 0 {
+		return line
+	}
+
+	// blocked marks every byte that is tag markup or already claimed.
+	blocked := make([]bool, len(line))
+	inTag := false
+	for i := 0; i < len(line); i++ {
+		if line[i] == '<' {
+			inTag = true
+		}
+		blocked[i] = inTag
+		if line[i] == '>' {
+			inTag = false
+		}
+	}
+
+	ordered := make([]string, 0, len(nouns))
+	for noun := range nouns {
+		if noun != `` {
+			ordered = append(ordered, noun)
+		}
+	}
+	sort.Slice(ordered, func(a, b int) bool {
+		if len(ordered[a]) != len(ordered[b]) {
+			return len(ordered[a]) > len(ordered[b])
+		}
+		return ordered[a] < ordered[b]
+	})
+
+	type span struct{ start, end int }
+	var spans []span
+	for _, noun := range ordered {
+		if strings.Contains(line, `>`+noun+`</ansi>`) {
+			continue
+		}
+		for from := 0; from <= len(line)-len(noun); {
+			idx := strings.Index(line[from:], noun)
+			if idx < 0 {
+				break
+			}
+			start, end := from+idx, from+idx+len(noun)
+			free := true
+			for j := start; j < end; j++ {
+				if blocked[j] {
+					free = false
+					break
+				}
+			}
+			if free {
+				for j := start; j < end; j++ {
+					blocked[j] = true
+				}
+				spans = append(spans, span{start, end})
+				break
+			}
+			from = start + 1
+		}
+	}
+	if len(spans) == 0 {
+		return line
+	}
+
+	sort.Slice(spans, func(a, b int) bool { return spans[a].start < spans[b].start })
+	var b strings.Builder
+	last := 0
+	for _, s := range spans {
+		b.WriteString(line[last:s.start])
+		b.WriteString(`<ansi fg="noun">`)
+		b.WriteString(line[s.start:s.end])
+		b.WriteString(`</ansi>`)
+		last = s.end
+	}
+	b.WriteString(line[last:])
+	return b.String()
 }

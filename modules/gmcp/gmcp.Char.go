@@ -466,12 +466,13 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 			// Owner ruling 4 (2026-09-20): Char.Enemies rides the same sight
 			// gate as the fight prompt's {target} token
-			// (userrecord.prompt.go canSeeTargetForPrompt / messaging.CanSeeClearly).
+			// (userrecord.prompt.go promptTargetSight / messaging.ReaderSight).
 			// Without this, GMCP undid the darkness work: room text read
 			// "Something slashes you!" while a modern client's enemy panel
 			// showed the mob by name with a live HP bar. Computed once per
 			// call, not per mob -- it depends only on the viewer and room.
-			canSee := messaging.CanSeeClearly(user.Character, roomInfo)
+			sight := messaging.ReaderSight(user.Character, roomInfo)
+			canSee := sight == messaging.SightFull
 
 			for _, mobInstanceId := range roomInfo.GetMobs(rooms.FindFighting) {
 				mob := mobs.GetInstance(mobInstanceId)
@@ -490,8 +491,9 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 				if !canSee {
 					// Keep the row (a scripted client must still see the
 					// fight is ongoing) but strip identity and health, the
-					// same two things the prompt withholds. Stay binary
-					// like the prompt -- no "a figure" tier here.
+					// same two things the prompt withholds. The name is
+					// what the combat lines call it at this sight, "a
+					// figure" at shapes and "something" with none (#455).
 					//
 					// Zeroed, not omitted. TestCharVitals_ZeroPoolsAreSentAsZero
 					// (gmcp.Vitals_test.go) documents a real incident: a
@@ -503,7 +505,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 					// a blind stretch, which is a worse leak than a
 					// misleading 0. A 0 is at least uniformly wrong, not a
 					// stale truth.
-					e.Name = `an unseen foe`
+					e.Name = messaging.UnseenNoun(sight)
 					e.Hp = 0
 					e.MaxHp = 0
 				}

@@ -152,9 +152,11 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 				// The mob tag, not the player one. GetCharacterName(true) tags
 				// every name `username`, so a mob holder rendered in the player
 				// colour. mobDisplayName is what the spell code already uses.
+				// StripNameAdjectives: mobDisplayName is look's form and
+				// carries the adjective span, a state tag, not prose (#453).
 				charName = m.Character.GetCharacterName(true)
 				if r := rooms.LoadRoom(m.Character.RoomId); r != nil {
-					charName = mobDisplayName(m, r, 0)
+					charName = messaging.StripNameAdjectives(mobDisplayName(m, r, 0))
 				}
 				charPlainName = mobPlainName(m)
 				roomId = m.Character.RoomId

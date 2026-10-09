@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // Empathic Shroud is a real hide (#444, owner 2026-10-09). The Awareness
@@ -276,4 +277,146 @@ func TestShroudOverSneak_ClearsTheSneakingFlag(t *testing.T) {
 	require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 200, "spell"))
 	require.True(t, c.HiddenByShroud())
 	require.Nil(t, c.GetMiscData(`sneaking`))
+}
+
+// #451: a player saved while hidden by a sneak (autosave, copyover, a
+// graceful shutdown) came back Visible, and the load's permanent rebuild
+// (Validate(true), users.loadUserFromPath) found no source for the saved
+// permanent record 9, so it expired and the prune pass told the room
+// "emerges from the shadows". A live 9 on a reloaded holder re-enters the
+// sneak hide the way a live 31 re-enters the shroud hide.
+func TestSneakHide_SurvivesReload(t *testing.T) {
+	seedStealthRecords(t)
+	c := newHider(50)
+	sneakHide(t, c)
+	c.SetMiscData(`sneaking`, true)
+
+	saved, err := yaml.Marshal(c)
+	require.NoError(t, err)
+	loaded := &Character{}
+	require.NoError(t, yaml.Unmarshal(saved, loaded))
+	require.Nil(t, loaded.Awareness, "fixture: Awareness is not saved")
+
+	require.NoError(t, loaded.Validate(true)) // what users.loadUserFromPath runs
+	require.True(t, loaded.IsHidden(), "the sneak hide must survive the reload")
+	require.False(t, loaded.HiddenByShroud(), "it comes back as a sneak")
+	require.True(t, loaded.holdsLiveStealthRecord(), "record 9 must stay live")
+	for _, rec := range loaded.Conditions.List {
+		if rec.ConditionId == conditionIdHidden {
+			require.False(t, rec.Expired(), "an expired 9 is pruned with its end line")
+		}
+	}
+	require.Equal(t, true, loaded.GetMiscData(`sneaking`), "the saved flag matches the hide")
+
+	require.NoError(t, loaded.Validate(true))
+	require.True(t, loaded.IsHidden(), "a second Validate changes nothing")
+}
+
+// #451 review G4: logout forces a hidden player visible, which cancels 9 or
+// 31 to an expired record that is saved before any prune. On the next login
+// the first prune told the room "emerges from the shadows" (or the shroud's
+// end line) of a player who had just arrived. A save boundary drops an ended
+// stealth record silently; a live one is kept for the reload rehide.
+func TestEndedStealthRecord_IsDroppedAtTheSaveBoundary(t *testing.T) {
+	for _, id := range []int{conditionIdHidden, conditions.ConditionIdEmpathicShroud} {
+		seedStealthRecords(t)
+		c := newHider(50)
+		if id == conditionIdHidden {
+			sneakHide(t, c)
+		} else {
+			require.NoError(t, c.AddConditionMagnitude(id, 0, 180, "spell"))
+		}
+		// What the logout reveal leaves: the record expired, the holder Visible.
+		c.Conditions.RemoveCondition(id)
+		c.RemovePermanentCondition(conditionIdHidden)
+		c.Awareness = awareness.NewMachine()
+
+		saved, err := yaml.Marshal(c)
+		require.NoError(t, err)
+		loaded := &Character{}
+		require.NoError(t, yaml.Unmarshal(saved, loaded))
+
+		loaded.DiscardEndedStealthRecords()
+		require.NoError(t, loaded.Validate(true))
+		for _, p := range loaded.Conditions.Prune() {
+			require.NotEqual(t, id, p.ConditionId, "record %d's end line was told on login", id)
+		}
+		require.False(t, loaded.IsHidden(), "record %d", id)
+	}
+}
+
+// A live record survives the save boundary, so the reload rehide (#451, #444)
+// still finds it.
+func TestLiveStealthRecord_SurvivesTheSaveBoundary(t *testing.T) {
+	seedStealthRecords(t)
+	c := newHider(50)
+	sneakHide(t, c)
+	c.DiscardEndedStealthRecords()
+	require.True(t, c.holdsLiveStealthRecord())
+}
+
+// The control: an ordinary reveal in play keeps its end line. Validate must
+// not drop the expired record; only the save boundary does.
+func TestEndedStealthRecord_InPlayStillTellsItsEndLine(t *testing.T) {
+	seedStealthRecords(t)
+	c := newHider(50)
+	sneakHide(t, c)
+	c.RevealForCombat()
+	require.False(t, c.IsHidden())
+	require.NoError(t, c.Validate(true))
+	told := false
+	for _, p := range c.Conditions.Prune() {
+		told = told || p.ConditionId == conditionIdHidden
+	}
+	require.True(t, told, "an in-play reveal must still prune record 9 with its end line")
+}
+
+// #451 review G6: a save holding both a live 9 and a live 31 reloaded into the
+// shroud hide whatever the scores, because reconcileShroudHide runs first and
+// reconcileSneakHide only acted on a Visible holder. The stronger hide holds
+// (owner, 2026-10-09: one hide, the strongest) and the other record goes
+// silently.
+func TestReload_BothStealthRecordsKeepTheStronger(t *testing.T) {
+	load := func(t *testing.T, dex int, shroud float64) *Character {
+		t.Helper()
+		seedStealthRecords(t)
+		c := newHider(dex)
+		require.True(t, c.Conditions.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, shroud))
+		require.True(t, c.Conditions.AddCondition(conditionIdHidden, true))
+		c.Awareness = nil // what a load builds: no machine until Validate
+		saved, err := yaml.Marshal(c)
+		require.NoError(t, err)
+		loaded := &Character{}
+		require.NoError(t, yaml.Unmarshal(saved, loaded))
+		require.NoError(t, loaded.Validate(true))
+		return loaded
+	}
+	t.Run("stronger sneak holds", func(t *testing.T) {
+		c := load(t, 300, 100)
+		require.True(t, c.IsHidden())
+		require.False(t, c.HiddenByShroud(), "the weaker shroud took the hide")
+		require.False(t, c.holdsLiveShroudRecord(), "the weaker 31 stays")
+		for _, p := range c.Conditions.Prune() {
+			require.NotEqual(t, conditions.ConditionIdEmpathicShroud, p.ConditionId, "31 must go silently")
+		}
+	})
+	t.Run("stronger shroud holds", func(t *testing.T) {
+		c := load(t, 50, 300)
+		require.True(t, c.HiddenByShroud())
+		require.False(t, c.holdsLiveStealthRecord(), "the weaker 9 stays")
+		for _, p := range c.Conditions.Prune() {
+			require.NotEqual(t, conditionIdHidden, p.ConditionId, "9 must go silently")
+		}
+	})
+}
+
+// The sibling: a 9 that a reveal already cancelled stays cancelled.
+func TestSneakHide_CancelledRecordStaysVisibleOnReload(t *testing.T) {
+	seedStealthRecords(t)
+	c := newHider(50)
+	sneakHide(t, c)
+	c.Conditions.RemoveCondition(conditionIdHidden) // what the reveal cascade's cancel leaves
+	c.Awareness = awareness.NewMachine()
+	require.NoError(t, c.Validate(true))
+	require.False(t, c.IsHidden())
 }

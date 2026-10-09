@@ -125,10 +125,10 @@ func item_Spawn(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 			room.AddItem(itm, false)
 
 			user.SendText(messaging.CategorySystem,
-				fmt.Sprintf(`You wave your hands around and <ansi fg="item">%s</ansi> appears from thin air and falls to the ground.`, itm.DisplayName()),
+				fmt.Sprintf(`You wave your hands and <ansi fg="item">%s</ansi> appears.`, itm.DisplayName()),
 			)
 			room.SendTextVisual(messaging.CategoryMobEmote,
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> waves their hands around and <ansi fg="item">%s</ansi> appears from thin air and falls to the ground.`, user.Character.Name, itm.DisplayName()),
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> waves their hands and <ansi fg="item">%s</ansi> appears.`, user.Character.Name, itm.DisplayName()),
 				user.UserId,
 			)
 

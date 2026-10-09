@@ -395,12 +395,23 @@ func attackerBonusSkillAndStat(res combat.AttackResult, atkChar *characters.Char
 // mob is unseen in it by every reader, as a hidden caster is in its
 // spell-channel lines (#274, owner R3). GetMobNameIndexed alone named it to
 // every faces reader as "Skeleton (hidden)" (#382).
+//
+// It is a NARRATION name, as characters.GetCharacterName(true) is (#453): the
+// identity tag with its duplicate index and suffix colour, but no adjective
+// span, quest star or " and <pet>". Every caller puts it in a line about what
+// the mob did or had done to it (recoil, spell, condition and defence
+// lines), where "You recoil from striking Skeleton (charmed)!" told a state
+// tag (#454 review).
 func mobDisplayName(mob *mobs.Mob, room *rooms.Room, viewingUserId int) string {
 	if mobHiddenFrom(mob, viewingUserId) {
 		return messaging.UnseenFigure(messaging.SightNone)
 	}
 	dupIdx := room.GetMobDuplicateIndex(mob.InstanceId)
-	return mob.Character.GetMobNameIndexed(viewingUserId, dupIdx).String()
+	f := mob.Character.GetMobNameIndexed(viewingUserId, dupIdx)
+	f.Adjectives = nil
+	f.QuestAlert = false
+	f.PetName = ``
+	return f.String()
 }
 
 // mobPlainName is mobDisplayName's untagged twin, for a condition line's
@@ -516,6 +527,20 @@ func sendMobSpellFailed(mob *mobs.Mob, room *rooms.Room, verb string) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
 		`%s's spell %s.`, mobSubjectName(mob, room), verb),
 		messaging.SoundSpellSputtersOut)
+}
+
+// fizzleMobFold ends a mob's fold whose target is gone and tells the room
+// (#242): the casting is cleared (a no-op when the fold step already
+// cleared it), the concentration failure is recorded against the fold's
+// target, and the room reads "<caster>'s spell fizzles." by sight or hears
+// the sputter. It is the one ending for every way a mob's target goes: the
+// fold step's TargetGone (dead or logged out), IdleMobs releasing a mob whose
+// target walked out mid-fold, and a fold that completes with no target left
+// in the room (resolveMobSpell).
+func fizzleMobFold(mob *mobs.Mob, room *rooms.Room, cs activity.CastingData) {
+	clearCastingActivity(&mob.Character, activity.TriggerConcentrationBreak)
+	recordConcentrationFailure(combat.Mob, combat.User, &mob.Character, castingTargetChar(cs))
+	sendMobSpellFailed(mob, room, "fizzles")
 }
 
 // sendMobWeaving narrates a mob still holding its fold. Sight only: a quiet
@@ -822,6 +847,19 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 	return true
 }
 
+// mobHoldsHelpFold reports whether mob is folding a spell that is not a harm
+// spell: one whose fold steps out of combat as well as in it (#242). A spell
+// no longer defined counts too, so its fold step clears it
+// (SpellDataMissing) rather than leaving it to hang.
+func mobHoldsHelpFold(mob *mobs.Mob) bool {
+	cs, ok := mob.Character.CastingData()
+	if !ok {
+		return false
+	}
+	spell := spells.GetSpell(cs.SpellId)
+	return spell == nil || !spell.IsHarm()
+}
+
 // handleMobFoldCasting processes fold spell casting for a mob.
 // Returns true if the mob is casting and should skip combat.
 func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
@@ -845,8 +883,7 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 		sendMobConcentrationBroke(mob, mobRoom)
 
 	case result.TargetGone:
-		recordConcentrationFailure(combat.Mob, combat.User, &mob.Character, castingTargetChar(csBeforeProcess))
-		sendMobSpellFailed(mob, mobRoom, "fizzles")
+		fizzleMobFold(mob, mobRoom, csBeforeProcess)
 
 	case result.SpellDataMissing:
 		// Silent failure — no message for missing spell data on mobs.
@@ -858,9 +895,15 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 	case result.CastComplete:
 		cs := result.CastingData
 		spellData := result.SpellData
-		castLanded := false
+		castLanded, fizzled := false, false
 		if resolveRoom := rooms.LoadRoom(mob.Character.RoomId); resolveRoom != nil {
-			castLanded = resolveMobSpell(mob, cs, spellData, resolveRoom)
+			castLanded, fizzled = resolveMobSpell(mob, cs, spellData, resolveRoom)
+		}
+		// A fold that completed on a room its targets had left fizzled:
+		// nothing resolved, so no award and no discovery, as for TargetGone
+		// above (#242).
+		if fizzled {
+			return true
 		}
 		// Stage 38.3: Mob spellcasting progression.
 		//
@@ -1086,8 +1129,11 @@ func handleCompanionOwnerAssist(defMob *mobs.Mob, attackerDesc string) {
 
 	// Owner fights back if not already in combat. The round claim stops this
 	// duplicating the reactive path in CombatPhase_CompanionAssist.go, which
-	// fires a round earlier and leaves IsInCombat() still false.
+	// fires a round earlier and leaves IsInCombat() still false. An owner who
+	// sees nothing cannot pick the attacker out (#454), as a party member
+	// cannot, and is skipped.
 	if !owner.Character.IsInCombat() &&
+		memberSeesSomething(owner) &&
 		owner.Character.TryClaimAssistCommand(util.GetRoundCount()) {
 		owner.Command(fmt.Sprintf("attack %s", attackerDesc))
 	}
@@ -1367,14 +1413,27 @@ func handlePartyAutoAttack(mob *mobs.Mob, defUser *users.UserRecord) {
 				continue
 			}
 			if memberUser := users.GetByUserId(memberId); memberUser != nil {
+				// A member who sees nothing cannot pick the mob out (#454),
+				// and would be told so every round it swings.
 				if memberUser.Character.RoomId == defUser.Character.RoomId &&
 					memberUser.Character.GetSetting("autoattack") != "off" &&
-					!memberUser.Character.IsInCombat() {
+					!memberUser.Character.IsInCombat() &&
+					memberSeesSomething(memberUser) {
 					memberUser.Command(fmt.Sprintf(`attack #%d`, mob.InstanceId))
 				}
 			}
 		}
 	}
+}
+
+// memberSeesSomething reports whether a party member makes out at least
+// shapes in their room, which `attack #<id>` needs since #454.
+func memberSeesSomething(u *users.UserRecord) bool {
+	room := rooms.LoadRoom(u.Character.RoomId)
+	if room == nil {
+		return false
+	}
+	return messaging.ParticipantSight(u.Character, room) != messaging.SightNone
 }
 
 // surpriseCandidate builds the skullduggery candidate a landed surprise attack

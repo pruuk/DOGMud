@@ -2,8 +2,8 @@
 <ansi fg="yellow-bold">RoomId:</ansi>         <ansi fg="red">{{ $room.RoomId }}</ansi>{{ if eq $zone.RoomId $room.RoomId }} <ansi fg="white">(This is the zone root)</ansi>{{ else }} <ansi fg="white">(Zone root is {{ $zone.RoomId }})</ansi>{{ end }}
 <ansi fg="yellow-bold">Filepath:</ansi>       <ansi fg="129">{{ $room.Filepath }}</ansi>
 <ansi fg="yellow-bold">Zone:</ansi>           <ansi fg="room-zone">{{ $room.Zone }}</ansi>
-<ansi fg="yellow-bold">MapSymbol:</ansi>      <ansi fg="map-{{ lowercase $room.MapLegend }}">{{ $room.GetMapSymbol }}</ansi>
-<ansi fg="yellow-bold">MapLegend:</ansi>      <ansi fg="map-{{ lowercase $room.MapLegend }}">{{ $room.MapLegend }}</ansi>
+<ansi fg="yellow-bold">MapSymbol:</ansi>      <ansi fg="map-{{ mapslug $room.MapLegend }}">{{ $room.GetMapSymbol }}</ansi>
+<ansi fg="yellow-bold">MapLegend:</ansi>      <ansi fg="map-{{ mapslug $room.MapLegend }}">{{ $room.MapLegend }}</ansi>
 <ansi fg="yellow-bold">Title:</ansi>          <ansi fg="room-title">{{ $room.Title }}</ansi>
 <ansi fg="yellow-bold">Description:</ansi>    {{ splitstring $room.GetDescription 64 "                " }}
 <ansi fg="yellow-bold">Exits:</ansi>          {{ if eq (len $room.Exits) 0 }}None{{ else }}

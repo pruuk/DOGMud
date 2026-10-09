@@ -1187,6 +1187,9 @@ var unicodeToAscii = map[rune]string{
 	// Map / directional
 	'▲': "^", '▼': "v", '△': "^", '▽': "v",
 	'≈': "~", '⌂': "#", '◆': "*", '●': "o", '○': "o",
+	// No-break space: the crit banner close is glued to the line's last word
+	// with one (combat_helpers.go); an ASCII client gets a plain space.
+	' ': " ",
 }
 
 // Server start time, stamped once from main() so MSSP (and anything else) can

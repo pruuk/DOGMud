@@ -28,7 +28,7 @@ options:
         - 'You circle <ansi fg="{acteetype}">{actee}</ansi> warily, <ansi fg="item">{itemname}</ansi> arched and ready to plunge.'
         master:
         - 'With practiced ease, you adopt a {stance} stance while {position}.'
-        - 'Your <ansi fg="item">{itemname}</ansi> settles into perfect striking position, {momentum}.'
+        - 'You settle your <ansi fg="item">{itemname}</ansi> into perfect striking position, {momentum}.'
         - 'You flow into your {stance} fighting stance with lethal, coiled precision.'
         - '{momentum}, you read <ansi fg="{acteetype}">{actee}</ansi>''s every opening, barb poised to inject.'
       actee:
@@ -44,7 +44,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> circles you with deadly, coiled precision.'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> settles into a masterful {stance} stance.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> arches into perfect position, a lethal threat.'
+        - '<ansi fg="{actortype}">{actor}</ansi> arches their <ansi fg="item">{itemname}</ansi> into perfect position, a lethal threat.'
         - '<ansi fg="{actortype}">{actor}</ansi> flows into a {stance} fighting stance with lethal, coiled precision.'
         - 'With terrifying calm, <ansi fg="{actortype}">{actor}</ansi> prepares their venomous strike.'
       observer:
@@ -60,7 +60,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> circles <ansi fg="{acteetype}">{actee}</ansi> warily, barb arched and ready to plunge.'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> adopts a masterful, venomous combat stance.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> settles into perfect striking position.'
+        - '<ansi fg="{actortype}">{actor}</ansi> settles their <ansi fg="item">{itemname}</ansi> into perfect striking position.'
         - '<ansi fg="{actortype}">{actor}</ansi> flows into a lethal, coiled fighting stance.'
         - 'With coiled menace, <ansi fg="{actortype}">{actor}</ansi> prepares to engage <ansi fg="{acteetype}">{actee}</ansi>.'
   wait:
@@ -122,7 +122,7 @@ options:
         - 'You jab your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but miss!'
         - 'Your sting arcs through the air as <ansi fg="{acteetype}">{actee}</ansi> dodges!'
         - 'You lunge at <ansi fg="{acteetype}">{actee}</ansi> with your barb, but fail to connect!'
-        - 'You stab wildly and your <ansi fg="item">{itemname}</ansi> finds only empty air!'
+        - 'You stab wildly with your <ansi fg="item">{itemname}</ansi> and find only empty air!'
         expert:
         - 'Your calculated strike misses as <ansi fg="{acteetype}">{actee}</ansi> evades!'
         - 'You feint and lunge, but <ansi fg="{acteetype}">{actee}</ansi> anticipates your sting!'
@@ -138,7 +138,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> jabs their <ansi fg="item">{itemname}</ansi> at you, but misses.'
         - '<ansi fg="{actortype}">{actor}''s</ansi> barb slices through the air as you dodge!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges their stinger at you, but fails to connect!'
-        - '<ansi fg="{actortype}">{actor}</ansi> stabs wildly and their <ansi fg="item">{itemname}</ansi> finds only empty air.'
+        - '<ansi fg="{actortype}">{actor}</ansi> stabs wildly with their <ansi fg="item">{itemname}</ansi> and finds only empty air.'
         expert:
         - 'You evade <ansi fg="{actortype}">{actor}</ansi>''s calculated strike!'
         - 'You anticipate <ansi fg="{actortype}">{actor}</ansi>''s feint and avoid their plunge!'
@@ -154,7 +154,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> jabs their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but misses.'
         - '<ansi fg="{actortype}">{actor}''s</ansi> barb slices through the air as <ansi fg="{acteetype}">{actee}</ansi> dodges!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges at <ansi fg="{acteetype}">{actee}</ansi> but fails to connect.'
-        - '<ansi fg="{actortype}">{actor}</ansi> stabs wildly and their <ansi fg="item">{itemname}</ansi> finds only empty air.'
+        - '<ansi fg="{actortype}">{actor}</ansi> stabs wildly with their <ansi fg="item">{itemname}</ansi> and finds only empty air.'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s calculated sting is evaded by <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{acteetype}">{actee}</ansi> anticipates the feint and avoids the plunge!'
@@ -171,7 +171,7 @@ options:
       actor:
         beginner:
         - 'You jab your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>.'
-        - 'Your <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi>.'
+        - 'You graze <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>.'
         - 'You deliver a glancing sting to <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You poke clumsily and nick <ansi fg="{acteetype}">{actee}</ansi> with your barb.'
         expert:
@@ -228,7 +228,7 @@ options:
       actor:
         beginner:
         - 'You sting <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> pierces <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You pierce <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'You plunge your barb into <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You arc your <ansi fg="item">{itemname}</ansi> down and connect solidly!'
         expert:
@@ -244,14 +244,14 @@ options:
         - 'You exploit an opening and drive your barb into <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Following through, you deliver a solid sting to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You capitalize on your momentum and strike true!'
-        - 'Your <ansi fg="item">{itemname}</ansi> flashes as you maintain the pressure!'
+        - 'You flash your <ansi fg="item">{itemname}</ansi> and keep up the pressure!'
         - 'You are {momentum} as your barb pierces <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> sinks into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
+        - 'You sink your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
         - 'You drive your stinger into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> stings you with their <ansi fg="item">{itemname}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> pierces you!'
+        - '<ansi fg="{actortype}">{actor}</ansi> pierces you with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> plunges their barb into you!'
         - '<ansi fg="{actortype}">{actor}</ansi> arcs their <ansi fg="item">{itemname}</ansi> down and connects solidly!'
         expert:
@@ -267,14 +267,14 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> exploits an opening and drives their barb home!'
         - '<ansi fg="{actortype}">{actor}</ansi> follows through with a solid sting!'
         - '<ansi fg="{actortype}">{actor}</ansi> capitalizes on their momentum and strikes true!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> flashes as they maintain pressure!'
+        - '<ansi fg="{actortype}">{actor}</ansi> flashes their <ansi fg="item">{itemname}</ansi> and keeps up the pressure!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your stance and injects with precision!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> sinks into your {bodypart}!'
+        - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> into your {bodypart}!'
         - '<ansi fg="{actortype}">{actor}</ansi> drives their stinger into your {bodypart}!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> stings <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> pierces <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> pierces <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> plunges their barb into <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> arcs their <ansi fg="item">{itemname}</ansi> down and connects solidly!'
         expert:
@@ -290,9 +290,9 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> exploits an opening and drives their barb home!'
         - '<ansi fg="{actortype}">{actor}</ansi> follows through with a solid sting!'
         - '<ansi fg="{actortype}">{actor}</ansi> capitalizes on momentum and strikes true!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> flashes as the pressure continues!'
+        - '<ansi fg="{actortype}">{actor}</ansi> flashes their <ansi fg="item">{itemname}</ansi> and keeps up the pressure!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads the stance and injects with precision!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> sinks into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
+        - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
         - '<ansi fg="{actortype}">{actor}</ansi> drives their stinger into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
   heavy:
     # messages for when they are in the same room
@@ -383,12 +383,12 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY PIERCES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You <ansi fg="cyan-bold">CRITICALLY PIERCE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL STING</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SKEWERS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You <ansi fg="cyan-bold">SKEWER</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'You land a <ansi fg="cyan-bold">DEVASTATING PLUNGE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
-        - 'You whirl and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">IMPALES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You whirl and <ansi fg="cyan-bold">IMPALE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Lunging forward, you deliver a <ansi fg="cyan-bold">PERFECT STING</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You flow like venom and your barb <ansi fg="cyan-bold">PENETRATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - you <ansi fg="cyan-bold">INJECT</ansi> with full force!'
@@ -399,14 +399,14 @@ options:
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT INJECTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING PLUNGE</ansi> from the perfect angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">PERFORATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with lethal precision!'
-        - 'Your positioning is flawless - your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your positioning is flawless - you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Your unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL IMPALEMENT</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">DRIVE THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly!'
         - 'The tide of battle favors you - your stinger <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY PIERCES</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL STING</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY PIERCES</ansi> you with their <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL STING</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - 'You are <ansi fg="cyan-bold">DEVASTATED</ansi> by <ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING PLUNGE</ansi> on you!'
         expert:
@@ -427,8 +427,8 @@ options:
         - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their stinger <ansi fg="cyan-bold">DECIMATES</ansi> you!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY PIERCES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL STING</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY PIERCES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL STING</ansi> to <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING PLUNGE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
@@ -455,7 +455,7 @@ options:
         - 'Your sting <ansi fg="red-bold">FUMBLES</ansi> awkwardly as your plunge goes completely wild!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and your barb snags uselessly on nothing!'
         - 'You overcommit to your plunge and <ansi fg="red-bold">FUMBLE</ansi>, nearly losing your balance!'
-        - 'You stumble badly and your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> uselessly!'
+        - 'You stumble badly and <ansi fg="red-bold">FUMBLE</ansi> your <ansi fg="item">{itemname}</ansi> uselessly!'
         expert:
         - 'Your tactical calculation fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your sting!'
@@ -480,7 +480,7 @@ options:
         - '<ansi fg="{actortype}">{actor}''s</ansi> masterful strike is disrupted - they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> barb snags uselessly on nothing!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their sting at <ansi fg="{acteetype}">{actee}</ansi> in a clumsy manner!'
         - '<ansi fg="{actortype}">{actor}</ansi> loses control and their plunge <ansi fg="red-bold">FUMBLES</ansi> pathetically!'

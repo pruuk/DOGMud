@@ -1430,6 +1430,15 @@ but collapsed each pool to one line per intensity per skill tier here.
 `consistent_attack_messages_guard_test.go` fails the build if the name
 returns.
 
+**Natural-weapon pools never make `{itemname}` a verb's subject.** A mob's
+natural weapon renders as the species' `unarmedname`, singular for some
+("maw", "abrasive whirl") and plural for most ("claws", "pseudopods"), so
+no verb can agree with it. In the `claws`, `bite`, `sting`, `gore` and
+`slam` pools (and any other species `natural_attack` pool) the attacker
+does the verb: "You rake X with your {itemname}". In both worlds,
+`natural_weapon_agreement_test.go` fails any line where a word other than a
+preposition, particle or participle follows `{itemname}` (#455).
+
 ## Item walkers
 
 `WalkSlice(s []Item, fn func(*Item))` (walk.go) calls fn with a pointer

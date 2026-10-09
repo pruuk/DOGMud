@@ -161,11 +161,22 @@ func (c *Character) GetPlayerName(viewingUserId int, renderFlags ...NameRenderFl
 // GetCharacterName returns the character's name as a plain string (ansi=false)
 // or as an ANSI-tagged display string (ansi=true). Works for both player and
 // mob characters; uses the username color tag for ANSI display.
+//
+// The tagged form is the NARRATION name: the identity tag alone, keeping its
+// suffix colour (dead) but no adjective span, quest star or " and <pet>"
+// (#453). Every production caller feeds it into a line about what the holder
+// did, and "Sil Vantage (hidden) seems to shimmer" told the room a state tag.
+// look and the rosters render through GetPlayerName / GetMobName instead and
+// keep every decoration.
 func (c *Character) GetCharacterName(ansi bool) string {
 	if !ansi {
 		return c.Name
 	}
-	return c.getFormattedName(0, `username`).String()
+	f := c.getFormattedName(0, `username`)
+	f.Adjectives = nil
+	f.QuestAlert = false
+	f.PetName = ``
+	return f.String()
 }
 
 func (c *Character) getFormattedName(viewingUserId int, uType string, renderFlags ...NameRenderFlag) FormattedName {

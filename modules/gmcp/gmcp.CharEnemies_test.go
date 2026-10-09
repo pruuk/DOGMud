@@ -14,7 +14,7 @@ import (
 )
 
 // Char.Enemies rides the same sight gate as the fight prompt's {target}
-// token (userrecord.prompt.go canSeeTargetForPrompt / messaging.CanSeeClearly),
+// token (userrecord.prompt.go promptTargetSight / messaging.ReaderSight),
 // per owner ruling 4 (2026-09-20): GMCP must not undo the darkness work by
 // handing a modern client the enemy's name and a live HP bar while the room
 // text reads "Something slashes you!".
@@ -94,7 +94,7 @@ func TestCharEnemies_BlindViewerGetsNoIdentityOrHp(t *testing.T) {
 		"the row must stay -- dropping it would tell a scripted client the fight ended")
 
 	e := enemies[0]
-	require.Equal(t, "an unseen foe", e.Name, "must match the prompt's wording exactly")
+	require.Equal(t, "something", e.Name, "must match the prompt's and the combat lines' wording exactly (#455)")
 	require.NotEqual(t, "Grave Wight", e.Name, "a blind viewer's payload must name no mob")
 	require.Equal(t, 0, e.Hp, "a blind viewer must carry no readable hp")
 	require.Equal(t, 0, e.MaxHp, "a blind viewer must carry no readable hp_max")

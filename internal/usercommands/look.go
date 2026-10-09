@@ -698,10 +698,7 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 			legend := output.GetLegend(keywords.GetAllLegendAliases(room.Zone))
 
 			for i := 1; i <= c.Height; i++ {
-				for sym, txtLegend := range legend {
-					txtLc := strings.ToLower(txtLegend)
-					tinyMap[i] = strings.Replace(tinyMap[i], string(sym), fmt.Sprintf(`<ansi fg="map-room"><ansi fg="map-%s" bg="mapbg-%s">%c</ansi></ansi>`, txtLc, txtLc, sym), -1)
-				}
+				tinyMap[i] = mapper.ColorizeLegendLine(tinyMap[i], legend)
 			}
 
 			details = rooms.GetDetails(room, user, tinyMap)

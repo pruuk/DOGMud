@@ -42,6 +42,26 @@ The listener set is the substance of the module:
 Every one of those exists because a stale follow edge produces a mob trailing a
 player who no longer exists, or a follower that cannot be shaken off.
 
+## Sight (#454)
+
+The player `follow <name>` runs the typed name through `actions.AimBySight`
+before it resolves, like every command that names a creature: full sight
+resolves names, shapes only resolves `shape` / `N.shape` / `shape#N` (and
+`@N` / `#N`) and answers a typed name with a hint, no sight resolves nothing
+("You don't see them here."). `follow stop` and `follow lose` name no one and
+need no sight. The lines that follow a start hide each name at its reader's
+sight (`messaging.HideNames` for the follower, `HideSpeakerNames` for the
+target, who reads "Someone is following you."). `follow stop` tells the
+followed user the follower's name the same way ("Someone stopped following
+you." in the dark), and the follower's own line hides the followed name at
+the follower's sight. The mob `follow` is not gated: mobs act on shapes.
+Every line a player reads about a follow ending hides the other party's
+name at that player's sight in their own room (`readerSight`): a mob's
+`follow stop` ("Rat stopped following you.", which once printed the
+player's own name) and `follow lose`, and the round expiry lines in
+`onNewRound` for player and player, mob and player, player and mob. A mob
+subject reads "Something", a player subject "Someone".
+
 ## Gotchas
 
 - **Any new way for an actor to leave the world needs a listener here.**

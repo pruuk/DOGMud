@@ -198,3 +198,56 @@ func (c *Character) reconcileShroudHide() {
 	}
 	_ = c.Awareness.TransitionToRevealing(state.TransitionReason{Trigger: awareness.TriggerShroudEnded})
 }
+
+// DiscardEndedStealthRecords drops an ended (expired, not yet pruned) record
+// 9 or 31 without its end line, and keeps a live one. It is for a SAVE
+// BOUNDARY only: users.loadUserFromPath calls it before the load's
+// Validate(true) (#451 review). Logout forces a hidden player visible, which
+// cancels the record to expired, and the save happens before any prune, so
+// the first prune after the next login told the room "emerges from the
+// shadows" of a player who had just arrived. An expired record on a loaded
+// character always ended before the save; its moment has passed.
+//
+// Never call it from Validate or the reconcile functions: an ordinary reveal
+// in play leaves the same expired record, and the prune of it is what tells
+// the room the hider emerged.
+func (c *Character) DiscardEndedStealthRecords() {
+	// A freshly loaded record list has no lookups yet, and Discard reads them.
+	c.Conditions.Validate(true)
+	for _, id := range []int{conditionIdHidden, conditions.ConditionIdEmpathicShroud} {
+		for _, rec := range c.Conditions.List {
+			if rec.ConditionId == id && rec.Expired() {
+				c.Conditions.Discard(id)
+				break
+			}
+		}
+	}
+}
+
+// reconcileSneakHide is reconcileShroudHide's sibling for a sneak hide
+// (#451). Validate calls it after reconcileShroudHide.
+//
+// Reload: a loaded character gets a fresh, Visible Awareness machine while
+// its saved permanent record 9 comes back live, and the permanent rebuild
+// (Validate(true)) found no source for a 9 on a Visible holder, so it
+// expired and the prune pass told the room "emerges from the shadows". A
+// Visible holder of a live 9 re-enters the sneak hide through
+// hideForStealthRecord, the door record 9 lands through, so the rebuild
+// that follows keeps the 9 (reapplyPermanentConditions sources a live 9 on
+// a sneak-hidden holder) and the saved `sneaking` flag matches the hide.
+// Every exit from Hidden cancels 9 with the other hidden-flag records
+// (Awareness_Cascades.go), so a revealed hide does not come back here.
+//
+// Both records live (#451 review): reconcileShroudHide runs first, so a
+// reload holding a live 9 and a live 31 comes back shroud-hidden whatever the
+// scores. A live 9 on a shroud-hidden holder lands through the same door,
+// whose settleHide keeps the stronger hide and discards the other record
+// without its end line (owner, 2026-10-09: one hide, the strongest).
+func (c *Character) reconcileSneakHide() {
+	if c.Awareness == nil || !c.holdsLiveStealthRecord() {
+		return
+	}
+	if c.Awareness.State() == awareness.Visible || c.HiddenByShroud() {
+		c.hideForStealthRecord(conditionIdHidden)
+	}
+}

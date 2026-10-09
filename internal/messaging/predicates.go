@@ -212,3 +212,22 @@ func CanSeeShapes(observer *characters.Character, room RoomVisibility) bool {
 	d := ParticipantSight(observer, room)
 	return d == SightFull || d == SightShapes
 }
+
+// ReaderSight is the sight decision a reader's visual line is judged at:
+// SightFull when CanSeeClearly, SightShapes when CanSeeShapes, else
+// SightNone. Unlike ParticipantSight it carries the sleep gate, as every
+// visual sender does (rooms.visualDecision is this function). The fight
+// prompt's {target} and GMCP Char.Enemies name an unseen foe with
+// UnseenNoun of it, so they say what the combat lines say (#455), and the
+// combat personal lines' name gate is this function too
+// (combat.newCombatContext), so a sleeper hit in a lit room reads
+// "something".
+func ReaderSight(observer *characters.Character, room RoomVisibility) SightDecision {
+	switch {
+	case CanSeeClearly(observer, room):
+		return SightFull
+	case CanSeeShapes(observer, room):
+		return SightShapes
+	}
+	return SightNone
+}

@@ -43,7 +43,7 @@ func Plant(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	actor := &actions.UserActor{User: user, Room: room}
+	actor := actions.UserActorAtSight(user, room)
 	result := actions.Plant(actor, opts)
 
 	// actions.Plant emits player-facing text for every outcome except
@@ -90,17 +90,22 @@ func parsePlantArgs(args []string, room *rooms.Room, user *users.UserRecord) (ac
 		return actions.PlantOptions{}, false
 	}
 
-	// Try mob/player resolution first.
-	target, err := actions.ResolveTargetActor(room, targetNoun, actions.ResolveTargetOptions{Viewer: user.Character})
-	if err == nil {
-		if target.IsPlayer() {
-			user.SendText(messaging.CategorySystem, "You can't plant items on other players.")
-			return actions.PlantOptions{}, false
+	// Try mob/player resolution first, if the planter's sight lets the noun
+	// name a creature (#454). A refused noun may still be a container; the
+	// refusal is told only if it is not.
+	creatureNoun, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, targetNoun, `plant `+itemNoun+` on`)
+	if aimRefusal == `` {
+		target, err := actions.ResolveTargetActor(room, creatureNoun, actions.ResolveTargetOptions{Viewer: user.Character})
+		if err == nil {
+			if target.IsPlayer() {
+				user.SendText(messaging.CategorySystem, "You can't plant items on other players.")
+				return actions.PlantOptions{}, false
+			}
+			return actions.PlantOptions{
+				ItemNoun:            itemNoun,
+				TargetMobInstanceId: target.(*actions.MobActor).Mob.InstanceId,
+			}, true
 		}
-		return actions.PlantOptions{
-			ItemNoun:            itemNoun,
-			TargetMobInstanceId: target.(*actions.MobActor).Mob.InstanceId,
-		}, true
 	}
 
 	// Try room container.
@@ -112,6 +117,10 @@ func parsePlantArgs(args []string, room *rooms.Room, user *users.UserRecord) (ac
 		}, true
 	}
 
+	if aimRefusal != `` {
+		user.SendText(messaging.CategorySystem, aimRefusal)
+		return actions.PlantOptions{}, false
+	}
 	user.SendText(messaging.CategorySystem, "Plant on whom?")
 	return actions.PlantOptions{}, false
 }

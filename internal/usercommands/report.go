@@ -23,7 +23,10 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	cpBar := users.RenderVitalBar(c.Conviction, c.ConvictionMax.Value,
 		c.GetPoolReservation("conviction", c.ConvictionMax.Value))
 
-	barText := fmt.Sprintf(`HP %s  SP %s  CP %s`, hpBar, spBar, cpBar)
+	// Each bar is bracketed. Every report line ends in the CP bar, and a
+	// closing bracket is a terminator the end-punctuation stage leaves
+	// alone, so no stop is written inside the bar's colour (#455).
+	barText := fmt.Sprintf(`HP [%s]  SP [%s]  CP [%s]`, hpBar, spBar, cpBar)
 
 	rest = strings.TrimSpace(strings.ToLower(rest))
 
@@ -56,8 +59,15 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if rest != "" {
-		// Find target player in room
-		target, err := actions.ResolveTargetActor(room, rest, actions.ResolveTargetOptions{Viewer: user.Character})
+		// Find target player in room. #454, owner call 2: a typed name
+		// resolves only at full sight, or a whisper would confirm who is there
+		// in the dark.
+		name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `rep`)
+		if refusal != `` {
+			user.SendText(messaging.CategorySystem, refusal)
+			return true, nil
+		}
+		target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
 		if err == actions.ErrTargetVanished {
 			user.SendText(messaging.CategorySystem, "They are no longer here.")
 			return true, nil
@@ -73,12 +83,16 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			return true, nil
 		}
 
-		targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(
+		// Each side's line hides the other's name at that reader's sight. The
+		// report is a whisper, so its sender is "Someone" (HideSpeakerNames).
+		targetUser.SendText(messaging.CategorySystem, messaging.HideSpeakerNames(fmt.Sprintf(
 			`<ansi fg="whisper"><ansi fg="username">%s</ansi> reports to you: %s</ansi>`,
-			c.Name, barText))
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			c.Name, barText),
+			[]string{c.Name}, messaging.ParticipantSight(targetUser.Character, room)))
+		user.SendText(messaging.CategorySystem, messaging.HideNames(fmt.Sprintf(
 			`<ansi fg="whisper">You report to <ansi fg="username">%s</ansi>: %s</ansi>`,
-			targetUser.Character.Name, barText))
+			targetUser.Character.Name, barText),
+			[]string{targetUser.Character.Name}, messaging.ParticipantSight(c, room)))
 		return true, nil
 	}
 

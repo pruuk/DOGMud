@@ -70,6 +70,16 @@ func resolveFoldRecall(actor actions.Actor) {
 	// Clear combat state before teleporting.
 	targeting.Release(char, targeting.ReasonDisengage)
 
+	// #456, owner ruling 2026-10-09: a mover is seen by the light they carry
+	// on their own way out, so the departure line is judged by the room
+	// before the fold took the caster (and their light) away. No sound twin:
+	// the codebase has no sound for a fold.
+	oldRoom := rooms.LoadRoom(currentRoomId)
+	var departSnap rooms.VisualSnapshot
+	if oldRoom != nil {
+		departSnap = oldRoom.VisualSnapshot()
+	}
+
 	// Move the actor first; only broadcast on success so a failed teleport
 	// doesn't leave the departure room thinking the actor vanished.
 	if !teleportActor(actor, anchorRoom) {
@@ -81,8 +91,8 @@ func resolveFoldRecall(actor actions.Actor) {
 	// currentRoomId, since char.RoomId has been updated by teleport). Both
 	// broadcasts are seen, so they go through the room's sight path, and a
 	// bystander who makes out shapes only reads a figure, not the name (#428).
-	if oldRoom := rooms.LoadRoom(currentRoomId); oldRoom != nil {
-		oldRoom.SendTextVisualHidingNames(messaging.CategorySpellManifestation, fmt.Sprintf(
+	if oldRoom != nil {
+		oldRoom.SendTextVisualToSnapshot(departSnap, messaging.CategorySpellManifestation, fmt.Sprintf(
 			`<ansi fg="username">%s</ansi> folds through the Veil and vanishes!`,
 			actor.GetName()), []string{actor.GetName()}, actor.GetUserId())
 	}

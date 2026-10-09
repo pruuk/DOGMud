@@ -309,7 +309,10 @@ wrappers that render the outcome.
   (sight-gated, with a sound fallback) unless `sneaking`, plays the movement
   sounds either way, and pulls an NPC party's idle (not in-combat) members
   through the same exit. A sneaking mob sends no exit, entry or next-room
-  line, as a sneaking player never has (parity slice 6, ruling D1).
+  line, as a sneaking player never has (parity slice 6, ruling D1). The exit
+  line is judged by `from` before the move (`Room.VisualSnapshot`, then
+  `SendTextVisualWithAudioToSnapshot`), so a mob is seen leaving by the light
+  it carries out with it (#456); the entry line is judged after the move.
 - **`ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int)`**
   moved here from the (still unexported at the call site) `mobcommands`
   version; retargets or releases players and mobs in `room` that were
@@ -655,12 +658,53 @@ word on its own line (#430).
   root registers every lookup as viewer or plain, with the reason.
 - **`FindAttackTarget(rest, room, userId, mobId, viewer)`**: the named branch
   and the `*`, `*mob`, `*user` pools skip what `viewer` does not perceive.
-- **`InitiateCast`** runs `admitCastAim` (`cast_admission.go`) for a player's
-  single-target casts of either kind and harmful multi casts: clear sight
-  allows names, foes and shapes; shapes only allows the caster's own foe and
-  `shape` / `N.shape` / `shape#N` (figures are perceived players then mobs, in
-  room order); no sight refuses. Refusals are narrated, set
-  `RefusalExplained`, and spend nothing.
+- **`AimBySight(viewer, selfUserId, room, name, verb) (string, string)`**
+  (`sight_aim.go`, #454): the one rule for a creature name a player types.
+  Clear sight admits the name as typed; shapes only admits `shape` /
+  `N.shape` / `shape#N` (rewritten to the figure's `@<userId>` or
+  `#<mobInstanceId>`; figures are perceived players then mobs, in room
+  order), an id form (`@N`, `#N`, what party auto-assist types) and an empty
+  name, and answers any other name with `AimShapesHint(verb)`; no sight
+  admits nothing (`AimNothingLine` for a shape or no name, `AimNotHereLine`
+  for a name). It returns the name to resolve and the refusal to tell, ""
+  when admitted. Player commands that name a creature run it (the list is
+  in `internal/usercommands/context.md`), except three left ungated on
+  purpose (plan D-H2-12): `look <creature>` (`look.go`, which names a
+  creature only when `NamesCreatures`, i.e. at full sight, and refuses with
+  no sight), `sell` to a named merchant (`usercommands/sell.go`), and hiring
+  a merc with `buy <x> from <merc>` (`buy.go`). Mob commands never run it
+  (mobs act on shapes, D8), with one exception: `admitCastAim` applies the
+  rule to every caster, a mob included (see `InitiateCast` below). It does
+  not return the sight it judged (a recorded choice): most callers need only
+  the name, and those that also need the sight (`attack`, `give`, `party`,
+  `rep`, `show`, `target`, `follow`, `StageMeleeTarget`) call
+  `messaging.ParticipantSight` themselves, a cheap read of the same
+  moment's state, rather than every caller taking a third result.
+- **`UserActorAtSight(user, room) Actor`**: the actor a gated command hands
+  its action. At shapes only it anonymizes every identity tag in the lines
+  the action tells the player ("a figure"), since they aimed at a shape and
+  never learned the name; otherwise it is a plain `*UserActor`.
+- **`RefuseIfAsleep` / `RefuseMobIfAsleep`** (`sleeping_target.go`) hide the
+  sleeper's name at the player's sight in their own room ("A figure is fast
+  asleep."), since an `ask` or `give` aimed at a shape never learned it.
+- **`ShotSight(viewer, room, rest) messaging.SightDecision`**
+  (`combat_fire.go`): what a shooter makes out of the room a shot is aimed
+  into, parsing `rest` as `ExecuteFire` does: their own room, or `scanReach`
+  through an exit. `usercommands.Fire` refuses below full sight before any
+  name resolves. **`ShotFallsBackHome(viewer, room) bool`**: a shot through an
+  exit that finds no one beyond retries the whole phrase in the shooter's own
+  room only for a mob shooter or a player at full sight of that room;
+  `ExecuteFire` and the command's pre-fire `resolveShootTarget` both ask it.
+  (With the shipped `LightExitsAbove` 55 over `LightDimBelow` 50 a shooter
+  who sees through an exit always sees home fully; a config with the exit
+  threshold below the dim one would otherwise leak.)
+- **`InitiateCast`** runs `admitCastAim` (`cast_admission.go`) for every
+  caster's single-target casts of either kind and harmful multi casts. It
+  does not check `IsPlayer`, so a mob caster is held to the same sight rule
+  (refusals go to its no-op `SendText`); this is the one place a mob is. The sight rule
+  is `AimBySight`'s (verb `cast <spell>`); the cast adds the self-cast
+  exemption and lets no name at shapes aim at the caster's own foe only.
+  Refusals are narrated, set `RefusalExplained`, and spend nothing.
 - **`HelpCharmAlly(m, sideUserId)`**: the one rule for which charmed mobs a
   helpful spell from `sideUserId`'s side may land on: charmed by that player
   or by a member of that player's party. `InitiateCast`'s single-target help

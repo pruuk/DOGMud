@@ -33,7 +33,8 @@ const unloadedMeleeDamageCap = 0.30
 
 // combatContext carries per-round environmental info into the combat engine.
 type combatContext struct {
-	// sourceSight and targetSight are the OPTICS VERDICT, and since lighting
+	// sourceSight and targetSight are the READER verdict (messaging.ReaderSight:
+	// optics plus the sleep test; see newCombatContext), and since lighting
 	// plan 5b they are the narration gate only: they decide whether a
 	// combatant's name is hidden (messaging.HideNames in combat.go) and no
 	// longer feed any score. They carry the full SightDecision rather than a
@@ -56,6 +57,29 @@ type combatContext struct {
 	// Uses combatContext (not a separate parameter) so it threads through
 	// calculateCombat without touching Attack*Vs* signatures.
 	forceCrit bool
+}
+
+// newCombatContext builds one attack's context in room: each side's sight
+// verdict (the narration gate) and comfort distances (the scoring input).
+//
+// The verdict is messaging.ReaderSight, which carries the sleep test, as
+// the prompt and GMCP do: a sleeping defender is attacked (the sleeping
+// auto-crit) and reads the first hit's personal line while still asleep,
+// judged before the hit wakes them, so it names "something", not the
+// attacker (#455). The comfort distances stay optics only, so sleep never
+// adds a darkness term to the score.
+func newCombatContext(source, target *characters.Character, room messaging.RoomVisibility, forceCrit bool) combatContext {
+	sd, sb := messaging.ComfortDistance(source, room)
+	td, tb := messaging.ComfortDistance(target, room)
+	return combatContext{
+		sourceSight:  messaging.ReaderSight(source, room),
+		targetSight:  messaging.ReaderSight(target, room),
+		sourceDark:   sd,
+		sourceBright: sb,
+		targetDark:   td,
+		targetBright: tb,
+		forceCrit:    forceCrit,
+	}
 }
 
 // weaponSetup holds pre-computed weapon info for a single weapon swing.
@@ -1565,6 +1589,15 @@ func attackMessagePct(pctDamage int, isCrit bool) int {
 	return pctDamage
 }
 
+// critBannerOpen and critBannerClose frame every line of a critical hit. The
+// close is joined to the line's last word by a no-break space (U+00A0, built
+// from its code point so the source holds no invisible character): the
+// wrapper (messaging.WrapAnsi) breaks only at an ASCII space, so the closing
+// *** can no longer wrap onto a line of its own (#455).
+const critBannerOpen = `<ansi fg="crit-text">***</ansi> `
+
+var critBannerClose = string(rune(0x00A0)) + `<ansi fg="crit-text">***</ansi>`
+
 // buildAttackMessages constructs and sends all combat messages for a swing.
 //
 // defended is hitResolution.defended: the defence won the contest but the
@@ -1799,11 +1832,11 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	}
 
 	if result.Crit {
-		toAttackerMsg = items.ItemMessage(`<ansi fg="crit-text">***</ansi> ` + string(toAttackerMsg) + ` <ansi fg="crit-text">***</ansi>`)
-		toDefenderMsg = items.ItemMessage(`<ansi fg="crit-text">***</ansi> ` + string(toDefenderMsg) + ` <ansi fg="crit-text">***</ansi>`)
-		toAttackerRoomMsg = items.ItemMessage(`<ansi fg="crit-text">***</ansi> ` + string(toAttackerRoomMsg) + ` <ansi fg="crit-text">***</ansi>`)
+		toAttackerMsg = items.ItemMessage(critBannerOpen + string(toAttackerMsg) + critBannerClose)
+		toDefenderMsg = items.ItemMessage(critBannerOpen + string(toDefenderMsg) + critBannerClose)
+		toAttackerRoomMsg = items.ItemMessage(critBannerOpen + string(toAttackerRoomMsg) + critBannerClose)
 		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(`<ansi fg="crit-text">***</ansi> ` + string(toDefenderRoomMsg) + ` <ansi fg="crit-text">***</ansi>`)
+			toDefenderRoomMsg = items.ItemMessage(critBannerOpen + string(toDefenderRoomMsg) + critBannerClose)
 		}
 	}
 

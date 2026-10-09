@@ -491,7 +491,14 @@ func spellDefenceIdentity(char *characters.Character, user *users.UserRecord, ro
 		return ""
 	}
 	if user != nil {
-		return char.GetPlayerName(user.UserId).String()
+		// A narration name (#453): no adjective span and no " and <pet>",
+		// which RenderChannelDefenceMessages' StripNameAdjectives does not
+		// remove ("Aliceia and Fang dodges").
+		f := char.GetPlayerName(user.UserId)
+		f.Adjectives = nil
+		f.QuestAlert = false
+		f.PetName = ``
+		return f.String()
 	}
 	if room != nil && char.MobInstanceId > 0 {
 		if mob := mobs.GetInstance(char.MobInstanceId); mob != nil {
@@ -585,23 +592,27 @@ func consumeSpellComponent(user *users.UserRecord, tag string) {
 //     resolveHelpSpell; a player's self-cast arrives as a player target.
 //   - No onMagic script, no component consumption.
 //   - Per-target helpers are entirely separate from the player equivalents.
-func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.SpellData, room *rooms.Room) (anyLanded bool) {
+//
+// fizzled reports a fold that completed on a room its every target had left:
+// nothing resolved, so the caller pays no progression award and rolls no
+// spell discovery, as for the fold step's TargetGone fizzle.
+func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.SpellData, room *rooms.Room) (anyLanded, fizzled bool) {
 	// Go spell hooks — dispatch position-mutating / non-target spells before
 	// the type-based effect routing below. Mirrors the player path in
 	// resolveSpell. Stage 3.0d.
 	switch cs.SpellId {
 	case "fold-anchor":
 		resolveFoldAnchor(actions.NewMobActorInRoom(mob, room))
-		return true // uncontested utility cast: no defence to beat
+		return true, false // uncontested utility cast: no defence to beat
 	case "fold-recall":
 		actor := actions.NewMobActorInRoom(mob, room)
 		if !validateFoldRecall(actor) {
 			// The recall could not be validated. Nothing resolved, so the
 			// cast did not land.
-			return false
+			return false, false
 		}
 		resolveFoldRecall(actor)
-		return true
+		return true, false
 	}
 
 	// drain_area is a boss-ability effect type: it drains every living
@@ -617,7 +628,7 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 	// free — this function never runs until the cast finishes.
 	if spellData.EffectType == "drain_area" {
 		resolveMobDrainArea(mob, room, spellData)
-		return true // uncontested area drain
+		return true, false // uncontested area drain
 	}
 
 	side := spellAttackSideFor(spellData, &mob.Character, combat.SightRoom(room))
@@ -630,12 +641,18 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 		cs.TargetUserIds, cs.TargetMobInstanceIds = spellHelpAreaTargets(actions.NewMobActorInRoom(mob, room), room)
 	}
 
+	// found counts the targets still here to resolve against. With none, the
+	// fold completed on a room its every target had left (#242): it fizzles
+	// aloud, as the fold step's TargetGone does, instead of resolving nothing
+	// and saying nothing.
+	found := 0
 	for _, mobInstId := range cs.TargetMobInstanceIds {
 		if mobInstId == mob.InstanceId {
 			// MS: the caster is its own target. Only a help spell puts a mob
 			// in its own list (a HelpSingle with no target, or its own place
 			// in an area help), and it takes the same uncontested step and
 			// appliers as every other pairing. A mob never harms itself.
+			found++
 			if !spellData.IsHarm() {
 				self := actions.NewMobActorInRoom(mob, room)
 				anyLanded = resolveHelpSpell(newSpellEffectCtx(&mob.Character, self, self, room, spellData,
@@ -644,16 +661,22 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 			continue
 		}
 		if target := mobs.GetInstance(mobInstId); target != nil && target.Character.Health > 0 && target.Character.RoomId == room.RoomId {
+			found++
 			anyLanded = resolveMobSpellAgainstMob(mob, target, room, spellData, side, magnitude) || anyLanded
 		}
 	}
 	for _, userId := range cs.TargetUserIds {
 		if target := users.GetByUserId(userId); target != nil && target.Character.RoomId == room.RoomId {
+			found++
 			anyLanded = resolveMobSpellAgainstPlayer(mob, target, room, spellData, side, magnitude) || anyLanded
 		}
 	}
+	if found == 0 {
+		fizzleMobFold(mob, room, cs)
+		return false, true
+	}
 
-	return anyLanded
+	return anyLanded, false
 }
 
 // resolveMobDrainArea is the resolution handler for a mob-cast spell whose

@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -50,6 +51,24 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// here, before firing. We re-resolve the would-be target (mirroring
 	// ExecuteFire's parse) without applying damage. The duplicated resolution is
 	// the deliberate price of safe pre-fire gating.
+	//
+	// #454: an aimed shot needs full sight of the room it is aimed into, and
+	// that is judged BEFORE any name resolves. Resolving first let the guards
+	// below ("X is in your party!", "You can't shoot yourself.") and the
+	// later too-dark refusal answer differently for a creature that is there,
+	// which told a shooter in the dark who was present. Every name, a shape
+	// included, is refused below full sight with the same lines ExecuteFire
+	// would give.
+	if strings.TrimSpace(rest) != `` {
+		if actions.ShotSight(user.Character, room, rest) != messaging.SightFull {
+			if user.Character.Perception != nil && user.Character.Perception.State() == perception.Blinded {
+				user.SendText(messaging.CategorySystem, actions.ShotBlindedLine)
+			} else {
+				user.SendText(messaging.CategorySystem, actions.ShotTooDarkLine)
+			}
+			return true, nil
+		}
+	}
 	tUserId, _, tRoom, _ := resolveShootTarget(room, rest, user.Character)
 
 	// Issue 3 (self-target): room.FindByName can resolve the shooter.
@@ -125,12 +144,11 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.Blinded {
-		user.SendText(messaging.CategorySystem, `You can't see well enough to aim.`)
+		user.SendText(messaging.CategorySystem, actions.ShotBlindedLine)
 		return true, nil
 	}
 	if result.TooDarkToAim {
-		user.SendText(messaging.CategorySystem,
-			`It is too dark to aim. You need light, or eyes that do not need it.`)
+		user.SendText(messaging.CategorySystem, actions.ShotTooDarkLine)
 		return true, nil
 	}
 	if result.IsCharmed {
@@ -691,9 +709,10 @@ func resolveShootTarget(room *rooms.Room, rest string, viewer *characters.Charac
 		}
 	}
 	userId, mobInstanceId = targetRoom.FindByNameSeenBy(viewer, strings.Join(targetWords, " "))
-	if userId == 0 && mobInstanceId == 0 && crossRoom {
+	if userId == 0 && mobInstanceId == 0 && crossRoom && actions.ShotFallsBackHome(viewer, room) {
 		// The trailing word may have been part of the target name after all;
-		// retry as a same-room shot using the full argument string.
+		// retry as a same-room shot using the full argument string, only at
+		// full sight of the shooter's own room (#454).
 		crossRoom = false
 		targetRoom = room
 		userId, mobInstanceId = room.FindByNameSeenBy(viewer, strings.Join(args, " "))

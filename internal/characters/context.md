@@ -836,6 +836,11 @@ why the clearing lives here and not in each command (docs/baubles).
   (`GetCharacterName(true)`, room broadcasts) never carry it; until slice B
   (2026-09-12) they carried it for every character not fighting a player,
   because both sides of the comparison were 0.
+  `GetCharacterName(true)` is the narration name: the identity tag alone
+  (suffix colour kept), with no adjective span, quest star or " and <pet>"
+  (#453). Every production caller feeds a narrated line, where "(hidden)" or
+  "(☀️Lit)" is a state tag, not prose. `GetPlayerName` and `GetMobName` keep
+  every decoration for `look` and the rosters.
 - **Adjectives system**: Visual indicators for character states (sleeping, charmed, poisoned, prone, etc.)
 - **Quest indicators**: Visual markers for quest-relevant NPCs
 
@@ -1455,14 +1460,32 @@ Hidden. For the same reason `reapplyPermanentConditions` (the
 `Validate(true)` rebuild) counts a LIVE 9 on a sneak-hidden holder as
 sourced; a 9 a cancel just expired is not live, so a cancel is not undone.
 `SneakOverShroud()` is the sneak command's takeover. `Validate` calls
-`reconcileShroudHide()` beside `reconcilePerception()`: a shroud hide with no
+`reconcileShroudHide()` and then `reconcileSneakHide()` right after
+`RecalculateStats()` (scores are built on `ValueAdj`, which a load does not
+save, so before the recalc a reloaded sneak scored as Dexterity 0): a shroud hide with no
 live 31 (expired, removed, purged, cancelled) is revealed with
 `awareness.TriggerShroudEnded`; and a Visible holder of a live 31 (a reload,
 whose Awareness machine is built fresh and Visible) re-enters the shroud hide
-through `hideForStealthRecord` at the record's score. Breaking: an observer
+through `hideForStealthRecord` at the record's score. `reconcileSneakHide()`
+runs right after it and does the same for a sneak hide (#451): a Visible
+holder of a live record 9 (a reload) re-enters the sneak hide through
+`hideForStealthRecord(9)`, so the `Validate(true)` rebuild keeps the 9, no end
+line is told, and the saved `sneaking` misc key matches. A live 9 on a
+shroud-hidden holder (a save that held both records) lands through the same
+door, so `settleHide` keeps the stronger hide and discards the other record
+silently. Breaking: an observer
 winning a roll, combat (31 carries `cancel-on-combat`), death and logout
 reveal it like a sneak hide, and the reveal cascade cancels 31, so a revealed
 hide is never re-entered.
+
+`DiscardEndedStealthRecords()` drops an expired, unpruned 9 or 31 without its
+end line and keeps a live one. It is called at the save boundary only,
+`users.loadUserFromPath` before the load's `Validate(true)`: logout forces a
+hidden player visible and the save happens before any prune, so the first
+prune after login told the room "emerges from the shadows". It must never run
+from `Validate` or the reconcile functions, because an ordinary reveal in play
+leaves the same expired record and its prune is the end line the room is
+owed.
 
 This maintains backward compatibility with systems that check for condition #9
 while keeping the Awareness machine as the canonical state source.

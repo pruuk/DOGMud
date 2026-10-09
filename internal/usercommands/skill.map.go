@@ -3,7 +3,6 @@ package usercommands
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
@@ -173,10 +172,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if width == 0 {
 			width = runewidth.StringWidth(displayLines[0])
 		}
-		for sym, txtLegend := range legend {
-			txtLc := strings.ToLower(txtLegend)
-			displayLines[i] = strings.Replace(displayLines[i], string(sym), fmt.Sprintf(`<ansi fg="map-room"><ansi fg="map-%s" bg="mapbg-%s">%c</ansi></ansi>`, txtLc, txtLc, sym), -1)
-		}
+		displayLines[i] = mapper.ColorizeLegendLine(displayLines[i], legend)
 	}
 
 	mapData := map[string]any{

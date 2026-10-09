@@ -49,9 +49,15 @@ func RefuseIfAsleep(c *characters.Character, name string, user *users.UserRecord
 		// Suggest shout WITH words. Bare `shout` wakes them but prints the
 		// rather silly `You shout, ""`, and "try shout" was read as an
 		// instruction to type exactly that.
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		line := fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> is fast asleep. `+
-				`You could make some noise -- try <ansi fg="command">shout wake up</ansi>.`, name))
+				`You could make some noise -- try <ansi fg="command">shout wake up</ansi>.`, name)
+		// A player who aimed at a shape never learned the sleeper's name
+		// (#454): hide it at their sight in their own room.
+		if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
+			line = messaging.HideNames(line, []string{name}, messaging.ParticipantSight(user.Character, room))
+		}
+		user.SendText(messaging.CategorySystem, line)
 	}
 	return true
 }

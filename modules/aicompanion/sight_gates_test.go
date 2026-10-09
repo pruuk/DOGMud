@@ -1,13 +1,19 @@
 package aicompanion
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // Her `remove` refuses a cursed worn item up front, as `get` refuses a
@@ -23,6 +29,135 @@ func TestCompanionRemoveRefusesACursedItem(t *testing.T) {
 		[]stimulus{{Kind: `heard`, FromOwner: true}}, 0, 0)
 	if out.Issued || out.Refused != `it will not come off` {
 		t.Fatalf("want a refusal before any command, got %+v", out)
+	}
+}
+
+// askForScene is an owner with a companion module enabled in harmWorld's room,
+// with a Smith there or not, lit or pitch dark.
+func askForScene(t *testing.T, smithHere, lit bool) (*AICompanionModule, *controller, *users.UserRecord, *rooms.Room) {
+	t.Helper()
+	owner, _, room, _ := harmWorld(t, configs.PVPDisabled)
+	if smithHere {
+		harmMob(t, room, 300, `Smith`)
+	}
+	if !lit {
+		room.SkyLight, room.Lamp = rooms.SkyLightPtr(0), rooms.LampPtr(0)
+	}
+	m, c, _ := strangerModule()
+	m.cfg.Enabled = true
+	m.ctrls = map[int]*controller{owner.UserId: c}
+	events.DrainQueuedMessagesForTest(owner.UserId)
+	return m, c, owner, room
+}
+
+// #454 review F6: companion-ask finds its NPC through the owner's sight rule.
+// In the dark a Smith who is there and one who is not read the same refusal,
+// and the companion is sent to neither.
+func TestCompanionAskSight_DarkReadsTheSameWhetherPresentOrNot(t *testing.T) {
+	told := map[bool]string{}
+	for _, here := range []bool{true, false} {
+		m, c, owner, room := askForScene(t, here, false)
+		_, _ = m.cmdAskFor(`smith about the ore`, owner, room, events.EventFlag(0))
+		told[here] = strings.Join(events.DrainQueuedMessagesForTest(owner.UserId), ``)
+		if c.askAuth != nil {
+			t.Fatalf("here=%v: the companion was sent to ask someone the owner cannot see", here)
+		}
+	}
+	if told[true] != told[false] {
+		t.Fatalf("the refusal told a present Smith from an absent one:\n here: %q\n gone: %q", told[true], told[false])
+	}
+}
+
+// The lit control: the owner can see the Smith, so the companion is sent.
+func TestCompanionAskSight_LitSendsTheCompanion(t *testing.T) {
+	m, c, owner, room := askForScene(t, true, true)
+	_, _ = m.cmdAskFor(`smith about the ore`, owner, room, events.EventFlag(0))
+	if c.askAuth == nil || c.askAuth.MobInstanceId != 300 {
+		t.Fatalf("a lit owner could not send the companion to the Smith: %+v", c.askAuth)
+	}
+}
+
+const askInfraredCond = 9786 // infravision, reach 30
+
+// #454 review K10: an owner who makes out the Smith only as a shape sends
+// their companion to it, and the errand wrote the Smith's real name into the
+// companion's memory and prompt, where she may say it aloud. Both now name
+// the NPC as the owner perceives it.
+func TestCompanionAskSight_AShapeIsNotNamedToTheCompanion(t *testing.T) {
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		askInfraredCond: {ConditionId: askInfraredCond, Name: "Test Infrared", Secret: true,
+			Flags:   []conditions.Flag{conditions.InfraredVision},
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectInfraReach: {Literal: 30}}},
+	}))
+	m, c, owner, room := askForScene(t, true, false)
+	if err := owner.Character.AddCondition(askInfraredCond, true); err != nil {
+		t.Fatalf("could not give the owner infravision: %v", err)
+	}
+	if got := room.ParticipantSight(owner.UserId); got != messaging.SightShapes {
+		t.Fatalf("fixture: the owner must make out shapes only, got %v", got)
+	}
+
+	_, _ = m.cmdAskFor(`#300 about the ore`, owner, room, events.EventFlag(0))
+	if c.askAuth == nil || c.askAuth.MobInstanceId != 300 {
+		t.Fatalf("fixture: the owner could not send the companion to the shape: %+v", c.askAuth)
+	}
+	for _, line := range c.mind.RecentLines {
+		if strings.Contains(line.Text, `Smith`) {
+			t.Errorf("her memory names the shape: %q", line.Text)
+		}
+	}
+	for _, s := range c.pending {
+		if strings.Contains(s.Text, `Smith`) {
+			t.Errorf("her prompt names the shape: %q", s.Text)
+		}
+	}
+	if len(c.pending) == 0 || !strings.Contains(c.pending[len(c.pending)-1].Text, `a figure`) {
+		t.Errorf("the errand should name the NPC as the owner sees it, a figure: %+v", c.pending)
+	}
+}
+
+// The lit control: at full sight the errand names the NPC.
+func TestCompanionAskSight_LitNamesTheNPC(t *testing.T) {
+	m, c, owner, room := askForScene(t, true, true)
+	_, _ = m.cmdAskFor(`smith about the ore`, owner, room, events.EventFlag(0))
+	if len(c.pending) == 0 || !strings.Contains(c.pending[len(c.pending)-1].Text, `Smith`) {
+		t.Fatalf("a lit errand should name the Smith: %+v", c.pending)
+	}
+}
+
+const unbondLightCond = 9785 // a carried light, literal strength 60
+
+// #456 review G3, owner ruling 2026-10-09: a mover is seen by the light they
+// carry on their own way out. Mara carries the only light in the room; when
+// the bond ends, Bram, left in the dark, saw her go by that light. The line
+// was judged after RemoveMob, when the light had gone with her.
+func TestUnbondPartingLineIsJudgedByHerOwnLight(t *testing.T) {
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		unbondLightCond: {ConditionId: unbondLightCond, Name: "Test Torchlight", Secret: true, TriggerCount: 1, RoundInterval: 1,
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 60}}},
+	}))
+	owner, bram, room, her := harmWorld(t, configs.PVPDisabled)
+	room.SkyLight, room.Lamp = rooms.SkyLightPtr(0), rooms.LampPtr(0)
+	if err := her.Character.AddCondition(unbondLightCond, false); err != nil {
+		t.Fatalf("could not light her: %v", err)
+	}
+	if got := room.ParticipantSight(bram.UserId); got != messaging.SightFull {
+		t.Fatalf("fixture: her light must light the room, got %v", got)
+	}
+	owner.Character.Companions = []characters.CompanionInfo{{InstanceId: her.InstanceId, Name: `Mara`, SourceType: characters.CompanionBonded}}
+	m, _, _ := strangerModule()
+	m.ctrls = map[int]*controller{}
+	events.DrainQueuedMessagesForTest(bram.UserId)
+
+	if _, err := m.unbond(owner, `waves once and walks away.`); err != nil {
+		t.Fatalf("unbond: %v", err)
+	}
+	if got := room.ParticipantSight(bram.UserId); got != messaging.SightNone {
+		t.Fatalf("fixture: the light must leave with her, got %v", got)
+	}
+	got := regexp.MustCompile(`<[^>]*>`).ReplaceAllString(strings.Join(events.DrainQueuedMessagesForTest(bram.UserId), ``), ``)
+	if !strings.Contains(got, `Mara waves once and walks away.`) {
+		t.Fatalf("Bram saw her go by her own light, got %q", got)
 	}
 }
 

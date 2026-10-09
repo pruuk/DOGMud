@@ -513,6 +513,10 @@ func loadUserFromPath(userFilePath string, skipValidation bool) (*UserRecord, er
 	}
 
 	if !skipValidation {
+		// A stealth record that ended before the save (logout forces a
+		// hidden player visible) goes silently, or the first prune after
+		// login tells the room its end line (#451).
+		loadedUser.Character.DiscardEndedStealthRecords()
 		if err := loadedUser.Character.Validate(true); err != nil {
 			return nil, fmt.Errorf("user file %s failed validation: %w", userFilePath, err)
 		}

@@ -318,15 +318,15 @@ func main() {
 	// dark-room players, matching combat-text darkness gating. Lives here
 	// because users/ cannot import rooms/ (import cycle); main can import
 	// both rooms/ and messaging/.
-	users.SetCanSeeInRoomCheck(func(c *characters.Character) bool {
+	users.SetPromptSightCheck(func(c *characters.Character) messaging.SightDecision {
 		if c == nil {
-			return true
+			return messaging.SightFull
 		}
 		room := rooms.LoadRoom(c.RoomId)
 		if room == nil {
-			return true
+			return messaging.SightFull
 		}
-		return messaging.CanSeeClearly(c, room)
+		return messaging.ReaderSight(c, room)
 	})
 
 	// Wire the goals → behaviortree archetype-weights resolver. Avoids

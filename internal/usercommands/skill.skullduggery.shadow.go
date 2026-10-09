@@ -50,6 +50,14 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
+	// #454: a typed name resolves only at full sight.
+	name, refusal := actions.AimBySight(user.Character, user.UserId, room, strings.ToLower(rest), `shadow`)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return true, nil
+	}
+	rest = name
+
 	// Resolve target in the current room, excluding the player themselves.
 	target, err := actions.ResolveTargetActor(room, strings.ToLower(rest), actions.ResolveTargetOptions{
 		ExcludeUserId: user.UserId,
@@ -72,7 +80,7 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		opts.TargetMobInstanceId = target.GetMobInstanceId()
 	}
 
-	actor := &actions.UserActor{User: user, Room: room}
+	actor := actions.UserActorAtSight(user, room)
 	result := actions.Shadow(actor, opts)
 
 	if result.OnCooldown {

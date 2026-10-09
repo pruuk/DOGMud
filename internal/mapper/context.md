@@ -17,6 +17,8 @@ the same crawl.
   per-zone cache, and the render entry points.
 - **mapper.node.go** — `mapNode` and `nodeExit`, the crawl's internal graph.
 - **mapper.map.go** — `mapRender` and legend assembly.
+- **maptag.go**: `LegendSlug` and `ColorizeLegendLine`, the one colour-tag
+  builder for a rendered map line (minimap, `map`, legend template).
 - **mapper.config.go** — `Config` (render options) and `SymbolOverride`.
 - **mapper.path.go** — A\* pathfinding, the path cache, and `GetPath`/`NextStep`.
 - **mapper.consistency.go** — the Cartesian consistency engine (see below).
@@ -89,7 +91,27 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender
 func (r *mapper) GetFullMap(centerRoomId int, c Config) mapRender
 func (m *mapRender) GetLegend(overrides map[rune]string) map[rune]string
 func (c *Config) OverrideSymbol(roomId int, symbol rune, legend string)
+func LegendSlug(name string) string
+func ColorizeLegendLine(line string, legend map[rune]string) string
 ```
+
+A legend name becomes a colour tag through `LegendSlug` only: lower case,
+spaces as hyphens (`map-deep-water`). The colour aliases are keyed by that
+slug; with ansitags v1.1.0 a spaced `fg="map-deep water"` matches no alias
+and the tile only loses its colour. The tags that printed as raw text in the
+#455 playtest came from room noun highlighting rewriting a word inside a map
+tag's attribute (`fg="map-deep-<ansi fg="noun">water</ansi>"`);
+`rooms.highlightNouns` now matches visible text only and runs before the
+minimap joins the line. `ColorizeLegendLine` walks a line
+once, rune by rune, so a symbol inside a tag it already wrote is never
+rewritten. `usercommands/look.go` (minimap), `usercommands/skill.map.go` and
+the `mapslug` template function use it; `maps/map.template`,
+`descriptions/room-title.template` and `admincommands/ingame/roominfo.template`
+call `mapslug` in both worlds, and `TestMapTagTemplatesUseMapslug` fails any
+template that builds a `map-` tag with `lowercase`. A new multi-word legend
+needs a `map-<slug>` alias in each world's `ansi-aliases.yaml`: a biome name
+(`TestMultiWordBiomesHaveSlugAliases`), or a room `maplegend` or a name the
+code writes such as "Party Member" (`TestEveryMultiWordLegendHasSlugAlias`).
 
 `GetLimitedMap` is the player-facing one — the visible radius scales with
 Perception. `GetFullMap` is unbounded and used by admin tooling.

@@ -15,6 +15,17 @@ the recipient's connection.
    and the noun (`a <ansi fg="itemname">Ivory Fan</ansi>` becomes
    `an …`), keeping the tags byte for byte. It tests the first letter,
    not the sound, so "a useful" becomes "an useful"; a known limitation.
+   `CategoryMobEmote` skips every stage except sentence-end punctuation,
+   so authored mob emotes keep their own words but end with a stop
+   (#455); the player-typed `CategoryEmote` skips every stage.
+   The stop goes INSIDE any trailing `</ansi>` closers, which is right
+   for a coloured clause or a whole-line wrapper (the stop keeps the
+   clause's colour) and wrong for a trailing name span. The stage cannot
+   tell the two apart, so it stays inside (decision, #455 review), and a
+   line that ends in a coloured name authors its own stop after the name
+   (`pet.go`: "You pet %s."). A line that ends in text the stage must
+   not touch ends in a terminator it already honours (`.!?,)]"'*`): the
+   afk message is quoted and the report's vital bars are bracketed.
 3. **Sight gate** (visual channel only) — per-recipient: CanSeeClearly,
    CanSeeShapes, or skip-visual-deliver-audio. Consumes the chunk-6
    Perception FSM (see `internal/state/perception/`).
@@ -356,6 +367,15 @@ Functions:
   - `CanSeeShapes(observer, room) bool` = awake AND (`ParticipantSight ==
     SightFull` OR `== SightShapes`). Also sleep-gated: closed eyes see no
     shapes either.
+  - `ReaderSight(observer, room) SightDecision` = the two above as one
+    decision (full, shapes, none). `rooms.visualDecision` is this
+    function; the fight prompt's `{target}` and GMCP `Char.Enemies` name an
+    unseen foe with `UnseenNoun` of it, as the combat lines do (#455).
+    The combat personal lines' name gate (`combat.newCombatContext`'s
+    `sourceSight`/`targetSight`) is also `ReaderSight`: a sleeping
+    defender is reachable (the sleeping-victim auto-crit) and reads the
+    first hit while still asleep, so it names "something", as the prompt
+    does. Combat scoring reads `ComfortDistance`, never this verdict.
   - `CanSeeSightImpairedOnly(observer, room) bool` = `ParticipantSight ==
     SightFull`, WITHOUT the sleep gate. This is the one `internal/combat`
     used to read (as `CanSeeClearly`, before M4d) to drive
@@ -418,7 +438,9 @@ Functions:
   narrated line that names a creature rather than lists it.
   `combat.RenderChannelDefenceMessages` applies it to both identities; the
   melee and counter paths build their names without adjectives instead
-  (`combat.meleeIdentityTag`).
+  (`combat.meleeIdentityTag`). The condition start, trigger and end lines
+  for a mob holder apply it to `mobDisplayName` (hooks, #453); a player
+  holder's `GetCharacterName(true)` carries no span to begin with.
 - `Normalize(cat Category, text string) string`
 - `Anonymize(text string) string`: the pipeline's infrared fallback for every
   visual line. Replaces each identity tag with "a figure" and takes the

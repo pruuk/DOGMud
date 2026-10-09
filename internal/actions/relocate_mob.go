@@ -95,6 +95,11 @@ func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.R
 		enterFrom = exit.FromPhrase(back)
 	}
 
+	// #456, owner ruling 2026-10-09: a mover is seen by the light they carry
+	// on their own way out, so the exit line is judged by the room before
+	// the move. The entry line keeps being judged after it.
+	departSnap := from.VisualSnapshot()
+
 	from.RemoveMob(mob.InstanceId)
 	ClearRoomAggroOnDeparture(from, mob.InstanceId)
 	dest.AddMob(mob.InstanceId)
@@ -102,7 +107,7 @@ func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.R
 	c := configs.GetTextFormatsConfig()
 
 	if !sneaking {
-		from.SendTextVisualWithAudio(messaging.CategoryRoomExit,
+		from.SendTextVisualWithAudioToSnapshot(departSnap, messaging.CategoryRoomExit,
 			fmt.Sprintf(string(c.ExitRoomMessageWrapper),
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaves %s.`, mob.Character.Name, exit.DeparturePhrase(exitName)),
 			),

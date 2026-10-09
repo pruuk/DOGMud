@@ -572,7 +572,30 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 
     return events.Continue
 }
+```
 
+**Stranded folds (#242).** A mob's fold step (`handleMobFoldCasting`) runs
+in the combat round. In combat it steps every fold; out of combat it steps
+a help fold only (`mobHoldsHelpFold`: a non-harm spell, or one no longer
+defined), ahead of the non-combatant skip, as a player's fold steps
+whether or not they fight. So an idle buff (Seren's `cast
+conviction-ward`, Rhett's `conviction-armor`) weaves, resolves and clears
+the cast. A HARMFUL fold held out of combat is stale (its target left or
+the caster was released), and `IdleMobs` ends it through `endStrandedFold`
+/ `fizzleMobFold` ("<caster>'s spell fizzles." by sight, the sputter by
+sound): before the release when a player target walked out (a help fold
+such as a self-heal is kept through that release and resolves at its out
+of combat fold step), and for any
+mob out of combat still holding one, every round, which covers a mob
+target that walked or fled out (`actions.ClearRoomAggroOnDeparture`
+releases the caster) and every other release. Between them every stale
+fold ends: a help fold whose target died or left fizzles at its own fold
+step (`TargetGone`, or no target found at completion). A harmful cast a
+mob begins out of combat commits it to its target, a mob target as well as
+a player (`mobcommands.Cast`, `castFoeMob`), so its fold steps in combat
+and resolves rather than being swept.
+
+```go
 func HandleIdleMobs(e events.Event) events.ListenerReturn {
     evt := e.(events.MobIdle)
 
@@ -839,6 +862,12 @@ Behavioral parity with the old polling path in `NewRound_DoCombat`:
 - Same `AutoAssist` flag check on the companion entry
 - Same `NoAggroTarget` grace-period guard on the owner
 - Sibling companions in the same room are also assisted
+
+An owner who sees nothing in their room is not sent to `attack @<id>` /
+`attack #<id>` (#454): the sight gate would refuse the id form and tell them
+"You don't see them here." every round. This path and
+`handleCompanionOwnerAssist` (`NewRound_DoCombat_helpers.go`) both skip such
+an owner through `memberSeesSomething`, the check party auto-assist uses.
 
 The polling `CompanionAutoTarget` in `combat_retarget.go` remains as a
 fallback. Duplicate attack commands are benign (second attempt is vetoed
@@ -1150,6 +1179,24 @@ darkness.
 Registers an `OnPlayerDespawn` listener that calls `character.Awareness.ForceVisible()`
 to ensure the awareness machine is reset on logout. Prevents stale awareness
 state or leaks if a character is reused or respawned.
+
+Before it forces the quitter visible, `onPlayerDespawnForAwareness` stores
+under the user temp-data key `despawnUnseenByKey` the players in the room
+who could not make them out (`playersNotPerceiving`, by
+`Character.Perceives`). `HandleLeave` runs after it (`events.Last`) and its
+`removeAndAnnounceDespawn` takes `Room.VisualSnapshot()` before
+`RemovePlayer`, then sends the `player-despawn` line with
+`SendTextVisualToSnapshot`, excluding those players (#456): the quitter is
+seen going by their own light, and a hidden quitter is not named to a room
+that never saw them.
+
+The same rule holds for every other departure line in this package: take
+`VisualSnapshot()` of the room being left before the mover goes, then send
+with `SendTextVisualToSnapshot`. `resolveFoldRecall` ("folds through the
+Veil and vanishes!", visual only: no sound exists for a fold),
+`TransportCompanions` ("X follows Y.") and `PushCompanionsToRoom` ("X is
+swept out of the room!", whose name is now identity-tagged and hidden at
+shapes) all do. Arrival lines stay judged after the move.
 
 ## Attributed death routing (U5c)
 
@@ -1753,6 +1800,20 @@ does not have a concept of "already broke this round" — two breaks in one
 round simply fire `TransitionToFree` twice; the second call is a no-op from
 the `Free` state.
 
+**Target gone, mob caster (#242):** `fizzleMobFold(mob, room, cs)`
+(`NewRound_DoCombat_helpers.go`) is the one ending for a mob fold whose target
+is gone: it clears the cast, records the concentration failure and calls
+`sendMobSpellFailed(mob, room, "fizzles")` (seen, or heard as
+`messaging.SoundSpellSputtersOut`). Three paths reach it: the fold step's
+`TargetGone` (a dead or logged-out target), `IdleMobs` releasing a mob whose
+target walked out mid-fold (the fold ends before the release; outside combat
+no fold step would run again), the `IdleMobs` sweep of any harmful fold a mob
+out of combat still holds (a mob target that walked or fled out releases the
+caster through `actions.ClearRoomAggroOnDeparture`), and `resolveMobSpell`
+completing with no target left in the room. `resolveMobSpell` reports that
+last case as `fizzled`, and `handleMobFoldCasting` then pays no progression
+award and rolls no spell discovery, as for `TargetGone`.
+
 Cross-references:
 - `internal/state/position/disruption.go` — per-position dmg%-equivalent table
 - `internal/state/position/context.md` — chunk 4f status + Guard inversion note
@@ -2081,7 +2142,11 @@ the contest, the only source of a crit (owner ruling, 2026-09-28). A player
 healing a mob queues `events.Healed` for the AI companion. Every applier
 narrates through `messaging.SendTrio` (players in the username tag, mobs
 through `mobDisplayName`), so a mob's spell on a mob reaches the room and a
-reader in the dark reads "something".
+reader in the dark reads "something". `mobDisplayName` and the player branch
+of `spellDefenceIdentity` are narration names (#453, #454 review): the
+identity tag with its duplicate index and suffix colour, never an adjective
+span, quest star or " and <pet>", so a recoil, spell or defence line never
+reads "Skeleton (charmed)" or "Aliceia and Fang".
 
 Every resolver takes a help spell (`attack_type: none`) through
 `resolveHelpSpell` with `uncontestedSpellResult()`: no contest, no fumble,

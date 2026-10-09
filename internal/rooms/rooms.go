@@ -436,13 +436,7 @@ func (r *Room) SendTextVisualToSnapshot(snap VisualSnapshot, cat messaging.Categ
 // visualDecision is the sight decision a visual line is judged at for c under
 // lighting: faces, shapes or nothing.
 func visualDecision(c *characters.Character, lighting messaging.RoomVisibility) messaging.SightDecision {
-	switch {
-	case messaging.CanSeeClearly(c, lighting):
-		return messaging.SightFull
-	case messaging.CanSeeShapes(c, lighting):
-		return messaging.SightShapes
-	}
-	return messaging.SightNone
+	return messaging.ReaderSight(c, lighting)
 }
 
 // deliverVisual is the one per-recipient body of the visual senders: hide
@@ -496,45 +490,71 @@ func (r *Room) SendTextVisualWithAudio(cat messaging.Category, visualTxt string,
 		if u == nil {
 			continue
 		}
-		decision := messaging.SightNone
-		switch {
-		case messaging.CanSeeClearly(u.Character, r):
-			decision = messaging.SightFull
-		case messaging.CanSeeShapes(u.Character, r):
-			decision = messaging.SightShapes
-		}
+		deliverVisualElseAudio(u, visualDecision(u.Character, r), cat, visualTxt, audioTxt)
+	}
+}
 
-		in := messaging.RenderInput{
-			Category:      cat,
-			Text:          visualTxt,
-			Channel:       messaging.ChannelVisual,
-			SightDecision: decision,
-			LineWidth:     u.GetLineWidth(),
-		}
-		if decision == messaging.SightNone {
-			if audioTxt == "" {
-				continue
-			}
-			// The audio channel deliberately skips the sight gate and the
-			// anonymizer, which is correct here: audioTxt is already written
-			// to name nobody.
-			in = messaging.RenderInput{
-				Category:  cat,
-				Text:      audioTxt,
-				Channel:   messaging.ChannelAudio,
-				LineWidth: u.GetLineWidth(),
-			}
-		}
-
-		rendered := messaging.RenderForRecipient(in)
-		if rendered == "" {
+// SendTextVisualWithAudioToSnapshot is SendTextVisualWithAudio judged against
+// snap, the sound twin of SendTextVisualToSnapshot: it reaches exactly the
+// players who are in the room now AND were in snap, each at the decision snap
+// recorded for them. A reader recorded at SightNone hears audioTxt.
+//
+// A departure is the case that prompted it (#456, owner ruling 2026-10-09): a
+// mover is seen by the light they carry on their own way out, so the line is
+// judged by the room before they left with it. Take the snapshot before the
+// move, move, then send.
+func (r *Room) SendTextVisualWithAudioToSnapshot(snap VisualSnapshot, cat messaging.Category, visualTxt string, audioTxt string, excludeUserIds ...int) {
+	for _, uid := range r.GetPlayers() {
+		if excluded(uid, excludeUserIds) {
 			continue
 		}
-		events.AddToQueue(events.Message{
-			UserId: u.UserId,
-			Text:   rendered + "\n",
-		})
+		decision, ok := snap[uid]
+		if !ok {
+			continue
+		}
+		u := users.GetByUserId(uid)
+		if u == nil {
+			continue
+		}
+		deliverVisualElseAudio(u, decision, cat, visualTxt, audioTxt)
 	}
+}
+
+// deliverVisualElseAudio is the one per-recipient body of the two
+// visual-with-audio senders: visualTxt on the visual channel at decision, or
+// audioTxt on the audio channel for a reader at SightNone (nothing at all when
+// audioTxt is empty).
+func deliverVisualElseAudio(u *users.UserRecord, decision messaging.SightDecision, cat messaging.Category, visualTxt string, audioTxt string) {
+	in := messaging.RenderInput{
+		Category:      cat,
+		Text:          visualTxt,
+		Channel:       messaging.ChannelVisual,
+		SightDecision: decision,
+		LineWidth:     u.GetLineWidth(),
+	}
+	if decision == messaging.SightNone {
+		if audioTxt == "" {
+			return
+		}
+		// The audio channel deliberately skips the sight gate and the
+		// anonymizer, which is correct here: audioTxt is already written
+		// to name nobody.
+		in = messaging.RenderInput{
+			Category:  cat,
+			Text:      audioTxt,
+			Channel:   messaging.ChannelAudio,
+			LineWidth: u.GetLineWidth(),
+		}
+	}
+
+	rendered := messaging.RenderForRecipient(in)
+	if rendered == "" {
+		return
+	}
+	events.AddToQueue(events.Message{
+		UserId: u.UserId,
+		Text:   rendered + "\n",
+	})
 }
 
 // SendTextUnsighted delivers txt on the audio channel to every player in the

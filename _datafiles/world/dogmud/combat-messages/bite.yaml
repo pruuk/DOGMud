@@ -28,7 +28,7 @@ options:
         - '{stance}, you ready your <ansi fg="item">{itemname}</ansi> for the perfect strike!'
         master:
         - 'With practiced ease, you adopt a {stance} stance while {position}.'
-        - 'Your <ansi fg="item">{itemname}</ansi> settle into perfect position, {momentum}, as you read <ansi fg="{acteetype}">{actee}</ansi>''s weaknesses.'
+        - 'You settle your <ansi fg="item">{itemname}</ansi> into perfect position, {momentum}, as you read <ansi fg="{acteetype}">{actee}</ansi>''s weaknesses.'
         - 'You flow into your {stance} fighting stance with the patience of an apex predator.'
         - '{momentum}, you read <ansi fg="{acteetype}">{actee}</ansi>''s every muscle, jaws poised perfectly.'
       actee:
@@ -44,7 +44,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> readies their <ansi fg="item">{itemname}</ansi> for the perfect strike, {stance}.'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> settles into a masterful {stance} stance.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> move into perfect position, a clear and deadly threat.'
+        - '<ansi fg="{actortype}">{actor}</ansi> moves their <ansi fg="item">{itemname}</ansi> into perfect position, a clear and deadly threat.'
         - 'With the patience of an apex predator, <ansi fg="{actortype}">{actor}</ansi> prepares to strike.'
         - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> reads your every muscle, jaws poised perfectly.'
       observer:
@@ -60,7 +60,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> readies their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, {stance}.'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> adopts a masterful combat stance.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> settle into perfect position as they read <ansi fg="{acteetype}">{actee}</ansi>''s weaknesses.'
+        - '<ansi fg="{actortype}">{actor}</ansi> settles their <ansi fg="item">{itemname}</ansi> into perfect position as they read <ansi fg="{acteetype}">{actee}</ansi>''s weaknesses.'
         - 'With predatory hunger, <ansi fg="{actortype}">{actor}</ansi> prepares to engage <ansi fg="{acteetype}">{actee}</ansi>.'
         - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s every muscle, jaws poised perfectly.'
   wait:
@@ -120,13 +120,13 @@ options:
       actor:
         beginner:
         - 'You snap at <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>, but miss!'
-        - 'Your <ansi fg="item">{itemname}</ansi> clack shut on empty air as <ansi fg="{acteetype}">{actee}</ansi> dodges!'
+        - 'You snap your <ansi fg="item">{itemname}</ansi> shut on empty air as <ansi fg="{acteetype}">{actee}</ansi> dodges!'
         - 'You lunge at <ansi fg="{acteetype}">{actee}</ansi>, but fail to close your jaws on anything!'
         - 'You snap wildly at <ansi fg="{acteetype}">{actee}</ansi> in frenzied rage, failing to connect!'
         expert:
         - 'Your calculated lunge misses as <ansi fg="{acteetype}">{actee}</ansi> evades!'
         - 'You feint and snap, but <ansi fg="{acteetype}">{actee}</ansi> anticipates your bite!'
-        - 'Despite your {stance} approach, your <ansi fg="item">{itemname}</ansi> find only air!'
+        - 'Despite your {stance} approach, you find only air with your <ansi fg="item">{itemname}</ansi>!'
         - 'Your tactical strike is countered expertly by <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected skill forces your perfect bite wide!'
@@ -136,13 +136,13 @@ options:
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> snaps at you with their <ansi fg="item">{itemname}</ansi> but misses.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> clack shut on air as you dodge!'
+        - '<ansi fg="{actortype}">{actor}</ansi> snaps their <ansi fg="item">{itemname}</ansi> shut on air as you dodge!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges at you, but fails to close their jaws!'
         - '<ansi fg="{actortype}">{actor}</ansi> snaps wildly in frenzied rage, missing you entirely!'
         expert:
         - 'You evade <ansi fg="{actortype}">{actor}</ansi>''s calculated lunge!'
         - 'You anticipate <ansi fg="{actortype}">{actor}</ansi>''s feint and avoid their bite!'
-        - 'Despite <ansi fg="{actortype}">{actor}</ansi>''s {stance} approach, their <ansi fg="item">{itemname}</ansi> find only air!'
+        - 'Despite <ansi fg="{actortype}">{actor}</ansi>''s {stance} approach, they find only air with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails as you counter expertly!'
         master:
         - 'Your masterful defense forces <ansi fg="{actortype}">{actor}</ansi>''s perfect bite wide!'
@@ -152,13 +152,13 @@ options:
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> snaps at <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>, but misses.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> clack shut on air as <ansi fg="{acteetype}">{actee}</ansi> dodges!'
+        - '<ansi fg="{actortype}">{actor}</ansi> snaps their <ansi fg="item">{itemname}</ansi> shut on air as <ansi fg="{acteetype}">{actee}</ansi> dodges!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges at <ansi fg="{acteetype}">{actee}</ansi>, but fails to connect!'
         - '<ansi fg="{actortype}">{actor}</ansi> snaps wildly at <ansi fg="{acteetype}">{actee}</ansi> in frenzied rage, failing to connect!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s calculated lunge is evaded by <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{acteetype}">{actee}</ansi> anticipates the feint and avoids the bite!'
-        - 'Despite a {stance} approach, <ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> find only air!'
+        - 'Despite a {stance} approach, <ansi fg="{actortype}">{actor}</ansi> finds only air with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{acteetype}">{actee}</ansi> counters <ansi fg="{actortype}">{actor}</ansi>''s tactical snap!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s masterful defense forces the perfect bite wide!'
@@ -170,9 +170,9 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi>.'
+        - 'You graze <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>.'
         - 'You nick <ansi fg="{acteetype}">{actee}</ansi> lightly with your <ansi fg="item">{itemname}</ansi>.'
-        - 'Your <ansi fg="item">{itemname}</ansi> barely scrape <ansi fg="{acteetype}">{actee}</ansi>.'
+        - 'You barely scrape <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>.'
         - 'You snap awkwardly, barely catching <ansi fg="{acteetype}">{actee}</ansi>.'
         expert:
         - 'You dart in and graze <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>.'
@@ -190,7 +190,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> grazes you with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> nicks you lightly with their <ansi fg="item">{itemname}</ansi>.'
-        - 'You feel a sting as <ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> barely scrape you.'
+        - 'You feel a sting as <ansi fg="{actortype}">{actor}</ansi> barely scrapes you with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> snaps awkwardly, barely catching you.'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> darts in and grazes you with their <ansi fg="item">{itemname}</ansi>.'
@@ -208,7 +208,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> nicks <ansi fg="{acteetype}">{actee}</ansi> lightly with their <ansi fg="item">{itemname}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> barely scrape <ansi fg="{acteetype}">{actee}</ansi>.'
+        - '<ansi fg="{actortype}">{actor}</ansi> barely scrapes <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> snaps awkwardly, barely catching <ansi fg="{acteetype}">{actee}</ansi>.'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> darts in and grazes <ansi fg="{acteetype}">{actee}</ansi> lightly.'
@@ -227,7 +227,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> sink into <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You sink your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You snap at <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Your jaws clamp down on <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You attack with wild, animalistic fury!'
@@ -244,7 +244,7 @@ options:
         - 'From your {stance} stance, you exploit an opening and bite into the {bodypart}!'
         - 'Following through, you deliver a solid bite to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You capitalize on your momentum and snap with perfect predatory timing!'
-        - 'Your <ansi fg="item">{itemname}</ansi> flash shut as you maintain pressure with masterful control!'
+        - 'You snap your <ansi fg="item">{itemname}</ansi> shut and maintain pressure with masterful control!'
         - '{position}, you bite decisively at <ansi fg="{acteetype}">{actee}</ansi>!'
         - '{momentum}, you clamp down with overwhelming apex predator skill!'
       actee:
@@ -266,7 +266,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> exploits an opening and bites your {bodypart} decisively!'
         - '<ansi fg="{actortype}">{actor}</ansi> follows through with a solid bite!'
         - '<ansi fg="{actortype}">{actor}</ansi> capitalizes on their momentum with perfect timing!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> flash shut as they maintain pressure!'
+        - '<ansi fg="{actortype}">{actor}</ansi> snaps their <ansi fg="item">{itemname}</ansi> shut as they maintain pressure!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your stance and bites with predator precision!'
         - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> clamps down on you with overwhelming apex predator skill!'
       observer:
@@ -296,7 +296,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> tear into <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You tear into <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'You deliver a crushing bite to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your jaws clamp down savagely on <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You attack with overwhelming, bestial rage!'
@@ -319,7 +319,7 @@ options:
         - 'From your {stance} stance, {momentum}, you clamp down devastatingly while {position}!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> tear into you!'
+        - '<ansi fg="{actortype}">{actor}</ansi> tears into you with their <ansi fg="item">{itemname}</ansi>!'
         - 'You are hit hard as <ansi fg="{actortype}">{actor}</ansi> delivers a crushing bite!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s jaws clamp down savagely on you!'
         - '<ansi fg="{actortype}">{actor}</ansi> attacks with overwhelming, bestial rage!'
@@ -342,7 +342,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s {stance} assault clamps down on you devastatingly, {momentum}, while you remain {position}!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> tear into <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> tears into <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a crushing bite to <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> clamps their jaws savagely on <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> attacks <ansi fg="{acteetype}">{actee}</ansi> with overwhelming, bestial rage!'
@@ -368,7 +368,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY MAUL</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You <ansi fg="cyan-bold">CRITICALLY MAUL</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL BITE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your jaws <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You land a <ansi fg="cyan-bold">DEVASTATING SNAP</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -384,14 +384,14 @@ options:
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING BITE</ansi> from the perfect predatory angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">SHRED</ansi> <ansi fg="{acteetype}">{actee}</ansi> with masterful precision!'
-        - 'Your positioning is flawless - your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your positioning is flawless - you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Your unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL MAULING</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">TEAR THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with devastating fury!'
         - 'The tide of battle favors you - your jaws <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY MAUL</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> deliver a <ansi fg="cyan-bold">CRITICAL BITE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY MAULS</ansi> you with their <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL BITE</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - 'You are <ansi fg="cyan-bold">DEVASTATED</ansi> by <ansi fg="{actortype}">{actor}''s jaws!</ansi>'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING SNAP</ansi> on you!'
         expert:
@@ -412,8 +412,8 @@ options:
         - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their jaws <ansi fg="cyan-bold">DECIMATE</ansi> you!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY MAUL</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> deliver a <ansi fg="cyan-bold">CRITICAL BITE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY MAULS</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL BITE</ansi> to <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their jaws!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING SNAP</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
@@ -439,7 +439,7 @@ options:
         beginner:
         - 'Your jaws <ansi fg="red-bold">FUMBLE</ansi> as your snap goes completely wild!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble off-balance!'
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> awkwardly, leaving you vulnerable!'
+        - 'You <ansi fg="red-bold">FUMBLE</ansi> your <ansi fg="item">{itemname}</ansi> awkwardly, leaving you vulnerable!'
         - 'You misjudge the distance and your attack <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
         - 'Your tactical calculation fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'

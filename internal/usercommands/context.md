@@ -19,7 +19,11 @@ The `internal/usercommands` package implements the complete command system for p
 #### **Basic Interaction Commands**
 - **Movement**: `go`, `flee` - Navigation and escape mechanics
 - **Communication**: `say`, `shout`, `whisper`, `emote`, `broadcast` - Player communication
-- **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering
+- **Observation**: `look`, `inspect`, `consider`, `online` (`who` is its alias in `keywords.yaml`, #421) - Information gathering.
+  The admin `online` table swaps Title for UserId, Zone and RoomId, and
+  `fitOnlineEntries` keeps it within 80 columns: it trims the Zone cell
+  first (RoomId still names the room), then the character name, keeping
+  its `[AI]` tag (#449). The player table is not trimmed.
 - **Inventory**: `inventory`, `get`, `drop`, `give`, `put` - Item management
 - **Drink** (`drink.go`, drink path unification 2026-09-28): `Drink` is a
   wrapper over `actions.Drink`, which holds every drink rule (toxicity, aging,
@@ -75,6 +79,35 @@ The `internal/usercommands` package implements the complete command system for p
   `Not<Identity>` result for ineligible callers. See
   `internal/combat/context.md` "Beast Moveset (Phase 3)" for full
   gate and mechanic details.
+
+#### **Naming a creature in the dark (#454)**
+Every command that names a creature in the room runs the typed name through
+`actions.AimBySight` before it resolves: `attack` (a `*` wildcard needs some
+sight), `target`, the melee specials (through `actions.StageMeleeTarget`),
+`give` (the giver's own pet, named `pet` or by its own name, is exempt and
+resolves before any room lookup; the item and recipient split admits only a
+recipient `AimBySight` admits, and below full sight falls to the first split
+whose item alone resolves, so a refusal never tells who is there), `show`, `consider`, `steal` and `plant`
+(a refused noun may still be a container), `shadow`, `talk`, `ask`,
+`party invite` and `rep`, and outside this package `follow`
+(`modules/follow`) and `companion-ask` (`modules/aicompanion`). Knowingly
+ungated: `look <creature>` (names one only at full sight), `sell` to a
+named merchant and `buy <x> from <merc>`. A pet is named, never a shape: `ownPetNamed`
+(`pet.go`) admits the player's own pet (`pet` or its name) at any sight, and
+`petOwnerInSight` finds another player's pet only at full sight of a
+perceived owner, so `pet <name>` (`AimNotHereLine` below full sight),
+`get x from <pet>` and `give x <pet>` never confirm a pet in the dark.
+`fire` refuses below full sight of the room it is
+aimed into (`actions.ShotSight`) before any name resolves. Lines that follow
+a shape name no one: `give`, `show`, `party invite` and `rep` hide each name
+at its reader's sight with `messaging.HideNames` (an invitation or a report
+to its recipient with `messaging.HideSpeakerNames`), and `consider`,
+`steal`, `plant` and `shadow` hand their action `actions.UserActorAtSight`.
+Party auto-assist skips a member who sees nothing. `share` pays the party
+members in the room directly through give's gold path (`giveGoldToUser`,
+which hides each name at its reader's sight), never by typing `give N gold
+to @uid`, which the sight gate would refuse in the dark; membership is
+already known, so no presence leaks.
 
 #### **Skill-Based Commands**
 - **Magic system**: `cast`, `enchant`, `unenchant`, `prepare` - Spellcasting mechanics
@@ -273,7 +306,12 @@ the mover spotting a hidden occupant) runs through `actions.EntryDetection`
 instead of `go.go`'s own inline rolls; the rare Search-training call
 (`actions.TrainSearchOnMove`) still fires from here, inside the
 `rooms.MoveToRoom` success branch. `move_wrapper_guard_test.go` (repo root)
-fails if this file prices or detects a step itself again.
+fails if this file prices or detects a step itself again. The departure line
+("X leaves to the north.") is judged by the room before the move: `Go` takes
+`room.VisualSnapshot()` just before `rooms.MoveToRoom` and sends with
+`SendTextVisualWithAudioToSnapshot`, so a mover is seen leaving by the light
+they carry out (#456, owner ruling 2026-10-09). Arrival lines are judged
+after the move.
 
 ## Dependencies
 - `internal/users`: User management and character data

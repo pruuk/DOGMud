@@ -786,7 +786,8 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 - `internal/util` - Utility functions for hashing, file operations, and validation
 - `internal/mudlog` - Logging system for user events and debugging
 - `internal/events` - Event queue (login/logout, web client commands)
-- `internal/messaging` - `SendText` categories and combat-verbosity parsing
+- `internal/messaging` - `SendText` categories, combat-verbosity parsing, and
+  the `SightDecision` the prompt sight check returns
 - `internal/mobs` - Charm tracking cleanup on login/zombie/removal
 - `internal/quests` - Quest step migration (`DoQuestStepMigration`)
 - `internal/skills` - Title derivation for `OnlineInfo.Title`
@@ -806,9 +807,9 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 
 | File | Purpose |
 |------|---------|
-| `users.go` | Registry, connect/disconnect, lookup, save file read/write (`LoadUser`, `loadUserFromPath`, `SaveUser`, `SaveAllUsers`) |
+| `users.go` | Registry, connect/disconnect, lookup, save file read/write (`LoadUser`, `loadUserFromPath`, `SaveUser`, `SaveAllUsers`). A validating load runs `Character.DiscardEndedStealthRecords()` before `Validate(true)`, so a stealth record the logout reveal expired is not told as "emerges from the shadows" after login (#451) |
 | `userrecord.go` | The `UserRecord` type |
-| `userrecord.prompt.go` | Prompt rendering and tokens |
+| `userrecord.prompt.go` | Prompt rendering and tokens. `SetPromptSightCheck(fn func(*characters.Character) messaging.SightDecision)` registers the reader's room sight (`messaging.ReaderSight`), wired at boot in `main.go` because `users` cannot import `rooms`; nil (boot, tests) means full sight. The fight prompt reads it to name a combat target below full sight as combat lines do, "a figure" at shapes and "something" with none, and to hide its health and position (#455) |
 | `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`), its legacy `Items`-to-`Slots` shape migration, and the U10d ranged-weapon rescale over banked items |
 | `index.go` / `index_rebuild.go` / `character_index.go` | Name/character indexes |
 | `migration.go` | Per-user migrations |

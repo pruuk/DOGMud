@@ -24,10 +24,17 @@ const (
 // skipStages returns the stage mask of stages to SKIP for cat.
 func skipStages(cat Category) normalizeStage {
 	switch cat {
+	case CategoryMobEmote:
+		// Authored mob prose keeps its casing, articles and words, but a
+		// sentence still ends: 700+ shipped idle emotes were written with
+		// no full stop and printed that way (#455). Player-typed emotes
+		// ride CategoryEmote, which stays fully exempt below.
+		return stageCapitalize | stageAAnAgreement | stageDupWordCollapse |
+			stageNameCanon
 	case CategoryRoomDescription, CategoryRoomEntry, CategoryRoomExit,
 		CategoryWeather, CategoryTimeOfDay, CategoryLight, CategorySplash,
 		CategoryNPCDialogue, CategoryDialogueHint,
-		CategoryMobIdle, CategoryMobEmote,
+		CategoryMobIdle,
 		CategorySpeech, CategoryWhisper, CategoryShout, CategoryEmote,
 		CategoryBroadcast,
 		CategorySkillProgress: // banner has its own formatting

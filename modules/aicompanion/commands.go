@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/apiframework"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -307,10 +308,15 @@ func (m *AICompanionModule) unbond(owner *users.UserRecord, departure string) (s
 		if mob := mobs.GetInstance(comp.InstanceId); mob != nil {
 			mob.Character.RemoveCharm()
 			if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
+				// #456, owner ruling 2026-10-09: a mover is seen by the light
+				// she carries on her own way out, so the parting line is
+				// judged by the room before she left it.
+				departSnap := r.VisualSnapshot()
 				r.RemoveMob(mob.InstanceId)
 				if departure != `` {
-					r.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
-						`<ansi fg="mobname">%s</ansi> %s`, comp.Name, util.EscapeAnsiTags(departure)))
+					r.SendTextVisualToSnapshot(departSnap, messaging.CategoryMobEmote, fmt.Sprintf(
+						`<ansi fg="mobname">%s</ansi> %s`, comp.Name, util.EscapeAnsiTags(departure)),
+						[]string{comp.Name})
 				}
 			}
 			mobs.DestroyInstance(mob.InstanceId)
@@ -624,7 +630,14 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 		return true, nil
 	}
 	// Seen by the owner: they cannot send their companion to question
-	// somebody they themselves cannot see.
+	// somebody they themselves cannot see. The typed name goes through the
+	// shared sight rule first (#454), so in the dark a name that is there
+	// and one that is not read the same refusal.
+	who, refusal := actions.AimBySight(user.Character, user.UserId, room, who, `companion-ask`)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return true, nil
+	}
 	_, mobInstanceId := room.FindByNameSeenBy(user.Character, who)
 	target := mobs.GetInstance(mobInstanceId)
 	if target == nil || target.Character.IsCharmed() {
@@ -632,15 +645,22 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 		return true, nil
 	}
 	c.askAuth = &askAuthority{MobInstanceId: mobInstanceId, Topic: topic, Expires: time.Now().Unix() + 60}
+	// The NPC is named as the owner perceives it: an owner who makes it out
+	// only as a shape sends her to "a figure", so its real name never
+	// reaches her memory or her prompt, where she might say it aloud (#454).
+	askee := target.Character.Name
+	if sight := messaging.ParticipantSight(user.Character, room); sight != messaging.SightFull {
+		askee = messaging.UnseenNoun(sight)
+	}
 	// The topic is the owner's own words, so it is written into her mind
 	// only once they have agreed that her mind may be sent.
 	if m.consented(user.UserId) {
 		c.mind.addLine(Line{Speaker: user.Character.Name, Kind: `asked`, ToMe: true,
-			Text: `Ask ` + target.Character.Name + ` about ` + topic + `.`}, m.cfg.WorkingMemoryLines)
+			Text: `Ask ` + askee + ` about ` + topic + `.`}, m.cfg.WorkingMemoryLines)
 		c.dirty = true
 	}
 	c.push(stimulus{Kind: `errand_ask`, Speaker: user.Character.Name,
-		Text: `put a question to ` + target.Character.Name + ` about ` + topic, FromOwner: true})
+		Text: `put a question to ` + askee + ` about ` + topic, FromOwner: true})
 	return true, nil
 }
 

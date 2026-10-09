@@ -87,6 +87,50 @@ type FireResult struct {
 	Blinded      bool
 }
 
+// The refusals of an aimed shot the shooter cannot see to line up: the fire
+// command's pre-fire sight gate and its answer to FireResult.Blinded and
+// FireResult.TooDarkToAim say the same thing, so they share these.
+const (
+	ShotBlindedLine = `You can't see well enough to aim.`
+	ShotTooDarkLine = `It is too dark to aim. You need light, or eyes that do not need it.`
+)
+
+// ShotSight is what a player shooter makes out of the room a shot in rest is
+// aimed into (#454): their sight of their own room for "<target>", or, for
+// "<target words...> <direction>" through an exit, scanReach's sight into the
+// room beyond (SightNone when it does not reach). It parses rest as
+// ExecuteFire does and resolves no name, so a caller can refuse a shooter who
+// cannot see before any name is looked up.
+func ShotSight(viewer *characters.Character, room *rooms.Room, rest string) messaging.SightDecision {
+	if room == nil {
+		return messaging.SightNone
+	}
+	args := strings.Fields(rest)
+	if len(args) >= 2 {
+		if name, roomId := room.FindExitByName(args[len(args)-1]); name != "" {
+			if adj := rooms.LoadRoom(roomId); adj != nil {
+				sight, reaches := scanReach(viewer, room, adj)
+				if !reaches {
+					return messaging.SightNone
+				}
+				return sight
+			}
+		}
+	}
+	return messaging.ParticipantSight(viewer, room)
+}
+
+// ShotFallsBackHome reports whether a shot through an exit that found no one
+// in the room beyond may retry its whole phrase ("guard north") in the
+// shooter's own room. A mob shooter (nil viewer) always may. A player may only
+// at full sight of their own room, the sight an aimed shot needs (#454):
+// ShotSight judged the room beyond, and resolving the phrase at home unseen
+// would answer differently for a creature that is there. Both ExecuteFire and
+// the fire command's pre-fire guards ask it.
+func ShotFallsBackHome(viewer *characters.Character, room *rooms.Room) bool {
+	return viewer == nil || messaging.ParticipantSight(viewer, room) == messaging.SightFull
+}
+
 // ExecuteFire resolves a ranged shot immediately. rest is either "<target>"
 // (same room) or "<target words...> <direction>" (adjacent room). The weapon
 // must be loaded; firing unloads it (even on a miss). An ORDINARY shot does not
@@ -187,7 +231,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		viewer = actor.GetCharacter()
 	}
 	targetUserId, targetMobInstanceId := targetRoom.FindByNameSeenBy(viewer, strings.Join(targetWords, " "))
-	if targetUserId == 0 && targetMobInstanceId == 0 && crossRoom {
+	if targetUserId == 0 && targetMobInstanceId == 0 && crossRoom && ShotFallsBackHome(viewer, room) {
 		// The trailing word may have been part of the target name after all;
 		// retry as a same-room shot using the full argument string.
 		crossRoom, exitName, targetRoom = false, "", room
