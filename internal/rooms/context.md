@@ -27,7 +27,7 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   rule (2026-10-05): a line announcing a change to the room's light lands
   with the state everyone was in BEFORE the change, so take the snapshot
   first, make the change, then send. Lighting plan 5d uses it for a
-  darkness's start line and its equip lines; #220 added `hood` and the end
+  darkness's start line, #447 for every equip and remove room line; #220 added `hood` and the end
   line of a light or darkness that runs out or is cancelled. Those end lines
   go out at the next prune, after the record has stopped counting, so the
   snapshot is kept in this package's end-line store

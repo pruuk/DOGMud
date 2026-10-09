@@ -115,13 +115,15 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// set more of them aside.
 		beforeReservation := user.Character.ReservationTotals()
 
-		// A darkness's "puts on" line is judged against the room as it was
-		// before the item goes on (owner rule, 2026-10-05), so the snapshot is
-		// taken here, before the equip. Only a darkness pays the room walk.
-		var beforeDark rooms.VisualSnapshot
-		if conditions.AnyDarknessSource(iSpec.WornConditionIds) {
-			beforeDark = room.VisualSnapshot()
-		}
+		// Every room line below is judged against the room as it was before
+		// the equip (owner rule, 2026-10-05; #447): a light or darkness put
+		// on, or a light displaced, changes what the room can see, and the
+		// line announcing it lands with the state before. An item that
+		// touches no light changes no one's sight, so the snapshot reads the
+		// same as the room would after; taking it always keeps one call per
+		// line, which the narration guard (messaging_surface_guard_test.go)
+		// needs to see each line's observer.
+		before := room.VisualSnapshot()
 
 		// One shared body for both spellings; a named arm only confines where
 		// the item goes (spec ruling 11), so the arm path meets Wear's
@@ -141,9 +143,9 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 					user.SendText(messaging.CategorySystem,
 						fmt.Sprintf(`You remove your <ansi fg="item">%s</ansi> and return it to your backpack.`, oldItem.DisplayName()),
 					)
-					room.SendTextVisual(messaging.CategoryEquipment,
+					room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment,
 						fmt.Sprintf(`<ansi fg="username">%s</ansi> removes their <ansi fg="item">%s</ansi> and stores it away.`, user.Character.Name, oldItem.DisplayName()),
-						user.UserId,
+						nil, user.UserId,
 					)
 				}
 			}
@@ -154,9 +156,9 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				} else {
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You wield your <ansi fg="item">%s</ansi> in your %s.`, result.Item.DisplayName(), result.ArmLabel))
 				}
-				room.SendTextVisual(messaging.CategoryEquipment,
+				room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> equips their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName()),
-					user.UserId,
+					nil, user.UserId,
 				)
 			} else if result.Item.GetSpec().Subtype == items.Wearable {
 				// A light says it is lit as it goes on (#260); the light
@@ -168,30 +170,21 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				user.SendText(messaging.CategorySystem,
 					fmt.Sprintf(`You wear your <ansi fg="item">%s</ansi>.%s`, result.Item.DisplayName(), lightNote),
 				)
-				putsOn := fmt.Sprintf(`<ansi fg="username">%s</ansi> puts on their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName())
-				// A darkness is judged against the room before it went on (owner
-				// rule, 2026-10-05; lighting plan 5d, ruling D6 as amended): it
-				// is already worn, so the room as it is now would silence its
-				// arrival for everyone it has just blinded, and judging it as
-				// lit would name the wearer to someone already blind. Two
-				// else-less ifs rather than an if/else:
-				// messaging_surface_guard_test.go's walk splits an if/else into
-				// separate events and would lose this line's observer, which it
-				// tracks.
-				snapped := beforeDark != nil && conditions.AnyDarknessSource(result.Item.GetSpec().WornConditionIds)
-				if snapped {
-					room.SendTextVisualToSnapshot(beforeDark, messaging.CategoryEquipment, putsOn, nil, user.UserId)
-				}
-				if !snapped {
-					room.SendTextVisual(messaging.CategoryEquipment, putsOn, user.UserId)
-				}
+				// Judged against the room before it went on (owner rule,
+				// 2026-10-05; lighting plan 5d, ruling D6 as amended; #447): a
+				// darkness already worn would silence its arrival for everyone
+				// it has just blinded, and a light already worn would name the
+				// wearer to someone who was blind before it was lit.
+				room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment,
+					fmt.Sprintf(`<ansi fg="username">%s</ansi> puts on their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName()),
+					nil, user.UserId)
 			} else {
 				user.SendText(messaging.CategorySystem,
 					fmt.Sprintf(`You wield your <ansi fg="item">%s</ansi>. You're feeling dangerous.`, result.Item.DisplayName()),
 				)
-				room.SendTextVisual(messaging.CategoryEquipment,
+				room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> wields their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName()),
-					user.UserId,
+					nil, user.UserId,
 				)
 			}
 

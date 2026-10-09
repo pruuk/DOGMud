@@ -45,6 +45,10 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
+	// The room line is judged against the room before the item comes off
+	// (owner rule, 2026-10-05; #447): taking off the only light must still
+	// show the watchers it just left in the dark who took it off.
+	before := room.VisualSnapshot()
 	result := actions.RemoveEquipment(actor, rest)
 	switch {
 	case result.Busy:
@@ -63,9 +67,9 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			user.SendText(messaging.CategorySystem,
 				fmt.Sprintf(`You remove your <ansi fg="item">%s</ansi> and return it to your backpack.`, result.Item.DisplayName()),
 			)
-			room.SendTextVisual(messaging.CategoryEquipment,
+			room.SendTextVisualToSnapshot(before, messaging.CategoryEquipment,
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> removes their <ansi fg="item">%s</ansi> and stores it away.`, user.Character.Name, result.Item.DisplayName()),
-				user.UserId,
+				nil, user.UserId,
 			)
 			sendReservationReturnDisclosure(user, beforeReservation)
 			// Taking off a light changes the band at once; the notice rides

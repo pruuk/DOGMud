@@ -529,15 +529,17 @@ a gate.
   path through the shared body means it now meets `Wear`'s `MinStrength` and
   reservation gates like any other equip, and an item it knocks off a full
   pack lands on the floor instead of being lost, matching the plain path.
-  The wearable room line ("X puts on their Y.") is judged against a
-  `rooms.VisualSnapshot` of the room taken before the equip
-  (`room.SendTextVisualToSnapshot`) when the item's worn conditions include a
-  darkness source (`conditions.AnyDarknessSource`, lighting plan 5d, ruling
-  D6 as amended by the owner on 2026-10-05), so the observers the Umbral
-  Lantern has just blinded still see it go on, and one already blind in a
-  dark room learns nothing. Two else-less `if`s, not an `if/else`, on purpose: the viewpoint walk in
-  the root `messaging_surface_guard_test.go` splits an `if/else` into separate events
-  and would lose the line's observer. `hood` refuses a darkness in the light
+  Every equip room line (displaced items, the arm-slot "equips", "puts on",
+  "wields") and the single `remove` line is judged against a
+  `rooms.VisualSnapshot` taken before the change
+  (`room.SendTextVisualToSnapshot`, #447): a light or darkness put on, taken
+  off or displaced announces itself with the room as it was before (owner
+  rule, 2026-10-05), so an observer blind before a torch was lit learns
+  nothing and one the torch's removal leaves in the dark still sees it come
+  off. For an item that touches no light the snapshot reads what the room
+  reads after. One call per line keeps the viewpoint walk in the root
+  `messaging_surface_guard_test.go` seeing each line's observer. `remove all`
+  sends no room line. `hood` refuses a darkness in the light
   slot with its existing "has no hood." line (`hoodedLight` reads light
   sources only).
 - **`busyRefusalText(verb string)`** (`busy_refuse.go`) is now the one string
