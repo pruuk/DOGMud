@@ -136,6 +136,22 @@ func (bs *Conditions) RemoveCondition(conditionId int) bool {
 	return false
 }
 
+// Discard deletes a held record outright. Unlike RemoveCondition, which only
+// marks it expired, the prune pass never sees it, so no end line is told. It
+// is for one hide handing over to another without a reveal (Empathic Shroud
+// and the sneak's record 9, characters.hideForStealthRecord), where the end
+// line ("emerges from the shadows") would tell the room something that did
+// not happen. Reports whether a record was held.
+func (bs *Conditions) Discard(conditionId int) bool {
+	idx, ok := bs.conditionIds[conditionId]
+	if !ok {
+		return false
+	}
+	bs.List = append(bs.List[:idx], bs.List[idx+1:]...)
+	bs.Validate(true)
+	return true
+}
+
 func (bs *Conditions) TriggersLeft(conditionId int) int {
 	if idx, ok := bs.conditionIds[conditionId]; ok {
 		return bs.List[idx].TriggersLeft

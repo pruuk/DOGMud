@@ -337,3 +337,52 @@ func TestAW_033_NoisyBroadcastReveals(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, Visible, A.State())
 }
+
+// --- Hide source (Empathic Shroud as a real hide, #444) ---
+
+// ResolveConcealmentAs stores the hide's data before the move to Hidden, so
+// the Hidden cascade can tell a shroud from a sneak.
+func TestResolveConcealmentAs_DataVisibleToTheHiddenCascade(t *testing.T) {
+	A, _ := makePair()
+	var seen HiddenData
+	var seenOk bool
+	A.Inner().AfterTransition("test_hidden_data", func(from, to State, r state.TransitionReason) {
+		if to == Hidden {
+			seen, seenOk = A.HiddenData()
+		}
+	})
+	require.NoError(t, A.TransitionToConcealing(ConcealingData{}, state.TransitionReason{}))
+	A.ResolveConcealmentAs(HiddenData{Source: HideShroud, Score: 180}, state.TransitionReason{})
+
+	require.Equal(t, Hidden, A.State())
+	require.True(t, seenOk, "the Hidden cascade must read the hide's data")
+	require.Equal(t, HiddenData{Source: HideShroud, Score: 180}, seen)
+	got, ok := A.HiddenData()
+	require.True(t, ok)
+	require.Equal(t, HideShroud, got.Source)
+}
+
+// A plain ResolveConcealment hides as a sneak; HiddenData is gone once the
+// hide ends, and SetHiddenData only acts while Hidden.
+func TestHiddenData_SneakDefaultSwapAndReveal(t *testing.T) {
+	A, _ := makePair()
+	_, ok := A.HiddenData()
+	require.False(t, ok, "a Visible machine has no hide")
+	A.SetHiddenData(HiddenData{Source: HideShroud, Score: 50})
+	_, ok = A.HiddenData()
+	require.False(t, ok, "SetHiddenData must not act outside Hidden")
+
+	require.NoError(t, A.TransitionToConcealing(ConcealingData{}, state.TransitionReason{}))
+	A.ResolveConcealment(true, state.TransitionReason{})
+	got, ok := A.HiddenData()
+	require.True(t, ok)
+	require.Equal(t, HideSneak, got.Source)
+
+	A.SetHiddenData(HiddenData{Source: HideShroud, Score: 90})
+	got, _ = A.HiddenData()
+	require.Equal(t, HiddenData{Source: HideShroud, Score: 90}, got)
+
+	require.NoError(t, A.TransitionToRevealing(state.TransitionReason{Trigger: TriggerShroudEnded}))
+	_, ok = A.HiddenData()
+	require.False(t, ok, "a revealed machine has no hide")
+}

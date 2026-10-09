@@ -81,6 +81,23 @@ rolls (Perception + Search vs. Dexterity + Skullduggery, via
 `internal/actions/sneak.go`, looping over every player and mob observer
 in the room; this method only records the already-computed result.
 
+### Hide data (#444)
+
+```go
+func (m *Machine) ResolveConcealmentAs(d HiddenData, r state.TransitionReason)
+func (m *Machine) HiddenData() (HiddenData, bool)
+func (m *Machine) SetHiddenData(d HiddenData)
+```
+
+`ResolveConcealmentAs` is `ResolveConcealment(true, r)` that stores `d`
+BEFORE the move to Hidden, so the Hidden cascade
+(`hooks/Awareness_Cascades.go`) can read it: a shroud hide (`HideShroud`)
+carries record 31 and no record 9. `HiddenData` reports the hide's data only
+while Hidden (inside a plain `ResolveConcealment`'s cascade it is not yet
+stored; read that as a sneak). `SetHiddenData` swaps it while Hidden, for one
+hide taking over from another without a reveal
+(`characters.SneakOverShroud`, `characters.hideForStealthRecord`).
+
 ### Revealing after detection or combat entry
 
 ```go
@@ -225,9 +242,12 @@ type ConcealingData struct {
     RoundsUntil int  // Reserved for multi-round sneak in future chunks.
 }
 
-type HiddenData struct{}
-    // Empty — reserved for future light-source tracking or
-    // per-observer awareness lists.
+type HideSource uint8 // HideSneak (default) or HideShroud (#444)
+
+type HiddenData struct {
+    Source HideSource // what keeps the character hidden
+    Score  float64    // a shroud's base score; unused for a sneak
+}
 
 type RevealingData struct {
     Reason state.TransitionReason  // Why is the character being revealed?
@@ -269,6 +289,8 @@ inline literals to ensure stable identifiers across the codebase:
 | `TriggerLogout` | `"logout_safety_valve"` |
 | `TriggerDeath` | `"death_cascade"` |
 | `TriggerForceVisible` | `"force_visible"` |
+| `TriggerConditionApplied` | `"condition_applied"` |
+| `TriggerShroudEnded` | `"shroud_ended"` |
 
 Verified against `transitions.go` 2026-08-25. Four names this table
 previously carried -- `TriggerDetectionSuccess`, `TriggerDetectionFailure`,
