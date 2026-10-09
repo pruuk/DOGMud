@@ -73,7 +73,9 @@ and alignment decision must use `VisibleWidth`, and `SplitString` already does.
 `ConvertToAscii` (backed by the `unicodeToAscii` table) and
 `StripCharsForScreenReaders` serve the accessibility and
 limited-client paths — a client that has not converged on UTF-8 gets readable
-text rather than mojibake.
+text rather than mojibake. Any non-ASCII rune player text carries on
+purpose needs a row there, as the no-break space (U+00A0) of the crit
+banners has.
 
 **`StripANSI` and `EscapeAnsiTags` are unrelated.** `StripANSI` removes raw
 terminal escape sequences (`\x1b[...m`) from already-rendered output.
