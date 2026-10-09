@@ -572,7 +572,20 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 
     return events.Continue
 }
+```
 
+**Stranded folds (#242).** A mob's fold step (`handleMobFoldCasting`) runs
+only in the combat round, so a mob released mid-fold would hold its spell
+forever, unspoken. `IdleMobs` ends it through `endStrandedFold` /
+`fizzleMobFold` ("<caster>'s spell fizzles." by sight, the sputter by
+sound): before the release when a player target walked out, and, for any
+mob out of combat still holding a HARMFUL fold, every round, which covers a
+mob target that walked or fled out (`actions.ClearRoomAggroOnDeparture`
+releases the caster) and every other release. A help fold out of combat
+(an idle `cast conviction-ward`) is not swept; that it never resolves is a
+separate, pre-existing problem.
+
+```go
 func HandleIdleMobs(e events.Event) events.ListenerReturn {
     evt := e.(events.MobIdle)
 

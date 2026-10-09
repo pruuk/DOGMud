@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state/presence"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -23,6 +24,18 @@ import (
 //
 // Handle mobs that are bored
 //
+
+// endStrandedFold ends a fold mob holds through fizzleMobFold, told at each
+// reader's sight in the mob's room. A no-op when the mob is not casting.
+func endStrandedFold(mob *mobs.Mob) {
+	cs, ok := mob.Character.CastingData()
+	if !ok {
+		return
+	}
+	if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+		fizzleMobFold(mob, room, cs)
+	}
+}
 
 func IdleMobs(e events.Event) events.ListenerReturn {
 
@@ -66,19 +79,29 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 			if mob.Character.CurrentCombatTarget().UserId > 0 {
 				user := users.GetByUserId(mob.Character.CurrentCombatTarget().UserId)
 				if user == nil || user.Character.RoomId != mob.Character.RoomId {
-					// A fold in progress ends first (#242): released, the mob
-					// leaves combat, the fold step never runs for it again,
-					// and the spell would hang unspoken.
-					if cs, ok := mob.Character.CastingData(); ok {
-						if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-							fizzleMobFold(mob, room, cs)
-						}
-					}
+					// A fold in progress ends first (#242), so its fizzle
+					// reads before the mumble; endStrandedFold below would
+					// only catch it a round later.
+					endStrandedFold(mob)
 					mob.Command(`emote mumbles about losing their quarry.`)
 					targeting.Release(&mob.Character, targeting.ReasonDisengage)
 				}
 			}
 			continue
+		}
+
+		// Out of combat, a mob's fold step never runs (it lives in the
+		// combat round), so a harmful fold it still holds would hang
+		// unspoken. One sweep for every way a caster is released mid-fold
+		// (#242): a mob target that walked or fled out
+		// (actions.ClearRoomAggroOnDeparture) and any other release. A help
+		// fold (an idle self-buff) is left alone: it never resolves out of
+		// combat either, but fizzling it would turn every idle buff into a
+		// fizzle line, which is a separate fix.
+		if cs, ok := mob.Character.CastingData(); ok {
+			if spell := spells.GetSpell(cs.SpellId); spell != nil && spell.IsHarm() {
+				endStrandedFold(mob)
+			}
 		}
 
 		// Chunk 5.14: a mob someone is swinging at must not wander off before

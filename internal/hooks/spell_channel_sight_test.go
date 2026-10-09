@@ -3,8 +3,10 @@ package hooks
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -327,6 +329,73 @@ func TestMobFold_TargetWalksOut_FizzlesAtEachReadersSight(t *testing.T) {
 			require.Empty(t, drainPlain(2), "the player who left reads nothing of the room")
 		})
 	}
+}
+
+// #242 review G2: a mob folding at a MOB that walks or flees out is released
+// by actions.ClearRoomAggroOnDeparture, not by IdleMobs' player-target check,
+// so it left combat still casting, the fold step never ran for it again, and
+// the spell hung unspoken. IdleMobs now ends every fold a mob out of combat
+// still holds.
+func TestMobFold_MobTargetRelocatesOut_Fizzles(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": testHarmSpell()}))
+	caster := spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	room.AddMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+
+	target := &mobs.Mob{MobId: 2, InstanceId: 101, Character: characters.Character{
+		Name: "Rat", RoomId: room.RoomId, Health: 10, Conditions: conditions.New()}}
+	target.Character.HealthMax.Value = 10
+	mobs.SetInstanceForTest(101, target)
+	t.Cleanup(func() { mobs.SetInstanceForTest(101, nil) })
+	room.AddMob(101)
+
+	caster.Character.Validate()
+	caster.Character.SetAggro(0, 101, characters.DefaultAttack)
+	require.True(t, caster.Character.IsInCombat(), "fixture: the caster fights the rat")
+	require.NoError(t, caster.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-bolt", FoldsNeeded: 3, TargetMobInstanceIds: []int{101}},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+
+	// The rat walks out: the departure releases whoever was fighting it.
+	room.RemoveMob(101)
+	target.Character.RoomId = 1
+	rooms.LoadRoom(1).AddMob(101)
+	actions.ClearRoomAggroOnDeparture(room, 101)
+	require.False(t, caster.Character.IsInCombat(), "fixture: the departure released the caster")
+	require.True(t, caster.Character.IsCasting(), "fixture: still folding after the release")
+	events.DrainQueuedMessagesForTest(1)
+
+	IdleMobs(events.NewRound{RoundNumber: 1})
+
+	require.False(t, caster.Character.IsCasting(), "the stranded fold ends")
+	got := drainPlain(1)
+	require.Equal(t, 1, countContaining(got, "Skeleton's spell fizzles."), "%v", got)
+}
+
+// The sweep ends harmful folds only. An idle self-buff (shipped idle
+// commands such as `cast conviction-ward`) is not fizzled every time it is
+// begun; that it never resolves out of combat is a separate problem.
+func TestMobFold_IdleHelpFoldIsNotSwept(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-ward": {SpellId: "test-ward", Name: "Test Ward",
+		AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSelf}}))
+	caster := spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	room.AddMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+	caster.Character.Validate()
+	require.NoError(t, caster.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-ward", FoldsNeeded: 3, TargetMobInstanceIds: []int{caster.InstanceId}},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+	require.False(t, caster.Character.IsInCombat())
+	events.DrainQueuedMessagesForTest(1)
+
+	IdleMobs(events.NewRound{RoundNumber: 1})
+
+	require.True(t, caster.Character.IsCasting(), "an idle help fold was swept")
+	require.Zero(t, countContaining(drainPlain(1), "fizzles"))
 }
 
 // #242: the fold step can also complete the cast in the round the target
