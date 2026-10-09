@@ -62,10 +62,9 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if strings.TrimSpace(rest) != `` {
 		if actions.ShotSight(user.Character, room, rest) != messaging.SightFull {
 			if user.Character.Perception != nil && user.Character.Perception.State() == perception.Blinded {
-				user.SendText(messaging.CategorySystem, `You can't see well enough to aim.`)
+				user.SendText(messaging.CategorySystem, actions.ShotBlindedLine)
 			} else {
-				user.SendText(messaging.CategorySystem,
-					`It is too dark to aim. You need light, or eyes that do not need it.`)
+				user.SendText(messaging.CategorySystem, actions.ShotTooDarkLine)
 			}
 			return true, nil
 		}
@@ -145,12 +144,11 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.Blinded {
-		user.SendText(messaging.CategorySystem, `You can't see well enough to aim.`)
+		user.SendText(messaging.CategorySystem, actions.ShotBlindedLine)
 		return true, nil
 	}
 	if result.TooDarkToAim {
-		user.SendText(messaging.CategorySystem,
-			`It is too dark to aim. You need light, or eyes that do not need it.`)
+		user.SendText(messaging.CategorySystem, actions.ShotTooDarkLine)
 		return true, nil
 	}
 	if result.IsCharmed {

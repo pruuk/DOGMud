@@ -48,6 +48,9 @@ const (
 // it. An empty name is admitted at shapes (the caller decides what no name
 // means) and refused with no sight.
 //
+// It does not return the sight it judged: a caller that also needs it calls
+// messaging.ParticipantSight itself (a recorded choice, see context.md).
+//
 // Player actors only: a mob acts on shapes and needs no hint (D8). An id form
 // is admitted at shapes because it is what a shape becomes, and what the
 // game's own party auto-assist types (`attack #N`).

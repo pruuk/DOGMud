@@ -85,7 +85,10 @@ resolves before any room lookup; the item and recipient split admits only a
 recipient `AimBySight` admits, and below full sight falls to the first split
 whose item alone resolves, so a refusal never tells who is there), `show`, `consider`, `steal` and `plant`
 (a refused noun may still be a container), `shadow`, `talk`, `ask`,
-`party invite` and `rep`. A pet is named, never a shape: `ownPetNamed`
+`party invite` and `rep`, and outside this package `follow`
+(`modules/follow`) and `companion-ask` (`modules/aicompanion`). Knowingly
+ungated: `look <creature>` (names one only at full sight), `sell` to a
+named merchant and `buy <x> from <merc>`. A pet is named, never a shape: `ownPetNamed`
 (`pet.go`) admits the player's own pet (`pet` or its name) at any sight, and
 `petOwnerInSight` finds another player's pet only at full sight of a
 perceived owner, so `pet <name>` (`AimNotHereLine` below full sight),

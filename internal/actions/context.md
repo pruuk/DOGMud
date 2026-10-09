@@ -667,8 +667,19 @@ word on its own line (#430).
   name, and answers any other name with `AimShapesHint(verb)`; no sight
   admits nothing (`AimNothingLine` for a shape or no name, `AimNotHereLine`
   for a name). It returns the name to resolve and the refusal to tell, ""
-  when admitted. Every player command that names a creature runs it (the
-  list is in `internal/usercommands/context.md`). Mobs act on shapes.
+  when admitted. Player commands that name a creature run it (the list is
+  in `internal/usercommands/context.md`), except three left ungated on
+  purpose (plan D-H2-12): `look <creature>` (`look.go`, which names a
+  creature only when `NamesCreatures`, i.e. at full sight, and refuses with
+  no sight), `sell` to a named merchant (`usercommands/sell.go`), and hiring
+  a merc with `buy <x> from <merc>` (`buy.go`). Mob commands never run it
+  (mobs act on shapes, D8), with one exception: `admitCastAim` applies the
+  rule to every caster, a mob included (see `InitiateCast` below). It does
+  not return the sight it judged (a recorded choice): most callers need only
+  the name, and those that also need the sight (`attack`, `give`, `party`,
+  `rep`, `show`, `target`, `follow`, `StageMeleeTarget`) call
+  `messaging.ParticipantSight` themselves, a cheap read of the same
+  moment's state, rather than every caller taking a third result.
 - **`UserActorAtSight(user, room) Actor`**: the actor a gated command hands
   its action. At shapes only it anonymizes every identity tag in the lines
   the action tells the player ("a figure"), since they aimed at a shape and
@@ -687,8 +698,10 @@ word on its own line (#430).
   (With the shipped `LightExitsAbove` 55 over `LightDimBelow` 50 a shooter
   who sees through an exit always sees home fully; a config with the exit
   threshold below the dim one would otherwise leak.)
-- **`InitiateCast`** runs `admitCastAim` (`cast_admission.go`) for a player's
-  single-target casts of either kind and harmful multi casts. The sight rule
+- **`InitiateCast`** runs `admitCastAim` (`cast_admission.go`) for every
+  caster's single-target casts of either kind and harmful multi casts. It
+  does not check `IsPlayer`, so a mob caster is held to the same sight rule
+  (refusals go to its no-op `SendText`); this is the one place a mob is. The sight rule
   is `AimBySight`'s (verb `cast <spell>`); the cast adds the self-cast
   exemption and lets no name at shapes aim at the caster's own foe only.
   Refusals are narrated, set `RefusalExplained`, and spend nothing.

@@ -87,6 +87,14 @@ type FireResult struct {
 	Blinded      bool
 }
 
+// The refusals of an aimed shot the shooter cannot see to line up: the fire
+// command's pre-fire sight gate and its answer to FireResult.Blinded and
+// FireResult.TooDarkToAim say the same thing, so they share these.
+const (
+	ShotBlindedLine = `You can't see well enough to aim.`
+	ShotTooDarkLine = `It is too dark to aim. You need light, or eyes that do not need it.`
+)
+
 // ShotSight is what a player shooter makes out of the room a shot in rest is
 // aimed into (#454): their sight of their own room for "<target>", or, for
 // "<target words...> <direction>" through an exit, scanReach's sight into the
