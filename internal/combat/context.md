@@ -1671,6 +1671,10 @@ Wrap in *** *** for crits, !!! !!! for fumbles.
 Send to attacker, defender, room observers.
 ```
 
+The crit frame is `critBannerOpen` / `critBannerClose`. The close joins the
+last word with a no-break space (U+00A0) so the wrapper, which breaks only at
+an ASCII space, never strands the closing `***` on a line alone (#455).
+
 **viii. Pet Damage** — `applyPetDamage()` — 20% chance the player's pet
 joins in with bonus damage. Its `toDefenderMsg` names the pet via
 `sourceChar.Pet.DisplayName()`; `hideIdentitiesInPersonalLines`

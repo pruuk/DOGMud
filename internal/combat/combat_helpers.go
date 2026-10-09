@@ -1565,6 +1565,15 @@ func attackMessagePct(pctDamage int, isCrit bool) int {
 	return pctDamage
 }
 
+// critBannerOpen and critBannerClose frame every line of a critical hit. The
+// close is joined to the line's last word by a no-break space (U+00A0, built
+// from its code point so the source holds no invisible character): the
+// wrapper (messaging.WrapAnsi) breaks only at an ASCII space, so the closing
+// *** can no longer wrap onto a line of its own (#455).
+const critBannerOpen = `<ansi fg="crit-text">***</ansi> `
+
+var critBannerClose = string(rune(0x00A0)) + `<ansi fg="crit-text">***</ansi>`
+
 // buildAttackMessages constructs and sends all combat messages for a swing.
 //
 // defended is hitResolution.defended: the defence won the contest but the
@@ -1799,11 +1808,11 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 	}
 
 	if result.Crit {
-		toAttackerMsg = items.ItemMessage(`<ansi fg="crit-text">***</ansi> ` + string(toAttackerMsg) + ` <ansi fg="crit-text">***</ansi>`)
-		toDefenderMsg = items.ItemMessage(`<ansi fg="crit-text">***</ansi> ` + string(toDefenderMsg) + ` <ansi fg="crit-text">***</ansi>`)
-		toAttackerRoomMsg = items.ItemMessage(`<ansi fg="crit-text">***</ansi> ` + string(toAttackerRoomMsg) + ` <ansi fg="crit-text">***</ansi>`)
+		toAttackerMsg = items.ItemMessage(critBannerOpen + string(toAttackerMsg) + critBannerClose)
+		toDefenderMsg = items.ItemMessage(critBannerOpen + string(toDefenderMsg) + critBannerClose)
+		toAttackerRoomMsg = items.ItemMessage(critBannerOpen + string(toAttackerRoomMsg) + critBannerClose)
 		if len(string(toDefenderRoomMsg)) > 0 {
-			toDefenderRoomMsg = items.ItemMessage(`<ansi fg="crit-text">***</ansi> ` + string(toDefenderRoomMsg) + ` <ansi fg="crit-text">***</ansi>`)
+			toDefenderRoomMsg = items.ItemMessage(critBannerOpen + string(toDefenderRoomMsg) + critBannerClose)
 		}
 	}
 
