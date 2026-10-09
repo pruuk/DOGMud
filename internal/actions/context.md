@@ -670,6 +670,11 @@ word on its own line (#430).
   its action. At shapes only it anonymizes every identity tag in the lines
   the action tells the player ("a figure"), since they aimed at a shape and
   never learned the name; otherwise it is a plain `*UserActor`.
+- **`ShotSight(viewer, room, rest) messaging.SightDecision`**
+  (`combat_fire.go`): what a shooter makes out of the room a shot is aimed
+  into, parsing `rest` as `ExecuteFire` does: their own room, or `scanReach`
+  through an exit. `usercommands.Fire` refuses below full sight before any
+  name resolves.
 - **`InitiateCast`** runs `admitCastAim` (`cast_admission.go`) for a player's
   single-target casts of either kind and harmful multi casts. The sight rule
   is `AimBySight`'s (verb `cast <spell>`); the cast adds the self-cast

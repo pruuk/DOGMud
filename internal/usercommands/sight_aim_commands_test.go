@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -246,4 +247,31 @@ func TestRepSight_EachBand(t *testing.T) {
 	assert.Contains(t, told, "You report to a figure:")
 	assert.NotContains(t, told, "Bobrick")
 	assert.Contains(t, aimTold(2), "Someone reports to you:")
+}
+
+// An aimed shot needs full sight of the room it is aimed into, judged before
+// any name resolves. Resolving first answered "Bobrick is in your party!" to a
+// shooter in pitch dark, which told them Bobrick was there.
+func TestFireSight_NoSightRefusesBeforeANameResolves(t *testing.T) {
+	user, room := aimScene(t, aimDark)
+	p := parties.New(1)
+	t.Cleanup(p.Disband)
+	p.InvitePlayer(2)
+	p.AcceptInvite(2)
+	for _, rest := range []string{"bobrick", "nobody"} {
+		_, _ = Fire(rest, user, room, events.EventFlag(0))
+		told := aimTold(1)
+		assert.Contains(t, told, "It is too dark to aim.", "%q", rest)
+		assert.NotContains(t, told, "Bobrick", "%q", rest)
+	}
+}
+
+// A shot through an exit is judged by what the shooter makes out of the room
+// beyond (scanReach), not of their own lit room.
+func TestShotSight_ThroughAnExitReadsTheRoomBeyond(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	rooms.LoadRoom(2).Biome = "cave"
+	require.Equal(t, 0, rooms.LoadRoom(2).LightLevel())
+	assert.Equal(t, messaging.SightFull, actions.ShotSight(user.Character, room, "skeleton"))
+	assert.Equal(t, messaging.SightNone, actions.ShotSight(user.Character, room, "skeleton north"))
 }

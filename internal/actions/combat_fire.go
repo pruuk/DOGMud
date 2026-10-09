@@ -87,6 +87,31 @@ type FireResult struct {
 	Blinded      bool
 }
 
+// ShotSight is what a player shooter makes out of the room a shot in rest is
+// aimed into (#454): their sight of their own room for "<target>", or, for
+// "<target words...> <direction>" through an exit, scanReach's sight into the
+// room beyond (SightNone when it does not reach). It parses rest as
+// ExecuteFire does and resolves no name, so a caller can refuse a shooter who
+// cannot see before any name is looked up.
+func ShotSight(viewer *characters.Character, room *rooms.Room, rest string) messaging.SightDecision {
+	if room == nil {
+		return messaging.SightNone
+	}
+	args := strings.Fields(rest)
+	if len(args) >= 2 {
+		if name, roomId := room.FindExitByName(args[len(args)-1]); name != "" {
+			if adj := rooms.LoadRoom(roomId); adj != nil {
+				sight, reaches := scanReach(viewer, room, adj)
+				if !reaches {
+					return messaging.SightNone
+				}
+				return sight
+			}
+		}
+	}
+	return messaging.ParticipantSight(viewer, room)
+}
+
 // ExecuteFire resolves a ranged shot immediately. rest is either "<target>"
 // (same room) or "<target words...> <direction>" (adjacent room). The weapon
 // must be loaded; firing unloads it (even on a miss). An ORDINARY shot does not
