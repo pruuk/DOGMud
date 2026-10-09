@@ -51,8 +51,10 @@ resolves names, shapes only resolves `shape` / `N.shape` / `shape#N` (and
 ("You don't see them here."). `follow stop` and `follow lose` name no one and
 need no sight. The lines that follow a start hide each name at its reader's
 sight (`messaging.HideNames` for the follower, `HideSpeakerNames` for the
-target, who reads "Someone is following you."). The mob `follow` is not
-gated: mobs act on shapes.
+target, who reads "Someone is following you."). `follow stop` tells the
+followed user the follower's name the same way ("Someone stopped following
+you." in the dark), and the follower's own line hides the followed name at
+the follower's sight. The mob `follow` is not gated: mobs act on shapes.
 
 ## Gotchas
 

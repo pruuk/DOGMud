@@ -463,8 +463,17 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 		if wasFollowing.userId > 0 {
 
 			if followUser := users.GetByUserId(wasFollowing.userId); followUser != nil {
-				followUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> stopped following you.`, followUser.Character.Name))
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You are no longer following <ansi fg="username">%s</ansi>.`, followUser.Character.Name))
+				// The followed user reads the FOLLOWER's name, hidden at the
+				// followed user's own sight in their own room (#454); the
+				// follower's line hides the followed name at the follower's
+				// sight, as the start line does.
+				followedSight := messaging.ParticipantSight(followUser.Character, rooms.LoadRoom(followUser.Character.RoomId))
+				followUser.SendText(messaging.CategorySystem, messaging.HideSpeakerNames(
+					fmt.Sprintf(`<ansi fg="username">%s</ansi> stopped following you.`, user.Character.Name),
+					[]string{user.Character.Name}, followedSight))
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf(`You are no longer following <ansi fg="username">%s</ansi>.`, followUser.Character.Name),
+					[]string{followUser.Character.Name}, followerSight))
 				return true, nil
 			}
 

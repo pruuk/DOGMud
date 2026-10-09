@@ -127,3 +127,32 @@ func TestFollowSight_StopAndLoseNeedNoSight(t *testing.T) {
 	_, _ = f.followUserCommand("lose", u1, room, events.EventFlag(0))
 	assert.Contains(t, followTold(1), "Nobody is following you.")
 }
+
+// #454: `follow stop` told the followed user their OWN name ("Bobrick stopped
+// following you."). The line names the follower, hidden at the followed
+// user's sight; the follower's own line hides the followed user's name at the
+// follower's sight, as the start line does.
+func TestFollowSight_StopNamesTheFollowerInALitRoom(t *testing.T) {
+	f, u1, _, room := followScene(t, followFull)
+	f.startFollow(followId{userId: 2}, followId{userId: 1}, 0)
+	_, _ = f.followUserCommand("stop", u1, room, events.EventFlag(0))
+	assert.False(t, f.isFollowing(followId{userId: 1}))
+	assert.Contains(t, followTold(1), "You are no longer following Bobrick.")
+	followed := followTold(2)
+	assert.Contains(t, followed, "Aliceia stopped following you.")
+	assert.NotContains(t, followed, "Bobrick stopped")
+}
+
+func TestFollowSight_StopReadsSomeoneInTheDark(t *testing.T) {
+	f, u1, _, room := followScene(t, followDark)
+	f.startFollow(followId{userId: 2}, followId{userId: 1}, 0)
+	_, _ = f.followUserCommand("stop", u1, room, events.EventFlag(0))
+	assert.False(t, f.isFollowing(followId{userId: 1}))
+	follower := followTold(1)
+	assert.Contains(t, follower, "You are no longer following")
+	assert.NotContains(t, follower, "Bobrick")
+	followed := followTold(2)
+	assert.Contains(t, followed, "Someone stopped following you.")
+	assert.NotContains(t, followed, "Aliceia")
+	assert.NotContains(t, followed, "Bobrick")
+}
