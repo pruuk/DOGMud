@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
+	"github.com/GoMudEngine/GoMud/internal/mutators"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -48,5 +50,69 @@ func TestGetDetails_NounHighlightSkipsTheMinimap(t *testing.T) {
 		if !strings.Contains(desc, `<ansi fg="noun">`+noun+`</ansi>`) {
 			t.Errorf("noun %q is not highlighted in the description: %q", noun, desc)
 		}
+	}
+}
+
+// nounModifierRoom puts room 1 of seedRegistry under one description
+// modifier coloured by a seeded pattern.
+func nounModifierRoom(t *testing.T, mod *mutators.TextModifier) (*Room, *users.UserRecord) {
+	t.Helper()
+	r, viewer := nounHighlightRoom(t)
+	t.Cleanup(colorpatterns.SeedPatternsForTest(map[string][]int{"test-flame": {196, 202, 208}}))
+	t.Cleanup(mutators.SeedSpecsForTest(mutators.MutatorSpec{
+		MutatorId:           "test-noun-modifier",
+		DescriptionModifier: mod,
+	}))
+	GetZoneConfig("TestZone").Mutators.Add("test-noun-modifier")
+	return r, viewer
+}
+
+// A recolour-only modifier (the default world's wildfire: replace with no
+// text) coloured the description before nouns were highlighted, so the
+// pattern's per-rune tags hid every noun from the highlighter.
+func TestGetDetails_NounsHighlightUnderARecolourModifier(t *testing.T) {
+	for _, tinymap := range [][]string{nil, {"~~~", "~~~"}} {
+		r, viewer := nounModifierRoom(t, &mutators.TextModifier{
+			Behavior:     mutators.TextReplace,
+			ColorPattern: "test-flame",
+		})
+		var desc string
+		if tinymap == nil {
+			desc = GetDetails(r, viewer).Description
+		} else {
+			desc = GetDetails(r, viewer, tinymap).Description
+		}
+		for _, noun := range []string{"room", "cave"} {
+			if !strings.Contains(desc, `<ansi fg="noun">`+noun+`</ansi>`) {
+				t.Errorf("minimap=%v: noun %q is not highlighted under the recolour: %q", tinymap != nil, noun, desc)
+			}
+		}
+		if m := tagInsideTag.FindString(desc); m != "" {
+			t.Errorf("minimap=%v: a tag is written inside another tag (%q): %q", tinymap != nil, m, desc)
+		}
+	}
+}
+
+// A noun inside a coloured modifier's own text is highlighted like one in
+// the description.
+func TestGetDetails_NounsHighlightInsideAColouredModifier(t *testing.T) {
+	r, viewer := nounModifierRoom(t, &mutators.TextModifier{
+		Behavior:     mutators.TextAppend,
+		Text:         "Smoke rolls over the water.",
+		ColorPattern: "test-flame",
+	})
+	desc := GetDetails(r, viewer).Description
+	if !strings.Contains(desc, `<ansi fg="noun">water</ansi>`) {
+		t.Errorf("the noun in the coloured modifier is not highlighted: %q", desc)
+	}
+}
+
+// A longer noun claims its span before a shorter one inside it, so the
+// shorter noun never nests a tag inside the longer one's.
+func TestHighlightNouns_LongerNounFirst(t *testing.T) {
+	got := highlightNouns("Still deep water here, and water.", map[string]string{"water": "", "deep water": ""})
+	want := `Still <ansi fg="noun">deep water</ansi> here, and <ansi fg="noun">water</ansi>.`
+	if got != want {
+		t.Errorf("highlightNouns = %q, want %q", got, want)
 	}
 }

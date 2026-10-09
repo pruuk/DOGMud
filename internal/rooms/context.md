@@ -132,13 +132,15 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Room alerts**: Special notifications for banks, training, storage, etc.
 - **Description modifiers**: `descriptionWithModifiers` applies each active
   mutator's prepend, append or replace text BEFORE the wrap, and
-  `wrapDescriptionParts` wraps each part as plain text then colours each
-  line, so a long modifier (the sanctuary line) wraps with the description
-  and beside the minimap (#455).
+  `wrapDescriptionParts` wraps each part as plain text, highlights nouns,
+  then colours each line, so a long modifier (the sanctuary line) wraps
+  with the description and beside the minimap (#455).
 - **Noun highlighting**: `highlightNouns` tags the first visible occurrence
   of each room noun per line, longest noun first, never inside tag markup.
-  It runs before the minimap joins a line, so a noun cannot rewrite a map
-  tag's attribute (#455).
+  It runs on the plain wrapped line, before any modifier colour pattern
+  (which leaves existing tags alone) and before the minimap joins the line,
+  so nouns stay highlighted under a recolour (wildfire), inside a coloured
+  modifier, and never rewrite a map tag's attribute (#455).
 
 ### Biome System (`biomes.go`)
 - **BiomeInfo**: Environmental definitions affecting room behavior

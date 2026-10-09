@@ -102,7 +102,12 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	// dogmud-world condition carries see-nouns, so the gate made the feature
 	// admin-only by accident. Discoverability for everyone beats a
 	// vestigial perk.
-	renderNouns := true
+	//
+	// Nouns are highlighted on each wrapped plain line, before any colour
+	// pattern and before the minimap joins the line: a noun the description
+	// lacks ("water") otherwise matched inside a map tag's attribute and
+	// broke the tag (#455).
+	nouns := r.Nouns
 
 	// A mutator's description modifier joins the description BEFORE the
 	// wrap, so a long modifier wraps with the rest (#455).
@@ -111,16 +116,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	if len(tinymap) > 0 {
 		desclineWidth := 80 - 7 // 7 is the width of the tinymap
 		padding := 1
-		description := wrapDescriptionParts(descParts, desclineWidth-padding)
-
-		// Highlight nouns before the minimap joins each line: a noun the
-		// description lacks ("water") otherwise matched inside a map tag's
-		// attribute and broke the tag (#455).
-		if renderNouns && len(r.Nouns) > 0 {
-			for i := range description {
-				description[i] = highlightNouns(description[i], r.Nouns)
-			}
-		}
+		description := wrapDescriptionParts(descParts, desclineWidth-padding, nouns)
 
 		for i := 0; i < len(tinymap[0]); i++ {
 			if i > len(description)-1 {
@@ -137,13 +133,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		details.Description = strings.Join(description, "\n")
 	} else {
 
-		roomDesc := wrapDescriptionParts(descParts, 80)
-
-		if renderNouns && len(r.Nouns) > 0 {
-			for i := range roomDesc {
-				roomDesc[i] = highlightNouns(roomDesc[i], r.Nouns)
-			}
-		}
+		roomDesc := wrapDescriptionParts(descParts, 80, nouns)
 
 		details.Description = strings.Join(roomDesc, "\n")
 	}
@@ -628,13 +618,18 @@ func descriptionWithModifiers(r *Room, description string) []descriptionPart {
 	return parts
 }
 
-// wrapDescriptionParts wraps each part to width as plain text, then colours
-// each wrapped line. A colour pattern tags every rune, so wrapping the
-// tagged text could break a word in two; colouring after the wrap cannot.
-func wrapDescriptionParts(parts []descriptionPart, width int) []string {
+// wrapDescriptionParts wraps each part to width as plain text, highlights
+// the room nouns on each wrapped line, then colours it. A colour pattern
+// tags every rune, so wrapping the tagged text could break a word in two
+// and highlighting it could never match a noun; doing both on the plain
+// line cannot. ApplyColorPattern leaves the noun tags it finds alone, so a
+// noun keeps its highlight in the description and in any modifier, coloured
+// or not (#455).
+func wrapDescriptionParts(parts []descriptionPart, width int, nouns map[string]string) []string {
 	var lines []string
 	for _, p := range parts {
 		for _, line := range util.SplitString(p.text, width) {
+			line = highlightNouns(line, nouns)
 			lines = append(lines, colorpatterns.ApplyColorPattern(line, p.colorPattern))
 		}
 	}

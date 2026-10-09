@@ -8,6 +8,9 @@ The `internal/colorpatterns` package provides a sophisticated color pattern appl
 
 ### Core Files
 - **colorpatterns.go**: Complete color pattern management and application system
+- **test_helpers.go**: `SeedPatternsForTest(patterns map[string][]int) func()`
+  adds numeric patterns for a test without reading `color-patterns.yaml`;
+  the returned func restores the previous entries
 
 ### Key Enumerations
 
