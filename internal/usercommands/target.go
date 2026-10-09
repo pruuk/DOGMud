@@ -58,6 +58,15 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 
+	// #454: a typed name resolves only at full sight.
+	name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `target`)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return true, nil
+	}
+	rest = name
+	sight := messaging.ParticipantSight(user.Character, room)
+
 	// Find the new target
 	target, err := actions.ResolveTargetActor(room, rest, actions.ResolveTargetOptions{
 		ExcludeUserId: user.UserId,
@@ -104,10 +113,14 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// switching targets onto it.
 		switch mobs.CheckPlayerHarm(m) {
 		case mobs.HarmBlockedCompanion:
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("<ansi fg=\"mobname\">%s</ansi> is someone's companion!", m.Character.Name))
+			user.SendText(messaging.CategorySystem, messaging.HideNames(
+				fmt.Sprintf("<ansi fg=\"mobname\">%s</ansi> is someone's companion!", m.Character.Name),
+				[]string{m.Character.Name}, sight))
 			return true, nil
 		case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("You can't attack <ansi fg=\"mobname\">%s</ansi>.", m.Character.Name))
+			user.SendText(messaging.CategorySystem, messaging.HideNames(
+				fmt.Sprintf("You can't attack <ansi fg=\"mobname\">%s</ansi>.", m.Character.Name),
+				[]string{m.Character.Name}, sight))
 			mobs.FireAttackRejected(m, user.UserId)
 			return true, nil
 		}
@@ -129,7 +142,9 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// Can't target party members
 		if partyInfo := parties.Get(user.UserId); partyInfo != nil {
 			if partyInfo.IsMember(newTargetPlayerId) {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf("<ansi fg=\"username\">%s</ansi> is in your party!", p.Character.Name))
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf("<ansi fg=\"username\">%s</ansi> is in your party!", p.Character.Name),
+					[]string{p.Character.Name}, sight))
 				return true, nil
 			}
 		}
@@ -163,11 +178,15 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		if newTargetMobInstanceId > 0 {
 			if m := mobs.GetInstance(newTargetMobInstanceId); m != nil {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf("You turn your attention to <ansi fg=\"mobname\">%s</ansi>!", m.Character.Name))
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf("You turn your attention to <ansi fg=\"mobname\">%s</ansi>!", m.Character.Name),
+					[]string{m.Character.Name}, sight))
 			}
 		} else if newTargetPlayerId > 0 {
 			if p := users.GetByUserId(newTargetPlayerId); p != nil {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf("You turn your attention to <ansi fg=\"username\">%s</ansi>!", p.Character.Name))
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
+					fmt.Sprintf("You turn your attention to <ansi fg=\"username\">%s</ansi>!", p.Character.Name),
+					[]string{p.Character.Name}, sight))
 			}
 		}
 		return true, nil

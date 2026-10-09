@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -42,16 +43,19 @@ func TestAttack_PitchDark_DoesNotNameTheMobToTheAttacker(t *testing.T) {
 	require.True(t, handled)
 	require.NoError(t, err)
 
+	// #454: with no sight a typed name resolves to nothing, so the attacker is
+	// refused, and the refusal names no one either.
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	require.Contains(t, out, "mortal combat", "the engagement line must still be sent: %q", out)
+	require.Contains(t, out, actions.AimNotHereLine, "the refusal must be sent: %q", out)
+	require.Equal(t, 0, user.Character.CurrentCombatTarget().MobInstanceId, "no sight engaged a named target")
 	require.NotContains(t, strings.ToLower(out), "skeleton",
 		"an attacker who sees nothing must not learn the target's name: %q", out)
 }
 
-func TestAttack_PitchDark_CompanionRefusalDoesNotNameTheMob(t *testing.T) {
-	t.Cleanup(seedAllRegistries())
-	darkenTestRoom1(t)
-	user, room := getTestUserAndRoom(t)
+// At shapes the attacker aims at a shape (#454), and the companion refusal
+// must not hand over the name the shape stands for.
+func TestAttack_Shapes_CompanionRefusalDoesNotNameTheMob(t *testing.T) {
+	user, room := aimScene(t, aimShapes)
 	user.Character.EndAggro()
 
 	// Charm the skeleton to user 2, so user 1's attack is refused as
@@ -65,14 +69,14 @@ func TestAttack_PitchDark_CompanionRefusalDoesNotNameTheMob(t *testing.T) {
 	require.Equal(t, mobs.HarmBlockedCompanion, mobs.CheckPlayerHarm(m), "fixture: the skeleton must be a companion")
 	events.DrainQueuedMessagesForTest(user.UserId)
 
-	handled, err := Attack("skeleton", user, room, 0)
+	handled, err := Attack("2.shape", user, room, 0)
 	require.True(t, handled)
 	require.NoError(t, err)
 
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
 	require.Contains(t, out, "companion", "the refusal must still be sent: %q", out)
 	require.NotContains(t, strings.ToLower(out), "skeleton",
-		"an attacker who sees nothing must not learn the companion's name: %q", out)
+		"an attacker who makes out shapes only must not learn the companion's name: %q", out)
 }
 
 func TestAttack_Lit_StillNamesTheMob(t *testing.T) {

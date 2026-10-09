@@ -99,6 +99,20 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 
 	} else {
+		// #454: a typed name resolves only at full sight. A shape becomes the
+		// "@id" or "#id" it stands for. A wildcard picks among what the
+		// attacker perceives, so it needs only some sight.
+		if rest[0] != '*' {
+			name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `attack`)
+			if refusal != `` {
+				user.SendText(messaging.CategorySystem, refusal)
+				return true, nil
+			}
+			rest = name
+		} else if messaging.ParticipantSight(user.Character, room) == messaging.SightNone {
+			user.SendText(messaging.CategorySystem, actions.AimNothingLine)
+			return true, nil
+		}
 		// Wildcard and named-target resolution delegated to shared helper.
 		t := actions.FindAttackTarget(rest, room, user.UserId, 0, user.Character)
 		attackPlayerId = t.UserId
@@ -151,15 +165,13 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			// Build target name for the Target command
 			targetName := rest
 			if targetName == "" || targetName[0] == '*' {
-				// For empty or random targets, find the actual name
+				// For empty or random targets, name the one resolved by its
+				// id form: Target judges a typed name by sight (#454), and an
+				// attacker who makes out shapes never typed one.
 				if attackMobInstanceId > 0 {
-					if m := mobs.GetInstance(attackMobInstanceId); m != nil {
-						targetName = m.Character.Name
-					}
+					targetName = fmt.Sprintf(`#%d`, attackMobInstanceId)
 				} else if attackPlayerId > 0 {
-					if p := users.GetByUserId(attackPlayerId); p != nil {
-						targetName = p.Character.Name
-					}
+					targetName = fmt.Sprintf(`@%d`, attackPlayerId)
 				}
 			}
 			// Delegate to Target command for proper switching logic
@@ -211,9 +223,12 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 						continue
 					}
 					if partyUser := users.GetByUserId(id); partyUser != nil {
+						// A member who sees nothing cannot pick the foe out
+						// (#454), and would be told so on every assist.
 						if partyUser.Character.RoomId == user.Character.RoomId &&
 							partyUser.Character.GetSetting("autoattack") != "off" &&
-							!partyUser.Character.IsInCombat() {
+							!partyUser.Character.IsInCombat() &&
+							messaging.ParticipantSight(partyUser.Character, room) != messaging.SightNone {
 							// U10d: no pre-combat burst is fired here. The
 							// party member's own `attack` command runs the
 							// normal path, which reaches EngageAggroType and
@@ -323,7 +338,9 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			if partyInfo := parties.Get(user.UserId); partyInfo != nil {
 				if partyInfo.IsMember(attackPlayerId) {
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name))
+					user.SendText(messaging.CategorySystem, messaging.HideNames(
+						fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name),
+						[]string{p.Character.Name}, messaging.ParticipantSight(user.Character, room)))
 					return true, nil
 				}
 			}
@@ -335,7 +352,8 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 							continue
 						}
 						if partyUser := users.GetByUserId(id); partyUser != nil {
-							if partyUser.Character.RoomId == user.Character.RoomId {
+							if partyUser.Character.RoomId == user.Character.RoomId &&
+								messaging.ParticipantSight(partyUser.Character, room) != messaging.SightNone {
 								partyUser.Command(fmt.Sprintf(`attack @%d`, attackPlayerId)) // # denotes a specific mob instanceId
 							}
 						}

@@ -1367,14 +1367,27 @@ func handlePartyAutoAttack(mob *mobs.Mob, defUser *users.UserRecord) {
 				continue
 			}
 			if memberUser := users.GetByUserId(memberId); memberUser != nil {
+				// A member who sees nothing cannot pick the mob out (#454),
+				// and would be told so every round it swings.
 				if memberUser.Character.RoomId == defUser.Character.RoomId &&
 					memberUser.Character.GetSetting("autoattack") != "off" &&
-					!memberUser.Character.IsInCombat() {
+					!memberUser.Character.IsInCombat() &&
+					memberSeesSomething(memberUser) {
 					memberUser.Command(fmt.Sprintf(`attack #%d`, mob.InstanceId))
 				}
 			}
 		}
 	}
+}
+
+// memberSeesSomething reports whether a party member makes out at least
+// shapes in their room, which `attack #<id>` needs since #454.
+func memberSeesSomething(u *users.UserRecord) bool {
+	room := rooms.LoadRoom(u.Character.RoomId)
+	if room == nil {
+		return false
+	}
+	return messaging.ParticipantSight(u.Character, room) != messaging.SightNone
 }
 
 // surpriseCandidate builds the skullduggery candidate a landed surprise attack
