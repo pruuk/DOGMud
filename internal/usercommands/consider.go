@@ -25,7 +25,13 @@ func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	// when two share it -- `consider bandit archer` reported on the Bandit
 	// Scout. room.FindByName handles multi-word input, and look already passes
 	// its full argument; this brings consider into line.
-	target, err := actions.ResolveTargetActor(room, strings.Join(args, " "),
+	// #454: a typed name resolves only at full sight.
+	name, refusal := actions.AimBySight(user.Character, user.UserId, room, strings.Join(args, " "), `consider`)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return true, nil
+	}
+	target, err := actions.ResolveTargetActor(room, name,
 		actions.ResolveTargetOptions{ExcludeUserId: user.UserId, Viewer: user.Character})
 	if err != nil {
 		// Always give feedback for an unresolved target — dead, absent, or no
@@ -35,7 +41,7 @@ func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		return true, nil
 	}
 
-	actor := &actions.UserActor{User: user, Room: room}
+	actor := actions.UserActorAtSight(user, room)
 	actions.Consider(actor, target)
 
 	// Quest engine: command notification

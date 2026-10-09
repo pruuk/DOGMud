@@ -70,11 +70,26 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	}
 
+	// #454: a typed name resolves only at full sight. The word "pet" is the
+	// giver's own pet, always at hand.
+	if giveWho != `pet` {
+		name, refusal := actions.AimBySight(user.Character, user.UserId, room, giveWho, `give `+giveWhat)
+		if refusal != `` {
+			user.SendText(messaging.CategorySystem, refusal)
+			return true, nil
+		}
+		giveWho = name
+	}
+	// Each side's own line hides the other's name at that reader's sight, as
+	// attack.go's do: a giver who aimed at a shape never learned the name.
+	giverSight := messaging.ParticipantSight(user.Character, room)
+
 	target, err := actions.ResolveTargetActor(room, giveWho, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err == nil {
 		if target.IsPlayer() {
 
 			targetUser := target.(*actions.UserActor).User
+			recipientSight := messaging.ParticipantSight(targetUser.Character, room)
 
 			user.Character.CancelConditionsWithFlag(conditions.Hidden)
 
@@ -87,11 +102,13 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					return true, nil
 				}
 
-				user.SendText(messaging.CategorySystem,
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
 					fmt.Sprintf(`You give the <ansi fg="item">%s</ansi> to <ansi fg="username">%s</ansi>.`, result.Item.DisplayName(), targetUser.Character.Name),
+					[]string{targetUser.Character.Name}, giverSight),
 				)
-				targetUser.SendText(messaging.CategorySystem,
+				targetUser.SendText(messaging.CategorySystem, messaging.HideNames(
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> gives you their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName()),
+					[]string{user.Character.Name}, recipientSight),
 				)
 				room.SendTextVisual(messaging.CategoryLoot,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> gives <ansi fg="username">%s</ansi> a <ansi fg="itemname">%s</ansi>.`, user.Character.Name, targetUser.Character.Name, result.Item.NameSimple()),
@@ -126,11 +143,13 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 						GoldChange: -giveGoldAmount,
 					})
 
-					user.SendText(messaging.CategorySystem,
+					user.SendText(messaging.CategorySystem, messaging.HideNames(
 						fmt.Sprintf(`You give <ansi fg="gold">%d gold</ansi> to <ansi fg="username">%s</ansi>.`, giveGoldAmount, targetUser.Character.Name),
+						[]string{targetUser.Character.Name}, giverSight),
 					)
-					targetUser.SendText(messaging.CategorySystem,
+					targetUser.SendText(messaging.CategorySystem, messaging.HideNames(
 						fmt.Sprintf(`<ansi fg="username">%s</ansi> gives you <ansi fg="gold">%d gold</ansi>.`, user.Character.Name, giveGoldAmount),
+						[]string{user.Character.Name}, recipientSight),
 					)
 					room.SendTextVisual(messaging.CategoryLoot,
 						fmt.Sprintf(`<ansi fg="username">%s</ansi> gives <ansi fg="username">%s</ansi> some <ansi fg="gold">gold</ansi>.`, user.Character.Name, targetUser.Character.Name),
@@ -179,8 +198,9 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					Amount:        giveGoldAmount,
 				})
 
-				user.SendText(messaging.CategorySystem,
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
 					fmt.Sprintf(`You give <ansi fg="gold">%d gold</ansi> to <ansi fg="username">%s</ansi>.`, giveGoldAmount, m.Character.Name),
+					[]string{m.Character.Name}, giverSight),
 				)
 				room.SendTextVisual(messaging.CategoryLoot,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> gave some gold to <ansi fg="mobname">%s</ansi>.`, user.Character.Name, m.Character.Name),
@@ -203,8 +223,9 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					// do NOT transfer to mob and do NOT fire onGive script.
 					user.Character.RemoveItem(giveItem)
 
-					user.SendText(messaging.CategorySystem,
+					user.SendText(messaging.CategorySystem, messaging.HideNames(
 						fmt.Sprintf(`You give the <ansi fg="item">%s</ansi> to <ansi fg="mobname">%s</ansi>.`, giveItem.DisplayName(), m.Character.Name),
+						[]string{m.Character.Name}, giverSight),
 					)
 					room.SendTextVisual(messaging.CategoryLoot,
 						fmt.Sprintf(`<ansi fg="username">%s</ansi> gave their <ansi fg="item">%s</ansi> to <ansi fg="mobname">%s</ansi>.`, user.Character.Name, giveItem.DisplayName(), m.Character.Name),
@@ -230,8 +251,9 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				// Update giveItem so onGive scripting below has the live value.
 				giveItem = result.Item
 
-				user.SendText(messaging.CategorySystem,
+				user.SendText(messaging.CategorySystem, messaging.HideNames(
 					fmt.Sprintf(`You give the <ansi fg="item">%s</ansi> to <ansi fg="mobname">%s</ansi>.`, giveItem.DisplayName(), m.Character.Name),
+					[]string{m.Character.Name}, giverSight),
 				)
 				room.SendTextVisual(messaging.CategoryLoot,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> gave their <ansi fg="item">%s</ansi> to <ansi fg="mobname">%s</ansi>.`, user.Character.Name, giveItem.DisplayName(), m.Character.Name),

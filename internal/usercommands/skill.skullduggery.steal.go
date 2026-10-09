@@ -50,7 +50,7 @@ func Steal(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	actor := &actions.UserActor{User: user, Room: room}
+	actor := actions.UserActorAtSight(user, room)
 	result := actions.Steal(actor, *opts)
 
 	// actions.Steal emits player-facing text for every outcome except
@@ -80,15 +80,20 @@ func parseStealArgs(args []string, room *rooms.Room, user *users.UserRecord) *ac
 		targetNoun = args[1]
 	}
 
-	// Try mob/player resolution first.
-	target, err := actions.ResolveTargetActor(room, targetNoun, actions.ResolveTargetOptions{Viewer: user.Character})
-	if err == nil {
-		if target.IsPlayer() {
-			user.SendText(messaging.CategorySystem, "You can't steal from other players.")
-			return nil
-		}
-		return &actions.StealOptions{
-			TargetMobInstanceId: target.(*actions.MobActor).Mob.InstanceId,
+	// Try mob/player resolution first, if the thief's sight lets the noun name
+	// a creature (#454). A refused noun may still be a container or a bauble,
+	// which keep their own rules; the refusal is told only if it is neither.
+	creatureNoun, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, targetNoun, `steal`)
+	if aimRefusal == `` {
+		target, err := actions.ResolveTargetActor(room, creatureNoun, actions.ResolveTargetOptions{Viewer: user.Character})
+		if err == nil {
+			if target.IsPlayer() {
+				user.SendText(messaging.CategorySystem, "You can't steal from other players.")
+				return nil
+			}
+			return &actions.StealOptions{
+				TargetMobInstanceId: target.(*actions.MobActor).Mob.InstanceId,
+			}
 		}
 	}
 
@@ -117,6 +122,10 @@ func parseStealArgs(args []string, room *rooms.Room, user *users.UserRecord) *ac
 		}
 	}
 
+	if aimRefusal != `` {
+		user.SendText(messaging.CategorySystem, aimRefusal)
+		return nil
+	}
 	user.SendText(messaging.CategorySystem, "Steal from whom?")
 	return nil
 }

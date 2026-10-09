@@ -666,6 +666,10 @@ word on its own line (#430).
   for a name). It returns the name to resolve and the refusal to tell, ""
   when admitted. Every player command that names a creature runs it (the
   list is in `internal/usercommands/context.md`). Mobs act on shapes.
+- **`UserActorAtSight(user, room) Actor`**: the actor a gated command hands
+  its action. At shapes only it anonymizes every identity tag in the lines
+  the action tells the player ("a figure"), since they aimed at a shape and
+  never learned the name; otherwise it is a plain `*UserActor`.
 - **`InitiateCast`** runs `admitCastAim` (`cast_admission.go`) for a player's
   single-target casts of either kind and harmful multi casts. The sight rule
   is `AimBySight`'s (verb `cast <spell>`); the cast adds the self-cast

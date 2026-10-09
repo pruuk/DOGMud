@@ -151,3 +151,27 @@ func aimFigures(viewer *characters.Character, selfUserId int, room *rooms.Room) 
 	}
 	return figures
 }
+
+// UserActorAtSight is the actor a player command that names a creature hands
+// to its action (#454). At clear sight, or with no sight (where nothing
+// resolves), it is &UserActor{User: user, Room: room}. A player who makes out
+// shapes only aimed at a shape and never learned the name, so every line the
+// action tells them anonymizes the identity tags it carries ("a figure"), as
+// a room line already does for them.
+func UserActorAtSight(user *users.UserRecord, room *rooms.Room) Actor {
+	actor := &UserActor{User: user, Room: room}
+	if room == nil || messaging.ParticipantSight(user.Character, room) != messaging.SightShapes {
+		return actor
+	}
+	return &shapesUserActor{Actor: actor}
+}
+
+// shapesUserActor is a UserActor whose own lines name no one (see
+// UserActorAtSight).
+type shapesUserActor struct {
+	Actor
+}
+
+func (a *shapesUserActor) SendText(cat messaging.Category, msg string) {
+	a.Actor.SendText(cat, messaging.Anonymize(msg))
+}

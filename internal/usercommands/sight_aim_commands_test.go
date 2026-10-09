@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
@@ -123,4 +124,75 @@ func TestTargetSight_NoSightResolvesNothing(t *testing.T) {
 	_, _ = Target("bobrick", user, room, events.EventFlag(0))
 	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
 	assert.Equal(t, 100, user.Character.CurrentCombatTarget().MobInstanceId, "the target did not change")
+}
+
+func TestGiveSight_ClearSightNamesBothSides(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	user.Character.Gold = 50
+	_, _ = Give("10 gold bobrick", user, room, events.EventFlag(0))
+	assert.Equal(t, 40, user.Character.Gold)
+	assert.Contains(t, aimTold(1), "to Bobrick.")
+	assert.Contains(t, aimTold(2), "Aliceia gives you")
+}
+
+func TestGiveSight_ShapesHintsANameAndHidesNamesAfterAShape(t *testing.T) {
+	user, room := aimScene(t, aimShapes)
+	user.Character.Gold = 50
+	_, _ = Give("10 gold bobrick", user, room, events.EventFlag(0))
+	told := aimTold(1)
+	assert.Contains(t, told, "give 10 gold shape")
+	assert.Equal(t, 50, user.Character.Gold, "a typed name was given to at shapes")
+
+	_, _ = Give("10 gold 1.shape", user, room, events.EventFlag(0))
+	assert.Equal(t, 40, user.Character.Gold, "shape 1 is Bobrick")
+	told = aimTold(1)
+	assert.Contains(t, told, "to a figure.")
+	assert.NotContains(t, told, "Bobrick", "the giver aimed at a shape and read its name")
+	// Bobrick has no infrared: he sees nothing, and reads "Something".
+	recipient := aimTold(2)
+	assert.Contains(t, recipient, "Something gives you")
+	assert.NotContains(t, recipient, "Aliceia", "a recipient who sees nothing read the giver's name")
+}
+
+func TestGiveSight_NoSightGivesNothing(t *testing.T) {
+	user, room := aimScene(t, aimDark)
+	user.Character.Gold = 50
+	_, _ = Give("10 gold bobrick", user, room, events.EventFlag(0))
+	assert.Equal(t, 50, user.Character.Gold)
+	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+}
+
+func TestShowSight_ShapesHidesTheNameAfterAShape(t *testing.T) {
+	user, room := aimScene(t, aimShapes)
+	user.Character.StoreItem(items.New(10001))
+	_, _ = Show("sword 2.shape", user, room, events.EventFlag(0))
+	told := aimTold(1)
+	assert.Contains(t, told, "to a figure.")
+	assert.NotContains(t, told, "Skeleton")
+}
+
+func TestStealSight_EachBand(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	opts := parseStealArgs([]string{"skeleton"}, room, user)
+	require.NotNil(t, opts)
+	assert.Equal(t, 100, opts.TargetMobInstanceId)
+
+	user, room = aimScene(t, aimShapes)
+	assert.Nil(t, parseStealArgs([]string{"skeleton"}, room, user))
+	assert.Contains(t, aimTold(1), "steal 2.shape")
+	opts = parseStealArgs([]string{"2.shape"}, room, user)
+	require.NotNil(t, opts, "a shape is stolen from at shapes")
+	assert.Equal(t, 100, opts.TargetMobInstanceId)
+
+	user, room = aimScene(t, aimDark)
+	assert.Nil(t, parseStealArgs([]string{"skeleton"}, room, user))
+	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+}
+
+func TestConsiderSight_ShapesConsidersAFigure(t *testing.T) {
+	user, room := aimScene(t, aimShapes)
+	_, _ = Consider("2.shape", user, room, events.EventFlag(0))
+	told := aimTold(1)
+	assert.Contains(t, told, "You consider a figure")
+	assert.NotContains(t, told, "Skeleton")
 }

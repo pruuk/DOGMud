@@ -108,7 +108,9 @@ func TestStealAFixtureInTheDarkSaysNothingOfIt(t *testing.T) {
 	out := sentTo(user)
 	assert.NotContains(t, out, "Arch Lantern")
 	assert.NotContains(t, out, "fixed in place")
-	assert.Contains(t, out, "Steal from whom?")
+	// #454: with no sight the noun names no creature either, so the thief
+	// reads the sight refusal, which names nothing.
+	assert.Contains(t, out, actions.AimNotHereLine)
 }
 
 // A fixture that is first on the floor must not shadow an ordinary item the

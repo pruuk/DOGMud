@@ -40,6 +40,15 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
+	// #454: a typed name resolves only at full sight.
+	name, refusal := actions.AimBySight(user.Character, user.UserId, room, targetName, `show `+objectName)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return true, nil
+	}
+	targetName = name
+	showerSight := messaging.ParticipantSight(user.Character, room)
+
 	target, err := actions.ResolveTargetActor(room, targetName, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil {
 		user.SendText(messaging.CategorySystem, "Who???")
@@ -58,13 +67,15 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		targetUser := target.(*actions.UserActor).User
 
 		// Tell the shower
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategorySystem, messaging.HideNames(
 			fmt.Sprintf(`You show the <ansi fg="item">%s</ansi> to <ansi fg="username">%s</ansi>.`, showItem.DisplayName(), targetUser.Character.Name),
+			[]string{targetUser.Character.Name}, showerSight),
 		)
 
-		// Tell the Showee
-		targetUser.SendText(messaging.CategorySystem,
+		// Tell the Showee, at the showee's own sight.
+		targetUser.SendText(messaging.CategorySystem, messaging.HideNames(
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> shows you their <ansi fg="item">%s</ansi>.`, user.Character.Name, showItem.DisplayName()),
+			[]string{user.Character.Name}, messaging.ParticipantSight(targetUser.Character, room)),
 		)
 
 		targetUser.SendText(messaging.CategorySystem,
@@ -81,8 +92,9 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		targetMob := target.(*actions.MobActor).Mob
 
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategorySystem, messaging.HideNames(
 			fmt.Sprintf(`You show the <ansi fg="item">%s</ansi> to <ansi fg="mobname">%s</ansi>.`, showItem.DisplayName(), targetMob.Character.Name),
+			[]string{targetMob.Character.Name}, showerSight),
 		)
 
 		room.SendTextVisual(messaging.CategoryMobEmote,
