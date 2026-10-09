@@ -80,3 +80,36 @@ func TestMobDonningAFloorDarknessIsNotSeenInARoomAlreadyDark(t *testing.T) {
 	require.NotContains(t, got, mob.Character.Name, "a player already blind in the dark was told who donned the lantern")
 	require.NotContains(t, got, "picks up", "a player already blind in the dark saw the lantern donned")
 }
+
+// #447 on the floor-loot path: a mob lighting a torch it picked up in a dark
+// room is not seen by a player who was blind when it was picked up.
+func TestMobDonningAFloorLightIsNotSeenInARoomDarkBeforeIt(t *testing.T) {
+	const torchCond, torchItem = 9773, 999973
+	t.Cleanup(seedAllRegistries())
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		torchCond: {ConditionId: torchCond, Name: "Test Torchlight", Secret: true, TriggerCount: 1, RoundInterval: 1,
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectLightStrength: {Literal: 40}}},
+	}))
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		torchItem: {ItemId: torchItem, Name: "test torch", NameSimple: "torch",
+			Type: items.Light, Subtype: items.Wearable, WornConditionIds: []int{torchCond},
+			PhysicalMitigation: 20}, // scores as an upgrade, so the mob picks it
+	}))
+	mob := mobs.GetInstance(100)
+	require.NotNil(t, mob)
+	mob.BehaviorArchetype = "generic_fighter"
+	room := rooms.LoadRoom(mob.Character.RoomId)
+	require.NotNil(t, room)
+	zero := 0.0
+	room.SkyLight = &zero
+	room.Lamp = nil
+	require.Less(t, room.LightLevel(), 25, "fixture: the room must be dark before the torch")
+	room.Items = []items.Item{{ItemId: torchItem}}
+	drainPlain(1)
+
+	require.True(t, EquipBestFloorItem(mob, room), "fixture: the mob must choose the torch")
+	require.GreaterOrEqual(t, room.LightLevel(), 25, "fixture: the torch must light the room")
+	got := strings.Join(drainPlain(1), "\n")
+	require.NotContains(t, got, "picks up", "a player blind before the torch was lit saw it picked up")
+	require.NotContains(t, got, mob.Character.Name)
+}
