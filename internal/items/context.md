@@ -546,6 +546,15 @@ They never use Heavy, because ordinary defence still allows a partial effect
 through. Defensive crits alone use Heavy and may truthfully describe full
 negation.
 
+`RenderMoveDefenseMessage` is the same function for an `{attack}` that names a
+move rather than an item: the unarmed "strike", and every channel defence
+(`combat.RenderChannelDefenceMessages`: kick, aimed shot, firebomb, a spell).
+The authored lines wrap `{attack}` in `fg="item"`, which is right for an armed
+swing; for a move it strips that tag from `{attack}` and `{weapon}` before
+substitution (`UntagItemTokens`), because `messaging.HideWeapons` reads every
+item-tagged name as a weapon and would tell a shapes-only reader "the weapon
+rushes past" for a kick (spec F2). The stored pools are never edited.
+
 These coordinated pools are authoritative for the actual quell or defy
 outcome. Callers pass the resolved defence result and display-ready, actor-aware
 identities; they do not add a competing hardcoded outcome line. Private

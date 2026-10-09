@@ -435,7 +435,9 @@ Functions:
   spectator combat line is covered and a non-combat item line is not;
   `combat.hideIdentitiesInPersonalLines` runs it on the personal lines.
   Untagged item names pass through, which is why the combat templates tag
-  every weapon token.
+  every weapon token. The converse holds too: a non-item must not wear the
+  item tag. A move name in `{attack}` renders untagged through
+  `items.RenderMoveDefenseMessage`, and `{bodypart}` is never tagged.
 - `WrapAnsi(text string, maxWidth int) string`
 - `Say(cat Category, text string) Line`
 - `SendTrio(t Trio, aud Audience)`: delivers one narrated event to
@@ -495,6 +497,11 @@ flags). Everything else — `rooms`, `users`, `mobs`, `combat`,
   `LightBlindBelow` / `LightDimBelow` band thresholds off
   `configs.GetBalanceConfig()`. `configs` imports nothing from
   `messaging`, so this adds no cycle risk either.
+- `messaging` also imports `internal/species` (added by spec F2,
+  `hideweapons.go`), so `HideWeapons` can keep every species'
+  `UnarmedName` as a natural weapon. `species` imports `configs`,
+  `fileloader`, `items`, `mudlog`, `stats` and `util`, none of which
+  imports `messaging`, so this adds no cycle risk.
 - Nothing in `characters` imports `messaging` (would close a cycle).
 
 > **Corrected 2026-09-08.** This file previously documented four

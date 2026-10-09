@@ -51,6 +51,9 @@ defects below. #382 closes when a re-run of the failed and unrun cases finds no 
   `hideIdentitiesInPersonalLines` (each side at its own sight) and the spectator drain. Untagged
   `{weapon}` and `{attack}` tokens in combat and move templates get the item tag. An unarmed
   name ("fists") is not an item and stays. Articles are tested ("a weapon", never "an weapon").
+  Likewise a move: where `{attack}` holds a move (the unarmed "strike", every channel defence
+  such as kick, aimed shot, firebomb or a spell) the defence line renders it without the item
+  tag (`items.RenderMoveDefenseMessage`), and `{bodypart}` is never tagged.
 - **F3 Every disruption is heard (R4).** The two sound lines move to exported `messaging`
   constants. Flee, boss, throw and throttle interrupts use `SendTextVisualWithAudio`. Player
   fizzle, falter and bleed-out break gain the room lines the mob versions have, sight then sound.
@@ -67,6 +70,11 @@ defects below. #382 closes when a re-run of the failed and unrun cases finds no 
   `Night`, with a final full stop.
 - **F7 The map stays dark.** `Zone.Map` adds the current room only when the player's
   `ParticipantSight` is not `SightNone`.
+- **Known limits.** A crit disarm's actor line (`AttemptCritDisarm` in `criteffects.go`, reached
+  from the grapple crit in `grapple_move.go`) names the victim's weapon to the disarmer even at
+  shapes. This is accepted as known by touch: the disarmer has just wrenched it loose. Trio
+  actor and actee lines get no weapon pass; only the observer seat runs through the pipeline's
+  weapon stage.
 
 **Out of scope:** R7's broadcast; admin `zap` naming the admin; the `fine` reply width (#250).
 
