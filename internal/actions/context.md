@@ -655,12 +655,22 @@ word on its own line (#430).
   root registers every lookup as viewer or plain, with the reason.
 - **`FindAttackTarget(rest, room, userId, mobId, viewer)`**: the named branch
   and the `*`, `*mob`, `*user` pools skip what `viewer` does not perceive.
+- **`AimBySight(viewer, selfUserId, room, name, verb) (string, string)`**
+  (`sight_aim.go`, #454): the one rule for a creature name a player types.
+  Clear sight admits the name as typed; shapes only admits `shape` /
+  `N.shape` / `shape#N` (rewritten to the figure's `@<userId>` or
+  `#<mobInstanceId>`; figures are perceived players then mobs, in room
+  order), an id form (`@N`, `#N`, what party auto-assist types) and an empty
+  name, and answers any other name with `AimShapesHint(verb)`; no sight
+  admits nothing (`AimNothingLine` for a shape or no name, `AimNotHereLine`
+  for a name). It returns the name to resolve and the refusal to tell, ""
+  when admitted. Every player command that names a creature runs it (the
+  list is in `internal/usercommands/context.md`). Mobs act on shapes.
 - **`InitiateCast`** runs `admitCastAim` (`cast_admission.go`) for a player's
-  single-target casts of either kind and harmful multi casts: clear sight
-  allows names, foes and shapes; shapes only allows the caster's own foe and
-  `shape` / `N.shape` / `shape#N` (figures are perceived players then mobs, in
-  room order); no sight refuses. Refusals are narrated, set
-  `RefusalExplained`, and spend nothing.
+  single-target casts of either kind and harmful multi casts. The sight rule
+  is `AimBySight`'s (verb `cast <spell>`); the cast adds the self-cast
+  exemption and lets no name at shapes aim at the caster's own foe only.
+  Refusals are narrated, set `RefusalExplained`, and spend nothing.
 - **`HelpCharmAlly(m, sideUserId)`**: the one rule for which charmed mobs a
   helpful spell from `sideUserId`'s side may land on: charmed by that player
   or by a member of that player's party. `InitiateCast`'s single-target help

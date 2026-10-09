@@ -54,8 +54,8 @@ func TestCastSight_SelfCastByNameNeedsNoSight(t *testing.T) {
 	}
 }
 
-// `all.shape` names no single figure, so castShapeIndex reads 0 for it. Without
-// castNamesAShape the refusal called it a typed name.
+// `all.shape` names no single figure, so aimShapeIndex reads 0 for it. Without
+// aimNamesAShape the refusal called it a typed name.
 func TestCastSight_AllShapeIsAShapeNotAName(t *testing.T) {
 	a, _ := castSightScene(t, "cave")
 	requireRefused(t, a, InitiateCast(a, "sight-heal", "all.shape"), "You can't see anything to aim at.")
