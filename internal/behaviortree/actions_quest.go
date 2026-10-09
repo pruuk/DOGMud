@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
 )
@@ -172,7 +173,15 @@ func actReturnItem(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 
-	user.SendText(messaging.CategoryMobEmote, fmt.Sprintf("%s hands back the %s.\n", ctx.MobName, item.Name()))
+	// The NPC's name is hidden at the player's sight (#454): a player who gave
+	// to a shape never learned it.
+	sight := messaging.SightFull
+	if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
+		sight = messaging.ParticipantSight(user.Character, room)
+	}
+	user.SendText(messaging.CategoryMobEmote, messaging.HideNames(
+		fmt.Sprintf("%s hands back the %s.\n", ctx.MobName, item.Name()),
+		[]string{ctx.MobName}, sight))
 	return Success
 }
 

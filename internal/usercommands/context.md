@@ -76,6 +76,20 @@ The `internal/usercommands` package implements the complete command system for p
   `internal/combat/context.md` "Beast Moveset (Phase 3)" for full
   gate and mechanic details.
 
+#### **Naming a creature in the dark (#454)**
+Every command that names a creature in the room runs the typed name through
+`actions.AimBySight` before it resolves: `attack` (a `*` wildcard needs some
+sight), `target`, the melee specials (through `actions.StageMeleeTarget`),
+`give` (the word `pet` is exempt), `show`, `consider`, `steal` and `plant`
+(a refused noun may still be a container), `shadow`, `talk`, `ask`,
+`party invite` and `rep`. `fire` refuses below full sight of the room it is
+aimed into (`actions.ShotSight`) before any name resolves. Lines that follow
+a shape name no one: `give`, `show`, `party invite` and `rep` hide each name
+at its reader's sight with `messaging.HideNames` (an invitation or a report
+to its recipient with `messaging.HideSpeakerNames`), and `consider`,
+`steal`, `plant` and `shadow` hand their action `actions.UserActorAtSight`.
+Party auto-assist skips a member who sees nothing.
+
 #### **Skill-Based Commands**
 - **Magic system**: `cast`, `enchant`, `unenchant`, `prepare` - Spellcasting mechanics
 - **Stealth**: `sneak`, `picklock`, `pickpocket`, `peep` - Stealth and thievery
