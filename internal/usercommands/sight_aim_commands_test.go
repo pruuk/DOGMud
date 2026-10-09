@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/pets"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -192,6 +193,61 @@ func TestStealSight_EachBand(t *testing.T) {
 	user, room = aimScene(t, aimDark)
 	assert.Nil(t, parseStealArgs([]string{"skeleton"}, room, user))
 	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+}
+
+// #454 review F8: plant's creature noun goes through the sight rule; a
+// refused noun may still name a room container.
+func TestPlantSight_EachBand(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	opts, ok := parsePlantArgs([]string{"sword", "skeleton"}, room, user)
+	require.True(t, ok)
+	assert.Equal(t, 100, opts.TargetMobInstanceId)
+
+	user, room = aimScene(t, aimShapes)
+	_, ok = parsePlantArgs([]string{"sword", "skeleton"}, room, user)
+	assert.False(t, ok, "a typed name was planted on at shapes")
+	assert.Contains(t, aimTold(1), "plant sword on 2.shape")
+	opts, ok = parsePlantArgs([]string{"sword", "on", "2.shape"}, room, user)
+	require.True(t, ok, "a shape is planted on at shapes")
+	assert.Equal(t, 100, opts.TargetMobInstanceId)
+
+	user, room = aimScene(t, aimDark)
+	_, ok = parsePlantArgs([]string{"sword", "skeleton"}, room, user)
+	assert.False(t, ok)
+	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	room.Containers = map[string]rooms.Container{"chest": {}}
+	opts, ok = parsePlantArgs([]string{"sword", "chest"}, room, user)
+	require.True(t, ok, "a container is still named in the dark")
+	assert.Equal(t, "chest", opts.ContainerNoun)
+}
+
+// #454 review F8: shadow's target goes through the sight rule. The action's
+// own "must be hidden" line is reached only once a target resolves.
+func TestShadowSight_EachBand(t *testing.T) {
+	const reached = "You must be hidden to shadow someone."
+	setup := func(band aimBand) (*users.UserRecord, *rooms.Room) {
+		user, room := aimScene(t, band)
+		user.Character.Skills = map[string]int{string(skills.Skullduggery): 3}
+		return user, room
+	}
+
+	user, room := setup(aimFull)
+	_, _ = Shadow("skeleton", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), reached, "clear sight resolves a name")
+
+	user, room = setup(aimShapes)
+	_, _ = Shadow("skeleton", user, room, events.EventFlag(0))
+	told := aimTold(1)
+	assert.Contains(t, told, "shadow 2.shape")
+	assert.NotContains(t, told, reached, "a typed name resolved at shapes")
+	_, _ = Shadow("2.shape", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), reached, "a shape resolves at shapes")
+
+	user, room = setup(aimDark)
+	_, _ = Shadow("skeleton", user, room, events.EventFlag(0))
+	told = aimTold(1)
+	assert.Contains(t, told, actions.AimNotHereLine)
+	assert.NotContains(t, told, reached, "a name resolved with no sight")
 }
 
 func TestConsiderSight_ShapesConsidersAFigure(t *testing.T) {
