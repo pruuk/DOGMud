@@ -1,6 +1,7 @@
 # Sight gates follow-ups (#382)
 
-**Status:** G1-G6 APPROVED by the owner, 2026-10-09; G7 written from the owner's ruling, under review.
+**Status:** G1-G6 APPROVED by the owner, 2026-10-09. G7 is written from the owner's rulings
+that day (caster's score, the stronger hide wins) and is under review.
 **Parent:** `specs/completed/2026-10-08-sight-gates-playtest-fixes-design.md` (shipped in #445).
 The re-run playtest (run `a7219436241e24e7`, master `c7520f387`) left #446, #447, #448 and
 #449, and the residue of #242 and #216. This slice fixes all six in one PR, and adds the owner's
@@ -35,6 +36,8 @@ playtest.
 | `HiddenData` is empty today; `ResolveConcealment(true)` sets it | `state/awareness/awareness.go:168-183` |
 | Hider score is Dex + Skullduggery × `SkillWeight` + mutation stealth, then light modifiers | `actions/skill_helpers.go:29-49` (`CalcSneakScore`) |
 | A spell condition can carry a caster-derived magnitude: `CasterStatValue` + Spellcasting | `hooks/light_spell.go:23-40`, `:56-66` |
+| `sneak` while hidden returns `AlreadyHidden`: "You're already hidden!" | `actions/sneak.go:136-138`; `usercommands/skill.skullduggery.sneak.go:55-57` |
+| Every opposed roll against a hider goes through `CalcSneakScore` (move, sneak, search, track, shadow, steal, plant) | `actions/skill_helpers.go:66`; 11 call sites |
 
 ## Fixes
 
@@ -73,10 +76,21 @@ playtest.
     hidden by the shroud, `CalcSneakScore` uses that score in place of Dex plus
     Skullduggery × `SkillWeight`. Mutation stealth and the light modifiers still apply. A 31
     with no magnitude (admin `setcondition`) uses the holder's own spell score.
+  - **One hide at a time, the stronger (owner, 2026-10-09).** "Only one or the other should
+    exist (the strongest)." The comparison is the two base scores: the shroud score against
+    Dex plus Skullduggery × `SkillWeight`. Mutation and light apply to both alike, so they
+    are left out.
+    - `sneak` while shroud-hidden, shroud stronger: refused with the existing "You're
+      already hidden!".
+    - `sneak` while shroud-hidden, sneak stronger: the sneak replaces the shroud. Record 31
+      is removed without a reveal and the hide becomes a sneak hide. There is no new roll,
+      since the holder is already hidden; the normal sneak cost applies.
+    - The shroud landing on a sneak-hidden holder: if it is stronger, it replaces the sneak.
+      If not, record 31 is dropped and the sneak stays.
+  - **Breaking.** A shroud hide breaks the way a sneak hide does: when an observer wins an
+    opposed roll against it, and on entering combat. The reveal cascade cancels 31 with 9.
   - **Ending.** When no live 31 remains (expiry, purge, death), `Validate` reveals a
-    shroud-sourced hide, and the cascade cancels the permanent 9 with it. A hide the holder
-    made by sneaking is not a shroud hide and does not end with it. Combat still reveals, as
-    for any hide.
+    shroud-sourced hide.
 
 **Out of scope:** room prose dashes (#248), and the table separators in `achievements` and
 `craft list`.
@@ -90,8 +104,9 @@ Each fix gets a failing test first:
 - G4: `hooks/spell_channel_sight_test.go`.
 - G5: a Blinded reader in a lit room.
 - G6: the dash guard, plus a wrap test on a kick line.
-- G7: in `characters`, 31 enters Hidden and its end reveals, while a sneak hide survives it.
-  In `actions`, the shroud score replaces Dex plus Skullduggery.
+- G7: in `characters`, 31 enters Hidden and its end reveals. In `actions`, the shroud score
+  replaces Dex plus Skullduggery. Both stronger-wins directions are tested, as is a spotted
+  shroud hide cancelling 31.
 
 One PR. The playtest re-runs the failing cases. It adds a scout case (#251), a TargetGone
 fizzle, and a shroud cast: hidden, then visible when the shroud ends. If no leak is found,
