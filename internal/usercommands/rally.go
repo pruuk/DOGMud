@@ -27,7 +27,7 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 	if result.AlreadyActive {
-		user.SendText(messaging.CategorySystem, "You're already rallied — save it for when it matters.")
+		user.SendText(messaging.CategorySystem, "You're already rallied. Save it for when it matters.")
 		return true, nil
 	}
 	if result.OnCooldown {

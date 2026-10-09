@@ -24,6 +24,14 @@ var noDashCopyFiles = []string{
 	"internal/usercommands/drop.go",
 	"internal/usercommands/equip.go",
 	"internal/hooks/NewRound_DoCombat_helpers.go",
+	// #449, the sight-gates follow-ups.
+	"internal/usercommands/loot.go",
+	"internal/usercommands/go.go",
+	"internal/usercommands/usercommands.go",
+	"internal/usercommands/rally.go",
+	"internal/usercommands/warcry.go",
+	"internal/hooks/spell_resolution.go",
+	"internal/combat/combat_helpers.go",
 }
 
 func TestCopyFilesHaveNoDashesInStringLiterals(t *testing.T) {

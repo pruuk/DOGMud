@@ -481,7 +481,7 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			// (unless admin). AllowedWhenDowned is the legacy field name for
 			// "may be run while dead" — there is no "downed but alive" state.
 			if userDisabled && !cmdInfo.AdminOnly {
-				user.SendText(messaging.CategorySystem, "You can't do that — you're dead. Hold on; you'll be pulled back to safety.")
+				user.SendText(messaging.CategorySystem, "You can't do that while you're dead. Hold on; you'll be pulled back to safety.")
 				return true, nil
 			}
 
