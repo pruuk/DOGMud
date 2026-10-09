@@ -855,12 +855,7 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 
 	groundStuff = append(groundStuff, details.VisibleCorpses...)
 
-	groundDetails := map[string]any{
-		`GroundStuff`: groundStuff,
-		`IsDark`:      !room.IsLit(),
-		`IsNight`:     gametime.IsNight(),
-	}
-	textOut, _ = templates.Process("descriptions/ontheground", groundDetails, user.UserId)
+	textOut = actions.RenderGround(groundStuff, !room.IsLit(), gametime.IsNight(), user.UserId)
 	if len(textOut) > 0 {
 		user.SendText(messaging.CategoryRoomDescription, textOut)
 	}

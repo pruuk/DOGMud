@@ -15,7 +15,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
-	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -298,13 +297,8 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 		}
 	}
 	if actor.IsPlayer() && len(stashedNames) > 0 {
-		details := map[string]any{
-			"GroundStuff": stashedNames,
-			"IsDark":      !room.IsLit(),
-			"IsNight":     gametime.IsNight(),
-		}
-		text, _ := templates.Process("descriptions/ontheground", details, actor.GetUserId())
-		actor.SendText(messaging.CategorySystem, text)
+		actor.SendText(messaging.CategorySystem,
+			RenderGround(stashedNames, !room.IsLit(), gametime.IsNight(), actor.GetUserId()))
 	}
 
 	// U10b-1b PHASE C: hidden detection is an OPPOSED contest, reconciled onto
