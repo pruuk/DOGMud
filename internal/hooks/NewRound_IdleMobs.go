@@ -14,7 +14,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state/presence"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -90,18 +89,16 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 			continue
 		}
 
-		// Out of combat, a mob's fold step never runs (it lives in the
-		// combat round), so a harmful fold it still holds would hang
-		// unspoken. One sweep for every way a caster is released mid-fold
-		// (#242): a mob target that walked or fled out
-		// (actions.ClearRoomAggroOnDeparture) and any other release. A help
-		// fold (an idle self-buff) is left alone: it never resolves out of
-		// combat either, but fizzling it would turn every idle buff into a
-		// fizzle line, which is a separate fix.
-		if cs, ok := mob.Character.CastingData(); ok {
-			if spell := spells.GetSpell(cs.SpellId); spell != nil && spell.IsHarm() {
-				endStrandedFold(mob)
-			}
+		// Out of combat, the combat round steps only a help fold (an idle
+		// self-buff, see handleMobCombat), so a harmful fold a mob still
+		// holds would hang unspoken. One sweep for every way a caster is
+		// released mid-fold (#242): a mob target that walked or fled out
+		// (actions.ClearRoomAggroOnDeparture) and any other release. A
+		// harmful spell never resolves out of combat, so it fizzles at once.
+		// A help fold is left to its fold step, which resolves it, or
+		// fizzles it when its target is gone; so every stale fold ends.
+		if mob.Character.IsCasting() && !mobHoldsHelpFold(mob) {
+			endStrandedFold(mob)
 		}
 
 		// Chunk 5.14: a mob someone is swinging at must not wander off before

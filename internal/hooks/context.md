@@ -575,15 +575,20 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 ```
 
 **Stranded folds (#242).** A mob's fold step (`handleMobFoldCasting`) runs
-only in the combat round, so a mob released mid-fold would hold its spell
-forever, unspoken. `IdleMobs` ends it through `endStrandedFold` /
-`fizzleMobFold` ("<caster>'s spell fizzles." by sight, the sputter by
-sound): before the release when a player target walked out, and, for any
-mob out of combat still holding a HARMFUL fold, every round, which covers a
-mob target that walked or fled out (`actions.ClearRoomAggroOnDeparture`
-releases the caster) and every other release. A help fold out of combat
-(an idle `cast conviction-ward`) is not swept; that it never resolves is a
-separate, pre-existing problem.
+in the combat round. In combat it steps every fold; out of combat it steps
+a help fold only (`mobHoldsHelpFold`: a non-harm spell, or one no longer
+defined), ahead of the non-combatant skip, as a player's fold steps
+whether or not they fight. So an idle buff (Seren's `cast
+conviction-ward`, Rhett's `conviction-armor`) weaves, resolves and clears
+the cast. A HARMFUL fold held out of combat is stale (its target left or
+the caster was released), and `IdleMobs` ends it through `endStrandedFold`
+/ `fizzleMobFold` ("<caster>'s spell fizzles." by sight, the sputter by
+sound): before the release when a player target walked out, and for any
+mob out of combat still holding one, every round, which covers a mob
+target that walked or fled out (`actions.ClearRoomAggroOnDeparture`
+releases the caster) and every other release. Between them every stale
+fold ends: a help fold whose target died or left fizzles at its own fold
+step (`TargetGone`, or no target found at completion).
 
 ```go
 func HandleIdleMobs(e events.Event) events.ListenerReturn {

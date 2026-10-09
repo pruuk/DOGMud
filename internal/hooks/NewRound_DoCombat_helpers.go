@@ -847,6 +847,19 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 	return true
 }
 
+// mobHoldsHelpFold reports whether mob is folding a spell that is not a harm
+// spell: one whose fold steps out of combat as well as in it (#242). A spell
+// no longer defined counts too, so its fold step clears it
+// (SpellDataMissing) rather than leaving it to hang.
+func mobHoldsHelpFold(mob *mobs.Mob) bool {
+	cs, ok := mob.Character.CastingData()
+	if !ok {
+		return false
+	}
+	spell := spells.GetSpell(cs.SpellId)
+	return spell == nil || !spell.IsHarm()
+}
+
 // handleMobFoldCasting processes fold spell casting for a mob.
 // Returns true if the mob is casting and should skip combat.
 func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {

@@ -277,6 +277,21 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			continue
 		}
 
+		// A help fold held out of combat (an idle self-buff such as a
+		// priest's `cast conviction-ward`) takes its fold step here, as a
+		// player's fold does whether or not they fight
+		// (handlePlayerFoldCasting runs ahead of the player pass's combat
+		// check). The step used to run only in the in-combat block below,
+		// so an idle buff never resolved and left the mob casting for good
+		// (#242). It runs ahead of the non-combatant skip, since priests and
+		// quest givers cast these. A harmful fold held out of combat is
+		// stale, its target gone, and IdleMobs fizzles it.
+		if !mob.Character.IsInCombat() && mobHoldsHelpFold(mob) {
+			if foldRoom := rooms.LoadRoom(mob.Character.RoomId); foldRoom != nil && handleMobFoldCasting(mob, foldRoom) {
+				continue
+			}
+		}
+
 		// Non-combatant mobs (merchants, quest NPCs) should never fight.
 		// If they somehow got aggro (e.g., from pack scatter), clear it.
 		if mob.IsNonCombatant() {

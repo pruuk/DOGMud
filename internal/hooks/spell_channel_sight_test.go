@@ -427,6 +427,71 @@ func TestMobFold_IdleHelpFoldIsNotSwept(t *testing.T) {
 	require.Zero(t, countContaining(drainPlain(1), "fizzles"))
 }
 
+// idleFoldCaster puts mob 100 in the fallback room, out of combat, folding
+// spellId on itself.
+func idleFoldCaster(t *testing.T, room *rooms.Room, spellId string, targetMobs []int) *mobs.Mob {
+	t.Helper()
+	caster := spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	room.AddMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+	caster.Character.Validate()
+	require.NoError(t, caster.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: spellId, FoldsNeeded: 2, FoldsPerRound: 1, TargetMobInstanceIds: targetMobs},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+	require.False(t, caster.Character.IsInCombat(), "fixture: the caster is not fighting")
+	events.DrainQueuedMessagesForTest(1)
+	return caster
+}
+
+// #242 review K9: a mob's fold step ran only in the combat round, so a
+// shipped idle buff (Seren's `cast conviction-ward`, Rhett's
+// `conviction-armor`) never resolved and left the mob casting for good. The
+// combat round now steps a help fold out of combat too, as a player's fold
+// steps whether or not they fight: it weaves, then resolves, its effect
+// lands and the cast clears.
+func TestMobFold_IdleHelpFoldResolvesOutOfCombat(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-mend": {SpellId: "test-mend", Name: "Test Mend",
+		AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSelf,
+		EffectType: "heal", EffectMagnitude: 5}}))
+	t.Cleanup(conditions.SeedConditionRecordsForTest()) // the heal's regenerating condition
+	caster := idleFoldCaster(t, room, "test-mend", []int{100})
+
+	handleMobCombat(events.NewRound{RoundNumber: 1})
+	require.True(t, caster.Character.IsCasting(), "one fold of two: still weaving")
+	require.False(t, caster.Character.HasCondition(conditions.ConditionIdRegenerating), "the heal landed before the fold completed")
+
+	handleMobCombat(events.NewRound{RoundNumber: 2})
+	require.False(t, caster.Character.IsCasting(), "the completed help fold clears the cast")
+	require.True(t, caster.Character.HasCondition(conditions.ConditionIdRegenerating), "the heal landed")
+	got := drainPlain(1)
+	require.Equal(t, 1, countContaining(got, "Skeleton channels restorative magic."), "%v", got)
+	require.Zero(t, countContaining(got, "fizzles"), "%v", got)
+}
+
+// The combat round leaves a harmful fold held out of combat to IdleMobs'
+// sweep, which fizzles it at once (#242 G2): its target is gone, and a
+// harmful spell never resolves out of combat.
+func TestMobFold_StaleHarmFoldStillFizzlesAfterTheCombatRound(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": testHarmSpell()}))
+	caster := idleFoldCaster(t, room, "test-bolt", []int{101})
+	target := &mobs.Mob{MobId: 2, InstanceId: 101, Character: characters.Character{
+		Name: "Rat", RoomId: 1, Health: 10, Conditions: conditions.New()}}
+	target.Character.HealthMax.Value = 10
+	mobs.SetInstanceForTest(101, target)
+	t.Cleanup(func() { mobs.SetInstanceForTest(101, nil) })
+	rooms.LoadRoom(1).AddMob(101)
+
+	handleMobCombat(events.NewRound{RoundNumber: 1})
+	require.True(t, caster.Character.IsCasting(), "the combat round must not step a stale harmful fold")
+	IdleMobs(events.NewRound{RoundNumber: 1})
+
+	require.False(t, caster.Character.IsCasting(), "the stranded fold ends")
+	require.Equal(t, 1, countContaining(drainPlain(1), "Skeleton's spell fizzles."))
+}
+
 // #242: the fold step can also complete the cast in the round the target
 // walked out, before IdleMobs releases the mob. resolveMobSpell then found
 // no target in the room, resolved nothing and said nothing.
