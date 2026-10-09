@@ -99,3 +99,53 @@ func TestSpottedLine_MobSpotterKeepsTheMobTag(t *testing.T) {
 		})
 	}
 }
+
+// Sight gates playtest fixes, F4: a sneaker caught on ARRIVAL is told, as a
+// sneaker caught by the sneak command is, the spotter named only as far as
+// the mover's own sight allows. Before, the mover read nothing: its hide
+// simply ended, and condition 9 carries no end line for its holder.
+func TestEntryDetection_SpottedMoverIsTold(t *testing.T) {
+	cases := []struct {
+		name    string
+		lamp    int
+		infra   bool
+		spotter string
+		want    string
+	}{
+		{"lit room names a player spotter", 80, false, "player",
+			"You slip into the room but Watcher notices you."},
+		{"lit room names a mob spotter", 80, false, "mob",
+			"You slip into the room but Watcher notices you."},
+		{"heat sight in the dark sees a figure", 0, true, "player",
+			"You slip into the room but a figure notices you."},
+		{"pitch dark sees nothing", 0, false, "player",
+			"You slip into the room but something notices you."},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			w := newDarkDetectWorld(t, 0.75)
+			w.dest.Lamp = rooms.LampPtr(c.lamp)
+			id := 9811
+			if c.spotter == "mob" {
+				id = 9851
+			}
+			_, obs := w.place(t, c.spotter, id, "Watcher")
+			obs.Stats.Perception.ValueAdj = 1000
+			require.True(t, obs.Conditions.AddCondition(hearSuperCond, true), "hears even where it cannot see")
+			mover, mc := w.place(t, "player", 9810, "Sneak")
+			mc.Stats.Dexterity.ValueAdj = 0
+			if c.infra {
+				require.True(t, mc.Conditions.AddCondition(hearInfraCond, true))
+			}
+			hideForMove(t, mc)
+			mc.SetMiscData(`sneaking`, true)
+			hearLines(9810)
+
+			got := EntryDetection(mover, w.dest, true)
+
+			require.False(t, got.StillSneaking)
+			require.Equal(t, []string{c.want}, hearLines(9810))
+			hearLines(9811) // the observer's notice; drained so later tests start clean
+		})
+	}
+}

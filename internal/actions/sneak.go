@@ -64,11 +64,24 @@ func sneakNoticeLine(seen, sneakerName string, sight messaging.SightDecision) st
 // sees nothing or cannot perceive the spotter (a hidden spotter is never
 // named).
 func SpottedLine(sneaker *characters.Character, room messaging.RoomVisibility, spotter *characters.Character) string {
+	return spottedLineFrom(spottedOpeningHide, sneaker, room, spotter)
+}
+
+// The openings of the two spotted lines: the sneak command's attempt, and a
+// sneaking arrival caught at the door (EntryDetection).
+const (
+	spottedOpeningHide   = `You try to blend into the shadows`
+	spottedOpeningArrive = `You slip into the room`
+)
+
+// spottedLineFrom is SpottedLine with its opening, so the sneak command and a
+// sneaking arrival name the spotter by one rule.
+func spottedLineFrom(opening string, sneaker *characters.Character, room messaging.RoomVisibility, spotter *characters.Character) string {
 	tag := `mobname`
 	if spotter.GetUserId() > 0 {
 		tag = `username`
 	}
-	line := `You try to blend into the shadows but <ansi fg="` + tag + `">` +
+	line := opening + ` but <ansi fg="` + tag + `">` +
 		spotter.Name + `</ansi> notices you.`
 	sight := messaging.ParticipantSight(sneaker, room)
 	if !sneaker.Perceives(spotter) {
