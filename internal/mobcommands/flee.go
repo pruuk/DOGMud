@@ -33,9 +33,11 @@ func Flee(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			Trigger: activity.TriggerCastCancel,
 			Actor:   state.ActorRef{MobInstanceId: mob.InstanceId},
 		})
-		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi> breaks their concentration.`,
-			mob.Character.Name))
+		// Seen by sight, heard by a reader who sees nothing, in the shared
+		// spell-disruption wording (#242, owner ruling R4).
+		room.SendTextVisualWithAudio(messaging.CategorySpellDisruption, fmt.Sprintf(
+			`<ansi fg="mobname">%s</ansi>'s concentration breaks.`,
+			mob.Character.Name), messaging.SoundChantBreaksOff)
 	}
 
 	begin := actions.BeginFlee(actions.NewMobActorInRoom(mob, room), strings.TrimSpace(rest))

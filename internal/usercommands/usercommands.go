@@ -412,9 +412,11 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			})
 			user.SendText(messaging.CategorySystem,
 				`<ansi fg="cyan">You lose your concentration as you flee!</ansi>`)
-			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
-				`<ansi fg="username">%s</ansi> breaks their concentration.`,
-				user.Character.Name), user.UserId)
+			// Seen by sight, heard by a reader who sees nothing, in the
+			// shared spell-disruption wording (#242, owner ruling R4).
+			room.SendTextVisualWithAudio(messaging.CategorySpellDisruption, fmt.Sprintf(
+				`<ansi fg="username">%s</ansi>'s concentration breaks.`,
+				user.Character.Name), messaging.SoundChantBreaksOff, user.UserId)
 			// Fall through — let the flee command execute normally
 		} else if cmd != `cancel` && cmd != `flee` {
 			if cmdInfo, hasCmdInfo := userCommands[cmd]; !hasCmdInfo || !cmdInfo.AllowedWhenDowned {
