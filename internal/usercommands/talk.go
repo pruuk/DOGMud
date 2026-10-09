@@ -38,7 +38,13 @@ func Talk(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		args = args[1:]
 	}
 
-	searchName := args[0]
+	// #454, owner call 2: a typed name resolves only at full sight, or
+	// talking would confirm who is there in the dark.
+	searchName, refusal := actions.AimBySight(user.Character, user.UserId, room, args[0], `talk`)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return true, nil
+	}
 
 	target, err := actions.ResolveTargetActor(room, searchName, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil || target.IsPlayer() {

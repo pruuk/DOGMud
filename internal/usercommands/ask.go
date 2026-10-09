@@ -89,7 +89,13 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return true, nil
 	}
 
-	searchName := args[0]
+	// #454, owner call 2: a typed name resolves only at full sight, or
+	// asking would confirm who is there in the dark.
+	searchName, refusal := actions.AimBySight(user.Character, user.UserId, room, args[0], `ask`)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return true, nil
+	}
 
 	// Only ask charmed players or mobs to do stuff
 	target, err := actions.ResolveTargetActor(room, searchName, actions.ResolveTargetOptions{Viewer: user.Character})

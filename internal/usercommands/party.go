@@ -179,7 +179,17 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		return true, nil
 	}
 
-	target, err := actions.ResolveTargetActor(room, rest, actions.ResolveTargetOptions{Viewer: user.Character})
+	// #454, owner call 2: the invitee is found among the room's occupants, so
+	// a typed name resolves only at full sight, or inviting would confirm who
+	// is there in the dark.
+	name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `party invite`)
+	if refusal != `` {
+		user.SendText(messaging.CategorySystem, refusal)
+		return true, nil
+	}
+	inviterSight := messaging.ParticipantSight(user.Character, room)
+
+	target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s not found.`, rest))
 		return true, nil
@@ -198,8 +208,14 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 	}
 
 	if currentParty.InvitePlayer(invitePlayerId) {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You invited <ansi fg="username">%s</ansi> to your party.`, invitedUser.Character.Name))
-		invitedUser.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> invited you to their party. Type <ansi fg="command">party accept</ansi> or <ansi fg="command">party decline</ansi> to respond.`, user.Character.Name))
+		user.SendText(messaging.CategorySystem, messaging.HideNames(
+			fmt.Sprintf(`You invited <ansi fg="username">%s</ansi> to your party.`, invitedUser.Character.Name),
+			[]string{invitedUser.Character.Name}, inviterSight))
+		// The invitation is words from a person: "Someone" to a reader who
+		// cannot see who, as speech reads (HideSpeakerNames).
+		invitedUser.SendText(messaging.CategorySystem, messaging.HideSpeakerNames(
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> invited you to their party. Type <ansi fg="command">party accept</ansi> or <ansi fg="command">party decline</ansi> to respond.`, user.Character.Name),
+			[]string{user.Character.Name}, messaging.ParticipantSight(invitedUser.Character, room)))
 	} else {
 		user.SendText(messaging.CategorySystem, `Something went wrong.`)
 	}

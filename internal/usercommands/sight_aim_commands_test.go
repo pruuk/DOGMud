@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
@@ -195,4 +196,54 @@ func TestConsiderSight_ShapesConsidersAFigure(t *testing.T) {
 	told := aimTold(1)
 	assert.Contains(t, told, "You consider a figure")
 	assert.NotContains(t, told, "Skeleton")
+}
+
+// Owner call 2: talk, ask, party invite and rep find their target among the
+// room's occupants, so a typed name in the dark would confirm who is there.
+func TestTalkAskSight_NoSightResolvesNothing(t *testing.T) {
+	user, room := aimScene(t, aimDark)
+	_, _ = Talk("skeleton", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	_, _ = Ask("skeleton quest", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+}
+
+func TestTalkSight_ShapesHintsAName(t *testing.T) {
+	user, room := aimScene(t, aimShapes)
+	_, _ = Talk("skeleton", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), "talk 2.shape")
+}
+
+func TestPartyInviteSight_EachBand(t *testing.T) {
+	user, room := aimScene(t, aimDark)
+	t.Cleanup(func() {
+		if p := parties.Get(1); p != nil {
+			p.Disband()
+		}
+	})
+	_, _ = Party("invite bobrick", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Empty(t, aimTold(2), "a player nobody could see was invited")
+
+	user, room = aimScene(t, aimShapes)
+	_, _ = Party("invite 1.shape", user, room, events.EventFlag(0))
+	told := aimTold(1)
+	assert.Contains(t, told, "You invited a figure to your party.")
+	assert.NotContains(t, told, "Bobrick")
+	invitee := aimTold(2)
+	assert.Contains(t, invitee, "Someone invited you", "Bobrick sees nothing, so his inviter is someone")
+}
+
+func TestRepSight_EachBand(t *testing.T) {
+	user, room := aimScene(t, aimDark)
+	_, _ = Report("bobrick", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Empty(t, aimTold(2), "a whisper reached a player nobody could see")
+
+	user, room = aimScene(t, aimShapes)
+	_, _ = Report("1.shape", user, room, events.EventFlag(0))
+	told := aimTold(1)
+	assert.Contains(t, told, "You report to a figure:")
+	assert.NotContains(t, told, "Bobrick")
+	assert.Contains(t, aimTold(2), "Someone reports to you:")
 }
