@@ -287,7 +287,7 @@ func tickMobConditions(mob *mobs.Mob, mobInstanceId int) {
 			if trigSpec := conditions.GetConditionSpec(condition.ConditionId); trigSpec != nil && len(trigSpec.Narration(conditions.PhaseTrigger).Observer) > 0 {
 				if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
 					roles := trigSpec.Narrate(conditions.PhaseTrigger,
-						mobDisplayName(mob, room, 0),
+						messaging.StripNameAdjectives(mobDisplayName(mob, room, 0)), // #453
 						mobPlainName(mob))
 					if roles.Observer != "" {
 						// HidingNames: see the user-side twin and

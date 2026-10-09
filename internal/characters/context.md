@@ -836,6 +836,11 @@ why the clearing lives here and not in each command (docs/baubles).
   (`GetCharacterName(true)`, room broadcasts) never carry it; until slice B
   (2026-09-12) they carried it for every character not fighting a player,
   because both sides of the comparison were 0.
+  `GetCharacterName(true)` is the narration name: the identity tag alone
+  (suffix colour kept), with no adjective span, quest star or " and <pet>"
+  (#453). Every production caller feeds a narrated line, where "(hidden)" or
+  "(☀️Lit)" is a state tag, not prose. `GetPlayerName` and `GetMobName` keep
+  every decoration for `look` and the rosters.
 - **Adjectives system**: Visual indicators for character states (sleeping, charmed, poisoned, prone, etc.)
 - **Quest indicators**: Visual markers for quest-relevant NPCs
 

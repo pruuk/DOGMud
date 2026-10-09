@@ -103,7 +103,7 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 					// holder line is rendered and dropped: a mob has no client.
 					holderName := mob.Character.GetCharacterName(true)
 					if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
-						holderName = mobDisplayName(mob, r, 0)
+						holderName = messaging.StripNameAdjectives(mobDisplayName(mob, r, 0)) // #453
 					}
 					roles := endConditionSpec.Narrate(conditions.PhaseEnd,
 						holderName, mobPlainName(mob))
