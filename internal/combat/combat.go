@@ -740,17 +740,40 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 // embedded not pointed to, so there is no pointer to nil-check; Exists()
 // (Type != "") is that guard's value-type equivalent, true only once a
 // player has actually bonded a pet.
+//
+// Weapons follow the same rule (spec F2, ruling R8): below full sight a
+// reader's line names no weapon but their own, which they hold.
 func hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar *characters.Character, ctx combatContext) {
+	sourceKeeps := heldWeaponNames(sourceChar)
 	for i := range result.MessagesToSource {
-		result.MessagesToSource[i].Text = messaging.HideNames(result.MessagesToSource[i].Text, []string{targetChar.Name}, ctx.sourceSight)
+		text := messaging.HideNames(result.MessagesToSource[i].Text, []string{targetChar.Name}, ctx.sourceSight)
+		result.MessagesToSource[i].Text = messaging.HideWeapons(text, ctx.sourceSight, sourceKeeps)
 	}
 	targetHides := []string{sourceChar.Name}
 	if sourceChar.Pet.Exists() {
 		targetHides = append(targetHides, sourceChar.Pet.PlainName())
 	}
+	targetKeeps := heldWeaponNames(targetChar)
 	for i := range result.MessagesToTarget {
-		result.MessagesToTarget[i].Text = messaging.HideNames(result.MessagesToTarget[i].Text, targetHides, ctx.targetSight)
+		text := messaging.HideNames(result.MessagesToTarget[i].Text, targetHides, ctx.targetSight)
+		result.MessagesToTarget[i].Text = messaging.HideWeapons(text, ctx.targetSight, targetKeeps)
 	}
+}
+
+// heldWeaponNames lists every name a combat line can print for what c holds
+// in any arm: DisplayName for {itemname}, the spec Name for {weapon} and
+// {attack}. messaging.HideWeapons keeps these on c's own lines.
+func heldWeaponNames(c *characters.Character) []string {
+	var names []string
+	for _, pair := range c.GetHandPairs() {
+		for _, slot := range []characters.HandSlot{pair.First, pair.Second} {
+			if slot.ItemPtr == nil || slot.ItemPtr.ItemId < 1 {
+				continue
+			}
+			names = append(names, slot.ItemPtr.DisplayName(), slot.ItemPtr.GetSpec().Name)
+		}
+	}
+	return names
 }
 
 // applyPositionHitModifiers returns the combined position-based hit

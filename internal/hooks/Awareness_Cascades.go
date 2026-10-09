@@ -57,7 +57,10 @@ func wireAwarenessFromCombatPhase(c *characters.Character) {
 				_ = c.AddCondition(9, true)
 			case from == awareness.Hidden &&
 				(to == awareness.Revealing || to == awareness.Visible):
-				// Remove condition #9 via cancel-on-flag mechanism.
+				// Remove condition #9 via cancel-on-flag mechanism. That
+				// cancel also spends a spawn-time hide (conditionids: [9])
+				// before its Validate(true), so the record is not revived
+				// on the now visible mob (sight gates playtest fixes, F5).
 				c.CancelConditionsWithFlag(conditions.Hidden)
 			}
 		})

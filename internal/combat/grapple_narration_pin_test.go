@@ -48,9 +48,12 @@ func TestGrappleNarrationPinnedToOriginalLiterals(t *testing.T) {
 		const targetName = "Victim"
 		const weaponName = "rusty dagger"
 
-		wantMessage := `<ansi fg="yellow-bold">You disarm ` + targetName + `, loosening their grip on their ` + weaponName + `!</ansi>`
-		wantTargetMsg := `<ansi fg="red-bold">` + sourceName + ` disarms you! Your ` + weaponName + ` slips from your grasp!</ansi>`
-		wantRoomMessage := `<ansi fg="combat">` + sourceName + ` disarms ` + targetName + `, knocking their ` + weaponName + ` loose!</ansi>`
+		// {weapon} sits in an item tag (spec F2) so the pipeline can hide it
+		// from a spectator who sees only shapes.
+		taggedWeapon := `<ansi fg="item">` + weaponName + `</ansi>`
+		wantMessage := `<ansi fg="yellow-bold">You disarm ` + targetName + `, loosening their grip on their ` + taggedWeapon + `!</ansi>`
+		wantTargetMsg := `<ansi fg="red-bold">` + sourceName + ` disarms you! Your ` + taggedWeapon + ` slips from your grasp!</ansi>`
+		wantRoomMessage := `<ansi fg="combat">` + sourceName + ` disarms ` + targetName + `, knocking their ` + taggedWeapon + ` loose!</ansi>`
 
 		source := characters.New()
 		source.Name = sourceName

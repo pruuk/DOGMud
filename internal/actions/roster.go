@@ -23,3 +23,21 @@ func RenderRoster(details rooms.RoomTemplateDetails, userId int) string {
 	}
 	return messaging.WrapAnsi(text, users.GetByUserId(userId).GetLineWidth())
 }
+
+// RenderGround renders the "On the Ground: ..." list (the
+// descriptions/ontheground template) for userId and wraps it like
+// RenderRoster: it goes out on the same two unwrapped categories, and a room
+// with a few corpses printed one 116-column line (#382 playtest). Every
+// ground send goes through here. An empty list renders nothing.
+func RenderGround(groundStuff []string, isDark bool, isNight bool, userId int) string {
+	details := map[string]any{
+		`GroundStuff`: groundStuff,
+		`IsDark`:      isDark,
+		`IsNight`:     isNight,
+	}
+	text, _ := templates.Process("descriptions/ontheground", details, userId)
+	if text == "" {
+		return ""
+	}
+	return messaging.WrapAnsi(text, users.GetByUserId(userId).GetLineWidth())
+}

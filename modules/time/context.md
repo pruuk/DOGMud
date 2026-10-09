@@ -14,6 +14,11 @@ The module is one file and one function. All the calendar logic lives in
 func TimeCommand(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error)
 ```
 
+`timeLine(gd, period)` formats the reply for a period from
+`gametime.DayPeriod` ("day", "night", "dusk", "dawn"); `TimeCommand` reads
+`gametime.LampsLit()` for the current round only, since the testing
+argument moves the date, not the sky.
+
 ## Gotchas
 
 - **Do not put calendar arithmetic here.** Anything computing a period, a

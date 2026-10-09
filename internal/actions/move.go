@@ -201,18 +201,26 @@ func EntryDetection(mover Actor, dest *rooms.Room, sneaking bool) EntryDetection
 	// The light is invariant across every occupant, so it is composed once.
 	light := messaging.FixedLight(dest.LightLevel())
 
-	if sneaking && sneakerSpotted(mover, dest, light) {
+	var spotter *characters.Character
+	if sneaking {
+		spotter = sneakerSpotted(mover, dest, light)
+	}
+	if spotter != nil {
 		mc := mover.GetCharacter()
 		// Drive the Awareness FSM out of Hidden; the mirror cascade in
 		// Awareness_Cascades.go clears the Hidden condition. Calling
 		// CancelConditionsWithFlag directly would expire the condition but
-		// leave the FSM in Hidden. Silent to the mover: if the observer is
-		// itself hidden, naming it leaks what the mover cannot see; the
-		// Hidden condition's own end text is the signal.
+		// leave the FSM in Hidden.
 		_ = mc.Awareness.TransitionToRevealing(
 			state.TransitionReason{Trigger: awareness.TriggerObserverSearch})
 		mc.SetMiscData(`sneaking`, nil)
 		sneaking = false
+		// The mover is told, the spotter named only as far as the mover's
+		// own sight allows, as the sneak command does (SpottedLine): a
+		// hidden spotter reads "something". A mob mover's SendText is a
+		// no-op. Sight gates playtest fixes, F4.
+		mover.SendText(messaging.CategorySystem,
+			spottedLineFrom(spottedOpeningArrive, mc, dest, spotter))
 	}
 
 	if !sneaking {
@@ -289,8 +297,8 @@ func alliesOf(mover Actor) moverAllies {
 
 // sneakerSpotted rolls a sneaking mover against dest's observers. The sneak
 // score is computed per observer so a nightvision observer applies the right
-// light modifier.
-func sneakerSpotted(mover Actor, dest *rooms.Room, light messaging.RoomVisibility) bool {
+// light modifier. It returns the observer who caught the mover, or nil.
+func sneakerSpotted(mover Actor, dest *rooms.Room, light messaging.RoomVisibility) *characters.Character {
 	mc := mover.GetCharacter()
 	allies := alliesOf(mover)
 
@@ -307,7 +315,7 @@ func sneakerSpotted(mover Actor, dest *rooms.Room, light messaging.RoomVisibilit
 		if !combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success {
 			NewUserActor(p).SendText(messaging.CategorySystem, sneakNoticeLine(
 				moverName(mover)+` slips into the room but you notice them.`, mover.GetName(), sight))
-			return true
+			return p.Character
 		}
 	}
 
@@ -322,11 +330,11 @@ func sneakerSpotted(mover Actor, dest *rooms.Room, light messaging.RoomVisibilit
 		sneakScore := CalcSneakScoreVsObserver(mc, &m.Character, light)
 		observerScore, _ := sneakObserverScore(&m.Character, dest)
 		if !combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success {
-			return true
+			return &m.Character
 		}
 	}
 
-	return false
+	return nil
 }
 
 // newcomerSpots rolls the arriving mover to spot every hidden player and mob

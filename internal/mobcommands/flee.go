@@ -33,9 +33,17 @@ func Flee(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			Trigger: activity.TriggerCastCancel,
 			Actor:   state.ActorRef{MobInstanceId: mob.InstanceId},
 		})
-		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi> breaks their concentration.`,
-			mob.Character.Name))
+		// Seen by sight, heard by a reader who sees nothing, in the shared
+		// spell-disruption wording (#242, owner ruling R4).
+		// The mob is named as the hooks package's mob room lines name it:
+		// with its duplicate number ("Skeleton 2"), and unnamed when hidden.
+		subject := mob.Character.GetMobNameIndexed(0, room.GetMobDuplicateIndex(mob.InstanceId)).String()
+		if mob.Character.IsHidden() {
+			subject = messaging.HideNames(`<ansi fg="mobname">`+mob.Character.Name+`</ansi>`,
+				[]string{mob.Character.Name}, messaging.SightNone)
+		}
+		room.SendTextVisualWithAudio(messaging.CategorySpellDisruption,
+			subject+"'s concentration breaks.", messaging.SoundChantBreaksOff)
 	}
 
 	begin := actions.BeginFlee(actions.NewMobActorInRoom(mob, room), strings.TrimSpace(rest))

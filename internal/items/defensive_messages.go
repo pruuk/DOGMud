@@ -134,6 +134,20 @@ func (d *DefenseMessageGroup) Validate() error {
 // ordinary defensive wins cap at Normal because they still let an effect
 // through. An optional index is accepted for deterministic tests.
 func RenderDefenseMessage(defenseType DefencePool, defensiveCrit bool, normalizedDefenceMargin float64, tokenReplacements map[TokenName]string, indexOverride ...int) DefenseMessageTriad {
+	return renderDefenseMessage(defenseType, defensiveCrit, normalizedDefenceMargin, tokenReplacements, false, indexOverride...)
+}
+
+// RenderMoveDefenseMessage is RenderDefenseMessage for an {attack} that names
+// a move rather than an item: the unarmed "strike", a kick, an aimed shot, a
+// spell. The authored lines tag {attack} and {weapon} as an item, which is
+// right for an armed swing; for a move that tag would make the sight pipeline
+// read the move as a weapon (spec F2: "an unarmed name is not an item"), so
+// this strips the item tag from around those two tokens before substitution.
+func RenderMoveDefenseMessage(defenseType DefencePool, defensiveCrit bool, normalizedDefenceMargin float64, tokenReplacements map[TokenName]string, indexOverride ...int) DefenseMessageTriad {
+	return renderDefenseMessage(defenseType, defensiveCrit, normalizedDefenceMargin, tokenReplacements, true, indexOverride...)
+}
+
+func renderDefenseMessage(defenseType DefencePool, defensiveCrit bool, normalizedDefenceMargin float64, tokenReplacements map[TokenName]string, moveNamed bool, indexOverride ...int) DefenseMessageTriad {
 	intensity := Weak
 	if defensiveCrit {
 		intensity = Heavy
@@ -149,8 +163,44 @@ func RenderDefenseMessage(defenseType DefencePool, defensiveCrit bool, normalize
 	if !ok {
 		return DefenseMessageTriad{}
 	}
+	if moveNamed {
+		options = options.untagged(TokenAttack, TokenWeapon)
+	}
 
 	return options.RenderTriad(tokenReplacements, nil, indexOverride...)
+}
+
+// untagged returns a copy of o whose lines carry tokens bare, without the
+// item colour tag the authored lines wrap them in. The stored pools are never
+// edited.
+func (o DefenseOptions) untagged(tokens ...TokenName) DefenseOptions {
+	strip := func(pool MessageOptions) MessageOptions {
+		if len(pool) == 0 {
+			return pool
+		}
+		out := make(MessageOptions, len(pool))
+		for i, m := range pool {
+			out[i] = ItemMessage(UntagItemTokens(string(m), tokens...))
+		}
+		return out
+	}
+	o.Together = DefenseTogetherMessages{
+		ToDefender: strip(o.Together.ToDefender),
+		ToAttacker: strip(o.Together.ToAttacker),
+		ToRoom:     strip(o.Together.ToRoom),
+	}
+	return o
+}
+
+// UntagItemTokens rewrites each `<ansi fg="item">{token}</ansi>` in template
+// as a bare `{token}`, for a token that holds a move or body part rather than
+// an item. messaging.HideWeapons reads every item-tagged name as a weapon, so
+// a non-item must not wear the tag.
+func UntagItemTokens(template string, tokens ...TokenName) string {
+	for _, tok := range tokens {
+		template = strings.ReplaceAll(template, `<ansi fg="item">`+string(tok)+`</ansi>`, string(tok))
+	}
+	return template
 }
 
 // RenderTriad renders one coordinated defender/attacker/room triad from an

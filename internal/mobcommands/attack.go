@@ -100,7 +100,7 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 				u.SendText(messaging.CategoryHitMelee, messaging.HideNames(personalText, []string{mob.Character.Name}, sight))
 
 				room.SendTextVisual(messaging.CategoryHitMelee,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="username">%s</ansi>`, mob.Character.Name, u.Character.Name),
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="username">%s</ansi>.`, mob.Character.Name, u.Character.Name),
 					u.UserId)
 
 			}
@@ -150,7 +150,7 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 			if engaged && !isSneaking && !alreadyFighting {
 				room.SendTextVisual(messaging.CategoryHitMelee,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="mobname">%s</ansi>`, mob.Character.Name, m.Character.Name))
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, m.Character.Name))
 			}
 
 		}

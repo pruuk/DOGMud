@@ -64,6 +64,13 @@ func RenderForRecipient(in RenderInput) string {
 		case SightShapes:
 			// Stage 4: anonymize (stubbed; T6 lands the implementation).
 			text = anonymize(text)
+			// A shapes-only spectator of a fight sees no weapon's name
+			// (ruling R8). Every spectator combat line reaches here: the
+			// spectator drain and the Trio observer seats both render
+			// through this stage.
+			if isCombatNarration(in.Category) {
+				text = HideWeapons(text, SightShapes, nil)
+			}
 		}
 	}
 

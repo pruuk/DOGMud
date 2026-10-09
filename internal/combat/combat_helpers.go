@@ -1378,7 +1378,13 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 	// against their own mean, which is decisive about nothing: a defender who
 	// rolled well for themselves and still barely scraped the swing narrated
 	// as though they had dismissed it.
-	triad := items.RenderDefenseMessage(itemsDefencePool, band.crit, band.margin, tokenReplacements)
+	// Unarmed, {attack} is the move "strike" and {weapon} a body part: neither
+	// is an item, so neither may wear the item tag (spec F2).
+	render := items.RenderDefenseMessage
+	if sourceChar.Equipment.Weapon.ItemId <= 0 {
+		render = items.RenderMoveDefenseMessage
+	}
+	triad := render(itemsDefencePool, band.crit, band.margin, tokenReplacements)
 	if len(triad.ToDefender) > 0 {
 		toDefenderMsg := triad.ToDefender
 		toAttackerMsg := triad.ToAttacker

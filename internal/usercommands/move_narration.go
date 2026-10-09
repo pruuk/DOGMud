@@ -48,6 +48,11 @@ type moveCategories struct {
 	Actee          messaging.Category
 	Observer       messaging.Category
 	RemoteObserver messaging.Category
+	// ObserverSound is what an observer who sees nothing hears of the
+	// event, sent under the Observer category: a line that names nobody,
+	// for an event heard as well as seen (a cast interrupt, #242 owner
+	// ruling R4). Empty, the usual case, keeps it silent to them.
+	ObserverSound string
 }
 
 // sameMoveCategory returns a moveCategories with cat on every role, for a
@@ -113,6 +118,7 @@ func sendMoveEvent(verb string, event movenarration.EventKey, ids moveIdentities
 		Actee:          lineOrNone(cats.Actee, roles.Actee),
 		Observer:       lineOrNone(cats.Observer, roles.Observer),
 		RemoteObserver: lineOrNone(cats.RemoteObserver, roles.ActeeObserver),
+		ObserverSound:  lineOrNone(cats.Observer, cats.ObserverSound),
 	}, aud)
 }
 

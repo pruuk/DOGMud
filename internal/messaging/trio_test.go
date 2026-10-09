@@ -19,6 +19,11 @@ type fakeBroadcaster struct {
 	names []string
 	excl  []int
 	sight map[int]SightDecision
+
+	soundCalls int
+	soundCat   Category
+	soundText  string
+	soundExcl  []int
 }
 
 func (f *fakeBroadcaster) SendTextVisualHidingNames(cat Category, txt string, names []string, excludeUserIds ...int) {
@@ -27,6 +32,13 @@ func (f *fakeBroadcaster) SendTextVisualHidingNames(cat Category, txt string, na
 	f.text = txt
 	f.names = append([]string(nil), names...)
 	f.excl = append([]int(nil), excludeUserIds...)
+}
+
+func (f *fakeBroadcaster) SendTextUnsighted(cat Category, txt string, excludeUserIds ...int) {
+	f.soundCalls++
+	f.soundCat = cat
+	f.soundText = txt
+	f.soundExcl = append([]int(nil), excludeUserIds...)
 }
 
 func (f *fakeBroadcaster) ParticipantSight(userId int) SightDecision {
@@ -130,6 +142,37 @@ func TestSendTrioNoLineObserverSendsNoBroadcast(t *testing.T) {
 
 	if room.calls != 0 {
 		t.Fatalf("room calls = %d, want 0", room.calls)
+	}
+}
+
+// #242, owner ruling R4: a disruption is heard as well as seen. A trio's
+// ObserverSound goes to the room's readers who see nothing, with the same
+// exclusions as the observer line, so the actor and actee never read it.
+func TestSendTrioDeliversTheObserverSoundToTheUnsighted(t *testing.T) {
+	room := &fakeBroadcaster{}
+	SendTrio(Trio{
+		Actor:         Say(CategorySystem, "a"),
+		Observer:      Say(CategorySpellDisruption, "b's spell collapses!"),
+		ObserverSound: Say(CategorySpellDisruption, SoundChantBreaksOff),
+	}, Audience{Actor: &fakeRecipient{}, ActorId: 7, ActeeId: 9, Room: room})
+
+	if room.soundCalls != 1 || room.soundText != SoundChantBreaksOff || room.soundCat != CategorySpellDisruption {
+		t.Fatalf("sound: %d calls, %q, %v", room.soundCalls, room.soundText, room.soundCat)
+	}
+	if len(room.soundExcl) != 2 || room.soundExcl[0] != 7 || room.soundExcl[1] != 9 {
+		t.Fatalf("sound exclusions = %v, want [7 9]", room.soundExcl)
+	}
+}
+
+func TestSendTrioWithoutObserverSoundIsSilentToTheUnsighted(t *testing.T) {
+	room := &fakeBroadcaster{}
+	SendTrio(Trio{
+		Actor:    Say(CategorySystem, "a"),
+		Observer: Say(CategoryBash, "c"),
+	}, Audience{Actor: &fakeRecipient{}, ActorId: 7, Room: room})
+
+	if room.soundCalls != 0 {
+		t.Fatalf("sound calls = %d, want 0: an event that makes no sound stays silent", room.soundCalls)
 	}
 }
 

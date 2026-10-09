@@ -258,7 +258,7 @@ func TestFlee_CastingMobDropsItsCastAndFlees(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, mob.Character.IsDisengaging(), "the casting mob did not begin its flee")
 	assert.False(t, mob.Character.Activity.IsCasting(), "the fleeing mob kept its cast")
-	assert.Equal(t, 1, countPerRecipient(t, captured, mu, "breaks their concentration."),
+	assert.Equal(t, 1, countPerRecipient(t, captured, mu, "concentration breaks."),
 		"the room did not see the mob break its concentration")
 }
 

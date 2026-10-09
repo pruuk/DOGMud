@@ -1133,6 +1133,12 @@ combat reads its own copy of the verdict, stored typed on `combatContext`.
 
 ### Personal-line identity hiding (M4d PR 2)
 
+Weapons too, since the sight-gates playtest fixes (spec F2, ruling R8):
+after hiding names, each side's lines go through `messaging.HideWeapons`
+at that reader's sight, keeping `heldWeaponNames(reader)` (every arm's
+`DisplayName` and spec `Name`), so a reader below full sight learns no
+weapon but their own.
+
 `hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar
 *characters.Character, ctx combatContext)` (`combat.go`) is the M4d PR 2
 replacement for the deleted `hooks.replaceDarknessMessages`. Where the old

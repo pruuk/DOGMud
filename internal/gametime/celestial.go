@@ -129,6 +129,24 @@ func LampsLit() bool {
 	return LampsLitAt(IsNight(), CelestialLight(), StreetLampSkyFraction(), configs.GetLightingConfig())
 }
 
+// DayPeriod names the part of the day the `time` command reports: "night"
+// while it is night, "dusk" (from noon) or "dawn" (before noon) while the
+// lamps are lit but it is not yet night, else "day". Night is the geometric
+// sunset; the lamps light earlier, when the low sun no longer shows faces, so
+// a 4PM winter street already reads dim (#382 playtest).
+func DayPeriod(night bool, lampsLit bool, hour24 int) string {
+	switch {
+	case night:
+		return "night"
+	case lampsLit && hour24 >= 12:
+		return "dusk"
+	case lampsLit:
+		return "dawn"
+	default:
+		return "day"
+	}
+}
+
 // streetLampSky holds the float64 bits of the registered street-lamp sky
 // fraction. It is written when biomes load and read every round.
 var streetLampSky atomic.Uint64

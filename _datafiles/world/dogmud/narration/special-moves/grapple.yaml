@@ -19,11 +19,11 @@ events:
       - '<ansi fg="combat">The failed grapple sends them sprawling!</ansi>'
   disarm:
     actor:
-      - '<ansi fg="yellow-bold">You disarm {actee_plain}, loosening their grip on their {weapon}!</ansi>'
+      - '<ansi fg="yellow-bold">You disarm {actee_plain}, loosening their grip on their <ansi fg="item">{weapon}</ansi>!</ansi>'
     actee:
-      - '<ansi fg="red-bold">{actor_plain} disarms you! Your {weapon} slips from your grasp!</ansi>'
+      - '<ansi fg="red-bold">{actor_plain} disarms you! Your <ansi fg="item">{weapon}</ansi> slips from your grasp!</ansi>'
     observer:
-      - '<ansi fg="combat">{actor_plain} disarms {actee_plain}, knocking their {weapon} loose!</ansi>'
+      - '<ansi fg="combat">{actor_plain} disarms {actee_plain}, knocking their <ansi fg="item">{weapon}</ansi> loose!</ansi>'
   # player_* events are the PLAYER twin's own wording (M4e-1b, option B): the
   # twins shipped different prose for the same event, so they take separate
   # keys rather than sharing the mob events above. Merging them into one pool

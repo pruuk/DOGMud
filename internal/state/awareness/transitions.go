@@ -31,4 +31,8 @@ const (
 	TriggerLogout             = "logout_safety_valve"
 	TriggerDeath              = "death_cascade"
 	TriggerForceVisible       = "force_visible"
+	// TriggerConditionApplied is the stealth record (condition 9) added to a
+	// Visible character by anything but the sneak command: a mob's
+	// spawn-time conditionids, an admin setcondition.
+	TriggerConditionApplied = "condition_applied"
 )

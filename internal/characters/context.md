@@ -1994,10 +1994,11 @@ and `FlagValues`' rank scaling.
 `Character.HasAnyBlindSource()` in `internal/characters/sight.go` checks
 both blind condition sources (`perception.ConditionIdBlinded` and
 `perception.ConditionIdFlashbangBlindness`) and returns true if either is
-currently active. Used
-by the expire-path in `RemoveCondition` to determine
-whether to fire `Blinded` back to `Sighted` when one of two overlapping
-sources clears. Uses `Conditions.TriggersLeft(id) > 0` rather than
+currently active. Used by `reconcilePerception` (same file), which
+`Validate` calls right after `Conditions.Validate()`: it moves Perception to
+`Blinded` when a source is held and back to `Sighted` when none is, so an
+add on any door, `RemoveCondition`, the round's prune, a death or purge, and
+a load all agree. Uses `Conditions.TriggersLeft(id) > 0` rather than
 `HasCondition(id)` — see `internal/state/perception/context.md` for the
 implementation-detail rationale.
 

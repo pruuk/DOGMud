@@ -15,6 +15,10 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   sight-gated. `SendTextVisual` gates each recipient by
   `messaging.CanSeeClearly` / `CanSeeShapes` and anonymizes for infrared-only
   observers. `SendTextVisualWithAudio` gives the unsighted an audio variant.
+  `SendTextUnsighted(cat, txt, excludeUserIds...)` is that audio half on its
+  own, for a caller whose visual half travels separately
+  (`messaging.SendTrio`'s `ObserverSound`, the spell-disruption senders in
+  `internal/hooks`); `txt` must name nobody.
   `VisualSnapshot()` returns a `VisualSnapshot` (user id to
   `messaging.SightDecision`) of what every player in the room can see now;
   `SendTextVisualToSnapshot(snap, cat, txt, names, excludeUserIds...)`

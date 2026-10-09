@@ -24,7 +24,11 @@ var throttleCategories = moveCategories{Actor: messaging.CategorySystem, Actee: 
 // spell die is reading about the disruption, not the bite that caused it
 // (see throttle.go's own comment on the pre-migration send, and throw.go's
 // player_cast_interrupt, which uses the same category for the same reason).
-var throttleCastInterruptCategories = moveCategories{Actor: messaging.CategorySystem, Actee: messaging.CategorySystem, Observer: messaging.CategorySpellDisruption}
+//
+// A disruption is heard as well as seen (#242, owner ruling R4), so a reader
+// who sees nothing hears the chant break off.
+var throttleCastInterruptCategories = moveCategories{Actor: messaging.CategorySystem, Actee: messaging.CategorySystem, Observer: messaging.CategorySpellDisruption,
+	ObserverSound: messaging.SoundChantBreaksOff}
 
 func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{

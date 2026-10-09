@@ -4,13 +4,35 @@
 package characters
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 )
 
+// reconcilePerception brings the Perception machine in line with the blind
+// sources the character holds. Validate calls it after the condition lookups
+// are rebuilt, so every path that changes conditions agrees: an add on any
+// door, RemoveCondition, the round's prune of a spent record, a death or
+// purge that expires records, and a load (Perception is runtime only, so a
+// load starts Sighted and a still-live blind condition must blind again).
+func (c *Character) reconcilePerception() {
+	if c.Perception == nil {
+		return
+	}
+	blind := c.HasAnyBlindSource()
+	switch {
+	case blind && c.Perception.State() == perception.Sighted:
+		_ = c.Perception.TransitionTo(perception.Blinded,
+			state.TransitionReason{Trigger: perception.TriggerConditionApplied})
+	case !blind && c.Perception.State() == perception.Blinded:
+		_ = c.Perception.TransitionTo(perception.Sighted,
+			state.TransitionReason{Trigger: perception.TriggerConditionExpired})
+	}
+}
+
 // HasAnyBlindSource returns true if any active blind source is currently
-// affecting this character. Used by Perception expire-paths in AddCondition and
-// RemoveCondition to decide whether to fire the Blinded→Sighted transition when
-// one of multiple overlapping sources clears.
+// affecting this character. Used by reconcilePerception, which Validate calls,
+// to decide whether Perception should be Blinded or Sighted once overlapping
+// sources are counted together.
 //
 // Sources checked:
 //   - Condition 3 (Blinded) — _datafiles/world/dogmud/conditions/3-blinded.yaml

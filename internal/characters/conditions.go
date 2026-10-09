@@ -3,13 +3,13 @@ package characters
 import (
 	"fmt"
 	"math"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
-	"github.com/GoMudEngine/GoMud/internal/state/perception"
 )
 
 func (c *Character) IsDisabled() bool {
@@ -31,7 +31,22 @@ func (c *Character) HasFlagFromAnySource(conditionFlag conditions.Flag) bool {
 }
 
 func (c *Character) CancelConditionsWithFlag(conditionFlag conditions.Flag) bool {
+	heldStealth := c.holdsLiveStealthRecord()
 	if c.Conditions.HasFlag(conditionFlag, true) {
+		// A cancel that just ended the stealth record spends a spawn-time
+		// hide (conditionids: [9]) for good, and it must do so BEFORE the
+		// Validate(true) below: reapplyPermanentConditions would otherwise
+		// revive record 9 from the permanent id. Revived during a reveal,
+		// it sat live on a visible mob (a stray "emerges from the shadows"
+		// later, a true mob_has_condition 9); revived on a direct cancel
+		// (a mob's get, give, eat, show, aid) while the machine was still
+		// Hidden, it kept the rescue below from ever driving the mob out
+		// (sight gates playtest fixes, F5). Every path that ends stealth
+		// reaches here: the direct cancels, and every Awareness exit from
+		// Hidden through the cascade in Awareness_Cascades.go.
+		if heldStealth && !c.holdsLiveStealthRecord() {
+			c.RemovePermanentCondition(conditionIdHidden)
+		}
 		_ = c.Validate(true)
 		// Hidden flag is special: the Awareness FSM mirrors the condition
 		// via Awareness_Cascades.go. If a caller cancels the condition
@@ -139,15 +154,48 @@ func (c *Character) AddCondition(conditionId int, isPermanent bool) error {
 	if !c.Conditions.AddCondition(conditionId, isPermanent) {
 		return fmt.Errorf(`failed to add condition. target: "%s" conditionId: %d`, c.Name, conditionId)
 	}
-	// Chunk 6 (Perception): blind-source conditions trigger Sighted → Blinded.
-	// Guard against re-entry: only fire if state is currently Sighted.
-	if (conditionId == perception.ConditionIdBlinded || conditionId == perception.ConditionIdFlashbangBlindness) &&
-		c.Perception != nil && c.Perception.State() == perception.Sighted {
-		_ = c.Perception.TransitionTo(perception.Blinded,
-			state.TransitionReason{Trigger: perception.TriggerConditionApplied, Metadata: map[string]any{"conditionId": conditionId}})
-	}
+	c.hideForStealthRecord(conditionId)
+	// Validate brings Perception in line with the blind sources.
 	_ = c.Validate()
 	return nil
+}
+
+// conditionIdHidden is the stealth record the Awareness machine mirrors
+// (Awareness_Cascades.go): entering Hidden adds it, leaving Hidden cancels it.
+const conditionIdHidden = 9
+
+// hideForStealthRecord is the other half of that mirror. Record 9 added to a
+// Visible character (a mob's spawn-time conditionids, an admin setcondition)
+// drives Awareness into Hidden, so IsHidden agrees with the record. Before,
+// only the sneak command entered Hidden, and an ambusher spawned with 9 was
+// listed in the room and emoted (sight gates playtest fixes, F5). The
+// cascade's own re-add arrives while the machine is already Hidden, and a
+// sneak in flight is Concealing, so neither is driven twice.
+//
+// Only record 9: another hidden-flag record (Empathic Shroud, 31) is timed,
+// and the cascade would pin a permanent 9 that outlives it.
+//
+// A refused hide (a busy character's Visible to Concealing is vetoed) takes
+// the record back off, so no record 9 claims hidden on a character the
+// machine kept Visible. A permanent 9 stays in the id list and tries again at
+// the next Validate(true).
+func (c *Character) hideForStealthRecord(conditionId int) {
+	if conditionId != conditionIdHidden || c.Awareness == nil || c.Awareness.State() != awareness.Visible {
+		return
+	}
+	reason := state.TransitionReason{Trigger: awareness.TriggerConditionApplied}
+	if err := c.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason); err != nil {
+		c.Conditions.RemoveCondition(conditionIdHidden)
+		return
+	}
+	c.Awareness.ResolveConcealment(true, reason)
+}
+
+// holdsLiveStealthRecord reports a live (unexpired) record 9. HasCondition
+// cannot answer this: it also counts an expired record the prune pass has not
+// yet removed.
+func (c *Character) holdsLiveStealthRecord() bool {
+	return len(c.Conditions.GetConditions(conditionIdHidden)) > 0
 }
 
 // AddConditionScaled adds a condition with its duration scaled by durationMult.
@@ -156,12 +204,8 @@ func (c *Character) AddConditionScaled(conditionId int, durationMult float64) er
 	if !c.Conditions.AddConditionScaled(conditionId, durationMult) {
 		return fmt.Errorf(`failed to add condition. target: "%s" conditionId: %d`, c.Name, conditionId)
 	}
-	// Chunk 6 (Perception): see AddCondition above.
-	if (conditionId == perception.ConditionIdBlinded || conditionId == perception.ConditionIdFlashbangBlindness) &&
-		c.Perception != nil && c.Perception.State() == perception.Sighted {
-		_ = c.Perception.TransitionTo(perception.Blinded,
-			state.TransitionReason{Trigger: perception.TriggerConditionApplied, Metadata: map[string]any{"conditionId": conditionId}})
-	}
+	c.hideForStealthRecord(conditionId)
+	// Validate brings Perception in line with the blind sources.
 	_ = c.Validate()
 	return nil
 }
@@ -184,6 +228,7 @@ func (c *Character) AddConditionMagnitude(conditionId int, triggers int, magnitu
 	for _, b := range c.Conditions.GetConditions(conditionId) {
 		b.Source = source
 	}
+	c.hideForStealthRecord(conditionId)
 	_ = c.Validate()
 	return nil
 }
@@ -199,31 +244,38 @@ func (c *Character) GetConditions(conditionId ...int) []*conditions.Condition {
 func (c *Character) RemoveCondition(conditionId int) {
 	conditionId = int(math.Abs(float64(conditionId)))
 	c.Conditions.RemoveCondition(conditionId)
-	// Chunk 6 (Perception): clearing a blind-source condition may flip
-	// Blinded → Sighted, but only if no other blind source remains.
-	if (conditionId == perception.ConditionIdBlinded || conditionId == perception.ConditionIdFlashbangBlindness) &&
-		c.Perception != nil && c.Perception.State() == perception.Blinded && !c.HasAnyBlindSource() {
-		_ = c.Perception.TransitionTo(perception.Sighted,
-			state.TransitionReason{Trigger: perception.TriggerConditionExpired, Metadata: map[string]any{"conditionId": conditionId}})
-	}
+	// Validate brings Perception in line with the blind sources that remain.
 	_ = c.Validate()
 }
 
-// Used with SpawnInfo to gift spawning mobs with permanent conditions
+// Used with SpawnInfo to gift spawning mobs with permanent conditions.
+//
+// The list is copied: both spawn callers pass a slice they do not own (the
+// mob template's ConditionIds through a shallow copy, a room's
+// spawnInfo.ConditionIds), so an instance that edits its own list must not
+// write through to the template every later spawn reads.
 func (c *Character) SetPermanentConditions(conditionIds []int) {
-	c.permanentConditionIds = conditionIds
+	c.permanentConditionIds = append([]int(nil), conditionIds...)
 }
 
 // RemovePermanentCondition removes a condition ID from the permanent condition list so
 // it won't be re-applied during Validate(). Use this when a permanent condition
 // should be permanently lost (e.g., revealing a hidden mob).
+//
+// It builds a new list rather than shifting the old one in place, so even a
+// list that still shares a template's backing array cannot rewrite the
+// template (an in-place delete turned a Pale Lurker's [9, 85] into [85, 85]).
 func (c *Character) RemovePermanentCondition(conditionId int) {
-	for i, id := range c.permanentConditionIds {
-		if id == conditionId {
-			c.permanentConditionIds = append(c.permanentConditionIds[:i], c.permanentConditionIds[i+1:]...)
-			return
+	if !slices.Contains(c.permanentConditionIds, conditionId) {
+		return
+	}
+	kept := make([]int, 0, len(c.permanentConditionIds)-1)
+	for _, id := range c.permanentConditionIds {
+		if id != conditionId {
+			kept = append(kept, id)
 		}
 	}
+	c.permanentConditionIds = kept
 }
 
 // reapplyPermanentConditions refreshes item, species, pet and permanent

@@ -121,10 +121,18 @@ Types and constants:
   "wired the mechanism, dropped the narration" defect class the M1
   viewpoint audit found repeatedly. Proved capable of failing with a
   probe in `internal/combat/combat.go`; see the M4d Task 5 report.
+  A fifth field, `ObserverSound`, is what an observer who sees nothing
+  hears of an event heard as well as seen (a spell disruption, #242 owner
+  ruling R4). It names nobody; `NoLine`, the usual case, keeps the event
+  silent to such a reader.
+- `SoundChantBreaksOff`, `SoundSpellSputtersOut` (`disruption_sounds.go`):
+  the two sound lines every spell-disruption path shares, mob and player
+  caster alike (broken concentration or interrupt; fizzle or falter).
 - `Recipient` — minimal interface (`SendText(cat, text)`) satisfied by
   `*users.UserRecord` and by `actions.Actor`.
 - `Broadcaster`: interface satisfied by `*rooms.Room`:
-  `SendTextVisualHidingNames(cat, txt, names, excludeUserIds ...int)` and
+  `SendTextVisualHidingNames(cat, txt, names, excludeUserIds ...int)`,
+  `SendTextUnsighted(cat, txt, excludeUserIds ...int)` and
   `ParticipantSight(userId int) SightDecision`.
 - `Audience`: who is present for one event: `Actor`/`ActorId`/`ActorName`,
   `Actee`/`ActeeId`/`ActeeName`, `Room`, and `RemoteRoom`. Ids are passed
@@ -417,6 +425,19 @@ Functions:
   adjective span behind it (same pattern as `HideNames`), because
   `rooms.go` anonymizes BEFORE it hides names and the span would otherwise
   survive as "a figure (dead)".
+- `HideWeapons(text string, d SightDecision, keep []string) string`
+  (`hideweapons.go`, owner ruling R8, 2026-10-08): below `SightFull` every
+  `fg="item"` or `fg="itemname"` tag in a combat line becomes `WeaponWord`
+  ("weapon"), nested display-name tags included, with "an" before it turned
+  to "a". It keeps a natural weapon ("fists", any species' `UnarmedName`)
+  and any name in `keep` (a participant's own held gear). The pipeline runs
+  it at `SightShapes` for `isCombatNarration` categories only, so every
+  spectator combat line is covered and a non-combat item line is not;
+  `combat.hideIdentitiesInPersonalLines` runs it on the personal lines.
+  Untagged item names pass through, which is why the combat templates tag
+  every weapon token. The converse holds too: a non-item must not wear the
+  item tag. A move name in `{attack}` renders untagged through
+  `items.RenderMoveDefenseMessage`, and `{bodypart}` is never tagged.
 - `WrapAnsi(text string, maxWidth int) string`
 - `Say(cat Category, text string) Line`
 - `SendTrio(t Trio, aud Audience)`: delivers one narrated event to
@@ -427,7 +448,9 @@ Functions:
   exclude the actor and the actee. Each role is rendered for its reader: the
   actor's line hides `ActeeName` and the actee's hides `ActorName` by that
   reader's `ParticipantSight`; the observer and remote-observer lines hide
-  both, judged per-observer by their own room's `ParticipantSight`.
+  both, judged per-observer by their own room's `ParticipantSight`. An
+  `ObserverSound` goes to `aud.Room.SendTextUnsighted` with the same
+  exclusions, reaching only the observers who see nothing.
 
 ## Two jobs, not one
 
@@ -474,6 +497,11 @@ flags). Everything else — `rooms`, `users`, `mobs`, `combat`,
   `LightBlindBelow` / `LightDimBelow` band thresholds off
   `configs.GetBalanceConfig()`. `configs` imports nothing from
   `messaging`, so this adds no cycle risk either.
+- `messaging` also imports `internal/species` (added by spec F2,
+  `hideweapons.go`), so `HideWeapons` can keep every species'
+  `UnarmedName` as a natural weapon. `species` imports `configs`,
+  `fileloader`, `items`, `mudlog`, `stats` and `util`, none of which
+  imports `messaging`, so this adds no cycle risk.
 - Nothing in `characters` imports `messaging` (would close a cycle).
 
 > **Corrected 2026-09-08.** This file previously documented four
@@ -527,6 +555,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 | `sight_mult.go` | `SightScoreMultiplier` and `SightMult` (lighting plan 5b): the sight ramp as a score multiplier, replacing the deleted `DarknessScoreMultiplier` |
 | `verbosity.go` | Per-player verbosity filtering |
 | `trio.go` | `Line`/`Trio`/`Audience`/`SendTrio` — fan-out of one narrated event to its four audiences |
+| `disruption_sounds.go` | `SoundChantBreaksOff`, `SoundSpellSputtersOut`: the shared sound lines of a spell disruption (#242, owner ruling R4) |
 
 Adding a transformation means adding a stage here, not special-casing at a call
 site — that centralisation is the point of the package.

@@ -891,7 +891,7 @@ func narrationRecognizeCall(call *ast.CallExpr) (narrationCallViewpoint, bool) {
 				return viewpointObserver, true
 			}
 		case "SendTextVisual", "SendTextVisualHidingNames",
-			"SendTextVisualWithAudio",
+			"SendTextVisualWithAudio", "SendTextUnsighted",
 			// Lighting plan 5d (owner rule, 2026-10-05): a line judged
 			// against a snapshot of the room before its light changed. #220
 			// moved the last as-lit senders onto it and deleted them.

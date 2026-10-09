@@ -190,9 +190,9 @@ grapple|crit_failure|0|actor= <ansi fg="red-bold">You overextend badly and fall 
 grapple|crit_failure|0|actee= <ansi fg="yellow-bold">Your opponent overextends and falls - you see an opening!</ansi>
 grapple|crit_failure|0|observer= <ansi fg="combat">The failed grapple sends them sprawling!</ansi>
 grapple|crit_failure|0|remote_observer= 
-grapple|disarm|0|actor= <ansi fg="yellow-bold">You disarm ACTEE, loosening their grip on their WEAPON!</ansi>
-grapple|disarm|0|actee= <ansi fg="red-bold">ACTOR disarms you! Your WEAPON slips from your grasp!</ansi>
-grapple|disarm|0|observer= <ansi fg="combat">ACTOR disarms ACTEE, knocking their WEAPON loose!</ansi>
+grapple|disarm|0|actor= <ansi fg="yellow-bold">You disarm ACTEE, loosening their grip on their <ansi fg="item">WEAPON</ansi>!</ansi>
+grapple|disarm|0|actee= <ansi fg="red-bold">ACTOR disarms you! Your <ansi fg="item">WEAPON</ansi> slips from your grasp!</ansi>
+grapple|disarm|0|observer= <ansi fg="combat">ACTOR disarms ACTEE, knocking their <ansi fg="item">WEAPON</ansi> loose!</ansi>
 grapple|disarm|0|remote_observer= 
 grapple|fail|0|actor= 
 grapple|fail|0|actee= <ansi fg="mobname">ACTOR</ansi> tries to grapple you, but you slip away!

@@ -155,6 +155,19 @@ func engageAfterThrow(user *users.UserRecord, room *rooms.Room, hitMobs []*mobs.
 	}
 }
 
+// throwCastInterruptCategories: player_cast_interrupt rides
+// CategorySpellDisruption on every role, as throttle's does: a bystander
+// watching a spell die is reading about the disruption. A disruption is heard
+// as well as seen (#242, owner ruling R4), so a reader who sees nothing hears
+// the chant break off.
+var throwCastInterruptCategories = moveCategories{
+	Actor:          messaging.CategorySpellDisruption,
+	Actee:          messaging.CategorySpellDisruption,
+	Observer:       messaging.CategorySpellDisruption,
+	RemoteObserver: messaging.CategorySpellDisruption,
+	ObserverSound:  messaging.SoundChantBreaksOff,
+}
+
 // throwInterruptAudience returns a copy of throw's actee-less Audience that
 // names one mob, for the single event that has an actee.
 //
@@ -382,7 +395,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			sendMoveEvent("throw", "player_cast_interrupt",
 				moveIdentities{ActeePlain: mob.Character.Name},
 				throwInterruptAudience(aud, mob.Character.Name),
-				sameMoveCategory(messaging.CategorySpellDisruption), nil)
+				throwCastInterruptCategories, nil)
 		}
 
 		hit := !out.Defended

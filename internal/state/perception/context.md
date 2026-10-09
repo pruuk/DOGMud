@@ -45,8 +45,9 @@ Blinded → {Sighted}
 ```
 
 Re-entry (Sighted→Sighted, Blinded→Blinded) is NOT in the table.
-Callers must check current state before firing transitions — the
-inline guards in `Character.AddCondition` / `RemoveCondition` handle this.
+Callers must check current state before firing transitions. The one
+production caller, `Character.reconcilePerception` (`internal/characters/sight.go`),
+does: it fires only when the held blind sources and the state disagree.
 
 ---
 
@@ -54,8 +55,17 @@ inline guards in `Character.AddCondition` / `RemoveCondition` handle this.
 
 | Source | File | Hook |
 |---|---|---|
-| Condition 3 (Blinded) | `_datafiles/world/dogmud/conditions/3-blinded.yaml` | `Character.AddCondition` / `RemoveCondition` |
-| Condition 77 (Flashbang Blindness) | `_datafiles/world/dogmud/conditions/77-flashbang_blindness.yaml` | `Character.AddCondition` / `RemoveCondition` |
+| Condition 3 (Blinded) | `_datafiles/world/dogmud/conditions/3-blinded.yaml` | `Character.Validate` → `reconcilePerception` |
+| Condition 77 (Flashbang Blindness) | `_datafiles/world/dogmud/conditions/77-flashbang_blindness.yaml` | `Character.Validate` → `reconcilePerception` |
+
+`Validate` reconciles after it rebuilds the condition lookups, so every path
+agrees: any add door (`AddCondition`, `AddConditionScaled`,
+`AddConditionMagnitude`), `RemoveCondition`, the round's prune of a spent
+record (`hooks.PruneConditions` calls `Prune` then `Validate`, never
+`RemoveCondition`), a death or purge that expires records, and a load. The
+machine is `yaml:"-"`, so a load starts Sighted; without the reconcile a relog
+cured live blindness, and before 2026-10-08 natural expiry never restored
+sight at all.
 
 Two sources, both conditions. Detection is by condition ID (not by flag) because the
 existing condition YAMLs don't carry a blindness-specific flag, and adding one
@@ -71,8 +81,8 @@ combat condition enum on 2026-09-12.
 
 `Character.HasAnyBlindSource()` (in `internal/characters/sight.go`)
 returns true if either source is currently active. Used
-by the `RemoveCondition` expire-path to decide whether to fire Blinded→Sighted
-when one of two overlapping sources clears.
+by `reconcilePerception` to decide which way the state should point, so one of
+two overlapping sources clearing leaves the holder Blinded.
 
 Important implementation detail: the condition checks use
 `Conditions.TriggersLeft(id) > 0` rather than `Conditions.HasCondition(id)`. The
@@ -118,7 +128,11 @@ Presence).
 - `integration_test.go`: real-Character integration via `AddCondition` /
   `RemoveCondition`: PE-INT-001 through PE-INT-005 and PE-INT-007 (overlap and
   single-source paths). PE-INT-006 was the condition-source case and was
-  deleted with the enum.
+  deleted with the enum. PE-INT-008 (natural expiry through `Prune` then
+  `Validate`), PE-INT-009 (a reload keeps live blindness) and PE-INT-010 (the
+  magnitude door blinds) pin the reconcile.
+- `internal/hooks/blind_expiry_test.go`: the real round prune
+  (`PruneConditions`) restores sight for conditions 3 and 77.
 
 No smoke pass at chunk-6 ship — dormant. The messaging framework
 chunk (2026-05-20) authored its own AI feature-tester goal at

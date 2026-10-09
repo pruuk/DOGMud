@@ -61,20 +61,36 @@ func TimeCommand(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		gd = gametime.GetDate(gametime.GetLastPeriod(rest, gd.RoundNumber))
 	}
 
-	dayNight := `day`
-	if gd.Night {
-		dayNight = `night`
+	// The lamps are read for the current round only; the testing argument
+	// moves the date, not the sky, so it falls back to night alone.
+	lampsLit := gd.Night
+	if rest == `` {
+		lampsLit = gametime.LampsLit()
 	}
 
-	user.SendText(messaging.CategoryTimeOfDay, fmt.Sprintf(`It is now %s. It is <ansi fg="%s">%stime</ansi> on <ansi fg="230">day %d</ansi> of <ansi fg="230">year %d</ansi>. The month is <ansi fg="230">%s</ansi>, and it is the year of the <ansi fg="230">%s</ansi>`,
+	user.SendText(messaging.CategoryTimeOfDay, timeLine(gd, gametime.DayPeriod(gd.Night, lampsLit, gd.Hour24)))
+
+	return true, nil
+}
+
+// timeLine formats the `time` reply for a period from gametime.DayPeriod.
+// Day and night keep their "-time" words and colours; dusk and dawn take the
+// night colour, since the lamps are lit.
+func timeLine(gd gametime.GameDate, period string) string {
+	word, color := `daytime`, `day`
+	switch period {
+	case `night`:
+		word, color = `nighttime`, `night`
+	case `dusk`, `dawn`:
+		word, color = period, `night`
+	}
+	return fmt.Sprintf(`It is now %s. It is <ansi fg="%s">%s</ansi> on <ansi fg="230">day %d</ansi> of <ansi fg="230">year %d</ansi>. The month is <ansi fg="230">%s</ansi>, and it is the year of the <ansi fg="230">%s</ansi>.`,
 		gd.String(),
-		dayNight,
-		dayNight,
+		color,
+		word,
 		gd.Day,
 		gd.Year,
 		gametime.MonthName(gd.Month),
 		gametime.GetZodiac(gd.Year),
-	))
-
-	return true, nil
+	)
 }
