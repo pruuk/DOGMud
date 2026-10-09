@@ -17,6 +17,8 @@ the same crawl.
   per-zone cache, and the render entry points.
 - **mapper.node.go** — `mapNode` and `nodeExit`, the crawl's internal graph.
 - **mapper.map.go** — `mapRender` and legend assembly.
+- **maptag.go**: `LegendSlug` and `ColorizeLegendLine`, the one colour-tag
+  builder for a rendered map line (minimap, `map`, legend template).
 - **mapper.config.go** — `Config` (render options) and `SymbolOverride`.
 - **mapper.path.go** — A\* pathfinding, the path cache, and `GetPath`/`NextStep`.
 - **mapper.consistency.go** — the Cartesian consistency engine (see below).
@@ -89,7 +91,18 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender
 func (r *mapper) GetFullMap(centerRoomId int, c Config) mapRender
 func (m *mapRender) GetLegend(overrides map[rune]string) map[rune]string
 func (c *Config) OverrideSymbol(roomId int, symbol rune, legend string)
+func LegendSlug(name string) string
+func ColorizeLegendLine(line string, legend map[rune]string) string
 ```
+
+A legend name becomes a colour tag through `LegendSlug` only: lower case,
+spaces as hyphens (`map-deep-water`). A space inside `fg="..."` stops the tag
+parser and prints the tag as text (#455). `ColorizeLegendLine` walks a line
+once, rune by rune, so a symbol inside a tag it already wrote is never
+rewritten. `usercommands/look.go` (minimap), `usercommands/skill.map.go` and
+the `mapslug` template function in `maps/map.template` all use it. A new
+multi-word biome needs a `map-<slug>` alias in `ansi-aliases.yaml`
+(`TestMultiWordBiomesHaveSlugAliases`).
 
 `GetLimitedMap` is the player-facing one — the visible radius scales with
 Perception. `GetFullMap` is unbounded and used by admin tooling.

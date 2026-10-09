@@ -32,6 +32,7 @@ colors:
   map-temple: 8 # Bright black BG
   mapbg-temple: 15 # Bright black
   map-water: 12 # Bright blue
+  map-deep-water: 12 # Bright blue; legend "Deep Water" (mapper.LegendSlug)
   map-shore: 12 # Bright blue
   map-forest: 2
   map-trainer: 12 # Bright blue

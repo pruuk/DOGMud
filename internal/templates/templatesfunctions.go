@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/language"
+	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -80,6 +81,9 @@ var (
 		"lowercase": func(s string) string {
 			return strings.ToLower(s)
 		},
+		// The map legend's colour slug, shared with the minimap and the
+		// map command so the legend's tag matches theirs (#455).
+		"mapslug": mapper.LegendSlug,
 		// The three spell-reference values a player used to be shown as raw
 		// numbers. Each DELEGATES to internal/combat rather than restating the
 		// bands here: the `spells` command already describes cost with
