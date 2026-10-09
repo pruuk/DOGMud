@@ -129,7 +129,16 @@ The `internal/mobcommands` package implements the AI command system for non-play
   the dark, a locked exit and a hidden target by the player's own rules. Every
   room line it sends goes through `Room.SendTextVisualHidingNames`, so an
   observer who only sees shapes reads "a figure" instead of the mob's name.
-- **Magic usage**: `cast`, `portal` - Spellcasting AI with tactical considerations
+- **Magic usage**: `cast`, `portal` - Spellcasting AI with tactical considerations.
+  `Cast` (`cast.go`) begins a fold through `actions.InitiateCast`. A harmful
+  cast begun out of combat commits the mob to its target at once
+  (`targeting.Commit`, `ReasonAttack`): the first player target, else the
+  first mob target `castFoeMob` lets it fight (not itself, not a
+  non-combatant, not a companion of its own charmer). A harmful fold only
+  steps in combat (`hooks.handleMobFoldCasting`), and `hooks.IdleMobs`
+  fizzles one held out of combat, so without the commit a mob-target harm
+  cast never resolved (#242). A non-combatant caster is refused by the
+  combat-phase veto (`hooks/CombatPhase_Vetoes.go`) and fights nobody.
 - **Stealth operations**: `sneak` - Covert movement capabilities
 
 ### Advanced AI Features

@@ -590,7 +590,10 @@ mob out of combat still holding one, every round, which covers a mob
 target that walked or fled out (`actions.ClearRoomAggroOnDeparture`
 releases the caster) and every other release. Between them every stale
 fold ends: a help fold whose target died or left fizzles at its own fold
-step (`TargetGone`, or no target found at completion).
+step (`TargetGone`, or no target found at completion). A harmful cast a
+mob begins out of combat commits it to its target, a mob target as well as
+a player (`mobcommands.Cast`, `castFoeMob`), so its fold steps in combat
+and resolves rather than being swept.
 
 ```go
 func HandleIdleMobs(e events.Event) events.ListenerReturn {

@@ -172,15 +172,47 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	room.SendTextVisual(messaging.CategorySpellFold, fmt.Sprintf(
 		`<ansi fg="mobname">%s</ansi> begins weaving a spell.`, mob.Character.Name))
 
-	// Initiate combat aggro immediately when targeting a player with an offensive spell.
-	// This ensures the mob enters the combat loop so the player is flagged as in combat.
-	// The casting block in the combat tick safely handles CastingState and skips melee.
-	if spellInfo.IsHarm() {
-		if !mob.Character.IsInCombat() && len(result.TargetUserIds) > 0 {
+	// Initiate combat aggro immediately when an offensive spell has a target.
+	// This ensures the mob enters the combat loop, where the casting block
+	// steps the fold and skips melee: out of combat a harmful fold is never
+	// stepped, and IdleMobs fizzles it (#242). A player target comes first,
+	// as it always has; failing one, the first mob target the mob could
+	// fight (castFoeMob).
+	if spellInfo.IsHarm() && !mob.Character.IsInCombat() {
+		if len(result.TargetUserIds) > 0 {
 			targeting.Commit(&mob.Character,
 				state.ActorRef{UserId: result.TargetUserIds[0]}, targeting.ReasonAttack)
+		} else if mId := castFoeMob(mob, result.TargetMobInstanceIds); mId > 0 {
+			targeting.Commit(&mob.Character,
+				state.ActorRef{MobInstanceId: mId}, targeting.ReasonAttack)
 		}
 	}
 
 	return true, nil
+}
+
+// castFoeMob returns the first of a harmful cast's mob targets that caster
+// may fight, or 0: by the rules mob-against-mob targeting keeps
+// (targeting.selectWeakestHatedMob), not itself, not a non-combatant, and
+// not a companion of the owner it is charmed by. An area spell's targets are
+// every mob in the room, so the filter picks one the area resolution would
+// also hit (hooks.mobAreaHarmTargets) rather than letting the combat-phase
+// veto on a non-combatant first target leave the caster uncommitted. A
+// non-combatant caster is refused by that same veto (CombatPhase_Vetoes).
+func castFoeMob(caster *mobs.Mob, targetMobInstanceIds []int) int {
+	charmedBy := caster.Character.GetCharmedUserId()
+	for _, mId := range targetMobInstanceIds {
+		if mId == caster.InstanceId {
+			continue
+		}
+		m := mobs.GetInstance(mId)
+		if m == nil || m.IsNonCombatant() || m.Character.Health <= 0 {
+			continue
+		}
+		if charmedBy > 0 && m.Character.IsCharmed(charmedBy) {
+			continue
+		}
+		return mId
+	}
+	return 0
 }

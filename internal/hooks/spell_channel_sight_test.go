@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -499,6 +500,116 @@ func TestMobFold_QuarryLeaves_HelpFoldResolvesWithoutFizzle(t *testing.T) {
 	require.Zero(t, countContaining(got, "fizzles"), "%v", got)
 	require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
 	require.Equal(t, 1, countContaining(got, "Skeleton channels restorative magic."), "%v", got)
+}
+
+// mobCastAtRat puts the test mob (100) and a rat (101) in room, out of
+// combat, and has the mob begin `cast test-bolt rat` through its own cast
+// command.
+func mobCastAtRat(t *testing.T, room *rooms.Room, mutate func(caster, rat *mobs.Mob)) (caster, rat *mobs.Mob) {
+	t.Helper()
+	bolt := testHarmSpell()
+	bolt.BaseFolds = 1
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": bolt}))
+	caster = spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	room.AddMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+	caster.Character.Validate()
+	caster.Character.ConvictionMax.Value, caster.Character.Conviction = 1000, 1000
+	caster.Character.Cooldowns = nil
+
+	rat = &mobs.Mob{MobId: 2, InstanceId: 101, Character: characters.Character{
+		Name: "Rat", RoomId: room.RoomId, Health: 10, Conditions: conditions.New()}}
+	rat.Character.HealthMax.Value = 10
+	mobs.SetInstanceForTest(101, rat)
+	t.Cleanup(func() { mobs.SetInstanceForTest(101, nil) })
+	room.AddMob(101)
+	t.Cleanup(func() { room.RemoveMob(101) })
+	if mutate != nil {
+		mutate(caster, rat)
+	}
+	require.False(t, caster.Character.IsInCombat(), "fixture: the caster is not fighting")
+	events.DrainQueuedMessagesForTest(1)
+
+	_, err := mobcommands.Cast("test-bolt rat", caster, room)
+	require.NoError(t, err)
+	require.True(t, caster.Character.IsCasting(), "fixture: the cast began")
+	return caster, rat
+}
+
+// #242 final review: a mob's harmful cast committed aggro only at a player
+// target, so a harm spell a mob aimed at another mob out of combat (a bonded
+// companion's `cast sparks #<goblin>`) began a fold the IdleMobs sweep
+// fizzled a round later (and hung for good before that sweep). The cast now
+// commits the caster to its mob target as it does to a player: it fights,
+// and the fold resolves.
+func TestMobCastHarmAtMob_EntersCombatAndResolves(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	caster, _ := mobCastAtRat(t, room, nil)
+
+	require.True(t, caster.Character.IsInCombat(), "the harmful cast did not commit the caster")
+	require.Equal(t, 101, caster.Character.CurrentCombatTarget().MobInstanceId)
+
+	for round := uint64(1); round <= 8 && caster.Character.IsCasting(); round++ {
+		IdleMobs(events.NewRound{RoundNumber: round})
+		handleMobCombat(events.NewRound{RoundNumber: round})
+	}
+	require.False(t, caster.Character.IsCasting(), "the fold never resolved")
+	got := drainPlain(1)
+	require.Zero(t, countContaining(got, "fizzles"), "%v", got)
+	require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+}
+
+// An area harm spell's targets are every mob in the room. The commit goes
+// to one the caster can fight: a non-combatant ahead of the rat in the room
+// is passed over (the combat-phase veto would refuse it and leave the caster
+// uncommitted, its fold to fizzle).
+func TestMobCastAreaHarm_CommitsPastANonCombatant(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	for _, uid := range []int{1, 2} { // a room of mobs only
+		walkOut(t, room, uid)
+	}
+	burst := testHarmSpell()
+	burst.SpellId, burst.Targeting = "test-burst", combatvocab.TargetArea
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-burst": burst}))
+
+	caster := spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+	caster.Character.Validate()
+	caster.Character.ConvictionMax.Value, caster.Character.Conviction = 1000, 1000
+	caster.Character.Cooldowns = nil
+	for _, m := range []*mobs.Mob{
+		{MobId: 3, InstanceId: 102, NonCombatant: true, Character: characters.Character{Name: "Clerk", NonCombatant: true}},
+		{MobId: 2, InstanceId: 101, Character: characters.Character{Name: "Rat"}},
+	} {
+		m.Character.RoomId, m.Character.Health, m.Character.Conditions = room.RoomId, 10, conditions.New()
+		m.Character.HealthMax.Value = 10
+		mobs.SetInstanceForTest(m.InstanceId, m)
+		id := m.InstanceId
+		t.Cleanup(func() { mobs.SetInstanceForTest(id, nil); room.RemoveMob(id) })
+		room.AddMob(id)
+	}
+	room.AddMob(caster.InstanceId)
+	require.Equal(t, []int{102, 101, caster.InstanceId}, room.GetMobs(), "fixture: the clerk is listed first")
+
+	_, err := mobcommands.Cast("test-burst", caster, room)
+	require.NoError(t, err)
+	require.True(t, caster.Character.IsCasting(), "fixture: the cast began")
+	require.True(t, caster.Character.IsInCombat(), "the caster committed to nobody")
+	require.Equal(t, 101, caster.Character.CurrentCombatTarget().MobInstanceId)
+}
+
+// The commit is bounded: a non-combatant caster (a quest giver, a merchant)
+// starts no fight by casting, as it starts none by any other route (the
+// combat-phase veto, CombatPhase_Vetoes).
+func TestMobCastHarmAtMob_NonCombatantCasterStartsNoFight(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	caster, _ := mobCastAtRat(t, room, func(caster, _ *mobs.Mob) {
+		caster.Character.NonCombatant = true
+		t.Cleanup(func() { caster.Character.NonCombatant = false })
+	})
+	require.False(t, caster.Character.IsInCombat(), "a non-combatant caster started a fight")
 }
 
 // The combat round leaves a harmful fold held out of combat to IdleMobs'
