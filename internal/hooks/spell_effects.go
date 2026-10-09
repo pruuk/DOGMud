@@ -518,5 +518,7 @@ func interruptSpellTarget(c spellEffectCtx) {
 			c.casterName(), c.spell.Name)),
 		Observer: messaging.Say(messaging.CategorySpellDisruption, fmt.Sprintf(
 			`<ansi fg="cyan">%s's spell collapses!</ansi>`, roomName(actorHiddenFromRoom(c.target), c.targetName()))),
+		// A disruption is heard as well as seen (#242, owner ruling R4).
+		ObserverSound: messaging.Say(messaging.CategorySpellDisruption, messaging.SoundChantBreaksOff),
 	}, c.audience())
 }
