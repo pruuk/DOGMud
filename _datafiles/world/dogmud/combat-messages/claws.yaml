@@ -170,7 +170,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi>.'
+        - 'You graze <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>.'
         - 'You scratch <ansi fg="{acteetype}">{actee}</ansi> lightly with your <ansi fg="item">{itemname}</ansi>.'
         - 'Your claws barely nick <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You swipe awkwardly, barely scratching <ansi fg="{acteetype}">{actee}</ansi>.'
@@ -227,7 +227,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> rends <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You rend <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'You slash <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Your claws tear into <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You attack with wild, animalistic fury!'
@@ -244,7 +244,7 @@ options:
         - 'From your {stance} stance, you exploit an opening and gouge decisively!'
         - 'Following through, you deliver a solid rake to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You capitalize on your momentum and strike with perfect predatory timing!'
-        - 'Your <ansi fg="item">{itemname}</ansi> flashes as you maintain the pressure with masterful control!'
+        - 'You flash your <ansi fg="item">{itemname}</ansi> and keep up the pressure with masterful control!'
         - '{position}, you rake decisively at <ansi fg="{acteetype}">{actee}</ansi>!'
         - '{momentum}, you lacerate with overwhelming apex predator skill!'
         - 'Your claws rake across <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
@@ -302,7 +302,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> bites into <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You sink your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You deliver a powerful slash to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your claws sink deeply into <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You attack with overwhelming, bestial rage!'
@@ -326,7 +326,7 @@ options:
         - 'Your claws sink deep into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}, tearing viciously!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> bites into you!'
+        - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> into you!'
         - 'You are hit hard as <ansi fg="{actortype}">{actor}</ansi> delivers a powerful slash!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s claws sink deeply into you!'
         - '<ansi fg="{actortype}">{actor}</ansi> attacks with overwhelming, bestial rage!'
@@ -350,7 +350,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s claws sink deep into your {bodypart}!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> bites into <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a powerful slash to <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> sinks claws deeply into <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> attacks <ansi fg="{acteetype}">{actee}</ansi> with overwhelming, bestial rage!'
@@ -377,12 +377,12 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You <ansi fg="cyan-bold">CRITICALLY EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL RAKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your claws <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You land a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
-        - 'You whirl and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SHREDS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You whirl and <ansi fg="cyan-bold">SHRED</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Lunging forward while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT TEAR</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You flow like a hunting beast and your claws <ansi fg="cyan-bold">LACERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them from your {stance} stance!'
@@ -393,14 +393,14 @@ options:
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> from the perfect predatory angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">SHRED</ansi> <ansi fg="{acteetype}">{actee}</ansi> with masterful precision!'
-        - 'Your positioning is flawless - your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your positioning is flawless, and you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Your unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL LACERATION</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">CARVE THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with devastating predatory fury!'
         - 'The tide of battle favors you - your claws <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL RAKE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> you with their <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL RAKE</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - 'You are <ansi fg="cyan-bold">DEVASTATED</ansi> by <ansi fg="{actortype}">{actor}''s claws!</ansi>'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> on you!'
         expert:
@@ -421,8 +421,8 @@ options:
         - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their claws <ansi fg="cyan-bold">DECIMATE</ansi> you!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL RAKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL RAKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their claws!</ansi>'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:

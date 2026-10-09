@@ -170,7 +170,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi>.'
+        - 'You graze <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>.'
         - 'You nick <ansi fg="{acteetype}">{actee}</ansi> lightly with your <ansi fg="item">{itemname}</ansi>.'
         - 'Your <ansi fg="item">{itemname}</ansi> barely scrape <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You snap awkwardly, barely catching <ansi fg="{acteetype}">{actee}</ansi>.'
