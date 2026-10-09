@@ -301,7 +301,9 @@ func RenderChannelDefenceMessages(out ChannelDefenceResult, identities ChannelDe
 	// its status (#415).
 	identities.Attacker = messaging.StripNameAdjectives(identities.Attacker)
 	identities.Defender = messaging.StripNameAdjectives(identities.Defender)
-	triad := items.RenderDefenseMessage(items.DefencePoolFor(out.Defence), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
+	// attack is always a move, shot or spell name here, never an item, so it
+	// renders without the item tag (spec F2: a move is never "weapon").
+	triad := items.RenderMoveDefenseMessage(items.DefencePoolFor(out.Defence), out.DefensiveCrit, out.NormalizedDefenceMargin, map[items.TokenName]string{
 		items.TokenActor:  identities.Attacker,
 		items.TokenActee:  identities.Defender,
 		items.TokenAttack: attack,
