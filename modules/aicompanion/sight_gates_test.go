@@ -77,6 +77,54 @@ func TestCompanionAskSight_LitSendsTheCompanion(t *testing.T) {
 	}
 }
 
+const askInfraredCond = 9786 // infravision, reach 30
+
+// #454 review K10: an owner who makes out the Smith only as a shape sends
+// their companion to it, and the errand wrote the Smith's real name into the
+// companion's memory and prompt, where she may say it aloud. Both now name
+// the NPC as the owner perceives it.
+func TestCompanionAskSight_AShapeIsNotNamedToTheCompanion(t *testing.T) {
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		askInfraredCond: {ConditionId: askInfraredCond, Name: "Test Infrared", Secret: true,
+			Flags:   []conditions.Flag{conditions.InfraredVision},
+			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectInfraReach: {Literal: 30}}},
+	}))
+	m, c, owner, room := askForScene(t, true, false)
+	if err := owner.Character.AddCondition(askInfraredCond, true); err != nil {
+		t.Fatalf("could not give the owner infravision: %v", err)
+	}
+	if got := room.ParticipantSight(owner.UserId); got != messaging.SightShapes {
+		t.Fatalf("fixture: the owner must make out shapes only, got %v", got)
+	}
+
+	_, _ = m.cmdAskFor(`#300 about the ore`, owner, room, events.EventFlag(0))
+	if c.askAuth == nil || c.askAuth.MobInstanceId != 300 {
+		t.Fatalf("fixture: the owner could not send the companion to the shape: %+v", c.askAuth)
+	}
+	for _, line := range c.mind.RecentLines {
+		if strings.Contains(line.Text, `Smith`) {
+			t.Errorf("her memory names the shape: %q", line.Text)
+		}
+	}
+	for _, s := range c.pending {
+		if strings.Contains(s.Text, `Smith`) {
+			t.Errorf("her prompt names the shape: %q", s.Text)
+		}
+	}
+	if len(c.pending) == 0 || !strings.Contains(c.pending[len(c.pending)-1].Text, `a figure`) {
+		t.Errorf("the errand should name the NPC as the owner sees it, a figure: %+v", c.pending)
+	}
+}
+
+// The lit control: at full sight the errand names the NPC.
+func TestCompanionAskSight_LitNamesTheNPC(t *testing.T) {
+	m, c, owner, room := askForScene(t, true, true)
+	_, _ = m.cmdAskFor(`smith about the ore`, owner, room, events.EventFlag(0))
+	if len(c.pending) == 0 || !strings.Contains(c.pending[len(c.pending)-1].Text, `Smith`) {
+		t.Fatalf("a lit errand should name the Smith: %+v", c.pending)
+	}
+}
+
 const unbondLightCond = 9785 // a carried light, literal strength 60
 
 // #456 review G3, owner ruling 2026-10-09: a mover is seen by the light they

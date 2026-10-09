@@ -373,6 +373,9 @@ Roadmap and phase plan: `docs/aicompanion/`.
   owner's typed name through `actions.AimBySight` before it looks the NPC
   up (#454), so in the dark a name that is there and one that is not read
   the same refusal, and at shapes the owner aims with `shape` / `N.shape`.
+  The errand's memory line and prompt stimulus name the NPC as the owner
+  perceives it (`messaging.UnseenNoun`, "a figure" at shapes), never its
+  real name, which the companion could otherwise say aloud.
 - **primer.txt**: the common-knowledge world primer given to the model.
 - **relayfor.go**: `relayFor`, the `apiframework.Relay` the module lends to
   other features. It answers only for `apiframework.PurposeFinds`, only for

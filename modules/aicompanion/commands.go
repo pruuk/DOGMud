@@ -645,15 +645,22 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 		return true, nil
 	}
 	c.askAuth = &askAuthority{MobInstanceId: mobInstanceId, Topic: topic, Expires: time.Now().Unix() + 60}
+	// The NPC is named as the owner perceives it: an owner who makes it out
+	// only as a shape sends her to "a figure", so its real name never
+	// reaches her memory or her prompt, where she might say it aloud (#454).
+	askee := target.Character.Name
+	if sight := messaging.ParticipantSight(user.Character, room); sight != messaging.SightFull {
+		askee = messaging.UnseenNoun(sight)
+	}
 	// The topic is the owner's own words, so it is written into her mind
 	// only once they have agreed that her mind may be sent.
 	if m.consented(user.UserId) {
 		c.mind.addLine(Line{Speaker: user.Character.Name, Kind: `asked`, ToMe: true,
-			Text: `Ask ` + target.Character.Name + ` about ` + topic + `.`}, m.cfg.WorkingMemoryLines)
+			Text: `Ask ` + askee + ` about ` + topic + `.`}, m.cfg.WorkingMemoryLines)
 		c.dirty = true
 	}
 	c.push(stimulus{Kind: `errand_ask`, Speaker: user.Character.Name,
-		Text: `put a question to ` + target.Character.Name + ` about ` + topic, FromOwner: true})
+		Text: `put a question to ` + askee + ` about ` + topic, FromOwner: true})
 	return true, nil
 }
 
