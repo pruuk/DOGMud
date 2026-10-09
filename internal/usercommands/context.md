@@ -91,7 +91,11 @@ a shape name no one: `give`, `show`, `party invite` and `rep` hide each name
 at its reader's sight with `messaging.HideNames` (an invitation or a report
 to its recipient with `messaging.HideSpeakerNames`), and `consider`,
 `steal`, `plant` and `shadow` hand their action `actions.UserActorAtSight`.
-Party auto-assist skips a member who sees nothing.
+Party auto-assist skips a member who sees nothing. `share` pays the party
+members in the room directly through give's gold path (`giveGoldToUser`,
+which hides each name at its reader's sight), never by typing `give N gold
+to @uid`, which the sight gate would refuse in the dark; membership is
+already known, so no presence leaks.
 
 #### **Skill-Based Commands**
 - **Magic system**: `cast`, `enchant`, `unenchant`, `prepare` - Spellcasting mechanics

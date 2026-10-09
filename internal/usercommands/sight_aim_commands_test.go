@@ -323,6 +323,36 @@ func TestGiveSight_PetWordIsTheOwnPetBeforeAPlayer(t *testing.T) {
 	assert.False(t, petraHas, "`give sword pet` went to Petra")
 }
 
+// #454 review F2: share pays the party members in the room directly. It typed
+// `give N gold to @uid` per member, which the sight gate refused in the dark.
+// Party membership is known, so paying a member tells no one who is there;
+// each line hides the other's name at its reader's sight.
+func TestShareSight_EachBandPaysTheParty(t *testing.T) {
+	for _, band := range []aimBand{aimFull, aimDark} {
+		user, room := aimScene(t, band)
+		p := parties.New(1)
+		p.InvitePlayer(2)
+		p.AcceptInvite(2)
+		user.Character.Gold = 50
+		bob := users.GetByUserId(2)
+		bob.Character.Gold = 0
+		_, _ = Share("10 gold", user, room, events.EventFlag(0))
+		p.Disband()
+		assert.Equal(t, 45, user.Character.Gold, "band %d: the sharer kept Bobrick's share", band)
+		assert.Equal(t, 5, bob.Character.Gold, "band %d: Bobrick got no share", band)
+		told, bobTold := aimTold(1), aimTold(2)
+		assert.NotContains(t, told, actions.AimNotHereLine, "band %d", band)
+		if band == aimFull {
+			assert.Contains(t, told, "to Bobrick.")
+			assert.Contains(t, bobTold, "Aliceia gives you")
+		} else {
+			assert.NotContains(t, told, "Bobrick", "a sharer in the dark read the name")
+			assert.NotContains(t, bobTold, "Aliceia", "a member in the dark read the sharer's name")
+			assert.Contains(t, bobTold, "gives you")
+		}
+	}
+}
+
 // The own pet by its own name is at hand at shapes: no hint.
 func TestGiveSight_OwnPetByNameAtShapes(t *testing.T) {
 	user, room := aimScene(t, aimShapes)

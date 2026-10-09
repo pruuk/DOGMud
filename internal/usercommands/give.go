@@ -124,45 +124,8 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 			} else if giveGoldAmount > 0 {
 
-				if targetUser.UserId == user.UserId {
+				giveGoldToUser(user, targetUser, room, giveGoldAmount)
 
-					user.SendText(messaging.CategorySystem,
-						fmt.Sprintf(`You count out <ansi fg="gold">%d gold</ansi> and put it back in your pocket.`, giveGoldAmount),
-					)
-					room.SendTextVisual(messaging.CategoryLoot,
-						fmt.Sprintf(`<ansi fg="username">%s</ansi> counts out some <ansi fg="gold">gold</ansi> and put it back in their pocket.`, user.Character.Name),
-						user.UserId)
-
-				} else {
-					userActor := &actions.UserActor{User: user, Room: room}
-					if err := actions.GiveGoldToChar(userActor, giveGoldAmount, targetUser.Character); err != nil {
-						user.SendText(messaging.CategorySystem, "Something went wrong.")
-						return true, nil
-					}
-
-					events.AddToQueue(events.EquipmentChange{
-						UserId:     targetUser.UserId,
-						GoldChange: giveGoldAmount,
-					})
-
-					events.AddToQueue(events.EquipmentChange{
-						UserId:     user.UserId,
-						GoldChange: -giveGoldAmount,
-					})
-
-					user.SendText(messaging.CategorySystem, messaging.HideNames(
-						fmt.Sprintf(`You give <ansi fg="gold">%d gold</ansi> to <ansi fg="username">%s</ansi>.`, giveGoldAmount, targetUser.Character.Name),
-						[]string{targetUser.Character.Name}, giverSight),
-					)
-					targetUser.SendText(messaging.CategorySystem, messaging.HideNames(
-						fmt.Sprintf(`<ansi fg="username">%s</ansi> gives you <ansi fg="gold">%d gold</ansi>.`, user.Character.Name, giveGoldAmount),
-						[]string{user.Character.Name}, recipientSight),
-					)
-					room.SendTextVisual(messaging.CategoryLoot,
-						fmt.Sprintf(`<ansi fg="username">%s</ansi> gives <ansi fg="username">%s</ansi> some <ansi fg="gold">gold</ansi>.`, user.Character.Name, targetUser.Character.Name),
-						user.UserId,
-						targetUser.UserId)
-				}
 			} else {
 				user.SendText(messaging.CategorySystem, "Something went wrong.")
 			}
@@ -334,6 +297,51 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	user.SendText(messaging.CategorySystem, `Who??? (<ansi fg="command">give {object-name} {receiver-name}</ansi>)`)
 
 	return true, nil
+}
+
+// giveGoldToUser moves amount gold from user to targetUser, both in room, and
+// tells each side with the other's name hidden at that reader's sight. Giving
+// to oneself counts the gold out and back. give's gold branch and share both
+// pay through it.
+func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount int) {
+	if targetUser.UserId == user.UserId {
+		user.SendText(messaging.CategorySystem,
+			fmt.Sprintf(`You count out <ansi fg="gold">%d gold</ansi> and put it back in your pocket.`, amount),
+		)
+		room.SendTextVisual(messaging.CategoryLoot,
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> counts out some <ansi fg="gold">gold</ansi> and put it back in their pocket.`, user.Character.Name),
+			user.UserId)
+		return
+	}
+
+	userActor := &actions.UserActor{User: user, Room: room}
+	if err := actions.GiveGoldToChar(userActor, amount, targetUser.Character); err != nil {
+		user.SendText(messaging.CategorySystem, "Something went wrong.")
+		return
+	}
+
+	events.AddToQueue(events.EquipmentChange{
+		UserId:     targetUser.UserId,
+		GoldChange: amount,
+	})
+
+	events.AddToQueue(events.EquipmentChange{
+		UserId:     user.UserId,
+		GoldChange: -amount,
+	})
+
+	user.SendText(messaging.CategorySystem, messaging.HideNames(
+		fmt.Sprintf(`You give <ansi fg="gold">%d gold</ansi> to <ansi fg="username">%s</ansi>.`, amount, targetUser.Character.Name),
+		[]string{targetUser.Character.Name}, messaging.ParticipantSight(user.Character, room)),
+	)
+	targetUser.SendText(messaging.CategorySystem, messaging.HideNames(
+		fmt.Sprintf(`<ansi fg="username">%s</ansi> gives you <ansi fg="gold">%d gold</ansi>.`, user.Character.Name, amount),
+		[]string{user.Character.Name}, messaging.ParticipantSight(targetUser.Character, room)),
+	)
+	room.SendTextVisual(messaging.CategoryLoot,
+		fmt.Sprintf(`<ansi fg="username">%s</ansi> gives <ansi fg="username">%s</ansi> some <ansi fg="gold">gold</ansi>.`, user.Character.Name, targetUser.Character.Name),
+		user.UserId,
+		targetUser.UserId)
 }
 
 // giveToOwnPet reports whether who names the giver's own pet: the word "pet",

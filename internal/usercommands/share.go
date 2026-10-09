@@ -1,7 +1,6 @@
 package usercommands
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -57,18 +56,26 @@ func Share(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		split := int(math.Floor(float64(giveGoldAmount) / float64(len(partyMembersInRoom))))
 		leftOver := giveGoldAmount - split*len(partyMembersInRoom)
 
+		// Each share is paid directly, not typed as `give N gold to @uid`:
+		// the give command's sight gate refuses an id form in the dark, and
+		// party membership is already known, so paying a member tells no one
+		// who is there (#454). giveGoldToUser hides each name at its reader's
+		// sight.
+		shares := map[int]int{}
 		for _, uid := range partyMembersInRoom {
-
-			user.Command(fmt.Sprintf("give %d gold to @%d", split, uid))
-
+			shares[uid] += split
+		}
+		if leftOver > 0 {
+			shares[partyMembersInRoom[util.Rand(len(partyMembersInRoom))]] += leftOver
 		}
 
-		if leftOver > 0 {
-
-			randomMember := partyMembersInRoom[util.Rand(len(partyMembersInRoom))]
-
-			user.Command(fmt.Sprintf("give %d gold to @%d", leftOver, randomMember))
-
+		for _, uid := range partyMembersInRoom {
+			if shares[uid] <= 0 {
+				continue
+			}
+			if member := users.GetByUserId(uid); member != nil {
+				giveGoldToUser(user, member, room, shares[uid])
+			}
 		}
 
 	} else {
