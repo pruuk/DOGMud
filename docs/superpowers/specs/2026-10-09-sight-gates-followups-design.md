@@ -1,7 +1,7 @@
 # Sight gates follow-ups (#382)
 
-**Status:** G1-G6 APPROVED by the owner, 2026-10-09. G7 is written from the owner's rulings
-that day (caster's score, the stronger hide wins) and is under review.
+**Status:** APPROVED by the owner, 2026-10-09. G1-G6 are as drafted. G7 follows the owner's
+rulings that day: the caster's score, and the stronger hide wins.
 **Parent:** `specs/completed/2026-10-08-sight-gates-playtest-fixes-design.md` (shipped in #445).
 The re-run playtest (run `a7219436241e24e7`, master `c7520f387`) left #446, #447, #448 and
 #449, and the residue of #242 and #216. This slice fixes all six in one PR, and adds the owner's
