@@ -3,6 +3,7 @@ package characters
 import (
 	"fmt"
 	"math"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
@@ -30,7 +31,22 @@ func (c *Character) HasFlagFromAnySource(conditionFlag conditions.Flag) bool {
 }
 
 func (c *Character) CancelConditionsWithFlag(conditionFlag conditions.Flag) bool {
+	heldStealth := c.holdsLiveStealthRecord()
 	if c.Conditions.HasFlag(conditionFlag, true) {
+		// A cancel that just ended the stealth record spends a spawn-time
+		// hide (conditionids: [9]) for good, and it must do so BEFORE the
+		// Validate(true) below: reapplyPermanentConditions would otherwise
+		// revive record 9 from the permanent id. Revived during a reveal,
+		// it sat live on a visible mob (a stray "emerges from the shadows"
+		// later, a true mob_has_condition 9); revived on a direct cancel
+		// (a mob's get, give, eat, show, aid) while the machine was still
+		// Hidden, it kept the rescue below from ever driving the mob out
+		// (sight gates playtest fixes, F5). Every path that ends stealth
+		// reaches here: the direct cancels, and every Awareness exit from
+		// Hidden through the cascade in Awareness_Cascades.go.
+		if heldStealth && !c.holdsLiveStealthRecord() {
+			c.RemovePermanentCondition(conditionIdHidden)
+		}
 		_ = c.Validate(true)
 		// Hidden flag is special: the Awareness FSM mirrors the condition
 		// via Awareness_Cascades.go. If a caller cancels the condition
@@ -158,15 +174,28 @@ const conditionIdHidden = 9
 //
 // Only record 9: another hidden-flag record (Empathic Shroud, 31) is timed,
 // and the cascade would pin a permanent 9 that outlives it.
+//
+// A refused hide (a busy character's Visible to Concealing is vetoed) takes
+// the record back off, so no record 9 claims hidden on a character the
+// machine kept Visible. A permanent 9 stays in the id list and tries again at
+// the next Validate(true).
 func (c *Character) hideForStealthRecord(conditionId int) {
 	if conditionId != conditionIdHidden || c.Awareness == nil || c.Awareness.State() != awareness.Visible {
 		return
 	}
 	reason := state.TransitionReason{Trigger: awareness.TriggerConditionApplied}
 	if err := c.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason); err != nil {
+		c.Conditions.RemoveCondition(conditionIdHidden)
 		return
 	}
 	c.Awareness.ResolveConcealment(true, reason)
+}
+
+// holdsLiveStealthRecord reports a live (unexpired) record 9. HasCondition
+// cannot answer this: it also counts an expired record the prune pass has not
+// yet removed.
+func (c *Character) holdsLiveStealthRecord() bool {
+	return len(c.Conditions.GetConditions(conditionIdHidden)) > 0
 }
 
 // AddConditionScaled adds a condition with its duration scaled by durationMult.
@@ -218,21 +247,34 @@ func (c *Character) RemoveCondition(conditionId int) {
 	_ = c.Validate()
 }
 
-// Used with SpawnInfo to gift spawning mobs with permanent conditions
+// Used with SpawnInfo to gift spawning mobs with permanent conditions.
+//
+// The list is copied: both spawn callers pass a slice they do not own (the
+// mob template's ConditionIds through a shallow copy, a room's
+// spawnInfo.ConditionIds), so an instance that edits its own list must not
+// write through to the template every later spawn reads.
 func (c *Character) SetPermanentConditions(conditionIds []int) {
-	c.permanentConditionIds = conditionIds
+	c.permanentConditionIds = append([]int(nil), conditionIds...)
 }
 
 // RemovePermanentCondition removes a condition ID from the permanent condition list so
 // it won't be re-applied during Validate(). Use this when a permanent condition
 // should be permanently lost (e.g., revealing a hidden mob).
+//
+// It builds a new list rather than shifting the old one in place, so even a
+// list that still shares a template's backing array cannot rewrite the
+// template (an in-place delete turned a Pale Lurker's [9, 85] into [85, 85]).
 func (c *Character) RemovePermanentCondition(conditionId int) {
-	for i, id := range c.permanentConditionIds {
-		if id == conditionId {
-			c.permanentConditionIds = append(c.permanentConditionIds[:i], c.permanentConditionIds[i+1:]...)
-			return
+	if !slices.Contains(c.permanentConditionIds, conditionId) {
+		return
+	}
+	kept := make([]int, 0, len(c.permanentConditionIds)-1)
+	for _, id := range c.permanentConditionIds {
+		if id != conditionId {
+			kept = append(kept, id)
 		}
 	}
+	c.permanentConditionIds = kept
 }
 
 // reapplyPermanentConditions refreshes item, species, pet and permanent

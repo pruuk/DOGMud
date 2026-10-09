@@ -3,8 +3,10 @@ package hooks
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -109,6 +111,90 @@ func TestHiddenSpawn_SpottedStaysSpotted(t *testing.T) {
 	require.NoError(t, m.Character.Awareness.TransitionToRevealing(
 		state.TransitionReason{Trigger: awareness.TriggerObserverSearch}))
 	require.False(t, m.Character.IsHidden())
+	// No Validate(true) here: the reveal itself must leave no live record 9.
+	// The cascade's cancel used to run its Validate(true) while 9 was still a
+	// permanent id, which revived the record on a visible mob: a stray
+	// "emerges from the shadows" line later, and a true mob_has_condition 9.
+	// HasCondition counts an expired, unpruned record, so read the live ones.
+	require.Empty(t, m.Character.GetConditions(9), "the reveal leaves no live stealth record")
+	require.False(t, m.Character.HasConditionFlag(conditions.Hidden))
+
+	// The permanent id is gone too: a later refresh does not bring 9 back.
 	m.Character.Validate(true)
+	require.Empty(t, m.Character.GetConditions(9), "the permanent 9 is spent, not re-added")
 	require.False(t, m.Character.IsHidden(), "a spotted ambusher does not slip back into hiding")
+}
+
+// A hidden-spawned mob that acts (get, give, eat, show, aid) cancels its own
+// stealth through CancelConditionsWithFlag(Hidden) directly, not through an
+// Awareness transition. That cancel's Validate(true) used to revive record 9
+// from the permanent id while the machine was still Hidden, so the rescue
+// that drives the machine out saw a live 9 and left the mob hidden.
+func TestHiddenSpawn_ActingRevealsForGood(t *testing.T) {
+	m := spawnHiddenSkeleton(t)
+	require.True(t, m.Character.IsHidden())
+	room := rooms.LoadRoom(1)
+	require.NotNil(t, room)
+	room.Gold = 10
+	t.Cleanup(func() { room.Gold = 0 })
+
+	mobcommands.Get("gold", m, room)
+	require.Zero(t, room.Gold, "the mob picked up the gold")
+	require.False(t, m.Character.IsHidden(), "a mob that picks something up is seen doing it")
+	require.Empty(t, m.Character.GetConditions(9), "no live stealth record on a visible mob")
+
+	m.Character.Validate(true)
+	require.False(t, m.Character.IsHidden())
+	require.Empty(t, m.Character.GetConditions(9))
+}
+
+// Two mobs spawned from one template that carries conditionids [9, 85] (the
+// Pale Lurker). Spotting the first must spend only that instance's hide: the
+// permanent list used to alias the template's ConditionIds, and the in-place
+// removal rewrote the template to [85, 85], so every later spawn was visible.
+func TestHiddenSpawn_RevealLeavesTheTemplateAlone(t *testing.T) {
+	t.Cleanup(seedAllRegistries())
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		9: {ConditionId: 9, Name: "Hidden",
+			Flags:       []conditions.Flag{conditions.Hidden, conditions.CancelIfCombat},
+			EndRoomText: "{actee_plain} emerges from the shadows."},
+		85: {ConditionId: 85, Name: "Test Permanent Companion Record"},
+	}))
+	// The registry holds this pointer, so spec is the template itself (a
+	// GetMobSpec read would hand back a copy).
+	spec := &mobs.Mob{MobId: 3, Zone: "TestZone", ConditionIds: []int{9, 85},
+		Character: characters.Character{Name: "Pale Lurker"}}
+	t.Cleanup(mobs.SeedMobsForTest(map[int]*mobs.Mob{3: spec}, map[int]*mobs.Mob{}))
+
+	first := mobs.NewMobById(3, 1)
+	require.NotNil(t, first)
+	require.True(t, first.Character.IsHidden(), "a [9, 85] spawn is hidden")
+
+	require.NoError(t, first.Character.Awareness.TransitionToRevealing(
+		state.TransitionReason{Trigger: awareness.TriggerObserverSearch}))
+	require.False(t, first.Character.IsHidden())
+	require.Equal(t, []int{9, 85}, spec.ConditionIds, "a reveal never edits the template")
+
+	second := mobs.NewMobById(3, 1)
+	require.NotNil(t, second)
+	require.True(t, second.Character.IsHidden(), "the next spawn of the same mob is still hidden")
+	require.NotEmpty(t, second.Character.GetConditions(85))
+}
+
+// A hide the Awareness machine refuses (a busy character's Visible to
+// Concealing is vetoed) must not leave a record 9 that claims hidden on a
+// visible character.
+func TestHiddenSpawn_VetoedHideLeavesNoRecord(t *testing.T) {
+	t.Cleanup(seedAllRegistries())
+	t.Cleanup(seedHiddenSpawnCondition())
+	m := mobs.GetInstance(100)
+	require.NotNil(t, m)
+	m.Character.Validate()
+	m.Character.Awareness.RegisterActivityCheck(func() bool { return false })
+
+	m.Character.SetPermanentConditions([]int{9})
+	m.Character.Validate(true)
+	require.False(t, m.Character.IsHidden())
+	require.Empty(t, m.Character.GetConditions(9), "no stealth record on a character the machine kept visible")
+	require.False(t, m.Character.HasConditionFlag(conditions.Hidden))
 }
