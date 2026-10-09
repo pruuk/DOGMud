@@ -25,9 +25,7 @@ func TestFlee_CastingMobBreakIsSeenAndHeard(t *testing.T) {
 	require.NoError(t, err)
 
 	sighted, blind := mobSpeechHeard(1), mobSpeechHeard(2)
-	require.Contains(t, sighted, "Skeleton's concentration breaks.")
-	require.Contains(t, blind, messaging.SoundChantBreaksOff)
-	for _, line := range blind {
-		require.NotContains(t, line, "Skeleton", "a reader who sees nothing must not learn who broke off")
-	}
+	// Each reader gets exactly one of the two lines.
+	require.Equal(t, []string{"Skeleton's concentration breaks."}, sighted)
+	require.Equal(t, []string{messaging.SoundChantBreaksOff}, blind)
 }

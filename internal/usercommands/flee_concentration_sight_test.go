@@ -42,11 +42,8 @@ func TestFlee_CastingPlayerBreakIsHeardByTheBlind(t *testing.T) {
 
 	fleeMidCast(t, alice)
 
-	heard := speechWrapperHeard(2)
-	require.Contains(t, heard, messaging.SoundChantBreaksOff)
-	for _, line := range heard {
-		require.NotContains(t, line, "Aliceia", "a reader who sees nothing must not learn who broke off")
-	}
+	// Exactly the sound line: no visual line, and no name.
+	require.Equal(t, []string{messaging.SoundChantBreaksOff}, speechWrapperHeard(2))
 }
 
 func TestFlee_CastingPlayerBreakNamesTheCasterAtClearSight(t *testing.T) {
@@ -56,5 +53,5 @@ func TestFlee_CastingPlayerBreakNamesTheCasterAtClearSight(t *testing.T) {
 
 	fleeMidCast(t, alice)
 
-	require.Contains(t, speechWrapperHeard(2), "Aliceia's concentration breaks.")
+	require.Equal(t, []string{"Aliceia's concentration breaks."}, speechWrapperHeard(2))
 }

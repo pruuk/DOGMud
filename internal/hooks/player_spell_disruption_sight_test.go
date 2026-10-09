@@ -45,7 +45,9 @@ func TestPlayerSpellFizzle_ShapesSeeAFigure_BlindHearTheSpell(t *testing.T) {
 
 		got := drainPlain(1)
 		require.Equal(t, messaging.SightShapes, messaging.ParticipantSight(users.GetByUserId(1).Character, room))
+		require.Len(t, got, 1, "%v", got)
 		require.Equal(t, 1, countContaining(got, "spell fizzles"), "%v", got)
+		require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
 		require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
 	})
 
@@ -57,7 +59,9 @@ func TestPlayerSpellFizzle_ShapesSeeAFigure_BlindHearTheSpell(t *testing.T) {
 		require.True(t, handlePlayerFoldCasting(caster, caster.UserId))
 
 		got := drainPlain(1)
+		require.Len(t, got, 1, "%v", got)
 		require.Equal(t, 1, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+		require.Zero(t, countContaining(got, "spell fizzles"), "%v", got)
 		require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
 	})
 }
@@ -72,7 +76,9 @@ func TestPlayerBleedOutBreak_IsSeenAndHeard(t *testing.T) {
 		require.True(t, handlePlayerFoldCasting(caster, caster.UserId))
 
 		got := drainPlain(1)
+		require.Len(t, got, 1, "%v", got)
 		require.Equal(t, 1, countContaining(got, "concentration breaks"), "%v", got)
+		require.Zero(t, countContaining(got, messaging.SoundChantBreaksOff), "%v", got)
 		require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
 	})
 
@@ -85,7 +91,10 @@ func TestPlayerBleedOutBreak_IsSeenAndHeard(t *testing.T) {
 		require.True(t, handlePlayerFoldCasting(caster, caster.UserId))
 
 		got := drainPlain(1)
+		require.Len(t, got, 1, "%v", got)
 		require.Equal(t, 1, countContaining(got, messaging.SoundChantBreaksOff), "%v", got)
+		require.Zero(t, countContaining(got, "concentration breaks"), "%v", got)
+		require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
 	})
 }
 
@@ -98,7 +107,9 @@ func TestPlayerSpellFalter_ShapesSeeAFigure_BlindHearTheSpell(t *testing.T) {
 		sendPlayerSpellFailed(caster, room, "falters")
 
 		got := drainPlain(1)
+		require.Len(t, got, 1, "%v", got)
 		require.Equal(t, 1, countContaining(got, "spell falters"), "%v", got)
+		require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
 		require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
 		require.Empty(t, drainPlain(2), "the caster reads its own line, not the room's")
 	})
@@ -109,7 +120,10 @@ func TestPlayerSpellFalter_ShapesSeeAFigure_BlindHearTheSpell(t *testing.T) {
 		sendPlayerSpellFailed(caster, room, "falters")
 
 		got := drainPlain(1)
+		require.Len(t, got, 1, "%v", got)
 		require.Equal(t, 1, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+		require.Zero(t, countContaining(got, "spell falters"), "%v", got)
+		require.Zero(t, countContaining(got, caster.Character.Name), "%v", got)
 	})
 
 	t.Run("clear sight names the caster", func(t *testing.T) {
@@ -118,6 +132,8 @@ func TestPlayerSpellFalter_ShapesSeeAFigure_BlindHearTheSpell(t *testing.T) {
 		sendPlayerSpellFailed(caster, room, "falters")
 
 		got := drainPlain(1)
+		require.Len(t, got, 1, "%v", got)
 		require.Equal(t, 1, countContaining(got, caster.Character.Name+"'s spell falters."), "%v", got)
+		require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
 	})
 }
