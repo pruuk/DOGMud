@@ -78,10 +78,14 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 			if mob.Character.CurrentCombatTarget().UserId > 0 {
 				user := users.GetByUserId(mob.Character.CurrentCombatTarget().UserId)
 				if user == nil || user.Character.RoomId != mob.Character.RoomId {
-					// A fold in progress ends first (#242), so its fizzle
-					// reads before the mumble; endStrandedFold below would
-					// only catch it a round later.
-					endStrandedFold(mob)
+					// A harmful fold in progress ends first (#242), so its
+					// fizzle reads before the mumble; endStrandedFold below
+					// would only catch it a round later. A help fold (a
+					// self-heal mid-fight) is kept: the combat round steps
+					// it out of combat and it resolves.
+					if !mobHoldsHelpFold(mob) {
+						endStrandedFold(mob)
+					}
 					mob.Command(`emote mumbles about losing their quarry.`)
 					targeting.Release(&mob.Character, targeting.ReasonDisengage)
 				}

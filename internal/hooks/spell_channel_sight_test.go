@@ -272,6 +272,7 @@ func TestPlayerSpellFindsNothing_HiddenCasterIsNeverNamed(t *testing.T) {
 // when its target walks out.
 func foldingMobInRoom(t *testing.T, room *rooms.Room, targetUserId int) *mobs.Mob {
 	t.Helper()
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-bolt": testHarmSpell()}))
 	m := spellChannelMob(t)
 	rooms.LoadRoom(m.Character.RoomId).RemoveMob(m.InstanceId)
 	room.AddMob(m.InstanceId)
@@ -468,6 +469,36 @@ func TestMobFold_IdleHelpFoldResolvesOutOfCombat(t *testing.T) {
 	got := drainPlain(1)
 	require.Equal(t, 1, countContaining(got, "Skeleton channels restorative magic."), "%v", got)
 	require.Zero(t, countContaining(got, "fizzles"), "%v", got)
+}
+
+// #242 final review: IdleMobs' quarry release (a player foe who left the
+// room) ended any fold the mob held, so a mob mid-fold on a help spell on
+// itself (Seren or Olen's `cast heal`) read "spell fizzles" when its foe
+// walked out. A help fold is left to its fold step, which now runs out of
+// combat: the release keeps it, and it resolves.
+func TestMobFold_QuarryLeaves_HelpFoldResolvesWithoutFizzle(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-mend": {SpellId: "test-mend", Name: "Test Mend",
+		AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSelf,
+		EffectType: "heal", EffectMagnitude: 5}}))
+	t.Cleanup(conditions.SeedConditionRecordsForTest()) // the heal's regenerating condition
+	caster := idleFoldCaster(t, room, "test-mend", []int{100})
+	caster.Character.SetAggro(2, 0, characters.DefaultAttack)
+	require.True(t, caster.Character.IsInCombat(), "fixture: the caster fights player 2")
+	walkOut(t, room, 2)
+
+	IdleMobs(events.NewRound{RoundNumber: 1})
+	require.False(t, caster.Character.IsInCombat(), "the quarry release still happens")
+	require.True(t, caster.Character.IsCasting(), "the release ended a help fold")
+
+	handleMobCombat(events.NewRound{RoundNumber: 1})
+	handleMobCombat(events.NewRound{RoundNumber: 2})
+	require.False(t, caster.Character.IsCasting(), "the help fold resolves and clears")
+	require.True(t, caster.Character.HasCondition(conditions.ConditionIdRegenerating), "the heal landed")
+	got := drainPlain(1)
+	require.Zero(t, countContaining(got, "fizzles"), "%v", got)
+	require.Zero(t, countContaining(got, messaging.SoundSpellSputtersOut), "%v", got)
+	require.Equal(t, 1, countContaining(got, "Skeleton channels restorative magic."), "%v", got)
 }
 
 // The combat round leaves a harmful fold held out of combat to IdleMobs'
