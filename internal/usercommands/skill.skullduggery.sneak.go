@@ -60,6 +60,12 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		user.SendText(messaging.CategorySystem, "You can't do that while in combat!")
 		return true, nil
 
+	case result.ReplacedShroud:
+		// Already hidden by a weaker Empathic Shroud: the sneak took the hide
+		// over with no roll (#444), so there is nothing to practise.
+		user.SendText(messaging.CategorySystem, `You let the shroud fall away and slip into the shadows on your own.`)
+		return true, nil
+
 	case result.SpottedBy != nil:
 		// Apply failure cooldown so the player can't spam sneak
 		if cfg.SneakFailCooldown > 0 {

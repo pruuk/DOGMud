@@ -725,8 +725,11 @@ itself.
   awareness, cooldown, round, contest, or progression mutation occurred.
   `AlreadyHidden` and `InCombat` are pre-admission outcomes and therefore have
   a zero-value cost result.
-- **Roll:** The sneaker uses effective Dexterity plus the Skullduggery skill
-  multiplier and stealth bonuses, modified by light conditions per observer.
+- **Roll:** The sneaker uses `CalcSneakScore`: `Character.HideBaseScore()`
+  (effective Dexterity plus Skullduggery x `SkillWeight`, or while Empathic
+  Shroud hides the actor the shroud's score in their place, #444) plus stealth
+  bonuses, modified by light conditions per observer. The same score is every
+  opposed roll against a hider: the 11 `CalcSneakScoreVsObserver` sites.
   Each observer uses effective Perception plus the Search skill multiplier,
   priced by `sneakObserverScore`: by sight (`CalcDetectionScore`) when it
   makes out anything, by ear (`CalcHearingScore`, `Balance.SneakHearingMult`,
@@ -742,16 +745,24 @@ itself.
   the sneaker's line (`SpottedLine`) names the spotter only as far as the
   sneaker sees (#215). `RollHappened` distinguishes a contested attempt from
   an empty-room success.
+- **Under a shroud (#444):** an actor the shroud hides is `AlreadyHidden`
+  unless their `SneakBaseScore()` beats the shroud's score; then the sneak pays
+  the normal admission and takes the hide over with
+  `Character.SneakOverShroud()` (record 31 dropped without its end line,
+  record 9 added, no reveal, no roll) and returns `Success` with
+  `ReplacedShroud` and `RollHappened` false.
 - **Player wrapper ownership:** The user command owns the skill gate, busy and
   prior-failure-cooldown messages, stamina-refusal text, and player-facing
   success/failure text. It checks the prior failure cooldown with read-only
   `CooldownReady`; only a spotted paid attempt may apply
   `SneakFailCooldown`, and an absent/zero value remains disabled. Player
   Skullduggery progression runs only when `RollHappened` is true and only after
-  paid resolution.
+  paid resolution. A `ReplacedShroud` result reads "You let the shroud fall
+  away and slip into the shadows on your own." and awards nothing.
 - **Mob wrapper ownership:** The mob command renders no refusal text and has no
-  player failure cooldown. It returns immediately on `CostRefused`; only a
-  successful paid attempt calls `OnSkillUse("skullduggery", 0)`.
+  player failure cooldown. It returns immediately on `CostRefused`; a paid
+  attempt awards Skullduggery through `AwardResolved` win or lose, except a
+  `ReplacedShroud` takeover, which ran no contest.
 - **`MobIsSneaking(mob *mobs.Mob) bool`** (`sneak.go`) is the one derivation of
   a mob's sneaking state: `IsHidden()` (the Awareness-backed condition), or
   the `sneaking` misc-data flag set while not yet hidden (`Sneak` sets it
