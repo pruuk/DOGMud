@@ -1464,7 +1464,11 @@ sourced; a 9 a cancel just expired is not live, so a cancel is not undone.
 live 31 (expired, removed, purged, cancelled) is revealed with
 `awareness.TriggerShroudEnded`; and a Visible holder of a live 31 (a reload,
 whose Awareness machine is built fresh and Visible) re-enters the shroud hide
-through `hideForStealthRecord` at the record's score. Breaking: an observer
+through `hideForStealthRecord` at the record's score. `reconcileSneakHide()`
+runs right after it and does the same for a sneak hide (#451): a Visible
+holder of a live record 9 (a reload) re-enters the sneak hide through
+`hideForStealthRecord(9)`, so the `Validate(true)` rebuild keeps the 9, no end
+line is told, and the saved `sneaking` misc key matches. Breaking: an observer
 winning a roll, combat (31 carries `cancel-on-combat`), death and logout
 reveal it like a sneak hide, and the reveal cascade cancels 31, so a revealed
 hide is never re-entered.

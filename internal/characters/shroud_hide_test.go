@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // Empathic Shroud is a real hide (#444, owner 2026-10-09). The Awareness
@@ -276,4 +277,48 @@ func TestShroudOverSneak_ClearsTheSneakingFlag(t *testing.T) {
 	require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 200, "spell"))
 	require.True(t, c.HiddenByShroud())
 	require.Nil(t, c.GetMiscData(`sneaking`))
+}
+
+// #451: a player saved while hidden by a sneak (autosave, copyover, a
+// graceful shutdown) came back Visible, and the load's permanent rebuild
+// (Validate(true), users.loadUserFromPath) found no source for the saved
+// permanent record 9, so it expired and the prune pass told the room
+// "emerges from the shadows". A live 9 on a reloaded holder re-enters the
+// sneak hide the way a live 31 re-enters the shroud hide.
+func TestSneakHide_SurvivesReload(t *testing.T) {
+	seedStealthRecords(t)
+	c := newHider(50)
+	sneakHide(t, c)
+	c.SetMiscData(`sneaking`, true)
+
+	saved, err := yaml.Marshal(c)
+	require.NoError(t, err)
+	loaded := &Character{}
+	require.NoError(t, yaml.Unmarshal(saved, loaded))
+	require.Nil(t, loaded.Awareness, "fixture: Awareness is not saved")
+
+	require.NoError(t, loaded.Validate(true)) // what users.loadUserFromPath runs
+	require.True(t, loaded.IsHidden(), "the sneak hide must survive the reload")
+	require.False(t, loaded.HiddenByShroud(), "it comes back as a sneak")
+	require.True(t, loaded.holdsLiveStealthRecord(), "record 9 must stay live")
+	for _, rec := range loaded.Conditions.List {
+		if rec.ConditionId == conditionIdHidden {
+			require.False(t, rec.Expired(), "an expired 9 is pruned with its end line")
+		}
+	}
+	require.Equal(t, true, loaded.GetMiscData(`sneaking`), "the saved flag matches the hide")
+
+	require.NoError(t, loaded.Validate(true))
+	require.True(t, loaded.IsHidden(), "a second Validate changes nothing")
+}
+
+// The sibling: a 9 that a reveal already cancelled stays cancelled.
+func TestSneakHide_CancelledRecordStaysVisibleOnReload(t *testing.T) {
+	seedStealthRecords(t)
+	c := newHider(50)
+	sneakHide(t, c)
+	c.Conditions.RemoveCondition(conditionIdHidden) // what the reveal cascade's cancel leaves
+	c.Awareness = awareness.NewMachine()
+	require.NoError(t, c.Validate(true))
+	require.False(t, c.IsHidden())
 }

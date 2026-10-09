@@ -198,3 +198,25 @@ func (c *Character) reconcileShroudHide() {
 	}
 	_ = c.Awareness.TransitionToRevealing(state.TransitionReason{Trigger: awareness.TriggerShroudEnded})
 }
+
+// reconcileSneakHide is reconcileShroudHide's sibling for a sneak hide
+// (#451). Validate calls it after reconcileShroudHide.
+//
+// Reload: a loaded character gets a fresh, Visible Awareness machine while
+// its saved permanent record 9 comes back live, and the permanent rebuild
+// (Validate(true)) found no source for a 9 on a Visible holder, so it
+// expired and the prune pass told the room "emerges from the shadows". A
+// Visible holder of a live 9 re-enters the sneak hide through
+// hideForStealthRecord, the door record 9 lands through, so the rebuild
+// that follows keeps the 9 (reapplyPermanentConditions sources a live 9 on
+// a sneak-hidden holder) and the saved `sneaking` flag matches the hide.
+// Every exit from Hidden cancels 9 with the other hidden-flag records
+// (Awareness_Cascades.go), so a revealed hide does not come back here.
+func (c *Character) reconcileSneakHide() {
+	if c.Awareness == nil {
+		return
+	}
+	if c.Awareness.State() == awareness.Visible && c.holdsLiveStealthRecord() {
+		c.hideForStealthRecord(conditionIdHidden)
+	}
+}
