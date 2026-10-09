@@ -417,6 +417,17 @@ Functions:
   adjective span behind it (same pattern as `HideNames`), because
   `rooms.go` anonymizes BEFORE it hides names and the span would otherwise
   survive as "a figure (dead)".
+- `HideWeapons(text string, d SightDecision, keep []string) string`
+  (`hideweapons.go`, owner ruling R8, 2026-10-08): below `SightFull` every
+  `fg="item"` or `fg="itemname"` tag in a combat line becomes `WeaponWord`
+  ("weapon"), nested display-name tags included, with "an" before it turned
+  to "a". It keeps a natural weapon ("fists", any species' `UnarmedName`)
+  and any name in `keep` (a participant's own held gear). The pipeline runs
+  it at `SightShapes` for `isCombatNarration` categories only, so every
+  spectator combat line is covered and a non-combat item line is not;
+  `combat.hideIdentitiesInPersonalLines` runs it on the personal lines.
+  Untagged item names pass through, which is why the combat templates tag
+  every weapon token.
 - `WrapAnsi(text string, maxWidth int) string`
 - `Say(cat Category, text string) Line`
 - `SendTrio(t Trio, aud Audience)`: delivers one narrated event to
