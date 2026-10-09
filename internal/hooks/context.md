@@ -1047,7 +1047,7 @@ the opening strike, which reads `Aggro.Type` later in the round.
 
 Events and cascades (per state transition, not per round):
 - Awareness `Visible → Hidden`: apply condition #9 (not for a shroud hide) + room text "sneaks away"
-- Awareness `Hidden → Visible`: remove condition #9 + room text "emerges from hiding"
+- Awareness `Hidden → Visible`: remove condition #9 + room text "emerges from hiding"; clear the `sneaking` misc key (every exit from Hidden, #444), so `usercommands.Go` does not move a visible player as a sneaker
 - Combat Phase `Idle → Engaging`: trigger Awareness reveal cascade
 
 ### Awareness_LightChange.go

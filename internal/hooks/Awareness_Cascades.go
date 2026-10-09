@@ -69,6 +69,11 @@ func wireAwarenessFromCombatPhase(c *characters.Character) {
 				// before its Validate(true), so the record is not revived
 				// on the now visible mob (sight gates playtest fixes, F5).
 				c.CancelConditionsWithFlag(conditions.Hidden)
+				// The sneak is over however it ended (combat, a cancel, a
+				// spot, a shroud running out): usercommands.Go reads this
+				// flag and would otherwise move a visible player as a
+				// sneaker. Sneak sets it again on its next success (#444).
+				c.SetMiscData(`sneaking`, nil)
 			}
 		})
 }

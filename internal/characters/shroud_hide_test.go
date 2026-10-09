@@ -160,12 +160,120 @@ func TestSneakOverShroud_SwapsWithoutAReveal(t *testing.T) {
 	require.False(t, c.SneakOverShroud(), "nothing left to take over")
 }
 
-// A re-cast while shroud-hidden reads the new record's score.
-func TestShroudRecast_TakesTheNewScore(t *testing.T) {
+// A re-cast while shroud-hidden keeps the stronger of the two scores (owner,
+// 2026-10-09: one hide, the strongest), and the record carries it, so a
+// reload reads the same score.
+func TestShroudRecast_KeepsTheStrongerScore(t *testing.T) {
+	t.Run("weaker recast keeps the held score", func(t *testing.T) {
+		seedStealthRecords(t)
+		c := newHider(50)
+		require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 180, "spell"))
+		require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 120, "spell"))
+		require.True(t, c.HiddenByShroud())
+		require.Equal(t, 180.0, c.HideBaseScore())
+		require.Equal(t, 180.0, c.shroudRecordScore(), "the record keeps the stronger score too")
+	})
+	t.Run("stronger recast takes the new score", func(t *testing.T) {
+		seedStealthRecords(t)
+		c := newHider(50)
+		require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 120, "spell"))
+		require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 180, "spell"))
+		require.Equal(t, 180.0, c.HideBaseScore())
+	})
+}
+
+// A record 9 that wins a hide (or lands on a sneak hide) holds it as a
+// permanent record, the way the Hidden cascade adds it. The event path adds 9
+// with isPermanent false (an admin setcondition, a mob's add_condition 9),
+// and 9 has no triggercount, so as authored it would be pruned at once while
+// the holder stays Hidden: "emerges from the shadows" told of a holder who
+// never left them.
+func TestStealthRecord_WinningEventNineIsPermanent(t *testing.T) {
+	t.Run("over a weaker shroud", func(t *testing.T) {
+		seedStealthRecords(t)
+		c := newHider(300)
+		require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 100, "spell"))
+		require.NoError(t, c.AddCondition(9, false))
+		require.False(t, c.HiddenByShroud(), "fixture: the stronger sneak base took the hide")
+
+		pruned := c.Conditions.Prune()
+		require.NoError(t, c.Validate())
+		for _, p := range pruned {
+			require.NotEqual(t, 9, p.ConditionId, "the winning 9 must not be pruned")
+		}
+		require.True(t, c.IsHidden())
+		require.True(t, c.holdsLiveStealthRecord(), "a live record 9 carries the hide")
+	})
+	t.Run("on a sneak hide", func(t *testing.T) {
+		seedStealthRecords(t)
+		c := newHider(50)
+		sneakHide(t, c)
+		require.NoError(t, c.AddCondition(9, false))
+
+		pruned := c.Conditions.Prune()
+		require.NoError(t, c.Validate())
+		for _, p := range pruned {
+			require.NotEqual(t, 9, p.ConditionId, "a re-added 9 must not downgrade the held one")
+		}
+		require.True(t, c.IsHidden())
+		require.True(t, c.holdsLiveStealthRecord())
+	})
+	// The permanent rebuild (Validate(true): a CancelConditionsWithFlag of
+	// any held flag, a spawn) removes a permanent record nothing sources. A
+	// live 9 on a sneak-hidden holder is sourced by the hide itself.
+	t.Run("survives the permanent rebuild", func(t *testing.T) {
+		seedStealthRecords(t)
+		c := newHider(300)
+		require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 100, "spell"))
+		require.NoError(t, c.AddCondition(9, false))
+		require.NoError(t, c.Validate(true))
+		require.True(t, c.holdsLiveStealthRecord(), "the event 9 that won the hide")
+
+		sneaker := newHider(50)
+		sneakHide(t, sneaker)
+		require.NoError(t, sneaker.Validate(true))
+		require.True(t, sneaker.IsHidden())
+		require.True(t, sneaker.holdsLiveStealthRecord(), "the sneak's own 9")
+	})
+}
+
+// Reload: a saved character comes back with its records and a fresh, Visible
+// Awareness machine. A live 31 re-enters the shroud hide at the record's
+// score; a cancelled one does not.
+func TestShroudHide_SurvivesReload(t *testing.T) {
+	t.Run("live record rehides at its score", func(t *testing.T) {
+		seedStealthRecords(t)
+		c := newHider(50)
+		require.True(t, c.Conditions.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 180))
+		c.Awareness = awareness.NewMachine() // what a load builds
+		require.False(t, c.IsHidden(), "fixture: the fresh machine is Visible")
+
+		require.NoError(t, c.Validate())
+		require.True(t, c.IsHidden())
+		require.True(t, c.HiddenByShroud())
+		require.Equal(t, 180.0, c.HideBaseScore())
+		require.NoError(t, c.Validate())
+		require.True(t, c.HiddenByShroud(), "a second Validate changes nothing")
+	})
+	t.Run("cancelled record stays visible", func(t *testing.T) {
+		seedStealthRecords(t)
+		c := newHider(50)
+		require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 180, "spell"))
+		c.RevealForCombat()
+		require.False(t, c.IsHidden())
+		require.NoError(t, c.Validate())
+		require.False(t, c.IsHidden(), "a hide combat revealed stays revealed")
+	})
+}
+
+// A stronger shroud taking over a sneak hide clears the sneak's misc flag:
+// left set, it would move the holder as a sneaker after the shroud ends.
+func TestShroudOverSneak_ClearsTheSneakingFlag(t *testing.T) {
 	seedStealthRecords(t)
 	c := newHider(50)
-	require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 180, "spell"))
-	require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 120, "spell"))
+	sneakHide(t, c)
+	c.SetMiscData(`sneaking`, true)
+	require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 200, "spell"))
 	require.True(t, c.HiddenByShroud())
-	require.Equal(t, 120.0, c.HideBaseScore())
+	require.Nil(t, c.GetMiscData(`sneaking`))
 }

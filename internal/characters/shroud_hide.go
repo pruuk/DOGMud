@@ -115,16 +115,29 @@ func (c *Character) hideScoreOf(d awareness.HiddenData) float64 {
 }
 
 // settleHide resolves a stealth record landing on a character already
-// Hidden. The same kind keeps the hide (a re-cast shroud takes the new
-// record's score). A different kind: the stronger base score holds and the
+// Hidden. The same kind keeps the hide; a re-cast shroud keeps the stronger
+// of the held and incoming scores, and the record carries it so a reload
+// reads the same. A different kind: the stronger base score holds and the
 // incumbent wins a tie. The loser's record is discarded, not cancelled, so no
 // end line tells the room of a reveal that did not happen. refused reports
 // that the incoming record was the one dropped.
+//
+// A record 9 that holds the hide is made permanent, as the Hidden cascade
+// adds it (Awareness_Cascades.go): the event path adds 9 with isPermanent
+// false (an admin setcondition, a mob's add_condition 9), and 9 has no
+// triggercount, so it would otherwise be pruned next round, telling its end
+// line, while the holder stays Hidden.
 func (c *Character) settleHide(conditionId int, incoming awareness.HiddenData) (refused bool) {
 	held, _ := c.Awareness.HiddenData()
 	if held.Source == incoming.Source {
 		if incoming.Source == awareness.HideShroud {
+			if held.Score > incoming.Score {
+				incoming.Score = held.Score
+			}
+			c.stampShroudRecordScore(incoming.Score)
 			c.Awareness.SetHiddenData(incoming)
+		} else {
+			c.Conditions.AddCondition(conditionIdHidden, true)
 		}
 		return false
 	}
@@ -137,17 +150,49 @@ func (c *Character) settleHide(conditionId int, incoming awareness.HiddenData) (
 	} else {
 		c.Conditions.Discard(conditionIdHidden)
 		c.RemovePermanentCondition(conditionIdHidden)
+		// The sneak is over; a stale flag would move the holder as a
+		// sneaker once the shroud ends.
+		c.SetMiscData(`sneaking`, nil)
 	}
 	c.Awareness.SetHiddenData(incoming)
+	if incoming.Source == awareness.HideSneak {
+		c.Conditions.AddCondition(conditionIdHidden, true)
+	}
 	return false
 }
 
-// reconcileShroudHide ends a shroud hide once no live record 31 remains: it
-// ran out (the prune pass validates after pruning), was removed, purged or
-// cancelled. Validate calls it beside reconcilePerception. The reveal runs
-// the Awareness cascade, which cancels any other hidden-flag record; with no
-// record left that cascade's cancel is a no-op, so this cannot recurse.
+// stampShroudRecordScore writes score onto the held record 31 as its
+// magnitude, so the record and the hide agree.
+func (c *Character) stampShroudRecordScore(score float64) {
+	for _, rec := range c.Conditions.GetConditions(conditions.ConditionIdEmpathicShroud) {
+		rec.Magnitude = score
+	}
+}
+
+// reconcileShroudHide keeps the shroud hide and record 31 in step. Validate
+// calls it beside reconcilePerception.
+//
+// Ending: once no live record 31 remains (it ran out, the prune pass
+// validates after pruning; or was removed, purged or cancelled) the hide is
+// revealed. The reveal runs the Awareness cascade, which cancels any other
+// hidden-flag record; with no record left that cascade's cancel is a no-op,
+// so this cannot recurse.
+//
+// Reload: a loaded character gets a fresh, Visible Awareness machine while
+// its saved records come back live. A Visible holder of a live 31 re-enters
+// the shroud hide through hideForStealthRecord, the door record 31 lands
+// through, at the record's score. A landing never reaches this branch
+// Visible (the door hides first, or discards a refused 31), and every exit
+// from Hidden cancels 31 with the other hidden-flag records, so a revealed
+// hide does not come back here.
 func (c *Character) reconcileShroudHide() {
+	if c.Awareness == nil {
+		return
+	}
+	if c.Awareness.State() == awareness.Visible && c.holdsLiveShroudRecord() {
+		c.hideForStealthRecord(conditions.ConditionIdEmpathicShroud)
+		return
+	}
 	if !c.HiddenByShroud() || c.holdsLiveShroudRecord() {
 		return
 	}

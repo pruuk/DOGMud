@@ -348,6 +348,16 @@ func (c *Character) reapplyPermanentConditions() {
 		}
 	}
 
+	// A sneak hide sources its own record 9 (#444): the Hidden cascade and
+	// settleHide hold it as a permanent record, and removing it here would
+	// prune it, telling "emerges from the shadows", under a holder still
+	// Hidden. Only a LIVE 9 counts: a cancel that just expired it
+	// (CancelConditionsWithFlag) runs this rebuild while the machine is
+	// still Hidden, and must not revive it.
+	if c.IsHidden() && !c.HiddenByShroud() && c.holdsLiveStealthRecord() {
+		hasSource[conditionIdHidden] = true
+	}
+
 	// Permanent records with no source so far default to false, so they are
 	// removed unless a worn item below still grants them.
 	for _, b := range c.Conditions.List {

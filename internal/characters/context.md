@@ -1442,16 +1442,27 @@ starts from: the shroud's score while `HiddenByShroud()`, else
 
 One hide at a time, the stronger (owner, 2026-10-09). A 9 or a 31 landing on a
 holder already Hidden goes through `settleHide`: the same kind keeps the hide
-(a re-cast 31 takes its new score), a different kind keeps the higher base
-score, the incumbent winning a tie. The loser's record goes by
-`Conditions.Discard`, so no end line is told; a dropped incoming record makes
-its add door return an error so no start line is told either.
+(a re-cast 31 keeps the higher of the held and incoming scores, and
+`stampShroudRecordScore` writes it back onto the record), a different kind
+keeps the higher base score, the incumbent winning a tie. The loser's record
+goes by `Conditions.Discard`, so no end line is told; a dropped incoming
+record makes its add door return an error so no start line is told either.
+A shroud winning over a sneak also clears the `sneaking` misc key. A 9 that
+holds the hide (winning, or landing on a sneak hide) is made permanent, as
+the Hidden cascade adds it: the event path adds 9 non-permanent and 9 has no
+triggercount, so it would otherwise prune at once under a holder still
+Hidden. For the same reason `reapplyPermanentConditions` (the
+`Validate(true)` rebuild) counts a LIVE 9 on a sneak-hidden holder as
+sourced; a 9 a cancel just expired is not live, so a cancel is not undone.
 `SneakOverShroud()` is the sneak command's takeover. `Validate` calls
 `reconcileShroudHide()` beside `reconcilePerception()`: a shroud hide with no
 live 31 (expired, removed, purged, cancelled) is revealed with
-`awareness.TriggerShroudEnded`. Breaking: an observer winning a roll, combat
-(31 carries `cancel-on-combat`), death and logout reveal it like a sneak hide,
-and the reveal cascade cancels 31.
+`awareness.TriggerShroudEnded`; and a Visible holder of a live 31 (a reload,
+whose Awareness machine is built fresh and Visible) re-enters the shroud hide
+through `hideForStealthRecord` at the record's score. Breaking: an observer
+winning a roll, combat (31 carries `cancel-on-combat`), death and logout
+reveal it like a sneak hide, and the reveal cascade cancels 31, so a revealed
+hide is never re-entered.
 
 This maintains backward compatibility with systems that check for condition #9
 while keeping the Awareness machine as the canonical state source.
