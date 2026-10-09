@@ -100,7 +100,7 @@ func TestWaitRound_DarkRoomHidesAttackerName(t *testing.T) {
 
 	armWait(&mob.Character, 1)
 
-	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room, 1)
+	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
@@ -132,7 +132,7 @@ func TestWaitRound_LitRoomShowsAttackerName(t *testing.T) {
 
 	armWait(&mob.Character, 1)
 
-	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room, 1)
+	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
@@ -167,7 +167,7 @@ func TestWaitRound_DarkRoomHidesTargetNameFromAttacker(t *testing.T) {
 
 	armWaitOnMob(user1.Character, 100)
 
-	handled := handleCombatWaitRound(user1.Character, &mob.Character, combat.User, combat.Mob, user1, nil, room, room, 1)
+	handled := handleCombatWaitRound(user1.Character, &mob.Character, combat.User, combat.Mob, user1, nil, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
@@ -207,7 +207,7 @@ func TestWaitRound_DarkRoomInfraredDefenderStillGetsDarkLine(t *testing.T) {
 
 	armWait(&mob.Character, 1)
 
-	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room, 1)
+	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
@@ -246,7 +246,7 @@ func TestWaitRound_EmptyAuthoredListStaysSilentInTheDark(t *testing.T) {
 
 	armWait(&mob.Character, 1)
 
-	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room, 1)
+	handled := handleCombatWaitRound(&mob.Character, user1.Character, combat.Mob, combat.User, nil, user1, room, room)
 	require.True(t, handled, "attacker should still be in its wait round")
 
 	lines := drainPlain(1)
@@ -255,8 +255,7 @@ func TestWaitRound_EmptyAuthoredListStaysSilentInTheDark(t *testing.T) {
 
 // #216: in PvP a defender who sees nothing already reads the fixed dark line
 // for the wait round; the room's fight sound must not reach them as well.
-// The caller passes only one user id as viewerUserId, so the fallback has to
-// exclude both combatants itself.
+// The fallback has to exclude both combatants itself.
 func TestWaitRound_PvPBlindedDefenderHearsNoFightSound(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -284,7 +283,7 @@ func TestWaitRound_PvPBlindedDefenderHearsNoFightSound(t *testing.T) {
 	drainPlain(1)
 	drainPlain(2)
 
-	handled := handleCombatWaitRound(attacker.Character, defender.Character, combat.User, combat.User, attacker, defender, room, room, attacker.UserId)
+	handled := handleCombatWaitRound(attacker.Character, defender.Character, combat.User, combat.User, attacker, defender, room, room)
 	require.True(t, handled)
 
 	lines := drainPlain(1)

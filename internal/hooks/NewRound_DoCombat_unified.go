@@ -274,20 +274,11 @@ func phase1WaitRound(atk, def actions.Actor) bool {
 	atkRoom := atk.GetRoom()
 	defRoom := def.GetRoom()
 
-	// viewerUserId is the user-side participant (0 if neither is a user).
-	viewerUserId := 0
-	if atk.IsPlayer() {
-		viewerUserId = atk.GetUserId()
-	} else if def.IsPlayer() {
-		viewerUserId = def.GetUserId()
-	}
-
 	return handleCombatWaitRound(
 		atkChar, defChar,
 		actorSourceTarget(atk), actorSourceTarget(def),
 		userRecordOrNil(atk), userRecordOrNil(def),
 		atkRoom, defRoom,
-		viewerUserId,
 	)
 }
 
