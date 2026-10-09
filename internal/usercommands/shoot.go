@@ -711,9 +711,10 @@ func resolveShootTarget(room *rooms.Room, rest string, viewer *characters.Charac
 		}
 	}
 	userId, mobInstanceId = targetRoom.FindByNameSeenBy(viewer, strings.Join(targetWords, " "))
-	if userId == 0 && mobInstanceId == 0 && crossRoom {
+	if userId == 0 && mobInstanceId == 0 && crossRoom && actions.ShotFallsBackHome(viewer, room) {
 		// The trailing word may have been part of the target name after all;
-		// retry as a same-room shot using the full argument string.
+		// retry as a same-room shot using the full argument string, only at
+		// full sight of the shooter's own room (#454).
 		crossRoom = false
 		targetRoom = room
 		userId, mobInstanceId = room.FindByNameSeenBy(viewer, strings.Join(args, " "))

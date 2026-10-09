@@ -112,6 +112,17 @@ func ShotSight(viewer *characters.Character, room *rooms.Room, rest string) mess
 	return messaging.ParticipantSight(viewer, room)
 }
 
+// ShotFallsBackHome reports whether a shot through an exit that found no one
+// in the room beyond may retry its whole phrase ("guard north") in the
+// shooter's own room. A mob shooter (nil viewer) always may. A player may only
+// at full sight of their own room, the sight an aimed shot needs (#454):
+// ShotSight judged the room beyond, and resolving the phrase at home unseen
+// would answer differently for a creature that is there. Both ExecuteFire and
+// the fire command's pre-fire guards ask it.
+func ShotFallsBackHome(viewer *characters.Character, room *rooms.Room) bool {
+	return viewer == nil || messaging.ParticipantSight(viewer, room) == messaging.SightFull
+}
+
 // ExecuteFire resolves a ranged shot immediately. rest is either "<target>"
 // (same room) or "<target words...> <direction>" (adjacent room). The weapon
 // must be loaded; firing unloads it (even on a miss). An ORDINARY shot does not
@@ -212,7 +223,7 @@ func ExecuteFire(actor Actor, rest string) FireResult {
 		viewer = actor.GetCharacter()
 	}
 	targetUserId, targetMobInstanceId := targetRoom.FindByNameSeenBy(viewer, strings.Join(targetWords, " "))
-	if targetUserId == 0 && targetMobInstanceId == 0 && crossRoom {
+	if targetUserId == 0 && targetMobInstanceId == 0 && crossRoom && ShotFallsBackHome(viewer, room) {
 		// The trailing word may have been part of the target name after all;
 		// retry as a same-room shot using the full argument string.
 		crossRoom, exitName, targetRoom = false, "", room

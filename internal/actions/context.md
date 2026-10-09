@@ -680,7 +680,13 @@ word on its own line (#430).
   (`combat_fire.go`): what a shooter makes out of the room a shot is aimed
   into, parsing `rest` as `ExecuteFire` does: their own room, or `scanReach`
   through an exit. `usercommands.Fire` refuses below full sight before any
-  name resolves.
+  name resolves. **`ShotFallsBackHome(viewer, room) bool`**: a shot through an
+  exit that finds no one beyond retries the whole phrase in the shooter's own
+  room only for a mob shooter or a player at full sight of that room;
+  `ExecuteFire` and the command's pre-fire `resolveShootTarget` both ask it.
+  (With the shipped `LightExitsAbove` 55 over `LightDimBelow` 50 a shooter
+  who sees through an exit always sees home fully; a config with the exit
+  threshold below the dim one would otherwise leak.)
 - **`InitiateCast`** runs `admitCastAim` (`cast_admission.go`) for a player's
   single-target casts of either kind and harmful multi casts. The sight rule
   is `AimBySight`'s (verb `cast <spell>`); the cast adds the self-cast

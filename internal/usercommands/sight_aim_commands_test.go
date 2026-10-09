@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -266,6 +267,56 @@ func TestFireSight_NoSightRefusesBeforeANameResolves(t *testing.T) {
 		assert.Contains(t, told, "It is too dark to aim.", "%q", rest)
 		assert.NotContains(t, told, "Bobrick", "%q", rest)
 	}
+}
+
+// #454 review F7: a shot through an exit that finds no one beyond retries the
+// whole phrase in the shooter's own room. ShotSight judged only the room
+// beyond, so a shooter who made out only shapes at home had a party member
+// whose name the phrase began read "is in your party!" where an absent one
+// read the next refusal. Reachable when LightExitsAbove sits below
+// LightDimBelow, which the config allows (it is checked against
+// LightBlindBelow only); the shipped 55 over 50 hides it.
+func TestFireSight_OwnRoomFallbackNeedsSightOfTheOwnRoom(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Balance.LightBlindBelow = 25
+	cfg.Balance.LightDimBelow = 50
+	cfg.Balance.LightExitsAbove = 30
+	configs.SetConfigForTest(t, cfg)
+	told := map[bool]string{}
+	for _, present := range []bool{true, false} {
+		user, room := aimScene(t, aimFull)
+		room.Biome, room.Lamp = "cave", rooms.LampPtr(40)
+		require.Equal(t, messaging.SightShapes, messaging.ParticipantSight(user.Character, room), "the shooter's own room must be at shapes")
+		rooms.LoadRoom(2).Biome, rooms.LoadRoom(2).Lamp = "cave", rooms.LampPtr(60)
+		require.Equal(t, messaging.SightFull, actions.ShotSight(user.Character, room, "bob north"), "the room beyond must be in full sight")
+		users.GetByUserId(2).Character.Name = "Bob Northgate"
+		p := parties.New(1)
+		p.InvitePlayer(2)
+		p.AcceptInvite(2)
+		if !present {
+			room.RemovePlayer(2)
+		}
+		_, _ = Fire("bob north", user, room, events.EventFlag(0))
+		p.Disband()
+		told[present] = aimTold(1)
+		assert.NotContains(t, told[present], "Northgate", "present=%v", present)
+	}
+	assert.Equal(t, told[true], told[false], "the shot told a present party member from an absent one")
+}
+
+// The lit control: in a lit own room the full phrase finds the member.
+func TestFireSight_LitOwnRoomFallbackFindsTheName(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	room.Lamp = rooms.LampPtr(90)
+	rooms.LoadRoom(2).Lamp = rooms.LampPtr(90)
+	require.Equal(t, messaging.SightFull, actions.ShotSight(user.Character, room, "bob north"), "the room beyond must be in full sight")
+	users.GetByUserId(2).Character.Name = "Bob Northgate"
+	p := parties.New(1)
+	t.Cleanup(p.Disband)
+	p.InvitePlayer(2)
+	p.AcceptInvite(2)
+	_, _ = Fire("bob north", user, room, events.EventFlag(0))
+	assert.Contains(t, aimTold(1), "Bob Northgate is in your party!")
 }
 
 // A shot through an exit is judged by what the shooter makes out of the room
