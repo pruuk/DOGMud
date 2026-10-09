@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +45,39 @@ func TestFlee_CastingPlayerBreakIsHeardByTheBlind(t *testing.T) {
 
 	// Exactly the sound line: no visual line, and no name.
 	require.Equal(t, []string{messaging.SoundChantBreaksOff}, speechWrapperHeard(2))
+}
+
+// A player hidden in a fight and then casting is reached only through an
+// admin's setcondition 9 (hideForStealthRecord has no combat check), since
+// engaging reveals and sneak refuses in combat. The break line then reads
+// "Something", as the mob flee line and the hooks player lines do.
+func TestFlee_HiddenCastingPlayerBreakDoesNotNameThem(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	alice, _, _ := speechWrapperScene(t)
+
+	alice.Character.SetAggro(0, 100, characters.DefaultAttack)
+	reason := state.TransitionReason{Trigger: "flee_concentration_sight_test"}
+	require.NoError(t, alice.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+	alice.Character.Awareness.ResolveConcealment(true, reason)
+	require.True(t, alice.Character.IsHidden())
+	defer alice.Character.Awareness.ForceVisible(reason)
+	events.DrainQueuedMessagesForTest(2)
+
+	alice.Character.Activity = activity.NewMachine()
+	require.NoError(t, alice.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "sparks", ConvictionSpent: 3, FoldsNeeded: 4},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin},
+	))
+	handled, err := TryCommand("flee", "", alice.UserId, events.CmdSkipScripts)
+	require.True(t, handled)
+	require.NoError(t, err)
+
+	got := speechWrapperHeard(2)
+	require.Contains(t, got, "Something's concentration breaks.")
+	for _, line := range got {
+		require.NotContains(t, line, "Aliceia", "the hidden caster is not named: %v", got)
+	}
 }
 
 func TestFlee_CastingPlayerBreakNamesTheCasterAtClearSight(t *testing.T) {

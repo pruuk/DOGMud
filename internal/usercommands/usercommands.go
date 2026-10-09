@@ -414,9 +414,14 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 				`<ansi fg="cyan">You lose your concentration as you flee!</ansi>`)
 			// Seen by sight, heard by a reader who sees nothing, in the
 			// shared spell-disruption wording (#242, owner ruling R4).
-			room.SendTextVisualWithAudio(messaging.CategorySpellDisruption, fmt.Sprintf(
-				`<ansi fg="username">%s</ansi>'s concentration breaks.`,
-				user.Character.Name), messaging.SoundChantBreaksOff, user.UserId)
+			// A hidden caster (an admin's setcondition 9 mid-fight) reads
+			// "Something", as the mob flee line and the hooks lines do.
+			subject := `<ansi fg="username">` + user.Character.Name + `</ansi>`
+			if user.Character.IsHidden() {
+				subject = messaging.HideNames(subject, []string{user.Character.Name}, messaging.SightNone)
+			}
+			room.SendTextVisualWithAudio(messaging.CategorySpellDisruption,
+				subject+"'s concentration breaks.", messaging.SoundChantBreaksOff, user.UserId)
 			// Fall through — let the flee command execute normally
 		} else if cmd != `cancel` && cmd != `flee` {
 			if cmdInfo, hasCmdInfo := userCommands[cmd]; !hasCmdInfo || !cmdInfo.AllowedWhenDowned {

@@ -536,8 +536,20 @@ func sendMobWeaving(mob *mobs.Mob, room *rooms.Room) {
 // named the caster to everyone (#242).
 func sendPlayerConcentrationBroke(caster *users.UserRecord, room *rooms.Room) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-		`<ansi fg="username">%s</ansi>'s concentration breaks.`, caster.Character.Name),
+		`%s's concentration breaks.`, playerSubjectName(caster)),
 		messaging.SoundChantBreaksOff, caster.UserId)
+}
+
+// playerSubjectName is a player caster's name at the start of a room-wide
+// disruption line, the player twin of mobSubjectName. A hidden caster (one
+// who sneaked, then cast: the Activity veto only stops a caster from
+// starting to sneak) is unseen by every reader and reads "Something".
+func playerSubjectName(caster *users.UserRecord) string {
+	name := `<ansi fg="username">` + caster.Character.Name + `</ansi>`
+	if caster.Character.IsHidden() {
+		return messaging.HideNames(name, []string{caster.Character.Name}, messaging.SightNone)
+	}
+	return name
 }
 
 // sendPlayerSpellFailed narrates a player's spell that fizzles (target gone)
@@ -547,7 +559,7 @@ func sendPlayerConcentrationBroke(caster *users.UserRecord, room *rooms.Room) {
 // versions told the room nothing.
 func sendPlayerSpellFailed(caster *users.UserRecord, room *rooms.Room, verb string) {
 	sendVisualElseAudible(room, messaging.CategorySpellDisruption, fmt.Sprintf(
-		`<ansi fg="username">%s</ansi>'s spell %s.`, caster.Character.Name, verb),
+		`%s's spell %s.`, playerSubjectName(caster), verb),
 		messaging.SoundSpellSputtersOut, caster.UserId)
 }
 

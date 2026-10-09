@@ -50,29 +50,36 @@ func TestRenderGround_WrapsToTheLineWidth(t *testing.T) {
 }
 
 // Every ground send goes through RenderGround, so no caller can print the
-// list unwrapped again.
+// list unwrapped again. It walks internal/ and modules/, and matches the
+// template name in double quotes or backticks.
 func TestOnTheGroundTemplateRenderedOnlyByRenderGround(t *testing.T) {
 	_, here, _, ok := runtime.Caller(0)
 	require.True(t, ok)
 	internalDir := filepath.Join(filepath.Dir(here), "..")
-	scanned := 0
-	err := filepath.WalkDir(internalDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+	modulesDir := filepath.Join(internalDir, "..", "modules")
+	for _, dir := range []string{internalDir, modulesDir} {
+		scanned := 0
+		err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+				return nil
+			}
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			scanned++
+			src := string(data)
+			names := strings.Contains(src, `"descriptions/ontheground"`) ||
+				strings.Contains(src, "`descriptions/ontheground`")
+			if names && filepath.Base(path) != "roster.go" {
+				t.Errorf("%s renders descriptions/ontheground directly; use actions.RenderGround", path)
+			}
 			return nil
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		scanned++
-		if strings.Contains(string(data), `"descriptions/ontheground"`) && filepath.Base(path) != "roster.go" {
-			t.Errorf("%s renders descriptions/ontheground directly; use actions.RenderGround", path)
-		}
-		return nil
-	})
-	require.NoError(t, err)
-	require.NotZero(t, scanned)
+		})
+		require.NoError(t, err)
+		require.NotZero(t, scanned, "the walk of %s found no Go files, so it proves nothing", dir)
+	}
 }
