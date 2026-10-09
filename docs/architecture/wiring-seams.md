@@ -32,7 +32,7 @@ import that would otherwise cycle.
 | `rooms` | `SetBTreeStateEvictor` | `behaviortree.EvictRoomBTreeState` | `rooms → behaviortree` |
 | `behaviortree` | `SetCompanionSweep` | `hooks.CompanionSweepCallback` | `behaviortree → hooks` |
 | `characters` | `SetUserUntargetableCheck` | closure over `users` | `characters → users` |
-| `users` | `SetCanSeeInRoomCheck` | closure over `characters`/`rooms` | `users → rooms` |
+| `users` | `SetPromptSightCheck` | closure over `characters`/`rooms` | `users → rooms` |
 | `goals` | `SetWeightsLookup` | closure over `mobs`/`behaviortree` | `goals → behaviortree` |
 | `goals` | `SetArchetypeDefaultsLookup` | closure over `mobs` | `goals → behaviortree` |
 | `goals` | `SetPlanStateClear` | `planners.ClearPlanState` | `goals → planners` |

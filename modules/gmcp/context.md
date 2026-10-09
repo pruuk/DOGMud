@@ -345,15 +345,15 @@ per mob:
 | JSON key | Go field | What it carries |
 |---|---|---|
 | `id` | `Id` | `mob.ShorthandId()` |
-| `name` | `Name` | the mob's name, or `an unseen foe` (see below) |
+| `name` | `Name` | the mob's name, or `a figure` / `something` (see below) |
 | `hp` | `Hp` | current HP, or `0` when unseen |
 | `hp_max` | `MaxHp` | max HP, or `0` when unseen |
 | `engaged` | `Engaged` | true for the viewer's current combat target |
 
 **Owner ruling 4 (2026-09-20): this payload rides the same sight gate as
 the fight prompt's `{target}` token** —
-`messaging.CanSeeClearly(user.Character, roomInfo)`, the same predicate
-`userrecord.prompt.go`'s `canSeeTargetForPrompt` reads. Before this ruling,
+`messaging.ReaderSight(user.Character, roomInfo)`, the same decision
+`userrecord.prompt.go`'s `promptTargetSight` reads. Before this ruling,
 GMCP undid the whole darkness effort: room text read "Something slashes
 you!" while a modern client's enemy panel showed the mob by exact name with
 a live HP bar. `canSee` is computed ONCE per call (it depends only on the
@@ -363,7 +363,8 @@ When `canSee` is false, the ROW STAYS (a scripted client still needs to
 know the fight is ongoing) but identity and current numbers are stripped,
 matching what the prompt withholds:
 
-- `Name` becomes the literal `an unseen foe`.
+- `Name` becomes `messaging.UnseenNoun(sight)`: `a figure` at shapes,
+  `something` with no sight, the words the combat lines use (#455).
 - `Hp` and `MaxHp` are both set to **`0`**, not omitted.
 
 **Zeroed, not omitted, is deliberate.** `TestCharVitals_ZeroPoolsAreSentAsZero`

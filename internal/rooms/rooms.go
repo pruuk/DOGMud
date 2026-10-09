@@ -436,13 +436,7 @@ func (r *Room) SendTextVisualToSnapshot(snap VisualSnapshot, cat messaging.Categ
 // visualDecision is the sight decision a visual line is judged at for c under
 // lighting: faces, shapes or nothing.
 func visualDecision(c *characters.Character, lighting messaging.RoomVisibility) messaging.SightDecision {
-	switch {
-	case messaging.CanSeeClearly(c, lighting):
-		return messaging.SightFull
-	case messaging.CanSeeShapes(c, lighting):
-		return messaging.SightShapes
-	}
-	return messaging.SightNone
+	return messaging.ReaderSight(c, lighting)
 }
 
 // deliverVisual is the one per-recipient body of the visual senders: hide

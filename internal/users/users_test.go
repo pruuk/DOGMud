@@ -1572,7 +1572,7 @@ func TestRemoveUserAndDisconnect_NotFound(t *testing.T) {
 // gating in NewRound_DoCombat.
 func TestPromptTargetVisibilityGating(t *testing.T) {
 	// Restore the global check after the test so we don't leak state.
-	defer SetCanSeeInRoomCheck(nil)
+	defer SetPromptSightCheck(nil)
 
 	u := &UserRecord{
 		UserId: 7001,
@@ -1584,34 +1584,42 @@ func TestPromptTargetVisibilityGating(t *testing.T) {
 	// U12c-2: the combat target lives on the machine, so the fixture commits
 	// through the seam rather than assigning the field.
 	u.Character.SetAggro(0, 999999, characters.DefaultAttack)
+	at := func(d messaging.SightDecision) func(*characters.Character) messaging.SightDecision {
+		return func(*characters.Character) messaging.SightDecision { return d }
+	}
 
-	// Blind / dark room: the {target} token must NOT expose any name and
-	// must render the neutral placeholder instead.
-	SetCanSeeInRoomCheck(func(c *characters.Character) bool { return false })
-	blindOut := u.ProcessPromptString(`{target}`)
-	if !strings.Contains(blindOut, "an unseen foe") {
-		t.Errorf("blind prompt should render the unseen-foe placeholder, got %q", blindOut)
+	// #455: the {target} token names an unseen foe as the combat lines do,
+	// "a figure" at shapes and "something" with no sight, never a name.
+	SetPromptSightCheck(at(messaging.SightNone))
+	if out := u.ProcessPromptString(`{target}`); !strings.Contains(out, ">something<") {
+		t.Errorf("a prompt that sees nothing should read %q, got %q", "something", out)
+	}
+	SetPromptSightCheck(at(messaging.SightShapes))
+	if out := u.ProcessPromptString(`{target}`); !strings.Contains(out, ">a figure<") {
+		t.Errorf("a shapes prompt should read %q, got %q", "a figure", out)
 	}
 
 	// Sighted: with no such mob instance registered, the lookup yields
-	// nothing — but crucially the placeholder must NOT be used (the
-	// sighted branch was taken). This proves the gate flips on visibility.
-	SetCanSeeInRoomCheck(func(c *characters.Character) bool { return true })
+	// nothing, but crucially no placeholder is used (the sighted branch was
+	// taken). This proves the gate flips on visibility.
+	SetPromptSightCheck(at(messaging.SightFull))
 	seeOut := u.ProcessPromptString(`{target}`)
-	if strings.Contains(seeOut, "an unseen foe") {
-		t.Errorf("sighted prompt must not use the unseen-foe placeholder, got %q", seeOut)
+	if strings.Contains(seeOut, "something") || strings.Contains(seeOut, "a figure") {
+		t.Errorf("sighted prompt must not use the unseen placeholder, got %q", seeOut)
 	}
 
-	// targethealth / targetpos must be suppressed entirely when blind.
-	SetCanSeeInRoomCheck(func(c *characters.Character) bool { return false })
-	if out := u.ProcessPromptString(`{targethealth}{targetpos}`); out != "" {
-		t.Errorf("blind prompt should suppress targethealth/targetpos, got %q", out)
+	// targethealth / targetpos must be suppressed entirely below full sight.
+	for _, d := range []messaging.SightDecision{messaging.SightShapes, messaging.SightNone} {
+		SetPromptSightCheck(at(d))
+		if out := u.ProcessPromptString(`{targethealth}{targetpos}`); out != "" {
+			t.Errorf("sight %v prompt should suppress targethealth/targetpos, got %q", d, out)
+		}
 	}
 
-	// Default (no check registered) defaults to "can see".
-	SetCanSeeInRoomCheck(nil)
-	if !u.canSeeTargetForPrompt() {
-		t.Error("canSeeTargetForPrompt should default to true when no check is registered")
+	// Default (no check registered) defaults to full sight.
+	SetPromptSightCheck(nil)
+	if got := u.promptTargetSight(); got != messaging.SightFull {
+		t.Errorf("promptTargetSight should default to SightFull when no check is registered, got %v", got)
 	}
 }
 
