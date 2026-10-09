@@ -312,6 +312,65 @@ func TestSneakHide_SurvivesReload(t *testing.T) {
 	require.True(t, loaded.IsHidden(), "a second Validate changes nothing")
 }
 
+// #451 review G4: logout forces a hidden player visible, which cancels 9 or
+// 31 to an expired record that is saved before any prune. On the next login
+// the first prune told the room "emerges from the shadows" (or the shroud's
+// end line) of a player who had just arrived. A save boundary drops an ended
+// stealth record silently; a live one is kept for the reload rehide.
+func TestEndedStealthRecord_IsDroppedAtTheSaveBoundary(t *testing.T) {
+	for _, id := range []int{conditionIdHidden, conditions.ConditionIdEmpathicShroud} {
+		seedStealthRecords(t)
+		c := newHider(50)
+		if id == conditionIdHidden {
+			sneakHide(t, c)
+		} else {
+			require.NoError(t, c.AddConditionMagnitude(id, 0, 180, "spell"))
+		}
+		// What the logout reveal leaves: the record expired, the holder Visible.
+		c.Conditions.RemoveCondition(id)
+		c.RemovePermanentCondition(conditionIdHidden)
+		c.Awareness = awareness.NewMachine()
+
+		saved, err := yaml.Marshal(c)
+		require.NoError(t, err)
+		loaded := &Character{}
+		require.NoError(t, yaml.Unmarshal(saved, loaded))
+
+		loaded.DiscardEndedStealthRecords()
+		require.NoError(t, loaded.Validate(true))
+		for _, p := range loaded.Conditions.Prune() {
+			require.NotEqual(t, id, p.ConditionId, "record %d's end line was told on login", id)
+		}
+		require.False(t, loaded.IsHidden(), "record %d", id)
+	}
+}
+
+// A live record survives the save boundary, so the reload rehide (#451, #444)
+// still finds it.
+func TestLiveStealthRecord_SurvivesTheSaveBoundary(t *testing.T) {
+	seedStealthRecords(t)
+	c := newHider(50)
+	sneakHide(t, c)
+	c.DiscardEndedStealthRecords()
+	require.True(t, c.holdsLiveStealthRecord())
+}
+
+// The control: an ordinary reveal in play keeps its end line. Validate must
+// not drop the expired record; only the save boundary does.
+func TestEndedStealthRecord_InPlayStillTellsItsEndLine(t *testing.T) {
+	seedStealthRecords(t)
+	c := newHider(50)
+	sneakHide(t, c)
+	c.RevealForCombat()
+	require.False(t, c.IsHidden())
+	require.NoError(t, c.Validate(true))
+	told := false
+	for _, p := range c.Conditions.Prune() {
+		told = told || p.ConditionId == conditionIdHidden
+	}
+	require.True(t, told, "an in-play reveal must still prune record 9 with its end line")
+}
+
 // The sibling: a 9 that a reveal already cancelled stays cancelled.
 func TestSneakHide_CancelledRecordStaysVisibleOnReload(t *testing.T) {
 	seedStealthRecords(t)

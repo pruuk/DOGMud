@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 )
 
 // A save that is valid YAML but has one bad field must NOT be silently
@@ -34,6 +36,32 @@ func TestLoadUserDoesNotOverwriteCorruptSave(t *testing.T) {
 	}
 	if !strings.Contains(string(after), "training: notanumber") {
 		t.Error("the offending field was rewritten — the original must be preserved for diagnosis")
+	}
+}
+
+// #451 review G4: logout forces a hidden player visible, which leaves record 9
+// (or 31) expired in the save. Loading must drop it silently, or the first
+// prune after login tells the room "emerges from the shadows".
+func TestLoadUserDropsAnEndedStealthRecord(t *testing.T) {
+	dir := withUserDataDir(t)
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		9: {ConditionId: 9, Name: "Hidden", Flags: []conditions.Flag{conditions.Hidden, conditions.CancelIfCombat}},
+	}))
+	path := filepath.Join(dir, "users", "7.yaml")
+	// An expired record saves with no triggersleft (TriggersLeftExpired, 0).
+	save := "userid: 7\nusername: quitter\ncharacter:\n  name: Quitter\n  conditions:\n    list:\n      - conditionid: 9\n"
+	if err := os.WriteFile(path, []byte(save), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	u, err := loadUserFromPath(path, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, rec := range u.Character.Conditions.List {
+		if rec.ConditionId == 9 {
+			t.Fatalf("an ended record 9 survived the load: %+v", rec)
+		}
 	}
 }
 

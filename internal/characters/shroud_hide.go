@@ -199,6 +199,31 @@ func (c *Character) reconcileShroudHide() {
 	_ = c.Awareness.TransitionToRevealing(state.TransitionReason{Trigger: awareness.TriggerShroudEnded})
 }
 
+// DiscardEndedStealthRecords drops an ended (expired, not yet pruned) record
+// 9 or 31 without its end line, and keeps a live one. It is for a SAVE
+// BOUNDARY only: users.loadUserFromPath calls it before the load's
+// Validate(true) (#451 review). Logout forces a hidden player visible, which
+// cancels the record to expired, and the save happens before any prune, so
+// the first prune after the next login told the room "emerges from the
+// shadows" of a player who had just arrived. An expired record on a loaded
+// character always ended before the save; its moment has passed.
+//
+// Never call it from Validate or the reconcile functions: an ordinary reveal
+// in play leaves the same expired record, and the prune of it is what tells
+// the room the hider emerged.
+func (c *Character) DiscardEndedStealthRecords() {
+	// A freshly loaded record list has no lookups yet, and Discard reads them.
+	c.Conditions.Validate(true)
+	for _, id := range []int{conditionIdHidden, conditions.ConditionIdEmpathicShroud} {
+		for _, rec := range c.Conditions.List {
+			if rec.ConditionId == id && rec.Expired() {
+				c.Conditions.Discard(id)
+				break
+			}
+		}
+	}
+}
+
 // reconcileSneakHide is reconcileShroudHide's sibling for a sneak hide
 // (#451). Validate calls it after reconcileShroudHide.
 //

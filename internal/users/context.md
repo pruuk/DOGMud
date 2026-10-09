@@ -806,7 +806,7 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 
 | File | Purpose |
 |------|---------|
-| `users.go` | Registry, connect/disconnect, lookup, save file read/write (`LoadUser`, `loadUserFromPath`, `SaveUser`, `SaveAllUsers`) |
+| `users.go` | Registry, connect/disconnect, lookup, save file read/write (`LoadUser`, `loadUserFromPath`, `SaveUser`, `SaveAllUsers`). A validating load runs `Character.DiscardEndedStealthRecords()` before `Validate(true)`, so a stealth record the logout reveal expired is not told as "emerges from the shadows" after login (#451) |
 | `userrecord.go` | The `UserRecord` type |
 | `userrecord.prompt.go` | Prompt rendering and tokens |
 | `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`), its legacy `Items`-to-`Slots` shape migration, and the U10d ranged-weapon rescale over banked items |

@@ -1473,6 +1473,15 @@ winning a roll, combat (31 carries `cancel-on-combat`), death and logout
 reveal it like a sneak hide, and the reveal cascade cancels 31, so a revealed
 hide is never re-entered.
 
+`DiscardEndedStealthRecords()` drops an expired, unpruned 9 or 31 without its
+end line and keeps a live one. It is called at the save boundary only,
+`users.loadUserFromPath` before the load's `Validate(true)`: logout forces a
+hidden player visible and the save happens before any prune, so the first
+prune after login told the room "emerges from the shadows". It must never run
+from `Validate` or the reconcile functions, because an ordinary reveal in play
+leaves the same expired record and its prune is the end line the room is
+owed.
+
 This maintains backward compatibility with systems that check for condition #9
 while keeping the Awareness machine as the canonical state source.
 
