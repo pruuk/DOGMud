@@ -90,8 +90,8 @@ reference — a new fight targeting N Meiroks starts near the matching row.
 | Target | Encounter | `statpool` | Nodrop mitigation (phys/mag/conv) | Mechanic |
 |--------|-----------|-----------|-----------------------------------|----------|
 | **1 Meirok** | #20 Pass-Apex (9541) | **1100** | hide 40230: **62/52/52** | none (pure stat/gear) |
-| **2 Meirok** | #21 Sentinel (9552) | **2000** (calibrated at 2400) | carapace 40231: **65/52/48** + warding-core 40232: **10/45/45** | 1 light hook — "Rouse the Wards" (summon 2 adds at 50% HP) |
-| **3 Meirok** | #22 Core Guardian (9562) | **2800** authored (calibrated at 5000); inside the instance the pool is **7 × gold paid** (room 6395's spawn multiplier), so 2800 is a 400g run | Hull Plating 40225: **55/45/–** + Core Matrix 40226 | full apparatus (drain / telegraphed discharge / interrupt / 3 adds) |
+| **2 Meirok** | #21 Sentinel (9552) | **2000** (calibrated at 2400) | carapace 40231: **65/52/48** + warding-core 40232: **10/45/45** | 1 light hook: "Rouse the Wards" (summon 2 adds at 50% HP) |
+| **3 Meirok** | #22 Core Guardian (9562) | **2800** authored (calibrated at 5000); inside the instance the pool is **7 × gold paid** (room 6395's spawn multiplier), so 2800 is a 400g run | Hull Plating 40225: **55/45/none** + Core Matrix 40226 | full apparatus (drain / telegraphed discharge / interrupt / 3 adds) |
 
 The calibrated pools above were restatted onto the instance gold curve on
 2026-08-14 (`2d2350db4`): the Sentinel 2400 to 2000 and the Core Guardian
