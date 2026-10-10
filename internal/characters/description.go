@@ -166,6 +166,12 @@ func (c *Character) GetAdjectives() []string {
 	if c.HasConditionFlag(conditions.Poison) {
 		retAdjectives = append(retAdjectives, `poisoned`)
 	}
+
+	// A bleed shows as a poison does (#249): Blood Boil's Boiling Blood and
+	// a combat bleed both carry the flag.
+	if c.HasConditionFlag(conditions.Bleeding) {
+		retAdjectives = append(retAdjectives, `bleeding`)
+	}
 	// End dynamic adjectives
 
 	retAdjectives = append(retAdjectives, c.Adjectives...)

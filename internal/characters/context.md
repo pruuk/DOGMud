@@ -842,7 +842,7 @@ why the clearing lives here and not in each command (docs/baubles).
   (#453). Every production caller feeds a narrated line, where "(hidden)" or
   "(☀️Lit)" is a state tag, not prose. `GetPlayerName` and `GetMobName` keep
   every decoration for `look` and the rosters.
-- **Adjectives system**: Visual indicators for character states (sleeping, charmed, poisoned, prone, etc.)
+- **Adjectives system**: Visual indicators for character states (sleeping, charmed, poisoned, bleeding, prone, etc.)
 - **Quest indicators**: Visual markers for quest-relevant NPCs
 
 ### Pool Reservation and the Ceiling (U7b, `reservation.go`)

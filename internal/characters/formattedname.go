@@ -30,6 +30,7 @@ var (
 		`sleeping`: {`asleep`, `zZz`, `gray`},    // Are they hiding?
 		`zombie`:   {`zOmBie`, `z`, `zombie`},    // Have they disconnected and are zombie status?
 		`poisoned`: {`☠poisoned`, `☠`, `purple`}, // Is poison at work in them?
+		`bleeding`: {`bleeding`, `bleed`, `red`}, // Is a wound or Blood Boil bleeding them (#249)?
 		`shop`:     {`shop`, `$`, `gold`},        // Do they sell stuff?
 	}
 

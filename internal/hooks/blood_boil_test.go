@@ -137,3 +137,15 @@ func TestBloodBoil_ALethalTickCreditsTheCaster(t *testing.T) {
 	assert.Equal(t, 1, died[0].KillerUserId, "the caster is the killer")
 	assert.Positive(t, mob.Character.PlayerDamage[1], "and is credited with the harm")
 }
+
+// The target of Blood Boil shows as bleeding, not poisoned (#249).
+func TestBloodBoil_TheTargetReadsBleedingNotPoisoned(t *testing.T) {
+	t.Cleanup(seedAllRegistries())
+	seedBoilingBlood(t)
+
+	castOnBobrick(t, bloodBoilTestSpell())
+
+	adj := users.GetByUserId(2).Character.GetAdjectives()
+	assert.Contains(t, adj, "bleeding")
+	assert.NotContains(t, adj, "poisoned")
+}
