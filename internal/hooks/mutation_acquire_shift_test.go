@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/goals"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/worldevents"
 )
 
 // TestApplyAcquiredMutationTriggersShift: acquiring a pull-mutation
@@ -29,6 +30,10 @@ func TestApplyAcquiredMutationTriggersShift(t *testing.T) {
 		map[int]*mobs.Mob{88801: mob},
 	)
 	defer cleanupMob()
+	// applyAcquiredMutation emits a "has manifested a mutation" world event
+	// into the shared ring buffer; the gossip tests read that feed and
+	// expect it empty (#478).
+	t.Cleanup(worldevents.ResetForTest)
 
 	applyAcquiredMutation(mob, "brawn")
 
