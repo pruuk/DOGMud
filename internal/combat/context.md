@@ -914,7 +914,7 @@ separate "gear quality" axis.
 | Offense (physAtk per-swing) | weapon `DamageMultiplier`, `SpeedMultiplier`; offhand + ExtraArm weapons |
 | Offense (magAtk caster) | equipped weapon `SpellDamageMultiplier` |
 | Offense (any stat-derived) | equipment `StatMods` → `Stats.X.ValueAdj` |
-| Defense (mitigation) | equipment `PhysicalMitigation` / `MagicalMitigation` / `ConvictionMitigation` summed by `char.Get*Mitigation()` |
+| Defense (mitigation) | equipment `PhysicalMitigation` / `MagicalMitigation` / `ConvictionMitigation` summed by `char.Get*Mitigation()`, bent through each channel's curve by `EffectiveMitigationFor` (#465) |
 | Defense (avoidance) | equipment-driven dodge/parry/block via `char.GetDefenseScore(...)` |
 | Durability | `char.HealthMax.Value` / `StaminaMax.Value` / `ConvictionMax.Value` — all reflect equipment stat boosts |
 | Skills | not gear-driven |
@@ -1330,7 +1330,8 @@ is in Casting state):
      spellDmgMult * weaponSpellDmgMult, ChannelMagical)`.
    - Applies `GetMagicalMitigation()` from target's gear.
    - Z-score <= -2.0 = backfire (damages caster).
-   - Z-score >= 2.0 = crit (double damage, bypasses mitigation).
+   - Z-score >= 2.0 = crit (skill-scaled damage; skips mitigation up to the
+     curve's knee and loses the overflow above it, #465).
 5. Triggers spell discovery chance, skill progression.
 6. Returns `true` — player skips normal melee this round.
 
@@ -1522,8 +1523,12 @@ Example at STR=120, rank=10, weaponDmgMult=1.2:
   SkillMultiplier(10) = 1.0 + (3.0-1.0) * sqrt(10/50) = 1.894
   rawDmg = 120 * 1.894 * 1.2 * 0.30 = 81.8
 
-dmgMean = ApplyMitigation(rawDmg, mob.GetPhysicalMitigation(), 0.75)
-  e.g., mob has 20% phys mitigation: dmgMean = 81.8 * 0.80 = 65.4
+dmgMean = ApplyMitigation(rawDmg, mob.GetPhysicalMitigation(),
+                          MitigationCurveFor(ChannelPhysical))
+  e.g., mob has 20% phys mitigation (below the knee, so it counts in full):
+  dmgMean = 81.8 * 0.80 = 65.4
+critReduction = MitigationCurveFor(ChannelPhysical).CritReduction(mitigation)
+  (0 at or below the knee; see "Mitigation curve (#465)")
 
 Further multiplied by:
   ResourceMultiplier(health)         // HP-based melee penalty
@@ -1648,7 +1653,9 @@ The crit flag is decided during hitroll resolution (see margin_crit.go) and
 passed in. calcHitDamage does NOT re-derive it. U10d: the opening-strike flag
 does NOT select the crit branch either — only the crit verdict does.
 
-  CRIT: mean = rawDmgForCrit * critDmgMult                   // PRE-mitigation!
+  CRIT: mean = rawDmgForCrit * critDmgMult * (1 - critReduction)
+                                         // PRE-mitigation, less the overflow
+                                         // above the curve's knee (#465)
         if openingStrike { mean *= openingStrikeMult }        // U10d ambush
         damage = dice.RollStat(mean)
         Apply crit conditions to target.
@@ -1846,8 +1853,9 @@ values directly.
 |------|----------|
 | `combat/combat.go` | `calculateCombat()` orchestrator (~80 lines), `AttackPlayerVsMob`, `AttackPlayerVsPlayer`, `AttackMobVsPlayer`, `AttackMobVsMob`, `GetWaitMessages` |
 | `combat/combat_helpers.go` | Extracted helpers: `calcAttackCount`, `collectAttackWeapons`, `buildWeaponSetup`, `buildDamageParams`, `calcAttackScore`, `calcCritThreshold`, `calcDualWieldPenalty`, `filterDefensesForThirdParty`, `runBestOfAllDefense`, `resolveDefenseOutcome`, `calcHitDamage`, `buildAttackMessages`, `applyPetDamage` |
-| `combat/damage_pipeline.go` | `CalcRawDamage`, `ApplyMitigation`, `SkillMultiplier`, `ResourceMultiplier`, `MitigationCap`, `DamageScale`; `GetConvictionDamageDescription` (third person, "their resolve") and `GetConvictionDamageDescriptionToTarget` (the same bands in second person, "your resolve", for the line the taunted or countered player reads, #262) |
-| `combat/crit_damage.go` | `CritDamageMultiplier`, `CritOrMitigatedDamage` |
+| `combat/damage_pipeline.go` | `CalcRawDamage`, `ApplyMitigation`, `SkillMultiplier`, `ResourceMultiplier`, `MitigationCurveFor`, `EffectiveMitigationFor`, `DamageScale`; `GetConvictionDamageDescription` (third person, "their resolve") and `GetConvictionDamageDescriptionToTarget` (the same bands in second person, "your resolve", for the line the taunted or countered player reads, #262) |
+| `combat/crit_damage.go` | `CritDamageMultiplier`, `CritOrMitigatedDamage`, `CritOrMitigatedDamageScaled` (crit reduced by the curve's overflow, #465) |
+| `combat/mitigation_curve.go` | `MitigationCurve`, `EffectiveMitigation`, `MitigationCurve.CritReduction` (#465) |
 | `combat/margin_crit.go` | `ContestCrit`, `ContestCritThreshold` |
 | `combat/crit_floor.go` | `ApplyCritFloor`, `AttackContestCrit`, `DefenseContestCrit`, `AttackCritFloor`, `DefenseCritFloor` |
 | `combat/attackresult.go` | `AttackResult` struct (includes `Hit`/`CleanHit` — dealt damage vs. won the contest, see the Task 10/14 section — `DefenseAttempts`, `AttackZScore`, `DefenseZScore`, `ParryCritDetected`, `DodgeCritDetected`), `SwingEvent`, `SwingDefence`/`SwingDefences` (U10b-1; see "Defender progression" below) and message helpers |
@@ -1868,6 +1876,48 @@ values directly.
 | `hooks/spell_resolution.go` | `resolveSpell`, `resolveAgainstMob`, `resolveAgainstPlayer` (effects apply through `applySpellEffect` in `hooks/spell_effects.go`) |
 
 ---
+
+## Mitigation curve (#465)
+
+Every channel sums its raw mitigation from all sources
+(`Character.GetPhysicalMitigation` / `GetMagicalMitigation` /
+`GetConvictionMitigation`, uncapped) and bends it through that channel's
+`MitigationCurve` (`mitigation_curve.go`), read by
+`MitigationCurveFor(channel)` from four knobs per channel
+(`PhysicalMitigationKnee`, `...Cap`, `...Aim`, `...Bend`, and the same for
+`Magical` and `Conviction`; all ship at 0.50 / 0.90 / 0.05 / 0.40):
+
+```
+EffectiveMitigation(raw, c)
+  raw <= 0 or NaN -> 0
+  raw <= knee     -> raw
+  otherwise       -> x = raw - knee
+                     min(knee + (cap + aim - knee) * x / (x + bend), cap)
+```
+
+At the shipped numbers raw 0.75 stops 67%, 1.00 75%, 1.81 84%, 3.70 90%.
+It replaced a flat clamp at 0.75 (`MitigationCap(channel)`, deleted).
+
+- **Normal hits:** `ApplyMitigation(raw, pct, curve)` is
+  `raw * (1 - EffectiveMitigation(pct, curve))`. Every caller passes
+  `MitigationCurveFor` of its channel: melee (`buildDamageParams`), pets,
+  `ExecuteSkillMove`, spells (`calcSpellDamageForCharacter`), taunt, counter,
+  riposte, throw, and `ReflectDamage`.
+- **Armor piercing** (`SkillMoveParams.MitigationMultiplier`, stomp 0.5)
+  scales RAW mitigation before the curve.
+- **Crits:** a crit skips mitigation up to the knee and loses the overflow
+  above it, `curve.CritReduction(pct) = max(0, EffectiveMitigation(pct) -
+  knee)`. `CritOrMitigatedDamageScaled` multiplies the crit mean by
+  `1 - CritReduction`; melee carries it as `swingDamageParams.critReduction`
+  (0 in a literal built elsewhere: a full crit, never no damage). The defence
+  multiplier stays skipped on crits.
+- **Readers:** `EffectiveMitigationFor(char, channel)` is the value combat
+  applies; `PowerScore` averages it over the three channels and the status
+  sheet shows it (`effectiveMitigation` template function, `internal/templates`).
+  `identify` still describes one item's own points, raw: it bands a single
+  item's raw points through `mitigationQuality`, while `status` bands the
+  wearer's effective value, so the two screens use the same words on
+  different scales.
 
 ## Position hit modifiers (chunk 4e)
 
@@ -2188,6 +2238,7 @@ own identical terms (converging that is not Task 17's mandate).
 | `combat.go` | Round resolution entry points. `resolveCombatRound` builds and admits one aggregate attack plan before resolution, then passes the committed short state into hit scoring. **`calculateCombat` takes both combatants as POINTERS (U7 Task 1). See the gotcha under "Contest core"; value parameters silently switched the whole melee defence cost model off.** Each of the four call sites builds its `combatContext` with `newCombatContext` (`combat_helpers.go`): `sourceSight`/`targetSight` from `messaging.ReaderSight` and the comfort fields `sourceDark`/`sourceBright`/`targetDark`/`targetBright` from `messaging.ComfortDistance`, once per side; see "Sight: the verdict and the ramp". |
 | `combat_helpers.go` | Extracted helpers, including the immutable-ish `attackPlan` snapshot consumed by `calculateCombat`. **`runBestOfAllDefense` no longer rolls — it builds defence scores and delegates to `internal/contest` (U1). It performs the one sign conversion between the core's attack-positive margin and `bestDefenseResult`'s defence-positive one.** `combatContext` itself lives here: its `sourceSight`/`targetSight` verdicts only hide names, and the attack and defence scores multiply by `messaging.SightScoreMultiplier` on its comfort fields; see "Sight: the verdict and the ramp". |
 | `damage_pipeline.go` | The unified three-channel damage + mitigation pipeline |
+| `mitigation_curve.go` | The mitigation curve (#465): `MitigationCurve`, `EffectiveMitigation`, `CritReduction`. See "Mitigation curve (#465)" |
 | `margin_crit.go` | Normalized opposed-roll margin, the source of the crit flag. `normalizedAttackMargin`/`normalizedDefenseMargin` serve melee (5.11d); `ContestCrit` serves spell + conviction (5.11g). **The two take opposite margin sign conventions — read the doc comments before touching either.** |
 | `crit_floor.go` | Crit floors, 1% both directions (5.11e). **U6 Task 9 changed the DENOMINATORS: the attack floor applies to swings that WON THE CONTEST and the defence floor to swings the DEFENCE won, keyed on `best.margin` (defence-positive, so `<= 0` is an attack win), not on `res.hit`.** The old hit/miss split stops being answerable once a defensive win deals partial damage, because a deflected swing then has `res.hit == true` while the defence won. A floored outcome and an uncontested swing (`defenseType == ""`) are promoted by neither floor. **`applyCritFloors` must stay the LAST thing `resolveDefenseOutcome` does** — an attack crit forces a hit, so flooring earlier becomes an undeclared second hit floor stacked on `ContestFloor`. **U6 Task 10:** a promotion to a defence crit now also clears `res.hit` and `res.damageMult`, because an ordinary defensive win arrives here already landing partial damage. |
 | `defence_multiplier.go` | `DefenceMitigation` — the margin-scaled damage reduction a defensive win now earns (U6 Task 10). 50% at a bare win, 100% at `ContestCritThreshold`. Its 0.5 and its threshold are STRUCTURAL, not config knobs: the threshold is the point the curve has to meet so that full negation by a defensive crit is continuous with it rather than a cliff. Also `ResolveChannelAttack` / `AttackSide` / `AwardDefenceProgression` — the U6 Task 12 resolver (then `ResolveChannelDefence`) that replaced the deleted `avoidance.go`, widened by U6b Task 4 into THE seam every non-melee attack rides, with the attack score caller-supplied via `AttackSide` (the internal `ChannelAttackScore` helper was deleted with the flip). **U6 Task 13** extracted `defenceDamageMultiplier(res contest.Result) float64` from the resolver's tail — it converts a finished opposed contest into the attacker's damage multiplier (1.0 attack win, 0.0 defensive crit, exactly 0.5 on a floored save, 0.0-0.5 off the curve otherwise) and is now the ONE place the sign negation, the floored sentinel, and the sqrt(2) normaliser live, reached through `ResolveChannelAttack` (and so by `ExecuteSkillMove`). |
