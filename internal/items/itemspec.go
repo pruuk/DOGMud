@@ -3,6 +3,7 @@ package items
 import (
 	"fmt"
 	"math"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -857,15 +858,38 @@ func FindSpecByComponentTag(tag string) *ItemSpec {
 	return best
 }
 
-// file self loads due to init()
+// LoadDataFiles loads every item spec and the combat and defense message
+// sets at boot. It panics on a load error: the server cannot run without
+// them. A live reload calls LoadDataFilesE instead.
 func LoadDataFiles() {
+	if err := LoadDataFilesE(); err != nil {
+		panic(err)
+	}
+}
+
+// LoadDataFilesE is LoadDataFiles for `reload items`: it returns the error
+// instead of panicking (#271). The items, attack messages and defense
+// messages all load into temporaries first and swap in together only after
+// every one has loaded, so a failure leaves the previous data fully live.
+func LoadDataFilesE() (err error) {
+	// casing.AssertCanonical panics on a non-canonical name; a reload
+	// reports that like any other load error.
+	defer func() {
+		if r := recover(); r != nil {
+			if re, ok := r.(error); ok {
+				err = fmt.Errorf("item load panicked: %w\n%s", re, debug.Stack())
+			} else {
+				err = fmt.Errorf("item load panicked: %v\n%s", r, debug.Stack())
+			}
+		}
+	}()
 
 	start := time.Now()
 
 	dataPath := string(configs.GetFilePathsConfig().DataFiles)
 	tmpItems, err := fileloader.LoadAllFlatFiles[int, *ItemSpec](dataPath + `/items`)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath+`/items`))
+		return errors.Wrap(err, `filepath: `+dataPath+`/items`)
 	}
 
 	for id, spec := range tmpItems {
@@ -877,25 +901,26 @@ func LoadDataFiles() {
 		}
 	}
 
-	items = tmpItems
-	rebuildAuthoredKeywords()
-
 	tmpAttackMessages, err := fileloader.LoadAllFlatFiles[ItemSubType, *WeaponAttackMessageGroup](dataPath + `/combat-messages`)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath+`/combat-messages`))
+		return errors.Wrap(err, `filepath: `+dataPath+`/combat-messages`)
 	}
-
-	attackMessages = tmpAttackMessages
 
 	tmpDefenseMessages, err := fileloader.LoadAllFlatFiles[DefencePool, *DefenseMessageGroup](dataPath + `/defense-messages`)
 	if err != nil {
-		panic(errors.Wrap(err, `filepath: `+dataPath+`/defense-messages`))
+		return errors.Wrap(err, `filepath: `+dataPath+`/defense-messages`)
 	}
 
+	// Every set loaded; swap them in together. rebuildAuthoredKeywords reads
+	// the package items map, so it follows the items swap.
+	items = tmpItems
+	rebuildAuthoredKeywords()
+	attackMessages = tmpAttackMessages
 	defenseMessages = tmpDefenseMessages
 
 	mudlog.Info("itemspec.LoadDataFiles()", "itemLoadedCount", len(items), "attackMessageCount", len(attackMessages), "defenseMessageCount", len(defenseMessages), "Time Taken", time.Since(start))
 
+	return nil
 }
 
 // RegisterTestItemSpec is a test-only helper that registers an ItemSpec

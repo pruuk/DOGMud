@@ -97,12 +97,36 @@ func TestEquipArm_SuccessLines(t *testing.T) {
 	user, room := armUser(t)
 	require.True(t, user.Character.StoreItem(armItem(96050, "knife", items.Weapon, 1, false)))
 	require.True(t, user.Character.StoreItem(armItem(96051, "buckler", items.Offhand, 1, false)))
-	assert.Contains(t, armOut(t, user, room, "knife arm1"), "You wield your")
+	out1 := armOut(t, user, room, "knife arm1")
+	assert.Contains(t, out1, "You wield your")
+	assert.Contains(t, out1, "in your weapon hand.")
 	assert.Equal(t, 96050, user.Character.Equipment.Weapon.ItemId)
 	out := armOut(t, user, room, "buckler arm2")
 	assert.Contains(t, out, "You equip your")
 	assert.Contains(t, out, "in your offhand.")
 	assert.Equal(t, 96051, user.Character.Equipment.Offhand.ItemId)
+}
+
+// #270: an extra arm reads "arm 3" in the equip line, as the equipment list
+// numbers it, not the internal slot key "extra arm 1".
+func TestEquipArm_ExtraArmLineUsesTheArmNumber(t *testing.T) {
+	user, room := armUser(t)
+	origMutations, origExtraArms := user.Character.Mutations, user.Character.ExtraArms
+	origExtraArm1 := user.Character.Equipment.ExtraArm1
+	t.Cleanup(func() {
+		user.Character.Mutations = origMutations
+		user.Character.ExtraArms = origExtraArms
+		user.Character.Equipment.ExtraArm1 = origExtraArm1
+	})
+	// Validate re-derives ExtraArms from the mutation, so set that instead.
+	// A fresh map is assigned (not written into), so origMutations is never aliased.
+	user.Character.Mutations = map[string]int{"extra-arms": 2}
+	user.Character.ExtraArms = 2
+	require.True(t, user.Character.StoreItem(armItem(96060, "club", items.Weapon, 1, false)))
+	out := armOut(t, user, room, "club arm3")
+	assert.Contains(t, out, "in your arm 3.")
+	assert.NotContains(t, out, "extra arm")
+	assert.Equal(t, 96060, user.Character.Equipment.ExtraArm1.ItemId)
 }
 
 // An item knocked off a full pack lands on the floor instead of vanishing.

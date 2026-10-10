@@ -23,9 +23,9 @@
 {{ end -}}
 {{- if not .Equipment.Belt.IsDisabled }}   <ansi fg="yellow">Belt:       </ansi><ansi fg="itemname">{{ .Equipment.Belt.NameComplex      }}</ansi>
 {{ end -}}
-{{- if not .Equipment.Wrist1.IsDisabled }}   <ansi fg="yellow">Wrist:      </ansi><ansi fg="itemname">{{ .Equipment.Wrist1.NameComplex    }}</ansi>
+{{- if not .Equipment.Wrist1.IsDisabled }}   <ansi fg="yellow">Wrist 1:    </ansi><ansi fg="itemname">{{ .Equipment.Wrist1.NameComplex    }}</ansi>
 {{ end -}}
-{{- if not .Equipment.Wrist2.IsDisabled }}   <ansi fg="yellow">Wrist:      </ansi><ansi fg="itemname">{{ .Equipment.Wrist2.NameComplex    }}</ansi>
+{{- if not .Equipment.Wrist2.IsDisabled }}   <ansi fg="yellow">Wrist 2:    </ansi><ansi fg="itemname">{{ .Equipment.Wrist2.NameComplex    }}</ansi>
 {{ end -}}
 {{- if not .Equipment.ExtraWrist1.IsDisabled }}   <ansi fg="yellow">Wrist 3:    </ansi><ansi fg="itemname">{{ .Equipment.ExtraWrist1.NameComplex }}</ansi>
 {{ end -}}

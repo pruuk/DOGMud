@@ -31,8 +31,8 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		Records     []QuestRecord
 	}
 
-	showHidden := rest == `all+`
-	showComplete := (rest == `all`) || showHidden
+	showHidden := questsShowHidden(rest, user)
+	showComplete := rest == `all` || rest == `all+`
 
 	qInfo := QuestInfo{}
 	allQuests := []QuestRecord{}
@@ -42,15 +42,13 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	allQuestProgress := user.Character.GetQuestProgress()
 
-	if rest == `all+` {
+	if showHidden {
 		for _, quest := range quests.GetAllQuests() {
 			if _, ok := allQuestProgress[quest.QuestId]; ok {
 				continue
 			}
 			allQuestProgress[quest.QuestId] = `all+`
 		}
-	} else {
-
 	}
 
 	for questId, questStep := range allQuestProgress {
@@ -111,4 +109,11 @@ func Quests(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	user.SendText(messaging.CategorySystem, questTxt)
 
 	return true, nil
+}
+
+// questsShowHidden reports whether `quests all+`, which lists every quest
+// including unstarted and secret ones, applies. Admins only (#289); anyone
+// else typing it gets the plain `all` view.
+func questsShowHidden(rest string, user *users.UserRecord) bool {
+	return rest == `all+` && user.Role == users.RoleAdmin
 }

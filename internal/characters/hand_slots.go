@@ -1,6 +1,8 @@
 package characters
 
 import (
+	"fmt"
+
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
@@ -69,6 +71,22 @@ func (c *Character) ArmLabel(arm int) string {
 		return ``
 	}
 	return pairs[pairIdx].Second.Label
+}
+
+// ArmDisplayName is how a player reads arm N (1 to 6): "weapon hand",
+// "offhand", then "arm 3" to "arm 6", as the equipment list numbers them
+// (#270). "" when the character has no such arm. ArmLabel stays the slot key.
+func (c *Character) ArmDisplayName(arm int) string {
+	if c.ArmLabel(arm) == `` {
+		return ``
+	}
+	switch arm {
+	case 1:
+		return `weapon hand`
+	case 2:
+		return `offhand`
+	}
+	return fmt.Sprintf(`arm %d`, arm)
 }
 
 // Is2H returns true if the item in this slot is a 2-handed weapon that

@@ -16,7 +16,8 @@ type EquipItemResult struct {
 	Found          bool
 	Equipped       bool
 	FailureReason  string
-	// ArmLabel is the hand the item went into ("offhand", "extra arm 1"), set only by EquipItemInArm.
+	// ArmLabel is how the player reads the arm the item went into ("weapon
+	// hand", "offhand", "arm 3"), set only by EquipItemInArm.
 	ArmLabel string
 }
 
@@ -38,7 +39,7 @@ func EquipItemInArm(actor Actor, itemName string, arm int) EquipItemResult {
 		return c.WearInArm(i, arm)
 	})
 	if res.Equipped {
-		res.ArmLabel = actor.GetCharacter().ArmLabel(arm)
+		res.ArmLabel = actor.GetCharacter().ArmDisplayName(arm)
 	}
 	return res
 }

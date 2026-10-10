@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
@@ -44,12 +45,14 @@ func Portal(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		// Only interest in rooms where players haven't visited in a while and have at least 1
 		mostItemRoomId, qty := rooms.GetRoomWithMostItems(bool(config.IncludeRecentRooms), int(config.MinimumItems), int(config.MinimumGold))
-		if qty == 0 { // could't find any
-			// No more rooms with items? Our job is done i guess.
+		if qty == 0 {
+			// No room is worth looting, which is a normal outcome: go home
+			// and drop the haul. Not an error (#267).
+			mudlog.Debug("portal loot", "mobId", mob.MobId, "result", "no worthy room, going home")
 
 			mob.Command(`portal home;drop all`)
 
-			return true, fmt.Errorf("failed to find worthy room with loot")
+			return true, nil
 		}
 		portalTargetRoomId = mostItemRoomId
 	}

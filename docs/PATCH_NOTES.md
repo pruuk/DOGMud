@@ -1,5 +1,28 @@
 # DOGMud Patch Notes
 
+## 2026-10-10: Loose ends
+
+- Items whose names start with "Gold", such as Gold Wire, can be picked up
+  again, from the floor, from a container or from a corpse. `get gold` on
+  its own still means the coins.
+- A party invite that goes nowhere, because nobody by that name is here or
+  you named yourself, no longer leaves you in an empty party that blocks
+  `follow`.
+- Extra arms and wrists now have the same names everywhere. Your extra arms
+  are arm 3 to arm 6, and your wrists are wrist 1 to wrist 6, whether you
+  equip, look or check your equipment.
+- `help attack` now explains target switching properly: changing targets in
+  the middle of a fight takes skill, and a failed switch costs you a round.
+- `status` no longer shows a strange "auto-tap-below 0" surrender policy for
+  older characters. They now have the usual default.
+- Creatures no longer "look a little confused" with stray words after their
+  name.
+- Torches and lanterns now restock in shops at the rate their worth
+  suggests.
+- For admins: `room info` works again, `reload items` names the broken
+  file and keeps the old items when a file is malformed, `help <admin
+  command>` shows that command's help, and `quests all+` is admin-only.
+
 ## 2026-10-07: Light, balanced
 
 - City street lamps are now lit when the light fails and put out once the

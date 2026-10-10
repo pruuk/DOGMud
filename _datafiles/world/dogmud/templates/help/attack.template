@@ -80,8 +80,11 @@ See <ansi fg="command">help grapple</ansi>.
 <ansi fg="yellow">━━━ Target Switching ━━━</ansi>
 
 When fighting multiple enemies, use <ansi fg="command">attack <target></ansi> to switch targets:
-  - Immediately retargets to the new enemy
-  - Automatic retargeting when your current target dies
+  - Switching mid-fight takes skill and quick hands. If it works, you turn
+    to the new enemy after a round. If it fails, you stay on your old
+    target and lose the round.
+  - If your target is already dead or gone, the switch is immediate, and
+    you pick a new enemy automatically when your target dies
   - Party members can coordinate attacks on the same target
 
 <ansi fg="yellow">━━━ Defense System ━━━</ansi>

@@ -33,7 +33,6 @@ const (
 
 	// active → Free, externally induced
 	TriggerConcentrationBreak = "concentration_break" // Casting only
-	TriggerCombatInterrupt    = "combat_interrupt"    // Crafting / Salvaging
 	TriggerMovementInterrupt  = "movement_interrupt"  // Crafting / Salvaging
 	TriggerDamageInterrupt    = "damage_interrupt"    // Crafting / Salvaging (hard cancel, no roll)
 	TriggerDeath              = "death"               // cascade from Life

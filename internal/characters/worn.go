@@ -58,7 +58,7 @@ func (w *Worn) AllSlots() []WornSlot {
 		{"extraarm3", "Arm 5", &w.ExtraArm3}, {"extraarm4", "Arm 6", &w.ExtraArm4},
 		{"head", "Head", &w.Head}, {"neck", "Neck", &w.Neck}, {"shoulders", "Shoulders", &w.Shoulders},
 		{"body", "Body", &w.Body}, {"back", "Back", &w.Back}, {"belt", "Belt", &w.Belt},
-		{"wrist1", "Wrist", &w.Wrist1}, {"wrist2", "Wrist", &w.Wrist2},
+		{"wrist1", "Wrist 1", &w.Wrist1}, {"wrist2", "Wrist 2", &w.Wrist2},
 		{"extrawrist1", "Wrist 3", &w.ExtraWrist1}, {"extrawrist2", "Wrist 4", &w.ExtraWrist2},
 		{"extrawrist3", "Wrist 5", &w.ExtraWrist3}, {"extrawrist4", "Wrist 6", &w.ExtraWrist4},
 		{"gloves", "Gloves", &w.Gloves}, {"ring", "Ring", &w.Ring}, {"ring2", "Ring", &w.Ring2},

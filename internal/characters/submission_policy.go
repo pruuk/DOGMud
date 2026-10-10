@@ -72,6 +72,10 @@ type SurrenderPolicy struct {
 	HpPctThreshold int           `yaml:"hp_pct_threshold"` // 1-100; ignored unless Mode == SurrenderAutoTap
 }
 
+// DefaultPlayerSurrenderPolicy is a new character's surrender policy, and the
+// one Validate gives a save that has none (#284).
+var DefaultPlayerSurrenderPolicy = SurrenderPolicy{Mode: SurrenderAutoTap, HpPctThreshold: 15}
+
 func (p SurrenderPolicy) String() string {
 	switch p.Mode {
 	case SurrenderNever:

@@ -8,6 +8,7 @@ type: light
 subtype: wearable
 weight: 0.3
 value: 60
+rarity_tier: 30
 # A boss drop, never stocked: vendor_categories says who BUYS it (items
 # ValidateVendorCategories refuses an empty list at boot), not who sells it.
 vendor_categories:

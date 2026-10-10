@@ -169,12 +169,10 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		return true, nil
 	}
 
-	// Not in a party? Create one.
-	if currentParty == nil {
-		currentParty = parties.New(user.UserId)
-	}
-
-	if !currentParty.IsLeader(user.UserId) {
+	// A player already in a party must lead it to invite. A player in no
+	// party gets one only once the invite is actually sent (#459), so a
+	// refused invite does not leave them leading an empty party.
+	if currentParty != nil && !currentParty.IsLeader(user.UserId) {
 		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
 		return true, nil
 	}
@@ -202,8 +200,23 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 	invitedUser := target.(*actions.UserActor).User
 	invitePlayerId := invitedUser.UserId
 
+	if invitePlayerId == user.UserId {
+		user.SendText(messaging.CategorySystem, `You can't invite yourself.`)
+		return true, nil
+	}
+
 	if invitedParty := parties.Get(invitePlayerId); invitedParty != nil {
 		user.SendText(messaging.CategorySystem, `That player is already in a party.`)
+		return true, nil
+	}
+
+	createdParty := false
+	if currentParty == nil {
+		currentParty = parties.New(user.UserId)
+		createdParty = true
+	}
+	if currentParty == nil {
+		user.SendText(messaging.CategorySystem, `Something went wrong.`)
 		return true, nil
 	}
 
@@ -217,7 +230,12 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> invited you to their party. Type <ansi fg="command">party accept</ansi> or <ansi fg="command">party decline</ansi> to respond.`, user.Character.Name),
 			[]string{user.Character.Name}, messaging.ParticipantSight(invitedUser.Character, room)))
 	} else {
+		// Backstop: do not leave behind a party this call created.
+		if createdParty {
+			currentParty.Disband()
+		}
 		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		return true, nil
 	}
 
 	dispatchPartyEvent(currentParty, `invited`)

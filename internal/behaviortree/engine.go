@@ -79,19 +79,20 @@ func (e *Engine) LoadTree(mobId int, path string) error {
 	return nil
 }
 
-// Negative cache (noTree / noRoomTree) — design note.
+// Negative cache (noTree / noRoomTree): design note.
 //
 // The negative cache records mob/room ids whose behavior tree YAML does
-// not exist on disk (or whose load failed at file-stat time). Once set,
-// an entry only clears on a successful subsequent LoadTree / LoadRoomTree.
+// not exist on disk (or whose load failed at file-stat time). An entry
+// clears on a successful LoadTree / LoadRoomTree, which the editor save
+// paths in save.go call after writing a file, so a tree created or
+// rewritten through the editor is picked up without a restart.
 //
-// This is correct ONLY because behavior tree files are static for the
-// process lifetime — there is no hot-reload of YAML on disk change. If
-// hot-reload is ever added, the negative cache becomes a stale-cache bug:
-// a file appearing on disk after the negative entry is set will be
-// invisible until the engine restarts.
-//
-// TODO(hot-reload): bust cache on file change if/when hot-reload is added.
+// EvictTree and EvictRoomTree do the opposite: they drop the cached tree
+// and SET the negative entry, because after a delete "no tree" is the
+// truth. A file that appears on disk behind the engine's back (edited by
+// hand, not through the editor) stays invisible until a Load call or a
+// restart. EvictArchetype sets noArchetype the same way; EvictItemTree
+// clears noItemTree so the next request re-reads the file.
 
 // HasNoTree reports whether the negative cache has recorded that mobId has no
 // behavior tree file on disk. Callers should check this before os.Stat.
