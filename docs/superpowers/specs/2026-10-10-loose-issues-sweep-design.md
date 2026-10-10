@@ -45,7 +45,8 @@ a player already in a party. Test: refused invite leaves `parties.Get` nil.
 Players typing it get the normal `all` view.
 
 **#269 Gold-prefixed items.** Take the gold-pile branch only when the whole
-argument is the gold word or its prefix (`get gold`, `get gol`). `get gold
+argument is the word `gold` (the old prefix check was dead code, so `get gol`
+never worked). `get gold
 wire` and `get all` then reach item matching. Test with a Gold Wire on the
 floor plus a gold pile.
 
