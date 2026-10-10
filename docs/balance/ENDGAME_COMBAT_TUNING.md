@@ -75,8 +75,12 @@ character:
 **Which channel to weight:** match the party's damage mix. A Meirok party is
 **mostly physical** (claws + wolf bites) with some magical (spells) and conviction
 (taunt), so lead with **`physical_mitigation`** and back it with magical/
-conviction. Total mitigation per channel caps at **75%** (`PhysicalMitigationCap`
-etc.) — a single 65-phys piece is fine; don't stack past ~70 total.
+conviction. Since #465 raw mitigation per channel runs through a curve: it is
+linear up to 50%, then bends toward a 90% hard cap (`...MitigationKnee`,
+`...MitigationCap`, `...MitigationAim`, `...MitigationBend`; see
+`internal/combat/context.md`). Raw 65 stops about 62%, raw 100 stops 75%, and
+stacking past 100 still helps but slowly, so a single 65-phys piece is fine
+and a second piece is no longer wasted.
 
 ## 3. The baseline anchors (empirical, tune by interpolation)
 
@@ -93,7 +97,10 @@ reference — a new fight targeting N Meiroks starts near the matching row.
 required `statpool` (1100 → 2400 → 5000 ≈ ×2.2, ×2.1), while **physical
 mitigation stays in the ~55–65% band** across all tiers. So for a new fight:
 start `statpool` at `~1100 × 2^(N−1)`, put phys mitigation around 60%, then
-verify live.
+verify live. These anchors were calibrated under the old flat 75% clamp, where
+raw points equalled effective mitigation. Under the #465 curve the same raw
+55 to 65 stops about 55 to 62%, and the Sentinel's 75 raw physical stops about
+67% instead of 75%, so re-verify each anchor live before copying it.
 
 **Mechanical-depth ramp** (depth scales with N, not just numbers): **1 Meirok =
 no mechanic** (a pure stat/gear check), **2 Meirok = one light telegraphed hook**
