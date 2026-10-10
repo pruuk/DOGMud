@@ -5,7 +5,13 @@ your current room.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">sell <item></ansi>     Sell an item to a merchant.
+  <ansi fg="command">sell <item></ansi>          Sell one item to a merchant.
+  <ansi fg="command">sell 5 <item></ansi>        Sell up to five of that item.
+  <ansi fg="command">sell all <item></ansi>      Sell every one of that item you carry.
+  <ansi fg="command">sell all.<item></ansi>      The same as sell all <item>.
+
+If the merchant runs short of gold partway through, you are
+told how many sold.
 
 The command searches your backpack first, then your bandolier,
 then your component bag. Quest items cannot be sold.
@@ -42,4 +48,5 @@ hot goods until some of what it holds has cooled.
 Find out more about referring to items by name by typing
 <ansi fg="command">help item-names</ansi>.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help buy</ansi>, <ansi fg="command">help appraise</ansi>, <ansi fg="command">help list</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help buy</ansi>, <ansi fg="command">help appraise</ansi>, <ansi fg="command">help list</ansi>,
+<ansi fg="command">help give</ansi>, <ansi fg="command">help storage</ansi>

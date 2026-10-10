@@ -32,3 +32,5 @@ forfeit your least valuable stacks first and notify you via
 <ansi fg="command">inbox</ansi>. Keep gold deposited to
 cover your storage costs.
 
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help storage</ansi>, <ansi fg="command">help stow</ansi>
+
