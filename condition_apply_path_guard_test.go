@@ -188,10 +188,12 @@ var conditionApplyPathAllowlist = map[string]string{
 	// Task 7, same import shift as above; re-keyed again 3b playtest fix,
 	// same import shift as above; re-keyed again messaging M6 slice 1, when
 	// spellConditionsNarrateStart landed above it and again when the shield
-	// arm moved to the event door and its Minor Shield row was deleted) ───────
-	"internal/hooks/spell_help_effects.go|176": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
-	"internal/mobcommands/consume.go|46":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
-	"internal/mobcommands/consume.go|58":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	// arm moved to the event door and its Minor Shield row was deleted; the
+	// spell row DELETED messaging M6 slice 1, when each heal spell began
+	// landing its own heal through the condition event, leaving the two
+	// feeding rows) ───────
+	"internal/mobcommands/consume.go|46": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/mobcommands/consume.go|58": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 
 	// ── former combat condition: the spell dot is now one record (Task 8;
 	// re-keyed slice 1b when the dot moved to every round; re-keyed again

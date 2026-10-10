@@ -305,6 +305,7 @@ help-aliases:
                      dazzle, dazzled, dark]
   darkness:         [umbral, pall]
   wards:            [ward, warding, shield spell, shield spells]
+  healing-spells:   [heals, heal spells, healing spell]
   seasons:         [season, winter, summer, spring, autumn, calendar]
   moons:            [moon, swiftmoon, wanderer, eye]
 

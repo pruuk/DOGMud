@@ -26,7 +26,10 @@ func massMendSpellForAreaTest() *spells.SpellData {
 	}
 }
 
+// holdsRegen lands the queued heals (a heal travels the condition event,
+// messaging M6 slice 1) and reports whether c holds the Regenerating record.
 func holdsRegen(c *characters.Character) bool {
+	landQueuedConditions()
 	return len(c.GetConditions(conditions.ConditionIdRegenerating)) > 0
 }
 

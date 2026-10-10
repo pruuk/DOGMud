@@ -108,10 +108,12 @@ var familyFor = map[string]struct {
 	reads  conditions.EffectKind
 }{
 	"shield": {conditions.FamilyWard, conditions.EffectMitigationFlat},
+	"heal":   {conditions.FamilyHeal, conditions.EffectRegenMult},
 }
 
-// R3, R4 and R7: each shield spell lands its own condition, one per spell,
-// in the ward family, reading the spell's strength from its magnitude.
+// R3, R4, R7 and R8: each shield and heal spell lands its own condition,
+// one per spell, in the ward or heal family, reading the spell's strength
+// (a ward's points, a heal's multiplier) from its magnitude.
 func TestShieldAndHealSpellsLandTheirOwnCondition(t *testing.T) {
 	all := shippedSpells(t)
 	conds := shippedConditions(t)
@@ -180,5 +182,62 @@ func TestWardRosterHoldsItsOrdering(t *testing.T) {
 				w.spellId, s.EffectMagnitude, s.Cost, prevMag, prevCost)
 		}
 		prevMag, prevCost = s.EffectMagnitude, s.Cost
+	}
+}
+
+// healIdentity is one heal spell as the player meets it: its multiplier
+// (effect_magnitude), its authored duration (its condition's triggercount)
+// and whether it lands on everyone (targeting area).
+type healIdentity struct {
+	mult, rounds int
+	area         bool
+}
+
+func shippedHeal(t *testing.T, all map[string]*spells.SpellData, conds map[int]*conditions.ConditionSpec, id string) healIdentity {
+	t.Helper()
+	s := all[id]
+	if s == nil || len(s.ConditionIds) != 1 || conds[s.ConditionIds[0]] == nil {
+		t.Fatalf("%s: missing, or not landing exactly one shipped condition", id)
+	}
+	return healIdentity{mult: s.EffectMagnitude, rounds: conds[s.ConditionIds[0]].TriggerCount, area: string(s.Targeting) == "area"}
+}
+
+// R9: the heal roster's identities. Mend Flesh is long and gentle, Mend
+// Wounds short and strong; Mend All is the short, light area heal,
+// Communion of Flesh the long, steady one and Mass Mend the short, strong
+// one at the top. Chrysalis Regeneration (33) and Vital Surge (32) are in
+// the heal family; Regenerating (120), the mob feeding record, is not.
+func TestHealRosterHoldsItsIdentities(t *testing.T) {
+	all := shippedSpells(t)
+	conds := shippedConditions(t)
+	flesh := shippedHeal(t, all, conds, "heal")
+	wounds := shippedHeal(t, all, conds, "mend-wounds")
+	mendAll := shippedHeal(t, all, conds, "mend-all")
+	communion := shippedHeal(t, all, conds, "communion-of-flesh")
+	mass := shippedHeal(t, all, conds, "mass-mend")
+
+	if flesh.area || wounds.area || !mendAll.area || !communion.area || !mass.area {
+		t.Errorf("targeting: Mend Flesh and Mend Wounds single, the other three area: %+v %+v %+v %+v %+v", flesh, wounds, mendAll, communion, mass)
+	}
+	if !(flesh.mult < wounds.mult && flesh.rounds > wounds.rounds) {
+		t.Errorf("Mend Flesh must be gentler and longer than Mend Wounds: %+v vs %+v", flesh, wounds)
+	}
+	if !(communion.rounds > mendAll.rounds && communion.rounds > mass.rounds) {
+		t.Errorf("Communion of Flesh must be the longest area heal: %+v vs %+v, %+v", communion, mendAll, mass)
+	}
+	if !(mass.mult > communion.mult && mass.mult > mendAll.mult) {
+		t.Errorf("Mass Mend must be the strongest area heal: %+v vs %+v, %+v", mass, communion, mendAll)
+	}
+	total := func(h healIdentity) int { return h.mult * h.rounds }
+	if !(total(mendAll) < total(communion) && total(mendAll) < total(mass)) {
+		t.Errorf("Mend All must be the lightest area heal in all: %d vs %d, %d", total(mendAll), total(communion), total(mass))
+	}
+	for _, id := range []int{32, 33} {
+		if c := conds[id]; c == nil || c.Family != conditions.FamilyHeal {
+			t.Errorf("condition %d must be in the heal family", id)
+		}
+	}
+	if c := conds[conditions.ConditionIdRegenerating]; c == nil || c.Family != "" {
+		t.Errorf("condition %d (the feeding record) must stay out of the heal family", conditions.ConditionIdRegenerating)
 	}
 }

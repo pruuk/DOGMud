@@ -1,0 +1,15 @@
+conditionid: 138
+name: Mend Wounds
+description: Strong healing magic closes your wounds quickly, but it does not
+  last long. Another healing spell takes its place rather than adding to it.
+family: heal
+triggerrate: 1 round
+# The duration at an untrained caster of average willpower; the spell scales
+# it by its caster (applySpellHeal, healTriggers). Short and strong (R9).
+triggercount: 25
+effects:
+  regen_mult: magnitude
+start_actor: "Your healing magic surges into {actee}'s wounds."
+start_actee: "Healing magic surges into your wounds."
+start_observer: "A bright glow surges over {actee}'s wounds."
+end_actee: "The surge of healing in your wounds runs its course."

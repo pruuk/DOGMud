@@ -1059,6 +1059,13 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	// name handed to HideNames.
 	"conditions/135-conviction_bulwark.yaml": true,
 	"conditions/136-chrysalis_cocoon.yaml":   true,
+	// And the heal spells' own heals, narrated by the same start sender.
+	"conditions/137-mend_flesh.yaml":         true,
+	"conditions/138-mend_wounds.yaml":        true,
+	"conditions/139-mend_all.yaml":           true,
+	"conditions/140-communion_of_flesh.yaml": true,
+	"conditions/141-mass_mend.yaml":          true,
+	"conditions/142-arc_weld_repair.yaml":    true,
 	// Lighting plan 5c: the vision spells and the tincture, narrated by the
 	// same three phases as 29 and 65 above.
 	"conditions/128-night_sight.yaml":       true,

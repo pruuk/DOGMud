@@ -1,11 +1,11 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">heal</ansi> spell
 
-The <ansi fg="command">Mend Flesh</ansi> spell weaves restorative energy through a target's body,
-mending wounds and restoring vitality. Cast it on yourself or a nearby ally.
-The healing resolves the moment folds are completed — there is no delay.
+The <ansi fg="command">Mend Flesh</ansi> spell settles gentle healing magic into a target's
+wounds. It does not heal at once: the target heals faster than normal for a
+long while, a little at a time. Cast it on yourself or a nearby ally.
 
-Healing power scales with your willpower and spellcasting skill. A critical
-success (unusually high opposed roll) roughly doubles the amount healed.
+It is the gentlest and longest of the single target heals. How long it lasts
+grows with your willpower and spellcasting skill.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -14,8 +14,13 @@ success (unusually high opposed roll) roughly doubles the amount healed.
 
 <ansi fg="yellow">Base Folds:  </ansi> <ansi fg="white-bold">4</ansi>
 <ansi fg="yellow">Target:      </ansi> <ansi fg="white-bold">Single ally (or self)</ansi>
-<ansi fg="yellow">Defense:     </ansi> <ansi fg="white-bold">None — help spells always apply</ansi>
+<ansi fg="yellow">Defense:     </ansi> <ansi fg="white-bold">None, help spells always apply</ansi>
+<ansi fg="yellow">Healing:     </ansi> <ansi fg="white-bold">Gentle, over a long time</ansi>
 <ansi fg="yellow">Conv. Cost:  </ansi> <ansi fg="white-bold">25</ansi>
 <ansi fg="yellow">School:      </ansi> <ansi fg="white-bold">Vital</ansi>
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cast</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help conviction-ward</ansi>
+<ansi fg="white-bold">Notes:</ansi>
+  - A target holds one healing spell at a time. A new one replaces the old.
+  - Salves, potions and food that heal you still add on top.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help mend-wounds</ansi>, <ansi fg="command">help cast</ansi>

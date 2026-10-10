@@ -1,0 +1,16 @@
+conditionid: 141
+name: Mass Mend
+description: A powerful tide of healing magic closes your wounds fast for a
+  short while. Another healing spell takes its place rather than adding to it.
+family: heal
+triggerrate: 1 round
+# The duration at an untrained caster of average willpower; the spell scales
+# it by its caster (applySpellHeal, healTriggers). Short and strong, the top
+# area heal (R9).
+triggercount: 55
+effects:
+  regen_mult: magnitude
+start_actor: "A tide of your healing magic washes over {actee}."
+start_actee: "A powerful tide of healing magic washes over you."
+start_observer: "A tide of warm green light washes over {actee}."
+end_actee: "The tide of healing magic ebbs from your wounds."

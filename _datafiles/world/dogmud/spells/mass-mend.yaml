@@ -1,7 +1,7 @@
 spellid: mass-mend
 name: Mass Mend
 aliases: [massmend]
-description: Heals all nearby allies and grants sustained regeneration.
+description: Washes all nearby allies in a strong, short tide of healing.
 attack_type: none
 damage_type: non_harm
 targeting: area
@@ -14,8 +14,12 @@ difficulty: 40
 primarystat: willpower
 base_folds: 16
 effect_type: heal
-effect_magnitude: 5
+effect_magnitude: 8
+# The heal this spell lands, its multiplier on the holder's natural healing
+# (effect_magnitude) and its own duration (the condition's triggercount),
+# per the slice 1 identity table (messaging M6 slice 1, owner ruling R9):
+# short and strong, the top area heal.
 condition_ids:
-  - 33
+  - 141
 cast_actor: "You gather deep Chrysalis energy and begin radiating it outward."
 cast_observer: "{actor} raises both arms as waves of warm, green light pulse outward."

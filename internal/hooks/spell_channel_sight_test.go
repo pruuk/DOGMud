@@ -466,6 +466,7 @@ func TestMobFold_IdleHelpFoldResolvesOutOfCombat(t *testing.T) {
 
 	handleMobCombat(events.NewRound{RoundNumber: 2})
 	require.False(t, caster.Character.IsCasting(), "the completed help fold clears the cast")
+	landQueuedConditions() // the heal travels the condition event
 	require.True(t, caster.Character.HasCondition(conditions.ConditionIdRegenerating), "the heal landed")
 	got := drainPlain(1)
 	require.Equal(t, 1, countContaining(got, "Skeleton channels restorative magic."), "%v", got)
@@ -495,6 +496,7 @@ func TestMobFold_QuarryLeaves_HelpFoldResolvesWithoutFizzle(t *testing.T) {
 	handleMobCombat(events.NewRound{RoundNumber: 1})
 	handleMobCombat(events.NewRound{RoundNumber: 2})
 	require.False(t, caster.Character.IsCasting(), "the help fold resolves and clears")
+	landQueuedConditions() // the heal travels the condition event
 	require.True(t, caster.Character.HasCondition(conditions.ConditionIdRegenerating), "the heal landed")
 	got := drainPlain(1)
 	require.Zero(t, countContaining(got, "fizzles"), "%v", got)

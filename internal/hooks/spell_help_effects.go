@@ -145,12 +145,17 @@ func spellConditionNarratesStart(c spellEffectCtx, conditionId int) bool {
 	return spec != nil && !c.targetChar().HasCondition(conditionId) && spec.NarratesCastStart(c.selfCast())
 }
 
-// applySpellHeal is the one heal applier (slice 3b): a Regenerating record
-// on the target at the spell's magnitude as a regen multiplier (floored at
-// 1x) for half the universal spell duration (floored at six rounds), read
-// from the caster's primarystat and cast skill. Every pairing gains it; a
-// mob's heal on a player used to apply nothing (audit row 3). The dead
-// player-to-player crit boost is gone (owner ruling 3).
+// applySpellHeal is the one heal applier (slice 3b): the spell's own heal
+// (spellHealConditionId) on the target at the spell's magnitude as a regen
+// multiplier (floored at 1x), for the heal's own duration scaled by the
+// caster (healTriggers). Each heal spell has its own multiplier and duration
+// (messaging M6 slice 1, owner rulings R8 and R9). The heal travels the
+// condition event, which replaces any other heal the target holds and names
+// the caster; when the heal's own start lines tell every audience, they are
+// the only lines (owner ruling R11), and a re-cast of a heal already held
+// keeps the lines below. Every pairing gains it; a mob's heal on a player
+// used to apply nothing (audit row 3). The dead player-to-player crit boost
+// is gone (owner ruling 3).
 //
 // A player healing a mob queues events.Healed, which the AI companion reads
 // as "somebody tended me"; the event names a mob, so no other pairing
@@ -164,16 +169,20 @@ func applySpellHeal(c spellEffectCtx) int {
 	if regenMult < 1.0 {
 		regenMult = 1.0
 	}
-	durationRounds := calcSpellDuration(c.spell.BaseFolds, skill, stat) / 2
-	if durationRounds < 6 {
-		durationRounds = 6
-	}
+	healId := spellHealConditionId(c.spell)
 	casterName, targetName := c.casterName(), c.targetName()
 	casterHidden, targetHidden := c.hiddenFromRoom()
 	if u, m := c.casterUser(), c.targetMob(); u != nil && m != nil {
 		events.AddToQueue(events.Healed{HealerUserId: u.UserId, MobInstanceId: m.InstanceId})
 	}
-	_ = c.targetChar().AddConditionMagnitude(conditions.ConditionIdRegenerating, durationRounds, regenMult, "heal spell")
+	narrated := spellConditionNarratesStart(c, healId)
+	if target := spellConditionTargetOf(c.target); target != nil {
+		target.QueueCondition(events.Condition{ConditionId: healId, Source: "heal spell",
+			Triggers: healTriggers(healId, stat, skill), Magnitude: regenMult, Caster: c.casterRef(), CastStart: narrated})
+	}
+	if narrated {
+		return 0
+	}
 	if c.selfCast() {
 		messaging.SendTrio(messaging.Trio{
 			Actor: messaging.Say(messaging.CategorySpellVital,
@@ -257,6 +266,42 @@ func applySpellShield(c spellEffectCtx) int {
 			`A shimmering barrier surrounds %s.`, roomName(targetHidden, targetName))),
 	}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 	return 0
+}
+
+// spellHealConditionId is the heal a heal spell lands: its one
+// condition_ids entry, a heal-family record (the root guard
+// TestShieldAndHealSpellsLandTheirOwnCondition holds the shipped spells to
+// that), or Regenerating for a spell that names none.
+func spellHealConditionId(spell *spells.SpellData) int {
+	if len(spell.ConditionIds) > 0 {
+		return spell.ConditionIds[0]
+	}
+	return conditions.ConditionIdRegenerating
+}
+
+// spellDurationTerm is the caster's part of every universal spell duration
+// (calcSpellDuration): 10 + willpower/20 + spellcasting skill/2.
+func spellDurationTerm(spellcastingSkill int, willpower int) float64 {
+	return 10.0 + float64(willpower)/20.0 + float64(spellcastingSkill)/2.0
+}
+
+// untrainedDurationTerm is spellDurationTerm for an untrained caster at the
+// stat centre of 100: the caster a heal's authored duration is written for.
+var untrainedDurationTerm = spellDurationTerm(0, 100)
+
+// healTriggers is how many rounds a heal lasts from this caster: the heal
+// condition's authored trigger count, which is its duration for an untrained
+// caster of average willpower, scaled by how much longer this caster's spells
+// last (spellDurationTerm), at least one. A heal's identity, long or short,
+// is its own data, so each heal can be gentle and long or strong and short
+// whatever its casting time (owner ruling R9); the caster still lengthens
+// every heal as before.
+func healTriggers(conditionId int, willpower int, spellcastingSkill int) int {
+	spec := conditions.GetConditionSpec(conditionId)
+	if spec == nil {
+		return 1
+	}
+	return max(1, int(math.Round(float64(spec.TriggerCount)*spellDurationTerm(spellcastingSkill, willpower)/untrainedDurationTerm)))
 }
 
 // spellWardConditionId is the ward a shield spell lands: its one

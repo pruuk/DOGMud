@@ -303,3 +303,27 @@ condition|136|start_actee => Living Chrysalis weaves a cocoon around you.
 condition|136|start_observer => Tendrils of living Chrysalis weave a cocoon around <ansi fg="username">Aliceia</ansi>.
 condition|136|end_actee => Your Chrysalis Cocoon splits and flakes away.
 condition|136|end_observer => The cocoon around <ansi fg="username">Aliceia</ansi> splits and flakes away.
+condition|137|start_actor => Your healing magic settles gently into <ansi fg="username">Aliceia</ansi>'s wounds.
+condition|137|start_actee => Gentle healing magic settles into your wounds.
+condition|137|start_observer => A soft glow settles over <ansi fg="username">Aliceia</ansi>'s wounds.
+condition|137|end_actee => The gentle healing in your wounds runs its course.
+condition|138|start_actor => Your healing magic surges into <ansi fg="username">Aliceia</ansi>'s wounds.
+condition|138|start_actee => Healing magic surges into your wounds.
+condition|138|start_observer => A bright glow surges over <ansi fg="username">Aliceia</ansi>'s wounds.
+condition|138|end_actee => The surge of healing in your wounds runs its course.
+condition|139|start_actor => A light wash of your healing magic eases <ansi fg="username">Aliceia</ansi>'s wounds.
+condition|139|start_actee => A light wash of healing magic eases your wounds.
+condition|139|start_observer => A light wash of healing settles over <ansi fg="username">Aliceia</ansi>.
+condition|139|end_actee => The light wash of healing fades from your wounds.
+condition|140|start_actor => Your shared healing hums steadily through <ansi fg="username">Aliceia</ansi>.
+condition|140|start_actee => A deep, steady healing hums through your body.
+condition|140|start_observer => A steady green glow hums around <ansi fg="username">Aliceia</ansi>.
+condition|140|end_actee => The steady healing hum in your body fades.
+condition|141|start_actor => A tide of your healing magic washes over <ansi fg="username">Aliceia</ansi>.
+condition|141|start_actee => A powerful tide of healing magic washes over you.
+condition|141|start_observer => A tide of warm green light washes over <ansi fg="username">Aliceia</ansi>.
+condition|141|end_actee => The tide of healing magic ebbs from your wounds.
+condition|142|start_actor => Your arc-light starts welding <ansi fg="username">Aliceia</ansi>'s plating back together.
+condition|142|start_actee => Arc-light starts welding your plating back together.
+condition|142|start_observer => Hard blue-white arc-light welds <ansi fg="username">Aliceia</ansi>'s plating back together.
+condition|142|end_actee => The arc-light welding your plating sputters out.

@@ -1,0 +1,17 @@
+conditionid: 137
+name: Mend Flesh
+description: Gentle healing magic knits your wounds closed, slowly but for a
+  long while. Another healing spell takes its place rather than adding to it.
+# The heal family (messaging M6 slice 1, owner rulings R4 and R6): a new heal
+# spell replaces this one instead of stacking. Potions and salves still stack.
+family: heal
+triggerrate: 1 round
+# The duration at an untrained caster of average willpower; the spell scales
+# it by its caster (applySpellHeal, healTriggers). Long and gentle (R9).
+triggercount: 45
+effects:
+  regen_mult: magnitude
+start_actor: "Your healing magic settles gently into {actee}'s wounds."
+start_actee: "Gentle healing magic settles into your wounds."
+start_observer: "A soft glow settles over {actee}'s wounds."
+end_actee: "The gentle healing in your wounds runs its course."

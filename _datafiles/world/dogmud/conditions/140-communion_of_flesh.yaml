@@ -1,0 +1,16 @@
+conditionid: 140
+name: Communion of Flesh
+description: A deep, steady healing hums through your body and keeps mending
+  you for a long while. Another healing spell takes its place rather than
+  adding to it.
+family: heal
+triggerrate: 1 round
+# The duration at an untrained caster of average willpower; the spell scales
+# it by its caster (applySpellHeal, healTriggers). Long and steady (R9).
+triggercount: 90
+effects:
+  regen_mult: magnitude
+start_actor: "Your shared healing hums steadily through {actee}."
+start_actee: "A deep, steady healing hums through your body."
+start_observer: "A steady green glow hums around {actee}."
+end_actee: "The steady healing hum in your body fades."
