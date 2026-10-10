@@ -86,6 +86,18 @@ func TestTemplateFreeze_StatusReadsTheBrokenLimbRecord(t *testing.T) {
 // raw physical points read "fortified" under the old raw reading and "heavy"
 // on the curve (about 67%).
 func TestTemplateFreeze_StatusDefensesReadTheCurve(t *testing.T) {
+	// Pin the shipped curve on all three channels (restored on cleanup)
+	// rather than relying on the Go defaults equalling config.yaml.
+	cfg := configs.GetConfig()
+	b := &cfg.Balance
+	b.PhysicalMitigationKnee, b.PhysicalMitigationCap = 0.50, 0.90
+	b.PhysicalMitigationAim, b.PhysicalMitigationBend = 0.05, 0.40
+	b.MagicalMitigationKnee, b.MagicalMitigationCap = 0.50, 0.90
+	b.MagicalMitigationAim, b.MagicalMitigationBend = 0.05, 0.40
+	b.ConvictionMitigationKnee, b.ConvictionMitigationCap = 0.50, 0.90
+	b.ConvictionMitigationAim, b.ConvictionMitigationBend = 0.05, 0.40
+	configs.SetConfigForTest(t, cfg)
+
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	useDogmudTemplates(t)
