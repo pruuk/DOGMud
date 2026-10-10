@@ -1474,7 +1474,7 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 	if isCrit {
 		result.Crit = true
 		result.ConditionTarget = sdp.critConditions
-		// Crits bypass mitigation up to the knee, so they roll around the UNmitigated mean —
+		// Crits bypass mitigation up to the knee, so they roll around the UNmitigated mean,
 		// and therefore must take their spread from that same mean. RollStat
 		// derives stdDev = mean * RollSpread internally, which is the only way
 		// to keep the two in step.
