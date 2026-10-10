@@ -218,7 +218,7 @@ func executeCounterTaunt(counterer, target *characters.Character) CounterTauntRe
 		side.SkillRank,
 		out.AttackerCrit,
 		target.GetConvictionMitigation(),
-		combat.MitigationCap(combat.ChannelConviction),
+		combat.MitigationCurveFor(combat.ChannelConviction),
 	)
 	if mult := out.DamageMultiplier; mult < 1.0 {
 		dmg = int(math.Round(float64(dmg) * mult))

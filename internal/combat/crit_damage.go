@@ -92,7 +92,7 @@ func OpeningStrikeMultiplier(attacker *characters.Character, channelKnob float64
 // The melee channel deliberately does NOT use this. calcHitDamage carries
 // backstab consumption and crit-condition bookkeeping, and floors at 0 rather than
 // 1, so folding it in here would either lose behaviour or bloat the signature.
-func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap, bonusCritMult float64) int {
+func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mitigPct float64, curve MitigationCurve, bonusCritMult float64) int {
 	mean := rawDmg
 	if isCrit {
 		if bonusCritMult == 0 {
@@ -100,7 +100,7 @@ func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mit
 		}
 		mean *= CritDamageMultiplier(skillRank) * bonusCritMult
 	} else {
-		mean = ApplyMitigation(rawDmg, mitigPct, mitigCap)
+		mean = ApplyMitigation(rawDmg, mitigPct, curve)
 	}
 
 	dmg := int(math.Round(dice.RollStat(mean).Value))
@@ -113,6 +113,6 @@ func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mit
 
 // CritOrMitigatedDamage rolls the damage for one spell or conviction hit, with
 // no bonus multiplier. See CritOrMitigatedDamageScaled.
-func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap float64) int {
-	return CritOrMitigatedDamageScaled(rawDmg, skillRank, isCrit, mitigPct, mitigCap, 1.0)
+func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct float64, curve MitigationCurve) int {
+	return CritOrMitigatedDamageScaled(rawDmg, skillRank, isCrit, mitigPct, curve, 1.0)
 }

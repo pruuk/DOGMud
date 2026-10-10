@@ -203,8 +203,10 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 	if mitigMult <= 0 {
 		mitigMult = 1.0
 	}
+	// Armor piercing scales RAW mitigation, then the curve bends it (#465):
+	// a stomp halves the defender's raw sum before the knee is applied.
 	mitig := p.Defender.GetPhysicalMitigation() * mitigMult
-	cap := MitigationCap(ChannelPhysical)
+	curve := MitigationCurveFor(ChannelPhysical)
 
 	// U6b Task 6: ONE contest through the channel seam. The defence is a
 	// SET (DefenceEntriesFor: a shieldless defender never rolls block),
@@ -249,7 +251,7 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 	if p.Attacker != nil && p.Attacker.IsMob {
 		rawDmg *= float64(configs.GetBalanceConfig().MobDamageMultiplier)
 	}
-	dmg := CritOrMitigatedDamageScaled(rawDmg, p.Attack.SkillRank, result.Crit, mitig, cap, p.BonusCritMultiplier)
+	dmg := CritOrMitigatedDamageScaled(rawDmg, p.Attack.SkillRank, result.Crit, mitig, curve, p.BonusCritMultiplier)
 	if !result.Crit {
 		dmg = int(float64(dmg) * out.DamageMultiplier)
 		if out.DamageMultiplier > 0 && dmg < 1 {

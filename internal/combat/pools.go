@@ -6,7 +6,7 @@ import (
 )
 
 // DamageChannel is NOT one of the four authored axes. It is the damage
-// pipeline's pool: which scale knob, which mitigation cap, which stat
+// pipeline's pool: which scale knob, which mitigation curve, which stat
 // toughens on a defensive crit. Nothing declares it in data; these functions
 // derive it from combatvocab (owner ruling 2026-09-18), replacing three
 // switches that used to encode the same facts by hand.

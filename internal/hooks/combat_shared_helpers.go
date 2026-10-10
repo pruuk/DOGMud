@@ -88,7 +88,8 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 		// Mitigation is keyed by the DAMAGE type (combat.MitigationChannelFor):
 		// physical harm meets physical mitigation, mental meets magical,
 		// social meets conviction. A non-harm cast never reaches this helper.
-		var mitigPct, cap float64
+		var mitigPct float64
+		var curve combat.MitigationCurve
 		if ch, ok := combat.MitigationChannelFor(spellData.DamageType); ok {
 			switch ch {
 			case combat.ChannelPhysical:
@@ -98,17 +99,17 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 			case combat.ChannelConviction:
 				mitigPct = target.GetConvictionMitigation()
 			}
-			cap = combat.MitigationCap(ch)
+			curve = combat.MitigationCurveFor(ch)
 		} else {
 			mudlog.Error("calcSpellDamageForCharacter", "spell", spellData.SpellId, "error", "non-harm spell reached the damage pipeline")
-			cap = 0.75
+			curve = combat.MitigationCurveFor(combat.ChannelPhysical)
 		}
 
 		// Chunk 5.11g: a crit bypasses mitigation AND scales by the caster's
 		// spellcasting rank. Before this, a crit against an unmitigated target
 		// dealt exactly a normal hit's damage, so crit worth was set purely by
 		// the defender's armour.
-		return combat.CritOrMitigatedDamage(rawDmg, skillLevel, isCrit, mitigPct, cap)
+		return combat.CritOrMitigatedDamage(rawDmg, skillLevel, isCrit, mitigPct, curve)
 	}
 
 	// Legacy fallback: magnitude-based damage (no mitigation, no stat scaling)
@@ -321,7 +322,7 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 			combat.ChannelPhysical,
 		)
 		dmgMean := combat.ApplyMitigation(raw, attacker.GetPhysicalMitigation(),
-			combat.MitigationCap(combat.ChannelPhysical))
+			combat.MitigationCurveFor(combat.ChannelPhysical))
 		roll := dice.RollStat(dmgMean)
 		dmg := int(roll.Value)
 		if dmg < 1 {

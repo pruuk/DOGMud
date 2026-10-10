@@ -99,34 +99,41 @@ func ResourceMultiplier(current, max int, penaltyMax float64) float64 {
 	return 1.0 - penaltyMax*math.Pow(1.0-ratio, curve)
 }
 
-// ApplyMitigation reduces raw damage by a mitigation percentage, capped.
-// final = raw × (1 - min(mitigationPct, cap))
-// mitigationPct and cap are fractions (0.0–1.0).
-func ApplyMitigation(rawDmg float64, mitigationPct float64, cap float64) float64 {
-	if mitigationPct < 0 {
-		mitigationPct = 0
-	}
-	if cap <= 0 {
-		cap = 0.75
-	}
-	if mitigationPct > cap {
-		mitigationPct = cap
-	}
-	return rawDmg * (1.0 - mitigationPct)
+// ApplyMitigation reduces raw damage by raw mitigation bent through curve
+// (#465): final = raw x (1 - EffectiveMitigation(mitigationPct, curve)).
+// mitigationPct is the uncapped fraction Character.Get*Mitigation returns,
+// after any armor piercing has scaled it; the curve, not the caller, bounds it.
+func ApplyMitigation(rawDmg float64, mitigationPct float64, curve MitigationCurve) float64 {
+	return rawDmg * (1.0 - EffectiveMitigation(mitigationPct, curve))
 }
 
-// MitigationCap returns the configured cap for a given damage channel.
-func MitigationCap(channel DamageChannel) float64 {
+// MitigationCurveFor returns the configured mitigation curve for a damage
+// channel (#465), four knobs per channel. An unknown channel reads the
+// physical curve, so a caller that falls through still meets a real curve.
+func MitigationCurveFor(channel DamageChannel) MitigationCurve {
 	bal := configs.GetBalanceConfig()
 	switch channel {
-	case ChannelPhysical:
-		return float64(bal.PhysicalMitigationCap)
 	case ChannelMagical:
-		return float64(bal.MagicalMitigationCap)
+		return MitigationCurve{
+			Knee: float64(bal.MagicalMitigationKnee),
+			Cap:  float64(bal.MagicalMitigationCap),
+			Aim:  float64(bal.MagicalMitigationAim),
+			Bend: float64(bal.MagicalMitigationBend),
+		}
 	case ChannelConviction:
-		return float64(bal.ConvictionMitigationCap)
+		return MitigationCurve{
+			Knee: float64(bal.ConvictionMitigationKnee),
+			Cap:  float64(bal.ConvictionMitigationCap),
+			Aim:  float64(bal.ConvictionMitigationAim),
+			Bend: float64(bal.ConvictionMitigationBend),
+		}
 	default:
-		return 0.75
+		return MitigationCurve{
+			Knee: float64(bal.PhysicalMitigationKnee),
+			Cap:  float64(bal.PhysicalMitigationCap),
+			Aim:  float64(bal.PhysicalMitigationAim),
+			Bend: float64(bal.PhysicalMitigationBend),
+		}
 	}
 }
 

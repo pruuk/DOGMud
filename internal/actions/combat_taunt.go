@@ -260,7 +260,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		side.SkillRank,
 		isCrit,
 		target.Char.GetConvictionMitigation(),
-		combat.MitigationCap(combat.ChannelConviction),
+		combat.MitigationCurveFor(combat.ChannelConviction),
 	)
 
 	// The defence multiplier from the SAME contest: 1.0 on an attack win,

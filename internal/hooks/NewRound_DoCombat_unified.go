@@ -371,9 +371,9 @@ func applyCombatDamageBonuses(atk, def actions.Actor, res *combat.AttackResult) 
 	if physReturnPct > 0 || magReturnPct > 0 {
 		dealt := float64(res.DamageToTarget)
 		returnDmg := combat.ReflectDamage(dealt, physReturnPct,
-			atkChar.GetPhysicalMitigation(), combat.MitigationCap(combat.ChannelPhysical))
+			atkChar.GetPhysicalMitigation(), combat.MitigationCurveFor(combat.ChannelPhysical))
 		returnDmg += combat.ReflectDamage(dealt, magReturnPct,
-			atkChar.GetMagicalMitigation(), combat.MitigationCap(combat.ChannelMagical))
+			atkChar.GetMagicalMitigation(), combat.MitigationCurveFor(combat.ChannelMagical))
 		if returnDmg > 0 {
 			atkChar.ApplyHarm(characters.PoolHealth, returnDmg, charActorRef(defChar))
 			emitReturnDamageText(atk, def, returnDmg)

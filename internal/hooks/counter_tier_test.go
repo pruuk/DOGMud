@@ -97,7 +97,7 @@ func TestRiposte_ReadsCounterDamageKnob(t *testing.T) {
 	wantRaw := combat.CalcRawDamage(defender.Stats.Strength.ValueAdj,
 		defender.GetCombatSkillLevel(), 0.5, combat.ChannelPhysical)
 	wantMean := combat.ApplyMitigation(wantRaw, attacker.GetPhysicalMitigation(),
-		combat.MitigationCap(combat.ChannelPhysical))
+		combat.MitigationCurveFor(combat.ChannelPhysical))
 	require.InDelta(t, wantMean, meanHalf, wantMean*0.10,
 		"riposte at knob 0.5 must keep the old 0.5 literal's damage mean")
 

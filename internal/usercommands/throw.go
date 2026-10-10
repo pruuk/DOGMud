@@ -409,8 +409,8 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		if hasDamage {
 			rawDmg := combat.CalcRawDamage(dexterity, skullduggery, spec.DamageMultiplier, combat.ChannelPhysical)
 			mitPct := mob.Character.GetPhysicalMitigation()
-			mitCap := combat.MitigationCap(combat.ChannelPhysical)
-			dmg = combat.CritOrMitigatedDamage(rawDmg, skullduggery, out.AttackerCrit, mitPct, mitCap)
+			mitCurve := combat.MitigationCurveFor(combat.ChannelPhysical)
+			dmg = combat.CritOrMitigatedDamage(rawDmg, skullduggery, out.AttackerCrit, mitPct, mitCurve)
 			if !out.AttackerCrit {
 				dmg = int(float64(dmg) * out.DamageMultiplier)
 				if out.DamageMultiplier > 0 && dmg < 1 {

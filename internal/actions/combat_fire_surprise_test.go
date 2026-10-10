@@ -86,7 +86,10 @@ func pinRangedSurpriseBalance(t *testing.T) {
 	b.SkillMultiplierBase = 1.0
 	b.SkillMultiplierMax = 3.0
 	b.SkillSoftCap = 50
-	b.PhysicalMitigationCap = 0.75
+	b.PhysicalMitigationKnee = 0.50
+	b.PhysicalMitigationCap = 0.90
+	b.PhysicalMitigationAim = 0.05
+	b.PhysicalMitigationBend = 0.40
 	b.StaminaPenaltyMax = 0.28
 	b.HealthPenaltyMax = 0.28
 	b.ResourcePenaltyCurve = 2.0

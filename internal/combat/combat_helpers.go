@@ -487,7 +487,7 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 	}
 
 	// Apply target's physical mitigation
-	dmgMean := ApplyMitigation(rawDmg, targetChar.GetPhysicalMitigation(), MitigationCap(ChannelPhysical))
+	dmgMean := ApplyMitigation(rawDmg, targetChar.GetPhysicalMitigation(), MitigationCurveFor(ChannelPhysical))
 
 	// Track pre-mitigation damage for crits
 	rawDmgForCrit := rawDmg
@@ -1964,9 +1964,9 @@ func applyPetDamage(result *AttackResult, sourceChar *characters.Character, targ
 	// (combat_taunt.go) channels has nothing to attach to. Deliberately not
 	// adding one — a pet crit is a separate design decision, not a bug fix.
 	petMitigation := targetChar.GetPhysicalMitigation()
-	petMitigationCap := MitigationCap(ChannelPhysical)
-	petBaseDmg = ApplyMitigation(petBaseDmg, petMitigation, petMitigationCap)
-	petVar = ApplyMitigation(petVar, petMitigation, petMitigationCap)
+	petMitigationCurve := MitigationCurveFor(ChannelPhysical)
+	petBaseDmg = ApplyMitigation(petBaseDmg, petMitigation, petMitigationCurve)
+	petVar = ApplyMitigation(petVar, petMitigation, petMitigationCurve)
 
 	// Pet damage is claws/bite/etc — natural-sharp band.
 	petCat := messaging.CategoryHitNaturalSharp
