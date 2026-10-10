@@ -107,10 +107,11 @@ var (
 // arity cannot tell them from the silent door: see the light-spell entry
 // for internal/hooks/light_spell.go.
 var conditionApplyPathAllowlist = map[string]string{
-	// ── The sanctioned consumer of the event ────────────────────────────────
-	"internal/hooks/Condition_ApplyConditions.go|118": "this IS the hook the event feeds; it is where every routed condition is finally applied",
-	"internal/hooks/Condition_ApplyConditions.go|120": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	// ── The sanctioned consumer of the event (re-keyed messaging M6 slice 1,
+	// when the family rival read landed above the adds) ──────────────────
 	"internal/hooks/Condition_ApplyConditions.go|122": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|124": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|126": "this IS the hook the event feeds; it is where every routed condition is finally applied",
 
 	// ── silent-start conditions whose applier narrates the moment itself ────
 	"internal/actions/combat_throttle.go|149": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",

@@ -144,7 +144,7 @@ func roomName(hidden bool, printed string) string {
 
 func (c spellEffectCtx) critTag() string {
 	if c.out.AttackerCrit {
-		return ` <ansi fg="yellow">[CRIT!]</ansi>`
+		return critMarker
 	}
 	return ""
 }
