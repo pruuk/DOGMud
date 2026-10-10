@@ -72,6 +72,16 @@ func TestMapOccupantMarkers_DrawnFromLevelFour(t *testing.T) {
 		"players are marked last, so they win over the Skeleton in the same room")
 }
 
+// A client that reports a tiny or zero-height screen must never shrink the
+// map below the standard size (it panicked on a negative height).
+func TestMapSize_WideNeverBelowStandard(t *testing.T) {
+	for _, tc := range []struct{ sw, sh int }{{80, 0}, {10, 5}, {0, 0}, {80, 24}} {
+		w, h := mapSizeFor(4, true, tc.sw, tc.sh)
+		assert.GreaterOrEqual(t, w, 65, "screen %dx%d width", tc.sw, tc.sh)
+		assert.GreaterOrEqual(t, h, 21, "screen %dx%d height", tc.sw, tc.sh)
+	}
+}
+
 // `help map` promises `map wide` at level 4; the screen-size sizing sat under
 // the same unreachable skillLevel > 4 (owner call 2026-10-10).
 func TestMapSize_WideFromLevelFour(t *testing.T) {

@@ -69,6 +69,9 @@ const (
 	// changed anything although `help map` promises it (owner call 2026-10-10).
 	wideMapLevel = 4
 
+	standardMapWidth  = 65
+	standardMapHeight = 21
+
 	mapBorderWidth  = 14
 	mapBorderHeight = 6 // Title, map top, map bottom, 2 legend, blank line.
 )
@@ -77,13 +80,16 @@ const (
 // a wide map of wideMapLevel or higher fills the client's screen less the
 // frame, with an even height.
 func mapSizeFor(skillLevel int, wide bool, screenWidth, screenHeight int) (int, int) {
-	width, height := 65, 21
+	width, height := standardMapWidth, standardMapHeight
 	if wide && skillLevel >= wideMapLevel {
-		width = screenWidth - mapBorderWidth
-		height = screenHeight - mapBorderHeight
-		if height%2 != 0 {
-			height--
+		// Wide never shrinks below the standard map: a tiny or unreported
+		// screen would otherwise give a negative size.
+		width = max(width, screenWidth-mapBorderWidth)
+		h := screenHeight - mapBorderHeight
+		if h%2 != 0 {
+			h--
 		}
+		height = max(height, h)
 	}
 	return width, height
 }
@@ -137,12 +143,8 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	var err error
 
-	sw := 80
-	sh := 40
-	if user.ClientSettings().Display.ScreenWidth > 0 {
-		sw = int(user.ClientSettings().Display.ScreenWidth)
-		sh = int(user.ClientSettings().Display.ScreenHeight)
-	}
+	sw := user.ClientSettings().Display.GetScreenWidth()
+	sh := user.ClientSettings().Display.GetScreenHeight()
 	mapWidth, mapHeight := mapSizeFor(skillLevel, rest == "wide", sw, sh)
 
 	zMapper := mapper.GetMapper(roomId)
@@ -180,9 +182,6 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	c.OverrideSymbol(user.Character.RoomId, '@', `You`)
 
 	mapOutput := zMapper.GetLimitedMap(roomId, c)
-	if skillLevel > 4 {
-		//mapRender = m.GetFullMap(roomId, c)
-	}
 
 	legend := mapOutput.GetLegend(keywords.GetAllLegendAliases(room.Zone))
 
