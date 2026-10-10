@@ -1840,6 +1840,13 @@ without that line keeps the weave. Disruptors need no change: the mob is
 casting for the whole windup, so `InterruptTargetCast` lands in any round.
 `mob_min_cast_rounds_test.go` pins all of it.
 
+A mob's AREA harm cast skips the fold step's target-gone check
+(`castTargetGone`): its cast-time list is the whole room and goes stale
+during a windup, so one killed add or one downed or departed player used to
+fizzle the cast with no disruptor. `resolveMobSpell` re-reads the room at
+landing and skips downed players for harm, fizzling only when no one is
+left. Single-target casts and players' casts keep the check.
+
 ### Chunk 4f (U10: opposed contest, not chance-based)
 
 **`processFoldRound`** in `combat_shared_helpers.go` replaced the earlier

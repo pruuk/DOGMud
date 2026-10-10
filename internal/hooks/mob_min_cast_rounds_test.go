@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -87,6 +88,62 @@ func TestMobMinCastRounds_AbsentFieldCompletesInOneRound(t *testing.T) {
 	handleMobFoldCasting(m, room)
 	require.False(t, m.Character.IsCasting(), "without the field the cast completes on its first step, as before")
 	require.Zero(t, countContaining(drainPlain(1), windupWarning))
+}
+
+// windupAreaMob is windupMob with an AREA harm spell whose cast-time target
+// list holds both players and an add (instance 999) that is gone by the
+// held round, as a killed add's instance is.
+func windupAreaMob(t *testing.T) (*mobs.Mob, *rooms.Room) {
+	t.Helper()
+	m, room := windupMob(t, 2)
+	area := windupSpell(2)
+	area.Targeting = combatvocab.TargetArea
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-windup": area}))
+	m.Character.Activity = activity.NewMachine()
+	require.NoError(t, m.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-windup", FoldsNeeded: 2, FoldsPerRound: 57,
+			TotalConvictionCost: 20, TargetUserIds: []int{1, 2}, TargetMobInstanceIds: []int{999}},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+	return m, room
+}
+
+// Branch review of #480: an area harm cast checked its cast-time target list
+// on every fold step, so one dead add, or one downed or departed player,
+// fizzled the whole Core Discharge without a disruptor. resolveMobSpell
+// re-reads the room at landing, so the cast now lands on whoever remains.
+func TestMobAreaWindup_KilledAddDoesNotFizzleIt(t *testing.T) {
+	m, room := windupAreaMob(t)
+	require.Nil(t, mobs.GetInstance(999), "fixture: the add is gone")
+
+	handleMobFoldCasting(m, room)
+	require.True(t, m.Character.IsCasting(), "a dead add must not fizzle the held round")
+	handleMobFoldCasting(m, room)
+	require.False(t, m.Character.IsCasting())
+	require.NotZero(t, countContaining(drainPlain(2), "Test Bolt"), "the cast lands on the players still standing")
+}
+
+func TestMobAreaWindup_DownedPlayerDoesNotFizzleIt(t *testing.T) {
+	m, room := windupAreaMob(t)
+	handleMobFoldCasting(m, room)
+	require.True(t, m.Character.IsCasting())
+
+	downed := users.GetByUserId(1)
+	downed.Character.Health = 0
+	drainPlain(1)
+	drainPlain(2)
+	handleMobFoldCasting(m, room)
+	require.False(t, m.Character.IsCasting(), "round 2 resolves despite a downed player")
+	require.NotZero(t, countContaining(drainPlain(2), "Test Bolt"), "the standing player is hit")
+	require.Equal(t, 0, downed.Character.Health, "the downed player is not struck again")
+}
+
+// The fizzle stays for a single-target cast: its one target down ends it.
+func TestMobSingleTargetFold_DownedTargetStillFizzles(t *testing.T) {
+	m, room := windupMob(t, 2)
+	users.GetByUserId(2).Character.Health = 0
+	handleMobFoldCasting(m, room)
+	require.False(t, m.Character.IsCasting(), "a single-target harm cast at a downed player ends")
+	require.NotZero(t, countContaining(drainPlain(1), "fizzles"))
 }
 
 // The field is a mob-cast rule. A player's cast of a spell carrying it steps

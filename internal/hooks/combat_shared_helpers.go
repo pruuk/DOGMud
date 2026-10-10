@@ -568,6 +568,39 @@ func cancelDamageConditions(ch *characters.Character) {
 	ch.CancelConditionsWithFlag(conditions.CancelOnDamage)
 }
 
+// castTargetGone is processFoldRound's target-gone check: any dead or missing
+// target in the cast-time list, or a downed player for a harm spell, breaks
+// the spell.
+//
+// Not for a MOB's area harm cast (#480 review). Its cast-time list is the
+// whole room, and resolveMobSpell re-reads the room at landing
+// (mobAreaHarmTargets, or resolveMobDrainArea for a drain), fizzling only
+// when no one is left. Checking the stale list here let one killed add, or
+// one downed or departed player, cancel a boss windup with no disruptor.
+// A player's area cast and every single-target cast keep the check.
+func castTargetGone(char *characters.Character, cs activity.CastingData, spellData *spells.SpellData) bool {
+	if char.GetUserId() == 0 && spellData != nil && spellData.IsHarm() &&
+		spellData.Targeting == combatvocab.TargetArea {
+		return false
+	}
+	for _, mobInstId := range cs.TargetMobInstanceIds {
+		if m := mobs.GetInstance(mobInstId); m == nil || m.Character.Health < 1 {
+			return true
+		}
+	}
+	for _, targetUserId := range cs.TargetUserIds {
+		u := users.GetByUserId(targetUserId)
+		if u == nil {
+			return true
+		}
+		// For harm spells, downed players count as gone.
+		if u.Character.Health < 1 && spellData != nil && spellData.IsHarm() {
+			return true
+		}
+	}
+	return false
+}
+
 // =============================================================================
 // processFoldRound — shared fold casting step for both players and mobs.
 //
@@ -675,30 +708,7 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 		}
 	}
 
-	// Target-gone check: any dead/nil target breaks the spell.
-	targetGone := false
-	for _, mobInstId := range cs.TargetMobInstanceIds {
-		m := mobs.GetInstance(mobInstId)
-		if m == nil || m.Character.Health < 1 {
-			targetGone = true
-			break
-		}
-	}
-	if !targetGone {
-		for _, targetUserId := range cs.TargetUserIds {
-			u := users.GetByUserId(targetUserId)
-			if u == nil {
-				targetGone = true
-				break
-			}
-			// For harm spells, downed players count as gone.
-			if u.Character.Health < 1 && spellData != nil && spellData.IsHarm() {
-				targetGone = true
-				break
-			}
-		}
-	}
-	if targetGone {
+	if castTargetGone(char, cs, spellData) {
 		clearCastingActivity(char, activity.TriggerConcentrationBreak)
 		return FoldRoundResult{TargetGone: true, CastingData: cs}
 	}
