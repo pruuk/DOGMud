@@ -1474,7 +1474,7 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 	if isCrit {
 		result.Crit = true
 		result.ConditionTarget = sdp.critConditions
-		// Crits bypass mitigation, so they roll around the UNmitigated mean —
+		// Crits bypass mitigation up to the knee, so they roll around the UNmitigated mean —
 		// and therefore must take their spread from that same mean. RollStat
 		// derives stdDev = mean * RollSpread internally, which is the only way
 		// to keep the two in step.
@@ -1970,7 +1970,7 @@ func applyPetDamage(result *AttackResult, sourceChar *characters.Character, targ
 	// value, and preserves the pet's authored coefficient of variation.
 	//
 	// Pets have no crit path: nothing here inspects a Z-score or sets
-	// result.Crit, so the "crits bypass mitigation" convention used by the melee
+	// result.Crit, so the "crits bypass mitigation up to the knee" convention used by the melee
 	// (combat_helpers.go), spell (combat_shared_helpers.go) and taunt
 	// (combat_taunt.go) channels has nothing to attach to. Deliberately not
 	// adding one — a pet crit is a separate design decision, not a bug fix.

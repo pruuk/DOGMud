@@ -252,8 +252,8 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	// Fumbles stayed self-relative and returned above.
 	isCrit := out.AttackerCrit
 
-	// Chunk 5.11g: a crit bypasses the target's conviction mitigation AND
-	// scales by the taunter's rhetoric rank. Before this, a crit against an
+	// Chunk 5.11g: a crit bypasses the target's conviction mitigation up to the
+	// knee AND scales by the taunter's rhetoric rank. Before this, a crit against an
 	// unmitigated target dealt exactly a normal hit's damage.
 	dmg := combat.CritOrMitigatedDamage(
 		rawDmg,

@@ -28,7 +28,7 @@ type SkillMoveResult struct {
 
 	// Crit is the attacker's margin-derived critical, decided ONCE inside
 	// ResolveChannelAttack against CritBarFor's pair bar (U6b). A crit
-	// bypasses mitigation via CritOrMitigatedDamage. Only ResolveChannelAttack
+	// bypasses mitigation up to the knee via CritOrMitigatedDamage. Only ResolveChannelAttack
 	// sets it.
 	Crit bool
 
@@ -231,7 +231,7 @@ func executeSkillMoveWithRunner(p SkillMoveParams, runner defenceContestRunner) 
 	// The contest WIN.
 	result.Hit = !out.Defended
 
-	// Damage pipeline: crit bypasses mitigation and scales by
+	// Damage pipeline: crit bypasses mitigation up to the knee, scales by
 	// CritDamageMultiplier(RAW rank); non-crits mitigate then scale by
 	// the defence multiplier (1.0 on an attack win by construction, 0.5
 	// on a floored save, 0.0-0.5 on a rolled defensive win).

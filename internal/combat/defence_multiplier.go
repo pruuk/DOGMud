@@ -30,7 +30,7 @@ import (
 // counterattack, and is resolved before this is reached.
 //
 // Applied AFTER item mitigation. There is no double count: a crit bypasses item
-// mitigation and never receives a defence multiplier, because an attack crit
+// mitigation up to the knee and never receives a defence multiplier, because an attack crit
 // beats a non-crit defence outright.
 //
 // The 0.5 and the crit threshold are STRUCTURAL, not tunables. 0.5 is the value

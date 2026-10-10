@@ -105,7 +105,7 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 			curve = combat.MitigationCurveFor(combat.ChannelPhysical)
 		}
 
-		// Chunk 5.11g: a crit bypasses mitigation AND scales by the caster's
+		// Chunk 5.11g: a crit bypasses mitigation up to the knee AND scales by the caster's
 		// spellcasting rank. Before this, a crit against an unmitigated target
 		// dealt exactly a normal hit's damage, so crit worth was set purely by
 		// the defender's armour.

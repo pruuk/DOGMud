@@ -401,7 +401,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		hit := !out.Defended
 
 		// Damage — U6b Task 15: the multiplier curve and the crit tier. A
-		// crit bypasses mitigation and scales by CritDamageMultiplier(raw
+		// crit bypasses mitigation up to the knee, scales by CritDamageMultiplier(raw
 		// rank); a defended throw still splashes partial damage along the
 		// shared DefenceMitigation curve (0.5 on a bare defensive win, down
 		// to 0.0 on a defensive crit).
