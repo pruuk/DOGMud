@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -37,6 +38,27 @@ func flattenDescription(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
 
+// displacedGearText is the line a player reads when a mutation pushes a worn
+// item off their body into the pack (#481).
+func displacedGearText(g characters.DisplacedGear) string {
+	switch g.Reason {
+	case characters.DisplacedByDisabledLegs:
+		return fmt.Sprintf(`Your new tail leaves no room for <ansi fg="item">%s</ansi>, so you take it off.`, g.ItemName)
+	}
+	return fmt.Sprintf(`Your changed body leaves no room for <ansi fg="item">%s</ansi>, so you take it off.`, g.ItemName)
+}
+
+// tellDisplacedGear validates the character, so the slot rules for a mutation
+// that has just landed run now (a quest grant has had no round tick yet), and
+// tells the player about each item a mutation pushed into their pack. The
+// characters package records the displacement; this drains it once.
+func tellDisplacedGear(user *users.UserRecord) {
+	user.Character.Validate()
+	for _, g := range user.Character.TakeDisplacedGear() {
+		user.SendText(messaging.CategoryMutation, displacedGearText(g))
+	}
+}
+
 // MutationGained_Reveal renders the terminal side of a mutation reveal:
 // a per-user chrysalis splash ceremony for new acquisitions, a short
 // flourish for deepenings. The web card is pushed separately by the gmcp
@@ -54,6 +76,8 @@ func MutationGained_Reveal(e events.Event) events.ListenerReturn {
 	if spec == nil {
 		return events.Continue
 	}
+	// After the reveal is sent: say what the new body pushed off it.
+	defer tellDisplacedGear(user)
 
 	if !evt.IsNew {
 		user.SendText(messaging.CategoryMutation,

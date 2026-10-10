@@ -130,7 +130,7 @@ func flagPhrase(target string) string {
 	case "active-ability":
 		return "Grants a new ability you can use in play."
 	case "disable-legs":
-		return "You lose the use of your legs."
+		return "You can no longer wear leg armor."
 	case "tail":
 		return "You grow a tail, gaining its equipment slot."
 	case "movement":

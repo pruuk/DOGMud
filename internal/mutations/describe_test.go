@@ -23,6 +23,8 @@ func TestDescribeEffect(t *testing.T) {
 		{"conviction_cost up", MutationEffect{Type: "conviction_cost_multiplier", Value: 0.2}, "Raises the conviction your abilities cost."},
 		{"nightvision", MutationEffect{Type: "flag", Target: "nightvision", Value: 1}, "You see clearly in the dark."},
 		{"see-hidden", MutationEffect{Type: "flag", Target: "see-hidden", Value: 1}, "You notice hidden creatures and things others miss."},
+		// #481: the flag only closes the legs equipment slot; the legs work.
+		{"disable-legs", MutationEffect{Type: "flag", Target: "disable-legs", Value: 1}, "You can no longer wear leg armor."},
 		{"natural_armor", MutationEffect{Type: "natural_armor", Value: 5}, "Hardens your hide against physical blows."},
 		{"aggro up", MutationEffect{Type: "aggro_magnet", Target: "aggro", Value: 1}, "Draws hostile attention toward you."},
 		{"stealth_bonus", MutationEffect{Type: "stealth_bonus", Value: 20}, "Sharpens your ability to move unseen and unheard."},

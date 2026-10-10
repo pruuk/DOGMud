@@ -114,7 +114,15 @@ events.RegisterListener(events.LevelUp{}, SendLevelNotifications) // Level-up me
 events.RegisterListener(events.LevelUp{}, CheckGuide)             // Guide NPC spawning
 events.RegisterListener(events.ItemOwnership{}, CheckItemQuests)  // Item-based quests
 events.RegisterListener(events.MobIdle{}, HandleIdleMobs)         // Mob AI behavior
+events.RegisterListener(mutations.Gained{}, MutationGained_Reveal) // Mutation reveal
 ```
+
+`MutationGained_Reveal` (#481) also tells the player what the new body
+pushed off it: after the reveal it validates the character (so a quest
+grant, which has had no round tick yet, runs the slot rules now) and sends
+one line per `Character.TakeDisplacedGear()` record, such as "Your new tail
+leaves no room for Iron Greaves, so you take it off." The item is already
+in the pack (`ReturnToPack`, never the ground).
 
 ## Combat System Integration
 
