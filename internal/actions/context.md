@@ -554,8 +554,8 @@ would not come off.
 plain `Wear`, so the arm path gets every gate `Wear` has (strength, hands,
 curse, reservation) instead of the old hand-rolled arm placement.
 `EquipItemResult.ArmLabel` (`:20`) is set only by `EquipItemInArm`, from
-`Character.ArmLabel(arm)`, and names the hand that took the item ("offhand",
-"extra arm 1") for the wrapper's line.
+`Character.ArmDisplayName(arm)`, and names the hand that took the item
+("weapon hand", "offhand", "arm 3") for the wrapper's line.
 
 **`craft.go`**: `TooDarkToCraft(actor Actor) bool` (`:129`) is
 `!messaging.CanSeeClearly(...)`: crafting is fine work, so shapes by infrared

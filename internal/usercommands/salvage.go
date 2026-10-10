@@ -208,8 +208,8 @@ func startCorpseSalvage(user *users.UserRecord, room *rooms.Room, corpse rooms.C
 // an item the character is CARRYING rather than wearing or wielding.
 //
 // The labels come from Character.FindItem: "in your backpack", "in your
-// bandolier", and the equipment-slot names ("wielded", "offhand", "extra arm",
-// and the wearable slots). Anything carried can be salvaged; anything equipped
+// bandolier", and the equipment-slot names ("wielded", "offhand", "arm 3" to
+// "arm 6", and the wearable slots). Anything carried can be salvaged; anything equipped
 // must be removed first.
 //
 // ⚠️ The component bag is absent from this list because Character.FindItem does
