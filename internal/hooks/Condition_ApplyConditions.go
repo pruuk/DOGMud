@@ -91,6 +91,10 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 	// start room line ("seems to shimmer and fade from view") would only
 	// give the hidden holder away.
 	hideOnHidden := targetChar.IsHidden() && slices.Contains(conditionInfo.Flags, conditions.Hidden)
+	// Who could not make the holder out, taken before the condition lands
+	// (#458): the start line is judged by the room as it was, so a hide
+	// landing on a visible holder reaches everyone who watched them vanish.
+	startUnseenBy := conditionLineUnseenBy(rooms.LoadRoom(targetChar.RoomId), targetChar)
 
 	// Apply the condition. A DurationMult of 0 or 1 means the authored duration, and
 	// for 1.0 AddConditionScaled is equivalent to AddCondition(id, false): both set
@@ -149,16 +153,7 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 			}
 		} else if evt.MobInstanceId != 0 {
 			if m := mobs.GetInstance(evt.MobInstanceId); m != nil {
-				// The mob tag, not the player one. GetCharacterName(true) tags
-				// every name `username`, so a mob holder rendered in the player
-				// colour. mobDisplayName is what the spell code already uses.
-				// StripNameAdjectives: mobDisplayName is look's form and
-				// carries the adjective span, a state tag, not prose (#453).
-				charName = m.Character.GetCharacterName(true)
-				if r := rooms.LoadRoom(m.Character.RoomId); r != nil {
-					charName = messaging.StripNameAdjectives(mobDisplayName(m, r, 0))
-				}
-				charPlainName = mobPlainName(m)
+				charName, charPlainName = conditionMobNames(m)
 				roomId = m.Character.RoomId
 			}
 		}
@@ -185,8 +180,13 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 					// open, blood welling from ragged claw-wounds."), so it was
 					// live. Read in play 2026-09-21: "Cave Crawler is raked
 					// open..." among lines that otherwise all said "A figure".
+					//
+					// Only to the players who perceived the holder before it
+					// landed (#458): a sneak-hidden player quitting read to
+					// the room as "Ordel Quist sits down and begins to
+					// meditate."
 					sendConditionStartRoomText(r, startSnap,
-						roles.Observer, []string{charPlainName}, excludeId)
+						roles.Observer, []string{charPlainName}, append(startUnseenBy, excludeId)...)
 				}
 			}
 		}
@@ -256,4 +256,46 @@ func sendConditionStartRoomText(r *rooms.Room, snap rooms.VisualSnapshot, msg st
 		return
 	}
 	r.SendTextVisualHidingNames(messaging.CategoryConditionApply, msg, names, skip...)
+}
+
+// conditionLineUnseenBy lists the players in r who must not read a room line
+// about holder: those who do not perceive them, by the rule the quit line
+// uses (playersNotPerceiving, characters.Character.Perceives: the holder is
+// hidden and the reader has no see-hidden). Every condition room line skips
+// them: start (judged before the condition lands), trigger and end (#458).
+// The one exception is a hide's own end line, conditionEndLineUnseenBy. nil
+// for a visible holder, which costs no room walk, and for a nil room.
+func conditionLineUnseenBy(r *rooms.Room, holder *characters.Character) []int {
+	if r == nil || !holder.IsHidden() {
+		return nil
+	}
+	return playersNotPerceiving(r, holder)
+}
+
+// conditionEndLineUnseenBy is conditionLineUnseenBy for an end line. A
+// hidden-flagged condition's end line ("emerges from the shadows", "shimmers
+// back into view") announces the holder coming back into view, so it reaches
+// every watcher, the ones who could not see them most of all. It must not
+// wait on the holder's Awareness: a shroud that runs out tells its end line
+// in the prune pass before the Validate that reveals the holder.
+func conditionEndLineUnseenBy(r *rooms.Room, holder *characters.Character, spec *conditions.ConditionSpec) []int {
+	if slices.Contains(spec.Flags, conditions.Hidden) {
+		return nil
+	}
+	return conditionLineUnseenBy(r, holder)
+}
+
+// conditionMobNames is a mob holder's names for a condition line: the
+// narration name for {actee} (the mob tag, not GetCharacterName(true)'s
+// player one, and StripNameAdjectives because look's form carries the
+// adjective span, a state tag, #453) and the bare name for {actee_plain}.
+// A hidden mob is named too: the line goes only to the readers who perceive
+// it (conditionLineUnseenBy), or it is the reveal that brings the mob back
+// into view, so the name gives the mob away to no one (#458).
+func conditionMobNames(m *mobs.Mob) (name, plainName string) {
+	name = m.Character.GetCharacterName(true)
+	if r := rooms.LoadRoom(m.Character.RoomId); r != nil {
+		name = messaging.StripNameAdjectives(mobSeenName(m, r, 0))
+	}
+	return name, m.Character.GetCharacterName(false)
 }

@@ -406,22 +406,19 @@ func mobDisplayName(mob *mobs.Mob, room *rooms.Room, viewingUserId int) string {
 	if mobHiddenFrom(mob, viewingUserId) {
 		return messaging.UnseenFigure(messaging.SightNone)
 	}
+	return mobSeenName(mob, room, viewingUserId)
+}
+
+// mobSeenName is mobDisplayName for a reader known to perceive the mob, so
+// it names a hidden mob too. A condition line is the caller: it goes only to
+// the readers who perceive its holder (conditionLineUnseenBy, #458).
+func mobSeenName(mob *mobs.Mob, room *rooms.Room, viewingUserId int) string {
 	dupIdx := room.GetMobDuplicateIndex(mob.InstanceId)
 	f := mob.Character.GetMobNameIndexed(viewingUserId, dupIdx)
 	f.Adjectives = nil
 	f.QuestAlert = false
 	f.PetName = ``
 	return f.String()
-}
-
-// mobPlainName is mobDisplayName's untagged twin, for a condition line's
-// {actee_plain}: the bare name, or "something" for a hidden mob. A room line
-// is the only place it is read, so it never asks a viewer.
-func mobPlainName(mob *mobs.Mob) string {
-	if mobHiddenFrom(mob, 0) {
-		return messaging.UnseenNoun(messaging.SightNone)
-	}
-	return mob.Character.GetCharacterName(false)
 }
 
 // mobHiddenFrom reports whether a line about mob must not name it to

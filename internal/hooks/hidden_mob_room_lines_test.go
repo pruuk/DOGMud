@@ -58,13 +58,18 @@ func requireUnnamed(t *testing.T, got []string, want string) {
 	assert.Equal(t, 1, countContaining(got, want), "%v", got)
 }
 
-func TestHiddenMob_ConditionStartLineDoesNotNameIt(t *testing.T) {
+// A condition line about a hidden mob goes only to the readers who perceive
+// it (#458), so a reader without see-hidden reads neither its name nor a
+// "Something" line. hidden_holder_condition_lines_test.go has the see-hidden
+// reader, who reads the name, and a hide's reveal line, which reaches all.
+func TestHiddenMob_ConditionStartLineIsNotTold(t *testing.T) {
 	litRoomOneWithHiddenSkeleton(t)
 	ApplyConditions(events.Condition{MobInstanceId: 100, ConditionId: glowConditionId})
-	requireUnnamed(t, drainPlain(2), "Something glows.")
+	got := drainPlain(2)
+	assert.Zero(t, countContaining(got, "glows"), "%v", got)
 }
 
-func TestHiddenMob_ConditionEndLineDoesNotNameIt(t *testing.T) {
+func TestHiddenMob_ConditionEndLineIsNotTold(t *testing.T) {
 	m := litRoomOneWithHiddenSkeleton(t)
 	for _, id := range []int{fadeConditionId, shadeConditionId} {
 		require.True(t, m.Character.Conditions.AddCondition(id, false))
@@ -73,16 +78,17 @@ func TestHiddenMob_ConditionEndLineDoesNotNameIt(t *testing.T) {
 	PruneConditions(events.NewTurn{TurnNumber: 1})
 	got := drainPlain(2)
 	// fade authors {actee}, the tagged name; shade authors a bare
-	// {actee_plain}, as shipped condition 9 does.
-	requireUnnamed(t, got, "Something fades.")
-	requireUnnamed(t, got, "Something emerges from the shadows.")
+	// {actee_plain}. Neither is a hide, so neither is a reveal.
+	assert.Zero(t, countContaining(got, "fades"), "%v", got)
+	assert.Zero(t, countContaining(got, "emerges"), "%v", got)
 }
 
-func TestHiddenMob_RoundTickTriggerLineDoesNotNameIt(t *testing.T) {
+func TestHiddenMob_RoundTickTriggerLineIsNotTold(t *testing.T) {
 	m := litRoomOneWithHiddenSkeleton(t)
 	require.True(t, m.Character.Conditions.AddCondition(shiverConditionId, false))
 	tickMobConditions(m, 100)
-	requireUnnamed(t, drainPlain(2), "Something shivers.")
+	got := drainPlain(2)
+	assert.Zero(t, countContaining(got, "shivers"), "%v", got)
 }
 
 func TestHiddenMob_DrainAreaRoomLineDoesNotNameIt(t *testing.T) {

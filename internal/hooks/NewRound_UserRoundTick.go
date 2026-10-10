@@ -297,10 +297,13 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 									// Anonymize, which cannot see a bare name, and 17
 									// shipped condition observer lines authored an
 									// {actee_plain}. See Condition_ApplyConditions.go.
+									// Only to the players who perceive the holder:
+									// a sneak-hidden player read to the room as
+									// "Ordel Quist continues meditating." (#458).
 									r.SendTextVisualHidingNames(messaging.CategoryConditionApply,
 										roles.Observer,
 										[]string{user.Character.GetCharacterName(false)},
-										user.UserId)
+										append(conditionLineUnseenBy(r, user.Character), user.UserId)...)
 								}
 							}
 						}

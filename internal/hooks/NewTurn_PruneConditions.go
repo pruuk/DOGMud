@@ -50,8 +50,11 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 							}
 							if roles.Observer != "" {
 								if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+									// Only to the players who perceive the holder,
+									// unless it is a hide's reveal (#458).
 									sendConditionEndRoomText(r, rooms.TakeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
-										[]string{user.Character.GetCharacterName(false)}, user.UserId)
+										[]string{user.Character.GetCharacterName(false)},
+										append(conditionEndLineUnseenBy(r, user.Character, endConditionSpec), user.UserId)...)
 								}
 							}
 						}
@@ -98,19 +101,19 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 				// Send YAML end text (if defined).
 				endConditionSpec := conditions.GetConditionSpec(conditionInfo.ConditionId)
 				if endConditionSpec != nil && len(endConditionSpec.Narration(conditions.PhaseEnd).Observer) > 0 {
-					// The mob tag, not the player one: see Condition_ApplyConditions.go.
+					// The mob tag, not the player one: see conditionMobNames.
 					// Visual, not audio, for the same reason as start text. The
 					// holder line is rendered and dropped: a mob has no client.
-					holderName := mob.Character.GetCharacterName(true)
-					if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
-						holderName = messaging.StripNameAdjectives(mobDisplayName(mob, r, 0)) // #453
-					}
+					holderName, holderPlainName := conditionMobNames(mob)
 					roles := endConditionSpec.Narrate(conditions.PhaseEnd,
-						holderName, mobPlainName(mob))
+						holderName, holderPlainName)
 					if roles.Observer != "" {
 						if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
+							// Only to the players who perceive the mob, unless
+							// it is a hide's reveal (#458).
 							sendConditionEndRoomText(r, rooms.TakeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
-								[]string{mob.Character.GetCharacterName(false)})
+								[]string{mob.Character.GetCharacterName(false)},
+								conditionEndLineUnseenBy(r, &mob.Character, endConditionSpec)...)
 						}
 					}
 				}

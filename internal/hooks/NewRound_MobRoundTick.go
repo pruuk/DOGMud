@@ -286,16 +286,17 @@ func tickMobConditions(mob *mobs.Mob, mobInstanceId int) {
 			// PruneConditions, so the line gets the same condition colour.
 			if trigSpec := conditions.GetConditionSpec(condition.ConditionId); trigSpec != nil && len(trigSpec.Narration(conditions.PhaseTrigger).Observer) > 0 {
 				if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-					roles := trigSpec.Narrate(conditions.PhaseTrigger,
-						messaging.StripNameAdjectives(mobDisplayName(mob, room, 0)), // #453
-						mobPlainName(mob))
+					holderName, holderPlainName := conditionMobNames(mob)
+					roles := trigSpec.Narrate(conditions.PhaseTrigger, holderName, holderPlainName)
 					if roles.Observer != "" {
 						// HidingNames: see the user-side twin and
 						// Condition_ApplyConditions.go. A bare {actee_plain} is
-						// invisible to tag-based Anonymize.
+						// invisible to tag-based Anonymize. Only to the
+						// players who perceive the mob (#458).
 						room.SendTextVisualHidingNames(messaging.CategoryConditionApply,
 							roles.Observer,
-							[]string{mob.Character.GetCharacterName(false)})
+							[]string{mob.Character.GetCharacterName(false)},
+							conditionLineUnseenBy(room, &mob.Character)...)
 					}
 				}
 			}
