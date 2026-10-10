@@ -252,6 +252,7 @@ func TestSpellConditionsNarrateTheirOwnStart(t *testing.T) {
 	all := shippedSpells(t)
 	conds := shippedConditions(t)
 	var problems []string
+	checked := 0
 	for _, id := range sortedSpellIds(all) {
 		s := all[id]
 		if !slices.Contains(conditionIdReaders, s.EffectType) {
@@ -262,11 +263,16 @@ func TestSpellConditionsNarrateTheirOwnStart(t *testing.T) {
 			if c == nil {
 				continue // reported by TestSpellConditionIdsAreReadByTheirEffectType
 			}
+			checked++
 			if !c.NarratesCastStart(false) {
 				problems = append(problems, fmt.Sprintf("%s: condition %d (%s) must author start_actor, start_actee and start_observer and not be silent-start",
 					id, cid, c.Name))
 			}
 		}
+	}
+	// A guard that checked nothing would pass vacuously.
+	if checked < 20 {
+		t.Fatalf("only %d spell-landed condition ids were checked, want at least 20", checked)
 	}
 	if len(problems) > 0 {
 		t.Fatalf("%d spell-landed conditions cannot tell their own start:\n  - %s", len(problems), strings.Join(problems, "\n  - "))

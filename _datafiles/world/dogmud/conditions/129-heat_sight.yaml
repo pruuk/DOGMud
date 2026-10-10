@@ -5,7 +5,7 @@ description: You see the warmth of living things as pale shapes, in any
   shape, never a face. Your eyes are also a little sharper for faint
   light, so daylight or any bright lamp dazzles you, and everything you do
   by sight suffers until the light fades or the spell wears off.
-start_actor: "Warmth blooms into pale shapes before {actee}'s eyes."
+start_actor: "{actee}'s eyes open to the warmth of living things."
 start_actee: Warmth blooms into pale shapes wherever something lives.
 end_actee: The pale shapes of warmth fade from your sight.
 start_observer: "A dull red sheen settles over {actee}'s eyes."

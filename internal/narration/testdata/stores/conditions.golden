@@ -108,7 +108,7 @@ condition|40|trigger_actee => Toxic spores eat at your flesh.
 condition|40|trigger_observer => <ansi fg="username">Aliceia</ansi> winces as fungal toxin spreads.
 condition|40|end_actee => You finally cough up the last of the spores.
 condition|41|start_actor => A thick fog descends over <ansi fg="username">Aliceia</ansi>'s thoughts.
-condition|41|start_actee => A thick fog descends over your thoughts...
+condition|41|start_actee => A thick fog descends over your thoughts.
 condition|41|start_observer => <ansi fg="username">Aliceia</ansi>'s eyes glaze over.
 condition|41|end_actee => The fog lifts from your mind and clarity returns.
 condition|42|start_actee => The warm meal settles in your belly and your aches ease.
@@ -306,12 +306,12 @@ condition|122|trigger_actee => <ansi fg="red">Blood seeps from your wounds!</ans
 condition|122|end_actee => Your wounds stop bleeding.
 condition|123|start_actee => The severed bond leaves a hollow in you that will take time to fill.
 condition|123|end_actee => The hollow the severed bond left in you has finally closed.
-condition|128|start_actor => <ansi fg="username">Aliceia</ansi>'s eyes sharpen for faint light.
+condition|128|start_actor => <ansi fg="username">Aliceia</ansi>'s eyes sharpen to see in faint light.
 condition|128|start_actee => Your eyes sharpen for faint light.
 condition|128|start_observer => <ansi fg="username">Aliceia</ansi>'s eyes widen and catch the faint light.
 condition|128|end_actee => Your eyes lose their edge for faint light.
 condition|128|end_observer => The faint light leaves <ansi fg="username">Aliceia</ansi>'s eyes.
-condition|129|start_actor => Warmth blooms into pale shapes before <ansi fg="username">Aliceia</ansi>'s eyes.
+condition|129|start_actor => <ansi fg="username">Aliceia</ansi>'s eyes open to the warmth of living things.
 condition|129|start_actee => Warmth blooms into pale shapes wherever something lives.
 condition|129|start_observer => A dull red sheen settles over <ansi fg="username">Aliceia</ansi>'s eyes.
 condition|129|end_actee => The pale shapes of warmth fade from your sight.
