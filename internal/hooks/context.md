@@ -2279,6 +2279,13 @@ maths); only the cross-channel tier's swing runs through the seam. The
 auto-trip/auto-bash `ExecuteSkillMove` calls carry `IsCounter`, which the
 tier's wiring refuses — counters never recurse.
 
+Also in `combat_shared_helpers.go`: `calcSpellDamageForCharacter` writes a
+`SpellDamage` debug line on every pipeline hit (#480), the spell twin of
+melee's `DistDamage` / `CritDamage`: spell id, caster, target, `rawDmg`,
+`channel`, `rawMitig` (the uncapped sum), `effMitig` (after the channel's
+curve), `isCrit` and the rolled `dmg`. The legacy magnitude path logs only
+its existing warning. `spell_damage_debug_log_test.go` pins the line.
+
 ## Gotcha: prone auto-recovery became contested on 2026-08-30. It never was before.
 
 `recoveryContest` (`recovery_contest.go`) builds the opposed prone-recovery roll

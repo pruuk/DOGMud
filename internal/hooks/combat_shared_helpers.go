@@ -90,14 +90,18 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 		// social meets conviction. A non-harm cast never reaches this helper.
 		var mitigPct float64
 		var curve combat.MitigationCurve
+		channelName := "none"
 		if ch, ok := combat.MitigationChannelFor(spellData.DamageType); ok {
 			switch ch {
 			case combat.ChannelPhysical:
 				mitigPct = target.GetPhysicalMitigation()
+				channelName = "physical"
 			case combat.ChannelMagical:
 				mitigPct = target.GetMagicalMitigation()
+				channelName = "magical"
 			case combat.ChannelConviction:
 				mitigPct = target.GetConvictionMitigation()
+				channelName = "conviction"
 			}
 			curve = combat.MitigationCurveFor(ch)
 		} else {
@@ -109,7 +113,16 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 		// spellcasting rank. Before this, a crit against an unmitigated target
 		// dealt exactly a normal hit's damage, so crit worth was set purely by
 		// the defender's armour.
-		return combat.CritOrMitigatedDamage(rawDmg, skillLevel, isCrit, mitigPct, curve)
+		dmg := combat.CritOrMitigatedDamage(rawDmg, skillLevel, isCrit, mitigPct, curve)
+
+		// #480: the spell twin of melee's DistDamage / CritDamage lines, so a
+		// tuner can split raw output from mitigation in the logs. Plain values,
+		// no Sprintf: slog drops a debug record before formatting it.
+		mudlog.Debug("SpellDamage", "spell", spellData.SpellId, "caster", caster.Name, "target", target.Name,
+			"rawDmg", math.Round(rawDmg*10)/10, "channel", channelName, "rawMitig", mitigPct,
+			"effMitig", math.Round(combat.EffectiveMitigation(mitigPct, curve)*1000)/1000,
+			"isCrit", isCrit, "dmg", dmg)
+		return dmg
 	}
 
 	// Legacy fallback: magnitude-based damage (no mitigation, no stat scaling)
