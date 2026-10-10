@@ -2,6 +2,7 @@ package conditions
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
@@ -21,29 +22,37 @@ const (
 // Narration assembles the variants for one phase.
 //
 // The holder's line is the ACTEE: the condition happens to them. The room's line is
-// the Observer. Actor is empty and reserved for the caster, which M6 authors
-// once events.Condition carries a caster (owner ruling, 2026-09-12). Start and End
-// go through StartUserNotice / EndUserNotice, so the secret, hidden,
+// the Observer. Actor is the CASTER's line, start_actor, and exists only at
+// start (messaging M6 slice 1, section 2). Start and End go through
+// StartUserNotice / StartActorNotice / EndUserNotice, so the secret, hidden,
 // silent-start and generic-fallback rules stay in their one door.
 func (b *ConditionSpec) Narration(p Phase) narration.Variants {
-	var holder, room string
+	var caster, holder, room string
 	switch p {
 	case PhaseStart:
-		holder, room = b.StartUserNotice(), b.StartRoomText
+		caster, holder, room = b.StartActorNotice(), b.StartUserNotice(), b.StartRoomText
 	case PhaseTrigger:
 		holder, room = b.TriggerUserText, b.TriggerRoomText
 	case PhaseEnd:
 		holder, room = b.EndUserNotice(), b.EndRoomText
 	}
-	return narration.Variants{Actee: textutil.Pool(holder), Observer: textutil.Pool(room)}
+	return narration.Variants{Actor: textutil.Pool(caster), Actee: textutil.Pool(holder), Observer: textutil.Pool(room)}
 }
 
-// Narrate renders one phase for its audiences. It takes the HOLDER, not a
-// token context: the holder is always the actee (a condition happens to them),
-// and building the context here means no call site can put the name in the
-// wrong slot. Actor stays empty until events.Condition carries a caster (M6).
+// Narrate renders one phase for its audiences with no caster. It takes the
+// HOLDER, not a token context: the holder is always the actee (a condition
+// happens to them), and building the context here means no call site can put
+// the name in the wrong slot.
 func (b *ConditionSpec) Narrate(p Phase, holderName, holderPlainName string) narration.Roles {
+	return b.NarrateCast(p, holderName, holderPlainName, "", "")
+}
+
+// NarrateCast is Narrate with the record's caster, which fills {actor} and
+// {actor_plain}. Only the start phase may name the caster (validateNarration).
+func (b *ConditionSpec) NarrateCast(p Phase, holderName, holderPlainName, casterName, casterPlainName string) narration.Roles {
 	return textutil.Narrate(b.Narration(p), textutil.TokenContext{
+		ActorName:      casterName,
+		ActorPlainName: casterPlainName,
 		ActeeName:      holderName,
 		ActeePlainName: holderPlainName,
 	})
@@ -76,16 +85,25 @@ func (b *ConditionSpec) AuthoredStartLine(holderName, holderPlainName string) st
 // it the raw fields and Narration agree; it is listed here so all three
 // phases are checked in one place.
 func (b *ConditionSpec) validateNarration() error {
-	phases := []struct{ name, user, room string }{
-		{"start", b.StartUserText, b.StartRoomText},
-		{"trigger", b.TriggerUserText, b.TriggerRoomText},
-		{"end", b.EndUserText, b.EndRoomText},
+	phases := []struct{ name, actor, user, room string }{
+		{"start", b.StartActorText, b.StartUserText, b.StartRoomText},
+		{"trigger", "", b.TriggerUserText, b.TriggerRoomText},
+		{"end", "", b.EndUserText, b.EndRoomText},
 	}
 	for _, ph := range phases {
-		if ph.user == "" && ph.room == "" {
+		if ph.actor == "" && ph.user == "" && ph.room == "" {
 			continue
 		}
-		v := narration.Variants{Actee: textutil.Pool(ph.user), Observer: textutil.Pool(ph.room)}
+		// {actor} is the caster, known only when the record lands. A trigger
+		// or end line is told with no caster, so it would render empty.
+		if ph.name != "start" {
+			for _, text := range []string{ph.user, ph.room} {
+				if strings.Contains(text, narration.TokenActor) || strings.Contains(text, narration.TokenActorPlain) {
+					return fmt.Errorf("conditionId %d (%s) %s text names the caster with {actor}; only start lines know the caster", b.ConditionId, b.Name, ph.name)
+				}
+			}
+		}
+		v := narration.Variants{Actor: textutil.Pool(ph.actor), Actee: textutil.Pool(ph.user), Observer: textutil.Pool(ph.room)}
 		// No expected role set: a condition may legitimately author only a holder
 		// line or only a room line, so no fixed shape exists to declare. The
 		// blank-variant check is what this call is for.
