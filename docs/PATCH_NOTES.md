@@ -55,6 +55,9 @@
 - The Defenses part of `status` now describes the protection you really
   have, so a heavily armored character may read one step lower than
   before. `consider`, and how creatures size you up, use the same measure.
+- Core Discharge, the Core Guardian's blast that hits the whole room, no
+  longer kills a prepared player outright from full health. It still hits
+  very hard, so stop it when you can.
 
 ## 2026-10-10: More loose ends
 

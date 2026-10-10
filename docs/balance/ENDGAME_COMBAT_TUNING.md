@@ -90,11 +90,23 @@ reference — a new fight targeting N Meiroks starts near the matching row.
 | Target | Encounter | `statpool` | Nodrop mitigation (phys/mag/conv) | Mechanic |
 |--------|-----------|-----------|-----------------------------------|----------|
 | **1 Meirok** | #20 Pass-Apex (9541) | **1100** | hide 40230: **62/52/52** | none (pure stat/gear) |
-| **2 Meirok** | #21 Sentinel (9552) | **2400** | carapace 40231: **65/52/48** + warding-core 40232: **10/45/45** | 1 light hook — "Rouse the Wards" (summon 2 adds at 50% HP) |
-| **3 Meirok** | #22 Core Guardian (9562) | **5000** (instanced; effectively scales with gold buy-in) | Hull Plating 40225: **55/45/–** + Core Matrix 40226 | full apparatus (drain / telegraphed discharge / interrupt / 3 adds) |
+| **2 Meirok** | #21 Sentinel (9552) | **2000** (calibrated at 2400) | carapace 40231: **65/52/48** + warding-core 40232: **10/45/45** | 1 light hook — "Rouse the Wards" (summon 2 adds at 50% HP) |
+| **3 Meirok** | #22 Core Guardian (9562) | **2800** authored (calibrated at 5000); inside the instance the pool is **7 × gold paid** (room 6395's spawn multiplier), so 2800 is a 400g run | Hull Plating 40225: **55/45/–** + Core Matrix 40226 | full apparatus (drain / telegraphed discharge / interrupt / 3 adds) |
+
+The calibrated pools above were restatted onto the instance gold curve on
+2026-08-14 (`2d2350db4`): the Sentinel 2400 to 2000 and the Core Guardian
+5000 to 2800. The mob YAML is the live value.
+
+**Spell damage scales separately.** A boss's spell damage is
+willpower × skill multiplier × the spell's `damage_multiplier` ×
+`SpellDamageScale` × `GlobalDamageMultiplier`, so a retune of
+`SpellDamageScale` moves every boss spell with it. Doubling it on 2026-08-03
+turned Core Discharge from a heavy hit into a one-shot (#480);
+`internal/hooks/core_discharge_balance_test.go` now pins that spell's mean
+against a mid player.
 
 **The heuristic that falls out:** each added Meirok roughly **doubles** the
-required `statpool` (1100 → 2400 → 5000 ≈ ×2.2, ×2.1), while **physical
+required `statpool` (1100 → 2400 → 5000 ≈ ×2.2, ×2.1, at calibration), while **physical
 mitigation stays in the ~55–65% band** across all tiers. So for a new fight:
 start `statpool` at `~1100 × 2^(N−1)`, put phys mitigation around 60%, then
 verify live. These anchors were calibrated under the old flat 75% clamp, where
