@@ -1351,10 +1351,10 @@ Cross-machine cleanup that fires on two Life transitions:
 | `Death_InboundAggroCleanup.go` | Clears mobs and companions that were targeting the dying actor; fires for both player and mob deaths |
 | `Death_MobLoot.go` | Carried and equipped item drop, gold drop, dark-room sound cue, mob corpse creation |
 | `Death_AlivenessSubstrate.go` | Fires `events.MobDeath`; downstream subscribers handle faction rep, opinion update, crime recording, knowledge propagation, bounty resolution |
-| `Death_MobInstanceCleanup.go` | `DeleteMobInstance`, `DestroyInstance`, `CleanupMobSpawns`, `RemoveMob` |
+| `Death_MobInstanceCleanup.go` | `creditMobKill`, then `DeleteMobInstance`, `DestroyInstance`, `CleanupMobSpawns`, `RemoveMob` |
 | `Death_MobBroadcast.go` | Room "X has died" broadcast, Guide tempdata, worldevents `MobKilledByPlayer` |
 | `Death_MobBehaviorTree.go` | Fires `mob_die` btree event with primary killer's `UserId` |
-| `Death_MobKillCredit.go` | `EndAggro` on killers, `KD.AddMobKill`, `OnFirstMobKill`, party kill credit |
+| `Death_MobKillCredit.go` | `creditMobKill`: releases killers still targeting the mob, `KD.AddMobKill`, party kill credit. Not an observer of its own: `scheduleMobDespawnFromLife` calls it before the instance is destroyed, because an observer registered after `Death_MobInstanceCleanup.go` found the instance gone and credited nobody (#468) |
 | `Death_MobCharmCleanup.go` | `TrackRecentDeath`, `RemoveCharm`, reverse-track player `TrackCharmed` |
 | `MobDeath_TrackingCleanup.go` | Clears `tracking-mob` / `tracking-display-count` + condition 86, and drops any shadow on the dying mob through `actions.ClearShadow` (found with `actions.ShadowTargetOf`; no cooldown, no line), on every player and mob (chunk 2.8; parity slice 6) |
 
