@@ -1189,7 +1189,12 @@ the list for a trigger line, and `PruneConditions` for an end line through
 line: "emerges from the shadows" and "shimmers back into view" announce the
 holder coming back into view and must reach the watchers who could not see
 them. A shroud that runs out tells that line before the prune's Validate
-reveals the holder, so the exemption reads the flag, not Awareness. A
+reveals the holder, so the exemption reads the flag, not Awareness. For
+the same reason a reveal carries the holder's other end lines that turn:
+`revealFirst` orders a holder's pruned records hidden-flag first and reports
+whether there was one, and in such a turn `pruneEndLineUnseenBy` skips no
+one, so a watcher reads "shimmers back into view" and then "stops
+meditating", in that order. A
 see-hidden reader perceives the holder and reads every line. The holder's
 own lines are untouched. A mob holder's names come from
 `conditionMobNames`, which names a hidden mob (through `mobSeenName`, the

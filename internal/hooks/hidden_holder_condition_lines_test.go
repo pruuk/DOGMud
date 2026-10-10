@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -235,4 +236,69 @@ func TestHiddenHolder_RevealLineReachesWatchers(t *testing.T) {
 		got := drainPlain(watcher.UserId)
 		assert.Equal(t, 1, countContaining(got, "Aliceia emerges from the shadows."), "%v", got)
 	})
+}
+
+// indexContaining is the index of the first line holding needle, or -1.
+func indexContaining(lines []string, needle string) int {
+	for i, l := range lines {
+		if strings.Contains(l, needle) {
+			return i
+		}
+	}
+	return -1
+}
+
+// A shroud running out in the same prune as another condition's end reveals
+// the holder, so the watchers who could not see them read the reveal and
+// then the other end line, in that order. The meditate twin is added after
+// the shroud, and Prune hands records back last first, so before the fix its
+// end line was judged while the holder was still hidden and reached no one.
+func TestHiddenHolder_SameTurnRevealCarriesTheOtherEndLines(t *testing.T) {
+	cases := []struct {
+		name   string
+		holder func(holder *users.UserRecord, m *mobs.Mob) *characters.Character
+		named  string
+	}{
+		{"player", func(h *users.UserRecord, _ *mobs.Mob) *characters.Character { return h.Character }, "Aliceia"},
+		{"mob", func(_ *users.UserRecord, m *mobs.Mob) *characters.Character { return &m.Character }, "Skeleton"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name+": reveal, then the other end line", func(t *testing.T) {
+			h, watcher, m := hiddenHolderFixture(t)
+			c := tc.holder(h, m)
+			require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 150, "spell"))
+			require.True(t, c.Conditions.AddCondition(meditateTestId, false))
+			require.True(t, c.HiddenByShroud())
+			require.False(t, watcher.Character.Perceives(c))
+			events.DrainQueuedMessagesForTest(watcher.UserId)
+
+			runOutShroud(t, c)
+			expire(t, c.Conditions.List, meditateTestId)
+			PruneConditions(events.NewTurn{TurnNumber: 1})
+			require.False(t, c.IsHidden())
+
+			got := drainPlain(watcher.UserId)
+			reveal := indexContaining(got, tc.named+" shimmers back into view.")
+			stops := indexContaining(got, tc.named+" stops meditating.")
+			require.NotEqual(t, -1, reveal, "the reveal line: %v", got)
+			require.NotEqual(t, -1, stops, "the other end line rides the reveal: %v", got)
+			assert.Less(t, reveal, stops, "the reveal is read first: %v", got)
+		})
+		t.Run(tc.name+": control, a non-hide end alone reaches no one", func(t *testing.T) {
+			h, watcher, m := hiddenHolderFixture(t)
+			c := tc.holder(h, m)
+			require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdEmpathicShroud, 0, 150, "spell"))
+			require.True(t, c.Conditions.AddCondition(meditateTestId, false))
+			require.False(t, watcher.Character.Perceives(c))
+			events.DrainQueuedMessagesForTest(watcher.UserId)
+
+			expire(t, c.Conditions.List, meditateTestId)
+			PruneConditions(events.NewTurn{TurnNumber: 1})
+			require.True(t, c.IsHidden(), "the shroud still holds")
+
+			got := drainPlain(watcher.UserId)
+			assert.Zero(t, countContaining(got, "meditat"), "%v", got)
+			assert.Zero(t, countContaining(got, tc.named), "%v", got)
+		})
+	}
 }
