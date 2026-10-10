@@ -45,6 +45,7 @@ help:
       - broadcast
       - emote
       - chat
+      - trade
       - channels
       - gc
       - inbox
@@ -154,6 +155,7 @@ help:
       - bounty
       - motd
       - newbie
+      - tutorial
       - oasis
       - payfine
       - petition
