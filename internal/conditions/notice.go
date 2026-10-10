@@ -65,7 +65,9 @@ func (b *ConditionSpec) StartActorNotice() string {
 // generic "<Name> takes effect." fallback does not count, and neither does a
 // silent start. selfCast: the caster is the holder, so the holder line is the
 // caster's line and no start_actor is needed. A refresh of a record already
-// held narrates no start, and the caller checks that separately.
+// held narrates no start, and the caller checks that separately. It judges
+// authored text only; whether a hidden holder's room line is actually told is
+// the caller's call.
 func (b *ConditionSpec) NarratesCastStart(selfCast bool) bool {
 	if b.StartUserNotice() == "" || b.StartUserText == "" || b.StartRoomText == "" {
 		return false

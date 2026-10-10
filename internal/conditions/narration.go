@@ -39,12 +39,16 @@ func (b *ConditionSpec) Narration(p Phase) narration.Variants {
 	return narration.Variants{Actor: textutil.Pool(caster), Actee: textutil.Pool(holder), Observer: textutil.Pool(room)}
 }
 
-// Narrate renders one phase for its audiences with no caster. It takes the
+// noCasterName fills {actor} when a start line is told with no caster.
+const noCasterName = "something"
+
+// Narrate renders one phase for its audiences with no caster, so {actor}
+// reads "something". It takes the
 // HOLDER, not a token context: the holder is always the actee (a condition
 // happens to them), and building the context here means no call site can put
 // the name in the wrong slot.
 func (b *ConditionSpec) Narrate(p Phase, holderName, holderPlainName string) narration.Roles {
-	return b.NarrateCast(p, holderName, holderPlainName, "", "")
+	return b.NarrateCast(p, holderName, holderPlainName, noCasterName, noCasterName)
 }
 
 // NarrateCast is Narrate with the record's caster, which fills {actor} and
@@ -59,7 +63,7 @@ func (b *ConditionSpec) NarrateCast(p Phase, holderName, holderPlainName, caster
 }
 
 // AuthoredStartLine renders start_actee as written, ignoring the notice
-// rules. It is the door for the applier of a silent-start condition, which narrates
+// rules; it has no caster, so {actor} reads "something". It is the door for the applier of a silent-start condition, which narrates
 // the start itself because the condition never travels the event that would:
 // sleep (15), arrest (88), stun (84) and broken limb (83). Enchant Withdrawal
 // (123) is not silent-start, but disenchant applies it through
@@ -73,6 +77,8 @@ func (b *ConditionSpec) NarrateCast(p Phase, holderName, holderPlainName, caster
 // is exactly why that defect would stay invisible until one is authored.
 func (b *ConditionSpec) AuthoredStartLine(holderName, holderPlainName string) string {
 	return textutil.SubstituteTokens(b.StartUserText, textutil.TokenContext{
+		ActorName:      noCasterName,
+		ActorPlainName: noCasterName,
 		ActeeName:      holderName,
 		ActeePlainName: holderPlainName,
 	})
