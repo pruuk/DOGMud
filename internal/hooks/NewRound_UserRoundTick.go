@@ -324,14 +324,17 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 							// non-positive input. Hence the sign split; ApplyHarm
 							// takes a POSITIVE amount, so negate.
 							//
-							// DoT conditions carry no applier, so the harm source is
-							// anonymous (state.ActorRef{}). See ApplyHarm's docstring.
+							// The harm is the record's caster's (#240), so a tick
+							// that kills names them; a record nobody cast harms
+							// anonymously, as before. A player victim's damage map
+							// is left alone, as a spell's direct damage leaves it
+							// (creditSpellDamage credits mob victims only).
 							switch trigConditionSpec.TickPool {
 							case "health":
 								if tickAmt > 0 {
 									user.Character.ApplyRestore(characters.PoolHealth, tickAmt)
 								} else if tickAmt < 0 {
-									user.Character.ApplyHarm(characters.PoolHealth, -tickAmt, state.ActorRef{})
+									user.Character.ApplyHarm(characters.PoolHealth, -tickAmt, condition.Caster)
 									// Damage is damage: wake a sleeper and drop
 									// cancel-on-damage records, as the poison and
 									// bleed hook always did (slice 1, change 5).
@@ -352,13 +355,13 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 								if tickAmt > 0 {
 									user.Character.ApplyRestore(characters.PoolStamina, tickAmt)
 								} else if tickAmt < 0 {
-									user.Character.ApplyHarm(characters.PoolStamina, -tickAmt, state.ActorRef{})
+									user.Character.ApplyHarm(characters.PoolStamina, -tickAmt, condition.Caster)
 								}
 							case "conviction":
 								if tickAmt > 0 {
 									user.Character.ApplyRestore(characters.PoolConviction, tickAmt)
 								} else if tickAmt < 0 {
-									user.Character.ApplyHarm(characters.PoolConviction, -tickAmt, state.ActorRef{})
+									user.Character.ApplyHarm(characters.PoolConviction, -tickAmt, condition.Caster)
 								}
 							}
 						}

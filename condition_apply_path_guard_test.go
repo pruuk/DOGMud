@@ -136,7 +136,7 @@ var conditionApplyPathAllowlist = map[string]string{
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
 	"internal/usercommands/character.go|423":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
-	"internal/behaviortree/actions_item_proc.go|409": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
+	"internal/behaviortree/actions_item_proc.go|419": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40":     "the holder is a MOB (a summoned companion), not a player",
 
 	// ── secret conditions: silence is the authored intent ───────────────────
@@ -247,8 +247,10 @@ var conditionApplyPathAllowlist = map[string]string{
 	// again parity slice 3b Task 2 when the dispatcher gained its condition
 	// case, and again Task 3 when it gained its heal case, and again Task 4
 	// when it gained its shield case, and again Task 5 when its doc comment
-	// grew and the per-pairing fallthrough became the default arm) ──────
-	"internal/hooks/spell_effects.go|348": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
+	// grew and the per-pairing fallthrough became the default arm; moved to
+	// AddConditionMagnitudeBy and re-keyed messaging M6 slice 1, when the
+	// dot began to carry its caster and creditMobHarm landed above it) ──────
+	"internal/hooks/spell_effects.go|355": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
 
 	// ── light spells (lighting plan 5a): an EVENT door, not the silent
 	// character door. applySpellCondition's target is a spellConditionTarget,
@@ -305,7 +307,9 @@ var primitivePackages = []string{
 	filepath.Join("internal", "characters"),
 }
 
-var conditionAddCallPattern = regexp.MustCompile(`\.(AddCondition(?:Scaled|Magnitude)?)\(`)
+// AddConditionMagnitudeBy is the character door with a caster (messaging M6
+// slice 1); it applies in place exactly as AddConditionMagnitude does.
+var conditionAddCallPattern = regexp.MustCompile(`\.(AddCondition(?:Scaled|Magnitude(?:By)?)?)\(`)
 
 // identifierArgPattern matches a bare identifier or field selector, which is
 // how a variable source reaches these calls: src, reason, source, evt.Source.
@@ -382,7 +386,7 @@ func callArgs(src string, openParen int) (args []string, ok bool) {
 // variable source is never reported as silent. The second result is false
 // when the call could not be parsed.
 func isEventPathCall(src string, method string, openParen int) (eventPath bool, parsed bool) {
-	if method == "AddConditionMagnitude" {
+	if method == "AddConditionMagnitude" || method == "AddConditionMagnitudeBy" {
 		// The character door and the user door share a four-argument shape
 		// ending in a source string, so arity cannot tell them apart. Treat
 		// every call as a direct add: the safe reading, since a producer
@@ -466,7 +470,7 @@ func TestPlayerConditionsTravelTheEventPath(t *testing.T) {
 				}
 				rule := "an event-path condition add ends in a source string; this call does not, so it applies the condition in place, Condition_ApplyConditions never runs, and the holder reads nothing."
 				advice := fmt.Sprintf("Route it through users.UserRecord.AddCondition / AddConditionScaled (or the mobs.Mob / actions.Actor equivalent, which all take a source string), or add %q to conditionApplyPathAllowlist with a reason.", key)
-				if method := src[loc[2]:loc[3]]; method == "AddConditionMagnitude" {
+				if method := src[loc[2]:loc[3]]; method == "AddConditionMagnitude" || method == "AddConditionMagnitudeBy" {
 					rule = "the character door applies in place and the user door queues the event, but they share one four-argument shape, so this guard reads every AddConditionMagnitude call as a direct add (the safe reading). Record why in conditionApplyPathAllowlist, or confirm the call is the user door and record that instead."
 					advice = "Routing it through users.UserRecord.AddConditionMagnitude does not silence this guard; allowlist it either way, noting which door it is."
 				}

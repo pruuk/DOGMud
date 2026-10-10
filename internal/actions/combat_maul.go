@@ -129,7 +129,7 @@ func ExecuteMaul(actor Actor) MaulResult {
 	bleedDmg := 0
 	if result.Hit {
 		bleedDmg = bleedPerRound(char.Stats.Strength.ValueAdj, cfg.MaulBleedStrengthDivisor, cfg.MaulBleedMin)
-		_ = target.Char.AddConditionMagnitude(conditions.ConditionIdBleeding, int(cfg.MaulBleedRounds), -float64(bleedDmg), "maul")
+		_ = target.Char.AddConditionMagnitudeBy(conditions.ConditionIdBleeding, int(cfg.MaulBleedRounds), -float64(bleedDmg), "maul", ActorRefOf(actor))
 	}
 
 	// Determine source/target types for analytics.

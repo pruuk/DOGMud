@@ -12,7 +12,7 @@ import (
 )
 
 // spellCreditEffects are the harmful effects that land damage on the spot.
-// The dot is absent on purpose: its ticks harm anonymously (see applySpellDot).
+// The dot is absent: it credits per tick (condition_tick_credit_test.go).
 func spellCreditEffects() []struct {
 	name  string
 	spell func() *spells.SpellData

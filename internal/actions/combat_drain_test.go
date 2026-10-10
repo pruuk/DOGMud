@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -138,7 +139,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 		char.Cooldowns = characters.Cooldowns{} // clear cooldown from previous attempt
 		char.Health = 150                       // reset HP so the heal delta is visible
 
-		res = ExecuteDrain(newStubActor(char, newTestRoom()))
+		res = ExecuteDrain(&idStubActor{stubActor: newStubActor(char, newTestRoom()), mobInstanceId: 4242})
 		if res.Executed && res.MoveResult.Hit {
 			hitSeen = true
 			break
@@ -171,6 +172,8 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	if assert.Len(t, held, 1, "expected exactly one held Bleeding record") {
 		assert.Less(t, held[0].Magnitude, 0.0, "drain's Bleeding record must carry a negative magnitude")
 		assert.Less(t, held[0].TickAmount, 0, "drain's Bleeding record must carry a negative tick snapshot")
+		assert.Equal(t, state.ActorRef{MobInstanceId: 4242}, held[0].Caster,
+			"the bleed names its attacker, so a bleed kill credits them (#240)")
 	}
 
 	// BleedDmg should be at least the minimum.
