@@ -67,9 +67,11 @@ type spellConditionTarget interface {
 // The event names the caster (casterRef) and carries the crit marker for the
 // caster's start line (messaging M6 slice 1), so the holder reads the start
 // lines with the caster's name, and a tick that kills credits the caster.
+// castStart marks a cast that dropped its own trio for the start lines
+// (events.Condition.CastStart).
 func applySpellCondition(target spellConditionTarget, spellData *spells.SpellData, caster *characters.Character, conditionId int,
-	casterRef state.ActorRef, crit bool) {
-	evt := events.Condition{ConditionId: conditionId, Source: "spell", Caster: casterRef, CasterCrit: crit}
+	casterRef state.ActorRef, castStart, crit bool) {
+	evt := events.Condition{ConditionId: conditionId, Source: "spell", Caster: casterRef, CastStart: castStart, CasterCrit: crit}
 	if mag, ok := shroudSpellApplication(spellData, caster, conditionId); ok {
 		evt.Magnitude = mag
 	} else if mag, trig, ok := magnitudeSpellApplication(spellData, caster, conditionId); ok {

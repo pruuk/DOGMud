@@ -50,6 +50,13 @@ type Condition struct {
 	// CasterCrit puts the critical marker on the caster's start line, which
 	// replaces the spell's own "takes effect" line (owner ruling R11).
 	CasterCrit bool
+	// CastStart marks a spell that sent no lines of its own because this
+	// condition's start lines tell every audience (owner ruling R11). Those
+	// lines are the cast's only lines, so ApplyConditions tells them even when
+	// the record is already held: two casts in one round both judge the
+	// holder unaffected before either event lands. A refresh without it stays
+	// silent.
+	CastStart bool
 }
 
 func (b Condition) Type() string { return `Condition` }

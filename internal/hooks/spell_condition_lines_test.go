@@ -114,6 +114,60 @@ func TestSpellConditionLines_CritMarkerMovesToTheCasterLine(t *testing.T) {
 	assert.Equal(t, []string{"An aura blooms around you."}, drainPlain(2))
 }
 
+// A narrated self-cast that crits: the marker rides the holder's own line,
+// once, and the spell's trio is not sent. A help spell is uncontested and
+// never crits, so the cast is a contested one.
+func TestSpellConditionLines_SelfCastCritMarksTheHolderLineOnce(t *testing.T) {
+	f := newSpellParityFixture(t, spellContestAttackCrit())
+	seedSpellLineConditions(t)
+	spell := hexSpellForConditionTest()
+	spell.ConditionIds = []int{spellLineAuthoredId}
+
+	resolveAgainstPlayer(f.casterUser, f.casterUser, f.room, spell,
+		spellAttackSideFor(spell, f.casterUser.Character, nil), 0)
+	applyQueuedConditions(t, 1)
+
+	assert.Equal(t, []string{"An aura blooms around you. [CRIT!]"}, drainPlain(1))
+	assert.Equal(t, []string{"An aura blooms around Aliceia."}, drainPlain(3))
+}
+
+// Two casts of the same narrated condition on one holder in one round both
+// resolve before either event lands (DoCombat resolves every cast inside the
+// one NewRound dispatch; the queue drains after it). Both dropped their trio,
+// so the second, landing on a record the first just made, still tells its
+// start: every caster, the holder and the room read a line for each cast.
+func TestSpellConditionLines_ASameRoundRecastStillTellsItsStart(t *testing.T) {
+	f := newSpellParityFixture(t, spellContestAttackWin())
+	seedSpellLineConditions(t)
+	spell := auraSpell(spellLineAuthoredId)
+
+	resolveAgainstPlayer(f.casterUser, f.targetUser, f.room, spell,
+		spellAttackSideFor(spell, f.casterUser.Character, nil), 0)
+	resolveAgainstPlayer(f.watcher, f.targetUser, f.room, spell,
+		spellAttackSideFor(spell, f.watcher.Character, nil), 0)
+	queued := applyQueuedConditions(t, 2)
+
+	require.Len(t, queued, 2)
+	// Each caster reads its own caster line and the other cast's room line.
+	assert.Equal(t, []string{"An aura blooms around Bobrick.", "An aura blooms around Bobrick."}, drainPlain(1))
+	assert.Equal(t, []string{"An aura blooms around you.", "An aura blooms around you."}, drainPlain(2))
+	assert.Equal(t, []string{"An aura blooms around Bobrick.", "An aura blooms around Bobrick."}, drainPlain(3))
+}
+
+// A refresh no spell narrated (a potion, a hazard, a re-cast whose spell
+// kept its trio) still tells no start.
+func TestSpellConditionLines_ARefreshFromAnotherDoorStaysSilent(t *testing.T) {
+	f := newSpellParityFixture(t, spellContestAttackWin())
+	seedSpellLineConditions(t)
+	require.NoError(t, f.targetUser.Character.AddCondition(spellLineAuthoredId, false))
+
+	ApplyConditions(events.Condition{UserId: 2, ConditionId: spellLineAuthoredId, Source: "potion",
+		LifeEpoch: f.targetUser.Character.LifeEpoch})
+
+	assert.Empty(t, drainPlain(2))
+	assert.Empty(t, drainPlain(3))
+}
+
 // A silent-start condition tells nobody, so the spell keeps its trio.
 func TestSpellConditionLines_ASilentConditionKeepsTheTrio(t *testing.T) {
 	f := newSpellParityFixture(t, spellContestAttackWin())

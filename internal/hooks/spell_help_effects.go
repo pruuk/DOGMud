@@ -85,7 +85,7 @@ func applySpellConditionEffect(c spellEffectCtx) int {
 	narrated := spellConditionsNarrateStart(c)
 	if target := spellConditionTargetOf(c.target); target != nil {
 		for _, conditionId := range c.spell.ConditionIds {
-			applySpellCondition(target, c.spell, c.casterChar, conditionId, c.casterRef(), narrated && c.out.AttackerCrit)
+			applySpellCondition(target, c.spell, c.casterChar, conditionId, c.casterRef(), narrated, narrated && c.out.AttackerCrit)
 		}
 	}
 	if c.spell.IsHarm() {

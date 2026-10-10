@@ -112,7 +112,7 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 	//
 	// A darkness's start line is judged against the room as it was before the
 	// darkness lands (owner rule, 2026-10-05), so the snapshot comes first.
-	startSnap := darknessStartSnapshot(conditionInfo, targetChar, wasAlreadyActive)
+	startSnap := darknessStartSnapshot(conditionInfo, targetChar, wasAlreadyActive && !evt.CastStart)
 	// A ward or a heal replaces its family's other record (owner rulings R4,
 	// R6); the add discards it, so its name is read first for the
 	// replacement line.
@@ -150,10 +150,15 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 	//
 	// A mob holder has no client, so with no caster line and no room text
 	// there is nothing to render.
+	//
+	// A spell that dropped its own lines for these (evt.CastStart) is told
+	// on a refresh too: its cast judged the holder unaffected, but a second
+	// cast in the same round can land on the record the first just made, and
+	// those lines are its only ones. Any other refresh stays silent.
 	startText := conditionInfo.Narration(conditions.PhaseStart)
 	holderCanRead := evt.UserId != 0 && len(startText.Actee) > 0
 	casterCanRead := evt.Caster.UserId != 0 && len(startText.Actor) > 0
-	if !wasAlreadyActive && holderKnown && (holderCanRead || casterCanRead || len(startText.Observer) > 0) {
+	if (!wasAlreadyActive || evt.CastStart) && holderKnown && (holderCanRead || casterCanRead || len(startText.Observer) > 0) {
 		// The room line is visual and hides names (sendConditionStartRoomText):
 		// condition 115 authors a bare {actee_plain}, which tag-based Anonymize
 		// cannot see; read in play 2026-09-21 as "Cave Crawler is raked
