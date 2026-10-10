@@ -172,6 +172,34 @@ func TestTemplateFreeze_StatusDefensesReadTheCurve(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, out, "heavy", "75 raw points bend to about 67%%")
 	assert.NotContains(t, out, "fortified", "the raw sum must not reach the status sheet")
+	assert.NotContains(t, out, "impregnable")
+
+	// #479: a heavy build at the 90% cap reads the status-only top band.
+	user.Character.Equipment.Body = items.Item{ItemId: 99465, Spec: &items.ItemSpec{
+		ItemId: 99465, Name: "probe plate", PhysicalMitigation: 370,
+	}}
+	out, err = templates.Process("character/status", user, user.UserId)
+	require.NoError(t, err)
+	assert.Contains(t, out, "impregnable", "370 raw points reach the 90%% cap")
+	assert.NotContains(t, out, "fortified")
+}
+
+// #479: identify bands one item's raw points and never reads the status-only
+// "impregnable" band, however high the points.
+func TestTemplateFreeze_IdentifyKeepsFortifiedAsTopBand(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	useDogmudTemplates(t)
+
+	spec := items.ItemSpec{ItemId: 99479, Name: "probe plate", Type: items.Body, PhysicalMitigation: 95}
+	item := items.Item{ItemId: 99479}
+	out, err := templates.Process("descriptions/identify", struct {
+		Item     *items.Item
+		ItemSpec *items.ItemSpec
+	}{&item, &spec}, 0)
+	require.NoError(t, err)
+	assert.Contains(t, out, "fortified")
+	assert.NotContains(t, out, "impregnable")
 }
 
 func TestTemplateFreeze_IdentifyReadsConditionIds(t *testing.T) {

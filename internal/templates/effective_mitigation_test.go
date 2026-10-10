@@ -65,6 +65,49 @@ func TestEffectiveMitigation_StatusBandsReadTheCurve(t *testing.T) {
 	assert.Equal(t, "fortified", got, "370 raw points reach the cap")
 }
 
+// #479: the status sheet bands effective mitigation through defenseQuality,
+// which adds "impregnable" from 85% on top of mitigationQuality's bands.
+// mitigationQuality itself (identify's raw single-item reading) keeps
+// "fortified" as its top band.
+func TestDefenseQuality_TopBand(t *testing.T) {
+	render := func(expr string) string {
+		t.Helper()
+		out, err := ProcessText(expr, nil)
+		require.NoError(t, err)
+		return strings.TrimRight(out, "\r\n")
+	}
+	cases := []struct {
+		pct  string
+		want string
+	}{
+		{"0.0", "none"},
+		{"0.5", "strong"},
+		{"0.69", "heavy"},
+		{"0.7", "fortified"},
+		{"0.849", "fortified"},
+		{"0.85", "impregnable"},
+		{"0.9", "impregnable"},
+	}
+	for _, c := range cases {
+		assert.Equal(t, c.want, render(`{{ defenseQuality `+c.pct+` }}`), "defenseQuality %s", c.pct)
+	}
+	for _, pct := range []string{"0.85", "0.9", "3.7"} {
+		assert.Equal(t, "fortified", render(`{{ mitigationQuality `+pct+` }}`),
+			"identify's bands stay unchanged at %s", pct)
+	}
+}
+
+// The status expression end to end: 370 raw points reach the 90% cap, which
+// the status sheet reads as "impregnable".
+func TestEffectiveMitigation_StatusTopBandIsImpregnable(t *testing.T) {
+	pinShippedCurve(t)
+	c := characters.New()
+	c.Equipment.Body = items.Item{ItemId: 1, Spec: &items.ItemSpec{PhysicalMitigation: 370}}
+	out, err := ProcessText(`{{ defenseQuality (effectiveMitigation .C "physical") }}`, map[string]any{"C": c})
+	require.NoError(t, err)
+	assert.Equal(t, "impregnable", strings.TrimRight(out, "\r\n"))
+}
+
 // A channel name the function does not know fails the render rather than
 // silently describing some other channel.
 func TestEffectiveMitigation_UnknownChannelFailsTheRender(t *testing.T) {

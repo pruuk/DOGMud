@@ -377,25 +377,8 @@ var (
 			}
 			return 0, fmt.Errorf("effectiveMitigation: unknown channel %q", channel)
 		},
-		"mitigationQuality": func(pct float64) string {
-			percent := pct * 100
-			switch {
-			case percent <= 0:
-				return "none"
-			case percent < 10:
-				return "thin"
-			case percent < 25:
-				return "light"
-			case percent < 40:
-				return "moderate"
-			case percent < 55:
-				return "strong"
-			case percent < 70:
-				return "heavy"
-			default:
-				return "fortified"
-			}
-		},
+		"mitigationQuality": mitigationQuality,
+		"defenseQuality":    defenseQuality,
 		"damageQuality": func(mult float64) string {
 			switch {
 			case mult < 0.3:
@@ -535,6 +518,44 @@ func padRight(totalWidth int, stringArgs ...string) string {
 		return stringIn
 	}
 	return stringIn + strings.Repeat(padString, paddingLength)
+}
+
+// mitigationQuality maps a mitigation fraction to a word band, "none" to
+// "fortified" (from 70%). identify passes one item's raw points (divided by
+// 100), so its top band is "fortified" however high the points go.
+func mitigationQuality(pct float64) string {
+	percent := pct * 100
+	switch {
+	case percent <= 0:
+		return "none"
+	case percent < 10:
+		return "thin"
+	case percent < 25:
+		return "light"
+	case percent < 40:
+		return "moderate"
+	case percent < 55:
+		return "strong"
+	case percent < 70:
+		return "heavy"
+	default:
+		return "fortified"
+	}
+}
+
+// defenseQualityImpregnable is where the status sheet's top Defenses band
+// starts (#479, owner ruling): effective mitigation of 85% and up.
+const defenseQualityImpregnable = 0.85
+
+// defenseQuality bands a character's effective mitigation for the status
+// sheet: mitigationQuality's bands plus "impregnable" from 85%, so builds
+// between 70% and the 90% cap no longer all read "fortified". It is
+// status-only; identify keeps mitigationQuality.
+func defenseQuality(pct float64) string {
+	if pct >= defenseQualityImpregnable {
+		return "impregnable"
+	}
+	return mitigationQuality(pct)
 }
 
 func padRightX(input, padding string, length int) string {
