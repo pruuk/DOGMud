@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -9,6 +10,29 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// #308: a lone number is a slot only for remove; `storage add 5` still asks
+// "add what?" rather than hunting for an item called 5.
+func TestStorageAdd_LoneNumberAsksWhat(t *testing.T) {
+	t.Cleanup(seedAllRegistries())
+	user, room := getTestUserAndRoom(t)
+	oldIsStorage := room.IsStorage
+	room.IsStorage = true
+	origStorage := user.ItemStorage
+	t.Cleanup(func() {
+		room.IsStorage = oldIsStorage
+		user.ItemStorage = origStorage
+	})
+	user.ItemStorage = users.Storage{}
+	events.DrainQueuedMessagesForTest(user.UserId)
+
+	_, err := Storage("add 5", user, room, 0)
+	require.NoError(t, err)
+
+	got := sentTo(user)
+	assert.NotContains(t, got, "You don't have a")
+	assert.Contains(t, strings.ToLower(got), "add what?")
+}
 
 // #308: `storage remove 2` read the 2 as a quantity with no item name and
 // answered "You don't have a  in storage." It takes slot 2.
