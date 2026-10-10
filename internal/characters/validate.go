@@ -473,7 +473,7 @@ func (c *Character) validateDisabledSlotsForSpecies() {
 			}
 			c.Equipment.Wrist1 = items.ItemDisabledSlot
 			if c.Equipment.Wrist2.ItemId > 0 {
-				c.StoreItem(c.Equipment.Wrist2)
+				c.displaceSlotItem(c.Equipment.Wrist2, DisplacedBySpecies)
 			}
 			c.Equipment.Wrist2 = items.ItemDisabledSlot
 		case items.Back:
@@ -502,9 +502,59 @@ func (c *Character) validateDisabledSlotsForSpecies() {
 		}
 
 		if !itemFoundInDisabledSlot.IsDisabled() {
-			c.StoreItem(itemFoundInDisabledSlot)
+			c.displaceSlotItem(itemFoundInDisabledSlot, DisplacedBySpecies)
 			mudlog.Debug("Disabled Check", "error", "Item found in disabled slot", "name", itemFoundInDisabledSlot.Name(), "slot", disabledSlot, "character", c.Name)
 		}
+	}
+}
+
+// DisplacedGear reasons: why a slot closed under a worn item.
+const (
+	// DisplacedByDisabledLegs: a disable-legs mutation (the tail) closed
+	// the legs slot.
+	DisplacedByDisabledLegs = "disable-legs"
+	// DisplacedByLostTail: the tail mutation is gone, so the tail slot closed.
+	DisplacedByLostTail = "lost-tail"
+	// DisplacedByLostArm: an extra-arms level is gone, so that arm's arm
+	// and wrist slots closed.
+	DisplacedByLostArm = "lost-arm"
+	// DisplacedBySpecies: the character's species has no such slot.
+	DisplacedBySpecies = "species"
+)
+
+// DisplacedGear is one worn item pushed out of its slot into the pack (#481),
+// by a mutation or by a species that has no such slot: its display name, and
+// Reason says why (one of the DisplacedBy constants above).
+// It keeps the name, not the item: the item itself lives in the pack, and a
+// second copy here would be an item field every WalkItems must visit.
+type DisplacedGear struct {
+	ItemName string
+	Reason   string
+}
+
+// TakeDisplacedGear returns the gear pushed off this character's body since
+// the last call, and clears the record. The round tick's end-of-round check
+// queues hooks' DisplacedGear_Notify, which drains it to tell the player.
+func (c *Character) TakeDisplacedGear() []DisplacedGear {
+	got := c.displacedGear
+	c.displacedGear = nil
+	return got
+}
+
+// HasDisplacedGear reports whether TakeDisplacedGear has anything to return.
+func (c *Character) HasDisplacedGear() bool {
+	return len(c.displacedGear) > 0
+}
+
+// displaceSlotItem takes an item out of a slot the species or a mutation
+// closed and returns it to the pack. It never destroys the item: ReturnToPack
+// keeps it even past StoreItem's carry limit. A player's displacement is
+// recorded with its reason for TakeDisplacedGear; a mob's is not, since
+// nothing drains it.
+func (c *Character) displaceSlotItem(itm items.Item, reason string) {
+	c.ReturnToPack(itm)
+	if c.userId > 0 {
+		c.displacedGear = append(c.displacedGear, DisplacedGear{ItemName: itm.DisplayName(), Reason: reason})
 	}
 }
 
@@ -524,43 +574,43 @@ func (c *Character) validateMutationSlots() {
 	// Extra arms: unavailable levels move items back to backpack.
 	if c.ExtraArms < 4 {
 		if c.Equipment.ExtraArm4.ItemId > 0 {
-			c.StoreItem(c.Equipment.ExtraArm4)
+			c.displaceSlotItem(c.Equipment.ExtraArm4, DisplacedByLostArm)
 		}
 		c.Equipment.ExtraArm4 = items.ItemDisabledSlot
 		if c.Equipment.ExtraWrist4.ItemId > 0 {
-			c.StoreItem(c.Equipment.ExtraWrist4)
+			c.displaceSlotItem(c.Equipment.ExtraWrist4, DisplacedByLostArm)
 		}
 		c.Equipment.ExtraWrist4 = items.ItemDisabledSlot
 	}
 	if c.ExtraArms < 3 {
 		if c.Equipment.ExtraArm3.ItemId > 0 {
-			c.StoreItem(c.Equipment.ExtraArm3)
+			c.displaceSlotItem(c.Equipment.ExtraArm3, DisplacedByLostArm)
 		}
 		c.Equipment.ExtraArm3 = items.ItemDisabledSlot
 		if c.Equipment.ExtraWrist3.ItemId > 0 {
-			c.StoreItem(c.Equipment.ExtraWrist3)
+			c.displaceSlotItem(c.Equipment.ExtraWrist3, DisplacedByLostArm)
 		}
 		c.Equipment.ExtraWrist3 = items.ItemDisabledSlot
 	}
 	if c.ExtraArms < 2 {
 		if c.Equipment.ExtraArm2.ItemId > 0 {
-			c.StoreItem(c.Equipment.ExtraArm2)
+			c.displaceSlotItem(c.Equipment.ExtraArm2, DisplacedByLostArm)
 			mudlog.Debug("Extra Arms Check", "info", "Item returned from extra arm 2 slot", "name", c.Equipment.ExtraArm2.Name(), "character", c.Name)
 		}
 		c.Equipment.ExtraArm2 = items.ItemDisabledSlot
 		if c.Equipment.ExtraWrist2.ItemId > 0 {
-			c.StoreItem(c.Equipment.ExtraWrist2)
+			c.displaceSlotItem(c.Equipment.ExtraWrist2, DisplacedByLostArm)
 		}
 		c.Equipment.ExtraWrist2 = items.ItemDisabledSlot
 	}
 	if c.ExtraArms < 1 {
 		if c.Equipment.ExtraArm1.ItemId > 0 {
-			c.StoreItem(c.Equipment.ExtraArm1)
+			c.displaceSlotItem(c.Equipment.ExtraArm1, DisplacedByLostArm)
 			mudlog.Debug("Extra Arms Check", "info", "Item returned from extra arm 1 slot", "name", c.Equipment.ExtraArm1.Name(), "character", c.Name)
 		}
 		c.Equipment.ExtraArm1 = items.ItemDisabledSlot
 		if c.Equipment.ExtraWrist1.ItemId > 0 {
-			c.StoreItem(c.Equipment.ExtraWrist1)
+			c.displaceSlotItem(c.Equipment.ExtraWrist1, DisplacedByLostArm)
 		}
 		c.Equipment.ExtraWrist1 = items.ItemDisabledSlot
 	}
@@ -572,7 +622,7 @@ func (c *Character) validateMutationSlots() {
 		}
 	} else {
 		if c.Equipment.Tail.ItemId > 0 {
-			c.StoreItem(c.Equipment.Tail)
+			c.displaceSlotItem(c.Equipment.Tail, DisplacedByLostTail)
 		}
 		c.Equipment.Tail = items.ItemDisabledSlot
 	}
@@ -580,7 +630,7 @@ func (c *Character) validateMutationSlots() {
 	// Tail mutation disables legs slot via disable-legs flag.
 	if flags := mutations.GetMutationFlags(c.Mutations); flags["disable-legs"] {
 		if c.Equipment.Legs.ItemId > 0 {
-			c.StoreItem(c.Equipment.Legs)
+			c.displaceSlotItem(c.Equipment.Legs, DisplacedByDisabledLegs)
 			mudlog.Debug("Mutation Check", "info", "Item returned from legs slot (tail mutation)", "name", c.Equipment.Legs.Name(), "character", c.Name)
 		}
 		c.Equipment.Legs = items.ItemDisabledSlot

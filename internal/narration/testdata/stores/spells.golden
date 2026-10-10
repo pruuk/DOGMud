@@ -76,7 +76,7 @@ spell|hemorrhagic-burst|cast_observer => <ansi fg="username">Aliceia</ansi> clen
 spell|hemorrhagic-wave|cast_actor => You channel a wave of rupturing force outward.
 spell|hemorrhagic-wave|cast_observer => <ansi fg="username">Aliceia</ansi> clenches both fists as a sickening pressure builds.
 spell|identify|cast_actor => You focus your mind, reaching out to sense the item's essence...
-spell|iron-will|cast_actor => You forge a wall of iron resolve around the target's mind.
+spell|iron-will|cast_actor => You forge a wall of iron resolve.
 spell|iron-will|cast_observer => <ansi fg="username">Aliceia</ansi> focuses intently, a steely aura forming.
 spell|kinetic-hurl|cast_actor => You gather telekinetic force, the air between your hands distorting.
 spell|kinetic-hurl|cast_observer => <ansi fg="username">Aliceia</ansi> gathers telekinetic force, the air distorting around their hands.

@@ -4,8 +4,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -15,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,6 +66,61 @@ func TestTemplateFreeze_ConditionsListReadsPermanent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, out, "Bleeding (2)")
 	assert.Contains(t, out, "Stoneskin")
+}
+
+// #469: the name column must hold every shipped condition name, so a long
+// name never runs into its description, and no row may leave the box.
+// Every name in the conditions directory is rendered (a stacking one with a
+// two-digit count suffix), so a longer name added later fails here.
+func TestTemplateFreeze_ConditionsNameColumnFitsEveryName(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	useDogmudTemplates(t)
+
+	_, here, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	dir := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "conditions")
+	files, err := os.ReadDir(dir)
+	require.NoError(t, err)
+	nameRe := regexp.MustCompile(`(?m)^name:\s*"?([^"\r\n]+?)"?\s*$`)
+	desc := "Marker words that run long enough to wrap onto a second line of the box at any width."
+	entries := []conditionEntry{}
+	for _, f := range files {
+		raw, err := os.ReadFile(filepath.Join(dir, f.Name()))
+		require.NoError(t, err)
+		m := nameRe.FindSubmatch(raw)
+		if m == nil {
+			continue
+		}
+		name := string(m[1])
+		if regexp.MustCompile(`(?m)^\s*-\s*stacking\s*$`).Match(raw) {
+			name += " (99)"
+		}
+		entries = append(entries, conditionEntry{Name: name, Description: desc, RoundsLeft: 4})
+	}
+	require.Greater(t, len(entries), 100, "the scan must find the shipped conditions")
+
+	out, err := templates.Process("character/conditions", entries, 0)
+	require.NoError(t, err)
+	tagRe := regexp.MustCompile(`<[^>]+>`)
+	lines := strings.Split(strings.ReplaceAll(util.StripANSI(tagRe.ReplaceAllString(out, "")), "\r", ""), "\n")
+	box := utf8.RuneCountInString(lines[0])
+	descCol := -1
+	for _, line := range lines {
+		assert.LessOrEqual(t, utf8.RuneCountInString(line), box, "row leaves the box: %q", line)
+		idx := strings.Index(line, "Marker words")
+		if idx < 0 {
+			continue
+		}
+		if descCol < 0 {
+			descCol = idx
+		}
+		assert.Equal(t, descCol, idx, "description must start in one column: %q", line)
+	}
+	require.Greater(t, descCol, 0)
+	for _, e := range entries {
+		assert.Contains(t, out, e.Name)
+	}
 }
 
 func TestTemplateFreeze_StatusReadsTheBrokenLimbRecord(t *testing.T) {
@@ -113,6 +172,34 @@ func TestTemplateFreeze_StatusDefensesReadTheCurve(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, out, "heavy", "75 raw points bend to about 67%%")
 	assert.NotContains(t, out, "fortified", "the raw sum must not reach the status sheet")
+	assert.NotContains(t, out, "impregnable")
+
+	// #479: a heavy build at the 90% cap reads the status-only top band.
+	user.Character.Equipment.Body = items.Item{ItemId: 99465, Spec: &items.ItemSpec{
+		ItemId: 99465, Name: "probe plate", PhysicalMitigation: 370,
+	}}
+	out, err = templates.Process("character/status", user, user.UserId)
+	require.NoError(t, err)
+	assert.Contains(t, out, "impregnable", "370 raw points reach the 90%% cap")
+	assert.NotContains(t, out, "fortified")
+}
+
+// #479: identify bands one item's raw points and never reads the status-only
+// "impregnable" band, however high the points.
+func TestTemplateFreeze_IdentifyKeepsFortifiedAsTopBand(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	useDogmudTemplates(t)
+
+	spec := items.ItemSpec{ItemId: 99479, Name: "probe plate", Type: items.Body, PhysicalMitigation: 95}
+	item := items.Item{ItemId: 99479}
+	out, err := templates.Process("descriptions/identify", struct {
+		Item     *items.Item
+		ItemSpec *items.ItemSpec
+	}{&item, &spec}, 0)
+	require.NoError(t, err)
+	assert.Contains(t, out, "fortified")
+	assert.NotContains(t, out, "impregnable")
 }
 
 func TestTemplateFreeze_IdentifyReadsConditionIds(t *testing.T) {

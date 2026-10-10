@@ -723,8 +723,10 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 					}
 				}
 
-				// Recalculate all stats at the end of the round tick
-				user.Character.Validate()
+				// Recalculate all stats at the end of the round tick, and
+				// queue the notice for any gear a closed slot pushed off
+				// (#481).
+				endOfRoundValidate(user)
 
 				// Town Justice 5.1c Task 9: release player when jail sentence expires.
 				releaseIfSentenceServed(user.Character, uId, util.GetRoundCount())

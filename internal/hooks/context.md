@@ -114,7 +114,20 @@ events.RegisterListener(events.LevelUp{}, SendLevelNotifications) // Level-up me
 events.RegisterListener(events.LevelUp{}, CheckGuide)             // Guide NPC spawning
 events.RegisterListener(events.ItemOwnership{}, CheckItemQuests)  // Item-based quests
 events.RegisterListener(events.MobIdle{}, HandleIdleMobs)         // Mob AI behavior
+events.RegisterListener(mutations.Gained{}, MutationGained_Reveal) // Mutation reveal
 ```
+
+Gear a closed slot pushed off a player (#481) is told by
+`DisplacedGear_Notify` (in `MutationGained_Reveal.go`), not by the reveal:
+the Bloom Wafer and the Phial of Second Birth grant mutations without
+queueing `mutations.Gained`. The round tick's closing `endOfRoundValidate`
+validates each player and, when `Character.HasDisplacedGear()`, queues a
+`displacedGearNotice` at priority 50. That runs after every priority-0
+event, including the `splash.Splash` the reveal queues, so the line follows
+the reveal on the splash path too. The listener drains
+`TakeDisplacedGear()` and sends one line per item naming the cause, such as
+"Your new tail leaves no room for Iron Greaves, so you take it off." The
+item is already in the pack (`ReturnToPack`, never the ground).
 
 ## Combat System Integration
 

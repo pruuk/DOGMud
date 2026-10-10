@@ -856,7 +856,14 @@ type hitResolution struct {
 	// critSource labels HOW crit was decided, for analytics only. See
 	// AttackResult.CritSource. Melee has three crit sites and they are NOT
 	// equivalent: two follow the roll, one (the ambush opening) bypasses it.
-	critSource   string
+	critSource string
+	// critZ and critBasis record the value the attack-crit verdict compared
+	// against the bar and where it came from (#481), for the AttackCrit debug
+	// line only: "margin" (normalised opposed margin), "selfz" (no defence was
+	// rolled, so the attacker's self-relative z) or "forced" (a forced crit,
+	// which ignores critZ). Set on every resolveDefenseOutcomeInner call.
+	critZ        float64
+	critBasis    string
 	fumble       bool
 	doubleFumble bool
 	defenseCrit  bool
@@ -1106,12 +1113,14 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 	var attackCrit bool
 	if z, ok := normalizedAttackMargin(best); ok {
 		attackCrit = z >= critThreshold
+		res.critZ, res.critBasis = z, "margin"
 	} else {
 		// T2: no defence was attempted, so there is no contest and no margin to
 		// derive from. Fall back to the legacy self-relative check, which
 		// preserves prior behaviour exactly on that path. Do NOT synthesise a
 		// margin from math.Inf(-1).
 		attackCrit = best.hitRoll.ZScore >= critThreshold
+		res.critZ, res.critBasis = best.hitRoll.ZScore, "selfz"
 	}
 
 	// Mirror of the attack side, and it must mirror it: an earlier draft left
@@ -1139,6 +1148,7 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 	if forceCrit {
 		attackCrit = true
 		attackFumble = false
+		res.critBasis = "forced"
 	}
 	// Diagnostic label only; see AttackResult.CritSource. Recorded where the
 	// verdict is DECIDED, because the whole point is to separate a crit that won
@@ -1234,7 +1244,8 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 			res.crit = true
 			res.critSource = meleeCritSourceFor(forceCrit)
 			res.damageMult = 1.0
-			mudlog.Debug("AttackCrit", "zScore", fmt.Sprintf("%.2f", best.hitRoll.ZScore),
+			mudlog.Debug("AttackCrit", "critZ", fmt.Sprintf("%.2f", res.critZ),
+				"basis", res.critBasis,
 				"threshold", fmt.Sprintf("%.2f", critThreshold),
 				"source", sourceChar.Name, "target", targetChar.Name)
 			return res

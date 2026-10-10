@@ -2201,6 +2201,23 @@ weight limit would refuse, the item goes into the backpack anyway. It never
 drops to the ground (owner, 2026-10-06). The crit disarm
 (`combat.AttemptCritDisarm`) uses it; before, a full pack lost the weapon.
 
+## Slots closed by species or mutation (#481)
+
+`validateDisabledSlotsForSpecies` and `validateMutationSlots` (run by
+`Validate`) move an item out of a slot the species or a mutation closes
+(extra arms and wrists, the tail slot, the legs slot under `disable-legs`)
+with `ReturnToPack`, so the item is never lost; they used to call
+`StoreItem` and ignore its refusal past 2x carry capacity, which destroyed
+the item. For a player (non-zero user id), every such removal goes through
+`displaceSlotItem` and is recorded as a `DisplacedGear{ItemName, Reason}`
+(the name only, so no `WalkItems` has a second item copy to visit). Reasons:
+`DisplacedByDisabledLegs` (the tail closed legs), `DisplacedByLostTail`,
+`DisplacedByLostArm` (arm or wrist of a lost extra-arms level) and
+`DisplacedBySpecies`. `HasDisplacedGear()` reports a pending record;
+`TakeDisplacedGear()` returns it and clears it. The hooks round tick drains
+it to tell the player (see `internal/hooks/context.md`). The record is
+runtime only, and a mob's displacement is not recorded.
+
 ## The caster door (messaging M6 slice 1)
 
 `AddConditionMagnitudeBy(conditionId, triggers, magnitude, source, caster

@@ -103,12 +103,15 @@ Cached template with metadata for efficient reuse and cache invalidation.
   character's mitigation on `"physical"`, `"magical"` or `"conviction"`, bent
   through that channel's curve by `combat.EffectiveMitigationFor`, the value
   combat applies. An unknown channel name fails the render. The DOGMud
-  `character/status` template passes it to **mitigationQuality**, which maps a
-  fraction to a word band ("none" to "fortified", "fortified" from 70%).
-  `descriptions/identify` still passes one item's own points to
-  `mitigationQuality`, raw, so `identify` bands a single item's raw points
-  while `status` bands the wearer's effective value: the same words on
-  different scales.
+  `character/status` template passes it to **defenseQuality** (#479), which
+  returns "impregnable" from 85% effective and otherwise defers to
+  **mitigationQuality**. `mitigationQuality` maps a fraction to a word band
+  ("none" to "fortified", "fortified" from 70%). `descriptions/identify`
+  still passes one item's own points to `mitigationQuality`, raw, so
+  `identify` bands a single item's raw points (top band "fortified") while
+  `status` bands the wearer's effective value: the same words on different
+  scales, plus a status-only top band. Both are top-level functions in
+  `templatesfunctions.go`, registered in the func map.
 
 ### Markdown Integration
 - **processMarkdown(in string) string**: Processes markdown content

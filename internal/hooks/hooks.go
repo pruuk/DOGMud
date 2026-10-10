@@ -32,6 +32,9 @@ func RegisterListeners() {
 
 	// Mutation reveal (terminal ceremony/flourish; web card via gmcp module)
 	events.RegisterListener(mutations.Gained{}, MutationGained_Reveal)
+	// Gear a closed slot pushed into the pack (#481); queued by the round
+	// tick's endOfRoundValidate, after any reveal.
+	events.RegisterListener(displacedGearNotice{}, DisplacedGear_Notify)
 
 	// RoomChange Listeners
 	events.RegisterListener(events.RoomChange{}, LocationMusicChange)

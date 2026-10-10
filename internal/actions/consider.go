@@ -77,6 +77,10 @@ func predictionFor(ratio float64) string {
 		return `<ansi fg="yellow">An even contest. Tread carefully</ansi>`
 	case ratio > 0.5:
 		return `<ansi fg="red-bold">They have the upper hand</ansi>`
+	case ratio >= 0.25:
+		// #481: 0 to 0.5 used to be one band, so very different loadouts
+		// against the same strong target all read "severely outmatched".
+		return `<ansi fg="red-bold">You are badly outmatched</ansi>`
 	case ratio > 0:
 		return `<ansi fg="red-bold">You are severely outmatched</ansi>`
 	default:
