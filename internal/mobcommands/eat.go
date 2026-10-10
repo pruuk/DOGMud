@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func Eat(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
@@ -22,6 +23,12 @@ func Eat(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		itemSpec := matchItem.GetSpec()
 
 		if itemSpec.Subtype != items.Edible {
+			return true, nil
+		}
+
+		// A mob leaves food that has gone bad, as a player is refused it.
+		// No message: nobody asked it why (#277).
+		if matchItem.IsSpoiledFood(util.GetRoundCount()) {
 			return true, nil
 		}
 

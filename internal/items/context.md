@@ -673,11 +673,16 @@ per-potion (`AgingThresholds`: `ferment_rounds` / `peak_rounds` /
 ```go
 func GetAgingPhase(elapsedRounds uint64, thresholds AgingThresholds, effectiveSpeed float64) (AgingPhase, float64)
 func CalcEffectiveAgingSpeed(bottleMultiplier float64, craftSkill int) float64
+func (i *Item) IsSpoiledFood(now uint64) bool
 ```
 
 `CalcEffectiveAgingSpeed` = `bottleMultiplier × max(0.5, 1.0 - craftSkill/200)`,
 so a higher effective speed ages faster (shorter phases); craft skill floors
 out at a 50% speed reduction (skill approximately 100+).
+
+`IsSpoiledFood` is the eat-side question: an item whose spec ages, made at a
+known `CraftedRound`, past `PhaseSpoiled` at bottle speed 1.0. Player and mob
+`eat` both ask it; no shipped food carries `aging:` yet.
 
 ### Bottle Tiers
 All four bottles share `component_tag: bottle`; crafting consumes whichever
