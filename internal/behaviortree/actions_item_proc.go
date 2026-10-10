@@ -94,7 +94,7 @@ func actProc(params map[string]any, ctx *EvalContext) Result {
 	case `aoe_stun`:
 		executed = procAoeStun(owner, ev.Room, p)
 	case `apply_condition`:
-		executed = procApplyCondition(ev.Other, p)
+		executed = procApplyCondition(owner, ev.Other, p)
 	}
 	if executed {
 		return Success
@@ -335,14 +335,14 @@ func procStealPool(owner, other *characters.Character, params map[string]float64
 	return false
 }
 
-// procApplyCondition applies the Bleeding record to the target. Params:
+// procApplyCondition applies owner's Bleeding record to the target. Params:
 // condition (1=bleeding; the switch is the extension point for future
 // condition ids; only bleeding is wired here, YAGNI), duration (the stack's
 // rounds, default 4 if unset/<1), magnitude (per-round health loss, default 2
 // if unset/<1). Each proc that fires adds one stack; see the Stacking flag.
 // Unknown condition ids do not execute (so the branch's cooldown isn't
 // armed).
-func procApplyCondition(target *characters.Character, params map[string]float64) bool {
+func procApplyCondition(owner, target *characters.Character, params map[string]float64) bool {
 	if target == nil {
 		return false
 	}
@@ -356,9 +356,19 @@ func procApplyCondition(target *characters.Character, params map[string]float64)
 	}
 	switch int(params["condition"]) {
 	case 1:
-		return target.AddConditionMagnitude(conditions.ConditionIdBleeding, dur, -mag, "itemproc") == nil
+		return target.AddConditionMagnitudeBy(conditions.ConditionIdBleeding, dur, -mag, "itemproc", procOwnerRef(owner)) == nil
 	}
 	return false
+}
+
+// procOwnerRef names an item proc's owner as procStealPool does, for the
+// caster of a bleed the proc opens: a bleed that kills credits the owner
+// (#240). Nobody for a nil owner.
+func procOwnerRef(owner *characters.Character) state.ActorRef {
+	if owner == nil {
+		return state.ActorRef{}
+	}
+	return state.ActorRef{UserId: owner.GetUserId(), MobInstanceId: owner.MobInstanceId}
 }
 
 // procAoeStun applies the stagger-stun condition (84, a 1-round Stunned) to every

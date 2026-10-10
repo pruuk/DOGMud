@@ -47,6 +47,34 @@ func (b *ConditionSpec) StartUserNotice() string {
 	return fmt.Sprintf("%s takes effect.", b.Name)
 }
 
+// StartActorNotice is the line the CASTER reads when this condition lands on
+// someone else: the authored start_actor, silenced by the same flags as
+// StartUserNotice. There is no generic fallback: a condition with no caster
+// line keeps the spell's own lines instead (NarratesCastStart).
+func (b *ConditionSpec) StartActorNotice() string {
+	if b.Secret || b.hasFlag(Quiet) || b.hasFlag(SilentStart) {
+		return ""
+	}
+	return b.StartActorText
+}
+
+// NarratesCastStart reports whether this condition's own start lines will
+// tell every audience of a spell landing it, so the spell drops its generic
+// "takes effect" lines (owner ruling R11): an authored holder line and room
+// line, and, when the caster is someone else, an authored caster line. The
+// generic "<Name> takes effect." fallback does not count, and neither does a
+// silent start. selfCast: the caster is the holder, so the holder line is the
+// caster's line and no start_actor is needed. A refresh of a record already
+// held narrates no start, and the caller checks that separately. It judges
+// authored text only; whether a hidden holder's room line is actually told is
+// the caller's call.
+func (b *ConditionSpec) NarratesCastStart(selfCast bool) bool {
+	if b.StartUserNotice() == "" || b.StartUserText == "" || b.StartRoomText == "" {
+		return false
+	}
+	return selfCast || b.StartActorNotice() != ""
+}
+
 // EndUserNotice is the line the holder reads when this condition ends: the
 // authored end_actee, or "<Name> has expired." when none is authored.
 // A secret condition says nothing; a nameless one keeps its authored line only.

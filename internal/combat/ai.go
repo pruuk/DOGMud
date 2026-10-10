@@ -736,21 +736,22 @@ func CanUseCast(char *characters.Character) bool {
 }
 
 // preferredSpell returns the spell ID the mob should cast this round.
-// Priority: (1) minor-shield if unshielded, (2) heal-self if < 30% HP, (3) harm spells.
+// Priority: (1) conviction-ward if no ward is up, (2) heal-self if < 30% HP and no heal is running, (3) harm spells.
 func preferredSpell(mob *mobs.Mob) string {
-	// Shield self if not already shielded
-	if !mob.Character.Conditions.HasEffect(conditions.EffectMitigationFlat) {
+	// Ward self if no ward is up (the ward family, messaging M6 slice 1)
+	if !mob.Character.Conditions.HasFamily(conditions.FamilyWard) {
 		if _, has := mob.Character.SpellBook["conviction-ward"]; has {
 			if sd := spells.GetSpell("conviction-ward"); sd != nil && mob.Character.Conviction >= sd.Cost {
 				return "conviction-ward"
 			}
 		}
 	}
-	// Heal when critically low
+	// Heal when critically low and no heal is running (the heal family, read
+	// as the ward branch reads the ward family).
 	// SELF-side, EffectivePoolMax -- see ScoreGrapple. A reserved companion must
 	// not panic-heal at a full pool.
 	selfPct := float64(mob.Character.Health) * 100 / float64(mob.Character.EffectivePoolMax(characters.PoolHealth))
-	if selfPct < 30 {
+	if selfPct < 30 && !mob.Character.Conditions.HasFamily(conditions.FamilyHeal) {
 		if _, has := mob.Character.SpellBook["heal"]; has {
 			if sd := spells.GetSpell("heal"); sd != nil && mob.Character.Conviction >= sd.Cost {
 				return "heal"

@@ -1117,7 +1117,9 @@ Pinnacle proc path (`hooks/item_procs.go`, `items.ItemProc`, `procs:`,
 `ProcsFor`, the builder's proc editor) is retired.
 
 - **`proc(effect, ...)`** runs `procLifesteal`, `procStealPool`,
-  `procAoeStun` or `procApplyCondition` (moved unchanged from hooks) for
+  `procAoeStun` or `procApplyCondition` (moved from hooks; it takes the
+  owner and opens its bleed in the owner's name through `procOwnerRef`, so
+  a bleed kill credits the owner, messaging M6 slice 1) for
   `itemHolder(ctx)` against `ctx.Event.Proc` (`ProcEvent{Other, Room,
   Damage}`; nil on a kill, read as zero). The other params are the
   effect's numbers. It returns Success only when the effect did something
@@ -1161,3 +1163,13 @@ Pinnacle proc path (`hooks/item_procs.go`, `items.ItemProc`, `procs:`,
   `hollow_choir.yaml` (on_spell_hit conviction steal 0.08, cooldown 3).
   `hooks/testdata/item_proc_parity.golden` is the retired path's record;
   `TestItemProcParity` holds the trees to it.
+
+## Wards and heals already up (messaging M6 slice 1)
+
+`cast_best_in_category` skips a candidate whose effect is already on the
+caster (`spellEffectAlreadyActive`, `action_cast_best_in_category.go`): a
+shield spell while any ward is up, a heal spell while any heal is
+(`Conditions.HasFamily` with `conditions.FamilyWard` or `FamilyHeal`), and
+any other spell while one of its `ConditionIds` is held. Each shield and
+heal spell lands its own condition, and a new one only replaces the old, so
+casting a second ward or heal would swap one for another.

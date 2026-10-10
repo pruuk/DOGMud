@@ -8,5 +8,7 @@ statmods:
   willpower: 20
   magical_mitigation: 10
   conviction_mitigation: 10
+start_actor: "{actee}'s mind hardens like iron."
 start_actee: Your mind hardens like iron, resolute and unyielding.
+start_observer: "{actee}'s jaw sets with iron resolve."
 end_actee: The iron resolve in your mind softens back to normal.

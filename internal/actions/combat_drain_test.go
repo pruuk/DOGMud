@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -138,7 +139,7 @@ func TestDrain_HealAndBleed(t *testing.T) {
 		char.Cooldowns = characters.Cooldowns{} // clear cooldown from previous attempt
 		char.Health = 150                       // reset HP so the heal delta is visible
 
-		res = ExecuteDrain(newStubActor(char, newTestRoom()))
+		res = ExecuteDrain(&idStubActor{stubActor: newStubActor(char, newTestRoom()), mobInstanceId: 4242})
 		if res.Executed && res.MoveResult.Hit {
 			hitSeen = true
 			break
@@ -171,6 +172,8 @@ func TestDrain_HealAndBleed(t *testing.T) {
 	if assert.Len(t, held, 1, "expected exactly one held Bleeding record") {
 		assert.Less(t, held[0].Magnitude, 0.0, "drain's Bleeding record must carry a negative magnitude")
 		assert.Less(t, held[0].TickAmount, 0, "drain's Bleeding record must carry a negative tick snapshot")
+		assert.Equal(t, state.ActorRef{MobInstanceId: 4242}, held[0].Caster,
+			"the bleed names its attacker, so a bleed kill credits them (#240)")
 	}
 
 	// BleedDmg should be at least the minimum.
@@ -396,6 +399,39 @@ func TestDrainArea_SinglePlayer(t *testing.T) {
 
 	require.Greater(result.TotalDamage, 0, "aggregate damage should be positive")
 	require.Greater(result.Healed, 0, "mob should be healed by the aggregate lifesteal")
+}
+
+// TestDrainArea_BleedNamesAttacker pins that the area drain's bleed names its
+// attacker too, so a bleed kill credits them (#240).
+func TestDrainArea_BleedNamesAttacker(t *testing.T) {
+	p1 := seedDrainAreaPlayer(7011, "quester-caster", "Caster Target")
+	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{7011: p1})
+	defer cleanupUsers()
+	defer conditions.SeedConditionRecordsForTest()()
+
+	room := newTestRoom()
+	room.AddPlayer(7011)
+
+	attacker := &idStubActor{stubActor: newStubActor(drainAreaAttacker(), room), mobInstanceId: 4345}
+
+	hitSeen := false
+	for i := 0; i < 100 && !hitSeen; i++ {
+		attacker.stubActor.char.Cooldowns = characters.Cooldowns{}
+		p1.Character.Health = 500
+		p1.Character.RemoveCondition(conditions.ConditionIdBleeding)
+		result := ExecuteDrainArea(attacker)
+		hitSeen = result.Executed && len(result.PlayerResults) == 1 && result.PlayerResults[0].MoveResult.Hit
+	}
+	if !hitSeen {
+		t.Fatal("no area drain hit in 100 attempts; the hit path is broken")
+	}
+
+	held := p1.Character.GetConditions(conditions.ConditionIdBleeding)
+	if assert.NotEmpty(t, held, "a landed area drain leaves a Bleeding record") {
+		want := ActorRefOf(attacker)
+		assert.False(t, want.IsZero(), "the test attacker must have a real identity")
+		assert.Equal(t, want, held[0].Caster, "the area drain bleed names its attacker (#240)")
+	}
 }
 
 // TestDrainArea_MultiPlayer verifies the N-player case: every player in the

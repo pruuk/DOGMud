@@ -594,6 +594,12 @@ it, so a heal- or damage-over-time scales with the caster's skill and gear
 from the first cast, not only on a recast. `mobs.Mob.AddConditionTickScaled`
 is the mob twin, documented in `internal/mobs/context.md`.
 
+`QueueCondition(evt events.Condition)` (messaging M6 slice 1) queues a
+condition the producer filled in, stamping this user as the holder and the
+current life epoch over whatever the producer wrote there. It is the door a
+caster rides through (`Caster`, `CasterCrit`, `CastStart`), and the four add
+doors above are now this door with their own fields set.
+
 ## Usage Examples
 
 ### User Authentication

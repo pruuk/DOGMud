@@ -144,7 +144,7 @@ func roomName(hidden bool, printed string) string {
 
 func (c spellEffectCtx) critTag() string {
 	if c.out.AttackerCrit {
-		return ` <ansi fg="yellow">[CRIT!]</ansi>`
+		return critMarker
 	}
 	return ""
 }
@@ -231,17 +231,26 @@ func commitHarmfulSpellAggro(c spellEffectCtx, fresh bool) {
 // after-the-harm order is safe too, but crediting first keeps the kill
 // attributed even if a death is ever resolved inline.
 func creditSpellDamage(c spellEffectCtx, dmg int) {
-	m := c.targetMob()
+	creditMobHarm(c.targetMob(), c.casterRef(), dmg)
+}
+
+// creditMobHarm is creditSpellDamage's rule by ref, shared with a
+// damage-over-time tick (#240): a player is credited with dmg on the mob, a
+// mob charmed by a player credits that player, and anything else credits
+// nobody. The player need not be online: the damage map is keyed by id.
+func creditMobHarm(m *mobs.Mob, caster state.ActorRef, dmg int) {
 	if m == nil || dmg <= 0 {
 		return
 	}
-	if u := c.casterUser(); u != nil {
-		m.Character.TrackPlayerDamage(u.UserId, dmg)
+	if caster.UserId != 0 {
+		m.Character.TrackPlayerDamage(caster.UserId, dmg)
 		return
 	}
-	if cm := c.casterMob(); cm != nil {
-		if charmedUserId := cm.Character.GetCharmedUserId(); charmedUserId > 0 {
-			m.Character.TrackPlayerDamage(charmedUserId, dmg)
+	if caster.MobInstanceId != 0 {
+		if cm := mobs.GetInstance(caster.MobInstanceId); cm != nil {
+			if charmedUserId := cm.Character.GetCharmedUserId(); charmedUserId > 0 {
+				m.Character.TrackPlayerDamage(charmedUserId, dmg)
+			}
 		}
 	}
 }
@@ -313,10 +322,8 @@ func spellCasterStatAndSkill(spell *spells.SpellData, caster *characters.Charact
 // narrates the defence triad and applies nothing. Either way the cast was an
 // attack.
 //
-// Unlike damage and knockdown, the dot does NOT credit its caster in the
-// mob's PlayerDamage (creditSpellDamage): the ticks harm with an anonymous
-// source, so a dot kill still counts for no one. Crediting it needs the
-// caster carried on the condition record; that is a filed follow-up.
+// The record carries its caster (#240): each tick harms in the caster's name
+// and credits them on a mob (creditMobHarm), so a dot kill counts for them.
 func applySpellDot(c spellEffectCtx) int {
 	tc := c.targetChar()
 	fresh := !tc.IsInCombat()
@@ -345,7 +352,7 @@ func applySpellDot(c spellEffectCtx) int {
 	casterHidden, targetHidden := c.hiddenFromRoom()
 	// The character door, on purpose: an immune target refuses the record,
 	// and nothing that did not happen may be narrated.
-	afflicted := tc.AddConditionMagnitude(conditions.ConditionIdPoisoned, dotDuration, -float64(dotAmount), "spell") == nil
+	afflicted := tc.AddConditionMagnitudeBy(conditions.ConditionIdPoisoned, dotDuration, -float64(dotAmount), "spell", c.casterRef()) == nil
 	commitHarmfulSpellAggro(c, fresh)
 	if !afflicted {
 		return 0

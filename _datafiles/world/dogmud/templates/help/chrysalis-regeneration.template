@@ -1,8 +1,10 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">chrysalis-regeneration</ansi> spell
 
-The <ansi fg="command">Chrysalis Regeneration</ansi> spell infuses the target with deep Chrysalis
-energy that dramatically accelerates the body's natural healing. The
-target recovers from wounds at a remarkable rate for the duration.
+The <ansi fg="command">Chrysalis Regeneration</ansi> spell wraps a single target in deep Chrysalis
+energy. It does not heal at once: every few moments it mends a good part
+of the target's health, for a while. Cast it on yourself or a nearby ally.
+
+It is the stronger form of <ansi fg="command">Vital Surge</ansi>, and it costs more to cast.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -14,6 +16,10 @@ target recovers from wounds at a remarkable rate for the duration.
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 10
   <ansi fg="yellow">Conv. Cost:  </ansi> 80
-  <ansi fg="yellow">Effect:      </ansi> Powerful regeneration condition, rapidly restores health
+  <ansi fg="yellow">Healing:     </ansi> Strong, over a while
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+<ansi fg="white-bold">Notes:</ansi>
+  - A target holds one healing spell at a time. A new one replaces the old.
+  - Salves, potions and food that heal you still add on top.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help vital-surge</ansi>, <ansi fg="command">help cast</ansi>

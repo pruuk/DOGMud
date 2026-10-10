@@ -1,0 +1,15 @@
+conditionid: 139
+name: Mend All
+description: A light wash of healing magic eases your wounds for a short
+  while. Another healing spell takes its place rather than adding to it.
+family: heal
+triggerrate: 1 round
+# The duration at an untrained caster of average willpower; the spell scales
+# it by its caster (applySpellHeal, healTriggers). Short and light (R9).
+triggercount: 30
+effects:
+  regen_mult: magnitude
+start_actor: "A light wash of your healing magic eases {actee}'s wounds."
+start_actee: "A light wash of healing magic eases your wounds."
+start_observer: "A light wash of healing settles over {actee}."
+end_actee: "The light wash of healing fades from your wounds."

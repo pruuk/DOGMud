@@ -229,6 +229,8 @@ func (c *Character) GetMagicalMitigation() float64 {
 	// condition portion is unscaled (correct — conditions aren't gear).
 	nonGearMit := int(mutations.GetMagicalResistance(c.Mutations) * 100)
 	nonGearMit += c.StatMod("magical_mitigation")
+	// A ward that blocks spell damage (messaging M6 slice 1, section 4).
+	nonGearMit += int(c.Conditions.Effect(conditions.EffectMitigationMagical))
 
 	return float64(gearMit+nonGearMit) / 100.0
 }
@@ -265,6 +267,8 @@ func (c *Character) GetConvictionMitigation() float64 {
 	// Non-gear additions (mutation resistance + condition stat mods via c.StatMod).
 	nonGearMit := int(mutations.GetConvictionResistance(c.Mutations) * 100)
 	nonGearMit += c.StatMod("conviction_mitigation")
+	// A ward that blocks social damage (messaging M6 slice 1, section 4).
+	nonGearMit += int(c.Conditions.Effect(conditions.EffectMitigationConviction))
 
 	return float64(gearMit+nonGearMit) / 100.0
 }

@@ -331,7 +331,7 @@ Hand candidates (`handCandidates`): a two-hander only offers whole pairs, ordere
 
 `ChooseWornSlot` never mutates; `SlotChoice.apply(i)` (called by `wearChosen`) writes `i` into `Slots[0]` and clears every later entry.
 
-**Deleted**: `wearWeaponOrShield`, and from `hand_slots.go` the three `Find*` helpers (`FindFirstEmptySlot`, `FindFirstFreePair`, `FindCheapestPairToDisplace`) and `PairIsFree`/`PairOccupantCount`, which had no callers left once `ChooseWornSlot` absorbed their logic as a stable sort. `hand_slots.go` gained `ArmLabel(arm int) string`, the arm-to-label lookup `chooseArm` and command wrappers share.
+**Deleted**: `wearWeaponOrShield`, and from `hand_slots.go` the three `Find*` helpers (`FindFirstEmptySlot`, `FindFirstFreePair`, `FindCheapestPairToDisplace`) and `PairIsFree`/`PairOccupantCount`, which had no callers left once `ChooseWornSlot` absorbed their logic as a stable sort. `hand_slots.go` gained `ArmLabel(arm int) string`, the arm-to-label lookup `chooseArm` and command wrappers share. `(*Character).ArmDisplayName(arm int) string` is the player-facing name of arm N ("weapon hand", "offhand", then "arm 3" to "arm 6"; "" for an arm the character lacks, #270); `ArmLabel` stays the slot key.
 
 **The golden oracle** (`wear_slot_golden_test.go`) keeps verbatim copies of the pre-5a `wearWeaponOrShield`, the three `Find*` helpers and the ring/wrist cases (`legacyWear` and friends) and diffs `Wear` against them over ~27,000 non-cursed placements (2, 3, 4, 6 arms; three species sizes; dual wield on/off). Two placements are deliberately carved out (`sanctionedDivergence`) because the owner changed them on purpose with nothing cursed: the old disabled-`Ring`/`Wrist1` fallback (legacy wrote the `ItemId -1` marker into a disabled slot; `ChooseWornSlot` never writes a disabled slot), and the shield-beside-a-two-hander swap at 3+ arms (ruling 13, above). Both carve-outs have their own explicit tests in `wear_slot_test.go`.
 
@@ -646,9 +646,10 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   spell's `effect_magnitude` YAML field becomes the regen multiplier
   (`spellData.EffectMagnitude`, e.g. 3 = 3x base regen, floored at 1.0; help
   spells do not crit). `internal/hooks/spell_help_effects.go`'s
-  `applySpellHeal` calls `c.targetChar().AddConditionMagnitude(conditions.ConditionIdRegenerating,
-  durationRounds, regenMult, "heal spell")` with `durationRounds =
-  calcSpellDuration(...)/2`, floored at 6 rounds. Each round after that,
+  `applySpellHeal` queues the spell's own heal condition (its one
+  `condition_ids` entry, a `regen_mult: magnitude` record in the heal family;
+  messaging M6 slice 1) for `healTriggers` rounds: the heal's authored
+  `triggercount` scaled by the caster. Each round after that,
   `NewRound_AutoHeal.go` reads `Conditions.HasEffect(conditions.EffectRegenMult)` and
   `Conditions.Effect(conditions.EffectRegenMult)` and multiplies that round's
   `HealthPerRound()` result by it -- in combat this is the ONLY health regen a
@@ -1840,6 +1841,9 @@ struct `{Mode SurrenderMode, HpPctThreshold int}`. Three modes:
 `SurrenderNever` / `SurrenderAlways` / `SurrenderAutoTap` (fires when
 HP% drops below `HpPctThreshold`). Default for players:
 `SurrenderAutoTap` at 15%. Set via `set surrender` command.
+`DefaultPlayerSurrenderPolicy` (AutoTap at 15) is the policy `New()` gives a
+character and the one `Validate` gives a save whose policy is the zero value
+(#284).
 
 Persisted: `yaml:"surrender_policy,omitempty"`.
 
@@ -2196,3 +2200,17 @@ taken off the body, back into its pack, and never refuses: when `StoreItem`'s
 weight limit would refuse, the item goes into the backpack anyway. It never
 drops to the ground (owner, 2026-10-06). The crit disarm
 (`combat.AttemptCritDisarm`) uses it; before, a full pack lost the weapon.
+
+## The caster door (messaging M6 slice 1)
+
+`AddConditionMagnitudeBy(conditionId, triggers, magnitude, source, caster
+state.ActorRef) error` is `AddConditionMagnitude` with the record's caster,
+stamped through `conditions.Conditions.Stamp`; `AddConditionMagnitude` is
+the same door with a zero caster. The spell dot (`applySpellDot`) and every
+combat bleed (drain, hamstring, maul, rake, throttle and the item proc) land
+through it, so a tick that kills credits the caster (#240).
+
+The ward effects `mitigation_magical` and `mitigation_conviction` are read by
+`GetMagicalMitigation` and `GetConvictionMitigation` through
+`Conditions.Effect`, beside the statmods they sum with, as `mitigation_flat`
+is by `GetPhysicalMitigation`.

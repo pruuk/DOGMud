@@ -31,7 +31,7 @@ func calcSpellDuration(baseFolds int, spellcastingSkill int, willpower int) int 
 	if baseFolds < 1 {
 		baseFolds = 4
 	}
-	duration := float64(baseFolds) * (10.0 + float64(willpower)/20.0 + float64(spellcastingSkill)/2.0)
+	duration := float64(baseFolds) * spellDurationTerm(spellcastingSkill, willpower)
 	if duration < 10 {
 		duration = 10
 	}

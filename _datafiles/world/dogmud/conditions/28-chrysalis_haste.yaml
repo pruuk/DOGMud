@@ -7,5 +7,7 @@ flags:
   - haste
 statmods:
   dexterity: 10
-start_actee: "Chrysalis energy floods your nerves \u2014 everything feels faster."
+start_actor: "Chrysalis energy floods {actee}'s nerves."
+start_actee: "Chrysalis energy floods your nerves, and everything feels faster."
+start_observer: "{actee} begins to move with uncanny speed."
 end_actee: The Chrysalis haste fades and your movements return to normal.

@@ -1,0 +1,18 @@
+conditionid: 135
+name: Conviction Bulwark
+description: A bulwark of belief blunts physical blows and spells alike. It
+  does nothing against harsh words. A newer ward takes its place rather than
+  adding to it.
+family: ward
+triggerrate: 1 round
+# A floor for the born-dead guard; the spell sets the real count from its
+# caster (applySpellShield).
+triggercount: 10
+effects:
+  mitigation_flat: magnitude
+  mitigation_magical: magnitude
+start_actor: "Your belief rises into a bulwark around {actee}."
+start_actee: "A bulwark of belief rises around you."
+start_observer: "A shimmering bulwark of belief rises around {actee}."
+end_actee: "Your Conviction Bulwark fades."
+end_observer: "The bulwark around {actee} fades."

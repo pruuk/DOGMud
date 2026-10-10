@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -28,7 +29,7 @@ func seedDefensiveCasterSpells(t *testing.T) func() {
 		"chrysalis-cocoon": {
 			SpellId: "chrysalis-cocoon", Name: "Chrysalis Cocoon",
 			AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSingle, Cost: 60, BaseFolds: 8,
-			EffectType: "shield", EffectMagnitude: 125, ConditionIds: []int{52},
+			EffectType: "shield", EffectMagnitude: 125, ConditionIds: []int{136},
 			Categories: []string{"self_defense"},
 		},
 		// self_heal
@@ -119,18 +120,19 @@ func TestDefensiveCaster_FullHP_WithoutConditions_CastsCocoonFirst(t *testing.T)
 	}
 }
 
-// TestDefensiveCaster_CocoonActive_SingleEnemy_CastsHarmSingle verifies the
+// TestDefensiveCaster_AnyWardActive_SingleEnemy_CastsHarmSingle verifies the
 // cast_best_in_category "already active" semantics from
-// action_cast_best_in_category.go: spellEffectAlreadyActive skips a
-// candidate when ANY of its ConditionIds is already present on the caster.
-// chrysalis-cocoon carries ConditionIds:[52], so seeding condition 52 (not the Minor
-// Shield record, which is a different, EffectType=="shield" check that
-// chrysalis-cocoon also has but isn't required to trip this skip) is
-// sufficient to remove it as a self_defense candidate. With no other
-// self_defense spell known, that branch has no candidates and Fails;
-// with a single enemy (no room setup => multiple_enemies Fails), the
-// selector reaches harm_single and casts conviction-spike.
-func TestDefensiveCaster_CocoonActive_SingleEnemy_CastsHarmSingle(t *testing.T) {
+// action_cast_best_in_category.go: spellEffectAlreadyActive skips a shield
+// spell when ANY ward is up, the ward family (messaging M6 slice 1), not
+// only the spell's own. A new ward would replace the old one, so casting
+// chrysalis-cocoon over a Conviction Bulwark only swaps wards. The seeded
+// ward is a different id from the cocoon's own (136) and declares no
+// mitigation_flat, so neither the old ConditionIds branch nor the old
+// HasEffect(mitigation_flat) test could see it. With no other self_defense
+// spell known, that branch has no candidates and Fails; with a single enemy
+// (no room setup => multiple_enemies Fails), the selector reaches
+// harm_single and casts conviction-spike.
+func TestDefensiveCaster_AnyWardActive_SingleEnemy_CastsHarmSingle(t *testing.T) {
 	defer seedDefensiveCasterSpells(t)()
 	LoadArchetypeForTest(t, "defensive_caster", defensiveCasterYAML)
 
@@ -142,10 +144,9 @@ func TestDefensiveCaster_CocoonActive_SingleEnemy_CastsHarmSingle(t *testing.T) 
 	defer cleanup()
 	defer events.DrainQueuedInputsForTest(mob.InstanceId)
 
-	// Condition 52 is what chrysalis-cocoon's cast actually grants; seeding it
-	// is what makes spellEffectAlreadyActive skip the spell via the
-	// ConditionIds branch.
-	defer seedConditionOnChar(t, &mob.Character, 52)()
+	// A Conviction Bulwark (135) is up: any ward makes
+	// spellEffectAlreadyActive skip every shield spell.
+	defer seedWardOnChar(t, &mob.Character, 135)()
 
 	ok := TryMobBehavior(mob.InstanceId, EventContext{EventType: "mob_combat_round"})
 	if !ok {
@@ -155,8 +156,20 @@ func TestDefensiveCaster_CocoonActive_SingleEnemy_CastsHarmSingle(t *testing.T) 
 
 	cmd := events.InspectQueuedInputForTest(mob.InstanceId, "cast ")
 	if !strings.HasPrefix(cmd, "cast conviction-spike") {
-		t.Fatalf("cocoon-active, single-enemy caster should cast conviction-spike (harm_single), got %q", cmd)
+		t.Fatalf("ward-active, single-enemy caster should cast conviction-spike (harm_single), got %q", cmd)
 	}
+}
+
+// seedWardOnChar puts a ward-family record with no effects on char, so only
+// the ward family test can see it.
+func seedWardOnChar(t *testing.T, char *characters.Character, conditionId int) func() {
+	t.Helper()
+	cleanup := conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		conditionId: {ConditionId: conditionId, Name: "Test Bulwark", Family: conditions.FamilyWard},
+	})
+	char.Conditions.List = append(char.Conditions.List, &conditions.Condition{ConditionId: conditionId, TriggersLeft: 5})
+	char.Conditions.Validate(true)
+	return cleanup
 }
 
 // TestDefensiveCaster_BanditCaster285Shape_NoSelfDefense_CastsHarmSingle

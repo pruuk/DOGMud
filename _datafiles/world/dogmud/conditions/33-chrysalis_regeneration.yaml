@@ -1,9 +1,15 @@
 conditionid: 33
 name: Chrysalis Regeneration
-description: Deep Chrysalis energy rapidly regenerates your body.
+# The heal family (messaging M6 slice 1, owner ruling R9): any heal spell
+# replaces any other.
+family: heal
+description: Deep Chrysalis energy rapidly regenerates your body. Another
+  healing spell takes its place rather than adding to it.
 triggerrate: 2 rounds
 triggercount: 8
+start_actor: "Deep Chrysalis energy wraps around {actee}."
 start_actee: Deep Chrysalis energy wraps around you, accelerating your body's healing.
+start_observer: "Deep green light wraps around {actee}."
 end_actee: The Chrysalis regeneration fades.
 trigger_actee: Chrysalis energy knits your wounds closed.
 tick_pool: health

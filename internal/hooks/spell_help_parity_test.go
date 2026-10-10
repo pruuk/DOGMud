@@ -42,7 +42,7 @@ func TestSpellHelpParity_EveryPairingLandsTheSame(t *testing.T) {
 				assert.Equal(t, parityHealRounds(), rec.TriggersLeft)
 			}},
 		{name: "shield", spell: shieldSpellForParityTest,
-			roomWord: "shimmering barrier surrounds", selfWord: "shimmering barrier surrounds",
+			roomWord: "ward of conviction shimmers around", selfWord: "ward of conviction shimmers around",
 			check: func(t *testing.T, f *spellParityFixture, p spellParityPairing) {
 				rec := shieldRecord(t, p.target(f))
 				assert.Equal(t, parityShieldBonus(), rec.Magnitude)

@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/state"
 )
 
 // EVENT DEFINITIONS FOLLOW
@@ -41,6 +42,21 @@ type Condition struct {
 	// The producers stamp it; ApplyConditions refuses the event if the holder has
 	// died since, because the condition was aimed at a life that has ended.
 	LifeEpoch uint64
+	// Caster is who cast the condition (messaging M6 slice 1). ApplyConditions
+	// stamps it on the record, a damage-over-time tick credits it with the
+	// harm, and the start lines name it. Zero for a potion, hazard, mutation
+	// or anything else nobody cast.
+	Caster state.ActorRef
+	// CasterCrit puts the critical marker on the caster's start line, which
+	// replaces the spell's own "takes effect" line (owner ruling R11).
+	CasterCrit bool
+	// CastStart marks a spell that sent no lines of its own because this
+	// condition's start lines tell every audience (owner ruling R11). Those
+	// lines are the cast's only lines, so ApplyConditions tells them even when
+	// the record is already held: two casts in one round both judge the
+	// holder unaffected before either event lands. A refresh without it stays
+	// silent.
+	CastStart bool
 }
 
 func (b Condition) Type() string { return `Condition` }

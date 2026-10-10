@@ -30,12 +30,12 @@ goals:
     lands one, say so and move on.
   - >-
     WARD. Ask Fold Adept to cast conviction-ward on you. Leave the arena, rest,
-    and type `conditions` once. Quote the "Minor Shield" row. When it ends,
-    quote the line. Expect "Your Minor Shield dissipates." A ward that ends
+    and type `conditions` once. Quote the "Conviction Ward" row. When it ends,
+    quote the line. Expect "Your Conviction Ward fades." A ward that ends
     with no line is the defect.
   - >-
     LOGIN. Ask Fold Adept to ward you again. Type `quit`, log back in as the
-    same character, and type `conditions`. "Minor Shield" must still be
+    same character, and type `conditions`. "Conviction Ward" must still be
     listed. Quote the output.
   - >-
     Judge every line as writing. Quote anything with a raw number, a literal

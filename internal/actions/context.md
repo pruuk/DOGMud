@@ -244,7 +244,8 @@ gated), so armed undead still drain.
 **Bleeds stack (slice 1b, owner ruling 2026-09-14).** Rake, maul, hamstring,
 drain (`ExecuteDrain` and each landed target of `ExecuteDrainArea`) and throttle each add one
 stack to the target's 122 Bleeding record on a landed hit, through
-`AddConditionMagnitude(conditions.ConditionIdBleeding, rounds, -amount, source)`. The stack's
+`AddConditionMagnitudeBy(conditions.ConditionIdBleeding, rounds, -amount, source, ActorRefOf(actor))`,
+which stamps the attacker as the record's caster (see "ActorRefOf" below). The stack's
 per-round amount is `bleedPerRound` (`bleed.go`): the attacker's Strength
 `ValueAdj` divided by the move's `<Move>BleedStrengthDivisor` knob, floored at
 `<Move>BleedMin`; its rounds are `<Move>BleedRounds`. All fifteen knobs live in
@@ -1769,6 +1770,14 @@ type TrackOptions struct {
 
 ---
 
+## `ActorRefOf` (messaging M6 slice 1)
+
+`ActorRefOf(a Actor) state.ActorRef` names an actor for harm attribution (a
+player by user id, a mob by instance id, nobody for nil). The combat moves'
+bleeds (drain, the drain area, hamstring, maul, rake, throttle) pass it to
+`Character.AddConditionMagnitudeBy` as the record's caster, so a bleed that
+kills credits the attacker (#240).
+
 ## Caller Integration
 
 **User commands** (`internal/usercommands/`): Parse CLI args into
@@ -1895,7 +1904,7 @@ the rest are ordinary verbs.
 
 | Group | Files |
 |-------|-------|
-| Actor abstraction | `actor.go`, `actor_user.go`, `actor_mob.go` |
+| Actor abstraction | `actor.go`, `actor_user.go`, `actor_mob.go`, `actor_ref.go` (`ActorRefOf`) |
 | Readiness gates | `action_readiness.go`, `command_readiness.go` |
 | Targeting | `target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go` |
 | Shared helpers | `combat_helpers.go`, `skill_helpers.go`, `mutation_helpers.go`, `aggression.go`, `bleed.go` (`bleedPerRound`) |

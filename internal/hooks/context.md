@@ -1113,14 +1113,17 @@ comes from `conditions.SpellScaledTriggers(kind, stat, skill)` (lighting plan
 5d): darkness reads its own `DarknessSpellDuration*` trio, the other three
 kinds share `SpellDuration*` (triggers floored at 1).
 `ok` is false for any other condition, which keeps its authored application.
-`applySpellCondition(target, spellData, caster, conditionId)` is the one door
-the one spell-condition applier, `applySpellConditionEffect`
-(`spell_help_effects.go`, every pairing since parity slice 3b), calls: a magnitude-scaled light or sight
-goes through `AddConditionMagnitude`; a `tick_pool` condition (a heal- or
-damage-over-time) goes through `AddConditionTickScaled` at
+`applySpellCondition(target, spellData, caster, conditionId, casterRef,
+castStart, crit)` is the one door the one spell-condition applier,
+`applySpellConditionEffect` (`spell_help_effects.go`, every pairing since
+parity slice 3b), calls. It fills one `events.Condition` (source "spell",
+the caster ref, `CastStart` and the crit marker, messaging M6 slice 1): a
+magnitude-scaled light or sight sets `Magnitude` and `Triggers`; a
+`tick_pool` condition (a heal- or damage-over-time) sets `TickScale` to
 `spellTickScale(caster)` (`spell_tick_scale.go`, tick amount at apply,
-2026-09-28); anything else through `AddCondition`. All three sit on the small
-`spellConditionTarget` interface a `*users.UserRecord` and a `*mobs.Mob` both
+2026-09-28); anything else keeps its authored values. It queues the event
+through the `spellConditionTarget` interface's one method,
+`QueueCondition`, which a `*users.UserRecord` and a `*mobs.Mob` both
 satisfy. The record then trims to its HOLDER's eyes, who may not be the
 caster.
 
@@ -2119,17 +2122,22 @@ reads the caster through `spellCasterStatAndSkill` (the spell's primarystat
 through `CasterStatValue`, and the school's cast skill):
 
 - **Shield: full duration, no divisor.** `applySpellShield`
-  (`spell_help_effects.go`) passes `calcSpellDuration(...)` unmodified to
-  `AddConditionMagnitude(conditions.ConditionIdMinorShield, duration, ...)` as the trigger
-  count (record 119 ticks once a round, so triggers and rounds coincide).
-- **Heal: `/2`, floored at 6.** `applySpellHeal` (`spell_help_effects.go`)
-  computes `calcSpellDuration(...) / 2`, then clamps `durationRounds < 6` up
-  to 6, before
-  `AddConditionMagnitude(conditions.ConditionIdRegenerating, durationRounds, regenMult, ...)`.
+  (`spell_help_effects.go`) queues the spell's own ward
+  (`spellWardConditionId`) with `calcSpellDuration(...)` unmodified as the
+  trigger count (every ward ticks once a round, so triggers and rounds
+  coincide).
+- **Heal: the heal's own duration, scaled by the caster.** `applySpellHeal`
+  (`spell_help_effects.go`) queues the spell's own heal
+  (`spellHealConditionId`) for `healTriggers(conditionId, willpower,
+  skill)` rounds: the heal's authored `triggercount` (its duration for an
+  untrained caster of willpower 100) times `spellDurationTerm(skill,
+  willpower) / spellDurationTerm(0, 100)`, at least one. `spellDurationTerm`
+  is `calcSpellDuration`'s caster term, `10 + willpower/20 + skill/2`
+  (messaging M6 slice 1, owner ruling R9).
 - **DoT: `/3`, floored at 3.** `applySpellDot` (`spell_effects.go`) computes
   `calcSpellDuration(...) / 3`, then clamps `dotDuration < 3` up to 3, and
   passes that rounds figure straight to
-  `AddConditionMagnitude(conditions.ConditionIdPoisoned, dotDuration, ...)`: record 121 ticks
+  `AddConditionMagnitudeBy(conditions.ConditionIdPoisoned, dotDuration, ..., c.casterRef())`: record 121 ticks
   every round (slice 1b; it was every third round before). See
   `internal/conditions/context.md` under "Cadence".
 
@@ -2169,8 +2177,8 @@ fold stat.
 
 The helpful effects have one applier each in `spell_help_effects.go`:
 `applySpellConditionEffect` (every named condition through
-`applySpellCondition`'s event door), `applySpellHeal` (a Regenerating
-record), `applySpellShield` (a Minor Shield record) and `applySpellPurge`
+`applySpellCondition`'s event door), `applySpellHeal` (the spell's own heal
+condition), `applySpellShield` (the spell's own ward) and `applySpellPurge`
 (cancels every poison). `applySpellDefaultEffect` serves an effect with no
 applier of its own, and charm binds a mob through `applyMobEffect_charm`.
 A defended status narrates the defence triad and applies nothing
@@ -2425,3 +2433,51 @@ key `pinnacle_proc_cd_*` is inert in old saves.
 `testdata/item_proc_parity.golden` is the retired path's record (four
 items, five events, hits, misses, cooldown windows and a probe draw each
 round); `TestItemProcParity` holds the tree path to it.
+
+## Casters, start lines and DoT credit (messaging M6 slice 1)
+
+`ApplyConditions` stamps every landed record with the event's `Source` and
+`Caster` (`conditions.Conditions.Stamp`). Before the add it reads the
+record's family rivals (`familyRivalNames`); after it, the holder and the
+room read `narrateFamilyReplacement`'s line ("Your Conviction Ward fades as
+Conviction Bulwark takes hold.") in place of the replaced record's end line.
+That line is silent when the new condition's start is silent (secret, quiet,
+silent-start: `StartUserNotice` empty), and `familyRivalNames` leaves out a
+rival whose own end is silent.
+
+`narrateConditionStart` (`condition_cast_lines.go`) tells one start line per
+audience: `start_actor` to a caster who is someone else and online,
+`start_actee` to a player holder, `start_observer` to the room, which
+excludes both and skips `startUnseenBy` (#458; the replacement line skips it
+too). `conditionPartyOf` resolves the holder and the caster, a mob through
+`conditionMobNames`; `conditionParty.namesFor(viewer)` hides a hidden mob
+from a participant who does not perceive it and names it to one who does,
+as a spell's own lines do. Each private line
+hides the other party's name at that reader's sight
+(`conditionReaderSight`: the pre-landing snapshot for a darkness, else
+`ParticipantSight`). The crit marker rides the caster's line, which on a
+self-cast is the holder's.
+
+The start lines are told on a fresh landing, and on a refresh only when the
+event carries `CastStart`: the spell dropped its own lines for these, and
+two casts in one round both judge the holder unaffected before either event
+lands, so the second must still be told. Any other refresh stays silent.
+
+`applySpellConditionEffect`, `applySpellShield` and `applySpellHeal` drop
+their generic lines when the start is narrated: a fresh landing of a condition
+whose own start lines tell every audience (`ConditionSpec.NarratesCastStart`).
+`applySpellConditionEffect` asks `spellConditionsNarrateStart`, which holds only
+when every condition the spell lands qualifies; `applySpellShield` and
+`applySpellHeal` land one condition and ask the singular
+`spellConditionNarratesStart`. They pass that verdict to
+`applySpellCondition` (or the event) as `castStart`. A silent condition, or a
+re-cast of one already held, keeps the generic lines (owner ruling R11).
+
+The round ticks harm in the record's caster's name:
+`ApplyHarm(pool, amount, condition.Caster)` for health, stamina and
+conviction, player and mob. A mob's health tick also credits the caster in
+its damage map through `creditMobHarm`, `creditSpellDamage`'s rule by ref (a
+player, or a mob charmed by one). The player need not be online: the damage
+map and the killer ref are keyed by id. The zero-health backstops stay
+anonymous: a tick routes through `ApplyHarm`, which queues an attributed
+death and sets `DeathQueued`, so no tick reaches them.

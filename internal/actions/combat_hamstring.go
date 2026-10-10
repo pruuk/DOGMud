@@ -135,7 +135,7 @@ func ExecuteHamstring(actor Actor) HamstringResult {
 	bleedDmg := 0
 	if result.Hit {
 		bleedDmg = bleedPerRound(char.Stats.Strength.ValueAdj, cfg.HamstringBleedStrengthDivisor, cfg.HamstringBleedMin)
-		_ = target.Char.AddConditionMagnitude(conditions.ConditionIdBleeding, int(cfg.HamstringBleedRounds), -float64(bleedDmg), "hamstring")
+		_ = target.Char.AddConditionMagnitudeBy(conditions.ConditionIdBleeding, int(cfg.HamstringBleedRounds), -float64(bleedDmg), "hamstring", ActorRefOf(actor))
 	}
 
 	// Determine source/target types for analytics.

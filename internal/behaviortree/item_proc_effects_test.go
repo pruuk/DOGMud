@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
 )
 
 // The four proc effects (item behaviour slice 3, Rule 20), moved unchanged
@@ -144,7 +145,9 @@ func TestProcLifesteal(t *testing.T) {
 func TestProcApplyCondition_Bleed(t *testing.T) {
 	t.Cleanup(conditions.SeedConditionRecordsForTest())
 	target := characters.New()
-	if !procApplyCondition(target, map[string]float64{"condition": 1, "duration": 6, "magnitude": 12}) {
+	owner := characters.New()
+	owner.MobInstanceId = 515
+	if !procApplyCondition(owner, target, map[string]float64{"condition": 1, "duration": 6, "magnitude": 12}) {
 		t.Fatal("apply_condition should execute")
 	}
 	if got := target.Conditions.TriggersLeft(conditions.ConditionIdBleeding); got != 6 {
@@ -157,6 +160,9 @@ func TestProcApplyCondition_Bleed(t *testing.T) {
 	if len(held[0].Stacks) != 1 || held[0].Stacks[0].RoundsLeft != 6 || held[0].Stacks[0].Amount != -12 {
 		t.Fatalf("expected one stack of 6 rounds at -12, got %+v", held[0].Stacks)
 	}
+	if held[0].Caster != (state.ActorRef{MobInstanceId: 515}) {
+		t.Fatalf("the bleed must name the item's owner as its caster (#240), got %+v", held[0].Caster)
+	}
 }
 
 // With the Bleeding spec absent the add fails, and procApplyCondition must
@@ -165,16 +171,16 @@ func TestProcApplyCondition_Bleed(t *testing.T) {
 // true unconditionally turns this red.
 func TestProcApplyCondition_BleedSpecMissing_ReturnsFalse(t *testing.T) {
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{}))
-	if procApplyCondition(characters.New(), map[string]float64{"condition": 1, "duration": 6, "magnitude": 12}) {
+	if procApplyCondition(characters.New(), characters.New(), map[string]float64{"condition": 1, "duration": 6, "magnitude": 12}) {
 		t.Fatal("procApplyCondition must return false when the Bleeding spec is missing")
 	}
 }
 
 func TestProcApplyCondition_NilAndUnknown(t *testing.T) {
-	if procApplyCondition(nil, map[string]float64{"condition": 1}) {
+	if procApplyCondition(characters.New(), nil, map[string]float64{"condition": 1}) {
 		t.Fatal("nil target must not execute")
 	}
-	if procApplyCondition(characters.New(), map[string]float64{"condition": 99}) {
+	if procApplyCondition(characters.New(), characters.New(), map[string]float64{"condition": 99}) {
 		t.Fatal("unknown condition id must not execute")
 	}
 }

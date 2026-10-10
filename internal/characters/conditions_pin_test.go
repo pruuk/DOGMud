@@ -38,7 +38,7 @@ func TestPin_ShieldAddsFlatPhysicalMitigation(t *testing.T) {
 	defer conditions.SeedConditionRecordsForTest()()
 	c := pinCharacter()
 	before := c.GetPhysicalMitigation()
-	_ = c.AddConditionMagnitude(conditions.ConditionIdMinorShield, 10, 12, "pin") // SETUP
+	_ = c.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 10, 12, "pin") // SETUP
 	c.Conditions.Validate(true)
 	got := c.GetPhysicalMitigation() - before
 	if math.Abs(got-0.12) > 1e-9 {

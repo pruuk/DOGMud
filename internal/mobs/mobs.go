@@ -865,15 +865,20 @@ func (m *Mob) ShorthandId() string {
 	return fmt.Sprintf(`#%d`, m.InstanceId)
 }
 
+// QueueCondition queues a condition the producer has filled in, stamping this
+// mob as the holder and its current life epoch: the mob twin of
+// UserRecord.QueueCondition, and the door a caster rides through (messaging
+// M6 slice 1). The other add doors here are this door with their own fields
+// set.
+func (m *Mob) QueueCondition(evt events.Condition) {
+	evt.UserId = 0
+	evt.MobInstanceId = m.InstanceId
+	evt.LifeEpoch = m.Character.LifeEpoch
+	events.AddToQueue(evt)
+}
+
 func (m *Mob) AddCondition(conditionId int, source string) {
-
-	events.AddToQueue(events.Condition{
-		MobInstanceId: m.InstanceId,
-		ConditionId:   conditionId,
-		Source:        source,
-		LifeEpoch:     m.Character.LifeEpoch,
-	})
-
+	m.QueueCondition(events.Condition{ConditionId: conditionId, Source: source})
 }
 
 // AddConditionScaled queues a condition whose duration is scaled by
@@ -884,39 +889,20 @@ func (m *Mob) AddConditionScaled(conditionId int, durationMult float64, source s
 	if durationMult <= 0 {
 		durationMult = 1.0
 	}
-	events.AddToQueue(events.Condition{
-		MobInstanceId: m.InstanceId,
-		ConditionId:   conditionId,
-		Source:        source,
-		DurationMult:  durationMult,
-		LifeEpoch:     m.Character.LifeEpoch,
-	})
+	m.QueueCondition(events.Condition{ConditionId: conditionId, Source: source, DurationMult: durationMult})
 }
 
 // AddConditionMagnitude queues a record with an exact trigger count and a
 // per-instance magnitude through the event path, the mob twin of
 // UserRecord.AddConditionMagnitude.
 func (m *Mob) AddConditionMagnitude(conditionId int, triggers int, magnitude float64, source string) {
-	events.AddToQueue(events.Condition{
-		MobInstanceId: m.InstanceId,
-		ConditionId:   conditionId,
-		Source:        source,
-		Triggers:      triggers,
-		Magnitude:     magnitude,
-		LifeEpoch:     m.Character.LifeEpoch,
-	})
+	m.QueueCondition(events.Condition{ConditionId: conditionId, Source: source, Triggers: triggers, Magnitude: magnitude})
 }
 
 // AddConditionTickScaled queues a tick_pool condition whose per-round amount
 // is scaled by scale, the mob twin of UserRecord.AddConditionTickScaled.
 func (m *Mob) AddConditionTickScaled(conditionId int, scale float64, source string) {
-	events.AddToQueue(events.Condition{
-		MobInstanceId: m.InstanceId,
-		ConditionId:   conditionId,
-		Source:        source,
-		TickScale:     scale,
-		LifeEpoch:     m.Character.LifeEpoch,
-	})
+	m.QueueCondition(events.Condition{ConditionId: conditionId, Source: source, TickScale: scale})
 }
 
 func (m *Mob) PlayerAttacked(userId int) {
