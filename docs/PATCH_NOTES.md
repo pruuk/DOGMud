@@ -58,6 +58,13 @@
 - Core Discharge, the Core Guardian's blast that hits the whole room, no
   longer kills a prepared player outright from full health. It still hits
   very hard, so stop it when you can.
+- The Core Guardian now warns you before its discharge. It gathers its
+  power for two rounds, and a flashbang or a disruption spell stops it at
+  any point in that time.
+- Warden-Prime has its own, weaker discharge, Warden Discharge, with the
+  same two-round warning. It hurts but does not kill a prepared player, so
+  you can practise the interrupt before you face the Core Guardian. See
+  `help warden-discharge`.
 
 ## 2026-10-10: More loose ends
 
