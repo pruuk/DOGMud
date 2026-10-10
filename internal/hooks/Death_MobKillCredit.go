@@ -1,97 +1,82 @@
 package hooks
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
-	"github.com/GoMudEngine/GoMud/internal/state"
-	"github.com/GoMudEngine/GoMud/internal/state/life"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// wireMobKillCredit subscribes to Life Alive→Dead transitions on
-// mob characters and awards kill credit to:
+// creditMobKill awards kill credit for a mob that has just died to:
 //   - Each player whose UserId appears in DeadData.DamageMap
 //   - All party members of those players who are not already credited
 //
 // Also ends combat aggro for any killer who is currently targeting
 // this mob.
 //
+// It is called by scheduleMobDespawnFromLife while the instance is still
+// alive, not wired as its own Life observer. It used to be one
+// (wireMobKillCredit), but AfterTransition cascades run in init() order,
+// which is alphabetical by filename, so Death_MobInstanceCleanup.go ran
+// first, destroyed the instance, and this credit found nothing and returned.
+// No player's kill count ever moved (#468). It is the same ordering trap the
+// loot drop hit, solved the same way.
+//
 // Migrated from internal/mobcommands/suicide.go lines 133-178 as
 // part of chunk-2 Task 10.
-func wireMobKillCredit(c *characters.Character) {
-	c.Life.Inner().AfterTransition("mob_kill_credit",
-		func(from, to life.State, r state.TransitionReason) {
-			if from != life.Alive || to != life.Dead {
-				return
+func creditMobKill(m *mobs.Mob) {
+	d, _ := m.Character.Life.DeadData()
+	if len(d.DamageMap) == 0 {
+		return
+	}
+
+	inTraining := m.Character.Zone == `Training`
+
+	// Award kill credit to direct attackers.
+	for uid := range d.DamageMap {
+		user := users.GetByUserId(uid)
+		if user == nil {
+			continue
+		}
+
+		// End combat aggro if the player is still targeting this mob.
+		if user.Character.IsInCombat() {
+			if user.Character.CurrentCombatTarget().MobInstanceId == m.InstanceId {
+				targeting.Release(user.Character, targeting.ReasonDisengage)
 			}
-			// Only fire for mob characters.
-			if c.MobInstanceId == 0 {
-				return
+		}
+
+		if !inTraining {
+			// U10b-1 Task 20 deleted the first-kill progression call
+			// that stood here: it was not a resolved action, and it
+			// progressed a skill named "combat" that does not exist.
+			// KD.AddMobKill stays -- it is the kill-count stat, not
+			// progression.
+			user.Character.KD.AddMobKill(int(m.MobId))
+		}
+	}
+
+	// Award kill credit to party members not already credited.
+	partyMembersHandled := map[int]bool{}
+	for uid := range d.DamageMap {
+		partyMembersHandled[uid] = true
+		p := parties.Get(uid)
+		if p == nil {
+			continue
+		}
+		for _, memberId := range p.GetMembers() {
+			if partyMembersHandled[memberId] {
+				continue
 			}
-			m := mobs.GetInstance(c.MobInstanceId)
-			if m == nil {
-				return
+			partyMembersHandled[memberId] = true
+			partyUser := users.GetByUserId(memberId)
+			if partyUser == nil {
+				continue
 			}
-
-			d, _ := c.Life.DeadData()
-			if len(d.DamageMap) == 0 {
-				return
+			if !inTraining {
+				// See the note on the killer's branch above.
+				partyUser.Character.KD.AddMobKill(int(m.MobId))
 			}
-
-			inTraining := m.Character.Zone == `Training`
-
-			// Award kill credit to direct attackers.
-			for uid := range d.DamageMap {
-				user := users.GetByUserId(uid)
-				if user == nil {
-					continue
-				}
-
-				// End combat aggro if the player is still targeting this mob.
-				if user.Character.IsInCombat() {
-					if user.Character.CurrentCombatTarget().MobInstanceId == m.InstanceId {
-						targeting.Release(user.Character, targeting.ReasonDisengage)
-					}
-				}
-
-				if !inTraining {
-					// U10b-1 Task 20 deleted the first-kill progression call
-					// that stood here: it was not a resolved action, and it
-					// progressed a skill named "combat" that does not exist.
-					// KD.AddMobKill stays -- it is the kill-count stat, not
-					// progression.
-					user.Character.KD.AddMobKill(int(m.MobId))
-				}
-			}
-
-			// Award kill credit to party members not already credited.
-			partyMembersHandled := map[int]bool{}
-			for uid := range d.DamageMap {
-				partyMembersHandled[uid] = true
-				p := parties.Get(uid)
-				if p == nil {
-					continue
-				}
-				for _, memberId := range p.GetMembers() {
-					if partyMembersHandled[memberId] {
-						continue
-					}
-					partyMembersHandled[memberId] = true
-					partyUser := users.GetByUserId(memberId)
-					if partyUser == nil {
-						continue
-					}
-					if !inTraining {
-						// See the note on the killer's branch above.
-						partyUser.Character.KD.AddMobKill(int(m.MobId))
-					}
-				}
-			}
-		})
-}
-
-func init() {
-	characters.OnCharacterCreated(wireMobKillCredit)
+		}
+	}
 }

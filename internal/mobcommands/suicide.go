@@ -49,11 +49,11 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// instance cleanup) fires via AfterTransition observers wired in:
 	//   Death_MobBroadcast.go
 	//   Death_MobBehaviorTree.go
-	//   Death_MobKillCredit.go
 	//   Death_MobCharmCleanup.go
 	//   Death_MobLoot.go           (T7)
 	//   Death_AlivenessSubstrate.go (T7)
-	//   Death_MobInstanceCleanup.go (T7)
+	//   Death_MobInstanceCleanup.go (T7; also runs the kill credit
+	//                                in Death_MobKillCredit.go, #468)
 	//
 	// Pick the first entry in PlayerDamage as the nominal killer for
 	// attribution (matches historical suicide.go behaviour).

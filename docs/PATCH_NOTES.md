@@ -26,6 +26,9 @@
 - If you use a trigger that watches for "Your Minor Shield dissipates.",
   change it: that line is now "Your Conviction Ward fades." A web client
   trigger on the status "Minor Shield" should now look for the ward's name.
+- Your kills count again. Killing a creature had stopped adding to your
+  `killstats` and to the achievements that count kills. New kills are
+  counted from now on; kills from before the fix cannot be recovered.
 
 ## 2026-10-10: Loose ends
 
