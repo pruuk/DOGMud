@@ -26,6 +26,32 @@ func TestAddConditionMagnitudeBy_StampsTheCasterAndTheSource(t *testing.T) {
 	// owns the record, so a casterless re-application leaves none.
 	require.NoError(t, c.AddConditionMagnitude(conditions.ConditionIdPoisoned, 5, -3, "potion"))
 	assert.True(t, c.GetConditions(conditions.ConditionIdPoisoned)[0].Caster.IsZero())
+	assert.Equal(t, "potion", c.GetConditions(conditions.ConditionIdPoisoned)[0].Source)
+}
+
+// A refused re-add stamps nothing: the conditions layer refuses a poison
+// record under poison immunity before AddConditionMagnitudeBy reaches Stamp,
+// so the held record keeps its caster and its source.
+func TestAddConditionMagnitudeBy_ARefusedAddKeepsTheHeldCaster(t *testing.T) {
+	const stoneId = 917
+	defer conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		stoneId: {ConditionId: stoneId, Name: "Stone", TriggerRate: "1 round", TriggerCount: 5, Flags: []conditions.Flag{conditions.PoisonImmunity}},
+	})()
+	defer conditions.SeedConditionRecordsForTest()()
+	c := pinCharacter()
+	casterA := state.ActorRef{UserId: 12}
+	casterB := state.ActorRef{UserId: 13}
+
+	require.NoError(t, c.AddConditionMagnitudeBy(conditions.ConditionIdPoisoned, 5, -3, "spell", casterA))
+	require.NoError(t, c.AddCondition(stoneId, false))
+
+	err := c.AddConditionMagnitudeBy(conditions.ConditionIdPoisoned, 5, -3, "potion", casterB)
+	require.Error(t, err)
+
+	got := c.GetConditions(conditions.ConditionIdPoisoned)
+	require.Len(t, got, 1)
+	assert.Equal(t, casterA, got[0].Caster)
+	assert.Equal(t, "spell", got[0].Source)
 }
 
 // A stacking record (a bleed) is one record, so its caster is its newest
