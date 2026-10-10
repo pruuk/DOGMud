@@ -1,6 +1,9 @@
 package hooks
 
 import (
+	"slices"
+
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -37,6 +40,7 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 
 				logOff = false
 				if conditionsToPrune := user.Character.Conditions.Prune(); len(conditionsToPrune) > 0 {
+					reveal := revealFirst(conditionsToPrune)
 					for _, conditionInfo := range conditionsToPrune {
 						// Send the end notice (authored, or the generic line;
 						// a secret condition is silent).
@@ -50,8 +54,11 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 							}
 							if roles.Observer != "" {
 								if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+									// Only to the players who perceive the holder,
+									// unless it is a hide's reveal or rides one (#458).
 									sendConditionEndRoomText(r, rooms.TakeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
-										[]string{user.Character.GetCharacterName(false)}, user.UserId)
+										[]string{user.Character.GetCharacterName(false)},
+										append(pruneEndLineUnseenBy(r, user.Character, endConditionSpec, reveal), user.UserId)...)
 								}
 							}
 						}
@@ -94,23 +101,24 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 		mob := mobs.GetInstance(mobInstanceId)
 
 		if conditionsToPrune := mob.Character.Conditions.Prune(); len(conditionsToPrune) > 0 {
+			reveal := revealFirst(conditionsToPrune)
 			for _, conditionInfo := range conditionsToPrune {
 				// Send YAML end text (if defined).
 				endConditionSpec := conditions.GetConditionSpec(conditionInfo.ConditionId)
 				if endConditionSpec != nil && len(endConditionSpec.Narration(conditions.PhaseEnd).Observer) > 0 {
-					// The mob tag, not the player one: see Condition_ApplyConditions.go.
+					// The mob tag, not the player one: see conditionMobNames.
 					// Visual, not audio, for the same reason as start text. The
 					// holder line is rendered and dropped: a mob has no client.
-					holderName := mob.Character.GetCharacterName(true)
-					if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
-						holderName = messaging.StripNameAdjectives(mobDisplayName(mob, r, 0)) // #453
-					}
+					holderName, holderPlainName := conditionMobNames(mob)
 					roles := endConditionSpec.Narrate(conditions.PhaseEnd,
-						holderName, mobPlainName(mob))
+						holderName, holderPlainName)
 					if roles.Observer != "" {
 						if r := rooms.LoadRoom(mob.Character.RoomId); r != nil {
+							// Only to the players who perceive the mob, unless
+							// it is a hide's reveal or rides one (#458).
 							sendConditionEndRoomText(r, rooms.TakeEndLineSnapshot(conditionInfo, r.RoomId), roles.Observer,
-								[]string{mob.Character.GetCharacterName(false)})
+								[]string{mob.Character.GetCharacterName(false)},
+								pruneEndLineUnseenBy(r, &mob.Character, endConditionSpec, reveal)...)
 						}
 					}
 				}
@@ -127,6 +135,43 @@ func PruneConditions(e events.Event) events.ListenerReturn {
 
 	return events.Continue
 
+}
+
+// revealFirst orders a holder's pruned records so the hidden-flag ones (a
+// hide's end: the holder coming back into view) come first, keeping the
+// rest in Prune's order, and reports whether there was one: a reveal this
+// turn (#458). The holder's hiddenness is not cleared until the Validate
+// after the loop, so without this an end line pruned in the same turn as a
+// shroud ("stops meditating") was judged against the holder still hidden and
+// reached none of the watchers who read the reveal.
+func revealFirst(pruned []*conditions.Condition) bool {
+	slices.SortStableFunc(pruned, func(a, b *conditions.Condition) int {
+		switch ha, hb := isHideRecord(a), isHideRecord(b); {
+		case ha == hb:
+			return 0
+		case ha:
+			return -1
+		default:
+			return 1
+		}
+	})
+	return isHideRecord(pruned[0])
+}
+
+// isHideRecord reports whether rec's spec carries the Hidden flag.
+func isHideRecord(rec *conditions.Condition) bool {
+	spec := conditions.GetConditionSpec(rec.ConditionId)
+	return spec != nil && slices.Contains(spec.Flags, conditions.Hidden)
+}
+
+// pruneEndLineUnseenBy is conditionEndLineUnseenBy for the prune pass: in a
+// turn that reveals the holder (revealFirst) every end line reaches every
+// watcher, since the reveal line read first has brought the holder into view.
+func pruneEndLineUnseenBy(r *rooms.Room, holder *characters.Character, spec *conditions.ConditionSpec, reveal bool) []int {
+	if reveal {
+		return nil
+	}
+	return conditionEndLineUnseenBy(r, holder, spec)
 }
 
 // sendConditionEndRoomText sends a condition's end room line on the visual

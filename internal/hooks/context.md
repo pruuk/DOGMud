@@ -1056,7 +1056,9 @@ transition), the Hidden cascade adds no record 9, so the hide is Hidden plus
 record 31 and its end is told once, by 31's end line. `light_spell.go`'s
 `shroudSpellApplication` stamps the caster's `characters.ShroudScore` on
 record 31 as its magnitude, and `ApplyConditions` tells no start room line
-for a hidden-flag record landing on a holder already hidden.
+for a hidden-flag record landing on a holder already hidden. Every other
+condition line about a hidden holder reaches only the players who perceive
+them (#458, see `conditionLineUnseenBy`).
 
 Also registers an `AfterTransition` callback on the Combat Phase machine
 that reveals a hidden character on `Idle → Engaging`. A surprise attack is
@@ -1173,6 +1175,45 @@ by the room as it is. A darkness's end line needs nothing: the room is
 lighter by then. `EquipBestFloorItem` (`mob_equip_best_floor_item.go`) takes
 the same snapshot before every floor pickup it equips (#447), not only a
 darkness.
+
+Every condition room line goes only to the players who perceive its holder
+(#458), by the rule the quit line uses: `conditionLineUnseenBy(r, holder)`
+(`Condition_ApplyConditions.go`) returns `playersNotPerceiving(r, holder)`
+for a hidden holder and nil otherwise, and the send skips those ids. The
+start line takes the list BEFORE the condition lands (`startUnseenBy`), so a
+hide landing on a visible holder reaches everyone who watched them vanish;
+a hide landing on a holder already hidden is still silent (`hideOnHidden`).
+Both round ticks (`NewRound_UserRoundTick.go`, `tickMobConditions`) skip
+the list for a trigger line, and `PruneConditions` for an end line through
+`conditionEndLineUnseenBy`, which exempts a hidden-flagged condition's end
+line: "emerges from the shadows" and "shimmers back into view" announce the
+holder coming back into view and must reach the watchers who could not see
+them. A shroud that runs out tells that line before the prune's Validate
+reveals the holder, so the exemption reads the flag, not Awareness. For
+the same reason a reveal carries the holder's other end lines that turn:
+`revealFirst` orders a holder's pruned records hidden-flag first and reports
+whether there was one, and in such a turn `pruneEndLineUnseenBy` skips no
+one, so a watcher reads "shimmers back into view" and then "stops
+meditating", in that order. A
+see-hidden reader perceives the holder and reads every line. The holder's
+own lines are untouched. A mob holder's names come from
+`conditionMobNames`, which names a hidden mob (through `mobSeenName`, the
+`mobDisplayName` body without its hidden check): no reader of a condition
+line is one the name would give it away to.
+
+The same rule covers a hidden mob's own acts, by owner ruling R3 (#274: "a
+hidden actor does not emote. Silence, not an anonymous line."): the
+stat-gain emote (`emitMobStatGains`), the prone-recovery emote
+(`tickMobProneRecovery`), the weave (`sendMobWeaving`), the focus shift
+(`sendMobShiftsFocus`) and the drain-area landing line
+(`resolveMobDrainArea`) name the mob through `mobSeenName` and skip
+`mobActUnseenBy(room, mob)` (`NewRound_DoCombat_helpers.go`, a wrapper on
+`conditionLineUnseenBy`), so a see-hidden reader reads the name and the
+rest read nothing (#458; they read "Something ..." since #382). A spell
+disruption is the exception: a break, fizzle or falter is heard (owner
+ruling R4, #242), so `sendMobConcentrationBroke`, `sendMobSpellFailed` and
+the drain that finds no one to drain still read "Something's ..." to the
+room through `mobSubjectName` and `sendVisualElseAudible`.
 
 ### Logout_AwarenessCleanup.go
 

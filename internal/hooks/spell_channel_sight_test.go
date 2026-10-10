@@ -124,10 +124,12 @@ func TestMobShiftsFocus_IsSightOnlyAndHidesBothNames(t *testing.T) {
 	require.Empty(t, blind, "a reader who sees nothing gets nothing for a focus shift")
 }
 
-// A hidden mob caster is unseen in its own spell-channel lines by every
+// A hidden mob caster is unseen in its own spell disruption lines by every
 // reader, even one who reads faces in a lit room: the line names
 // "Something", never the mob, as sendSpoken does for a speaker still hidden
-// and as SendSeen's silence does for a hidden emote (#274, owner R3).
+// (#274). A disruption is heard (owner R4), so it is told; the weave and the
+// focus shift are sight-only acts and are silent to a non-perceiver instead
+// (owner R3, TestHiddenMob_OwnActsAreSilentToNonPerceivers, #458).
 func TestMobSpellChannel_HiddenCasterIsNeverNamed(t *testing.T) {
 	cases := []struct {
 		name string
@@ -137,8 +139,6 @@ func TestMobSpellChannel_HiddenCasterIsNeverNamed(t *testing.T) {
 		{"concentration breaks", sendMobConcentrationBroke, "Something's concentration breaks."},
 		{"spell fizzles", func(m *mobs.Mob, r *rooms.Room) { sendMobSpellFailed(m, r, "fizzles") }, "Something's spell fizzles."},
 		{"spell falters", func(m *mobs.Mob, r *rooms.Room) { sendMobSpellFailed(m, r, "falters") }, "Something's spell falters."},
-		{"weave", sendMobWeaving, "Something weaves magic with focused intent."},
-		{"focus shift", func(m *mobs.Mob, r *rooms.Room) { sendMobShiftsFocus(m, r, users.GetByUserId(1)) }, "Something shifts focus to"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

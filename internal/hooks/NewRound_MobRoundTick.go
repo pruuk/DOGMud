@@ -196,11 +196,13 @@ func expireMobCombatMemory(mob *mobs.Mob) {
 func tickMobProneRecovery(mob *mobs.Mob) {
 	if attemptMade, success := mob.Character.AttemptRecovery(recoveryContest(&mob.Character)); attemptMade {
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-			mName := mobSubjectName(mob, room)
+			// Silent to a reader who does not perceive a hidden mob, not
+			// "Something ..." (owner R3, #458).
+			mName, unseenBy := mobSeenName(mob, room, 0), mobActUnseenBy(room, mob)
 			if success {
-				sendVisualRoomText(room, messaging.CategoryMobEmote, mName+" clambers to their feet in a rushed panic.")
+				sendVisualRoomText(room, messaging.CategoryMobEmote, mName+" clambers to their feet in a rushed panic.", unseenBy...)
 			} else {
-				sendVisualRoomText(room, messaging.CategoryMobEmote, mName+" attempts to stand, but slips and falls in the chaos of battle.")
+				sendVisualRoomText(room, messaging.CategoryMobEmote, mName+" attempts to stand, but slips and falls in the chaos of battle.", unseenBy...)
 			}
 		}
 	}
@@ -286,16 +288,17 @@ func tickMobConditions(mob *mobs.Mob, mobInstanceId int) {
 			// PruneConditions, so the line gets the same condition colour.
 			if trigSpec := conditions.GetConditionSpec(condition.ConditionId); trigSpec != nil && len(trigSpec.Narration(conditions.PhaseTrigger).Observer) > 0 {
 				if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-					roles := trigSpec.Narrate(conditions.PhaseTrigger,
-						messaging.StripNameAdjectives(mobDisplayName(mob, room, 0)), // #453
-						mobPlainName(mob))
+					holderName, holderPlainName := conditionMobNames(mob)
+					roles := trigSpec.Narrate(conditions.PhaseTrigger, holderName, holderPlainName)
 					if roles.Observer != "" {
 						// HidingNames: see the user-side twin and
 						// Condition_ApplyConditions.go. A bare {actee_plain} is
-						// invisible to tag-based Anonymize.
+						// invisible to tag-based Anonymize. Only to the
+						// players who perceive the mob (#458).
 						room.SendTextVisualHidingNames(messaging.CategoryConditionApply,
 							roles.Observer,
-							[]string{mob.Character.GetCharacterName(false)})
+							[]string{mob.Character.GetCharacterName(false)},
+							conditionLineUnseenBy(room, &mob.Character)...)
 					}
 				}
 			}

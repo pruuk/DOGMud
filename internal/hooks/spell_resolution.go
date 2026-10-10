@@ -777,9 +777,12 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 		}
 	}
 
+	// The landing is the mob's own act: silent to a reader who does not
+	// perceive a hidden mob (owner R3, #458). The no-one-to-drain line above
+	// is a fizzle, a disruption, and keeps mobSubjectName (owner R4).
 	sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
 		`%s's <ansi fg="cyan">%s</ansi> tears the life from everyone in the room!`,
-		mobSubjectName(mob, room), spellData.Name))
+		mobSeenName(mob, room, 0), spellData.Name), mobActUnseenBy(room, mob)...)
 }
 
 // landed carries the same meaning as on the player path: the contest was WON
