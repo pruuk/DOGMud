@@ -1127,3 +1127,50 @@ func TestExecuteArrest_ArrestLineNamesTheFineCommand(t *testing.T) {
 	}
 	t.Fatalf("the arrested player never read the arrest line")
 }
+
+// #241: the player read "The cell door clangs shut behind you." and only
+// then "A guard seizes you...": the door before the arrest. The seizure
+// comes first.
+func TestExecuteArrest_SeizureLinePrecedesTheCellDoor(t *testing.T) {
+	const doorLine = "The cell door clangs shut behind you."
+	const arrestedUserId = 8803
+
+	origCell, origMove, origDecay, origNow := cellRoomFn, aMoveFn, aDecayFn, bNowFn
+	t.Cleanup(func() {
+		cellRoomFn, aMoveFn, aDecayFn, bNowFn = origCell, origMove, origDecay, origNow
+	})
+	aMoveFn = func(userId int, toRoomId int, isSpawn ...bool) error { return nil }
+	cellRoomFn = func(faction string) int { return 5106 }
+	aDecayFn = func() int { return 5 }
+	bNowFn = func() uint64 { return 100 }
+
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		jailedConditionId: {ConditionId: jailedConditionId, Name: "Jailed",
+			Flags: []conditions.Flag{conditions.SilentStart}, TriggerCount: 1, RoundInterval: 1,
+			StartUserText: doorLine},
+	}))
+	u := users.NewTestUser(arrestedUserId, "jailbird3", "Jailbird", 0)
+	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{arrestedUserId: u}))
+	events.DrainQueuedMessagesForTest(arrestedUserId)
+
+	if ok := ExecuteArrest(u.Character, arrestedUserId, "stillwater_guards", false); !ok {
+		t.Fatalf("ExecuteArrest should succeed when the faction has a cell")
+	}
+
+	seize, door := -1, -1
+	msgs := events.DrainQueuedMessagesForTest(arrestedUserId)
+	for i, msg := range msgs {
+		if seize < 0 && strings.Contains(msg, "A guard seizes you") {
+			seize = i
+		}
+		if door < 0 && strings.Contains(msg, doorLine) {
+			door = i
+		}
+	}
+	if seize < 0 || door < 0 {
+		t.Fatalf("want both the seizure and the door line, got %q", msgs)
+	}
+	if seize > door {
+		t.Errorf("the cell door (line %d) clanged before the guard seized the player (line %d)", door, seize)
+	}
+}

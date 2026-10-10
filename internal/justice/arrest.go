@@ -405,6 +405,15 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 	// travels the event that would narrate it and is ours to send, alongside
 	// the arrest-context line.
 	if u := users.GetByUserId(userId); u != nil {
+		// The seizure comes first, then the cell door (#241). CategorySystem
+		// is never wrapped by the pipeline (it carries tables), so this line
+		// wraps itself to the reader's width (#430). It names `fine`, which
+		// names `payfine`, so a new prisoner sees the way out (#298).
+		u.SendText(messaging.CategorySystem, messaging.WrapAnsi(
+			fmt.Sprintf("A guard seizes you and hauls you to the holding cell. "+
+				"You have been placed under arrest by the %s. "+
+				`Type <ansi fg="command">fine</ansi> to see what you owe.`, factionName),
+			u.GetLineWidth()))
 		if spec := conditions.GetConditionSpec(jailedConditionId); spec != nil {
 			line := spec.AuthoredStartLine(
 				u.Character.GetCharacterName(true),
@@ -413,15 +422,6 @@ func ExecuteArrest(player *characters.Character, userId int, faction string, isM
 				u.SendText(messaging.CategoryConditionApply, line)
 			}
 		}
-		// CategorySystem is never wrapped by the pipeline (it also carries
-		// tables), so this line wraps itself to the reader's width; unwrapped
-		// it ran past 100 columns (#430). It names `fine`, which names
-		// `payfine`: a new prisoner otherwise had to guess the way out (#298).
-		u.SendText(messaging.CategorySystem, messaging.WrapAnsi(
-			fmt.Sprintf("A guard seizes you and hauls you to the holding cell. "+
-				"You have been placed under arrest by the %s. "+
-				`Type <ansi fg="command">fine</ansi> to see what you owe.`, factionName),
-			u.GetLineWidth()))
 	} else {
 		// The condition landed on the character either way; only the prose is lost.
 		mudlog.Warn("justice", "msg", "ExecuteArrest: no user record for the arrested player, so the jail start line and arrest flavor could not be sent", "userId", userId)
