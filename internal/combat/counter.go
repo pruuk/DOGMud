@@ -281,13 +281,17 @@ func BuildCounterTauntMessages(counterer, countered *characters.Character, crit 
 	if triad.ToRoom == "" {
 		return buildGenericCounterTauntMessages(counterer.Name, countered.Name, damage, counteredMaxCP)
 	}
-	dmgTag := ""
+	// The counterer reads the damage about the countered ("their will");
+	// the countered reads it about their own ("your will", #262).
+	dmgTag, dmgTagToCountered := "", ""
 	if damage > 0 {
 		dmgTag = fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`,
 			GetConvictionDamageDescription(damage, counteredMaxCP))
+		dmgTagToCountered = fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`,
+			GetConvictionDamageDescriptionToTarget(damage, counteredMaxCP))
 	}
 	return retortPrefix + string(triad.ToDefender) + dmgTag,
-		retortPrefix + string(triad.ToAttacker) + dmgTag,
+		retortPrefix + string(triad.ToAttacker) + dmgTagToCountered,
 		retortPrefix + string(triad.ToRoom)
 }
 
@@ -296,8 +300,9 @@ func BuildCounterTauntMessages(counterer, countered *characters.Character, crit 
 func buildGenericCounterTauntMessages(countererName, counteredName string, damage, counteredMaxCP int) (countererMsg, taunterMsg, roomMsg string) {
 	if damage > 0 {
 		dmgDesc := GetConvictionDamageDescription(damage, counteredMaxCP)
+		dmgDescToCountered := GetConvictionDamageDescriptionToTarget(damage, counteredMaxCP)
 		return fmt.Sprintf(retortPrefix+`You throw %s's words right back in their face! (<ansi fg="damage">%s</ansi>)`, counteredName, dmgDesc),
-			fmt.Sprintf(retortPrefix+`%s throws your words right back in your face! (<ansi fg="damage">%s</ansi>)`, countererName, dmgDesc),
+			fmt.Sprintf(retortPrefix+`%s throws your words right back in your face! (<ansi fg="damage">%s</ansi>)`, countererName, dmgDescToCountered),
 			fmt.Sprintf(retortPrefix+`%s throws %s's words right back!`, countererName, counteredName)
 	}
 	return fmt.Sprintf(retortPrefix+`You snap back at %s, but the words fail to bite!`, counteredName),

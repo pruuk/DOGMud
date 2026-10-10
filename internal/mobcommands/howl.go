@@ -51,7 +51,7 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	case result.Hit:
 		if !result.Defence.Defended {
 			if targetPlayer != nil {
-				personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc)
+				personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDescToTarget)
 				sight := messaging.ParticipantSight(targetPlayer.Character, room)
 				targetPlayer.SendText(messaging.CategoryTauntSuccess, messaging.HideNames(personalText, []string{mob.Character.Name}, sight))
 			}

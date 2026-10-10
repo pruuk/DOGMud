@@ -49,7 +49,7 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	switch {
 	case result.Fumble:
-		if !sendMobTauntTriad(combat.TauntFumble, "", messaging.CategoryTauntFailure,
+		if !sendMobTauntTriad(combat.TauntFumble, "", "", messaging.CategoryTauntFailure,
 			mob, targetName, targetPlayer, room) {
 			room.SendTextHidingNames(messaging.CategoryTauntFailure,
 				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge that breaks into a strangled gasp.`, mob.Character.Name),
@@ -65,10 +65,10 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			if result.Crit {
 				intensity = combat.TauntCritical
 			}
-			if !sendMobTauntTriad(intensity, result.DmgDesc, messaging.CategoryTauntSuccess,
+			if !sendMobTauntTriad(intensity, result.DmgDesc, result.DmgDescToTarget, messaging.CategoryTauntSuccess,
 				mob, targetName, targetPlayer, room) {
 				if targetPlayer != nil {
-					personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDesc)
+					personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDescToTarget)
 					sight := messaging.ParticipantSight(targetPlayer.Character, room)
 					targetPlayer.SendText(messaging.CategoryTauntSuccess, messaging.HideNames(personalText, []string{mob.Character.Name}, sight))
 				}
@@ -89,7 +89,7 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 
 	default: // miss
-		if !sendMobTauntTriad(combat.TauntMiss, "", messaging.CategoryTauntResist,
+		if !sendMobTauntTriad(combat.TauntMiss, "", "", messaging.CategoryTauntResist,
 			mob, targetName, targetPlayer, room) {
 			if targetPlayer != nil {
 				personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge, but you brush it off.`, mob.Character.Name)
@@ -126,7 +126,7 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 // it. That is also why the {actortype} and {acteetype} tokens must resolve to
 // real name aliases: HideNames' tag-consuming match looks for
 // username|mobname|petname, and a tag outside that set leaks the name.
-func sendMobTauntTriad(intensity combat.TauntIntensity, dmgDesc string, cat messaging.Category,
+func sendMobTauntTriad(intensity combat.TauntIntensity, dmgDesc, targetDmgDesc string, cat messaging.Category,
 	mob *mobs.Mob, targetName string, targetPlayer *users.UserRecord, room *rooms.Room) bool {
 
 	targetType := "mobname"
@@ -135,7 +135,7 @@ func sendMobTauntTriad(intensity combat.TauntIntensity, dmgDesc string, cat mess
 	}
 
 	triad := combat.GetTauntTriad(intensity, mob.Character.Name, targetName,
-		"mobname", targetType, dmgDesc)
+		"mobname", targetType, dmgDesc).WithDefenderDamage(dmgDesc, targetDmgDesc)
 
 	if triad.ToRoom == "" {
 		return false

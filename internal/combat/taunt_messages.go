@@ -2,6 +2,7 @@ package combat
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -191,6 +192,18 @@ func GetTauntTriad(intensity TauntIntensity, source, target, sourceType, targetT
 		ToDefender: roles.Actee,
 		ToRoom:     roles.Observer,
 	}
+}
+
+// WithDefenderDamage gives the defender's line the second-person damage
+// description. A triad renders one {damage} for all three audiences, so the
+// one taunted read "a feeble jab at their resolve" about their own (#262).
+// rendered is what the triad was rendered with; toDefender replaces it in
+// ToDefender only. Either one empty leaves the triad as it is.
+func (t TauntTriad) WithDefenderDamage(rendered, toDefender string) TauntTriad {
+	if rendered != "" && toDefender != "" {
+		t.ToDefender = strings.Replace(t.ToDefender, rendered, toDefender, 1)
+	}
+	return t
 }
 
 // SeedTauntMessagesForTest swaps the store for a test-supplied set of bands,

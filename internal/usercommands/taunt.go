@@ -81,11 +81,11 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	switch {
 	case result.Fumble:
-		sendTauntMessages(combat.TauntFumble, "", sourceName, targetName,
+		sendTauntMessages(combat.TauntFumble, "", "", sourceName, targetName,
 			"username", targetType, user, targetPlayer, room, result.Target.UserId)
 
 	case result.Hit && result.Crit:
-		sendTauntMessages(combat.TauntCritical, result.DmgDesc, sourceName, targetName,
+		sendTauntMessages(combat.TauntCritical, result.DmgDesc, result.DmgDescToTarget, sourceName, targetName,
 			"username", targetType, user, targetPlayer, room, result.Target.UserId)
 
 		if result.AggroPulled {
@@ -94,7 +94,7 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	case result.Hit:
 		if !result.Defence.Defended {
-			sendTauntMessages(combat.TauntHit, result.DmgDesc, sourceName, targetName,
+			sendTauntMessages(combat.TauntHit, result.DmgDesc, result.DmgDescToTarget, sourceName, targetName,
 				"username", targetType, user, targetPlayer, room, result.Target.UserId)
 		}
 		identities := combat.ChannelDefenceIdentities{
@@ -114,7 +114,7 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// but silence is the one outcome this command must never produce.
 		if messaged := sendChannelDefenceMessages(result.Defence, identities, "taunt",
 			user, targetPlayer, room, result.Target.UserId); !messaged && result.Defence.Defended {
-			sendTauntMessages(combat.TauntHit, result.DmgDesc, sourceName, targetName,
+			sendTauntMessages(combat.TauntHit, result.DmgDesc, result.DmgDescToTarget, sourceName, targetName,
 				"username", targetType, user, targetPlayer, room, result.Target.UserId)
 		}
 
@@ -123,7 +123,7 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 
 	default:
-		sendTauntMessages(combat.TauntMiss, "", sourceName, targetName,
+		sendTauntMessages(combat.TauntMiss, "", "", sourceName, targetName,
 			"username", targetType, user, targetPlayer, room, result.Target.UserId)
 	}
 
@@ -194,13 +194,14 @@ func sendAggroPullMessages(user *users.UserRecord, room *rooms.Room, sourceName,
 
 // sendTauntMessages sends data-driven taunt messages to attacker, defender,
 // and room. Falls back to generic text if no YAML messages are loaded.
-func sendTauntMessages(intensity combat.TauntIntensity, dmgDesc, source, target, sourceType, targetType string,
+func sendTauntMessages(intensity combat.TauntIntensity, dmgDesc, targetDmgDesc, source, target, sourceType, targetType string,
 	user *users.UserRecord, targetPlayer *users.UserRecord, room *rooms.Room, targetPlayerId int) {
 
 	// ONE call, ONE variant index, three audiences. Three separate calls here
 	// drew three independent indices, so the attacker, the defender and the
 	// room were each narrated a different moment of the same taunt.
-	triad := combat.GetTauntTriad(intensity, source, target, sourceType, targetType, dmgDesc)
+	triad := combat.GetTauntTriad(intensity, source, target, sourceType, targetType, dmgDesc).
+		WithDefenderDamage(dmgDesc, targetDmgDesc)
 	atkMsg, defMsg, roomMsg := triad.ToAttacker, triad.ToDefender, triad.ToRoom
 
 	// Fallback if no messages loaded

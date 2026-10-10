@@ -91,7 +91,7 @@ func TestBuildCounterTauntMessagesRendersFromCounterDefyPool(t *testing.T) {
 			if tc.damage > 0 {
 				dmgDesc := GetConvictionDamageDescription(tc.damage, 200)
 				require.Contains(t, countererMsg, dmgDesc)
-				require.Contains(t, taunterMsg, dmgDesc)
+				require.Contains(t, taunterMsg, GetConvictionDamageDescriptionToTarget(tc.damage, 200))
 				require.NotContains(t, roomMsg, dmgDesc, "room lines never carry damage")
 			}
 		})

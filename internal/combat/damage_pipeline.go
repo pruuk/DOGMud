@@ -168,8 +168,22 @@ func CalcReachAdjustedItemMult(
 	return baseMult * ReachUtility(reach, posRadius)
 }
 
-// GetConvictionDamageDescription converts conviction damage to descriptive text.
+// GetConvictionDamageDescription converts conviction damage to descriptive
+// text, as the one dealing it and any onlooker read it ("their resolve").
 func GetConvictionDamageDescription(damageAmount int, targetMaxConviction int) string {
+	return convictionDamageDescription(damageAmount, targetMaxConviction, "their")
+}
+
+// GetConvictionDamageDescriptionToTarget is the same band as the one who
+// took the damage reads it on their own line: "your resolve", not "their
+// resolve" (#262).
+func GetConvictionDamageDescriptionToTarget(damageAmount int, targetMaxConviction int) string {
+	return convictionDamageDescription(damageAmount, targetMaxConviction, "your")
+}
+
+// convictionDamageDescription is the one band table; whose is the
+// possessive the reader sees ("their" or "your").
+func convictionDamageDescription(damageAmount int, targetMaxConviction int, whose string) string {
 	if targetMaxConviction <= 0 {
 		return "a mild rebuke"
 	}
@@ -178,15 +192,15 @@ func GetConvictionDamageDescription(damageAmount int, targetMaxConviction int) s
 
 	switch {
 	case pct < 5:
-		return "a feeble jab at their resolve"
+		return "a feeble jab at " + whose + " resolve"
 	case pct < 15:
 		return "a stinging insult"
 	case pct < 30:
 		return "a rattling verbal assault"
 	case pct < 50:
-		return "a crushing blow to their confidence"
+		return "a crushing blow to " + whose + " confidence"
 	case pct < 75:
-		return "a devastating attack on their will"
+		return "a devastating attack on " + whose + " will"
 	default:
 		return "a soul-shattering tirade"
 	}
