@@ -111,7 +111,15 @@ func TestEquipArm_SuccessLines(t *testing.T) {
 // numbers it, not the internal slot key "extra arm 1".
 func TestEquipArm_ExtraArmLineUsesTheArmNumber(t *testing.T) {
 	user, room := armUser(t)
+	origMutations, origExtraArms := user.Character.Mutations, user.Character.ExtraArms
+	origExtraArm1 := user.Character.Equipment.ExtraArm1
+	t.Cleanup(func() {
+		user.Character.Mutations = origMutations
+		user.Character.ExtraArms = origExtraArms
+		user.Character.Equipment.ExtraArm1 = origExtraArm1
+	})
 	// Validate re-derives ExtraArms from the mutation, so set that instead.
+	// A fresh map is assigned (not written into), so origMutations is never aliased.
 	user.Character.Mutations = map[string]int{"extra-arms": 2}
 	user.Character.ExtraArms = 2
 	require.True(t, user.Character.StoreItem(armItem(96060, "club", items.Weapon, 1, false)))

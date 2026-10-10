@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -36,6 +37,18 @@ func seedGoldWireRoom(t *testing.T) (*users.UserRecord, *rooms.Room) {
 	}))
 	user, room := getTestUserAndRoom(t)
 	user.Character.Stats.Strength.ValueAdj = 50
+	// grantCorpseGold sends corpse gold to the party pool when the looter is in
+	// a party, so a party left over from an earlier test would eat the gold.
+	if p := parties.Get(user.UserId); p != nil {
+		p.Disband()
+	}
+	t.Cleanup(func() {
+		if p := parties.Get(user.UserId); p != nil {
+			p.Disband()
+		}
+	})
+	origGold := user.Character.Gold
+	t.Cleanup(func() { user.Character.Gold = origGold })
 	origItems := user.Character.Items
 	user.Character.Items = nil
 	t.Cleanup(func() { user.Character.Items = origItems })
@@ -74,6 +87,16 @@ func TestGet_GoldStillMeansThePile(t *testing.T) {
 	user, room := seedGoldWireRoom(t)
 	Get("gold", user, room, 0)
 	assert.Contains(t, sentTo(user), "There's no gold to grab.")
+}
+
+// `get gold from ground` is the same pile; "from ground" is stripped first.
+func TestGet_GoldFromGroundStillMeansThePile(t *testing.T) {
+	user, room := seedGoldWireRoom(t)
+	room.Gold = 15
+	user.Character.Gold = 0
+	Get("gold from ground", user, room, 0)
+	assert.Equal(t, 15, user.Character.Gold)
+	assert.Equal(t, 0, room.Gold)
 }
 
 // The floor pile is taken into the purse, not just announced.
