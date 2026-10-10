@@ -3,6 +3,7 @@ package items
 import (
 	"fmt"
 	"math"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -876,9 +877,9 @@ func LoadDataFilesE() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if re, ok := r.(error); ok {
-				err = fmt.Errorf("%w", re)
+				err = fmt.Errorf("item load panicked: %w\n%s", re, debug.Stack())
 			} else {
-				err = fmt.Errorf("%v", r)
+				err = fmt.Errorf("item load panicked: %v\n%s", r, debug.Stack())
 			}
 		}
 	}()
