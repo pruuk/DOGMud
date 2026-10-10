@@ -18,6 +18,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode/utf8"
 
 	"crypto/md5"
 
@@ -1127,6 +1128,9 @@ func StripCharsForScreenReaders(s string) string {
 // ConvertToAscii replaces UTF-8 box-drawing, block element, and other
 // decorative Unicode characters with ASCII visual equivalents.
 // ANSI escape sequences pass through unchanged.
+// Glyphs the table maps to nothing (heavy rules, markers) are dropped along
+// with the one space each strands: a space right after the drop at a line
+// start or after another space, and trailing spaces at a line end.
 // Fast-paths when input contains no bytes >= 0x80.
 func ConvertToAscii(s string) string {
 	// Fast path: if no high bytes, nothing to convert
@@ -1141,17 +1145,102 @@ func ConvertToAscii(s string) string {
 		return s
 	}
 
-	var b strings.Builder
-	b.Grow(len(s))
+	buf := make([]byte, 0, len(s))
+
+	// justDropped is true from a dropped glyph until the next visible
+	// non-space rune; skipSpace is true until the one stranded space has been
+	// skipped. atBoundary is true when the last visible output was a space or
+	// a newline (or nothing yet). ANSI escapes are invisible to all three.
+	justDropped := false
+	skipSpace := false
+	atBoundary := true
+	inEsc := false
+
+	// trim removes trailing spaces, stepping over trailing CSI sequences
+	// (ESC [ ... letter) so a colour reset after the spaces does not hide
+	// them, then restores those sequences.
+	trim := func() {
+		end := len(buf)
+		for end > 0 {
+			c := buf[end-1]
+			if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+				break
+			}
+			i := end - 2
+			for i >= 0 && (buf[i] == ';' || buf[i] == '[' || (buf[i] >= '0' && buf[i] <= '9')) {
+				i--
+			}
+			if i < 0 || buf[i] != '\x1b' || i+1 >= end-1 || buf[i+1] != '[' {
+				break
+			}
+			end = i
+		}
+		tail := append([]byte(nil), buf[end:]...)
+		buf = buf[:end]
+		for len(buf) > 0 && buf[len(buf)-1] == ' ' {
+			buf = buf[:len(buf)-1]
+		}
+		buf = append(buf, tail...)
+	}
+
+	// emit writes one visible rune's output, applying the stranded-space rules.
+	emit := func(r rune, repl string) {
+		if justDropped {
+			switch {
+			case r == '\n' || r == '\r':
+				trim()
+				justDropped, skipSpace = false, false
+			case repl == " ":
+				if atBoundary && skipSpace {
+					skipSpace = false
+					return
+				}
+			default:
+				justDropped, skipSpace = false, false
+			}
+		}
+		buf = append(buf, repl...)
+		last := repl[len(repl)-1]
+		atBoundary = last == ' ' || last == '\n'
+	}
 
 	for _, r := range s {
-		if repl, ok := unicodeToAscii[r]; ok {
-			b.WriteString(repl)
-		} else {
-			b.WriteRune(r)
+		if inEsc {
+			buf = utf8.AppendRune(buf, r)
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+				inEsc = false
+			}
+			continue
 		}
+		if r == '\x1b' {
+			inEsc = true
+			buf = utf8.AppendRune(buf, r)
+			continue
+		}
+
+		// Plain ASCII never needs the table lookup.
+		if r < utf8.RuneSelf {
+			emit(r, string(r))
+			continue
+		}
+
+		repl, ok := unicodeToAscii[r]
+		if !ok {
+			repl = string(r)
+		}
+
+		if repl == "" {
+			if r != '\uFE0F' && r != '\uFE0E' { // selectors trail their glyph; not a drop
+				justDropped, skipSpace = true, true
+			}
+			continue
+		}
+		emit(r, repl)
 	}
-	return b.String()
+	if justDropped {
+		trim()
+	}
+	return string(buf)
 }
 
 // unicodeToAscii maps decorative Unicode runes to ASCII string equivalents.
@@ -1187,6 +1276,22 @@ var unicodeToAscii = map[rune]string{
 	// Map / directional
 	'▲': "^", '▼': "v", '△': "^", '▽': "v",
 	'≈': "~", '⌂': "#", '◆': "*", '●': "o", '○': "o",
+	// Heavy box rules (#253): dropped, not drawn. Only ━ ships in server
+	// text (help section rules, the banner rule and the aicompanion module
+	// headers); the rest of the heavy family is here so a new template cannot bring one back unconverted.
+	'━': "", '┃': "", '┅': "", '┇': "", '┉': "", '┋': "", '╍': "", '╏': "",
+	'┏': "", '┓': "", '┗': "", '┛': "",
+	'┣': "", '┫': "", '┳': "", '┻': "", '╋': "",
+	'╸': "", '╹': "", '╺': "", '╻': "",
+	// Pet, companion, death and counter markers, and the warning and check
+	// marks (#253): dropped; the word beside each still says it.
+	'♥': "", '♦': "", '☠': "", '⚔': "", '⚠': "", '✓': "", '✗': "", '✕': "",
+	// The quest-item star is the only flag that item carries, so it stays
+	// visible as a '*' (#253).
+	'★': "*",
+	// Em and en dash: a hyphen, not nothing, so the words either side stay
+	// apart (#253).
+	'—': "-", '–': "-",
 	// No-break space: the crit banner close is glued to the line's last word
 	// with one (combat_helpers.go); an ASCII client gets a plain space.
 	' ': " ",

@@ -47,19 +47,10 @@ func Eat(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			return true, nil
 		}
 
-		// Check if food has spoiled
-		if itemSpec.Aging.HasAging() && matchItem.CraftedRound > 0 {
-			currentRound := util.GetRoundCount()
-			var elapsed uint64
-			if currentRound >= matchItem.CraftedRound {
-				elapsed = currentRound - matchItem.CraftedRound
-			}
-			effSpeed := items.CalcEffectiveAgingSpeed(1.0, matchItem.CraftSkill) // food has no bottle
-			phase, _ := items.GetAgingPhase(elapsed, itemSpec.Aging, effSpeed)
-			if phase == items.PhaseSpoiled {
-				user.SendText(messaging.CategorySystem, `<ansi fg="red">The food has gone bad! It reeks of decay and is clearly inedible.</ansi>`)
-				return true, nil
-			}
+		// Food that has gone bad is refused; mob eat asks the same (#277).
+		if matchItem.IsSpoiledFood(util.GetRoundCount()) {
+			user.SendText(messaging.CategorySystem, `<ansi fg="red">The food has gone bad! It reeks of decay and is clearly inedible.</ansi>`)
+			return true, nil
 		}
 
 		user.Character.CancelConditionsWithFlag(conditions.Hidden)

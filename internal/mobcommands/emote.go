@@ -31,6 +31,9 @@ func Emote(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	emoteText := rest
 	if result.IsAlias {
 		emoteText = result.AliasText
+	} else if rest[0] == '@' && len(rest) > 1 {
+		// The @ form, stripped as the player command strips it (#273).
+		emoteText = rest[1:]
 	}
 
 	actions.SendSeen(actor, messaging.CategoryMobEmote,

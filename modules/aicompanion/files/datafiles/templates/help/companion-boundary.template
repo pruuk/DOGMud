@@ -1,0 +1,17 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">companion-boundary</ansi>
+
+Draws a line with your companion: friendship, and nothing more. They
+remember it for good and will not raise it again. If things between you
+had already grown closer, you go back to being friends.
+
+The line stays until you lift it.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">companion-boundary friendship</ansi>   Keep things as they are.
+  <ansi fg="command">companion-boundary none</ansi>         Lift the line you drew.
+  <ansi fg="command">companion-boundary</ansi>              Lifts it too.
+
+<ansi fg="command">companion-court</ansi> lifts the line too.
+
+See also <ansi fg="command">help companion-court</ansi> and <ansi fg="command">help aicompanion</ansi>.

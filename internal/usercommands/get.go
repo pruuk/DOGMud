@@ -186,14 +186,18 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		// get all <corpse> — sweep every item + gold from a corpse's loot.
 		// Corpses aren't room Containers, so FindContainerByName above misses
-		// them; resolve via FindCorpseIndex and take from THAT corpse through
+		// them; resolve via parser.SplitTrailingContainer (FindCorpseIndex
+		// underneath) and take from THAT corpse through
 		// the same helpers as `get <item> from <corpse>`, so each item flows
 		// through the loot-mode gate. Never re-resolve it by its full name:
 		// below clear sight the lookup refuses the name, and the refusal
 		// would print it (#435).
+		// The corpse is the whole trailing span, as `get <item> <corpse>`
+		// resolves it (the parser split below), not the last word: that made
+		// `get all lookout corpse` sweep whichever corpse was newest (#217).
 		if len(args) >= 2 {
-			if cIdx := room.FindCorpseIndex(args[len(args)-1], user.Character); cIdx >= 0 {
-				corpse := &room.Corpses[cIdx]
+			if _, cm, ok := parser.SplitTrailingContainer(parser.Scope{User: user, Room: room}, rest); ok && cm.Kind == parser.KindCorpse {
+				corpse := &room.Corpses[cm.CorpseIdx]
 				if !canLootCorpse(user, corpse) {
 					user.SendText(messaging.CategorySystem, `This isn't your kill.`)
 					return true, nil

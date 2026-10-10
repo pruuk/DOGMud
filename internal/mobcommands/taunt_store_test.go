@@ -59,7 +59,7 @@ func TestMobTauntTriadUsesTheAuthoredStore(t *testing.T) {
 	defer litRoom.RemovePlayer(target.UserId)
 	events.DrainQueuedMessagesForTest(target.UserId)
 
-	said := sendMobTauntTriad(combat.TauntHit, "ModerateWounds", messaging.CategoryTauntSuccess,
+	said := sendMobTauntTriad(combat.TauntHit, "ModerateWounds", "", messaging.CategoryTauntSuccess,
 		mob, target.Character.Name, target, litRoom)
 	require.True(t, said, "a seeded store must produce narration")
 
@@ -112,7 +112,7 @@ func TestMobTauntTriadAnonymizesInTheDark(t *testing.T) {
 	events.DrainQueuedMessagesForTest(target.UserId)
 	events.DrainQueuedMessagesForTest(observer.UserId)
 
-	said := sendMobTauntTriad(combat.TauntHit, "ModerateWounds", messaging.CategoryTauntSuccess,
+	said := sendMobTauntTriad(combat.TauntHit, "ModerateWounds", "", messaging.CategoryTauntSuccess,
 		mob, target.Character.Name, target, darkRoom)
 	require.True(t, said)
 
@@ -153,7 +153,7 @@ func TestMobTauntTriadFallsBackWhenTheStoreIsEmpty(t *testing.T) {
 	room := rooms.LoadRoom(mob.Character.RoomId)
 	require.NotNil(t, room)
 
-	said := sendMobTauntTriad(combat.TauntHit, "", messaging.CategoryTauntSuccess,
+	said := sendMobTauntTriad(combat.TauntHit, "", "", messaging.CategoryTauntSuccess,
 		mob, "Someone", nil, room)
 	require.False(t, said, "an empty store must report that it narrated nothing")
 }

@@ -1,11 +1,11 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">give</ansi>
 
-The <ansi fg="command">look</ansi> command gives an object to another player or mob.
+The <ansi fg="command">give</ansi> command gives an object to another player or mob.
 
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">give sword sam</ansi>
-  This gives your sword to sam.
+  This gives your sword to sam. <ansi fg="command">give sword to sam</ansi> works too.
 
   <ansi fg="command">give 30 gold sam</ansi>
   This gives 30 gold to sam.
@@ -14,3 +14,5 @@ Giving a stolen trinket back to whoever it was taken from
 returns it. Its owner will be glad of it, and a thief who
 has been caught stealing wins back a little of the goodwill
 that cost them. See <ansi fg="command">help steal</ansi>.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help show</ansi>, <ansi fg="command">help sell</ansi>, <ansi fg="command">help storage</ansi>

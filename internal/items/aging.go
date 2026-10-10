@@ -159,3 +159,20 @@ func CalcEffectiveAgingSpeed(bottleMultiplier float64, craftSkill int) float64 {
 	}
 	return bottleMultiplier * skillFactor
 }
+
+// IsSpoiledFood reports whether this food has gone bad at round now: its
+// spec has aging thresholds, it was made at a known round, and it is past
+// its spoil point. Food has no bottle, so only the cook's skill slows it.
+// The one check player and mob eat both ask (#277).
+func (i *Item) IsSpoiledFood(now uint64) bool {
+	spec := i.GetSpec()
+	if !spec.Aging.HasAging() || i.CraftedRound == 0 {
+		return false
+	}
+	var elapsed uint64
+	if now >= i.CraftedRound {
+		elapsed = now - i.CraftedRound
+	}
+	phase, _ := GetAgingPhase(elapsed, spec.Aging, CalcEffectiveAgingSpeed(1.0, i.CraftSkill))
+	return phase == PhaseSpoiled
+}

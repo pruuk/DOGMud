@@ -13,7 +13,13 @@ type PricingConfig struct {
 	PriceCeiling       float64 // Max scarcity multiplier (default 1.5)
 	AbundanceThreshold float64 // Stock/restock ratio for full abundance (default 3.0)
 	DefaultBaselineQty int     // Pricing baseline for RestockQty==0 entries (default 3)
+	GoldReserveRatio   float64 // Share of a shop's starting gold kept back before it buys (default 0.50)
 }
+
+// defaultGoldReserveRatio is DefaultPricingConfig's reserve, named so
+// EvaluateBuyRules can fall back to it for a hand-built cfg without calling
+// DefaultPricingConfig (pricing_balance_guard_test.go forbids that).
+const defaultGoldReserveRatio = 0.50
 
 // PricingConfigFromBalance creates a PricingConfig from the game's balance settings.
 // Falls back to DefaultPricingConfig() values for any field that is zero/unset.
@@ -35,6 +41,9 @@ func PricingConfigFromBalance() PricingConfig {
 	if int(b.DefaultPricingBaselineQty) > 0 {
 		cfg.DefaultBaselineQty = int(b.DefaultPricingBaselineQty)
 	}
+	if float64(b.ShopGoldReserveRatio) > 0 {
+		cfg.GoldReserveRatio = float64(b.ShopGoldReserveRatio)
+	}
 	return cfg
 }
 
@@ -46,6 +55,7 @@ func DefaultPricingConfig() PricingConfig {
 		PriceCeiling:       1.5,
 		AbundanceThreshold: 3.0,
 		DefaultBaselineQty: 3,
+		GoldReserveRatio:   defaultGoldReserveRatio,
 	}
 }
 

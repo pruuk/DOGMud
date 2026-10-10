@@ -40,9 +40,6 @@ character:
   speciesid: 1
   level: 1
   gold: 30
-  items:
-    - itemid: 20068
-    - itemid: 10026
   equipment:
     weapon:
       itemid: 10026

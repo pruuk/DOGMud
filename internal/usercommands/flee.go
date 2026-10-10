@@ -15,9 +15,9 @@ const fleeShortageText = "You break away on instinct rather than technique, too 
 var fleeRefusalText = map[actions.FleeRefusal]string{
 	// A no-go root (a Jailed holding cell, 5.1c) pins the player; flee must
 	// honour it or it becomes a jail-escape hole (smoke BUG-02).
-	actions.FleeRefuseRooted: `You're locked in — there's nowhere to flee to.`,
+	actions.FleeRefuseRooted: `You're locked in, with nowhere to flee to.`,
 	// Blood Frenzy, hamstrung, winded, tackled: you can fight, not retreat.
-	actions.FleeRefuseNoFlee: `You can't break off to flee right now — you can only fight.`,
+	actions.FleeRefuseNoFlee: `You can't break off to flee right now. You can only fight.`,
 	// A second flee while the first resolves used to print nothing at all.
 	actions.FleeRefuseAlready: `You're already trying to break away. Give it a moment.`,
 	// Also rejects a stale queued flee after a lethal round respawned you.

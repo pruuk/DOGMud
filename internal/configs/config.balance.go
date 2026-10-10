@@ -623,12 +623,11 @@ type Balance struct {
 	SpellDiscoveryDecayRate  ConfigFloat `yaml:"SpellDiscoveryDecayRate"`  // Decay per known spell: chance = base / (1 + known*this) (default 0.1)
 
 	// ── DISCOVERY OFFSET (shared: spells + recipes) ──────────────────────────
-	DiscoveryPerceptionScale      ConfigFloat `yaml:"DiscoveryPerceptionScale"`      // Raw Per contribution reaches 1.0 at (Per - 100) / this (default 200)
-	DiscoverySkillScale           ConfigFloat `yaml:"DiscoverySkillScale"`           // Raw skill contribution reaches 1.0 at rank / this (default 100)
-	DiscoveryMaxDecayOffset       ConfigFloat `yaml:"DiscoveryMaxDecayOffset"`       // Hard ceiling on combined offset; effective decay floor = Decay × (1 - this) (default 0.8)
-	SpellFoldsSkillFactor         ConfigInt   `yaml:"SpellFoldsSkillFactor"`         // Skill * this in folds-per-round calc (default 25)
-	SpellProficiencyCastsPerPoint ConfigInt   `yaml:"SpellProficiencyCastsPerPoint"` // Casts needed per 1 proficiency point (default 50)
-	ConjureCooldown               ConfigInt   `yaml:"ConjureCooldown"`               // Rounds between corpse-free conjure/summon casts, on their own key (default 36)
+	DiscoveryPerceptionScale ConfigFloat `yaml:"DiscoveryPerceptionScale"` // Raw Per contribution reaches 1.0 at (Per - 100) / this (default 200)
+	DiscoverySkillScale      ConfigFloat `yaml:"DiscoverySkillScale"`      // Raw skill contribution reaches 1.0 at rank / this (default 100)
+	DiscoveryMaxDecayOffset  ConfigFloat `yaml:"DiscoveryMaxDecayOffset"`  // Hard ceiling on combined offset; effective decay floor = Decay × (1 - this) (default 0.8)
+	SpellFoldsSkillFactor    ConfigInt   `yaml:"SpellFoldsSkillFactor"`    // Skill * this in folds-per-round calc (default 25)
+	ConjureCooldown          ConfigInt   `yaml:"ConjureCooldown"`          // Rounds between corpse-free conjure/summon casts, on their own key (default 36)
 	// SpellDifficultyProgressionScale and CraftDifficultyProgressionScale were
 	// DELETED by U10b-3, which moved difficulty off progression and onto
 	// discovery. Nothing read them afterwards, and a knob that tunes nothing is

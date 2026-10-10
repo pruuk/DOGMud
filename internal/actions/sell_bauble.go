@@ -151,10 +151,8 @@ func baubleOfferFor(item items.Item, shopInv *shops.ShopInventory, fence bool, z
 	}
 
 	if shopInv != nil {
-		ratio := float64(configs.GetBalanceConfig().ShopGoldReserveRatio)
-		if ratio <= 0 {
-			ratio = 0.50
-		}
+		// The reserve EvaluateBuyRules reads, from the same PricingConfig (#346).
+		ratio := shops.PricingConfigFromBalance().GoldReserveRatio
 		if !shopInv.CanAfford(price, shopInv.GoldReserve(ratio)) {
 			return BaubleOffer{Refusal: baubleSayCantAfford, Broke: true}
 		}

@@ -79,7 +79,9 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		if remaining[0] == `all` {
 			qtyAll = true
 			nameArgs = remaining[1:] // may be empty (add all) or have a name (add all iron-ore)
-		} else if n, err := strconv.Atoi(remaining[0]); err == nil && n > 0 {
+		} else if n, err := strconv.Atoi(remaining[0]); err == nil && n > 0 && (len(remaining) > 1 || action != `remove`) {
+			// For remove, a number is a quantity only when a name follows.
+			// A lone number is a slot: "storage remove 3" (#308).
 			qty = n
 			nameArgs = remaining[1:]
 		}

@@ -298,6 +298,9 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 		leaderId := currentParty.LeaderUserId
 
 		charmedMobInstanceIds := []int{}
+		// A charmed companion is in GetCharmIds too; it is listed once, with
+		// the companions below, not also as a charmed friend (#244).
+		companionInstanceIds := map[int]bool{}
 
 		for _, uid := range currentParty.UserIds {
 			uStatus := "In Party"
@@ -306,7 +309,13 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 			}
 
 			u := users.GetByUserId(uid)
+			if u == nil {
+				continue
+			}
 			uRoom := rooms.LoadRoom(u.Character.RoomId)
+			if uRoom == nil {
+				continue
+			}
 			uHealthPct := int(math.Floor((float64(u.Character.Health) / float64(u.Character.HealthMax.Value)) * 100))
 			uHealthPctStr := fmt.Sprintf(`%d%%`, uHealthPct)
 			uLoc := uRoom.Title
@@ -337,11 +346,25 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 			formatting = append(formatting, rowFormat)
 
 			charmedMobInstanceIds = append(charmedMobInstanceIds, u.Character.GetCharmIds()...)
+			for _, comp := range u.Character.Companions {
+				if comp.InstanceId != 0 {
+					companionInstanceIds[comp.InstanceId] = true
+				}
+			}
 		}
 
 		for _, mobInstanceId := range charmedMobInstanceIds {
+			if companionInstanceIds[mobInstanceId] {
+				continue
+			}
 			m := mobs.GetInstance(mobInstanceId)
+			if m == nil {
+				continue
+			}
 			mRoom := rooms.LoadRoom(m.Character.RoomId)
+			if mRoom == nil {
+				continue
+			}
 			mHealthPct := int(math.Floor((float64(m.Character.Health) / float64(m.Character.HealthMax.Value)) * 100))
 			rows = append(rows, []string{
 				m.Character.Name,
@@ -397,6 +420,9 @@ func cmdPartyList(user *users.UserRecord, currentParty *parties.Party) {
 
 		for _, uid := range currentParty.InviteUserIds {
 			u := users.GetByUserId(uid)
+			if u == nil {
+				continue
+			}
 			rows = append(rows, []string{
 				u.Character.Name,
 				`Invited`,

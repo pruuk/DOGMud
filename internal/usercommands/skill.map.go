@@ -24,6 +24,16 @@ Level 2 - Map a 9x7 area
 Level 3 - Map a 13x9 area
 Level 4 - Map a 17x9 area, and enables the "wide" version.
 */
+// mobMapSymbol is the map cell for a room holding hostile mobs. The skull has
+// no ASCII form (ConvertToAscii drops it, which would erase the cell), so an
+// ASCII-mode player gets '!' (#253).
+func mobMapSymbol(asciiMode bool) rune {
+	if asciiMode {
+		return '!'
+	}
+	return '☠'
+}
+
 func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// Map is a free command — no skill gate.
@@ -127,7 +137,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		for _, rid := range rooms.GetRoomsWithMobs() {
 			if roomInfo := rooms.LoadRoom(rid); roomInfo != nil {
 				if len(roomInfo.GetMobs(rooms.FindFighting|rooms.FindHostile)) > 0 {
-					c.OverrideSymbol(rid, '☠', `Mob`)
+					c.OverrideSymbol(rid, mobMapSymbol(user.AsciiMode), `Mob`)
 				} else {
 					c.OverrideSymbol(rid, '☺', `NPC`)
 				}

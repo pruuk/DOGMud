@@ -76,6 +76,14 @@ limited-client paths — a client that has not converged on UTF-8 gets readable
 text rather than mojibake. Any non-ASCII rune player text carries on
 purpose needs a row there, as the no-break space (U+00A0) of the crit
 banners has.
+Heavy box rules (`━` and family) and the `♥ ♦ ☠ ⚔ ⚠ ✓ ✗ ✕` markers map to
+nothing, because the words beside them carry the meaning (`★`, the only
+quest-item flag, maps to `*`); `ConvertToAscii`
+also takes the one space a dropped glyph strands (after a line start or
+another space) and trailing spaces at line end, even behind a colour reset.
+A symbol that must stay visible (the mob cell on `map`) needs an ASCII
+variant chosen at the source, as `mobMapSymbol` does. Em and en dashes map to `-`, because
+dropping them would glue two words together (#253).
 
 **`StripANSI` and `EscapeAnsiTags` are unrelated.** `StripANSI` removes raw
 terminal escape sequences (`\x1b[...m`) from already-rendered output.

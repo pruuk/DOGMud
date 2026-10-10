@@ -1014,7 +1014,7 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 				currentRound := int64(util.GetRoundCount())
 				if !connDetails.AICommandAllowed(currentRound, int(netCfg.AICommandsPerRound)) {
 					connections.SendTo(
-						[]byte(fmt.Sprintf("Command dropped — AI rate limit (%d/round). Wait for the next round.\r\n", netCfg.AICommandsPerRound)),
+						[]byte(fmt.Sprintf("Command dropped: AI rate limit (%d/round). Wait for the next round.\r\n", netCfg.AICommandsPerRound)),
 						connDetails.ConnectionId(),
 					)
 					clientInput.Reset()

@@ -1,0 +1,20 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">companion-ask</ansi>
+
+Sends your companion to ask someone here about something for you. Only
+when you send them this way do your companion's words reach that person's
+dialogue, and only on that topic, for a short while.
+
+You must be able to see who you are sending them to. Another player's
+companion cannot be asked.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">companion-ask <who> about <what></ansi>
+
+  <ansi fg="command">companion-ask smith about the ore</ansi>
+  This sends your companion to put that question to the smith.
+
+The person is named by one word, as with other commands. Everything after
+the word <ansi fg="command">about</ansi> is the topic.
+
+See also <ansi fg="command">help aicompanion</ansi>.

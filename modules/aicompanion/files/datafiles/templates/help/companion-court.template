@@ -1,0 +1,21 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">companion-court</ansi>
+
+Says yes to a closer bond with your companion. Nothing about a romance
+moves a step unless you say so with this command, and only when your
+companion is ready for it. If it is not the moment, they let you know
+and nothing changes.
+
+If you drew a line earlier with <ansi fg="command">companion-boundary friendship</ansi>,
+this lifts it. Nothing else changes; the rest is up to the two of you.
+
+Some companions are not looking for this, and say so kindly.
+
+This works only once you have agreed that your companion may think for
+themselves (see <ansi fg="command">help companion-ai</ansi>). A plain companion answers
+with a few set lines, and nothing more grows between you.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">companion-court</ansi>    Say yes to the next step.
+
+See also <ansi fg="command">help companion-boundary</ansi> and <ansi fg="command">help aicompanion</ansi>.

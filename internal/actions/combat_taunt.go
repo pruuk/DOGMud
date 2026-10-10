@@ -57,6 +57,10 @@ type TauntResult struct {
 	// DmgDesc is the player-facing description of the conviction damage.
 	DmgDesc string
 
+	// DmgDescToTarget is DmgDesc as the target reads it, about their own
+	// resolve rather than "their" resolve (#262).
+	DmgDescToTarget string
+
 	// SelfDamage is the self-conviction damage taken on a fumble.
 	SelfDamage int
 
@@ -280,6 +284,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 		convMaxRef = 1
 	}
 	dmgDesc := combat.GetConvictionDamageDescription(dmg, convMaxRef)
+	dmgDescToTarget := combat.GetConvictionDamageDescriptionToTarget(dmg, convMaxRef)
 
 	// Crit-received toughening now fires exactly once, inside the seam's
 	// bonus tier (combat.ResolveChannelAttack -> awardChannelDefenceBonus);
@@ -346,15 +351,16 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	counter := counterTauntExit(actor, char, target, out)
 
 	return TauntResult{
-		Cost:        cost,
-		Target:      target,
-		Executed:    true,
-		Hit:         true,
-		Crit:        isCrit,
-		Damage:      dmg,
-		DmgDesc:     dmgDesc,
-		Defence:     out,
-		AggroPulled: agroPulled,
-		Counter:     counter,
+		Cost:            cost,
+		Target:          target,
+		Executed:        true,
+		Hit:             true,
+		Crit:            isCrit,
+		Damage:          dmg,
+		DmgDesc:         dmgDesc,
+		DmgDescToTarget: dmgDescToTarget,
+		Defence:         out,
+		AggroPulled:     agroPulled,
+		Counter:         counter,
 	}
 }
