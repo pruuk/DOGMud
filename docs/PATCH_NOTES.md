@@ -18,7 +18,8 @@
   potions and food still add on top.
 - A spell that lays an effect on someone now gives one clear line to each
   person there: the caster, the target and the room each read their own
-  line, written for that effect and naming the caster.
+  line, written for that effect. When the spell is harmful, the target and
+  the people watching are told who cast it.
 - A poison or bleed that kills now counts as your kill, even if you have
   walked away, logged out or died since you cast it. It counts for
   reputation, crimes and bounties as any other kill would.

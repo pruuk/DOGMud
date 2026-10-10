@@ -7,6 +7,6 @@ statmods:
   perception: -25
   dexterity: -15
 start_actor: "You flood {actee}'s senses until they overload."
-start_actee: "Your senses explode with input. Everything is too bright, too loud!"
-start_observer: "{actee} reels, overwhelmed by something unseen."
+start_actee: "{actor}'s spell floods your senses. It is all too bright, too loud!"
+start_observer: "{actee} reels, overwhelmed by {actor}'s spell."
 end_actee: The sensory overload subsides and your senses normalize.

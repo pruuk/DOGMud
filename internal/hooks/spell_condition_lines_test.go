@@ -18,6 +18,7 @@ import (
 const (
 	spellLineAuthoredId = 7211 // all three start lines
 	spellLineSilentId   = 7212 // silent-start
+	spellLineHarmId     = 7213 // a harmful condition that names its caster
 )
 
 // seedSpellLineConditions adds the two specs to the fixture's registry,
@@ -31,6 +32,9 @@ func seedSpellLineConditions(t *testing.T) {
 			StartRoomText: "An aura blooms around {actee_plain}.", EndUserText: "Your aura fades."},
 		spellLineSilentId: {ConditionId: spellLineSilentId, Name: "Test Hush", RoundInterval: 1, TriggerCount: 10,
 			Flags: []conditions.Flag{conditions.SilentStart}, EndUserText: "The hush lifts."},
+		spellLineHarmId: {ConditionId: spellLineHarmId, Name: "Test Fog", RoundInterval: 1, TriggerCount: 10,
+			StartActorText: "You fog {actee}'s mind.", StartUserText: "{actor}'s spell fogs your mind.",
+			StartRoomText: "{actor}'s spell fogs {actee}'s mind.", EndUserText: "The fog lifts."},
 	}))
 	t.Cleanup(conditions.SeedConditionRecordsForTest())
 }
@@ -80,6 +84,39 @@ func TestSpellConditionLines_SelfCastIsOneLinePerAudience(t *testing.T) {
 
 	assert.Equal(t, []string{"An aura blooms around you."}, drainPlain(1))
 	assert.Equal(t, []string{"An aura blooms around Aliceia."}, drainPlain(3))
+}
+
+// Owner ruling 2026-10-10: a harmful condition spell names its caster to the
+// target and the room through {actor} in the condition's own start lines.
+func TestSpellConditionLines_AHarmfulSpellNamesItsCaster(t *testing.T) {
+	f := newSpellParityFixture(t, spellContestAttackWin())
+	seedSpellLineConditions(t)
+	spell := hexSpellForConditionTest()
+	spell.ConditionIds = []int{spellLineHarmId}
+	require.True(t, spell.IsHarm())
+
+	resolveAgainstPlayer(f.casterUser, f.targetUser, f.room, spell,
+		spellAttackSideFor(spell, f.casterUser.Character, nil), 0)
+	applyQueuedConditions(t, 2)
+
+	assert.Equal(t, []string{"You fog Bobrick's mind."}, drainPlain(1))
+	assert.Equal(t, []string{"Aliceia's spell fogs your mind."}, drainPlain(2))
+	assert.Equal(t, []string{"Aliceia's spell fogs Bobrick's mind."}, drainPlain(3))
+}
+
+// A mob caster's harmful condition names the mob to its player target.
+func TestSpellConditionLines_AHarmfulMobSpellNamesTheMob(t *testing.T) {
+	f := newSpellParityFixture(t, spellContestAttackWin())
+	seedSpellLineConditions(t)
+	spell := hexSpellForConditionTest()
+	spell.ConditionIds = []int{spellLineHarmId}
+
+	resolveMobSpellAgainstPlayer(f.casterMob, f.targetUser, f.room, spell,
+		spellAttackSideFor(spell, &f.casterMob.Character, nil), 0)
+	applyQueuedConditions(t, 2)
+
+	assert.Equal(t, []string{"Skeleton's spell fogs your mind."}, drainPlain(2))
+	assert.Equal(t, []string{"Skeleton's spell fogs Bobrick's mind."}, drainPlain(3))
 }
 
 // A mob caster's condition on a player: the player and the room read the

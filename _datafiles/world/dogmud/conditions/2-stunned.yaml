@@ -6,6 +6,6 @@ triggercount: 2
 flags:
   - no-combat
 start_actor: "You leave {actee} stunned and staggering."
-start_actee: '<ansi fg="yellow">You are stunned! You cannot attack.</ansi>'
-start_observer: "{actee_plain} staggers, dazed!"
+start_actee: '<ansi fg="yellow">{actor}''s spell stuns you! You cannot attack.</ansi>'
+start_observer: "{actor_plain}'s spell leaves {actee_plain} staggering, dazed!"
 end_actee: '<ansi fg="green">You shake off the stun.</ansi>'

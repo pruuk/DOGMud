@@ -6,6 +6,6 @@ triggercount: 3
 statmods:
   perception: -40
 start_actor: "Darkness swallows {actee}'s sight."
-start_actee: '<ansi fg="yellow">Your vision goes dark. You have been blinded!</ansi>'
-start_observer: "{actee_plain} claws at their eyes, blinded!"
+start_actee: '<ansi fg="yellow">{actor}''s spell turns your vision dark. You are blinded!</ansi>'
+start_observer: "{actor_plain}'s spell blinds {actee_plain}, who claws at their eyes."
 end_actee: '<ansi fg="green">Your vision slowly returns to normal.</ansi>'
