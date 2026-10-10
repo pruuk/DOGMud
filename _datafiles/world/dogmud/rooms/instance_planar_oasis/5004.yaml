@@ -8,7 +8,7 @@ description: >-
   The oasis water is dark and still to the north. Something
   stirs within the sand itself.
 biome: ether
-lamp: 38
+lamp: 52
 exits:
   south:
     roomid: 5003

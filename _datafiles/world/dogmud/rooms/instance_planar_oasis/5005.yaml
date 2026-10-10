@@ -9,7 +9,7 @@ description: >-
   edge has been fused into glass by repeated exposure to
   tremendous heat. Whatever rules this place is here.
 biome: ether
-lamp: 38
+lamp: 52
 exits:
   south:
     roomid: 5004
