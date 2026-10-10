@@ -206,6 +206,11 @@ func seedAllRegistries() func() {
 	})
 
 	return func() {
+		// room1.AddMob above queues a RoomChange, and most tests built on
+		// this fixture queue messages, inputs or combat events they never
+		// process. Left in the shared global queue they reach whatever test
+		// runs next (#478: TestWaitRound_* read another test's lines).
+		events.DrainAllQueuedEventsForTest()
 		cleanupSpells()
 		cleanupBiomes()
 		cleanupRooms()
