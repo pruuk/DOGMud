@@ -1,9 +1,14 @@
 package hooks
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -113,42 +118,129 @@ func meanCoreDischargeHit(t *testing.T, sd *spells.SpellData, mobId int, statPoo
 	return total / float64(coreDischargeSpawns*coreDischargeRollsPerMob), wil / coreDischargeSpawns
 }
 
-// TestCoreDischarge_ShippedMeanLeavesReferencePlayerStanding pins #480's
-// retune: an uninterrupted Core Discharge from the Core Guardian at its
-// authored statpool must take a mean 60 to 70% of the reference mid player's
-// health on a normal hit. It runs the real calcSpellDamageForCharacter on the
-// shipped spell, boss template, Core Matrix and config, so a later change to
-// SpellDamageScale, GlobalDamageMultiplier, the mitigation curve, the boss's
-// stats or the spell's damage_multiplier that moves the number fails here.
-func TestCoreDischarge_ShippedMeanLeavesReferencePlayerStanding(t *testing.T) {
-	loadShippedCrashSiteBosses(t)
+// spawnMultiplier reads the instance stat-pool multiplier a crash-site room
+// authors for mobId (spawninfo statpool; the live pool is gold paid times
+// this, rooms.ScaleSpawnStatPools), so the reference run follows the content.
+func spawnMultiplier(t *testing.T, roomId, mobId int) int {
+	t.Helper()
+	path := filepath.Join("_datafiles", "world", "dogmud", "rooms", "crash_site_interior", strconv.Itoa(roomId)+".yaml")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading room %d: %v", roomId, err)
+	}
+	var room struct {
+		SpawnInfo []struct {
+			MobId    int `yaml:"mobid"`
+			StatPool int `yaml:"statpool"`
+		} `yaml:"spawninfo"`
+	}
+	if err := yaml.Unmarshal(raw, &room); err != nil {
+		t.Fatalf("parsing room %d: %v", roomId, err)
+	}
+	for _, s := range room.SpawnInfo {
+		if s.MobId == mobId && s.StatPool > 0 {
+			return s.StatPool
+		}
+	}
+	t.Fatalf("room %d spawns no mob %d with a statpool multiplier", roomId, mobId)
+	return 0
+}
 
+// TestCrashSiteDischarges_ShippedMeansHitTheirBands pins #480's retune: an
+// uninterrupted discharge in a 400g run (the Core Guardian's authored pool,
+// 2800, is exactly that run) takes a mean of the reference mid player's
+// health on a normal hit inside each boss's band: 60-70% for the Core
+// Guardian, 30-40% for Warden-Prime, the teaching boss. It runs the real
+// calcSpellDamageForCharacter on the shipped spells, boss templates, Core
+// Matrix and config, so a later change to SpellDamageScale,
+// GlobalDamageMultiplier, the mitigation curve, a boss's stats or a spell's
+// damage_multiplier that moves either number fails here.
+func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
+	loadShippedCrashSiteBosses(t)
 	if got := float64(configs.GetBalanceConfig().SpellDamageScale); got == 1.0 {
 		t.Fatal("SpellDamageScale is the Go default 1.0: the shipped config.yaml was not read")
 	}
-	sd := spells.GetSpell("core-discharge")
-	if sd == nil {
-		t.Fatal("core-discharge did not load from the shipped spells")
+
+	const referenceGold = 400
+	for _, tc := range []struct {
+		boss, spellId string
+		mobId, roomId int
+		low, high     float64
+	}{
+		{"Core Guardian", "core-discharge", coreDischargeGuardianId, 6395, 0.60, 0.70},
+		{"Warden-Prime", "warden-discharge", coreDischargeWardenId, 6392, 0.30, 0.40},
+	} {
+		t.Run(tc.boss, func(t *testing.T) {
+			sd := spells.GetSpell(tc.spellId)
+			if sd == nil {
+				t.Fatalf("%s did not load from the shipped spells", tc.spellId)
+			}
+			mult := spawnMultiplier(t, tc.roomId, tc.mobId)
+			mean, wil := meanCoreDischargeHit(t, sd, tc.mobId, referenceGold*mult)
+			frac := mean / coreDischargeRefHP
+			t.Logf("%s, %dg run (pool %d): willpower %.1f, mean hit %.1f = %.1f%% of %d HP (damage_multiplier %.2f)",
+				tc.boss, referenceGold, referenceGold*mult, wil, mean, frac*100, coreDischargeRefHP, sd.DamageMultiplier)
+			if frac < tc.low || frac > tc.high {
+				t.Errorf("%s mean hit is %.1f%% of a %d HP reference player, want %.0f-%.0f%%; "+
+					"retune damage_multiplier in %s.yaml (or revisit the knob that moved)",
+					tc.spellId, frac*100, coreDischargeRefHP, tc.low*100, tc.high*100, tc.spellId)
+			}
+		})
 	}
+}
 
-	mean, wil := meanCoreDischargeHit(t, sd, coreDischargeGuardianId, 0)
-	frac := mean / coreDischargeRefHP
-	t.Logf("Core Guardian: willpower %.1f, mean hit %.1f = %.1f%% of %d HP (damage_multiplier %.2f)",
-		wil, mean, frac*100, coreDischargeRefHP, sd.DamageMultiplier)
-
-	if frac < coreDischargeBandLow || frac > coreDischargeBandHigh {
-		t.Errorf("Core Discharge mean hit is %.1f%% of a %d HP reference player, want %.0f-%.0f%%; "+
-			"retune damage_multiplier in core-discharge.yaml (or revisit the knob that moved)",
-			frac*100, coreDischargeRefHP, coreDischargeBandLow*100, coreDischargeBandHigh*100)
+// TestCrashSiteDischarges_TreesCastTheirOwnWindupSpell pins the wiring: each
+// boss tree casts its own discharge, and that spell carries the two-round
+// min_cast_rounds windup and a warning line for the held round.
+func TestCrashSiteDischarges_TreesCastTheirOwnWindupSpell(t *testing.T) {
+	loadShippedCrashSiteBosses(t)
+	for tree, want := range map[string]string{
+		"9562-the_core_guardian.yaml": "core-discharge",
+		"9561-warden_prime.yaml":      "warden-discharge",
+	} {
+		raw, err := os.ReadFile(filepath.Join("_datafiles", "world", "dogmud", "behaviors", "crash_site_interior", tree))
+		if err != nil {
+			t.Fatalf("reading %s: %v", tree, err)
+		}
+		var doc any
+		if err := yaml.Unmarshal(raw, &doc); err != nil {
+			t.Fatalf("parsing %s: %v", tree, err)
+		}
+		cast := map[string]bool{}
+		collectCastSpells(doc, cast)
+		if !cast[want] {
+			t.Errorf("%s casts %v, want it to cast %s", tree, cast, want)
+		}
+		for id := range cast {
+			if strings.HasSuffix(id, "-discharge") && id != want {
+				t.Errorf("%s casts %s; each boss casts only its own discharge", tree, id)
+			}
+		}
+		sd := spells.GetSpell(want)
+		if sd == nil {
+			t.Fatalf("%s did not load", want)
+		}
+		if sd.MinCastRounds != 2 || sd.WaitRoomText == "" {
+			t.Errorf("%s: min_cast_rounds %d, wait_observer %q; want 2 and a warning line", want, sd.MinCastRounds, sd.WaitRoomText)
+		}
 	}
+}
 
-	wMean, wWil := meanCoreDischargeHit(t, sd, coreDischargeWardenId, 0)
-	t.Logf("Warden-Prime: willpower %.1f, mean hit %.1f = %.1f%% of %d HP",
-		wWil, wMean, wMean/coreDischargeRefHP*100, coreDischargeRefHP)
-	for _, gold := range []int{200, 300, 400} {
-		g, gw := meanCoreDischargeHit(t, sd, coreDischargeGuardianId, gold*7)
-		w, ww := meanCoreDischargeHit(t, sd, coreDischargeWardenId, gold*5)
-		t.Logf("%dg instance: Guardian wil %.0f mean %.0f (%.0f%%); Warden-Prime wil %.0f mean %.0f (%.0f%%)",
-			gold, gw, g, g/coreDischargeRefHP*100, ww, w, w/coreDischargeRefHP*100)
+// collectCastSpells gathers the spell of every `do: cast` node in a parsed tree.
+func collectCastSpells(node any, out map[string]bool) {
+	switch n := node.(type) {
+	case map[string]any:
+		if n["do"] == "cast" {
+			if s, ok := n["spell"].(string); ok {
+				out[s] = true
+			}
+		}
+		for _, v := range n {
+			collectCastSpells(v, out)
+		}
+	case []any:
+		for _, v := range n {
+			collectCastSpells(v, out)
+		}
 	}
 }

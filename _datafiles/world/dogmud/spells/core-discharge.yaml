@@ -2,8 +2,8 @@ spellid: core-discharge
 name: Core Discharge
 aliases: [discharge]
 description: >
-  A ruinous vent of raw power torn straight from a guardian construct's
-  core -- a room-wide detonation of cold light and crushing force that
+  A ruinous vent of raw power torn straight from the Core Guardian's
+  core: a room-wide detonation of cold light and crushing force that
   scours everything standing in the open. Mob-castable only; the
   buildup would kill any living caster before release.
 attack_type: spell
@@ -34,13 +34,20 @@ effect_magnitude: 150
 #   mean hit   = 763 x 0.441 = 337, 64% of 530
 # Inside the instance the pool is 7 x gold paid: 200g (1400) about 44%, 300g
 # (2100) about 54%, 400g (2800) 64%. A crit skips mitigation to the knee and
-# scales by the caster's skill, so it still kills. Warden-Prime (9561) casts
-# this too, with no Core Matrix: about 11% at 300g. Pinned by
+# scales by the caster's skill, so it still kills. Warden-Prime (9561) has
+# its own weaker warden-discharge. Pinned by
 # internal/hooks/core_discharge_balance_test.go.
 damage_multiplier: 0.3
 no_damage_interrupt: true
+# min_cast_rounds (#480): the Guardian makes about 57 folds a round, so
+# without this the cast completed on its first step and left one round to
+# interrupt. Held open for 2 steps: the round it starts (cast_observer), one
+# warning round (wait_observer), then the blast. Every disruptor lands across
+# the whole windup.
+min_cast_rounds: 2
 categories:
   - harm_multi
 cast_actor: "Power floods inward, gathering at your core."
-cast_observer: "{actor}'s core flares white-hot -- the air begins to scream."
+cast_observer: "{actor}'s core flares white-hot, and the air begins to scream."
+wait_observer: "{actor}'s core shrieks and blazes. It is about to burst!"
 ignore_move_cooldown: true
