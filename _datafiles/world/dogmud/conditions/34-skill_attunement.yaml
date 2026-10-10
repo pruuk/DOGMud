@@ -5,5 +5,7 @@ triggerrate: 1 round
 triggercount: 200
 flags:
   - skill-progress
-start_actee: "Your mind opens and sharpens \u2014 every action feels more instructive."
+start_actor: "{actee}'s mind opens to learning."
+start_actee: "Your mind opens and sharpens. Every action feels more instructive."
+start_observer: "{actee} looks suddenly sharp and attentive."
 end_actee: The heightened attunement fades from your mind.

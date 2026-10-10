@@ -5,5 +5,7 @@ triggerrate: 1 round
 triggercount: 200
 flags:
   - mutation-rate
+start_actor: "Chrysalis energy surges through {actee}'s cells."
 start_actee: "Chrysalis energy surges through your cells, accelerating mutation."
+start_observer: "{actee}'s skin ripples faintly with Chrysalis light."
 end_actee: The mutagenic catalyst fades from your system.

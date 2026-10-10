@@ -5,5 +5,7 @@ triggerrate: 1 round
 triggercount: 9
 flags:
   - no-go
+start_actor: "Your psionic anchor locks onto {actee}'s mind."
 start_actee: "A psionic anchor locks onto your mind, rooting you in place!"
+start_observer: "{actee} stiffens, rooted to the spot."
 end_actee: The psychic anchor releases its grip on your mind.

@@ -14,6 +14,7 @@ effects:
 flags:
   - adjustable
   - cancellable
+start_actor: "A pall of dark spores gathers around {actee}."
 start_actee: "A pall of dark spores gathers around you."
 start_observer: "A pall of dark spores gathers around {actee_plain}."
 end_actee: "Your pall thins, and the light comes back."

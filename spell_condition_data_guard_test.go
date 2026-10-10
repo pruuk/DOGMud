@@ -241,3 +241,34 @@ func TestHealRosterHoldsItsIdentities(t *testing.T) {
 		t.Errorf("condition %d (the feeding record) must stay out of the heal family", conditions.ConditionIdRegenerating)
 	}
 }
+
+// R1, R2 and R11: a condition a spell lands tells its own start, one line
+// per audience: start_actor for a caster who is someone else, start_actee
+// for the holder and start_observer for the room
+// (ConditionSpec.NarratesCastStart), so the spell's generic "takes effect"
+// trio never has to stand in. A silent-start condition would bring the trio
+// back, so none may be landed by a spell.
+func TestSpellConditionsNarrateTheirOwnStart(t *testing.T) {
+	all := shippedSpells(t)
+	conds := shippedConditions(t)
+	var problems []string
+	for _, id := range sortedSpellIds(all) {
+		s := all[id]
+		if !slices.Contains(conditionIdReaders, s.EffectType) {
+			continue
+		}
+		for _, cid := range s.ConditionIds {
+			c := conds[cid]
+			if c == nil {
+				continue // reported by TestSpellConditionIdsAreReadByTheirEffectType
+			}
+			if !c.NarratesCastStart(false) {
+				problems = append(problems, fmt.Sprintf("%s: condition %d (%s) must author start_actor, start_actee and start_observer and not be silent-start",
+					id, cid, c.Name))
+			}
+		}
+	}
+	if len(problems) > 0 {
+		t.Fatalf("%d spell-landed conditions cannot tell their own start:\n  - %s", len(problems), strings.Join(problems, "\n  - "))
+	}
+}

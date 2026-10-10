@@ -13,13 +13,16 @@ condition|0|start_observer => <ansi fg="username">Aliceia</ansi> sits down and b
 condition|0|trigger_actee => You continue your meditation...
 condition|0|trigger_observer => <ansi fg="username">Aliceia</ansi> continues meditating.
 condition|0|end_actee => Your meditation ends and you slip away from the realm.
+condition|1|start_actor => A warm glow blooms around <ansi fg="username">Aliceia</ansi>.
 condition|1|start_actee => A warm glow surrounds you.
 condition|1|start_observer => A warm glow surrounds Aliceia.
 condition|1|end_actee => Your glow fades away.
 condition|1|end_observer => The glow surrounding Aliceia fades away.
+condition|2|start_actor => You leave <ansi fg="username">Aliceia</ansi> stunned and staggering.
 condition|2|start_actee => <ansi fg="yellow">You are stunned! You cannot attack.</ansi>
 condition|2|start_observer => Aliceia staggers, dazed!
 condition|2|end_actee => <ansi fg="green">You shake off the stun.</ansi>
+condition|3|start_actor => Darkness swallows <ansi fg="username">Aliceia</ansi>'s sight.
 condition|3|start_actee => <ansi fg="yellow">Your vision goes dark. You have been blinded!</ansi>
 condition|3|start_observer => Aliceia claws at their eyes, blinded!
 condition|3|end_actee => <ansi fg="green">Your vision slowly returns to normal.</ansi>
@@ -40,35 +43,57 @@ condition|24|start_actee => You are weak and shaking as you recover from dying.
 condition|24|end_actee => You have recovered from dying and feel steady again.
 condition|25|start_actee => A dark shadow clings to you and dulls your senses.
 condition|25|end_actee => The dark shadow lifts and your senses come back.
+condition|26|start_actor => Conviction surges through <ansi fg="username">Aliceia</ansi>'s limbs.
 condition|26|start_actee => Conviction surges through your limbs, empowering your strikes.
+condition|26|start_observer => <ansi fg="username">Aliceia</ansi> moves with a sudden surge of strength.
 condition|26|end_actee => The surge of conviction fades from your limbs.
+condition|27|start_actor => <ansi fg="username">Aliceia</ansi>'s mind hardens like iron.
 condition|27|start_actee => Your mind hardens like iron, resolute and unyielding.
+condition|27|start_observer => <ansi fg="username">Aliceia</ansi>'s jaw sets with iron resolve.
 condition|27|end_actee => The iron resolve in your mind softens back to normal.
-condition|28|start_actee => Chrysalis energy floods your nerves — everything feels faster.
+condition|28|start_actor => Chrysalis energy floods <ansi fg="username">Aliceia</ansi>'s nerves.
+condition|28|start_actee => Chrysalis energy floods your nerves, and everything feels faster.
+condition|28|start_observer => <ansi fg="username">Aliceia</ansi> begins to move with uncanny speed.
 condition|28|end_actee => The Chrysalis haste fades and your movements return to normal.
 condition|29|start_actee => Your eyes sharpen for faint light.
 condition|29|start_observer => <ansi fg="username">Aliceia</ansi>'s eyes widen and catch the faint light.
 condition|29|end_actee => Your eyes lose their edge for faint light.
 condition|29|end_observer => The faint light leaves <ansi fg="username">Aliceia</ansi>'s eyes.
+condition|30|start_actor => You scramble the nerves in <ansi fg="username">Aliceia</ansi>'s limbs.
 condition|30|start_actee => Your muscles twitch uncontrollably as nerve signals misfire.
+condition|30|start_observer => <ansi fg="username">Aliceia</ansi>'s muscles twitch and spasm.
 condition|30|end_actee => Your nerves settle and control returns to your limbs.
-condition|31|start_actee => You wrap yourself in a psionic shroud, fading from perception.
+condition|31|start_actor => You wrap <ansi fg="username">Aliceia</ansi> in a psionic shroud.
+condition|31|start_actee => A psionic shroud wraps around you, and you fade from perception.
 condition|31|start_observer => <ansi fg="username">Aliceia</ansi> seems to shimmer and fade from view.
 condition|31|end_observer => <ansi fg="username">Aliceia</ansi> shimmers back into view.
+condition|32|start_actor => Chrysalis energy pulses into <ansi fg="username">Aliceia</ansi>'s body.
 condition|32|start_actee => Chrysalis energy suffuses your body with a warm, mending pulse.
+condition|32|start_observer => A warm pulse of light settles over <ansi fg="username">Aliceia</ansi>.
 condition|32|trigger_actee => The vital surge mends your wounds.
 condition|32|end_actee => The vital surge fades.
+condition|33|start_actor => Deep Chrysalis energy wraps around <ansi fg="username">Aliceia</ansi>.
 condition|33|start_actee => Deep Chrysalis energy wraps around you, accelerating your body's healing.
+condition|33|start_observer => Deep green light wraps around <ansi fg="username">Aliceia</ansi>.
 condition|33|trigger_actee => Chrysalis energy knits your wounds closed.
 condition|33|end_actee => The Chrysalis regeneration fades.
-condition|34|start_actee => Your mind opens and sharpens — every action feels more instructive.
+condition|34|start_actor => <ansi fg="username">Aliceia</ansi>'s mind opens to learning.
+condition|34|start_actee => Your mind opens and sharpens. Every action feels more instructive.
+condition|34|start_observer => <ansi fg="username">Aliceia</ansi> looks suddenly sharp and attentive.
 condition|34|end_actee => The heightened attunement fades from your mind.
+condition|35|start_actor => Chrysalis energy surges through <ansi fg="username">Aliceia</ansi>'s cells.
 condition|35|start_actee => Chrysalis energy surges through your cells, accelerating mutation.
+condition|35|start_observer => <ansi fg="username">Aliceia</ansi>'s skin ripples faintly with Chrysalis light.
 condition|35|end_actee => The mutagenic catalyst fades from your system.
+condition|36|start_actor => Your psionic anchor locks onto <ansi fg="username">Aliceia</ansi>'s mind.
 condition|36|start_actee => A psionic anchor locks onto your mind, rooting you in place!
+condition|36|start_observer => <ansi fg="username">Aliceia</ansi> stiffens, rooted to the spot.
 condition|36|end_actee => The psychic anchor releases its grip on your mind.
-condition|37|start_actee => Your senses explode with input — everything is too bright, too loud!
+condition|37|start_actor => You flood <ansi fg="username">Aliceia</ansi>'s senses until they overload.
+condition|37|start_actee => Your senses explode with input. Everything is too bright, too loud!
+condition|37|start_observer => <ansi fg="username">Aliceia</ansi> reels, overwhelmed by something unseen.
 condition|37|end_actee => The sensory overload subsides and your senses normalize.
+condition|38|start_actor => Solidified conviction wraps around <ansi fg="username">Aliceia</ansi> like armor.
 condition|38|start_actee => Solidified conviction wraps around your body like armor.
 condition|38|start_observer => <ansi fg="username">Aliceia</ansi> is encased in a shimmering layer of conviction.
 condition|38|end_actee => The conviction armor fades from your body.
@@ -82,7 +107,9 @@ condition|40|start_observer => <ansi fg="username">Aliceia</ansi> is enveloped i
 condition|40|trigger_actee => Toxic spores eat at your flesh.
 condition|40|trigger_observer => <ansi fg="username">Aliceia</ansi> winces as fungal toxin spreads.
 condition|40|end_actee => You finally cough up the last of the spores.
+condition|41|start_actor => A thick fog descends over <ansi fg="username">Aliceia</ansi>'s thoughts.
 condition|41|start_actee => A thick fog descends over your thoughts...
+condition|41|start_observer => <ansi fg="username">Aliceia</ansi>'s eyes glaze over.
 condition|41|end_actee => The fog lifts from your mind and clarity returns.
 condition|42|start_actee => The warm meal settles in your belly and your aches ease.
 condition|42|end_actee => The comfort of the meal fades from your belly.
@@ -115,7 +142,9 @@ condition|52|start_actee => A Chrysalis sheen settles over your skin like a shel
 condition|52|start_observer => <ansi fg="username">Aliceia</ansi> takes on a faint sheen, like a shell.
 condition|52|end_actee => The Chrysalis sheen flakes away from your skin.
 condition|52|end_observer => The sheen over <ansi fg="username">Aliceia</ansi> flakes away.
+condition|53|start_actor => <ansi fg="username">Aliceia</ansi>'s sight pierces the Veil.
 condition|53|start_actee => Your sight pierces the Veil and hidden things show.
+condition|53|start_observer => <ansi fg="username">Aliceia</ansi>'s eyes take on a pale, far-seeing gleam.
 condition|53|end_actee => The Veil closes again and hidden things slip away.
 condition|54|start_actee => Warmth spreads as the salve knits your wounds closed.
 condition|54|end_actee => The warmth of the healing salve fades.
@@ -277,10 +306,12 @@ condition|122|trigger_actee => <ansi fg="red">Blood seeps from your wounds!</ans
 condition|122|end_actee => Your wounds stop bleeding.
 condition|123|start_actee => The severed bond leaves a hollow in you that will take time to fill.
 condition|123|end_actee => The hollow the severed bond left in you has finally closed.
+condition|128|start_actor => <ansi fg="username">Aliceia</ansi>'s eyes sharpen for faint light.
 condition|128|start_actee => Your eyes sharpen for faint light.
 condition|128|start_observer => <ansi fg="username">Aliceia</ansi>'s eyes widen and catch the faint light.
 condition|128|end_actee => Your eyes lose their edge for faint light.
 condition|128|end_observer => The faint light leaves <ansi fg="username">Aliceia</ansi>'s eyes.
+condition|129|start_actor => Warmth blooms into pale shapes before <ansi fg="username">Aliceia</ansi>'s eyes.
 condition|129|start_actee => Warmth blooms into pale shapes wherever something lives.
 condition|129|start_observer => A dull red sheen settles over <ansi fg="username">Aliceia</ansi>'s eyes.
 condition|129|end_actee => The pale shapes of warmth fade from your sight.
@@ -289,6 +320,7 @@ condition|130|start_actee => A dull heat spreads behind your eyes, and living wa
 condition|130|start_observer => A dull red sheen settles over <ansi fg="username">Aliceia</ansi>'s eyes.
 condition|130|end_actee => The heat behind your eyes cools, and the pale shapes fade.
 condition|130|end_observer => The red sheen fades from <ansi fg="username">Aliceia</ansi>'s eyes.
+condition|131|start_actor => A pall of dark spores gathers around <ansi fg="username">Aliceia</ansi>.
 condition|131|start_actee => A pall of dark spores gathers around you.
 condition|131|start_observer => A pall of dark spores gathers around Aliceia.
 condition|131|end_actee => Your pall thins, and the light comes back.

@@ -7,9 +7,10 @@ flags:
   - hidden
   # A real hide (#444): it breaks on combat the way the sneak's record 9 does.
   - cancel-on-combat
-start_actee: You wrap yourself in a psionic shroud, fading from perception.
+start_actor: "You wrap {actee} in a psionic shroud."
+start_actee: "A psionic shroud wraps around you, and you fade from perception."
 start_observer: "{actee} seems to shimmer and fade from view."
-# No end_user_text — like the Hidden condition, you are NOT told when the shroud
+# No end_actee: like the Hidden condition, you are NOT told when the shroud
 # lapses (you can't know who or what perceived you). Room observers still get
-# end_room_text since, from their POV, you visibly shimmer back into sight.
+# end_observer since, from their POV, you visibly shimmer back into sight.
 end_observer: "{actee} shimmers back into view."

@@ -1066,6 +1066,21 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"conditions/140-communion_of_flesh.yaml": true,
 	"conditions/141-mass_mend.yaml":          true,
 	"conditions/142-arc_weld_repair.yaml":    true,
+	// And the spell-landed conditions that gained a start_observer line so a
+	// spell's generic trio is never needed (owner ruling R11), narrated by
+	// the same start sender.
+	"conditions/26-conviction_surge.yaml":       true,
+	"conditions/27-iron_will.yaml":              true,
+	"conditions/28-chrysalis_haste.yaml":        true,
+	"conditions/30-nerve_disruption.yaml":       true,
+	"conditions/32-vital_surge.yaml":            true,
+	"conditions/33-chrysalis_regeneration.yaml": true,
+	"conditions/34-skill_attunement.yaml":       true,
+	"conditions/35-mutation_catalyst.yaml":      true,
+	"conditions/36-psychic_anchor.yaml":         true,
+	"conditions/37-sensory_overload.yaml":       true,
+	"conditions/41-mind_fog.yaml":               true,
+	"conditions/53-veil_sight.yaml":             true,
 	// Lighting plan 5c: the vision spells and the tincture, narrated by the
 	// same three phases as 29 and 65 above.
 	"conditions/128-night_sight.yaml":       true,

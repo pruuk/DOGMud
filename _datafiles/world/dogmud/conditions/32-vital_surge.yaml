@@ -6,7 +6,9 @@ family: heal
 description: Chrysalis energy steadily mends your body over time.
 triggerrate: 2 rounds
 triggercount: 9
+start_actor: "Chrysalis energy pulses into {actee}'s body."
 start_actee: Chrysalis energy suffuses your body with a warm, mending pulse.
+start_observer: "A warm pulse of light settles over {actee}."
 end_actee: The vital surge fades.
 trigger_actee: The vital surge mends your wounds.
 tick_pool: health

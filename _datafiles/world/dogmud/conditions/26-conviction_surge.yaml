@@ -7,5 +7,7 @@ flags:
   - damage-bonus
 statmods:
   strength: 15
+start_actor: "Conviction surges through {actee}'s limbs."
 start_actee: Conviction surges through your limbs, empowering your strikes.
+start_observer: "{actee} moves with a sudden surge of strength."
 end_actee: The surge of conviction fades from your limbs.

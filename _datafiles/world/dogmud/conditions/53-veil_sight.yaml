@@ -1,7 +1,9 @@
 conditionid: 53
 name: Veil Sight
 description: Your perception pierces the Veil, revealing hidden creatures.
+start_actor: "{actee}'s sight pierces the Veil."
 start_actee: Your sight pierces the Veil and hidden things show.
+start_observer: "{actee}'s eyes take on a pale, far-seeing gleam."
 end_actee: The Veil closes again and hidden things slip away.
 triggerrate: 1 round
 triggercount: 30

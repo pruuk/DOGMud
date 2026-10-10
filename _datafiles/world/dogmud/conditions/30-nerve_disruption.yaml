@@ -6,5 +6,7 @@ triggercount: 8
 statmods:
   dexterity: -15
   strength: -10
+start_actor: "You scramble the nerves in {actee}'s limbs."
 start_actee: Your muscles twitch uncontrollably as nerve signals misfire.
+start_observer: "{actee}'s muscles twitch and spasm."
 end_actee: Your nerves settle and control returns to your limbs.
