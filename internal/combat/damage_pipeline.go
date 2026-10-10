@@ -107,6 +107,22 @@ func ApplyMitigation(rawDmg float64, mitigationPct float64, curve MitigationCurv
 	return rawDmg * (1.0 - EffectiveMitigation(mitigationPct, curve))
 }
 
+// EffectiveMitigationFor is the fraction of a channel's damage char actually
+// stops: its raw sum (Character.Get*Mitigation) bent through the channel's
+// curve. The reader for anything that describes or weighs a character's
+// protection (PowerScore, the status sheet), so it sees what combat applies.
+// An unknown channel reads physical, as MitigationCurveFor does.
+func EffectiveMitigationFor(char *characters.Character, channel DamageChannel) float64 {
+	switch channel {
+	case ChannelMagical:
+		return EffectiveMitigation(char.GetMagicalMitigation(), MitigationCurveFor(channel))
+	case ChannelConviction:
+		return EffectiveMitigation(char.GetConvictionMitigation(), MitigationCurveFor(channel))
+	default:
+		return EffectiveMitigation(char.GetPhysicalMitigation(), MitigationCurveFor(ChannelPhysical))
+	}
+}
+
 // MitigationCurveFor returns the configured mitigation curve for a damage
 // channel (#465), four knobs per channel. An unknown channel reads the
 // physical curve, so a caller that falls through still meets a real curve.
