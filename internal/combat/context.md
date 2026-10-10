@@ -1608,6 +1608,9 @@ if not floored:
   sentinel, not a real margin, so promoting it would hand a decisive result to
   the side that lost the roll. forceCrit (sleeping victim) is exempt from both
   gates: it is decided before the roll, so it forces the win too.
+  The AttackCrit debug line logs the value the verdict compared (critZ) and
+  its basis: margin, selfz (no defence rolled) or forced (#481), carried on
+  hitResolution.critZ / critBasis. It no longer logs the self-relative z.
 
 attackWon -> HIT
 otherwise -> defence succeeded. Send the defence message, progress the defence
