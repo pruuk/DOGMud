@@ -87,8 +87,12 @@ func TestUnlock_Success_ContainerBecomesUnlocked(t *testing.T) {
 	defer cleanup()
 
 	// Set a non-zero round count so SetUnlocked() stamps a non-zero UnlockedRound.
+	// Restore the round this binary had, not 0: round 0 is a different
+	// time of day from the RoundCountMinimum the counter starts at, and the
+	// visual room-line tests that ran later stopped seeing their lines (#440).
+	origRound := util.GetRoundCount()
 	util.SetRoundCountForTest(42)
-	defer util.SetRoundCountForTest(0)
+	t.Cleanup(func() { util.SetRoundCountForTest(origRound) })
 
 	addKeyToMob(t)
 	mob, room := getTestMobAndRoom(t)

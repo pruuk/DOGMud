@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -337,6 +338,12 @@ func seedAllRegistries() func() {
 	cleanupDefenseMsgs := items.SeedDefenseMessagesForTest(items.MinimalDefenseMessageFixture())
 
 	return func() {
+		// The party registry is global and not part of any seed above. A
+		// test whose command forms a party (TestPartyDeep's "invite bobrick"
+		// makes user 1 a leader) left it standing, and later tests then got
+		// nil from parties.New(1) or had corpse gold routed to the pool
+		// (#440).
+		disbandSeededUserParties()
 		cleanupDefenseMsgs()
 		cleanupSpecies()
 		cleanupItems()
@@ -348,6 +355,16 @@ func seedAllRegistries() func() {
 		cleanupConditionRecords()
 		cleanupConditions()
 		cleanupKeywords()
+	}
+}
+
+// disbandSeededUserParties disbands any party that seedAllRegistries' users
+// (1 and 2) lead, belong to or are invited to.
+func disbandSeededUserParties() {
+	for _, uid := range []int{1, 2} {
+		if p := parties.Get(uid); p != nil {
+			p.Disband()
+		}
 	}
 }
 

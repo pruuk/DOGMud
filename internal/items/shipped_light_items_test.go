@@ -9,6 +9,21 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
 
+// loadShippedWorld loads the shipped conditions and items and restores the
+// registries this binary held before, so the shipped set does not replace
+// the specs other tests registered (#440: the stacking tests' init specs
+// vanished when this ran first under -shuffle). Each Seed call snapshots the
+// live registry; LoadDataFiles then swaps in its own map.
+func loadShippedWorld(t *testing.T) {
+	t.Helper()
+	t.Cleanup(conditions.SeedConditionsForTest(nil))
+	t.Cleanup(items.SeedItemsForTest(nil))
+	t.Cleanup(items.SeedAttackMessagesForTest(nil))
+	t.Cleanup(items.SeedDefenseMessagesForTest(nil))
+	conditions.LoadDataFiles()
+	items.LoadDataFiles()
+}
+
 // The 5a ladder, read from the shipped world: every carried light has its
 // strength, lives in the light slot, and is secret so a light shows at most
 // once in the conditions list (owner, 2026-09-26).
@@ -20,8 +35,7 @@ func TestShippedLightItemsMatchTheLadder(t *testing.T) {
 	// refuses 0; a test binary never reads config.yaml.
 	cfg.Network.LogoutRounds = 3
 	configs.SetConfigForTest(t, cfg)
-	conditions.LoadDataFiles()
-	items.LoadDataFiles()
+	loadShippedWorld(t)
 
 	cases := []struct {
 		itemId     int
@@ -110,8 +124,7 @@ func TestShippedItemBehaviours(t *testing.T) {
 	cfg.FilePaths.DataFiles = configs.ConfigString(`../../_datafiles/world/dogmud`)
 	cfg.Network.LogoutRounds = 3
 	configs.SetConfigForTest(t, cfg)
-	conditions.LoadDataFiles()
-	items.LoadDataFiles()
+	loadShippedWorld(t)
 
 	for _, c := range []struct {
 		itemId   int
