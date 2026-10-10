@@ -188,8 +188,8 @@ type Character struct {
 	CombatPhase *combatphase.Machine `yaml:"-"`
 	// Chunk 4d: submission policy fields. Set via `set submission`
 	// and `set surrender` commands. Defaults are PolicySubdue and
-	// SurrenderPolicy{Mode: SurrenderAutoTap, HpPctThreshold: 15}
-	// for players (applied by characters.New()); mobs inherit from
+	// DefaultPlayerSurrenderPolicy for players (applied by characters.New(),
+	// and by Validate to a save with none); mobs inherit from
 	// archetype defaults at spawn (see DefaultSubmissionPolicyForArchetype).
 	SubmissionPolicy SubmissionPolicy `yaml:"submission_policy,omitempty"`
 	SurrenderPolicy  SurrenderPolicy  `yaml:"surrender_policy,omitempty"`
@@ -429,7 +429,7 @@ func New() *Character {
 		Perception:                 perception.NewMachine(),
 		PerGrappleMessageCooldowns: map[string]bool{},
 		SubmissionPolicy:           PolicySubdue,
-		SurrenderPolicy:            SurrenderPolicy{Mode: SurrenderAutoTap, HpPctThreshold: 15},
+		SurrenderPolicy:            DefaultPlayerSurrenderPolicy,
 		ArrestPolicy:               ArrestSurrender,
 		LastSubmissionAttempted:    0,
 	}

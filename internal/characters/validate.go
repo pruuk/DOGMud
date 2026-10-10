@@ -637,6 +637,12 @@ func (c *Character) Validate(recalcPermanentConditions ...bool) error {
 		// the unconditional overwrite matches the Presence pattern.
 		c.Perception = perception.NewMachine()
 	}
+	// A save written before surrender_policy existed loads the zero value,
+	// auto-tap below 0, which no player can choose and which status printed
+	// as "auto-tap-below 0" (#284). Mobs set their own policy at spawn.
+	if c.SurrenderPolicy == (SurrenderPolicy{}) {
+		c.SurrenderPolicy = DefaultPlayerSurrenderPolicy
+	}
 	if c.PerGrappleMessageCooldowns == nil {
 		c.PerGrappleMessageCooldowns = map[string]bool{}
 	}
