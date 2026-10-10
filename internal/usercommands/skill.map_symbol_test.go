@@ -20,3 +20,16 @@ func TestMobMapSymbolSurvivesAscii(t *testing.T) {
 		t.Errorf("ascii symbol changed by conversion: %q", got)
 	}
 }
+
+// #253 follow-up: the markers the map command draws convert to one ASCII
+// character each, so an ASCII map cell keeps its width.
+func TestMapCodeMarkersConvertToOneAsciiCharacter(t *testing.T) {
+	for name, r := range map[string]rune{
+		"you": '@', "player, npc, party member": '☺', "friend": '☹', "mob": mobMapSymbol(true),
+	} {
+		got := util.ConvertToAscii(string(r))
+		if len(got) != 1 || got[0] >= 0x80 {
+			t.Errorf("%s: %q converts to %q, not one ASCII character", name, r, got)
+		}
+	}
+}

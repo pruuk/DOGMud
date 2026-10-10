@@ -12,7 +12,9 @@ display modes.
   All box-drawing and decorative characters are converted to
   plain ASCII equivalents (+, -, |, =, #, etc). Use this if
   your client shows garbled characters in tables, status bars,
-  or the message of the day.
+  or the message of the day. Map markers and terrain glyphs
+  become letters, so a map keeps its shape; <ansi fg="command">help map</ansi>
+  lists them.
 
 <ansi fg="yellow">Usage:</ansi>
   <ansi fg="command">set charset</ansi>    Toggle between UTF-8 and ASCII

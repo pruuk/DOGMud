@@ -1233,6 +1233,7 @@ func TestConvertToAscii(t *testing.T) {
 		{"plus or minus", "~12 ±3", "~12 +/-3"},
 		{"times", "rate 1.50×", "rate 1.50x"},
 		{"lock grid cells keep their width", "  ↑  |  ↓  ", "  ^  |  v  "},
+		{"biome glyphs", "⌬♠♣∴⩕⁖≋⌇🕸♨", "OFf:M.=sXw"},
 		{"unmapped high rune passthrough", "café", "café"},
 		// The crit banners hold a no-break space so the wrap keeps the
 		// banner words together; an ASCII-mode client gets a plain space.
