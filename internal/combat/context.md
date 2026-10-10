@@ -709,7 +709,11 @@ Three tactical combat abilities with knockdown mechanics and shared cooldown:
 `RunContest(p.Attack.score()*p.KnockdownFactor, []contest.Entry{{Score:
 defScore}})` where `defScore = Defender.Dex + unarmed-combat×SkillWeight`,
 standard `ContestFloor`. A lost contest (resist) fires one success-only
-unarmed-combat progression event for the defender. This is a **named
+unarmed-combat progression event for the defender. The contest runs only
+against a Standing defender (`Defender.IsStanding()`, #481): the Position
+table knocks down only from Standing, so a defender already prone, supine
+or grappled takes the move's damage with no contest and no resist award.
+Control-immune defenders and factor 0 are skipped the same way. This is a **named
 rebalance**: the deleted `*KnockdownChance` knobs (shipped 50/60/35;
 bash's Go default was 40) were thresholds
 on a `Normal(50, 7.5)` roll, not literal percentages — they actually
