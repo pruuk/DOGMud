@@ -1,5 +1,23 @@
 # DOGMud Patch Notes
 
+## 2026-10-10: Boiling blood and fair arrests
+
+- Blood Boil now sets your victim's blood boiling instead of poisoning
+  them. They read as bleeding, the spell names who cast it, and a death
+  from it reads as bleeding out. Purge Affliction and Cleansing Wave still
+  cure it. Any wound that bleeds now shows "bleeding" on whoever has it.
+- Guards no longer arrest you out of nowhere. When you break the law, one
+  guard tells you you're under arrest. Stay put and you are taken. Walk
+  away, or log out, and that call lapses: a guard who sees you later will
+  tell you again before hauling you off. When you are taken, you hear the
+  guard seize you before the cell door clangs shut.
+- Master mappers now see NPCs, players and creatures on their `map`, and
+  `map wide` fills your screen, as `help map` has always said.
+- Players using plain ASCII text see every map symbol as a single letter
+  or mark, so maps line up, and arrows, ellipses and other symbols become
+  their plain-text forms. `help map` lists each map symbol in both forms.
+- `trade` and `tutorial` now appear in the `help` list.
+
 ## Unreleased: Wards, heals and who cast them
 
 - There are now three wards, and each says what it stops. Conviction Ward
