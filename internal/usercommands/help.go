@@ -109,6 +109,11 @@ func Help(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	return true, nil
 }
 
+// adminHelpNameStrip removes everything that cannot be in an admin command name.
+// Help aliases (keywords.TryHelpAlias) are not applied: they map player topics
+// to player help files, not to admin command names.
+var adminHelpNameStrip = regexp.MustCompile(`[^a-z0-9\-]+`)
+
 // adminHelpFor renders an admin command's own help file,
 // admincommands/help/command.<name>, for a user allowed to run that command
 // (#296). Everyone else, and any topic with no such file, gets false.
@@ -117,7 +122,7 @@ func adminHelpFor(topic string, user *users.UserRecord) (string, bool) {
 	if len(args) == 0 {
 		return ``, false
 	}
-	name := regexp.MustCompile(`[^a-z0-9\-]+`).ReplaceAllString(args[0], ``)
+	name := adminHelpNameStrip.ReplaceAllString(args[0], ``)
 	if name == `` || !user.HasRolePermission(name, true) {
 		return ``, false
 	}
