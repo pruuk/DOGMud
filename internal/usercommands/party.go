@@ -169,12 +169,10 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		return true, nil
 	}
 
-	// Not in a party? Create one.
-	if currentParty == nil {
-		currentParty = parties.New(user.UserId)
-	}
-
-	if !currentParty.IsLeader(user.UserId) {
+	// A player already in a party must lead it to invite. A player in no
+	// party gets one only once the invite is actually sent (#459), so a
+	// refused invite does not leave them leading an empty party.
+	if currentParty != nil && !currentParty.IsLeader(user.UserId) {
 		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
 		return true, nil
 	}
@@ -204,6 +202,14 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 
 	if invitedParty := parties.Get(invitePlayerId); invitedParty != nil {
 		user.SendText(messaging.CategorySystem, `That player is already in a party.`)
+		return true, nil
+	}
+
+	if currentParty == nil {
+		currentParty = parties.New(user.UserId)
+	}
+	if currentParty == nil {
+		user.SendText(messaging.CategorySystem, `Something went wrong.`)
 		return true, nil
 	}
 
