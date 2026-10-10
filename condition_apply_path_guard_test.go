@@ -200,8 +200,9 @@ var conditionApplyPathAllowlist = map[string]string{
 	// again Task 7, when spellHelpAreaTargets' mobs, parties and rooms
 	// imports shifted spell_help_effects.go; re-keyed again 3b playtest fix,
 	// when the party rule moved to actions.HelpCharmAlly and the parties
-	// import left spell_help_effects.go) ────
-	"internal/hooks/spell_help_effects.go|195": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
+	// import left spell_help_effects.go; re-keyed again messaging M6 slice 1,
+	// when spellConditionsNarrateStart landed above it) ────
+	"internal/hooks/spell_help_effects.go|220": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
 
 	// ── former combat condition: Regenerating is now one record (Task 7;
 	// re-keyed slice 1b, same shift as above; re-keyed again Task 10 and
@@ -224,8 +225,9 @@ var conditionApplyPathAllowlist = map[string]string{
 	// the MS row DELETED by Task 6, same deletion as above, a mob's
 	// self-cast heal now reaching applySpellHeal's row; re-keyed again
 	// Task 7, same import shift as above; re-keyed again 3b playtest fix,
-	// same import shift as above) ───────
-	"internal/hooks/spell_help_effects.go|144": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	// same import shift as above; re-keyed again messaging M6 slice 1, same
+	// shift as above) ───────
+	"internal/hooks/spell_help_effects.go|169": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 	"internal/mobcommands/consume.go|46":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 	"internal/mobcommands/consume.go|58":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 
@@ -251,20 +253,6 @@ var conditionApplyPathAllowlist = map[string]string{
 	// AddConditionMagnitudeBy and re-keyed messaging M6 slice 1, when the
 	// dot began to carry its caster and creditMobHarm landed above it) ──────
 	"internal/hooks/spell_effects.go|355": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
-
-	// ── light spells (lighting plan 5a): an EVENT door, not the silent
-	// character door. applySpellCondition's target is a spellConditionTarget,
-	// which the silent Character door cannot satisfy (its
-	// AddConditionMagnitude returns an error); its implementers are
-	// *users.UserRecord and *mobs.Mob, both of which queue events.Condition,
-	// so Condition_ApplyConditions runs and narrates the start ─────────────
-	// Re-keyed lighting plan 5c, when the hook became magnitudeSpellApplication
-	// and also scales nightvision and infra reach, and again when its formula
-	// moved to conditions.SpellScaledMagnitude, and again when the
-	// spellConditionTarget interface gained AddConditionTickScaled (parity
-	// slice 2).
-	"internal/hooks/light_spell.go|71": "Empathic Shroud at the caster's shroud score (#444): the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
-	"internal/hooks/light_spell.go|75": "light, sight or darkness spell at the caster's scaled magnitude and triggers: the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
 
 	// ── magnitude potions (lighting plan 5c): the player's and the mob's drink
 	// each carried this call (usercommands/drink.go and mobcommands/drink.go)

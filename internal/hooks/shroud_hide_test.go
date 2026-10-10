@@ -86,7 +86,7 @@ func TestShroudSpell_HidesAtTheCastersScoreWithNoRecord9(t *testing.T) {
 	want := characters.ShroudScore(spell.CasterStatValue(caster.Character.Stats), caster.Character.GetSkillLevel(skills.Spellcasting))
 	require.Positive(t, want)
 
-	applySpellCondition(holder, spell, caster.Character, conditions.ConditionIdEmpathicShroud)
+	applySpellCondition(holder, spell, caster.Character, conditions.ConditionIdEmpathicShroud, state.ActorRef{}, false)
 	q := events.DrainQueuedConditionsForTest(holder.UserId)
 	require.Len(t, q, 1)
 	require.Equal(t, want, q[0].Magnitude, "the record carries the CASTER's score")

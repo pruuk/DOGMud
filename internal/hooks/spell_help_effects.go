@@ -80,17 +80,24 @@ func applySpellConditionEffect(c spellEffectCtx) int {
 	// see the exact string the line prints.
 	casterName, targetName := c.casterName(), c.targetName()
 	casterHidden, targetHidden := c.hiddenFromRoom()
+	// Read before the conditions land, as the apply hook's refresh test is:
+	// a condition already held narrates no start.
+	narrated := spellConditionsNarrateStart(c)
 	if target := spellConditionTargetOf(c.target); target != nil {
 		for _, conditionId := range c.spell.ConditionIds {
-			applySpellCondition(target, c.spell, c.casterChar, conditionId)
+			applySpellCondition(target, c.spell, c.casterChar, conditionId, c.casterRef(), narrated && c.out.AttackerCrit)
 		}
 	}
 	if c.spell.IsHarm() {
 		commitHarmfulSpellAggro(c, fresh)
 	}
-	// KNOWN AND DEFERRED: a condition with authored start text also narrates
-	// this moment through the event applySpellCondition queues, so an
-	// audience can read it twice. The messaging arc's M6 merges them.
+	// Owner ruling R11: when the conditions' own start lines tell every
+	// audience, they are the only lines (narrateConditionStart) and the
+	// generic trio below is not sent. A silent condition, or a re-cast of one
+	// already held, keeps the trio.
+	if narrated {
+		return 0
+	}
 	if c.selfCast() {
 		messaging.SendTrio(messaging.Trio{
 			Actor: messaging.Say(c.category(), fmt.Sprintf(
@@ -111,6 +118,24 @@ func applySpellConditionEffect(c spellEffectCtx) int {
 			roomName(casterHidden, casterName), c.spell.Name, roomName(targetHidden, targetName))),
 	}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 	return 0
+}
+
+// spellConditionsNarrateStart reports whether every condition the spell lands
+// will tell its own start to every audience (ConditionSpec.NarratesCastStart),
+// so the spell sends no generic "takes effect" lines of its own (owner ruling
+// R11). A condition the target already holds is a refresh with no start
+// lines, so it keeps the spell's lines; so does a spell that lands nothing.
+func spellConditionsNarrateStart(c spellEffectCtx) bool {
+	if len(c.spell.ConditionIds) == 0 {
+		return false
+	}
+	for _, conditionId := range c.spell.ConditionIds {
+		spec := conditions.GetConditionSpec(conditionId)
+		if spec == nil || c.targetChar().HasCondition(conditionId) || !spec.NarratesCastStart(c.selfCast()) {
+			return false
+		}
+	}
+	return true
 }
 
 // applySpellHeal is the one heal applier (slice 3b): a Regenerating record
