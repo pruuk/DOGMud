@@ -646,9 +646,10 @@ and `applyVitalChange` (the single signed pipeline behind harm and restore).
   spell's `effect_magnitude` YAML field becomes the regen multiplier
   (`spellData.EffectMagnitude`, e.g. 3 = 3x base regen, floored at 1.0; help
   spells do not crit). `internal/hooks/spell_help_effects.go`'s
-  `applySpellHeal` calls `c.targetChar().AddConditionMagnitude(conditions.ConditionIdRegenerating,
-  durationRounds, regenMult, "heal spell")` with `durationRounds =
-  calcSpellDuration(...)/2`, floored at 6 rounds. Each round after that,
+  `applySpellHeal` queues the spell's own heal condition (its one
+  `condition_ids` entry, a `regen_mult: magnitude` record in the heal family;
+  messaging M6 slice 1) for `healTriggers` rounds: the heal's authored
+  `triggercount` scaled by the caster. Each round after that,
   `NewRound_AutoHeal.go` reads `Conditions.HasEffect(conditions.EffectRegenMult)` and
   `Conditions.Effect(conditions.EffectRegenMult)` and multiplies that round's
   `HealthPerRound()` result by it -- in combat this is the ONLY health regen a
@@ -2196,3 +2197,17 @@ taken off the body, back into its pack, and never refuses: when `StoreItem`'s
 weight limit would refuse, the item goes into the backpack anyway. It never
 drops to the ground (owner, 2026-10-06). The crit disarm
 (`combat.AttemptCritDisarm`) uses it; before, a full pack lost the weapon.
+
+## The caster door (messaging M6 slice 1)
+
+`AddConditionMagnitudeBy(conditionId, triggers, magnitude, source, caster
+state.ActorRef) error` is `AddConditionMagnitude` with the record's caster,
+stamped through `conditions.Conditions.Stamp`; `AddConditionMagnitude` is
+the same door with a zero caster. The spell dot (`applySpellDot`) and every
+combat bleed (drain, hamstring, maul, rake, throttle and the item proc) land
+through it, so a tick that kills credits the caster (#240).
+
+The ward effects `mitigation_magical` and `mitigation_conviction` are read by
+`GetMagicalMitigation` and `GetConvictionMitigation` through
+`Conditions.Effect`, beside the statmods they sum with, as `mitigation_flat`
+is by `GetPhysicalMitigation`.

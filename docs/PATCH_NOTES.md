@@ -1,5 +1,30 @@
 # DOGMud Patch Notes
 
+## Unreleased: Wards, heals and who cast them
+
+- There are now three wards, and each says what it stops. Conviction Ward
+  turns aside physical blows only. The new Conviction Bulwark also blunts
+  spells. Chrysalis Cocoon, the strongest, blunts blows, spells and harsh
+  words alike. Type `conditions` to see which ward is on you.
+- You hold one ward at a time. Casting a different ward replaces the one
+  already there, and you are told which gave way. Potions, armor and
+  mutations that protect you still add on top of a ward.
+- Every healing spell now works over time, and each has its own pace. Mend
+  Flesh is gentle and long. Mend Wounds is strong and short. Of the group
+  heals, Mend All is light, Communion of Flesh is steady and the longest,
+  and Mass Mend is the strongest. Arc-Weld Repair is the heal for machines.
+  You hold one healing spell at a time, as with wards; salves, potions and
+  food still add on top.
+- A spell that lays an effect on someone now gives one clear line to each
+  person there: the caster, the target and the room each read their own
+  line, written for that effect and naming the caster.
+- A poison or bleed that kills now counts as your kill, even if you have
+  walked away, logged out or died since you cast it. It counts for
+  reputation, crimes and bounties as any other kill would.
+- If you use a trigger that watches for "Your Minor Shield dissipates.",
+  change it: that line is now "Your Conviction Ward fades." A web client
+  trigger on the status "Minor Shield" should now look for the ward's name.
+
 ## 2026-10-10: Loose ends
 
 - Items whose names start with "Gold", such as Gold Wire, can be picked up

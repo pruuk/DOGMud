@@ -1304,7 +1304,8 @@ check happens before anything else.
 #### 2b. (deleted) Shield Decay
 There used to be a `handlePlayerShieldDecay(user)` step here, decrementing the
 shield condition a SECOND time on every combat round while the condition tick
-had already decremented it once. Minor Shield is condition 119 now, decays once a
+had already decremented it once. The ward is condition 119 now (Conviction Ward
+since messaging M6 slice 1; 135 and 136 are the other two wards), decays once a
 round with every other record, and narrates its end wherever it ends rather
 than only in combat. The helper and its mob-side twin are deleted (conditions
 unification, 2026-09-12). A combat shield therefore lasts about twice as long
@@ -1756,13 +1757,17 @@ scripted combat command.
     - **Resource depletion progression:** Moved to regen tick in
       `NewRound_AutoHeal.go` — smooth curve replaces old 25% threshold.
       See `characters/context.md` for details.
-12. **Minor Shield reduction**: NOT flat damage off the top. It contributes
+12. **Ward reduction**: NOT flat damage off the top. It contributes
     mitigation POINTS, read by `Character.GetPhysicalMitigation` through
     `Conditions.Effect(conditions.EffectMitigationFlat)`, summed with gear, natural
     armor, species armor and the `physical_mitigation` statmods, and the whole
     sum is divided by 100 to become the mitigation FRACTION the damage
-    pipeline applies. The 119 Minor Shield record declares
-    `mitigation_flat: magnitude`.
+    pipeline applies. Every ward (119, 135, 136) declares
+    `mitigation_flat: magnitude`; 135 and 136 also declare
+    `mitigation_magical` and 136 `mitigation_conviction`, read by the
+    magical and conviction mitigations the same way. `preferredSpell`
+    (`ai.go`) casts `conviction-ward` when no ward is up:
+    `Conditions.HasFamily(conditions.FamilyWard)`.
 13. **Adrenaline Surge** — mutation check for bonus damage.
 14. **Crit effects (defender is player):**
     - Parry crit: player attempts to disarm the mob.
