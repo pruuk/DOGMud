@@ -319,6 +319,9 @@ func (bs *Conditions) addConditionScaled(conditionId int, durationMult float64) 
 			return false
 		}
 
+		// A ward or a heal replaces its family's other record (family.go).
+		bs.discardFamilyRivals(conditionInfo)
+
 		triggers := int(float64(conditionInfo.TriggerCount) * durationMult)
 		if triggers < 1 {
 			triggers = 1
@@ -453,6 +456,9 @@ func (bs *Conditions) AddCondition(conditionId int, isPermanent bool) bool {
 		if slices.Contains(conditionInfo.Flags, Poison) && bs.HasFlag(PoisonImmunity, false) {
 			return false
 		}
+
+		// A ward or a heal replaces its family's other record (family.go).
+		bs.discardFamilyRivals(conditionInfo)
 
 		newCondition := Condition{
 			ConditionId:  conditionInfo.ConditionId,

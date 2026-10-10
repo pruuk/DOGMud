@@ -185,6 +185,10 @@ type ConditionSpec struct {
 	// (2.0, the historic literal). The strongest held value wins.
 	ProgressMult float64 `yaml:"progress_mult,omitempty"`
 
+	// Family names the set this record replaces within instead of stacking:
+	// FamilyWard or FamilyHeal (family.go). Empty for every other record.
+	Family string `yaml:"family,omitempty"`
+
 	// YAML text fields: flavor text sent by the engine (replaces JS messaging).
 	//
 	// The authored keys name the PHASE and then the AUDIENCE, in the canonical
@@ -352,6 +356,10 @@ func (b *ConditionSpec) Validate() error {
 	}
 
 	if err := b.validateEffects(); err != nil {
+		return err
+	}
+
+	if err := b.validateFamily(); err != nil {
 		return err
 	}
 
