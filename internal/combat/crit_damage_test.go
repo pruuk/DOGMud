@@ -64,9 +64,9 @@ func TestCritDamageMultiplier_IsLinearNotSqrt(t *testing.T) {
 
 func TestCritOrMitigatedDamage_CritBypassesMitigationAndScales(t *testing.T) {
 	// The two halves of a crit in the spell and conviction channels: it ignores
-	// the defender's mitigation entirely AND multiplies by skill. Holding
-	// mitigation at a punishing 0.75 proves the bypass; the ratio proves the
-	// scaling.
+	// the defender's mitigation up to the curve's knee AND multiplies by skill.
+	// Holding mitigation at the knee (0.50, the most a crit still ignores in
+	// full since #465) proves the bypass; the ratio proves the scaling.
 	const (
 		samples = 20000
 		rawDmg  = 60.0
@@ -75,12 +75,12 @@ func TestCritOrMitigatedDamage_CritBypassesMitigationAndScales(t *testing.T) {
 
 	critTotal, normalTotal := 0.0, 0.0
 	for i := 0; i < samples; i++ {
-		critTotal += float64(CritOrMitigatedDamage(rawDmg, rank, true, 0.75, shippedCurveForTest))
+		critTotal += float64(CritOrMitigatedDamage(rawDmg, rank, true, 0.50, shippedCurveForTest))
 		normalTotal += float64(CritOrMitigatedDamage(rawDmg, rank, false, 0.0, shippedCurveForTest))
 	}
 
 	// Normal + zero mitigation lands on rawDmg, so the ratio isolates the
-	// multiplier even though the crit sample faced 75% mitigation.
+	// multiplier even though the crit sample faced 50% mitigation.
 	got := (critTotal / samples) / (normalTotal / samples)
 	want := CritDamageMultiplier(rank)
 	if math.Abs(got-want) > 0.05*want {

@@ -415,7 +415,13 @@ func TestMeleeParityDamagePerSwing(t *testing.T) {
 			if math.Abs(sdp.critDmgMult-critDmgMult) > 1e-9 {
 				t.Fatalf("critDmgMult = %.6f, want %.6f", sdp.critDmgMult, critDmgMult)
 			}
-			critMean := sdp.rawDmgForCrit * sdp.critDmgMult
+			// #465: the crit loses the mitigation above the knee (0 in the
+			// light and mid cells, about 0.17 in the BIS cell).
+			wantCritReduction := shippedCurveForTest.CritReduction(float64(cell.mitPct) / 100.0)
+			if math.Abs(sdp.critReduction-wantCritReduction) > 1e-9 {
+				t.Fatalf("critReduction = %.6f, want %.6f", sdp.critReduction, wantCritReduction)
+			}
+			critMean := sdp.rawDmgForCrit * sdp.critDmgMult * (1 - sdp.critReduction)
 
 			// ── Layer 2: the probability anchor ─────────────────────────
 			anchor := buildParityAnchor(atkScore, defScore, sdp.dmgMean, critMean)

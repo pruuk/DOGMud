@@ -123,6 +123,12 @@ type swingDamageParams struct {
 	critDmgMult    float64 // chunk 5.11g: skill-scaled crit worth, applied to rawDmgForCrit only
 	critConditions []int
 
+	// critReduction is the share a crit loses to the target's physical
+	// mitigation above the curve's knee (#465, MitigationCurve.CritReduction).
+	// 0 at or below the knee, and 0 in a literal built outside
+	// buildDamageParams, which degrades to a full crit, never to no damage.
+	critReduction float64
+
 	// openingStrikeMult is the skullduggery stack for the ONE opening strike of
 	// a surprise attack. 1.0 otherwise. Applied to the crit MEAN before the roll
 	// -- dice.RollStat takes its spread from the mean it is handed, so scaling
@@ -486,8 +492,11 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 		rawDmg *= float64(configs.GetBalanceConfig().MobDamageMultiplier)
 	}
 
-	// Apply target's physical mitigation
-	dmgMean := ApplyMitigation(rawDmg, targetChar.GetPhysicalMitigation(), MitigationCurveFor(ChannelPhysical))
+	// Apply target's physical mitigation, bent through the curve (#465). A
+	// crit skips it up to the knee and loses the overflow above it.
+	physMit := targetChar.GetPhysicalMitigation()
+	physCurve := MitigationCurveFor(ChannelPhysical)
+	dmgMean := ApplyMitigation(rawDmg, physMit, physCurve)
 
 	// Track pre-mitigation damage for crits
 	rawDmgForCrit := rawDmg
@@ -534,6 +543,7 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 		dmgMean:       dmgMean,
 		rawDmgForCrit: rawDmgForCrit,
 		critDmgMult:   CritDamageMultiplier(combatSkillLevel),
+		critReduction: physCurve.CritReduction(physMit),
 		openingStrikeMult: OpeningStrikeMultiplier(sourceChar,
 			float64(configs.GetBalanceConfig().SurpriseOpeningStrikeMultiplier)),
 	}
@@ -1473,8 +1483,9 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 		// before the roll, for that same reason — scaling the rolled result
 		// instead would stretch the spread by the multiplier and leave crits
 		// wildly swingier at high skill. U10d's opening-strike stack rides the
-		// same mean for the same reason.
-		critMean := sdp.rawDmgForCrit * sdp.critDmgMult
+		// same mean for the same reason. #465: mitigation above the curve's
+		// knee softens the crit (critReduction), as on every other channel.
+		critMean := sdp.rawDmgForCrit * sdp.critDmgMult * (1 - sdp.critReduction)
 		if openingStrike {
 			// Only buildDamageParams constructs swingDamageParams today, so an
 			// unset multiplier means a future literal was built elsewhere.
