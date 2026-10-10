@@ -2334,6 +2334,12 @@ only calls `actions.Say(&actions.MobActor{...}, line)`: a guard's spoken
 line goes through the same reveal, deafen split and name-hiding every other
 NPC speaker gets, rather than a hand-rolled room broadcast.
 
+`hooks.go` registers `justice.LapseArrestStampOnMove` on `RoomChange`: a
+player who walks out of the room a guard declared their arrest in drops
+that declaration, so the next sighting declares afresh (#241). The listener
+lives in `internal/justice`; `TestArrestStampLapseIsRegistered` reads
+`hooks.go` to guard the registration.
+
 ## Dependencies
 
 - `internal/events` - Event system for listener registration and event processing

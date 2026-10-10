@@ -75,9 +75,15 @@ players who are hidden, dead, or aggro-flagged immune.
 | Player policy | Outcome |
 |---------------|---------|
 | Resist | `mob.Command("attack @uid")` immediately — `SeverityAttack` action emitted |
-| Surrender — first sight | `guardSayFn` warning + stamp `justice_arrest_pending_<uid>` in guard MiscData |
-| Surrender — within `ArrestResistGraceRounds` | No-op (waiting) |
-| Surrender — grace expired | Call `executeArrestFn` (→ `ExecuteArrest`), clear pending stamp |
+| Surrender, no live stamp | `guardSayFn` declaration; stamp `justice_arrest_pending_round` and `justice_arrest_pending_room` on the PLAYER's MiscData, so one guard speaks however many share the room (#241) |
+| Surrender, within `ArrestResistGraceRounds` | No-op (waiting) |
+| Surrender, grace run, same room | Any guard there calls `executeArrestFn` (→ `ExecuteArrest`) and clears the stamp |
+| Surrender, player walked out of the declared room | `LapseArrestStampOnMove` (a `RoomChange` listener wired in `hooks.RegisterListeners`) drops the stamp, so the next sighting declares afresh, even back in the same room inside the window |
+| Surrender, stamp from another room or older than twice the grace | `liveArrestStamp` drops it; this sighting declares afresh |
+
+`LapseArrestStampOnMove` clears only on a move whose `FromRoomId` is the
+stamped room: the `RoomChange` for the player's own arrival can be heard
+after a guard there has declared, and must not drop that fresh stamp.
 
 The `EnforceAction` return value carries `{UserId, Severity, Escalated}`
 for tests and future telemetry.
@@ -91,20 +97,24 @@ arise because crime sites in `internal/actions` call `MaybeDeclareBounty`.
 **`executeArrestFn` seam**: Wraps `ExecuteArrest`; tests override to
 intercept without a live mob/world.
 
+**`guardFactionsFn` seam**: `factions.FactionsForMob`, which needs loaded
+faction definitions; tests override it.
+
 **`firstFactionWithCell`**: When a guard belongs to multiple factions
 (e.g. `guards` + `citizens`), `firstFactionWithCell(guardFactions)` picks
 the first one that owns a holding cell via `cellRoomFn`. Used in the
 `arrestOutcomeHaul` branch so the correct arresting faction (and its cell)
 is selected; returns `""` if no faction owns a cell, which aborts the haul
-silently without losing the pending stamp.
+silently and leaves the player's stamp to lapse on its own.
 
 **`pruneStaleWarnStamps`**: Called once per guard-tick at the top of
 `RunGuardEnforcement`. Deletes `justice_warned_<uid>` entries older than
 `warnStampStaleAfter()` rounds (delegates to `lookbackFn` —
 `JusticeCrimeLookbackRounds`). Warn stamps are written on first Cold-rep
 sighting but never cleared once rep recovers; without this sweep they
-accumulate on guard MiscData indefinitely. Arrest-pending stamps
-(`justice_arrest_pending_*`) are self-cleaning on haul and are left alone.
+accumulate on guard MiscData indefinitely. Arrest stamps live on the
+player, not the guard, and lapse on their own (`liveArrestStamp`,
+`LapseArrestStampOnMove`, #241).
 
 ---
 
@@ -380,9 +390,10 @@ crime site (actions/hooks)
 guard mob's per-round tick
   └─ RunGuardEnforcement
        └─ Verdict(guardFactions, uid) → SeverityArrest
+       └─ liveArrestStamp(player, room, now)  (another room or past 2x grace: dropped)
        └─ resolveArrest(resist, pending, pendingRound, now, grace)
             ├─ resist=true  → attack @uid
-            ├─ !pending     → guardSayFn + stamp pending key
+            ├─ !pending     → guardSayFn + stamp the player (round, room)
             ├─ within grace → no-op
             └─ grace done   → executeArrestFn
                                └─ ExecuteArrest

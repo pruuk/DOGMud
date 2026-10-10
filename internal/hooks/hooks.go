@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/forager"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/justice"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/splash"
 )
@@ -41,6 +42,7 @@ func RegisterListeners() {
 	events.RegisterListener(events.RoomChange{}, PresencePlayerEntry)
 	events.RegisterListener(events.RoomChange{}, LightNoticeOnMove)
 	events.RegisterListener(events.RoomChange{}, StolenBaubleRecognition)
+	events.RegisterListener(events.RoomChange{}, justice.LapseArrestStampOnMove)
 
 	// NewRound Listeners
 	events.RegisterListener(events.NewRound{}, InactivePlayers)
