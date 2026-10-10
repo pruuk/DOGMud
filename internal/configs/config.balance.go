@@ -340,9 +340,23 @@ type Balance struct {
 	ArchetypePrimaryStatWeight      ConfigFloat `yaml:"ArchetypePrimaryStatWeight"`      // Relative weight per PRIMARY stat when distributing a mob's stat pool. Normalised in code (default 0.2667 = today's 80%/3)
 	ArchetypeSecondaryStatWeight    ConfigFloat `yaml:"ArchetypeSecondaryStatWeight"`    // Relative weight per NON-PRIMARY stat. Equal to primary reproduces the uniform archetype (default 0.0667 = today's 20%/3)
 	GlobalDamageMultiplier          ConfigFloat `yaml:"GlobalDamageMultiplier"`          // Master multiplier applied to ALL damage channels (default 1.0)
-	PhysicalMitigationCap           ConfigFloat `yaml:"PhysicalMitigationCap"`           // Max physical mitigation % (default 0.75)
-	MagicalMitigationCap            ConfigFloat `yaml:"MagicalMitigationCap"`            // Max magical mitigation % (default 0.75)
-	ConvictionMitigationCap         ConfigFloat `yaml:"ConvictionMitigationCap"`         // Max conviction mitigation % (default 0.75)
+	// Mitigation curve (#465), four knobs per channel, read by
+	// combat.MitigationCurveFor: raw mitigation counts in full up to the knee,
+	// bends toward cap + aim above it, and never passes the cap. Validator:
+	// 0 < knee < cap <= 0.95, aim > 0, bend > 0; a bad value falls back to the
+	// default (0.50 / 0.90 / 0.05 / 0.40).
+	PhysicalMitigationKnee   ConfigFloat `yaml:"PhysicalMitigationKnee"`   // Physical raw mitigation that counts in full (default 0.50)
+	PhysicalMitigationCap    ConfigFloat `yaml:"PhysicalMitigationCap"`    // Hard ceiling on effective physical mitigation (default 0.90)
+	PhysicalMitigationAim    ConfigFloat `yaml:"PhysicalMitigationAim"`    // How far past the cap the physical curve aims; 0 never reaches it (default 0.05)
+	PhysicalMitigationBend   ConfigFloat `yaml:"PhysicalMitigationBend"`   // Raw physical mitigation past the knee that covers half the bend (default 0.40)
+	MagicalMitigationKnee    ConfigFloat `yaml:"MagicalMitigationKnee"`    // Magical raw mitigation that counts in full (default 0.50)
+	MagicalMitigationCap     ConfigFloat `yaml:"MagicalMitigationCap"`     // Hard ceiling on effective magical mitigation (default 0.90)
+	MagicalMitigationAim     ConfigFloat `yaml:"MagicalMitigationAim"`     // How far past the cap the magical curve aims; 0 never reaches it (default 0.05)
+	MagicalMitigationBend    ConfigFloat `yaml:"MagicalMitigationBend"`    // Raw magical mitigation past the knee that covers half the bend (default 0.40)
+	ConvictionMitigationKnee ConfigFloat `yaml:"ConvictionMitigationKnee"` // Conviction raw mitigation that counts in full (default 0.50)
+	ConvictionMitigationCap  ConfigFloat `yaml:"ConvictionMitigationCap"`  // Hard ceiling on effective conviction mitigation (default 0.90)
+	ConvictionMitigationAim  ConfigFloat `yaml:"ConvictionMitigationAim"`  // How far past the cap the conviction curve aims; 0 never reaches it (default 0.05)
+	ConvictionMitigationBend ConfigFloat `yaml:"ConvictionMitigationBend"` // Raw conviction mitigation past the knee that covers half the bend (default 0.40)
 	// U6 Task 12 deleted SpellAvoidanceDamageMultiplier and
 	// RhetoricAvoidanceDamageMultiplier from here. They were the flat partial
 	// multipliers returned by TrySpellDeflection and TryStoicResolve, the second

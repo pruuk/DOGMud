@@ -1194,11 +1194,26 @@ Balance:
   # the bow damage_multiplier line used to carry.
   RangedUnengagedDamageMultiplier: 2.75
   #
-  # Mitigation caps: maximum % damage reduction from armor for each channel.
-  # 0.75 = armor can block at most 75% of incoming damage in that channel.
-  PhysicalMitigationCap: 0.75
-  MagicalMitigationCap: 0.75
-  ConvictionMitigationCap: 0.75
+  # Mitigation curve (#465), four knobs per channel. Raw mitigation (every
+  # source summed) counts in full up to the Knee, bends toward Cap + Aim above
+  # it, and never stops more than Cap of the damage. Aim 0 only approaches the
+  # cap; above 0 the cap is reachable. Bend is the raw mitigation past the knee
+  # that covers half the distance. The part of effective mitigation above the
+  # knee also softens critical hits. Validator: 0 < Knee < Cap <= 0.95, Aim and
+  # Bend above 0; a bad value falls back to 0.50 / 0.90 / 0.05 / 0.40.
+  # At these values: raw 0.75 stops 67%, raw 1.00 75%, raw 1.81 84%, raw 3.70 90%.
+  PhysicalMitigationKnee: 0.50
+  PhysicalMitigationCap: 0.90
+  PhysicalMitigationAim: 0.05
+  PhysicalMitigationBend: 0.40
+  MagicalMitigationKnee: 0.50
+  MagicalMitigationCap: 0.90
+  MagicalMitigationAim: 0.05
+  MagicalMitigationBend: 0.40
+  ConvictionMitigationKnee: 0.50
+  ConvictionMitigationCap: 0.90
+  ConvictionMitigationAim: 0.05
+  ConvictionMitigationBend: 0.40
   #
   # ── Resource Depletion Penalties ──
   # As HP/SP/CP drain, combat effectiveness gradually decreases.
