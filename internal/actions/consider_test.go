@@ -134,7 +134,12 @@ func TestConsider_PredictionRatioBands(t *testing.T) {
 		{2.5, "odds favor you"},
 		{1.5, "even contest"},
 		{0.75, "upper hand"},
-		{0.25, "severely outmatched"},
+		{0.51, "upper hand"},
+		// #481: the old single band from 0 to 0.5 split at 0.25.
+		{0.5, "badly outmatched"},
+		{0.25, "badly outmatched"},
+		{0.249, "severely outmatched"},
+		{0.01, "severely outmatched"},
 		{0.0, "will not survive"},
 	}
 	for _, c := range cases {
