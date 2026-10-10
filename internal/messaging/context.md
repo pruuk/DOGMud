@@ -439,7 +439,8 @@ Functions:
   `combat.RenderChannelDefenceMessages` applies it to both identities; the
   melee and counter paths build their names without adjectives instead
   (`combat.meleeIdentityTag`). The condition start, trigger and end lines
-  for a mob holder apply it to `mobDisplayName` (hooks, #453); a player
+  for a mob holder apply it to `mobSeenName` through `conditionMobNames`
+  (hooks, #453, #458); a player
   holder's `GetCharacterName(true)` carries no span to begin with.
 - `Normalize(cat Category, text string) string`
 - `Anonymize(text string) string`: the pipeline's infrared fallback for every
