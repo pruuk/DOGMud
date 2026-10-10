@@ -15,6 +15,6 @@ venomous or toxic enemies.
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 10
   <ansi fg="yellow">Conv. Cost:  </ansi> 80
-  <ansi fg="yellow">Effect:      </ansi> Purges poisons from all allies in the room
+  <ansi fg="yellow">Effect:      </ansi> Purges poisons and Blood Boil from all allies in the room
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>

@@ -160,7 +160,7 @@ const (
 | `shield` | Applies ConditionShield with magnitude = damage absorbed |
 | `dot` | Applies the spell's one `condition_ids` record (Blood Boil: 143 Boiling Blood), or 121 Poisoned when it names none (Neural Toxin); duration from the caster (`applySpellDot`, `spellDotConditionId`) |
 | `knockdown` | Deals damage + knocks the target Supine (face-up "slams to the ground") via `Position.TransitionToSupine(MinRecoveryRounds: 1, TriggerKnockdownSpell)`. The legacy `CombatPosition = PositionProne` parallel-write is removed (T21 sunset). Future work may add a direction config to distinguish blast (Supine default) from shockwave (Prone). |
-| `purge` | Removes poison conditions and ConditionPoisoned from target(s) |
+| `purge` | Cures poisons and every record a `dot` spell lands (`purgeAfflictions`), not a combat bleed |
 | `none` | No automatic effect — spell behavior handled in Go hooks (used by condition spells, summons, utility) |
 
 ---

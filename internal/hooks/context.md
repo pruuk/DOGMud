@@ -2185,7 +2185,9 @@ The helpful effects have one applier each in `spell_help_effects.go`:
 `applySpellConditionEffect` (every named condition through
 `applySpellCondition`'s event door), `applySpellHeal` (the spell's own heal
 condition), `applySpellShield` (the spell's own ward) and `applySpellPurge`
-(cancels every poison). `applySpellDefaultEffect` serves an effect with no
+(`purgeAfflictions`, shared with Purge Affliction: every poison and every
+record a dot spell lands, never a combat bleed, #249).
+`applySpellDefaultEffect` serves an effect with no
 applier of its own, and charm binds a mob through `applyMobEffect_charm`.
 A defended status narrates the defence triad and applies nothing
 (`spellStatusDefended`); a harmful condition or default spell still starts

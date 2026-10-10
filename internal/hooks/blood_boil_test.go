@@ -149,3 +149,41 @@ func TestBloodBoil_TheTargetReadsBleedingNotPoisoned(t *testing.T) {
 	assert.Contains(t, adj, "bleeding")
 	assert.NotContains(t, adj, "poisoned")
 }
+
+// Purge Affliction and Cleansing Wave cured Blood Boil through 121's poison
+// flag. Blood Boil's 143 is a bleed, so both purges cure it by name of the
+// spells' own records, and a combat bleed (122) stays (owner call
+// 2026-10-10).
+func TestPurge_CuresBoilingBloodButNotACombatBleed(t *testing.T) {
+	cases := map[string]func(caster, target *users.UserRecord, room *rooms.Room){
+		"purge affliction": func(caster, target *users.UserRecord, room *rooms.Room) {
+			resolvePurgeAffliction(caster, room, purgeTarget{char: target.Character, user: target, name: target.Character.Name})
+		},
+		"cleansing wave": func(caster, target *users.UserRecord, room *rooms.Room) {
+			wave := &spells.SpellData{SpellId: "cleansing-wave", Name: "Cleansing Wave", EffectType: "purge"}
+			applySpellEffect(newSpellEffectCtx(caster.Character, actions.NewUserActorInRoom(caster, room),
+				actions.NewUserActorInRoom(target, room), room, wave, 10, spellContestAttackWin()))
+		},
+	}
+	for name, purge := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Cleanup(seedAllRegistries())
+			seedBoilingBlood(t)
+			t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{
+				"blood-boil": bloodBoilTestSpell(), "neural-toxin": neuralToxinTestSpell(),
+			}))
+			caster, target, room := users.GetByUserId(1), users.GetByUserId(2), rooms.LoadRoom(1)
+			require.NoError(t, target.Character.AddConditionMagnitude(boilingBloodId, 5, -4, "spell"))
+			require.NoError(t, target.Character.AddConditionMagnitude(conditions.ConditionIdPoisoned, 5, -4, "spell"))
+			require.NoError(t, target.Character.AddConditionMagnitude(conditions.ConditionIdBleeding, 5, -4, "rake"))
+
+			purge(caster, target, room)
+
+			// GetConditions, not HasCondition: a cure only expires a record
+			// and leaves it for the round's prune.
+			assert.Empty(t, target.Character.GetConditions(boilingBloodId), "Blood Boil is cured")
+			assert.Empty(t, target.Character.GetConditions(conditions.ConditionIdPoisoned), "poison is cured, as before")
+			assert.Len(t, target.Character.GetConditions(conditions.ConditionIdBleeding), 1, "a combat bleed is not")
+		})
+	}
+}

@@ -315,8 +315,8 @@ func spellWardConditionId(spell *spells.SpellData) int {
 	return conditions.ConditionIdConvictionWard
 }
 
-// applySpellPurge is the one purge applier (slice 3b): it cancels every
-// poison on the target. A mob target gains it: Cleansing Wave over a
+// applySpellPurge is the one purge applier (slice 3b): it cures the target
+// (purgeAfflictions: every poison and every record a dot spell lands). A mob target gains it: Cleansing Wave over a
 // charmed companion said it took effect and cleansed nothing. The
 // Go-hooked Purge Affliction spell is a different path
 // (resolvePurgeAffliction, spell_purgeaffliction.go) and never comes here.
@@ -328,7 +328,7 @@ func applySpellPurge(c spellEffectCtx) int {
 	// adjective from the target's rendered name.
 	casterName, targetName := c.casterName(), c.targetName()
 	casterHidden, targetHidden := c.hiddenFromRoom()
-	c.targetChar().CancelConditionsWithFlag(conditions.Poison)
+	purgeAfflictions(c.targetChar())
 	if c.selfCast() {
 		messaging.SendTrio(messaging.Trio{
 			Actor: messaging.Say(messaging.CategorySpellVital,
