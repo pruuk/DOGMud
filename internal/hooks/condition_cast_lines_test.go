@@ -21,6 +21,12 @@ const (
 	castNoActorId = 7204 // start_actee and start_observer only
 	castHeatId    = 7205 // infravision, so a reader in the dark makes out shapes
 	castSightId   = 7206 // see-hidden, so a reader perceives a hidden mob
+
+	castSecretWardId = 7207 // ward family, secret
+	castQuietWardId  = 7208 // ward family, quiet
+	castSilentWardId = 7209 // ward family, silent-start
+	castVenomWardId  = 7210 // ward family, poison-flagged
+	castNoPoisonId   = 7211 // poison immunity, so a poison-flagged add is refused
 )
 
 func seedCastLineConditions() func() {
@@ -54,6 +60,19 @@ func castLineSpecs() map[int]*conditions.ConditionSpec {
 			Effects: map[conditions.EffectKind]conditions.EffectValue{conditions.EffectInfraReach: {Literal: 30}}},
 		castSightId: {ConditionId: castSightId, Name: "Test Cast True Sight", Secret: true,
 			Flags: []conditions.Flag{conditions.SeeHidden}},
+		castSecretWardId: {ConditionId: castSecretWardId, Name: "Test Veil", Family: conditions.FamilyWard, Secret: true,
+			RoundInterval: 1, TriggerCount: 10},
+		castQuietWardId: {ConditionId: castQuietWardId, Name: "Test Hush", Family: conditions.FamilyWard, RoundInterval: 1, TriggerCount: 10,
+			Flags: []conditions.Flag{conditions.Quiet}},
+		castSilentWardId: {ConditionId: castSilentWardId, Name: "Test Still Ward", Family: conditions.FamilyWard, RoundInterval: 1, TriggerCount: 10,
+			Flags:         []conditions.Flag{conditions.SilentStart},
+			StartUserText: "A still ward settles over you.", EndUserText: "Your Test Still Ward fades."},
+		castVenomWardId: {ConditionId: castVenomWardId, Name: "Test Venom Ward", Family: conditions.FamilyWard, RoundInterval: 1, TriggerCount: 10,
+			Flags:          []conditions.Flag{conditions.Poison},
+			StartActorText: "A venom ward coils around {actee}.", StartUserText: "A venom ward coils around you.", StartRoomText: "A venom ward coils around {actee_plain}.",
+			EndUserText: "Your Test Venom Ward fades."},
+		castNoPoisonId: {ConditionId: castNoPoisonId, Name: "Test Stone Gut", Secret: true,
+			Flags: []conditions.Flag{conditions.PoisonImmunity}},
 	}
 }
 
@@ -264,4 +283,143 @@ func TestConditionCast_ACasterWhoPerceivesAHiddenHolderReadsItsName(t *testing.T
 	assert.Equal(t, []string{"You ward Skeleton."}, casterLines)
 	assert.NotContains(t, casterLines, "A ward settles over Skeleton.", "the room line excludes the caster")
 	assert.Empty(t, drainPlain(2), "a reader who does not perceive the holder reads nothing")
+}
+
+// The replacement line names both wards, so it keeps each one's silence: a
+// rival whose end is secret or quiet is not named, and a new member whose
+// start is secret, quiet or silent-start tells no replacement at all. The
+// holder and the room read the same rule.
+func TestConditionCast_TheReplacementLineKeepsASecretSecret(t *testing.T) {
+	cases := []struct {
+		name          string
+		held, landing int
+		holder, room  []string
+	}{
+		{"secret rival", castSecretWardId, castWardBId,
+			[]string{"A bulwark rises around you."}, []string{"A bulwark rises around Bobrick."}},
+		{"quiet rival", castQuietWardId, castWardBId,
+			[]string{"A bulwark rises around you."}, []string{"A bulwark rises around Bobrick."}},
+		{"secret new member", castWardAId, castSecretWardId, []string{}, []string{}},
+		{"quiet new member", castWardAId, castQuietWardId, []string{}, []string{}},
+		{"silent-start new member", castWardAId, castSilentWardId, []string{}, []string{}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cleanup := seedAllRegistries()
+			defer cleanup()
+			defer seedCastLineConditions()()
+			seedCastObserver(t)
+			rooms.LoadRoom(1).Lamp = rooms.LampPtr(90)
+
+			holder := users.GetByUserId(2).Character
+			require.True(t, holder.Conditions.AddCondition(tc.held, false))
+			drainCastParties()
+
+			ApplyConditions(events.Condition{UserId: 2, ConditionId: tc.landing, Caster: state.ActorRef{UserId: 2}})
+
+			assert.False(t, holder.HasCondition(tc.held), "the rival is still replaced")
+			assert.True(t, holder.HasCondition(tc.landing))
+			assert.Equal(t, tc.holder, drainPlain(2))
+			assert.Equal(t, tc.room, drainPlain(3))
+		})
+	}
+}
+
+// A refused add (a poison-flagged ward on a poison-immune holder) replaces
+// nothing: the rival stays and no replacement line is told.
+func TestConditionCast_ARefusedFamilyAddKeepsTheRivalAndSaysNothing(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer seedCastLineConditions()()
+	seedCastObserver(t)
+	rooms.LoadRoom(1).Lamp = rooms.LampPtr(90)
+
+	holder := users.GetByUserId(2).Character
+	require.True(t, holder.Conditions.AddCondition(castNoPoisonId, true))
+	require.True(t, holder.Conditions.AddCondition(castWardAId, false))
+	drainCastParties()
+
+	ApplyConditions(events.Condition{UserId: 2, ConditionId: castVenomWardId, Caster: state.ActorRef{UserId: 1}})
+
+	assert.True(t, holder.HasCondition(castWardAId), "the refused add keeps the rival")
+	assert.False(t, holder.HasCondition(castVenomWardId))
+	assert.Empty(t, drainPlain(1))
+	assert.Empty(t, drainPlain(2))
+	assert.Empty(t, drainPlain(3))
+}
+
+// An expired rival the prune pass has not reached yet is left for it, so it
+// gets its own end line there, not a replacement line; the new ward's start
+// lines still go out.
+func TestConditionCast_AnExpiredRivalGetsNoReplacementLine(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	defer seedCastLineConditions()()
+	seedCastObserver(t)
+	rooms.LoadRoom(1).Lamp = rooms.LampPtr(90)
+
+	holder := users.GetByUserId(2).Character
+	require.True(t, holder.Conditions.AddCondition(castWardAId, false))
+	expire(t, holder.Conditions.List, castWardAId)
+	drainCastParties()
+
+	ApplyConditions(events.Condition{UserId: 2, ConditionId: castWardBId, Caster: state.ActorRef{UserId: 2}})
+
+	assert.Equal(t, []string{"A bulwark rises around you."}, drainPlain(2))
+	assert.Equal(t, []string{"A bulwark rises around Bobrick."}, drainPlain(3))
+}
+
+// A hidden mob caster reads "something" to a holder and a room who do not
+// perceive it, and its name to a holder who does (the next test).
+func TestConditionCast_AHiddenMobCasterReadsSomething(t *testing.T) {
+	m := litRoomOneWithHiddenSkeleton(t)
+	t.Cleanup(seedCastLineConditions())
+	seedCastObserver(t)
+	require.False(t, users.GetByUserId(2).Character.Perceives(&m.Character))
+	require.False(t, users.GetByUserId(3).Character.Perceives(&m.Character))
+	drainCastParties()
+
+	ApplyConditions(events.Condition{UserId: 2, ConditionId: castCallerId, Caster: state.ActorRef{MobInstanceId: 100}})
+
+	assert.Equal(t, []string{"Something marks you."}, drainPlain(2))
+	assert.Equal(t, []string{"Something marks Bobrick."}, drainPlain(3))
+}
+
+func TestConditionCast_AHolderWithSeeHiddenReadsAHiddenMobCastersName(t *testing.T) {
+	m := litRoomOneWithHiddenSkeleton(t)
+	t.Cleanup(seedCastLineConditions())
+	seedCastObserver(t)
+	holder := users.GetByUserId(2).Character
+	require.True(t, holder.Conditions.AddCondition(castSightId, true))
+	require.True(t, holder.Perceives(&m.Character))
+	drainCastParties()
+
+	ApplyConditions(events.Condition{UserId: 2, ConditionId: castCallerId, Caster: state.ActorRef{MobInstanceId: 100}})
+
+	assert.Equal(t, []string{"Skeleton marks you."}, drainPlain(2))
+}
+
+// A caster who is gone (a player offline, a mob no longer spawned) reads as
+// "something", and nothing panics.
+func TestConditionCast_AGoneCasterReadsSomething(t *testing.T) {
+	for name, caster := range map[string]state.ActorRef{
+		"offline player": {UserId: 99},
+		"gone mob":       {MobInstanceId: 9999},
+	} {
+		t.Run(name, func(t *testing.T) {
+			cleanup := seedAllRegistries()
+			defer cleanup()
+			defer seedCastLineConditions()()
+			seedCastObserver(t)
+			rooms.LoadRoom(1).Lamp = rooms.LampPtr(90)
+			drainCastParties()
+
+			require.NotPanics(t, func() {
+				ApplyConditions(events.Condition{UserId: 2, ConditionId: castCallerId, Caster: caster})
+			})
+
+			assert.Equal(t, []string{"Something marks you."}, drainPlain(2))
+			assert.Equal(t, []string{"Something marks Bobrick."}, drainPlain(3))
+		})
+	}
 }

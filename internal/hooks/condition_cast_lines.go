@@ -184,10 +184,13 @@ func narrateConditionStart(spec *conditions.ConditionSpec, evt events.Condition,
 
 // familyRivalNames names the held records a landing condition will replace
 // (conditions.Conditions.FamilyRivals), read BEFORE the add discards them.
+// The replacement line stands in for a rival's end line, so a rival whose end
+// is silent (EndUserNotice empty: secret, quiet, hidden or nameless) is not
+// named; it is still replaced, in silence, as its end would have been.
 func familyRivalNames(held *conditions.Conditions, conditionId int) []string {
 	var names []string
 	for _, b := range held.FamilyRivals(conditionId) {
-		if spec := conditions.GetConditionSpec(b.ConditionId); spec != nil {
+		if spec := conditions.GetConditionSpec(b.ConditionId); spec != nil && spec.EndUserNotice() != "" {
 			names = append(names, spec.Name)
 		}
 	}
@@ -196,9 +199,16 @@ func familyRivalNames(held *conditions.Conditions, conditionId int) []string {
 
 // narrateFamilyReplacement tells the holder and the room which ward or heal
 // gave way to the one landing (owner ruling R6), in place of the old record's
-// end line, which the discard never tells. The room line skips unseenBy, as
-// every condition room line does (#458).
+// end line, which the discard never tells. The line names the new condition
+// too, so it is told only when the new condition's start would be
+// (StartUserNotice non-empty: not secret, quiet, silent-start or nameless);
+// a silent rival is already left out by familyRivalNames. The room line
+// follows the holder line's rule and skips unseenBy, as every condition room
+// line does (#458).
 func narrateFamilyReplacement(spec *conditions.ConditionSpec, replaced []string, holder conditionParty, unseenBy []int) {
+	if spec.StartUserNotice() == "" {
+		return
+	}
 	r := rooms.LoadRoom(holder.roomId)
 	for _, old := range replaced {
 		if holder.user != nil {
