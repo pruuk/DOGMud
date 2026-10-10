@@ -92,6 +92,24 @@ func (s *arrestStampScene) moveTo(to *rooms.Room) {
 	})
 }
 
+// #241: the stamp is saved with the character, so it must not outlive the
+// session: logging out and back in to the same room inside the window would
+// otherwise haul the player with no new declaration.
+func TestArrestStamp_DoesNotSurviveLogout(t *testing.T) {
+	s := newArrestStampScene(t)
+	s.player.Character.SetMiscData(keyArrestPendingRound, stampTestRound)
+	s.player.Character.SetMiscData(keyArrestPendingRoom, uint64(stampTestRoomA))
+
+	LapseArrestStampOnDespawn(events.PlayerDespawn{UserId: stampTestUserId})
+
+	if _, _, ok := s.stamp(); ok {
+		t.Fatal("arrest stamp survived the player's despawn")
+	}
+	if _, ok := miscDataRound(s.player.Character.MiscData, keyArrestPendingRoom); ok {
+		t.Error("arrest room key survived the player's despawn")
+	}
+}
+
 func (s *arrestStampScene) stamp() (round, room uint64, ok bool) {
 	round, okRound := miscDataRound(s.player.Character.MiscData, keyArrestPendingRound)
 	room, okRoom := miscDataRound(s.player.Character.MiscData, keyArrestPendingRoom)

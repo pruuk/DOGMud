@@ -99,6 +99,8 @@ func RegisterListeners() {
 	events.RegisterListener(events.PlayerDespawn{}, PlayerDespawnTrackingCleanup)
 	// Player despawn: tear down ephemeral jail cell + preserve sentence record
 	events.RegisterListener(events.PlayerDespawn{}, PlayerDespawnJailCleanup)
+	// Player despawn: a declared arrest does not survive logout (#241)
+	events.RegisterListener(events.PlayerDespawn{}, justice.LapseArrestStampOnDespawn)
 	events.RegisterListener(events.PlayerDespawn{}, LightNoticeOnDespawn)
 	events.RegisterListener(events.PlayerDespawn{}, HandleLeave, events.Last) // This is a final listener, has to happen last
 

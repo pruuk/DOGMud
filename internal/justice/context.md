@@ -112,9 +112,12 @@ silently and leaves the player's stamp to lapse on its own.
 `warnStampStaleAfter()` rounds (delegates to `lookbackFn` —
 `JusticeCrimeLookbackRounds`). Warn stamps are written on first Cold-rep
 sighting but never cleared once rep recovers; without this sweep they
-accumulate on guard MiscData indefinitely. Arrest stamps live on the
+accumulate on guard MiscData indefinitely. It also deletes any leftover
+per-guard `justice_arrest_pending_*` key. Arrest stamps live on the
 player, not the guard, and lapse on their own (`liveArrestStamp`,
-`LapseArrestStampOnMove`, #241).
+`LapseArrestStampOnMove`, #241). The stamp is shared across factions (a
+guard of another faction in the same room may haul on it) and is cleared on
+logout (`LapseArrestStampOnDespawn`, a `PlayerDespawn` listener).
 
 ---
 

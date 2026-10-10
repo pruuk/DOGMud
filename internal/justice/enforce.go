@@ -147,10 +147,16 @@ func warnStampStaleAfter() uint64 { return lookbackFn() }
 // pruneStaleWarnStamps deletes justice_warned_* entries older than staleAfter
 // rounds. Cold-rep warn stamps are never revisited once a player's rep
 // recovers (the Warn branch stops running), so they would otherwise leak.
-// Leaves every other key alone (an arrest stamp lives on the player, #241).
+// Also deletes leftover per-guard justice_arrest_pending_* keys, which older
+// builds wrote on the guard; the arrest stamp now lives on the player (#241).
+// Leaves every other key alone.
 // Deleting from a map during range over its keys is safe in Go.
 func pruneStaleWarnStamps(md map[string]any, now, staleAfter uint64) {
 	for key := range md {
+		if strings.HasPrefix(key, "justice_arrest_pending_") {
+			delete(md, key)
+			continue
+		}
 		if !strings.HasPrefix(key, "justice_warned_") {
 			continue
 		}
@@ -199,6 +205,21 @@ func LapseArrestStampOnMove(e events.Event) events.ListenerReturn {
 	}
 	stampRoom, ok := miscDataRound(user.Character.MiscData, keyArrestPendingRoom)
 	if ok && stampRoom == uint64(evt.FromRoomId) {
+		clearArrestStamp(user.Character)
+	}
+	return events.Continue
+}
+
+// LapseArrestStampOnDespawn is a PlayerDespawn listener
+// (hooks.RegisterListeners): the stamp is saved with the character, so it is
+// dropped on logout. Otherwise a player who logged out inside the window and
+// came back to the same room could be hauled with no new declaration (#241).
+func LapseArrestStampOnDespawn(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.PlayerDespawn)
+	if !ok || evt.UserId == 0 {
+		return events.Continue
+	}
+	if user := users.GetByUserId(evt.UserId); user != nil {
 		clearArrestStamp(user.Character)
 	}
 	return events.Continue
