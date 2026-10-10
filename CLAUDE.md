@@ -45,9 +45,11 @@ they live here instead of only in a skill.
 - Never blanket-kill a server by process name or port sweep. The user runs
   their own server on this machine. Kill by PID, identified as yours. See
   `dogmud-playtesting`.
-- `_datafiles/config.yaml` carries the git skip-worktree bit and desyncs in
-  both directions. Build a commit from the `git show HEAD:` blob, never from
-  disk. See `dogmud-balance-config`.
+- `_datafiles/config.yaml` is an ordinary tracked file (its skip-worktree bit
+  was retired on this machine 2026-10-10). Local-only settings (dev port, log
+  level) live in the gitignored `_datafiles/world/dogmud/config-overrides.yaml`,
+  which the engine overlays at boot. Never put a local value in `config.yaml`.
+  See `dogmud-balance-config`.
 - Balance numbers come from `config.yaml`, never from a Go default. Several
   shipped values differ sharply. See `dogmud-balance-config`.
 - `grep -c` exits 1 when it finds zero matches, so a passing "expect zero"

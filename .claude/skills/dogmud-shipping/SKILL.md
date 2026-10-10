@@ -136,7 +136,8 @@ catch what CI cannot see or what wastes a CI round-trip.
 4. **Update `docs/PATCH_NOTES.md`** with a dated entry. Player-facing framing,
    no raw numbers, no em dashes.
 5. **`Logging.LogToFile: false`** in `_datafiles/config.yaml` (the droplet has
-   limited disk). Note this file has `skip-worktree` set.
+   limited disk). This is the committed value; a local `LogToFile` belongs in
+   the gitignored `_datafiles/world/dogmud/config-overrides.yaml`.
 6. **Boot the server and confirm `Server Ready`.** `go build` only checks
    compilation. YAML data files (mobs, items, quests, dialogues, rooms, schedules,
    patrols) panic at *startup* on a filename/name-field mismatch, an invalid
@@ -144,13 +145,14 @@ catch what CI cannot see or what wastes a CI round-trip.
    real boot catches these.
 
    Use an **isolated detached worktree** so you never disturb the user's running
-   server, and copy the skip-worktree config in by hand:
+   server. The worktree's committed `config.yaml` is the shipped one; point
+   `CONFIG_PATH` at a scratch override that moves every port off the owner's:
 
    ```bash
    git worktree add --detach C:/tmp/dogmud-boot-check HEAD
-   cp _datafiles/config.yaml C:/tmp/dogmud-boot-check/_datafiles/config.yaml
+   printf 'Network:\n  TelnetPort: [43333]\n  LocalPort: 19999\n  HttpPort: 18090\n  AIPort: 45555\n' > "$TMP/boot-override.yaml"
    cd C:/tmp/dogmud-boot-check && go build -o boot-check.exe .
-   timeout 180 ./boot-check.exe > boot.log 2>&1
+   CONFIG_PATH="$TMP/boot-override.yaml" timeout 180 ./boot-check.exe > boot.log 2>&1
    grep -cE "^panic:|goroutine [0-9]+ \[running\]|runtime error" boot.log  # want 0
    grep -c "Server Ready" boot.log                                          # want 1
    ```
@@ -195,9 +197,9 @@ because it is a distinct, reusable procedure: build to a fixed-path
 
 ```bash
 git worktree add --detach C:/tmp/dogmud-boot-check HEAD
-cp _datafiles/config.yaml C:/tmp/dogmud-boot-check/_datafiles/config.yaml
+printf 'Network:\n  TelnetPort: [43333]\n  LocalPort: 19999\n  HttpPort: 18090\n  AIPort: 45555\n' > "$TMP/boot-override.yaml"
 cd C:/tmp/dogmud-boot-check && go build -o boot-check.exe .
-timeout 180 ./boot-check.exe > boot.log 2>&1
+CONFIG_PATH="$TMP/boot-override.yaml" timeout 180 ./boot-check.exe > boot.log 2>&1
 grep -cE "^panic:|goroutine [0-9]+ \[running\]|runtime error" boot.log  # want 0
 grep -c "Server Ready" boot.log                                          # want 1
 ```

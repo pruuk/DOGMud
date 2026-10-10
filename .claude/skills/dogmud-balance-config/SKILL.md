@@ -1,6 +1,6 @@
 ---
 name: dogmud-balance-config
-description: Use before hardcoding any balance number, or when retuning how something feels. Covers that 472 balance knobs are declared in internal/configs/config.balance.go and surfaced through _datafiles/config.yaml, that retuning is a config edit rather than a code change, that a Go default is never a live value because several shipped knobs differ sharply, that an absent key is meaningful because 0 is a legal shipped value, and that config.yaml carries skip-worktree so it desyncs in both directions.
+description: Use before hardcoding any balance number, or when retuning how something feels. Covers that 472 balance knobs are declared in internal/configs/config.balance.go and surfaced through _datafiles/config.yaml, that retuning is a config edit rather than a code change, that a Go default is never a live value because several shipped knobs differ sharply, that an absent key is meaningful because 0 is a legal shipped value, and that local-only settings live in the gitignored config-overrides.yaml, not in config.yaml.
 ---
 
 ## Look for the knob before editing a literal
@@ -162,36 +162,34 @@ forward, and do not assume today's verified numbers stay correct either: the
 whole point of this skill is that a knob count is exactly the kind of fact
 that must be re-read from source, not recalled, every time it matters.
 
-## config.yaml has skip-worktree
+## Local settings live in config-overrides.yaml
 
-`_datafiles/config.yaml` carries the git skip-worktree bit
-(`git ls-files -v _datafiles/config.yaml` shows `S`), which hides a
-deliberate local-dev divergence (locally the file diverges from the tracked
-blob, for example a different `HttpPort` and log settings). Consequences:
+Until 2026-10-10 the owner's machine kept local-dev values (a dev `HttpPort`,
+a quieter `LogLevel`) directly in `_datafiles/config.yaml` and hid them with
+the git skip-worktree bit. The disk copy and the committed blob drifted in
+both directions, pulls refused when master touched the file, and commits had
+to be built from the `git show HEAD:` blob. That arrangement is retired.
 
-- `git status` shows the file as clean even when it has local edits.
-- `git add` on it fails with a misleading error about "sparse-checkout
-  definition." The worktree is not sparse; that is just modern git's wording
-  for a skip-worktree path.
-- The disk copy and the committed blob can drift arbitrarily far apart in
-  both directions, because normal `git status`/`git diff` never surfaces the
-  drift while the bit is set.
+Now:
+- `_datafiles/config.yaml` is an ordinary tracked file. Edit it, `git diff`
+  it and commit it like any other. It holds shipped values only.
+- Local-only values go in `_datafiles/world/dogmud/config-overrides.yaml`
+  (gitignored as `**/config-overrides.yaml`). The engine overlays it on
+  `config.yaml` at boot (`overridePathFor` in `internal/configs/configs.go`;
+  `CONFIG_PATH`, when set, names a different file instead), and the engine's
+  own writes (`Server.CurrentVersion`, `Server.NextRoomId` via `SetEngineVal`)
+  merge into the same file without dropping other keys. Use the nested form:
 
-**Build any commit to this file from the committed blob, never from disk.**
-Use `git show HEAD:_datafiles/config.yaml` as the base, not the working-tree
-copy, since the working-tree copy may hold local-only values that must never
-land in a commit (for example a dev-only port).
+  ```yaml
+  Logging:
+    LogLevel: info
+  Network:
+    HttpPort: 8090
+  ```
 
-**`git update-index --cacheinfo` clears the skip-worktree bit.** A
-hash-object-plus-cacheinfo procedure for staging a config change rewrites
-the index entry from scratch, which silently clears the bit. The symptom
-shows up several commits later: `git status` starts reporting the file as
-modified, and switching branches refuses with an uncommitted-changes error
-on a file that is supposed to be invisible. Check with
-`git ls-files -v _datafiles/config.yaml` after any procedure that touches
-the index for this file: `S` means the bit is still set, `H` means it was
-cleared and needs `git update-index --skip-worktree _datafiles/config.yaml`
-to restore it. [[reference_config_yaml_skip_worktree]]
+- Another clone (for example the droplet's checkout) may still carry the bit.
+  `git ls-files -v _datafiles/config.yaml` shows `S` there; check before
+  committing from that clone. [[reference_config_yaml_skip_worktree]]
 
 ## Sources
 

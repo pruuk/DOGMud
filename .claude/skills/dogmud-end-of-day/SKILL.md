@@ -57,8 +57,9 @@ checkout. Check it before trusting a `sed` pass, and use the Edit tool on any
 file whose index is CRLF. Either way, `git diff --numstat` must show only the
 lines you meant to change.
 
-⚠️ `_datafiles/config.yaml` carries skip-worktree. If a moved path is cited
-there, build the change from the `git show HEAD:` blob (`dogmud-balance-config`).
+`_datafiles/config.yaml` is an ordinary tracked file; a moved path cited there
+is edited in place like any other doc. Local-only settings live in the
+gitignored `config-overrides.yaml` (`dogmud-balance-config`).
 
 Afterwards run the guard tests whose constants name spec paths
 (`go test -count=1 -run 'Identifier|WireFreeze|ConsistentAttack' .`) and
