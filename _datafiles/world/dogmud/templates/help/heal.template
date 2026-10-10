@@ -21,6 +21,6 @@ grows with your willpower and spellcasting skill.
 
 <ansi fg="white-bold">Notes:</ansi>
   - A target holds one healing spell at a time. A new one replaces the old.
-  - Salves, potions and food that heal you still add on top.
+  - Salves, potions and healing food still add on top.
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help mend-wounds</ansi>, <ansi fg="command">help cast</ansi>

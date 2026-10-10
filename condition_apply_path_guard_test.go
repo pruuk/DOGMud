@@ -188,7 +188,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// Task 7, same import shift as above; re-keyed again 3b playtest fix,
 	// same import shift as above; re-keyed again messaging M6 slice 1, when
 	// spellConditionsNarrateStart landed above it and again when the shield
-	// arm moved to the event door and its Minor Shield row was deleted; the
+	// arm moved to the event door and its Conviction Ward row was deleted; the
 	// spell row DELETED messaging M6 slice 1, when each heal spell began
 	// landing its own heal through the condition event, leaving the two
 	// feeding rows) ───────

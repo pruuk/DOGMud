@@ -1353,7 +1353,7 @@ func TestMobDisplayName(t *testing.T) {
 // through Conditions.Trigger() in UserRoundTick, and narrates its end through the
 // PruneConditions pass like every other condition.
 
-func TestMinorShieldRecordExpiresOnceAndNarratesItsEnd(t *testing.T) {
+func TestConvictionWardRecordExpiresOnceAndNarratesItsEnd(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	defer conditions.SeedConditionRecordsForTest()()
@@ -1377,7 +1377,7 @@ func TestMinorShieldRecordExpiresOnceAndNarratesItsEnd(t *testing.T) {
 	assert.Equal(t, 1, countContaining(drainPlain(1), "Your Conviction Ward fades."))
 }
 
-// TestMinorShieldRecordDecaysOncePerRound pins the behaviour change itself:
+// TestConvictionWardRecordDecaysOncePerRound pins the behaviour change itself:
 // a shield with 2 rounds left must still have exactly 1 after one round,
 // even though both UserRoundTick and DoCombat fire for it. Before Task 6,
 // DoCombat's handlePlayerShieldDecay call added a second decrement here and
@@ -1385,7 +1385,7 @@ func TestMinorShieldRecordExpiresOnceAndNarratesItsEnd(t *testing.T) {
 // DoCombat is fired even though its shield-decay branches are now deleted
 // entirely, precisely so that a reintroduced decrement there would be
 // caught by this assertion; UserRoundTick alone would not catch it.
-func TestMinorShieldRecordDecaysOncePerRound(t *testing.T) {
+func TestConvictionWardRecordDecaysOncePerRound(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	defer conditions.SeedConditionRecordsForTest()()
@@ -1957,7 +1957,7 @@ func TestMobRoundTick_CharmedDecrement(t *testing.T) {
 	assert.Equal(t, 2, mob.Character.Charmed.RoundsRemaining)
 }
 
-func TestMobRoundTick_TicksMinorShieldRecord(t *testing.T) {
+func TestMobRoundTick_TicksConvictionWardRecord(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	defer conditions.SeedConditionRecordsForTest()()

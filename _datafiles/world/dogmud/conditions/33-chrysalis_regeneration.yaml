@@ -3,7 +3,8 @@ name: Chrysalis Regeneration
 # The heal family (messaging M6 slice 1, owner ruling R9): any heal spell
 # replaces any other.
 family: heal
-description: Deep Chrysalis energy rapidly regenerates your body.
+description: Deep Chrysalis energy rapidly regenerates your body. Another
+  healing spell takes its place rather than adding to it.
 triggerrate: 2 rounds
 triggercount: 8
 start_actor: "Deep Chrysalis energy wraps around {actee}."

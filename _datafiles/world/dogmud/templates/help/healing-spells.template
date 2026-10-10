@@ -16,8 +16,8 @@ A target holds one healing spell at a time. Casting a different one
 replaces the one already there, and the target is told which gave way.
 Casting the same one again renews it.
 
-Healing spells do not cancel other healing. Salves, potions, food and
-mutations that help you heal still add on top.
+Healing spells do not cancel other healing. Salves, potions, healing food
+and mutations that help you heal still add on top.
 
 Type <ansi fg="command">conditions</ansi> to see which healing spell is on you.
 

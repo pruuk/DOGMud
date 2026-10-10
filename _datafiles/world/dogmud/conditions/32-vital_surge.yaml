@@ -3,7 +3,8 @@ name: Vital Surge
 # The heal family (messaging M6 slice 1, owner ruling R9): any heal spell
 # replaces any other.
 family: heal
-description: Chrysalis energy steadily mends your body over time.
+description: Chrysalis energy steadily mends your body over time. Another
+  healing spell takes its place rather than adding to it.
 triggerrate: 2 rounds
 triggercount: 9
 start_actor: "Chrysalis energy pulses into {actee}'s body."

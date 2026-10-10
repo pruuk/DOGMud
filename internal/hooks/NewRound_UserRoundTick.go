@@ -266,7 +266,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						// !Expired(), which silently dropped the tick/harm
 						// effect on any condition's final trigger (invisible until
 						// now because every existing record used a trigger
-						// count far above 1: Warcry/Rally 25, MinorShield/
+						// count far above 1: Warcry/Rally 25, ConvictionWard/
 						// Regenerating/Poisoned 10). A record created with
 						// exactly one trigger left, which slice 1's three-round
 						// Bleeding produced for every ordinary duration, never

@@ -279,7 +279,7 @@ The engine derives expected filenames using `ConvertForFilename()`. The rules:
 | `"Elder Saris"` | `elder_saris` |
 | `"O'Brien's Watch"` | `obriens_watch` |
 | `"Iron Longsword"` | `iron_longsword` |
-| `"Minor Shield"` | `minor_shield` |
+| `"Conviction Ward"` | `conviction_ward` |
 | `"fire-bolt"` | `fire_bolt` *(but spells skip this — use spellid directly)* |
 
 **Exception:** Spell filenames use the `spellid` value verbatim. `spellid: fire-bolt` → file is `fire-bolt.yaml`, not `fire_bolt.yaml`.
