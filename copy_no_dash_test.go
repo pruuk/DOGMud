@@ -32,6 +32,9 @@ var noDashCopyFiles = []string{
 	"internal/usercommands/warcry.go",
 	"internal/hooks/spell_resolution.go",
 	"internal/combat/combat_helpers.go",
+	// #287, the flee refusals and the AI rate-limit notice.
+	"internal/usercommands/flee.go",
+	"main.go",
 }
 
 func TestCopyFilesHaveNoDashesInStringLiterals(t *testing.T) {
