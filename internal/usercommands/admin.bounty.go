@@ -333,11 +333,17 @@ func parseTargetSpec(s string) (knowledge.Subject, bool) {
 	return knowledge.Subject{}, false
 }
 
-// bountyTruncate shortens s to at most maxLen runes, appending "…" if trimmed.
+// bountyTruncate shortens s to at most maxLen runes, ending a cut in "...".
+// ASCII dots, not "…": the column is padded by rune count, and an ASCII
+// client reads "…" as three characters, which pushed a cut row two columns
+// wide (#253 follow-up).
 func bountyTruncate(s string, maxLen int) string {
 	runes := []rune(s)
 	if len(runes) <= maxLen {
 		return s
 	}
-	return string(runes[:maxLen-1]) + "…"
+	if maxLen <= 3 {
+		return string(runes[:maxLen])
+	}
+	return string(runes[:maxLen-3]) + "..."
 }

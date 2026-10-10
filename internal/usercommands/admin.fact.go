@@ -322,15 +322,19 @@ func factForgetAll(args []string, user *users.UserRecord) (bool, error) {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-// factTruncate shortens s to at most n runes, appending "…" if trimmed.
-// Named with a fact prefix to avoid collision with similarly-named
-// helpers in other admin command files in this package.
+// factTruncate shortens s to at most n runes, ending a cut in "..." (ASCII,
+// so a padded column holds in either charset; #253 follow-up). Named with a
+// fact prefix to avoid collision with similarly-named helpers in other admin
+// command files in this package.
 func factTruncate(s string, n int) string {
 	runes := []rune(s)
 	if len(runes) <= n {
 		return s
 	}
-	return string(runes[:n-1]) + "…"
+	if n <= 3 {
+		return string(runes[:n])
+	}
+	return string(runes[:n-3]) + "..."
 }
 
 // defaultDash returns s if non-empty, or "-" otherwise.
