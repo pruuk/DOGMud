@@ -18,8 +18,15 @@ const (
 	EffectDodgeMult      EffectKind = "dodge_mult"      // dodge score multiplier (no producer today; kept for parity with the reader)
 	EffectRegenMult      EffectKind = "regen_mult"      // multiplier on base health regen (heal spells, corpse feeding)
 	EffectMitigationFlat EffectKind = "mitigation_flat" // flat physical mitigation points (wards)
-	EffectPoolMaxPct     EffectKind = "pool_max_pct"    // fraction taken off a pool maximum; the pool rides on Condition.Source
-	EffectAttacksCap     EffectKind = "attacks_cap"     // upper bound on swings per round
+	// EffectMitigationMagical and EffectMitigationConviction are a ward's
+	// flat points against spell (mental) and social damage, the siblings of
+	// mitigation_flat (messaging M6 slice 1, section 4). They sum with the
+	// magical_mitigation and conviction_mitigation statmods, so a potion
+	// still adds on top of a ward.
+	EffectMitigationMagical    EffectKind = "mitigation_magical"
+	EffectMitigationConviction EffectKind = "mitigation_conviction"
+	EffectPoolMaxPct           EffectKind = "pool_max_pct" // fraction taken off a pool maximum; the pool rides on Condition.Source
+	EffectAttacksCap           EffectKind = "attacks_cap"  // upper bound on swings per round
 	// EffectNightVisionStrength is how far DOWN the scale an observer's usable
 	// light band shifts. Aggregated as MAX, not summed: two night-sight
 	// sources do not stack into a wider window than the better one grants.
@@ -53,7 +60,8 @@ const (
 // AllEffectKinds is the closed set, for validation and docs.
 var AllEffectKinds = []EffectKind{
 	EffectDamageMult, EffectDefenseMult, EffectDodgeMult, EffectRegenMult,
-	EffectMitigationFlat, EffectPoolMaxPct, EffectAttacksCap,
+	EffectMitigationFlat, EffectMitigationMagical, EffectMitigationConviction,
+	EffectPoolMaxPct, EffectAttacksCap,
 	EffectNightVisionStrength, EffectInfraReach, EffectLightStrength,
 	EffectDarknessStrength,
 }
