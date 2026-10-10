@@ -1,11 +1,13 @@
 package usercommands
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -41,8 +43,17 @@ func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		return true, nil
 	}
 
-	actor := actions.UserActorAtSight(user, room)
-	actions.Consider(actor, target)
+	// A mob the player may not harm is not a fight to weigh up: attack
+	// refuses it through the same check, so consider says so instead of
+	// rating the odds (#286). The quest notification below still fires.
+	if m := mobs.GetInstance(target.GetMobInstanceId()); mobs.CheckPlayerHarm(m).Blocked() {
+		user.SendText(messaging.CategorySystem, messaging.HideNames(
+			fmt.Sprintf(`You can't fight <ansi fg="mobname">%s</ansi>.`, m.Character.Name),
+			[]string{m.Character.Name}, messaging.ParticipantSight(user.Character, room)))
+	} else {
+		actor := actions.UserActorAtSight(user, room)
+		actions.Consider(actor, target)
+	}
 
 	// Quest engine: command notification
 	bridge := questengine.NewGameBridge(user, room.RoomId)
