@@ -11,7 +11,7 @@ start_actor: "Chrysalis energy pulses into {actee}'s body."
 start_actee: Chrysalis energy suffuses your body with a warm, mending pulse.
 start_observer: "A warm pulse of light settles over {actee}."
 end_actee: The vital surge fades.
-trigger_actee: The vital surge mends your wounds.
+trigger_actee: The warm pulse keeps mending your wounds.
 tick_pool: health
 tick_percent: 0.05
 tick_min: 1

@@ -70,7 +70,7 @@ condition|31|end_observer => <ansi fg="username">Aliceia</ansi> shimmers back in
 condition|32|start_actor => Chrysalis energy pulses into <ansi fg="username">Aliceia</ansi>'s body.
 condition|32|start_actee => Chrysalis energy suffuses your body with a warm, mending pulse.
 condition|32|start_observer => A warm pulse of light settles over <ansi fg="username">Aliceia</ansi>.
-condition|32|trigger_actee => The vital surge mends your wounds.
+condition|32|trigger_actee => The warm pulse keeps mending your wounds.
 condition|32|end_actee => The vital surge fades.
 condition|33|start_actor => Deep Chrysalis energy wraps around <ansi fg="username">Aliceia</ansi>.
 condition|33|start_actee => Deep Chrysalis energy wraps around you, accelerating your body's healing.

@@ -17,5 +17,5 @@ condition_ids:
   - 27
 categories:
   - self_defense
-cast_actor: "You forge a wall of iron resolve around the target's mind."
+cast_actor: "You forge a wall of iron resolve."
 cast_observer: "{actor} focuses intently, a steely aura forming."
