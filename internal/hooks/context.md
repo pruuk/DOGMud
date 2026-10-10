@@ -117,12 +117,17 @@ events.RegisterListener(events.MobIdle{}, HandleIdleMobs)         // Mob AI beha
 events.RegisterListener(mutations.Gained{}, MutationGained_Reveal) // Mutation reveal
 ```
 
-`MutationGained_Reveal` (#481) also tells the player what the new body
-pushed off it: after the reveal it validates the character (so a quest
-grant, which has had no round tick yet, runs the slot rules now) and sends
-one line per `Character.TakeDisplacedGear()` record, such as "Your new tail
-leaves no room for Iron Greaves, so you take it off." The item is already
-in the pack (`ReturnToPack`, never the ground).
+Gear a closed slot pushed off a player (#481) is told by
+`DisplacedGear_Notify` (in `MutationGained_Reveal.go`), not by the reveal:
+the Bloom Wafer and the Phial of Second Birth grant mutations without
+queueing `mutations.Gained`. The round tick's closing `endOfRoundValidate`
+validates each player and, when `Character.HasDisplacedGear()`, queues a
+`displacedGearNotice` at priority 50. That runs after every priority-0
+event, including the `splash.Splash` the reveal queues, so the line follows
+the reveal on the splash path too. The listener drains
+`TakeDisplacedGear()` and sends one line per item naming the cause, such as
+"Your new tail leaves no room for Iron Greaves, so you take it off." The
+item is already in the pack (`ReturnToPack`, never the ground).
 
 ## Combat System Integration
 

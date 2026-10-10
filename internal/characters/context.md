@@ -2208,12 +2208,15 @@ drops to the ground (owner, 2026-10-06). The crit disarm
 (extra arms and wrists, the tail slot, the legs slot under `disable-legs`)
 with `ReturnToPack`, so the item is never lost; they used to call
 `StoreItem` and ignore its refusal past 2x carry capacity, which destroyed
-the item. For a player (non-zero user id), an item the `disable-legs` flag
-(the tail) pushes off is recorded as a `DisplacedGear{ItemName, Reason}` (the
-name only, so no `WalkItems` has a second item copy to visit) with
-reason `DisplacedByDisabledLegs`; `TakeDisplacedGear()` returns the record
-and clears it. `hooks.MutationGained_Reveal` drains it to tell the player.
-The record is runtime only, and a mob's displacement is not recorded.
+the item. For a player (non-zero user id), every such removal goes through
+`displaceSlotItem` and is recorded as a `DisplacedGear{ItemName, Reason}`
+(the name only, so no `WalkItems` has a second item copy to visit). Reasons:
+`DisplacedByDisabledLegs` (the tail closed legs), `DisplacedByLostTail`,
+`DisplacedByLostArm` (arm or wrist of a lost extra-arms level) and
+`DisplacedBySpecies`. `HasDisplacedGear()` reports a pending record;
+`TakeDisplacedGear()` returns it and clears it. The hooks round tick drains
+it to tell the player (see `internal/hooks/context.md`). The record is
+runtime only, and a mob's displacement is not recorded.
 
 ## The caster door (messaging M6 slice 1)
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/species"
 )
 
 // seedTailAndGreaves registers a tail mutation carrying the disable-legs flag
@@ -79,6 +80,46 @@ func TestValidate_TailRecordsDisplacedLegArmourForAPlayer(t *testing.T) {
 	c.validateMutationSlots()
 	if again := c.TakeDisplacedGear(); len(again) != 0 {
 		t.Errorf("an already disabled slot displaced again: %+v", again)
+	}
+}
+
+// Every forced removal is recorded for a player with its real cause, not
+// only the tail's legs: a lost tail, a lost extra arm (and its wrist) and a
+// species-closed slot.
+func TestValidate_RecordsEveryForcedSlotRemovalWithItsCause(t *testing.T) {
+	seedTailAndGreaves(t)
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		94810: {SpeciesId: 94810, Name: "Probe", DisabledSlots: []string{"back"}},
+	}))
+
+	c := New()
+	c.SetUserId(4811)
+	c.SpeciesId = 94810
+	c.Equipment.Tail = items.New(999480)      // no tail mutation: the slot closes
+	c.Equipment.ExtraArm1 = items.New(999480) // no extra-arms mutation
+	c.Equipment.ExtraWrist1 = items.New(999480)
+	c.Equipment.Back = items.New(999480) // species closes back
+	c.Mutations = map[string]int{}
+
+	c.validateDisabledSlotsForSpecies()
+	c.validateMutationSlots()
+
+	reasons := map[string]int{}
+	for _, g := range c.TakeDisplacedGear() {
+		reasons[g.Reason]++
+	}
+	want := map[string]int{
+		DisplacedByLostTail: 1,
+		DisplacedByLostArm:  2,
+		DisplacedBySpecies:  1,
+	}
+	for r, n := range want {
+		if reasons[r] != n {
+			t.Errorf("reason %q recorded %d times, want %d (all: %v)", r, reasons[r], n, reasons)
+		}
+	}
+	if got := len(c.Items); got != 4 {
+		t.Errorf("all four items must be in the pack, got %d", got)
 	}
 }
 

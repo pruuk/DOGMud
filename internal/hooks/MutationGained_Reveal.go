@@ -38,24 +38,65 @@ func flattenDescription(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
 
-// displacedGearText is the line a player reads when a mutation pushes a worn
-// item off their body into the pack (#481).
+// displacedGearText is the line a player reads when a closed slot pushes a
+// worn item off their body into the pack (#481), naming the real cause.
 func displacedGearText(g characters.DisplacedGear) string {
+	item := `<ansi fg="item">` + g.ItemName + `</ansi>`
 	switch g.Reason {
 	case characters.DisplacedByDisabledLegs:
-		return fmt.Sprintf(`Your new tail leaves no room for <ansi fg="item">%s</ansi>, so you take it off.`, g.ItemName)
+		return `Your new tail leaves no room for ` + item + `, so you take it off.`
+	case characters.DisplacedByLostTail:
+		return `Your tail is gone, so you take off ` + item + `.`
+	case characters.DisplacedByLostArm:
+		return `Your extra arm is gone, so you take off ` + item + `.`
+	case characters.DisplacedBySpecies:
+		return `Your body has no place for ` + item + `, so you take it off.`
 	}
-	return fmt.Sprintf(`Your changed body leaves no room for <ansi fg="item">%s</ansi>, so you take it off.`, g.ItemName)
+	return `Your body no longer has room for ` + item + `, so you take it off.`
 }
 
-// tellDisplacedGear validates the character, so the slot rules for a mutation
-// that has just landed run now (a quest grant has had no round tick yet), and
-// tells the player about each item a mutation pushed into their pack. The
-// characters package records the displacement; this drains it once.
-func tellDisplacedGear(user *users.UserRecord) {
-	user.Character.Validate()
+// displacedGearNoticePriority orders the gear notice after every default
+// (priority 0) event, including a splash.Splash that MutationGained_Reveal
+// queues while the notice already waits, so the line follows the reveal on
+// the splash path too. It stays ahead of the prompt redraw (100).
+const displacedGearNoticePriority = 50
+
+// displacedGearNotice asks DisplacedGear_Notify to tell one player about the
+// gear a closed slot pushed into their pack.
+type displacedGearNotice struct {
+	UserId int
+}
+
+func (displacedGearNotice) Type() string { return `DisplacedGearNotice` }
+
+// DisplacedGear_Notify drains the player's displacement record and sends one
+// line per item. Draining here, when the notice is handled, means a record
+// queued twice is still told once.
+func DisplacedGear_Notify(e events.Event) events.ListenerReturn {
+	evt, ok := e.(displacedGearNotice)
+	if !ok {
+		return events.Continue
+	}
+	user := users.GetByUserId(evt.UserId)
+	if user == nil || user.Character == nil {
+		return events.Continue
+	}
 	for _, g := range user.Character.TakeDisplacedGear() {
 		user.SendText(messaging.CategoryMutation, displacedGearText(g))
+	}
+	return events.Continue
+}
+
+// endOfRoundValidate is the round tick's closing validate for one player,
+// and the one drain point every mutation grant reaches: the round tick,
+// pinnacle tick and quest grants queue mutations.Gained, but the Bloom Wafer
+// and the Phial of Second Birth narrate their own grant and queue nothing.
+// Whatever closed a slot since the last tick, the displacement is recorded by
+// then, and the notice is queued behind any reveal already waiting.
+func endOfRoundValidate(user *users.UserRecord) {
+	user.Character.Validate()
+	if user.Character.HasDisplacedGear() {
+		events.AddToQueue(displacedGearNotice{UserId: user.UserId}, displacedGearNoticePriority)
 	}
 }
 
@@ -76,8 +117,6 @@ func MutationGained_Reveal(e events.Event) events.ListenerReturn {
 	if spec == nil {
 		return events.Continue
 	}
-	// After the reveal is sent: say what the new body pushed off it.
-	defer tellDisplacedGear(user)
 
 	if !evt.IsNew {
 		user.SendText(messaging.CategoryMutation,
