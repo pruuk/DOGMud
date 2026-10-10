@@ -1,5 +1,25 @@
 # DOGMud Patch Notes
 
+## 2026-10-10: More loose ends
+
+- `get all lookout corpse` now takes from the lookout's corpse, not
+  whichever corpse happens to be first.
+- `party list` shows a charmed companion once, not twice.
+- When a taunt or a retort lands on you, your line now says it struck
+  "your" resolve, not "their".
+- `consider` on someone you may not fight, such as a shopkeeper or your own
+  companion, now says "You can't fight" them instead of giving odds.
+- Creatures no longer eat food that has gone bad.
+- The help pages for give, show, sell, storage and bank are corrected and
+  now cover the bulk forms, such as `sell all <item>` and `storage remove`
+  by slot number, which now works as written. New help pages explain the
+  companion courting, boundary and ask commands.
+- The bandit fighter no longer drops its sword and vest on every kill.
+- Halix no longer tries to walk to a hidden, locked room on its rounds.
+- Players using plain ASCII text no longer see stray symbols: decorative
+  rules and icons are removed, dashes become hyphens, a quest item's star
+  shows as `*`, and creatures on the `map` show as `!`.
+
 ## 2026-10-10: Loose ends
 
 - Items whose names start with "Gold", such as Gold Wire, can be picked up
