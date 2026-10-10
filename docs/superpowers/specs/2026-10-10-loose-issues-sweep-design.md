@@ -1,6 +1,6 @@
 # Loose issues sweep (2026-10-10)
 
-Thirteen small open issues that sit outside the big arcs, fixed in one branch
+Fourteen small open issues that sit outside the big arcs, fixed in one branch
 (`worktree-loose-issues-sweep`). Each is a few lines of code, copy or YAML,
 plus a test where the change is behavioural.
 
@@ -41,7 +41,7 @@ checks (sight, resolve, is-a-player, not-already-in-a-party), so a party is
 created only when an invite is actually sent. The leader check stays first for
 a player already in a party. Test: refused invite leaves `parties.Get` nil.
 
-**#289 `quests all+`.** Gate `all+` behind the admin role (question 1).
+**#289 `quests all+`.** Gate `all+` behind the admin role (owner call).
 Players typing it get the normal `all` view.
 
 **#269 Gold-prefixed items.** Take the gold-pile branch only when the whole
@@ -58,7 +58,7 @@ that the previous items are still live.
 qualifies; it already portals home and drops. Log at debug level.
 
 **#302 Confused emote.** Stop emoting to the room; log the unhandled command
-once at warn level with the mob id (question 2).
+once at warn level with the mob id (owner call).
 
 **#284 Surrender policy zero value.** In `Character.Validate`, map
 `{AutoTap, 0}` to the same `{AutoTap, 15}` default `characters.New` uses,
@@ -67,6 +67,19 @@ sharing one constant. Test: a save without the key reads "auto-tap-below 15".
 **#296 Admin help.** When `help/<name>` misses and the user has permission
 for that admin command, render `admincommands/help/command.<name>`.
 Non-admins still get "no help found". Test both roles.
+
+**#270 Arm and wrist labels (owner call: "arm 3-6", wrists to match).**
+Today the same slot is named three ways. The strings are also lookup keys
+(`IsBlockedBy2H "extra arm 2"` in the inventory templates, the
+`"extra wrist 1"` cases in `worn.go:225-236`, the sources in
+`inventory.go:521-536`), so the keys stay as they are and only what a player
+reads changes. One display label per slot, taken from `Worn.AllSlots`
+(`worn.go:57-63`): extra arms read "arm 3" to "arm 6"; wrists read "wrist 1"
+to "wrist 6", which renames the two natural wrists from "Wrist" to "Wrist 1"
+and "Wrist 2" in `inventory.template` and `inventory-look.template`. Equip,
+remove and inventory messages look the label up instead of printing the key.
+Test: equip into each extra arm and wrist slot; the message and the eq list
+name the same slot.
 
 **#307, #361, #357, #306, #305.** Copy and YAML: attack help describes the
 roll and the lost round; add tiers 50/40/30; delete the dead constant and its
@@ -78,7 +91,6 @@ make the effigy comment say it is hard, not impossible, to kill.
 - #249 (DoT "poisoned" tag): held by the M6 slice 1 session.
 - #236 (help index): needs `keywords.yaml`, which M6 slice 1 edits; do after
   it merges.
-- #270 (extra arm labels): needs a naming choice (question 3).
 - #217 (corpse selection) and #440 (shuffle-order tests): real but larger;
   better as their own branches.
 
