@@ -3,7 +3,6 @@ package shops
 import (
 	"math"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -24,8 +23,8 @@ type BuyOffer struct {
 //  4. Vendor's craft_support doesn't accept any of the item's tags.
 //  5. Vendor is at MaxStock for this item ("48 iron ores" overstock cap).
 //  6. Vendor can't afford the buy price without dropping below
-//     shopInv.GoldReserve(BalanceConfig.ShopGoldReserveRatio) — defaults
-//     to 0.50 when the config knob is unset.
+//     shopInv.GoldReserve(cfg.GoldReserveRatio), the ShopGoldReserveRatio
+//     knob carried on PricingConfig (0.50 when a cfg leaves it unset).
 //
 // Otherwise returns a BuyOffer with dynamic price from CalcBuyPrice.
 //
@@ -86,11 +85,11 @@ func EvaluateBuyRules(
 		price = flat
 	}
 
-	// Gold-reserve gate.
-	b := configs.GetBalanceConfig()
-	reserveRatio := float64(b.ShopGoldReserveRatio)
+	// Gold-reserve gate. The ratio comes in on cfg like every other pricing
+	// knob (#346); a hand-built cfg that leaves it unset gets the default.
+	reserveRatio := cfg.GoldReserveRatio
 	if reserveRatio <= 0 {
-		reserveRatio = 0.50 // fallback default
+		reserveRatio = defaultGoldReserveRatio
 	}
 	reserve := shopInv.GoldReserve(reserveRatio)
 	if !shopInv.CanAfford(price, reserve) {

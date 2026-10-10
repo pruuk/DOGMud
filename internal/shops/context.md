@@ -139,10 +139,12 @@ triggers in production today. The same holds for every live knob below.
 - **`ShopAbundanceThreshold`**: shipped `3.0`, Go default `3.0`. The
   `current/restockQty` ratio at which `ScarcityMultiplier` reaches
   `PriceFloor`; see the per-item normalization note above.
-- **`ShopGoldReserveRatio`**: shipped `0.50`, Go default `0.50`. Read
-  directly (not through `PricingConfig`) by `buyrules.go`'s
-  `EvaluateBuyRules` and by `modules/auctions/npc_buyers.go`. Fraction of a
-  shop's gold pool held back before it will buy from a seller.
+- **`ShopGoldReserveRatio`**: shipped `0.50`, Go default `0.50`. Carried as
+  `PricingConfig.GoldReserveRatio` (filled by `PricingConfigFromBalance`) and
+  read from there by `EvaluateBuyRules`, by the bauble offer in
+  `internal/actions/sell_bauble.go` and by `modules/auctions/npc_buyers.go`.
+  Fraction of a shop's starting gold held back before it will buy from a
+  seller.
 - **`BarterMaxDiscount`**: shipped `0.15`, Go default `0.15`. Read by
   `internal/actions` `tryPurchaseFromInventory` (through `barterDiscount`,
   which also folds in sight): the buy-side cap at Bartering 50.

@@ -171,13 +171,10 @@ func (o *official) Refund(n int)         { o.wallet.Refund(n) }
 func (o *official) Wallet() *NpcWallet   { return o.wallet }
 func (o *official) Flavor() string       { return "into the crown's vaults" }
 
-// reserveRatio returns the shop gold-reserve fraction from config (0.50 fallback).
+// reserveRatio returns the shop gold-reserve fraction, the PricingConfig
+// value shops.EvaluateBuyRules reads (#346).
 func reserveRatio() float64 {
-	r := float64(configs.GetBalanceConfig().ShopGoldReserveRatio)
-	if r <= 0 {
-		r = 0.50
-	}
-	return r
+	return shops.PricingConfigFromBalance().GoldReserveRatio
 }
 
 func persistShop(inv *shops.ShopInventory) {
