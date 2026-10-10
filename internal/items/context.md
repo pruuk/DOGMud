@@ -997,6 +997,8 @@ showing a numbered list when the name is ambiguous
 - UUID generation optimized for performance
 
 ### File Loading Optimization
+- `LoadDataFilesE() error`: the reload form of `LoadDataFiles`. Returns the load error (file named) instead of panicking; a set that fails to load leaves the previous set live. `reload items` uses it.
+
 ```go
 // Batch loading of all item specifications
 func LoadDataFiles() {

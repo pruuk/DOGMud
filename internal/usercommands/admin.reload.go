@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 /*
@@ -39,7 +40,12 @@ func Reload(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	switch strings.ToLower(rest) {
 	case `items`:
-		items.LoadDataFiles()
+		if err := items.LoadDataFilesE(); err != nil {
+			user.SendText(messaging.CategorySystem,
+				`<ansi fg="red">Items reload failed. The items loaded before are still in use.</ansi>`)
+			user.SendText(messaging.CategorySystem, util.EscapeAnsiTags(err.Error()))
+			return true, nil
+		}
 		user.SendText(messaging.CategorySystem, `Items reloaded.`)
 		return true, nil
 	case `biomes`:
