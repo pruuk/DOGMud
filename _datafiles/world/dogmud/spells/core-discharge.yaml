@@ -19,7 +19,25 @@ primarystat: willpower
 base_folds: 2
 effect_type: damage
 effect_magnitude: 150
-damage_multiplier: 2.0
+# damage_multiplier (#480, 2026-10-10). Intent since b4de5bad6: a missed
+# interrupt is heavy but survivable, about 60-70% of a mid player's health.
+# 2.0 met that until SpellDamageScale doubled (1.56 to 3.12, f68db5baf); it
+# then averaged about 2,245 a player. Arithmetic for the Core Guardian at its
+# authored statpool 2800 against the #480 reference player (530 HP, raw 0.56
+# physical), normal hit, shipped config.yaml:
+#   willpower  = 30 species + 2800 x 0.125 fighting mental share + 200 Core
+#                Matrix = 580
+#   skill mult = SkillMultiplier(41: Core Matrix 40 + 1) = 1 + 2 x sqrt(41/50)
+#                = 2.811
+#   raw        = 580 x 2.811 x 0.3 x SpellDamageScale 3.12 x Global 0.5 = 763
+#   mitigation = 0.50 + 0.45 x 0.06 / (0.06 + 0.40) = 0.559 on the curve
+#   mean hit   = 763 x 0.441 = 337, 64% of 530
+# Inside the instance the pool is 7 x gold paid: 200g (1400) about 44%, 300g
+# (2100) about 54%, 400g (2800) 64%. A crit skips mitigation to the knee and
+# scales by the caster's skill, so it still kills. Warden-Prime (9561) casts
+# this too, with no Core Matrix: about 11% at 300g. Pinned by
+# internal/hooks/core_discharge_balance_test.go.
+damage_multiplier: 0.3
 no_damage_interrupt: true
 categories:
   - harm_multi
