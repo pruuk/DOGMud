@@ -18,6 +18,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode/utf8"
 
 	"crypto/md5"
 
@@ -1141,17 +1142,65 @@ func ConvertToAscii(s string) string {
 		return s
 	}
 
-	var b strings.Builder
-	b.Grow(len(s))
+	buf := make([]byte, 0, len(s))
 
-	for _, r := range s {
-		if repl, ok := unicodeToAscii[r]; ok {
-			b.WriteString(repl)
-		} else {
-			b.WriteRune(r)
+	// A glyph that maps to nothing (a heavy rule, a marker) must not leave
+	// its neighbouring space behind. justDropped is true from a dropped glyph
+	// until the next visible rune; while it is set, a space that follows
+	// another space (or a line start) is skipped, and a line end trims the
+	// spaces the drop stranded. ANSI escapes are invisible to this.
+	justDropped := false
+	atBoundary := true // last visible output was a space or newline, or none yet
+	inEsc := false
+	trim := func() {
+		for len(buf) > 0 && buf[len(buf)-1] == ' ' {
+			buf = buf[:len(buf)-1]
 		}
 	}
-	return b.String()
+
+	for _, r := range s {
+		if inEsc {
+			buf = utf8.AppendRune(buf, r)
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+				inEsc = false
+			}
+			continue
+		}
+		if r == '\x1b' {
+			inEsc = true
+			buf = utf8.AppendRune(buf, r)
+			continue
+		}
+
+		repl, ok := unicodeToAscii[r]
+		if !ok {
+			repl = string(r)
+		}
+
+		if repl == "" {
+			if r != '️' && r != '︎' { // selectors trail their glyph; not a drop
+				justDropped = true
+			}
+			continue
+		}
+
+		if justDropped {
+			if r == '\n' || r == '\r' {
+				trim()
+				justDropped = false
+			} else if r == ' ' && atBoundary {
+				continue
+			} else {
+				justDropped = false
+			}
+		}
+		buf = append(buf, repl...)
+		atBoundary = repl[len(repl)-1] == ' ' || repl[len(repl)-1] == '\n'
+	}
+	if justDropped {
+		trim()
+	}
+	return string(buf)
 }
 
 // unicodeToAscii maps decorative Unicode runes to ASCII string equivalents.
@@ -1187,6 +1236,20 @@ var unicodeToAscii = map[rune]string{
 	// Map / directional
 	'▲': "^", '▼': "v", '△': "^", '▽': "v",
 	'≈': "~", '⌂': "#", '◆': "*", '●': "o", '○': "o",
+	// Heavy box rules (#253): dropped, not drawn. Only ━ ships in server
+	// text (help section rules and the banner rule); the rest of the heavy
+	// family is here so a new template cannot bring one back unconverted.
+	'━': "", '┃': "", '┅': "", '┇': "", '┉': "", '┋': "", '╍': "", '╏': "",
+	'┏': "", '┓': "", '┗': "", '┛': "",
+	'┣': "", '┫': "", '┳': "", '┻': "", '╋': "",
+	'╸': "", '╹': "", '╺': "", '╻': "",
+	// Pet, companion, death and counter markers, the quest star and the
+	// warning and check marks (#253): dropped; the word beside each still
+	// says it.
+	'♥': "", '♦': "", '☠': "", '⚔': "", '★': "", '⚠': "", '✓': "", '✗': "", '✕': "",
+	// Em and en dash: a hyphen, not nothing, so the words either side stay
+	// apart (#253).
+	'—': "-", '–': "-",
 	// No-break space: the crit banner close is glued to the line's last word
 	// with one (combat_helpers.go); an ASCII client gets a plain space.
 	' ': " ",

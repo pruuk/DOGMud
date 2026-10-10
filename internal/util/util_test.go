@@ -1208,6 +1208,19 @@ func TestConvertToAscii(t *testing.T) {
 		{"moon glyph", "☾", "("},
 		{"weather glyphs", "⚡❄", "!*"},
 		{"map glyphs", "▲▼≈⌂", "^v~#"},
+		// #253: heavy rules and the pet, companion, death and counter
+		// markers are dropped; dashes become a hyphen. A dropped glyph
+		// takes the space it leaves with it.
+		{"heavy rule dropped", "━━━ Usage ━━━", "Usage"},
+		{"heavy box dropped", "┏┓┗┛┃┣┫┳┻╋", ""},
+		{"heavy rule line is empty", "  ━━━━━━  \nnext", "\nnext"},
+		{"markers dropped", "♥friend ♦companion ☠dead", "friend companion dead"},
+		{"counter glyph dropped", "⚔ COUNTER!", "COUNTER!"},
+		{"counter glyph after ansi", "\x1b[31m⚔ COUNTER!\x1b[0m", "\x1b[31mCOUNTER!\x1b[0m"},
+		{"mid-line glyph keeps one space", "hit ⚔ hard", "hit hard"},
+		{"other symbols dropped", "⚠ ★ ✓ ✗ ✕ x", "x"},
+		{"em dash is a hyphen", "locked in — nowhere", "locked in - nowhere"},
+		{"en dash is a hyphen", "arms 3–6", "arms 3-6"},
 		{"unmapped high rune passthrough", "café", "café"},
 		// The crit banners hold a no-break space so the wrap keeps the
 		// banner words together; an ASCII-mode client gets a plain space.
