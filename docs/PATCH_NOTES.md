@@ -1,5 +1,35 @@
 # DOGMud Patch Notes
 
+## Unreleased: Wards, heals and who cast them
+
+- There are now three wards, and each says what it stops. Conviction Ward
+  turns aside physical blows only. The new Conviction Bulwark also blunts
+  spells. Chrysalis Cocoon, the strongest, blunts blows, spells and harsh
+  words alike. Type `conditions` to see which ward is on you.
+- You hold one ward at a time. Casting a different ward replaces the one
+  already there, and you are told which gave way. Potions, armor and
+  mutations that protect you still add on top of a ward.
+- Every healing spell now works over time, and each has its own pace. Mend
+  Flesh is gentle and long. Mend Wounds is strong and short. Of the group
+  heals, Mend All is light, Communion of Flesh is steady and the longest,
+  and Mass Mend is the strongest. Machines mend each other with Arc-Weld
+  Repair. You hold one healing spell at a time, as with wards, so a new
+  healing spell replaces Vital Surge or Chrysalis Regeneration; salves,
+  potions and food still add on top.
+- A spell that lays an effect on someone now gives one clear line to each
+  person there: the caster, the target and the room each read their own
+  line, written for that effect. When the spell is harmful, the target and
+  the people watching are told who cast it.
+- A poison or bleed that kills now counts as your kill, even if you have
+  walked away, logged out or died since you cast it. It counts for
+  reputation, crimes and bounties as any other kill would.
+- If you use a trigger that watches for "Your Minor Shield dissipates.",
+  change it: that line is now "Your Conviction Ward fades." A web client
+  trigger on the status "Minor Shield" should now look for the ward's name.
+- Your kills count again. Killing a creature had stopped adding to your
+  `killstats` and to the achievements that count kills. New kills are
+  counted from now on; kills from before the fix cannot be recovered.
+
 ## 2026-10-10: More loose ends
 
 - `get all lookout corpse` now takes from the lookout's corpse, not

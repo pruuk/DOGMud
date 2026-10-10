@@ -419,15 +419,20 @@ func (u *UserRecord) CommandFlagged(inputTxt string, flagData events.EventFlag, 
 
 }
 
+// QueueCondition queues a condition the producer has filled in, stamping this
+// user as the holder and the current life epoch. It is the door a caster
+// rides through (messaging M6 slice 1): a spell sets Caster and CasterCrit,
+// and every other field means what it means on events.Condition. The other
+// add doors here are this door with their own fields set.
+func (u *UserRecord) QueueCondition(evt events.Condition) {
+	evt.UserId = u.UserId
+	evt.MobInstanceId = 0
+	evt.LifeEpoch = u.lifeEpoch()
+	events.AddToQueue(evt)
+}
+
 func (u *UserRecord) AddCondition(conditionId int, source string) {
-
-	events.AddToQueue(events.Condition{
-		UserId:      u.UserId,
-		ConditionId: conditionId,
-		Source:      source,
-		LifeEpoch:   u.lifeEpoch(),
-	})
-
+	u.QueueCondition(events.Condition{ConditionId: conditionId, Source: source})
 }
 
 // AddConditionScaled queues a condition whose duration is scaled, the way potion
@@ -443,14 +448,7 @@ func (u *UserRecord) AddConditionScaled(conditionId int, durationMult float64, s
 		durationMult = 1.0
 	}
 
-	events.AddToQueue(events.Condition{
-		UserId:       u.UserId,
-		ConditionId:  conditionId,
-		Source:       source,
-		DurationMult: durationMult,
-		LifeEpoch:    u.lifeEpoch(),
-	})
-
+	u.QueueCondition(events.Condition{ConditionId: conditionId, Source: source, DurationMult: durationMult})
 }
 
 // AddConditionMagnitude queues a record with an exact trigger count and a
@@ -460,14 +458,7 @@ func (u *UserRecord) AddConditionScaled(conditionId int, durationMult float64, s
 // wants the notice too. triggers is the exact trigger count, which for a
 // one-round record is the rounds.
 func (u *UserRecord) AddConditionMagnitude(conditionId int, triggers int, magnitude float64, source string) {
-	events.AddToQueue(events.Condition{
-		UserId:      u.UserId,
-		ConditionId: conditionId,
-		Source:      source,
-		Triggers:    triggers,
-		Magnitude:   magnitude,
-		LifeEpoch:   u.lifeEpoch(),
-	})
+	u.QueueCondition(events.Condition{ConditionId: conditionId, Source: source, Triggers: triggers, Magnitude: magnitude})
 }
 
 // AddConditionTickScaled queues a tick_pool condition whose per-round amount
@@ -475,13 +466,7 @@ func (u *UserRecord) AddConditionMagnitude(conditionId int, triggers int, magnit
 // (Condition_ApplyConditions). A spell passes its caster's scale; 0 means
 // 1.0. The record's duration is the authored one.
 func (u *UserRecord) AddConditionTickScaled(conditionId int, scale float64, source string) {
-	events.AddToQueue(events.Condition{
-		UserId:      u.UserId,
-		ConditionId: conditionId,
-		Source:      source,
-		TickScale:   scale,
-		LifeEpoch:   u.lifeEpoch(),
-	})
+	u.QueueCondition(events.Condition{ConditionId: conditionId, Source: source, TickScale: scale})
 }
 
 // lifeEpoch is the epoch every queued condition is stamped with, so ApplyConditions can

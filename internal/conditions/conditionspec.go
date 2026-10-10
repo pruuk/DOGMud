@@ -185,6 +185,10 @@ type ConditionSpec struct {
 	// (2.0, the historic literal). The strongest held value wins.
 	ProgressMult float64 `yaml:"progress_mult,omitempty"`
 
+	// Family names the set this record replaces within instead of stacking:
+	// FamilyWard or FamilyHeal (family.go). Empty for every other record.
+	Family string `yaml:"family,omitempty"`
+
 	// YAML text fields: flavor text sent by the engine (replaces JS messaging).
 	//
 	// The authored keys name the PHASE and then the AUDIENCE, in the canonical
@@ -192,6 +196,12 @@ type ConditionSpec struct {
 	// half is `actee`, not `actor`: a condition is something that happens TO
 	// the character holding it, which is why this store's {actee} token means
 	// the holder while a spell's means the spell's target.
+	//
+	// start_actor is the CASTER's line when the caster is someone other than
+	// the holder (messaging M6 slice 1, section 2): it names the holder with
+	// {actee}. Start lines may also name the caster with {actor}; trigger and
+	// end lines may not, because no caster is known when they are told.
+	StartActorText  string `yaml:"start_actor,omitempty"`
 	StartUserText   string `yaml:"start_actee,omitempty"`
 	StartRoomText   string `yaml:"start_observer,omitempty"`
 	TriggerUserText string `yaml:"trigger_actee,omitempty"`
@@ -337,7 +347,7 @@ func (b *ConditionSpec) Validate() error {
 	// panic, so a typo cannot reach a player as raw text. Ambient stores
 	// (weather, gossip, tips) keep warning until M4b sets the two-tier policy.
 	for _, text := range []string{
-		b.StartUserText, b.StartRoomText,
+		b.StartActorText, b.StartUserText, b.StartRoomText,
 		b.TriggerUserText, b.TriggerRoomText,
 		b.EndUserText, b.EndRoomText,
 	} {
@@ -352,6 +362,10 @@ func (b *ConditionSpec) Validate() error {
 	}
 
 	if err := b.validateEffects(); err != nil {
+		return err
+	}
+
+	if err := b.validateFamily(); err != nil {
 		return err
 	}
 

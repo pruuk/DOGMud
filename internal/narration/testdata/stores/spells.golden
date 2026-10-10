@@ -48,6 +48,8 @@ spell|conviction-armor|cast_actor => You solidify your conviction into a protect
 spell|conviction-armor|cast_observer => <ansi fg="username">Aliceia</ansi> concentrates as conviction hardens into visible armor.
 spell|conviction-barrage|cast_actor => You compress your conviction into hundreds of razor-sharp fragments!
 spell|conviction-barrage|cast_observer => <ansi fg="username">Aliceia</ansi> raises their arms as the air fills with crackling shards of light!
+spell|conviction-bulwark|cast_actor => You raise your belief into a bulwark.
+spell|conviction-bulwark|cast_observer => <ansi fg="username">Aliceia</ansi> lifts their hands as belief gathers into a bulwark.
 spell|conviction-spike|cast_actor => You focus your conviction into a sharp point of force.
 spell|conviction-spike|cast_observer => <ansi fg="username">Aliceia</ansi> narrows their eyes, conviction crystallizing in the air.
 spell|conviction-surge|cast_actor => You channel conviction into empowering energy.

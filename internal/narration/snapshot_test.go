@@ -926,6 +926,11 @@ func buildConditionsGolden(t *testing.T) string {
 			// Actee slot itself. Same stand-in name as every other store, so the
 			// rendered rows stay comparable.
 			roles := spec.Narrate(ph.p, kindBNoTarget.ActorName, kindBNoTarget.ActorPlainName)
+			// start_actor (messaging M6 slice 1) is the caster's line, which
+			// names the holder; only the start phase has one.
+			if roles.Actor != "" {
+				fmt.Fprintf(&b, "condition|%d|start_actor => %s\n", id, roles.Actor)
+			}
 			if roles.Actee != "" {
 				fmt.Fprintf(&b, "condition|%d|%s => %s\n", id, ph.userKey, roles.Actee)
 			}

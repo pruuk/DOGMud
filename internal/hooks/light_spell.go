@@ -3,8 +3,10 @@ package hooks
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/state"
 )
 
 // magnitudeSpellApplication reports how a spell's condition should be applied
@@ -55,29 +57,27 @@ func shroudSpellApplication(spellData *spells.SpellData, caster *characters.Char
 // spellConditionTarget is what a spell condition lands on: a player record or
 // a mob, both of which queue the narrating events.Condition.
 type spellConditionTarget interface {
-	AddCondition(conditionId int, source string)
-	AddConditionMagnitude(conditionId int, triggers int, magnitude float64, source string)
-	AddConditionTickScaled(conditionId int, scale float64, source string)
+	QueueCondition(evt events.Condition)
 }
 
 // applySpellCondition applies one of a spell's conditions to its target: a
 // magnitude-scaled light or sight at the caster's scaled value and duration,
 // a heal- or damage-over-time at the caster's spellTickScale (the apply hook
 // computes the amount where it lands), anything else at its authored values.
-// Every door queues events.Condition, so the holder reads the start notice
-// either way.
-func applySpellCondition(target spellConditionTarget, spellData *spells.SpellData, caster *characters.Character, conditionId int) {
+// The event names the caster (casterRef) and carries the crit marker for the
+// caster's start line (messaging M6 slice 1), so the holder reads the start
+// lines with the caster's name, and a tick that kills credits the caster.
+// castStart marks a cast that dropped its own trio for the start lines
+// (events.Condition.CastStart).
+func applySpellCondition(target spellConditionTarget, spellData *spells.SpellData, caster *characters.Character, conditionId int,
+	casterRef state.ActorRef, castStart, crit bool) {
+	evt := events.Condition{ConditionId: conditionId, Source: "spell", Caster: casterRef, CastStart: castStart, CasterCrit: crit}
 	if mag, ok := shroudSpellApplication(spellData, caster, conditionId); ok {
-		target.AddConditionMagnitude(conditionId, 0, mag, "spell")
-		return
+		evt.Magnitude = mag
+	} else if mag, trig, ok := magnitudeSpellApplication(spellData, caster, conditionId); ok {
+		evt.Magnitude, evt.Triggers = mag, trig
+	} else if spec := conditions.GetConditionSpec(conditionId); spec != nil && spec.TickPool != "" {
+		evt.TickScale = spellTickScale(caster)
 	}
-	if mag, trig, ok := magnitudeSpellApplication(spellData, caster, conditionId); ok {
-		target.AddConditionMagnitude(conditionId, trig, mag, "spell")
-		return
-	}
-	if spec := conditions.GetConditionSpec(conditionId); spec != nil && spec.TickPool != "" {
-		target.AddConditionTickScaled(conditionId, spellTickScale(caster), "spell")
-		return
-	}
-	target.AddCondition(conditionId, "spell")
+	target.QueueCondition(evt)
 }

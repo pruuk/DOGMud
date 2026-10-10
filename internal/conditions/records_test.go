@@ -60,7 +60,7 @@ func TestShippedConditionRecordsMatchTestHelperShape(t *testing.T) {
 
 	ids := []int{
 		ConditionIdWarcry, ConditionIdRally, ConditionIdOffBalance, ConditionIdRecovering,
-		ConditionIdMinorShield, ConditionIdRegenerating, ConditionIdPoisoned, ConditionIdBleeding,
+		ConditionIdConvictionWard, ConditionIdRegenerating, ConditionIdPoisoned, ConditionIdBleeding,
 		ConditionIdEnchantWithdrawal,
 	}
 

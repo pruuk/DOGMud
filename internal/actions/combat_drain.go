@@ -144,7 +144,7 @@ func ExecuteDrain(actor Actor) DrainResult {
 	bleedDmg := 0
 	if result.Hit {
 		bleedDmg = bleedPerRound(char.Stats.Strength.ValueAdj, cfg.DrainBleedStrengthDivisor, cfg.DrainBleedMin)
-		_ = target.Char.AddConditionMagnitude(conditions.ConditionIdBleeding, int(cfg.DrainBleedRounds), -float64(bleedDmg), "drain")
+		_ = target.Char.AddConditionMagnitudeBy(conditions.ConditionIdBleeding, int(cfg.DrainBleedRounds), -float64(bleedDmg), "drain", ActorRefOf(actor))
 	}
 
 	// Lifesteal: heal the attacker for a fraction of damage dealt. Gated on
@@ -311,7 +311,7 @@ func ExecuteDrainArea(actor Actor) DrainAreaResult {
 		// Bleed is a status effect (binary), so it stays gated on a clean hit.
 		if moveResult.Hit {
 			pr.BleedDmg = bleedPerRound(char.Stats.Strength.ValueAdj, cfg.DrainBleedStrengthDivisor, cfg.DrainBleedMin)
-			_ = target.Character.AddConditionMagnitude(conditions.ConditionIdBleeding, int(cfg.DrainBleedRounds), -float64(pr.BleedDmg), "drain")
+			_ = target.Character.AddConditionMagnitudeBy(conditions.ConditionIdBleeding, int(cfg.DrainBleedRounds), -float64(pr.BleedDmg), "drain", ActorRefOf(actor))
 		}
 
 		// Lifesteal reads the damage actually applied, per U6's shared partial

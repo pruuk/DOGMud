@@ -207,25 +207,27 @@ func spellHasCategory(sd *spells.SpellData, category string) bool {
 
 // spellEffectAlreadyActive returns true when the effect this spell would
 // grant is already on the character. Branches:
+//   - spell.EffectType == "shield": skip if any ward is active, the ward
+//     family (conditions.FamilyWard; messaging M6 slice 1). Each shield spell
+//     lands its own ward and a new ward replaces the old, so a second ward
+//     would only swap one for another.
+//   - spell.EffectType == "heal": skip if any heal is active, the heal
+//     family, for the same reason.
 //   - spell.ConditionIds non-empty: skip if any is active (HasCondition)
-//   - spell.EffectType == "shield": skip if the Minor Shield record (condition
-//     119, see _datafiles/world/dogmud/conditions/119-minor_shield.yaml) is
-//     already granting mitigation. Spell resolution lands shield-type
-//     casts via AddConditionMagnitude(ConditionIdMinorShield, ...) — checked here via
-//     the Conditions.HasEffect(EffectMitigationFlat) door, NOT
-//     Character.HasShield(), which checks for equipped shield items or
-//     species natural-bash, neither of which is what this spell grants.
 //
-// If neither mechanism matches, returns false (conservative — may recast but
-// won't silently stall the tree).
+// If no branch matches, returns false (conservative: may recast but won't
+// silently stall the tree).
 func spellEffectAlreadyActive(char *characters.Character, sd *spells.SpellData) bool {
+	switch sd.EffectType {
+	case "shield":
+		return char.Conditions.HasFamily(conditions.FamilyWard)
+	case "heal":
+		return char.Conditions.HasFamily(conditions.FamilyHeal)
+	}
 	for _, bid := range sd.ConditionIds {
 		if char.HasCondition(bid) {
 			return true
 		}
-	}
-	if sd.EffectType == "shield" && char.Conditions.HasEffect(conditions.EffectMitigationFlat) {
-		return true
 	}
 	return false
 }

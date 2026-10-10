@@ -1,9 +1,9 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">mass-mend</ansi> spell
 
-The <ansi fg="command">Mass Mend</ansi> spell radiates Chrysalis healing energy outward, mending
-the wounds of every ally in the room and leaving each of them with a
-sustained regeneration effect that continues to restore health over
-time. The caster draws on their own vitality to fuel this potent heal.
+The <ansi fg="command">Mass Mend</ansi> spell sends a strong tide of healing over every ally in
+the room. Each of them heals much faster for a short while. It is the
+strongest of the group heals. The caster pays for it with a portion of
+their own health.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -15,10 +15,10 @@ time. The caster draws on their own vitality to fuel this potent heal.
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 16
   <ansi fg="yellow">Conv. Cost:  </ansi> 120
-  <ansi fg="yellow">Effect:      </ansi> Heals all allies in the room, then grants regeneration
+  <ansi fg="yellow">Healing:     </ansi> Strong, over a short time, for all allies here
 
 <ansi fg="white-bold">Notes:</ansi>
   - Also costs a portion of the caster's own health to cast.
-  - Combines immediate healing with a lasting regeneration condition.
+  - Each ally holds one healing spell at a time. A new one replaces the old.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help cast</ansi>

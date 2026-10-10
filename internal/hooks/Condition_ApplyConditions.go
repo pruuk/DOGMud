@@ -112,7 +112,11 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 	//
 	// A darkness's start line is judged against the room as it was before the
 	// darkness lands (owner rule, 2026-10-05), so the snapshot comes first.
-	startSnap := darknessStartSnapshot(conditionInfo, targetChar, wasAlreadyActive)
+	startSnap := darknessStartSnapshot(conditionInfo, targetChar, wasAlreadyActive && !evt.CastStart)
+	// A ward or a heal replaces its family's other record (owner rulings R4,
+	// R6); the add discards it, so its name is read first for the
+	// replacement line.
+	replaced := familyRivalNames(&targetChar.Conditions, evt.ConditionId)
 	var addErr error
 	if evt.Magnitude != 0 || evt.Triggers > 0 {
 		addErr = targetChar.AddConditionMagnitude(evt.ConditionId, evt.Triggers, evt.Magnitude, evt.Source)
@@ -125,71 +129,43 @@ func ApplyConditions(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 
+	// The record remembers who applied it and from what, on every door
+	// (messaging M6 slice 1, section 1): the newest application owns it.
+	targetChar.Conditions.Stamp(evt.ConditionId, evt.Source, evt.Caster)
+
 	// A tick_pool condition's per-round amount is computed here, where the
 	// record now exists, on a fresh application and a refresh alike, at the
 	// applier's scale (a spell's caster scale; 0, meaning 1.0, for the rest).
 	setTickAmountAtApply(targetChar, conditionInfo, evt.ConditionId, evt.TickScale)
 
+	holder, holderKnown := conditionPartyOf(state.ActorRef{UserId: evt.UserId, MobInstanceId: evt.MobInstanceId})
+	if holderKnown && len(replaced) > 0 {
+		narrateFamilyReplacement(conditionInfo, replaced, holder, startUnseenBy)
+	}
+
 	//
-	// Send the start notice (authored, or the generic line; a secret condition is
-	// silent) only on first application, not on refresh.
+	// Send the start lines (authored, or the generic holder line; a secret
+	// condition is silent) only on first application, not on refresh. One line
+	// per audience: the caster, the holder and the room (narrateConditionStart).
 	//
-	// A mob holder has no client, so only room text can reach anyone; without
-	// it there is nothing to render and the name and room lookups are skipped.
+	// A mob holder has no client, so with no caster line and no room text
+	// there is nothing to render.
+	//
+	// A spell that dropped its own lines for these (evt.CastStart) is told
+	// on a refresh too: its cast judged the holder unaffected, but a second
+	// cast in the same round can land on the record the first just made, and
+	// those lines are its only ones. Any other refresh stays silent.
 	startText := conditionInfo.Narration(conditions.PhaseStart)
 	holderCanRead := evt.UserId != 0 && len(startText.Actee) > 0
-	if !wasAlreadyActive && (holderCanRead || len(startText.Observer) > 0) {
-		var charName, charPlainName string
-		var holder *users.UserRecord
-		var roomId, excludeId int
-
-		if evt.UserId != 0 {
-			if u := users.GetByUserId(evt.UserId); u != nil {
-				charName = u.Character.GetCharacterName(true)
-				charPlainName = u.Character.GetCharacterName(false)
-				roomId = u.Character.RoomId
-				excludeId = u.UserId
-				holder = u
-			}
-		} else if evt.MobInstanceId != 0 {
-			if m := mobs.GetInstance(evt.MobInstanceId); m != nil {
-				charName, charPlainName = conditionMobNames(m)
-				roomId = m.Character.RoomId
-			}
-		}
-
-		if charName != "" {
-			roles := conditionInfo.Narrate(conditions.PhaseStart, charName, charPlainName)
-			// The holder is the ACTEE: the condition happens to them. A mob holder
-			// has no client, so its line is rendered and dropped.
-			if roles.Actee != "" && holder != nil {
-				holder.SendText(messaging.CategoryConditionApply, roles.Actee)
-			}
-			// Visual, not audio. Start text describes what the room SEES
-			// ("A warm glow surrounds Alice"), and Room.SendText is never
-			// sight-gated, so it reached blind and unsighted observers. M2
-			// fixed the same defect for a spell's cast_observer line.
-			if roles.Observer != "" && !hideOnHidden {
-				if r := rooms.LoadRoom(roomId); r != nil {
-					// HidingNames, not plain SendTextVisual. Sight-gating alone
-					// leaves the line leaning on tag-based Anonymize, which by
-					// its own docstring only strips identity TAGS and cannot
-					// see a bare name. M4d PR 1 filed that as a latent defect
-					// waiting for the first bare name to be authored; condition
-					// 115 authors `{actee_plain}` ("{actee_plain} is raked
-					// open, blood welling from ragged claw-wounds."), so it was
-					// live. Read in play 2026-09-21: "Cave Crawler is raked
-					// open..." among lines that otherwise all said "A figure".
-					//
-					// Only to the players who perceived the holder before it
-					// landed (#458): a sneak-hidden player quitting read to
-					// the room as "Ordel Quist sits down and begins to
-					// meditate."
-					sendConditionStartRoomText(r, startSnap,
-						roles.Observer, []string{charPlainName}, append(startUnseenBy, excludeId)...)
-				}
-			}
-		}
+	casterCanRead := evt.Caster.UserId != 0 && len(startText.Actor) > 0
+	if (!wasAlreadyActive || evt.CastStart) && holderKnown && (holderCanRead || casterCanRead || len(startText.Observer) > 0) {
+		// The room line is visual and hides names (sendConditionStartRoomText):
+		// condition 115 authors a bare {actee_plain}, which tag-based Anonymize
+		// cannot see; read in play 2026-09-21 as "Cave Crawler is raked
+		// open..." among lines that otherwise all said "A figure". It goes
+		// only to the players who perceived the holder before it landed
+		// (startUnseenBy, #458).
+		narrateConditionStart(conditionInfo, evt, holder, startSnap, hideOnHidden, startUnseenBy)
 	}
 
 	// Remove conditions listed in start_remove_conditions (cure effects)

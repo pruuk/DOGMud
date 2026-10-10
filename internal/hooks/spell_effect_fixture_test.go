@@ -89,6 +89,9 @@ func newSpellParityFixture(t *testing.T, out combat.ChannelDefenceResult) *spell
 		drainPlain(id)
 	}
 	events.DrainQueuedPlayerAttackedMobsForTest(0)
+	// A ward or a heal lands through the condition queue (messaging M6 slice
+	// 1); an earlier test's leftover event must not land in this one.
+	events.DrainQueuedMobConditionsForTest(0) // zero drains every holder
 	return f
 }
 

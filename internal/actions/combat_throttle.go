@@ -143,7 +143,7 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 		// Strength / ThrottleBleedStrengthDivisor per round, floor
 		// ThrottleBleedMin); the choke's primary DoT is stamina drain.
 		bleedDmg = bleedPerRound(char.Stats.Strength.ValueAdj, cfg.ThrottleBleedStrengthDivisor, cfg.ThrottleBleedMin)
-		_ = target.Char.AddConditionMagnitude(conditions.ConditionIdBleeding, int(cfg.ThrottleBleedRounds), -float64(bleedDmg), "throttle")
+		_ = target.Char.AddConditionMagnitudeBy(conditions.ConditionIdBleeding, int(cfg.ThrottleBleedRounds), -float64(bleedDmg), "throttle", ActorRefOf(actor))
 
 		// Stamina-over-time: apply the Throttled DoT condition (id 89).
 		_ = target.Char.AddCondition(89, false)

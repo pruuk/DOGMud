@@ -1,0 +1,20 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">wards</ansi>
+
+A ward is a spell that turns aside part of the damage that reaches its
+target. Each ward blocks certain kinds of damage and no others.
+
+  <ansi fg="command">Conviction Ward</ansi>     Physical blows. The weakest and cheapest.
+  <ansi fg="command">Conviction Bulwark</ansi>  Physical blows and spells.
+  <ansi fg="command">Chrysalis Cocoon</ansi>    Physical blows, spells and harsh words. The strongest.
+
+A target holds one ward at a time. Casting a different ward replaces the one
+already there, and the target is told which ward gave way. Casting the same
+ward again renews it.
+
+Wards do not cancel other protection. Potions, armor, gear and mutations
+that guard you still add their protection on top of a ward.
+
+Type <ansi fg="command">conditions</ansi> to see which ward is on you.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help conviction-ward</ansi>, <ansi fg="command">help conviction-bulwark</ansi>,
+          <ansi fg="command">help chrysalis-cocoon</ansi>, <ansi fg="command">help conditions</ansi>

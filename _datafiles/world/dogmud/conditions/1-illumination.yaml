@@ -9,6 +9,7 @@ effects:
 flags:
   - adjustable
   - cancellable
+start_actor: "A warm glow blooms around {actee}."
 start_actee: "A warm glow surrounds you."
 start_observer: "A warm glow surrounds {actee_plain}."
 end_actee: "Your glow fades away."

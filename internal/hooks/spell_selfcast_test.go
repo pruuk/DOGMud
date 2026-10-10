@@ -37,8 +37,9 @@ func TestSpellSelfCast_AMobOnItselfIsSeenCleansedAndRecorded(t *testing.T) {
 		f := newSpellParityFixture(t, spellContestAttackWin())
 
 		ms.cast(f, shieldSpellForParityTest())
+		landQueuedConditions()
 
-		assert.Equal(t, 1, countContaining(drainPlain(3), "A shimmering barrier surrounds Skeleton"))
+		assert.Equal(t, 1, countContaining(drainPlain(3), "A faint ward of conviction shimmers around Skeleton"))
 		require.Len(t, f.records, 1, "a self-cast is recorded")
 		assert.Equal(t, combat.Mob, f.records[0].src)
 		assert.True(t, f.records[0].hit)

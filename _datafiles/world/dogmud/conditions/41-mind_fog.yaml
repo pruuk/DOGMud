@@ -6,5 +6,7 @@ triggercount: 9
 statmods:
   perception: -15
   willpower: -10
-start_actee: A thick fog descends over your thoughts...
+start_actor: "A thick fog descends over {actee}'s thoughts."
+start_actee: "{actor}'s spell lays a thick fog over your thoughts."
+start_observer: "{actee}'s eyes glaze over under {actor}'s spell."
 end_actee: The fog lifts from your mind and clarity returns.

@@ -944,6 +944,13 @@ func (m *Mob) AddConditionScaled(conditionId int, durationMult float64, source s
 // like a player caster's, on the first cast, not only on a recast.
 func (m *Mob) AddConditionTickScaled(conditionId int, scale float64, source string)
 
+// QueueCondition (messaging M6 slice 1) is the mob twin of
+// UserRecord.QueueCondition: it queues a condition the producer filled in,
+// stamping the mob as the holder and its life epoch. A spell's caster rides
+// through it (Caster, CasterCrit, CastStart); the four add doors above are
+// this door with their own fields set.
+func (m *Mob) QueueCondition(evt events.Condition)
+
 // Command execution through Input events
 // All mob commands go through the same event system as player commands
 ```

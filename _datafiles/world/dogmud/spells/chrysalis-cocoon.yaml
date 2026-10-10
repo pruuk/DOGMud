@@ -14,8 +14,10 @@ primarystat: willpower
 base_folds: 8
 effect_type: shield
 effect_magnitude: 125
+# The ward this spell lands: physical, spell and social, the strongest of
+# the three (messaging M6 slice 1, owner ruling R7).
 condition_ids:
-  - 52
+  - 136
 categories:
   - self_defense
 cast_actor: "You draw living Chrysalis around the target, weaving a protective cocoon."

@@ -1,0 +1,19 @@
+conditionid: 119
+name: Conviction Ward
+description: A ward of hardened belief turns aside some of the physical
+  blows that reach you. It does nothing against spells or harsh words. A
+  newer ward takes its place rather than adding to it.
+# The ward family (messaging M6 slice 1, owner rulings R4 and R6): a new
+# ward replaces this one instead of stacking. Potions and gear still stack.
+family: ward
+triggerrate: 1 round
+# A floor for the born-dead guard; the spell sets the real count from its
+# caster (applySpellShield).
+triggercount: 10
+effects:
+  mitigation_flat: magnitude
+start_actor: "Your conviction hardens into a ward around {actee}."
+start_actee: "A ward of hardened conviction settles around you."
+start_observer: "A faint ward of conviction shimmers around {actee}."
+end_actee: "Your Conviction Ward fades."
+end_observer: "The ward around {actee} fades."

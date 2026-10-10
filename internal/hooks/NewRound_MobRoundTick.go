@@ -240,14 +240,17 @@ func tickMobConditions(mob *mobs.Mob, mobInstanceId int) {
 					// Hence the sign split; ApplyHarm takes a POSITIVE amount, so
 					// negate.
 					//
-					// DoT conditions carry no applier, so the harm source is anonymous
-					// (state.ActorRef{}). See ApplyHarm's docstring.
+					// The harm is the record's caster's (#240): a tick that kills
+					// names them, and a health tick credits them in the damage
+					// map every mob-death consumer reads. A record nobody cast
+					// harms anonymously, as before.
 					switch mobConditionSpec.TickPool {
 					case "health":
 						if tickAmt > 0 {
 							mob.Character.ApplyRestore(characters.PoolHealth, tickAmt)
 						} else if tickAmt < 0 {
-							mob.Character.ApplyHarm(characters.PoolHealth, -tickAmt, state.ActorRef{})
+							creditMobHarm(mob, condition.Caster, -tickAmt)
+							mob.Character.ApplyHarm(characters.PoolHealth, -tickAmt, condition.Caster)
 							cancelCraftOrSalvageOnDamage(&mob.Character)
 							cancelDamageConditions(&mob.Character)
 							// See tickCauseFor and deathCauseFor: captures the
@@ -266,13 +269,13 @@ func tickMobConditions(mob *mobs.Mob, mobInstanceId int) {
 						if tickAmt > 0 {
 							mob.Character.ApplyRestore(characters.PoolStamina, tickAmt)
 						} else if tickAmt < 0 {
-							mob.Character.ApplyHarm(characters.PoolStamina, -tickAmt, state.ActorRef{})
+							mob.Character.ApplyHarm(characters.PoolStamina, -tickAmt, condition.Caster)
 						}
 					case "conviction":
 						if tickAmt > 0 {
 							mob.Character.ApplyRestore(characters.PoolConviction, tickAmt)
 						} else if tickAmt < 0 {
-							mob.Character.ApplyHarm(characters.PoolConviction, -tickAmt, state.ActorRef{})
+							mob.Character.ApplyHarm(characters.PoolConviction, -tickAmt, condition.Caster)
 						}
 					}
 				}

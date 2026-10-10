@@ -255,15 +255,23 @@ func (c *Character) AddConditionScaled(conditionId int, durationMult float64) er
 // own triggercount. Every record that uses this door today ticks once a
 // round, so the trigger count is the rounds; a stacking record takes it as the
 // new stack's rounds. source overwrites the held record's Source on every
-// call, so a stacking record carries its last applier's source.
+// call, so a stacking record carries its last applier's source. It is
+// AddConditionMagnitudeBy with no caster.
 func (c *Character) AddConditionMagnitude(conditionId int, triggers int, magnitude float64, source string) error {
+	return c.AddConditionMagnitudeBy(conditionId, triggers, magnitude, source, state.ActorRef{})
+}
+
+// AddConditionMagnitudeBy is AddConditionMagnitude with the record's caster
+// (messaging M6 slice 1): the spell dot and the combat bleeds name who
+// opened them, so a tick that kills credits that caster. Source and caster
+// are stamped on every call (Conditions.Stamp), so a stacking record carries
+// its newest applier's.
+func (c *Character) AddConditionMagnitudeBy(conditionId int, triggers int, magnitude float64, source string, caster state.ActorRef) error {
 	conditionId = int(math.Abs(float64(conditionId)))
 	if !c.Conditions.AddConditionMagnitude(conditionId, triggers, magnitude) {
 		return fmt.Errorf(`failed to add condition. target: "%s" conditionId: %d`, c.Name, conditionId)
 	}
-	for _, b := range c.Conditions.GetConditions(conditionId) {
-		b.Source = source
-	}
+	c.Conditions.Stamp(conditionId, source, caster)
 	refused := c.hideForStealthRecord(conditionId)
 	_ = c.Validate()
 	if refused {

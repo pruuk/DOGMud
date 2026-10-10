@@ -5,6 +5,7 @@ triggerrate: 1 round
 triggercount: 20
 statmods:
   vitality: 30
+start_actor: "Solidified conviction wraps around {actee} like armor."
 start_actee: Solidified conviction wraps around your body like armor.
 start_observer: "{actee} is encased in a shimmering layer of conviction."
 end_actee: The conviction armor fades from your body.

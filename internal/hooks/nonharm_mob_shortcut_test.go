@@ -58,7 +58,9 @@ func TestNonHarmCastAtAMobRunsNoContest(t *testing.T) {
 	// applySpellHeal applies a regenerating condition rather than an
 	// instant heal (spell_help_effects.go); confirm the effect actually
 	// applied rather than asserting on Health, which the applier never
-	// touches directly.
+	// touches directly. It travels the condition event, so it is landed
+	// first (messaging M6 slice 1).
+	landQueuedConditions()
 	if !mob.Character.HasCondition(conditions.ConditionIdRegenerating) {
 		t.Error("the heal did not apply: no regenerating condition on the mob")
 	}

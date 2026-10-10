@@ -129,7 +129,7 @@ func ExecuteRake(actor Actor) RakeResult {
 	bleedDmg := 0
 	if result.Hit {
 		bleedDmg = bleedPerRound(char.Stats.Strength.ValueAdj, cfg.RakeBleedStrengthDivisor, cfg.RakeBleedMin)
-		_ = target.Char.AddConditionMagnitude(conditions.ConditionIdBleeding, int(cfg.RakeBleedRounds), -float64(bleedDmg), "rake")
+		_ = target.Char.AddConditionMagnitudeBy(conditions.ConditionIdBleeding, int(cfg.RakeBleedRounds), -float64(bleedDmg), "rake", ActorRefOf(actor))
 	}
 
 	// Determine source/target types for analytics.

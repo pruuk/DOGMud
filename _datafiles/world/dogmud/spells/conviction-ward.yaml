@@ -14,6 +14,10 @@ primarystat: willpower
 base_folds: 4
 effect_type: shield
 effect_magnitude: 75
+# The ward this spell lands: physical only, the weakest of the three
+# (messaging M6 slice 1, owner ruling R7).
+condition_ids:
+  - 119
 categories:
   - self_defense
 cast_actor: "You solidify your belief into a protective barrier."

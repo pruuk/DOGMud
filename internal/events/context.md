@@ -630,6 +630,17 @@ chatter (`IsCommunication`) and the reader is deafened.
 `internal/hooks/Message_SendMessages.go` applies it on both of its delivery
 branches, and tests read it rather than copy the rule.
 
+`Condition` also carries `Caster state.ActorRef`, `CasterCrit bool` and
+`CastStart bool` (messaging M6 slice 1): who cast it, which
+`hooks.ApplyConditions` stamps on the record and names in the start lines;
+whether the crit marker rides the caster's start line; and whether the spell
+dropped its own generic lines because the condition's start lines tell every
+audience. `CastStart` makes `ApplyConditions` tell those start lines even when
+the record is already held (two casts in one round both judge the holder
+unaffected before either event lands); any other refresh stays silent.
+`users.UserRecord.QueueCondition` and `mobs.Mob.QueueCondition` are the doors
+that carry them.
+
 `Condition` (`eventtypes.go`) carries `TickScale float64` (tick amount at
 apply, 2026-09-28) alongside `Magnitude`/`Triggers` and `DurationMult`: it
 scales a `tick_pool` condition's per-round amount, computed where the

@@ -13,6 +13,6 @@ mutatorid: training-combat
 #decayintoid: another-alert-id
 #respawnrate: noon
 #decayrate: sunset
-playerconditionids: [32] # Extra Attentive
+playerconditionids: [32] # Vital Surge here (Extra Attentive in the default world)
 #mobconditionids: []
 #nativeconditionids: []

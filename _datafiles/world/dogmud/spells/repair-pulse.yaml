@@ -19,5 +19,11 @@ primarystat: willpower
 base_folds: 2
 effect_type: heal
 effect_magnitude: 8
+# The heal this spell lands, its multiplier on the holder's natural healing
+# (effect_magnitude) and its own duration (the condition's triggercount),
+# per the slice 1 identity table (messaging M6 slice 1, owner ruling R9):
+# as before slice 1.
+condition_ids:
+  - 142
 cast_actor: "Arc-light gathers between your manipulators."
 cast_observer: "{actor} crackles with hard blue-white arc-light, current arcing toward {actee}."

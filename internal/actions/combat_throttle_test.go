@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/stretchr/testify/assert"
@@ -137,7 +138,7 @@ func TestThrottle_Executed_BleedAndCondition(t *testing.T) {
 		char.SetAggro(0, targetMob.InstanceId, characters.DefaultAttack)
 		char.Cooldowns = characters.Cooldowns{}
 
-		res = ExecuteThrottle(newStubActor(char, newTestRoom()))
+		res = ExecuteThrottle(&idStubActor{stubActor: newStubActor(char, newTestRoom()), userId: 31})
 		if res.Executed && res.MoveResult.Hit {
 			hitSeen = true
 			break
@@ -161,6 +162,8 @@ func TestThrottle_Executed_BleedAndCondition(t *testing.T) {
 	if assert.Len(t, held, 1, "expected exactly one held Bleeding record") {
 		assert.Less(t, held[0].Magnitude, 0.0, "throttle's Bleeding record must carry a negative magnitude")
 		assert.Less(t, held[0].TickAmount, 0, "throttle's Bleeding record must carry a negative tick snapshot")
+		assert.Equal(t, state.ActorRef{UserId: 31}, held[0].Caster,
+			"the bleed names its attacker, so a bleed kill credits them (#240)")
 	}
 
 	// BleedDmg should be at least the minimum.

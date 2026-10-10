@@ -119,7 +119,7 @@ func TestApplyPetDamage_RespectsPhysicalMitigation(t *testing.T) {
 		return c
 	}
 
-	// The Minor Shield record's mitigation_flat effect feeds
+	// The Conviction Ward record's mitigation_flat effect feeds
 	// GetPhysicalMitigation()'s non-gear term, so it sets mitigation without
 	// needing the item data files loaded.
 	//
@@ -137,7 +137,7 @@ func TestApplyPetDamage_RespectsPhysicalMitigation(t *testing.T) {
 		c.HealthMax.Value = 500
 		c.Health = 500
 		if mitigationPct > 0 {
-			_ = c.AddConditionMagnitude(conditions.ConditionIdMinorShield, 100, float64(mitigationPct), "test")
+			_ = c.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 100, float64(mitigationPct), "test")
 		}
 		return c
 	}

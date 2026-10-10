@@ -46,7 +46,7 @@ verbs.
 | Rally | Rally | 80 |
 | Defense penalty (failed grapple) | Off Balance | 117 |
 | Recovery penalty (standing up) | Recovering | 118 |
-| Shield | Minor Shield | 119 |
+| Shield | Conviction Ward (renamed from Minor Shield, messaging M6 slice 1) | 119 |
 | Regenerating | Regenerating | 120 |
 | Poisoned (the spell dot) | Poisoned | 121 |
 | Bleeding | Bleeding | 122 |
@@ -75,7 +75,9 @@ Combat reads timed state through `Conditions.Effect(kind)` and
 | `attacks_cap` | `calcSwingCount`, `internal/combat/combat_helpers.go` |
 | `damage_mult` | the damage mean and crit base, same file |
 | `defense_mult` | the defense score, same file |
-| `mitigation_flat` | `Character.GetPhysicalMitigation`, `internal/characters/combat.go`; `internal/combat/ai.go` and `internal/behaviortree/action_cast_best_in_category.go` ask `HasEffect` before casting a ward |
+| `mitigation_flat` | `Character.GetPhysicalMitigation`, `internal/characters/combat.go` |
+| `mitigation_magical` | `Character.GetMagicalMitigation`, same file (a ward that blocks spells, messaging M6 slice 1) |
+| `mitigation_conviction` | `Character.GetConvictionMitigation`, same file (a ward that blocks social damage) |
 | `dodge_mult` | `Character.GetDefenseScoreFor`, `internal/characters/combat.go` (`GetDefenseScore` is a one-line wrapper over it; no shipped producer, and the seam is kept because `Effect` is a product with identity 1.0) |
 | `regen_mult` | `internal/hooks/NewRound_AutoHeal.go`, four branches across the player and mob paths |
 | `pool_max_pct` | the pool loop in `internal/characters/validate.go`; the pool NAME rides on the instance's `Source` |
@@ -295,6 +297,7 @@ type Condition struct {
     LightTrim      LightTrim // plan 5a: full, trimmed or off; see light.go
     LightOutput    float64   // plan 5a: the trimmed term when LightTrim is LightTrimmed
     Hooded         bool      // plan 5a: a hooded light sheds nothing
+    Caster         state.ActorRef // M6 slice 1: who applied it; only a player caster is saved
 }
 ```
 
@@ -399,8 +402,9 @@ A refusal is a refusal all the way out: `Character.AddCondition` returns an
 error, `ApplyConditions` (`internal/hooks/Condition_ApplyConditions.go`)
 returns on it before the start notice, `start_remove_conditions`,
 `TrackConditionStarted` or `ConditionsTriggered`, and
-`Character.AddConditionMagnitude` returns an `error` the two spell dot sites
-test before narrating. `HasFlag` guards a nil spec, since every add now asks it
+`Character.AddConditionMagnitudeBy` (and `AddConditionMagnitude`, which wraps
+it) returns an `error` the spell dot site (`applySpellDot`,
+`internal/hooks/spell_effects.go`) tests before narrating. `HasFlag` guards a nil spec, since every add now asks it
 and a save can hold a dead condition id.
 
 `ApplyConditions` also refuses, the same way and before any add, an event whose
@@ -663,6 +667,8 @@ const (
     EffectDodgeMult      EffectKind = "dodge_mult"      // dodge score multiplier (no producer today; kept for parity with the reader)
     EffectRegenMult      EffectKind = "regen_mult"      // multiplier on base health regen (heal spells, corpse feeding)
     EffectMitigationFlat EffectKind = "mitigation_flat" // flat physical mitigation points (wards)
+    EffectMitigationMagical    EffectKind = "mitigation_magical"    // a ward's flat points against spell (mental) damage
+    EffectMitigationConviction EffectKind = "mitigation_conviction" // a ward's flat points against social damage
     EffectPoolMaxPct     EffectKind = "pool_max_pct"    // fraction taken off a pool maximum; the pool rides on Condition.Source
     EffectAttacksCap     EffectKind = "attacks_cap"     // upper bound on swings per round
     EffectNightVisionStrength EffectKind = "nightvision_strength" // graded lighting plan 2: how far DOWN the light scale the observer's usable band shifts
@@ -680,7 +686,8 @@ contribution for that kind: a multiplier kind (`damage_mult`, `defense_mult`,
 kind (`nightvision_strength`, `infra_reach`) takes the strongest held value
 rather than summing, so two sources of the same vision effect cannot stack
 into a window wider than the better one grants; everything else
-(`mitigation_flat`, `pool_max_pct`) sums with identity `0`. It never calls
+(`mitigation_flat`, `mitigation_magical`, `mitigation_conviction`,
+`pool_max_pct`) sums with identity `0`. It never calls
 `HasFlag` with `expire=true`, so reading it has no side effect.
 `Conditions.HasEffect(kind EffectKind) bool` reports whether any held,
 unexpired record declares the kind at all, without computing a value.
@@ -768,11 +775,70 @@ func (bs *Conditions) AddCondition(conditionId int, isPermanent bool) bool {
 }
 ```
 
+### The caster on a record (messaging M6 slice 1)
+
+`Condition.Caster state.ActorRef` (yaml `caster`) is who put the record on
+its holder: a spell's caster, the attacker whose blow opened a bleed, zero
+for a potion, hazard, mutation or gear. `Conditions.Stamp(conditionId,
+source, caster)` writes it and `Source` on the held record after an add door
+lands it; the newest application owns the record, so a re-application by
+someone else takes it over and a casterless one clears it. A stacking record
+is one record, so it carries its newest applier's caster.
+
+Only a player caster is saved. `Condition.MarshalYAML` writes the caster's
+`UserId` and zeroes its `MobInstanceId` (a mob's instance id is runtime only
+and names a different creature after a restart), and `UnmarshalYAML` drops a
+mob caster from an old save. Both go through `plainCondition`, the struct
+without its methods, so neither recurses. The strip rides the marshaller, so
+it holds wherever a `Conditions` list is written (a user's save; a mob's
+instance save, `internal/mobs/instance_save.go`, writes no conditions at all).
+A copyover reloads users from their YAML saves, so a mob caster does not
+survive one either.
+
+### Families (messaging M6 slice 1)
+
+`ConditionSpec.Family` (yaml `family`) is `FamilyWard` (`ward`),
+`FamilyHeal` (`heal`) or empty (`family.go`; `AllFamilies` is the closed
+set, and `validateFamily` refuses any other name at load). Landing a record
+whose spec names a family discards every other record of that family on the
+holder first, inside `addConditionScaled` and `AddCondition`
+(`discardFamilyRivals`, through `Discard`, so no end line is told), after
+the refusal checks, so a refused add keeps its rival. Re-landing the same id
+is a refresh. A rival that has already expired is skipped: it is left for the
+prune pass, so its own end line still fires. A permanent record (`AddCondition`
+with `permanent` true) in a family is discarded like any other, so do not tag
+a family on a spec that items or mutations grant permanently. A record with no
+family is never touched, so potions, salves, items and mutations keep stacking
+with a ward or a heal.
+
+`FamilyRivals(conditionId)` lists the live records an add would replace;
+the apply hook reads it BEFORE the add for its replacement line.
+`HasFamily(family)` is the mob AI's "already shielded" and "already
+healing" test (`internal/combat/ai.go` and
+`internal/behaviortree/action_cast_best_in_category.go`).
+
+### Caster lines (messaging M6 slice 1)
+
+`ConditionSpec.StartActorText` (yaml `start_actor`) is the caster's line
+when the caster is someone other than the holder; it names the holder with
+`{actee}`. `StartActorNotice()` silences it like `StartUserNotice()` (secret,
+quiet, silent-start) with no generic fallback. `Narration(PhaseStart)`
+carries it as the `Actor` variant, and `NarrateCast(phase, holderName,
+holderPlain, casterName, casterPlain)` fills `{actor}` with the caster.
+`Narrate` is `NarrateCast` with no caster, and `AuthoredStartLine` has none
+either: both fill `{actor}` with "something" (the unexported const
+`noCasterName`). Only start lines may name the caster: `validateNarration`
+refuses `{actor}` in trigger and end text.
+`NarratesCastStart(selfCast)` reports whether the condition's own start
+lines tell every audience a spell's generic trio served (authored
+`start_actee` and `start_observer`, and `start_actor` unless the caster is
+the holder); a spell drops its trio only then (owner ruling R11).
+
 ### Magnitude Records (`AddConditionMagnitude`)
 
 `Conditions.AddConditionMagnitude(conditionId int, triggers int, magnitude float64) bool`
 is the writer door for every record that used to be a hand-rolled combat
-condition (Minor Shield, Regenerating, Poisoned, Bleeding). It refreshes or
+condition (Conviction Ward, Regenerating, Poisoned, Bleeding). It refreshes or
 adds the condition via `addConditionScaled(conditionId, 1.0)`, then, if
 `triggers > 0`, overwrites `TriggersLeft` with the exact count, **a trigger
 count, not a duration in rounds**; every record that goes through this door
@@ -1205,9 +1271,17 @@ not mention the door.
 
 ## DOGMud Shield/Ward Spell Scaling
 
-Two live spells use `effect_type: shield`: `conviction-ward`
-(`effect_magnitude: 75`) and `chrysalis-cocoon` (`effect_magnitude: 125`), both
-defined under `_datafiles/world/dogmud/spells/`. `applySpellShield` in `internal/hooks/spell_help_effects.go` is the single
+Three live spells use `effect_type: shield` (messaging M6 slice 1, owner
+ruling R7), each landing its own ward through its one `condition_ids`
+entry, all defined under `_datafiles/world/dogmud/spells/`:
+
+| Spell | `effect_magnitude` | Ward | Blocks |
+|---|---|---|---|
+| `conviction-ward` | 75 | 119 Conviction Ward | physical |
+| `conviction-bulwark` | 100 | 135 Conviction Bulwark | physical, spell |
+| `chrysalis-cocoon` | 125 | 136 Chrysalis Cocoon | physical, spell, social |
+
+`applySpellShield` in `internal/hooks/spell_help_effects.go` is the single
 handler for every shield spell, whoever casts it and whoever it lands on
 (parity slice 3b; a shield on a pet, or from a creature, applied nothing
 before it).
@@ -1217,7 +1291,8 @@ shieldBonus := (stat + weightedSkill) / 3
 if c.magnitude > 0 {
     shieldBonus = int(math.Round(float64(shieldBonus) * float64(c.magnitude) / 100.0))
 }
-_ = c.targetChar().AddConditionMagnitude(conditions.ConditionIdMinorShield, duration, float64(shieldBonus), "spell")
+target.QueueCondition(events.Condition{ConditionId: wardId, Source: "spell",
+    Triggers: duration, Magnitude: float64(shieldBonus), Caster: c.casterRef(), CastStart: narrated})
 ```
 
 `stat` and the skill come from `spellCasterStatAndSkill`: the spell's
@@ -1235,29 +1310,19 @@ need a real roll: the static-difficulty seam
 already exists and is used by search, track, and forage checks; no spell path
 calls it. Duration is computed
 by the unexported `calcSpellDuration(baseFolds, spellcastingSkill, willpower)`
-in the same file, not by anything in this package:
+in `internal/hooks/spell_resolution.go`, not by anything in this package:
 `duration = baseFolds * (10 + willpower/20 + spellcastingSkill/2)`.
 
-**Where the magnitude actually lands.** The 119 Minor Shield record does not
-touch `magical_mitigation` or `conviction_mitigation` at all. Its declared
-effect is `mitigation_flat: magnitude`, and the only reader of that kind on a
-character is `Character.GetPhysicalMitigation()`
-(`internal/characters/combat.go`), which takes it through
-`c.Conditions.Effect(conditions.EffectMitigationFlat)` and sums it with gear
-`physical_mitigation`, mutation natural armor, and species natural armor, then
-clamps the total at `PhysicalMitigationCap`. So both "magical" ward spells buy
-physical mitigation through the Minor Shield record, not magical or conviction
-mitigation.
-
-A shield spell can separately carry `condition_ids`,
-and those conditions use the ordinary statmod path described above instead:
-`chrysalis-cocoon` grants `condition_ids: [52]` (Chrysalis Shell, in
-`_datafiles/world/dogmud/conditions/52-chrysalis_shell.yaml`), whose
-`statmods: {magical_mitigation: 15, conviction_mitigation: 15}` are summed by
-`Conditions.StatMod()` and read by `Character.GetMagicalMitigation()` /
-`GetConvictionMitigation()` through `c.StatMod("magical_mitigation")` /
-`c.StatMod("conviction_mitigation")`. `conviction-ward` sets no `condition_ids`, so
-it grants no magical or conviction mitigation at all despite its name.
+**Where the magnitude lands.** The ward record carries the one strength,
+and each effect kind it declares reads it (`magnitude`):
+`mitigation_flat` feeds `Character.GetPhysicalMitigation()`,
+`mitigation_magical` feeds `GetMagicalMitigation()` and
+`mitigation_conviction` feeds `GetConvictionMitigation()`
+(`internal/characters/combat.go`), each summed with gear, mutations and the
+matching statmod, so a potion's `magical_mitigation` still adds on top. The
+total is clamped downstream at the channel's mitigation cap. The wards are
+the `ward` family (above), so a target holds one at a time; condition 52
+Chrysalis Shell is no longer named by any spell and is left unchanged.
 
 ### Mitigation caps
 
@@ -1294,15 +1359,17 @@ they live downstream, in the damage pipeline.
 | File | Purpose |
 |------|---------|
 | `conditionspec.go` | The authored `ConditionSpec` and its loader |
-| `notice.go` | The player-side start/end notice resolver and `SilentNoticeConditions` |
-| `narration.go` | The narration door: `Phase`, `Narration`, `Narrate`, `AuthoredStartLine`, `validateNarration` |
+| `notice.go` | The player-side start/end notice resolver (`StartActorNotice` for the caster's line), `NarratesCastStart` and `SilentNoticeConditions` |
+| `narration.go` | The narration door: `Phase`, `Narration`, `Narrate`, `NarrateCast` (the caster fills `{actor}`), `AuthoredStartLine`, `validateNarration` |
 | `conditions.go` | Held condition instances (`Condition`, `Conditions`), flags, stat mods, `AddConditionMagnitude`, `GetDurations` |
 | `tick.go` | `ComputeTickAmount`, the tick-pool amount formula |
 | `stacks.go` | `Stack`, the stacking tick (`addStack`, `syncStacks`, `tickStacks`), `tickAmountFor`, `DisplayName` |
 | `effects.go` | `EffectKind`, the closed effects vocabulary, `Conditions.Effect` / `Conditions.HasEffect` / `Conditions.EffectValues` (lighting plan 5c), `ScaledKinds` / `ConditionSpec.ScaledKind` (lighting plan 5c) |
 | `scaled_magnitude.go` | `SpellScaledMagnitude` (lighting plan 5c): the base + stat/D1 + skill/D2 value a spell applies a scaled kind at, capped; `CapScaledMagnitude`, the cap both spell and potion apply (infra reach at `LightInfraReachCap`, nightvision at `configs.LightWindowShiftCap`); `SpellScaledTriggers` (lighting plan 5d), the trigger count, where darkness reads its own `LightDarknessSpellDuration*` trio and the other kinds share the light trio; `NewCharacterSpellStat` / `NewCharacterSpellSkill`, the numbers the admin `setcondition` command evaluates it at |
 | `light.go` | Lighting plan 5a: `LightTrim`, `Condition.LightMax` / `LightNow` / `SetLightOutput` / `ResetLight`, `Conditions.LightSources`; plan 5d: `Conditions.DarknessSources`, `Conditions.LightAndDarknessSources` |
-| `ids.go` | The record ids the engine names in code: `ConditionIdWarcry` (79) through `ConditionIdEnchantWithdrawal` (123) |
+| `caster.go` | Messaging M6 slice 1: `Conditions.Stamp` (source and caster on a held record) and `Condition.MarshalYAML` / `UnmarshalYAML` (a mob caster is never saved) |
+| `family.go` | Messaging M6 slice 1: `FamilyWard`, `FamilyHeal`, `AllFamilies`, `Conditions.HasFamily` / `FamilyRivals`, and the rival discard the add primitives call |
+| `ids.go` | The record ids the engine names in code: `ConditionIdEmpathicShroud` (31), then `ConditionIdWarcry` (79) and `ConditionIdRally` (80), then `ConditionIdOffBalance` (117) through `ConditionIdEnchantWithdrawal` (123); 119 is `ConditionIdConvictionWard`, 120 `ConditionIdRegenerating`, 121 `ConditionIdPoisoned`, 122 `ConditionIdBleeding` |
 | `test_helpers.go` | Test fixtures: `SeedConditionsForTest` (replaces the registry) and `SeedConditionRecordsForTest` (adds 79, 80 and 117 to 123 on top of whatever is already seeded) |
 
 Condition files are named `{conditionid}-{ConvertForFilename(name)}.yaml`: `name:

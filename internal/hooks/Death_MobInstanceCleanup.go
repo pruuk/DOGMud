@@ -69,6 +69,10 @@ func scheduleMobDespawnFromLife(m *mobs.Mob) {
 	// this session would be lost, and its gear could not be checked.
 	captureBondedCompanionOnDeath(m)
 
+	// Kill credit reads the instance too (#468), so it runs here, not as an
+	// observer of its own that init order would place after the destroy.
+	creditMobKill(m)
+
 	// 1. Drop loot + corpse BEFORE destroying the instance.
 	if room := rooms.LoadRoom(m.Character.RoomId); room != nil {
 		dropMobLootAndSetCorpse(m, room)

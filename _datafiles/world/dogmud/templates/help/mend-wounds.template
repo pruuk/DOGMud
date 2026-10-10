@@ -1,9 +1,10 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">mend-wounds</ansi> spell
 
-The <ansi fg="command">Mend Wounds</ansi> spell concentrates Chrysalis healing energy into a
-single target, rapidly closing wounds and restoring vitality. The
-fundamental single-target healing spell — efficient, reliable, and
-the first healing art many casters master.
+The <ansi fg="command">Mend Wounds</ansi> spell surges strong healing magic into a single
+target. The target heals much faster than normal, but only for a short
+while. Use it when a wound needs closing now.
+
+How long it lasts grows with your willpower and spellcasting skill.
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -15,6 +16,10 @@ the first healing art many casters master.
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 4
   <ansi fg="yellow">Conv. Cost:  </ansi> 40
-  <ansi fg="yellow">Effect:      </ansi> Restores health to a single target
+  <ansi fg="yellow">Healing:     </ansi> Strong, over a short time
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
+<ansi fg="white-bold">Notes:</ansi>
+  - A target holds one healing spell at a time. A new one replaces the old.
+  - Salves, potions and food that heal you still add on top.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help healing-spells</ansi>, <ansi fg="command">help heal</ansi>, <ansi fg="command">help cast</ansi>

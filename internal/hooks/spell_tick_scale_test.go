@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -167,17 +168,17 @@ func TestApplySpellCondition_TickPoolQueuesTheCasterScale(t *testing.T) {
 	}
 	for _, tg := range targets {
 		t.Run(tg.name, func(t *testing.T) {
-			applySpellCondition(tg.door, spell, caster, spellPathTickConditionId)
+			applySpellCondition(tg.door, spell, caster, spellPathTickConditionId, state.ActorRef{}, false, false)
 			q := tg.drain()
 			require.Len(t, q, 1)
 			assert.Equal(t, want, q[0].TickScale, "a tick_pool condition carries the caster's scale")
 
-			applySpellCondition(tg.door, spell, caster, spellPathPlainConditionId)
+			applySpellCondition(tg.door, spell, caster, spellPathPlainConditionId, state.ActorRef{}, false, false)
 			q = tg.drain()
 			require.Len(t, q, 1)
 			assert.Zero(t, q[0].TickScale, "a non-ticking condition carries no scale")
 
-			applySpellCondition(tg.door, spell, caster, spellPathGlowConditionId)
+			applySpellCondition(tg.door, spell, caster, spellPathGlowConditionId, state.ActorRef{}, false, false)
 			q = tg.drain()
 			require.Len(t, q, 1)
 			assert.NotZero(t, q[0].Magnitude, "a magnitude light still queues its magnitude")

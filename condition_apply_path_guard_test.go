@@ -107,10 +107,11 @@ var (
 // arity cannot tell them from the silent door: see the light-spell entry
 // for internal/hooks/light_spell.go.
 var conditionApplyPathAllowlist = map[string]string{
-	// ── The sanctioned consumer of the event ────────────────────────────────
-	"internal/hooks/Condition_ApplyConditions.go|118": "this IS the hook the event feeds; it is where every routed condition is finally applied",
-	"internal/hooks/Condition_ApplyConditions.go|120": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	// ── The sanctioned consumer of the event (re-keyed messaging M6 slice 1,
+	// when the family rival read landed above the adds) ──────────────────
 	"internal/hooks/Condition_ApplyConditions.go|122": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|124": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|126": "this IS the hook the event feeds; it is where every routed condition is finally applied",
 
 	// ── silent-start conditions whose applier narrates the moment itself ────
 	"internal/actions/combat_throttle.go|149": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
@@ -135,7 +136,7 @@ var conditionApplyPathAllowlist = map[string]string{
 
 	// ── mob holders: no client, so no line could reach anyone ───────────────
 	"internal/usercommands/character.go|423":         "the holder is a MOB (m.Character), and condition 99 is a perma-gear pin, not something a player reads",
-	"internal/behaviortree/actions_item_proc.go|409": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
+	"internal/behaviortree/actions_item_proc.go|419": "the holder is a MOB (m.Character); an item proc stunning a mob has nobody to tell",
 	"internal/hooks/manifester_companions.go|40":     "the holder is a MOB (a summoned companion), not a player",
 
 	// ── secret conditions: silence is the authored intent ───────────────────
@@ -164,44 +165,6 @@ var conditionApplyPathAllowlist = map[string]string{
 	// quiet one-round records (Task 5) ──────────────────────────────────────
 	"internal/combat/grapple_move.go|63": "former combat condition (one-round penalty): quiet record; must apply synchronously inside the round tick",
 
-	// ── former combat condition: Minor Shield is now one record (Task 6;
-	// re-keyed messaging M4b-2 Task 7 when spellAttackShape's deletion
-	// shrank and shifted every later line in that file; re-keyed again
-	// Task 10 when the non-harm-at-a-mob shortcut shifted every later line;
-	// re-keyed again Task 10's follow-up when the shortcut's comment grew;
-	// re-keyed again counters slice Task 3 when the drain-area counter
-	// dispatch loop was deleted; re-keyed again messaging M4d Task 6 when the
-	// default case's self-cast line moved onto SendTrio and grew a comment;
-	// re-keyed again messaging M4d PR 3 Task 3 when the purge/heal/condition
-	// self-cast branches above the shield case moved onto SendTrio;
-	// re-keyed again parity slice 2 when the post-queue tick snapshot blocks
-	// and the mutations import were deleted; re-keyed again spell effects 3a
-	// Task 1 when the arms functions took their context headers and the MP
-	// switch moved out of its resolver; re-keyed again spell effects 3a Task 2
-	// when the three damage arms moved into applySpellDamage; re-keyed again
-	// spell effects 3a Task 4 when the three knockdown arms moved into
-	// applySpellKnockdown; re-keyed again spell effects 3a Task 5 when the
-	// resolvers' backfire, interrupt and record blocks moved into
-	// spell_effects.go; re-keyed again parity slice 3a Task 7 when the
-	// one-contest guard began parsing spell_effects.go too; re-keyed again
-	// parity slice 3a Task 8 when maybeInterruptSpellOnMob was deleted;
-	// re-keyed again parity slice 3b Task 1 when the resolvers' help-spell
-	// shortcuts collapsed into resolveHelpSpell, and again parity slice 3b
-	// Task 2 when the three condition arms moved into
-	// applySpellConditionEffect, and again Task 3 when the heal arms it moved
-	// into applySpellHeal shifted every later line in spell_resolution.go;
-	// the PP row MOVED into applySpellShield by Task 4, which replaced the
-	// player-to-player shield arm and gained PM, MM and MP; the MS row stays
-	// in spell_resolution.go, re-keyed for the same deletion's shift, and
-	// again Task 5 when the per-pairing arms above it were deleted; the MS
-	// row DELETED by Task 6, when applyMobSelfEffect's switch was deleted
-	// and a mob's self-cast shield reached applySpellShield's row; re-keyed
-	// again Task 7, when spellHelpAreaTargets' mobs, parties and rooms
-	// imports shifted spell_help_effects.go; re-keyed again 3b playtest fix,
-	// when the party rule moved to actions.HelpCharmAlly and the parties
-	// import left spell_help_effects.go) ────
-	"internal/hooks/spell_help_effects.go|195": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
-
 	// ── former combat condition: Regenerating is now one record (Task 7;
 	// re-keyed slice 1b, same shift as above; re-keyed again Task 10 and
 	// Task 10's follow-up; re-keyed again counters slice Task 3, same
@@ -223,10 +186,14 @@ var conditionApplyPathAllowlist = map[string]string{
 	// the MS row DELETED by Task 6, same deletion as above, a mob's
 	// self-cast heal now reaching applySpellHeal's row; re-keyed again
 	// Task 7, same import shift as above; re-keyed again 3b playtest fix,
-	// same import shift as above) ───────
-	"internal/hooks/spell_help_effects.go|144": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
-	"internal/mobcommands/consume.go|46":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
-	"internal/mobcommands/consume.go|58":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	// same import shift as above; re-keyed again messaging M6 slice 1, when
+	// spellConditionsNarrateStart landed above it and again when the shield
+	// arm moved to the event door and its Conviction Ward row was deleted; the
+	// spell row DELETED messaging M6 slice 1, when each heal spell began
+	// landing its own heal through the condition event, leaving the two
+	// feeding rows) ───────
+	"internal/mobcommands/consume.go|46": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	"internal/mobcommands/consume.go|58": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 
 	// ── former combat condition: the spell dot is now one record (Task 8;
 	// re-keyed slice 1b when the dot moved to every round; re-keyed again
@@ -246,22 +213,10 @@ var conditionApplyPathAllowlist = map[string]string{
 	// again parity slice 3b Task 2 when the dispatcher gained its condition
 	// case, and again Task 3 when it gained its heal case, and again Task 4
 	// when it gained its shield case, and again Task 5 when its doc comment
-	// grew and the per-pairing fallthrough became the default arm) ──────
-	"internal/hooks/spell_effects.go|348": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
-
-	// ── light spells (lighting plan 5a): an EVENT door, not the silent
-	// character door. applySpellCondition's target is a spellConditionTarget,
-	// which the silent Character door cannot satisfy (its
-	// AddConditionMagnitude returns an error); its implementers are
-	// *users.UserRecord and *mobs.Mob, both of which queue events.Condition,
-	// so Condition_ApplyConditions runs and narrates the start ─────────────
-	// Re-keyed lighting plan 5c, when the hook became magnitudeSpellApplication
-	// and also scales nightvision and infra reach, and again when its formula
-	// moved to conditions.SpellScaledMagnitude, and again when the
-	// spellConditionTarget interface gained AddConditionTickScaled (parity
-	// slice 2).
-	"internal/hooks/light_spell.go|71": "Empathic Shroud at the caster's shroud score (#444): the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
-	"internal/hooks/light_spell.go|75": "light, sight or darkness spell at the caster's scaled magnitude and triggers: the EVENT door (users.UserRecord / mobs.Mob AddConditionMagnitude both queue events.Condition); listed only because arity cannot tell it from the silent character door",
+	// grew and the per-pairing fallthrough became the default arm; moved to
+	// AddConditionMagnitudeBy and re-keyed messaging M6 slice 1, when the
+	// dot began to carry its caster and creditMobHarm landed above it) ──────
+	"internal/hooks/spell_effects.go|355": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
 
 	// ── magnitude potions (lighting plan 5c): the player's and the mob's drink
 	// each carried this call (usercommands/drink.go and mobcommands/drink.go)
@@ -304,7 +259,9 @@ var primitivePackages = []string{
 	filepath.Join("internal", "characters"),
 }
 
-var conditionAddCallPattern = regexp.MustCompile(`\.(AddCondition(?:Scaled|Magnitude)?)\(`)
+// AddConditionMagnitudeBy is the character door with a caster (messaging M6
+// slice 1); it applies in place exactly as AddConditionMagnitude does.
+var conditionAddCallPattern = regexp.MustCompile(`\.(AddCondition(?:Scaled|Magnitude(?:By)?)?)\(`)
 
 // identifierArgPattern matches a bare identifier or field selector, which is
 // how a variable source reaches these calls: src, reason, source, evt.Source.
@@ -381,7 +338,7 @@ func callArgs(src string, openParen int) (args []string, ok bool) {
 // variable source is never reported as silent. The second result is false
 // when the call could not be parsed.
 func isEventPathCall(src string, method string, openParen int) (eventPath bool, parsed bool) {
-	if method == "AddConditionMagnitude" {
+	if method == "AddConditionMagnitude" || method == "AddConditionMagnitudeBy" {
 		// The character door and the user door share a four-argument shape
 		// ending in a source string, so arity cannot tell them apart. Treat
 		// every call as a direct add: the safe reading, since a producer
@@ -465,7 +422,7 @@ func TestPlayerConditionsTravelTheEventPath(t *testing.T) {
 				}
 				rule := "an event-path condition add ends in a source string; this call does not, so it applies the condition in place, Condition_ApplyConditions never runs, and the holder reads nothing."
 				advice := fmt.Sprintf("Route it through users.UserRecord.AddCondition / AddConditionScaled (or the mobs.Mob / actions.Actor equivalent, which all take a source string), or add %q to conditionApplyPathAllowlist with a reason.", key)
-				if method := src[loc[2]:loc[3]]; method == "AddConditionMagnitude" {
+				if method := src[loc[2]:loc[3]]; method == "AddConditionMagnitude" || method == "AddConditionMagnitudeBy" {
 					rule = "the character door applies in place and the user door queues the event, but they share one four-argument shape, so this guard reads every AddConditionMagnitude call as a direct add (the safe reading). Record why in conditionApplyPathAllowlist, or confirm the call is the user door and record that instead."
 					advice = "Routing it through users.UserRecord.AddConditionMagnitude does not silence this guard; allowlist it either way, noting which door it is."
 				}
