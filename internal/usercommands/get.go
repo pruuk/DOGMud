@@ -435,8 +435,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			return true, nil
 		}
 
-		goldName := `gold`
-		if args[0] == goldName || (len(args[0]) < 5 && goldName[0:len(args[0])-1] == args[0]) {
+		// rest is the item span with "from <corpse>" removed; only the bare
+		// word is the gold. "gold wire" is an item (#269).
+		if strings.EqualFold(strings.TrimSpace(rest), `gold`) {
 			takeCorpseGold(user, room, corpse)
 			return true, nil
 		}
@@ -498,8 +499,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			return true, nil
 		}
 
-		goldName := `gold`
-		if args[0] == goldName || (len(args[0]) < 5 && goldName[0:len(args[0])-1] == args[0]) {
+		// rest is the item span with "from <container>" removed; only the bare
+		// word is the gold. "gold wire" is an item (#269).
+		if strings.EqualFold(strings.TrimSpace(rest), `gold`) {
 
 			if container.Gold < 1 {
 				user.SendText(messaging.CategorySystem, "There's no gold to grab.")

@@ -3,6 +3,7 @@ package usercommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
@@ -73,4 +74,74 @@ func TestGet_GoldStillMeansThePile(t *testing.T) {
 	user, room := seedGoldWireRoom(t)
 	Get("gold", user, room, 0)
 	assert.Contains(t, sentTo(user), "There's no gold to grab.")
+}
+
+// The floor pile is taken into the purse, not just announced.
+func TestGet_GoldPileRaisesPurse(t *testing.T) {
+	user, room := seedGoldWireRoom(t)
+	room.Gold = 40
+	user.Character.Gold = 0
+	Get("gold", user, room, 0)
+	assert.Equal(t, 40, user.Character.Gold)
+	assert.Equal(t, 0, room.Gold)
+}
+
+// seedGoldWireChest puts a Gold Wire and goldInside gold in a chest and in a
+// corpse's loot, on top of seedGoldWireRoom.
+func seedGoldWireChest(t *testing.T, goldInside int) (*users.UserRecord, *rooms.Room) {
+	t.Helper()
+	user, room := seedGoldWireRoom(t)
+	origContainers, origCorpses := room.Containers, room.Corpses
+	t.Cleanup(func() { room.Containers, room.Corpses = origContainers, origCorpses })
+	room.Containers = map[string]rooms.Container{
+		"chest": {Gold: goldInside, Items: []items.Item{items.New(goldWireItemId)}},
+	}
+	room.Corpses = []rooms.Corpse{{
+		MobId:     1,
+		Character: characters.Character{Name: "Skeleton"},
+		Loot:      rooms.Container{Gold: goldInside, Items: []items.Item{items.New(goldWireItemId)}},
+	}}
+	user.Character.Gold = 0
+	events.DrainQueuedMessagesForTest(user.UserId)
+	return user, room
+}
+
+func TestGet_GoldNamedItemFromContainer(t *testing.T) {
+	user, room := seedGoldWireChest(t, 0)
+	Get("gold wire from chest", user, room, 0)
+	assert.NotContains(t, sentTo(user), "There's no gold to grab.")
+	_, carried := user.Character.FindInBackpack("gold wire")
+	assert.True(t, carried, "get gold wire from chest picks up the Gold Wire")
+	assert.Empty(t, room.Containers["chest"].Items)
+}
+
+func TestGetAll_ContainerTakesItemNamedGold(t *testing.T) {
+	user, room := seedGoldWireChest(t, 0)
+	Get("all chest", user, room, 0)
+	_, carried := user.Character.FindInBackpack("gold wire")
+	assert.True(t, carried, "get all chest picks up the Gold Wire")
+	assert.Empty(t, room.Containers["chest"].Items)
+}
+
+func TestGet_GoldFromContainerStillTakesGold(t *testing.T) {
+	user, room := seedGoldWireChest(t, 25)
+	Get("gold from chest", user, room, 0)
+	assert.Equal(t, 25, user.Character.Gold)
+	assert.Equal(t, 0, room.Containers["chest"].Gold)
+	assert.Len(t, room.Containers["chest"].Items, 1, "the Gold Wire stays put")
+}
+
+func TestGet_GoldNamedItemFromCorpse(t *testing.T) {
+	user, room := seedGoldWireChest(t, 25)
+	Get("gold wire from skeleton corpse", user, room, 0)
+	_, carried := user.Character.FindInBackpack("gold wire")
+	assert.True(t, carried, "get gold wire from corpse picks up the Gold Wire")
+	assert.Equal(t, 0, user.Character.Gold, "the corpse gold is not taken")
+	assert.Equal(t, 25, room.Corpses[0].Loot.Gold)
+}
+
+func TestGet_GoldFromCorpseStillTakesGold(t *testing.T) {
+	user, room := seedGoldWireChest(t, 25)
+	Get("gold from skeleton corpse", user, room, 0)
+	assert.Equal(t, 25, user.Character.Gold)
 }
