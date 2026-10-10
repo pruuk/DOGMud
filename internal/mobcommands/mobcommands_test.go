@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
@@ -265,6 +266,11 @@ func seedAllRegistries() func() {
 	})
 
 	return func() {
+		// Drop whatever the test queued and never processed. A queued
+		// "prepares to fight" from one test's Attack was otherwise delivered
+		// to the next test's captureAnnounces listener as a second copy
+		// (#440).
+		events.DrainAllQueuedEventsForTest()
 		cleanupItems()
 		cleanupSpecies()
 		cleanupSpells()
