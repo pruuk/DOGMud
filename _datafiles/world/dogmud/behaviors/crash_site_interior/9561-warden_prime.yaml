@@ -7,8 +7,7 @@
 #   1. Warden Discharge -- a telegraphed party-wide harm spell cast on a
 #      fixed cooldown while in combat: the lesser form of the Core
 #      Guardian's Core Discharge, with its own spell since #480 so each
-#      boss's damage is tuned to its own stats. The tree announces, then
-#      casts; the spell's `min_cast_rounds: 2` holds the cast open (internal/
+#      boss's damage is tuned to its own stats. The tree casts; the spell's `min_cast_rounds: 2` holds the cast open (internal/
 #      hooks processFoldRound), so the windup is the cast round with its
 #      `cast_observer` line, one held round showing its `wait_observer`
 #      warning (sendMobWindupWarning, in place of the generic weave), then
@@ -44,9 +43,10 @@ tree:
   children:
 
     # ── Warden Discharge: telegraphed AoE, fixed cadence while in combat.
-    #    Announce, then cast (#480). The spell's min_cast_rounds: 2 holds the
-    #    cast open for a two-round windup, as on the Core Guardian, so the
-    #    lesson matches the exam. ──
+    #    The spell's min_cast_rounds: 2 holds the cast open for a two-round
+    #    windup, as on the Core Guardian, so the lesson matches the exam
+    #    (#480). Its cast_observer line is the announce; no send_room_text,
+    #    which would name Warden-Prime in the dark. ──
     - type: decorator
       event: mob_combat_round
       mod: cooldown
@@ -56,10 +56,6 @@ tree:
         children:
           - type: condition
             check: mob_in_combat
-          - type: action
-            do: send_room_text
-            text: >-
-              Warden-Prime's eye dims as it pulls its light inward. Stop it now!
           - type: action
             do: cast
             spell: warden-discharge

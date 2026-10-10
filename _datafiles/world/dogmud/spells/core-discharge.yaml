@@ -48,6 +48,6 @@ min_cast_rounds: 2
 categories:
   - harm_multi
 cast_actor: "Power floods inward, gathering at your core."
-cast_observer: "{actor}'s core flares white-hot, and the air begins to scream."
+cast_observer: "{actor}'s core flares white-hot and the air screams. Stop it now!"
 wait_observer: "{actor}'s core shrieks and blazes. It is about to burst!"
 ignore_move_cooldown: true

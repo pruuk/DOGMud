@@ -57,7 +57,7 @@ spell|conviction-surge|cast_observer => <ansi fg="username">Aliceia</ansi> gathe
 spell|conviction-ward|cast_actor => You solidify your belief into a protective barrier.
 spell|conviction-ward|cast_observer => <ansi fg="username">Aliceia</ansi> spreads their arms as conviction shimmers into a ward.
 spell|core-discharge|cast_actor => Power floods inward, gathering at your core.
-spell|core-discharge|cast_observer => <ansi fg="username">Aliceia</ansi>'s core flares white-hot, and the air begins to scream.
+spell|core-discharge|cast_observer => <ansi fg="username">Aliceia</ansi>'s core flares white-hot and the air screams. Stop it now!
 spell|core-discharge|wait_observer => <ansi fg="username">Aliceia</ansi>'s core shrieks and blazes. It is about to burst!
 spell|core-drain|cast_actor => Power gathers inward, filaments of cold light reaching for your prey.
 spell|core-drain|cast_observer => <ansi fg="username">Aliceia</ansi>'s chest irises open. Cold filaments reach toward you.
@@ -159,5 +159,5 @@ spell|veil-sight|cast_observer => <ansi fg="username">Aliceia</ansi> narrows the
 spell|vital-surge|cast_actor => You channel a sustained pulse of healing energy.
 spell|vital-surge|cast_observer => <ansi fg="username">Aliceia</ansi> channels a warm, pulsing glow.
 spell|warden-discharge|cast_actor => Power floods inward, gathering at your core.
-spell|warden-discharge|cast_observer => <ansi fg="username">Aliceia</ansi>'s core flares white-hot, and the air begins to hum.
+spell|warden-discharge|cast_observer => <ansi fg="username">Aliceia</ansi>'s core flares white-hot and the air hums. Stop it now!
 spell|warden-discharge|wait_observer => <ansi fg="username">Aliceia</ansi>'s core whines and burns brighter. It is about to burst!

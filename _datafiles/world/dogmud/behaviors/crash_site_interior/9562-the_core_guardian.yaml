@@ -74,11 +74,14 @@ tree:
     # ── 1. Core Discharge: the payoff. Fires as soon as Core Charge is
     #    past threshold; resets charge immediately (see Build decision 2
     #    above -- this covers both a clean resolve and an interrupt).
-    #    Announce, then cast (#480). The spell's min_cast_rounds: 2 holds
-    #    the cast open: this round the announce and the spell's
-    #    cast_observer line, next round its wait_observer warning, the
-    #    round after that the blast. The Guardian is casting for the whole
-    #    windup, so any disruptor landing in it cancels the discharge. ──
+    #    The spell's min_cast_rounds: 2 holds the cast open (#480): this
+    #    round its cast_observer line is the announce, next round its
+    #    wait_observer warning, the round after that the blast. Both lines
+    #    go through the sight-aware spell senders; a send_room_text here
+    #    would be plain room text that names the Guardian in the dark and
+    #    prints even if the cast fails. The Guardian is casting for the
+    #    whole windup, so any disruptor landing in it cancels the
+    #    discharge. ──
     - type: sequence
       event: mob_combat_round
       children:
@@ -88,10 +91,6 @@ tree:
           check: state_greater_than
           key: core_charge
           value: 1
-        - type: action
-          do: send_room_text
-          text: >-
-            The Core Guardian pulls all its stolen strength inward. Stop it now!
         - type: action
           do: cast
           spell: core-discharge

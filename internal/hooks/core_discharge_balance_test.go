@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -166,9 +167,15 @@ func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
 		boss, spellId string
 		mobId, roomId int
 		low, high     float64
+		// wantWil is the YAML comment's willpower: 30 (automaton species) +
+		// pool x 0.125 (the fighting archetype's per-mental-stat share,
+		// 0.15 / 1.2) + 200 from the Guardian's Core Matrix. Pinning it means
+		// a drift in the stat inputs fails here by name, not only as a
+		// moved damage band.
+		wantWil float64
 	}{
-		{"Core Guardian", "core-discharge", coreDischargeGuardianId, 6395, 0.60, 0.70},
-		{"Warden-Prime", "warden-discharge", coreDischargeWardenId, 6392, 0.30, 0.40},
+		{"Core Guardian", "core-discharge", coreDischargeGuardianId, 6395, 0.60, 0.70, 30 + 2800*0.125 + 200},
+		{"Warden-Prime", "warden-discharge", coreDischargeWardenId, 6392, 0.30, 0.40, 30 + 2000*0.125},
 	} {
 		t.Run(tc.boss, func(t *testing.T) {
 			sd := spells.GetSpell(tc.spellId)
@@ -180,6 +187,13 @@ func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
 			frac := mean / coreDischargeRefHP
 			t.Logf("%s, %dg run (pool %d): willpower %.1f, mean hit %.1f = %.1f%% of %d HP (damage_multiplier %.2f)",
 				tc.boss, referenceGold, referenceGold*mult, wil, mean, frac*100, coreDischargeRefHP, sd.DamageMultiplier)
+			// The pool spreads at random per spawn: one spawn's willpower has
+			// a spread of about 17 at pool 2800, so the 40-spawn mean is
+			// within about 3, and 15 is a five-sigma margin.
+			if math.Abs(wil-tc.wantWil) > 15 {
+				t.Errorf("%s willpower %.1f, want %.0f +/- 15 (species + pool share + Core Matrix); "+
+					"the YAML arithmetic is stale", tc.boss, wil, tc.wantWil)
+			}
 			if frac < tc.low || frac > tc.high {
 				t.Errorf("%s mean hit is %.1f%% of a %d HP reference player, want %.0f-%.0f%%; "+
 					"retune damage_multiplier in %s.yaml (or revisit the knob that moved)",
@@ -208,6 +222,13 @@ func TestCrashSiteDischarges_TreesCastTheirOwnWindupSpell(t *testing.T) {
 		}
 		cast := map[string]bool{}
 		collectCastSpells(doc, cast)
+		// #480 review: the windup's warning is the spell's own sight-aware
+		// cast and wait lines. A send_room_text beside the cast is plain
+		// room.SendText: it names the boss in the dark and prints even when
+		// the cast then fails.
+		if n := roomTextBesideCast(doc); n > 0 {
+			t.Errorf("%s: %d send_room_text node(s) share a sequence with a cast; warn through the spell's lines", tree, n)
+		}
 		if !cast[want] {
 			t.Errorf("%s casts %v, want it to cast %s", tree, cast, want)
 		}
@@ -232,6 +253,37 @@ func TestCrashSiteDischarges_TreesCastTheirOwnWindupSpell(t *testing.T) {
 			}
 		}
 	}
+}
+
+// roomTextBesideCast counts send_room_text actions in any children list that
+// also holds a `do: cast` action.
+func roomTextBesideCast(node any) int {
+	n := 0
+	switch v := node.(type) {
+	case map[string]any:
+		if kids, ok := v["children"].([]any); ok {
+			hasCast, texts := false, 0
+			for _, k := range kids {
+				if m, ok := k.(map[string]any); ok {
+					hasCast = hasCast || m["do"] == "cast"
+					if m["do"] == "send_room_text" {
+						texts++
+					}
+				}
+			}
+			if hasCast {
+				n += texts
+			}
+		}
+		for _, c := range v {
+			n += roomTextBesideCast(c)
+		}
+	case []any:
+		for _, c := range v {
+			n += roomTextBesideCast(c)
+		}
+	}
+	return n
 }
 
 // collectCastSpells gathers the spell of every `do: cast` node in a parsed tree.
