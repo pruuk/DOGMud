@@ -244,7 +244,8 @@ gated), so armed undead still drain.
 **Bleeds stack (slice 1b, owner ruling 2026-09-14).** Rake, maul, hamstring,
 drain (`ExecuteDrain` and each landed target of `ExecuteDrainArea`) and throttle each add one
 stack to the target's 122 Bleeding record on a landed hit, through
-`AddConditionMagnitude(conditions.ConditionIdBleeding, rounds, -amount, source)`. The stack's
+`AddConditionMagnitudeBy(conditions.ConditionIdBleeding, rounds, -amount, source, ActorRefOf(actor))`,
+which stamps the attacker as the record's caster (see "ActorRefOf" below). The stack's
 per-round amount is `bleedPerRound` (`bleed.go`): the attacker's Strength
 `ValueAdj` divided by the move's `<Move>BleedStrengthDivisor` knob, floored at
 `<Move>BleedMin`; its rounds are `<Move>BleedRounds`. All fifteen knobs live in

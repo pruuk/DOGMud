@@ -402,8 +402,9 @@ A refusal is a refusal all the way out: `Character.AddCondition` returns an
 error, `ApplyConditions` (`internal/hooks/Condition_ApplyConditions.go`)
 returns on it before the start notice, `start_remove_conditions`,
 `TrackConditionStarted` or `ConditionsTriggered`, and
-`Character.AddConditionMagnitude` returns an `error` the two spell dot sites
-test before narrating. `HasFlag` guards a nil spec, since every add now asks it
+`Character.AddConditionMagnitudeBy` (and `AddConditionMagnitude`, which wraps
+it) returns an `error` the spell dot site (`applySpellDot`,
+`internal/hooks/spell_effects.go`) tests before narrating. `HasFlag` guards a nil spec, since every add now asks it
 and a save can hold a dead condition id.
 
 `ApplyConditions` also refuses, the same way and before any add, an event whose
@@ -1368,7 +1369,7 @@ they live downstream, in the damage pipeline.
 | `light.go` | Lighting plan 5a: `LightTrim`, `Condition.LightMax` / `LightNow` / `SetLightOutput` / `ResetLight`, `Conditions.LightSources`; plan 5d: `Conditions.DarknessSources`, `Conditions.LightAndDarknessSources` |
 | `caster.go` | Messaging M6 slice 1: `Conditions.Stamp` (source and caster on a held record) and `Condition.MarshalYAML` / `UnmarshalYAML` (a mob caster is never saved) |
 | `family.go` | Messaging M6 slice 1: `FamilyWard`, `FamilyHeal`, `AllFamilies`, `Conditions.HasFamily` / `FamilyRivals`, and the rival discard the add primitives call |
-| `ids.go` | The record ids the engine names in code: `ConditionIdWarcry` (79) through `ConditionIdEnchantWithdrawal` (123); 119 is `ConditionIdConvictionWard` |
+| `ids.go` | The record ids the engine names in code: `ConditionIdEmpathicShroud` (31), then `ConditionIdWarcry` (79) and `ConditionIdRally` (80), then `ConditionIdOffBalance` (117) through `ConditionIdEnchantWithdrawal` (123); 119 is `ConditionIdConvictionWard`, 120 `ConditionIdRegenerating`, 121 `ConditionIdPoisoned`, 122 `ConditionIdBleeding` |
 | `test_helpers.go` | Test fixtures: `SeedConditionsForTest` (replaces the registry) and `SeedConditionRecordsForTest` (adds 79, 80 and 117 to 123 on top of whatever is already seeded) |
 
 Condition files are named `{conditionid}-{ConvertForFilename(name)}.yaml`: `name:

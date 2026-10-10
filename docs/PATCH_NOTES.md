@@ -12,9 +12,10 @@
 - Every healing spell now works over time, and each has its own pace. Mend
   Flesh is gentle and long. Mend Wounds is strong and short. Of the group
   heals, Mend All is light, Communion of Flesh is steady and the longest,
-  and Mass Mend is the strongest. Arc-Weld Repair is the heal for machines.
-  You hold one healing spell at a time, as with wards; salves, potions and
-  food still add on top.
+  and Mass Mend is the strongest. Machines mend each other with Arc-Weld
+  Repair. You hold one healing spell at a time, as with wards, so a new
+  healing spell replaces Vital Surge or Chrysalis Regeneration; salves,
+  potions and food still add on top.
 - A spell that lays an effect on someone now gives one clear line to each
   person there: the caster, the target and the room each read their own
   line, written for that effect and naming the caster.

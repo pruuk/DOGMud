@@ -2137,7 +2137,7 @@ through `CasterStatValue`, and the school's cast skill):
 - **DoT: `/3`, floored at 3.** `applySpellDot` (`spell_effects.go`) computes
   `calcSpellDuration(...) / 3`, then clamps `dotDuration < 3` up to 3, and
   passes that rounds figure straight to
-  `AddConditionMagnitude(conditions.ConditionIdPoisoned, dotDuration, ...)`: record 121 ticks
+  `AddConditionMagnitudeBy(conditions.ConditionIdPoisoned, dotDuration, ..., c.casterRef())`: record 121 ticks
   every round (slice 1b; it was every third round before). See
   `internal/conditions/context.md` under "Cadence".
 
@@ -2464,9 +2464,12 @@ two casts in one round both judge the holder unaffected before either event
 lands, so the second must still be told. Any other refresh stays silent.
 
 `applySpellConditionEffect`, `applySpellShield` and `applySpellHeal` drop
-their generic lines when `spellConditionNarratesStart` holds: a fresh landing
-of a condition whose own start lines tell every audience
-(`ConditionSpec.NarratesCastStart`). They pass that verdict to
+their generic lines when the start is narrated: a fresh landing of a condition
+whose own start lines tell every audience (`ConditionSpec.NarratesCastStart`).
+`applySpellConditionEffect` asks `spellConditionsNarrateStart`, which holds only
+when every condition the spell lands qualifies; `applySpellShield` and
+`applySpellHeal` land one condition and ask the singular
+`spellConditionNarratesStart`. They pass that verdict to
 `applySpellCondition` (or the event) as `castStart`. A silent condition, or a
 re-cast of one already held, keeps the generic lines (owner ruling R11).
 
