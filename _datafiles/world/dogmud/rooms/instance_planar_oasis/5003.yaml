@@ -9,7 +9,7 @@ description: >-
   water glimmers to the north. The portal behind you pulses
   with reassuring stability.
 biome: ether
-lamp: 38
+lamp: 52
 exits:
   north:
     roomid: 5004

@@ -2059,17 +2059,17 @@ room 5002 biome=interior
   infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5003 biome=ether
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
   infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5004 biome=ether
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
   infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5005 biome=ether
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
   infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
