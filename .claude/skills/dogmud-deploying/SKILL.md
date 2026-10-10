@@ -92,18 +92,17 @@ full patch notes
 (`https://github.com/pruuk/DOGMud/blob/master/PATCH_NOTES.md`).
 [[feedback_motd_format]]
 
-## `config.yaml` skip-worktree
+## `config.yaml` and local overrides
 
-`_datafiles/config.yaml` carries `skip-worktree`, which desyncs the disk copy
-from the committed blob in both directions: a naive commit dance can leak
-local dev overrides (wrong `HttpPort`, `LogToFile: true`, a stray `Playtest:`
-block) onto master, and a stale disk copy can silently make a normal-looking
-edit revert config another commit already changed. Never build the commit
-from the disk file. Build it from `git show HEAD:_datafiles/config.yaml`,
-apply the intended edit to that blob, stage it directly with
-`git update-index --cacheinfo` (which clears the skip-worktree bit and must be
-re-set afterward), and only then update disk separately to match the running
-server's needs. [[feedback-skip-worktree-config-leak]]
+On the owner's dev machine `_datafiles/config.yaml` is an ordinary tracked
+file holding shipped values only (skip-worktree retired 2026-10-10). Local dev
+values (`HttpPort`, `LogLevel`, `LogToFile`, a `Playtest:` block) belong in
+the gitignored `_datafiles/world/dogmud/config-overrides.yaml`, which the
+engine overlays at boot, so they can no longer leak onto master. The droplet's
+checkout may still carry the skip-worktree bit from before:
+`git ls-files -v _datafiles/config.yaml` shows `S` if so, and then a pull
+there can refuse when master changes the file. Prod's own values come from
+its config mount, not from this file. [[feedback-skip-worktree-config-leak]]
 
 ## Build time baseline
 

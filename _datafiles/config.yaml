@@ -2350,10 +2350,11 @@ Network:
   # - HttpPort -
   #   The port the server listens on for web requests
   #   0 (zero) means none.
-  #   LOCAL: 8090, not 80 — Docker Desktop publishes the critbench-frontend
+  #   LOCAL: 8090, not 80. Docker Desktop publishes the critbench-frontend
   #   container on 0.0.0.0:80 (up since 2026-07-30), so a DOGMud server set
-  #   to 80 loses the bind and boots with NO web listener. The droplet's own
-  #   config (not this file — skip-worktree) owns the prod value.
+  #   to 80 loses the bind and boots with NO web listener. The local 8090
+  #   lives in the gitignored world/dogmud/config-overrides.yaml, not here.
+  #   The droplet's own config owns the prod value.
   HttpPort: 80
   # - HttpsPort -
   #   The port the server listens on for web requests
