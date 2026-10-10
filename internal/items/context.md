@@ -997,38 +997,10 @@ showing a numbered list when the name is ambiguous
 - UUID generation optimized for performance
 
 ### File Loading Optimization
-- `LoadDataFilesE() error`: the reload form of `LoadDataFiles`. Returns the load error (file named) instead of panicking; a set that fails to load leaves the previous set live. `reload items` uses it.
+Two functions load the item specs, the combat (attack) messages and the defense messages:
 
-```go
-// Batch loading of all item specifications
-func LoadDataFiles() {
-    start := time.Now()
-    
-    tmpItems, err := fileloader.LoadAllFlatFiles[int, *ItemSpec](
-        string(configs.GetFilePathsConfig().DataFiles) + "/items"
-    )
-    if err != nil {
-        panic(err)
-    }
-    
-    items = tmpItems
-    
-    // Load attack messages
-    tmpAttackMessages, err := fileloader.LoadAllFlatFiles[ItemSubType, *WeaponAttackMessageGroup](
-        string(configs.GetFilePathsConfig().DataFiles) + "/combat-messages"
-    )
-    if err != nil {
-        panic(err)
-    }
-    
-    attackMessages = tmpAttackMessages
-    
-    mudlog.Info("itemspec.LoadDataFiles()", 
-        "itemLoadedCount", len(items),
-        "attackMessageCount", len(attackMessages),
-        "Time Taken", time.Since(start))
-}
-```
+- `LoadDataFiles()`: the boot form. Calls `LoadDataFilesE` and panics on error, because the server cannot run without these sets.
+- `LoadDataFilesE() error`: the reload form. Returns the load error (file named) instead of panicking, including a non-canonical name caught by `casing.AssertCanonical`. All three sets load into temporaries first and swap in together only after every one has loaded, so a failure leaves the previous data fully live. `reload items` uses it.
 
 ## Dependencies
 

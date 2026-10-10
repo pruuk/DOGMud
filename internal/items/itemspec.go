@@ -867,14 +867,19 @@ func LoadDataFiles() {
 }
 
 // LoadDataFilesE is LoadDataFiles for `reload items`: it returns the error
-// instead of panicking (#271). Each set is swapped in only after it loads,
-// so a set that fails leaves the previous one live.
+// instead of panicking (#271). The items, attack messages and defense
+// messages all load into temporaries first and swap in together only after
+// every one has loaded, so a failure leaves the previous data fully live.
 func LoadDataFilesE() (err error) {
 	// casing.AssertCanonical panics on a non-canonical name; a reload
 	// reports that like any other load error.
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("%v", r)
+			if re, ok := r.(error); ok {
+				err = fmt.Errorf("%w", re)
+			} else {
+				err = fmt.Errorf("%v", r)
+			}
 		}
 	}()
 
@@ -895,21 +900,21 @@ func LoadDataFilesE() (err error) {
 		}
 	}
 
-	items = tmpItems
-	rebuildAuthoredKeywords()
-
 	tmpAttackMessages, err := fileloader.LoadAllFlatFiles[ItemSubType, *WeaponAttackMessageGroup](dataPath + `/combat-messages`)
 	if err != nil {
 		return errors.Wrap(err, `filepath: `+dataPath+`/combat-messages`)
 	}
-
-	attackMessages = tmpAttackMessages
 
 	tmpDefenseMessages, err := fileloader.LoadAllFlatFiles[DefencePool, *DefenseMessageGroup](dataPath + `/defense-messages`)
 	if err != nil {
 		return errors.Wrap(err, `filepath: `+dataPath+`/defense-messages`)
 	}
 
+	// Every set loaded; swap them in together. rebuildAuthoredKeywords reads
+	// the package items map, so it follows the items swap.
+	items = tmpItems
+	rebuildAuthoredKeywords()
+	attackMessages = tmpAttackMessages
 	defenseMessages = tmpDefenseMessages
 
 	mudlog.Info("itemspec.LoadDataFiles()", "itemLoadedCount", len(items), "attackMessageCount", len(attackMessages), "defenseMessageCount", len(defenseMessages), "Time Taken", time.Since(start))
