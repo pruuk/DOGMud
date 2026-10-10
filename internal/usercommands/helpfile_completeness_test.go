@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
 // helpDataRoot walks up from the test working directory to find the
@@ -219,5 +221,72 @@ func TestHelpFileCompleteness_ModuleCommands(t *testing.T) {
 	if len(missing) > 0 {
 		sort.Strings(missing)
 		t.Errorf("module commands missing help files (%d):\n  %s", len(missing), strings.Join(missing, "\n  "))
+	}
+}
+
+// TestHelpFileCompleteness_IndexListsEveryCommand: `help` lists only what
+// keywords.yaml indexes, so a command with a help file but no index entry is
+// found only by a player who already knows its name. trade and tutorial were
+// (#236). Every non-admin command with a help file is listed, directly,
+// through the help file it shares (commandHelpAliases), or as a help alias.
+func TestHelpFileCompleteness_IndexListsEveryCommand(t *testing.T) {
+	root := helpDataRoot(t)
+	raw, err := os.ReadFile(filepath.Join(root, "keywords.yaml"))
+	if err != nil {
+		t.Fatalf("reading keywords.yaml: %v", err)
+	}
+	var kw struct {
+		Help        map[string]map[string][]string `yaml:"help"`
+		HelpAliases map[string][]string            `yaml:"help-aliases"`
+	}
+	if err := yaml.Unmarshal(raw, &kw); err != nil {
+		t.Fatalf("parsing keywords.yaml: %v", err)
+	}
+	indexed := map[string]bool{}
+	for _, categories := range kw.Help {
+		for _, list := range categories {
+			for _, c := range list {
+				indexed[strings.ToLower(c)] = true
+			}
+		}
+	}
+	aliasOf := map[string]string{}
+	for topic, list := range kw.HelpAliases {
+		for _, a := range list {
+			aliasOf[strings.ToLower(a)] = strings.ToLower(topic)
+		}
+	}
+	if len(indexed) < 100 {
+		t.Fatalf("read only %d indexed topics; the keywords.yaml shape changed", len(indexed))
+	}
+
+	userHelpDir := filepath.Join(root, "templates", "help")
+	var unlisted []string
+	checked := 0
+	for name, info := range userCommands {
+		if info.AdminOnly || commandHelpSkip[name] {
+			continue
+		}
+		target := name
+		if alias, ok := commandHelpAliases[name]; ok {
+			target = alias
+		}
+		if !helpFileExistsAt(filepath.Join(userHelpDir, target+".template"), filepath.Join(userHelpDir, target+".md")) {
+			continue // TestHelpFileCompleteness_Commands reports a missing file
+		}
+		checked++
+		if indexed[name] || indexed[target] || (aliasOf[name] != "" && indexed[aliasOf[name]]) {
+			continue
+		}
+		unlisted = append(unlisted, name)
+	}
+	if checked < 100 {
+		t.Fatalf("checked only %d commands; the scan cannot see the commands it guards", checked)
+	}
+	if len(unlisted) > 0 {
+		sort.Strings(unlisted)
+		t.Errorf("commands with a help file that `help` never lists (%d): %s\n"+
+			"Add each under a category in _datafiles/world/dogmud/keywords.yaml.",
+			len(unlisted), strings.Join(unlisted, ", "))
 	}
 }

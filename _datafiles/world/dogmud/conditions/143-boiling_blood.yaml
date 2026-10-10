@@ -1,0 +1,14 @@
+conditionid: 143
+name: Boiling Blood
+description: Blood seething in your veins, dealing damage over time.
+triggerrate: 1 round
+triggercount: 10
+tick_pool: health
+tick_from_magnitude: true
+start_actor: "You set the blood in {actee}'s veins boiling."
+start_actee: "{actor}'s spell sets your blood boiling in your veins!"
+start_observer: "{actor}'s spell sets {actee}'s blood boiling."
+trigger_actee: '<ansi fg="red">Your blood boils and seeps from your skin!</ansi>'
+end_actee: "Your blood cools at last and stops seeping."
+flags:
+  - bleeding

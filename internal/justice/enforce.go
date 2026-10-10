@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -107,6 +108,37 @@ func arrestGraceRounds() uint64 {
 	return uint64(v)
 }
 
+// arrestStampLapseRounds is how long a declaration holds: the grace, then as
+// long again for a guard in the room to make the haul. Derived from the one
+// knob, ArrestResistGraceRounds, rather than a second (#241).
+func arrestStampLapseRounds() uint64 { return 2 * arrestGraceRounds() }
+
+// liveArrestStamp reads the player's declared arrest and reports whether it
+// still holds in roomId at nowRound: made in this room and no older than
+// arrestStampLapseRounds. A stamp that does not hold is cleared, so this
+// sighting declares afresh. Walking out of the room drops the stamp at once
+// (LapseArrestStampOnMove), so a player who leaves and comes back inside the
+// window hears the declaration again too; the room check here is the
+// backstop for a move no RoomChange reported.
+func liveArrestStamp(player *characters.Character, roomId int, nowRound uint64) (uint64, bool) {
+	round, ok := miscDataRound(player.MiscData, keyArrestPendingRound)
+	if !ok {
+		return 0, false
+	}
+	stampRoom, roomOk := miscDataRound(player.MiscData, keyArrestPendingRoom)
+	if roomOk && stampRoom == uint64(roomId) && nowRound >= round && nowRound-round <= arrestStampLapseRounds() {
+		return round, true
+	}
+	clearArrestStamp(player)
+	return 0, false
+}
+
+// clearArrestStamp drops the player's declared arrest.
+func clearArrestStamp(player *characters.Character) {
+	player.SetMiscData(keyArrestPendingRound, nil)
+	player.SetMiscData(keyArrestPendingRoom, nil)
+}
+
 // warnStampStaleAfter returns the number of rounds after which an unseen
 // justice_warned_* stamp is considered stale and eligible for pruning.
 // Delegates to lookbackFn so the two windows stay in sync with one config knob.
@@ -115,10 +147,16 @@ func warnStampStaleAfter() uint64 { return lookbackFn() }
 // pruneStaleWarnStamps deletes justice_warned_* entries older than staleAfter
 // rounds. Cold-rep warn stamps are never revisited once a player's rep
 // recovers (the Warn branch stops running), so they would otherwise leak.
-// Leaves justice_arrest_pending_* (self-cleaning on haul) and all other keys.
+// Also deletes leftover per-guard justice_arrest_pending_* keys, which older
+// builds wrote on the guard; the arrest stamp now lives on the player (#241).
+// Leaves every other key alone.
 // Deleting from a map during range over its keys is safe in Go.
 func pruneStaleWarnStamps(md map[string]any, now, staleAfter uint64) {
 	for key := range md {
+		if strings.HasPrefix(key, "justice_arrest_pending_") {
+			delete(md, key)
+			continue
+		}
 		if !strings.HasPrefix(key, "justice_warned_") {
 			continue
 		}
@@ -135,6 +173,56 @@ func pruneStaleWarnStamps(md map[string]any, now, staleAfter uint64) {
 // executeArrestFn seam — tests override to intercept without live mobs.
 var executeArrestFn = func(player *characters.Character, userId int, faction string, isMurder bool) bool {
 	return ExecuteArrest(player, userId, faction, isMurder)
+}
+
+// guardFactionsFn seam: the factions a guard enforces for. Tests override,
+// because factions.FactionsForMob needs loaded faction definitions.
+var guardFactionsFn = factions.FactionsForMob
+
+// Player MiscData keys for a declared arrest (#241). The stamp lives on the
+// PLAYER, not on each guard, so one declaration is heard however many guards
+// share the room, and it holds only where and while it was made
+// (liveArrestStamp, LapseArrestStampOnMove).
+const (
+	keyArrestPendingRound = "justice_arrest_pending_round"
+	keyArrestPendingRoom  = "justice_arrest_pending_room"
+)
+
+// LapseArrestStampOnMove is a RoomChange listener (hooks.RegisterListeners):
+// a player who walks out of the room an arrest was declared in drops the
+// declaration, so a guard who sees them next, even back in that same room
+// inside the window, declares afresh before any haul (owner call 2026-10-10,
+// #241). Only leaving the declared room counts: the event for the player's
+// own arrival can be heard after a guard there has already declared.
+func LapseArrestStampOnMove(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.RoomChange)
+	if !ok || evt.UserId == 0 || evt.FromRoomId == evt.ToRoomId {
+		return events.Continue
+	}
+	user := users.GetByUserId(evt.UserId)
+	if user == nil {
+		return events.Continue
+	}
+	stampRoom, ok := miscDataRound(user.Character.MiscData, keyArrestPendingRoom)
+	if ok && stampRoom == uint64(evt.FromRoomId) {
+		clearArrestStamp(user.Character)
+	}
+	return events.Continue
+}
+
+// LapseArrestStampOnDespawn is a PlayerDespawn listener
+// (hooks.RegisterListeners): the stamp is saved with the character, so it is
+// dropped on logout. Otherwise a player who logged out inside the window and
+// came back to the same room could be hauled with no new declaration (#241).
+func LapseArrestStampOnDespawn(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.PlayerDespawn)
+	if !ok || evt.UserId == 0 {
+		return events.Continue
+	}
+	if user := users.GetByUserId(evt.UserId); user != nil {
+		clearArrestStamp(user.Character)
+	}
+	return events.Continue
 }
 
 // firstFactionWithCell returns the first faction in order that owns a
@@ -157,7 +245,7 @@ func RunGuardEnforcement(mob *mobs.Mob, room *rooms.Room, nowRound uint64) []Enf
 	if mob == nil || room == nil || mob.Character.IsInCombat() || mob.Character.IsCharmed() {
 		return nil
 	}
-	guardFactions := factions.FactionsForMob(mob)
+	guardFactions := guardFactionsFn(mob)
 	if len(guardFactions) == 0 {
 		return nil
 	}
@@ -208,8 +296,7 @@ func RunGuardEnforcement(mob *mobs.Mob, room *rooms.Room, nowRound uint64) []Enf
 			}
 		case SeverityArrest:
 			resist := user.Character.ArrestPolicy == characters.ArrestResist
-			pendingKey := fmt.Sprintf("justice_arrest_pending_%d", uid)
-			pendingRound, pending := miscDataRound(mob.Character.MiscData, pendingKey)
+			pendingRound, pending := liveArrestStamp(user.Character, room.RoomId, nowRound)
 			switch resolveArrest(resist, pending, pendingRound, nowRound, arrestGraceRounds()) {
 			case arrestOutcomeAttack:
 				mob.Command(fmt.Sprintf("attack @%d", uid))
@@ -217,17 +304,18 @@ func RunGuardEnforcement(mob *mobs.Mob, room *rooms.Room, nowRound uint64) []Enf
 			case arrestOutcomeDeclare:
 				guardSayFn(room, mob,
 					"No more moving along. You're under arrest. Come quietly.")
-				mob.Character.SetMiscData(pendingKey, nowRound)
+				user.Character.SetMiscData(keyArrestPendingRound, nowRound)
+				user.Character.SetMiscData(keyArrestPendingRoom, room.RoomId)
 				acts = append(acts, EnforceAction{uid, SeverityArrest, false})
 			case arrestOutcomeHaul:
 				faction := firstFactionWithCell(guardFactions)
 				if faction == "" {
-					// No arresting faction owns a cell — cannot haul; leave
-					// the pending stamp so the declaration line isn't lost.
+					// No arresting faction owns a cell, so no haul; leave the
+					// player's stamp; it lapses on its own (liveArrestStamp).
 					break
 				}
 				executeArrestFn(user.Character, uid, faction, false)
-				mob.Character.SetMiscData(pendingKey, nil)
+				clearArrestStamp(user.Character)
 				acts = append(acts, EnforceAction{uid, SeverityArrest, true})
 			}
 		}

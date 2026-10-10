@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -52,7 +53,27 @@ func (p purgeTarget) stillPresent(room *rooms.Room, requireAlive bool) bool {
 	return !requireAlive || p.char.Health > 0
 }
 
-// resolvePurgeAffliction narrates the purge and cancels poison on the target.
+// purgeAfflictions ends what Purge Affliction and Cleansing Wave cure: every
+// poison, and every record a damage-over-time spell lands (Blood Boil's
+// Boiling Blood, #249). The cure follows the spells, read from the spell
+// registry through spellDotConditionId, so a new dot spell's record is
+// curable the day it ships, and a combat bleed (122), which no spell lands,
+// stays uncured as before (owner call 2026-10-10).
+func purgeAfflictions(ch *characters.Character) {
+	ch.CancelConditionsWithFlag(conditions.Poison)
+	for _, s := range spells.GetAllSpells() {
+		if s.EffectType != "dot" {
+			continue
+		}
+		// GetConditions skips a record already expired, by the poison
+		// cancel above (121) or an earlier dot spell naming the same one.
+		if id := spellDotConditionId(s); len(ch.GetConditions(id)) > 0 {
+			ch.RemoveCondition(id)
+		}
+	}
+}
+
+// resolvePurgeAffliction narrates the purge and cures the target (purgeAfflictions).
 // Self-cast keeps its one-line wording. A mob target has no client, so its
 // Actee recipient is nil and only the caster and the room read anything; names
 // are hidden per reader by the seam.
@@ -98,5 +119,5 @@ func resolvePurgeAffliction(user *users.UserRecord, room *rooms.Room, target pur
 		}, aud)
 	}
 
-	target.char.CancelConditionsWithFlag(conditions.Poison)
+	purgeAfflictions(target.char)
 }

@@ -47,7 +47,7 @@ type SpellData struct {
 	EffectMagnitude    int      `yaml:"effect_magnitude,omitempty"`     // Legacy: base damage/heal amount
 	DamageMultiplier   float64  `yaml:"damage_multiplier,omitempty"`    // Spell damage multiplier for new pipeline (Stage 34)
 	EffectDuration     int      `yaml:"effect_duration,omitempty"`      // DoT tick count (default 0 = use 3)
-	ConditionIds       []int    `yaml:"condition_ids,omitempty"`        // Condition IDs to apply (for "condition" effect type)
+	ConditionIds       []int    `yaml:"condition_ids,omitempty"`        // Condition IDs to apply: every id for "condition", the one ward or heal for "shield"/"heal", the one record for "dot"
 	QuestRequired      string   `yaml:"quest_required,omitempty"`       // Quest token required before spell can be discovered
 	MobOnly            bool     `yaml:"mob_only,omitempty"`             // Boss/NPC signature ability: players may never DISCOVER it. See GetEligibleSpells.
 	NoDamageInterrupt  bool     `yaml:"no_damage_interrupt,omitempty"`  // Telegraphed casts: skip damage/position concentration-break (still interrupted by the disruptor system)

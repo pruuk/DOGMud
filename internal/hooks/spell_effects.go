@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -317,6 +318,17 @@ func spellCasterStatAndSkill(spell *spells.SpellData, caster *characters.Charact
 	return spell.CasterStatValue(caster.Stats), caster.GetSkillLevel(castSkill)
 }
 
+// spellDotConditionId is the record a damage-over-time spell lands: its one
+// condition_ids entry (Blood Boil's 143 Boiling Blood, #249), or 121
+// Poisoned for a spell that names none (Neural Toxin). The root guard
+// TestDotSpellsNameAtMostOneCondition holds the shipped dots to one id.
+func spellDotConditionId(spell *spells.SpellData) int {
+	if len(spell.ConditionIds) > 0 {
+		return spell.ConditionIds[0]
+	}
+	return conditions.ConditionIdPoisoned
+}
+
 // applySpellDot is the one damage-over-time applier (slice 3a). The
 // affliction is binary: it lands only on an attack win, and a defended cast
 // narrates the defence triad and applies nothing. Either way the cast was an
@@ -324,6 +336,7 @@ func spellCasterStatAndSkill(spell *spells.SpellData, caster *characters.Charact
 //
 // The record carries its caster (#240): each tick harms in the caster's name
 // and credits them on a mob (creditMobHarm), so a dot kill counts for them.
+// The record is the spell's own (spellDotConditionId, #249).
 func applySpellDot(c spellEffectCtx) int {
 	tc := c.targetChar()
 	fresh := !tc.IsInCombat()
@@ -339,22 +352,41 @@ func applySpellDot(c spellEffectCtx) int {
 	if dotDuration < 3 {
 		dotDuration = 3
 	}
-	// Condition 121 ticks every round, so dotDuration is the trigger count.
+	// The dot's record ticks every round, so dotDuration is the trigger count.
 	// The record's negative magnitude is the harm per tick, floored at one.
 	dotAmount := c.magnitude
 	if dotAmount < 1 {
 		dotAmount = 1
 	}
-	// Names are read BEFORE the condition lands: AddConditionMagnitude below
-	// can add the "poisoned" adjective to the target's own rendered name, and
+	dotId := spellDotConditionId(c.spell)
+	// Names are read BEFORE the condition lands: the add below can add the
+	// "poisoned" or "bleeding" adjective to the target's rendered name, and
 	// SendTrio's redaction must see the exact string the line prints.
 	casterName, targetName := c.casterName(), c.targetName()
 	casterHidden, targetHidden := c.hiddenFromRoom()
+	// A record that tells its own start, one line per audience (Blood Boil's
+	// 143), is narrated by it, as a condition spell's is (owner ruling R11);
+	// a silent-start record (121, Neural Toxin's) keeps the trio below.
+	// Everything the start line is judged by is read before the add, as the
+	// apply hook reads it: the refresh test, the holder's names, and who
+	// could not make the holder out (#249).
+	holder, holderKnown := conditionPartyOf(c.targetRef())
+	narrated := holderKnown && spellConditionNarratesStart(c, dotId)
+	unseenBy := conditionLineUnseenBy(c.room, tc)
 	// The character door, on purpose: an immune target refuses the record,
 	// and nothing that did not happen may be narrated.
-	afflicted := tc.AddConditionMagnitudeBy(conditions.ConditionIdPoisoned, dotDuration, -float64(dotAmount), "spell", c.casterRef()) == nil
+	afflicted := tc.AddConditionMagnitudeBy(dotId, dotDuration, -float64(dotAmount), "spell", c.casterRef()) == nil
+	if afflicted && narrated {
+		// Told before the fight is committed, so the line is judged against
+		// the room as the spell found it.
+		ref := c.targetRef()
+		narrateConditionStart(conditions.GetConditionSpec(dotId), events.Condition{
+			UserId: ref.UserId, MobInstanceId: ref.MobInstanceId, ConditionId: dotId,
+			Source: "spell", Caster: c.casterRef(), CasterCrit: c.out.AttackerCrit,
+		}, holder, nil, false, unseenBy)
+	}
 	commitHarmfulSpellAggro(c, fresh)
-	if !afflicted {
+	if !afflicted || narrated {
 		return 0
 	}
 	messaging.SendTrio(messaging.Trio{

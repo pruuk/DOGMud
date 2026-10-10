@@ -359,3 +359,8 @@ condition|142|start_actor => Your arc-light starts welding <ansi fg="username">A
 condition|142|start_actee => Arc-light starts welding your plating back together.
 condition|142|start_observer => Hard blue-white arc-light welds <ansi fg="username">Aliceia</ansi>'s plating back together.
 condition|142|end_actee => The arc-light welding your plating sputters out.
+condition|143|start_actor => You set the blood in <ansi fg="username">Aliceia</ansi>'s veins boiling.
+condition|143|start_actee => something's spell sets your blood boiling in your veins!
+condition|143|start_observer => something's spell sets <ansi fg="username">Aliceia</ansi>'s blood boiling.
+condition|143|trigger_actee => <ansi fg="red">Your blood boils and seeps from your skin!</ansi>
+condition|143|end_actee => Your blood cools at last and stops seeping.

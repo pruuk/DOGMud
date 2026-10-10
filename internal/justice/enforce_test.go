@@ -115,7 +115,7 @@ func TestPruneStaleWarnStamps(t *testing.T) {
 	md := map[string]any{
 		"justice_warned_1":         uint64(100), // stale: now-100 > staleAfter(200)? 1000-100=900 > 200 -> pruned
 		"justice_warned_2":         uint64(950), // fresh: 1000-950=50 <= 200 -> kept
-		"justice_arrest_pending_3": uint64(100), // must be left alone
+		"justice_arrest_pending_3": uint64(950), // leftover per-guard key: deleted, fresh or not
 		"some_other_key":           uint64(100), // must be left alone
 	}
 
@@ -127,8 +127,8 @@ func TestPruneStaleWarnStamps(t *testing.T) {
 	if _, ok := md["justice_warned_2"]; !ok {
 		t.Fatalf("fresh justice_warned_2 must be kept")
 	}
-	if _, ok := md["justice_arrest_pending_3"]; !ok {
-		t.Fatalf("arrest-pending stamp must not be touched")
+	if _, ok := md["justice_arrest_pending_3"]; ok {
+		t.Fatalf("leftover per-guard arrest-pending key should have been deleted")
 	}
 	if _, ok := md["some_other_key"]; !ok {
 		t.Fatalf("unrelated key must not be touched")

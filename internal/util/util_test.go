@@ -1225,6 +1225,15 @@ func TestConvertToAscii(t *testing.T) {
 		{"trailing ansi at end", "\x1b[33mUsage ━━━\x1b[0m", "\x1b[33mUsage\x1b[0m"},
 		{"em dash is a hyphen", "locked in — nowhere", "locked in - nowhere"},
 		{"en dash is a hyphen", "arms 3–6", "arms 3-6"},
+		// #253 follow-up: glyphs that carry meaning get an ASCII form. A map
+		// marker becomes one letter, so a map cell keeps its width.
+		{"map markers", "@☺☹⚷", "@P&K"},
+		{"arrow", "Novice → Adept", "Novice -> Adept"},
+		{"ellipsis", "a long name…", "a long name..."},
+		{"plus or minus", "~12 ±3", "~12 +/-3"},
+		{"times", "rate 1.50×", "rate 1.50x"},
+		{"lock grid cells keep their width", "  ↑  |  ↓  ", "  ^  |  v  "},
+		{"biome glyphs", "⌬♠♣∴⩕⁖≋⌇🕸♨", "OFf:M.=sXw"},
 		{"unmapped high rune passthrough", "café", "café"},
 		// The crit banners hold a no-break space so the wrap keeps the
 		// banner words together; an ASCII-mode client gets a plain space.

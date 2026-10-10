@@ -124,18 +124,20 @@ func Locate(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 				ct++
 
-				// trunacte room.Title to only 20 chars
+				// Both cells are padded to 24 runes. Cut by rune (a byte cut
+				// could split one) and end in ASCII dots, so the column holds
+				// for a UTF-8 and an ASCII client alike (#253 follow-up).
 				roomTitle := room.Title
-				if len(roomTitle) > 24 {
-					roomTitle = roomTitle[0:23] + `…`
+				if r := []rune(roomTitle); len(r) > 24 {
+					roomTitle = string(r[:21]) + `...`
 				}
 
 				mobName := mob.Character.Name
 				if mob.Character.IsInCombat() {
 					mobName = `*` + mobName
 				}
-				if len(mobName) > 24 {
-					mobName = mobName[0:23] + `…`
+				if r := []rune(mobName); len(r) > 24 {
+					mobName = string(r[:21]) + `...`
 				}
 
 				rows = append(rows, []string{

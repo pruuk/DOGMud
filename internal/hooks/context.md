@@ -2137,8 +2137,10 @@ through `CasterStatValue`, and the school's cast skill):
 - **DoT: `/3`, floored at 3.** `applySpellDot` (`spell_effects.go`) computes
   `calcSpellDuration(...) / 3`, then clamps `dotDuration < 3` up to 3, and
   passes that rounds figure straight to
-  `AddConditionMagnitudeBy(conditions.ConditionIdPoisoned, dotDuration, ..., c.casterRef())`: record 121 ticks
-  every round (slice 1b; it was every third round before). See
+  `AddConditionMagnitudeBy(spellDotConditionId(spell), dotDuration, ..., c.casterRef())`:
+  the spell's one `condition_ids` entry (Blood Boil's 143 Boiling Blood) or
+  121 Poisoned (Neural Toxin) ticks every round (slice 1b; it was every
+  third round before). See
   `internal/conditions/context.md` under "Cadence".
 
 **Crit never touches a duration, and never touches a help spell.** A
@@ -2169,8 +2171,12 @@ already fighting, the caster on the target likewise, and a player caster on a
 mob calls `actions.SeedAggression` with freshness judged per target, as
 `throw` does, which records the assault crime on a fresh engagement (owner
 ruling, 2026-09-28). Damage and knockdown on a mob call `creditSpellDamage`
-before the harm, as melee does with `TrackPlayerDamage`; the dot does not
-(its ticks harm anonymously, a filed follow-up). A dot's duration reads the
+before the harm, as melee does with `TrackPlayerDamage`; the dot's record
+carries its caster, so each tick credits them (`creditMobHarm`, #240). A dot
+whose record tells its own start (Blood Boil's 143) narrates through
+`narrateConditionStart`, with everything read before the record lands and
+the lines sent before the fight is committed; a silent-start record (121)
+keeps the spell's "afflicts" trio (#249). A dot's duration reads the
 spell's primarystat and the school's cast skill through
 `spellCasterStatAndSkill`, not `actions.GetSpellStatAndSkill`, which is the
 fold stat.
@@ -2179,7 +2185,9 @@ The helpful effects have one applier each in `spell_help_effects.go`:
 `applySpellConditionEffect` (every named condition through
 `applySpellCondition`'s event door), `applySpellHeal` (the spell's own heal
 condition), `applySpellShield` (the spell's own ward) and `applySpellPurge`
-(cancels every poison). `applySpellDefaultEffect` serves an effect with no
+(`purgeAfflictions`, shared with Purge Affliction: every poison and every
+record a dot spell lands, never a combat bleed, #249).
+`applySpellDefaultEffect` serves an effect with no
 applier of its own, and charm binds a mob through `applyMobEffect_charm`.
 A defended status narrates the defence triad and applies nothing
 (`spellStatusDefended`); a harmful condition or default spell still starts
@@ -2325,6 +2333,12 @@ so nothing in `hooks` hides a speaker's name itself.
 only calls `actions.Say(&actions.MobActor{...}, line)`: a guard's spoken
 line goes through the same reveal, deafen split and name-hiding every other
 NPC speaker gets, rather than a hand-rolled room broadcast.
+
+`hooks.go` registers `justice.LapseArrestStampOnMove` on `RoomChange`: a
+player who walks out of the room a guard declared their arrest in drops
+that declaration, so the next sighting declares afresh (#241). The listener
+lives in `internal/justice`; `TestArrestStampLapseIsRegistered` reads
+`hooks.go` to guard the registration.
 
 ## Dependencies
 

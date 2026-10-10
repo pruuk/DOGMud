@@ -1276,6 +1276,20 @@ var unicodeToAscii = map[rune]string{
 	// Map / directional
 	'▲': "^", '▼': "v", '△': "^", '▽': "v",
 	'≈': "~", '⌂': "#", '◆': "*", '●': "o", '○': "o",
+	// Map markers that carry meaning (#253 follow-up): one letter each, so a
+	// cell keeps its width. P and K, not @ and L: @ is You and L is the
+	// Loom's room symbol (owner call 2026-10-10).
+	'☺': "P", '☹': "&", '⚷': "K",
+	// Biome glyphs (#253 follow-up, owner approved 2026-10-10): one letter
+	// each, none shared with a room mapsymbol, a map marker or a legend
+	// override. Cave, Dense Forest, Forest, Ether, Mountains, Plains, River,
+	// Sewer, Spiderweb, Swamp. ≋ also draws water in the splash art.
+	'⌬': "O", '♠': "F", '♣': "f", '∴': ":", '⩕': "M",
+	'⁖': ".", '≋': "=", '⌇': "s", '🕸': "X", '♨': "w",
+	// Text glyphs that carry meaning (#253 follow-up): the skill banner and
+	// admin arrows, truncation ellipses, a weapon's damage spread, admin
+	// multipliers, and the lock grid's up and down pins.
+	'→': "->", '…': "...", '±': "+/-", '×': "x", '↑': "^", '↓': "v",
 	// Heavy box rules (#253): dropped, not drawn. Only ━ ships in server
 	// text (help section rules, the banner rule and the aicompanion module
 	// headers); the rest of the heavy family is here so a new template cannot bring one back unconverted.

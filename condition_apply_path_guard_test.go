@@ -215,8 +215,10 @@ var conditionApplyPathAllowlist = map[string]string{
 	// when it gained its shield case, and again Task 5 when its doc comment
 	// grew and the per-pairing fallthrough became the default arm; moved to
 	// AddConditionMagnitudeBy and re-keyed messaging M6 slice 1, when the
-	// dot began to carry its caster and creditMobHarm landed above it) ──────
-	"internal/hooks/spell_effects.go|355": "former combat condition (spell dot): silent-start record, the spell narrates the affliction; must apply synchronously so the refusal is known to the narrator",
+	// dot began to carry its caster and creditMobHarm landed above it; re-keyed
+	// loose issues sweep 3 when the dot began to read its record from
+	// condition_ids, #249) ──────
+	"internal/hooks/spell_effects.go|378": "spell dot: applies synchronously so an immune target's refusal is known before anything is narrated; the spell then tells the record's own start lines (narrateConditionStart, Blood Boil's 143) or, for a silent-start record (121), its own trio",
 
 	// ── magnitude potions (lighting plan 5c): the player's and the mob's drink
 	// each carried this call (usercommands/drink.go and mobcommands/drink.go)

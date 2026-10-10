@@ -16,23 +16,29 @@ Hidden areas and secret passages may not appear on the map.
 
 <ansi fg="yellow">Map symbols:</ansi>
 
-  <ansi fg="white">@</ansi>   You (your current room)
-  <ansi fg="white">☺</ansi>   A player, party member, or non-hostile NPC
-  <ansi fg="white">☠</ansi>   A hostile or actively fighting mob
-  <ansi fg="white">☹</ansi>   A friend (a charmed mob travelling with
-      a party member)
+  UTF-8  ASCII
+  <ansi fg="white">@</ansi>      <ansi fg="white">@</ansi>      You (your current room)
+  <ansi fg="white">☺</ansi>      <ansi fg="white">P</ansi>      A party member, and with keen Perception
+                a player or a peaceful NPC
+  <ansi fg="white">☠</ansi>      <ansi fg="white">!</ansi>      A hostile or fighting mob (keen Perception)
+  <ansi fg="white">☹</ansi>      <ansi fg="white">&</ansi>      A friend (a charmed mob travelling with
+                a party member)
+  <ansi fg="white">⚷</ansi>      <ansi fg="white">K</ansi>      A locked exit
+  <ansi fg="white">?</ansi>      <ansi fg="white">?</ansi>      A secret passage you have found
+
+With <ansi fg="command">set charset</ansi> on ASCII the map draws the second column,
+and terrain glyphs become letters too. The legend names each one.
 
 <ansi fg="yellow">Usage:</ansi>
 
   <ansi fg="skill">map</ansi>        Display a map of the nearby area.
-  <ansi fg="skill">map wide</ansi>   Display a zoomed-out overview
-                 (requires advanced mapping skill /
-                 high Perception).
+  <ansi fg="skill">map wide</ansi>   Display a larger map that fills your
+                 screen (requires keen Perception).
 
 <ansi fg="yellow">The web client map:</ansi>
 
 Players using the browser-based web client also have a graphical
-"leather map" panel — an aged-parchment map that fills in as you
+"leather map" panel: an aged-parchment map that fills in as you
 explore the world (fog of war). Rooms you have not yet visited are
 hidden; rooms further from you appear slightly dimmed.
 
@@ -42,10 +48,10 @@ hidden; rooms further from you appear slightly dimmed.
   to see its name in a tooltip.
 
 <ansi fg="yellow">Markers on rooms:</ansi>
-  <ansi fg="white">$</ansi>   Bank — deposit/withdraw gold here
-  <ansi fg="white">S</ansi>   Shop — a merchant or vendor
-  <ansi fg="white">T</ansi>   Trainer — a skill instructor or master
-  <ansi fg="white">▢</ansi>   Storage — a storeroom or money-pouch
+  <ansi fg="white">$</ansi>   Bank: deposit and withdraw gold here
+  <ansi fg="white">S</ansi>   Shop: a merchant or vendor
+  <ansi fg="white">T</ansi>   Trainer: a skill instructor or master
+  <ansi fg="white">▢</ansi>   Storage: a storeroom or money-pouch
   A small figure on a room means a party member is standing there.
 
 <ansi fg="yellow">Vertical connections (stairs):</ansi>
@@ -57,17 +63,17 @@ hidden; rooms further from you appear slightly dimmed.
 
 <ansi fg="yellow">Paths between rooms:</ansi>
   The lines connecting rooms change style to show terrain type:
-  - Solid line       — paved road or corridor
-  - Dashed line      — forest trail, marsh path, or open ground
-  - Dashed blue line — river, waterway, or canal
-  - Rocky/jagged     — mountain ridge or cliff path
-  - Long dashed      — highway or long-distance connection
+  - Solid line: paved road or corridor
+  - Dashed line: forest trail, marsh path, or open ground
+  - Dashed blue line: river, waterway, or canal
+  - Rocky or jagged: mountain ridge or cliff path
+  - Long dashed: highway or long-distance connection
 
 <ansi fg="yellow">Special exits:</ansi>
   A small door icon (with the path turning red beyond it) means a
-  locked exit — you need a key or the right skill to pass.
+  locked exit: you need a key or the right skill to pass.
 
-  A faint dotted path ending in a <ansi fg="white">?</ansi> is a secret passage — it
+  A faint dotted path ending in a <ansi fg="white">?</ansi> is a secret passage. It
   appears only once you have discovered it.
 
   An arrowhead on a path marks a one-way passage: you can travel
@@ -76,15 +82,16 @@ hidden; rooms further from you appear slightly dimmed.
   A small archway indicates a gate or zone threshold.
 
   A short dashed stub pointing off the edge of a room tile is an
-  unexplored exit — the area exists but you have not been there
+  unexplored exit: the area exists but you have not been there
   yet. When the exit leads to a different zone it is labelled
   with an arrow and the zone name (e.g. "→ Ironwind Steppe").
 
 <ansi fg="yellow">Map controls (bottom-left corner of the panel):</ansi>
   <ansi fg="command">fit</ansi>   Zoom to fit the entire known map in the panel.
   <ansi fg="command">ctr</ansi>   Re-centre the view on your current room.
-  <ansi fg="command">−</ansi> / <ansi fg="command">+</ansi>  Zoom out / zoom in one step.
+  <ansi fg="command">-</ansi> / <ansi fg="command">+</ansi>  Zoom out / zoom in one step.
 
 <ansi fg="yellow">Related:</ansi>
   <ansi fg="command">help map-examples</ansi>
   <ansi fg="command">help perception</ansi>
+  <ansi fg="command">help charset</ansi>

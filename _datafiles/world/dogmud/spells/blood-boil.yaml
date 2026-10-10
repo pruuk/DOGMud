@@ -13,6 +13,7 @@ difficulty: 25
 primarystat: willpower
 base_folds: 6
 effect_type: dot
+condition_ids: [143]
 effect_magnitude: 40
 damage_multiplier: 0.80
 effect_duration: 3

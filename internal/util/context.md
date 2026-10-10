@@ -84,6 +84,12 @@ another space) and trailing spaces at line end, even behind a colour reset.
 A symbol that must stay visible (the mob cell on `map`) needs an ASCII
 variant chosen at the source, as `mobMapSymbol` does. Em and en dashes map to `-`, because
 dropping them would glue two words together (#253).
+Glyphs that carry meaning get a visible form (#253 follow-up): the map
+markers `☺ ☹ ⚷` become `P & K`, `→` becomes `->`, `…` `...`, `±` `+/-`,
+`×` `x`, and `↑ ↓` `^ v`. A map cell must convert to exactly one ASCII
+character or its row shifts; `internal/mapper`'s
+`TestMapGlyphsConvertToOneAsciiCharacter` holds every biome and mapper glyph
+to that.
 
 **`StripANSI` and `EscapeAnsiTags` are unrelated.** `StripANSI` removes raw
 terminal escape sequences (`\x1b[...m`) from already-rendered output.

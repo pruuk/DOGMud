@@ -73,10 +73,12 @@ func sortedSpellIds(all map[string]*spells.SpellData) []string {
 
 // conditionIdReaders are the effect types whose applier reads condition_ids
 // (internal/hooks: applySpellConditionEffect, applySpellShield,
-// applySpellHeal). On any other effect type the list is dead data that
-// promises the player something the spell never does: Chrysalis Cocoon's
-// [52] and Mass Mend's [33] were exactly that.
-var conditionIdReaders = []string{"condition", "shield", "heal"}
+// applySpellHeal, and applySpellDot through spellDotConditionId, #249). On
+// any other effect type the list is dead data that promises the player
+// something the spell never does: Chrysalis Cocoon's [52] and Mass Mend's
+// [33] were exactly that. A dot's named record must tell its own start, as
+// every other reader's must (TestSpellConditionsNarrateTheirOwnStart).
+var conditionIdReaders = []string{"condition", "shield", "heal", "dot"}
 
 func TestSpellConditionIdsAreReadByTheirEffectType(t *testing.T) {
 	all := shippedSpells(t)
@@ -276,5 +278,26 @@ func TestSpellConditionsNarrateTheirOwnStart(t *testing.T) {
 	}
 	if len(problems) > 0 {
 		t.Fatalf("%d spell-landed conditions cannot tell their own start:\n  - %s", len(problems), strings.Join(problems, "\n  - "))
+	}
+}
+
+// A dot spell lands one record (spellDotConditionId reads ConditionIds[0]),
+// so a second id would be dead data (#249).
+func TestDotSpellsNameAtMostOneCondition(t *testing.T) {
+	all := shippedSpells(t)
+	dots := 0
+	for _, id := range sortedSpellIds(all) {
+		s := all[id]
+		if s.EffectType != "dot" {
+			continue
+		}
+		dots++
+		if len(s.ConditionIds) > 1 {
+			t.Errorf("%s: a dot spell lands one record, names %v", id, s.ConditionIds)
+		}
+	}
+	// Blood Boil and Neural Toxin; a guard that found none would pass vacuously.
+	if dots < 2 {
+		t.Fatalf("only %d dot spells found, want at least 2", dots)
 	}
 }
