@@ -190,8 +190,8 @@ func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
 }
 
 // TestCrashSiteDischarges_TreesCastTheirOwnWindupSpell pins the wiring: each
-// boss tree casts its own discharge, and that spell carries the two-round
-// min_cast_rounds windup and a warning line for the held round.
+// boss tree casts its own discharge, and every telegraphed spell it casts
+// carries the two-round min_cast_rounds windup and a held-round warning.
 func TestCrashSiteDischarges_TreesCastTheirOwnWindupSpell(t *testing.T) {
 	loadShippedCrashSiteBosses(t)
 	for tree, want := range map[string]string{
@@ -216,12 +216,20 @@ func TestCrashSiteDischarges_TreesCastTheirOwnWindupSpell(t *testing.T) {
 				t.Errorf("%s casts %s; each boss casts only its own discharge", tree, id)
 			}
 		}
-		sd := spells.GetSpell(want)
-		if sd == nil {
-			t.Fatalf("%s did not load", want)
-		}
-		if sd.MinCastRounds != 2 || sd.WaitRoomText == "" {
-			t.Errorf("%s: min_cast_rounds %d, wait_observer %q; want 2 and a warning line", want, sd.MinCastRounds, sd.WaitRoomText)
+		// Every telegraphed boss cast the tree makes (no_damage_interrupt:
+		// the discharges and Core Drain) carries the two-round windup its
+		// help page promises, and a warning line for the held round.
+		for id := range cast {
+			sd := spells.GetSpell(id)
+			if sd == nil {
+				t.Fatalf("%s casts %s, which did not load", tree, id)
+			}
+			if !sd.NoDamageInterrupt {
+				continue
+			}
+			if sd.MinCastRounds != 2 || sd.WaitRoomText == "" {
+				t.Errorf("%s: min_cast_rounds %d, wait_observer %q; want 2 and a warning line", id, sd.MinCastRounds, sd.WaitRoomText)
+			}
 		}
 	}
 }

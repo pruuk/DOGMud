@@ -60,7 +60,8 @@ spell|core-discharge|cast_actor => Power floods inward, gathering at your core.
 spell|core-discharge|cast_observer => <ansi fg="username">Aliceia</ansi>'s core flares white-hot, and the air begins to scream.
 spell|core-discharge|wait_observer => <ansi fg="username">Aliceia</ansi>'s core shrieks and blazes. It is about to burst!
 spell|core-drain|cast_actor => Power gathers inward, filaments of cold light reaching for your prey.
-spell|core-drain|cast_observer => <ansi fg="username">Aliceia</ansi>'s chest-cavity irises open -- filaments of cold light reach toward you. It will feed on the room next round.
+spell|core-drain|cast_observer => <ansi fg="username">Aliceia</ansi>'s chest irises open. Cold filaments reach toward you.
+spell|core-drain|wait_observer => <ansi fg="username">Aliceia</ansi>'s filaments pull tight. It is about to feed!
 spell|empathic-shroud|cast_actor => You weave a psionic shroud of unnoticability.
 spell|empathic-shroud|cast_observer => <ansi fg="username">Aliceia</ansi> traces patterns in the air that seem to blur reality.
 spell|fold-anchor|cast_actor => You weave a Chrysalis anchor into the fabric of this location.
