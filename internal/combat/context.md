@@ -1767,7 +1767,9 @@ scripted combat command.
     `mitigation_magical` and 136 `mitigation_conviction`, read by the
     magical and conviction mitigations the same way. `preferredSpell`
     (`ai.go`) casts `conviction-ward` when no ward is up:
-    `Conditions.HasFamily(conditions.FamilyWard)`.
+    `Conditions.HasFamily(conditions.FamilyWard)`. Its `heal` branch (below
+    30% health) reads the heal family the same way, so it does not recast a
+    heal while one is running: `HasFamily(conditions.FamilyHeal)`.
 13. **Adrenaline Surge** — mutation check for bonus damage.
 14. **Crit effects (defender is player):**
     - Parry crit: player attempts to disarm the mob.

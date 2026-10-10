@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 )
@@ -115,5 +116,40 @@ func TestPreferredSpellReadsTheCompanionsReachableHealth(t *testing.T) {
 		t.Errorf("preferredSpell made a fully rested 90%%-reserved companion cast heal on " +
 			"itself. Its pool is already at its REACHABLE maximum. This means " +
 			"preferredSpell divides by HealthMax.Value instead of EffectivePoolMax")
+	}
+}
+
+// ai.go preferredSpell reads the heal family the way it reads the ward
+// family (messaging M6 slice 1, section 3): a near-dead caster that already
+// holds a running heal does not recast one, which would only replace it.
+func TestPreferredSpellDoesNotRecastAHealWhileOneIsRunning(t *testing.T) {
+	defer spells.SeedSpellsForTest(map[string]*spells.SpellData{
+		"heal": {SpellId: "heal", Name: "Heal", Cost: 5, EffectType: "heal"},
+	})()
+	const healId = 7301
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		healId: {ConditionId: healId, Name: "Test Heal", Family: conditions.FamilyHeal, RoundInterval: 1, TriggerCount: 5},
+	}))
+
+	_, depleted := reservedAndDepleted(t, characters.PoolHealth, 0.90)
+	worn := asMob(depleted)
+	worn.Character.SpellBook = map[string]int{"heal": 1}
+	worn.Character.Conviction = 100
+
+	if got := preferredSpell(worn); got != "heal" {
+		t.Fatalf("fixture: a near-dead caster with no heal running chose %q, want \"heal\"", got)
+	}
+
+	held := conditions.New()
+	held.List = append(held.List, &conditions.Condition{ConditionId: healId, TriggersLeft: 5})
+	held.Validate(true)
+	worn.Character.Conditions = held
+	if !worn.Character.Conditions.HasFamily(conditions.FamilyHeal) {
+		t.Fatal("fixture: the seeded record does not read as the heal family")
+	}
+
+	if got := preferredSpell(worn); got == "heal" {
+		t.Errorf("preferredSpell recast heal on a caster already holding a heal-family " +
+			"condition; the heal branch must check HasFamily(FamilyHeal) as the ward branch does")
 	}
 }
