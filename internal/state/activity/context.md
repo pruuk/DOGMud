@@ -98,8 +98,14 @@ type CastingData struct {
     TargetUserIds        []int
     TargetMobInstanceIds []int
     SpellRest            string
+    RoundsStepped        int // AdvanceCastingFolds calls so far (#480)
 }
 ```
+
+`RoundsStepped` counts fold steps. `AdvanceCastingFolds` increments it on
+every call, including a held step that adds no folds. A mob spell's
+`min_cast_rounds` (`internal/spells`) reads it in `hooks.processFoldRound`
+to hold the cast open; this package does not know about that rule.
 
 ### CraftingData
 

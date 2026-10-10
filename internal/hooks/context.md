@@ -1826,6 +1826,20 @@ resolving sub outcomes. If > 0, forces the tier to `SubTierBad` regardless
 of the roll result. Both submitter and partner accumulators are reset to 0
 at the end of each per-pair tick via defer.
 
+### A mob's held windup: `min_cast_rounds` (#480)
+
+`processFoldRound` keeps a MOB's cast open (`StillCasting`) until
+`CastingData.RoundsStepped` reaches the spell's `MinCastRounds`, even when
+the folds are already full. The rule is keyed on `char.GetUserId() == 0`,
+so a player's cast never meets it. A held step adds no folds, and
+`calcFoldConvictionCost` charges 0 for a step with no fold gain. On a held
+round `handleMobFoldCasting` calls `sendMobWindupWarning`, which sends the
+spell's `wait_observer` line (caster named by `mobSeenName`, same audience
+as `sendMobWeaving`) in place of the weave; a spell without the field or
+without that line keeps the weave. Disruptors need no change: the mob is
+casting for the whole windup, so `InterruptTargetCast` lands in any round.
+`mob_min_cast_rounds_test.go` pins all of it.
+
 ### Chunk 4f (U10: opposed contest, not chance-based)
 
 **`processFoldRound`** in `combat_shared_helpers.go` replaced the earlier

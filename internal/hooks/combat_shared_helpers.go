@@ -505,7 +505,9 @@ func simulateFoldRound(cs activity.CastingData) int {
 // calcFoldConvictionCost computes the conviction cost for a fold round,
 // proportional to folds gained vs total folds needed.
 func calcFoldConvictionCost(cs activity.CastingData, foldDelta int) int {
-	if cs.TotalConvictionCost <= 0 || cs.FoldsNeeded <= 0 {
+	// foldDelta 0 is a held step of a mob's min_cast_rounds windup (#480):
+	// the folds are already full, so the step adds nothing and costs nothing.
+	if cs.TotalConvictionCost <= 0 || cs.FoldsNeeded <= 0 || foldDelta <= 0 {
 		return 0
 	}
 	roundCost := (cs.TotalConvictionCost * foldDelta) / cs.FoldsNeeded
@@ -735,6 +737,11 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 	// Conviction was charged by the ApplyCost above. Advance folds via the
 	// Activity machine.
 	updatedCs, complete := char.Activity.AdvanceCastingFolds(foldDelta, roundCost)
+	// #480: a mob's min_cast_rounds holds the cast open until it has stepped
+	// that many rounds, whatever its fold rate. A player's cast ignores it.
+	if complete && char.GetUserId() == 0 && updatedCs.RoundsStepped < spellData.MinCastRounds {
+		complete = false
+	}
 	if complete {
 		clearCastingActivity(char, activity.TriggerCastComplete)
 		return FoldRoundResult{

@@ -562,6 +562,26 @@ func sendMobWeaving(mob *mobs.Mob, room *rooms.Room) {
 		mobActUnseenBy(room, mob)...)
 }
 
+// sendMobWindupWarning is the held round of a min_cast_rounds windup (#480):
+// the spell's own wait_observer line in place of the generic weave, to the
+// same audience and with the caster named the same way. It sends nothing and
+// returns false for a spell without the field or without that line, so every
+// other mob cast keeps the weave.
+func sendMobWindupWarning(mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData) bool {
+	if spellData == nil || spellData.MinCastRounds <= 0 {
+		return false
+	}
+	// Both forms take the seen name, as the weave does: a plain name would
+	// name a hidden caster.
+	seen := mobSeenName(mob, room, 0)
+	roles := spellData.Narrate(spells.PhaseWait, textutil.TokenContext{ActorName: seen, ActorPlainName: seen})
+	if roles.Observer == "" {
+		return false
+	}
+	sendVisualRoomText(room, messaging.CategorySpellFold, roles.Observer, mobActUnseenBy(room, mob)...)
+	return true
+}
+
 // sendPlayerConcentrationBroke narrates a player caster's broken
 // concentration to the rest of the room, as sendMobConcentrationBroke does
 // for a mob: seen by sight, heard by a reader who sees nothing. The caster
@@ -990,7 +1010,9 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 		}
 
 	case result.StillCasting:
-		sendMobWeaving(mob, mobRoom)
+		if !sendMobWindupWarning(mob, mobRoom, result.SpellData) {
+			sendMobWeaving(mob, mobRoom)
+		}
 	}
 
 	return true

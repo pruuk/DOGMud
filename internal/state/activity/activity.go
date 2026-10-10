@@ -53,6 +53,10 @@ type CastingData struct {
 	TargetUserIds        []int
 	TargetMobInstanceIds []int
 	SpellRest            string
+	// RoundsStepped counts AdvanceCastingFolds calls: one per fold step. A
+	// mob spell's min_cast_rounds (#480) holds the cast open until it
+	// reaches that many, whatever FoldsAccumulated says.
+	RoundsStepped int
 }
 
 // CraftingData replaces internal/characters/CraftingState.
