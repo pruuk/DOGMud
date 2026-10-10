@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/state"
 )
 
 const (
@@ -41,6 +42,12 @@ type Condition struct {
 	LightTrim   LightTrim `yaml:"lighttrim,omitempty"`
 	LightOutput float64   `yaml:"lightoutput,omitempty"`
 	Hooded      bool      `yaml:"hooded,omitempty"`
+
+	// Caster is who put this record on its holder: a spell's caster, the
+	// attacker whose blow opened a bleed. Zero for a record nothing cast (a
+	// potion, a hazard, a mutation, gear). The newest application owns the
+	// record (Stamp). Only a player caster is saved; see caster.go.
+	Caster state.ActorRef `yaml:"caster,omitempty"`
 }
 
 func (b *Condition) StatMod(statName string) int {
