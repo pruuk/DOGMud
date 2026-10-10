@@ -1,0 +1,18 @@
+conditionid: 136
+name: Chrysalis Cocoon
+description: A shell of living Chrysalis blunts physical blows, spells and
+  harsh words alike. A newer ward takes its place rather than adding to it.
+family: ward
+triggerrate: 1 round
+# A floor for the born-dead guard; the spell sets the real count from its
+# caster (applySpellShield).
+triggercount: 10
+effects:
+  mitigation_flat: magnitude
+  mitigation_magical: magnitude
+  mitigation_conviction: magnitude
+start_actor: "Living Chrysalis weaves a cocoon around {actee}."
+start_actee: "Living Chrysalis weaves a cocoon around you."
+start_observer: "Tendrils of living Chrysalis weave a cocoon around {actee}."
+end_actee: "Your Chrysalis Cocoon splits and flakes away."
+end_observer: "The cocoon around {actee} splits and flakes away."

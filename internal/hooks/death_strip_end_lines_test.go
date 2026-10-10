@@ -42,7 +42,7 @@ func TestDeathStrip_ExpiredRecordsDoNotNarrateAfterRespawn(t *testing.T) {
 	// A one-trigger bleed that kills, and a narrated shield that would have
 	// lasted. Both end lines must stay silent.
 	require.NoError(t, u.Character.AddConditionMagnitude(conditions.ConditionIdBleeding, 1, -5, "claws"))
-	require.NoError(t, u.Character.AddConditionMagnitude(conditions.ConditionIdMinorShield, 10, 3, "spell"))
+	require.NoError(t, u.Character.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 10, 3, "spell"))
 	u.Character.Health = 1
 
 	UserRoundTick(events.NewRound{RoundNumber: 1})
@@ -64,7 +64,7 @@ func TestDeathStrip_ExpiredRecordsDoNotNarrateAfterRespawn(t *testing.T) {
 		"the death cause must still read the held Bleeding record")
 
 	assert.False(t, u.Character.HasCondition(conditions.ConditionIdBleeding), "the stripped bleed is gone after the respawn")
-	assert.False(t, u.Character.HasCondition(conditions.ConditionIdMinorShield), "the stripped shield is gone after the respawn")
+	assert.False(t, u.Character.HasCondition(conditions.ConditionIdConvictionWard), "the stripped shield is gone after the respawn")
 
 	holderLines := drainPlain(1)
 	roomLines := drainPlain(2)
@@ -74,9 +74,9 @@ func TestDeathStrip_ExpiredRecordsDoNotNarrateAfterRespawn(t *testing.T) {
 
 	assert.Equal(t, 0, countContaining(holderLines, "Your wounds stop bleeding."),
 		"the respawned player must not read the stripped bleed's end line")
-	assert.Equal(t, 0, countContaining(holderLines, "Minor Shield dissipates"),
+	assert.Equal(t, 0, countContaining(holderLines, "Conviction Ward fades"),
 		"nor the stripped shield's")
-	assert.Equal(t, 0, countContaining(roomLines, "Minor Shield dissipates"),
+	assert.Equal(t, 0, countContaining(roomLines, "ward around"),
 		"and the room must not see it either")
 }
 
@@ -99,10 +99,10 @@ func TestDeathStrip_ANonDeathCancelStillNarrates(t *testing.T) {
 	u := setupConditionAfterDeath(t)
 	t.Cleanup(conditions.SeedConditionRecordsForTest())
 
-	require.NoError(t, u.Character.AddConditionMagnitude(conditions.ConditionIdMinorShield, 10, 3, "spell"))
+	require.NoError(t, u.Character.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 10, 3, "spell"))
 	u.Character.CancelConditionsWithFlag(conditions.All)
 	drainPlain(1)
 
 	PruneConditions(events.NewTurn{TurnNumber: 1})
-	assert.Equal(t, 1, countContaining(drainPlain(1), "Your Minor Shield dissipates."))
+	assert.Equal(t, 1, countContaining(drainPlain(1), "Your Conviction Ward fades."))
 }

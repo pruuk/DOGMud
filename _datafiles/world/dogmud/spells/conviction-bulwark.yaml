@@ -1,0 +1,24 @@
+spellid: conviction-bulwark
+name: Conviction Bulwark
+aliases: [bulwark]
+description: Raises belief into a bulwark that blunts blows and spells.
+attack_type: none
+damage_type: non_harm
+targeting: single
+schools:
+  - enhancement
+cost: 45
+waitrounds: 1
+difficulty: 15
+primarystat: willpower
+base_folds: 6
+effect_type: shield
+effect_magnitude: 100
+# The ward this spell lands: physical and spell, the middle of the three
+# (messaging M6 slice 1, owner ruling R7).
+condition_ids:
+  - 135
+categories:
+  - self_defense
+cast_actor: "You raise your belief into a bulwark."
+cast_observer: "{actor} lifts their hands as belief gathers into a bulwark."

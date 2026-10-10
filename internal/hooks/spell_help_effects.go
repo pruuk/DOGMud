@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 )
 
 // Spell effect unification, parity slice 3b
@@ -130,12 +131,18 @@ func spellConditionsNarrateStart(c spellEffectCtx) bool {
 		return false
 	}
 	for _, conditionId := range c.spell.ConditionIds {
-		spec := conditions.GetConditionSpec(conditionId)
-		if spec == nil || c.targetChar().HasCondition(conditionId) || !spec.NarratesCastStart(c.selfCast()) {
+		if !spellConditionNarratesStart(c, conditionId) {
 			return false
 		}
 	}
 	return true
+}
+
+// spellConditionNarratesStart is spellConditionsNarrateStart for one
+// condition: a fresh landing whose own start lines tell every audience.
+func spellConditionNarratesStart(c spellEffectCtx, conditionId int) bool {
+	spec := conditions.GetConditionSpec(conditionId)
+	return spec != nil && !c.targetChar().HasCondition(conditionId) && spec.NarratesCastStart(c.selfCast())
 }
 
 // applySpellHeal is the one heal applier (slice 3b): a Regenerating record
@@ -190,13 +197,18 @@ func applySpellHeal(c spellEffectCtx) int {
 	return 0
 }
 
-// applySpellShield is the one shield applier (slice 3b): a Minor Shield
-// record on the target worth a third of the caster's primarystat plus its
-// weighted cast skill (at least one), scaled by the spell's magnitude (100
-// is 1x), for the full universal spell duration. Every pairing gains it: a
-// shield on a charmed pet, or from a creature onto a player, applied
-// nothing (audit rows 3 and 15). The dead player-to-player crit bump is
-// gone (owner ruling 3).
+// applySpellShield is the one shield applier (slice 3b): the spell's own
+// ward (spellWardConditionId) on the target, worth a third of the caster's
+// primarystat plus its weighted cast skill (at least one), scaled by the
+// spell's magnitude (100 is 1x), for the full universal spell duration. That
+// one strength feeds every kind of damage the ward blocks (messaging M6
+// slice 1, owner ruling R7). The ward travels the condition event, which
+// replaces any other ward the target holds and names the caster; when the
+// ward's own start lines tell every audience, they are the only lines (owner
+// ruling R11), and a re-cast of a ward already held keeps the lines below.
+// Every pairing gains it: a shield on a charmed pet, or from a creature onto
+// a player, applied nothing (audit rows 3 and 15). The dead player-to-player
+// crit bump is gone (owner ruling 3).
 func applySpellShield(c spellEffectCtx) int {
 	if spellStatusDefended(c) {
 		return 0
@@ -217,7 +229,15 @@ func applySpellShield(c spellEffectCtx) int {
 	duration := calcSpellDuration(c.spell.BaseFolds, skill, stat)
 	casterName, targetName := c.casterName(), c.targetName()
 	_, targetHidden := c.hiddenFromRoom()
-	_ = c.targetChar().AddConditionMagnitude(conditions.ConditionIdMinorShield, duration, float64(shieldBonus), "spell")
+	wardId := spellWardConditionId(c.spell)
+	narrated := spellConditionNarratesStart(c, wardId)
+	if target := spellConditionTargetOf(c.target); target != nil {
+		target.QueueCondition(events.Condition{ConditionId: wardId, Source: "spell",
+			Triggers: duration, Magnitude: float64(shieldBonus), Caster: c.casterRef(), CastStart: narrated})
+	}
+	if narrated {
+		return 0
+	}
 	if c.selfCast() {
 		messaging.SendTrio(messaging.Trio{
 			Actor: messaging.Say(c.category(),
@@ -237,6 +257,17 @@ func applySpellShield(c spellEffectCtx) int {
 			`A shimmering barrier surrounds %s.`, roomName(targetHidden, targetName))),
 	}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 	return 0
+}
+
+// spellWardConditionId is the ward a shield spell lands: its one
+// condition_ids entry, a ward-family record (the root guard
+// TestShieldAndHealSpellsLandTheirOwnCondition holds the shipped spells to
+// that), or Conviction Ward for a spell that names none.
+func spellWardConditionId(spell *spells.SpellData) int {
+	if len(spell.ConditionIds) > 0 {
+		return spell.ConditionIds[0]
+	}
+	return conditions.ConditionIdConvictionWard
 }
 
 // applySpellPurge is the one purge applier (slice 3b): it cancels every

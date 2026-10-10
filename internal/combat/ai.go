@@ -736,10 +736,10 @@ func CanUseCast(char *characters.Character) bool {
 }
 
 // preferredSpell returns the spell ID the mob should cast this round.
-// Priority: (1) minor-shield if unshielded, (2) heal-self if < 30% HP, (3) harm spells.
+// Priority: (1) conviction-ward if no ward is up, (2) heal-self if < 30% HP, (3) harm spells.
 func preferredSpell(mob *mobs.Mob) string {
-	// Shield self if not already shielded
-	if !mob.Character.Conditions.HasEffect(conditions.EffectMitigationFlat) {
+	// Ward self if no ward is up (the ward family, messaging M6 slice 1)
+	if !mob.Character.Conditions.HasFamily(conditions.FamilyWard) {
 		if _, has := mob.Character.SpellBook["conviction-ward"]; has {
 			if sd := spells.GetSpell("conviction-ward"); sd != nil && mob.Character.Conviction >= sd.Cost {
 				return "conviction-ward"

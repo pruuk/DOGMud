@@ -1344,9 +1344,9 @@ func TestMobDisplayName(t *testing.T) {
 	assert.NotEmpty(t, name, "mob display name should not be empty")
 }
 
-// ─── Minor Shield record ──────────────────────────────────────────────────────
+// ─── Conviction Ward record ──────────────────────────────────────────────────────
 //
-// Minor Shield used to be a combat-condition enum entry, decremented twice
+// Conviction Ward used to be a combat-condition enum entry, decremented twice
 // per round: once by the enum's own tick in the round ticks and again by
 // handlePlayerShieldDecay / the mob branch in DoCombat. Task 6 deleted the
 // second decrement entirely; the record now decays exactly once per round,
@@ -1362,7 +1362,7 @@ func TestMinorShieldRecordExpiresOnceAndNarratesItsEnd(t *testing.T) {
 	require.NotNil(t, u)
 	drainPlain(1)
 
-	_ = u.Character.AddConditionMagnitude(conditions.ConditionIdMinorShield, 1, 10.0, "test")
+	_ = u.Character.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 1, 10.0, "test")
 	assert.Equal(t, 10.0, u.Character.Conditions.Effect(conditions.EffectMitigationFlat),
 		"the mitigation effect must be live before the round ticks")
 
@@ -1372,9 +1372,9 @@ func TestMinorShieldRecordExpiresOnceAndNarratesItsEnd(t *testing.T) {
 	UserRoundTick(events.NewRound{RoundNumber: 1})
 	PruneConditions(events.NewTurn{TurnNumber: 1})
 
-	assert.False(t, u.Character.HasCondition(conditions.ConditionIdMinorShield),
+	assert.False(t, u.Character.HasCondition(conditions.ConditionIdConvictionWard),
 		"a 1-round shield must be gone after one round tick and one prune pass")
-	assert.Equal(t, 1, countContaining(drainPlain(1), "Your Minor Shield dissipates."))
+	assert.Equal(t, 1, countContaining(drainPlain(1), "Your Conviction Ward fades."))
 }
 
 // TestMinorShieldRecordDecaysOncePerRound pins the behaviour change itself:
@@ -1393,13 +1393,13 @@ func TestMinorShieldRecordDecaysOncePerRound(t *testing.T) {
 	u := users.GetByUserId(1)
 	require.NotNil(t, u)
 
-	_ = u.Character.AddConditionMagnitude(conditions.ConditionIdMinorShield, 2, 10.0, "test")
-	require.Equal(t, 2, u.Character.Conditions.TriggersLeft(conditions.ConditionIdMinorShield))
+	_ = u.Character.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 2, 10.0, "test")
+	require.Equal(t, 2, u.Character.Conditions.TriggersLeft(conditions.ConditionIdConvictionWard))
 
 	UserRoundTick(events.NewRound{RoundNumber: 1})
 	DoCombat(events.NewRound{RoundNumber: 1})
 
-	assert.Equal(t, 1, u.Character.Conditions.TriggersLeft(conditions.ConditionIdMinorShield),
+	assert.Equal(t, 1, u.Character.Conditions.TriggersLeft(conditions.ConditionIdConvictionWard),
 		"the shield must decay exactly once per round")
 }
 
@@ -1963,14 +1963,14 @@ func TestMobRoundTick_TicksMinorShieldRecord(t *testing.T) {
 	defer conditions.SeedConditionRecordsForTest()()
 
 	mob := mobs.GetInstance(100)
-	_ = mob.Character.AddConditionMagnitude(conditions.ConditionIdMinorShield, 3, 10.0, "test")
+	_ = mob.Character.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 3, 10.0, "test")
 
 	evt := events.NewRound{RoundNumber: 1}
 	MobRoundTick(evt)
 
 	// The record should still exist but its trigger count decremented.
-	assert.True(t, mob.Character.HasCondition(conditions.ConditionIdMinorShield))
-	assert.Equal(t, 2, mob.Character.Conditions.TriggersLeft(conditions.ConditionIdMinorShield))
+	assert.True(t, mob.Character.HasCondition(conditions.ConditionIdConvictionWard))
+	assert.Equal(t, 2, mob.Character.Conditions.TriggersLeft(conditions.ConditionIdConvictionWard))
 }
 
 // ─── ApplyMoonMods ────────────────────────────────────────────────────────────

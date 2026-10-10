@@ -1052,7 +1052,13 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"conditions/114-cursed.yaml":           true,
 	"conditions/115-rending_bleed.yaml":    true,
 	"conditions/116-terrified.yaml":        true,
-	"conditions/119-minor_shield.yaml":     true,
+	"conditions/119-conviction_ward.yaml":  true,
+	// Messaging M6 slice 1: the other two wards, narrated by the same start
+	// (narrateConditionStart, through sendConditionStartRoomText) and end
+	// (sendConditionEndRoomText) senders as 119, each with the holder's plain
+	// name handed to HideNames.
+	"conditions/135-conviction_bulwark.yaml": true,
+	"conditions/136-chrysalis_cocoon.yaml":   true,
 	// Lighting plan 5c: the vision spells and the tincture, narrated by the
 	// same three phases as 29 and 65 above.
 	"conditions/128-night_sight.yaml":       true,

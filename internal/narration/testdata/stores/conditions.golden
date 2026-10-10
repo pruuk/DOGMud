@@ -265,8 +265,11 @@ condition|116|start_actee => A primal dread rolls over you and every instinct sa
 condition|116|start_observer => Aliceia shrinks back, gripped by a sudden animal dread.
 condition|116|end_actee => The dread loosens its grip on you.
 condition|116|end_observer => The dread gripping <ansi fg="username">Aliceia</ansi> loosens.
-condition|119|end_actee => Your Minor Shield dissipates.
-condition|119|end_observer => <ansi fg="username">Aliceia</ansi>'s Minor Shield dissipates.
+condition|119|start_actor => Your conviction hardens into a ward around <ansi fg="username">Aliceia</ansi>.
+condition|119|start_actee => A ward of hardened conviction settles around you.
+condition|119|start_observer => A faint ward of conviction shimmers around <ansi fg="username">Aliceia</ansi>.
+condition|119|end_actee => Your Conviction Ward fades.
+condition|119|end_observer => The ward around <ansi fg="username">Aliceia</ansi> fades.
 condition|120|end_actee => The healing magic in your wounds runs its course.
 condition|121|trigger_actee => <ansi fg="green">The poison burns through your veins!</ansi>
 condition|121|end_actee => The poison in your veins finally burns itself out.
@@ -290,3 +293,13 @@ condition|131|start_actee => A pall of dark spores gathers around you.
 condition|131|start_observer => A pall of dark spores gathers around Aliceia.
 condition|131|end_actee => Your pall thins, and the light comes back.
 condition|131|end_observer => The pall around Aliceia thins away.
+condition|135|start_actor => Your belief rises into a bulwark around <ansi fg="username">Aliceia</ansi>.
+condition|135|start_actee => A bulwark of belief rises around you.
+condition|135|start_observer => A shimmering bulwark of belief rises around <ansi fg="username">Aliceia</ansi>.
+condition|135|end_actee => Your Conviction Bulwark fades.
+condition|135|end_observer => The bulwark around <ansi fg="username">Aliceia</ansi> fades.
+condition|136|start_actor => Living Chrysalis weaves a cocoon around <ansi fg="username">Aliceia</ansi>.
+condition|136|start_actee => Living Chrysalis weaves a cocoon around you.
+condition|136|start_observer => Tendrils of living Chrysalis weave a cocoon around <ansi fg="username">Aliceia</ansi>.
+condition|136|end_actee => Your Chrysalis Cocoon splits and flakes away.
+condition|136|end_observer => The cocoon around <ansi fg="username">Aliceia</ansi> splits and flakes away.

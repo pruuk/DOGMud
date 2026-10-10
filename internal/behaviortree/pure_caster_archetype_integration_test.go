@@ -69,7 +69,7 @@ func seedCasterMob(t *testing.T, instanceId int, spellbook map[string]int) (*mob
 	}
 	m.Character.Name = "testcaster"
 	m.Character.Conviction = 500
-	// Base, not just Value: the two tests below that apply Minor Shield via
+	// Base, not just Value: the two tests below that apply Conviction Ward via
 	// AddConditionMagnitude trigger a full Character.Validate(), which recomputes
 	// ConvictionMax/HealthMax from Base + stats + balance config and clamps
 	// Conviction/Health down to the recomputed max (validate.go:347-348,
@@ -167,13 +167,13 @@ func TestPureCaster_DefenseCovered_SingleEnemy_CastsHarmSingle(t *testing.T) {
 	defer cleanup()
 	defer events.DrainQueuedInputsForTest(mob.InstanceId)
 
-	// Activate iron-will (condition 27) and conviction-ward (the Minor Shield
+	// Activate iron-will (condition 27) and conviction-ward (the Conviction Ward
 	// record). seedConditionOnChar replaces the whole spec map with just {27}, so
-	// SeedConditionRecordsForTest must run AFTER it to add Minor Shield's
+	// SeedConditionRecordsForTest must run AFTER it to add Conviction Ward's
 	// spec back in (additive) before AddConditionMagnitude needs it.
 	defer seedConditionOnChar(t, &mob.Character, 27)()
 	defer conditions.SeedConditionRecordsForTest()()
-	_ = mob.Character.AddConditionMagnitude(conditions.ConditionIdMinorShield, 20, 75, "test")
+	_ = mob.Character.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 20, 75, "test")
 	// AddConditionMagnitude validates the embedded Character directly, which
 	// installs a PLAYER Presence/Perception (Character.Validate()'s nil
 	// guard); mob.Validate() puts the mob ones back so TryMobBehavior sees a
@@ -211,11 +211,11 @@ func TestPureCaster_NoCandidates_FallsThrough(t *testing.T) {
 	defer events.DrainQueuedInputsForTest(mob.InstanceId)
 
 	// seedConditionOnChar replaces the whole spec map with just {27}, so
-	// SeedConditionRecordsForTest must run AFTER it to add Minor Shield's
+	// SeedConditionRecordsForTest must run AFTER it to add Conviction Ward's
 	// spec back in (additive) before AddConditionMagnitude needs it.
 	defer seedConditionOnChar(t, &mob.Character, 27)()
 	defer conditions.SeedConditionRecordsForTest()()
-	_ = mob.Character.AddConditionMagnitude(conditions.ConditionIdMinorShield, 20, 75, "test")
+	_ = mob.Character.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 20, 75, "test")
 	// AddConditionMagnitude validates the embedded Character directly, which
 	// installs a PLAYER Presence/Perception (Character.Validate()'s nil
 	// guard); mob.Validate() puts the mob ones back so TryMobBehavior sees a

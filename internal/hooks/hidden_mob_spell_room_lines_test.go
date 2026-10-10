@@ -34,7 +34,7 @@ func seeHiddenCasterOnHiddenSkeleton(t *testing.T) (*users.UserRecord, *mobs.Mob
 	const seeHiddenId = 7102
 	// SeedConditionsForTest replaces the registry, so the glow a condition
 	// spell names is reseeded here, and the records a dot, heal and shield
-	// apply (121 Poisoned, Regenerating, Minor Shield) are added on top.
+	// apply (121 Poisoned, Regenerating, Conviction Ward) are added on top.
 	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
 		seeHiddenId: {ConditionId: seeHiddenId, Name: "Test True Sight",
 			Flags: []conditions.Flag{conditions.SeeHidden}},
@@ -58,6 +58,8 @@ func TestHiddenMob_SpellRoomLinesDoNotNameIt(t *testing.T) {
 		// caster does (SetAggro's untargetable guard), so a damage spell's
 		// commit cannot reveal the mob before its line is built.
 		veto bool
+		// want empty: the line is the condition's own, which skips a reader
+		// who does not perceive the holder (#458).
 		want string
 	}{
 		{"damage", &spells.SpellData{SpellId: "sparks", Name: "Sparks", EffectType: "damage",
@@ -71,7 +73,7 @@ func TestHiddenMob_SpellRoomLinesDoNotNameIt(t *testing.T) {
 		{"heal", &spells.SpellData{SpellId: "heal", Name: "Heal", EffectType: "heal", EffectMagnitude: 3},
 			false, "Aliceia's Heal envelops something in healing light."},
 		{"shield", &spells.SpellData{SpellId: "test-shield", Name: "Ward", EffectType: "shield"},
-			false, "A shimmering barrier surrounds something."},
+			false, ""},
 		{"purge", &spells.SpellData{SpellId: "test-purge", Name: "Cleanse", EffectType: "purge"},
 			false, "Aliceia's Cleanse cleanses something of afflictions."},
 	}
@@ -85,9 +87,14 @@ func TestHiddenMob_SpellRoomLinesDoNotNameIt(t *testing.T) {
 
 			applySpellEffect(newSpellEffectCtx(caster.Character, actions.NewUserActorInRoom(caster, room),
 				actions.NewMobActorInRoom(m, room), room, tc.spell, 10, spellContestAttackWin()))
+			landQueuedConditions() // a ward or a heal lands through the condition queue
 
 			assert.NotZero(t, countContaining(drainPlain(1), "Skeleton"),
 				"the see-hidden caster still reads the mob's name in its own line")
+			if tc.want == "" {
+				assert.Empty(t, drainPlain(2), "a reader who does not perceive the holder reads no condition line")
+				return
+			}
 			requireUnnamed(t, drainPlain(2), tc.want)
 		})
 	}

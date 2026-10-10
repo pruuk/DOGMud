@@ -165,45 +165,6 @@ var conditionApplyPathAllowlist = map[string]string{
 	// quiet one-round records (Task 5) ──────────────────────────────────────
 	"internal/combat/grapple_move.go|63": "former combat condition (one-round penalty): quiet record; must apply synchronously inside the round tick",
 
-	// ── former combat condition: Minor Shield is now one record (Task 6;
-	// re-keyed messaging M4b-2 Task 7 when spellAttackShape's deletion
-	// shrank and shifted every later line in that file; re-keyed again
-	// Task 10 when the non-harm-at-a-mob shortcut shifted every later line;
-	// re-keyed again Task 10's follow-up when the shortcut's comment grew;
-	// re-keyed again counters slice Task 3 when the drain-area counter
-	// dispatch loop was deleted; re-keyed again messaging M4d Task 6 when the
-	// default case's self-cast line moved onto SendTrio and grew a comment;
-	// re-keyed again messaging M4d PR 3 Task 3 when the purge/heal/condition
-	// self-cast branches above the shield case moved onto SendTrio;
-	// re-keyed again parity slice 2 when the post-queue tick snapshot blocks
-	// and the mutations import were deleted; re-keyed again spell effects 3a
-	// Task 1 when the arms functions took their context headers and the MP
-	// switch moved out of its resolver; re-keyed again spell effects 3a Task 2
-	// when the three damage arms moved into applySpellDamage; re-keyed again
-	// spell effects 3a Task 4 when the three knockdown arms moved into
-	// applySpellKnockdown; re-keyed again spell effects 3a Task 5 when the
-	// resolvers' backfire, interrupt and record blocks moved into
-	// spell_effects.go; re-keyed again parity slice 3a Task 7 when the
-	// one-contest guard began parsing spell_effects.go too; re-keyed again
-	// parity slice 3a Task 8 when maybeInterruptSpellOnMob was deleted;
-	// re-keyed again parity slice 3b Task 1 when the resolvers' help-spell
-	// shortcuts collapsed into resolveHelpSpell, and again parity slice 3b
-	// Task 2 when the three condition arms moved into
-	// applySpellConditionEffect, and again Task 3 when the heal arms it moved
-	// into applySpellHeal shifted every later line in spell_resolution.go;
-	// the PP row MOVED into applySpellShield by Task 4, which replaced the
-	// player-to-player shield arm and gained PM, MM and MP; the MS row stays
-	// in spell_resolution.go, re-keyed for the same deletion's shift, and
-	// again Task 5 when the per-pairing arms above it were deleted; the MS
-	// row DELETED by Task 6, when applyMobSelfEffect's switch was deleted
-	// and a mob's self-cast shield reached applySpellShield's row; re-keyed
-	// again Task 7, when spellHelpAreaTargets' mobs, parties and rooms
-	// imports shifted spell_help_effects.go; re-keyed again 3b playtest fix,
-	// when the party rule moved to actions.HelpCharmAlly and the parties
-	// import left spell_help_effects.go; re-keyed again messaging M6 slice 1,
-	// when spellConditionsNarrateStart landed above it) ────
-	"internal/hooks/spell_help_effects.go|220": "former combat condition (ward): silent-start record, the spell narrates; must apply synchronously so the same resolution pass sees it",
-
 	// ── former combat condition: Regenerating is now one record (Task 7;
 	// re-keyed slice 1b, same shift as above; re-keyed again Task 10 and
 	// Task 10's follow-up; re-keyed again counters slice Task 3, same
@@ -225,9 +186,10 @@ var conditionApplyPathAllowlist = map[string]string{
 	// the MS row DELETED by Task 6, same deletion as above, a mob's
 	// self-cast heal now reaching applySpellHeal's row; re-keyed again
 	// Task 7, same import shift as above; re-keyed again 3b playtest fix,
-	// same import shift as above; re-keyed again messaging M6 slice 1, same
-	// shift as above) ───────
-	"internal/hooks/spell_help_effects.go|169": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
+	// same import shift as above; re-keyed again messaging M6 slice 1, when
+	// spellConditionsNarrateStart landed above it and again when the shield
+	// arm moved to the event door and its Minor Shield row was deleted) ───────
+	"internal/hooks/spell_help_effects.go|176": "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 	"internal/mobcommands/consume.go|46":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 	"internal/mobcommands/consume.go|58":       "former combat condition (regen): silent-start record, the spell or the feeding narrates; must apply synchronously",
 

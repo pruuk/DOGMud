@@ -304,7 +304,8 @@ help-aliases:
   light:            [lighting, lantern, lanterns, torch, torches, candle, candles,
                      dazzle, dazzled, dark]
   darkness:         [umbral, pall]
-  seasons:          [season, winter, summer, spring, autumn, calendar]
+  wards:            [ward, warding, shield spell, shield spells]
+  seasons:         [season, winter, summer, spring, autumn, calendar]
   moons:            [moon, swiftmoon, wanderer, eye]
 
 # Default aliases for commands

@@ -13,7 +13,7 @@ const (
 	ConditionIdRally             = 80
 	ConditionIdOffBalance        = 117 // failed grapple exposure, one round
 	ConditionIdRecovering        = 118 // prone recovery penalty, one round
-	ConditionIdMinorShield       = 119
+	ConditionIdConvictionWard    = 119 // the weakest ward, and the shield fallback (messaging M6 slice 1)
 	ConditionIdRegenerating      = 120
 	ConditionIdPoisoned          = 121 // the spell dot; Venom (39) and Spore Toxin (40) are their own records
 	ConditionIdBleeding          = 122

@@ -111,19 +111,18 @@ func TestConditionNotice_ScaledEventStillNarratesTheStart(t *testing.T) {
 // former combat condition: Character.AddConditionMagnitude is what every condition
 // site calls synchronously, but the event carries Triggers/Magnitude too, for
 // a future caller (a spell or item) that wants the start notice through the
-// queue instead. Minor Shield is silent-start, so no start line is expected;
-// this only pins that the exact trigger count and the magnitude-derived
-// effect both survive the trip through ApplyConditions.
+// queue instead. This only pins that the exact trigger count and the
+// magnitude-derived effect both survive the trip through ApplyConditions.
 func TestConditionNotice_MagnitudeEventAppliesSilently(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
 	defer conditions.SeedConditionRecordsForTest()()
 
-	assert.Equal(t, events.Continue, ApplyConditions(events.Condition{UserId: 1, ConditionId: conditions.ConditionIdMinorShield, Triggers: 7, Magnitude: 9, Source: "test"}))
+	assert.Equal(t, events.Continue, ApplyConditions(events.Condition{UserId: 1, ConditionId: conditions.ConditionIdConvictionWard, Triggers: 7, Magnitude: 9, Source: "test"}))
 
 	holder := users.GetByUserId(1)
 	require.NotNil(t, holder)
-	assert.Equal(t, 7, holder.Character.Conditions.TriggersLeft(conditions.ConditionIdMinorShield))
+	assert.Equal(t, 7, holder.Character.Conditions.TriggersLeft(conditions.ConditionIdConvictionWard))
 	assert.Equal(t, float64(9), holder.Character.Conditions.Effect(conditions.EffectMitigationFlat))
 }
 

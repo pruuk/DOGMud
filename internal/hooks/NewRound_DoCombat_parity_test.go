@@ -223,15 +223,15 @@ func TestMvM_AttackerStatGainEmitsRoomMessage(t *testing.T) {
 		"new MvM stat-gain block must dispatch MobStatGainMessages[\"strength\"] via mobRoom.SendText; captured messages were: %v", *captured)
 }
 
-// ─── Gap 4: MvP Minor Shield single-application ───────────────────────────────
+// ─── Gap 4: MvP Conviction Ward single-application ───────────────────────────────
 
 // TestMvP_ConditionShieldAppliedOnceNotDoubleDipped locks the deletion of
 // the inline ConditionShield reduction in handleMobVsPlayer (Gap 4). The
 // magnitude is already added inside the mitigation layer
 // (GetPhysicalMitigation; the legacy GetDefense path was removed
 // 2026-08-03). The deleted block was applying a *second* reduction equal
-// to half the magnitude on top of that. Minor Shield is now the condition record
-// (ConditionIdMinorShield, Task 6) rather than the enum condition, but the
+// to half the magnitude on top of that. Conviction Ward is now the condition record
+// (ConditionIdConvictionWard, Task 6) rather than the enum condition, but the
 // mitigation-layer contract this test pins is unchanged.
 //
 // Rather than try to drive a full attack with deterministic damage (combat
@@ -258,11 +258,11 @@ func TestMvP_ConditionShieldAppliedOnceNotDoubleDipped(t *testing.T) {
 	assert.Equal(t, 0.0, defUser.Character.GetPhysicalMitigation(),
 		"baseline: no shield, no equipment → 0 physical mitigation")
 
-	// Apply the Minor Shield record with magnitude 30 (this is the
+	// Apply the Conviction Ward record with magnitude 30 (this is the
 	// integer-percent value the spell stores; the magnitude maps 1:1 into
 	// the mitigation percentage at characters/combat.go:185).
 	const magnitude float64 = 30
-	_ = defUser.Character.AddConditionMagnitude(conditions.ConditionIdMinorShield, 10, magnitude, "test")
+	_ = defUser.Character.AddConditionMagnitude(conditions.ConditionIdConvictionWard, 10, magnitude, "test")
 
 	// After applying: GetPhysicalMitigation should add exactly magnitude/100.
 	got := defUser.Character.GetPhysicalMitigation()
@@ -273,7 +273,7 @@ func TestMvP_ConditionShieldAppliedOnceNotDoubleDipped(t *testing.T) {
 	// The old trailing sanity check here cleared defUser.Character.Conditions and
 	// asserted mitigation was UNCHANGED, to prove unrelated condition state could
 	// not leak into the condition-derived mitigation number. That premise no
-	// longer holds post-Task-6: Minor Shield IS a Conditions record now, so
+	// longer holds post-Task-6: Conviction Ward IS a Conditions record now, so
 	// clearing Conditions clears the shield itself. There is nothing left to
 	// sanity-check that the assertion above does not already cover.
 }
