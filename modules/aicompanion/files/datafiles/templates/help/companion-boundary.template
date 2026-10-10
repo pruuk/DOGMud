@@ -10,6 +10,7 @@ The line stays until you lift it.
 
   <ansi fg="command">companion-boundary friendship</ansi>   Keep things as they are.
   <ansi fg="command">companion-boundary none</ansi>         Lift the line you drew.
+  <ansi fg="command">companion-boundary</ansi>              Lifts it too.
 
 <ansi fg="command">companion-court</ansi> lifts the line too.
 
