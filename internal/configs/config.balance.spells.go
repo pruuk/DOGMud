@@ -45,9 +45,6 @@ func (b *Balance) validateSpells() {
 	if b.SpellDiscoveryDecayRate <= 0 {
 		b.SpellDiscoveryDecayRate = 0.1
 	}
-	if b.SpellProficiencyCastsPerPoint < 1 {
-		b.SpellProficiencyCastsPerPoint = 50
-	}
 	if b.ConcentrationFloor <= 0 || b.ConcentrationFloor > 0.5 {
 		b.ConcentrationFloor = 0.02
 	}

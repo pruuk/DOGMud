@@ -1932,11 +1932,6 @@ Balance:
   # Folds per round: how fast a spell charges each combat round.
   # Formula includes: SpellcastingLevel × SpellFoldsSkillFactor
   SpellFoldsSkillFactor: 25
-  #
-  #
-  # Proficiency: successful casts needed to gain 1 proficiency point
-  #   with a specific spell. Higher proficiency reduces fizzle chance.
-  SpellProficiencyCastsPerPoint: 50
 
   # ── DIFFICULTY ─────────────────────────────────────────────────────────────
   # SpellDifficultyProgressionScale and CraftDifficultyProgressionScale were
