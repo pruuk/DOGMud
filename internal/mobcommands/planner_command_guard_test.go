@@ -21,12 +21,9 @@ var planCommandPattern = regexp.MustCompile(`Command:\s*"([a-z]+)`)
 // Every command a planner emits must be a registered MOB command.
 //
 // ⚠️ Nothing validates this at runtime. world.go's TryCommand falls through to
-// an unhandled-command path that makes the mob emote
-//
-//	<name> looks a little confused (<cmd> <rest>).
-//
-// to the entire room -- so an unregistered verb is not a silent no-op, it is
-// visible spam attached to every mob running that planner, every tick.
+// an unhandled-command path that logs a warning (#302; it used to emote
+// "<name> looks a little confused (<cmd> <rest>)." to the room). Either way
+// the mob does nothing that tick, every tick.
 //
 // This test exists because `internal/planners/survival.go` returned "rest" as
 // its default for a hurt out-of-combat mob. "rest" is not a mob command, not a
@@ -60,8 +57,8 @@ func TestEveryPlannerCommandIsRegistered(t *testing.T) {
 			assert.True(t, registered[verb],
 				"internal/planners/%s emits %q, which is not a registered mob "+
 					"command. An unregistered verb makes every mob running this "+
-					"planner emote \"looks a little confused (%s ...)\" to the "+
-					"whole room. Register it in mobcommands, or emit a verb that "+
+					"planner do nothing and log an unhandled command (%s) every "+
+					"tick. Register it in mobcommands, or emit a verb that "+
 					"exists (\"noop\" is the do-nothing one).",
 				e.Name(), verb, verb)
 		}

@@ -1109,12 +1109,26 @@ func (w *World) processMobInput(mobInstanceId int, inputText string) {
 
 	}
 
-	if !handled {
-		if len(command) > 0 {
-			mob.Command(fmt.Sprintf(`emote looks a little confused (%s %s).`, command, remains))
-		}
+	if !handled && len(command) > 0 {
+		noteUnhandledMobCommand(int(mob.MobId), command, remains)
 	}
 
+}
+
+// unhandledMobCommands remembers which mob and command pairs were already
+// logged, so a mob stuck on a bad verb logs it once, not every tick.
+var unhandledMobCommands sync.Map
+
+// noteUnhandledMobCommand logs a mob command nothing handled. Players used to
+// see "<mob> looks a little confused (east )." (#302); now only the log does.
+// Returns whether this call logged.
+func noteUnhandledMobCommand(mobId int, command, remains string) bool {
+	key := fmt.Sprintf("%d:%s", mobId, command)
+	if _, seen := unhandledMobCommands.LoadOrStore(key, true); seen {
+		return false
+	}
+	mudlog.Warn("mob-UnhandledCommand", "mobId", mobId, "command", command, "remains", remains)
+	return true
 }
 
 func (w *World) UpdateStats() {
