@@ -91,6 +91,7 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender
 func (r *mapper) GetFullMap(centerRoomId int, c Config) mapRender
 func (m *mapRender) GetLegend(overrides map[rune]string) map[rune]string
 func (c *Config) OverrideSymbol(roomId int, symbol rune, legend string)
+func (c *Config) SymbolOverrideAt(roomId int) (SymbolOverride, bool)
 func LegendSlug(name string) string
 func ColorizeLegendLine(line string, legend map[rune]string) string
 ```
@@ -361,13 +362,22 @@ The mapper data is consumed by two independent rendering paths:
 `GetLegend` to render a terminal-width ASCII map scaled by the player's
 Perception skill. Symbol legend:
 
-| Symbol | Meaning              |
-|--------|----------------------|
-| `@`    | You (current room)   |
-| `☺`    | Player / Party / NPC |
-| `☠`    | Hostile mob          |
-| `☹`    | Friendly NPC         |
-| *(biome/mapsymbol)* | Room terrain glyph |
+| Symbol | ASCII | Meaning |
+|--------|-------|---------|
+| `@`    | `@`   | You (current room) |
+| `☺`    | `P`   | Party member; from map level 4, a player or a peaceful NPC |
+| `☠`    | `!`   | Hostile or fighting mob, from map level 4 (`mobMapSymbol`) |
+| `☹`    | `&`   | Friend (a party member's charmed mob) |
+| `⚷`    | `K`   | Locked exit (`LockedSymbol`) |
+| *(biome/mapsymbol)* | one letter | Room terrain glyph |
+
+Every glyph a map draws must convert to one ASCII character
+(`TestMapGlyphsConvertToOneAsciiCharacter`); the ASCII forms live in
+`util.unicodeToAscii`, except the mob cell, which `mobMapSymbol` picks at
+the source because `☠` is dropped elsewhere.
+
+`map wide` (a screen-sized map) is also level 4 and up
+(`mapSizeFor`, `wideMapLevel`).
 
 Detail level (visible radius, secret/locked display) scales with
 Perception. This path is text-only and has no awareness of the

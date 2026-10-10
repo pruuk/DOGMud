@@ -34,6 +34,60 @@ func mobMapSymbol(asciiMode bool) rune {
 	return '☠'
 }
 
+// occupantMarkerLevel is the map level that draws the NPC, Player and Mob
+// markers. They sat under skillLevel > 4, which no Perception tier reaches,
+// so no map drew them although `help map` lists them (#253 follow-up; owner
+// call 2026-10-10).
+const occupantMarkerLevel = 4
+
+// addOccupantMarkers marks, on a map of occupantMarkerLevel or higher, every
+// room holding mobs (Mob when one is hostile or fighting, NPC otherwise) and
+// every room holding players (Player). Players are marked last, so a room
+// holding both reads Player; the party, friend and You markers the caller
+// adds afterwards override all three.
+func addOccupantMarkers(c *mapper.Config, skillLevel int, asciiMode bool) {
+	if skillLevel < occupantMarkerLevel {
+		return
+	}
+	for _, rid := range rooms.GetRoomsWithMobs() {
+		if roomInfo := rooms.LoadRoom(rid); roomInfo != nil {
+			if len(roomInfo.GetMobs(rooms.FindFighting|rooms.FindHostile)) > 0 {
+				c.OverrideSymbol(rid, mobMapSymbol(asciiMode), `Mob`)
+			} else {
+				c.OverrideSymbol(rid, '☺', `NPC`)
+			}
+		}
+	}
+	for _, rid := range rooms.GetRoomsWithPlayers() {
+		c.OverrideSymbol(rid, '☺', `Player`)
+	}
+}
+
+const (
+	// wideMapLevel is the map level that enables `map wide`. It sat under
+	// skillLevel > 4, which no Perception tier reaches, so `map wide` never
+	// changed anything although `help map` promises it (owner call 2026-10-10).
+	wideMapLevel = 4
+
+	mapBorderWidth  = 14
+	mapBorderHeight = 6 // Title, map top, map bottom, 2 legend, blank line.
+)
+
+// mapSizeFor returns the map's width and height. The standard map is 65x21;
+// a wide map of wideMapLevel or higher fills the client's screen less the
+// frame, with an even height.
+func mapSizeFor(skillLevel int, wide bool, screenWidth, screenHeight int) (int, int) {
+	width, height := 65, 21
+	if wide && skillLevel >= wideMapLevel {
+		width = screenWidth - mapBorderWidth
+		height = screenHeight - mapBorderHeight
+		if height%2 != 0 {
+			height--
+		}
+	}
+	return width, height
+}
+
 func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// Map is a free command — no skill gate.
@@ -83,41 +137,13 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	var err error
 
-	mapWidth := 65
-	mapHeight := 21
-	// assume 80x24 default?
-
-	// Admin mapping gets a giant map
-	borderWidth := 14
-	borderHeight := 6 // Title, map top, map bottom, 2 legend, blank line.
-
-	// Double the size
-	//mapWidth = mapWidth << 1
-	//mapHeight = mapHeight << 1
-
-	if skillLevel > 4 {
-
-		sw := 80
-		sh := 40
-		if user.ClientSettings().Display.ScreenWidth > 0 {
-			sw = int(user.ClientSettings().Display.ScreenWidth)
-			sh = int(user.ClientSettings().Display.ScreenHeight)
-		}
-
-		mapWidth = int(sw) - borderWidth
-		mapHeight = sh - borderHeight // extra 2 for the new lines after
-		if mapHeight%2 != 0 {
-			mapHeight--
-		}
-
-		if mapWidth > sw-borderWidth {
-			mapWidth = sw - borderWidth
-		}
-		if mapHeight > sh-borderHeight {
-			mapHeight = sh - borderHeight
-		}
-
+	sw := 80
+	sh := 40
+	if user.ClientSettings().Display.ScreenWidth > 0 {
+		sw = int(user.ClientSettings().Display.ScreenWidth)
+		sh = int(user.ClientSettings().Display.ScreenHeight)
 	}
+	mapWidth, mapHeight := mapSizeFor(skillLevel, rest == "wide", sw, sh)
 
 	zMapper := mapper.GetMapper(roomId)
 	if zMapper == nil {
@@ -133,21 +159,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		UserId:    user.UserId,
 	}
 
-	if skillLevel > 4 {
-		for _, rid := range rooms.GetRoomsWithMobs() {
-			if roomInfo := rooms.LoadRoom(rid); roomInfo != nil {
-				if len(roomInfo.GetMobs(rooms.FindFighting|rooms.FindHostile)) > 0 {
-					c.OverrideSymbol(rid, mobMapSymbol(user.AsciiMode), `Mob`)
-				} else {
-					c.OverrideSymbol(rid, '☺', `NPC`)
-				}
-			}
-		}
-
-		for _, rid := range rooms.GetRoomsWithPlayers() {
-			c.OverrideSymbol(rid, '☺', `Player`)
-		}
-	}
+	addOccupantMarkers(&c, skillLevel, user.AsciiMode)
 
 	if p := parties.Get(user.UserId); p != nil {
 		for _, uid := range p.GetMembers() {

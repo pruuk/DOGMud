@@ -32,9 +32,8 @@ and terrain glyphs become letters too. The legend names each one.
 <ansi fg="yellow">Usage:</ansi>
 
   <ansi fg="skill">map</ansi>        Display a map of the nearby area.
-  <ansi fg="skill">map wide</ansi>   Display a zoomed-out overview
-                 (requires advanced mapping skill /
-                 high Perception).
+  <ansi fg="skill">map wide</ansi>   Display a larger map that fills your
+                 screen (requires keen Perception).
 
 <ansi fg="yellow">The web client map:</ansi>
 

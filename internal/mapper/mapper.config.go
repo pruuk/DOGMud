@@ -20,3 +20,9 @@ func (c *Config) OverrideSymbol(roomId int, symbol rune, legend string) {
 
 	c.symbolOverrides[roomId] = SymbolOverride{symbol, legend}
 }
+
+// SymbolOverrideAt reports the symbol and legend forced on roomId, if any.
+func (c *Config) SymbolOverrideAt(roomId int) (SymbolOverride, bool) {
+	o, ok := c.symbolOverrides[roomId]
+	return o, ok
+}
