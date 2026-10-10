@@ -522,8 +522,9 @@ const (
 	DisplacedBySpecies = "species"
 )
 
-// DisplacedGear is one worn item a mutation pushed out of its slot into the
-// pack (#481): its display name, and Reason says why (DisplacedByDisabledLegs).
+// DisplacedGear is one worn item pushed out of its slot into the pack (#481),
+// by a mutation or by a species that has no such slot: its display name, and
+// Reason says why (one of the DisplacedBy constants above).
 // It keeps the name, not the item: the item itself lives in the pack, and a
 // second copy here would be an item field every WalkItems must visit.
 type DisplacedGear struct {
@@ -531,9 +532,9 @@ type DisplacedGear struct {
 	Reason   string
 }
 
-// TakeDisplacedGear returns the gear a mutation pushed off this character's
-// body since the last call, and clears the record. The mutation-gained hook
-// drains it to tell the player.
+// TakeDisplacedGear returns the gear pushed off this character's body since
+// the last call, and clears the record. The round tick's end-of-round check
+// queues hooks' DisplacedGear_Notify, which drains it to tell the player.
 func (c *Character) TakeDisplacedGear() []DisplacedGear {
 	got := c.displacedGear
 	c.displacedGear = nil
