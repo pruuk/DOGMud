@@ -331,7 +331,7 @@ Hand candidates (`handCandidates`): a two-hander only offers whole pairs, ordere
 
 `ChooseWornSlot` never mutates; `SlotChoice.apply(i)` (called by `wearChosen`) writes `i` into `Slots[0]` and clears every later entry.
 
-**Deleted**: `wearWeaponOrShield`, and from `hand_slots.go` the three `Find*` helpers (`FindFirstEmptySlot`, `FindFirstFreePair`, `FindCheapestPairToDisplace`) and `PairIsFree`/`PairOccupantCount`, which had no callers left once `ChooseWornSlot` absorbed their logic as a stable sort. `hand_slots.go` gained `ArmLabel(arm int) string`, the arm-to-label lookup `chooseArm` and command wrappers share.
+**Deleted**: `wearWeaponOrShield`, and from `hand_slots.go` the three `Find*` helpers (`FindFirstEmptySlot`, `FindFirstFreePair`, `FindCheapestPairToDisplace`) and `PairIsFree`/`PairOccupantCount`, which had no callers left once `ChooseWornSlot` absorbed their logic as a stable sort. `hand_slots.go` gained `ArmLabel(arm int) string`, the arm-to-label lookup `chooseArm` and command wrappers share. `(*Character).ArmDisplayName(arm int) string` is the player-facing name of arm N ("weapon hand", "offhand", then "arm 3" to "arm 6"; "" for an arm the character lacks, #270); `ArmLabel` stays the slot key.
 
 **The golden oracle** (`wear_slot_golden_test.go`) keeps verbatim copies of the pre-5a `wearWeaponOrShield`, the three `Find*` helpers and the ring/wrist cases (`legacyWear` and friends) and diffs `Wear` against them over ~27,000 non-cursed placements (2, 3, 4, 6 arms; three species sizes; dual wield on/off). Two placements are deliberately carved out (`sanctionedDivergence`) because the owner changed them on purpose with nothing cursed: the old disabled-`Ring`/`Wrist1` fallback (legacy wrote the `ItemId -1` marker into a disabled slot; `ChooseWornSlot` never writes a disabled slot), and the shield-beside-a-two-hander swap at 3+ arms (ruling 13, above). Both carve-outs have their own explicit tests in `wear_slot_test.go`.
 
@@ -1841,6 +1841,9 @@ struct `{Mode SurrenderMode, HpPctThreshold int}`. Three modes:
 `SurrenderNever` / `SurrenderAlways` / `SurrenderAutoTap` (fires when
 HP% drops below `HpPctThreshold`). Default for players:
 `SurrenderAutoTap` at 15%. Set via `set surrender` command.
+`DefaultPlayerSurrenderPolicy` (AutoTap at 15) is the policy `New()` gives a
+character and the one `Validate` gives a save whose policy is the zero value
+(#284).
 
 Persisted: `yaml:"surrender_policy,omitempty"`.
 
