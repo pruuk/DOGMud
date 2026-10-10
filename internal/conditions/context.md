@@ -1320,34 +1320,39 @@ and each effect kind it declares reads it (`magnitude`):
 `mitigation_conviction` feeds `GetConvictionMitigation()`
 (`internal/characters/combat.go`), each summed with gear, mutations and the
 matching statmod, so a potion's `magical_mitigation` still adds on top. The
-total is clamped downstream at the channel's mitigation cap. The wards are
+total is bent downstream through the channel's mitigation curve. The wards are
 the `ward` family (above), so a target holds one at a time; condition 52
 Chrysalis Shell is no longer named by any spell and is left unchanged.
 
-### Mitigation caps
+### Mitigation curve
 
-| Cap | Shipped (`config.yaml`) | Go default |
-|-----|--------------------------|------------|
-| `PhysicalMitigationCap` | 0.75 | 0.75 |
-| `MagicalMitigationCap` | 0.75 | 0.75 |
-| `ConvictionMitigationCap` | 0.75 | 0.75 |
-
-All three are read by `combat.ApplyMitigation`
-(`internal/combat/damage_pipeline.go`) and validated positive and at most 1.0
-by `internal/configs/smoke_test.go`. Nothing in this package enforces them;
-they live downstream, in the damage pipeline.
+Each channel (Physical, Magical, Conviction) has four knobs, for example
+`PhysicalMitigationKnee`, `PhysicalMitigationCap`, `PhysicalMitigationAim` and
+`PhysicalMitigationBend`; all twelve ship at 0.50 / 0.90 / 0.05 / 0.40
+(knee / cap / aim / bend) in `config.yaml`. `combat.MitigationCurveFor(channel)`
+reads them and `combat.ApplyMitigation(raw, pct, curve)`
+(`internal/combat/damage_pipeline.go`) bends the summed raw value through
+`EffectiveMitigation`. Cap is a hard ceiling, and `validateMitigationCurve`
+(`internal/configs/config.balance.combat.go`) keeps it above 0 and at most
+0.95, the knee above 0 and below the cap, and aim and bend positive. Nothing
+in this package enforces any of it; it lives downstream, in the damage
+pipeline. Formula, crit behaviour and callers: "Mitigation curve (#465)" in
+`internal/combat/context.md`.
 
 ## Gotchas
 
-- **Shield magnitude converges on the physical mitigation cap, not on a
-  per-spell ceiling.** `conviction-ward` (magnitude 75) and `chrysalis-cocoon`
-  (magnitude 125) both feed `GetPhysicalMitigation()`, and once a caster's
-  shield roll alone clears `PhysicalMitigationCap` (0.75), every shield spell
-  reads identically at the player: same condition, same message, same
-  effective mitigation, regardless of magnitude. The full mechanism, the
-  thresholds it saturates at, and the design options under discussion are in
-  `docs/audits/2026-08-30-shield-spells-converge-at-the-cap.md`; read that
-  before re-deriving or retuning this.
+- **Shield magnitude has diminishing returns, then converges on the physical
+  mitigation cap.** `conviction-ward` (magnitude 75) and `chrysalis-cocoon`
+  (magnitude 125) both feed `GetPhysicalMitigation()`. Since #465 there is no
+  flat wall at 0.75: raw 0.75 stops about 67% and raw 1.25 about 79%, so the
+  two still differ. Only once a caster's shield roll alone reaches roughly
+  raw 3.7 (`PhysicalMitigationCap` 0.90 at the shipped knobs) does every shield
+  spell read identically at the player: same condition, same message, same
+  effective mitigation, regardless of magnitude. The audit
+  `docs/audits/2026-08-30-shield-spells-converge-at-the-cap.md` predates the
+  curve and its thresholds describe the old flat 0.75 clamp; re-derive them
+  against "Mitigation curve (#465)" in `internal/combat/context.md` before
+  retuning this.
 - The one durable difference between the two spells today is
   `chrysalis-cocoon`'s `condition_ids: [52]` grant (adds magical and conviction
   mitigation through the statmod path above, invisible unless the target is

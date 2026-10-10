@@ -49,7 +49,7 @@
   counted from now on; kills from before the fix cannot be recovered.
 - Armor keeps paying off past the point where it used to stop. The first
   layers of protection count in full. Past that, each extra layer helps
-  less, but it always helps, and nothing makes you completely immune.
+  less, up to a limit, and nothing makes you completely immune.
 - Very heavy protection now also softens critical hits. Against lighter
   protection a critical hit lands in full, as before.
 - The Defenses part of `status` now describes the protection you really
