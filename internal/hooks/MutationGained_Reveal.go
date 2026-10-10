@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/splash"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -94,7 +95,9 @@ func DisplacedGear_Notify(e events.Event) events.ListenerReturn {
 // Whatever closed a slot since the last tick, the displacement is recorded by
 // then, and the notice is queued behind any reveal already waiting.
 func endOfRoundValidate(user *users.UserRecord) {
-	user.Character.Validate()
+	if err := user.Character.Validate(); err != nil {
+		mudlog.Warn("endOfRoundValidate", "userId", user.UserId, "error", err)
+	}
 	if user.Character.HasDisplacedGear() {
 		events.AddToQueue(displacedGearNotice{UserId: user.UserId}, displacedGearNoticePriority)
 	}
