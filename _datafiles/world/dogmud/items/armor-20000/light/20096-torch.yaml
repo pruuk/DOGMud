@@ -8,6 +8,7 @@ type: light
 subtype: wearable
 weight: 0.5
 value: 1
+rarity_tier: 50
 vendor_categories:
 - blacksmithing
 wornconditionids:

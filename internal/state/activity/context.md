@@ -148,7 +148,6 @@ inline string literals for stable identifiers across the codebase.
 | `TriggerCraftCancel` | `"craft_cancel"` | Crafting → Free, player/mob typed `cancel` |
 | `TriggerSalvageCancel` | `"salvage_cancel"` | Salvaging → Free, player/mob typed `cancel` |
 | `TriggerConcentrationBreak` | `"concentration_break"` | Casting → Free, failed Willpower roll on damage |
-| `TriggerCombatInterrupt` | `"combat_interrupt"` | Crafting/Salvaging → Free, character entered combat |
 | `TriggerMovementInterrupt` | `"movement_interrupt"` | Crafting/Salvaging → Free, character moved rooms |
 | `TriggerDamageInterrupt` | `"damage_interrupt"` | Crafting/Salvaging → Free, damage received (hard cancel) |
 | `TriggerDeath` | `"death"` | Any active → Free, Life Alive→Dead cascade |
