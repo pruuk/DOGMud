@@ -60,7 +60,8 @@
   very hard, so stop it when you can.
 - The Core Guardian now warns you before its discharge. It gathers its
   power for two rounds, and a flashbang or a disruption spell stops it at
-  any point in that time.
+  any point in that time. Its Core Drain now gives the same two-round
+  warning.
 - Warden-Prime has its own, weaker discharge, Warden Discharge, with the
   same two-round warning. It hurts but does not kill a prepared player, so
   you can practise the interrupt before you face the Core Guardian. See

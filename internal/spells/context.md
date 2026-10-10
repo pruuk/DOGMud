@@ -107,8 +107,8 @@ place of the generic "weaves magic" line (`hooks.sendMobWindupWarning`), and
 every disruptor can cancel the cast across the whole windup. A player's
 cast ignores the field, so `Validate()` refuses it on a spell without
 `mob_only: true`, and refuses a negative count. Absent (0) changes nothing.
-Shipped at 2 on `core-discharge` (the Core Guardian) and `warden-discharge`
-(Warden-Prime, its own lesser spell since #480).
+Shipped at 2 on the Core Guardian's `core-discharge` and `core-drain`, and
+on `warden-discharge` (Warden-Prime, its own lesser spell since #480).
 
 ### Spell Difficulty and Target Types
 

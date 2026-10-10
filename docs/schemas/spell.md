@@ -55,7 +55,7 @@ _datafiles/world/dogmud/spells/{spellid}.js   (optional — only if spell has lo
 | `cast_observer` | string | no | Text sent to room on cast. Supports `{actor}`, `{actee}` tokens. |
 | `wait_actor` | string | no | Text sent to caster each wait round. |
 | `wait_observer` | string | no | Text sent to room each wait round. For a mob cast held by `min_cast_rounds`, it replaces the generic "weaves magic" line on each held round. |
-| `min_cast_rounds` | int | no | Mob casts only, and only on a `mob_only: true` spell (validated at load). Holds a mob's cast open for at least this many rounds, whatever its fold rate, so a boss telegraph can be interrupted across the whole windup. 0 or absent changes nothing. Shipped at 2 on `core-discharge` and `warden-discharge` (#480). |
+| `min_cast_rounds` | int | no | Mob casts only, and only on a `mob_only: true` spell (validated at load). Holds a mob's cast open for at least this many rounds, whatever its fold rate, so a boss telegraph can be interrupted across the whole windup. 0 or absent changes nothing. Shipped at 2 on `core-discharge`, `core-drain` and `warden-discharge` (#480). |
 | `magic_actor` | string | no | Text sent to caster on resolution. |
 | `magic_observer` | string | no | Text sent to room on resolution. |
 
