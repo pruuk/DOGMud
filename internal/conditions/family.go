@@ -67,16 +67,19 @@ func (bs *Conditions) FamilyRivals(conditionId int) []*Condition {
 	return out
 }
 
-// discardFamilyRivals deletes every other record of spec's family, live or
-// expired, with no end line (Discard): the hook tells the replacement line in
-// its place. Called by the add primitives after their refusal checks, so a
-// refused add (poison immunity) keeps the rival.
+// discardFamilyRivals deletes every other live record of spec's family with
+// no end line (Discard): the hook tells the replacement line in its place. An
+// expired rival is left alone for the prune pass, so its own end line still
+// fires. Called by the add primitives after their refusal checks, so a refused
+// add (poison immunity) keeps the rival. A permanent record (AddCondition(id,
+// true)) in a family is discarded like any other, so do not tag a family on a
+// spec that items or mutations grant permanently.
 func (bs *Conditions) discardFamilyRivals(spec *ConditionSpec) {
 	if spec.Family == "" {
 		return
 	}
 	for _, b := range slices.Clone(bs.List) {
-		if b.ConditionId == spec.ConditionId {
+		if b.ConditionId == spec.ConditionId || b.Expired() {
 			continue
 		}
 		if other := GetConditionSpec(b.ConditionId); other != nil && other.Family == spec.Family {

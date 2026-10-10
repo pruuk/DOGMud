@@ -93,6 +93,60 @@ func TestFamilyRivals_ListsLiveRivalsOnly(t *testing.T) {
 	assert.Empty(t, bs.FamilyRivals(familyTestWardB), "an expired rival is left to the prune pass")
 }
 
+// An expired, unpruned rival is not discarded by a replacement: it stays in
+// the list so the prune pass returns it and its own end line still fires.
+func TestFamily_ExpiredRivalIsLeftForPrune(t *testing.T) {
+	seedFamilyTestSpecs(t)
+	bs := New()
+	require.True(t, bs.AddCondition(familyTestWardA, false))
+	bs.RemoveCondition(familyTestWardA) // expired this round, not yet pruned
+
+	require.True(t, bs.AddCondition(familyTestWardB, false))
+
+	pruned := bs.Prune()
+	require.Len(t, pruned, 1, "the expired ward reaches the prune pass")
+	assert.Equal(t, familyTestWardA, pruned[0].ConditionId)
+	assert.True(t, bs.HasCondition(familyTestWardB), "the newest ward stands")
+}
+
+// A refused add keeps the rival: the poison check runs before the discard.
+func TestFamily_RefusedAddKeepsTheRival(t *testing.T) {
+	const (
+		poisonWard = 9327
+		stoneId    = 9328
+	)
+	restore := SeedConditionsForTest(map[int]*ConditionSpec{
+		familyTestWardA: {ConditionId: familyTestWardA, Name: "Ward A", Family: FamilyWard, TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 5},
+		poisonWard:      {ConditionId: poisonWard, Name: "Poison Ward", Family: FamilyWard, TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 5, Flags: []Flag{Poison}},
+		stoneId:         {ConditionId: stoneId, Name: "Stone", TriggerRate: "1 round", RoundInterval: 1, TriggerCount: 5, Flags: []Flag{PoisonImmunity}},
+	})
+	t.Cleanup(restore)
+
+	bs := New()
+	require.True(t, bs.AddCondition(familyTestWardA, false))
+	require.True(t, bs.AddCondition(stoneId, false))
+
+	assert.False(t, bs.AddCondition(poisonWard, false), "the immune holder refuses the poison ward")
+	assert.True(t, bs.HasCondition(familyTestWardA), "the refused add leaves the rival held")
+	assert.False(t, bs.HasCondition(poisonWard))
+}
+
+// A rival held after an unrelated record: the discard reindexes, so the
+// unrelated record still resolves.
+func TestFamily_DiscardKeepsTheIndexForOtherRecords(t *testing.T) {
+	seedFamilyTestSpecs(t)
+	bs := New()
+	require.True(t, bs.AddCondition(familyTestPotion, false))
+	require.True(t, bs.AddCondition(familyTestWardA, false))
+
+	require.True(t, bs.AddCondition(familyTestWardB, false))
+
+	assert.False(t, bs.HasCondition(familyTestWardA), "the rival is gone")
+	assert.True(t, bs.HasCondition(familyTestPotion), "the unrelated record still resolves")
+	require.Len(t, bs.GetConditions(familyTestPotion), 1)
+	require.Len(t, bs.GetConditions(familyTestWardB), 1)
+}
+
 // HasFamily is the mob AI's "already shielded" and "already healing" test.
 func TestHasFamily(t *testing.T) {
 	seedFamilyTestSpecs(t)
