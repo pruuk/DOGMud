@@ -196,11 +196,13 @@ func expireMobCombatMemory(mob *mobs.Mob) {
 func tickMobProneRecovery(mob *mobs.Mob) {
 	if attemptMade, success := mob.Character.AttemptRecovery(recoveryContest(&mob.Character)); attemptMade {
 		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
-			mName := mobSubjectName(mob, room)
+			// Silent to a reader who does not perceive a hidden mob, not
+			// "Something ..." (owner R3, #458).
+			mName, unseenBy := mobSeenName(mob, room, 0), mobActUnseenBy(room, mob)
 			if success {
-				sendVisualRoomText(room, messaging.CategoryMobEmote, mName+" clambers to their feet in a rushed panic.")
+				sendVisualRoomText(room, messaging.CategoryMobEmote, mName+" clambers to their feet in a rushed panic.", unseenBy...)
 			} else {
-				sendVisualRoomText(room, messaging.CategoryMobEmote, mName+" attempts to stand, but slips and falls in the chaos of battle.")
+				sendVisualRoomText(room, messaging.CategoryMobEmote, mName+" attempts to stand, but slips and falls in the chaos of battle.", unseenBy...)
 			}
 		}
 	}

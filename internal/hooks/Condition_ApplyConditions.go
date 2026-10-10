@@ -263,7 +263,8 @@ func sendConditionStartRoomText(r *rooms.Room, snap rooms.VisualSnapshot, msg st
 // uses (playersNotPerceiving, characters.Character.Perceives: the holder is
 // hidden and the reader has no see-hidden). Every condition room line skips
 // them: start (judged before the condition lands), trigger and end (#458).
-// The one exception is a hide's own end line, conditionEndLineUnseenBy. nil
+// The one exception is a hide's own end line, conditionEndLineUnseenBy. A
+// hidden mob's own acts skip the same readers (mobActUnseenBy). nil
 // for a visible holder, which costs no room walk, and for a nil room.
 func conditionLineUnseenBy(r *rooms.Room, holder *characters.Character) []int {
 	if r == nil || !holder.IsHidden() {

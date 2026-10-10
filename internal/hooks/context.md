@@ -1201,6 +1201,20 @@ own lines are untouched. A mob holder's names come from
 `mobDisplayName` body without its hidden check): no reader of a condition
 line is one the name would give it away to.
 
+The same rule covers a hidden mob's own acts, by owner ruling R3 (#274: "a
+hidden actor does not emote. Silence, not an anonymous line."): the
+stat-gain emote (`emitMobStatGains`), the prone-recovery emote
+(`tickMobProneRecovery`), the weave (`sendMobWeaving`), the focus shift
+(`sendMobShiftsFocus`) and the drain-area landing line
+(`resolveMobDrainArea`) name the mob through `mobSeenName` and skip
+`mobActUnseenBy(room, mob)` (`NewRound_DoCombat_helpers.go`, a wrapper on
+`conditionLineUnseenBy`), so a see-hidden reader reads the name and the
+rest read nothing (#458; they read "Something ..." since #382). A spell
+disruption is the exception: a break, fizzle or falter is heard (owner
+ruling R4, #242), so `sendMobConcentrationBroke`, `sendMobSpellFailed` and
+the drain that finds no one to drain still read "Something's ..." to the
+room through `mobSubjectName` and `sendVisualElseAudible`.
+
 ### Logout_AwarenessCleanup.go
 
 Registers an `OnPlayerDespawn` listener that calls `character.Awareness.ForceVisible()`

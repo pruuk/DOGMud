@@ -828,9 +828,13 @@ func emitMobStatGains(atk actions.Actor, before map[string]int) {
 			// in a pitch-dark cave read "Cave Crawler moves with increasing
 			// swiftness" while every combat line in the same round called the
 			// same mob "something" (found in play, 2026-09-21).
-			name := mobSubjectName(mob, atkRoom)
+			//
+			// A hidden mob's gain is silent to a reader who does not
+			// perceive it, not "Something ..." (owner R3, #458).
+			name := mobSeenName(mob, atkRoom, 0)
 			atkRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote,
-				fmt.Sprintf(tmpl, name), []string{mob.Character.Name})
+				fmt.Sprintf(tmpl, name), []string{mob.Character.Name},
+				mobActUnseenBy(atkRoom, mob)...)
 		}
 	}
 }
