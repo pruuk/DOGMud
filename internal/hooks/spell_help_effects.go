@@ -316,10 +316,10 @@ func spellWardConditionId(spell *spells.SpellData) int {
 }
 
 // applySpellPurge is the one purge applier (slice 3b): it cures the target
-// (purgeAfflictions: every poison and every record a dot spell lands). A mob target gains it: Cleansing Wave over a
-// charmed companion said it took effect and cleansed nothing. The
-// Go-hooked Purge Affliction spell is a different path
-// (resolvePurgeAffliction, spell_purgeaffliction.go) and never comes here.
+// (purgeAfflictions: every poison and every record a dot spell lands). A mob
+// target gains it: Cleansing Wave over a charmed companion said it took
+// effect and cleansed nothing. The Go-hooked Purge Affliction spell is a
+// separate path (resolvePurgeAffliction, spell_purgeaffliction.go), not here.
 func applySpellPurge(c spellEffectCtx) int {
 	if spellStatusDefended(c) {
 		return 0
