@@ -401,6 +401,39 @@ func TestDrainArea_SinglePlayer(t *testing.T) {
 	require.Greater(result.Healed, 0, "mob should be healed by the aggregate lifesteal")
 }
 
+// TestDrainArea_BleedNamesAttacker pins that the area drain's bleed names its
+// attacker too, so a bleed kill credits them (#240).
+func TestDrainArea_BleedNamesAttacker(t *testing.T) {
+	p1 := seedDrainAreaPlayer(7011, "quester-caster", "Caster Target")
+	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{7011: p1})
+	defer cleanupUsers()
+	defer conditions.SeedConditionRecordsForTest()()
+
+	room := newTestRoom()
+	room.AddPlayer(7011)
+
+	attacker := &idStubActor{stubActor: newStubActor(drainAreaAttacker(), room), mobInstanceId: 4345}
+
+	hitSeen := false
+	for i := 0; i < 100 && !hitSeen; i++ {
+		attacker.stubActor.char.Cooldowns = characters.Cooldowns{}
+		p1.Character.Health = 500
+		p1.Character.RemoveCondition(conditions.ConditionIdBleeding)
+		result := ExecuteDrainArea(attacker)
+		hitSeen = result.Executed && len(result.PlayerResults) == 1 && result.PlayerResults[0].MoveResult.Hit
+	}
+	if !hitSeen {
+		t.Fatal("no area drain hit in 100 attempts; the hit path is broken")
+	}
+
+	held := p1.Character.GetConditions(conditions.ConditionIdBleeding)
+	if assert.NotEmpty(t, held, "a landed area drain leaves a Bleeding record") {
+		want := ActorRefOf(attacker)
+		assert.False(t, want.IsZero(), "the test attacker must have a real identity")
+		assert.Equal(t, want, held[0].Caster, "the area drain bleed names its attacker (#240)")
+	}
+}
+
 // TestDrainArea_MultiPlayer verifies the N-player case: every player in the
 // room takes drain damage independently, and the mob is healed by the sum of
 // each player's DrainHealRatio fraction (aggregate lifesteal).
