@@ -577,7 +577,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		// Only the bare word is the gold pile. "gold wire" is an item, and
 		// `get all` arrives here with each item's name (#269).
-		if len(args) == 1 && args[0] == `gold` {
+		if strings.EqualFold(strings.TrimSpace(rest), `gold`) {
 
 			if room.Gold < 1 {
 				user.SendText(messaging.CategorySystem, "There's no gold to grab.")
