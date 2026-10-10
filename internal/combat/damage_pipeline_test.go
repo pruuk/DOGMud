@@ -92,28 +92,30 @@ func TestCalcRawDamage_Conviction(t *testing.T) {
 }
 
 func TestApplyMitigation(t *testing.T) {
+	c := shippedCurveForTest
+
 	// No mitigation
-	result := ApplyMitigation(100, 0, 0.75)
+	result := ApplyMitigation(100, 0, c)
 	if math.Abs(result-100.0) > 0.01 {
-		t.Errorf("ApplyMitigation(100, 0, 0.75) = %f, want 100.0", result)
+		t.Errorf("ApplyMitigation(100, 0, curve) = %f, want 100.0", result)
 	}
 
-	// 50% mitigation
-	result2 := ApplyMitigation(100, 0.50, 0.75)
+	// 50% mitigation, at the knee: counts in full
+	result2 := ApplyMitigation(100, 0.50, c)
 	if math.Abs(result2-50.0) > 0.01 {
-		t.Errorf("ApplyMitigation(100, 0.50, 0.75) = %f, want 50.0", result2)
+		t.Errorf("ApplyMitigation(100, 0.50, curve) = %f, want 50.0", result2)
 	}
 
-	// 90% mitigation capped at 75%
-	result3 := ApplyMitigation(100, 0.90, 0.75)
+	// 100% raw bends to 75% effective (#465): 100 -> 25
+	result3 := ApplyMitigation(100, 1.00, c)
 	if math.Abs(result3-25.0) > 0.01 {
-		t.Errorf("ApplyMitigation(100, 0.90, 0.75) = %f, want 25.0 (capped)", result3)
+		t.Errorf("ApplyMitigation(100, 1.00, curve) = %f, want 25.0 (bent)", result3)
 	}
 
 	// Negative mitigation treated as 0
-	result4 := ApplyMitigation(100, -0.5, 0.75)
+	result4 := ApplyMitigation(100, -0.5, c)
 	if math.Abs(result4-100.0) > 0.01 {
-		t.Errorf("ApplyMitigation(100, -0.5, 0.75) = %f, want 100.0", result4)
+		t.Errorf("ApplyMitigation(100, -0.5, curve) = %f, want 100.0", result4)
 	}
 }
 
@@ -178,7 +180,7 @@ func TestGetConvictionDamageDescription(t *testing.T) {
 	}
 }
 
-// ─── Stage 40.2: DamageScale and MitigationCap edge cases ──────────────────
+// ─── Stage 40.2: DamageScale and MitigationCurveFor edge cases ─────────────
 
 func TestDamageScale(t *testing.T) {
 	tests := []struct {
@@ -201,52 +203,63 @@ func TestDamageScale(t *testing.T) {
 	}
 }
 
-// TestMitigationCap verifies each channel returns its OWN configured cap.
+// TestMitigationCurveFor verifies each channel returns its OWN configured
+// curve, all four knobs.
 //
-// This previously asserted only `0 < got <= 1.0` while its comment claimed to
-// check the configured value — so an implementation returning 0.99 for every
-// channel, or wiring Magical to the Physical cap, passed cleanly. The three
-// caps also default to the same number (0.75), so comparing against config
-// alone cannot detect cross-wiring either. The overrides below give each
-// channel a distinct value so a mix-up actually fails.
-func TestMitigationCap(t *testing.T) {
-	err := configs.AddOverlayOverrides(map[string]any{
-		"Balance.PhysicalMitigationCap":   0.61,
-		"Balance.MagicalMitigationCap":    0.62,
-		"Balance.ConvictionMitigationCap": 0.63,
-	})
-	if err != nil {
-		t.Fatalf("failed to override balance config: %v", err)
-	}
+// The twelve knobs ship at the same four numbers on every channel, so
+// comparing against config alone cannot detect cross-wiring. The overrides
+// below give every knob a distinct value so a mix-up actually fails. Pinned
+// through SetConfigForTest, which restores on cleanup (the cap test this
+// replaced wrote a permanent overlay that leaked into every later test).
+func TestMitigationCurveFor(t *testing.T) {
+	cfg := configs.GetConfig()
+	b := &cfg.Balance
+	b.PhysicalMitigationKnee, b.PhysicalMitigationCap = 0.41, 0.61
+	b.PhysicalMitigationAim, b.PhysicalMitigationBend = 0.011, 0.31
+	b.MagicalMitigationKnee, b.MagicalMitigationCap = 0.42, 0.62
+	b.MagicalMitigationAim, b.MagicalMitigationBend = 0.012, 0.32
+	b.ConvictionMitigationKnee, b.ConvictionMitigationCap = 0.43, 0.63
+	b.ConvictionMitigationAim, b.ConvictionMitigationBend = 0.013, 0.33
+	configs.SetConfigForTest(t, cfg)
 
 	tests := []struct {
 		name    string
 		channel DamageChannel
-		want    float64
+		want    MitigationCurve
 	}{
-		{"Physical", ChannelPhysical, 0.61},
-		{"Magical", ChannelMagical, 0.62},
-		{"Conviction", ChannelConviction, 0.63},
+		{"Physical", ChannelPhysical, MitigationCurve{Knee: 0.41, Cap: 0.61, Aim: 0.011, Bend: 0.31}},
+		{"Magical", ChannelMagical, MitigationCurve{Knee: 0.42, Cap: 0.62, Aim: 0.012, Bend: 0.32}},
+		{"Conviction", ChannelConviction, MitigationCurve{Knee: 0.43, Cap: 0.63, Aim: 0.013, Bend: 0.33}},
+		// An unknown channel falls through to the physical curve.
+		{"UnknownChannel", DamageChannel(99), MitigationCurve{Knee: 0.41, Cap: 0.61, Aim: 0.011, Bend: 0.31}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MitigationCap(tt.channel)
-			if math.Abs(got-tt.want) > 1e-9 {
-				t.Errorf("MitigationCap(%v) = %f, want %f (its own configured cap)", tt.channel, got, tt.want)
-			}
-			if got <= 0 || got > 1.0 {
-				t.Errorf("MitigationCap(%v) = %f, outside the sane range (0, 1.0]", tt.channel, got)
+			got := MitigationCurveFor(tt.channel)
+			if math.Abs(got.Knee-tt.want.Knee) > 1e-9 || math.Abs(got.Cap-tt.want.Cap) > 1e-9 ||
+				math.Abs(got.Aim-tt.want.Aim) > 1e-9 || math.Abs(got.Bend-tt.want.Bend) > 1e-9 {
+				t.Errorf("MitigationCurveFor(%v) = %+v, want %+v (its own configured curve)", tt.channel, got, tt.want)
 			}
 		})
 	}
+}
 
-	t.Run("UnknownChannel", func(t *testing.T) {
-		// Defensive default, deliberately not config-driven.
-		if got := MitigationCap(DamageChannel(99)); got != 0.75 {
-			t.Errorf("MitigationCap(unknown) = %f, want the 0.75 fallback", got)
+// With no overrides a test binary runs the Go defaults, which equal the
+// shipped curve (config_mitigation_curve_test.go pins the shipped file).
+func TestMitigationCurveFor_DefaultsAreTheShippedCurve(t *testing.T) {
+	cfg := configs.GetConfig()
+	cfg.Balance = configs.Balance{}
+	cfg.Balance.Validate()
+	configs.SetConfigForTest(t, cfg)
+
+	for _, ch := range []DamageChannel{ChannelPhysical, ChannelMagical, ChannelConviction} {
+		got := MitigationCurveFor(ch)
+		if math.Abs(got.Knee-0.50) > 1e-9 || math.Abs(got.Cap-0.90) > 1e-9 ||
+			math.Abs(got.Aim-0.05) > 1e-9 || math.Abs(got.Bend-0.40) > 1e-9 {
+			t.Errorf("MitigationCurveFor(%v) = %+v, want the shipped 0.50 / 0.90 / 0.05 / 0.40", ch, got)
 		}
-	})
+	}
 }
 
 func TestCalcRawDamage_EdgeCases(t *testing.T) {
@@ -264,16 +277,16 @@ func TestCalcRawDamage_EdgeCases(t *testing.T) {
 }
 
 func TestApplyMitigation_EdgeCases(t *testing.T) {
-	// 100% mitigation should be capped
-	got := ApplyMitigation(100.0, 1.0, 0.75)
-	expected := 25.0 // 100 * (1 - 0.75)
+	// Far past any build, mitigation stops at the 90% cap: 100 -> 10
+	got := ApplyMitigation(100.0, 10.0, shippedCurveForTest)
+	expected := 10.0 // 100 * (1 - 0.90)
 	if math.Abs(got-expected) > 0.01 {
-		t.Errorf("ApplyMitigation(100, 1.0, 0.75) = %f, want %f", got, expected)
+		t.Errorf("ApplyMitigation(100, 10.0, curve) = %f, want %f", got, expected)
 	}
 
 	// Zero raw → zero result
-	got = ApplyMitigation(0, 0.5, 0.75)
+	got = ApplyMitigation(0, 0.5, shippedCurveForTest)
 	if got != 0 {
-		t.Errorf("ApplyMitigation(0, 0.5, 0.75) = %f, want 0", got)
+		t.Errorf("ApplyMitigation(0, 0.5, curve) = %f, want 0", got)
 	}
 }

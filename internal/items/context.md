@@ -277,7 +277,10 @@ Typical values by armor tier:
 | Shield (offhand) | 5–10% | 0–2% | 0% |
 | Amulet/ring | 0–2% | 3–8% | 3–8% |
 
-All three channels cap at 75% by default (configurable).
+Each channel's summed raw mitigation is bent through a curve (full until a
+knee of 50%, then diminishing returns toward a hard ceiling of 90% by default,
+all configurable per channel); see "Mitigation curve (#465)" in
+`internal/combat/context.md`.
 
 **Enchantment effects for the new pipeline:**
 - `physical_mitigation_bonus` — adds to physical_mitigation (int)

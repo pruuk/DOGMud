@@ -25,8 +25,9 @@ package combat
 // Matchup: the PARITY cell. Both sides stat 100, unarmed-combat 30, bare
 // hands. Attack score = dodge score = 100 + 30×SkillWeight(2.0) = 160, crit
 // bar = CritBarFor(30,30) = 2.0 both ways, ContestFloor 0.125. Three
-// mitigation cells on the defender: light (0%), mid (40%), BIS (75% — the
-// PhysicalMitigationCap). Mitigation is injected as a condition statmod
+// mitigation cells on the defender: light (0%), mid (40%), BIS (75% raw, the
+// old cap; the #465 curve bends it to about 67%, past the knee). Mitigation
+// is injected as a condition statmod
 // (physical_mitigation), which GetPhysicalMitigation folds in alongside gear.
 //
 // Knob values are pinned to the Go defaults the test binary actually runs
@@ -90,7 +91,10 @@ func pinParityBalance(t *testing.T) {
 	b.SkillMultiplierBase = 1.0
 	b.SkillMultiplierMax = 3.0
 	b.SkillSoftCap = 50
-	b.PhysicalMitigationCap = 0.75
+	b.PhysicalMitigationKnee = 0.50
+	b.PhysicalMitigationCap = 0.90
+	b.PhysicalMitigationAim = 0.05
+	b.PhysicalMitigationBend = 0.40
 	b.StaminaPenaltyMax = 0.28
 	b.HealthPenaltyMax = 0.28
 	b.ResourcePenaltyCurve = 2.0
@@ -342,7 +346,7 @@ func TestMeleeParityDamagePerSwing(t *testing.T) {
 	}{
 		{"light-0pct", 0},
 		{"mid-40pct", 40},
-		{"BIS-75pct-cap", 75},
+		{"BIS-75pct-raw", 75},
 	}
 
 	for _, cell := range cells {
@@ -401,7 +405,7 @@ func TestMeleeParityDamagePerSwing(t *testing.T) {
 				}
 			}
 			sdp := buildDamageParams(attacker, defender, plan.weapons[0], 0, User)
-			wantDmgMean := ApplyMitigation(rawDamage, float64(cell.mitPct)/100.0, 0.75)
+			wantDmgMean := ApplyMitigation(rawDamage, float64(cell.mitPct)/100.0, shippedCurveForTest)
 			if math.Abs(sdp.dmgMean-wantDmgMean) > 1e-9 {
 				t.Fatalf("dmgMean = %.6f, want %.6f from the shipped formula", sdp.dmgMean, wantDmgMean)
 			}
@@ -411,7 +415,13 @@ func TestMeleeParityDamagePerSwing(t *testing.T) {
 			if math.Abs(sdp.critDmgMult-critDmgMult) > 1e-9 {
 				t.Fatalf("critDmgMult = %.6f, want %.6f", sdp.critDmgMult, critDmgMult)
 			}
-			critMean := sdp.rawDmgForCrit * sdp.critDmgMult
+			// #465: the crit loses the mitigation above the knee (0 in the
+			// light and mid cells, about 0.17 in the BIS cell).
+			wantCritReduction := shippedCurveForTest.CritReduction(float64(cell.mitPct) / 100.0)
+			if math.Abs(sdp.critReduction-wantCritReduction) > 1e-9 {
+				t.Fatalf("critReduction = %.6f, want %.6f", sdp.critReduction, wantCritReduction)
+			}
+			critMean := sdp.rawDmgForCrit * sdp.critDmgMult * (1 - sdp.critReduction)
 
 			// ── Layer 2: the probability anchor ─────────────────────────
 			anchor := buildParityAnchor(atkScore, defScore, sdp.dmgMean, critMean)

@@ -1,8 +1,10 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">armor</ansi>
 
 <ansi fg="command">Armor</ansi> provides damage mitigation across three channels.
-Each channel has its own mitigation percentage, and each is
-capped so that no amount of armor makes you untouchable.
+Each channel has its own mitigation. The first layers of
+protection count in full. Past that, each extra layer helps
+less, and no amount of armor makes you untouchable. Very heavy
+protection also softens critical hits.
 
 <ansi fg="yellow">Physical Mitigation</ansi>
   Reduces damage from melee attacks, ranged weapons, and

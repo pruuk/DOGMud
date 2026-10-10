@@ -82,6 +82,39 @@ func TestTemplateFreeze_StatusReadsTheBrokenLimbRecord(t *testing.T) {
 	assert.Contains(t, out, "Broken limb", "status reads .Character.Conditions.HasCondition and .TriggersLeft")
 }
 
+// #465: the status sheet's Defenses row describes effective mitigation. 75
+// raw physical points read "fortified" under the old raw reading and "heavy"
+// on the curve (about 67%).
+func TestTemplateFreeze_StatusDefensesReadTheCurve(t *testing.T) {
+	// Pin the shipped curve on all three channels (restored on cleanup)
+	// rather than relying on the Go defaults equalling config.yaml.
+	cfg := configs.GetConfig()
+	b := &cfg.Balance
+	b.PhysicalMitigationKnee, b.PhysicalMitigationCap = 0.50, 0.90
+	b.PhysicalMitigationAim, b.PhysicalMitigationBend = 0.05, 0.40
+	b.MagicalMitigationKnee, b.MagicalMitigationCap = 0.50, 0.90
+	b.MagicalMitigationAim, b.MagicalMitigationBend = 0.05, 0.40
+	b.ConvictionMitigationKnee, b.ConvictionMitigationCap = 0.50, 0.90
+	b.ConvictionMitigationAim, b.ConvictionMitigationBend = 0.05, 0.40
+	configs.SetConfigForTest(t, cfg)
+
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	useDogmudTemplates(t)
+
+	user, _ := getTestUserAndRoom(t)
+	originalBody := user.Character.Equipment.Body
+	t.Cleanup(func() { user.Character.Equipment.Body = originalBody })
+	user.Character.Equipment.Body = items.Item{ItemId: 99465, Spec: &items.ItemSpec{
+		ItemId: 99465, Name: "probe plate", PhysicalMitigation: 75,
+	}}
+
+	out, err := templates.Process("character/status", user, user.UserId)
+	require.NoError(t, err)
+	assert.Contains(t, out, "heavy", "75 raw points bend to about 67%%")
+	assert.NotContains(t, out, "fortified", "the raw sum must not reach the status sheet")
+}
+
 func TestTemplateFreeze_IdentifyReadsConditionIds(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()

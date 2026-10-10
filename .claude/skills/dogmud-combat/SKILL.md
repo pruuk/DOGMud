@@ -1,6 +1,6 @@
 ---
 name: dogmud-combat
-description: Use when touching damage, defence, hit resolution, opposed contests, or mob combat AI. Model half: the five-factor damage formula, the three channels and shipped config scales, mitigation caps, crits as an opposed-roll margin, best-of-all defence resolution, and combat.RunContest as the single entry point for every opposed contest. Placement half: where combat logic goes, btree events firing before legacy AI, and using actions.ResolveTargetActor rather than reimplementing target resolution.
+description: Use when touching damage, defence, hit resolution, opposed contests, or mob combat AI. Model half: the five-factor damage formula, the three channels and shipped config scales, the mitigation curve, crits as an opposed-roll margin, best-of-all defence resolution, and combat.RunContest as the single entry point for every opposed contest. Placement half: where combat logic goes, btree events firing before legacy AI, and using actions.ResolveTargetActor rather than reimplementing target resolution.
 ---
 
 This skill has two halves that fire on the same trigger but serve different
@@ -78,7 +78,7 @@ Do not quote the Go defaults as if they were live values. Read `config.yaml`.
 Note also that a knob left *absent* from `config.yaml` falls back to its Go
 default, so absence is meaningful.
 
-Then `ApplyMitigation(raw, mitigation%, cap)` and `dice.RollStat(final)` for variance.
+Then `ApplyMitigation(raw, mitigation%, curve)` and `dice.RollStat(final)` for variance.
 
 ### Three Channels
 | Channel | Stat | Skills | Item Field | Mitigation Method |
@@ -102,12 +102,16 @@ side-jobs migrated: shield classification keys on `physical_mitigation > 0 ||
 subtype wearable`, the item-value formula prices the three mitigation fields,
 and the dead upstream `Item.Enchant` that wrote it was deleted).
 
-### Mitigation Caps
-Default 75% each: `PhysicalMitigationCap`, `MagicalMitigationCap`, `ConvictionMitigationCap`
+### Mitigation Curve
+Raw mitigation is bent by `MitigationCurveFor(channel)`: full up to a knee, then
+diminishing returns toward a hard cap. Four knobs per channel
+(`PhysicalMitigationKnee`, `...Cap`, `...Aim`, `...Bend`, same for `Magical`
+and `Conviction`), shipped 0.50 / 0.90 / 0.05 / 0.40. Crits lose the overflow
+above the knee. See "Mitigation curve (#465)" in `internal/combat/context.md`.
 
 ### Key Functions
 - `combat.CalcRawDamage(stat, skillRank, itemMult, channel)`: compute raw damage
-- `combat.ApplyMitigation(raw, pct, cap)`: apply percentage reduction
+- `combat.ApplyMitigation(raw, pct, curve)`: apply the curved percentage reduction
 - `combat.SkillMultiplier(rank)`: sqrt curve from config
 - `combat.ResourceMultiplier(current, max, penaltyMax)`: smooth resource depletion penalty
 - `character.GetPhysicalMitigation()` / `GetMagicalMitigation()` / `GetConvictionMitigation()`: sum equipment

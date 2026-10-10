@@ -123,6 +123,12 @@ type swingDamageParams struct {
 	critDmgMult    float64 // chunk 5.11g: skill-scaled crit worth, applied to rawDmgForCrit only
 	critConditions []int
 
+	// critReduction is the share a crit loses to the target's physical
+	// mitigation above the curve's knee (#465, MitigationCurve.CritReduction).
+	// 0 at or below the knee, and 0 in a literal built outside
+	// buildDamageParams, which degrades to a full crit, never to no damage.
+	critReduction float64
+
 	// openingStrikeMult is the skullduggery stack for the ONE opening strike of
 	// a surprise attack. 1.0 otherwise. Applied to the crit MEAN before the roll
 	// -- dice.RollStat takes its spread from the mean it is handed, so scaling
@@ -486,8 +492,11 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 		rawDmg *= float64(configs.GetBalanceConfig().MobDamageMultiplier)
 	}
 
-	// Apply target's physical mitigation
-	dmgMean := ApplyMitigation(rawDmg, targetChar.GetPhysicalMitigation(), MitigationCap(ChannelPhysical))
+	// Apply target's physical mitigation, bent through the curve (#465). A
+	// crit skips it up to the knee and loses the overflow above it.
+	physMit := targetChar.GetPhysicalMitigation()
+	physCurve := MitigationCurveFor(ChannelPhysical)
+	dmgMean := ApplyMitigation(rawDmg, physMit, physCurve)
 
 	// Track pre-mitigation damage for crits
 	rawDmgForCrit := rawDmg
@@ -534,6 +543,7 @@ func buildDamageParams(sourceChar *characters.Character, targetChar *characters.
 		dmgMean:       dmgMean,
 		rawDmgForCrit: rawDmgForCrit,
 		critDmgMult:   CritDamageMultiplier(combatSkillLevel),
+		critReduction: physCurve.CritReduction(physMit),
 		openingStrikeMult: OpeningStrikeMultiplier(sourceChar,
 			float64(configs.GetBalanceConfig().SurpriseOpeningStrikeMultiplier)),
 	}
@@ -1464,7 +1474,7 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 	if isCrit {
 		result.Crit = true
 		result.ConditionTarget = sdp.critConditions
-		// Crits bypass mitigation, so they roll around the UNmitigated mean —
+		// Crits bypass mitigation up to the knee, so they roll around the UNmitigated mean,
 		// and therefore must take their spread from that same mean. RollStat
 		// derives stdDev = mean * RollSpread internally, which is the only way
 		// to keep the two in step.
@@ -1473,8 +1483,9 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 		// before the roll, for that same reason — scaling the rolled result
 		// instead would stretch the spread by the multiplier and leave crits
 		// wildly swingier at high skill. U10d's opening-strike stack rides the
-		// same mean for the same reason.
-		critMean := sdp.rawDmgForCrit * sdp.critDmgMult
+		// same mean for the same reason. #465: mitigation above the curve's
+		// knee softens the crit (critReduction), as on every other channel.
+		critMean := sdp.rawDmgForCrit * sdp.critDmgMult * (1 - sdp.critReduction)
 		if openingStrike {
 			// Only buildDamageParams constructs swingDamageParams today, so an
 			// unset multiplier means a future literal was built elsewhere.
@@ -1959,14 +1970,14 @@ func applyPetDamage(result *AttackResult, sourceChar *characters.Character, targ
 	// value, and preserves the pet's authored coefficient of variation.
 	//
 	// Pets have no crit path: nothing here inspects a Z-score or sets
-	// result.Crit, so the "crits bypass mitigation" convention used by the melee
+	// result.Crit, so the "crits bypass mitigation up to the knee" convention used by the melee
 	// (combat_helpers.go), spell (combat_shared_helpers.go) and taunt
 	// (combat_taunt.go) channels has nothing to attach to. Deliberately not
 	// adding one — a pet crit is a separate design decision, not a bug fix.
 	petMitigation := targetChar.GetPhysicalMitigation()
-	petMitigationCap := MitigationCap(ChannelPhysical)
-	petBaseDmg = ApplyMitigation(petBaseDmg, petMitigation, petMitigationCap)
-	petVar = ApplyMitigation(petVar, petMitigation, petMitigationCap)
+	petMitigationCurve := MitigationCurveFor(ChannelPhysical)
+	petBaseDmg = ApplyMitigation(petBaseDmg, petMitigation, petMitigationCurve)
+	petVar = ApplyMitigation(petVar, petMitigation, petMitigationCurve)
 
 	// Pet damage is claws/bite/etc — natural-sharp band.
 	petCat := messaging.CategoryHitNaturalSharp

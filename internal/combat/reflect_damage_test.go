@@ -13,28 +13,31 @@ import (
 
 func TestReflectDamage_UnmitigatedMatchesLegacy(t *testing.T) {
 	// 100 damage dealt, 25% reflect, no mitigation -> 25, the old behaviour.
-	assert.Equal(t, 25, ReflectDamage(100, 25, 0.0, 0.75))
+	assert.Equal(t, 25, ReflectDamage(100, 25, 0.0, shippedCurveForTest))
 }
 
 func TestReflectDamage_MitigationReduces(t *testing.T) {
 	// Same, but the attacker carries 40% of the matching channel.
-	assert.Equal(t, 15, ReflectDamage(100, 25, 0.40, 0.75),
+	assert.Equal(t, 15, ReflectDamage(100, 25, 0.40, shippedCurveForTest),
 		"25 reflected, 40%% mitigated -> 15")
 }
 
-func TestReflectDamage_RespectsCap(t *testing.T) {
-	// 90% mitigation is clamped to the 75% cap, so 25 -> 6 (6.25 truncated).
-	assert.Equal(t, 6, ReflectDamage(100, 25, 0.90, 0.75),
-		"mitigation above the cap must clamp to the cap")
+func TestReflectDamage_FollowsTheCurve(t *testing.T) {
+	// 100% raw bends to 75% effective (#465), so 25 -> 6 (6.25 truncated).
+	assert.Equal(t, 6, ReflectDamage(100, 25, 1.00, shippedCurveForTest),
+		"mitigation above the knee must follow the curve")
+	// Far past any build it stops at the 90% cap: 25 -> 2 (2.5 truncated).
+	assert.Equal(t, 2, ReflectDamage(100, 25, 10.0, shippedCurveForTest),
+		"mitigation must never pass the cap")
 }
 
 func TestReflectDamage_ZeroPercentIsZero(t *testing.T) {
-	assert.Equal(t, 0, ReflectDamage(100, 0, 0.0, 0.75))
-	assert.Equal(t, 0, ReflectDamage(100, -5, 0.0, 0.75))
+	assert.Equal(t, 0, ReflectDamage(100, 0, 0.0, shippedCurveForTest))
+	assert.Equal(t, 0, ReflectDamage(100, -5, 0.0, shippedCurveForTest))
 }
 
 func TestReflectDamage_ZeroDamageIsZero(t *testing.T) {
-	assert.Equal(t, 0, ReflectDamage(0, 25, 0.0, 0.75))
+	assert.Equal(t, 0, ReflectDamage(0, 25, 0.0, shippedCurveForTest))
 }
 
 // The Elemental King case that motivated the chunk: 25% reflect, and a player
@@ -42,8 +45,8 @@ func TestReflectDamage_ZeroDamageIsZero(t *testing.T) {
 func TestReflectDamage_ChannelInvestmentPaysOff(t *testing.T) {
 	const dealt, pct = 200.0, 25
 
-	bare := ReflectDamage(dealt, pct, 0.0, 0.75)
-	warded := ReflectDamage(dealt, pct, 0.50, 0.75)
+	bare := ReflectDamage(dealt, pct, 0.0, shippedCurveForTest)
+	warded := ReflectDamage(dealt, pct, 0.50, shippedCurveForTest)
 
 	assert.Equal(t, 50, bare)
 	assert.Equal(t, 25, warded)

@@ -10,7 +10,7 @@
  │ <ansi fg="yellow">Toxicity:   </ansi>{{ toxicityQuality .Character.ToxicityBandName 13 }}<ansi fg="yellow">Encumbrance:</ansi>{{ encumbranceQuality .Character.GetCarriedWeight .Character.CarryCapacity 13 }}                          │
  └─────────────────────────────────────────────────────────────────────────────┘
  ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Defenses</ansi> ────────────────────────────────────────────────────────────────┐
- │ <ansi fg="yellow">Physical:   </ansi>{{ padRight 13 (mitigationQuality (.Character.GetPhysicalMitigation)) }}<ansi fg="yellow">Magical:    </ansi>{{ padRight 13 (mitigationQuality (.Character.GetMagicalMitigation)) }}<ansi fg="yellow">Conviction: </ansi>{{ padRight 13 (mitigationQuality (.Character.GetConvictionMitigation)) }} │
+ │ <ansi fg="yellow">Physical:   </ansi>{{ padRight 13 (mitigationQuality (effectiveMitigation .Character "physical")) }}<ansi fg="yellow">Magical:    </ansi>{{ padRight 13 (mitigationQuality (effectiveMitigation .Character "magical")) }}<ansi fg="yellow">Conviction: </ansi>{{ padRight 13 (mitigationQuality (effectiveMitigation .Character "conviction")) }} │
  └─────────────────────────────────────────────────────────────────────────────┘
  ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi> ────────────────────────────────────────────────────────────────────┐
  │ <ansi fg="yellow">Species:    </ansi>{{ padRight 13 .Character.SpeciesDisplay }}<ansi fg="yellow">Gold:       </ansi>{{ padRight 13 (numberFormat .Character.Gold) }}<ansi fg="yellow">Bank:       </ansi>{{ padRight 13 (numberFormat .Character.Bank) }} │

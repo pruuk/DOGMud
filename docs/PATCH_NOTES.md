@@ -47,6 +47,14 @@
 - Your kills count again. Killing a creature had stopped adding to your
   `killstats` and to the achievements that count kills. New kills are
   counted from now on; kills from before the fix cannot be recovered.
+- Armor keeps paying off past the point where it used to stop. The first
+  layers of protection count in full. Past that, each extra layer helps
+  less, up to a limit, and nothing makes you completely immune.
+- Very heavy protection now also softens critical hits. Against lighter
+  protection a critical hit lands in full, as before.
+- The Defenses part of `status` now describes the protection you really
+  have, so a heavily armored character may read one step lower than
+  before. `consider`, and how creatures size you up, use the same measure.
 
 ## 2026-10-10: More loose ends
 

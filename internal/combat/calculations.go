@@ -98,7 +98,11 @@ func PowerScore(char characters.Character) float64 {
 	offenseScore := physAtk + magAtk*0.5 + convAtk*0.5
 
 	// ── DEFENSE ──────────────────────────────────────────────────────────
-	avgMit := (char.GetPhysicalMitigation() + char.GetMagicalMitigation() + char.GetConvictionMitigation()) / 3.0
+	// Effective, not raw (#465): consider, mob flee and target choice and the
+	// power leaderboard weigh the protection combat actually applies.
+	avgMit := (EffectiveMitigationFor(&char, ChannelPhysical) +
+		EffectiveMitigationFor(&char, ChannelMagical) +
+		EffectiveMitigationFor(&char, ChannelConviction)) / 3.0
 	dodgeScore := char.GetDefenseScore(combatvocab.DefenceDodge)
 	parryScore := char.GetDefenseScore(combatvocab.DefenceParry)
 	blockScore := char.GetDefenseScore(combatvocab.DefenceBlock)

@@ -74,16 +74,17 @@ func SplitReflectPercents(statModPct, mutationPct, speciesPct int, speciesChanne
 //
 // damageDealt is the damage the attacker just landed; returnPct is the
 // defender's reflect percentage for this channel; mitigation is the ATTACKER's
-// fraction for the matching channel (they are the one taking it).
+// fraction for the matching channel (they are the one taking it), bent
+// through that channel's curve.
 //
 // Returns 0 for a non-positive percentage so callers can sum channels without
 // guarding each one.
-func ReflectDamage(damageDealt float64, returnPct int, mitigation, cap float64) int {
+func ReflectDamage(damageDealt float64, returnPct int, mitigation float64, curve MitigationCurve) int {
 	if returnPct <= 0 || damageDealt <= 0 {
 		return 0
 	}
 
 	raw := damageDealt * float64(returnPct) / 100.0
 
-	return int(ApplyMitigation(raw, mitigation, cap))
+	return int(ApplyMitigation(raw, mitigation, curve))
 }

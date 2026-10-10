@@ -350,6 +350,19 @@ func (n *Network) Validate() {
 }
 ```
 
+### Mitigation curve knobs (#465)
+Twelve `Balance` knobs, four per channel, read by `combat.MitigationCurveFor`:
+`PhysicalMitigationKnee`, `PhysicalMitigationCap`, `PhysicalMitigationAim`,
+`PhysicalMitigationBend`, and the same for `Magical` and `Conviction`. The
+`...Cap` keys kept their names; they are the curve's hard ceiling now, not a
+clamp. `validateMitigationCurve` (`config.balance.combat.go`) enforces
+`0 < knee < cap <= 0.95`, `aim > 0`, `bend > 0`, written `!(x > 0)` so a NaN
+falls back too; a bad or absent value takes the default 0.50 / 0.90 / 0.05 /
+0.40, which is also what `config.yaml` ships, so a test binary runs the
+shipped curve. An absent key reads 0, so aim 0 is not expressible (0.0001 is
+the approach-only curve in practice). `config_mitigation_curve_test.go` pins
+the defaults, every fallback and the shipped file.
+
 ### Banned Name Validation
 ```go
 // Check if a name matches banned patterns
@@ -983,7 +996,7 @@ Config is split one file per section, all assembled in `configs.go`.
 | `config.timing.go` | Round length, rounds per day |
 | `config.gameplay.go` | Gameplay knobs (map enforcement, petitions, …) |
 | `config.balance.go` | Balance root |
-| `config.balance.combat.go` | Combat maths, mitigation caps, defence floor |
+| `config.balance.combat.go` | Combat maths, mitigation curves (`validateMitigationCurve`, #465), defence floor |
 | `config.balance.progression.go` | Stat/skill progression |
 | `config.balance.spells.go` | Spell scaling |
 | `config.balance.shops.go` | Shop pricing and restock |

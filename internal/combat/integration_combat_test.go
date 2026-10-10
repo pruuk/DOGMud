@@ -43,7 +43,7 @@ func TestIntegration_CombatLifecycle(t *testing.T) {
 		// Damage pipeline
 		staminaMult := ResourceMultiplier(atkStamina, atkStaminaMax, 0.28)
 		rawDmg := CalcRawDamage(atkStr, atkSkill, 1.0, ChannelPhysical)
-		mitigated := ApplyMitigation(rawDmg, defPhysMit, MitigationCap(ChannelPhysical))
+		mitigated := ApplyMitigation(rawDmg, defPhysMit, MitigationCurveFor(ChannelPhysical))
 		finalDmg := mitigated * staminaMult
 
 		// Roll for variance
@@ -157,7 +157,7 @@ func TestIntegration_DamageChannels(t *testing.T) {
 }
 
 // ─── Integration: Defense and Mitigation ─────────────────────────────────────
-// Exercises: GetPhysicalMitigation(), ApplyMitigation(), MitigationCap()
+// Exercises: GetPhysicalMitigation(), ApplyMitigation(), MitigationCurveFor()
 
 func TestIntegration_DefenseAndMitigation(t *testing.T) {
 	// Create a character with equipment providing physical mitigation
@@ -198,22 +198,24 @@ func TestIntegration_DefenseAndMitigation(t *testing.T) {
 
 	// Apply mitigation to raw damage
 	rawDmg := 100.0
-	mitigated := ApplyMitigation(rawDmg, physMit, 0.75)
+	mitigated := ApplyMitigation(rawDmg, physMit, shippedCurveForTest)
 	expected := rawDmg * (1 - physMit)
 	assert.InDelta(t, expected, mitigated, 0.01,
-		"Mitigated damage should be raw * (1 - mitigation%)")
+		"Mitigation below the knee should be raw * (1 - mitigation%)")
 
-	// Test mitigation cap at 75%
-	heavilyArmored := 0.90 // 90% mitigation from gear
-	capped := ApplyMitigation(rawDmg, heavilyArmored, 0.75)
-	assert.InDelta(t, 25.0, capped, 0.01,
-		"Mitigation above 75% cap should be capped to 75%")
+	// Past the knee the curve bends (#465): raw 90% from gear stops 72.5%
+	heavilyArmored := 0.90
+	bent := ApplyMitigation(rawDmg, heavilyArmored, shippedCurveForTest)
+	assert.InDelta(t, 100*(1-EffectiveMitigation(0.90, shippedCurveForTest)), bent, 0.01,
+		"Mitigation above the knee should follow the curve")
+	assert.InDelta(t, 27.5, bent, 0.01, "raw 90% stops 72.5%")
 
-	// Verify each channel has the correct cap from config
+	// Every channel's configured curve is sane: 0 < knee < cap <= 0.95
 	for _, ch := range []DamageChannel{ChannelPhysical, ChannelMagical, ChannelConviction} {
-		cap := MitigationCap(ch)
-		assert.Greater(t, cap, 0.0, "Mitigation cap should be positive")
-		assert.LessOrEqual(t, cap, 1.0, "Mitigation cap should be <= 1.0")
+		c := MitigationCurveFor(ch)
+		assert.Greater(t, c.Knee, 0.0, "knee should be positive")
+		assert.Less(t, c.Knee, c.Cap, "knee should be below the cap")
+		assert.LessOrEqual(t, c.Cap, 0.95, "cap should be <= 0.95")
 	}
 }
 
@@ -234,7 +236,7 @@ func TestIntegration_FullDamagePipeline(t *testing.T) {
 	assert.InDelta(t, expectedRaw, rawDmg, 0.01, "Raw damage should match formula")
 
 	// Step 3: Apply mitigation
-	mitigated := ApplyMitigation(rawDmg, physMitigation, MitigationCap(ChannelPhysical))
+	mitigated := ApplyMitigation(rawDmg, physMitigation, MitigationCurveFor(ChannelPhysical))
 	assert.Less(t, mitigated, rawDmg, "Mitigated damage should be less than raw")
 	assert.InDelta(t, rawDmg*0.70, mitigated, 0.01, "30% mitigation removes 30%")
 

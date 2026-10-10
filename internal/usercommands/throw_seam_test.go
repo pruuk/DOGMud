@@ -299,8 +299,10 @@ func TestThrowSeam_DefensiveCritFullyNegatesAndDoesNotEngage(t *testing.T) {
 }
 
 // TestThrowSeam_AttackerCritBypassesMitigationAndScales: throw gains the crit
-// tier — a crit bypasses the target's 75% physical mitigation and scales by
-// CritDamageMultiplier, where a normal hit is mitigated to a quarter.
+// tier. The target carries 75% raw physical mitigation, which the #465 curve
+// bends to about 67%: a normal hit keeps about a third (mean ~10), and a crit
+// skips the mitigation up to the knee, loses the overflow above it (about a
+// sixth) and scales by CritDamageMultiplier (mean ~50).
 func TestThrowSeam_AttackerCritBypassesMitigationAndScales(t *testing.T) {
 	t.Run("normal hit is mitigated", func(t *testing.T) {
 		user, room, targets := seedThrowSeamFixture(t, 1, 75, 0)
@@ -315,7 +317,7 @@ func TestThrowSeam_AttackerCritBypassesMitigationAndScales(t *testing.T) {
 
 		dmg := 500 - targets[0].Character.Health
 		assert.GreaterOrEqual(t, dmg, 1)
-		assert.LessOrEqual(t, dmg, 15, "a non-crit hit must respect 75%% mitigation (mean ~7.5)")
+		assert.LessOrEqual(t, dmg, 15, "a non-crit hit must respect the target's mitigation (mean ~10)")
 	})
 
 	t.Run("crit bypasses and scales", func(t *testing.T) {
@@ -331,7 +333,7 @@ func TestThrowSeam_AttackerCritBypassesMitigationAndScales(t *testing.T) {
 
 		dmg := 500 - targets[0].Character.Health
 		assert.GreaterOrEqual(t, dmg, 30,
-			"a crit must bypass mitigation and scale by CritDamageMultiplier (mean ~60)")
+			"a crit must skip mitigation to the knee and scale by CritDamageMultiplier (mean ~50)")
 	})
 }
 

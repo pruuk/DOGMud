@@ -23,6 +23,13 @@ import (
 // `CritDamageMultiplier(skill) / (1 - mitigation)`. The bypass is what lets a
 // crit answer heavy armour; the multiplier is what makes skill investment show
 // up in the payoff.
+//
+// #465 narrowed the bypass: a crit now skips mitigation up to the curve's
+// knee and is reduced by the part of effective mitigation above it
+// (MitigationCurve.CritReduction), so very heavy protection softens crits
+// too. A target at or below the knee takes full crits, as before. At 85%
+// effective, a 2.0x crit lands near 1.3x raw against a 0.15x normal hit:
+// still about nine normal hits.
 
 // CritDamageMultiplier returns the multiplier applied to a critical hit's
 // pre-mitigation damage, given the rank of the skill governing the attack's
@@ -77,9 +84,10 @@ func OpeningStrikeMultiplier(attacker *characters.Character, channelKnob float64
 // CritOrMitigatedDamageScaled is CritOrMitigatedDamage with an extra crit-only
 // multiplier, used by the U10d ranged surprise shot.
 //
-// On a crit it bypasses mitigation entirely and scales by
-// CritDamageMultiplier(skillRank) * bonusCritMult; on a normal hit it applies
-// mitigation and bonusCritMult plays no part at all. Either way the
+// On a crit it skips mitigation up to the curve's knee and scales by
+// CritDamageMultiplier(skillRank) * bonusCritMult * (1 - the curve's
+// CritReduction), the overflow above the knee (#465); on a normal hit it
+// applies mitigation and bonusCritMult plays no part at all. Either way the
 // multiplier is applied to the MEAN before the roll, because dice.RollStat
 // derives its spread from the mean it is handed (stdDev = mean * RollSpread)
 // — scaling the rolled result instead would stretch the spread by the
@@ -92,15 +100,15 @@ func OpeningStrikeMultiplier(attacker *characters.Character, channelKnob float64
 // The melee channel deliberately does NOT use this. calcHitDamage carries
 // backstab consumption and crit-condition bookkeeping, and floors at 0 rather than
 // 1, so folding it in here would either lose behaviour or bloat the signature.
-func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap, bonusCritMult float64) int {
+func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mitigPct float64, curve MitigationCurve, bonusCritMult float64) int {
 	mean := rawDmg
 	if isCrit {
 		if bonusCritMult == 0 {
 			bonusCritMult = 1.0
 		}
-		mean *= CritDamageMultiplier(skillRank) * bonusCritMult
+		mean *= CritDamageMultiplier(skillRank) * bonusCritMult * (1 - curve.CritReduction(mitigPct))
 	} else {
-		mean = ApplyMitigation(rawDmg, mitigPct, mitigCap)
+		mean = ApplyMitigation(rawDmg, mitigPct, curve)
 	}
 
 	dmg := int(math.Round(dice.RollStat(mean).Value))
@@ -113,6 +121,6 @@ func CritOrMitigatedDamageScaled(rawDmg float64, skillRank int, isCrit bool, mit
 
 // CritOrMitigatedDamage rolls the damage for one spell or conviction hit, with
 // no bonus multiplier. See CritOrMitigatedDamageScaled.
-func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct, mitigCap float64) int {
-	return CritOrMitigatedDamageScaled(rawDmg, skillRank, isCrit, mitigPct, mitigCap, 1.0)
+func CritOrMitigatedDamage(rawDmg float64, skillRank int, isCrit bool, mitigPct float64, curve MitigationCurve) int {
+	return CritOrMitigatedDamageScaled(rawDmg, skillRank, isCrit, mitigPct, curve, 1.0)
 }

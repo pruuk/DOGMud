@@ -7,8 +7,35 @@ func validPositiveActionCost(v ConfigFloat) bool {
 	return f > 0 && !math.IsNaN(f) && !math.IsInf(f, 0)
 }
 
+// validateMitigationCurve fills one channel's mitigation curve (#465): knee,
+// ceiling (the channel's MitigationCap), aim and bend. An absent key reads 0
+// and takes the default, so 0 is not expressible for any of the four (an aim
+// of 0.0001 is the approach-only curve in practice). Written `!(x > 0)` so a
+// NaN from YAML `.nan` falls back too. The ceiling stays at or under 0.95, so
+// nothing is ever close to immune. A knee not below the ceiling takes the
+// default knee; a ceiling at or under even that takes the whole default
+// curve. The defaults are the shipped values, so a test binary (which never
+// loads config.yaml) runs the shipped curve.
+func validateMitigationCurve(knee, ceiling, aim, bend *ConfigFloat) {
+	if !(*ceiling > 0) || *ceiling > 0.95 {
+		*ceiling = 0.90
+	}
+	if !(*knee > 0) || *knee >= *ceiling {
+		*knee = 0.50
+	}
+	if *knee >= *ceiling {
+		*knee, *ceiling = 0.50, 0.90
+	}
+	if !validPositiveActionCost(*aim) {
+		*aim = 0.05
+	}
+	if !validPositiveActionCost(*bend) {
+		*bend = 0.40
+	}
+}
+
 // validateCombat sets defaults for combat rolls, defense, prone/grapple,
-// special moves, skullduggery, darkness, damage channels, mitigation caps,
+// special moves, skullduggery, darkness, damage channels, mitigation curves,
 // and toxicity fields.
 // validateCombatSteal bounds the pickpocket pause. Zero is an absent key,
 // so it takes the default (a pause of nothing would give the roll away at
@@ -375,15 +402,12 @@ func (b *Balance) validateCombat() {
 	if b.RhetoricDamageScale <= 0 {
 		b.RhetoricDamageScale = 1.0
 	}
-	if b.PhysicalMitigationCap <= 0 || b.PhysicalMitigationCap > 1.0 {
-		b.PhysicalMitigationCap = 0.75
-	}
-	if b.MagicalMitigationCap <= 0 || b.MagicalMitigationCap > 1.0 {
-		b.MagicalMitigationCap = 0.75
-	}
-	if b.ConvictionMitigationCap <= 0 || b.ConvictionMitigationCap > 1.0 {
-		b.ConvictionMitigationCap = 0.75
-	}
+	validateMitigationCurve(&b.PhysicalMitigationKnee, &b.PhysicalMitigationCap,
+		&b.PhysicalMitigationAim, &b.PhysicalMitigationBend)
+	validateMitigationCurve(&b.MagicalMitigationKnee, &b.MagicalMitigationCap,
+		&b.MagicalMitigationAim, &b.MagicalMitigationBend)
+	validateMitigationCurve(&b.ConvictionMitigationKnee, &b.ConvictionMitigationCap,
+		&b.ConvictionMitigationAim, &b.ConvictionMitigationBend)
 
 	// ── CRIT DAMAGE (chunk 5.11g) ───────────────────────────────────────────
 	// Both defaults are non-zero, so both must default on <= 0: an absent key

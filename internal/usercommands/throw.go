@@ -401,7 +401,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		hit := !out.Defended
 
 		// Damage — U6b Task 15: the multiplier curve and the crit tier. A
-		// crit bypasses mitigation and scales by CritDamageMultiplier(raw
+		// crit bypasses mitigation up to the knee, scales by CritDamageMultiplier(raw
 		// rank); a defended throw still splashes partial damage along the
 		// shared DefenceMitigation curve (0.5 on a bare defensive win, down
 		// to 0.0 on a defensive crit).
@@ -409,8 +409,8 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		if hasDamage {
 			rawDmg := combat.CalcRawDamage(dexterity, skullduggery, spec.DamageMultiplier, combat.ChannelPhysical)
 			mitPct := mob.Character.GetPhysicalMitigation()
-			mitCap := combat.MitigationCap(combat.ChannelPhysical)
-			dmg = combat.CritOrMitigatedDamage(rawDmg, skullduggery, out.AttackerCrit, mitPct, mitCap)
+			mitCurve := combat.MitigationCurveFor(combat.ChannelPhysical)
+			dmg = combat.CritOrMitigatedDamage(rawDmg, skullduggery, out.AttackerCrit, mitPct, mitCurve)
 			if !out.AttackerCrit {
 				dmg = int(float64(dmg) * out.DamageMultiplier)
 				if out.DamageMultiplier > 0 && dmg < 1 {

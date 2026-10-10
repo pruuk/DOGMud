@@ -362,6 +362,21 @@ var (
 			}
 			return result
 		},
+		// effectiveMitigation is a character's mitigation on one channel
+		// ("physical", "magical" or "conviction") bent through that channel's
+		// curve (#465), the value combat applies. The status sheet passes it
+		// to mitigationQuality. An unknown name fails the render.
+		"effectiveMitigation": func(c *characters.Character, channel string) (float64, error) {
+			switch channel {
+			case "physical":
+				return combat.EffectiveMitigationFor(c, combat.ChannelPhysical), nil
+			case "magical":
+				return combat.EffectiveMitigationFor(c, combat.ChannelMagical), nil
+			case "conviction":
+				return combat.EffectiveMitigationFor(c, combat.ChannelConviction), nil
+			}
+			return 0, fmt.Errorf("effectiveMitigation: unknown channel %q", channel)
+		},
 		"mitigationQuality": func(pct float64) string {
 			percent := pct * 100
 			switch {

@@ -118,30 +118,31 @@ func TestRegression_DefenseFloorAlwaysApplies(t *testing.T) {
 		"the selected defence must come from the requested sequence")
 }
 
-// TestRegression_MitigationCapEnforced guards against bug where mitigation
-// exceeding 75% was not properly capped.
+// TestRegression_MitigationCapEnforced guards against mitigation that is not
+// bounded. Since #465 the bound is a curve: linear to the knee (0.50),
+// diminishing above it, never past the cap (0.90).
 func TestRegression_MitigationCapEnforced(t *testing.T) {
 	testCases := []struct {
 		name          string
 		raw           float64
 		mitigationPct float64
-		cap           float64
 		expected      float64
 	}{
-		{"under_cap", 100.0, 0.50, 0.75, 50.0},
-		{"at_cap", 100.0, 0.75, 0.75, 25.0},
-		{"over_cap_clamped", 100.0, 0.95, 0.75, 25.0},
-		{"full_mitigation_capped", 100.0, 1.00, 0.75, 25.0},
-		{"negative_mitigation_treated_as_zero", 100.0, -0.10, 0.75, 100.0},
-		{"zero_mitigation", 100.0, 0.0, 0.75, 100.0},
+		{"under_knee", 100.0, 0.40, 60.0},
+		{"at_knee", 100.0, 0.50, 50.0},
+		{"over_knee_bent", 100.0, 0.75, 32.7},
+		{"full_raw_bent", 100.0, 1.00, 25.0},
+		{"far_past_any_build_capped", 100.0, 10.0, 10.0},
+		{"negative_mitigation_treated_as_zero", 100.0, -0.10, 100.0},
+		{"zero_mitigation", 100.0, 0.0, 100.0},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := ApplyMitigation(tc.raw, tc.mitigationPct, tc.cap)
-			assert.InDelta(t, tc.expected, result, 0.01,
-				"ApplyMitigation(%.0f, %.2f, %.2f) should be %.0f",
-				tc.raw, tc.mitigationPct, tc.cap, tc.expected)
+			result := ApplyMitigation(tc.raw, tc.mitigationPct, shippedCurveForTest)
+			assert.InDelta(t, tc.expected, result, 0.05,
+				"ApplyMitigation(%.0f, %.2f, curve) should be %.1f",
+				tc.raw, tc.mitigationPct, tc.expected)
 		})
 	}
 }
