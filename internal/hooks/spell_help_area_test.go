@@ -81,6 +81,51 @@ func TestHelpArea_PlayerHealsThePartysCompanionsNotAStrangersPet(t *testing.T) {
 	}
 }
 
+// Messaging M6 slice 1 (#338): an area heal that names a heal with authored
+// start lines lands it on every player in the room, caster included, and each
+// audience reads exactly one line per target: the caster the start_actor line
+// for each other target and its own holder line for itself, each target its
+// holder line, everyone else the observer line. No generic trio line is sent.
+// A help area heal reaches every player in the room, so the third player is
+// both a target and the observer of the other two.
+func TestHelpArea_AnAreaHealTellsEachAudienceOncePerTarget(t *testing.T) {
+	f := newSpellParityFixture(t, spellContestAttackWin())
+	seedTestHeals(t)
+	spell := massMendSpellForAreaTest()
+	spell.ConditionIds = []int{testGentleHealId}
+
+	resolveSpell(f.casterUser, activity.CastingData{SpellId: spell.SpellId}, spell, f.room)
+	landQueuedConditions()
+
+	for _, u := range []*users.UserRecord{f.casterUser, f.targetUser, f.watcher} {
+		assert.Len(t, u.Character.GetConditions(testGentleHealId), 1, "%s holds the heal once", u.Character.Name)
+	}
+	caster, bobrick, carys := drainPlain(1), drainPlain(2), drainPlain(3)
+	assert.ElementsMatch(t, []string{
+		"A gentle heal settles on you.",
+		"A gentle heal settles on Bobrick.",
+		"A gentle heal settles on Carys.",
+	}, caster, "the caster: its own holder line, an actor line per other target")
+	assert.ElementsMatch(t, []string{
+		"A gentle heal settles on you.",
+		"A gentle heal settles on Aliceia.",
+		"A gentle heal settles on Carys.",
+	}, bobrick, "a target: its holder line, an observer line per other target")
+	assert.ElementsMatch(t, []string{
+		"A gentle heal settles on you.",
+		"A gentle heal settles on Aliceia.",
+		"A gentle heal settles on Bobrick.",
+	}, carys, "a target: its holder line, an observer line per other target")
+	for _, lines := range [][]string{caster, bobrick, carys} {
+		for _, line := range lines {
+			assert.NotContains(t, line, "Mass Mend", "the spell's own trio is not sent")
+			assert.NotContains(t, line, "warm glow")
+			assert.NotContains(t, line, "restorative")
+			assert.NotContains(t, line, "envelops")
+		}
+	}
+}
+
 // An uncharmed mob's area heal lands on itself and its packmates, the mobs
 // its own AI would heal (mobs.FindPackmatesInRoom), and never on a player or
 // a mob outside the pack.
