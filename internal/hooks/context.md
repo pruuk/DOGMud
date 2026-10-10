@@ -2137,8 +2137,10 @@ through `CasterStatValue`, and the school's cast skill):
 - **DoT: `/3`, floored at 3.** `applySpellDot` (`spell_effects.go`) computes
   `calcSpellDuration(...) / 3`, then clamps `dotDuration < 3` up to 3, and
   passes that rounds figure straight to
-  `AddConditionMagnitudeBy(conditions.ConditionIdPoisoned, dotDuration, ..., c.casterRef())`: record 121 ticks
-  every round (slice 1b; it was every third round before). See
+  `AddConditionMagnitudeBy(spellDotConditionId(spell), dotDuration, ..., c.casterRef())`:
+  the spell's one `condition_ids` entry (Blood Boil's 143 Boiling Blood) or
+  121 Poisoned (Neural Toxin) ticks every round (slice 1b; it was every
+  third round before). See
   `internal/conditions/context.md` under "Cadence".
 
 **Crit never touches a duration, and never touches a help spell.** A
@@ -2169,8 +2171,12 @@ already fighting, the caster on the target likewise, and a player caster on a
 mob calls `actions.SeedAggression` with freshness judged per target, as
 `throw` does, which records the assault crime on a fresh engagement (owner
 ruling, 2026-09-28). Damage and knockdown on a mob call `creditSpellDamage`
-before the harm, as melee does with `TrackPlayerDamage`; the dot does not
-(its ticks harm anonymously, a filed follow-up). A dot's duration reads the
+before the harm, as melee does with `TrackPlayerDamage`; the dot's record
+carries its caster, so each tick credits them (`creditMobHarm`, #240). A dot
+whose record tells its own start (Blood Boil's 143) narrates through
+`narrateConditionStart`, with everything read before the record lands and
+the lines sent before the fight is committed; a silent-start record (121)
+keeps the spell's "afflicts" trio (#249). A dot's duration reads the
 spell's primarystat and the school's cast skill through
 `spellCasterStatAndSkill`, not `actions.GetSpellStatAndSkill`, which is the
 fold stat.

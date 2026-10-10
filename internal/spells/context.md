@@ -158,7 +158,7 @@ const (
 | `damage` | Direct HP damage to target(s). New pipeline (DamageMultiplier > 0) scales off Willpower always, NOT PrimaryStat -- see the PrimaryStat note above. Legacy path (DamageMultiplier == 0) scales off EffectMagnitude. |
 | `heal` | Direct HP restoration to target(s) |
 | `shield` | Applies ConditionShield with magnitude = damage absorbed |
-| `dot` | Applies ConditionPoisoned; ticks for EffectDuration cycles (each cycle = 3 rounds in AutoHeal) |
+| `dot` | Applies the spell's one `condition_ids` record (Blood Boil: 143 Boiling Blood), or 121 Poisoned when it names none (Neural Toxin); duration from the caster (`applySpellDot`, `spellDotConditionId`) |
 | `knockdown` | Deals damage + knocks the target Supine (face-up "slams to the ground") via `Position.TransitionToSupine(MinRecoveryRounds: 1, TriggerKnockdownSpell)`. The legacy `CombatPosition = PositionProne` parallel-write is removed (T21 sunset). Future work may add a direction config to distinguish blast (Supine default) from shockwave (Prone). |
 | `purge` | Removes poison conditions and ConditionPoisoned from target(s) |
 | `none` | No automatic effect — spell behavior handled in Go hooks (used by condition spells, summons, utility) |

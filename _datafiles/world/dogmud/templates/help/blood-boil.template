@@ -15,8 +15,9 @@ cannot stop the damage once the blood begins to cook.
   <ansi fg="yellow">School:      </ansi> Vital
   <ansi fg="yellow">Base Folds:  </ansi> 6
   <ansi fg="yellow">Conv. Cost:  </ansi> 50
-  <ansi fg="yellow">Defense:     </ansi> Physical — quick reflexes can dodge it; armor only
+  <ansi fg="yellow">Defense:     </ansi> Physical. Quick reflexes can dodge it; armor only
                  softens what lands
-  <ansi fg="yellow">Effect:      </ansi> Damage over time: the boiling blood turns toxic for several rounds
+  <ansi fg="yellow">Effect:      </ansi> Damage over time: the target bleeds for several
+                 rounds. Purge Affliction or Cleansing Wave ends it
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help spells</ansi>, <ansi fg="command">help cast</ansi>
