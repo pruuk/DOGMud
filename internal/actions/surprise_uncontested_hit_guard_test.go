@@ -117,7 +117,7 @@ var rawDamageSiteOwners = map[string]string{
 
 	// Spell damage is computed here and consumed downstream of the spell's
 	// contest; this function applies nothing itself.
-	"internal/hooks/combat_shared_helpers.go:calcSpellDamageForCharacter": "pure calculation, consumed downstream of the spell contest",
+	"internal/hooks/combat_shared_helpers.go:rollSpellDamage": "pure calculation, consumed downstream of the spell contest (calcSpellDamageForCharacter wraps it; #480 kept its inputs for the SpellDamage log)",
 
 	// Crit follow-up effects, which only exist because the round's contest was
 	// already won decisively.
