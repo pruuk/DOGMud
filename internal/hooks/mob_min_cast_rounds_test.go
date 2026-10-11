@@ -39,11 +39,9 @@ func TestMobMinCastRounds_CastStartedThisRoundIsNotSteppedThisRound(t *testing.T
 	m.Character.ConvictionMax.Value, m.Character.Conviction = 1000, 1000
 	m.Character.Cooldowns = nil
 	m.Character.SetAggro(2, 0, characters.DefaultAttack)
-	orig := util.GetRoundCount()
-	t.Cleanup(func() { util.SetRoundCountForTest(orig) })
 	drainPlain(1)
 
-	util.SetRoundCountForTest(9000) // round N, MobRoundTick: the delayed cast runs
+	pinScheduleRoundForTest(t, 9000) // round N, MobRoundTick: the delayed cast runs; restored on cleanup
 	_, err := mobcommands.Cast("test-windup", m, room)
 	require.NoError(t, err)
 	require.True(t, m.Character.IsCasting(), "fixture: the cast began")

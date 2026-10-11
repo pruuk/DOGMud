@@ -23,6 +23,7 @@ import (
 
 func coreDrainWindupBoss(t *testing.T) (*mobs.Mob, *rooms.Room) {
 	t.Helper()
+	drainEventQueueOnCleanup(t) // the drain lands conditions through the event queue
 	t.Cleanup(seedDrainAreaRegistries(t, []int{7101, 7102}))
 	t.Cleanup(conditions.SeedConditionRecordsForTest())
 	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-core-drain": {

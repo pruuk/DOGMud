@@ -44,6 +44,7 @@ const (
 // file, because the hooks TestMain points FilePaths.DataFiles at a temp dir.
 func loadShippedCrashSiteBosses(t *testing.T) {
 	t.Helper()
+	drainEventQueueOnCleanup(t) // spawning boss templates may queue events
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("runtime.Caller(0) failed")
