@@ -36,6 +36,40 @@ import (
 // calcSpellDamageForCharacter computes spell damage using the pipeline (if
 // spell has DamageMultiplier > 0) or the legacy path. Works for any caster.
 func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters.Character, target *characters.Character, magnitude int, isCrit bool) int {
+	return rollSpellDamage(spellData, caster, target, magnitude, isCrit).dmg
+}
+
+// spellDamageRoll is one spell damage roll and the inputs behind it, kept so
+// the applier can log them after the target's defence (#480): rawDmg before
+// mitigation, the mitigation channel, raw and effective mitigation, and the
+// rolled dmg before any defence scales it. channel is "legacy" for the
+// magnitude path, which has no raw or mitigation.
+type spellDamageRoll struct {
+	rawDmg, rawMitig, effMitig float64
+	channel                    string
+	isCrit                     bool
+	dmg                        int
+}
+
+// logSpellDamage writes the SpellDamage debug line for a roll the applier has
+// resolved against the target's defence: defended (a defence scaled it),
+// evaded (a defensive crit negated it) and applied (the damage actually
+// taken). The spell twin of melee's DistDamage / CritDamage lines. Plain
+// values, no Sprintf: slog drops a debug record before formatting it.
+func logSpellDamage(spellData *spells.SpellData, caster, target *characters.Character, r spellDamageRoll,
+	out combat.ChannelDefenceResult, applied int) {
+	casterName := ""
+	if caster != nil {
+		casterName = caster.Name
+	}
+	mudlog.Debug("SpellDamage", "spell", spellData.SpellId, "caster", casterName, "target", target.Name,
+		"rawDmg", math.Round(r.rawDmg*10)/10, "channel", r.channel, "rawMitig", r.rawMitig,
+		"effMitig", math.Round(r.effMitig*1000)/1000, "isCrit", r.isCrit, "rolled", r.dmg,
+		"defended", out.Defended, "evaded", out.DefensiveCrit, "dmg", applied)
+}
+
+// rollSpellDamage is calcSpellDamageForCharacter with its inputs kept.
+func rollSpellDamage(spellData *spells.SpellData, caster *characters.Character, target *characters.Character, magnitude int, isCrit bool) spellDamageRoll {
 
 	if spellData.DamageMultiplier > 0 && caster != nil {
 		// U9: the spell's own primarystat and school drive damage, exactly as
@@ -113,16 +147,11 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 		// spellcasting rank. Before this, a crit against an unmitigated target
 		// dealt exactly a normal hit's damage, so crit worth was set purely by
 		// the defender's armour.
-		dmg := combat.CritOrMitigatedDamage(rawDmg, skillLevel, isCrit, mitigPct, curve)
-
-		// #480: the spell twin of melee's DistDamage / CritDamage lines, so a
-		// tuner can split raw output from mitigation in the logs. Plain values,
-		// no Sprintf: slog drops a debug record before formatting it.
-		mudlog.Debug("SpellDamage", "spell", spellData.SpellId, "caster", caster.Name, "target", target.Name,
-			"rawDmg", math.Round(rawDmg*10)/10, "channel", channelName, "rawMitig", mitigPct,
-			"effMitig", math.Round(combat.EffectiveMitigation(mitigPct, curve)*1000)/1000,
-			"isCrit", isCrit, "dmg", dmg)
-		return dmg
+		return spellDamageRoll{
+			rawDmg: rawDmg, rawMitig: mitigPct, effMitig: combat.EffectiveMitigation(mitigPct, curve),
+			channel: channelName, isCrit: isCrit,
+			dmg: combat.CritOrMitigatedDamage(rawDmg, skillLevel, isCrit, mitigPct, curve),
+		}
 	}
 
 	// Legacy fallback: magnitude-based damage (no mitigation, no stat scaling)
@@ -135,7 +164,7 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 	if isCrit {
 		dmg += magnitude
 	}
-	return dmg
+	return spellDamageRoll{channel: "legacy", isCrit: isCrit, dmg: dmg}
 }
 
 // checkConcentrationBreak tests whether a casting character's concentration
