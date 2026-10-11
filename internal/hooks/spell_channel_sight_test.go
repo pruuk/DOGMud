@@ -602,6 +602,42 @@ func TestMobCastAreaHarm_CommitsPastANonCombatant(t *testing.T) {
 	require.Equal(t, 101, caster.Character.CurrentCombatTarget().MobInstanceId)
 }
 
+// #480 re-review: f368a2125 made a wild mob's area harm spare its allies at
+// landing, but the cast-time list and castFoeMob still counted them. An idle
+// `cast sparks` with only a packmate in the room (Sylara 241, the pothole
+// beasts 9121-9123) began a fold, committed the caster to its own packmate,
+// then spared it and fizzled, leaving the two fighting. With nobody it may
+// harm in the room, the cast is refused: no cast and no fight.
+func TestMobCastAreaHarm_OnlyAPackmateHereStartsNothing(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	for _, uid := range []int{1, 2} { // a room of mobs only
+		walkOut(t, room, uid)
+	}
+	burst := testHarmSpell()
+	burst.SpellId, burst.Targeting = "test-burst", combatvocab.TargetArea
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-burst": burst}))
+
+	caster := spellChannelMob(t)
+	rooms.LoadRoom(caster.Character.RoomId).RemoveMob(caster.InstanceId)
+	caster.Character.RoomId = room.RoomId
+	caster.Character.Validate()
+	caster.Character.ConvictionMax.Value, caster.Character.Conviction = 1000, 1000
+	caster.Character.Cooldowns = nil
+	packmate := &mobs.Mob{MobId: caster.MobId, InstanceId: 103, Character: characters.Character{
+		Name: "Skeleton", RoomId: room.RoomId, Health: 10, Conditions: conditions.New()}}
+	packmate.Character.HealthMax.Value = 10
+	mobs.SetInstanceForTest(103, packmate)
+	t.Cleanup(func() { mobs.SetInstanceForTest(103, nil); room.RemoveMob(103) })
+	room.AddMob(103)
+	room.AddMob(caster.InstanceId)
+	require.True(t, caster.ConsidersAnAlly(packmate), "fixture: the other mob is the caster's own kind")
+
+	_, err := mobcommands.Cast("test-burst", caster, room)
+	require.NoError(t, err)
+	require.False(t, caster.Character.IsCasting(), "an area harm with only allies here must not begin")
+	require.False(t, caster.Character.IsInCombat(), "and the caster must not fight its own packmate")
+}
+
 // The commit is bounded: a non-combatant caster (a quest giver, a merchant)
 // starts no fight by casting, as it starts none by any other route (the
 // combat-phase veto, CombatPhase_Vetoes).

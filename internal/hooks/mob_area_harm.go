@@ -53,12 +53,10 @@ func mobAreaHarmTargets(caster *mobs.Mob, room *rooms.Room) (mobIds []int, userI
 				continue
 			}
 			// A wild caster spares its allies (#480 playtest: Core
-			// Discharge struck the Guardian's own adds). ConsidersAnAlly is
-			// the rule callforhelp uses: same kind, or same species unless
-			// either hates the other's groups. A charmed caster fights for
-			// its owner and keeps the owner's rules above; a charmed target
-			// serves a player, so it is no ally of a wild caster.
-			if charmedByUserId == 0 && !m.Character.IsCharmed() && caster.ConsidersAnAlly(m) {
+			// Discharge struck the Guardian's own adds). Mob.AreaHarmSpares
+			// is the one rule, shared with the cast-time list and the foe
+			// the cast commits to.
+			if caster.AreaHarmSpares(m) {
 				continue
 			}
 		}

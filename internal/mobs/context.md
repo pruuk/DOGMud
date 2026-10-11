@@ -293,27 +293,25 @@ so `internal/seeders` can share it). NB: distinct from a guard *faction* id and 
 the combat-stance `Character.IsGuard()` predicate.
 
 ```go
-// Check if two mobs are allies
+// Check if two mobs are allies (mobs.go). Corrected 2026-10-10: an earlier
+// snippet here showed a group-membership rule the code never had.
 func (r *Mob) ConsidersAnAlly(m *Mob) bool {
     if m.MobId == r.MobId {
-        return true // Same mob type = ally
+        return true // same mob type
     }
-    
-    if len(m.Groups) == 0 && len(r.Groups) == 0 {
-        return true // No factions = neutral allies
+    if r.hatesAnyGroup(m.Groups) || m.hatesAnyGroup(r.Groups) {
+        return false // group hatred beats a shared species
     }
-    
-    // Check for shared group membership
-    for _, targetGroup := range r.Groups {
-        for _, testGroup := range m.Groups {
-            if testGroup == targetGroup {
-                return true
-            }
-        }
-    }
-    
-    return false
+    return r.Character.SpeciesId > 0 &&
+        r.Character.SpeciesId == m.Character.SpeciesId // same species
 }
+
+// AreaHarmSpares (#480): whether this mob's area harm spell spares m. A wild
+// (uncharmed) caster spares every uncharmed creature it ConsidersAnAlly.
+// The one rule for the cast-time list (actions.InitiateCast), the foe the
+// cast commits to (mobcommands.castFoeMob) and who it lands on
+// (hooks.mobAreaHarmTargets).
+func (r *Mob) AreaHarmSpares(m *Mob) bool
 ```
 
 Hatred is `HatesSpecies(raceName string) bool` (the lowercased name is in the

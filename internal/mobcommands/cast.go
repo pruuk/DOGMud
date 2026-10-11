@@ -195,7 +195,8 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 // castFoeMob returns the first of a harmful cast's mob targets that caster
 // may fight, or 0: by the rules mob-against-mob targeting keeps
 // (targeting.selectWeakestHatedMob), not itself, not a non-combatant, and
-// not a companion of the owner it is charmed by. An area spell's targets are
+// not a companion of the owner it is charmed by, not an ally the area harm
+// spares (Mob.AreaHarmSpares). An area spell's targets are
 // every mob in the room, so the filter picks one the area resolution would
 // also hit (hooks.mobAreaHarmTargets) rather than letting the combat-phase
 // veto on a non-combatant first target leave the caster uncommitted. A
@@ -211,6 +212,9 @@ func castFoeMob(caster *mobs.Mob, targetMobInstanceIds []int) int {
 			continue
 		}
 		if charmedBy > 0 && m.Character.IsCharmed(charmedBy) {
+			continue
+		}
+		if caster.AreaHarmSpares(m) { // never its own ally (#480)
 			continue
 		}
 		return mId

@@ -2147,7 +2147,10 @@ nothing changes.
 A wild (uncharmed) caster also spares every uncharmed creature it
 `Mob.ConsidersAnAlly`: its own kind, or its species unless either hates the
 other's groups, the rule `callforhelp` uses (#480 playtest: Core Discharge
-was striking the Guardian's own adds).
+was striking the Guardian's own adds). The rule is `Mob.AreaHarmSpares`,
+shared with `actions.InitiateCast`'s cast-time list and
+`mobcommands.castFoeMob`, so an area harm with only allies in the room is
+refused rather than begun against them.
 
 ## Spell Duration System
 

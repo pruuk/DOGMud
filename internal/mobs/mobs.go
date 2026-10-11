@@ -1238,6 +1238,17 @@ func (r *Mob) ConsidersAnAlly(m *Mob) bool {
 	return false
 }
 
+// AreaHarmSpares reports whether this mob's area harm spell spares m (#480):
+// a wild (uncharmed) caster spares every uncharmed creature it
+// ConsidersAnAlly. A charmed caster fights by its owner's rules instead, and a
+// charmed creature serves a player, so neither case spares. The one rule for
+// every place that picks a mob's area harm targets: the cast-time list
+// (actions.InitiateCast), the foe it commits to (mobcommands.castFoeMob) and
+// who it lands on (hooks.mobAreaHarmTargets), so they cannot drift apart.
+func (r *Mob) AreaHarmSpares(m *Mob) bool {
+	return r.Character.GetCharmedUserId() == 0 && !m.Character.IsCharmed() && r.ConsidersAnAlly(m)
+}
+
 // hatesAnyGroup returns true if this mob's Hates list includes any of the given groups.
 func (r *Mob) hatesAnyGroup(groups []string) bool {
 	for _, hate := range r.Hates {
