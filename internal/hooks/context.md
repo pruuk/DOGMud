@@ -2144,6 +2144,11 @@ blocks, and a person `(*rooms.Room).CanPvp` refuses to the owner or who is
 in the owner's party. With the aicompanion module off nothing is bonded and
 nothing changes.
 
+A wild (uncharmed) caster also spares every uncharmed creature it
+`Mob.ConsidersAnAlly`: its own kind, or its species unless either hates the
+other's groups, the rule `callforhelp` uses (#480 playtest: Core Discharge
+was striking the Guardian's own adds).
+
 ## Spell Duration System
 
 `calcSpellDuration` lives here, in `spell_resolution.go`, not in
