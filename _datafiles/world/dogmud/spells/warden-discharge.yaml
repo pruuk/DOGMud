@@ -24,18 +24,19 @@ effect_magnitude: 150
 # It cast core-discharge until #480, which now suits only the Core Guardian
 # (Core Matrix: +200 willpower, +40 spellcasting). Arithmetic for a 400g run
 # (Warden-Prime's pool is 5 x gold paid, room 6392, so 2000) against the
-# #480 reference player (530 HP, raw 0.02 physical), normal hit, shipped
-# config.yaml:
+# #480 reference player (the playtest `mid` profile, 491 HP, raw 0.02
+# physical), normal hit, shipped config.yaml:
 #   willpower  = 30 species + 2000 x 0.125 fighting mental share = 280
 #   skill mult = SkillMultiplier(1) = 1 + 2 x sqrt(1/50) = 1.283
-#   raw        = 280 x 1.283 x 0.34 x SpellDamageScale 3.12 x Global 0.5
-#              = 190
+#   raw        = 280 x 1.283 x 0.32 x SpellDamageScale 3.12 x Global 0.5
+#              = 179
 #   mitigation = 0.02 (below the curve's 0.50 knee, so linear)
-#   mean hit   = 190 x 0.98 = 187, 35% of 530
-# At 300g (1500) about 27%, at 200g (1000) about 19%. A crit (not tuned)
-# multiplies raw by CritDamageMultiplier(1) = 2.05: about 390, 74%.
-# Pinned by internal/hooks/core_discharge_balance_test.go.
-damage_multiplier: 0.34
+#   mean hit   = 179 x 0.98 = 176, 36% of 491
+# Highest normal roll, as for core-discharge (z=3 x1.45, live-run +5%):
+# 176 x 1.45 x 1.05 = 268, 55%. At 300g (1500) about 28%, at 200g (1000)
+# about 20%. A crit (not tuned) multiplies raw by CritDamageMultiplier(1) =
+# 2.05: about 368, 75%. Pinned by internal/hooks/core_discharge_balance_test.go.
+damage_multiplier: 0.32
 no_damage_interrupt: true
 # min_cast_rounds (#480): held open for 2 fold steps, as the Core
 # Guardian's discharge is, so the warning and the interrupt window match.

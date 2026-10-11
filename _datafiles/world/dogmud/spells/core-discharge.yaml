@@ -20,27 +20,34 @@ base_folds: 2
 effect_type: damage
 effect_magnitude: 150
 # damage_multiplier (#480). Owner ruling 2026-10-10: a missed discharge
-# must never one-shot a full-health UNARMOURED player; it takes about 85-90%
-# of their pool, and armour takes it well below that. 2.0 shipped until
-# SpellDamageScale doubled (1.56 to 3.12, f68db5baf) and it one-shot
-# everyone. Arithmetic for the Core Guardian in a 400g run (pool 7 x gold,
-# room 6395, so 2800, its authored statpool) against the #480 reference
-# player (530 HP, raw 0.02 physical), normal hit, shipped config.yaml:
+# must never one-shot a full-health UNARMOURED player, so its HIGHEST normal
+# (non-crit) roll stays under their pool; armour takes it well below that.
+# 2.0 shipped until SpellDamageScale doubled (1.56 to 3.12, f68db5baf) and
+# it one-shot everyone. Reference: the playtest `mid` profile, 491 HP at raw
+# 0.02 physical, in a 400g run (pool 7 x gold, room 6395, so 2800, the
+# authored statpool). Normal hit, shipped config.yaml:
 #   willpower  = 30 species + 2800 x 0.125 fighting mental share + 200 Core
 #                Matrix = 580
 #   skill mult = SkillMultiplier(41: Core Matrix 40 + 1) = 1 + 2 x sqrt(41/50)
 #                = 2.811
-#   raw        = 580 x 2.811 x 0.185 x SpellDamageScale 3.12 x Global 0.5
-#              = 470
+#   raw        = 580 x 2.811 x 0.12 x SpellDamageScale 3.12 x Global 0.5
+#              = 305
 #   mitigation = 0.02 (below the curve's 0.50 knee, so linear)
-#   mean hit   = 470 x 0.98 = 461, 87% of 530
-# A raw 0.56 player (curve 0.559) takes 470 x 0.441 = 207, 39%. Willpower
-# scales with gold: 300g (2100) about 74%, 200g (1400) about 61%.
+#   mean hit   = 305 x 0.98 = 299, 61% of 491
+# The roll is a normal with sd = mean x RollSpread 0.15 and no clamp: a z=3
+# roll (one hit in about 740) is x1.45. A live boss also runs above the
+# spawn mean: its willpower is random per spawn (sd about 17) and it trains
+# spellcasting on its own drains. The re-playtest of cdc2250de logged raw
+# 489.7 to 493 at 0.185, 4% over this mean, so allow 5%:
+#   highest normal = 299 x 1.45 x 1.05 = 455, 93% of 491
+# The boss's own hull suppression does not apply: hull_suppression gives
+# condition 95 to players only. Willpower scales with gold: 300g about 52%,
+# 200g about 43% mean. A raw 0.56 player (curve 0.559) takes about 27%.
 # A crit is NOT tuned: it skips mitigation up to the knee and scales by
-# CritDamageMultiplier(41) = 2.0 + 0.05 x 41 = 4.05, so 470 x 4.05 = about
-# 1,900, still a one-shot. Warden-Prime (9561) has its own weaker
+# CritDamageMultiplier(41) = 2.0 + 0.05 x 41 = 4.05, so 305 x 4.05 = about
+# 1,240, still a one-shot. Warden-Prime (9561) has its own weaker
 # warden-discharge. Pinned by internal/hooks/core_discharge_balance_test.go.
-damage_multiplier: 0.185
+damage_multiplier: 0.12
 no_damage_interrupt: true
 # min_cast_rounds (#480): the Guardian makes about 57 folds a round, so
 # without this the cast completed on its first step and left one round to

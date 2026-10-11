@@ -21,20 +21,53 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 )
 
-// #480 reference player (owner ruling 2026-10-10, after the playtest of
-// 89c58a9f6): an effectively UNARMOURED player, raw 0.02 physical, 530 HP. A
-// missed discharge must never one-shot them at full health; armoured
-// players then take much less.
+// #480 reference player (owner ruling 2026-10-10): the real playtest `mid`
+// profile (tools/playtest/profiles/mid.yaml), effectively UNARMOURED at raw
+// 0.02 physical. A missed discharge must never one-shot them at full health,
+// so the highest normal (non-crit) roll has to stay under their pool.
 const (
-	coreDischargeRefHP       = 530
-	coreDischargeRefRawMitig = 0.02
+	coreDischargeMidProfile  = "tools/playtest/profiles/mid.yaml"
 	coreDischargeGuardianId  = 9562
 	coreDischargeWardenId    = 9561
 	coreDischargeSpawns      = 40
 	coreDischargeRollsPerMob = 500
-	coreDischargeBandLow     = 0.60
-	coreDischargeBandHigh    = 0.70
+
+	// The non-crit roll is dice.RollStat: a normal around the mean with
+	// sd = mean x RollSpread and no upper clamp, so it has no true maximum.
+	// The bound uses z = 3, a roll one hit in about 740 exceeds.
+	coreDischargeRollZ = 3.0
+	// coreDischargeRunAllowance covers what moves a live boss's raw damage
+	// above the spawn-averaged mean this test measures: one spawn's random
+	// willpower (sd about 17 on 580 at pool 2800, 3%) and the spellcasting
+	// the Guardian trains on its own drains during the fight. The
+	// re-playtest of cdc2250de logged raw 489.7 to 493 against a mean of
+	// 470, so +4.2%; 5% covers it.
+	coreDischargeRunAllowance = 1.05
+	// coreDischargeBoundMargin keeps the highest normal roll a little under
+	// a full pool rather than exactly at it.
+	coreDischargeBoundMargin = 0.97
 )
+
+// midReferencePlayer is the `mid` playtest profile's character, validated
+// the way the game builds one, so its pool and mitigation are the game's
+// own (about 491 HP; raw 0.02 physical from its body and feet).
+func midReferencePlayer(t *testing.T) *characters.Character {
+	t.Helper()
+	raw, err := os.ReadFile(coreDischargeMidProfile)
+	if err != nil {
+		t.Fatalf("reading the mid profile: %v", err)
+	}
+	var profile struct {
+		Character characters.Character `yaml:"character"`
+	}
+	if err := yaml.Unmarshal(raw, &profile); err != nil {
+		t.Fatalf("parsing the mid profile: %v", err)
+	}
+	c := &profile.Character
+	c.Validate()
+	c.Health = c.HealthMax.Value
+	return c
+}
 
 // loadShippedCrashSiteBosses points the registries at the REAL shipped
 // config, species, items, spells and the two crash-site boss templates, and
@@ -89,25 +122,11 @@ func loadShippedCrashSiteBosses(t *testing.T) {
 	t.Cleanup(mobs.SeedMobsForTest(ms, map[int]*mobs.Mob{}))
 }
 
-// coreDischargeReferenceTarget is the #480 reference player: a bare
-// character whose only protection is one piece carrying raw 0.02 physical.
-func coreDischargeReferenceTarget() *characters.Character {
-	target := &characters.Character{Name: "Reference"}
-	target.HealthMax.Value = coreDischargeRefHP
-	target.Health = coreDischargeRefHP
-	target.Equipment.Body = items.Item{ItemId: 1, Spec: &items.ItemSpec{
-		PhysicalMitigation: int(coreDischargeRefRawMitig * 100),
-	}}
-	return target
-}
-
-// meanCoreDischargeHit is the mean NORMAL (non-crit) landed Core Discharge
-// against the reference target, averaged over fresh spawns of mobId (the
-// stat pool is randomly distributed per spawn) and many damage rolls each.
-// statPool 0 spawns at the template's own statpool.
-func meanCoreDischargeHit(t *testing.T, sd *spells.SpellData, mobId int, statPool int) (mean float64, willpower float64) {
+// meanCoreDischargeHit is the mean NORMAL (non-crit) landed discharge against
+// target, averaged over fresh spawns of mobId (the stat pool is randomly
+// distributed per spawn) and many damage rolls each.
+func meanCoreDischargeHit(t *testing.T, sd *spells.SpellData, mobId int, statPool int, target *characters.Character) (mean float64, willpower float64) {
 	t.Helper()
-	target := coreDischargeReferenceTarget()
 	total, wil := 0.0, 0.0
 	for s := 0; s < coreDischargeSpawns; s++ {
 		mob := mobs.NewMobByIdFresh(mobs.MobId(mobId), 0, statPool)
@@ -150,21 +169,33 @@ func spawnMultiplier(t *testing.T, roomId, mobId int) int {
 	return 0
 }
 
-// TestCrashSiteDischarges_ShippedMeansHitTheirBands pins #480's retune: an
-// uninterrupted discharge in a 400g run (the Core Guardian's authored pool,
-// 2800, is exactly that run) takes a mean of the reference mid player's
-// health on a normal hit inside each boss's band: 85-90% for the Core
-// Guardian (never a one-shot), 30-40% for Warden-Prime, the teaching boss.
-// It runs the real
-// calcSpellDamageForCharacter on the shipped spells, boss templates, Core
-// Matrix and config, so a later change to SpellDamageScale,
-// GlobalDamageMultiplier, the mitigation curve, a boss's stats or a spell's
-// damage_multiplier that moves either number fails here.
+// TestCrashSiteDischarges_ShippedMeansHitTheirBands pins #480's retune
+// against the `mid` playtest player in a 400g run (the Core Guardian's
+// authored pool, 2800, is exactly that run). Two checks per boss:
+//
+//   - the bound (owner ruling: never a one-shot): mean x the roll's z = 3
+//     multiple x the live-run allowance stays under 97% of the pool;
+//   - the mean band: 58-64% of the pool for the Core Guardian, 30-40% for
+//     Warden-Prime, the teaching boss.
+//
+// It runs the real calcSpellDamageForCharacter on the shipped spells, boss
+// templates, Core Matrix, mid profile and config, so a later change to
+// SpellDamageScale, RollSpread, GlobalDamageMultiplier, the mitigation curve,
+// a boss's stats or a spell's damage_multiplier that moves either fails here.
 func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
 	loadShippedCrashSiteBosses(t)
 	if got := float64(configs.GetBalanceConfig().SpellDamageScale); got == 1.0 {
 		t.Fatal("SpellDamageScale is the Go default 1.0: the shipped config.yaml was not read")
 	}
+	ref := midReferencePlayer(t)
+	pool := float64(ref.HealthMax.Value)
+	if raw := ref.GetPhysicalMitigation(); math.Abs(raw-0.02) > 1e-9 {
+		t.Fatalf("the mid profile's raw physical mitigation is %.3f, want 0.02 (effectively unarmoured)", raw)
+	}
+	spread := float64(configs.GetBalanceConfig().RollSpread)
+	highRoll := 1 + coreDischargeRollZ*spread
+	t.Logf("mid reference player: %d HP, raw physical 0.02; RollSpread %.2f, so a z=%.0f roll is x%.3f",
+		ref.HealthMax.Value, spread, coreDischargeRollZ, highRoll)
 
 	const referenceGold = 400
 	for _, tc := range []struct {
@@ -178,7 +209,7 @@ func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
 		// moved damage band.
 		wantWil float64
 	}{
-		{"Core Guardian", "core-discharge", coreDischargeGuardianId, 6395, 0.85, 0.90, 30 + 2800*0.125 + 200},
+		{"Core Guardian", "core-discharge", coreDischargeGuardianId, 6395, 0.58, 0.64, 30 + 2800*0.125 + 200},
 		{"Warden-Prime", "warden-discharge", coreDischargeWardenId, 6392, 0.30, 0.40, 30 + 2000*0.125},
 	} {
 		t.Run(tc.boss, func(t *testing.T) {
@@ -187,10 +218,17 @@ func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
 				t.Fatalf("%s did not load from the shipped spells", tc.spellId)
 			}
 			mult := spawnMultiplier(t, tc.roomId, tc.mobId)
-			mean, wil := meanCoreDischargeHit(t, sd, tc.mobId, referenceGold*mult)
-			frac := mean / coreDischargeRefHP
-			t.Logf("%s, %dg run (pool %d): willpower %.1f, mean hit %.1f = %.1f%% of %d HP (damage_multiplier %.3f)",
-				tc.boss, referenceGold, referenceGold*mult, wil, mean, frac*100, coreDischargeRefHP, sd.DamageMultiplier)
+			mean, wil := meanCoreDischargeHit(t, sd, tc.mobId, referenceGold*mult, ref)
+			frac := mean / pool
+			high := mean * highRoll * coreDischargeRunAllowance
+			t.Logf("%s, %dg run (pool %d): willpower %.1f, mean hit %.1f = %.1f%% of %.0f HP; "+
+				"high normal roll %.0f = %.1f%% (damage_multiplier %.3f)",
+				tc.boss, referenceGold, referenceGold*mult, wil, mean, frac*100, pool, high, high/pool*100, sd.DamageMultiplier)
+			if high >= coreDischargeBoundMargin*pool {
+				t.Errorf("%s: mean %.1f x z=%.0f roll %.3f x run allowance %.2f = %.0f, want under %.0f%% of the "+
+					"%.0f HP pool: a normal roll could one-shot an unarmoured player", tc.spellId, mean,
+					coreDischargeRollZ, highRoll, coreDischargeRunAllowance, high, coreDischargeBoundMargin*100, pool)
+			}
 			// The pool spreads at random per spawn: one spawn's willpower has
 			// a spread of about 17 at pool 2800, so the 40-spawn mean is
 			// within about 3, and 15 is a five-sigma margin.
@@ -199,9 +237,9 @@ func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
 					"the YAML arithmetic is stale", tc.boss, wil, tc.wantWil)
 			}
 			if frac < tc.low || frac > tc.high {
-				t.Errorf("%s mean hit is %.1f%% of a %d HP reference player, want %.0f-%.0f%%; "+
+				t.Errorf("%s mean hit is %.1f%% of the %.0f HP reference player, want %.0f-%.0f%%; "+
 					"retune damage_multiplier in %s.yaml (or revisit the knob that moved)",
-					tc.spellId, frac*100, coreDischargeRefHP, tc.low*100, tc.high*100, tc.spellId)
+					tc.spellId, frac*100, pool, tc.low*100, tc.high*100, tc.spellId)
 			}
 		})
 	}
