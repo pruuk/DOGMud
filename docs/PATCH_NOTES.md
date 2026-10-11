@@ -56,8 +56,9 @@
   have, so a heavily armored character may read one step lower than
   before. `consider`, and how creatures size you up, use the same measure.
 - Core Discharge, the Core Guardian's blast that hits the whole room, no
-  longer kills a prepared player outright from full health. It still hits
-  very hard, so stop it when you can.
+  longer kills a player outright from full health, even one with no armor.
+  It still hits very hard, and a rare critical blast can still kill, so
+  stop it when you can. It no longer harms the Guardian's own helpers.
 - The Core Guardian now warns you before its discharge. It gathers its
   power for two rounds, and a flashbang or a disruption spell stops it at
   any point in that time. Its Core Drain now gives the same two-round
