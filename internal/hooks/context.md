@@ -1840,6 +1840,13 @@ without that line keeps the weave. Disruptors need no change: the mob is
 casting for the whole windup, so `InterruptTargetCast` lands in any round.
 `mob_min_cast_rounds_test.go` pins all of it.
 
+A windup takes no fold step in the round its cast began
+(`CastingData.StartedRound`, set by `mobcommands.Cast`): a btree `cast` is
+a delayed action that `MobRoundTick` drains at the start of a round, before
+`DoCombat` steps folds, so stepping it then put the cast line and the first
+warning in one round and left one round to interrupt. Cast line in round N,
+warning in N+1, blast in N+2.
+
 A mob's AREA harm cast skips the fold step's target-gone check
 (`castTargetGone`): its cast-time list is the whole room and goes stale
 during a windup, so one killed add or one downed or departed player used to

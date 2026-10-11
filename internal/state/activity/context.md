@@ -99,8 +99,12 @@ type CastingData struct {
     TargetMobInstanceIds []int
     SpellRest            string
     RoundsStepped        int // AdvanceCastingFolds calls so far (#480)
+    StartedRound         uint64 // round a mob's cast began, 0 when unset (#480)
 }
 ```
+
+`StartedRound` is set by `mobcommands.Cast`; a mob's `min_cast_rounds`
+windup takes no fold step in that round (`hooks.handleMobFoldCasting`).
 
 `RoundsStepped` counts fold steps. `AdvanceCastingFolds` increments it on
 every call, including a held step that adds no folds. A mob spell's

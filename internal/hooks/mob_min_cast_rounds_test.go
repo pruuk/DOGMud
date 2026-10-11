@@ -5,14 +5,63 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/require"
 )
+
+// Playtest of 89c58a9f6: the windup collapsed to one casting round. The
+// tree's `cast` is a delayed action, drained by MobRoundTick at the START of
+// the next round, before DoCombat; so the cast began, and DoCombat's fold
+// step then held it and printed the warning, in that same round. The cast
+// line and the warning arrived together and the blast came one round later.
+// This drives exactly that order: the cast starts in round N (the drained
+// delayed action), DoCombat's fold step runs in round N, then N+1, N+2.
+func TestMobMinCastRounds_CastStartedThisRoundIsNotSteppedThisRound(t *testing.T) {
+	room := seedFallbackRoom(t, 60, heatEyesConditionId)
+	area := windupSpell(2)
+	area.Targeting = combatvocab.TargetArea
+	area.IgnoreMoveCooldown = true
+	area.BaseFolds = 2 // two folds: within two steps even at a fold rate of 1
+	area.CastRoomText = "{actor}'s core flares."
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-windup": area}))
+	m := spellChannelMob(t)
+	rooms.LoadRoom(m.Character.RoomId).RemoveMob(m.InstanceId)
+	room.AddMob(m.InstanceId)
+	m.Character.RoomId = room.RoomId
+	m.Character.Validate()
+	m.Character.ConvictionMax.Value, m.Character.Conviction = 1000, 1000
+	m.Character.Cooldowns = nil
+	m.Character.SetAggro(2, 0, characters.DefaultAttack)
+	orig := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCountForTest(orig) })
+	drainPlain(1)
+
+	util.SetRoundCountForTest(9000) // round N, MobRoundTick: the delayed cast runs
+	_, err := mobcommands.Cast("test-windup", m, room)
+	require.NoError(t, err)
+	require.True(t, m.Character.IsCasting(), "fixture: the cast began")
+	handleMobFoldCasting(m, room) // round N, DoCombat
+	got := drainPlain(1)
+	require.Equal(t, 1, countContaining(got, "core flares"), "round N shows the cast line: %v", got)
+	require.Zero(t, countContaining(got, windupWarning), "the warning must not share the cast line's round: %v", got)
+	require.True(t, m.Character.IsCasting())
+
+	util.SetRoundCountForTest(9001)
+	handleMobFoldCasting(m, room)
+	require.Equal(t, 1, countContaining(drainPlain(1), windupWarning), "round N+1 is the warning round")
+	require.True(t, m.Character.IsCasting(), "and still held")
+
+	util.SetRoundCountForTest(9002)
+	handleMobFoldCasting(m, room)
+	require.False(t, m.Character.IsCasting(), "round N+2 is the blast: two full rounds after the cast line")
+}
 
 // #480: min_cast_rounds holds a MOB's fold-cast open for at least N fold
 // steps whatever its fold rate, so a boss with a huge fold rate (the Core

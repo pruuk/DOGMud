@@ -904,6 +904,17 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 	// Capture state before processFoldRound clears it on terminal conditions.
 	csBeforeProcess, _ := mob.Character.Activity.CastingData()
 
+	// #480: a min_cast_rounds windup takes no fold step in the round its cast
+	// began. A btree `cast` is a delayed action that MobRoundTick drains at
+	// the START of a round, before DoCombat reaches this step, so stepping it
+	// here put the cast line and the first warning in the same round and left
+	// one round to interrupt. The mob still holds the round (casting).
+	if csBeforeProcess.StartedRound != 0 && csBeforeProcess.StartedRound == util.GetRoundCount() {
+		if sd := spells.GetSpell(csBeforeProcess.SpellId); sd != nil && sd.MinCastRounds > 0 {
+			return true
+		}
+	}
+
 	result := processFoldRound(&mob.Character)
 
 	switch {

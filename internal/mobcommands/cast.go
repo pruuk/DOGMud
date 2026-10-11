@@ -151,6 +151,7 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		TargetUserIds:        result.TargetUserIds,
 		TargetMobInstanceIds: result.TargetMobInstanceIds,
 		SpellRest:            result.SpellRest,
+		StartedRound:         util.GetRoundCount(),
 	}
 	if err := mob.Character.Activity.TransitionToCasting(
 		castData,
