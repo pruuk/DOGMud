@@ -90,6 +90,7 @@ func loadGrapplerToFraction(c *characters.Character, itemID int, fraction float6
 // roles to one Character. The tick must force-break the invalid solo state
 // before either role quotes, messages, or rolls.
 func TestGrappleMaintenanceRejectsSelfLinkedPairBeforeAdmission(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	setGrappleCostConfig(t)
 	cases := []struct {
 		name    string

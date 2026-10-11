@@ -296,6 +296,8 @@ func TestPackFlee_TriggersForGroupmates(t *testing.T) {
 // to the player, and the camp mobs walking up to the rally point should
 // not infinitely oscillate after the fight is over.
 func TestPackFlee_ClearsHelpRoomOnCallerDeath(t *testing.T) {
+	// p.Dissolve below runs in t.Cleanup, after seedAllRegistries' drain.
+	drainEventQueueOnCleanup(t)
 	cleanup := seedAllRegistries()
 	defer cleanup()
 
@@ -339,6 +341,8 @@ func TestPackFlee_ClearsHelpRoomOnCallerDeath(t *testing.T) {
 // non-caller member dies, the help call stays active so other responders
 // keep coming. Only the caller's death clears the call.
 func TestPackFlee_PreservesHelpRoomOnNonCallerDeath(t *testing.T) {
+	// p.Dissolve below runs in t.Cleanup, after seedAllRegistries' drain.
+	drainEventQueueOnCleanup(t)
 	cleanup := seedAllRegistries()
 	defer cleanup()
 

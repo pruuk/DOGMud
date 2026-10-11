@@ -191,6 +191,7 @@ func TestProcessAttackerProgression_AnOutrightMissAwardsAtTheFractionToo(t *test
 // failure fraction 0, so only a win can advance anything and this cannot pass
 // by accident on the loss path.
 func TestProcessAttackerProgression_ACleanHitStillAwardsFullWeight(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	pinCertainAttackerProgressionForTest(t, 0.0)
 
 	c := characters.New()
@@ -489,6 +490,7 @@ func TestProcessAttackerProgression_WeightFollowsTheWinningSkillNotTheRound(t *t
 // Without this, an implementation that always reported a loss would pass the
 // test above.
 func TestProcessAttackerProgression_TheWinningSkillsOwnCleanHitPaysFull(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	pinCertainAttackerProgressionForTest(t, 0.0)
 
 	c := characters.New()
@@ -519,6 +521,7 @@ func TestProcessAttackerProgression_TheWinningSkillsOwnCleanHitPaysFull(t *testi
 // weapon-combat, exactly as AttackResult.CleanHit aggregates across one
 // weapon's swings.
 func TestProcessAttackerProgression_EitherEntryOfASkillCountsAsThatSkillLanding(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	pinCertainAttackerProgressionForTest(t, 0.0)
 
 	c := characters.New()

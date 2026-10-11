@@ -28,6 +28,7 @@ import (
 // and users.SeedUsersForTest separately (or use the combined seed below).
 func seedFollowRegistries(t *testing.T) func() {
 	t.Helper()
+	drainEventQueueOnCleanup(t)
 
 	mobSpec := &mobs.Mob{
 		MobId: 10,

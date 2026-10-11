@@ -23,6 +23,7 @@ import (
 // internal/actions but scoped to this package's drain_area dispatch test.
 func seedDrainAreaRegistries(t *testing.T, playerIds []int) func() {
 	t.Helper()
+	drainEventQueueOnCleanup(t)
 
 	bossMob := &mobs.Mob{
 		MobId:      9562,

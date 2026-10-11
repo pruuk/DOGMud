@@ -138,13 +138,11 @@ func runOneCombatRoundForcingCritForTest(t *testing.T, atk, def actions.Actor) {
 	// claimBonusProgression treats round==0 as "no round context" and claims
 	// unconditionally WITHOUT recording the claim in bonusProgressionRound
 	// (characters/progression.go), so ClaimedBonusThisRound can never observe
-	// a claim made at round 0. Other tests in this package leave the shared
-	// global round counter at exactly 0 on exit (see
-	// NewRound_IdleMobs_schedule_test.go's `defer util.SetRoundCountForTest(0)`),
-	// and Go runs this package's tests sequentially, so a test that reads the
-	// counter here can observe that residue depending on run order. Pin a
-	// real round and restore the prior value afterward rather than depending
-	// on suite order.
+	// a claim made at round 0. The schedule tests once left the shared global
+	// round counter at exactly 0 on exit (fixed in #478; they now restore the
+	// value they found), and any test that pins the counter can leave residue
+	// if it forgets to restore. Pin a real round and restore the prior value
+	// afterward rather than depending on suite order.
 	prevRound := util.GetRoundCount()
 	util.SetRoundCountForTest(util.RoundCountMinimum)
 	t.Cleanup(func() { util.SetRoundCountForTest(prevRound) })

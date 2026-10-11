@@ -14,6 +14,7 @@ import (
 // stamina and conviction at zero but deliberately does NOT floor health.
 // validate.go carries a matching explicit "No lower Health clamp" comment.
 func TestApplyHarm_HealthStoresOverkill(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	c := characters.New()
 	c.HealthMax.Base = 100
 	c.HealthMax.Recalculate()
@@ -34,6 +35,7 @@ func TestApplyHarm_HealthStoresOverkill(t *testing.T) {
 // negative value passes all of them. This is the assertion that makes removing
 // the floors safe.
 func TestApplyHarm_NegativeHealthStillReadsAsDead(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	c := characters.New()
 	c.HealthMax.Base = 100
 	c.HealthMax.Recalculate()

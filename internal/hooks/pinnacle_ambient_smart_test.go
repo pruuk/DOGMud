@@ -29,6 +29,7 @@ func seedSmartAmbient() func() {
 // had. This is the fix for the prod complaint that crafting more potions made
 // the whole bandolier feel broken.
 func TestAmbientSmartReset_KeepsExistingWhenAddingSecond(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	defer seedSmartAmbient()()
 
 	u := users.NewTestUser(720, "smart", "SmartReset", 7720)
@@ -69,6 +70,7 @@ func TestAmbientSmartReset_KeepsExistingWhenAddingSecond(t *testing.T) {
 // TestAmbientSmartReset_RemoveRevokesOnlyThatCondition proves removing one potion
 // revokes only its condition, leaving the others active (no full re-attune).
 func TestAmbientSmartReset_RemoveRevokesOnlyThatCondition(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	defer seedSmartAmbient()()
 
 	u := users.NewTestUser(722, "remove", "Remover", 7722)
@@ -100,6 +102,7 @@ func TestAmbientSmartReset_RemoveRevokesOnlyThatCondition(t *testing.T) {
 // TestAmbientSmartReset_Messages proves the attuning/attuned feedback fires once
 // each and steady state is silent.
 func TestAmbientSmartReset_Messages(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	defer seedSmartAmbient()()
 
 	u := users.NewTestUser(721, "msgs", "Messenger", 7721)

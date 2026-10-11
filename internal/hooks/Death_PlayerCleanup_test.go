@@ -82,6 +82,7 @@ func TestDeathCleanup_NoDeprogressionSkipsStatDecay(t *testing.T) {
 // impractical to assert a specific value, so we assert at least one of
 // the six training fields decreased or the event log has an entry.
 func TestDeathCleanup_DeprogressionAllowedNormally(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	seedMinimalConfig(t)
 
 	cfg := configs.GetGamePlayConfig()

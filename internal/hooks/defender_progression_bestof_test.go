@@ -141,6 +141,7 @@ func TestProcessDefenderProgression_ALostRoundReadsTheKnob_FullFractionAdvances(
 // share the skill) plus one unarmed-combat roll. Best-of collapses that to the
 // single highest roll.
 func TestProcessDefenderProgression_ThreeDefenceTypesAwardOnce(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	pinCertainDefenderProgressionForTest(t, 0.35)
 
 	c := characters.New()

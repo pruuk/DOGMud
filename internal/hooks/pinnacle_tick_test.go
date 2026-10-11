@@ -37,6 +37,7 @@ func setPinnacleEnabled(t *testing.T, on bool) {
 // TestPinnacleHunger_DrainAndClock covers the anchor-on-first-tick behavior,
 // the no-drain-before-threshold guard, and the escalating drain after.
 func TestPinnacleHunger_DrainAndClock(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
 		999950: {ItemId: 999950, Name: "blackrazor", Type: items.Weapon, Hands: 1,
 			HungerRounds: 10, HungerDrainPct: 0.1},
@@ -73,6 +74,7 @@ func TestPinnacleHunger_DrainAndClock(t *testing.T) {
 // TestPinnacleHunger_NeverLethalAndKillReset proves hunger clamps at 1 HP and
 // that a recent kill re-bases the anchor (feeding the blade).
 func TestPinnacleHunger_NeverLethalAndKillReset(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
 		999950: {ItemId: 999950, Name: "blackrazor", Type: items.Weapon, Hands: 1,
 			HungerRounds: 10, HungerDrainPct: 0.1},
@@ -198,6 +200,7 @@ func TestPinnacleAgingFreeze(t *testing.T) {
 // ─── Ambient potions ────────────────────────────────────────────────────────
 
 func TestPinnacleAmbientPotions(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
 		999954: {ItemId: 999954, Name: "ambient bandolier", Type: items.Belt,
 			IsBandolier: true, BandolierCapacity: 4, AmbientPotions: true},
@@ -249,6 +252,7 @@ func TestPinnacleAmbientPotions(t *testing.T) {
 // ─── Mutation tick ──────────────────────────────────────────────────────────
 
 func TestPinnacleMutationTick(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
 		999956: {ItemId: 999956, Name: "seething prism", Type: items.Neck,
 			MutationTickInterval: 5, MutationTickChance: 100, MutationRarityFloor: 8},

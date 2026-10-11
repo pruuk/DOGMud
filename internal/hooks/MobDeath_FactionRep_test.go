@@ -50,6 +50,7 @@ enemies: []
 // returns a cleanup func.
 func seedHookRoom(t *testing.T, roomId int) (*rooms.Room, func()) {
 	t.Helper()
+	drainEventQueueOnCleanup(t)
 	room := &rooms.Room{
 		RoomId:      roomId,
 		Zone:        "Thornwall City",

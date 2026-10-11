@@ -206,6 +206,11 @@ func seedAllRegistries() func() {
 	})
 
 	return func() {
+		// room1.AddMob above queues a RoomChange, and most tests built on
+		// this fixture queue messages, inputs or combat events they never
+		// process. Left in the shared global queue they reach whatever test
+		// runs next (#478: TestWaitRound_* read another test's lines).
+		events.DrainAllQueuedEventsForTest()
 		cleanupSpells()
 		cleanupBiomes()
 		cleanupRooms()
@@ -213,6 +218,17 @@ func seedAllRegistries() func() {
 		cleanupMobs()
 		cleanupConditions()
 	}
+}
+
+// drainEventQueueOnCleanup empties the shared global event queue when t
+// ends, for a fixture that does not build on seedAllRegistries. Seeding a
+// room with Room.AddMob, sending a user a message or driving a combat or
+// condition path all queue events; left behind, they reach whatever test
+// runs next (#478). Registered at the top of a fixture, it runs after the
+// fixture's other cleanups.
+func drainEventQueueOnCleanup(t *testing.T) {
+	t.Helper()
+	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
 }
 
 // setCombatPositionParallel sets the Position FSM to the given state. Seeds
@@ -2159,11 +2175,13 @@ func TestIdleMobs_NoPanic(t *testing.T) {
 // ─── BroadcastNewChar ─────────────────────────────────────────────────────────
 
 func TestBroadcastNewChar_CharacterCreated(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	result := BroadcastNewChar(events.CharacterCreated{UserId: 1, CharacterName: "Hero"})
 	assert.Equal(t, events.Continue, result)
 }
 
 func TestBroadcastNewChar_CharacterChanged(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	result := BroadcastNewChar(events.CharacterChanged{UserId: 1, LastCharacterName: "Old", CharacterName: "New"})
 	assert.Equal(t, events.Continue, result)
 }

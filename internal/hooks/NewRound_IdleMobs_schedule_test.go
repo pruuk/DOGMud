@@ -145,10 +145,21 @@ func TestScheduleTick_WantsSleep_FalseWhenAwayFromTarget(t *testing.T) {
 	}
 }
 
+// pinScheduleRoundForTest sets the global round counter and restores the
+// value it found on cleanup. Restoring a fixed 0 instead left the counter
+// below RoundCountMinimum for every later test, and a fresh character's
+// AssistCommandedRound is also 0, so TryClaimAssistCommand refused the
+// companion owner's assist in party_autoassist_sight_test.go (#478).
+func pinScheduleRoundForTest(t *testing.T, round uint64) {
+	t.Helper()
+	prev := util.GetRoundCount()
+	util.SetRoundCountForTest(round)
+	t.Cleanup(func() { util.SetRoundCountForTest(prev) })
+}
+
 func TestScheduleTick_WantsSleep_FalseDuringGraceCooldown(t *testing.T) {
 	registerSleepyScheduleForTest(t)
-	util.SetRoundCountForTest(1000)
-	defer util.SetRoundCountForTest(0)
+	pinScheduleRoundForTest(t, 1000)
 
 	mob := &mobs.Mob{ScheduleId: "sleepy_test"}
 	mob.Character.RoomId = 1234
@@ -162,8 +173,7 @@ func TestScheduleTick_WantsSleep_FalseDuringGraceCooldown(t *testing.T) {
 
 func TestScheduleTick_WantsSleep_TrueAfterGraceCooldown(t *testing.T) {
 	registerSleepyScheduleForTest(t)
-	util.SetRoundCountForTest(1100)
-	defer util.SetRoundCountForTest(0)
+	pinScheduleRoundForTest(t, 1100)
 
 	mob := &mobs.Mob{ScheduleId: "sleepy_test"}
 	mob.Character.RoomId = 1234
@@ -260,6 +270,7 @@ func TestScheduleTickPlan_PatrolSegmentDoesNotSetWantsPath(t *testing.T) {
 }
 
 func TestApplySchedulePlan_StampsEmptyOnNonPatrolSegment(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	mobs.RegisterScheduleForTest(&mobs.Schedule{
 		Id: "non_patrol_sched",
 		Segments: []mobs.ScheduleSegment{

@@ -62,6 +62,7 @@ tree:
 
 func seedItemEventsWorld(t *testing.T) (bearer *users.UserRecord, room *rooms.Room) {
 	t.Helper()
+	drainEventQueueOnCleanup(t)
 	cfg := configs.GetConfig()
 	cfg.GamePlay.PinnacleItemsEnabled = true
 	cfg.Balance.ItemChatterNormalCooldownRounds = 20
