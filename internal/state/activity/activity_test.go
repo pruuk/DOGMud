@@ -221,3 +221,20 @@ func TestAC_028_SalvagingToCraftingFails(t *testing.T) {
 // --- AC-029 through AC-034: Mob/player parity ---
 
 // --- AC-035 through AC-038: Cascade verification ---
+
+// TestAdvanceCastingFolds_CountsSteps pins the step counter min_cast_rounds
+// (#480) reads: every AdvanceCastingFolds call is one fold step, including a
+// step that adds no folds because a held windup is already full.
+func TestAdvanceCastingFolds_CountsSteps(t *testing.T) {
+	m := activity.NewMachine()
+	_ = m.TransitionToCasting(activity.CastingData{SpellId: "blast", FoldsNeeded: 2},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin})
+	cs, complete := m.AdvanceCastingFolds(2, 5)
+	if !complete || cs.RoundsStepped != 1 {
+		t.Fatalf("after one step: complete=%v RoundsStepped=%d, want true and 1", complete, cs.RoundsStepped)
+	}
+	cs, _ = m.AdvanceCastingFolds(0, 0)
+	if cs.RoundsStepped != 2 || cs.FoldsAccumulated != 2 {
+		t.Fatalf("after a held step: RoundsStepped=%d FoldsAccumulated=%d, want 2 and 2", cs.RoundsStepped, cs.FoldsAccumulated)
+	}
+}

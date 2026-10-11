@@ -1826,6 +1826,34 @@ resolving sub outcomes. If > 0, forces the tier to `SubTierBad` regardless
 of the roll result. Both submitter and partner accumulators are reset to 0
 at the end of each per-pair tick via defer.
 
+### A mob's held windup: `min_cast_rounds` (#480)
+
+`processFoldRound` keeps a MOB's cast open (`StillCasting`) until
+`CastingData.RoundsStepped` reaches the spell's `MinCastRounds`, even when
+the folds are already full. The rule is keyed on `char.GetUserId() == 0`,
+so a player's cast never meets it. A held step adds no folds, and
+`calcFoldConvictionCost` charges 0 for a step with no fold gain. On a held
+round `handleMobFoldCasting` calls `sendMobWindupWarning`, which sends the
+spell's `wait_observer` line (caster named by `mobSeenName`, same audience
+as `sendMobWeaving`) in place of the weave; a spell without the field or
+without that line keeps the weave. Disruptors need no change: the mob is
+casting for the whole windup, so `InterruptTargetCast` lands in any round.
+`mob_min_cast_rounds_test.go` pins all of it.
+
+A windup takes no fold step in the round its cast began
+(`CastingData.StartedRound`, set by `mobcommands.Cast`): a btree `cast` is
+a delayed action that `MobRoundTick` drains at the start of a round, before
+`DoCombat` steps folds, so stepping it then put the cast line and the first
+warning in one round and left one round to interrupt. Cast line in round N,
+warning in N+1, blast in N+2.
+
+A mob's AREA harm cast skips the fold step's target-gone check
+(`castTargetGone`): its cast-time list is the whole room and goes stale
+during a windup, so one killed add or one downed or departed player used to
+fizzle the cast with no disruptor. `resolveMobSpell` re-reads the room at
+landing and skips downed players for harm, fizzling only when no one is
+left. Single-target casts and players' casts keep the check.
+
 ### Chunk 4f (U10: opposed contest, not chance-based)
 
 **`processFoldRound`** in `combat_shared_helpers.go` replaced the earlier
@@ -2116,6 +2144,14 @@ blocks, and a person `(*rooms.Room).CanPvp` refuses to the owner or who is
 in the owner's party. With the aicompanion module off nothing is bonded and
 nothing changes.
 
+A wild (uncharmed) caster also spares every uncharmed creature it
+`Mob.ConsidersAnAlly`: its own kind, or its species unless either hates the
+other's groups, the rule `callforhelp` uses (#480 playtest: Core Discharge
+was striking the Guardian's own adds). The rule is `Mob.AreaHarmSpares`,
+shared with `actions.InitiateCast`'s cast-time list and
+`mobcommands.castFoeMob`, so an area harm with only allies in the room is
+refused rather than begun against them.
+
 ## Spell Duration System
 
 `calcSpellDuration` lives here, in `spell_resolution.go`, not in
@@ -2278,6 +2314,18 @@ and the block is skipped entirely at 0 because `CalcRawDamage` treats
 maths); only the cross-channel tier's swing runs through the seam. The
 auto-trip/auto-bash `ExecuteSkillMove` calls carry `IsCounter`, which the
 tier's wiring refuses — counters never recurse.
+
+Also in `combat_shared_helpers.go`: `rollSpellDamage` is
+`calcSpellDamageForCharacter` with its inputs kept (`spellDamageRoll`), and
+the damage appliers (`applySpellDamage`, `applySpellKnockdown`) write a
+`SpellDamage` debug line through `logSpellDamage` AFTER the target's
+defence (#480), the spell twin of melee's `DistDamage` / `CritDamage`:
+spell id, caster, target, `rawDmg`, `channel` ("legacy" for the magnitude
+path), `rawMitig` (the uncapped sum), `effMitig` (after the channel's
+curve), `isCrit`, `rolled` (before defence), `defended`, `evaded` (a
+defensive crit) and `dmg`, the damage actually applied. It was first written
+inside the roll, so dodged hits logged full damage.
+`spell_damage_debug_log_test.go` pins the line, including an evaded hit.
 
 ## Gotcha: prone auto-recovery became contested on 2026-08-30. It never was before.
 

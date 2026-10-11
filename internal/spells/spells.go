@@ -53,6 +53,14 @@ type SpellData struct {
 	NoDamageInterrupt  bool     `yaml:"no_damage_interrupt,omitempty"`  // Telegraphed casts: skip damage/position concentration-break (still interrupted by the disruptor system)
 	IgnoreMoveCooldown bool     `yaml:"ignore_move_cooldown,omitempty"` // Scripted boss abilities: bypass the shared special-move cast cooldown (btree controls cadence)
 
+	// MinCastRounds (#480) holds a MOB's fold-cast open for at least this
+	// many fold steps, whatever its fold rate, so a telegraphed boss ability
+	// gives the room a real windup to interrupt. Each held step shows the
+	// spell's wait_observer line in place of the generic weave. 0 (absent)
+	// changes nothing. A player's cast ignores it, so it is valid only on a
+	// mob_only spell (Validate).
+	MinCastRounds int `yaml:"min_cast_rounds,omitempty"`
+
 	// Companion summoning fields: replaces JS onMagic for summon spells
 	SummonMobId int `yaml:"summon_mob_id,omitempty"`
 	// SummonPetMultiplier is the single dial for this pet's tier. It scales the
@@ -276,6 +284,13 @@ func (s *SpellData) Validate() error {
 
 	if err := s.validateAxes(); err != nil {
 		return err
+	}
+
+	if s.MinCastRounds < 0 {
+		return fmt.Errorf("spell %q: min_cast_rounds %d is negative", s.SpellId, s.MinCastRounds)
+	}
+	if s.MinCastRounds > 0 && !s.MobOnly {
+		return fmt.Errorf("spell %q: min_cast_rounds holds only a mob's cast, so it needs mob_only: true", s.SpellId)
 	}
 
 	if s.Difficulty < 0 {

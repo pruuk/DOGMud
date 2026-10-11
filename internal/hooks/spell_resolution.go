@@ -667,6 +667,12 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 	}
 	for _, userId := range cs.TargetUserIds {
 		if target := users.GetByUserId(userId); target != nil && target.Character.RoomId == room.RoomId {
+			// A downed player is no target for harm, as a dead mob is not
+			// above. The fold step used to fizzle the whole cast on one; an
+			// area harm cast now reaches landing (#480 review), so skip them.
+			if spellData.IsHarm() && target.Character.Health < 1 {
+				continue
+			}
 			found++
 			anyLanded = resolveMobSpellAgainstPlayer(mob, target, room, spellData, side, magnitude) || anyLanded
 		}

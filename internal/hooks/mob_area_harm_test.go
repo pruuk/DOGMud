@@ -90,6 +90,57 @@ func TestBondedAreaHarmFollowsPvpAndTheParty(t *testing.T) {
 	}
 }
 
+// Playtest of 89c58a9f6: Core Discharge struck the Guardian's own Grapnel
+// Warden and Hull Sweeper (one crit for 3721), and an add dying scattered
+// its packmates, the Guardian among them, out of its windup. A wild mob's
+// area harm spares the mobs it ConsidersAnAlly (its own kind or species,
+// the rule callforhelp and the pack scatter use), and still hits the
+// players and any other creature.
+func TestWildAreaHarmSparesTheCastersAllies(t *testing.T) {
+	_, room := areaHarmWorld(t, configs.PVPDisabled)
+	boss := mobs.GetInstance(42)
+	boss.Character.RemoveCharm() // fixture: this caster is wild, not charmed
+	boss.MobId, boss.Character.SpeciesId = 9562, 45
+	addMob := mobs.GetInstance(43)
+	addMob.MobId, addMob.Character.SpeciesId = 9586, 45 // its summoned add, same kind
+	stranger := mobs.GetInstance(44)
+	stranger.MobId, stranger.Character.SpeciesId = 9999, 7
+	stranger.PlayerAttackImmune = false
+
+	mobIds, userIds := mobAreaHarmTargets(boss, room)
+	if !slices.Equal(mobIds, []int{44}) {
+		t.Fatalf("the add is spared and the stranger is not: %v", mobIds)
+	}
+	slices.Sort(userIds)
+	if !slices.Equal(userIds, []int{1, 2}) {
+		t.Fatalf("every player is still hit: %v", userIds)
+	}
+}
+
+// The two exceptions to the ally skip: a same-kind creature charmed by a
+// player serves that player and is hit, and two of a species whose groups
+// hate each other (a warden and a bandit) are no allies, so it is hit too.
+func TestWildAreaHarmHitsCharmedKinAndHatedKin(t *testing.T) {
+	_, room := areaHarmWorld(t, configs.PVPDisabled)
+	boss := mobs.GetInstance(42)
+	boss.Character.RemoveCharm()
+	boss.MobId, boss.Character.SpeciesId = 9562, 45
+	boss.Groups, boss.Hates = []string{"warden"}, []string{"bandit"}
+	pet := mobs.GetInstance(43)
+	pet.MobId, pet.Character.SpeciesId = 9586, 45
+	pet.Character.Charm(1, characters.CharmPermanent, ``)
+	rival := mobs.GetInstance(44)
+	rival.MobId, rival.Character.SpeciesId = 9999, 45
+	rival.Groups = []string{"bandit"}
+	rival.PlayerAttackImmune = false
+
+	mobIds, _ := mobAreaHarmTargets(boss, room)
+	slices.Sort(mobIds)
+	if !slices.Equal(mobIds, []int{43, 44}) {
+		t.Fatalf("charmed kin and hated kin are both hit: %v", mobIds)
+	}
+}
+
 // The control: a charmed mob that is not bonded (and a bonded one while the
 // module is off) is not gated, exactly as before.
 func TestUnbondedAreaHarmIsUnchanged(t *testing.T) {

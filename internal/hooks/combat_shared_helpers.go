@@ -36,6 +36,40 @@ import (
 // calcSpellDamageForCharacter computes spell damage using the pipeline (if
 // spell has DamageMultiplier > 0) or the legacy path. Works for any caster.
 func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters.Character, target *characters.Character, magnitude int, isCrit bool) int {
+	return rollSpellDamage(spellData, caster, target, magnitude, isCrit).dmg
+}
+
+// spellDamageRoll is one spell damage roll and the inputs behind it, kept so
+// the applier can log them after the target's defence (#480): rawDmg before
+// mitigation, the mitigation channel, raw and effective mitigation, and the
+// rolled dmg before any defence scales it. channel is "legacy" for the
+// magnitude path, which has no raw or mitigation.
+type spellDamageRoll struct {
+	rawDmg, rawMitig, effMitig float64
+	channel                    string
+	isCrit                     bool
+	dmg                        int
+}
+
+// logSpellDamage writes the SpellDamage debug line for a roll the applier has
+// resolved against the target's defence: defended (a defence scaled it),
+// evaded (a defensive crit negated it) and applied (the damage actually
+// taken). The spell twin of melee's DistDamage / CritDamage lines. Plain
+// values, no Sprintf: slog drops a debug record before formatting it.
+func logSpellDamage(spellData *spells.SpellData, caster, target *characters.Character, r spellDamageRoll,
+	out combat.ChannelDefenceResult, applied int) {
+	casterName := ""
+	if caster != nil {
+		casterName = caster.Name
+	}
+	mudlog.Debug("SpellDamage", "spell", spellData.SpellId, "caster", casterName, "target", target.Name,
+		"rawDmg", math.Round(r.rawDmg*10)/10, "channel", r.channel, "rawMitig", r.rawMitig,
+		"effMitig", math.Round(r.effMitig*1000)/1000, "isCrit", r.isCrit, "rolled", r.dmg,
+		"defended", out.Defended, "evaded", out.DefensiveCrit, "dmg", applied)
+}
+
+// rollSpellDamage is calcSpellDamageForCharacter with its inputs kept.
+func rollSpellDamage(spellData *spells.SpellData, caster *characters.Character, target *characters.Character, magnitude int, isCrit bool) spellDamageRoll {
 
 	if spellData.DamageMultiplier > 0 && caster != nil {
 		// U9: the spell's own primarystat and school drive damage, exactly as
@@ -90,14 +124,18 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 		// social meets conviction. A non-harm cast never reaches this helper.
 		var mitigPct float64
 		var curve combat.MitigationCurve
+		channelName := "none"
 		if ch, ok := combat.MitigationChannelFor(spellData.DamageType); ok {
 			switch ch {
 			case combat.ChannelPhysical:
 				mitigPct = target.GetPhysicalMitigation()
+				channelName = "physical"
 			case combat.ChannelMagical:
 				mitigPct = target.GetMagicalMitigation()
+				channelName = "magical"
 			case combat.ChannelConviction:
 				mitigPct = target.GetConvictionMitigation()
+				channelName = "conviction"
 			}
 			curve = combat.MitigationCurveFor(ch)
 		} else {
@@ -109,7 +147,11 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 		// spellcasting rank. Before this, a crit against an unmitigated target
 		// dealt exactly a normal hit's damage, so crit worth was set purely by
 		// the defender's armour.
-		return combat.CritOrMitigatedDamage(rawDmg, skillLevel, isCrit, mitigPct, curve)
+		return spellDamageRoll{
+			rawDmg: rawDmg, rawMitig: mitigPct, effMitig: combat.EffectiveMitigation(mitigPct, curve),
+			channel: channelName, isCrit: isCrit,
+			dmg: combat.CritOrMitigatedDamage(rawDmg, skillLevel, isCrit, mitigPct, curve),
+		}
 	}
 
 	// Legacy fallback: magnitude-based damage (no mitigation, no stat scaling)
@@ -122,7 +164,7 @@ func calcSpellDamageForCharacter(spellData *spells.SpellData, caster *characters
 	if isCrit {
 		dmg += magnitude
 	}
-	return dmg
+	return spellDamageRoll{channel: "legacy", isCrit: isCrit, dmg: dmg}
 }
 
 // checkConcentrationBreak tests whether a casting character's concentration
@@ -492,7 +534,9 @@ func simulateFoldRound(cs activity.CastingData) int {
 // calcFoldConvictionCost computes the conviction cost for a fold round,
 // proportional to folds gained vs total folds needed.
 func calcFoldConvictionCost(cs activity.CastingData, foldDelta int) int {
-	if cs.TotalConvictionCost <= 0 || cs.FoldsNeeded <= 0 {
+	// foldDelta 0 is a held step of a mob's min_cast_rounds windup (#480):
+	// the folds are already full, so the step adds nothing and costs nothing.
+	if cs.TotalConvictionCost <= 0 || cs.FoldsNeeded <= 0 || foldDelta <= 0 {
 		return 0
 	}
 	roundCost := (cs.TotalConvictionCost * foldDelta) / cs.FoldsNeeded
@@ -551,6 +595,39 @@ func cancelDamageConditions(ch *characters.Character) {
 		mobs.OnSleeperWoken(ch)
 	}
 	ch.CancelConditionsWithFlag(conditions.CancelOnDamage)
+}
+
+// castTargetGone is processFoldRound's target-gone check: any dead or missing
+// target in the cast-time list, or a downed player for a harm spell, breaks
+// the spell.
+//
+// Not for a MOB's area harm cast (#480 review). Its cast-time list is the
+// whole room, and resolveMobSpell re-reads the room at landing
+// (mobAreaHarmTargets, or resolveMobDrainArea for a drain), fizzling only
+// when no one is left. Checking the stale list here let one killed add, or
+// one downed or departed player, cancel a boss windup with no disruptor.
+// A player's area cast and every single-target cast keep the check.
+func castTargetGone(char *characters.Character, cs activity.CastingData, spellData *spells.SpellData) bool {
+	if char.GetUserId() == 0 && spellData != nil && spellData.IsHarm() &&
+		spellData.Targeting == combatvocab.TargetArea {
+		return false
+	}
+	for _, mobInstId := range cs.TargetMobInstanceIds {
+		if m := mobs.GetInstance(mobInstId); m == nil || m.Character.Health < 1 {
+			return true
+		}
+	}
+	for _, targetUserId := range cs.TargetUserIds {
+		u := users.GetByUserId(targetUserId)
+		if u == nil {
+			return true
+		}
+		// For harm spells, downed players count as gone.
+		if u.Character.Health < 1 && spellData != nil && spellData.IsHarm() {
+			return true
+		}
+	}
+	return false
 }
 
 // =============================================================================
@@ -660,30 +737,7 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 		}
 	}
 
-	// Target-gone check: any dead/nil target breaks the spell.
-	targetGone := false
-	for _, mobInstId := range cs.TargetMobInstanceIds {
-		m := mobs.GetInstance(mobInstId)
-		if m == nil || m.Character.Health < 1 {
-			targetGone = true
-			break
-		}
-	}
-	if !targetGone {
-		for _, targetUserId := range cs.TargetUserIds {
-			u := users.GetByUserId(targetUserId)
-			if u == nil {
-				targetGone = true
-				break
-			}
-			// For harm spells, downed players count as gone.
-			if u.Character.Health < 1 && spellData != nil && spellData.IsHarm() {
-				targetGone = true
-				break
-			}
-		}
-	}
-	if targetGone {
+	if castTargetGone(char, cs, spellData) {
 		clearCastingActivity(char, activity.TriggerConcentrationBreak)
 		return FoldRoundResult{TargetGone: true, CastingData: cs}
 	}
@@ -722,6 +776,11 @@ func processFoldRound(char *characters.Character) FoldRoundResult {
 	// Conviction was charged by the ApplyCost above. Advance folds via the
 	// Activity machine.
 	updatedCs, complete := char.Activity.AdvanceCastingFolds(foldDelta, roundCost)
+	// #480: a mob's min_cast_rounds holds the cast open until it has stepped
+	// that many rounds, whatever its fold rate. A player's cast ignores it.
+	if complete && char.GetUserId() == 0 && updatedCs.RoundsStepped < spellData.MinCastRounds {
+		complete = false
+	}
 	if complete {
 		clearCastingActivity(char, activity.TriggerCastComplete)
 		return FoldRoundResult{

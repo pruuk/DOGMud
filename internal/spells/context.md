@@ -57,6 +57,7 @@ type SpellData struct {
     EffectType      string                 // "damage", "heal", "shield", "dot", "knockdown", "purge", "none"
     EffectMagnitude int                    // Base power of the effect
     EffectDuration  int                    // For DoT: number of tick cycles
+    MinCastRounds   int                    // yaml: min_cast_rounds. Mob casts only: fold steps before it can complete (#480)
 }
 
 func (s *SpellData) CasterStatValue(stats stats.Statistics) int
@@ -88,14 +89,26 @@ It drives:
   their school) this is a no-op in practice; it exists so a spell that
   declares something else actually trains it.
 
-**It does NOT drive raw damage magnitude.** `calcSpellDamageForCharacter`
-(`internal/hooks/combat_shared_helpers.go`) reads `caster.Stats.Willpower.ValueAdj`
-directly through `combat.CalcRawDamage`, not `spellData.CasterStatValue(...)`.
-A spell with a non-willpower `primarystat` still rolls its attack and trains
-its progression off that stat, but its damage number is Willpower regardless.
-This is not drift to "fix" without a design decision -- it is the current
-shipped behaviour, and the Effect Types row below has been corrected to
-match it rather than the aspiration.
+It also drives raw damage: `calcSpellDamageForCharacter`
+(`internal/hooks/combat_shared_helpers.go`) passes
+`spellData.CasterStatValue(caster.Stats)` to `combat.CalcRawDamage` (U9). An
+older note here said damage read Willpower regardless; the code no longer
+does.
+
+### `min_cast_rounds` (#480): a mob's held windup
+
+`MinCastRounds int` (`yaml:"min_cast_rounds"`) holds a MOB's fold-cast open
+for at least that many fold steps, whatever its fold rate. A boss with a
+high fold rate otherwise completes any cast on its first step, which leaves
+one round to interrupt. `hooks.processFoldRound` applies it, counting steps
+in `activity.CastingData.RoundsStepped`; a held step adds no folds and costs
+no conviction. Each held step shows the spell's `wait_observer` line in
+place of the generic "weaves magic" line (`hooks.sendMobWindupWarning`), and
+every disruptor can cancel the cast across the whole windup. A player's
+cast ignores the field, so `Validate()` refuses it on a spell without
+`mob_only: true`, and refuses a negative count. Absent (0) changes nothing.
+Shipped at 2 on the Core Guardian's `core-discharge` and `core-drain`, and
+on `warden-discharge` (Warden-Prime, its own lesser spell since #480).
 
 ### Spell Difficulty and Target Types
 

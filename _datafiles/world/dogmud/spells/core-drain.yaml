@@ -29,5 +29,12 @@ no_damage_interrupt: true
 # mechanical effect on the drain's damage/heal.
 effect_magnitude: 100
 cast_actor: "Power gathers inward, filaments of cold light reaching for your prey."
-cast_observer: "{actor}'s chest-cavity irises open -- filaments of cold light reach toward you. It will feed on the room next round."
+# min_cast_rounds (#480): the Guardian's fold rate finished this on its first
+# step, so the "two-round windup" its help page promised was one round. Held
+# open for 2 steps, as Core Discharge is: the cast line, one warning round,
+# then the drain. Core Charge still rises only when the drain resolves
+# (resolveMobDrainArea), so an interrupt anywhere in the windup denies it.
+min_cast_rounds: 2
+cast_observer: "{actor}'s chest irises open. Cold filaments reach toward you."
+wait_observer: "{actor}'s filaments pull tight. It is about to feed!"
 ignore_move_cooldown: true

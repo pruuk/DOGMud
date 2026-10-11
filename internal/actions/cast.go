@@ -280,6 +280,12 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 					} else {
 						return CastResult{SpellInfo: spellInfo, NoTarget: true}
 					}
+				} else {
+					// Named, but no one by that name is here (#480 playtest:
+					// the Repair Frame's delayed repair-pulse ran after its
+					// boss died, began with no target, and narrated "arcing
+					// toward ."). NoTarget, as the player branch answers.
+					return CastResult{SpellInfo: spellInfo, NoTarget: true}
 				}
 			} else {
 				targetMobInstanceIds = append(targetMobInstanceIds, actor.GetMobInstanceId())
@@ -319,6 +325,15 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 				// so a fireball hit protected NPCs standing in the room.
 				if actor.IsPlayer() && mobs.CheckPlayerHarm(mobs.GetInstance(mId)).Blocked() {
 					continue
+				}
+				// A wild mob caster's area harm spares its allies (#480), so
+				// an ally is no target: with only allies here the cast is
+				// refused below rather than begun, committed and fizzled.
+				if !actor.IsPlayer() {
+					caster, target := mobs.GetInstance(actor.GetMobInstanceId()), mobs.GetInstance(mId)
+					if caster != nil && target != nil && caster.AreaHarmSpares(target) {
+						continue
+					}
 				}
 				targetMobInstanceIds = append(targetMobInstanceIds, mId)
 			}

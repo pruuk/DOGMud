@@ -1,20 +1,21 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">Core Discharge</ansi>
 
-<ansi fg="command">Core Discharge</ansi> is a boss ability used by the constructs of the Crash
-Site (Warden-Prime and the Core Guardian). The construct's core flares
-white-hot over a two-round windup — "the air begins to scream" — and
-then unleashes a devastating blast against everyone in the room.
+<ansi fg="command">Core Discharge</ansi> is the Core Guardian's boss ability in the Crash Site.
+Once the Guardian has drained enough strength from the room, its core
+flares white-hot and the air begins to scream. It warns you for two
+rounds, then a devastating blast hits everyone in the room.
 
 <ansi fg="yellow">Counterplay: </ansi>
 
-  The windup can be INTERRUPTED — but only by specific tools, not by an
-  ordinary knockdown. Land one of these on the construct while its core
-  is charging and the discharge is cancelled:
+  The windup can be INTERRUPTED, but only with specific tools, not with an
+  ordinary knockdown. Land one of these on the Guardian while its core is
+  charging and the discharge is cancelled:
 
     <ansi fg="command">throw flashbang</ansi>          a thrown grenade disrupts the core
     <ansi fg="command">cast neural-stun</ansi>         (or sensory-overload, kinetic-shove)
 
   A plain <ansi fg="command">bash</ansi> or <ansi fg="command">kick</ansi> will NOT interrupt it. Keep an interrupt in
-  reserve — an undisrupted discharge can wipe an unprepared party.
+  reserve. A prepared player can survive one blast, but a party that lets
+  them through will not last.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help throw</ansi>, <ansi fg="command">help spells</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help core-drain</ansi>, <ansi fg="command">help warden-discharge</ansi>, <ansi fg="command">help throw</ansi>

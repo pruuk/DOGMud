@@ -53,6 +53,15 @@ type CastingData struct {
 	TargetUserIds        []int
 	TargetMobInstanceIds []int
 	SpellRest            string
+	// RoundsStepped counts AdvanceCastingFolds calls: one per fold step. A
+	// mob spell's min_cast_rounds (#480) holds the cast open until it
+	// reaches that many, whatever FoldsAccumulated says.
+	RoundsStepped int
+	// StartedRound is the round a MOB's cast began (mobcommands.Cast), 0 when
+	// unset. A min_cast_rounds windup takes no fold step in that round, so a
+	// cast begun at the start of a round (a delayed btree action) still gives
+	// two full rounds before it lands (#480).
+	StartedRound uint64
 }
 
 // CraftingData replaces internal/characters/CraftingState.

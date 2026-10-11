@@ -218,7 +218,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// dot began to carry its caster and creditMobHarm landed above it; re-keyed
 	// loose issues sweep 3 when the dot began to read its record from
 	// condition_ids, #249) ──────
-	"internal/hooks/spell_effects.go|378": "spell dot: applies synchronously so an immune target's refusal is known before anything is narrated; the spell then tells the record's own start lines (narrateConditionStart, Blood Boil's 143) or, for a silent-start record (121), its own trio",
+	"internal/hooks/spell_effects.go|381": "spell dot: applies synchronously so an immune target's refusal is known before anything is narrated; the spell then tells the record's own start lines (narrateConditionStart, Blood Boil's 143) or, for a silent-start record (121), its own trio",
 
 	// ── magnitude potions (lighting plan 5c): the player's and the mob's drink
 	// each carried this call (usercommands/drink.go and mobcommands/drink.go)

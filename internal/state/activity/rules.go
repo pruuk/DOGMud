@@ -68,8 +68,10 @@ func (m *Machine) ForceFree(r state.TransitionReason) {
 }
 
 // AdvanceCastingFolds increments folds accumulated and conviction
-// spent on the current cast. Returns the updated data and true if
-// the cast just completed (FoldsAccumulated >= FoldsNeeded).
+// spent on the current cast, and counts the step in RoundsStepped.
+// Returns the updated data and true if the folds are complete
+// (FoldsAccumulated >= FoldsNeeded). A mob spell's min_cast_rounds is
+// applied by the caller (hooks.processFoldRound), not here.
 //
 // Caller is responsible for transitioning to Free + resolving the
 // spell when complete = true.
@@ -79,6 +81,7 @@ func (m *Machine) AdvanceCastingFolds(folds int, convictionCost int) (CastingDat
 	}
 	m.casting.FoldsAccumulated += folds
 	m.casting.ConvictionSpent += convictionCost
+	m.casting.RoundsStepped++
 	complete := m.casting.FoldsAccumulated >= m.casting.FoldsNeeded
 	return *m.casting, complete
 }

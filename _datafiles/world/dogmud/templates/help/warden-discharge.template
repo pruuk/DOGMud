@@ -1,0 +1,20 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">Warden Discharge</ansi>
+
+<ansi fg="command">Warden Discharge</ansi> is Warden-Prime's boss ability, the lesser form of
+the Core Guardian's <ansi fg="command">Core Discharge</ansi>. Warden-Prime's eye dims and its
+core flares. It warns you for two rounds, then a blast hits everyone in
+the room. A prepared player survives one blast, but it hurts.
+
+<ansi fg="yellow">Counterplay: </ansi>
+
+  The windup can be INTERRUPTED, but only with specific tools, not with an
+  ordinary knockdown. Land one of these on Warden-Prime while its core is
+  charging and the blast is cancelled:
+
+    <ansi fg="command">throw flashbang</ansi>          a thrown grenade disrupts the core
+    <ansi fg="command">cast neural-stun</ansi>         (or sensory-overload, kinetic-shove)
+
+  A plain <ansi fg="command">bash</ansi> or <ansi fg="command">kick</ansi> will NOT interrupt it. This is the fight that
+  teaches the Core Guardian's discharge, so practise the interrupt here.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help core-discharge</ansi>, <ansi fg="command">help throw</ansi>

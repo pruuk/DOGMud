@@ -55,6 +55,22 @@
 - The Defenses part of `status` now describes the protection you really
   have, so a heavily armored character may read one step lower than
   before. `consider`, and how creatures size you up, use the same measure.
+- Core Discharge, the Core Guardian's blast that hits the whole room, no
+  longer kills a player outright from full health, even one with no armor.
+  It still hits very hard, and a rare critical blast can still kill, so
+  stop it when you can. It no longer harms the Guardian's own helpers, and
+  killing a helper no longer makes the Guardian or Warden-Prime abandon its
+  post.
+- A wild creature's spell that hits the whole room now spares its own kind
+  and kin, so it no longer starts a fight with its own pack.
+- The Core Guardian now warns you before its discharge. It gathers its
+  power for two rounds, and a flashbang or a disruption spell stops it at
+  any point in that time. Its Core Drain now gives the same two-round
+  warning.
+- Warden-Prime has its own, weaker discharge, Warden Discharge, with the
+  same two-round warning. It hurts but does not kill a prepared player, so
+  you can practise the interrupt before you face the Core Guardian. See
+  `help warden-discharge`.
 
 ## 2026-10-10: More loose ends
 

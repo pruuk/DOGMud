@@ -330,6 +330,24 @@ func TestConsidersAnAlly(t *testing.T) {
 	})
 }
 
+// #480: the one rule a mob's area harm spares by, shared by
+// hooks.mobAreaHarmTargets, actions.InitiateCast and mobcommands.castFoeMob.
+func TestAreaHarmSpares(t *testing.T) {
+	caster := &Mob{MobId: 1, Character: characters.Character{SpeciesId: 45}}
+	kin := &Mob{MobId: 2, Character: characters.Character{SpeciesId: 45}}
+	stranger := &Mob{MobId: 3, Character: characters.Character{SpeciesId: 7}}
+	assert.True(t, caster.AreaHarmSpares(kin), "a wild caster spares its own kin")
+	assert.False(t, caster.AreaHarmSpares(stranger), "and not a stranger")
+
+	pet := &Mob{MobId: 2, Character: characters.Character{SpeciesId: 45}}
+	pet.Character.Charm(5, -1, "")
+	assert.False(t, caster.AreaHarmSpares(pet), "a charmed creature serves a player and is not spared")
+
+	charmedCaster := &Mob{MobId: 1, Character: characters.Character{SpeciesId: 45}}
+	charmedCaster.Character.Charm(5, -1, "")
+	assert.False(t, charmedCaster.AreaHarmSpares(kin), "a charmed caster fights by its owner's rules instead")
+}
+
 // ─── Idle/Angry Commands ────────────────────────────────────────────────────
 
 func TestGetIdleCommand(t *testing.T) {

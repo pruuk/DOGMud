@@ -9,6 +9,9 @@ archetype: fighting
 submission_policy: lethal
 surrender_policy: never
 hostile: true
+# Its Repair Frame shares its species, so without this the add's death
+# scattered Warden-Prime out of its windup (#480, owner 2026-10-10).
+pack_flee_immune: true
 statpool: 500
 maxwander: 0
 groups:

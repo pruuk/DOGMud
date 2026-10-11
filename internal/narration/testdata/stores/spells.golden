@@ -57,9 +57,11 @@ spell|conviction-surge|cast_observer => <ansi fg="username">Aliceia</ansi> gathe
 spell|conviction-ward|cast_actor => You solidify your belief into a protective barrier.
 spell|conviction-ward|cast_observer => <ansi fg="username">Aliceia</ansi> spreads their arms as conviction shimmers into a ward.
 spell|core-discharge|cast_actor => Power floods inward, gathering at your core.
-spell|core-discharge|cast_observer => <ansi fg="username">Aliceia</ansi>'s core flares white-hot -- the air begins to scream.
+spell|core-discharge|cast_observer => <ansi fg="username">Aliceia</ansi>'s core flares white-hot and the air screams. Stop it now!
+spell|core-discharge|wait_observer => <ansi fg="username">Aliceia</ansi>'s core shrieks and blazes. It is about to burst!
 spell|core-drain|cast_actor => Power gathers inward, filaments of cold light reaching for your prey.
-spell|core-drain|cast_observer => <ansi fg="username">Aliceia</ansi>'s chest-cavity irises open -- filaments of cold light reach toward you. It will feed on the room next round.
+spell|core-drain|cast_observer => <ansi fg="username">Aliceia</ansi>'s chest irises open. Cold filaments reach toward you.
+spell|core-drain|wait_observer => <ansi fg="username">Aliceia</ansi>'s filaments pull tight. It is about to feed!
 spell|empathic-shroud|cast_actor => You weave a psionic shroud of unnoticability.
 spell|empathic-shroud|cast_observer => <ansi fg="username">Aliceia</ansi> traces patterns in the air that seem to blur reality.
 spell|fold-anchor|cast_actor => You weave a Chrysalis anchor into the fabric of this location.
@@ -156,3 +158,6 @@ spell|veil-sight|cast_actor => You open your perception to the Veil, seeking wha
 spell|veil-sight|cast_observer => <ansi fg="username">Aliceia</ansi> narrows their eyes, peering at something unseen.
 spell|vital-surge|cast_actor => You channel a sustained pulse of healing energy.
 spell|vital-surge|cast_observer => <ansi fg="username">Aliceia</ansi> channels a warm, pulsing glow.
+spell|warden-discharge|cast_actor => Power floods inward, gathering at your core.
+spell|warden-discharge|cast_observer => <ansi fg="username">Aliceia</ansi>'s core flares white-hot and the air hums. Stop it now!
+spell|warden-discharge|wait_observer => <ansi fg="username">Aliceia</ansi>'s core whines and burns brighter. It is about to burst!

@@ -26,8 +26,9 @@ import (
 // when a bonded companion is an ordinary one and nothing changes.
 
 // mobAreaHarmTargets is who a mob's area harm spell lands on when it
-// resolves: every creature in the room but itself and non-combatants, and
-// every person. A charmed caster spares its owner and its owner's other
+// resolves: every creature in the room but itself, non-combatants and (for a
+// wild caster) its allies by Mob.ConsidersAnAlly, and every person. A
+// charmed caster spares its owner and its owner's other
 // companions; a bonded one also spares whatever its owner could not harm.
 func mobAreaHarmTargets(caster *mobs.Mob, room *rooms.Room) (mobIds []int, userIds []int) {
 	charmedByUserId := caster.Character.GetCharmedUserId()
@@ -49,6 +50,13 @@ func mobAreaHarmTargets(caster *mobs.Mob, room *rooms.Room) (mobIds []int, userI
 				continue
 			}
 			if bonded && !bondedMayHarmMob(m) {
+				continue
+			}
+			// A wild caster spares its allies (#480 playtest: Core
+			// Discharge struck the Guardian's own adds). Mob.AreaHarmSpares
+			// is the one rule, shared with the cast-time list and the foe
+			// the cast commits to.
+			if caster.AreaHarmSpares(m) {
 				continue
 			}
 		}

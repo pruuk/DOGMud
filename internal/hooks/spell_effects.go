@@ -262,14 +262,17 @@ func creditMobHarm(m *mobs.Mob, caster state.ActorRef, dmg int) {
 func applySpellDamage(c spellEffectCtx) int {
 	tc := c.targetChar()
 	fresh := !tc.IsInCombat()
-	dmg := scaleSpellDamageByDefence(
-		calcSpellDamageForCharacter(c.spell, c.casterChar, tc, c.magnitude, c.out.AttackerCrit), c.out)
+	roll := rollSpellDamage(c.spell, c.casterChar, tc, c.magnitude, c.out.AttackerCrit)
+	dmg := scaleSpellDamageByDefence(roll.dmg, c.out)
 	sendSpellChannelDefenceMessages(c.room, c.category(), c.out,
 		spellDefenceIdentity(c.casterChar, c.casterUser(), c.room),
 		spellDefenceIdentity(tc, c.targetUser(), c.room), c.spell.Name, c.casterUser(), c.targetUser())
 	if c.out.DefensiveCrit {
 		dmg = 0
-	} else {
+	}
+	// After the defence (#480): an evaded hit logs 0 applied, not the roll.
+	logSpellDamage(c.spell, c.casterChar, tc, roll, c.out, dmg)
+	if !c.out.DefensiveCrit {
 		creditSpellDamage(c, dmg)
 		tc.ApplyHarm(characters.PoolHealth, dmg, c.casterRef())
 		cancelDamageConditions(tc)
@@ -408,8 +411,8 @@ func applySpellDot(c spellEffectCtx) int {
 func applySpellKnockdown(c spellEffectCtx) int {
 	tc := c.targetChar()
 	fresh := !tc.IsInCombat()
-	dmg := scaleSpellDamageByDefence(
-		calcSpellDamageForCharacter(c.spell, c.casterChar, tc, c.magnitude, c.out.AttackerCrit), c.out)
+	roll := rollSpellDamage(c.spell, c.casterChar, tc, c.magnitude, c.out.AttackerCrit)
+	dmg := scaleSpellDamageByDefence(roll.dmg, c.out)
 	// Names are read before ApplyHarm and TransitionToSupine: a lethal hit
 	// adds the "dead" adjective to the target's own rendered name, and
 	// SendTrio's redaction must see the exact string the line prints.
@@ -417,7 +420,9 @@ func applySpellKnockdown(c spellEffectCtx) int {
 	casterHidden, targetHidden := c.hiddenFromRoom()
 	if c.out.DefensiveCrit {
 		dmg = 0
-	} else {
+	}
+	logSpellDamage(c.spell, c.casterChar, tc, roll, c.out, dmg) // after the defence (#480)
+	if !c.out.DefensiveCrit {
 		creditSpellDamage(c, dmg)
 		tc.ApplyHarm(characters.PoolHealth, dmg, c.casterRef())
 		cancelDamageConditions(tc)
