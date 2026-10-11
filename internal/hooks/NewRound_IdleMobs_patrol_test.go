@@ -87,6 +87,7 @@ func TestPatrolTickPlan_WantsHomeFallbackAfterMaxRetries(t *testing.T) {
 }
 
 func TestApplyPatrolPlan_IncrementsRetryOnWantsPath(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	registerTestPatrol(t)
 
 	mob := &mobs.Mob{}

@@ -53,6 +53,7 @@ func treeProcDispatch(trigger string, owner, other *characters.Character, room *
 // engine at the shipped item trees, enables procs and seeds one room.
 func loadProcParityWorld(t *testing.T) *rooms.Room {
 	t.Helper()
+	drainEventQueueOnCleanup(t)
 	// The overlay first: AddOverlayOverrides rebuilds the live config, so
 	// it would drop a data path set before it.
 	setItemProcsEnabled(t, true)

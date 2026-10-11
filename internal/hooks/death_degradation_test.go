@@ -39,6 +39,7 @@ func seedRacialStats(u *users.UserRecord, training int) {
 // skills they had barely touched. Reported from prod as "it is always
 // skullduggery".
 func TestSkillRust_HeavilyUsedSkillIsStillEligible(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	config := degradationConfig()
 
 	u := users.NewTestUser(701, "rustplayer", "Rustplayer", 5001)
@@ -69,6 +70,7 @@ func TestSkillRust_SkillAtFloorIsUntouched(t *testing.T) {
 
 // Rust never drops a skill below the floor, however large the rust amount.
 func TestSkillRust_NeverGoesBelowFloor(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	config := degradationConfig()
 	floor := int(config.Death.SkillRustFloor)
 
@@ -87,6 +89,7 @@ func TestSkillRust_NeverGoesBelowFloor(t *testing.T) {
 // Stat decay never drives Training negative, and never drops a stat's PERMANENT
 // part (Racial + Training) below StatDecayFloor.
 func TestStatDecay_RespectsBothFloors(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	config := degradationConfig()
 	floor := int(config.Death.StatDecayFloor)
 
@@ -122,6 +125,7 @@ func TestStatDecay_RespectsBothFloors(t *testing.T) {
 // The stat pick is uniform across all six. Over many deaths every stat should
 // take at least one hit; a filter or a biased pick would starve some of them.
 func TestStatDecay_SpreadsAcrossAllSixStats(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	config := degradationConfig()
 
 	u := users.NewTestUser(705, "spreadplayer", "Spreadplayer", 5001)

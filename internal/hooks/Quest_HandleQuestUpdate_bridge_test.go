@@ -56,6 +56,7 @@ triggers:
 // cleanup func that restores the original FilePaths.DataFiles config value.
 func setupBridgeTestQuest(t *testing.T) func() {
 	t.Helper()
+	drainEventQueueOnCleanup(t)
 
 	tmp := t.TempDir()
 	questsDir := filepath.Join(tmp, "quests")

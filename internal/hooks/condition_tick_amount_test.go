@@ -15,6 +15,7 @@ import (
 // every record whose TickAmount was 0, so a mob's heal-over-time never healed
 // and its damage-over-time never hurt (drink path unification).
 func TestMobRoundTickFillsAZeroTickAmount(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	const (
 		regenId = 88201
 		rotId   = 88202

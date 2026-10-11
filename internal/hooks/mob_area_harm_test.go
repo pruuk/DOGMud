@@ -19,6 +19,7 @@ import (
 // players may not attack (44), with PvP as given.
 func areaHarmWorld(t *testing.T, pvp string) (*mobs.Mob, *rooms.Room) {
 	t.Helper()
+	drainEventQueueOnCleanup(t)
 	cfg := configs.GetConfig()
 	cfg.GamePlay.PVP = configs.ConfigString(pvp)
 	cfg.GamePlay.PVPMinimumSkillRanks = 0

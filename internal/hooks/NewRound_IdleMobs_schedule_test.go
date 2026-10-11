@@ -270,6 +270,7 @@ func TestScheduleTickPlan_PatrolSegmentDoesNotSetWantsPath(t *testing.T) {
 }
 
 func TestApplySchedulePlan_StampsEmptyOnNonPatrolSegment(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	mobs.RegisterScheduleForTest(&mobs.Schedule{
 		Id: "non_patrol_sched",
 		Segments: []mobs.ScheduleSegment{

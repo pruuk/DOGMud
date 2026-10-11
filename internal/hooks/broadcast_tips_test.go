@@ -10,6 +10,7 @@ import (
 )
 
 func TestBroadcastTips(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	on := users.NewTestUser(9301, "tipson", "Tipson", 19301)
 	off := users.NewTestUser(9302, "tipsoff", "Tipsoff", 19302)
 	off.SetConfigOption("tips", false)

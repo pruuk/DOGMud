@@ -20,6 +20,7 @@ import (
 // OR the player still has a companion, so losing your LAST companion at full
 // health is exactly the case that never self-corrects.
 func TestCompanionCleanup_DeathRepublishesVitals(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	const userId = 9187
 
 	u := users.NewTestUser(userId, "bereaved", "Bereaved", uint64(userId))

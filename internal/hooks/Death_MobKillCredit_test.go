@@ -13,6 +13,7 @@ import (
 // attached in its real registration order, instance cleanup included: credit
 // must not depend on the instance surviving the other death observers.
 func TestMobKillCredit_ThePlayerWhoDamagedItGetsTheKill(t *testing.T) {
+	drainEventQueueOnCleanup(t)
 	user := users.NewTestUser(7, "killer", "Killer", 0)
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{user.UserId: user}))
 
