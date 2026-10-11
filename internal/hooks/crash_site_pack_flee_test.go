@@ -24,6 +24,7 @@ func TestCrashSiteBosses_AnAddsDeathDoesNotScatterTheBoss(t *testing.T) {
 		{"Warden-Prime", coreDischargeWardenId, 9585},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			drainEventQueueOnCleanup(t) // PackFlee queues mob commands
 			room := seedFallbackRoom(t, 60, heatEyesConditionId)
 			loadShippedCrashSiteBosses(t)
 
