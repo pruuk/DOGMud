@@ -21,11 +21,13 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 )
 
-// #480 reference player: the mid-geared playtester Core Discharge one-shot,
-// 532 HP at raw 0.56 physical mitigation (55.9% after the #465 curve).
+// #480 reference player (owner ruling 2026-10-10, after the playtest of
+// 89c58a9f6): an effectively UNARMOURED player, raw 0.02 physical, 530 HP. A
+// missed discharge must never one-shot them at full health; armoured
+// players then take much less.
 const (
 	coreDischargeRefHP       = 530
-	coreDischargeRefRawMitig = 0.56
+	coreDischargeRefRawMitig = 0.02
 	coreDischargeGuardianId  = 9562
 	coreDischargeWardenId    = 9561
 	coreDischargeSpawns      = 40
@@ -87,7 +89,7 @@ func loadShippedCrashSiteBosses(t *testing.T) {
 }
 
 // coreDischargeReferenceTarget is the #480 reference player: a bare
-// character whose only protection is one piece carrying raw 0.56 physical.
+// character whose only protection is one piece carrying raw 0.02 physical.
 func coreDischargeReferenceTarget() *characters.Character {
 	target := &characters.Character{Name: "Reference"}
 	target.HealthMax.Value = coreDischargeRefHP
@@ -150,8 +152,9 @@ func spawnMultiplier(t *testing.T, roomId, mobId int) int {
 // TestCrashSiteDischarges_ShippedMeansHitTheirBands pins #480's retune: an
 // uninterrupted discharge in a 400g run (the Core Guardian's authored pool,
 // 2800, is exactly that run) takes a mean of the reference mid player's
-// health on a normal hit inside each boss's band: 60-70% for the Core
-// Guardian, 30-40% for Warden-Prime, the teaching boss. It runs the real
+// health on a normal hit inside each boss's band: 85-90% for the Core
+// Guardian (never a one-shot), 30-40% for Warden-Prime, the teaching boss.
+// It runs the real
 // calcSpellDamageForCharacter on the shipped spells, boss templates, Core
 // Matrix and config, so a later change to SpellDamageScale,
 // GlobalDamageMultiplier, the mitigation curve, a boss's stats or a spell's
@@ -174,7 +177,7 @@ func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
 		// moved damage band.
 		wantWil float64
 	}{
-		{"Core Guardian", "core-discharge", coreDischargeGuardianId, 6395, 0.60, 0.70, 30 + 2800*0.125 + 200},
+		{"Core Guardian", "core-discharge", coreDischargeGuardianId, 6395, 0.85, 0.90, 30 + 2800*0.125 + 200},
 		{"Warden-Prime", "warden-discharge", coreDischargeWardenId, 6392, 0.30, 0.40, 30 + 2000*0.125},
 	} {
 		t.Run(tc.boss, func(t *testing.T) {
@@ -185,7 +188,7 @@ func TestCrashSiteDischarges_ShippedMeansHitTheirBands(t *testing.T) {
 			mult := spawnMultiplier(t, tc.roomId, tc.mobId)
 			mean, wil := meanCoreDischargeHit(t, sd, tc.mobId, referenceGold*mult)
 			frac := mean / coreDischargeRefHP
-			t.Logf("%s, %dg run (pool %d): willpower %.1f, mean hit %.1f = %.1f%% of %d HP (damage_multiplier %.2f)",
+			t.Logf("%s, %dg run (pool %d): willpower %.1f, mean hit %.1f = %.1f%% of %d HP (damage_multiplier %.3f)",
 				tc.boss, referenceGold, referenceGold*mult, wil, mean, frac*100, coreDischargeRefHP, sd.DamageMultiplier)
 			// The pool spreads at random per spawn: one spawn's willpower has
 			// a spread of about 17 at pool 2800, so the 40-spawn mean is
