@@ -61,6 +61,8 @@
   stop it when you can. It no longer harms the Guardian's own helpers, and
   killing a helper no longer makes the Guardian or Warden-Prime abandon its
   post.
+- A wild creature's spell that hits the whole room now spares its own kind
+  and kin, so it no longer starts a fight with its own pack.
 - The Core Guardian now warns you before its discharge. It gathers its
   power for two rounds, and a flashbang or a disruption spell stops it at
   any point in that time. Its Core Drain now gives the same two-round
