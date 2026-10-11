@@ -153,3 +153,20 @@ func TestInitiateCast_HelpSingle_WildMobHelpsWildMobsNotPets(t *testing.T) {
 	assert.True(t, player.NoTarget, "no player is a wild mob's ally")
 	assert.Empty(t, player.TargetUserIds)
 }
+
+// #480 playtest: "Repair Frame crackles with hard blue-white arc-light,
+// current arcing toward ." The Repair Frame's tree casts repair-pulse at a
+// named boss; when the boss had died before the delayed cast ran, the name
+// matched no one, the mob branch fell through with no target at all, and the
+// cast began anyway, rendering {actee} empty. A named target that is not
+// here is NoTarget, as the player branch answers.
+func TestInitiateCast_HelpSingle_MobNamedTargetGoneIsNoTarget(t *testing.T) {
+	seedHelpSingleSpell(t, "help-gone-target")
+	actor, _ := mobCasterForHelpTest(t, nil)
+
+	res := InitiateCast(actor, "help-gone-target", "The Core Guardian")
+	assert.True(t, res.NoTarget, "a named help target who is not here is NoTarget")
+	assert.False(t, res.Initiated, "and no cast begins")
+	assert.Empty(t, res.TargetMobInstanceIds)
+	assert.Empty(t, res.TargetUserIds)
+}

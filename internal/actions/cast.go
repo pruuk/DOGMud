@@ -280,6 +280,12 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 					} else {
 						return CastResult{SpellInfo: spellInfo, NoTarget: true}
 					}
+				} else {
+					// Named, but no one by that name is here (#480 playtest:
+					// the Repair Frame's delayed repair-pulse ran after its
+					// boss died, began with no target, and narrated "arcing
+					// toward ."). NoTarget, as the player branch answers.
+					return CastResult{SpellInfo: spellInfo, NoTarget: true}
 				}
 			} else {
 				targetMobInstanceIds = append(targetMobInstanceIds, actor.GetMobInstanceId())

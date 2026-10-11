@@ -714,7 +714,9 @@ word on its own line (#430).
   mob helps any player and its owner's side; an uncharmed mob helps itself
   and mobs charmed by no one (its packmates, a boss add's named boss), never
   a player or a pet. A refused help target is plain `NoTarget`, so a player
-  hears `You don't see "x" here.`
+  hears `You don't see "x" here.` A mob's NAMED help target that is not in
+  the room is `NoTarget` too (#480): it used to fall through and begin a
+  cast with no target, whose cast line rendered `{actee}` empty.
 - **`SendCounterTrio(room, res, countered, counteredUserId)`**: the one counter
   dispatch, used by `DispatchCounterMessages` and `hooks.fireSpellCounterTier`.
   It goes through `messaging.SendTrio`, so a counter in the dark names nobody.
