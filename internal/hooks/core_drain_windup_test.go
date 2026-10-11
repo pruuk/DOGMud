@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
 
@@ -55,6 +56,27 @@ func TestCoreDrainWindup_ChargeRisesOnlyWhenTheDrainLands(t *testing.T) {
 	handleMobFoldCasting(boss, room)
 	require.False(t, boss.Character.IsCasting(), "round 2 resolves the drain")
 	require.Equal(t, 1, coreCharge(boss), "the landed drain feeds one charge")
+}
+
+// Playtest of 89c58a9f6 (23:53-23:55): the drain fizzled when one of its
+// cast-time targets died, with other players still in the room. The drain
+// is an area harm cast, so 242dea303's castTargetGone skips its stale list
+// and resolveMobDrainArea re-reads the room; this pins that for the drain.
+func TestCoreDrainWindup_DeadTargetDoesNotFizzleIt(t *testing.T) {
+	boss, room := coreDrainWindupBoss(t)
+	boss.Character.Activity = activity.NewMachine()
+	require.NoError(t, boss.Character.Activity.TransitionToCasting(
+		activity.CastingData{SpellId: "test-core-drain", FoldsNeeded: 2, FoldsPerRound: 57, TotalConvictionCost: 20,
+			TargetUserIds: []int{7101, 7102}, TargetMobInstanceIds: []int{999}},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+
+	handleMobFoldCasting(boss, room)
+	require.True(t, boss.Character.IsCasting(), "a gone add must not fizzle the drain")
+	users.GetByUserId(7101).Character.Health = 0 // one target drops in the windup
+
+	handleMobFoldCasting(boss, room)
+	require.False(t, boss.Character.IsCasting())
+	require.Equal(t, 1, coreCharge(boss), "the drain lands on whoever remains and feeds the charge")
 }
 
 func TestCoreDrainWindup_InterruptedDrainFeedsNoCharge(t *testing.T) {
