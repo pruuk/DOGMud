@@ -58,7 +58,9 @@
 - Core Discharge, the Core Guardian's blast that hits the whole room, no
   longer kills a player outright from full health, even one with no armor.
   It still hits very hard, and a rare critical blast can still kill, so
-  stop it when you can. It no longer harms the Guardian's own helpers.
+  stop it when you can. It no longer harms the Guardian's own helpers, and
+  killing a helper no longer makes the Guardian or Warden-Prime abandon its
+  post.
 - The Core Guardian now warns you before its discharge. It gathers its
   power for two rounds, and a flashbang or a disruption spell stops it at
   any point in that time. Its Core Drain now gives the same two-round

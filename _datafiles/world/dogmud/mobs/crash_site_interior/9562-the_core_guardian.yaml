@@ -9,6 +9,9 @@ archetype: fighting
 submission_policy: lethal
 surrender_policy: never
 hostile: true
+# Its adds share its species, so without this an add's death scattered the
+# Guardian out of its vault and dropped its windup (#480, owner 2026-10-10).
+pack_flee_immune: true
 statpool: 2800
 maxwander: 0
 groups:
