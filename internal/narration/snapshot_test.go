@@ -90,6 +90,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/darkcombat"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/gossip"
 	"github.com/GoMudEngine/GoMud/internal/grapplemessaging"
@@ -854,6 +855,9 @@ func TestSnapshotStores(t *testing.T) {
 	t.Run("light_notices", func(t *testing.T) {
 		checkGolden(t, "light_notices.golden", buildLightNoticesGolden(t))
 	})
+	t.Run("dark_combat", func(t *testing.T) {
+		checkGolden(t, "dark_combat.golden", buildDarkCombatGolden(t))
+	})
 }
 
 // ---------------------------------------------------------------------
@@ -1556,6 +1560,35 @@ func buildPositionControlGolden(t *testing.T) string {
 // ---------------------------------------------------------------------
 // Store 17: light notices (internal/lightnotice)
 // ---------------------------------------------------------------------
+
+// buildDarkCombatGolden freezes every dark-combat line, so a dropped,
+// reordered or reworded line goes red.
+func buildDarkCombatGolden(t *testing.T) string {
+	t.Helper()
+	dir := filepath.Join(dogmudDataDir(t), "narration", "dark-combat")
+	groups, err := fileloader.LoadAllFlatFiles[string, *darkcombat.ViewpointGroup](dir)
+	if err != nil {
+		t.Fatalf("loading %s: %v", dir, err)
+	}
+	if len(groups) == 0 {
+		t.Fatal("no dark-combat files loaded; the golden would be vacuous")
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "# dark-combat store snapshot (M6 slice 2)\n")
+	fmt.Fprintf(&b, "# dimensions: viewpoint x outcome x index\n\n")
+	for _, v := range darkcombat.Viewpoints() {
+		g := groups[string(v)]
+		if g == nil {
+			t.Fatalf("viewpoint %q has no file", v)
+		}
+		for _, o := range darkcombat.Outcomes() {
+			for i, line := range g.Outcomes[o] {
+				fmt.Fprintf(&b, "%s|%s|%d= %s\n", v, o, i, line)
+			}
+		}
+	}
+	return b.String()
+}
 
 // buildLightNoticesGolden freezes every line of every cause, transition and
 // setting, every index, so a dropped, reordered or reworded line goes red.
