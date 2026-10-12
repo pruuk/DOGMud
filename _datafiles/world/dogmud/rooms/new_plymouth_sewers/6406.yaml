@@ -4,7 +4,7 @@ title: Lamp-Niche Passage
 description: >
   At regular intervals along this stretch, someone has cut small
   <ansi fg="itemname">lamp-niches</ansi> into the brick at shoulder
-  height — neat, deliberate work, each one just deep enough to shelter
+  height: neat, deliberate work, each one just deep enough to shelter
   a flame from the tunnel's breath. Most hold <ansi
   fg="itemname">candle stubs</ansi> burned down to puddled heels, and
   above every niche a dark <ansi fg="itemname">soot fan</ansi> spreads
@@ -26,7 +26,7 @@ exits:
 nouns:
   lamp niches: Cut square and true into the brick, each a hand deep,
     spaced so that a light in one is just visible from the next.
-    This was not idle work — someone measured, someone planned, and
+    This was not idle work. Someone measured, someone planned, and
     generations of toshers have kept the system in use ever since.
   candle stubs: Heels of tallow puddled into the niche floors, some
     fresh enough to give under a thumbnail, some fossilized to the

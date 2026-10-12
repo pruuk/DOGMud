@@ -2,12 +2,12 @@ roomid: 6411
 zone: New Plymouth Sewers
 title: Beneath Cutter's Lane
 description: >
-  The harbor announces itself before you see any way to reach it —
+  The harbor announces itself before you see any way to reach it:
   salt and tar and fish-gut on the air, cut through the sewer's own
   smells like a knife through tallow. Overhead, a <ansi
   fg="itemname">loose grate</ansi> lets down a grey slot of alley
   light, and a <ansi fg="itemname">knotted rope</ansi> hangs from its
-  bars, dark with the grip of many hands — an arrangement nobody
+  bars, dark with the grip of many hands, an arrangement nobody
   official installed and nobody official has removed. Along the brick
   at chest height runs a crisp <ansi fg="itemname">barnacle
   line</ansi>, white and sharp as a chalk mark, showing exactly how
@@ -39,8 +39,8 @@ nouns:
     rope hanging from its bars does the rest of the arguing.
   knotted rope: Hemp gone grey-black with handling, knotted at
     forearm intervals for climbing, made fast to the grate's bars
-    above. It is a tool in daily use — supple, sound, and not
-    fraying — maintained by the same community of nobody that keeps
+    above. It is a tool in daily use, supple, sound, and not
+    fraying, maintained by the same community of nobody that keeps
     the grate loose.
   barnacle line: A band of small white shells cemented to the brick
     in a line level as a mason's string. Below it the wall is
@@ -50,7 +50,7 @@ nouns:
 idlemessages:
 - A gull's cry drops through the loose grate, absurdly bright
   against the tunnel's gloom.
-- The water below stirs and rises a finger's width — somewhere out
+- The water below stirs and rises a finger's width. Somewhere out
   past the outfall, the tide is changing its mind.
 - The knotted rope swings gently, touched by the harbor draught
   coming down through the grate.

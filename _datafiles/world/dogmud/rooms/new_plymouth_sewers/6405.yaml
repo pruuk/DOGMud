@@ -24,7 +24,7 @@ exits:
 nouns:
   walkway: A raised brick shelf running the tunnel's length, wide
     enough for one person walking carefully or two people who trust
-    each other. Its surface is worn smooth down the center — feet
+    each other. Its surface is worn smooth down the center. Feet
     have used this route for a long time, and not only rat feet.
   droppings: Drifted along the wall's base in quantities that suggest
     a population rather than a visitor. Some are old and grey, some
@@ -39,7 +39,7 @@ idlemessages:
   lamplight, hurried and then abruptly silent.
 - A chorus of small scratching starts up inside the wall, runs for
   a moment, and stops.
-- The channel carries something past — a rind, a rag — and a moment
+- The channel carries something past, a rind, a rag, and a moment
   later, farther downstream, the water answers with a soft plop.
 spawninfo:
   - mobid: 9563

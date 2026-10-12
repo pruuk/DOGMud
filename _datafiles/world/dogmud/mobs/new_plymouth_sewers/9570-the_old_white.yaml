@@ -26,7 +26,7 @@ idlecommands:
     tasting the air for what the tunnels have sent it.'
   - ''
 combatcommands:
-  - 'emote strikes -- a pale blur out of the dark, faster than
+  - 'emote strikes: a pale blur out of the dark, faster than
     anything that size has any right to be.'
   - ''
   - 'emote throws a coil the width of a barrel across the floor,
@@ -35,7 +35,7 @@ combatcommands:
   - 'emote draws its head back in a long, patient curve, blind
     eyes fixed on nothing, every other sense fixed on you.'
   - ''
-  - 'emote hisses -- a sound like the whole wallow exhaling --
+  - 'emote hisses, a sound like the whole wallow exhaling,
     and the bones on the shelf shiver with it.'
   - ''
 activitylevel: 30
@@ -50,14 +50,14 @@ character:
   name: The Old White
   description: |
     A serpent, if the word can stretch that far. It is white the
-    way the deep is dark -- absolutely, from blunt scarred snout
+    way the deep is dark: absolutely, from blunt scarred snout
     to the last of a length you cannot see the end of, scales
     gone thick and pale as worn ivory. Its eyes are smooth blind
     domes the color of milk, and it has not missed them in a very
     long time. The mouth is the part that keeps growing. Its
     fangs have run on past any serpent's measure, curved ivory
     the length of a forearm, too long now for the jaw to close
-    over completely -- so it rests with them showing, patient,
+    over completely, so it rests with them showing, patient,
     the way old kings rest wearing their crowns. It was here
     before the city had a name for down. Everything on the shelf
     around it arrived as food.
