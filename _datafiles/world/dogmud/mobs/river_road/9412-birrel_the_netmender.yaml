@@ -13,7 +13,7 @@ idlecommands:
   - 'emote works a torn net section back through the repair needle,
     fingers moving without hesitation through the familiar knot.'
   - ''
-  - 'say Fresh river perch this morning -- smoked yesterday, so it
+  - 'say Fresh river perch this morning, smoked yesterday, so it
     will keep you well. Worth every coin, if I say so myself.'
   - ''
   - 'emote holds the net up to the light, checks her work with one
@@ -25,13 +25,13 @@ character:
   description: |
     Birrel the Netmender runs the small stall at the landing where
     she mends river nets by morning and sells smoked fish and river
-    food by afternoon -- a two-trade livelihood that suits her
+    food by afternoon, a two-trade livelihood that suits her
     perfectly well and generates enough village gossip to keep both
     halves running. She is broad-faced and cheerful, with ink-dark
     fingers from the net-dye on her repair thread, and an opinion
     on everything from the pilgrims to the price of salt. Her
     Chrysalis-change gave her a second set of thumbs, sprouting
-    inward from each palm -- she uses all four to work the net
+    inward from each palm. She uses all four to work the net
     needle with a speed that leaves people staring, then politely
     pretending they had not been.
   speciesid: 1

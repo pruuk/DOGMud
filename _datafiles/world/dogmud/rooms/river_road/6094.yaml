@@ -4,7 +4,7 @@ title: The Barge Landing
 description: >
   A timber jetty extends from the bank on tarred pilings, and against it
   a flat-bottomed barge sits moored on long lines. The barge is old but
-  sound — caulked and painted, with a covered hold and a long steering
+  sound: caulked and painted, with a covered hold and a long steering
   oar. Mid-channel, a second barge works slowly south under a pole, its
   deck loaded with baled goods. The landing itself is worn plank and mud
   and the smell of pine tar, the traffic of this stretch written plainly
@@ -22,8 +22,8 @@ nouns:
     It is the kind of vessel built for work and for waiting, not speed.
   the river traffic: >
     In the middle of the channel a barge poles slowly south, its deck
-    piled with bales. Downriver is the Confluence — the city where the
-    waters meet — and beyond it, eventually, New Plymouth. The barge
+    piled with bales. Downriver is the Confluence, the city where the
+    waters meet, and beyond it, eventually, New Plymouth. The barge
     traffic runs that way, not back. Nothing is coming north today.
 spawninfo:
   - mobid: 9411

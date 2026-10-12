@@ -3,7 +3,7 @@ zone: River Road
 title: The Confluence Bluff
 description: >
   The road climbs briefly onto a low bluff where the land juts toward
-  the water, and the view opens all at once. Below, two rivers meet —
+  the water, and the view opens all at once. Below, two rivers meet:
   the one you have followed south, and a second broad channel pressing
   in from the east, the two joining into a wide dark body of water that
   spills away southwest. The meeting is quiet, not dramatic: the waters
@@ -18,8 +18,8 @@ exits:
   west: {roomid: 6100}
 nouns:
   the meeting of waters: >
-    Two rivers, joined. The one from the north — the stream that became
-    this road's companion — and the broader eastern channel, slower,
+    Two rivers, joined. The one from the north (the stream that became
+    this road's companion) and the broader eastern channel, slower,
     darker, coming in from hills beyond sight. Where they press together
     the water goes opaque for a moment, surface eddies spinning, and
     then clears to a single unhurried southward flow.
