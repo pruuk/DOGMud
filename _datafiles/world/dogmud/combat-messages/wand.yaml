@@ -98,7 +98,7 @@ options:
     together:
       actor:
         beginner:
-        - 'You flick your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but the strike goes wide!'
+        - 'You flick your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but the strike misses!'
         - 'Your arcane jab misses <ansi fg="{acteetype}">{actee}</ansi> completely!'
         - 'You thrust your <ansi fg="item">{itemname}</ansi> forward, but <ansi fg="{acteetype}">{actee}</ansi> evades!'
         expert:
@@ -337,7 +337,7 @@ options:
         expert:
         - 'Your channeled strike misfires - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your arcane jab!'
-        - 'Your footing slips at the worst moment and you <ansi fg="red-bold">FUMBLE</ansi> the strike!'
+        - 'You lose your balance at the worst moment and <ansi fg="red-bold">FUMBLE</ansi> the strike!'
         - 'You overcommit to the feint and <ansi fg="red-bold">FUMBLE</ansi>, your <ansi fg="item">{itemname}</ansi> skittering off course!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter disrupts your channel - you <ansi fg="red-bold">FUMBLE</ansi>!'
@@ -353,7 +353,7 @@ options:
         expert:
         - '<ansi fg="{actortype}">{actor}''s</ansi> channeled strike misfires - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges and <ansi fg="red-bold">FUMBLES</ansi> their arcane jab!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> footing slips and they <ansi fg="red-bold">FUMBLE</ansi> the strike against you!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and <ansi fg="red-bold">FUMBLES</ansi> the strike against you!'
         - '<ansi fg="{actortype}">{actor}</ansi> overcommits to the feint and <ansi fg="red-bold">FUMBLES</ansi>, their <ansi fg="item">{itemname}</ansi> skittering wide!'
         master:
         - 'Your defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s channel - they <ansi fg="red-bold">FUMBLE</ansi>!'
@@ -369,7 +369,7 @@ options:
         expert:
         - '<ansi fg="{actortype}">{actor}''s</ansi> channeled strike misfires - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> footing slips at the worst moment and they <ansi fg="red-bold">FUMBLE</ansi> the strike against <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and <ansi fg="red-bold">FUMBLES</ansi> the strike against <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> overcommits to the feint and <ansi fg="red-bold">FUMBLES</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
         - '<ansi fg="{acteetype}">{actee}''s</ansi> defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s channel - a <ansi fg="red-bold">FUMBLE</ansi>!'

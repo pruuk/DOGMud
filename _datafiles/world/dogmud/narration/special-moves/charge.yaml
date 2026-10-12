@@ -7,14 +7,14 @@ events:
       - '{actor} charges and slams into {actee}, sending them sprawling!'
   hit:
     actee:
-      - '{actor} charges at you, but you keep your footing! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} charges at you, but you stay on your feet! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} charges into {actee}, but they stay on their feet!'
   partial:
     actee:
-      - '{actor} charges and you dodge the worst of it, but the impact still clips you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} charges and you dodge the worst of it, but the impact still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} charges at {actee}, who mostly dodges but still gets clipped!'
+      - '{actor} charges at {actee}, who mostly dodges but is still barely hit!'
   miss:
     actee:
       - '{actor} charges past you, missing entirely!'
@@ -22,6 +22,6 @@ events:
       - '{actor} charges past {actee}, missing entirely!'
   whiff_on_prone:
     actee:
-      - '{actor} thunders in, but you are already down, and it overruns you.'
+      - '{actor} thunders in, but you are already down, and it runs over you.'
     observer:
-      - '{actor} charges {actee}, who is already down, and overruns them.'
+      - '{actor} charges {actee}, who is already down, and runs over them.'

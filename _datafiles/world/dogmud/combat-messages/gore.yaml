@@ -440,7 +440,7 @@ options:
         - 'Your charge <ansi fg="red-bold">FUMBLES</ansi> as you hook nothing with your <ansi fg="item">{itemname}</ansi>!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble past your target off-balance!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> your <ansi fg="item">{itemname}</ansi> awkwardly, leaving you wide open!'
-        - 'You lose your footing and your charge <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
+        - 'You lose your balance and your charge <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
         - 'Your tactical charge fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the angle and <ansi fg="red-bold">FUMBLE</ansi> your gore!'
@@ -453,8 +453,8 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s charge <ansi fg="red-bold">FUMBLES</ansi> as they hook nothing with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their charge in an embarrassing stumble!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their footing!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing and their charge <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their balance!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and their charge <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi> their gore!'

@@ -229,7 +229,7 @@ options:
         beginner:
         - 'You fire your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, to no avail!'
         - 'Your shot at <ansi fg="{acteetype}">{actee}</ansi> misses completely!'
-        - 'You pull the trigger, but your shot goes wide of <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'You pull the trigger, but your shot misses <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your poor aim causes you to miss <ansi fg="{acteetype}">{actee}</ansi> badly!'
         expert:
         - 'Your calculated shot misses as <ansi fg="{acteetype}">{actee}</ansi> evades!'
@@ -283,7 +283,7 @@ options:
         expert:
         - 'Your carefully calculated shot misses <ansi fg="{acteetype}">{actee}</ansi> through the <ansi fg="exit">{exitname}</ansi>!'
         - 'You account for wind, but your shot still misses through the <ansi fg="exit">{exitname}</ansi>!'
-        - 'Despite your professional aim, the shot goes wide through the <ansi fg="exit">{exitname}</ansi>.'
+        - 'Despite your professional aim, the shot misses and flies through the <ansi fg="exit">{exitname}</ansi>.'
         master:
         - 'Your perfect reading of wind and distance still results in a miss through the <ansi fg="exit">{exitname}</ansi>!'
         - 'Even your instinctive marksmanship fails to connect through the <ansi fg="exit">{exitname}</ansi>!'

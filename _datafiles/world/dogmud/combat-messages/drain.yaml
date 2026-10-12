@@ -431,7 +431,7 @@ options:
         - 'Your lunge <ansi fg="red-bold">FUMBLES</ansi> as your <ansi fg="item">{itemname}</ansi> grasp nothing!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble past your target off-balance!'
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> awkwardly, leaving you wide open!'
-        - 'You lose your footing and your drain <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
+        - 'You lose your balance and your drain <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
         - 'Your tactical drain fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the reach and <ansi fg="red-bold">FUMBLE</ansi> your drain!'
@@ -444,8 +444,8 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s lunge <ansi fg="red-bold">FUMBLES</ansi> as their <ansi fg="item">{itemname}</ansi> grasp nothing!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their drain in an embarrassing stumble!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their footing!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing and their drain <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their balance!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and their drain <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the reach and <ansi fg="red-bold">FUMBLES</ansi> their drain!'
@@ -459,7 +459,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their drain at <ansi fg="{acteetype}">{actee}</ansi> and stumbles past!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their lunge in a clumsy, lurching stumble!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing and their drain <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and their drain <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the reach and <ansi fg="red-bold">FUMBLES</ansi>!'

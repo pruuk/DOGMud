@@ -42,15 +42,15 @@ events:
   partial:
     actor:
       - '{actee} sidesteps, but you still catch them! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your leap at {actee} mostly misses, but you still clip them on the way past! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your leap at {actee} mostly misses, but you still barely hit them on the way past! (<ansi fg="damage">{damage}</ansi>)'
       - '{actee} dodges the worst of your pounce, but you still catch them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} leaps at you and you sidestep most of it, but it still clips you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} leaps at you and you sidestep most of it, but they still clip you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} leaps at you and you sidestep most of it, but it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} leaps at you and you sidestep most of it, but they still barely hit you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} springs at you; you dodge most of the pounce, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} leaps at {actee}, who mostly dodges but still gets clipped!'
-      - '{actor} leaps at {actee}, who mostly dodges but still gets clipped!'
+      - '{actor} leaps at {actee}, who mostly dodges but is still barely hit!'
+      - '{actor} leaps at {actee}, who mostly dodges but is still barely hit!'
       - '{actor} leaps at {actee}, who dodges the worst of it but still gets caught!'
   # DIVERGENT (Task 4b Step 3, owner-approved 2026-09-21): variants 1 to 3
   # (the player's original lines) describe different feels -- target
@@ -61,7 +61,7 @@ events:
       - 'You leap at {actee}, but they sidestep your pounce!'
       - 'Your leap at {actee} misses as they sidestep!'
       - 'You spring at {actee} but they dodge your pounce!'
-      - 'Your pounce carries you past {actee} — they step aside!'
+      - 'Your pounce carries you past {actee} as they step aside!'
     actee:
       - '{actor} leaps at you, but you sidestep the pounce!'
       - '{actor} leaps at you but you sidestep their pounce!'

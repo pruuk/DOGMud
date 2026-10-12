@@ -101,7 +101,7 @@ options:
         - 'Your <ansi fg="item">{itemname}</ansi> snap at <ansi fg="{acteetype}">{actee}</ansi>''s throat but find nothing!'
         - 'You lunge for the throat but <ansi fg="{acteetype}">{actee}</ansi> pulls away!'
         - '<ansi fg="{acteetype}">{actee}</ansi> twists clear before your <ansi fg="item">{itemname}</ansi> can close!'
-        - 'Your throttle lunge goes wide and your <ansi fg="item">{itemname}</ansi> clap on empty air!'
+        - 'Your throttle lunge misses and your <ansi fg="item">{itemname}</ansi> clap on empty air!'
         expert:
         - 'Your calculated lunge falls short, and <ansi fg="{acteetype}">{actee}</ansi> reads the angle!'
         - 'Despite your {stance} approach, the throat slips your <ansi fg="item">{itemname}</ansi>!'

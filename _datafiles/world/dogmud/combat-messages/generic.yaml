@@ -203,7 +203,7 @@ options:
       actor:
         beginner:
         - 'Your attack misses!'
-        - 'Your attack from afar goes wide!'
+        - 'Your attack from afar misses!'
         expert:
         - 'Your calculated strike misses!'
         - 'Your calculated ranged strike fails to connect!'
@@ -223,7 +223,7 @@ options:
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> attacks but misses!'
-        - '<ansi fg="{actortype}">{actor}</ansi> attacks but their shot goes wide!'
+        - '<ansi fg="{actortype}">{actor}</ansi> attacks but their shot misses!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s calculated strike misses!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s calculated ranged attack misses!'
@@ -650,7 +650,7 @@ options:
         beginner:
         - 'Your attack <ansi fg="red-bold">FUMBLES</ansi> badly!'
         - 'Your ranged attack <ansi fg="red-bold">FUMBLES</ansi> completely!'
-        - 'You lose your footing and your shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
+        - 'You lose your balance and your shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
         - 'Your desperate shot goes wrong and <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - 'Your calculated strike <ansi fg="red-bold">FUMBLES</ansi>!'
@@ -682,7 +682,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> attack <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> ranged attack <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing and the shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and the shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s desperate shot goes wrong and <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - '<ansi fg="{actortype}">{actor}''s</ansi> calculated strike <ansi fg="red-bold">FUMBLES</ansi>!'

@@ -98,7 +98,7 @@ options:
     together:
       actor:
         beginner:
-        - 'You swing your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but the blow goes wide!'
+        - 'You swing your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but the blow misses!'
         - 'Your strike at <ansi fg="{acteetype}">{actee}</ansi> misses completely!'
         - 'You swing but fail to connect, the crystal dimming briefly!'
         expert:
@@ -112,7 +112,7 @@ options:
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> swings their <ansi fg="item">{itemname}</ansi> at you, but misses!'
-        - '<ansi fg="{actortype}">{actor}</ansi> strikes at you but the blow goes wide!'
+        - '<ansi fg="{actortype}">{actor}</ansi> strikes at you but the blow misses!'
         - '<ansi fg="{actortype}">{actor}</ansi> swings but fails to connect, their <ansi fg="item">{itemname}</ansi>''s crystal dimming briefly.'
         expert:
         - 'You evade <ansi fg="{actortype}">{actor}</ansi>''s calculated swing!'
@@ -125,7 +125,7 @@ options:
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> swings their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but misses!'
-        - '<ansi fg="{actortype}">{actor}</ansi> strikes at <ansi fg="{acteetype}">{actee}</ansi> but the blow goes wide!'
+        - '<ansi fg="{actortype}">{actor}</ansi> strikes at <ansi fg="{acteetype}">{actee}</ansi> but the blow misses!'
         - '<ansi fg="{actortype}">{actor}</ansi> swings but fails to connect, their <ansi fg="item">{itemname}</ansi>''s crystal dimming briefly.'
         expert:
         - '<ansi fg="{acteetype}">{actee}</ansi> evades <ansi fg="{actortype}">{actor}</ansi>''s calculated swing!'

@@ -452,7 +452,7 @@ options:
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their snap in an embarrassing display!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their footing!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their balance!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s jaws <ansi fg="red-bold">FUMBLE</ansi> pathetically as they overextend!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and their attack <ansi fg="red-bold">FUMBLES</ansi> hopelessly!'
         expert:

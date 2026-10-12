@@ -13,14 +13,14 @@ events:
   partial:
     actor:
       - 'Your shot grazes {actee}!'
-      - 'Your shot goes wide of {actee}, but the edge of it still clips them! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your shot flies past {actee}, but the edge of it still barely hits them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor}''s shot goes wide, but the edge of it still clips you!'
-      - '{actor}''s shot goes wide, but the edge of it still clips you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s shot flies past, but the edge of it still barely hits you!'
+      - '{actor}''s shot flies past, but the edge of it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
   miss:
     actor:
       - 'Your shot narrowly misses {actee}!'
-      - 'Your shot goes wide of {actee}!'
+      - 'Your shot flies past {actee}!'
     actee:
       - '{actor}''s shot narrowly misses you!'
       - '{actor}''s shot narrowly misses you!'
@@ -34,7 +34,7 @@ events:
       - 'Your shot from cover takes {actee} unaware! (<ansi fg="damage">{damage}</ansi>)'
   surprise_miss:
     actor:
-      - 'Your shot from cover goes wide of {actee}!'
+      - 'Your shot from cover flies past {actee}!'
   fire_announce:
     observer:
       - '{actor} fires their {weapon} at {actee}!'
@@ -52,7 +52,7 @@ events:
       - 'A shot streaks in from somewhere nearby and strikes {actee}!'
   arrival_unknown_partial:
     remote_observer:
-      - 'A shot streaks in from somewhere nearby and clips {actee}!'
+      - 'A shot streaks in from somewhere nearby and barely hits {actee}!'
   arrival_unknown_miss:
     remote_observer:
       - 'A shot streaks in from somewhere nearby and narrowly misses {actee}!'
@@ -61,7 +61,7 @@ events:
       - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and strikes {actee}!'
   arrival_known_partial:
     remote_observer:
-      - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and clips {actee}!'
+      - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and barely hits {actee}!'
   arrival_known_miss:
     remote_observer:
       - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and narrowly misses {actee}!'

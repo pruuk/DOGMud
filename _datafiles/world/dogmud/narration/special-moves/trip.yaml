@@ -14,13 +14,13 @@ events:
   tailsweep_hit:
     actor:
       - 'Your tail sweeps into {actee}, but they stay upright! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your <ansi fg="yellow-bold">tailsweep</ansi> strikes {actee}, but they keep their footing! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your <ansi fg="yellow-bold">tailsweep</ansi> strikes {actee}, but they stay on their feet! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} sweeps at you with their tail, but you manage to stay upright! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} sweeps at you with their tail, but you manage to stay upright! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} tailsweeps {actee}, but they keep their footing!'
-      - '{actor} tailsweeps {actee}, but they keep their footing!'
+      - '{actor} tailsweeps {actee}, but they stay on their feet!'
+      - '{actor} tailsweeps {actee}, but they stay on their feet!'
   tailsweep_partial:
     actor:
       - 'Your tail still hits {actee}, but they stay on their feet! (<ansi fg="damage">{damage}</ansi>)'
@@ -85,4 +85,4 @@ events:
     actee:
       - '{actor} rushes at you and finds only the ground you are already on.'
     observer:
-      - '{actor} rushes at {actee}, who is already down, and carries straight past.'
+      - '{actor} rushes at {actee}, who is already down, and runs right past.'

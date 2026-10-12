@@ -98,7 +98,7 @@ options:
     together:
       actor:
         beginner:
-        - 'You sweep your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but the blow goes wide!'
+        - 'You sweep your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but the blow misses!'
         - 'Your thrust at <ansi fg="{acteetype}">{actee}</ansi> misses as they step inside your reach!'
         - 'You swing but fail to connect, the iron-shod end whistling past!'
         expert:

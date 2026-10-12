@@ -123,7 +123,7 @@ options:
     together:
       actor:
         beginner:
-        - 'You flail at <ansi fg="{acteetype}">{actee}</ansi> and clip them with your <ansi fg="item">{itemname}</ansi>.'
+        - 'You flail at <ansi fg="{acteetype}">{actee}</ansi> and barely hit them with your <ansi fg="item">{itemname}</ansi>.'
         - 'You throw a wild punch that barely grazes <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You shove your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> clumsily.'
         expert:
@@ -135,7 +135,7 @@ options:
         - 'Your feeler jab taps <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart} lightly.'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> flails and clips you with their <ansi fg="item">{itemname}</ansi>.'
+        - '<ansi fg="{actortype}">{actor}</ansi> flails and barely hits you with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> throws a wild punch that barely grazes you.'
         - '<ansi fg="{actortype}">{actor}</ansi> shoves their <ansi fg="item">{itemname}</ansi> into you clumsily.'
         expert:
@@ -147,7 +147,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s feeler jab taps your {bodypart} lightly.'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> flails at <ansi fg="{acteetype}">{actee}</ansi> and clips them.'
+        - '<ansi fg="{actortype}">{actor}</ansi> flails at <ansi fg="{acteetype}">{actee}</ansi> and barely hits them.'
         - '<ansi fg="{actortype}">{actor}</ansi> throws a wild punch that barely grazes <ansi fg="{acteetype}">{actee}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> shoves their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> clumsily.'
         expert:
@@ -342,7 +342,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> swings and <ansi fg="red-bold">FUMBLES</ansi>, nearly falling!'
         - '<ansi fg="{actortype}">{actor}</ansi> trips and <ansi fg="red-bold">FUMBLES</ansi> their attack!'
         - '<ansi fg="{actortype}">{actor}</ansi> overreaches with their <ansi fg="item">{itemname}</ansi> and <ansi fg="red-bold">FUMBLES</ansi>, nearly landing on their face!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s wild swing goes wide and they <ansi fg="red-bold">FUMBLE</ansi> badly!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s wild swing misses and they <ansi fg="red-bold">FUMBLE</ansi> badly!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s combination breaks down into a <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> overcommits and <ansi fg="red-bold">FUMBLES</ansi>!'
@@ -358,7 +358,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> swings wildly and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> trips and <ansi fg="red-bold">FUMBLES</ansi> their attack!'
         - '<ansi fg="{actortype}">{actor}</ansi> overreaches and <ansi fg="red-bold">FUMBLES</ansi>, nearly landing on their face!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s wild swing goes wide and they <ansi fg="red-bold">FUMBLE</ansi> badly!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s wild swing misses and they <ansi fg="red-bold">FUMBLE</ansi> badly!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s attack breaks down into a <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> overcommits against <ansi fg="{acteetype}">{actee}</ansi> and <ansi fg="red-bold">FUMBLES</ansi>!'

@@ -440,7 +440,7 @@ options:
         - 'Your lunge <ansi fg="red-bold">FUMBLES</ansi> as your <ansi fg="item">{itemname}</ansi> snap at nothing!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble past your prey off-balance!'
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> awkwardly, leaving you wide open!'
-        - 'You lose your footing and your savage lunge <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
+        - 'You lose your balance and your savage lunge <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
         - 'Your tactical lunge fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the angle and <ansi fg="red-bold">FUMBLE</ansi> your bite!'
@@ -453,8 +453,8 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s lunge <ansi fg="red-bold">FUMBLES</ansi> as their <ansi fg="item">{itemname}</ansi> snap at nothing!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their lunge in an embarrassing stumble!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their footing!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing and their lunge <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their balance!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and their lunge <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi> their bite!'

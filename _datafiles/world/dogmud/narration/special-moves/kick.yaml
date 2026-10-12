@@ -46,14 +46,14 @@ events:
     actor:
       - 'Your foot still lands as {actee} dodges most of it! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="yellow-bold">kick</ansi> fails to beat {actee}''s guard, but barely hits! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You swing a kick at {actee}; they slip most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You swing a kick at {actee}; they dodge most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - 'You dodge most of {actor}''s kick, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s kick barely gets past your guard! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} swings a kick at you, and you dodge most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} swings a kick at {actee}, who mostly dodges but still gets clipped!'
-      - '{actor} swings a kick at {actee}, who mostly dodges but still gets clipped!'
+      - '{actor} swings a kick at {actee}, who mostly dodges but is still barely hit!'
+      - '{actor} swings a kick at {actee}, who mostly dodges but is still barely hit!'
       - '{actor} swings a kick at {actee}, who dodges most of it but not all!'
   standard_miss:
     actor:

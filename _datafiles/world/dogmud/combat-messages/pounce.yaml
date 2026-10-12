@@ -23,7 +23,7 @@ options:
         - 'You bare your <ansi fg="item">{itemname}</ansi> and crouch, muscles tensed to leap.'
         expert:
         - 'From your {stance} stance, you coil low and calculate the perfect angle to launch at <ansi fg="{acteetype}">{actee}</ansi>.'
-        - 'While {position}, you compress your legs and read <ansi fg="{acteetype}">{actee}</ansi>''s footing.'
+        - 'While {position}, you compress your legs and watch <ansi fg="{acteetype}">{actee}</ansi>''s stance.'
         - '{stance}, you lower your haunches and measure the distance to <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You stalk forward half a step, {momentum}, haunches bunched to explode.'
         master:
@@ -39,7 +39,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> bares their <ansi fg="item">{itemname}</ansi> and lowers their body to spring.'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> coils low and calculates their angle of approach.'
-        - '<ansi fg="{actortype}">{actor}</ansi> compresses into a launching stance, reading your footing.'
+        - '<ansi fg="{actortype}">{actor}</ansi> compresses into a launching stance, watching your stance.'
         - '<ansi fg="{actortype}">{actor}</ansi> lowers their haunches and measures the distance between you.'
         - '<ansi fg="{actortype}">{actor}</ansi> stalks forward half a step, haunches bunched to strike.'
         master:
@@ -172,13 +172,13 @@ options:
         beginner:
         - 'You spring at <ansi fg="{acteetype}">{actee}</ansi> and graze them with your <ansi fg="item">{itemname}</ansi>.'
         - 'Your leap catches <ansi fg="{acteetype}">{actee}</ansi> with a glancing blow.'
-        - 'You lunge forward and clip <ansi fg="{acteetype}">{actee}</ansi> as they turn.'
+        - 'You lunge forward and barely hit <ansi fg="{acteetype}">{actee}</ansi> as they turn.'
         - 'Your pounce barely connects with <ansi fg="{acteetype}">{actee}</ansi>.'
         expert:
-        - 'You spring from your {stance} crouch and clip <ansi fg="{acteetype}">{actee}</ansi> lightly.'
+        - 'You spring from your {stance} crouch and barely hit <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'Angling from your {stance} approach, you score a shallow impact.'
         - 'You feint and lunge, grazing <ansi fg="{acteetype}">{actee}</ansi> {position}.'
-        - 'You test their footing with a half-measure pounce.'
+        - 'You test their stance with a half-measure pounce.'
         - 'Probing their guard, you deliver a glancing spring.'
         master:
         - 'You draw their guard and catch a shoulder with a light leap, {momentum}.'
@@ -191,15 +191,15 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> springs and grazes you with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> leaps and catches you with a glancing blow.'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges awkwardly, barely catching you.'
-        - 'You feel a shallow impact as <ansi fg="{actortype}">{actor}</ansi>''s pounce barely clips you.'
+        - 'You feel a shallow impact as <ansi fg="{actortype}">{actor}</ansi>''s pounce barely hits you.'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> springs from their {stance} crouch and clips you lightly.'
+        - '<ansi fg="{actortype}">{actor}</ansi> springs from their {stance} crouch and barely hits you.'
         - '<ansi fg="{actortype}">{actor}</ansi> angles in and scores a shallow impact.'
         - 'You feel a graze as <ansi fg="{actortype}">{actor}</ansi> feints and lunges.'
         - '<ansi fg="{actortype}">{actor}</ansi> tests your guard with a half-measure spring.'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a glancing pounce at you.'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi> draws your guard and clips your shoulder lightly.'
+        - '<ansi fg="{actortype}">{actor}</ansi> draws your guard and barely hits your shoulder.'
         - '<ansi fg="{actortype}">{actor}</ansi> presses forward and nicks you from their {stance} crouch.'
         - '<ansi fg="{actortype}">{actor}</ansi> pivots and delivers a shallow grazing impact.'
         - '<ansi fg="{actortype}">{actor}</ansi> finds a small opening and delivers a glancing leap.'
@@ -207,18 +207,18 @@ options:
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> springs and grazes <ansi fg="{acteetype}">{actee}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi> leaps and clips <ansi fg="{acteetype}">{actee}</ansi> with a glancing blow.'
-        - '<ansi fg="{actortype}">{actor}</ansi> lunges forward and clips <ansi fg="{acteetype}">{actee}</ansi> as they turn.'
+        - '<ansi fg="{actortype}">{actor}</ansi> leaps and barely hits <ansi fg="{acteetype}">{actee}</ansi> with a glancing blow.'
+        - '<ansi fg="{actortype}">{actor}</ansi> lunges forward and barely hits <ansi fg="{acteetype}">{actee}</ansi> as they turn.'
         - '<ansi fg="{actortype}">{actor}</ansi>''s pounce barely catches <ansi fg="{acteetype}">{actee}</ansi>.'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> springs in and clips <ansi fg="{acteetype}">{actee}</ansi> lightly.'
+        - '<ansi fg="{actortype}">{actor}</ansi> springs in and barely hits <ansi fg="{acteetype}">{actee}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> angles in and scores a shallow impact on <ansi fg="{acteetype}">{actee}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> feints and drives a glancing pounce.'
         - '<ansi fg="{actortype}">{actor}</ansi> tests <ansi fg="{acteetype}">{actee}</ansi>''s guard with a half-measure spring.'
         - '<ansi fg="{actortype}">{actor}</ansi> probes the guard and delivers a glancing spring.'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> draws the guard and lands a glancing leap on <ansi fg="{acteetype}">{actee}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi> presses forward with a quick clip from their {stance} crouch.'
+        - '<ansi fg="{actortype}">{actor}</ansi> presses forward with a quick, light strike from their {stance} crouch.'
         - '<ansi fg="{actortype}">{actor}</ansi> pivots and delivers a shallow grazing impact on <ansi fg="{acteetype}">{actee}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> finds a small opening and scores a glancing pounce.'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a calculated grazing leap with patient precision.'
@@ -440,7 +440,7 @@ options:
         - 'Your leap <ansi fg="red-bold">FUMBLES</ansi> as you overshoot <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> your pounce and stumble past your target!'
         - 'Your spring <ansi fg="red-bold">FUMBLES</ansi> badly, leaving you wide open!'
-        - 'You lose your footing and your pounce <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
+        - 'You lose your balance and your pounce <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
         - 'Your tactical pounce fails catastrophically and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the angle and <ansi fg="red-bold">FUMBLE</ansi> the leap!'
@@ -453,8 +453,8 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s leap <ansi fg="red-bold">FUMBLES</ansi> as they overshoot you!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their pounce in an embarrassing stumble!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s spring <ansi fg="red-bold">FUMBLES</ansi> badly as they lose footing!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing and their pounce <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s spring <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their balance!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and their pounce <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi> the leap!'
@@ -468,7 +468,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s leap <ansi fg="red-bold">FUMBLES</ansi> wildly past <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their pounce at <ansi fg="{acteetype}">{actee}</ansi> and stumbles past!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their spring in a clumsy, lurching stumble!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing and their pounce <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and their pounce <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi>!'

@@ -12,7 +12,7 @@ events:
       - '{actor} plunges into you, sapping your vitality and leeching your life-force! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} seizes you, sapping your vitality! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} latches onto you and drinks deep, leeching your life-force! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor}''s touch drains you, pulling vitality through their grasp! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s touch drains you, pulling your vitality away! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} tears into you and feeds, growing stronger as you weaken! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} plunges into {actee} and leeches their vitality!'
@@ -32,19 +32,19 @@ events:
     actor:
       - '{actee} pulls mostly free, but you still drain a little! (<ansi fg="damage">{damage}</ansi>)'
       - 'You mostly miss {actee}, but still drain some life! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actee} slips most of your grip, but you still sap a trace of their life-force! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} dodges most of your grip, but you still sap a trace of their life-force! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - 'You pull mostly free, but {actor} still drains a little! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} mostly misses, but still drains some of your life! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} lunges to drain you; you slip most of it away, but not all! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} lunges to drain you; you dodge most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} reaches for {actee} hungrily, who slips mostly free but still gets caught!'
       - '{actor} lunges to drain {actee}, who slips mostly free but still gets caught!'
-      - '{actor} lunges to drain {actee}, who slips most of it away but not all!'
+      - '{actor} lunges to drain {actee}, who dodges most of it but not all!'
   partial_heal:
     actor:
       - '<ansi fg="green">A trickle of stolen vitality flows into you. You feel {heal}.</ansi>'
-      - '<ansi fg="green">You feel {heal} as a sliver of their warmth becomes yours.</ansi>'
+      - '<ansi fg="green">You feel {heal} as a little of their warmth becomes yours.</ansi>'
   # DIVERGENT (Task 3, owner-approved 2026-09-21): variants 1 to 3 (the
   # player's original lines) describe different feels -- plain whiff /
   # target slips away / lunge glances off -- one feel per variant across all
