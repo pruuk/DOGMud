@@ -17,7 +17,7 @@ idlecommands:
   - 'emote lifts a coif and works the links with his thumb, checking
     each section before moving to the next.'
   - ''
-  - 'emote runs a bare hand along the seam of a chain vest — his
+  - 'emote runs a bare hand along the seam of a chain vest, his
     own skin rasping audibly against the iron rings.'
 activitylevel: 10
 character:
@@ -25,7 +25,7 @@ character:
   description: |
     Brun the Armorer is a large man, and the Chrysalis made him
     larger in the ways that count. His skin has hardened over the
-    years since his Bloom into something between leather and shale —
+    years since his Bloom into something between leather and shale,
     layered and callused, ridged at the joints in a way that catches
     the light like hammered plate. He tests his own chainwork by
     wearing it against bare skin before he sells it, which is a kind

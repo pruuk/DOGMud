@@ -14,8 +14,8 @@ idlecommands:
   - 'emote stands at the gate with the patience of a man who has
     learned to watch without appearing to watch.'
   - ''
-  - 'emote scans the Square in a slow, unhurried pass — left to right,
-    nothing missed — then returns his gaze to the middle distance.'
+  - 'emote scans the Square in a slow, unhurried pass, left to right,
+    with nothing missed, then returns his gaze to the middle distance.'
   - ''
   - 'emote adjusts the front of his coat with a single precise motion
     and is immediately still again.'
@@ -25,10 +25,10 @@ character:
   description: |
     Horst keeps the gate of the watched house with the patient ease
     of a man who has learned that stillness is its own authority.
-    He is neither large nor particularly striking — his power runs
+    He is neither large nor particularly striking. His power runs
     quieter than that, in the quality of a well-kept coat and the
     way his gaze maps a space and files everything it finds. He
-    carries no visible weapon. He shows no Chrysalis-change at all —
+    carries no visible weapon. He shows no Chrysalis-change at all:
     skin plain, hands unmarked, face ordinary in every way that
     matters. In a city where the Bloom touches nearly everyone who
     stays long enough, the absence of mutation is itself a statement.

@@ -1,9 +1,9 @@
 roomid: 5805
 zone: New Plymouth Merchant
-title: The Long Market — East Reach
+title: The Long Market, East Reach
 description: >
   The Long Market east of the square takes on a settled
-  tone — wider pavement, buildings with proper shop-
+  tone: wider pavement, buildings with proper shop-
   fronts rather than stall-awnings, the kind of
   commercial street where the neighbors have a covenant
   about appearances and keep it. The
@@ -14,7 +14,7 @@ description: >
   rather than being lured in. A
   <ansi fg="itemname">lamp-bracket</ansi> jutting from
   the corner building holds a lantern that burns
-  longer-oil — you can tell by the steadier, more
+  longer-oil. You can tell by the steadier, more
   golden waver of the flame through the glass. East,
   the Long Market continues toward the Temple district,
   the avenue running straight between the merchant
@@ -32,7 +32,7 @@ exits:
     roomid: 5802
 nouns:
   shop fronts: Carved signs in aged dark wood, each
-    specific to its trade — a sheaf for the grain-
+    specific to its trade, such as a sheaf for the grain-
     merchant, a spool for the thread-merchant, a simple
     key that could belong to several businesses but is
     generally understood in context. The brass lettering
@@ -45,7 +45,7 @@ nouns:
     building's stone face at about twice head-height,
     holding an enclosed lantern that burns longer-oil
     from the eastern coast. You can identify the oil by
-    the flame's quality — steadier, more golden than
+    the flame's quality, which is steadier, more golden than
     the tallow used on cheaper brackets. The bracket
     itself is old enough to have rust bleeding from the
     bolt-holes, but sound. It has been there since before
@@ -63,7 +63,7 @@ idlemessages:
 - The Long Market runs east from here in a clean line,
   and in the middle distance a temple spire marks where
   the avenue changes character.
-- This stretch is quieter than the square — the commerce
+- This stretch is quieter than the square, and the commerce
   here is more deliberate, the transactions longer and
   less public.
 x: -3

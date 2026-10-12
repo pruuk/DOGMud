@@ -3,14 +3,14 @@ zone: New Plymouth Merchant
 title: Falk's Auction House
 description: >
   The auction house floor runs wider than the frontage
-  suggests — a double-depth room with high ceilings to
-  hold the noise of a crowd, fitted rows of plain wooden
+  suggests. It is a double-depth room with high ceilings to
+  hold the noise of a crowd, fitted with rows of plain wooden
   benches facing a raised
   <ansi fg="itemname">auction-block</ansi>
   at the south wall, and a rail separating the viewing
   floor from the principals' area around the block.
-  Goods of real value pass through Falk's — estate lots,
-  merchant stock sold under obligation, single items of
+  Goods of real value pass through Falk's: estate lots,
+  merchant stock sold under obligation, and single items of
   the kind that need a buyer found rather than a price
   named. To the left of the block, the
   <ansi fg="itemname">property-roll</ansi>
@@ -42,18 +42,18 @@ nouns:
     crowd. The rail at the front edge has been gripped
     often enough to show it in the finish. Behind the
     block, a small door leads to a staging room where
-    lots are held before presentation — the door is
+    lots are held before presentation. The door is
     closed. A lot-number placard sits face-down on
     the block surface, meaning the current interval
     is between sales.
   property roll: A ledger mounted in a glass-faced
-    frame bolted to the wall beside the block — the
+    frame bolted to the wall beside the block. It is the
     public record of sales, open to inspection by any
     party seeking to confirm a transaction. Most entries
-    are unremarkable — estate goods, quantities of
+    are unremarkable, such as estate goods, quantities of
     trade stock, one or two personal effects of some
     value. But a recurring entry type repays careful
-    reading — lots catalogued simply as "consideration,"
+    reading. These are lots catalogued simply as "consideration,"
     buyer listed as "the arrangement," prices bearing
     no apparent relation to market rates for anything
     identifiable. The entries recur at irregular
@@ -65,7 +65,7 @@ idlemessages:
   the focused attention of someone who came here
   specifically to read it.
 - The benches are half-occupied in the lull between
-  lots — people waiting with the patience of those
+  lots, people waiting with the patience of those
   who have done their research.
 - Falk passes through the principals' area with a
   sheaf of papers, nods at no one in particular, and
@@ -73,7 +73,7 @@ idlemessages:
 - The auction-block is empty but has the quality of
   something about to be used.
 - A lot from the morning's session remains under the
-  block — a cloth-wrapped parcel, tagged and waiting.
+  block, a cloth-wrapped parcel, tagged and waiting.
 spawninfo:
   - mobid: 9345
     respawnrate: "10 real minutes"

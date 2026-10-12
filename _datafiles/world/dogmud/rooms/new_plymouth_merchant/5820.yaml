@@ -1,14 +1,14 @@
 roomid: 5820
 zone: New Plymouth Merchant
-title: The Watched House — Gate
+title: The Watched House Gate
 description: >
   The lane ends at a wall of dressed stone, eight feet
   high, and the heavy gate set into it. The gate is
-  wrought iron — old work, its vertical bars spaced
-  to allow inspection from either side — and it is
+  wrought iron, old work, its vertical bars spaced
+  to allow inspection from either side, and it is
   closed and chained with a padlock whose key is not
   here and has not been offered. Beyond the bars the
-  rented house is visible in outline — two stories,
+  rented house is visible in outline: two stories,
   upper shutters drawn, ground-floor windows dark
   behind curtains, a lamp burning faint and steady
   behind one of them. A figure in bloodline house-
@@ -33,19 +33,19 @@ exits:
     roomid: 5819
 nouns:
   house gate: Wrought iron on heavy stone piers, the
-    bars old and solid — this gate has been here
+    bars old and solid. This gate has been here
     longer than the bloodline's current tenancy. The
     chain looped through the bars is newer, its links
     bright where the older ironwork has gone grey.
     The padlock is the quality that does not suggest
     it is available to negotiation. Through the bars,
-    the house door is visible — closed — and to one
+    the house door is visible, closed, and to one
     side a small window showing light behind a curtain.
     Someone is home. The gate does not open from this
     side.
 idlemessages:
 - The watcher inside the gate holds a position three
-  steps from the bars — close enough to speak, far
+  steps from the bars, close enough to speak, far
   enough to be deliberate about it.
 - Through the gate, a lamp is visible behind the
   curtained ground-floor window. The light does not

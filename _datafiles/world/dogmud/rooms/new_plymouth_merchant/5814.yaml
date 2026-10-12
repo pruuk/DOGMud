@@ -4,13 +4,13 @@ title: The Gilt Threshold
 description: >
   The Gilt Threshold occupies a corner plot where the
   Gilded Walk opens north toward the inn's quiet
-  entrance — a building wide enough to carry weight
+  entrance. It is a building wide enough to carry weight
   and narrow enough to stay out of sight. The public
   room inside is low-ceilinged and warm, lit by good
   oil lamps set in iron brackets, the tables wiped to
   a cleanliness that costs more than it appears to.
   Somewhere in this city's social arithmetic, a
-  certain class of person drinks here — merchants
+  certain class of person drinks here: merchants
   with letters of credit, factors with information
   to sell, and occasionally someone who sits with
   their back to the wall and watches the room without
@@ -46,14 +46,14 @@ nouns:
     arranged by height rather than label, which tells
     you something about who chooses the stock. The
     person serving does not catch your eye and has not
-    failed to notice you — the distinction is a
+    failed to notice you. The distinction is a
     professional one, practiced here until it is
     seamless.
   guest ledger: A heavy ledger in an oiled leather
     slipcase, its brass clasp fastened on the stand
     beside the stair. Guest registers in an inn of
-    this kind do two things — accounting for who is
-    present, and recording who would prefer not to be.
+    this kind do two things. They account for who is
+    present, and they record who would prefer not to be.
     The cover carries no title. The spine is worn from
     handling. Whose names appear in the current pages,
     and under what designation, is information the
@@ -69,8 +69,8 @@ idlemessages:
 - A server moves between tables with the calm of
   someone who has learned not to hear anything in
   particular.
-- Footsteps on the stair above — an arrival or a
-  departure — and then the room's low undertone
+- Footsteps on the stair above, an arrival or a
+  departure, and then the room's low undertone
   resumes.
 spawninfo:
   - mobid: 9350

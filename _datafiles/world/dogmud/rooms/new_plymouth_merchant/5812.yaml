@@ -5,21 +5,21 @@ description: >
   The plate-works smells of metal and leather dressing
   and the dry coolness of annealed steel that has gone
   cold on its rack. Brun operates a fitting and
-  finishing shop here — the forging is done elsewhere,
-  in the Crafting Quarter — but the critical work of
+  finishing shop here. The forging is done elsewhere,
+  in the Crafting Quarter, but the critical work of
   sizing, adjusting, and certifying happens on this
   floor. A row of
   <ansi fg="itemname">plate-stands</ansi>
   runs the east wall, each holding a completed or
-  in-progress chest piece at body-height for assessment
-  — the stands articulate at the shoulder to simulate
+  in-progress chest piece at body-height for assessment.
+  The stands articulate at the shoulder to simulate
   movement. The center of the floor is the
-  <ansi fg="itemname">fitting-space</ansi>
-  — a marked area of bare board where customers stand
+  <ansi fg="itemname">fitting-space</ansi>,
+  a marked area of bare board where customers stand
   while Brun works around them with measuring cord and
   steel gauge. The sound in here is the ring of small
-  adjustments — a hammer used for tapping rather than
-  striking, files and fitted pieces. Brun's work is
+  adjustments: a hammer used for tapping rather than
+  striking, files, and fitted pieces. Brun's work is
   considered the best in the district for fit, which
   is the thing that makes the difference between armor
   that saves you and armor that does not.
@@ -38,7 +38,7 @@ nouns:
     posts, each holding a breastplate or partial suit
     assembly at body height. The adjustments on each
     stand have been set to a specific customer's
-    measurements — the heights and shoulder angles
+    measurements, so the heights and shoulder angles
     differ from stand to stand in ways that are not
     random. Some pieces are finished and tagged;
     others carry chalk marks at adjustment points
@@ -49,20 +49,20 @@ nouns:
   fitting space: A section of bare floor near the
     center of the shop, its boards marked with a
     painted outline of two boot-prints facing the
-    north wall — where the fitting mirror stands. The
+    north wall, where the fitting mirror stands. The
     space around it is kept clear for Brun's movement
-    during measurement sessions. The mirror is plate-
-    glass in an iron frame, bolted to the wall at an
+    during measurement sessions. The mirror is
+    plate-glass in an iron frame, bolted to the wall at an
     angle calculated for the customer's viewing rather
     than the fitter's convenience.
 idlemessages:
 - The tap of Brun's small hammer against a breastplate
-  edge rings once and then stops — the adjustment was
+  edge rings once and then stops. The adjustment was
   correct.
 - A customer on the fitting-space stands very still
   while Brun makes a chalk mark and calls a number.
 - The plate-stands along the east wall carry work in
-  several stages of completion — some raw, some nearly
+  several stages of completion, some raw, some nearly
   done, one recently collected and not yet replaced.
 - The smell of leather dressing from the strapping
   work mingles with the cooler metal-smell pleasantly.

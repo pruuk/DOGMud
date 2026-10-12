@@ -3,12 +3,12 @@ zone: New Plymouth Merchant
 title: The Exchange
 description: >
   The Exchange presents a narrow frontage to the Walk
-  — a door of banded oak, a small inlaid plate with
+  (a door of banded oak, a small inlaid plate with
   the name of the business in letters that are neither
-  plain nor ostentatious — and opens behind it into a
+  plain nor ostentatious) and opens behind it into a
   room considerably larger than the exterior suggests.
-  The counting-house smell is immediate and particular
-  — coin-metal and ledger-wax, dry paper, the faint
+  The counting-house smell is immediate and particular:
+  coin-metal and ledger-wax, dry paper, the faint
   tallow of lamps kept burning later than the
   surrounding shops. A long
   <ansi fg="itemname">transaction-table</ansi>
@@ -19,7 +19,7 @@ description: >
   a low rail and a hinged gate, the floor rises a step
   to the
   <ansi fg="itemname">principals-counter</ansi>,
-  where the significant transactions take place — loans
+  where the significant transactions take place: loans
   assessed, liens placed, the kind of money that moves
   in this city's upper registers. The room smells like
   the inside of a decision made in the absence of
@@ -38,7 +38,7 @@ exits:
 nouns:
   transaction table: A counter of dark wood running
     the east wall, divided by low iron rails into five
-    numbered stations — each with its own lamp, its
+    numbered stations, each with its own lamp, its
     own inkwell, and a worn leather pad for paperwork.
     The rails keep the business at each station
     separate in the way that convention makes physical
@@ -52,7 +52,7 @@ nouns:
     to it daily and knows exactly where everything is.
     A single sealed document sits centered on the
     blotter, waiting for a signature or already past
-    the need of one — from this distance, it is
+    the need of one. From this distance, it is
     impossible to say which.
 idlemessages:
 - A clerk at the transaction-table counts coins with
@@ -60,7 +60,7 @@ idlemessages:
   nothing else all day.
 - The sealed document on the principals-counter has
   not moved.
-- The coin-smell in here is not ambient — it is
+- The coin-smell in here is not ambient. It is
   specific, the product of metal handled in quantity.
 - A patron in the numbered queue shifts weight and
   checks the light from the street door.

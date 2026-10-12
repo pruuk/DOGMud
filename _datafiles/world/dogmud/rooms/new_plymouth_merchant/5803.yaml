@@ -1,9 +1,9 @@
 roomid: 5803
 zone: New Plymouth Merchant
-title: The Processional — North End
+title: The Processional, North End
 description: >
   The Processional widens north of the square and takes
-  on a more deliberate character — the paving better-
+  on a more deliberate character: the paving better-
   dressed, buildings running to cut stone rather than
   timber, ground floors given over to factors' offices
   and bonded warehouses whose signs are small and do
@@ -36,7 +36,7 @@ exits:
     roomid: 6000
 nouns:
   civic lamps: Lantern standards of iron painted blue
-    and silver, each one identical — clearly ordered in
+    and silver, each one identical, clearly ordered in
     a single commission and installed in a single season.
     The housings are hinged for refilling and the hinges
     are kept oiled; you notice this because they do not
@@ -47,7 +47,7 @@ nouns:
     person who does not know how to do anything
     carelessly.
   guild seals: Stone relief carvings set into the lintel
-    above a heavy oak door — five of them, overlapping
+    above a heavy oak door. There are five of them, overlapping
     slightly, each representing a different merchant
     guild. The oldest is worn nearly flat; the newest
     is sharp enough that the chisel-marks are still
