@@ -3,7 +3,7 @@ zone: New Plymouth Common
 title: The Back Court
 description: >
   The court is a gap between blocks rather than a
-  planned space — a rectangle of flagstone where the
+  planned space. It is a rectangle of flagstone where the
   buildings pulled back just enough to give the quarter
   somewhere to put its washing and its children. Both
   are here now, the former on lines strung building-to-
@@ -11,8 +11,8 @@ description: >
   and calling back and forth in the high shorthand of
   games you don't know the rules to. A
   <ansi fg="itemname">dry fountain</ansi> stands at
-  the court's center, its basin long since stopped —
-  someone has filled it with soil and planted herbs that
+  the court's center, its basin long since stopped.
+  Someone has filled it with soil and planted herbs that
   look better than they have any right to. Worn into
   the flagstones nearby, a
   <ansi fg="itemname">chalk hopscotch</ansi> grid has
@@ -34,15 +34,15 @@ nouns:
     the pipe at its center sealed long ago with mortar
     that has gone the same color as the stone. Someone
     has filled the basin with dark earth and planted
-    what appears to be a mix of herbs — thyme, something
+    what appears to be a mix of herbs, including thyme, something
     broader-leafed, a cluster of chives heading toward
     flower. The planting is doing well. Whoever tends
     it has an arrangement with the building above or
     simply enough reach. A small clay fragment is
-    balanced on the pediment's edge — a charm, or a
+    balanced on the pediment's edge, perhaps a charm, or a
     child's marking, or something that blew in and
     happened to land upright.
-  chalk hopscotch: Overlaid chalk on chalk — new marks
+  chalk hopscotch: Overlaid chalk on chalk, with new marks
     over old over older, in at least three colors.
     Beneath the chalk the flagstone has been worn along
     the jumping line and the turn-squares into a faint
@@ -57,7 +57,7 @@ idlemessages:
 - A pair of pigeons land on the dry fountain's rim,
   eye the herb planting, and depart disappointed.
 - Someone leans from a window above the court and calls
-  a name — one of the children looks up, considers
+  a name. One of the children looks up, considers
   this information, and goes back to the game.
 - The washing on the lines above shifts in a draft that
   does not reach the flagstones below.

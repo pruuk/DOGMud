@@ -2,14 +2,14 @@ roomid: 5606
 zone: New Plymouth Common
 title: The Brimming Bowl
 description: >
-  Even from outside you can tell it is doing well —
-  the sound leaking around the door is the sound of
+  Even from outside you can tell it is doing well.
+  The sound leaking around the door is the sound of
   people who have found each other at the end of the
   working day and intend to make something of that. The
   building occupies a corner plot and has been here long
   enough to look as though the street was built around it,
   which may be the case. Above the door, a painted sign
-  shows a wooden bowl tilted just slightly past full —
+  shows a wooden bowl tilted just slightly past full. This is
   the
   <ansi fg="itemname">bowl sign</ansi>, faded but legible,
   repainted whenever someone gets around to it, which is
@@ -17,7 +17,7 @@ description: >
   <ansi fg="itemname">doorway</ansi> is broad and worn,
   the lintel dark with the oils of ten thousand hands
   that have braced against it, and the doorstep is lower
-  than the street by an inch — either the street rose or
+  than the street by an inch. Either the street rose or
   the building settled, and the distinction has been
   forgiven by both parties. The taproom lies down a few
   steps through the doorway.
@@ -36,7 +36,7 @@ exits:
   down:
     roomid: 5607
 nouns:
-  bowl sign: A painted board — a bowl of turned wood in
+  bowl sign: A painted board with a bowl of turned wood in
     ochre and brown, the liquid inside tilting past the
     rim in a way that should mean spilling but never quite
     reaches it. The painter understood the bowl should be
@@ -47,7 +47,7 @@ nouns:
     that have been touched up but not replaced. This is
     considered accurate.
   doorway: An arched opening with a heavy door on iron
-    hinges that have been oiled recently — you can tell
+    hinges that have been oiled recently, which you can tell
     because they are silent. The lintel above is dark
     with years of hands, and the step below is worn to
     a smooth depression in its center. The door stands
@@ -67,8 +67,8 @@ idlemessages:
   the walls.
 - A man pauses outside the door, looks in, decides,
   and goes in. This happens with some regularity.
-- Two people part on the step — one going in, one going
-  home — with the brief warmth of a genuinely good
+- Two people part on the step, one going in, one going
+  home, with the brief warmth of a genuinely good
   evening almost over.
 x: -6
 y: -78

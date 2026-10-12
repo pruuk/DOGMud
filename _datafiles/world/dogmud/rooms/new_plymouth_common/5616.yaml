@@ -2,7 +2,7 @@ roomid: 5616
 zone: New Plymouth Common
 title: The Tannery Street
 description: >
-  The smell reaches you before the street does — a
+  The smell reaches you before the street does. It is a
   compound assault with layers: the sharp cut of lime
   at the top, below that the deep animal weight of
   raw hide and fat, below that something sulfurous and
@@ -11,7 +11,7 @@ description: >
   the working fronts of three or four tanning operations,
   their
   <ansi fg="itemname">soaking pits</ansi> ranged along
-  the building edges behind low stone walls — open vats
+  the building edges behind low stone walls. They are open vats
   of dark liquor with hides submerged and weighted down.
   On frames above them, past the pit stage, the
   <ansi fg="itemname">stretched hides</ansi> are pegged
@@ -39,7 +39,7 @@ nouns:
     behind low walls along the building fronts, three
     or four to a tannery. The liquor in them is dark
     brown-black, carrying the accumulated result of
-    the tanning process — oak bark, lye, materials you
+    the tanning process, including oak bark, lye, and materials you
     have decided not to look at too closely. Hides float
     below the surface, weighted with flat stones. The
     pit nearest the street has a crust on its surface
@@ -48,20 +48,20 @@ nouns:
     wooden rod and apparently finds it good.
   stretched hides: Wooden frames of roughly-hewn timber,
     the hides stretched across them and pegged at the
-    edges through small slits in the skin — tight as a
+    edges through small slits in the skin, tight as a
     drum, and pale as paper on the inner face where the
     flesh has been scraped away. Some are cattle, broad
     and flat. One smaller frame holds something that
     might be dog. They dry unevenly in the quarter's
     irregular light, and the smell at this stage is
-    less acute than the pits — more leather, less
-    animal — which is relative comfort.
+    less acute than the pits, with more leather and less
+    animal, which is relative comfort.
 idlemessages:
 - A tannery worker crosses the street between vat and
   frame with the deliberate stride of someone carrying
   weight in unpleasant conditions and preferring speed.
 - The smell shifts as a door opens somewhere in the
-  east-facing building — worse for a moment, then back
+  east-facing building. It is worse for a moment, then back
   to its previous terrible baseline.
 - A handcart comes through from the west loaded with
   raw hides still in the salt-pack; the driver keeps

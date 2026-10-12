@@ -10,12 +10,12 @@ groups:
   - np_commonfolk
 idlecommands:
   - 'emote draws a long pull with the scraper across the wet hide on
-    the beam — one fluid motion, the hide repositioned, another stroke
-    — with the unhurried efficiency of someone who has been at this
+    the beam: one fluid motion, the hide repositioned, another stroke,
+    with the unhurried efficiency of someone who has been at this
     since before you woke up.'
   - ''
   - 'emote reaches bare-handed into the lime barrel to check the
-    suspension — no flinching, no gloves — and withdraws both arms
+    suspension, no flinching, no gloves, and withdraws both arms
     pale to the elbow without any sign that the caustic troubles
     him in the least.'
   - ''
@@ -31,7 +31,7 @@ character:
     beam for the morning shift. He is broad and deliberate, with the
     particular stoop of someone who has bent over working height for
     a long time and carries the posture home. His hands and forearms
-    are pale to near-white — years of lime exposure that has never
+    are pale to near-white from years of lime exposure that has never
     damaged the skin, a Chrysalis-change that hardened the surface
     into something the caustic finds no purchase on. He does not
     discuss it. Neither does anyone else in the yard. It is

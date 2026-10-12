@@ -19,12 +19,12 @@ idlecommands:
     with the patient attention of someone who has done this enough
     times to trust the result.'
   - ''
-  - 'emote flinches — barely, a compression of the brows — at some
+  - 'emote flinches, barely, a compression of the brows, at some
     sound from outside in the back-alley, then goes back to what she
     was doing without explanation.'
   - ''
-  - 'emote checks the bruise on her own forearm — borrowed, bluer
-    than anything she did to herself — presses it once, and rolls
+  - 'emote checks the bruise on her own forearm (borrowed, bluer
+    than anything she did to herself), presses it once, and rolls
     her sleeve back down without complaint.'
   - ''
   - 'emote tilts a jar toward the light from the door and examines
@@ -36,17 +36,17 @@ character:
   name: Ysolde
   description: |
     Ysolde runs her room off the back-alley without signage and
-    without advertisement — word of mouth is the only way to find
+    without advertisement. Word of mouth is the only way to find
     her, and that word gets around to the people who need it. She
     is a lean woman in her middle years with the particular tired
     look of someone who has not slept deeply in a long time and
     has stopped expecting to. Her mutation is not one she chose
-    and is not one she discusses — she feels the pain of others.
+    and is not one she discusses: she feels the pain of others.
     Not metaphorically. When she examines a wound, she winces at
     its depth before the patient does. An ache in a patient's
     right shoulder becomes an ache in her own. She learned to work
     through it years ago and does not mention it, but her face
-    gives her away at the first examination — a quick compression
+    gives her away at the first examination: a quick compression
     at the brow, a held breath, a careful stillness that has
     nothing to do with clinical detachment and everything to do
     with managing what she has borrowed from the body in front of

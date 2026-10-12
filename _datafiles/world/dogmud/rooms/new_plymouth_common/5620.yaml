@@ -2,7 +2,7 @@ roomid: 5620
 zone: New Plymouth Common
 title: Ysolde's Room
 description: >
-  The room is small and precise — the kind of tidiness
+  The room is small and precise, with the kind of tidiness
   that comes from working in confined space for years
   and learning to put things back. The smell of the
   alley does not follow you in; what replaces it is
@@ -14,8 +14,8 @@ description: >
   way of someone who expects to need it quickly and
   cannot afford to have it tangled. Across the room
   a shelf holds a row of
-  <ansi fg="itemname">unlabeled jars</ansi> — stoppered
-  clay and green glass and one of clear — all without
+  <ansi fg="itemname">unlabeled jars</ansi>, stoppered
+  clay and green glass and one of clear, all without
   markings, all evidently known by smell and position.
   No questions are asked here. The curtained door leads
   back out to the alley, south.
@@ -30,15 +30,15 @@ exits:
 nouns:
   cot: A narrow rope-frame cot with a straw-filled
     tick and a single wool blanket folded to precise
-    thirds. It has been used recently — there is a
+    thirds. It has been used recently, and there is a
     slight depression in the tick that has not fully
     returned. The rope weave is tight and even, the
     frame sturdy, the blanket clean. It is a clinical
-    cot, not a personal one — it will be whoever needs
+    cot, not a personal one. It will be whoever needs
     it next, which is the point.
   unlabeled jars: A row of stoppered containers ranged
-    in an order that seems arbitrary and is not — clay
-    for the things that need darkness, green glass for
+    in an order that seems arbitrary and is not. Clay
+    is for the things that need darkness, green glass for
     the light-tolerant, clear glass for the two or three
     things that need to be checked by color. None are
     labeled. The contents range from pungent to faintly
@@ -49,15 +49,15 @@ nouns:
 idlemessages:
 - The brazier in the corner puts out a thin, even
   warmth and a smell of something resinous added to
-  the coals — not unpleasant.
+  the coals. It is not unpleasant.
 - A dried bundle on the far wall stirs in the slow
   convection from the brazier, its stalks tapping
   gently against the wall.
-- The quiet of the room is deliberate — the walls are
+- The quiet of the room is deliberate. The walls are
   thick here, because the alley outside is not as far
   as it sounds.
 - One of the unlabeled jars has condensation on its
-  inside — whatever is in it, it is cold, or the room
+  inside. Whatever is in it, it is cold, or the room
   is warmer than it seemed.
 - The cot's blanket has been straightened so precisely
   that it is impossible to tell whether someone used

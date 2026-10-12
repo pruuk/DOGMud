@@ -6,7 +6,7 @@ description: >
   rather than accepted. The Common Market is what the
   Merchant Quarter's covered hall would be if you stripped
   out the roof, the fixed stalls, and the assumption that
-  a price once named was a price once accepted — what you
+  a price once named was a price once accepted. What you
   get instead is a compact press of
   <ansi fg="itemname">barrow-stalls</ansi> pushed into
   whatever space the morning's jostling has settled on,
@@ -16,8 +16,8 @@ description: >
   <ansi fg="itemname">weighing-beam</ansi> hung from a
   post near the center is the market's one official
   fixture, and there is almost always a dispute in progress
-  somewhere in its vicinity — the beam, the weights, and
-  the testimony of whoever was standing nearest all being
+  somewhere in its vicinity. The beam, the weights, and
+  the testimony of whoever was standing nearest are all
   interpreted differently by different parties.
 biome: city_thoroughfare
 coord:
@@ -34,9 +34,9 @@ exits:
   west:
     roomid: 5606
 nouns:
-  barrow stalls: Handcarts converted to selling-platforms
-    — boards laid across the cart-bed, goods arranged on
-    them, the vendor standing behind or beside. They cluster
+  barrow stalls: Handcarts converted to selling-platforms,
+    with boards laid across the cart-bed, goods arranged on
+    them, and the vendor standing behind or beside. They cluster
     and separate through the day as new vendors arrive and
     others pack up, so the market's layout at noon looks
     nothing like it did at dawn. Most vendors know their

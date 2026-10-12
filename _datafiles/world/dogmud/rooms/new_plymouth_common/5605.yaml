@@ -3,19 +3,19 @@ zone: New Plymouth Common
 title: Cookshop Row
 description: >
   The smell reaches two streets away at midday and pulls
-  the quarter to it like a rope — fat on hot iron, cumin
-  and pepper in the smoke, the sweetness of rendered bone
+  the quarter to it like a rope. It carries fat on hot iron, cumin
+  and pepper in the smoke, and the sweetness of rendered bone
   broth that has been simmering since before dawn. Cookshop
   Row is not a fancy place but it is an honest one, and at
   the midday bell it is impossible to move through quickly.
   The
   <ansi fg="itemname">braziers</ansi> line both sides of
-  the street — clay fire-pots, iron grills, a clay-capped
-  oven at the far end that the woman who owns it is
-  protective of — and between them the vendors work fast
+  the street. There are clay fire-pots, iron grills, and a
+  clay-capped oven at the far end that the woman who owns
+  it is protective of. Between them the vendors work fast
   and loud. The long shared
   <ansi fg="itemname">trestle table</ansi> running down
-  the center belongs to no one and everyone — people eat
+  the center belongs to no one and everyone. People eat
   standing, set down their bowls to argue with their
   neighbors, and are gone again inside the quarter-hour.
 biome: city_thoroughfare
@@ -33,17 +33,17 @@ exits:
   north:
     roomid: 5610
 nouns:
-  braziers: A row of fire-points in different styles —
-    clay pots with iron grill plates, a proper brazier
+  braziers: A row of fire-points in different styles,
+    such as clay pots with iron grill plates, a proper brazier
     on a forged stand, two fire-blackened bricks with
     a flat stone across them. Each one has a vendor and
-    a smell — skewered meat on the left, root-vegetable
+    a smell, with skewered meat on the left, root-vegetable
     broth in the center, flatbread blistering on the stone
     at the far end. The heat coming off the row is
     noticeable even from the center of the street. The
     vendors do not look up; they are working.
   trestle table: Four planks on sawhorses running the
-    length of the food row — long enough that people at
+    length of the food row, long enough that people at
     one end cannot hear what people at the other end are
     saying, which has led to several misunderstandings and
     at least one friendship. There are no chairs. People
