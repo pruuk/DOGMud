@@ -520,10 +520,10 @@ func emitOutcomeMessages(controller, controlled *characters.Character,
 	sent := grapplemessaging.RenderTriad(triad, controllerName, controlledName,
 		controller.PerGrappleMessageCooldowns, key)
 	if sent.Controller != "" {
-		sendToCharacter(controller, sent.Controller)
+		sendToCharacter(controller, controlled, sent.Controller)
 	}
 	if sent.Controlled != "" {
-		sendToCharacter(controlled, sent.Controlled)
+		sendToCharacter(controlled, controller, sent.Controlled)
 	}
 	if sent.Observers != "" {
 		broadcastToRoomExcluding(controller, controlled, sent.Observers)
@@ -569,10 +569,10 @@ func emitHoldFlavor(controller, controlled *characters.Character,
 	sent := grapplemessaging.RenderTriad(triad, controllerName, controlledName,
 		controller.PerGrappleMessageCooldowns, "hold:"+key)
 	if sent.Controller != "" {
-		sendToCharacter(controller, sent.Controller)
+		sendToCharacter(controller, controlled, sent.Controller)
 	}
 	if sent.Controlled != "" {
-		sendToCharacter(controlled, sent.Controlled)
+		sendToCharacter(controlled, controller, sent.Controlled)
 	}
 	if sent.Observers != "" {
 		broadcastToRoomExcluding(controller, controlled, sent.Observers)
@@ -604,7 +604,7 @@ func emitStrikingApexFlavor(controller, controlled *characters.Character,
 			narration.TokenActor: controllerName,
 			narration.TokenActee: controlledName,
 		})
-		sendToCharacter(controller, line)
+		sendToCharacter(controller, controlled, line)
 	}
 }
 
@@ -666,12 +666,33 @@ func characterDisplayName(c *characters.Character) string {
 	return fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, c.Name)
 }
 
-// sendToCharacter sends a text message to a player character.
+// hideOtherInPersonalLine hides other's name in msg from reader by the
+// READER's own sight verdict in the reader's room (messaging.ReaderSight, sight
+// plus the sleep test): "a figure" at shapes, "something" at none, unchanged at
+// full sight. It is the same rule as combat's hideIdentitiesInPersonalLines.
+// A nil other (a line naming no one) returns msg unchanged.
+func hideOtherInPersonalLine(reader, other *characters.Character, msg string) string {
+	if reader == nil || other == nil {
+		return msg
+	}
+	// A nil interface, not a typed-nil *rooms.Room (see
+	// messaging.ParticipantSight): LightLevel would panic on the latter.
+	var vis messaging.RoomVisibility
+	if r := rooms.LoadRoom(reader.RoomId); r != nil {
+		vis = r
+	}
+	return messaging.HideNames(msg, []string{other.Name},
+		messaging.ReaderSight(reader, vis))
+}
+
+// sendToCharacter sends a text message to a player character, with other's
+// name (the grapple partner the line may name) hidden by the reader's own
+// sight. Pass nil other for a line that names no one.
 // For mobs, no-op — NPCs don't have a stdout. Uses the existing
 // userForCharacter helper from Position_Messaging.go (same package).
-func sendToCharacter(c *characters.Character, msg string) {
+func sendToCharacter(c, other *characters.Character, msg string) {
 	if u := userForCharacter(c); u != nil {
-		u.SendText(messaging.CategoryGrappleFlow, msg)
+		u.SendText(messaging.CategoryGrappleFlow, hideOtherInPersonalLine(c, other, msg))
 	}
 	// Mobs don't receive text.
 }
@@ -834,7 +855,7 @@ func commitGrappleMaintenance(
 }
 
 func emitGrappleMaintenanceShortage(c *characters.Character) {
-	sendToCharacter(c, `Exhaustion strips the trained control from your `+
+	sendToCharacter(c, nil, `Exhaustion strips the trained control from your `+
 		`grapple; your technique is slipping.`)
 }
 
@@ -979,10 +1000,10 @@ func emitGradientMessage(self state.ActorRef, transient control.State, from cont
 	sent := grapplemessaging.RenderGradient(triad, selfName, partnerName,
 		selfChar.PerGrappleMessageCooldowns, "gradient:"+key)
 	if sent.Self != "" {
-		sendToCharacter(selfChar, sent.Self)
+		sendToCharacter(selfChar, partner, sent.Self)
 	}
 	if sent.Partner != "" {
-		sendToCharacter(partner, sent.Partner)
+		sendToCharacter(partner, selfChar, sent.Partner)
 	}
 	if sent.Observers != "" {
 		broadcastToRoomExcluding(selfChar, partner, sent.Observers)
