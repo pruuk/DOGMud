@@ -23,7 +23,7 @@ events:
   hit:
     actor:
       - 'You spring at {actee} and crash into them! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You spring at {actee}, raking into them before they push you back! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You slam into {actee} before they push you back! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your pounce connects with {actee}, driving hard into their body! (<ansi fg="damage">{damage}</ansi>)'
       - 'You lunge forward and crash into {actee}! (<ansi fg="damage">{damage}</ansi>)'
       - 'You leap and bear into {actee}, drawing a grunt of pain! (<ansi fg="damage">{damage}</ansi>)'

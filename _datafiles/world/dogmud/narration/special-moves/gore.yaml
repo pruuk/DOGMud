@@ -9,7 +9,7 @@ events:
       - 'You thunder forward and gore {actee}, tossing them aside like a ragdoll! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your horns catch {actee} and you heave them backward off their feet! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} lowers its head and charges into you, driving you to the ground! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} charges into you, driving you to the ground! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} lowers their head and charges you — the impact sends you sprawling! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} drives their horns into you with shattering force and hurls you to the ground! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s charge catches you and tosses you off your feet! (<ansi fg="damage">{damage}</ansi>)'
@@ -28,13 +28,13 @@ events:
       - 'You lower your head and slam your horns into {actee}! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your charge catches {actee} with your horns, drawing a pained grunt! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} drives its horns into you with a powerful charge! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} drives their horns into you with a powerful charge! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} charges and drives their horns into you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s horned charge slams into you and rocks you back! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} lowers their head and rams their horns into you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s charge catches you with their horns, drawing a pained grunt from you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} drives its horns into {actee}!'
+      - '{actor} drives their horns into {actee}!'
       - '{actor} charges {actee} and drives their horns in!'
       - '{actor}''s horned charge slams into {actee}!'
       - '{actor} lowers their head and slams their horns into {actee}!'

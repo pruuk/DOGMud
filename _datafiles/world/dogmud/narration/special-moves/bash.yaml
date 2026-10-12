@@ -4,40 +4,40 @@ events:
   knockdown:
     actor:
       - 'Your <ansi fg="yellow-bold">{label}</ansi> knocks {actee} to the ground! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your <ansi fg="yellow-bold">shield bash</ansi> knocks {actee} to the ground! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your <ansi fg="yellow-bold">{label}</ansi> sends {actee} crashing to the ground! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> knocks you to the ground! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor}''s <ansi fg="yellow-bold">shield bash</ansi> knocks you to the ground! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> sends you crashing to the ground! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> knocks {actee} to the ground!'
-      - '{actor}''s <ansi fg="yellow-bold">shield bash</ansi> knocks {actee} to the ground!'
+      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> sends {actee} crashing to the ground!'
   hit:
     actor:
       - 'Your <ansi fg="yellow-bold">{label}</ansi> strikes {actee} hard! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your <ansi fg="yellow-bold">shield bash</ansi> strikes {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your <ansi fg="yellow-bold">{label}</ansi> catches {actee} squarely! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> strikes you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor}''s <ansi fg="yellow-bold">shield bash</ansi> strikes you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> catches you squarely! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} {verb} {actee} {with}!'
-      - '{actor} bashes {actee} with their shield!'
+      - '{actor}''s {label} catches {actee} squarely!'
   partial:
     actor:
       - 'Your <ansi fg="yellow-bold">{label}</ansi> fails to floor {actee}, but lands! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your <ansi fg="yellow-bold">shield bash</ansi> fails to floor {actee}, but still slams into them! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your <ansi fg="yellow-bold">{label}</ansi> fails to floor {actee}, but still hits! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> fails to floor you, but still crashes into you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor}''s <ansi fg="yellow-bold">shield bash</ansi> fails to floor you, but still slams into you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> fails to floor you, but hits you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} {verb} {actee} {with}, who staggers but stays up!'
-      - '{actor} bashes {actee} with their shield, who staggers but stays up!'
+      - '{actor} {verb} {actee} {with}, but fails to floor them!'
+      - '{actee} staggers under {actor}''s {label}, but stays up!'
   miss:
     actor:
       - 'Your <ansi fg="yellow-bold">{label}</ansi> misses {actee}!'
-      - 'Your <ansi fg="yellow-bold">shield bash</ansi> misses {actee}!'
+      - '{actee} avoids your <ansi fg="yellow-bold">{label}</ansi>!'
     actee:
       - '{actor} attempts a {label}, but misses!'
-      - '{actor} attempts to bash you with their shield, but misses!'
+      - 'You avoid {actor}''s {label}!'
     observer:
       - '{actor} attempts to bash {actee}, but misses!'
-      - '{actor} attempts to bash {actee}, but misses!'
+      - '{actee} avoids {actor}''s {label}!'

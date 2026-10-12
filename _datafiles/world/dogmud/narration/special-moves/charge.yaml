@@ -9,7 +9,7 @@ events:
     actee:
       - '{actor} charges at you, but you keep your footing! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} charges at {actee}, but they keep their footing!'
+      - '{actor} charges into {actee}, but they stay on their feet!'
   partial:
     actee:
       - '{actor} charges and you dodge the worst of it, but the impact still clips you! (<ansi fg="damage">{damage}</ansi>)'

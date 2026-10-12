@@ -48,8 +48,18 @@ mob variant carries an `actor` line (what a player reads on drawing it) and
 a player variant carries whatever the mob side had. The mob sender
 (`internal/mobcommands/move_narration.go` `sendMoveEvent`) sends every
 authored role, so a role added for the player twin is also sent for the mob:
-a mob's `throttle/cast_interrupt` now tells the room, as the player's does.
+a mob's `throttle/cast_interrupt` now tells the room, as the player's does,
+and passes `messaging.SoundChantBreaksOff` as the optional trailing
+`observerSound` argument so an observer who sees nothing hears it, the mob
+twin of the player side's `moveCategories.ObserverSound`.
 The `actor` line is harmless on the mob side, since a mob has no client.
+Because either twin can draw any variant, every line must read right
+whoever the actor is (audited 2026-10-12,
+`docs/superpowers/audits/2026-10-12-special-move-pairing-audit.md`): the
+actor is "their", never "its", and a line names only a body part or gear
+every actor of that verb has (horns for gore, fangs for maul and throttle,
+claws for rake; kick says "foot", never "boot" or "heel"; drain and
+hamstring name none; bash names its instrument through `{label}`).
 Both callers of a merged event must fill every token any variant uses:
 player `bash` fills `{label}`/`{verb}`/`{with}` and mob `shoot` fills
 `{damage}` for that reason. Events only a mob fires (`charge`, `hamstring`,

@@ -68,16 +68,27 @@ func renderMoveEvent(verb string, event movenarration.EventKey, ids moveIdentiti
 // from a reader who cannot make them out, judged by that reader's sight, so a
 // hand-rolled anonymous twin would be a second, cruder mechanism on top of a
 // working one.
-func sendMoveEvent(verb string, event movenarration.EventKey, ids moveIdentities, aud messaging.Audience, cat messaging.Category, extra map[string]string) {
+//
+// observerSound is what an observer who sees nothing hears of the event,
+// sent under cat: a line that names nobody, for an event heard as well as
+// seen (a cast interrupt, #242 owner ruling R4). It mirrors the player
+// side's moveCategories.ObserverSound. Omitted, the usual case, the event
+// stays silent to them.
+func sendMoveEvent(verb string, event movenarration.EventKey, ids moveIdentities, aud messaging.Audience, cat messaging.Category, extra map[string]string, observerSound ...string) {
 	roles, ok := renderMoveEvent(verb, event, ids, extra)
 	if !ok {
 		return
+	}
+	sound := messaging.NoLine
+	if len(observerSound) > 0 {
+		sound = lineOrNone(cat, observerSound[0])
 	}
 	messaging.SendTrio(messaging.Trio{
 		Actor:          lineOrNone(cat, roles.Actor),
 		Actee:          lineOrNone(cat, roles.Actee),
 		Observer:       lineOrNone(cat, roles.Observer),
 		RemoteObserver: lineOrNone(cat, roles.ActeeObserver),
+		ObserverSound:  sound,
 	}, aud)
 }
 

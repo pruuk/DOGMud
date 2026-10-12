@@ -33,7 +33,7 @@ events:
       - '{actor} snaps at you, and you dodge most of it, but the fangs still tear you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} lunges to maul you; you twist free of most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} snaps its fangs at {actee}, who twists mostly free but still gets torn!'
+      - '{actor} snaps at {actee}, who twists mostly free but still gets torn!'
       - '{actor} lunges to maul {actee}, who twists mostly free but still gets torn!'
       - '{actor} lunges to maul {actee}, who twists free of most of it but not all!'
   # DIVERGENT (Task 3, owner-approved 2026-09-21): variants 1 to 3 (the
@@ -47,12 +47,12 @@ events:
       - 'You snap at {actee} but they dodge your fangs!'
       - 'Your mauling lunge glances off {actee} harmlessly!'
     actee:
-      - '{actor} snaps its fangs at you, but misses!'
+      - '{actor} snaps their fangs at you, but misses!'
       - '{actor} snaps their fangs at you, but misses!'
       - '{actor} lunges to maul you but you dodge!'
       - '{actor}''s mauling lunge glances off you harmlessly!'
     observer:
-      - '{actor} snaps its fangs at {actee}, but misses!'
+      - '{actor} snaps their fangs at {actee}, but misses!'
       - '{actor} lunges to maul {actee}, but misses!'
       - '{actor} snaps at {actee}, who dodges the fangs!'
       - '{actor}''s mauling lunge glances off {actee} harmlessly!'

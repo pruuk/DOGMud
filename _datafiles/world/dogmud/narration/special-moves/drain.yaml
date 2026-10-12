@@ -4,22 +4,22 @@ events:
   hit:
     actor:
       - 'You plunge into {actee} and leech away their life-force! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your <ansi fg="item">claws</ansi> plunge into {actee}, sapping their vitality as warmth floods into you! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You seize {actee}, and their warmth floods into you! (<ansi fg="damage">{damage}</ansi>)'
       - 'You latch onto {actee} and drink deep, leeching their life-force! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your touch drains {actee}, pulling vitality through your <ansi fg="item">claws</ansi>! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your touch drains {actee}, pulling their vitality into you! (<ansi fg="damage">{damage}</ansi>)'
       - 'You tear into {actee} and feed, growing stronger as they weaken! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} plunges into you, sapping your vitality and leeching your life-force! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} plunges their <ansi fg="item">claws</ansi> into you, sapping your vitality! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} seizes you, sapping your vitality! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} latches onto you and drinks deep, leeching your life-force! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor}''''s touch drains you, pulling vitality through their grasp! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s touch drains you, pulling vitality through their grasp! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} tears into you and feeds, growing stronger as you weaken! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} plunges into {actee} and leeches their vitality!'
-      - '{actor} plunges their <ansi fg="item">claws</ansi> into {actee}, leeching their vitality!'
+      - '{actor} seizes {actee}, leeching their vitality!'
       - '{actor} latches onto {actee} and drinks deep!'
+      - '{actor}''s touch drains {actee}, pulling at their vitality!'
       - '{actor} tears into {actee} and feeds hungrily!'
-      - '{actor} tears into {actee} and feeds, growing stronger as they weaken!'
   # Actor-only: private knowledge about the drainer's own returning vigour,
   # under the detail-line ruling (see intentionallySilentRoles' drain/
   # hit_heal and drain/partial_heal entries).
@@ -31,11 +31,11 @@ events:
   partial:
     actor:
       - '{actee} pulls mostly free, but you still drain a little! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your reach for {actee} mostly fails, but your <ansi fg="item">claws</ansi> still catch a sliver of vitality! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You mostly miss {actee}, but still drain some life! (<ansi fg="damage">{damage}</ansi>)'
       - '{actee} slips most of your grip, but you still sap a trace of their life-force! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} reaches for you and you slip most of its grip, but it still catches a sliver of you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} reaches for you with hungry <ansi fg="item">claws</ansi>, and you slip most of it, but they still catch a sliver of you! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You pull mostly free, but {actor} still drains a little! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} mostly misses, but still drains some of your life! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} lunges to drain you; you slip most of it away, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} reaches for {actee} hungrily, who slips mostly free but still gets caught!'
@@ -57,7 +57,7 @@ events:
       - 'Your draining lunge glances off {actee} harmlessly!'
     actee:
       - '{actor} reaches for you hungrily, but misses!'
-      - '{actor} reaches for you with hungry <ansi fg="item">claws</ansi>, but misses!'
+      - '{actor} lunges to drain you, but misses!'
       - '{actor} lunges to drain you but you slip away!'
       - '{actor}''s draining lunge glances off you harmlessly!'
     observer:

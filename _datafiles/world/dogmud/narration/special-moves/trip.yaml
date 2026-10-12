@@ -23,7 +23,7 @@ events:
       - '{actor} tailsweeps {actee}, but they keep their footing!'
   tailsweep_partial:
     actor:
-      - 'Your tail cracks into {actee}, but they keep their feet! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your tail still hits {actee}, but they stay on their feet! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="yellow-bold">tailsweep</ansi> fails to trip {actee}, but still cracks into them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} swings their tail and you keep your feet, but it still cracks into you! (<ansi fg="damage">{damage}</ansi>)'
@@ -53,17 +53,17 @@ events:
       - '{actor} trips {actee}, sending them crashing to the ground!'
   trip_hit:
     actor:
-      - 'You try to trip {actee}, but they stay on their feet! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your sweep hits {actee} hard, but they stay on their feet! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="yellow-bold">trip</ansi> strikes {actee}, but they stay on their feet! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} attempts to trip you, but you keep your footing! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} attempts to trip you, but you keep your footing! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s sweep hits you hard, but you stay on your feet! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s trip strikes you, but you stay on your feet! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} attempts to trip {actee}, but they keep their footing!'
-      - '{actor} attempts to trip {actee}, but they keep their footing!'
+      - '{actor}''s sweep hits {actee} hard, but they stay on their feet!'
+      - '{actor}''s trip strikes {actee}, but they stay on their feet!'
   trip_partial:
     actor:
-      - 'Your sweep catches {actee}, but they keep their feet! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You still catch {actee}, but they stay on their feet! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="yellow-bold">trip</ansi> fails to take {actee} down, but still catches them hard! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} tries to trip you and you keep your feet, but the sweep still catches you! (<ansi fg="damage">{damage}</ansi>)'

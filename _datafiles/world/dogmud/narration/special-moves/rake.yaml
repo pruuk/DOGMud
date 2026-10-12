@@ -10,14 +10,14 @@ events:
       - 'You drive your claws across {actee}''s flesh — blood wells up! (<ansi fg="damage">{damage}</ansi>)'
       - 'A vicious rake of your claws shreds {actee}! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} rakes its claws across you, opening bleeding wounds! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s claws rake you, opening bleeding wounds! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} rakes their claws across you, opening bleeding wounds! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} slashes you with raking claws! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s raking strike tears into you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} drives their claws across your flesh — you bleed! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s vicious rake of claws shreds you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} rakes its claws across {actee}!'
+      - '{actor} rakes their claws across {actee}!'
       - '{actor} rakes their claws across {actee}!'
       - '{actor} slashes {actee} with raking claws!'
       - '{actor}''s claws tear into {actee}!'
@@ -29,11 +29,11 @@ events:
       - 'Your raking claws mostly miss {actee}, but still leave a shallow scratch! (<ansi fg="damage">{damage}</ansi>)'
       - '{actee} dodges most of your swipe, but your claws still catch them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor} swipes its claws and you dodge most of it, but they still scratch you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s claws still scratch you as you dodge! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} rakes their claws at you, and you dodge most of it, but they still scratch you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} swipes at you; you dodge most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
-      - '{actor} swipes its claws at {actee}, who mostly dodges but still gets scratched!'
+      - '{actor}''s claws still scratch {actee}, who mostly dodges!'
       - '{actor} rakes their claws at {actee}, who mostly dodges but still gets scratched!'
       - '{actor} swipes at {actee}, who dodges most of it but not all!'
   # DIVERGENT (Task 3, owner-approved 2026-09-21): variants 1 to 3 (the
@@ -46,12 +46,12 @@ events:
       - 'You swipe at {actee} but they dodge your claws!'
       - 'Your rake glances off {actee} harmlessly!'
     actee:
-      - '{actor} swipes its claws at you, but misses!'
+      - '{actor} swipes their claws at you, but misses!'
       - '{actor} rakes their claws at you, but misses!'
       - '{actor} swipes at you but you dodge!'
       - '{actor}''s rake glances off you harmlessly!'
     observer:
-      - '{actor} swipes its claws at {actee}, but misses!'
+      - '{actor} swipes their claws at {actee}, but misses!'
       - '{actor} rakes their claws at {actee}, but misses!'
       - '{actor} swipes at {actee}, who dodges the claws!'
       - '{actor}''s rake glances off {actee} harmlessly!'
