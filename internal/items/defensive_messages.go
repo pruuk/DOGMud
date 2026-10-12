@@ -57,6 +57,70 @@ const (
 type DefenseMessageGroup struct {
 	OptionId DefencePool      `yaml:"optionid"`
 	Options  DefenseIntensity `yaml:"options"`
+	// Deflected is the optional pool for a swing the defence won but that
+	// still did damage. A group may carry it beside its bands, or carry only
+	// it (the generic fallback group, DefencePoolDeflected).
+	Deflected *DeflectedPool `yaml:"deflected,omitempty"`
+}
+
+// DefencePoolDeflected is the key of the generic deflected-swing group: a
+// group with no bands, only a Deflected pool, used when the defence that won
+// has none of its own.
+const DefencePoolDeflected DefencePool = "deflected"
+
+// minDeflectedVariants is the fewest pairs a deflected pool may hold.
+const minDeflectedVariants = 4
+
+// DeflectedPool is the authored shape of a deflected-swing pool: the attacker
+// line and the defender line, paired by index.
+type DeflectedPool struct {
+	Actor []string `yaml:"actor"`
+	Actee []string `yaml:"actee"`
+}
+
+func (p *DeflectedPool) validate(id DefencePool) error {
+	if len(p.Actor) != len(p.Actee) {
+		return fmt.Errorf("deflected actor and actee lists for %s must have equal lengths", id)
+	}
+	if len(p.Actor) < minDeflectedVariants {
+		return fmt.Errorf("deflected pool for %s must contain at least %d variants", id, minDeflectedVariants)
+	}
+	for i := range p.Actor {
+		if strings.TrimSpace(p.Actor[i]) == "" || strings.TrimSpace(p.Actee[i]) == "" {
+			return fmt.Errorf("deflected[%d] for %s must be non-empty", i, id)
+		}
+	}
+	return nil
+}
+
+// RenderDeflectedSwing renders the attacker and defender lines for a swing the
+// defence won but that still did damage, both from one variant index. It reads
+// the defence's own deflected pool and falls back to the generic group; ok is
+// false when neither is loaded, and the caller keeps its own literal text. An
+// optional index is accepted for deterministic tests.
+func RenderDeflectedSwing(d combatvocab.Defence, tokenReplacements map[TokenName]string, indexOverride ...int) (toAttacker, toDefender ItemMessage, ok bool) {
+	var pool *DeflectedPool
+	if g := defenseMessages[DefencePoolFor(d)]; g != nil && d != combatvocab.DefenceNone {
+		pool = g.Deflected
+	}
+	if pool == nil {
+		if g := defenseMessages[DefencePoolDeflected]; g != nil {
+			pool = g.Deflected
+		}
+	}
+	if pool == nil {
+		return "", "", false
+	}
+	roles := narration.Render(
+		narration.Variants{Actor: pool.Actor, Actee: pool.Actee},
+		TokenStrings(tokenReplacements),
+		nil,
+		indexOverride...,
+	)
+	if roles.Actor == "" || roles.Actee == "" {
+		return "", "", false
+	}
+	return ItemMessage(roles.Actor), ItemMessage(roles.Actee), true
 }
 
 type DefenseIntensity map[Intensity]DefenseOptions
@@ -91,6 +155,17 @@ func (d *DefenseMessageGroup) Id() DefencePool {
 
 // Presumably to ensure the datafile hasn't messed something up.
 func (d *DefenseMessageGroup) Validate() error {
+
+	if d.Deflected != nil {
+		if err := d.Deflected.validate(d.OptionId); err != nil {
+			return err
+		}
+		// A group that is only a deflected pool (the generic fallback) has no
+		// bands to check.
+		if len(d.Options) == 0 {
+			return nil
+		}
+	}
 
 	// Make sure all important options are present.
 	optionsToCheck := []Intensity{Weak, Normal, Heavy}

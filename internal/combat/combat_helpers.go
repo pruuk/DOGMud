@@ -1576,6 +1576,15 @@ func meleeDisplaySubtype(weaponSubType items.ItemSubType, weaponReach, posRadius
 // neutral "turn aside" phrasing keeps the line coherent rather than printing
 // an empty verb.
 func deflectedSwingLines(defense combatvocab.Defence, sourceName, targetName, dmgDesc string) (toAttacker, toDefender items.ItemMessage) {
+	// The defence's deflected pool (or the generic one) when the store is
+	// loaded; both roles come from one variant. The literals below are the
+	// same sentences as variant 0, kept for a store that is not loaded.
+	if a, d, ok := items.RenderDeflectedSwing(defense, map[items.TokenName]string{
+		items.TokenActor: sourceName, items.TokenActee: targetName, items.TokenDamage: dmgDesc,
+	}); ok {
+		return a, d
+	}
+
 	dmg := `(<ansi fg="damage">` + dmgDesc + `</ansi>)`
 
 	var verbYou, verbThey string

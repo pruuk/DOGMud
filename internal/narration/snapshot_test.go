@@ -87,6 +87,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
@@ -506,11 +507,44 @@ func buildDefenseMessagesGolden(t *testing.T) string {
 	}
 
 	for _, dt := range types {
+		if items.DefencePool(dt) == items.DefencePoolDeflected {
+			continue // bands-free group; its lines are the deflected section below
+		}
 		for _, band := range bands {
 			triad := items.RenderDefenseMessage(items.DefencePool(dt), band.crit, band.margin, defenseStandins, 0)
 			fmt.Fprintf(&b, "%s|%s|actee => %s\n", dt, band.name, substituteDefenseTokens(string(triad.ToDefender)))
 			fmt.Fprintf(&b, "%s|%s|actor => %s\n", dt, band.name, substituteDefenseTokens(string(triad.ToAttacker)))
 			fmt.Fprintf(&b, "%s|%s|observer => %s\n", dt, band.name, substituteDefenseTokens(string(triad.ToRoom)))
+		}
+	}
+
+	// DEFLECTED SWING: the pair each side reads when a defence wins but the
+	// swing still does damage. One row per variant until the index wraps; a
+	// defence with no pool of its own (and an empty defence) reads the
+	// generic "deflected" group.
+	fmt.Fprintf(&b, "\n# DEFLECTED SWING: defence x variant index, actor and actee from one index\n")
+	deflectedStandins := map[items.TokenName]string{
+		items.TokenActor: "Attacker", items.TokenActee: "Defender", items.TokenDamage: "Wounds",
+	}
+	for _, d := range []combatvocab.Defence{combatvocab.DefenceDodge, combatvocab.DefenceParry, combatvocab.DefenceBlock, combatvocab.DefenceNone} {
+		name := string(d)
+		if d == combatvocab.DefenceNone {
+			name = "generic"
+		}
+		first := ""
+		for i := 0; i < 64; i++ {
+			actor, actee, ok := items.RenderDeflectedSwing(d, deflectedStandins, i)
+			if !ok {
+				fmt.Fprintf(&b, "deflected|%s => (no pool)\n", name)
+				break
+			}
+			if i == 0 {
+				first = string(actor)
+			} else if string(actor) == first {
+				break
+			}
+			fmt.Fprintf(&b, "deflected|%s|%d|actor => %s\n", name, i, substituteDefenseTokens(string(actor)))
+			fmt.Fprintf(&b, "deflected|%s|%d|actee => %s\n", name, i, substituteDefenseTokens(string(actee)))
 		}
 	}
 

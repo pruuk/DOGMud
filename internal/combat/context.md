@@ -551,6 +551,12 @@ curve: a bare win removes **50%**, rising linearly to **100%** at
 continuously instead of in a step. A defensive **crit** is not on this curve —
 it fully negates and, for a single-target attack, fires the counterattack.
 
+The single composite line each side reads for a deflected melee swing comes
+from `deflectedSwingLines`, which draws one index from the winning defence's
+`deflected:` pool in `defense-messages/` (generic `deflected.yaml` when the
+defence has none) through `items.RenderDeflectedSwing`. With no store loaded it
+returns the literal sentences, which equal variant 0 of each pool.
+
 Before this, a defensive win was zero damage while `TrySpellDeflection` and
 `TryStoicResolve` produced a flat 0.5 or 0.0 for spells and taunts: two
 mechanisms answering one question. Task 12 folded those channels onto this curve

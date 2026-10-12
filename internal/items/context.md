@@ -558,6 +558,18 @@ substitution (`UntagItemTokens`), because `messaging.HideWeapons` reads every
 item-tagged name as a weapon and would tell a shapes-only reader "the weapon
 rushes past" for a kick (spec F2). The stored pools are never edited.
 
+A group may also carry a `deflected:` section (`DeflectedPool`, `actor` and
+`actee` lists paired by index, at least four pairs), the lines for a swing the
+defence won but that still did damage. `RenderDeflectedSwing(defence, tokens,
+index...)` renders one pair from one index: the defence's own pool first, then
+the generic group `DefencePoolDeflected` (`deflected.yaml`), which holds no
+bands, only that section. `Validate` skips the band checks only for a group
+with a deflected pool and no bands at all. `ok` is false when no pool is loaded,
+and `combat.deflectedSwingLines` then keeps its literal text. Tokens: `{actor}`
+(attacker), `{actee}` (defender), `{damage}` (wound words, tagged by the line).
+Variant 0 of each pool is the pre-pool sentence, pinned by
+`TestShippedDeflectedPools`.
+
 These coordinated pools are authoritative for the actual quell or defy
 outcome. Callers pass the resolved defence result and display-ready, actor-aware
 identities; they do not add a competing hardcoded outcome line. Private
