@@ -15,7 +15,7 @@ import (
 // from combat text. Replacements: barely hits, misses / flies past, dodge
 // most of it, hurts a little, stay on your feet, lose your balance, runs
 // over / runs right past.
-var retiredCombatIdiom = regexp.MustCompile(`(?i)\bclip(s|ped)?\b|goes wide|\bslips? most\b|\bsliver\b|\bfooting\b|\boverruns?\b|carries straight past`)
+var retiredCombatIdiom = regexp.MustCompile(`(?i)\bclip(s|ped|ping)?\b|goes wide|went wide|\bslips? most\b|slipped most|\bsliver\b|\bfooting\b|\boverruns?\b|carries straight past`)
 
 func TestCombatTextHasNoRetiredIdioms(t *testing.T) {
 	_, here, _, ok := runtime.Caller(0)
@@ -23,7 +23,7 @@ func TestCombatTextHasNoRetiredIdioms(t *testing.T) {
 		t.Fatal("runtime.Caller failed")
 	}
 	root := filepath.Join(filepath.Dir(here), "_datafiles", "world", "dogmud")
-	dirs := []string{"combat-messages", "defense-messages", filepath.Join("narration", "special-moves")}
+	dirs := []string{"combat-messages", "defense-messages", filepath.Join("narration", "special-moves"), "messaging"}
 	scanned := 0
 	for _, d := range dirs {
 		files, err := filepath.Glob(filepath.Join(root, d, "*.yaml"))

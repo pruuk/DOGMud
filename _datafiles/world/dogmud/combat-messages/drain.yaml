@@ -389,7 +389,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">FEEDS</ansi> on you utterly!'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT DRAIN</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like a predator and <ansi fg="cyan-bold">LEECHES</ansi> you dry!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely, and yourvitality is <ansi fg="cyan-bold">ANNIHILATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely, and your vitality is <ansi fg="cyan-bold">ANNIHILATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your every breath and delivers a <ansi fg="cyan-bold">FLAWLESS DRAIN</ansi>!'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical strike creates the opening, and you are <ansi fg="cyan-bold">DRAINED</ansi>!'
@@ -397,7 +397,7 @@ options:
         - 'While {position}, {momentum}, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT FEEDING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING DRAIN</ansi> from the perfect angle!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">LEECHES</ansi> you with brutality!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless, and yourvitality is <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless, and your vitality is <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s unstoppable hunger ends in a <ansi fg="cyan-bold">CRITICAL DRAIN</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all focus and <ansi fg="cyan-bold">DRINKS DEEP</ansi> from you utterly!'
         - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> your vitality!'

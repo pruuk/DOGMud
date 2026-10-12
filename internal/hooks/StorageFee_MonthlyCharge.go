@@ -66,7 +66,7 @@ func ChargeStorageFee(u *users.UserRecord, currentMonth int) {
 				"Thornwall Bank Notice: Your monthly storage fee of "+
 					"%dg has been collected (%d slot(s) at %dg/slot). "+
 					"You have %dg remaining in your account. Next "+
-					"month's fee will be %dg. Please deposit"+
+					"month's fee will be %dg. Please deposit "+
 					"additional gold or retrieve items to avoid "+
 					"forfeiture.",
 				fee, slotCount, feePerSlot, u.Character.Bank, fee)

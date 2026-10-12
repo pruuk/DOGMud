@@ -418,7 +418,7 @@ options:
         - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL LACERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">CARVES THROUGH</ansi> you utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and theirclaws <ansi fg="cyan-bold">DECIMATE</ansi> you!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their claws <ansi fg="cyan-bold">DECIMATE</ansi> you!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY EVISCERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
@@ -440,7 +440,7 @@ options:
         - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL LACERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">CARVES THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and theirclaws <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their claws <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
   fumble:
     # messages for when they are in the same room
     together:

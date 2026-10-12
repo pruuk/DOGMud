@@ -745,7 +745,7 @@ options:
         - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL SHOT</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">CARVES THROUGH</ansi> you utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and theirshot <ansi fg="cyan-bold">DECIMATES</ansi> you!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their shot <ansi fg="cyan-bold">DECIMATES</ansi> you!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY SNIPES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -767,7 +767,7 @@ options:
         - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL SHOT</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">CARVES THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and theirshot <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their shot <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
     # messages for when they are in different rooms, such as with projectiles
     separate:
       actor:
@@ -794,7 +794,7 @@ options:
         - 'A tactical critical shot from the <ansi fg="exit">{entrancename}</ansi> direction <ansi fg="cyan-bold">ANNIHILATES</ansi> you!'
         master:
         - 'A legendary marksman''s critical shot from the <ansi fg="exit">{entrancename}</ansi> direction <ansi fg="cyan-bold">DEVASTATES</ansi> you!'
-        - 'A perfectly aimed critical shot from the <ansi fg="exit">{entrancename}</ansi> <ansi fg="cyan-bold">EVISCERA</ansi>ES you!'
+        - 'A perfectly aimed critical shot from the <ansi fg="exit">{entrancename}</ansi> <ansi fg="cyan-bold">EVISCERATES</ansi> you!'
         - 'An impossibly accurate critical shot from the <ansi fg="exit">{entrancename}</ansi> direction <ansi fg="cyan-bold">ANNIHILATES</ansi> you!'
       observer:
         beginner:

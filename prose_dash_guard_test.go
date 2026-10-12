@@ -29,6 +29,12 @@ var proseDashDirs = []string{
 var (
 	emOrEnDash   = regexp.MustCompile("[—–]")
 	spacedHyphen = regexp.MustCompile(`[A-Za-z0-9,.!?'")>}] --? [A-Za-z0-9<{'"]`)
+	// Holes a folded or double-quoted multi-line string opens: a dash after a
+	// `\ ` escaped-space continuation, a dash that ends a line, and a double
+	// hyphen that starts a continuation line.
+	contHyphen     = regexp.MustCompile(`\\ --? [A-Za-z<{]`)
+	trailingHyphen = regexp.MustCompile(`[^\s] --?\\?$`)
+	leadingDouble  = regexp.MustCompile(`^\s+-- `)
 )
 
 func TestPlayerProseHasNoDashes(t *testing.T) {
@@ -62,7 +68,8 @@ func TestPlayerProseHasNoDashes(t *testing.T) {
 					continue
 				}
 				scanned++
-				if emOrEnDash.MatchString(line) || spacedHyphen.MatchString(line) {
+				if emOrEnDash.MatchString(line) || spacedHyphen.MatchString(line) ||
+					contHyphen.MatchString(line) || trailingHyphen.MatchString(line) || leadingDouble.MatchString(line) {
 					t.Errorf("%s:%d uses a dash: %s", path, n, strings.TrimSpace(line))
 				}
 			}

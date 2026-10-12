@@ -25,6 +25,8 @@ import (
 // aligning spaces, as the old start menu did ("New to DOGMud      -- I know").
 var goDash = regexp.MustCompile("[—–]|[A-Za-z0-9,.!?'\")>}] -- [A-Za-z0-9<{'\"%]|  -- [A-Za-z0-9<{'\"%]")
 
+var fmtVerb = regexp.MustCompile(`%[-+# 0-9.]*[a-zA-Z]`)
+
 var goDashExemptPrefixes = []string{
 	"internal/behaviortree/",
 	"internal/conversations/",
@@ -82,6 +84,49 @@ func quietCall(c *ast.CallExpr) bool {
 	return false
 }
 
+// rightmostStringLit returns the string literal that ends expression e, if e
+// is a literal or a chain of literals joined by +.
+func rightmostStringLit(e ast.Expr) *ast.BasicLit {
+	switch x := e.(type) {
+	case *ast.BasicLit:
+		if x.Kind == token.STRING {
+			return x
+		}
+	case *ast.BinaryExpr:
+		if x.Op == token.ADD {
+			return rightmostStringLit(x.Y)
+		}
+	case *ast.ParenExpr:
+		return rightmostStringLit(x.X)
+	}
+	return nil
+}
+
+// leftmostStringLit returns the string literal that begins expression e.
+func leftmostStringLit(e ast.Expr) *ast.BasicLit {
+	switch x := e.(type) {
+	case *ast.BasicLit:
+		if x.Kind == token.STRING {
+			return x
+		}
+	case *ast.BinaryExpr:
+		if x.Op == token.ADD {
+			return leftmostStringLit(x.X)
+		}
+	case *ast.ParenExpr:
+		return leftmostStringLit(x.X)
+	}
+	return nil
+}
+
+func endsLowerLetter(s string) bool {
+	return s != "" && s[len(s)-1] >= 'a' && s[len(s)-1] <= 'z'
+}
+
+func startsLowerLetter(s string) bool {
+	return s != "" && s[0] >= 'a' && s[0] <= 'z'
+}
+
 func TestGoPlayerStringsHaveNoDashes(t *testing.T) {
 	_, here, _, ok := runtime.Caller(0)
 	if !ok {
@@ -112,22 +157,50 @@ func TestGoPlayerStringsHaveNoDashes(t *testing.T) {
 				}
 				return true
 			})
+			inQuiet := func(from, to token.Pos) bool {
+				for _, q := range quiet {
+					if from >= q[0] && to <= q[1] {
+						return true
+					}
+				}
+				return false
+			}
 			ast.Inspect(f, func(n ast.Node) bool {
+				if b, ok := n.(*ast.BinaryExpr); ok && b.Op == token.ADD && !inQuiet(b.Pos(), b.End()) {
+					left, right := rightmostStringLit(b.X), leftmostStringLit(b.Y)
+					if left != nil && right != nil {
+						ls, lerr := strconv.Unquote(left.Value)
+						rs, rerr := strconv.Unquote(right.Value)
+						if lerr == nil && rerr == nil && endsLowerLetter(ls) && startsLowerLetter(rs) {
+							t.Errorf("%s:%d: two words run together across a +: %q + %q", rel, fset.Position(b.OpPos).Line, ls, rs)
+						}
+					}
+				}
 				lit, ok := n.(*ast.BasicLit)
 				if !ok || lit.Kind != token.STRING {
 					return true
 				}
-				for _, q := range quiet {
-					if lit.Pos() >= q[0] && lit.End() <= q[1] {
-						return true
-					}
+				if inQuiet(lit.Pos(), lit.End()) {
+					return true
 				}
 				s, err := strconv.Unquote(lit.Value)
 				if err != nil {
 					s = lit.Value
 				}
+				line := fset.Position(lit.Pos()).Line
 				if goDash.MatchString(s) {
-					t.Errorf("%s:%d: dash in a string: %s", rel, fset.Position(lit.Pos()).Line, s)
+					t.Errorf("%s:%d: dash in a string: %s", rel, line, s)
+				}
+				// "%s<ansi ...>" is a format verb standing for text that ends in a
+				// space or a tag, not a word run into a tag.
+				if wordTagJoin.MatchString(fmtVerb.ReplaceAllString(s, "%")) {
+					t.Errorf("%s:%d: word joined to a tag (needs a space): %s", rel, line, s)
+				}
+				if w := runTogetherPossessive(s); w != "" {
+					t.Errorf("%s:%d: run-together possessive %q: %s", rel, line, w, s)
+				}
+				if joinedAreRun.MatchString(s) {
+					t.Errorf("%s:%d: joined words (you are / they are / we are): %s", rel, line, s)
 				}
 				return true
 			})

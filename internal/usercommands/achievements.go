@@ -51,7 +51,7 @@ func Achievements(rest string, user *users.UserRecord, room *rooms.Room, flags e
 	earnedPoints := achievements.PointsFor(char.Achievements)
 
 	user.SendText(messaging.CategorySystem,
-		fmt.Sprintf(`<ansi fg="yellow-bold">Achievements</ansi>: earned<ansi fg="white-bold">%d/%d</ansi>, <ansi fg="yellow">%d points</ansi>`,
+		fmt.Sprintf(`<ansi fg="yellow-bold">Achievements</ansi>: earned <ansi fg="white-bold">%d/%d</ansi>, <ansi fg="yellow">%d points</ansi>`,
 			earnedCount, len(defs), earnedPoints))
 
 	for _, cat := range achievementCategories {

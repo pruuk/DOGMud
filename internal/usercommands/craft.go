@@ -505,7 +505,7 @@ func craftCraftableNow(user *users.UserRecord, room *rooms.Room) bool {
 
 	if ready == 0 {
 		user.SendText(messaging.CategorySystem, ``)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Nothing you can craft here right now. Try<ansi fg="cyan-bold">craft list</ansi> to see everything you know.</ansi>`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Nothing you can craft here right now. Try <ansi fg="cyan-bold">craft list</ansi> to see everything you know.</ansi>`)
 		user.SendText(messaging.CategorySystem, ``)
 		return true
 	}

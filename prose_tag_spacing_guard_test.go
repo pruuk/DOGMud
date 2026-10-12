@@ -15,9 +15,28 @@ import (
 // dropped these spaces in dozens of lines. The same rewrite also produced
 // the joined words "youare", "theyare" and "weare".
 var (
-	wordTagJoin  = regexp.MustCompile(`[A-Za-z]<ansi fg=`)
+	wordTagJoin  = regexp.MustCompile(`[A-Za-z]<ansi\b|</ansi>[A-Za-z]`)
 	joinedAreRun = regexp.MustCompile(`\b(you|they|we)are\b`)
+	// "theirjaws", "yourvitality": a possessive run into the noun after it.
+	// Go's regexp has no lookahead, so the real possessives are filtered in
+	// runTogetherPossessive.
+	possessiveRun = regexp.MustCompile(`\b(their|your)[a-z]+\b`)
 )
+
+var realPossessiveWords = map[string]bool{
+	"theirs": true, "yours": true, "yourself": true, "yourselves": true,
+}
+
+// runTogetherPossessive returns the first "their..." or "your..." word in s
+// that is not a real English word, or "" when there is none.
+func runTogetherPossessive(s string) string {
+	for _, w := range possessiveRun.FindAllString(s, -1) {
+		if !realPossessiveWords[w] {
+			return w
+		}
+	}
+	return ""
+}
 
 func TestProseTagSpacing(t *testing.T) {
 	_, here, _, ok := runtime.Caller(0)
@@ -52,6 +71,9 @@ func TestProseTagSpacing(t *testing.T) {
 				scanned++
 				if wordTagJoin.MatchString(line) {
 					t.Errorf("%s:%d word joined to a tag (needs a space): %s", path, n, strings.TrimSpace(line))
+				}
+				if w := runTogetherPossessive(line); w != "" {
+					t.Errorf("%s:%d run-together possessive %q: %s", path, n, w, strings.TrimSpace(line))
 				}
 				if joinedAreRun.MatchString(line) {
 					t.Errorf("%s:%d joined words (you are / they are / we are): %s", path, n, strings.TrimSpace(line))

@@ -476,7 +476,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their attack as their whip wraps around them!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> in a pathetic tangle!'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach <ansi fg="red-bold">FUMBLES</ansi>, and theirwhip goes wild!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach <ansi fg="red-bold">FUMBLES</ansi>, and their whip goes wild!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and their whip <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> snap backfires catastrophically!'
         master:

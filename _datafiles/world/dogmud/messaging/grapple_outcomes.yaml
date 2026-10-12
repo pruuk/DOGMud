@@ -693,7 +693,7 @@ degradations:
       - "A hip bump creates enough room for {actee} to pull\
         \ the second leg free. Full guard closes and the pass resets."
     actee:
-      - "You shrimp hard on the pinned side, create a sliver of space,\
+      - "You shrimp hard on the pinned side, create a little space,\
         \ and drag the knee through. Half guard becomes full guard."
       - "You hip-bump {actor} to break their weight and snake\
         \ the second leg free. Full guard: you're back in the fight."
@@ -895,7 +895,7 @@ gradients:
       - "{actee} squirms and frames; {actor}'s dominance\
         \ slips."
       - "The pressure {actor} had on {actee} fades and\
-        \ neutral footing returns."
+        \ even ground returns."
 
   # upper_boundary_up: Neutral → Controlling (you're asserting dominance)
   upper_boundary_up:
