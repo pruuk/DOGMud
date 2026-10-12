@@ -33,6 +33,9 @@ contains:
   combat messages (`bite`, `claws`, `slam`, `gore`, `sting`). Empty
   means the humanoid default (generic-punch messaging). Validated at
   load by `validateNaturalAttack`; panics on unknown values.
+- `speech` — `*bool`; `speech: false` marks a species with no voice (beasts,
+  slimes, elementals, constructs). Absent means it speaks. Read through
+  `(*Species).CanSpeak()`; `characters.SpeechState` is the consumer.
 
 ### Registry
 

@@ -14,6 +14,7 @@ unarmedname: talons and beak
 natural_attack: claws
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote screeches and spreads its wings wide, talons extended.
   - emote fixes you with a piercing, unblinking stare.

@@ -1,5 +1,5 @@
 # taunt-messages store snapshot
-# files at time of writing: 1 (rhetoric)
+# files at time of writing: 3 (howl,rhetoric,wordless)
 # dimensions: intensity(hit/miss/critical/fumble) x perspective(actor/actee/observer)
 #
 # All three perspectives of one intensity come from ONE coordinated GetTauntTriad call
@@ -19,9 +19,33 @@ rhetoric|hit|observer => <ansi fg="User">Source</ansi> sneers at <ansi fg="Mob">
 rhetoric|miss|actor => Your taunt falls flat against <ansi fg="Mob">Target</ansi>.
 rhetoric|miss|actee => <ansi fg="User">Source</ansi> tries to taunt you, but it has no effect.
 rhetoric|miss|observer => <ansi fg="User">Source</ansi> tries to taunt <ansi fg="Mob">Target</ansi>, but it falls flat.
-rhetoric|critical|actor => Your words strike like a blade — <ansi fg="Mob">Target</ansi> recoils in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
-rhetoric|critical|actee => <ansi fg="User">Source</ansi>'s words cut to the bone — you reel in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
-rhetoric|critical|observer => <ansi fg="User">Source</ansi>'s words strike like a blade — <ansi fg="Mob">Target</ansi> recoils!
-rhetoric|fumble|actor => <ansi fg="red">You stumble over your words trying to taunt <ansi fg="Mob">Target</ansi> — how embarrassing!</ansi>
+rhetoric|critical|actor => Your words strike like a blade, and <ansi fg="Mob">Target</ansi> recoils in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+rhetoric|critical|actee => <ansi fg="User">Source</ansi>'s words cut to the bone, and you reel in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+rhetoric|critical|observer => <ansi fg="User">Source</ansi>'s words strike like a blade, and <ansi fg="Mob">Target</ansi> recoils!
+rhetoric|fumble|actor => <ansi fg="red">You stumble over your words trying to taunt <ansi fg="Mob">Target</ansi>. How embarrassing!</ansi>
 rhetoric|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi> tries to taunt you but fumbles their words!</ansi>
 rhetoric|fumble|observer => <ansi fg="User">Source</ansi> stumbles over their words trying to taunt <ansi fg="Mob">Target</ansi>.
+wordless|hit|actor => You snarl at <ansi fg="Mob">Target</ansi> until their nerve cracks! (<ansi fg="damage">ModerateWounds</ansi>)
+wordless|hit|actee => <ansi fg="User">Source</ansi> snarls at you until your nerve cracks! (<ansi fg="damage">ModerateWounds</ansi>)
+wordless|hit|observer => <ansi fg="User">Source</ansi> snarls at <ansi fg="Mob">Target</ansi> until their nerve cracks!
+wordless|miss|actor => Your snarl barely reaches <ansi fg="Mob">Target</ansi>, who is unmoved.
+wordless|miss|actee => <ansi fg="User">Source</ansi>'s snarl barely reaches you, and you are unmoved.
+wordless|miss|observer => <ansi fg="User">Source</ansi> snarls at <ansi fg="Mob">Target</ansi>, who is unmoved.
+wordless|critical|actor => Your roar crashes over <ansi fg="Mob">Target</ansi>, who reels! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+wordless|critical|actee => <ansi fg="User">Source</ansi>'s roar crashes over you, and you reel! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+wordless|critical|observer => <ansi fg="User">Source</ansi>'s roar crashes over <ansi fg="Mob">Target</ansi>, who reels!
+wordless|fumble|actor => <ansi fg="red">Your snarl fizzles out. <ansi fg="Mob">Target</ansi> stares at you.</ansi>
+wordless|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi>'s snarl at you fizzles out.</ansi>
+wordless|fumble|observer => <ansi fg="User">Source</ansi>'s snarl at <ansi fg="Mob">Target</ansi> fizzles out.
+howl|hit|actor => Your long howl rolls over <ansi fg="Mob">Target</ansi>, who shudders! (<ansi fg="damage">ModerateWounds</ansi>)
+howl|hit|actee => <ansi fg="User">Source</ansi>'s long howl rolls over you, and you shudder! (<ansi fg="damage">ModerateWounds</ansi>)
+howl|hit|observer => <ansi fg="User">Source</ansi>'s long howl rolls over <ansi fg="Mob">Target</ansi>, who shudders!
+howl|miss|actor => Your long howl fades, and <ansi fg="Mob">Target</ansi> stands firm.
+howl|miss|actee => <ansi fg="User">Source</ansi> howls long, but you stand firm.
+howl|miss|observer => <ansi fg="User">Source</ansi> howls long at <ansi fg="Mob">Target</ansi>, who stands firm.
+howl|critical|actor => Your long howl crashes over <ansi fg="Mob">Target</ansi>, who reels! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+howl|critical|actee => <ansi fg="User">Source</ansi>'s long howl crashes over you. You reel! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+howl|critical|observer => <ansi fg="User">Source</ansi>'s long howl crashes over <ansi fg="Mob">Target</ansi>, who reels!
+howl|fumble|actor => <ansi fg="red">Your long howl wavers and dies. <ansi fg="Mob">Target</ansi> stares at you.</ansi>
+howl|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi>'s long howl wavers and dies.</ansi>
+howl|fumble|observer => <ansi fg="User">Source</ansi>'s long howl at <ansi fg="Mob">Target</ansi> wavers and dies.

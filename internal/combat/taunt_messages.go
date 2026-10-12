@@ -145,7 +145,24 @@ type TauntTriad struct {
 // gets narration.DefaultPicker, which routes through the engine's util.Rand
 // seam.
 func GetTauntTriad(intensity TauntIntensity, source, target, sourceType, targetType, damageDesc string, picker ...narration.Picker) TauntTriad {
-	group := tauntMessages["rhetoric"]
+	return GetTauntTriadFrom(TauntPoolRhetoric, intensity, source, target, sourceType, targetType, damageDesc, picker...)
+}
+
+// Taunt pool names: the taunt-messages file a taunt narrates from.
+//
+// internal/characters cannot import this package, so (*Character).TauntPool
+// returns these same plain strings; TestTauntPoolNamesMatchCharacters pins
+// that the two spellings agree.
+const (
+	TauntPoolRhetoric = "rhetoric" // spoken barbs
+	TauntPoolWordless = "wordless" // snarls and roars: any speechless taunter
+	TauntPoolHowl     = "howl"     // howls and growls: the mob howl command
+)
+
+// GetTauntTriadFrom is GetTauntTriad for a named pool. An unknown pool returns
+// the zero triad, the same sentinel an empty store gives.
+func GetTauntTriadFrom(pool string, intensity TauntIntensity, source, target, sourceType, targetType, damageDesc string, picker ...narration.Picker) TauntTriad {
+	group := tauntMessages[pool]
 	if group == nil {
 		return TauntTriad{}
 	}
@@ -216,6 +233,17 @@ func SeedTauntMessagesForTest(bands map[TauntIntensity]*TauntMessages) func() {
 	prev := tauntMessages
 	tauntMessages = map[string]*TauntMessageGroup{
 		"rhetoric": {OptionId: "rhetoric", Options: bands},
+	}
+	return func() { tauntMessages = prev }
+}
+
+// SeedTauntPoolsForTest is SeedTauntMessagesForTest for several named pools at
+// once, so a test can tell which pool a taunt read from.
+func SeedTauntPoolsForTest(pools map[string]map[TauntIntensity]*TauntMessages) func() {
+	prev := tauntMessages
+	tauntMessages = map[string]*TauntMessageGroup{}
+	for name, bands := range pools {
+		tauntMessages[name] = &TauntMessageGroup{OptionId: name, Options: bands}
 	}
 	return func() { tauntMessages = prev }
 }

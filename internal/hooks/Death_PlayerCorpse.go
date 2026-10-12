@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"fmt"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -60,6 +62,9 @@ func wirePlayerCorpse(c *characters.Character) {
 				Character:    *u.Character,
 				RoundCreated: util.GetRoundCount(),
 			})
+			// The dead player is still listed in the room here (the
+			// "has died." line excludes them the same way), so skip them.
+			announceCorpse(room, fmt.Sprintf(`<ansi fg="username">%s</ansi>`, c.Name), u.UserId)
 		})
 }
 

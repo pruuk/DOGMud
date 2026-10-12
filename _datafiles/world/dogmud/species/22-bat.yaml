@@ -15,6 +15,7 @@ damage:
 damage_multiplier: 0.15
 disabledslots: ['weapon', 'offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet']
 tameable: false
+speech: false
 stats:
   strength:
     base: 15

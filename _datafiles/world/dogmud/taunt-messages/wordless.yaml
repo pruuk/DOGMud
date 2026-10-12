@@ -1,0 +1,107 @@
+# Wordless taunt messages: snarls, roars, hisses and shrieks.
+# Read by any taunter who cannot speak (species speech: false). A mob howl
+# reads its own pool, howl.yaml.
+# No words are spoken here, and no body part is named that a species might lack.
+# Tokens available:
+# {actor}     - name of the one making the sound
+# {actee}     - name of the target
+# {actortype} - ansi name alias for the actor: 'username' or 'mobname'
+# {acteetype} - ansi name alias for the target: 'username' or 'mobname'
+# {damage}    - conviction damage description text
+#
+# THE THREE LISTS IN EACH BAND PAIR BY INDEX, exactly as in rhetoric.yaml.
+# Variant N of actor, actee and observer describe the SAME moment, and
+# combat.GetTauntTriadFrom renders all three from ONE index.
+# combat.TauntMessageGroup.Validate enforces equal lengths, so adding a line to
+# one list means adding its partner to the other two.
+
+optionid: wordless
+options:
+  hit:
+    actor:
+    - 'You snarl at <ansi fg="{acteetype}">{actee}</ansi> until their nerve cracks! (<ansi fg="damage">{damage}</ansi>)'
+    - 'You roar, and the sound rattles <ansi fg="{acteetype}">{actee}</ansi>! (<ansi fg="damage">{damage}</ansi>)'
+    - 'You hiss low at <ansi fg="{acteetype}">{actee}</ansi>, and they flinch! (<ansi fg="damage">{damage}</ansi>)'
+    - 'You let out a piercing shriek at <ansi fg="{acteetype}">{actee}</ansi>! (<ansi fg="damage">{damage}</ansi>)'
+    - 'Your low rumble shakes <ansi fg="{acteetype}">{actee}</ansi> to the bone! (<ansi fg="damage">{damage}</ansi>)'
+    - 'Your menacing drone fills the air, and <ansi fg="{acteetype}">{actee}</ansi> falters! (<ansi fg="damage">{damage}</ansi>)'
+    actee:
+    - '<ansi fg="{actortype}">{actor}</ansi> snarls at you until your nerve cracks! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi> roars, and the sound rattles you! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi> hisses low at you, and you flinch! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi> lets out a piercing shriek at you! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi> makes a low rumble that shakes you to the bone! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s menacing drone fills the air, and you falter! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+    - '<ansi fg="{actortype}">{actor}</ansi> snarls at <ansi fg="{acteetype}">{actee}</ansi> until their nerve cracks!'
+    - '<ansi fg="{actortype}">{actor}</ansi> roars, and the sound rattles <ansi fg="{acteetype}">{actee}</ansi>!'
+    - '<ansi fg="{actortype}">{actor}</ansi> hisses low at <ansi fg="{acteetype}">{actee}</ansi>, who flinches!'
+    - '<ansi fg="{actortype}">{actor}</ansi> lets out a piercing shriek at <ansi fg="{acteetype}">{actee}</ansi>!'
+    - '<ansi fg="{actortype}">{actor}</ansi> makes a low rumble that shakes <ansi fg="{acteetype}">{actee}</ansi>!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s menacing drone fills the air, and <ansi fg="{acteetype}">{actee}</ansi> falters!'
+  miss:
+    actor:
+    - 'Your snarl barely reaches <ansi fg="{acteetype}">{actee}</ansi>, who is unmoved.'
+    - 'You roar at <ansi fg="{acteetype}">{actee}</ansi>, but they do not even blink.'
+    - '<ansi fg="{acteetype}">{actee}</ansi> watches your hiss with calm, steady eyes.'
+    - 'Your shriek fades, and <ansi fg="{acteetype}">{actee}</ansi> stands unbothered.'
+    - 'You rumble low, but <ansi fg="{acteetype}">{actee}</ansi> pays it no mind.'
+    - 'You snarl again and again, but <ansi fg="{acteetype}">{actee}</ansi> holds firm.'
+    actee:
+    - '<ansi fg="{actortype}">{actor}</ansi>''s snarl barely reaches you, and you are unmoved.'
+    - '<ansi fg="{actortype}">{actor}</ansi> roars, but you do not even blink.'
+    - 'You watch <ansi fg="{actortype}">{actor}</ansi> hiss with calm, steady eyes.'
+    - '<ansi fg="{actortype}">{actor}</ansi> shrieks, and you stand unbothered.'
+    - '<ansi fg="{actortype}">{actor}</ansi> rumbles low, but you pay it no mind.'
+    - '<ansi fg="{actortype}">{actor}</ansi> snarls again and again, but you hold firm.'
+    observer:
+    - '<ansi fg="{actortype}">{actor}</ansi> snarls at <ansi fg="{acteetype}">{actee}</ansi>, who is unmoved.'
+    - '<ansi fg="{actortype}">{actor}</ansi> roars at <ansi fg="{acteetype}">{actee}</ansi>, who does not even blink.'
+    - '<ansi fg="{acteetype}">{actee}</ansi> watches <ansi fg="{actortype}">{actor}</ansi> hiss with calm, steady eyes.'
+    - '<ansi fg="{actortype}">{actor}</ansi> shrieks, and <ansi fg="{acteetype}">{actee}</ansi> stands unbothered.'
+    - '<ansi fg="{actortype}">{actor}</ansi> rumbles low, but <ansi fg="{acteetype}">{actee}</ansi> pays it no mind.'
+    - '<ansi fg="{actortype}">{actor}</ansi> snarls again and again, but <ansi fg="{acteetype}">{actee}</ansi> holds firm.'
+  critical:
+    actor:
+    - 'Your roar crashes over <ansi fg="{acteetype}">{actee}</ansi>, who reels! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Your shriek pierces the air and <ansi fg="{acteetype}">{actee}</ansi> staggers! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'You snarl so fiercely that <ansi fg="{acteetype}">{actee}</ansi> stumbles back! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Thunder rolls from you and <ansi fg="{acteetype}">{actee}</ansi> shakes! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'You hiss, and <ansi fg="{acteetype}">{actee}</ansi> freezes in fear! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Your wild cry rings out and <ansi fg="{acteetype}">{actee}</ansi> wavers! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    actee:
+    - '<ansi fg="{actortype}">{actor}</ansi>''s roar crashes over you, and you reel! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s shriek pierces the air and you stagger! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi> snarls so fiercely that you stumble back! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Thunder rolls from <ansi fg="{actortype}">{actor}</ansi> and you shake! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi> hisses, and you freeze in fear! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s wild cry rings out and you waver! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    observer:
+    - '<ansi fg="{actortype}">{actor}</ansi>''s roar crashes over <ansi fg="{acteetype}">{actee}</ansi>, who reels!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s shriek pierces the air and <ansi fg="{acteetype}">{actee}</ansi> staggers!'
+    - '<ansi fg="{actortype}">{actor}</ansi> snarls so fiercely that <ansi fg="{acteetype}">{actee}</ansi> stumbles back!'
+    - 'Thunder rolls from <ansi fg="{actortype}">{actor}</ansi> and <ansi fg="{acteetype}">{actee}</ansi> shakes!'
+    - '<ansi fg="{actortype}">{actor}</ansi> hisses, and <ansi fg="{acteetype}">{actee}</ansi> freezes in fear!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s wild cry rings out and <ansi fg="{acteetype}">{actee}</ansi> wavers!'
+  fumble:
+    actor:
+    - '<ansi fg="red">Your snarl fizzles out. <ansi fg="{acteetype}">{actee}</ansi> stares at you.</ansi>'
+    - '<ansi fg="red">Your roar cracks and falls flat, and <ansi fg="{acteetype}">{actee}</ansi> looks on.</ansi>'
+    - '<ansi fg="red">You hiss, but only a thin whistle comes out.</ansi>'
+    - '<ansi fg="red">Your shriek dies away. <ansi fg="{acteetype}">{actee}</ansi> looks amused.</ansi>'
+    - '<ansi fg="red">You rumble, trip on the sound, and sputter.</ansi>'
+    - '<ansi fg="red">You try to roar at <ansi fg="{acteetype}">{actee}</ansi> and manage only a squeak.</ansi>'
+    actee:
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi>''s snarl at you fizzles out.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi>''s roar cracks and falls flat.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi> hisses, but only a thin whistle comes out.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi>''s shriek dies away to nothing.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi> rumbles, trips on the sound, and sputters.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi> tries to roar at you and manages only a squeak.</ansi>'
+    observer:
+    - '<ansi fg="{actortype}">{actor}</ansi>''s snarl at <ansi fg="{acteetype}">{actee}</ansi> fizzles out.'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s roar cracks and falls flat. <ansi fg="{acteetype}">{actee}</ansi> looks on.'
+    - '<ansi fg="{actortype}">{actor}</ansi> hisses, but only a thin whistle comes out.'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s shriek dies away, and <ansi fg="{acteetype}">{actee}</ansi> looks amused.'
+    - '<ansi fg="{actortype}">{actor}</ansi> rumbles, trips on the sound, and sputters.'
+    - '<ansi fg="{actortype}">{actor}</ansi> tries to roar at <ansi fg="{acteetype}">{actee}</ansi> and manages only a squeak.'

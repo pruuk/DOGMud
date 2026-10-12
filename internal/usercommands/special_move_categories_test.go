@@ -56,7 +56,7 @@ func TestKickActorLineWrapsAt80(t *testing.T) {
 var systemNoticeMarkers = []string{
 	"CostRefusalText", "focused on your work", "need a moment", "no target",
 	"already rallied", "still echoes", "Throw what?", "to throw.", "isn't something you can throw",
-	"crumbles apart", "ChannelDefenceShortageText", "text)",
+	"crumbles apart", "ChannelDefenceShortageText", "text)", "cannot make a sound",
 }
 
 // #449 siblings: taunt, throw, rally and warcry kept narration on

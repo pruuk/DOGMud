@@ -1676,13 +1676,21 @@ refusal category and the neighbouring "Visit a merchant" lines.
   mutation (owner decisions 2026-08-19), reuses only the contest + damage
   shape of taunt resolution, and never inspects its own contest's
   `DefensiveCrit`. `TauntResult.Counter` carries its outcome.
+  `TauntResult.Silenced` is true when `char.SpeechState()` is
+  `characters.Silenced`: the taunt (and a howl) is refused before anything is
+  paid, and callers print their own refusal (M6 slice 3). `CommandIsReady`'s
+  taunt case mirrors that gate. `TauntResult.WithWordlessDamageText()`
+  re-renders `DmgDesc`/`DmgDescToTarget` from the wordless band table; the mob
+  `howl` uses it so a howl names no speech whatever the species.
 
 Counter-swings route through the seam, so the ORIGINAL attacker defends them
 and is charged + progressed for it (the countered-party economy).
 
 Narration is rendered by `internal/combat` from the pool of the defence that
 won (`items.CounterPoolFor`; the defy answer from `counter-defy` via
-`combat.BuildCounterTauntMessages`). SEQUENCING:
+`combat.BuildCounterTauntMessages`, or `counter-defy-wordless` for a
+speechless counterer). `FireCounterTaunt` refuses a silenced counterer
+before the contest, so nothing is paid or defended (M6 slice 3). SEQUENCING:
 `counterSkillMoveExit` does
 NOT dispatch — messages render in call order and the wrappers narrate after
 `ExecuteX` returns, so the `CounterResult` rides up on each action's result

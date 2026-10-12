@@ -12,6 +12,7 @@ unarmedname: antlers
 natural_attack: gore
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote stamps a hoof and snorts nervously.
   - emote lowers its antlers and paws the ground.

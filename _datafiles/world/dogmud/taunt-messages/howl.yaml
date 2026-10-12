@@ -1,0 +1,107 @@
+# Howl taunt messages: long howls, rising howls, echoing howls, mournful
+# howls, and the growls that lead into them.
+# Read by the mob howl command, whatever the howler's species.
+# No words are spoken here, and no body part is named that a species might lack.
+# Tokens available:
+# {actor}     - name of the one howling
+# {actee}     - name of the target
+# {actortype} - ansi name alias for the actor: 'username' or 'mobname'
+# {acteetype} - ansi name alias for the target: 'username' or 'mobname'
+# {damage}    - conviction damage description text
+#
+# THE THREE LISTS IN EACH BAND PAIR BY INDEX, exactly as in rhetoric.yaml.
+# Variant N of actor, actee and observer describe the SAME moment, and
+# combat.GetTauntTriadFrom renders all three from ONE index.
+# combat.TauntMessageGroup.Validate enforces equal lengths, so adding a line to
+# one list means adding its partner to the other two.
+
+optionid: howl
+options:
+  hit:
+    actor:
+    - 'Your long howl rolls over <ansi fg="{acteetype}">{actee}</ansi>, who shudders! (<ansi fg="damage">{damage}</ansi>)'
+    - 'You let out a rising howl, and <ansi fg="{acteetype}">{actee}</ansi> falters! (<ansi fg="damage">{damage}</ansi>)'
+    - 'Your howl echoes all around <ansi fg="{acteetype}">{actee}</ansi>, who flinches! (<ansi fg="damage">{damage}</ansi>)'
+    - 'You howl a mournful note, and <ansi fg="{acteetype}">{actee}</ansi> goes cold! (<ansi fg="damage">{damage}</ansi>)'
+    - 'You growl low at <ansi fg="{acteetype}">{actee}</ansi>, and their nerve slips! (<ansi fg="damage">{damage}</ansi>)'
+    - 'Your growl swells into a howl, and <ansi fg="{acteetype}">{actee}</ansi> backs away! (<ansi fg="damage">{damage}</ansi>)'
+    actee:
+    - '<ansi fg="{actortype}">{actor}</ansi>''s long howl rolls over you, and you shudder! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi> lets out a rising howl, and you falter! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl echoes all around you, and you flinch! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi> howls a mournful note, and you go cold! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi> growls low at you, and your nerve slips! (<ansi fg="damage">{damage}</ansi>)'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s growl swells into a howl, and you back away! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+    - '<ansi fg="{actortype}">{actor}</ansi>''s long howl rolls over <ansi fg="{acteetype}">{actee}</ansi>, who shudders!'
+    - '<ansi fg="{actortype}">{actor}</ansi> lets out a rising howl, and <ansi fg="{acteetype}">{actee}</ansi> falters!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl echoes all around <ansi fg="{acteetype}">{actee}</ansi>, who flinches!'
+    - '<ansi fg="{actortype}">{actor}</ansi> howls a mournful note, and <ansi fg="{acteetype}">{actee}</ansi> goes cold!'
+    - '<ansi fg="{actortype}">{actor}</ansi> growls low at <ansi fg="{acteetype}">{actee}</ansi>, whose nerve slips!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s growl swells into a howl, and <ansi fg="{acteetype}">{actee}</ansi> backs away!'
+  miss:
+    actor:
+    - 'Your long howl fades, and <ansi fg="{acteetype}">{actee}</ansi> stands firm.'
+    - 'Your howl rises, but <ansi fg="{acteetype}">{actee}</ansi> does not even blink.'
+    - 'Your howl echoes away, and <ansi fg="{acteetype}">{actee}</ansi> pays it no mind.'
+    - 'You howl a mournful note, but <ansi fg="{acteetype}">{actee}</ansi> is unmoved.'
+    - 'You growl at <ansi fg="{acteetype}">{actee}</ansi>, who watches you calmly.'
+    - 'You growl and howl, but <ansi fg="{acteetype}">{actee}</ansi> holds their ground.'
+    actee:
+    - '<ansi fg="{actortype}">{actor}</ansi> howls long, but you stand firm.'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl rises, but you do not even blink.'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl echoes away, and you pay it no mind.'
+    - '<ansi fg="{actortype}">{actor}</ansi> howls a mournful note, but you are unmoved.'
+    - '<ansi fg="{actortype}">{actor}</ansi> growls at you, and you watch them calmly.'
+    - '<ansi fg="{actortype}">{actor}</ansi> growls and howls, but you hold your ground.'
+    observer:
+    - '<ansi fg="{actortype}">{actor}</ansi> howls long at <ansi fg="{acteetype}">{actee}</ansi>, who stands firm.'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl rises, but <ansi fg="{acteetype}">{actee}</ansi> does not even blink.'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl echoes away, and <ansi fg="{acteetype}">{actee}</ansi> pays it no mind.'
+    - '<ansi fg="{actortype}">{actor}</ansi> howls a mournful note, but <ansi fg="{acteetype}">{actee}</ansi> is unmoved.'
+    - '<ansi fg="{actortype}">{actor}</ansi> growls at <ansi fg="{acteetype}">{actee}</ansi>, who watches calmly.'
+    - '<ansi fg="{actortype}">{actor}</ansi> growls and howls, but <ansi fg="{acteetype}">{actee}</ansi> holds their ground.'
+  critical:
+    actor:
+    - 'Your long howl crashes over <ansi fg="{acteetype}">{actee}</ansi>, who reels! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Your howl rises and rises, and <ansi fg="{acteetype}">{actee}</ansi> staggers! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Your howl echoes on and on, and <ansi fg="{acteetype}">{actee}</ansi> shakes! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Your mournful howl chills <ansi fg="{acteetype}">{actee}</ansi> to the core! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Your growl breaks into a howl, and <ansi fg="{acteetype}">{actee}</ansi> recoils! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'You howl so fiercely that <ansi fg="{acteetype}">{actee}</ansi> stumbles back! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    actee:
+    - '<ansi fg="{actortype}">{actor}</ansi>''s long howl crashes over you. You reel! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl rises and rises, and you stagger! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl echoes on and on, and you shake! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s mournful howl chills you to the core! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s growl breaks into a howl. You recoil! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi> howls so fiercely that you stumble back! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    observer:
+    - '<ansi fg="{actortype}">{actor}</ansi>''s long howl crashes over <ansi fg="{acteetype}">{actee}</ansi>, who reels!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl rises and rises, and <ansi fg="{acteetype}">{actee}</ansi> staggers!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl echoes on and on, and <ansi fg="{acteetype}">{actee}</ansi> shakes!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s mournful howl chills <ansi fg="{acteetype}">{actee}</ansi> to the core!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s growl breaks into a howl, and <ansi fg="{acteetype}">{actee}</ansi> recoils!'
+    - '<ansi fg="{actortype}">{actor}</ansi> howls so fiercely that <ansi fg="{acteetype}">{actee}</ansi> stumbles back!'
+  fumble:
+    actor:
+    - '<ansi fg="red">Your long howl wavers and dies. <ansi fg="{acteetype}">{actee}</ansi> stares at you.</ansi>'
+    - '<ansi fg="red">Your howl starts to rise, then breaks into a yelp.</ansi>'
+    - '<ansi fg="red">You howl, but the sound comes out thin and small.</ansi>'
+    - '<ansi fg="red">Your mournful howl sounds more sad than fearsome.</ansi>'
+    - '<ansi fg="red">You growl, but it fades to a soft whine.</ansi>'
+    - '<ansi fg="red">You try to howl at <ansi fg="{acteetype}">{actee}</ansi> and manage only a squeak.</ansi>'
+    actee:
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi>''s long howl wavers and dies.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi>''s howl starts to rise, then breaks into a yelp.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi> howls, but the sound comes out thin and small.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi>''s mournful howl sounds more sad than fearsome.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi> growls, but it fades to a soft whine.</ansi>'
+    - '<ansi fg="green"><ansi fg="{actortype}">{actor}</ansi> tries to howl at you and manages only a squeak.</ansi>'
+    observer:
+    - '<ansi fg="{actortype}">{actor}</ansi>''s long howl at <ansi fg="{acteetype}">{actee}</ansi> wavers and dies.'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s howl starts to rise, then breaks into a yelp.'
+    - '<ansi fg="{actortype}">{actor}</ansi> howls, but the sound comes out thin and small.'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s mournful howl sounds more sad than fearsome.'
+    - '<ansi fg="{actortype}">{actor}</ansi> growls, but it fades to a soft whine.'
+    - '<ansi fg="{actortype}">{actor}</ansi> tries to howl at <ansi fg="{acteetype}">{actee}</ansi> and manages only a squeak.'

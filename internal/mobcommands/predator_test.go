@@ -519,7 +519,7 @@ func TestTauntAndHowlRouteStructuredDefyOutcomeExactlyOnce(t *testing.T) {
 		t.Run(filename, func(t *testing.T) {
 			parsed, err := parser.ParseFile(token.NewFileSet(), filepath.Join(filepath.Dir(thisFile), filename), nil, 0)
 			require.NoError(t, err)
-			actionCalls, renderCalls, legacyBranches := 0, 0, 0
+			actionCalls, renderCalls, narrateCalls, legacyBranches := 0, 0, 0, 0
 			ast.Inspect(parsed, func(node ast.Node) bool {
 				switch n := node.(type) {
 				case *ast.CallExpr:
@@ -529,6 +529,8 @@ func TestTauntAndHowlRouteStructuredDefyOutcomeExactlyOnce(t *testing.T) {
 							actionCalls++
 						case "sendChannelDefenceMessages":
 							renderCalls++
+						case "narrateMobTaunt":
+							narrateCalls++
 						}
 					}
 				case *ast.SelectorExpr:
@@ -539,7 +541,15 @@ func TestTauntAndHowlRouteStructuredDefyOutcomeExactlyOnce(t *testing.T) {
 				return true
 			})
 			require.Equal(t, 1, actionCalls, "%s must call the package-local action seam once", filename)
-			require.Equal(t, 1, renderCalls, "%s must render ExecuteTaunt's outcome once", filename)
+			// The shared narration flow (narrateMobTaunt, in taunt.go) is the
+			// one place the outcome is rendered; each wrapper must hand its
+			// result to it exactly once.
+			wantRender := 0
+			if filename == "taunt.go" {
+				wantRender = 1
+			}
+			require.Equal(t, wantRender, renderCalls, "%s must render ExecuteTaunt's outcome through the shared flow only", filename)
+			require.Equal(t, 1, narrateCalls, "%s must narrate its result through narrateMobTaunt once", filename)
 			require.Zero(t, legacyBranches, "%s must not retain hardcoded defy branches", filename)
 		})
 	}

@@ -204,10 +204,33 @@ func GetConvictionDamageDescriptionToTarget(damageAmount int, targetMaxConvictio
 	return convictionDamageDescription(damageAmount, targetMaxConviction, "your")
 }
 
-// convictionDamageDescription is the one band table; whose is the
+// GetWordlessConvictionDamageDescription is GetConvictionDamageDescription for
+// a taunt made without words (a beast's snarl, any howl, M6 slice 3): the
+// bands that name an insult, a rebuke, a verbal assault or a tirade read as
+// fear and dread instead.
+func GetWordlessConvictionDamageDescription(damageAmount int, targetMaxConviction int) string {
+	return convictionDamageBand(damageAmount, targetMaxConviction, "their", true)
+}
+
+// GetWordlessConvictionDamageDescriptionToTarget is the wordless band as the
+// one who took the damage reads it ("your").
+func GetWordlessConvictionDamageDescriptionToTarget(damageAmount int, targetMaxConviction int) string {
+	return convictionDamageBand(damageAmount, targetMaxConviction, "your", true)
+}
+
+// convictionDamageDescription is the spoken band table; whose is the
 // possessive the reader sees ("their" or "your").
 func convictionDamageDescription(damageAmount int, targetMaxConviction int, whose string) string {
+	return convictionDamageBand(damageAmount, targetMaxConviction, whose, false)
+}
+
+// convictionDamageBand is the one band table. wordless swaps the bands that
+// name speech; the bands that name resolve, confidence and will are shared.
+func convictionDamageBand(damageAmount int, targetMaxConviction int, whose string, wordless bool) string {
 	if targetMaxConviction <= 0 {
+		if wordless {
+			return "a flicker of unease"
+		}
 		return "a mild rebuke"
 	}
 
@@ -217,14 +240,23 @@ func convictionDamageDescription(damageAmount int, targetMaxConviction int, whos
 	case pct < 5:
 		return "a feeble jab at " + whose + " resolve"
 	case pct < 15:
+		if wordless {
+			return "a jolt of fear"
+		}
 		return "a stinging insult"
 	case pct < 30:
+		if wordless {
+			return "a wave of rattling dread"
+		}
 		return "a rattling verbal assault"
 	case pct < 50:
 		return "a crushing blow to " + whose + " confidence"
 	case pct < 75:
 		return "a devastating attack on " + whose + " will"
 	default:
+		if wordless {
+			return "a soul-shattering terror"
+		}
 		return "a soul-shattering tirade"
 	}
 }

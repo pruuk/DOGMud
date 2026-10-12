@@ -10,6 +10,7 @@ unarmedname: ember lash
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 grapple_immune: true
 return_damage: 20
 return_damage_channel: magical  # chunk 5.11f: elemental backlash answers to MAGICAL mitigation

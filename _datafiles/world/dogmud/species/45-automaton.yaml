@@ -11,6 +11,7 @@ unarmedname: servo-driven fists
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 naturalbash: true
 angrycommands:
   - emote pivots with a grind of servos, targeting sensors flaring.

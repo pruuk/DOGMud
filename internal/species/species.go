@@ -39,8 +39,12 @@ type Species struct {
 	// species uses for BASIC attacks (e.g. items.Bite, items.Claws). Empty =>
 	// humanoid default (Unarmed -> generic). Must be a known items.ItemSubType
 	// with a loaded combat-message file (validated at load in a later task).
-	NaturalAttack    items.ItemSubType `yaml:"natural_attack,omitempty"`
-	Tameable         bool
+	NaturalAttack items.ItemSubType `yaml:"natural_attack,omitempty"`
+	Tameable      bool
+	// Speech is false for a species with no voice (beasts, slimes, elementals,
+	// constructs). Absent means it speaks. Read through CanSpeak; a
+	// characters.SpeechState check decides how a taunt reads (M6 slice 3).
+	Speech           *bool `yaml:"speech,omitempty"`
 	Damage           items.Damage
 	DamageMultiplier float64 `yaml:"damage_multiplier,omitempty"` // Natural weapon power (0=use config default)
 	Selectable       bool
@@ -63,6 +67,12 @@ type Species struct {
 	// intrinsic kits nor in-combat acquisition. Machines/constructs (the
 	// Chrysalis is a biological phenomenon; it does not touch the mechanical).
 	MutationImmune bool `yaml:"mutation_immune,omitempty"`
+}
+
+// CanSpeak reports whether this species has a voice. A species file with no
+// speech key speaks.
+func (s *Species) CanSpeak() bool {
+	return s == nil || s.Speech == nil || *s.Speech
 }
 
 func GetAllSpecies() []Species {

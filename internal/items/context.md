@@ -403,7 +403,9 @@ plain carrier ("Curious Trinket").
   that one viewer (the repo-root guard `bauble_finder_view_guard_test.go`
   pins every caller and its call count). `displayNameFrom` and
   `longDescriptionFrom` are the spec-taking bodies of `DisplayName` and
-  `GetLongDescription`. Matching is viewer-agnostic,
+  `GetLongDescription`; `SpecDisplayName(itemId)` is the display name read
+  from the template spec with no item minted ("" without a spec), for text
+  about an item that does not exist yet (a mob's craft line). Matching is viewer-agnostic,
   so such a bauble matches ONLY by its generic words (`trinket`, `bauble`,
   the generic name), for everyone INCLUDING its finder: a hidden word that
   matched would confirm it to anyone who typed it (`look horse`), and as a
@@ -524,7 +526,10 @@ defence files do not move. Five counter-narration pools ride the same loader,
 shape, and validator (U6b Task 11, re-keyed by the counters slice) and keep
 their own constants because they are not defences: `CounterPoolDodge`,
 `CounterPoolParry`, `CounterPoolBlock`, `CounterPoolQuell`, and
-`CounterPoolDefy`. `CounterPoolFor(combatvocab.Defence)` names the pool for
+`CounterPoolDefy`. A sixth, `CounterPoolDefyWordless` (M6 slice 3), is the
+wordless twin of counter-defy that `combat.BuildCounterTauntMessages` reads
+for a speechless counterer; it is not a `CounterPoolFor` result.
+`CounterPoolFor(combatvocab.Defence)` names the pool for
 the DEFENCE that won the counter, not the attack it answered, so a parry crit
 always reads as a parry answered and a block crit as a block answered, with
 reinterpreted bands (weak = the counter is turned aside, normal = it lands,
@@ -557,6 +562,18 @@ swing; for a move it strips that tag from `{attack}` and `{weapon}` before
 substitution (`UntagItemTokens`), because `messaging.HideWeapons` reads every
 item-tagged name as a weapon and would tell a shapes-only reader "the weapon
 rushes past" for a kick (spec F2). The stored pools are never edited.
+
+A group may also carry a `deflected:` section (`DeflectedPool`, `actor` and
+`actee` lists paired by index, at least four pairs), the lines for a swing the
+defence won but that still did damage. `RenderDeflectedSwing(defence, tokens,
+index...)` renders one pair from one index: the defence's own pool first, then
+the generic group `DefencePoolDeflected` (`deflected.yaml`), which holds no
+bands, only that section. `Validate` skips the band checks only for a group
+with a deflected pool and no bands at all. `ok` is false when no pool is loaded,
+and `combat.deflectedSwingLines` then keeps its literal text. Tokens: `{actor}`
+(attacker), `{actee}` (defender), `{damage}` (wound words, tagged by the line).
+Variant 0 of each pool is the pre-pool sentence, pinned by
+`TestShippedDeflectedPools`.
 
 These coordinated pools are authoritative for the actual quell or defy
 outcome. Callers pass the resolved defence result and display-ready, actor-aware

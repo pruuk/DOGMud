@@ -2103,6 +2103,7 @@ disk. Grouped by what they own:
 | Inventory & gear | `inventory.go`, `inventory_handle.go`, `itemnouns.go` (`FindItemNoun`, plan 5a), `worn.go`, `hand_slots.go`, `anatomy.go`, `masterwork.go`, `migrate_enchantments.go`, `migrate_detuned_bows.go` |
 | Combat | `combat.go`, `combat_tokens.go`, `position_predicates.go`, `taunt_hold.go`, `submission_policy.go`, `die.go`, `respawn_home.go`, `engagement_storage.go` (was `combat_state_compat.go`; renamed by U12c-2 when the struct it kept compatible was deleted), `flee_admission.go` (`FleeAdmission`, `PublishFleeAdmission`, `TakeFleeAdmission`, `CancelFleeAdmission`, slice 4a) |
 | Casting | `cast_helpers.go`, `spells.go` |
+| Speech | `speech.go` (`(*Character).TauntPool()` returns "wordless" for Speechless, else "rhetoric", the plain names of `combat.TauntPool*`; `SpeechState`: `Speaks`, `Speechless` from a species with `speech: false`, `Silenced` from the `silenced` condition flag, which wins; M6 slice 3) |
 | Mutation | `intrinsic.go`, `bloom.go`, `bloom_mutation.go`, `chrysifier.go`, `mutation_scour.go` |
 | Social & economy | `companions.go`, `charminfo.go`, `shop.go`, `quests.go`, `alts.go` |
 | Justice | `arrest_policy.go` |

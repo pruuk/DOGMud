@@ -13,6 +13,7 @@ unarmedname: pseudopods
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 angrycommands:
   - emote quivers and extends a glistening pseudopod toward you.
   - emote bubbles and hisses, its surface roiling with caustic slime.

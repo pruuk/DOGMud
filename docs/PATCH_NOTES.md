@@ -2,6 +2,16 @@
 
 ## Unreleased: Fighting blind, and plainer combat words
 
+- Beasts and other creatures without a voice now snarl, roar and hiss at
+  you instead of trading insults, and answer your taunts the same way. A
+  wolf's howl now sounds like a howl, with real variety.
+- After a kill, a line tells you the remains are there to search, if you
+  can see them.
+- More variety when you begin a cast, and when a dodge, parry or block
+  only partly saves you.
+- A creature starting a craft now says what it is making; parry counters
+  fit any weapon, not just blades; gossip about the world reads cleanly.
+
 - When you cannot see at all, combat now tells you what you feel and hear:
   a blow landing, something whooshing past, your own swing finding nothing.
   You no longer read lines about watching your foe's stance. With

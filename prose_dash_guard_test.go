@@ -24,6 +24,7 @@ var proseDashDirs = []string{
 	"messaging",
 	"rooms",
 	"mobs",
+	"taunt-messages",
 }
 
 // The characters around a spaced dash may be a tag bracket or a token brace

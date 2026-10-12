@@ -5,19 +5,19 @@ options:
     together:
       actee:
       - '<ansi fg="defense-good">You defy {actor}''s {attack}, taking some of its sting.</ansi>'
-      - '<ansi fg="defense-good">You set your jaw against the {attack}, though the words still bite.</ansi>'
+      - '<ansi fg="defense-good">You set your jaw against the {attack}, though it still bites.</ansi>'
       - '<ansi fg="defense-good">You refuse to rise fully to {actor}''s {attack}.</ansi>'
       - '<ansi fg="defense-good">You hold onto your nerve as the {attack} finds a narrow purchase.</ansi>'
       - '<ansi fg="defense-good">You answer the {attack} with stubborn silence, blunting its edge.</ansi>'
       actor:
       - '<ansi fg="attack-bad">{actee} defies your {attack}, taking some of its sting.</ansi>'
-      - '<ansi fg="attack-bad">{actee} sets their jaw, though your words still bite.</ansi>'
+      - '<ansi fg="attack-bad">{actee} sets their jaw, though your {attack} still bites.</ansi>'
       - '<ansi fg="attack-bad">{actee} refuses to rise fully to your {attack}.</ansi>'
       - '<ansi fg="attack-bad">Your {attack} finds only a narrow purchase on {actee}.</ansi>'
       - '<ansi fg="attack-bad">{actee} answers your {attack} with silence, blunting its edge.</ansi>'
       observer:
       - '<ansi fg="combat">{actee} defies {actor}''s {attack}, taking some of its sting.</ansi>'
-      - '<ansi fg="combat">{actee} sets their jaw, though the words still bite.</ansi>'
+      - '<ansi fg="combat">{actee} sets their jaw, though the {attack} still bites.</ansi>'
       - '<ansi fg="combat">{actee} refuses to rise fully to {actor}''s {attack}.</ansi>'
       - '<ansi fg="combat">{actor}''s {attack} finds only a narrow purchase.</ansi>'
       - '<ansi fg="combat">{actee} answers the {attack} with stubborn silence.</ansi>'

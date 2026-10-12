@@ -33,6 +33,51 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
+	return narrateMobTaunt(mob, room, result, mob.Character.TauntPool(), "taunt", tauntLegacy, tauntAggroLine)
+}
+
+// mobTauntLegacy holds the fallback literals a mob taunt or howl sends when
+// the taunt store is empty (unit tests that never load world data). Every
+// field is a Sprintf format; the argument order is fixed per field.
+type mobTauntLegacy struct {
+	// Fumble: room line. Args: mob name.
+	Fumble string
+	// HitPersonal: line to a player target. Args: mob name, damage text.
+	HitPersonal string
+	// HitRoom: room line. Args: mob name, target name.
+	HitRoom string
+	// MissPersonal: line to a player target. Args: mob name.
+	MissPersonal string
+	// MissRoom: room line. Args: mob name, target name.
+	MissRoom string
+}
+
+var tauntLegacy = mobTauntLegacy{
+	Fumble:       `<ansi fg="mobname">%s</ansi> bellows a challenge that breaks into a strangled gasp.`,
+	HitPersonal:  `<ansi fg="mobname">%s</ansi>'s thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`,
+	HitRoom:      `<ansi fg="mobname">%s</ansi> bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`,
+	MissPersonal: `<ansi fg="mobname">%s</ansi> bellows a challenge, but you brush it off.`,
+	MissRoom:     `<ansi fg="mobname">%s</ansi> bellows a challenge at <ansi fg="username">%s</ansi>, but they shrug it off.`,
+}
+
+// Aggro-pull room lines. Args: the pulled target's name, the mob's name.
+const (
+	tauntAggroLine = `<ansi fg="mobname">%s</ansi> wheels around and locks onto <ansi fg="mobname">%s</ansi>!`
+	howlAggroLine  = `<ansi fg="mobname">%s</ansi> turns from its prey and snarls at <ansi fg="mobname">%s</ansi>!`
+)
+
+// narrateMobTaunt is the shared narration flow of a mob taunt and a mob howl: the
+// same conviction attack, narrated from pool (combat.TauntPoolRhetoric,
+// combat.TauntPoolWordless or combat.TauntPoolHowl). legacy holds the fallback
+// literals used only when the store is empty. aggroLine is the room line, as a Sprintf format, for an
+// aggro pull. command ("taunt" or "howl") is what the channel-defence
+// messages call the attack.
+//
+// The callers (Taunt, Howl) each run executeTauntAction and its refusal checks
+// themselves, so the admission guards in command_readiness_drift_test.go and
+// predator_test.go keep seeing the action seam in the wrapper; this function
+// only narrates an Executed result.
+func narrateMobTaunt(mob *mobs.Mob, room *rooms.Room, result actions.TauntResult, pool, command string, legacy mobTauntLegacy, aggroLine string) (bool, error) {
 	targetName := result.Target.Name
 
 	var targetPlayer *users.UserRecord
@@ -49,10 +94,10 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	switch {
 	case result.Fumble:
-		if !sendMobTauntTriad(combat.TauntFumble, "", "", messaging.CategoryTauntFailure,
+		if !sendMobTauntTriad(pool, combat.TauntFumble, "", "", messaging.CategoryTauntFailure,
 			mob, targetName, targetPlayer, room) {
 			room.SendTextHidingNames(messaging.CategoryTauntFailure,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge that breaks into a strangled gasp.`, mob.Character.Name),
+				fmt.Sprintf(legacy.Fumble, mob.Character.Name),
 				[]string{mob.Character.Name}, messaging.HideNames)
 		}
 
@@ -65,39 +110,39 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			if result.Crit {
 				intensity = combat.TauntCritical
 			}
-			if !sendMobTauntTriad(intensity, result.DmgDesc, result.DmgDescToTarget, messaging.CategoryTauntSuccess,
+			if !sendMobTauntTriad(pool, intensity, result.DmgDesc, result.DmgDescToTarget, messaging.CategoryTauntSuccess,
 				mob, targetName, targetPlayer, room) {
 				if targetPlayer != nil {
-					personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s thunderous challenge rattles your nerve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDescToTarget)
+					personalText := fmt.Sprintf(legacy.HitPersonal, mob.Character.Name, result.DmgDescToTarget)
 					sight := messaging.ParticipantSight(targetPlayer.Character, room)
 					targetPlayer.SendText(messaging.CategoryTauntSuccess, messaging.HideNames(personalText, []string{mob.Character.Name}, sight))
 				}
 				room.SendTextHidingNames(messaging.CategoryTauntSuccess,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a thunderous challenge at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName),
+					fmt.Sprintf(legacy.HitRoom, mob.Character.Name, targetName),
 					[]string{mob.Character.Name, targetName}, messaging.HideNames)
 			}
 		}
-		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetIdentity, targetName, "taunt")
+		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetIdentity, targetName, command)
 
 		// Aggro-pull confirmation: the taunt yanked the target off its prior
 		// foe and pinned it (taunt-hold). AggroPulled is only ever set when the
 		// target is a mob, so the name colors as a mobname.
 		if result.AggroPulled {
 			room.SendTextHidingNames(messaging.CategoryTauntSuccess,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> wheels around and locks onto <ansi fg="mobname">%s</ansi>!`, targetName, mob.Character.Name),
+				fmt.Sprintf(aggroLine, targetName, mob.Character.Name),
 				[]string{mob.Character.Name, targetName}, messaging.HideNames)
 		}
 
 	default: // miss
-		if !sendMobTauntTriad(combat.TauntMiss, "", "", messaging.CategoryTauntResist,
+		if !sendMobTauntTriad(pool, combat.TauntMiss, "", "", messaging.CategoryTauntResist,
 			mob, targetName, targetPlayer, room) {
 			if targetPlayer != nil {
-				personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge, but you brush it off.`, mob.Character.Name)
+				personalText := fmt.Sprintf(legacy.MissPersonal, mob.Character.Name)
 				sight := messaging.ParticipantSight(targetPlayer.Character, room)
 				targetPlayer.SendText(messaging.CategoryTauntResist, messaging.HideNames(personalText, []string{mob.Character.Name}, sight))
 			}
 			room.SendTextHidingNames(messaging.CategoryTauntResist,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> bellows a challenge at <ansi fg="username">%s</ansi>, but they shrug it off.`, mob.Character.Name, targetName),
+				fmt.Sprintf(legacy.MissRoom, mob.Character.Name, targetName),
 				[]string{mob.Character.Name, targetName}, messaging.HideNames)
 		}
 	}
@@ -126,7 +171,7 @@ func Taunt(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 // it. That is also why the {actortype} and {acteetype} tokens must resolve to
 // real name aliases: HideNames' tag-consuming match looks for
 // username|mobname|petname, and a tag outside that set leaks the name.
-func sendMobTauntTriad(intensity combat.TauntIntensity, dmgDesc, targetDmgDesc string, cat messaging.Category,
+func sendMobTauntTriad(pool string, intensity combat.TauntIntensity, dmgDesc, targetDmgDesc string, cat messaging.Category,
 	mob *mobs.Mob, targetName string, targetPlayer *users.UserRecord, room *rooms.Room) bool {
 
 	targetType := "mobname"
@@ -134,7 +179,7 @@ func sendMobTauntTriad(intensity combat.TauntIntensity, dmgDesc, targetDmgDesc s
 		targetType = "username"
 	}
 
-	triad := combat.GetTauntTriad(intensity, mob.Character.Name, targetName,
+	triad := combat.GetTauntTriadFrom(pool, intensity, mob.Character.Name, targetName,
 		"mobname", targetType, dmgDesc).WithDefenderDamage(dmgDesc, targetDmgDesc)
 
 	if triad.ToRoom == "" {

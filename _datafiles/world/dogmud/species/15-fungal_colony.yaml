@@ -14,6 +14,7 @@ unarmedname: spore tendrils
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 angrycommands:
   - emote pulsates, releasing a thick cloud of acrid spores.
   - emote stretches its mycelial threads toward you with a wet, tearing sound.

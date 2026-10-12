@@ -13,6 +13,7 @@ unarmedname: fangs
 natural_attack: bite
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote coils tightly and hisses, hood flaring wide.
   - emote flicks its forked tongue and draws back to strike.

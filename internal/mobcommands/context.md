@@ -42,6 +42,7 @@ The `internal/mobcommands` package implements the AI command system for non-play
   `SpeciesHasLifeDrain` / `SpeciesIsQuadrupedPredator` at three sync points:
   `CanUse*` in `ai.go`, `CommandIsReady`, and the action entry. Drift rows
   in `command_readiness_drift_test.go` keep all three in sync.
+- **Taunt pools**: `Taunt` and `Howl` each run `executeTauntAction` and its refusal checks, then hand the result to `narrateMobTaunt(mob, room, result, pool, command, legacy, aggroLine)` (`taunt.go`), the one narration flow. `Taunt` reads `mob.Character.TauntPool()` (wordless for a speechless species, else rhetoric); `Howl` always reads `combat.TauntPoolHowl` (`howl.yaml`) and re-renders its damage text with `TauntResult.WithWordlessDamageText`, so a howl names no speech whatever the species. `sendMobTauntTriad` takes the pool first. `mobTauntLegacy` holds the empty-store literals per command.
 - **Rhetoric**: `taunt` and its wolf-flavoured `howl` variant use the shared
   coordinated Defy renderer when defended. Its attacker, defender, and room
   lines replace the ordinary hit narration rather than following it. Every
@@ -119,7 +120,12 @@ The `internal/mobcommands` package implements the AI command system for non-play
   `craft` (`craft.go`) is a thin wrapper over `actions.InitiateCraft`
   (sight gates parity, slice 5a): the dark refusal (`CraftResult.CannotSee`)
   lives in `internal/actions/craft.go`, and every refusal, including a mob
-  that cannot see to work, is a silent no-op.
+  that cannot see to work, is a silent no-op. A started timed craft is
+  announced by `announceCraftBegin`, which judges each player by
+  `messaging.ReaderSight` (as `hooks.announceCorpse` does): full sight reads
+  the output item's name (`items.SpecDisplayName`, no item minted), shapes
+  reads "begins working on something." with the mob anonymised, no sight
+  reads nothing.
 
 #### **Support and Utility Behaviors**
 - **Healing assistance**: `aid`, `lookforaid` - Medical support AI

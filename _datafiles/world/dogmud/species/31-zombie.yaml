@@ -10,6 +10,7 @@ size: medium
 unarmedname: fists
 selectable: false
 tameable: false
+speech: false
 angrycommands:
   - emote lurches toward you with a wet, rattling moan.
   - emote reaches for you with fingers dark with rot.

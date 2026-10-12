@@ -246,6 +246,8 @@ The conditions system is built around several key components:
 - Death prevention and revival mechanics
 - Equipment interaction flags (permanent gear, curse removal)
 - Status effect flags (poison, accuracy, stealth, vision enhancement)
+- `Silenced`: the bearer cannot make a sound; `characters.SpeechState` reads it
+  and a taunt or howl is refused (M6 slice 3). Nothing sets it yet.
 - Environmental interaction flags (water cancellation). Light emission is not a
   flag: since lighting plan 5a a light is a record declaring the
   `light_strength` effect (see "Light sources (`light.go`)" below)

@@ -799,6 +799,12 @@ func TestCommandReadinessDrift(t *testing.T) {
 		{"taunt_no_aggro", "taunt",
 			func(m *mobs.Mob) { m.Character.EndAggro() },
 			false, "NoTarget"},
+		{"taunt_silenced", "taunt",
+			func(m *mobs.Mob) {
+				setDriftAggroMobTarget(m, 229)
+				_ = m.Character.AddCondition(readinessSilencedConditionId, true)
+			},
+			false, "Silenced"},
 
 		// ─── rally ────────────────────────────────────────────────
 		{"rally_ready", "rally",
@@ -1435,6 +1441,8 @@ func runExecuteAndReadFlag(cmd string, actor Actor, flag string) bool {
 			return r.OnCooldown
 		case "NoTarget":
 			return r.NoTarget
+		case "Silenced":
+			return r.Silenced
 		}
 	case "rally":
 		r := ExecuteRally(actor)

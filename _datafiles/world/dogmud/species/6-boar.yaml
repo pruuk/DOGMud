@@ -14,6 +14,7 @@ unarmedname: tusks
 natural_attack: gore
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote stamps the ground and snorts, lowering its tusks.
   - emote lets out a shrill squeal of rage.

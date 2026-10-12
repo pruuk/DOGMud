@@ -1,6 +1,6 @@
 # defense-messages store snapshot
-# defense-type files at time of writing: 10
-# defense-types: block,counter-block,counter-defy,counter-dodge,counter-parry,counter-quell,defy,dodge,parry,quell
+# defense-type files at time of writing: 12
+# defense-types: block,counter-block,counter-defy,counter-defy-wordless,counter-dodge,counter-parry,counter-quell,deflected,defy,dodge,parry,quell
 # dimensions: defense-type x band(weak/normal/heavy) -- all 3 roles (actee/actor/observer)
 # come from ONE coordinated RenderDefenseMessage call (same index across the triad).
 # RenderDefenseMessage has no picker param (util.Rand only) -- pinned via indexOverride=0,
@@ -37,6 +37,15 @@ counter-defy|normal|observer => <ansi fg="combat">Defender mocks Attacker for th
 counter-defy|heavy|actee => <ansi fg="defense-good">You tear Attacker's attempt apart word by word, and they fall silent.</ansi>
 counter-defy|heavy|actor => <ansi fg="attack-bad">Defender tears your attempt apart word by word, and you fall silent.</ansi>
 counter-defy|heavy|observer => <ansi fg="combat">Defender tears Attacker's attempt apart word by word, leaving them silent.</ansi>
+counter-defy-wordless|weak|actee => <ansi fg="defense-good">You snarl back at Attacker, but they hold steady.</ansi>
+counter-defy-wordless|weak|actor => <ansi fg="attack-bad">Defender snarls back at you, but you hold steady.</ansi>
+counter-defy-wordless|weak|observer => <ansi fg="combat">Defender snarls back at Attacker, who holds steady.</ansi>
+counter-defy-wordless|normal|actee => <ansi fg="defense-good">You snarl back at Attacker, and they flinch.</ansi>
+counter-defy-wordless|normal|actor => <ansi fg="attack-bad">Defender snarls back at you, and you flinch.</ansi>
+counter-defy-wordless|normal|observer => <ansi fg="combat">Defender snarls back at Attacker, who flinches.</ansi>
+counter-defy-wordless|heavy|actee => <ansi fg="defense-good">You hurl a savage snarl back at Attacker, and they freeze.</ansi>
+counter-defy-wordless|heavy|actor => <ansi fg="attack-bad">Defender hurls a savage snarl back at you, and you freeze.</ansi>
+counter-defy-wordless|heavy|observer => <ansi fg="combat">Defender hurls a savage snarl back at Attacker, who freezes.</ansi>
 counter-dodge|weak|actee => <ansi fg="defense-good">You lash out at the opening, but Attacker recovers in time.</ansi>
 counter-dodge|weak|actor => <ansi fg="attack-bad">Defender lashes out at your opening, but you recover in time.</ansi>
 counter-dodge|weak|observer => <ansi fg="combat">Defender lashes out at Attacker, who recovers in time.</ansi>
@@ -46,15 +55,15 @@ counter-dodge|normal|observer => <ansi fg="combat">Defender steps into the openi
 counter-dodge|heavy|actee => <ansi fg="defense-good">You slip inside Attacker's guard and strike with all your weight.</ansi>
 counter-dodge|heavy|actor => <ansi fg="attack-bad">Defender slips inside your guard and strikes with all their weight.</ansi>
 counter-dodge|heavy|observer => <ansi fg="combat">Defender slips inside Attacker's guard and strikes with full weight.</ansi>
-counter-parry|weak|actee => <ansi fg="defense-good">You turn the blow aside and cut back, but Attacker recovers in time.</ansi>
-counter-parry|weak|actor => <ansi fg="attack-bad">Defender turns your blow aside and cuts back, but you recover in time.</ansi>
-counter-parry|weak|observer => <ansi fg="combat">Defender turns Attacker's blow aside and cuts back, but Attacker recovers.</ansi>
-counter-parry|normal|actee => <ansi fg="defense-good">You turn the blow aside and cut back, opening Attacker's arm.</ansi>
-counter-parry|normal|actor => <ansi fg="attack-bad">Defender turns your blow aside and cuts back, opening your arm.</ansi>
-counter-parry|normal|observer => <ansi fg="combat">Defender turns Attacker's blow aside and cuts back, opening Attacker's arm.</ansi>
-counter-parry|heavy|actee => <ansi fg="defense-good">You turn the blow aside and cut back with everything, and Attacker reels.</ansi>
-counter-parry|heavy|actor => <ansi fg="attack-bad">Defender turns your blow aside and cuts back with everything, and you reel.</ansi>
-counter-parry|heavy|observer => <ansi fg="combat">Defender turns Attacker's blow aside and cuts back hard, and Attacker reels.</ansi>
+counter-parry|weak|actee => <ansi fg="defense-good">You turn the blow aside and strike back, but Attacker recovers in time.</ansi>
+counter-parry|weak|actor => <ansi fg="attack-bad">Defender turns your blow aside and strikes back, but you recover in time.</ansi>
+counter-parry|weak|observer => <ansi fg="combat">Defender turns Attacker's blow aside and strikes back, but Attacker recovers.</ansi>
+counter-parry|normal|actee => <ansi fg="defense-good">You turn the blow aside and strike back, catching Attacker off balance.</ansi>
+counter-parry|normal|actor => <ansi fg="attack-bad">Defender turns your blow aside and strikes back, catching you off balance.</ansi>
+counter-parry|normal|observer => <ansi fg="combat">Defender turns Attacker's blow aside and strikes back, catching Attacker off balance.</ansi>
+counter-parry|heavy|actee => <ansi fg="defense-good">You turn the blow aside and strike back with everything, and Attacker reels.</ansi>
+counter-parry|heavy|actor => <ansi fg="attack-bad">Defender turns your blow aside and strikes back with everything, and you reel.</ansi>
+counter-parry|heavy|observer => <ansi fg="combat">Defender turns Attacker's blow aside and strikes back hard, and Attacker reels.</ansi>
 counter-quell|weak|actee => <ansi fg="defense-good">You ground the working and lunge in, but Attacker wards your blow.</ansi>
 counter-quell|weak|actor => <ansi fg="attack-bad">Defender grounds your working and lunges in, but you ward the blow.</ansi>
 counter-quell|weak|observer => <ansi fg="combat">Defender grounds the working and lunges at Attacker, who wards the blow.</ansi>
@@ -100,6 +109,40 @@ quell|normal|observer => <ansi fg="combat">Defender quells the heart of Attacker
 quell|heavy|actee => <ansi fg="defense-good">You take no damage from Attacker's Strike, though its momentum still reaches you.</ansi>
 quell|heavy|actor => <ansi fg="attack-bad">Defender takes no damage from your Strike, though its momentum still reaches them.</ansi>
 quell|heavy|observer => <ansi fg="combat">Defender takes no damage from Attacker's Strike, though its momentum still reaches them.</ansi>
+
+# DEFLECTED SWING: defence x variant index, actor and actee from one index
+deflected|dodge|0|actor => Defender dodges your swing, but you still connect! (<ansi fg="damage">Wounds</ansi>)
+deflected|dodge|0|actee => You dodge Attacker's swing, but it still catches you! (<ansi fg="damage">Wounds</ansi>)
+deflected|dodge|1|actor => Defender dodges late, but your swing still lands! (<ansi fg="damage">Wounds</ansi>)
+deflected|dodge|1|actee => You dodge late, but Attacker's swing still lands! (<ansi fg="damage">Wounds</ansi>)
+deflected|dodge|2|actor => Defender dodges badly, but your swing still hurts them! (<ansi fg="damage">Wounds</ansi>)
+deflected|dodge|2|actee => You dodge badly, but Attacker's swing still hurts you! (<ansi fg="damage">Wounds</ansi>)
+deflected|dodge|3|actor => Defender dodges too slowly, but your swing still gets through! (<ansi fg="damage">Wounds</ansi>)
+deflected|dodge|3|actee => You dodge too slowly, but Attacker's swing still gets through! (<ansi fg="damage">Wounds</ansi>)
+deflected|parry|0|actor => Defender parries your swing, but you still connect! (<ansi fg="damage">Wounds</ansi>)
+deflected|parry|0|actee => You parry Attacker's swing, but it still catches you! (<ansi fg="damage">Wounds</ansi>)
+deflected|parry|1|actor => Defender parries late, but your swing still lands! (<ansi fg="damage">Wounds</ansi>)
+deflected|parry|1|actee => You parry late, but Attacker's swing still lands! (<ansi fg="damage">Wounds</ansi>)
+deflected|parry|2|actor => Defender parries badly, but your swing still hurts them! (<ansi fg="damage">Wounds</ansi>)
+deflected|parry|2|actee => You parry badly, but Attacker's swing still hurts you! (<ansi fg="damage">Wounds</ansi>)
+deflected|parry|3|actor => Defender half parries, and your swing still gets through! (<ansi fg="damage">Wounds</ansi>)
+deflected|parry|3|actee => You half parry, and Attacker's swing still gets through! (<ansi fg="damage">Wounds</ansi>)
+deflected|block|0|actor => Defender blocks your swing, but you still connect! (<ansi fg="damage">Wounds</ansi>)
+deflected|block|0|actee => You block Attacker's swing, but it still catches you! (<ansi fg="damage">Wounds</ansi>)
+deflected|block|1|actor => Defender blocks late, but your swing still lands! (<ansi fg="damage">Wounds</ansi>)
+deflected|block|1|actee => You block late, but Attacker's swing still lands! (<ansi fg="damage">Wounds</ansi>)
+deflected|block|2|actor => Defender blocks badly, but your swing still hurts them! (<ansi fg="damage">Wounds</ansi>)
+deflected|block|2|actee => You block badly, but Attacker's swing still hurts you! (<ansi fg="damage">Wounds</ansi>)
+deflected|block|3|actor => Defender blocks poorly, but your swing still gets through! (<ansi fg="damage">Wounds</ansi>)
+deflected|block|3|actee => You block poorly, but Attacker's swing still gets through! (<ansi fg="damage">Wounds</ansi>)
+deflected|generic|0|actor => Defender turns your swing aside, but you still connect! (<ansi fg="damage">Wounds</ansi>)
+deflected|generic|0|actee => You turn Attacker's swing aside, but it still catches you! (<ansi fg="damage">Wounds</ansi>)
+deflected|generic|1|actor => Defender turns your swing aside late, but it still lands! (<ansi fg="damage">Wounds</ansi>)
+deflected|generic|1|actee => You turn Attacker's swing aside late, but it still lands! (<ansi fg="damage">Wounds</ansi>)
+deflected|generic|2|actor => Defender turns your swing aside badly, but it still hurts them! (<ansi fg="damage">Wounds</ansi>)
+deflected|generic|2|actee => You turn Attacker's swing aside badly, but it still hurts you! (<ansi fg="damage">Wounds</ansi>)
+deflected|generic|3|actor => Defender turns your swing aside, but it still gets through! (<ansi fg="damage">Wounds</ansi>)
+deflected|generic|3|actee => You turn Attacker's swing aside, but it still gets through! (<ansi fg="damage">Wounds</ansi>)
 
 # EMPTY CASE: unregistered defense type -> empty triad
 nonexistent-defense-type|normal|actee => ""

@@ -14,6 +14,7 @@ unarmedname: stone fists
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 naturalbash: true
 angrycommands:
   - emote grinds forward, the earth cracking beneath each heavy step.

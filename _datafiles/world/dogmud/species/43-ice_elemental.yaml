@@ -10,6 +10,7 @@ unarmedname: crystal strike
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 angrycommands:
   - emote shifts her stance, frost spreading across the floor in
     a spreading ring.

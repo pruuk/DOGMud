@@ -1,0 +1,17 @@
+# Generic deflected-swing lines, read when the defence that won is unknown.
+# This file holds no defence bands: it is only the fallback pool for the
+# deflected section that dodge, parry and block each carry. actor and actee
+# pair by index; variant 0 is the original line.
+# Tokens: {actor} the attacker, {actee} the defender, {damage} the wound words.
+optionid: deflected
+deflected:
+  actor:
+  - '{actee} turns your swing aside, but you still connect! (<ansi fg="damage">{damage}</ansi>)'
+  - '{actee} turns your swing aside late, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
+  - '{actee} turns your swing aside badly, but it still hurts them! (<ansi fg="damage">{damage}</ansi>)'
+  - '{actee} turns your swing aside, but it still gets through! (<ansi fg="damage">{damage}</ansi>)'
+  actee:
+  - 'You turn {actor}''s swing aside, but it still catches you! (<ansi fg="damage">{damage}</ansi>)'
+  - 'You turn {actor}''s swing aside late, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
+  - 'You turn {actor}''s swing aside badly, but it still hurts you! (<ansi fg="damage">{damage}</ansi>)'
+  - 'You turn {actor}''s swing aside, but it still gets through! (<ansi fg="damage">{damage}</ansi>)'

@@ -12,6 +12,7 @@ unarmedname: mandibles
 natural_attack: bite
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote clicks its mandibles together in rapid staccato.
   - emote rears up on its hind legs, antennae twitching furiously.

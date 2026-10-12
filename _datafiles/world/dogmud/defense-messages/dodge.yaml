@@ -140,3 +140,17 @@ options:
       - '<ansi fg="combat"><ansi fg="mob">{actee}</ansi> leans slightly, easily avoiding the strike.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{actee}</ansi> sidesteps gracefully.</ansi>'
       - '<ansi fg="combat"><ansi fg="mob">{actee}</ansi> slips away before the attack reaches them.</ansi>'
+# The line each side reads when a dodge wins the contest but the swing still
+# does damage. actor and actee pair by index; variant 0 is the original line.
+# Tokens: {actor} the attacker, {actee} the defender, {damage} the wound words.
+deflected:
+  actor:
+  - '{actee} dodges your swing, but you still connect! (<ansi fg="damage">{damage}</ansi>)'
+  - '{actee} dodges late, but your swing still lands! (<ansi fg="damage">{damage}</ansi>)'
+  - '{actee} dodges badly, but your swing still hurts them! (<ansi fg="damage">{damage}</ansi>)'
+  - '{actee} dodges too slowly, but your swing still gets through! (<ansi fg="damage">{damage}</ansi>)'
+  actee:
+  - 'You dodge {actor}''s swing, but it still catches you! (<ansi fg="damage">{damage}</ansi>)'
+  - 'You dodge late, but {actor}''s swing still lands! (<ansi fg="damage">{damage}</ansi>)'
+  - 'You dodge badly, but {actor}''s swing still hurts you! (<ansi fg="damage">{damage}</ansi>)'
+  - 'You dodge too slowly, but {actor}''s swing still gets through! (<ansi fg="damage">{damage}</ansi>)'
