@@ -15,7 +15,7 @@ idlecommands:
     enough to know where to press and where to leave off.'
   - ''
   - 'emote draws out a fragment of shaped stone, turns it
-    in the lamp-light — one surface cut, one rough — and
+    in the lamp-light (one surface cut, one rough) and
     places it with the others in the cloth beside the knee.'
   - ''
   - 'emote wipes both arms down with a piece of sacking
@@ -26,12 +26,12 @@ character:
   name: A Mudlark
   description: |
     The mudlark is wet to the elbows in the particular
-    way that is no longer worth attending to — the
+    way that is no longer worth attending to: the
     arms have been wet at this depth so many times
     that the skin has taken on the color and texture
     of the work itself. A piece of cloth beside the
-    knee holds the day's finds — shaped stone, carved
-    fragments, the occasional fitting — arranged in
+    knee holds the day's finds: shaped stone, carved
+    fragments, the occasional fitting, arranged in
     the order they were pulled from the silt. The
     mudlark does not look up when the passage is
     crossed; the floor below the flood is the point

@@ -15,9 +15,9 @@ idlecommands:
     unhurried look that takes in everything without
     appearing to, then moves on.'
   - ''
-  - 'emote adjusts the fold of the coat with one hand —
-    the hand passes over a specific point inside the
-    lapel and comes away without taking anything — and
+  - 'emote adjusts the fold of the coat with one hand.
+    The hand passes over a specific point inside the
+    lapel and comes away without taking anything, and
     continues walking.'
   - ''
   - 'emote pauses, listens, does not look around. Then
@@ -28,7 +28,7 @@ character:
   name: A Furtive Runner
   description: |
     The runner is not running. The name is operational
-    rather than descriptive — what the runner does is
+    rather than descriptive. What the runner does is
     move through the buried quarter at a pace that reads
     as purposeful enough to avoid questions and ordinary
     enough to avoid attention. The coat is nondescript

@@ -2,15 +2,15 @@ roomid: 6030
 zone: New Plymouth Old Quarter
 title: Quill's Lamp-Walk
 description: >
-  The canal-side walk widens here — more room to pass
+  The canal-side walk widens here. There is more room to pass
   than on Lintel Street proper, the old stone frontages
   set back slightly from the canal's edge. What marks
   this stretch apart from the rest of the buried quarter
-  is the <ansi fg="itemname">lamp row</ansi> — four
+  is the <ansi fg="itemname">lamp row</ansi>: four
   clay lamps at intervals along the wall at head-height,
   each trimmed and burning, each maintained with a care
   the rest of the quarter does not receive. The smell
-  is different here — warm oil and live wick competing
+  is different here: warm oil and live wick competing
   with the mineral cold, a small circle of warmth where
   warmth should not exist at this depth. The <ansi
   fg="itemname">canal edge</ansi> runs close along the
@@ -34,7 +34,7 @@ exits:
     roomid: 6032
 nouns:
   lamp row: Four clay lamps at intervals along the
-    wall — not placed randomly but spaced with a sense
+    wall, not placed randomly but spaced with a sense
     of coverage, each gap between them exactly the
     distance that allows one lamp's light to reach
     the next. They are trimmed, all of them, the wicks
@@ -45,13 +45,13 @@ nouns:
     of the lamps.
   canal edge: The canal runs alongside the walk here,
     the still black water separated from the path by
-    a low stone lip — not quite a railing, not quite
+    a low stone lip, not quite a railing, not quite
     a wall, just the dressed edge of the cut. The
     canal's surface picks up the lamp row in four
     small points of orange light, perfectly still.
     Nothing in those reflections moves.
-  low door: A door set into the old stone frontage —
-    small, fitted to a pre-colonial opening, the frame
+  low door: A door set into the old stone frontage.
+    It is small, fitted to a pre-colonial opening, the frame
     worn smooth at the edges from regular use. A lamp
     burns on a shelf just inside the frame, visible
     through the gap where the door sits not quite
@@ -59,14 +59,14 @@ nouns:
     the way the lamps are tended.
 idlemessages:
 - The lamp row holds its orange line through the
-  canal-side dark — four small certainties in the
+  canal-side dark, four small certainties in the
   buried quarter.
 - The canal surface picks up the lamp reflections
   and holds them without distortion or movement.
 - The smell of oil and warm wick is out of place
   here, and welcome for being so.
-- A sound from the low door to the north — settling
-  wood or someone shifting — and then the usual
+- A sound from the low door to the north (settling
+  wood or someone shifting) and then the usual
   quiet returns.
 - The walk is empty but it does not feel unattended.
   The lamps are evidence of someone's regular work.
