@@ -14,6 +14,9 @@
 - A creature that throttles a spellcaster now tells the room the spell was
   broken, as a player's throttle already did, and you hear it even when you
   cannot see.
+- Room and creature descriptions across the world now use plain
+  punctuation instead of long dashes, so they read more easily, and a few
+  small typos were fixed along the way.
 
 ## 2026-10-10: Boiling blood and fair arrests
 
