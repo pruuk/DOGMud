@@ -3,7 +3,7 @@ zone: Stillwater Marsh
 title: Hidden Spring
 description: >
   A small pocket south of Mossy Hummock where the bog-rim
-  dips around a clear rising source — the
+  dips around a clear rising source, the
   <ansi fg="itemname">hidden-spring</ansi>, perhaps a
   forearm deep at the source, cold water rising visibly
   from a fissure in dark stone below the surface. The
@@ -13,7 +13,7 @@ description: >
   for anyone who finds the pocket. A stand of
   <ansi fg="itemname">bog-myrtle</ansi> surrounds the
   spring's edge, releasing a sweet aromatic smell when
-  brushed that carries on even the lightest air — the
+  brushed that carries on even the lightest air. The
   Stillwater brewer uses the leaves in a particular
   season ale. The <ansi fg="itemname">pocket-pool</ansi>
   itself is small, perhaps two paces across at most,
@@ -30,19 +30,19 @@ exits:
 nouns:
   hidden spring: |
     A small clear spring rising silently in a pocket of
-    bog-rim — perhaps a forearm deep at the source, the
+    bog-rim, perhaps a forearm deep at the source, the
     water visibly rising from a fissure in dark stone
     below. Cold and pure where the surrounding bog water
     is dark and acidic. The foragers fill their flasks
     here rather than at the black-pool.
   waxberry: |
-    A low waxberry shrub at the spring's edge — small
+    A low waxberry shrub at the spring's edge. It has small
     grey-blue waxy berries clustered at the branch-tips,
     edible and faintly sweet. A forager's reward for
     finding the pocket; the berries do not grow farther
     north in the wetter marsh.
   waxberries: |
-    Low waxberry shrubs at the spring's edge — small
+    Low waxberry shrubs at the spring's edge. They have small
     grey-blue waxy berries clustered at the branch-tips,
     edible and faintly sweet. A forager's reward for
     finding the pocket; the berries do not grow farther
@@ -50,11 +50,11 @@ nouns:
   bog myrtle: |
     A stand of bog-myrtle around the spring's edge,
     releasing a sweet aromatic smell when the leaves are
-    brushed — used by the Stillwater brewer to flavour
+    brushed. The Stillwater brewer uses it to flavour
     a particular season ale, and by the healer to ease
     the itching of bug-bites.
   pocket pool: |
-    The small pool the spring forms at its source — perhaps
+    The small pool the spring forms at its source, perhaps
     two paces across at most, easy to miss in the reeds.
     Much smaller than the deeper Spring Pool to the north,
     and easier to overlook. The water is clear and still,

@@ -21,7 +21,7 @@ activitylevel: 50
 character:
   name: Dragonfly Swarm
   description: |
-    A working swarm of dragonflies — perhaps two dozen large
+    A working swarm of dragonflies, perhaps two dozen large
     iridescent bodies in coordinated patrol over the small
     pool. They ignore you unless you make a problem of yourself.
   speciesid: 12

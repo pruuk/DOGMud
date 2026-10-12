@@ -3,7 +3,7 @@ zone: Stillwater Marsh
 title: Mill Creek Source
 description: >
   The board-trail bends north along the creek's actual upstream reach,
-  and here the water is different from the sluice pond below — narrower,
+  and here the water is different from the sluice pond below. It is narrower,
   no deeper than a hand's breadth in the channel, running clear and quick
   over a bed of <ansi fg="itemname">flat-stones</ansi> dark as old iron.
   The <ansi fg="itemname">shallow-creek</ansi> speaks steadily, a low
@@ -12,7 +12,7 @@ description: >
   leaves pungent and peppery even from arm's length. The
   <ansi fg="itemname">peat-bank</ansi> on either side is springy
   underfoot where you step off the boards, holding the shape of a boot
-  long after you've moved on. This is where the millstream begins — or
+  long after you've moved on. This is where the millstream begins, or
   near enough to it that the creek above barely deserves the name.
 biome: water
 coord:
@@ -28,27 +28,27 @@ nouns:
   shallow creek: |
     The creek runs perhaps a hand's breadth deep over a flat
     stone bed, slow but clear, cold enough to numb a hand after
-    a few seconds of immersion. The current is gentle — barely
-    more than a drift — but it is moving water, not marsh-stand,
+    a few seconds of immersion. The current is gentle, barely
+    more than a drift, but it is moving water, not marsh-stand,
     and it carries a faint mineral clarity the standing water
     south of here lacks.
   flat stone: |
     The creek-bed is paved with flat dark stones, visible through
     the shallow water and worn smooth by long slow current. A few
     of the larger ones break the surface just enough to step on
-    without getting your boots wet — if you choose your footing
+    without getting your boots wet, if you choose your footing
     carefully.
   flat stones: |
     The creek-bed is paved with flat dark stones, visible through
     the shallow water and worn smooth by long slow current. A few
     of the larger ones break the surface just enough to step on
-    without getting your boots wet — if you choose your footing
+    without getting your boots wet, if you choose your footing
     carefully.
   watercress: |
     Watercress grows in thick low mats along both banks, rooted
     in the peat at the water's edge and trailing into the current
     at the margins. The smell is sharp and peppery even from
-    standing distance — the same kind that grows thick at
+    standing distance. It is the same kind that grows thick at
     Watercress Bend in Fernway South, abundant enough here to
     fill a sack if you had reason to.
   peat bank: |
