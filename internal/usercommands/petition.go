@@ -70,7 +70,7 @@ func Petition(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	user.SendText(messaging.CategorySystem, `<ansi fg="green">Your petition has been sent to the staff. They'll review it as soon as they can.</ansi>`)
 
 	// Notify online staff.
-	alert := fmt.Sprintf(`<ansi fg="alert-5">[PETITION #%d]</ansi> <ansi fg="username">%s</ansi> (%s): %s <ansi fg="black-bold">Type 'petitions' to review.</ansi>`,
+	alert := fmt.Sprintf(`<ansi fg="alert-5">[PETITION #%d]</ansi> <ansi fg="username">%s</ansi> (%s): %s <ansi fg="black-bold">(Type 'petitions' to review.)</ansi>`,
 		p.Id, user.Username, room.Title, rest)
 	for _, staff := range users.GetAllActiveUsers() {
 		if staff.Role != users.RoleUser {

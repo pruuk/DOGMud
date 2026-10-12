@@ -52,7 +52,7 @@ advancements:
       - "You trip the near leg and follow them down, chest-to-chest, cutting\
         \ off the hip with your weight."
     actee:
-      - "{actor} levers your wrist outward and your hip buckles and\
+      - "{actor} levers your wrist outward. Your hip buckles and\
         \ you land hard. Their weight pins your upper chest before you can\
         \ roll."
       - "A trip catches your trailing foot mid-step. You go down sideways\
@@ -123,7 +123,7 @@ advancements:
     actor:
       - "You haul down on the seatbelt, kick one heel behind their knee,\
         \ and drag both of you to the mat. Hooks in."
-      - "You sit to the mat and pull them back and they land across your lap\
+      - "You sit to the mat and pull them back. They land across your lap\
         \ and you thread your hooks in before they can roll."
       - "A sharp lift-and-drop breaks their base. You fall back with them\
         \ and your legs swing over their hips: back mount secured."
@@ -171,8 +171,8 @@ advancements:
     actor:
       - "You walk your knee up their hip line, step across the belly, and\
         \ settle your weight into full mount."
-      - "A cross-face pins the head while you swing the far leg over and\
-        \ mount is locked before they can replace guard."
+      - "A cross-face pins the head while you swing the far leg over.\
+        \ Mount is locked before they can replace guard."
       - "Their near elbow frames high; you undercut it, knee-slide across\
         \ the torso, and ride into mount."
     actee:
@@ -228,7 +228,7 @@ advancements:
       - "You try to shrimp but {actor} steps the knee through\
         \ before you clear the hip. Mounted."
       - "{actor}'s knee slides off your belly and their weight\
-        \ redistributes and full mount drops on you."
+        \ redistributes. Full mount drops on you."
     observer:
       - "{actor} slides the knee off {actee}'s belly\
         \ and settles into full mount."
@@ -428,8 +428,8 @@ advancements:
 
   guard_to_mount:
     actor:
-      - "You trap the arm, bridge the hips, and roll them into mount\
-        \ and the arm-trap sweep put you on top."
+      - "You trap the arm and bridge the hips. The sweep rolls them\
+        \ over and puts you on top in mount."
       - "A pendulum sweep with the legs sends them airborne. You swing\
         \ up and land in mount before they settle."
       - "You break their posture with a collar grip, roll them over your\
@@ -537,7 +537,7 @@ degradations:
       - "A frame on your hip pries your knees apart; you settle for side\
         \ control."
     actee:
-      - "You bridge hard and shrimp the hip free and\
+      - "You bridge hard and shrimp the hip free.\
         \ {actor}'s mount slides off you and into side control."
       - "Your elbow frames between you and {actor}'s hip. You\
         \ hip-escape and they settle for side."
@@ -712,7 +712,7 @@ reversals:
   # Bridge-and-roll: former controller tumbles forward into closed guard.
   mount_reverse:
     actor:
-      - "{actee} bridges and you tumble forward and they roll up\
+      - "{actee} bridges and you tumble forward. They roll up\
         \ between your legs and now you're in their guard."
       - "Your base evaporates. {actee} bucks you off and comes up\
         \ between your legs: full guard."
@@ -723,7 +723,7 @@ reversals:
         \ between your legs: full guard, you're on top."
       - "Hips up, frame on the chin, sweep the post. {actor}\
         \ tumbles forward into your guard."
-      - "You time the buck and lift the hooks and {actor} cartwheels\
+      - "You time the buck and lift the hooks. {actor} cartwheels\
         \ off you and lands in your closed guard."
     observer:
       - "{actee} bridges and rolls {actor} forward into a\
@@ -768,7 +768,7 @@ reversals:
       - "You held it a half-second too long. {actee} reverses the\
         \ position and pins you down."
     actee:
-      - "You find the angle and force the reversal and {actor} is\
+      - "You find the angle and force the reversal. {actor} is\
         \ now the one pinned."
       - "You exploit the opening. The pressure reverses and you're on top,\
         \ in control."
@@ -786,7 +786,7 @@ escapes:
     actor:
       - "{actee} explodes free and they're back on their feet before you can grab again."
       - "Your grip fails. {actee} scrambles up and out of reach."
-      - "{actee} kicks off you and pops to their feet and the grapple breaks."
+      - "{actee} kicks off you and pops to their feet. The grapple breaks."
     actee:
       - "You explode through the gap and scramble to your feet, free of {actor}'s grip at last."
       - "A frame, a kick, a scramble. You're up and {actor}'s grip is broken."

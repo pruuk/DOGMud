@@ -186,6 +186,6 @@ submission:
       {actee} is dead."
 
   crit_flag:
-    actor: "With brutal precision. "
+    actor: "Brutal precision! "
     actee: ""
     observer: ""

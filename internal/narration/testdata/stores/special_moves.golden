@@ -610,12 +610,12 @@ shoot|fire_depart|0|actor=
 shoot|fire_depart|0|actee= 
 shoot|fire_depart|0|observer= <ansi fg="mobname">ACTOR</ansi> fires their WEAPON towards the <ansi fg="exit">EXITNAME</ansi>.
 shoot|fire_depart|0|remote_observer= 
-shoot|hit|0|actor= Your shot strikes <ansi fg="username">ACTEE</ansi> (<ansi fg="damage">DAMAGE</ansi>)!
-shoot|hit|0|actee= <ansi fg="mobname">ACTOR</ansi>'s shot strikes you (<ansi fg="damage">DAMAGE</ansi>)!
+shoot|hit|0|actor= Your shot strikes <ansi fg="username">ACTEE</ansi>! (<ansi fg="damage">DAMAGE</ansi>)
+shoot|hit|0|actee= <ansi fg="mobname">ACTOR</ansi>'s shot strikes you! (<ansi fg="damage">DAMAGE</ansi>)
 shoot|hit|0|observer= 
 shoot|hit|0|remote_observer= 
-shoot|hit|1|actor= Your shot takes <ansi fg="username">ACTEE</ansi> (<ansi fg="damage">DAMAGE</ansi>)!
-shoot|hit|1|actee= <ansi fg="mobname">ACTOR</ansi>'s shot strikes you (<ansi fg="damage">DAMAGE</ansi>)!
+shoot|hit|1|actor= Your shot takes <ansi fg="username">ACTEE</ansi>! (<ansi fg="damage">DAMAGE</ansi>)
+shoot|hit|1|actee= <ansi fg="mobname">ACTOR</ansi>'s shot strikes you! (<ansi fg="damage">DAMAGE</ansi>)
 shoot|hit|1|observer= 
 shoot|hit|1|remote_observer= 
 shoot|miss|0|actor= Your shot narrowly misses <ansi fg="username">ACTEE</ansi>!

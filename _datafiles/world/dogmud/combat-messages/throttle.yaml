@@ -29,7 +29,7 @@ options:
         - 'You hold your patience, {momentum}, <ansi fg="item">{itemname}</ansi> coiled and ready.'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> part as it closes in.'
+        - '<ansi fg="{actortype}">{actor}</ansi> parts its <ansi fg="item">{itemname}</ansi> as it closes in.'
         - '<ansi fg="{actortype}">{actor}</ansi> circles you, watching your neck.'
         - '<ansi fg="{actortype}">{actor}</ansi> eyes your throat with hungry intent.'
         expert:
@@ -42,7 +42,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> waits, {momentum}, for the precise moment to strike your throat.'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> part as it closes in on <ansi fg="{acteetype}">{actee}</ansi>''s throat.'
+        - '<ansi fg="{actortype}">{actor}</ansi> parts its <ansi fg="item">{itemname}</ansi> as it closes in on <ansi fg="{acteetype}">{actee}</ansi>''s throat.'
         - '<ansi fg="{actortype}">{actor}</ansi> circles <ansi fg="{acteetype}">{actee}</ansi>, eyes fixed on their throat.'
         - '<ansi fg="{actortype}">{actor}</ansi> eyes <ansi fg="{acteetype}">{actee}</ansi>''s neck with dark focus.'
         expert:
@@ -98,10 +98,10 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> snap at <ansi fg="{acteetype}">{actee}</ansi>''s throat but find nothing!'
+        - 'You snap at <ansi fg="{acteetype}">{actee}</ansi>''s throat with your <ansi fg="item">{itemname}</ansi> but find nothing!'
         - 'You lunge for the throat but <ansi fg="{acteetype}">{actee}</ansi> pulls away!'
         - '<ansi fg="{acteetype}">{actee}</ansi> twists clear before your <ansi fg="item">{itemname}</ansi> can close!'
-        - 'Your throttle lunge misses and your <ansi fg="item">{itemname}</ansi> clap on empty air!'
+        - 'Your throttle lunge misses and you clap your <ansi fg="item">{itemname}</ansi> shut on empty air!'
         expert:
         - 'Your calculated lunge falls short, and <ansi fg="{acteetype}">{actee}</ansi> reads the angle!'
         - 'Despite your {stance} approach, the throat slips your <ansi fg="item">{itemname}</ansi>!'
@@ -110,12 +110,12 @@ options:
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected movement forces your perfect choke wide!'
         - 'Despite flawless timing, <ansi fg="{acteetype}">{actee}</ansi> drops their chin and escapes the clamp!'
-        - 'A masterful angle undone by a faster dodge, and your <ansi fg="item">{itemname}</ansi> miss!'
+        - 'A masterful angle undone by a faster dodge, and you miss with your <ansi fg="item">{itemname}</ansi>!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> snaps at your throat but misses!'
         - 'You pull your throat back as <ansi fg="{actortype}">{actor}</ansi>''s jaws close on nothing!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> clamp on empty air as you twist away!'
+        - '<ansi fg="{actortype}">{actor}</ansi> clamps its <ansi fg="item">{itemname}</ansi> on empty air as you twist away!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges for your windpipe but fails to connect!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s calculated lunge falls short as you step aside!'
@@ -130,7 +130,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> snaps at <ansi fg="{acteetype}">{actee}</ansi>''s throat but misses!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges for <ansi fg="{acteetype}">{actee}</ansi>''s throat, but <ansi fg="{acteetype}">{actee}</ansi> pulls away!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> close on empty air!'
+        - '<ansi fg="{actortype}">{actor}</ansi> closes its <ansi fg="item">{itemname}</ansi> on empty air!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges for the windpipe but fails to connect!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s calculated lunge falls short as <ansi fg="{acteetype}">{actee}</ansi> steps aside!'
@@ -145,7 +145,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> graze <ansi fg="{acteetype}">{actee}</ansi>''s throat.'
+        - 'You graze <ansi fg="{acteetype}">{actee}</ansi>''s throat with your <ansi fg="item">{itemname}</ansi>.'
         - 'You catch <ansi fg="{acteetype}">{actee}</ansi> with a glancing bite at the neck.'
         - 'Your choke finds the edge of <ansi fg="{acteetype}">{actee}</ansi>''s throat.'
         expert:
@@ -186,7 +186,7 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> clamp around <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
+        - 'You clamp your <ansi fg="item">{itemname}</ansi> around <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
         - 'You seize <ansi fg="{acteetype}">{actee}</ansi> by the windpipe!'
         - 'Your jaws lock around <ansi fg="{acteetype}">{actee}</ansi>''s neck, and they gasp!'
         - 'You drive your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>''s throat and squeeze!'
@@ -194,15 +194,15 @@ options:
         - 'You close from a {stance} stance and clamp your <ansi fg="item">{itemname}</ansi> around the windpipe!'
         - 'Stepping into the lunge, you drive your <ansi fg="item">{itemname}</ansi> through <ansi fg="{acteetype}">{actee}</ansi>''s guard to the throat!'
         - 'You feint high and close low, {momentum}, jaws finding the neck!'
-        - 'Your <ansi fg="item">{itemname}</ansi> lock around <ansi fg="{acteetype}">{actee}</ansi>''s throat as they choke for air!'
+        - 'You lock your <ansi fg="item">{itemname}</ansi> around <ansi fg="{acteetype}">{actee}</ansi>''s throat as they choke for air!'
         master:
         - 'You press the advantage and clamp the windpipe, {momentum}!'
         - 'From a {stance} stance, you seize <ansi fg="{acteetype}">{actee}</ansi>''s throat with crushing precision!'
         - 'You exploit the gap and throttle decisively while {position}!'
-        - '{momentum}, your <ansi fg="item">{itemname}</ansi> lock tight around the throat!'
+        - '{momentum}, you lock your <ansi fg="item">{itemname}</ansi> tight around the throat!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> clamp around your throat!'
+        - '<ansi fg="{actortype}">{actor}</ansi> clamps its <ansi fg="item">{itemname}</ansi> around your throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> seizes your windpipe and you gasp for air!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s jaws lock around your neck, cutting off your air!'
         - '<ansi fg="{actortype}">{actor}</ansi> drives their <ansi fg="item">{itemname}</ansi> into your throat and squeezes!'
@@ -210,15 +210,15 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> closes from a {stance} stance and clamps your windpipe!'
         - '<ansi fg="{actortype}">{actor}</ansi> drives through your guard and locks onto your throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> feints and closes low, {momentum}, finding your neck!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> lock around your throat as you choke for air!'
+        - '<ansi fg="{actortype}">{actor}</ansi> locks its <ansi fg="item">{itemname}</ansi> around your throat as you choke for air!'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> presses the advantage and clamps the windpipe!'
         - '<ansi fg="{actortype}">{actor}</ansi> seizes your throat with crushing precision!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits the gap and throttles you decisively!'
-        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> lock tight around your throat!'
+        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> locks its <ansi fg="item">{itemname}</ansi> tight around your throat!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> clamp around <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
+        - '<ansi fg="{actortype}">{actor}</ansi> clamps its <ansi fg="item">{itemname}</ansi> around <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> seizes <ansi fg="{acteetype}">{actee}</ansi> by the windpipe!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s jaws lock around <ansi fg="{acteetype}">{actee}</ansi>''s neck!'
         - '<ansi fg="{actortype}">{actor}</ansi> drives their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>''s throat and squeezes!'
@@ -226,17 +226,17 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> closes from a {stance} stance and clamps the windpipe!'
         - '<ansi fg="{actortype}">{actor}</ansi> drives through the guard and locks onto the throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> feints high and closes low, finding the neck!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> lock around <ansi fg="{acteetype}">{actee}</ansi>''s throat as they choke for air!'
+        - '<ansi fg="{actortype}">{actor}</ansi> locks its <ansi fg="item">{itemname}</ansi> around <ansi fg="{acteetype}">{actee}</ansi>''s throat as they choke for air!'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> presses the advantage and clamps the windpipe!'
         - '<ansi fg="{actortype}">{actor}</ansi> seizes <ansi fg="{acteetype}">{actee}</ansi>''s throat with crushing precision!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits the gap and throttles decisively!'
-        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> lock tight around <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
+        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> locks its <ansi fg="item">{itemname}</ansi> tight around <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
   heavy:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> crush <ansi fg="{acteetype}">{actee}</ansi>''s throat with brutal force!'
+        - 'You crush <ansi fg="{acteetype}">{actee}</ansi>''s throat with brutal force from your <ansi fg="item">{itemname}</ansi>!'
         - 'You seize <ansi fg="{acteetype}">{actee}</ansi> by the windpipe and crush!'
         - 'Your jaws close around <ansi fg="{acteetype}">{actee}</ansi>''s neck and squeeze savagely!'
         - 'You drive deep and clamp <ansi fg="{acteetype}">{actee}</ansi>''s throat with overwhelming force!'
@@ -252,7 +252,7 @@ options:
         - '{momentum}, you clamp with overwhelming, suffocating force!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> crush your throat with brutal force!'
+        - '<ansi fg="{actortype}">{actor}</ansi> crushes your throat with brutal force from its <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> seizes your windpipe and crushes!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s jaws close around your neck and squeeze savagely!'
         - '<ansi fg="{actortype}">{actor}</ansi> clamps your throat with overwhelming force!'
@@ -268,7 +268,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> clamps your throat with overwhelming, suffocating force!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> crush <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
+        - '<ansi fg="{actortype}">{actor}</ansi> crushes <ansi fg="{acteetype}">{actee}</ansi>''s throat with its <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> seizes <ansi fg="{acteetype}">{actee}</ansi>''s windpipe and crushes!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s jaws close around <ansi fg="{acteetype}">{actee}</ansi>''s neck savagely!'
         - '<ansi fg="{actortype}">{actor}</ansi> drives deep and clamps <ansi fg="{acteetype}">{actee}</ansi>''s throat with overwhelming force!'
@@ -286,12 +286,12 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
+        - 'You <ansi fg="cyan-bold">CRUSH</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe with your <ansi fg="item">{itemname}</ansi>!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL CHOKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
+        - 'You <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s throat with your <ansi fg="item">{itemname}</ansi>!'
         - 'You land a <ansi fg="cyan-bold">CRUSHING THROTTLE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
-        - 'You close and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
+        - 'You close in and <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe with your <ansi fg="item">{itemname}</ansi>!'
         - 'Lunging while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT CHOKE</ansi>!'
         - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely and you <ansi fg="cyan-bold">ANNIHILATE</ansi> the throat!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS THROTTLE</ansi>!'
@@ -302,12 +302,12 @@ options:
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">THROTTLE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with brutal precision!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> your windpipe!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> your windpipe with its <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s choke delivers a <ansi fg="cyan-bold">CRITICAL THROTTLE</ansi>!'
         - 'You are <ansi fg="cyan-bold">DEVASTATED</ansi> as <ansi fg="{actortype}">{actor}</ansi> crushes your throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">CRUSHING THROTTLE</ansi> on your windpipe!'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> your windpipe!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> your windpipe with its <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and delivers a <ansi fg="cyan-bold">PERFECT CHOKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely, and they <ansi fg="cyan-bold">ANNIHILATE</ansi> your throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your every move and delivers a <ansi fg="cyan-bold">FLAWLESS THROTTLE</ansi>!'
@@ -318,12 +318,12 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">CRUSHES</ansi> your windpipe!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe with its <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s choke delivers a <ansi fg="cyan-bold">CRITICAL THROTTLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">CRUSHING THROTTLE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe with its <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges forward with a <ansi fg="cyan-bold">PERFECT CHOKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>: <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s every move and delivers a <ansi fg="cyan-bold">FLAWLESS THROTTLE</ansi>!'
@@ -336,9 +336,9 @@ options:
     together:
       actor:
         beginner:
-        - 'Your throttle lunge <ansi fg="red-bold">FUMBLES</ansi> as your <ansi fg="item">{itemname}</ansi> find nothing!'
+        - 'Your throttle lunge <ansi fg="red-bold">FUMBLES</ansi> as you find nothing with your <ansi fg="item">{itemname}</ansi>!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble past your target off-balance!'
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">CLAP SHUT</ansi> on empty air!'
+        - 'You <ansi fg="red-bold">CLAP SHUT</ansi> your <ansi fg="item">{itemname}</ansi> on empty air!'
         - 'You lose your angle and your throttle <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - 'Your tactical choke fails catastrophically and you <ansi fg="red-bold">FUMBLE</ansi>!'
@@ -350,9 +350,9 @@ options:
         - 'Your masterful choke is disrupted and you <ansi fg="red-bold">FUMBLE</ansi> entirely!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s throttle <ansi fg="red-bold">FUMBLES</ansi> as its <ansi fg="item">{itemname}</ansi> find nothing!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s throttle <ansi fg="red-bold">FUMBLES</ansi> as it finds nothing with its <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the throttle in an embarrassing stumble!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> clap shut on empty air!'
+        - '<ansi fg="{actortype}">{actor}</ansi> claps its <ansi fg="item">{itemname}</ansi> shut on empty air!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> as it loses its angle!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
@@ -364,9 +364,9 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s masterful throttle is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> at <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> at <ansi fg="{acteetype}">{actee}</ansi>''s throat with its <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the throttle and stumbles past!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">CLAP SHUT</ansi> on empty air!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">CLAPS SHUT</ansi> its <ansi fg="item">{itemname}</ansi> on empty air!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the choke in a clumsy lurch!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'

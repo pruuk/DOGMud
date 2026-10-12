@@ -15,6 +15,10 @@ import (
 // value found in either world.
 var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam}
 
+// naturalWeaponSpecialPools are the special-attack pools whose {itemname} is
+// the same natural weapon, so they follow the same rule (M6 slice 2 review).
+var naturalWeaponSpecialPools = []string{"throttle", "drain", "maul"}
+
 // afterItemName finds each {itemname} and the text that follows it.
 var afterItemName = regexp.MustCompile(`\{itemname\}(.*)`)
 
@@ -32,6 +36,9 @@ var weaponNotSubject = map[string]bool{
 	"toward": true, "towards": true, "to": true, "but": true, "as": true,
 	"from": true, "on": true, "off": true, "across": true, "against": true,
 	"over": true, "home": true, "shut": true,
+	// Modal and place words that take no verb ending ("before your {itemname}
+	// can close", "clamp your {itemname} around the throat").
+	"can": true, "around": true, "tight": true,
 }
 
 // subjectVerbAfterItemName returns the word that makes {itemname} the
@@ -90,6 +97,9 @@ func naturalWeaponPoolFiles(t *testing.T) []string {
 	pools := map[string]bool{}
 	for _, p := range naturalWeaponPools {
 		pools[string(p)] = true
+	}
+	for _, p := range naturalWeaponSpecialPools {
+		pools[p] = true
 	}
 	species, err := filepath.Glob(filepath.Join("..", "..", "_datafiles", "world", "*", "species", "*.yaml"))
 	if err != nil || len(species) == 0 {
