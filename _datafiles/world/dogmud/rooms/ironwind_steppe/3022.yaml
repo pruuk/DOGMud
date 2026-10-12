@@ -1,7 +1,7 @@
 roomid: 3022
 zone: Ironwind Steppe
 title: Hawk Hunting Ground
-description: The flats are unusually barren here -- short-cropped grass
+description: The flats are unusually barren here. Short-cropped grass
   and bare soil stretching wide, with minimal sagebrush. This open
   space is a hunting ground for the hawks and raptors that nest on
   the ridge to the east. Pellets of compressed fur and bone litter
@@ -23,10 +23,10 @@ exits:
 nouns:
   tree: A dead tree, bleached white by the elements, its bare
     branches spread like skeletal fingers. Hawks use it as a
-    perch -- the branches are streaked with droppings and the
+    perch. The branches are streaked with droppings and the
     ground beneath is littered with pellets and feathers.
   pellets: Compressed lumps of fur, bone, and insect shell,
-    coughed up by raptors. Each is a record of a meal -- mouse
+    coughed up by raptors. Each is a record of a meal, such as mouse
     skulls, beetle wings, and tiny rib cages compressed into
     dense grey cylinders.
 spawninfo:

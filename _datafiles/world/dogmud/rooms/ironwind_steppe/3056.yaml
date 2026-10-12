@@ -3,7 +3,7 @@ zone: Ironwind Steppe
 title: Reed Marsh
 description: The creek basin dips into a marshy depression where
   water collects year-round, supporting thick stands of cattails
-  and rushes. The ground is soft and treacherous -- what looks
+  and rushes. The ground is soft and treacherous. What looks
   like solid earth may be a thin crust over ankle-deep muck.
   Frogs croak from hidden pools, and dragonflies patrol the
   reeds. The marsh is a vital oasis on the dry steppe, drawing
@@ -36,6 +36,6 @@ spawninfo:
 idlemessages:
 - Frogs chorus from the hidden pools, a rhythmic croaking.
 - A dragonfly hovers motionless, then darts away in a blue flash.
-- The ground squishes and yields underfoot -- uncertain footing.
+- The ground squishes and yields underfoot, with uncertain footing.
 x: 24
 y: 12

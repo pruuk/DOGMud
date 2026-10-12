@@ -4,7 +4,7 @@ title: Deep Creek Bed
 description: The dry creek bed cuts deep here, its banks rising well
   above head height. The floor is a jumble of rounded boulders and
   packed gravel, the leavings of powerful floods. The walls show
-  distinct flood lines -- dark stains at various heights marking
+  distinct flood lines, dark stains at various heights marking
   past water levels. It feels like walking through a narrow canyon.
   The sky is a ribbon of blue above the steep banks.
 biome: land
@@ -27,7 +27,7 @@ nouns:
     together, creating an uneven floor. Some are large enough
     to sit on.
   lines: Dark stains on the creek banks marking past flood
-    levels. The highest lines are above your head -- testimony
+    levels. The highest lines are above your head, which is testimony
     to the violence of the seasonal floods that carved this
     channel.
 spawninfo:

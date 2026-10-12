@@ -2,7 +2,7 @@ roomid: 3003
 zone: Ironwind Steppe
 title: Overgrown Track
 description: The wagon track narrows here as grass encroaches from both
-  sides. Wildflowers -- small yellow and white blossoms -- dot the
+  sides. Wildflowers, small yellow and white blossoms, dot the
   verge where the soil is less trampled. The ground is still firm
   underfoot but the transition from city outskirts to open steppe is
   nearly complete. A collapsed stone cairn sits beside the track,
@@ -26,7 +26,7 @@ nouns:
     collapsed and overgrown. One flat stone near the base might bear
     faded carved letters, but erosion has made them illegible. It
     could be an old boundary marker for the city's jurisdiction.
-  flowers: Small hardy wildflowers growing along the track edges --
+  flowers: Small hardy wildflowers growing along the track edges,
     yellow buttercups and white clover, the kind that thrives in
     poor soil and full sun.
 spawninfo:

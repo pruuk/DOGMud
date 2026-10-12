@@ -5,7 +5,7 @@ description: A narrow ledge runs along the ridge's south face, the
   rock crumbling and unreliable underfoot. Parts of the ledge have
   broken away entirely, leaving gaps that require careful jumping.
   Below, the slope drops steeply toward the dry creek basin. The
-  exposed rock face beside you is layered -- dark basalt over pale
+  exposed rock face beside you is layered, with dark basalt over pale
   sandstone, the geological history of the region written in stone.
 biome: cliffs
 coord:
@@ -24,7 +24,7 @@ nouns:
     running along the ridge face. Chunks have broken off and lie
     in the scree below. The remaining stone feels solid but the
     edges are crumbling.
-  layers: The exposed rock face shows distinct layers -- dark
+  layers: The exposed rock face shows distinct layers, with dark
     basalt on top, then a thin band of red clay, then pale
     sandstone below. The layers tell of volcanic activity over
     older sedimentary stone.

@@ -1,7 +1,7 @@
 roomid: 3080
 zone: Ironwind Steppe
 title: Ravine Fork
-description: The ravine splits here into two branches -- one
+description: The ravine splits here into two branches, one
   continuing south deeper into wolf territory, the other
   angling southwest toward muddier, lower ground. The fork
   is marked by a massive boulder wedged between the ravine
@@ -19,7 +19,7 @@ exits:
 nouns:
   boulder: A huge boulder jammed between the ravine walls,
     forming a natural bridge overhead. Its surface is deeply
-    scored with claw marks -- wolves have used it for
+    scored with claw marks. Wolves have used it for
     generations to mark territory and sharpen their claws.
   fork: The point where the ravine divides into two channels.
     The left branch descends toward wetter ground; the right

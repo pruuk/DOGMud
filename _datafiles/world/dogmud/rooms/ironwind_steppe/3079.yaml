@@ -3,7 +3,7 @@ zone: Ironwind Steppe
 title: Deep Wolf Run
 description: The ravine cuts deeper here, the walls rising high
   above your head and blocking most of the sky. The vegetation
-  is thick and tangled -- vines, thorny bushes, and small trees
+  is thick and tangled, with vines, thorny bushes, and small trees
   growing in the sheltered depths. The stream from upstream has
   gone underground, leaving damp earth and the occasional muddy
   seep. Wolf trails branch in every direction through the
@@ -22,7 +22,7 @@ exits:
     roomid: 3080
 nouns:
   undergrowth: Dense, tangled vegetation filling the ravine
-    floor -- thorny bushes, climbing vines, and saplings
+    floor, such as thorny bushes, climbing vines, and saplings
     competing for the limited light. The growth provides
     excellent cover for wolves stalking through the ravine.
   seep: A muddy spot where groundwater oozes to the surface,

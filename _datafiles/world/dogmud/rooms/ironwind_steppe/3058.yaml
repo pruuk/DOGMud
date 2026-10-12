@@ -5,7 +5,7 @@ description: The dry creek basin widens and shallows here as the
   terrain levels out toward the south. The banks diminish to
   gentle slopes, and the creek bed spreads into a broad wash of
   sand and gravel. Beyond, the land opens into the lower regions
-  of the steppe -- boar wallows to the southwest and wolf ravines
+  of the steppe, with boar wallows to the southwest and wolf ravines
   to the south. The ground is drier here, the sand pale and fine.
 biome: land
 coord:
@@ -19,7 +19,7 @@ exits:
     roomid: 3081
 nouns:
   wash: A broad fan of deposited sand and gravel where the creek
-    basin opens out. The material is sorted by past floods --
+    basin opens out. The material is sorted by past floods, with
     coarser gravel near the banks, fine sand toward the center.
     Footprints and tracks pattern the smooth surface.
 spawninfo:

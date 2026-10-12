@@ -1,7 +1,7 @@
 roomid: 3033
 zone: Ironwind Steppe
 title: Ridge Trail Junction
-description: Two trails meet here on the ridge's western face -- one
+description: Two trails meet here on the ridge's western face. One
   climbing from the south, another traversing from the north. The
   junction is a small flat area littered with loose stone and a
   few hardy tufts of grass. A cairn of stacked stones stands at
@@ -23,7 +23,7 @@ exits:
 nouns:
   cairn: A neat stack of flat stones, waist-high, clearly built
     by a person. A few pebbles have been wedged between the
-    stones -- offerings or markers left by travellers. The
+    stones, offerings or markers left by travellers. The
     cairn has been here long enough for lichen to colonize
     the lower stones.
 spawninfo:

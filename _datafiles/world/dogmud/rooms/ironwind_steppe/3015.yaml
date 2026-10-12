@@ -4,8 +4,8 @@ title: Northern Sagebrush Flats
 description: The flats extend north here, the sagebrush growing denser
   and taller as if the soil is richer on this side. A few twisted
   juniper trees stand alone on the plain, their trunks gnarled by
-  decades of wind. The ground is scattered with animal bones --
-  small skulls, leg bones, vertebrae -- the remains of prey
+  decades of wind. The ground is scattered with animal bones,
+  small skulls, leg bones, vertebrae, the remains of prey
   animals discarded by predators. Wolf territory, by the signs.
 biome: land
 coord:
@@ -24,7 +24,7 @@ nouns:
     and dense blue-green foliage. They provide the only real
     shade on the flats. Birds nest in their branches.
   bones: Scattered animal bones, bleached white by sun and wind.
-    Small skulls, rib cages, leg bones -- the leavings of
+    Small skulls, rib cages, leg bones, the leavings of
     predators who hunt the flats. Most are old and dry.
 spawninfo:
 - mobid: 205

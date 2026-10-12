@@ -2,7 +2,7 @@ roomid: 3017
 zone: Ironwind Steppe
 title: The Broken Rise
 description: The flats give out here against the rising ground. Rocky
-  outcrops break through the thinning soil -- dark stone poking
+  outcrops break through the thinning soil, dark stone poking
   through the earth like bones through skin. A few scrubby pines
   cling to the lee side of the larger outcrops, their needles dark
   green against the pale grass. The ridge crowds close on nearly
@@ -13,7 +13,7 @@ exits:
   north:
     roomid: 3016
 nouns:
-  outcrops: Dark, angular stone breaking through the steppe soil --
+  outcrops: Dark, angular stone breaking through the steppe soil,
     the first exposed bedrock of the ridge system. The rock is
     basalt, dark and dense, veined with pale mineral deposits.
   pines: Stunted, wind-bent pines growing in the shelter of rock

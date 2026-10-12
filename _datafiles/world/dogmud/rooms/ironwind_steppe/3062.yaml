@@ -21,7 +21,7 @@ exits:
   east:
     roomid: 3065
 nouns:
-  markings: Crude scratches on the basalt wall -- directional
+  markings: Crude scratches on the basalt wall, such as directional
     arrows, tally marks, and what might be a rough map of the
     coulee system. The marks are made with a lighter stone
     on the dark basalt. They look deliberately placed.
@@ -35,7 +35,7 @@ spawninfo:
 - mobid: 222
 idlemessages:
 - The crude markings on the wall look freshly scratched.
-- A pebble clatters down one of the passages -- thrown or dislodged?
+- A pebble clatters down one of the passages, thrown or dislodged?
 - Movement flickers at the edge of a passage, then is gone.
 x: 26
 y: 13

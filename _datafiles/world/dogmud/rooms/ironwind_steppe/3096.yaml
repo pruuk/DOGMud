@@ -6,7 +6,7 @@ description: A wide clearing where the boars have destroyed all
   countless hooves. Boar droppings are thick on the ground
   and the smell is overwhelming. This is a gathering area
   where the sounder rests between wallowing sessions. Rubbing
-  posts -- sturdy tree trunks worn smooth by bristly hides --
+  posts, sturdy tree trunks worn smooth by bristly hides,
   stand at the clearing's edges, and deep ruts in the earth
   mark where boars have been rooting.
 biome: land
@@ -22,7 +22,7 @@ exits:
   south:
     roomid: 3097
 nouns:
-  posts: Sturdy tree trunks -- the last survivors of whatever
+  posts: Sturdy tree trunks, the last survivors of whatever
     grew here before the boars moved in. The bark has been
     rubbed completely off at boar shoulder-height, leaving
     the wood smooth and polished by bristly hides.
@@ -36,7 +36,7 @@ spawninfo:
 - mobid: 208
 idlemessages:
 - A boar rubs against a smooth post with evident satisfaction.
-- The clearing stinks of boar -- a thick, musky, organic smell.
+- The clearing stinks of boar, a thick, musky, organic smell.
 - Deep ruts show where boars have been rooting for hours.
 x: 25
 y: 16

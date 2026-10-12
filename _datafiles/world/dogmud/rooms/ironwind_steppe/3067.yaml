@@ -1,7 +1,7 @@
 roomid: 3067
 zone: Ironwind Steppe
 title: Ambush Coulee
-description: This stretch of coulee is perfect ambush territory --
+description: This stretch of coulee is perfect ambush territory,
   narrow enough to block, with overhanging walls that provide
   cover above and blind corners at both ends. The walls are
   scored with claw marks and the stone floor is scuffed by many
@@ -22,7 +22,7 @@ exits:
 nouns:
   tripwires: Braided grass cords stretched across the coulee
     floor at ankle height, tied to stones wedged in cracks.
-    They are crude but effective -- anyone moving quickly
+    They are crude but effective. Anyone moving quickly
     through here would stumble.
   stones: Small piles of fist-sized rocks placed on wall ledges
     overhead, positioned for dropping on anyone below. Crude

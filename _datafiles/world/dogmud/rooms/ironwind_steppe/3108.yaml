@@ -3,7 +3,7 @@ zone: Ironwind Steppe
 title: Stalker's Gallery
 description: A long, narrow gallery where the ceiling drops low
   enough to force you into a crouch. The walls are close and the
-  darkness is absolute -- no light reaches this deep. The floor
+  darkness is absolute. No light reaches this deep. The floor
   is smooth stone, worn by water and by the passage of creatures
   that navigate by sound and touch rather than sight. The air is
   still and cold, with a faint, musty animal smell. You have the
@@ -31,7 +31,7 @@ spawninfo:
 - mobid: 225
 idlemessages:
 - The absolute darkness feels thick enough to touch.
-- A faint sound -- breathing? -- comes from ahead in the gallery.
+- A faint sound (breathing?) comes from ahead in the gallery.
 - Cold air moves against your skin like the breath of something large.
 x: 22
 y: -5

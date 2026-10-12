@@ -2,7 +2,7 @@ roomid: 3117
 zone: Ironwind Steppe
 title: Badlands Descent
 description: >-
-  The ground drops here in a long, uneven shelf -- not a cliff but a
+  The ground drops here in a long, uneven shelf: not a cliff but a
   series of natural steps, each a short scramble of loose stone and
   compacted silt. The descent faces northwest, and the wind comes up
   the slope full in the face at every step. Sparse dry grass grows
@@ -24,9 +24,9 @@ exits:
     roomid: 3118
 nouns:
   shelf: The natural terracing of the slope, each step a compressed
-    layer of different stone -- volcanic above, sandstone and pale
+    layer of different stone, with volcanic above, sandstone and pale
     silt below. The edges are crumbly and the faces are wind-polished
-    smooth. Negotiating them requires care -- the drop between each
+    smooth. Negotiating them requires care, as the drop between each
     step is easy enough to misjudge.
   grass: Short, wire-stiff stalks of brown steppe grass, dormant or
     simply resigned to the conditions here. The root masses that hold

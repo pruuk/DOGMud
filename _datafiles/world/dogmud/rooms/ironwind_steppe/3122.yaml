@@ -2,7 +2,7 @@ roomid: 3122
 zone: Ironwind Steppe
 title: Coulee Entrance
 description: >-
-  The coulee system begins here -- the first clear channel, shallow but
+  The coulee system begins here: the first clear channel, shallow but
   definite, running roughly north-south and lined with coarser grass and
   the low, dense brush that follows seasonal water. The basalt that
   defines the deeper coulees is still absent; the walls here are packed
@@ -24,13 +24,13 @@ exits:
   west:
     roomid: 3074
 nouns:
-  channel: The first definite coulee channel -- shallow compared to the
+  channel: The first definite coulee channel, shallow compared to the
     deep basalt-walled coulees further west, but unmistakably a drainage
     cut into the steppe by persistent seasonal flow. The floor is packed
     silt over sandstone, damp in the shade and cracked in the open.
     The walls are low but vertical, the edges undercut slightly by runoff.
   brush: Dense, low brush colonizing the channel margins where seasonal
-    moisture concentrates -- thorn-armed, close-branched, the kind that
+    moisture concentrates, thorn-armed, close-branched, the kind that
     makes passage difficult if you leave the trail. Game paths thread
     through it at intervals, narrow and low.
 idlemessages:
