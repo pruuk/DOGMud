@@ -11,8 +11,8 @@ import (
 
 // M6 slice 3 (ledger row 35): a parry counter is sent for any parrying weapon,
 // a mace or a staff as much as a blade, so the lines may not name a cut, a
-// point or a thrust.
-var bladeOnlyWord = regexp.MustCompile(`(?i)\b(cut|cuts|point|points|thrust|thrusts)\b`)
+// point, a thrust, or a weapon driven deep.
+var bladeOnlyWord = regexp.MustCompile(`(?i)\b(cut|cuts|point|points|thrust|thrusts|deep)\b`)
 
 func bladeWordsIn(text string) []string {
 	var hits []string

@@ -2,9 +2,9 @@
 # Tokens available:
 # {actor}     - name of the taunter
 # {actee}     - name of the target
-# {actortype} - 'user' or 'mob'
-# {acteetype} - 'user' or 'mob'
-# {damage}     - conviction damage description text
+# {actortype} - ansi name alias for the taunter: 'username' or 'mobname'
+# {acteetype} - ansi name alias for the target: 'username' or 'mobname'
+# {damage}    - conviction damage description text
 #
 # THE THREE LISTS IN EACH BAND PAIR BY INDEX. Variant N of actor,
 # actee and observer describe the SAME moment, and combat.GetTauntTriad

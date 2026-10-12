@@ -33,19 +33,19 @@ options:
     together:
       actee:
       - '<ansi fg="defense-good">You turn the blow aside and strike back, catching {actor} off balance.</ansi>'
-      - '<ansi fg="defense-good">You catch the attack on your weapon and drive it home into {actor}.</ansi>'
+      - '<ansi fg="defense-good">You catch the attack on your weapon, then strike back hard at {actor}.</ansi>'
       - '<ansi fg="defense-good">You beat the attack aside and land a clean hit on {actor}.</ansi>'
       - '<ansi fg="defense-good">You check the blow, step in, and strike {actor} over the guard.</ansi>'
       - '<ansi fg="defense-good">Your answer follows the parry and finds {actor}.</ansi>'
       actor:
       - '<ansi fg="attack-bad">{actee} turns your blow aside and strikes back, catching you off balance.</ansi>'
-      - '<ansi fg="attack-bad">{actee} catches your attack on their weapon and drives it home into you.</ansi>'
+      - '<ansi fg="attack-bad">{actee} catches your attack on their weapon, then strikes back hard at you.</ansi>'
       - '<ansi fg="attack-bad">{actee} beats your attack aside and lands a clean hit on you.</ansi>'
       - '<ansi fg="attack-bad">{actee} checks your blow, steps in, and strikes you over the guard.</ansi>'
       - '<ansi fg="attack-bad">{actee}''s answer follows the parry and finds you.</ansi>'
       observer:
       - '<ansi fg="combat">{actee} turns {actor}''s blow aside and strikes back, catching {actor} off balance.</ansi>'
-      - '<ansi fg="combat">{actee} catches {actor}''s attack and drives a weapon home into {actor}.</ansi>'
+      - '<ansi fg="combat">{actee} catches {actor}''s attack on a weapon, then strikes back hard.</ansi>'
       - '<ansi fg="combat">{actee} beats {actor}''s attack aside and lands a clean hit.</ansi>'
       - '<ansi fg="combat">{actee} checks {actor}''s blow, steps in, and strikes over the guard.</ansi>'
       - '<ansi fg="combat">{actee}''s answer follows the parry and finds {actor}.</ansi>'
@@ -53,19 +53,19 @@ options:
     together:
       actee:
       - '<ansi fg="defense-good">You turn the blow aside and strike back with everything, and {actor} reels.</ansi>'
-      - '<ansi fg="defense-good">You throw the attack wide and drive your weapon deep into {actor}.</ansi>'
+      - '<ansi fg="defense-good">You throw the attack wide and strike {actor} with full force.</ansi>'
       - '<ansi fg="defense-good">You catch the blow, roll it off your guard, and strike {actor} full on.</ansi>'
       - '<ansi fg="defense-good">Your parry becomes a strike in one motion, and {actor} staggers.</ansi>'
       - '<ansi fg="defense-good">You read the swing early and answer it hard, and {actor} buckles.</ansi>'
       actor:
       - '<ansi fg="attack-bad">{actee} turns your blow aside and strikes back with everything, and you reel.</ansi>'
-      - '<ansi fg="attack-bad">{actee} throws your attack wide and drives a weapon deep into you.</ansi>'
+      - '<ansi fg="attack-bad">{actee} throws your attack wide and strikes you with full force.</ansi>'
       - '<ansi fg="attack-bad">{actee} catches your blow, rolls it off their guard, and strikes you fully.</ansi>'
       - '<ansi fg="attack-bad">{actee}''s parry becomes a strike in one motion, and you stagger.</ansi>'
       - '<ansi fg="attack-bad">{actee} reads your swing early and answers it hard, and you buckle.</ansi>'
       observer:
       - '<ansi fg="combat">{actee} turns {actor}''s blow aside and strikes back hard, and {actor} reels.</ansi>'
-      - '<ansi fg="combat">{actee} throws {actor}''s attack wide and drives a weapon deep into them.</ansi>'
+      - '<ansi fg="combat">{actee} throws {actor}''s attack wide and strikes back with full force.</ansi>'
       - '<ansi fg="combat">{actee} catches {actor}''s blow, rolls it off the guard, and strikes full on.</ansi>'
       - '<ansi fg="combat">{actee}''s parry becomes a strike in one motion, and {actor} staggers.</ansi>'
       - '<ansi fg="combat">{actee} reads the swing early and answers hard, and {actor} buckles.</ansi>'

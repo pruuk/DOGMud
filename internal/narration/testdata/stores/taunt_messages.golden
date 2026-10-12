@@ -29,14 +29,14 @@ wordless|hit|actor => You snarl at <ansi fg="Mob">Target</ansi> until their nerv
 wordless|hit|actee => <ansi fg="User">Source</ansi> snarls at you until your nerve cracks! (<ansi fg="damage">ModerateWounds</ansi>)
 wordless|hit|observer => <ansi fg="User">Source</ansi> snarls at <ansi fg="Mob">Target</ansi> until their nerve cracks!
 wordless|miss|actor => Your snarl barely reaches <ansi fg="Mob">Target</ansi>, who is unmoved.
-wordless|miss|actee => <ansi fg="User">Source</ansi> snarls at you, but it barely reaches you.
+wordless|miss|actee => <ansi fg="User">Source</ansi>'s snarl barely reaches you, and you are unmoved.
 wordless|miss|observer => <ansi fg="User">Source</ansi> snarls at <ansi fg="Mob">Target</ansi>, who is unmoved.
 wordless|critical|actor => Your roar crashes over <ansi fg="Mob">Target</ansi>, who reels! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
 wordless|critical|actee => <ansi fg="User">Source</ansi>'s roar crashes over you, and you reel! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
 wordless|critical|observer => <ansi fg="User">Source</ansi>'s roar crashes over <ansi fg="Mob">Target</ansi>, who reels!
-wordless|fumble|actor => <ansi fg="red">Your snarl breaks into a cough. <ansi fg="Mob">Target</ansi> stares at you.</ansi>
-wordless|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi>'s snarl at you breaks into a cough.</ansi>
-wordless|fumble|observer => <ansi fg="User">Source</ansi>'s snarl at <ansi fg="Mob">Target</ansi> breaks into a cough.
+wordless|fumble|actor => <ansi fg="red">Your snarl fizzles out. <ansi fg="Mob">Target</ansi> stares at you.</ansi>
+wordless|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi>'s snarl at you fizzles out.</ansi>
+wordless|fumble|observer => <ansi fg="User">Source</ansi>'s snarl at <ansi fg="Mob">Target</ansi> fizzles out.
 howl|hit|actor => Your long howl rolls over <ansi fg="Mob">Target</ansi>, who shudders! (<ansi fg="damage">ModerateWounds</ansi>)
 howl|hit|actee => <ansi fg="User">Source</ansi>'s long howl rolls over you, and you shudder! (<ansi fg="damage">ModerateWounds</ansi>)
 howl|hit|observer => <ansi fg="User">Source</ansi>'s long howl rolls over <ansi fg="Mob">Target</ansi>, who shudders!

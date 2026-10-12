@@ -148,9 +148,9 @@ deflected:
   - '{actee} parries your swing, but you still connect! (<ansi fg="damage">{damage}</ansi>)'
   - '{actee} parries late, but your swing still lands! (<ansi fg="damage">{damage}</ansi>)'
   - '{actee} parries badly, but your swing still hurts them! (<ansi fg="damage">{damage}</ansi>)'
-  - '{actee} parries it wide, but your swing still gets through! (<ansi fg="damage">{damage}</ansi>)'
+  - '{actee} half parries, and your swing still gets through! (<ansi fg="damage">{damage}</ansi>)'
   actee:
   - 'You parry {actor}''s swing, but it still catches you! (<ansi fg="damage">{damage}</ansi>)'
   - 'You parry late, but {actor}''s swing still lands! (<ansi fg="damage">{damage}</ansi>)'
   - 'You parry badly, but {actor}''s swing still hurts you! (<ansi fg="damage">{damage}</ansi>)'
-  - 'You parry it wide, but {actor}''s swing still gets through! (<ansi fg="damage">{damage}</ansi>)'
+  - 'You half parry, and {actor}''s swing still gets through! (<ansi fg="damage">{damage}</ansi>)'
