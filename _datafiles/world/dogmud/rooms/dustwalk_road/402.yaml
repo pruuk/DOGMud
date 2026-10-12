@@ -2,7 +2,7 @@ roomid: 402
 zone: Dustwalk Road
 title: The Cairn
 description: A stack of weathered stones marks the junction where a faint trail splits
-  west from the main road. The cairn is old -- lichen covers the lower stones and the
+  west from the main road. The cairn is old. Lichen covers the lower stones and the
   upper ones have been bleached pale by years of sun. Someone has scratched a crude
   arrow into the topmost rock, pointing south along the road. The scrubland opens up
   here into a wider vista of dry grassland, and the sky feels enormous overhead. Dark
@@ -26,7 +26,7 @@ spawninfo:
 nouns:
   cairn: A pile of flat stones stacked with deliberate care. The bottommost are large
     as dinner plates, the topmost no bigger than a fist. Each stone has been chosen
-    for how it sits -- this was built to last. Travellers have added smaller stones
+    for how it sits, and this was built to last. Travellers have added smaller stones
     over the years, making it lopsided.
   arrow: A crude directional mark scratched into pale stone. It points south along
     the road. Beneath it, someone has scratched what might be a word, but time and
