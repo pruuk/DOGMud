@@ -1,13 +1,14 @@
 roomid: 443
 zone: Thornwall Outskirts
 title: The Fallow Field
-description: What was once a productive farm plot is now a tangled wilderness of
-  waist-high weeds, dead crop stalks, and encroaching scrub. The stone walls that
-  mark its boundaries are still intact, but everything within them has been abandoned.
-  A collapsed tool shed sits in one corner, its timbers grey with weather. Near the
-  road-side wall, a wooden post has been driven into the ground, and a notice has
-  been nailed to it -- official-looking parchment bearing a wax seal. The field has
-  the melancholy feel of something that was cared for once and then simply stopped.
+description: What was once a productive farm plot is now a tangled wilderness
+  of waist-high weeds, dead crop stalks, and encroaching scrub. The stone walls
+  that mark its boundaries are still intact, but everything within them has
+  been abandoned. A collapsed tool shed sits in one corner, its timbers grey
+  with weather. Near the road-side wall, a wooden post has been driven into the
+  ground, and a notice has been nailed to it. It is official-looking parchment
+  bearing a wax seal. The field has the melancholy feel of something that was
+  cared for once and then simply stopped.
 biome: farmland
 coord:
   x: -3
@@ -29,9 +30,9 @@ nouns:
     or neglect. Inside the wreckage you can see a rusted hoe, a broken basket, and
     what might have been a seed press. The tools of someone who expected to farm
     here for years.
-  weeds: Thistles, ragwort, and wild grass have claimed every inch of the field.
-    Beneath the weeds, the furrows of the last planting are still barely visible --
-    straight, careful lines now smothered by neglect.
+  weeds: Thistles, ragwort, and wild grass have claimed every inch of the
+    field. Beneath the weeds, the furrows of the last planting are still barely
+    visible. They are straight, careful lines now smothered by neglect.
 spawninfo:
 - itemid: 22
 idlemessages:

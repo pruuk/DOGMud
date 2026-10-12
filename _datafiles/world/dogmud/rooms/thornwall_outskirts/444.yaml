@@ -1,14 +1,14 @@
 roomid: 444
 zone: Thornwall Outskirts
 title: Pest Fields
-description: The fields here have a sickly look -- crops that should be knee-high
-  are stunted and ragged, their leaves chewed to lace by something persistent. Mounds
-  of freshly turned earth dot the furrows where burrowing pests have been at work,
-  and the irrigation ditches are clogged with mud and debris. A farmer's attempts at
-  control are visible -- poison stakes, mesh coverings, even a line of smoking pots
-  meant to drive the creatures out -- but none of it seems to be working. The damage
-  is spreading from the abandoned field to the north, where the pests have established
-  themselves unchecked.
+description: The fields here have a sickly look. Crops that should be
+  knee-high are stunted and ragged, their leaves chewed to lace by something
+  persistent. Mounds of freshly turned earth dot the furrows where burrowing
+  pests have been at work, and the irrigation ditches are clogged with mud and
+  debris. A farmer's attempts at control are visible (poison stakes, mesh
+  coverings, even a line of smoking pots meant to drive the creatures out) but
+  none of it seems to be working. The damage is spreading from the abandoned
+  field to the north, where the pests have established themselves unchecked.
 biome: farmland
 coord:
   x: -3
