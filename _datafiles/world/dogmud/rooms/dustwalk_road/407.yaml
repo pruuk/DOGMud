@@ -1,7 +1,7 @@
 roomid: 407
 zone: Dustwalk Road
 title: Abandoned Campsite
-description: The road descends into a sheltered gully where someone has made camp --
+description: The road descends into a sheltered gully where someone has made camp
   and left in a hurry. A fire ring of blackened stones sits cold, surrounded by
   scattered debris. Torn canvas, broken crate slats, and the stripped bones of a
   small animal litter the ground. Boot prints churn the dust in every direction,
@@ -27,8 +27,8 @@ nouns:
     ground around it is scuffed with fresh boot prints. Whoever camped here last did
     not bother to clean up.
   debris: Torn canvas, splintered wood, and the scattered remains of a meal. Among
-    the refuse you notice scraps of cloth that might have come from a merchant's pack
-    -- dyed fabric, not the rough homespun a traveller would carry.
+    the refuse you notice scraps of cloth that might have come from a merchant's pack,
+    dyed fabric, not the rough homespun a traveller would carry.
   bones: Small animal bones, cracked for marrow and stripped clean. Whatever was eaten
     here was eaten thoroughly and without ceremony.
 idlemessages:

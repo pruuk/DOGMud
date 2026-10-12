@@ -6,7 +6,7 @@ description: >
   of place that exists because two roads cross and people need
   to eat. Smoke rises from the chimney of a stone-and-timber
   tavern on the western side. A well stands in the center, its
-  bucket rope frayed to threads. The buildings are practical —
+  bucket rope frayed to threads. The buildings are practical:
   stone foundations, timber upper floors, thatched roofs patched
   with varying degrees of care. A few chickens scratch in the
   mud. The village has no name posted anywhere, as if naming it
@@ -26,13 +26,13 @@ exits:
 nouns:
   well: A stone well at the center of the square, its rim worn
     smooth by decades of rope and bucket. The rope attached to
-    the windlass is frayed nearly through — someone should
+    the windlass is frayed nearly through. Someone should
     replace it, and probably no one will for another season.
     The water below is dark and still. A wooden cup hangs from
     a nail on the post, communal and unchained.
   tavern: A two-story building of fieldstone and dark timber,
     the largest structure in the village. A painted sign hangs
-    over the door — a crude tankard above the name "Haral's."
+    over the door, a crude tankard above the name "Haral's."
     Firelight flickers behind the ground-floor windows. The
     smell of cooking fat and woodsmoke leaks from every gap
     in the frame.

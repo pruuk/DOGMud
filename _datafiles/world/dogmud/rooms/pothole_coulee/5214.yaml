@@ -3,7 +3,7 @@ zone: Pothole Coulee
 title: Cleric's Study
 description: >
   This small back room belongs to the cleric, and the cleric belongs to
-  his books. They are everywhere -- shelved, stacked, splayed open
+  his books. They are everywhere: shelved, stacked, splayed open
   face-down to hold a place, leaning in drifts against the legs of the
   desk. A kettle sits on a trivet over a low brazier in the corner, gone
   cold and forgotten more often than not while its owner reads. Across one
@@ -25,7 +25,7 @@ exits:
     roomid: 5213
 nouns:
   books:
-    Books fill the study to bursting -- bound in cracked leather and limp
+    Books fill the study to bursting, bound in cracked leather and limp
     vellum, shelved two deep, stacked in towers on the floor, splayed open
     face-down across the desk to keep a dozen places at once. Some are
     sermons and ledgers and almanacs, the plain working stuff of a frontier
@@ -34,7 +34,7 @@ nouns:
     glue and slow patient dust.
   rubbings:
     Pinned in careful rows across one wall hang charcoal rubbings taken off
-    some carved stone, each one a nest of arcs set within arcs -- ring
+    some carved stone, each one a nest of arcs set within arcs, ring
     inside ring inside ring, swung from centers that sit just slightly
     apart. Follow any single curve with your eye and it never comes back to
     meet itself; the arcs run on past where they ought to close and trail

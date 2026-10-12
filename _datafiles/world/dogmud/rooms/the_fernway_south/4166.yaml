@@ -7,12 +7,12 @@ description: >
   the current barely moves and the surface is almost glass.
   A <ansi fg="itemname">watercress-mat</ansi> floats across
   most of the eddy, dense and ankle-deep at the bank's
-  edge — the smell of it strong and peppery, the kind of
+  edge. The smell of it is strong and peppery, the kind of
   green pungency that sharpens the nose. Along the muddy
   bank, where the watercress gives way to open ground,
   patches of dark red-brown
   <ansi fg="itemname">blood-moss</ansi> carpet the earth
-  in low spreading mats — a dyer's ingredient and an
+  in low spreading mats. It is a dyer's ingredient and an
   alchemist's staple, found only where the ground stays
   perpetually wet. The <ansi fg="itemname">soft-mud</ansi>
   underfoot gives with every step and holds boot-prints
@@ -30,17 +30,17 @@ exits:
 nouns:
   eddy: |
     The brook curves and loses its speed here, pooling into
-    a slow side-eddy where the surface barely turns — the
+    a slow side-eddy where the surface barely turns. It is the
     kind of still water that collects whatever the current
     brings down and holds it.
   watercress mat: |
     A dense mat of watercress fills most of the eddy,
     floating thick at the surface and rooted in the mud
-    below — pungent and peppery, ready to harvest by the
+    below. It is pungent and peppery, ready to harvest by the
     handful, the leaves broad and dark green.
   blood moss: |
     Patches of dark red-brown blood-moss spread across the
-    soft mud at the eddy's bank — low and flat, the color
+    soft mud at the eddy's bank. It is low and flat, the color
     of old rust, keeping the soil together where the ground
     stays wet. Useful to alchemists and dyers both.
   soft mud: |

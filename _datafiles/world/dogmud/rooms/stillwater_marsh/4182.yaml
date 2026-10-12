@@ -11,13 +11,13 @@ description: >
   greyish, bitter to the touch, the kind the Stillwater healer
   uses for her stronger pain-medicines. A
   <ansi fg="itemname">leaf-shimmer</ansi> moves through the
-  canopy in any passing breeze — the willow leaves are narrow
+  canopy in any passing breeze. The willow leaves are narrow
   and silvery on their undersides, and when the wind finds them
   the whole grove flashes briefly pale before settling. The
   <ansi fg="itemname">trail-end</ansi> is unmarked; the last
   plank-foot is simply lost in the mud where the willows take
   over, and the air here is noticeably cooler than the open
-  reed-beds behind — damper, stiller, with the faint green
+  reed-beds behind: damper, stiller, with the faint green
   smell of wet bark. There is nothing further west you can
   reach today.
 biome: water
@@ -42,7 +42,7 @@ nouns:
     for decades. The same species the Stillwater healer
     harvests for stronger pain-medicines.
   willow bark: |
-    The bark is greyish and finely furrowed — bitter to the
+    The bark is greyish and finely furrowed, bitter to the
     tongue and known to ease aches and reduce fevers when
     properly prepared. The healer in Stillwater pays well for
     a clean strip harvested at the right time of year.
@@ -52,7 +52,7 @@ nouns:
     turn, the canopy flashing briefly pale before the wind
     drops and the leaves settle green again.
   trail end: |
-    The trail simply ends here — the last plank-foot lost in
+    The trail simply ends here, the last plank-foot lost in
     the mud where the willows take over and nothing has bothered
     to walk further west. There is nothing west of here you can
     reach today.

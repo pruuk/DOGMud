@@ -1,9 +1,9 @@
 roomid: 5804
 zone: New Plymouth Merchant
-title: The Central Square — Market Stalls
+title: The Central Square, Market Stalls
 description: >
   The stall-stretch that spills east from the square is
-  the loudest quarter-acre in New Plymouth — a dense
+  the loudest quarter-acre in New Plymouth: a dense
   press of open-front shops and temporary awnings where
   hawkers work their pitches with practiced urgency and
   delivery boys from three different provisioners cut
@@ -12,7 +12,7 @@ description: >
   Processional carries dry goods and small luxuries;
   further east it shades toward bulk provisions ordered
   by the quarter's inns and kitchen operations. A runner
-  named Dobb is sometimes seen here between errands —
+  named Dobb is sometimes seen here between errands,
   recognizable by a patched green jacket and the habit
   of knowing which stall received a delivery before the
   stall-keeper does. The <ansi fg="itemname">red-awning</ansi>,
@@ -33,7 +33,7 @@ exits:
   east:
     roomid: 5814
 nouns:
-  stall row: The stalls here are not temporary — they
+  stall row: The stalls here are not temporary. They
     have permanent wooden frameworks, hinged shutters
     that fold down to form display counters, and
     weathered paint that has been refreshed enough times
@@ -45,9 +45,9 @@ nouns:
     they talk across the gap.
   red awning: Canvas on a frame of bent iron pipe, faded
     from what was probably a vivid red to something more
-    like dried clay, patched in three places — each patch
-    a slightly different shade of not-quite-matching red
-    — and still serviceable. Under it a cluster of
+    like dried clay, patched in three places, each patch
+    a slightly different shade of not-quite-matching red,
+    and still serviceable. Under it a cluster of
     produce and provision stalls operates at greater
     density than anywhere else in the stretch. The
     awning's shadow is considered valuable real estate;
@@ -62,7 +62,7 @@ idlemessages:
 - Two delivery boys from competing houses nearly
   collide between stalls and part with practiced
   indifference.
-- The smell here is layered — spice, fresh bread,
+- The smell here is layered with spice, fresh bread,
   raw cloth, the warm undertone of too many people
   in too small a space.
 - A stall-keeper pulls a cloth over their display and

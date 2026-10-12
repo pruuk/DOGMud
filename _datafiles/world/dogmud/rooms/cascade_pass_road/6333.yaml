@@ -2,19 +2,19 @@ roomid: 6333
 zone: Cascade Pass Road
 title: The Tree Line
 description: >
-  The last trees stand here — stunted, leaning,
+  The last trees stand here: stunted, leaning,
   their trunks torqued by decades of wind that has
   not relented. They thin quickly and then stop, the
-  transition abrupt — a handful of
+  transition abrupt: a handful of
   <ansi fg="itemname">bent pines</ansi> marking the
   boundary, then bare rock and open sky running upward
   without cover. The wind that the forest held back
-  arrives here in full — steady, cold, carrying
+  arrives here in full: steady, cold, carrying
   altitude and nothing else.
 
   Behind and below, the
   <ansi fg="itemname">settled valley</ansi> opens
-  out — fields, dark timber, the pale threads of
+  out: fields, dark timber, the pale threads of
   roads diminishing to the scale of something seen
   from a height. The light on it is softer than the
   light up here, and the warmth of it already belongs
@@ -42,7 +42,7 @@ nouns:
     on the bare rock.
   settled valley: >
     From this height the valley below is compressed to
-    something complete and composed — greens of field
+    something complete and composed: greens of field
     and pasture, the darker mass of managed timber,
     pale roads running between them. Smoke from
     distant hearths rises thin and straight where there

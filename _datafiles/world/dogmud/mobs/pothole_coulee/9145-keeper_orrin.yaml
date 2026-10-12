@@ -26,19 +26,19 @@ idlecommands:
 character:
   name: Keeper Orrin
   description: |
-    Orrin tends the grove the way a nurse tends a fevered sleeper -- gently,
+    Orrin tends the grove the way a nurse tends a fevered sleeper: gently,
     watchfully, ready for the moment the patient turns. The trees here grow
     at the edge of a thinning, where the veil between the ordinary world and
     whatever lies behind it has worn translucent, and Orrin has spent years
     learning to keep his footing in a place that does not always agree to
     stay one place.
     His outline lags. When he moves, the edges of him arrive a heartbeat
-    late -- a faint smear in the air at the wake of every gesture, gone the
+    late: a faint smear in the air at the wake of every gesture, gone the
     instant he goes still. He does not seem troubled by it. He says the
     grove does it to everyone who stays long enough, and that the trick is
     not to fight the lag but to move slowly enough that it cannot matter.
-    He teaches concentration -- holding a thought steady while the world
-    tries to knock it loose -- and he is patient with those who fail at it,
+    He teaches concentration, holding a thought steady while the world
+    tries to knock it loose, and he is patient with those who fail at it,
     because everyone does, at first.
   speciesid: 1
   level: 1

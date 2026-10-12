@@ -2,7 +2,7 @@ roomid: 5421
 zone: Hartcharn
 title: The Wagon Camp
 description: >
-  The smell gets here first — ox and dung and woodsmoke and the sharp
+  The smell gets here first: ox and dung and woodsmoke and the sharp
   mineral edge of fresh axle grease. The wagon camp is a wide dusty lot
   just inside the north wall, its packed earth rutted by iron rims and
   the hooves of draught animals resting in the shadow of their loads.
@@ -11,7 +11,7 @@ description: >
   noting cargo and consignee. A string of broad-shouldered
   <ansi fg="itemname">oxen</ansi> stands in rope at the far end, switching
   tails with the patience of animals who have made this stop many times.
-  Teamsters work between the rows — checking wheel-hubs, tightening lash,
+  Teamsters work between the rows, checking wheel-hubs, tightening lash,
   comparing notes on the state of the road. Near the wall a teamster's
   <ansi fg="itemname">supply cache</ansi> of oilskin bags and iron-bound
   chests sits between two cookfires already lit against the early chill.
@@ -24,19 +24,19 @@ exits:
   west:
     roomid: 5418
 nouns:
-  wagons: Heavy freight wagons built for distance rather than comfort —
+  wagons: Heavy freight wagons built for distance rather than comfort, with
     iron-rimmed wheels, thick timber sideboards, canvas covers lashed
     with hemp cord in a running knot. Chalk tallies on the boards mark
-    the loads — most are northbound, carrying salt fish and woven cloth
+    the loads. Most are northbound, carrying salt fish and woven cloth
     from the south, bound for the river towns past Tollford Crossing.
     One carries a crated something that its driver will not discuss.
   oxen: A string of broad-shouldered draught oxen standing in rope at
-    the camp's far end — built for wagons rather than ploughing, their
+    the camp's far end, built for wagons rather than ploughing, their
     horns tipped with iron knobs to keep them from goring one another
     in harness. They look ancient, patient, and wholly indifferent to
     the activity around them.
   supply cache: A heap of road gear stacked against the wall near the
-    cookfires — oilskin bags in various sizes, two iron-bound chests,
+    cookfires, with oilskin bags in various sizes, two iron-bound chests,
     spare wheel-hubs, and a coil of lashing cord. The larger chest has
     a dent suggesting it has served as a seat far more often than as a
     lockbox. It is not, at the moment, locked.

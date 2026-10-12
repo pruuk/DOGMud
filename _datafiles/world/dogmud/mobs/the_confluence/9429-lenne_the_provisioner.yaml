@@ -15,7 +15,7 @@ idlecommands:
     checks the edge weave with a quick pass of both thumbs, then
     folds it back into a clean rectangle.'
   - ''
-  - 'say Looking for rope? Three weights in stock -- light, medium,
+  - 'say Looking for rope? Three weights in stock: light, medium,
     and haul. Anything heavier, the chandler on the Landings quay
     is your man.'
   - ''
@@ -30,8 +30,8 @@ character:
     with the organized calm of someone who has answered the same
     questions about rope and waterskins many thousands of times
     and still answers them correctly. She stocks the practical
-    middle tier of river-trade goods -- cloth, line, tinder,
-    waterskins -- things the big chandlers don't bother with in
+    middle tier of river-trade goods (cloth, line, tinder,
+    waterskins), things the big chandlers don't bother with in
     small quantities and the fish market doesn't cover at all.
     Her Chrysalis-change lives in her fingertips: she can detect
     thread-count, weave integrity, and fiber quality in cloth by

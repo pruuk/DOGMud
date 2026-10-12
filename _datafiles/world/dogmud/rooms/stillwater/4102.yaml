@@ -2,7 +2,7 @@ roomid: 4102
 zone: Stillwater
 title: Lakefront Square
 description: >
-  The square opens out around you — a broad apron of
+  The square opens out around you: a broad apron of
   flagstone wider than it is long, hemmed by a low retaining
   wall on the eastern side that drops two human-heights to
   the lakeshore. From this height the lake spreads enormous
@@ -35,8 +35,8 @@ nouns:
   well: A circular wall of mortared lake-stone, chest-high,
     capped with a slab worn smooth in two semicircles where
     generations have leaned to crank the rope. The bucket is
-    of oak banded in iron — too heavy to be stolen casually
-    — and a long-handled iron dipper hangs from a hook for
+    of oak banded in iron, too heavy to be stolen casually,
+    and a long-handled iron dipper hangs from a hook for
     any traveler who needs only a drink. Looking down the
     shaft, the water is dark and very still and surprisingly
     close.
@@ -59,7 +59,7 @@ nouns:
     sat to watch the water.
   flagstone: A broad apron of weathered grey paving, the
     seams gone uneven over time. Worn paths run through the
-    weathering — a clear track from the southern road to the
+    weathering, a clear track from the southern road to the
     well, another from the well west toward the inn yard.
     People have walked here often enough to leave a record
     in stone.
@@ -68,7 +68,7 @@ idlemessages:
 - Two <ansi fg="mobname">gulls</ansi> wheel low over the square, shouting at each other.
 - A wagon turns in from the south road, its driver calling a horse to a stop near the western lane.
 - The lake-wind shifts and the smell of drying fish carries through the square for a moment.
-- Somewhere east, a hammer rings on iron — three measured strokes, then silence, then three more.
+- Somewhere east, a hammer rings on iron, three measured strokes, then silence, then three more.
 spawninfo:
 - mobid: 336
 - mobid: 354

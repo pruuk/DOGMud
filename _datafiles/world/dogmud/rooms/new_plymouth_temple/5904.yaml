@@ -7,22 +7,22 @@ description: >
   long rectangles of outdoor light and close enough
   to give the walk its character of enclosure without
   confinement. The stone underfoot is old and slightly
-  uneven — repaired in sections by different hands
+  uneven, repaired in sections by different hands
   across many years, each repair a shade different
   from the last. The
   <ansi fg="itemname">cloister-columns</ansi> carry
   carved capitals worn to near-abstraction by
-  generations of hands running along their height —
+  generations of hands running along their height:
   faces, knotwork, animals all softened to the
   suggestion of what they once were. Between the
   columns the enclosed garden of the precinct is
-  visible — gravel and low plantings, tended, quiet,
+  visible: gravel and low plantings, tended, quiet,
   a private interior the walk frames without entering.
   Along the inner wall a
   <ansi fg="itemname">cloister-bench</ansi> follows
   the walk's length, worn smooth at the sitting
   surface by years of use. The walk bends further
-  north — passages open toward the Keeper's House
+  north. Passages open toward the Keeper's House
   and the main precinct yard, still out of sight
   around the turn.
 biome: city_backstreet
@@ -38,22 +38,22 @@ exits:
 nouns:
   cloister columns: Stone columns at regular intervals
     along the walk's open side, their capitals carved
-    in the early style of the precinct — figures and
+    in the early style of the precinct, with figures and
     patterns that have been worn by passing hands to
     a depth that obscures what the carver intended.
-    You can read posture in some of them — a figure
-    turning, an animal's shoulder — but the specific
+    You can read posture in some of them (a figure
+    turning, an animal's shoulder), but the specific
     image is gone. The shafts themselves are smooth
     and cool to the touch, their stone a pale grey
     that goes warmer in strong afternoon light.
   cloister bench: A long stone bench set against the
-    inner wall of the walk — flat-topped, wide enough
+    inner wall of the walk, flat-topped, wide enough
     to sit comfortably, running most of the walk's
     length without interruption. The sitting surface
     is worn hollow in the middle, slightly, from
-    years of occupancy. The bench is for anyone —
-    it has no designation, no reserved position —
-    and it is used with that understanding — a place
+    years of occupancy. The bench is for anyone.
+    It has no designation and no reserved position,
+    and it is used with that understanding, as a place
     to sit without purpose being required. A faint
     handprint worn into the stone at one end marks
     where many hands have rested on the way down
@@ -65,7 +65,7 @@ idlemessages:
   rectangles on the walk floor that shift as the
   day moves.
 - From somewhere around the north bend, the soft
-  sound of a door closing — further along the
+  sound of a door closing, further along the
   precinct than this reach of walk.
 - Two birds work the enclosed garden visible
   between the columns, methodically investigating

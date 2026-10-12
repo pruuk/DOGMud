@@ -5,8 +5,8 @@ description: >
   Here the way splits, and both ways lead to the made thing, and
   neither is a way back. To the east the buried face opens onto a
   great
-  <ansi fg="itemname">disc-marked face</ansi>
-  — a broad expanse of the grey set apart from all the rest by a
+  <ansi fg="itemname">disc-marked face</ansi>:
+  a broad expanse of the grey set apart from all the rest by a
   vast ringed mark worked into it, the only marking the surface has
   shown in all these leagues, and everything about it says
   threshold, says door, says the way in is that way if there is a way
@@ -14,7 +14,7 @@ description: >
   <ansi fg="itemname">sealed recess</ansi>,
   a deep-set hollow closed over and dark, and out of that dark comes
   the same cold watchfulness as the warded stretch behind you but
-  heavier, older, concentrated — something still guards what is down
+  heavier, older, concentrated. Something still guards what is down
   there, and has never once stopped. This is the last
   <ansi fg="itemname">choice</ansi>
   before the threshold. East to the great ringed mark and whatever it
@@ -33,7 +33,7 @@ exits:
     roomid: 6369
 nouns:
   disc marked face: >
-    East, the grey carries the one mark it has ever shown — a vast
+    East, the grey carries the one mark it has ever shown: a vast
     ring worked into the surface, a great circle set off from
     everything around it, smooth-edged and seamless as the rest yet
     plainly meant, plainly apart. It reads as a threshold the way a
@@ -54,7 +54,7 @@ nouns:
     ringed mark and the threshold it promises. South to the sealed
     dark and the watch that holds it. Standing between them you feel
     the whole long walk narrow to this single point, and you feel,
-    too, that the thing has been waiting for exactly this — for
+    too, that the thing has been waiting for exactly this: for
     someone to come this far and stand here and have to choose which
     of its silences to break.
 idlemessages:

@@ -4,7 +4,7 @@ title: Lake-View Promenade
 description: >
   The lane east of the square opens into a long stone
   promenade running along the top of the lake's eastern
-  retaining wall — and from this height the lake itself
+  retaining wall, and from this height the lake itself
   spreads enormous to the horizon, flat and silver in the
   day, the far shore lost in haze. A waist-high
   <ansi fg="itemname">retaining wall</ansi> of dressed
@@ -13,7 +13,7 @@ description: >
   <ansi fg="itemname">lamp post</ansi> stands at the
   promenade's midpoint, its glass smoke-blackened. A
   worn stone <ansi fg="itemname">bench</ansi> faces the
-  lake — generations of travelers have sat here to make
+  lake. Generations of travelers have sat here to make
   the same calculations about distance and time.
 biome: city_thoroughfare
 coord:
@@ -36,7 +36,7 @@ nouns:
     glassy where idle travelers have sat to watch the
     fishing-skiffs work the shallows. A small bronze
     plaque set into the wall names the year the
-    promenade was raised — a date that means nothing to
+    promenade was raised, a date that means nothing to
     most who pass it.
   lake: From the promenade the surface stretches
     enormous and flat, the far shore lost in haze even
@@ -54,7 +54,7 @@ nouns:
     of darker stone near the front lip is a stain that
     no rain has been able to lift. From here the docks
     and the temple are both within an easy stroll.
-  docks: Visible below over the retaining wall — three
+  docks: Visible below over the retaining wall, three
     plank wharves jutting into the shallows, a
     fishmonger's table, drying racks, the steady creak
     of moored boats.

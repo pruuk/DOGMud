@@ -29,7 +29,7 @@ exits:
     roomid: 4130
 nouns:
   drip: A steady measured drip of water sounds from
-    somewhere in the dark ahead — perhaps every two
+    somewhere in the dark ahead, perhaps every two
     breaths, perhaps slightly less. The acoustics
     of the cave amplify each drop into a small
     echoing report. Whatever the drop's source, it
@@ -57,7 +57,7 @@ nouns:
     polished glassy by the running. In the
     cave-mouth's reflected light, here and there
     you can make out faint long parallel
-    scratch-marks on the lower courses — recent,
+    scratch-marks on the lower courses, recent,
     not lichen-filled.
 idlemessages:
 - The steady drip from somewhere ahead sounds again.

@@ -32,14 +32,14 @@ nouns:
   marker: A knee-high stone of dark basalt set upright in the earth at
     the edge of the moss, its top face worn to a shallow bowl by rain
     and use. Scratches in its surface might be old way-marks, or might
-    just be the work of weather -- it is impossible to say which.
+    just be the work of weather. It is impossible to say which.
   verge: The line where the sheltered ground ends and the open marsh
-    begins is sharp here -- on one side, moss and cool herb-scent; on
+    begins is sharp here, on one side, moss and cool herb-scent; on
     the other, dark water and the smell of slow rot. It is the kind of
     threshold that feels deliberate, as though the hollow itself drew a
     boundary and dared the marsh to cross it.
 idlemessages:
 - The <ansi fg="itemname">moss</ansi> breathes out a faint cold smell as the air shifts down from the pool.
-- Somewhere past the <ansi fg="itemname">verge</ansi>, something moves through standing water -- a soft, patient sound.
+- Somewhere past the <ansi fg="itemname">verge</ansi>, something moves through standing water, a soft, patient sound.
 x: 46
 y: 24

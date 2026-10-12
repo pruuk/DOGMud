@@ -2,7 +2,7 @@ roomid: 6104
 zone: River Road
 title: Sight of the Spires
 description: >
-  The road crests a shallow rise and the city appears — still distant,
+  The road crests a shallow rise and the city appears, still distant,
   half-dissolved in river haze, but unmistakable: three spires rising
   from the junction of the waters, the light at their tips catching
   first. Below them, walls, rooftops, the movement of river traffic.
@@ -22,7 +22,7 @@ nouns:
     along both banks of the joined river. Even from here, the noise and
     smoke and life of it are beginning to arrive.
   the city: >
-    The Confluence — named for the rivers that built it. A city old
+    The Confluence, named for the rivers that built it. A city old
     enough that the pilgrims call the Temple at its center the First
     Building. It grows clearer as the road descends: walls, the river
     gates, the constant passage of craft on the water. The pull south
@@ -32,7 +32,7 @@ spawninfo:
     respawnrate: "10 real minutes"
 idlemessages:
 - The city in the river haze, its spires a little sharper each time you look.
-- The road underfoot is better here — a surface someone has maintained.
+- The road underfoot is better here. Someone has maintained the surface.
 - A pilgrim group passes quickly, already sure of where they are going.
 x: 4
 y: 55

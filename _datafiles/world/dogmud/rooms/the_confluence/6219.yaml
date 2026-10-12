@@ -2,7 +2,7 @@ roomid: 6219
 zone: The Confluence
 title: Inkwell Court
 description: >
-  The quarter's central court — a small paved space
+  The quarter's central court, a small paved space
   open to the sky through a gap in the roofline, its
   floor worn smooth by decades of foot traffic between
   the halls that open off it in every direction. A dry
@@ -51,6 +51,6 @@ idlemessages:
 - The student on the bench makes a note, crosses it
   out, and reads the passage again.
 - A brief murmur of argument from the Margin Hall to
-  the west — two voices, then quiet.
+  the west, two voices, then quiet.
 x: 1
 y: 71

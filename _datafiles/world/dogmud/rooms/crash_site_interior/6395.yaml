@@ -10,7 +10,7 @@ description: >
   At the centre of all that space, where every line of the place has been
   bending you since the breach, stands the thing it was all built to
   keep. It is a keeper as the wardens are keepers, but it is to them what
-  the sea is to a cup — vast, and slow, and terribly whole, wrought in the
+  the sea is to a cup: vast, and slow, and terribly whole, wrought in the
   same grey and past all the patterns you have fought, so old and so
   wholly itself that the air seems to bend around the fact of it. It has
   stood here ten thousand years with nothing to guard against and it has
@@ -20,7 +20,7 @@ description: >
   aside, and it cannot be gone around. Beyond it, faint, the grey opens
   north onto a deck where the light is different, and the truth waits.
   West, half-hidden in the dark, a narrow vent-mouth stands open onto a
-  smaller chamber -- one more thing this vast room was built to expel.
+  smaller chamber, one more thing this vast room was built to expel.
 exits:
   south:
     roomid: 6394
@@ -31,7 +31,7 @@ exits:
 nouns:
   guardian: >
     The core's own keeper, built past every warden below it as a fortress
-    is built past a wall — vast, jointed past counting, wrought in the
+    is built past a wall: vast, jointed past counting, wrought in the
     grey and grown terrible with age, moving with the slow whole certainty
     of a thing that has never yet needed to hurry. It was set at the heart
     of the buried place to keep the answer from anyone who came for it, and

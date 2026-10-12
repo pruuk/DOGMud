@@ -3,7 +3,7 @@ zone: The Confluence
 title: The Rivermen's Guildhall
 description: >
   A wide low building of cut stone set back from the market row,
-  its door framed by carved rope-knots in the stone lintel — old
+  its door framed by carved rope-knots in the stone lintel. Old
   work, worn smooth by years of hands. Inside, the walls are hung
   with the charter documents of the river-trade guilds, framed in
   dark wood, the ink faded to brown. A long counter runs across
@@ -18,14 +18,14 @@ exits:
   east: {roomid: 6127}
 nouns:
   the guildhall: >
-    Built to last — cut stone and heavy roof timbers, the kind of
+    Built to last: cut stone and heavy roof timbers, the kind of
     building that says the guild expected to be here a long time.
     The charter documents on the walls run back further than anyone
     living can place; some name merchants whose families are still
     on the quay. The rope-knot carving above the door is a guild
     mark, sign that a riverman is under the hall's authority and
     protection when he trades here. The Weighmaster's tolls, the
-    Factor's rates, the Steward's ledgers — the guild sets them
+    Factor's rates, the Steward's ledgers: the guild sets them
     all and argues about them at length.
 spawninfo:
   - mobid: 9432

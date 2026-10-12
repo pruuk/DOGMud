@@ -2,18 +2,18 @@ roomid: 6028
 zone: New Plymouth Old Quarter
 title: The Production Room
 description: >
-  A stone room, roughly eight paces by six — the
+  A stone room, roughly eight paces by six, the
   dimensions of something measured before it was built,
   not found. The floor is bare stone except for a <ansi
   fg="itemname">drain</ansi> at the center, a hand-span
   across, cut into the flags with the same precision as
   everything else here. Against the near wall, a bare
-  <ansi fg="itemname">pallet</ansi> — no blanket, no
+  <ansi fg="itemname">pallet</ansi>, with no blanket, no
   pad, the ticking marked with the outline of long
-  unmoving occupation — pushed to one side as though
+  unmoving occupation, pushed to one side as though
   the person who lay on it left without arranging it.
   Along the far wall, the <ansi
-  fg="itemname">apparatus</ansi> remains in place —
+  fg="itemname">apparatus</ansi> remains in place:
   glass vessels of several sizes, copper tubing jointed
   and sealed with soft metal at every fitting, wax-sealed
   clay pots stacked in a wooden rack below the bench.
@@ -31,7 +31,7 @@ exits:
   north:
     roomid: 6027
 nouns:
-  drain: Set in the center of the stone floor — a
+  drain: Set in the center of the stone floor, a
     hand-span across, the edges dressed clean, the
     channel below slanting away at a deliberate angle.
     It is dry now. It has not always been dry; the
@@ -41,10 +41,10 @@ nouns:
     drain handled it efficiently and deliberately.
     The drain does not explain itself. It does not
     need to.
-  pallet: A low wooden frame with canvas ticking —
-    not a sleeping pallet, or not only that. The
+  pallet: A low wooden frame with canvas ticking.
+    It is not a sleeping pallet, or not only that. The
     ticking carries the depression and discoloration
-    of long, largely unmoving occupation — the outline
+    of long, largely unmoving occupation. This is the outline
     of someone who stayed in one position for extended
     periods. There is no blanket. There is no pillow.
     There is a short iron ring set into the wall at
@@ -52,7 +52,7 @@ nouns:
     inner surface. The pallet is empty. The person
     who was on it is gone.
   apparatus: Glass vessels in three sizes, clean and
-    cold — the glass is good quality, the kind used
+    cold. The glass is good quality, the kind used
     by apothecaries who expect to be examined.
     Copper tubing connects the vessels at fitted
     joints, each joint sealed with soft metal worked
@@ -64,18 +64,18 @@ nouns:
     and simply stopped. The room does not smell of
     anything now.
 idlemessages:
-- The apparatus holds its arrangement in the lamp-
-  light — glass and copper and wax, still in their
+- The apparatus holds its arrangement in the
+  lamp-light, glass and copper and wax, still in their
   last-used positions.
 - The drain is dry. The stone around its rim is not
   quite as clean as the drain itself.
 - The pallet shows the shape of someone who lay
   there for a long time without moving much.
 - The cold in this room sits below the cold of the
-  corridor — a sealed room at depth holds what it
+  corridor. A sealed room at depth holds what it
   has been given, and holds it long.
 - One of the clay pots in the rack has been moved
-  and not replaced exactly — it sits a half-inch
+  and not replaced exactly. It sits a half-inch
   out of the line of the others.
 x: -17
 y: -73

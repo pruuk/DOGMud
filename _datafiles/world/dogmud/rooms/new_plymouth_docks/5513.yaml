@@ -10,7 +10,7 @@ description: >
   that you are gone by morning-bell and have left the linen
   approximately where you found it. A row of
   <ansi fg="itemname">cots</ansi> occupies the open space at the
-  corridor's end — the overflow provision when the rooms are
+  corridor's end, the overflow provision when the rooms are
   full, which they often are. At the far wall a
   <ansi fg="itemname">washbasin</ansi> sits on an iron
   bracket, cracked along one side and sealed with a line of
@@ -29,7 +29,7 @@ nouns:
   cots: Three rope-frame cots at the corridor's end, each
     with a folded blanket and a thin ticking mattress that
     has been restuffed at least once and not recently. The
-    blankets are different patterns — one striped, one plain,
+    blankets are different patterns, one striped, one plain,
     one that was once a garment of some kind and has been
     cut down and hemmed. All of them smell of the people
     who have slept here before, but not unpleasantly; just
@@ -48,7 +48,7 @@ idlemessages:
 - A door at the corridor's end opens a crack, considers
   the hallway, and closes again.
 - The floorboards settle in a slow sequence from the stair-
-  head toward the far wall — the building adjusting its
+  head toward the far wall, the building adjusting its
   weight as it always does at this hour.
 - The smell of the driftwood fire comes up through the gaps
   between boards, faintly salt and faintly strange.

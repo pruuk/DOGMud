@@ -3,7 +3,7 @@ zone: Pothole Coulee
 title: Sniper's Roost
 description: >
   A tucked stone roost beside the overlook, angled east and slightly
-  below the crest -- invisible from the main bluff line until you
+  below the crest, invisible from the main bluff line until you
   are already standing in it. The single shooting-line from here
   is exceptional: it runs east and down at a precise angle that
   covers a long stretch of the coulee floor that no other position
@@ -22,7 +22,7 @@ exits:
 spawninfo:
 - mobid: 9168
 nouns:
-  roost: The roost is a secret within a secret -- even someone who
+  roost: The roost is a secret within a secret. Even someone who
     held the overlook might not look east and find it. The stone
     curves at just the right angle to shelter a shooter from
     wind and from sight both, while leaving the line east and down

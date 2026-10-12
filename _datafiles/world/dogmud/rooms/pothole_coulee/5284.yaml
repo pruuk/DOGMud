@@ -27,14 +27,14 @@ nouns:
   tracks: Pressed into the pale dust in overlapping generations, each
     set a small record of something passing through. Hare prints go in
     pairs, the hindfeet landing ahead of the front. The heavier prints
-    are older, edges soft, but the stride is long — a fox, most likely,
+    are older, edges soft, but the stride is long, a fox, most likely,
     or something close to it. The line leading south is freshest.
   dust: Fine and pale, the dust here holds every impression without
     apology. Wind smooths old tracks overnight, leaving the new ones
     standing sharp in the morning light. Rain would wash it all clean,
     but rain has not come lately.
 idlemessages:
-- Something moved through here recently — the <ansi fg="itemname">tracks</ansi> still have sharp edges.
+- Something moved through here recently. The <ansi fg="itemname">tracks</ansi> still have sharp edges.
 - A gust skims the <ansi fg="itemname">dust</ansi>, softening the older prints at the margins.
 x: 42
 y: 23

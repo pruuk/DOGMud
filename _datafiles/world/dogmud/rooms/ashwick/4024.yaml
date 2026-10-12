@@ -4,12 +4,12 @@ title: Cottage Garden
 description: >
   The garden behind Maren's cottage, gone wild in three years
   of neglect. Raised beds are still visible under the weeds,
-  their orderly layout a ghost of careful planning -- Delia's
+  their orderly layout a ghost of careful planning: Delia's
   training visible in the spacing and placement. Self-seeded
   comfrey and wild sage fight for space among the thistles
   and grass. Fennel has taken over one entire bed, its yellow
   flowers nodding in the breeze. The garden was good once.
-  The neglect is deep but not total -- the herbs survived
+  The neglect is deep but not total: the herbs survived
   because they were planted well.
 biome: farmland
 coord:
@@ -22,7 +22,7 @@ exits:
 nouns:
   garden: A kitchen garden overwhelmed by neglect. Raised
     wooden beds are visible under the overgrowth, their
-    layout orderly -- herbs grouped by use, sun-lovers on
+    layout orderly, herbs grouped by use, sun-lovers on
     the south side, shade-tolerant plants along the cottage
     wall. Someone trained in herbalism planned this. Three
     years of abandonment have not erased the design.

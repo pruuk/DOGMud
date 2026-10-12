@@ -16,7 +16,7 @@ idlecommands:
   - 'emote works its way a span against the flow, combing the
     silt beneath it clean of everything living.'
   - ''
-  - 'emote pulses once, deep in its mass -- a soft glow that
+  - 'emote pulses once, deep in its mass, a soft glow that
     swells, crests, and dies like a heartbeat made of light.'
   - ''
 combatcommands:
@@ -37,7 +37,7 @@ character:
   name: A Deep Slime
   description: |
     Where its cousins above wear the color of the channels that
-    feed them, this one has none at all -- a clear, heavy mass
+    feed them, this one has none at all: a clear, heavy mass
     the size of a cart, invisible in the dark water until you are
     standing in it. It has never needed color down here. What it
     has instead is the pulse. Deep at its center a soft glow

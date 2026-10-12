@@ -5,7 +5,7 @@ description: A broad cave entrance opens in the cliff face, wide
   enough for three people abreast and tall enough to walk upright.
   The stone archway is wind-polished smooth, and the transition
   from daylight to darkness is abrupt. Just inside the entrance,
-  the cave floor is covered with windblown sand and debris --
+  the cave floor is covered with windblown sand and debris, such as
   leaves, feathers, small bones. The walls are pale sandstone,
   cool to the touch, and the ceiling curves overhead in a natural
   vault. The passage leads deeper into darkness.
@@ -28,7 +28,7 @@ nouns:
     veined with darker mineral deposits. It frames a view of
     the steppe that seems impossibly bright from inside.
   debris: A drift of windblown material just inside the cave
-    entrance -- dry leaves, feathers, sand, and small animal
+    entrance, with dry leaves, feathers, sand, and small animal
     bones. The wind pushes it in but the cave's sheltered
     interior traps it here.
 spawninfo:

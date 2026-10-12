@@ -29,7 +29,7 @@ character:
   name: Osric Vane
   description: |
     I keep the strongbox for this end of Hartcharn, and I keep it
-    honest -- every coin in and every coin out gets a line in my
+    honest: every coin in and every coin out gets a line in my
     ledger. I do not have much use for chatter when there are figures
     to balance, but I will always make time for an account.
   speciesid: 1

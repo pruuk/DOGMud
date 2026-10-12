@@ -1,13 +1,14 @@
 roomid: 447
 zone: Thornwall Outskirts
 title: Beneath the Gate Arch
-description: You stand beneath the massive stone arch of Thornwall's western gate.
-  The wall is thick -- the passage through it is more tunnel than doorway, ten paces
-  deep and cool even in summer. Murder holes line the ceiling, and alcoves in the
-  walls once held additional guards. The stonework is ancient and solid, blackened
-  by centuries of torch smoke. Ahead, the city opens up -- noise, movement, the smell
-  of people and commerce. Behind you, the quiet farmland stretches west under an
-  open sky. This is the threshold between the rural outskirts and the city proper.
+description: You stand beneath the massive stone arch of Thornwall's western
+  gate. The wall is thick. The passage through it is more tunnel than doorway,
+  ten paces deep and cool even in summer. Murder holes line the ceiling, and
+  alcoves in the walls once held additional guards. The stonework is ancient
+  and solid, blackened by centuries of torch smoke. Ahead, the city opens up
+  with noise, movement, and the smell of people and commerce. Behind you, the
+  quiet farmland stretches west under an open sky. This is the threshold
+  between the rural outskirts and the city proper.
 biome: farmland
 coord:
   x: -1

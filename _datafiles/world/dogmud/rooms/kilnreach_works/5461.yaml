@@ -2,15 +2,15 @@ roomid: 5461
 zone: Kilnreach Works
 title: The Tannery
 description: >
-  The smell announces the tannery before the gate does —
-  a thick compound reek of ammonia and rotting hide and
+  The smell announces the tannery before the gate does.
+  A thick compound reek of ammonia and rotting hide and
   souring bark-liquor that presses into the nostrils and
   sits there, coating the back of the throat and bringing
   the eyes to water before a step has been taken inside.
   The yard is a grid of sunken <ansi fg="itemname">tan-pits</ansi>
   set into the earth, each brimming with brown steaming
   liquor, hides submerged at various stages of the long
-  cure — some pale and swollen from the lime-rinse, some
+  cure. Some are pale and swollen from the lime-rinse, some
   darkening through the tan, some near-finished and heavy
   with it. Tanners work the hides with long poles, keeping
   out of the liquor, their clothes and lower legs long ago
@@ -19,7 +19,7 @@ description: >
   noticing it. Dressed hides hang dripping from timber
   frames at the yard's far end, slick and dark and reeking
   close up. A low stone building at the yard's near edge
-  is the <ansi fg="itemname">bark-store</ansi> — its door
+  is the <ansi fg="itemname">bark-store</ansi>, its door
   propped wide for the next delivery, the resinous smell
   of ground bark cutting briefly through even the yard's
   general reek before the reek reasserts itself.
@@ -32,12 +32,12 @@ exits:
   east:
     roomid: 5453
 nouns:
-  tan pits: The pits are cut deep into the earth — eight feet
+  tan pits: The pits are cut deep into the earth, eight feet
     or more, their walls timber-lined to hold the liquor, each
     a different stage in the long cure. The first pits hold
     lime-water, pale and acrid, the hides in them swollen and
     bleached, the hair and surface fat stripped clean away.
-    Further in, the tan-liquor takes over — a brown extract of
+    Further in, the tan-liquor takes over, a brown extract of
     oak-bark and sumac and other things less easily named, the
     hides hanging heavy through it for weeks, sometimes months.
     The smell at close range is acute enough to make the eyes
@@ -52,7 +52,7 @@ nouns:
     oak-bark fill sacking bags stacked floor to ceiling, their
     sharp resinous smell cutting through even the yard's
     general stench. Sumac, hemlock-bark, and quebracho sit in
-    separate bales along the inner wall — each a different
+    separate bales along the inner wall, each a different
     tanning agent for different grades of hide. The store is
     cool and relatively dry, which keeps the mould off the
     product. It is the only part of the tannery that does not
@@ -64,7 +64,7 @@ idlemessages:
 - Flies gather above the nearest pit in a slow unhurried
   cloud, adjusting their orbit as the surface below shifts.
 - The dripping from the frames at the yard's far end forms
-  a slow irregular tick on the earth beneath — patient
+  a slow irregular tick on the earth beneath, patient
   and continuous.
 - A delivery cart pauses at the bark-store entrance; two men
   unload sacking bags with the efficient boredom of a job

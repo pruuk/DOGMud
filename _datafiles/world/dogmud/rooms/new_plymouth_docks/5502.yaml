@@ -10,15 +10,15 @@ description: >
   unconcerned with the commerce going on two hundred paces behind
   him. Gulls have claimed the piling-tops in ones and twos and
   watch the water with the focused patience of professionals. The
-  relative quiet out here has a quality to it — you notice the
+  relative quiet out here has a quality to it: you notice the
   river sound more when the shouting isn't covering it. A heavy
   coil of <ansi fg="itemname">tarred rope</ansi> sits coiled
   against a cleat near the quay's midpoint, and at the far western
   end the dock terminates at a <ansi fg="itemname">chained
   shipyard</ansi> gate, padlocked shut and clear about its
   intentions. Past the gulls, a stubby passage berth is kept
-  for the boats — the Lakewind Packet inbound from
-  Stillwater, the Broadbeam upriver from the Confluence —
+  for the boats: the Lakewind Packet inbound from
+  Stillwater, the Broadbeam upriver from the Confluence,
   where a varnished <ansi fg="itemname">sailings board</ansi>
   is kept current and the <ansi fg="mobname">quay agent</ansi>
   minds a strongbox at his elbow.
@@ -38,14 +38,14 @@ nouns:
     core fibers and hardened them. The surface is almost glossy,
     tacky in warm weather, and smells of the same pine-pitch that
     preserves the dock pilings. Whoever coiled it knew what they
-    were doing — the loops are even, the tuck tight. It is probably
+    were doing. The loops are even, the tuck tight. It is probably
     worth something if you knew who to ask.
   chained shipyard: A timber gate set into a dock-wall of the same
     age as the city's bones, the wood grey and checked with salt.
     A chain as thick as your thumb runs through two iron rings and
-    closes with a padlock that has recently been oiled — maintained,
+    closes with a padlock that has recently been oiled, maintained,
     not abandoned. A notice-board has been nailed to the gatepost
-    in clean paint — AUTHORIZED PERSONNEL ONLY — NAVAL COMMISSION
+    in clean paint, AUTHORIZED PERSONNEL ONLY. NAVAL COMMISSION
     BUSINESS. Beyond the gate, through the planking gaps, you can
     make out a dry-dock frame and the shadow of a hull in scaffold.
     The chain is not for you.
@@ -63,7 +63,7 @@ idlemessages:
   shifts half an inch and settles.
 - The chain on the shipyard gate clinks against its rings in a
   stray breeze.
-- From the main landing comes a distant shout — someone's problem,
+- From the main landing comes a distant shout, someone's problem,
   not yours, not here.
 spawninfo:
   - mobid: 9310

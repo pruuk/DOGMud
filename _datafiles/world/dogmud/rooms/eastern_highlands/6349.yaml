@@ -2,14 +2,14 @@ roomid: 6349
 zone: Eastern Highlands
 title: The Lightning-Split Cairn
 description: >
-  A cairn stands on a cleared shelf of stone — fieldstone,
+  A cairn stands on a cleared shelf of stone: fieldstone,
   stacked with care, the kind of fixed marker a methodical
   surveyor builds to anchor a position. Something reached it
   at some point and clove it from cap to base, the stones
   on either side of the split tumbled outward and left where
   they fell. What remains of the
   <ansi fg="itemname">cairn</ansi>
-  still stands, divided but not fully collapsed — old enough
+  still stands, divided but not fully collapsed, old enough
   that the
   <ansi fg="itemname">lightning scar</ansi>
   has weathered smooth, the break face darkened to the same
@@ -26,8 +26,8 @@ exits:
 nouns:
   cairn: >
     The cairn is fieldstone, each piece chosen for flatness
-    and stacked with evident care. The split divided it cleanly
-    — the two halves lean slightly away from each other now,
+    and stacked with evident care. The split divided it cleanly.
+    The two halves lean slightly away from each other now,
     a finger's width of gap along the full height of the break.
     The stones that tumbled outward lie where they landed. No
     one has touched them since. The remaining structure is solid
@@ -41,7 +41,7 @@ nouns:
     same grey-brown patina, the same faint lichen in the
     cracks. The bolt that struck it was not recent. The
     dividing line runs true from the topmost course to the
-    base — a single clean cleft, as though the cairn was
+    base: a single clean cleft, as though the cairn was
     designed to demonstrate what was inside it. The inside
     is just stone. Solid all the way through.
 idlemessages:

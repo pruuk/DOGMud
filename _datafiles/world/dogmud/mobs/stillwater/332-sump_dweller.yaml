@@ -18,7 +18,7 @@ idlecommands:
   - ''
   - 'emote lifts once to take the cave''s air, exposing a massive curved back of mottled grey-black hide'
   - ''
-  - 'emote rumbles low and deep from somewhere underwater — felt through the boots more than heard'
+  - 'emote rumbles low and deep from somewhere underwater, felt through the boots more than heard'
 activitylevel: 5
 combatcommands:
   - ''
@@ -27,7 +27,7 @@ character:
   description: |
     The thing that has been raiding Stillwater's fishing nets
     for years rises now from the black sump-pool at the cave's
-    deepest point — a massive amphibious predator perhaps four
+    deepest point: a massive amphibious predator perhaps four
     times the bulk of the largest drowned hunter, with the same
     mottled grey-black hide and the same pale sightless eyes
     but on a scale that takes the breath out of a careful

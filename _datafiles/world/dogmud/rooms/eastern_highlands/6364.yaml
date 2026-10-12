@@ -6,7 +6,7 @@ description: >
   <ansi fg="itemname">hollow</ansi>
   in the banked earth before the buried face, and the wrongness of
   the place is that it is not natural. The ground here has been
-  disturbed — dug, shifted, cleared and cleared again — not by water
+  disturbed: dug, shifted, cleared and cleared again, not by water
   and not by the slow hand of weather but by someone, patiently, a
   long time ago. There is a
   <ansi fg="itemname">worked ground</ansi>
@@ -17,8 +17,8 @@ description: >
   rises jointless out of the highland ahead, and the evidence of that
   working is everywhere and old. The
   <ansi fg="itemname">made thing</ansi>
-  itself takes no notice — it is the same as it has been the whole
-  way, vast and seamless and buried and unbothered — but the ground
+  itself takes no notice. It is the same as it has been the whole
+  way, vast and seamless and buried and unbothered, but the ground
   before it remembers a person, and the way bends south into their
   old ground where the labor was done.
 biome: cliffs
@@ -38,14 +38,14 @@ nouns:
     of time and then stops.
   worked ground: >
     Underfoot the earth is packed hard and flat, beaten smooth by
-    feet that went the same short ways again and again — from here to
+    feet that went the same short ways again and again: from here to
     the surface, from the surface back to here, a small worn round of
     ground that someone lived inside for a while. Grass has come back
     at the edges of it but not the middle. The middle was walked too
     long and too hard, once, to forget the walking.
   made thing: >
     Ahead the great grey flank rises jointless out of the highland
-    the same as it has the whole approach — no grain, no seam, no
+    the same as it has the whole approach: no grain, no seam, no
     flaw for the eye to hold. Someone cleared the earth from a
     section of it, off to the south. The surface neither helped nor
     hindered. It simply was, and let itself be uncovered, and gives

@@ -2,12 +2,12 @@ roomid: 6413
 zone: New Plymouth Sewers
 title: The Long Gallery
 description: >
-  The passage runs out into a gallery — high, straight, and long,
+  The passage runs out into a gallery: high, straight, and long,
   its walls carried upward in the grey dry-fitted
   <ansi fg="itemname">courses</ansi> until they pass out of the
   light. The line of it does not waver. Set into the stonework at
   intervals, flush with the wall face, are
-  <ansi fg="itemname">fragments</ansi> of a paler grey material —
+  <ansi fg="itemname">fragments</ansi> of a paler grey material,
   not stone, not metal, cold under the hand where the wall around
   them is merely cool. They sit within the courses rather than
   between them; they pass through no joint and interrupt none. They
@@ -41,7 +41,7 @@ idlemessages:
   long moment later, thinner.
 - The moving air draws steadily out of the west along the wall,
   without eddy or pause.
-- Light passing across one of the pale fragments returns nothing —
+- Light passing across one of the pale fragments returns nothing,
   no glint, no grain, only the flat, even grey.
 spawninfo:
   - mobid: 9568

@@ -30,7 +30,7 @@ activitylevel: 10
 character:
   name: Stone Beetle Queen
   items:
-    - itemid: 40010   # Chrysalis Core (Stage 3.4 — re-sourced from Aberrant Chrysalis)
+    - itemid: 40010   # Chrysalis Core (Stage 3.4, re-sourced from Aberrant Chrysalis)
       dropchance: 10  # match mob's itemdropchance; carried items default to 100%
   description: |
     An enormous beetle the size of a pony, her carapace thick

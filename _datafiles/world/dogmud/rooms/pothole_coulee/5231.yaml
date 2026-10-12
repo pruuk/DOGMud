@@ -5,9 +5,9 @@ description: >
   The shelf narrows to a last firm ledge before the ground tips down into
   the open wash. A weathered boundary stone stands planted at the lip,
   its old carved mark worn nearly smooth, a marker set here by whoever first
-  claimed this coulee for safe ground. Behind you the yard breathes easy -- swept
-  earth, blunted arms, the quiet of practice. Ahead the gravel falls away
-  east into country no drillmaster keeps. Out there the wash is held by
+  claimed this coulee for safe ground. Behind you the yard breathes easy:
+  swept earth, blunted arms, the quiet of practice. Ahead the gravel falls
+  away east into country no drillmaster keeps. Out there the wash is held by
   folk who fight back in earnest, and nothing wrapped in leather will
   answer for you. This is the edge. Past it, you are on your own.
 biome: cliffs
@@ -23,9 +23,9 @@ exits:
   east:
     roomid: 5232
 nouns:
-  marker: The boundary stone reads as a marker more than a wall -- a single
+  marker: The boundary stone reads as a marker more than a wall, a single
     upright slab planted at the lip of the safe ground. Whoever set it
-    meant it as a promise -- this far, the coulee keeps you. No further.
+    meant it as a promise. This far, the coulee keeps you. No further.
   stone: A weathered upright slab, grey and lichen-spotted, its carved mark
     rubbed nearly featureless by wind and reaching hands. It marks the last
     safe footing before the open wash.

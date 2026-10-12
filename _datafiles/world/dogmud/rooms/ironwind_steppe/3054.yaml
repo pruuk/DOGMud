@@ -22,7 +22,7 @@ exits:
     roomid: 3075
 nouns:
   debris: Tangled piles of driftwood, brush, and flood refuse
-    wedged into the junction. Some pieces are large -- whole
+    wedged into the junction. Some pieces are large, such as whole
     tree trunks stripped of bark and polished by water. The
     piles provide shelter for small animals.
   junction: The meeting point of two dry creek channels, marked
@@ -34,7 +34,7 @@ spawninfo:
 - mobid: 234
 idlemessages:
 - A ground squirrel perches on a driftwood pile, chirping alarm.
-- The wide junction feels exposed -- nowhere to hide.
+- The wide junction feels exposed, with nowhere to hide.
 - Wind funnels down both creek channels, meeting here in a swirl of dust.
 x: 22
 y: 11

@@ -6,9 +6,9 @@ description: >
   by dense undergrowth. A lean-to of branches and salvaged
   canvas stands against a fallen log, well-built for
   temporary shelter. A cold firepit sits in the clearing's
-  center -- no smoke, no embers, ash scattered and buried
+  center: no smoke, no embers, ash scattered and buried
   after each use. Bundles of dried herbs are stacked neatly
-  against a tree trunk -- feverfew, bitter-thistle, comfrey.
+  against a tree trunk: feverfew, bitter-thistle, comfrey.
   Someone has been living here for weeks, quietly, tidily,
   invisibly. The camp is the work of a person who knows how
   not to be found.
@@ -24,21 +24,21 @@ exits:
     roomid: 4032
 nouns:
   lean-to: A shelter of woven branches and salvaged canvas
-    propped against a fallen log. The construction is skilled
-    -- branches lashed tight, canvas stretched to shed rain,
+    propped against a fallen log. The construction is skilled,
+    branches lashed tight, canvas stretched to shed rain,
     a bed of dry leaves and fern fronds inside. Temporary
     but well-made, the work of someone who has slept rough
     before and learned to do it properly. A blanket, thin
     but clean, is folded at one end.
   firepit: A circle of stones around a pile of cold ash,
-    scattered and partially buried -- deliberately. No smoke
+    scattered and partially buried, deliberately. No smoke
     has risen from this pit in daylight. The ash is buried
     after each use to prevent visible smoke trails. Boot
     prints circle the pit, and a few charred bones sit at
-    the edge -- small game, eaten alone.
+    the edge, small game, eaten alone.
   herbs: Bundles of dried herbs stacked against a tree trunk,
-    neatly tied with cord. Feverfew, bitter-thistle, comfrey
-    -- the same herbs missing from Delia's garden beds back
+    neatly tied with cord. Feverfew, bitter-thistle, comfrey,
+    the same herbs missing from Delia's garden beds back
     in the hamlet. The bundles are prepared with skill,
     harvested at the right time and dried properly. Whoever
     gathered these knows herbalism.

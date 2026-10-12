@@ -2,7 +2,7 @@ roomid: 6331
 zone: Cascade Pass Road
 title: Under the Old Trees
 description: >
-  The timber here is the oldest you have walked under —
+  The timber here is the oldest you have walked under:
   the <ansi fg="itemname">old trunks</ansi> stand like
   columns in a hall without walls, their bark furrowed
   deep and pale where it has scaled away over centuries,
@@ -10,7 +10,7 @@ description: >
   gone. The light is green and faint and sourceless. The
   <ansi fg="itemname">forest floor</ansi> between the
   roots is covered in leaf-litter undisturbed by wind or
-  animal passage — a deep unbroken layer, the topmost
+  animal passage: a deep unbroken layer, the topmost
   leaves still holding their shape. No birds. No insects.
   The silence here is not the silence of an empty place.
   It is the silence of a place that has decided not to be
@@ -41,7 +41,7 @@ nouns:
     is no sign that anyone has stood here before.
   forest floor: >
     Deep leaf-litter piled between the root-plates in
-    an even, undisturbed layer — years of it, probably
+    an even, undisturbed layer: years of it, probably
     decades. The topmost leaves are still whole and
     unbroken, which means nothing walks here to grind
     them underfoot. No animal burrows. No insect sign.
@@ -51,16 +51,16 @@ nouns:
     forest floor would tell you something lived here, if
     anything did. It is silent on the subject.
 idlemessages:
-- Somewhere in the upper canopy a bird calls once —
-  a single note, cut short — and does not call again.
+- Somewhere in the upper canopy a bird calls once,
+  a single note, cut short, and does not call again.
 - The silence is complete enough that your own breathing
   sounds too loud, and then even that fades.
 - A leaf detaches from far overhead and falls in a slow
   spiral to the litter below, landing without a sound.
 - Something distant begins a sound and stops it, as if
   reconsidering.
-- The highest branches shift once — slow, without
-  noise — and are still.
+- The highest branches shift once, slow, without
+  noise, and are still.
 spawninfo:
   - mobid: 9539
     respawnrate: "12 real minutes"

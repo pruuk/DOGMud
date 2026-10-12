@@ -2,7 +2,7 @@ roomid: 5500
 zone: New Plymouth Docks
 title: River Road Landing
 description: >
-  The smell arrives before anything else — brine and tar and the
+  The smell arrives before anything else: brine and tar and the
   sweetness of rotting wood that has soaked in seawater for
   decades, and under it a warm animal undercurrent from somewhere
   inland. The river road bends here out of the empty scrubland and
@@ -10,9 +10,9 @@ description: >
   To the west the Lower Wharf opens up in a sprawl of pilings and
   rope and shouted orders; to the south the road runs back the way
   you came. Gulls wheel overhead in tight circles, indifferent.
-  At the road's turning stands a <ansi fg="itemname">milepost</ansi>
-  — the last one on this road, or the first, depending on your
-  direction — and below it, where the bank drops to the water,
+  At the road's turning stands a <ansi fg="itemname">milepost</ansi>,
+  the last one on this road, or the first, depending on your
+  direction, and below it, where the bank drops to the water,
   a line of <ansi fg="itemname">tide-wrack</ansi> marks the
   morning's high water in a dark stripe of weed and river-rubbish.
 biome: city_thoroughfare
@@ -28,12 +28,12 @@ exits:
 nouns:
   milepost: A stone post, salt-pitted and leaning a few degrees
     toward the river, the carved lettering half-legible. "New
-    Plymouth" it says — the distance worn to nothing, but then you
+    Plymouth" it says. The distance worn to nothing, but then you
     are already here and do not need the number. Someone has wedged
     a dried cornflower into a crack in the stone. It has been there
     long enough to lose its color.
   tide wrack: A dark stripe along the bank where the river has
-    receded and left its accounting — kelp-strands, a split cork,
+    receded and left its accounting, kelp-strands, a split cork,
     a sandal with its strap gone, the skeleton of a small fish
     spread flat and translucent as paper. Somewhere in the tangle
     a crab picks at something with systematic patience.
@@ -45,7 +45,7 @@ idlemessages:
 - From the west comes the creak of rope and the flat thud of cargo
   meeting wood.
 - A traveller passes you on the road heading south, pack high, pace
-  deliberate — someone who has seen what they came to see.
+  deliberate, someone who has seen what they came to see.
 - The river laps at the bank below with the small indifferent sound
   of a city that has been here a very long time.
 x: -7

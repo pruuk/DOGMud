@@ -15,7 +15,7 @@ idlecommands:
     original position.'
   - ''
   - 'emote straightens slightly as a cart passes too close to the
-    barrow — registers it, decides it is not her matter, and settles
+    barrow, registers it, decides it is not her matter, and settles
     back.'
   - ''
   - 'emote rests her hand on her belt without urgency and does a full
@@ -26,7 +26,7 @@ character:
   description: |
     The guard wears bloodline house-colors over a padded gambeson
     and stands at a position that covers both approaches to the
-    square without obviously covering either — the placement is
+    square without obviously covering either. The placement is
     deliberate, the posture learned, the attention too consistent
     to be accidental. She is civic muscle operating at the edge of
     bloodline authority, licensed to keep order in this district

@@ -5,7 +5,7 @@ description: A cleared patch of ground sits just off the road, sheltered
   from the wind by a low rise on the north side. A canvas lean-to has
   been stretched between two poles, its edges weighed down with stones.
   A small firepit smolders nearby, and a peddler's cart rests with one
-  wheel propped on a flat stone -- not broken, just resting. Crates
+  wheel propped on a flat stone, not broken, just resting. Crates
   and bundles of trade goods are stacked neatly beneath the lean-to.
   The whole camp has the organized look of someone who knows how to
   live on the road, and the settled feel of someone staying longer
@@ -21,7 +21,7 @@ exits:
 nouns:
   cart: A sturdy two-wheeled peddler's cart, its bed covered with oiled
     canvas strapped down tight. One wheel is propped up on a flat stone
-    to keep it off the damp ground -- a maintenance habit, not a repair.
+    to keep it off the damp ground. It is a maintenance habit, not a repair.
     The axle is greased and the frame is solid. This cart is waiting, not
     stuck.
   firepit: A ring of stones around a shallow pit of ash and coals. The

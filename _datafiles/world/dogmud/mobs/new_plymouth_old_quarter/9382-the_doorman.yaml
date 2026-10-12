@@ -16,19 +16,19 @@ idlecommands:
   - 'emote watches the far end of the corridor with the deliberate
     attention of a man still doing a job that no longer exists.'
   - ''
-  - 'emote shifts his weight from one foot to the other — the only
-    motion he makes — and is immediately still again.'
+  - 'emote shifts his weight from one foot to the other (the only
+    motion he makes) and is immediately still again.'
 activitylevel: 4
 character:
   name: The Doorman
   description: |
     He is very large and very still in the way that large things
-    sometimes are — a stillness that reads as threat rather than
+    sometimes are: a stillness that reads as threat rather than
     peace, because of the mass behind it. He stands in front of
     the iron door with the fixed quality of something set in place
     rather than a person who chose to stand there, and nothing
     about his posture suggests any intention of changing this.
-    The Bloom has left its mark on him — not the copper veining or
+    The Bloom has left its mark on him: not the copper veining or
     the wide night-eyes, but something structural, a density to
     his stance, as though he were slightly heavier than gravity
     alone accounts for. The operation he guarded is finished. He

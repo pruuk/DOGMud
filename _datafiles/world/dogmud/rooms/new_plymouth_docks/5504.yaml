@@ -2,7 +2,7 @@ roomid: 5504
 zone: New Plymouth Docks
 title: The Fish Market
 description: >
-  The smell here is categorical — fish cut and gutted and salted
+  The smell here is categorical: fish cut and gutted and salted
   and smoked and newly-caught all braided together at volume, and
   underneath it the cold mineral sharpness of the river itself.
   It does not lessen when you stop noticing it; it simply becomes
@@ -11,7 +11,7 @@ description: >
   and recent to dark amber and nearly jerked-dry, swaying slightly
   in the river breeze. At the market's center a broad stone
   <ansi fg="itemname">gutting slab</ansi> runs the length of
-  the central aisle — salt-crusted, scaled-over, stained in the
+  the central aisle, salt-crusted, scaled-over, stained in the
   particular irreversible way of surfaces that have been their
   function for a generation. The <ansi fg="itemname">drying
   racks</ansi> are worth a look if you want to know what the river
@@ -36,10 +36,10 @@ nouns:
     older fish have stiffened and darkened to a deep amber; you
     could crack one like bark. Newer catches hang pale and wet,
     dripping into the packed earth below. A rack near the end holds
-    something unfamiliar — long, flat, iridescent — that the gulls
+    something unfamiliar, long and flat and iridescent, that the gulls
     are eyeing from what they apparently judge to be a safe distance.
     It is not a safe distance.
-  gutting slab: Stone, not wood — someone made the right choice
+  gutting slab: Stone, not wood. Someone made the right choice
     when this market was built, because no wood would have survived
     what this slab has absorbed. It is nearly white with salt and
     the dried scale-film of ten thousand catches, and the surface
@@ -55,8 +55,8 @@ idlemessages:
 - A vendor adjusts the hang of a rack, testing the weight and
   spacing of each fish with quick professional fingers.
 - From the gutting slab comes the flat sound of a knife drawn
-  across scale — practiced, two strokes, done.
-- The market smell shifts when the tide turns — more brine, less
+  across scale, practiced, two strokes, done.
+- The market smell shifts when the tide turns, more brine, less
   smoke, as if the river is reasserting itself.
 spawninfo:
   - mobid: 9309

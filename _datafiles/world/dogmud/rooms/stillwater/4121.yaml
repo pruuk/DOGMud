@@ -3,7 +3,7 @@ zone: Stillwater
 title: Cave Mouth
 description: >
   Cool wet air sighs steadily out of a dark slot at the
-  base of the basalt ledge — a smell of old water and
+  base of the basalt ledge, a smell of old water and
   stone-cold mineral, the kind of air that has not seen
   the sun. The opening is only just wide enough to enter
   at a stoop, half-flooded, the water pooling deeper just
@@ -27,7 +27,7 @@ exits:
     roomid: 4127
 nouns:
   slot: A narrow dark opening in the basalt at the
-    base of the ledge — wide enough for a person to
+    base of the ledge, wide enough for a person to
     enter at a stoop, half-flooded, the water inside
     deeper than the lake outside by a hand's breadth.
     The stone around the opening is polished smooth
@@ -40,7 +40,7 @@ nouns:
     holding the other end. There is also a small bit
     of net mesh tangled in among the line.
   notice: A small constabulary notice nailed to a
-    wooden board beside the cave entrance — printed
+    wooden board beside the cave entrance, printed
     in heavy black ink, the bounty for clearing the
     cave doubled in fresher chalk-and-charcoal
     underline. Below the heading is a hand-drawn
@@ -48,7 +48,7 @@ nouns:
     the cave. The constabulary in town can settle
     the bounty for a body or a confirmed kill.
   air: A steady cool wet exhale of air comes out of
-    the cave even when the lake is calm — the kind of
+    the cave even when the lake is calm, the kind of
     underground breathing that means the cavern goes
     deeper than the slot suggests. The smell is old
     water, mineral stone, and faintly something

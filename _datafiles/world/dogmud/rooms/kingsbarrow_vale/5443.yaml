@@ -3,18 +3,18 @@ zone: Kingsbarrow Vale
 title: Vale's End
 description: >
   The grain thins at the ridge-top and gives out for good
-  on the descending slope — the planting stops where the
+  on the descending slope. The planting stops where the
   soil turns stony and pale, and from here north the
   country is rougher, the hedges gapped and unpruned,
   the verge-grass coarser. The breadbasket ends here.
-  The road doesn't pause for it — the wheel-ruts press
+  The road doesn't pause for it. The wheel-ruts press
   on north into territory that belongs to hammer and kiln
   rather than seed and harvest. Ahead the horizon is
   marked by a pale smear of stone-dust and grey smoke,
   low and wide across the north, rising from quarries
   and kilns still out of view beyond the ridge. The
   smell of the fields fades behind and something harder
-  takes its place — hot stone on the wind, a faint acrid
+  takes its place: hot stone on the wind, a faint acrid
   edge that the grain country didn't carry. At the road's
   verge a carved <ansi fg="itemname">march stone</ansi>
   marks the boundary, its face named and dated, its base
@@ -38,20 +38,20 @@ nouns:
     waist-high and square-sectioned, set at the road's
     verge where the granary lands of Kingsbarrow Vale give
     out and the works-country begins. The south face is
-    carved with the vale's name and a harvest glyph — a
-    sheaf inside a circle — and the north face names the
-    territory ahead in plain block lettering — KILNREACH
+    carved with the vale's name and a harvest glyph (a
+    sheaf inside a circle) and the north face names the
+    territory ahead in plain block lettering, KILNREACH
     WORKS, and below that a distance mark in old units.
     The east face carries a founding date and a
     commissioner's mark. At the stone's base a shallow
     hollow has been worn smooth where travellers have
-    rested their hands or left small things over years —
+    rested their hands or left small things over years,
     a couple of copper coins, a stub of candle, a sprig
     of dried grain from the fields behind, placed face-down
     on the stone's foot.
   northern road: The road running north from this point
     is the same road that has carried grain wagons south
-    through the vale for generations — but here its
+    through the vale for generations, but here its
     character changes. The surface is heavier-maintained,
     the wheel-ruts deeper and fresher, the verge cut back
     wider to accommodate larger loads coming south from
@@ -59,7 +59,7 @@ nouns:
     from view, the haze above the descent thickening with
     smoke and pale stone-dust. The sound of the grain
     country falls away almost at once. What replaces it
-    is a low irregular percussion from distance — quarry
+    is a low irregular percussion from distance, quarry
     work, or the stamp of mills, arriving on the wind
     in fragments.
 idlemessages:
@@ -72,7 +72,7 @@ idlemessages:
 - A lone cart comes up the road from the south, passes
   without stopping, and heads north into the haze with
   the driver not looking back.
-- Something taps in the far distance — a rhythm too
+- Something taps in the far distance, a rhythm too
   regular for weather, too faint to place from here.
 - Two rooks land on the march stone, investigate its top
   surface briefly, then lift off heading south.

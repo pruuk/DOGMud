@@ -2,7 +2,7 @@ roomid: 5472
 zone: New Plymouth Outskirts
 title: Stalls Row East
 description: >
-  The sellers' cries run together here into a solid wall of noise —
+  The sellers' cries run together here into a solid wall of noise:
   price on price, pitch layered over pitch, the whole row speaking
   at once until the words lose their meaning and what remains is
   pure market. A double rank of stalls fills the lane, their canvas
@@ -11,7 +11,7 @@ description: >
   bundles. At the lane's far end a food-seller tends an iron
   <ansi fg="itemname">grill</ansi>, smoke hanging low and drawing flies to the meat.
   The <ansi fg="itemname">stalls</ansi> press so close that the crowd must turn sideways
-  to pass between them — a shuffling press of householders, workers,
+  to pass between them, a shuffling press of householders, workers,
   and sharpers, every second exchange a price and every third a counteroffer.
 biome: city_thoroughfare
 coord:
@@ -23,7 +23,7 @@ exits:
     roomid: 5467
 nouns:
   stalls: The stalls are plank-and-sawhorse affairs, draped in
-    oilcloth and piled with goods — cloth in rough bolts, clay pots,
+    oilcloth and piled with goods such as cloth in rough bolts, clay pots,
     tin cups, bundles of dried herbs, strings of smoked fish, pastry
     in waxed leaves, and at the busier trestles a tray of cheap
     trinkets kept under the seller's eye. Each vendor has arranged
@@ -34,8 +34,8 @@ nouns:
     A seller turns skewers of meat and onion with a long fork,
     calling prices to anyone who slows. Fat drips into the coals
     and the smoke that rises is part advertisement, part hazard.
-  crowd: A slow press of buyers filling the lane between the stalls —
-    householders stretching a copper further than it wants to go,
+  crowd: A slow press of buyers filling the lane between the stalls,
+    including householders stretching a copper further than it wants to go,
     workers spending a fragment of a day's pay, and the occasional
     sharper turning a margin between two sellers who don't know
     each other's prices. Everyone moves slowly. Everyone argues.

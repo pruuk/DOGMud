@@ -4,10 +4,10 @@ title: Delia's Cottage
 description: >
   A tidy cottage facing the central green, herb bundles
   hanging from every beam inside. The door is open and the
-  extraordinary smell hits before anything else -- sage,
+  extraordinary smell hits before anything else: sage,
   feverfew, comfrey, dried lavender, a dozen scents layered
   and competing. A hand-lettered sign on the door reads
-  "Limited stock -- check back later." Inside, a scarred
+  "Limited stock. Check back later." Inside, a scarred
   worktable holds mortar and pestle, cutting board, and
   glass jars in various states of fullness. Several ceiling
   hooks are empty where bundles were taken and not replaced.
@@ -23,22 +23,22 @@ exits:
   east:
     roomid: 4028
 nouns:
-  herbs: Bundles of dried herbs hanging from ceiling beams --
+  herbs: Bundles of dried herbs hanging from ceiling beams,
     sage, feverfew, comfrey, lavender, and others harder to
     identify. The bundles are tied with colored string, each
     color perhaps marking a type or potency. Several hooks
     along the beams are empty, bundles taken and not replaced.
-    The gaps are recent -- dust has not yet settled on the
+    The gaps are recent, dust has not yet settled on the
     empty hooks.
   sign: A hand-lettered sign on wood scrap nailed to the
-    door frame. "Limited stock -- check back later." The
+    door frame. "Limited stock. Check back later." The
     letters are neat and slightly annoyed, the handwriting
     of someone explaining the same thing for the dozenth
-    time. The nail is new -- this sign was put up recently.
+    time. The nail is new, this sign was put up recently.
   worktable: A scarred wooden table that has seen years of
     cutting, grinding, and mixing. A stone mortar and pestle
     sit beside a cutting board stained with plant juices.
-    Glass jars line the table's back edge -- some full of
+    Glass jars line the table's back edge, some full of
     dried preparations, others empty and waiting. The
     workspace of someone unable to work at full capacity,
     supplies outpacing ability to restock.

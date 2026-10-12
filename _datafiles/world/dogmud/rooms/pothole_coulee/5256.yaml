@@ -4,7 +4,7 @@ title: Timbered Drift
 description: >
   The tunnel opens into a horizontal drift, wide enough here that two
   men could pass or a full fight could play out without wedging
-  against the walls. A grid of old timbers shores the ceiling -- squat
+  against the walls. A grid of old timbers shores the ceiling: squat
   posts with cross-beams laid between them, the wood black with age
   and glistening where the rock seeps. They groan at intervals, a
   slow deep sound that travels the whole drift and comes back changed.
@@ -28,13 +28,13 @@ exits:
 nouns:
   timbers: The old shoring grid, posts and cross-beams, black with
     age and sweating where the rock breathes through them. They hold
-    -- or have held -- but the groan they make when the mountain
+    (or have held) but the groan they make when the mountain
     settles is the sound of something under load for too long. Each
     one is the only thing between the roof and your head.
   drift: The worked horizontal gallery, wider than the access tunnel
-    east of it -- a proper working space once, where crews swung
+    east of it, a proper working space once, where crews swung
     picks and ran carts down a rail now vanished. The flat center
-    strip is the fighting ground -- wide enough to move in, the
+    strip is the fighting ground, wide enough to move in, the
     shoring posts spacing it into thirds that can be used for cover.
 spawninfo:
 - mobid: 9120

@@ -3,7 +3,7 @@ zone: Cascade Pass Road
 title: The Broken Ground
 description: >
   The highland scrub takes hold in the gaps between
-  rock — low, dry, clinging where there is enough
+  rock: low, dry, clinging where there is enough
   soil and giving up where there is not. The ground
   looks more solid from a distance than it proves
   underfoot, and the route is crossed by
@@ -12,11 +12,11 @@ description: >
   rock below gives no reliable edge. To one side a
   large
   <ansi fg="itemname">scored boulder</ansi>
-  sits in the open — its face marked by long parallel
+  sits in the open, its face marked by long parallel
   gouges, each the width of a hand, running at a
   slight downward angle. At the boulder's base, wedged
   into a crack in the stone, the remains of something
-  have been cached — pressed flat, covered with smaller
+  have been cached: pressed flat, covered with smaller
   stones, undisturbed. The country here requires
   attention.
 biome: mountains
@@ -30,7 +30,7 @@ nouns:
   erosion gullies: >
     Narrow channels cut into the route where rain has
     stripped the thin soil and exposed the rock
-    beneath. The sides are not vertical — they slope
+    beneath. The sides are not vertical: they slope
     outward under the scrub at the edges, so the drop
     begins further back than the visible rim suggests.
     Some crossings are straightforward. Others require
@@ -39,7 +39,7 @@ nouns:
     A large block of grey mountain stone, too heavy
     to have moved recently but not seated in a way
     that suggests it has always been where it is.
-    The face turned toward the route is marked — long
+    The face turned toward the route is marked: long
     parallel gouges, each the width of a spread hand,
     running at a downward angle from upper left to
     lower right. The cuts are irregular in spacing
@@ -55,7 +55,7 @@ idlemessages:
 - The scored boulder sits in the open with its
   marked face turned toward the route. Not hidden.
 - The scrub at the gully lips is pressed down in
-  places — not by weather, by weight, repeatedly
+  places, not by weather, by weight, repeatedly
   applied to the same spots.
 - The cold coming off the exposed stone here is
   different from the wind's cold. It rises from

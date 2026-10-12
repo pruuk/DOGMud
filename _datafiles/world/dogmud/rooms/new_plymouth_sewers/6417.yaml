@@ -3,15 +3,15 @@ zone: New Plymouth Sewers
 title: The Flooded Passage
 description: >
   The passage widens, and the whole north half of it is gone under
-  a black <ansi fg="itemname">pool</ansi> — deep past telling,
+  a black <ansi fg="itemname">pool</ansi>, deep past telling,
   still as poured glass, its far edge lost against the north wall.
   The walkable way keeps to the south side, a
   <ansi fg="itemname">shelf</ansi> of dry stone wide enough to pass
   along if you stay against the wall. Now and again, on no pattern
-  you can find, the surface of the pool breaks — a swell, a gleam
+  you can find, the surface of the pool breaks: a swell, a gleam
   of something large moving just beneath, gone before it becomes
   a shape. The pool offers no bank, no shallow end, no bottom the
-  light reaches — only the black water and whatever uses it. The
+  light reaches, only the black water and whatever uses it. The
   dry stone carries the passage on, east and west.
 biome: sewer
 coord:
@@ -26,8 +26,8 @@ exits:
 nouns:
   pool: Black past the first inch, and still in the way only deep
     water is still. The surface gives back your light as a flat
-    sheen and gives back nothing else. Every so often it moves —
-    a long swell rising from beneath and subsiding — and the
+    sheen and gives back nothing else. Every so often it moves,
+    a long swell rising from beneath and subsiding, and the
     movement settles any question of wading in before the question
     is fully formed.
   shelf: A ledge of the old grey stone running along the south

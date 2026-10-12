@@ -8,7 +8,7 @@ description: >
   sides, narrowing the way forward into a corridor of branch
   and shadow. This is the last open ground before the land
   belongs to something else entirely. The tangle is full of
-  sound — movement, breathing — that does not stop when you do.
+  sound (movement, breathing) that does not stop when you do.
 biome: dense_forest
 coord:
   x: 43
@@ -23,9 +23,9 @@ nouns:
   brush: Stems grown too dense to see through, interlocked overhead,
     pressing in from both sides as the trail narrows.
   tangle: The interlocked canopy of brush and branch that closes
-    this corridor into shadow — cover for what waits below.
+    this corridor into shadow, cover for what waits below.
 idlemessages:
-- The tangle shifts on both sides without wind — a slow, deliberate
+- The tangle shifts on both sides without wind, a slow, deliberate
   movement that tracks your progress.
 - Somewhere below, in the dark of the hollow, something exhales
   in a long, even breath.

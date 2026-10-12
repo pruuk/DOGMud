@@ -4,12 +4,12 @@ title: Kingsbarrow Approach
 description: >
   The road widens at the crest of a low rise and the fields begin
   to thin, the first orchards of Kingsbarrow edging in among the
-  barley — old apple trees and a row of plum, their branches
+  barley: old apple trees and a row of plum, their branches
   reaching over the verge. Ahead the pale <ansi fg="itemname">granary
   roofs</ansi> of the village lift above the treeline, high and
   broad, the biggest buildings for miles, their scale alone
   advertising what this settlement exists to do. Woodsmoke reaches
-  you before anything else, and behind it something sweeter — the
+  you before anything else, and behind it something sweeter: the
   warm heaviness of bread from a <ansi fg="itemname">roadside
   oven</ansi> set in a clay alcove at the road's edge, banked with
   ash and radiating a steady heat, a loaf cooling on its stone
@@ -29,7 +29,7 @@ exits:
     roomid: 5438
 nouns:
   granary roofs: The roofs rise above the apple crowns at the
-    village's heart — three of them, you can see now, running in
+    village's heart. Three of them, you can see now, running in
     a row and built to a common plan, steep pale thatch over wide
     timber frames. The ridgelines are high enough to hold a season's
     worth of grain from the whole surrounding belt, and the walls
@@ -41,11 +41,11 @@ nouns:
     banked at its mouth is fresh white, and the heat coming off the
     clay is steady and even. A round loaf sits cooling on the stone
     shelf above the fire door, its crust dark and split along the
-    top — unbought and unclaimed, left for the road. A hook in the
+    top, unbought and unclaimed, left for the road. A hook in the
     alcove wall holds a long-handled wooden peel, flour-dusty from
     recent use.
   cottages: Low, solid buildings of dark fieldstone, their thatch
-    cut square at the eaves — each one has a kitchen garden pressed
+    cut square at the eaves. Each one has a kitchen garden pressed
     to its south wall and a chicken run fenced with hurdles along
     the lane. The windows are small and deep-set, many with dried
     herbs hanging inside the sills. There is nothing spare or
@@ -60,7 +60,7 @@ idlemessages:
 - A hen works the road-verge with single-minded focus, scratching
   in the loose earth beside the oven alcove.
 - The smell of the cooling loaf on the oven shelf thickens as the
-  breeze shifts south — a warm, yeasty wave that rolls down the
+  breeze shifts south, a warm, yeasty wave that rolls down the
   lane.
 - An old dog lifts its head from the doorstep of the nearest
   cottage, regards you from the shadow, then settles its chin

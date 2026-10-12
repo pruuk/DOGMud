@@ -1,9 +1,9 @@
 roomid: 5901
 zone: New Plymouth Temple
-title: The Grand Temple — Sanctuary
+title: The Grand Temple, Sanctuary
 description: >
   The nave opens around you with a quality you do
-  not immediately have a word for — wide enough that
+  not immediately have a word for: wide enough that
   the columns at its edges are half-resolved in
   lamplight, high enough that the vault above
   dissolves into warm shadow, and the sound of the
@@ -15,20 +15,20 @@ description: >
   through the space; the light they produce seems to
   originate in the stone itself rather than in
   anything suspended from it. The floor carries its
-  history in worn smooth paths — the lines of
+  history in worn smooth paths: the lines of
   people who have arrived here and paused, uncertain
   where to put their feet next, while the rest of
   the room continued quietly around them. At the
   center of the nave the great
   <ansi fg="itemname">threshold-stone</ansi> sits
-  flush with the paving — a wide circle of pale
+  flush with the paving, a wide circle of pale
   granite, polished to a faint luminance by the
   weight of accumulated arrivals, the place where
   in this faith's understanding the boundary between
   gone and present is at its thinnest. Along the
   lower courses of the north wall a row of
   <ansi fg="itemname">processional-reliefs</ansi> runs
-  at waist height -- worn figures in slow procession,
+  at waist height, worn figures in slow procession,
   their hands held in postures too specific to be only
   devotion. The space
   does not ask anything of you; it receives. The
@@ -57,8 +57,8 @@ nouns:
     of rendered tallow with a trimmed wick, replaced
     on a rotation by the temple's lamp-keepers
     without interrupting the burning. They are not
-    identical — collected over centuries from
-    donations and replacements — but at this height
+    identical (collected over centuries from
+    donations and replacements), but at this height
     the variation disappears into the collective
     warmth they produce. The chains run in rows from
     east to west, and in certain light near the
@@ -67,7 +67,7 @@ nouns:
     another, without interruption for longer than
     the current building has stood.
   threshold stone: A circle of pale granite set
-    flush into the nave floor at its center — perhaps
+    flush into the nave floor at its center, perhaps
     ten feet across, its surface worn to a smoothness
     that catches light differently from the
     surrounding paving. There is no inscription.
@@ -75,14 +75,14 @@ nouns:
     is closest to whatever lies beyond it, and that
     those who have passed through that boundary in
     one direction may return through it in the
-    other. The wear pattern on the stone is concentric
-    — smoothest at the center, rougher toward the
-    rim — as if the returning always begin at the
+    other. The wear pattern on the stone is concentric,
+    smoothest at the center and rougher toward the
+    rim, as if the returning always begin at the
     same point, however they arrive.
   processional reliefs: A row of carved figures worked into the lower
     courses of the nave wall, much older than the smooth plaster above
-    them -- a slow procession, each figure's hands held in a particular
-    posture. The postures are not the gestures of any rite still
+    them. The figures form a slow procession, each one's hands held in
+    a particular posture. The postures are not the gestures of any rite still
     practiced here. Read along the row, the hand positions have the
     deliberate look of a sequence someone meant to be counted, not
     merely admired.
@@ -95,10 +95,10 @@ idlemessages:
 - A soft exchange of voices carries from the north
   cloister walk, too low to resolve into words.
 - The west doors open briefly and the sounds of
-  the plaza enter — then the doors close and the
+  the plaza enter. Then the doors close and the
   nave takes back its quiet.
 - The smell of the sanctuary is beeswax and old
-  stone and cool cloth — the accumulated smell of
+  stone and cool cloth, the accumulated smell of
   a place that has burned lamps in the same air
   for a very long time.
 x: 4

@@ -13,7 +13,7 @@ description: >
   hand's breadth at the moment to keep the wheel
   turning at a working pace. Closer to the bank, a
   small accumulation of dark heavy nodules glints under
-  the shallow water — <ansi fg="itemname">lake iron</ansi>,
+  the shallow water: <ansi fg="itemname">lake iron</ansi>,
   precipitated out by some process of the marsh and the
   creek's slow movement, the kind of forage the smith
   in town pays a premium for.
@@ -44,11 +44,11 @@ nouns:
     a hand-crank on the bank. The miller's son
     adjusts it twice daily to keep the wheel below
     turning at a working pace. The gate is currently
-    raised half a hand's breadth — the steady working
+    raised half a hand's breadth, the steady working
     setting.
   lake iron: A small accumulation of dark heavy nodules
     glints under the shallow water near the eastern
-    bank — lake-iron, precipitated out of the marsh
+    bank, lake-iron, precipitated out of the marsh
     water by some slow process the smiths understand
     better than the alchemists. Each nodule is the
     size of a knucklebone or smaller and weighs
@@ -60,8 +60,8 @@ nouns:
     western bank lean over the water, leaves silvering
     in any breeze. The bark of these particular
     willows is harvested by the healer for stronger
-    medicines than the marsh-willow at the foreshore
-    — the pond willows take up more of the iron from
+    medicines than the marsh-willow at the foreshore.
+    The pond willows take up more of the iron from
     the water and the bark becomes correspondingly
     more potent.
   bank: A grassy bank slopes gently down to the

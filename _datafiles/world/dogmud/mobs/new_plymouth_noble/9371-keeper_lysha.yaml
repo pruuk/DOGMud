@@ -18,15 +18,15 @@ idlecommands:
   - 'emote steps back from a painting, tilts her head at a very slight
     angle, and holds that position for a moment before straightening.'
   - ''
-  - 'emote takes a soft cloth from her pocket and touches it — barely
-    touches it — to the corner of a frame, then examines what the
+  - 'emote takes a soft cloth from her pocket and touches it (barely
+    touches it) to the corner of a frame, then examines what the
     cloth received.'
 activitylevel: 7
 character:
   name: Keeper Lysha
   description: |
     Keeper Lysha manages the gallery with a particular kind of
-    attention — not the attention of a custodian moving dust from
+    attention: not the attention of a custodian moving dust from
     place to place, but the attention of someone reading a very
     long text very slowly, unwilling to skip the difficult parts.
     She is quiet and deliberate, with the careful quality of
@@ -34,7 +34,7 @@ character:
     paintings is not what the gallery's official purpose asks
     her to see, and has decided to keep seeing it anyway. Her
     Chrysalis-change came on as a sharpening of color perception
-    beyond the range of ordinary human sight — she reads pigment
+    beyond the range of ordinary human sight. She reads pigment
     the way a trained appraiser reads metal, seeing age, origin,
     and the specific hand of a particular period in the saturation
     of a color or the way a varnish has crazed at the edges. In

@@ -3,7 +3,7 @@ zone: The Foldweave
 title: The Same Passage Again
 description: >
   You come north into a chamber and stop, because it is the circling
-  passage -- the same ribbed curve, the same close silk, and if you
+  passage: the same ribbed curve, the same close silk, and if you
   went looking you would find the same torn snag at eye height. Except
   it is not; it only wears the passage's face. Go
   <ansi fg="itemname">north</ansi> from here and the weave will fold
@@ -28,7 +28,7 @@ nouns:
     A rent in the silk-crust of the floor where the stone gave way
     beneath it, edges frayed and hanging over a true drop. Cold sweet
     air rises through it, thicker than the circling passage ever
-    breathed. This is the flaw the weave could not fold shut -- the
+    breathed. This is the flaw the weave could not fold shut: the
     one honest way down.
   north: >
     The way north looks like onward and is not: take it and the fold

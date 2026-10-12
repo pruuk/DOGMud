@@ -15,7 +15,7 @@ idlecommands:
     the glass, and rights it with a small practiced motion.'
   - ''
   - 'emote moves to the next bracket on the wall and inspects the
-    glass for soot — not appearing to look at anything else.'
+    glass for soot, not appearing to look at anything else.'
   - ''
   - 'emote wipes both hands on the cloth at his belt and becomes
     very still, as though listening to the water in the canal below.'
@@ -23,10 +23,10 @@ activitylevel: 7
 character:
   name: Quill the Lamplighter
   description: |
-    He is very thin and very quiet — the kind of person the city
+    He is very thin and very quiet, the kind of person the city
     produces in its lowest reaches, where warmth is tended rather
     than assumed. His eyes are wrong in a way you notice only when
-    the light shifts — too wide, too dark, the pupils spread as a
+    the light shifts: too wide, too dark, the pupils spread as a
     cat's in deep shadow and slow to contract even in lamplight.
     Long years below have left him adapted to the dark in ways the
     surface cannot undo. He carries an oil can, a wick-trimmer, and

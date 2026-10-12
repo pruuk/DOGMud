@@ -2,7 +2,7 @@ roomid: 301
 zone: Labyrinth of Low Tunnels
 title: Low Junction
 description: The descent levels out into a cramped junction where the tunnel splits
-  in three directions. The ceiling is barely chest height -- standing upright is
+  in three directions. The ceiling is barely chest height, standing upright is
   impossible. Every surface is covered in scratches, claw marks, and crude symbols
   gouged into the basalt with something sharp. A faint, greasy light flickers from
   somewhere down the southern passage, and the air is thick with the smell of unwashed
@@ -28,7 +28,7 @@ spawninfo:
   message: A hunched figure crouches at the edge of the junction, pale fungal growths pulsing faintly along its scalp. It watches the passage above with cautious, milky eyes.
   respawnrate: 5 real minutes
 nouns:
-  scratches: The marks are deliberate -- grouped in sets of four or five, slashed through
+  scratches: The marks are deliberate, grouped in sets of four or five, slashed through
     with a diagonal. Tally marks. Hundreds of them, layered over each other in the
     dim light.
   symbols: Crude pictograms scratched into the stone. Shapes that might be figures,

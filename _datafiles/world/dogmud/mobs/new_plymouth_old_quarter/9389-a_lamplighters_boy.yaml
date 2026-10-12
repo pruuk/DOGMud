@@ -10,7 +10,7 @@ groups:
   - humanoid
   - np_commonfolk
 idlecommands:
-  - 'emote checks the lamp on the wall — looks at the
+  - 'emote checks the lamp on the wall, looks at the
     oil level, trims the wick with a small iron tool
     drawn from a coat pocket, reseats the clay body
     with practiced hands, and moves on.'
@@ -21,14 +21,14 @@ idlecommands:
     not spill oil and has not spilled it in a long time.'
   - ''
   - 'emote pauses and tilts the head, listening for the
-    particular sound of a lamp about to go out — the
-    slight change in the flame — then relaxes, and
+    particular sound of a lamp about to go out (the
+    slight change in the flame) then relaxes, and
     continues along the walk.'
 activitylevel: 4
 character:
   name: A Lamplighter's Boy
   description: |
-    The boy is young — not a child, not quite grown —
+    The boy is young, not a child, not quite grown,
     with the quick, economical movements of someone
     who has been given a job that matters and knows it.
     An oil flask hangs from one shoulder on a leather
@@ -36,7 +36,7 @@ character:
     are in the coat pocket on the opposite side, the
     weight balanced from practice. He moves the lamp-
     walk with the route in his body rather than his
-    head — checking, topping off, trimming — without
+    head: checking, topping off, trimming, without
     pausing to consider the sequence because the
     sequence is settled. He works for the lamplighter
     and he does the work properly.

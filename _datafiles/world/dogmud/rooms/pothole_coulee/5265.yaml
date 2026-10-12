@@ -5,7 +5,7 @@ description: >
   A cold, clear pool fills the heart of the hollow, spring-fed from
   somewhere below the pale silt bottom, its surface barely moving. Reeds
   ring it close on three sides, pressing in tall and dark and still, and
-  the air here is cooler than anywhere above -- damp and clean, carrying
+  the air here is cooler than anywhere above: damp and clean, carrying
   a faint sweetness from the herbs that dry on the racks to the west.
   At the water's edge a flat slab of stone has been dressed level and
   set up as a bench: a mortar and pestle sit at one end, rows of glass
@@ -33,7 +33,7 @@ spawninfo:
 nouns:
   pool: The spring-fed pool is perhaps a dozen paces across, its water
     clear enough to show every grain of pale silt on the bottom. It is
-    cold enough to ache -- the kind of cold that only comes from deep
+    cold enough to ache, the kind of cold that only comes from deep
     underground.
   bench: A flat slab of stone set level at the water's edge and dressed
     smooth on its upper face. Worn edges and old stains in the stone

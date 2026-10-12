@@ -2,7 +2,7 @@ roomid: 6140
 zone: The Confluence
 title: Tri-Cross Square
 description: >
-  The square opens wide here — old worn paving in
+  The square opens wide here: old worn paving in
   irregular flags, the joins between them dark with
   the grout of generations. Three roads converge on
   this crossing: the road from the north along which
@@ -19,7 +19,7 @@ description: >
   end a settled authority; the Three Waters inn faces
   it from the east, a wide door and a hanging sign.
   Some of the newer building-fronts carry a carved
-  cocoon-ring motif on their lintels and friezes — a
+  cocoon-ring motif on their lintels and friezes, a
   common ornamental touch in the Confluence's more
   recently built quarters, present enough on the
   square to be unremarkable.
@@ -46,7 +46,7 @@ nouns:
     Below the names, on each face, the same phrase is
     cut in a different hand: three rivers, one city.
     The top surface is flat and weathered. A winter-
-    hazel wreath has been placed on it — dry now,
+    hazel wreath has been placed on it. It is dry now,
     held mostly by its wire frame, with no indication
     of who placed it or when. The plinth is old. The
     names cut into it are older than most of the
@@ -56,13 +56,13 @@ spawninfo:
     respawnrate: "20 real minutes"
 idlemessages:
 - Foot-traffic crosses the square in all four
-  directions — the pattern of a city going about
+  directions, the pattern of a city going about
   its ordinary business.
 - The civic bell rings the hour from the tower to
   the west, its counted note dropping across the
   square.
 - "A cart laden with river-freight crosses from the
-  Brenn Road: iron-rimmed wheels loud on the old
+  Brenn Road, iron-rimmed wheels loud on the old
   paving flags."
 x: 5
 y: 71

@@ -11,7 +11,7 @@ description: >
   <ansi fg="itemname">bench</ansi> runs along one wall, a fitted slop
   <ansi fg="itemname">bucket</ansi> in the corner, and clean straw
   scattered on the packed-earth floor. Someone has left their mark in
-  the mortar — faint <ansi fg="itemname">scratches</ansi> of tally-counts
+  the mortar: faint <ansi fg="itemname">scratches</ansi> of tally-counts
   and a small carved fish, patient work from a previous occupant's long
   afternoon. The barred door is the only way out, and it opens only from
   the office above.
@@ -38,15 +38,15 @@ nouns:
   bucket: A wooden slop bucket with a fitted lid in the corner. Someone
     scours it out between occupants; it is, all things considered, not the
     worst part of being here.
-  scratches: Faint lines scratched into the mortar between the lake-stones —
-    tally-marks grouped in fives, dozens of them, running along the wall
+  scratches: Faint lines scratched into the mortar between the lake-stones.
+    Tally-marks grouped in fives, dozens of them, running along the wall
     beside the bench. Below the tallies, worked into a seam of softer
-    mortar, a small fish has been carved with real care — flat body, fan
+    mortar, a small fish has been carved with real care, flat body, fan
     tail, one eye a neat round divot. Someone had the time and the
     patience to do it properly. You wonder how long they were here.
   bars: Heavy iron bars set into stone sockets at the floor and ceiling,
     sealing the cell from the passage beyond. The barred door at their
-    center has no handle on this side — only a keyhole, visible but
+    center has no handle on this side, only a keyhole, visible but
     unreachable. The bars are polished smooth at shoulder-height where
     every occupant has eventually stood and gripped them.
 idlemessages:

@@ -2,13 +2,13 @@ roomid: 6343
 zone: Eastern Highlands
 title: The Edge of the Reach
 description: >
-  The pass is behind. This is the highland —
-  the same grey the threshold promised, but here
+  The pass is behind. This is the highland.
+  The same grey the threshold promised, but here
   the grey has no edge within sight and the scrub
   extends on every side without interruption or
   reduction. The
   <ansi fg="itemname">highland floor</ansi>
-  is scoured to what the weather could not take —
+  is scoured to what the weather could not take:
   basalt and grit and thin root-work pressed into
   every crack, the whole surface low and old and
   indifferent to what passes over it. The
@@ -16,7 +16,7 @@ description: >
   is very large and completely empty. Nothing moves
   in it. Nothing moves anywhere the eye reaches.
   The cold from the threshold has not increased
-  crossing into this, but it has changed — at the
+  crossing into this, but it has changed. At the
   threshold it was the cold at the edge of a thing.
   Here it is the interior of that thing, and it
   does not vary in any direction.
@@ -31,7 +31,7 @@ exits:
 nouns:
   highland floor: >
     Grit and fractured basalt and scrub-root pressed
-    into every crack — the surface here is what
+    into every crack. The surface here is what
     remains after everything yielding has been taken
     by weather. It looks stable enough. It is cold to
     the touch even when the air above it is not
@@ -40,7 +40,7 @@ nouns:
     or encouraged. It looks as though it survived.
   sky: >
     The sky over the eastern reach is broad and
-    flat-grey without feature — not the sky of a
+    flat-grey without feature, not the sky of a
     storm approaching but of a sky that has simply
     always been this colour. Nothing circles in it.
     No bird, no shape, nothing that moves. The eye
@@ -55,7 +55,7 @@ idlemessages:
   anything else. The stillness is the kind that
   has been maintained rather than arrived at.
 - The cold at the floor of the reach is constant and
-  sourceless — it rises from the ground as readily
+  sourceless. It rises from the ground as readily
   as it descends from the air.
 - The horizon to the east is grey and uniform and
   gives no indication of where the highland ends,

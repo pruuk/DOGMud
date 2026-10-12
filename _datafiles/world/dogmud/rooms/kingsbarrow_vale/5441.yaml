@@ -3,7 +3,7 @@ zone: Kingsbarrow Vale
 title: North Vale Road
 description: >
   The last garden-walls drop behind and the fields resume
-  at once — wide and immediate on both sides of the road,
+  at once, wide and immediate on both sides of the road,
   the crop pressing close to the thorn-hedge line that
   keeps it from the verge. The road lifts here on a long
   gentle slope, and from the slight height the northern
@@ -13,7 +13,7 @@ description: >
   the road a string of laden
   <ansi fg="itemname">grain wagons</ansi> works north,
   the horses pulling steadily at the grade, the high-piled
-  sacks roped down tight over the boards — all of it bound
+  sacks roped down tight over the boards, all of it bound
   for the capital's granaries before the first frost. The
   <ansi fg="itemname">roadside hedge</ansi> runs unbroken
   on both flanks, old thorn and hazel grown head-high,
@@ -39,8 +39,8 @@ nouns:
     scored by long road-use. The boards are loaded to
     their limit with hessian grain-sacks, piled two and
     three deep and roped down in a tight cross-pattern over
-    the load. Each sack is stamped with a parish mark — a
-    circle enclosing a grain-stalk — and the estate number
+    the load. Each sack is stamped with a parish mark (a
+    circle enclosing a grain-stalk) and the estate number
     it came from. The nearest wagon's tailboard is wedged
     open to let the load breathe, and the sacks behind it
     are braced with folded sacking. The lead driver keeps
@@ -51,7 +51,7 @@ nouns:
     the hedge-top ragged where recent growth has not been
     laid. The bases are thick with tall grass, nettles, and
     trailing bramble stems, and the whole length is busy
-    with small bird life — sparrows working the base, a
+    with small bird life, sparrows working the base, a
     wren moving fast through the interior. At one point the
     hedge has been opened with a clean cut and a
     post-and-rail gate installed for farm traffic, the gate
@@ -64,15 +64,15 @@ idlemessages:
 - From the village behind, a bell rings twice, carrying
   easily through the open farm country.
 - One of the wagon-drivers exchanges words with a figure
-  at the hedge-gap — a farm hand leaning on a long-handled
-  tool — then the wagon moves on without pausing.
+  at the hedge-gap, a farm hand leaning on a long-handled
+  tool, then the wagon moves on without pausing.
 - A merlin cuts north above the field line, low and
   direct, then tilts and drops into the crop out of sight.
 hidden_nouns:
   old ruts:
     description: |
       Past the farm-gate the ground carries a set of ruts that
-      have no business here — they run east, away from the road
+      have no business here. They run east, away from the road
       and the fields, worn deeper than a season of cart traffic
       could account for and older than any of it. Nothing to the
       east needs a cart. Whatever wore these went that way many
@@ -81,6 +81,6 @@ hidden_nouns:
       ground and the tree-line beyond.
     hidden_description: |
       Beyond the farm-gate, a set of old ruts runs east through
-      the hedge-gap — a track leading away from the fields.
+      the hedge-gap, a track leading away from the fields.
 x: -8
 y: -56

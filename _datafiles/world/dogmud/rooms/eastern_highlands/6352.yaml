@@ -2,13 +2,13 @@ roomid: 6352
 zone: Eastern Highlands
 title: Where the Green Fails
 description: >
-  The scrub that has persisted since the pass — low,
-  grey-green, holding to the rock in sparse clumps — thins
+  The scrub that has persisted since the pass, low,
+  grey-green, holding to the rock in sparse clumps, thins
   here and stops. The
   <ansi fg="itemname">line</ansi>
   where it ends is too clean. Not the ragged taper of ordinary
   poor soil, where growth gives out gradually and leaves its
-  sparse dead remains before nothing — this is an edge, a
+  sparse dead remains before nothing. This is an edge, a
   definite one, the kind of edge that implies a reason on the
   other side of it. East of the line the
   <ansi fg="itemname">bare ground</ansi>
@@ -28,7 +28,7 @@ exits:
 nouns:
   line: >
     The transition from scrub to bare rock takes a short span
-    of ground. The last plants are not dying — the closest
+    of ground. The last plants are not dying. The closest
     growth is as alive as anything else on the highland,
     which is to say durable and low and not thriving, but
     present. It simply does not cross. The edge holds with
@@ -38,7 +38,7 @@ nouns:
     survive long enough to leave remains.
   bare ground: >
     East of the line, the rock is identical to the rock on
-    this side — the same grey basalt, the same fracture
+    this side: the same grey basalt, the same fracture
     pattern, the same shallow channels where water runs
     when water comes. Nothing distinguishes it from ground
     where things grow. The absence is not in the stone.

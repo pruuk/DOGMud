@@ -6,7 +6,7 @@ description: >
   dust to a shelf of bare rock. From here the whole wash lies open to the
   east, a pale gravel river climbing away between rising stone shoulders.
   Far up at its head, on a bluff that crowds the canyon shut, stands the
-  ruin of an old watchtower -- the Pothole Watch, its crown broken open
+  ruin of an old watchtower, the Pothole Watch, its crown broken open
   to the sky, leaning against the light. Whatever holds that ground now,
   it is a long hard climb from this safe step. The circle lies west.
 biome: cliffs
@@ -22,7 +22,7 @@ exits:
   east:
     roomid: 5231
 nouns:
-  tower: The Pothole Watch -- a squat ruined watchtower far up the canyon,
+  tower: The Pothole Watch, a squat ruined watchtower far up the canyon,
     set on a bluff where the walls draw in tight. Its top is broken open
     and one flank has sloughed away, but it still commands the whole wash.
     Something keeps that high ground. The climb to it looks long and mean.

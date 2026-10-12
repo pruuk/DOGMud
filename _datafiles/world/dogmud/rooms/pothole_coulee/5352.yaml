@@ -6,7 +6,7 @@ description: >
   way to a canyon lip that drops sharply to the north. The range ends:
   there are no more targets beyond this point, no more distance-marks
   in the stone. The lip of the canyon is close, and the drop beyond it
-  is significant -- the canyon cuts north from here into rougher country,
+  is significant. The canyon cuts north from here into rougher country,
   and the bottom is not visible from where you stand. The sanctuary of
   the terraces ends at this edge. The wind is strongest here, coming up
   from the canyon below and mixing with the northern flow in a way that
@@ -26,7 +26,7 @@ exits:
   north:
     roomid: 5353
 nouns:
-  lip: The canyon lip is a clean break in the bluff top -- stone one
+  lip: The canyon lip is a clean break in the bluff top, stone one
     step, open air the next. The edge is not crumbling; it is simply
     where the rock stops. Looking down into the canyon from here
     shows only shadow and the pale canyon walls dropping away.

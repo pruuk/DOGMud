@@ -27,7 +27,7 @@ corpse_description: |
   and trampled into the dirt. The driver's bench has split
   clean in two; the iron lantern is bent beyond use.
   Scattered among the wreckage, broken crates and split
-  sacks lie half-emptied — though the bandits did their
+  sacks lie half-emptied, though the bandits did their
   best to take what they could carry.
 
 character:
@@ -39,7 +39,7 @@ character:
     canvas weatherbeaten and patched in three places along
     the seams. A pair of leather-padded yokes at the front
     rig the wagon to its draft team. The wagon's right rear
-    wheel has been reset twice — the new spokes are paler
+    wheel has been reset twice, and the new spokes are paler
     than the rest. A small iron lantern hangs at the
     driver's bench, unlit by day.
   speciesid: 1

@@ -8,7 +8,7 @@ description: >
   its stone walls the same grey as the sky. Sheep dot the near
   field, their wool thick for winter, heads down in the grass.
   The smell of lanolin and woodsmoke carries on the breeze.
-  The track is narrow but well-worn — someone walks this path
+  The track is narrow but well-worn: someone walks this path
   every day.
 biome: farmland
 coord:
@@ -22,7 +22,7 @@ exits:
     roomid: 4049
 nouns:
   turnips: Rows of harvested turnip beds, the soil ridged and
-    dark. A few turnips remain — large and very purple, the
+    dark. A few turnips remain, large and very purple, the
     good kind that store through winter without going soft.
     Someone grew these with attention. The leaves have been
     stripped for feed, leaving only the crowns poking from

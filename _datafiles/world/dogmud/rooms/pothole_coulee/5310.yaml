@@ -3,8 +3,8 @@ zone: Pothole Coulee
 title: Sunken Path
 description: >
   A path winds between the pale trees, but it does not behave the way paths
-  should. Walk its length and you arrive not quite where the geometry promised
-  -- a step west that deposits you slightly north, a turn that lands you facing
+  should. Walk its length and you arrive not quite where the geometry promised:
+  a step west that deposits you slightly north, a turn that lands you facing
   the direction you came from. The ground dips here, sinking into shadow that
   pools in the low places regardless of where the sun is, shadow that has
   collected and thickened over time until it holds its shape without the dark
@@ -24,7 +24,7 @@ spawninfo:
 - mobid: 9147
 nouns:
   path: Worn but unreliable, the path carries the marks of boots in the
-    soft earth -- yet their spacing is wrong, too wide in some places,
+    soft earth, yet their spacing is wrong, too wide in some places,
     overlapping in others, as though the walkers kept finding themselves
     elsewhere mid-stride.
   shadow: It pools in the low places independent of light source, dark
@@ -33,7 +33,7 @@ nouns:
 idlemessages:
 - The <ansi fg="cyan">path</ansi> ahead bends, and when you look away and back, the bend is
   somewhere different.
-- <ansi fg="cyan">Shadow</ansi> shifts in a hollow near the tree roots -- not cast by anything
+- <ansi fg="cyan">Shadow</ansi> shifts in a hollow near the tree roots, not cast by anything
   you can locate.
 - Something moves at the edge of the treeline, arriving from the direction
   you are walking toward.

@@ -3,7 +3,7 @@ zone: Cascade Pass Road
 title: The Crumbling Watchtower
 description: >
   A <ansi fg="itemname">watchtower</ansi> stands
-  here — or the remains of one. The far wall has
+  here, or the remains of one. The far wall has
   fallen outward in a low spread of
   <ansi fg="itemname">drystone</ansi>, the courses
   long since separated and scattered, the individual
@@ -14,10 +14,10 @@ description: >
   stand in.
 
   The one intact feature is a narrow
-  <ansi fg="itemname">window</ansi> in the east wall
-  — a single vertical slot cut clean through the
+  <ansi fg="itemname">window</ansi> in the east wall:
+  a single vertical slot cut clean through the
   stone, facing east. Not toward the road behind you,
-  not toward the settled country below — east, onto
+  not toward the settled country below: east, onto
   the grey highland ahead. The slot is deliberate and
   precise, the stonework around it better-finished
   than the rest, as though whoever built this knew
@@ -41,18 +41,18 @@ nouns:
     Old drystone construction, circular, now largely
     collapsed. The standing section is roughly half
     the original circuit, the fallen section spread
-    in a low arc to the west — stones displaced
+    in a low arc to the west: stones displaced
     outward, settled long enough to have lichen thick
     on their north-facing surfaces. The masonry is
-    functional but careful — no mortar, the courses
+    functional but careful: no mortar, the courses
     fitted close enough to have stood for an immense
     span of time before the fall. No carving, no
     symbol, no inscription on any surviving face.
     The tower predates any record of this road.
   drystone: >
     The collapsed section has spread its stones
-    outward in a low arc, each course now separate
-    — the top courses farthest out, the bottom
+    outward in a low arc, each course now separate:
+    the top courses farthest out, the bottom
     courses still roughly in place. The stones are
     pale and fine-grained, the same rock as the
     surrounding mountain, quarried close and fitted
@@ -61,17 +61,17 @@ nouns:
     every north-facing surface. The fall was not
     recent.
   window: >
-    A narrow vertical slot cut through the east wall
-    — a single opening, precise and deliberate, the
+    A narrow vertical slot cut through the east wall:
+    a single opening, precise and deliberate, the
     edges well-finished where the surrounding
     stonework is rougher. Standing at it you look
     directly east across the grey highland, the
     broken plateau running to the hard horizon. The
     slot gives no view to the west, none to the
-    north or south — only east. Whoever chose this
+    north or south, only east. Whoever chose this
     orientation chose it with intention. What they
-    were watching for, from this height, looking east
-    — that question has no answer anyone living can
+    were watching for, from this height, looking east,
+    that question has no answer anyone living can
     supply.
 idlemessages:
 - The wind finds the narrow window and passes through
@@ -82,7 +82,7 @@ idlemessages:
 - The window faces east. It has always faced east.
   The settled country behind is not visible through
   it.
-- A stone in the fallen section shifts slightly —
+- A stone in the fallen section shifts slightly,
   frost working at it, or the wind, or nothing at all.
 - From inside the standing section, looking through
   the window, only the grey highland ahead is visible.

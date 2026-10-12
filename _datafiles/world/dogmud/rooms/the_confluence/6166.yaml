@@ -6,7 +6,7 @@ description: >
   broad stair rises from the water's edge to the portico
   above. The steps are wide dressed stone, each tread
   deep enough for two to ascend side by side without
-  difficulty — a scale that expects procession. The
+  difficulty, a scale that expects procession. The
   island's stone retaining wall runs along the bank to
   either side of the stair-foot, the water moving at
   its base. The temple fills the southern view from
@@ -26,7 +26,7 @@ exits:
 idlemessages:
 - A pilgrim pauses at the stair-foot and looks up at
   the facade before beginning the ascent.
-- The retaining wall is close at this end — the island
+- The retaining wall is close at this end, the island
   is narrower here than it appears from the bank.
 - The stone at the center of each tread is worn to
   a particular polish by the weight of arrivals.

@@ -3,9 +3,9 @@ zone: Labyrinth of Low Tunnels
 title: Hidden Cache
 description: A cramped hollow behind the chieftain's seat, barely large enough for a
   single person to crouch in. A shallow pit has been dug into the floor and covered
-  with flat stones -- a hoard, hidden with all the cunning of a creature that knows
+  with flat stones, a hoard, hidden with all the cunning of a creature that knows
   the value of keeping things. The pit is lined with strips of dried hide to keep
-  the damp out. Inside, objects are arranged with surprising care -- shiny things,
+  the damp out. Inside, objects are arranged with surprising care, shiny things,
   useful things, and things that are neither but clearly treasured. The air in this
   tiny space is suffocating, pressed close by the stone on every side. The walls are
   barely an arm-span apart, and the ceiling nearly touches the top of your head even
@@ -24,7 +24,7 @@ spawninfo:
   respawnrate: 15 real minutes
 nouns:
   pit: A shallow depression covered with flat stones, its edges lined with dried hide.
-    The contents are arranged by some logic you cannot follow -- a bent copper ring
+    The contents are arranged by some logic you cannot follow, a bent copper ring
     next to a smooth river stone next to a chunk of raw quartz next to a strip of
     cloth dyed blue. Value and valuelessness jumbled together, all of it hoarded with
     equal devotion.

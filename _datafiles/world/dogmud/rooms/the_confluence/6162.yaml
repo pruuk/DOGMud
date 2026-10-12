@@ -5,7 +5,7 @@ description: >
   A modest stone hall off the avenue, given over to the
   temple's account of its own beginning. A long carved
   <ansi fg="itemname">founding-relief</ansi>
-  runs the length of one wall — the three rivers, the
+  runs the length of one wall: the three rivers, the
   raising of the temple, the first Keepers at the
   water's edge. A brass
   <ansi fg="itemname">official-plaque</ansi>
@@ -27,13 +27,13 @@ nouns:
     shown as three braided lines drawing together, the
     temple rising on the island where they meet, robed
     figures gathered at the banks. The three rivers flow
-    from north, east, and southwest respectively —
-    Aldren, Brenn, Solt — and the raising is orderly,
+    from north, east, and southwest respectively:
+    Aldren, Brenn, Solt. The raising is orderly,
     purposeful, the composition of a beginning told
     with full confidence in how it went.
   official plaque: >
     THE FIRST MARK, the plaque reads, is the earliest
-    rendering of the Chrysalis truth — the sealed soul,
+    rendering of the Chrysalis truth: the sealed soul,
     the ringed cocoon, cut into the temple stone by the
     first Founders. It is given as settled doctrine, in
     the Keepers' formal lettering, earnest and unhurried.

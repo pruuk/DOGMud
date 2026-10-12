@@ -15,12 +15,15 @@ import (
 // prose a player reads. M6 slice 2 (ledger row 55). Quests, dialogue and
 // conversations are exempt until the quest and dialogue rework arc (#375).
 //
-// proseDashDirs grows in PR 2 to add rooms and mobs.
+// Quests, dialogue and conversations are not listed: their dashes wait for
+// the quest and dialogue rework arc (#375).
 var proseDashDirs = []string{
 	"combat-messages",
 	"defense-messages",
 	"narration",
 	"messaging",
+	"rooms",
+	"mobs",
 }
 
 // The characters around a spaced dash may be a tag bracket or a token brace

@@ -7,13 +7,13 @@ description: >
   over to a <ansi fg="itemname">board-trail</ansi> of split cedar
   laid two-wide across soft ground. The planks sway a little underfoot
   and the gaps between them show dark <ansi fg="itemname">marsh-water</ansi>
-  — peaty-brown, still, knee-deep at most — standing in every hollow
+  (peaty-brown, still, knee-deep at most) standing in every hollow
   off the trail's edges. Dense stands of
   <ansi fg="itemname">reeds</ansi> rise either side, their pale
   seed-heads barely moving in the southerly wind even as the smell
   of peat and cold wet earth arrives plainly on it. Somewhere east
   the <ansi fg="itemname">creek-sound</ansi> of the millstream
-  continues — a familiar murmur that already feels farther away
+  continues, a familiar murmur that already feels farther away
   than it should.
 biome: water
 coord:
@@ -38,14 +38,14 @@ nouns:
     walk without thinking, but steps to either side would put you
     ankle-deep before you caught yourself.
   marsh water: |
-    Standing water fills every depression off the trail's edges
-    — peaty-brown and slow, cold to the touch even in mild weather.
+    Standing water fills every depression off the trail's edges.
+    It is peaty-brown and slow, cold to the touch even in mild weather.
     It reads as knee-deep at most but the bottom is soft enough
     that depth alone is not the risk; the peat underfoot shifts
     and holds at every step.
   seed heads: |
     The pale brown seed-heads of the marsh-reeds nod at head height
-    along the trail — single tassels splitting open at this season,
+    along the trail. Single tassels split open at this season,
     releasing fine seed-fluff into any wind that finds the gap.
   reed: |
     Tall marsh-reeds stand in dense stands either side of the
@@ -59,7 +59,7 @@ nouns:
     papery smell entirely unlike the peat-water beneath them.
   creek sound: |
     East, just out of sight past the footbridge, the millstream
-    runs its course from the sluice pond to the lake — a low
+    runs its course from the sluice pond to the lake. It is a low
     constant water-murmur that reads as familiar from Stillwater
     proper. A few paces west it already sounds smaller, farther,
     as the marsh absorbs it.

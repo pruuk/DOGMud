@@ -15,8 +15,8 @@ idlecommands:
   - 'emote ranges the far edge of the coulee in a slow, unhurried
     patrol, pausing at each vantage to read the ground below'
   - ''
-  - 'emote lifts the great scarred head and vocalizes once -- a low,
-    rolling sound that carries down the coulee floor -- then listens'
+  - 'emote lifts the great scarred head and vocalizes once, a low,
+    rolling sound that carries down the coulee floor, then listens'
   - ''
   - 'emote sits at the ridgeline and watches the approaches with the
     focused attention of something that has learned to track a dozen
@@ -24,7 +24,7 @@ idlecommands:
   - ''
 combatcommands:
   - 'emote drives in hard and pulls off at the last instant, circling
-    wide -- a testing lunge designed to read how you move'
+    wide, a testing lunge designed to read how you move'
   - ''
   - 'emote lets out a sharp bark and the scab-hounds shift position,
     tightening the ring'
@@ -38,7 +38,7 @@ character:
     The outrider ranges the territory's edge alone, and has been doing
     it long enough that the coulee's geography is printed into its
     movement the way familiarity makes all motion more certain. It is
-    large -- larger than the pack-hound, broad-shouldered and deep-
+    large, larger than the pack-hound, broad-shouldered and deep-
     chested, the muzzle gone grey with age but the body still carrying
     the easy readiness of a thing that has fought its way to the far
     edge of the pack hierarchy and intends to stay there. The scarring
@@ -55,7 +55,7 @@ character:
   level: 1
   gold: 0
   items:
-    - itemid: 40070   # pack-hide pelt — carried, always drops
+    - itemid: 40070   # pack-hide pelt, carried, always drops
   stats:
     dexterity:
       base: 170

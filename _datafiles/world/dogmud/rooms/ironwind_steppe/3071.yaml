@@ -6,7 +6,7 @@ description: A low-ceilinged cave hollowed from the base of the coulee
   floor is covered in heaped grass, stolen cloth, and animal hides
   arranged in rough nests. The ceiling is blackened with soot and
   the air is thick with the smell of unwashed goblins. Personal
-  possessions -- weapons, trinkets, stolen goods -- are piled
+  possessions (weapons, trinkets, stolen goods) are piled
   beside each nest with obsessive territorial precision.
 biome: cave
 coord:
@@ -24,8 +24,8 @@ nouns:
     pushed against the walls, leaving a narrow central aisle.
     Each nest has a small pile of belongings beside it.
   possessions: Crude weapons, animal bones carved into tools,
-    stolen trinkets, bits of metal, and colorful stones --
-    each goblin's personal hoard, arranged with surprising
+    stolen trinkets, bits of metal, and colorful stones.
+    Each goblin's personal hoard, arranged with surprising
     care beside their sleeping nest.
 spawninfo:
 - mobid: 217
@@ -34,6 +34,6 @@ spawninfo:
 idlemessages:
 - The den smells like a wet dog rolled in compost.
 - A goblin snarls at another for getting too close to its nest.
-- Something gleams in one of the personal hoards -- metal or glass.
+- Something gleams in one of the personal hoards, metal or glass.
 x: 26
 y: 18

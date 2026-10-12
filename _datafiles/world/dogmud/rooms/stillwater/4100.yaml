@@ -5,7 +5,7 @@ description: >
   A low arch of mortared lake-stone marks the southern edge
   of town. A length of tarred twine strung with a dozen
   glass <ansi fg="itemname">fishing floats</ansi> hangs from
-  the keystone — pale greens and ambers tapping softly
+  the keystone, pale greens and ambers tapping softly
   against each other in the lake-wind, ringing further than
   you would expect. The road firms beneath your feet here,
   the gravel laid fresh and the verge trimmed back. North of
@@ -31,30 +31,30 @@ nouns:
     at the docks when winter shuts the lake down for working.
     The greens and ambers catch any low light and throw it
     back as muted colour. Even a soft wind sets them tapping
-    against each other, and the ringing carries — a sound
+    against each other, and the ringing carries, a sound
     travelers learn to listen for on the road north, the
     first sign Stillwater is close.
-  chime: (See fishing floats — the chime is the same string
+  chime: (See fishing floats. The chime is the same string
     of glass spheres hung from the arch's keystone.)
   notice board: A slab of weathered cedar nailed to the
     western pillar of the arch. The postings layer three-deep,
     older sheets bleeding through the newer in the rain. Among
-    them — a farmer offering bait-fish for trade or copper, a
+    them, a farmer offering bait-fish for trade or copper, a
     hand-drawn sketch of a tan dog answering to "Sumac" (last
     seen near the docks, a small reward offered), a fresher
     constabulary notice promising silver coin to any traveler
     willing to clear the eastern lake caves of whatever has
-    been savaging the fishing nets, and — half torn away, the
-    ink long faded — a missing-person notice for a fisherman
+    been savaging the fishing nets, and, half torn away, the
+    ink long faded, a missing-person notice for a fisherman
     named Elgar Voss, last seen the autumn before last.
   arch: Lake-stone mortared by hands that knew their craft.
-    The keystone bears a worn carving of a leaping pike — the
+    The keystone bears a worn carving of a leaping pike, the
     town's old sigil, predating the current bloodline by some
     generations. Lichen has filled the deeper grooves.
 idlemessages:
 - The fishing floats above the arch tap against each other and ring in the lake-wind.
 - A wagon rumbles past on the road, the driver lifting a hand before turning into town.
-- Distant hammering drifts down the road — steady, patient, a smithy at full work.
+- Distant hammering drifts down the road, steady and patient, a smithy at full work.
 - The wind shifts and carries a thicker smell of woodsmoke and frying fish from ahead.
 - A gull wheels overhead, head cocked at the road, before sliding east toward the water.
 x: -8

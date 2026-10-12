@@ -4,7 +4,7 @@ title: Deacon's Chapel
 description: >
   A modest stone chapel at the end of Chapel Lane, its walls
   thick and its windows narrow. The Chrysalis spiral is carved
-  above the heavy oak door -- but look closely and the oldest
+  above the heavy oak door, but look closely and the oldest
   layer of stonework beneath the spiral shows different
   geometry, partially obscured by the later carving. Inside,
   six wooden pews face a simple altar. Candles burn in iron
@@ -21,11 +21,11 @@ exits:
     roomid: 4018
 nouns:
   symbol: The Chrysalis spiral carved in stone above the door,
-    the standard icon of the faith -- a spiral representing
+    the standard icon of the faith, a spiral representing
     transformation and growth. But the carving sits atop older
     stonework, and where the chisel cut deepest, a different
-    geometry is visible beneath. The inner orbit -- a circular
-    pattern with concentric rings -- partially obscured by the
+    geometry is visible beneath. The inner orbit, a circular
+    pattern with concentric rings, is partially obscured by the
     later spiral. Someone built the Chrysalis over something
     that was here first.
   door: Heavy oak, its surface dark with age and polished
@@ -35,7 +35,7 @@ nouns:
     generations of entering feet.
   pews: Six wooden pews arranged in two rows of three, facing
     the altar. Prayer cushions on each seat, the fabric worn
-    thin at the knees. The wood is old but cared for -- oiled
+    thin at the knees. The wood is old but cared for, oiled
     and polished regularly. Hymnals rest in racks on the pew
     backs, their pages soft with use.
 spawninfo:

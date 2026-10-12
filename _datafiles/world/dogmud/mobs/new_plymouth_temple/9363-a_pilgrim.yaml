@@ -10,7 +10,7 @@ groups:
   - humanoid
 idlecommands:
   - 'emote stands very still before the altar with lowered eyes, lips
-    barely moving — not asking, exactly, or not only asking.'
+    barely moving, not asking, exactly, or not only asking.'
   - ''
   - 'emote shifts weight carefully off the right foot with the quiet
     economy of someone who has been walking for several days and has
@@ -26,7 +26,7 @@ character:
     it since. Their clothing is road-worn at the hem and around the
     pack-strap line. They move through the temple precinct with the
     careful presence of someone doing something that matters without
-    performing that it does — a distinction the precinct's practiced
+    performing that it does. It is a distinction the precinct's practiced
     inhabitants tend to notice. They will be gone by tomorrow.
   speciesid: 1
   level: 1

@@ -2,7 +2,7 @@ roomid: 6143
 zone: The Confluence
 title: The Municipal Hall
 description: >
-  The main chamber of the Confluence's civic hall — a
+  The main chamber of the Confluence's civic hall: a
   room built to accommodate public business, with rows
   of benches for petitioners, a raised dais for the
   city's presiding officers, and the accumulated texture
@@ -45,7 +45,7 @@ nouns:
     at the junction point at the chart's center. In
     one margin, in a hand older and less practiced
     than the chart-maker's, a fourth channel has been
-    pencilled in — its course running south-southwest
+    pencilled in, its course running south-southwest
     from the junction point. The line has been half-
     struck-through with a horizontal mark. A note
     beside it, in faded ink: the surveyors could not
@@ -58,7 +58,7 @@ nouns:
     its course running south-southwest from the junction, then half-
     struck-through with a single horizontal line. Beside it, in faded
     ink: the surveyors could not agree. It is the civic record's own
-    admission that the count of the waters was once in dispute — hung in
+    admission that the count of the waters was once in dispute, hung in
     plain public view, and unremarked for so long that no one sees it.
 spawninfo:
   - mobid: 9434

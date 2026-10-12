@@ -2,7 +2,7 @@ roomid: 5396
 zone: The Empty Reach
 title: Basalt Badlands
 description: >
-  The track runs into old lava country — shattered basalt heaved
+  The track runs into old lava country: shattered basalt heaved
   up in black ridges, edges sharp enough to part boot leather or
   the skin beneath it. The rock soaks heat through the morning
   and gives it back in slow waves off the stone faces, baking the
@@ -16,7 +16,7 @@ description: >
 
   Two <ansi fg="itemname">columns</ansi> of fractured basalt flank
   the track ahead, dark as cooled iron. At your feet, a long
-  <ansi fg="itemname">fissure</ansi> cleaves the flow field — cool
+  <ansi fg="itemname">fissure</ansi> cleaves the flow field, with cool
   air rising from the dark below. The <ansi fg="itemname">track</ansi>
   picks its way through the worst of the broken slabs by long habit.
 biome: land
@@ -33,12 +33,12 @@ nouns:
   columns: Two pillars of columnar basalt, roughly hexagonal in
     cross-section where the ancient lava cooled at its own slow
     pace. They stand twice your height, surfaces blackened and
-    glassy except where later fractures exposed the interior —
+    glassy except where later fractures exposed the interior,
     paler, coarser, still faintly warm to the touch even in the
     early morning before the sun has had time to add to it.
   fissure: A crack in the flow field, a hand's width at the lip
     and widening below. Cool air rises from the dark with a
-    mineral smell — stone and deep earth and something older than
+    mineral smell of stone and deep earth and something older than
     water. A pale shape lodges three feet down, out of easy reach.
     A bone, or a smooth pale rock, or something else left by
     someone who also stopped here to look. The dark below it
@@ -46,12 +46,12 @@ nouns:
   track: The path threads through the worst of the broken slabs
     by a route worn into habit by many careful feet. Boot-scrapes
     on the rock edges and a thin scatter of ground grit mark
-    where others have stepped. There is no margin for wandering —
-    the field on either side promises a turned ankle at best.
+    where others have stepped. There is no margin for wandering.
+    The field on either side promises a turned ankle at best.
 idlemessages:
 - The basalt clicks faintly, releasing the afternoon's stored heat.
 - A dry wind crosses the rock field, carrying grit and nothing else.
-- The silence here is total — no birds, no insects, only stone.
+- The silence here is total. No birds, no insects, only stone.
 - Far to the east, a column of dust rises and disperses without direction.
 - Your footsteps sound too loud among the black and broken rock.
 x: -8

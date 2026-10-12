@@ -3,7 +3,7 @@ zone: Greywater Flats
 title: Ford Approach
 description: >
   The causeway runs down off its bank onto firmer ground, and there ahead
-  of you is the <ansi fg="itemname">river</ansi> — wide and slow and grey,
+  of you is the <ansi fg="itemname">river</ansi>, wide and slow and grey,
   the colour of the sky it carries, sliding past without a sound. The road
   drops to a churned mud landing where it runs down into the shallows of
   the ford, the bank trodden to black soup by years of crossings. A
@@ -22,13 +22,13 @@ exits:
     roomid: 5426
 nouns:
   river: Broad and slow and silent, a sheet of moving pewter that gives
-    back the grey sky almost whole. It is wider than it first looks — the
-    far bank a low green line softened by river-mist — and the smooth skin
+    back the grey sky almost whole. It is wider than it first looks, the
+    far bank a low green line softened by river-mist, and the smooth skin
     of it hides a steady, patient pull. Where the road meets it the water
     runs shallow and braided over a paved bottom, the ford.
   ferry skiff: A broad flat-bottomed punt drawn up on the landing, a coil
     of rope and a long pole beside it. A board nailed to a stake gives the
-    fare for a crossing — a copper for a person, more for a beast or a
+    fare for a crossing, a copper for a person, more for a beast or a
     load. The ferryman is somewhere about, in no hurry.
   landing: The bank where the road meets the water, churned to a black
     glistening mud by uncounted crossings, printed over with the marks of

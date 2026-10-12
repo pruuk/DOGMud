@@ -2,14 +2,14 @@ roomid: 6297
 zone: Greenford
 title: The University Stair
 description: >
-  The lane meets the university boundary here —
+  The lane meets the university boundary here:
   a low wall of dressed ashlar with an iron gate
   in it, both leaves hooked back on heavy iron
   rings. The graveled path beyond rises toward the
   main court. The tower is close now, squared above
   the wall, its arched openings at the crown open
   to the sky. Forecourt, halls, the long library
-  windows — all plainly visible from the gate.
+  windows, all plainly visible from the gate.
   The grounds are open. Go up to enter. Examine
   the gate or the grounds.
 biome: city_thoroughfare
@@ -23,7 +23,7 @@ nouns:
     hooked back on iron rings set in the stone face.
     The iron is old and pitted, the hinges heavy
     castings of a type not made now. The latch plate
-    carries the university's device in relief — a
+    carries the university's device in relief: a
     book and a measuring rod crossed, a legible
     statement of the institution's sense of itself.
     The gate is old and set in a wall that has been
@@ -32,7 +32,7 @@ nouns:
   the grounds: >
     Beyond the gate: a graveled path between planted
     borders of low shrub and ground-cover, kept trim.
-    The path rises to the main forecourt — a broad
+    The path rises to the main forecourt: a broad
     paved space fronting the lecture-hall range.
     From the wall you can see the forecourt clearly
     and the figures crossing it: students, a lecturer
@@ -40,7 +40,7 @@ nouns:
     The grounds are open. Go up to walk in.
   the university tower: >
     From here the tower is close enough to feel
-    large — the base stones as broad as a man's
+    large, the base stones as broad as a man's
     arm-span, the upper arches open to the sky.
     A flag at the very top, too faded to make out.
     Jackdaws on the parapet ledge, unconcerned.
@@ -54,7 +54,7 @@ nouns:
     range, with a sundial on a plinth at the center
     and benches along the east wall. A worn diagonal
     cuts the flags where foot traffic ignores the
-    raked path — desire-line of a thousand crossings.
+    raked path, a desire-line of a thousand crossings.
     The sundial is accurate. The benches are occupied
     in good weather. The forecourt does its job.
 idlemessages:

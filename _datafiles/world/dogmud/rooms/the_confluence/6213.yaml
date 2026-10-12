@@ -4,7 +4,7 @@ title: The Antechamber
 description: >
   A broad, low room that opens between the landing
   and whatever lies further west. The walls here
-  carry faint traces of something applied long ago --
+  carry faint traces of something applied long ago:
   a pigment, or a gesso ground, too degraded to read
   but indicating that this space was once prepared
   and decorated. A few marks survive as ghost shapes:
@@ -26,11 +26,11 @@ exits:
   south:
     roomid: 6216
 idlemessages:
-- The ghost marks on the walls suggest preparation --
+- The ghost marks on the walls suggest preparation,
   a space between the ordinary and something else.
 - 'The floor is clean for this depth: the dust has
   been disturbed more recently than the age implies.'
-- A very faint smell of lamp oil lingers here --
+- A very faint smell of lamp oil lingers here,
   someone has been down with a light, not long ago.
 x: 10
 y: 82

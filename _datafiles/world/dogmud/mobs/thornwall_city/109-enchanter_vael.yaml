@@ -25,8 +25,8 @@ character:
   name: Enchanter Vael
   description: |
     A gaunt figure wrapped in a dark coat stained with luminescent
-    residue. Vael's hands are marked with faint, branching lines —
-    scars or veins, it is hard to tell — that glow faintly when
+    residue. Vael's hands are marked with faint, branching lines,
+    scars or veins, it is hard to tell, that glow faintly when
     they handle chrysalis materials. The enchanter speaks in clipped,
     precise sentences and regards visitors with the clinical interest
     of someone who studies mutations for a living. There is nothing
@@ -45,7 +45,7 @@ character:
     charisma:
       base: 90
   shop:
-    # Thornwall chrysalis (in-shop crafted) — Vael's specialty
+    # Thornwall chrysalis (in-shop crafted), Vael's specialty
     - itemid: 40010    # Chrysalis Core
       quantity: 0
       quantitymax: 0
@@ -70,12 +70,12 @@ character:
       quantity: 0
       quantitymax: 0
       price: 30
-    # Fernway forest (caravan-fed) — oak bark for ward inscriptions
+    # Fernway forest (caravan-fed), oak bark for ward inscriptions
     - itemid: 40062    # oak bark
       quantity: 0
       quantitymax: 0
       price: 35
-    # Stillwater unique (caravan-fed from Kess) — pearl for high-tier enchants
+    # Stillwater unique (caravan-fed from Kess), pearl for high-tier enchants
     - itemid: 40053    # Stillwater black pearl
       quantity: 0
       quantitymax: 0

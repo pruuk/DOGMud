@@ -4,7 +4,7 @@ title: The Fabrication Bay
 biome: interior
 description: >
   Past the guarded door the grey opens into a bay that was made for
-  making. The heart of it is a great fitted apparatus of the grey — a
+  making. The heart of it is a great fitted apparatus of the grey, a
   fabricator, you would call it if you had to call it anything, a worked
   cradle of arms and nozzles and fine grooved channels, hung now silent
   over a bed where things were once shaped out of raw stuff and finished.
@@ -22,7 +22,7 @@ nouns:
   fabricator: >
     A great fitted apparatus of the grey, hung over a shaping-bed on a
     cradle of jointed arms and fine nozzles and grooved channels. It was
-    made to make — to draw raw stuff up out of the racks and finish it
+    made to make: to draw raw stuff up out of the racks and finish it
     into whatever the place required. It hangs silent now, mid-reach,
     stopped in the middle of a task it will never complete.
   racks: >
@@ -34,7 +34,7 @@ nouns:
   apparatus: >
     Arms and nozzles and channels, all of the grey, cradling the empty
     shaping-bed. The care in the making of it is the same terrible care
-    that runs through everything here — a thing built to build, built to
+    that runs through everything here: a thing built to build, built to
     last, and left holding its breath in the dark.
 idlemessages:
 - The silent fabricator hangs mid-reach over its empty bed and does not move.

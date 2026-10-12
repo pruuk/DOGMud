@@ -2,7 +2,7 @@ roomid: 4106
 zone: Stillwater
 title: Brindle's Smithy
 description: >
-  The hammer-strikes ring before you reach the door — three
+  The hammer-strikes ring before you reach the door: three
   measured blows, then silence, then three more. The smithy
   is a low timber-framed building open along its southern
   wall to vent the forge-heat, the air inside shimmering
@@ -11,7 +11,7 @@ description: >
   <ansi fg="itemname">forge</ansi> itself takes the eastern
   wall, banked low with grey ash even when no one is
   working it. Most of the iron <ansi fg="itemname">stock</ansi>
-  racked along the northern wall is small — fishing-hooks,
+  racked along the northern wall is small: fishing-hooks,
   gaff-rings, net-needles, a dozen kinds of hinge. A few
   longer pieces in the back say the smith can do other work
   when she is asked.
@@ -43,7 +43,7 @@ nouns:
     base discoloured pale from the heat.
   stock: A long timber rack along the northern wall,
     sorted with the kind of order that comes from knowing
-    exactly what every customer asks for — fishing-hooks
+    exactly what every customer asks for, fishing-hooks
     in graduated sizes, gaff-rings, net-needles, hinges,
     latches, small chain by the yard. A separate rack in
     the back holds longer flat-stock and a few finished
@@ -60,7 +60,7 @@ nouns:
 idlemessages:
 - A coal in the forge cracks softly and settles deeper into the bed.
 - The bellows-arm creaks faintly even at rest, swaying in the heat-currents.
-- A hammer rings on iron — three measured blows, then silence.
+- A hammer rings on iron, three measured blows, then silence.
 - The lake-wind shifts and a draft pulls the forge-smell briefly toward the door.
 - A finished hook drops into the cold-bin with a small bright clink.
 spawninfo:

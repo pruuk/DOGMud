@@ -14,14 +14,14 @@ description: >
   smell is stew and woodsmoke and the specific warm
   compound of a room that has been feeding people for
   years without interruption. The city's gossip moves
-  through this room — who is coming, who has gone,
+  through this room: who is coming, who has gone,
   what the morning tide brought in, what the hall
   decided about the river tariffs this quarter. The
   innkeeper keeps track of all of it from behind the
   bar. A broad
   <ansi fg="itemname">stair</ansi>
   climbs from the east corner to the lodging rooms
-  above. A low door beside the stair lets out east —
+  above. A low door beside the stair lets out east:
   the lane runs toward the Brenn bridge and the east
   quarter beyond.
 biome: interior
@@ -45,7 +45,7 @@ nouns:
     A stone hearth deep enough to burn a full round of
     river-oak, its lintel smoke-blackened and its fire-
     basket wide. The settle nearest it has been worn to
-    the shape of habitual occupancy — a cushion
+    the shape of habitual occupancy: a cushion
     permanently depressed at its center, the back-rail
     polished by shoulders. On the mantelpiece: a tallow
     candle in a clay saucer, a pair of iron tongs on a

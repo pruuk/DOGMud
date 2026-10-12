@@ -3,18 +3,18 @@ zone: New Plymouth Noble
 title: The Servants' Stair
 description: >
   The servants' stair is the Noble Quarter's real
-  circulation — the passage through which the work
+  circulation: the passage through which the work
   of the quarter moves while the quarter itself
   presents an uninterrupted face of order and ease.
   The stair runs between the service court below
   and the garret level above, its treads worn to a
-  distinct shallow groove at the center — the groove
+  distinct shallow groove at the center, the groove
   of a foot placed in exactly the same position for
   many years, moving fast, carrying something. The
   walls are unplastered stone. The
   <ansi fg="itemname">stair-marks</ansi> accumulated
   on the walls at hand and shoulder height are the
-  record of what has been moved through here — a
+  record of what has been moved through here: a
   dark band at hand height where people have steadied
   themselves under loads, a paler scuff at elbow
   height, a painted number at each landing that no
@@ -36,12 +36,12 @@ exits:
     roomid: 6014
 nouns:
   stair marks: The accumulated evidence on the
-    walls of long service — a dark band at hand
+    walls of long service, such as a dark band at hand
     height running the full length of the stair
     on the left side, the right side cleaner but
     with shoulder-marks near the landings where
     loads are shifted. At the mid-landing, a
-    painted number — 3 — in white over an earlier
+    painted number, 3, in white over an earlier
     number that has bled through the new paint,
     and beneath that a faint impression of
     something written in a different hand that
@@ -50,7 +50,7 @@ nouns:
     recoverable. The shape of the last word
     suggests a name.
 idlemessages:
-- Quick footsteps on the stair from below —
+- Quick footsteps on the stair from below,
   someone ascending from the service court,
   their tread practiced and fast.
 - The stair is empty between passages, its

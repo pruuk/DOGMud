@@ -2,14 +2,14 @@ roomid: 6407
 zone: New Plymouth Sewers
 title: Beneath Sweeper's Corner
 description: >
-  The tunnel floor dips here and the water has taken advantage —
+  The tunnel floor dips here and the water has taken advantage:
   <ansi fg="itemname">standing water</ansi> spreads wall to wall,
   shin-deep and reluctant, going nowhere in particular. Above it, grey
   daylight finds its way down through one clear corner of the <ansi
   fg="itemname">gutter-grate</ansi> of Sweeper's Corner, the rest of
   the lattice packed with the quarter's compacted leavings, and what
-  arrives is less light than the rumor of light. The street comes down with it — cart
-  wheels on flagstone, a voice hailing another voice, the ordinary
+  arrives is less light than the rumor of light. The street comes down with it:
+  cart wheels on flagstone, a voice hailing another voice, the ordinary
   traffic of the Common overhead. The surface feels very close and
   very far at once, the way a shore feels from under water. The trunk
   continues north, and a lower passage angles away southwest.
@@ -34,7 +34,7 @@ nouns:
     beneath your boots the drain that should carry it away is making
     its slow, losing argument with the quarter's debris.
   gutter grate: Seen from below, the grate is a dark lattice packed
-    with the street's castoffs — leaf-mash, grit, rag-ends — save
+    with the street's castoffs (leaf-mash, grit, rag-ends) save
     for one corner that stands clear, through which daylight arrives
     already exhausted. Now and then the mass
     shifts a fraction as the sweeper above rearranges his territory,
@@ -43,7 +43,7 @@ nouns:
     Seen from below, a dark lattice packed with the street's
     castoffs, save for one clear corner through which daylight
     arrives already exhausted.
-  daylight: What passes for it — a grey suggestion filtering through
+  daylight: What passes for it, a grey suggestion filtering through
     the packed grate, enough to silver the water's surface and no
     more. It is the closest thing to open air this tunnel is offered.
 idlemessages:

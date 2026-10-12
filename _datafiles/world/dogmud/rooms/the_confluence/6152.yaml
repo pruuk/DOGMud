@@ -7,7 +7,7 @@ description: >
   paper that has worked itself into the walls over a
   long practice. A wide desk occupies most of the floor
   space, its surface carrying the organized clutter of
-  professional life — stacked deeds, a blotter, a sand-
+  professional life: stacked deeds, a blotter, a sand-
   shaker, pen-nibs sorted by weight in a handled cup.
   Against the far wall, shelving holds bound folios and
   rolled documents in labeled cases. The city's paperwork
@@ -32,7 +32,7 @@ nouns:
     crest and the notary's registration number. The
     press is used often; the die is clean and the hinge
     moves smoothly. Beside it, sealing wax in three
-    grades — plain, witnessed, and certified — and pen-
+    grades: plain, witnessed, and certified. There are also pen-
     nibs in ascending weights for different classes of
     document. Without the press, the desk is just a
     desk. With it, what is written here becomes part
@@ -43,7 +43,7 @@ spawninfo:
 idlemessages:
 - The seal-press rings against the desk as a document
   receives its formal mark.
-- Wax smoke drifts from the notary's work — a clean
+- Wax smoke drifts from the notary's work, a clean
   sharp smell, brief.
 - A citizen waits on the bench near the door, a deed
   held carefully in both hands.

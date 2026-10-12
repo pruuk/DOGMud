@@ -11,8 +11,8 @@ description: >
   <ansi fg="itemname">anvil</ansi>
   sits on its heavy oak block in the center of the
   floor, worn in the face from use and dark with scale.
-  The smith works without ceremony — metal to the fire,
-  metal to the anvil, back to the fire — and the hammer
+  The smith works without ceremony: metal to the fire,
+  metal to the anvil, back to the fire. The hammer
   note rings out clearly into the market and the lane
   below. This is a small-work smithy: nails, hinges,
   hook-and-staple sets, barrel-hoops. The market is
@@ -48,11 +48,11 @@ nouns:
     the block visibly into the earth below.
 idlemessages:
 - The hammer rings twice on the anvil-face, then once
-  on the horn — a working rhythm that carries through
+  on the horn, a working rhythm that carries through
   the whole quarter.
 - The forge-breath comes out the open door in a wave
   of heat when the bellows is worked.
 - A bin near the door holds iron scrap waiting to be
-  remelted — bent nails, broken hooks, worn barrel-rings.
+  remelted, bent nails, broken hooks, worn barrel-rings.
 x: -4
 y: 75

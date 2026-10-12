@@ -6,7 +6,7 @@ description: >
   pitch of bare rock and rubble that climbs toward the head of the canyon.
   The walls crowd in to a throat, and beyond them, close now and looming,
   the bluff lifts the ruined watchtower into the light. This is the
-  Pothole Watch, the broken tooth seen from the safe overlook far below --
+  Pothole Watch, the broken tooth seen from the safe overlook far below,
   near enough at last to read the slumped flank, the crown burst open to
   the sky, the empty sockets where windows watched the wash. Whatever
   holds the high ground holds it from up there, and it has surely already
@@ -23,7 +23,7 @@ exits:
   east:
     roomid: 5238
 nouns:
-  tower: The Pothole Watch up close at last -- a squat ruined watchtower on
+  tower: The Pothole Watch up close at last, a squat ruined watchtower on
     the bluff ahead, its crown split open and one flank sloughed away,
     still standing over the canyon it was raised to guard. Whatever holds
     this wash holds it from that height. The last climb runs straight up
@@ -33,7 +33,7 @@ nouns:
     windows that face down the whole length of the wash you just climbed.
   bluff: The shoulder of stone the tower stands on, where the canyon draws
     to a throat and the ground heaves up. Nothing reaches the tower except
-    over this last steep pitch -- and anything above can watch you take it.
+    over this last steep pitch, and anything above can watch you take it.
   climb: The steepening pitch of bare rock and loose rubble that lifts the
     wash toward the tower's foot. It is hands-and-feet ground in places,
     slow and exposed, with the high windows watching every step of it.

@@ -2,12 +2,12 @@ roomid: 5453
 zone: Kilnreach Works
 title: Kilnreach
 description: >
-  The foundry's roar hits first — not a sound so much as a
+  The foundry's roar hits first. It is not a sound so much as a
   pressure, a low iron bellow from the east felt through the soles
   of your boots before it registers as noise. Cinder-reek and
   forge-heat come with it, soaking into cloth and hair within
   moments of arrival. From the west the tannery asserts itself in
-  a different register entirely — lime and rendered fat and wet
+  a different register entirely: lime and rendered fat and wet
   hide in a slow inescapable combination, settling over the
   crossroads like weather. Between those two extremes lies the wide
   muddy way at the heart of the Works, broad enough for two
@@ -19,7 +19,7 @@ description: >
   wide against the heat, smoke and noise spilling out in roughly
   equal measure. A
   <ansi fg="itemname">notice board</ansi> stands nailed to the
-  frame of the nearest shed — its surface thick with wage sheets,
+  frame of the nearest shed, its surface thick with wage sheets,
   hazard warnings in red ink, and a foreman's handwritten orders
   from this morning, the edges of older notices curling away
   beneath the new. The
@@ -46,7 +46,7 @@ exits:
     roomid: 5461
 nouns:
   notice board: A heavy timber board nailed to the shed-frame at
-    eye height, its surface dense with papers — this week's wage
+    eye height, its surface dense with papers, among them this week's wage
     sheet in the upper corner, below it a notice concerning the
     lime-slake pits and the rules for working near them, a list of
     missing hand-tools that someone clearly expects returned, and a
@@ -65,12 +65,12 @@ nouns:
     with a combination of whip, voice, and long experience. Every
     wagon that passes sends a slow ripple through the mud underfoot.
   work sheds: The sheds that line the muddy way are built for
-    function and not an inch beyond it — heavy timber frames,
+    function and not an inch beyond it, with heavy timber frames,
     corrugated iron roofing where the original thatch caught and
     burned, doors wide as barn-gates and thrown open on all but the
     worst weather. Through those open doors the individual trades of
-    the Works are audible — hammering in one, the hiss of a
-    quench-tank in the next, the grinding of a dressed wheel in
+    the Works are audible, with hammering in one, the hiss of a
+    quench-tank in the next, and the grinding of a dressed wheel in
     the third. The walls of each shed are dark with smoke and age,
     and every surface within reach of a passing hand has been worn
     smooth by years of it.
@@ -78,8 +78,8 @@ idlemessages:
 - One of the <ansi fg="itemname">ore wagons</ansi> grinds hub-deep
   into the mud, and the teamster drops from the seat to dig the
   wheel free with a broad-bladed spade.
-- The foundry-roar to the east rises sharply for a moment — a new
-  pour going in — then drops back to its usual bone-deep note.
+- The foundry-roar to the east rises sharply for a moment as a new
+  pour goes in, then drops back to its usual bone-deep note.
 - A labourer pushes through with a barrow of coal slack, not
   looking up, not slowing, leaving a black trail in the mud.
 - Someone has pinned a new sheet to the

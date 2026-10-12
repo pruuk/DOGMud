@@ -2,14 +2,14 @@ roomid: 5603
 zone: New Plymouth Common
 title: The Flower Market
 description: >
-  The smell reaches you before the stalls do — green
+  The smell reaches you before the stalls do. It is green
   water and crushed stems and the sweetness of flowers
   that were cut this morning, cut in someone's garden or
   a plot outside the walls, and are now arranged in
   dripping wooden buckets along both sides of the lane.
   The
   <ansi fg="itemname">cut flowers</ansi> run the full
-  range of what the season allows — daisy-bundles tied
+  range of what the season allows: daisy-bundles tied
   with rush, waxy-petalled things in deep red, stems of
   something small and yellow whose name the vendor will
   tell you if you ask and has told you before and you
@@ -32,7 +32,7 @@ exits:
     roomid: 5611
 nouns:
   cut flowers: Bucket after bucket of stems cut this
-    morning — field flowers mostly, the kind grown in
+    morning, field flowers mostly, the kind grown in
     strips along wall-edges and market-garden borders,
     but arranged with a care that makes them look
     deliberate. Some have been bundled for carrying;
@@ -61,8 +61,8 @@ idlemessages:
 - A vendor refills a bucket from a hand-barrel, the
   flower-water running in a pale stream across the
   cobbles.
-- Two girls pass through quickly — not buying, just
-  passing — and both slow briefly at the scent.
+- Two girls pass through quickly, not buying, just
+  passing, and both slow briefly at the scent.
 - From the direction of the Rise, the sound of the well
   queue arguing floats down the lane, briefly, then
   fades.

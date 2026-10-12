@@ -3,7 +3,7 @@ zone: The Confluence
 title: The Temple Portico
 description: >
   A grand entrance portico at the top of the temple
-  stair — wide columns of pale river-stone, a deep
+  stair: wide columns of pale river-stone, a deep
   shaded overhang, and between them the
   <ansi fg="itemname">great-doors</ansi>
   of the temple, standing open through the day onto the
@@ -11,7 +11,7 @@ description: >
   plainly visible from the
   top of the stair, the
   <ansi fg="itemname">weathered-symbol</ansi>
-  is older than the portico around it — a four-ring
+  is older than the portico around it: a four-ring
   mark, one ring enclosing the next, worn to near-
   smoothness at its edges while the stone on either
   side shows far less weathering. At the foot of one
@@ -32,14 +32,14 @@ exits:
 nouns:
   weathered symbol: >
     The four-ring orbital mark cut into the keystone
-    above the great doors — one ring enclosing the
+    above the great doors: one ring enclosing the
     next, the outermost nearly flush with the stone's
     surface from long weathering. The portico columns
     beside it show far less wear. Whatever it was cut
     into, the Keepers have built around it. Their
     account is that it is the earliest rendering of
-    the Chrysalis truth — the sealed soul, the ringed
-    cocoon — set here by the first Founders. The stone
+    the Chrysalis truth: the sealed soul, the ringed
+    cocoon, set here by the first Founders. The stone
     it is cut into does not volunteer the same date.
   great doors: >
     The great doors of the Confluence temple stand open

@@ -6,7 +6,7 @@ description: >
   Square, proportioned to take the heat and noise of
   the trade. The <ansi fg="itemname">banked-forge</ansi>
   at the center is stone-built and low, its coals held
-  at an orange glow — worked today and banked only for
+  at an orange glow, worked today and banked only for
   the midday pause, the tuyere pipe running below the
   yard floor to the bellows mount at the eastern face.
   Around the forge's base a dark ring of <ansi fg="itemname">forge-scale</ansi>
@@ -34,7 +34,7 @@ nouns:
     plate, open at the working face, flanked by the
     bellows mount. The brick is blackened to glassy
     in the hottest section. The current charge has been
-    banked with ash across the top — a technique for
+    banked with ash across the top, a technique for
     holding temperature without burning fuel. The
     tuyere pipe runs below the floor; the stone around
     it is warm underfoot. This forge has not been cold
@@ -45,18 +45,18 @@ nouns:
     they scatter to the edges of the yard by degrees
     and pile against the walls. The fine black
     particulate from the forge's working has settled
-    on every horizontal surface in the yard — thin
+    on every horizontal surface in the yard, thin
     enough to look like shadow until you run a finger
     across it.
 idlemessages:
 - The forge coals pulse orange in the banked center,
   a low thermal shimmer rising above the hearth.
-- Metal cools somewhere in the yard — a faint tick as
+- Metal cools somewhere in the yard, a faint tick as
   something settles in the heat and contracts.
 - The smell of hot iron and quench-water hangs in the
   yard air even through the midday pause.
 - From above, through the stair-door, the sound of
-  movement on wooden boards — light and unhurried.
+  movement on wooden boards, light and unhurried.
 - Scale flakes near the forge edge catch the light
   flat and dark, blown there by the bellows exhaust.
 spawninfo:

@@ -5,7 +5,7 @@ description: >
   The hamlet's well stands north of the gate, a stone-ringed
   shaft with a wooden winch and frayed rope. The stones are
   old, older than most of the hamlet, and carvings run around
-  the base -- water blessings in standard Chrysalis
+  the base: water blessings in standard Chrysalis
   iconography, worn smooth by weather and touching hands.
   Among the blessings, one set of <ansi fg="itemname">marks
   </ansi> is different. Partially overgrown with moss, it
@@ -23,17 +23,17 @@ exits:
 nouns:
   well: A stone-ringed well, deep enough that dropped pebbles
     take a long count before the splash. The water is clean
-    and cold -- Ashwick's primary water source. The winch is
+    and cold, Ashwick's primary water source. The winch is
     wooden with an iron handle, the rope frayed but holding.
     Someone has tied a knot where the fibers are thinnest.
     The stone rim is worn into shallow grooves where buckets
     have scraped for generations.
   marks: Most carvings around the well base are water blessings
-    in standard Chrysalis iconography -- spirals with wave
+    in standard Chrysalis iconography, spirals with wave
     motifs, prayers for clean water and good health. One mark
     is older, partially overgrown with moss. It is NOT a
-    blessing. The inner orbit symbol -- concentric rings with
-    radial lines -- the same geometry found on old maps and
+    blessing. The inner orbit symbol (concentric rings with
+    radial lines) is the same geometry found on old maps and
     temple doorways. Someone carved it here long ago, before
     the Chrysalis blessings covered the rest of the stone.
 idlemessages:

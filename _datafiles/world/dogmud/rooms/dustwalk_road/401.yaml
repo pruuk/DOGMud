@@ -5,7 +5,7 @@ description: The road cuts through a stretch of low scrubland where thornbush an
   wiregrass crowd against the track. The vegetation is dense enough to hide anything
   smaller than a person, and the rustling never quite stops. Paw prints cross the
   road in several places, pressed deep into the sandy soil. Something has been hunting
-  here recently. The road itself is well-worn but unmaintained -- no one has filled
+  here recently. The road itself is well-worn but unmaintained. No one has filled
   the ruts or cleared the encroaching brush in a long time.
 biome: plains
 coord:
@@ -23,6 +23,6 @@ spawninfo:
   respawnrate: 4 real minutes
 idlemessages:
 - Something rustles in the thornbush just off the road. Probably nothing large.
-- Paw prints in the dust overlap in a confused tangle -- a pack has been through here.
+- Paw prints in the dust overlap in a confused tangle. A pack has been through here.
 - The wiregrass hisses in the wind like a slow exhalation.
 y: 1

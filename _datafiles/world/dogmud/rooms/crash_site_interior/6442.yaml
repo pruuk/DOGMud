@@ -5,8 +5,8 @@ biome: interior
 description: >
   A narrow chamber of the same grey material as the rest of the buried
   place, ringed with dark vent-mouths set flush into the walls. Whatever
-  this room was built to admit or expel, it still remembers the job --
-  the floor is scarred in long radial gouges, as if things far larger
+  this room was built to admit or expel, it still remembers the job.
+  The floor is scarred in long radial gouges, as if things far larger
   than a person have been thrown through here and skidded to a stop.
   The cold light holds steady and even, untroubled by whatever violence
   the walls have seen. It is quiet here in a way the rest of the place
@@ -17,7 +17,7 @@ exits:
 nouns:
   vents: >
     A ring of dark, flush-set vent-mouths, cold and still now. Whatever
-    they were built to move -- air, pressure, unwanted things -- they are
+    they were built to move: air, pressure, unwanted things. They are
     not moving it at the moment.
   gouges: >
     Long radial scars dragged across the floor, all pointed outward from

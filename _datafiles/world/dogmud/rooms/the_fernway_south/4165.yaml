@@ -15,7 +15,7 @@ description: >
   southern edge, pressed into the soft mud in a single
   deliberate line, a set of
   <ansi fg="itemname">heron-track</ansi> prints runs to the
-  water and stops — three-toed, wide-spaced, and recent
+  water and stops. They are three-toed, wide-spaced, and recent
   enough that they have not yet filled with water.
 biome: forest
 coord:
@@ -32,13 +32,13 @@ exits:
 nouns:
   pool: |
     The brook slows here into a shallow pool perhaps three
-    paces across — the current barely perceptible, the
+    paces across, the current barely perceptible, the
     bottom pale and sandy and visible in every part, the
     water cold and perfectly clear.
   reeds: |
     Marsh-reeds crowd both banks in dense stands, their
     bases in the soft mud and their tips well above head
-    height — close-packed enough to conceal a patient
+    height, close-packed enough to conceal a patient
     heron from anything not looking carefully.
   minnows: |
     Small silver fish hang in loose schools near the reedy
@@ -47,7 +47,7 @@ nouns:
     before slowly drifting back.
   heron track: |
     A single line of three-toed prints in the soft mud
-    at the pool's southern edge — each impression wide-
+    at the pool's southern edge. Each impression is wide-
     spaced and deliberate, the stride of a bird in no
     hurry. Recent enough that they have not filled with
     water.

@@ -4,11 +4,11 @@ title: The Long Terrace
 description: >
   The terrace extends further east along the bluff top, narrowing
   somewhat as the shelf thins. The targets at the far end of this stretch
-  are smaller than the ones at the firing range -- painted circles on
+  are smaller than the ones at the firing range: painted circles on
   timber boards, set out at distances that require real commitment from
   the bow. This is where distance practice happens, and the wind is the
   reason. It comes off the open country to the north and crosses the
-  terrace at varying angles and strengths -- a shooter who learns this
+  terrace at varying angles and strengths. A shooter who learns this
   shelf learns to read wind as a fact of the shot rather than an excuse
   for missing. Below the terrace edge, the coulee drops away to the
   lake and the town, both looking smaller than they did from the stair.
@@ -28,8 +28,8 @@ spawninfo:
 - mobid: 9163
 nouns:
   shelf: The shelf is the bluff's natural upper ledge, widened and
-    leveled by hand at the inner edge but left raw at the outer --
-    the stone simply ends in a clean drop to the coulee below. The
+    leveled by hand at the inner edge but left raw at the outer.
+    The stone simply ends in a clean drop to the coulee below. The
     floor is pale limestone, fine-grained and firm underfoot.
   wind: The wind on this terrace is the primary lesson. It does not
     blow steadily; it shifts by a few degrees between one breath

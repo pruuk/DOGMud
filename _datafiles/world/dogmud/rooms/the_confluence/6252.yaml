@@ -3,7 +3,7 @@ zone: The Confluence
 title: The Travelers' Inn
 description: >
   A low-eaved building facing the east gate road, its
-  sign a painted boot above the door — the universal
+  sign a painted boot above the door, the universal
   language of a house for travelers. The Travelers'
   Inn sits between the gate to the north and the
   common room to the south, with a stable entrance
@@ -37,6 +37,6 @@ idlemessages:
 - A traveler stops in front of the inn, looks up at
   the sign, and goes in.
 - The smell of cooking comes from somewhere behind
-  the inn's south wall — the common room, most likely.
+  the inn's south wall, the common room, most likely.
 x: 10
 y: 72

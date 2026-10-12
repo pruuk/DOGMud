@@ -3,7 +3,7 @@ zone: Greenford
 title: "The Cartographer's Rest, Upstairs"
 description: >
   The lodging floor is quieter than the common room
-  below — a short corridor with four numbered doors,
+  below: a short corridor with four numbered doors,
   the boards underfoot muffled by a strip of old
   woven rug worn to its backing. The doors are solid
   timber, latched from inside; at least two rooms are
@@ -35,7 +35,7 @@ nouns:
     running east from the square, and beyond the
     near rooftops a clear view toward the river
     valley. In clear weather the far bank is visible
-    and sometimes further — the hills above the
+    and sometimes further, the hills above the
     ford, the road north. From here the town looks
     small and well-ordered. It probably is.
   the doors: >

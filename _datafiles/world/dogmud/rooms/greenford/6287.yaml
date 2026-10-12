@@ -3,7 +3,7 @@ zone: Greenford
 title: The Town Stair
 description: >
   The riverfront ends here at a broad stone stair rising
-  from the lane into the town above. The stair is old —
+  from the lane into the town above. The stair is old:
   the treads hollowed by foot-traffic, the stone balustrade
   on the upper side worn smooth where hands have steadied
   themselves on the climb. From the foot of the stair the
@@ -23,7 +23,7 @@ exits:
 nouns:
   the stair: >
     Broad stone treads rising from the lane into the
-    town above — a dozen steps, then a turn, then more.
+    town above: a dozen steps, then a turn, then more.
     The treads are hollowed in the center from foot-
     traffic, the stone worn to a slight concavity that
     is itself a record of the number of people who have
@@ -42,7 +42,7 @@ nouns:
     door is open. The proprietor expects you to browse.
   the market above: >
     Voices carry down from the covered market at the
-    stair's top — not loud, just the ongoing sound of
+    stair's top: not loud, just the ongoing sound of
     a market doing its morning work. Canvas-covered
     stalls, from the sound of it, with goods being
     examined and prices discussed. From the foot of

@@ -1,14 +1,14 @@
 roomid: 3114
 zone: Ironwind Steppe
 title: Wyrm's Den
-description: The deepest chamber of the Windscour Caves -- a vast,
+description: The deepest chamber of the Windscour Caves, a vast,
   cathedral-like space where the ceiling vanishes into darkness
   overhead. The floor is a tumble of fallen stone blocks and
   mineral deposits, and the walls are scored with massive claw
   marks that dwarf anything in the upper caves. The air is hot
   and smells of sulphur and old stone. A low, rhythmic vibration
   runs through the floor, like the breathing of the earth itself.
-  This is the lair of the windscour wyrm -- the apex predator
+  This is the lair of the windscour wyrm, the apex predator
   of the cave system.
 biome: cave
 coord:
@@ -26,7 +26,7 @@ nouns:
     is scored in parallel sets of four, running in long, diagonal
     slashes. Whatever made these has claws like steel chisels.
   vibration: A low, rhythmic pulse running through the cave floor
-    and walls -- not quite sound, more felt than heard. It rises
+    and walls, not quite sound, more felt than heard. It rises
     and falls with the regularity of breathing, though on a
     scale that defies anything mortal.
   deposits: Mineral deposits built up on the cave floor in

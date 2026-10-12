@@ -2,7 +2,7 @@ roomid: 6274
 zone: East Road to Greenford
 title: The River Valley
 description: >
-  The descent steepens and the smell changes all at once —
+  The descent steepens and the smell changes all at once:
   wet ground, water-weed, the cool moving air that rises off
   a river in full run. After the open plateau the change is
   immediate and physical: the dust is gone, the air softer,
@@ -11,7 +11,7 @@ description: >
   falls across the road. In the hillside cut above the road
   a stone
   <ansi fg="itemname">niche</ansi>
-  has been worked into the rock face — old road-craft,
+  has been worked into the rock face, old road-craft,
   a waymark for travelers.
 biome: farmland
 coord: {x: 21, y: -67, z: 0}
@@ -22,15 +22,15 @@ nouns:
   the hillside: >
     A cut face of compacted earth and pale stone above the
     road, the work that let the road run at this grade
-    without sliding into the river valley. The cut is old —
-    the exposed stone face has weathered to the same grey as
+    without sliding into the river valley. The cut is old.
+    The exposed stone face has weathered to the same grey as
     the surrounding rock, and the planted toe of the slope
     below has grown into solid ground. Someone built this
     section carefully and it has lasted.
   the niche: >
     A cut in the hillside rock above the road, shaped by
     hand into a small alcove. Old road-caches like this
-    were left for foot travelers — a mark, a shared
+    were left for foot travelers: a mark, a shared
     resource, a place to leave something for the next
     person. This one holds a few smooth river pebbles and
     the shadow they sit in. Whoever left them here is

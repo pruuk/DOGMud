@@ -11,7 +11,7 @@ groups:
   - quayfolk
 idlecommands:
   - 'emote rolls one shoulder back and glances toward the river gate,
-    then nods to himself -- approving something that does not need
+    then nods to himself, approving something that does not need
     approval, but gets it anyway.'
   - ''
   - 'say Gate is open. Hasn''t been, most of the cold season. Good to
@@ -27,7 +27,7 @@ character:
   description: |
     Holt the Gate-Warden is a lean man with the weathered look of
     someone who has spent decades standing at a fixed point while
-    everything else moved past him -- merchants, pilgrims, freight
+    everything else moved past him: merchants, pilgrims, freight
     wagons, seasons. He wears a plain river-cloth coat and carries
     a short cudgel at his belt more out of habit than necessity;
     the gate behind him opens onto the Landings quay, and this

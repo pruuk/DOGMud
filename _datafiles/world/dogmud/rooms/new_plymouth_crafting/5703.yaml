@@ -1,9 +1,9 @@
 roomid: 5703
 zone: New Plymouth Crafting
-title: The Long Market — Artisan Stalls
+title: The Long Market, Artisan Stalls
 description: >
   The stall-stretch is the busiest section of the Long
-  Market — open-fronted workshops spill their displays
+  Market. Open-fronted workshops spill their displays
   onto trestle-tables along both sides of the street,
   and the noise and press of it is constant. Sea-import
   goods come up from the Docks most mornings; by midday
@@ -15,7 +15,7 @@ description: >
   buyers in equal measure, their ropes strung from
   bracket to bracket across the street. What is sold
   here today is different from last week and will be
-  different again tomorrow — this is a market of
+  different again tomorrow: this is a market of
   process, not inventory.
 biome: city_thoroughfare
 coord:
@@ -30,8 +30,8 @@ exits:
 nouns:
   stall tables: Long trestle-tables set out before open-
     fronted workshops, their surfaces showing the grain
-    of many years of outdoor use. The goods change daily
-    — raw timber, cured leather, ingots of various metals,
+    of many years of outdoor use. The goods change daily.
+    Raw timber, cured leather, ingots of various metals,
     bolts of canvas, coils of rope, finished tools
     alongside unfinished ones. Chalk prices are propped
     on small boards against each heap, amended often. A
@@ -41,8 +41,8 @@ nouns:
   canvas awnings: A run of faded canvas panels rigged on
     rope across the street, shading the stalls in the
     hours when the sun hits this side of the market. Each
-    panel shows a guild-stripe — alternating amber and
-    rust-red — worn to something quieter than it began.
+    panel shows a guild-stripe, alternating amber and
+    rust-red, worn to something quieter than it began.
     The ropes are strung through iron brackets set into
     the building faces, replaced periodically; the
     brackets are original and show it, pitted and stained

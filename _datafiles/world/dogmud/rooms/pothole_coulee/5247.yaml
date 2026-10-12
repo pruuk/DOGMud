@@ -4,8 +4,8 @@ title: Quench Shed
 description: >
   A low shed roofed with overlapping split shakes stretches behind the
   main smithy, its ceiling close enough to make a tall person stoop.
-  A second small forge occupies the near corner, modest and workmanlike
-  -- less heat than the main, just enough for learning hands that do
+  A second small forge occupies the near corner, modest and workmanlike,
+  with less heat than the main, just enough for learning hands that do
   not yet need the full bed. Beside it a deep quench-trough of dark
   water runs the length of the back wall, iron-stained to a rust-brown
   at the waterline. A plain workbench of heavy plank sits between them,
@@ -32,7 +32,7 @@ nouns:
     stained a deep rust-brown at the iron mark.
   workbench: A heavy plank bench bolted to the shed wall, its top
     gouged and scorched and hammer-marked by years of apprentice work.
-    No one bothers to plane it smooth anymore -- the scars are part of
+    No one bothers to plane it smooth anymore. The scars are part of
     it now.
 idlemessages:
 - The surface of the <ansi fg="itemname">trough</ansi> shifts faintly, stirred by some unseen drip.

@@ -3,7 +3,7 @@ zone: Stillwater
 title: Tannery Shed
 description: >
   A long low timber shed built apart from the residential
-  cottages — the smell explains the distance, sharp with
+  cottages. The smell explains the distance, sharp with
   oak-bark tannin and the underlying organic note of
   curing hide that the Stillwater wind never quite carries
   away. Stretched <ansi fg="itemname">hides</ansi> hang on
@@ -15,7 +15,7 @@ description: >
   oak-bark steeped to its working strength. A
   <ansi fg="itemname">scraping bench</ansi> against the
   northern wall holds the half-fleshed lake-eel hide that
-  the cave-divers brought in last week — the latest in a
+  the cave-divers brought in last week, the latest in a
   long row of unusual hides Garth Peltman has been quietly
   building a private market for.
 biome: interior
@@ -33,17 +33,17 @@ exits:
 nouns:
   hides: A row of stretched hides on upright wooden
     frames along the western wall, in graduated stages
-    of cure — the freshest at the southern end still
+    of cure, the freshest at the southern end still
     bearing flecks of fat, the next pale and salted
     and waiting for the vat, the next steeping
     indirectly under wet cloths, and the fully cured
     russet leather at the northern end ready to roll.
-    Most are common hides — sheep, goat, a small calf
-    — but several at the back are the dark mottled
+    Most are common hides, sheep, goat, a small calf,
+    but several at the back are the dark mottled
     skin of mutated lake creatures that the
     cave-divers occasionally bring in.
   vat: A long timber vat of dark tannin solution
-    dominates the shed's centre — the working bath
+    dominates the shed's centre, the working bath
     where the salted hides go to take the bark's
     dye and become leather. A long-handled wooden
     paddle leans against the rim. The tannin smell
@@ -54,13 +54,13 @@ nouns:
     fleshing-knife is most often drawn. A
     half-fleshed mottled lake-eel hide is currently
     pinned to the bench, the fleshing only partly
-    done — Garth's afternoon work, set aside when
+    done. It is Garth's afternoon work, set aside when
     the bell rang for noon.
   tools: A row of fleshing-knives, scrapers, and
     bone-handled awls hang from leather loops above
     the scraping bench. The blades are kept honed
     and the handles kept oiled. A separate row holds
-    the finer tools for the unusual hides — needles,
+    the finer tools for the unusual hides, needles,
     delicate scrapers, a small set of bone files.
   paddle: A long-handled wooden paddle leans against
     the vat for stirring the tannin solution and for

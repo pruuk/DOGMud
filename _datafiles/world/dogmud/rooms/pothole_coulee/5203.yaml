@@ -6,7 +6,7 @@ description: >
   by more feet than anyone has bothered to count. A weathered notice post
   stands square in the middle, its boards layered thick with the crier's
   latest word and a hundred older ones gone soft beneath. Even with not a
-  soul about, the square does not feel empty -- it holds the kept-breath
+  soul about, the square does not feel empty: it holds the kept-breath
   hum of a place where news breaks and gossip travels, where the day's
   first word and its last both get spoken aloud. Ways run off in every
   direction: north toward the pool, south to the market, west along the
@@ -36,8 +36,8 @@ nouns:
     far longer than the houses around it have stood.
   notice post: &noticepost A stout post of grey driftwood stands at the
     square's center, its broad face crusted with notices nailed one atop
-    another. The crier pins the fresh word here -- work wanted, strangers
-    expected, a warning or a wedding -- and nobody troubles to pull the old
+    another. The crier pins the fresh word here, work wanted, strangers
+    expected, a warning or a wedding, and nobody troubles to pull the old
     ones, so the layers go down years deep. You could read the town's whole
     recent memory off it if you had the patience to peel.
   post: *noticepost

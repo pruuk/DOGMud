@@ -11,7 +11,7 @@ groups:
   - np_commonfolk
 idlecommands:
   - 'emote crosses the service court with the quick stride of
-    someone whose pause has a cost — eyes down, hands free,
+    someone whose pause has a cost: eyes down, hands free,
     route direct from one door to the next.'
   - ''
   - 'emote checks the service-roster in the alcove, confirms
@@ -28,7 +28,7 @@ character:
     The servant moves through the service court with the
     practiced efficiency of someone whose value lies in being
     useful before being noticed. She carries the posture of
-    downcast attention — eyes at platform level, never at face
+    downcast attention: eyes at platform level, never at face
     level, a trained arrangement of the body that signals
     neither threat nor idleness. Her clothes are the estate's
     standard-issue grey, clean and pressed. Whatever she is

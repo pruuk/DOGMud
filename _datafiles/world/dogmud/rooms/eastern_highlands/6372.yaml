@@ -5,13 +5,13 @@ description: >
   This is the end of the road. There is no further east. The buried face
   stands sheer across the whole of the way ahead, and set into it, close
   enough now to touch, is a
-  <ansi fg="itemname">door</ansi> —
+  <ansi fg="itemname">door</ansi>:
   a great made shape, taller than a standing man and wider than the road,
   shut so perfectly into the grey that the line of its closing is less a
   seam than the memory of one. It does not open. There is no handle on it,
   no hinge the eye can find, no bar to lift and no lock to pick. At its
   centre, waist-high and plain, the smooth face is cut with a shallow
-  <ansi fg="itemname">depression</ansi> —
+  <ansi fg="itemname">depression</ansi>:
   a round, dished hollow, shaped with the same seamless certainty as
   everything here, and pressed deep into the heart of it is a
   <ansi fg="itemname">symbol</ansi>
@@ -24,7 +24,7 @@ description: >
   open for hands. It opens for the disc. Only the disc. And at the foot of
   it, tending a small banked fire as though this were any hearth in the
   world, sits a lone
-  <ansi fg="itemname">keeper</ansi> —
+  <ansi fg="itemname">keeper</ansi>,
   who watches you the way the door will not, and who knows, it seems, how
   the thing is done.
 biome: cliffs
@@ -39,12 +39,12 @@ nouns:
   keeper: >
     A gaunt weathered figure at the foot of the door, keeping a small fire
     in a place nothing living should want to be. Where you feel the wrong
-    of it in your teeth, the keeper feels nothing at all — long past
+    of it in your teeth, the keeper feels nothing at all, long past
     frightened, settled here like a spider at the one thread the whole
     country runs to. She looks at you and weighs you, and does not get up.
     Ask her about the way, and about the key, if you mean to go in.
   door: >
-    Seamless, jointless, immense — a single made shape set into the grey
+    Seamless, jointless, immense: a single made shape set into the grey
     face and closed so completely that it might be part of the face and not
     a door at all, but for the shallow dished hollow at its heart and the
     certainty, pressing in without a word, that behind it is the inside of
@@ -56,7 +56,7 @@ nouns:
   depression: >
     A round hollow dished shallow into the centre of the door, smooth as
     the rest and cut with the same impossible care. Run a hand across it
-    and the shape declares itself at once — it is made to receive
+    and the shape declares itself at once. It is made to receive
     something, a thing round and flat and sized to sit exactly here. A
     disc. Nothing you carry fits it. Nothing you have found in all this
     country fits it. The hollow does not close over its emptiness or
@@ -64,7 +64,7 @@ nouns:
     the one thing that was ever going to fill it.
   symbol: >
     Pressed deep into the floor of the hollow is the mark that has walked
-    with you since the first of Reth's markers — a ring struck through, and
+    with you since the first of Reth's markers: a ring struck through, and
     within it rings nested inside rings, plain and exact and old. Here at
     the door it is not a wayfinder any more. It is a seal. Whatever it
     means, it means it fully here, and it says the same thing the door says

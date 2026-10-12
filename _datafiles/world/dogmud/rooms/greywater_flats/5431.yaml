@@ -2,7 +2,7 @@ roomid: 5431
 zone: Greywater Flats
 title: Where the Reeds End
 description: >
-  The smell tells you before your eyes do — the cold green rot of the marsh
+  The smell tells you before your eyes do: the cold green rot of the marsh
   gives way all at once to turned earth and growing grain, warm and dry and
   clean. The reeds end here in a ragged last line, and beyond them the
   ground lifts into worked soil, the first proper hedged field with a stout
@@ -28,13 +28,13 @@ nouns:
     where field-hands have leaned to talk. A hollow in the gatepost holds
     a coil of spare twine and a forgotten clay pipe.
   crop: Young grain stands in the field beyond the hedge, drilled in
-    dead-straight rows, green and even and well-tended — barley, by the
+    dead-straight rows, green and even and well-tended, barley, by the
     look of the awns just forming. It is a different thing entirely from
     the wild reed and sedge behind you. Every stalk of it belongs to
     somebody.
   reeds: The last ragged line of them, marking the edge of the wet like a
     tide-line. Behind, they run unbroken to the grey horizon; ahead, not
-    one. The boundary between marsh and field is as sharp as a drawn rule —
+    one. The boundary between marsh and field is as sharp as a drawn rule,
     the work of the ditches, draining the wild back acre by acre.
 idlemessages:
 - A skylark climbs invisibly overhead, pouring down a thin endless song.

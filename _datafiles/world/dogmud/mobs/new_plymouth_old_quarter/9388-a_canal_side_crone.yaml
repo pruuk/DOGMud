@@ -12,7 +12,7 @@ groups:
 idlecommands:
   - 'emote sits against the old stone with the composed
     patience of something placed there rather than someone
-    who sat down — a stillness that has had a very long
+    who sat down: a stillness that has had a very long
     time to settle into its shape.'
   - ''
   - 'emote watches whoever is moving through the quarter
@@ -21,7 +21,7 @@ idlecommands:
     variations before and is simply noting which one
     this is.'
   - ''
-  - 'emote speaks something under the breath — not to
+  - 'emote speaks something under the breath, not to
     anyone present, possibly to no one at all, possibly
     to the quarter itself, which has been listening a
     long time and has opinions.'
@@ -30,7 +30,7 @@ character:
   name: A Canal-side Crone
   description: |
     She is very old in the way the stone around her is
-    old — worn to smoothness at the points of contact,
+    old, worn to smoothness at the points of contact,
     unchanged everywhere else. She has been in the Old
     Quarter long enough that the quarter's residents
     measure their own time here against how long she

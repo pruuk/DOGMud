@@ -2,7 +2,7 @@ roomid: 6369
 zone: Eastern Highlands
 title: The Sealed Recess
 description: >
-  The buried face opens here into a shallow made hollow — a recess cut
+  The buried face opens here into a shallow made hollow: a recess cut
   square and clean into the vast grey flank, its
   <ansi fg="itemname">walls</ansi>
   going back smooth and seamless into shadow. This is a threshold of its
@@ -12,9 +12,9 @@ description: >
   <ansi fg="itemname">dark</ansi>
   at the back of the recess in a slow steady breath, and the dark does not
   end where the eye loses it. It goes on. Past the reach of any light you
-  carry, something is set into that deeper black — something large,
+  carry, something is set into that deeper black: something large,
   something still, something that has not woken and has kept from waking
-  for an age — and the certainty of it presses on the skin before the mind
+  for an age, and the certainty of it presses on the skin before the mind
   can argue. You are being kept out of somewhere. And you are, very
   faintly, being watched from inside it.
 biome: cliffs
@@ -28,13 +28,13 @@ nouns:
   walls: >
     Cut square and true into the buried face, the walls of the recess are
     the same smooth jointless grey as everything the made thing shows the
-    world — no tool-mark, no seam, no mortar-line, no sign of the labour
+    world: no tool-mark, no seam, no mortar-line, no sign of the labour
     that any wall the eye has ever known was raised by. They simply are,
     cut clean and cold, and they go back into a dark they were plainly
     made to guard.
   dark: >
     The black at the back of the recess is not the ordinary dark of a cave
-    or a cellar. Light entering it does not travel — it stops, a little
+    or a cellar. Light entering it does not travel. It stops, a little
     way in, against nothing, as though the dark were a surface and not an
     absence. The cold comes out of it in an even breath. Whatever the
     recess was made to seal is back there, past where the eye can follow,

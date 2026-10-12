@@ -3,14 +3,14 @@ zone: Greenford
 title: The Blue Door
 description: >
   A narrow terraced house at the corner of the
-  west lane — its front door painted a deep
+  west lane, its front door painted a deep
   blue-grey, the paint fresh enough to mark a
   deliberate choice. No nameplate, no number.
   Through the narrow front window, maps and
   folios are visible in mid-stack: a scholar's
   working disorder, the kind that has a system
   beneath it that the owner alone could explain.
-  The house is quiet this morning — its occupant
+  The house is quiet this morning. Its occupant
   elsewhere. The row opens east; the lane
   continues south. Examine the blue door or
   the window.
@@ -22,7 +22,7 @@ exits:
 nouns:
   the blue door: >
     The door is painted a particular shade of
-    blue-grey — not quite slate, not quite the
+    blue-grey, not quite slate, not quite the
     sky, a colour someone chose with some
     conviction. The paint is recent: no cracks
     at the grain, no flaking at the hinges. The

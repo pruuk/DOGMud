@@ -3,11 +3,11 @@ zone: Pothole Coulee
 title: Farmstead Gate
 description: >
   A broad timber gate is set into the drystone wall where the cartway
-  meets the homestead boundary. The gate is well-made but much used --
-  the latch worn smooth from ten thousand lifts of the same hand, the
+  meets the homestead boundary. The gate is well-made but much used.
+  The latch worn smooth from ten thousand lifts of the same hand, the
   lower rail dark with the polish of animals brushing past. Beyond it,
   the packed earth of the yard opens wide, and the smell of the place
-  comes through without impediment -- hay and woodsmoke and turned soil,
+  comes through without impediment: hay and woodsmoke and turned soil,
   the warm compound smell of a place where people have been working for
   a long time. The wall stretches to either side, low enough to see over
   but substantial enough to mean something. Crossing this threshold feels
@@ -26,7 +26,7 @@ exits:
     roomid: 5324
 nouns:
   gate: The gate hangs true on its hinges and swings without resistance.
-    Someone keeps it in good repair -- the timber is oiled, the iron
+    Someone keeps it in good repair. The timber is oiled, the iron
     fittings free of rust. It stands open during the day.
   wall: The drystone wall is old work, fitted without mortar, each stone
     chosen to lock against its neighbors. It has settled into itself

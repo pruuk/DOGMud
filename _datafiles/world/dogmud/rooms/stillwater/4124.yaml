@@ -4,10 +4,10 @@ title: Temple Garden
 description: >
   Behind the temple, a small walled <ansi fg="itemname">garden</ansi>
   catches the southern sun and shelters from the
-  lake-wind — narrow gravel paths between raised
+  lake-wind. Narrow gravel paths between raised
   <ansi fg="itemname">beds</ansi> of culinary and medicinal
   herbs, each bed labelled in a careful round hand. The
-  smell is layered — rosemary and thyme dominant near the
+  smell is layered: rosemary and thyme dominant near the
   wall, marsh-sage and lake-mint in the wetter beds nearer
   the back, and something sweeter that resolves itself into
   late-flowering elderberry along the eastern fence. A
@@ -34,7 +34,7 @@ nouns:
     bed labelled in a careful round hand on a small
     slate driven into the bed's near edge.
   beds: Half a dozen raised beds of timber and turned
-    earth, each labelled — rosemary and thyme nearest
+    earth, each labelled, rosemary and thyme nearest
     the temple wall, marsh-sage and lake-mint in the
     wetter section nearer the back fence, garden-sage
     and a few other common kitchen herbs in the
@@ -65,7 +65,7 @@ hidden_nouns:
     description: |
       A flat slab of weathered stone half-buried at the foot of
       the crab-apple tree, the carving on its upper face worn
-      almost smooth — but still readable as a long spiral set
+      almost smooth, but still readable as a long spiral set
       inside an outer ring, neither Chrysalis nor anything else
       currently taught in the temple. Far older than the present
       garden. Whoever planted the crab-apple chose to plant it

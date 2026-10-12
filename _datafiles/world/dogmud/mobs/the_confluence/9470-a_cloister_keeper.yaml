@@ -13,7 +13,7 @@ idlecommands:
   - 'emote sweeps the cloister walk with long, unhurried strokes,
     working the stone flags clean from the garth wall outward.'
   - ''
-  - 'say We keep the garth as we keep the rite -- the same way each
+  - 'say We keep the garth as we keep the rite: the same way each
     day, because sameness is itself a kind of work.'
   - ''
   - 'emote pauses in the sweeping to look up at the sky above the
@@ -25,8 +25,8 @@ character:
   description: |
     One of the junior members of the order, assigned to the daily
     maintenance of the Garth and the cloister walks. He is young
-    enough that his Chrysalis-change is still making itself apparent
-    -- a faint iridescence in his skin that shifts from amber to
+    enough that his Chrysalis-change is still making itself apparent:
+    a faint iridescence in his skin that shifts from amber to
     green in direct light, which he has not yet decided how to feel
     about. He sweeps. He does not ask questions. He listens.
   speciesid: 1

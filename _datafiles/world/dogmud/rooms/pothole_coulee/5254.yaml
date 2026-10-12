@@ -7,7 +7,7 @@ description: >
   washing down the talus with the smell of wet clay, old blasting, and
   stone that has never warmed. The adit itself is a squared-off wound
   in the bluff face, cut wide enough for two abreast and tall enough
-  to clear a laden pack -- a working mouth, not a prospect hole. Old
+  to clear a laden pack, a working mouth, not a prospect hole. Old
   shoring frames the entrance in a timber arch, the posts set in rock
   and spiked crosswise, dark with age and with the slow moisture that
   seeps through basalt from above. The wood has checked and greyed but
@@ -31,7 +31,7 @@ exits:
     roomid: 5255
 nouns:
   adit: The squared-off entrance to the mine, cut wide enough for two
-    abreast and framed in old timber. It is a working mouth -- the
+    abreast and framed in old timber. It is a working mouth. The
     proportions say extraction, not exploration. The cold air pours
     out of it without pause. Daylight reaches only the first stretch
     of tunnel; what lies past that is real mine work, weight-bearing

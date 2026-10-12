@@ -1,7 +1,7 @@
 roomid: 405
 zone: Dustwalk Road
 title: Warden's Post
-description: A small waystation stands beside the road -- a stone-walled shelter with
+description: A small waystation stands beside the road. It is a stone-walled shelter with
   a flat roof and an open front, built to give road wardens a place to rest and watch
   the traffic. A wooden signpost out front lists distances in faded paint, though most
   of the destinations are illegible. The shelter is well-maintained despite its remote
@@ -23,7 +23,7 @@ spawninfo:
 nouns:
   signpost: A wooden post with flat boards nailed at angles, each painted with a
     destination and distance. Most have faded to illegibility. You can make out
-    "Sanctum Basin -- 2 leagues north" and "Watchers Crossing -- 3 leagues east."
+    "Sanctum Basin, 2 leagues north" and "Watchers Crossing, 3 leagues east."
     The rest is sun-bleached guesswork.
   reports: A stack of papers held down by a smooth stone. The handwriting is neat and
     precise. Patrol notes, weather observations, and tallies of travellers passed.

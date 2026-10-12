@@ -6,7 +6,7 @@ description: >
   paddock holds a few goats and a patient draft horse that
   watches you with mild interest. A small barn stands open,
   tools hanging on pegs inside. Rows of root vegetables
-  stretch behind the house in neat lines, recently weeded --
+  stretch behind the house in neat lines, recently weeded,
   the work of someone maintaining this place alone. Farmer
   Hesta's home, sturdy and practical, with none of the
   neglect visible elsewhere in Ashwick.
@@ -25,14 +25,14 @@ nouns:
     the far side, unimpressed. The fence is well-maintained,
     posts recently replaced where needed.
   barn: A small functional barn with its doors standing open.
-    Tools hang on pegs along the walls -- hoe, rake, scythe,
+    Tools hang on pegs along the walls, hoe, rake, scythe,
     all clean and oiled. Hay bales stacked in the loft. The
     work of someone who takes care of their tools because
     there is no one else to sharpen them.
-  crops: Root vegetables planted in neat rows -- turnips,
+  crops: Root vegetables planted in neat rows, turnips,
     parsnips, beets. Recently weeded, the soil dark and
     turned between the rows. The work is meticulous but
-    the scale is small -- one person's labor, stretched
+    the scale is small, one person's labor, stretched
     across what two or three once managed.
 spawninfo:
 - mobid: 261

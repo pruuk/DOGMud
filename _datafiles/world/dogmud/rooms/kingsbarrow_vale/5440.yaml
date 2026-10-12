@@ -3,7 +3,7 @@ zone: Kingsbarrow Vale
 title: The Market Cross
 description: >
   The sound of the market reaches you before the square
-  opens — voices at the stalls, the knock of a measure on
+  opens: voices at the stalls, the knock of a measure on
   a wooden counter, a running argument about weights done
   with enough laughter to show it is old between these
   two. The square is small and granite-sett paved, the
@@ -16,7 +16,7 @@ description: >
   A row of <ansi fg="itemname">market stalls</ansi> faces
   north along the square's edge, canvas awnings rigged on
   a fixed timber frame, their boards crowded with produce
-  from the surrounding farms — sacks of flour, bundles of
+  from the surrounding farms: sacks of flour, bundles of
   root vegetables, rounds of hard cheese. To the west the
   painted board of the Sheaf and Sickle hangs above a low
   lintel, the inn door propped open, bread-smell and voices
@@ -41,7 +41,7 @@ nouns:
     the south face to a stooped silhouette, though the
     carved wheatsheaf on the north face has fared better
     out of the weather's path. At the plinth base a wide
-    ledge runs all four sides — used on market days for
+    ledge runs all four sides. It is used on market days for
     small offerings, the stone of the ledge worn hollow at
     each corner by long habit. A ring of family names
     encircles the plinth below the ledge, most still
@@ -52,7 +52,7 @@ nouns:
     timber boards and awning frame old enough to have
     settled without shifting. The canvas awnings are worn
     to a pale grey but sound, and the boards beneath hold
-    the morning's trade — dried pulse in tied linen bags,
+    the morning's trade, dried pulse in tied linen bags,
     firm rounds of cheese wrapped in cloth, root vegetables
     in muddy bundles, a flat basket of wax-capped jars with
     handwritten labels. On the nearest stall's end-board a
@@ -60,7 +60,7 @@ nouns:
     locked tin cash-box sits weighted on the counting shelf
     behind the goods.
 idlemessages:
-- A stallholder calls an offer across the square — the
+- A stallholder calls an offer across the square, the
   voice easy and practised, not expecting much argument.
 - Two men work through an exchange at the plinth base, a
   ledger open between them, one marking figures while

@@ -5,7 +5,7 @@ description: >
   The stair bends here in a tight switchback, reversing direction up the
   bluff face. Loose scree has collected in the outer angle of the turn
   where the stone crumbles away from the steps, and you step carefully
-  around it. The wind is picking up -- it funnels along the bluff face
+  around it. The wind is picking up. It funnels along the bluff face
   and finds you at every exposed stretch of the climb. Below, the full
   arc of the coulee has come into view: the lake, the town, the roads
   threading off through the grassland. The terraces are still above you,
@@ -23,7 +23,7 @@ exits:
   north:
     roomid: 5349
 nouns:
-  switchback: The switchback is the tightest point on the climb -- the
+  switchback: The switchback is the tightest point on the climb. The
     outer edge crumbles away to a short drop, and the inner wall is
     close enough to brush with your shoulder. Someone has driven an iron
     pin into the stone here as a handhold.
@@ -35,7 +35,7 @@ idlemessages:
   ticks down the bluff face.
 - The wind at this height finds every gap in your clothing and reminds
   you it is here.
-- The coulee floor is visible in its entirety now -- a long oval of
+- The coulee floor is visible in its entirety now, a long oval of
   grass and water laid out below.
 - A pebble loosens somewhere above and falls past you, rattling off
   the bluff face and gone.

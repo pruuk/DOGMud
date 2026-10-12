@@ -4,7 +4,7 @@ title: Wind Gallery
 description: A long, narrow passage where the wind is channeled to
   tremendous speed. The constant airflow has polished the walls to
   a glassy smoothness and carved fluting patterns into the stone
-  that produce an eerie, harmonious sound -- multiple tones
+  that produce an eerie, harmonious sound, with multiple tones
   overlapping as the wind velocity changes. Fine grit carried by
   the wind stings exposed skin. The passage curves gently, and
   the light from outside is reduced to a dim glow.
@@ -24,7 +24,7 @@ exits:
 nouns:
   fluting: Narrow channels carved into the cave walls by wind
     erosion, each a slightly different depth and angle. When
-    wind passes over them they produce musical tones -- deep
+    wind passes over them they produce musical tones, from deep
     rumbles, high whistles, and everything between. The effect
     is otherworldly.
   walls: Glass-smooth cave walls polished by centuries of wind-

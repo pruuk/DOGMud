@@ -4,7 +4,7 @@ title: The Glass Kiln
 description: >
   The glassblower's kiln-room is organized entirely
   around heat and access to heat. The <ansi fg="itemname">glory-hole</ansi>
-  in the north wall — the kiln's working port — radiates
+  in the north wall, the kiln's working port, radiates
   continuously even when drawn down, its firebrick face
   glowing an even orange; the wave of heat coming off
   it is the room's dominant experience. Sand is scattered
@@ -29,7 +29,7 @@ exits:
     roomid: 5714
 nouns:
   glory hole: The kiln's working port is set into the
-    north wall at standing height — an arched opening
+    north wall at standing height, an arched opening
     faced with firebrick gone glassy from sustained
     heat. Even drawn down, the interior glows a steady
     orange and the heat coming off the face is a wall
@@ -40,7 +40,7 @@ nouns:
     fully banked; it has not been needed today.
   iron pipe rack: A horizontal rack of iron brackets
     above the east passage, holding blowpipes in
-    graduated lengths — the shortest for small work,
+    graduated lengths, the shortest for small work,
     the longest for large gathers. The pipes are
     scorched at the tips and carry the wax-drip
     evidence of hot glass handled and set aside. They
@@ -50,8 +50,8 @@ nouns:
 idlemessages:
 - The glory-hole radiates heat in a continuous wave
   even with the kiln drawn down to working temperature.
-- The smell of hot sand and minerals fills the room
-  — a smell so particular it announces the trade.
+- The smell of hot sand and minerals fills the room.
+  It is a smell so particular it announces the trade.
 - A blowpipe on the rack ticks softly as metal cools
   and contracts in the room's shifting heat.
 - Sand on the floor catches the glory-hole's orange

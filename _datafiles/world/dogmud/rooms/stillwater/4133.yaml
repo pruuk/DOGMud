@@ -5,7 +5,7 @@ description: >
   A narrow timber <ansi fg="itemname">footbridge</ansi> of
   three planks wide spans a clear running
   <ansi fg="itemname">creek</ansi> at the western edge of
-  town — Mill Creek, fed from the sluice pond above the
+  town: Mill Creek, fed from the sluice pond above the
   watermill and running south here to empty into the lake
   beyond. The bridge's hand-rails are worn smooth where
   generations of millers and water-haulers have leaned
@@ -44,7 +44,7 @@ nouns:
     bridge, the seat worn smooth and slightly hollowed
     by years of use. A small mossed marker beside it
     bears a name and two dates that the rain has
-    almost taken — the older miller's wife, who used
+    almost taken, the older miller's wife, who used
     to stop here on her water-runs.
   rails: Polished smooth at chest-height by generations
     of leaning hands. The wood at the western post

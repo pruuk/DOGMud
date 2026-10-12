@@ -8,7 +8,7 @@ description: >
   and a
   <ansi fg="itemname">fire</ansi>
   burns in the west wall's hearth, doing its work
-  without pretension — warmth, light, the ability to
+  without pretension: warmth, light, the ability to
   dry a wet coat. The room fills at dusk when the road
   traffic stops for the night, travelers comparing
   notes on conditions east and west of the city.
@@ -26,7 +26,7 @@ exits:
     roomid: 6256
 nouns:
   fire: >
-    A working hearth fire — nothing like the great
+    A working hearth fire, nothing like the great
     river-oak rounds in the Three Waters' hearth
     across the city, but doing its job honestly. The
     room is warm, the fire-basket is stacked, and the
@@ -41,7 +41,7 @@ idlemessages:
   conditions east of the gate; another answers
   without looking up.
 - The fire in the west wall is doing its essential
-  work — the room is warm, the wet boots by the
+  work, the room is warm, the wet boots by the
   hearth are drying.
 - Someone at the far end of the long table is asleep
   on their arms, a half-finished cup beside them.

@@ -3,11 +3,11 @@ zone: New Plymouth Docks
 title: Marn's Fabric-Remnants Shop
 description: >
   A narrow shop, the kind that has occupied this slot in the
-  building-line long enough you would not think to notice it —
+  building-line long enough you would not think to notice it:
   cut-rate cloth ends, a smell of unfinished textile and old
   wood, a proprietor who does not press you to stay. The front
-  tables hold bins of <ansi fg="itemname">remnant bolts</ansi>
-  — ends and offcuts in practical weights, cheap because they are
+  tables hold bins of <ansi fg="itemname">remnant bolts</ansi>:
+  ends and offcuts in practical weights, cheap because they are
   what is left when the useful part has been used, and still worth
   buying if you know what you need. At the back wall, past the
   shelving, a <ansi fg="itemname">cupboard door</ansi> stands
@@ -15,7 +15,7 @@ description: >
   of a fabric shop; the door itself carries the evidence of hands
   that have worked the latch many more times than restocking
   shelves would require. To the north a low stone footbridge is
-  visible over a canal cut — a span connecting this quarter's edge
+  visible over a canal cut, a span connecting this quarter's edge
   to the Crafting Quarter beyond. South returns to the
   outer lane; a stair leads down behind the cupboard door.
 biome: interior
@@ -36,12 +36,12 @@ nouns:
     accordingly. Wool homespun in grey and brown. A length of
     canvas too short for sail-use. Several pieces of linen once
     dyed indigo and faded to something quieter. The cloth is
-    honestly described by its price — not quite useful enough to
+    honestly described by its price, not quite useful enough to
     have been kept, not quite useless enough to throw away.
     Someone has been through the front bin recently; the edges
     of the pile are disturbed in a way that suggests hurry.
   cupboard door: A door set flush into the back wall, plain-
-    fronted and continuous with the shelving on either side —
+    fronted and continuous with the shelving on either side,
     at a glance, a storage cupboard for stock. The latch-plate
     is worn bright at its working edge in a way that does not
     match the rest of the room. The hinge side is marked where
@@ -50,14 +50,14 @@ nouns:
     often than shelf-storage requires, by more people than a
     bolt-count would warrant.
 idlemessages:
-- The shop is quiet — fabric shops usually are — but the quiet
+- The shop is quiet, as fabric shops usually are, but the quiet
   here has a quality of attention in it.
 - A customer browses the remnant bins with the focus of someone
   who knows exactly what they need and has not found it yet.
 - The proprietor straightens a stack of cloth at the front
   table without looking up or offering assistance.
-- From somewhere behind the back wall, a sound — movement, or
-  a voice kept deliberately low — surfaces briefly and stops.
+- From somewhere behind the back wall, a sound, movement, or
+  a voice kept deliberately low, surfaces briefly and stops.
 - The footbridge to the north catches afternoon light at a
   particular angle; the far end remains in shadow.
 spawninfo:

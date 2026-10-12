@@ -6,7 +6,7 @@ description: >
   overhead until the sky is just a pale smear between the stalks. The
   ground underfoot is soft and yields with a sucking pull at each step,
   mud welling up around your boots. Out in the dark water something
-  disturbs the surface — a slow ripple spreading wide and then gone.
+  disturbs the surface: a slow ripple spreading wide and then gone.
   The marsh proper begins here, and the air is thick with the smell of
   green rot and standing water.
 biome: swamp
@@ -31,7 +31,7 @@ nouns:
     bottom. The surface is faintly iridescent with a thin oil of decay.
 idlemessages:
 - Something disturbs the <ansi fg="itemname">water</ansi> out among the
-  <ansi fg="itemname">reeds</ansi> — a slow ripple, and then silence.
+  <ansi fg="itemname">reeds</ansi>, a slow ripple, and then silence.
 - A frog calls once from deep in the <ansi fg="itemname">reeds</ansi> and
   falls abruptly quiet.
 x: 46

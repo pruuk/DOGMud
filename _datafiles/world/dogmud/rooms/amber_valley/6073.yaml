@@ -2,7 +2,7 @@ roomid: 6073
 zone: Amber Valley
 title: Ayres' Holding
 description: >
-  Cool, green, and quietly defensive — the difference is almost an insult after
+  Cool, green, and quietly defensive. The difference is almost an insult after
   the dust to the east. This is the upstream holding, the one the channel
   reaches first, and it shows: lush rows of greens, fat-leaved squash sprawling
   over black damp earth, an orchard corner heavy and shining. Little runnels of
@@ -20,7 +20,7 @@ nouns:
     A planed board nailed up by the well-house, ruled into columns: a record of
     how the channel's flow is meant to be split between the two farms. The old
     even division has been crossed through and rewritten in a firm hand to claim
-    the larger share for this holding — with a long marginal note about
+    the larger share for this holding, with a long marginal note about
     upstream rights, ancestral grants, and "what was agreed." It reads less like
     a ledger than a defence brief, written by someone who expects to be accused.
   the barricade: >
@@ -34,9 +34,10 @@ nouns:
     and you can hear, faintly, the same water that the eastern fields are dying
     without.
   the green rows: >
-    Greens, squash, beans, all of it thriving — the same crops that wilt and die
-    a stone's throw east, here glossy and fat with water. Nothing about the soil
-    or the sun is different between the two farms. Only the gate is different.
+    Greens, squash, beans, all of it thriving. The same crops that wilt and die
+    a stone's throw east are glossy here and fat with water. Nothing about the
+    soil or the sun is different between the two farms. Only the gate is
+    different.
 idlemessages:
 - Water chuckles cool and steady through the runnels between the beds.
 - A broad squash-leaf nods under the weight of its own shade.

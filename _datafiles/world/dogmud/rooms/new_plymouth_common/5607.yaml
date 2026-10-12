@@ -2,12 +2,12 @@ roomid: 5607
 zone: New Plymouth Common
 title: The Brimming Bowl Taproom
 description: >
-  The noise is the first thing and the constant thing —
-  conversation in layers, the thump of cups on the table,
+  The noise is the first thing and the constant thing.
+  It is conversation in layers, the thump of cups on the table,
   someone near the back conducting an argument at volume
   that everyone else is ignoring, the squeal of a bench
   dragged to fit one more. The taproom is full in the way
-  that feels intentional — as though the room was built
+  that feels intentional, as though the room was built
   for exactly this many people and someone fills it to
   specification each evening. The
   <ansi fg="itemname">benches</ansi> run the length of
@@ -31,7 +31,7 @@ nouns:
   benches: Long planks on trestle-legs, worn smooth at
     the sitting-surface from consistent use. The bench
     nearest the door has a crack running its length that
-    has been there long enough to become familiar — people
+    has been there long enough to become familiar. People
     who have sat here before remember it, choose their spot
     around it, or don't bother. Every available length of
     bench currently holds someone, and the table above
@@ -41,7 +41,7 @@ nouns:
     iron dishes overhead.
   bar: The bar is a single plank of pale wood, warped
     slightly in the center from years of wet cups set down
-    on it. The surface is covered in ring-marks — pale
+    on it. The surface is covered in ring-marks, pale
     circles overlapping from edge to edge, a map of every
     drink ever set down here and lifted again. The barkeep
     keeps two pitchers and a row of cups on the near end

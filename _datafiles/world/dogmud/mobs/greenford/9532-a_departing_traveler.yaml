@@ -12,7 +12,7 @@ idlecommands:
   - 'emote adjusts the pack on her back with both hands,
     settling the straps, then looks west along the road.'
   - ''
-  - 'say New Plymouth -- first time out there. Everyone
+  - 'say New Plymouth, first time out there. Everyone
     says three days but everyone means if the road holds.'
   - ''
   - 'emote turns to look back at Greenford''s treeline,
@@ -25,8 +25,8 @@ character:
     A woman in her early thirties with a full pack and
     the settled bearing of someone who has made up her
     mind and is now simply executing the decision. She
-    is bound west -- New Plymouth, she says, for the
-    first time -- and her manner has the careful calm
+    is bound west (New Plymouth, she says, for the
+    first time) and her manner has the careful calm
     of someone who has been planning this long enough
     to stop being nervous about it. Her Chrysalis-
     change is visible on cold mornings: the knuckles
@@ -34,7 +34,7 @@ character:
     temperature drops, barely perceptible in daylight
     but present. She wears her gloves more often than
     the weather requires. The glow has never bothered
-    her -- she grew up with it -- but she has learned
+    her (she grew up with it) but she has learned
     it startles people who notice it unexpectedly, so
     she wraps her hands out of courtesy rather than
     embarrassment.

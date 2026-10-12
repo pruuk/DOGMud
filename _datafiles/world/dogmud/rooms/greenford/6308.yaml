@@ -2,7 +2,7 @@ roomid: 6308
 zone: Greenford
 title: The College Lane
 description: >
-  The back lane of the college precinct — a narrow
+  The back lane of the college precinct: a narrow
   passage between the common-room range to the west
   and the rear wall of the library to the east,
   paved with the same flagging as the cloister walk
@@ -10,7 +10,7 @@ description: >
   a passage. The lane opens at its south end to the
   college's back gate, its timber planks standing
   open onto Back Gate Lane and the residential
-  quarter beyond — faculty houses, quiet, morning
+  quarter beyond: faculty houses, quiet, morning
   fires already at the chimneys. The gate is
   unbolted; the streets begin on the other side.
   Examine the back gate or the lane.
@@ -24,7 +24,7 @@ nouns:
   the back gate: >
     A timber gate in the college's rear wall, its
     planks weathered to silver-grey, the iron
-    fittings solid but plain — no device, no
+    fittings solid but plain, no device, no
     inscription, just a working gate that opens
     and closes. A latch on the inside and a bolt
     above it. The gate is not locked. Beyond it:
@@ -45,7 +45,7 @@ nouns:
   the residential streets: >
     Visible beyond the back gate: a short lane
     opening onto the residential streets of the
-    upper town — quiet terraces of faculty houses,
+    upper town: quiet terraces of faculty houses,
     their front gardens modest, their chimneys
     already beginning to smoke with the morning.
     These streets are where the university actually

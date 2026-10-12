@@ -6,7 +6,7 @@ description: >
   North of the wreck the grey pulls itself back into order, and the order
   is worse than the ruin was. The corridor runs straight and grim and
   narrow, a gauntlet with no branch and no cover, its walls opened along
-  their whole length into the dead machinery — and here the machinery is
+  their whole length into the dead machinery, and here the machinery is
   awake in a way it has not been anywhere else. The charge does not crawl
   loose; it runs the walls in ranked threads, thickening as you go, arcing
   across the narrow way in silent blue-white sheets that leave the air
@@ -22,9 +22,9 @@ exits:
 nouns:
   gauntlet: >
     The straight grim run north, narrow and coverless, walled its whole
-    length with the opened machinery. It was made as an approach — a last
-    hard mile before whatever the place set its deepest keeper to guard —
-    and the charge that runs it now makes the making plain. Nothing built
+    length with the opened machinery. It was made as an approach: a last
+    hard mile before whatever the place set its deepest keeper to guard.
+    And the charge that runs it now makes the making plain. Nothing built
     this to be walked lightly.
   charge: >
     Here it does not crawl. It runs the ranked threads of the walls and

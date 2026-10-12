@@ -3,17 +3,17 @@ zone: New Plymouth Temple
 title: The Temple Courtyard
 description: >
   The courtyard opens between the cloister's north
-  bend and the precinct buildings arranged around it
-  — the Keeper's House to the west, the archive
+  bend and the precinct buildings arranged around it:
+  the Keeper's House to the west, the archive
   wing to the east, the pilgrims' hostel passage
   to the north. The paving is laid in an older
   pattern than the surrounding stonework, its rows
   angling slightly off-perpendicular to the
-  buildings above them — a tell that this open
+  buildings above them, a tell that this open
   space predates the current precinct's
   organization. A
   <ansi fg="itemname">precinct-board</ansi> on
-  the archive wall carries chalked notices — the
+  the archive wall carries chalked notices: the
   reading-room schedule, a roster of keepers in
   residence, a list of names some of which are
   marked with symbols whose meaning is not
@@ -27,7 +27,7 @@ description: >
   cross diagonally without stopping, their
   purposes moving between the hostel and the
   cloister walk below. The city noise is present
-  here in a way it is not inside — at the
+  here in a way it is not inside, at the
   perimeter of the temple's stillness rather than
   within it.
 biome: city_backstreet
@@ -47,7 +47,7 @@ exits:
 nouns:
   precinct board: A board of heavy planking fixed
     to the archive wall, its surface carrying
-    chalked notices in several hands — some
+    chalked notices in several hands, some
     official, some clearly appended without
     authorization. The current notices include the
     reading-room schedule, a roster of keepers in
@@ -60,13 +60,13 @@ nouns:
     the desk-keeper, but the morning's writing
     suggests familiarity with what was there before.
   yard well: The well at the courtyard's center is
-    older than the precinct it serves — the stone
+    older than the precinct it serves. The stone
     of its coping is a different origin from the
     building stone around it, and the well-shaft
     goes deeper than a precinct well would need to.
     The water is cold and slightly mineral. The
     coping is worn at two grip-points where hands
-    have reached over for the bucket — the wear
+    have reached over for the bucket. The wear is
     asymmetric, one side more used than the other.
     A protective roof was added after the main
     precinct was built; its wood is maintained but

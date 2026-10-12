@@ -17,7 +17,7 @@ character:
   description: |
     A crude man-shape of bound straw and sackcloth lashed to a fixed post,
     faceless but for two charcoal smudges where eyes might be. It does not
-    breathe and does not flinch until struck -- and it rights itself with a
+    breathe and does not flinch until struck. It rights itself with a
     dry rustle every time, no worse for the beating. A safe thing to learn
     a fight against.
   speciesid: 19
@@ -27,7 +27,7 @@ character:
     # Species 19 (dummy) has base vitality 200 and zero base damage. A large
     # vitality bump keeps the effigy standing through the lesson (no engine
     # "invulnerable" flag exists; high HP is the mechanism). The player is
-    # meant to practice on it and FLEE it -- a live target must remain for
+    # meant to practice on it and FLEE it, so a live target must remain for
     # the cast-spike and trip steps of quest 28. Was 1000, which a slow,
     # confused player auto-swinging for many rounds could still drop. It is
     # hard to kill, not impossible: a veteran with two companions killed it

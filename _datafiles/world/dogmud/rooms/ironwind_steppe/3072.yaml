@@ -3,7 +3,7 @@ zone: Ironwind Steppe
 title: Goblin Loot Cache
 description: The deepest point of the goblin encampment, a narrow
   coulee dead end used as a storage area and treasure room. Stolen
-  goods are piled against the walls -- crates, sacks, and bundles
+  goods are piled against the walls, such as crates, sacks, and bundles
   of scavenged material. A crude cage of lashed sticks sits in one
   corner, empty now but clearly used for holding captured animals
   or worse. The goblins guard this area more aggressively than the
@@ -32,6 +32,6 @@ spawninfo:
 idlemessages:
 - A goblin sorts through the loot pile, chittering to itself.
 - The crude cage creaks in a draft from somewhere.
-- Stolen goods are piled high -- the goblins have been busy.
+- Stolen goods are piled high. The goblins have been busy.
 x: 26
 y: 19

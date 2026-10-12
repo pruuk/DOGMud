@@ -33,7 +33,7 @@ spawninfo:
 nouns:
   joined channel: >
     The channel is cut into the floor along the south
-    side of the gallery -- wide enough that you could
+    side of the gallery, wide enough that you could
     not step across it, deep enough that the lamplight
     does not reach the bottom. Three rivers run in it
     as one: the Aldren, the Brenn, the Solt, meeting
@@ -44,7 +44,7 @@ nouns:
     going where water goes.
 idlemessages:
 - The sound of the joined channel is the loudest
-  thing at this depth -- a low continuous motion
+  thing at this depth, a low continuous motion
   of water, felt in the stone underfoot.
 - 'The current in the channel is steady and does not
   vary: three rivers made into one, going somewhere

@@ -4,7 +4,7 @@ title: Overlook Rise
 description: >
   The chimney delivers you onto the bluff-top with an abruptness that
   steals the breath. Wind arrives from every direction at once, a
-  flat unbroken pressure that has nothing to push against up here --
+  flat unbroken pressure that has nothing to push against up here:
   no trees, no walls, nothing between you and the sky in any
   direction. The coulee opens below in a long curved scar, every
   room of it visible from this height, every approach laid bare.
@@ -23,7 +23,7 @@ exits:
   north:
     roomid: 5361
 nouns:
-  wind: The wind up here is not a gust but a fact -- a constant
+  wind: The wind up here is not a gust but a fact, a constant
     lateral pressure that leans against you and does not stop. It
     carries grit and the smell of dry stone and something faintly
     metallic, the smell of altitude itself. It has been doing this
@@ -39,7 +39,7 @@ idlemessages:
   every hollow, every place something might shelter or hide.
 - A loose chip of pale stone skitters across the <ansi fg="white">rise</ansi> and drops off
   the eastern edge without a sound.
-- The gusts carry faint sounds up from below -- distance blurs them
+- The gusts carry faint sounds up from below. Distance blurs them
   into something indistinct, neither voice nor wind.
 x: 48
 y: 11

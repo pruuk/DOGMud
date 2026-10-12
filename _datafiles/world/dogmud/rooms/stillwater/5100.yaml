@@ -6,7 +6,7 @@ description: >
   between the general store and the constabulary road, its
   narrow facade marked by a single carved
   <ansi fg="itemname">anchor-and-scales</ansi> above the
-  door. Inside, the room is small and deliberate — a
+  door. Inside, the room is small and deliberate: a
   scarred <ansi fg="itemname">counter</ansi> of dark pine
   spans the width of the space, and behind it a
   floor-to-ceiling <ansi fg="itemname">rack</ansi> of
@@ -19,7 +19,7 @@ description: >
   <ansi fg="itemname">strongbox</ansi> of lake-iron sits
   bolted low to the floor behind the counter, and a
   ledger the size of a small door lies open on the
-  writing slope beside it. This is the town's bank -- not
+  writing slope beside it. This is the town's bank, not
   vaulted marble but a working counting house, built for
   fishing skiffs and pearl merchants, not emperors.
 biome: interior
@@ -46,10 +46,10 @@ nouns:
   rack: A floor-to-ceiling array of narrow pigeonholes
     behind the counter, every slot holding a folded
     document tied with waxed cord. Most seals bear the
-    counting house's mark -- a pearl in an open shell
+    counting house's mark, a pearl in an open shell
     pressed into brown wax. A few are older, their wax
     gone dark with age. At the very top, a row of slate
-    tags names the groupings -- MOORAGE, CATCH BONDS,
+    tags names the groupings, MOORAGE, CATCH BONDS,
     PEARL ACCOUNTS, SHIP LETTERS, and one small slot
     with no label at all.
   strongbox: A heavy coffer of lake-iron, squat and
@@ -63,13 +63,13 @@ nouns:
     several different hands across several seasons. The
     current entries are neat and small. Pearl prices,
     skiff-loan payments, a few larger entries in red
-    ink that carry no names -- only account numbers.
+    ink that carry no names, only account numbers.
     The oldest pages at the back are water-stained and
     the ink has faded to the colour of marsh water.
   anchor and scales: A carved wood panel above the
     door, painted once and now weathered to bare grain
     in patches. It shows a ship's anchor crossed with
-    a merchant's beam-balance -- the traditional sign
+    a merchant's beam-balance, the traditional sign
     of a counting house in any harbor town. Someone
     has scratched a small pearl into the anchor's ring
     in fresher work, local amendment.
@@ -82,6 +82,6 @@ idlemessages:
 - A wax seal cracks as a document is folded and slotted into its pigeonhole.
 - The strongbox settles with a low metallic tick as the building shifts in the lake wind.
 - The clerk dips a pen, pauses to calculate, and makes a single small entry.
-- Through the narrow window, the smell of the lake briefly sharpens -- tide-turn.
+- Through the narrow window, the smell of the lake briefly sharpens, tide-turn.
 x: -7
 y: 1

@@ -2,7 +2,7 @@ roomid: 6240
 zone: The Confluence
 title: The Craft-Supply Stall
 description: >
-  More a permanent stall than a shop — its front wall
+  More a permanent stall than a shop: its front wall
   folds up entirely to reveal the shelving behind it,
   and the stock is arranged in the logic of whoever
   laid it in rather than any system a stranger might
@@ -14,7 +14,7 @@ description: >
   bins; bolts of undyed
   <ansi fg="itemname">thread</ansi>
   in various weights wound on card. The stall serves
-  all of the trades in the quarter and knows it — the
+  all of the trades in the quarter and knows it: the
   stock covers enough range that there is rarely a need
   to go further for basic materials. The smithy is to
   the west.
@@ -46,12 +46,12 @@ nouns:
     uses the same stock.
   the dye powder: >
     Dye powders in undyed cloth sacks labeled in the
-    stall-keeper's cramped hand — weld yellow, woad
+    stall-keeper's cramped hand: weld yellow, woad
     blue, madder red, oak-gall black. The sacks sit
     in a row on the second shelf, each tied off with
     a different color of cord to speed identification.
   the thread: >
-    Thread on card-wrapped bolts — linen thread in two
+    Thread on card-wrapped bolts: linen thread in two
     weights, a wool thread in three, and one bolt of
     something finer that the label calls silk-weight
     cotton, which it almost certainly is not, but which

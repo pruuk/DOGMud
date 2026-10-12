@@ -18,8 +18,8 @@ idlecommands:
     look for exactly the moment it takes to confirm they have been
     noted, then looks back at what he was doing.'
   - ''
-  - 'emote wipes the common table with a cloth from his belt —
-    unhurried, thorough — as though the table has his full
+  - 'emote wipes the common table with a cloth from his belt,
+    unhurried, thorough, as though the table has his full
     attention, which it does not.'
   - ''
   - 'emote turns his head at something happening in the yard,
@@ -28,13 +28,13 @@ activitylevel: 6
 character:
   name: Keeve
   description: |
-    Keeve runs Aldric's the way a good harbor pilot works a strait
-    — with exact knowledge of where the hazards are, minimal
+    Keeve runs Aldric's the way a good harbor pilot works a strait,
+    with exact knowledge of where the hazards are, minimal
     conversation about it, and a practiced ease that is not the
     same as inattention. He is a lean man of fifty or so, with a
     scar across his upper lip old enough to be simply part of his
     face. In lamplight the scar's edges hold a faint amber glow,
-    just perceptible in low light — a Chrysalis trace subtle
+    just perceptible in low light: a Chrysalis trace subtle
     enough that most guests never remark on it, which is how he
     prefers things to go generally. His house takes horses, takes
     people, charges fair rates, and takes no notice of anyone's

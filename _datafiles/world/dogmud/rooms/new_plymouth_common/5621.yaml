@@ -3,7 +3,7 @@ zone: New Plymouth Common
 title: The Fighting-Pit Gate
 description: >
   The sound of a crowd rises here in a muffled continuous
-  swell from somewhere below and behind the gate — the
+  swell from somewhere below and behind the gate. It is the
   particular sound of people watching something with
   concentrated attention, the kind that goes briefly
   louder and then settles back to its steady level. The
@@ -31,7 +31,7 @@ exits:
     roomid: 5623
 nouns:
   iron gate: A gate of heavy flat-bar iron, the bars
-    set at two-hand spacing — close enough that nothing
+    set at two-hand spacing, close enough that nothing
     wider than an arm will fit between them, leaving a
     view of a stairwell descending beyond into low
     yellow light. Steps are visible going down, well-
@@ -45,26 +45,26 @@ nouns:
     crossed in the way of someone who has been standing
     like this long enough that it has become a resting
     posture rather than a threat-display. His face has
-    been rearranged by his profession over the years —
-    a nose that has learned a new direction, a ridge
-    above one eye where bone has filled in wrong — but
+    been rearranged by his profession over the years,
+    with a nose that has learned a new direction and a ridge
+    above one eye where bone has filled in wrong, but
     his expression is more bored than hostile. He looks
     at you the way a door looks at someone who has not
     yet noticed it is locked.
 idlemessages:
 - The crowd-sound from below rises a half-tone and
-  then subsides — something happened, or almost
+  then subsides. Something happened, or almost
   happened, and is now over.
 - The bouncer uncrosses his arms, shifts his weight
   to the other foot, and crosses them again. He does
   not look at you.
-- A sound from behind the gate — footsteps on the far
-  side of the stair — and then nothing; whoever it was
+- A sound from behind the gate, with footsteps on the far
+  side of the stair, and then nothing; whoever it was
   did not come up.
 - The lock on the gate catches the light from above;
   it is well-oiled and recently used.
 - Somewhere below a voice rises briefly above the
-  crowd-level — sharp, authoritative — and the crowd-
+  crowd-level, sharp and authoritative, and the crowd-
   sound adjusts and settles.
 x: -3
 y: -82

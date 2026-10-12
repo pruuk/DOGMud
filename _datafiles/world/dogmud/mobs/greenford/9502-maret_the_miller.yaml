@@ -15,7 +15,7 @@ idlecommands:
     the texture through the weave without opening it, then nods once.'
   - ''
   - 'say Stone-ground this morning. Flour does not keep its
-    quality if you leave it sitting -- ask me if you need it.'
+    quality if you leave it sitting. Ask me if you need it.'
   - ''
   - 'emote tips a measure of flour from a scoop into a cloth bag,
     folds the top with three precise creases, and sets it on the
@@ -26,7 +26,7 @@ character:
   name: Maret the Miller
   description: |
     Maret the Miller runs the watermill at the landing with a
-    methodical precision that extends to everything she touches --
+    methodical precision that extends to everything she touches:
     the sacks are stacked by farm, the flour graded by stone-setting,
     and the millwheel schedule posted on the door in her own clear
     hand. She is square-shouldered and flour-dusted, with a

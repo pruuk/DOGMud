@@ -4,7 +4,7 @@ title: Wagon Ruts
 description: The road widens here, its surface packed hard by heavy
   traffic. Deep wagon ruts score the earth in parallel lines, wide-set
   for the large freight wagons that serve the farms. Active farmland
-  stretches on both sides -- low green crops in neat rows, fed by
+  stretches on both sides, with low green crops in neat rows, fed by
   narrow irrigation ditches that glint with water. The road is better
   maintained in this stretch, with gravel packed into the worst ruts
   and drainage channels cut along the edges.
@@ -26,7 +26,7 @@ nouns:
   crops: Low green rows of some root vegetable stretch across the fields
     on both sides of the road, their leaves broad and dark. Narrow
     irrigation ditches run between the rows, carrying water from some
-    unseen source. The plants have been recently tended -- weeded and
+    unseen source. The plants have been recently tended, weeded and
     hilled with fresh earth.
 spawninfo:
 - mobid: 258

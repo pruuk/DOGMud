@@ -12,7 +12,7 @@ description: >
   edge are cloven and deep-set in the softer ground, some of
   them fresh enough that the rim is still sharp. An old oak
   at the hollow's edge wears a long polished patch at boar-
-  shoulder height — the <ansi fg="itemname">scratching-tree</ansi>,
+  shoulder height: the <ansi fg="itemname">scratching-tree</ansi>,
   its bark smooth and dark where years of coarse-haired backs
   have worked against it. A persistent low cloud of small
   <ansi fg="itemname">flies</ansi> hangs over the wallow;
@@ -30,13 +30,13 @@ exits:
 nouns:
   wallow mud: |
     Grey-brown and thick, the mud at the hollow's centre
-    is churned to a soft paste by repeated use — it holds
+    is churned to a soft paste by repeated use. It holds
     prints for days and smells of wet earth and pig both
     at once. The deepest part would take a boot to the
     knee without much argument.
   hoof prints: |
     Cloven-hoof prints ring the wallow in the softer earth
-    around its edge — overlapping, various sizes, some older
+    around its edge. They overlap, in various sizes, some older
     and softened and some recent enough that the pressed rim
     is still standing. At least two animals, by the spread
     of the tracks.

@@ -5,7 +5,7 @@ description: >
   A small open clearing in the marsh where the reeds pull
   back around a still shallow pool, leaving a pocket of
   open air above dark water. The pocket belongs to the
-  <ansi fg="itemname">dragonflies</ansi> — more here than
+  <ansi fg="itemname">dragonflies</ansi>, more here than
   anywhere else in the marsh, hunting in constant low
   arcs over the surface, their wings carrying a continuous
   fine buzz that underlies everything else. The
@@ -16,7 +16,7 @@ description: >
   as precise territory, intercepting anything small that
   crosses the open water. The
   <ansi fg="itemname">mosquito-thinning</ansi> is immediate
-  and noticeable — the biting is lighter here than anywhere
+  and noticeable. The biting is lighter here than anywhere
   else in the zone, a welcome relief.
 biome: water
 coord:
@@ -34,32 +34,32 @@ exits:
     roomid: 4194
 nouns:
   dragonfly: |
-    A large dragonfly working the pool — body the length of
+    A large dragonfly working the pool, with a body the length of
     a finger, wings clear and shimmering, colours metallic
     blue and copper and dark green depending on the angle.
     It moves with bursts of speed and abrupt stops,
     repositioning mid-air without apparent effort.
   dragonflies: |
-    Large dragonflies work the pool in overlapping arcs —
-    body the length of a finger, wings clear and shimmering,
+    Large dragonflies work the pool in overlapping arcs.
+    Each body is the length of a finger, wings clear and shimmering,
     colours metallic blue and copper and dark green depending
     on the angle. They move with bursts of speed and abrupt
     stops, repositioning mid-air without apparent effort.
   iridescence: |
     The dragonflies catch the light in brief metallic
-    flashes — blue from one angle, green from another,
+    flashes: blue from one angle, green from another,
     copper at the edge of vision as they turn. The glade
     is brighter for them; the colours are richer than the
     surrounding grey-green marsh.
   hunt pool: |
-    A small still pool the dragonflies claim as territory —
-    shallow and clear, weeds visible on the bottom, open
+    A small still pool the dragonflies claim as territory.
+    It is shallow and clear, weeds visible on the bottom, open
     water above. Any small flying insect that crosses the
     pool is taken almost before it registers. The pool
     itself is calm; the air above it is not.
   mosquito thinning: |
     The mosquitoes are noticeably scarcer here than in the
-    surrounding marsh — the dragonflies eat them throughout
+    surrounding marsh. The dragonflies eat them throughout
     the day. The relief is immediate on entering the glade.
     Foragers know to rest here when the biting elsewhere
     becomes oppressive.

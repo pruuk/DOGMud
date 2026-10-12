@@ -7,7 +7,7 @@ description: >
   in slow tongues at your boots. A row of lobed wicker
   <ansi fg="itemname">crab traps</ansi> sits drying along
   the high-water line, woven from soaked withies and weighted
-  with stones — the local way of catching the freshwater
+  with stones. It is the local way of catching the freshwater
   crayfish that scuttle through the shallows here. The
   <ansi fg="itemname">water line</ansi> is marked with a
   long ribbon of dried weed and small bleached bivalve
@@ -31,7 +31,7 @@ nouns:
     the gravel, woven from soaked withies and weighted
     with smooth river-stones. Each has a narrow inward
     funnel that lets a freshwater crayfish in but not
-    out — the local way of catching the small clawed
+    out. It is the local way of catching the small clawed
     things that scuttle through the shallows. A few of
     the older traps show weed-tangled bait still
     clinging in the bottom.
@@ -40,11 +40,11 @@ nouns:
     and a few crayfish-claw fragments, marking where
     the lake reached at last full water. The clams are
     the kind harvested by anyone with patience and a
-    bucket — the meat goes into the chowder at the
+    bucket. The meat goes into the chowder at the
     inn, the shells into a midden behind the
     fishmonger's table.
   freshwater clams: Small bleached bivalve shells
-    scatter the high-water line — the meat-filled live
+    scatter the high-water line. The meat-filled live
     ones are out in the shallows, half-buried in the
     silt, but you can see the dimpled shadows of them
     when the surface goes still. A bucket and an
@@ -59,18 +59,18 @@ nouns:
     water-rounded gravel, rolling and clicking
     underfoot. Each step sounds louder than your
     weight should warrant. Skipping-stones in
-    abundance — flat, palm-sized, perfect for the
+    abundance, flat, palm-sized, perfect for the
     long arcing throws.
 hidden_nouns:
   loose driftwood:
     description: |
       A wedge of driftwood, set just inside the larger log,
-      shifts when you press it — and beneath it, half-buried
+      shifts when you press it, and beneath it, half-buried
       in the gravel, is a small oilskin pouch that someone has
       cached here recently. The cache is empty for now.
       A fisherman's discreet stash, perhaps; or a smuggler's.
     hidden_description: |
-      A wedge of smaller driftwood is set just inside the larger log — too neat to be the lake's work.
+      A wedge of smaller driftwood is set just inside the larger log, too neat to be the lake's work.
 idlemessages:
 - A pebble shifts under the lap of a small wave with a flat dry click.
 - A gull drops onto the driftwood log, considers you, and lifts away.

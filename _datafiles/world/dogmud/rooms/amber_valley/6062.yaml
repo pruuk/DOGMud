@@ -2,7 +2,7 @@ roomid: 6062
 zone: Amber Valley
 title: The General Store
 description: >
-  The light dims and cools as you step in, and a hundred smells crowd together —
+  The light dims and cools as you step in, and a hundred smells crowd together:
   dried beans and twine, lamp-oil and soap, the dusty sweetness of grain in open
   sacks. Motes drift in the bars of sun that slant through a small front window.
 
@@ -22,7 +22,7 @@ exits:
   east: {roomid: 6059}
 nouns:
   the shelves: >
-    Floor-to-ceiling planks crammed with the valley's dry goods — folded cloth,
+    Floor-to-ceiling planks crammed with the valley's dry goods: folded cloth,
     coiled cord, jars of seed, tins of oil, stacked candles, a drawer-wall of nails
     and pins and buttons sorted by size. A sliding ladder leans against one run to
     reach the high stock. Nothing is labeled; the keeper plainly carries the whole
@@ -30,7 +30,7 @@ nouns:
   the counter: >
     A long wooden counter worn glassy at the elbows, a polished brass scale at one
     end and a fat ledger at the other. The ledger's pages are dense with names and
-    running tallies — half the valley buys on account here and squares up at
+    running tallies. Half the valley buys on account here and squares up at
     harvest, which the keeper records in a small, patient, unhurried hand.
   the sacks: >
     Burlap sacks slouched open against the counter, scoops standing in dried

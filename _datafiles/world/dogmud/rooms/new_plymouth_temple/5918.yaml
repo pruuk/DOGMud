@@ -1,19 +1,19 @@
 roomid: 5918
 zone: New Plymouth Temple
-title: The Restricted Collection — Door
+title: The Restricted Collection, Door
 description: >
   The passage ends at a door of iron-banded oak
   set in a frame that has been reinforced from
-  this side with additional stone — a later
+  this side with additional stone, a later
   addition, the mortar a slightly different color
   from the original wall. The door has no handle
   on this side. It has no visible keyhole on this
   side. It is not locked in the way that things
-  that can be unlocked are locked — it does not
+  that can be unlocked are locked. It does not
   open from this side, and the distinction matters.
   The <ansi fg="itemname">sealed-door</ansi> is the
   boundary. On the other side of it is the temple's
-  Restricted Collection — materials gathered over
+  Restricted Collection, materials gathered over
   three centuries of the faith's presence in this
   region, their subjects unknown to anyone not
   granted access by the canon, their existence
@@ -33,8 +33,8 @@ exits:
   south:
     roomid: 5917
 nouns:
-  sealed door: Iron-banded oak on reinforced stone
-    — the banding is old work, the bands running
+  sealed door: Iron-banded oak on reinforced stone.
+    The banding is old work, the bands running
     both horizontal and diagonal across the door's
     face, riveted into the wood at intervals. The
     iron has gone a deep grey-brown with age. On
@@ -43,12 +43,12 @@ nouns:
     flush in its frame without gap; if it has
     hinges they are on the other side. The stone
     reinforcement added to the frame is a generation
-    newer than the door itself — added after,
-    tightening the fit. Someone at some point
+    newer than the door itself. It was added
+    after, tightening the fit. Someone at some point
     decided the original installation was not
     sufficient. The catalog acknowledges the
     Restricted Collection's existence by volume
-    count — three hundred and twelve items, as of
+    count of three hundred and twelve items, as of
     the last inventory. The inventory was
     conducted nine years ago. The catalog does
     not record what the items are. Whatever is
@@ -56,8 +56,8 @@ nouns:
     for the mortar of the reinforcement to have
     gone the color of the original wall.
 idlemessages:
-- The door at the passage's end offers nothing
-  — no sound through it, no gap around it, no
+- The door at the passage's end offers nothing.
+  There is no sound through it, no gap around it, no
   sense that it has recently been opened.
 - The reinforced stone around the door frame
   is seamless work, well-settled. It was done

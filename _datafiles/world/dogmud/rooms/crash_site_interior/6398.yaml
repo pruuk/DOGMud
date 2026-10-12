@@ -4,18 +4,18 @@ title: The Oracle Gallery
 biome: interior
 description: >
   West of the deck the grey opens into a long gallery, and the whole far
-  wall of it is light. Not the cold sourceless glow of the halls — a wall
+  wall of it is light. Not the cold sourceless glow of the halls: a wall
   of moving light, deep and wide as a night sky, and it is a sky: black
   shot through with a thousand thousand steady fires, wheeling slow and
   patient across the grey as though the room looked out through the hull
   and the world and out the other side into somewhere else entirely. And
   it is somewhere else. Among the wheeling fires hangs a single blue world
   turning, ringed in white cloud, small with distance and dwindling as you
-  watch — a shore receding, held here in light so that whoever came after
+  watch: a shore receding, held here in light so that whoever came after
   would see what those inside had seen: a sky that is not this world's sky,
   and a small blue turning place shrinking away to a star. You do not have
   the words for it. You have only the certainty that it is real, and that
-  it is not of here, and that someone made it to be remembered by — and the
+  it is not of here, and that someone made it to be remembered by, and the
   cold sense, standing before it, that the whole of what this place is lies
   just past the edge of understanding, waiting somewhere close to be read.
   The gallery is very quiet. It is a hard thing to stand before. North the
@@ -28,7 +28,7 @@ exits:
     roomid: 6399
 nouns:
   wall: >
-    The whole far side of the gallery, made all of moving light — a window
+    The whole far side of the gallery, made all of moving light: a window
     that does not look on the highland or the dark of the hull but out
     into a vast patient blackness strewn with steady fires, wheeling slow.
     It is a sky, and it is not this world's sky. It was set here to be
@@ -42,7 +42,7 @@ nouns:
     star at all.
   blue world: >
     A single small orb turning among the fires, wrapped in white cloud over
-    deep blue, and dwindling — held in the light at the moment of its
+    deep blue, and dwindling, held in the light at the moment of its
     leaving, the way you would hold the last sight of a shore. It was home
     to whoever rode this thing down into the buried dark. They watched it
     grow small. They kept the watching here, so it would not be lost when

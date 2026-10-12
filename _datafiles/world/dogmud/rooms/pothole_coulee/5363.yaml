@@ -3,7 +3,7 @@ zone: Pothole Coulee
 title: Windward Nest
 description: >
   The rock on the bluff's eastern face has split and heaved into a
-  rough hollow -- not deep enough to be a cave, but sheltered enough
+  rough hollow, not deep enough to be a cave, but sheltered enough
   to be worth something. The windward side catches and deflects the
   prevailing gusts, leaving the interior almost calm while the rest
   of the bluff roars. It is a sniper's roost, tucked out of the
@@ -24,11 +24,11 @@ spawninfo:
 nouns:
   nest: The nest is a natural hollow improved by use. The floor is
     worn smooth by boots and waiting. The opening angle was chosen
-    deliberately -- whoever settled here could observe the perch and
+    deliberately, whoever settled here could observe the perch and
     the eastern approaches without being visible from below or from
     the main line of travel across the bluff.
-  rock: The split rock that forms the nest's walls is old work --
-    frost and time, not tools. But the person who found it recognized
+  rock: The split rock that forms the nest's walls is old work,
+    made by frost and time, not tools. But the person who found it recognized
     what it offered. The stone is dark on one face where a small fire
     burned, once or many times, cupped from the wind by the hollow.
 idlemessages:

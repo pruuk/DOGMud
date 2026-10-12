@@ -5,14 +5,14 @@ description: >
   The bog gives out entirely here. The quaking mat
   narrows to a band perhaps two paces wide and then the
   ground rises sharply onto a dry
-  <ansi fg="itemname">upland-shoulder</ansi> — firm
+  <ansi fg="itemname">upland-shoulder</ansi>, firm
   underfoot for the first time since the marshland entry,
   the change as abrupt as a threshold. Open sky replaces
   the close marsh canopy; the
   <ansi fg="itemname">pale-grass</ansi> of the steppe
   bends in a constant south wind, the same pale tan grass
   the Dustwalk shows in its drier stretches. The
-  <ansi fg="itemname">south-horizon</ansi> is unbroken —
+  <ansi fg="itemname">south-horizon</ansi> is unbroken:
   treeless, windswept, a long pale line where upland
   grass meets sky. The Dustwalk is somewhere out there.
   You do not go that way today. Looking back north,
@@ -31,7 +31,7 @@ exits:
 nouns:
   upland shoulder: |
     A low shoulder of dry firm upland rising sharply from
-    the bog edge — the transition is dramatic, a band
+    the bog edge. The transition is dramatic, a band
     perhaps two paces wide where wet quaking mat gives
     over to dry packed earth and grass. The ground here
     does not move underfoot. After the bog it feels
@@ -39,18 +39,18 @@ nouns:
   pale grass: |
     Knee-high pale tan upland grass bends in the south
     wind, the blades moving in long even waves. It is the
-    same grass the Dustwalk shows in its drier stretches —
-    distinctly not marsh vegetation, adapted to exposure
+    same grass the Dustwalk shows in its drier stretches.
+    It is distinctly not marsh vegetation, adapted to exposure
     and wind rather than water and shade.
   south horizon: |
-    The horizon south is unbroken steppe — pale grass and
+    The horizon south is unbroken steppe, with pale grass and
     scattered round stones stretching to a long line where
     land meets sky. The Dustwalk is somewhere out there
     beyond sight. You do not go that way today; the marsh
     path behind you leads back to Stillwater.
   marsh edge: |
     Looking back north the marsh ends sharply at the bog
-    edge — green wet bog one moment, dry pale grass the
+    edge: green wet bog one moment, dry pale grass the
     next. The foragers say the change is older than the
     watermill, older than Stillwater town, older than
     anyone can usefully remember.

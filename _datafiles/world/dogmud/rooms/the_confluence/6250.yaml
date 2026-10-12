@@ -5,7 +5,7 @@ description: >
   The paved road running east out of the Confluence,
   the gate arch behind to the west, the country opening
   ahead. This is the first stretch of the Greenford
-  road beyond the city wall — the paving is maintained
+  road beyond the city wall: the paving is maintained
   here, firm and even, kept by the same guild that
   tends the city's other arteries. A stone
   <ansi fg="itemname">milestone</ansi>
@@ -33,7 +33,7 @@ nouns:
     below it a distance in league-marks. The stone is
     old, its edges weathered, but the letters are
     clear enough. Beyond this marker the road runs
-    into open country — it is a long walk, and people
+    into open country. It is a long walk, and people
     who travel it prepare first.
 idlemessages:
 - The paving runs east from the gate, firm and even,

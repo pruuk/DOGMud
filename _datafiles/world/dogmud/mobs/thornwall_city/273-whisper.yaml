@@ -21,7 +21,7 @@ idlecommands:
   - 'emote makes a notation in a small coded ledger with a stub of
     charcoal'
   - ''
-  - 'emote glances at you briefly -- measuring, categorizing -- then
+  - 'emote glances at you briefly, measuring, categorizing, then
     looks away'
   - ''
 activitylevel: 10
@@ -34,7 +34,7 @@ character:
     small coded ledger open on the table; and a listening posture that
     suggests they registered every sound you made entering this room
     before you came through the door. Whisper deals in information,
-    tools, and discretion -- in that order of value. They speak quietly
+    tools, and discretion, in that order of value. They speak quietly
     enough that you have to lean in to hear, which means they can see
     your face and you cannot see theirs. This is probably intentional.
   speciesid: 1

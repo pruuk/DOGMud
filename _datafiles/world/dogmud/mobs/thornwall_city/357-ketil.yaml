@@ -25,7 +25,7 @@ knows_facts:
   - thornwall-caravan-trade
 hostile: false
 non_combatant: false             # crew fights bandits
-player_attack_immune: true       # players cannot attack -- rebuff like shopkeepers
+player_attack_immune: true       # players cannot attack, rebuff like shopkeepers
 maxwander: -1                    # -1 = unlimited; caravan crosses zones
 activitylevel: 15                # ~15% chance/tick to fire an idlecommand
 charm_immune: true
@@ -49,7 +49,7 @@ character:
   speciesid: 1
   level: 1
   gold: 50
-  # Equipment TBD -- defaulting to fists for v1 stat-pool tuning. If
+  # Equipment TBD, defaulting to fists for v1 stat-pool tuning. If
   # fights at 4052 don't go the caravan's way, kit Ketil with a real
   # weapon/shield/armor from items/.
   stats:

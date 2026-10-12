@@ -8,7 +8,7 @@ description: >
   back door opens here for deliveries and outbound
   stock, and a <ansi fg="itemname">lean-to</ansi> against
   the south face of the building provides the minimal
-  shelter of someone who has been given just enough —
+  shelter of someone who has been given just enough:
   a folding stool, a cup bleached by weather, the rest
   of it arrangement rather than comfort. Running both
   walls at shoulder height, <ansi fg="itemname">hook-strips</ansi>
@@ -16,7 +16,7 @@ description: >
   frames, and a pair of leather gloves that have been
   forgotten for some time. The floor is uneven stone.
   The smell is the lab's chemical atmosphere diluted
-  by the alley's open air — a thin version of what
+  by the alley's open air. It is a thin version of what
   fills the workshop proper, still unmistakable.
 biome: city_backstreet
 coord:
@@ -32,7 +32,7 @@ nouns:
     at a slope to shed rain. Under it, a folding stool
     wedged to hold steady on the uneven stone, and a
     ceramic cup on a wooden block beside it. The cup
-    is bleached by weather and use — it has been here
+    is bleached by weather and use. It has been here
     through several seasons. The lean-to's tin roof
     makes a hollow sound when rain falls, audible
     through the lab's back door, which is how whoever
@@ -50,14 +50,14 @@ nouns:
 idlemessages:
 - The tin roof of the lean-to settles with a small tick
   as temperature changes.
-- The alley smells of the lab behind the back door —
+- The alley smells of the lab behind the back door,
   chemical and faint heat, different from the open
   air just around the corner.
 - A reagent-frame on the hook-strip rotates slightly
   in the draft from the lab door.
 - The folding stool under the lean-to is empty, but
   the cup beside it is right-side-up.
-- The alley ends at a plain timber wall — no exit,
+- The alley ends at a plain timber wall with no exit,
   no gap. Just the end of the passage.
 spawninfo:
   - mobid: 9341

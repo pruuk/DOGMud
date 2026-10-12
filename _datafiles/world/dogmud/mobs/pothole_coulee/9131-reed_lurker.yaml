@@ -32,7 +32,7 @@ character:
   description: |
     In still water, among reeds that move in the same slow rhythm, the
     reed lurker is invisible. The banded olive-and-black scales were made
-    for this -- not evolved for it in any natural sense, but arrived at
+    for this, not evolved for it in any natural sense, but arrived at
     over many generations of the marsh selecting for the things that
     survived. It is long, heavier than it looks, and it strikes without
     any preliminary tension or warning posture that a person could learn
@@ -45,7 +45,7 @@ character:
   level: 1
   gold: 0
   items:
-    - itemid: 20052   # Sturdy Leather Boots — loot-lesson drop
+    - itemid: 20052   # Sturdy Leather Boots, loot-lesson drop
   stats:
     dexterity:
       base: 134

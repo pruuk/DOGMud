@@ -3,7 +3,7 @@ zone: The Fernway
 title: Old Weddell Farmstead
 description: >
   The side-track from Twin Oaks Bend ends at a small
-  abandoned <ansi fg="itemname">farmstead</ansi> — a
+  abandoned <ansi fg="itemname">farmstead</ansi>, a
   collapsed cottage of timber and field-stone, the roof
   long gone, the walls open to the sky. The yard around it
   has gone back to wild grass and bracken, but the
@@ -11,7 +11,7 @@ description: >
   is still visible in the regular rows of escaped herbs
   that have outlived the cooking they once served. A
   twisted old <ansi fg="itemname">apple tree</ansi> still
-  bears small bitter fruit at the yard's eastern edge —
+  bears small bitter fruit at the yard's eastern edge. It is
   the only thing the Weddells left that endures. The
   silence here is different from the trail's; this is the
   silence of a place once lived in.
@@ -27,13 +27,13 @@ nouns:
   farmstead: A small collapsed cottage of mortared
     field-stone and rotted timber, the roof long gone
     and the walls open to the sky. The shape of three
-    rooms is still readable in the foundation —
-    kitchen with hearth, sleeping-room, small back
+    rooms is still readable in the foundation, with a
+    kitchen hearth, a sleeping-room, and a small back
     pantry. A child's tin cup rusted past use lies
     where a window-sill once was.
   kitchen garden: The regular rows of escaped herbs
-    are still visible in the yard's western half —
-    rosemary gone wild and woody, sage in low silver
+    are still visible in the yard's western half.
+    Rosemary gone wild and woody, sage in low silver
     clumps, mint that has taken over more than its
     share, thyme along what would have been a stone
     path edge. A forager could fill a basket here

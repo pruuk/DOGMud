@@ -6,7 +6,7 @@ description: >
   mark the way where the reeds crowd in thick on either side. Trampled
   grass gives out to bare earth, then to soft mud that holds the shape
   of every boot that has passed before yours. The air shifts as you
-  descend -- the raw smell of the wash above softening into something
+  descend: the raw smell of the wash above softening into something
   greener, cooler, threaded through with a faint herb-scent rising from
   the hollow below. The path bends south, worn smooth by use, and
   somewhere below the reeds the low murmur of still water waits.
@@ -36,6 +36,6 @@ nouns:
     whisper. Somewhere among them, water sits quiet and dark.
 idlemessages:
 - The <ansi fg="itemname">reeds</ansi> shiver along the path as a breath of cool air rises from the hollow below.
-- Something moves softly in the reed beds -- a rustle, then stillness.
+- Something moves softly in the reed beds, a rustle, then stillness.
 x: 46
 y: 22

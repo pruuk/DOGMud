@@ -6,11 +6,11 @@ description: >
   a sunlit hollow where the canopy pulls back and the sky
   shows clear overhead. The warmth of the open patch is
   immediate and real. An old oak at the hollow's centre has
-  a wax-darkened hollow a body's-length up its trunk — the
-  <ansi fg="itemname">bee-tree</ansi> — and a steady traffic
+  a wax-darkened hollow a body's-length up its trunk, the
+  <ansi fg="itemname">bee-tree</ansi>, and a steady traffic
   of honeybees comes and goes from its lip in a low constant
   stream. The air here carries a fat wax-warmth and the thin
-  clean edge of honey — not sweet exactly, but close to it.
+  clean edge of honey. It is not sweet exactly, but close to it.
   A loose drift of the <ansi fg="itemname">swarm</ansi> hangs
   around the upper branches, wholly absorbed, paying no
   attention to the ground below. The
@@ -41,7 +41,7 @@ nouns:
     anything below; the work is everything.
   honeycomb: |
     The honeycomb is just visible at the lip of the bee-tree's
-    hollow — darkened with layers of old wax, the cells
+    hollow, darkened with layers of old wax, the cells
     packed close. The outermost edge is open to the air and
     the colour of dark amber.
   sun patch: |

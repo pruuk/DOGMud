@@ -7,7 +7,7 @@ description: >
   are worth it for the look of the thing. From this shoulder of high
   ground the valley lies spread like a map thrown down: a great warm bowl
   of farmland hazed gold to the far hills, and across it, stitched in vivid
-  living green, the <ansi fg="itemname">irrigation channels</ansi> — a
+  living green, the <ansi fg="itemname">irrigation channels</ansi>, a
   branching silver-green tracery of water carrying the high country's
   snowmelt out across the dry gold fields. Smoke stands up straight from
   far-off steadings; a town glints small and pale where the channels
@@ -36,7 +36,7 @@ nouns:
     what you are looking at, feeling the same lift of the heart.
   town: >
     Far off where the green channels gather thickest, a pale smudge of
-    walls and roofs catches the afternoon light — the valley's market town,
+    walls and roofs catches the afternoon light: the valley's market town,
     a long day's easy walk down the descending road. Even at this distance
     you can make out the dark stipple of orchards crowding close around it.
 idlemessages:

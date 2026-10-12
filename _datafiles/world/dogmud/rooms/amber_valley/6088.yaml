@@ -3,7 +3,7 @@ zone: Amber Valley
 title: The Markers' Walk
 description: >
   A narrow path winds east among the old trunks, and it is lined on both
-  sides with standing stones — the <ansi fg="itemname">memorial markers</ansi>
+  sides with standing stones, the <ansi fg="itemname">memorial markers</ansi>
   of the valley's most remembered Bloomings. They are not graves. No one is
   buried here; the marked ones lived long lives and many are living still.
   The stones are remembrances, raised so the change each person carried is
@@ -39,8 +39,9 @@ nouns:
     started: KESS, WHOSE SHADOW MOVES A HEARTBEAT BEFORE SHE DOES. The
     keepers carve them with the same love as the rest. If anyone has noticed
     that the recent Bloomings come on stranger and more dramatic than the
-    old — that the gentle wings and bark-skin of the elder stones have given
-    way to changes harder to name — no one here has thought to say it aloud.
+    old, and that the gentle wings and bark-skin of the elder stones have
+    given way to changes harder to name, no one here has thought to say it
+    aloud.
   light:
     >
     The dappled light moves slowly along the row of stones, finding a carved

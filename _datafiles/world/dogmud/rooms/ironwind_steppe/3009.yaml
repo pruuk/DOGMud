@@ -1,8 +1,8 @@
 roomid: 3009
 zone: Ironwind Steppe
 title: Steppe Margin
-description: The last of the city's detritus -- broken pottery, a
-  rotting fence rail, a sun-bleached animal skull -- lies scattered
+description: The last of the city's detritus (broken pottery, a
+  rotting fence rail, a sun-bleached animal skull) lies scattered
   in the grass here, marking the final edge of civilization's reach.
   Beyond this point the steppe is untouched, rolling eastward in
   long swells of silver-green grass under a vast sky. The ground
@@ -35,7 +35,7 @@ spawninfo:
 - mobid: 202
 - mobid: 233
 idlemessages:
-- The wind carries a distant howl -- a dog, or perhaps a wolf.
+- The wind carries a distant howl. A dog, or perhaps a wolf.
 - Grass seeds drift past on the breeze like tiny parachutes.
 - A ground squirrel pops up from a hole, looks around, and vanishes.
 x: 21

@@ -10,7 +10,7 @@ groups:
   - humanoid
   - bandits
 idlecommands:
-  # Hidden ambusher — visible idle emotes break the stealth illusion.
+  # Hidden ambusher: visible idle emotes break the stealth illusion.
   # Keep `sneak` (re-hides when the condition/FSM lapses) and empty
   # strings (skip-this-tick) so the mob stays unobtrusive between
   # ambush attempts.
@@ -33,7 +33,7 @@ character:
     Better dressed than the bandits further west, this one wears a
     hooded cloak over decent clothing. The highwayman has the look of someone
     who was once
-    legitimate -- a discharged soldier, perhaps, or a tradesman who fell on
+    legitimate, a discharged soldier, perhaps, or a tradesman who fell on
     hard times. The city's expansion has created a class of displaced people
     who know the roads well and have few options left. This one has chosen
     the option that pays.

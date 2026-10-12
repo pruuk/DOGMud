@@ -2,7 +2,7 @@ roomid: 4123
 zone: Stillwater
 title: Temple of Stillwater
 description: >
-  The sound is the first thing — a steady soft trickle of
+  The sound is the first thing: a steady soft trickle of
   water from a dark stone <ansi fg="itemname">font</ansi>
   set into the temple's western wall, the basin overflowing
   in a thin sheet to a runnel below that returns the water
@@ -41,7 +41,7 @@ nouns:
   font: A dark stone basin set into the western wall,
     waist-high, overflowing in a thin steady sheet to
     a stone runnel below. The runnel returns the water
-    somewhere into the temple's foundation — the
+    somewhere into the temple's foundation. The
     spring beneath the building has fed the font for
     longer than the present temple has stood. Pilgrims
     dip their fingers in passing; some drink.
@@ -64,26 +64,26 @@ nouns:
     pair lets in steadier indirect light through
     most of the day.
   mosaic: A worn flagstone mosaic covers the central
-    floor — a leaping pike enclosed in a simple
+    floor, a leaping pike enclosed in a simple
     circle, the tiles laid generations ago in
     blue-grey and bone-white slate. The pattern is
     older than the current Chrysalis theology and
     most of the temple's functionaries simply do not
     discuss what it might once have meant.
   stair: A narrow plank stair climbs the southern
-    wall to a small upper room — Mother Vasse the
+    wall to a small upper room, Mother Vasse the
     pearl-carver's bench, by long-standing
     arrangement with the temple. Worshippers leave
     her alone and she leaves them alone, and the
     arrangement suits both.
   spring: The water source itself is somewhere
-    beneath the temple — pilgrims who have asked
+    beneath the temple. Pilgrims who have asked
     are told only that the spring has fed the font
     for as long as anyone remembers, and that the
     present building sits where it does because the
     spring sat there first.
   lockbox: A sturdy iron-banded oak lockbox tucked
-    behind one of the altar's flanking columns —
+    behind one of the altar's flanking columns,
     Tova the marsh forager's, by some long-standing
     arrangement with the temple. The lid latches
     flush, the hasp worn smooth from years of

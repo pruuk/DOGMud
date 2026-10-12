@@ -10,7 +10,7 @@ description: >
   whoever built it. A heavy oak table dominates the center, its
   surface scarred with burn marks and stained with reagent spills
   in colours that do not occur in nature. This is not a hermit's
-  pantry -- it is a laboratory, maintained with the discipline of
+  pantry. It is a laboratory, maintained with the discipline of
   someone who has been doing serious work for a very long time.
 biome: cave
 coord:
@@ -24,7 +24,7 @@ nouns:
   shelves: >
     Floor-to-ceiling shelving carved into the hillside rock, each
     shelf packed tight with containers. The arrangement follows a
-    logic -- similar shapes grouped together, labels in a personal
+    logic, with similar shapes grouped together, labels in a personal
     shorthand scratched into the wood. Some jars pulse faintly
     with chrysalis energy. Others are deliberately sealed with
     wax and stored facing the wall.
@@ -39,11 +39,11 @@ nouns:
     different liquid or powder. The colours range from pale gold
     to deep violet to a black that seems to absorb light. None
     are labelled for an outsider. The stoppers are sealed with
-    chrysalis resin -- airtight, permanent until broken.
+    chrysalis resin. The seal is airtight and permanent until broken.
   burn marks: >
     Scorch patterns on the table surface, some deliberate and
     some clearly accidental. The deliberate ones form geometric
-    patterns -- containment circles, perhaps, or focusing guides
+    patterns, perhaps containment circles or focusing guides
     for channeling chrysalis energy. The accidental ones are
     larger and more chaotic. Experiments that did not go as
     planned.
@@ -52,7 +52,7 @@ idlemessages:
   then goes dark.
 - The mineral smell of chrysalis compound intensifies briefly,
   then fades.
-- Something ticks inside one of the sealed containers -- a slow,
+- Something ticks inside one of the sealed containers, a slow,
   irregular rhythm.
 x: -1
 y: 11

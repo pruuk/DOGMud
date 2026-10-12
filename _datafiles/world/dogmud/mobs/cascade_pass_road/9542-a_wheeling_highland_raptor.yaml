@@ -34,12 +34,12 @@ character:
   name: A Wheeling Highland-Raptor
   description: |
     A large bird of prey that rides the thermal columns off the
-    pass face -- wide-winged, unhurried, moving in long circles
+    pass face: wide-winged, unhurried, moving in long circles
     hundreds of feet up. It rarely lands and rarely needs to.
     The talons are built for gripping and the beak for tearing,
     and it has the keen, unhurried patience of something that can
     afford to wait for exactly the right moment. When it stoops,
-    there is almost no warning -- the shape drops out of the sky
+    there is almost no warning: the shape drops out of the sky
     fast and without sound, and by the time you register it, it
     has already committed.
   speciesid: 9

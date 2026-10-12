@@ -10,7 +10,7 @@ description: >
   room front-to-back, and behind it a heavy iron
   <ansi fg="itemname">strongbox</ansi> sits bolted to the
   floor in the corner. The northern wall holds a layered
-  <ansi fg="itemname">bounty board</ansi> — a patchwork of
+  <ansi fg="itemname">bounty board</ansi>, a patchwork of
   wanted notices, bounty offers, public-record entries, and
   faded curling sheets that no one has been bothered to take
   down. The back of the room is closed off by a row of thick
@@ -58,7 +58,7 @@ nouns:
     what's open. A fresher notice is pinned at eye level,
     doubling the reward for the lake-cave bounty.
   postings: A thick layered patchwork of paper across the
-    northern wall — wanted notices, bounty offers,
+    northern wall, wanted notices, bounty offers,
     public-record entries, bait-shop hours, and various
     notices from town council. The older sheets curl at
     the corners and bleed through the newer in damp
@@ -72,7 +72,7 @@ nouns:
     bars are polished smooth at hand-height by every drunk
     and pickpocket the constable has ever housed here.
   cell: A single small holding-cell behind the iron bars at
-    the back of the room — three walls of mortared
+    the back of the room, three walls of mortared
     lake-stone cool to the touch even in summer, a wooden
     plank bench long enough for a grown person to stretch
     out on, a folded grey blanket at one end, and a wooden
@@ -82,13 +82,13 @@ nouns:
     mark tally-counts and one carved fish from a previous
     occupant's afternoon.
   bench: Visible through the bars at the back of the
-    room — a long plank of weathered pine pegged to the
+    room, a long plank of weathered pine pegged to the
     cell's back wall, wide enough to stretch out on and
     worn smooth in the middle where every prisoner has
     eventually given up and lain down. A folded wool
     blanket sits at one end, coarse and clean and faintly
     smelling of cedar.
-  slop bucket: Visible in the cell's far corner — a wooden
+  slop bucket: Visible in the cell's far corner, a wooden
     bucket with a tight-fitting lid. The lid takes a plain
     iron handle that has been polished bright by use. The
     constable empties it daily; on the rare occasions he

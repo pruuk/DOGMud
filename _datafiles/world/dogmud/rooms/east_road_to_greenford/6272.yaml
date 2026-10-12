@@ -2,7 +2,7 @@ roomid: 6272
 zone: East Road to Greenford
 title: The Falling Ground
 description: >
-  The plateau tips here — not sharply, but you feel it in
+  The plateau tips here, not sharply, but you feel it in
   your legs after a mile of flat: the road is descending
   into lower country. The wheat continues on both sides but
   the crop here is different, the stalks shorter, the heads
@@ -18,14 +18,14 @@ exits:
 nouns:
   the descending road: >
     The road tilts east in a long even grade, the survey
-    work careful — no sudden drop, just a steady declension
+    work careful: no sudden drop, just a steady declension
     that carries you down without effort. The road-builder
     knew what they were doing. Someone planned this descent
     from the top and laid it out so you would not notice it
     until you were already a third of the way down.
   the horizon: >
     A few degrees lower than the sky behind you, and the
-    light coming off it is different — brighter, with more
+    light coming off it is different: brighter, with more
     blue in it, the particular cast that means a river
     running on land that has not dried out. Somewhere below
     and ahead, water is doing its work on the landscape and
@@ -33,6 +33,6 @@ nouns:
 idlemessages:
 - The road tilts forward slightly. Your stride adjusts without thought.
 - The wheat on the descending slope is shorter and less gold.
-- Something in the air is shifting — less dust, more sky.
+- Something in the air is shifting, with less dust and more sky.
 x: 20
 y: 71

@@ -2,7 +2,7 @@ roomid: 4138
 zone: Stillwater
 title: Uncle's Workshop
 description: >
-  Sawdust — fine and grey and undisturbed for years — coats
+  Sawdust, fine and grey and undisturbed for years, coats
   every surface in the small upper workshop above Ulla's
   parlor. The room runs the length of the cottage beneath
   a steep timbered roof, lit by a small dust-grimed gable
@@ -13,7 +13,7 @@ description: >
   left. A half-finished carved wooden
   <ansi fg="itemname">bird</ansi> sits in a clamp, the
   detail-work on one wing complete and the other still
-  blocked rough. Ulla's husband died — the neighbors say —
+  blocked rough. Ulla's husband died, the neighbors say,
   twelve years ago, on a fishing trip east. Nothing in this
   room has been moved since.
 biome: interior
@@ -29,7 +29,7 @@ nouns:
     wall, the surface scarred and stained by long use,
     a built-in iron bench-vise mounted at the eastern
     end. The vise's cast-iron handle is dark with old
-    grime. Look closely at the handle — there is
+    grime. Look closely at the handle. There is
     something scratched into the underside.
   bird: A half-finished carved wooden bird sits in the
     bench-vise's clamp, one wing's flight-feathers
@@ -38,7 +38,7 @@ nouns:
     afternoon and never picked it up again. It would
     have been a kingfisher, by the proportions.
   tools: A row of carving tools racked above the
-    bench in patient order — gouges in graduated
+    bench in patient order, gouges in graduated
     sizes, fine knives, a small mallet, a row of tiny
     files. A leather apron hangs from a hook beside
     the rack, a fine layer of dust on its shoulders.
@@ -48,7 +48,7 @@ nouns:
     can see the neighbour's roof and a sliver of the
     lake beyond.
   sawdust: A fine grey layer of accumulated sawdust
-    coats every horizontal surface in the workshop —
+    coats every horizontal surface in the workshop,
     the bench, the floor, the tops of the tools.
     Disturbed by your passing, it lifts in slow soft
     drifts and resettles. Footprints on the floor
@@ -60,14 +60,14 @@ hidden_nouns:
     description: |
       The cast-iron handle of the bench-vise has a small
       design scratched into the underside, where you would
-      not see it without lifting the handle to look — a long
+      not see it without lifting the handle to look: a long
       tight spiral set inside an outer circle. Old work,
       older than the cottage; the kind of mark someone
       makes when they want to remember a thing without
       explaining it. Whoever scratched it here knew the
       symbol meant something.
     hidden_description: |
-      The bench-vise's cast-iron handle has a small mark scratched on its underside — too regular to be wear. Try `look carving`.
+      The bench-vise's cast-iron handle has a small mark scratched on its underside, too regular to be wear. Try `look carving`.
 idlemessages:
 - A drift of sawdust lifts from the bench in a soft draft and resettles.
 - The window's prop-stick creaks faintly as the wind catches the sash.

@@ -6,7 +6,7 @@ description: Endless sagebrush flats stretch in every direction, the
   orchard. The grass between them is short and dry, crunching
   underfoot. A few large stones break the flat terrain, their
   surfaces pale and wind-worn. Animal tracks crisscross the
-  bare soil -- the prints of rabbits, foxes, and something
+  bare soil. These are the prints of rabbits, foxes, and something
   larger with padded paws.
 biome: land
 coord:
@@ -26,8 +26,8 @@ nouns:
     Lizards bask on them during the warmest hours.
   tracks: A confusion of animal tracks in the dusty soil. Small
     round prints from hares, the delicate lines of bird feet,
-    and the unmistakable four-toed pads of a canine -- probably
-    wolf.
+    and the unmistakable four-toed pads of a canine, probably
+    a wolf.
 spawninfo:
 - mobid: 213
 - mobid: 230

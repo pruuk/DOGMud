@@ -3,12 +3,12 @@ zone: East Road to Greenford
 title: The Bridge Approach
 description: >
   The road widens here into a small staging area at the
-  riverbank — a flattened space where carts and travelers
+  riverbank, a flattened space where carts and travelers
   arrange themselves before the crossing. The bridge is
   ahead, its stone spans visible crossing the Greenford
   river, the piers squared and broad, the roadway worn
   smooth. A toll-booth stands on the far bank, its
-  pipe-brazier smoking — the warden is at the post.
+  pipe-brazier smoking, which shows the warden is at the post.
   The staging area's earth is cut with deep cart tracks
   from the traffic of many seasons.
 biome: farmland
@@ -19,10 +19,10 @@ exits:
 nouns:
   the bridge: >
     From the staging area the bridge reads as a single
-    object — its three arches carrying the road low over
+    object, its three arches carrying the road low over
     the water, the far abutment landing on the opposite
     bank just below the climb into Greenford.
-    The bridge is old and well-maintained —
+    The bridge is old and well-maintained,
     the paving on the roadway worn to a smooth curve from
     traffic, the arch stones tight and close-fitted at the
     joints. It is the kind of bridge that has been repaired
@@ -32,16 +32,16 @@ nouns:
     A widened section of road at the bridge's approach, the
     earth leveled and the verge pushed back to give carts
     room to maneuver before the crossing. The cart tracks
-    here are deep and varied — heavy loads going both ways.
+    here are deep and varied, made by heavy loads going both ways.
     A log seat is set into the bank at the side for
     travelers who wait. This crossing has been in use for
     a long time.
   toll booth: >
-    A small stone structure on the far bank — a guard post
+    A small stone structure on the far bank, a guard post
     with a pipe-brazier mounted outside, the brazier lit
     and sending a thin line of smoke into the air above
     the span. The warden is visible through the near
-    window — a figure in a weathered coat, settled in
+    window: a figure in a weathered coat, settled in
     for the shift. The booth is built for occupancy and
     it is occupied. The toll collection is clearly not
     an afterthought.

@@ -2,14 +2,14 @@ roomid: 5306
 zone: Pothole Coulee
 title: Cracked Dome
 description: >
-  The observatory's dome still stands, but only just -- a long jagged
+  The observatory's dome still stands, but only just. A long jagged
   crack splits it from near the apex to the lip, and through that gap
   the sky enters, a bright wound across the stone ceiling. The floor
   beneath the crack is pale with years of rainwash. Dominating the room
   is a great telescope that came off its mount long ago and lies on its
   side, its barrel as wide as a man's shoulders and running nearly the
   full width of the chamber. Copper and bronze fittings have gone green
-  with age, and the lens at the far end -- cracked but still seated -- is
+  with age, and the lens at the far end, cracked but still seated, is
   glazed with a fine fur of oxidation. The air here is very still,
   insulated from the wind outside by those thick walls and the dome above.
 biome: ruins
@@ -25,13 +25,13 @@ exits:
   north:
     roomid: 5307
 nouns:
-  dome: The dome overhead is a remarkable thing even in its current state
-    -- great slabs of stone fitted to a curve, each one cut to angle just
+  dome: The dome overhead is a remarkable thing even in its current state, with
+    great slabs of stone fitted to a curve, each one cut to angle just
     so, holding the arch by press and weight alone. The crack that runs
     through it is ragged at the edges and has shed fragments onto the floor,
     but the dome has not moved since.
   telescope: Fallen on its side, the telescope is still an impressive
-    object -- brass rings along its length, a rotating mount at the base
+    object, brass rings along its length, a rotating mount at the base
     now bent and useless, a barrel that narrows toward the cracked lens
     end in careful graduated steps. It smells of old metal and something
     faintly like lamp oil.

@@ -8,7 +8,7 @@ description: >
   worn into the surface like old habit. Kitchen gardens peek
   over low walls, and the smell of cooking fires and animal
   dung mingles in the still air. It is quiet in the way that
-  small places are quiet -- not empty, but unhurried. A
+  small places are quiet: not empty, but unhurried. A
   farmstead lies to the south.
 biome: farmland
 coord:
@@ -28,12 +28,12 @@ nouns:
     behind each one, neat rows of herbs and root vegetables
     visible over the stone. Smoke rises from several chimneys.
     The houses are built close but not crowded, each with its
-    own space -- the architecture of people who value privacy
+    own space, the architecture of people who value privacy
     but not isolation.
   road: Packed earth worn smooth by generations of feet and
     wheels. A single set of cart ruts runs down the center,
     the grooves deep and permanent. The surface is hard enough
-    to shed rain but soft enough to show recent footprints --
+    to shed rain but soft enough to show recent footprints,
     mostly boots, a few bare feet, and the small prints of
     chickens wandering freely.
 spawninfo:

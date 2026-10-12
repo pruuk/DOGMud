@@ -4,7 +4,7 @@ title: Carved Niche
 description: A wider space where crude shelves have been gouged into the walls at
   various heights, all of them low. Clay pots sit on some <ansi fg="itemname">shelves</ansi>, sealed with wax
   and packed with dried fungus or something that smells like fermented grain. Others
-  hold small totems -- figures twisted from bone and sinew, eyeless faces carved into
+  hold small totems, figures twisted from bone and sinew, eyeless faces carved into
   knucklebones, bundles of teeth wrapped in strips of hide. This is a communal space,
   a storehouse and shrine both. The ceiling is black with soot, and the floor is worn
   smooth by the shuffling of many bare feet. The darkness presses in from every side,
@@ -28,7 +28,7 @@ spawninfo:
 nouns:
   pots: Rough clay vessels, pinched and shaped by small fingers. Some are sealed tight
     with dark wax. Others have been opened and re-sealed many times. The contents
-    smell sharp -- fermented, acrid, deliberately preserved.
+    smell sharp, fermented, acrid, deliberately preserved.
   totems: Small figures made from bone, sinew, and teeth. They have no eyes. Some are
     arranged in groups, others stand alone on their shelves. A few have been broken
     and carefully repaired with strips of hide binding.

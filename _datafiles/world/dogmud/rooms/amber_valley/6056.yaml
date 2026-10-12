@@ -2,18 +2,19 @@ roomid: 6056
 zone: Amber Valley
 title: The Market Square
 description: >
-  Voices reach you before anything else — a braided, easy din of haggling and
+  Voices reach you before anything else: a braided, easy din of haggling and
   greeting and laughter, threaded through with the steady chuckle of water. The
   square opens wide and sun-flooded, its hard-packed earth swept clean and worn
   pale by generations of market days.
 
-  At the center stands the old market cross, and around its base a low well-trough
-  catches channel-water that townsfolk dip from in passing. Stalls ring the open
-  space, fruit and cloth and pottery under faded awnings, and folk drift between
-  them in no particular hurry. Two grizzled farmers have squared off near the
-  trough, jabbing fingers at each other over some boundary ditch — a quarrel so
-  well-worn it draws more grins than concern. A boy weaves through with a basket
-  on his head, the soft pale down covering his arms catching the light like frost.
+  At the center stands the old market cross, and around its base a low
+  well-trough catches channel-water that townsfolk dip from in passing. Stalls
+  ring the open space, fruit and cloth and pottery under faded awnings, and folk
+  drift between them in no particular hurry. Two grizzled farmers have squared
+  off near the trough, jabbing fingers at each other over some boundary ditch.
+  It is a quarrel so well-worn it draws more grins than concern. A boy weaves
+  through with a basket on his head, the soft pale down covering his arms
+  catching the light like frost.
 
   <ansi fg="itemname">The market cross</ansi> rises at the heart of it all, and
   <ansi fg="itemname">the well-trough</ansi> circles its foot.
@@ -27,7 +28,7 @@ exits:
 nouns:
   the market cross: >
     Worn limestone, its four faces carved with the valley's old emblems: a sheaf,
-    a vine, a sun, and a fourth that time has rubbed to a blur — folk argue
+    a vine, a sun, and a fourth that time has rubbed to a blur. Folk argue
     whether it was a moth, a hand, or a face. The stone is polished smooth at
     shoulder height where countless people have leaned against it to gossip,
     and a sun-faded notice or two flutters from a nail driven near its base.
@@ -42,7 +43,7 @@ nouns:
     want it settled. One has a second thumb on his left hand that he uses to
     great effect for jabbing; the other doesn't appear to notice or care.
   the stalls: >
-    Trestle tables under patched awnings, heaped with the valley's plenty —
+    Trestle tables under patched awnings, heaped with the valley's plenty:
     apricots and plums, coiled rope, fired clay, bolts of plain dyed cloth.
     Nothing fancy, all of it good. The vendors call prices more out of habit
     than haggle, and slip an extra fruit to children without being asked.

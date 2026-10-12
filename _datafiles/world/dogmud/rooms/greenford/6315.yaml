@@ -2,8 +2,8 @@ roomid: 6315
 zone: Greenford
 title: Reth's Cottage
 description: >
-  The overgrown yew fills the front of the cottage
-  — its branches spread out over the path, its
+  The overgrown yew fills the front of the cottage,
+  its branches spread out over the path, its
   roots lifting the flagging in two places, the
   whole tree having been left to itself for more
   years than anyone has corrected. Behind it, the
@@ -11,7 +11,7 @@ description: >
   door, curtains drawn to a deliberate gap.
   Through the window,
   <ansi fg="itemname">field-notes</ansi> and
-  survey charts lie spread across the table — old
+  survey charts lie spread across the table: old
   paper in a precise, faded hand, the work of a
   man who came back from the eastern country and
   went quiet. The lane is north. Examine the
@@ -23,7 +23,7 @@ exits:
 nouns:
   field notes: >
     A retired surveyor's field papers spread across
-    the table — terrain charts and route sketches
+    the table: terrain charts and route sketches
     in a close, careful hand, the ink faded but
     the underlying work still readable. Eastern
     surveys: elevation marks, resource classifications,
@@ -35,7 +35,7 @@ nouns:
     to take.
   the yew: >
     An overgrown yew that has taken the front garden
-    entirely — trunk as thick as a person's waist,
+    entirely, trunk as thick as a person's waist,
     the bark deeply ridged and dark, the branches
     spreading out over the path and well past the
     low front wall into the lane. No one has pruned
@@ -43,12 +43,12 @@ nouns:
     tree has been given the garden, and it has taken
     it, and the cottage has learned to live behind
     it. The yew is the most recognisable thing about
-    this house — it is why Brennan mentioned it.
+    this house. It is why Brennan mentioned it.
 spawninfo:
   - mobid: 9524
     respawnrate: "20 real minutes"
 idlemessages:
-- The yew moves in no wind you can feel — thick branches, slow.
+- The yew moves in no wind you can feel, thick branches, slow.
 - Stillness at the cottage; curtains drawn to a gap, nothing stirring behind.
 - The front step is swept; the path through the yew root is clear, nothing more.
 x: 21

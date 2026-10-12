@@ -6,8 +6,8 @@ description: >
   of a man's knee among the stems, the branches overhead clawing
   together into a low canopy that shuts out what grey light the swamp
   allows. Dead wood leans against dead wood. Among the roots, where
-  the tangle of old growth meets the waterline, something has caught
-  -- a darker shape, still, threaded through by pale roots that have
+  the tangle of old growth meets the waterline, something has caught:
+  a darker shape, still, threaded through by pale roots that have
   grown around and through it over the slow years. The water between
   the stems is deep and does not move.
 biome: swamp
@@ -23,7 +23,7 @@ spawninfo:
 nouns:
   thicket: A close press of dead growth, stems and branches locked
     together, the whole mass leaning over the standing water below.
-    The footing between them is treacherous -- root, mud, and soft
+    The footing between them is treacherous. Root, mud, and soft
     rot where solid ground ought to be.
   roots: Old root-mass, pale where the bark has gone, threaded
     through by newer growth that has had years to work. Something is

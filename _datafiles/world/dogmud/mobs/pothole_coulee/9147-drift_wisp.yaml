@@ -14,7 +14,7 @@ idlecommands:
   - 'emote drifts a hand-span above the moss and stops, hanging there
     against all sense, then drifts on'
   - ''
-  - 'emote flickers -- here, then a step left, then here again -- without
+  - 'emote flickers: here, then a step left, then here again, without
     crossing the space between'
   - ''
 combatcommands:
@@ -27,7 +27,7 @@ character:
   name: Drift-Wisp
   description: |
     A loose handful of the grove that has come unstuck from itself. The
-    drift-wisp is barely a body -- a smear of dim light and drifting motes,
+    drift-wisp is barely a body: a smear of dim light and drifting motes,
     roughly person-high, that holds together out of habit rather than
     structure. Where the veil has thinned the most, small pieces of the
     world stop agreeing to stay put, and this is what that looks like once

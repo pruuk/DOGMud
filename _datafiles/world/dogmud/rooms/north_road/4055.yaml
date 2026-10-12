@@ -7,8 +7,8 @@ description: >
   line the bank to the west, their long branches trailing
   in the current. The air is cooler here, carrying the
   smell of wet earth and slow water. The road itself is
-  better maintained than the muddy stretch to the south —
-  the river traffic brings enough coin to keep the gravel
+  better maintained than the muddy stretch to the south.
+  The river traffic brings enough coin to keep the gravel
   topped up. It is quieter too. The farmland noise drops
   away and there is only the water and the birds.
 biome: farmland
@@ -42,7 +42,7 @@ spawninfo:
 idlemessages:
 - Willow branches swish against the water surface with
   a soft, papery sound.
-- Birdsong floats across from the far bank — something
+- Birdsong floats across from the far bank, something
   small and persistent, repeating the same phrase.
 - The river murmurs against its banks, a low constant
   sound just below silence.

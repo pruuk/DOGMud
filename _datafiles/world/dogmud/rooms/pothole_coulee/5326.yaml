@@ -2,17 +2,17 @@ roomid: 5326
 zone: Pothole Coulee
 title: The Barn
 description: >
-  The barn is larger inside than the yard suggests -- a high-ceilinged
+  The barn is larger inside than the yard suggests. It is a high-ceilinged
   space smelling of dry hay, animal warmth, and old timber. Four stalls
   run along the near wall, each swept clean, the mangers filled and the
   bedding fresh. A loft occupies the upper third of the building, reached
   by a fixed ladder nailed to the wall, bales stacked to the rafters
-  above. Tack hangs on iron pegs along the opposite wall -- harness,
+  above. Tack hangs on iron pegs along the opposite wall: harness,
   rope, a few tools cleaned and racked with the same economy of motion
   that marks all the work here. Light falls through gaps in the siding
   in bright horizontal bars, moving slowly across the floor as the day
-  progresses. A farmhand's daily work happens in this room -- the kind
-  of repetitive, necessary labor that keeps everything else possible --
+  progresses. A farmhand's daily work happens in this room, the kind
+  of repetitive, necessary labor that keeps everything else possible,
   and the barn holds the comfortable smell of that work done well.
 biome: interior
 coord:
@@ -38,7 +38,7 @@ idlemessages:
   as it moves from one wall toward the other.
 - The <ansi fg="yellow">stalls</ansi> are quiet now, the animals out in the yard
   or the near field.
-- Something moves in the <ansi fg="yellow">loft</ansi> overhead -- hay settling,
+- Something moves in the <ansi fg="yellow">loft</ansi> overhead, hay settling,
   or a small creature going about its business.
 x: 46
 y: 14

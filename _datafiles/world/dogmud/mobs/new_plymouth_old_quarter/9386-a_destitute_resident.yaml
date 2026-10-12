@@ -11,7 +11,7 @@ groups:
   - np_commonfolk
 idlecommands:
   - 'emote sits with both hands around a clay cup, not
-    drinking — just holding it, getting the warmth of
+    drinking, just holding it, getting the warmth of
     whatever was in it before it ran out.'
   - ''
   - 'emote looks at the salvaged door without expression,
@@ -27,7 +27,7 @@ character:
   description: |
     The resident has claimed a section of the canal-side
     ledge that is dry enough and arranged a few
-    belongings against the wall behind them — a rolled
+    belongings against the wall behind them: a rolled
     coat, a clay cup, a length of rope that may have
     had a use at some point. The face carries the
     specific expression of someone who has been in this

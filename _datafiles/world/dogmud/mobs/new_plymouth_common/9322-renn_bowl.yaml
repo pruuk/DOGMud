@@ -16,13 +16,13 @@ relationships:
     type: friend
     subtype: trade
 idlecommands:
-  - 'emote stands at the end of the bar and reads the room — who needs
-    a refill, who has had enough, who is about to start an argument —
-    and acts on all three before any of them become necessary to address.'
+  - 'emote stands at the end of the bar and reads the room: who needs
+    a refill, who has had enough, who is about to start an argument.
+    She acts on all three before any of them become necessary to address.'
   - ''
   - 'emote draws a slow breath, then calls last orders across the full
-    room in a voice that cuts through the noise like a bell through fog —
-    everyone hears it, no one mistakes it for anything else.'
+    room in a voice that cuts through the noise like a bell through fog.
+    Everyone hears it, no one mistakes it for anything else.'
   - ''
   - 'emote slides a cup along the bar without looking at the recipient,
     reads a face, and says something under the roar that only that person
@@ -36,15 +36,15 @@ character:
   name: Renn Bowl
   description: |
     Renn Bowl keeps the Brimming Bowl the way a ship's captain keeps
-    a tight vessel — by knowing exactly what every part of it is doing
+    a tight vessel, by knowing exactly what every part of it is doing
     at every moment. She is a broad, unhurried woman with a voice that
-    carries in a way her size alone does not explain — she can call
+    carries in a way her size alone does not explain: she can call
     last orders across a room in full roar and have every cup lowered
     without raising her tone. The mutation, she has said exactly once,
     came on gradually enough that she cannot pin the year. She brews
     her own ale in the cellars beneath the Bowl, and a portion of every
     batch goes east in barrels to Bressa Toll's Salt Cellar down at the
-    docks — an arrangement old enough that Bressa's regulars have grown
+    docks. The arrangement is old enough that Bressa's regulars have grown
     particular about it. Renn knows everything that moves through the
     quarter by ear, by cup, and by the specific silences that fall when
     certain names are said in company.

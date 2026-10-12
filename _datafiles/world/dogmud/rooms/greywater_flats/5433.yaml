@@ -3,7 +3,7 @@ zone: Greywater Flats
 title: Kingsbarrow March
 description: >
   Here the flats are wholly behind you and the capital's granary country
-  begins in earnest — rich hedged fields to the very horizon, the road
+  begins in earnest: rich hedged fields to the very horizon, the road
   running straight and well-metalled and purposeful toward a far smudge of
   roofs and the unmistakable bulk of distant <ansi fg="itemname">granaries</ansi>
   and mill-towers standing up above the green. You have left the wild
@@ -25,18 +25,18 @@ exits:
 nouns:
   march stone: A tall boundary stone of good pale ashlar, far finer than a
     common milestone, carved on its north face with a sheaf-and-tower
-    device and the words KINGSBARROW VALE. It marks the march — the bound —
+    device and the words KINGSBARROW VALE. It marks the march, the bound,
     where the river flats end and the capital's granary lands begin. A
     smaller line gives the leagues yet to New Plymouth, and the number is
     small enough now to believe.
   granaries: Far ahead above the green fields stand the long pale bulks of
     great granaries and the round towers of windmills and watermills,
-    hazed with distance but vast even so — the storehouses that hold a
+    hazed with distance but vast even so, the storehouses that hold a
     city's bread against the winter. You have seen nothing built on that
     scale on the whole long road. Behind them, fainter still, a smudge that
     might be roofs, or might be cloud.
   road: Straight, well-metalled, kept in good repair, running north toward
-    the granaries without a wasted yard — a road that matters, maintained
+    the granaries without a wasted yard, a road that matters, maintained
     by a power that needs the grain moved and the carts rolling. It is a
     different road from the one that crossed the wilds; this one has
     somewhere important to be.

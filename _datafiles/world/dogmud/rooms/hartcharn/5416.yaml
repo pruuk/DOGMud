@@ -2,9 +2,9 @@ roomid: 5416
 zone: Hartcharn
 title: Back Lane
 description: >
-  The smell tells the story — midden, wet ash, and the green tang
+  The smell tells the story: midden, wet ash, and the green tang
   of moss on damp stone. This is the narrow cut behind the cottage
-  row — the route for slop buckets, ash pits, and everything that
+  row, the route for slop buckets, ash pits, and everything that
   belongs away from the front street. Into the angle of the nearest
   wall is stacked a <ansi fg="itemname">woodpile</ansi>, timber
   split and roughly sorted, the cut ends still pale. Farther along,
@@ -23,17 +23,17 @@ exits:
 nouns:
   woodpile: A shoulder-height stack of split timber packed into the
     angle between two walls, covered loosely with a piece of oilcloth
-    weighted at the corners. The wood is alder and birch — split clean
+    weighted at the corners. The wood is alder and birch, split clean
     and left to season, the pale inner faces beginning to grey at the
     edges. A short-handled axe leans against the base of the stack,
     its blade nicked and dark from use.
   crock: A wide-bellied clay crock under the overhang of a back door,
     its lid a flat stone held down by a second stone on top. Brine
-    seeps along the crack between lid and rim. Whatever is inside —
-    pickled turnip, stored eggs, or something more doubtful — has been
+    seeps along the crack between lid and rim. Whatever is inside
+    (pickled turnip, stored eggs, or something more doubtful) has been
     there since well before the cold. The owner has not troubled to
     label it.
-  midden: A long midden running along the base of the far wall — ash,
+  midden: A long midden running along the base of the far wall, full of ash,
     bone, kitchen scraps, and the general output of a row of households
     that have been here long enough to fill it deep and start on
     another. The smell is assertive but not surprising. Someone has

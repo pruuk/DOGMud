@@ -2,17 +2,17 @@ roomid: 5452
 zone: Kilnreach Works
 title: Kiln Row
 description: >
-  The air on Kiln Row is bitter and alkaline — not the soft
+  The air on Kiln Row is bitter and alkaline, not the soft
   woodsmoke of a hearth or the clean smoke of a cooking fire,
   but the pungent mineral burn of lime-kilns at full draw,
   permanent and inescapable, coating the inside of the mouth
   with the faint taste of chalk. The eye confirms what the
-  nose has already given up on arguing with — everything is
+  nose has already given up on arguing with: everything is
   grey. The buildings are grey with it, the workers are grey
   with it, and the street surface carries a continuous fine
   pale powder that records every footfall and rises in slow
   drifts when the wind sets from the west. On that western
-  side the kilns stand in a row — four great stone-built
+  side the kilns stand in a row: four great stone-built
   chambers, their arched fire-mouths glowing amber-white in
   the permanent controlled burn, their stacks sending grey
   columns straight up in the still intervals between gusts.
@@ -24,13 +24,13 @@ description: >
   dry wall across the full width of the street. Across the
   narrow way, on the eastern side, the rough
   <ansi fg="itemname">workers' cottages</ansi> of Slag Lane
-  crowd close — low-walled, practical, their washing greyed
+  crowd close, low-walled, practical, their washing greyed
   before it dries and their window-shutters facing the kilns
   with a long, unsurprised familiarity. Between the two sides
   the street is barely wide enough for a laden cart to pass.
   Hard against the near kiln a
   <ansi fg="itemname">tally shed</ansi> has been built of
-  reclaimed stone — squat, solid, a sliding shutter over
+  reclaimed stone. It is squat and solid, with a sliding shutter over
   its counter-window standing open, a lantern burning inside
   despite the daylight, visible through the gap.
 biome: city_thoroughfare
@@ -50,10 +50,10 @@ exits:
 nouns:
   tally shed: A low stone shed built into the gap between the
     first and second kilns, its walls thick enough that the
-    heat from either side does not make it uninhabitable —
+    heat from either side does not make it uninhabitable,
     only uncomfortably warm. The sliding shutter over the
     counter-window faces the street, and through it the
-    interior is visible — a lantern on a hook, shelves of
+    interior is visible. There is a lantern on a hook, shelves of
     bound ledgers black with handling along their spines,
     and a row of wooden pegs holding delivery tickets on
     cords, each peg labelled in chalk on a small board
@@ -65,8 +65,8 @@ nouns:
     The ledgers on the nearest shelf are marked by year and
     quarter. The current one is very thick. Outside the shed,
     nailed to the frame above the shutter, a handwritten note
-    in a clipped administrative hand reads — and here the
-    lime-dust has obscured the first word — all disputed
+    in a clipped administrative hand reads, with the first
+    word lost under lime-dust, that all disputed
     short-weights must be re-weighed before the cart leaves
     the row. Non-compliant loads will not be cleared.
   workers' cottages: The cottages on the east side of Kiln
@@ -77,23 +77,23 @@ nouns:
     shared walls, each fronted by a low wall and a strip of
     yard just wide enough for a rain-barrel and a stack of
     fuel. Washing hangs between the upper windows on lines
-    strung between iron hooks — grey-white and heavy in the
+    strung between iron hooks, grey-white and heavy in the
     still air, not drying quickly. The doors are solid and
     plain, mostly shut. From behind one of them a child's
     voice carries briefly through the street noise, then
     stops. The cottages' windows facing the kilns are small
-    and set high — a practical choice, whether against the
+    and set high, a practical choice, whether against the
     heat or the glare.
 idlemessages:
 - The wind backs from the west and the full weight of the
-  kiln-heat comes across the street at once — dry and close,
+  kiln-heat comes across the street at once. It is dry and close,
   lasting only a moment before the air shifts again.
 - A kiln-worker moves along the fire-mouth row tapping each
   arch-stone with a long iron rod, listening to what the
   sound tells him about the draw.
 - From one of the cottages on the east side the smell of
-  cooking crosses briefly through the lime-smoke — onions
-  and something heavier — then the wind takes it again.
+  cooking crosses briefly through the lime-smoke (onions
+  and something heavier), then the wind takes it again.
 - A cart loaded with sacked lime creaks away to the north
   from the kiln yard, the driver's face and coat the same
   grey-white as his load.

@@ -11,8 +11,8 @@ groups:
   - humanoid
   - np_commonfolk
 idlecommands:
-  - 'emote turns a key over in her fingers — not looking at it,
-    just working it from one hand to the other — then tucks it
+  - 'emote turns a key over in her fingers, not looking at it,
+    just working it from one hand to the other, then tucks it
     back into her apron pocket without comment.'
   - ''
   - 'emote stands in the doorway and surveys the Row with the calm
@@ -20,7 +20,7 @@ idlecommands:
     of street long enough to notice when anything on it is wrong by
     the width of a finger.'
   - ''
-  - 'emote smooths the front of her apron — flat, practiced — and
+  - 'emote smooths the front of her apron, flat and practiced, and
     says nothing, though something in the set of her jaw suggests
     she had considered saying something and thought better of it.'
   - ''
@@ -38,7 +38,7 @@ character:
     door regardless. She is a woman somewhere in her middle years
     who appears younger than she is and has never corrected the
     impression. Her mutation is a scatter of faintly luminous
-    freckles across her cheekbones — nearly invisible in daylight,
+    freckles across her cheekbones. They are nearly invisible in daylight,
     but in a dim room or after dark they hold a soft, persistent
     glow, the color of a coal that is not quite out. They do not
     light a space. They only mark her face, if you know to look.

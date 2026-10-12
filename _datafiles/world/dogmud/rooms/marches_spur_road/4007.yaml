@@ -7,7 +7,7 @@ description: >
   ribs of some great beast, and vines have climbed the remaining walls
   in thick green curtains. The interior is dim and smells of old hay
   and animal musk. The south half of the roof still holds, creaking in
-  the wind. Someone has been here recently -- a firepit of fresh ash
+  the wind. Someone has been here recently. A firepit of fresh ash
   sits near the entrance, and boot prints track through the dust.
   Against the back wall, a stack of <ansi fg="itemname">crates</ansi>
   sits in shadow, their locks broken and road freight markings still
@@ -29,12 +29,12 @@ nouns:
     but it groans and creaks with every gust of wind. It will not last
     many more seasons.
   firepit: A circle of stones around a pile of fresh ash, still faintly
-    warm. Boot prints surround it -- two or three sets of different sizes.
+    warm. Boot prints surround it, two or three sets of different sizes.
     Someone has been sleeping here, and recently. A charred bone and
     the remains of a meal sit at the edge of the stones.
   crates: Wooden crates stacked against the back wall, partially hidden
     in shadow. The locks have been forced open and hang broken from their
-    hasps. Road freight markings are stamped on the sides -- shipping
+    hasps. Road freight markings are stamped on the sides. They are shipping
     labels from merchants along the spur road. These were not meant to
     end up in an abandoned barn.
 spawninfo:

@@ -9,8 +9,8 @@ description: >
   <ansi fg="itemname">ledge</ansi> runs around the pool's
   near margin, just wide enough to walk on. The pool's
   <ansi fg="itemname">surface</ansi> ripples occasionally
-  without wind, and pale moving things glide just below it
-  — too fast to follow, too pale to identify, never quite
+  without wind, and pale moving things glide just below it,
+  too fast to follow, too pale to identify, never quite
   breaking the water. A passage continues north into
   darker stone; another opens west across a tighter
   watery gap.
@@ -32,13 +32,13 @@ nouns:
     Disturbed water settles back to glass within a
     minute. The bottom is invisible from where you
     stand and dropping a stone produces a single
-    plop and then nothing — no second clack of
+    plop and then nothing, no second clack of
     stone-on-stone, suggesting the bottom is
     several human-heights down.
   surface: The pool's surface ripples occasionally
     without wind, and the ripple-pattern radiates
-    outward from points well away from the ledge —
-    something is moving down there. Pale moving
+    outward from points well away from the ledge.
+    Something is moving down there. Pale moving
     shapes glide just below the surface from time
     to time, too fast to follow, never breaking the
     water. The surface itself reflects the cave's
@@ -53,10 +53,10 @@ nouns:
     slow drips at irregular intervals. Faint pale
     striations in the basalt suggest the water-level
     has been higher in some seasons. The chamber's
-    acoustics amplify any sound — a footstep, a
+    acoustics amplify any sound, a footstep, a
     breath, a stone dropped.
   passage: A second passage opens west across a
-    narrower watery gap — the ledge pinches there
+    narrower watery gap. The ledge pinches there
     to a single boot-width and the water deepens
     sharply. Another opens north into deeper
     darker stone where the ledge becomes a series

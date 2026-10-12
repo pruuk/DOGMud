@@ -6,7 +6,7 @@ description: >
   The rubble of what fell lies where it landed, cushioned now by
   decades of drifted earth that has softened the edges of the stone
   into low mounds. Dust hangs in the air here even without wind to
-  stir it -- the hall produces its own slow circulation, drawing
+  stir it. The hall produces its own slow circulation, drawing
   from the open nave to the east and releasing it in a faint
   exhalation through gaps in the north wall. Niches cut into the
   walls stand empty, their edges worn where offerings were set and
@@ -27,7 +27,7 @@ exits:
   north:
     roomid: 5343
 nouns:
-  rubble: The rubble is mixed -- ceiling stone, fallen mortar, the
+  rubble: The rubble is mixed, ceiling stone, fallen mortar, the
     occasional timber rotted to a soft dark mass. It has settled into
     the hall over a very long time and the drift of earth between the
     pieces makes the floor uneven and yielding in places.

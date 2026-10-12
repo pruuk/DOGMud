@@ -2,7 +2,7 @@ roomid: 5422
 zone: Greywater Flats
 title: The Fen Road
 description: >
-  The smell changes first — Hartcharn's woodsmoke and bread fall away
+  The smell changes first: Hartcharn's woodsmoke and bread fall away
   behind you and the air turns cool and green and faintly rotten, the
   smell of standing water and crushed sedge. The road runs out of the
   town's firm fields onto low ground, the verges softening to black peat
@@ -22,18 +22,18 @@ exits:
   north:
     roomid: 5423
 nouns:
-  reeds: The first of them — tall green spears rooted in black water at
+  reeds: The first of them, tall green spears rooted in black water at
     the road's edge, hissing softly against each other when the wind moves
     through. A moorhen picks its way along a flattened run at their base
     and vanishes. Past this thin fringe the reeds thicken into a wall that
     runs unbroken to the horizon.
   boundary marker: A squat post of grey stone, its top weathered round,
     leaning where the soft ground has let it settle. One worn face still
-    carries the chiselled mark of Hartcharn's bound — a crossed staff and
+    carries the chiselled mark of Hartcharn's bound, a crossed staff and
     sheaf. Someone has wedged a few coins and a twist of dried flowers
     into a hollow at its base, a traveller's small toll against the wet
     road ahead.
-  country: Flat to every edge of sight — water-meadow and reed-bed and
+  country: Flat to every edge of sight, water-meadow and reed-bed and
     pewter pool, the huge sky pressing down on it and doubled in every
     standing pool. A line of birds crosses it, very far off. Nothing in
     it stands taller than a reed.

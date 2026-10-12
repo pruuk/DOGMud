@@ -2,7 +2,7 @@ roomid: 309
 zone: Labyrinth of Low Tunnels
 title: Bone Passage
 description: Small bones have been pressed into the mud floor of this passage in
-  deliberate patterns -- lines, curves, angular shapes that repeat at regular intervals.
+  deliberate patterns, lines, curves, angular shapes that repeat at regular intervals.
   A path marked out by the dead. The bones are old and yellowed, sunk deep into the
   packed earth, and the patterns continue along the walls where finger-bones and teeth
   have been pushed into cracks in the stone like mosaic tiles. The passage runs north
@@ -25,7 +25,7 @@ spawninfo:
   message: A warren warrior stands guard among the bone patterns, milky eyes tracking your movement.
   respawnrate: 10 real minutes
 nouns:
-  bones: Rat bones, bat bones, bird bones -- pressed into the earth in repeating
+  bones: Rat bones, bat bones, bird bones, pressed into the earth in repeating
     geometric shapes. Some patterns are simple lines. Others spiral inward or branch
     like lightning. Whether this is decoration, ritual, or wayfinding, you cannot tell.
   teeth: Small, sharp teeth pressed point-first into the cracks between stones. They

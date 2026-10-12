@@ -2,7 +2,7 @@ roomid: 6318
 zone: Greenford
 title: The West Road
 description: >
-  Beyond the gate the road has freed itself from town —
+  Beyond the gate the road has freed itself from town:
   the last garden walls behind, the country opening on
   either side: rough verge, a hedged meadow north, the
   river valley distant in the east. The surface is well-
@@ -23,7 +23,7 @@ exits:
 nouns:
   stable gate: >
     A wide timber gate in the hedgerow north of the road,
-    its bar lifted and swung back flat against the hedge —
+    its bar lifted and swung back flat against the hedge,
     standing open for the morning traffic. Beyond it the
     coaching stable yard is visible: the hard-packed
     surface, the lean-to roof of the coach-house, the
@@ -32,7 +32,7 @@ nouns:
     The stable is north; the gate stands open.
   the verge: >
     The road's margins here are long grass and rough meadow
-    growth — knapweed, yellow rattle, the coarse stems of
+    growth: knapweed, yellow rattle, the coarse stems of
     cow parsley gone to seed. The field to the south is
     meadow hay, not yet cut; to the north, pasture with
     the hedgerow marking the stable yard's edge. Standing

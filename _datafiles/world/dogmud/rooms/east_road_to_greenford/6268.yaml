@@ -2,7 +2,7 @@ roomid: 6268
 zone: East Road to Greenford
 title: The Wheatside Hamlet
 description: >
-  A small knot of buildings at the road's shoulder — a
+  A small knot of buildings at the road's shoulder: a
   victualler's stall with a striped awning, a storage shed,
   two dwellings set back behind it. The shade between the
   buildings is welcome after the open wheat. A wooden
@@ -22,8 +22,8 @@ spawninfo:
     respawnrate: "20 real minutes"
 nouns:
   the stall: >
-    A victualler's setup under a striped canvas awning —
-    baskets of provisions, a string of dried goods hanging
+    A victualler's setup under a striped canvas awning.
+    Baskets of provisions, a string of dried goods hanging
     from the awning frame, a clay jug sealed with wax sitting
     at one end of the counter. The stock is practical: road
     food for travelers who know a long day ahead of them.

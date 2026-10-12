@@ -2,7 +2,7 @@ roomid: 4116
 zone: Stillwater
 title: Fishing Docks
 description: >
-  Brine, wet wood, fish-oil, and tar — the working dock's
+  Brine, wet wood, fish-oil, and tar: the working dock's
   smell hits before the sound of mooring rope creaking
   against bollards reaches you. Three plank
   <ansi fg="itemname">wharves</ansi> jut into the shallows
@@ -13,8 +13,8 @@ description: >
   bench, sluiced clean with lake water at the end of every
   day. A row of <ansi fg="itemname">drying racks</ansi> at
   the southern end of the dock holds rows of split fish
-  curing in the lake-wind. Most striking — and most
-  troubling — is the bundle of torn <ansi fg="itemname">nets</ansi>
+  curing in the lake-wind. Most striking, and most
+  troubling, is the bundle of torn <ansi fg="itemname">nets</ansi>
   laid out on the planks for inspection, the tears too clean
   and too wide to be ordinary wear.
 biome: water
@@ -46,13 +46,13 @@ nouns:
     no matter the hour.
   drying racks: A row of timber racks at the southern
     end of the dock, holding rows of split fish curing
-    in the lake-wind — pike mostly, gutted and salted,
+    in the lake-wind, pike mostly, gutted and salted,
     drying for trade up the road in winter. A small
     wooden tally hangs at one end with chalked numbers
     that mean fish to whoever counts them.
   nets: A bundle of torn fishing-nets laid out on the
     planks for inspection. The tears are too clean and
-    too wide for ordinary wear — long parallel rents in
+    too wide for ordinary wear, long parallel rents in
     several places, as if drawn open by something with
     purchase enough to pull. The constabulary's
     posted bounty is for whoever can stop whatever has
@@ -68,14 +68,14 @@ nouns:
     bed, flaked rust-orange at the waterline and crusted
     with small freshwater barnacles below. Replacing
     them was the project of the last constable's third
-    summer — most of the older ones are stamped with
+    summer, and most of the older ones are stamped with
     a smith's mark you can almost make out.
 idlemessages:
 - A skiff's mooring rope creaks slowly against an iron bollard.
 - A gull drops to the table, snatches a scrap, and lifts away.
 - The lake-water under the wharves slaps once against the pilings, then settles.
 - The wind shifts and the smell of drying fish strengthens for a moment.
-- Somewhere out on the water, an oar-stroke sounds — slow, patient, a fisherman returning.
+- Somewhere out on the water, an oar-stroke sounds, slow and patient, a fisherman returning.
 spawninfo:
 - mobid: 342
 x: -6

@@ -20,7 +20,7 @@ idlecommands:
   - ''
 combatcommands:
   - 'emote plants the forelimbs wide, bracing against the floor, and
-    bellows -- the sound filling the den and pressing against the rock'
+    bellows, the sound filling the den and pressing against the rock'
   - ''
   - 'emote pivots the whole stone-armored body and drives a sweeping
     foreleg blow that scrapes sparks from the passage floor'
@@ -33,7 +33,7 @@ character:
   description: |
     At the bottom of the mine, past the drifts and the rubble and the
     ordinary dark, something has made a den. The stone-blooded beast is
-    not what it was when it first came down here -- that thing, whatever
+    not what it was when it first came down here. That thing, whatever
     cave creature it began as, has been subsumed by a slow and total
     transformation that the miners may have started and certainly did not
     intend. The basalt has grown into it as much as onto it. The hide is

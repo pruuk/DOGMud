@@ -3,7 +3,7 @@ zone: New Plymouth Crafting
 title: The Tanning Yard
 description: >
   The yard behind the tannery holds the vats in a row
-  along the north wall — cut stone, watertight mortar,
+  along the north wall: cut stone, watertight mortar,
   each filled with oak-bark tanning liquor at a different
   concentration. The <ansi fg="itemname">bark-vats</ansi>
   are the oldest part of the works, their coping stained
@@ -17,7 +17,7 @@ description: >
   worn as clearly as any road. A drain at the center
   was capped in fresh mortar, cleaner than the
   surrounding stone, but the cap has been levered
-  aside — an open shaft drops below, iron rungs set
+  aside. An open shaft drops below, iron rungs set
   into its wall. The tannery's effluent routes
   elsewhere now, toward the guild-approved channel.
 biome: city_backstreet
@@ -48,8 +48,8 @@ nouns:
     hides hang from it now in various stages, their
     bottom edges still dripping slowly into the channel
     cut in the stone below. The rack's wood has the
-    same dark color as the tannery's stretching-frames
-    — it has been in this yard long enough to be
+    same dark color as the tannery's stretching-frames.
+    It has been in this yard long enough to be
     saturated through.
 idlemessages:
 - The bark-vat liquor is still, dark brown at the
@@ -59,7 +59,7 @@ idlemessages:
 - The yard is quiet except for the dripping water
   from the rack and the occasional creak of its joints.
 - Light comes over the south wall and catches the near
-  vat's surface — clear enough to see the hide beneath.
+  vat's surface, clear enough to see the hide beneath.
 - The opened drain sits in slightly cleaner mortar
   than the surrounding stone, its cap levered aside
   and left leaning against the near vat.

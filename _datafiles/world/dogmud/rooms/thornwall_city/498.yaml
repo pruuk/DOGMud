@@ -7,8 +7,8 @@ description: >
   and shelving. Maps of the city and its tunnel system are pinned to a
   wooden frame against the north wall, annotated with routes, timings, and
   gate patrol schedules. A heavy iron <ansi fg="itemname">strongbox</ansi>
-  sits beneath the table, secured with a brass lock. This is not a hideout
-  -- it is an office, run with the efficiency of a legitimate business.
+  sits beneath the table, secured with a brass lock. This is not a hideout.
+  It is an office, run with the efficiency of a legitimate business.
 biome: cave
 lamp: 64
 coord:
@@ -30,7 +30,7 @@ nouns:
     the city is mapped and timed. Whoever made these had access to official
     city surveyor records.
   strongbox: A heavy iron strongbox beneath the table, secured with a brass
-    padlock. It is solidly built -- breaking it open without a key would
+    padlock. It is solidly built, and breaking it open without a key would
     take considerable effort and make a great deal of noise.
   table: A proper wooden table, out of place this far underground. Its
     surface is covered in papers, ink pots, and weighted-down maps.

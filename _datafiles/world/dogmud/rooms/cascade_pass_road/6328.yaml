@@ -3,7 +3,7 @@ zone: Cascade Pass Road
 title: The Deep Timber
 description: >
   The last axe-mark is somewhere behind you. The trees
-  here have never been worked — old-growth trunks too
+  here have never been worked: old-growth trunks too
   broad to reach around, the canopy fused overhead into
   a vault that dims the light to a sourceless green. No
   wheel-ruts in the road. No verge-cuts. The bare earth
@@ -11,7 +11,7 @@ description: >
   evidence of prior passage, and even that looks old.
   Against one of the great trees a set of
   <ansi fg="itemname">claw marks</ansi> rake the bark
-  from above head-height to the base of the trunk —
+  from above head-height to the base of the trunk:
   four parallel gouges, the exposed wood still pale and
   not yet hardened. Nearby a
   <ansi fg="itemname">picked-clean bone</ansi> rests in
@@ -35,7 +35,7 @@ nouns:
     your reach to the root-flare at the base of the
     trunk. Each gouge is as wide as a finger, cut clean
     through the bark into the pale wood beneath. The
-    edges are not torn but drawn — something braced
+    edges are not torn but drawn: something braced
     against the trunk and dragged downward with real
     force. The exposed wood has not yet greyed. The moss
     around the base of the tree is disturbed in a wide
@@ -44,8 +44,8 @@ nouns:
   picked clean bone: >
     A large leg-bone, probably deer, stripped of every
     scrap of hide and tissue. The joint-ends have been
-    cracked open — not shattered but split with
-    something that understood the geometry — and the
+    cracked open: not shattered but split with
+    something that understood the geometry, and the
     marrow cavities are empty and clean. The bone is
     not old. The exposed surfaces are still pale, barely
     weathered. It was dropped here, in this spot, and
@@ -56,7 +56,7 @@ idlemessages:
 - The canopy overhead is absolutely still. No wind
   reaches the ground here.
 - Something moves through the undergrowth at the far
-  edge of sight — a slow rustle, unhurried — and stops
+  edge of sight, a slow rustle, unhurried, and stops
   before it resolves into a shape.
 - A branch pops deep in the timber to the east. Nothing
   follows it.

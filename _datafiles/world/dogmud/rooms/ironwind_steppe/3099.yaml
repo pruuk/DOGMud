@@ -6,7 +6,7 @@ description: The wallowing grounds peter out here at the southern
   and firmer. The last muddy wallows are small and shallow, barely
   used. Beyond, the steppe grass reclaims the terrain in tufts
   and patches, gradually thickening into full coverage. This is
-  the boundary of boar territory -- their tracks thin out and
+  the boundary of boar territory. Their tracks thin out and
   disappear to the south.
 biome: land
 coord:
@@ -25,7 +25,7 @@ spawninfo:
 - mobid: 231
 - mobid: 235
 idlemessages:
-- The mud thins and the grass returns -- the wallow edge.
+- The mud thins and the grass returns at the wallow edge.
 - A beetle trundles across the drying mud.
 - The boar smell fades as the territory ends.
 x: 25

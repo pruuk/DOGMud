@@ -8,7 +8,7 @@ description: >
   <ansi fg="itemname">drain-cap</ansi> above, catching motes and the
   slow steam of the water below. The <ansi fg="itemname">channel</ansi>
   itself is stained in bands of ochre and rust where the tannery
-  <ansi fg="itemname">run-off</ansi> comes down — the smell of the
+  <ansi fg="itemname">run-off</ansi> comes down: the smell of the
   yards has followed you into the dark, lime and hide and something
   sourer underneath, and it shows no sign of giving up the pursuit.
   The vault carries on north and south into a darkness the drain-light
@@ -30,13 +30,13 @@ exits:
 nouns:
   drain cap: An iron cap made to sit flush in the yard above, pried up
     at some point and never seated properly again. It admits a column
-    of grey daylight and, with it, the working noise of the tannery —
+    of grey daylight and, with it, the working noise of the tannery,
     the slop of vats, a dragged hide, a voice raised and answered.
     The rungs below it are slick with the same ochre film that stains
     everything else down here.
   channel: The water moves at a walking pace, opaque and faintly warm,
     carrying whatever the yards above have finished with. Bands of
-    color mark the brick at its edge — ochre, rust, a chemical white —
+    color mark the brick at its edge in ochre, rust, a chemical white,
     each one the record of a different day's work overhead.
   run-off: A steady dribble enters through a clay pipe high in the
     east wall, tinted the exact brown of the tanning vats. Where it

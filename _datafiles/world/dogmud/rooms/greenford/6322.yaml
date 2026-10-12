@@ -2,16 +2,16 @@ roomid: 6322
 zone: Greenford
 title: The Plymouth Road
 description: >
-  The road bends here — a long westward arc the carter's
+  The road bends here: a long westward arc the carter's
   maps call the Plymouth Turn. Beyond the bend the
   surface is maintained and clear: drainage cut, verge
   trimmed, the way marked at intervals by the county's
   half-buried stones. Three days west and north, New
-  Plymouth waits — the capital, the harbour, the river
+  Plymouth waits: the capital, the harbour, the river
   district and its trade. Greenford is behind now; the
   university tower is barely above the treeline in the
   east. This is a place you come back to with a pack and
-  a reason — the road to New Plymouth is another journey
+  a reason. The road to New Plymouth is another journey
   for another day. Examine the
   <ansi fg="itemname">road-ahead</ansi> or the treeline.
 biome: land
@@ -20,7 +20,7 @@ exits:
   east: {roomid: 6321}
 nouns:
   road ahead: >
-    The road continues clearly west from the bend — the
+    The road continues clearly west from the bend: the
     surface maintained, the drainage good, the verge-posts
     marking the county's responsibility at regular
     intervals. At the limit of clear sight the road curves
@@ -35,7 +35,7 @@ nouns:
     Looking east from the Plymouth Turn: the road running
     back toward Greenford, and above the treeline that
     marks the town's eastern edge, the university tower
-    clear against the sky — the highest point of everything
+    clear against the sky, the highest point of everything
     visible. Greenford from here is smaller than you might
     expect, tucked into its river valley. The tower gives
     it away; without the tower it would be invisible. You

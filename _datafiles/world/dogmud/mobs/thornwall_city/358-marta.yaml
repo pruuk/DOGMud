@@ -32,12 +32,12 @@ character:
     A heavyset woman with arms like cooper's bands, dressed in a
     quilted gambeson and a sturdy leather skirt. A two-handed war
     hammer rests across her back, the head dark with old use. Her
-    expression is mild, almost amused -- the look of someone who has
+    expression is mild, almost amused, the look of someone who has
     been underestimated her whole life and stopped caring.
   speciesid: 1
   level: 1
   gold: 15
-  # Equipment TBD per Ketil's pattern -- fists for v1 stat tuning.
+  # Equipment TBD per Ketil's pattern, fists for v1 stat tuning.
   stats:
     strength:
       base: 132

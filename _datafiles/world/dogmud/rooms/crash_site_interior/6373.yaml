@@ -3,8 +3,8 @@ zone: Crash Site Interior
 title: The Breach
 biome: interior
 description: >
-  You are inside the made thing. The way in is a torn seam in the grey —
-  the only wound in a surface that has none anywhere else — and beyond it
+  You are inside the made thing. The way in is a torn seam in the grey,
+  the only wound in a surface that has none anywhere else, and beyond it
   the walls close into a corridor of the same seamless material, curving
   gently, lit from nowhere by a cold blue-white glow that does not
   flicker and casts no shadow you can find the source of. The air is
@@ -13,7 +13,7 @@ description: >
   your blood goes quiet, your gifts pull away like a tide going out, the
   woken things in you pressed flat and far. Whatever you can still do
   here, you will do with your own two hands. Whatever you expected, it was
-  not this — a made place, waiting, ten thousand years patient, and not as
+  not this: a made place, waiting, ten thousand years patient, and not as
   dead as it should be.
 mapsymbol: "*"
 exits:
@@ -21,7 +21,7 @@ exits:
     roomid: 6374
 nouns:
   seam: >
-    The torn edge you came through — the single flaw in an otherwise
+    The torn edge you came through, the single flaw in an otherwise
     perfect surface, and even it is clean, as though the grey gave way
     all at once rather than tearing. Beyond it, the highland light. Ahead,
     only the cold glow and the curving corridor.

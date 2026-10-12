@@ -2,15 +2,16 @@ roomid: 5522
 zone: New Plymouth Docks
 title: The Outer Dock Lane
 description: >
-  The sensory weight of the docks thins here — not cleanly but
+  The sensory weight of the docks thins here, not cleanly but
   gradually, the brine and tar lightening as the lane passes the
   last warehouse-back and the city proper begins to assert its own
-  mixed smell. The quarter's edge announces itself in small ways —
+  mixed smell. The quarter's edge announces itself in small ways:
   cobblestones better-set, buildings less salt-grey, and a
   <ansi fg="itemname">boundary stone</ansi> hard against
   the left wall marking the dock ward's limit in lettering that
   time has made approximate. Where loaded carts have crossed this
-  junction for decades, a pair of deep <ansi fg="itemname">handcart ruts</ansi> have been worn into the stone —
+  junction for decades, a pair of deep
+  <ansi fg="itemname">handcart ruts</ansi> have been worn into the stone:
   two grooves deep enough to catch a boot-toe at the wrong angle,
   a feature the city has repaired twice and that keeps returning.
   South leads back toward the tenements; north continues toward
@@ -43,7 +44,7 @@ nouns:
   handcart ruts: Two parallel grooves in the cobblestone surface,
     worn by the weight and repetition of laden carts crossing this
     junction. Each is deep enough to catch a boot-toe at the wrong
-    angle. They run at a slight diagonal — the natural path of the
+    angle. They run at a slight diagonal, the natural path of the
     carts was never quite the straight line the street's geometry
     would imply; the drivers knew something about the slope that
     the layout does not show.
@@ -55,7 +56,7 @@ idlemessages:
 - Someone pauses at the boundary stone, reads the lettering
   for reasons of their own, and moves on without comment.
 - The sound from the tenements to the south drifts up the
-  lane — voices, laundry in the wind, ordinary living.
+  lane, voices, laundry in the wind, ordinary living.
 - A gull drops into the lane, investigates the ruts, finds
   nothing to its purpose, and lifts off again.
 x: -8

@@ -2,7 +2,7 @@ roomid: 5501
 zone: New Plymouth Docks
 title: The Lower Wharf
 description: >
-  Noise and motion hit you at once — the slap of water against
+  Noise and motion hit you at once: the slap of water against
   pilings, the rattle of rope through iron rings, a foreman's
   shout that expects to be obeyed and is. This is the barge
   landing, where river craft come in low and heavy and are relieved
@@ -12,7 +12,7 @@ description: >
   efficient silence of men who have done this loading a hundred
   times. The great <ansi fg="itemname">mooring-bollards</ansi>
   march along the dock edge in pairs, their iron hides worn bright
-  at the crown and rust-streaked below — each one festooned with
+  at the crown and rust-streaked below, each one festooned with
   loops of rope that someone has made fast with more confidence
   than artistry. This is where you arrive if you came by water.
   The city begins here, not gently.
@@ -41,7 +41,7 @@ nouns:
     around the base has cracked slightly under the years of load.
     The rope-scars are grooved deep in the crown where hawsers have
     dragged under tension. One bollard has a name chiseled into
-    the flange — MARRICK — too deep to be recent, too exact to be
+    the flange, MARRICK. It is too deep to be recent, too exact to be
     idle. The name means nothing obvious.
 idlemessages:
 - A barge-hand calls out a count; the rest of the chain responds

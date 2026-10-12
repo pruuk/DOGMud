@@ -1,20 +1,20 @@
 roomid: 5917
 zone: New Plymouth Temple
-title: The Archive — Reading Room
+title: The Archive, Reading Room
 description: >
-  The reading room is the archive's public face —
-  a room of lamplit desks arranged in two parallel
+  The reading room is the archive's public face.
+  It is a room of lamplit desks arranged in two parallel
   rows, each desk fitted with a brass-shielded oil
   lamp and a <ansi fg="itemname">reading-slope</ansi>
   of polished hardwood angled for someone who intends
   to work for several hours. The volumes on these
-  desks are permitted volumes — the archive's general
+  desks are permitted volumes, the archive's general
   collection, accessible on request, their contents
   known and curated. The room smells of lamp-oil,
   beeswax, and a particular kind of learned dust
   that is not the same as ordinary dust. A printed
   <ansi fg="itemname">access-rules</ansi> placard
-  stands at the room's entrance — fourteen rules,
+  stands at the room's entrance with fourteen rules,
   the fourteenth the longest, the second-to-last the
   most recently added, its ink slightly fresher than
   its neighbors. The stacks lie to the east; a
@@ -34,7 +34,7 @@ exits:
     roomid: 5918
 nouns:
   reading slope: A sloped reading surface fitted
-    to each desk — a piece of polished hardwood
+    to each desk, a piece of polished hardwood
     hinged at the back, its angle fixed by a small
     peg through a series of notch-holes so it can
     be adjusted. The surface is worn smooth where
@@ -42,19 +42,19 @@ nouns:
     The wood is a warm mid-brown darkened further
     at the contact points. Small brass clips at the
     top of each slope hold open volumes without
-    requiring a hand to keep the page — a detail
+    requiring a hand to keep the page. This detail
     that suggests whoever designed this room
     understood what extended reading actually
     requires.
   access rules: A printed card on heavy stock
     mounted in a frame at the reading room's
-    entrance — fourteen numbered rules for the
+    entrance, with fourteen numbered rules for the
     use of the archive's general collection. The
     rules cover hours of access, handling of
     volumes, prohibition of copying without
     archivist approval, and the process for
     requesting items from the stacks. Rule
-    fourteen — the longest — concerns the
+    fourteen, the longest, concerns the
     Restricted Collection and consists entirely
     of a description of the process by which
     access may be requested and the criteria
@@ -67,12 +67,12 @@ idlemessages:
   a page without looking up, their attention
   entirely elsewhere from this room.
 - The oil lamps along the reading desks burn
-  steadily — the brass shields directing light
+  steadily, the brass shields directing light
   precisely downward onto the slopes.
 - From the northern passage, no sound. The door
   at its end is not a door that makes sounds.
-- The smell of the reading room is specific —
-  lamp-oil and the particular dust of volumes
+- The smell of the reading room is specific.
+  It is lamp-oil and the particular dust of volumes
   that have been opened many times by many hands.
 - Someone has left a reading slope at its maximum
   angle, the brass clips empty. The desk is

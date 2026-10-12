@@ -3,7 +3,7 @@ zone: Greenford
 title: The Market Square
 description: >
   The Town Stair gives out here onto the Market
-  Square — the upper town spreading from the top
+  Square: the upper town spreading from the top
   of the climb. It is not large, the kind of square
   a market fills comfortably on a weekday morning
   with room to cross between the stalls. The
@@ -23,7 +23,7 @@ exits:
   east: {roomid: 6291}
 nouns:
   the square: >
-    The Market Square is the upper town's centre —
+    The Market Square is the upper town's centre,
     not grand, but solid and well-used. The cobbles
     are of two generations: an older set worn smooth
     in the crossing-paths, and a newer section at
@@ -35,7 +35,7 @@ nouns:
     long time.
   the stalls: >
     The morning stalls claim the square's south and
-    east edges — canvas awnings, trestle tables,
+    east edges: canvas awnings, trestle tables,
     the smell of produce fresh from the overnight
     road in. Vegetables, small goods, a handful of
     cut flowers. Nothing elaborate. The serious

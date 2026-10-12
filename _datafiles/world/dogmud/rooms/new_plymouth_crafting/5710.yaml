@@ -3,7 +3,7 @@ zone: New Plymouth Crafting
 title: Above the Forge
 description: >
   The room above the forge is warm through the floor
-  as much as through the window — the hearth below
+  as much as through the window. The hearth below
   heats the boards and the boards heat the room, and
   the smell of iron and coal-smoke rises with it. A
   rope-strung <ansi fg="itemname">bed-frame</ansi> takes
@@ -14,7 +14,7 @@ description: >
   this window in the morning more than once to check
   the state of yesterday's fire before going down. A
   growing collection of <ansi fg="itemname">tool-sketches</ansi>
-  covers the east wall — charcoal on paper, each labeled
+  covers the east wall: charcoal on paper, each labeled
   with dimensions and material notes, the thinking of
   someone who works problems out on paper when they
   are not working them out at the anvil.
@@ -32,12 +32,12 @@ nouns:
     the contact edges and replaced at the headboard
     end within the last year. The blanket is rough
     wool, heavy and serviceable. On the small shelf
-    above the headboard — three books, a lamp with
+    above the headboard are three books, a lamp with
     a burned-down wick, and a folded piece of paper
     that has been read often enough to wear through
     its fold-line.
   tool sketches: Charcoal drawings pinned in a rough
-    grid on the east wall — tools, components, and
+    grid on the east wall, showing tools, components, and
     one larger study that appears to be a new design
     for the bellows bracket. Each is labeled in a
     cramped hand with measurements and notes on metal
@@ -46,7 +46,7 @@ nouns:
     work. The newest sketch has a line crossed out
     and redrawn twice.
 idlemessages:
-- The floor is noticeably warm underfoot — the forge
+- The floor is noticeably warm underfoot, the forge
   heat rising through the boards from below.
 - From the south window, a clear view of the yard and
   the banked forge coals.

@@ -4,8 +4,8 @@ title: Shrine Approach
 description: >
   A moss-grown path climbs the low rise from the standing stones below,
   narrowing as the ground steepens. At the top of the rise two gateposts
-  have fallen -- one toppled entirely, one listing at a precarious angle
-  -- and the lintel that once joined them lies across the path in two
+  have fallen (one toppled entirely, one listing at a precarious angle)
+  and the lintel that once joined them lies across the path in two
   pieces, its carved face pressed into the earth. Whoever set these stones
   here did so with care; whoever knocked them down left without tidying.
   Beyond the broken gate the path continues toward a weathered structure
@@ -26,7 +26,7 @@ exits:
     roomid: 5341
 nouns:
   path: Moss-covered and worn smooth at its center, the path shows long
-    use. The stones beneath the moss are fitted, not random -- someone
+    use. The stones beneath the moss are fitted, not random. Someone
     laid this way deliberately, and the earth has been slow to reclaim it.
   lintel: The carved face of the lintel presses into the turf, its
     inscription hidden from view. The edges of the break are old, weathered

@@ -8,12 +8,12 @@ description: >
   expedient transmission of authority through paper.
   The <ansi fg="itemname">central-worktable</ansi>
   is long and undecorated, its surface divided by
-  invisible convention into distinct working areas —
+  invisible convention into distinct working areas:
   correspondence to one end, ledgers to the other,
   rolled survey instruments in a rack at the far
   end that has not been touched today. The room's
-  occupant — whoever holds the steward's post this
-  season — conducts the bloodline's city-facing
+  occupant, whoever holds the steward's post this
+  season, conducts the bloodline's city-facing
   business from behind that table with the manner
   of someone who represents a power they did not
   originate and will not inherit. Everything here
@@ -41,7 +41,7 @@ nouns:
     papers set down and lifted, seals pressed, and
     instruments unrolled across it. The invisible
     working zones are apparent to anyone who spends
-    five minutes here — active correspondence to
+    five minutes here. Active correspondence to
     the right, the bloodline's city-facing ledgers
     to the left, the center kept clear for
     consultation. The table has no decorative
@@ -49,13 +49,13 @@ nouns:
 idlemessages:
 - Papers are moved from one end of the central
   table to the other in an order that is the
-  order that matters — and then re-ordered
+  order that matters, and then re-ordered
   again as circumstances change.
 - A courier enters briefly from the Processional,
   delivers a sealed letter to the in-tray near
   the table's right end, and leaves without
   exchanging words.
-- The office is cool at midday — the stone keeps
+- The office is cool at midday. The stone keeps
   the temperature even and does not care whether
   this is comfortable.
 - The ledgers on the left side of the central
@@ -63,7 +63,7 @@ idlemessages:
   week's entries are still loose pages waiting
   to be bound.
 - From the northern door, the faint sound of
-  the gallery is barely audible — quiet movement,
+  the gallery is barely audible, with quiet movement,
   or the particular near-silence of someone
   studying something closely.
 spawninfo:

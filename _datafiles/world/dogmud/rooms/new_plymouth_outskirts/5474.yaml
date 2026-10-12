@@ -2,7 +2,7 @@ roomid: 5474
 zone: New Plymouth Outskirts
 title: The Hawkers' Yard
 description: >
-  Dust and noise together — that is the first impression the yard
+  Dust and noise together: that is the first impression the yard
   gives, a packed-earth clearing where a dozen <ansi fg="itemname">barrows</ansi>
   and loaded trays have mustered at odd angles, all of them talking
   at once. The goods on offer have a look about them, an uncertainty
@@ -24,7 +24,7 @@ exits:
 nouns:
   barrows: A mixed fleet of market carts and handbarrows, ranging
     from heavy two-wheel pushers to improvised trays on salvaged
-    wheels, all loaded with goods of uncertain provenance — handled
+    wheels, all loaded with goods of uncertain provenance, including handled
     glassware, used tools, cloth of no clear origin, stoppered
     bottles without labels, and wrapped bundles that shift and
     clink when touched. A buyer who pays attention to which

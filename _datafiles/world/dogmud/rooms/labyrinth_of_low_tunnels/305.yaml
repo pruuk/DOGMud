@@ -7,7 +7,7 @@ description: The passage south of the rubble choke dead-ends in a partially cave
   a crude nest. Something slept here, curled tight in the dark. A vertical crack in
   the floor drops away into blackness, wide enough to squeeze through, its edges worn
   smooth by the passage of many small bodies. Cold air rises from below, carrying
-  sounds -- distant, guttural, and busy.
+  sounds, distant, guttural, and busy.
 biome: cave
 coord:
   x: -13
@@ -23,7 +23,7 @@ spawninfo:
   message: A warren scout scrambles up from the crack below, clawed hands gripping the worn stone.
   respawnrate: 10 real minutes
 nouns:
-  nest: A heap of scraps -- torn hide, matted fur, strips of something that might once
+  nest: A heap of scraps, torn hide, matted fur, strips of something that might once
     have been cloth. It stinks of sweat and animal warmth. Whatever sleeps here is
     small but not concerned about comfort.
   crack: A vertical fissure dropping straight down into the rock. The edges are polished

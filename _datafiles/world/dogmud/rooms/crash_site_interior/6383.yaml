@@ -6,7 +6,7 @@ description: >
   The corridor north sags out of true, its floor and ceiling drawn
   toward each other where the deck failed, so that you go stooped through
   a grey that has lost its calm. Here the machinery in the walls has been
-  laid open by the buckling — ranks of fine filament and dulled metal
+  laid open by the buckling: ranks of fine filament and dulled metal
   torn from their fitted channels and hanging, and no longer sleeping. A
   charge crawls in the ruin of them, arcing wall to wall in thin
   blue-white threads, silent and quick, jumping the narrowed gap and gone
@@ -20,7 +20,7 @@ exits:
     roomid: 6384
 nouns:
   machinery: >
-    Torn from the buckled walls and left hanging — ranks of hair-fine
+    Torn from the buckled walls and left hanging: ranks of hair-fine
     grey filament and dulled unnameable metal, spilled from channels that
     held them fitted for ten thousand years. The charge that crawls
     through the ruin now is not work. It is the twitch of a thing too long

@@ -5,7 +5,7 @@ description: >
   A spiral of broken steps rises into the guts of a ruined tower, each
   tread worn smooth by generations of feet and slick now with cold damp.
   The stone underfoot is black with old copper stain, and the air carries
-  that mineral smell -- the breath of a building that has sat sealed and
+  that mineral smell, the breath of a building that has sat sealed and
   still for a very long time. Somewhere above, the structure opens; light
   falls down the stairwell in a pale column. Thick walls rise around you,
   mortared with care by hands that believed this place mattered.
@@ -24,7 +24,7 @@ exits:
 nouns:
   steps: Broad and spiraling, the steps were carved from the same pale
     limestone as the tower walls. Each one bears the shallow groove of
-    long use -- a path worn deep by those who once climbed here with
+    long use, a path worn deep by those who once climbed here with
     purpose.
   stone: The walls are dressed stone fitted without mortar at the joints,
     dark with age and stained by copper runoff from the instruments that

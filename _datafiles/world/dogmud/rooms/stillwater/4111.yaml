@@ -8,7 +8,7 @@ description: >
   gives way to pressed gravel, and the road runs northward
   into rolling country before bending out of sight. A
   weathered <ansi fg="itemname">milestone</ansi> stands at
-  the road's shoulder under the arch — its inscribed face
+  the road's shoulder under the arch, its inscribed face
   turned northward, naming a destination most travelers in
   this town will never see. The lake-wind comes harder
   through the gap here than it does in the square. A faint
@@ -32,7 +32,7 @@ exits:
 spawninfo:
 - itemid: 55
 nouns:
-  arch: A simple timber arch — two upright squared posts
+  arch: A simple timber arch, two upright squared posts
     of dark cedar with a single crossbeam, its bark long
     weathered away to silver. A small iron lantern hangs
     from a hook at the crossbeam's center, lit at dusk
@@ -41,7 +41,7 @@ nouns:
   milestone: A waist-high block of dressed lake-stone
     standing under the arch, the carved face turned
     north toward the road ahead. The carving names a
-    single distant destination — NEW PLYMOUTH — and a
+    single distant destination, NEW PLYMOUTH, and a
     number of leagues that most travelers will hear
     from a wagon-driver before they ever reach the
     next milestone confirming it.
@@ -50,7 +50,7 @@ nouns:
     but visibly thinning further north. Wagon ruts run
     deep in the verges; the road carries real traffic
     in spring and fall.
-  view: From under the arch the country opens out —
+  view: From under the arch the country opens out,
     rolling pasture and hedgerow stretching north until
     the road bends out of sight behind a low rise. On
     a clear day a smudge of distant smoke on the

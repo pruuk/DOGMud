@@ -15,7 +15,7 @@ idlecommands:
     thin cord, and sets them alongside the other bundles on the stall
     ledge with the efficiency of long practice.'
   - ''
-  - 'say Candles, wreaths, incense -- whatever your devotion calls
+  - 'say Candles, wreaths, incense, whatever your devotion calls
     for. All traditional, all proper for the temple.'
   - ''
   - 'emote wipes down the stall counter, straightening the display of
@@ -28,7 +28,7 @@ character:
   description: |
     The Offering-Seller runs a tidy stall at the edge of the temple
     approach, selling the small devotional items pilgrims carry to
-    the altar. She is not a Keeper -- she is a trader who has been
+    the altar. She is not a Keeper. She is a trader who has been
     working this pitch for nine years and knows exactly what pilgrims
     want, at what price, at which point in their journey. Her stock
     is candles, reed wreaths, and temple incense, sourced from the

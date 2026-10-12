@@ -2,9 +2,9 @@ roomid: 467
 zone: Thornwall City
 title: Temple District
 description: A quieter part of the city, set apart from the market's noise by a low
-  wall and a row of ancient yew trees. The temple dominates the district -- a stone
+  wall and a row of ancient yew trees. The temple dominates the district. It is a stone
   building of considerable age, its spire the tallest structure in Thornwall. Smaller
-  buildings cluster around it -- a hospice, a scriptorium, and residences for the
+  buildings cluster around it, including a hospice, a scriptorium, and residences for the
   temple staff. The cobblestones here are cleaner than the rest of the city, swept
   daily by acolytes. The air smells of incense and old stone.
 biome: city_backstreet
@@ -21,7 +21,7 @@ exits:
     roomid: 5000
 nouns:
   temple: The temple is built of pale limestone that has aged to a warm honey colour.
-    Its architecture is old -- pointed arches, narrow windows, a spire that tapers
+    Its architecture is old, with pointed arches, narrow windows, a spire that tapers
     to a weathervane. The doors are heavy oak, standing open during the day. A
     carved motto above the entrance has been worn nearly illegible by weather.
   trees: Ancient yew trees, their trunks thick and gnarled, their dark foliage

@@ -3,7 +3,7 @@ zone: South Road
 title: The First Orchards
 description: >
   The smell tells you you've reached the valley floor before your feet are
-  sure of it — a wave of ripening fruit, sweet and heavy and green, rolling
+  sure of it: a wave of ripening fruit, sweet and heavy and green, rolling
   up the road to meet the dry descent. The scrub ends as abruptly as the
   orchard did far above, and irrigated green comes back all at once: rows
   of low trained <ansi fg="itemname">fruit trees</ansi> march off on either
@@ -20,7 +20,7 @@ exits:
 nouns:
   fruit trees: >
     Not the failing apples of the high country but valley
-    stock — peach and apricot and fig, trained low and spread wide on
+    stock: peach and apricot and fig, trained low and spread wide on
     wires to catch the heat, each tree's feet fed by a runnel of channel
     water. They hang heavy with fruit going gold and blushing, and the air
     beneath them is thick and humming with wasps and the smell of sugar.
@@ -34,7 +34,7 @@ nouns:
   ditch: >
     A channel of clear running water hand-cut along the verge, cool
     and quick, branching off through gaps to flood each row in turn. Trail
-    your fingers in it and you feel where the valley's wealth comes from —
+    your fingers in it and you feel where the valley's wealth comes from:
     snowmelt led patiently down from the high country to wake the warm dry
     ground.
 idlemessages:

@@ -3,11 +3,11 @@ zone: Ashwick
 title: Ritual Circle
 description: >
   A circle of flat river stones set into the grass south of
-  the central green -- the site of Ashwick's Autumnal Rite.
+  the central green, the site of Ashwick's Autumnal Rite.
   The stones are worn smooth by generations of standing feet,
   arranged in a ring roughly ten paces across. Wooden poles
   stand at the cardinal points, draped with drying flower
-  garlands -- chrysanthemums, sage bundles, dyed cloth in
+  garlands: chrysanthemums, sage bundles, dyed cloth in
   Chrysalis colors. One stone near the east edge bears a dark
   <ansi fg="itemname">scorch mark</ansi> that does not match
   any fire damage. The air here holds a faint charge, like
@@ -25,10 +25,10 @@ nouns:
     surfaces worn smooth by generations of feet. Each stone
     is roughly knee-width, set flush with the ground so the
     grass grows tight against their edges. Most are unmarked
-    grey river stone. One near the east edge is different --
+    grey river stone. One near the east edge is different,
     it bears a dark discoloration that draws the eye.
   scorch mark: A dark mark on one of the eastern stones,
-    roughly hand-shaped -- fingers splayed as if someone
+    roughly hand-shaped, fingers splayed as if someone
     pressed a burning palm to the rock. It is not soot or
     char from a fire. The discoloration goes into the stone
     itself, as if the rock was changed by heat from within.
@@ -37,7 +37,7 @@ nouns:
   garlands: Dried flower garlands draped on wooden poles at
     the circle's cardinal points. Chrysanthemums woven with
     sage bundles and strips of dyed cloth in Chrysalis
-    ceremonial colors -- gold, green, and deep violet. They
+    ceremonial colors, gold, green, and deep violet. They
     are from the most recent Autumnal Rite, drying slowly
     in the open air. A few petals have fallen to the grass.
 idlemessages:

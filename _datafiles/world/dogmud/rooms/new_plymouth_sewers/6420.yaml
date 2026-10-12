@@ -5,7 +5,7 @@ description: >
   Water returns to the deep here, and in quantity. The passage
   runs knee-deep in soft <ansi fg="itemname">silt</ansi>,
   and over the silt the <ansi fg="itemname">water</ansi> moves west
-  with intent — not the seep and stand of the sewers above, but a
+  with intent: not the seep and stand of the sewers above, but a
   steady, continuous draw, going somewhere and taking the passage
   along with it. Each step sinks, holds, and comes free with a
   reluctant pull. The dry channel lies back east. The flow bends
@@ -27,9 +27,9 @@ nouns:
     weight slowly and gives it back the same way, and every print
     you leave is already softening behind you.
   water: Cold, dark, and moving in one steady draw with no slack
-    in it anywhere. It runs clean — cleaner than anything in the
+    in it anywhere. It runs clean, cleaner than anything in the
     brick country above, filtered through half a city's depth of
-    stone — and it tastes of the grey rock it came through.
+    stone, and it tastes of the grey rock it came through.
 idlemessages:
 - The current lifts a long streak of silt off the bed and carries
   it away west.

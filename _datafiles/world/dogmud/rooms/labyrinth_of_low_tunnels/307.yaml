@@ -4,7 +4,7 @@ title: Refuse Heap
 description: The tunnel widens into a low, stinking pit that serves as the warren's
   midden. Broken tools, cracked pottery, fouled rags, splintered bones, and rotting
   scraps of unidentifiable organic matter are heaped against the walls in mounds that
-  nearly reach the ceiling. The stench is extraordinary -- a physical wall of decay
+  nearly reach the ceiling. The stench is extraordinary, a physical wall of decay
   that makes your eyes water and your gorge rise. Flies cluster in black clouds over
   the worst of it. Narrow paths have been stamped through the refuse, connecting the
   exits, but the footing is treacherous and foul.
@@ -24,8 +24,8 @@ spawninfo:
   respawnrate: 10 real minutes
 nouns:
   midden: Layers of waste packed down over what must be years. The bottom layers have
-    compacted into a dark, putrid sludge. Occasionally a recognizable object protrudes
-    -- a buckle, a broken blade, a cracked bowl. Nothing worth touching.
+    compacted into a dark, putrid sludge. Occasionally a recognizable object protrudes,
+    a buckle, a broken blade, a cracked bowl. Nothing worth touching.
   tools: Broken handles, snapped flint blades, a hammer-stone split in two. The tools
     are crude but show deliberate craftsmanship. Whatever broke them did so through
     heavy use, not carelessness.

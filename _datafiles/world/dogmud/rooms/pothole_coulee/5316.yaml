@@ -5,8 +5,8 @@ description: >
   Something is wrong with the distance here. The path ahead looks a stone's
   throw away, and the path behind looks the same, but walking forward takes
   you sideways, and walking sideways sometimes brings you closer to where
-  you started. Far things appear near -- you could swear you see the details
-  of the ground a hundred paces north as clearly as your own boots -- while
+  you started. Far things appear near. You could swear you see the details
+  of the ground a hundred paces north as clearly as your own boots, while
   near things feel remote, behind a gauze you cannot name. The ground itself
   seems reluctant to cooperate, each step landing somewhere slightly other
   than where you intended. You get the impression the Folding has crumpled
@@ -26,13 +26,13 @@ exits:
 spawninfo:
 - mobid: 9149
 nouns:
-  distance: The sensation is acute and disorienting -- the far looks near,
+  distance: The sensation is acute and disorienting. The far looks near,
     the near recedes. You reach for a handhold and your arm falls short;
     you glance back and the way you came appears smaller than it should,
     already far away. Distance here is a suggestion the place is not
     committed to.
-  ground: The ground is ordinary stone -- pale, cracked, the same floating
-    scabland as before -- but it refuses to respond predictably to your
+  ground: The ground is ordinary stone, pale, cracked, the same floating
+    scabland as before. But it refuses to respond predictably to your
     weight. Each footfall lands and holds, but the next step does not
     follow in the direction you stepped.
 idlemessages:

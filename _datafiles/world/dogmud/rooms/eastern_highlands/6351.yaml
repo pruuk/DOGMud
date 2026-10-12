@@ -4,14 +4,14 @@ title: The Abandoned Survey Camp
 description: >
   What is left here was a camp once. The
   <ansi fg="itemname">shelter</ansi>
-  is collapsed — a set of lashed poles that has been lying on
+  is collapsed: a set of lashed poles that has been lying on
   its side long enough to bleach grey and settle into the rock.
   A
   <ansi fg="itemname">fire ring</ansi>
   marks where someone kept a fire: flat stones arranged in a
   careful circle, undisturbed since the last fire burned in
   them, the ash long since taken by the wind. What remains is
-  the arrangement — the deliberateness of it, the habit of
+  the arrangement: the deliberateness of it, the habit of
   someone who made camp methodically and expected to return.
   Whatever
   <ansi fg="itemname">instruments</ansi>
@@ -27,7 +27,7 @@ exits:
     roomid: 6352
 nouns:
   shelter: >
-    The frame was built low — a set of poles lashed at
+    The frame was built low: a set of poles lashed at
     the apex, whatever covered them entirely gone. What
     remains is the poles themselves, pale and dry as old
     bone, collapsed onto each other in a heap that no
@@ -40,7 +40,7 @@ nouns:
   fire ring: >
     A ring of fist-sized stones, each chosen for flatness
     and set with the care of someone who intends to return
-    to it. The interior is scoured clean — no ash, no
+    to it. The interior is scoured clean: no ash, no
     char, no impression of repeated use except in the
     placement of the stones, which have not moved. The
     circle is intact. Someone made a fire here more than
@@ -53,8 +53,8 @@ nouns:
     There is nothing here that could still be called an
     instrument. On close examination, behind the fallen
     shelter, faint impressions remain in the rock dust
-    where something flat-footed stood for a long time
-    — the square shadows of where legs met stone. Whatever
+    where something flat-footed stood for a long time:
+    the square shadows of where legs met stone. Whatever
     the surveyor used to fix his positions and build his
     record, it is gone. The dust remembers the shape of
     what stood in it. That is all that remains of the
@@ -62,8 +62,8 @@ nouns:
 idlemessages:
 - The fire ring holds no heat. It has not held heat for
   a long time.
-- The poles of the collapsed shelter are dry as driftwood
-  — no moisture, nothing left to decay further.
+- The poles of the collapsed shelter are dry as driftwood.
+  There is no moisture, nothing left to decay further.
 - The cold here is not the cold of altitude alone. It is
   the cold of a place that has been empty long enough
   that emptiness has become its condition.

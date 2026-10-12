@@ -11,8 +11,8 @@ groups:
   - folded
 activitylevel: 21
 idlecommands:
-  - 'emote repeats a single short motion over and over -- a half-step and
-    a turn -- like a phrase of speech with the meaning worn off'
+  - 'emote repeats a single short motion over and over: a half-step and
+    a turn, like a phrase of speech with the meaning worn off'
   - ''
   - 'emote splits briefly into two overlapping outlines that drift apart
     and then snap back into one'
@@ -29,8 +29,8 @@ character:
   description: |
     Out on the reality-thin scabland, where the world comes apart in
     earnest, even violence leaves a residue. A fold-echo is the print of
-    something that happened here and refuses to finish happening -- a death,
-    a struggle, a crossing -- folded back on itself until it stands up and
+    something that happened here and refuses to finish happening: a death,
+    a struggle, a crossing, folded back on itself until it stands up and
     repeats. It is more solid than the grove-things, because the scabland
     has more of itself to spare, but it is no more whole: an outline that
     keeps a half-step of after-image trailing behind it, an attack that

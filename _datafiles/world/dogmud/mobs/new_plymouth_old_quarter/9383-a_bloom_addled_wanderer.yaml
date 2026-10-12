@@ -11,7 +11,7 @@ groups:
 idlecommands:
   - 'emote mouths something without sound, hands held slightly
     away from the body as though they expect to be handed
-    something, or to drop something — the gesture is not
+    something, or to drop something. The gesture is not
     resolved in either direction.'
   - ''
   - 'emote stops walking. Stands in place with the particular
@@ -26,7 +26,7 @@ character:
   name: A Bloom-Addled Wanderer
   description: |
     The veining at the temples and jaw is copper-bright
-    against pale skin — the Bloom's specific signature,
+    against pale skin: the Bloom's specific signature,
     worn here openly, without the concealment you see
     above ground. The eyes are wide and fixed at a
     middle distance that does not correspond to anything

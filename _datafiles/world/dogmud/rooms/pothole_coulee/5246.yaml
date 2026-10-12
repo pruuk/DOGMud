@@ -8,7 +8,7 @@ description: >
   iron ingots in grey rows, each one stamped with a count-mark on the
   end. A row of burlap sacks bulges with coal, fine dust sifting from
   the seams onto the floor. Coils of leather strip hang from wooden
-  pegs driven into the uprights -- cut and cured, ready for handle-
+  pegs driven into the uprights, cut and cured, ready for handle-
   wrapping, bellows-work, or strapping of any kind. Stacked planks of
   rough-cut timber fill the back. The air here is cool and dry, held
   against the forge-heat by the overhang above.
@@ -29,11 +29,11 @@ nouns:
     work starts with these.
   coal: Burlap sacks of smithing coal, the chunks ranging from fist-
     sized to dust. The fine sift of it covers everything nearby in
-    black powder and gets into every crease. Good fuel, patient fuel
-    -- it holds heat better than wood and burns longer.
+    black powder and gets into every crease. Good fuel, patient fuel.
+    It holds heat better than wood and burns longer.
   leather: Coils of cured leather strip, pliable and dark, smelling
     of tannin and old grease. This is the kind used for handle-wrap
-    and bellows-patch -- narrow, strong, and clean.
+    and bellows-patch, narrow, strong, and clean.
 idlemessages:
 - A bit of <ansi fg="itemname">coal</ansi> dust shifts and settles off the nearest sack in the still air.
 x: 38

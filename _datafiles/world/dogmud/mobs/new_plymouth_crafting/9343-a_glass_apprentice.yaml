@@ -9,14 +9,14 @@ groups:
   - humanoid
 idlecommands:
   - 'emote checks the annealing oven temperature by the glow through
-    the door-gap — not touching, not yet — and makes the small
+    the door-gap, not touching, not yet, and makes the small
     adjustment to the damper that the reading called for.'
   - ''
   - 'emote turns a cooled piece on the soapstone bench, examines the
     rim against the light from the passage, and sets it back with
     more care than it strictly requires.'
   - ''
-  - 'emote keeps his hands at his sides when he is not working —
+  - 'emote keeps his hands at his sides when he is not working,
     the habit of someone who has learned what hot things in low
     light can do to careless fingers.'
 activitylevel: 8

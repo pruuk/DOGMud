@@ -17,7 +17,7 @@ groups:
 idlecommands:
   - 'emote crouches at the edge of the junction, watching the passage above with cautious eyes'
   - 'emote grinds dried herbs between its palms, releasing a sharp medicinal scent'
-  - 'emote holds up an open palm toward you -- a gesture that needs no translation'
+  - 'emote holds up an open palm toward you, a gesture that needs no translation'
   - ''
   - ''
 activitylevel: 15
@@ -29,7 +29,7 @@ character:
     other by several inches, the fingers tapering into delicate, multi-jointed digits
     that move with unnerving precision. Pale fungal growths cluster along its scalp
     like a crown, pulsing faintly with bioluminescence. Its eyes are the same milky
-    grey as its kin, but there is something behind them -- a calculating awareness
+    grey as its kin, but there is something behind them: a calculating awareness
     that the warriors lack. Clay pots of dried herbs and bundles of cave-grown
     medicinals hang from its harness. When it speaks, its voice is a hoarse whisper,
     halting but deliberate.

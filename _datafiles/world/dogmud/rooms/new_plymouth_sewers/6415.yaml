@@ -3,16 +3,16 @@ zone: New Plymouth Sewers
 title: The Wallow
 description: >
   The passage drops into a sunken chamber, and the chamber is a
-  <ansi fg="itemname">wallow</ansi> — a wide pool of dark water
+  <ansi fg="itemname">wallow</ansi>: a wide pool of dark water
   worn smooth at its rim where something hauls itself out, and in,
   and out again. A broad <ansi fg="itemname">silt-shelf</ansi>
   stands above the waterline along the east wall, and what lies on
   the shelf tells you whose room this is.
-  <ansi fg="itemname">Bones</ansi> — cracked open, sorted by no
+  <ansi fg="itemname">Bones</ansi>, cracked open, sorted by no
   current, carried here and left. Fresh kills over old ones, old
   ones over older. The drag-marks from the junction all run down
-  into the water and end there. This is a kept room — kept the way
-  a den is kept — and nothing about it suggests its keeper ranges
+  into the water and end there. This is a kept room, kept the way
+  a den is kept, and nothing about it suggests its keeper ranges
   far. A doorway continues south.
 biome: sewer
 coord:
@@ -35,7 +35,7 @@ nouns:
     edges, as though pushed aside to keep the sleeping place
     clear.
   bones: Cracked for the marrow, every one. Rat, dog, gull, and
-    larger — some of the larger ones you decide not to examine
+    larger. Some of the larger ones you decide not to examine
     closely. None were washed here; there is no current on the
     shelf to wash them. They were carried, eaten, and dropped,
     in layers going down.

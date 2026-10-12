@@ -2,16 +2,16 @@ roomid: 5378
 zone: North Road North
 title: The Lake & Ladle, Common Room
 description: >
-  The noise finds you first — voices layered on voices, a hand
+  The noise finds you first: voices layered on voices, a hand
   of cards slapping down on the back table, the steady crack
   and sigh of the hearth fire. Then the warmth rolls in behind
   it, dense and low, carrying woodsmoke and rendered drippings
   and the heavy, meaty scent of a pot of stew that has been
   going since noon. The Lake and Ladle's common room is wide
   and low-beamed, its oak rafters dark with old smoke; trestle
-  tables fill most of the floor, holding tonight's usual crowd
-  — drovers eating without looking up, a pair of merchants bent
-  over an unrolled map at the middle table, a lean traveler who
+  tables fill most of the floor, holding tonight's usual crowd:
+  drovers eating without looking up, a pair of merchants bent
+  over an unrolled map at the middle table, and a lean traveler who
   has not moved from her seat by the wall since before dark.
   The <ansi fg="itemname">hearth</ansi> commands the far end of
   the room, wide enough to roast an ox, a cauldron swinging low
@@ -40,11 +40,11 @@ nouns:
     drew in charcoal and donated to the board rather than carry
     further, and at least three sheets pinned over older ones
     that have not been read since they were posted. The board
-    is open — any traveler may pin or take a notice, and the
-    innkeeper clears it only when the papers begin to fall of
+    is open. Any traveler may pin or take a notice, and the
+    innkeeper clears it only when the papers begin to fall under
     their own weight.
   hearth: A farmhouse-scale fireplace built from rounded river
-    stones mortared with care — wide enough that two people
+    stones mortared with care, wide enough that two people
     could stand inside it comfortably side by side. A cauldron
     hangs on a pivoting iron arm over the banked coals, its
     lid trembling as something thick and meaty simmers inside.
@@ -57,16 +57,16 @@ nouns:
     smoothness by decades of elbows and cup-bottoms. Clay cups
     hang above it on iron hooks. A stoneware crock of house ale
     sits at one end, a ladle hooked over its lip. A small
-    chalkboard behind the counter lists tonight's prices — ale,
-    bowl, pallet above. The innkeeper keeps a rag tucked at her
+    chalkboard behind the counter lists tonight's prices for ale,
+    bowl, and pallet above. The innkeeper keeps a rag tucked at her
     hip and uses it constantly; little passes through this room
     without her noticing.
   tables: Long trestle tables with bench seating on both sides,
     each surface scored with knife-cuts and ground down by cup-
     rings worked into the grain over the years. The near table
     is occupied by drovers eating fast and quietly. The back
-    table hosts a card game — four players, three different
-    opinions on the rules, two spectators unwilling to leave.
+    table hosts a card game with four players, three different
+    opinions on the rules, and two spectators unwilling to leave.
     The middle table belongs to the merchants and their map;
     the map is annotated in two different hands and the
     disagreement shows no sign of resolution.

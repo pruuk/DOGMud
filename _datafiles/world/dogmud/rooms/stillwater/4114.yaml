@@ -3,7 +3,7 @@ zone: Stillwater
 title: Reedy Foreshore
 description: >
   Frogs croak unevenly across a marshy stretch of shallows
-  where a small creek drains south into the lake — the
+  where a small creek drains south into the lake. The
   reeds reach over your head in places, and the path
   threads between them on a series of flat plank
   duckboards. The smell is wet earth, marsh-sage, and the
@@ -14,7 +14,7 @@ description: >
   from the firmer hummocks, their bark traditionally
   stripped for poultice work. Closer to the path, a
   <ansi fg="itemname">lake mint</ansi> patch crowds the
-  edge of the duckboards — bruise a leaf and the smell
+  edge of the duckboards. Bruise a leaf and the smell
   doubles in the air.
 biome: swamp
 coord:
@@ -31,7 +31,7 @@ nouns:
     on either side of the path, their seedheads fat and
     brown and ready to burst. The fibrous down inside
     the heads is what tailors carry off in basket-loads
-    in early autumn — light, warm, and slow to clump.
+    in early autumn, light, warm, and slow to clump.
     Several heads near the path show fresh thumbprint
     bruises where someone has tested the down between
     finger and thumb.
@@ -39,12 +39,12 @@ nouns:
     the firmer hummocks among the reeds, their leaves
     long and silver-backed. The bark, stripped in early
     summer and dried, makes a poultice for fevers and
-    a tonic for aching joints — known to anyone who
+    a tonic for aching joints, known to anyone who
     has ever spent a winter on the lake. A few saplings
     near the path show fresh ring-cuts where a forager
     has been at them.
   lake mint: A patch of low ground-hugging mint crowds
-    the path's edge near the foreshore — bright green
+    the path's edge near the foreshore, with bright green
     leaves with a darker vein, and a sharper, colder
     smell than garden mint. Used by alchemists for
     steady-hand tonics; bruise a leaf and the smell
@@ -54,7 +54,7 @@ nouns:
     timber sleepers across the wettest ground, kept up
     by whoever fishes the channel that week. The
     timber is silvered with age and slick where the
-    moss has crept in. Walk steady — the southernmost
+    moss has crept in. Walk steady, the southernmost
     plank is loose and one end is missing entirely.
   creek: A small clear creek runs south through the
     foreshore on its way to the lake, the bottom dark

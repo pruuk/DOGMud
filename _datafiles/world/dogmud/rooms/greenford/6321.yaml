@@ -3,14 +3,14 @@ zone: Greenford
 title: The Milepost
 description: >
   The road crests a gentle rise here, and for a moment
-  the country is all around — the river valley east, the
+  the country is all around: the river valley east, the
   lowland fields north, the wooded highlands beginning to
   show west where the road is heading. A carved stone
   milepost stands at the verge, its face lettered in
   incised capitals: GREENFORD 1 MILE; NEW PLYMOUTH 3
   DAYS. The paint in the cuts is old and partly gone but
   the letters are still clear. Carts pass at intervals,
-  traveling both ways — the road is in use, the Plymouth
+  traveling both ways. The road is in use, the Plymouth
   trade still running. Examine the milepost or the verge.
 biome: land
 coord: {x: 19, y: -78, z: 1}
@@ -25,13 +25,13 @@ nouns:
     out: GREENFORD 1 MILE; NEW PLYMOUTH 3 DAYS. Below
     the principal destinations, added in a later cut:
     COUNTY BOUNDARY 4 MILES NORTH. The stone is the
-    county's standard marker — the same post you find at
+    county's standard marker: the same post you find at
     every mile on this road west until the highland
     crossing. This one is the first, and in that sense
     the most important: it names the town you have left
     and the city you are going to.
   the verge: >
-    The road's margin here is open country — the verge
+    The road's margin here is open country: the verge
     wide enough to rest a horse, the grass a mixed meadow
     growth of the kind that follows maintained roads.
     Looking west: the road curves slightly north, following

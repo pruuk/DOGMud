@@ -2,15 +2,15 @@ roomid: 6348
 zone: Eastern Highlands
 title: The Basalt Colonnade
 description: >
-  Columns of dark rock rise from the ridge in rough rows —
-  close enough in height and spacing that the eye, approaching,
+  Columns of dark rock rise from the ridge in rough rows.
+  They are close enough in height and spacing that the eye, approaching,
   arranges them into something deliberate. The mind goes there
   first. Then the bases come into view, each one splayed and
   uneven where the stone fractured up through the earth, and
   the spacing that looked even is not even, and what the mind
   assembled disassembles. The
   <ansi fg="itemname">columns</ansi>
-  are what they are — cooled basalt, cracked along planes no
+  are what they are: cooled basalt, cracked along planes no
   hand directed, the heights irregular, the gaps between them
   almost but not quite consistent. Standing among them, they
   are entirely natural. Whatever shaped this
@@ -32,7 +32,7 @@ nouns:
     planes into irregular facets. The bases are wide and
     uneven, splaying where the stone came through the substrate.
     No two are the same height. The spacing between them is
-    almost regular — almost, but not quite, which is the thing
+    almost regular. Almost, but not quite, which is the thing
     the eye caught from a distance and the mind kept misreading.
     Standing among them, they are entirely natural. The
     regularity is the kind of coincidence that happens in
@@ -40,7 +40,7 @@ nouns:
     into patterns it was not trying to make. The columns did
     not choose to stand in rows. They simply do.
   highland: >
-    The reach continues east and south from the colonnade —
+    The reach continues east and south from the colonnade:
     grey rock, low scrub, the same flat cold light that has
     been present since the pass. The columns are the one
     vertical thing on this part of the ridge. Beyond them
@@ -51,7 +51,7 @@ idlemessages:
 - The wind passes between the columns in complete silence.
   This is not a sheltered space. There is no reason for
   the silence.
-- Light falls on the dark stone at a flat angle — not dim,
+- Light falls on the dark stone at a flat angle, not dim,
   but flat, as though the surface absorbs the direction
   rather than reflecting it.
 - A stone loosens somewhere above and strikes twice on its

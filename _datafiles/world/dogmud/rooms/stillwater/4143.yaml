@@ -3,7 +3,7 @@ zone: Stillwater
 title: Tailor's Cottage
 description: >
   The clack and slide of a heavy floor loom fills the long
-  front room of a cottage at the town's northern edge —
+  front room of a cottage at the town's northern edge:
   Linny Greaves at her work, weaving the wool blanket
   trade Stillwater is quietly known for among the road's
   travelers. A heavy oak <ansi fg="itemname">loom</ansi>
@@ -11,11 +11,11 @@ description: >
   threads stretched taut in long parallel rows and the
   shuttle currently parked mid-pass. A long working
   <ansi fg="itemname">bench</ansi> against the western
-  wall holds the day's hand-stitching — a folded shirt
+  wall holds the day's hand-stitching: a folded shirt
   needing collar-work, a pile of mended fishing-net,
   three pairs of patched trousers awaiting collection. A
   rack of finished <ansi fg="itemname">cloth</ansi>
-  stands ready by the door — bolts of plain wool, a
+  stands ready by the door: bolts of plain wool, a
   shorter row of cattail-down lined cloaks for the cold
   travel north, and a small folded stack of dyed lake-mint
   green that the temple's acolyte has bought twice and
@@ -42,7 +42,7 @@ nouns:
     The loom is a generation older than Linny and was
     her teacher's before her.
   bench: A long working bench against the western
-    wall holds the day's hand-stitching — a folded
+    wall holds the day's hand-stitching, a folded
     linen shirt needing its collar-work, a heavy pile
     of mended fishing-net brought up from the docks,
     three pairs of patched trousers awaiting their
@@ -50,7 +50,7 @@ nouns:
     needles sits at one end; a small basket of waxed
     thread sits at the other.
   cloth: A wooden rack of finished cloth stands ready
-    by the door — bolts of plain wool in three weights,
+    by the door, bolts of plain wool in three weights,
     a shorter row of cattail-down lined cloaks suitable
     for cold travel north, several plain undyed linen
     shifts, and a small folded stack of dyed lake-mint
@@ -65,7 +65,7 @@ nouns:
     spares.
   basket: A round willow basket beside the loom holds
     spare shuttles, balls of yarn in graduated weights,
-    and a small set of tools — needles, awls, a
+    and a small set of tools, needles, awls, a
     tapestry-bone, a small pair of shears. The basket
     is older than the shuttles; the willow has gone
     silver-pale with handling.

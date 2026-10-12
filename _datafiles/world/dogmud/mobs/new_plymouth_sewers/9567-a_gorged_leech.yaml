@@ -13,7 +13,7 @@ idlecommands:
   - 'emote hangs just under the black surface, a paler smudge in
     the dark water, utterly still.'
   - ''
-  - 'emote rolls once in the pool -- a slow, heavy turn -- and the
+  - 'emote rolls once in the pool, a slow, heavy turn, and the
     surface closes over it without a sound.'
   - ''
   - 'emote lies half out on the stone shelf, its blind forequarter
@@ -36,7 +36,7 @@ character:
   description: |
     A leech the size of a rolled carpet, grown vast on whatever
     the deep water sends it and pale as everything down here is
-    pale -- it has never once seen light and has no eyes to see
+    pale. It has never once seen light and has no eyes to see
     it with. Its skin has gone translucent as wet paper, and
     inside the slack grey body its last meals hang as dark
     suspended shadows, some of them still recognizable in

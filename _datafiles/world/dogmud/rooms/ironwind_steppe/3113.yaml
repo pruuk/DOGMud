@@ -1,13 +1,13 @@
 roomid: 3113
 zone: Ironwind Steppe
 title: Deep Cistern
-description: A natural cistern fills the center of this cave chamber
-  -- a deep pool of still, black water that reflects nothing. The
+description: A natural cistern fills the center of this cave chamber.
+  It is a deep pool of still, black water that reflects nothing. The
   water is ice-cold and impossibly clear despite its dark appearance.
   The depth is unknown; dropping a stone in produces a long, echoing
   plunk that suggests considerable depth. The chamber walls are wet
   and smooth, and the air is cold and heavy with moisture. Something
-  moves in the deep water -- slow, patient ripples that have no
+  moves in the deep water, with slow, patient ripples that have no
   visible source.
 biome: cave
 coord:

@@ -2,7 +2,7 @@ roomid: 5608
 zone: New Plymouth Common
 title: The Public Cistern
 description: >
-  The damp reaches you before the door does — a cold
+  The damp reaches you before the door does. It is a cold
   mineral smell mixed with lye-soap and the particular
   scent of fabric that has been wet and is becoming dry,
   which is never quite like either state. The cistern
@@ -15,11 +15,11 @@ description: >
   beside it hangs a long-handled iron dipper worn bright
   at the bowl. A rank of
   <ansi fg="itemname">washboards</ansi> occupies the
-  outer wall — a dozen of them, different sizes, rigged
-  over a trough of standing water — and at this hour most
-  of them are occupied, the sound of wet cloth slapping
+  outer wall. There are a dozen of them, in different sizes,
+  rigged over a trough of standing water, and at this hour
+  most of them are occupied, the sound of wet cloth slapping
   stone underlining everything else anyone says here.
-  The cistern is the quarter's other gathering point —
+  The cistern is the quarter's other gathering point,
   the one where the conversation is horizontal and the
   work never stops.
 biome: city_backstreet
@@ -38,19 +38,19 @@ nouns:
   cistern lid: A heavy timber lid, iron-hinged on one
     side and iron-ringed on the other. Its surface has
     been worn smooth by hands and rough by rain until it
-    is its own texture — neither raw wood nor polished,
+    is its own texture, neither raw wood nor polished,
     just used. Beneath it, water collected from the
     rooftops sits in a stone basin in the cold dark,
     flat and clear and cold enough to make the dipper
     handle sting. The iron dipper hanging beside it
     is bright from use and has someone's name scratched
-    into the handle in shallow letters — too shallow
+    into the handle in shallow letters, too shallow
     to read without leaning in.
   washboards: A row of ridged stone-and-wood boards
     canted over a shared trough, most of them wet and
     in use. The women working them have the easy rhythmic
-    conversation of people doing repetitive work together
-    — voices rising and falling over the slap and scrub,
+    conversation of people doing repetitive work together,
+    with voices rising and falling over the slap and scrub,
     one thread of talk moving from board to board along
     the row without losing itself. Two boards in the
     middle sit unoccupied. The trough water is grey and

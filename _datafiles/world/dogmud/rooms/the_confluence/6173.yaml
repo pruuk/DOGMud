@@ -3,7 +3,7 @@ zone: The Confluence
 title: The Sanctuary
 description: >
   Beyond the crossing, the temple narrows again into the
-  sanctuary -- the innermost space open to the public,
+  sanctuary, the innermost space open to the public,
   set a step above the crossing floor. At its center a
   stone altar holds a small
   <ansi fg="itemname">altar-flame</ansi>,
@@ -30,7 +30,7 @@ exits:
 nouns:
   altar flame: >
     A small fire burning in a bronze dish on the altar
-    stone -- not showy, not ceremonial in its size, but
+    stone, not showy, not ceremonial in its size, but
     present. The Keepers tend it continuously; it has
     not gone out, they will say, in the temple's full
     accounting of itself. Whether that is precise or

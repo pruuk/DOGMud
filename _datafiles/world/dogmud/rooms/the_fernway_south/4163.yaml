@@ -7,11 +7,11 @@ description: >
   canopies fused overhead into a single broad dome of
   <ansi fg="itemname">dappled-light</ansi> that shifts and
   breathes with every movement of the wind. The air beneath
-  is cooler than the burn scar to the north — greener, with
+  is cooler than the burn scar to the north, and greener, with
   that particular still quality a glade takes on when the
   surrounding trees are old enough to muffle sound. The
-  ground is thick with <ansi fg="itemname">beech-mast</ansi>
-  — fallen nuts and husks and layers of the broad papery
+  ground is thick with <ansi fg="itemname">beech-mast</ansi>:
+  fallen nuts and husks and layers of the broad papery
   leaves from past autumns, packed into a surface that gives
   and rustles underfoot. The <ansi fg="itemname">twin-beech</ansi>
   trunks themselves are smooth silver-grey, scarred with a
@@ -19,7 +19,7 @@ description: >
   initials so old they have nearly weathered flat. Worn
   deer-tracks branch from the glade at the
   <ansi fg="itemname">path-junction</ansi>, one east, one
-  west, one south — beaten deep into the leaf-litter by
+  west, one south. They are beaten deep into the leaf-litter by
   small feet over many seasons.
 biome: forest
 coord:
@@ -40,13 +40,13 @@ nouns:
     Two ancient beeches grown so close their trunks have
     fused at the base and their canopies long since merged
     overhead into one. The smooth silver-grey bark is clean
-    except for a few carved initials — names and dates, the
-    dates barely legible — worn to shallow grooves by weather
+    except for a few carved initials: names and dates, the
+    dates barely legible, worn to shallow grooves by weather
     and the slow expansion of the living wood.
   beech mast: |
     The glade floor is thick with fallen beech-nuts and their
     spiny husks, layered over seasons of broad papery leaves
-    — a deer larder in autumn and a comfortable browsing floor
+    It is a deer larder in autumn and a comfortable browsing floor
     all year. The surface gives underfoot and releases a faint
     dry sweetness when turned over.
   dappled light: |
@@ -57,7 +57,7 @@ nouns:
     shade is deep enough that the moss stays damp.
   path junction: |
     Worn deer-tracks branch from the glade's edge in three
-    directions — east, west, and south — beaten into the
+    directions (east, west, and south), beaten into the
     beech-mast by years of small regular feet. They run with
     the purpose of long-established routes, not casual
     wandering.

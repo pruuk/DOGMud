@@ -2,8 +2,8 @@ roomid: 6350
 zone: Eastern Highlands
 title: The Scoured Flat
 description: >
-  Bare rock stretches in all directions without interruption
-  — no soil in the cracks, no scrub, no moss, nothing that
+  Bare rock stretches in all directions without interruption.
+  There is no soil in the cracks, no scrub, no moss, nothing that
   would anchor or soften the surface. Whatever the
   <ansi fg="itemname">wind</ansi>
   has been doing to this shelf, it has been doing it long
@@ -11,7 +11,7 @@ description: >
   not gusty or variable. It is a continuous pressure from
   the east, and nested inside it, beneath it, is a
   <ansi fg="itemname">silence</ansi>
-  that should not be there — a held stillness under the
+  that should not be there: a held stillness under the
   moving air, as though the wind is travelling over something
   that does not participate in the sound. The rock underfoot
   is fractured into close-fitting plates, each one scrubbed
@@ -26,7 +26,7 @@ exits:
 nouns:
   wind: >
     The wind here is not cold in the ordinary sense. It is
-    constant — a single sustained pressure from the east that
+    constant: a single sustained pressure from the east that
     the body leans into and then adjusts to and then cannot
     stop adjusting to, because the adjustment never resolves.
     It carries nothing. No smell, no moisture, no warmth,
@@ -37,7 +37,7 @@ nouns:
   silence: >
     Under the sound of the wind there is a quality of
     stillness that the wind does not account for. It is
-    not the silence of shelter — the flat is entirely
+    not the silence of shelter. The flat is entirely
     exposed. It is more like a dampening, as though the
     sound of the wind is allowed in but the sound of
     anything else is not. A voice here feels closer than
@@ -52,7 +52,7 @@ idlemessages:
   was loose has long since been taken.
 - Nothing grows in the cracks. The cracks are clean.
 - The sound of a footstep on the flat stone arrives too
-  precisely — no softening, no scatter, nothing carried
+  precisely. No softening, no scatter, nothing carried
   away. The flat offers everything back at once.
 - To the south the ground holds the shape of something.
   Not quite scrub. Not quite nothing. Closer inspection

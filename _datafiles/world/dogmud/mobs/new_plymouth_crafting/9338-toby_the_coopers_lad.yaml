@@ -17,7 +17,7 @@ idlecommands:
   - 'emote sits on the front step with arms around his knees, watching
     the street end with a quiet that is not quite ease.'
   - ''
-  - 'emote runs a hand along the wall beside the cooperage door —
+  - 'emote runs a hand along the wall beside the cooperage door,
     briefly, the way you might touch something you are keeping safe.'
   - ''
   - 'emote does not move far from the door.'
@@ -27,8 +27,8 @@ character:
   description: |
     Toby the Cooper's Lad sits on the front step of the Abandoned
     Cooperage or stands near enough to the door that he is always
-    between you and it. He is young — not a child, not quite settled
-    into a man — with the permanent pink of steam-reddened hands,
+    between you and it. He is young, not a child, not quite settled
+    into a man, with the permanent pink of steam-reddened hands,
     palms and the backs of both, the Chrysalis-change that the
     cooperage's old work burned into him before the place went quiet.
     He does not explain why he is still here. He does not ask you

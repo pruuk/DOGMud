@@ -3,19 +3,19 @@ zone: Stillwater
 title: Boat Rental Pier
 description: >
   Three flat-bottomed <ansi fg="itemname">skiffs</ansi> are
-  drawn up at a short timber pier east of the net yard —
-  light shallow craft built for one or two persons, with
+  drawn up at a short timber pier east of the net yard.
+  They are light shallow craft built for one or two persons, with
   oars stowed inboard and a single small sail furled at the
   mast. A small painted <ansi fg="itemname">sign</ansi>
   nailed to the pier's outer post lists the day rate in
   copper. A bronze <ansi fg="itemname">bell</ansi> hangs
-  from a wooden frame near the pier's landward end — the
+  from a wooden frame near the pier's landward end, the
   way travelers summon the boatman from his cottage when he
   is not at the pier himself. The water here is calm and
   clear enough to count the gravel on the bottom. A stubby
-  berth at the pier's end serves the passage boats — the
+  berth at the pier's end serves the passage boats. The
   Lakewind Packet and the Grey Heron take their turns tying
-  up here — where a painted <ansi fg="itemname">sailings
+  up here, where a painted <ansi fg="itemname">sailings
   board</ansi> lists their comings and goings and the
   <ansi fg="mobname">ferry agent</ansi> keeps a locked
   strongbox close at hand.
@@ -31,12 +31,12 @@ exits:
     roomid: 4120
 nouns:
   skiffs: Three flat-bottomed lake skiffs moored
-    bow-and-stern to the pier — light craft a single
+    bow-and-stern to the pier, light craft a single
     person can row easily and a stronger wind will
     push along under the small furled sail at each
     mast. The hulls are dark with pitch, the gunwales
     worn smooth. Each boat has its name carved into
-    the bow — Patience, Old Marda, and a third whose
+    the bow, Patience, Old Marda, and a third whose
     name has been scratched out and not yet replaced.
   sign: A small painted board nailed to the pier's
     outer post listing the day rate in copper. The
@@ -57,7 +57,7 @@ nouns:
     skiff at low water.
   water: Calm and clear here at the pier's foot, the
     lake's gravel bed visible perhaps two human-heights
-    down — small darting fish, a pale crayfish-shadow,
+    down, small darting fish, a pale crayfish-shadow,
     the occasional larger shape that resolves into a
     pike if it holds still long enough to identify.
   sailings board: A painted board nailed near the ferry

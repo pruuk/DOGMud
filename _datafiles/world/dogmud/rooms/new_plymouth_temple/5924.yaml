@@ -3,13 +3,13 @@ zone: New Plymouth Temple
 title: The Sexton's Walk
 description: >
   The walk is the maintenance lane along the
-  temple's back wall — a plain service passage
+  temple's back wall, a plain service passage
   without ornament or pretension to it, its
   paving laid for durability rather than
   appearance. The sexton's domain runs here
   along the north side of the chapel and the
   almonry's back, and along it are the service
-  fixtures of the building's daily operation —
+  fixtures of the building's daily operation:
   a <ansi fg="itemname">tool-rack</ansi> holding
   the sexton's equipment in documented order,
   a <ansi fg="itemname">water-barrel</ansi> under its iron spigot, a pitch-
@@ -34,39 +34,39 @@ nouns:
   tool rack: A rack of iron hooks and wooden
     pegs along the walk's inner wall, holding
     the sexton's working equipment in a fixed
-    documented order — each peg and hook
+    documented order, each peg and hook
     assigned to a specific item, the assignments
     written on a small label beneath each
     position. The tools are plain and
-    well-maintained — brooms of different widths,
+    well-maintained, with brooms of different widths,
     a mop and bucket, a long-handled brush for
     high surfaces, a pitch-applicator, a collection
     of rags in a hanging bag, a hammer and a
     small selection of iron fixings in a jar.
     One peg is empty; the label beneath it reads
     "roof-hook" and the hook's absence is not
-    recent — the label has faded as much as its
+    recent. The label has faded as much as its
     neighbors.
   water barrel: A large wooden barrel on a
     low stand at the walk's east end, its iron
     spigot low enough for bucket-filling. The
     barrel is fed from a pipe coming through
-    the wall — the same source as the yard-well
+    the wall. It is the same source as the yard-well
     above, the water cold and slightly mineral.
     The barrel's wood is old and dark, slightly
     green on the north side where the wall shade
     keeps it damp. A tin cup hangs on a nail
-    beside the spigot — the sexton's cup, by
+    beside the spigot, the sexton's cup, by
     usage rather than inscription.
 idlemessages:
 - The sexton's walk smells of pitch and damp
-  stone — the smell of maintenance done without
+  stone. It is the smell of maintenance done without
   ceremony.
 - The tool-rack is fully occupied except for
   the absent roof-hook, whose peg has been
   empty long enough that no one asks about it.
 - The water-barrel spigot drips at a rate of
-  one drop every several seconds — a slow loss
+  one drop every several seconds, a slow loss
   that will be addressed on the next round.
 - The walk is narrow enough that two people
   passing must turn sideways. It was not built

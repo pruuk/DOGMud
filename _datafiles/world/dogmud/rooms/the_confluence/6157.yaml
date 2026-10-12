@@ -2,7 +2,7 @@ roomid: 6157
 zone: The Confluence
 title: The Temple Forecourt
 description: >
-  A broad stone plaza at the water's edge — the full
+  A broad stone plaza at the water's edge. The full
   ceremonial width of the avenue arrives here and then
   stops, the paving ending at the joined rivers' near
   bank. To the east the causeway begins, a long bridge
@@ -36,7 +36,7 @@ spawninfo:
 idlemessages:
 - Pilgrims cross the forecourt with deliberate steps,
   offerings tucked under their arms.
-- The joined rivers are audible here — a low, broad
+- The joined rivers are audible here, a low, broad
   sound at the base of the city's noise.
 - A keeper at the forecourt's edge gestures pilgrims
   toward the causeway when the way seems clear.

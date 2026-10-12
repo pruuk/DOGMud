@@ -14,18 +14,19 @@ spawninfo:
   - mobid: 9491
 nouns:
   water: >-
-    The still surface shows you back to yourself -- and, far down beneath your
-    reflection, a faint blue-green glow, steady and patient. It is the same
-    light you'll one day find in the Awakening Pool. For now it only watches.
+    The still surface shows you back to yourself. Far down beneath your
+    reflection, there is a faint blue-green glow, steady and
+    patient. It is the same light you'll one day find in the Awakening Pool.
+    For now it only watches.
   pattern: >-
-    Six faint points of light hang in the depths in a slow ring -- Strength,
+    Six faint points of light hang in the depths in a slow ring: Strength,
     Dexterity, Perception, Vitality, Willpower, Charisma. Every soul that wakes
     here carries all six, each one centered on the same human measure. What you
     *do* with them is what makes you different.
   embers: >-
-    Three small embers drift beneath the surface: one red, one green, one gold
-    -- your health, your stamina, your conviction. They dim when you spend them
-    and warm again when you rest.
+    Three small embers drift beneath the surface: one red, one green, one gold.
+    They are your health, your stamina, your conviction. They dim when you
+    spend them and warm again when you rest.
   dewey: >-
     Dewey stands a little back from the water, giving you room to look. 'Take
     your time. There's no clock on you here.'

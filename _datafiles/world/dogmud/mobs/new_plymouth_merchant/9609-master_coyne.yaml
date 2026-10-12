@@ -17,7 +17,7 @@ idlecommands:
   - 'emote slots a rolled document into a numbered strongbox and
     presses the wax seal flat with one thumb.'
   - ''
-  - 'emote checks a account-holder name against the ledger and
+  - 'emote checks an account-holder name against the ledger and
     nods once, satisfied, before moving to the next line.'
   - ''
   - 'emote makes a small notation in the margin of the ledger,
@@ -27,7 +27,7 @@ activitylevel: 12
 character:
   name: Master Coyne
   description: |
-    I keep the Exchange's accounts and I keep them precisely --
+    I keep the Exchange's accounts and I keep them precisely:
     every deposit, every withdrawal, every numbered strongbox
     matched to the name on its lease. I do not raise my voice
     and I do not lose a figure. My coat is grey because grey

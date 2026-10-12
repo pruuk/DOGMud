@@ -30,16 +30,16 @@ spawninfo:
 nouns:
   charts: Dozens of star-charts cover the shelves, their edges curling
     and brown. The ink has faded to rust on the oldest, but a few near
-    the workbench look fresher -- traced over, re-inked, annotated in a
+    the workbench look fresher, traced over, re-inked, annotated in a
     cramped careful hand.
   instruments: Brass calipers, a bone sighting-rod, a pair of dividers
-    whose tips have been filed to near-invisibility -- each instrument
+    whose tips have been filed to near-invisibility. Each instrument
     rests exactly where it was last set down, waiting in the green light
     to be picked up again.
 idlemessages:
 - The green lamp flame bends slightly, though there is no draft to explain it.
 - A loose <ansi fg="yellow">chart</ansi> at the edge of the workbench shifts and resettles with a dry whisper.
-- The hall is very quiet -- the kind of quiet that has been tended, kept deliberately.
+- The hall is very quiet, the kind of quiet that has been tended, kept deliberately.
 - One of the brass <ansi fg="yellow">instruments</ansi> catches the lamplight and sends a slow arc across the wall.
 x: 43
 y: 17

@@ -2,7 +2,7 @@ roomid: 5385
 zone: North Road North
 title: Sage Flats
 description: >
-  The smell arrives before anything else — sun-warmed sage,
+  The smell arrives before anything else: sun-warmed sage,
   sharp and medicinal and clean, the defining scent of dry
   country, thick enough to taste when the wind is still. The
   road narrows to a pale scratch across an enormous flat of
@@ -10,7 +10,7 @@ description: >
   bunchgrass stretching to every horizon; the sky above takes
   up more of the world here than the land does, pale and wide
   and utterly cloudless. A person can walk this road and feel
-  the particular loneliness of being fully visible — no hedges,
+  the particular loneliness of being fully visible, with no hedges,
   no trees, no fold in the earth to step behind. The
   <ansi fg="itemname">horizon</ansi> is so flat and far in
   every direction that the eye keeps expecting something to
@@ -28,18 +28,18 @@ exits:
     roomid: 5386
 nouns:
   sagebrush: The silver-green of the sagebrush runs in every
-    direction without a break — acres of it, close and dense,
+    direction without a break, acres of it, close and dense,
     each plant grey-barked and brittle-looking but surprisingly
     tough, each branch ending in tight clusters of small oval
     leaves coated in fine silver hairs that trap and hold the
     scent. Break a stem and the oil comes out, the smell
-    doubling — sharp and medicinal, unmistakably itself. The
+    doubling, sharp and medicinal, unmistakably itself. The
     plant is low, knee-high at most, giving the whole flat a
     uniform horizon-to-horizon texture broken only by the pale
     stalks of dried bunchgrass and the occasional bare basalt
     shelf pushing through the thin soil.
-  horizon: The horizon here is a clean line all the way around —
-    flat land meeting pale sky in an unbroken circle, nothing
+  horizon: The horizon here is a clean line all the way around.
+    Flat land meets pale sky in an unbroken circle, with nothing
     rising above it within sight. At midday the distance
     shimmers in the heat until the line between land and sky
     becomes uncertain. Standing on the road you can see perhaps
@@ -47,7 +47,7 @@ nouns:
     except the brush and, occasionally, a hawk tracing long slow
     arcs against the blue. The country extends beyond sight in
     every direction with equal indifference.
-  road: Out here the road is more suggestion than surface — a
+  road: Out here the road is more suggestion than surface. It is a
     line of gravel pressed into the soil, the verges no longer
     distinguishable from the surrounding scrubland now that
     maintenance has stopped. The gravel has thinned and spread.

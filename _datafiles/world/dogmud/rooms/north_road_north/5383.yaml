@@ -3,21 +3,21 @@ zone: North Road North
 title: Cracked Verge
 description: >
   The heat of the stone reaches the skin before anything
-  else — the pale <ansi fg="itemname">basalt</ansi>
+  else. The pale <ansi fg="itemname">basalt</ansi>
   pushing through the thin soil here catches the day's sun
   and holds it, giving back warmth long after the air has
   cooled. The ground is dry to the depth of a boot heel
-  and further — surface <ansi fg="itemname">cracks</ansi>
+  and further. Surface <ansi fg="itemname">cracks</ansi>
   run between the rock exposures in a fine irregular
   network, the soil between them pale as ash and powdery
   underfoot. The road is little more than two wheel-ruts
   pressed into the hardpan, the gravel nearly gone, and
-  traffic is scarcer here — the scrub grows unhurried to
+  traffic is scarcer here. The scrub grows unhurried to
   the road's very edge and the air carries the smell of
   sun-warmed sage and hot stone. At the eastern shoulder
   a cluster of stacked stones and sun-bleached offerings
   marks a <ansi fg="itemname">wayshrine</ansi> built up
-  over many seasons — the kind of place where travelers
+  over many seasons. It is the kind of place where travelers
   leave small things before crossing unfamiliar country.
 biome: land
 coord:
@@ -31,7 +31,7 @@ exits:
     roomid: 5384
 nouns:
   basalt: Exposures of dark grey basalt push through
-    the thin topsoil in slabs and knuckles — the
+    the thin topsoil in slabs and knuckles. The
     underlying rock is close to the surface now, the
     glacial till that once softened this terrain having
     thinned away. The stone's face is rough where it
@@ -39,18 +39,18 @@ nouns:
     of weather have worked it. On the flat upper faces
     a thin black crust of lichen has established
     itself, dark against the pale stone. The rock is
-    noticeably warm to the touch on exposed surfaces —
-    it holds the sun's heat well into evening in
+    noticeably warm to the touch on exposed surfaces.
+    It holds the sun's heat well into evening in
     dry weather.
   wayshrine: A cluster of stones at the road's edge
-    that has accumulated rather than been built —
-    travelers have been adding to it long enough that
+    that has accumulated rather than been built.
+    Travelers have been adding to it long enough that
     it has taken on a rough structure, a low central
     cairn flanked by smaller offerings laid on the
     flat rock beside it. The items here are sun-
-    bleached and dry — a small clay cup placed upright,
+    bleached and dry. They include a small clay cup placed upright,
     two braided grass rings, a copper piece face-down
-    on the stone, a short length of cord knotted in
+    on the stone, and a short length of cord knotted in
     an elaborate pattern. Some offerings are clearly
     older than others. The cup is empty and clean,
     placed deliberately, as if left for someone who
@@ -59,7 +59,7 @@ nouns:
     exposures is a pale, close-grained clay-silt
     that has dried past hard to something close to
     ceramic. A network of shallow cracks runs through
-    it in irregular polygons — the surface contracts
+    it in irregular polygons. The surface contracts
     as the moisture leaves and the fracture geometry
     follows the ground's own logic. The powdery edges
     of each crack are fine enough to stir in the
@@ -70,8 +70,8 @@ nouns:
 idlemessages:
 - Dust rises from the wheel-ruts in a low thin haze
   that settles almost before it lifts.
-- The smell here is all dry stone and sage — no
-  moisture in it, no green note at all. The farmland
+- The smell here is all dry stone and sage, with no
+  moisture in it and no green note at all. The farmland
   behind might as well be a day south.
 - A lizard crosses the basalt face with unhurried
   precision and disappears into a crack without

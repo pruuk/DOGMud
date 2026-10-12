@@ -2,7 +2,7 @@ roomid: 6050
 zone: South Road
 title: Irrigation Row
 description: >
-  Water is everywhere here, and you hear it before anything else — a
+  Water is everywhere here, and you hear it before anything else: a
   many-throated trickle and rush and gurgle on every side, the sound of a
   whole landscape being fed. The road runs along the top of a low bank
   between fields, and from it you look down on the valley's plumbing laid
@@ -20,7 +20,7 @@ exits:
   south: {roomid: 6051}
 nouns:
   main leat: >
-    The artery of this stretch — a broad stone-lined channel
+    The artery of this stretch: a broad stone-lined channel
     running fast and brimming alongside the road, carrying far more water
     than any one field could want. It comes down from the high springs and
     feeds the whole comb of lesser channels below; foul it or block it, and
@@ -33,7 +33,7 @@ nouns:
     silver into a flooded field. Each board is a small daily decision about
     who drinks and who goes dry, and each is watched.
   fields: >
-    Squared plots of deep-watered crop running off on both sides —
+    Squared plots of deep-watered crop running off on both sides:
     bean and onion and standing barley, green to the point of black,
     quilted by the channels into a patchwork. The line where the watered
     land ends and the dry slope begins is as sharp as a drawn knife.

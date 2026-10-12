@@ -5,7 +5,7 @@ description: The cave walls here are riddled with small tunnels and
   chambers gnawed into the softer stone by generations of deep
   gnawers. The tunnels are too small for a person but large enough
   for the rat-sized creatures that made them. Gnaw marks score
-  every surface -- the stone chipped and scraped by persistent
+  every surface, the stone chipped and scraped by persistent
   teeth. The air smells of animal musk and stone dust. Scratching
   sounds come from the walls in every direction, an unsettling
   reminder that you are surrounded by unseen inhabitants.
@@ -35,7 +35,7 @@ spawninfo:
 - mobid: 226
 - mobid: 226
 idlemessages:
-- Scratching comes from inside the walls -- gnawers at work.
+- Scratching comes from inside the walls, gnawers at work.
 - Stone dust trickles from a gnawed tunnel as something shifts inside.
 - The warren is alive with unseen movement on every side.
 x: 24

@@ -5,7 +5,7 @@ description: A damp, warm cave chamber where pale fungi grow in
   profuse clusters on every surface. Shelf mushrooms line the
   walls in overlapping tiers, and delicate thread-like mycelium
   covers the floor in a white mat. Some of the larger fungi
-  glow with a faint bioluminescence -- a ghostly blue-green
+  glow with a faint bioluminescence, a ghostly blue-green
   light that provides just enough illumination to see shapes
   and movement. The air is thick with spores and smells of
   damp earth and decay.
@@ -25,7 +25,7 @@ exits:
   west:
     roomid: 3108
 nouns:
-  fungi: An extraordinary variety of cave fungi -- pale shelf
+  fungi: An extraordinary variety of cave fungi, including pale shelf
     mushrooms, delicate thread-like growths, and bulbous caps
     in shades of white, grey, and sickly yellow. Several
     species glow faintly blue-green, providing dim natural

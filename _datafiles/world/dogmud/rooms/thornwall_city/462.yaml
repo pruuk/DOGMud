@@ -2,11 +2,11 @@ roomid: 462
 zone: Thornwall City
 title: Main Street, Central
 description: The center of Main Street is marked by a worn stone fountain that has
-  not held water in years -- its basin is used as an informal message board, with
+  not held water in years. Its basin is used as an informal message board, with
   notices and handbills tucked under stones along the rim. The street widens here
   into a small plaza where the major thoroughfares converge. To the north, the Temple
   District's spire is visible above the rooftops. To the south, a narrower street
-  leads toward the Craftsmen's Quarter. The buildings here are better maintained --
+  leads toward the Craftsmen's Quarter. The buildings here are better maintained, with
   fresh paint, clean windows, the occasional decorative ironwork.
 biome: city_thoroughfare
 coord:
@@ -23,7 +23,7 @@ exits:
   south:
     roomid: 469
 nouns:
-  fountain: A stone fountain in the classical style -- a central pillar topped with a
+  fountain: A stone fountain in the classical style, with a central pillar topped with a
     worn figure too weathered to identify, surrounded by a circular basin. The
     plumbing failed long ago. The basin is dry, its floor covered in a layer of
     notices, lost buttons, and pigeon droppings.

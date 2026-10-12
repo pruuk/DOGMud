@@ -14,13 +14,13 @@ description: >
   stone itself. On the north wall, a section known
   here simply as
   <ansi fg="itemname">the old wall</ansi>
-  predates the building around it — darker stone,
+  predates the building around it: darker stone,
   differently cut, the mortar of the current building
   running to it rather than through it. Something has
   been cut into its sheltered interior face. The records
   in this room do not appear to address it. A propped
   door in the west wall opens through into the Scholars'
-  Quarter — the Margin's halls back onto this archive,
+  Quarter. The Margin's halls back onto this archive,
   and its scholars come and go through here as if the
   records were half their own.
 biome: interior
@@ -37,7 +37,7 @@ nouns:
   the old wall: >
     A section of the records room's north wall in a
     stone darker and differently textured than the
-    surrounding building-stone — an older block,
+    surrounding building-stone: an older block,
     sheltered from street-damp and the wear of foot-
     traffic by the building that went up around it.
     The mortar of the current structure runs to it
@@ -62,7 +62,7 @@ idlemessages:
 - A clerk enters briefly, pulls a folio from the
   middle shelves, and leaves with it under one arm.
 - The old wall's stone is colder than the rest of
-  the room — a mineral chill that the shelves around
+  the room, a mineral chill that the shelves around
   it do not share.
 x: 3
 y: 71

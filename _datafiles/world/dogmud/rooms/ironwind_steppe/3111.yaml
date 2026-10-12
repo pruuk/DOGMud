@@ -1,7 +1,7 @@
 roomid: 3111
 zone: Ironwind Steppe
 title: Bone Grotto
-description: A grotto littered with bones -- not the small prey
+description: A grotto littered with bones, not the small prey
   remains found near the surface, but larger, more disturbing
   specimens. Ribs, femurs, and skulls of animals as large as
   deer and boar lie scattered across the cave floor, many showing
@@ -20,7 +20,7 @@ exits:
   east:
     roomid: 3112
 nouns:
-  bones: Large animal bones -- boar ribs, deer leg bones, and
+  bones: Large animal bones, such as boar ribs, deer leg bones, and
     skulls too large to be rodents. Many are cracked and
     gnawed, showing marks from something with powerful jaws.
     The bones are arranged along the grotto walls with a
@@ -32,6 +32,6 @@ spawninfo:
 idlemessages:
 - Bones shift and settle with a dry, clicking sound.
 - The bone grotto reeks of old decay and fresh predator musk.
-- Something breathes in the darkness above -- slow and heavy.
+- Something breathes in the darkness above, slow and heavy.
 x: 22
 y: -6

@@ -21,7 +21,7 @@ exits:
   south:
     roomid: 5275
 nouns:
-  water: The surface here is wrong — a metallic sheen floats on it
+  water: The surface here is wrong, a metallic sheen floats on it
     and the color beneath is too dark, too still. No insects touch it.
     No frogs call from its banks.
   reek: An underlying sulphur smell that rises in waves when the air

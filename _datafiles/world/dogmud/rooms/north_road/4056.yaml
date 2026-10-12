@@ -10,7 +10,7 @@ description: >
   to ache. It pulls at the stones with each step, and
   one or two shift underfoot with a grinding scrape.
   The smell here is all cold water and wet stone.
-  Nothing decorative about this crossing — it is purely
+  Nothing decorative about this crossing. It is purely
   functional, and has been since someone first decided
   the creek needed a road over it.
 biome: farmland
@@ -25,8 +25,8 @@ exits:
     roomid: 4057
 nouns:
   ford: Flat stones laid across the riverbed, worn smooth
-    on their upper faces. The spacing is deliberate —
-    close enough to step between comfortably, though a
+    on their upper faces. The spacing is deliberate.
+    Close enough to step between comfortably, though a
     few gaps have opened as stones shifted. Sediment has
     built up against the upstream face of each slab,
     forming small ridges. Two of the larger stones bear

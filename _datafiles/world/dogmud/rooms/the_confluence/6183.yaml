@@ -26,7 +26,7 @@ nouns:
   warded door: >
     A door of iron-bound timber, old and heavy, seated
     in an arch at the landing's east end. It opens east
-    into the cloisters -- the deep interior of the temple,
+    into the cloisters, the deep interior of the temple,
     where the senior Keepers live and work and where,
     deeper still, the way to what lies beneath can be
     found. The Threshold Warden is courteous about it:
@@ -40,7 +40,7 @@ spawninfo:
     respawnrate: "20 real minutes"
 idlemessages:
 - The Threshold Warden stands at ease beside the door,
-  neither forbidding nor inviting -- simply present.
+  neither forbidding nor inviting, simply present.
 - The passage runs on east through the door, into the
   quiet of the cloisters beyond.
 - A pilgrim asks the Warden something in a low voice;

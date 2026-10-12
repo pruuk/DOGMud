@@ -2,7 +2,7 @@ roomid: 6440
 zone: The Confluence
 title: The Warded Corner
 description: >
-  A closet-sized room made colder by its own construction — the
+  A closet-sized room made colder by its own construction: the
   walls here are lined in a hatch-pattern of fine wire, and the
   floor is scored with concentric warding-lines in chalk gone
   permanent under repeated tracing. At the center, an
@@ -27,7 +27,7 @@ nouns:
   enchanting circle: >
     Rings of pale inlay set into the floorboards themselves,
     fine as wire and laid with a precision no amateur hand
-    could manage. The pattern does not repeat cleanly — small
+    could manage. The pattern does not repeat cleanly: small
     corrections and rerouted lines mark places where the design
     was fixed mid-work rather than planned from the start.
 idlemessages:

@@ -21,11 +21,11 @@ exits:
 nouns:
   webs: Layer upon layer of spider silk spanning the coulee,
     from fresh and glistening to old and dust-caked. The
-    construction is not random -- the webs form a deliberate
+    construction is not random. The webs form a deliberate
     three-dimensional trap, funneling prey toward the center.
   husks: Dried husks of prey animals wrapped in silk and
     suspended in the web. Most are insects, but a few are
-    disturbingly large -- a rat, what might have been a bird,
+    disturbingly large, such as a rat, what might have been a bird,
     and something bigger wrapped too thoroughly to identify.
 spawninfo:
 - mobid: 220
@@ -33,7 +33,7 @@ spawninfo:
 - mobid: 220
 idlemessages:
 - A web strand vibrates with a low hum as something moves in it.
-- Silk brushes your face -- sticky and strong.
+- Silk brushes your face, sticky and strong.
 - Something large shifts in a dark crevice, multiple legs folding.
 x: 27
 y: 13

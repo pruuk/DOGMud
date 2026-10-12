@@ -3,7 +3,7 @@ zone: Stillwater Marsh
 title: Iron Seep
 description: >
   South of Cattail Bend the marsh narrows to a single broad
-  <ansi fg="itemname">iron-seep</ansi> — water rising slow and
+  <ansi fg="itemname">iron-seep</ansi>, water rising slow and
   cold from the peat, spreading across the rock shelf before
   draining south. The air carries a faint iron-tang here, the
   same smell as a freshly-worked forge but cooler and lower to
@@ -11,7 +11,7 @@ description: >
   nodules cluster on the seep's bottom like dark beads scattered
   by a careless hand, visible through the thin sheet of water
   above them. Every stone the seep has touched bears a stripe of
-  <ansi fg="itemname">rust-stains</ansi> — orange fading to brown,
+  <ansi fg="itemname">rust-stains</ansi>, orange fading to brown,
   strong enough to identify the seep's reach from a distance.
   The <ansi fg="itemname">mineral-water</ansi> itself is clear
   enough to drink but leaves the inside of a flask the colour of
@@ -30,19 +30,19 @@ exits:
     roomid: 4188
 nouns:
   iron tang: |
-    The faint metallic smell that hangs over the seep — strong
+    The faint metallic smell that hangs over the seep. It is strong
     enough to notice from several paces away when the wind is
     still, fading at the edges of the room. Smiths know it; so
     do the foragers who work the lake-iron beds.
   iron seep: |
     A broad slow seep where mineral-rich water rises through the
     marsh peat and spreads across a low shelf of stone before
-    draining south — the source of the lake-iron nodules
+    draining south. It is the source of the lake-iron nodules
     concentrated downstream at Sluice Pond. The ground at the
     seep's edge is cold even in summer, and the iron-tang in the
     air is strong enough to notice from several paces away.
   lake iron: |
-    Dark heavy nodules cluster on the seep's stone bottom —
+    Dark heavy nodules cluster on the seep's stone bottom,
     each one the size of a knucklebone or smaller, dense enough
     in the hand to surprise you. These are the same nodules the
     foragers bring to the Stillwater smith, who pays a premium
@@ -50,16 +50,16 @@ nouns:
     iron-stock will not serve.
   rust stain: |
     Rust-orange stains mark every stone the seep-water has
-    touched for any length of time — distinctive enough that
+    touched for any length of time. They are distinctive enough that
     a forager can find the seep by following the stained rocks
     south from the trail junction when the light is poor.
   rust stains: |
     Rust-orange stains mark every stone the seep-water has
-    touched for any length of time — distinctive enough that
+    touched for any length of time. They are distinctive enough that
     a forager can find the seep by following the stained rocks
     south from the trail junction when the light is poor.
   mineral water: |
-    The seep-water tastes faintly of iron and salt — drinkable
+    The seep-water tastes faintly of iron and salt. It is drinkable
     in small amounts, though it stains a clay flask inside and
     out within a day. The foragers say it clears the head when
     taken cold; the healer says the same with less enthusiasm.

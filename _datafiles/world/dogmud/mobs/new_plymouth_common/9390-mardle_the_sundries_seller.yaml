@@ -15,7 +15,7 @@ idlecommands:
   - 'emote squares the coils of rope on the front edge of the stall and
     shifts the loosest one to the back without looking.'
   - ''
-  - 'say Rope, waterskins, candles — whatever keeps the day moving,
+  - 'say Rope, waterskins, candles. Whatever keeps the day moving,
     I have it right here.'
   - ''
   - 'emote rubs both knuckles once, glances at the sky, and draws a
@@ -28,12 +28,12 @@ character:
   name: Mardle the Sundries-Seller
   description: |
     Mardle the Sundries-Seller has kept her corner of the Common Market
-    long enough that the stall is a fixed point — rope coils, waterskins,
+    long enough that the stall is a fixed point: rope coils, waterskins,
     soap cakes, tinderboxes, tallow dips, and sacks of flour arranged
     with the settled certainty of someone who stopped taking inventory
     years ago and simply knows. She is compact and steady, with a worn
     canvas apron and a voice pitched to carry across the square without
-    apparent effort. Her Chrysalis-change is the quiet kind — her joints
+    apparent effort. Her Chrysalis-change is the quiet kind: her joints
     ache before rain arrives, reliably, a few hours ahead of any cloud.
     The quarter's working people have learned to watch her knuckles. She
     moves extra candles to the front of the table on those mornings, and
