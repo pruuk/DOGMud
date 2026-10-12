@@ -8,7 +8,7 @@ description: >
   scythed back to shoulder width, the cut grass lying pale and fragrant
   in the sun. Ahead, the drystone wall of the homestead comes into view
   above the rise, and beyond it the thatched rooflines of the longhouse
-  and barn sit solid against the sky. The track itself is soft going --
+  and barn sit solid against the sky. The track itself is soft going,
   packed earth giving slightly underfoot, the kind of road that has been
   walked so long it has worn itself comfortable.
 biome: farmland
@@ -27,7 +27,7 @@ nouns:
   track: Wheel ruts run in two parallel channels the length of the slope,
     worn deep enough that grass has rooted in their centers. The track
     knows where it is going and has for a long time.
-  ruts: The ruts are old -- deepened over many seasons by cartloads
+  ruts: The ruts are old, deepened over many seasons by cartloads
     of hay and grain and timber. Grass grows between them in a low
     green ridge, undisturbed by recent wheels.
 idlemessages:

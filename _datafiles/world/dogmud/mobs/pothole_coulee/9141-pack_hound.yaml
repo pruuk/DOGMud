@@ -34,7 +34,7 @@ character:
     The pack-hound is bigger than the common scab-hound by a head and
     broader across the chest, its coat a darker grey that has a slight
     coarseness to it, like wire brushed the wrong way. The scarring on
-    this one is older and thicker -- a record of engagements it pressed
+    this one is older and thicker: a record of engagements it pressed
     rather than avoided. It runs at the front of the pack not because it
     was put there but because it is the kind of animal that moves toward
     things rather than away from them, and that tendency has been
@@ -47,7 +47,7 @@ character:
   level: 1
   gold: 0
   items:
-    - itemid: 40070   # pack-hide pelt — carried, always drops
+    - itemid: 40070   # pack-hide pelt, carried, always drops
   stats:
     dexterity:
       base: 146

@@ -21,8 +21,8 @@ idlecommands:
 character:
   name: Warden Esk
   description: |
-    Esk keeps the threshold -- the old basalt arch beneath its low plank
-    roof -- though anyone who watches him a while wonders what there is to
+    Esk keeps the threshold, the old basalt arch beneath its low plank
+    roof, though anyone who watches him a while wonders what there is to
     guard, for the arch has waited untroubled longer than the town has
     stood. He is a big, unhurried man gone gray at the temples, and he holds
     his watch with the deep calm of someone perfectly at ease with stillness,
@@ -31,7 +31,7 @@ character:
     attention sharpens and dims back to a coal-glow when it eases, so that
     folk learn to read his mood off them like a hearth. He speaks seldom and
     weighs each word, and what he says about the arch he says plainly and
-    without dread. There is no menace in his keeping -- only the patient
+    without dread. There is no menace in his keeping, only the patient
     steadiness of a man set to mind a wonder, and content to do it.
   speciesid: 1
   level: 1

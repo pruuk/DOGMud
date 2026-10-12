@@ -2,7 +2,7 @@ roomid: 5371
 zone: Pothole Coulee
 title: Coulee Rim
 description: >-
-  The coulee ends here -- not in a wall but in an opening, the basalt
+  The coulee ends here, not in a wall but in an opening, the basalt
   bluffs tapering and dropping away to either side until there is nothing
   left of them but low outcrops and then open sky. You stand on the last
   rise of the coulee floor, a shelf of packed earth and scattered shale
@@ -10,7 +10,7 @@ description: >-
   badlands beyond. The change is total: behind you the coulee's walls
   still hold warmth and shelter; ahead, the land falls open and raw,
   scrub-dotted and wind-cut, rolling west into the broad steppe. A rough
-  trail -- more gap in the brush than path -- descends from this rim
+  trail, more gap in the brush than path, descends from this rim
   into the broken ground below. The mine mouth sits back east among the
   talus.
 biome: mountains
@@ -26,13 +26,13 @@ exits:
     zone: Ironwind Steppe
 nouns:
   trail: A worn gap in the rim scrub where travelers and animals have
-    pushed through repeatedly -- not a maintained path but a remembered
+    pushed through repeatedly. It is not a maintained path but a remembered
     one. It drops steeply from the rim shelf into the broken terrain
     below, the packed earth of the descent scoured bare by wind and
     seasonal runoff.
   rim: The final shelf of coulee floor, a raised lip of packed earth
     and shale where the ravine's protective walls finally end. Standing
-    on it you are neither in the coulee nor on the open steppe -- you
+    on it you are neither in the coulee nor on the open steppe. You
     are at the hinge between the two, exposed to the wind for the first
     time.
 idlemessages:

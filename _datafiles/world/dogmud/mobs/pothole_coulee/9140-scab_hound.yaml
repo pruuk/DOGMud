@@ -31,7 +31,7 @@ character:
     A lean grey dog, ribs visible under a coat gone dull and rough at
     the edges, scarred across the muzzle and shoulder from fights it
     survived by being faster than what hit it. The scab-hound is not
-    large enough to be frightening on its own -- that is precisely the
+    large enough to be frightening on its own. That is precisely the
     point. It operates as one note in a chord, working the flanks while
     others press the center, circling wide to cut off retreat while the
     pack reads the target's attention and finds the moment no one is
@@ -42,7 +42,7 @@ character:
   level: 1
   gold: 0
   items:
-    - itemid: 40070   # pack-hide pelt — carried, always drops
+    - itemid: 40070   # pack-hide pelt, carried, always drops
   stats:
     dexterity:
       base: 138
