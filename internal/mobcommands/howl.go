@@ -1,17 +1,25 @@
 package mobcommands
 
 import (
-	"fmt"
-
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// Howl is a wolf conviction attack — a taunt reskin for mob use.
+// howlLegacy is what a howl sends when the taunt store is empty (unit tests
+// that never load world data).
+var howlLegacy = mobTauntLegacy{
+	Fumble:       `<ansi fg="mobname">%s</ansi> lets out a pitiful howl that trails off weakly.`,
+	HitPersonal:  `<ansi fg="mobname">%s</ansi>'s menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`,
+	HitRoom:      `<ansi fg="mobname">%s</ansi> throws back its head and lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`,
+	MissPersonal: `<ansi fg="mobname">%s</ansi> howls, but you steel yourself against the sound.`,
+	MissRoom:     `<ansi fg="mobname">%s</ansi> howls menacingly at <ansi fg="username">%s</ansi>, but it has no effect.`,
+}
+
+// Howl is a wolf conviction attack, a taunt reskin for mob use. It always
+// narrates from the wordless pool: a howl is a sound, whatever the species.
 func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	if !mob.Character.IsInCombat() {
@@ -28,58 +36,5 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
-	targetName := result.Target.Name
-
-	var targetPlayer *users.UserRecord
-	if result.Target.UserId > 0 {
-		targetPlayer = users.GetByUserId(result.Target.UserId)
-	}
-	targetIdentity := targetName
-	if targetPlayer != nil {
-		targetIdentity = targetPlayer.Character.GetPlayerName(targetPlayer.UserId).String()
-	} else if targetMob := mobs.GetInstance(result.Target.MobInstanceId); targetMob != nil {
-		targetIdentity = targetMob.Character.GetMobNameIndexed(0,
-			room.GetMobDuplicateIndex(targetMob.InstanceId)).String()
-	}
-
-	switch {
-	case result.Fumble:
-		room.SendTextHidingNames(messaging.CategoryTauntFailure,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> lets out a pitiful howl that trails off weakly.`, mob.Character.Name),
-			[]string{mob.Character.Name}, messaging.HideNames)
-
-	case result.Hit:
-		if !result.Defence.Defended {
-			if targetPlayer != nil {
-				personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s menacing howl shakes your resolve! (<ansi fg="damage">%s</ansi>)`, mob.Character.Name, result.DmgDescToTarget)
-				sight := messaging.ParticipantSight(targetPlayer.Character, room)
-				targetPlayer.SendText(messaging.CategoryTauntSuccess, messaging.HideNames(personalText, []string{mob.Character.Name}, sight))
-			}
-			room.SendTextHidingNames(messaging.CategoryTauntSuccess,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> throws back its head and lets out a bone-chilling howl at <ansi fg="username">%s</ansi>!`, mob.Character.Name, targetName),
-				[]string{mob.Character.Name, targetName}, messaging.HideNames)
-		}
-		sendChannelDefenceMessages(result.Defence, mob, targetPlayer, room, targetIdentity, targetName, "howl")
-
-		// Aggro-pull confirmation: the howl yanked the target off its prior foe
-		// and pinned it (taunt-hold). AggroPulled is only ever set when the
-		// target is a mob, so the name colors as a mobname.
-		if result.AggroPulled {
-			room.SendTextHidingNames(messaging.CategoryTauntSuccess,
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns from its prey and snarls at <ansi fg="mobname">%s</ansi>!`, targetName, mob.Character.Name),
-				[]string{mob.Character.Name, targetName}, messaging.HideNames)
-		}
-
-	default: // miss
-		if targetPlayer != nil {
-			personalText := fmt.Sprintf(`<ansi fg="mobname">%s</ansi> howls, but you steel yourself against the sound.`, mob.Character.Name)
-			sight := messaging.ParticipantSight(targetPlayer.Character, room)
-			targetPlayer.SendText(messaging.CategoryTauntResist, messaging.HideNames(personalText, []string{mob.Character.Name}, sight))
-		}
-		room.SendTextHidingNames(messaging.CategoryTauntResist,
-			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> howls menacingly at <ansi fg="username">%s</ansi>, but it has no effect.`, mob.Character.Name, targetName),
-			[]string{mob.Character.Name, targetName}, messaging.HideNames)
-	}
-
-	return true, nil
+	return narrateMobTaunt(mob, room, result, combat.TauntPoolWordless, "howl", howlLegacy, howlAggroLine)
 }

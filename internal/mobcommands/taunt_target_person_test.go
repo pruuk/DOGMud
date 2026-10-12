@@ -34,7 +34,7 @@ func TestMobTauntTriad_TargetReadsYourResolve(t *testing.T) {
 	t.Cleanup(func() { room.Lamp = oldLamp })
 	events.DrainQueuedMessagesForTest(target.UserId)
 
-	said := sendMobTauntTriad(combat.TauntHit,
+	said := sendMobTauntTriad(combat.TauntPoolRhetoric, combat.TauntHit,
 		"a feeble jab at their resolve", "a feeble jab at your resolve",
 		messaging.CategoryTauntSuccess, mob, target.Character.Name, target, room)
 	require.True(t, said)

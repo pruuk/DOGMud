@@ -205,7 +205,10 @@ func sendTauntMessages(intensity combat.TauntIntensity, dmgDesc, targetDmgDesc, 
 	// ONE call, ONE variant index, three audiences. Three separate calls here
 	// drew three independent indices, so the attacker, the defender and the
 	// room were each narrated a different moment of the same taunt.
-	triad := combat.GetTauntTriad(intensity, source, target, sourceType, targetType, dmgDesc).
+	//
+	// The pool follows the taunter: a speechless one snarls (wordless), a
+	// speaker uses rhetoric. A silenced taunter never reaches here.
+	triad := combat.GetTauntTriadFrom(user.Character.TauntPool(), intensity, source, target, sourceType, targetType, dmgDesc).
 		WithDefenderDamage(dmgDesc, targetDmgDesc)
 	atkMsg, defMsg, roomMsg := triad.ToAttacker, triad.ToDefender, triad.ToRoom
 

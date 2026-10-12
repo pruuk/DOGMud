@@ -29,3 +29,18 @@ func (c *Character) SpeechState() SpeechState {
 	}
 	return Speaks
 }
+
+// TauntPool names the taunt-messages pool this character's taunt narrates
+// from: "wordless" for a Speechless character, "rhetoric" otherwise. A
+// Silenced character never gets as far as narration (the taunt is refused), so
+// it reads rhetoric here like any speaker.
+//
+// The names are plain strings because this package cannot import
+// internal/combat; combat.TauntPoolRhetoric and combat.TauntPoolWordless are
+// the same two spellings, and a test in internal/mobcommands pins that.
+func (c *Character) TauntPool() string {
+	if c.SpeechState() == Speechless {
+		return "wordless"
+	}
+	return "rhetoric"
+}

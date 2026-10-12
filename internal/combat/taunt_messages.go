@@ -235,3 +235,14 @@ func SeedTauntMessagesForTest(bands map[TauntIntensity]*TauntMessages) func() {
 	}
 	return func() { tauntMessages = prev }
 }
+
+// SeedTauntPoolsForTest is SeedTauntMessagesForTest for several named pools at
+// once, so a test can tell which pool a taunt read from.
+func SeedTauntPoolsForTest(pools map[string]map[TauntIntensity]*TauntMessages) func() {
+	prev := tauntMessages
+	tauntMessages = map[string]*TauntMessageGroup{}
+	for name, bands := range pools {
+		tauntMessages[name] = &TauntMessageGroup{OptionId: name, Options: bands}
+	}
+	return func() { tauntMessages = prev }
+}
