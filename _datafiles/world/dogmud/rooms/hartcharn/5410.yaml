@@ -2,15 +2,15 @@ roomid: 5410
 zone: Hartcharn
 title: The Smithy
 description: >
-  Heat reaches you first — rolling from the <ansi fg="itemname">forge</ansi>
+  Heat reaches you first, rolling from the <ansi fg="itemname">forge</ansi>
   in the back wall, coals banked high and glowing red-orange. The smithy
   is a wide, low-roofed building just off the east side of the square,
   its walls smoke-blackened from years of hard use. The ring of hammer on
   <ansi fg="itemname">anvil</ansi> fills the room and bounces off stone
-  and rafters alike — sharp, repetitive, steady as a working clock. Coal
+  and rafters alike: sharp, repetitive, steady as a working clock. Coal
   smoke hangs in the air. A <ansi fg="itemname">slack tub</ansi>
   beside the forge steams faintly when hot metal enters it. A timber rack
-  along the near wall holds finished work awaiting collection — horseshoes,
+  along the near wall holds finished work awaiting collection: horseshoes,
   wheel strakes, and wagon bolts ready for the road.
 biome: interior
 coord:

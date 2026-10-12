@@ -15,8 +15,8 @@ idlecommands:
   - ''
   - 'emote lifts a length of iron bar with his tongs and turns it in
     the coals, judging the color with a half-squint.'
-  - 'emote strikes the iron on the anvil -- once, twice, three ringing
-    blows -- then turns it and strikes again.'
+  - 'emote strikes the iron on the anvil, once, twice, three ringing
+    blows, then turns it and strikes again.'
   - ''
   - 'emote plunges the worked iron into the quench trough; steam
     billows up and he watches it dissipate without blinking.'
@@ -34,7 +34,7 @@ character:
     that the hammer looks proportionate. He does not say much. He says
     even less to strangers. The patches of fine dark scale running up
     his forearms and across the back of his neck give his skin the
-    look of something half-armored -- a Chrysalis drift that has, by
+    look of something half-armored: a Chrysalis drift that has, by
     all accounts, served him well at the forge, where scale sheds
     sparks better than any leather sleeve. He keeps them oiled and
     does not cover them. The work gets done and the iron is good; that

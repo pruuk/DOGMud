@@ -3,10 +3,10 @@ zone: Hartcharn
 title: The Coachman's Rest
 description: >
   The Coachman's Rest fills the whole north side of the market
-  square — three storeys of heavy timber framing and whitewashed
+  square: three storeys of heavy timber framing and whitewashed
   render, the upper floors cantilevered out on stout oak brackets
   above the entrance. A painted <ansi fg="itemname">sign</ansi> hangs
-  from a wrought-iron arm over the arched doorway — a coach-wheel in
+  from a wrought-iron arm over the arched doorway: a coach-wheel in
   gold leaf on deep green, the inn's name scrolled beneath in bold
   lettering. Brass lamp-brackets flank the broad door, each holding
   a glass-paned lantern whose flame keeps the threshold warm against
@@ -31,7 +31,7 @@ exits:
     roomid: 5412
 nouns:
   sign: A large painted board hung from a wrought-iron arm bolted
-    into the timber fascia — a coach-wheel in gold leaf on dark
+    into the timber fascia, a coach-wheel in gold leaf on dark
     green, its spokes picked out in ochre and black. The name
     "The Coachman's Rest" is lettered beneath in a steady hand,
     the paint well kept and retouched often enough that older
@@ -43,8 +43,8 @@ nouns:
     of hands pushing through. Brass lamp-brackets flank it on
     either side, flames burning steady behind polished glass
     that throws warm amber light across the step and the square.
-  yard: The coaching yard opens west through a broad stone arch —
-    iron wheels grinding over cobblestone, teams coming off the
+  yard: The coaching yard opens west through a broad stone arch,
+    with iron wheels grinding over cobblestone, teams coming off the
     road while others are readied to leave, ostlers calling
     numbers back and forth. The Coachman's Rest handles more
     traffic than any other stop on the road for many miles, and

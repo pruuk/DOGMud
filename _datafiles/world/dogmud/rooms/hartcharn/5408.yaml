@@ -2,7 +2,7 @@ roomid: 5408
 zone: Hartcharn
 title: The Posting Yard
 description: >
-  The smell of horse and harness hits before anything else — warm and
+  The smell of horse and harness hits before anything else: warm and
   dense, laced with straw and the honest reek of dung. The posting yard
   stretches west of the coaching inn, its packed-dirt floor churned into
   ruts by iron-shod wheels and heavy hooves. Stabling lines the north
@@ -26,7 +26,7 @@ nouns:
   coaches: Two heavy road coaches built for distance rather than comfort,
     their bodies banded iron over seasoned timber, roof racks lashed with
     oilcloth. A chalk board nailed to the lean-to post lists the next run
-    northbound — through six posting villages to New Plymouth, departing
+    northbound, through six posting villages to New Plymouth, departing
     at first light. Mud cakes the running boards from the road south.
   tack rack: A long timber rack hung with working harness in various
     states of readiness. Horse collars stuffed fat with fresh padding sit
@@ -38,7 +38,7 @@ idlemessages:
 - Harness brass jingles as a collar is buckled tight for the road ahead.
 - Straw rustles as a horse shifts weight in the stabling, snorting softly.
 - A driver climbs to the box seat and gathers the reins, sizing up the team.
-- The creak of wheels and hoofbeats — a coach rolls in from the road, muddy.
+- The creak of wheels and hoofbeats as a coach rolls in from the road, muddy.
 spawninfo:
   - mobid: 9186
     respawnrate: "15 real minutes"

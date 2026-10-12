@@ -24,7 +24,7 @@ activitylevel: 10
 character:
   name: Sefa Crane
   description: |
-    I chalk the circle fresh every few days -- the lines wear thin
+    I chalk the circle fresh every few days. The lines wear thin
     under all the working. Hill folk bring me their chrysalis shards
     and their odd growths, and I set them into wire and stone so the
     strangeness holds still and does something useful. It is careful
@@ -43,7 +43,7 @@ character:
     charisma:
       base: 90
   shop:
-    # Thornwall chrysalis (in-shop crafted) — Sefa's specialty
+    # Thornwall chrysalis (in-shop crafted), Sefa's specialty
     - itemid: 40010    # Chrysalis Core
       quantity: 0
       quantitymax: 0
@@ -68,12 +68,12 @@ character:
       quantity: 0
       quantitymax: 0
       price: 30
-    # Fernway forest (caravan-fed) — oak bark for ward inscriptions
+    # Fernway forest (caravan-fed), oak bark for ward inscriptions
     - itemid: 40062    # oak bark
       quantity: 0
       quantitymax: 0
       price: 35
-    # Stillwater unique (caravan-fed from Kess) — pearl for high-tier enchants
+    # Stillwater unique (caravan-fed from Kess), pearl for high-tier enchants
     - itemid: 40053    # Stillwater black pearl
       quantity: 0
       quantitymax: 0
