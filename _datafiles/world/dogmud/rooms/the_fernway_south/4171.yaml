@@ -4,7 +4,7 @@ title: Old Stand
 description: >
   The bracken gives way here to a cathedral hush. The
   <ansi fg="itemname">old-oak</ansi> trees that gather in this
-  stand are the largest in the southern wood — trunks so thick
+  stand are the largest in the southern wood. Their trunks are so thick
   three people could not reach around them, their roots
   spreading wide and deep into the dark earth underfoot. The
   canopy overhead is so dense that <ansi fg="itemname">deep-shade</ansi>
@@ -15,7 +15,7 @@ description: >
   each ridge and crack. At the base of the largest tree a mass
   of exposed roots has curled and weathered into a natural
   <ansi fg="itemname">root-throne</ansi> that could seat a
-  person comfortably — generations of foragers have rested
+  person comfortably. Generations of foragers have rested
   there before pressing south.
 biome: dense_forest
 coord:
@@ -32,12 +32,12 @@ nouns:
     Generation-old oaks, trunks thicker than three people could
     reach around, branches spreading wide enough to crowd out
     their neighbors. The nearest one shows no scar of storm or
-    axe — it has simply grown, season after season, until it
+    axe. It has simply grown, season after season, until it
     owns this piece of ground.
   oak bark: |
     The bark is deeply furrowed and grey-brown, each ridge worn
     smooth in places by decades of weather. The tannin is thick
-    in it — alchemists value bark from oaks this old for the
+    in it. Alchemists value bark from oaks this old for the
     compounds it yields.
   deep shade: |
     Less light reaches this stand than anywhere else in the
@@ -46,8 +46,8 @@ nouns:
     the kind of shade that holds damp long into dry seasons.
   root throne: |
     The largest oak's exposed roots have curled and split over
-    decades into a natural seat at the base of the trunk —
-    wide enough to sit in, roots armresting on each side. The
+    decades into a natural seat at the base of the trunk.
+    It is wide enough to sit in, with roots like armrests on each side. The
     bark where people have leaned is worn smooth and dark.
 idlemessages:
 - an acorn drops and rolls to a stop in the leaf litter

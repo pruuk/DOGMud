@@ -4,7 +4,7 @@ title: Birch Stand
 description: >
   A loose stand of paper birches fills this stretch of the deer
   ridge, their <ansi fg="itemname">birch-trunks</ansi> pale
-  silver-grey among the darker oaks and beeches to the west —
+  silver-grey among the darker oaks and beeches to the west,
   clean and almost luminous where sunlight reaches them, their
   slim shapes making the grove feel open and slightly exposed.
   Long <ansi fg="itemname">bark-strips</ansi> peel from the
@@ -12,7 +12,7 @@ description: >
   cream-colored, dry at the curl and papery between the fingers.
   Several trunks weep threads of clear
   <ansi fg="itemname">birch-sap</ansi> from old wounds at
-  mid-height — sweet to smell, the sap-runs dried to thin amber
+  mid-height. It smells sweet, the sap-runs dried to thin amber
   rivulets down the bark. Where the trunks are smoothest, a
   series of <ansi fg="itemname">deer-rubs</ansi> shows at
   antler height: pale, polished patches where bucks have worked
@@ -33,44 +33,44 @@ exits:
 nouns:
   birch trunk: |
     The birch trunks are pale silver-grey, the bark
-    marked with thin horizontal lenticels — distinctive
+    marked with thin horizontal lenticels, distinctive
     enough to identify from a distance. Close up the
     surface has a faint papery texture, cool and slightly
     smooth where it has not begun to peel.
   birch trunks: |
     The birch trunks are pale silver-grey, the bark
-    marked with thin horizontal lenticels — distinctive
+    marked with thin horizontal lenticels, distinctive
     enough to identify from a distance. Close up the
     surface has a faint papery texture, cool and slightly
     smooth where it has not begun to peel.
   bark strip: |
     Long strips of birch bark peel from several trunks,
-    curling outward from the living wood — flammable and
+    curling outward from the living wood. They are flammable and
     useful, easy to pull free and tuck into a pack. The
     inner surface is cream-white and dry, the outer
     surface grey and marked with those thin dark lines.
   bark strips: |
     Long strips of birch bark peel from several trunks,
-    curling outward from the living wood — flammable and
+    curling outward from the living wood. They are flammable and
     useful, easy to pull free and tuck into a pack. The
     inner surface is cream-white and dry, the outer
     surface grey and marked with those thin dark lines.
   birch sap: |
     A few of the older trunks show dried amber rivulets
     where sap has seeped from old deer-rub wounds and
-    run down the bark — sweet-smelling up close, the
+    run down the bark. It smells sweet up close, the
     runs hardened now to thin sticky lines. Fresh sap
     would run clear in early spring, prized for drinking.
   deer rub: |
     Smooth, pale-worn patches at antler height mark
     several birches where bucks have rubbed velvet from
-    new antler growth — the bark worn away to bare smooth
+    new antler growth. The bark is worn away to bare smooth
     wood beneath, the height consistent from tree to
     tree, roughly chest-high on a person.
   deer rubs: |
     Smooth, pale-worn patches at antler height mark
     several birches where bucks have rubbed velvet from
-    new antler growth — the bark worn away to bare smooth
+    new antler growth. The bark is worn away to bare smooth
     wood beneath, the height consistent from tree to
     tree, roughly chest-high on a person.
 idlemessages:

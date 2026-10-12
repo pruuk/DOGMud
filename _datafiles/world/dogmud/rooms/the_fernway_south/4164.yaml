@@ -3,7 +3,7 @@ zone: The Fernway South
 title: Brook Rise
 description: >
   The deer-track west from Twin Beech Glade drops suddenly into
-  a small hollow where the sound changes — the dry forest hush
+  a small hollow where the sound changes: the dry forest hush
   replaced by the quiet, constant voice of moving water. A
   <ansi fg="itemname">brook</ansi> rises here from a moss-rimmed
   crack in the bedrock, clear and cold, running a few paces
@@ -12,7 +12,7 @@ description: >
   than the surrounding wood by several degrees, and a faint
   mineral smell comes off the stone where the water emerges.
   Every exposed rock at the source is mantled in bright
-  <ansi fg="itemname">moss</ansi> — deep sphagnum that holds
+  <ansi fg="itemname">moss</ansi>, a deep sphagnum that holds
   the moisture and keeps the hollow damp even in dry weather.
   At the pool's edge, where the overflow spreads before it
   gathers itself south, a thick stand of
@@ -37,16 +37,16 @@ nouns:
   spring pool: |
     A small clear pool collects at the brook's source, no
     deeper than a forearm and cold enough to numb the hand
-    in seconds — the stone below is pale and faintly sandy,
+    in seconds. The stone below is pale and faintly sandy,
     every grain visible.
   moss: |
     Bright green sphagnum carpets every rock at the spring,
     packed so dense and moist it gives like a sponge underfoot
-    — the kind of moss that holds water for hours after rain
+    It is the kind of moss that holds water for hours after rain
     has stopped.
   watercress: |
     Watercress crowds the pool's overflow-edge in a thick,
-    ankle-high mat — pungent and peppery, easy to harvest by
+    ankle-high mat, pungent and peppery, easy to harvest by
     the handful, and a clear sign that the brook runs clean.
 idlemessages:
 - a small leaf drifts on the brook and is carried south

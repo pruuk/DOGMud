@@ -4,18 +4,18 @@ title: Hare-Run Meadow
 description: >
   The forest opens east of Briar Tangle into a small grass-
   edged meadow where the canopy steps back and the sky
-  appears overhead for the first time since Foxglade — a
+  appears overhead for the first time since Foxglade. It is a
   proper <ansi fg="itemname">open-sky</ansi> that makes the
   shoulders drop. The <ansi fg="itemname">meadow-grass</ansi>
   runs knee-high at the edges of the clearing, pale-seeded
   and bowing in any wind that finds the gap, but close to the
   ground a network of <ansi fg="itemname">hare-paths</ansi>
-  threads through the cover — low cropped passages through
+  threads through the cover: low cropped passages through
   the grass, packed by small fast feet into hard smooth
   channels. The earth inside each run is cool and damp even
   in dry weather, the soil finely patterned with tiny
   prints. Fresh <ansi fg="itemname">droppings</ansi> lie in
-  small clusters along the path edges — the meadow is in
+  small clusters along the path edges. The meadow is in
   constant use, even if the hares themselves are keeping out
   of sight.
 biome: forest
@@ -35,13 +35,13 @@ nouns:
     tall.
   hare path: |
     A network of low cropped passages threads the grass from
-    every direction — the work of small feet over a long time,
+    every direction: the work of small feet over a long time,
     the earth inside each run packed hard and smooth. Two or
     three of the runs converge near the meadow's centre
     before splitting again toward the treeline.
   hare paths: |
     A network of low cropped passages threads the grass from
-    every direction — the work of small feet over a long time,
+    every direction: the work of small feet over a long time,
     the earth inside each run packed hard and smooth. Two or
     three of the runs converge near the meadow's centre
     before splitting again toward the treeline.
@@ -52,7 +52,7 @@ nouns:
     of a territorial marker; most are simply dropped mid-run.
   open sky: |
     The first real break in the canopy since the forest closed
-    in north of Fox Den — wide enough to show a proper stretch
+    in north of Fox Den, wide enough to show a proper stretch
     of sky and to let the light come in flat and whole rather
     than filtered through leaves. A hawk's thermal might use
     this gap; their shadows cross it often enough.
