@@ -590,20 +590,14 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			}
 
 			// Record per-swing analytics
-			attackResult.SwingEvents = append(attackResult.SwingEvents, SwingEvent{
-				Hit:           res.hit,
-				Crit:          res.crit,
-				CritSource:    res.critSource,
-				Fumble:        res.fumble,
-				DoubleFumble:  res.doubleFumble,
-				DefenseCrit:   res.defenseCrit,
-				Damage:        attackTargetDamage,
-				DamageReduced: attackTargetReduction,
-				DefenseUsed:   attackResult.DefenseUsed,
-				AttackZScore:  attackResult.AttackZScore,
-				DefenseZScore: attackResult.DefenseZScore,
-				AttackType:    swingAtkType,
-			})
+			se := swingEventFor(res)
+			se.Damage = attackTargetDamage
+			se.DamageReduced = attackTargetReduction
+			se.DefenseUsed = attackResult.DefenseUsed
+			se.AttackZScore = attackResult.AttackZScore
+			se.DefenseZScore = attackResult.DefenseZScore
+			se.AttackType = swingAtkType
+			attackResult.SwingEvents = append(attackResult.SwingEvents, se)
 
 			// Only build attack messages for non-double-fumble (double fumble already sent)
 			if !res.doubleFumble {
@@ -654,6 +648,21 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 
 	return attackResult
 
+}
+
+// swingEventFor fills the per-swing outcome fields of a SwingEvent from one
+// swing's resolution. The caller adds the round-scoped fields (damage, the
+// z-scores, DefenseUsed, AttackType).
+func swingEventFor(r hitResolution) SwingEvent {
+	return SwingEvent{
+		Hit:          r.hit,
+		Crit:         r.crit,
+		CritSource:   r.critSource,
+		Fumble:       r.fumble,
+		DoubleFumble: r.doubleFumble,
+		DefenseCrit:  r.defenseCrit,
+		Defended:     r.defenceWon(),
+	}
 }
 
 // hideIdentitiesInPersonalLines hides each side's counterpart from that

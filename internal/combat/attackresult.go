@@ -74,10 +74,16 @@ type SwingEvent struct {
 	// regime change from ~5% to ~50% could not be attributed: forced crits
 	// bypass the margin entirely, so a flat avg_attack_z_score cannot rule
 	// them in or out.
-	CritSource    string
-	Fumble        bool
-	DoubleFumble  bool
-	DefenseCrit   bool
+	CritSource   string
+	Fumble       bool
+	DoubleFumble bool
+	DefenseCrit  bool
+	// Defended is this swing's own defensive win (hitResolution.defenceWon:
+	// a plain win or a defence crit). AttackResult.DefenseUsed cannot answer
+	// that: it is stamped on a win and never cleared, so every later swing of
+	// the round would read as defended. The dark-combat lines (M6 slice 2)
+	// bucket on this field.
+	Defended      bool
 	Damage        int
 	DamageReduced int
 	DefenseUsed   combatvocab.Defence
