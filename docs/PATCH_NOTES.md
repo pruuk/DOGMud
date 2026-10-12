@@ -1,5 +1,20 @@
 # DOGMud Patch Notes
 
+## Unreleased: Fighting blind, and plainer combat words
+
+- When you cannot see at all, combat now tells you what you feel and hear:
+  a blow landing, something whooshing past, your own swing finding nothing.
+  You no longer read lines about watching your foe's stance. With
+  infravision you still see shapes and read the fight as before.
+- Creatures and players now share the same wording for special moves, so
+  a wolf's pounce and a player's pounce read alike and both have more
+  variety. What the room sees always matches what happened.
+- Combat text uses plainer words: "barely hits" instead of "clips", "stay
+  on your feet" instead of "keep your footing", and similar.
+- A creature that throttles a spellcaster now tells the room the spell was
+  broken, as a player's throttle already did, and you hear it even when you
+  cannot see.
+
 ## 2026-10-10: Boiling blood and fair arrests
 
 - Blood Boil now sets your victim's blood boiling instead of poisoning
