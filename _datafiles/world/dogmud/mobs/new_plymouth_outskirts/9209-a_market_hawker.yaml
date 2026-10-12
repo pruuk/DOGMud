@@ -23,7 +23,7 @@ idlecommands:
   - 'emote rearranges the items on his tray into a more appealing
     display, frowning critically at the result.'
   - ''
-  - 'emote stabs a finger at someone in the crowd -- "You, friend.
+  - 'emote stabs a finger at someone in the crowd: "You, friend.
     Yes, you. I have exactly what you need."'
   - ''
 activitylevel: 16
@@ -34,7 +34,7 @@ character:
     A broad-shouldered man with a voice like a market-bell and a
     tray hung round his neck on a leather harness, loaded with
     goods of questionable provenance. He works the Outer Market
-    without a licence plate on his board -- technically a code
+    without a licence plate on his board, which is technically a code
     violation, but enforcement at the East Gate approach has been
     patchy since the new gate-captain took post. His most
     noticeable feature, after the voice, is his skin: when the

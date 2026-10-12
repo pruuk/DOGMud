@@ -2,7 +2,7 @@ roomid: 5468
 zone: New Plymouth Outskirts
 title: Market Sprawl
 description: >
-  The smell reaches you first — the accumulated reek of too
+  The smell reaches you first: the accumulated reek of too
   many people in too little space, sharpened by frying fat and
   the sweet rot of refuse piled against the leaning walls. The
   market thickens here into narrower lanes between crooked
@@ -12,9 +12,9 @@ description: >
   examined closely. Hands stay near purses without anyone
   admitting why. Above the roofline of the
   <ansi fg="itemname">shanties</ansi>, the city wall fills the
-  sky to the north — massive and indifferent — and the
+  sky to the north, massive and indifferent, and the
   unlicensed inn called the Broken Gate opens its low door to
-  the west. Every gap between the stalls holds somebody —
+  the west. Every gap between the stalls holds somebody,
   sheltering, watching, waiting for something not yet arrived.
 biome: city_thoroughfare
 coord:
@@ -31,13 +31,13 @@ exits:
   west:
     roomid: 5475
 nouns:
-  shady stalls: The goods here are harder to look at directly —
+  shady stalls: The goods here are harder to look at directly,
     not because they are hidden but because their sellers have
     arranged them to be overlooked by those not seeking them.
     Trays of keys in uncertain condition. Carved seals and
     signet rings. What appears to be military equipment sold
     by someone who acquired it informally. A cloth-covered
-    table holds a chained strongbox — the seller names a price
+    table holds a chained strongbox. The seller names a price
     that assumes specific need. Most goods have no clear origin
     and most sellers have no name. Items may be left here in
     storage at a half-copper per day, no questions offered.
@@ -51,7 +51,7 @@ nouns:
     are squares of oilskin. Smoke finds its way out through
     the boards.
   crowd: The people moving through this part of the market move
-    differently — tighter, more aware of the bodies around
+    differently, tighter and more aware of the bodies around
     them, faces angled to see without appearing to watch.
     There are travellers with the road still on them, refugees
     with everything they own in a bundle, and people whose
@@ -61,11 +61,11 @@ nouns:
 idlemessages:
 - A hooded figure leans against a shanty wall and watches the
   lane without appearing to watch anything in particular.
-- Something near one stall is leaking — a dark puddle spreading
+- Something near one stall is leaking, a dark puddle spreading
   slowly across the packed earth floor.
 - A beggar rattles a tin cup in the press of the crowd, her
   appeal swallowed by the general noise around her.
-- A sharp argument breaks out two stalls to the east — voices
+- A sharp argument breaks out two stalls to the east, voices
   rising fast, then cutting off just as suddenly.
 - The smell of burning fat from an unseen fire drifts through
   the lane, thick enough to taste.

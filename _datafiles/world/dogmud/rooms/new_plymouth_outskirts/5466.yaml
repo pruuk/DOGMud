@@ -3,15 +3,15 @@ zone: New Plymouth Outskirts
 title: The City Road
 description: >
   The kilns and yards of the works fall behind and the road
-  broadens into a proper paved avenue. Ahead — filling the
-  northern sky from edge to edge — the
+  broadens into a proper paved avenue. Ahead, filling the
+  northern sky from edge to edge, the
   <ansi fg="itemname">city walls</ansi> of New Plymouth rise
   in smoke-crowned stone, taller and vaster than anything on
   the long road, the grey face pressing the horizon flat
   beneath the great gatehouse and the slow dark plume of the
   city's own smoke above it. Traffic surges around you without
-  pause — laden carts grinding south, foot passengers shouldering
-  north toward the gate, pedlars working the crowd's edges with
+  pause. Laden carts grind south, foot passengers shoulder
+  north toward the gate, and pedlars work the crowd's edges with
   trays of cheap goods. At the road's edge a worn
   <ansi fg="itemname">waystone</ansi> marks the city's formal
   boundary, smoothed by a thousand passing hands. After the
@@ -29,8 +29,8 @@ exits:
   north:
     roomid: 5467
 nouns:
-  city walls: The walls of New Plymouth are not decorative —
-    they are the product of centuries of civic will, dark grey
+  city walls: The walls of New Plymouth are not decorative.
+    They are the product of centuries of civic will, dark grey
     ashlar rising to a height that makes the road below feel
     incidental. The near face is stained by the city's own
     smoke, stratified in soft bands from the base to the high
@@ -39,7 +39,7 @@ nouns:
     stream. The sheer scale of it is not easy to hold in a
     single look.
   waystone: A squat column of worn granite stands at the road's
-    edge, older than the paving around it — its face barely
+    edge, older than the paving around it, its face barely
     legible beneath the grease of a thousand coins and wishes
     pressed there by travellers entering and leaving the city.
     The top has been hollowed into a shallow basin. It holds a
@@ -57,7 +57,7 @@ idlemessages:
   watching the flow with the bored vigilance of long practice.
 - Someone's dog threads the crowd at ankle height, nimble and
   purposeful, and vanishes under a passing cart.
-- A family rests at the road's verge — packs and bundles stacked
-  around them, two children asleep on the baggage.
+- A family rests at the road's verge, packs and bundles stacked
+  around them and two children asleep on the baggage.
 x: -8
 y: -67

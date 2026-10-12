@@ -2,7 +2,7 @@ roomid: 5475
 zone: New Plymouth Outskirts
 title: The Broken Gate
 description: >
-  The smell finds you before your eyes have adjusted — cheap ale,
+  The smell finds you before your eyes have adjusted: cheap ale,
   old smoke, and the close press of too many bodies in a room with
   low beams and no ventilation worth mentioning. The common room of
   the Broken Gate resolves out of the dimness as a low-ceilinged
@@ -29,14 +29,14 @@ nouns:
     runs itself. The ale is cheap, the cups are clean enough, and
     no one is asked their business.
   board: A plank of weathered wood nailed to the wall beside the
-    door, layered over with notices — small papers pinned over older
+    door, layered over with notices. Small papers are pinned over older
     papers, most of them handwritten. Work offered, mostly unskilled.
     Rooms available in the outskirts. Goods sought at prices that
     expect the seller has no better option. A few are unsigned.
     One says only a name and a date.
   corners: The room's four corners and the space under the tables
-    serve as the inn's paid accommodations — a spot of floor, your
-    own coat for a blanket, no cot provided. Those who paid are
+    serve as the inn's paid accommodations, with a spot of floor, your
+    own coat for a blanket and no cot provided. Those who paid are
     already arranged there, coats pulled close, faces to the wall.
     The company does not invite scrutiny and offers none.
 idlemessages:
