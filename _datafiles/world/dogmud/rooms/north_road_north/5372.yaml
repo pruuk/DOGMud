@@ -2,8 +2,8 @@ roomid: 5372
 zone: North Road North
 title: Stillwater's North Verge
 description: >
-  The sounds of Stillwater — the square's low murmur, the bell
-  on the lakefront — thin quickly behind you once you clear the
+  The sounds of Stillwater (the square's low murmur, the bell
+  on the lakefront) thin quickly behind you once you clear the
   arch. The road is pressed gravel now, the town paving ending
   just south at the gate; here the lane runs between tall
   <ansi fg="itemname">hedgerows</ansi> of hawthorn and elder
@@ -11,7 +11,7 @@ description: >
   lake-wind still pushes this far, carrying the cold iron smell
   of the water. A gap in the eastern hedge frames the last clear
   <ansi fg="itemname">lakeview</ansi> a northbound traveler
-  gets — Stillwater's rooftops stepping down toward the shore,
+  gets: Stillwater's rooftops stepping down toward the shore,
   the water itself a band of silver-grey under the open sky.
 biome: land
 coord:
@@ -28,12 +28,12 @@ nouns:
   hedgerow: Tall hawthorn and elder, chest-high and interlocked,
     woven into a dense wall along both verges. The hawthorn is
     past fruiting; what berries remain are dark and wrinkled,
-    taken slowly by birds through the autumn. Old growth — some
+    taken slowly by birds through the autumn. The growth is old, and some
     stems are thick as a wrist, and nothing pushes through
     without collecting thorns. A cold draft threads through the
     branches from the direction of the lake.
   lakeview: The gap in the eastern hedge gives a clean look back
-    south — Stillwater's rooftops stepping down toward the shore,
+    south. Stillwater's rooftops step down toward the shore,
     the lake itself a bright band of silver-grey, and the dark
     cedar arch of the North Gate half-visible at the road's
     southward bend. Another minute of walking north and the

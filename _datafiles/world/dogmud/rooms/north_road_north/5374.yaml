@@ -2,14 +2,14 @@ roomid: 5374
 zone: North Road North
 title: Lakeward Milepost
 description: >
-  Sun-warmed stone — the <ansi fg="itemname">milepost</ansi>
+  Sun-warmed stone greets you here. The <ansi fg="itemname">milepost</ansi>
   at the road's west shoulder has been baking since midmorning,
   and when you lay a hand on its carved face the heat comes as
   a small, unexpected comfort. The post stands at a fork: the
   main highway continues north toward a tollgate named in the
   carving, while a rougher <ansi fg="itemname">track</ansi>
   branches northwest, muddier and narrower but packed hard by
-  regular use — a locals' cutoff that bypasses the gate. The
+  regular use. It is a locals' cutoff that bypasses the gate. The
   carved face gives the league-count to New Plymouth, a number
   large enough that a lake-town traveler must read it twice.
   Road dust hangs in the air here, dry and faintly earthy,
@@ -29,13 +29,13 @@ exits:
 nouns:
   milepost: A waist-high pillar of dressed grey limestone, its
     faces carved with the destinations and distances of the
-    North Road. North face — LAKEWARD TOLLGATE — 1 LEAGUE.
-    NEW PLYMOUTH — 23 LEAGUES, 4 DAYS' WALK. South face —
-    STILLWATER — 1 LEAGUE. THORNWALL — 2 DAYS. The stone is old enough
-    that the carving has softened at the edges but every
+    North Road. The north face reads LAKEWARD TOLLGATE, 1 LEAGUE.
+    NEW PLYMOUTH, 23 LEAGUES, 4 DAYS' WALK. The south face reads
+    STILLWATER, 1 LEAGUE. THORNWALL, 2 DAYS. The stone is old
+    enough that the carving has softened at the edges but every
     number is still legible. Someone has scratched a small
-    compass rose into the base in rougher, private hand — a
-    traveler's waypoint mark, or a promise to return.
+    compass rose into the base in a rougher, private hand, a
+    traveler's waypoint mark or a promise to return.
   track: The northwest track angles off the road sharply, half
     the width of the highway and muddier in every season.
     The ruts are shallower than the road's but well-worn and

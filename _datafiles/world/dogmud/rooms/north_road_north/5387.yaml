@@ -4,9 +4,9 @@ title: Basalt Shoulder
 description: >
   The road climbs a bare shoulder where old basalt has pushed
   through the thin soil in slabs and columns, shouldering the
-  verge back on both sides. The stone is black and sharp-edged —
-  columnar-fractured, volcanic, old enough that the joints have
-  opened into blade-thin seams — and nothing grows on it but a
+  verge back on both sides. The stone is black and sharp-edged,
+  columnar-fractured, volcanic, and old enough that the joints have
+  opened into blade-thin seams. Nothing grows on it but a
   pale crust of lichen, ash-grey on the windward faces and rust-
   orange where moisture clings. Run a hand across the outcrop
   and it holds the sun's heat long after the air cools; meet
@@ -37,8 +37,8 @@ nouns:
     outcrop, running from knee height to well above the head,
     its walls pressed close enough that a hand fits inside but
     barely an arm. The interior widens slightly a foot in from
-    the entrance, and the floor there is dry — sheltered by
-    the overhang of the upper stone — and soft with windblown
+    the entrance, and the floor there is dry (sheltered by
+    the overhang of the upper stone) and soft with windblown
     grit accumulated over seasons. The small pale bones inside
     belonged to something that found this shelter and did not
     find its way back out. The crack goes deeper than the
@@ -51,21 +51,21 @@ nouns:
     crosses the basalt shoulder, laid on the rock's own broken
     chips where the builders ran out of good compacted earth.
     The individual stones are larger and sharper-edged than
-    those further south — angular fragments of the same basalt
+    those further south, angular fragments of the same basalt
     rather than river-worn gravel. The road's margins are
     defined not by cut verges but by the outcrop itself, two
     thrusting slabs of stone channeling the path through the
     gap between them. Beyond the shoulder, north, the gravel
     reasserts itself briefly, but the road has declared itself
-    already — what comes next will be thinner country.
+    already. What comes next will be thinner country.
 idlemessages:
 - A hawk circles high over the basalt shoulder, riding the
   thermal off the hot stone, and does not come down.
 - Wind threads through the columnar joints in the outcrop with
-  a low hollow note — almost musical, almost not.
+  a low hollow note, almost musical, almost not.
 - A lizard emerges from the crevice's lower edge, considers
   the road with flat eyes, and withdraws into the dark.
-- The stone radiates its stored heat into the cooling air —
+- The stone radiates its stored heat into the cooling air,
   the warmth of something with no living source.
 x: -8
 y: -14

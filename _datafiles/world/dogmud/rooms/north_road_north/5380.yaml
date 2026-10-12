@@ -2,7 +2,7 @@ roomid: 5380
 zone: North Road North
 title: Drovers' Pull-off
 description: >
-  The smell reaches the road before the place does — dung and
+  The smell reaches the road before the place does: dung and
   wet straw and the sharp lanolin note of sheep penned close
   together, layered over the mineral dustiness of earth beaten
   flat by generations of hooves. A wide scrubby area opens off
@@ -35,7 +35,7 @@ nouns:
     packed with clay and still holding. The water inside is
     grey-green with road grit and a thin coat of algae. It is
     functional, if uninviting. A wooden stake has been driven
-    into the bank beside it — the surface gouged and smooth
+    into the bank beside it, its surface gouged and smooth
     where animals have been tied and pulled hard against
     their lead.
   hurdles: Split-timber hurdles hammered into the ground with
@@ -43,27 +43,27 @@ nouns:
     to hold anything short of a panicked ox. The fence-posts
     are rubbed smooth where animals have pressed and worried
     against them. A hank of raw wool is snagged on the lower
-    rail of the nearer pen — sheep, recently, still faintly
+    rail of the nearer pen. It is from sheep, recently, and still faintly
     tacky with lanolin. The ground inside both pens is fouled
     and trampled into a sticky dark paste that will be deep
     mud at the first proper rain.
   firepit: A ring of smoke-blackened fieldstones forming a
     communal pit at the pull-off's center, the stones arranged
-    by old consensus and added to piecemeal over the years —
-    some are cracked from repeated heating. The pit is heaped
+    by old consensus and added to piecemeal over the years.
+    Some are cracked from repeated heating. The pit is heaped
     with grey ash, charcoal stubs, and the charred bones of
     someone's roadside meal. Pushed to the edge of the ash
-    ring, a few bits of debris have accumulated — a broken iron
-    clasp, a half-burned scrap of waxed paper, a flattened
+    ring, a few bits of debris have accumulated, including a broken iron
+    clasp, a half-burned scrap of waxed paper, and a flattened
     copper slug that might once have been a coin. The pit holds
     the memory of a hundred fires. Tonight it is cold.
   ground: The pull-off's earth has been worked flat by long
-    use — every blade of grass beaten out of it, what remains
-    a mix of fine dust when dry and grey mud when wet. The
+    use. Every blade of grass is beaten out of it, and what remains
+    is a mix of fine dust when dry and grey mud when wet. The
     surface is written over with the layered tracks of hooves,
     boots, and cartwheel ruts pressed one over another until
     they form a single illegible record. The smell of the place
-    — dung, trampled vegetation, cold ash — is as much a
+    (dung, trampled vegetation, cold ash) is as much a
     signature as the hurdles or the trough. On the north edge
     a low bank of nettles has been left to grow, marking the
     pull-off's limit as clearly as any fence.
@@ -71,7 +71,7 @@ idlemessages:
 - A crow drops into the empty pen, examines the fouled ground
   with professional attention, and departs.
 - The wind shifts and the smell of the pull-off thickens
-  briefly — dung and mud and the cold ash of the firepit.
+  briefly with dung and mud and the cold ash of the firepit.
 - Flies work the rim of the trough with single-minded
   persistence, rising and settling, rising and settling.
 - Someone on the road to the west is exchanging route news

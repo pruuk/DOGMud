@@ -2,8 +2,8 @@ roomid: 5373
 zone: North Road North
 title: The Rolling Pasture Road
 description: >
-  The hedgerows fall back and the country opens out all at once —
-  broad pasture rolling north and west, stitched together by low
+  The hedgerows fall back and the country opens out all at once.
+  Broad pasture rolls north and west, stitched together by low
   <ansi fg="itemname">drystone walls</ansi> and clipped hedge
   lines that stretch to the horizon. On the east shoulder a
   heavy wooden <ansi fg="itemname">farm gate</ansi> marks where
@@ -11,7 +11,7 @@ description: >
   cattle stand in the near distance, motionless as fence posts
   except for the slow turn of a head. The road curves gently
   north around a low rise, wagon ruts pressed deep into the
-  verge — confirming this is real highway, freight road, not
+  verge. This is a real highway, a freight road, not
   just a lane between farmsteads.
 biome: farmland
 coord:
@@ -27,7 +27,7 @@ nouns:
   gate: A heavy farm gate of squared ash planks hung on a thick
     gatepost, its iron pin-hinges dark with rust and long use.
     The gatepost is hollow at the top where the wood has
-    checked and split — a gap deep enough to hide a fold of
+    checked and split. The gap is deep enough to hide a fold of
     paper. Locals leave notes there for the farm family when
     the gate is down and the track is empty. The latch is a
     simple iron pin; the gate swings freely both ways.

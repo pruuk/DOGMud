@@ -3,13 +3,13 @@ zone: North Road North
 title: The Tollgate
 description: >
   A striped <ansi fg="itemname">barrier</ansi> pole spans the
-  road at chest height — red-and-white paint worn thin at the
+  road at chest height. Its red-and-white paint is worn thin at the
   midpoint, its weighted end resting in a notched cradle beside
   the verge. The <ansi fg="itemname">tollhouse</ansi> is a
   narrow cedar building set against the west bank, barely wide
   enough for a counter and a stool; through the open service
-  shutter a keeper works without fuss — two coppers per foot
-  traveler, four per horse, eight per loaded wagon — and drops
+  shutter a keeper works without fuss, charging two coppers per
+  foot traveler, four per horse, and eight per loaded wagon. He drops
   each coin through the slot of a heavy iron
   <ansi fg="itemname">strongbox</ansi> bolted to the counter
   board. A chalked toll board above the shutter repeats the
@@ -28,18 +28,18 @@ exits:
   north:
     roomid: 5377
 nouns:
-  barrier: A weighted timber beam — a span of squared white-oak
+  barrier: A weighted timber beam, a span of squared white-oak
     painted with alternating red and white bands, hung at one
     end on a pivot post and counterweighted with a leather sack
     of river stones at the other. The keeper raises it by a
     short pull on a rope; when released, the weight drops the
     beam back across the road in a single smooth arc. The paint
-    at the middle is worn thin from ten thousand handholds —
+    at the middle is worn thin from ten thousand handholds, from
     travelers steadying themselves while digging for coin. One
     band bears the painted word TOLL in black lettering, just
     legible under the weather-fade.
   strongbox: A heavy iron coffer bolted through the counter
-    plank and into the tollhouse floor joists — it does not
+    plank and into the tollhouse floor joists. It does not
     shift when you test it. The top has a coin slot wide enough
     for a stack of coppers and nothing more. The sides are plain
     hammered iron, no lock visible from outside; a second key
@@ -49,12 +49,12 @@ nouns:
   tollhouse: A single-room cedar building just wide enough for
     its counter, a stool, a ledger shelf, and a narrow sleeping
     bunk folded against the back wall. The shutter facing the
-    road doubles as the service counter — propped up on a stick,
+    road doubles as the service counter. Propped up on a stick,
     it turns the opening into a window with a lip just right for
     resting your purse while you count coin. A candle lantern
     hangs from the rafter above. Worn into the door frame with
-    long use is the carved shape of a hand holding three coins —
-    the tollkeeper's guild mark, or a private joke.
+    long use is the carved shape of a hand holding three coins,
+    the tollkeeper's guild mark or a private joke.
 idlemessages:
 - The barrier swings up smoothly on its rope and drops back
   with a clack as a traveler clears through.

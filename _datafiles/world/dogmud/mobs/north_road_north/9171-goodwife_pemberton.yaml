@@ -14,7 +14,7 @@ idlecommands:
   - ''
   - 'emote ladles stew from the iron pot into a bowl, taps the ladle
     on the rim twice, and sets it on the pass-shelf.'
-  - 'emote calls toward the back room -- "Nold! More bread, now, not
+  - 'emote calls toward the back room, "Nold! More bread, now, not
     later!"'
   - ''
   - 'emote draws a measure of ale, checks the head with a critical eye,
@@ -34,7 +34,7 @@ character:
     Her hair is black going silver at the temples, pinned back and
     covered with a clean linen cap. Her apron is always spotless
     for the first hour of morning and comprehensively stained by
-    the second. She notices everything -- who has been drinking
+    the second. She notices everything: who has been drinking
     since noon, who is quarreling quietly with their travel
     companion, who is watching other people's purses. Her eyes are
     an amber so deep they shade toward copper, with a faint ring
