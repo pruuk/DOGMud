@@ -1,0 +1,38 @@
+# Dark-combat lines, attacker viewpoint (M6 slice 2, ledger rows 36 to 41).
+# Read by a player who cannot see at all (optics, not sleep) in place of the
+# composed swing line. One line per swing outcome, written from touch and
+# sound. Never name anyone, never claim sight, no {tokens}, no numbers, no
+# dashes, at most 80 visible columns. Variant 0 of each list is the line the
+# game shipped before M4d PR 2.
+viewpoint: attacker
+outcomes:
+  fumble:
+    - '<ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">You stumble badly in the darkness!</ansi> <ansi fg="fumble-text">!!!</ansi>'
+    - '<ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">Your foot catches and you lurch off balance!</ansi> <ansi fg="fumble-text">!!!</ansi>'
+    - '<ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">You overreach in the dark and nearly fall!</ansi> <ansi fg="fumble-text">!!!</ansi>'
+    - '<ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">Your blind swing goes wrong and throws you off!</ansi> <ansi fg="fumble-text">!!!</ansi>'
+  crit:
+    - '<ansi fg="crit-text">***</ansi> <ansi fg="attack-good">You land a devastating blow in the dark!</ansi> <ansi fg="crit-text">***</ansi>'
+    - '<ansi fg="crit-text">***</ansi> <ansi fg="attack-good">You feel your blow strike deep into something!</ansi> <ansi fg="crit-text">***</ansi>'
+    - '<ansi fg="crit-text">***</ansi> <ansi fg="attack-good">Your blow lands with a heavy, sickening thud!</ansi> <ansi fg="crit-text">***</ansi>'
+    - '<ansi fg="crit-text">***</ansi> <ansi fg="attack-good">Your arm jolts as your blow smashes home!</ansi> <ansi fg="crit-text">***</ansi>'
+  deflected:
+    - '<ansi fg="attack-bad">Something turns your blow aside, but you feel it land!</ansi>'
+    - '<ansi fg="attack-bad">Your strike is pushed aside, but it still connects!</ansi>'
+    - '<ansi fg="attack-bad">Something blocks most of your blow, but not all of it!</ansi>'
+    - '<ansi fg="attack-bad">You feel your blow meet resistance, then scrape through!</ansi>'
+  defended:
+    - '<ansi fg="attack-bad">Your attack is turned aside by something!</ansi>'
+    - '<ansi fg="attack-bad">Your blow meets something hard and stops dead!</ansi>'
+    - '<ansi fg="attack-bad">Something moves away and your strike finds only air!</ansi>'
+    - '<ansi fg="attack-bad">You feel your blow knocked aside in the dark!</ansi>'
+  hit:
+    - '<ansi fg="attack-good">You strike blindly and connect!</ansi>'
+    - '<ansi fg="attack-good">Your blind swing thuds into something!</ansi>'
+    - '<ansi fg="attack-good">You feel your blow land on something solid!</ansi>'
+    - '<ansi fg="attack-good">You hear a grunt as your strike connects!</ansi>'
+  miss:
+    - '<ansi fg="yellow">You swing wildly in the darkness!</ansi>'
+    - '<ansi fg="yellow">Your swing cuts through empty air!</ansi>'
+    - '<ansi fg="yellow">You strike at a sound and hit nothing!</ansi>'
+    - '<ansi fg="yellow">Your blow finds nothing in the dark!</ansi>'

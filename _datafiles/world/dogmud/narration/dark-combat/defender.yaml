@@ -1,0 +1,35 @@
+# Dark-combat lines, defender viewpoint (M6 slice 2, ledger rows 42 to 47).
+# Read by a player who cannot see at all (optics, not sleep) in place of the
+# composed swing line. Same rules as attacker.yaml.
+viewpoint: defender
+outcomes:
+  fumble:
+    - '<ansi fg="yellow">You hear your attacker stumble!</ansi>'
+    - '<ansi fg="yellow">You hear something lurch and scrape close by!</ansi>'
+    - '<ansi fg="yellow">Something stumbles near you with a clatter!</ansi>'
+    - '<ansi fg="yellow">You hear a scuffle as something loses its balance!</ansi>'
+  crit:
+    - '<ansi fg="crit-text">***</ansi> <ansi fg="red">Something hits you hard in the dark!</ansi> <ansi fg="crit-text">***</ansi>'
+    - '<ansi fg="crit-text">***</ansi> <ansi fg="red">A crushing blow slams into you out of the dark!</ansi> <ansi fg="crit-text">***</ansi>'
+    - '<ansi fg="crit-text">***</ansi> <ansi fg="red">Something strikes you with terrible force!</ansi> <ansi fg="crit-text">***</ansi>'
+    - '<ansi fg="crit-text">***</ansi> <ansi fg="red">Pain bursts through you as a heavy blow lands!</ansi> <ansi fg="crit-text">***</ansi>'
+  deflected:
+    - '<ansi fg="defense-good">You fend off something in the dark, but it still catches you!</ansi>'
+    - '<ansi fg="defense-good">You block something blindly, but it still gets through!</ansi>'
+    - '<ansi fg="defense-good">You turn something aside, but not quite in time!</ansi>'
+    - '<ansi fg="defense-good">You feel a blow coming and soften it, but it lands!</ansi>'
+  defended:
+    - '<ansi fg="defense-good">You fend off something in the dark!</ansi>'
+    - '<ansi fg="defense-good">You hear something coming and block it!</ansi>'
+    - '<ansi fg="defense-good">You twist away from something in the dark!</ansi>'
+    - '<ansi fg="defense-good">You feel a blow coming and turn it aside!</ansi>'
+  hit:
+    - '<ansi fg="red">Something strikes you in the dark!</ansi>'
+    - '<ansi fg="red">A blow lands on you out of nowhere!</ansi>'
+    - '<ansi fg="red">You feel something hit you hard!</ansi>'
+    - '<ansi fg="red">Something you cannot see strikes you!</ansi>'
+  miss:
+    - '<ansi fg="yellow">You hear something whoosh past!</ansi>'
+    - '<ansi fg="yellow">Something rushes past you in the dark!</ansi>'
+    - '<ansi fg="yellow">You feel the air move as something misses you!</ansi>'
+    - '<ansi fg="yellow">You hear a swing pass close by!</ansi>'
