@@ -93,6 +93,7 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 			RoundOwnedUntil:   lootTimeoutRound(currentRound, config.Death.CorpseLootTimeout.String()),
 			RRAssignee:        assignCorpseLoot(loot, owners, m.Character.PlayerDamage),
 		})
+		announceCorpse(room, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Character.Name))
 		return
 	}
 

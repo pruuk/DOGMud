@@ -1231,6 +1231,15 @@ ruling R4, #242), so `sendMobConcentrationBroke`, `sendMobSpellFailed` and
 the drain that finds no one to drain still read "Something's ..." to the
 room through `mobSubjectName` and `sendVisualElseAudible`.
 
+### corpse_line.go
+
+`announceCorpse(room, identity, excludeUserIds...)` sends "<identity>'s body
+lies where it fell." to full-sight readers and "A body lies where it fell."
+to shapes readers (nothing at no sight), judged per player by
+`messaging.ReaderSight`. Called only where a corpse is created
+(`dropMobLootAndSetCorpse` inside `CorpsesEnabled`, `wirePlayerCorpse`), after
+the "has died." line; the dead player is excluded.
+
 ### Logout_AwarenessCleanup.go
 
 Registers an `OnPlayerDespawn` listener that calls `character.Awareness.ForceVisible()`
