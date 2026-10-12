@@ -1,165 +1,25 @@
 moveid: kick
+# Mobs and players draw from one pool per event (M6 slice 2, ledger row 56). Variant N of every role describes one moment.
 events:
   standard_knockdown:
+    actor:
+      - 'You kick {actee} hard, knocking them to the ground! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your powerful <ansi fg="yellow-bold">kick</ansi> knocks {actee} to the ground! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your kick sends {actee} sprawling! (<ansi fg="damage">{damage}</ansi>)'
+      - 'A devastating kick drops {actee} to the floor! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor}''s powerful <ansi fg="yellow-bold">kick</ansi> knocks you to the ground! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s powerful kick knocks you to the ground! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s kick sends you sprawling! (<ansi fg="damage">{damage}</ansi>)'
+      - 'A devastating kick from {actor} drops you to the floor! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} kicks {actee}, knocking them to the ground!'
+      - '{actor} kicks {actee}, knocking them to the ground!'
+      - '{actor}''s kick sends {actee} sprawling!'
+      - 'A devastating kick from {actor} drops {actee} to the floor!'
   standard_hit:
-    actee:
-      - '{actor} kicks you hard! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} kicks {actee}!'
-  standard_partial:
-    actee:
-      - '{actor} attempts to kick you, and you slip most of it, but the boot still clips you! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} swings a kick at {actee}, who mostly dodges but still gets clipped!'
-  standard_miss:
-    actee:
-      - '{actor} attempts to kick you, but misses!'
-    observer:
-      - '{actor} attempts to kick {actee}, but misses!'
-  stomp_hit:
-    actee:
-      - '{actor} stomps on you while you''re down! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} stomps on the downed {actee}!'
-  stomp_partial:
-    actee:
-      - '{actor} tries to stomp you, and you roll aside, but the heel still catches you! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} tries to stomp {actee}, who rolls mostly clear but still gets caught!'
-  stomp_miss:
-    actee:
-      - '{actor} tries to stomp you, but you roll aside!'
-    observer:
-      - '{actor} tries to stomp {actee}, but misses!'
-  knee_hit:
-    actee:
-      - '{actor} drives a knee into you in the grapple! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} drives a knee into {actee}!'
-  knee_partial:
-    actee:
-      - '{actor} tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} tries to knee {actee} in the grapple, who blocks most of it but still takes the hit!'
-  knee_miss:
-    actee:
-      - '{actor} tries to knee you, but you block it!'
-    observer:
-      - '{actor} tries to knee {actee}, but misses!'
-  # player_* events are the PLAYER twin's own wording (M4e-1b, option B): the
-  # twins shipped different prose for the same event, so they take separate
-  # keys rather than sharing the mob events above. Merging them into one pool
-  # is filed as M6 ledger row 56.
-  #
-  # SQUARING (M4e-1b Task 4b Step 4): each role drew its own independent
-  # util.Rand pool pre-migration, across three sub-movesets (stomp, knee,
-  # standard) and, for standard, two hit branches (knockdown, hit) -- so the
-  # pools were ragged: stomp hit 6/6/6, partial 1/1/1, miss 3/2/1; knee hit
-  # 6/6/5, partial 1/1/1, miss 3/2/1; standard hit 6/5/4, knockdown 3/2/2,
-  # partial 2/2/1, miss 3/2/2. Every pre-existing line stays at its own
-  # index, byte for byte; the added lines fill the gap to the widest role's
-  # width so index N of every role now describes one moment.
-  player_stomp_hit:
     actor:
-      - 'You bring your heel down hard on {actee}! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You slam your foot into the downed {actee}! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You drive a vicious stomp into {actee} while they scramble! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You crush your boot down on {actee}! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You stamp hard on the prone {actee}! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You grind your heel into {actee} as they try to rise! (<ansi fg="damage">{damage}</ansi>)'
-    actee:
-      - '{actor} stomps on you while you''re down! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} slams a boot into you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} drives their heel into you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} crushes you underfoot! (<ansi fg="damage">{damage}</ansi>)'
-      - 'A vicious stomp from {actor} smashes into you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} grinds a boot into your ribs! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} stomps on the downed {actee}!'
-      - '{actor} slams a boot into {actee}!'
-      - '{actor} drives their heel into {actee}!'
-      - '{actor} viciously stomps {actee}!'
-      - '{actor} crushes {actee} underfoot!'
-      - '{actor} grinds their heel into {actee}!'
-  player_stomp_partial:
-    actor:
-      - 'You try to stomp {actee}; they roll aside, but your heel still catches them! (<ansi fg="damage">{damage}</ansi>)'
-    actee:
-      - '{actor} tries to stomp you, and you roll aside, but the heel still catches you! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} tries to stomp {actee}, who rolls mostly clear but still gets caught!'
-  player_stomp_miss:
-    actor:
-      - 'You try to stomp {actee}, but they roll aside!'
-      - 'Your stomp misses as {actee} twists away!'
-      - 'You slam your foot down but {actee} squirms free!'
-    actee:
-      - '{actor} tries to stomp you, but you roll aside!'
-      - '{actor}''s stomp misses as you twist away!'
-      - '{actor} slams a foot down, but you squirm free!'
-    observer:
-      - '{actor} tries to stomp {actee}, but misses!'
-      - '{actor}''s stomp misses as {actee} twists away!'
-      - '{actor} slams a foot down at {actee}, who squirms free!'
-  player_knee_hit:
-    actor:
-      - 'You drive a knee into {actee}! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You slam your knee into {actee}''s body! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You ram a sharp knee into {actee}! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You crack your knee against {actee}! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You pump a knee strike into {actee}''s midsection! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You wrench {actee} close and knee them hard! (<ansi fg="damage">{damage}</ansi>)'
-    actee:
-      - '{actor} drives a knee into you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} slams a knee into your body! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} rams their knee into you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} cracks a knee against you! (<ansi fg="damage">{damage}</ansi>)'
-      - 'A sharp knee from {actor} hits your midsection! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} wrenches you close and knees you hard! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} drives a knee into {actee}!'
-      - '{actor} slams a knee into {actee}!'
-      - '{actor} rams their knee into {actee}!'
-      - '{actor} cracks a knee against {actee}!'
-      - '{actor} knees {actee} hard in the grapple!'
-      - '{actor} wrenches {actee} close and knees them hard!'
-  player_knee_partial:
-    actor:
-      - 'You try to knee {actee}; they block most of it, but the strike still lands! (<ansi fg="damage">{damage}</ansi>)'
-    actee:
-      - '{actor} tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} tries to knee {actee} in the grapple, who blocks most of it but still takes the hit!'
-  # DIVERGENT (Task 4b Step 4, owner-approved 2026-09-21): the three roles
-  # describe different feels -- target turns away / strike glances off /
-  # target blocks -- rather than one moment each. The actor pool already held
-  # the glances and blocks feels natively; its turn-away line is REWORDED,
-  # the one deliberate wording change in this whole slice (from "but can't
-  # find the angle!" to "but they turn their body away!"). The existing actee
-  # lines are reassigned to the GLANCES and BLOCKS feel slots they already
-  # matched; the existing observer line is kept for the TURN-AWAY feel, since
-  # the two owner-approved new observer lines already cover glances and
-  # blocks by their own wording. The actee turn-away line and both new
-  # observer lines are the owner-approved verbatim additions.
-  player_knee_miss:
-    actor:
-      - 'You try to knee {actee}, but they turn their body away!'
-      - 'Your knee strike glances off {actee}!'
-      - '{actee} blocks your knee!'
-    actee:
-      - '{actor} tries to knee you, but you turn your body away!'
-      - '{actor}''s knee strike glances off you!'
-      - '{actor} tries to knee you, but you block it!'
-    observer:
-      - '{actor} tries to knee {actee} in the grapple, but misses!'
-      - '{actor}''s knee strike glances off {actee} in the grapple!'
-      - '{actor} tries to knee {actee} in the grapple, but they block it!'
-  player_standard_hit:
-    actor:
+      - 'You kick {actee} hard! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="yellow-bold">kick</ansi> strikes {actee}! (<ansi fg="damage">{damage}</ansi>)'
       - 'You land a solid kick on {actee}! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your boot connects with {actee}! (<ansi fg="damage">{damage}</ansi>)'
@@ -168,6 +28,7 @@ events:
       - 'Your foot crashes into {actee}! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} kicks you hard! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} kicks you hard! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} lands a solid kick on you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s boot connects with you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} drives a kick into you! (<ansi fg="damage">{damage}</ansi>)'
@@ -175,44 +36,144 @@ events:
       - '{actor}''s foot crashes into you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} kicks {actee}!'
+      - '{actor} kicks {actee}!'
       - '{actor} lands a solid kick on {actee}!'
       - '{actor} drives a kick into {actee}!'
       - '{actor} snaps a kick at {actee}!'
       - '{actor} snaps a kick at {actee} and it lands!'
       - '{actor}''s foot crashes into {actee}!'
-  player_standard_knockdown:
+  standard_partial:
     actor:
-      - 'Your powerful <ansi fg="yellow-bold">kick</ansi> knocks {actee} to the ground! (<ansi fg="damage">{damage}</ansi>)'
-      - 'Your kick sends {actee} sprawling! (<ansi fg="damage">{damage}</ansi>)'
-      - 'A devastating kick drops {actee} to the floor! (<ansi fg="damage">{damage}</ansi>)'
-    actee:
-      - '{actor}''s powerful kick knocks you to the ground! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor}''s kick sends you sprawling! (<ansi fg="damage">{damage}</ansi>)'
-      - 'A devastating kick from {actor} drops you to the floor! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} kicks {actee}, knocking them to the ground!'
-      - '{actor}''s kick sends {actee} sprawling!'
-      - 'A devastating kick from {actor} drops {actee} to the floor!'
-  player_standard_partial:
-    actor:
+      - 'Your boot still lands as {actee} dodges most of it! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="yellow-bold">kick</ansi> fails to beat {actee}''s guard, but your boot still clips them! (<ansi fg="damage">{damage}</ansi>)'
       - 'You swing a kick at {actee}; they slip most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} attempts to kick you, and you slip most of it, but the boot still clips you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} attempts to kick you, and you slip most of it, but the boot still clips you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} swings a kick at you, and you dodge most of it, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} swings a kick at {actee}, who mostly dodges but still gets clipped!'
+      - '{actor} swings a kick at {actee}, who mostly dodges but still gets clipped!'
       - '{actor} swings a kick at {actee}, who dodges most of it but not all!'
-  player_standard_miss:
+  standard_miss:
     actor:
+      - 'You try to kick {actee}, but miss!'
       - 'Your <ansi fg="yellow-bold">kick</ansi> misses {actee}!'
       - 'You swing a kick at {actee} but miss!'
       - 'Your kick sails past {actee}!'
     actee:
       - '{actor} attempts to kick you, but misses!'
+      - '{actor} attempts to kick you, but misses!'
       - '{actor} swings a kick at you but misses!'
       - '{actor}''s kick sails past you!'
     observer:
       - '{actor} attempts to kick {actee}, but misses!'
+      - '{actor} attempts to kick {actee}, but misses!'
       - '{actor} swings a kick at {actee} but misses!'
       - '{actor}''s kick sails past {actee}!'
+  stomp_hit:
+    actor:
+      - 'You stomp on {actee} while they are down! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You bring your heel down hard on {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You slam your foot into the downed {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You drive a vicious stomp into {actee} while they scramble! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You crush your boot down on {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You stamp hard on the prone {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You grind your heel into {actee} as they try to rise! (<ansi fg="damage">{damage}</ansi>)'
+    actee:
+      - '{actor} stomps on you while you''re down! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} stomps on you while you''re down! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} slams a boot into you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} drives their heel into you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} crushes you underfoot! (<ansi fg="damage">{damage}</ansi>)'
+      - 'A vicious stomp from {actor} smashes into you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} grinds a boot into your ribs! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+      - '{actor} stomps on the downed {actee}!'
+      - '{actor} stomps on the downed {actee}!'
+      - '{actor} slams a boot into {actee}!'
+      - '{actor} drives their heel into {actee}!'
+      - '{actor} viciously stomps {actee}!'
+      - '{actor} crushes {actee} underfoot!'
+      - '{actor} grinds their heel into {actee}!'
+  stomp_partial:
+    actor:
+      - 'Your heel still lands as {actee} rolls mostly clear! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You try to stomp {actee}; they roll aside, but your heel still catches them! (<ansi fg="damage">{damage}</ansi>)'
+    actee:
+      - '{actor} tries to stomp you, and you roll aside, but the heel still catches you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} tries to stomp you, and you roll aside, but the heel still catches you! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+      - '{actor} tries to stomp {actee}, who rolls mostly clear but still gets caught!'
+      - '{actor} tries to stomp {actee}, who rolls mostly clear but still gets caught!'
+  stomp_miss:
+    actor:
+      - 'You stomp at {actee}, but they roll aside!'
+      - 'You try to stomp {actee}, but they roll aside!'
+      - 'Your stomp misses as {actee} twists away!'
+      - 'You slam your foot down but {actee} squirms free!'
+    actee:
+      - '{actor} tries to stomp you, but you roll aside!'
+      - '{actor} tries to stomp you, but you roll aside!'
+      - '{actor}''s stomp misses as you twist away!'
+      - '{actor} slams a foot down, but you squirm free!'
+    observer:
+      - '{actor} tries to stomp {actee}, but misses!'
+      - '{actor} tries to stomp {actee}, but misses!'
+      - '{actor}''s stomp misses as {actee} twists away!'
+      - '{actor} slams a foot down at {actee}, who squirms free!'
+  knee_hit:
+    actor:
+      - 'You drive a knee into {actee} in the grapple! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You drive a knee into {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You slam your knee into {actee}''s body! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You ram a sharp knee into {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You crack your knee against {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You pump a knee strike into {actee}''s midsection! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You wrench {actee} close and knee them hard! (<ansi fg="damage">{damage}</ansi>)'
+    actee:
+      - '{actor} drives a knee into you in the grapple! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} drives a knee into you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} slams a knee into your body! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} rams their knee into you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} cracks a knee against you! (<ansi fg="damage">{damage}</ansi>)'
+      - 'A sharp knee from {actor} hits your midsection! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} wrenches you close and knees you hard! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+      - '{actor} drives a knee into {actee}!'
+      - '{actor} drives a knee into {actee}!'
+      - '{actor} slams a knee into {actee}!'
+      - '{actor} rams their knee into {actee}!'
+      - '{actor} cracks a knee against {actee}!'
+      - '{actor} knees {actee} hard in the grapple!'
+      - '{actor} wrenches {actee} close and knees them hard!'
+  knee_partial:
+    actor:
+      - '{actee} blocks most of your knee, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You try to knee {actee}; they block most of it, but the strike still lands! (<ansi fg="damage">{damage}</ansi>)'
+    actee:
+      - '{actor} tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} tries to knee you, and you block most of it, but it still lands! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+      - '{actor} tries to knee {actee} in the grapple, who blocks most of it but still takes the hit!'
+      - '{actor} tries to knee {actee} in the grapple, who blocks most of it but still takes the hit!'
+  # DIVERGENT (Task 4b Step 4, owner-approved 2026-09-21): variants 1 to 3
+  # (the player's original lines) describe different feels -- target turns
+  # away / strike glances off / target blocks -- one feel per variant across
+  # all three roles.
+  knee_miss:
+    actor:
+      - 'You try to knee {actee}, but they block it!'
+      - 'You try to knee {actee}, but they turn their body away!'
+      - 'Your knee strike glances off {actee}!'
+      - '{actee} blocks your knee!'
+    actee:
+      - '{actor} tries to knee you, but you block it!'
+      - '{actor} tries to knee you, but you turn your body away!'
+      - '{actor}''s knee strike glances off you!'
+      - '{actor} tries to knee you, but you block it!'
+    observer:
+      - '{actor} tries to knee {actee}, but misses!'
+      - '{actor} tries to knee {actee} in the grapple, but misses!'
+      - '{actor}''s knee strike glances off {actee} in the grapple!'
+      - '{actor} tries to knee {actee} in the grapple, but they block it!'

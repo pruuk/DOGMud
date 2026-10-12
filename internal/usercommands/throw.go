@@ -155,7 +155,7 @@ func engageAfterThrow(user *users.UserRecord, room *rooms.Room, hitMobs []*mobs.
 	}
 }
 
-// throwCastInterruptCategories: player_cast_interrupt rides
+// throwCastInterruptCategories: cast_interrupt rides
 // CategorySpellDisruption on every role, as throttle's does: a bystander
 // watching a spell die is reading about the disruption. A disruption is heard
 // as well as seen (#242, owner ruling R4), so a reader who sees nothing hears
@@ -313,7 +313,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// oversight: the M1 audit ruled this file's 17 actor sends and zero actee
 	// sends as the one genuinely actee-less member of the special-move family.
 	//
-	// ONE EXCEPTION: player_cast_interrupt names a single mob, because it
+	// ONE EXCEPTION: cast_interrupt names a single mob, because it
 	// reports what happened to that mob's cast. It takes a named copy of this
 	// Audience via throwInterruptAudience so SendTrio can hide that name from a
 	// reader who cannot see; the base Audience below stays actee-less for
@@ -330,7 +330,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		Actor:      fmt.Sprintf(`<ansi fg="username">%s</ansi>`, user.Character.Name),
 		ActorPlain: user.Character.Name,
 	}
-	sendMoveEvent("throw", "player_hurl", playerIds, aud,
+	sendMoveEvent("throw", "hurl", playerIds, aud,
 		moveCategories{Actor: messaging.CategoryHitRanged, Observer: messaging.CategoryHitRanged},
 		map[string]string{movenarration.TokenItem: matchItem.DisplayName()})
 
@@ -362,7 +362,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// throw aborts even a winning roll): effect hits thrower instead.
 		if out.AttackerFumble {
 			fumbled = true
-			sendMoveEvent("throw", "player_fumble", playerIds, aud,
+			sendMoveEvent("throw", "fumble", playerIds, aud,
 				moveCategories{Actor: messaging.CategoryHitRanged, Observer: messaging.CategoryHitRanged}, nil)
 
 			// Apply effects to thrower
@@ -392,7 +392,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// before the attack-success gate so a tanky boss can't simply dodge the
 		// interrupt. (Fumbles break above, so a botched throw still can't cancel.)
 		if maybeInterruptOnThrow(mob, matchItem.ItemId, state.ActorRef{UserId: user.UserId}) {
-			sendMoveEvent("throw", "player_cast_interrupt",
+			sendMoveEvent("throw", "cast_interrupt",
 				moveIdentities{ActeePlain: mob.Character.Name},
 				throwInterruptAudience(aud, mob.Character.Name),
 				throwCastInterruptCategories, nil)
@@ -440,7 +440,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			throwerLine := messaging.NoLine
 			if dmg > 0 {
 				dmgDesc := combat.GetDamageDescription(dmg, mob.Character.HealthMax.Value)
-				partialRoles, _ := renderMoveEvent("throw", "player_partial_hit",
+				partialRoles, _ := renderMoveEvent("throw", "partial_hit",
 					moveIdentities{Actee: fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, mob.Character.Name)},
 					map[string]string{movenarration.TokenDamage: dmgDesc})
 				throwerLine = lineOrNone(messaging.CategoryHitRanged, partialRoles.Actor)

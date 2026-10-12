@@ -89,15 +89,15 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	if res.MoveResult.Hit {
 		if res.MoveResult.KnockedDown {
-			sendMoveEvent("pounce", "player_knockdown", ids, aud, pounceCategories, damageTokens)
+			sendMoveEvent("pounce", "knockdown", ids, aud, pounceCategories, damageTokens)
 		} else {
-			sendMoveEvent("pounce", "player_hit", ids, aud, pounceCategories, damageTokens)
+			sendMoveEvent("pounce", "hit", ids, aud, pounceCategories, damageTokens)
 		}
 	} else if res.MoveResult.Damage > 0 {
 		// Defended-partial: the personal lines carry the damage, and the room
 		// line names the defence that blunted the pounce (U6b Task 9), falling
 		// back to the squared partial text when there was no defence to name.
-		roles, _ := renderMoveEvent("pounce", "player_partial", ids, damageTokens)
+		roles, _ := renderMoveEvent("pounce", "partial", ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "pounce")
 		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
 		if defended {
@@ -118,7 +118,7 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
 		}, aud)
 	} else {
-		sendMoveEvent("pounce", "player_miss", ids, aud, pounceCategories, nil)
+		sendMoveEvent("pounce", "miss", ids, aud, pounceCategories, nil)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

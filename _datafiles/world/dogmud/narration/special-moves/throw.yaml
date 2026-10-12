@@ -1,19 +1,19 @@
 moveid: throw
+# Mobs and players draw from one pool per event (M6 slice 2, ledger row 56). Variant N of every role describes one moment.
 events:
   # throw has no mob twin: mobs do not throw grenades, so this file carries
-  # only the PLAYER side's player_* events (M4e-1b). It is authored fresh
-  # rather than copied from an existing mob file, unlike bash/trip/grapple/
-  # shoot.
+  # only the player side's events (M4e-1b). It is authored fresh rather than
+  # copied from an existing mob file, unlike bash/trip/grapple/shoot.
   #
   # No event here authors an actee role. Throw is an untargeted room AoE
   # against every hostile present -- throw.go's own comment calls it "the one
   # genuinely actee-less member of the special-move family."
-  player_hurl:
+  hurl:
     actor:
       - '<ansi fg="yellow-bold">You hurl the <ansi fg="itemname">{item}</ansi> into the fray!</ansi>'
     observer:
       - '<ansi fg="yellow-bold">{actor} hurls a <ansi fg="itemname">{item}</ansi> into the fray!</ansi>'
-  player_fumble:
+  fumble:
     actor:
       - '<ansi fg="red-bold">Your throw goes horribly wrong — the projectile detonates in your hand!</ansi>'
     observer:
@@ -21,13 +21,13 @@ events:
   # The interrupted party is a mob with no client; its name rides the actor
   # and observer text as plain prose ({actee_plain}) rather than the tagged
   # {actee} span.
-  player_cast_interrupt:
+  cast_interrupt:
     actor:
       - '<ansi fg="cyan-bold">The blast shatters {actee_plain}''s concentration -- its spell collapses!</ansi>'
     observer:
       - '<ansi fg="cyan">{actee_plain}''s spell collapses as the blast strikes!</ansi>'
   # Actor only: the room's line for a defended throw always comes from the
   # channel defence triad (sourced outside this store), not from here.
-  player_partial_hit:
+  partial_hit:
     actor:
       - 'The edge of the blast still catches {actee}! (<ansi fg="damage">{damage}</ansi>)'

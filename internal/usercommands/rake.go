@@ -81,12 +81,12 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	damageTokens := map[string]string{movenarration.TokenDamage: dmgDesc}
 
 	if res.MoveResult.Hit {
-		sendMoveEvent("rake", "player_hit", ids, aud, rakeCategories, damageTokens)
+		sendMoveEvent("rake", "hit", ids, aud, rakeCategories, damageTokens)
 	} else if res.MoveResult.Damage > 0 {
 		// Defended-partial: the personal lines carry the damage, and the room
 		// line names the defence that blunted the rake (U6b Task 9), falling
 		// back to the squared partial text when there was no defence to name.
-		roles, _ := renderMoveEvent("rake", "player_partial", ids, damageTokens)
+		roles, _ := renderMoveEvent("rake", "partial", ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "claw rake")
 		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
 		if defended {
@@ -107,7 +107,7 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
 		}, aud)
 	} else {
-		sendMoveEvent("rake", "player_miss", ids, aud, rakeCategories, nil)
+		sendMoveEvent("rake", "miss", ids, aud, rakeCategories, nil)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

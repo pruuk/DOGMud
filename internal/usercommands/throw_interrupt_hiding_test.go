@@ -13,7 +13,7 @@ import (
 // cannot see.
 //
 // throw is area-effect and genuinely actee-less, so it builds ONE Audience with
-// ActeeName: NoName and reuses it for every event. player_cast_interrupt is the
+// ActeeName: NoName and reuses it for every event. cast_interrupt is the
 // exception: it renders a single mob's name into throw.yaml's {actee_plain}.
 // NoName means "nobody to hide" at trio.go:127 and hidenames.go:48, so before
 // this fix the mob's name reached every reader at every sight tier.

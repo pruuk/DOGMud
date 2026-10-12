@@ -97,16 +97,16 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if result.Hit {
 		switch res.Variant {
 		case actions.KickStomp:
-			sendMoveEvent("kick", "player_stomp_hit", ids, aud, kickCategories, damageTokens)
+			sendMoveEvent("kick", "stomp_hit", ids, aud, kickCategories, damageTokens)
 
 		case actions.KickKnee:
-			sendMoveEvent("kick", "player_knee_hit", ids, aud, kickCategories, damageTokens)
+			sendMoveEvent("kick", "knee_hit", ids, aud, kickCategories, damageTokens)
 
 		default: // KickStandard
 			if result.KnockedDown {
-				sendMoveEvent("kick", "player_standard_knockdown", ids, aud, kickCategories, damageTokens)
+				sendMoveEvent("kick", "standard_knockdown", ids, aud, kickCategories, damageTokens)
 			} else {
-				sendMoveEvent("kick", "player_standard_hit", ids, aud, kickCategories, damageTokens)
+				sendMoveEvent("kick", "standard_hit", ids, aud, kickCategories, damageTokens)
 			}
 		}
 	} else if result.Damage > 0 {
@@ -115,11 +115,11 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		var partialEvent movenarration.EventKey
 		switch res.Variant {
 		case actions.KickStomp:
-			partialEvent = "player_stomp_partial"
+			partialEvent = "stomp_partial"
 		case actions.KickKnee:
-			partialEvent = "player_knee_partial"
+			partialEvent = "knee_partial"
 		default: // KickStandard
-			partialEvent = "player_standard_partial"
+			partialEvent = "standard_partial"
 		}
 		roles, _ := renderMoveEvent("kick", partialEvent, ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, target, result.Defence, attackName)
@@ -145,13 +145,13 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// No defence to narrate (e.g. a fumbled kick): plain miss text.
 		switch res.Variant {
 		case actions.KickStomp:
-			sendMoveEvent("kick", "player_stomp_miss", ids, aud, kickCategories, nil)
+			sendMoveEvent("kick", "stomp_miss", ids, aud, kickCategories, nil)
 
 		case actions.KickKnee:
-			sendMoveEvent("kick", "player_knee_miss", ids, aud, kickCategories, nil)
+			sendMoveEvent("kick", "knee_miss", ids, aud, kickCategories, nil)
 
 		default: // KickStandard
-			sendMoveEvent("kick", "player_standard_miss", ids, aud, kickCategories, nil)
+			sendMoveEvent("kick", "standard_miss", ids, aud, kickCategories, nil)
 		}
 	}
 

@@ -18,12 +18,12 @@ import (
 // and colour like the room's (#449).
 var throttleCategories = moveCategories{Actor: messaging.CategoryHitNaturalSharp, Actee: messaging.CategoryHitNaturalSharp, Observer: messaging.CategoryHitNaturalSharp}
 
-// throttleCastInterruptCategories: player_cast_interrupt's own room line
+// throttleCastInterruptCategories: cast_interrupt's own room line
 // deliberately rides CategorySpellDisruption rather than
 // CategoryHitNaturalSharp, matching pre-migration -- a bystander watching a
 // spell die is reading about the disruption, not the bite that caused it
 // (see throttle.go's own comment on the pre-migration send, and throw.go's
-// player_cast_interrupt, which uses the same category for the same reason).
+// cast_interrupt, which uses the same category for the same reason).
 //
 // A disruption is heard as well as seen (#242, owner ruling R4), so a reader
 // who sees nothing hears the chant break off.
@@ -93,7 +93,7 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	damageTokens := map[string]string{movenarration.TokenDamage: dmgDesc}
 
 	if res.MoveResult.Hit {
-		sendMoveEvent("throttle", "player_hit", ids, aud, throttleCategories, damageTokens)
+		sendMoveEvent("throttle", "hit", ids, aud, throttleCategories, damageTokens)
 
 		// A detail line riding on the hit above, and a WORLD EVENT under the
 		// detail-line ruling: a spell visibly failing is something the room
@@ -101,14 +101,14 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		// private between the two people involved. Not squared: this was
 		// already a hardcoded 1/1/1 triad pre-migration, not a pool.
 		if res.InterruptedCast {
-			sendMoveEvent("throttle", "player_cast_interrupt", ids, aud, throttleCastInterruptCategories, nil)
+			sendMoveEvent("throttle", "cast_interrupt", ids, aud, throttleCastInterruptCategories, nil)
 		}
 	} else if res.MoveResult.Damage > 0 {
 		// Defended-partial: the personal lines carry the damage, and the room
 		// line names the defence that blunted the throttle (U6b Task 9),
 		// falling back to the squared partial text when there was no defence
 		// to name.
-		roles, _ := renderMoveEvent("throttle", "player_partial", ids, damageTokens)
+		roles, _ := renderMoveEvent("throttle", "partial", ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "throttle lunge")
 		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
 		if defended {
@@ -129,7 +129,7 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
 		}, aud)
 	} else {
-		sendMoveEvent("throttle", "player_miss", ids, aud, throttleCategories, nil)
+		sendMoveEvent("throttle", "miss", ids, aud, throttleCategories, nil)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

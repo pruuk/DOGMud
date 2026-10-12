@@ -1,84 +1,67 @@
 moveid: drain
+# Mobs and players draw from one pool per event (M6 slice 2, ledger row 56). Variant N of every role describes one moment.
 events:
   hit:
-    actee:
-      - '{actor} plunges into you, sapping your vitality and leeching your life-force! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} plunges into {actee} and leeches their vitality!'
-  partial:
-    actee:
-      - '{actor} reaches for you and you slip most of its grip, but it still catches a sliver of you! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} reaches for {actee} hungrily, who slips mostly free but still gets caught!'
-  miss:
-    actee:
-      - '{actor} reaches for you hungrily, but misses!'
-    observer:
-      - '{actor} reaches for {actee} hungrily, but misses!'
-  # player_* events are the PLAYER twin's own wording (M4e-1b, option B): the
-  # twins shipped different prose for the same event, so they take separate
-  # keys rather than sharing the mob events above. Merging them into one pool
-  # is filed as M6 ledger row 56.
-  #
-  # SQUARING (M4e-1b Task 4b Step 2): each role drew its own util.Rand
-  # pre-migration, so the three pools were ragged (hit 4/4/3, partial 2/2/1).
-  # Every pre-existing line stays at its own index, byte for byte; the added
-  # lines are marked NEW in the commit message and fill the gap to the
-  # widest role's width so index N of every role now describes one moment.
-  player_hit:
     actor:
+      - 'You plunge into {actee} and leech away their life-force! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="item">claws</ansi> plunge into {actee}, sapping their vitality as warmth floods into you! (<ansi fg="damage">{damage}</ansi>)'
       - 'You latch onto {actee} and drink deep, leeching their life-force! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your touch drains {actee}, pulling vitality through your <ansi fg="item">claws</ansi>! (<ansi fg="damage">{damage}</ansi>)'
       - 'You tear into {actee} and feed, growing stronger as they weaken! (<ansi fg="damage">{damage}</ansi>)'
     actee:
+      - '{actor} plunges into you, sapping your vitality and leeching your life-force! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} plunges their <ansi fg="item">claws</ansi> into you, sapping your vitality! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} latches onto you and drinks deep, leeching your life-force! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''''s touch drains you, pulling vitality through their grasp! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} tears into you and feeds, growing stronger as you weaken! (<ansi fg="damage">{damage}</ansi>)'
     observer:
+      - '{actor} plunges into {actee} and leeches their vitality!'
       - '{actor} plunges their <ansi fg="item">claws</ansi> into {actee}, leeching their vitality!'
       - '{actor} latches onto {actee} and drinks deep!'
       - '{actor} tears into {actee} and feeds hungrily!'
       - '{actor} tears into {actee} and feeds, growing stronger as they weaken!'
   # Actor-only: private knowledge about the drainer's own returning vigour,
   # under the detail-line ruling (see intentionallySilentRoles' drain/
-  # player_hit_heal and drain/player_partial_heal entries). No squaring: this
-  # was already 3/0/0 and 2/0/0 pre-migration, and stays that shape.
-  player_hit_heal:
+  # hit_heal and drain/partial_heal entries).
+  hit_heal:
     actor:
       - '<ansi fg="green">Their stolen vitality flows into you — {heal}.</ansi>'
       - '<ansi fg="green">Stolen life-force surges through you — {heal}.</ansi>'
       - '<ansi fg="green">You feel {heal} as their warmth becomes yours.</ansi>'
-  player_partial:
+  partial:
     actor:
+      - '{actee} pulls mostly free, but you still drain a little! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your reach for {actee} mostly fails, but your <ansi fg="item">claws</ansi> still catch a sliver of vitality! (<ansi fg="damage">{damage}</ansi>)'
       - '{actee} slips most of your grip, but you still sap a trace of their life-force! (<ansi fg="damage">{damage}</ansi>)'
     actee:
+      - '{actor} reaches for you and you slip most of its grip, but it still catches a sliver of you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} reaches for you with hungry <ansi fg="item">claws</ansi>, and you slip most of it, but they still catch a sliver of you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} lunges to drain you; you slip most of it away, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
+      - '{actor} reaches for {actee} hungrily, who slips mostly free but still gets caught!'
       - '{actor} lunges to drain {actee}, who slips mostly free but still gets caught!'
       - '{actor} lunges to drain {actee}, who slips most of it away but not all!'
-  player_partial_heal:
+  partial_heal:
     actor:
       - '<ansi fg="green">A trickle of stolen vitality flows into you. You feel {heal}.</ansi>'
       - '<ansi fg="green">You feel {heal} as a sliver of their warmth becomes yours.</ansi>'
-  # DIVERGENT (Task 3, owner-approved 2026-09-21): the three roles describe
-  # different feels -- plain whiff / target slips away / lunge glances off --
-  # rather than one moment each, so this is not squared by the ordinary
-  # sibling method. The actor pool already held all three feels natively; the
-  # actee and observer additions are the owner-approved verbatim lines.
-  player_miss:
+  # DIVERGENT (Task 3, owner-approved 2026-09-21): variants 1 to 3 (the
+  # player's original lines) describe different feels -- plain whiff /
+  # target slips away / lunge glances off -- one feel per variant across all
+  # three roles.
+  miss:
     actor:
+      - 'You reach for {actee} hungrily, but miss!'
       - 'Your drain misses {actee}!'
       - 'You reach for {actee} but they slip away!'
       - 'Your draining lunge glances off {actee} harmlessly!'
     actee:
+      - '{actor} reaches for you hungrily, but misses!'
       - '{actor} reaches for you with hungry <ansi fg="item">claws</ansi>, but misses!'
       - '{actor} lunges to drain you but you slip away!'
       - '{actor}''s draining lunge glances off you harmlessly!'
     observer:
+      - '{actor} reaches for {actee} hungrily, but misses!'
       - '{actor} lunges to drain {actee}, but misses!'
       - '{actor} reaches for {actee}, who slips away!'
       - '{actor}''s draining lunge glances off {actee} harmlessly!'

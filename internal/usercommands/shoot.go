@@ -416,11 +416,11 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	var moveEvent movenarration.EventKey
 	switch {
 	case hit:
-		moveEvent = "player_hit"
+		moveEvent = "hit"
 	case partial:
-		moveEvent = "player_partial"
+		moveEvent = "partial"
 	default:
-		moveEvent = "player_miss"
+		moveEvent = "miss"
 	}
 
 	ids := moveIdentities{
@@ -542,7 +542,7 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 			if triadRoom != "" {
 				sameRoomLine = messaging.Say(messaging.CategoryHitRanged, triadRoom)
 			} else {
-				announceRoles, _ := renderMoveEvent("shoot", "player_fire_announce", ids, map[string]string{movenarration.TokenWeapon: weapon})
+				announceRoles, _ := renderMoveEvent("shoot", "fire_announce", ids, map[string]string{movenarration.TokenWeapon: weapon})
 				sameRoomLine = lineOrNone(messaging.CategoryHitRanged, announceRoles.Observer)
 			}
 		}
@@ -559,7 +559,7 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	// target's room sees it arrive.
 	departLine := messaging.NoLine
 	if !result.IsSneaking {
-		departRoles, _ := renderMoveEvent("shoot", "player_fire_depart", ids, map[string]string{
+		departRoles, _ := renderMoveEvent("shoot", "fire_depart", ids, map[string]string{
 			movenarration.TokenWeapon:   weapon,
 			movenarration.TokenExitName: result.ExitName,
 		})
@@ -587,17 +587,17 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 		var arrivalEvent movenarration.EventKey
 		switch {
 		case known && hit:
-			arrivalEvent = "player_arrival_known_hit"
+			arrivalEvent = "arrival_known_hit"
 		case known && partial:
-			arrivalEvent = "player_arrival_known_partial"
+			arrivalEvent = "arrival_known_partial"
 		case known:
-			arrivalEvent = "player_arrival_known_miss"
+			arrivalEvent = "arrival_known_miss"
 		case hit:
-			arrivalEvent = "player_arrival_unknown_hit"
+			arrivalEvent = "arrival_unknown_hit"
 		case partial:
-			arrivalEvent = "player_arrival_unknown_partial"
+			arrivalEvent = "arrival_unknown_partial"
 		default:
-			arrivalEvent = "player_arrival_unknown_miss"
+			arrivalEvent = "arrival_unknown_miss"
 		}
 
 		arrivalTokens := map[string]string{}
@@ -643,7 +643,7 @@ func surpriseShotShooterLine(hit bool, triad, targetColored, tier string, dealtD
 	// protects.
 	switch {
 	case hit:
-		roles, ok := renderMoveEvent(`shoot`, `player_surprise_hit`,
+		roles, ok := renderMoveEvent(`shoot`, `surprise_hit`,
 			moveIdentities{Actee: targetColored},
 			map[string]string{movenarration.TokenDamage: tier})
 		if !ok {
@@ -659,7 +659,7 @@ func surpriseShotShooterLine(hit bool, triad, targetColored, tier string, dealtD
 		}
 		return triad + fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`, tier)
 	default:
-		roles, ok := renderMoveEvent(`shoot`, `player_surprise_miss`,
+		roles, ok := renderMoveEvent(`shoot`, `surprise_miss`,
 			moveIdentities{Actee: targetColored}, nil)
 		if !ok {
 			return ""

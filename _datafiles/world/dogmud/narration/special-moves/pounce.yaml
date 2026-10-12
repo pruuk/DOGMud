@@ -1,93 +1,74 @@
 moveid: pounce
+# Mobs and players draw from one pool per event (M6 slice 2, ledger row 56). Variant N of every role describes one moment.
 events:
   knockdown:
-    actee:
-      - '{actor} leaps at you and slams you to the ground! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} leaps at {actee} and slams them to the ground!'
-  hit:
-    actee:
-      - '{actor} springs at you and crashes into your body! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} springs at {actee} and crashes into them!'
-  partial:
-    actee:
-      - '{actor} leaps at you and you sidestep most of it, but it still clips you! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} leaps at {actee}, who mostly dodges but still gets clipped!'
-  miss:
-    actee:
-      - '{actor} leaps at you, but you sidestep the pounce!'
-    observer:
-      - '{actor} leaps at {actee}, but misses!'
-  # player_* events are the PLAYER twin's own wording (M4e-1b, option B): the
-  # twins shipped different prose for the same event, so they take separate
-  # keys rather than sharing the mob events above. Merging them into one pool
-  # is filed as M6 ledger row 56.
-  #
-  # SQUARING (M4e-1b Task 4b Step 3): each role drew its own util.Rand
-  # pre-migration, and this verb splits its hit outcome into two branches
-  # (knockdown, hit), so the pools were ragged across both -- knockdown
-  # 4/3/3, hit 4/3/2, partial 2/2/1. Every pre-existing line stays at its own
-  # index, byte for byte; the added lines fill the gap to the widest role's
-  # width so index N of every role now describes one moment.
-  player_knockdown:
     actor:
+      - 'You leap on {actee} and slam them to the ground! (<ansi fg="damage">{damage}</ansi>)'
       - 'You leap at {actee} and slam them to the ground! (<ansi fg="damage">{damage}</ansi>)'
       - 'You spring forward and bear {actee} down under your weight! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your pounce drives {actee} backward off their feet! (<ansi fg="damage">{damage}</ansi>)'
       - 'You hurl yourself at {actee}, crashing into them and sending them sprawling! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} leaps at you and slams you to the ground! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} leaps at you and slams you to the ground! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} springs forward and bears you down! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s pounce drives you backward off your feet! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} hurls themselves at you, crashing into you and sending you sprawling! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} leaps at {actee} and slams them to the ground!'
+      - '{actor} leaps at {actee} and slams them to the ground!'
       - '{actor} springs forward and bears {actee} down!'
       - '{actor}''s pounce drives {actee} backward off their feet!'
       - '{actor} hurls themselves at {actee}, crashing into them and sending them sprawling!'
-  player_hit:
+  hit:
     actor:
+      - 'You spring at {actee} and crash into them! (<ansi fg="damage">{damage}</ansi>)'
       - 'You spring at {actee}, raking into them before they push you back! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your pounce connects with {actee}, driving hard into their body! (<ansi fg="damage">{damage}</ansi>)'
       - 'You lunge forward and crash into {actee}! (<ansi fg="damage">{damage}</ansi>)'
       - 'You leap and bear into {actee}, drawing a grunt of pain! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} springs at you and crashes into your body! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} springs at you and crashes into your body! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s pounce drives hard into you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} lunges and slams into you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} leaps and bears into you, drawing a grunt of pain from you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} springs at {actee} and crashes into them!'
+      - '{actor} springs at {actee} and crashes into them!'
       - '{actor}''s pounce drives hard into {actee}!'
       - '{actor} lunges forward and crashes into {actee}!'
       - '{actor} leaps and bears into {actee}, drawing a grunt of pain!'
-  player_partial:
+  partial:
     actor:
+      - '{actee} sidesteps, but you still catch them! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your leap at {actee} mostly misses, but you still clip them on the way past! (<ansi fg="damage">{damage}</ansi>)'
       - '{actee} dodges the worst of your pounce, but you still catch them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
+      - '{actor} leaps at you and you sidestep most of it, but it still clips you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} leaps at you and you sidestep most of it, but they still clip you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} springs at you; you dodge most of the pounce, but not all! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} leaps at {actee}, who mostly dodges but still gets clipped!'
+      - '{actor} leaps at {actee}, who mostly dodges but still gets clipped!'
       - '{actor} leaps at {actee}, who dodges the worst of it but still gets caught!'
-  # DIVERGENT (Task 4b Step 3, owner-approved 2026-09-21): the three roles
-  # describe different feels -- target sidesteps / target dodges / pounce
-  # carries past -- rather than one moment each. The actor pool already held
-  # all three feels natively; the actee and observer additions are the
-  # owner-approved verbatim lines.
-  player_miss:
+  # DIVERGENT (Task 4b Step 3, owner-approved 2026-09-21): variants 1 to 3
+  # (the player's original lines) describe different feels -- target
+  # sidesteps / target dodges / pounce carries past -- one feel per variant
+  # across all three roles.
+  miss:
     actor:
+      - 'You leap at {actee}, but they sidestep your pounce!'
       - 'Your leap at {actee} misses as they sidestep!'
       - 'You spring at {actee} but they dodge your pounce!'
       - 'Your pounce carries you past {actee} — they step aside!'
     actee:
+      - '{actor} leaps at you, but you sidestep the pounce!'
       - '{actor} leaps at you but you sidestep their pounce!'
       - '{actor} springs at you, but you dodge!'
       - '{actor}''s pounce carries them past you as you step aside!'
     observer:
+      - '{actor} leaps at {actee}, but misses!'
       - '{actor} leaps at {actee}, but misses!'
       - '{actor} springs at {actee}, who dodges the pounce!'
       - '{actor}''s pounce carries them past {actee}, who steps aside!'

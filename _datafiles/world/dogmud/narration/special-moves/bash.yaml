@@ -1,54 +1,43 @@
 moveid: bash
+# Mobs and players draw from one pool per event (M6 slice 2, ledger row 56). Variant N of every role describes one moment.
 events:
   knockdown:
-    actee:
-      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> knocks you to the ground! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> knocks {actee} to the ground!'
-  hit:
-    actee:
-      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> strikes you! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} {verb} {actee} {with}!'
-  partial:
-    actee:
-      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> fails to floor you, but still crashes into you! (<ansi fg="damage">{damage}</ansi>)'
-    observer:
-      - '{actor} {verb} {actee} {with}, who staggers but stays up!'
-  miss:
-    actee:
-      - '{actor} attempts a {label}, but misses!'
-    observer:
-      - '{actor} attempts to bash {actee}, but misses!'
-  # player_* events are the PLAYER twin's own wording (M4e-1b, option B): the
-  # twins shipped different prose for the same event, so they take separate
-  # keys rather than sharing the mob events above. Merging them into one pool
-  # is filed as M6 ledger row 56.
-  player_knockdown:
     actor:
+      - 'Your <ansi fg="yellow-bold">{label}</ansi> knocks {actee} to the ground! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="yellow-bold">shield bash</ansi> knocks {actee} to the ground! (<ansi fg="damage">{damage}</ansi>)'
     actee:
+      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> knocks you to the ground! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s <ansi fg="yellow-bold">shield bash</ansi> knocks you to the ground! (<ansi fg="damage">{damage}</ansi>)'
     observer:
+      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> knocks {actee} to the ground!'
       - '{actor}''s <ansi fg="yellow-bold">shield bash</ansi> knocks {actee} to the ground!'
-  player_hit:
+  hit:
     actor:
+      - 'Your <ansi fg="yellow-bold">{label}</ansi> strikes {actee} hard! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="yellow-bold">shield bash</ansi> strikes {actee}! (<ansi fg="damage">{damage}</ansi>)'
     actee:
+      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> strikes you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s <ansi fg="yellow-bold">shield bash</ansi> strikes you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
+      - '{actor} {verb} {actee} {with}!'
       - '{actor} bashes {actee} with their shield!'
-  player_partial:
+  partial:
     actor:
+      - 'Your <ansi fg="yellow-bold">{label}</ansi> fails to floor {actee}, but lands! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your <ansi fg="yellow-bold">shield bash</ansi> fails to floor {actee}, but still slams into them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
+      - '{actor}''s <ansi fg="yellow-bold">{label}</ansi> fails to floor you, but still crashes into you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s <ansi fg="yellow-bold">shield bash</ansi> fails to floor you, but still slams into you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
+      - '{actor} {verb} {actee} {with}, who staggers but stays up!'
       - '{actor} bashes {actee} with their shield, who staggers but stays up!'
-  player_miss:
+  miss:
     actor:
+      - 'Your <ansi fg="yellow-bold">{label}</ansi> misses {actee}!'
       - 'Your <ansi fg="yellow-bold">shield bash</ansi> misses {actee}!'
     actee:
+      - '{actor} attempts a {label}, but misses!'
       - '{actor} attempts to bash you with their shield, but misses!'
     observer:
+      - '{actor} attempts to bash {actee}, but misses!'
       - '{actor} attempts to bash {actee}, but misses!'

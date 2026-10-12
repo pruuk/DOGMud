@@ -77,10 +77,9 @@ func Throttle(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if result.Hit {
 		sendMoveEvent("throttle", "hit", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens)
 
-		// Cast-interrupt detail line riding on the hit above. The YAML authors
-		// only an actee role for this event; lineOrNone keeps the room and
-		// actor roles silent, matching today's behaviour of never broadcasting
-		// this to the room.
+		// Cast-interrupt detail line riding on the hit above. Mobs and players
+		// share one pool (M6 slice 2, ledger row 56), so the room is told of
+		// the interrupt as it is for a player's throttle.
 		if res.InterruptedCast && targetUser != nil {
 			sendMoveEvent("throttle", "cast_interrupt", ids, aud, messaging.CategorySpellDisruption, nil)
 		}

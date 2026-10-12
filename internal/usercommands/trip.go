@@ -103,15 +103,15 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if result.Hit {
 		if hasTail {
 			if result.KnockedDown {
-				sendMoveEvent("trip", "player_tailsweep_knockdown", ids, aud, tripCategories, damageTokens)
+				sendMoveEvent("trip", "tailsweep_knockdown", ids, aud, tripCategories, damageTokens)
 			} else {
-				sendMoveEvent("trip", "player_tailsweep_hit", ids, aud, tripCategories, damageTokens)
+				sendMoveEvent("trip", "tailsweep_hit", ids, aud, tripCategories, damageTokens)
 			}
 		} else {
 			if result.KnockedDown {
-				sendMoveEvent("trip", "player_trip_knockdown", ids, aud, tripCategories, damageTokens)
+				sendMoveEvent("trip", "trip_knockdown", ids, aud, tripCategories, damageTokens)
 			} else {
-				sendMoveEvent("trip", "player_trip_hit", ids, aud, tripCategories, damageTokens)
+				sendMoveEvent("trip", "trip_hit", ids, aud, tripCategories, damageTokens)
 			}
 		}
 	} else if result.Damage > 0 {
@@ -121,10 +121,10 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		var partialEvent movenarration.EventKey
 		if hasTail {
 			tripAttack = "tailsweep"
-			partialEvent = "player_tailsweep_partial"
+			partialEvent = "tailsweep_partial"
 		} else {
 			tripAttack = "trip"
-			partialEvent = "player_trip_partial"
+			partialEvent = "trip_partial"
 		}
 		roles, _ := renderMoveEvent("trip", partialEvent, ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, target, result.Defence, tripAttack)
@@ -157,9 +157,9 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				Observer: messaging.Say(messaging.CategoryTrip, defence.ToRoom),
 			}, aud)
 		} else if hasTail {
-			sendMoveEvent("trip", "player_tailsweep_miss", ids, aud, tripCategories, nil)
+			sendMoveEvent("trip", "tailsweep_miss", ids, aud, tripCategories, nil)
 		} else {
-			sendMoveEvent("trip", "player_trip_miss", ids, aud, tripCategories, nil)
+			sendMoveEvent("trip", "trip_miss", ids, aud, tripCategories, nil)
 		}
 	}
 
