@@ -2,7 +2,7 @@ roomid: 4104
 zone: Stillwater
 title: The Pike & Lantern, Lodging Loft
 description: >
-  The smell up here is altogether different — clean linen,
+  The smell up here is altogether different: clean linen,
   beeswax candle, and the faint mineral cool of lake-air
   through a half-shuttered <ansi fg="itemname">window</ansi>
   in the eastern gable. The loft runs the long axis of the
@@ -32,7 +32,7 @@ nouns:
     chimney pots. The lake's wet, cool breath comes in
     through the gap.
   bedsteads: Six plain wooden frames strung with rope laced
-    in a tight diamond pattern — uncomfortable for a single
+    in a tight diamond pattern, uncomfortable for a single
     night, surprisingly forgiving on the second, and after
     a week of road-sleep nearly luxurious. Each is dressed
     with a folded grey blanket and a thin straw bolster.
@@ -41,7 +41,7 @@ nouns:
     own padlock.
   rope: A length of tarred manila rope coiled neatly on a
     peg by the eastern gable. Long enough, by the look, to
-    reach the yard below — useful when a trunk is too heavy
+    reach the yard below, useful when a trunk is too heavy
     to wrestle down the stairs, or for some other purpose
     a guest might find for it.
   herbs: Bunches of drying lake-mint, marsh-sage, and what
@@ -57,7 +57,7 @@ idlemessages:
 - The shutter at the gable knocks softly against the frame in the lake-wind.
 - Below, in the common room, a low murmur of voices rises briefly, then settles.
 - A bunch of drying lake-mint releases a thin sweet smell as the breeze stirs the rafters.
-- The plank floor creaks once, on its own — old wood remembering the shape of someone who isn't there.
+- The plank floor creaks once, on its own, old wood remembering the shape of someone who isn't there.
 - A sparrow alights briefly on the windowsill, peers in, and is gone.
 x: -9
 y: 2

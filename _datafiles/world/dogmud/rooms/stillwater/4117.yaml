@@ -3,7 +3,7 @@ zone: Stillwater
 title: Net Yard
 description: >
   The creak of timber drying-frames swaying in the lake-wind
-  fills the small fenced yard north of the docks — a long
+  fills the small fenced yard north of the docks, a long
   open space with two rows of tall A-shaped
   <ansi fg="itemname">frames</ansi> spread with mended
   fishing nets stretched taut to dry. Wooden
@@ -35,7 +35,7 @@ nouns:
     while reaching. The frames creak softly even in
     light wind.
   shuttle: A scatter of carved wooden net-needles in a
-    woven basket beside the bench — the simple
+    woven basket beside the bench, the simple
     flat-bladed shuttles a net-mender uses to weave
     knot after knot of waxed twine. Several have been
     polished smooth by long use; one or two are
@@ -44,7 +44,7 @@ nouns:
     southern wall, the working surface kept clean and
     waxed against the damp. A small hand-loop of
     half-mended netting is currently pinned to a clamp
-    at one end — someone's work in progress, abandoned
+    at one end, someone's work in progress, abandoned
     when the bell rang for the noon break.
   tallow: A small wooden bucket of yellowish tallow
     sits beside the bench, a wooden paddle propped
@@ -54,7 +54,7 @@ nouns:
     is faintly mutton.
   twine: Balls of waxed linen twine in graduated
     weights, stacked in a small wall-rack near the
-    bench. The thinnest is for fine work — repairing
+    bench. The thinnest is for fine work, repairing
     fly-tackle and small mesh; the heaviest could
     moor a barge.
 idlemessages:

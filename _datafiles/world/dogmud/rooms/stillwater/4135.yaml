@@ -4,7 +4,7 @@ title: The Watermill
 description: >
   The deep slow rumble of a working millstone fills the
   stone-built mill from the moment you step into its open
-  yard — a low constant grinding that the millers'
+  yard: a low constant grinding that the millers'
   children grow up sleeping through. A great wooden
   <ansi fg="itemname">water wheel</ansi> turns slowly on
   the building's western wall, fed by the creek's diverted
@@ -40,7 +40,7 @@ nouns:
     the millstones through a wooden gear train the
     current miller's grandfather built.
   millstones: A pair of round dressed millstones
-    inside the open mill — the lower stone fixed and
+    inside the open mill, the lower stone fixed and
     the upper stone slowly rotating above it, the
     grain falling through a wooden hopper between them
     to be ground to flour and out the side. Fine pale
@@ -63,7 +63,7 @@ nouns:
   slate: A square of slate hung above the open mill
     door listing the prices for current sack-weights,
     in copper. The miller's percentage of every sack
-    ground is also chalked here — a plain
+    ground is also chalked here, a plain
     transparency that the farmers in the area have
     appreciated for two generations.
 idlemessages:

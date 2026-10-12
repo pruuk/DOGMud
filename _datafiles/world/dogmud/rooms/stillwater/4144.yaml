@@ -3,7 +3,7 @@ zone: Stillwater
 title: Old Chapel Ruin
 description: >
   The broken stone foundation of a small chapel sits in a
-  mossy hollow west of the wardstone circle — three
+  mossy hollow west of the wardstone circle: three
   surviving courses of mortared lake-stone and a single
   intact corner where a doorpost still stands. The
   <ansi fg="itemname">foundation</ansi> outlines a single
@@ -11,7 +11,7 @@ description: >
   long given to grass and creeping moss. A weathered
   carved <ansi fg="itemname">altar stone</ansi> remains
   at the eastern end, the surface inscribed with a long
-  tight spiral inside an outer circle — the work of a
+  tight spiral inside an outer circle, the work of a
   hand that long predates the present temple, in a
   carving style no current mason in town would
   recognise. The lake-wind passes through the broken
@@ -32,7 +32,7 @@ exits:
 nouns:
   foundation: Three surviving courses of mortared
     lake-stone outline a single modest room perhaps
-    fifteen paces across — the foundation of a small
+    fifteen paces across, the foundation of a small
     chapel that stood here before the present temple
     in town existed. The mortar is older and harder
     than anything currently being made in Stillwater;
@@ -43,12 +43,12 @@ nouns:
     surface inscribed with a long tight spiral set
     inside an outer circle. The carving is older than
     the Chrysalis theology by some considerable
-    margin — neither the present temple nor any of
+    margin. Neither the present temple nor any of
     the present masons would acknowledge the work.
     Whatever it meant, there is no longer anyone alive
     in town who can readily explain it.
   doorpost: A single intact stone doorpost still
-    stands at the foundation's western corner — the
+    stands at the foundation's western corner, the
     other long fallen and gone. The wind passes
     through the broken doorframe with a low even
     sound that the locals avoid commenting on. A
@@ -59,7 +59,7 @@ nouns:
     foundation's interior, softening the broken
     stones and the long-fallen rubble. In several
     places the moss has begun to fill the cracks
-    between courses and slowly lever them apart —
+    between courses and slowly lever them apart,
     the patient work of decades.
   hollow: The chapel sits in a small natural hollow,
     sheltered on three sides by low ridges of

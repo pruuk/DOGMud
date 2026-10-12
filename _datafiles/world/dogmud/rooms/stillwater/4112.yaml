@@ -2,7 +2,7 @@ roomid: 4112
 zone: Stillwater
 title: Stable Yard
 description: >
-  Hay and horse — that is the smell of the place, warm and
+  Hay and horse: that is the smell of the place, warm and
   sweet and animal. The yard is packed earth gone to dust
   in the high traffic-paths, fenced on three sides by a
   three-rail timber paddock and on the fourth by the long
@@ -25,7 +25,7 @@ exits:
     roomid: 4135
 nouns:
   stable: A long low timber building running the yard's
-    western edge — three working stalls along its open
+    western edge, with three working stalls along its open
     front, divided by half-walls of pegged plank, with
     iron rings set into the dividers for tying. Two of
     the stalls are usually occupied by the inn's draft

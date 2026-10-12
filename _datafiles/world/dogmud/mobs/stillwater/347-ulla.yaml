@@ -27,7 +27,7 @@ idlecommands:
   - 'emote looks toward the window that faces the workshop and then looks
     away'
   - ''
-  - 'emote turns a small object over in her hands -- something worn smooth
+  - 'emote turns a small object over in her hands, something worn smooth
     by long handling'
   - ''
   - 'emote exhales slowly and straightens her shoulders as though
@@ -44,7 +44,7 @@ character:
     cottage tidy and the workshop locked. His niece Maren, who weaves in
     Thornwall City, writes occasionally; Ulla answers when she can find the
     words. There is something she knows about her husband's last weeks that
-    she has not told anyone -- not the constable, not the priest -- and it
+    she has not told anyone, not the constable, not the priest, and it
     sits in her like a stone. She would speak of it, if someone asked
     the right questions.
   speciesid: 1
