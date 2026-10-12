@@ -34,6 +34,9 @@ type TauntResult struct {
 	// NoTarget is true when there is no aggro target or the target is gone.
 	NoTarget bool
 
+	// Silenced is true when the taunter cannot make a sound; nothing was paid.
+	Silenced bool
+
 	// Hit reports whether the taunt was delivered and contested (everything
 	// except a fumble, since the U6b Task 5 collapse). There is no separate
 	// miss outcome any more: a defensive win is a blunted, partial-damage
@@ -107,6 +110,14 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	// Don't interrupt any active activity (cast/craft/salvage) to taunt.
 	if char.IsActing() {
 		return TauntResult{Crafting: true}
+	}
+
+	// A silenced taunter cannot shout, snarl or howl (M6 slice 3). Refused
+	// before the target, the cooldown and the cost, so nothing is spent.
+	// A silenced taunter cannot shout, snarl or howl (M6 slice 3). Refused
+	// before the target, the cooldown and the cost, so nothing is spent.
+	if char.SpeechState() == characters.Silenced {
+		return TauntResult{Silenced: true}
 	}
 
 	// Resolve the target through the staged-target-aware seam. Player wrappers

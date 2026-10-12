@@ -37,6 +37,11 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
+	if result.Silenced {
+		user.SendText(messaging.CategorySystem, "You cannot make a sound.")
+		return true, nil
+	}
+
 	if result.OnCooldown {
 		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
 		return true, nil
