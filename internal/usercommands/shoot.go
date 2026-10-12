@@ -438,7 +438,7 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	// names the shooter at all.
 	targetIds := ids
 	if result.IsSneaking {
-		targetIds.Actor = `Someone`
+		targetIds.Actor = messaging.StealthActor
 	}
 	roles, _ := renderMoveEvent("shoot", moveEvent, targetIds, damageTokens)
 

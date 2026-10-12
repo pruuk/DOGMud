@@ -81,6 +81,13 @@ func SpeakerNoun(d SightDecision) string {
 	return "someone"
 }
 
+// StealthActor is what every reader calls a shooter firing from stealth. It is
+// not a sight word: a sneaking shooter is hidden from everyone whatever their
+// sight, so the name never enters the line (shoot, both twins). Engine
+// vocabulary, kept in Go beside UnseenNoun and SpeakerNoun by decision (M6
+// slice 2, ledger row 54).
+const StealthActor = "Someone"
+
 // HideSpeakerNames hides a speaker's name in a speech line from a listener at
 // d: each of names, where it stands as a whole identity tag, becomes "a
 // figure" or "someone", capitalised at a sentence start. Clear sight returns

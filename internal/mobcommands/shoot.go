@@ -94,7 +94,7 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// so the name never enters the text in the first place.
 		actor := mobName
 		if result.IsSneaking {
-			actor = `Someone`
+			actor = messaging.StealthActor
 		}
 		targetIds := ids
 		targetIds.Actor = actor

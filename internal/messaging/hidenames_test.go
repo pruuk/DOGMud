@@ -196,3 +196,9 @@ func TestHideNames_AdjectiveSpanGoesWithTheTag(t *testing.T) {
 		})
 	}
 }
+
+func TestStealthActor_IsTheOneSpelling(t *testing.T) {
+	if StealthActor != "Someone" {
+		t.Fatalf("StealthActor = %q, want %q", StealthActor, "Someone")
+	}
+}
