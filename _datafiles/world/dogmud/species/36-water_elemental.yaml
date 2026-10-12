@@ -12,6 +12,7 @@ unarmedname: watery surge
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 angrycommands:
   - emote surges forward, water churning with violent intent.
   - emote crests like a wave and crashes down with terrible weight.

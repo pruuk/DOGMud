@@ -11,6 +11,7 @@ unarmedname: claws
 natural_attack: claws
 selectable: false
 tameable: false
+speech: false
 angrycommands:
   - emote clacks its jaws and raises its bony hands.
   - emote turns its eyeless gaze on you, hollow sockets glowing cold.

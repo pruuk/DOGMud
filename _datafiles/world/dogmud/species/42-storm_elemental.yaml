@@ -10,6 +10,7 @@ unarmedname: arcing strike
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 grapple_immune: true
 return_damage: 15
 return_damage_channel: magical  # chunk 5.11f: elemental backlash answers to MAGICAL mitigation

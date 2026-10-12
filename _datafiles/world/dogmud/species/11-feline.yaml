@@ -14,6 +14,7 @@ unarmedname: claws and fangs
 natural_attack: claws
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote flattens its ears and hisses, fur bristling along its spine.
   - emote crouches low, tail lashing back and forth.

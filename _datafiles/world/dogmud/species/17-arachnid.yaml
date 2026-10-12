@@ -15,6 +15,7 @@ unarmedname: fangs
 natural_attack: bite
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote rears up on its hind legs, fangs glistening with venom.
   - emote skitters sideways, legs clicking on the ground.

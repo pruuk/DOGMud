@@ -9,6 +9,7 @@ unarmedname: teeth
 natural_attack: bite
 angrycommands: [emote hisses.]
 tameable: true
+speech: false
 stats:
   strength:
     base: 30

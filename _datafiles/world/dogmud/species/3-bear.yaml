@@ -13,6 +13,7 @@ unarmedname: claws and teeth
 natural_attack: claws
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote rises onto its hind legs and roars, shaking the ground.
   - emote swats the air with a massive paw, claws extended.

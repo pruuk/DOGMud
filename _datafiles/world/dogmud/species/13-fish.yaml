@@ -9,6 +9,7 @@ unarmedname: fins
 natural_attack: bite
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote thrashes its tail and snaps its jaws.
   - emote circles aggressively, fins flared wide.

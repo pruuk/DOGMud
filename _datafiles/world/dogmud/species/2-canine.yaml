@@ -14,6 +14,7 @@ unarmedname: jaws
 natural_attack: bite
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote snarls, lips curling back to reveal sharp teeth.
   - emote lowers its head and growls deep in its chest.

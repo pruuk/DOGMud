@@ -13,6 +13,7 @@ unarmedname: maw
 natural_attack: bite
 selectable: false
 tameable: true
+speech: false
 angrycommands:
   - emote erupts from the ground, maw gaping wide.
   - emote thrashes its massive body, sending tremors through the earth.

@@ -12,6 +12,7 @@ unarmedname: sticks
 selectable: false
 knowsfirstaid: false
 tameable: false
+speech: false
 stats:
   strength:
     base: 10

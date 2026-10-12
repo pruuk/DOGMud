@@ -9,6 +9,7 @@ unarmedname: abrasive whirl
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 angrycommands:
   - emote tightens its column, sand grains hissing like cicadas.
   - emote sends a stinging spray of grit ahead of itself.

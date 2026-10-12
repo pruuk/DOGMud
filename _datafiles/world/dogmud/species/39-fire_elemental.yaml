@@ -13,6 +13,7 @@ unarmedname: scorching strike
 natural_attack: slam
 selectable: false
 tameable: false
+speech: false
 return_damage: 25
 return_damage_channel: magical  # chunk 5.11f: elemental backlash answers to MAGICAL mitigation
 angrycommands:

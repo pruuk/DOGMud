@@ -16,6 +16,7 @@ unarmedname: jaws
 natural_attack: bite
 selectable: false
 tameable: false
+speech: false
 angrycommands:
   - 'emote bares its teeth and chitters a low warning'
   - 'emote hisses and arches its back'
