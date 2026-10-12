@@ -3,7 +3,7 @@ zone: Greenford
 title: The Quiet End
 description: >
   The west lane narrows here toward its quieter
-  end — the terraces more spare, their front
+  end: the terraces more spare, their front
   gardens longer and left more to themselves.
   An older house sits close on the right, its
   front gate hanging open; the occupant is just
@@ -22,7 +22,7 @@ exits:
   south: {roomid: 6315}
 nouns:
   the gardens: >
-    Front gardens behind the quieter terraces —
+    Front gardens behind the quieter terraces,
     longer than those on College Row, their
     planting less deliberate: grass between
     stepping stones, a climber that has not been

@@ -3,7 +3,7 @@ zone: Greenford
 title: The Herbalist's Stall
 description: >
   The Herbalist's Stall is a narrow shop crowded with the
-  business of drying and grinding — bundles of herbs hang
+  business of drying and grinding: bundles of herbs hang
   in rows from the ceiling beams, and a stout alchemy bench
   along the back wall holds a mortar, a rack of small
   bottles, and a set of brass scales. The air is thick with
@@ -23,7 +23,7 @@ nouns:
     grain. Everything on it has a place and stays there.
   the herbs: >
     Bundles of drying herbs hang in tidy rows from the
-    ceiling beams — mint, thistle, root, and bark, each
+    ceiling beams: mint, thistle, root, and bark, each
     bundle tagged with a small wooden marker in a cramped
     hand.
   the scales: >

@@ -11,8 +11,8 @@ idlecommands:
   - 'emote stands motionless on the gravel ledge below the steps,
     one amber eye fixed on the water, patient as carved stone.'
   - ''
-  - 'emote strikes without warning -- a blur of neck and yellow
-    beak -- then lifts its head with something silver wriggling
+  - 'emote strikes without warning, a blur of neck and yellow
+    beak, then lifts its head with something silver wriggling
     in its grip.'
   - ''
   - 'emote spreads enormous grey wings and climbs away from the
@@ -24,7 +24,7 @@ character:
   description: |
     A tall grey-blue bird standing stone-still at the river's
     edge, neck coiled back against its breast, one amber eye
-    on the shallows below. It could be a carving -- until it
+    on the shallows below. It could be a carving, until it
     strikes, a blur of beak and neck so fast the motion barely
     registers, and lifts something silver from the current.
     Disturbed, it opens wings that seem too large for the space

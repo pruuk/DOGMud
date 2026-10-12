@@ -2,7 +2,7 @@ roomid: 6319
 zone: Greenford
 title: The Coaching Stable
 description: >
-  Horse-smell and fresh hay — the coaching stable's yard
+  Horse-smell and fresh hay: the coaching stable's yard
   is open to the road, a timber-framed structure on three
   sides enclosing a hard-packed surface swept clean this
   morning. Two coaches are berthed under the south lean-to,
@@ -20,7 +20,7 @@ exits:
   south: {roomid: 6318}
 nouns:
   the coach trunk: >
-    A heavy iron-banded trunk in the yard's center — dark
+    A heavy iron-banded trunk in the yard's center: dark
     wood, the iron straps riveted at each corner and buckled
     across the lid. The lock is a good one. The trunk bears
     the marks of extended travel: scuff-lines at the lower
@@ -42,7 +42,7 @@ nouns:
   the harness: >
     A long rack of pegs along the east wall holds the
     stable's working harness in organized rows: breast
-    collar, hames, traces, breeching — each set belonging
+    collar, hames, traces, breeching, each set belonging
     to a specific horse and marked with a painted strip of
     color on the headstall. The leather is well-oiled and
     supple, the brass fittings clean. The ostler works the

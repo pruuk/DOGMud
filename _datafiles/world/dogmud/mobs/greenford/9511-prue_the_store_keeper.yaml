@@ -15,7 +15,7 @@ idlecommands:
     space it came from.'
   - ''
   - 'say Everything''s in its place. If you can''t find
-    something, ask -- I can reach it in the dark.'
+    something, ask. I can reach it in the dark.'
   - ''
   - 'emote steps onto the kick-step, lifts the lid of a grain
     jar on the top tier, and replaces it with the same motion
@@ -26,7 +26,7 @@ character:
   name: Prue the Store-Keeper
   description: |
     Prue the Store-Keeper has run the General Store for twelve
-    years with a precision that borders on the affronting --
+    years with a precision that borders on the affronting:
     everything is in its place, the place has not changed,
     and the suggestion that any of this could be otherwise
     she does not entertain. She is short and neat, with hands

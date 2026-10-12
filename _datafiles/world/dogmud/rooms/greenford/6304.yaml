@@ -2,7 +2,7 @@ roomid: 6304
 zone: Greenford
 title: The Restricted Collection
 description: >
-  The anteroom of the restricted collection — a
+  The anteroom of the restricted collection: a
   small square room of bare stone, lit by a single
   lamp. The holdings are behind the iron-bound door
   in the far wall, closed and locked. A notice on
@@ -22,7 +22,7 @@ nouns:
   the door: >
     An iron-bound oak door in the far wall, its
     construction heavier than anything else in the
-    archive wing — wide iron straps, a lock-plate
+    archive wing: wide iron straps, a lock-plate
     of cast iron with a keyhole that takes a long
     key. The door has been here since the collection
     was established. The lock shows no sign of
@@ -33,7 +33,7 @@ nouns:
   the notice: >
     A framed card pinned beside the door in a
     careful clerical hand: ACCESS TO THE RESTRICTED
-    COLLECTION — by written application to the
+    COLLECTION: by written application to the
     Keeper of the Archive only. Purposes must be
     stated in full. Supervised use. No materials
     to leave this room. The Keeper's decision is

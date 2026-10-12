@@ -3,7 +3,7 @@ zone: Greenford
 title: College Row
 description: >
   The principal residential street of the upper
-  town opens here — a wider cobbled way lined
+  town opens here: a wider cobbled way lined
   with terrace houses on both sides, their front
   gardens bounded by low stone walls and wrought-
   iron railings. A distinctive blue door at the
@@ -24,7 +24,7 @@ exits:
 nouns:
   the street: >
     College Row runs east to west as well as north
-    and south here — the main artery of the
+    and south here, the main artery of the
     residential quarter, where the faculty actually
     live rather than work. The cobbles are swept
     more carefully than the back lane; the residents
@@ -36,7 +36,7 @@ nouns:
     unhurried.
   the gardens: >
     Front gardens behind low walls and iron railings
-    along both sides of the row — each modest enough
+    along both sides of the row, each modest enough
     that a serious gardener would call them
     forecourts, but tended with a care that says they
     matter to their owners. One has a clipped hedge;

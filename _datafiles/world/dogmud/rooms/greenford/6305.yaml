@@ -2,7 +2,7 @@ roomid: 6305
 zone: Greenford
 title: Brennan's Office
 description: >
-  A working office in the lecture-hall range —
+  A working office in the lecture-hall range,
   close enough to the hall to hear the bell and
   cramped enough to suggest the university does
   not value its surveyors' administrative comfort.
@@ -10,8 +10,8 @@ description: >
   surface productive-disordered: field journals,
   indexed correspondence, rolled charts in their
   tubes. The wall behind the desk holds
-  <ansi fg="itemname">old-maps</ansi>
-  — survey sheets covering the region and its
+  <ansi fg="itemname">old-maps</ansi>:
+  survey sheets covering the region and its
   margins, pinned and overlapping, annotated in
   several hands. Examine the old-maps or the desk.
 biome: interior
@@ -25,7 +25,7 @@ nouns:
     A wall of survey sheets covering the region and
     its margins, pinned in overlapping layers and
     annotated in Brennan's hand and in others'.
-    The maps span several decades of fieldwork —
+    The maps span several decades of fieldwork:
     the older ones on heavier paper, their edges
     brown, their ink faded to a warm sepia. In the
     margins of several of the oldest maps, drawn by
@@ -33,7 +33,7 @@ nouns:
     different years, the same mark recurs: a set of
     nested rings, small and precise. No legend
     explains it. A note in Brennan's hand, pinned
-    beside one example, reads only: recurring — see
+    beside one example, reads only: recurring, see
     archive. What it marks, or whether the different
     surveyors who drew it shared a reason, the maps
     do not say.

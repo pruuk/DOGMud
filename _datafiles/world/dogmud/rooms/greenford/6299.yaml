@@ -10,7 +10,7 @@ description: >
   the cloister walk opens south to the college's
   quieter precincts. Students cross the quad in
   the way people cross a space they cross every
-  day — without looking at it. The air carries
+  day, without looking at it. The air carries
   chalk, old stone, and the faint sweetness of
   the planted borders. Examine the sundial or
   the tower.
@@ -38,7 +38,7 @@ nouns:
     The tower stands at the north end of the quad
     and makes the rest of the university look
     smaller than it is. Its base stones are broad
-    and old; the upper courses are lighter — two
+    and old; the upper courses are lighter: two
     phases of building that have spent enough time
     together to look intended. The arched openings
     at the crown let the sky through on all sides.
@@ -47,7 +47,7 @@ nouns:
     being bothered.
   the planted borders: >
     Low border planting along the quad's inner
-    edges — clipped box and a running ground-cover
+    edges: clipped box and a running ground-cover
     that has been here long enough to have its own
     formal shape. In the east border a single rose,
     very old, its canes thick as a thumb, currently
@@ -62,7 +62,7 @@ nouns:
     converges; the gravel there is worn deeper and
     re-raked more often. Along the edges the borders
     are kept from the paths by thin stone kerbs, laid
-    in the old way — slightly proud of the surface,
+    in the old way, slightly proud of the surface,
     to stop the gravel spreading.
 spawninfo:
   - mobid: 9521

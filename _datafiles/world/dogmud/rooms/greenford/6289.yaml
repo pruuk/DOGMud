@@ -3,7 +3,7 @@ zone: Greenford
 title: The Market Cross
 description: >
   The Market Cross is the square's south end and its
-  formal centre — a carved stone shaft on a worn
+  formal centre: a carved stone shaft on a worn
   plinth, the stone pale and smooth at hand-height
   where it has been touched in passing. The produce
   stalls ring it on three sides: greens and roots
@@ -23,13 +23,13 @@ exits:
   south: {roomid: 6295}
 nouns:
   the market cross: >
-    A plain stone shaft rising from a square plinth —
+    A plain stone shaft rising from a square plinth,
     no figure at the top, just a carved cap with a
     simple moulding at the neck. The cross is old:
     the stone is a paler grey than the surrounding
     cobbles, and the base has settled so that it
     leans a degree to the east. The plinth carries
-    worn lettering around its face — a founding year
+    worn lettering around its face: a founding year
     and a civic formula too faded to read fully. The
     cross has been marking the market's centre for a
     very long time.
@@ -55,7 +55,7 @@ nouns:
     and the sellers will be calculating.
   the town crier: >
     The town crier works the cross end of the market
-    on most mornings — a stocky man with a good bell
+    on most mornings: a stocky man with a good bell
     arm and a carrying voice, though the voice is
     quiet for the moment. His satchel holds the day's
     announcements. He reads them once with the bell

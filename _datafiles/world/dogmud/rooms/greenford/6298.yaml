@@ -2,7 +2,7 @@ roomid: 6298
 zone: Greenford
 title: The University Gate
 description: >
-  The graveled path levels here at the inner gate —
+  The graveled path levels here at the inner gate:
   the porter's lodge is set into the boundary wall
   to the east, a low stone building with a window
   onto the path and a door standing open. The main
@@ -10,7 +10,7 @@ description: >
   from below: the quadrangle, the tower above it,
   the ranges on three sides. The porter's board
   beside the lodge tracks visitors and hours. From
-  the south the open quad carries faint voices —
+  the south the open quad carries faint voices:
   a lecture in progress, its words just out of reach.
   Examine the lodge or the board.
 biome: city_thoroughfare
@@ -55,7 +55,7 @@ nouns:
     colour from a later phase of building. The
     arched openings at the crown let the sky through
     on all sides. At this distance the tool-marks
-    on the base stones are visible — dressed by hand,
+    on the base stones are visible: dressed by hand,
     long before the university was built around it.
     The tower is the tallest structure in Greenford
     and probably the oldest. Both things are true in

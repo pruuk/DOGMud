@@ -3,7 +3,7 @@ zone: Greenford
 title: Back Gate Lane
 description: >
   A breath of cooler air comes through the
-  college's back gate -- beyond it, the lane
+  college's back gate. Beyond it, the lane
   drops a short step to cobbled ground, the
   beginning of the residential quarter, where
   the flagging of the precinct gives way to
@@ -24,7 +24,7 @@ exits:
 nouns:
   the lane: >
     The short lane between the college's back gate
-    and the first of the residential streets —
+    and the first of the residential streets,
     cobbled here in a smaller stone than the college
     precinct uses, the surface well-maintained but
     not dressed for show. Tree-roots have worked at
