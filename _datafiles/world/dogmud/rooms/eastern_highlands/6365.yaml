@@ -4,14 +4,14 @@ title: The Cleared Section
 description: >
   Someone cleared this by hand. A whole span of the buried face
   stands uncovered here where the earth was carried off it, load by
-  load, until the grey ran bare — and it was not done in a day, and
+  load, until the grey ran bare. It was not done in a day, and
   it was not done by many. It was done by one. The
   <ansi fg="itemname">cleared face</ansi>
   rises smooth and jointless above a floor packed hard by a single
   person's going and coming, and along the sheltered bank stands what
   is left of a
-  <ansi fg="itemname">camp</ansi>
-  — a lean-to gone grey and slack, a cold ring of stones, a few
+  <ansi fg="itemname">camp</ansi>:
+  a lean-to gone grey and slack, a cold ring of stones, a few
   things set down and never taken up again. The
   <ansi fg="itemname">tools</ansi>
   are still where the hands left them, a mattock leaned just so, a
@@ -19,7 +19,7 @@ description: >
   back to the work tomorrow and the day after that. There is no one
   here. There has been no one here for a long time. Whoever cleared
   this earth, alone, out at the far end of the world with only the
-  made thing for company, is gone — and the ground and the tools and
+  made thing for company, is gone, and the ground and the tools and
   the patient bare grey of the face they uncovered are all that stayed
   to say they ever came at all.
 biome: cliffs
@@ -33,9 +33,9 @@ nouns:
   cleared face: >
     Where the earth was carried away the grey stands bare, a broad
     span of it, smooth and jointless and unbothered as all the rest.
-    The clearing of it was enormous labor — you can read that at a
+    The clearing of it was enormous labor. You can read that at a
     glance, the sheer weight of soil that had to be lifted and moved
-    to lay this much of it open — and it was done a handful at a time
+    to lay this much of it open, and it was done a handful at a time
     by one back, one pair of hands, for however long one person could
     make themselves keep at it out here alone. The face gives back
     nothing for the work. It never did. Someone did the work anyway.
@@ -43,11 +43,11 @@ nouns:
     A lean-to of poles and rotted cloth sags against the sheltered
     bank, gone grey, half-fallen. A ring of fire-stones sits cold at
     its mouth, the ash long since blown to nothing. A few small
-    things are set about with a care that outlived their owner — a
+    things are set about with a care that outlived their owner: a
     tin cup, a bundle that was bedding once. On one of the lean-to
     poles, low down, where a hand at rest by the fire could reach it,
     a name has been cut into the wood with a knife, careful and deep
-    and often gone over — MAREN — as though the cutting of it were a
+    and often gone over (MAREN) as though the cutting of it were a
     thing to do in the evenings, alone, to keep a person in mind.
   tools: >
     The tools are the worst of it, because they are so orderly. A

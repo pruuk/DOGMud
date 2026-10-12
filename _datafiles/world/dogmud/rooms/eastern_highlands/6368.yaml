@@ -4,7 +4,7 @@ title: The Ward-Field
 description: >
   The last open stretch before the buried face narrows to a corridor of
   charged air, and the air is not empty. It is loaded. Something in it
-  stands drawn taut and waiting — a held
+  stands drawn taut and waiting: a held
   <ansi fg="itemname">charge</ansi>
   laid across the ground the way a held breath is laid across a room
   before a blow, and you do not so much walk through it as walk into it.
@@ -15,8 +15,8 @@ description: >
   Nothing here has moved in an age and everything here is ready to. This
   is not weather, and it is not natural, and it is not safe. It is the
   made thing keeping its distance kept, and the closer the door the harder
-  it presses, and the body knows — the way it has known all through this
-  country — that the field would answer if it were crossed the wrong way.
+  it presses, and the body knows (the way it has known all through this
+  country) that the field would answer if it were crossed the wrong way.
 biome: cliffs
 coord: {x: 15, y: 54, z: 3}
 exits:
@@ -27,7 +27,7 @@ exits:
 nouns:
   charge: >
     It has no colour and no glow and throws no light, and still you can
-    feel exactly where it lies — a taut, waiting weight strung through the
+    feel exactly where it lies: a taut, waiting weight strung through the
     air ahead like a wire pulled to the edge of snapping. It is not stone
     and it is not weather. It was set here, and set to hold, and it has
     held a very long time. Stepping into it is like stepping into the

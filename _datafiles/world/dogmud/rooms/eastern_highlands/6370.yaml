@@ -3,7 +3,7 @@ zone: Eastern Highlands
 title: The Disc-Face Approach
 description: >
   The ground rises the last short way and the buried face rises with it,
-  filling the east — the vast grey flank of the made thing sheer and close
+  filling the east, the vast grey flank of the made thing sheer and close
   now, and set into it, still a stone's throw ahead, the shape the whole
   road has been climbing toward. A
   <ansi fg="itemname">door</ansi>.
@@ -11,7 +11,7 @@ description: >
   deliberate there, a great shut shape with a mark at its heart. But the
   last step east is not free. Strung across the final approach, between you
   and the door, lies a
-  <ansi fg="itemname">ward</ansi> —
+  <ansi fg="itemname">ward</ansi>:
   the charged air gathered and narrowed here into a single taut line, the
   last defence of the threshold, and this one is not content to press and
   warn. This one would kill. It can be read, if the nerve holds. It can be
@@ -27,7 +27,7 @@ exits:
     roomid: 6372
 nouns:
   door: >
-    From here it is only a shape — a shut, deliberate thing set into the
+    From here it is only a shape: a shut, deliberate thing set into the
     grey face ahead, too far yet to read in full. What carries across the
     gap is that it was meant, placed, made to be there, and that at its
     centre sits a mark the eye has met before on Reth's markers. The rest
@@ -35,9 +35,9 @@ nouns:
     reaching it without crossing the taut and lethal air between.
   ward: >
     The charge that filled the field behind you is gathered here into one
-    narrow, singing line drawn across the approach — you can find its edges
+    narrow, singing line drawn across the approach. You can find its edges
     if you are still and patient, a seam in the air that hums against the
-    teeth. It is not a wall and it is not a lock — nothing to pick, nothing
+    teeth. It is not a wall and it is not a lock: nothing to pick, nothing
     to lift, nothing to still. It is the field itself drawn to an edge, and
     it bites at whatever crosses, worst of all here where it guards the
     door. You can cross it. You will feel it do its work as you go.

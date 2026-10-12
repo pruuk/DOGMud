@@ -3,12 +3,12 @@ zone: Eastern Highlands
 title: The Descending Curve
 description: >
   Ahead the made thing begins to
-  <ansi fg="itemname">curve</ansi>
-  — the long seamless flank that ran level for so much walking
+  <ansi fg="itemname">curve</ansi>:
+  the long seamless flank that ran level for so much walking
   bending down at last, angling into the highland, going where
   the ground will take it. You can see, not far east now, the
   place the eye has refused to think about for the whole of the
-  approach — the
+  approach, the
   <ansi fg="itemname">descent</ansi>
   where the surface stops running alongside and starts running
   in, down under the rock, into the earth. This is the end of
@@ -16,7 +16,7 @@ description: >
   ground, and whatever the entering means, you will be at it
   soon. The curve is smooth as all the rest, grey and jointless
   and vast and buried, and it goes down with a slow certainty
-  that is worse than any drop — the certainty of a thing that
+  that is worse than any drop: the certainty of a thing that
   knows exactly where it is going and has known for longer than
   anything alive. The way east follows it down.
 biome: cliffs
@@ -31,7 +31,7 @@ nouns:
     >
     The curve is where the level flank gives up being level. It
     bends downward in a long smooth arc, seamless as ever, no
-    joint or fold to mark the turning — the whole immense
+    joint or fold to mark the turning. The whole immense
     greyness simply leaning into the earth as though it always
     meant to. There is nothing sudden in it. It curves the way
     something enormous curves, slowly, so that up close you would
@@ -41,8 +41,8 @@ nouns:
     >
     East and a little below, the surface angles into the
     highland and the rock closes over the top of it, and past a
-    certain point you cannot follow it with the eye any further
-    — it goes under, into the ground, into the dark below the
+    certain point you cannot follow it with the eye any further.
+    It goes under, into the ground, into the dark below the
     country. That is the place the whole walk has been pointing
     at. The mind has kept it at arm's length the entire way.
     From here it is no longer at arm's length. It is just ahead,

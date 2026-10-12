@@ -6,7 +6,7 @@ description: >
   down with it. Whether the ground is rising to meet the
   <ansi fg="itemname">surface</ansi>
   or the surface is sinking to meet the ground is a question the
-  eye cannot settle — both look true and neither feels right.
+  eye cannot settle. Both look true and neither feels right.
   Either way the plateau line climbs above you as you walk,
   until you are moving in the
   <ansi fg="itemname">shadow</ansi>
@@ -41,7 +41,7 @@ nouns:
   shadow:
     >
     The shadow the buried flank throws is not a cold shadow so
-    much as a low one — the plateau line stands above you now and
+    much as a low one. The plateau line stands above you now and
     the open daylight narrows to a strip overhead. Down in it the light goes
     flat and grey and the walk feels enclosed, hemmed between the
     living rock on one side and the made thing on the other. It

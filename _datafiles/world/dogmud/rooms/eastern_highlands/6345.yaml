@@ -2,7 +2,7 @@ roomid: 6345
 zone: Eastern Highlands
 title: The Gully Head
 description: >
-  The ground opens here — an erosion cut running
+  The ground opens here: an erosion cut running
   south from this point, steep-sided and deeper
   than it first reads from the rim. The
   <ansi fg="itemname">gully</ansi>
@@ -11,12 +11,12 @@ description: >
   is shadow and loose material that would shift
   badly under any weight. The smell that comes
   up from it is old and sourced in what water
-  left behind when it stopped running — not rot
+  left behind when it stopped running. Not rot
   exactly, not damp exactly, but the residue of
   both after a long drying. The
   <ansi fg="itemname">gully rim</ansi>
   east holds firmer stone, and the way on runs
-  there — along the edge where the ground is more
+  there, along the edge where the ground is more
   continuous and the drop stays visible on one
   side. South descends into the cut. East continues
   along the rim toward country that offers nothing
@@ -37,7 +37,7 @@ nouns:
     in these highlands. The walls expose horizontal
     bands of different stone where the erosion worked
     through the surface material into what lies
-    beneath — older, darker, denser. The floor is
+    beneath: older, darker, denser. The floor is
     shadow and loose scree. The smell from it is old
     and sourced in stone that was wet for a long
     time and has been dry for longer.
@@ -47,7 +47,7 @@ nouns:
     enough to walk without testing each step. The
     drop to the gully floor stays visible on the
     south side. The highland continues on the north.
-    The rim is not comfortable, but it is passable —
+    The rim is not comfortable, but it is passable,
     which is the best the eastern reach has offered.
 idlemessages:
 - Wind finds the gully from somewhere below and rises

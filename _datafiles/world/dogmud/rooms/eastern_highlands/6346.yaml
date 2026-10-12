@@ -4,7 +4,7 @@ title: The Dry Gully
 description: >
   The gully runs south and ends where erosion
   stacked everything it could carry against the
-  cliff — a rough wall of accumulated stone and
+  cliff: a rough wall of accumulated stone and
   compacted debris rising to the height of the
   cut above. The
   <ansi fg="itemname">scree field</ansi>
@@ -13,14 +13,14 @@ description: >
   swallowed quickly by the depth of material. Along
   the base of the south wall,
   <ansi fg="itemname">old bones</ansi>
-  have been collected — picked clean, cracked for
+  have been collected, picked clean, cracked for
   what they held, some scattered. Different sizes.
   The same practice repeated across many returns.
   The smell is heavy and animal and sourced toward
   the
   <ansi fg="itemname">low opening</ansi>
   in the debris wall where fallen stone has left
-  an irregular gap — shadowed, large enough, the
+  an irregular gap, shadowed, large enough, the
   floor inside worn smooth in a way the surrounding
   scree is not. Whatever uses that hollow is not
   here now.
@@ -35,12 +35,12 @@ nouns:
     erosion into a deep unstable layer that
     shifts under any weight applied to it. Each
     step sounds out how uncertain the ground is
-    — a dry shifting sound, no echo. The material
+    with a dry shifting sound, no echo. The material
     is mostly basalt with occasional pieces of
     darker stone mixed through. Nothing grows in
     it. Nothing has tried.
   old bones: >
-    Collected rather than scattered — brought here,
+    Collected rather than scattered: brought here,
     cracked for what they held, the remainder left
     in the open. Different sizes suggest different
     animals over different seasons. The oldest are
@@ -52,7 +52,7 @@ nouns:
     A gap in the southern debris wall where fallen
     stone has not entirely filled the space left by
     the original erosion. The interior is dark and
-    the smell is strongest here — animal, old, close.
+    the smell is strongest here: animal, old, close.
     The opening is large enough for something to
     move through with ease. The floor immediately
     inside is smoothed in a way the surrounding
@@ -68,7 +68,7 @@ idlemessages:
 - The opening in the south wall is dark and the dark
   does not resolve into anything from this distance.
   The smell continues out of it steadily.
-- The gully bottom holds a particular quiet — the kind
+- The gully bottom holds a particular quiet, the kind
   that belongs to a place that is not always this quiet.
 spawninfo:
   - mobid: 9543
