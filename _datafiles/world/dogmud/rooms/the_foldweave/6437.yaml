@@ -4,13 +4,13 @@ title: The Heart of the Fold
 description: >
   Past the gate the fold closes over you and there is no more
   pretending the cave has walls or a size. This is the
-  <ansi fg="itemname">heart</ansi> -- a space the eye cannot measure
+  <ansi fg="itemname">heart</ansi>: a space the eye cannot measure
   because there is nothing in it that holds still to be measured
   against, only silk, silk in every direction folded through itself
   so that the near is the far and the far is near, a single chamber
   wearing the shape of a warren. Underfoot the packed silk is warm.
   Overhead and around and somehow also below, the
-  <ansi fg="itemname">nest-heart</ansi> hangs -- the oldest weave,
+  <ansi fg="itemname">nest-heart</ansi> hangs: the oldest weave,
   the first fold, the seed the whole overlong warren was spun outward
   from. The cold sweet air has its source here and does not move,
   because there is nowhere further in for it to go. This is the
@@ -27,7 +27,7 @@ exits:
     mapdirection: up
 nouns:
   heart: >
-    A space with no measure to it -- silk folded through silk until
+    A space with no measure to it: silk folded through silk until
     near and far change places and a single chamber holds the reach of
     a whole warren. Turn in it and the turning does not take you
     anywhere, because everywhere here is already here, folded close.

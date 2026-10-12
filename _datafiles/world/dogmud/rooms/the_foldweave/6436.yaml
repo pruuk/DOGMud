@@ -3,7 +3,7 @@ zone: The Foldweave
 title: The Foldweaver's Court
 description: >
   The bridge-strands of the deep draw together as they descend and
-  become, here, a <ansi fg="itemname">court</ansi> -- a floor of
+  become, here, a <ansi fg="itemname">court</ansi>: a floor of
   packed silk broad and level as a hall, ringed by the great converging
   cables and roofed by a canopy of them so dense and so high that it
   makes a false sky, pricked with the pale points where anchor-knots
@@ -30,7 +30,7 @@ nouns:
   court: >
     A hall's-worth of packed silk, level and broad, ringed by the
     converging cables of the whole weave and roofed by a false sky of
-    them. It has the stillness of a made and kept place -- a floor for
+    them. It has the stillness of a made and kept place: a floor for
     holding court, for being approached across, for watching a long
     approach from the head of.
   fold gate: >

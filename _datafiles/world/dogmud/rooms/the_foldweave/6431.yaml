@@ -6,7 +6,7 @@ description: >
   the strand-crawl comes up out of the floor here, and the doubled
   chamber comes down into it from above, and both deliver you to the
   same lip of the same drop. It is a junction the way a knot is a
-  junction -- everything drawn through one narrow place. The walls
+  junction: everything drawn through one narrow place. The walls
   are ribbed with <ansi fg="itemname">fold-ridges</ansi>, seams of
   silk laid so densely they have gone hard as horn, curving in ways
   that make the chamber seem to turn a corner it does not turn. West,
@@ -35,8 +35,8 @@ nouns:
     it would be.
   gap: >
     A low breathing gap in the western wall, cold air pulsing out of
-    it in slow even draughts. The passage past it does not run straight
-    -- it circles, by the feel of the draught, back toward its own
+    it in slow even draughts. The passage past it does not run straight.
+    It circles, by the feel of the draught, back toward its own
     beginning.
   chimney: >
     A raw vertical drop in the floor, unspun and honest stone for once,
