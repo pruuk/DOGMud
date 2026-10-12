@@ -5,7 +5,7 @@ description: Beneath the old bridge the river narrows and deepens, channeled bet
   moss-covered stone pilings that rise like pillars into the shadowed arch above. The
   air is cold and damp here, and the sound of the water echoes off the stonework in
   a way that makes it hard to hear anything else. Debris has collected against the
-  pilings -- branches, rags, the occasional bone. The riverbed drops away sharply
+  pilings, including branches, rags, the occasional bone. The riverbed drops away sharply
   on the downstream side, and the water there is black and still in a way that suggests
   depth. Claw marks score the stone where something has been climbing in and out of
   the water.
@@ -20,9 +20,9 @@ exits:
 nouns:
   marks: Deep parallel scratches in the stone, each about a handspan apart. Whatever
     made them has claws like chisels and the strength to gouge dressed stone. The
-    marks are fresh -- the exposed rock beneath is still pale and unweathered.
+    marks are fresh. The exposed rock beneath is still pale and unweathered.
   debris: A tangle of branches, waterlogged cloth, and less identifiable things caught
-    against the bridge pilings. Among the refuse you spot cracked bones -- too large
+    against the bridge pilings. Among the refuse you spot cracked bones, too large
     to be fish, too gnawed to identify. Something has been feeding here.
   pilings: The bridge pilings are massive blocks of fitted stone, green with centuries
     of moss and river spray. They are solid and square, built to last, but the
@@ -32,7 +32,7 @@ spawninfo:
   respawnrate: 6 real minutes
 idlemessages:
 - Water echoes off the underside of the bridge in hollow, booming sounds.
-- Something shifts in the dark water downstream -- a ripple, then stillness.
+- Something shifts in the dark water downstream. A ripple, then stillness.
 - A wet, scraping sound comes from one of the pilings, then stops.
 x: 4
 y: 6

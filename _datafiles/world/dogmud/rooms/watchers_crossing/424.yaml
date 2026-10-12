@@ -3,9 +3,9 @@ zone: Watchers Crossing
 title: Trading Post
 description: A timber-framed building with wide shutters thrown open to the air,
   displaying goods on shelves that face the road. The trading post is part shop, part
-  warehouse -- crates and barrels are stacked along the back wall, and a long counter
+  warehouse. Crates and barrels are stacked along the back wall, and a long counter
   runs the length of the room. The merchant has organized her wares with a precision
-  that borders on obsessive -- dried goods to the left, tools in the center, sundries
+  that borders on obsessive, with dried goods to the left, tools in the center, sundries
   to the right. A scale and a set of weights sit on the counter beside an abacus
   whose beads have been worn smooth.
 biome: river
@@ -19,7 +19,7 @@ exits:
   west:
     roomid: 423
 nouns:
-  shelves: The shelves display a practical selection -- rope, candles, flint and steel,
+  shelves: The shelves display a practical selection of rope, candles, flint and steel,
     dried meat, small clay pots of salve. Nothing fancy, but everything a traveller
     might need. Prices are chalked on small slate tags.
   crates: The crates bear shipping marks from several settlements. Most are addressed
