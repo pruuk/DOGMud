@@ -12,7 +12,7 @@ idlecommands:
   - 'emote sets a crate down with a solid thud, rolls the shoulder that
     carried it, and picks up the next before the roll is finished.'
   - ''
-  - 'emote whistles three short notes — some signal between dock-hands —
+  - 'emote whistles three short notes, some signal between dock-hands,
     and somewhere in the stack-row someone whistles back.'
   - ''
   - 'emote lifts a loaded barrow off the dock edge with apparent ease
@@ -25,7 +25,7 @@ character:
   description: |
     A dock-hand in worn canvas and sweat, built for what this work
     requires. The crates they carry, the barrows they push, the loads
-    they shoulder and set down and lift again — these are the measure
+    they shoulder and set down and lift again. These are the measure
     of the day. They do not look up unless something goes wrong with
     the count or the load. Not always then either.
   speciesid: 1

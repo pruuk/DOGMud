@@ -13,8 +13,8 @@ groups:
   - np_dockfolk
 idlecommands:
   - 'emote presses a bare palm flat to the bottom of the cauldron
-    for a moment — testing it without flinching, with the ease of
-    someone who has never needed to flinch — then adds a measure
+    for a moment, testing it without flinching, with the ease of
+    someone who has never needed to flinch, then adds a measure
     of salt and steps back.'
   - ''
   - 'emote stacks dock-loaves on the bread tray in a fast, practiced
@@ -34,11 +34,11 @@ character:
   description: |
     Corra is a broad woman in a stained apron who has fed the
     dock-shift for longer than most of the current stevedores
-    have been arriving. She is not unfriendly — she is busy, in
+    have been arriving. She is not unfriendly. She is busy, in
     the absolute and permanent sense of someone who serves a hot
     meal every working day from before dawn to past midday without
     a break. Her hands are what people notice first, if they
-    notice anything — she works the cauldron bare-handed, lifts
+    notice anything. She works the cauldron bare-handed, lifts
     iron lids from a full boil without pulling back, stacks
     dock-bread still warm from the oven with her palms flat
     against the crust. A Chrysalis change she has had long enough

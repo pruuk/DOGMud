@@ -11,7 +11,7 @@ groups:
   - humanoid
   - np_dockfolk
 idlecommands:
-  - 'emote measures a rope with outstretched arms — three spans — and
+  - 'emote measures a rope with outstretched arms, three spans, and
     makes a cut without checking the length twice.'
   - ''
   - 'emote brushes his hands together and the gesture sheds a fine spray
@@ -29,7 +29,7 @@ character:
     Chandler Voss has the look of a man who has spent decades in rooms
     that smell of pitch and oil and rope-tar and who has made his peace
     with it. He is broad-shouldered, economical in his movements, and
-    shorter than he appears — the tidiness of his shop makes him seem
+    shorter than he appears: the tidiness of his shop makes him seem
     larger than the space. His skin is the most noticeable thing about
     him: a dark, even staining has worked its way below the surface,
     permanent as a dye, and in wet weather water runs off it in clear

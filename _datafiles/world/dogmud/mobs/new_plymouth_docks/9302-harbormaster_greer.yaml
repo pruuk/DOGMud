@@ -28,7 +28,7 @@ character:
   name: Harbormaster Greer
   description: |
     Harbormaster Greer wears his office the way the building wears the
-    harbor — worn into the stone, slightly damp, functional past any
+    harbor: worn into the stone, slightly damp, functional past any
     consideration of comfort. He is lean, in his mid-fifties, careful
     in his movements, with the studied neutrality of someone who has
     learned that every expression costs something at this counter. His
@@ -36,7 +36,7 @@ character:
     salt-crystal growth, each joint a rough white formation that catches
     the lamplight like hoarfrost. He says it stopped hurting years ago.
     Whether he believes that is difficult to read. He handles the harbor
-    ledger with those hands the way a man handles something sharp —
+    ledger with those hands the way a man handles something sharp:
     carefully, consistently, without making it look like care.
   speciesid: 1
   level: 1

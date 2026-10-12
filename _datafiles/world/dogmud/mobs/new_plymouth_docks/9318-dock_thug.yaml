@@ -22,19 +22,19 @@ combatcommands:
   - 'emote presses forward fast, closing the distance before
     you have finished deciding.'
   - ''
-  - 'emote drives a knee toward the midsection — economical,
+  - 'emote drives a knee toward the midsection, economical,
     no announcement.'
 activitylevel: 12
 character:
   name: Dock Thug
   description: |
-    He is in the shadows because he is always in the shadows —
-    this is not coincidence but method. The underdocks suit him
+    He is in the shadows because he is always in the shadows.
+    This is not coincidence but method. The underdocks suit him
     the way water suits the bilge channel running below the dock
     boards. He is broad across the shoulders, not young but not
     old, and he carries no visible weapon because the visible
     ones are harder to explain afterward. The Chrysalis has given
-    him nothing obvious — or he has learned to dress around it.
+    him nothing obvious, or he has learned to dress around it.
     What he has instead is patience and the specific attentive
     stillness of someone very good at judging whether a target
     is worth the effort and the risk. You are being evaluated

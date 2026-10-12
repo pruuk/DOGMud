@@ -16,8 +16,8 @@ idlecommands:
   - 'emote runs a hand through his hair, which does not improve it,
     and exhales in a way that does not help either.'
   - ''
-  - 'emote looks at his own fingernails — faintly luminous at the
-    tips, the pale glow stronger now — and looks away from them
+  - 'emote looks at his own fingernails, faintly luminous at the
+    tips, the pale glow stronger now, and looks away from them
     quickly, as if the reminder is unwelcome.'
   - ''
   - 'emote glances toward the door as though expecting someone,
@@ -26,12 +26,12 @@ activitylevel: 14
 character:
   name: Teo
   description: |
-    He is young — early twenties, hauler's build, the kind of face
+    He is young: early twenties, hauler's build, the kind of face
     that looks trustworthy because it does not know how to arrange
     itself otherwise. His jaw is working the way a jaw works when
     a person has been saying the same true thing for hours and has
     not yet been believed. At the tips of his fingers a faint
-    phosphorescence glows — cool blue-white, visible when the light
+    phosphorescence glows: cool blue-white, visible when the light
     is low, the sort of Chrysalis drift that arrives uninvited and
     will not be talked away. The glow is stronger when he is
     frightened, which he currently is. He is standing near the

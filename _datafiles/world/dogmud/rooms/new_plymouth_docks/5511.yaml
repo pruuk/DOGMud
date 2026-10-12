@@ -3,14 +3,14 @@ zone: New Plymouth Docks
 title: The Salt Cellar
 description: >
   A building that leans slightly into the street as if
-  listening — the Salt Cellar has been here long enough that
+  listening. The Salt Cellar has been here long enough that
   the cobblestones around its foundation have been reset
   twice and the building remains, unmoved and unsurprised.
-  By day its face is ordinary — stained timber, a broad door,
+  By day its face is ordinary: stained timber, a broad door,
   the faint persistent smell of beer soaked into old wood.
   But after the dock-shift ends, the place becomes the
   <ansi fg="itemname">tavern sign</ansi>'s promise made
-  good — voices and light and the kind of warmth that means
+  good: voices and light and the kind of warmth that means
   people who work hard in cold wet places have found each
   other for the evening. A
   <ansi fg="itemname">door lantern</ansi> hangs from an
@@ -36,8 +36,8 @@ exits:
   up:
     roomid: 5513
 nouns:
-  tavern sign: A salt-cellar — the small covered vessel for
-    table salt — painted in faded ochre on a panel of grey
+  tavern sign: A salt-cellar, the small covered vessel for
+    table salt, painted in faded ochre on a panel of grey
     board above the door. The painting is not especially
     skilled but it is clear, and someone has touched up the
     outline in charcoal recently. Below it, in a different
@@ -48,7 +48,7 @@ nouns:
     both older than anything else on the building's face.
     The glass has a faint green tint from age or from the
     manufacture, and the flame inside burns lower than it
-    should for the oil remaining — which is never quite out.
+    should for the oil remaining, which is never quite out.
     The lampman who services it, if there is one, leaves
     no evidence of having been here.
 idlemessages:
@@ -61,7 +61,7 @@ idlemessages:
 - From inside comes a single note of laughter, too loud,
   cut short; then the ordinary sound of a room at ease.
 - Someone has chalked an arrow on the cobblestones pointing
-  at the door. It could be recent or it could be old — it
+  at the door. It could be recent or it could be old. It
   has been walked over enough that it is hard to say.
 x: -8
 y: -78
