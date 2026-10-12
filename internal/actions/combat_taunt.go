@@ -114,8 +114,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 
 	// A silenced taunter cannot shout, snarl or howl (M6 slice 3). Refused
 	// before the target, the cooldown and the cost, so nothing is spent.
-	// A silenced taunter cannot shout, snarl or howl (M6 slice 3). Refused
-	// before the target, the cooldown and the cost, so nothing is spent.
+	// SYNC POINT: CommandIsReady's "taunt" case mirrors this gate.
 	if char.SpeechState() == characters.Silenced {
 		return TauntResult{Silenced: true}
 	}

@@ -141,10 +141,15 @@ func TestCommandIsReady_IsCrafting_BlocksEveryCommand(t *testing.T) {
 	}
 }
 
+// readinessSilencedConditionId is a test condition carrying the Silenced flag.
+const readinessSilencedConditionId = 9502
+
 func seedConditionsForTest() func() {
 	return conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
 		79: {ConditionId: 79, Name: "Warcry", TriggerCount: 10, RoundInterval: 1},
 		80: {ConditionId: 80, Name: "Rally", TriggerCount: 10, RoundInterval: 1},
+		readinessSilencedConditionId: {ConditionId: readinessSilencedConditionId, Name: "Test Silenced",
+			Flags: []conditions.Flag{conditions.Silenced}},
 	})
 }
 

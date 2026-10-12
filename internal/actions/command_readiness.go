@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/species"
 )
@@ -42,7 +43,8 @@ func CommandIsReady(actor Actor, cmd string) bool {
 
 	switch cmd {
 	case "taunt":
-		return char.IsInCombat()
+		// A silenced taunter is refused by ExecuteTaunt (M6 slice 3).
+		return char.IsInCombat() && char.SpeechState() != characters.Silenced
 
 	case "rally":
 		return !char.HasCondition(80)

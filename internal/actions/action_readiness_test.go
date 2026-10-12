@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestActionReadiness_GenericCommand_Ready verifies that an unrecognized /
@@ -59,6 +60,21 @@ func TestActionReadiness_SpecialMove_OnCooldown_Deferred(t *testing.T) {
 func TestActionReadiness_SpecialMove_StructurallyBlocked_Rejected(t *testing.T) {
 	m := newTestMob(t, nil)
 	m.Character.EndAggro() // removes the aggro set by newTestMob
+	actor := &MobActor{Mob: m, Room: nil}
+	result := ActionReadiness(actor, "taunt")
+	assert.Equal(t, ActionRejected, result.Status)
+	assert.Equal(t, "special-move unavailable", result.Reason)
+}
+
+// TestActionReadiness_SilencedTaunt_Rejected: a silenced taunter in combat is
+// refused by ExecuteTaunt, so a queued taunt surfaces that refusal and drops
+// rather than retrying silently (M6 slice 3).
+func TestActionReadiness_SilencedTaunt_Rejected(t *testing.T) {
+	cleanup := seedConditionsForTest()
+	defer cleanup()
+
+	m := newTestMob(t, nil)
+	require.NoError(t, m.Character.AddCondition(readinessSilencedConditionId, true))
 	actor := &MobActor{Mob: m, Room: nil}
 	result := ActionReadiness(actor, "taunt")
 	assert.Equal(t, ActionRejected, result.Status)
