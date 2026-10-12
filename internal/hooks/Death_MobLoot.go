@@ -93,7 +93,13 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 			RoundOwnedUntil:   lootTimeoutRound(currentRound, config.Death.CorpseLootTimeout.String()),
 			RRAssignee:        assignCorpseLoot(loot, owners, m.Character.PlayerDamage),
 		})
-		announceCorpse(room, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Character.Name))
+		// A mob with an authored corpse_name (wreckage, a husk) gets the
+		// anonymous line: "<Name>'s remains" reads wrong for it.
+		identity := ""
+		if m.CorpseName == "" {
+			identity = fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Character.Name)
+		}
+		announceCorpse(room, identity)
 		return
 	}
 

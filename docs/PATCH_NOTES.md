@@ -3,9 +3,11 @@
 ## Unreleased: Fighting blind, and plainer combat words
 
 - Beasts and other creatures without a voice now snarl, roar and hiss at
-  you instead of trading insults, and a wolf's howl has real variety.
-- After a kill, a body line tells you the corpse is there to search, if
-  you can see it.
+  you instead of trading insults, and answer your taunts the same way. A
+  wolf's howl now sounds like a howl, with real variety. A creature that
+  is silenced can neither taunt nor answer one.
+- After a kill, a line tells you the remains are there to search, if you
+  can see them.
 - More variety when you begin a cast, and when a dodge, parry or block
   only partly saves you.
 - A creature starting a craft now says what it is making; parry counters

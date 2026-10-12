@@ -1233,10 +1233,13 @@ room through `mobSubjectName` and `sendVisualElseAudible`.
 
 ### corpse_line.go
 
-`announceCorpse(room, identity, excludeUserIds...)` sends "<identity>'s body
-lies where it fell." to full-sight readers and "A body lies where it fell."
-to shapes readers (nothing at no sight), judged per player by
-`messaging.ReaderSight`. Called only where a corpse is created
+`announceCorpse(room, identity, excludeUserIds...)` sends "<identity>'s
+remains lie where they fell." to full-sight readers and "Some remains lie
+where they fell." to shapes readers (nothing at no sight), judged per player
+by `messaging.ReaderSight`. "Remains", not "body", so the line fits
+wreckage, elementals, orbs and slimes. An empty identity sends the anonymous
+line to full sight too; `dropMobLootAndSetCorpse` passes one for a mob with
+an authored `corpse_name`. Called only where a corpse is created
 (`dropMobLootAndSetCorpse` inside `CorpsesEnabled`, `wirePlayerCorpse`), after
 the "has died." line; the dead player is excluded.
 

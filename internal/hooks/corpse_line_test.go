@@ -31,9 +31,9 @@ func TestAnnounceCorpse_ReadsByTheReadersSight(t *testing.T) {
 		want  []string
 	}{
 		{"full sight reads the name", messaging.SightFull,
-			[]string{"Skeleton's body lies where it fell."}},
-		{"shapes reads an anonymous body", messaging.SightShapes,
-			[]string{"A body lies where it fell."}},
+			[]string{"Skeleton's remains lie where they fell."}},
+		{"shapes reads anonymous remains", messaging.SightShapes,
+			[]string{"Some remains lie where they fell."}},
 		{"no sight reads nothing", messaging.SightNone, []string{}},
 	}
 	for _, tc := range cases {
@@ -73,7 +73,7 @@ func TestAnnounceCorpse_ExcludesTheDeadPlayer(t *testing.T) {
 	announceCorpse(rooms.LoadRoom(1), `<ansi fg="username">Aliceia</ansi>`, 1)
 
 	assert.Empty(t, drainPlain(1))
-	assert.Equal(t, []string{"Aliceia's body lies where it fell."}, drainPlain(2))
+	assert.Equal(t, []string{"Aliceia's remains lie where they fell."}, drainPlain(2))
 }
 
 func TestDropMobLootAndSetCorpse_BodyLineOnlyWhenACorpseIsLeft(t *testing.T) {
@@ -99,9 +99,34 @@ func TestDropMobLootAndSetCorpse_BodyLineOnlyWhenACorpseIsLeft(t *testing.T) {
 
 		got := drainPlain(1)
 		if enabled {
-			assert.Equal(t, []string{"Skeleton's body lies where it fell."}, got)
+			assert.Equal(t, []string{"Skeleton's remains lie where they fell."}, got)
 		} else {
 			assert.Empty(t, got, "no corpse, no body line")
 		}
 	}
+}
+
+// A mob with an authored corpse_name (wreckage, a husk) is not "<Name>'s
+// remains": even a reader who sees clearly reads the anonymous line.
+func TestDropMobLootAndSetCorpse_CorpseNameReadsAnonymous(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	restore := seedNarrationConditions()
+	defer restore()
+	rooms.LoadRoom(1).Lamp = rooms.LampPtr(60)
+	require.NoError(t, configs.AddOverlayOverrides(map[string]any{
+		"GamePlay.Death.CorpsesEnabled": true,
+	}))
+	defer configs.AddOverlayOverrides(map[string]any{
+		"GamePlay.Death.CorpsesEnabled": false,
+	})
+
+	m := &mobs.Mob{CorpseName: "splintered wagon wreckage"}
+	m.Character = characters.Character{Name: "Wagon"}
+	room := rooms.LoadRoom(1)
+	drainPlain(1)
+
+	dropMobLootAndSetCorpse(m, room)
+
+	assert.Equal(t, []string{"Some remains lie where they fell."}, drainPlain(1))
 }
