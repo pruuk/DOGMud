@@ -286,12 +286,12 @@ options:
     together:
       actor:
         beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRUSH</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
+        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL CHOKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
+        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
         - 'You land a <ansi fg="cyan-bold">CRUSHING THROTTLE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
-        - 'You close and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
+        - 'You close and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
         - 'Lunging while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT CHOKE</ansi>!'
         - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely and you <ansi fg="cyan-bold">ANNIHILATE</ansi> the throat!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS THROTTLE</ansi>!'
@@ -302,12 +302,12 @@ options:
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">THROTTLE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with brutal precision!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRUSH</ansi> your windpipe!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> your windpipe!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s choke delivers a <ansi fg="cyan-bold">CRITICAL THROTTLE</ansi>!'
         - 'You are <ansi fg="cyan-bold">DEVASTATED</ansi> as <ansi fg="{actortype}">{actor}</ansi> crushes your throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">CRUSHING THROTTLE</ansi> on your windpipe!'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATE</ansi> your windpipe!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> your windpipe!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and delivers a <ansi fg="cyan-bold">PERFECT CHOKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely, and they <ansi fg="cyan-bold">ANNIHILATE</ansi> your throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your every move and delivers a <ansi fg="cyan-bold">FLAWLESS THROTTLE</ansi>!'
@@ -318,12 +318,12 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">CRUSHES</ansi> your windpipe!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRUSH</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRUSHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s choke delivers a <ansi fg="cyan-bold">CRITICAL THROTTLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">CRUSHING THROTTLE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s windpipe!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges forward with a <ansi fg="cyan-bold">PERFECT CHOKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>: <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s every move and delivers a <ansi fg="cyan-bold">FLAWLESS THROTTLE</ansi>!'
@@ -364,7 +364,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s masterful throttle is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> at <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> at <ansi fg="{acteetype}">{actee}</ansi>''s throat!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the throttle and stumbles past!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">CLAP SHUT</ansi> on empty air!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the choke in a clumsy lurch!'

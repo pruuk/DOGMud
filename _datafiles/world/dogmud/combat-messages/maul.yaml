@@ -370,24 +370,24 @@ options:
         beginner:
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY SAVAGE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You deliver a <ansi fg="cyan-bold">CRITICAL MAULING</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You land a <ansi fg="cyan-bold">DEVASTATING SAVAGE BITE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
-        - 'You surge and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SAVAGE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with horrifying force!'
+        - 'You surge and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SAVAGES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with horrifying force!'
         - 'Lunging while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT MAULING</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You flow like a hunting predator and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">TEAR THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely, and you<ansi fg="cyan-bold">ANNIHILATE</ansi> from your {stance} stance!'
+        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely, and you <ansi fg="cyan-bold">ANNIHILATE</ansi> from your {stance} stance!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS SAVAGE BITE</ansi> through <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - 'Your tactical lunge creates the perfect opening, and you<ansi fg="cyan-bold">MAUL</ansi> <ansi fg="{acteetype}">{actee}</ansi> with apex fury!'
+        - 'Your tactical lunge creates the perfect opening, and you <ansi fg="cyan-bold">MAUL</ansi> <ansi fg="{acteetype}">{actee}</ansi> with apex fury!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> mauling!'
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING SAVAGE ASSAULT</ansi> from the perfect angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">SAVAGE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with masterful brutality!'
-        - 'Your positioning is flawless, and your<ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your positioning is flawless, and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL MAULING</ansi>!'
         - 'Channeling all ferocity, you <ansi fg="cyan-bold">TEAR THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with devastating force!'
-        - 'The tide of battle favors you, and your<ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'The tide of battle favors you, and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY SAVAGE</ansi> you!'
@@ -395,21 +395,21 @@ options:
         - 'You are <ansi fg="cyan-bold">DEVASTATED</ansi> by <ansi fg="{actortype}">{actor}</ansi>''s savage assault!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING SAVAGE BITE</ansi> on you!'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> surges and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SAVAGE</ansi> you clean through!'
+        - '<ansi fg="{actortype}">{actor}</ansi> surges and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SAVAGES</ansi> you clean through!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and delivers a <ansi fg="cyan-bold">PERFECT MAULING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like a predator and <ansi fg="cyan-bold">TEARS THROUGH</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely, and they<ansi fg="cyan-bold">ANNIHILATE</ansi> you!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely, and they <ansi fg="cyan-bold">ANNIHILATE</ansi> you!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your every move and delivers a <ansi fg="cyan-bold">FLAWLESS SAVAGE BITE</ansi> through you!'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical lunge creates the opening, and youare <ansi fg="cyan-bold">MAULED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical lunge creates the opening, and you are <ansi fg="cyan-bold">MAULED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> mauling on you!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS MAULING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING SAVAGE ASSAULT</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">SAVAGES</ansi> you with brutality!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless, and youare <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s unstoppable assault ends in a <ansi fg="cyan-bold">CRITICAL MAULING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all ferocity and <ansi fg="cyan-bold">TEARS THROUGH</ansi> you utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATE</ansi> you!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> you!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY SAVAGE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -417,7 +417,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with a brutal savage assault!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING SAVAGE BITE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> surges and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SAVAGE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> surges and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SAVAGES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges forward with a <ansi fg="cyan-bold">PERFECT MAULING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like a predator and <ansi fg="cyan-bold">TEARS THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> - <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
@@ -431,7 +431,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s assault culminates in a <ansi fg="cyan-bold">CRITICAL MAULING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all ferocity and <ansi fg="cyan-bold">TEARS THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
   fumble:
     # messages for when they are in the same room
     together:
@@ -439,16 +439,16 @@ options:
         beginner:
         - 'Your lunge <ansi fg="red-bold">FUMBLES</ansi> as your <ansi fg="item">{itemname}</ansi> snap at nothing!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble past your prey off-balance!'
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> awkwardly, leaving you wide open!'
+        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> awkwardly, leaving you wide open!'
         - 'You lose your balance and your savage lunge <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
-        - 'Your tactical lunge fails catastrophically, and you<ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical lunge fails catastrophically, and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the angle and <ansi fg="red-bold">FUMBLE</ansi> your bite!'
         - 'Your feint backfires and you <ansi fg="red-bold">FUMBLE</ansi> the savage charge badly!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected sidestep forces you to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Your masterful assault is disrupted, and you<ansi fg="red-bold">FUMBLE</ansi> the execution!'
+        - 'Your masterful assault is disrupted, and you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s lunge <ansi fg="red-bold">FUMBLES</ansi> as their <ansi fg="item">{itemname}</ansi> snap at nothing!'
@@ -462,15 +462,15 @@ options:
         master:
         - 'Your sidestep forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the lunge!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful assault is disrupted, and they<ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful assault is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their lunge at <ansi fg="{acteetype}">{actee}</ansi> and stumbles past!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> awkwardly at <ansi fg="{acteetype}">{actee}</ansi>, leaving them wide open!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> awkwardly at <ansi fg="{acteetype}">{actee}</ansi>, leaving them wide open!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their savage bite in a clumsy, lurching stumble!'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails, and they<ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s feint backfires catastrophically!'
         master:

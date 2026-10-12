@@ -289,11 +289,11 @@ options:
         - 'You swing with clumsy luck and your <ansi fg="item">{itemname}</ansi> connects for a <ansi fg="cyan-bold">CRUSHING BLOW</ansi>!'
         expert:
         - 'You channel devastating force and <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>, and you<ansi fg="cyan-bold">ANNIHILATE</ansi> them!'
+        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>, and you <ansi fg="cyan-bold">ANNIHILATE</ansi> them!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
         - 'You time your swing perfectly and the crystal head lands a <ansi fg="cyan-bold">RESOUNDING CRITICAL</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - 'Your tactical brilliance creates the perfect opening, and you<ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your tactical brilliance creates the perfect opening, and you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">SHATTER THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'With regal precision, you place the full weight of your <ansi fg="item">{itemname}</ansi> to <ansi fg="cyan-bold">SOVEREIGN EFFECT</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -338,7 +338,7 @@ options:
         - 'You overcommit to your swing and <ansi fg="red-bold">FUMBLE</ansi>, stumbling!'
         - 'Your <ansi fg="item">{itemname}</ansi> slips from your grasp and you <ansi fg="red-bold">FUMBLE</ansi> the blow!'
         expert:
-        - 'Your tactical approach fails, and you<ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical approach fails, and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your channeled swing!'
         - 'You mistime your swing and <ansi fg="red-bold">FUMBLE</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'The weight of your <ansi fg="item">{itemname}</ansi> betrays you and you <ansi fg="red-bold">FUMBLE</ansi>!'
@@ -354,7 +354,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> stumbles and <ansi fg="red-bold">FUMBLES</ansi> the blow meant for you!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> clumsily!'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails, and they<ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> mistimes the swing and <ansi fg="red-bold">FUMBLES</ansi>!'
         - 'The weight of their <ansi fg="item">{itemname}</ansi> betrays <ansi fg="{actortype}">{actor}</ansi> and they <ansi fg="red-bold">FUMBLE</ansi>!'
@@ -370,7 +370,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their swing against <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> slips from their grasp as they <ansi fg="red-bold">FUMBLE</ansi> the blow!'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails, and they<ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> mistimes the swing and <ansi fg="red-bold">FUMBLES</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'The weight of the <ansi fg="item">{itemname}</ansi> betrays <ansi fg="{actortype}">{actor}</ansi> and they <ansi fg="red-bold">FUMBLE</ansi>!'

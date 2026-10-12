@@ -494,4 +494,4 @@ options:
         master:
         - '<ansi fg="{acteetype}">{actee}''s</ansi> defense forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> perfect strike is disrupted: a<ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> perfect strike is disrupted: a <ansi fg="red-bold">FUMBLE</ansi>!'
