@@ -65,13 +65,134 @@ func TestDarkLines_CategoriesMatchTheRetiredFunction(t *testing.T) {
 	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Defended), got[0].Text) {
 		t.Fatalf("line 0 %q is not from defender/defended", got[0].Text)
 	}
+	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Hit), got[1].Text) {
+		t.Fatalf("line 1 %q is not from defender/hit", got[1].Text)
+	}
 }
 
+// darkResult builds a one-swing round through the real senders, so the swing
+// lines carry the indices hideIdentitiesInPersonalLines swaps on.
 func darkResult() *AttackResult {
-	return &AttackResult{
-		SwingEvents:      []SwingEvent{{Hit: true, Damage: 5}},
-		MessagesToSource: []TaggedMessage{{Category: messaging.CategoryHitMelee, Text: "Reading their stance, you strike Shade with practiced precision!"}},
-		MessagesToTarget: []TaggedMessage{{Category: messaging.CategoryHitMelee, Text: "Grimwald slashes you with their Rusted Cleaver!"}},
+	r := &AttackResult{SwingEvents: []SwingEvent{{Hit: true, Damage: 5}}}
+	r.sendSwingToSource(messaging.CategoryHitMelee, "Reading their stance, you strike Shade with practiced precision!")
+	r.sendSwingToTarget(messaging.CategoryHitMelee, "Grimwald slashes you with their Rusted Cleaver!")
+	return r
+}
+
+func TestHideIdentities_BlindDefenderKeepsThePetLineNameHidden(t *testing.T) {
+	loadDarkCombatForTest(t)
+	atk := verdictObserver(t, false, false, false, false)
+	def := verdictObserver(t, false, false, false, true) // blind
+	atk.Name, def.Name = "Grimwald", "Shade"
+	ctx := newCombatContext(atk, def, verdictLight(100), false)
+
+	r := darkResult()
+	r.SendToTarget(messaging.CategoryHitNaturalSharp, "Grimwald's wolf jumps into the fray and deals a wound to you!")
+	r.SendToTarget(messaging.CategorySystem, "Grimwald watches you.")
+	hideIdentitiesInPersonalLines(r, atk, def, ctx)
+
+	if len(r.MessagesToTarget) != 3 {
+		t.Fatalf("want dark line + pet line + system line, got %d: %v", len(r.MessagesToTarget), r.MessagesToTarget)
+	}
+	if !slices.Contains(darkcombat.Pool(darkcombat.Defender, darkcombat.Hit), r.MessagesToTarget[0].Text) {
+		t.Fatalf("line 0 %q is not a defender/hit dark line", r.MessagesToTarget[0].Text)
+	}
+	pet := r.MessagesToTarget[1]
+	if pet.Category != messaging.CategoryHitNaturalSharp || !strings.Contains(pet.Text, "jumps into the fray") || strings.Contains(pet.Text, "Grimwald") {
+		t.Fatalf("pet line should survive with the attacker hidden, got %+v", pet)
+	}
+	if strings.Contains(r.MessagesToTarget[2].Text, "Grimwald") {
+		t.Fatalf("a kept line leaked the name: %q", r.MessagesToTarget[2].Text)
+	}
+}
+
+func TestHideIdentities_BlindAttackerKeepsTheDoubleFumbleLine(t *testing.T) {
+	loadDarkCombatForTest(t)
+	atk := verdictObserver(t, false, false, false, true) // blind
+	def := verdictObserver(t, false, false, false, false)
+	atk.Name, def.Name = "Grimwald", "Shade"
+	ctx := newCombatContext(atk, def, verdictLight(100), false)
+
+	// A double-fumble round: the composer sends the fumble line with SendToSource
+	// (not a swing line) and the swing event is a double fumble.
+	r := &AttackResult{SwingEvents: []SwingEvent{{Fumble: true, DoubleFumble: true}}}
+	r.SendToSource(messaging.CategoryHitMelee, "!!! You trip over Shade and fall flat! !!!")
+	hideIdentitiesInPersonalLines(r, atk, def, ctx)
+
+	if len(r.MessagesToSource) != 1 {
+		t.Fatalf("want exactly the double-fumble line, got %v", r.MessagesToSource)
+	}
+	got := r.MessagesToSource[0].Text
+	if !strings.Contains(got, "fall flat") || strings.Contains(got, "Shade") {
+		t.Fatalf("double-fumble line should be kept with the name hidden, got %q", got)
+	}
+	for _, o := range []darkcombat.Outcome{darkcombat.Fumble, darkcombat.Hit, darkcombat.Miss} {
+		if slices.Contains(darkcombat.Pool(darkcombat.Attacker, o), got) {
+			t.Fatalf("a dark line replaced the double-fumble line: %q", got)
+		}
+	}
+}
+
+func TestHideIdentities_BlindDefenderReadsDeflectedAndDefendedPools(t *testing.T) {
+	loadDarkCombatForTest(t)
+	cases := []struct {
+		name    string
+		se      SwingEvent
+		outcome darkcombat.Outcome
+		cat     messaging.Category
+	}{
+		{"deflected", SwingEvent{Defended: true, Damage: 3}, darkcombat.Deflected, messaging.CategoryHitMelee},
+		{"defended", SwingEvent{Defended: true}, darkcombat.Defended, messaging.CategoryDodge},
+	}
+	for _, c := range cases {
+		atk := verdictObserver(t, false, false, false, false)
+		def := verdictObserver(t, false, false, false, true) // blind
+		atk.Name, def.Name = "Grimwald", "Shade"
+		ctx := newCombatContext(atk, def, verdictLight(100), false)
+
+		r := &AttackResult{SwingEvents: []SwingEvent{c.se}}
+		r.sendSwingToTarget(c.cat, "composed swing line")
+		hideIdentitiesInPersonalLines(r, atk, def, ctx)
+		if len(r.MessagesToTarget) != 1 {
+			t.Fatalf("%s: got %d lines, want 1", c.name, len(r.MessagesToTarget))
+		}
+		m := r.MessagesToTarget[0]
+		if !slices.Contains(darkcombat.Pool(darkcombat.Defender, c.outcome), m.Text) {
+			t.Errorf("%s: %q is not from defender/%s", c.name, m.Text, c.outcome)
+		}
+		if m.Category != c.cat {
+			t.Errorf("%s: category = %v, want %v", c.name, m.Category, c.cat)
+		}
+	}
+}
+
+func TestSwapSwingLines(t *testing.T) {
+	m := func(s string) TaggedMessage { return TaggedMessage{Text: s} }
+	texts := func(ms []TaggedMessage) []string {
+		var out []string
+		for _, x := range ms {
+			out = append(out, x.Text)
+		}
+		return out
+	}
+	msgs := []TaggedMessage{m("pet"), m("swing1"), m("short"), m("swing2"), m("tail")}
+	dark := []TaggedMessage{m("D1"), m("D2")}
+
+	got := texts(swapSwingLines(msgs, []int{1, 3}, dark))
+	want := []string{"pet", "D1", "D2", "short", "tail"}
+	if !slices.Equal(got, want) {
+		t.Errorf("swap = %v, want %v", got, want)
+	}
+	// Unsorted indices still anchor on the earliest swing line.
+	got = texts(swapSwingLines(msgs, []int{3, 1}, dark))
+	if !slices.Equal(got, want) {
+		t.Errorf("unsorted swap = %v, want %v", got, want)
+	}
+	if got := swapSwingLines(msgs, nil, dark); !slices.Equal(texts(got), texts(msgs)) {
+		t.Errorf("empty index changed the slice: %v", texts(got))
+	}
+	if got := swapSwingLines(msgs, []int{1, 3}, nil); !slices.Equal(texts(got), texts(msgs)) {
+		t.Errorf("empty dark changed the slice: %v", texts(got))
 	}
 }
 

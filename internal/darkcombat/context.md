@@ -5,8 +5,9 @@ messaging M6 slice 2 (#370 ledger rows 36 to 47), replacing the twelve Go
 literals M4d PR 2 retired with `replaceDarknessMessages`.
 
 Go decides WHEN: `internal/combat.hideIdentitiesInPersonalLines` swaps a
-reader's personal lines for one dark line per `combat.SwingEvent` when that
-reader's OPTICS verdict (`messaging.ParticipantSight`) is `SightNone`. Not
+reader's per-swing narration lines (only those; pet, shortage, entangled and
+double-fumble lines are kept, names hidden) for one dark line per
+`combat.SwingEvent` when that reader's OPTICS verdict (`messaging.ParticipantSight`) is `SightNone`. Not
 `ReaderSight`: that one counts a sleeper as blind, and a sleeper hit in a lit
 room must not read "in the dark". Shapes readers (infravision) keep the
 composed line with "a figure".

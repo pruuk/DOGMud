@@ -1447,8 +1447,8 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 
 		defCat := CategoryForDefenseVerb(defenseVerb)
 		if !partial {
-			result.SendToTarget(defCat, string(toDefenderMsg))
-			result.SendToSource(defCat, string(toAttackerMsg))
+			result.sendSwingToTarget(defCat, string(toDefenderMsg))
+			result.sendSwingToSource(defCat, string(toAttackerMsg))
 		}
 		result.SendToSourceRoom(defCat, string(toRoomMsg))
 		if sourceChar.RoomId != targetChar.RoomId {
@@ -1457,8 +1457,8 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 	} else {
 		defCat := CategoryForDefenseVerb(defenseVerb)
 		if !partial {
-			result.SendToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
-			result.SendToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
+			result.sendSwingToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
+			result.sendSwingToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
 		}
 		result.SendToSourceRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss %s's attack.</ansi>`, targetChar.Name, defenseVerb, sourceChar.Name))
 		if sourceChar.RoomId != targetChar.RoomId {
@@ -1912,7 +1912,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		attackerMsg += fmt.Sprintf(` <ansi fg="white">[%s was blocked]</ansi>`, GetDamageDescription(attackSourceReduction, sourceChar.HealthMax.Value))
 	}
 
-	result.SendToSource(hitCat, string(attackerMsg))
+	result.sendSwingToSource(hitCat, string(attackerMsg))
 
 	// Send to victim
 	defenderMsg := string(toDefenderMsg)
@@ -1920,7 +1920,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		defenderMsg += fmt.Sprintf(` <ansi fg="red">[you blocked %s]</ansi>`, GetDamageDescription(attackTargetReduction, targetChar.HealthMax.Value))
 	}
 
-	result.SendToTarget(hitCat, string(defenderMsg))
+	result.sendSwingToTarget(hitCat, string(defenderMsg))
 
 	// Send to room. A deflected swing sends none: the defence room line from
 	// sendDefenseMessages already narrated it, and room lines carry no damage.

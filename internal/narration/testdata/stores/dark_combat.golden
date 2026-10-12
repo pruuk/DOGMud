@@ -43,7 +43,7 @@ defender|defended|2= <ansi fg="defense-good">You twist away from something in th
 defender|defended|3= <ansi fg="defense-good">You feel a blow coming and turn it aside!</ansi>
 defender|hit|0= <ansi fg="red">Something strikes you in the dark!</ansi>
 defender|hit|1= <ansi fg="red">A blow lands on you out of nowhere!</ansi>
-defender|hit|2= <ansi fg="red">You feel something hit you hard!</ansi>
+defender|hit|2= <ansi fg="red">You feel something hit you!</ansi>
 defender|hit|3= <ansi fg="red">Something you cannot see strikes you!</ansi>
 defender|miss|0= <ansi fg="yellow">You hear something whoosh past!</ansi>
 defender|miss|1= <ansi fg="yellow">Something rushes past you in the dark!</ansi>

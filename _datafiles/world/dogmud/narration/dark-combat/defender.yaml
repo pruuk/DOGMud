@@ -26,7 +26,7 @@ outcomes:
   hit:
     - '<ansi fg="red">Something strikes you in the dark!</ansi>'
     - '<ansi fg="red">A blow lands on you out of nowhere!</ansi>'
-    - '<ansi fg="red">You feel something hit you hard!</ansi>'
+    - '<ansi fg="red">You feel something hit you!</ansi>'
     - '<ansi fg="red">Something you cannot see strikes you!</ansi>'
   miss:
     - '<ansi fg="yellow">You hear something whoosh past!</ansi>'

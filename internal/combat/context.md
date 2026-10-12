@@ -1177,9 +1177,14 @@ lines.
 
 **Dark lines (M6 slice 2).** When a reader's optics verdict
 (`combatContext.sourceOptics` / `targetOptics`, `messaging.ParticipantSight`)
-is `SightNone`, `hideIdentitiesInPersonalLines` replaces that side's personal
-lines with one `internal/darkcombat` line per `SwingEvent` (`darkOutcome`,
-`darkLines`). A sleeper trips `ReaderSight` but not optics, so it keeps the
+is `SightNone`, `hideIdentitiesInPersonalLines` replaces ONLY that side's
+per-swing narration lines (recorded by `AttackResult.sendSwingToSource` /
+`sendSwingToTarget`: `buildAttackMessages` and `sendDefenseMessages`) with
+one `internal/darkcombat` line per `SwingEvent` (`darkOutcome`, `darkLines`,
+`swapSwingLines`), after the name-hiding loops. Every other personal line is
+kept with names hidden: pet damage, shortage texts, the entangled / helpless
+lines, wait-round lines, and the double-fumble line (which has no dark line
+and is the reader's only signal they were knocked prone). A sleeper trips `ReaderSight` but not optics, so it keeps the
 composed line with "something". `SwingEvent.Defended` is the per-swing
 defensive win the buckets read; `AttackResult.DefenseUsed` is sticky across a
 round and must not be used for per-swing questions.

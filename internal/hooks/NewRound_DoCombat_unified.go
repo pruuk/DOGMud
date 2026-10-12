@@ -518,7 +518,10 @@ func dispatchCritAndMessaging(atk, def actions.Actor, res *combat.AttackResult) 
 	// composition, inside internal/combat, against the SAME per-side verdict
 	// (combatContext.sourceSight / targetSight) this package cannot see
 	// directly -- res.MessagesToSource/MessagesToTarget arrive already
-	// hidden. srcCanSee/tgtCanSee survive here for a second, still-live job:
+	// hidden. A reader with no sight at all (optics SightNone) additionally
+	// gets the per-swing lines swapped, at composition, for internal/darkcombat
+	// lines; their other personal lines are kept, names hidden.
+	// srcCanSee/tgtCanSee survive here for a second, still-live job:
 	// the tally-summary gate below. recordTallyFor builds its own summary
 	// line straight from the character names, not from res.MessagesTo*, so a
 	// blind participant's per-swing prose being hidden upstream says nothing

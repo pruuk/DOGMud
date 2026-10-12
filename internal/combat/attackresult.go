@@ -198,6 +198,15 @@ type AttackResult struct {
 	// defender progression award is chosen from. See the SwingDefence doc
 	// comment for how it differs from DefenseUsed and DefenseAttempts.
 	SwingDefences []SwingDefence
+
+	// swingSourceLines / swingTargetLines are the indices into MessagesToSource
+	// / MessagesToTarget of the per-swing narration lines (buildAttackMessages
+	// and sendDefenseMessages), recorded by sendSwingToSource / sendSwingToTarget.
+	// A reader with no sight has exactly these lines swapped for dark-combat
+	// lines (hideIdentitiesInPersonalLines); every other personal line (pet,
+	// shortage, entangled, double fumble, wait round) is kept.
+	swingSourceLines []int
+	swingTargetLines []int
 }
 
 func (a *AttackResult) SendToSource(cat messaging.Category, msg string) {
@@ -206,6 +215,19 @@ func (a *AttackResult) SendToSource(cat messaging.Category, msg string) {
 
 func (a *AttackResult) SendToTarget(cat messaging.Category, msg string) {
 	a.MessagesToTarget = append(a.MessagesToTarget, TaggedMessage{Category: cat, Text: msg})
+}
+
+// sendSwingToSource is SendToSource for a per-swing narration line: it also
+// records the line's index so a sightless reader's copy can be swapped.
+func (a *AttackResult) sendSwingToSource(cat messaging.Category, msg string) {
+	a.swingSourceLines = append(a.swingSourceLines, len(a.MessagesToSource))
+	a.SendToSource(cat, msg)
+}
+
+// sendSwingToTarget is the target-side twin of sendSwingToSource.
+func (a *AttackResult) sendSwingToTarget(cat messaging.Category, msg string) {
+	a.swingTargetLines = append(a.swingTargetLines, len(a.MessagesToTarget))
+	a.SendToTarget(cat, msg)
 }
 
 func (a *AttackResult) SendToSourceRoom(cat messaging.Category, msg string) {
