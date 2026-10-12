@@ -5,7 +5,9 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -35,6 +37,7 @@ func init() {
 	events.RegisterListener(events.PartyUpdated{}, g.onPartyChange)
 	events.RegisterListener(PartyUpdateVitals{}, g.onUpdateVitals)
 	events.RegisterListener(events.CharacterVitalsChanged{}, g.vitalsChangedHandler)
+	events.RegisterListener(events.SightBandChanged{}, g.sightBandChangedHandler)
 
 }
 
@@ -73,6 +76,40 @@ func (g *GMCPPartyModule) vitalsChangedHandler(e events.Event) events.ListenerRe
 	return events.Continue
 }
 
+// vitalsLocation is the Party.Vitals Location for a member standing in room:
+// the room title, or the empty string while that member cannot see their own
+// room. Someone in pitch dark (or blinded) does not know where they are, so
+// the party cannot be told either; shapes or full sight keep the title. Same
+// rule as Room.Info (#252), applied to the party payload (#492). The verdict
+// is per member, so callers must not cache the result by room id. A nil room
+// (failed load) yields "" and is never passed on as a typed-nil
+// messaging.RoomVisibility.
+func vitalsLocation(c *characters.Character, room *rooms.Room) string {
+	if room == nil {
+		return ``
+	}
+	if messaging.ParticipantSight(c, room) == messaging.SightNone {
+		return ``
+	}
+	return room.Title
+}
+
+// sightBandChangedHandler re-sends Party.Vitals when a member's light band
+// changes, since Location follows sight (#492). Party.Vitals is otherwise
+// event-driven (vitals change, room change, party change), not periodic.
+func (g *GMCPPartyModule) sightBandChangedHandler(e events.Event) events.ListenerReturn {
+	evt, typeOk := e.(events.SightBandChanged)
+	if !typeOk || evt.UserId == 0 {
+		return events.Continue
+	}
+	if party := parties.Get(evt.UserId); party != nil {
+		events.AddToQueue(PartyUpdateVitals{LeaderId: party.LeaderUserId})
+	} else {
+		g.maybeSendSoloCompanionVitals(evt.UserId)
+	}
+	return events.Continue
+}
+
 // maybeSendSoloCompanionVitals pushes a Party.Vitals payload for solo players
 // who have active companions, so companion bars appear in the vitals panel.
 func (g *GMCPPartyModule) maybeSendSoloCompanionVitals(userId int) {
@@ -82,7 +119,6 @@ func (g *GMCPPartyModule) maybeSendSoloCompanionVitals(userId int) {
 	}
 
 	vitals := map[string]GMCPPartyModule_Payload_Vitals{}
-	roomTitles := map[int]string{}
 
 	for _, comp := range user.Character.Companions {
 		if comp.InstanceId <= 0 {
@@ -123,13 +159,7 @@ func (g *GMCPPartyModule) maybeSendSoloCompanionVitals(userId int) {
 			}
 		}
 
-		roomTitle := ``
-		if rt, ok := roomTitles[mob.Character.RoomId]; ok {
-			roomTitle = rt
-		} else if mobRoom := rooms.LoadRoom(mob.Character.RoomId); mobRoom != nil {
-			roomTitle = mobRoom.Title
-			roomTitles[mob.Character.RoomId] = roomTitle
-		}
+		roomTitle := vitalsLocation(&mob.Character, rooms.LoadRoom(mob.Character.RoomId))
 
 		compName := comp.Name
 		if compName == `` {
@@ -282,8 +312,6 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 		Vitals:  map[string]GMCPPartyModule_Payload_Vitals{},
 	}
 
-	roomTitles := map[int]string{}
-
 	for _, uId := range party.GetMembers() {
 
 		if user := users.GetByUserId(uId); user != nil {
@@ -315,13 +343,7 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 				}
 			}
 
-			roomTitle, ok := roomTitles[user.Character.RoomId]
-			if !ok {
-				if uRoom := rooms.LoadRoom(user.Character.RoomId); uRoom != nil {
-					roomTitle = uRoom.Title
-					roomTitles[user.Character.RoomId] = roomTitle
-				}
-			}
+			roomTitle := vitalsLocation(user.Character, rooms.LoadRoom(user.Character.RoomId))
 
 			partyPayload.Vitals[user.Character.Name] = GMCPPartyModule_Payload_Vitals{
 				Name:              user.Character.Name,
@@ -393,13 +415,7 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 					}
 				}
 
-				roomTitle := ``
-				if rt, ok := roomTitles[mob.Character.RoomId]; ok {
-					roomTitle = rt
-				} else if mobRoom := rooms.LoadRoom(mob.Character.RoomId); mobRoom != nil {
-					roomTitle = mobRoom.Title
-					roomTitles[mob.Character.RoomId] = roomTitle
-				}
+				roomTitle := vitalsLocation(&mob.Character, rooms.LoadRoom(mob.Character.RoomId))
 
 				compName := comp.Name
 				if compName == `` {
