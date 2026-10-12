@@ -5,7 +5,7 @@ description: >
   A low stone wall runs north and south along the hamlet's
   western edge, broken here by a wooden gate rusted permanently
   open on its hinges. Beyond it, the hamlet of Ashwick is
-  visible -- small, tidy, unremarkable. Packed-earth road leads
+  visible: small, tidy, unremarkable. Packed-earth road leads
   east between fieldstone houses. A faded sign hangs from a post
   beside the gate, swaying slightly in the wind. The wall is
   more boundary marker than defense, barely waist-high, the
@@ -29,7 +29,7 @@ nouns:
   gate: A wooden gate set into the low stone wall, its iron
     hinges rusted open in a permanent welcome. The wood is
     weathered grey and cracked along the grain, but the frame
-    still stands solid. It has not been closed in years --
+    still stands solid. It has not been closed in years,
     perhaps decades. More boundary marker than barrier, it
     marks where the road becomes a hamlet.
   sign: A plain wooden sign nailed to a post beside the gate.

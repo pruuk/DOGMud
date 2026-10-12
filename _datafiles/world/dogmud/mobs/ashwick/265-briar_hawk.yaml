@@ -12,7 +12,7 @@ behavior_archetype: generic_fighter
 idlecommands:
   - 'emote circles above the clearing on broad wings'
   - ''
-  - 'emote screeches -- a sharp, territorial warning'
+  - 'emote screeches, a sharp, territorial warning'
   - ''
   - 'emote dives at movement below and pulls up at the last moment'
   - ''
@@ -23,7 +23,7 @@ character:
     A large hawk with mottled brown-and-gray plumage and talons built
     for killing. It patrols the herb clearings with aggressive
     territorial instinct, diving at anything that enters its nesting
-    zone. The Chrysalis has given it size -- this bird is half again
+    zone. The Chrysalis has given it size: this bird is half again
     as large as any hawk you have seen, and considerably less
     interested in avoiding conflict.
   speciesid: 20
