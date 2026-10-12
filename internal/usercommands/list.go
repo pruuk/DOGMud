@@ -112,7 +112,7 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if away := actions.MerchantAwayAsleep(room); away != nil {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> has closed up for the night and gone to bed. `+
-					`Come back in the morning -- or make some noise nearby.`, away.Character.Name))
+					`Come back in the morning, or make some noise nearby.`, away.Character.Name))
 			return true, nil
 		}
 		user.SendText(messaging.CategorySystem, "Visit a merchant to list and buy objects.")

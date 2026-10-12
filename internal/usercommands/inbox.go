@@ -53,7 +53,7 @@ func Inbox(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				// lost; the reader frees space and checks mail again. (The message
 				// body + border were already printed above this block.)
 				user.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`Your pack is too full to receive the <ansi fg="item">%s</ansi> — free some space and check your mail again.`, msg.Item.DisplayName()))
+					fmt.Sprintf(`Your pack is too full to receive the <ansi fg="item">%s</ansi>. Free some space and check your mail again.`, msg.Item.DisplayName()))
 				continue
 			}
 		}

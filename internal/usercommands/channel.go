@@ -84,7 +84,7 @@ func Channels(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			if channels.Enabled(user.GetConfigOption(ch.ConfigKey)) {
 				state = `<ansi fg="green">on</ansi>`
 			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="%s">%s</ansi> — %s`, ch.Color, ch.Name, state))
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="%s">%s</ansi>: %s`, ch.Color, ch.Name, state))
 		}
 		return true, nil
 	}

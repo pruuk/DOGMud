@@ -17,7 +17,7 @@ import (
 
 // shadowSpottedLine is what a shadower reads when it arrives in its quarry's
 // room no longer hidden.
-const shadowSpottedLine = "You've been spotted -- your shadow ends."
+const shadowSpottedLine = "You've been spotted. Your shadow ends."
 
 // RoomChangeShadowFollow runs two passes on every RoomChange.
 //

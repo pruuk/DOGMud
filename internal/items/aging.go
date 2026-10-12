@@ -106,15 +106,15 @@ func GetPhaseDescription(phase AgingPhase, alchemySkill int,
 	if alchemySkill < 30 {
 		switch phase {
 		case PhaseFresh:
-			return "It's still maturing — not yet at its best."
+			return "It's still maturing, not yet at its best."
 		case PhaseFermented:
 			return "It's developing well, nearing its peak."
 		case PhasePeak:
 			return "It's at peak potency."
 		case PhaseDeclining:
-			return "It's beginning to fade — use it soon."
+			return "It's beginning to fade. Use it soon."
 		case PhaseSpoiled:
-			return "It has turned — drinking this would be unwise."
+			return "It has turned. Drinking this would be unwise."
 		}
 		return ""
 	}
@@ -124,7 +124,7 @@ func GetPhaseDescription(phase AgingPhase, alchemySkill int,
 	case PhaseFresh:
 		return "Freshly brewed and still maturing. Give it time."
 	case PhaseFermented:
-		return "Fermenting nicely — it will reach peak soon."
+		return "Fermenting nicely. It will reach peak soon."
 	case PhasePeak:
 		remaining := decay - elapsed
 		total := decay - peak
@@ -136,9 +136,9 @@ func GetPhaseDescription(phase AgingPhase, alchemySkill int,
 		remaining := spoil - elapsed
 		total := spoil - decay
 		if total > 0 && remaining/total > 0.5 {
-			return "Past its peak and declining — still usable for now."
+			return "Past its peak and declining, but still usable for now."
 		}
-		return "Declining rapidly — use it very soon or distill it."
+		return "Declining rapidly. Use it very soon or distill it."
 	case PhaseSpoiled:
 		return "Completely spoiled. Only good for distilling remnants."
 	}

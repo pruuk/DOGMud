@@ -427,7 +427,7 @@ func cmdSetSubmission(user *users.UserRecord, args []string) (bool, error) {
 			if pending != "1" {
 				user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">WARNING:</ansi> Setting your submission policy to`+
 					` <ansi fg="red-bold">lethal</ansi> means your successful submissions will KILL`+
-					` opponents — players included, with full deprogression and corpse loot.`)
+					` opponents, players included, with full deprogression and corpse loot.`)
 				user.SendText(messaging.CategorySystem, "If you're sure, run the command again to confirm.")
 				user.Character.SetMiscData("submission_lethal_pending", "1")
 				return true, nil

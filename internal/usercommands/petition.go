@@ -27,14 +27,14 @@ func Petition(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	rest = strings.TrimSpace(rest)
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: <ansi fg="cyan-bold">petition <message></ansi> — send a message to the staff (harassment, a stuck quest, anything).</ansi>`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: <ansi fg="cyan-bold">petition <message></ansi>: send a message to the staff (harassment, a stuck quest, anything).</ansi>`)
 		return true, nil
 	}
 
 	gp := configs.GetGamePlayConfig()
 
 	if maxLen := int(gp.PetitionMaxLen); maxLen > 0 && len(rest) > maxLen {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">That's a bit long — please keep your petition under %d characters.</ansi>`, maxLen))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">That's a bit long. Please keep your petition under %d characters.</ansi>`, maxLen))
 		return true, nil
 	}
 
@@ -47,7 +47,7 @@ func Petition(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	onCooldown := seen && cd > 0 && nowRound-last < cd
 	petitionCooldownMu.Unlock()
 	if onCooldown {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">You've just sent a petition — give the staff a moment before sending another.</ansi>`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">You've just sent a petition. Give the staff a moment before sending another.</ansi>`)
 		return true, nil
 	}
 
@@ -70,7 +70,7 @@ func Petition(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	user.SendText(messaging.CategorySystem, `<ansi fg="green">Your petition has been sent to the staff. They'll review it as soon as they can.</ansi>`)
 
 	// Notify online staff.
-	alert := fmt.Sprintf(`<ansi fg="alert-5">[PETITION #%d]</ansi> <ansi fg="username">%s</ansi> (%s): %s <ansi fg="black-bold">— type 'petitions' to review.</ansi>`,
+	alert := fmt.Sprintf(`<ansi fg="alert-5">[PETITION #%d]</ansi> <ansi fg="username">%s</ansi> (%s): %s <ansi fg="black-bold">Type 'petitions' to review.</ansi>`,
 		p.Id, user.Username, room.Title, rest)
 	for _, staff := range users.GetAllActiveUsers() {
 		if staff.Role != users.RoleUser {

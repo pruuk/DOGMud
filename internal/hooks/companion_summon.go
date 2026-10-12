@@ -99,7 +99,7 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 	// ── 5. Spawn and register ───────────────────────────────────────────
 	mob := mobs.NewMobByIdFresh(mobs.MobId(spellData.SummonMobId), room.RoomId, pool)
 	if mob == nil {
-		user.SendText(messaging.CategorySpellDisruption, "The summoning fails — something is wrong.")
+		user.SendText(messaging.CategorySpellDisruption, "The summoning fails. Something is wrong.")
 		return false
 	}
 	room.AddMob(mob.InstanceId)
@@ -237,7 +237,7 @@ func selectRaiseCorpse(corpses []rooms.Corpse, nameFilter string, targetIndex, m
 func raiseFailureMessage(reason raiseSkipReason, nameFilter string) string {
 	switch reason {
 	case raiseHasLoot:
-		return "Those remains still hold spoils — clear the loot from them first, then raise what's left."
+		return "Those remains still hold spoils. Clear the loot from them first, then raise what's left."
 	case raiseTooWeak:
 		return "Those remains are too faint to hold a bound spirit."
 	case raiseWasCharmed:

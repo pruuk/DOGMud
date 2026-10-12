@@ -123,7 +123,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 					nameTag = "mobname"
 				}
 				actor.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`You read <ansi fg="%s">%s</ansi>'s sign in the scuffed ground -- close, here in the open with you.`, nameTag, name))
+					fmt.Sprintf(`You read <ansi fg="%s">%s</ansi>'s sign in the scuffed ground. It is close, here in the open with you.`, nameTag, name))
 			}
 			return result
 		}

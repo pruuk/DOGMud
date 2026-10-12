@@ -41,7 +41,7 @@ func resolveEnchantSlot(equipment *characters.Worn, targetType string, specifier
 		// Multiple candidates — tell the player to specify
 		lines := "Which slot? You have multiple options:\n"
 		for i, c := range candidates {
-			lines += fmt.Sprintf("  %s#%d — %s\n",
+			lines += fmt.Sprintf("  %s#%d: %s\n",
 				slotSpecName(targetType), i+1, c.Item.DisplayName())
 		}
 		return "", nil, lines

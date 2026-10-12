@@ -356,7 +356,7 @@ func tickAmbientPotions(user *users.UserRecord, now uint64) {
 	if _, ok := characters.MiscRound(c.GetMiscData("pinnacle_bandolier_attune_round")); ok {
 		if newlyApplied {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="magenta">The %s settles into resonance — its stored virtues suffuse you.</ansi>`,
+				`<ansi fg="magenta">The %s settles into resonance. Its stored virtues suffuse you.</ansi>`,
 				spec.Name))
 		}
 		c.SetMiscData("pinnacle_bandolier_attune_round", nil)

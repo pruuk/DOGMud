@@ -48,7 +48,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	if room.MatchesSealedCrate(args[0]) {
-		user.SendText(messaging.CategorySystem, `The shipping crate has no lock to pick — it's sealed by the caravan's binding, not by mechanism.`)
+		user.SendText(messaging.CategorySystem, `The shipping crate has no lock to pick. It's sealed by the caravan's binding, not by mechanism.`)
 		return true, nil
 	}
 

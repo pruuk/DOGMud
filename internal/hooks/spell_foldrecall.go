@@ -63,7 +63,7 @@ func resolveFoldRecall(actor actions.Actor) {
 	currentRoomId := char.RoomId
 
 	if anchorRoom <= 0 || anchorRoom == currentRoomId {
-		actor.SendText(messaging.CategorySpellFold, "The fold collapses — no valid anchor found.")
+		actor.SendText(messaging.CategorySpellFold, "The fold collapses. No valid anchor found.")
 		return
 	}
 
@@ -83,7 +83,7 @@ func resolveFoldRecall(actor actions.Actor) {
 	// Move the actor first; only broadcast on success so a failed teleport
 	// doesn't leave the departure room thinking the actor vanished.
 	if !teleportActor(actor, anchorRoom) {
-		actor.SendText(messaging.CategorySpellFold, "The fold collapses — no valid anchor found.")
+		actor.SendText(messaging.CategorySpellFold, "The fold collapses. No valid anchor found.")
 		return
 	}
 
