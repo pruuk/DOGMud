@@ -99,15 +99,6 @@ PlayerMutationMilestone-Global:
   - "You hear about this? {desc}"
   - "This is the kind of thing people remember. {desc}"
 
-IronwindEvent-Regional:
-  - "Something stirring on the steppe east of town. {desc}"
-  - "Word from the frontier -- {desc} The steppe is restless."
-  - "Traders coming in from the east say {desc}"
-
-IronwindEvent-Global:
-  - "The whole steppe is talking about this. {desc}"
-  - "This one came from the Ironwind frontier. {desc}"
-
 PlayerDiedPvE-Local-Local:
   - "I heard some fool got themselves killed right near here. {desc}"
   - "Not far from where we sit, {desc} did someone in."

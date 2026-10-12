@@ -5,11 +5,6 @@
 # "<the stand-in event>". The pick itself (util.Rand) is not frozen; no test can pin it.
 # dimensions: key x variant index
 
-gossip|IronwindEvent-Global|0 => The whole steppe is talking about this. <the stand-in event>
-gossip|IronwindEvent-Global|1 => This one came from the Ironwind frontier. <the stand-in event>
-gossip|IronwindEvent-Regional|0 => Something stirring on the steppe east of town. <the stand-in event>
-gossip|IronwindEvent-Regional|1 => Word from the frontier -- <the stand-in event> The steppe is restless.
-gossip|IronwindEvent-Regional|2 => Traders coming in from the east say <the stand-in event>
 gossip|MobCraftedRare-Global|0 => Now THIS is worth mentioning. <the stand-in event>
 gossip|MobCraftedRare-Global|1 => Everyone is talking about it. <the stand-in event>
 gossip|MobCraftedRare-Global|2 => I have not heard of work like this in years. <the stand-in event>

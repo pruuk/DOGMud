@@ -8,7 +8,7 @@ facts:
         - thornwall
       status: active
     - id: stillwater-lake-decline
-      description: Boats return half-empty from the lake; nets come up shredded by something out of the caves.
+      description: boats return half-empty from the lake; nets come up shredded by something out of the caves.
       significance: 2
       declared_round: 0
       tags:
@@ -32,7 +32,7 @@ facts:
         - lore
       status: active
     - id: stillwater-cave-creatures
-      description: Drowned hunters and skitter-shrimp from the deep caves have pushed into the shallows.
+      description: drowned hunters and skitter-shrimp from the deep caves have pushed into the shallows.
       significance: 2
       declared_round: 0
       tags:
@@ -56,7 +56,7 @@ facts:
         - road
       status: active
     - id: thornwall-hard-times
-      description: Taxes bite and folk grumble about paying for protection; trade is tight in the city.
+      description: taxes bite and folk grumble about paying for protection; trade is tight in the city.
       significance: 1
       declared_round: 0
       tags:
@@ -80,7 +80,7 @@ facts:
         - trade
       status: active
     - id: ashwick-deep-woods-wolves
-      description: Wolves have been prowling out of the Deep Woods, taking livestock from the outlying farms.
+      description: wolves have been prowling out of the Deep Woods, taking livestock from the outlying farms.
       significance: 2
       declared_round: 0
       tags:
@@ -96,7 +96,7 @@ facts:
         - people
       status: active
     - id: watchers-road-bandits
-      description: Bandits have grown bold on the trade roads; travelers and caravans cross with one hand on their purse.
+      description: bandits have grown bold on the trade roads; travelers and caravans cross with one hand on their purse.
       significance: 2
       declared_round: 0
       tags:
@@ -105,7 +105,7 @@ facts:
         - bandits
       status: active
     - id: watchers-toll-grumbling
-      description: Folk grumble over the bridge toll, though the collector only does as he is bid.
+      description: folk grumble over the bridge toll, though the collector only does as he is bid.
       significance: 1
       declared_round: 0
       tags:
@@ -122,7 +122,7 @@ facts:
         - crisis
       status: active
     - id: ironwind-steppe-drying
-      description: Water and game grow scarce on the steppe; every creature on it is pressed and hungry.
+      description: water and game grow scarce on the steppe; every creature on it is pressed and hungry.
       significance: 2
       declared_round: 0
       tags:
