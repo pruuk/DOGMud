@@ -1912,7 +1912,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		attackerMsg += fmt.Sprintf(` <ansi fg="white">[%s was blocked]</ansi>`, GetDamageDescription(attackSourceReduction, sourceChar.HealthMax.Value))
 	}
 
-	result.sendSwingToSource(hitCat, string(attackerMsg))
+	result.sendSwingToSource(hitCat, attackerMsg)
 
 	// Send to victim
 	defenderMsg := string(toDefenderMsg)
@@ -1920,7 +1920,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		defenderMsg += fmt.Sprintf(` <ansi fg="red">[you blocked %s]</ansi>`, GetDamageDescription(attackTargetReduction, targetChar.HealthMax.Value))
 	}
 
-	result.sendSwingToTarget(hitCat, string(defenderMsg))
+	result.sendSwingToTarget(hitCat, defenderMsg)
 
 	// Send to room. A deflected swing sends none: the defence room line from
 	// sendDefenseMessages already narrated it, and room lines carry no damage.
