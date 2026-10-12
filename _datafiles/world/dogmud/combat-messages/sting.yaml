@@ -391,18 +391,18 @@ options:
         - 'You whirl and <ansi fg="cyan-bold">IMPALE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Lunging forward, you deliver a <ansi fg="cyan-bold">PERFECT STING</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You flow like venom and your barb <ansi fg="cyan-bold">PENETRATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - you <ansi fg="cyan-bold">INJECT</ansi> with full force!'
+        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely, and you <ansi fg="cyan-bold">INJECT</ansi> with full force!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS STRIKE</ansi> through <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - 'Your tactical brilliance creates the perfect opening - you <ansi fg="cyan-bold">EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your tactical brilliance creates the perfect opening, and you <ansi fg="cyan-bold">EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> sting!'
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT INJECTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING PLUNGE</ansi> from the perfect angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">PERFORATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with lethal precision!'
-        - 'Your positioning is flawless - you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
+        - 'Your positioning is flawless, and you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Your unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL IMPALEMENT</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">DRIVE THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly!'
-        - 'The tide of battle favors you - your stinger <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'The tide of battle favors you, and your stinger <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY PIERCES</ansi> you with their <ansi fg="item">{itemname}</ansi>!'
@@ -413,15 +413,15 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> whirls and their barb <ansi fg="cyan-bold">IMPALES</ansi> you!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and delivers a <ansi fg="cyan-bold">PERFECT STING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like venom and <ansi fg="cyan-bold">PENETRATES</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens you completely - they <ansi fg="cyan-bold">INJECT</ansi> with full force!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens you completely, and they <ansi fg="cyan-bold">INJECT</ansi> with full force!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your every move and delivers a <ansi fg="cyan-bold">FLAWLESS STRIKE</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening - you are <ansi fg="cyan-bold">EVISCERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening, and you are <ansi fg="cyan-bold">EVISCERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> sting!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS STRIKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING PLUNGE</ansi> from the perfect angle!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">PERFORATES</ansi> you with precision!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL IMPALEMENT</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">DRIVES THROUGH</ansi> you utterly!'
         - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their stinger <ansi fg="cyan-bold">DECIMATES</ansi> you!'
@@ -457,13 +457,13 @@ options:
         - 'You overcommit to your plunge and <ansi fg="red-bold">FUMBLE</ansi>, nearly losing your balance!'
         - 'You stumble badly and <ansi fg="red-bold">FUMBLE</ansi> your <ansi fg="item">{itemname}</ansi> uselessly!'
         expert:
-        - 'Your tactical calculation fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical calculation fails catastrophically, and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your sting!'
         - 'Your feint backfires and you <ansi fg="red-bold">FUMBLE</ansi> badly!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter forces you to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Your masterful strike is disrupted - you <ansi fg="red-bold">FUMBLE</ansi> the injection!'
+        - 'Your masterful strike is disrupted, and you <ansi fg="red-bold">FUMBLE</ansi> the injection!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> sting <ansi fg="red-bold">FUMBLES</ansi> awkwardly, barb catching air!'
@@ -477,7 +477,7 @@ options:
         master:
         - 'Your defense forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful strike is disrupted - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful strike is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -485,10 +485,10 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their sting at <ansi fg="{acteetype}">{actee}</ansi> in a clumsy manner!'
         - '<ansi fg="{actortype}">{actor}</ansi> loses control and their plunge <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> feint backfires catastrophically!'
         master:
         - '<ansi fg="{acteetype}">{actee}''s</ansi> defense forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> perfect strike is disrupted - a <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> perfect strike is disrupted: a <ansi fg="red-bold">FUMBLE</ansi>!'

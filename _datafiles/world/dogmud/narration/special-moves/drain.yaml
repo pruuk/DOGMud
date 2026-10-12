@@ -25,8 +25,8 @@ events:
   # hit_heal and drain/partial_heal entries).
   hit_heal:
     actor:
-      - '<ansi fg="green">Their stolen vitality flows into you — {heal}.</ansi>'
-      - '<ansi fg="green">Stolen life-force surges through you — {heal}.</ansi>'
+      - '<ansi fg="green">Their stolen vitality flows into you: {heal}.</ansi>'
+      - '<ansi fg="green">Stolen life-force surges through you: {heal}.</ansi>'
       - '<ansi fg="green">You feel {heal} as their warmth becomes yours.</ansi>'
   partial:
     actor:

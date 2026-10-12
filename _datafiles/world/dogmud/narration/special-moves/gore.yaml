@@ -10,7 +10,7 @@ events:
       - 'Your horns catch {actee} and you heave them backward off their feet! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} charges into you, driving you to the ground! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} lowers their head and charges you — the impact sends you sprawling! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} lowers their head and charges you. The impact sends you sprawling! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} drives their horns into you with shattering force and hurls you to the ground! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s charge catches you and tosses you off your feet! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s horns catch you and they heave you backward off your feet! (<ansi fg="damage">{damage}</ansi>)'
@@ -61,7 +61,7 @@ events:
       - 'You charge at {actee}, but they sidestep the gore!'
       - 'Your charge at {actee} misses as they sidestep your horns!'
       - 'You thunder toward {actee} but they dodge your gore!'
-      - 'Your horned charge carries you past {actee} — they step aside!'
+      - 'Your horned charge carries you past {actee}. They step aside!'
     actee:
       - '{actor} charges at you, but you sidestep the gore!'
       - '{actor} charges you but you sidestep their horns!'

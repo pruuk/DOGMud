@@ -367,18 +367,18 @@ options:
         - 'You lunge and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">FEED</ansi> on <ansi fg="{acteetype}">{actee}</ansi> completely!'
         - 'Striking while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT DRAIN</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You flow like a predator and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">LEECH</ansi> <ansi fg="{acteetype}">{actee}</ansi> dry!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - you <ansi fg="cyan-bold">ANNIHILATE</ansi> their vitality from your {stance} stance!'
+        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely, and you<ansi fg="cyan-bold">ANNIHILATE</ansi> their vitality from your {stance} stance!'
         - 'Reading every breath, you deliver a <ansi fg="cyan-bold">FLAWLESS DRAIN</ansi> through <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - 'Your tactical strike creates the perfect opening - you <ansi fg="cyan-bold">DRAIN</ansi> <ansi fg="{acteetype}">{actee}</ansi> with apex fury!'
+        - 'Your tactical strike creates the perfect opening, and you<ansi fg="cyan-bold">DRAIN</ansi> <ansi fg="{acteetype}">{actee}</ansi> with apex fury!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> drain!'
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT FEEDING</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING DRAIN</ansi> from the perfect angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">LEECH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with masterful, brutal hunger!'
-        - 'Your positioning is flawless - your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s vitality!'
+        - 'Your positioning is flawless, and your<ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s vitality!'
         - 'Your unstoppable hunger culminates in a <ansi fg="cyan-bold">CRITICAL DRAIN</ansi>!'
         - 'Channeling all focus, you <ansi fg="cyan-bold">DRINK DEEP</ansi> from <ansi fg="{acteetype}">{actee}</ansi> with devastating force!'
-        - 'The tide of battle favors you - your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s vitality!'
+        - 'The tide of battle favors you, and your<ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s vitality!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY DRAIN</ansi> you!'
@@ -389,15 +389,15 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">FEED</ansi> on you utterly!'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT DRAIN</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like a predator and <ansi fg="cyan-bold">LEECHES</ansi> you dry!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely - your vitality is <ansi fg="cyan-bold">ANNIHILATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely, and yourvitality is <ansi fg="cyan-bold">ANNIHILATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your every breath and delivers a <ansi fg="cyan-bold">FLAWLESS DRAIN</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical strike creates the opening - you are <ansi fg="cyan-bold">DRAINED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical strike creates the opening, and youare <ansi fg="cyan-bold">DRAINED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your aura and delivers a <ansi fg="cyan-bold">FLAWLESS DRAIN</ansi>!'
         - 'While {position}, {momentum}, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT FEEDING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING DRAIN</ansi> from the perfect angle!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">LEECHES</ansi> you with brutality!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless - your vitality is <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless, and yourvitality is <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s unstoppable hunger ends in a <ansi fg="cyan-bold">CRITICAL DRAIN</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all focus and <ansi fg="cyan-bold">DRINKS DEEP</ansi> from you utterly!'
         - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATE</ansi> your vitality!'
@@ -433,13 +433,13 @@ options:
         - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> awkwardly, leaving you wide open!'
         - 'You lose your balance and your drain <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
-        - 'Your tactical drain fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical drain fails catastrophically, and you<ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the reach and <ansi fg="red-bold">FUMBLE</ansi> your drain!'
         - 'Your feint backfires and you <ansi fg="red-bold">FUMBLE</ansi> the lunge badly!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected sidestep forces you to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Your masterful drain is disrupted - you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
+        - 'Your masterful drain is disrupted, and you<ansi fg="red-bold">FUMBLE</ansi> the execution!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s lunge <ansi fg="red-bold">FUMBLES</ansi> as their <ansi fg="item">{itemname}</ansi> grasp nothing!'
@@ -453,7 +453,7 @@ options:
         master:
         - 'Your sidestep forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the drain!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful drain is disrupted - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful drain is disrupted, and they<ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLE</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -461,10 +461,10 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their lunge in a clumsy, lurching stumble!'
         - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and their drain <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails, and they<ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the reach and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s feint backfires catastrophically!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s sidestep forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s perfect drain is disrupted - a <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s perfect drain is disrupted: a <ansi fg="red-bold">FUMBLE</ansi>!'

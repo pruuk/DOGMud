@@ -15,7 +15,7 @@ events:
       - '<ansi fg="yellow-bold">{actor} hurls a <ansi fg="itemname">{item}</ansi> into the fray!</ansi>'
   fumble:
     actor:
-      - '<ansi fg="red-bold">Your throw goes horribly wrong — the projectile detonates in your hand!</ansi>'
+      - '<ansi fg="red-bold">Your throw goes horribly wrong. The projectile detonates in your hand!</ansi>'
     observer:
       - '<ansi fg="red">{actor}''s throw backfires spectacularly!</ansi>'
   # The interrupted party is a mob with no client; its name rides the actor
@@ -23,7 +23,7 @@ events:
   # {actee} span.
   cast_interrupt:
     actor:
-      - '<ansi fg="cyan-bold">The blast shatters {actee_plain}''s concentration -- its spell collapses!</ansi>'
+      - '<ansi fg="cyan-bold">The blast shatters {actee_plain}''s concentration and its spell collapses!</ansi>'
     observer:
       - '<ansi fg="cyan">{actee_plain}''s spell collapses as the blast strikes!</ansi>'
   # Actor only: the room's line for a defended throw always comes from the

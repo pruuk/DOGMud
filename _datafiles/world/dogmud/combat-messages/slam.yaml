@@ -217,7 +217,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> feints and grazes <ansi fg="{acteetype}">{actee}</ansi> with a test slam.'
         - '<ansi fg="{actortype}">{actor}</ansi> tests <ansi fg="{acteetype}">{actee}</ansi>''s stance with a probing slam.'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi> draws the guard and barely hits with careful aim.'
+        - '<ansi fg="{actortype}">{actor}</ansi> draws the guard and lands a light, careful hit.'
         - '<ansi fg="{actortype}">{actor}</ansi> presses forward with a measured glancing blow.'
         - '<ansi fg="{actortype}">{actor}</ansi> dances in while flicking bulk at <ansi fg="{acteetype}">{actee}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> finds a small opening and delivers a controlled nudge.'

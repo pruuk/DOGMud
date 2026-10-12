@@ -296,7 +296,7 @@ options:
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS SWEEP</ansi>!'
         - 'Timing your strike to the beat of their footwork, you land a <ansi fg="cyan-bold">TEXTBOOK CRITICAL</ansi>!'
         master:
-        - 'Your tactical brilliance creates the perfect opening - you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your tactical brilliance creates the perfect opening, and you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi>!'
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">CRUSH THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly!'
@@ -312,7 +312,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> reads your timing perfectly and <ansi fg="cyan-bold">DEVASTATES</ansi> you with a flawless sweep!'
         - 'You barely register the feint before <ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">ANNIHILATES</ansi> you!'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance - you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance: you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s staff moves like an extension of their will as you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - 'With effortless precision, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> against you!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">CRUSHES THROUGH</ansi> you!'
@@ -341,7 +341,7 @@ options:
         - 'You overextend your sweep and <ansi fg="red-bold">FUMBLE</ansi>, nearly dropping your weapon!'
         - 'You swing too hard and <ansi fg="red-bold">FUMBLE</ansi>, the <ansi fg="item">{itemname}</ansi> slipping in your sweaty grip!'
         expert:
-        - 'Your tactical sweep fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical sweep fails catastrophically, and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your strike!'
         - 'Your timing slips for just a moment and you <ansi fg="red-bold">FUMBLE</ansi> the exchange!'
         - 'You overcommit to the feint and <ansi fg="red-bold">FUMBLE</ansi>, staff twisting awkwardly in your hands!'
@@ -357,7 +357,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> overswings and <ansi fg="red-bold">FUMBLES</ansi>, the <ansi fg="item">{itemname}</ansi> nearly slipping from their hands!'
         - 'You watch <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLE</ansi> as their staff twists wide!'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical sweep fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical sweep fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges and <ansi fg="red-bold">FUMBLES</ansi> their strike!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s timing slips and they <ansi fg="red-bold">FUMBLE</ansi> right in front of you!'
         - 'You spot the opening as <ansi fg="{actortype}">{actor}</ansi> overcommits and <ansi fg="red-bold">FUMBLES</ansi>!'
@@ -373,7 +373,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their sweep against <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> overswings wildly and <ansi fg="red-bold">FUMBLES</ansi> the <ansi fg="item">{itemname}</ansi>!'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical sweep fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical sweep fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s timing slips and the sweep <ansi fg="red-bold">FUMBLES</ansi> wide of <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> overcommits to the feint and <ansi fg="red-bold">FUMBLES</ansi>, staff twisting awkwardly in view of <ansi fg="{acteetype}">{actee}</ansi>!'

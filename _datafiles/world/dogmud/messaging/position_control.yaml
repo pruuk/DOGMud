@@ -31,7 +31,7 @@ gradient_messages:
       actor: "You feel your {position} slipping."
       observer: "{actor} struggles to maintain {position}."
     neutral:
-      actor: "The {position} is even — it's all up for grabs."
+      actor: "The {position} is even, so it's all up for grabs."
       observer: "The {position} between {actor} and {actee} is even."
     becoming_controlled:
       actor: "You're about to lose the {position}."
@@ -42,10 +42,10 @@ gradient_messages:
 
   actee:
     losing_control:
-      actor: "You feel an opening — they're losing the position."
+      actor: "You feel an opening. They're losing the position."
       observer: ""
     neutral:
-      actor: "The {position} is even — it's all up for grabs."
+      actor: "The {position} is even, so it's all up for grabs."
       observer: ""
     becoming_controlled:
       actor: "You're starting to control the position!"
@@ -63,7 +63,7 @@ transition_messages:
     observer: ""
 
 stamina_warning:
-  actor: "You're getting gassed — your {position} is hard to maintain."
+  actor: "You're getting gassed, and your {position} is hard to maintain."
   observer: "{actor} looks exhausted in the {position}."
 
 # Submission attempt + resolution templates (chunk 4d T11).
@@ -83,9 +83,9 @@ stamina_warning:
 submission:
   opening:
     armbar:
-      actor: "You isolate {actee}'s arm and crank — they
+      actor: "You isolate {actee}'s arm and crank. They
         feel the joint go past its limit!"
-      actee: "{actor} isolates your arm and cranks — pain
+      actee: "{actor} isolates your arm and cranks. Pain
         shoots through the elbow!"
       observer: "{actor} isolates {actee}'s arm in a brutal
         armbar."
@@ -96,8 +96,8 @@ submission:
         The world begins to dim."
       observer: "{actor} sinks a rear-naked choke on {actee}."
     triangle:
-      actor: "Your legs lock around {actee}'s neck and arm
-        — the squeeze is on."
+      actor: "Your legs lock around {actee}'s neck and arm.
+        The squeeze is on."
       actee: "{actor}'s legs trap your neck and one arm.
         You can barely breathe."
       observer: "{actor} locks a triangle choke around
@@ -117,8 +117,8 @@ submission:
       observer: "{actor} cranks an americana on {actee}'s
         shoulder."
     omoplata:
-      actor: "You trap {actee}'s shoulder with your leg
-        — the angle is impossible."
+      actor: "You trap {actee}'s shoulder with your leg.
+        The angle is impossible."
       actee: "{actor}'s leg traps your shoulder at an
         impossible angle."
       observer: "{actor} locks an omoplata on {actee}'s
@@ -131,11 +131,11 @@ submission:
       observer: "{actor} sinks an anaconda choke on {actee}."
 
   escape_bad:
-    actor: "Your submission attempt overcommits — {actee}
+    actor: "Your submission attempt overcommits. {actee}
       exploits the opening and breaks free!"
     actee: "You feel {actor} overcommit on the submission.
       You twist free and they hit the ground!"
-    observer: "{actor} overcommits on the submission — {actee}
+    observer: "{actor} overcommits on the submission. {actee}
       escapes the grapple entirely."
 
   neutral:
@@ -186,6 +186,6 @@ submission:
       {actee} is dead."
 
   crit_flag:
-    actor: "With brutal precision — "
+    actor: "With brutal precision. "
     actee: ""
     observer: ""

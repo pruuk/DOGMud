@@ -284,7 +284,7 @@ options:
         - 'You slip past <ansi fg="{acteetype}">{actee}</ansi>''s guard and drive a <ansi fg="cyan-bold">TEXTBOOK KNOCKOUT BLOW</ansi> into their {bodypart}!'
         master:
         - 'You flow through <ansi fg="{acteetype}">{actee}</ansi>''s defenses and <ansi fg="cyan-bold">OBLITERATE</ansi> them with a devastating combination!'
-        - 'Your {stance} mastery finds the perfect angle - you <ansi fg="cyan-bold">ANNIHILATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your {stance} mastery finds the perfect angle, and you <ansi fg="cyan-bold">ANNIHILATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Reading every twitch, you deliver a <ansi fg="cyan-bold">FLAWLESS CRITICAL STRIKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
         - 'You seize the moment and <ansi fg="cyan-bold">DEMOLISH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with a perfectly placed strike!'
       actee:
@@ -333,9 +333,9 @@ options:
         - 'Your timing breaks and your attack <ansi fg="red-bold">FUMBLES</ansi> badly!'
         - 'You plant your foot wrong mid strike and your attack <ansi fg="red-bold">FUMBLES</ansi> away!'
         master:
-        - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter disrupts your flow - you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter disrupts your flow, and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect technique, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'A subtle shift from <ansi fg="{acteetype}">{actee}</ansi> breaks your rhythm - you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'A subtle shift from <ansi fg="{acteetype}">{actee}</ansi> breaks your rhythm, and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You read <ansi fg="{acteetype}">{actee}</ansi> a heartbeat too late and your technique <ansi fg="red-bold">FUMBLES</ansi>!'
       actee:
         beginner:
@@ -349,7 +349,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s timing slips mid strike and they <ansi fg="red-bold">FUMBLE</ansi> badly!'
         - '<ansi fg="{actortype}">{actor}</ansi> plants a foot wrong and their attack <ansi fg="red-bold">FUMBLES</ansi> away!'
         master:
-        - 'Your defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s flow - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s flow, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
         - 'A subtle shift from you breaks <ansi fg="{actortype}">{actor}</ansi>''s rhythm and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads you a heartbeat too late and their technique <ansi fg="red-bold">FUMBLES</ansi>!'
@@ -365,7 +365,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s timing slips mid strike and the attack <ansi fg="red-bold">FUMBLES</ansi> badly!'
         - '<ansi fg="{actortype}">{actor}</ansi> plants a foot wrong and their attack <ansi fg="red-bold">FUMBLES</ansi> away!'
         master:
-        - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter disrupts <ansi fg="{actortype}">{actor}</ansi>''s flow - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter disrupts <ansi fg="{actortype}">{actor}</ansi>''s flow, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{acteetype}">{actee}</ansi>''s subtle shift breaks <ansi fg="{actortype}">{actor}</ansi>''s rhythm and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi> a heartbeat too late and their technique <ansi fg="red-bold">FUMBLES</ansi>!'

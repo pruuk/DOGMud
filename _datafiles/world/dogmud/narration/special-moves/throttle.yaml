@@ -30,7 +30,7 @@ events:
       - 'Your choke breaks {actee}''s concentration, and their spell collapses!'
       - '{actee}''s spell collapses as they fight for air!'
     actee:
-      - '{actor}''s choke shatters your concentration — your spell collapses!'
+      - '{actor}''s choke shatters your concentration. Your spell collapses!'
       - 'Your spell collapses as you fight for air!'
     observer:
       - '{actor}''s choke breaks {actee}''s concentration, and the spell collapses!'

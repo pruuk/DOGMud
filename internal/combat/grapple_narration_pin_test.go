@@ -29,7 +29,7 @@ func TestGrappleNarrationPinnedToOriginalLiterals(t *testing.T) {
 
 	t.Run("crit_failure", func(t *testing.T) {
 		wantActor := `<ansi fg="red-bold">You overextend badly and fall to the ground!</ansi>`
-		wantActee := `<ansi fg="yellow-bold">Your opponent overextends and falls - you see an opening!</ansi>`
+		wantActee := `<ansi fg="yellow-bold">Your opponent overextends and falls. You see an opening!</ansi>`
 		wantObserver := `<ansi fg="combat">The failed grapple sends them sprawling!</ansi>`
 
 		attacker := &characters.Character{Name: "Attacker", Position: position.NewMachine()}

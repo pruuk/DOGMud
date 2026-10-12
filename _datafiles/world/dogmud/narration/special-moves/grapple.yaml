@@ -27,7 +27,7 @@ events:
     actor:
       - '<ansi fg="red-bold">You overextend badly and fall to the ground!</ansi>'
     actee:
-      - '<ansi fg="yellow-bold">Your opponent overextends and falls - you see an opening!</ansi>'
+      - '<ansi fg="yellow-bold">Your opponent overextends and falls. You see an opening!</ansi>'
     observer:
       - '<ansi fg="combat">The failed grapple sends them sprawling!</ansi>'
   disarm:
@@ -42,7 +42,7 @@ events:
   # success event already narrated to them.
   prone_penalty:
     actor:
-      - '<ansi fg="yellow">{actee_plain} was already prone - they had little chance to resist!</ansi>'
+      - '<ansi fg="yellow">{actee_plain} was already prone, and they had little chance to resist!</ansi>'
   defense_exposed:
     actor:
       - '<ansi fg="red">Your failed attempt leaves you exposed!</ansi>'

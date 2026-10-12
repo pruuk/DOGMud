@@ -7,14 +7,14 @@ events:
       - 'Your claws rake across {actee}, opening raking gashes that weep! (<ansi fg="damage">{damage}</ansi>)'
       - 'You slash {actee} with raking claws, leaving bleeding wounds! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your raking strike tears into {actee}! (<ansi fg="damage">{damage}</ansi>)'
-      - 'You drive your claws across {actee}''s flesh — blood wells up! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You drive your claws across {actee}''s flesh and blood wells up! (<ansi fg="damage">{damage}</ansi>)'
       - 'A vicious rake of your claws shreds {actee}! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor}''s claws rake you, opening bleeding wounds! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} rakes their claws across you, opening bleeding wounds! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor} slashes you with raking claws! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s raking strike tears into you! (<ansi fg="damage">{damage}</ansi>)'
-      - '{actor} drives their claws across your flesh — you bleed! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} drives their claws across your flesh and you bleed! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s vicious rake of claws shreds you! (<ansi fg="damage">{damage}</ansi>)'
     observer:
       - '{actor} rakes their claws across {actee}!'

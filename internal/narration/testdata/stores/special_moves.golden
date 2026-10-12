@@ -70,11 +70,11 @@ drain|hit|4|actor= You tear into <ansi fg="username">ACTEE</ansi> and feed, grow
 drain|hit|4|actee= <ansi fg="mobname">ACTOR</ansi> tears into you and feeds, growing stronger as you weaken! (<ansi fg="damage">DAMAGE</ansi>)
 drain|hit|4|observer= <ansi fg="mobname">ACTOR</ansi> tears into <ansi fg="username">ACTEE</ansi> and feeds hungrily!
 drain|hit|4|remote_observer= 
-drain|hit_heal|0|actor= <ansi fg="green">Their stolen vitality flows into you — {heal}.</ansi>
+drain|hit_heal|0|actor= <ansi fg="green">Their stolen vitality flows into you: {heal}.</ansi>
 drain|hit_heal|0|actee= 
 drain|hit_heal|0|observer= 
 drain|hit_heal|0|remote_observer= 
-drain|hit_heal|1|actor= <ansi fg="green">Stolen life-force surges through you — {heal}.</ansi>
+drain|hit_heal|1|actor= <ansi fg="green">Stolen life-force surges through you: {heal}.</ansi>
 drain|hit_heal|1|actee= 
 drain|hit_heal|1|observer= 
 drain|hit_heal|1|remote_observer= 
@@ -143,7 +143,7 @@ gore|knockdown|0|actee= <ansi fg="mobname">ACTOR</ansi> charges into you, drivin
 gore|knockdown|0|observer= <ansi fg="mobname">ACTOR</ansi> charges into <ansi fg="username">ACTEE</ansi> and hurls them to the ground!
 gore|knockdown|0|remote_observer= 
 gore|knockdown|1|actor= You lower your head and charge <ansi fg="username">ACTEE</ansi>, driving your horns in and sending them flying! (<ansi fg="damage">DAMAGE</ansi>)
-gore|knockdown|1|actee= <ansi fg="mobname">ACTOR</ansi> lowers their head and charges you — the impact sends you sprawling! (<ansi fg="damage">DAMAGE</ansi>)
+gore|knockdown|1|actee= <ansi fg="mobname">ACTOR</ansi> lowers their head and charges you. The impact sends you sprawling! (<ansi fg="damage">DAMAGE</ansi>)
 gore|knockdown|1|observer= <ansi fg="mobname">ACTOR</ansi> charges <ansi fg="username">ACTEE</ansi> and hurls them to the ground!
 gore|knockdown|1|remote_observer= 
 gore|knockdown|2|actor= Your charge slams into <ansi fg="username">ACTEE</ansi> with bone-jarring force, hurling them to the ground! (<ansi fg="damage">DAMAGE</ansi>)
@@ -170,7 +170,7 @@ gore|miss|2|actor= You thunder toward <ansi fg="username">ACTEE</ansi> but they 
 gore|miss|2|actee= <ansi fg="mobname">ACTOR</ansi> thunders toward you, but you dodge the gore!
 gore|miss|2|observer= <ansi fg="mobname">ACTOR</ansi> thunders toward <ansi fg="username">ACTEE</ansi>, who dodges the gore!
 gore|miss|2|remote_observer= 
-gore|miss|3|actor= Your horned charge carries you past <ansi fg="username">ACTEE</ansi> — they step aside!
+gore|miss|3|actor= Your horned charge carries you past <ansi fg="username">ACTEE</ansi>. They step aside!
 gore|miss|3|actee= <ansi fg="mobname">ACTOR</ansi>'s horned charge carries them past you as you step aside!
 gore|miss|3|observer= <ansi fg="mobname">ACTOR</ansi>'s horned charge carries them past <ansi fg="username">ACTEE</ansi>, who steps aside!
 gore|miss|3|remote_observer= 
@@ -187,7 +187,7 @@ gore|partial|2|actee= <ansi fg="mobname">ACTOR</ansi> thunders toward you; you d
 gore|partial|2|observer= <ansi fg="mobname">ACTOR</ansi> charges <ansi fg="username">ACTEE</ansi>, who dodges the worst of it but still gets caught by the horns!
 gore|partial|2|remote_observer= 
 grapple|crit_failure|0|actor= <ansi fg="red-bold">You overextend badly and fall to the ground!</ansi>
-grapple|crit_failure|0|actee= <ansi fg="yellow-bold">Your opponent overextends and falls - you see an opening!</ansi>
+grapple|crit_failure|0|actee= <ansi fg="yellow-bold">Your opponent overextends and falls. You see an opening!</ansi>
 grapple|crit_failure|0|observer= <ansi fg="combat">The failed grapple sends them sprawling!</ansi>
 grapple|crit_failure|0|remote_observer= 
 grapple|defense_exposed|0|actor= <ansi fg="red">Your failed attempt leaves you exposed!</ansi>
@@ -206,7 +206,7 @@ grapple|fail|1|actor= Your <ansi fg="yellow-bold">grapple</ansi> attempt against
 grapple|fail|1|actee= <ansi fg="mobname">ACTOR</ansi> tries to grapple you, but you slip away!
 grapple|fail|1|observer= <ansi fg="mobname">ACTOR</ansi> tries to grapple <ansi fg="username">ACTEE</ansi>, but fails!
 grapple|fail|1|remote_observer= 
-grapple|prone_penalty|0|actor= <ansi fg="yellow">ACTEE was already prone - they had little chance to resist!</ansi>
+grapple|prone_penalty|0|actor= <ansi fg="yellow">ACTEE was already prone, and they had little chance to resist!</ansi>
 grapple|prone_penalty|0|actee= 
 grapple|prone_penalty|0|observer= 
 grapple|prone_penalty|0|remote_observer= 
@@ -542,8 +542,8 @@ rake|hit|3|actor= Your raking strike tears into <ansi fg="username">ACTEE</ansi>
 rake|hit|3|actee= <ansi fg="mobname">ACTOR</ansi>'s raking strike tears into you! (<ansi fg="damage">DAMAGE</ansi>)
 rake|hit|3|observer= <ansi fg="mobname">ACTOR</ansi>'s claws tear into <ansi fg="username">ACTEE</ansi>!
 rake|hit|3|remote_observer= 
-rake|hit|4|actor= You drive your claws across <ansi fg="username">ACTEE</ansi>'s flesh — blood wells up! (<ansi fg="damage">DAMAGE</ansi>)
-rake|hit|4|actee= <ansi fg="mobname">ACTOR</ansi> drives their claws across your flesh — you bleed! (<ansi fg="damage">DAMAGE</ansi>)
+rake|hit|4|actor= You drive your claws across <ansi fg="username">ACTEE</ansi>'s flesh and blood wells up! (<ansi fg="damage">DAMAGE</ansi>)
+rake|hit|4|actee= <ansi fg="mobname">ACTOR</ansi> drives their claws across your flesh and you bleed! (<ansi fg="damage">DAMAGE</ansi>)
 rake|hit|4|observer= <ansi fg="mobname">ACTOR</ansi> drives their claws across <ansi fg="username">ACTEE</ansi>'s flesh, drawing blood!
 rake|hit|4|remote_observer= 
 rake|hit|5|actor= A vicious rake of your claws shreds <ansi fg="username">ACTEE</ansi>! (<ansi fg="damage">DAMAGE</ansi>)
@@ -643,7 +643,7 @@ shoot|surprise_miss|0|actee=
 shoot|surprise_miss|0|observer= 
 shoot|surprise_miss|0|remote_observer= 
 throttle|cast_interrupt|0|actor= Your choke breaks <ansi fg="username">ACTEE</ansi>'s concentration, and their spell collapses!
-throttle|cast_interrupt|0|actee= <ansi fg="mobname">ACTOR</ansi>'s choke shatters your concentration — your spell collapses!
+throttle|cast_interrupt|0|actee= <ansi fg="mobname">ACTOR</ansi>'s choke shatters your concentration. Your spell collapses!
 throttle|cast_interrupt|0|observer= <ansi fg="mobname">ACTOR</ansi>'s choke breaks <ansi fg="username">ACTEE</ansi>'s concentration, and the spell collapses!
 throttle|cast_interrupt|0|remote_observer= 
 throttle|cast_interrupt|1|actor= <ansi fg="username">ACTEE</ansi>'s spell collapses as they fight for air!
@@ -698,11 +698,11 @@ throttle|partial|2|actor= <ansi fg="username">ACTEE</ansi> pulls mostly free of 
 throttle|partial|2|actee= You twist mostly away as <ansi fg="mobname">ACTOR</ansi> snaps at your throat, but not all the way! (<ansi fg="damage">DAMAGE</ansi>)
 throttle|partial|2|observer= <ansi fg="mobname">ACTOR</ansi> snaps at <ansi fg="username">ACTEE</ansi>'s throat, who twists mostly away but not all the way!
 throttle|partial|2|remote_observer= 
-throw|cast_interrupt|0|actor= <ansi fg="cyan-bold">The blast shatters ACTEE's concentration -- its spell collapses!</ansi>
+throw|cast_interrupt|0|actor= <ansi fg="cyan-bold">The blast shatters ACTEE's concentration and its spell collapses!</ansi>
 throw|cast_interrupt|0|actee= 
 throw|cast_interrupt|0|observer= <ansi fg="cyan">ACTEE's spell collapses as the blast strikes!</ansi>
 throw|cast_interrupt|0|remote_observer= 
-throw|fumble|0|actor= <ansi fg="red-bold">Your throw goes horribly wrong — the projectile detonates in your hand!</ansi>
+throw|fumble|0|actor= <ansi fg="red-bold">Your throw goes horribly wrong. The projectile detonates in your hand!</ansi>
 throw|fumble|0|actee= 
 throw|fumble|0|observer= <ansi fg="red"><ansi fg="mobname">ACTOR</ansi>'s throw backfires spectacularly!</ansi>
 throw|fumble|0|remote_observer= 
