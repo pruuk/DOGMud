@@ -1676,6 +1676,9 @@ refusal category and the neighbouring "Visit a merchant" lines.
   mutation (owner decisions 2026-08-19), reuses only the contest + damage
   shape of taunt resolution, and never inspects its own contest's
   `DefensiveCrit`. `TauntResult.Counter` carries its outcome.
+  `TauntResult.Silenced` is true when `char.SpeechState()` is
+  `characters.Silenced`: the taunt (and a howl) is refused before anything is
+  paid, and callers print their own refusal (M6 slice 3).
 
 Counter-swings route through the seam, so the ORIGINAL attacker defends them
 and is charged + progressed for it (the countered-party economy).
