@@ -3,7 +3,7 @@ zone: Marches Spur Road
 title: Overgrown Path
 description: >
   A narrow track leads west from the road through waist-high grass
-  and wild scrub. The path is barely visible -- just a faint depression
+  and wild scrub. The path is barely visible, just a faint depression
   where feet have pressed the soil enough times to discourage new
   growth. Old fence posts from the abandoned claim line the way, leaning
   inward as if trying to close the gap. The grass thins ahead where
@@ -32,7 +32,7 @@ nouns:
     them, creating a loose natural wall on either side of the track.
   smoke: >
     Thin pale smoke rising from beyond the stone wall ahead. Wood
-    smoke, with something herbal underneath -- not cooking, but
+    smoke, with something herbal underneath. It is not cooking, but
     something being dried or burned deliberately. The smell is
     pleasant from this distance.
 idlemessages:

@@ -11,7 +11,7 @@ groups:
   - animal
   - canine
   - predator
-# speciesid 10 is a placeholder -- update if a canine species
+# speciesid 10 is a placeholder, update if a canine species
 # is added to the engine species table
 idlecommands:
   - 'emote sniffs the air with ears swiveling'
@@ -28,7 +28,7 @@ character:
     ragged tail. It watches the road with the calculating
     patience of a scavenger that has learned exactly how close
     it can get before something becomes a problem. Its ribs
-    are visible under the thin coat -- not starving, but never
+    are visible under the thin coat. It is not starving, but never
     quite full.
   speciesid: 10
   level: 1

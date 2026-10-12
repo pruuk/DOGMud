@@ -3,7 +3,7 @@ zone: Marches Spur Road
 title: Scrubland Bend
 description: The road curves gently through dry scrubland, sage and
   bunchgrass pressing close on both sides. The air carries a sharp herbal
-  scent -- bruised sage from where wagon wheels have clipped the bushes.
+  scent of bruised sage from where wagon wheels have clipped the bushes.
   The river's sound is gone now, replaced entirely by wind pushing across
   the open plain. A flat basalt rock sits beside the road, dark and
   sun-warmed, where a lizard watches passing travelers with ancient
@@ -32,6 +32,6 @@ spawninfo:
 idlemessages:
 - A gust of wind bends the sage bushes flat, releasing their sharp scent.
 - The lizard on the rock shifts position, then freezes again.
-- Something rustles in the scrub off the road -- too small to see.
+- Something rustles in the scrub off the road, too small to see.
 x: 2
 y: 8

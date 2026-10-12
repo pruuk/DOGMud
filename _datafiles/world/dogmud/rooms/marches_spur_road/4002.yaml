@@ -6,7 +6,7 @@ description: A small stone shrine sits beside the road, knee-high and
   junction where a faint track branches west toward what looks like a
   camp, while the main road continues south. Dried flowers and small
   offerings cluster at the shrine's base, left by travelers seeking
-  safe passage. The stone is old -- older than the road, perhaps --
+  safe passage. The stone is old, perhaps older than the road,
   carved in a style that predates current Chrysalis iconography.
 biome: plains
 coord:
@@ -28,7 +28,7 @@ nouns:
     rested in passing. Someone has wedged a copper coin into a crack.
   offerings: A small pile of dried wildflowers, a heel of road-bread gone
     hard as stone, and a scattering of copper coins. Among the older
-    offerings sits a recent addition -- a small carved wooden prayer
+    offerings sits a recent addition, a small carved wooden prayer
     tablet asking for safe passage for freight wagons on the south road.
     The carving is fresh, the wood still pale.
 idlemessages:

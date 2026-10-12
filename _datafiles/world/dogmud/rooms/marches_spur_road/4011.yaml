@@ -3,7 +3,7 @@ zone: Marches Spur Road
 title: Waypoint Inn Yard
 description: The road opens into a packed-earth yard before a solid
   fieldstone-and-timber building. A painted wooden sign hangs above the
-  door -- a yoke split in half, the two halves pointing in opposite
+  door. It shows a yoke split in half, the two halves pointing in opposite
   directions. A hitching post stands near the entrance with two draft
   horses tied and dozing. A water trough sits beside the post, clean
   and recently filled. A notice board near the door is pinned with
@@ -25,7 +25,7 @@ nouns:
   sign: A painted wooden sign hanging from an iron bracket above the
     door. It depicts a yoke split cleanly in half, the two halves
     pointing in opposite directions. Beneath the image, in plain
-    letters -- "The Broken Yoke." The paint is faded but maintained,
+    letters, "The Broken Yoke." The paint is faded but maintained,
     touched up where the weather has worn it.
   board: A wooden notice board mounted beside the inn door, bristling
     with pinned papers. Job postings for farm labor, a road warning
