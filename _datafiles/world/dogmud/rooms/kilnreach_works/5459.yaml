@@ -2,13 +2,13 @@ roomid: 5459
 zone: Kilnreach Works
 title: The Lime Kilns
 description: >
-  The heat reaches you before the kilns do — a dry searing
+  The heat reaches you before the kilns do: a dry searing
   wall of it pressing against the face, stripping the air of
   moisture, carrying with it a caustic bitterness that settles
   in the throat and whitens the lips over time. A row of great
   stone <ansi fg="itemname">kilns</ansi> occupies the yard
   in a close line, their domed crowns black with soot, their
-  burning throats fed without cease — limestone and charcoal
+  burning throats fed without cease: limestone and charcoal
   tumbling in from above as lean-armed men work the loading
   ramps, the combustion roaring through the stonework, felt
   in the chest as much as heard. Lime-smoke drifts in thin
@@ -29,7 +29,7 @@ exits:
   east:
     roomid: 5452
 nouns:
-  kilns: The kilns stand close and massive — each a drum of
+  kilns: The kilns stand close and massive, each a drum of
     dressed stone perhaps twelve feet across and twenty high,
     their interiors burning at temperatures that give limestone
     no peace. A loading port at each crown receives the fuel
@@ -38,7 +38,7 @@ nouns:
     continuously, one section cooling while the rest burn.
     The heat radiating from the nearest kiln keeps anyone at
     arm's length without instruction. A fresh-burned load sits
-    cooling in the nearest draw-bay — the lime white and fierce,
+    cooling in the nearest draw-bay. The lime is white and fierce,
     still hot enough to blister, smouldering faintly at the
     edges where unburned stone gives way to the finished product.
   tool shed: A lean-to built against the kiln fence, its
@@ -48,7 +48,7 @@ nouns:
     hot product, heavy canvas covers for the cooling draw-bays,
     a crate of marking chalk for batch tallies, spare loading
     poles bundled in the corner with cord. Everything is filmed
-    with pale lime-dust — a white coating that settles into
+    with pale lime-dust, a white coating that settles into
     every crevice and sits there. The door has no latch; there
     is nothing here worth locking against a thief who would not
     rather have the gauntlets than anything else in the shed.
@@ -58,10 +58,10 @@ idlemessages:
 - A thin white ribbon of lime-smoke drifts across the yard
   and catches the light briefly before dispersing to nothing.
 - The roar from the nearest kiln rises a note as a new charge
-  of charcoal catches inside — a brief bright intensity, then
+  of charcoal catches inside, a brief bright intensity, then
   settling back into its baseline thunder.
-- Limestone dust settles on every flat surface — the tool
-  ledges, the loading ramps, the back of an unguarded hand.
+- Limestone dust settles on every flat surface, including the tool
+  ledges, the loading ramps, and the back of an unguarded hand.
 - A worker at the loading ramp swings a heavy canvas cover
   over the nearest draw-bay and ties it off without looking up.
 x: -9

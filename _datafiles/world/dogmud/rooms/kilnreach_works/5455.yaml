@@ -4,9 +4,9 @@ title: The Brickfields
 description: >
   Open ground spreads in every direction, covered from north to
   south in rank upon rank of raw brick laid out to dry on wooden
-  pallets — clay-yellow where the sun reaches, darker where morning
+  pallets, clay-yellow where the sun reaches, darker where morning
   damp still clings to the lower courses. The scale of it is not
-  immediately apparent and then suddenly is — there are thousands,
+  immediately apparent and then suddenly is. There are thousands,
   and the kilns to the west are making thousands more, and this
   has been the condition of this field for as long as anyone in
   Kilnreach can remember. The
@@ -16,12 +16,12 @@ description: >
   pallet-rows is churned to red-brown mud where the clay-workers
   have wheeled their barrows back and forth until every trace of
   grass is long gone. At the field's northern edge the finished
-  work accumulates — mountains of
+  work accumulates: mountains of
   <ansi fg="itemname">drying brick</ansi> stacked chest-high,
   stamped with the Kilnreach mark, roped at intervals for transit,
   and tallied in chalk on the lead brick of each column. The
   <ansi fg="itemname">clay pits</ansi> are visible as raw gouges
-  to the west of the pallets — open wounds in the red earth,
+  to the west of the pallets, open wounds in the red earth,
   surrounded by spoil-heaps and the deep parallel tracks of loaded
   barrows heading east. The raw material of New Plymouth's walls
   sits here drying under an open sky, unremarkable to everyone
@@ -40,7 +40,7 @@ exits:
     roomid: 5463
 nouns:
   drying brick: The stacked brick at the field's northern edge is
-    the finished product of the Kilnreach cycle — clay quarried from
+    the finished product of the Kilnreach cycle. Clay is quarried from
     the pits, shaped in timber moulds, dried here on the pallets,
     kiln-fired to the west, then stacked and counted again before
     the wagons take them north. Each brick bears the Kilnreach stamp,
@@ -56,7 +56,7 @@ nouns:
     where the fuel feeds the burn, and the heat that rolls from them
     is felt clearly even at the distance of the pallet rows.
     Clay-workers tend them in the short efficient bursts of people
-    who have learned not to linger near the fire-mouths — stoking,
+    who have learned not to linger near the fire-mouths, stoking,
     checking the draw, retreating. Each kiln runs a full firing
     cycle through the day without pause, and the column of smoke
     they produce is visible from the main road north of the Works

@@ -4,7 +4,7 @@ title: The Works Road
 description: >
   The smell changes before the land does. The warm grain-sweetness
   of the vale falls away behind you and in its place something
-  harder arrives — smoke and hot stone and the acrid alkaline
+  harder arrives: smoke and hot stone and the acrid alkaline
   lift of crushed lime thickening with every step north, carried
   on a wind that has crossed quarried ground before it reached
   you. This is a different country, and the nose knows it first.
@@ -12,10 +12,10 @@ description: >
   either side the earth has been broken apart and turned over,
   its skin stripped back to bare pale stone, and
   <ansi fg="itemname">spoil heaps</ansi> rise from the
-  scarred ground like unburied bones — chalk-white and
+  scarred ground like unburied bones, chalk-white and
   ragged-edged, patched with coarse grass at their flanks
   where wind-scatter has had time to seed. The road itself
-  has changed with the country around it — rutted deep and
+  has changed with the country around it: rutted deep and
   wide, the wheel-marks of heavy ore-wagons pressed into
   compacted earth, the verge cut back to accommodate loads
   coming south. On the road's western verge a heavy
@@ -23,7 +23,7 @@ description: >
   iron-banded and square-set, its faces hung with official
   notices of the Crown Works authority. Beyond it the road
   runs on into the pale haze ahead, and for the first time
-  the sound arrives on the wind — a low irregular percussion
+  the sound arrives on the wind: a low irregular percussion
   from the north, too heavy and too rhythmic for weather,
   the distant hammer-and-drill of the quarries working.
 biome: land
@@ -38,14 +38,14 @@ exits:
   north:
     roomid: 5451
 nouns:
-  spoil heaps: The heaps are the discard of the quarries — waste
+  spoil heaps: The heaps are the discard of the quarries, waste
     rock and overburden stripped from working faces and tipped
     at the margins of the road where the ground was already
-    broken. Up close they are larger than they appeared — each
+    broken. Up close they are larger than they appeared. Each
     heap stands two or three times head-height, pale and
     blocky, the raw stone exposed on their upper faces not yet
     weathered to grey. At the base of the nearest, the debris
-    is coarser — whole slabs and broken angles of limestone
+    is coarser, with whole slabs and broken angles of limestone
     thrown together without order, the gaps between them
     collecting runoff in shallow pools the colour of watered
     milk. Nothing grows on the fresh faces. Farther from the
@@ -56,20 +56,20 @@ nouns:
   works boundary post: A heavy squared post of dressed stone,
     iron-banded at the top and set deep in the verge, facing
     the road from both sides. The north face carries a stamped
-    iron plate engraved with the Crown Works device — a kiln
-    above an open hand — and the words KILNREACH WORKS
+    iron plate engraved with the Crown Works device (a kiln
+    above an open hand) and the words KILNREACH WORKS
     AUTHORITY. Below the plate a wooden board has been nailed
     and covered with printed and hand-written papers. There
     is a current levy schedule for outbound loads, a notice
     prohibiting unlicensed stone-working within the
     authority's bounds, and a hazard warning about the quarry
-    road east of the next junction — a faded line of text
+    road east of the next junction. A faded line of text
     at the bottom notes that the notice is renewed annually
     and that ignorance of its terms is not an admissible
     defence before the works magistrate. The board's lower
     edge is dark with weather and the papers at the bottom
     of the stack are too blurred to read, though their
-    seals are still visible — red wax, and official.
+    seals are still visible, red wax and official.
 idlemessages:
 - A gust from the north brings the smell of hot stone sharp
   for a moment, cutting through everything else, then the
