@@ -127,7 +127,7 @@ options:
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> lunges at you with their <ansi fg="item">{itemname}</ansi> but misses.'
-        - '<ansi fg="{actortype}">{actor}</ansi> rakes its <ansi fg="item">{itemname}</ansi> through the air as you dodge!'
+        - '<ansi fg="{actortype}">{actor}</ansi> rakes their <ansi fg="item">{itemname}</ansi> through the air as you dodge!'
         - '<ansi fg="{actortype}">{actor}</ansi> reaches for you but fails to connect!'
         - '<ansi fg="{actortype}">{actor}</ansi> snatches at you wildly and misses!'
         expert:
@@ -143,7 +143,7 @@ options:
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> lunges at <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>, but misses.'
-        - '<ansi fg="{actortype}">{actor}</ansi> cuts through empty air with its <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> cuts through empty air with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reaches for <ansi fg="{acteetype}">{actee}</ansi> but fails to connect!'
         - '<ansi fg="{actortype}">{actor}</ansi> snatches at <ansi fg="{acteetype}">{actee}</ansi> and finds nothing!'
         expert:
@@ -181,7 +181,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> barely grazes you with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> catches you with a glancing scrape.'
-        - 'You feel a faint pull as <ansi fg="{actortype}">{actor}</ansi> barely catches you with its <ansi fg="item">{itemname}</ansi>.'
+        - 'You feel a faint pull as <ansi fg="{actortype}">{actor}</ansi> barely catches you with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges awkwardly, barely sapping you.'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> darts in and catches you lightly.'
@@ -199,7 +199,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> barely grazes <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> catches <ansi fg="{acteetype}">{actee}</ansi> with a glancing scrape.'
-        - '<ansi fg="{actortype}">{actor}</ansi> barely nicks <ansi fg="{acteetype}">{actee}</ansi> with its <ansi fg="item">{itemname}</ansi>.'
+        - '<ansi fg="{actortype}">{actor}</ansi> barely nicks <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges awkwardly, barely sapping <ansi fg="{acteetype}">{actee}</ansi>.'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> darts in and catches <ansi fg="{acteetype}">{actee}</ansi> lightly.'
@@ -242,7 +242,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> into you, sapping your vitality!'
         - '<ansi fg="{actortype}">{actor}</ansi> drains you with their <ansi fg="item">{itemname}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> tears through you with its <ansi fg="item">{itemname}</ansi>, leeching warmth!'
+        - '<ansi fg="{actortype}">{actor}</ansi> tears through you with their <ansi fg="item">{itemname}</ansi>, leeching warmth!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and feeds, drinking your vitality!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> steps in and latches on, draining you cleanly!'
@@ -257,14 +257,14 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> exploits the opening and feeds decisively!'
         - '<ansi fg="{actortype}">{actor}</ansi> catches your {bodypart} and drinks deep!'
         - '<ansi fg="{actortype}">{actor}</ansi> capitalizes on their momentum with perfect, hungry timing!'
-        - '<ansi fg="{actortype}">{actor}</ansi> works its <ansi fg="item">{itemname}</ansi> to maintain the feeding!'
+        - '<ansi fg="{actortype}">{actor}</ansi> works their <ansi fg="item">{itemname}</ansi> to maintain the feeding!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your stance and strikes with vampiric precision!'
         - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> feeds with overwhelming vampiric power!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> drains <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> tears through <ansi fg="{acteetype}">{actee}</ansi> with its <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> tears through <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and drives their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>, drinking deep!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> steps in and latches on, draining <ansi fg="{acteetype}">{actee}</ansi> cleanly!'
@@ -279,7 +279,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> exploits the opening and drains decisively!'
         - '<ansi fg="{actortype}">{actor}</ansi> catches the {bodypart} and feeds!'
         - '<ansi fg="{actortype}">{actor}</ansi> capitalizes on momentum with perfect, hungry timing!'
-        - '<ansi fg="{actortype}">{actor}</ansi> works its <ansi fg="item">{itemname}</ansi> as the drain continues!'
+        - '<ansi fg="{actortype}">{actor}</ansi> works their <ansi fg="item">{itemname}</ansi> as the drain continues!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads the stance and strikes with vampiric precision!'
         - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> feeds on <ansi fg="{acteetype}">{actee}</ansi> with overwhelming vampiric power!'
   heavy:
@@ -310,9 +310,9 @@ options:
         - 'From your {stance} stance, {momentum}, you drain savagely while {position}!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> plunges its <ansi fg="item">{itemname}</ansi> deep into you, drinking greedily!'
+        - '<ansi fg="{actortype}">{actor}</ansi> plunges their <ansi fg="item">{itemname}</ansi> deep into you, drinking greedily!'
         - 'You are struck hard as <ansi fg="{actortype}">{actor}</ansi> feeds with brutal hunger!'
-        - '<ansi fg="{actortype}">{actor}</ansi> sinks its <ansi fg="item">{itemname}</ansi> deep, stealing your warmth!'
+        - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> deep, stealing your warmth!'
         - '<ansi fg="{actortype}">{actor}</ansi> feeds with overwhelming, vampiric hunger!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi> latches on hard, sapping your vitality brutally!'
@@ -333,7 +333,7 @@ options:
         - 'From their {stance} stance, {momentum}, <ansi fg="{actortype}">{actor}</ansi> drains you savagely while {position}!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> plunges its <ansi fg="item">{itemname}</ansi> deep into <ansi fg="{acteetype}">{actee}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> plunges their <ansi fg="item">{itemname}</ansi> deep into <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a brutal drain to <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> sinks their <ansi fg="item">{itemname}</ansi> deep into <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> feeds on <ansi fg="{acteetype}">{actee}</ansi> with overwhelming, vampiric hunger!'
@@ -381,7 +381,7 @@ options:
         - 'The tide of battle favors you, and you <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s vitality with your <ansi fg="item">{itemname}</ansi>!'
       actee:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY DRAINS</ansi> you with its <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY DRAINS</ansi> you with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s hunger delivers a <ansi fg="cyan-bold">CRITICAL DRAIN</ansi>!'
         - 'You are <ansi fg="cyan-bold">DEVASTATED</ansi> as <ansi fg="{actortype}">{actor}</ansi> feeds!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING SAP</ansi> on you!'
@@ -403,7 +403,7 @@ options:
         - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and they <ansi fg="cyan-bold">DECIMATE</ansi> your vitality with their <ansi fg="item">{itemname}</ansi>!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY DRAINS</ansi> <ansi fg="{acteetype}">{actee}</ansi> with its <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY DRAINS</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s hunger delivers a <ansi fg="cyan-bold">CRITICAL DRAIN</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s vitality with terrible feeding!'
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DEVASTATING SAP</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -456,7 +456,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s masterful drain is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi> with its <ansi fg="item">{itemname}</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their drain at <ansi fg="{acteetype}">{actee}</ansi> and stumbles past!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their lunge in a clumsy, lurching stumble!'
         - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and their drain <ansi fg="red-bold">FUMBLES</ansi> pathetically!'

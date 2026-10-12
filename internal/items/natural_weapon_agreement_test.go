@@ -151,3 +151,82 @@ func TestNaturalWeaponPoolsNeverPutAVerbAfterTheWeapon(t *testing.T) {
 		}
 	}
 }
+
+// An actor is "they/their" everywhere in player copy, never "it/its", and a
+// natural weapon is the actor's: "{actor} rakes their {itemname}", not "its".
+// Task 6 of M6 slice 2 ruled this; the verb-agreement rewrite once put "its"
+// into about 55 lines.
+var (
+	itsBeforeWeapon = regexp.MustCompile(`\bits\s+(<ansi[^>]*>)?\{itemname\}`)
+	itsAfterActor   = regexp.MustCompile(`\{actor\}[^.!?]*\bits\s+([A-Za-z]+)`)
+)
+
+// objectNounsAfterIts are the things an actor line may legitimately call
+// "its": a thing the actor holds or aims, not the actor itself.
+var objectNounsAfterIts = map[string]bool{
+	"crystal": true, "energy": true, "mark": true, "length": true,
+	"tip": true, "target": true,
+}
+
+// actorItsOffence returns a description of an actor-possessive "its" on line,
+// or "".
+func actorItsOffence(line string) string {
+	if itsBeforeWeapon.MatchString(line) {
+		return `its {itemname}`
+	}
+	for _, m := range itsAfterActor.FindAllStringSubmatch(line, -1) {
+		if !objectNounsAfterIts[strings.ToLower(m[1])] {
+			return `its ` + m[1] + ` after {actor}`
+		}
+	}
+	return ``
+}
+
+func TestActorItsDetector_CanFail(t *testing.T) {
+	for _, line := range []string{
+		`<ansi fg="a">{actor}</ansi> rakes its <ansi fg="item">{itemname}</ansi> through the air`,
+		`{actor} cuts through empty air with its {itemname}!`,
+		`{actor} loses its angle!`,
+	} {
+		if actorItsOffence(line) == `` {
+			t.Errorf("missed an actor 'its' in %q", line)
+		}
+	}
+	for _, line := range []string{
+		`{actor}''s wand FUMBLES as its energy fizzles!`,
+		`{actor} raises their {itemname}, its crystal pulsing.`,
+		`The shot finds its mark!`,
+	} {
+		if v := actorItsOffence(line); v != `` {
+			t.Errorf("flagged %q in %q", v, line)
+		}
+	}
+}
+
+func TestCombatCopyNeverCallsAnActorIts(t *testing.T) {
+	var files []string
+	for _, pat := range []string{
+		filepath.Join("..", "..", "_datafiles", "world", "*", "combat-messages", "*.yaml"),
+		filepath.Join("..", "..", "_datafiles", "world", "*", "narration", "special-moves", "*.yaml"),
+	} {
+		got, err := filepath.Glob(pat)
+		if err != nil || len(got) == 0 {
+			t.Fatalf("no files for %s (err %v); the guard would check nothing", pat, err)
+		}
+		files = append(files, got...)
+	}
+	for _, f := range files {
+		raw, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatalf("read %s: %v", f, err)
+		}
+		for i, line := range strings.Split(string(raw), "\n") {
+			if strings.HasPrefix(strings.TrimSpace(line), "#") {
+				continue
+			}
+			if v := actorItsOffence(line); v != `` {
+				t.Errorf("%s:%d: an actor is \"their\", not %q: %s", f, i+1, v, strings.TrimSpace(line))
+			}
+		}
+	}
+}
