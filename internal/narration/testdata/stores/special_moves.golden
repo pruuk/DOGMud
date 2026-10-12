@@ -610,8 +610,8 @@ shoot|fire_depart|0|actor=
 shoot|fire_depart|0|actee= 
 shoot|fire_depart|0|observer= <ansi fg="mobname">ACTOR</ansi> fires their WEAPON towards the <ansi fg="exit">EXITNAME</ansi>.
 shoot|fire_depart|0|remote_observer= 
-shoot|hit|0|actor= Your shot strikes <ansi fg="username">ACTEE</ansi>!
-shoot|hit|0|actee= <ansi fg="mobname">ACTOR</ansi>'s shot strikes you!
+shoot|hit|0|actor= Your shot strikes <ansi fg="username">ACTEE</ansi> (<ansi fg="damage">DAMAGE</ansi>)!
+shoot|hit|0|actee= <ansi fg="mobname">ACTOR</ansi>'s shot strikes you (<ansi fg="damage">DAMAGE</ansi>)!
 shoot|hit|0|observer= 
 shoot|hit|0|remote_observer= 
 shoot|hit|1|actor= Your shot takes <ansi fg="username">ACTEE</ansi> (<ansi fg="damage">DAMAGE</ansi>)!
@@ -626,8 +626,8 @@ shoot|miss|1|actor= Your shot flies past <ansi fg="username">ACTEE</ansi>!
 shoot|miss|1|actee= <ansi fg="mobname">ACTOR</ansi>'s shot narrowly misses you!
 shoot|miss|1|observer= 
 shoot|miss|1|remote_observer= 
-shoot|partial|0|actor= Your shot grazes <ansi fg="username">ACTEE</ansi>!
-shoot|partial|0|actee= <ansi fg="mobname">ACTOR</ansi>'s shot flies past, but the edge of it still barely hits you!
+shoot|partial|0|actor= Your shot grazes <ansi fg="username">ACTEE</ansi>! (<ansi fg="damage">DAMAGE</ansi>)
+shoot|partial|0|actee= <ansi fg="mobname">ACTOR</ansi>'s shot flies past, but the edge of it still barely hits you! (<ansi fg="damage">DAMAGE</ansi>)
 shoot|partial|0|observer= 
 shoot|partial|0|remote_observer= 
 shoot|partial|1|actor= Your shot flies past <ansi fg="username">ACTEE</ansi>, but the edge of it still barely hits them! (<ansi fg="damage">DAMAGE</ansi>)

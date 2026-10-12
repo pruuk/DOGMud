@@ -77,3 +77,45 @@ func TestMobThrottleCastInterrupt_IsHeardAndSeen(t *testing.T) {
 			`sendMoveEvent("throttle", "cast_interrupt", ids, aud, messaging.CategorySpellDisruption, nil, messaging.SoundChantBreaksOff)`)
 	})
 }
+
+// A mob throttling a casting MOB narrates to the room as a mob throttling a
+// player does. The cast_interrupt event carries observer and sound lines, so
+// throttle.go no longer gates it on the target being a player; SendTrio
+// skips the actee line when aud.Actee is unset.
+func TestMobThrottleCastInterrupt_MobTargetIsNarratedToTheRoom(t *testing.T) {
+	if err := movenarration.LoadFrom("../../_datafiles/world/dogmud/narration/special-moves"); err != nil {
+		t.Fatalf("load special-move narration: %v", err)
+	}
+	cleanup := seedAllRegistries()
+	defer cleanup()
+
+	mob, room := getTestMobAndRoom(t)
+	room.SkyLight, room.Lamp = rooms.SkyLightPtr(0), rooms.LampPtr(60)
+	for _, uid := range []int{1, 2} {
+		users.GetByUserId(uid).Character.Perception = characters.New().Perception
+		events.DrainQueuedMessagesForTest(uid)
+	}
+
+	// The aud throttle.go builds for a mob target: no Actee recipient, no id.
+	mobName, victim := mob.Character.Name, "Giant Rat"
+	ids := moveIdentities{
+		Actor:      fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, mobName),
+		ActorPlain: mobName,
+		Actee:      fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, victim),
+		ActeePlain: victim,
+	}
+	aud := messaging.Audience{ActorName: mobName, ActeeName: victim, Room: room}
+	sendMoveEvent("throttle", "cast_interrupt", ids, aud, messaging.CategorySpellDisruption, nil, messaging.SoundChantBreaksOff)
+
+	heard := mobSpeechHeard(1)
+	require.Len(t, heard, 1, "a sighted bystander reads the observer line: %v", heard)
+	require.Contains(t, heard[0], mobName)
+	require.NotContains(t, heard[0], messaging.SoundChantBreaksOff)
+
+	// And throttle.go must make that call for a mob target: no player-only gate.
+	raw, err := os.ReadFile("throttle.go")
+	require.NoError(t, err)
+	require.NotContains(t, string(raw), `res.InterruptedCast && targetUser`,
+		"the cast_interrupt send is gated on a player target, so a casting mob's interrupt is silent to the room")
+	require.Contains(t, string(raw), `if res.InterruptedCast {`)
+}

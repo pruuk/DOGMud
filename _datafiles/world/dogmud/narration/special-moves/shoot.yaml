@@ -5,17 +5,17 @@ events:
   # line. The room line for a same-room shot comes from fire_announce instead.
   hit:
     actor:
-      - 'Your shot strikes {actee}!'
+      - 'Your shot strikes {actee} (<ansi fg="damage">{damage}</ansi>)!'
       - 'Your shot takes {actee} (<ansi fg="damage">{damage}</ansi>)!'
     actee:
-      - '{actor}''s shot strikes you!'
+      - '{actor}''s shot strikes you (<ansi fg="damage">{damage}</ansi>)!'
       - '{actor}''s shot strikes you (<ansi fg="damage">{damage}</ansi>)!'
   partial:
     actor:
-      - 'Your shot grazes {actee}!'
+      - 'Your shot grazes {actee}! (<ansi fg="damage">{damage}</ansi>)'
       - 'Your shot flies past {actee}, but the edge of it still barely hits them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor}''s shot flies past, but the edge of it still barely hits you!'
+      - '{actor}''s shot flies past, but the edge of it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
       - '{actor}''s shot flies past, but the edge of it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
   miss:
     actor:
