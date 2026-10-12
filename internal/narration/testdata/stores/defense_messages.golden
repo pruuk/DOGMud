@@ -46,15 +46,15 @@ counter-dodge|normal|observer => <ansi fg="combat">Defender steps into the openi
 counter-dodge|heavy|actee => <ansi fg="defense-good">You slip inside Attacker's guard and strike with all your weight.</ansi>
 counter-dodge|heavy|actor => <ansi fg="attack-bad">Defender slips inside your guard and strikes with all their weight.</ansi>
 counter-dodge|heavy|observer => <ansi fg="combat">Defender slips inside Attacker's guard and strikes with full weight.</ansi>
-counter-parry|weak|actee => <ansi fg="defense-good">You turn the blow aside and cut back, but Attacker recovers in time.</ansi>
-counter-parry|weak|actor => <ansi fg="attack-bad">Defender turns your blow aside and cuts back, but you recover in time.</ansi>
-counter-parry|weak|observer => <ansi fg="combat">Defender turns Attacker's blow aside and cuts back, but Attacker recovers.</ansi>
-counter-parry|normal|actee => <ansi fg="defense-good">You turn the blow aside and cut back, opening Attacker's arm.</ansi>
-counter-parry|normal|actor => <ansi fg="attack-bad">Defender turns your blow aside and cuts back, opening your arm.</ansi>
-counter-parry|normal|observer => <ansi fg="combat">Defender turns Attacker's blow aside and cuts back, opening Attacker's arm.</ansi>
-counter-parry|heavy|actee => <ansi fg="defense-good">You turn the blow aside and cut back with everything, and Attacker reels.</ansi>
-counter-parry|heavy|actor => <ansi fg="attack-bad">Defender turns your blow aside and cuts back with everything, and you reel.</ansi>
-counter-parry|heavy|observer => <ansi fg="combat">Defender turns Attacker's blow aside and cuts back hard, and Attacker reels.</ansi>
+counter-parry|weak|actee => <ansi fg="defense-good">You turn the blow aside and strike back, but Attacker recovers in time.</ansi>
+counter-parry|weak|actor => <ansi fg="attack-bad">Defender turns your blow aside and strikes back, but you recover in time.</ansi>
+counter-parry|weak|observer => <ansi fg="combat">Defender turns Attacker's blow aside and strikes back, but Attacker recovers.</ansi>
+counter-parry|normal|actee => <ansi fg="defense-good">You turn the blow aside and strike back, catching Attacker off balance.</ansi>
+counter-parry|normal|actor => <ansi fg="attack-bad">Defender turns your blow aside and strikes back, catching you off balance.</ansi>
+counter-parry|normal|observer => <ansi fg="combat">Defender turns Attacker's blow aside and strikes back, catching Attacker off balance.</ansi>
+counter-parry|heavy|actee => <ansi fg="defense-good">You turn the blow aside and strike back with everything, and Attacker reels.</ansi>
+counter-parry|heavy|actor => <ansi fg="attack-bad">Defender turns your blow aside and strikes back with everything, and you reel.</ansi>
+counter-parry|heavy|observer => <ansi fg="combat">Defender turns Attacker's blow aside and strikes back hard, and Attacker reels.</ansi>
 counter-quell|weak|actee => <ansi fg="defense-good">You ground the working and lunge in, but Attacker wards your blow.</ansi>
 counter-quell|weak|actor => <ansi fg="attack-bad">Defender grounds your working and lunges in, but you ward the blow.</ansi>
 counter-quell|weak|observer => <ansi fg="combat">Defender grounds the working and lunges at Attacker, who wards the blow.</ansi>
