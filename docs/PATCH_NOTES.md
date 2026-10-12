@@ -17,6 +17,9 @@
 - Room and creature descriptions across the world now use plain
   punctuation instead of long dashes, so they read more easily, and a few
   small typos were fixed along the way.
+- When you grapple something you cannot make out, your grapple messages
+  no longer give away its name, and the party panel no longer shows where
+  you are while you stand in total darkness.
 
 ## 2026-10-10: Boiling blood and fair arrests
 
