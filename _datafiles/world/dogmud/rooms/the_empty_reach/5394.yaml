@@ -3,14 +3,14 @@ zone: The Empty Reach
 title: The Long Flat
 description: >
   The land opens here into something that takes a moment to fully
-  see — a vast flat of grey-green scrub spreading to every horizon,
+  see: a vast flat of grey-green scrub spreading to every horizon,
   bunchgrass and sage rolling out under a sky that is enormous and
   pale and everywhere. The track becomes a thin pale scar running
   north into a shimmer of risen heat, and then it is simply gone.
   The scale of it presses against you. There is very far yet to go.
 
   A lone <ansi fg="itemname">fencepost</ansi> stands at the road's
-  edge — old, silvered by weather, tilting eastward. A strand of
+  edge. It is old, silvered by weather, tilting eastward. A strand of
   rusted wire loops from it into the scrub and vanishes. The
   <ansi fg="itemname">track</ansi> ahead dissolves into the heat-
   shimmer without ceremony, as though distance is simply what this
@@ -33,13 +33,13 @@ nouns:
     into the scrub at knee height before vanishing into the sage.
     The land it once fenced is indistinguishable from the land it
     did not. Wedged in the split top is a small rusted tin with a
-    crimped lid — left there by someone, for someone, or perhaps
+    crimped lid, left there by someone, for someone, or perhaps
     simply left.
   track: The road ahead is little more than a pair of ruts pressed
     into pale clay, hardened over many years of use. It runs north
     into the heat-shimmer and becomes impossible to follow with the
-    eye. You know it continues — you can see a faint scar in the
-    scrub on the far side of the shimmer — but the distance between
+    eye. You know it continues. You can see a faint scar in the
+    scrub on the far side of the shimmer, but the distance between
     here and there has a discouraging quality to it.
 idlemessages:
 - The heat-shimmer ripples along the track like standing water.
