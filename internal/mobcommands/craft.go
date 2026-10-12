@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -64,11 +65,22 @@ func Craft(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 
 	case result.Initiated:
-		room.SendTextVisual(messaging.CategoryMobIdle, fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi> begins working on something.`,
-			mob.Character.Name))
+		room.SendTextVisual(messaging.CategoryMobIdle, craftBeginLine(
+			mob.Character.Name, result.Recipe))
 		return true, nil
 	}
 
 	return true, nil
+}
+
+// craftBeginLine is the room line for a mob starting a timed craft. It names
+// the recipe's output item; a recipe with no resolvable output (an enchant
+// recipe, or an unknown item id) keeps the vague "something".
+func craftBeginLine(mobName string, recipe *crafting.RecipeSpec) string {
+	what := `something`
+	if recipe != nil && items.GetItemSpec(recipe.Output.ItemId) != nil {
+		itm := items.New(recipe.Output.ItemId)
+		what = fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, itm.DisplayName())
+	}
+	return fmt.Sprintf(`<ansi fg="mobname">%s</ansi> begins working on %s.`, mobName, what)
 }
