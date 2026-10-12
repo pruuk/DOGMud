@@ -4,7 +4,7 @@ title: Guard Barracks
 description: >-
   The city guard barracks is a solid stone building near the western gate,
   built for function without the slightest concern for aesthetics. The ground
-  floor is a combination of duty room, armoury, and holding cells -- a long
+  floor is a combination of duty room, armoury, and holding cells. A long
   wooden table dominates the center, covered with duty rosters, incident
   reports, and the remains of someone's lunch. Weapon racks line the walls,
   holding spears, short swords, and a few crossbows. Iron-barred cells occupy
@@ -20,12 +20,12 @@ exits:
     # The holding cell door is locked; only the guards carry the key.
     # The arrest system places prisoners via a direct room move
     # (rooms.MoveToRoom), which bypasses exit locks, so this only blocks
-    # ORGANIC entry - wandering NPCs (e.g. a hostile-flagged townsperson
+    # ORGANIC entry, such as wandering NPCs (e.g. a hostile-flagged townsperson
     # pursuing a wanted player) and random players. difficulty 255 =
     # effectively unpickable / key-only (no key item targets this lock).
     #
     # NOTE: the admin web builder strips YAML comments on save. If this
-    # block disappears again, that is why - restore it from git history.
+    # block disappears again, that is why. Restore it from git history.
     lock:
       difficulty: 255
   south:
@@ -43,7 +43,7 @@ nouns:
     for a cot and a bucket. They are empty now, their doors standing open.
     Scratches and stains on the walls suggest they see regular use.
   racks: >-
-    Wooden weapon racks holding city guard equipment -- spears, short swords,
+    Wooden weapon racks holding city guard equipment: spears, short swords,
     truncheons, and a few crossbows with quarrel pouches. Everything is
     maintained but well-used. A chalk board above lists equipment checked out
     and by whom.

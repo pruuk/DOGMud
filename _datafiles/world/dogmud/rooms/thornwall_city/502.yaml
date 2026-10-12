@@ -5,7 +5,7 @@ description: >
   A low corridor where the ceiling forces a stoop. Chrysalis growths pulse
   along the walls in irregular clusters, their bioluminescence painting
   everything in dim blue-green. Thin filaments stretch across the passage
-  at intervals -- some are natural mycelium threading between growths, but
+  at intervals. Some are natural mycelium threading between growths, but
   others are too regular, too deliberate, attached to small hooks driven
   into the stone. Crude ward symbols have been scratched into the walls
   at shoulder height, drawn in what looks like dried blood. Whatever lives
@@ -28,10 +28,10 @@ nouns:
     natural ones sag in irregular curves; the deliberately placed
     ones are taut, horizontal, attached at both ends to small iron
     hooks. Disturbing the taut ones would almost certainly make
-    noise -- or worse.
+    noise, or worse.
   ward symbols: >
     Rough symbols scratched into the stone at intervals. They are
-    not any recognized script -- more like a personal code, repeated
+    not any recognized script. They are more like a personal code, repeated
     glyphs that might mean "danger" or "home" or something with no
     word in common language. Each symbol has a small smear beneath
     it, darker than the stone.
@@ -42,7 +42,7 @@ nouns:
     one. Up close, the surface is warm to the touch.
   blood marks: >
     The pigment used to draw the ward symbols. It is dark brown now,
-    old and flaking at the edges. Recent additions are darker -- some
+    old and flaking at the edges. Recent additions are darker, and some
     still slightly tacky. Someone keeps maintaining these marks.
 idlemessages:
 - The filaments sway in an imperceptible draught, taut and trembling.

@@ -2,7 +2,7 @@ roomid: 472
 zone: Thornwall City
 title: The Drowning Post Tavern
 description: A low-ceilinged tavern tucked into the south end of the Craftsmen's
-  Quarter, its sign depicting a fence post half-submerged in rising water -- a
+  Quarter, its sign depicting a fence post half-submerged in rising water. It is a
   reference to the flooding that plagued this district before the drainage channels
   were built. The interior is dim, smoky, and comfortable in the way of places that
   have soaked up decades of conversation and spilled ale. Mismatched tables fill the
@@ -27,7 +27,7 @@ exits:
     roomid: 5102
 nouns:
   sign: A painted wooden sign showing a fence post in brown water, the waterline
-    rising to the crossbar. The paint is fresh -- someone keeps the sign maintained
+    rising to the crossbar. The paint is fresh, and someone keeps the sign maintained
     even if the rest of the building could use work. Below the image, in block
     letters, "The Drowning Post."
   bar: A massive slab of oak, dark with age and stain, resting on heavy trestle
@@ -37,7 +37,7 @@ nouns:
   alcove: Past the end of the bar, a moth-eaten curtain hangs from a
     sagging rope, half-screening a cramped alcove where three old men sit
     around a battered table. The space looks like it has been claimed for
-    decades -- no one else would dare sit there.
+    decades. No one else would dare sit there.
   cellar: A narrow staircase descends into darkness. The air rising from below is
     cool and damp, smelling of old stone and stagnant water. The cellar serves
     as storage, but the dampness suggests the flooding that gave the tavern its

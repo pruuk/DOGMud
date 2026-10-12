@@ -15,7 +15,7 @@ groups:
 idlecommands:
   - 'sneak'
   - 'sneak'
-  - 'emote shimmers at the edge of visibility -- there and not there'
+  - 'emote shimmers at the edge of visibility, there and not there'
   - 'sneak'
   - 'emote moves from one wall to another in a single fluid motion that
     crosses the room faster than it should'
@@ -43,13 +43,13 @@ character:
   name: Chrysalis Phantom
   description: |
     What stands before you is recognizably human only in the broad
-    sense -- two arms, two legs, upright. The details wrong. Its skin
+    sense: two arms, two legs, upright. The details wrong. Its skin
     shifts between colours the way a cuttlefish shifts between patterns:
     not slowly, not smoothly, but in sudden reconfigurations that leave
     your eyes reporting contradictory information about where it is
     standing. Its eyes catch light at angles that eyes should not, pale
     and pupil-wide in the dark, reflecting back colours that are not in
-    this room. It moves like liquid poured downhill -- no wasted motion,
+    this room. It moves like liquid poured downhill, with no wasted motion,
     no telegraph, weight committing fully only at the last possible
     instant. The chrysalis mutation has gone deep here. Whatever this
     was before, it is something else now. On each hand, knuckle weapons

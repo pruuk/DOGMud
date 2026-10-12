@@ -6,7 +6,7 @@ description: >
   tunnel operation. Bedrolls are shoved against one wall alongside a crate
   of hard bread and dried meat. A water barrel stands in the corner, its
   tap dripping slowly onto the stone floor. This is where the tunnel
-  guards sleep and eat between shifts -- functional but miserable.
+  guards sleep and eat between shifts. It is functional but miserable.
 biome: cave
 coord:
   x: 3
@@ -19,7 +19,7 @@ spawninfo:
   - mobid: 245
 nouns:
   supplies: Hard bread, strips of dried meat, a few onions going soft.
-    Tunnel rations -- enough to keep a guard fed, not enough to keep
+    Tunnel rations, enough to keep a guard fed, not enough to keep
     them happy about it.
   bedrolls: Thin wool bedrolls laid directly on the stone. They smell
     of mildew and sweat. Nobody sleeps well down here.

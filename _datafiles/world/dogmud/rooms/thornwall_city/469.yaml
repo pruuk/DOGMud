@@ -2,7 +2,7 @@ roomid: 469
 zone: Thornwall City
 title: Craftsmen's Quarter, West
 description: South of Main Street, the city takes on a different character. The
-  Craftsmen's Quarter is a working neighbourhood -- the buildings are functional,
+  Craftsmen's Quarter is a working neighbourhood. The buildings are functional,
   the streets are narrower, and the air is thick with the sounds and smells of
   production. Hammering from smithies, the sharp smell of tanning chemicals, the
   rasp of saws from a woodworker's shop. The people here have the calloused hands
@@ -23,7 +23,7 @@ exits:
   west:
     roomid: 474
 nouns:
-  shops: Ground-floor workshops open directly onto the street -- a tanner, a
+  shops: Ground-floor workshops open directly onto the street, including a tanner, a
     woodworker, a rope-maker. Each one spills its work onto the cobblestones.
     Apprentices sit on doorsteps, taking breaks they probably should not be taking.
 idlemessages:

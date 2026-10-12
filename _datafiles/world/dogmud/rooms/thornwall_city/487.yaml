@@ -5,9 +5,9 @@ description: >
   The passage ends in a wall of fallen stone and splintered timber. Whatever
   this channel once connected to is buried under tons of rubble. Chunks of
   dressed stone jut from the debris at odd angles, and dust still sifts
-  down from cracks in the ceiling above. The collapse looks old -- decades
-  at least -- but the stone overhead creaks ominously. A faint sweetness
-  drifts up from the floor -- organic, warm, and entirely wrong for a dead
+  down from cracks in the ceiling above. The collapse looks old, decades
+  at least, but the stone overhead creaks ominously. A faint sweetness
+  drifts up from the floor, organic, warm, and entirely wrong for a dead
   end. The rubble is thorough, but the floor is not.
 biome: cave
 coord:
@@ -26,7 +26,7 @@ exits:
       trapconditionids: [39]
 nouns:
   rubble: Fallen stone blocks, cracked timber supports, and packed earth.
-    The collapse is thorough -- there is no way through. But the floor
+    The collapse is thorough. There is no way through. But the floor
     feels different near the east edge of the debris. Hollow, almost.
   floor: The stone floor near the base of the collapse is cleaner than it
     should be. No dust accumulation. The mortar seams look disturbed,

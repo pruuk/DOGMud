@@ -4,7 +4,7 @@ title: Sealed Drain Grate
 description: >
   A rusted iron grate lies half-hidden beneath a crust of rubble and dried
   chrysalis residue. Scratch marks on the iron bars show it has been pried
-  open before -- the hinges are newer than the frame, replaced after repeated
+  open before. The hinges are newer than the frame, replaced after repeated
   forced entries. Chrysalis resin beads along the edges like dried amber,
   sealing the cracks where tunnel air once leaked upward. The shaft below
   breathes warm, stale air laced with something organic and sweet.
@@ -27,13 +27,13 @@ exits:
 nouns:
   grate: >
     A rusted iron grate set into the floor. The bars are thick but
-    old, the lock mechanism newer -- someone replaced it after the
+    old, the lock mechanism newer, as someone replaced it after the
     original was broken. Scratch marks around the frame show repeated
     forced entry.
   rubble: >
     Loose stone and dried clay packed around the grate's edges,
     deliberately placed to make it look like a cave-in rather than
-    an entrance. Some of the rubble is fake -- it sits too evenly.
+    an entrance. Some of the rubble is fake because it sits too evenly.
   scratch marks: >
     Deep gouges in the iron frame, made by tools or fingernails.
     Some are fresh. Something comes and goes through here often

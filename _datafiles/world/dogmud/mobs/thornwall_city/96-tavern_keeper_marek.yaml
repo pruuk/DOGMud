@@ -32,12 +32,12 @@ character:
   name: Tavern Keeper Marek
   description: |
     A broad man with a shaved head and a scar that runs from his left ear
-    to his jaw -- a souvenir from a previous career he does not discuss.
+    to his jaw, a souvenir from a previous career he does not discuss.
     Marek runs the Drowning Post with a bartender's combination of warmth
     and wariness. He knows everyone in the Craftsmen's Quarter by name,
     remembers what they drink, and hears everything that is said in his
-    tavern. His current troubles are etched into the lines around his eyes
-    -- the tavern owes taxes to the city and protection money to someone
+    tavern. His current troubles are etched into the lines around his eyes.
+    The tavern owes taxes to the city and protection money to someone
     less official, and the squeeze is slowly killing the business.
   speciesid: 1
   level: 1

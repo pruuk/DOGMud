@@ -5,7 +5,7 @@ description: North of the market, the city settles into a residential neighbourh
   of narrow streets and close-built houses. The buildings are two and three stories
   tall, their upper floors jutting out over the street on timber brackets until the
   houses nearly touch across the gap. Laundry lines create a web of drying cloth
-  overhead. The ward houses the city's working population -- labourers, clerks, junior
+  overhead. The ward houses the city's working population, including labourers, clerks, junior
   merchants, and families who have lived in the same buildings for generations. It is
   quiet compared to the market, with the particular hush of a neighbourhood where
   people are either at work or sleeping.
@@ -19,10 +19,10 @@ exits:
     roomid: 478
 nouns:
   houses: Narrow-fronted houses with shared walls, each one slightly different from
-    its neighbours -- a different colour of shutter, a window box here, a carved
+    its neighbours, such as a different colour of shutter, a window box here, a carved
     doorframe there. The individuality is small but fierce, the only expression
     of personality available in such tight quarters.
-  laundry: Lines of drying clothes span the street from upper windows -- shirts,
+  laundry: Lines of drying clothes span the street from upper windows, hung with shirts,
     sheets, stockings, all fluttering like flags of domesticity. The arrangement
     suggests an informal system where certain lines belong to certain households.
 spawninfo:
