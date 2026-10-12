@@ -23,7 +23,7 @@
 | Row 58's doubled apostrophe is `narration/special-moves/drain.yaml:37` (`'{actor}''''s touch drains you, ...'`) and is frozen in `internal/narration/testdata/stores/special_moves.golden:74` | both files |
 | Row 54: `UnseenNoun`, `UnseenFigure`, `SpeakerNoun` live in `internal/messaging/hidenames.go`, `WeaponWord` in `hideweapons.go`. The stealth-shot literal `` `Someone` `` remains at `internal/mobcommands/shoot.go:97` and `internal/usercommands/shoot.go:441` | those files |
 | Idiom counts, special moves / core combat (`combat-messages` + `defense-messages`): "clip" 19/18, "goes wide" 5/12, "slip most" 10/0, "sliver" 4/0, "keep ... footing" 9/0, any "footing" 9/33, "overrun\|carries straight past" 3/0. "sliver" and "clip" also appear in `bauble-corpus.yaml` item names, out of scope | `grep -rniE` |
-| Em/en dash lines (non-comment): rooms 3,840 in 771 files (48 zone dirs), mobs 317 in 145 files, messaging 109 (99 in `grapple_outcomes.yaml`), special-move narration 9, combat-messages 0. Spaced hyphen used as a dash: combat-messages 171, narration 2, rooms 1 | `grep -rnP '\x{2014}\|\x{2013}'`, `grep -rnE '[A-Za-z,.!'"'"'] - [A-Za-z]'` |
+| Em/en dash lines (non-comment): rooms 3,840 in 771 files (48 zone dirs), mobs 317 in 145 files, messaging 109 (99 in `grapple_outcomes.yaml`), special-move narration 9, combat-messages 0. Spaced hyphen used as a dash: combat-messages 171, narration 2, rooms 1. Spaced double hyphen ` -- ` (added to scope by the owner at plan review): rooms 1,015, mobs 496, narration 1, Go player strings 12. With it, rooms total 4,857 lines in 1,174 files and mobs 813 lines in 461 files | `grep -rnP '\x{2014}\|\x{2013}'`, `grep -rnE '[A-Za-z,.!'"'"'] - [A-Za-z]'` |
 | Go string literals with a dash in combat code (`internal/combat`, `internal/mobcommands`, special-move usercommands, `internal/movenarration`): 0. Player-facing Go literals with a dash exist elsewhere, e.g. `internal/hooks/spell_foldrecall.go:66`, `companion_summon.go:102`, `NewRound_AutoHeal.go:118`, `pinnacle_tick.go:359` | `grep -rnP` over `*.go`, non-test, non-comment |
 
 ## Scope
@@ -140,18 +140,22 @@ recording the decision.
   prompts), outside the quest, dialogue and conversation packages, which
   wait for #375. Log messages, error values and validator output are not
   player prose and stay. The plan enumerates every site before the task
-  starts.
+  starts. The text stays in Go (owner, plan review 2026-10-12; M7 #371
+  decides any store question), so a root guard parses Go source and fails on
+  an em dash, en dash or ` -- ` in a string literal outside log, error and
+  exempt builder or admin code.
 - Each sentence is rewritten by hand: period, comma, colon, or "and". No
   mechanical replace.
 
 ## PR 2: world dash sweep
 
-- Em and en dashes in every room file (771 files across 48 zone
-  directories) and mob file (145 files), plus the one spaced-hyphen room line.
+- Em dashes, en dashes and spaced double hyphens in every room file (1,174
+  files across 48 zone directories) and mob file (461 files), plus the one
+  spaced-hyphen room line.
 - Done zone by zone by subagents with a controller review of each zone. One
   commit per zone, so the owner can read a zone at a time.
 - Same hand-rewrite rule. Room descriptions keep their 80-column wrap.
-- New guard test: fails on any em dash, en dash or spaced-hyphen dash in a
+- New guard test: fails on any em dash, en dash, or spaced hyphen or double hyphen used as a dash in a
   non-comment line under `combat-messages`, `defense-messages`, `narration`,
   `messaging`, `rooms` and `mobs`. Quests and dialogue are exempt by name
   with a pointer to #375. The guard lands in PR 2 because only then are all

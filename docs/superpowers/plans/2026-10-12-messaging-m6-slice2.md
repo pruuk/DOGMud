@@ -39,7 +39,8 @@
 | `drain.yaml:37` carries `'{actor}''''s touch drains you, ...'` (renders two apostrophes) | `_datafiles/world/dogmud/narration/special-moves/drain.yaml:37` |
 | Stealth literal `` `Someone` `` at `internal/mobcommands/shoot.go:97` and `internal/usercommands/shoot.go:441` | those files |
 | `UnseenNoun`, `SpeakerNoun` live in `internal/messaging/hidenames.go` | `hidenames.go:30,77` |
-| Dash counts (non-comment lines): rooms 3,840 in 771 files across 48 zone dirs; mobs 317 in 145 files; `messaging/` 109 (99 in `grapple_outcomes.yaml`); `narration/` 9 em dashes + 2 spaced hyphens; `combat-messages/` 171 spaced hyphens, 0 em dashes | grep |
+| Dash counts (non-comment lines). Three forms count as a dash: em/en dash, a spaced hyphen ` - `, and a spaced double hyphen ` -- ` (owner 2026-10-12; no unspaced `word--word` exists in scope). Rooms: 3,840 em/en + 1,015 ` -- ` = 4,857 lines in 1,174 files across 48 zone dirs. Mobs: 317 em/en + 496 ` -- ` = 813 lines in 461 files. `messaging/` 109 (99 in `grapple_outcomes.yaml`). `narration/` 12 (9 em, 2 ` - `, 1 ` -- `). `combat-messages/` 171 ` - `, 0 others | `grep -rnP "[\x{2014}\x{2013}]\|[A-Za-z,.!?'\"] --? [A-Za-z]"` |
+| Go player strings with ` -- `: 12 sites (listed in Task 9). `internal/usercommands/admin.fact.go:158` uses `--` as a CLI separator and is not prose | grep |
 | `docs/PATCH_NOTES.md` takes a dated `## YYYY-MM-DD: Title` entry, player voice, 72-column bullets | that file |
 
 ## Working rules for every task
@@ -370,6 +371,7 @@ func TestValidate_Rejects(t *testing.T) {
 		"number":            func(g *ViewpointGroup) { g.Outcomes[Hit][1] = "You hit 3 times." },
 		"em dash":           func(g *ViewpointGroup) { g.Outcomes[Hit][1] = "You hit \u2014 hard." },
 		"spaced hyphen":     func(g *ViewpointGroup) { g.Outcomes[Hit][1] = "You hit - hard." },
+		"double hyphen":     func(g *ViewpointGroup) { g.Outcomes[Hit][1] = "You hit -- hard." },
 		"too wide":          func(g *ViewpointGroup) { g.Outcomes[Hit][1] = strings.Repeat("a", 81) },
 	}
 	for name, mutate := range cases {
@@ -466,8 +468,9 @@ const MinVariants = 4
 const maxLineColumns = 80
 
 var (
-	ansiTag      = regexp.MustCompile(`<[^>]*>`)
-	spacedHyphen = regexp.MustCompile(`[A-Za-z,.!?'"] - [A-Za-z]`)
+	ansiTag = regexp.MustCompile(`<[^>]*>`)
+	// spacedHyphen is a hyphen or double hyphen standing in for a dash.
+	spacedHyphen = regexp.MustCompile(`[A-Za-z,.!?'"] --? [A-Za-z]`)
 )
 
 // ViewpointGroup is one viewpoint's file.
@@ -1373,7 +1376,8 @@ import (
 )
 
 // House style (dogmud-player-copy): no em dash, no en dash, and no spaced
-// hyphen standing in for one, in prose a player reads. M6 slice 2 (ledger
+// hyphen or spaced double hyphen (" - ", " -- ") standing in for one, in
+// prose a player reads. M6 slice 2 (ledger
 // row 55). Quests, dialogue and conversations are exempt until the quest and
 // dialogue rework arc (#375).
 //
@@ -1387,7 +1391,7 @@ var proseDashDirs = []string{
 
 var (
 	emOrEnDash   = regexp.MustCompile("[\u2014\u2013]")
-	spacedHyphen = regexp.MustCompile(`[A-Za-z,.!?'"] - [A-Za-z]`)
+	spacedHyphen = regexp.MustCompile(`[A-Za-z,.!?'"] --? [A-Za-z]`)
 )
 
 func TestPlayerProseHasNoDashes(t *testing.T) {
@@ -1438,7 +1442,7 @@ func TestPlayerProseHasNoDashes(t *testing.T) {
 ```
 
 Run: `go test . -run TestPlayerProseHasNoDashes -count=1`
-Expected: FAIL listing about 291 lines. If a hit is not prose (a YAML key or an ID), report it to the controller rather than weakening the regex.
+Expected: FAIL listing about 292 lines (narration 12, messaging 109, combat-messages 171). Null probe for the double-hyphen form: the narration hit with ` -- ` must be among them. If a hit is not prose (a YAML key or an ID), report it to the controller rather than weakening the regex.
 
 - [ ] **Step 2: Rewrite each hit by hand**
 
@@ -1505,21 +1509,188 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 | `internal/usercommands/skill.disenchant.go` | 23, 73 |
 | `modules/auctions/auctions.go` | 434, 952 |
 
+Spaced double hyphen (` -- `), same treatment:
+
+| File | Lines |
+|---|---|
+| `internal/actions/drink.go` | 370 |
+| `internal/actions/sleeping_target.go` | 54 |
+| `internal/actions/track.go` | 126 |
+| `internal/hooks/RoomChange_ShadowFollow.go` | 20 |
+| `internal/hooks/StorageFee_MonthlyCharge.go` | 69 |
+| `internal/mutations/describe.go` | 54 |
+| `internal/skills/skills.go` | 54, 58, 60 |
+| `internal/usercommands/list.go` | 115 |
+| `internal/usercommands/start.go` | 98 |
+| `internal/usercommands/throw.go` | 276 |
+
+`internal/usercommands/admin.fact.go:158` is a CLI `--` separator in an admin usage line, not prose; leave it.
+
 Excluded on purpose: log lines (`mudlog.*`), error values, validator and builder output (`internal/behaviortree`, `modules/gmcp`, `internal/mapper`, `internal/migration`, schedule/patrol loaders), admin commands (`admin.*.go`, `modules/weather/weather_commands.go`), Go comments, `internal/util/util.go` (the dash-folding table), `internal/lightnotice/store.go:149` (the validator), and the quest, dialogue and conversation packages (#375).
 
 - [ ] **Step 1: Re-verify the list**
 
 ```bash
-grep -rnP '[\x{2014}\x{2013}]' <each file above> | grep -vP '^\S+:\d+:\s*//'
+grep -rnP '[\x{2014}\x{2013}]|[a-z] -- [a-zA-Z]' <each file in both tables> | grep -vP '^\S+:\d+:\s*//'
 ```
 
 Expected: exactly the lines listed (line numbers may shift by a few if earlier tasks touched the file; `usercommands/shoot.go` is not in the list).
 
-- [ ] **Step 2: Rewrite each string by hand**
+- [ ] **Step 2: Write the Go guard (it fails now)**
 
-Same rule as Task 8. In a list row such as `` `  [x] %s (%d) — %s` `` use a colon: `` `  [x] %s (%d): %s` ``. Keep `%` verbs and their order.
+The text stays in Go (owner 2026-10-12; M7 #371 decides any store question), so a guard reading Go source keeps dashes from coming back. Create `go_prose_dash_guard_test.go` at the repo root:
 
-- [ ] **Step 3: Gate**
+```go
+package main
+
+import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io/fs"
+	"path/filepath"
+	"regexp"
+	"runtime"
+	"strconv"
+	"strings"
+	"testing"
+)
+
+// House style for player text held in Go (M6 slice 2, ledger row 55): no em
+// dash, en dash or spaced double hyphen in a string literal. Spaced single
+// hyphens are not checked here: Go uses " - " in format and usage strings
+// too often for a pattern to tell them from a dash.
+//
+// Skipped: string literals inside log, error, panic and test-failure calls;
+// and the paths below, which hold builder, admin, validator or migration
+// output, the dash-folding table, or quest and dialogue text (#375).
+var goDash = regexp.MustCompile("[—–]|[A-Za-z,.!?] -- [A-Za-z]")
+
+var goDashExemptPrefixes = []string{
+	"internal/behaviortree/",
+	"internal/conversations/",
+	"internal/dialogue/",
+	"internal/mapper/",
+	"internal/migration/",
+	"internal/questengine/",
+	"internal/quests/",
+	"modules/gmcp/",
+}
+
+var goDashExemptFiles = map[string]string{
+	"internal/actions/divergences.go":          "registry audit log text",
+	"internal/caravan/visit.go":                "log text",
+	"internal/darkcombat/store.go":             "the validator's own pattern",
+	"internal/ferry/route.go":                  "log text",
+	"internal/ferry/tradecircuit.go":           "loader error text",
+	"internal/hooks/Quest_HandleQuestUpdate.go": "quest text, #375",
+	"internal/lightnotice/store.go":            "the validator's own pattern",
+	"internal/mobs/patrol_loader.go":           "loader log text",
+	"internal/mobs/schedule_loader.go":         "loader log text",
+	"internal/state/position/validation.go":    "invariant error text",
+	"internal/util/util.go":                    "the dash-folding table",
+	"modules/weather/weather_commands.go":      "admin command output",
+}
+
+func goDashExempt(rel string) bool {
+	for _, p := range goDashExemptPrefixes {
+		if strings.HasPrefix(rel, p) {
+			return true
+		}
+	}
+	if _, ok := goDashExemptFiles[rel]; ok {
+		return true
+	}
+	return strings.HasPrefix(filepath.Base(rel), "admin.")
+}
+
+// quietCall reports a call whose string arguments are not player text.
+func quietCall(c *ast.CallExpr) bool {
+	switch f := c.Fun.(type) {
+	case *ast.Ident:
+		return f.Name == "panic"
+	case *ast.SelectorExpr:
+		if x, ok := f.X.(*ast.Ident); ok {
+			switch x.Name {
+			case "mudlog", "errors", "log", "slog":
+				return true
+			case "fmt":
+				return f.Sel.Name == "Errorf"
+			}
+		}
+	}
+	return false
+}
+
+func TestGoPlayerStringsHaveNoDashes(t *testing.T) {
+	_, here, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	root := filepath.Dir(here)
+	scanned := 0
+	for _, top := range []string{"internal", "modules"} {
+		err := filepath.WalkDir(filepath.Join(root, top), func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+				return err
+			}
+			rel, _ := filepath.Rel(root, path)
+			rel = filepath.ToSlash(rel)
+			if goDashExempt(rel) {
+				return nil
+			}
+			fset := token.NewFileSet()
+			f, err := parser.ParseFile(fset, path, nil, 0)
+			if err != nil {
+				return err
+			}
+			scanned++
+			var quiet [][2]token.Pos
+			ast.Inspect(f, func(n ast.Node) bool {
+				if c, ok := n.(*ast.CallExpr); ok && quietCall(c) {
+					quiet = append(quiet, [2]token.Pos{c.Pos(), c.End()})
+				}
+				return true
+			})
+			ast.Inspect(f, func(n ast.Node) bool {
+				lit, ok := n.(*ast.BasicLit)
+				if !ok || lit.Kind != token.STRING {
+					return true
+				}
+				for _, q := range quiet {
+					if lit.Pos() >= q[0] && lit.End() <= q[1] {
+						return true
+					}
+				}
+				s, err := strconv.Unquote(lit.Value)
+				if err != nil {
+					s = lit.Value
+				}
+				if goDash.MatchString(s) {
+					t.Errorf("%s:%d: dash in a string: %s", rel, fset.Position(lit.Pos()).Line, s)
+				}
+				return true
+			})
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if scanned < 100 {
+		t.Fatalf("scanned only %d Go files; the walk is broken", scanned)
+	}
+}
+```
+
+Run: `go test . -run TestGoPlayerStringsHaveNoDashes -count=1`
+Expected: FAIL, listing the sites in the two tables above, plus anything the grep's filters missed (a string concatenated across lines, a struct literal). Classify every hit that is not in the tables: player text gets fixed in Step 3; text no player reads gets an entry in `goDashExemptFiles` with its reason, and the controller is told. Never widen `quietCall` or the prefixes to clear a hit you have not read.
+
+- [ ] **Step 3: Rewrite each string by hand**
+
+Same rule as Task 8. In a list row such as `` `  [x] %s (%d) — %s` `` use a colon: `` `  [x] %s (%d): %s` ``. Keep `%` verbs and their order. Then `go test . -run TestGoPlayerStringsHaveNoDashes -count=1` → PASS. Null probe: put `—` back into one `aging.go` string, confirm the guard names that file and line, restore.
+
+- [ ] **Step 4: Gate**
 
 ```bash
 go build ./... && go test . ./internal/... ./modules/... -count=1
@@ -1527,10 +1698,10 @@ go build ./... && go test . ./internal/... ./modules/... -count=1
 
 Expected: PASS. A test that pinned the old string is updated to the new string in the same commit; name it in the commit body.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add <each file above by name> <each test updated by name>
+git add go_prose_dash_guard_test.go <each file in both tables by name> <each test updated by name>
 git commit -m "copy: no dashes in player-facing Go text
 
 Part of ledger row 55 (#370). Quest, dialogue and conversation text waits for #375.
@@ -1606,7 +1777,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Ledger.** Set the Status cell of rows 36 to 54 and 56 to 59 to `done (PR #___, M6 slice 2)` with a short note (row 54: "kept in Go by decision; `messaging.StealthActor`"; rows 36 to 47: "dark-combat store, optics-gated"). Row 55: `partly done (PR #___): combat, narration, messaging, player Go text; rooms and mobs in PR #___; quests and dialogue moved to #375`. Fill the PR number once the PR exists (amend the docs commit before merge).
 
-- [ ] **Step 2: README.** Add rows for: `internal/darkcombat/context.md`, `_datafiles/world/dogmud/narration/dark-combat/`, `combat_idiom_guard_test.go`, `prose_dash_guard_test.go`, `docs/superpowers/audits/2026-10-12-special-move-pairing-audit.md`. Match the neighbouring rows' style.
+- [ ] **Step 2: README.** Add rows for: `internal/darkcombat/context.md`, `_datafiles/world/dogmud/narration/dark-combat/`, `combat_idiom_guard_test.go`, `prose_dash_guard_test.go`, `go_prose_dash_guard_test.go`, `docs/superpowers/audits/2026-10-12-special-move-pairing-audit.md`. Match the neighbouring rows' style.
 
 - [ ] **Step 3: Patch notes.** A new top entry:
 
@@ -1659,13 +1830,13 @@ Start after PR 1 merges, so `prose_dash_guard_test.go` exists on master.
 
 ### Task 14: Rooms, one zone per commit
 
-**Files:** `_datafiles/world/dogmud/rooms/<zone>/*.yaml` (48 zone directories, 771 files, 3,840 lines) plus the one spaced-hyphen room line.
+**Files:** `_datafiles/world/dogmud/rooms/<zone>/*.yaml` (48 zone directories, 1,174 files, 4,857 lines: 3,840 em/en dashes, 1,015 ` -- `, and 1 ` - `).
 
 - [ ] **Step 1: List zones by hit count**
 
 ```bash
 cd C:/tmp/dogmud-m6s2-world
-for z in _datafiles/world/dogmud/rooms/*/; do n=$(grep -rnP '[\x{2014}\x{2013}]' "$z" --include=*.yaml | grep -vP '^\S+?:\d+:\s*#' | wc -l); [ "$n" -gt 0 ] && echo "$n $(basename "$z")"; done | sort -nr
+for z in _datafiles/world/dogmud/rooms/*/; do n=$(grep -rnP "[\x{2014}\x{2013}]|[A-Za-z,.!?'\"] --? [A-Za-z]" "$z" --include=*.yaml | grep -vP '^\S+?:\d+:\s*#' | wc -l); [ "$n" -gt 0 ] && echo "$n $(basename "$z")"; done | sort -nr
 ```
 
 - [ ] **Step 2: Per zone (subagent, one zone or a small batch of small zones per dispatch)**
@@ -1673,7 +1844,7 @@ for z in _datafiles/world/dogmud/rooms/*/; do n=$(grep -rnP '[\x{2014}\x{2013}]'
 For each file: rewrite every dash by hand (period, comma, colon, "and"), keep each description's line wrap within 80 columns (re-wrap the paragraph if a rewrite changes its length), change nothing else. Then:
 
 ```bash
-grep -rnP '[\x{2014}\x{2013}]' _datafiles/world/dogmud/rooms/<zone> --include=*.yaml | grep -vP '^\S+?:\d+:\s*#'
+grep -rnP "[\x{2014}\x{2013}]|[A-Za-z,.!?'\"] --? [A-Za-z]" _datafiles/world/dogmud/rooms/<zone> --include=*.yaml | grep -vP '^\S+?:\d+:\s*#'
 go test ./internal/rooms/... -count=1
 ```
 
@@ -1692,7 +1863,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ### Task 15: Mobs
 
-**Files:** `_datafiles/world/dogmud/mobs/**/*.yaml` (145 files, 317 lines). Same procedure as Task 14, batched by subdirectory, one commit per batch, `go test ./internal/mobs/... -count=1` after each.
+**Files:** `_datafiles/world/dogmud/mobs/**/*.yaml` (461 files, 813 lines: 317 em/en dashes, 496 ` -- `). Same procedure and grep as Task 14, batched by subdirectory, one commit per batch, `go test ./internal/mobs/... -count=1` after each.
 
 ### Task 16: Widen the guard
 
