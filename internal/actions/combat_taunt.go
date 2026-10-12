@@ -294,8 +294,14 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	if convMaxRef <= 0 {
 		convMaxRef = 1
 	}
+	// A speechless taunter (a beast's snarl, a howl) hurts conviction without
+	// words, so its damage text must not name an insult (M6 slice 3).
 	dmgDesc := combat.GetConvictionDamageDescription(dmg, convMaxRef)
 	dmgDescToTarget := combat.GetConvictionDamageDescriptionToTarget(dmg, convMaxRef)
+	if char.TauntPool() == combat.TauntPoolWordless {
+		dmgDesc = combat.GetWordlessConvictionDamageDescription(dmg, convMaxRef)
+		dmgDescToTarget = combat.GetWordlessConvictionDamageDescriptionToTarget(dmg, convMaxRef)
+	}
 
 	// Crit-received toughening now fires exactly once, inside the seam's
 	// bonus tier (combat.ResolveChannelAttack -> awardChannelDefenceBonus);
