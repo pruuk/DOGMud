@@ -3,7 +3,7 @@ zone: South Road
 title: Valley Gate
 description: >
   The road levels, the dust gives way to swept cobble underfoot, and the
-  noise of a town reaches you all at once — voices, cartwheels, a smith's
+  noise of a town reaches you all at once: voices, cartwheels, a smith's
   ringing somewhere ahead, the busy human sound you have not heard since
   the crossroads far above. This is where the South Road ends and Amber
   Valley begins: a broad stone <ansi fg="itemname">gateway</ansi> stands
@@ -31,7 +31,7 @@ nouns:
   toll keeper's lodge: >
     A small flat-roofed booth of mud-brick set in the
     gate's shade, a shuttered window at counter height. A board beside it
-    lists the tolls — a copper a cart-wheel, free for those on foot — but
+    lists the tolls (a copper a cart-wheel, free for those on foot) but
     the shutter is up and the stool inside empty, the keeper off about some
     other business and the gate left to mind itself in the heat.
   boundary marker: >
@@ -44,7 +44,7 @@ nouns:
 idlemessages:
 - A laden cart rumbles in through the gateway from the town, the carter
   nodding to no one in particular.
-- The mingled smells of the town roll out under the arch — bread, dung,
+- The mingled smells of the town roll out under the arch, with bread, dung,
   hot stone, and somewhere close, frying fish.
 x: 2
 y: 33
