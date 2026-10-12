@@ -3,7 +3,7 @@ zone: North Road
 title: Betta's Barn
 description: >
   Warm in the way of places where animals have lived for a long
-  time — a deep, settled warmth that has nothing to do with fire,
+  time: a deep, settled warmth that has nothing to do with fire,
   that comes from the accumulated heat of many large bodies over
   many years. Two cows chew placidly in their stalls, undisturbed
   by your presence. A donkey watches from the far corner with
@@ -21,7 +21,7 @@ exits:
 nouns:
   bedroll: A rough bed of straw piled against the wall in the
     darkest corner of the barn, partially covered by an old horse
-    blanket. The straw is pressed flat where someone slept —
+    blanket. The straw is pressed flat where someone slept,
     recently, by the look of it. A few dark hairs cling to the
     blanket. Beside the bedroll, a withered apple core, brown
     and soft, the kind that was past its best when it was eaten.

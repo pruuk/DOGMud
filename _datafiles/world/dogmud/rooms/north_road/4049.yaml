@@ -7,7 +7,7 @@ description: >
   the yard, and a side path leads around to a back door that
   is not visible from the approach. Chickens scratch in the
   packed dirt. A wooden bench sits by the front door, a
-  half-finished whittling project resting on its seat — a
+  half-finished whittling project resting on its seat, a
   small bird with its wings tucked. Smoke curls from the
   chimney in a thin, steady line. Everything here is
   maintained, nothing is new.
@@ -22,7 +22,7 @@ exits:
   south:
     roomid: 4050
 nouns:
-  whittling: A half-finished carving resting on the bench — a
+  whittling: A half-finished carving resting on the bench, a
     small wooden bird, wings folded against its body, head
     tilted slightly as if listening to something only it can
     hear. The knife work is careful but unpolished, the marks
@@ -30,7 +30,7 @@ nouns:
     the bench around it.
   door: A heavy oak door, its surface dark with weather and age.
     The iron handle is worn smooth. The threshold has been swept
-    recently — a broom leans against the wall beside the door.
+    recently. A broom leans against the wall beside the door.
     The door is closed but not locked.
   chickens: Brown hens picking through the dirt, scratching for
     grubs with the focused intensity of creatures that have

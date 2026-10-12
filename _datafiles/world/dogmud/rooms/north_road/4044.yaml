@@ -6,7 +6,7 @@ description: >
   dead scrub of late autumn. A drainage ditch cuts between
   the road and the fields to the east, its banks muddy and
   steep. In the scrub along the embankment, a narrow gap where
-  the branches have been recently disturbed — someone crouched
+  the branches have been recently disturbed: someone crouched
   here, parting the dead growth to watch the road. A dirt path
   leads west toward a farmstead visible in the distance. The
   road continues north where the ground roughens and the
@@ -25,7 +25,7 @@ exits:
     roomid: 4048
 nouns:
   scrub: A narrow gap in the dead scrub along the embankment.
-    The branches have been pushed aside recently — they are
+    The branches have been pushed aside recently. They are
     cracked rather than bent, and a few leaves are crushed flat
     where someone knelt. The inner bank of the ditch is scuffed
     where a boot slipped. Whoever hid here was watching the road

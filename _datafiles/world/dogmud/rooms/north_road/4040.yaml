@@ -5,7 +5,7 @@ description: >
   The road curves north here around a dense hedgerow that has
   grown wild enough to block the view ahead. Farm gates line
   the eastern side, their posts leaning at comfortable angles.
-  At the bend stands a boundary marker — a squat stone pillar,
+  At the bend stands a boundary marker: a squat stone pillar,
   waist-height, carved with the Chrysalis spiral. The spiral's
   center has been worn smooth by years of hands laid on it in
   passing. The stone is warm to the touch even in the autumn
@@ -22,8 +22,8 @@ exits:
     roomid: 4041
 nouns:
   marker: A squat stone pillar set into the ground at the bend,
-    carved with the Chrysalis spiral. The design is old — the
-    edges of the carving are soft with age — but the center of
+    carved with the Chrysalis spiral. The design is old. The
+    edges of the carving are soft with age, but the center of
     the spiral has been worn glassy-smooth by countless hands
     laid on it over the years. Below the spiral, faded letters
     read "In this territory, all who carry the gift are under

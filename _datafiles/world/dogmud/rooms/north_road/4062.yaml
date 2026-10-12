@@ -4,12 +4,12 @@ title: North Road End
 description: >
   The road widens here, the gravel better laid and more
   recently topped than the stretch behind you. Wagon ruts
-  run deep and close together — heavy, regular traffic in
+  run deep and close together: heavy, regular traffic in
   both directions. Fresh hoofprints overlap in the soft
   shoulder and standing water fills the deepest wheel
   grooves. On the horizon ahead, thin columns of grey smoke
   climb from too many sources to be a single homestead.
-  The smell carries on the north wind — woodsmoke and fish,
+  The smell carries on the north wind: woodsmoke and fish,
   tallow and wet rope. Stillwater. The road continues, but
   this is as far as the wilds reach.
 biome: farmland
@@ -26,13 +26,13 @@ exits:
 nouns:
   smoke: Thin columns rise from the direction of Stillwater,
     bending north in the wind before dispersing. There are
-    too many of them — a dozen at least, distinct sources
+    too many of them, a dozen at least, from distinct sources
     spaced across the horizon. Cookfires, forge smoke, the
     heavier dark plume of a tallow works or a pottery kiln.
     A settlement large enough to generate that many fires
     does not appear from nothing. Stillwater has been here
     a long time.
-  road: The road surface improves markedly here — fresh
+  road: The road surface improves markedly here. Fresh
     gravel laid in the wheel lines, the verge trimmed
     back. Deep ruts from heavy wagons run in both
     directions, some filled with standing water from
@@ -42,8 +42,8 @@ nouns:
     an interest in keeping it passable.
 idlemessages:
 - The wind from the north carries the smell of fish and
-  woodsmoke — the unmistakable signature of a working town.
-- Distant hammering drifts on the wind — steady, rhythmic,
+  woodsmoke, the unmistakable signature of a working town.
+- Distant hammering drifts on the wind, steady, rhythmic,
   the sound of a smithy at full work.
 - A wagon is visible on the road ahead, moving south toward
   you, growing slowly larger on the flat horizon.

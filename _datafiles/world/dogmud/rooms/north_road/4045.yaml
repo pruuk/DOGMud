@@ -25,19 +25,19 @@ exits:
     roomid: 4046
 nouns:
   hearth: A wide stone hearth set into the wall, blackened by
-    years of use. The fire burns steady — not roaring, not dying,
+    years of use. The fire burns steady, not roaring, not dying,
     maintained by someone who knows exactly how much wood a room
     this size needs. The iron grate in front has been repaired
     more than once, one bar slightly thicker where it was
     re-forged.
   bar: A plank of dark oak laid across two barrel-ends, polished
     smooth by elbows and spilled drink. Behind it, bottles stand
-    in careful rows on a shelf — not many, but each in its place.
+    in careful rows on a shelf, not many, but each in its place.
     A clay pitcher of water sits at one end, a stack of wooden
     cups at the other.
   tables: Rough-hewn tables scattered across the room, each one
-    different — built at different times from whatever wood was
-    available. Their surfaces are maps of use -- knife marks, burn
+    different, built at different times from whatever wood was
+    available. Their surfaces are maps of use, with knife marks, burn
     rings, initials carved by people who are no longer here.
 idlemessages:
 - The fire pops, sending a shower of sparks up the chimney.

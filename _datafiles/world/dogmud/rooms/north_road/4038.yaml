@@ -7,7 +7,7 @@ description: >
   the ground smooth. A weathered signpost stands at the fork,
   its arms pointing north and south along the highway, east
   back toward the hamlet. Wagon ruts cut deep grooves in the
-  mud — heavier traffic than anything on the spur road. The
+  mud: heavier traffic than anything on the spur road. The
   air smells of turned earth and woodsmoke from a farmstead
   somewhere downwind. A heavy iron-banded <ansi
   fg="itemname">crate</ansi> sits in the lee of the crossroads
@@ -28,13 +28,13 @@ nouns:
     "Stillwater, 3 days." South reads "Amber Valley, 5 days."
     East reads "Ashwick, half day." The north-pointing arm has
     been repainted recently. Someone has scratched a crude skull
-    into the wood beneath the Stillwater sign — a warning, or
+    into the wood beneath the Stillwater sign. It is a warning, or
     a joke.
   ruts: Deep wheel ruts scored into the packed earth, some fresh
     and sharp-edged, others softened by rain into shallow troughs.
     The heaviest traffic runs north-south. A few lighter tracks
     branch east toward Ashwick. Mixed in with the wheel marks are
-    hoofprints — patrol horses, by the spacing.
+    hoofprints from patrol horses, by the spacing.
   crate: |
     A heavy iron-banded oak shipping crate, its lid latched shut
     and its flanks burned with a caravan's seal. Foragers from the
