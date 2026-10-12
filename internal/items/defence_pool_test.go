@@ -55,8 +55,16 @@ func TestCounterPoolConstantsAreTheShippedFilesAndTheConversion(t *testing.T) {
 			t.Errorf("CounterPoolFor(%s) = %q, want the constant %q", d, got, pool)
 		}
 	}
+	// Variant pools ship beside the per-defence ones but are not a
+	// CounterPoolFor result.
+	variants := map[DefencePool]bool{CounterPoolDefyWordless: true}
+	for pool := range variants {
+		if !shipped[pool] {
+			t.Errorf("variant constant %q has no shipped file", pool)
+		}
+	}
 	for pool := range shipped {
-		if _, ok := constants[pool]; !ok {
+		if _, ok := constants[pool]; !ok && !variants[pool] {
 			t.Errorf("shipped file %q has no constant", pool)
 		}
 	}

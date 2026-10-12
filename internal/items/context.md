@@ -524,7 +524,10 @@ defence files do not move. Five counter-narration pools ride the same loader,
 shape, and validator (U6b Task 11, re-keyed by the counters slice) and keep
 their own constants because they are not defences: `CounterPoolDodge`,
 `CounterPoolParry`, `CounterPoolBlock`, `CounterPoolQuell`, and
-`CounterPoolDefy`. `CounterPoolFor(combatvocab.Defence)` names the pool for
+`CounterPoolDefy`. A sixth, `CounterPoolDefyWordless` (M6 slice 3), is the
+wordless twin of counter-defy that `combat.BuildCounterTauntMessages` reads
+for a speechless counterer; it is not a `CounterPoolFor` result.
+`CounterPoolFor(combatvocab.Defence)` names the pool for
 the DEFENCE that won the counter, not the attack it answered, so a parry crit
 always reads as a parry answered and a block crit as a block answered, with
 reinterpreted bands (weak = the counter is turned aside, normal = it lands,

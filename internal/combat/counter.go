@@ -271,36 +271,70 @@ const retortPrefix = `<ansi fg="cyan-bold">⚔ RETORT!</ansi> `
 // one counter renderer that still substitutes a raw name into an observer
 // line. It was the sibling this file's own guard test caught: identical bug,
 // same file, left unfixed while its two neighbours were tagged.
+//
+// M6 slice 3: a speechless counterer (characters.Speechless) answers with a
+// sound, not words: its lines come from the counter-defy-wordless pool
+// (counter-defy when that pool is missing) and its damage text from the
+// wordless band table, which names no insult.
 func BuildCounterTauntMessages(counterer, countered *characters.Character, crit bool, damage, counteredMaxCP int) (countererMsg, taunterMsg, roomMsg string) {
+	wordless := counterer.SpeechState() == characters.Speechless
 	bandCrit, bandMargin := counterBand(crit, damage)
-	triad := items.RenderDefenseMessage(items.CounterPoolDefy, bandCrit, bandMargin,
-		map[items.TokenName]string{
-			items.TokenActor: meleeIdentityTag(countered),
-			items.TokenActee: meleeIdentityTag(counterer),
-		})
+	tokens := map[items.TokenName]string{
+		items.TokenActor: meleeIdentityTag(countered),
+		items.TokenActee: meleeIdentityTag(counterer),
+	}
+	var triad items.DefenseMessageTriad
+	if wordless {
+		triad = items.RenderDefenseMessage(items.CounterPoolDefyWordless, bandCrit, bandMargin, tokens)
+	}
 	if triad.ToRoom == "" {
-		return buildGenericCounterTauntMessages(counterer.Name, countered.Name, damage, counteredMaxCP)
+		triad = items.RenderDefenseMessage(items.CounterPoolDefy, bandCrit, bandMargin, tokens)
+	}
+	if triad.ToRoom == "" {
+		return buildGenericCounterTauntMessages(counterer.Name, countered.Name, damage, counteredMaxCP, wordless)
 	}
 	// The counterer reads the damage about the countered ("their will");
 	// the countered reads it about their own ("your will", #262).
 	dmgTag, dmgTagToCountered := "", ""
 	if damage > 0 {
-		dmgTag = fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`,
-			GetConvictionDamageDescription(damage, counteredMaxCP))
-		dmgTagToCountered = fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`,
-			GetConvictionDamageDescriptionToTarget(damage, counteredMaxCP))
+		desc, descToCountered := counterTauntDamageText(damage, counteredMaxCP, wordless)
+		dmgTag = fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`, desc)
+		dmgTagToCountered = fmt.Sprintf(` (<ansi fg="damage">%s</ansi>)`, descToCountered)
 	}
 	return retortPrefix + string(triad.ToDefender) + dmgTag,
 		retortPrefix + string(triad.ToAttacker) + dmgTagToCountered,
 		retortPrefix + string(triad.ToRoom)
 }
 
+// counterTauntDamageText is a retort's conviction damage text as the counterer
+// and as the countered read it; wordless picks the band table that names no
+// speech.
+func counterTauntDamageText(damage, counteredMaxCP int, wordless bool) (string, string) {
+	if wordless {
+		return GetWordlessConvictionDamageDescription(damage, counteredMaxCP),
+			GetWordlessConvictionDamageDescriptionToTarget(damage, counteredMaxCP)
+	}
+	return GetConvictionDamageDescription(damage, counteredMaxCP),
+		GetConvictionDamageDescriptionToTarget(damage, counteredMaxCP)
+}
+
 // buildGenericCounterTauntMessages is the Task 10 retort narration, kept only
 // as the fallback for environments where the counter-defy pool is not loaded.
-func buildGenericCounterTauntMessages(countererName, counteredName string, damage, counteredMaxCP int) (countererMsg, taunterMsg, roomMsg string) {
+// wordless is true for a speechless counterer: it snarls rather than speaks.
+func buildGenericCounterTauntMessages(countererName, counteredName string, damage, counteredMaxCP int, wordless bool) (countererMsg, taunterMsg, roomMsg string) {
+	if wordless {
+		if damage > 0 {
+			dmgDesc, dmgDescToCountered := counterTauntDamageText(damage, counteredMaxCP, true)
+			return fmt.Sprintf(retortPrefix+`You snarl right back at %s! (<ansi fg="damage">%s</ansi>)`, counteredName, dmgDesc),
+				fmt.Sprintf(retortPrefix+`%s snarls right back at you! (<ansi fg="damage">%s</ansi>)`, countererName, dmgDescToCountered),
+				fmt.Sprintf(retortPrefix+`%s snarls right back at %s!`, countererName, counteredName)
+		}
+		return fmt.Sprintf(retortPrefix+`You snarl back at %s, but it fails to bite!`, counteredName),
+			fmt.Sprintf(retortPrefix+`%s snarls back at you, but it fails to bite!`, countererName),
+			fmt.Sprintf(retortPrefix+`%s snarls back at %s!`, countererName, counteredName)
+	}
 	if damage > 0 {
-		dmgDesc := GetConvictionDamageDescription(damage, counteredMaxCP)
-		dmgDescToCountered := GetConvictionDamageDescriptionToTarget(damage, counteredMaxCP)
+		dmgDesc, dmgDescToCountered := counterTauntDamageText(damage, counteredMaxCP, false)
 		return fmt.Sprintf(retortPrefix+`You throw %s's words right back in their face! (<ansi fg="damage">%s</ansi>)`, counteredName, dmgDesc),
 			fmt.Sprintf(retortPrefix+`%s throws your words right back in your face! (<ansi fg="damage">%s</ansi>)`, countererName, dmgDescToCountered),
 			fmt.Sprintf(retortPrefix+`%s throws %s's words right back!`, countererName, counteredName)

@@ -905,7 +905,7 @@ var observerIdentityGuardRoots = []string{
 // A file NOT in this map is enforced like any other; a new entry earns its
 // place only with the same kind of proof.
 //
-// defense-messages/*.yaml (ten files) -> a Go function that already
+// defense-messages/*.yaml (eleven files) -> a Go function that already
 // substitutes a fully self-tagged identity string
 // (`<ansi fg="mobname">Name</ansi>` or `<ansi fg="username">Name</ansi>`,
 // built by meleeIdentityTag or the pre-existing taunt/spell defence path).
@@ -922,7 +922,8 @@ var observerIdentityGuardRoots = []string{
 //
 //	dodge.yaml, parry.yaml, block.yaml    -> combat.sendDefenseMessages (Item 1)
 //	counter-dodge/parry/block/quell.yaml  -> combat.fillCounterMessages (Item 1)
-//	counter-defy.yaml                     -> combat.BuildCounterTauntMessages
+//	counter-defy.yaml and
+//	counter-defy-wordless.yaml            -> combat.BuildCounterTauntMessages
 //	                                          (fixed alongside Item 1: this
 //	                                          guard caught it substituting a
 //	                                          raw name exactly like its two
@@ -1013,6 +1014,9 @@ var observerIdentityGuardContentSafeViaCode = map[string]bool{
 	"defense-messages/counter-block.yaml": true,
 	"defense-messages/counter-quell.yaml": true,
 	"defense-messages/counter-defy.yaml":  true,
+	// M6 slice 3: the wordless twin of counter-defy, rendered by the same
+	// combat.BuildCounterTauntMessages with the same meleeIdentityTag tokens.
+	"defense-messages/counter-defy-wordless.yaml": true,
 	// Conditions: all three narration phases pass the holder's plain name
 	// into HideNames (start Condition_ApplyConditions.go:179, trigger
 	// UserRoundTick and MobRoundTick, end

@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -433,4 +434,55 @@ func counterRetortMessageFixture() *items.DefenseMessageGroup {
 	return &items.DefenseMessageGroup{OptionId: items.CounterPoolDefy, Options: items.DefenseIntensity{
 		items.Weak: mk("weak"), items.Normal: mk("normal"), items.Heavy: mk("heavy"),
 	}}
+}
+
+// M6 slice 3: a silenced counterer does not retort. FireCounterTaunt refuses
+// before the contest, so no contest runs, the countered party defends and
+// pays nothing, and no conviction moves on either side. The unsilenced control
+// proves the same fixture does fire.
+func TestFireCounterTaunt_SilencedCountererDoesNotRetort(t *testing.T) {
+	pinTauntCollapseKnobs(t)
+	pinActionsCounterKnob(t, 0.5)
+	t.Cleanup(func() { mobs.SetInstanceForTest(counterTauntBypassTargetId, nil) })
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		tauntSilencedConditionId: {ConditionId: tauntSilencedConditionId, Name: "Test Silenced",
+			Flags: []conditions.Flag{conditions.Silenced}},
+	}))
+
+	for _, silenced := range []bool{false, true} {
+		name := "control: an unsilenced counterer retorts"
+		if silenced {
+			name = "silenced counterer does not retort"
+		}
+		t.Run(name, func(t *testing.T) {
+			taunter, counterer := newTauntCollapsePair(t, counterTauntBypassTargetId, 200, 10, 120, 7)
+			taunter.Character.Health = 1000
+			taunter.Character.HealthMax.Value = 1000
+			counterer.Character.Health = 1000
+			counterer.Character.HealthMax.Value = 1000
+			if silenced {
+				require.NoError(t, counterer.Character.AddCondition(tauntSilencedConditionId, true))
+			}
+
+			calls := 0
+			restore := combat.SetChannelAttackContestRunnerForTest(counterSequencedRunner(t, &calls,
+				tauntDeterministicRunner(t, 0.5, 0.5, -0.5), // the counter-taunt would land
+			))
+			t.Cleanup(restore)
+
+			taunterConv, countererConv := taunter.Character.Conviction, counterer.Character.Conviction
+			res := FireCounterTaunt(nil, combatvocab.Rhetoric(combatvocab.TargetSingle),
+				&counterer.Character, &taunter.Character, nil, 0, nil, 0)
+
+			if !silenced {
+				require.True(t, res.Fired, "control must fire")
+				require.Less(t, taunter.Character.Conviction, taunterConv, "control must deal conviction damage")
+				return
+			}
+			require.False(t, res.Fired, "a silenced counterer must not retort")
+			require.Zero(t, calls, "no contest may run for a silenced counterer")
+			require.Equal(t, taunterConv, taunter.Character.Conviction, "the countered party must pay nothing")
+			require.Equal(t, countererConv, counterer.Character.Conviction, "the counterer must pay nothing")
+		})
+	}
 }

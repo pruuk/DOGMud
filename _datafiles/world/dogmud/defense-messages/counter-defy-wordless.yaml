@@ -1,0 +1,82 @@
+# Counter narration for a DEFY crit by a counterer with no voice for words
+# (species speech: false, M6 slice 3): the wordless twin of counter-defy.yaml.
+# The defender shrugged off an attempt on their nerve, a taunt or a charm, and
+# answers with a sound: a snarl turned back, a roar that drowns the attempt.
+# No words are spoken here, no body part is named that a species might lack,
+# and no line names the attempt, because a charm is honeyed and a taunt is not.
+# combat.BuildCounterTauntMessages reads this pool for a speechless counterer
+# and falls back to counter-defy.yaml when it is missing.
+# {actee} is the COUNTERER (whose defy critted); {actor} is the one whose
+# attempt was defied. Bands: weak = the answer fails to bite (no conviction
+# damage), normal = the answer lands, heavy = the answer crits.
+optionid: counter-defy-wordless
+options:
+  weak:
+    together:
+      actee:
+      - '<ansi fg="defense-good">You snarl back at {actor}, but they hold steady.</ansi>'
+      - '<ansi fg="defense-good">You roar back at {actor}, but they barely flinch.</ansi>'
+      - '<ansi fg="defense-good">You hiss at {actor} in scorn, but it fails to bite.</ansi>'
+      - '<ansi fg="defense-good">Your answering growl rolls out, but {actor}''s nerve holds.</ansi>'
+      - '<ansi fg="defense-good">You shriek back at {actor}, but the sound fades too soon.</ansi>'
+      - '<ansi fg="defense-good">You rumble a low answer, but {actor} does not give ground.</ansi>'
+      actor:
+      - '<ansi fg="attack-bad">{actee} snarls back at you, but you hold steady.</ansi>'
+      - '<ansi fg="attack-bad">{actee} roars back at you, but you barely flinch.</ansi>'
+      - '<ansi fg="attack-bad">{actee} hisses at you in scorn, but it fails to bite.</ansi>'
+      - '<ansi fg="attack-bad">{actee}''s answering growl rolls out, but your nerve holds.</ansi>'
+      - '<ansi fg="attack-bad">{actee} shrieks back at you, but the sound fades too soon.</ansi>'
+      - '<ansi fg="attack-bad">{actee} rumbles a low answer, but you do not give ground.</ansi>'
+      observer:
+      - '<ansi fg="combat">{actee} snarls back at {actor}, who holds steady.</ansi>'
+      - '<ansi fg="combat">{actee} roars back at {actor}, who barely flinches.</ansi>'
+      - '<ansi fg="combat">{actee} hisses at {actor} in scorn, but it fails to bite.</ansi>'
+      - '<ansi fg="combat">{actee}''s answering growl rolls out, but {actor}''s nerve holds.</ansi>'
+      - '<ansi fg="combat">{actee} shrieks back at {actor}, but the sound fades too soon.</ansi>'
+      - '<ansi fg="combat">{actee} rumbles a low answer, but {actor} does not give ground.</ansi>'
+  normal:
+    together:
+      actee:
+      - '<ansi fg="defense-good">You snarl back at {actor}, and they flinch.</ansi>'
+      - '<ansi fg="defense-good">Your roar drowns out {actor}''s attempt, and their nerve slips.</ansi>'
+      - '<ansi fg="defense-good">You hiss back at {actor}, and they shrink from the sound.</ansi>'
+      - '<ansi fg="defense-good">Your answering growl rolls over {actor}, and they falter.</ansi>'
+      - '<ansi fg="defense-good">You shriek back at {actor}, and their bravado wavers.</ansi>'
+      - '<ansi fg="defense-good">Your low rumble answers {actor}, and they back away.</ansi>'
+      actor:
+      - '<ansi fg="attack-bad">{actee} snarls back at you, and you flinch.</ansi>'
+      - '<ansi fg="attack-bad">{actee}''s roar drowns out your attempt, and your nerve slips.</ansi>'
+      - '<ansi fg="attack-bad">{actee} hisses back at you, and you shrink from the sound.</ansi>'
+      - '<ansi fg="attack-bad">{actee}''s answering growl rolls over you, and you falter.</ansi>'
+      - '<ansi fg="attack-bad">{actee} shrieks back at you, and your bravado wavers.</ansi>'
+      - '<ansi fg="attack-bad">{actee}''s low rumble answers you, and you back away.</ansi>'
+      observer:
+      - '<ansi fg="combat">{actee} snarls back at {actor}, who flinches.</ansi>'
+      - '<ansi fg="combat">{actee}''s roar drowns out {actor}''s attempt, and their nerve slips.</ansi>'
+      - '<ansi fg="combat">{actee} hisses back at {actor}, who shrinks from the sound.</ansi>'
+      - '<ansi fg="combat">{actee}''s answering growl rolls over {actor}, who falters.</ansi>'
+      - '<ansi fg="combat">{actee} shrieks back at {actor}, whose bravado wavers.</ansi>'
+      - '<ansi fg="combat">{actee}''s low rumble answers {actor}, who backs away.</ansi>'
+  heavy:
+    together:
+      actee:
+      - '<ansi fg="defense-good">You hurl a savage snarl back at {actor}, and they freeze.</ansi>'
+      - '<ansi fg="defense-good">Your roar swallows {actor}''s attempt whole, and their nerve cracks.</ansi>'
+      - '<ansi fg="defense-good">You hiss so fiercely that {actor} stumbles back.</ansi>'
+      - '<ansi fg="defense-good">Your growl swells to thunder, and {actor} reels.</ansi>'
+      - '<ansi fg="defense-good">Your shriek splits the air, and {actor} staggers.</ansi>'
+      - '<ansi fg="defense-good">You answer with a wild cry, and {actor} buckles.</ansi>'
+      actor:
+      - '<ansi fg="attack-bad">{actee} hurls a savage snarl back at you, and you freeze.</ansi>'
+      - '<ansi fg="attack-bad">{actee}''s roar swallows your attempt whole, and your nerve cracks.</ansi>'
+      - '<ansi fg="attack-bad">{actee} hisses so fiercely that you stumble back.</ansi>'
+      - '<ansi fg="attack-bad">{actee}''s growl swells to thunder, and you reel.</ansi>'
+      - '<ansi fg="attack-bad">{actee}''s shriek splits the air, and you stagger.</ansi>'
+      - '<ansi fg="attack-bad">{actee} answers with a wild cry, and you buckle.</ansi>'
+      observer:
+      - '<ansi fg="combat">{actee} hurls a savage snarl back at {actor}, who freezes.</ansi>'
+      - '<ansi fg="combat">{actee}''s roar swallows {actor}''s attempt, and their nerve cracks.</ansi>'
+      - '<ansi fg="combat">{actee} hisses so fiercely that {actor} stumbles back.</ansi>'
+      - '<ansi fg="combat">{actee}''s growl swells to thunder, and {actor} reels.</ansi>'
+      - '<ansi fg="combat">{actee}''s shriek splits the air, and {actor} staggers.</ansi>'
+      - '<ansi fg="combat">{actee} answers with a wild cry, and {actor} buckles.</ansi>'

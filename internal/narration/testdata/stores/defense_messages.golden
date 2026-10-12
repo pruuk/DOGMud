@@ -1,6 +1,6 @@
 # defense-messages store snapshot
-# defense-type files at time of writing: 11
-# defense-types: block,counter-block,counter-defy,counter-dodge,counter-parry,counter-quell,deflected,defy,dodge,parry,quell
+# defense-type files at time of writing: 12
+# defense-types: block,counter-block,counter-defy,counter-defy-wordless,counter-dodge,counter-parry,counter-quell,deflected,defy,dodge,parry,quell
 # dimensions: defense-type x band(weak/normal/heavy) -- all 3 roles (actee/actor/observer)
 # come from ONE coordinated RenderDefenseMessage call (same index across the triad).
 # RenderDefenseMessage has no picker param (util.Rand only) -- pinned via indexOverride=0,
@@ -37,6 +37,15 @@ counter-defy|normal|observer => <ansi fg="combat">Defender mocks Attacker for th
 counter-defy|heavy|actee => <ansi fg="defense-good">You tear Attacker's attempt apart word by word, and they fall silent.</ansi>
 counter-defy|heavy|actor => <ansi fg="attack-bad">Defender tears your attempt apart word by word, and you fall silent.</ansi>
 counter-defy|heavy|observer => <ansi fg="combat">Defender tears Attacker's attempt apart word by word, leaving them silent.</ansi>
+counter-defy-wordless|weak|actee => <ansi fg="defense-good">You snarl back at Attacker, but they hold steady.</ansi>
+counter-defy-wordless|weak|actor => <ansi fg="attack-bad">Defender snarls back at you, but you hold steady.</ansi>
+counter-defy-wordless|weak|observer => <ansi fg="combat">Defender snarls back at Attacker, who holds steady.</ansi>
+counter-defy-wordless|normal|actee => <ansi fg="defense-good">You snarl back at Attacker, and they flinch.</ansi>
+counter-defy-wordless|normal|actor => <ansi fg="attack-bad">Defender snarls back at you, and you flinch.</ansi>
+counter-defy-wordless|normal|observer => <ansi fg="combat">Defender snarls back at Attacker, who flinches.</ansi>
+counter-defy-wordless|heavy|actee => <ansi fg="defense-good">You hurl a savage snarl back at Attacker, and they freeze.</ansi>
+counter-defy-wordless|heavy|actor => <ansi fg="attack-bad">Defender hurls a savage snarl back at you, and you freeze.</ansi>
+counter-defy-wordless|heavy|observer => <ansi fg="combat">Defender hurls a savage snarl back at Attacker, who freezes.</ansi>
 counter-dodge|weak|actee => <ansi fg="defense-good">You lash out at the opening, but Attacker recovers in time.</ansi>
 counter-dodge|weak|actor => <ansi fg="attack-bad">Defender lashes out at your opening, but you recover in time.</ansi>
 counter-dodge|weak|observer => <ansi fg="combat">Defender lashes out at Attacker, who recovers in time.</ansi>

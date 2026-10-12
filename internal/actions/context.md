@@ -1688,7 +1688,9 @@ and is charged + progressed for it (the countered-party economy).
 
 Narration is rendered by `internal/combat` from the pool of the defence that
 won (`items.CounterPoolFor`; the defy answer from `counter-defy` via
-`combat.BuildCounterTauntMessages`). SEQUENCING:
+`combat.BuildCounterTauntMessages`, or `counter-defy-wordless` for a
+speechless counterer). `FireCounterTaunt` refuses a silenced counterer
+before the contest, so nothing is paid or defended (M6 slice 3). SEQUENCING:
 `counterSkillMoveExit` does
 NOT dispatch — messages render in call order and the wrappers narrate after
 `ExecuteX` returns, so the `CounterResult` rides up on each action's result

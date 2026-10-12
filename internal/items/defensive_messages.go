@@ -52,6 +52,12 @@ const (
 	CounterPoolBlock DefencePool = "counter-block"
 	CounterPoolQuell DefencePool = "counter-quell"
 	CounterPoolDefy  DefencePool = "counter-defy"
+
+	// CounterPoolDefyWordless is the wordless twin of CounterPoolDefy (M6
+	// slice 3): the retort of a counterer with no voice for words. Not a
+	// CounterPoolFor result; combat.BuildCounterTauntMessages picks it for a
+	// speechless counterer and falls back to CounterPoolDefy without it.
+	CounterPoolDefyWordless DefencePool = "counter-defy-wordless"
 )
 
 type DefenseMessageGroup struct {

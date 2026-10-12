@@ -261,6 +261,13 @@ func FireCounterTaunt(room *rooms.Room, shape combatvocab.Attack, counterer, cou
 		return CounterTauntResult{}
 	}
 
+	// A silenced counterer cannot answer at all (M6 slice 3), exactly as a
+	// silenced taunter cannot taunt. Refused before the contest, so the
+	// countered party defends nothing and no conviction moves.
+	if counterer != nil && counterer.SpeechState() == characters.Silenced {
+		return CounterTauntResult{}
+	}
+
 	res := executeCounterTaunt(counterer, countered)
 	if !res.Fired {
 		return res
