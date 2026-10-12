@@ -1,5 +1,5 @@
 # taunt-messages store snapshot
-# files at time of writing: 1 (rhetoric)
+# files at time of writing: 2 (rhetoric,wordless)
 # dimensions: intensity(hit/miss/critical/fumble) x perspective(actor/actee/observer)
 #
 # All three perspectives of one intensity come from ONE coordinated GetTauntTriad call
@@ -25,3 +25,15 @@ rhetoric|critical|observer => <ansi fg="User">Source</ansi>'s words strike like 
 rhetoric|fumble|actor => <ansi fg="red">You stumble over your words trying to taunt <ansi fg="Mob">Target</ansi> — how embarrassing!</ansi>
 rhetoric|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi> tries to taunt you but fumbles their words!</ansi>
 rhetoric|fumble|observer => <ansi fg="User">Source</ansi> stumbles over their words trying to taunt <ansi fg="Mob">Target</ansi>.
+wordless|hit|actor => You snarl at <ansi fg="Mob">Target</ansi> until their nerve cracks! (<ansi fg="damage">ModerateWounds</ansi>)
+wordless|hit|actee => <ansi fg="User">Source</ansi> snarls at you until your nerve cracks! (<ansi fg="damage">ModerateWounds</ansi>)
+wordless|hit|observer => <ansi fg="User">Source</ansi> snarls at <ansi fg="Mob">Target</ansi> until their nerve cracks!
+wordless|miss|actor => Your snarl barely reaches <ansi fg="Mob">Target</ansi>, who is unmoved.
+wordless|miss|actee => <ansi fg="User">Source</ansi> snarls at you, but it barely reaches you.
+wordless|miss|observer => <ansi fg="User">Source</ansi> snarls at <ansi fg="Mob">Target</ansi>, who is unmoved.
+wordless|critical|actor => Your roar crashes over <ansi fg="Mob">Target</ansi>, who reels! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+wordless|critical|actee => <ansi fg="User">Source</ansi>'s roar crashes over you, and you reel! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+wordless|critical|observer => <ansi fg="User">Source</ansi>'s roar crashes over <ansi fg="Mob">Target</ansi>, who reels!
+wordless|fumble|actor => <ansi fg="red">Your snarl breaks into a cough. <ansi fg="Mob">Target</ansi> stares at you.</ansi>
+wordless|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi>'s snarl at you breaks into a cough.</ansi>
+wordless|fumble|observer => <ansi fg="User">Source</ansi>'s snarl at <ansi fg="Mob">Target</ansi> breaks into a cough.

@@ -1,10 +1,13 @@
 package combat
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/narration"
+	"gopkg.in/yaml.v2"
 )
 
 // seedTauntMessages replaces the package store for one test and returns a
@@ -214,4 +217,88 @@ func TestGetTauntTriadIsAllThreeOrNothing(t *testing.T) {
 	if got != (TauntTriad{}) {
 		t.Fatalf("a band missing a role must render NOTHING, not a partial triad; got %+v", got)
 	}
+}
+
+// loadShippedTauntPool reads one shipped taunt-messages file straight from the
+// repo, validates it as the loader would, and returns it.
+func loadShippedTauntPool(t *testing.T, name string) *TauntMessageGroup {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("..", "..", "_datafiles", "world", "dogmud", "taunt-messages", name+".yaml"))
+	if err != nil {
+		t.Fatalf("read %s: %v", name, err)
+	}
+	var g TauntMessageGroup
+	if err := yaml.Unmarshal(raw, &g); err != nil {
+		t.Fatalf("parse %s: %v", name, err)
+	}
+	if g.OptionId != name {
+		t.Fatalf("%s: optionid %q does not match the file name", name, g.OptionId)
+	}
+	if err := g.Validate(); err != nil {
+		t.Fatalf("validate %s: %v", name, err)
+	}
+	return &g
+}
+
+// The shipped wordless pool loads and renders all three roles for every band,
+// with its tokens filled.
+func TestGetTauntTriadFromWordlessRendersEveryBand(t *testing.T) {
+	seedTauntMessages(t, map[string]*TauntMessageGroup{
+		TauntPoolRhetoric: loadShippedTauntPool(t, TauntPoolRhetoric),
+		TauntPoolWordless: loadShippedTauntPool(t, TauntPoolWordless),
+	})
+
+	for _, band := range []TauntIntensity{TauntHit, TauntMiss, TauntCritical, TauntFumble} {
+		got := GetTauntTriadFrom(TauntPoolWordless, band, "Gruntfang", "Target", "mob", "user", "a stinging insult", narration.SequencePicker())
+		if got.ToAttacker == "" || got.ToDefender == "" || got.ToRoom == "" {
+			t.Fatalf("band %s: incomplete triad %+v", band, got)
+		}
+		for _, line := range []string{got.ToAttacker, got.ToDefender, got.ToRoom} {
+			if strings.Contains(line, "{") || strings.Contains(line, "}") {
+				t.Errorf("band %s: unfilled token in %q", band, line)
+			}
+		}
+		if !strings.Contains(got.ToRoom, "Gruntfang") && band != TauntFumble {
+			t.Errorf("band %s: room line does not name the actor: %q", band, got.ToRoom)
+		}
+	}
+}
+
+// A named pool reads that pool, not rhetoric; an unknown pool is the zero
+// triad; GetTauntTriad still reads rhetoric.
+func TestGetTauntTriadFromSelectsThePool(t *testing.T) {
+	seedTauntMessages(t, map[string]*TauntMessageGroup{
+		TauntPoolRhetoric: relabel(tauntFixture(3)["rhetoric"], "R-"),
+		TauntPoolWordless: relabel(tauntFixture(3)["rhetoric"], "W-"),
+	})
+
+	pick := narration.SequencePicker
+	if got := GetTauntTriadFrom(TauntPoolWordless, TauntHit, "s", "t", "mob", "user", "d", pick()); !strings.HasPrefix(got.ToAttacker, "W-") {
+		t.Errorf("wordless read %q", got.ToAttacker)
+	}
+	if got := GetTauntTriadFrom(TauntPoolRhetoric, TauntHit, "s", "t", "mob", "user", "d", pick()); !strings.HasPrefix(got.ToAttacker, "R-") {
+		t.Errorf("rhetoric read %q", got.ToAttacker)
+	}
+	if got := GetTauntTriad(TauntHit, "s", "t", "mob", "user", "d", pick()); !strings.HasPrefix(got.ToAttacker, "R-") {
+		t.Errorf("GetTauntTriad must stay on rhetoric, read %q", got.ToAttacker)
+	}
+	if got := GetTauntTriadFrom("no-such-pool", TauntHit, "s", "t", "mob", "user", "d", pick()); got != (TauntTriad{}) {
+		t.Errorf("unknown pool must be the zero triad, got %+v", got)
+	}
+}
+
+// relabel prefixes every line of a group, so a test can tell the pools apart.
+func relabel(g *TauntMessageGroup, prefix string) *TauntMessageGroup {
+	out := &TauntMessageGroup{OptionId: g.OptionId, Options: map[TauntIntensity]*TauntMessages{}}
+	for band, m := range g.Options {
+		p := func(in []string) []string {
+			r := make([]string, len(in))
+			for i, s := range in {
+				r[i] = prefix + s
+			}
+			return r
+		}
+		out.Options[band] = &TauntMessages{ToAttacker: p(m.ToAttacker), ToDefender: p(m.ToDefender), ToRoom: p(m.ToRoom)}
+	}
+	return out
 }
