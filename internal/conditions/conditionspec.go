@@ -96,6 +96,10 @@ const (
 	// grapple exposure) and any line would repeat each round.
 	Quiet Flag = `quiet`
 
+	// Silenced: the bearer cannot make a sound. Taunt and howl are refused
+	// (characters.SpeechState). Nothing sets it yet; #499 adds the spell.
+	Silenced Flag = `silenced`
+
 	// Stacking marks a tick record where every application is its own stack
 	// with its own timer, instead of refreshing the one instance. The record
 	// ticks the sum of its live stacks once a round and ends with its longest
@@ -157,6 +161,7 @@ var AllFlags = []Flag{
 	SilentStart,
 	Bleeding,
 	Quiet,
+	Silenced,
 	Stacking,
 	Adjustable,
 	Cancellable,
