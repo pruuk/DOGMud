@@ -82,15 +82,15 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if res.MoveResult.Hit {
 		if res.MoveResult.KnockedDown {
-			sendMoveEvent("gore", "player_knockdown", ids, aud, goreCategories, damageTokens)
+			sendMoveEvent("gore", "knockdown", ids, aud, goreCategories, damageTokens)
 		} else {
-			sendMoveEvent("gore", "player_hit", ids, aud, goreCategories, damageTokens)
+			sendMoveEvent("gore", "hit", ids, aud, goreCategories, damageTokens)
 		}
 	} else if res.MoveResult.Damage > 0 {
 		// Defended-partial: the personal lines carry the damage, and the room
 		// line names the defence that blunted the gore (U6b Task 9), falling
 		// back to the squared partial text when there was no defence to name.
-		roles, _ := renderMoveEvent("gore", "player_partial", ids, damageTokens)
+		roles, _ := renderMoveEvent("gore", "partial", ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "goring charge")
 		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
 		if defended {
@@ -111,7 +111,7 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
 		}, aud)
 	} else {
-		sendMoveEvent("gore", "player_miss", ids, aud, goreCategories, nil)
+		sendMoveEvent("gore", "miss", ids, aud, goreCategories, nil)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

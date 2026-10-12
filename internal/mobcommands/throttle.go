@@ -77,12 +77,17 @@ func Throttle(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if result.Hit {
 		sendMoveEvent("throttle", "hit", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens)
 
-		// Cast-interrupt detail line riding on the hit above. The YAML authors
-		// only an actee role for this event; lineOrNone keeps the room and
-		// actor roles silent, matching today's behaviour of never broadcasting
-		// this to the room.
-		if res.InterruptedCast && targetUser != nil {
-			sendMoveEvent("throttle", "cast_interrupt", ids, aud, messaging.CategorySpellDisruption, nil)
+		// Cast-interrupt detail line riding on the hit above. Mobs and players
+		// share one pool (M6 slice 2, ledger row 56), so the room is told of
+		// the interrupt as it is for a player's throttle, and an observer who
+		// sees nothing hears the chant break off, as from a player's (#242).
+		//
+		// Not gated on targetUser: the event carries observer and sound lines
+		// now, so a mob throttling a casting MOB is narrated to the room as a
+		// player doing it is. SendTrio skips the actee line when aud.Actee is
+		// unset.
+		if res.InterruptedCast {
+			sendMoveEvent("throttle", "cast_interrupt", ids, aud, messaging.CategorySpellDisruption, nil, messaging.SoundChantBreaksOff)
 		}
 	} else if result.Damage > 0 {
 		// Defended-partial: the actee line still carries the damage from the

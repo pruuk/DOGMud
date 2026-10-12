@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/darkcombat"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -590,20 +591,14 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 			}
 
 			// Record per-swing analytics
-			attackResult.SwingEvents = append(attackResult.SwingEvents, SwingEvent{
-				Hit:           res.hit,
-				Crit:          res.crit,
-				CritSource:    res.critSource,
-				Fumble:        res.fumble,
-				DoubleFumble:  res.doubleFumble,
-				DefenseCrit:   res.defenseCrit,
-				Damage:        attackTargetDamage,
-				DamageReduced: attackTargetReduction,
-				DefenseUsed:   attackResult.DefenseUsed,
-				AttackZScore:  attackResult.AttackZScore,
-				DefenseZScore: attackResult.DefenseZScore,
-				AttackType:    swingAtkType,
-			})
+			se := swingEventFor(res)
+			se.Damage = attackTargetDamage
+			se.DamageReduced = attackTargetReduction
+			se.DefenseUsed = attackResult.DefenseUsed
+			se.AttackZScore = attackResult.AttackZScore
+			se.DefenseZScore = attackResult.DefenseZScore
+			se.AttackType = swingAtkType
+			attackResult.SwingEvents = append(attackResult.SwingEvents, se)
 
 			// Only build attack messages for non-double-fumble (double fumble already sent)
 			if !res.doubleFumble {
@@ -647,13 +642,107 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	}
 
 	// M4d PR 2: hide identities at composition, once, over every personal
-	// line this round composed -- rather than replaceDarknessMessages'
-	// approach of throwing the composed line away and substituting one of
-	// twelve hardcoded sentences. See hideIdentitiesInPersonalLines.
+	// line this round composed. A reader who cannot see at all (optics
+	// SightNone) then has the per-swing lines swapped for dark-combat lines
+	// from the narration store (M6 slice 2); every other line, and every
+	// other reader's lines, are kept with names hidden. See
+	// hideIdentitiesInPersonalLines.
 	hideIdentitiesInPersonalLines(&attackResult, sourceChar, targetChar, ctx)
 
 	return attackResult
 
+}
+
+// swingEventFor fills the per-swing outcome fields of a SwingEvent from one
+// swing's resolution. The caller adds the round-scoped fields (damage, the
+// z-scores, DefenseUsed, AttackType).
+func swingEventFor(r hitResolution) SwingEvent {
+	return SwingEvent{
+		Hit:          r.hit,
+		Crit:         r.crit,
+		CritSource:   r.critSource,
+		Fumble:       r.fumble,
+		DoubleFumble: r.doubleFumble,
+		DefenseCrit:  r.defenseCrit,
+		Defended:     r.defenceWon(),
+	}
+}
+
+// swapSwingLines replaces the per-swing narration lines of msgs (the indices in
+// swingIdx) with dark, keeping every other line in order. All the dark lines
+// sit at the position of the FIRST swing line; the other swing lines are
+// dropped. With no swing line or no dark line, msgs is returned unchanged.
+func swapSwingLines(msgs []TaggedMessage, swingIdx []int, dark []TaggedMessage) []TaggedMessage {
+	if len(swingIdx) == 0 || len(dark) == 0 {
+		return msgs
+	}
+	isSwing := make(map[int]bool, len(swingIdx))
+	for _, i := range swingIdx {
+		isSwing[i] = true
+	}
+	first := swingIdx[0]
+	for _, i := range swingIdx {
+		if i < first {
+			first = i
+		}
+	}
+	out := make([]TaggedMessage, 0, len(msgs)-len(swingIdx)+len(dark))
+	for i, m := range msgs {
+		if i == first {
+			out = append(out, dark...)
+		}
+		if !isSwing[i] {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
+// darkOutcome buckets one swing for a reader who cannot see, in the order the
+// retired replaceDarknessMessages used. ok is false for a double fumble, which
+// gets no dark line: its composed line is kept (names hidden) and carries the
+// signal that the reader was knocked prone. "Defended" reads
+// the swing's own Defended, not AttackResult.DefenseUsed, which is sticky.
+func darkOutcome(se SwingEvent) (darkcombat.Outcome, bool) {
+	switch {
+	case se.DoubleFumble:
+		return "", false
+	case se.Fumble:
+		return darkcombat.Fumble, true
+	case se.Crit:
+		return darkcombat.Crit, true
+	case se.Defended && !se.DefenseCrit && se.Damage > 0:
+		return darkcombat.Deflected, true
+	case se.Defended:
+		return darkcombat.Defended, true
+	case se.Hit:
+		return darkcombat.Hit, true
+	}
+	return darkcombat.Miss, true
+}
+
+// darkLines is one dark line per swing for viewpoint v. A clean defence is
+// CategoryDodge; every other bucket, a deflected swing included, is
+// CategoryHitMelee, so the damage-to-viewer verbosity floor still applies.
+// Empty when the store is unloaded or there is no swing to narrate.
+func darkLines(events []SwingEvent, v darkcombat.Viewpoint) []TaggedMessage {
+	var out []TaggedMessage
+	for _, se := range events {
+		o, ok := darkOutcome(se)
+		if !ok {
+			continue
+		}
+		text, ok := darkcombat.Line(v, o, narration.DefaultPicker)
+		if !ok {
+			return nil
+		}
+		cat := messaging.CategoryHitMelee
+		if o == darkcombat.Defended {
+			cat = messaging.CategoryDodge
+		}
+		out = append(out, TaggedMessage{Category: cat, Text: text})
+	}
+	return out
 }
 
 // hideIdentitiesInPersonalLines hides each side's counterpart from that
@@ -709,7 +798,20 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 // weapon whenever both held a weapon of the same name. The crit disarm line
 // names the victim's weapon outside any AttackResult (criteffects.go) and
 // is the accepted known limit.
+//
+// Dark lines (M6 slice 2): a reader who cannot see at all has that side's
+// PER-SWING narration lines (the ones recorded by sendSwingToSource /
+// sendSwingToTarget) replaced by one internal/darkcombat line per swing,
+// after the name-hiding above. Every other personal line (pet damage,
+// shortage texts, entangled / helpless, double fumble, wait round) is kept,
+// names hidden as for any reader. The gate is ctx.sourceOptics /
+// ctx.targetOptics (messaging.ParticipantSight), not the sight fields above,
+// so a sleeper in a lit room, whom ReaderSight counts as blind, keeps the
+// composed line with "something". A shapes reader keeps the composed line too.
 func hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar *characters.Character, ctx combatContext) {
+	// The name-hiding loops run FIRST, over the composed lines only, so a dark
+	// line never passes through HideNames (a mob named "Something" cannot
+	// rewrite it). The optics-gated swap follows at the bottom.
 	for i := range result.MessagesToSource {
 		result.MessagesToSource[i].Text = messaging.HideNames(result.MessagesToSource[i].Text, []string{targetChar.Name}, ctx.sourceSight)
 	}
@@ -720,6 +822,14 @@ func hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar 
 	for i := range result.MessagesToTarget {
 		text := messaging.HideNames(result.MessagesToTarget[i].Text, targetHides, ctx.targetSight)
 		result.MessagesToTarget[i].Text = messaging.HideWeapons(text, ctx.targetSight)
+	}
+	if ctx.sourceOptics == messaging.SightNone {
+		result.MessagesToSource = swapSwingLines(result.MessagesToSource, result.swingSourceLines,
+			darkLines(result.SwingEvents, darkcombat.Attacker))
+	}
+	if ctx.targetOptics == messaging.SightNone {
+		result.MessagesToTarget = swapSwingLines(result.MessagesToTarget, result.swingTargetLines,
+			darkLines(result.SwingEvents, darkcombat.Defender))
 	}
 }
 

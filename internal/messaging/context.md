@@ -433,6 +433,10 @@ Functions:
 - `SpeakerNoun(d SightDecision) string`: the word `HideSpeakerNames`
   substitutes, "a figure" at shapes and "someone" otherwise; exported for
   GMCP say's `sender` (#252).
+- `StealthActor` (const, "Someone"): what every reader calls a shooter firing
+  from stealth; not a sight word, since a sneaking shooter is hidden from all
+  sight. Used by both `shoot` twins; engine vocabulary beside `UnseenNoun` and
+  `SpeakerNoun` (M6 slice 2, ledger row 54).
 - `StripNameAdjectives(text string) string` (#415): drops the adjective span
   ("(dead)", "(♥friend)") after every identity tag, keeping the tag, for a
   narrated line that names a creature rather than lists it.

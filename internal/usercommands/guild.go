@@ -93,7 +93,7 @@ func guildInfo(user *users.UserRecord) {
 		user.SendText(messaging.CategorySystem, `You are not in a guild. Found one with <ansi fg="command">guild create <TAG> <name></ansi>, or get invited to one.`)
 		return
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi> — %d member(s)`, g.Name, g.Tag, len(g.Members)))
+	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>: %d member(s)`, g.Name, g.Tag, len(g.Members)))
 	if g.Motd != "" {
 		// Escaped again on render (idempotent) so a MOTD persisted before
 		// guilds.SetMotd started escaping is neutralised too.
@@ -165,7 +165,7 @@ func guildList(user *users.UserRecord) {
 				break
 			}
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="cyan">[%s]</ansi> <ansi fg="white">%s</ansi> — %d member(s), led by %s`, g.Tag, g.Name, len(g.Members), leaderName))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="cyan">[%s]</ansi> <ansi fg="white">%s</ansi>: %d member(s), led by %s`, g.Tag, g.Name, len(g.Members), leaderName))
 	}
 }
 
@@ -182,7 +182,7 @@ func guildLeave(user *users.UserRecord, rest string) {
 		}
 		// Sole-member leader: leaving disbands.
 		cmdPrompt, _ := user.StartPrompt(`guild`, rest)
-		q := cmdPrompt.Ask(`You are the only member — leaving will disband the guild. Proceed?`, []string{`Yes`, `No`}, `No`)
+		q := cmdPrompt.Ask(`You are the only member. Leaving will disband the guild. Proceed?`, []string{`Yes`, `No`}, `No`)
 		if !q.Done {
 			return
 		}

@@ -25,11 +25,11 @@ func TestShootNarration_VerticalExitsReadAsDirections(t *testing.T) {
 		role  func(r narration.Roles) string
 		want  string
 	}{
-		{"player_fire_depart", "up", observerRole, "Orc fires their bow upward."},
-		{"player_fire_depart", "north", observerRole, `Orc fires their bow towards the <ansi fg="exit">north</ansi>.`},
-		{"player_arrival_known_hit", "up", acteeObserverRole, "A shot streaks in from somewhere above and strikes Bob!"},
-		{"player_arrival_known_hit", "down", acteeObserverRole, "A shot streaks in from somewhere below and strikes Bob!"},
-		{"player_arrival_known_hit", "north", acteeObserverRole, `A shot streaks in from beyond the <ansi fg="exit">north</ansi> and strikes Bob!`},
+		{"fire_depart", "up", observerRole, "Orc fires their bow upward."},
+		{"fire_depart", "north", observerRole, `Orc fires their bow towards the <ansi fg="exit">north</ansi>.`},
+		{"arrival_known_hit", "up", acteeObserverRole, "A shot streaks in from somewhere above and strikes Bob!"},
+		{"arrival_known_hit", "down", acteeObserverRole, "A shot streaks in from somewhere below and strikes Bob!"},
+		{"arrival_known_hit", "north", acteeObserverRole, `A shot streaks in from beyond the <ansi fg="exit">north</ansi> and strikes Bob!`},
 	}
 	for _, c := range cases {
 		roles, ok := renderMoveEvent("shoot", c.event, ids, map[string]string{

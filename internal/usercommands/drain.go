@@ -81,24 +81,24 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	damageTokens := map[string]string{movenarration.TokenDamage: dmgDesc}
 
 	if res.MoveResult.Hit {
-		sendMoveEvent("drain", "player_hit", ids, aud, drainCategories, damageTokens)
+		sendMoveEvent("drain", "hit", ids, aud, drainCategories, damageTokens)
 
 		// Describe the heal to the draining player — no raw numbers.
 		//
 		// Actor-only: this reports the drainer's own returning vigour to the
 		// drainer. Private knowledge under the detail-line ruling, not a
-		// world event (see intentionallySilentRoles' drain/player_hit_heal
+		// world event (see intentionallySilentRoles' drain/hit_heal
 		// entry).
 		if res.Healed > 0 {
 			healDesc := combat.GetHealDescription(res.Healed, user.Character.HealthMax.Value)
 			healTokens := map[string]string{movenarration.TokenHeal: healDesc}
-			sendMoveEvent("drain", "player_hit_heal", ids, aud, drainCategories, healTokens)
+			sendMoveEvent("drain", "hit_heal", ids, aud, drainCategories, healTokens)
 		}
 	} else if res.MoveResult.Damage > 0 {
 		// Defended-partial: the personal lines carry the damage, and the room
 		// line names the defence that blunted the drain (U6b Task 9), falling
 		// back to the squared partial text when there was no defence to name.
-		roles, _ := renderMoveEvent("drain", "player_partial", ids, damageTokens)
+		roles, _ := renderMoveEvent("drain", "partial", ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "draining grasp")
 		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
 		if defended {
@@ -116,7 +116,7 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		if res.Healed > 0 {
 			healDesc := combat.GetHealDescription(res.Healed, user.Character.HealthMax.Value)
 			healTokens := map[string]string{movenarration.TokenHeal: healDesc}
-			sendMoveEvent("drain", "player_partial_heal", ids, aud, drainCategories, healTokens)
+			sendMoveEvent("drain", "partial_heal", ids, aud, drainCategories, healTokens)
 		}
 	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "draining grasp"); defended {
 		// A defence stopped it outright: all three lines come from the triad.
@@ -127,7 +127,7 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
 		}, aud)
 	} else {
-		sendMoveEvent("drain", "player_miss", ids, aud, drainCategories, nil)
+		sendMoveEvent("drain", "miss", ids, aud, drainCategories, nil)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

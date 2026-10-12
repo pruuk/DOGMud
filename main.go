@@ -33,6 +33,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/conversations"
 	"github.com/GoMudEngine/GoMud/internal/copyover"
+	"github.com/GoMudEngine/GoMud/internal/darkcombat"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/factions"
 	"github.com/GoMudEngine/GoMud/internal/ferry"
@@ -1977,6 +1978,7 @@ func loadAllDataFiles(isReload bool) {
 	combat.LoadTauntMessageFiles()
 	movenarration.LoadMoveNarrationFiles()
 	lightnotice.LoadLightNoticeFiles()
+	darkcombat.LoadDarkCombatFiles()
 	spells.LoadCastingMessages()
 	audio.LoadAudioConfig()
 	characters.CompileAdjectiveSwaps() // This should come after loading color patterns.

@@ -376,18 +376,18 @@ options:
         - 'You charge and <ansi fg="cyan-bold">IMPALE</ansi> <ansi fg="{acteetype}">{actee}</ansi> clean through with your <ansi fg="item">{itemname}</ansi>!'
         - 'Lunging while {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT GORE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You flow like a charging beast and <ansi fg="cyan-bold">SKEWER</ansi> <ansi fg="{acteetype}">{actee}</ansi> on your <ansi fg="item">{itemname}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them from your {stance} stance!'
+        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely, and you <ansi fg="cyan-bold">ANNIHILATE</ansi> them from your {stance} stance!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS IMPALE</ansi> through <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - 'Your tactical charge creates the perfect opening - you <ansi fg="cyan-bold">GORE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with apex fury!'
+        - 'Your tactical charge creates the perfect opening, and you <ansi fg="cyan-bold">GORE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with apex fury!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> impale!'
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING CHARGE</ansi> from the perfect angle!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">TOSS</ansi> <ansi fg="{acteetype}">{actee}</ansi> with masterful, brutal precision!'
-        - 'Your positioning is flawless - you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
+        - 'Your positioning is flawless, and you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         - 'Your unstoppable charge culminates in a <ansi fg="cyan-bold">CRITICAL IMPALEMENT</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">DRIVE THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with devastating force!'
-        - 'The tide of battle favors you - you <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
+        - 'The tide of battle favors you, and you <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with your <ansi fg="item">{itemname}</ansi>!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY IMPALES</ansi> you on their <ansi fg="item">{itemname}</ansi>!'
@@ -398,18 +398,18 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> charges and <ansi fg="cyan-bold">IMPALES</ansi> you clean through with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and delivers a <ansi fg="cyan-bold">PERFECT GORE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like a charging beast and <ansi fg="cyan-bold">SKEWERS</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely - they <ansi fg="cyan-bold">ANNIHILATE</ansi> you!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens you completely, and they <ansi fg="cyan-bold">ANNIHILATE</ansi> you!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS IMPALE</ansi> through you!'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical charge creates the opening - you are <ansi fg="cyan-bold">GORED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical charge creates the opening, and you are <ansi fg="cyan-bold">GORED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS IMPALE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>, {position} and {momentum}, delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING CHARGE</ansi> from the perfect angle!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">TOSSES</ansi> you with brutality!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless - you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s unstoppable charge ends in a <ansi fg="cyan-bold">CRITICAL IMPALEMENT</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">DRIVES THROUGH</ansi> you utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - they <ansi fg="cyan-bold">DECIMATE</ansi> you with their <ansi fg="item">{itemname}</ansi>!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and they <ansi fg="cyan-bold">DECIMATE</ansi> you with their <ansi fg="item">{itemname}</ansi>!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">CRITICALLY IMPALES</ansi> <ansi fg="{acteetype}">{actee}</ansi> on their <ansi fg="item">{itemname}</ansi>!'
@@ -420,18 +420,18 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> charges and <ansi fg="cyan-bold">IMPALES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges forward with a <ansi fg="cyan-bold">PERFECT GORE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like a beast and <ansi fg="cyan-bold">SKEWERS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> - <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>: <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS IMPALE</ansi> through <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical charge creates the opening - <ansi fg="cyan-bold">EVISCERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical charge creates the opening: <ansi fg="cyan-bold">EVISCERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS IMPALE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>, {position} and {momentum}, delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING CHARGE</ansi> from the perfect angle!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">TOSSES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s charge culminates in a <ansi fg="cyan-bold">CRITICAL IMPALEMENT</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">DRIVES THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - they <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and they <ansi fg="cyan-bold">DECIMATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
   fumble:
     # messages for when they are in the same room
     together:
@@ -440,21 +440,21 @@ options:
         - 'Your charge <ansi fg="red-bold">FUMBLES</ansi> as you hook nothing with your <ansi fg="item">{itemname}</ansi>!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble past your target off-balance!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> your <ansi fg="item">{itemname}</ansi> awkwardly, leaving you wide open!'
-        - 'You lose your footing and your charge <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
+        - 'You lose your balance and your charge <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
-        - 'Your tactical charge fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical charge fails catastrophically, and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the angle and <ansi fg="red-bold">FUMBLE</ansi> your gore!'
         - 'Your feint backfires and you <ansi fg="red-bold">FUMBLE</ansi> the charge badly!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected sidestep forces you to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Your masterful charge is disrupted - you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
+        - 'Your masterful charge is disrupted, and you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s charge <ansi fg="red-bold">FUMBLES</ansi> as they hook nothing with their <ansi fg="item">{itemname}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their charge in an embarrassing stumble!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their footing!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing and their charge <ansi fg="red-bold">FUMBLES</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s attack <ansi fg="red-bold">FUMBLES</ansi> badly as they lose their balance!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and their charge <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi> their gore!'
@@ -462,7 +462,7 @@ options:
         master:
         - 'Your sidestep forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the charge!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful charge is disrupted - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful charge is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s charge <ansi fg="red-bold">FUMBLES</ansi> as they hook nothing with their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -470,10 +470,10 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their gore in a clumsy, lurching stumble!'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s feint backfires catastrophically!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s sidestep forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s perfect charge is disrupted - a <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s perfect charge is disrupted: a <ansi fg="red-bold">FUMBLE</ansi>!'

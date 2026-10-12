@@ -16,9 +16,9 @@ import (
 // hold as Go literals now come from the movenarration store, and must render
 // BYTE IDENTICAL to what those literals produced.
 //
-// The 118-row byte-identity net (internal/mobcommands/special_move_net_test.go)
-// covers only the thirteen mob-command files migrated in M4e-1 PR 1a/1b; these
-// six lines live in internal/combat and had no proof of their own until this
+// The byte-identity net that covered the thirteen mob-command files migrated
+// in M4e-1 PR 1a/1b has since been removed; it never covered these six lines,
+// which live in internal/combat and have no proof of their own but this
 // test. The wanted strings below are copied verbatim from the pre-migration
 // source (git history of grapple.go / criteffects.go), not derived from the
 // YAML, so a change to either side that drifts the wording fails here.
@@ -29,7 +29,7 @@ func TestGrappleNarrationPinnedToOriginalLiterals(t *testing.T) {
 
 	t.Run("crit_failure", func(t *testing.T) {
 		wantActor := `<ansi fg="red-bold">You overextend badly and fall to the ground!</ansi>`
-		wantActee := `<ansi fg="yellow-bold">Your opponent overextends and falls - you see an opening!</ansi>`
+		wantActee := `<ansi fg="yellow-bold">Your opponent overextends and falls. You see an opening!</ansi>`
 		wantObserver := `<ansi fg="combat">The failed grapple sends them sprawling!</ansi>`
 
 		attacker := &characters.Character{Name: "Attacker", Position: position.NewMachine()}

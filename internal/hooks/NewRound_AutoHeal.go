@@ -115,7 +115,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 						`Your hands have a fine tremor now, and your sight swims at the edges.`)
 				case 5:
 					user.SendText(messaging.CategoryWarning,
-						`Your whole body is in revolt — sweat, shakes, the taste of metal.`)
+						`Your whole body is in revolt: sweat, shakes, the taste of metal.`)
 				}
 			} else {
 				// Improving — one relief line for any downward crossing.

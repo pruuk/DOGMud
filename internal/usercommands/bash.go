@@ -90,19 +90,27 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		Actee:      fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, target.Name),
 		ActeePlain: target.Name,
 	}
-	damageTokens := map[string]string{movenarration.TokenDamage: dmgDesc}
+	// Mobs and players share one pool per event (M6 slice 2, ledger row 56),
+	// so the mob variants' species tokens must be filled here too. A player
+	// always bashes with a shield.
+	damageTokens := map[string]string{
+		movenarration.TokenDamage: dmgDesc,
+		movenarration.TokenLabel:  "shield bash",
+		movenarration.TokenVerb:   "bashes",
+		movenarration.TokenWith:   "with their shield",
+	}
 
 	if result.Hit {
 		if result.KnockedDown {
-			sendMoveEvent("bash", "player_knockdown", ids, aud, bashCategories, damageTokens)
+			sendMoveEvent("bash", "knockdown", ids, aud, bashCategories, damageTokens)
 		} else {
-			sendMoveEvent("bash", "player_hit", ids, aud, bashCategories, damageTokens)
+			sendMoveEvent("bash", "hit", ids, aud, bashCategories, damageTokens)
 		}
 	} else if result.Damage > 0 {
 		// Defended-partial: the personal lines carry the damage, and the room
 		// line names the defence that blunted the bash (U6b Task 9), falling
 		// back to plain stagger text when there was no defence to name.
-		roles, _ := renderMoveEvent("bash", "player_partial", ids, damageTokens)
+		roles, _ := renderMoveEvent("bash", "partial", ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, target, result.Defence, "shield bash")
 		observer := lineOrNone(messaging.CategoryBash, roles.Observer)
 		if defended {
@@ -124,7 +132,7 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}, aud)
 	} else {
 		// No defence to narrate (e.g. a fumbled swing): plain miss text.
-		sendMoveEvent("bash", "player_miss", ids, aud, bashCategories, nil)
+		sendMoveEvent("bash", "miss", ids, aud, bashCategories, damageTokens)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

@@ -28,7 +28,7 @@ options:
         - 'While {position}, you channel your momentum toward <ansi fg="{acteetype}">{actee}</ansi>.'
         master:
         - 'With practiced control, you adopt a {stance} stance, {position}, ready to crash into <ansi fg="{acteetype}">{actee}</ansi>.'
-        - '{momentum}, you read <ansi fg="{acteetype}">{actee}</ansi>''s footing and prepare the perfect slam.'
+        - '{momentum}, you watch <ansi fg="{acteetype}">{actee}</ansi>''s stance and prepare the perfect slam.'
         - 'You settle your {stance} fighting form, mass loaded and ready to deliver ruin.'
         - '{momentum}, you assess <ansi fg="{acteetype}">{actee}</ansi>''s balance before committing your {itemname}.'
       actee:
@@ -44,7 +44,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> channels their momentum toward you.'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> adopts a masterful {stance} stance, mass loaded for impact.'
-        - '<ansi fg="{actortype}">{actor}</ansi> reads your footing with terrifying accuracy.'
+        - '<ansi fg="{actortype}">{actor}</ansi> watches your stance with terrifying accuracy.'
         - '<ansi fg="{actortype}">{actor}</ansi>''s bulk coils like a spring aimed directly at you.'
         - '<ansi fg="{actortype}">{actor}</ansi> assesses your balance before committing to the {itemname}.'
       observer:
@@ -60,7 +60,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> shifts their mass toward <ansi fg="{acteetype}">{actee}</ansi>, ready to smash.'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> loads their bulk, prepared to crash into <ansi fg="{acteetype}">{actee}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s footing, preparing the perfect slam.'
+        - '<ansi fg="{actortype}">{actor}</ansi> watches <ansi fg="{acteetype}">{actee}</ansi>''s stance, preparing the perfect slam.'
         - '<ansi fg="{actortype}">{actor}</ansi> settles into a masterful {stance} combat stance.'
         - '<ansi fg="{actortype}">{actor}</ansi> assesses <ansi fg="{acteetype}">{actee}</ansi>''s balance before committing to the {itemname}.'
   wait:
@@ -175,13 +175,13 @@ options:
         - 'Your charge lacks force and only grazes <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You make awkward contact with <ansi fg="{acteetype}">{actee}</ansi>, achieving little.'
         expert:
-        - 'You dart in and clip <ansi fg="{acteetype}">{actee}</ansi> with a glancing shoulder.'
+        - 'You dart in and barely hit <ansi fg="{acteetype}">{actee}</ansi> with a glancing shoulder.'
         - 'Angling from your {stance} stance, you land a probing shove on <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You roll your weight forward and deliver a light nudge to <ansi fg="{acteetype}">{actee}</ansi>.'
         - 'You feint and graze <ansi fg="{acteetype}">{actee}</ansi> with a testing body check, {position}.'
-        - 'Testing their footing, you deliver a probing slam to <ansi fg="{acteetype}">{actee}</ansi>.'
+        - 'Testing their stance, you deliver a probing slam to <ansi fg="{acteetype}">{actee}</ansi>.'
         master:
-        - 'You draw their stance open and clip <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart} with controlled force.'
+        - 'You draw their stance open and barely hit <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}.'
         - 'From your {stance} posture, {momentum}, you land a deliberate glancing blow.'
         - 'You flick your {itemname} at <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart} with precise restraint.'
         - 'You find a small opening and deliver a controlled nudge to <ansi fg="{acteetype}">{actee}</ansi>.'
@@ -193,13 +193,13 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s charge lacks force and only grazes you.'
         - '<ansi fg="{actortype}">{actor}</ansi> makes awkward contact, achieving little.'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> darts in and clips you with a glancing shoulder.'
+        - '<ansi fg="{actortype}">{actor}</ansi> darts in and barely hits you with a glancing shoulder.'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a probing shove from their {stance} stance.'
         - '<ansi fg="{actortype}">{actor}</ansi> rolls forward and nudges you with controlled weight.'
         - '<ansi fg="{actortype}">{actor}</ansi> feints and grazes you with a testing body check.'
-        - '<ansi fg="{actortype}">{actor}</ansi> tests your footing with a probing slam.'
+        - '<ansi fg="{actortype}">{actor}</ansi> tests your stance with a probing slam.'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi> draws your guard and clips your {bodypart} with control.'
+        - '<ansi fg="{actortype}">{actor}</ansi> draws your guard and barely hits your {bodypart}.'
         - '<ansi fg="{actortype}">{actor}</ansi> presses forward and grazes you from their {stance} stance.'
         - '<ansi fg="{actortype}">{actor}</ansi> flicks their bulk at you while {momentum}.'
         - '<ansi fg="{actortype}">{actor}</ansi> finds a small gap and nudges you precisely.'
@@ -211,13 +211,13 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s charge barely grazes <ansi fg="{acteetype}">{actee}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> makes awkward contact with <ansi fg="{acteetype}">{actee}</ansi>, achieving little.'
         expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> darts in and clips <ansi fg="{acteetype}">{actee}</ansi> with a glancing shoulder.'
+        - '<ansi fg="{actortype}">{actor}</ansi> darts in and barely hits <ansi fg="{acteetype}">{actee}</ansi> with a glancing shoulder.'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a probing shove from a {stance} stance.'
         - '<ansi fg="{actortype}">{actor}</ansi> rolls forward and nudges <ansi fg="{acteetype}">{actee}</ansi> lightly.'
         - '<ansi fg="{actortype}">{actor}</ansi> feints and grazes <ansi fg="{acteetype}">{actee}</ansi> with a test slam.'
-        - '<ansi fg="{actortype}">{actor}</ansi> tests <ansi fg="{acteetype}">{actee}</ansi>''s footing with a probing slam.'
+        - '<ansi fg="{actortype}">{actor}</ansi> tests <ansi fg="{acteetype}">{actee}</ansi>''s stance with a probing slam.'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi> draws the guard and clips with controlled precision.'
+        - '<ansi fg="{actortype}">{actor}</ansi> draws the guard and lands a light, careful hit.'
         - '<ansi fg="{actortype}">{actor}</ansi> presses forward with a measured glancing blow.'
         - '<ansi fg="{actortype}">{actor}</ansi> dances in while flicking bulk at <ansi fg="{acteetype}">{actee}</ansi>.'
         - '<ansi fg="{actortype}">{actor}</ansi> finds a small opening and delivers a controlled nudge.'
@@ -440,7 +440,7 @@ options:
         - 'Your charge <ansi fg="red-bold">FUMBLES</ansi> as your slam goes completely wild!'
         - 'You <ansi fg="red-bold">FUMBLE</ansi> and stumble off-balance under your own weight!'
         - 'Your body check <ansi fg="red-bold">FUMBLES</ansi> awkwardly, leaving you vulnerable!'
-        - 'You lose your footing and your slam <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
+        - 'You lose your balance and your slam <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
         - 'Your tactical charge fails catastrophically and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the angle and <ansi fg="red-bold">FUMBLE</ansi> your slam!'
@@ -453,7 +453,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s charge <ansi fg="red-bold">FUMBLES</ansi> pathetically as they stumble!'
         - '<ansi fg="{actortype}">{actor}</ansi> trips over their own momentum and <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s body check <ansi fg="red-bold">FUMBLES</ansi> as they lose their footing!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s body check <ansi fg="red-bold">FUMBLES</ansi> as they lose their balance!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their slam in an embarrassing display!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical charge fails and they <ansi fg="red-bold">FUMBLE</ansi>!'
@@ -468,7 +468,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s charge <ansi fg="red-bold">FUMBLES</ansi> wildly at <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their slam at <ansi fg="{acteetype}">{actee}</ansi> and stumbles!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their body check in a clumsy crash!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing as the slam <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance as the slam <ansi fg="red-bold">FUMBLES</ansi> pathetically!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s tactical charge fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the angle and <ansi fg="red-bold">FUMBLES</ansi>!'

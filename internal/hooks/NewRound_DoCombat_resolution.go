@@ -60,9 +60,12 @@ const (
 // name is not enough. A participant without clear sight
 // (messaging.CanSeeSightImpairedOnly: darkness or blindness, not sleep, see
 // the predicate's own comment for why a sleeper must still read what hit
-// them; infrared does not count as clear) instead reads one fixed dark line, the
-// same convention the swing path (dispatchCritAndMessaging /
-// replaceDarknessMessages) already uses. The fixed line is only sent when
+// them; infrared does not count as clear) instead reads one fixed dark line.
+// The swing path does the analogous job at composition, in
+// combat.hideIdentitiesInPersonalLines with lines from internal/darkcombat.
+// Known divergence: this wait-round path darkens any reader below full sight,
+// while the swing path darkens only a reader with no sight at all (optics
+// SightNone). The fixed line is only sent when
 // there was an authored line to begin with, so an empty authored list stays
 // silent as before. Room lines are delivered inside combat.GetWaitMessages
 // itself via messaging.SendTrio, not drained here; see the comment at the

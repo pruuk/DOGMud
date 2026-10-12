@@ -1,0 +1,51 @@
+# dark-combat store snapshot (M6 slice 2)
+# dimensions: viewpoint x outcome x index
+
+attacker|fumble|0= <ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">You stumble badly in the darkness!</ansi> <ansi fg="fumble-text">!!!</ansi>
+attacker|fumble|1= <ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">Your foot catches and you lurch off balance!</ansi> <ansi fg="fumble-text">!!!</ansi>
+attacker|fumble|2= <ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">You overreach in the dark and nearly fall!</ansi> <ansi fg="fumble-text">!!!</ansi>
+attacker|fumble|3= <ansi fg="fumble-text">!!!</ansi> <ansi fg="yellow">Your blind swing goes wrong and throws you off!</ansi> <ansi fg="fumble-text">!!!</ansi>
+attacker|crit|0= <ansi fg="crit-text">***</ansi> <ansi fg="attack-good">You land a devastating blow in the dark!</ansi> <ansi fg="crit-text">***</ansi>
+attacker|crit|1= <ansi fg="crit-text">***</ansi> <ansi fg="attack-good">You feel your blow strike deep into something!</ansi> <ansi fg="crit-text">***</ansi>
+attacker|crit|2= <ansi fg="crit-text">***</ansi> <ansi fg="attack-good">Your blow lands with a heavy, sickening thud!</ansi> <ansi fg="crit-text">***</ansi>
+attacker|crit|3= <ansi fg="crit-text">***</ansi> <ansi fg="attack-good">Your arm jolts as your blow smashes home!</ansi> <ansi fg="crit-text">***</ansi>
+attacker|deflected|0= <ansi fg="attack-bad">Something turns your blow aside, but you feel it land!</ansi>
+attacker|deflected|1= <ansi fg="attack-bad">Your strike is pushed aside, but it still connects!</ansi>
+attacker|deflected|2= <ansi fg="attack-bad">Something blocks most of your blow, but not all of it!</ansi>
+attacker|deflected|3= <ansi fg="attack-bad">You feel your blow meet resistance, then scrape through!</ansi>
+attacker|defended|0= <ansi fg="attack-bad">Your attack is turned aside by something!</ansi>
+attacker|defended|1= <ansi fg="attack-bad">Your blow meets something hard and stops dead!</ansi>
+attacker|defended|2= <ansi fg="attack-bad">Something moves away and your strike finds only air!</ansi>
+attacker|defended|3= <ansi fg="attack-bad">You feel your blow knocked aside in the dark!</ansi>
+attacker|hit|0= <ansi fg="attack-good">You strike blindly and connect!</ansi>
+attacker|hit|1= <ansi fg="attack-good">Your blind swing thuds into something!</ansi>
+attacker|hit|2= <ansi fg="attack-good">You feel your blow land on something solid!</ansi>
+attacker|hit|3= <ansi fg="attack-good">You hear a grunt as your strike connects!</ansi>
+attacker|miss|0= <ansi fg="yellow">You swing wildly in the darkness!</ansi>
+attacker|miss|1= <ansi fg="yellow">Your swing cuts through empty air!</ansi>
+attacker|miss|2= <ansi fg="yellow">You strike at a sound and hit nothing!</ansi>
+attacker|miss|3= <ansi fg="yellow">Your blow finds nothing in the dark!</ansi>
+defender|fumble|0= <ansi fg="yellow">You hear your attacker stumble!</ansi>
+defender|fumble|1= <ansi fg="yellow">You hear something lurch and scrape close by!</ansi>
+defender|fumble|2= <ansi fg="yellow">Something stumbles near you with a clatter!</ansi>
+defender|fumble|3= <ansi fg="yellow">You hear a scuffle as something loses its balance!</ansi>
+defender|crit|0= <ansi fg="crit-text">***</ansi> <ansi fg="red">Something hits you hard in the dark!</ansi> <ansi fg="crit-text">***</ansi>
+defender|crit|1= <ansi fg="crit-text">***</ansi> <ansi fg="red">A crushing blow slams into you out of the dark!</ansi> <ansi fg="crit-text">***</ansi>
+defender|crit|2= <ansi fg="crit-text">***</ansi> <ansi fg="red">Something strikes you with terrible force!</ansi> <ansi fg="crit-text">***</ansi>
+defender|crit|3= <ansi fg="crit-text">***</ansi> <ansi fg="red">Pain bursts through you as a heavy blow lands!</ansi> <ansi fg="crit-text">***</ansi>
+defender|deflected|0= <ansi fg="defense-good">You fend off something in the dark, but it still catches you!</ansi>
+defender|deflected|1= <ansi fg="defense-good">You block something blindly, but it still gets through!</ansi>
+defender|deflected|2= <ansi fg="defense-good">You turn something aside, but not quite in time!</ansi>
+defender|deflected|3= <ansi fg="defense-good">You feel a blow coming and soften it, but it lands!</ansi>
+defender|defended|0= <ansi fg="defense-good">You fend off something in the dark!</ansi>
+defender|defended|1= <ansi fg="defense-good">You hear something coming and block it!</ansi>
+defender|defended|2= <ansi fg="defense-good">You twist away from something in the dark!</ansi>
+defender|defended|3= <ansi fg="defense-good">You feel a blow coming and turn it aside!</ansi>
+defender|hit|0= <ansi fg="red">Something strikes you in the dark!</ansi>
+defender|hit|1= <ansi fg="red">A blow lands on you out of nowhere!</ansi>
+defender|hit|2= <ansi fg="red">You feel something hit you!</ansi>
+defender|hit|3= <ansi fg="red">Something you cannot see strikes you!</ansi>
+defender|miss|0= <ansi fg="yellow">You hear something whoosh past!</ansi>
+defender|miss|1= <ansi fg="yellow">Something rushes past you in the dark!</ansi>
+defender|miss|2= <ansi fg="yellow">You feel the air move as something misses you!</ansi>
+defender|miss|3= <ansi fg="yellow">You hear a swing pass close by!</ansi>

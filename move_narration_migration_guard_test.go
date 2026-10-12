@@ -263,8 +263,9 @@ type moveEventPair struct {
 //
 // internal/usercommands joined M4e-1b: the player-side special-move files
 // carry their own sendMoveEvent/renderMoveEvent pair
-// (internal/usercommands/move_narration.go), naming player_* prefixed event
-// keys in the SAME store files this scan already covers.
+// (internal/usercommands/move_narration.go), naming event keys in the SAME
+// store files this scan already covers. Since M6 slice 2 (ledger row 56) the
+// mob and player call sites name the same keys and draw from one pool.
 var moveEventScanDirs = []string{
 	"internal/mobcommands",
 	"internal/combat",
@@ -505,10 +506,10 @@ func TestMoveEventKeysAgree(t *testing.T) {
 // whole observer: block was proven, earlier in this arc, to pass every
 // existing guard.
 //
-// An absent role is not automatically a bug -- several are legitimate (a mob
-// has no actor client; throttle's cast_interrupt is a private mechanical
-// note; shoot splits its narration across events that each own exactly one
-// audience) -- but the absence must be DECLARED, with a reason, rather than
+// An absent role is not automatically a bug -- several are legitimate (a
+// detail line that is private knowledge; throw has no single actee; shoot
+// splits its narration across events that each own exactly one audience) --
+// but the absence must be DECLARED, with a reason, rather than
 // merely happening to be true today.
 // ---------------------------------------------------------------------------
 
@@ -517,17 +518,17 @@ func TestMoveEventKeysAgree(t *testing.T) {
 // reason read directly off the call site that sends it, not guessed from the
 // YAML alone.
 var intentionallySilentRoles = map[string]string{
-	"shoot/player_surprise_hit": "actor only: the ambush shot's EXTRA line, read by the shooter alone. " +
-		"The room and the target learn about the shot through player_fire_announce and " +
-		"player_hit/player_partial/player_miss exactly as they do for an ordinary shot; this line " +
+	"shoot/surprise_hit": "actor only: the ambush shot's EXTRA line, read by the shooter alone. " +
+		"The room and the target learn about the shot through fire_announce and " +
+		"hit/partial/miss exactly as they do for an ordinary shot; this line " +
 		"is what makes firing from concealment feel different to the person doing it, and giving " +
 		"it a room line would tell everyone the shot came from cover.",
-	"shoot/player_surprise_miss": "actor only: see shoot/player_surprise_hit.",
-	"shoot/hit":                  "actee only: the room's line for a same-room shot always comes from fire_announce's observer role, sent unconditionally before the outcome is known; hit/partial/miss carry only the target's own line (shoot.go's same-room branch).",
-	"shoot/partial":              "actee only: same as shoot/hit -- the room line is fire_announce's, not this event's.",
-	"shoot/miss":                 "actee only: same as shoot/hit -- the room line is fire_announce's, not this event's.",
+	"shoot/surprise_miss": "actor only: see shoot/surprise_hit.",
+	"shoot/hit":           "actor and actee, no observer: the room's line for a same-room shot always comes from fire_announce's observer role, sent unconditionally before the outcome is known; hit/partial/miss carry only the shooter's own line (actor, read by a player shooter; a mob shooter has no client) and the target's own line (actee) (shoot.go's same-room branch, mob and player alike).",
+	"shoot/partial":       "actor and actee, no observer: same as shoot/hit -- the room line is fire_announce's, not this event's.",
+	"shoot/miss":          "actor and actee, no observer: same as shoot/hit -- the room line is fire_announce's, not this event's.",
 
-	"shoot/fire_announce": "observer only: this is the room's line for a same-room shot, sent once regardless of outcome; the outcome itself is authored separately on hit/partial/miss's actee role (shoot.go's same-room branch).",
+	"shoot/fire_announce": "observer only: this is the room's line for a same-room shot, sent once regardless of outcome; the outcome itself is authored separately on hit/partial/miss's actor and actee roles (shoot.go's same-room branch). No actor role either -- the shooter's own line for this shot is the hit/partial/miss actor role, not a duplicate announce.",
 	"shoot/fire_depart":   "observer only: the SHOOTER's own room sees the shot leave; the outcome is narrated to the TARGET's room by the arrival_* events instead, and the target got their own hit/partial/miss line already (shoot.go's cross-room branch).",
 
 	"shoot/arrival_unknown_hit":     "remote_observer only: these six arrival_* events exist solely for the defender's-room audience on a cross-room shot. The shooter's room already got fire_depart and the target already got hit/partial/miss (shoot.go's cross-room arrival send).",
@@ -537,40 +538,24 @@ var intentionallySilentRoles = map[string]string{
 	"shoot/arrival_known_partial":   "remote_observer only: see shoot/arrival_unknown_hit.",
 	"shoot/arrival_known_miss":      "remote_observer only: see shoot/arrival_unknown_hit.",
 
-	"throttle/cast_interrupt": "actee only: throttle.go's own comment says it plainly -- \"the YAML authors only an actee role for this event... matching today's behaviour of never broadcasting this to the room\" -- the interrupt is a private mechanical note riding on the hit event.",
+	// Detail lines that are private knowledge, carried over from the M4e-1b
+	// player-side shapes and renamed when the mob and player pools merged
+	// (M6 slice 2, ledger row 56).
+	"grapple/prone_penalty":   "actor only: private knowledge about the actor's own roll against an already-prone target (grapple.go's own comment) -- a room line here would invent an observation nobody in the room made, about a grapple the success event already narrated to them.",
+	"grapple/defense_exposed": "actor only: private knowledge, same ruling as prone_penalty -- the actor alone learns their failed grapple left them exposed.",
 
-	// M4e-1b: the player-side special-move files (internal/usercommands),
-	// naming player_* prefixed keys in the same store files. These mirror
-	// the asymmetric role shapes their pre-migration call sites already had.
-	"grapple/player_prone_penalty":   "actor only: private knowledge about the actor's own roll against an already-prone target (grapple.go's own comment) -- a room line here would invent an observation nobody in the room made, about a grapple the success event already narrated to them.",
-	"grapple/player_defense_exposed": "actor only: private knowledge, same ruling as player_prone_penalty -- the actor alone learns their failed grapple left them exposed.",
-
-	"shoot/player_hit":     "actee only: the room's line for a same-room shot always comes from player_fire_announce's observer role, sent unconditionally before the outcome is known; hit/partial/miss carry only the target's own line (shoot.go's sendShootMessages, same-room branch).",
-	"shoot/player_partial": "actee only: same as shoot/player_hit -- the room line is player_fire_announce's, not this event's.",
-	"shoot/player_miss":    "actee only: same as shoot/player_hit -- the room line is player_fire_announce's, not this event's.",
-
-	"shoot/player_fire_announce": "observer only: this is the room's line for a same-room shot, sent once regardless of outcome; the outcome itself is authored separately on player_hit/player_partial/player_miss's actee role (shoot.go's same-room branch). No actor role either -- the shooter's own line for this shot is the hit/partial/miss actor role, not a duplicate announce.",
-	"shoot/player_fire_depart":   "observer only: the SHOOTER's own room sees the shot leave; the outcome is narrated to the TARGET's room by the player_arrival_* events instead, and the target already got their own player_hit/player_partial/player_miss line (shoot.go's cross-room branch).",
-
-	"shoot/player_arrival_unknown_hit":     "remote_observer only: these six arrival_* events exist solely for the defender's-room audience on a cross-room shot. The shooter's room already got player_fire_depart and the target already got player_hit/player_partial/player_miss (shoot.go's cross-room arrival send).",
-	"shoot/player_arrival_unknown_partial": "remote_observer only: see shoot/player_arrival_unknown_hit.",
-	"shoot/player_arrival_unknown_miss":    "remote_observer only: see shoot/player_arrival_unknown_hit.",
-	"shoot/player_arrival_known_hit":       "remote_observer only: see shoot/player_arrival_unknown_hit.",
-	"shoot/player_arrival_known_partial":   "remote_observer only: see shoot/player_arrival_unknown_hit.",
-	"shoot/player_arrival_known_miss":      "remote_observer only: see shoot/player_arrival_unknown_hit.",
-
-	"throw/player_hurl":           "no actee: throw is an untargeted room AoE against every hostile present, so it has no single actee at all (throw.go's own comment: \"17 actor sends and zero actee sends... the one genuinely actee-less member of the special-move family\").",
-	"throw/player_fumble":         "no actee: same as throw/player_hurl -- a fumble hits the thrower, not a chosen target.",
-	"throw/player_cast_interrupt": "no actee: the interrupted party is a mob with no client; its name rides the actor and observer text as plain prose instead.",
-	"throw/player_partial_hit":    "actor only: the room's line for a defended throw always comes from the channel defence triad (combat.RenderChannelDefenceMessages, sourced outside this store), and there is no actee -- see throw/player_hurl.",
+	"throw/hurl":           "no actee: throw is an untargeted room AoE against every hostile present, so it has no single actee at all (throw.go's own comment: \"17 actor sends and zero actee sends... the one genuinely actee-less member of the special-move family\").",
+	"throw/fumble":         "no actee: same as throw/hurl -- a fumble hits the thrower, not a chosen target.",
+	"throw/cast_interrupt": "no actee: the interrupted party is a mob with no client; its name rides the actor and observer text as plain prose instead.",
+	"throw/partial_hit":    "actor only: the room's line for a defended throw always comes from the channel defence triad (combat.RenderChannelDefenceMessages, sourced outside this store), and there is no actee -- see throw/hurl.",
 
 	// M4e-1b Task 4b Step 2: drain's lifesteal detail lines. Private
 	// knowledge under the detail-line ruling -- this reports the drainer's
 	// own returning vigour to the drainer, not a world event -- so neither
 	// carries an actee or an observer role, same shape as
-	// grapple/player_prone_penalty above.
-	"drain/player_hit_heal":     "actor only: private knowledge about the drainer's own returning vigour (drain.go's own comment) -- a room or target line here would invent an observation nobody made about a lifesteal the player_hit event already narrated as damage.",
-	"drain/player_partial_heal": "actor only: private knowledge, same ruling as drain/player_hit_heal -- a partial drain that still lifesteals reports the trickle to the drainer alone.",
+	// grapple/prone_penalty above.
+	"drain/hit_heal":     "actor only: private knowledge about the drainer's own returning vigour (drain.go's own comment) -- a room or target line here would invent an observation nobody made about a lifesteal the hit event already narrated as damage.",
+	"drain/partial_heal": "actor only: private knowledge, same ruling as drain/hit_heal -- a partial drain that still lifesteals reports the trickle to the drainer alone.",
 }
 
 // TestMoveEventRoleSetsAgree asserts every authored event carries both an
@@ -578,10 +563,9 @@ var intentionallySilentRoles = map[string]string{
 // not, and fails on a stale entry whose event authors the role after all (so
 // the map cannot rot into a blanket exemption nobody re-checks).
 //
-// actor is deliberately not part of the default expectation: a mob has no
-// client, so no mob-authored event carries an actor line at all (grapple's
-// crit_failure/disarm are the only events in this store that author one, and
-// they author actee/observer too, so they need no exception here).
+// actor is deliberately not part of the default expectation: mob-only events
+// (charge, hamstring, trip's whiff_on_prone) author no actor line, since a
+// mob has no client, while every event a player can fire does author one.
 func TestMoveEventRoleSetsAgree(t *testing.T) {
 	groups := loadMoveNarrationGroups(t)
 

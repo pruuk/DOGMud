@@ -10,6 +10,7 @@
 | Fact | Where read |
 |---|---|
 | The twelve dark-room literals were deleted with `replaceDarknessMessages`; its last body is at `6370977fd^:internal/hooks/NewRound_DoCombat_helpers.go`. It bucketed per `combat.SwingEvent`: skip `DoubleFumble`; `Fumble`; `Crit`; deflected (`DefenseUsed != "" && !DefenseCrit && Damage > 0`); defended (`DefenseCrit \|\| DefenseUsed != ""`); `Hit`; else miss. Categories: defended is `CategoryDodge`, every other bucket `CategoryHitMelee` | `git show 6370977fd^:...` |
+| `AttackResult.DefenseUsed` is stamped on a defensive win and never cleared, so it is sticky across a round; the old bucketing narrated a later clean hit as "defended". Implementation added `SwingEvent.Defended` (per swing, `hitResolution.defenceWon()`) | `internal/combat/combat_helpers.go` |
 | Today a blind reader's personal lines are the composed store line with the other party hidden: `hideIdentitiesInPersonalLines` (`internal/combat/combat.go`) runs `messaging.HideNames` on `MessagesToSource` at `ctx.sourceSight` and `HideNames` + `HideWeapons` on `MessagesToTarget` at `ctx.targetSight` | `internal/combat/combat.go:712-724` |
 | `ctx.sourceSight` / `ctx.targetSight` are `messaging.ReaderSight`, which CARRIES the sleep gate (a sleeper in a lit room is `SightNone`) | `internal/combat/combat_helpers.go:75-76`, `internal/messaging/predicates.go:216-233` |
 | `messaging.ParticipantSight` is the optics verdict with no sleep gate; `CanSeeSightImpairedOnly` is built on it | `internal/messaging/predicates.go:56`, `:192` |
@@ -46,12 +47,12 @@ Owner ruling (2026-10-12): a reader with NO sight reads purpose-written dark
 prose. A shapes reader (infravision) keeps today's composed line with "a
 figure" and "weapon", because they can make out the fight.
 
-- New store `_datafiles/world/dogmud/narration/dark-combat.yaml`, loaded by a
-  new package `internal/darkcombat` built on the `movenarration` /
-  `lightnotice` pattern (`LoadFrom(dir) error`, a boot loader,
-  `narration.ValidateVariants` at load). Six outcome keys: `fumble`, `crit`,
-  `deflected`, `defended`, `hit`, `miss`. Each holds an `attacker` list and a
-  `defender` list. The two lists are picked independently (a blind attacker
+- New store directory `_datafiles/world/dogmud/narration/dark-combat/`, one
+  file per viewpoint (`attacker.yaml`, `defender.yaml`, because the loader is
+  keyed by file), loaded by a new package `internal/darkcombat` built on the
+  `movenarration` / `lightnotice` pattern (`LoadFrom(dir) error`, a boot
+  loader, `narration.ValidateVariants` at load). Each file holds six outcome
+  lists: `fumble`, `crit`, `deflected`, `defended`, `hit`, `miss`. The two lists are picked independently (a blind attacker
   and a blind defender are separate readers), so the store validates each
   list on its own with a minimum of 4 variants, rather than as index-paired
   roles.
@@ -62,8 +63,12 @@ figure" and "weapon", because they can make out the fight.
   one, so nothing can leak.
 - Hook: in `hideIdentitiesInPersonalLines`, when the reader's OPTICS verdict
   (`messaging.ParticipantSight(reader, room) == SightNone`) is none, that
-  side's personal lines are replaced by one dark line per `SwingEvent`,
-  bucketed and categorised exactly as `replaceDarknessMessages` did. The
+  side's PER-SWING narration lines (those `buildAttackMessages` and
+  `sendDefenseMessages` record through `sendSwingToSource/Target`) are
+  replaced by one dark line per `SwingEvent`, bucketed and categorised as
+  `replaceDarknessMessages` did, except that "defended" reads the per-swing
+  `SwingEvent.Defended`. Every other personal line (pet damage, defence
+  shortage, entangled, double fumble) stays, names hidden. The
   optics verdict, not `ctx.*Sight`, because `ReaderSight` counts a sleeper as
   blind and a sleeper hit in a lit room must not read "in the dark" (the
   2026-08-31 defect). A sleeper keeps today's composed line with

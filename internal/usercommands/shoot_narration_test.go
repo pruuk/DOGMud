@@ -116,7 +116,7 @@ func TestSurpriseShotShooterLine_DefendedPartialNamesTheDefence(t *testing.T) {
 		if !strings.Contains(got, "light wounds") {
 			t.Errorf("a defended-partial ambush must still carry the damage band, got %q", got)
 		}
-		if strings.Contains(got, "goes wide") || strings.Contains(got, "unaware") {
+		if strings.Contains(got, "flies past") || strings.Contains(got, "unaware") {
 			t.Errorf("a defended-partial ambush took a hit-or-miss arm: %q", got)
 		}
 	})
@@ -143,7 +143,7 @@ func TestSurpriseShotShooterLine_DefendedPartialNamesTheDefence(t *testing.T) {
 
 	t.Run("clean miss: no triad, no band", func(t *testing.T) {
 		got := surpriseShotShooterLine(false, "", "Selka", "light wounds", false)
-		if !strings.Contains(got, "goes wide") {
+		if !strings.Contains(got, "flies past") {
 			t.Fatalf("a missed ambush must use the from-cover miss line, got %q", got)
 		}
 		if strings.Contains(got, "light wounds") {

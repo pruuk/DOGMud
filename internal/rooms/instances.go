@@ -176,7 +176,7 @@ func (ir *InstanceRegistry) CheckPortalTimers() {
 		var msg string
 		switch remainingRounds {
 		case fiveMinRounds:
-			msg = `<ansi fg="yellow">The portal flickers — it won't hold much longer.</ansi>`
+			msg = `<ansi fg="yellow">The portal flickers. It won't hold much longer.</ansi>`
 		case oneMinRounds:
 			msg = `<ansi fg="red">The portal is barely a shimmer now. Leave soon or find your own way out.</ansi>`
 		}
@@ -196,7 +196,7 @@ func (ir *InstanceRegistry) CheckPortalTimers() {
 	ir.mu.RUnlock()
 
 	// Phase B: process each expired instance OUTSIDE the RLock.
-	const collapseMsg = `<ansi fg="red">The portal's shimmer collapses around you — the instance unravels.</ansi>`
+	const collapseMsg = `<ansi fg="red">The portal's shimmer collapses around you. The instance unravels.</ansi>`
 	for _, inst := range expired {
 		// 1. Boot phase — O(1) populated-room check via roomsWithUsers.
 		//    Send the flavor message BEFORE MoveToRoom so players see

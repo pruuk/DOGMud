@@ -367,7 +367,7 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	if itemSpec.ItemId == ysoldesPurgeItemId {
 		char.AddBloomAddiction(-5)
 		actor.SendText(messaging.CategoryWarning,
-			`The purge takes hold -- your body convulses as it expels the `+
+			`The purge takes hold. Your body convulses as it expels the `+
 				`Bloom. It is violent, and it is fast.`)
 	}
 

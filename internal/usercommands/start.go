@@ -63,9 +63,9 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	question := cmdPrompt.Ask(
 		"How much of Gaius do you already know?\n"+
-			"  1) New to text MUDs       -- I'll teach you the basics first.\n"+
-			"  2) New to DOGMud          -- I know MUDs; show me what's different.\n"+
-			"  3) Veteran                -- skip all tutorials; drop me into the city.",
+			"  1) New to text MUDs:  I'll teach you the basics first.\n"+
+			"  2) New to DOGMud:     I know MUDs; show me what's different.\n"+
+			"  3) Veteran:           Skip all tutorials; drop me into the city.",
 		[]string{"1", "2", "3"}, "2")
 	if !question.Done {
 		return true, nil
@@ -95,7 +95,7 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// 2026-07-18 feedback). Route-agnostic: runs for all three onboarding paths.
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(
 			`%s<ansi fg="magenta-bold">One quick thing before you go.</ansi> Gaius is still being built, and your `+
-				`eyes are new -- that makes them valuable. If something breaks or reads `+
+				`eyes are new, and that makes them valuable. If something breaks or reads `+
 				`wrong, type <ansi fg="command">bug</ansi> and tell us what happened. If you `+
 				`think of something that would make the world better, type `+
 				`<ansi fg="command">suggest</ansi>. We read every one.%s`,

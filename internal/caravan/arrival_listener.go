@@ -241,7 +241,7 @@ func handleFernwayPickupArrival(leader *mobs.Mob, arrival events.PatrolWaypointA
 	if stored > 0 {
 		r.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
 			`<ansi fg="yellow">The caravan pulls up to the roadside crate, breaks the seal,`+
-				` and loads its contents into the wagon — %d %s in all.</ansi>`,
+				` and loads its contents into the wagon: %d %s in all.</ansi>`,
 			stored, caravanPluralize("crate-load", stored)))
 	}
 	if rejected > 0 {

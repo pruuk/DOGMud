@@ -394,18 +394,18 @@ options:
         - 'You whirl and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">SUNDERS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Lunging forward, you deliver a <ansi fg="cyan-bold">PERFECT CLEAVE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You flow with power and your blade <ansi fg="cyan-bold">RENDS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - you <ansi fg="cyan-bold">BISECT</ansi> them!'
+        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely, and you <ansi fg="cyan-bold">BISECT</ansi> them!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS CHOP</ansi> through <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - 'Your tactical brilliance creates the perfect opening - you <ansi fg="cyan-bold">EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> while {momentum}!'
+        - 'Your tactical brilliance creates the perfect opening, and you <ansi fg="cyan-bold">EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> while {momentum}!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> cleave, {position}!'
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING CHOP</ansi> from the perfect angle, staying {stance}!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">HEW</ansi> <ansi fg="{acteetype}">{actee}</ansi> with precision while {momentum}!'
-        - 'Your positioning is flawless - your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>, {position}!'
+        - 'Your positioning is flawless, and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>, {position}!'
         - 'Your unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL CLEAVE</ansi>!'
         - 'Channeling all momentum, you <ansi fg="cyan-bold">HACK THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly while {stance}!'
-        - 'The tide of battle favors you - your blade <ansi fg="cyan-bold">SEVERS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'The tide of battle favors you, and your blade <ansi fg="cyan-bold">SEVERS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY CLEAVES</ansi> you!'
@@ -416,18 +416,18 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> whirls and their blade <ansi fg="cyan-bold">SUNDERS</ansi> you!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and delivers a <ansi fg="cyan-bold">PERFECT CLEAVE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows with power and <ansi fg="cyan-bold">RENDS</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens you completely - they <ansi fg="cyan-bold">BISECT</ansi> you!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens you completely, and they <ansi fg="cyan-bold">BISECT</ansi> you!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads your every move and delivers a <ansi fg="cyan-bold">FLAWLESS CHOP</ansi> through you!'
         master:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening - you are <ansi fg="cyan-bold">EVISCERATED</ansi>, {position}!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening, and you are <ansi fg="cyan-bold">EVISCERATED</ansi>, {position}!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> cleave against you, {position}!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS CHOP</ansi> while {momentum}!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING CLEAVE</ansi> from the perfect angle, staying {stance}!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">HEWS</ansi> you with precision, {momentum}!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - you are <ansi fg="cyan-bold">OBLITERATED</ansi>, {position}!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>, {position}!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL CLEAVE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">HACKS THROUGH</ansi> you utterly, staying {stance}!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their blade <ansi fg="cyan-bold">SEVERS</ansi> you while {momentum}!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their blade <ansi fg="cyan-bold">SEVERS</ansi> you while {momentum}!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY CLEAVES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -438,18 +438,18 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> whirls and their blade <ansi fg="cyan-bold">SUNDERS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges forward with a <ansi fg="cyan-bold">PERFECT CLEAVE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows with power and <ansi fg="cyan-bold">RENDS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - <ansi fg="cyan-bold">BISECTION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely: <ansi fg="cyan-bold">BISECTION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS CHOP</ansi> through <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening - <ansi fg="cyan-bold">EVISCERATION</ansi>, staying {stance}!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening: <ansi fg="cyan-bold">EVISCERATION</ansi>, staying {stance}!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> cleave, {position}!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS CHOP</ansi> while {momentum}!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING CLEAVE</ansi> from the perfect angle, {position}!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">HEWS</ansi> <ansi fg="{acteetype}">{actee}</ansi> with precision while {momentum}!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL CLEAVE</ansi>, staying {stance}!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">HACKS THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly, {position}!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their blade <ansi fg="cyan-bold">SEVERS</ansi> <ansi fg="{acteetype}">{actee}</ansi> while {momentum}!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their blade <ansi fg="cyan-bold">SEVERS</ansi> <ansi fg="{acteetype}">{actee}</ansi> while {momentum}!'
   fumble:
     # messages for when they are in the same room
     together:
@@ -460,13 +460,13 @@ options:
         - 'You overcommit to your hack and <ansi fg="red-bold">FUMBLE</ansi>, nearly losing your balance!'
         - 'You stumble badly and your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> uselessly!'
         expert:
-        - 'Your tactical calculation fails catastrophically - you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical calculation fails catastrophically, and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your cleave!'
         - 'Your feint backfires and you <ansi fg="red-bold">FUMBLE</ansi> badly!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter forces you to <ansi fg="red-bold">FUMBLE</ansi> while {position}!'
         - 'Despite perfect form and a {stance} stance, a misstep causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Your masterful strike is disrupted - you <ansi fg="red-bold">FUMBLE</ansi> the execution while {momentum}!'
+        - 'Your masterful strike is disrupted, and you <ansi fg="red-bold">FUMBLE</ansi> the execution while {momentum}!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s blade <ansi fg="red-bold">FUMBLES</ansi> awkwardly against their own armor!'
@@ -480,7 +480,7 @@ options:
         master:
         - 'Your defense forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi> while {position}!'
         - 'Despite their skill and a {stance} stance, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> while {momentum}!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful strike is disrupted - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful strike is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> wildly as their cleave goes nowhere!'
@@ -488,10 +488,10 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their swing at <ansi fg="{acteetype}">{actee}</ansi> in a ridiculous manner!'
         - '<ansi fg="{actortype}">{actor}</ansi> stumbles badly as their <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> uselessly.'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> feint backfires catastrophically, {position}!'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s defense forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>, staying {stance}!'
         - 'Despite masterful form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> while {momentum}!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> perfect strike is disrupted - a <ansi fg="red-bold">FUMBLE</ansi>, {position}!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> perfect strike is disrupted: a <ansi fg="red-bold">FUMBLE</ansi>, {position}!'

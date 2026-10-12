@@ -81,12 +81,12 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	damageTokens := map[string]string{movenarration.TokenDamage: dmgDesc}
 
 	if res.MoveResult.Hit {
-		sendMoveEvent("maul", "player_hit", ids, aud, maulCategories, damageTokens)
+		sendMoveEvent("maul", "hit", ids, aud, maulCategories, damageTokens)
 	} else if res.MoveResult.Damage > 0 {
 		// Defended-partial: the personal lines carry the damage, and the room
 		// line names the defence that blunted the maul (U6b Task 9), falling
 		// back to the squared partial text when there was no defence to name.
-		roles, _ := renderMoveEvent("maul", "player_partial", ids, damageTokens)
+		roles, _ := renderMoveEvent("maul", "partial", ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "savage bite")
 		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
 		if defended {
@@ -107,7 +107,7 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			Observer: messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom),
 		}, aud)
 	} else {
-		sendMoveEvent("maul", "player_miss", ids, aud, maulCategories, nil)
+		sendMoveEvent("maul", "miss", ids, aud, maulCategories, nil)
 	}
 
 	// U6b Task 11: the counter renders AFTER the move's own outcome.

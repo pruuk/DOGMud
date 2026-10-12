@@ -41,6 +41,13 @@ type combatContext struct {
 	// bool because seeing shapes is not the same as seeing nothing.
 	sourceSight messaging.SightDecision
 	targetSight messaging.SightDecision
+	// sourceOptics and targetOptics are messaging.ParticipantSight: optics
+	// only, NO sleep test. They decide one thing: whether a side's personal
+	// lines become dark lines (internal/darkcombat). The sight fields above
+	// cannot, because ReaderSight counts a sleeper as blind and a sleeper hit
+	// in a lit room must not read "in the dark" (the 2026-08-31 defect).
+	sourceOptics messaging.SightDecision
+	targetOptics messaging.SightDecision
 	// sourceDark/sourceBright and targetDark/targetBright are
 	// messaging.ComfortDistance for each side: the sight RAMP's input (plan
 	// 5b). The verdict fields above stay the narration gate; these two pairs
@@ -67,13 +74,16 @@ type combatContext struct {
 // auto-crit) and reads the first hit's personal line while still asleep,
 // judged before the hit wakes them, so it names "something", not the
 // attacker (#455). The comfort distances stay optics only, so sleep never
-// adds a darkness term to the score.
+// adds a darkness term to the score. The optics pair is ParticipantSight, the
+// dark-line gate, which a sleeper does not trip.
 func newCombatContext(source, target *characters.Character, room messaging.RoomVisibility, forceCrit bool) combatContext {
 	sd, sb := messaging.ComfortDistance(source, room)
 	td, tb := messaging.ComfortDistance(target, room)
 	return combatContext{
 		sourceSight:  messaging.ReaderSight(source, room),
 		targetSight:  messaging.ReaderSight(target, room),
+		sourceOptics: messaging.ParticipantSight(source, room),
+		targetOptics: messaging.ParticipantSight(target, room),
 		sourceDark:   sd,
 		sourceBright: sb,
 		targetDark:   td,
@@ -1437,8 +1447,8 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 
 		defCat := CategoryForDefenseVerb(defenseVerb)
 		if !partial {
-			result.SendToTarget(defCat, string(toDefenderMsg))
-			result.SendToSource(defCat, string(toAttackerMsg))
+			result.sendSwingToTarget(defCat, string(toDefenderMsg))
+			result.sendSwingToSource(defCat, string(toAttackerMsg))
 		}
 		result.SendToSourceRoom(defCat, string(toRoomMsg))
 		if sourceChar.RoomId != targetChar.RoomId {
@@ -1447,8 +1457,8 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 	} else {
 		defCat := CategoryForDefenseVerb(defenseVerb)
 		if !partial {
-			result.SendToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
-			result.SendToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
+			result.sendSwingToSource(defCat, fmt.Sprintf(`<ansi fg="attack-bad">%s %ss your attack!</ansi>`, targetChar.Name, defenseVerb))
+			result.sendSwingToTarget(defCat, fmt.Sprintf(`<ansi fg="defense-good">You %s %s's attack!</ansi>`, defenseVerb, sourceChar.Name))
 		}
 		result.SendToSourceRoom(defCat, fmt.Sprintf(`<ansi fg="combat">%s %ss %s's attack.</ansi>`, targetChar.Name, defenseVerb, sourceChar.Name))
 		if sourceChar.RoomId != targetChar.RoomId {
@@ -1902,7 +1912,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		attackerMsg += fmt.Sprintf(` <ansi fg="white">[%s was blocked]</ansi>`, GetDamageDescription(attackSourceReduction, sourceChar.HealthMax.Value))
 	}
 
-	result.SendToSource(hitCat, string(attackerMsg))
+	result.sendSwingToSource(hitCat, attackerMsg)
 
 	// Send to victim
 	defenderMsg := string(toDefenderMsg)
@@ -1910,7 +1920,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		defenderMsg += fmt.Sprintf(` <ansi fg="red">[you blocked %s]</ansi>`, GetDamageDescription(attackTargetReduction, targetChar.HealthMax.Value))
 	}
 
-	result.SendToTarget(hitCat, string(defenderMsg))
+	result.sendSwingToTarget(hitCat, defenderMsg)
 
 	// Send to room. A deflected swing sends none: the defence room line from
 	// sendDefenseMessages already narrated it, and room lines carry no damage.

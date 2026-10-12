@@ -1,20 +1,33 @@
 moveid: grapple
+# Mobs and players draw from one pool per event (M6 slice 2, ledger row 56). Variant N of every role describes one moment.
 events:
   success:
+    actor:
+      - 'You <ansi fg="yellow-bold">grapple</ansi> {actee} into <ansi fg="cyan">{position}</ansi> position!'
+      - 'You <ansi fg="yellow-bold">grapple</ansi> {actee}, transitioning to <ansi fg="cyan">{position}</ansi> position!'
     actee:
+      - '{actor} <ansi fg="yellow-bold">grapples</ansi> you, transitioning to <ansi fg="cyan">{position}</ansi> position!'
       - '{actor} <ansi fg="yellow-bold">grapples</ansi> you, transitioning to <ansi fg="cyan">{position}</ansi> position!'
     observer:
       - '{actor} <ansi fg="yellow-bold">grapples</ansi> {actee} into <ansi fg="cyan">{position}</ansi> position!'
+      - '{actor} <ansi fg="yellow-bold">grapples</ansi> {actee} into <ansi fg="cyan">{position}</ansi> position!'
   fail:
+    actor:
+      - 'You try to grapple {actee}, but they slip away!'
+      - 'Your <ansi fg="yellow-bold">grapple</ansi> attempt against {actee} fails!'
     actee:
+      - '{actor} tries to grapple you, but you slip away!'
       - '{actor} tries to grapple you, but you slip away!'
     observer:
       - '{actor} tries to grapple {actee}, but fails!'
+      - '{actor} tries to grapple {actee}, but fails!'
+  # crit_failure and disarm are shared between the mob and player call sites
+  # via internal/combat/grapple_narration.go.
   crit_failure:
     actor:
       - '<ansi fg="red-bold">You overextend badly and fall to the ground!</ansi>'
     actee:
-      - '<ansi fg="yellow-bold">Your opponent overextends and falls - you see an opening!</ansi>'
+      - '<ansi fg="yellow-bold">Your opponent overextends and falls. You see an opening!</ansi>'
     observer:
       - '<ansi fg="combat">The failed grapple sends them sprawling!</ansi>'
   disarm:
@@ -24,32 +37,12 @@ events:
       - '<ansi fg="red-bold">{actor_plain} disarms you! Your <ansi fg="item">{weapon}</ansi> slips from your grasp!</ansi>'
     observer:
       - '<ansi fg="combat">{actor_plain} disarms {actee_plain}, knocking their <ansi fg="item">{weapon}</ansi> loose!</ansi>'
-  # player_* events are the PLAYER twin's own wording (M4e-1b, option B): the
-  # twins shipped different prose for the same event, so they take separate
-  # keys rather than sharing the mob events above. Merging them into one pool
-  # is filed as M6 ledger row 56. (crit_failure and disarm above are already
-  # SHARED between the mob and player call sites via
-  # internal/combat/grapple_narration.go, so they need no player_ twin.)
-  player_success:
-    actor:
-      - 'You <ansi fg="yellow-bold">grapple</ansi> {actee}, transitioning to <ansi fg="cyan">{position}</ansi> position!'
-    actee:
-      - '{actor} <ansi fg="yellow-bold">grapples</ansi> you, transitioning to <ansi fg="cyan">{position}</ansi> position!'
-    observer:
-      - '{actor} <ansi fg="yellow-bold">grapples</ansi> {actee} into <ansi fg="cyan">{position}</ansi> position!'
-  player_fail:
-    actor:
-      - 'Your <ansi fg="yellow-bold">grapple</ansi> attempt against {actee} fails!'
-    actee:
-      - '{actor} tries to grapple you, but you slip away!'
-    observer:
-      - '{actor} tries to grapple {actee}, but fails!'
   # Private knowledge: no actee or observer line. A room line here would
   # invent an observation nobody in the room made, about a grapple the
-  # player_success event already narrated to them.
-  player_prone_penalty:
+  # success event already narrated to them.
+  prone_penalty:
     actor:
-      - '<ansi fg="yellow">{actee_plain} was already prone - they had little chance to resist!</ansi>'
-  player_defense_exposed:
+      - '<ansi fg="yellow">{actee_plain} was already prone, and they had little chance to resist!</ansi>'
+  defense_exposed:
     actor:
       - '<ansi fg="red">Your failed attempt leaves you exposed!</ansi>'

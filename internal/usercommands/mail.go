@@ -198,7 +198,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// record, or write a disk copy a now-online session would clobber).
 	rec, offlineUsername, ok := resolveMailRecipient(recipientName, user.UserId, users.GetByCharacterName, users.CharacterNameSearch)
 	if !ok || !deliverMail(rec, offlineUsername, msg) {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your mail to <ansi fg="username">%s</ansi> could not be delivered — nothing was sent.`, recipientName))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your mail to <ansi fg="username">%s</ansi> could not be delivered. Nothing was sent.`, recipientName))
 		return true, nil
 	}
 

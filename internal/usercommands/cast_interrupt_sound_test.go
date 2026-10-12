@@ -37,7 +37,7 @@ func TestCastInterruptMoveEvents_AreHeardAndSeen(t *testing.T) {
 				}
 				aud := messaging.Audience{Actor: alice, ActorId: alice.UserId, ActorName: alice.Character.Name,
 					ActeeName: "Skeleton", Room: room}
-				sendMoveEvent(tc.verb, "player_cast_interrupt", ids, aud, tc.cats, nil)
+				sendMoveEvent(tc.verb, "cast_interrupt", ids, aud, tc.cats, nil)
 			}
 
 			t.Run("sees nothing", func(t *testing.T) {

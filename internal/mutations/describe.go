@@ -51,7 +51,7 @@ func DescribeEffect(e MutationEffect) string {
 	case "movement_speed":
 		// Negative value = faster/lighter step (see GetMovementSpeedModifier).
 		if e.Value <= 0 {
-			return "Lightens your step -- you move faster and more quietly."
+			return "Lightens your step. You move faster and more quietly."
 		}
 		return "Weighs down your step, slowing how you move."
 	case "on_hit_condition":
@@ -59,7 +59,7 @@ func DescribeEffect(e MutationEffect) string {
 	case "aura_ally_condition":
 		return "Your presence steadies and emboldens allies who fight beside you."
 	case "aura_enemy_condition":
-		return "Your presence rattles nearby foes — their aim and focus falter."
+		return "Your presence rattles nearby foes. Their aim and focus falter."
 	case "conviction_cost_multiplier":
 		// Additive delta (cost * (1.0 + value)); <0 is cheaper, >0 dearer.
 		if e.Value < 0 {
@@ -136,21 +136,21 @@ func flagPhrase(target string) string {
 	case "movement":
 		return "Changes how you move through the world."
 	case "battle-frenzy":
-		return "When badly wounded you fly into a battle frenzy — you hit harder, but cannot make yourself retreat."
+		return "When badly wounded you fly into a battle frenzy. You hit harder, but cannot make yourself retreat."
 	case "flying":
-		return "You take to the air on wings — swift over ground, hard for the earthbound to touch, and free to break away at will."
+		return "You take to the air on wings, swift over ground, hard for the earthbound to touch, and free to break away at will."
 	case "portable-workshop":
-		return "Your body is itself a workshop — you can craft anywhere, needing no station or tools."
+		return "Your body is itself a workshop. You can craft anywhere, needing no station or tools."
 	case "homunculus":
-		return "You can forge a living copy of yourself — a crafted companion that fights at your side."
+		return "You can forge a living copy of yourself: a crafted companion that fights at your side."
 	case "companion-cap-raise":
 		return "You can keep more companions at your side at once."
 	case "brood-mother":
-		return "You endlessly birth and sustain a brood — and are never left without a companion."
+		return "You endlessly birth and sustain a brood, and are never left without a companion."
 	case "control-immune":
-		return "Nothing can take you off your feet — you cannot be knocked down or grappled."
+		return "Nothing can take you off your feet. You cannot be knocked down or grappled."
 	case "shout-stacking":
-		return "You can loose several battle-shouts at once — a single cry carries the force of both a rally and a war cry together."
+		return "You can loose several battle-shouts at once. A single cry carries the force of both a rally and a war cry together."
 	}
 	return ""
 }

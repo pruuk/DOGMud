@@ -382,18 +382,18 @@ options:
         - 'You whirl and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from perfect distance!'
         - 'Lunging forward with controlled precision, you deliver a <ansi fg="cyan-bold">PERFECT LASH</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You flow like water and your whip <ansi fg="cyan-bold">RENDS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them with your whip!'
+        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely, and you <ansi fg="cyan-bold">ANNIHILATE</ansi> them with your whip!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS STRIKE</ansi> with your <ansi fg="item">{itemname}</ansi>!'
         master:
-        - 'Your tactical brilliance and perfect distance control create the opening - you <ansi fg="cyan-bold">EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your tactical brilliance and perfect distance control create the opening, and you <ansi fg="cyan-bold">EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> from impossible reach!'
         - 'While {position} and {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> of whip mastery!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING LASH</ansi> from the perfect angle and distance!'
         - 'Exploiting total advantage, you <ansi fg="cyan-bold">SHRED</ansi> <ansi fg="{acteetype}">{actee}</ansi> with legendary whip control!'
-        - 'Your positioning is flawless - your whip <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from ideal range!'
+        - 'Your positioning is flawless, and your whip <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from ideal range!'
         - 'Your unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL LASHING</ansi> of pure mastery!'
         - 'Channeling all momentum and perfect distance, you <ansi fg="cyan-bold">CARVE THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with devastating arcs!'
-        - 'The tide of battle favors you - your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from legendary reach!'
+        - 'The tide of battle favors you, and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from legendary reach!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRACKS VIOLENTLY</ansi> against you!'
@@ -404,18 +404,18 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> whirls and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> you from perfect distance!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and delivers a <ansi fg="cyan-bold">PERFECT LASH</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like water and <ansi fg="cyan-bold">RENDS</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens you completely - they <ansi fg="cyan-bold">ANNIHILATE</ansi> you!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens you completely, and they <ansi fg="cyan-bold">ANNIHILATE</ansi> you!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS STRIKE</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening - you are <ansi fg="cyan-bold">EVISCERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening, and you are <ansi fg="cyan-bold">EVISCERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> from impossible reach!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS STRIKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> from the perfect angle and distance!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">SHREDS</ansi> you with legendary whip mastery!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL LASHING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and perfect distance, <ansi fg="cyan-bold">CARVING THROUGH</ansi> you with deadly arcs!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> you from legendary range!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> you from legendary range!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRACKS VIOLENTLY</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -426,18 +426,18 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> whirls and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges forward with a <ansi fg="cyan-bold">PERFECT LASH</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like water and <ansi fg="cyan-bold">RENDS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely: <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS STRIKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance and perfect distance create the opening - <ansi fg="cyan-bold">EVISCERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance and perfect distance create the opening: <ansi fg="cyan-bold">EVISCERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS STRIKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> from the perfect angle and distance!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">SHREDS</ansi> <ansi fg="{acteetype}">{actee}</ansi> with precision!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL LASHING</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and perfect whip control, <ansi fg="cyan-bold">CARVING THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> with deadly arcs!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from legendary range!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi> from legendary range!'
   fumble:
     # messages for when they are in the same room
     together:
@@ -454,7 +454,7 @@ options:
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter forces you to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite perfect form, a misstep causes your whip to <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Your masterful snap is disrupted - you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
+        - 'Your masterful snap is disrupted, and you <ansi fg="red-bold">FUMBLE</ansi> the execution!'
       actee:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> and tangles pathetically!'
@@ -468,7 +468,7 @@ options:
         master:
         - 'Your defense forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{actortype}">{actor}''s</ansi> whip <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful strike is disrupted - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful strike is disrupted, and they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> in a tangled mess!'
@@ -476,10 +476,10 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their attack as their whip wraps around them!'
         - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> in a pathetic tangle!'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach <ansi fg="red-bold">FUMBLES</ansi> - their whip goes wild!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach <ansi fg="red-bold">FUMBLES</ansi>, and their whip goes wild!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and their whip <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> snap backfires catastrophically!'
         master:
         - '<ansi fg="{acteetype}">{actee}''s</ansi> defense forces <ansi fg="{actortype}">{actor}</ansi> to <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{actortype}">{actor}''s</ansi> whip <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> perfect snap is disrupted - a <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> perfect snap is disrupted: a <ansi fg="red-bold">FUMBLE</ansi>!'

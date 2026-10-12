@@ -15,6 +15,10 @@ import (
 // value found in either world.
 var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam}
 
+// naturalWeaponSpecialPools are the special-attack pools whose {itemname} is
+// the same natural weapon, so they follow the same rule (M6 slice 2 review).
+var naturalWeaponSpecialPools = []string{"throttle", "drain", "maul"}
+
 // afterItemName finds each {itemname} and the text that follows it.
 var afterItemName = regexp.MustCompile(`\{itemname\}(.*)`)
 
@@ -32,6 +36,9 @@ var weaponNotSubject = map[string]bool{
 	"toward": true, "towards": true, "to": true, "but": true, "as": true,
 	"from": true, "on": true, "off": true, "across": true, "against": true,
 	"over": true, "home": true, "shut": true,
+	// Modal and place words that take no verb ending ("before your {itemname}
+	// can close", "clamp your {itemname} around the throat").
+	"can": true, "around": true, "tight": true,
 }
 
 // subjectVerbAfterItemName returns the word that makes {itemname} the
@@ -91,6 +98,9 @@ func naturalWeaponPoolFiles(t *testing.T) []string {
 	for _, p := range naturalWeaponPools {
 		pools[string(p)] = true
 	}
+	for _, p := range naturalWeaponSpecialPools {
+		pools[p] = true
+	}
 	species, err := filepath.Glob(filepath.Join("..", "..", "_datafiles", "world", "*", "species", "*.yaml"))
 	if err != nil || len(species) == 0 {
 		t.Fatalf("no species files found: %v", err)
@@ -137,6 +147,85 @@ func TestNaturalWeaponPoolsNeverPutAVerbAfterTheWeapon(t *testing.T) {
 		for i, line := range strings.Split(string(raw), "\n") {
 			if v := subjectVerbAfterItemName(line); v != `` {
 				t.Errorf("%s:%d: the weapon is the subject of %q: %s", f, i+1, v, strings.TrimSpace(line))
+			}
+		}
+	}
+}
+
+// An actor is "they/their" everywhere in player copy, never "it/its", and a
+// natural weapon is the actor's: "{actor} rakes their {itemname}", not "its".
+// Task 6 of M6 slice 2 ruled this; the verb-agreement rewrite once put "its"
+// into about 55 lines.
+var (
+	itsBeforeWeapon = regexp.MustCompile(`\bits\s+(<ansi[^>]*>)?\{itemname\}`)
+	itsAfterActor   = regexp.MustCompile(`\{actor\}[^.!?]*\bits\s+([A-Za-z]+)`)
+)
+
+// objectNounsAfterIts are the things an actor line may legitimately call
+// "its": a thing the actor holds or aims, not the actor itself.
+var objectNounsAfterIts = map[string]bool{
+	"crystal": true, "energy": true, "mark": true, "length": true,
+	"tip": true, "target": true,
+}
+
+// actorItsOffence returns a description of an actor-possessive "its" on line,
+// or "".
+func actorItsOffence(line string) string {
+	if itsBeforeWeapon.MatchString(line) {
+		return `its {itemname}`
+	}
+	for _, m := range itsAfterActor.FindAllStringSubmatch(line, -1) {
+		if !objectNounsAfterIts[strings.ToLower(m[1])] {
+			return `its ` + m[1] + ` after {actor}`
+		}
+	}
+	return ``
+}
+
+func TestActorItsDetector_CanFail(t *testing.T) {
+	for _, line := range []string{
+		`<ansi fg="a">{actor}</ansi> rakes its <ansi fg="item">{itemname}</ansi> through the air`,
+		`{actor} cuts through empty air with its {itemname}!`,
+		`{actor} loses its angle!`,
+	} {
+		if actorItsOffence(line) == `` {
+			t.Errorf("missed an actor 'its' in %q", line)
+		}
+	}
+	for _, line := range []string{
+		`{actor}''s wand FUMBLES as its energy fizzles!`,
+		`{actor} raises their {itemname}, its crystal pulsing.`,
+		`The shot finds its mark!`,
+	} {
+		if v := actorItsOffence(line); v != `` {
+			t.Errorf("flagged %q in %q", v, line)
+		}
+	}
+}
+
+func TestCombatCopyNeverCallsAnActorIts(t *testing.T) {
+	var files []string
+	for _, pat := range []string{
+		filepath.Join("..", "..", "_datafiles", "world", "*", "combat-messages", "*.yaml"),
+		filepath.Join("..", "..", "_datafiles", "world", "*", "narration", "special-moves", "*.yaml"),
+	} {
+		got, err := filepath.Glob(pat)
+		if err != nil || len(got) == 0 {
+			t.Fatalf("no files for %s (err %v); the guard would check nothing", pat, err)
+		}
+		files = append(files, got...)
+	}
+	for _, f := range files {
+		raw, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatalf("read %s: %v", f, err)
+		}
+		for i, line := range strings.Split(string(raw), "\n") {
+			if strings.HasPrefix(strings.TrimSpace(line), "#") {
+				continue
+			}
+			if v := actorItsOffence(line); v != `` {
+				t.Errorf("%s:%d: an actor is \"their\", not %q: %s", f, i+1, v, strings.TrimSpace(line))
 			}
 		}
 	}

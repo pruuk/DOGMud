@@ -20,7 +20,7 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	rest = strings.TrimSpace(rest)
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `<ansi fg="command">disenchant <item></ansi> — strip a Chrysalis enchantment from an item.`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="command">disenchant <item></ansi>: strip a Chrysalis enchantment from an item.`)
 		return true, nil
 	}
 
@@ -70,7 +70,7 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	// pool clamp lands before this command returns.
 	_ = user.Character.AddConditionMagnitude(conditions.ConditionIdEnchantWithdrawal, penaltyRounds, reservePct, reservePool)
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="magenta">You pry the Chrysalis free. It comes away screaming — a `+
+	user.SendText(messaging.CategorySystem, `<ansi fg="magenta">You pry the Chrysalis free. It comes away screaming, a `+
 		`soundless wail that reverberates through your bones. The item `+
 		`falls silent, stripped of its living power.</ansi>`)
 	user.SendText(messaging.CategorySystem, `<ansi fg="red">A sudden emptiness floods through you. Your body aches `+

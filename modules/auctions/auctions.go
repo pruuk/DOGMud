@@ -431,7 +431,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 
 	user.ClearPrompt()
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("Auctioning your <ansi fg=\"item\">%s</ansi> — buyout <ansi fg=\"gold\">%d gold</ansi>, reserve <ansi fg=\"gold\">%d gold</ansi>.", matchItem.DisplayName(), amt, reserveFrom(amt, auctionReservePct)))
+	user.SendText(messaging.CategorySystem, fmt.Sprintf("Auctioning your <ansi fg=\"item\">%s</ansi>: buyout <ansi fg=\"gold\">%d gold</ansi>, reserve <ansi fg=\"gold\">%d gold</ansi>.", matchItem.DisplayName(), amt, reserveFrom(amt, auctionReservePct)))
 
 	duration := 60
 	if dur, ok := mod.plug.Config.Get(`DurationSeconds`).(int); ok {
@@ -949,7 +949,7 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 				itemCopy := a.ItemData
 				winner.Inbox.Add(users.Message{
 					FromName: `Auction System`,
-					Message:  fmt.Sprintf(`You won the auction for <ansi fg="item">%s</ansi>, but your pack was full — it was sent to your mailbox.`, a.ItemData.DisplayName()),
+					Message:  fmt.Sprintf(`You won the auction for <ansi fg="item">%s</ansi>, but your pack was full. It was sent to your mailbox.`, a.ItemData.DisplayName()),
 					Item:     &itemCopy,
 				})
 				mailed++

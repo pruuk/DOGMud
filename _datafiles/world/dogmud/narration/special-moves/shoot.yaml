@@ -1,14 +1,40 @@
 moveid: shoot
+# Mobs and players draw from one pool per event (M6 slice 2, ledger row 56). Variant N of every role describes one moment.
 events:
+  # hit/partial/miss carry the shooter's own actor line and the target's actee
+  # line. The room line for a same-room shot comes from fire_announce instead.
   hit:
+    actor:
+      - 'Your shot strikes {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your shot takes {actee}! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor}''s shot strikes you!'
+      - '{actor}''s shot strikes you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s shot strikes you! (<ansi fg="damage">{damage}</ansi>)'
   partial:
+    actor:
+      - 'Your shot grazes {actee}! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your shot flies past {actee}, but the edge of it still barely hits them! (<ansi fg="damage">{damage}</ansi>)'
     actee:
-      - '{actor}''s shot goes wide, but the edge of it still clips you!'
+      - '{actor}''s shot flies past, but the edge of it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s shot flies past, but the edge of it still barely hits you! (<ansi fg="damage">{damage}</ansi>)'
   miss:
+    actor:
+      - 'Your shot narrowly misses {actee}!'
+      - 'Your shot flies past {actee}!'
     actee:
       - '{actor}''s shot narrowly misses you!'
+      - '{actor}''s shot narrowly misses you!'
+  # The ambush shot's own actor line, for a shooter firing from concealment.
+  # Actor only: the room and the target learn about the shot through
+  # fire_announce and hit/partial/miss as usual; this is the extra line the
+  # SHOOTER alone reads, and it is why the surprise shot feels different from
+  # an ordinary one.
+  surprise_hit:
+    actor:
+      - 'Your shot from cover takes {actee} unaware! (<ansi fg="damage">{damage}</ansi>)'
+  surprise_miss:
+    actor:
+      - 'Your shot from cover flies past {actee}!'
   fire_announce:
     observer:
       - '{actor} fires their {weapon} at {actee}!'
@@ -26,7 +52,7 @@ events:
       - 'A shot streaks in from somewhere nearby and strikes {actee}!'
   arrival_unknown_partial:
     remote_observer:
-      - 'A shot streaks in from somewhere nearby and clips {actee}!'
+      - 'A shot streaks in from somewhere nearby and barely hits {actee}!'
   arrival_unknown_miss:
     remote_observer:
       - 'A shot streaks in from somewhere nearby and narrowly misses {actee}!'
@@ -35,62 +61,7 @@ events:
       - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and strikes {actee}!'
   arrival_known_partial:
     remote_observer:
-      - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and clips {actee}!'
+      - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and barely hits {actee}!'
   arrival_known_miss:
-    remote_observer:
-      - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and narrowly misses {actee}!'
-  # player_* events are the PLAYER twin's own wording (M4e-1b, option B): the
-  # twins shipped different prose for the same event, so they take separate
-  # keys rather than sharing the mob events above. Merging them into one pool
-  # is filed as M6 ledger row 56. Unlike the mob's actee-only hit/partial/miss,
-  # the player's own shot carries a personal actor line too.
-  player_hit:
-    actor:
-      - 'Your shot takes {actee} (<ansi fg="damage">{damage}</ansi>)!'
-    actee:
-      - '{actor}''s shot strikes you (<ansi fg="damage">{damage}</ansi>)!'
-  player_partial:
-    actor:
-      - 'Your shot goes wide of {actee}, but the edge of it still clips them! (<ansi fg="damage">{damage}</ansi>)'
-    actee:
-      - '{actor}''s shot goes wide, but the edge of it still clips you! (<ansi fg="damage">{damage}</ansi>)'
-  player_miss:
-    actor:
-      - 'Your shot goes wide of {actee}!'
-    actee:
-      - '{actor}''s shot narrowly misses you!'
-  # The ambush shot's own actor line, for a shooter firing from concealment.
-  # Actor only: the room and the target learn about the shot through
-  # player_fire_announce and player_hit/player_partial/player_miss as usual;
-  # this is the extra line the SHOOTER alone reads, and it is why the surprise
-  # shot feels different from an ordinary one.
-  player_surprise_hit:
-    actor:
-      - 'Your shot from cover takes {actee} unaware! (<ansi fg="damage">{damage}</ansi>)'
-  player_surprise_miss:
-    actor:
-      - 'Your shot from cover goes wide of {actee}!'
-  player_fire_announce:
-    observer:
-      - '{actor} fires their {weapon} at {actee}!'
-  player_fire_depart:
-    observer:
-      - '{actor} fires their {weapon} towards the <ansi fg="exit">{exitname}</ansi>.'
-  player_arrival_unknown_hit:
-    remote_observer:
-      - 'A shot streaks in from somewhere nearby and strikes {actee}!'
-  player_arrival_unknown_partial:
-    remote_observer:
-      - 'A shot streaks in from somewhere nearby and clips {actee}!'
-  player_arrival_unknown_miss:
-    remote_observer:
-      - 'A shot streaks in from somewhere nearby and narrowly misses {actee}!'
-  player_arrival_known_hit:
-    remote_observer:
-      - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and strikes {actee}!'
-  player_arrival_known_partial:
-    remote_observer:
-      - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and clips {actee}!'
-  player_arrival_known_miss:
     remote_observer:
       - 'A shot streaks in from beyond the <ansi fg="exit">{exitname}</ansi> and narrowly misses {actee}!'

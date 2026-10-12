@@ -29,6 +29,8 @@ verb, loaded flat by verb id.
 moveid: kick
 events:
   standard_hit:
+    actor:
+      - 'You kick {actee} hard! (<ansi fg="damage">{damage}</ansi>)'
     actee:
       - '{actor} kicks you hard! (<ansi fg="damage">{damage}</ansi>)'
     observer:
@@ -36,19 +38,33 @@ events:
 ```
 
 Role keys are the arc's canonical four: `actor`, `actee`, `observer`,
-`remote_observer`. A mob has no client, so mob events author no `actor` line.
+`remote_observer`.
 
-**Player events take `player_` prefixed keys, in the SAME file as their mob
-twin (M4e-1b, owner ruling, option B).** The original PR 1b design assumed a
-player call site would simply fill in the empty `actor` role on the existing
-mob event; it cannot, because the two shipped DIFFERENT prose for the same
-event (`drain`'s mob `hit` actee line and the player's four lifesteal actee
-lines share nothing). `bash.yaml`'s `player_hit` and `hit` are therefore
-separate top-level events, not one event with a filled-in role. Merging the
-two prose sets into one shared pool is a bigger content change, filed as M6
-ledger row 56, and is explicitly out of scope for this migration. A verb with
-no mob twin at all (`throw`, which mobs never do) carries ONLY `player_*`
-keys in its file.
+**Mobs and players share one pool per event (M6 slice 2, ledger row 56).**
+M4e-1b had kept the twins' wording apart under `player_` prefixed keys; that
+split is gone. A merged event lists the mob's variants first, then the
+player's. Every role present in an event is present at every index, so a
+mob variant carries an `actor` line (what a player reads on drawing it) and
+a player variant carries whatever the mob side had. The mob sender
+(`internal/mobcommands/move_narration.go` `sendMoveEvent`) sends every
+authored role, so a role added for the player twin is also sent for the mob:
+a mob's `throttle/cast_interrupt` now tells the room, as the player's does,
+and passes `messaging.SoundChantBreaksOff` as the optional trailing
+`observerSound` argument so an observer who sees nothing hears it, the mob
+twin of the player side's `moveCategories.ObserverSound`.
+The `actor` line is harmless on the mob side, since a mob has no client.
+Because either twin can draw any variant, every line must read right
+whoever the actor is (audited 2026-10-12,
+`docs/superpowers/audits/2026-10-12-special-move-pairing-audit.md`): the
+actor is "their", never "its", and a line names only a body part or gear
+every actor of that verb has (horns for gore, fangs for maul and throttle,
+claws for rake; kick says "foot", never "boot" or "heel"; drain and
+hamstring name none; bash names its instrument through `{label}`).
+Both callers of a merged event must fill every token any variant uses:
+player `bash` fills `{label}`/`{verb}`/`{with}` and mob `shoot` fills
+`{damage}` for that reason. Events only a mob fires (`charge`, `hamstring`,
+`trip/whiff_on_prone`) author no `actor` line; `throw`, which mobs never do,
+carries only player events.
 
 **Event keys carry the variant axis where one exists.** `kick` resolves as
 stomp, knee or standard and `trip` as tailsweep or trip, so their keys are
@@ -72,7 +88,7 @@ Verified against source 2026-09-21 with
 | `(*MoveNarrationGroup) Id()` / `Filepath()` | methods | The `fileloader` generic contract |
 | `EventMessages` | type | One event's four role pools |
 | `EventKey` | type | Names one outcome branch of one verb |
-| `TokenDamage`, `TokenLabel`, `TokenWith`, `TokenVerb`, `TokenWeapon`, `TokenExitName`, `TokenPosition`, `TokenItem` | consts | This store's event tokens, beyond the four canonical name tokens. `TokenItem` was added in M4e-1b for `throw`'s thrown item name |
+| `TokenDamage`, `TokenLabel`, `TokenWith`, `TokenVerb`, `TokenWeapon`, `TokenExitName`, `TokenPosition`, `TokenItem`, `TokenHeal` | consts | This store's event tokens, beyond the four canonical name tokens. `TokenItem` was added in M4e-1b for `throw`'s thrown item name; `TokenHeal` carries `drain`'s lifesteal description |
 
 ## Using it correctly
 
@@ -132,8 +148,8 @@ Widening the set is a deliberate edit to that map.
 
 🪤 **`ValidateVariants` SKIPS EMPTY POOLS.** An event that omits a whole role
 validates clean and then tells that audience nothing. An absent role cannot
-simply be banned, because mob events legitimately have no `actor` line and
-`shoot`'s arrival events are remote-observer only. The real check is role-set
+simply be banned, because mob-only events legitimately have no `actor` line
+and `shoot`'s arrival events are remote-observer only. The real check is role-set
 agreement with the call site, in the root guard.
 
 ## Tests that hold this together
@@ -146,16 +162,15 @@ agreement with the call site, in the root guard.
   spellings
 - `internal/narration/testdata/stores/special_moves.golden` via
   `TestSnapshotStores` - renders every event at every variant index
-- `internal/mobcommands/special_move_net_test.go` - the byte-identity net:
-  118 rows asserting each event renders exactly what the original Go literal
-  produced. This is what proves the migration changed no wording
-- `internal/usercommands/special_move_net_test.go` - the player-side twin,
-  `TestMigratedWordingIsByteIdentical`: 305 rows across all twelve player
-  files, all comparing, 0 skipped and 0 failed now that the migration is
-  complete
-- `internal/combat/grapple_narration_pin_test.go` - the same proof for
-  grapple's crit-failure and disarm events, which live in `internal/combat`
-  rather than a mob command file and so sit outside the 118-row net
+- The M4e byte-identity nets (`special_move_net_test.go` in
+  `internal/mobcommands` and `internal/usercommands`, their
+  `testdata/pre_migration_literals.json` fixtures and
+  `tools/move_narration_net.py`) were retired in M6 slice 2: they proved the
+  migration changed no wording, and M6 changes wording on purpose.
+  `special_moves.golden` is the record of the shipped text now
+- `internal/combat/grapple_narration_pin_test.go` - pins grapple's
+  crit-failure and disarm events, which live in `internal/combat` rather
+  than a mob command file
 - `move_narration_migration_guard_test.go` (root package) -
   `TestMigratedFilesHoldNoNarrationLiterals` walks all 25 migrated files (13
   mob, 12 player) and fails on any backtick prose literal reached from a

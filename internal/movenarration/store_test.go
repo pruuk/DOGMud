@@ -1,6 +1,8 @@
 package movenarration
 
 import (
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -90,5 +92,72 @@ func TestValidateAcceptsEveryShippedToken(t *testing.T) {
 		if err := g.Validate(); err != nil {
 			t.Errorf("declared token %s was rejected: %v", tok, err)
 		}
+	}
+}
+
+// Within one role of one event, every variant must carry the same SET of
+// value tokens. Variant N of every role describes one moment, and a variant
+// that drops {damage} (or {heal}, {position}, ...) silently loses that part
+// of the report whenever the picker lands on it. Shoot hit and partial once
+// shipped a first variant without {damage}.
+func TestShippedVariantsCarryTheSameValueTokens(t *testing.T) {
+	_, here, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller failed")
+	}
+	dir := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "narration", "special-moves")
+	prev := loadedMoves
+	t.Cleanup(func() { loadedMoves = prev })
+	if err := LoadFrom(dir); err != nil {
+		t.Fatalf("LoadFrom(%s): %v", dir, err)
+	}
+	if len(loadedMoves) == 0 {
+		t.Fatal("loaded no moves; the check would compare nothing")
+	}
+	valueTokens := []string{
+		TokenDamage, TokenHeal, TokenPosition, TokenWeapon, TokenItem,
+		TokenExitName, TokenLabel, TokenWith, TokenVerb,
+	}
+	// Bash's observer variants are alternative phrasings of the species
+	// instrument ("{actor} {verb} {actee} {with}" against "{actor}'s {label}
+	// catches {actee}"), not one variant dropping a report, so {label},
+	// {with} and {verb} are not compared there.
+	phrasing := map[string]bool{TokenLabel: true, TokenWith: true, TokenVerb: true}
+	setOf := func(moveId, role, line string) string {
+		var have []string
+		for _, tok := range valueTokens {
+			if moveId == "bash" && role == "observer" && phrasing[tok] {
+				continue
+			}
+			if strings.Contains(line, tok) {
+				have = append(have, tok)
+			}
+		}
+		return strings.Join(have, ",")
+	}
+	compared := 0
+	for moveId, g := range loadedMoves {
+		for key, ev := range g.Events {
+			roles := map[string][]string{
+				"actor": ev.Actor, "actee": ev.Actee,
+				"observer": ev.Observer, "remote_observer": ev.RemoteObserver,
+			}
+			for role, lines := range roles {
+				if len(lines) < 2 {
+					continue
+				}
+				compared++
+				want := setOf(moveId, role, lines[0])
+				for i, line := range lines[1:] {
+					if got := setOf(moveId, role, line); got != want {
+						t.Errorf("%s %s %s: variant %d carries [%s] but variant 0 carries [%s]: %s",
+							moveId, key, role, i+1, got, want, line)
+					}
+				}
+			}
+		}
+	}
+	if compared == 0 {
+		t.Fatal("compared no multi-variant roles")
 	}
 }

@@ -127,7 +127,7 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	// Send messages based on result
 	if result.Success {
 		positionTokens := map[string]string{movenarration.TokenPosition: result.PositionDesc}
-		sendMoveEvent("grapple", "player_success", ids, aud, grappleCategories, positionTokens)
+		sendMoveEvent("grapple", "success", ids, aud, grappleCategories, positionTokens)
 
 		// Flavor text for prone targets.
 		//
@@ -136,7 +136,7 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		// observation nobody in the room made, about a grapple the event above
 		// already narrated to them.
 		if result.PositionPenalty < 0 {
-			sendMoveEvent("grapple", "player_prone_penalty", ids, aud, grappleCategories, nil)
+			sendMoveEvent("grapple", "prone_penalty", ids, aud, grappleCategories, nil)
 		}
 
 		// Disarm messaging: a WORLD EVENT, so it carries the full trio, which
@@ -149,11 +149,11 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			}, aud)
 		}
 	} else {
-		sendMoveEvent("grapple", "player_fail", ids, aud, grappleCategories, nil)
+		sendMoveEvent("grapple", "fail", ids, aud, grappleCategories, nil)
 
 		// Defense penalty: private knowledge again, same ruling as above.
 		if result.DefensePenalty {
-			sendMoveEvent("grapple", "player_defense_exposed", ids, aud, grappleCategories, nil)
+			sendMoveEvent("grapple", "defense_exposed", ids, aud, grappleCategories, nil)
 		}
 
 		// Critical failure: a world event, full trio, as before.

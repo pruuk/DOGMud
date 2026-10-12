@@ -170,9 +170,9 @@ func sendChannelDefenceMessages(out combat.ChannelDefenceResult, identities comb
 // switched its aggro to the taunter.
 func sendAggroPullMessages(user *users.UserRecord, room *rooms.Room, sourceName, targetName string) {
 	pullMsgs := []string{
-		`Your words cut deep -- <ansi fg="mobname">%s</ansi> turns away from its prey and fixes its fury on you!`,
+		`Your words cut deep. <ansi fg="mobname">%s</ansi> turns away from its prey and fixes its fury on you!`,
 		`The insult lands true. <ansi fg="mobname">%s</ansi> abandons its quarry and lunges toward you!`,
-		`Your mockery is unbearable -- <ansi fg="mobname">%s</ansi> wheels around to face you!`,
+		`Your mockery is unbearable. <ansi fg="mobname">%s</ansi> wheels around to face you!`,
 		`<ansi fg="mobname">%s</ansi> snarls and shifts its full attention to you.`,
 	}
 	user.SendText(messaging.CategoryTauntSuccess, fmt.Sprintf(pullMsgs[util.Rand(len(pullMsgs))], targetName))

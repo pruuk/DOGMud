@@ -173,7 +173,7 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	case result.ForeignComponent:
 		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
-			`<ansi fg="red">The %s must be your own work — it bears another maker's mark.</ansi>`,
+			`<ansi fg="red">The %s must be your own work. It bears another maker's mark.</ansi>`,
 			result.ForeignComponentName))
 		return true, nil
 
@@ -358,7 +358,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 	// Self-crafted-component check (require_own_components)
 	if ownOk, offendingName := crafting.CheckOwnComponents(recipe, user.Character.Items, user.Character.ComponentItems, user.Character.Name); !ownOk {
 		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
-			`<ansi fg="red">The %s must be your own work — it bears another maker's mark.</ansi>`,
+			`<ansi fg="red">The %s must be your own work. It bears another maker's mark.</ansi>`,
 			offendingName))
 		return true, nil
 	}
@@ -475,7 +475,7 @@ func craftRecipeRow(r *crafting.RecipeSpec) string {
 		displayName = fmt.Sprintf("%s (%s)", r.Name, r.TargetType)
 	}
 	return fmt.Sprintf(
-		`  <ansi fg="green">[V]</ansi> <ansi fg="white">%-26s</ansi> — %s  <ansi fg="dark-cyan">%s, %s</ansi>`,
+		`  <ansi fg="green">[V]</ansi> <ansi fg="white">%-26s</ansi>: %s  <ansi fg="dark-cyan">%s, %s</ansi>`,
 		displayName, ingredientList, stationStr, craftTimeDesc(r.TimeRounds))
 }
 
@@ -505,7 +505,7 @@ func craftCraftableNow(user *users.UserRecord, room *rooms.Room) bool {
 
 	if ready == 0 {
 		user.SendText(messaging.CategorySystem, ``)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Nothing you can craft here right now — try <ansi fg="cyan-bold">craft list</ansi> to see everything you know.</ansi>`)
+		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Nothing you can craft here right now. Try <ansi fg="cyan-bold">craft list</ansi> to see everything you know.</ansi>`)
 		user.SendText(messaging.CategorySystem, ``)
 		return true
 	}
@@ -643,11 +643,11 @@ func craftList(user *users.UserRecord, room *rooms.Room) bool {
 				}
 				if reason != "" {
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(
-						`    <ansi fg="red">[%s]</ansi> <ansi fg="white">%-26s</ansi> — %s  <ansi fg="red">%s</ansi><ansi fg="dark-cyan">%s, %s</ansi>`,
+						`    <ansi fg="red">[%s]</ansi> <ansi fg="white">%-26s</ansi>: %s  <ansi fg="red">%s</ansi><ansi fg="dark-cyan">%s, %s</ansi>`,
 						indicator, displayName, ingredientList, reason, stationStr, craftTimeDesc(r.TimeRounds)))
 				} else {
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(
-						`    <ansi fg="green">[%s]</ansi> <ansi fg="white">%-26s</ansi> — %s  <ansi fg="dark-cyan">%s, %s</ansi>`,
+						`    <ansi fg="green">[%s]</ansi> <ansi fg="white">%-26s</ansi>: %s  <ansi fg="dark-cyan">%s, %s</ansi>`,
 						indicator, displayName, ingredientList, stationStr, craftTimeDesc(r.TimeRounds)))
 				}
 			}

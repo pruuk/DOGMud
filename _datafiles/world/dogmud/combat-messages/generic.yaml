@@ -203,7 +203,7 @@ options:
       actor:
         beginner:
         - 'Your attack misses!'
-        - 'Your attack from afar goes wide!'
+        - 'Your attack from afar misses!'
         expert:
         - 'Your calculated strike misses!'
         - 'Your calculated ranged strike fails to connect!'
@@ -223,7 +223,7 @@ options:
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi> attacks but misses!'
-        - '<ansi fg="{actortype}">{actor}</ansi> attacks but their shot goes wide!'
+        - '<ansi fg="{actortype}">{actor}</ansi> attacks but their shot misses!'
         expert:
         - '<ansi fg="{actortype}">{actor}</ansi>''s calculated strike misses!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s calculated ranged attack misses!'
@@ -494,7 +494,7 @@ options:
         - 'Your well timed strike lands a <ansi fg="cyan-bold">TELLING BLOW</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'You time your attack perfectly and deliver a <ansi fg="cyan-bold">DECISIVE STRIKE</ansi>!'
         master:
-        - 'Your tactical brilliance creates the perfect opening - you <ansi fg="cyan-bold">EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'Your tactical brilliance creates the perfect opening, and you <ansi fg="cyan-bold">EVISCERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi>!'
         - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - 'You execute a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> from the perfect angle!'
@@ -511,9 +511,9 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">DECISIVE STRIKE</ansi> against you!'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS HIT</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads you completely and strikes your {bodypart} for a <ansi fg="cyan-bold">PERFECT CRITICAL</ansi>!'
-        - 'There is no defense against it - <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi> on you!'
+        - 'There is no defense against it: <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi> on you!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY HITS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -527,9 +527,9 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DECISIVE STRIKE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS HIT</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> strikes <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart} for a <ansi fg="cyan-bold">PERFECT CRITICAL</ansi>!'
-        - 'There is no defense against it - <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi>!'
+        - 'There is no defense against it: <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi>!'
     separate:
       actor:
         beginner:
@@ -604,7 +604,7 @@ options:
         - 'You trip over your own feet and <ansi fg="red-bold">FUMBLE</ansi> the attack!'
         - 'Your <ansi fg="item">{itemname}</ansi> slips from your hand as you <ansi fg="red-bold">FUMBLE</ansi>!'
         expert:
-        - 'Your tactical calculation fails - you <ansi fg="red-bold">FUMBLE</ansi>!'
+        - 'Your tactical calculation fails, and you <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You overcommit to the strike and <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Your footwork betrays you and you <ansi fg="red-bold">FUMBLE</ansi> the attack!'
@@ -620,7 +620,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> trips over their own feet and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> slips from their hand as they <ansi fg="red-bold">FUMBLE</ansi>!'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'You sidestep just enough that <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> the attack!'
         - '<ansi fg="{actortype}">{actor}</ansi> overcommits to the strike and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> footwork betrays them and they <ansi fg="red-bold">FUMBLE</ansi>!'
@@ -636,7 +636,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> trips over their own feet and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> slips from their hand!'
         expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails - they <ansi fg="red-bold">FUMBLE</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical approach fails, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> overcommits to the strike and <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> footwork betrays them and they <ansi fg="red-bold">FUMBLE</ansi>!'
@@ -650,7 +650,7 @@ options:
         beginner:
         - 'Your attack <ansi fg="red-bold">FUMBLES</ansi> badly!'
         - 'Your ranged attack <ansi fg="red-bold">FUMBLES</ansi> completely!'
-        - 'You lose your footing and your shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
+        - 'You lose your balance and your shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
         - 'Your desperate shot goes wrong and <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - 'Your calculated strike <ansi fg="red-bold">FUMBLES</ansi>!'
@@ -682,7 +682,7 @@ options:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> attack <ansi fg="red-bold">FUMBLES</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> ranged attack <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their footing and the shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
+        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and the shot <ansi fg="red-bold">FUMBLES</ansi> wide!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s desperate shot goes wrong and <ansi fg="red-bold">FUMBLES</ansi>!'
         expert:
         - '<ansi fg="{actortype}">{actor}''s</ansi> calculated strike <ansi fg="red-bold">FUMBLES</ansi>!'

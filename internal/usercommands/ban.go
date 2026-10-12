@@ -90,7 +90,7 @@ func Ban(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		target.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">You have been banned.</ansi> %s`, reason))
 		connections.Kick(target.ConnectionId(), "Banned by staff: "+reason)
 	} else if !users.Exists(name) {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">Note: no account named "%s" is currently known — the name is banned and will apply if it is ever registered.</ansi>`, name))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">Note: no account named "%s" is currently known. The name is banned and will apply if it is ever registered.</ansi>`, name))
 	}
 
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> has been <ansi fg="alert-5">banned</ansi>. Reason: %s`, banName, reason))

@@ -94,16 +94,19 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// so the name never enters the text in the first place.
 		actor := mobName
 		if result.IsSneaking {
-			actor = `Someone`
+			actor = messaging.StealthActor
 		}
 		targetIds := ids
 		targetIds.Actor = actor
+		// Mobs and players share one pool per event (M6 slice 2, ledger row
+		// 56); the player variants carry {damage}, so it is filled here too.
+		damageTokens := map[string]string{movenarration.TokenDamage: combat.GetDamageDescription(result.MoveResult.Damage, result.MoveResult.TargetMaxHP)}
 		switch {
 		case hit:
-			roles, _ := renderMoveEvent("shoot", "hit", targetIds, nil)
+			roles, _ := renderMoveEvent("shoot", "hit", targetIds, damageTokens)
 			targetLine = lineOrNone(messaging.CategoryHitRanged, roles.Actee)
 		case partial:
-			roles, _ := renderMoveEvent("shoot", "partial", targetIds, nil)
+			roles, _ := renderMoveEvent("shoot", "partial", targetIds, damageTokens)
 			targetLine = lineOrNone(messaging.CategoryHitRanged, roles.Actee)
 		case triadDef != "":
 			// Not migrated: triadDef is the channel defence triad's own text

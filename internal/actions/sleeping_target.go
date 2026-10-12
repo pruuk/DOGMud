@@ -51,7 +51,7 @@ func RefuseIfAsleep(c *characters.Character, name string, user *users.UserRecord
 		// instruction to type exactly that.
 		line := fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> is fast asleep. `+
-				`You could make some noise -- try <ansi fg="command">shout wake up</ansi>.`, name)
+				`You could make some noise. Try <ansi fg="command">shout wake up</ansi>.`, name)
 		// A player who aimed at a shape never learned the sleeper's name
 		// (#454): hide it at their sight in their own room.
 		if room := rooms.LoadRoom(user.Character.RoomId); room != nil {

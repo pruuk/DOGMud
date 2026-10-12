@@ -24,17 +24,17 @@ advancements:
     actor:
       - "You wrench the underhook, drive forward, and ride them down into\
         \ mount."
-      - "A snap-down sets it up — you sprawl over the shoulder and slide\
+      - "A snap-down sets it up: you sprawl over the shoulder and slide\
         \ into mount before they can recover."
       - "Their stance breaks. You drag them flat and climb on top, knees\
         \ high in mount."
     actee:
       - "{actor} wrenches the underhook and rides you down. The\
-        \ ceiling spins overhead — they're mounted on your chest."
+        \ ceiling spins overhead. They're mounted on your chest."
       - "You feel the snap-down too late. Their weight crashes onto your\
         \ sternum and the world goes vertical."
       - "Your stance crumbles. {actor}'s knees hammer up under\
-        \ your armpits — full mount."
+        \ your armpits: full mount."
     observer:
       - "{actor} wrenches an underhook and rides {actee}\
         \ down into mount."
@@ -52,13 +52,13 @@ advancements:
       - "You trip the near leg and follow them down, chest-to-chest, cutting\
         \ off the hip with your weight."
     actee:
-      - "{actor} levers your wrist outward — your hip buckles and\
+      - "{actor} levers your wrist outward. Your hip buckles and\
         \ you land hard. Their weight pins your upper chest before you can\
         \ roll."
       - "A trip catches your trailing foot mid-step. You go down sideways\
         \ and {actor} is already stacking across you."
       - "You lose the underhook battle. {actor} dumps you to the\
-        \ floor and settles their hips perpendicular to yours — side control."
+        \ floor and settles their hips perpendicular to yours: side control."
     observer:
       - "{actor} leverages a wrist and sweeps {actee} to\
         \ the mat, settling into side control."
@@ -78,7 +78,7 @@ advancements:
     actee:
       - "{actor} spins inside your guard and suddenly they're\
         \ behind you, arms cinched around your waist."
-      - "You give the underhook, they take the back — it happens in one\
+      - "You give the underhook, they take the back. It happens in one\
         \ fluid rotation and now {actor}'s hands are clasped at\
         \ your belly."
       - "The snap-down doubles you over and {actor} flows behind\
@@ -98,14 +98,14 @@ advancements:
         \ are hunting."
       - "A duck-under puts you behind them on one knee. You stand up into\
         \ a rear clinch, both forearms framing their ribs."
-      - "You slip the double-collar and rotate around their hip — one\
+      - "You slip the double-collar and rotate around their hip, one\
         \ circling step and you're at their back, chest pressed to their\
         \ spine."
     actee:
       - "A duck-under steals your hip. {actor} rises behind you,\
         \ forearms boxing your ribs. You're standing but helpless."
       - "{actor} body-locks from behind and your balance shifts\
-        \ back — you're on your heels, their hands are clasped at your\
+        \ back, so you're on your heels, their hands are clasped at your\
         \ sternum."
       - "You feel the slip before you see it. {actor} is behind\
         \ you now, rear clinch locked, waiting for the moment to drag you\
@@ -123,14 +123,14 @@ advancements:
     actor:
       - "You haul down on the seatbelt, kick one heel behind their knee,\
         \ and drag both of you to the mat. Hooks in."
-      - "You sit to the mat and pull them back — they land across your lap\
+      - "You sit to the mat and pull them back. They land across your lap\
         \ and you thread your hooks in before they can roll."
       - "A sharp lift-and-drop breaks their base. You fall back with them\
-        \ and your legs swing over their hips — back mount secured."
+        \ and your legs swing over their hips: back mount secured."
     actee:
       - "{actor} bites down on the seatbelt and sweeps your knee\
         \ out. You land hard on your back with them coiled behind you."
-      - "The floor comes up fast — {actor} sat down and pulled you\
+      - "The floor comes up fast. {actor} sat down and pulled you\
         \ with them. Their heels are already digging into your hips."
       - "A lift-and-dump breaks your posture. You hit the mat on your side\
         \ and feel {actor}'s hooks thread in."
@@ -146,7 +146,7 @@ advancements:
   mount_to_background:
     actor:
       - "They turn to shield their face from your elbow. You take the gift\
-        \ — seatbelt over the shoulder, hooks in, back mount."
+        \ Seatbelt over the shoulder, hooks in, back mount."
       - "As they roll to their stomach you ride the roll, posting your hand\
         \ and sliding your legs around their torso."
       - "They give up the turtle to dodge strikes. You follow and sink one\
@@ -171,13 +171,13 @@ advancements:
     actor:
       - "You walk your knee up their hip line, step across the belly, and\
         \ settle your weight into full mount."
-      - "A cross-face pins the head while you swing the far leg over —\
-        \ mount locked before they can replace guard."
+      - "A cross-face pins the head while you swing the far leg over.\
+        \ Mount is locked before they can replace guard."
       - "Their near elbow frames high; you undercut it, knee-slide across\
         \ the torso, and ride into mount."
     actee:
       - "{actor} walks their knee across your belly. You scramble\
-        \ but their hips are already past your guard — mounted."
+        \ but their hips are already past your guard. Mounted."
       - "A cross-face drives your head to the mat. In the same motion\
         \ {actor}'s knee swings over and their weight drops on you."
       - "You feel the knee-slide before you can react. {actor}\
@@ -193,13 +193,13 @@ advancements:
     actor:
       - "They roll to their knees under the pressure. You ride them up,\
         \ slap on the seatbelt, and drag them back down with hooks in."
-      - "As they turtle you flow to their back — one hook, then two,\
+      - "As they turtle you flow to their back: one hook, then two,\
         \ chest tight on their spine."
       - "You sense the turn coming and time it: as they face down you spin\
         \ to the back, threading both legs around their hips."
     actee:
       - "You try to come up to your knees but {actor} rides the\
-        \ turtle and wraps over your shoulder — seatbelt. Their hooks\
+        \ turtle and wraps over your shoulder. Seatbelt. Their hooks\
         \ dig in."
       - "Rolling to escape side control hands {actor} your back.\
         \ They follow and settle in before you can stand."
@@ -217,18 +217,18 @@ advancements:
   kob_to_mount:
     actor:
       - "You slide your knee forward off the belly and step the foot\
-        \ through — mount without them finding a frame."
+        \ through into mount without them finding a frame."
       - "Their elbows crash inward to relieve the knee pressure; you use\
         \ the gap to swing the leg over. Mount."
       - "A quick shift of your base and the knee crosses the hip line;\
         \ you settle into full mount before they recover breath."
     actee:
       - "You bridge against {actor}'s knee and they slide it\
-        \ forward — straight into mount, heavier and worse."
+        \ forward, straight into mount, heavier and worse."
       - "You try to shrimp but {actor} steps the knee through\
         \ before you clear the hip. Mounted."
       - "{actor}'s knee slides off your belly and their weight\
-        \ redistributes — full mount drops on you."
+        \ redistributes. Full mount drops on you."
     observer:
       - "{actor} slides the knee off {actee}'s belly\
         \ and settles into full mount."
@@ -241,12 +241,12 @@ advancements:
     actor:
       - "They roll away from the knee to find breathing room. You jump\
         \ the roll and land on their back, already hunting hooks."
-      - "As they face down to escape the pressure, you flow behind them —\
+      - "As they face down to escape the pressure, you flow behind them:\
         \ seatbelt cinched, hooks threading in."
       - "You read the roll before it happens. By the time they're face-down\
         \ you're coiled at their back with both legs locked in."
     actee:
-      - "You roll to get away from {actor}'s knee — but they flow\
+      - "You roll to get away from {actor}'s knee, but they flow\
         \ with you and end up at your back. Hooks dig into your hips."
       - "Facing down feels safer than the knee on your stomach, but\
         \ {actor} is already sinking the seatbelt across your\
@@ -265,7 +265,7 @@ advancements:
   ns_to_sidecontrol:
     actor:
       - "You rotate ninety degrees, framing the shoulder, and drop your\
-        \ hip across their chest — side control."
+        \ hip across their chest: side control."
       - "From north-south you step the near knee down to the hip line,\
         \ pivot, and stack into side control."
       - "You shift your weight laterally, catch the far arm, and swing\
@@ -273,7 +273,7 @@ advancements:
     actee:
       - "{actor} pivots out of north-south and drops their hip\
         \ across your chest. You're in side control before you can frame."
-      - "The weight shifts sideways — {actor} steps through and\
+      - "The weight shifts sideways. {actor} steps through and\
         \ stacks on your chest in side control."
       - "{actor} catches your far arm and swings their hip across;\
         \ you're now under side control."
@@ -288,7 +288,7 @@ advancements:
   ns_to_mount:
     actor:
       - "You walk your hips forward along their body line and swing your\
-        \ legs over in one smooth pivot — mount."
+        \ legs over in one smooth pivot into mount."
       - "From north-south you creep forward, thread the legs past the\
         \ elbows, and land in mount before they can bridge."
       - "A sharp forward drive with both knees slides you past the guard\
@@ -296,7 +296,7 @@ advancements:
     actee:
       - "{actor} walks forward from north-south and swings into\
         \ mount. You're pinned before you can lift your hips."
-      - "They thread through the arms from above — {actor}'s\
+      - "They thread through the arms from above and {actor}'s\
         \ knees clear your guard and they drop into mount."
       - "{actor} creeps forward and the transition happens too\
         \ fast to stop. Full mount."
@@ -310,7 +310,7 @@ advancements:
 
   ns_to_background:
     actor:
-      - "You spin fully — hips over their face — and drive forward. They\
+      - "You spin fully, hips over their face, and drive forward. They\
         \ roll to stay oriented and hand you the back."
       - "A north-south choke setup forces them to turn; you ride the\
         \ roll and arrive at their back with a seatbelt ready."
@@ -339,7 +339,7 @@ advancements:
         \ clear the half guard into side control."
       - "A cross-face and underhook flatten them out; you walk the knee\
         \ through and post in side control."
-      - "You dig the underhook and switch your hips — the trapped leg\
+      - "You dig the underhook and switch your hips and the trapped leg\
         \ pops free and you stack into side control."
     actee:
       - "{actor} knee-slices through your half guard. The leg\
@@ -366,7 +366,7 @@ advancements:
         \ guard, and step into mount in one flowing sequence."
     actee:
       - "{actor} frees their leg and steps directly into mount.\
-        \ No pause, no warning — you're mounted."
+        \ No pause, no warning. You're mounted."
       - "The underhook pries your shoulder up and {actor}'s knee\
         \ threads past your guard. Mount."
       - "{actor} drives the cross-face and your half guard\
@@ -384,7 +384,7 @@ advancements:
       - "They roll to prevent the pass. You abandon the leg, slap the\
         \ seatbelt over their shoulder, and drag them to their back."
       - "A wide guard-pass attempt forces them face-down. You flow\
-        \ immediately to their back — one hook, then two."
+        \ immediately to their back: one hook, then two."
       - "They give up the half guard by rolling. You read it, back-step\
         \ out of the leg entanglement, and take the back."
     actee:
@@ -410,7 +410,7 @@ advancements:
       - "A scissor sweep rolls them and you pop straight up to side\
         \ control before they can frame."
       - "You plant a foot on the hip, push them sideways, and follow them\
-        \ to the top — side control."
+        \ to the top: side control."
     actee:
       - "The hip bump catches you leaning; you tip and {actor}\
         \ comes up over you into side control."
@@ -428,8 +428,8 @@ advancements:
 
   guard_to_mount:
     actor:
-      - "You trap the arm, bridge the hips, and roll them into mount\
-        \ — the arm-trap sweep put you on top."
+      - "You trap the arm and bridge the hips. The sweep rolls them\
+        \ over and puts you on top in mount."
       - "A pendulum sweep with the legs sends them airborne. You swing\
         \ up and land in mount before they settle."
       - "You break their posture with a collar grip, roll them over your\
@@ -452,16 +452,16 @@ advancements:
   guard_to_background:
     actor:
       - "They posture to escape the guard; you take the back in the\
-        \ scramble — seatbelt on, hooks threading in."
+        \ scramble: seatbelt on, hooks threading in."
       - "You transition to a back-take by rolling to the side, trapping\
         \ the arm, and swinging behind them as they try to stand."
       - "As they push up to break the guard you roll to the side and\
-        \ take the back — hooks in before their knees straighten."
+        \ take the back, hooks in before their knees straighten."
     actee:
       - "You posture to escape {actor}'s guard and they follow\
         \ you up, slapping on the seatbelt. Back mount."
       - "{actor} rolls sideways and arrives at your back as you\
-        \ try to stand — hooks already in."
+        \ try to stand, hooks already in."
       - "You push up to break the guard and {actor} transitions\
         \ right behind you. The hooks dig in before you're upright."
     observer:
@@ -476,7 +476,7 @@ advancements:
   turtle_to_background:
     actor:
       - "You drive a seatbelt grip over the far shoulder, kick one heel\
-        \ across their hip, and roll them onto their back — hooks in."
+        \ across their hip, and roll them onto their back, hooks in."
       - "You dig under the far arm, lock the seatbelt, and roll them to\
         \ the side. Both hooks land as they straighten out."
       - "A clock-choke setup forces them to react; they expose the hip\
@@ -484,7 +484,7 @@ advancements:
         \ second."
     actee:
       - "{actor} clamps the seatbelt across your far shoulder\
-        \ and rolls you over. You land on your back — hooks already in."
+        \ and rolls you over. You land on your back, hooks already in."
       - "The seatbelt snaps tight under your arm and {actor}\
         \ rolls you to the side. Their hooks dig into your hips."
       - "You resist the clock-choke by shifting your hip but\
@@ -508,7 +508,7 @@ degradations:
       - "They duck the chin, peel your hand off the seatbelt, and spin to\
         \ face you. The back control dissolves into a chest-to-chest clinch."
       - "A sharp elbow drives into your forearm and your grip breaks.\
-        \ {actee} wheels around before you can reestablish — clinch."
+        \ {actee} wheels around before you can reestablish. Clinch."
     actee:
       - "You drop your chin, peel {actor}'s seatbelt hand, and\
         \ pivot hard. Their grip peels away and you're face-to-face in a\
@@ -517,7 +517,7 @@ degradations:
         \ the grip loosen. You spin out and secure the clinch before they\
         \ can adjust."
       - "You shuck the waist lock sideways and rotate into {actor}.\
-        \ Back control becomes clinch — still in their space, but facing\
+        \ Back control becomes clinch, still in their space, but facing\
         \ them now."
     observer:
       - "{actee} peels {actor}'s seatbelt grip and pivots\
@@ -530,14 +530,14 @@ degradations:
   # ── Mount degradation ────────────────────────────────────────────────────
   mount_to_sidecontrol:
     actor:
-      - "{actee} bridges hard and hip-escapes — your mount slides\
+      - "{actee} bridges hard and hip-escapes and your mount slides\
         \ off into side control."
       - "You can't keep your base. {actee} shrimps free and lands\
         \ in side control."
       - "A frame on your hip pries your knees apart; you settle for side\
         \ control."
     actee:
-      - "You bridge hard and shrimp the hip free —\
+      - "You bridge hard and shrimp the hip free.\
         \ {actor}'s mount slides off you and into side control."
       - "Your elbow frames between you and {actor}'s hip. You\
         \ hip-escape and they settle for side."
@@ -568,7 +568,7 @@ degradations:
       - "You elbow-frame {actor}'s shoulder and work your near\
         \ knee inside. It threads through and you close the half guard."
       - "You shrimp out on the hip side, make space, and pump your knee\
-        \ through — half guard recovered."
+        \ through. Half guard recovered."
       - "You post the inside elbow, flatten your near hip, and pull the\
         \ knee in. {actor}'s side control compresses to half guard."
     observer:
@@ -585,12 +585,12 @@ degradations:
       - "{actee} shrimps sideways and knocks your knee off their\
         \ belly. You drop your hip back down into side control."
       - "They bridge off the knee pressure and twist. You can't rebalance\
-        \ — your base falls and you settle for side control."
+        \ Your base falls and you settle for side control."
       - "A two-handed push on your knee breaks the pin; you ride the shove\
         \ down into side control instead."
     actee:
       - "You shrimp into {actor} and knock the knee off your belly\
-        \ — they drop back into side control. Uncomfortable, but better."
+        \ and they drop back into side control. Uncomfortable, but better."
       - "You bridge against the knee and twist your hips out. The knee-on-\
         \ belly collapses and {actor} settles for side control."
       - "You plant both hands on {actor}'s knee and push sideways.\
@@ -616,7 +616,7 @@ degradations:
       - "You shrimp your hips sideways and frame {actor}'s thigh\
         \ out. Their north-south hold breaks; they slide to side control."
       - "You bridge and roll the hips. {actor} loses alignment and\
-        \ slides off to side control — you take it."
+        \ slides off to side control, and you take it."
       - "You work the elbow frame against {actor}'s knee and angle\
         \ your hips out until the north-south hold breaks into side control."
     observer:
@@ -633,7 +633,7 @@ degradations:
       - "{actee} rolls the trapped arm free and the crucifix\
         \ unravels. You're left with back mount instead."
       - "They force the elbow inside and break your arm trap. The crucifix\
-        \ is gone — you settle onto their back."
+        \ is gone and you settle onto their back."
       - "A violent roll strips the figure-four on the arm.\
         \ {actee} pulls free and you return to back mount."
     actee:
@@ -644,7 +644,7 @@ degradations:
         \ free. {actor} loses the crucifix and settles for back\
         \ mount."
       - "You flatten the arm and swim it through the trap. The crucifix\
-        \ dissolves — {actor} still has your back, but the arm\
+        \ dissolves. {actor} still has your back, but the arm\
         \ is free."
     observer:
       - "{actee} forces the elbow inside {actor}'s grip\
@@ -657,7 +657,7 @@ degradations:
   # ── BackGround degradation ───────────────────────────────────────────────
   background_to_mount:
     actor:
-      - "{actee} turns into you — they roll face-up and pull\
+      - "{actee} turns into you and they roll face-up and pull\
         \ you forward. You're in mount now, on top but no longer at the\
         \ back."
       - "They hip-escape sideways and drag your top hook down. You\
@@ -666,13 +666,13 @@ degradations:
         \ {actee} pulls you over and you land in mount."
     actee:
       - "You roll toward {actor}'s hook-side, drag the top hook\
-        \ down, and pull them forward. Back mount becomes mount — you're\
+        \ down, and pull them forward. Back mount becomes mount. You're\
         \ face-up now with {actor} on top."
       - "You hip-escape to the side and torque your upper body toward\
         \ {actor}. They tumble forward and the position flips\
         \ to mount."
       - "You post the outside elbow and roll hard toward the hook.\
-        \ {actor} loses the back and lands in mount — but you\
+        \ {actor} loses the back and lands in mount, but you\
         \ escaped the back."
     observer:
       - "{actee} rolls toward {actor}'s hook-side and\
@@ -686,17 +686,17 @@ degradations:
   halfguard_to_guard:
     actor:
       - "{actee} wiggles the trapped leg out and closes full\
-        \ guard. Your half-guard pin is gone — both legs locked around\
+        \ guard. Your half-guard pin is gone, with both legs locked around\
         \ your waist."
       - "They shrimp to create space and drag the knee through. Half\
         \ guard becomes full guard before you can flatten them again."
       - "A hip bump creates enough room for {actee} to pull\
         \ the second leg free. Full guard closes and the pass resets."
     actee:
-      - "You shrimp hard on the pinned side, create a sliver of space,\
+      - "You shrimp hard on the pinned side, create a little space,\
         \ and drag the knee through. Half guard becomes full guard."
       - "You hip-bump {actor} to break their weight and snake\
-        \ the second leg free. Full guard — you're back in the fight."
+        \ the second leg free. Full guard: you're back in the fight."
       - "You bridge and shrimp, working the trapped knee toward the\
         \ center until it clears {actor}'s thigh. Full guard\
         \ locks in."
@@ -712,22 +712,22 @@ reversals:
   # Bridge-and-roll: former controller tumbles forward into closed guard.
   mount_reverse:
     actor:
-      - "{actee} bridges and you tumble forward — they roll up\
+      - "{actee} bridges and you tumble forward. They roll up\
         \ between your legs and now you're in their guard."
       - "Your base evaporates. {actee} bucks you off and comes up\
-        \ between your legs — full guard."
+        \ between your legs: full guard."
       - "Hooks dig under your hips and lift; you cartwheel forward into their\
         \ guard."
     actee:
       - "You bridge hard, post on the temple, and roll {actor}\
-        \ between your legs — full guard, you're on top."
+        \ between your legs: full guard, you're on top."
       - "Hips up, frame on the chin, sweep the post. {actor}\
         \ tumbles forward into your guard."
-      - "You time the buck and lift the hooks — {actor} cartwheels\
+      - "You time the buck and lift the hooks. {actor} cartwheels\
         \ off you and lands in your closed guard."
     observer:
       - "{actee} bridges and rolls {actor} forward into a\
-        \ guard reversal — top and bottom flip."
+        \ guard reversal as top and bottom flip."
       - "{actee} times a buck and sweeps {actor} into\
         \ closed guard, reversing the mount."
       - "{actor} cartwheels off {actee}'s bridge and\
@@ -737,7 +737,7 @@ reversals:
   # Turn-in-and-pin: defender peels the hook, spins into attacker, mounts.
   background_reverse:
     actor:
-      - "You lose the hooks — {actee} peels your top hook and spins\
+      - "You lose the hooks. {actee} peels your top hook and spins\
         \ into you. They land in mount before you can recover."
       - "{actee} rolls toward your near hook. You can't readjust in\
         \ time and they end up sitting on your chest."
@@ -747,12 +747,12 @@ reversals:
       - "You peel the top hook, rotate hard into {actor}, and sit\
         \ on their chest in mount. Back mount is gone."
       - "You roll toward {actor}'s near side, drag the hook down,\
-        \ and come up on top — mount."
+        \ and come up on top in mount."
       - "You spin inside the seatbelt before {actor} can tighten\
         \ it. They go flat; you land in mount."
     observer:
       - "{actee} peels {actor}'s hook and spins inside,\
-        \ landing in mount — back mount reversed."
+        \ landing in mount: back mount reversed."
       - "{actee} rolls toward the near hook and comes up in mount\
         \ on {actor}."
       - "{actee} turns into {actor}'s seatbelt grip and\
@@ -764,11 +764,11 @@ reversals:
     actor:
       - "{actee} finds the leverage you missed. The position flips\
         \ and suddenly they're the one in control."
-      - "A scramble, a shift — and you're on the wrong end of the pin."
+      - "A scramble, a shift, and you're on the wrong end of the pin."
       - "You held it a half-second too long. {actee} reverses the\
         \ position and pins you down."
     actee:
-      - "You find the angle and force the reversal — {actor} is\
+      - "You find the angle and force the reversal. {actor} is\
         \ now the one pinned."
       - "You exploit the opening. The pressure reverses and you're on top,\
         \ in control."
@@ -777,36 +777,36 @@ reversals:
     observer:
       - "{actee} reverses the position on {actor},\
         \ claiming control."
-      - "{actee} exploits a gap and flips the pin — roles swap."
+      - "{actee} exploits a gap and flips the pin. Roles swap."
       - "{actor} held the position a moment too long;\
         \ {actee} reverses it."
 
 escapes:
   generic_escape:
     actor:
-      - "{actee} explodes free — they're back on their feet before you can grab again."
+      - "{actee} explodes free and they're back on their feet before you can grab again."
       - "Your grip fails. {actee} scrambles up and out of reach."
-      - "{actee} kicks off you and pops to their feet — the grapple breaks."
+      - "{actee} kicks off you and pops to their feet. The grapple breaks."
     actee:
-      - "You explode through the gap and scramble to your feet — free of {actor}'s grip at last."
-      - "A frame, a kick, a scramble. You're up — {actor}'s grip is broken."
-      - "You create the frame, kick {actor} away, and scramble to your feet — free."
+      - "You explode through the gap and scramble to your feet, free of {actor}'s grip at last."
+      - "A frame, a kick, a scramble. You're up and {actor}'s grip is broken."
+      - "You create the frame, kick {actor} away, and scramble to your feet, free."
     observer:
       - "{actee} explodes free of {actor} and scrambles back to their feet."
-      - "{actor}'s grip fails — {actee} scrambles up and out of reach."
+      - "{actor}'s grip fails and {actee} scrambles up and out of reach."
       - "{actee} kicks {actor} off and the grapple breaks; both stand."
 holds:
   clinch_hold:
     actor:
-      - "You and {actee} grind in the clinch — wrist fights and head-position grunts."
+      - "You and {actee} grind in the clinch with wrist fights and head-position grunts."
       - "Hand-fighting in the pocket. Neither of you gives an inch."
-      - "Shoulders pressed together, breath ragged — you wrestle for the underhook."
+      - "Shoulders pressed together, breath ragged, you wrestle for the underhook."
     actee:
-      - "You and {actor} grind in the clinch — wrists battle for control."
+      - "You and {actor} grind in the clinch as your wrists battle for control."
       - "Your shoulders crash together. Neither side breaks position."
       - "Breath rasps against {actor}'s neck. The clinch holds."
     observer:
-      - "{actor} and {actee} grind in the clinch — neither giving ground."
+      - "{actor} and {actee} grind in the clinch, neither giving ground."
       - "{actor} and {actee} fight hands and head position."
       - "Shoulders crash together; the clinch holds."
   ground_hold_generic:
@@ -824,11 +824,11 @@ holds:
       - "{actee} squirms; {actor} stays heavy."
   guard_hold:
     actor:
-      - "You break {actee}'s posture down with your legs — they grind for an opening."
+      - "You break {actee}'s posture down with your legs and they grind for an opening."
       - "Your hips frame {actee}'s; the guard stays closed."
       - "You snap {actee}'s head down with high guard, smothering their base."
     actee:
-      - "{actor}'s legs pry and snap — you can't post your base."
+      - "{actor}'s legs pry and snap. You can't post your base."
       - "Your knees frame in vain. {actor}'s guard holds."
       - "{actor} drags your head down with high guard; you smother."
     observer:
@@ -839,7 +839,7 @@ holds:
     actor:
       - "{actee} curls tighter. You hand-fight for an opening to the back."
       - "You ride the shoulder, looking for the seatbelt. {actee} stays balled up."
-      - "Knees driven in tight — {actee} can't expand from the turtle."
+      - "Knees driven in tight, {actee} can't expand from the turtle."
     actee:
       - "You curl tighter. {actor} pulls at your wrists."
       - "{actor} rides your shoulder, hunting hooks. You stay balled up."
@@ -851,41 +851,41 @@ holds:
   backstanding_hold:
     actor:
       - "You stay glued to {actee}'s back, hands fighting for the over-under."
-      - "Hooks aren't there yet — you ride the standing back-clinch and wait."
+      - "Hooks aren't there yet, so you ride the standing back-clinch and wait."
       - "{actee} hand-fights your wrists; you stay stuck to their spine."
     actee:
       - "{actor} stays glued to your back. You hand-fight the over-under."
-      - "You feel them hunting hooks — you grip and shake to keep them off your hips."
+      - "You feel them hunting hooks, so you grip and shake to keep them off your hips."
       - "{actor}'s chest rides your spine. You can't peel them off."
     observer:
       - "{actor} stays glued to {actee}'s back, hand-fighting."
       - "{actor} hunts hooks against {actee}'s hips; {actee} blocks."
-      - "{actee} shakes against {actor}'s back-clinch — neither gives."
+      - "{actee} shakes against {actor}'s back-clinch, neither gives."
 
 striking_apex:
   mount_strike_flavor:
     - "You ride high in mount and rain elbows down."
-    - "You ride high mount, knees driving into {actee}'s biceps — their arms can't lift to defend."
+    - "You ride high mount, knees driving into {actee}'s biceps, and their arms can't lift to defend."
     - "{actee} bridges weakly under you; you posture up and drive hammerfists into their guard."
     - "Sweat and copper. You ride the mount and drop knuckles like pistons."
     - "Their arms tire from defending their face. You sit heavy and let the strikes through."
-    - "You shift your weight onto {actee}'s sternum and unload — short, vicious elbows from the top."
-    - "Cross-face pinning their jaw, free hand cocked back — you punish from full mount."
+    - "You shift your weight onto {actee}'s sternum and unload short, vicious elbows from the top."
+    - "Cross-face pinning their jaw, free hand cocked back, you punish from full mount."
 
 gradients:
   # upper_boundary_down: Controlling → Neutral (your dominance is slipping)
   upper_boundary_down:
     actor:
-      - "Your control slips — {actee} squirms free of the lock\
+      - "Your control slips and {actee} squirms free of the lock\
         \ you had."
       - "You feel your grip loosen; {actee}'s frantic movements\
         \ pry leverage back from you."
-      - "The dominant position shifts under you — you're no longer in\
+      - "The dominant position shifts under you and you're no longer in\
         \ control of this exchange."
     actee:
       - "{actor}'s dominance slips. You feel space opening where\
         \ there was none."
-      - "{actor} can't hold the pressure — your bridges and\
+      - "{actor} can't hold the pressure and your bridges and\
         \ frames are working."
       - "The lock {actor} had on you starts to give. You're\
         \ scrambling back to even."
@@ -894,26 +894,26 @@ gradients:
         \ the exchange evens out."
       - "{actee} squirms and frames; {actor}'s dominance\
         \ slips."
-      - "The pressure {actor} had on {actee} fades —\
-        \ neutral footing returns."
+      - "The pressure {actor} had on {actee} fades and\
+        \ even ground returns."
 
   # upper_boundary_up: Neutral → Controlling (you're asserting dominance)
   upper_boundary_up:
     actor:
-      - "You feel the position click — your weight settles right and you\
+      - "You feel the position click: your weight settles right and you\
         \ assert full control."
       - "Your leverage finally takes; you're now in the dominant position."
-      - "A surge of pressure and you've got it — you're the controlling\
+      - "A surge of pressure and you've got it. You're the controlling\
         \ side now."
     actee:
       - "{actor} settles their weight and the position locks\
-        \ against you — they're in control."
+        \ against you and they're in control."
       - "You feel {actor} establish the dominant grip. The fight\
         \ tightens."
       - "{actor} times the pressure right and asserts control\
         \ over you."
     observer:
-      - "{actor} establishes dominance over {actee} —\
+      - "{actor} establishes dominance over {actee} and\
         \ control settles in their favor."
       - "{actor}'s pressure finally takes; they assume the\
         \ controlling position."
@@ -922,11 +922,11 @@ gradients:
   # lower_boundary_down: Neutral → Controlled (you're being overwhelmed)
   lower_boundary_down:
     actor:
-      - "Pressure crashes down — {actor} smothers your movement\
+      - "Pressure crashes down and {actor} smothers your movement\
         \ and you're fully controlled."
       - "Your space evaporates. {actor}'s weight settles heavy\
         \ and you can't generate leverage."
-      - "The position turns on you — {actor} establishes full\
+      - "The position turns on you and {actor} establishes full\
         \ control and you're stuck."
     actee:
       - "Your pressure drives through; {actee} can't resist and\
@@ -937,31 +937,31 @@ gradients:
         \ the exchange now."
     observer:
       - "{actor} drives pressure home and {actee} can\
-        \ no longer resist — full control established."
+        \ no longer resist: full control established."
       - "{actee}'s leverage gives way; {actor} settles\
         \ into dominant control."
-      - "{actor} locks {actee} down — the position is\
+      - "{actor} locks {actee} down and the position is\
         \ fully controlled now."
 
   # lower_boundary_up: Controlled → Neutral (you create space)
   lower_boundary_up:
     actor:
-      - "You create space — a bridge and a hip-escape breaks\
+      - "You create space: a bridge and a hip-escape breaks\
         \ {actor}'s weight off you."
       - "Your frame catches and you wrench free of the worst of the\
         \ pressure. Breathing room."
       - "You scramble back to a fighting position; {actor} no\
         \ longer has you fully pinned."
     actee:
-      - "{actee} bridges and creates space — your dominant\
+      - "{actee} bridges and creates space and your dominant\
         \ control slips into a scramble."
-      - "{actee}'s frame disrupts your control — the pin\
+      - "{actee}'s frame disrupts your control and the pin\
         \ starts to break."
-      - "You feel {actee} earn back leverage — they're no longer\
+      - "You feel {actee} earn back leverage and they're no longer\
         \ fully pinned."
     observer:
       - "{actee} bridges and scrambles back from\
-        \ {actor}'s control — the position evens out."
+        \ {actor}'s control and the position evens out."
       - "{actee} earns space against {actor}; the pin\
         \ breaks back to neutral."
       - "{actor}'s control on {actee} fails;\

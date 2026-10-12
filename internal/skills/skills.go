@@ -51,13 +51,13 @@ const (
 // foraging (the `forage` command) trains Search, so Search's blurb says so —
 // players who forage were confused that there was no separate "foraging" skill.
 var skillBlurbs = map[SkillTag]string{
-	WeaponCombat:  "Melee with weapons -- attack and defense.",
+	WeaponCombat:  "Melee with weapons: attack and defense.",
 	UnarmedCombat: "Fists, grappling, and unarmed defense.",
 	RangedCombat:  "Bows, crossbows, and firearms (aimed with Perception).",
 	Spellcasting:  "All magic, offense and defense.",
-	Rhetoric:      "Conviction attacks -- taunt and demoralize.",
+	Rhetoric:      "Conviction attacks: taunt and demoralize.",
 	Skullduggery:  "Sneaking, stealing, lockpicking, and ambush.",
-	Search:        "Finding hidden things -- and foraging the wild for resources.",
+	Search:        "Finding hidden things, and foraging the wild for resources.",
 	Bartering:     "Better prices and appraisal when you trade.",
 	Blacksmithing: "Forging metal weapons, armor, and tools.",
 	Alchemy:       "Brewing potions, salves, and medicines.",

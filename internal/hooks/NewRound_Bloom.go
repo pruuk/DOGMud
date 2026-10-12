@@ -94,7 +94,7 @@ func BloomTick(e events.Event) events.ListenerReturn {
 					c.RemoveCondition(92)
 					user.SendText(messaging.CategoryWarning,
 						`The craving has finally loosened its grip. You feel `+
-							`clean — or as close to it as you're likely to get.`)
+							`clean, or as close to it as you're likely to get.`)
 				}
 			}
 		}
