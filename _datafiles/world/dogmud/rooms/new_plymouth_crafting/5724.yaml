@@ -5,12 +5,12 @@ description: >
   A paved transit yard between the Long Market and the
   tannery district, used for staging and hand-off.
   Several <ansi fg="itemname">hand-carts</ansi> along the east
-  wall wait without ownership — three of them, communal
+  wall wait without ownership, three of them, communal
   by long practice, in varying states of repair,
   available to whoever needs one and accountable to
   no one. Near the north entrance, a <ansi fg="itemname">tally-post</ansi>
-  of painted timber carries this morning's chalk marks
-  — consignment lines, delivery windows, quantities —
+  of painted timber carries this morning's chalk marks:
+  consignment lines, delivery windows, quantities,
   in several different hands written over the remains
   of yesterday's entries, the chalk never fully cleaning.
   The yard stone is stained from years of wet goods
@@ -30,8 +30,8 @@ exits:
     roomid: 5704
 nouns:
   hand carts: Three hand-carts in various states of
-    use, parked without precision along the east wall
-    — a large two-wheel freight cart, a smaller single-
+    use, parked without precision along the east wall,
+    including a large two-wheel freight cart, a smaller single-
     barrow with a rope handle, and a flat four-wheel
     trolley with a broken front pin jammed back in
     and held with wire. All three belong to anyone
@@ -42,8 +42,8 @@ nouns:
     who needed it today and had no time for more.
   tally post: A timber post of painted pine set in a
     mortar block, standing about chest height. The chalk
-    marks are today's — consignment references, weight
-    estimates, recipient names and delivery windows —
+    marks are today's, with consignment references, weight
+    estimates, recipient names and delivery windows
     in three different hands. The morning's marks sit
     over yesterday's partial erasures; old chalk does
     not come off cleanly and leaves a grey underlayer
@@ -52,14 +52,14 @@ nouns:
     erasure-layer is about that old.
 idlemessages:
 - The hand-carts along the east wall are empty and
-  unattended — between loads, or waiting for someone.
+  unattended, between loads, or waiting for someone.
 - The tally-post carries new chalk marks from this
   morning, still sharp against the grey underlayer.
 - The tannery's smell comes down from the north
-  entrance on any drift of air — rich and present.
+  entrance on any drift of air, rich and present.
 - Someone crosses the yard heading south, a folded
   freight note under one arm, without pausing.
 - The yard stone underfoot is stained by years of
-  wet goods set down here — hides, barrels, produce.
+  wet goods set down here, such as hides, barrels, produce.
 x: -6
 y: -84

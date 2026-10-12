@@ -10,8 +10,8 @@ description: >
   ahead, the canal smell gives way to sawdust and linseed
   oil and the bright, clean edge of worked metal. A painted
   <ansi fg="itemname">ward-post</ansi> stands at the
-  landing's north edge — rust-red and amber, the Crafting
-  Quarter's colours — marking where the Docks jurisdiction
+  landing's north edge, rust-red and amber, the Crafting
+  Quarter's colours, marking where the Docks jurisdiction
   ends and the guild streets begin. The lane opens north
   into the district proper.
 biome: city_thoroughfare
@@ -32,15 +32,15 @@ nouns:
     a guarantee, and worn to a pale smooth finish from the
     hands of workers crossing every day. On the south pier,
     someone has scratched the outline of a barge into the
-    stone — rough, unhurried, old enough that the edges
-    have weathered soft.
+    stone. It is rough and unhurried, old enough that the
+    edges have weathered soft.
   ward post: A squat wooden post painted in the Crafting
     Quarter's rust-red and amber, standing at the exact
     line where the Docks end. A carved hand points north;
     below it a smaller inscription names the guilds'
     maintenance claim on all streets from this post
     forward. At the base, someone has left a dried bundle
-    of herbs — between custom and coincidence — long enough
+    of herbs, between custom and coincidence, long enough
     ago that the color is mostly gone.
 idlemessages:
 - A worker crosses the bridge behind you with bundled stock

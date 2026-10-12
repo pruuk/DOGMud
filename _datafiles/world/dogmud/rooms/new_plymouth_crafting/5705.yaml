@@ -5,7 +5,7 @@ description: >
   A quieter lane turns north from the Long Market's
   crossing, where the trade in ink and paper settled long
   enough ago that the name stuck. The noise of the market
-  drops away within a few steps — what reaches you here
+  drops away within a few steps. What reaches you here
   is the shuffle of pages, the smell of lamp-black ink
   and sizing, and the occasional murmur of someone
   reading aloud to verify a purchase. Low <ansi fg="itemname">stall-awnings</ansi>
@@ -33,8 +33,8 @@ exits:
     roomid: 5722
 nouns:
   stall awnings: A run of narrow canvas panels mounted
-    on wooden arms along the west side of the lane —
-    an older style than the market's rope-hung awnings,
+    on wooden arms along the west side of the lane. They
+    are an older style than the market's rope-hung awnings,
     and faded to the particular brown of canvas left out
     in weather for a decade or more. Under each, a
     different trade in text and image. A paper-seller.
@@ -46,17 +46,17 @@ nouns:
     the street surface to either side. It was laid,
     according to a faded notice at the south end, for
     drainage from the ink-works that once occupied the
-    lane's full length. The works are gone — replaced
-    by individual stalls — but the channel remains,
+    lane's full length. The works are gone, replaced
+    by individual stalls, but the channel remains,
     dry now and serving as a visual seam down the middle
     of the Inkwalk. After heavy rain, someone says,
     it runs black.
 idlemessages:
-- The lane is quieter than the Long Market — voices
+- The lane is quieter than the Long Market. Voices
   here are kept moderate, which here passes for silence.
 - A customer emerges from under one of the stall awnings
   with a wrapped parcel and holds it as if it matters.
-- The smell of fresh ink is stronger today — someone is
+- The smell of fresh ink is stronger today. Someone is
   running a press somewhere close by.
 - A loose page skips down the center channel in a small
   gust and catches against a step.

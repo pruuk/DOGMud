@@ -1,9 +1,9 @@
 roomid: 5702
 zone: New Plymouth Crafting
-title: The Long Market — the Crossing
+title: The Long Market, the Crossing
 description: >
   The Long Market's main thoroughfare meets the Inkwalk
-  lane here, and the intersection is busy with it — hand-
+  lane here, and the intersection is busy with it: hand-
   carts loaded with incoming goods threading between foot-
   traffic, the air carrying both the market's working smell
   and a quieter drift of ink from the north. A painted
@@ -30,7 +30,7 @@ exits:
     roomid: 5705
 nouns:
   direction board: A painted board on an iron post, cut
-    into four compass arms — the Long Market east and west,
+    into four compass arms, the Long Market east and west,
     the Inkwalk north, the bridge approach south. The
     lettering has been touched up recently; older paint
     shows through at the edges in a darker, more worn
@@ -38,8 +38,8 @@ nouns:
     height where hands have steadied themselves, perhaps
     while reading, perhaps simply while waiting in the
     press of foot-traffic.
-  crossing stones: The paving here is a mosaic of repairs
-    — original stone, then darker replacement stone, then
+  crossing stones: The paving here is a mosaic of repairs,
+    original stone, then darker replacement stone, then
     lighter stone again, a column of maintenance decisions.
     The heaviest wear is in a rough circle around the
     direction-board post, where foot-traffic pivots and

@@ -1,8 +1,8 @@
 roomid: 5704
 zone: New Plymouth Crafting
-title: The Long Market — East End
+title: The Long Market, East End
 description: >
-  The Long Market's eastern end is quieter — the last of
+  The Long Market's eastern end is quieter. The last of
   the open stalls taper to a blank wall and a wider
   junction where the road continues toward the Central
   Square and the Merchant Quarter beyond, though that
@@ -31,14 +31,14 @@ nouns:
   lamp post: An iron post topped with an oil-lantern
     housing, the arm angled to throw light onto the
     junction. The lantern glass is clean, the wick
-    trimmed — someone maintains it with attention. The
+    trimmed. Someone maintains it with attention. The
     post's base was recently re-set in fresh mortar
     after paving work; the mortar has not yet taken the
     weathered grey of the surrounding stone. At night
     this lamp marks the point where the Crafting Quarter
     ends.
   paste residue: The wall carries an uneven skin of
-    broadsheet layers — notice over notice, some still
+    broadsheet layers, notice over notice, some still
     legible and some reduced to papery substrate. Guild
     announcements, a militia call from two seasons back,
     a tanner's advertisement repeated so often it has
@@ -49,7 +49,7 @@ nouns:
     work on the street. Someone was warning of something.
 idlemessages:
 - The junction at the east end is quieter than the stall-
-  stretch — foot-traffic crosses rather than lingering.
+  stretch. Foot-traffic crosses rather than lingering.
 - A broadsheet has come loose from the wall and skitters
   a few feet in a gust before catching on a boot-scraper.
 - The lamp-post's housing rattles faintly in the wind,

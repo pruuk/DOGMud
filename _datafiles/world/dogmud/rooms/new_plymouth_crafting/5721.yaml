@@ -6,14 +6,14 @@ description: >
   descending stair-head, the opening filled floor to
   ceiling with planks. The <ansi fg="itemname">boarding</ansi>
   is heavy and cross-hatched, each layer of planks
-  spiked in hard — the boards have been added to over
+  spiked in hard. The boards have been added to over
   time rather than replaced, as if each round of nails
   was someone's answer to a question the previous round
   had not settled. A <ansi fg="itemname">chalk-notice</ansi>
   chalked onto the topmost plank is old enough to have
   been renewed at least once. Below the boarding, a
   stair descends to a passage that once ran beneath
-  the waterline into the Old Quarter — sealed from this
+  the waterline into the Old Quarter. It was sealed from this
   side when the cellar took water and the way became
   more trouble than it was worth. The chalk says not
   to go down.
@@ -27,7 +27,7 @@ exits:
     roomid: 5720
 nouns:
   boarding: Heavy planks nailed across the stair-head
-    in overlapping layers — the first was a single
+    in overlapping layers. The first was a single
     board with a simple notice, then more boards were
     added, then the nails doubled, then a cross-plank
     laid over the top. The work has accumulated over
@@ -38,14 +38,14 @@ nouns:
     not neglect but intention.
   chalk notice: Chalked onto the topmost plank in a
     hand that is not large and not small. The chalk
-    has been renewed at some point — the original
+    has been renewed at some point, and the original
     lettering is still visible underneath, slightly
     different in form. The message is the same in both
     versions. A faint cold rises through the cracks
     in the boards below it, which gives the notice
     a kind of authority.
 idlemessages:
-- From below the boarding — the particular silence of
+- From below the boarding, the particular silence of
   closed water. A faint cold rises through the cracks.
 - The chalk notice was renewed at some point. The
   earlier lettering is still visible underneath.

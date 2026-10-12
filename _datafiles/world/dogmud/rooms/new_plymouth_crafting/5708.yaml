@@ -6,10 +6,10 @@ description: >
   whose boards have been nailed across the windows and
   door with the thoroughness of someone who does not
   intend to return. Above the boards a painted <ansi fg="itemname">old-sign</ansi>
-  still identifies the premises — a cartographer's compass-
+  still identifies the premises: a cartographer's compass-
   rose mark and a name, faded but legible. Through a gap
   where one board has warped from its nail, a dim interior
-  is just visible — a <ansi fg="itemname">display-case</ansi>
+  is just visible. A <ansi fg="itemname">display-case</ansi>
   stands against the far wall, holding a row of pale
   objects that do not look like maps. The street here is
   quiet in a particular way, as if foot-traffic has learned
@@ -24,23 +24,23 @@ exits:
     roomid: 5705
 nouns:
   old sign: A painted board above the boarded door, its
-    colors bleached by weather but the forms still clear
-    — a compass rose with eight points, rendered with a
+    colors bleached by weather but the forms still clear.
+    It shows a compass rose with eight points, rendered with a
     cartographer's precision, and below it in heavy
     lettering the name "Edvar" and a subtitle that time
     has reduced to the word "Surveys" and some other
     letters that are no longer letters. The compass rose
     carries a mark in its northwest quadrant that is not
-    standard — a small symbol, possibly a glyph, possibly
+    standard, a small symbol, possibly a glyph, possibly
     a maker's mark, possibly neither. The sign has been
     here long enough to belong to the building, which is
     not comforting.
-  display case: Visible through the gap in the boards —
+  display case: Visible through the gap in the boards,
     a glass-topped display case standing against the back
     wall of the dim interior, its contents arranged in a
     row with a care that does not look like accident.
     Seven objects, each roughly palm-sized, pale in the
-    bad light — the texture looks like stone, but the
+    bad light. The texture looks like stone, but the
     edges are too regular for natural stone, and the
     surface of each carries markings that might be
     scratched or might be carved. From here it is

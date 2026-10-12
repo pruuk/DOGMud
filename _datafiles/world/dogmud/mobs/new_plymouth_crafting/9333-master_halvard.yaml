@@ -21,19 +21,19 @@ idlecommands:
   - 'emote lifts a finished bar from the rack with bare fingers, sights
     along its length, sets it down, and picks up the hammer again.'
   - ''
-  - 'emote lays a palm briefly against the forge mouth — not a test,
-    just a habit — and adjusts the bellows without stepping back.'
+  - 'emote lays a palm briefly against the forge mouth, not a test,
+    just a habit, and adjusts the bellows without stepping back.'
 activitylevel: 10
 character:
   name: Master Halvard
   description: |
     Master Halvard runs the Forge Yard with the unhurried certainty of
     a man who learned the fire young and never decided to fear it. He
-    is broad in the way that only decades at the hammer produce — wide
+    is broad in the way that only decades at the hammer produce: wide
     at the shoulder, deliberate in movement, scarred across both
     forearms with burns that no longer teach him anything. His
     Chrysalis-change is the kind a blacksmith might have designed if
-    given the chance — his skin will not scorch. He reads the heat of
+    given the chance: his skin will not scorch. He reads the heat of
     iron with bare hands, holds the work in the flame longer than any
     tong-dependent smith would risk, and the fire finds nothing to take.
     He calls it an efficiency. His sister Marda, who brings him a pot

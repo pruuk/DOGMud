@@ -16,7 +16,7 @@ idlecommands:
     considers it, and resigns herself to carrying it through the day.'
   - ''
   - 'emote holds a flask up to the window light, examines it for
-    residue, and sets it aside — the glass is not yet clean enough.'
+    residue, and sets it aside. The glass is not yet clean enough.'
 activitylevel: 8
 character:
   name: A Lab Assistant

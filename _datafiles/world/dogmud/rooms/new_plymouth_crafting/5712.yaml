@@ -3,14 +3,14 @@ zone: New Plymouth Crafting
 title: Above the Lab
 description: >
   The room above the alchemist's lab carries the smell
-  of the work below — chemical traces filter up through
+  of the work below. Chemical traces filter up through
   the floorboards and have been absorbed by every
   surface. A <ansi fg="itemname">reading-table</ansi>
   in the north corner holds a lamp, a ledger open to
   a recent entry, and a tray of paper references in a
   hand that does not waste space on the page. The south
-  window is cracked at the top — a permanent arrangement,
-  apparently, to manage the air — and has faded at the
+  window is cracked at the top, a permanent arrangement,
+  apparently, to manage the air, and has faded at the
   upper sash differently from the lower where it never
   fully closes. A <ansi fg="itemname">shelf-by-the-bed</ansi>
   holds a small collection of sealed glass vessels,
@@ -30,7 +30,7 @@ nouns:
   reading table: A small table against the north wall
     below the window, its surface covered with pages
     and a working notebook. The handwriting in the
-    notebook is compressed and regular — someone
+    notebook is compressed and regular, like someone
     transcribing quickly without sacrificing precision.
     Annotations have been added in a different pen,
     and those annotations have their own annotations.
@@ -48,16 +48,16 @@ nouns:
     shelf is old. The vessels are not. They have been
     moved here from somewhere more formal.
 idlemessages:
-- The chemical smell from below is faint but constant
-  — it has settled into the grain of everything here.
+- The chemical smell from below is faint but constant.
+  It has settled into the grain of everything here.
 - The window sash, cracked at the top, lets in a thin
   line of outside air that does not reach the bed.
 - Light from the north window falls on the open
   notebook at a working angle.
 - The floorboards carry the faint vibration of work
   at the bench in the lab below.
-- The room is arranged by use rather than appearance
-  — what is needed is within reach; the rest is not.
+- The room is arranged by use rather than appearance.
+  What is needed is within reach; the rest is not.
 x: -10
 y: -85
 z: 1

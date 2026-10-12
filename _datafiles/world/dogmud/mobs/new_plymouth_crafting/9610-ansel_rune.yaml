@@ -26,7 +26,7 @@ character:
     reads a face, and it tells me just as much. My coat carries
     more scorch marks than I would like to admit, mostly from
     workings that went slightly wrong before I understood why.
-    I do not talk while I am binding a sigil -- a wandering
+    I do not talk while I am binding a sigil. A wandering
     thought at the wrong moment ruins good material and I have
     ruined enough of it already to know better. Ask me for
     something specific and I will tell you exactly what it
@@ -46,7 +46,7 @@ character:
     charisma:
       base: 90
   shop:
-    # Thornwall chrysalis (in-shop crafted) — Rune's specialty
+    # Thornwall chrysalis (in-shop crafted), Rune's specialty
     - itemid: 40010    # Chrysalis Core
       quantity: 0
       quantitymax: 0
@@ -71,12 +71,12 @@ character:
       quantity: 0
       quantitymax: 0
       price: 30
-    # Fernway forest (caravan-fed) — oak bark for ward inscriptions
+    # Fernway forest (caravan-fed), oak bark for ward inscriptions
     - itemid: 40062    # oak bark
       quantity: 0
       quantitymax: 0
       price: 35
-    # Stillwater unique (caravan-fed from Kess) — pearl for high-tier enchants
+    # Stillwater unique (caravan-fed from Kess), pearl for high-tier enchants
     - itemid: 40053    # Stillwater black pearl
       quantity: 0
       quantitymax: 0

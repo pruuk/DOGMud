@@ -5,7 +5,7 @@ description: >
   The hall behind the glassworks was built for expansion
   and never fully put to use. A second furnace stands
   cold against the north wall, its draw-port closed
-  with a ceramic stopper — the structure is sound,
+  with a ceramic stopper. The structure is sound,
   only unlit. The <ansi fg="itemname">annealing-oven</ansi>
   at the east end of the same wall is still in service,
   its door standing open, a row of ceramic cooling
@@ -13,7 +13,7 @@ description: >
   a recently removed piece still warm on them. Along
   the south wall, the <ansi fg="itemname">cooling-bench</ansi>
   of heavy soapstone runs the room's full length, its
-  surface a record of every piece set down hot here —
+  surface a record of every piece set down hot here,
   ring upon overlapping ring. The new brickwork of the
   expansion is visible in the east wall and the ceiling
   is a handspan lower than the kiln-room next door,
@@ -32,14 +32,14 @@ nouns:
     with a simple latch. The interior is lined with
     ceramic fiber and carries a rack of shallow pads
     for setting finished pieces during the anneal
-    cycle — each pad sized for different work. The
+    cycle, each pad sized for different work. The
     oven has been used recently; the pads inside still
     carry the ghost-heat of a piece removed not long
     ago. The iron door's latch has been repaired with
     different-grade iron; the join shows in the color.
   cooling bench: The long soapstone surface of the
     south wall has been in service since before the
-    expansion — the older western half carries more
+    expansion. The older western half carries more
     accumulated work than the newer eastern end. Rings
     from cooling pieces form an overlapping record,
     each one marking the exact diameter of a piece
@@ -58,8 +58,8 @@ idlemessages:
   edge near the cooling bench and left there.
 - The kiln-room's heat filters through the west wall
   and keeps the air here warm even with the fire down.
-- The ceiling is lower here than in the kiln-room —
-  the change is abrupt enough that you notice.
+- The ceiling is lower here than in the kiln-room.
+  The change is abrupt enough that you notice.
 spawninfo:
   - mobid: 9343
     respawnrate: "10 real minutes"
