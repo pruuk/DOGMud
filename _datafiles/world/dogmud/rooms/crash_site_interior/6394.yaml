@@ -5,7 +5,7 @@ biome: interior
 description: >
   Past the ranked approach the grey closes to a single narrow room, and
   the noise of the place stops at the door of it as though cut. There are
-  no recesses here and no keepers — nothing waits in this room but the
+  no recesses here and no keepers. Nothing waits in this room but the
   room itself, kept clean and shut and reverent, a held breath worked
   into the very walls. The cold light stands unbroken. The old hum, which
   has run under everything since the breach, falls here almost to
@@ -23,7 +23,7 @@ exits:
 nouns:
   hush: >
     Not the mere absence of sound but a made stillness, kept in this room
-    the way the lower halls keep their keepers — deliberate, guarded,
+    the way the lower halls keep their keepers: deliberate, guarded,
     reverent. It is the quiet that sits at the threshold of something the
     makers set above everything else, and it draws your breath shallow
     without your leave.

@@ -5,12 +5,12 @@ biome: interior
 description: >
   East off the command approach a lower way runs out where the cold light
   does not follow, and a few steps in the dark closes over you complete.
-  This is a hall the place let fall — the grey here is buckled and split,
+  This is a hall the place let fall: the grey here is buckled and split,
   the seams torn wide and weeping the same bright stinging discharge as
   the approach behind, so that the only light is that hurt flicker snapping
   along the broken walls, and the air prickles and stings with every
   breath. Something lives in the fall. It does not keep, the way the
-  wardens keep — it drifts the dark places the light abandoned, grown
+  wardens keep. It drifts the dark places the light abandoned, grown
   strange and patient in the long black, and it comes toward the sound of
   you without hurry and without any purpose you could name but the meeting.
   There is nothing kept down here and nothing worth the keeping, only the
@@ -22,13 +22,13 @@ exits:
 nouns:
   discharge: >
     The torn seams down here weep the same bright stinging light as the
-    approach, worse for the dark around it — a hurt flicker snapping along
+    approach, worse for the dark around it: a hurt flicker snapping along
     the broken grey, the only light in the hall, and a hurt in the air that
     prickles and stings with every breath drawn under it. It grows no
     kinder the longer you stay.
   drifter: >
     A thing grown strange in the long black, drifting the dark the light
-    gave up on — no keeper, with no post and no charge, only a patient
+    gave up on: no keeper, with no post and no charge, only a patient
     wrongness that has learned this fallen hall the way water learns a low
     place. It comes toward the sound of you unhurried, wanting nothing you
     could name but the meeting, and it is between you and nothing worth

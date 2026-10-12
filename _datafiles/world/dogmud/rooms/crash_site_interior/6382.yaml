@@ -5,7 +5,7 @@ biome: interior
 description: >
   The shaft lets you out onto a wide landing where the grey has come
   down in the world. The seamless perfection of the corridors above does
-  not hold here — the floor is canted, buckled along a slow ridge as
+  not hold here: the floor is canted, buckled along a slow ridge as
   though the whole deck below had settled and never risen, and the cold
   light comes uneven now, pooling and thinning across the tilt. Ways run
   off it in three directions: back up the shaft, north into a corridor
@@ -23,14 +23,14 @@ exits:
 nouns:
   landing: >
     A wide platform where the shaft delivers you, worked once flat and
-    now gone slightly wrong — canted along a ridge where the deck settled
+    now gone slightly wrong: canted along a ridge where the deck settled
     under a weight or a wound long ago. The cold light lies uneven across
     it, and the ways off it lead only deeper. Nothing here climbs back
     toward the light of its own accord.
   ridge: >
     A slow buckle in the floor where the grey gave and set again, running
     the width of the landing. It is the first honest damage you have seen
-    in the place — proof that even a made thing made to last forever can
+    in the place, proof that even a made thing made to last forever can
     be moved, if the thing that moves it is large enough.
 idlemessages:
 - The cold light pools in the low side of the tilt and thins across the ridge.

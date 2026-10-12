@@ -4,7 +4,7 @@ title: The Grey Corridor
 biome: interior
 description: >
   The corridor runs on, seamless and curving, the same cold light lying
-  even along its length. There are shapes set into the walls — recesses,
+  even along its length. There are shapes set into the walls: recesses,
   sealed panels, a shallow alcove where the grey has been worked into a
   face of small even marks that mean nothing to you and were plainly
   meant to mean something to someone. Everything is intact. Everything is
@@ -18,7 +18,7 @@ exits:
 nouns:
   alcove: >
     A shallow set-in place in the grey wall, its back worked into rows of
-    small even marks — a language, or a reckoning, or a record. You cannot
+    small even marks: a language, or a reckoning, or a record. You cannot
     read it. It has waited a very long time for someone who can.
 idlemessages:
 - The cold light runs even along the seamless grey and does not change.

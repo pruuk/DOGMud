@@ -4,7 +4,7 @@ title: The Command Deck
 biome: interior
 description: >
   Past the vault the grey opens into a broad low room that was plainly the
-  mind of the whole place — a deck ringed with worked stations, panels of
+  mind of the whole place: a deck ringed with worked stations, panels of
   dark glass set at a standing height, the cold light running clean and
   even here as though this room at least had never been let fall into
   ruin. Nothing keeps it now. The keepers are behind you, spent against
@@ -30,7 +30,7 @@ nouns:
     A ring of worked posts and dark-glass panels set at standing height
     around the deck, each plainly made for a watcher who is not here. They
     are cold and dark now, their purpose stopped, but their shape is the
-    shape of a place from which the whole made thing was steered — the
+    shape of a place from which the whole made thing was steered. The
     hands that stood here are ten thousand years gone, and the posts have
     kept their places since.
   deck: >
@@ -40,7 +40,7 @@ nouns:
     guarding done, and every deeper room opens off it, waiting.
   gallery: >
     West the grey gives onto a long room from which a light spills that is
-    not the steady cold glow — it moves, and it has colours in it, and it
+    not the steady cold glow. It moves, and it has colours in it, and it
     lays a stir of pale radiance across the deck floor toward your feet.
     Whatever is in there is lit as nothing else below is lit.
 idlemessages:

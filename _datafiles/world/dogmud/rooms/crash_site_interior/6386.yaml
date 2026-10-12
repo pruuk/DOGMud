@@ -4,14 +4,14 @@ title: Trapped Conduit
 biome: interior
 description: >
   A short branch off the wreck, and at the end of it the grey draws
-  together around a sealed way east — not collapsed, not ajar like the
+  together around a sealed way east: not collapsed, not ajar like the
   others, but shut deliberately, a fitted door worked flush into the wall
   and closed on whatever lies past it. It hums. Under the palm the grey
   around the seam carries a faint live thrum, and the fittings of the lock
   are threaded through with the same dead machinery that crawls the rest
   of the place, waiting behind the mechanism the way a held breath waits.
   Whatever is kept beyond was worth the keeping, once. The lock can be
-  worked by a knowing and careful hand — but a hand that slips will wake
+  worked by a knowing and careful hand. But a hand that slips will wake
   the charge coiled in the fittings, and the charge does not forgive. The
   way back west is open and safe. The way east is a wager.
 exits:
@@ -24,8 +24,8 @@ exits:
       trapconditionids: [97]
 nouns:
   door: >
-    A fitted way worked flush into the grey and shut deliberately —
-    unlike the collapsed and ajar ways elsewhere, this one was closed on
+    A fitted way worked flush into the grey and shut deliberately.
+    Unlike the collapsed and ajar ways elsewhere, this one was closed on
     purpose and has stayed closed. It hums faintly under the hand, live
     where nothing else here is live, and it does not mean to be opened by
     the careless.

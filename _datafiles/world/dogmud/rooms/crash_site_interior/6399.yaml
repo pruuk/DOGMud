@@ -4,13 +4,13 @@ title: The Signal Array
 biome: interior
 description: >
   North of the gallery the grey rises into a tall narrow room full of
-  reaching shapes — slender arms of the pale material folded up against
+  reaching shapes: slender arms of the pale material folded up against
   the ceiling, ranked dishes and fine bright filaments gathered toward a
   single seat at the room's heart, all of it aimed, or made to aim, at
   something far past the hull. This was the voice of the buried thing: the
   place from which it could call out and be heard across the patient dark,
   across the gulf the gallery showed you, all the way to whatever else is
-  out there. And there is something else out there. The array knows it —
+  out there. And there is something else out there. The array knows it:
   the one panel still faintly lit holds three steady marks high above the
   world, three points that keep their places in the wheeling dark far too
   well and too still to be stars, waiting, patient, near enough to call if
@@ -30,20 +30,20 @@ exits:
 nouns:
   array: >
     Ranked dishes and slender folded arms and fine bright filaments,
-    gathered toward one cold seat and aimed at something far past the hull
-    — the buried thing's voice, made to call across the dark to whatever
+    gathered toward one cold seat and aimed at something far past the hull:
+    the buried thing's voice, made to call across the dark to whatever
     shared it. It is broken now. The reach hangs folded, the filaments dark,
     and nothing you do wakes it; what would raise the voice is not here.
   panel: >
     The one face in the room still faintly lit, holding three steady marks
-    set high above the small turning world — three shapes waiting in the
+    set high above the small turning world: three shapes waiting in the
     wheeling dark, patient, near enough to be called if the call could be
     made. They are not stars. They hold their places too well for stars.
   marks: >
     Three steady points held high above the world on the lit panel, apart
     from the wheeling fires, keeping station in the dark where nothing
     ought to keep it. They do not drift and they do not wheel. They wait,
-    patient, the way this place waited — and the array was built to reach
+    patient, the way this place waited, and the array was built to reach
     them, though what they are it does not say. The array is broken. It
     could not tell you now even if it knew.
   seat: >
