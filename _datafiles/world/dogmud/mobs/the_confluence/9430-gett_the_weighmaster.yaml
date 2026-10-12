@@ -16,7 +16,7 @@ idlecommands:
   - ''
   - 'say Declared weight and actual weight are not the same thing
     nearly as often as they should be. Bring your cargo in before
-    the Weighhouse closes -- not after.'
+    the Weighhouse closes, not after.'
   - ''
   - 'emote levels a sealed crate onto the platform scale, adjusts
     it with a flat-handed tap to center the load, and watches the
@@ -34,7 +34,7 @@ character:
     of the city, and has filed thirty-seven formal disputes with the
     guild on behalf of the Weighhouse in six years of service. He
     mentions this number without pride or irritation, the way someone
-    mentions the height of a bridge -- it is simply a fact of the
+    mentions the height of a bridge: it is simply a fact of the
     structure. His Chrysalis-change is the appropriate one for his
     work: he has an internal sense of weight accurate to within a
     fraction of a standard measure. He still uses the certified

@@ -2,7 +2,7 @@ roomid: 6220
 zone: The Confluence
 title: The Margin Hall
 description: >
-  The Margin's meeting hall — the room where the
+  The Margin's meeting hall, the room where the
   community of scholars who study the old records
   convenes to argue about them. Survey copies and
   traced maps cover most of the wall space from floor
@@ -37,7 +37,7 @@ spawninfo:
 nouns:
   the maps: >
     The wall-covering of survey copies and traced maps
-    that constitutes the Margin's working record —
+    that constitutes the Margin's working record:
     sheets of varying age, quality, and scale, pinned
     wherever there is space and annotated in the
     margins by the scholars who have worked from them.
@@ -53,14 +53,14 @@ nouns:
     with old ink and shows the small scars of dividers
     and measuring tools used without proper backing.
     Near the east end, someone has carved a small
-    notation into the wood — a surveyor's shorthand,
-    or perhaps a coordinate — and then thought better
+    notation into the wood: a surveyor's shorthand,
+    or perhaps a coordinate, and then thought better
     of the impulse and left it anyway.
 idlemessages:
 - The senior scholar at the west end turns a page and
   pauses over something in the middle of it.
 - Lamplight falls differently across the pinned maps
   as someone shifts position at the table.
-- From the hall, a pause in all conversation — as if
+- From the hall, a pause in all conversation, as if
   a point has been conceded, or a new one found.
 y: 71

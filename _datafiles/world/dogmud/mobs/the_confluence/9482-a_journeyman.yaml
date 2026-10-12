@@ -13,7 +13,7 @@ idlecommands:
     under one arm, nods, and walks on with slightly
     more urgency than before.'
   - ''
-  - 'say Late -- sorry, not talking, late.'
+  - 'say Late, sorry, not talking, late.'
   - ''
   - 'emote slows just long enough to adjust the bundle
     under his arm, then picks up the pace again.'
@@ -24,8 +24,8 @@ character:
   description: |
     A Journeyman is always on his way somewhere specific
     and already somewhat late. He carries materials for
-    one of the Row's workshops -- which workshop varies
-    by the day -- and navigates the lane at the brisk
+    one of the Row's workshops (which workshop varies
+    by the day) and navigates the lane at the brisk
     trot of someone who has not yet been given permission
     to walk. He will be an expert craftsman in a few
     years if he survives the apprenticeship. Right now

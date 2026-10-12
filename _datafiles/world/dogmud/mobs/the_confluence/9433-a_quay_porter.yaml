@@ -13,20 +13,20 @@ idlecommands:
   - 'emote shoulders a sack from the freight stack, pivots on one
     heel, and carries it to the cargo platform at a brisk walk.'
   - ''
-  - 'say Making way -- freight coming through, clear the walkway.'
+  - 'say Making way! Freight coming through, clear the walkway.'
   - ''
   - 'emote sets a crate down by the market bell-post, straightens up,
     and checks the freight stack with a practiced eye before reaching
     for the next load.'
   - ''
   - 'say River-cloth off the Aldren! Market stall at the center
-    cross -- get it fresh!'
+    cross, get it fresh!'
   - ''
 activitylevel: 10
 character:
   name: A Quay Porter
   description: |
-    A porter works the Long Quay freight runs -- loading, off-
+    A porter works the Long Quay freight runs: loading, off-
     loading, shifting cargo between the wharf and the Weighhouse,
     and filling in wherever a piece of freight needs to move from
     where it is to where it needs to be. This one has the build

@@ -17,8 +17,8 @@ idlecommands:
   - 'say If you need a candle for a prayer, take one. They are
     not for sale. They are for the purpose.'
   - ''
-  - 'emote writes in the daily ledger -- stock, distributions,
-    names of those who came to the window this morning -- then
+  - 'emote writes in the daily ledger (stock, distributions,
+    names of those who came to the window this morning), then
     sets the pen aside and looks up.'
   - ''
 activitylevel: 10

@@ -23,7 +23,7 @@ character:
   name: A Temple Visitor
   description: |
     A temple visitor moves through the nave at the pace of a first
-    visit, looking at everything. Neither devout nor irreverent --
+    visit, looking at everything. Neither devout nor irreverent,
     simply curious, taking the space in before deciding what they
     think of it.
   speciesid: 1

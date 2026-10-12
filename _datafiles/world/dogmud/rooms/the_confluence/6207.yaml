@@ -6,7 +6,7 @@ description: >
   square piers in two rows carry a ceiling of fitted
   slabs, each pier cut from the same dense stone as
   everything below the seam. The piers are not
-  decorated, but they are precisely placed -- the
+  decorated, but they are precisely placed: the
   spacing is exact, and the ceiling they carry has
   not shifted in whatever span of time they have been
   standing. This was built to last, by people who
@@ -30,7 +30,7 @@ idlemessages:
 - 'The ceiling slabs are fitted without mortar: they
   hold by weight and the precision of the cut alone.'
 - A low reverberation moves through the floor when
-  you step -- the water is very near beneath.
+  you step. The water is very near beneath.
 x: 12
 y: 82
 z: -2

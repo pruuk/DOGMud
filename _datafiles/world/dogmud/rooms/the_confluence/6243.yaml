@@ -6,7 +6,7 @@ description: >
   wider than its neighbors, with a low fence that marks
   the boundary without keeping anything in or out. Nets
   of various sizes hang to dry from a frame in the small
-  front yard —
+  front yard:
   <ansi fg="itemname">river-nets</ansi>
   of the type set from a flat-bottomed boat with a long
   pole, now out of the water and in need of mending in
@@ -30,7 +30,7 @@ nouns:
     A spread of fine-mesh river net, the kind used from
     a flat-bottomed punt to catch small fish in the
     calmer bends. Three tears in the mesh have been
-    marked with bright cord — the net is serviceable
+    marked with bright cord: the net is serviceable
     but in need of an afternoon's mending work.
 idlemessages:
 - A net is spread across the fence for inspection, the

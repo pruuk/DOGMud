@@ -6,7 +6,7 @@ description: >
   end of the garden walk, and the
   <ansi fg="itemname">gate</ansi>
   in its western face is plainer than any entrance the
-  scholars would claim — iron-barred, set between
+  scholars would claim: iron-barred, set between
   dressed courses, the passage low enough that a tall
   man ducks. Past it, the city changes register: the
   paving underfoot becomes irregular, older, repaired
@@ -28,7 +28,7 @@ exits:
 nouns:
   the gate: >
     A plain iron gate set into the outer wall of the
-    Scholars' Quarter — bars worn dull, mortar cracked
+    Scholars' Quarter: bars worn dull, mortar cracked
     at the jamb, the lintel low enough to require
     attention. On the scholars' side it is an
     afterthought; on the craft side it is simply the

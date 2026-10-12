@@ -11,8 +11,8 @@ description: >
   is draped across rods near the ceiling, airing or
   drying or waiting for collection. The cloth ranges
   from rough undyed linen to a tighter wool in a rust-
-  and-cream stripe that seems to be a house specialty
-  — it appears on the shutters as a painted stripe as
+  and-cream stripe that seems to be a house specialty.
+  It appears on the shutters as a painted stripe as
   well. The cooperage is north; the potter's is east.
 biome: interior
 coord:
@@ -30,7 +30,7 @@ spawninfo:
     respawnrate: "20 real minutes"
 nouns:
   the cloth: >
-    Bolts and lengths of cloth at various stages —
+    Bolts and lengths of cloth at various stages:
     undyed linen in rough rolls, a plain brown wool,
     and the rust-and-cream stripe that seems to be the
     weaver's signature work. The stripe is tighter and

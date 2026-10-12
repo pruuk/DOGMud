@@ -16,7 +16,7 @@ idlecommands:
     waste time on uncertainty.'
   - ''
   - 'say East landing gets the Brenn current in the morning.
-    Better for the net than the main quay -- fewer barges to
+    Better for the net than the main quay. Fewer barges to
     tangle in.'
   - ''
   - 'emote rolls up a length of net on one forearm with smooth
@@ -38,7 +38,7 @@ character:
     traffic than the Long Quay, which suits him: fewer barges
     mean cleaner net runs, and the Brenn current in the morning
     is reliable. His Chrysalis-change is the fisher's gift taken
-    one step further -- he can feel where the fish are, a low
+    one step further: he can feel where the fish are, a low
     pressure at the edge of his awareness, and he has not come
     home empty-handed since.
   speciesid: 1

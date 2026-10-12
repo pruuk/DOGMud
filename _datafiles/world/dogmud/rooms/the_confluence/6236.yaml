@@ -2,20 +2,20 @@ roomid: 6236
 zone: The Confluence
 title: The Potter's
 description: >
-  Clay underfoot and clay on every surface — the
+  Clay underfoot and clay on every surface: the
   doorstep has a permanent grey dusting of it that no
   amount of sweeping entirely removes. The shop front
   gives onto a workroom where a heavy
   <ansi fg="itemname">wheel</ansi>
   sits in the center of a tamped-earth floor, its head
   still damp from the morning's work. Rows of
-  <ansi fg="itemname">greenware</ansi>
-  — bowls, jars, narrow-necked bottles — stand on
+  <ansi fg="itemname">greenware</ansi>,
+  such as bowls, jars, and narrow-necked bottles, stand on
   boards to either side, waiting for the dryness that
   precedes the
   <ansi fg="itemname">kiln</ansi>
   in the yard. The finished pieces on the front shelf
-  are plain but good — the kind of work a household
+  are plain but good: the kind of work a household
   buys once and keeps for twenty years. The craft row
   is north; the weaver's is west; the market is south.
 biome: interior
@@ -41,7 +41,7 @@ nouns:
     resting on it, covered with a wet cloth to keep it
     from drying between sessions.
   the greenware: >
-    Unfired clay pieces drying on boards — bowls in
+    Unfired clay pieces drying on boards: bowls in
     two sizes, jars with tight-fitting lids, and
     several narrow-necked bottles the purpose of which
     is not immediately clear. The clay is still dark

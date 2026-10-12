@@ -15,7 +15,7 @@ idlecommands:
     measured loops, checks the lay of the braid, and sets it on
     the rack with a single light press.'
   - ''
-  - 'say Line, lamp oil, tar, tinder -- if you''re going out on
+  - 'say Line, lamp oil, tar, tinder. If you''re going out on
     the water, I''ve got what keeps you coming back.'
   - ''
   - 'emote trims the wick on a hanging lantern with a small pair
@@ -33,8 +33,8 @@ character:
     long as anyone in the Landings can remember, because Ferrick
     took it from his father who took it from his uncle. His
     Chrysalis-change is useful in the trade: his fingertips can
-    read the quality and lay of rope by touch alone -- twist
-    tension, fiber separation, grade -- well enough to assess a
+    read the quality and lay of rope by touch alone (twist
+    tension, fiber separation, grade) well enough to assess a
     coil from across the counter without unwinding it.
   speciesid: 1
   level: 1

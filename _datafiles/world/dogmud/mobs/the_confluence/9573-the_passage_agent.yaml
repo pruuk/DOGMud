@@ -9,7 +9,7 @@ maxwander: 0
 groups:
   - humanoid
 idlecommands:
-  - 'say Passage up to Stillwater or down to Plymouth -- I keep the
+  - 'say Passage up to Stillwater or down to Plymouth. I keep the
     crossing, not the cargo.'
   - ''
   - 'emote chalks a fresh line on the sailings board, steps back, and
@@ -24,7 +24,7 @@ character:
   description: |
     The Passage Agent keeps a low camp stool and a dockside crate near
     the passage mooring, apart from the freight barge's own crew. He
-    came up through the river trade the slow way -- poling, then
+    came up through the river trade the slow way: poling, then
     crewing, then finally minding the passenger side of the business,
     which he claims suits his knees better than his back. He reads the
     current the way river folk do, by the color of it and the pitch of

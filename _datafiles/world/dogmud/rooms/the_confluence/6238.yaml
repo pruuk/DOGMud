@@ -9,7 +9,7 @@ description: >
   from before light, and the smell of it reaches
   halfway up the craft row by dawn. A wide
   <ansi fg="itemname">shelf</ansi>
-  behind the counter holds today's batch — round loaves,
+  behind the counter holds today's batch: round loaves,
   flat loaves, a tray of rolls already a third gone by
   midmorning. The market is back to the east.
 biome: interior
@@ -26,7 +26,7 @@ spawninfo:
 nouns:
   the shelf: >
     The counter shelf holds today's baking in no
-    particular order — round loaves side by side with
+    particular order: round loaves side by side with
     smaller flat ones, and a tray of rolls that is
     already a third gone by midmorning. The baker does
     not label anything; regular customers know what

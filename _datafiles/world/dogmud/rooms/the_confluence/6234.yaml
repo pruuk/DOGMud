@@ -10,7 +10,7 @@ description: >
   <ansi fg="itemname">staves</ansi>
   are bundled and stacked in the passage beneath an
   overhang. Inside, the smell of cut oak and charring
-  wood is specific and deep — the hoops are fired to
+  wood is specific and deep: the hoops are fired to
   bend, and the scorch is never entirely out of the
   timbers. A half-built cask sits on a stand near the
   door, waiting for its head. The row is east; the
@@ -31,7 +31,7 @@ spawninfo:
 nouns:
   the barrels: >
     A row of finished barrels against the cooperage
-    wall — river-trade sizes, tight-grained, the staves
+    wall: river-trade sizes, tight-grained, the staves
     pale oak going dark at the char-line above the
     bottom hoop. Each has the cooperage's mark burned
     into the head.

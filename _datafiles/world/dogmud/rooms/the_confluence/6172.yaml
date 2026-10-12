@@ -1,12 +1,12 @@
 roomid: 6172
 zone: The Confluence
-title: The Crossing — Great Hall Over the Waters
+title: The Crossing, Great Hall Over the Waters
 description: >
   The temple opens out here into its great hall, the
   point the whole island was built to hold. Set into the
   floor at the center is a broad iron
   <ansi fg="itemname">water-grate</ansi>,
-  and beneath it the three rivers meet and become one --
+  and beneath it the three rivers meet and become one:
   the Aldren from the north, the Brenn from the east, the
   Solt from the southwest, their separate voices closing
   into a single deep sound that fills the hall from below.
@@ -35,7 +35,7 @@ nouns:
   water grate: >
     A grate of black iron bars set flush into the floor,
     wide as a cart is long. Through it the joined waters
-    move close beneath -- you can feel the cool off them
+    move close beneath. You can feel the cool off them
     and the steady pull of the current finding its single
     channel. The slabs the grate is seated in are older
     than anything else underfoot, cut and laid by hands
@@ -46,8 +46,8 @@ nouns:
   offering brazier: >
     A low iron stand holding dozens of small candle-ends
     and a scattering of woven rush braids left by those
-    who paused here. The offerings are simple -- a candle
-    stub, a braid of river-grass -- the sort of thing
+    who paused here. The offerings are simple: a candle
+    stub, a braid of river-grass, the sort of thing
     carried a long way and set down carefully.
 spawninfo:
   - mobid: 9457

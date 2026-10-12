@@ -6,7 +6,7 @@ description: >
   character of the space changes entirely: there is
   no temple work in this chamber at all. The stone
   is the same dense, dark material as the seeping
-  passage, but the geometry shifts -- the ceiling
+  passage, but the geometry shifts: the ceiling
   is lower and more regular than the vault above,
   the proportions of the room deliberate in a way
   that belongs to a different tradition of building
@@ -26,8 +26,8 @@ exits:
 idlemessages:
 - 'The stair behind you is the last thing the Keepers
   cut: from here west, the hands are older.'
-- The air at this level has a different quality --
-  cooler, stiller, carrying the weight of more stone.
+- The air at this level has a different quality.
+  It is cooler, stiller, and carries the weight of more stone.
 - 'The proportions of the landing are deliberate:
   low, wide, built to a plan, not an afterthought.'
 x: 13

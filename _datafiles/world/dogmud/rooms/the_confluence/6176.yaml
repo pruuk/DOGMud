@@ -2,7 +2,7 @@ roomid: 6176
 zone: The Confluence
 title: Chapel of the Solt
 description: >
-  The southwesternmost chapel, given to the Solt -- the
+  The southwesternmost chapel, given to the Solt, the
   widest of the three rivers, which winds through low
   marsh and tidal flat before closing with the others
   at the island. The air here is warmer and heavier than
@@ -28,8 +28,8 @@ exits:
 nouns:
   floor mosaic: >
     The floor is laid in a mosaic of dark and pale stone, the
-    pattern a single broad river fanning out across flat country
-    -- the Solt as it nears the lowland, losing its banks and
+    pattern a single broad river fanning out across flat country:
+    the Solt as it nears the lowland, losing its banks and
     spreading wide before it reaches the island. Worshippers sit
     along its edges and follow the spreading water with their
     eyes. The tesserae underfoot are worn smooth where the
