@@ -3,23 +3,23 @@ zone: New Plymouth Noble
 title: The Service Court
 description: >
   The service court is where the Noble Quarter's
-  real needs arrive — a back-court of plain stone,
+  real needs arrive. It is a back-court of plain stone,
   accessible from the atelier to the west and the
   servants' stair to the north, where deliveries
   are received away from the Processional's sight-
   lines. The <ansi fg="itemname">loading-platform</ansi>
   along the court's north wall is worn at the edge
-  where crates are set down and lifted — a different
+  where crates are set down and lifted, a different
   kind of wear from the Processional's carriage-
   grooves, more vertical, the mark of weight borne
   and released. There is always something in transit
-  here — bolts of cloth for the atelier, household
+  here: bolts of cloth for the atelier, household
   provisions for the estate lane, the category of
   supply that the Quarter's public face prefers not
   to be seen receiving, though the Quarter requires
   it no less than anywhere else. A
   <ansi fg="itemname">service-roster</ansi> hangs
-  in the alcove by the north door — today's
+  in the alcove by the north door, listing today's
   deliveries, times, suppliers, the unpoetic
   logistics of keeping the Noble Quarter running.
   It is read, checked, and current.
@@ -36,7 +36,7 @@ exits:
 nouns:
   loading platform: A raised stone platform along
     the court's north wall, level with a cart's
-    bed — the height at which things transfer from
+    bed, the height at which things transfer from
     one surface to another without being set on the
     ground. The platform's edge is worn at the front
     face and corners, the wear-pattern the record of
@@ -45,7 +45,7 @@ nouns:
     and is treated accordingly.
   service roster: A board in the alcove by the north
     door, its current page the day's deliveries and
-    their status — arrival times, supplier, description
+    their status, with arrival times, supplier, description
     of goods, the initial of whoever received them.
     The handwriting on the receiving initials changes
     across the day as different staff take the post.
@@ -54,7 +54,7 @@ nouns:
     overdue.
 idlemessages:
 - A cart pulls into the service court from
-  behind the building — the driver and a court
+  behind the building. The driver and a court
   attendant exchange a look and begin the
   transfer without discussion.
 - The service court is quiet between deliveries.
@@ -64,11 +64,11 @@ idlemessages:
   alcove, finds it current, and returns
   to other work.
 - The court's stone holds the particular
-  smell of a working delivery space — cloth
+  smell of a working delivery space, with cloth
   dust, fresh sawdust from packing crates,
   and the cold-stone underlying everything.
 - An empty crate has been stacked at the
-  court's east wall — its contents received
+  court's east wall, its contents received
   and distributed, waiting for collection.
 spawninfo:
   - mobid: 9377

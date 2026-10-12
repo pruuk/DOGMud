@@ -6,14 +6,14 @@ description: >
   gatehouse complex, its ground floor given over to
   the ceremonial guard's off-watch hours. The room is
   immaculate in the specific way that reflects standing
-  orders rather than personal inclination — the
-  <ansi fg="itemname">guard-kit</ansi> racked along
-  the south wall in exact columns, the
-  <ansi fg="itemname">duty-board</ansi> current and
+  orders rather than personal inclination. The
+  <ansi fg="itemname">guard-kit</ansi> is racked along
+  the south wall in exact columns, and the
+  <ansi fg="itemname">duty-board</ansi> is current and
   correctly initialed at every line. Nothing is out
   of place. A smell of oil and laundered wool and the
   particular polish applied to ceremonial boots is the
-  room's dominant register — domestic and institutional
+  room's dominant register, domestic and institutional
   at once, the smell of people required to maintain
   an appearance and trained to do it without visible
   effort. The guards who rotate through here are not
@@ -31,18 +31,18 @@ exits:
 nouns:
   guard kit: Equipment racked along the barracks'
     south wall in columns corresponding to each
-    guard's assigned post — ceremonial weapons
+    guard's assigned post, with ceremonial weapons
     cleaned and oiled, dress-uniform components
     hanging in sequence, boots paired and polished
     beneath. The rack is a catalogue of the
-    gatehouse guard's public identity — there are
+    gatehouse guard's public identity. There are
     no personal effects here, no modifications to
     standard issue, no wear that has not been
     addressed. The kit exists to be put on and
     to look right when it is on.
   duty board: A board of hardwood mounted near
     the room's east wall, its surface carrying
-    the current watch roster — names, posts,
+    the current watch roster, with names, posts,
     watch-times, relief schedules, all in a
     clear hand with each line initialed by the
     responsible officer at shift change. The
@@ -53,7 +53,7 @@ nouns:
     of communication.
 idlemessages:
 - The barracks holds its readiness between
-  watches — kit in order, board current,
+  watches, with kit in order, board current,
   the room prepared for the next occupant
   as for the last.
 - The smell of boot-polish in the barracks

@@ -15,8 +15,8 @@ idlecommands:
     stillness that comes from a body that has decided it is furniture
     until further notice.'
   - ''
-  - 'emote registers your continued presence with a slow, complete look —
-    not hostile, simply complete — and returns to station.'
+  - 'emote registers your continued presence with a slow, complete look
+    (not hostile, simply complete) and returns to station.'
   - ''
   - 'emote moves not at all. The bell-pull beside the gate swings in the
     draft. He does not look at it.'
@@ -26,10 +26,10 @@ character:
   description: |
     Porter Skell occupies the gatehouse recess in the liveried
     house-colors of the estate block, and the recess might have
-    been built for him specifically — he fits it so completely that
+    been built for him specifically. He fits it so completely that
     the architecture seems like an extension of his person rather
     than the other way around. He is broad and patient, and he has
-    the Chrysalis-change in his stance rather than his skin — a
+    the Chrysalis-change in his stance rather than his skin: a
     density to the way he stands that is not quite natural, as if
     his bones have made some private arrangement with the ground
     beneath them. You would not move him unless he chose to move.

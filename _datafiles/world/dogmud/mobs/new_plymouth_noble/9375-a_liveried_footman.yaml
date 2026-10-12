@@ -11,7 +11,7 @@ groups:
   - bloodline_domestic
 idlecommands:
   - 'emote holds his position on the Noble Way, his posture the
-    result of training rather than effort — a formal ease that
+    result of training rather than effort: a formal ease that
     signals availability and complete absence of invitation.'
   - ''
   - 'emote adjusts the set of his jacket-front by a fraction that
@@ -26,13 +26,13 @@ character:
   name: A Liveried Footman
   description: |
     The footman is stationed at the inner edge of the Noble Way
-    in the bloodline's house-colors — a deep blue-grey livery
+    in the bloodline's house-colors: a deep blue-grey livery
     over pressed whites, the household cipher embroidered in
     silver thread at the left breast. He stands at the angle
     that covers the approach without blocking it, which is the
     angle he was taught to hold. His expression is the expression
     of someone who has learned that incuriosity is a form of
-    service — he registers arrivals without acknowledging them
+    service. He registers arrivals without acknowledging them
     and departures without watching them go.
   speciesid: 1
   level: 1

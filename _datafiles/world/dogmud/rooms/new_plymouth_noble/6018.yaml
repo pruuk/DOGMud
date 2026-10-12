@@ -3,16 +3,16 @@ zone: New Plymouth Noble
 title: The Sentry Walk
 description: >
   The stretch between the Processional and the Palace
-  gatehouse is known informally as the Sentry Walk —
-  a name not carved anywhere but understood by anyone
-  who has come this far. There is always someone in
+  gatehouse is known informally as the Sentry Walk.
+  The name is not carved anywhere but is understood by
+  anyone who has come this far. There is always someone in
   sight here. Not always the same someone, not always
   posted at the same point, but the geometry of the
   approach ensures that no position along this stretch
   goes unobserved for any meaningful interval. The
   <ansi fg="itemname">worn-posts</ansi> set into the
   paving at intervals are the quarter's original
-  patrol anchor points — predating the current
+  patrol anchor points, predating the current
   bloodline's tenancy of the Palace, worn smooth at
   shoulder height by generations of guards who rested
   arms against them during long watches. The gatehouse
@@ -35,7 +35,7 @@ nouns:
     basalt, set flush with the paving at measured
     intervals along the Walk's centerline. Each one
     is worn smooth at the top and on its south-facing
-    face — the resting-point for a guard's forearm
+    face, the resting-point for a guard's forearm
     during a long watch. The wear is old, predating
     the current bloodline by at least two prior
     regimes. No one has replaced them. The posts
@@ -56,7 +56,7 @@ idlemessages:
   low afternoon light along its rounded
   upper edge.
 - From the Sentry Walk, the Palace gatehouse
-  is visible in its full width — stone, iron,
+  is visible in its full width, in stone, iron,
   and the studied stillness of those who
   stand before it.
 spawninfo:

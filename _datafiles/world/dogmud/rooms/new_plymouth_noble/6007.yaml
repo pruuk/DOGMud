@@ -1,23 +1,23 @@
 roomid: 6007
 zone: New Plymouth Noble
-title: The Art Gallery — Hall
+title: The Art Gallery, Hall
 description: >
   The gallery's main hall runs east-west, its walls
-  hung with the Noble Quarter's collection — bloodline
+  hung with the Noble Quarter's collection: bloodline
   portraits in formal commission above the wainscoting,
   civic scenes in the panels between. The
   <ansi fg="itemname">bloodline-portraits</ansi> are
-  what a visiting dignitary would be shown — recent
+  what a visiting dignitary would be shown: recent
   work, excellent technical quality, subjects rendered
   in the correct poses with the correct objects and
   the correct expressions for their stations. Between
   them, set slightly lower and less prominently lit,
-  are the <ansi fg="itemname">older-paintings</ansi> —
-  not the collection's pride, not on the tour, and not
-  easily dismissed once noticed. Their subject matter
-  is, on the surface, the same as the newer work —
-  landscapes of this region, early settlement scenes,
-  a horizon or two — but the details in them do not
+  are the <ansi fg="itemname">older-paintings</ansi>.
+  They are not the collection's pride, not on the tour,
+  and not easily dismissed once noticed. Their subject
+  matter is, on the surface, the same as the newer
+  work: landscapes of this region, early settlement
+  scenes, a horizon or two. But the details in them do not
   match the history the newer paintings confirm.
   A stair at the hall's north wall leads up to the
   keeper's rooms above. The old wing continues west.
@@ -36,8 +36,8 @@ exits:
 nouns:
   bloodline portraits: A series of formal commissions
     in matching frames, occupying the upper register
-    of the hall's main wall. They are excellent work —
-    subjects rendered with authority and precision,
+    of the hall's main wall. They are excellent work,
+    with subjects rendered with authority and precision,
     their faces made legible without being made
     individual, their settings correct in every detail
     of dress, emblem, and posture. They tell the
@@ -49,14 +49,14 @@ nouns:
     takes considerable effort to look so inevitable.
   older paintings: Set between the bloodline
     commissions at a slightly lower register, these
-    are older work — the pigment warmed by age, the
+    are older work, the pigment warmed by age, the
     varnish slightly crazed at the corners, the frames
     the prior pattern that the newer ones have
     replaced. The subjects are landscapes, settlement
     scenes, a coastal horizon labeled in a script not
     the current city's formal hand. A careful eye
     finds an eight-pointed figure in the background
-    of the third panel from the left — worked into
+    of the third panel from the left, worked into
     the detail of a structure in what appears to be
     an earlier settlement, geometrically distinct from
     anything in the official iconography. The
@@ -77,11 +77,11 @@ idlemessages:
   who already knows them, reading subjects'
   names from the plaques at the frame bases.
 - The stair to the keeper's rooms above
-  produces a faint sound — the particular
+  produces a faint sound, the particular
   creak of a step that the keeper has
   long stopped noticing.
 - The older paintings' varnish catches the
-  afternoon light at a low angle — at this
+  afternoon light at a low angle. At this
   hour, the detail in the third panel
   from the left is briefly very clear.
 spawninfo:

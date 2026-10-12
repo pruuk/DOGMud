@@ -2,7 +2,7 @@ roomid: 6006
 zone: New Plymouth Noble
 title: The Office Antechamber
 description: >
-  The antechamber exists for one purpose — to hold
+  The antechamber exists for one purpose: to hold
   petitioners at a remove from the office proper
   while their business is considered, their
   paperwork checked, or their appointment confirmed.
@@ -16,7 +16,7 @@ description: >
   to examine, nothing that would make the wait feel
   shorter or longer than it is. This is not an
   oversight. The room communicates one thing with
-  precision — the person in the office controls
+  precision: the person in the office controls
   the pace of what happens next, and this is the
   space in which that becomes concrete. The office
   door to the east is closed.
@@ -33,7 +33,7 @@ nouns:
     as the walls, cut from a single piece and
     built into the north wall at seat height.
     There is no cushioning. The surface is smooth
-    but not polished — there was never any intention
+    but not polished. There was never any intention
     to make it pleasant, only adequate. The bench
     holds three people with room between them, or
     four at close quarters. You can tell without

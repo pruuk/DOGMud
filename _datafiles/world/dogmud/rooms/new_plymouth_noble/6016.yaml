@@ -3,7 +3,7 @@ zone: New Plymouth Noble
 title: The Palace Gatehouse
 description: >
   The gatehouse closes the north end of the Sentry
-  Walk with an architecture of deliberate finality —
+  Walk with an architecture of deliberate finality:
   its stone twice the depth of anything on the
   Processional, its facing blocks dressed to a finish
   that absorbs light rather than reflecting it. The
@@ -13,13 +13,13 @@ description: >
   and old, its verticals as thick as a man's wrist,
   and the chain across the center bar is not
   ceremonial. A guard-captain stands before the gate
-  in full ceremonial dress — not making conversation,
+  in full ceremonial dress, not making conversation,
   not accepting approach, present in the way an
   architectural feature is present, except that this
   one breathes. The gate does not open for inspection,
   for request, or for the merely curious. What lies
-  beyond it — the Palace's inner court, the bloodline's
-  residential half of the Quarter — is conducted on
+  beyond it (the Palace's inner court, the bloodline's
+  residential half of the Quarter) is conducted on
   their terms and at their invitation, and that
   invitation has not been extended. The garden lies
   west; the barracks lie east. The gate stands north,
@@ -39,11 +39,11 @@ exits:
 nouns:
   palace gate: Black iron between two towers of
     dressed basalt, its vertical bars spaced to
-    allow inspection from both sides — the gap
+    allow inspection from both sides, the gap
     deliberate, a statement that what is inside
     is not hidden, merely inaccessible. Through
     the bars the Palace's inner court is partially
-    visible — a forecourt of the same pale stone
+    visible, a forecourt of the same pale stone
     as the Processional, wider than expected, its
     far end closed by doors whose scale is intended
     to make those approaching them aware of their
@@ -58,7 +58,7 @@ idlemessages:
   move, does not speak, and does not alter
   the direction of their attention.
 - Through the palace-gate, the inner court
-  is visible in the late light — the pale
+  is visible in the late light. The pale
   stone, the far doors, the distance between
   where you stand and where they are.
 - The gatehouse towers alter the sound of
@@ -71,7 +71,7 @@ idlemessages:
   intended from the first stone.
 - The guard-captain's uniform carries no
   insignia beyond the bloodline cipher
-  at the breast and shoulder — embroidered
+  at the breast and shoulder, embroidered
   here in silver thread rather than painted.
 spawninfo:
   - mobid: 9374
