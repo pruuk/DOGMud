@@ -34,10 +34,10 @@ exits:
 nouns:
   parked wagon: A heavy-framed freight wagon with iron-rimmed wheels
     worn flat on the inner face from hard use on stone roads. The
-    bed is half-filled: a cluster of salt barrels at the forward
+    bed is half-filled, a cluster of salt barrels at the forward
     end, grain sacks behind them, a bundle of something wrapped in
     oilskin at the tailgate that no one has documented on the
-    tally-slate. The wagon's sideboard bears a burned-in mark:
+    tally-slate. The wagon's sideboard bears a burned-in mark,
     a wheel with a single spoke doubled, that is the depot's own
     device, not a merchant's. The team will come when the load
     is settled.
@@ -45,9 +45,9 @@ nouns:
     main depot, built to match the bed-height of a laden wagon so
     that barrow-loads roll across level. The tally-slate nailed to
     the post records today's outbound dispatches in a small precise
-    hand: destination, cargo, weight, departure bell. Three entries
+    hand, destination, cargo, weight, departure bell. Three entries
     have been marked DEPARTED. Two more are PENDING. One at the
-    bottom reads HELD: NO CLEARANCE and has been underlined twice
+    bottom reads HELD, NO CLEARANCE and has been underlined twice
     in a different chalk than the rest.
 idlemessages:
 - A handcart comes in from the east at a jog and the runner calls

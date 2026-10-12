@@ -33,7 +33,7 @@ exits:
 nouns:
   job ledger: A thick-spined book, the current volume in a
     series that lines a shelf above the desk. The open page
-    shows today's entries in a dense, consistent hand:
+    shows today's entries in a dense, consistent hand,
     names or initials, tasks, hours, marks paid. Some entries
     have a small check beside them; others have a dash. Two
     names are crossed through. The margins hold running
@@ -58,7 +58,7 @@ idlemessages:
 - The strongbox does not move or make any sound.
   It does not need to.
 - From the street outside comes the ordinary sound of the
-  dock morning: carts, voices, the distant creak of rope
+  dock morning, carts, voices, the distant creak of rope
   under load.
 x: -9
 y: -77

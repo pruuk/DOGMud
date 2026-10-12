@@ -32,7 +32,7 @@ exits:
     zone: New Plymouth Sewers
 nouns:
   refuse heap: Everything a working street discards that is
-    too large or too wrong for the gutter: broken barrel
+    too large or too wrong for the gutter, broken barrel
     staves, a boot missing its sole, two chairs with the
     seats gone, a tangle of rope not worth re-splicing, a
     quantity of cloth too far gone to name. The heap has
@@ -52,7 +52,7 @@ nouns:
 idlemessages:
 - The alley smells more at certain times of day than others.
   This is one of the other times, and it still smells.
-- From the grate comes a sound: water, or something moving
+- From the grate comes a sound, water, or something moving
   in water, and then nothing.
 - A cat materializes at the alley's mouth, takes one step
   in, reconsiders, and leaves.

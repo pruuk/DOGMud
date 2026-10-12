@@ -23,7 +23,7 @@ exits:
   north:
     roomid: 5349
 nouns:
-  switchback: The switchback is the tightest point on the climb: the
+  switchback: The switchback is the tightest point on the climb. The
     outer edge crumbles away to a short drop, and the inner wall is
     close enough to brush with your shoulder. Someone has driven an iron
     pin into the stone here as a handhold.
@@ -35,7 +35,7 @@ idlemessages:
   ticks down the bluff face.
 - The wind at this height finds every gap in your clothing and reminds
   you it is here.
-- The coulee floor is visible in its entirety now: a long oval of
+- The coulee floor is visible in its entirety now, a long oval of
   grass and water laid out below.
 - A pebble loosens somewhere above and falls past you, rattling off
   the bluff face and gone.

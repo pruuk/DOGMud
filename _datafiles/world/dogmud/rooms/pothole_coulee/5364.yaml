@@ -31,7 +31,7 @@ nouns:
   overlook: The overlook is the bluff's summit, the place where the
     ground runs out and the sky takes over. Standing here you are
     the highest thing on this stretch of country. The position is
-    obvious and deliberate: whoever holds this ground controls
+    obvious and deliberate, whoever holds this ground controls
     everything below, and they know it.
   stand: A marksman's stand in the truest sense, open to every
     direction, no higher ground nearby to be shot from, every
@@ -39,7 +39,7 @@ nouns:
     Giving it up means crossing open ground under fire. It is not
     a position you abandon lightly.
 idlemessages:
-- The <ansi fg="cyan">overlook</ansi> gives you everything at once: the whole coulee, the
+- The <ansi fg="cyan">overlook</ansi> gives you everything at once, the whole coulee, the
   far walls, the country beyond. It is a great deal of world to
   hold in one view.
 - The wind at this height has a low resonance, a vibration in the

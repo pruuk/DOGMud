@@ -27,7 +27,7 @@ exits:
     roomid: 5252
 nouns:
   collapse: The mass of fallen basalt that swallowed the back half of the
-    prospect cut: plates stacked on plates, grey and cold, the weight
+    prospect cut, plates stacked on plates, grey and cold, the weight
     of the hill carried on the broken backs of the timbers that failed
     to hold it. The cut runs in only so far as the rock allows, and no
     further. Past the heap is silence and dark and no air.
@@ -43,7 +43,7 @@ nouns:
     a slow, shallow rhythm. Whoever is in there is alive, for now, and
     they cannot dig themselves out.
   cut: The remnant of the prospect cut, the open portion that survived
-    the collapse: a low tunnel driven into the hillside and then
+    the collapse, a low tunnel driven into the hillside and then
     immediately ended. The walls are scored with pick marks, dark and
     damp, and the floor is covered in broken chips. The rest of the cut
     is behind the rubble, gone.
@@ -51,6 +51,6 @@ spawninfo:
 - mobid: 9117
 idlemessages:
 - A settled creak moves through the <ansi fg="itemname">timbers</ansi> in the heap and a thin trickle of grit sifts down from above.
-- The <ansi fg="itemname">hand</ansi> shifts slightly in the rubble: not a reach, not a signal, just the body reminding itself it is still there.
+- The <ansi fg="itemname">hand</ansi> shifts slightly in the rubble, not a reach, not a signal, just the body reminding itself it is still there.
 x: 37
 y: 19

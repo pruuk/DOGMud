@@ -33,7 +33,7 @@ nouns:
     It holds heat better than wood and burns longer.
   leather: Coils of cured leather strip, pliable and dark, smelling
     of tannin and old grease. This is the kind used for handle-wrap
-    and bellows-patch: narrow, strong, and clean.
+    and bellows-patch, narrow, strong, and clean.
 idlemessages:
 - A bit of <ansi fg="itemname">coal</ansi> dust shifts and settles off the nearest sack in the still air.
 x: 38

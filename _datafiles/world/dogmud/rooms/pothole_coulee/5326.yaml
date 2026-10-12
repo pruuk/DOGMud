@@ -38,7 +38,7 @@ idlemessages:
   as it moves from one wall toward the other.
 - The <ansi fg="yellow">stalls</ansi> are quiet now, the animals out in the yard
   or the near field.
-- Something moves in the <ansi fg="yellow">loft</ansi> overhead: hay settling,
+- Something moves in the <ansi fg="yellow">loft</ansi> overhead, hay settling,
   or a small creature going about its business.
 x: 46
 y: 14

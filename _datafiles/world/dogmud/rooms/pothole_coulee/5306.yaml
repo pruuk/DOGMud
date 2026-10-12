@@ -25,13 +25,13 @@ exits:
   north:
     roomid: 5307
 nouns:
-  dome: The dome overhead is a remarkable thing even in its current state:
+  dome: The dome overhead is a remarkable thing even in its current state, with
     great slabs of stone fitted to a curve, each one cut to angle just
     so, holding the arch by press and weight alone. The crack that runs
     through it is ragged at the edges and has shed fragments onto the floor,
     but the dome has not moved since.
   telescope: Fallen on its side, the telescope is still an impressive
-    object: brass rings along its length, a rotating mount at the base
+    object, brass rings along its length, a rotating mount at the base
     now bent and useless, a barrel that narrows toward the cracked lens
     end in careful graduated steps. It smells of old metal and something
     faintly like lamp oil.

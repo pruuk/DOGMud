@@ -25,7 +25,7 @@ exits:
   east:
     roomid: 6164
 idlemessages:
-- The river's sound is immediately different out here:
+- The river's sound is immediately different out here,
   open on all sides, not channeled by walls.
 - A pilgrim pauses near the west railing and looks
   down at the joined waters before continuing east.

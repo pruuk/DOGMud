@@ -26,13 +26,13 @@ exits:
 spawninfo:
 - mobid: 9152
 nouns:
-  gap: Not an absence but a presence: the gap is a thing in itself,
+  gap: Not an absence but a presence. The gap is a thing in itself,
     a fold held permanently open, edges cycling between fraying and
     resealing. Light passes through it that carries no heat. The air
     that moves through it carries no smell. It is the thinnest place
     in the world, and something has been living in the thinness.
   place: The place exerts a kind of gravity that has nothing to do
-    with weight. You are pulled toward the center of it without moving:
+    with weight. You are pulled toward the center of it without moving,
     the attention, the awareness, the sense that the place is also
     aware of you and has been for longer than you have been aware of it.
 idlemessages:

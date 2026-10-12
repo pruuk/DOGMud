@@ -33,7 +33,7 @@ nouns:
     mug-bottoms overlap so completely they form their own
     pattern, like growth rings in a felled tree. Three mugs
     currently sit on it, two empty and one not. The wood
-    around the serving gap is worn lower than the rest:
+    around the serving gap is worn lower than the rest,
     the place where hands have rested most, over the most
     years.
   hearth: A stone fireplace wide enough to stand in, burning
@@ -56,7 +56,7 @@ idlemessages:
   scratched or marked in so many hands it is no longer
   possible to read any of them individually.
 - From upstairs comes the sound of someone settling onto a
-  cot: a creak, a sigh, and then quiet.
+  cot, a creak, a sigh, and then quiet.
 spawninfo:
   - mobid: 9301
     respawnrate: "20 real minutes"

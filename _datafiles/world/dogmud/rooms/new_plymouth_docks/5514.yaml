@@ -40,7 +40,7 @@ nouns:
     thing built for use and maintained to that standard and
     no further. The water is changed regularly; you can tell
     by the smell, or rather the absence of one.
-  common table: A table of unknown original wood: resurfaced,
+  common table: A table of unknown original wood, resurfaced,
     cut down, reinforced, and scarred so many times that its
     origins are immaterial. The current surface holds the
     marks of meals, arguments, games, and transactions in no
@@ -57,7 +57,7 @@ idlemessages:
 - A pair of travelers comes in from the yard, their boots
   loud on the threshold, and find the corner without
   being told it is available.
-- The smell of the yard drifts in through the open door:
+- The smell of the yard drifts in through the open door,
   horses and hay and the faint undertone of the docks
   two streets over.
 spawninfo:

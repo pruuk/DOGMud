@@ -23,9 +23,9 @@ exits:
   east:
     roomid: 5232
 nouns:
-  marker: The boundary stone reads as a marker more than a wall: a single
+  marker: The boundary stone reads as a marker more than a wall, a single
     upright slab planted at the lip of the safe ground. Whoever set it
-    meant it as a promise: this far, the coulee keeps you. No further.
+    meant it as a promise. This far, the coulee keeps you. No further.
   stone: A weathered upright slab, grey and lichen-spotted, its carved mark
     rubbed nearly featureless by wind and reaching hands. It marks the last
     safe footing before the open wash.

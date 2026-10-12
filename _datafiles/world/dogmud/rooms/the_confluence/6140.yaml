@@ -56,13 +56,13 @@ spawninfo:
     respawnrate: "20 real minutes"
 idlemessages:
 - Foot-traffic crosses the square in all four
-  directions: the pattern of a city going about
+  directions, the pattern of a city going about
   its ordinary business.
 - The civic bell rings the hour from the tower to
   the west, its counted note dropping across the
   square.
 - "A cart laden with river-freight crosses from the
-  Brenn Road: iron-rimmed wheels loud on the old
+  Brenn Road, iron-rimmed wheels loud on the old
   paving flags."
 x: 5
 y: 71

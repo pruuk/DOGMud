@@ -51,7 +51,7 @@ nouns:
     forest floor would tell you something lived here, if
     anything did. It is silent on the subject.
 idlemessages:
-- Somewhere in the upper canopy a bird calls once:
+- Somewhere in the upper canopy a bird calls once,
   a single note, cut short, and does not call again.
 - The silence is complete enough that your own breathing
   sounds too loud, and then even that fades.
@@ -59,7 +59,7 @@ idlemessages:
   spiral to the litter below, landing without a sound.
 - Something distant begins a sound and stops it, as if
   reconsidering.
-- The highest branches shift once: slow, without
+- The highest branches shift once, slow, without
   noise, and are still.
 spawninfo:
   - mobid: 9539

@@ -27,16 +27,16 @@ exits:
     roomid: 5243
 nouns:
   table: A heavy timber table set square in the room, its scarred top
-    scrawled over with a crude map of the wash: the canyon scratched out
+    scrawled over with a crude map of the wash, the canyon scratched out
     in lines, with stones and chalked marks shifted across it like pieces in
     a long game. Someone has been planning from up here, reading the whole
     climb below and setting their crew against it. The marks are recent.
-  war table: The same scarred table, used for war: the wash mapped on its
+  war table: The same scarred table, used for war, the wash mapped on its
     top, the comings and goings of the canyon worked out in stones and
     scratches. Whoever sits to it commands the gate and the climb and the
     crew between, and means to go on doing so. A chair waits drawn up to it,
     lately filled.
-  view: The whole canyon, taken in at a glance through the burst wall: the
+  view: The whole canyon, taken in at a glance through the burst wall, the
     wash unrolled from the lower throat to the gate at the tower's foot,
     pale and bare and every step of it visible. Nothing climbs this canyon
     unseen from here. It is the reason the tower was raised, and the reason
@@ -51,7 +51,7 @@ nouns:
     holds the high seat holds it looking out this gap, with the entire climb
     spread bare beneath, forewarned of every soul that starts up.
   seat: A heavy chair drawn up facing the breach, set where the watcher can
-    take in the whole wash at once: the high seat, the keeper's seat, the
+    take in the whole wash at once, the high seat, the keeper's seat, the
     won place of whoever holds this ground by force. It is empty for the
     moment, and the air around it has not yet gone cold.
 spawninfo:

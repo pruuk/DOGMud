@@ -29,11 +29,11 @@ nouns:
   den: The fouled inner chamber, swept clear at the center by the
     body that sleeps and turns and sleeps here, walls ringed with
     pushed rubble and the litter of many meals. It has the shape of
-    a lair: a place organized by instinct over a long time into
+    a lair, a place organized by instinct over a long time into
     something that serves the occupant perfectly and everything else
     not at all.
   bones: Cracked and gnawed across the den floor, the picked remains
-    of the beast's meals. Most are animal: the long bones of
+    of the beast's meals. Most are animal, the long bones of
     something hunted in the upper workings. But not all. A tool
     haft, a boot heel, a helmet dome with the bowl bitten through.
     These were carried in by things that walked upright and did not
@@ -43,7 +43,7 @@ spawninfo:
   message: The stone-blooded beast lifts its fused-stone head from the den floor and fixes on you.
   respawnrate: 10 real minutes
 idlemessages:
-- The stink of the <ansi fg="itemname">den</ansi> thickens when the air stirs: musk and old blood and something underneath that has no name.
+- The stink of the <ansi fg="itemname">den</ansi> thickens when the air stirs, musk and old blood and something underneath that has no name.
 - One of the <ansi fg="itemname">bones</ansi> rocks under a shifting column section and cracks against the wall, and the sound of it travels back through the gallery.
 x: 31
 y: 18

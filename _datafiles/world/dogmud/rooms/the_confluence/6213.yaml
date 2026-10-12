@@ -26,11 +26,11 @@ exits:
   south:
     roomid: 6216
 idlemessages:
-- The ghost marks on the walls suggest preparation:
+- The ghost marks on the walls suggest preparation,
   a space between the ordinary and something else.
 - 'The floor is clean for this depth: the dust has
   been disturbed more recently than the age implies.'
-- A very faint smell of lamp oil lingers here:
+- A very faint smell of lamp oil lingers here,
   someone has been down with a light, not long ago.
 x: 10
 y: 82

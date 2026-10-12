@@ -33,13 +33,13 @@ nouns:
     cascade clicking down below you, and the noise carries far in the
     open air.
   talus: The broken-rock apron below the smithy ledge, built up over
-    seasons of frost-heave and the forge's own discards: clinker,
+    seasons of frost-heave and the forge's own discards, clinker,
     cinder, and pried-out gangue pitching down the face to mix with
     the native rubble. It is neither safe nor stable, and it knows it.
   leavings: A picked-over tumble of bent frames, frayed cordage, and
     broken-handled tools heaped at the base of a frost-heaved slab.
     Whoever sorted through this took everything of worth. What remains
-    is a lesson: the talus gives up nothing for free.
+    is a lesson, the talus gives up nothing for free.
 spawninfo:
 - mobid: 9118
   message: A scree scavenger scuttles out from under a loose plate, mandibles working.

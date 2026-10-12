@@ -33,7 +33,7 @@ nouns:
   stacked crates: Timber crates in several sizes, stacked two and
     three high and banded with iron strips that have begun to rust
     at the cut ends. Each one carries a stenciled mark in black
-    tar-paint: a port symbol, a batch number, a weight-class glyph
+    tar-paint, a port symbol, a batch number, a weight-class glyph
     in a shorthand that is not quite any language. The marks are
     from at least four different ports. You recognize one of them
     and are surprised by how far it is. Whatever is inside rattles
@@ -44,16 +44,16 @@ nouns:
     several hands over several days, the older entries faint beneath
     the newer ones. Columns for hull name, cargo type, declared
     weight, tariff status, warehouse bay. The tariff-status column
-    has three notations in use: a checkmark, a circle, and a small
+    has three notations in use, a checkmark, a circle, and a small
     cross whose meaning the board does not explain. Several entries
     carry the circle. One hull name, MAREN'S TIDE, has been
-    struck through and written over: SETTLED. The name underneath
+    struck through and written over, SETTLED. The name underneath
     is still legible if you look for it.
 idlemessages:
 - A barrow wheel squeals as it rounds the corner from the open
   warehouse door. Nobody oils it.
 - The smell of the unlabeled crate near the east end waxes and
-  wanes with the breeze: something sweet and slightly wrong.
+  wanes with the breeze, something sweet and slightly wrong.
 - Two talliers compare their counts by lamplight in the warehouse
   doorway, each insisting on their own number.
 - A rat moves along the base of the crate-stack with the brisk

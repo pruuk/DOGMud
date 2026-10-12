@@ -26,7 +26,7 @@ exits:
   north:
     roomid: 5346
 nouns:
-  ledge: The ledge is sound: the wall below it is the intact section
+  ledge: The ledge is sound. The wall below it is the intact section
     of the shrine, and the stone underfoot is solid. The worn patch at
     the edge has been smoothed by years of hands resting there, looking
     out. It is a comfortable place to stand and look at a large

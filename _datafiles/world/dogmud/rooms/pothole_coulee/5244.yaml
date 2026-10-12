@@ -22,7 +22,7 @@ exits:
   west:
     roomid: 5245
 nouns:
-  path: The path has been worked by patient hands: slag and cinder
+  path: The path has been worked by patient hands, slag and cinder
     packed into every gap between the rock plates, giving solid footing
     where the loose talus offered none. It climbs steadily toward the
     smell of the forge.
@@ -31,7 +31,7 @@ nouns:
     holds the slope together and announces the smithy before you see
     it.
   smoke: A thin column of grey-white smoke rises from somewhere above
-    the talus, steady and deliberate: not a fire out of control but
+    the talus, steady and deliberate, not a fire out of control but
     a forge kept burning. It bends west in the canyon draft and
     vanishes.
 idlemessages:

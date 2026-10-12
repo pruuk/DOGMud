@@ -46,10 +46,10 @@ nouns:
   rack: A floor-to-ceiling array of narrow pigeonholes
     behind the counter, every slot holding a folded
     document tied with waxed cord. Most seals bear the
-    counting house's mark: a pearl in an open shell
+    counting house's mark, a pearl in an open shell
     pressed into brown wax. A few are older, their wax
     gone dark with age. At the very top, a row of slate
-    tags names the groupings: MOORAGE, CATCH BONDS,
+    tags names the groupings, MOORAGE, CATCH BONDS,
     PEARL ACCOUNTS, SHIP LETTERS, and one small slot
     with no label at all.
   strongbox: A heavy coffer of lake-iron, squat and
@@ -82,6 +82,6 @@ idlemessages:
 - A wax seal cracks as a document is folded and slotted into its pigeonhole.
 - The strongbox settles with a low metallic tick as the building shifts in the lake wind.
 - The clerk dips a pen, pauses to calculate, and makes a single small entry.
-- Through the narrow window, the smell of the lake briefly sharpens: tide-turn.
+- Through the narrow window, the smell of the lake briefly sharpens, tide-turn.
 x: -7
 y: 1

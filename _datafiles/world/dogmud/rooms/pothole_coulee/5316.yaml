@@ -26,12 +26,12 @@ exits:
 spawninfo:
 - mobid: 9149
 nouns:
-  distance: The sensation is acute and disorienting: the far looks near,
+  distance: The sensation is acute and disorienting. The far looks near,
     the near recedes. You reach for a handhold and your arm falls short;
     you glance back and the way you came appears smaller than it should,
     already far away. Distance here is a suggestion the place is not
     committed to.
-  ground: The ground is ordinary stone: pale, cracked, the same floating
+  ground: The ground is ordinary stone, pale, cracked, the same floating
     scabland as before. But it refuses to respond predictably to your
     weight. Each footfall lands and holds, but the next step does not
     follow in the direction you stepped.

@@ -25,7 +25,7 @@ exits:
 nouns:
   hollow: A half-roofed pocket scoured back into the south wall, out of the
     wind and out of the wash's sightlines. It is the kind of place a
-    cornered fighter picks to make a stand: one way in, walls at the
+    cornered fighter picks to make a stand, one way in, walls at the
     back, and time to see anyone coming.
   wreckage: A smashed cart heaved onto its side to wall the hollow's mouth,
     axles jutting, the gaps packed with rubble and broken planking. The
@@ -38,7 +38,7 @@ nouns:
     its boss dented, its rim notched, the paint long scoured away. Whoever
     holds the hollow keeps it close. They are still in this fight.
   recess: The deep shadowed back of the hollow where the wall overhangs.
-    The dark of it holds a stillness that is plainly not emptiness: the
+    The dark of it holds a stillness that is plainly not emptiness, the
     quiet of someone forted up, watching the mouth, waiting you out.
 spawninfo:
 - mobid: 9112

@@ -32,7 +32,7 @@ exits:
 spawninfo:
 - itemid: 55
 nouns:
-  arch: A simple timber arch: two upright squared posts
+  arch: A simple timber arch, two upright squared posts
     of dark cedar with a single crossbeam, its bark long
     weathered away to silver. A small iron lantern hangs
     from a hook at the crossbeam's center, lit at dusk
@@ -50,7 +50,7 @@ nouns:
     but visibly thinning further north. Wagon ruts run
     deep in the verges; the road carries real traffic
     in spring and fall.
-  view: From under the arch the country opens out:
+  view: From under the arch the country opens out,
     rolling pasture and hedgerow stretching north until
     the road bends out of sight behind a low rise. On
     a clear day a smudge of distant smoke on the

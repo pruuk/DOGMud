@@ -26,7 +26,7 @@ exits:
 spawninfo:
 - mobid: 9148
 nouns:
-  veil: Invisible but palpable: the thinning between worlds that the old
+  veil: Invisible but palpable, the thinning between worlds that the old
     adepts sought out deliberately, believing it sharpened focus to work
     in a place where the Folding pressed close. Here it presses very close.
   hollow: A natural depression in the grove floor, the hollow holds its
@@ -37,7 +37,7 @@ idlemessages:
   smooths again.
 - Something dark shifts at the very edge of sight and is gone before
   you can name its shape.
-- The <ansi fg="cyan">veil</ansi> here makes a sound, just below the hum: a sound like
+- The <ansi fg="cyan">veil</ansi> here makes a sound, just below the hum, a sound like
   very old paper under enormous pressure.
 x: 41
 y: 13

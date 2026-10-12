@@ -22,10 +22,10 @@ spawninfo:
 nouns:
   thorns: Stiff, hooked barbs that catch on anything soft and hold it,
     patient as a trap.
-  game: Signs of small animals everywhere: runs, pellets, tufts of
+  game: Signs of small animals everywhere, runs, pellets, tufts of
     fur, the pressed-flat shapes of resting bodies.
 idlemessages:
-- Something small bolts through the brake just below sight: a
+- Something small bolts through the brake just below sight, a
   brief thrashing, then silence.
 - A thorn-barb catches and pulls free, leaving a thin scratch along
   your arm.

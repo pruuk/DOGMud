@@ -29,12 +29,12 @@ exits:
 nouns:
   ruin: The shrine ruin predates the stone ring and possibly the coulee
     folk entirely. Its stones are shaped with a precision the megaliths
-    do not share: fitted rather than placed, the joints still close
+    do not share, fitted rather than placed, the joints still close
     despite centuries of settling. Something was very carefully built
     here, and the care outlasted whoever intended it.
   rise: The ground rises steadily from the ring toward the ruin,
     the slope gentle but consistent. Standing at its top with the ring
-    at your back, you can see a long way across the coulee: south
+    at your back, you can see a long way across the coulee, south
     to the track, east toward the deeper coulee lands, west to the
     horizon. Whoever chose this site for a shrine chose the sightlines
     deliberately.
@@ -43,7 +43,7 @@ idlemessages:
   into its full shape, a near-perfect circle, unmistakable from
   this angle in a way it is not from inside.
 - The <ansi fg="cyan">ruin</ansi> at the top of the rise holds a silence that is
-  different from the circle's: older, more complete, less
+  different from the circle's, older, more complete, less
   expectant.
 - Wind moves through the fallen blocks of the <ansi fg="cyan">ruin</ansi> and makes
   no sound at all, as though the structure still knows how to

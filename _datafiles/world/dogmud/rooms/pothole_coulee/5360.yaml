@@ -23,7 +23,7 @@ exits:
   north:
     roomid: 5361
 nouns:
-  wind: The wind up here is not a gust but a fact: a constant
+  wind: The wind up here is not a gust but a fact, a constant
     lateral pressure that leans against you and does not stop. It
     carries grit and the smell of dry stone and something faintly
     metallic, the smell of altitude itself. It has been doing this

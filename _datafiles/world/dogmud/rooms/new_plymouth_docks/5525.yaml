@@ -29,7 +29,7 @@ exits:
 nouns:
   notice board: A panel of grey board fixed to the east wall,
     its surface layered with notices in various hands. Most are
-    routine: cargo claims, working-hour postings, the rotation
+    routine, cargo claims, working-hour postings, the rotation
     schedule for the dock constable's shift. But one sheet stands
     apart, pinned at eye level and recently dated, a formal
     accusation naming a dockhand, Teo, and charging him with two
@@ -37,7 +37,7 @@ nouns:
     is signed and witnessed. Teo's response, if any, is not
     represented here.
   holding cell: Iron bars set into old stone, the fitting solid
-    if not elegant: a closet that was made secure rather than
+    if not elegant, a closet that was made secure rather than
     built for the purpose. The single bench inside is worn in the
     middle where people have sat on it long enough to hollow the
     wood. A ring-bolt in the wall at ankle height has a groove
@@ -49,7 +49,7 @@ idlemessages:
 - The lamp on the desk burns down another fraction and nobody
   trims the wick.
 - From outside, through the gap under the door, the sounds of
-  the lane arrive: cart-wheels, voices, the ordinary day.
+  the lane arrive, cart-wheels, voices, the ordinary day.
 - The notice board shifts in a draft and the newer sheets
   rustle against the older ones beneath them.
 - The holding cell is empty but the silence inside it is a
