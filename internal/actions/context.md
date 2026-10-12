@@ -1678,7 +1678,10 @@ refusal category and the neighbouring "Visit a merchant" lines.
   `DefensiveCrit`. `TauntResult.Counter` carries its outcome.
   `TauntResult.Silenced` is true when `char.SpeechState()` is
   `characters.Silenced`: the taunt (and a howl) is refused before anything is
-  paid, and callers print their own refusal (M6 slice 3).
+  paid, and callers print their own refusal (M6 slice 3). `CommandIsReady`'s
+  taunt case mirrors that gate. `TauntResult.WithWordlessDamageText()`
+  re-renders `DmgDesc`/`DmgDescToTarget` from the wordless band table; the mob
+  `howl` uses it so a howl names no speech whatever the species.
 
 Counter-swings route through the seam, so the ORIGINAL attacker defends them
 and is charged + progressed for it (the countered-party economy).

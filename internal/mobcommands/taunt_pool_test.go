@@ -20,14 +20,17 @@ const (
 	poolTestBeastId    = 9602
 	poolTestRhetoricAt = "RHETORIC-LINE"
 	poolTestWordlessAt = "WORDLESS-LINE"
+	poolTestHowlAt     = "HOWL-LINE"
 )
+
+var poolTestMarkers = []string{poolTestRhetoricAt, poolTestWordlessAt, poolTestHowlAt}
 
 func poolTestBands(marker string) map[combat.TauntIntensity]*combat.TauntMessages {
 	bands := map[combat.TauntIntensity]*combat.TauntMessages{}
 	for _, band := range []combat.TauntIntensity{combat.TauntHit, combat.TauntMiss, combat.TauntCritical, combat.TauntFumble} {
 		bands[band] = &combat.TauntMessages{
 			ToAttacker: []string{marker + " attacker"},
-			ToDefender: []string{marker + " defender"},
+			ToDefender: []string{marker + " defender [{damage}]"},
 			ToRoom:     []string{marker + " room"},
 		}
 	}
@@ -37,6 +40,13 @@ func poolTestBands(marker string) map[combat.TauntIntensity]*combat.TauntMessage
 // runPoolCase runs a mob command at a player target with both pools seeded
 // with distinguishable lines and returns what the player was sent.
 func runPoolCase(t *testing.T, run func(string, *mobs.Mob, *rooms.Room) (bool, error), speciesId int, result actions.TauntResult) string {
+	t.Helper()
+	return runPoolCaseWithTargetConviction(t, run, speciesId, result, 0)
+}
+
+// runPoolCaseWithTargetConviction is runPoolCase with the target's conviction
+// maximum set for the run (0 leaves it as it is).
+func runPoolCaseWithTargetConviction(t *testing.T, run func(string, *mobs.Mob, *rooms.Room) (bool, error), speciesId int, result actions.TauntResult, convMax int) string {
 	t.Helper()
 	t.Cleanup(seedAllRegistries())
 	no := false
@@ -48,12 +58,18 @@ func runPoolCase(t *testing.T, run func(string, *mobs.Mob, *rooms.Room) (bool, e
 	t.Cleanup(combat.SeedTauntPoolsForTest(map[string]map[combat.TauntIntensity]*combat.TauntMessages{
 		combat.TauntPoolRhetoric: poolTestBands(poolTestRhetoricAt),
 		combat.TauntPoolWordless: poolTestBands(poolTestWordlessAt),
+		combat.TauntPoolHowl:     poolTestBands(poolTestHowlAt),
 	}))
 
 	mob := mobs.GetInstance(100)
 	require.NotNil(t, mob)
 	mob.Character.SpeciesId = speciesId
 	target := users.GetByUserId(1)
+	if convMax > 0 {
+		oldMax := target.Character.ConvictionMax.Value
+		target.Character.ConvictionMax.Value = convMax
+		t.Cleanup(func() { target.Character.ConvictionMax.Value = oldMax })
+	}
 	room := rooms.LoadRoom(mob.Character.RoomId)
 	oldLamp := room.Lamp
 	room.Lamp = rooms.LampPtr(90)
@@ -86,8 +102,8 @@ func TestMobTauntAndHowlReadTheRightPool(t *testing.T) {
 	}{
 		{"speaking mob taunts in rhetoric", Taunt, poolTestSpeakerId, poolTestRhetoricAt},
 		{"speechless mob taunts wordless", Taunt, poolTestBeastId, poolTestWordlessAt},
-		{"speaking mob howls wordless", Howl, poolTestSpeakerId, poolTestWordlessAt},
-		{"speechless mob howls wordless", Howl, poolTestBeastId, poolTestWordlessAt},
+		{"speaking mob howls from the howl pool", Howl, poolTestSpeakerId, poolTestHowlAt},
+		{"speechless mob howls from the howl pool", Howl, poolTestBeastId, poolTestHowlAt},
 	}
 	for _, tc := range cases {
 		for _, band := range []string{"hit", "crit", "miss", "fumble"} {
@@ -109,13 +125,45 @@ func TestMobTauntAndHowlReadTheRightPool(t *testing.T) {
 					return
 				}
 				require.Contains(t, got, tc.want+" defender")
-				other := poolTestRhetoricAt
-				if tc.want == poolTestRhetoricAt {
-					other = poolTestWordlessAt
+				for _, other := range poolTestMarkers {
+					if other != tc.want {
+						require.NotContains(t, got, other)
+					}
 				}
-				require.NotContains(t, got, other)
 			})
 		}
+	}
+}
+
+// A howl's damage text is wordless whatever the howler's species; a speaking
+// mob's taunt keeps the spoken text. The stubbed action returns the spoken
+// text, as ExecuteTaunt does for a speaking taunter.
+func TestMobHowlDamageTextIsWordless(t *testing.T) {
+	const (
+		spoken   = "a stinging insult"
+		wordless = "a jolt of fear"
+	)
+	cases := []struct {
+		name string
+		run  func(string, *mobs.Mob, *rooms.Room) (bool, error)
+		want string
+		not  string
+	}{
+		{"speaking mob howls", Howl, wordless, spoken},
+		{"speaking mob taunts", Taunt, spoken, wordless},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := actions.TauntResult{
+				Hit:             true,
+				Damage:          10, // a tenth of the target's conviction: the jolt band
+				DmgDesc:         spoken,
+				DmgDescToTarget: spoken,
+			}
+			got := runPoolCaseWithTargetConviction(t, tc.run, poolTestSpeakerId, result, 100)
+			require.Contains(t, got, tc.want)
+			require.NotContains(t, got, tc.not)
+		})
 	}
 }
 

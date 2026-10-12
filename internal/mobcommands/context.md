@@ -42,7 +42,7 @@ The `internal/mobcommands` package implements the AI command system for non-play
   `SpeciesHasLifeDrain` / `SpeciesIsQuadrupedPredator` at three sync points:
   `CanUse*` in `ai.go`, `CommandIsReady`, and the action entry. Drift rows
   in `command_readiness_drift_test.go` keep all three in sync.
-- **Taunt pools**: `Taunt` and `Howl` each run `executeTauntAction` and its refusal checks, then hand the result to `narrateMobTaunt(mob, room, result, pool, command, legacy, aggroLine)` (`taunt.go`), the one narration flow. `Taunt` reads `mob.Character.TauntPool()` (wordless for a speechless species, else rhetoric); `Howl` always reads `combat.TauntPoolWordless`. `sendMobTauntTriad` takes the pool first. `mobTauntLegacy` holds the empty-store literals per command.
+- **Taunt pools**: `Taunt` and `Howl` each run `executeTauntAction` and its refusal checks, then hand the result to `narrateMobTaunt(mob, room, result, pool, command, legacy, aggroLine)` (`taunt.go`), the one narration flow. `Taunt` reads `mob.Character.TauntPool()` (wordless for a speechless species, else rhetoric); `Howl` always reads `combat.TauntPoolHowl` (`howl.yaml`) and re-renders its damage text with `TauntResult.WithWordlessDamageText`, so a howl names no speech whatever the species. `sendMobTauntTriad` takes the pool first. `mobTauntLegacy` holds the empty-store literals per command.
 - **Rhetoric**: `taunt` and its wolf-flavoured `howl` variant use the shared
   coordinated Defy renderer when defended. Its attacker, defender, and room
   lines replace the ordinary hit narration rather than following it. Every

@@ -1,5 +1,5 @@
 # taunt-messages store snapshot
-# files at time of writing: 2 (rhetoric,wordless)
+# files at time of writing: 3 (howl,rhetoric,wordless)
 # dimensions: intensity(hit/miss/critical/fumble) x perspective(actor/actee/observer)
 #
 # All three perspectives of one intensity come from ONE coordinated GetTauntTriad call
@@ -37,3 +37,15 @@ wordless|critical|observer => <ansi fg="User">Source</ansi>'s roar crashes over 
 wordless|fumble|actor => <ansi fg="red">Your snarl breaks into a cough. <ansi fg="Mob">Target</ansi> stares at you.</ansi>
 wordless|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi>'s snarl at you breaks into a cough.</ansi>
 wordless|fumble|observer => <ansi fg="User">Source</ansi>'s snarl at <ansi fg="Mob">Target</ansi> breaks into a cough.
+howl|hit|actor => Your long howl rolls over <ansi fg="Mob">Target</ansi>, who shudders! (<ansi fg="damage">ModerateWounds</ansi>)
+howl|hit|actee => <ansi fg="User">Source</ansi>'s long howl rolls over you, and you shudder! (<ansi fg="damage">ModerateWounds</ansi>)
+howl|hit|observer => <ansi fg="User">Source</ansi>'s long howl rolls over <ansi fg="Mob">Target</ansi>, who shudders!
+howl|miss|actor => Your long howl fades, and <ansi fg="Mob">Target</ansi> stands firm.
+howl|miss|actee => <ansi fg="User">Source</ansi> howls long, but you stand firm.
+howl|miss|observer => <ansi fg="User">Source</ansi> howls long at <ansi fg="Mob">Target</ansi>, who stands firm.
+howl|critical|actor => Your long howl crashes over <ansi fg="Mob">Target</ansi>, who reels! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+howl|critical|actee => <ansi fg="User">Source</ansi>'s long howl crashes over you. You reel! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+howl|critical|observer => <ansi fg="User">Source</ansi>'s long howl crashes over <ansi fg="Mob">Target</ansi>, who reels!
+howl|fumble|actor => <ansi fg="red">Your long howl wavers and dies. <ansi fg="Mob">Target</ansi> stares at you.</ansi>
+howl|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi>'s long howl wavers and dies.</ansi>
+howl|fumble|observer => <ansi fg="User">Source</ansi>'s long howl at <ansi fg="Mob">Target</ansi> wavers and dies.

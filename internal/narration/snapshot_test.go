@@ -585,7 +585,7 @@ func buildTauntMessagesGolden(t *testing.T) string {
 
 	intensities := []combat.TauntIntensity{combat.TauntHit, combat.TauntMiss, combat.TauntCritical, combat.TauntFumble}
 
-	for _, pool := range []string{combat.TauntPoolRhetoric, combat.TauntPoolWordless} {
+	for _, pool := range []string{combat.TauntPoolRhetoric, combat.TauntPoolWordless, combat.TauntPoolHowl} {
 		for _, intensity := range intensities {
 			triad := combat.GetTauntTriadFrom(pool, intensity, "Source", "Target", "User", "Mob", "ModerateWounds", narration.SequencePicker())
 			fmt.Fprintf(&b, "%s|%s|actor => %s\n", pool, intensity, triad.ToAttacker)

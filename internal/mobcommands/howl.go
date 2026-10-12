@@ -19,7 +19,8 @@ var howlLegacy = mobTauntLegacy{
 }
 
 // Howl is a wolf conviction attack, a taunt reskin for mob use. It always
-// narrates from the wordless pool: a howl is a sound, whatever the species.
+// narrates from the howl pool, with wordless damage text: a howl is a sound,
+// whatever the species.
 func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	if !mob.Character.IsInCombat() {
@@ -36,5 +37,5 @@ func Howl(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
-	return narrateMobTaunt(mob, room, result, combat.TauntPoolWordless, "howl", howlLegacy, howlAggroLine)
+	return narrateMobTaunt(mob, room, result.WithWordlessDamageText(), combat.TauntPoolHowl, "howl", howlLegacy, howlAggroLine)
 }

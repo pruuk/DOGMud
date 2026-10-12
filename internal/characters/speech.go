@@ -12,7 +12,7 @@ const (
 	// Speaks: words work; a taunt reads from the rhetoric pool.
 	Speaks SpeechState = iota
 	// Speechless: the species has no voice; a taunt reads from the wordless
-	// pool (snarls, roars), as a howl does.
+	// pool (snarls, roars). A howl reads its own howl pool.
 	Speechless
 	// Silenced: something stops the character making any sound; a taunt or
 	// howl is refused. Wins over the species.

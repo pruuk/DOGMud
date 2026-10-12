@@ -81,6 +81,33 @@ type TauntResult struct {
 	Counter CounterTauntResult
 }
 
+// tauntDamageText is the damage description of a taunt as onlookers and as the
+// target read it. wordless picks the band table that names no speech.
+func tauntDamageText(dmg int, target *characters.Character, wordless bool) (string, string) {
+	convMaxRef := 1
+	if target != nil && target.ConvictionMax.Value > 0 {
+		convMaxRef = target.ConvictionMax.Value
+	}
+	if wordless {
+		return combat.GetWordlessConvictionDamageDescription(dmg, convMaxRef),
+			combat.GetWordlessConvictionDamageDescriptionToTarget(dmg, convMaxRef)
+	}
+	return combat.GetConvictionDamageDescription(dmg, convMaxRef),
+		combat.GetConvictionDamageDescriptionToTarget(dmg, convMaxRef)
+}
+
+// WithWordlessDamageText returns the result with its damage text re-rendered
+// from the wordless band table. A caller whose taunt is a sound, not speech,
+// whatever the taunter's species (the mob howl), uses it; a result that dealt
+// no damage text is returned unchanged.
+func (r TauntResult) WithWordlessDamageText() TauntResult {
+	if !r.Executed || !r.Hit || r.DmgDesc == "" {
+		return r
+	}
+	r.DmgDesc, r.DmgDescToTarget = tauntDamageText(r.Damage, r.Target.Char, true)
+	return r
+}
+
 func tauntTargetIsCurrent(snapshot, current AggroTarget, originalRoomID int, char *characters.Character) bool {
 	return snapshot.Found && current.Found &&
 		snapshot.Char == current.Char &&
@@ -288,19 +315,11 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	target.Char.ApplyHarm(characters.PoolConviction, dmg,
 		state.ActorRef{UserId: char.GetUserId(), MobInstanceId: char.MobInstanceId})
 
-	// Build player-facing damage description.
-	convMaxRef := target.Char.ConvictionMax.Value
-	if convMaxRef <= 0 {
-		convMaxRef = 1
-	}
-	// A speechless taunter (a beast's snarl, a howl) hurts conviction without
-	// words, so its damage text must not name an insult (M6 slice 3).
-	dmgDesc := combat.GetConvictionDamageDescription(dmg, convMaxRef)
-	dmgDescToTarget := combat.GetConvictionDamageDescriptionToTarget(dmg, convMaxRef)
-	if char.TauntPool() == combat.TauntPoolWordless {
-		dmgDesc = combat.GetWordlessConvictionDamageDescription(dmg, convMaxRef)
-		dmgDescToTarget = combat.GetWordlessConvictionDamageDescriptionToTarget(dmg, convMaxRef)
-	}
+	// Build player-facing damage description. A speechless taunter hurts
+	// conviction without words, so its damage text must not name an insult
+	// (M6 slice 3). A howl is wordless whatever the species; Howl re-renders
+	// through WithWordlessDamageText.
+	dmgDesc, dmgDescToTarget := tauntDamageText(dmg, target.Char, char.TauntPool() == combat.TauntPoolWordless)
 
 	// Crit-received toughening now fires exactly once, inside the seam's
 	// bonus tier (combat.ResolveChannelAttack -> awardChannelDefenceBonus);

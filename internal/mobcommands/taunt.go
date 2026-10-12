@@ -67,9 +67,9 @@ const (
 )
 
 // narrateMobTaunt is the shared narration flow of a mob taunt and a mob howl: the
-// same conviction attack, narrated from pool (combat.TauntPoolRhetoric or
-// combat.TauntPoolWordless). legacy holds the fallback literals used only when
-// the store is empty. aggroLine is the room line, as a Sprintf format, for an
+// same conviction attack, narrated from pool (combat.TauntPoolRhetoric,
+// combat.TauntPoolWordless or combat.TauntPoolHowl). legacy holds the fallback
+// literals used only when the store is empty. aggroLine is the room line, as a Sprintf format, for an
 // aggro pull. command ("taunt" or "howl") is what the channel-defence
 // messages call the attack.
 //

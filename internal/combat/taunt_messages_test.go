@@ -240,26 +240,29 @@ func loadShippedTauntPool(t *testing.T, name string) *TauntMessageGroup {
 	return &g
 }
 
-// The shipped wordless pool loads and renders all three roles for every band,
-// with its tokens filled.
+// The shipped wordless and howl pools load and render all three roles for
+// every band, with their tokens filled.
 func TestGetTauntTriadFromWordlessRendersEveryBand(t *testing.T) {
 	seedTauntMessages(t, map[string]*TauntMessageGroup{
 		TauntPoolRhetoric: loadShippedTauntPool(t, TauntPoolRhetoric),
 		TauntPoolWordless: loadShippedTauntPool(t, TauntPoolWordless),
+		TauntPoolHowl:     loadShippedTauntPool(t, TauntPoolHowl),
 	})
 
-	for _, band := range []TauntIntensity{TauntHit, TauntMiss, TauntCritical, TauntFumble} {
-		got := GetTauntTriadFrom(TauntPoolWordless, band, "Gruntfang", "Target", "mob", "user", "a stinging insult", narration.SequencePicker())
-		if got.ToAttacker == "" || got.ToDefender == "" || got.ToRoom == "" {
-			t.Fatalf("band %s: incomplete triad %+v", band, got)
-		}
-		for _, line := range []string{got.ToAttacker, got.ToDefender, got.ToRoom} {
-			if strings.Contains(line, "{") || strings.Contains(line, "}") {
-				t.Errorf("band %s: unfilled token in %q", band, line)
+	for _, pool := range []string{TauntPoolWordless, TauntPoolHowl} {
+		for _, band := range []TauntIntensity{TauntHit, TauntMiss, TauntCritical, TauntFumble} {
+			got := GetTauntTriadFrom(pool, band, "Gruntfang", "Target", "mob", "user", "a jolt of fear", narration.SequencePicker())
+			if got.ToAttacker == "" || got.ToDefender == "" || got.ToRoom == "" {
+				t.Fatalf("%s band %s: incomplete triad %+v", pool, band, got)
 			}
-		}
-		if !strings.Contains(got.ToRoom, "Gruntfang") && band != TauntFumble {
-			t.Errorf("band %s: room line does not name the actor: %q", band, got.ToRoom)
+			for _, line := range []string{got.ToAttacker, got.ToDefender, got.ToRoom} {
+				if strings.Contains(line, "{") || strings.Contains(line, "}") {
+					t.Errorf("%s band %s: unfilled token in %q", pool, band, line)
+				}
+			}
+			if !strings.Contains(got.ToRoom, "Gruntfang") && band != TauntFumble {
+				t.Errorf("%s band %s: room line does not name the actor: %q", pool, band, got.ToRoom)
+			}
 		}
 	}
 }

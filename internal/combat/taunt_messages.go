@@ -155,7 +155,8 @@ func GetTauntTriad(intensity TauntIntensity, source, target, sourceType, targetT
 // that the two spellings agree.
 const (
 	TauntPoolRhetoric = "rhetoric" // spoken barbs
-	TauntPoolWordless = "wordless" // snarls and roars: howl, and any speechless taunter
+	TauntPoolWordless = "wordless" // snarls and roars: any speechless taunter
+	TauntPoolHowl     = "howl"     // howls and growls: the mob howl command
 )
 
 // GetTauntTriadFrom is GetTauntTriad for a named pool. An unknown pool returns
