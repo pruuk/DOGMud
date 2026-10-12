@@ -2,7 +2,7 @@ roomid: 5439
 zone: Kingsbarrow Vale
 title: Mill Street
 description: >
-  You hear the mill before you see the millstream — a low
+  You hear the mill before you see the millstream: a low
   continuous rumble underfoot and in the air at once, the groan
   of the great wheel turning and the heavier percussion of the
   millstones behind it, a sound so settled into this street that
@@ -13,7 +13,7 @@ description: >
   to the right where a rim is being fitted over a smoking fire.
   Between the workshops and the eastern turning, handcarts line
   the roadway, each loaded with bulging <ansi fg="itemname">grain
-  sacks</ansi> — some inbound for the mill, some outbound and
+  sacks</ansi>, some inbound for the mill, some outbound and
   sealed with twine, waiting for the morning's first cart north.
   The <ansi fg="itemname">millstream</ansi> runs past the east
   end of the lane, fast and brown and purposeful, the wheel's
@@ -38,7 +38,7 @@ nouns:
     are swollen tight, seams pulled taut, and the cloth is dark
     with the oils of the grain inside. The outbound sacks are
     the same cloth but flatter, the meal settled and packed
-    hard, the mark on each changed to a different hand — the
+    hard, the mark on each changed to a different hand, the
     miller's tally rather than the farmer's. A few sacks at
     the stack's base are split at a seam, grain leaking into
     the road-dirt in a pale trickle that has drawn a line of
@@ -50,15 +50,15 @@ nouns:
     a glass surface at its centre that breaks into chaotic foam
     at the wheel's far edge, churning and white, then flattening
     again into the drainage cut that takes it south toward the
-    flats. The stone channel is old — worn smooth at the lip,
+    flats. The stone channel is old, worn smooth at the lip,
     green-black with moss below the waterline, the mortar between
     the courses so compressed by time it looks like more stone.
   cooper's yard: The yard opens at the lane's west side, a
     working space of fragrant wood-dust and splitting mauls,
     stave-billets propped in loose fans against the wall and a
     half-finished barrel on a tilting-horse waiting for its
-    hoops. Fresh-split oak gives the yard its particular smell
-    — clean and tannic, nothing like the grain smell that
+    hoops. Fresh-split oak gives the yard its particular smell,
+    clean and tannic, nothing like the grain smell that
     saturates the rest of the street. A rack of finished barrels
     stands ready beside the gate, their staves still pale and
     tight-grained before the first use seasons them dark.
@@ -76,7 +76,7 @@ idlemessages:
   from the mill door to a waiting handcart, set it down with
   a grunt, and go back for another without stopping.
 - A boy darts between the handcarts with a stick, pretending
-  something — the game is private and involves the grain sacks
+  something. The game is private and involves the grain sacks
   as obstacles to be cleared without touching.
 x: -8
 y: -54
