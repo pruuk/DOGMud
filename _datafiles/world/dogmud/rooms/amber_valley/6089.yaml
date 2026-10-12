@@ -13,7 +13,7 @@ description: >
   <ansi fg="itemname">weathered marker</ansi> worn so nearly flat that at
   first it seems only a pale stone among the roots. It is older than the
   Rite. It is older than the markers' walk, older than the lintel-stone at
-  the gate, older — the keepers will admit if pressed — than anything the
+  the gate, older (the keepers will admit if pressed) than anything the
   valley can account for.
 biome: land
 coord: {x: -5, y: -39, z: 0}
@@ -24,7 +24,7 @@ nouns:
     >
     The stone is worn almost to smoothness, its face turned up to the scant
     light and softened by ages past any reckoning. No name survives on it,
-    no Blooming named or dated — the valley's careful way of carving is
+    no Blooming named or dated. The valley's careful way of carving is
     nowhere in it. But as your eyes adjust and the dapple shifts, you make
     out, faint beneath the wear, a symbol someone cut here long before the
     Rite was ever dreamed: a single point ringed round, and from that ring

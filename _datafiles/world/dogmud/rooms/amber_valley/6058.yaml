@@ -2,9 +2,9 @@ roomid: 6058
 zone: Amber Valley
 title: East Market
 description: >
-  The smell hits you full and sweet — ripe apricots split warm in the sun, the
-  honey-edge of overripe plums, the green sharpness of cut melon. Bees move through
-  it all in a lazy golden drift, and nobody troubles to wave them off.
+  The smell hits you full and sweet: ripe apricots split warm in the sun, the
+  honey-edge of overripe plums, the green sharpness of cut melon. Bees move
+  through it all in a lazy golden drift, and nobody troubles to wave them off.
 
   This is the fruit market proper, where the valley's real wealth is piled in
   baskets and crates and spread on cloth: apricots in tumbled heaps, figs going
@@ -14,7 +14,7 @@ description: >
   biggest stall has bark-rough skin across the backs of his hands, and he uses the
   toughened pads of his fingers to twist stems without ever bruising the flesh.
   When the wind swings round from the south it carries the sharp tang of the
-  tannery up over the sweetness from Tanner's Row, just down the lane — the
+  tannery up over the sweetness from Tanner's Row, just down the lane. The
   vendors only shrug and fan it off; in this valley the sweet and the sour have
   always lived as near neighbors.
 
@@ -29,7 +29,7 @@ exits:
 nouns:
   the fruit baskets: >
     Wide shallow baskets woven from valley reed, each heaped with a single kind of
-    fruit so the colors run in a long ribbon down the stalls — apricot gold, plum
+    fruit so the colors run in a long ribbon down the stalls: apricot gold, plum
     purple, fig brown, the pale green of underripe grapes. The smell is almost
     too much, rich and warm and faintly fermenting at the edges where the softest
     fruit has begun to give.
@@ -40,7 +40,7 @@ nouns:
     it with a hand-lettered sign: "Take a taste. Leave the bees be."
   the fruit seller: >
     A broad old man presiding over the largest stall, his hands and forearms
-    sheathed in skin gone bark-rough and brown — a Blooming he plainly counts a
+    sheathed in skin gone bark-rough and brown, a Blooming he plainly counts a
     blessing, since the toughened pads let him twist stems and turn thorned canes
     bare-handed. He'll split an apricot with his thumbnail and hand you the better
     half before you've decided to buy.

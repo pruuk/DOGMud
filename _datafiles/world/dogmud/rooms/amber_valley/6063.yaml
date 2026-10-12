@@ -2,11 +2,12 @@ roomid: 6063
 zone: Amber Valley
 title: Tanner's Row
 description: >
-  The smell announces this lane before you reach it — the sharp animal tang of the
-  tannery, cut through with the bitter-green reek of dye-vats and the vinegar bite
+  The smell announces this lane before you reach it: the sharp animal tang of
+  the tannery, cut through with the bitter-green reek of dye-vats and the
+  vinegar bite
   of mordant. It is not unpleasant so much as honest, the smell of a place that
   works with its hands. The row was set here on purpose, at the market's southern
-  lee — downwind of the fruit-stalls just up the lane, on most days at least.
+  lee, downwind of the fruit-stalls just up the lane, on most days at least.
 
   Tanner's Row is the valley's grubby, vital underside, where hides become leather
   and plain cloth becomes color. Stretched skins dry on frames down one side; on
@@ -14,8 +15,8 @@ description: >
   in overlapping rings of madder-red and woad-blue. Workers move between them with
   rolled sleeves and stained forearms, unhurried in the heat. A young tanner hauls a
   hide from a vat one-handed, the thick scaled hide running up the back of that arm
-  gleaming wet — a Blooming that lets her plunge into the harshest liquor without a
-  glove and laugh about it.
+  gleaming wet, a Blooming that lets her plunge into the harshest liquor
+  without a glove and laugh about it.
 
   <ansi fg="itemname">the drying frames</ansi> line one wall, and across the lane
   steam <ansi fg="itemname">the dye-vats</ansi>.
@@ -32,7 +33,7 @@ nouns:
     hides at the near end; the finished leather at the far end smells only of oil
     and sun.
   the dye vats: >
-    A line of half-sunken vats, each holding a different steeping color — madder
+    A line of half-sunken vats, each holding a different steeping color: madder
     boiling down to blood-red, woad gone deep indigo, a yellow weld bright as the
     sun overhead. The ground around them is stained in soft overlapping rings, a
     decade of spills layered into an accidental rainbow. Steam and a sharp vinegar
@@ -41,8 +42,8 @@ nouns:
     A wiry young woman working the vats sleeves-up, the back of one forearm sheathed
     in thick overlapping scales gone slick and dark with dye-liquor. She reaches
     bare-armed into vats that would scald or burn an ordinary hand, fishing out
-    hides one-handed, and grins at your glance like it's the best joke in the world —
-    which, in this valley, it nearly is.
+    hides one-handed, and grins at your glance like it's the best joke in the
+    world, which, in this valley, it nearly is.
 idlemessages:
 - A hide slaps wetly onto a drying frame.
 - Steam curls up off the hot madder-vat, sharp and red-smelling.

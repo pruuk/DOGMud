@@ -4,7 +4,7 @@ title: Valley's South Lane
 description: >
   The lane reaches its southern edge, where the cultivated land falls away to
   open scrub and the long drop of country beyond. The
-  <ansi fg="itemname">south road</ansi> runs on from here now — the wash-out
+  <ansi fg="itemname">south road</ansi> runs on from here now, the wash-out
   bridged over at last, a fresh-cut roadbed angled down toward the river
   country below. New mortar still pales between the stones. West, a faint
   foot path climbs into the dry foothills. The wind comes uncombed off the
@@ -19,15 +19,15 @@ exits:
 nouns:
   the south road: >
     A new post stands where the old one leaned. The board reading WAY WASHED
-    OUT — NO PASSAGE has been turned face-down in the scrub; a replacement
-    reads: TO THE RIVER COUNTRY & THE CONFLUENCE — OPEN. Below the old
+    OUT: NO PASSAGE has been turned face-down in the scrub; a replacement
+    reads: TO THE RIVER COUNTRY & THE CONFLUENCE: OPEN. Below the old
     scratched word SOON, a single heavy line has been scored through it and
     the word OPEN written beside it. The gully is bridged over with flat
     river stone and fresh mortar, the work clean if not elegant. The road
     drops away south, passable at last.
   the open country: >
     South past the repaired crossing, the land tilts away in long dry folds
-    toward a far green seam of riverbank. The road runs on into it now —
+    toward a far green seam of riverbank. The road runs on into it now,
     mended at last, the way to the Confluence finally open. That green country
     and its wide water lie ahead, no longer only a view.
   the foot path: >

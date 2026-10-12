@@ -5,7 +5,7 @@ description: >
   This is the dry rim of the whole valley, and from here the land lays itself
   out below you. The path runs along a stony spine where the wind never quite
   stops, and behind and east the green <ansi fg="itemname">vista</ansi> of the
-  farms spreads soft and patchworked, hazed gold in the heat — orchard, field,
+  farms spreads soft and patchworked, hazed gold in the heat: orchard, field,
   and the silver thread of the channels, everything Amber Valley grows. Forward
   is only more dry country. Just below the path, where the ridge breaks away in
   a tumble of pale rock, a dark <ansi fg="itemname">slot</ansi> gapes in the
@@ -17,7 +17,7 @@ exits:
   south: {roomid: 6079}
 nouns:
   the vista: >
-    From the ridge the valley opens below you in a single sweep — the dark crowns
+    From the ridge the valley opens below you in a single sweep: the dark crowns
     of the orchards, the quilted greens and golds of the fields, the bright
     stitching of the irrigation channels carrying the water down. From up here
     you can see plainly how the whole green miracle depends on those thin silver
