@@ -23,9 +23,12 @@ var proseDashDirs = []string{
 	"messaging",
 }
 
+// The characters around a spaced dash may be a tag bracket or a token brace
+// ("{actor}</ansi> - their jaws", "opening - <ansi ...>"): a tag is invisible
+// in play, so a dash beside one reads as a dash all the same.
 var (
 	emOrEnDash   = regexp.MustCompile("[—–]")
-	spacedHyphen = regexp.MustCompile(`[A-Za-z,.!?'"] --? [A-Za-z]`)
+	spacedHyphen = regexp.MustCompile(`[A-Za-z0-9,.!?'")>}] --? [A-Za-z0-9<{'"]`)
 )
 
 func TestPlayerProseHasNoDashes(t *testing.T) {

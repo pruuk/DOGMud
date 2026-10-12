@@ -286,7 +286,7 @@ options:
         - 'By pure luck, your wild swing with your <ansi fg="item">{itemname}</ansi> connects and <ansi fg="cyan-bold">CRACKS INTO</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         expert:
         - 'You channel overwhelming force and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them with arcane fury!'
+        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>, and you <ansi fg="cyan-bold">ANNIHILATE</ansi> them with arcane fury!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
         - 'You slip past their guard and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRACKS TRUE</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
@@ -322,7 +322,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s stance and delivers a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> slips past the guard and <ansi fg="cyan-bold">CRACKS TRUE</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - 'With almost contemptuous ease, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> needs only the barest motion to deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">SEARS THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -358,7 +358,7 @@ options:
         master:
         - 'Your defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s channel, and they <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite their skill, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their strike!'
-        - 'A moment''s carelessness costs <ansi fg="{actortype}">{actor}</ansi> - they <ansi fg="red-bold">FUMBLE</ansi> despite their mastery!'
+        - 'A moment''s carelessness costs <ansi fg="{actortype}">{actor}</ansi>, and they <ansi fg="red-bold">FUMBLE</ansi> despite their mastery!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> catches on your guard and they <ansi fg="red-bold">FUMBLE</ansi>!'
       observer:
         beginner:
@@ -374,5 +374,5 @@ options:
         master:
         - '<ansi fg="{acteetype}">{actee}''s</ansi> defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s channel: a <ansi fg="red-bold">FUMBLE</ansi>!'
         - 'Despite masterful form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        - 'A moment''s carelessness costs <ansi fg="{actortype}">{actor}</ansi> - a <ansi fg="red-bold">FUMBLE</ansi> despite their mastery!'
+        - 'A moment''s carelessness costs <ansi fg="{actortype}">{actor}</ansi>: a <ansi fg="red-bold">FUMBLE</ansi> despite their mastery!'
         - 'Despite masterful form, <ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> catches wrong and they <ansi fg="red-bold">FUMBLE</ansi>!'

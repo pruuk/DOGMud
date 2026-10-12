@@ -400,7 +400,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless, and yourvitality is <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s unstoppable hunger ends in a <ansi fg="cyan-bold">CRITICAL DRAIN</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all focus and <ansi fg="cyan-bold">DRINKS DEEP</ansi> from you utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> your vitality!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> your vitality!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY DRAIN</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -411,18 +411,18 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> lunges and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">FEEDS</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT DRAIN</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like a predator and <ansi fg="cyan-bold">LEECHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> - <ansi fg="cyan-bold">ANNIHILATION</ansi> of vitality!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>: <ansi fg="cyan-bold">ANNIHILATION</ansi> of vitality!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every breath and delivers a <ansi fg="cyan-bold">FLAWLESS DRAIN</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical strike creates the opening - <ansi fg="cyan-bold">EVISCERATION</ansi> of will!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical strike creates the opening: <ansi fg="cyan-bold">EVISCERATION</ansi> of will!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads the aura and delivers a <ansi fg="cyan-bold">FLAWLESS DRAIN</ansi>!'
         - 'While {position}, {momentum}, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT FEEDING</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING DRAIN</ansi> from the perfect angle!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">LEECHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless - <ansi fg="cyan-bold">OBLITERATION</ansi> of vitality!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi> of vitality!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s hunger culminates in a <ansi fg="cyan-bold">CRITICAL DRAIN</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all focus and <ansi fg="cyan-bold">DRINKS DEEP</ansi> from <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s vitality!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and their <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>''s vitality!'
   fumble:
     # messages for when they are in the same room
     together:

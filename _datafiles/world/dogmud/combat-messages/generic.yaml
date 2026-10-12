@@ -513,7 +513,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS HIT</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads you completely and strikes your {bodypart} for a <ansi fg="cyan-bold">PERFECT CRITICAL</ansi>!'
-        - 'There is no defense against it - <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi> on you!'
+        - 'There is no defense against it: <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi> on you!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY HITS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -527,9 +527,9 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">DECISIVE STRIKE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS HIT</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> strikes <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart} for a <ansi fg="cyan-bold">PERFECT CRITICAL</ansi>!'
-        - 'There is no defense against it - <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi>!'
+        - 'There is no defense against it: <ansi fg="{actortype}">{actor}</ansi> lands a <ansi fg="cyan-bold">FLAWLESS CRITICAL</ansi>!'
     separate:
       actor:
         beginner:

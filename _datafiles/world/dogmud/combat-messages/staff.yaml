@@ -292,7 +292,7 @@ options:
         - 'You drive your <ansi fg="item">{itemname}</ansi> home with a <ansi fg="cyan-bold">RESOUNDING CRITICAL</ansi>!'
         expert:
         - 'You whirl your staff and <ansi fg="cyan-bold">DEVASTATE</ansi> <ansi fg="{acteetype}">{actee}</ansi> with both ends!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> - you <ansi fg="cyan-bold">ANNIHILATE</ansi> them!'
+        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>, and you <ansi fg="cyan-bold">ANNIHILATE</ansi> them!'
         - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS SWEEP</ansi>!'
         - 'Timing your strike to the beat of their footwork, you land a <ansi fg="cyan-bold">TEXTBOOK CRITICAL</ansi>!'
         master:
@@ -328,7 +328,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> reads the exchange perfectly and lands a <ansi fg="cyan-bold">FLAWLESS SWEEP</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> times the strike to <ansi fg="{acteetype}">{actee}</ansi>''s footwork and lands a <ansi fg="cyan-bold">TEXTBOOK CRITICAL</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s staff becomes an extension of their will as <ansi fg="{acteetype}">{actee}</ansi> is <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - 'With effortless precision, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">CRUSHES THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'

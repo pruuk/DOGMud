@@ -89,7 +89,7 @@ options:
         - 'A professional threat looms from the <ansi fg="exit">{entrancename}</ansi> direction.'
         master:
         - 'You sense a legendary marksman preparing to fire from the <ansi fg="exit">{entrancename}</ansi> direction.'
-        - 'An instinctive threat emanates from the <ansi fg="exit">{entrancename}</ansi> - someone with perfect aim.'
+        - 'An instinctive threat emanates from the <ansi fg="exit">{entrancename}</ansi>: someone with perfect aim.'
         - 'You feel an ominous premonition of flawless marksmanship from the <ansi fg="exit">{entrancename}</ansi>.'
       observer:
         beginner:
@@ -220,7 +220,7 @@ options:
         - '<ansi fg="{acteetype}">{actee}</ansi> feels the weight of a tactical shooter''s focus from the <ansi fg="exit">{entrancename}</ansi>.'
         master:
         - '<ansi fg="{acteetype}">{actee}</ansi> senses a legendary marksman reading their next move from the <ansi fg="exit">{entrancename}</ansi>.'
-        - 'An ominous certainty settles over <ansi fg="{acteetype}">{actee}</ansi> - perfect aim awaits from the <ansi fg="exit">{entrancename}</ansi>.'
+        - 'An ominous certainty settles over <ansi fg="{acteetype}">{actee}</ansi>: perfect aim awaits from the <ansi fg="exit">{entrancename}</ansi>.'
         - '<ansi fg="{acteetype}">{actee}</ansi> feels a premonition of instinctive marksmanship from the <ansi fg="exit">{entrancename}</ansi> direction.'
   miss:
     # messages for when they are in the same room
@@ -745,7 +745,7 @@ options:
         - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL SHOT</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">CARVES THROUGH</ansi> you utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their shot <ansi fg="cyan-bold">DECIMATES</ansi> you!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and theirshot <ansi fg="cyan-bold">DECIMATES</ansi> you!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY SNIPES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -756,18 +756,18 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> whirls and their shot <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges forward with a <ansi fg="cyan-bold">PERFECT STRIKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like water and <ansi fg="cyan-bold">RENDS</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful lead opens <ansi fg="{acteetype}">{actee}</ansi> completely - <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful lead opens <ansi fg="{acteetype}">{actee}</ansi> completely: <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS SHOT</ansi> through <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening - <ansi fg="cyan-bold">EVISCERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening: <ansi fg="cyan-bold">EVISCERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> strike on <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS SHOT</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> from the perfect angle!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">SHREDS</ansi> <ansi fg="{acteetype}">{actee}</ansi> with precision!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL SHOT</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">CARVES THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their shot <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and theirshot <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
     # messages for when they are in different rooms, such as with projectiles
     separate:
       actor:

@@ -427,7 +427,7 @@ options:
         - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL SMASH</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">POUNDS THROUGH</ansi> you utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their weapon <ansi fg="cyan-bold">DECIMATES</ansi> you!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and theirweapon <ansi fg="cyan-bold">DECIMATES</ansi> you!'
       observer:
         beginner:
         - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY SMASHES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
@@ -438,18 +438,18 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi> whirls and their weapon <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> lunges forward with a <ansi fg="cyan-bold">PERFECT STRIKE</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> flows like water and <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely - <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> masterful feint opens <ansi fg="{acteetype}">{actee}</ansi> completely: <ansi fg="cyan-bold">ANNIHILATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS BASH</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening - <ansi fg="cyan-bold">PULVERIZATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> tactical brilliance creates the perfect opening: <ansi fg="cyan-bold">PULVERIZATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> reads every move and delivers a <ansi fg="cyan-bold">FLAWLESS BASH</ansi>!'
         - 'While {position}, {momentum}, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING STRIKE</ansi> from the perfect angle!'
         - '<ansi fg="{actortype}">{actor}</ansi> exploits total advantage and <ansi fg="cyan-bold">DEMOLISHES</ansi> <ansi fg="{acteetype}">{actee}</ansi> with precision!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}''s</ansi> positioning is flawless: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}''s</ansi> unstoppable assault culminates in a <ansi fg="cyan-bold">CRITICAL SMASH</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">POUNDS THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly!'
-        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi> - their weapon <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        - 'The tide favors <ansi fg="{actortype}">{actor}</ansi>, and theirweapon <ansi fg="cyan-bold">DECIMATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
   fumble:
     # messages for when they are in the same room
     together:

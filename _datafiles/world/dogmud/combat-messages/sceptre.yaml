@@ -325,7 +325,7 @@ options:
         - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> finds its mark for a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> times the swing perfectly for a <ansi fg="cyan-bold">RESOUNDING CRITICAL</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
         master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance - <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi>''s relentless approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> on <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">SHATTERS THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
         - '<ansi fg="{actortype}">{actor}</ansi> places the weight of the blow with <ansi fg="cyan-bold">SOVEREIGN EFFECT</ansi>, and <ansi fg="{acteetype}">{actee}</ansi> reels!'
