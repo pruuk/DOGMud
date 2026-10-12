@@ -403,7 +403,9 @@ plain carrier ("Curious Trinket").
   that one viewer (the repo-root guard `bauble_finder_view_guard_test.go`
   pins every caller and its call count). `displayNameFrom` and
   `longDescriptionFrom` are the spec-taking bodies of `DisplayName` and
-  `GetLongDescription`. Matching is viewer-agnostic,
+  `GetLongDescription`; `SpecDisplayName(itemId)` is the display name read
+  from the template spec with no item minted ("" without a spec), for text
+  about an item that does not exist yet (a mob's craft line). Matching is viewer-agnostic,
   so such a bauble matches ONLY by its generic words (`trinket`, `bauble`,
   the generic name), for everyone INCLUDING its finder: a hidden word that
   matched would confirm it to anyone who typed it (`look horse`), and as a

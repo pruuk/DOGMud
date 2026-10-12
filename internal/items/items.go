@@ -497,6 +497,17 @@ func (i *Item) DisplayName() string {
 	return i.displayNameFrom(i.GetSpec())
 }
 
+// SpecDisplayName is the display name an item of itemId would show, read from
+// its spec without minting an item; "" when no spec exists.
+func SpecDisplayName(itemId int) string {
+	spec := GetItemSpec(itemId)
+	if spec == nil {
+		return ``
+	}
+	itm := Item{ItemId: itemId}
+	return itm.displayNameFrom(*spec)
+}
+
 // displayNameFrom is DisplayName over a spec already resolved (GetSpec, or
 // GetSpecFor for one viewer).
 func (i *Item) displayNameFrom(spec ItemSpec) string {

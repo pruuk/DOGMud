@@ -120,7 +120,12 @@ The `internal/mobcommands` package implements the AI command system for non-play
   `craft` (`craft.go`) is a thin wrapper over `actions.InitiateCraft`
   (sight gates parity, slice 5a): the dark refusal (`CraftResult.CannotSee`)
   lives in `internal/actions/craft.go`, and every refusal, including a mob
-  that cannot see to work, is a silent no-op.
+  that cannot see to work, is a silent no-op. A started timed craft is
+  announced by `announceCraftBegin`, which judges each player by
+  `messaging.ReaderSight` (as `hooks.announceCorpse` does): full sight reads
+  the output item's name (`items.SpecDisplayName`, no item minted), shapes
+  reads "begins working on something." with the mob anonymised, no sight
+  reads nothing.
 
 #### **Support and Utility Behaviors**
 - **Healing assistance**: `aid`, `lookforaid` - Medical support AI
