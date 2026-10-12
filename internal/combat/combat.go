@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/darkcombat"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -641,9 +642,10 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 	}
 
 	// M4d PR 2: hide identities at composition, once, over every personal
-	// line this round composed -- rather than replaceDarknessMessages'
-	// approach of throwing the composed line away and substituting one of
-	// twelve hardcoded sentences. See hideIdentitiesInPersonalLines.
+	// line this round composed. A reader who cannot see at all (optics
+	// SightNone) then has the composed lines swapped for dark-combat lines
+	// from the narration store (M6 slice 2); every other reader keeps the
+	// composed line with names hidden. See hideIdentitiesInPersonalLines.
 	hideIdentitiesInPersonalLines(&attackResult, sourceChar, targetChar, ctx)
 
 	return attackResult
@@ -663,6 +665,52 @@ func swingEventFor(r hitResolution) SwingEvent {
 		DefenseCrit:  r.defenseCrit,
 		Defended:     r.defenceWon(),
 	}
+}
+
+// darkOutcome buckets one swing for a reader who cannot see, in the order the
+// retired replaceDarknessMessages used. ok is false for a double fumble,
+// which is narrated by its own line and gets no dark line. "Defended" reads
+// the swing's own Defended, not AttackResult.DefenseUsed, which is sticky.
+func darkOutcome(se SwingEvent) (darkcombat.Outcome, bool) {
+	switch {
+	case se.DoubleFumble:
+		return "", false
+	case se.Fumble:
+		return darkcombat.Fumble, true
+	case se.Crit:
+		return darkcombat.Crit, true
+	case se.Defended && !se.DefenseCrit && se.Damage > 0:
+		return darkcombat.Deflected, true
+	case se.Defended:
+		return darkcombat.Defended, true
+	case se.Hit:
+		return darkcombat.Hit, true
+	}
+	return darkcombat.Miss, true
+}
+
+// darkLines is one dark line per swing for viewpoint v. A clean defence is
+// CategoryDodge; every other bucket, a deflected swing included, is
+// CategoryHitMelee, so the damage-to-viewer verbosity floor still applies.
+// Empty when the store is unloaded or there is no swing to narrate.
+func darkLines(events []SwingEvent, v darkcombat.Viewpoint) []TaggedMessage {
+	var out []TaggedMessage
+	for _, se := range events {
+		o, ok := darkOutcome(se)
+		if !ok {
+			continue
+		}
+		text, ok := darkcombat.Line(v, o, narration.DefaultPicker)
+		if !ok {
+			return nil
+		}
+		cat := messaging.CategoryHitMelee
+		if o == darkcombat.Defended {
+			cat = messaging.CategoryDodge
+		}
+		out = append(out, TaggedMessage{Category: cat, Text: text})
+	}
+	return out
 }
 
 // hideIdentitiesInPersonalLines hides each side's counterpart from that
@@ -718,7 +766,24 @@ func swingEventFor(r hitResolution) SwingEvent {
 // weapon whenever both held a weapon of the same name. The crit disarm line
 // names the victim's weapon outside any AttackResult (criteffects.go) and
 // is the accepted known limit.
+//
+// Dark lines (M6 slice 2): a reader who cannot see at all has that side's
+// personal lines replaced by one internal/darkcombat line per swing. The gate
+// is ctx.sourceOptics / ctx.targetOptics (messaging.ParticipantSight), not
+// the sight fields above, so a sleeper in a lit room, whom ReaderSight counts
+// as blind, keeps the composed line with "something". A shapes reader keeps
+// the composed line too.
 func hideIdentitiesInPersonalLines(result *AttackResult, sourceChar, targetChar *characters.Character, ctx combatContext) {
+	if ctx.sourceOptics == messaging.SightNone {
+		if dark := darkLines(result.SwingEvents, darkcombat.Attacker); len(dark) > 0 {
+			result.MessagesToSource = dark
+		}
+	}
+	if ctx.targetOptics == messaging.SightNone {
+		if dark := darkLines(result.SwingEvents, darkcombat.Defender); len(dark) > 0 {
+			result.MessagesToTarget = dark
+		}
+	}
 	for i := range result.MessagesToSource {
 		result.MessagesToSource[i].Text = messaging.HideNames(result.MessagesToSource[i].Text, []string{targetChar.Name}, ctx.sourceSight)
 	}

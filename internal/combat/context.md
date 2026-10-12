@@ -1155,7 +1155,8 @@ function discarded the composed line entirely and substituted one of twelve
 hardcoded Go sentences, this one keeps the composed line — weapon flavour,
 the winning defence, and M4c's damage band all survive — and hides only the
 OTHER party's name inside it, per READER, by that reader's own
-`SightDecision`:
+`SightDecision`, for every reader who can see at least shapes. A reader whose
+optics are `SightNone` is the exception: see "Dark lines" below.
 
 - `result.MessagesToSource` (the attacker's own lines): the DEFENDER's name
   is hidden by `ctx.sourceSight`.
@@ -1173,6 +1174,15 @@ they are sight-gated separately through `messaging.SendTrio`. Called once
 per round, at the end of `calculateCombat`, after every swing's
 `buildAttackMessages` and `applyPetDamage` have already composed their
 lines.
+
+**Dark lines (M6 slice 2).** When a reader's optics verdict
+(`combatContext.sourceOptics` / `targetOptics`, `messaging.ParticipantSight`)
+is `SightNone`, `hideIdentitiesInPersonalLines` replaces that side's personal
+lines with one `internal/darkcombat` line per `SwingEvent` (`darkOutcome`,
+`darkLines`). A sleeper trips `ReaderSight` but not optics, so it keeps the
+composed line with "something". `SwingEvent.Defended` is the per-swing
+defensive win the buckets read; `AttackResult.DefenseUsed` is sticky across a
+round and must not be used for per-swing questions.
 
 Melee's defence lines (`sendDefenseMessages`, `fillCounterMessages`,
 `BuildCounterTauntMessages`) do NOT go through this function — they
