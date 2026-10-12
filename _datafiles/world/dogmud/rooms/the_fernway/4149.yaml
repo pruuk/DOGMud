@@ -3,7 +3,7 @@ zone: The Fernway
 title: Twin Oaks Bend
 description: >
   Two enormous old <ansi fg="itemname">oaks</ansi> rise on
-  either side of a sharp bend in the path — twins by the
+  either side of a sharp bend in the path, twins by the
   look of them, perhaps three centuries old apiece, their
   upper branches interlaced into a single canopy that
   throws cool dappled light onto the trail below. The
@@ -31,7 +31,7 @@ nouns:
     the path's bend, their trunks broader than two grown
     persons could span hand-to-hand and their bark deeply
     seamed and lichen-streaked. The upper branches lace
-    into a single shared canopy — a feat of long
+    into a single shared canopy, a feat of long
     competitive growth. Both trees bear deep marks at
     waist height where generations of travelers have
     carved initials and small symbols.
@@ -42,7 +42,7 @@ nouns:
     cold-water tonic. A few of the deepest patches show
     small white star-flowers above the leaves.
   foxglove: Tall pink-flowered foxglove rises in scattered
-    patches at the edge of the oaks' shade — beautiful and
+    patches at the edge of the oaks' shade, beautiful and
     poisonous in equal measure. The leaves are a known
     heart-medicine in small careful doses and a known
     killer in any larger one. Most healers refuse to
@@ -50,7 +50,7 @@ nouns:
   side track: A small brown footpath branches south off
     the main trail, the underbrush flattened from
     occasional use but not maintained. A weathered
-    wooden marker reads simply WEDDELL — perhaps the name
+    wooden marker reads simply WEDDELL, perhaps the name
     of the family that once held the land down that way.
 idlemessages:
 - A jay screams from somewhere high in the oaks' canopy and is answered by another.

@@ -4,13 +4,13 @@ title: Bracken Mile
 description: >
   The path runs flat and straight through the densest
   stretch of <ansi fg="itemname">bracken</ansi> for what
-  feels like a long time — the fronds reach above
+  feels like a long time. The fronds reach above
   shoulder-height on both sides, and the trail itself is
   little more than a beaten dark line through the green.
   The air here smells purely of fern-must and the slight
   bitter-green of crushed stems. A small clear patch of
   trail-side <ansi fg="itemname">wild thyme</ansi> grows
-  where the bracken thins for a few paces — pungent and
+  where the bracken thins for a few paces, pungent and
   silvered-grey, releasing its smell at any brush. The
   path goes on and on at the same slow pace, and a
   walker's mind settles.
@@ -36,7 +36,7 @@ nouns:
     occupies a few paces of clear ground at the path's
     middle, the silvered-grey leaves and tiny pink
     flowers forming a soft cushion. Pinch a sprig and
-    the smell jumps — sharper and cleaner than any
+    the smell jumps, sharper and cleaner than any
     garden-cultivated thyme. Cooks gather it for stews
     and roasts; healers use the oil for sore throats
     and a few other things.
@@ -49,12 +49,12 @@ nouns:
   green: The walls of green close on both sides, the
     light filtered to a soft uniform glow. A walker on
     this stretch starts to feel they have been walking
-    forever and will keep walking forever — pleasant
+    forever and will keep walking forever, pleasant
     rather than alarming, the kind of pace that lets
     the mind unspool.
 idlemessages:
 - A breeze ripples the bracken-tops into a long slow wave that runs the length of the trail.
-- A small dry crackle from somewhere off the path — something small, moving.
+- A small dry crackle from somewhere off the path. Something small is moving.
 - The smell of crushed wild thyme rises briefly underfoot.
 - A late <ansi fg="mobname">cricket</ansi> starts up from the bracken and is answered by another.
 x: -3

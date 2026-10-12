@@ -4,14 +4,14 @@ title: Fox Den
 description: >
   The southern earth-track from Foxglade dips into a small
   hollow where a low <ansi fg="itemname">embankment</ansi>
-  rises along the path's western side — the kind of dry
+  rises along the path's western side, the kind of dry
   raised earth that foxes and badgers favor for their
   dens. A clear <ansi fg="itemname">den-mouth</ansi>
   opens in the embankment's face, the entry packed smooth
   by use and the earth around it printed with small
   pawprints in the soft ground. The musky
   <ansi fg="itemname">scent</ansi> of fox-marking is
-  strong here — fresh and unmistakable. A patch of bone
+  strong here, fresh and unmistakable. A patch of bone
   and small tufts of fur at the den's edge mark recent
   meals; the fox is at home.
 biome: forest
@@ -28,7 +28,7 @@ exits:
 nouns:
   embankment: A low raised earth-bank rises along the
     western side of the small hollow, perhaps twice a
-    person's height — the dry firm earth foxes and
+    person's height, the dry firm earth foxes and
     badgers prefer for digging. The embankment runs
     perhaps fifty paces north-south and is riddled with
     the dark mouths of small dens, most of them long
@@ -40,12 +40,12 @@ nouns:
     a pawprint or two is small enough to be a kit
     rather than a grown fox.
   scent: The musky scent of fox-marking is strong and
-    fresh in the air around the den — recognizable to
+    fresh in the air around the den, recognizable to
     anyone who has spent time in country like this.
     Not unpleasant; just unmistakable. The marker
     has been here recently and will likely return.
   bones: A small scatter of bones at the den's edge
-    marks recent meals — rabbit mostly, a few bird-
+    marks recent meals, rabbit mostly, a few bird-
     bones, the long thin leg-bone of something larger
     that the fox dragged in from elsewhere. Tufts of
     grey-brown fur lie among the bones, some of it

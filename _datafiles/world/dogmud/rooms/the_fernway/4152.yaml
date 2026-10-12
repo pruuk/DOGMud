@@ -4,14 +4,14 @@ title: Foxglade
 description: >
   A small open clearing where the bracken thins and a
   patch of taller grass and scattered
-  <ansi fg="itemname">foxglove</ansi> opens to the sky —
-  the path's name comes from the small russet shapes that
+  <ansi fg="itemname">foxglove</ansi> opens to the sky.
+  The path's name comes from the small russet shapes that
   sometimes cross the glade at dusk. Pale
   <ansi fg="itemname">wild garlic</ansi> grows along the
   glade's western edge, the broad green leaves
   unmistakable and the smell unmistakable too. A faint
   musky <ansi fg="itemname">scent</ansi> hangs around the
-  glade's southern verge — fox-marking, fresh enough to
+  glade's southern verge: fox-marking, fresh enough to
   still be sharp. A small earth-track branches south
   toward what looks like a den-mouth.
 biome: forest
@@ -30,7 +30,7 @@ nouns:
   foxglove: Tall pink-flowered foxglove stands in the
     glade's open ground, the same plant as the foxgloves
     near the Twin Oaks bend but here in greater
-    numbers — perhaps fifty plants in a loose scatter.
+    numbers, perhaps fifty plants in a loose scatter.
     Beautiful, poisonous, and useful in small careful
     doses. The fox-glade gets its name from the
     flowers, by some accounts; from the foxes themselves,
@@ -43,7 +43,7 @@ nouns:
     garlic, much prized by inn-cooks who can get their
     hands on a basket.
   scent: A faint musky scent hangs in the glade's
-    southern air — fresh fox-marking, recognizable to
+    southern air, fresh fox-marking, recognizable to
     anyone who has spent time in country like this.
     Not unpleasant; just unmistakable. The marking
     gets stronger toward the southern edge of the
@@ -51,7 +51,7 @@ nouns:
   grass: Tall pale grasses grow where the bracken
     thins, the seedheads heavy and bowed in the
     afternoon light. Several patches show beaten-down
-    impressions where deer have bedded — and a few
+    impressions where deer have bedded, and a few
     smaller impressions where foxes have done the
     same.
 idlemessages:

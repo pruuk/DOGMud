@@ -3,7 +3,7 @@ zone: The Fernway
 title: Stoneford Crossing
 description: >
   A clear shallow <ansi fg="itemname">creek</ansi> cuts the
-  trail at a stretch of flat water-rounded stones — the ford
+  trail at a stretch of flat water-rounded stones, the ford
   the path's name comes from. The water is ankle-deep at
   the crossing and slightly colder than the air, with a
   faint mineral-iron edge that suggests deeper springs
@@ -28,7 +28,7 @@ nouns:
   creek: A clear shallow creek runs north-south across the
     trail, the bed of pale water-rounded stones visible
     through the moving surface. The water carries a faint
-    mineral-iron taste — the same edge the smiths in
+    mineral-iron taste, the same edge the smiths in
     Stillwater speak of when they describe their lake-iron
     forage. A small heron-print is pressed into the soft
     earth at the western bank.
@@ -39,7 +39,7 @@ nouns:
     boots have crossed; the moss on their sides is full
     deep green.
   watercress: Bright green leafy clusters of watercress
-    grow in the creek's slower bends — the kind kitchen-
+    grow in the creek's slower bends, the kind kitchen-
     gardens cultivate but here growing wild and abundant.
     Foragers gather it for salads and for the slight
     peppery edge it lends to soup. The leaves above the
