@@ -73,21 +73,21 @@ options:
     - '<ansi fg="{acteetype}">{actee}</ansi> stays stone-faced through <ansi fg="{actortype}">{actor}</ansi>''s taunt.'
   critical:
     actor:
-    - 'Your words strike like a blade — <ansi fg="{acteetype}">{actee}</ansi> recoils in shock! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Your words strike like a blade, and <ansi fg="{acteetype}">{actee}</ansi> recoils in shock! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     - 'You unleash a devastating verbal onslaught on <ansi fg="{acteetype}">{actee}</ansi>! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     - 'Your taunt hits <ansi fg="{acteetype}">{actee}</ansi> right where it hurts! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     - 'You shatter <ansi fg="{acteetype}">{actee}</ansi>''s composure with a masterful insult! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
-    - 'Your words are devastating — <ansi fg="{acteetype}">{actee}</ansi> visibly staggers! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - 'Your words are devastating, and <ansi fg="{acteetype}">{actee}</ansi> visibly staggers! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     - 'You deliver a soul-crushing taunt that leaves <ansi fg="{acteetype}">{actee}</ansi> reeling! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     actee:
-    - '<ansi fg="{actortype}">{actor}</ansi>''s words cut to the bone — you reel in shock! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s words cut to the bone, and you reel in shock! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     - '<ansi fg="{actortype}">{actor}</ansi> unleashes a devastating verbal onslaught! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     - '<ansi fg="{actortype}">{actor}</ansi>''s taunt hits you right where it hurts! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     - '<ansi fg="{actortype}">{actor}</ansi> shatters your composure with a masterful insult! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
-    - '<ansi fg="{actortype}">{actor}</ansi>''s words are devastating — you stagger! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s words are devastating, and you stagger! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     - '<ansi fg="{actortype}">{actor}</ansi> delivers a soul-crushing taunt! (<ansi fg="damage">{damage}</ansi>) <ansi fg="yellow">[CRIT!]</ansi>'
     observer:
-    - '<ansi fg="{actortype}">{actor}</ansi>''s words strike like a blade — <ansi fg="{acteetype}">{actee}</ansi> recoils!'
+    - '<ansi fg="{actortype}">{actor}</ansi>''s words strike like a blade, and <ansi fg="{acteetype}">{actee}</ansi> recoils!'
     - '<ansi fg="{actortype}">{actor}</ansi> unleashes a devastating verbal onslaught on <ansi fg="{acteetype}">{actee}</ansi>!'
     - '<ansi fg="{acteetype}">{actee}</ansi> reels as <ansi fg="{actortype}">{actor}</ansi> strikes a nerve!'
     - '<ansi fg="{actortype}">{actor}</ansi> shatters <ansi fg="{acteetype}">{actee}</ansi>''s composure with a masterful insult!'
@@ -95,7 +95,7 @@ options:
     - '<ansi fg="{actortype}">{actor}</ansi> delivers a soul-crushing taunt to <ansi fg="{acteetype}">{actee}</ansi>!'
   fumble:
     actor:
-    - '<ansi fg="red">You stumble over your words trying to taunt <ansi fg="{acteetype}">{actee}</ansi> — how embarrassing!</ansi>'
+    - '<ansi fg="red">You stumble over your words trying to taunt <ansi fg="{acteetype}">{actee}</ansi>. How embarrassing!</ansi>'
     - '<ansi fg="red">Your taunt comes out garbled and nonsensical. <ansi fg="{acteetype}">{actee}</ansi> stares at you.</ansi>'
     - '<ansi fg="red">You accidentally insult yourself mid-taunt. That... did not go well.</ansi>'
     - '<ansi fg="red">Your voice cracks as you try to taunt <ansi fg="{acteetype}">{actee}</ansi>. Mortifying.</ansi>'

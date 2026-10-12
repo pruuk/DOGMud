@@ -19,10 +19,10 @@ rhetoric|hit|observer => <ansi fg="User">Source</ansi> sneers at <ansi fg="Mob">
 rhetoric|miss|actor => Your taunt falls flat against <ansi fg="Mob">Target</ansi>.
 rhetoric|miss|actee => <ansi fg="User">Source</ansi> tries to taunt you, but it has no effect.
 rhetoric|miss|observer => <ansi fg="User">Source</ansi> tries to taunt <ansi fg="Mob">Target</ansi>, but it falls flat.
-rhetoric|critical|actor => Your words strike like a blade — <ansi fg="Mob">Target</ansi> recoils in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
-rhetoric|critical|actee => <ansi fg="User">Source</ansi>'s words cut to the bone — you reel in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
-rhetoric|critical|observer => <ansi fg="User">Source</ansi>'s words strike like a blade — <ansi fg="Mob">Target</ansi> recoils!
-rhetoric|fumble|actor => <ansi fg="red">You stumble over your words trying to taunt <ansi fg="Mob">Target</ansi> — how embarrassing!</ansi>
+rhetoric|critical|actor => Your words strike like a blade, and <ansi fg="Mob">Target</ansi> recoils in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+rhetoric|critical|actee => <ansi fg="User">Source</ansi>'s words cut to the bone, and you reel in shock! (<ansi fg="damage">ModerateWounds</ansi>) <ansi fg="yellow">[CRIT!]</ansi>
+rhetoric|critical|observer => <ansi fg="User">Source</ansi>'s words strike like a blade, and <ansi fg="Mob">Target</ansi> recoils!
+rhetoric|fumble|actor => <ansi fg="red">You stumble over your words trying to taunt <ansi fg="Mob">Target</ansi>. How embarrassing!</ansi>
 rhetoric|fumble|actee => <ansi fg="green"><ansi fg="User">Source</ansi> tries to taunt you but fumbles their words!</ansi>
 rhetoric|fumble|observer => <ansi fg="User">Source</ansi> stumbles over their words trying to taunt <ansi fg="Mob">Target</ansi>.
 wordless|hit|actor => You snarl at <ansi fg="Mob">Target</ansi> until their nerve cracks! (<ansi fg="damage">ModerateWounds</ansi>)
