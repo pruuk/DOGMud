@@ -2,7 +2,7 @@ roomid: 6273
 zone: East Road to Greenford
 title: The Greenford Overlook
 description: >
-  The ground drops away and the full view opens — a river,
+  The ground drops away and the full view opens: a river,
   wide and silver in the afternoon light, and beyond it the
   town of Greenford climbing its hill. Rooftops layer on
   rooftops, and at the crown of the hill a tall building
@@ -11,7 +11,7 @@ description: >
   between you clear and still, the distance compressing
   everything into a composed view. The road below this
   ridge descends to the riverbank and the bridge. You can
-  see both from here. The way is open — you can cross.
+  see both from here. The way is open, and you can cross.
 biome: land
 coord: {x: 20, y: -67, z: 0}
 exits:
@@ -22,14 +22,14 @@ nouns:
     The town sits on its hill across the river, buildings
     rising in tiers from the waterfront up to the university
     at the crown. The tower above the main hall is the
-    tallest feature — square stone, with arched openings
+    tallest feature, built of square stone with arched openings
     near the top. The town below is densely built, the
     rooftops close and varied. From here it looks complete
     and self-contained, like something that has been
     happening for a very long time without you.
   the river: >
     Wide and silver below the ridge, the Greenford river
-    runs with a speed that is visible even from here — you
+    runs with a speed that is visible even from here. You
     can see the current-shear where the main channel meets
     the slower water near the bank. The bridge sits at the
     narrowing below the ridge, its stone piers spaced across
@@ -37,7 +37,7 @@ nouns:
     not stop for them.
   university: >
     The University at Greenford occupies the crown of the
-    hill — a cluster of stone buildings around a central
+    hill, a cluster of stone buildings around a central
     hall, the square tower rising above the rest. From this
     distance the stonework is too fine to read but the
     proportions are clear: this is a building that was
@@ -47,7 +47,7 @@ nouns:
     The square tower above the university's main hall is
     the tallest thing on the hill, its upper story pierced
     by arched openings that catch the afternoon light on
-    their interior faces. The tower is old — the stone
+    their interior faces. The tower is old, the stone
     darkened at the base, lighter where courses were added
     or repaired in later years. From here it looks steady
     and entirely indifferent to the distance between you.

@@ -3,7 +3,7 @@ zone: East Road to Greenford
 title: The Old Waystone
 description: >
   The field wall opens here at a gap that was not made for a
-  gate — the stone courses simply end on either side of a squat
+  gate: the stone courses simply end on either side of a squat
   stone post standing a little back from the road in the wheat.
   The
   <ansi fg="itemname">waystone</ansi>
@@ -25,14 +25,14 @@ nouns:
     shallow rings cut into the surface, concentric, the
     lines worn almost level with the stone now. Weathering
     has softened everything. There is no inscription that
-    anyone can make out — no name, no distance, no sign
+    anyone can make out, with no name, no distance and no sign
     of what road this marked or what it was placed to say.
     It is old enough that the question may no longer have
     an answer.
   the field wall: >
     Fitted fieldstone, built dry without mortar, the courses
     even and close. On both sides of the waystone the wall
-    simply ends — no framing, no arch, no hinge for a gate.
+    simply ends, with no framing, no arch and no hinge for a gate.
     The builders stopped where the stone was and picked up on
     the other side of it. The wall is younger than the stone
     it works around.
