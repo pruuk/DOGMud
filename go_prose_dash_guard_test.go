@@ -21,7 +21,9 @@ import (
 // Skipped: string literals inside log, error, panic and test-failure calls;
 // and the paths below, which hold builder, admin, validator or migration
 // output, the dash-folding table, or quest and dialogue text (#375).
-var goDash = regexp.MustCompile("[—–]|[A-Za-z0-9,.!?'\")>}] -- [A-Za-z0-9<{'\"%]")
+// The last alternative catches a " -- " used as a column separator after
+// aligning spaces, as the old start menu did ("New to DOGMud      -- I know").
+var goDash = regexp.MustCompile("[—–]|[A-Za-z0-9,.!?'\")>}] -- [A-Za-z0-9<{'\"%]|  -- [A-Za-z0-9<{'\"%]")
 
 var goDashExemptPrefixes = []string{
 	"internal/behaviortree/",

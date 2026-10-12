@@ -63,9 +63,9 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	question := cmdPrompt.Ask(
 		"How much of Gaius do you already know?\n"+
-			"  1) New to text MUDs       -- I'll teach you the basics first.\n"+
-			"  2) New to DOGMud          -- I know MUDs; show me what's different.\n"+
-			"  3) Veteran                -- skip all tutorials; drop me into the city.",
+			"  1) New to text MUDs:  I'll teach you the basics first.\n"+
+			"  2) New to DOGMud:     I know MUDs; show me what's different.\n"+
+			"  3) Veteran:           Skip all tutorials; drop me into the city.",
 		[]string{"1", "2", "3"}, "2")
 	if !question.Done {
 		return true, nil
