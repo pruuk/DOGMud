@@ -2,22 +2,22 @@ roomid: 6342
 zone: Cascade Pass Road
 title: The Threshold of the Reach
 description: >
-  The ground here is the last of it — the furthest
+  The ground here is the last of it: the furthest
   point the road reaches, where the highland swallows
   what remains of any human intention in the terrain.
   To the west the pass descends back toward the world.
   To the east the
   <ansi fg="itemname">highland</ansi>
-  runs on — grey rock and low scrub and nothing else,
+  runs on: grey rock and low scrub and nothing else,
   no road, no shelter, no visible water in any
   direction. The cold off it is not the cold of
   weather. There is a quality in the air at this edge
   that the body registers before the mind finds a name
-  for it. The silence is the wrong kind of silence —
+  for it. The silence is the wrong kind of silence:
   not the absence of sound, but sound pressed out of
   the space by something that continues to press. The
   <ansi fg="itemname">eastern ground</ansi>
-  lies open — you can walk out into it, if you have the
+  lies open: you can walk out into it, if you have the
   will. This is the last edge of any road. What lies
   beyond is the surveyor's country, and worse, and it
   does not want to be crossed. But it can be.
@@ -35,14 +35,14 @@ nouns:
     the threshold without interruption. The scrub is
     low and the stone is exposed in long flat outcrops
     between patches of grit and thin soil. There is
-    no path — only open ground that becomes other
+    no path, only open ground that becomes other
     open ground. At a certain distance the detail
     resolves into texture and the texture into a
     single uniform grey, and at that point it becomes
     impossible to judge how far it goes. Far enough
     that the question stops feeling useful.
   eastern ground: >
-    The ground at the threshold edge is undistinguished —
+    The ground at the threshold edge is undistinguished:
     the same mountain rock as behind you, the same
     scrub, the same grey grit in the cracks. There
     is no wall, no barrier, no visible reason the

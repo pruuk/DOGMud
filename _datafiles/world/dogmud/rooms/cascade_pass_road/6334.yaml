@@ -7,8 +7,8 @@ description: >
   away sharply on the other. The drop is long and
   the bottom of it is not visible from where you
   stand. The <ansi fg="itemname">handholds</ansi>
-  cut into the rock face are worn smooth and shallow
-  — not by recent use, but by something older. The
+  cut into the rock face are worn smooth and shallow.
+  Not by recent use, but by something older. The
   stone where hands have gone is polished to a
   different colour than the weathered rock to either
   side. This path was used before the farms were
@@ -32,7 +32,7 @@ exits:
 nouns:
   handholds: >
     Carved into the rock face at intervals along the
-    narrowest section of the ledge — each one a
+    narrowest section of the ledge, each one a
     flat palm-width depression, angled for grip.
     They are worn smooth and shallow with use, the
     stone polished to a different texture than the
@@ -43,7 +43,7 @@ nouns:
     made them or when.
   raptor: >
     A large bird turning slow circles on a thermal
-    high above the pass — dark against the grey sky,
+    high above the pass, dark against the grey sky,
     wings angled in the stillness of soaring. It
     drifts wide and comes back. It has been there for
     as long as you have been on the switchback. It
@@ -60,7 +60,7 @@ idlemessages:
   you.
 - The drop on the open side of the ledge is longer
   than is comfortable to look at straight down.
-- The handholds are smooth under the hand — worn by
+- The handholds are smooth under the hand, worn by
   something older than the road below.
 - A gust hits the ledge sideways, brief and sharp,
   then passes. The raptor above does not react to it.

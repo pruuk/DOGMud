@@ -2,7 +2,7 @@ roomid: 6329
 zone: Cascade Pass Road
 title: The Ruined Waypoint
 description: >
-  A travellers' shelter once stood here — you can read
+  A travellers' shelter once stood here: you can read
   its shape in what remains. The
   <ansi fg="itemname">collapsed roof</ansi> has fallen
   inward, the timber rafters rotted through at the eaves
@@ -13,10 +13,10 @@ description: >
   firebox choked with years of old bird-nesting and bark
   fall. Beside the entrance a
   <ansi fg="itemname">name board</ansi> leans against the
-  stonework — the kind once posted at road stations to
+  stonework, the kind once posted at road stations to
   list the settlements ahead with their distances. The
   western entries are still legible under fading paint.
-  The eastern entries have been gouged out — not worn,
+  The eastern entries have been gouged out: not worn,
   not faded, but worked over deliberately with something
   sharp until the wood below the paint is nothing but
   raw, unreadable grooves. East of the shelter the road
@@ -35,7 +35,7 @@ exits:
 nouns:
   collapsed roof: >
     The shelter was built of timber posts under a shallow
-    pitch roof — field construction, the kind that lasts
+    pitch roof: field construction, the kind that lasts
     a generation or two with maintenance. It received
     none. The eave-plates gave first and then the
     ridge-beam followed, and the whole thing came down
@@ -56,7 +56,7 @@ nouns:
     A thick plank of weathered oak, the destination
     entries carved in and then repainted across what
     looks like many seasons of use. The western entries
-    are readable under the fading paint — distances and
+    are readable under the fading paint: distances and
     names of places you have already passed through. The
     eastern entries have been obliterated. The gouges
     are thorough and deliberate, each entry worked over
