@@ -517,9 +517,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						// Salvaging tick — advance round via Activity machine.
 						sd, complete := user.Character.Activity.AdvanceSalvagingRound()
 						if !complete {
-							user.SendText(messaging.CategorySystem, fmt.Sprintf(
-								`<ansi fg="yellow">You continue salvaging... (%d/%d)</ansi>`,
-								sd.RoundsComplete, sd.RoundsTotal))
+							user.SendText(messaging.CategorySystem, salvageProgressLine(user.Character, sd))
 						} else {
 							// Determine salvage type from ItemUuid prefix.
 							const corpsePrefix = "corpse:"
@@ -546,9 +544,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						// Crafting tick — advance round via Activity machine.
 						cd, complete := user.Character.Activity.AdvanceCraftingRound()
 						if !complete {
-							user.SendText(messaging.CategorySystem, fmt.Sprintf(
-								`<ansi fg="yellow">You continue working on %s... (%d/%d)</ansi>`,
-								cd.RecipeId, cd.RoundsComplete, cd.RoundsTotal))
+							user.SendText(messaging.CategorySystem, craftProgressLine(cd))
 						} else {
 							recipe := crafting.GetRecipe(cd.RecipeId)
 							enchantTargetSlot := cd.TargetSlot
