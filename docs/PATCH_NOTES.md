@@ -2,6 +2,9 @@
 
 ## Unreleased: Fighting blind, and plainer combat words
 
+- Tavern Keeper Marek, Innkeeper Thessa and Innkeeper Tolva can no longer
+  be attacked, robbed or harmed by spells, like every shopkeeper already.
+
 - Crafting is no longer silent to the room. When you start, finish or
   ruin a piece of work, anyone watching sees it, and anyone who can make
   out only shapes sees a figure at work on something. In the dark, or
