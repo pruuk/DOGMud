@@ -16,6 +16,7 @@ func TestPredictFight_StrongerSideCostsLess(t *testing.T) {
 	strong.Stats.Dexterity.Recalculate()
 	weak := parityCombatant(t, "weak")
 	strong.Health, weak.Health = 300, 300
+	strong.HealthMax.Value, weak.HealthMax.Value = 300, 300
 
 	p := PredictFight(strong, weak)
 	q := PredictFight(weak, strong)
@@ -49,6 +50,8 @@ func TestPredictFight_LifestealReducesIncoming(t *testing.T) {
 	pinParityBalance(t)
 	you := parityCombatant(t, "you")
 	them := parityCombatant(t, "them")
+	you.Stats.Strength.Base = 160
+	you.Stats.Strength.Recalculate()
 	you.Health, them.Health = 300, 300
 	before := PredictFight(you, them).TheirDamagePerRound
 
@@ -58,7 +61,12 @@ func TestPredictFight_LifestealReducesIncoming(t *testing.T) {
 	you.Conditions.List = append(you.Conditions.List, &conditions.Condition{ConditionId: 9301, TriggersLeft: 1000})
 	you.Conditions.Validate(true)
 
-	if after := PredictFight(you, them).TheirDamagePerRound; after >= before {
-		t.Fatalf("lifesteal left incoming at %v (was %v)", after, before)
+	after := PredictFight(you, them).TheirDamagePerRound
+	want := 0.5 * meleeDamagePerRound(you, them, User)
+	if want <= 0 {
+		t.Fatalf("test needs your melee above zero, got %v", want)
+	}
+	if got := before - after; math.Abs(got-want) > 1e-9 {
+		t.Fatalf("lifesteal took %v off incoming (%v -> %v), want %v", got, before, after, want)
 	}
 }

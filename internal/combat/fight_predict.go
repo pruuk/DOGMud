@@ -28,8 +28,8 @@ func PredictFight(you, them *characters.Character) FightPrediction {
 	theirOut := theirMelee + spellDamagePerRound(them, you)
 
 	p := FightPrediction{
-		YourDamagePerRound:  math.Max(0, yourOut-healPerRound(them, theirMelee)),
-		TheirDamagePerRound: math.Max(0, theirOut-healPerRound(you, yourMelee)),
+		YourDamagePerRound:  nonNegative(yourOut - healPerRound(them, theirMelee)),
+		TheirDamagePerRound: nonNegative(theirOut - healPerRound(you, yourMelee)),
 	}
 	finish(&p, float64(max(you.Health, 1)), float64(max(them.Health, 1)))
 	return p
@@ -37,9 +37,14 @@ func PredictFight(you, them *characters.Character) FightPrediction {
 
 // healPerRound is what c regains each combat round: lifesteal on its own
 // melee damage, a heal spell's Regenerating record, and health ticks
-// (negative when damage-over-time outweighs heal-over-time).
+// (negative when damage-over-time outweighs heal-over-time). Lifesteal counts
+// only when lifesteal_pct is above zero, the same gate live combat uses in
+// NewRound_DoCombat_unified.go.
 func healPerRound(c *characters.Character, meleeOut float64) float64 {
-	h := meleeOut * float64(c.StatMod("lifesteal_pct")) / 100.0
+	h := 0.0
+	if pct := c.StatMod("lifesteal_pct"); pct > 0 {
+		h = meleeOut * float64(pct) / 100.0
+	}
 	h += c.CombatHealthRegenPerRound()
 	h += c.Conditions.PoolTickPerRound("health")
 	return h
@@ -68,6 +73,14 @@ func finish(p *FightPrediction, yourHealth, theirHealth float64) {
 	default:
 		p.Dent = p.RoundsToKillYou * p.YourDamagePerRound / theirHealth
 	}
+}
+
+// nonNegative floors x at zero; !(x > 0) also sends a NaN from layer 1 to 0.
+func nonNegative(x float64) float64 {
+	if !(x > 0) {
+		return 0
+	}
+	return x
 }
 
 func roundsToKill(health, perRound float64) float64 {
