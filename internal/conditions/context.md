@@ -185,6 +185,15 @@ tripled the spell dot's total, so the owner halved the two spell dot
 
 ### Facts worth knowing
 
+- **`PoolTickPerRound(pool)` is the read-only forecast of tick records**
+  (`effects.go`). It returns the per-round average of every live tick record
+  on `"health"`, `"stamina"` or `"conviction"`: each record's cached
+  `TickAmount` over its `RoundInterval`, positive for healing and negative
+  for harm. Live means `TriggersLeft > 0`; a record whose amount is not
+  cached yet counts nothing and a stacking record counts once. The fight
+  prediction (`combat.PredictFight`) weighs heal-over-time and
+  damage-over-time with it (#301).
+
 - **These records persist.** The deleted combat condition slice was tagged
   `yaml:"-"`, so every combat condition vanished on logout or restart. A
   record is saved with the rest of `Character.Conditions`, so a poison or a

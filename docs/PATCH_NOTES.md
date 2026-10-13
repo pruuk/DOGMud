@@ -2,6 +2,14 @@
 
 ## Unreleased: Fighting blind, and plainer combat words
 
+- `consider` now tells you what a fight would really cost you, from "they
+  won't lay a finger on you" to "you have zero chance", and how long each of
+  you would need to beat the other. It weighs both of you as you stand right
+  now, buffs, wards and enchantments included. Sizing someone up is now a
+  skill: Perception and search against their Charisma and rhetoric, so a
+  poor read is muddier, and a dark or dazzling room makes it harder. It uses
+  your special-move recovery, and it trains search.
+
 - Tavern Keeper Marek, Innkeeper Thessa and Innkeeper Tolva can no longer
   be attacked, robbed or harmed by spells, like every shopkeeper already.
 

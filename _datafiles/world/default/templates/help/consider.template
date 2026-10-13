@@ -1,19 +1,32 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">consider</ansi>
 
-The <ansi fg="command">consider</ansi> command sizes up a target and gives
-you a gut-feeling estimate of how a fight might go.
+The <ansi fg="command">consider</ansi> command sizes up a target: what a fight
+would cost you, and how long each of you would need to beat the other.
 
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">consider goblin</ansi>
 
-<ansi fg="yellow">Possible outcomes:</ansi>
+It reads both of you as you stand right now. Your spells, potions, wards and
+enchantments count, and so do theirs.
 
-  <ansi fg="blue-bold">They pose no threat to you</ansi>
-  <ansi fg="green">You hold a clear advantage</ansi>
-  <ansi fg="green">The odds favor you</ansi>
-  <ansi fg="yellow">An even contest. Tread carefully</ansi>
-  <ansi fg="red-bold">They have the upper hand</ansi>
-  <ansi fg="red-bold">You are severely outmatched</ansi>
-  <ansi fg="red-bold">You will not survive this fight</ansi>
+Sizing someone up is a skill. Your <ansi fg="stat">Perception</ansi> and <ansi fg="skill">search</ansi> skill
+work against their <ansi fg="stat">Charisma</ansi> and <ansi fg="skill">rhetoric</ansi>, so a good read is
+clear and a poor one is muddy and may be off. A dark or dazzling room makes
+the read harder. Results vary, and each read trains search.
 
+Considering uses your special-move recovery, like <ansi fg="command">bash</ansi>
+or a spell, so you can't consider and use a special move in the same breath.
+
+<ansi fg="yellow">What you might hear:</ansi>
+
+  <ansi fg="blue-bold">They won't lay a finger on you.</ansi>
+  <ansi fg="green">A few scratches at most.</ansi>
+  <ansi fg="green">You'll win, but you'll feel it.</ansi>
+  <ansi fg="yellow">You'd win, barely, if at all.</ansi>
+  <ansi fg="yellow">Neither of you is ending this soon.</ansi>
+  <ansi fg="red-bold">You'd likely lose.</ansi>
+  <ansi fg="red-bold">You'd lose badly.</ansi>
+  <ansi fg="red-bold">What could you possibly be thinking? You have zero chance.</ansi>
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cooldowns</ansi>, <ansi fg="command">help search</ansi>

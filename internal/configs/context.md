@@ -588,6 +588,23 @@ This configuration system provides a robust foundation for managing all aspects 
 
 ---
 
+## Consider fight-read knobs (#301)
+
+Ten `Balance.Consider*` knobs (`config.balance.go`), defaulted and ordered
+by `validateConsider` (`config.balance.consider.go`, called from
+`Balance.Validate`). They are `ConfigFloat`. Go tests load these defaults,
+not `config.yaml`.
+- Pace cut-offs in rounds: `ConsiderPaceMoments` (2), `ConsiderPaceShort`
+  (6), `ConsiderPaceLong` (20). Out of order, all three reset to defaults.
+- Verdict band edges: `ConsiderBandUntouched` (0.05),
+  `ConsiderBandScratches` (0.25), `ConsiderBandHurt` (0.6),
+  `ConsiderBandBarely` (1.0), `ConsiderBandLethal` (3.0). Out of order,
+  all five reset. `ConsiderBandHopelessDent` (0.05) is the "zero chance"
+  edge on the share of their health you take off.
+- `ConsiderClearReadZ` (1.0): how many roll spreads a won read must clear
+  to count as a clear read rather than a fair one.
+`actions.classifyFight` and `actions.readQualityFor` are the readers.
+
 ## DOGMud Balance Configuration Knobs
 
 The `Balance` subsection of the config holds all gameplay-tuning constants.

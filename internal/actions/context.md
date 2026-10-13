@@ -751,6 +751,19 @@ classifies `combat.PredictFight` into a `Verdict` and two `Pace`s.
   `considerContest` (an alias of `combat.RunContest` tests pin). The roll sets
   `ReadClear` / `ReadFair` / `ReadMuddy`; a muddy read slides a middle verdict
   toward barely (`muddySlide`).
+- **`fight_read.go`:** `Verdict` (eight values; `Lethal()` and `Danger()`),
+  `Pace` (moments, short, long, age, never, cut by `paceFor` from the
+  `ConsiderPace*` knobs), `ReadQuality` (`ReadNone` for a read with no
+  roll, then clear, fair, muddy), `FightRead` (verdict, both paces and the
+  `combat.FightPrediction`), `ReadFight(you, them)` (the roll-free read),
+  `classifyFight` and `FightReadPlain` (untagged verdict then pace words
+  for the AI companion). Band order in `classifyFight` matters: untouched
+  first (a target that cannot hurt you is never hopeless), then stalemate
+  (both paces an age, so a slow pillow-hitter is not zero chance), then
+  hopeless (their dent too small), then scratches, hurt, barely, likely
+  lose, lose badly by `Cost`. `muddySlide` only moves scratches, hurt,
+  likely lose and lose badly one step toward barely. `readQualityFor`
+  turns the roll into clear, fair or muddy with `ConsiderClearReadZ`.
 - **Progression:** `actor.AwardResolved(won, CandidateFor("search"))`, only
   behind the cooldown claim (`consider_no_progression_test.go`).
 - **Messaging:** opener, verdict line and pace line to a player. A mob actor
