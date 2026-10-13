@@ -437,11 +437,12 @@ original ask (spells/items/mobs/buffs) by four.
 
 ### Barrier 2: Interleaved logic and side effects — ✅ MOSTLY SOLVED
 The "extract ~10 pure helpers" recommendation was followed almost literally.
-`internal/hooks/combat_shared_helpers.go` now has exactly 10 top-level helpers
-(`calcSpellDamageForCharacter`, `checkConcentrationBreak`, `tryWeaponBreak`,
+`internal/hooks/combat_shared_helpers.go` had exactly 10 top-level helpers when this audit
+was taken (`calcSpellDamageForCharacter`, `checkConcentrationBreak`, `tryWeaponBreak`,
 `applyCritEffects`, `simulateFoldRound`, `calcFoldConvictionCost`, `clearCastingActivity`,
 `cancelCraftOrSalvageOnDamage`, `cancelDamageBuffs`, `processFoldRound`), several individually
-tested. Caveat: `spell_resolution.go` has *grown* to 1,478 lines despite the extraction.
+tested. Since then `cancelCraftOrSalvageOnDamage` is gone (damage now ends crafting and
+salvaging at the `ApplyHarm` seam, #514) and `cancelDamageBuffs` is now `cancelDamageConditions`. Caveat: `spell_resolution.go` has *grown* to 1,478 lines despite the extraction.
 
 ### Barrier 3: Embedded RNG — ⚠️ STILL TRUE
 No RNG-injection refactor. Option C (statistical testing) remains dominant and works well

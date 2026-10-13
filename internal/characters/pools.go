@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/life"
 )
 
@@ -641,7 +642,22 @@ func (c *Character) applyVitalChange(pool Pool, delta int) int {
 // and routing combat.go's 8 sites away from it would stop melee kills cancelling
 // combat conditions. Hence the split: those 8 keep the wrapper, everything else uses
 // this primitive.
+//
+// Health harm that actually lands also ends a craft or salvage in progress
+// (#514): every attack reaches this seam, so one hook covers them all. Use
+// ApplyAttrition for health loss that is not an attack.
 func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int {
+	return c.harm(pool, amount, source, true)
+}
+
+// ApplyAttrition is ApplyHarm for health loss that is not an attack: the
+// pinnacle blade toll, toxicity sickness, stuck-mob decay. It applies exactly
+// the same harm but does not interrupt a craft or salvage (#514 R2).
+func (c *Character) ApplyAttrition(pool Pool, amount int, source state.ActorRef) int {
+	return c.harm(pool, amount, source, false)
+}
+
+func (c *Character) harm(pool Pool, amount int, source state.ActorRef, interrupt bool) int {
 	if amount <= 0 {
 		return 0
 	}
@@ -687,7 +703,31 @@ func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int 
 		})
 	}
 
+	// #514: an attack ends any work in hand. Health only, and only harm that
+	// actually landed. It runs after the vital change, so a killing blow is
+	// already at zero health when the craft-ended hook reads it.
+	if interrupt && pool == PoolHealth && applied > 0 {
+		c.interruptWork()
+	}
+
 	return applied
+}
+
+// interruptWork ends a craft or salvage in progress because the character was
+// hurt (#514). The state changes here, at once; the Activity machine's
+// craft-ended and salvage-ended callbacks queue the narration, which hooks
+// sends at the end of the round, after the hit line that caused it.
+func (c *Character) interruptWork() {
+	if c.Activity == nil {
+		return
+	}
+	switch c.Activity.State() {
+	case activity.Crafting, activity.Salvaging:
+		_ = c.Activity.TransitionToFree(state.TransitionReason{
+			Trigger: activity.TriggerDamageInterrupt,
+			Actor:   c.ActorRef(),
+		})
+	}
 }
 
 // ApplyRestore restores amount to pool and returns the amount ACTUALLY restored,

@@ -65,6 +65,25 @@ func ClearListeners() {
 	eventListeners = map[string][]ListenerWrapper{}
 }
 
+// SwapListenersForTest empties the listener registry and returns a func that
+// puts the previous registry back. It lets a test drive a real registration
+// (such as hooks.RegisterListeners) through DoListeners without leaving those
+// listeners, or losing the init()-registered ones, for later tests.
+//
+// FOR TEST USE ONLY.
+func SwapListenersForTest() (restore func()) {
+	listenerLock.Lock()
+	saved, savedWildcard := eventListeners, hasWildcardListener
+	eventListeners = map[string][]ListenerWrapper{}
+	hasWildcardListener = false
+	listenerLock.Unlock()
+	return func() {
+		listenerLock.Lock()
+		eventListeners, hasWildcardListener = saved, savedWildcard
+		listenerLock.Unlock()
+	}
+}
+
 // Returns an ID for the listener which can be used to unregister later.
 func RegisterListener(emptyEvent any, cbFunc Listener, qFlag ...QueueFlag) ListenerId {
 	listenerLock.Lock()

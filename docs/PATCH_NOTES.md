@@ -9,6 +9,9 @@
   skill: Perception and search against their Charisma and rhetoric, so a
   poor read is muddier, and a dark or dazzling room makes it harder. It uses
   your special-move recovery, and it trains search.
+- Any attack now interrupts crafting or salvaging, not just an ordinary
+  swing: a charge, a kick, a spell or a thrown blade all break your
+  concentration on the work.
 
 - Tavern Keeper Marek, Innkeeper Thessa and Innkeeper Tolva can no longer
   be attacked, robbed or harmed by spells, like every shopkeeper already.

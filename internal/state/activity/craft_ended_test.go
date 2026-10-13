@@ -109,3 +109,98 @@ func TestCraftEnded_NotWhenAlreadyFree(t *testing.T) {
 		t.Errorf("handler calls = %d, want 0", len(*calls))
 	}
 }
+
+type salvageEndedCall struct {
+	data    activity.SalvagingData
+	trigger string
+}
+
+func salvageEndedRecorder(m *activity.Machine) *[]salvageEndedCall {
+	calls := &[]salvageEndedCall{}
+	m.OnSalvageEnded("t", func(d activity.SalvagingData, r state.TransitionReason) {
+		*calls = append(*calls, salvageEndedCall{d, r.Trigger})
+	})
+	return calls
+}
+
+func beginSalvage(t *testing.T, m *activity.Machine) {
+	t.Helper()
+	err := m.TransitionToSalvaging(
+		activity.SalvagingData{ItemUuid: "u1", RoundsTotal: 3},
+		state.TransitionReason{Trigger: activity.TriggerSalvageBegin},
+	)
+	if err != nil {
+		t.Fatalf("begin salvage: %v", err)
+	}
+}
+
+func TestSalvageEnded_FiresOnceOnFree(t *testing.T) {
+	m := activity.NewMachine()
+	calls := salvageEndedRecorder(m)
+	beginSalvage(t, m)
+	if err := m.TransitionToFree(state.TransitionReason{Trigger: activity.TriggerSalvageCancel}); err != nil {
+		t.Fatalf("free: %v", err)
+	}
+	if len(*calls) != 1 {
+		t.Fatalf("handler calls = %d, want 1", len(*calls))
+	}
+	got := (*calls)[0]
+	if got.data.ItemUuid != "u1" || got.trigger != activity.TriggerSalvageCancel {
+		t.Errorf("got item %q trigger %q", got.data.ItemUuid, got.trigger)
+	}
+}
+
+func TestSalvageEnded_FiresOnForceFree(t *testing.T) {
+	m := activity.NewMachine()
+	calls := salvageEndedRecorder(m)
+	beginSalvage(t, m)
+	m.ForceFree(state.TransitionReason{Trigger: activity.TriggerDamageInterrupt})
+	if len(*calls) != 1 {
+		t.Fatalf("handler calls = %d, want 1", len(*calls))
+	}
+	if (*calls)[0].trigger != activity.TriggerDamageInterrupt || (*calls)[0].data.ItemUuid != "u1" {
+		t.Errorf("got %+v", (*calls)[0])
+	}
+}
+
+func TestSalvageEnded_NotForCraftingOrCasting(t *testing.T) {
+	m := activity.NewMachine()
+	calls := salvageEndedRecorder(m)
+	beginCraft(t, m)
+	_ = m.TransitionToFree(state.TransitionReason{Trigger: activity.TriggerCraftCancel})
+	_ = m.TransitionToCasting(activity.CastingData{SpellId: "s"},
+		state.TransitionReason{Trigger: activity.TriggerCastBegin})
+	_ = m.TransitionToFree(state.TransitionReason{Trigger: activity.TriggerCastCancel})
+	m.ForceFree(state.TransitionReason{Trigger: activity.TriggerDeath})
+	if len(*calls) != 0 {
+		t.Errorf("handler calls = %d, want 0", len(*calls))
+	}
+}
+
+func TestSalvageEnded_NotWhenTheTransitionIsVetoed(t *testing.T) {
+	m := activity.NewMachine()
+	calls := salvageEndedRecorder(m)
+	m.Inner().BeforeTransition("refuse_free", func(from, to activity.State, r state.TransitionReason) error {
+		if to == activity.Free {
+			return errors.New("refused")
+		}
+		return nil
+	})
+	beginSalvage(t, m)
+	if err := m.TransitionToFree(state.TransitionReason{Trigger: activity.TriggerSalvageCancel}); err == nil {
+		t.Fatal("expected the veto to refuse the transition")
+	}
+	if len(*calls) != 0 {
+		t.Errorf("handler calls = %d, want 0 after a vetoed transition", len(*calls))
+	}
+}
+
+func TestSalvageEnded_NotWhenAlreadyFree(t *testing.T) {
+	m := activity.NewMachine()
+	calls := salvageEndedRecorder(m)
+	_ = m.TransitionToFree(state.TransitionReason{Trigger: activity.TriggerSalvageCancel})
+	m.ForceFree(state.TransitionReason{Trigger: activity.TriggerSalvageCancel})
+	if len(*calls) != 0 {
+		t.Errorf("handler calls = %d, want 0", len(*calls))
+	}
+}
