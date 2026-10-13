@@ -38,7 +38,27 @@ func sendMovementMessage(room *rooms.Room, visualCat messaging.Category, visualM
 	room.SendTextVisualWithAudio(visualCat, visualMsg, soundMsg)
 }
 
+// isMoveAttempt reports whether rest asks the mob to move: the room-id form
+// callforhelp issues, an exit of this room (aliases included), or a compass
+// word with no exit behind it (a player's go bumps into the wall). The same
+// words a player's go treats as an attempt, plus the mob-only room-id form.
+func isMoveAttempt(rest string, room *rooms.Room) bool {
+	if _, err := strconv.Atoi(rest); err == nil {
+		return true
+	}
+	return actions.FindExit(room, rest).Found || actions.IsCompassDirection(rest)
+}
+
 func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
+
+	// #512, owner ruling A (2026-10-13): an ATTEMPTED move stops a craft or
+	// salvage, as a player's go does, even when a wall, a lock, a root or
+	// the price then stops the step. Asked before any of those checks, and
+	// only for a word that is a move: Go is also the fallback for every mob
+	// command nothing else claimed, which must not end work.
+	if isMoveAttempt(rest, room) {
+		actions.InterruptWorkOnMove(&mob.Character)
+	}
 
 	// If has a condition that prevents combat, skip the player
 	if mob.Character.HasConditionFlag(conditions.NoMovement) {
@@ -77,10 +97,6 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			// they carry on their own way out, so the exit line is judged
 			// by the room before the move; the entry line, after it.
 			departSnap := room.VisualSnapshot()
-
-			// #512: running off is the mob's own move, so it stops a craft
-			// or salvage before it leaves, as actions.RelocateMob does.
-			actions.InterruptWorkOnMove(&mob.Character)
 
 			room.RemoveMob(mob.InstanceId)
 			actions.ClearRoomAggroOnDeparture(room, mob.InstanceId)

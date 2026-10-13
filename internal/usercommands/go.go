@@ -54,16 +54,8 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	// If no valid exit, check if it's a recognized cardinal direction (handled below
 	// as "bumping into walls"). Otherwise return false so the dispatcher shows
 	// "not recognized" instead of a confusing "can't do that in combat" message.
-	isCardinal := false
-	if exitName == `` {
-		switch rest {
-		case "north", "south", "east", "west", "up", "down",
-			"northwest", "northeast", "southwest", "southeast":
-			isCardinal = true
-		}
-		if !isCardinal {
-			return false, nil
-		}
+	if exitName == `` && !actions.IsCompassDirection(rest) {
+		return false, nil
 	}
 
 	if user.Character.IsInCombat() {

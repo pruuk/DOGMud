@@ -1298,8 +1298,13 @@ shapes) all do. Arrival lines stay judged after the move.
 A companion following its owner (`TransportCompanions`) moves of its own
 will, as a player follower's re-issued `go` does, so it calls
 `actions.InterruptWorkOnMove` in the old room to stop a craft or salvage
-(#512). `PushCompanionsToRoom` is a forced sweep and does not, matching a
-player moved by `rooms.MoveToRoom`, which keeps their work.
+(#512). It keeps a cast (owner ruling B, 2026-10-13: movement never
+interrupts casting); a harmful fold at a foe left behind loses its fight and
+is fizzled by IdleMobs' stranded-fold sweep, and a help fold steps on
+(`companion_follow_test.go` pins both). `PushCompanionsToRoom` is a forced
+sweep and does not interrupt work, matching a player moved by
+`rooms.MoveToRoom`, which keeps their work; it still force-frees a cast
+(trigger `companion_sweep`).
 
 ## Attributed death routing (U5c)
 

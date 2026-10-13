@@ -447,7 +447,10 @@ are subject to perception-scaled reaction delays (see below).
 The forager's recall (`tickForagerRecalling` in `actions_forager.go`) moves
 the mob straight to its anchor room instead of casting fold-recall. It is the
 forager's own move, so it calls `actions.InterruptWorkOnMove` before leaving
-and stops a craft or salvage as walking does (#512).
+and stops a craft or salvage as walking does (#512). It keeps a cast (owner
+ruling B, 2026-10-13: movement never interrupts casting); the cast rules end
+it (IdleMobs fizzles a harmful fold out of combat, a help fold steps on, and
+a fold-recall landing on the anchor it stands on collapses in place).
 
 ### Archer / Ranged — varied delays (ranged-weapons feature)
 

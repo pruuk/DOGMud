@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -13,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -221,11 +223,37 @@ func TestTransportCompanions_AlreadyInDest(t *testing.T) {
 		"companion RoomId must stay at 2 — no double-move")
 }
 
-// TestTransportCompanions_CastInterrupt verifies that an in-progress cast is
-// aborted and the companion is moved to the destination room.
-func TestTransportCompanions_CastInterrupt(t *testing.T) {
+// Owner ruling B (2026-10-13): movement never interrupts casting. A
+// companion following its owner mid-fold keeps the fold; the existing cast
+// rules end it afterwards (see the two tests below).
+const (
+	followHarmSpell = "follow-test-bolt"
+	followHelpSpell = "follow-test-mend"
+)
+
+func seedFollowSpells(t *testing.T) {
+	t.Helper()
+	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{
+		followHarmSpell: {SpellId: followHarmSpell, Name: "Test Bolt", BaseFolds: 4,
+			AttackType: combatvocab.AttackSpell, DamageType: combatvocab.DamagePhysical, Targeting: combatvocab.TargetSingle},
+		followHelpSpell: {SpellId: followHelpSpell, Name: "Test Mend", BaseFolds: 4,
+			AttackType: combatvocab.AttackSpell, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSingle},
+	}))
+}
+
+func followCasting(t *testing.T, mob *mobs.Mob, cs activity.CastingData) {
+	t.Helper()
+	mob.Character.Activity = activity.NewMachine()
+	require.NoError(t, mob.Character.Activity.TransitionToCasting(cs,
+		state.TransitionReason{Trigger: activity.TriggerCastBegin}))
+}
+
+// TestTransportCompanions_ACastSurvivesTheMove: the companion moves and is
+// still casting.
+func TestTransportCompanions_ACastSurvivesTheMove(t *testing.T) {
 	cleanup := seedFollowRegistries(t)
 	defer cleanup()
+	seedFollowSpells(t)
 
 	owner := newOwnerWithCompanion(1, 2)
 	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: owner})
@@ -233,18 +261,62 @@ func TestTransportCompanions_CastInterrupt(t *testing.T) {
 
 	mob := mobs.GetInstance(200)
 	require.NotNil(t, mob)
-	mob.Character.Activity = activity.NewMachine()
-	_ = mob.Character.Activity.TransitionToCasting(
-		activity.CastingData{SpellId: "sparks", FoldsNeeded: 3},
-		state.TransitionReason{Trigger: activity.TriggerCastBegin},
-	)
+	followCasting(t, mob, activity.CastingData{SpellId: followHelpSpell, FoldsNeeded: 4, TargetUserIds: []int{1}})
 
 	TransportCompanions(owner, 1, 2)
 
-	assert.True(t, mob.Character.Activity == nil || mob.Character.Activity.IsFree(),
-		"Activity must be Free (cast cleared) on move")
-	assert.Equal(t, 2, mob.Character.RoomId,
-		"companion must be in destination room after cast-interrupt")
+	assert.Equal(t, 2, mob.Character.RoomId, "companion must be in destination room")
+	assert.True(t, mob.Character.Activity.IsCasting(), "movement must not interrupt the cast")
+}
+
+// A harmful fold at a foe left behind: following ends the fight (the target
+// is not in the new room), and an out-of-combat mob holding a harmful fold
+// has it fizzled by the idle sweep (IdleMobs, #242), so the cast ends rather
+// than hanging.
+func TestTransportCompanions_AHarmfulFoldAtAFoeLeftBehindFizzles(t *testing.T) {
+	cleanup := seedFollowRegistries(t)
+	defer cleanup()
+	seedFollowSpells(t)
+
+	owner := newOwnerWithCompanion(1, 2)
+	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: owner})
+	defer cleanupUsers()
+
+	mob := mobs.GetInstance(200)
+	require.NotNil(t, mob)
+	mob.Character.SetAggro(0, 99, characters.DefaultAttack)
+	followCasting(t, mob, activity.CastingData{SpellId: followHarmSpell, FoldsNeeded: 4, TargetMobInstanceIds: []int{99}})
+
+	TransportCompanions(owner, 1, 2)
+	require.True(t, mob.Character.IsCasting(), "the fold is kept across the move")
+	require.False(t, mob.Character.IsInCombat(), "the foe stayed behind, so the fight ended")
+
+	// IdleMobs' condition for its stranded-fold sweep, then the sweep.
+	require.True(t, mob.Character.IsCasting() && !mobHoldsHelpFold(mob), "a harmful fold out of combat is stranded")
+	endStrandedFold(mob)
+	assert.True(t, mob.Character.Activity.IsFree(), "the stranded harmful fold fizzles")
+}
+
+// A help fold at the owner, who is in the new room: it is left to its fold
+// step, which steps on (and later resolves) because its target is present.
+func TestTransportCompanions_AHelpFoldAtTheOwnerStepsOn(t *testing.T) {
+	cleanup := seedFollowRegistries(t)
+	defer cleanup()
+	seedFollowSpells(t)
+
+	owner := newOwnerWithCompanion(1, 2)
+	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: owner})
+	defer cleanupUsers()
+
+	mob := mobs.GetInstance(200)
+	require.NotNil(t, mob)
+	followCasting(t, mob, activity.CastingData{SpellId: followHelpSpell, FoldsNeeded: 4, FoldsPerRound: 1, TargetUserIds: []int{1}})
+
+	TransportCompanions(owner, 1, 2)
+	require.True(t, mobHoldsHelpFold(mob), "the idle sweep leaves a help fold to its fold step")
+
+	result := processFoldRound(&mob.Character)
+	assert.True(t, result.StillCasting, "the help fold steps on in the new room, got %+v", result)
 }
 
 // TestTransportCompanions_StaleCompanionEntry verifies that a companion whose

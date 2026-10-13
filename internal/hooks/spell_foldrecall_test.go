@@ -47,6 +47,21 @@ func TestValidateFoldRecall_HappyPath_Passes(t *testing.T) {
 	assert.True(t, ok, "validate must pass when anchor exists and is not the current room")
 }
 
+// Owner ruling B (2026-10-13): a forager's recall teleport keeps the
+// fold-recall it may be casting. When that fold lands on the anchor the
+// forager already stands on, the resolver collapses it and moves nobody.
+func TestResolveFoldRecall_AMobOnItsAnchorStaysPut(t *testing.T) {
+	c := characters.New()
+	c.RoomId = 4037
+	c.SetMiscData("fold-anchor-room", 4037)
+
+	a := &fakeActor{char: c, name: "Tova", mobInstId: 8240}
+
+	resolveFoldRecall(a)
+
+	assert.Equal(t, 4037, c.RoomId, "a fold on its own anchor moves nobody")
+}
+
 // resolveFoldRecall: short-circuit when no anchor is set (defensive — validate
 // should have caught it). Confirm the resolver doesn't blow up.
 func TestResolveFoldRecall_NoAnchor_NoOp(t *testing.T) {

@@ -5,8 +5,10 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -126,6 +128,73 @@ func TestMobMove_GoToARoomIdStopsTheCraft(t *testing.T) {
 		t.Fatalf("go 7363: %v", err)
 	}
 	assertStopToldToTheRoomLeft(t, m)
+}
+
+const mobMoveRootCondId = 7366
+
+// Owner ruling A (2026-10-13): a mob's work stops on an ATTEMPTED move, as a
+// player's does, even when the move then fails. Each case leaves the mob in
+// the room it tried to leave, its craft stopped and the stop told there.
+func TestMobMove_AFailedAttemptStillStopsTheCraft(t *testing.T) {
+	cases := []struct {
+		name  string
+		setup func(t *testing.T, m *mobs.Mob)
+		cmd   string
+	}{
+		{"locked door", func(t *testing.T, m *mobs.Mob) {
+			from := rooms.LoadRoom(craftEndedRoomId)
+			from.Exits = map[string]exit.RoomExit{"east": {RoomId: mobMoveDestRoomId, Lock: gamelock.Lock{Difficulty: 10}}}
+			if !from.Exits["east"].Lock.IsLocked() {
+				t.Fatal("fixture: the east exit is locked")
+			}
+		}, "east"},
+		{"rooted", func(t *testing.T, m *mobs.Mob) {
+			t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+				mobMoveRootCondId: {ConditionId: mobMoveRootCondId, Name: "Rooted", TriggerCount: 1,
+					Flags: []conditions.Flag{conditions.NoMovement}},
+			}))
+			if err := m.Character.AddCondition(mobMoveRootCondId, false); err != nil {
+				t.Fatalf("fixture: root: %v", err)
+			}
+			if !m.Character.HasConditionFlag(conditions.NoMovement) {
+				t.Fatal("fixture: the mob is rooted")
+			}
+		}, "east"},
+		{"a wall", nil, "north"},
+		{"a room id it cannot reach", nil, "99999"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m := mobMoveCraftScene(t, true)
+			if tc.setup != nil {
+				tc.setup(t, m)
+			}
+			_, _ = mobcommands.Go(tc.cmd, m, rooms.LoadRoom(craftEndedRoomId))
+
+			if m.Character.RoomId != craftEndedRoomId {
+				t.Fatalf("fixture: the move should fail, but the mob is in room %d", m.Character.RoomId)
+			}
+			if !m.Character.Activity.IsFree() {
+				t.Errorf("Activity = %v after a failed attempt, want Free", m.Character.Activity.State())
+			}
+			left := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId))
+			if !containsLine(left, "Smith stops forging.") {
+				t.Errorf("watcher read %q, want the stop line", left)
+			}
+		})
+	}
+}
+
+// Go is also the fallback for every mob command nothing else claimed. A word
+// that is not a move leaves the work alone.
+func TestMobMove_AWordThatIsNotAMoveLeavesTheCraft(t *testing.T) {
+	m := mobMoveCraftScene(t, true)
+	if handled, _ := mobcommands.Go("dance", m, rooms.LoadRoom(craftEndedRoomId)); handled {
+		t.Fatal("fixture: dance is not a move")
+	}
+	if !m.Character.Activity.IsCrafting() {
+		t.Errorf("Activity = %v after a non-move word, want Crafting", m.Character.Activity.State())
+	}
 }
 
 // A companion following its owner moves of its own will, as a player
