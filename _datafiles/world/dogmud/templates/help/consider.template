@@ -10,13 +10,13 @@ would cost you, and how long each of you would need to beat the other.
 It reads both of you as you stand right now. Your spells, potions, wards and
 enchantments count, and so do theirs.
 
-Sizing someone up is a skill. Your <ansi fg="stat">Perception</ansi> and <ansi fg="skill">search</ansi> skill
-work against their <ansi fg="stat">Charisma</ansi> and <ansi fg="skill">rhetoric</ansi>, so a good read is
-clear and a poor one is muddy and may be off. A dark or dazzling room makes
-the read harder. Results vary, and each read trains search.
+Sizing someone up is a skill. Your <ansi fg="stat">Perception</ansi> and <ansi fg="skill">search</ansi> skill work
+against their <ansi fg="stat">Charisma</ansi> and <ansi fg="skill">rhetoric</ansi>, so a good read is clear and a
+poor one is muddy and may be off. A dark or dazzling room makes the read
+harder. Results vary, and each read trains search.
 
-Considering uses your special-move recovery, like <ansi fg="command">bash</ansi>
-or a spell, so you can't consider and use a special move in the same breath.
+Considering uses your special-move recovery, like <ansi fg="command">bash</ansi> or a spell,
+so you can't consider and use a special move in the same breath.
 
 <ansi fg="yellow">What you might hear:</ansi>
 
