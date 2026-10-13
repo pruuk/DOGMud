@@ -24,18 +24,14 @@ tips:
     The three moons affect your abilities. Watch for moon phase
     announcements and plan accordingly.
   - >-
-    Use <ansi fg="command">consider</ansi>
-    <ansi fg="yellow">[target]</ansi> before a fight to gauge
-    how dangerous an opponent is.
-  - >-
     Crafting materials can be found by using the
     <ansi fg="command">forage</ansi> command in wilderness areas.
   - >-
     You can <ansi fg="command">equip</ansi> weapons and armor from
     your <ansi fg="command">inventory</ansi>. Better gear helps a lot.
   - >-
-    Running low on health? Rest outside of combat to regenerate.
-    Your Vitality stat affects how fast you recover.
+    Running low on health? <ansi fg="command">sleep</ansi> to recover
+    much faster, but not where enemies roam: a sleeper is easy prey.
   - >-
     Use <ansi fg="command">skills</ansi> to see your skill ranks.
     Skills improve the more you use them.
@@ -61,8 +57,8 @@ tips:
     Mutations are permanent changes to your body. They develop
     naturally as you adventure and grow.
   - >-
-    Try <ansi fg="command">help defense</ansi> to learn about combat
-    stances. Dodge, parry, and block each have strengths.
+    Try <ansi fg="command">help defense</ansi> to learn how you turn
+    blows aside. Dodge, parry, and block each have strengths.
   - >-
     NPCs remember your actions. Completing quests and making
     choices shapes how the world treats you.
@@ -74,7 +70,7 @@ tips:
     <ansi fg="command">stash</ansi> to lighten your load. Heavy
     packs slow you down.
   - >-
-    Use <ansi fg="command">set hints</ansi> to toggle these tips on
+    Use <ansi fg="command">set tips</ansi> to toggle these tips on
     or off.
   - >-
     Grappling is powerful in combat. Use
@@ -90,7 +86,7 @@ tips:
     The old regulars in the back corner of the Drowning Post
     Tavern share gossip about world events. Visit and listen.
   - >-
-    East of Thornwall lies the Ironwind Steppe -- open grassland
+    East of Thornwall lies the Ironwind Steppe, open grassland
     prowled by wolf packs and boar sounders. Bring good gear.
   - >-
     Wolves and goblins form packs on the steppe. The longer a
@@ -108,8 +104,8 @@ tips:
     their feelings? Try out the <ansi fg="command">taunt</ansi>
     special command.
   - >-
-    Healing up slow? Some rooms are sanctuaries — temples, certain
-    camps, the Sanctum Basin tutorial — and regenerate health,
+    Healing up slow? Some rooms are sanctuaries (temples, certain
+    camps, the Sanctum Basin tutorial) and regenerate health,
     stamina, and conviction much faster than ordinary rooms. Look
     for a peaceful description.
   - >-
@@ -129,29 +125,27 @@ tips:
     <ansi fg="command">help skullduggery</ansi> for details.
   - >-
     Use <ansi fg="command">sneak</ansi> to enter the shadows. Be
-    careful -- sharp-eyed NPCs may notice you trying to hide.
+    careful: sharp-eyed NPCs may notice you trying to hide.
   - >-
     Hidden and attacking? If your special move is ready, your first
     blow is an ambush. Land it cleanly and it hits very hard.
   - >-
     Use <ansi fg="command">shadow</ansi> to tail someone between
-    rooms without being seen. Requires rank 2 skullduggery.
+    rooms without being seen. Requires rank 3 skullduggery.
   - >-
     You can <ansi fg="command">steal</ansi> from NPCs or
     <ansi fg="command">plant</ansi> items on them. Being hidden
-    improves your chances.</ansi>
+    improves your chances.
   - >-
     Knock someone down? Follow up with a
     <ansi fg="command">kick</ansi> for a devastating stomp that
-    bypasses half their armor.
-  - >-
-    In a grapple and in control? Use <ansi fg="command">kick</ansi>
-    for a powerful knee strike.
+    bypasses half their armor. In a grapple and in control, the
+    same <ansi fg="command">kick</ansi> becomes a powerful knee strike.
   - >-
     You can open a fight with <ansi fg="command">kick</ansi>,
     <ansi fg="command">bash</ansi>, <ansi fg="command">trip</ansi>,
     <ansi fg="command">grapple</ansi>, or
-    <ansi fg="command">taunt</ansi> — no need to
+    <ansi fg="command">taunt</ansi>. No need to
     <ansi fg="command">attack</ansi> first.
   - >-
     Use <ansi fg="command">reply</ansi> to whisper back to the last
@@ -182,8 +176,8 @@ tips:
     Surviving a critical hit makes you tougher. Physical crits train
     Vitality, magical crits train Willpower, taunts train Charisma.
   - >-
-    <ansi fg="command">Veil Sight</ansi> lets you see hidden creatures
-    and players. Useful when exploring dangerous areas.
+    The <ansi fg="spellname">Veil Sight</ansi> spell lets you see hidden
+    creatures and players. Useful when exploring dangerous areas.
   - >-
     Use <ansi fg="command">buy 5 iron ingot</ansi> to purchase multiple
     items at once from a merchant.
@@ -192,7 +186,7 @@ tips:
     A crystalline decanter keeps brews fresh four times longer.
   - >-
     Drinking too many potions builds toxicity. Your body can only
-    handle so much alchemy at once — let it decay between doses.
+    handle so much alchemy at once, so let it decay between doses.
   - >-
     Moonpetal only grows at night. Try
     <ansi fg="command">forage</ansi> in wilderness areas after dark.
@@ -208,10 +202,6 @@ tips:
   - >-
     Use <ansi fg="command">salvage</ansi> to break down crafted items
     and recover materials. Higher skill means better returns.
-  - >-
-    Salvaging is free at a crafting station. Buy a
-    <ansi fg="itemname">salvage kit</ansi> from Fence Dealer Siv in
-    Thornwall to salvage anywhere.
   - >-
     Salvaging always destroys the item, even if you recover
     nothing. Make sure you really want to break it down.
@@ -240,8 +230,8 @@ tips:
     Elementals cost heavy conviction to conjure but need no
     components. Fire and magma reflect damage back at attackers.
   - >-
-    Be careful with <ansi fg="command">dismiss</ansi> -- dismissed
-    companions turn hostile immediately. All of them.
+    Be careful with <ansi fg="command">dismiss</ansi>. A charmed
+    creature you dismiss turns hostile immediately.
   - >-
     Rumor has it some tunnels go deeper than anyone lets on.
     A sharp eye might spot what others miss.

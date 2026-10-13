@@ -39,14 +39,17 @@ func BroadcastTips(e events.Event) events.ListenerReturn {
 			continue
 		}
 		u.SendText(messaging.CategoryTip, fullText)
-	}
 
-	// Also fire a Communication event for the web client's comms window.
-	events.AddToQueue(events.Communication{
-		CommType: "broadcast",
-		Name:     "Tip",
-		Message:  tip,
-	})
+		// Also fire a Communication event for the web client's comms window,
+		// aimed at this player alone so the opt-out above holds there too
+		// (#496): an untargeted broadcast reaches every online user.
+		events.AddToQueue(events.Communication{
+			TargetUserId: u.UserId,
+			CommType:     "broadcast",
+			Name:         "Tip",
+			Message:      tip,
+		})
+	}
 
 	return events.Continue
 }
