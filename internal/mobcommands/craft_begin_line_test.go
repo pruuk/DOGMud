@@ -93,12 +93,11 @@ func TestMobCraftCommandStartLineReachesRoom(t *testing.T) {
 	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
 		8301: {ItemId: 8301, Name: "iron dagger"},
 	}))
-	t.Cleanup(crafting.SeedRecipesForTest(map[string]*crafting.RecipeSpec{
-		"test-iron-dagger": {
-			RecipeId: "test-iron-dagger", Name: "test iron dagger", Skill: "blacksmithing",
-			TimeRounds: 3, Output: crafting.RecipeOutput{ItemId: 8301, Quantity: 1},
-		},
-	}))
+	crafting.RegisterRecipeForTest(&crafting.RecipeSpec{
+		RecipeId: "test-iron-dagger", Name: "test iron dagger", Skill: "blacksmithing",
+		TimeRounds: 3, Output: crafting.RecipeOutput{ItemId: 8301, Quantity: 1},
+	})
+	t.Cleanup(func() { crafting.UnregisterRecipeForTest("test-iron-dagger") })
 	mob, room := getTestMobAndRoom(t)
 	origSky, origLamp := room.SkyLight, room.Lamp
 	origKnown, origActivity := mob.Character.KnownRecipes, mob.Character.Activity
