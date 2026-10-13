@@ -45,6 +45,13 @@
   from the Reliquary floor, no longer also tells you that you already
   took what you just found. In the waking tutorial, looking at your guide
   before looking around now counts for both steps.
+- Turning tips off with `set tips` now also keeps them out of the web
+  client's chat panel.
+- The rotating tips are corrected and tidied: `shadow` needs rank 3
+  skullduggery (so does `help shadow`), you `sleep` to recover rather
+  than rest, Veil Sight is a spell, and only a charmed creature turns on
+  you when dismissed. Tips about salvage kits and combat stances, which no
+  longer exist, are gone, as are repeated tips.
 
 ## 2026-10-10: Boiling blood and fair arrests
 

@@ -89,7 +89,7 @@ func (g *GMCPCommModule) onComm(e events.Event) events.ListenerReturn {
 
 	} else if evt.CommType == `broadcast` {
 
-		sendToUserIds = append([]int{}, users.GetOnlineUserIds()...)
+		sendToUserIds = broadcastRecipients(evt, users.GetOnlineUserIds())
 
 	} else if evt.CommType == `whisper` {
 
@@ -125,6 +125,16 @@ func (g *GMCPCommModule) onComm(e events.Event) events.ListenerReturn {
 	}
 
 	return events.Continue
+}
+
+// broadcastRecipients is who a broadcast Comm event reaches. A targeted
+// broadcast (a tip, queued once per player who has tips on, #496) reaches only
+// its target; an untargeted one reaches every online user.
+func broadcastRecipients(evt events.Communication, onlineUserIds []int) []int {
+	if evt.TargetUserId > 0 {
+		return []int{evt.TargetUserId}
+	}
+	return append([]int{}, onlineUserIds...)
 }
 
 // commDelivery is one listener's copy of a Comm.Channel payload.

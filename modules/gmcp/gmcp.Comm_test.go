@@ -101,3 +101,11 @@ func TestSayDeliveries_TargetedSayReachesOnlyTheTarget(t *testing.T) {
 		CommType: `say`, Name: `Crier`, Message: `psst`, SpeakerHidden: true})
 	require.Equal(t, map[int]string{9742: `Someone`}, got)
 }
+
+// #496: a tip is queued per player who has tips on, so a targeted broadcast
+// must reach only its target; an untargeted broadcast still reaches everyone.
+func TestBroadcastRecipients_TargetedReachesOnlyTarget(t *testing.T) {
+	online := []int{1, 2, 3}
+	require.Equal(t, []int{2}, broadcastRecipients(events.Communication{CommType: `broadcast`, TargetUserId: 2}, online))
+	require.Equal(t, online, broadcastRecipients(events.Communication{CommType: `broadcast`}, online))
+}
