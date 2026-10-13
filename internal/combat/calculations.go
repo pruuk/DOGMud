@@ -34,14 +34,11 @@ func (p powerScoreTerms) total() float64 {
 // come from the fight read's shared helpers (fight_expect.go), so PowerScore,
 // consider and combat cannot drift apart (#301).
 func powerScoreParts(char characters.Character) powerScoreTerms {
+	// PowerScore rates the build at full pools; the fight read (PredictFight)
+	// reads live state. See atFullPools.
+	char = atFullPools(char)
 	c := &char
 	p := powerScoreTerms{}
-
-	// PowerScore rates the build at full pools; the fight read (PredictFight)
-	// reads live state. char is a by-value copy, so this leaves the caller's
-	// character alone (ints only: the copy is shallow).
-	c.Health = c.HealthMax.Value
-	c.Stamina = c.StaminaMax.Value
 
 	// ── OFFENSE ──────────────────────────────────────────────────────────
 	p.meleeOffense = meleeOffenseRaw(c, sourceTypeOf(c))
