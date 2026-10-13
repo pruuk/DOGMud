@@ -1,5 +1,11 @@
 # DOGMud Patch Notes
 
+## 2026-10-13: One blow, one story
+
+- Combat lines now always show the attacker, the defender and onlookers the
+  same moment, from the opening feint to the fumble; some used to describe a
+  different blow to each.
+
 ## Unreleased: Fighting blind, and plainer combat words
 
 - `consider` now tells you what a fight would really cost you, from "they

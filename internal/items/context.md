@@ -513,6 +513,35 @@ type TogetherMessages struct {
 }
 ```
 
+### Combat-messages record layout (#370, M6 rows 26-27)
+
+In `_datafiles/world/dogmud/combat-messages/*.yaml`, each split (`together`,
+`separate`) holds tier -> list of records. A record is one blow and carries
+every role's line for it: `actor`, `actee` and `observer` under `together`,
+and those plus `remote_observer` under `separate`. Moving a record moves all
+of its roles, so a reorder can no longer narrate different blows to different
+audiences. Tiers are `beginner`, `expert` and `master`.
+
+`attack_records.go` holds the decoder. `decodeTieredRecords` reads one split
+and returns the per-role `SkillTieredMessages` pools; it rejects an unknown
+key, a mix of role keys and tier keys, a record with a missing role and an
+empty line. `TogetherMessages.UnmarshalYAML` and `SeparateMessages.UnmarshalYAML`
+map the roles onto `ToAttacker`, `ToDefender`, `ToRoom` (and `ToAttackerRoom`,
+`ToDefenderRoom` for separate), so `PoolFor` and `Render` are unchanged.
+`AttackTypes.UnmarshalYAML` decodes each intensity through `attackOptionsCapture`,
+which keeps the original unmarshal func so strict decoding, exact scalar text
+and true line numbers survive (a marshal and re-parse would lose them).
+
+Transition rule: files still in the legacy role-first layout (role -> tier ->
+list, with `actor`/`actee`/`observer`/`remote_observer` keys) decode through
+the `plain` fallback until the last batch of #370 converts the final file and
+retires that layout. Files with the pre-M4b keys (`toattacker`, `todefender`,
+`toroom`, ...), such as the 8 under `_datafiles/world/default/combat-messages/`,
+do NOT decode: `decodeTieredRecords` rejects them as unknown keys, so loading
+the default world fails `LoadDataFilesE` at the combat-messages step (it used
+to load empty pools silently). The default world already does not boot (no
+`recipes/`).
+
 ### Defence Message Structure
 
 Defence pools use the same data-loader architecture under
@@ -1402,7 +1431,8 @@ Those are the GO FIELD names, and they lag the YAML. M4b-1 renamed the authored
 keys to the canonical role vocabulary, so a data file now says `actor`,
 `actee`, `observer` and, in the `separate` split only, `remote_observer`.
 `toattacker`/`todefender`/`toroom`/`toattackerroom`/`todefenderroom` are the
-old spellings and no longer load anything. `toattackerroom` became plain
+old spellings; since #370 a file using them fails to load with an unknown key
+error (it no longer loads silently empty). `toattackerroom` became plain
 `observer` because it is the same audience as `together`'s room line: the
 observers standing with the actor. The same rename covers
 `defense-messages/` (`DefenseTogetherMessages`) and `taunt-messages/`

@@ -4,6 +4,11 @@ PR 2 of messaging M3 item 8 renders every audience of one swing from a single
 coordinated index, which requires the role pools in each (verb, split, tier)
 group to be equal in length. This reports every group where they are not.
 
+Both layouts are read: role-first (split -> role -> tier -> [lines]) and
+records (split -> tier -> [{actor, actee, observer[, remote_observer]}]).
+Records keep pools equal by construction; the audit still reports any short
+pool, such as a record missing a role.
+
 READ ONLY. Never write YAML from Python: yaml.dump would destroy the token
 comment header, the quoting and the key order of every file it touched.
 
@@ -30,6 +35,26 @@ def groups(path):
     for verb, verb_body in ((doc or {}).get("options") or {}).items():
         for split, split_body in (verb_body or {}).items():
             if not split_body:
+                continue
+            if any(k in TIERS for k in split_body):
+                # Record layout: split -> tier -> [{role: line}]. Count each
+                # role across the tier's records; a record missing a role
+                # shows as a short pool.
+                # Roles used anywhere in this split; a role no record uses
+                # (remote_observer on together) is not a short pool.
+                used = sorted({
+                    r for t in TIERS for rec in (split_body.get(t) or [])
+                    for r in (rec or {})
+                })
+                for tier in TIERS:
+                    recs = split_body.get(tier) or []
+                    if not recs:
+                        continue
+                    counts = {
+                        r: sum(1 for rec in recs if (rec or {}).get(r))
+                        for r in used
+                    }
+                    yield verb, split, tier, counts
                 continue
             # An explicitly-null role is a present role with an empty pool,
             # not an absent one: shooting.yaml nulls todefenderroom.
