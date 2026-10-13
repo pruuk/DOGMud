@@ -213,7 +213,7 @@ func TestMobDrainArea_RevealsItsHiddenCaster(t *testing.T) {
 // End to end through the mob's own cast command and the combat round: a
 // hidden mob's harmful cast leaves it hidden through its fold rounds (the
 // round's cancel-on-combat strip must not reveal a mob still folding), and
-// it is out of hiding once the cast is over.
+// the landing reveals it.
 func TestHiddenMobHarmfulCast_StaysHiddenWhileFolding(t *testing.T) {
 	_, _, caster := hiddenHolderFixture(t)
 	room := rooms.LoadRoom(1)
@@ -224,6 +224,9 @@ func TestHiddenMobHarmfulCast_StaysHiddenWhileFolding(t *testing.T) {
 	t.Cleanup(spells.SeedSpellsForTest(map[string]*spells.SpellData{"test-spike": spike}))
 	caster.Character.ConvictionMax.Value, caster.Character.Conviction = 1000, 1000
 	caster.Character.Cooldowns = nil
+	// The contest is pinned to an attack win, so the spell lands (no fumble
+	// and backfire) and the reveal asserted below is the landing's.
+	t.Cleanup(combat.SetChannelAttackContestRunnerForTest(attackWinContest(t)))
 
 	rat := &mobs.Mob{MobId: 2, InstanceId: 101, Character: characters.Character{
 		Name: "Rat", RoomId: room.RoomId, Health: 1000, Conditions: conditions.New()}}
@@ -253,9 +256,5 @@ func TestHiddenMobHarmfulCast_StaysHiddenWhileFolding(t *testing.T) {
 		handleMobCombat(events.NewRound{RoundNumber: round})
 	}
 	require.False(t, caster.Character.IsCasting(), "fixture: the cast resolved")
-	// Landed, it revealed the caster; fumbled, the caster is still in combat
-	// and the next round's strip reveals it before it can swing.
-	util.SetRoundCountForTest(9007)
-	handleMobCombat(events.NewRound{RoundNumber: 9007})
-	require.False(t, caster.Character.IsHidden(), "a caster whose cast is over is out of hiding")
+	require.False(t, caster.Character.IsHidden(), "the landing must reveal the caster")
 }
