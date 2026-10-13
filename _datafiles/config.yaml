@@ -782,6 +782,24 @@ Balance:
   #   ongoing maintenance uses GrappleStaminaCostPerRound instead.
   SpecialMoveBaseStaminaCost: 4
   SpecialMoveCooldown: 4
+  #
+  # Consider (#301): consider reads a fight as a verdict plus two paces.
+  #   ConsiderPace*: rounds to kill at or under which a pace is "moments",
+  #   "a short fight" or "a long fight"; above Long it is "an age".
+  #   ConsiderBand*: limits on cost (the share of your health the fight takes)
+  #   and, for HopelessDent, on dent (the share of theirs you take before
+  #   dying). ConsiderClearReadZ: how far a won read roll must clear, in roll
+  #   spreads, to read clearly. Each ladder must ascend or it resets whole.
+  ConsiderPaceMoments: 2
+  ConsiderPaceShort: 6
+  ConsiderPaceLong: 20
+  ConsiderBandUntouched: 0.05
+  ConsiderBandHopelessDent: 0.05
+  ConsiderBandScratches: 0.25
+  ConsiderBandHurt: 0.6
+  ConsiderBandBarely: 1.0
+  ConsiderBandLethal: 3.0
+  ConsiderClearReadZ: 1.0
 
   # - ConjureCooldown -
   # Rounds between corpse-free conjure/summon casts, on their OWN cooldown key

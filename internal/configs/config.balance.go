@@ -1357,6 +1357,22 @@ type Balance struct {
 	LightDarknessSpellDurationBase         ConfigFloat `yaml:"LightDarknessSpellDurationBase"`         // default 2
 	LightDarknessSpellDurationStatDivisor  ConfigFloat `yaml:"LightDarknessSpellDurationStatDivisor"`  // default 50
 	LightDarknessSpellDurationSkillDivisor ConfigFloat `yaml:"LightDarknessSpellDurationSkillDivisor"` // default 20
+
+	// ── CONSIDER (#301) ─────────────────────────────────────────────────────
+	// consider reads a fight as a verdict plus two paces; see
+	// internal/actions/fight_read.go. Pace limits are rounds to kill. Band
+	// limits are shares of health: cost is the share of yours the fight takes,
+	// dent the share of theirs you take before dying.
+	ConsiderPaceMoments      ConfigFloat `yaml:"ConsiderPaceMoments"`      // default 2
+	ConsiderPaceShort        ConfigFloat `yaml:"ConsiderPaceShort"`        // default 6
+	ConsiderPaceLong         ConfigFloat `yaml:"ConsiderPaceLong"`         // default 20
+	ConsiderBandUntouched    ConfigFloat `yaml:"ConsiderBandUntouched"`    // default 0.05
+	ConsiderBandHopelessDent ConfigFloat `yaml:"ConsiderBandHopelessDent"` // default 0.05
+	ConsiderBandScratches    ConfigFloat `yaml:"ConsiderBandScratches"`    // default 0.25
+	ConsiderBandHurt         ConfigFloat `yaml:"ConsiderBandHurt"`         // default 0.6
+	ConsiderBandBarely       ConfigFloat `yaml:"ConsiderBandBarely"`       // default 1.0
+	ConsiderBandLethal       ConfigFloat `yaml:"ConsiderBandLethal"`       // default 3.0
+	ConsiderClearReadZ       ConfigFloat `yaml:"ConsiderClearReadZ"`       // default 1.0
 }
 
 func (b *Balance) Validate() {
@@ -1369,6 +1385,7 @@ func (b *Balance) Validate() {
 	b.validateBaubles()
 	b.validateMisc()
 	b.validateLighting()
+	b.validateConsider()
 }
 
 func GetBalanceConfig() Balance {
