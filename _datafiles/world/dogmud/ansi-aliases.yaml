@@ -285,3 +285,8 @@ colors:
 # `system`, the category these lines rode before, so moving them only
 # changes where they wrap. Each line also carries its own inner color tag.
   craft: 8
+
+# The room's lines about a crafter (owner ruling C, 2026-10-13). Same value
+# as `emote` and `mob-idle`, the categories these lines rode, so moving them
+# only changes where they wrap.
+  craft-seen: 144

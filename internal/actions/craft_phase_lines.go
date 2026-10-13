@@ -34,7 +34,10 @@ func NarrateCraftPhase(crafter Actor, recipe *crafting.RecipeSpec, phase craftin
 		return
 	}
 	actorName, actorPlain := cc.GetCharacterName(true), cc.GetCharacterName(false)
-	cat := messaging.CategoryEmote
+	// One wrapped category for every room line about a crafter, player or
+	// mob (owner ruling C, 2026-10-13). CategoryEmote, which a player
+	// crafter's lines rode, never wraps.
+	cat := messaging.CategoryCraftSeen
 	crafterUserId := 0
 	switch a := crafter.(type) {
 	case *UserActor:
@@ -47,7 +50,6 @@ func NarrateCraftPhase(crafter Actor, recipe *crafting.RecipeSpec, phase craftin
 			return
 		}
 		actorName = MobSeenName(a.Mob, room, 0)
-		cat = messaging.CategoryMobIdle
 	}
 
 	item := ""

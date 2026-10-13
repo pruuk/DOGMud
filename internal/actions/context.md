@@ -1857,7 +1857,11 @@ names hidden and the item as "something"; no sight (dark, blinded, asleep)
 reads the skill's heard line, `start_heard` at start and `finish_heard` at
 success and failure alike; a reader who does not perceive a hidden crafter
 (`UnseenBy`) reads the heard line whatever their sight. Each reader is sent
-exactly once. Lines come from `crafting-messages.yaml` (see
+exactly once. Every line rides `messaging.CategoryCraftSeen`, for a player or
+a mob crafter, so it wraps at the reader's width (owner ruling C, 2026-10-13;
+before, a player crafter's lines rode the non-wrapping `CategoryEmote`).
+`craft_phase_wrap_test.go` pins it with a long crafter name and a
+34-character item name. Lines come from `crafting-messages.yaml` (see
 `internal/crafting/context.md`). Root guard `craft_phase_narration_guard_test.go`
 keeps every other site from sending craft room lines itself.
 

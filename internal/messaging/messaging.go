@@ -114,6 +114,14 @@ const (
 	// Refusals ("you are missing...") stay on CategorySystem.
 	CategoryCraft
 
+	// The room's lines ABOUT a crafter (owner ruling C, 2026-10-13):
+	// actions.NarrateCraftPhase's seen, shapes and heard lines, for a player
+	// or a mob crafter. They rode CategoryEmote (player) and CategoryMobIdle
+	// (mob), and CategoryEmote never wraps, so a long name and item name ran
+	// past 80. Appended so no existing value shifts; normalised and colored
+	// as CategoryEmote is (alias craft-seen, same value as emote).
+	CategoryCraftSeen
+
 	// categoryMax is the exclusive upper bound of the Category enum.
 	// Used by tests to iterate the full range; do not consume in
 	// production code.
@@ -250,6 +258,8 @@ func (c Category) String() string {
 		return "light"
 	case CategoryCraft:
 		return "craft"
+	case CategoryCraftSeen:
+		return "craft-seen"
 	}
 	return "Unknown"
 }

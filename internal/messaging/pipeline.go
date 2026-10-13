@@ -149,7 +149,9 @@ func shouldWrap(cat Category) bool {
 		// The quit line (#449): one sentence of narration to the room.
 		CategoryLogout,
 		// The crafter's own work lines (#515): recipe prose runs long.
-		CategoryCraft:
+		CategoryCraft,
+		// The room's lines about a crafter (owner ruling C).
+		CategoryCraftSeen:
 		return true
 	}
 	return false

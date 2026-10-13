@@ -35,10 +35,11 @@ the recipient's connection.
 5. **Apply category color tag** — `<ansi fg="<category-alias>">…</ansi>`.
 6. **Wrap** at recipient's `UserRecord.LineWidth` (default 80, range
    40-240), ANSI-aware, but only for the narration categories
-   `shouldWrap` admits (47 of the 63 `Category` values as of this
+   `shouldWrap` admits (48 of the 64 `Category` values as of this
    writing, `CategoryLight` among them: lighting plan 3d's transition
-   notices wrap exactly as `CategoryTimeOfDay` does; and `CategoryCraft`,
-   #515, the crafter's own work lines). Pre-formatted
+   notices wrap exactly as `CategoryTimeOfDay` does; `CategoryCraft`,
+   #515, the crafter's own work lines; and `CategoryCraftSeen`, the
+   room's lines about a crafter). Pre-formatted
    output is excluded by category: mixed
    buckets that mix refusals or chat with tables, ASCII art or a
    banner (`System`, `Broadcast`, `Splash`, `SkillProgress`), the
@@ -66,7 +67,7 @@ full per-recipient pipeline.
 
 Types and constants:
 
-- `Category`: enum of 63 text classes (combat hits, defense, grapple,
+- `Category`: enum of 64 text classes (combat hits, defense, grapple,
   submissions, specials, spells by school, social, system, environment,
   loot/equipment/condition/mutation/toxin; plus `CategoryCombatSummary` for
   the per-round compact tally emitted by the light-verbosity path, and
@@ -104,8 +105,16 @@ Types and constants:
   no normalisation skips, no verbosity tier drops it, and alias `craft` in
   `ansi-aliases.yaml` is 8, the `system` value. Refusals (unknown recipe,
   missing ingredients, already busy, too dark) stay on `CategorySystem`;
-  the room's onlooker lines keep their own categories (`actions.NarrateCraftPhase`).
+  the room's onlooker lines ride `CategoryCraftSeen`, below.
   Pinned by `category_craft_test.go`.
+- `CategoryCraftSeen` (owner ruling C, 2026-10-13): the room's lines ABOUT a
+  crafter, every line `actions.NarrateCraftPhase` sends (seen, shapes and
+  heard), for a player or a mob crafter. Appended after `CategoryCraft`. A
+  player crafter's lines rode `CategoryEmote`, which never wraps, and a mob
+  crafter's rode `CategoryMobIdle`; both now wrap here. Normalised as
+  `CategoryEmote` is (every stage skipped), no verbosity tier drops it, and
+  alias `craft-seen` in `ansi-aliases.yaml` is 144, the `emote` and
+  `mob-idle` value, so the onlooker color is unchanged.
 - `Verbosity`, `ParseVerbosity`, `(Verbosity).Suppresses` — combat-text
   verbosity primitives in `verbosity.go`. The allowlists
   (`suppressibleAtMedium`, `suppressibleAtLight`) declare which
