@@ -29,4 +29,5 @@ so you can't consider and use a special move in the same breath.
   <ansi fg="red-bold">You'd lose badly.</ansi>
   <ansi fg="red-bold">What could you possibly be thinking? You have zero chance.</ansi>
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cooldowns</ansi>, <ansi fg="command">help search</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help cooldowns</ansi>, <ansi fg="command">help special</ansi>,
+  <ansi fg="command">help search</ansi>

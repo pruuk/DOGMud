@@ -935,11 +935,12 @@ changes (melee offense) and (b) any stat-mod difference flows through
 `mutations.GearEffectivenessMultiplier` — an ethereal wraith's
 PowerScore reflects gear at the rank-determined fraction.
 
-Consumers: `actions.Consider` (player + mob `consider`),
-behavior tree conditions `target_power_ratio_above` and
-`target_power_ratio_below`, behavior tree action
-`target_weakest_mob_in_room`. `actions.Consider` no longer uses
-PowerScore: it reads `PredictFight` (next section).
+Consumers: behavior tree conditions `target_power_ratio_above` and
+`target_power_ratio_below` (`internal/behaviortree/conditions_combat.go`),
+the weakest-mob selection in `internal/targeting` (wired to PowerScore by
+`targeting_wiring.go` through `SetPowerScoreFn`), and the power leaderboard
+in `modules/leaderboards`. `actions.Consider` does not use PowerScore: it
+reads `PredictFight` (next section).
 
 ## The fight read (#301)
 

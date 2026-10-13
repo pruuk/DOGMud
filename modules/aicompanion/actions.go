@@ -714,7 +714,8 @@ func (m *AICompanionModule) lookAt(c *controller, mob *mobs.Mob, room *rooms.Roo
 }
 
 // consider sizes up a person or creature (F6.5), silently, as a player's
-// consider does, using the same power comparison.
+// consider does. It gets the same fight read a player's consider gives,
+// without the roll.
 func (m *AICompanionModule) consider(c *controller, mob *mobs.Mob, room *rooms.Room, t *thing) actionOutcome {
 	self := actions.NewMobActorInRoom(mob, room)
 	var target actions.Actor
