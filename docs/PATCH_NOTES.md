@@ -2,6 +2,12 @@
 
 ## Unreleased: Fighting blind, and plainer combat words
 
+- Crafting is no longer silent to the room. When you start, finish or
+  ruin a piece of work, anyone watching sees it, and anyone who can make
+  out only shapes sees a figure at work on something. In the dark, or
+  from someone hidden, the craft is heard instead: a hammer ringing, a
+  pot bubbling, then quiet. Creatures that craft follow the same rules.
+
 - When someone starts a spell aimed at you, you now read a line of your own
   telling you so.
 - A hidden caster starting a spell nearby is heard but not seen: a faint
