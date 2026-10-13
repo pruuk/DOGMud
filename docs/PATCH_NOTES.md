@@ -41,6 +41,10 @@
   you are while you stand in total darkness.
 - Players using plain ASCII text no longer see two stray garbled
   characters after their status prompt.
+- Opening the smugglers' strongbox in The Undertow, or lifting the disc
+  from the Reliquary floor, no longer also tells you that you already
+  took what you just found. In the waking tutorial, looking at your guide
+  before looking around now counts for both steps.
 
 ## 2026-10-10: Boiling blood and fair arrests
 
