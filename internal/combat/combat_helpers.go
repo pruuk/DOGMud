@@ -815,7 +815,7 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 		//
 		// U8 keeps every candidate in the contest but removes the governing skill
 		// addend from this candidate when its own immutable quote is unaffordable.
-		// Stats, equipment and the multipliers below remain unchanged.
+		// Stats, equipment and the multipliers in defenceEntryScore remain unchanged.
 
 		defenseScore, quote, quoted := defenceEntryScore(targetChar, defenseType, isThirdParty, ctx)
 
