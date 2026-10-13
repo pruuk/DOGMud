@@ -4,7 +4,7 @@
 
 **Goal:** Every craft, by a player or a mob, tells the room when it starts, succeeds and fails, judged per reader by sight, from per-skill pools in one new store.
 
-**Architecture:** A new world file `crafting-messages.yaml` holds five pools per skill, loaded and validated by `internal/crafting` (`LoadCraftingMessages`, `CraftRoomLines`, `CraftHeardLine`). One sender, `actions.NarrateCraftPhase`, partitions the room by sight and sends the seen line (item named or "something"), or the heard line. All eight craft room-line sites call it; the mob-only Go lines are deleted.
+**Architecture:** A new world file `crafting-messages.yaml` holds five pools per skill, loaded and validated by `internal/crafting` (`LoadCraftingMessages`, `CraftRoomLines`, `CraftHeardLine`). One sender, `actions.NarrateCraftPhase`, partitions the room by sight and sends the seen line (item named or "something"), or the heard line. All ten craft room-line sites call it (eight at plan time; see Tasks 4 and 10); the mob-only Go lines are deleted.
 
 **Tech Stack:** Go, yaml.v2, the `internal/narration` render core, `internal/messaging` sight predicates, `internal/rooms` senders.
 
@@ -1627,3 +1627,14 @@ func init() {
 - [ ] **Step 8: Docs and gate.** `internal/state/activity/context.md`: document `OnCraftEnded` and why it exists. `internal/crafting/context.md`: `PhaseCancel`, `cancel_observer`, cancel heard as `finish_heard`. `internal/hooks/context.md`: add `Activity_CraftEnded.go` beside `Activity_Cascades.go` if that file lists cascade hooks. `docs/PATCH_NOTES.md`: extend the crafting bullet with one sentence: "If someone stops partway, the room sees them set the work aside." Spec already carries R4. Full gate, each standalone: `gofmt -l internal/ modules/ *.go`, `go build ./...`, `go vet ./...`, `go test ./...`, `golangci-lint run --new-from-merge-base=origin/master ./...`. Commit per step or in two commits (engine + store; hook + copy + docs), named paths only.
 
 - [ ] **Step 9: File the mob-movement issue.** Search first (`gh issue list --repo pruuk/DOGMud --search "mob craft move"`); if none, `gh issue create --repo pruuk/DOGMud` titled "A mob that moves mid-craft keeps crafting and finishes in its new room", body: mob movement never cancels mob crafting (players' `go` does, `usercommands/go.go:90-99`), so the new room hears a finish with no start; found in the M6 row 7 final review (PR #508); behaviour question, not a narration one.
+
+### Task 10: shop keepers' background crafting uses the shared sender
+
+Found in the playtest (a tenth site the spec missed); owner approved option (a) on 2026-10-13.
+
+- `mobs.CraftResult` gains `RecipeId`, set in `executeCraft` and `executeCraftLegacy` beside `RecipeName`. Salvage and restock-only results leave it empty.
+- `hooks/MobIdle_HandleIdleMobs.go`: the result-to-lines step is now `narrateShopCraft(mob, room, result)`. A craft resolves its spec with `crafting.GetRecipe(result.RecipeId)` and calls `actions.NarrateCraftPhase` with `PhaseSuccess` or `PhaseFailure`; no start line (a shop craft is one idle tick). A nil recipe sends nothing.
+- Salvage results (Success true, Salvaged true) shared the old success line; they keep it, for salvage only, and never reach the craft sender. The restock-only supply-cart lines are unchanged.
+- The old failure string ("frowns at a failed attempt...") is deleted.
+- Tests: `internal/hooks/shop_craft_narration_test.go` drives `narrateShopCraft` directly (success, failure, salvage, restock-only, unknown recipe); bite proof: success phase swapped to start fails the success test.
+- Spec table, Deleted section and `docs/README.md` row updated to ten sites.

@@ -167,6 +167,9 @@ the same category as their seen line.
 | Mob instant, `mobcommands/craft.go:56` | `MobRoomLine` with "produces something" fallback | `PhaseStart` then `PhaseSuccess` |
 | Mob start, `announceCraftBegin` | sight-judged Go line | `PhaseStart` |
 | Mob tick success/failure, `NewRound_MobRoundTick.go:617`, `:629` | fallback "finishes their work" / silent failure | `PhaseSuccess` / `PhaseFailure` |
+| Shop keepers' background crafting, `hooks/MobIdle_HandleIdleMobs.go` (`narrateShopCraft`, result of `mobs.TickMobCraft`) | ambient Go lines "finishes crafting and sets a new item on the shelf" / "frowns at a failed attempt" | `PhaseSuccess` / `PhaseFailure` only, no start (owner ruling 2026-10-13, option a: found in the playtest; a shop craft is one idle tick with no timed start, and a start line would double the shop-counter noise). Salvage and restock-only results are not crafts and keep their lines. `CraftResult` gains `RecipeId` so the hook can resolve the spec |
+
+The table is ten sites.
 
 An instant craft narrates start and success together, so the room is told the
 crafter began and finished, matching a timed craft's two moments.
@@ -174,8 +177,11 @@ crafter began and finished, matching a timed craft's two moments.
 ### Deleted
 
 `RecipeSpec.MobRoomLine` and `mob_room_line.go`, `announceCraftBegin`,
-`craftBeginLine`, the Observer half of `craftDeliverInstant`, and both mob
-fallback strings. The per-recipe `success_observer` / `failure_observer`
+`craftBeginLine`, the Observer half of `craftDeliverInstant`, both mob
+fallback strings, and the two shop-craft Go strings in
+`MobIdle_HandleIdleMobs.go` ("finishes crafting and sets a new item on the
+shelf" survives for the salvage case only; "frowns at a failed attempt and
+discards the ruined materials" is gone). The per-recipe `success_observer` / `failure_observer`
 fields STAY in the schema, unread by the sender; the crafting rework decides
 whether they return as an override or go. `RecipeSpec.Narration` keeps
 returning them so the validator still checks any that get authored, and the

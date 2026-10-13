@@ -623,7 +623,8 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
     // import cycles in the mobs package.
     craftRoom := rooms.LoadRoom(mob.Character.RoomId) // loaded once
     if result := mobs.TickMobCraft(mob, combat.SightRoom(craftRoom)); result != nil {
-        // Emit room flavor text (success/failure)
+        // narrateShopCraft: craft success/failure via actions.NarrateCraftPhase
+        // (no start line); salvage and restock-only keep their own lines
         // Emit MobCraftedRare world event if SkillMinimum >= CrafterRareThreshold
     }
 
