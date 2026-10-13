@@ -11,6 +11,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -68,6 +70,39 @@ func TestPinnacleHunger_DrainAndClock(t *testing.T) {
 	tickHunger(c, u, 65)
 	if c.Health != 85 {
 		t.Fatalf("expected drain to 85 (escalation 1.5), got %d", c.Health)
+	}
+}
+
+// TestPinnacleHunger_TollDoesNotInterruptACraft proves the blade's toll is
+// attrition, not an attack (#514 R2): it drains health but a craft in hand
+// keeps running.
+func TestPinnacleHunger_TollDoesNotInterruptACraft(t *testing.T) {
+	drainEventQueueOnCleanup(t)
+	defer items.SeedItemsForTest(map[int]*items.ItemSpec{
+		999950: {ItemId: 999950, Name: "blackrazor", Type: items.Weapon, Hands: 1,
+			HungerRounds: 10, HungerDrainPct: 0.1},
+	})()
+
+	u := users.NewTestUser(703, "hungry4", "Hungerer4", 7703)
+	u.Character = characters.New() // a fresh Character carries an Activity machine
+	c := u.Character
+	c.HealthMax.Value = 100
+	c.Health = 100
+	c.Equipment.Weapon = items.New(999950)
+	c.SetMiscData("pinnacle_hunger_anchor", uint64(0))
+	if err := c.Activity.TransitionToCrafting(
+		activity.CraftingData{RecipeId: "toll-craft-test", RoundsTotal: 5},
+		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
+	); err != nil {
+		t.Fatalf("begin craft: %v", err)
+	}
+
+	tickHunger(c, u, 20)
+	if c.Health >= 100 {
+		t.Fatalf("the toll should drain, health=%d", c.Health)
+	}
+	if st := c.Activity.State(); st != activity.Crafting {
+		t.Fatalf("the toll interrupted the craft: activity is %v, want Crafting", st)
 	}
 }
 

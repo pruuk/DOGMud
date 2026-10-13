@@ -252,7 +252,6 @@ func tickMobConditions(mob *mobs.Mob, mobInstanceId int) {
 						} else if tickAmt < 0 {
 							creditMobHarm(mob, condition.Caster, -tickAmt)
 							mob.Character.ApplyHarm(characters.PoolHealth, -tickAmt, condition.Caster)
-							cancelCraftOrSalvageOnDamage(&mob.Character)
 							cancelDamageConditions(&mob.Character)
 							// See tickCauseFor and deathCauseFor: captures the
 							// cause at tick-landing time so a record already

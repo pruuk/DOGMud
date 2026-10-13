@@ -338,7 +338,6 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 									// Damage is damage: wake a sleeper and drop
 									// cancel-on-damage records, as the poison and
 									// bleed hook always did (slice 1, change 5).
-									cancelCraftOrSalvageOnDamage(user.Character)
 									cancelDamageConditions(user.Character)
 									// Capture the cause at the moment the tick lands: a
 									// tick that is the record's last trigger arrives

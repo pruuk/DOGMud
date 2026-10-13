@@ -48,6 +48,8 @@ func (m *Machine) TransitionToSalvaging(d SalvagingData, r state.TransitionReaso
 func (m *Machine) TransitionToFree(r state.TransitionReason) error {
 	ended := m.crafting
 	wasCrafting := m.State() == Crafting
+	endedSalvage := m.salvaging
+	wasSalvaging := m.State() == Salvaging
 	if err := m.inner.TransitionTo(Free, r); err != nil {
 		return err
 	}
@@ -56,6 +58,9 @@ func (m *Machine) TransitionToFree(r state.TransitionReason) error {
 	m.salvaging = nil
 	if wasCrafting {
 		m.fireCraftEnded(ended, r)
+	}
+	if wasSalvaging {
+		m.fireSalvageEnded(endedSalvage, r)
 	}
 	return nil
 }
@@ -68,12 +73,17 @@ func (m *Machine) ForceFree(r state.TransitionReason) {
 	}
 	ended := m.crafting
 	wasCrafting := m.State() == Crafting
+	endedSalvage := m.salvaging
+	wasSalvaging := m.State() == Salvaging
 	_ = m.inner.TransitionTo(Free, r)
 	m.casting = nil
 	m.crafting = nil
 	m.salvaging = nil
 	if wasCrafting {
 		m.fireCraftEnded(ended, r)
+	}
+	if wasSalvaging {
+		m.fireSalvageEnded(endedSalvage, r)
 	}
 }
 

@@ -76,23 +76,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		prevToxBand := user.Character.ToxicityBand()
 
 		// Toxicity decay (clears slower at high levels) + acute high-toxicity harm.
-		if user.Character.Toxicity > 0 {
-			bal := configs.GetBalanceConfig()
-			decay := float64(bal.ToxicityDecayPerTick)
-			if tMax := user.Character.GetToxicityMax(); tMax > 0 && user.Character.Toxicity/tMax >= 0.75 {
-				decay *= float64(bal.ToxicityHighDecaySlowMult)
-			}
-			user.Character.Toxicity -= decay
-			if user.Character.Toxicity < 0 {
-				user.Character.Toxicity = 0
-			}
-			// The body poisons itself at dangerous toxicity ("shortened life").
-			// Lethal toxicity is caught by the Health<1 non-combat death check above
-			// on the next tick.
-			if dmg := user.Character.ToxicitySicknessDamage(); dmg > 0 {
-				user.Character.ApplyHarm(characters.PoolHealth, dmg, state.ActorRef{})
-			}
-		}
+		tickToxicity(user.Character)
 
 		// Notify player when toxicity crosses a named threshold — once per
 		// crossing, not every tick. Bands 1 and 2 carry no penalty; their lines
@@ -377,6 +361,30 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 	}
 
 	return events.Continue
+}
+
+// tickToxicity is AutoHeal's per-tick toxicity step: decay (slower at high
+// levels), then acute harm at dangerous toxicity.
+func tickToxicity(c *characters.Character) {
+	if c.Toxicity <= 0 {
+		return
+	}
+	bal := configs.GetBalanceConfig()
+	decay := float64(bal.ToxicityDecayPerTick)
+	if tMax := c.GetToxicityMax(); tMax > 0 && c.Toxicity/tMax >= 0.75 {
+		decay *= float64(bal.ToxicityHighDecaySlowMult)
+	}
+	c.Toxicity -= decay
+	if c.Toxicity < 0 {
+		c.Toxicity = 0
+	}
+	// The body poisons itself at dangerous toxicity ("shortened life").
+	// Lethal toxicity is caught by AutoHeal's Health<1 non-combat death check
+	// on the next tick.
+	if dmg := c.ToxicitySicknessDamage(); dmg > 0 {
+		// Attrition, not an attack: it does not interrupt a craft (#514 R2).
+		c.ApplyAttrition(characters.PoolHealth, dmg, state.ActorRef{})
+	}
 }
 
 // regenMultFromSpecs returns the regen multiplier resulting from a set

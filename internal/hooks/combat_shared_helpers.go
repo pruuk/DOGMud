@@ -557,44 +557,6 @@ func clearCastingActivity(ch *characters.Character, trigger string) {
 	}
 }
 
-// cancelCraftOrSalvageOnDamage cancels the character's Activity if it is
-// Crafting or Salvaging. This is a hard cancel — no roll — because any
-// damage interrupts physical work immediately. Casting interrupts are
-// handled separately by clearCastingActivity (concentration break via
-// willpower roll). Both helpers may be called together at the same damage
-// site: they are independent and each no-ops when the state doesn't match.
-func cancelCraftOrSalvageOnDamage(ch *characters.Character) {
-	if ch.Activity == nil {
-		return
-	}
-	switch ch.Activity.State() {
-	case activity.Crafting:
-		err := ch.Activity.TransitionToFree(state.TransitionReason{
-			Trigger: activity.TriggerDamageInterrupt,
-			Actor:   ch.Activity.Self(),
-		})
-		// Tell a player crafter, as walking away does (usercommands/go.go).
-		// The room already hears the craft stop; a mob is told nothing.
-		// "Pain", not "blow": a bleed tick lands here too, with no blow (#515).
-		if err == nil && ch.GetUserId() > 0 {
-			if u := users.GetByUserId(ch.GetUserId()); u != nil {
-				u.SendText(messaging.CategorySystem, `<ansi fg="red">The pain interrupts your crafting.</ansi>`)
-			}
-		}
-	case activity.Salvaging:
-		err := ch.Activity.TransitionToFree(state.TransitionReason{
-			Trigger: activity.TriggerDamageInterrupt,
-			Actor:   ch.Activity.Self(),
-		})
-		// Tell a player salvager, as walking away does (usercommands/go.go).
-		if err == nil && ch.GetUserId() > 0 {
-			if u := users.GetByUserId(ch.GetUserId()); u != nil {
-				u.SendText(messaging.CategorySystem, `<ansi fg="red">The pain interrupts your salvaging.</ansi>`)
-			}
-		}
-	}
-}
-
 // cancelDamageConditions fires the Sleeping wake hook (if the character is asleep)
 // and then cancels all active conditions with the CancelOnDamage flag.
 //

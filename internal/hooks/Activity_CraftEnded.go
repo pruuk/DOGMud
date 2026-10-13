@@ -16,7 +16,8 @@ import (
 // later path that leaves Crafting. Completion narrates its own outcome at the
 // round tick, and death has its own narration, so both are skipped. One hook
 // rather than a call at each cancel site, so a new cancel path cannot be
-// silent.
+// silent. Every exit narrates at once except damage, which is deferred to the
+// end of the round (see below).
 func wireCraftEndedNarration(c *characters.Character) {
 	if c.Activity == nil {
 		return
@@ -33,13 +34,28 @@ func wireCraftEndedNarration(c *characters.Character) {
 		if c.Health < 1 || !c.IsAlive() {
 			return
 		}
+		ref := c.ActorRef()
+		// Hurt: the craft has already ended, but the damage that ended it is
+		// narrated after this callback returns. The crafter's "The pain
+		// interrupts your crafting." and the room's stop line wait for the
+		// round-end flush (work_interrupt_narration.go, owner ruling
+		// 2026-10-13), so they read after the hit line, not before it.
+		if r.Trigger == activity.TriggerDamageInterrupt {
+			queueWorkInterrupt(pendingWorkInterrupt{
+				userId:        ref.UserId,
+				mobInstanceId: ref.MobInstanceId,
+				roomId:        c.RoomId,
+				recipeId:      d.RecipeId,
+				phase:         crafting.PhaseCancel,
+			})
+			return
+		}
 		recipe := crafting.GetRecipe(d.RecipeId)
 		room := rooms.LoadRoom(c.RoomId)
 		if recipe == nil || room == nil {
 			return
 		}
 		var crafter actions.Actor
-		ref := c.ActorRef()
 		switch {
 		case ref.UserId > 0:
 			if u := users.GetByUserId(ref.UserId); u != nil {

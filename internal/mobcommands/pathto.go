@@ -22,7 +22,8 @@ func Pathto(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			// If can't go home, slowly lose health (10%)
 			// This helps to clean up mobs that get stuck in a weird location, which can
 			// happen for any number of reasons, like players dragging them through portals
-			mob.Character.ApplyHarm(characters.PoolHealth,
+			// Attrition, not an attack: it does not interrupt a craft (#514 R2).
+			mob.Character.ApplyAttrition(characters.PoolHealth,
 				int(math.Ceil(float64(mob.Character.HealthMax.Value)/10)),
 				state.ActorRef{})
 			return true, nil

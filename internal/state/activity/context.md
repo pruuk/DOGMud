@@ -228,6 +228,20 @@ Casting or Salvaging, nor when the machine was already Free. The hook in
 `internal/hooks/Activity_CraftEnded.go` uses it to tell the room (messaging
 M6 row 7, R4).
 
+### OnSalvageEnded
+
+```go
+func (m *Machine) OnSalvageEnded(name string, fn func(SalvagingData, state.TransitionReason))
+```
+
+The salvage twin of `OnCraftEnded`: called after the machine leaves
+`Salvaging` through `TransitionToFree` or `ForceFree`, with the data of the
+salvage that ended and the reason, after state and data are cleared and with
+no lock held. Not fired for Crafting or Casting, a vetoed transition, or a
+machine already Free. `internal/hooks/Activity_SalvageEnded.go` uses it to
+tell a salvager "The pain interrupts your salvaging." (#514), queued for the
+round-end flush so it reads after the hit line.
+
 ### Advance helpers
 
 ```go
@@ -334,9 +348,9 @@ Casting is not interrupted by movement.
 
 ### Damage interrupts (call-site wiring)
 
-`cancelCraftOrSalvageOnDamage` in `internal/hooks/combat_shared_helpers.go`
-fires `TriggerDamageInterrupt` unconditionally (hard cancel, no roll) at
-every damage application site when the target is Crafting or Salvaging.
+`Character.ApplyHarm` (`interruptWork` in `internal/characters/pools.go`)
+fires `TriggerDamageInterrupt` unconditionally (hard cancel, no roll) on any
+health harm that lands when the target is Crafting or Salvaging.
 Casting takes a different path: `checkConcentrationBreak` rolls Willpower
 and fires `TriggerConcentrationBreak` only on failure.
 

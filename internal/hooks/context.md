@@ -84,6 +84,7 @@ events.RegisterListener(events.NewRound{}, HandleRespawns)        // Mob respawn
 events.RegisterListener(events.NewRound{}, DoCombat)              // Combat resolution
 events.RegisterListener(events.NewRound{}, AutoHeal)              // Natural healing
 events.RegisterListener(events.NewRound{}, IdleMobs)              // Mob idle behavior
+events.RegisterListener(events.NewRound{}, FlushWorkInterruptNarration, events.Last) // Damage-ended craft/salvage lines (#514)
 ```
 
 ### NewTurn Event Handlers (4 handlers)
@@ -507,9 +508,9 @@ returns it; read the RETURNED value, not `condition.TickAmount`.
 Three things the tick path does at the moment health harm lands, all of which
 the old poison hook did and the condition tick path did NOT:
 
-- `cancelCraftOrSalvageOnDamage(char)` and `cancelDamageConditions(char)`
-  (`combat_shared_helpers.go`), so a damaging tick now wakes a sleeper and
-  cancels a `cancel-on-damage` record.
+- `cancelDamageConditions(char)` (`combat_shared_helpers.go`), so a damaging
+  tick now wakes a sleeper and cancels a `cancel-on-damage` record. (The
+  craft/salvage interrupt is in `Character.ApplyHarm` itself, #514.)
 - `tickCauseFor(spec)` (`tick_cause.go`) returns "poison" for a `poison`-flagged
   record and "bleeding out" for a `bleeding`-flagged one, and the tick stamps
   it on `Character.LastTickCause` with `LastTickCauseRound`. `deathCauseFor`
@@ -1485,7 +1486,48 @@ for casting).
 movement or damage interrupt) it calls `actions.NarrateCraftPhase` with
 `crafting.PhaseCancel`, so the room sees the work set aside. Completion
 (`TriggerCraftComplete`) and `TriggerDeath` are skipped: the round tick
-narrates its own outcome, and death has its own narration.
+narrates its own outcome, and death has its own narration. On
+`TriggerDamageInterrupt` it sends nothing itself: it queues a pending
+interruption (see `work_interrupt_narration.go`), and the flush then tells a
+living player crafter "The pain interrupts your crafting." and sends the
+room's stop line (#514; the old hand-placed `cancelCraftOrSalvageOnDamage`
+helper is gone, the interrupt lives in `Character.ApplyHarm`). Every other
+exit narrates at once.
+
+### Activity_SalvageEnded.go
+
+`characters.OnCharacterCreated(wireSalvageEndedNarration)` registers an
+`Activity.OnSalvageEnded` handler. On `TriggerDamageInterrupt` only, for a
+living player salvager, it queues a pending interruption; the flush sends
+"The pain interrupts your salvaging." Nothing for any other trigger (movement
+tells the salvager in `usercommands/go.go`) and nothing to the room, since
+salvage has no room lines.
+
+### work_interrupt_narration.go
+
+Deferred narration for work ended by damage (owner ruling 2026-10-13, option
+A). Damage lands before the hit line that reports it is sent, so the craft or
+salvage ends at once in `Character.ApplyHarm` but its lines wait. The two
+ended hooks call `queueWorkInterrupt` with a `pendingWorkInterrupt` (user id
+or mob instance id, room id, recipe id or `salvage`, phase) into a
+mutex-guarded package slice; the dying skip is decided there, at record time.
+`FlushWorkInterruptNarration`, registered in `hooks.go` as a `NewRound`
+listener with `events.Last`, calls `flushWorkInterrupts`, which drains the
+queue (`takeWorkInterrupts`) and sends the same lines the hooks used to: the
+player's own line, then `actions.NarrateCraftPhase` resolved against the
+recorded room. Dropped: an unresolvable crafter, a crafter who has started
+dying since, and a crafter whose Activity is no longer Free (out-of-round
+damage waited for the flush and they began new work). An unresolvable room
+drops only the room line. A Last listener runs after every non-Last listener
+regardless of registration time, so the flush follows `UserRoundTick`,
+`MobRoundTick`, `DoCombat` (with spell resolution) and every module listener
+(`init()` or load time); `TestNewRound_FlushRunsAfterEveryOtherListener`
+drives the real `RegisterListeners` chain to pin it. Messages
+are FIFO `events.Message` events at one priority, so the lines read after the
+round's hit lines. A `NewRound` listener that returned `Cancel` would skip
+the flush; none does. Damage outside round processing waits for the next
+round. Tests call `flushWorkInterrupts` directly and clear the queue with
+`takeWorkInterrupts`.
 
 ### Call-site wirings (not AfterTransition)
 
@@ -1495,7 +1537,7 @@ Movement and damage interrupts do not fit the machine-to-machine
 | Interrupt | Location | Trigger fired |
 |-----------|----------|---------------|
 | Movement (Crafting/Salvaging) | `internal/usercommands/go.go` | `TriggerMovementInterrupt` |
-| Damage taken (Crafting/Salvaging) | `cancelCraftOrSalvageOnDamage` in `combat_shared_helpers.go` | `TriggerDamageInterrupt` |
+| Damage taken (Crafting/Salvaging) | `Character.ApplyHarm` (`interruptWork`, #514) | `TriggerDamageInterrupt` |
 | Damage taken (Casting) | `clearCastingActivity` in `combat_shared_helpers.go` | `TriggerConcentrationBreak` on roll failure |
 
 Completion triggers are fired by per-tick consumers after a successful
