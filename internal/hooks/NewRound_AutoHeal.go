@@ -222,8 +222,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			} else {
 				// In combat: no base regen, but a Regenerating record (heal spell) still applies
 				if user.Character.Conditions.HasEffect(conditions.EffectRegenMult) {
-					regenMult := user.Character.Conditions.Effect(conditions.EffectRegenMult)
-					healAmt := int(math.Floor(float64(user.Character.HealthPerRound()) * toxRegenMult * regenMult * regenMultiplier))
+					healAmt := int(math.Floor(user.Character.CombatHealthRegenPerRound() * toxRegenMult * regenMultiplier))
 					if healAmt < 1 {
 						healAmt = 1
 					}
@@ -327,8 +326,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 		} else {
 			// In combat: only the Regenerating record applies
 			if mob.Character.Conditions.HasEffect(conditions.EffectRegenMult) {
-				regenMult := mob.Character.Conditions.Effect(conditions.EffectRegenMult)
-				hpAmt := int(math.Floor(float64(mob.Character.HealthPerRound()) * regenMult * mobRegenMult))
+				hpAmt := int(math.Floor(mob.Character.CombatHealthRegenPerRound() * mobRegenMult))
 				if hpAmt < 1 {
 					hpAmt = 1
 				}

@@ -320,3 +320,25 @@ func (bs *Conditions) HasEffect(kind EffectKind) bool {
 	}
 	return false
 }
+
+// PoolTickPerRound is the per-round average of every live tick record on pool
+// ("health", "stamina", "conviction"): each record's cached TickAmount spread
+// over its RoundInterval. Positive heals, negative harms. Live means what the
+// tick loop fires: TriggersLeft > 0 and RoundInterval >= 1. A record whose
+// amount is not cached yet (TickAmount 0) counts nothing, and a stacking
+// record counts once. Read-only; the fight prediction weighs heal-over-time
+// and damage-over-time with it (#301).
+func (bs *Conditions) PoolTickPerRound(pool string) float64 {
+	total := 0.0
+	for _, b := range bs.List {
+		if b == nil || b.TriggersLeft <= 0 || b.TickAmount == 0 {
+			continue
+		}
+		spec := GetConditionSpec(b.ConditionId)
+		if spec == nil || spec.TickPool != pool || spec.RoundInterval < 1 {
+			continue
+		}
+		total += float64(b.TickAmount) / float64(spec.RoundInterval)
+	}
+	return total
+}
