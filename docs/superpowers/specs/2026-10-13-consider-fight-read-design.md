@@ -150,8 +150,8 @@ Checked in this order; limits are balance knobs as above:
 | Band | Condition | Meaning (copy written separately) |
 |---|---|---|
 | 1 untouched | it deals you no net damage, or cost < `ConsiderBandUntouched` (0.05) | it won't lay a finger on you |
-| 7 hopeless | dent < `ConsiderBandHopelessDent` (0.05) | what could you possibly be thinking? You have zero chance |
 | S stalemate | both paces are "an age" | neither of you is ending this soon |
+| 7 hopeless | dent < `ConsiderBandHopelessDent` (0.05) | what could you possibly be thinking? You have zero chance |
 | 2 | cost < `ConsiderBandScratches` (0.25) | a few scratches at most |
 | 3 | cost < `ConsiderBandHurt` (0.6) | you'll win, but you'll feel it |
 | 4 | cost < `ConsiderBandBarely` (1.0) | you'd win, barely, if at all |
@@ -160,15 +160,23 @@ Checked in this order; limits are balance knobs as above:
 
 No verdict mentions pace ("quickly" is gone from band 6); pace is the second
 line's job. Band 1 is checked first so a target that cannot hurt you never
-reads hopeless just because you cannot hurt it either. Infinite rounds-to-kill
-(zero net damage) is handled explicitly, not by floating-point accident.
+reads hopeless just because you cannot hurt it either. Stalemate is checked
+before hopeless so a vast-health, pillow-hitting target (whose dent is tiny
+only because the fight would last hundreds of rounds) reads as a stalemate,
+not as zero chance. Infinite rounds-to-kill (zero net damage) is handled
+explicitly, not by floating-point accident.
+
+There is no base health regeneration in combat; only a heal spell's
+Regenerating record heals mid-fight (`internal/hooks/NewRound_AutoHeal.go`,
+in-combat branches), so the prediction counts that record and nothing else.
 
 Worked examples (the playtest confirms them):
 
-- **Straw Effigy** (vast health, pillow hits): if your regeneration outpaces
-  its hits, band 1 with paces "an age" / "never" ("It won't lay a finger on
-  you. It would take you an age to bring down, and it could never bring you
-  down."). If its hits get through, stalemate with "an age" / "an age".
+- **Straw Effigy** (vast health, pillow hits; species 19 has zero base
+  damage): band 1 if its hits do no net damage, otherwise stalemate; your
+  pace is "an age" either way ("Neither of you is ending this soon. It would
+  take you an age to bring them down, and it would take them an age to end
+  you.").
 - **A fragile hard hitter**: band 4 with paces "moments" / "a short fight".
 - **Megalomania with a starter character**: band 7.
 
@@ -233,12 +241,16 @@ again. Four guards, cheapest first:
    layer 1 profiles, and consider and the companion must call `PredictFight`.
 2. **Same inputs.** For a set of fixture characters, PowerScore's offense and
    defense terms equal the layer 1 profile outputs.
-3. **Prediction matches combat.** For a few fixed matchups (a bare starter
-   against a rat, a buffed fighter against a mid-level mob, a caster), run the
-   real combat round code many times with a fixed seed; the predicted damage
-   per round must land within a stated tolerance of the measured average. A
-   combat change that bypasses the shared helpers turns this red. It also
-   measures how rough the read really is, which informs the band limits.
+3. **Prediction matches combat.** For a few fixed melee matchups (an even
+   pair, an outclassed attacker, an armoured defender), run the real combat
+   round code (`resolveCombatRound`, as `TestMeleeParityDamagePerSwing` does)
+   many times with pinned config; the predicted melee damage per round must
+   land within a stated tolerance of the measured average. A combat change
+   that bypasses the shared helpers turns this red. It also measures how rough
+   the read really is, which informs the band limits. Spell damage resolves in
+   `internal/hooks`, out of a combat test's reach, so the spell term is held
+   to `rollSpellDamage` instead by sharing its extracted helpers and by an
+   exact unit test.
 4. **Verdicts pinned.** The Straw Effigy, a starter rat and the Megalomania
    case are named tests pinned to their expected verdict and paces.
 
