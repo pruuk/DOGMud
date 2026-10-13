@@ -1515,10 +1515,14 @@ mutex-guarded package slice; the dying skip is decided there, at record time.
 listener with `events.Last`, calls `flushWorkInterrupts`, which drains the
 queue (`takeWorkInterrupts`) and sends the same lines the hooks used to: the
 player's own line, then `actions.NarrateCraftPhase` resolved against the
-recorded room. An unresolvable crafter or room is dropped, as is a crafter
-who has started dying since. `events.Last` puts the flush after every other
-`NewRound` listener, including `UserRoundTick`, `MobRoundTick`, `DoCombat`
-(with spell resolution) and module listeners registered later, and messages
+recorded room. Dropped: an unresolvable crafter, a crafter who has started
+dying since, and a crafter whose Activity is no longer Free (out-of-round
+damage waited for the flush and they began new work). An unresolvable room
+drops only the room line. A Last listener runs after every non-Last listener
+regardless of registration time, so the flush follows `UserRoundTick`,
+`MobRoundTick`, `DoCombat` (with spell resolution) and every module listener
+(`init()` or load time); `TestNewRound_FlushRunsAfterEveryOtherListener`
+drives the real `RegisterListeners` chain to pin it. Messages
 are FIFO `events.Message` events at one priority, so the lines read after the
 round's hit lines. A `NewRound` listener that returned `Cancel` would skip
 the flush; none does. Damage outside round processing waits for the next

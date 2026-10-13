@@ -183,7 +183,8 @@ func TestCraftEnded_MobCrafterStopsAndTheRoomReadsIt(t *testing.T) {
 }
 
 // A player crafter who is hit is told the work stopped, as one who walks
-// away is; the watcher reads the cancel line. A mob is told nothing.
+// away is; the watcher reads the cancel line. A second hit on the now idle
+// crafter says nothing. (The mob half is TestApplyHarm_MobCrafterSendsNoCrafterLine.)
 func TestApplyHarm_PlayerCrafterIsTold(t *testing.T) {
 	crafter := craftEndedScene(t)
 	err := crafter.Character.Activity.TransitionToCrafting(
@@ -395,6 +396,8 @@ func TestCraftEnded_CancelNarratesWithoutAFlush(t *testing.T) {
 // the flush: the death narration covers it, as for a single killing blow.
 func TestFlushWorkInterrupts_DropsACrafterKilledLaterInTheRound(t *testing.T) {
 	crafter := craftEndedScene(t)
+	// The lethal hit queues a CharacterDied; do not leak it to later tests.
+	t.Cleanup(func() { events.DrainQueuedCharacterDiedForTest() })
 	err := crafter.Character.Activity.TransitionToCrafting(
 		activity.CraftingData{RecipeId: craftEndedRecipeId, RoundsTotal: 5},
 		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
@@ -412,5 +415,105 @@ func TestFlushWorkInterrupts_DropsACrafterKilledLaterInTheRound(t *testing.T) {
 	}
 	if got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId)); len(got) != 0 {
 		t.Fatalf("watcher read %q after the crafter died in the round, want nothing", got)
+	}
+}
+
+// Damage outside the round waits for the next flush. A crafter who has begun
+// new work by then is told nothing: a stale pain line and a stop line for the
+// old recipe would follow their new start line.
+func TestFlushWorkInterrupts_DropsACrafterBusyAgain(t *testing.T) {
+	crafter := craftEndedScene(t)
+	begin := func() {
+		t.Helper()
+		err := crafter.Character.Activity.TransitionToCrafting(
+			activity.CraftingData{RecipeId: craftEndedRecipeId, RoundsTotal: 5},
+			state.TransitionReason{Trigger: activity.TriggerCraftBegin},
+		)
+		if err != nil {
+			t.Fatalf("begin craft: %v", err)
+		}
+	}
+	begin()
+	crafter.Character.Health = 20
+	crafter.Character.ApplyHarm(characters.PoolHealth, 1, state.ActorRef{})
+	begin() // a new craft before the next round's flush
+	events.DrainQueuedMessagesForTest(craftEndedCrafterId)
+	events.DrainQueuedMessagesForTest(craftEndedWatcherId)
+
+	flushWorkInterrupts()
+
+	if own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId)); len(own) != 0 {
+		t.Fatalf("crafter read %q while crafting again, want nothing", own)
+	}
+	if got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId)); len(got) != 0 {
+		t.Fatalf("watcher read %q while the crafter works again, want nothing", got)
+	}
+}
+
+// A room that no longer resolves drops only the room line: the player is still
+// told, as before the deferral.
+func TestFlushWorkInterrupts_MissingRoomStillTellsThePlayer(t *testing.T) {
+	craftEndedScene(t)
+	queueWorkInterrupt(pendingWorkInterrupt{
+		userId:   craftEndedCrafterId,
+		roomId:   craftEndedRoomId + 99999, // never seeded
+		recipeId: craftEndedRecipeId,
+		phase:    crafting.PhaseCancel,
+	})
+	flushWorkInterrupts()
+
+	own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
+	if len(own) != 1 || own[0] != "The pain interrupts your crafting." {
+		t.Fatalf("crafter read %q, want one line %q", own, "The pain interrupts your crafting.")
+	}
+	if got := events.DrainQueuedMessagesForTest(craftEndedWatcherId); len(got) != 0 {
+		t.Fatalf("watcher read %q with no room, want nothing", got)
+	}
+}
+
+const craftEndedMarkerLine = "Marker from a later NewRound listener."
+
+// The real NewRound chain: hooks.RegisterListeners, then one more plain
+// listener registered after it (as a module's would be, or any listener added
+// later), which queues a marker to the crafter. The flush is registered
+// earlier, inside RegisterListeners, so only events.Last puts it behind the
+// marker.
+func TestNewRound_FlushRunsAfterEveryOtherListener(t *testing.T) {
+	crafter := craftEndedScene(t)
+	t.Cleanup(events.SwapListenersForTest())
+	RegisterListeners()
+	events.RegisterListener(events.NewRound{}, func(events.Event) events.ListenerReturn {
+		crafter.SendText(messaging.CategoryHitBlunt, craftEndedMarkerLine)
+		return events.Continue
+	})
+
+	err := crafter.Character.Activity.TransitionToCrafting(
+		activity.CraftingData{RecipeId: craftEndedRecipeId, RoundsTotal: 5},
+		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
+	)
+	if err != nil {
+		t.Fatalf("begin craft: %v", err)
+	}
+	crafter.Character.Health = 20
+	crafter.Character.ApplyHarm(characters.PoolHealth, 1, state.ActorRef{})
+	// Start from an empty queue: the drain helpers read the heap's backing
+	// array, which pushes alone keep in insertion order.
+	events.DrainAllQueuedEventsForTest()
+	t.Cleanup(func() { events.DrainAllQueuedEventsForTest() })
+
+	events.DoListeners(events.NewRound{RoundNumber: 7})
+
+	own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
+	marker, pain := -1, -1
+	for i, l := range own {
+		switch l {
+		case craftEndedMarkerLine:
+			marker = i
+		case "The pain interrupts your crafting.":
+			pain = i
+		}
+	}
+	if marker < 0 || pain < 0 || pain < marker {
+		t.Fatalf("crafter read %q; want the marker, then the pain line after it", own)
 	}
 }

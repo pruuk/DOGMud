@@ -80,14 +80,19 @@ before the hit that caused them.
   not on the Character. The dying skip is decided when it is recorded.
 - `FlushWorkInterruptNarration` drains the queue and sends exactly the old
   lines: the player's own line, then the room's stop line through
-  `actions.NarrateCraftPhase` against the recorded room. A crafter or room
-  that no longer resolves is dropped, and so is a crafter who has started
-  dying since (a later blow that round killed them; death narration covers
-  it).
-- `hooks.go` registers the flush as a `NewRound` listener with `events.Last`,
-  so it runs after every other `NewRound` listener: `UserRoundTick` and
-  `MobRoundTick` (condition ticks), `DoCombat` (melee, special moves and
-  spell resolution), and the module listeners that register later. Messages
+  `actions.NarrateCraftPhase` against the recorded room. A crafter that no
+  longer resolves is dropped, and so is a crafter who has started dying since
+  (a later blow that round killed them; death narration covers it) or whose
+  Activity is no longer Free (damage outside the round waited for the flush
+  and they have begun new work, so a stale pain line and an old recipe's stop
+  line would follow their "You begin..." line). A room that no longer
+  resolves drops only the room line; the player's own line is sent first.
+- `hooks.go` registers the flush as a `NewRound` listener with `events.Last`.
+  A Last listener runs after every non-Last listener regardless of when
+  either registered, so the flush follows `UserRoundTick` and `MobRoundTick`
+  (condition ticks), `DoCombat` (melee, special moves and spell resolution),
+  and every module listener, whether it registers in `init()` or at load. A
+  test drives the real `RegisterListeners` chain to pin this. Messages
   are queued `events.Message` events in FIFO order at one priority, so the
   flushed lines read after every line queued earlier in the round. No
   `NewRound` listener returns `Cancel`, which would skip a final listener.

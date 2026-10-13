@@ -82,7 +82,8 @@ func RegisterListeners() {
 	events.RegisterListener(events.NewRound{}, WarehouseTick) // Warehouse pools: accrual + dirty save
 	// #514: damage-ended craft and salvage lines are sent after every other
 	// NewRound listener (events.Last), so they read after the round's hit lines.
-	// Registration order alone would not do: module listeners register later.
+	// A Last listener runs after every non-Last one regardless of when either
+	// registered; registration order alone would not do.
 	events.RegisterListener(events.NewRound{}, FlushWorkInterruptNarration, events.Last)
 
 	// Turn Hooks

@@ -615,6 +615,12 @@ text, so a test can also read `IsCommunication`. It matches on
 `Message` queued for `roomId` (`Room.SendTextCommunication`,
 `Room.SendTextToExits`) rather than a per-user one.
 
+`SwapListenersForTest()` (#514) empties the listener registry and returns a
+restore func, so a test can run a real registration such as
+`hooks.RegisterListeners` through `DoListeners` and put the previous registry
+(including `init()`-registered listeners) back afterwards. Unlike
+`ClearListeners`, it loses nothing for later tests.
+
 `DrainQueuedUserInputsForTest(userId)` (parity slice 6) drains the `Input`
 events `UserRecord.Command` queued for a player (`MobInstanceId` 0, matched on
 `UserId`); `DrainQueuedInputsForTest` and `InspectQueuedInputForTest` match
