@@ -38,8 +38,10 @@ func wireAwarenessFromCombatPhase(c *characters.Character) {
 			// harmful cast commits at cast start, #242) stays hidden: the
 			// spell's landing reveals it (commitHarmfulSpellAggro, owner
 			// ruling R6, messaging M6 slice 4). Keyed on the commit's own
-			// trigger, not on IsCasting: a hidden caster mid-fold that is
-			// attacked, or turns on an attacker, is revealed as before.
+			// trigger, not on IsCasting: a hidden caster mid-fold that
+			// commits to combat any other way (turning on an attacker, say)
+			// is revealed here as before. Being struck reveals it whatever
+			// its combat state (RevealForCombat, revealForHarmfulSpell).
 			if r.Trigger == combatphase.TriggerCastFold {
 				return
 			}

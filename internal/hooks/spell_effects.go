@@ -215,13 +215,14 @@ func commitHarmfulSpellAggro(c spellEffectCtx, fresh bool) {
 	// caster already in combat (a mob committed at cast start by its
 	// fold-only commit, targeting.ReasonCastFold) makes no Idle to Engaging
 	// transition for the Awareness cascade to see.
-	if cc := c.casterChar; cc != nil && cc.Awareness != nil && cc.IsHidden() {
-		_ = cc.Awareness.TransitionToRevealing(state.TransitionReason{
-			Trigger:  awareness.TriggerCombatEntered,
-			Metadata: map[string]any{"spell": c.spell.SpellId},
-		})
-	}
+	revealForHarmfulSpell(c.casterChar, c.spell.SpellId)
 	tc := c.targetChar()
+	// A struck target is revealed too, fresh or not, as melee, the special
+	// moves and taunt reveal their defender (RevealForCombat). The fresh
+	// commit below used to be the only reveal, through the Awareness
+	// cascade, so a hidden mob already in combat (folding after its
+	// fold-only commit) stayed hidden under a spell.
+	revealForHarmfulSpell(tc, c.spell.SpellId)
 	if fresh {
 		targeting.Commit(tc, c.casterRef(), targeting.ReasonAttack)
 	}
@@ -231,6 +232,26 @@ func commitHarmfulSpellAggro(c spellEffectCtx, fresh bool) {
 	if u, m := c.casterUser(), c.targetMob(); u != nil && m != nil {
 		actions.SeedAggression(u, m, c.room, fresh)
 	}
+}
+
+// revealForHarmfulSpell ends ch's hiding because a harmful spell landed, as
+// its caster or its target (owner ruling R6, messaging M6 slice 4).
+//
+// Hiding only, through the Awareness machine, not RevealForCombat: that also
+// strips every cancel-on-combat condition (meditating, sleeping), which for
+// a combatant is the combat round's own job (CancelCombatConditions each
+// round), and a spell landing out of combat (a player caster's, before its
+// commit) would wake or rouse on the spot what melee only does to its
+// defender. The stealth records 9 and 31 still end, through the cascade's
+// condition mirror, with their end lines.
+func revealForHarmfulSpell(ch *characters.Character, spellId string) {
+	if ch == nil || ch.Awareness == nil || !ch.IsHidden() {
+		return
+	}
+	_ = ch.Awareness.TransitionToRevealing(state.TransitionReason{
+		Trigger:  awareness.TriggerCombatEntered,
+		Metadata: map[string]any{"spell": spellId},
+	})
 }
 
 // creditSpellDamage remembers who hurt a mob, as melee does: a player caster

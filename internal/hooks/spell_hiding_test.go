@@ -119,21 +119,95 @@ func TestHarmfulLandingLineIsJudgedBeforeTheReveal(t *testing.T) {
 }
 
 // R6 is for every caster: a hidden player's harmful spell on a mob reveals
-// the player when it lands.
+// the player when it lands. The player is already fighting, so no Idle to
+// Engaging cascade can do it: the explicit reveal is what is tested. Sneak
+// refuses in combat, so the fixture hides it through the machine directly.
 func TestHarmfulLandingRevealsAHiddenPlayerCaster(t *testing.T) {
 	caster, _, m := hiddenHolderFixture(t)
 	room := rooms.LoadRoom(1)
-	sneakHide(t, caster.Character)
 	t.Cleanup(func() {
 		targeting.Release(caster.Character, targeting.ReasonDisengage)
 		targeting.Release(&m.Character, targeting.ReasonDisengage)
 	})
+	require.True(t, targeting.Commit(caster.Character, state.ActorRef{MobInstanceId: m.InstanceId}, targeting.ReasonAttack))
+	sneakHide(t, caster.Character) // fixture: hidden while already fighting
 
 	c := newSpellEffectCtx(caster.Character, actions.NewUserActorInRoom(caster, room),
 		actions.NewMobActorInRoom(m, room), room, hidingSpikeSpell(), 100, combat.ChannelDefenceResult{})
-	commitHarmfulSpellAggro(c, true)
+	commitHarmfulSpellAggro(c, !m.Character.IsInCombat())
 
 	require.False(t, caster.Character.IsHidden(), "the landing must reveal its hidden player caster")
+}
+
+// A hidden mob mid-fold is already in combat (its fold-only commit), so the
+// target's fresh commit cannot reveal it. Struck by a harmful spell it is
+// revealed anyway, as melee reveals its defender (RevealForCombat).
+func TestHarmfulSpellRevealsAStruckHiddenCasterMidFold(t *testing.T) {
+	for _, area := range []bool{false, true} {
+		name := "single target, caster perceives it"
+		if area {
+			name = "area spell"
+		}
+		t.Run(name, func(t *testing.T) {
+			caster, _, m := hiddenHolderFixture(t)
+			room := rooms.LoadRoom(1)
+			require.True(t, targeting.Commit(&m.Character, state.ActorRef{UserId: caster.UserId}, targeting.ReasonCastFold))
+			t.Cleanup(func() {
+				targeting.Release(&m.Character, targeting.ReasonDisengage)
+				targeting.Release(caster.Character, targeting.ReasonDisengage)
+			})
+			sneakHide(t, &m.Character)
+			startCastingForHidingTest(t, &m.Character)
+			spell := hidingSpikeSpell()
+			if area {
+				spell.Targeting = combatvocab.TargetArea
+			} else {
+				grantSeeHidden(t, caster, &m.Character)
+			}
+
+			c := newSpellEffectCtx(caster.Character, actions.NewUserActorInRoom(caster, room),
+				actions.NewMobActorInRoom(m, room), room, spell, 100, combat.ChannelDefenceResult{})
+			commitHarmfulSpellAggro(c, !m.Character.IsInCombat())
+
+			require.False(t, m.Character.IsHidden(), "a struck hidden caster must be revealed")
+		})
+	}
+}
+
+// Only harm reveals: a help spell landing reveals neither its hidden caster
+// nor its hidden target.
+func TestHelpSpellLandingRevealsNobody(t *testing.T) {
+	caster, _, m := hiddenHolderFixture(t)
+	t.Cleanup(conditions.SeedConditionRecordsForTest()) // the heal's regenerating record
+	room := rooms.LoadRoom(1)
+	sneakHide(t, caster.Character)
+	sneakHide(t, &m.Character)
+	heal := &spells.SpellData{SpellId: "heal", Name: "Heal", EffectType: "heal", EffectMagnitude: 3,
+		AttackType: combatvocab.AttackNone, DamageType: combatvocab.DamageNonHarm, Targeting: combatvocab.TargetSingle}
+	require.False(t, heal.IsHarm(), "fixture: a help spell")
+
+	applySpellEffect(newSpellEffectCtx(caster.Character, actions.NewUserActorInRoom(caster, room),
+		actions.NewMobActorInRoom(m, room), room, heal, 10, uncontestedSpellResult()))
+	landQueuedConditions()
+
+	require.True(t, m.Character.HasCondition(conditions.ConditionIdRegenerating), "fixture: the heal landed")
+	require.True(t, caster.Character.IsHidden(), "a help spell must not reveal its caster")
+	require.True(t, m.Character.IsHidden(), "a help spell must not reveal its target")
+	require.False(t, m.Character.IsInCombat(), "and starts no fight")
+}
+
+// The area drain resolves outside the appliers, so it reveals its hidden
+// caster itself once the drain has drawn from anyone.
+func TestMobDrainArea_RevealsItsHiddenCaster(t *testing.T) {
+	f := newSpellParityFixture(t, spellContestAttackWin())
+	t.Cleanup(combat.SetChannelAttackContestRunnerForTest(attackWinContest(t)))
+	f.room.Lamp = rooms.LampPtr(90)
+	f.casterMob.Character.Validate()
+	hideMob(t, f.casterMob)
+
+	resolveMobDrainArea(f.casterMob, f.room, coreRechargeSpellForTest())
+
+	require.False(t, f.casterMob.Character.IsHidden(), "a landed drain must reveal its hidden caster")
 }
 
 // End to end through the mob's own cast command and the combat round: a

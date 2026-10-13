@@ -1086,13 +1086,20 @@ One exemption (owner ruling R6, messaging M6 slice 4): a transition under
 `combatphase.TriggerCastFold` does not reveal. That is a mob's harmful cast
 committing it at cast start only so its fold steps (`targeting.ReasonCastFold`,
 #242). Starting a cast never breaks hiding; a harmful spell breaks its
-caster's hiding when it lands, explicitly in `commitHarmfulSpellAggro`, for
-every caster. The mob combat round skips its cancel-on-combat strip while the
-mob is folding, so the strip does not reveal it either; a cast that ends
-without landing leaves the strip to reveal it on its next round. The
-exemption is keyed on the trigger, not on `IsCasting`, so a hidden caster
-mid-fold that enters combat any other way is still revealed.
-`spell_hiding_test.go` pins all of this.
+caster's hiding when it lands, for every caster, through
+`revealForHarmfulSpell` (hiding only, via the Awareness machine, not
+`RevealForCombat`): in `commitHarmfulSpellAggro`, and in
+`resolveMobDrainArea` once the drain has drawn from anyone. The mob combat
+round skips its cancel-on-combat strip while the mob is folding, so the strip
+does not reveal it either; a cast that ends without landing leaves the strip
+to reveal it on its next round. The exemption is keyed on the trigger, not on
+`IsCasting`, so a hidden caster mid-fold that commits to combat any other way
+is still revealed by the cascade. Being struck reveals it whatever its combat
+state: melee, special moves and taunt through `RevealForCombat`, a harmful
+spell through `revealForHarmfulSpell` on the target in
+`commitHarmfulSpellAggro` (the area drain still reveals none of its
+targets). GMCP `Char.Enemies` lists no row for a hidden mob the viewer does
+not perceive. `spell_hiding_test.go` pins all of this.
 
 `SetAggro` writes `c.Aggro` *before* it dual-writes the Combat Phase
 transition. That order matters for anything observing `Idle → Engaging`

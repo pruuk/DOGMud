@@ -479,6 +479,13 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 				if mob == nil {
 					continue
 				}
+				// A hidden mob the viewer does not perceive has no row at
+				// all, as the room lines name it to nobody: a hidden caster
+				// is in combat for its whole fold (owner ruling R6, messaging
+				// M6 slice 4), and a row would leak its name and health.
+				if !user.Character.Perceives(&mob.Character) {
+					continue
+				}
 
 				e := GMCPCharModule_Enemy{
 					Id:      mob.ShorthandId(),

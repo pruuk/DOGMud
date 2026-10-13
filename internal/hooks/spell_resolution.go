@@ -766,6 +766,17 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
 		`%s's <ansi fg="cyan">%s</ansi> tears the life from everyone in the room!`,
 		mobSeenName(mob, room, 0), spellData.Name), mobActUnseenBy(room, mob)...)
+
+	// The drain is harmful: once it has drawn from anyone, it breaks its
+	// caster's hiding, as every harmful landing does (owner ruling R6). After
+	// the landing lines, so they are judged as the drain found the room. The
+	// area drain still reveals none of its targets.
+	for _, pr := range result.PlayerResults {
+		if pr.MoveResult.Hit || pr.MoveResult.Damage > 0 {
+			revealForHarmfulSpell(&mob.Character, spellData.SpellId)
+			break
+		}
+	}
 }
 
 // landed carries the same meaning as on the player path: the contest was WON
