@@ -82,6 +82,6 @@ func Consider(actor Actor, target Actor) ConsiderResult {
 	name := fmt.Sprintf(`<ansi fg="%sname">%s</ansi>`, considerType, result.TargetName)
 	actor.SendText(messaging.CategorySystem, openerText(result.Quality, name))
 	actor.SendText(messaging.CategorySystem, verdictLine(result.Read))
-	actor.SendText(messaging.CategorySystem, paceText(result.Read))
+	actor.SendText(messaging.CategorySystem, paceLineFor(result.Read, result.Quality))
 	return result
 }

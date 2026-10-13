@@ -141,6 +141,30 @@ func TestConsider_MuddyReadSlidesTheVerdict(t *testing.T) {
 		t.Fatalf("muddy read: quality %v verdict %v (clean %v), want muddy %v",
 			r.Quality, r.Read.Verdict, clean, muddySlide(clean))
 	}
+
+	// The pace line is the hedge, never an exact pace that could contradict
+	// the slid verdict (owner ruling 2026-10-13).
+	if len(self.sent) != 3 || self.sent[2] != muddyPaceText {
+		t.Fatalf("muddy pace line: sent %q, want third line %q", self.sent, muddyPaceText)
+	}
+	for _, w := range []string{"moments", "short fight", "long fight", "never"} {
+		if strings.Contains(self.sent[2], w) {
+			t.Errorf("muddy pace line %q still says %q", self.sent[2], w)
+		}
+	}
+}
+
+// A fair or clear read keeps the exact pace line.
+func TestConsider_NonMuddyReadKeepsTheExactPace(t *testing.T) {
+	fixRoll(t, contest.Result{Success: true, Margin: 1})
+	self := newFakeActor("hero", 100, 100, true)
+	r := Consider(self, newFakeActor("orc", 100, 100, false))
+	if r.Quality == ReadMuddy {
+		t.Fatalf("fixture premise: a won roll read muddy")
+	}
+	if len(self.sent) != 3 || self.sent[2] != paceText(r.Read) {
+		t.Fatalf("pace line: sent %q, want third line %q", self.sent, paceText(r.Read))
+	}
 }
 
 // The reader pays the sight ramp (plan 5b): the score handed to the roll is

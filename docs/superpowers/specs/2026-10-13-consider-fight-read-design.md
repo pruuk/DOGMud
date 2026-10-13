@@ -202,8 +202,10 @@ Worked examples (the playtest confirms them):
    - **fair**: won
    - **muddy**: lost
 4. A muddy read slides verdict bands 2, 3, 5 and 6 one step toward band 4;
-   bands 1, 4, 7 and stalemate stay. Paces never slide; on a muddy read their
-   line is hedged by the opener. The slide is deterministic given the roll, so
+   bands 1, 4, 7 and stalemate stay. Paces never slide; on a muddy read the
+   opener hedges and the pace line is replaced by the hedge sentence "How long
+   it would take either of you is hard to judge." so it cannot contradict the
+   slid verdict (owner ruling 2026-10-13, follow-up to #523). The slide is deterministic given the roll, so
    tests can pin it.
 5. The roll trains through the resolved-contest applier,
    `actor.AwardResolved(won, CandidateFor("search"))`, on every roll that

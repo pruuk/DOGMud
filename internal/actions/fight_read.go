@@ -210,6 +210,19 @@ func paceText(r FightRead) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
+// muddyPaceText replaces the exact pace line on a muddy read, so the pace can
+// never contradict the slid verdict (owner ruling 2026-10-13, #301 follow-up).
+const muddyPaceText = `How long it would take either of you is hard to judge.`
+
+// paceLineFor is the pace line `consider` sends: the hedge on a muddy read,
+// the exact paces otherwise.
+func paceLineFor(r FightRead, q ReadQuality) string {
+	if q == ReadMuddy {
+		return muddyPaceText
+	}
+	return paceText(r)
+}
+
 // verdictLine is the verdict in its colour, for a player.
 func verdictLine(r FightRead) string {
 	return fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, verdictColor[r.Verdict], verdictText[r.Verdict])
