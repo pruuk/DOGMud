@@ -8,8 +8,8 @@
   murmur or a prickle in the air, with no name and no hint of the target.
   A hidden caster now stays hidden until a harmful spell lands, and a
   hidden target struck by a harmful spell is revealed.
-- When a player starts casting, the room now sees it begin, as it always
-  has for creatures.
+- Onlookers now see a player's spell take shape round by round, as they
+  always have for creatures.
 
 - Beasts and other creatures without a voice now snarl, roar and hiss at
   you instead of trading insults, and answer your taunts the same way. A

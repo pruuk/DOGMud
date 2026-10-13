@@ -196,6 +196,24 @@ func TestSpellPhase_WaitLineIsSightOnly(t *testing.T) {
 	requireOneLine(t, "caster", phaseLines(phaseCasterId), "You hold the spike.")
 }
 
+// The magic phase has no generic room line: a spell with no magic_* text
+// sends nothing, and an authored magic_observer reaches the room by sight.
+func TestSpellPhase_MagicLineOnlyWhenAuthored(t *testing.T) {
+	room := phaseScene(t, "city", false)
+	caster := NewUserActorInRoom(users.GetByUserId(phaseCasterId), room)
+
+	castAt(caster, phaseSpell(false), spells.PhaseMagic, room, phaseTargetId)
+	if got := phaseLines(phaseBystanderId); len(got) != 0 {
+		t.Fatalf("no magic text authored, yet the room read %q", got)
+	}
+
+	s := phaseSpell(false)
+	s.MagicUserText, s.MagicRoomText = "The spike flies.", "{actor}'s spike flies."
+	castAt(caster, s, spells.PhaseMagic, room, phaseTargetId)
+	requireOneLine(t, "caster", phaseLines(phaseCasterId), "The spike flies.")
+	requireOneLine(t, "bystander", phaseLines(phaseBystanderId), "Kael's spike flies.")
+}
+
 // R3 + R5: a hidden caster's lines are silent to a reader who does not
 // perceive them, who instead hears one unnamed line at cast start only.
 func TestSpellPhase_HiddenCasterIsHeardNotSeenAtCastStart(t *testing.T) {

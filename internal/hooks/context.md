@@ -1072,9 +1072,9 @@ record 31 as its magnitude, and `ApplyConditions` tells no start room line
 for a hidden-flag record landing on a holder already hidden. Every other
 condition line about a hidden holder reaches only the players who perceive
 them (#458, see `conditionLineUnseenBy`). `conditionLineUnseenBy`,
-`playersNotPerceiving`, `mobDisplayName` and `mobSeenName` are thin wrappers
-over `actions.UnseenBy`, `actions.PlayersNotPerceiving`,
-`actions.MobDisplayName` and `actions.MobSeenName`.
+`playersNotPerceiving`, `mobDisplayName`, `mobSeenName` and `mobHiddenFrom`
+are thin wrappers over `actions.UnseenBy`, `actions.PlayersNotPerceiving`,
+`actions.MobDisplayName`, `actions.MobSeenName` and `actions.MobHiddenFrom`.
 
 Also registers an `AfterTransition` callback on the Combat Phase machine
 that reveals a hidden character on `Idle → Engaging`. A surprise attack is
@@ -1102,7 +1102,8 @@ state: melee, special moves and taunt through `RevealForCombat`, a harmful
 spell through `revealForHarmfulSpell` on the target in
 `commitHarmfulSpellAggro` (the area drain still reveals none of its
 targets). GMCP `Char.Enemies` lists no row for a hidden mob the viewer does
-not perceive. `spell_hiding_test.go` pins all of this.
+not perceive. `spell_hiding_test.go` pins the hiding rule;
+`modules/gmcp/gmcp.CharEnemies_test.go` pins the enemies panel.
 
 `SetAggro` writes `c.Aggro` *before* it dual-writes the Combat Phase
 transition. That order matters for anything observing `Idle → Engaging`
