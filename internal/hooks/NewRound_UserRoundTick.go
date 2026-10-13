@@ -610,6 +610,8 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 									// that WAS spent contributed nothing. Four bottles ship with
 									// multipliers from 3.0 down to 0.25, so the two could differ by 12x.
 									var bottleAgingMult float64
+									// The room hears a failure when an enchant does not apply.
+									roomPhase := crafting.PhaseSuccess
 									for _, itm := range consumed {
 										if spec := itm.GetSpec(); spec.ComponentTag == "bottle" && spec.BottleAgingMultiplier > 0 {
 											bottleAgingMult = spec.BottleAgingMultiplier
@@ -622,6 +624,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										targetItem := user.Character.Equipment.GetSlotPointer(enchantTargetSlot)
 										if targetItem == nil || targetItem.ItemId < 1 {
 											user.SendText(messaging.CategoryWarning, `<ansi fg="red">The item is no longer equipped. The enchanting fails, but your materials are returned.</ansi>`)
+											roomPhase = crafting.PhaseFailure
 										} else if pool, added, breach := enchantApplyWouldBreach(user.Character, targetItem, recipe.EnchantType); breach {
 											// U7b: craft.go refuses this before the work starts, but
 											// the rounds in between are not free of change: a worn
@@ -632,6 +635,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 											user.SendText(messaging.CategoryWarning, fmt.Sprintf(
 												`<ansi fg="red">%s The enchanting fails, but your materials are returned.</ansi>`,
 												user.Character.ReservationRefusal(pool, added)))
+											roomPhase = crafting.PhaseFailure
 										} else {
 											user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 											eDef := enchantments.GetEnchantment(recipe.EnchantType)
@@ -670,7 +674,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										ActorPlainName: user.Character.GetCharacterName(false),
 									})
 									user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, successRoles.Actor))
-									actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, crafting.PhaseSuccess, room)
+									actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, roomPhase, room)
 
 									// Stage 31.1: Recipe discovery roll
 									bal := configs.GetBalanceConfig()

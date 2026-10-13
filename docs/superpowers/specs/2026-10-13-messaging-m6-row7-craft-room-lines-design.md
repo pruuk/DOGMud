@@ -190,7 +190,10 @@ returning them so the validator still checks any that get authored, and the
 - **Root guard** `craft_phase_narration_guard_test.go`: no file but
   `internal/actions/craft_phase_lines.go` reads a craft observer pool or calls
   the crafting store's room renderers; no site calls `Narrate(...).Observer`
-  on a recipe.
+  on a recipe. The Observer rule matches only a prefixed roles variable
+  (`successRoles.Observer` and the like) in files that use `crafting.Phase`,
+  because the round-tick hooks also hold condition narration in a variable
+  named plain `roles`.
 - **Goldens and snapshot**: re-record whatever the store snapshot harness
   emits for the new store; existing recipe rows unchanged.
 - **Full gate**: `go test ./...` (root guards key on line numbers, so run

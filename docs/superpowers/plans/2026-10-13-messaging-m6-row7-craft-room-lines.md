@@ -562,9 +562,9 @@ alchemy:
     - "{actor} measures reagents into a flask to make {item}."
     - "{actor} warms a flask over a small flame, starting on {item}."
   success_observer:
-    - "{actor} stoppers a vial and sets it aside, {item} finished."
+    - "{actor} stoppers the last vial and sets aside {item}."
     - "{actor} holds a flask up to the light, satisfied with {item}."
-    - "{actor} pours off the last drops, and {item} is done."
+    - "{actor} pours off the last drops, finishing {item}."
   failure_observer:
     - "{actor}'s flask clouds over with a sour smell. The batch is ruined."
     - "{actor} winces as the mixture curdles, and pours it away."
@@ -584,9 +584,9 @@ blacksmithing:
     - "{actor} sets a bar of metal on the anvil to make {item}."
     - "{actor} works the bellows, starting on {item}."
   success_observer:
-    - "{actor} quenches the metal with a hiss, and {item} is finished."
+    - "{actor} quenches the metal with a hiss, finishing {item}."
     - "{actor} gives a last few taps and sets down {item}, finished."
-    - "{actor} turns the finished {item} over, satisfied."
+    - "{actor} looks over {item} one last time, satisfied."
   failure_observer:
     - "{actor} curses as the metal cracks under the hammer. The work is ruined."
     - "{actor} pulls the metal from the fire too late, and it is spoiled."
@@ -607,7 +607,7 @@ cooking:
     - "{actor} stirs a pot over the flames, cooking {item}."
   success_observer:
     - "{actor} ladles out a finished serving of {item}."
-    - "{actor} takes the pot off the fire, and {item} is ready."
+    - "{actor} takes the pot off the fire, finishing {item}."
     - "{actor} tastes the pot, nods, and sets {item} aside."
   failure_observer:
     - "{actor}'s pot boils over and the food burns. The meal is ruined."
@@ -628,7 +628,7 @@ enchanting:
     - "{actor} lays out runes and begins enchanting {item}."
     - "{actor} murmurs over {item} as a faint light gathers."
   success_observer:
-    - "{actor} completes the pattern, and {item} glows briefly before settling."
+    - "{actor} completes the pattern over {item}, and the glow settles."
     - "{actor} lowers their hands, and the glow sinks into {item}."
     - "A soft light flares over {actor}'s work on {item} and fades."
   failure_observer:
@@ -650,8 +650,8 @@ jewelcrafting:
     - "{actor} bends fine wire with pliers, starting on {item}."
     - "{actor} picks up a jeweler's file and begins shaping {item}."
   success_observer:
-    - "{actor} polishes {item} with a soft cloth and holds it up, finished."
-    - "{actor} sets the last stone, and {item} catches the light."
+    - "{actor} gives {item} a last polish with a soft cloth."
+    - "{actor} sets the last stone in {item} and holds the work to the light."
     - "{actor} turns {item} in the light, satisfied with the work."
   failure_observer:
     - "{actor} winces as a stone cracks in its setting. The piece is ruined."
@@ -672,8 +672,8 @@ tailoring:
     - "{actor} threads a needle and starts sewing {item}."
     - "{actor} measures out a length of material for {item}."
   success_observer:
-    - "{actor} ties off the last stitch, and {item} is finished."
-    - "{actor} shakes out {item} and looks it over, satisfied."
+    - "{actor} ties off the last stitch in {item}."
+    - "{actor} shakes out {item} and looks the work over, satisfied."
     - "{actor} bites through the thread and holds up {item}."
   failure_observer:
     - "{actor}'s seam tears apart in their hands. The work is ruined."
