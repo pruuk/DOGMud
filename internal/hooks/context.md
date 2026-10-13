@@ -1303,8 +1303,12 @@ interrupts casting); a harmful fold at a foe left behind loses its fight and
 is fizzled by IdleMobs' stranded-fold sweep, and a help fold steps on
 (`companion_follow_test.go` pins both). `PushCompanionsToRoom` is a forced
 sweep and does not interrupt work, matching a player moved by
-`rooms.MoveToRoom`, which keeps their work; it still force-frees a cast
-(trigger `companion_sweep`).
+`rooms.MoveToRoom`, which keeps their work (forced moves are #528). It keeps
+a cast too (ruling B, applied to the sweep 2026-10-13): a harmful fold at
+the foe left behind loses its fight and is fizzled by the stranded-fold
+sweep, and a help fold at the owner, who stays in the fight room, steps on
+and fizzles at landing in `resolveMobSpell` because its target is not in
+the holding room. No move in this file ends a cast any more.
 
 ## Attributed death routing (U5c)
 

@@ -490,11 +490,16 @@ func TestPushCompanionsToRoom_AlreadyInDest(t *testing.T) {
 		"companion RoomId must stay at 2 — no double-move")
 }
 
-// TestPushCompanionsToRoom_CastInterrupt verifies an in-progress companion
-// cast is aborted by the sweep (mirrors TransportCompanions).
-func TestPushCompanionsToRoom_CastInterrupt(t *testing.T) {
+// Owner ruling B, applied to the sweep (2026-10-13): a companion shoved out
+// of the fight keeps casting, as a following one does. The cast rules end
+// it: the owner stays behind in the fight room, so the cast cannot land.
+
+// TestPushCompanionsToRoom_ACastSurvivesTheSweep: the shoved companion is in
+// the holding room and still casting.
+func TestPushCompanionsToRoom_ACastSurvivesTheSweep(t *testing.T) {
 	cleanup := seedFollowRegistries(t)
 	defer cleanup()
+	seedFollowSpells(t)
 
 	owner := newOwnerWithCompanion(1, 1)
 	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: owner})
@@ -502,18 +507,66 @@ func TestPushCompanionsToRoom_CastInterrupt(t *testing.T) {
 
 	mob := mobs.GetInstance(200)
 	require.NotNil(t, mob)
-	mob.Character.Activity = activity.NewMachine()
-	_ = mob.Character.Activity.TransitionToCasting(
-		activity.CastingData{SpellId: "sparks", FoldsNeeded: 3},
-		state.TransitionReason{Trigger: activity.TriggerCastBegin},
-	)
+	followCasting(t, mob, activity.CastingData{SpellId: followHelpSpell, FoldsNeeded: 4, TargetUserIds: []int{1}})
 
 	PushCompanionsToRoom(owner, 2)
 
-	assert.True(t, mob.Character.Activity == nil || mob.Character.Activity.IsFree(),
-		"Activity must be Free (cast cleared) on sweep")
-	assert.Equal(t, 2, mob.Character.RoomId,
-		"companion must be in destination room after cast-interrupt")
+	assert.Equal(t, 2, mob.Character.RoomId, "companion must be in the holding room")
+	assert.True(t, mob.Character.Activity.IsCasting(), "the sweep must not interrupt the cast")
+}
+
+// A harmful fold at the foe it was shoved away from: the sweep ends the
+// fight (the foe is not in the holding room), and the idle sweep fizzles a
+// harmful fold held out of combat (#242).
+func TestPushCompanionsToRoom_AHarmfulFoldAtTheFoeFizzles(t *testing.T) {
+	cleanup := seedFollowRegistries(t)
+	defer cleanup()
+	seedFollowSpells(t)
+
+	owner := newOwnerWithCompanion(1, 1)
+	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: owner})
+	defer cleanupUsers()
+
+	mob := mobs.GetInstance(200)
+	require.NotNil(t, mob)
+	mob.Character.SetAggro(0, 99, characters.DefaultAttack)
+	followCasting(t, mob, activity.CastingData{SpellId: followHarmSpell, FoldsNeeded: 4, TargetMobInstanceIds: []int{99}})
+
+	PushCompanionsToRoom(owner, 2)
+	require.True(t, mob.Character.IsCasting(), "the fold is kept across the sweep")
+	require.False(t, mob.Character.IsInCombat(), "the foe is not in the holding room, so the fight ended")
+
+	require.True(t, mob.Character.IsCasting() && !mobHoldsHelpFold(mob), "a harmful fold out of combat is stranded")
+	endStrandedFold(mob)
+	assert.True(t, mob.Character.Activity.IsFree(), "the stranded harmful fold fizzles")
+}
+
+// A help fold at the owner, who stayed in the fight room: it steps on, and
+// when it completes in the holding room its target is not there, so it
+// fizzles at landing (resolveMobSpell, #242) rather than healing through a
+// wall.
+func TestPushCompanionsToRoom_AHelpFoldAtTheOwnerLeftBehindFizzlesAtLanding(t *testing.T) {
+	cleanup := seedFollowRegistries(t)
+	defer cleanup()
+	seedFollowSpells(t)
+
+	owner := newOwnerWithCompanion(1, 1)
+	cleanupUsers := users.SeedUsersForTest(map[int]*users.UserRecord{1: owner})
+	defer cleanupUsers()
+
+	mob := mobs.GetInstance(200)
+	require.NotNil(t, mob)
+	cs := activity.CastingData{SpellId: followHelpSpell, FoldsNeeded: 4, FoldsPerRound: 1, TargetUserIds: []int{1}}
+	followCasting(t, mob, cs)
+
+	PushCompanionsToRoom(owner, 2)
+	require.True(t, mobHoldsHelpFold(mob), "the idle sweep leaves a help fold to its fold step")
+	require.True(t, processFoldRound(&mob.Character).StillCasting, "the help fold steps on in the holding room")
+
+	landed, fizzled := resolveMobSpell(mob, cs, spells.GetSpell(followHelpSpell), rooms.LoadRoom(2))
+	assert.False(t, landed, "nothing lands on an owner in another room")
+	assert.True(t, fizzled, "the fold fizzles at landing")
+	assert.True(t, mob.Character.Activity.IsFree(), "the fizzle ends the cast")
 }
 
 // TestPushCompanionsToRoom_StaleCompanionEntry verifies a companion whose mob

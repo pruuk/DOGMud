@@ -9,7 +9,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -181,13 +180,12 @@ func PushCompanionsToRoom(owner *users.UserRecord, destRoomId int) {
 			continue
 		}
 
-		// Interrupt any in-progress cast (spent conviction is forfeit).
-		if mob.Character.Activity != nil && mob.Character.Activity.IsCasting() {
-			mob.Character.Activity.ForceFree(state.TransitionReason{
-				Trigger: "companion_sweep",
-				Actor:   mob.Character.Activity.Self(),
-			})
-		}
+		// A cast is kept (owner ruling B, applied to the sweep 2026-10-13:
+		// movement never interrupts casting). The cast rules end it: a
+		// harmful fold at the foe left behind loses its fight below and is
+		// fizzled by IdleMobs' stranded-fold sweep; a help fold at the owner,
+		// who stays in the fight room, fizzles at landing. A forced sweep
+		// does not interrupt work either (#528).
 
 		// Remove from current room.
 		curRoomId := mob.Character.RoomId
