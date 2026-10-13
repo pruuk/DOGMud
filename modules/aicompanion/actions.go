@@ -713,25 +713,6 @@ func (m *AICompanionModule) lookAt(c *controller, mob *mobs.Mob, room *rooms.Roo
 	return actionOutcome{Perceived: result, Plain: plain}
 }
 
-// considerWords mirrors actions.predictionFor without its markup.
-func considerWords(ratio float64) string {
-	switch {
-	case ratio > 4:
-		return `they pose no threat to you`
-	case ratio > 3:
-		return `you hold a clear advantage`
-	case ratio > 2:
-		return `the odds favour you`
-	case ratio > 1:
-		return `it would be an even contest`
-	case ratio > 0.5:
-		return `they have the upper hand`
-	case ratio > 0:
-		return `you are severely outmatched`
-	}
-	return `you would not survive a fight`
-}
-
 // consider sizes up a person or creature (F6.5), silently, as a player's
 // consider does, using the same power comparison.
 func (m *AICompanionModule) consider(c *controller, mob *mobs.Mob, room *rooms.Room, t *thing) actionOutcome {
@@ -753,7 +734,7 @@ func (m *AICompanionModule) consider(c *controller, mob *mobs.Mob, room *rooms.R
 	res := actions.Consider(self, target)
 	now := time.Now().Unix()
 	c.mind.recordInteraction(t.Key, `consider`, true, now)
-	result := fmt.Sprintf(`You sized up %s: %s.`, t.Name, considerWords(res.Ratio))
+	result := fmt.Sprintf(`You sized up %s. %s`, t.Name, actions.FightReadPlain(res.Read))
 	c.mind.addLine(Line{Kind: `event`, Text: result}, m.cfg.WorkingMemoryLines)
 	return actionOutcome{Perceived: result}
 }

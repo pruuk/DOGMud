@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/apiframework"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -501,8 +502,9 @@ func TestLootAndConsiderWords(t *testing.T) {
 	if !strings.Contains(lootRuleWords(lootAskFirst, `Corvin`), `ask before`) {
 		t.Fatal("ask-first wording")
 	}
-	if considerWords(5) != `they pose no threat to you` || considerWords(0.7) != `they have the upper hand` {
-		t.Fatal("consider words drifted from the engine's bands")
+	// The companion speaks the engine's own fight read (#301): no private copy.
+	if got := actions.FightReadPlain(actions.FightRead{Verdict: actions.VerdictUntouched}); !strings.HasPrefix(got, `They won't lay a finger on you.`) {
+		t.Fatalf("companion consider words: %q", got)
 	}
 	if plainText(`<ansi fg="red">Hot</ansi>   soup`) != `Hot soup` {
 		t.Fatal("plainText did not strip markup")
