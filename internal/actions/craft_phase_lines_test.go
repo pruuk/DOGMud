@@ -131,3 +131,53 @@ func TestCraftPhase_SkillWithNoPoolsSendsNothing(t *testing.T) {
 		t.Fatalf("no pools for the skill, yet the room read %q", got)
 	}
 }
+
+// A hidden crafter in the dark: the non-perceiver is sent the heard line once,
+// not once by the sound channel and again by the per-reader loop.
+func TestCraftPhase_DarkNonPerceiverHearsOnce(t *testing.T) {
+	room := craftScene(t, "cave", false)
+	crafter := users.GetByUserId(phaseCasterId)
+	phaseHide(t, crafter.Character)
+
+	craftBy(crafter, room, craftRecipe(), crafting.PhaseStart)
+	requireOneLine(t, "dark non-perceiver", phaseLines(phaseBystanderId), "You hear hammering close by.")
+}
+
+func TestCraftPhase_ShapesReadsAMobCrafterAsAFigure(t *testing.T) {
+	room := craftScene(t, "cave", true)
+	m := phaseMob(t, room, false)
+
+	NarrateCraftPhase(NewMobActorInRoom(m, room), craftRecipe(), crafting.PhaseSuccess, room)
+	requireOneLine(t, "shapes bystander", phaseLines(phaseBystanderId), "A figure finishes something.")
+}
+
+func TestCraftPhase_DarkReaderWhoPerceivesAHiddenCrafterHears(t *testing.T) {
+	room := craftScene(t, "cave", false)
+	crafter := users.GetByUserId(phaseCasterId)
+	phaseHide(t, crafter.Character)
+	if !users.GetByUserId(phaseBystanderId).Character.Conditions.AddCondition(phaseSeeHiddenId, true) {
+		t.Fatal("precondition: see hidden")
+	}
+
+	craftBy(crafter, room, craftRecipe(), crafting.PhaseStart)
+	requireOneLine(t, "dark perceiver", phaseLines(phaseBystanderId), "You hear hammering close by.")
+}
+
+// A seen line may use {actor_plain}, which the tag anonymizer cannot catch, so
+// the plain name is hidden per reader as well.
+func TestCraftPhase_ShapesReaderNeverReadsAPlainName(t *testing.T) {
+	room := craftScene(t, "cave", true)
+	t.Cleanup(crafting.SeedCraftingMessagesForTest(crafting.CraftingMessages{"blacksmithing": {
+		StartObserver:   []string{"{actor} begins forging {item}."},
+		SuccessObserver: []string{"{actor_plain} finishes {item}."},
+		FailureObserver: []string{"{actor} ruins the work."},
+		StartHeard:      []string{"You hear hammering close by."},
+		FinishHeard:     []string{"The hammering stops."},
+	}}))
+	craftBy(users.GetByUserId(phaseCasterId), room, craftRecipe(), crafting.PhaseSuccess)
+
+	got := phaseLines(phaseBystanderId)
+	if len(got) != 1 || strings.Contains(got[0], "Kael") {
+		t.Fatalf("a shapes reader must read one line with no plain name, got %q", got)
+	}
+}

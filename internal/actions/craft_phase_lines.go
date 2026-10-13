@@ -76,7 +76,8 @@ func NarrateCraftPhase(crafter Actor, recipe *crafting.RecipeSpec, phase craftin
 			notShapes = append(notShapes, uid)
 		}
 	}
-	names := []string{actorName}
+	// A seen line may use {actor_plain}, which the tag anonymizer cannot catch.
+	names := []string{actorName, actorPlain}
 	if full != "" {
 		room.SendTextVisualHidingNames(cat, full, names, notFull...)
 	}
