@@ -82,8 +82,13 @@ func salvageProgressLine(ch *characters.Character, sd activity.SalvagingData) st
 	}
 	for _, itm := range ch.GetAllCarriedItems() {
 		if itm.UUID.String() == sd.ItemUuid {
-			return fmt.Sprintf(`<ansi fg="yellow">You keep salvaging the <ansi fg="itemname">%s</ansi>; %s.</ansi>`,
-				itm.DisplayName(), phrase)
+			name := itm.DisplayName()
+			article := "the "
+			if startsWithArticle(name) {
+				article = "" // "A Beeswax Votive Candle" takes no second article
+			}
+			return fmt.Sprintf(`<ansi fg="yellow">You keep salvaging %s<ansi fg="itemname">%s</ansi>; %s.</ansi>`,
+				article, name, phrase)
 		}
 	}
 	return fmt.Sprintf(`<ansi fg="yellow">You keep salvaging; %s.</ansi>`, phrase)

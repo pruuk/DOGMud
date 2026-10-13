@@ -140,6 +140,7 @@ var textSurfaceRegistry = map[string]surfaceEntry{
 	// param, not a struct field, read the same way by
 	// internal/behaviortree/actions_dialogue.go.
 	"user_text": {narration, "internal/behaviortree/actions_dialogue.go getStringParam(params, \"user_text\") -- drives a mob's scripted actor-facing speech/emote (e.g. the \"respond\" action) when a behavior-tree event fires, seen in behaviors/**/*.yaml."},
+	"room_text": {narration, "internal/behaviortree/actions_dialogue.go actRespond getStringParam(params, \"room_text\") -- the \"respond\" action's line to everyone in the room but the triggering player (Room.SendTextVisual), the room half of user_text; behaviors/**/*.yaml (Old Edrin, Cleric Hadwen's rite, #515). Held to the third person by mob_emote_second_person_guard_test.go."},
 
 	// -- Room/zone ambient narration. --
 	"idlemessages": {narration, "internal/rooms/rooms.go Room.IdleMessages and internal/rooms/zoneconfig.go ZoneConfig.IdleMessages -- room/zone ambient flavour lines, 1,285 occurrences, the largest narration surface in the game. Read by internal/hooks/NewRound_UserRoundTick.go."},

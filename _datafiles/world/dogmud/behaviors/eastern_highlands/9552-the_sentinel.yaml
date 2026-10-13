@@ -33,8 +33,7 @@ tree:
           text: >-
             The light in the Sentinel's socket flares white and splits --
             and along the vault walls two banked guardians grind awake and
-            drop from their niches to stand between you and the thing it
-            keeps.
+            drop from their niches to stand guard over the thing it keeps.
         - type: action
           do: summon_companion
           mob_id: 9550

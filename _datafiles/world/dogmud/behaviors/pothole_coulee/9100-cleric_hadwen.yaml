@@ -57,20 +57,28 @@ tree:
             The pool answers first. It is older than the town and more
             patient than I am. Look into the water.
           delay: 13.0
+        # The rite happens to the asker alone (#515): they read it in the
+        # second person, and the rest of the room watches it in the third.
         - type: action
-          do: emote
-          text: >-
-            rests a hand on your shoulder. The pool's light rises to
-            meet you, and for a moment you are somewhere else -- folded
+          do: respond
+          user_text: >-
+            {actor} rests a hand on your shoulder. The pool's light rises
+            to meet you, and for a moment you are somewhere else, folded
             inside something vast and warm that is looking back at you
             with your own eyes.
+          room_text: >-
+            {actor} rests a hand on the shoulder of the one beside him,
+            and the pool's light rises to meet them.
           delay: 16.0
         - type: action
-          do: emote
-          text: >-
-            lifts his hand away. The light lets you go -- the water is
-            only water again, the morning is just a morning, and
+          do: respond
+          user_text: >-
+            {actor} lifts his hand away. The light lets you go: the water
+            is only water again, the morning is just a morning, and
             something under your skin is newly, quietly awake.
+          room_text: >-
+            {actor} lifts his hand away, and the light sinks back into
+            the pool.
           delay: 20.0
         - type: action
           do: say

@@ -109,7 +109,9 @@ Types and constants:
   Pinned by `category_craft_test.go`.
 - `CategoryCraftSeen` (owner ruling C, 2026-10-13): the room's lines ABOUT a
   crafter, every line `actions.NarrateCraftPhase` sends (seen, shapes and
-  heard), for a player or a mob crafter. Appended after `CategoryCraft`. A
+  heard), for a player or a mob crafter, and the room's corpse-salvage line
+  in `actions/salvage.go` ("X kneels over the corpse ...", which rode
+  `CategoryMobIdle`). Appended after `CategoryCraft`. A
   player crafter's lines rode `CategoryEmote`, which never wraps, and a mob
   crafter's rode `CategoryMobIdle`; both now wrap here. Normalised as
   `CategoryEmote` is (every stage skipped), no verbosity tier drops it, and

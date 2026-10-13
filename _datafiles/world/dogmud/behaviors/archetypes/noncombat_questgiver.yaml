@@ -21,7 +21,7 @@ tree:
     - type: action
       event: player_enter
       do: emote
-      text: "glances up as you enter."
+      text: "glances up at the newcomer."
 
     - type: action
       event: player_attack_rejected

@@ -117,7 +117,7 @@ tree:
         - type: action
           do: emote
           text: >-
-            levels his staff at you, and the air between you and him
+            levels his staff at his foe, and the air between them
             begins to shimmer with heat.
 
     # Phase 2 (tactical combat) is handled by the reactive AI preset

@@ -212,7 +212,7 @@ combat archetype).
       first time (trip/bash under 50% health; its enrage was wired dead
       since authoring).
 - [ ] Dewey and the ferry/passage agents greet you normally; none of them
-      says "pays you little mind." on entry.
+      says "pays the newcomer little mind." on entry.
 - [ ] Set-piece bosses (Sentinel, Core Guardian, Warden Prime, Old Edrin,
       beetle queen) still stand and fight; none of them flees its arena.
 - [ ] A sleeping target still takes auto-crits for the whole first round.

@@ -154,6 +154,21 @@ func TestSalvageProgressLine(t *testing.T) {
 	assert.Contains(t, line, "; you're about halfway.")
 	assert.False(t, anyDigit.MatchString(plainText(line)), "%q", line)
 
+	// An item whose name carries its own article takes no second one
+	// ("the A Beeswax Votive Candle" was the shipped bug; 26 shipped items
+	// start with A, An or The).
+	const candleId = 97514
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		candleId: {ItemId: candleId, Name: "A Beeswax Votive Candle"},
+	}))
+	candle := items.New(candleId)
+	require.Equal(t, "A Beeswax Votive Candle", candle.DisplayName(), "fixture")
+	user.Character.Items = append(user.Character.Items, candle)
+	t.Cleanup(func() { user.Character.Items = user.Character.Items[:len(user.Character.Items)-1] })
+	assert.Equal(t, `<ansi fg="yellow">You keep salvaging <ansi fg="itemname">A Beeswax Votive Candle</ansi>; you're about halfway.</ansi>`,
+		salvageProgressLine(user.Character, activity.SalvagingData{
+			ItemUuid: candle.UUID.String(), RoundsComplete: 1, RoundsTotal: 2}))
+
 	// Corpse salvage and an item no longer carried both still read cleanly.
 	assert.Equal(t, `<ansi fg="yellow">You keep working over the corpse; it's nearly done.</ansi>`,
 		salvageProgressLine(user.Character, activity.SalvagingData{

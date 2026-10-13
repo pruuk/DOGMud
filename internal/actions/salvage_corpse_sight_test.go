@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -58,6 +59,19 @@ func TestSalvageCorpse_ClearReadersReadTheNames(t *testing.T) {
 	require.NotEmpty(t, own)
 	require.Contains(t, own[0], "salvage the Grey Wolf corpse", "got %v", own)
 	require.Equal(t, []string{"Drinker kneels over the corpse of Grey Wolf and works it for salvage."}, watcher)
+}
+
+// #515: the room's salvage line rides CategoryCraftSeen, as the room's craft
+// lines do (same color, wraps), not CategoryMobIdle.
+func TestSalvageCorpse_TheRoomLineRidesCraftSeen(t *testing.T) {
+	salvager, room := salvageSightScene(t, "city")
+
+	result := Salvage(&UserActor{User: salvager, Room: room}, SalvageOptions{TargetCorpse: true})
+	require.True(t, result.RollHappened, "fixture must reach the salvage roll: %q", result.Reason)
+
+	raw := events.DrainQueuedMessagesForTest(drinkSightInfraId)
+	require.Len(t, raw, 1)
+	require.Contains(t, raw[0], `fg="`+messaging.CategoryCraftSeen.String()+`"`, "got %q", raw[0])
 }
 
 // A salvager below clear sight whose corpse vanished is told so without the

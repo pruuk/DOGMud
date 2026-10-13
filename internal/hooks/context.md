@@ -1538,7 +1538,8 @@ one (`startsWithArticle`: "You keep working on The Blackrazor"). An
 enchanting, whose `CraftingData.TargetSlot` is set, names the item in that
 slot instead ("You keep enchanting <item>"), matching its start line; an
 item gone from the slot drops the name. `salvageProgressLine(ch, sd)` names
-the item being salvaged, or "the corpse".
+the item being salvaged, with no extra "the" before a name that starts with
+an article ("You keep salvaging A Beeswax Votive Candle"), or "the corpse".
 
 ### work_interrupt_narration.go
 
