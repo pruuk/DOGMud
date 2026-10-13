@@ -126,4 +126,13 @@ func TestCraftLines_UnknownSkillOrUnloadedStoreRendersNothing(t *testing.T) {
 	if h := CraftHeardLine("cooking", PhaseStart); h != "" {
 		t.Fatalf("unloaded store rendered %q", h)
 	}
+
+	// A loaded store with no block for the skill renders nothing too.
+	SeedCraftingMessagesForTest(CraftingMessages{"cooking": validPools()})
+	if f, v := CraftRoomLines("tailoring", PhaseStart, ctx, "Stew"); f != "" || v != "" {
+		t.Fatalf("unknown skill rendered %q / %q", f, v)
+	}
+	if h := CraftHeardLine("tailoring", PhaseStart); h != "" {
+		t.Fatalf("unknown skill rendered %q", h)
+	}
 }

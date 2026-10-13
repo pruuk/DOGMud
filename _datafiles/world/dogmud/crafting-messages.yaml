@@ -1,0 +1,145 @@
+# Room lines for crafting (messaging M6 row 7, owner rulings R1 to R3,
+# 2026-10-13). One block per recipe skill; every recipe of a skill uses its
+# block. internal/crafting/messages.go loads and validates this file at boot.
+#
+#   start_observer, success_observer, failure_observer: what a reader who can
+#     see the crafter reads. {actor} is the crafter (required). {item} is the
+#     thing being made, or "something" to a reader who makes out only shapes
+#     and for a recipe that makes no item. Failure lines may not use {item}.
+#   start_heard, finish_heard: what a reader who cannot see the crafter hears.
+#     No tokens: a sound names nobody. finish_heard serves success and
+#     failure alike, so a sound never tells the outcome.
+#
+# Quote every line. No dashes.
+
+alchemy:
+  start_observer:
+    - "{actor} sets out vials and begins working on {item}."
+    - "{actor} measures reagents into a flask to make {item}."
+    - "{actor} warms a flask over a small flame, starting on {item}."
+  success_observer:
+    - "{actor} stoppers a vial and sets it aside, {item} finished."
+    - "{actor} holds a flask up to the light, satisfied with {item}."
+    - "{actor} pours off the last drops, and {item} is done."
+  failure_observer:
+    - "{actor}'s flask clouds over with a sour smell. The batch is ruined."
+    - "{actor} winces as the mixture curdles, and pours it away."
+    - "{actor} frowns at a murky flask and sets it aside, spoiled."
+  start_heard:
+    - "You hear glass clinking softly close by."
+    - "You hear liquid poured carefully from one vessel to another."
+    - "Something close by begins to bubble quietly."
+  finish_heard:
+    - "The bubbling close by dies away."
+    - "You hear a stopper pushed into glass, then quiet."
+    - "The clink of glass close by falls still."
+
+blacksmithing:
+  start_observer:
+    - "{actor} heats metal in the forge and begins working on {item}."
+    - "{actor} sets a bar of metal on the anvil to make {item}."
+    - "{actor} works the bellows, starting on {item}."
+  success_observer:
+    - "{actor} quenches the metal with a hiss, and {item} is finished."
+    - "{actor} gives a last few taps and sets down {item}, finished."
+    - "{actor} turns the finished {item} over, satisfied."
+  failure_observer:
+    - "{actor} curses as the metal cracks under the hammer. The work is ruined."
+    - "{actor} pulls the metal from the fire too late, and it is spoiled."
+    - "{actor} shakes their head at a warped piece of metal and tosses it aside."
+  start_heard:
+    - "You hear the ring of a hammer on metal close by."
+    - "You hear the roar of bellows and the hiss of a forge."
+    - "Close by, a hammer begins to strike metal in a steady rhythm."
+  finish_heard:
+    - "The hammering close by falls silent."
+    - "You hear a sharp hiss of steam, then quiet."
+    - "The ring of metal close by stops."
+
+cooking:
+  start_observer:
+    - "{actor} sets a pot over the fire and begins cooking {item}."
+    - "{actor} chops ingredients and starts making {item}."
+    - "{actor} stirs a pot over the flames, cooking {item}."
+  success_observer:
+    - "{actor} ladles out a finished serving of {item}."
+    - "{actor} takes the pot off the fire, and {item} is ready."
+    - "{actor} tastes the pot, nods, and sets {item} aside."
+  failure_observer:
+    - "{actor}'s pot boils over and the food burns. The meal is ruined."
+    - "{actor} tastes the pot, grimaces, and dumps it out."
+    - "{actor} scrapes a burnt mess from the pot and throws it away."
+  start_heard:
+    - "You hear a pot bubbling over a fire close by."
+    - "You hear the steady sound of chopping close by."
+    - "You hear something sizzling close by."
+  finish_heard:
+    - "The bubbling of the pot close by stops."
+    - "You hear a pot lifted off the fire."
+    - "The sizzling close by dies down."
+
+enchanting:
+  start_observer:
+    - "{actor} traces a glowing pattern in the air over {item}."
+    - "{actor} lays out runes and begins enchanting {item}."
+    - "{actor} murmurs over {item} as a faint light gathers."
+  success_observer:
+    - "{actor} completes the pattern, and {item} glows briefly before settling."
+    - "{actor} lowers their hands, and the glow sinks into {item}."
+    - "A soft light flares over {actor}'s work on {item} and fades."
+  failure_observer:
+    - "{actor}'s pattern flickers and collapses. The enchantment fails."
+    - "The light over {actor}'s work sputters out, and the materials crumble."
+    - "{actor} flinches as the runes go dark and the work comes undone."
+  start_heard:
+    - "You hear a low, steady murmur close by."
+    - "A faint hum rises somewhere close by."
+    - "You hear soft chanting close by."
+  finish_heard:
+    - "The humming close by fades away."
+    - "The murmuring close by stops."
+    - "The faint hum close by falls silent."
+
+jewelcrafting:
+  start_observer:
+    - "{actor} sets a gem in a small vise and begins working on {item}."
+    - "{actor} bends fine wire with pliers, starting on {item}."
+    - "{actor} picks up a jeweler's file and begins shaping {item}."
+  success_observer:
+    - "{actor} polishes {item} with a soft cloth and holds it up, finished."
+    - "{actor} sets the last stone, and {item} catches the light."
+    - "{actor} turns {item} in the light, satisfied with the work."
+  failure_observer:
+    - "{actor} winces as a stone cracks in its setting. The piece is ruined."
+    - "{actor}'s file slips and gouges the metal. The work is spoiled."
+    - "{actor} sighs and sweeps the ruined pieces aside."
+  start_heard:
+    - "You hear the fine scrape of a file close by."
+    - "You hear tiny taps of metal on metal close by."
+    - "You hear the faint grinding of a polishing wheel close by."
+  finish_heard:
+    - "The fine scraping close by stops."
+    - "The tiny tapping close by falls quiet."
+    - "The grinding close by slows and stops."
+
+tailoring:
+  start_observer:
+    - "{actor} spreads out cloth and begins cutting a pattern for {item}."
+    - "{actor} threads a needle and starts sewing {item}."
+    - "{actor} measures out a length of material for {item}."
+  success_observer:
+    - "{actor} ties off the last stitch, and {item} is finished."
+    - "{actor} shakes out {item} and looks it over, satisfied."
+    - "{actor} bites through the thread and holds up {item}."
+  failure_observer:
+    - "{actor}'s seam tears apart in their hands. The work is ruined."
+    - "{actor} frowns at a crooked seam and pulls the work apart."
+    - "{actor} cuts the cloth wrong and tosses the scraps aside."
+  start_heard:
+    - "You hear the snip of shears close by."
+    - "You hear cloth rustling and a needle drawn through it."
+    - "You hear fabric torn into strips close by."
+  finish_heard:
+    - "The rustle of cloth close by goes quiet."
+    - "You hear a final snip of thread, then quiet."
+    - "The snipping close by stops."

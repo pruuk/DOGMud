@@ -1640,6 +1640,7 @@ func loadAllDataFiles(isReload bool) {
 	mutations.LoadMutationFiles()
 	enchantments.LoadEnchantmentFiles()
 	crafting.LoadRecipeFiles()
+	crafting.LoadCraftingMessages()
 	rooms.LoadDataFiles()
 	// Town Justice 5.1: validate faction holding_cell_room references now that
 	// rooms are loaded. DI callback breaks the factions ← rooms import cycle.

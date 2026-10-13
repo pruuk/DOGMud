@@ -164,6 +164,7 @@ func setupRealStores(t *testing.T) {
 
 	// M3 item 6: recipes load from the same configured data path.
 	crafting.LoadRecipeFiles()
+	crafting.LoadCraftingMessages()
 
 	// M3 item 7: gossip templates load from the same configured data path.
 	gossip.Load()
@@ -873,6 +874,9 @@ func TestSnapshotStores(t *testing.T) {
 	t.Run("quests", func(t *testing.T) {
 		checkGolden(t, "quests.golden", buildQuestsGolden(t))
 	})
+	t.Run("crafting_messages", func(t *testing.T) {
+		checkGolden(t, "crafting_messages.golden", buildCraftingMessagesGolden(t))
+	})
 	t.Run("crafting", func(t *testing.T) {
 		checkGolden(t, "crafting.golden", buildCraftingGolden(t))
 	})
@@ -1164,6 +1168,47 @@ func buildCraftingGolden(t *testing.T) string {
 		fmt.Fprintf(&b, "recipe|%s|failure_actor => %s\n", id, fmt.Sprintf(`<ansi fg="red">%s</ansi>`, failure.Actor))
 		if failure.Observer != "" {
 			fmt.Fprintf(&b, "recipe|%s|failure_observer => %s\n", id, failure.Observer)
+		}
+	}
+	return b.String()
+}
+
+// Store 11b: crafting-messages.yaml (internal/crafting, messaging M6 row 7).
+// Every pool of every skill, each variant in order through SequencePicker,
+// with a named crafter and item for the seen lines.
+func buildCraftingMessagesGolden(t *testing.T) string {
+	t.Helper()
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "# crafting-messages.yaml store snapshot (internal/crafting)\n")
+	fmt.Fprintf(&b, "# dimensions: skill x phase x variant; seen lines full|vague, then heard\n\n")
+
+	skills := crafting.RecipeSkills()
+	if len(skills) == 0 {
+		t.Fatal("no recipes loaded; setupRealStores must call crafting.LoadRecipeFiles()")
+	}
+	ctx := textutil.TokenContext{ActorName: "Kael", ActorPlainName: "Kael"}
+	phases := []struct {
+		name string
+		p    crafting.Phase
+	}{{"start", crafting.PhaseStart}, {"success", crafting.PhaseSuccess}, {"failure", crafting.PhaseFailure}}
+	for _, skill := range skills {
+		for _, ph := range phases {
+			pick := narration.SequencePicker()
+			for i := 0; i < 3; i++ {
+				full, vague := crafting.CraftRoomLines(skill, ph.p, ctx, "Iron Dagger", pick)
+				fmt.Fprintf(&b, "craft|%s|%s|%d|full => %s\n", skill, ph.name, i, full)
+				fmt.Fprintf(&b, "craft|%s|%s|%d|vague => %s\n", skill, ph.name, i, vague)
+			}
+		}
+		for _, ph := range []struct {
+			name string
+			p    crafting.Phase
+		}{{"start_heard", crafting.PhaseStart}, {"finish_heard", crafting.PhaseSuccess}} {
+			pick := narration.SequencePicker()
+			for i := 0; i < 3; i++ {
+				fmt.Fprintf(&b, "craft|%s|%s|%d => %s\n", skill, ph.name, i, crafting.CraftHeardLine(skill, ph.p, pick))
+			}
 		}
 	}
 	return b.String()
