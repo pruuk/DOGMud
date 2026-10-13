@@ -183,6 +183,11 @@ func (r *Quest) Validate() error {
 		return err
 	}
 
+	// No trigger may enable a later one in the same command; see samecommand.go.
+	if err := r.validateSameCommandChains(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

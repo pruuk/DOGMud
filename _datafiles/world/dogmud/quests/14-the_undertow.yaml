@@ -99,6 +99,18 @@ triggers:
           sits beneath his table, locked tight. Whatever proof you need is
           probably in there."
 
+  # ── STRONGBOX: already opened ─────────────────────────
+  # First, so it is judged before the open trigger grants 14-evidence;
+  # after it, both would fire in the command that opens the box (#495).
+  - event: room_interact
+    room: 498
+    noun: strongbox
+    conditions:
+      has: ["14-evidence"]
+    actions:
+      - actor: "The strongbox is open and empty. You have already taken
+          the ledger."
+
   # ── STRONGBOX: open with key ──────────────────────────
   - event: room_interact
     room: 498
@@ -128,16 +140,6 @@ triggers:
     actions:
       - actor: "The strongbox is locked with a heavy brass padlock. You
           need a key."
-
-  # ── STRONGBOX: already opened ─────────────────────────
-  - event: room_interact
-    room: 498
-    noun: strongbox
-    conditions:
-      has: ["14-evidence"]
-    actions:
-      - actor: "The strongbox is open and empty. You have already taken
-          the ledger."
 
   # ── REPORT: bribe ledger to Velk ─────────────────────
   - event: item_give

@@ -128,18 +128,24 @@ triggers:
             - {delay: 0, text: "Good -- now take stock of where you stand.
                 Type look."}
 
+  # A player who types look guide before a bare look has done both lessons.
+  # First, so the bare-look trigger below (which also matches look guide)
+  # does not say "Type look guide" in the same command (#495).
   - event: command_issued
     command: look
+    noun: guide
     conditions:
       has: [28-hinted]
       missing: [28-looked]
     actions:
       - grant: 28-looked
+      - grant: 28-examined
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 0, text: "Good. Now look closer at one thing in
-                particular. Type look guide."}
+            - {delay: 0, text: "That's the whole trick of this world -- the
+                ones who read what's in front of them live longest. The way
+                north is open."}
 
   - event: command_issued
     command: look
@@ -155,6 +161,21 @@ triggers:
             - {delay: 0, text: "That's the whole trick of this world -- the
                 ones who read what's in front of them live longest. The way
                 north is open."}
+
+  # Last: it matches look guide too, and would grant what the trigger
+  # above requires in the same command.
+  - event: command_issued
+    command: look
+    conditions:
+      has: [28-hinted]
+      missing: [28-looked]
+    actions:
+      - grant: 28-looked
+      - npc_say:
+          mob: 9491
+          lines:
+            - {delay: 0, text: "Good. Now look closer at one thing in
+                particular. Type look guide."}
 
   # ── 6259 Knowing Yourself: status, north ──
   - event: room_enter
