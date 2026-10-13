@@ -611,6 +611,8 @@ One subagent per file, sequentially, because every file's proof runs the same go
   - `move`: move a whole record to another tier. Text unchanged. Changes which skill level sees it.
   - `rewrite`: replace one role's line in one record. Only for a line with no partner anywhere in that intensity and split, or a banner that needs aligning. Copy rules: no em or en dashes, at most 80 visible characters once tags are stripped, only tokens already used in the file, an actor's weapon is "their", never "its", no new idioms, same voice and tense as the role's other lines (actor second person, actee "you" as target, observer third person).
   - No deletions.
+  - **Token ownership** (batch 1 playtest): in attack lines `{position}`, `{stance}` and `{momentum}` are the ATTACKER's. A defender or room line that gives them to the defender ("while you remain {position}") is a mismatch: rewrite it.
+  - **Room lines name the target** (owner 2026-10-13, from batch 2): an `observer` (and `remote_observer`) line that never names `{actee}` leaves onlookers unable to tell who was hit; rewrite it to name `{actee}` where it fits in 80 visible characters, and list any that cannot fit as copy notes. Batch 5 also sweeps batch 1's four files for this.
 - [ ] **Step 2:** Each auditor reads EVERY record (not only hinted ones) and asks: do all roles describe the same blow, with the same action, result and banner? It returns JSON only:
 
 ```json

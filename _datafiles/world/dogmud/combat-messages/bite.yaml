@@ -292,7 +292,7 @@ options:
         actee: '<ansi fg="{actortype}">{actor}</ansi> exploits your position and clamps down brutally!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> exploits position and clamps down with brutal efficiency!'
       - actor: 'Even while {position}, {momentum}, you snap shut with overwhelming force!'
-        actee: 'Even as you stay {position}, <ansi fg="{actortype}">{actor}</ansi> snaps shut with overwhelming force, {momentum}!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> snaps shut with overwhelming force, {momentum}, even while {position}!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> snaps shut on <ansi fg="{acteetype}">{actee}</ansi> with overwhelming force, {momentum}!'
       - actor: 'Your {stance} fighting style overwhelms <ansi fg="{acteetype}">{actee}</ansi> with ferocity!'
         actee: '<ansi fg="{actortype}">{actor}</ansi> overwhelms you with devastating ferocity!'
@@ -307,7 +307,7 @@ options:
         actee: '<ansi fg="{actortype}">{actor}</ansi> maintains their assault with a powerful lunge!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> maintains the assault with a powerful lunging bite!'
       - actor: 'From your {stance} stance, {momentum}, you clamp down devastatingly while {position}!'
-        actee: '<ansi fg="{actortype}">{actor}</ansi>''s {stance} assault clamps down on you devastatingly, {momentum}, while you remain {position}!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s {stance} assault clamps down on you devastatingly, {momentum}!'
         observer: '<ansi fg="{actortype}">{actor}</ansi>''s {stance} assault clamps down on <ansi fg="{acteetype}">{actee}</ansi> devastatingly, {momentum}!'
   critical:
     # messages for when they are in the same room
@@ -349,8 +349,8 @@ options:
         actee: '<ansi fg="{actortype}">{actor}</ansi>''s {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> strike!'
         observer: '<ansi fg="{actortype}">{actor}</ansi>''s {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> strike!'
       - actor: 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
-        actee: '{momentum}, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> while you remain {position}!'
-        observer: '{momentum}, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> while <ansi fg="{acteetype}">{actee}</ansi> remains {position}!'
+        actee: '{momentum}, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> while {position}!'
+        observer: '{momentum}, <ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> on <ansi fg="{acteetype}">{actee}</ansi> while {position}!'
       - actor: 'You execute a <ansi fg="cyan-bold">DEVASTATING BITE</ansi> from the perfect predatory angle!'
         actee: '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING BITE</ansi> from the perfect angle!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> executes a <ansi fg="cyan-bold">DEVASTATING BITE</ansi> from the perfect angle!'
