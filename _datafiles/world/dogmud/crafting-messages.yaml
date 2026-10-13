@@ -38,7 +38,7 @@ alchemy:
   finish_heard:
     - "The sounds of glass and liquid close by fall quiet."
     - "The careful work close by goes still."
-    - "You hear a last soft clink of glass close by, then quiet."
+    - "Whatever was brewing close by goes quiet."
 
 blacksmithing:
   start_observer:
@@ -64,7 +64,7 @@ blacksmithing:
   finish_heard:
     - "The noise of the forge close by dies down."
     - "The metalwork close by falls silent."
-    - "You hear a last sharp hiss close by, then quiet."
+    - "The work at the forge close by stops."
 
 cooking:
   start_observer:
@@ -90,7 +90,7 @@ cooking:
   finish_heard:
     - "The sounds of cooking close by fall quiet."
     - "The cooking close by goes still."
-    - "You hear a pot set down close by, then quiet."
+    - "The kitchen sounds close by die away."
 
 enchanting:
   start_observer:
@@ -166,6 +166,6 @@ tailoring:
     - "You hear cloth rustling and a needle drawn through it."
     - "You hear fabric torn into strips close by."
   finish_heard:
-    - "The rustle of cloth close by goes quiet."
-    - "The sounds of sewing close by stop."
-    - "You hear a final snip of thread, then quiet."
+    - "The sounds of cloth work close by go quiet."
+    - "The tailoring close by falls silent."
+    - "The busy sounds close by fade, then quiet."

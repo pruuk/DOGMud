@@ -264,7 +264,7 @@ nothing. The owner chose one hook over a call at each site.
 
 ### Corners
 
-- **Death:** no stop line; the death narration covers it.
+- **Death:** no stop line; the death narration covers it. A killing blow that also interrupts the craft sends no stop line either (owner ruling 2026-10-13).
 - **Salvaging:** out of scope (no salvage room lines exist yet).
 - **A mob that moves mid-craft** keeps crafting and finishes in its new room
   (pre-existing: mob movement never cancels mob crafting). Not a line

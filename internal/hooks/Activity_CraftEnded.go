@@ -25,6 +25,14 @@ func wireCraftEndedNarration(c *characters.Character) {
 		if r.Trigger == activity.TriggerCraftComplete || r.Trigger == activity.TriggerDeath {
 			return
 		}
+		// A killing blow that also interrupts the craft sends no stop line
+		// (owner ruling 2026-10-13): the death narration covers it. The damage
+		// cancel runs before the queued CharacterDied is processed, so the
+		// crafter is "dying" (Health < 1 while still Alive, the predicate
+		// pools.go documents), not yet Dead. Cover both.
+		if c.Health < 1 || !c.IsAlive() {
+			return
+		}
 		recipe := crafting.GetRecipe(d.RecipeId)
 		room := rooms.LoadRoom(c.RoomId)
 		if recipe == nil || room == nil {

@@ -581,10 +581,16 @@ func cancelCraftOrSalvageOnDamage(ch *characters.Character) {
 			}
 		}
 	case activity.Salvaging:
-		_ = ch.Activity.TransitionToFree(state.TransitionReason{
+		err := ch.Activity.TransitionToFree(state.TransitionReason{
 			Trigger: activity.TriggerDamageInterrupt,
 			Actor:   ch.Activity.Self(),
 		})
+		// Tell a player salvager, as walking away does (usercommands/go.go).
+		if err == nil && ch.GetUserId() > 0 {
+			if u := users.GetByUserId(ch.GetUserId()); u != nil {
+				u.SendText(messaging.CategorySystem, `<ansi fg="red">The blow interrupts your salvaging.</ansi>`)
+			}
+		}
 	}
 }
 

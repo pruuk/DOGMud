@@ -144,6 +144,8 @@ func TestCraftEnded_MobCrafterStopsAndTheRoomReadsIt(t *testing.T) {
 	m.Character.MobInstanceId = craftEndedMobId
 	m.Character.RoomId = craftEndedRoomId
 	m.Character.Validate() // fires OnCharacterCreated, wiring the hook
+	// A live mob: the hook skips the dying.
+	m.Character.Health = 10
 	mobs.SetInstanceForTest(craftEndedMobId, m)
 	t.Cleanup(func() { mobs.SetInstanceForTest(craftEndedMobId, nil) })
 	room.AddMob(craftEndedMobId)
@@ -190,5 +192,83 @@ func TestCancelCraftOnDamage_PlayerCrafterIsToldMobIsNot(t *testing.T) {
 	cancelCraftOrSalvageOnDamage(crafter.Character)
 	if own := events.DrainQueuedMessagesForTest(craftEndedCrafterId); len(own) != 0 {
 		t.Fatalf("a hit on an idle crafter sent %q", own)
+	}
+}
+
+// The mob half: a crafting mob that is hit is told nothing (it has no
+// connection to tell), and the lit watcher reads the stop line exactly once.
+func TestCancelCraftOnDamage_MobCrafterSendsNoCrafterLine(t *testing.T) {
+	craftEndedScene(t)
+	room := rooms.LoadRoom(craftEndedRoomId)
+
+	m := &mobs.Mob{InstanceId: craftEndedMobId}
+	m.Character.Name = "Smith"
+	m.Character.MobInstanceId = craftEndedMobId
+	m.Character.RoomId = craftEndedRoomId
+	m.Character.Validate() // fires OnCharacterCreated, wiring the hook
+	m.Character.Health = 10
+	mobs.SetInstanceForTest(craftEndedMobId, m)
+	t.Cleanup(func() { mobs.SetInstanceForTest(craftEndedMobId, nil) })
+	room.AddMob(craftEndedMobId)
+
+	err := m.Character.Activity.TransitionToCrafting(
+		activity.CraftingData{RecipeId: craftEndedRecipeId, RoundsTotal: 5},
+		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
+	)
+	if err != nil {
+		t.Fatalf("begin craft: %v", err)
+	}
+	cancelCraftOrSalvageOnDamage(&m.Character)
+
+	got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId))
+	if len(got) != 1 || got[0] != "Smith stops forging." {
+		t.Fatalf("watcher read %q, want one line %q", got, "Smith stops forging.")
+	}
+	// The scene's player Kael stands in the room too: he reads the stop line
+	// and nothing else, in particular no "your crafting" line.
+	other := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
+	if len(other) != 1 || other[0] != "Smith stops forging." {
+		t.Fatalf("bystander read %q, want only %q", other, "Smith stops forging.")
+	}
+}
+
+// A hit on a salvaging player is told as walking away is; nobody else hears.
+func TestCancelSalvageOnDamage_PlayerSalvagerIsTold(t *testing.T) {
+	crafter := craftEndedScene(t)
+	err := crafter.Character.Activity.TransitionToSalvaging(
+		activity.SalvagingData{},
+		state.TransitionReason{Trigger: activity.TriggerSalvageBegin},
+	)
+	if err != nil {
+		t.Fatalf("begin salvage: %v", err)
+	}
+	cancelCraftOrSalvageOnDamage(crafter.Character)
+
+	own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
+	if len(own) != 1 || own[0] != "The blow interrupts your salvaging." {
+		t.Fatalf("salvager read %q, want one line %q", own, "The blow interrupts your salvaging.")
+	}
+	if got := events.DrainQueuedMessagesForTest(craftEndedWatcherId); len(got) != 0 {
+		t.Fatalf("watcher heard %q, want nothing", got)
+	}
+}
+
+// Owner ruling 2026-10-13: a killing blow that interrupts the craft sends the
+// room no stop line. Lethal damage leaves the crafter below one health but
+// still Alive (CharacterDied is only queued), so the hook must read health.
+func TestCraftEnded_KillingBlowSendsNoStopLine(t *testing.T) {
+	crafter := craftEndedScene(t)
+	crafter.Character.Health = -3
+	endCraftWith(t, crafter, activity.TriggerDamageInterrupt)
+	if got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId)); len(got) != 0 {
+		t.Fatalf("watcher read %q on a killing blow, want nothing", got)
+	}
+
+	crafter = craftEndedScene(t)
+	crafter.Character.Health = 1
+	endCraftWith(t, crafter, activity.TriggerDamageInterrupt)
+	got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId))
+	if len(got) != 1 || got[0] != "Kael stops forging." {
+		t.Fatalf("watcher read %q on a survived blow, want one line %q", got, "Kael stops forging.")
 	}
 }
