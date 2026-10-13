@@ -1464,6 +1464,15 @@ Activity-side observer. All three active states (Casting, Crafting,
 Salvaging) transition to Free; there is no casting exemption for the
 death cascade.
 
+### Activity_CraftEnded.go
+
+`characters.OnCharacterCreated(wireCraftEndedNarration)` registers an
+`Activity.OnCraftEnded` handler. When a craft ends without finishing (cancel,
+movement or damage interrupt) it calls `actions.NarrateCraftPhase` with
+`crafting.PhaseCancel`, so the room sees the work set aside. Completion
+(`TriggerCraftComplete`) and `TriggerDeath` are skipped: the round tick
+narrates its own outcome, and death has its own narration.
+
 **Combat-entry cancellation — implemented via veto, not cascade:**
 
 Crafting and Salvaging block the character from entering combat

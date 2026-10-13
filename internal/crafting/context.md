@@ -277,13 +277,14 @@ decides their fate.
 ## Room lines (crafting-messages.yaml)
 
 `messages.go` loads `_datafiles/world/dogmud/crafting-messages.yaml`: one
-block per recipe skill (six shipped), five pools each. Only the dogmud world
+block per recipe skill (six shipped), six pools each. Only the dogmud world
 ships it; the default world has no `recipes/` and does not boot today.
 
-- `SkillPools`: `start_observer`, `success_observer`, `failure_observer` (seen
-  lines, `{actor}` required, `{item}` allowed in start and success only) and
-  `start_heard`, `finish_heard` (sound lines naming nobody). `finish_heard`
-  serves success and failure alike so a sound never gives the outcome away.
+- `SkillPools`: `start_observer`, `success_observer`, `failure_observer`,
+  `cancel_observer` (seen lines, `{actor}` required, `{item}` allowed in start
+  and success only) and `start_heard`, `finish_heard` (sound lines naming
+  nobody). `finish_heard` serves success, failure and cancel alike so a sound
+  never gives the outcome away.
 - `CraftingMessages`: skill to `SkillPools`. `Validate` needs every pool at
   least 3 deep, the token rules above, and a block for every skill a loaded
   recipe uses; an unknown skill block is an error.
@@ -293,7 +294,10 @@ ships it; the default world has no `recipes/` and does not boot today.
 - `TokenItem` (`{item}`): this store's own event token; the store puts it in
   the token map it hands `narration.Render`. It reads "something" when the
   reader cannot make the item out or the recipe makes no item.
-- `PhaseStart` joins `PhaseSuccess` and `PhaseFailure`. It has no recipe text.
+- `PhaseStart` and `PhaseCancel` join `PhaseSuccess` and `PhaseFailure`. They
+  have no recipe text. `PhaseCancel` is a craft that ended unfinished (R4); its
+  seen line is `cancel_observer`, sent by the hook in
+  `internal/hooks/Activity_CraftEnded.go`.
 - `CraftRoomLines(skill, phase, ctx, item, picker...)` returns the seen line
   twice from one variant (`full` names the item, `vague` says "something").
   `CraftHeardLine(skill, phase, picker...)` returns the sound line.

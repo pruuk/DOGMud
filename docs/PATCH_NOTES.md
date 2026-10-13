@@ -7,6 +7,7 @@
   out only shapes sees a figure at work on something. In the dark, or
   from someone hidden, the craft is heard instead: a hammer ringing, a
   pot bubbling, then quiet. Creatures that craft follow the same rules.
+  If someone stops partway, the room sees them set the work aside.
 
 - When someone starts a spell aimed at you, you now read a line of your own
   telling you so.
