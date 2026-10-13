@@ -12,7 +12,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -20,7 +19,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
-	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -307,37 +305,11 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	// 12b. Send YAML cast text (if defined).
-	if spellInfo.Narration(spells.PhaseCast).Len() > 0 {
-		castRoom := rooms.LoadRoom(user.Character.RoomId)
-		tCtx := textutil.TokenContext{
-			ActorName:      user.Character.GetCharacterName(true),
-			ActorPlainName: user.Character.GetCharacterName(false),
-		}
-		if len(result.TargetUserIds) > 0 {
-			if tUser := users.GetByUserId(result.TargetUserIds[0]); tUser != nil {
-				tCtx.ActeeName = tUser.Character.GetCharacterName(true)
-				tCtx.ActeePlainName = tUser.Character.GetCharacterName(false)
-			}
-		} else if len(result.TargetMobInstanceIds) > 0 {
-			if tMob := mobs.GetInstance(result.TargetMobInstanceIds[0]); tMob != nil {
-				tCtx.ActeeName = tMob.Character.GetCharacterName(true)
-				tCtx.ActeePlainName = tMob.Character.GetCharacterName(false)
-			}
-		}
-		roles := spellInfo.Narrate(spells.PhaseCast, tCtx)
-		if roles.Actor != "" {
-			user.SendText(messaging.CategorySpellFold, roles.Actor)
-		}
-		// SendTextVisual, not SendText: a cast_observer line describes what the
-		// room SEES ("a fierce glow building"), and the audio channel is never
-		// sight-gated, so this reached blind observers with the caster name
-		// and the visual detail. Found by the 2026-09-08 darkness playtest. Its
-		// sibling windup two steps below already used SendTextVisual -- one
-		// event, two paths, only one darkness-aware.
-		if roles.Observer != "" && castRoom != nil {
-			castRoom.SendTextVisual(messaging.CategorySpellFold, roles.Observer, user.UserId)
-		}
+	// 12b. Cast-start lines through the one body every caster shares
+	// (messaging M6 slice 4): the caster's, the target's own, the room's.
+	if castRoom := rooms.LoadRoom(user.Character.RoomId); castRoom != nil {
+		actions.NarrateSpellPhase(actions.NewUserActorInRoom(user, castRoom), spellInfo, spells.PhaseCast,
+			result.TargetUserIds, result.TargetMobInstanceIds, castRoom, messaging.CategorySpellFold)
 	}
 
 	// 13. Go onCast hooks — run before JS, can abort the cast.

@@ -1,7 +1,6 @@
 package mobcommands
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -14,8 +13,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
-	"github.com/GoMudEngine/GoMud/internal/textutil"
-	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -115,29 +112,11 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
-	// Send YAML cast text (if defined).
-	if spellInfo.Narration(spells.PhaseCast).Len() > 0 {
-		castRoom := rooms.LoadRoom(mob.Character.RoomId)
-		tCtx := textutil.TokenContext{
-			ActorName:      mob.Character.GetCharacterName(true),
-			ActorPlainName: mob.Character.GetCharacterName(false),
-		}
-		if len(result.TargetUserIds) > 0 {
-			if tUser := users.GetByUserId(result.TargetUserIds[0]); tUser != nil {
-				tCtx.ActeeName = tUser.Character.GetCharacterName(true)
-				tCtx.ActeePlainName = tUser.Character.GetCharacterName(false)
-			}
-		} else if len(result.TargetMobInstanceIds) > 0 {
-			if tMob := mobs.GetInstance(result.TargetMobInstanceIds[0]); tMob != nil {
-				tCtx.ActeeName = tMob.Character.GetCharacterName(true)
-				tCtx.ActeePlainName = tMob.Character.GetCharacterName(false)
-			}
-		}
-		roles := spellInfo.Narrate(spells.PhaseCast, tCtx)
-		// A mob caster has no client: its own line is rendered and dropped.
-		if roles.Observer != "" && castRoom != nil {
-			castRoom.SendTextVisual(messaging.CategorySpellFold, roles.Observer)
-		}
+	// Cast-start lines through the one body every caster shares (messaging M6
+	// slice 4). A mob caster has no client, so it reads nothing.
+	if castRoom := rooms.LoadRoom(mob.Character.RoomId); castRoom != nil {
+		actions.NarrateSpellPhase(actions.NewMobActorInRoom(mob, castRoom), spellInfo, spells.PhaseCast,
+			result.TargetUserIds, result.TargetMobInstanceIds, castRoom, messaging.CategorySpellFold)
 	}
 
 	// Commit CastingState to Activity machine (sole truth).
@@ -169,9 +148,6 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		mob.Character.ApplyRestore(characters.PoolConviction, firstRoundCost)
 		return true, nil
 	}
-
-	room.SendTextVisual(messaging.CategorySpellFold, fmt.Sprintf(
-		`<ansi fg="mobname">%s</ansi> begins weaving a spell.`, mob.Character.Name))
 
 	// Initiate combat aggro immediately when an offensive spell has a target.
 	// This ensures the mob enters the combat loop, where the casting block
