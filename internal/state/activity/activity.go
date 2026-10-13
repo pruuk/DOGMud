@@ -91,7 +91,31 @@ type Machine struct {
 	salvaging *SalvagingData
 	self      state.ActorRef
 
-	craftEnded []craftEndedEntry
+	craftEnded   []craftEndedEntry
+	salvageEnded []salvageEndedEntry
+}
+
+type salvageEndedEntry struct {
+	name string
+	fn   func(SalvagingData, state.TransitionReason)
+}
+
+// OnSalvageEnded registers a handler called after the machine leaves
+// Salvaging, with the data of the salvage that ended and the reason it ended
+// (#514). Same shape and same reason as OnCraftEnded: by the time an
+// AfterTransition cascade runs the state already reads Free.
+func (m *Machine) OnSalvageEnded(name string, fn func(SalvagingData, state.TransitionReason)) {
+	m.salvageEnded = append(m.salvageEnded, salvageEndedEntry{name: name, fn: fn})
+}
+
+// fireSalvageEnded calls the salvage-ended handlers for a salvage that just ended.
+func (m *Machine) fireSalvageEnded(ended *SalvagingData, r state.TransitionReason) {
+	if ended == nil {
+		return
+	}
+	for _, e := range m.salvageEnded {
+		e.fn(*ended, r)
+	}
 }
 
 type craftEndedEntry struct {
