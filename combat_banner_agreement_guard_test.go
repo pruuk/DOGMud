@@ -126,7 +126,28 @@ func TestCombatBannerWordsAgreeAcrossRoles(t *testing.T) {
 		for _, f := range bannerFailures(name, &g) {
 			t.Errorf("banner mismatch: %s", f)
 		}
+		if n := bannerRecordCount(&g); n == 0 {
+			t.Errorf("%s: no record carries a banner word, the guard checked nothing", name)
+		}
 	}
+}
+
+// bannerRecordCount counts the actor lines (one per record) holding at least
+// one banner word, so a file the guard cannot see into fails loudly.
+func bannerRecordCount(g *items.WeaponAttackMessageGroup) int {
+	n := 0
+	for _, opts := range g.Options {
+		for _, s := range []items.SkillTieredMessages{opts.Together.ToAttacker, opts.Separate.ToAttacker} {
+			for _, tier := range []items.MessageOptions{s.Beginner, s.Expert, s.Master} {
+				for _, line := range tier {
+					if len(bannerWords(string(line))) > 0 {
+						n++
+					}
+				}
+			}
+		}
+	}
+	return n
 }
 
 func TestBannerWordsAgreeRule(t *testing.T) {
