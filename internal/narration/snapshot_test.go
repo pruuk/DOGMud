@@ -1191,7 +1191,7 @@ func buildCraftingMessagesGolden(t *testing.T) string {
 	phases := []struct {
 		name string
 		p    crafting.Phase
-	}{{"start", crafting.PhaseStart}, {"success", crafting.PhaseSuccess}, {"failure", crafting.PhaseFailure}}
+	}{{"start", crafting.PhaseStart}, {"success", crafting.PhaseSuccess}, {"failure", crafting.PhaseFailure}, {"cancel", crafting.PhaseCancel}}
 	for _, skill := range skills {
 		for _, ph := range phases {
 			pick := narration.SequencePicker()

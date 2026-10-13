@@ -1,14 +1,16 @@
-# Room lines for crafting (messaging M6 row 7, owner rulings R1 to R3,
+# Room lines for crafting (messaging M6 row 7, owner rulings R1 to R4,
 # 2026-10-13). One block per recipe skill; every recipe of a skill uses its
 # block. internal/crafting/messages.go loads and validates this file at boot.
 #
-#   start_observer, success_observer, failure_observer: what a reader who can
-#     see the crafter reads. {actor} is the crafter (required). {item} is the
-#     thing being made, or "something" to a reader who makes out only shapes
-#     and for a recipe that makes no item. Failure lines may not use {item}.
+#   start_observer, success_observer, failure_observer, cancel_observer: what
+#     a reader who can see the crafter reads. {actor} is the crafter
+#     (required). {item} is the thing being made, or "something" to a reader
+#     who makes out only shapes and for a recipe that makes no item. Failure
+#     and cancel lines may not use {item}. A cancel is a craft that ended
+#     without finishing: stopped, walked away from, or broken off by damage.
 #   start_heard, finish_heard: what a reader who cannot see the crafter hears.
-#     No tokens: a sound names nobody. finish_heard serves success and
-#     failure alike, so a sound never tells the outcome.
+#     No tokens: a sound names nobody. finish_heard serves success, failure
+#     and cancel alike, so a sound never tells the outcome.
 #
 # Quote every line. No dashes.
 
@@ -25,6 +27,10 @@ alchemy:
     - "{actor}'s flask clouds over with a sour smell. The batch is ruined."
     - "{actor} winces as the mixture curdles, and pours it away."
     - "{actor} frowns at a murky flask and sets it aside, spoiled."
+  cancel_observer:
+    - "{actor} stops working and pushes the vials aside, the batch unfinished."
+    - "{actor} corks a half-made mixture and sets it down."
+    - "{actor} pinches out the small flame and leaves the work for now."
   start_heard:
     - "You hear glass clinking softly close by."
     - "You hear liquid poured carefully from one vessel to another."
@@ -47,6 +53,10 @@ blacksmithing:
     - "{actor} curses as the metal cracks under the hammer. The work is ruined."
     - "{actor} pulls the metal from the fire too late, and it is spoiled."
     - "{actor} shakes their head at a warped piece of metal and tosses it aside."
+  cancel_observer:
+    - "{actor} sets down the hammer, the work unfinished."
+    - "{actor} pulls the metal from the forge and stops."
+    - "{actor} leaves the work cooling on the anvil, unfinished."
   start_heard:
     - "You hear the ring of a hammer on metal close by."
     - "You hear the roar of bellows and the hiss of a forge."
@@ -69,6 +79,10 @@ cooking:
     - "{actor}'s pot boils over and the food burns. The meal is ruined."
     - "{actor} tastes the pot, grimaces, and dumps it out."
     - "{actor} scrapes a burnt mess from the pot and throws it away."
+  cancel_observer:
+    - "{actor} pulls the pot off the fire, the meal unfinished."
+    - "{actor} stops cooking and sets the pot aside."
+    - "{actor} leaves the half-made meal where it sits."
   start_heard:
     - "You hear a pot bubbling over a fire close by."
     - "You hear the steady sound of chopping close by."
@@ -91,6 +105,10 @@ enchanting:
     - "{actor}'s pattern flickers and collapses. The enchantment fails."
     - "The light over {actor}'s work sputters out, and the materials crumble."
     - "{actor} flinches as the runes go dark and the work comes undone."
+  cancel_observer:
+    - "{actor} lets the glowing pattern fade, the work unfinished."
+    - "{actor} breaks off the enchantment, and the gathered light dies away."
+    - "{actor} stops murmuring, and the faint light fades."
   start_heard:
     - "You hear a low, steady murmur close by."
     - "A faint hum rises somewhere close by."
@@ -113,6 +131,10 @@ jewelcrafting:
     - "{actor} winces as a stone cracks in its setting. The piece is ruined."
     - "{actor}'s file slips and gouges the metal. The work is spoiled."
     - "{actor} sighs and sweeps the ruined pieces aside."
+  cancel_observer:
+    - "{actor} sets down the file, the piece unfinished."
+    - "{actor} loosens the vise and puts the work away for now."
+    - "{actor} stops working and lays the tools aside."
   start_heard:
     - "You hear the fine scrape of a file close by."
     - "You hear tiny taps of metal on metal close by."
@@ -135,6 +157,10 @@ tailoring:
     - "{actor}'s seam tears apart in their hands. The work is ruined."
     - "{actor} frowns at a crooked seam and pulls the work apart."
     - "{actor} cuts the cloth wrong and tosses the scraps aside."
+  cancel_observer:
+    - "{actor} sets the needle down, the work unfinished."
+    - "{actor} folds away the half-sewn cloth."
+    - "{actor} stops sewing and puts the work aside."
   start_heard:
     - "You hear the snip of shears close by."
     - "You hear cloth rustling and a needle drawn through it."

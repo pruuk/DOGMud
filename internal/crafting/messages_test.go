@@ -13,6 +13,7 @@ func validPools() SkillPools {
 		StartObserver:   []string{"{actor} begins {item}.", "{actor} starts {item}.", "{actor} sets to {item}."},
 		SuccessObserver: []string{"{actor} finishes {item}.", "{actor} completes {item}.", "{actor} is done with {item}."},
 		FailureObserver: []string{"{actor} ruins it.", "{actor} spoils it.", "{actor} gives up."},
+		CancelObserver:  []string{"{actor} stops.", "{actor} sets it down.", "{actor} gives up for now."},
 		StartHeard:      []string{"You hear work begin.", "You hear tools.", "You hear a clatter."},
 		FinishHeard:     []string{"The work stops.", "The tools fall quiet.", "The clatter ends."},
 	}
@@ -49,6 +50,16 @@ func TestCraftingMessagesValidate_Refusals(t *testing.T) {
 			p.FailureObserver = []string{"{actor} burns {item}.", "{actor} b.", "{actor} c."}
 			cm["cooking"] = p
 		}, []string{"cooking"}, "failure_observer may not use {item}"},
+		{"cancel line without actor", func(cm CraftingMessages) {
+			p := cm["cooking"]
+			p.CancelObserver = []string{"The work stops.", "{actor} b.", "{actor} c."}
+			cm["cooking"] = p
+		}, []string{"cooking"}, "cancel_observer must name the crafter with {actor}"},
+		{"item in a cancel line", func(cm CraftingMessages) {
+			p := cm["cooking"]
+			p.CancelObserver = []string{"{actor} drops {item}.", "{actor} b.", "{actor} c."}
+			cm["cooking"] = p
+		}, []string{"cooking"}, "cancel_observer may not use {item}"},
 		{"token in a heard line", func(cm CraftingMessages) {
 			p := cm["cooking"]
 			p.FinishHeard = []string{"{actor} stops.", "b.", "c."}
@@ -102,6 +113,19 @@ func TestCraftRoomLines_FullAndVagueShareOneVariant(t *testing.T) {
 		if strings.Replace(full, "Stew", "something", 1) != vague {
 			t.Fatalf("round %d: full %q and vague %q are different variants", i, full, vague)
 		}
+	}
+}
+
+func TestCraftLines_CancelPhase(t *testing.T) {
+	t.Cleanup(SeedCraftingMessagesForTest(CraftingMessages{"cooking": validPools()}))
+	ctx := textutil.TokenContext{ActorName: "Kael", ActorPlainName: "Kael"}
+	full, vague := CraftRoomLines("cooking", PhaseCancel, ctx, "Stew", narration.FirstPicker)
+	if full != "Kael stops." || vague != "Kael stops." {
+		t.Fatalf("got full %q vague %q", full, vague)
+	}
+	// A cancel sounds like a finish, so a sound never says why the work ended.
+	if got := CraftHeardLine("cooking", PhaseCancel, narration.FirstPicker); got != "The work stops." {
+		t.Fatalf("heard: %q, want the finish pool", got)
 	}
 }
 

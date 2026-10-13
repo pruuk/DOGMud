@@ -90,6 +90,31 @@ type Machine struct {
 	crafting  *CraftingData
 	salvaging *SalvagingData
 	self      state.ActorRef
+
+	craftEnded []craftEndedEntry
+}
+
+type craftEndedEntry struct {
+	name string
+	fn   func(CraftingData, state.TransitionReason)
+}
+
+// OnCraftEnded registers a handler called after the machine leaves Crafting,
+// with the data of the craft that ended and the reason it ended (messaging M6
+// row 7, R4). It exists because an AfterTransition cascade runs once the
+// state already reads Free, when CraftingData no longer answers.
+func (m *Machine) OnCraftEnded(name string, fn func(CraftingData, state.TransitionReason)) {
+	m.craftEnded = append(m.craftEnded, craftEndedEntry{name: name, fn: fn})
+}
+
+// fireCraftEnded calls the craft-ended handlers for a craft that just ended.
+func (m *Machine) fireCraftEnded(ended *CraftingData, r state.TransitionReason) {
+	if ended == nil {
+		return
+	}
+	for _, e := range m.craftEnded {
+		e.fn(*ended, r)
+	}
 }
 
 // NewMachine returns an Activity machine in Free.

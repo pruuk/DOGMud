@@ -30,14 +30,15 @@ const unknownItem = "something"
 const minCraftingVariants = 3
 
 // SkillPools is one skill's room lines (messaging M6 row 7, owner rulings
-// R1 to R3). The *_observer pools are seen lines naming the crafter with
+// R1 to R4). The *_observer pools are seen lines naming the crafter with
 // {actor}; the *_heard pools are what a reader who cannot see the crafter
-// hears, and name nobody. finish_heard serves success and failure alike so
-// a sound never gives the outcome away.
+// hears, and name nobody. finish_heard serves success, failure and cancel
+// alike so a sound never gives the outcome away.
 type SkillPools struct {
 	StartObserver   []string `yaml:"start_observer"`
 	SuccessObserver []string `yaml:"success_observer"`
 	FailureObserver []string `yaml:"failure_observer"`
+	CancelObserver  []string `yaml:"cancel_observer"`
 	StartHeard      []string `yaml:"start_heard"`
 	FinishHeard     []string `yaml:"finish_heard"`
 }
@@ -64,6 +65,7 @@ func (p SkillPools) pools() []craftPool {
 		{"start_observer", p.StartObserver, true, withItem},
 		{"success_observer", p.SuccessObserver, true, withItem},
 		{"failure_observer", p.FailureObserver, true, actorOnly},
+		{"cancel_observer", p.CancelObserver, true, actorOnly},
 		{"start_heard", p.StartHeard, false, nil},
 		{"finish_heard", p.FinishHeard, false, nil},
 	}
@@ -181,6 +183,8 @@ func CraftRoomLines(skill string, p Phase, ctx textutil.TokenContext, item strin
 		pool = pools.SuccessObserver
 	case PhaseFailure:
 		pool = pools.FailureObserver
+	case PhaseCancel:
+		pool = pools.CancelObserver
 	}
 	if len(pool) == 0 {
 		return "", ""
@@ -201,8 +205,9 @@ func CraftRoomLines(skill string, p Phase, ctx textutil.TokenContext, item strin
 }
 
 // CraftHeardLine renders what a reader who cannot see the crafter hears:
-// the start pool at PhaseStart, the finish pool at success and at failure.
-// "" when the store has no pool for skill.
+// the start pool at PhaseStart, the finish pool at every other phase. A cancel
+// deliberately sounds like a finish, so a sound never says why the work ended
+// (R3, R4). "" when the store has no pool for skill.
 func CraftHeardLine(skill string, p Phase, picker ...narration.Picker) string {
 	pools, ok := craftingMessages[skill]
 	if !ok {
