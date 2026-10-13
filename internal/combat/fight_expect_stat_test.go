@@ -39,6 +39,10 @@ func TestMeleePredictionMatchesCombat(t *testing.T) {
 		t.Skip("statistical guard; skipped in -short")
 	}
 	pinParityBalance(t)
+	// The Go default is 0 (compression off); _datafiles/config.yaml ships
+	// ContestGapSaturation 2.80. Pin the shipped value so the guard measures
+	// the compression the prediction claims to share.
+	setContestGapSaturationForTest(t, 2.8)
 
 	cases := []struct {
 		name                       string

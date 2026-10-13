@@ -54,6 +54,10 @@ func TestSelfCritShare_IsTheOneSidedTail(t *testing.T) {
 // (owner ruling 2026-10-13).
 func TestMeleeDamagePerRound_HitChanceBrackets(t *testing.T) {
 	pinParityBalance(t)
+	// The shipped saturation (_datafiles/config.yaml ContestGapSaturation
+	// 2.80; the Go default 0 turns compression off), so the claim that
+	// compression is a no-op at parity is actually exercised.
+	setContestGapSaturationForTest(t, 2.8)
 	a := parityCombatant(t, "attacker")
 	d := parityCombatant(t, "defender")
 	floor := contestFloor()
