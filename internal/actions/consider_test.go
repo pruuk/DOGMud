@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // fakeActor is a minimal Actor for unit tests. It records SendText lines and
@@ -15,6 +17,7 @@ import (
 type fakeActor struct {
 	awardRecorder // records Actor.AwardResolved calls
 	char          *characters.Character
+	room          *rooms.Room // nil unless a test stands the actor somewhere
 	name          string
 	isPlayer      bool
 	sent          []string
@@ -44,7 +47,7 @@ func newFakeActor(name string, statAdj, healthMax int, isPlayer bool) *fakeActor
 }
 
 func (a *fakeActor) GetCharacter() *characters.Character         { return a.char }
-func (a *fakeActor) GetRoom() *rooms.Room                        { return nil }
+func (a *fakeActor) GetRoom() *rooms.Room                        { return a.room }
 func (a *fakeActor) SendText(_ messaging.Category, msg string)   { a.sent = append(a.sent, msg) }
 func (a *fakeActor) GetName() string                             { return a.name }
 func (a *fakeActor) IsPlayer() bool                              { return a.isPlayer }
@@ -125,12 +128,54 @@ func TestConsider_CooldownRefusalNeitherRollsNorTrains(t *testing.T) {
 func TestConsider_MuddyReadSlidesTheVerdict(t *testing.T) {
 	fixRoll(t, contest.Result{Success: false})
 	self := newFakeActor("hero", 100, 100, true)
-	target := newFakeActor("orc", 100, 100, false)
+	target := newFakeActor("orc", 120, 100, false) // reads lose-badly clean
 	clean := ReadFight(self.char, target.char).Verdict
+	switch clean {
+	case VerdictScratches, VerdictHurt, VerdictLikelyLose, VerdictLoseBadly:
+	default:
+		t.Fatalf("fixture premise: clean verdict %v must be one that slides", clean)
+	}
 
 	r := Consider(self, target)
-	if r.Quality != ReadMuddy || r.Read.Verdict != muddySlide(clean) {
-		t.Fatalf("muddy read: quality %v verdict %v, want muddy %v", r.Quality, r.Read.Verdict, muddySlide(clean))
+	if r.Quality != ReadMuddy || r.Read.Verdict == clean || r.Read.Verdict != muddySlide(clean) {
+		t.Fatalf("muddy read: quality %v verdict %v (clean %v), want muddy %v",
+			r.Quality, r.Read.Verdict, clean, muddySlide(clean))
+	}
+}
+
+// The reader pays the sight ramp (plan 5b): the score handed to the roll is
+// Perception + Search x SkillWeight in a comfortable room, and strictly less
+// in a dark one (#301).
+func TestConsider_ReadScorePaysTheSightRamp(t *testing.T) {
+	var got float64
+	old := considerContest
+	considerContest = func(score float64, _ []contest.Entry) contest.Result {
+		got = score
+		return contest.Result{Success: true, Margin: 1}
+	}
+	t.Cleanup(func() { considerContest = old })
+
+	scoreIn := func(lamp int) float64 {
+		zero := 0.0
+		room := &rooms.Room{RoomId: 9740, SkyLight: &zero}
+		if lamp > 0 {
+			room.Lamp = rooms.LampPtr(lamp)
+		}
+		self := newFakeActor("hero", 100, 100, true)
+		self.room = room
+		self.char.SetSkill(string(skills.Search), 3)
+		Consider(self, newFakeActor("orc", 100, 100, false))
+		return got
+	}
+
+	want := 100 + 3*float64(configs.GetBalanceConfig().SkillWeight)
+
+	lit := scoreIn(60)
+	if lit != want {
+		t.Errorf("lit read score %v, want Perception + Search x SkillWeight = %v", lit, want)
+	}
+	if dark := scoreIn(0); dark >= lit {
+		t.Errorf("dark read score %v, want strictly less than lit %v", dark, lit)
 	}
 }
 
