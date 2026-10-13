@@ -227,6 +227,7 @@ func TestCaptureSnapshot_Foragers(t *testing.T) {
 	defer mobs.SetInstanceForTest(forager.InstanceId, nil)
 	r.AddMob(forager.InstanceId)
 
+	health.ResetForagersSeenForTest()
 	snap := health.CaptureSnapshot()
 
 	// With pre-population active, we get 1 live row + 2 placeholder rows
@@ -264,10 +265,11 @@ func TestCaptureSnapshot_Foragers(t *testing.T) {
 		t.Error("cargo_by_bucket: got nil map, want initialized map")
 	}
 
-	// Verify placeholder rows are present for the other two foragers.
+	// Verify placeholder rows are present for the other two foragers,
+	// never seen live, so not yet spawned rather than despawned (#291).
 	inactive := 0
 	for _, row := range snap.Foragers {
-		if row.State == "(despawned)" {
+		if row.State == health.ForagerStateNotYetSpawned {
 			inactive++
 			if row.CargoByBucket == nil {
 				t.Error("placeholder row has nil CargoByBucket")
@@ -275,7 +277,7 @@ func TestCaptureSnapshot_Foragers(t *testing.T) {
 		}
 	}
 	if inactive != 2 {
-		t.Errorf("despawned placeholder rows: got %d, want 2", inactive)
+		t.Errorf("not-yet-spawned placeholder rows: got %d, want 2", inactive)
 	}
 }
 
@@ -347,15 +349,17 @@ func TestLookupShopMobName_FallsBackToTemplate(t *testing.T) {
 // when no forager mobs are spawned, CaptureSnapshot still emits 3 rows —
 // one placeholder per forager.AllProfiles() entry, all with state=(despawned).
 func TestCaptureSnapshot_Foragers_PrepopulatesInactiveProfiles(t *testing.T) {
-	// No mob instances registered → all three foragers are despawned.
+	// No mob instances registered and none seen since "boot" → all three
+	// foragers are not yet spawned.
+	health.ResetForagersSeenForTest()
 	snap := health.CaptureSnapshot()
 
 	if len(snap.Foragers) != 3 {
 		t.Fatalf("Foragers: got %d, want 3 (all placeholders)", len(snap.Foragers))
 	}
 	for _, f := range snap.Foragers {
-		if f.State != "(despawned)" {
-			t.Errorf("mob %d: state=%q, want (despawned)", f.MobId, f.State)
+		if f.State != health.ForagerStateNotYetSpawned {
+			t.Errorf("mob %d: state=%q, want %s", f.MobId, f.State, health.ForagerStateNotYetSpawned)
 		}
 		if f.CargoByBucket == nil {
 			t.Errorf("mob %d: CargoByBucket is nil", f.MobId)
@@ -475,7 +479,18 @@ func TestCaptureForagers_DistinguishesDespawnedFromIdle(t *testing.T) {
 	defer mobs.SetInstanceForTest(tova.InstanceId, nil)
 	r.AddMob(tova.InstanceId)
 
-	// Halix (mob 372) and Kessa (mob 373) are NOT spawned — tests "(despawned)" path.
+	// Halix (mob 372) is live for one capture and then gone: the
+	// "(despawned)" path. Kessa (mob 373) is never spawned: the
+	// "(not yet spawned)" path, a forager whose room loads late (#291).
+	health.ResetForagersSeenForTest()
+	halix := &mobs.Mob{MobId: mobs.MobId(372), InstanceId: 93372, HomeRoomId: roomId, Zone: "TestZone"}
+	halix.Character.Name = "Halix"
+	halix.Character.Conditions = conditions.New()
+	halix.Character.RoomId = roomId
+	halix.BTreeState = behaviortree.NewBehaviorState()
+	mobs.SetInstanceForTest(halix.InstanceId, halix)
+	health.CaptureSnapshot()
+	mobs.SetInstanceForTest(halix.InstanceId, nil)
 
 	snap := health.CaptureSnapshot()
 
@@ -484,22 +499,34 @@ func TestCaptureForagers_DistinguishesDespawnedFromIdle(t *testing.T) {
 		t.Fatalf("Foragers: got %d, want 3", len(snap.Foragers))
 	}
 
-	// Count despawned and idle rows.
+	// Count despawned, not-yet-spawned and idle rows.
 	despawnedCount := 0
+	notYetCount := 0
 	idleCount := 0
 	var idle *health.ForagerSnapshot
 	for i := range snap.Foragers {
 		switch snap.Foragers[i].State {
-		case "(despawned)":
+		case health.ForagerStateDespawned:
 			despawnedCount++
+			if snap.Foragers[i].MobId != 372 {
+				t.Errorf("despawned row is mob %d, want 372 (Halix)", snap.Foragers[i].MobId)
+			}
+		case health.ForagerStateNotYetSpawned:
+			notYetCount++
+			if snap.Foragers[i].MobId != 373 {
+				t.Errorf("not-yet-spawned row is mob %d, want 373 (Kessa)", snap.Foragers[i].MobId)
+			}
 		case "(idle, no state)":
 			idleCount++
 			idle = &snap.Foragers[i]
 		}
 	}
 
-	if despawnedCount != 2 {
-		t.Errorf("despawned rows: got %d, want 2 (Halix + Kessa not spawned)", despawnedCount)
+	if despawnedCount != 1 {
+		t.Errorf("despawned rows: got %d, want 1 (Halix, seen then gone)", despawnedCount)
+	}
+	if notYetCount != 1 {
+		t.Errorf("not-yet-spawned rows: got %d, want 1 (Kessa, never seen)", notYetCount)
 	}
 	if idleCount != 1 {
 		t.Errorf("idle rows: got %d, want 1 (Tova spawned with empty BTreeState)", idleCount)

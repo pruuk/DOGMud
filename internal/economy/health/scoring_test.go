@@ -494,3 +494,26 @@ func TestShopGoldScore(t *testing.T) {
 		}
 	}
 }
+
+// #291: a forager not yet spawned since boot has no score and stays out of
+// the forager mean; a despawned one scores 0 and counts.
+func TestScore_Forager_NotYetSpawnedHasNoScore(t *testing.T) {
+	hist := make([]*health.Snapshot, 24) // satisfy minHistoryForCycles
+	for i := range hist {
+		hist[i] = &health.Snapshot{}
+	}
+	cur := health.Snapshot{Foragers: []health.ForagerSnapshot{
+		{MobId: 372, Name: "Halix", State: health.ForagerStateDespawned},
+		{MobId: 373, Name: "Kessa", State: health.ForagerStateNotYetSpawned},
+	}}
+	s := health.ScoreWithConfig(&cur, hist, testScoringCfg)
+	if len(s.PerForager) != 2 {
+		t.Fatalf("PerForager rows: got %d, want 2", len(s.PerForager))
+	}
+	if !s.PerForager[0].HasScore || s.PerForager[0].Score != 0 {
+		t.Errorf("despawned row: got %+v, want a score of 0", s.PerForager[0])
+	}
+	if s.PerForager[1].HasScore {
+		t.Errorf("not-yet-spawned row: got %+v, want no score", s.PerForager[1])
+	}
+}
