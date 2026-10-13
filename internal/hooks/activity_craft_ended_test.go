@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -127,5 +128,67 @@ func TestCraftEnded_CompletionAndDeathSendNoCancelLine(t *testing.T) {
 				t.Fatalf("watcher read %q, want nothing", got)
 			}
 		})
+	}
+}
+
+const craftEndedMobId = 98361
+
+// A mob crafter reaches the same hook: the lit watcher reads the mob's
+// cancel line, named by what the room can see of it.
+func TestCraftEnded_MobCrafterStopsAndTheRoomReadsIt(t *testing.T) {
+	craftEndedScene(t)
+	room := rooms.LoadRoom(craftEndedRoomId)
+
+	m := &mobs.Mob{InstanceId: craftEndedMobId}
+	m.Character.Name = "Smith"
+	m.Character.MobInstanceId = craftEndedMobId
+	m.Character.RoomId = craftEndedRoomId
+	m.Character.Validate() // fires OnCharacterCreated, wiring the hook
+	mobs.SetInstanceForTest(craftEndedMobId, m)
+	t.Cleanup(func() { mobs.SetInstanceForTest(craftEndedMobId, nil) })
+	room.AddMob(craftEndedMobId)
+
+	err := m.Character.Activity.TransitionToCrafting(
+		activity.CraftingData{RecipeId: craftEndedRecipeId, RoundsTotal: 5},
+		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
+	)
+	if err != nil {
+		t.Fatalf("begin craft: %v", err)
+	}
+	if err := m.Character.Activity.TransitionToFree(state.TransitionReason{Trigger: activity.TriggerCraftCancel}); err != nil {
+		t.Fatalf("free: %v", err)
+	}
+
+	got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId))
+	if len(got) != 1 || got[0] != "Smith stops forging." {
+		t.Fatalf("watcher read %q, want one line %q", got, "Smith stops forging.")
+	}
+}
+
+// A player crafter who is hit is told the work stopped, as one who walks
+// away is; the watcher reads the cancel line. A mob is told nothing.
+func TestCancelCraftOnDamage_PlayerCrafterIsToldMobIsNot(t *testing.T) {
+	crafter := craftEndedScene(t)
+	err := crafter.Character.Activity.TransitionToCrafting(
+		activity.CraftingData{RecipeId: craftEndedRecipeId, RoundsTotal: 5},
+		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
+	)
+	if err != nil {
+		t.Fatalf("begin craft: %v", err)
+	}
+	cancelCraftOrSalvageOnDamage(crafter.Character)
+
+	own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
+	if len(own) != 1 || own[0] != "The blow interrupts your crafting." {
+		t.Fatalf("crafter read %q, want one line %q", own, "The blow interrupts your crafting.")
+	}
+	got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId))
+	if len(got) != 1 || got[0] != "Kael stops forging." {
+		t.Fatalf("watcher read %q, want one line %q", got, "Kael stops forging.")
+	}
+	// Already Free: a second hit says nothing.
+	cancelCraftOrSalvageOnDamage(crafter.Character)
+	if own := events.DrainQueuedMessagesForTest(craftEndedCrafterId); len(own) != 0 {
+		t.Fatalf("a hit on an idle crafter sent %q", own)
 	}
 }

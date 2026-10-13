@@ -1,6 +1,7 @@
 package activity_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -72,6 +73,27 @@ func TestCraftEnded_NotForCastingOrSalvaging(t *testing.T) {
 	m.ForceFree(state.TransitionReason{Trigger: activity.TriggerDeath})
 	if len(*calls) != 0 {
 		t.Errorf("handler calls = %d, want 0", len(*calls))
+	}
+}
+
+func TestCraftEnded_NotWhenTheTransitionIsVetoed(t *testing.T) {
+	m := activity.NewMachine()
+	calls := craftEndedRecorder(m)
+	m.Inner().BeforeTransition("refuse_free", func(from, to activity.State, r state.TransitionReason) error {
+		if to == activity.Free {
+			return errors.New("refused")
+		}
+		return nil
+	})
+	beginCraft(t, m)
+	if err := m.TransitionToFree(state.TransitionReason{Trigger: activity.TriggerCraftCancel}); err == nil {
+		t.Fatal("expected the veto to refuse the transition")
+	}
+	if len(*calls) != 0 {
+		t.Errorf("handler calls = %d, want 0 after a vetoed transition", len(*calls))
+	}
+	if !m.IsCrafting() {
+		t.Errorf("state = %v, want Crafting after a vetoed transition", m.State())
 	}
 }
 

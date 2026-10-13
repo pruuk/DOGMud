@@ -36,9 +36,9 @@ alchemy:
     - "You hear liquid poured carefully from one vessel to another."
     - "Something close by begins to bubble quietly."
   finish_heard:
-    - "The bubbling close by dies away."
-    - "You hear a stopper pushed into glass, then quiet."
-    - "The clink of glass close by falls still."
+    - "The sounds of glass and liquid close by fall quiet."
+    - "The careful work close by goes still."
+    - "You hear a last soft clink of glass close by, then quiet."
 
 blacksmithing:
   start_observer:
@@ -62,9 +62,9 @@ blacksmithing:
     - "You hear the roar of bellows and the hiss of a forge."
     - "Close by, a hammer begins to strike metal in a steady rhythm."
   finish_heard:
-    - "The hammering close by falls silent."
-    - "You hear a sharp hiss of steam, then quiet."
-    - "The ring of metal close by stops."
+    - "The noise of the forge close by dies down."
+    - "The metalwork close by falls silent."
+    - "You hear a last sharp hiss close by, then quiet."
 
 cooking:
   start_observer:
@@ -88,9 +88,9 @@ cooking:
     - "You hear the steady sound of chopping close by."
     - "You hear something sizzling close by."
   finish_heard:
-    - "The bubbling of the pot close by stops."
-    - "You hear a pot lifted off the fire."
-    - "The sizzling close by dies down."
+    - "The sounds of cooking close by fall quiet."
+    - "The cooking close by goes still."
+    - "You hear a pot set down close by, then quiet."
 
 enchanting:
   start_observer:
@@ -114,9 +114,9 @@ enchanting:
     - "A faint hum rises somewhere close by."
     - "You hear soft chanting close by."
   finish_heard:
-    - "The humming close by fades away."
-    - "The murmuring close by stops."
-    - "The faint hum close by falls silent."
+    - "The strange sounds close by fade into silence."
+    - "The low sounds close by fade away."
+    - "The air close by goes quiet again."
 
 jewelcrafting:
   start_observer:
@@ -140,9 +140,9 @@ jewelcrafting:
     - "You hear tiny taps of metal on metal close by."
     - "You hear the faint grinding of a polishing wheel close by."
   finish_heard:
-    - "The fine scraping close by stops."
-    - "The tiny tapping close by falls quiet."
-    - "The grinding close by slows and stops."
+    - "The fine, small sounds of work close by stop."
+    - "The delicate work close by falls quiet."
+    - "You hear a small tool set down close by, then quiet."
 
 tailoring:
   start_observer:
@@ -167,5 +167,5 @@ tailoring:
     - "You hear fabric torn into strips close by."
   finish_heard:
     - "The rustle of cloth close by goes quiet."
+    - "The sounds of sewing close by stop."
     - "You hear a final snip of thread, then quiet."
-    - "The snipping close by stops."
