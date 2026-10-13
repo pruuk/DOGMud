@@ -56,7 +56,8 @@ match do not, and the player one is mute.
 nothing. The engine's one sound channel (`SendTextUnsighted`) reaches sleepers,
 and every other room sound (combat, spell disruption) already does. The craft
 sound follows that channel rather than adding a sleeper exception; a sleeper
-hears the hammer as they hear a fight. Noise waking is #336's business.
+hears the hammer as they hear a fight. Noise waking is #336's business. The sender test
+`TestCraftPhase_SleeperHearsTheCraft` confirms a sleeper hears the craft.
 
 ## Design
 
@@ -95,9 +96,9 @@ blacksmithing:
   `crafting.LoadRecipeFiles()`. Validation: every pool present and at least 3
   deep, token rules above, and every skill used by a loaded recipe has a
   block. An unknown skill block is an error too, so a misspelling cannot hide.
-- The `default` world gets its own copy of the file (as with
-  `casting-messages.yaml`), so a default-world boot does not panic. It loads no
-  recipes, so the skill cross-check passes trivially.
+- No default-world copy: the default world has no `recipes/`, and
+  `LoadRecipeFiles` already panics on the missing directory, so it does not
+  boot today (found while planning).
 - Render functions pick through the store's own `narration.Render` with a
   picker, as `spells.CastRoomLine` does, never `textutil.Narrate` (which always
   picks the first variant).
@@ -129,10 +130,14 @@ Composition, reusing existing senders:
    via `room.SendTextVisualHidingNames` excluding everyone but the full-sight
    readers, and `vague` the same way for the shapes readers. Both exclude the
    crafter and `UnseenBy`.
-3. Send the heard line via `room.SendTextUnsighted`, excluding the crafter.
-4. Send the heard line to each `UnseenBy` reader who can see (not `SightNone`,
-   so step 3 has not already reached them) with `u.SendText`, as
-   `NarrateSpellPhase` does for R5.
+3. Send the heard line via `room.SendTextUnsighted`, excluding the crafter and
+   every `UnseenBy` reader.
+4. Send the heard line to each `UnseenBy` reader other than the crafter with
+   `u.SendText`, whatever their sight, as `NarrateSpellPhase` does for R5.
+   Each reader is sent exactly once.
+
+Both the tagged and the plain crafter names are hidden from a shapes reader,
+so `{actor_plain}` in a seen line cannot leak a name.
 
 `{item}` resolves to `items.SpecDisplayName(recipe.Output.ItemId)` in the
 `itemname` colour, or "something" when the recipe has no output item (an
@@ -149,6 +154,7 @@ the same category as their seen line.
 | Site | Today | After |
 |---|---|---|
 | Player start, `usercommands/craft.go` `result.Initiated` | no room line | `PhaseStart` |
+| Player enchanting timed start, `usercommands/craft.go` `craftEnchanting` | no room line | `PhaseStart` (found during build: enchanting shares the tick finish sites, so without it the room heard a finish with no start) |
 | Player instant, `craft.go:198` and `completeCraft` `:767` | empty Observer via `craftDeliverInstant` | `PhaseStart` then `PhaseSuccess`; `craftDeliverInstant` keeps only the crafter's line |
 | Player tick success/failure, `NewRound_UserRoundTick.go:672`, `:709` | authored-only `sendVisualRoomText` | `PhaseSuccess` / `PhaseFailure` |
 | Mob instant, `mobcommands/craft.go:56` | `MobRoomLine` with "produces something" fallback | `PhaseStart` then `PhaseSuccess` |
@@ -173,8 +179,7 @@ returning them so the validator still checks any that get authored, and the
 - **Store tests** (`internal/crafting`): shipped `crafting-messages.yaml`
   loads; every recipe skill has a block; each pool has 3 or more variants;
   `{actor}` required where stated; `{item}` refused in failure and heard
-  pools; no token in heard pools; unknown skill block refused; no dashes; each
-  rendered line fits 80 columns with a long name.
+  pools; no token in heard pools; unknown skill block refused; no dashes.
 - **Sender tests** (`internal/actions`), each proven able to fail first:
   full-sight reader gets the item named; shapes reader gets "something" and no
   crafter name; dark reader gets the heard line and no seen line; sleeper gets
@@ -189,7 +194,7 @@ returning them so the validator still checks any that get authored, and the
 - **Goldens and snapshot**: re-record whatever the store snapshot harness
   emits for the new store; existing recipe rows unchanged.
 - **Full gate**: `go test ./...` (root guards key on line numbers, so run
-  `go test .` after every batch), lint, two boots (dogmud and default world).
+  `go test .` after every batch), lint, two boots of the dogmud world.
 - **Playtest**: a player crafts a timed and an instant recipe in a lit room,
   a dim room and a dark room with a second player watching; a mob does the
   same, made to run `craft` by an admin command, since no shipped mob is
