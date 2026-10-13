@@ -90,9 +90,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	// move shares (#512). Casting is NOT interrupted by movement (policy).
 	switch actions.InterruptWorkOnMove(user.Character) {
 	case activity.Crafting:
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Your movement interrupts your crafting.</ansi>`)
+		user.SendText(messaging.CategoryCraft, `<ansi fg="red">Your movement interrupts your crafting.</ansi>`)
 	case activity.Salvaging:
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Your movement interrupts your salvaging.</ansi>`)
+		user.SendText(messaging.CategoryCraft, `<ansi fg="red">Your movement interrupts your salvaging.</ansi>`)
 	}
 	// If has a condition that prevents combat, skip the player
 	if user.Character.HasConditionFlag(conditions.NoMovement) {

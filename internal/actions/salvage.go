@@ -217,12 +217,12 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 			corpseName = target.NameAt(sight)
 		}
 		if len(recovered) > 0 {
-			salvagerLine = messaging.Say(messaging.CategorySystem, fmt.Sprintf(
+			salvagerLine = messaging.Say(messaging.CategoryCraft, fmt.Sprintf(
 				`<ansi fg="green">You salvage the %s and recover: %s.</ansi>`,
 				corpseName,
 				formatRecovered(recovered)))
 		} else {
-			salvagerLine = messaging.Say(messaging.CategorySystem, fmt.Sprintf(
+			salvagerLine = messaging.Say(messaging.CategoryCraft, fmt.Sprintf(
 				`<ansi fg="red">You attempt to salvage the %s but recover nothing useful.</ansi>`,
 				corpseName))
 		}
@@ -388,12 +388,12 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 
 	if actor.IsPlayer() {
 		if len(recovered) > 0 {
-			actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+			actor.SendText(messaging.CategoryCraft, fmt.Sprintf(
 				`<ansi fg="green">You salvage the <ansi fg="itemname">%s</ansi> and recover: %s.</ansi>`,
 				targetItem.DisplayName(),
 				formatRecovered(recovered)))
 		} else {
-			actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+			actor.SendText(messaging.CategoryCraft, fmt.Sprintf(
 				`<ansi fg="red">You attempt to salvage the <ansi fg="itemname">%s</ansi> but recover nothing useful.</ansi>`,
 				targetItem.DisplayName()))
 		}

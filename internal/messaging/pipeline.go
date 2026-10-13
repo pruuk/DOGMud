@@ -147,7 +147,9 @@ func shouldWrap(cat Category) bool {
 		CategoryLoot, CategoryEquipment, CategoryConditionApply,
 		CategoryConditionExpire, CategoryMutation, CategoryTip,
 		// The quit line (#449): one sentence of narration to the room.
-		CategoryLogout:
+		CategoryLogout,
+		// The crafter's own work lines (#515): recipe prose runs long.
+		CategoryCraft:
 		return true
 	}
 	return false

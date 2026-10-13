@@ -125,7 +125,7 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
+	user.SendText(messaging.CategoryCraft, fmt.Sprintf(
 		`<ansi fg="yellow">You begin carefully disassembling the <ansi fg="itemname">%s</ansi>...</ansi>`,
 		itm.DisplayName()))
 
@@ -195,7 +195,7 @@ func startCorpseSalvage(user *users.UserRecord, room *rooms.Room, corpse rooms.C
 	user.Character.SetMiscData("salvage_corpse_round_created", int(corpse.RoundCreated))
 
 	// Named by the salvager's sight (#428 review), as loot names it.
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
+	user.SendText(messaging.CategoryCraft, fmt.Sprintf(
 		`<ansi fg="yellow">You begin carefully working over the %s...</ansi>`,
 		corpseNameFor(user, room, &corpse)))
 

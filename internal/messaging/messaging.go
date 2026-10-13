@@ -106,6 +106,14 @@ const (
 	// existing Category value shifts. Lighting plan 3d's band-change notices.
 	CategoryLight
 
+	// Work, appended so no existing Category value shifts (#515). The
+	// crafter's and salvager's OWN lines: begin, per-round progress,
+	// success, failure, interrupt and stop. Recipe success and failure
+	// lines are authored prose that often runs past 80 columns, so this
+	// category wraps where CategorySystem, a mixed bucket, cannot.
+	// Refusals ("you are missing...") stay on CategorySystem.
+	CategoryCraft
+
 	// categoryMax is the exclusive upper bound of the Category enum.
 	// Used by tests to iterate the full range; do not consume in
 	// production code.
@@ -240,6 +248,8 @@ func (c Category) String() string {
 		return "toxin"
 	case CategoryLight:
 		return "light"
+	case CategoryCraft:
+		return "craft"
 	}
 	return "Unknown"
 }

@@ -35,9 +35,10 @@ the recipient's connection.
 5. **Apply category color tag** — `<ansi fg="<category-alias>">…</ansi>`.
 6. **Wrap** at recipient's `UserRecord.LineWidth` (default 80, range
    40-240), ANSI-aware, but only for the narration categories
-   `shouldWrap` admits (46 of the 62 `Category` values as of this
+   `shouldWrap` admits (47 of the 63 `Category` values as of this
    writing, `CategoryLight` among them: lighting plan 3d's transition
-   notices wrap exactly as `CategoryTimeOfDay` does). Pre-formatted
+   notices wrap exactly as `CategoryTimeOfDay` does; and `CategoryCraft`,
+   #515, the crafter's own work lines). Pre-formatted
    output is excluded by category: mixed
    buckets that mix refusals or chat with tables, ASCII art or a
    banner (`System`, `Broadcast`, `Splash`, `SkillProgress`), the
@@ -65,7 +66,7 @@ full per-recipient pipeline.
 
 Types and constants:
 
-- `Category`: enum of 62 text classes (combat hits, defense, grapple,
+- `Category`: enum of 63 text classes (combat hits, defense, grapple,
   submissions, specials, spells by school, social, system, environment,
   loot/equipment/condition/mutation/toxin; plus `CategoryCombatSummary` for
   the per-round compact tally emitted by the light-verbosity path, and
@@ -91,6 +92,20 @@ Types and constants:
   (`shouldWrap`), skips the same normalisation stages (`normalize.go`'s
   skip table), and no verbosity tier suppresses it. Alias `light` in
   `ansi-aliases.yaml`, value 179.
+- `CategoryCraft` (#515): the crafter's and salvager's OWN work lines,
+  appended after `CategoryLight`. Begin (`usercommands/craft.go`,
+  `usercommands/salvage.go`), per-round progress and the recipe's
+  `success_actor` / `failure_actor` (`hooks/NewRound_UserRoundTick.go`), the
+  instant-craft success (`craftDeliverInstant`), the salvage result
+  (`actions/salvage.go`), the interrupt lines (`usercommands/go.go`,
+  `hooks/work_interrupt_narration.go`) and `cancel`'s stop line. It exists
+  so these lines wrap: recipe prose often runs past 80 columns and
+  `CategorySystem` cannot wrap. Otherwise it is treated as `CategorySystem`:
+  no normalisation skips, no verbosity tier drops it, and alias `craft` in
+  `ansi-aliases.yaml` is 8, the `system` value. Refusals (unknown recipe,
+  missing ingredients, already busy, too dark) stay on `CategorySystem`;
+  the room's onlooker lines keep their own categories (`actions.NarrateCraftPhase`).
+  Pinned by `category_craft_test.go`.
 - `Verbosity`, `ParseVerbosity`, `(Verbosity).Suppresses` — combat-text
   verbosity primitives in `verbosity.go`. The allowlists
   (`suppressibleAtMedium`, `suppressibleAtLight`) declare which
@@ -556,6 +571,9 @@ flags). Everything else — `rooms`, `users`, `mobs`, `combat`,
    enum returns.
 4. If the new Category needs style-normalization skips, edit the
    `normalize.go` skip table.
+5. If it is narration that should fold at the reader's width, add it to
+   `shouldWrap` in `pipeline.go` AND to `wrapAllowlist` in
+   `pipeline_test.go`, and bump that test's admitted count.
 
 ## See Also
 

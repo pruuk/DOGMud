@@ -120,7 +120,7 @@ func sendWorkInterrupt(p pendingWorkInterrupt) {
 		if p.salvage {
 			line = `<ansi fg="red">The pain interrupts your salvaging.</ansi>`
 		}
-		user.SendText(messaging.CategorySystem, line)
+		user.SendText(messaging.CategoryCraft, line)
 	}
 	// Salvage has no room lines yet.
 	if p.salvage {

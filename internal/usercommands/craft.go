@@ -50,7 +50,7 @@ func craftDeliver(user *users.UserRecord, cat messaging.Category, text string) {
 // sites: case result.ImmediateComplete in Craft(), and completeCraft (the
 // enchanting instant path).
 func craftDeliverInstant(user *users.UserRecord, room *rooms.Room, recipe *crafting.RecipeSpec, roles narration.Roles) {
-	craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, roles.Actor))
+	craftDeliver(user, messaging.CategoryCraft, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, roles.Actor))
 	actor := actions.NewUserActorInRoom(user, room)
 	actions.NarrateCraftPhase(actor, recipe, crafting.PhaseStart, room)
 	actions.NarrateCraftPhase(actor, recipe, crafting.PhaseSuccess, room)
@@ -193,7 +193,7 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 
 	case result.Initiated:
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
+		craftDeliver(user, messaging.CategoryCraft, fmt.Sprintf(
 			`<ansi fg="yellow">You begin crafting %s... (%s)</ansi>`,
 			result.RecipeName, craftTimeDesc(result.TimeRounds)))
 		actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), result.Recipe, crafting.PhaseStart, room)
@@ -416,7 +416,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">You are already working on something. Finish or be interrupted first.</ansi>`)
 		return true, nil
 	}
-	craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
+	craftDeliver(user, messaging.CategoryCraft, fmt.Sprintf(
 		`<ansi fg="yellow">You begin enchanting <ansi fg="itemname">%s</ansi>... (%s)</ansi>`,
 		targetItem.DisplayName(), craftTimeDesc(recipe.TimeRounds)))
 	actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, crafting.PhaseStart, room)

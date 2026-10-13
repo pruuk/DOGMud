@@ -1502,7 +1502,11 @@ exit narrates at once. The line goes to the crafter's room at the moment the
 craft ends (`c.RoomId`), which is why `actions.InterruptWorkOnMove` runs
 before every move's room change: a mob that walks away is heard stopping in
 the room it left (#512). A mob crafter gets no line of its own;
-`NarrateCraftPhase` sends only to players in the room.
+`NarrateCraftPhase` sends only to players in the room. The crafter's own
+lines here and in the round tick (progress, recipe success and failure, the
+pain interrupt, and the salvage siblings) ride `messaging.CategoryCraft`,
+which the pipeline wraps at the reader's width; recipe prose often runs past
+80 columns (#515).
 
 ### Activity_SalvageEnded.go
 
