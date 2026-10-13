@@ -1,5 +1,10 @@
 # DOGMud Patch Notes
 
+## 2026-10-13: One blow, one story
+
+- Combat lines now always show the attacker, the defender and onlookers the
+  same blow; a few strong hits used to describe a different strike to each.
+
 ## Unreleased: Fighting blind, and plainer combat words
 
 - Any attack now interrupts crafting or salvaging, not just an ordinary

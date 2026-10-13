@@ -513,6 +513,29 @@ type TogetherMessages struct {
 }
 ```
 
+### Combat-messages record layout (#370, M6 rows 26-27)
+
+In `_datafiles/world/dogmud/combat-messages/*.yaml`, each split (`together`,
+`separate`) holds tier -> list of records. A record is one blow and carries
+every role's line for it: `actor`, `actee` and `observer` under `together`,
+and those plus `remote_observer` under `separate`. Moving a record moves all
+of its roles, so a reorder can no longer narrate different blows to different
+audiences. Tiers are `beginner`, `expert` and `master`.
+
+`attack_records.go` holds the decoder. `decodeTieredRecords` reads one split
+and returns the per-role `SkillTieredMessages` pools; it rejects an unknown
+key, a mix of role keys and tier keys, a record with a missing role and an
+empty line. `TogetherMessages.UnmarshalYAML` and `SeparateMessages.UnmarshalYAML`
+map the roles onto `ToAttacker`, `ToDefender`, `ToRoom` (and `ToAttackerRoom`,
+`ToDefenderRoom` for separate), so `PoolFor` and `Render` are unchanged.
+`AttackTypes.UnmarshalYAML` decodes each intensity through `attackOptionsCapture`,
+which keeps the original unmarshal func so strict decoding, exact scalar text
+and true line numbers survive (a marshal and re-parse would lose them).
+
+Transition rule: files still in the legacy role-first layout (`toattacker`
+style keys, role -> tier -> list) decode through the `plain` fallback until
+the last batch of #370 converts the final file and retires that layout.
+
 ### Defence Message Structure
 
 Defence pools use the same data-loader architecture under
