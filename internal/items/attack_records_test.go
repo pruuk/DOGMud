@@ -14,12 +14,15 @@ options:
     together:
       actor:
         beginner: ['A0', 'A1']
+        expert: ['AE']
         master: ['A2']
       actee:
         beginner: ['D0', 'D1']
+        expert: ['DE']
         master: ['D2']
       observer:
         beginner: ['R0', 'R1']
+        expert: ['RE']
         master: ['R2']
     separate:
       actor: {beginner: ['SA0']}
@@ -36,6 +39,8 @@ options:
       beginner:
       - {actor: 'A0', actee: 'D0', observer: 'R0'}
       - {actor: 'A1', actee: 'D1', observer: 'R1'}
+      expert:
+      - {actor: 'AE', actee: 'DE', observer: 'RE'}
       master:
       - {actor: 'A2', actee: 'D2', observer: 'R2'}
     separate:
@@ -71,8 +76,15 @@ func TestRecordLayoutDecodesToTheSamePoolsAsRoleFirst(t *testing.T) {
 			}
 		}
 		as, bs := a.Options[Weak].Separate, b.Options[Weak].Separate
-		if strings.Join(as.ToDefenderRoom.PoolFor(lvl), "|") != strings.Join(bs.ToDefenderRoom.PoolFor(lvl), "|") {
-			t.Errorf("level %d remote_observer differs", lvl)
+		for name, pair := range map[string][2][]string{
+			"sep actor":           {as.ToAttacker.PoolFor(lvl), bs.ToAttacker.PoolFor(lvl)},
+			"sep actee":           {as.ToDefender.PoolFor(lvl), bs.ToDefender.PoolFor(lvl)},
+			"sep observer":        {as.ToAttackerRoom.PoolFor(lvl), bs.ToAttackerRoom.PoolFor(lvl)},
+			"sep remote_observer": {as.ToDefenderRoom.PoolFor(lvl), bs.ToDefenderRoom.PoolFor(lvl)},
+		} {
+			if len(pair[0]) == 0 || strings.Join(pair[0], "|") != strings.Join(pair[1], "|") {
+				t.Errorf("level %d %s: role-first %v, records %v", lvl, name, pair[0], pair[1])
+			}
 		}
 	}
 }
@@ -128,6 +140,30 @@ options:
       grandmaster:
       - {actor: 'A', actee: 'D', observer: 'R'}
 `, "option[`weak`]: together: unknown key \"grandmaster\""},
+		"nil record": {`
+optionid: test
+options:
+  weak:
+    together:
+      beginner:
+      - ~
+`, "option[`weak`]: together: beginner record 0: missing role \"actor\""},
+		"legacy remote_observer under together": {`
+optionid: test
+options:
+  weak:
+    together:
+      actor: {beginner: ['A']}
+      remote_observer: {beginner: ['X']}
+`, "option[`weak`]: together: unknown key \"remote_observer\""},
+		"first unknown key in sorted order": {`
+optionid: test
+options:
+  weak:
+    together:
+      beginner:
+      - {actor: 'A', actee: 'D', observer: 'R', zzz: 'x', aaa: 'y'}
+`, "option[`weak`]: together: beginner record 0: unknown key \"aaa\""},
 	}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -137,6 +173,68 @@ options:
 			}
 			if !strings.Contains(err.Error(), c.want) {
 				t.Errorf("error %q does not contain %q", err.Error(), c.want)
+			}
+		})
+	}
+}
+
+func TestStrictDecodingStillSeesBelowOptions(t *testing.T) {
+	cases := map[string]string{
+		"typo split key": `
+optionid: test
+options:
+  weak:
+    togther:
+      actor: {beginner: ['A']}
+`,
+		"typo tier key": `
+optionid: test
+options:
+  weak:
+    together:
+      actor: {begginer: ['A']}
+      actee: {beginner: ['D']}
+      observer: {beginner: ['R']}
+`,
+	}
+	for name, doc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var g WeaponAttackMessageGroup
+			if err := yaml.UnmarshalStrict([]byte(doc), &g); err == nil {
+				t.Fatal("strict decode accepted a typo'd key")
+			}
+		})
+	}
+}
+
+func TestUnquotedScalarsStayExact(t *testing.T) {
+	roleFirst := `
+optionid: test
+options:
+  weak:
+    together:
+      actor: {beginner: [yes, 0x1F]}
+      actee: {beginner: [yes, 0x1F]}
+      observer: {beginner: [yes, 0x1F]}
+`
+	records := `
+optionid: test
+options:
+  weak:
+    together:
+      beginner:
+      - {actor: yes, actee: yes, observer: yes}
+      - {actor: 0x1F, actee: 0x1F, observer: 0x1F}
+`
+	for name, doc := range map[string]string{"role-first": roleFirst, "records": records} {
+		t.Run(name, func(t *testing.T) {
+			g, err := decodeGroup(t, doc)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := strings.Join(g.Options[Weak].Together.ToAttacker.PoolFor(0), "|")
+			if got != "yes|0x1F" {
+				t.Errorf("got %q, want %q", got, "yes|0x1F")
 			}
 		})
 	}

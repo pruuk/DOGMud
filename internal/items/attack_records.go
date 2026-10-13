@@ -2,9 +2,8 @@ package items
 
 import (
 	"fmt"
+	"sort"
 	"strings"
-
-	"gopkg.in/yaml.v2"
 )
 
 // The record layout (#370, M6 rows 26-27): each split holds tier -> list of
@@ -38,10 +37,15 @@ func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (poo
 	if err := unmarshal(&probe); err != nil {
 		return nil, false, err
 	}
-	sawRole, sawTier := false, false
+	keys := make([]string, 0, len(probe))
 	for k := range probe {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	sawRole, sawTier := false, false
+	for _, k := range keys {
 		switch {
-		case isOneOf(k, separateRoles):
+		case isOneOf(k, roles):
 			sawRole = true
 		case isOneOf(k, tierNames):
 			sawTier = true
@@ -63,7 +67,12 @@ func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (poo
 	pools = make(map[string]SkillTieredMessages, len(roles))
 	for _, tier := range tierNames {
 		for i, rec := range tiers[tier] {
+			recKeys := make([]string, 0, len(rec))
 			for k := range rec {
+				recKeys = append(recKeys, k)
+			}
+			sort.Strings(recKeys)
+			for _, k := range recKeys {
 				if !isOneOf(k, roles) {
 					return nil, false, fmt.Errorf("%s record %d: unknown key %q", tier, i, k)
 				}
@@ -123,22 +132,40 @@ func (m *SeparateMessages) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	return nil
 }
 
+// attackOptionsCapture stores the unmarshal func yaml.v2 hands it, so each
+// intensity can be decoded later, in sorted order, from the ORIGINAL node. That
+// keeps strict decoding, exact scalar text and true line numbers, none of which
+// survive a marshal and re-parse round trip.
+type attackOptionsCapture struct {
+	unmarshal func(interface{}) error
+}
+
+func (c *attackOptionsCapture) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	c.unmarshal = unmarshal
+	return nil
+}
+
 // UnmarshalYAML decodes each intensity on its own so a record error names the
 // intensity it came from; the file loader adds the path.
 func (a *AttackTypes) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var raw map[Intensity]interface{}
+	var raw map[Intensity]*attackOptionsCapture
 	if err := unmarshal(&raw); err != nil {
 		return err
 	}
+	names := make([]string, 0, len(raw))
+	for intensity := range raw {
+		names = append(names, string(intensity))
+	}
+	sort.Strings(names)
+
 	out := make(AttackTypes, len(raw))
-	for intensity, node := range raw {
-		b, err := yaml.Marshal(node)
-		if err != nil {
-			return fmt.Errorf("option[`%s`]: %w", intensity, err)
-		}
+	for _, name := range names {
+		intensity := Intensity(name)
 		var opts AttackOptions
-		if err := yaml.Unmarshal(b, &opts); err != nil {
-			return fmt.Errorf("option[`%s`]: %w", intensity, err)
+		if c := raw[intensity]; c != nil && c.unmarshal != nil {
+			if err := c.unmarshal(&opts); err != nil {
+				return fmt.Errorf("option[`%s`]: %w", intensity, err)
+			}
 		}
 		out[intensity] = opts
 	}
