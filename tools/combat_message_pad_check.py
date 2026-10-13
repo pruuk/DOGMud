@@ -176,25 +176,32 @@ def main():
         added = 0
         moved = 0
 
-        for prop in rewrites.get(stem, []):
+        # Rewrites apply in manifest order, so a later proposal may rewrite
+        # an earlier one's `new` (an addendum chaining X -> Y -> Z). Each
+        # `old` is checked against the baseline as rewritten so far, and a
+        # `new` must reach the after file unless a later proposal consumes it.
+        props = rewrites.get(stem, [])
+        for i, prop in enumerate(props):
             key = prop_key(prop, args.ignore_tier)
             old, new = prop["old"], prop["new"]
             label = f"{name} {'/'.join(key)}"
-            ok = True
             if b_counts.get(key, collections.Counter())[old] < 1:
                 rows.append(f"    MANIFEST {label}: old not in baseline: {old[:90]}")
-                ok = False
-            if a_counts.get(key, collections.Counter())[new] < 1:
+                continue
+            consumed = any(
+                prop_key(later, args.ignore_tier) == key and later["old"] == new
+                for later in props[i + 1:]
+            )
+            if not consumed and a_counts.get(key, collections.Counter())[new] < 1:
                 rows.append(f"    MANIFEST {label}: new not in after file: {new[:90]}")
-                ok = False
-            if ok:
-                b_counts[key][old] -= 1
-                a_counts[key][new] -= 1
-                # Let the position check see the sanctioned edit as the
-                # same line, so it does not read as a reorder.
-                b_lines = list(b_pools[key])
-                b_lines[b_lines.index(old)] = new
-                b_pools[key] = b_lines
+                continue
+            b_counts[key][old] -= 1
+            b_counts[key][new] += 1
+            # Let the position check see the sanctioned edit as the
+            # same line, so it does not read as a reorder.
+            b_lines = list(b_pools[key])
+            b_lines[b_lines.index(old)] = new
+            b_pools[key] = b_lines
 
         for key in sorted(set(b_counts) | set(a_counts)):
             b_count = +b_counts.get(key, collections.Counter())
