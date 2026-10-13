@@ -190,7 +190,8 @@ func TrainSearchOnMove(actor Actor) {
 // Call it BEFORE the room change: the craft-ended hook narrates the stop to
 // the crafter's current room, which must be the room being left.
 //
-// It returns the state it stopped, or activity.Free when nothing stopped.
+// It returns the work it interrupted (Crafting or Salvaging, even if a veto
+// held the transition), or activity.Free when there was no work to stop.
 // The caller tells a player what stopped; a mob has no one to tell.
 func InterruptWorkOnMove(c *characters.Character) activity.State {
 	if c == nil || c.Activity == nil {
@@ -200,12 +201,14 @@ func InterruptWorkOnMove(c *characters.Character) activity.State {
 	if work != activity.Crafting && work != activity.Salvaging {
 		return activity.Free
 	}
-	if err := c.Activity.TransitionToFree(state.TransitionReason{
+	// The result is the work the move interrupted, read before the
+	// transition, whatever the transition returns: a player's go told them
+	// the move interrupted their work regardless of the outcome before this
+	// helper existed, and still does.
+	_ = c.Activity.TransitionToFree(state.TransitionReason{
 		Trigger: activity.TriggerMovementInterrupt,
 		Actor:   c.ActorRef(),
-	}); err != nil {
-		return activity.Free
-	}
+	})
 	return work
 }
 

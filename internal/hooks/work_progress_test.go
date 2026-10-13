@@ -42,12 +42,61 @@ func TestCraftProgressLine_NamesTheRecipe(t *testing.T) {
 	crafting.RegisterRecipeForTest(&crafting.RecipeSpec{RecipeId: "healing-salve", Name: "Healing Salve"})
 	t.Cleanup(func() { crafting.UnregisterRecipeForTest("healing-salve") })
 
-	line := craftProgressLine(activity.CraftingData{RecipeId: "healing-salve", RoundsComplete: 1, RoundsTotal: 2})
+	line := craftProgressLine(characters.New(), activity.CraftingData{RecipeId: "healing-salve", RoundsComplete: 1, RoundsTotal: 2})
 	assert.Equal(t, `<ansi fg="yellow">You keep working on the Healing Salve; you're about halfway.</ansi>`, line)
 
 	// A recipe that has gone missing falls back to its id rather than blanking.
-	line = craftProgressLine(activity.CraftingData{RecipeId: "gone-recipe", RoundsComplete: 2, RoundsTotal: 3})
+	line = craftProgressLine(characters.New(), activity.CraftingData{RecipeId: "gone-recipe", RoundsComplete: 2, RoundsTotal: 3})
 	assert.Contains(t, line, "the gone-recipe; it's nearly done.")
+}
+
+// Review finding D: a recipe whose name already carries an article reads
+// without a second one ("the The Blackrazor" was the shipped bug).
+func TestCraftProgressLine_ANameWithItsOwnArticleGetsNoSecond(t *testing.T) {
+	for id, name := range map[string]string{
+		"assemble-the-blackrazor": "The Blackrazor", // the shipped recipe's name
+		"article-test-a":          "A Lantern of Glass",
+		"article-test-an":         "an Ember Lamp",
+	} {
+		crafting.RegisterRecipeForTest(&crafting.RecipeSpec{RecipeId: id, Name: name})
+		t.Cleanup(func() { crafting.UnregisterRecipeForTest(id) })
+
+		line := craftProgressLine(characters.New(), activity.CraftingData{RecipeId: id, RoundsComplete: 1, RoundsTotal: 3})
+		assert.Equal(t, `<ansi fg="yellow">You keep working on `+name+`; you've only just started.</ansi>`, line)
+	}
+	// A word that merely starts with the letters keeps its article.
+	crafting.RegisterRecipeForTest(&crafting.RecipeSpec{RecipeId: "article-test-theory", Name: "Theory Stone"})
+	t.Cleanup(func() { crafting.UnregisterRecipeForTest("article-test-theory") })
+	assert.Contains(t, craftProgressLine(characters.New(), activity.CraftingData{RecipeId: "article-test-theory", RoundsComplete: 1, RoundsTotal: 3}),
+		"You keep working on the Theory Stone;")
+}
+
+// Review finding E: an enchanting's progress line names the item being
+// enchanted, as its start line ("You begin enchanting <item>") does, not the
+// recipe. An item no longer in the slot drops the name.
+func TestCraftProgressLine_EnchantingNamesTheItem(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	crafting.RegisterRecipeForTest(&crafting.RecipeSpec{RecipeId: "honed-edge-test", Name: "Honed-Edge",
+		EnchantType: "honed-edge", TargetType: "weapon"})
+	t.Cleanup(func() { crafting.UnregisterRecipeForTest("honed-edge-test") })
+
+	const swordId = 97513
+	t.Cleanup(items.SeedItemsForTest(map[int]*items.ItemSpec{
+		swordId: {ItemId: swordId, Name: "notched longsword", Type: items.Weapon},
+	}))
+	ch := characters.New()
+	ch.Equipment.Weapon = items.New(swordId)
+	require.NotZero(t, ch.Equipment.Weapon.ItemId, "fixture: the sword is seeded")
+	cd := activity.CraftingData{RecipeId: "honed-edge-test", TargetSlot: "wielded", RoundsComplete: 1, RoundsTotal: 2}
+
+	line := craftProgressLine(ch, cd)
+	assert.Equal(t, `<ansi fg="yellow">You keep enchanting <ansi fg="itemname">`+ch.Equipment.Weapon.DisplayName()+
+		`</ansi>; you're about halfway.</ansi>`, line)
+	assert.NotContains(t, line, "Honed-Edge")
+
+	ch.Equipment.Weapon = items.Item{}
+	assert.Equal(t, `<ansi fg="yellow">You keep enchanting; you're about halfway.</ansi>`, craftProgressLine(ch, cd))
 }
 
 var anyDigit = regexp.MustCompile(`[0-9]`)

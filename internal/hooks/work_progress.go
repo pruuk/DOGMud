@@ -33,14 +33,42 @@ func workProgressPhrase(done, total int) string {
 
 // craftProgressLine is the per-round line a crafter sees. It names the recipe the
 // way the craft start line does (the recipe's Name); the id is only a fallback for
-// a recipe that is no longer registered, so the line never goes blank.
-func craftProgressLine(cd activity.CraftingData) string {
+// a recipe that is no longer registered, so the line never goes blank. A name
+// that already starts with an article ("The Blackrazor") takes no second one.
+//
+// An enchanting (its CraftingData carries the target slot) names the item being
+// enchanted instead, as its start line "You begin enchanting <item>" does; an
+// item no longer in that slot drops the name rather than guessing one.
+func craftProgressLine(ch *characters.Character, cd activity.CraftingData) string {
+	phrase := workProgressPhrase(cd.RoundsComplete, cd.RoundsTotal)
+	if cd.TargetSlot != "" {
+		if ch != nil {
+			if itm := ch.Equipment.GetSlotPointer(cd.TargetSlot); itm != nil && itm.ItemId > 0 {
+				return fmt.Sprintf(`<ansi fg="yellow">You keep enchanting <ansi fg="itemname">%s</ansi>; %s.</ansi>`,
+					itm.DisplayName(), phrase)
+			}
+		}
+		return fmt.Sprintf(`<ansi fg="yellow">You keep enchanting; %s.</ansi>`, phrase)
+	}
 	name := cd.RecipeId
 	if recipe := crafting.GetRecipe(cd.RecipeId); recipe != nil && recipe.Name != "" {
 		name = recipe.Name
 	}
-	return fmt.Sprintf(`<ansi fg="yellow">You keep working on the %s; %s.</ansi>`,
-		name, workProgressPhrase(cd.RoundsComplete, cd.RoundsTotal))
+	if !startsWithArticle(name) {
+		name = "the " + name
+	}
+	return fmt.Sprintf(`<ansi fg="yellow">You keep working on %s; %s.</ansi>`, name, phrase)
+}
+
+// startsWithArticle reports whether name opens with "the", "a" or "an" as a
+// whole word, in any case.
+func startsWithArticle(name string) bool {
+	first, _, _ := strings.Cut(name, " ")
+	switch strings.ToLower(first) {
+	case "the", "a", "an":
+		return true
+	}
+	return false
 }
 
 // salvageProgressLine is the per-round line a salvager sees. An item salvage

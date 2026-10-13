@@ -544,7 +544,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						// Crafting tick — advance round via Activity machine.
 						cd, complete := user.Character.Activity.AdvanceCraftingRound()
 						if !complete {
-							user.SendText(messaging.CategoryCraft, craftProgressLine(cd))
+							user.SendText(messaging.CategoryCraft, craftProgressLine(user.Character, cd))
 						} else {
 							recipe := crafting.GetRecipe(cd.RecipeId)
 							enchantTargetSlot := cd.TargetSlot

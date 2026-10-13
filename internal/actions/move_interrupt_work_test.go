@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -59,6 +60,23 @@ func TestInterruptWorkOnMove_StopsCraftingAndSalvaging(t *testing.T) {
 		if trigger != activity.TriggerMovementInterrupt {
 			t.Errorf("%v: ended with trigger %q, want %q", work, trigger, activity.TriggerMovementInterrupt)
 		}
+	}
+}
+
+// Review finding F: the return value is the work the move interrupted, read
+// before the transition, so a player is told "Your movement interrupts your
+// crafting." even if the transition is vetoed, as on master before the
+// helper existed.
+func TestInterruptWorkOnMove_ReportsTheWorkEvenWhenTheTransitionIsVetoed(t *testing.T) {
+	c := busyCharacter(t, activity.Crafting)
+	c.Activity.Inner().BeforeTransition("test-veto", func(_, _ activity.State, _ state.TransitionReason) error {
+		return errors.New("vetoed")
+	})
+	if got := InterruptWorkOnMove(c); got != activity.Crafting {
+		t.Errorf("InterruptWorkOnMove = %v on a vetoed transition, want Crafting", got)
+	}
+	if !c.Activity.IsCrafting() {
+		t.Fatalf("fixture: the veto should have held the craft, Activity = %v", c.Activity.State())
 	}
 }
 

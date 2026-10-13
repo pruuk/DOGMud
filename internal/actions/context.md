@@ -367,7 +367,7 @@ func QuoteMove(actor Actor, dest *rooms.Room) MoveCharge  // prices, spends noth
 func ChargeMove(actor Actor, dest *rooms.Room) MoveCharge // pays, or refunds AP on a stamina refusal
 func QuoteMobStep(mob *mobs.Mob, exitName string) MoveCharge // quotes a mob's next step by exit name; a step that does not resolve quotes as affordable
 func TrainSearchOnMove(actor Actor) // the rare Search training a completed step earns
-func InterruptWorkOnMove(c *characters.Character) activity.State // stops Crafting/Salvaging; returns what stopped, or Free
+func InterruptWorkOnMove(c *characters.Character) activity.State // stops Crafting/Salvaging; returns the work interrupted, or Free
 func IsCompassDirection(name string) bool // go.go: the ten compass words; a player's and a mob's go both read it to spot a move attempt
 ```
 
@@ -375,8 +375,10 @@ func IsCompassDirection(name string) bool // go.go: the ten compass words; a pla
 2026-10-13): a move stops a craft or salvage, for a player and a mob alike,
 through this one helper so the two cannot drift apart. It transitions
 Crafting or Salvaging to Free with `activity.TriggerMovementInterrupt` and
-returns the state it stopped (`activity.Free` when nothing stopped, including
-a nil character or Activity). Casting is never interrupted by movement and is
+returns the work it interrupted, read before the transition and returned even
+if a veto holds it, so a player's go tells them as it did before the helper
+existed (`activity.Free` when there was no work, including a nil character or
+Activity). Casting is never interrupted by movement and is
 left alone. Callers: `usercommands.Go` (which tells the player "Your movement
 interrupts your crafting." or "...salvaging."), `mobcommands.Go` on any move
 attempt, before its failure checks (owner ruling A), `RelocateMob` (mob walk

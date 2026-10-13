@@ -1523,6 +1523,19 @@ tells a player salvager in `usercommands/go.go`; a mob salvager stopped by
 its own move, through `actions.InterruptWorkOnMove`, is told nothing) and
 nothing to the room, since salvage has no room lines.
 
+### work_progress.go
+
+The per-round line a crafter or salvager reads while the work runs
+(`UserRoundTick`, on `messaging.CategoryCraft`). `workProgressPhrase(done,
+total)` turns the round count into words with no numbers (#513).
+`craftProgressLine(ch, cd)` names the recipe ("You keep working on the
+Healing Salve"), with no second article when the name already starts with
+one (`startsWithArticle`: "You keep working on The Blackrazor"). An
+enchanting, whose `CraftingData.TargetSlot` is set, names the item in that
+slot instead ("You keep enchanting <item>"), matching its start line; an
+item gone from the slot drops the name. `salvageProgressLine(ch, sd)` names
+the item being salvaged, or "the corpse".
+
 ### work_interrupt_narration.go
 
 Deferred narration for work ended by damage (owner ruling 2026-10-13, option
