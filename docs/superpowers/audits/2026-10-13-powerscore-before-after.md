@@ -38,8 +38,34 @@ run to run. Curated `SpawnMutations` are applied.
 
 ## After
 
-(filled in Task 8)
+| mob | archetype | power | vs novice (570) | vs journeyman (1021) | vs veteran (1551) |
+|---|---|---|---|---|---|
+| 72 Warren Scout | lookout | 1273 | 2.23 acts | 1.25 acts | 0.82 - |
+| 90 Thornwall Highwayman | thief | 1339 | 2.35 acts | 1.31 - | 0.86 - |
+| 205 Steppe Wolf | predator | 1103 | 1.93 acts | 1.08 - | 0.71 - |
+| 206 Young Wolf | predator | 1044 | 1.83 acts | 1.02 - | 0.67 - |
+| 222 Goblin Sentry | lookout | 1042 | 1.83 acts | 1.02 acts | 0.67 - |
+| 223 Scarred Wolf | predator | 1326 | 2.33 acts | 1.30 acts | 0.86 - |
+| 247 Tunnel Lookout | lookout | 1334 | 2.34 acts | 1.31 acts | 0.86 - |
+| 283 Bandit Lookout | lookout | 1561 | 2.74 acts | 1.53 acts | 1.01 acts |
+| 9140 Scab-Hound | predator | 1022 | 1.79 acts | 1.00 - | 0.66 - |
+| 9141 Pack-Hound | predator | 1137 | 1.99 acts | 1.11 - | 0.73 - |
+| 9176 Lean Coyote | predator | 1020 | 1.79 acts | 1.00 - | 0.66 - |
+| 9190 Market Cutpurse | thief | 1381 | 2.42 acts | 1.35 - | 0.89 - |
+| 9210 A Cutpurse | thief | 1371 | 2.40 acts | 1.34 - | 0.88 - |
+| 9211 Quill the Tout | thief | 1384 | 2.43 acts | 1.36 - | 0.89 - |
+| 9318 Dock Thug | thief | 1409 | 2.47 acts | 1.38 - | 0.91 - |
+| 9538 A Lone Hunter-Wolf | predator | 1594 | 2.80 acts | 1.56 acts | 1.03 - |
+| 9543 A Gully-Denned Wolf | predator | 1680 | 2.94 acts | 1.65 acts | 1.08 - |
+| 9548 A Carrion Highland-Hound | predator | 2229 | 3.91 acts | 2.18 acts | 1.44 acts |
+| 9565 A Feral Mongrel | predator | 1493 | 2.62 acts | 1.46 acts | 0.96 - |
 
 ## Decision
 
-(filled in Task 8)
+No archetype decision flips for any mob against any fixture player. Thresholds unchanged.
+
+Compared cell by cell, all 57 acts/- marks match the Before table. The
+fixture players' own scores rose (journeyman 971 to 1021, veteran 1461 to
+1551, novice 571 to 570), so ratios moved, but none crossed an archetype
+threshold. Closest to an edge: 9140 Scab-Hound and 9176 Lean Coyote against
+the journeyman, both 1.00 and still "-".

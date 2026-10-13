@@ -167,7 +167,13 @@ func TestPowerScore_KillsAddBump(t *testing.T) {
 
 func TestPowerScore_MultiWieldHigherScore(t *testing.T) {
 	makeWeapon := func() items.Item {
+		// Type is Weapon (#301, Task 8): PowerScore now reads the planned swings,
+		// and collectAttackWeapons only plans an offhand or extra-arm item that
+		// is a Weapon, as live combat does. The old private formula counted any
+		// item with an id. The property pinned (more weapons, higher score) is
+		// unchanged.
 		return items.Item{ItemId: 1, Spec: &items.ItemSpec{
+			Type:             items.Weapon,
 			DamageMultiplier: 1.0,
 			SpeedMultiplier:  1.0,
 		}}
