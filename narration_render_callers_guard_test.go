@@ -19,6 +19,7 @@ import (
 var narrationRenderCallers = map[string]string{
 	"internal/behaviortree/actions_item_voice.go": "Kind A: item tree speech pools (item behaviour slice 2), single role (the item speaks); the default picker is deliberate, so a seeded util.Rand replays it",
 	"internal/combat/grapple_narration.go":        "Kind A: grapple's crit-failure and disarm events, the special-move store's only internal/combat consumer (both are shared with internal/mobcommands/usercommands twins, so they cannot live in move_narration.go without a cycle) (M4e-1)",
+	"internal/crafting/messages.go":               "Kind A: crafting room-line pools (M6 row 7), seen lines render Observer with a store-local {item} token, heard lines render Actor only; the caller supplies the picker",
 	"internal/combat/taunt_messages.go":           "Kind A: the taunt store's coordinated triad",
 	"internal/gossip/gossip.go":                   "Kind A: gossip template pools, single role (the gossiping NPC)",
 	"internal/grapplemessaging/render.go":         "Kind A: the grapple store's coordinated triad",
