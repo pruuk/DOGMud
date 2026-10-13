@@ -17,4 +17,5 @@ effect_magnitude: 30
 damage_multiplier: 0.60
 effect_duration: 4
 cast_actor: "You channel psionic venom toward your target's mind."
+cast_actee: "{actor} focuses on you with toxic intent, a sickly glow around their hands."
 cast_observer: "{actor} focuses with toxic intent, a sickly glow around their hands."

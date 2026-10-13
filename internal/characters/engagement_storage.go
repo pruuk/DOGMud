@@ -96,6 +96,14 @@ func (c *Character) TrackPlayerDamage(userId int, damageAmt int) {
 // Engaging. All writes to Aggro go through this method (dual-write to
 // CombatPhase for parity). Direct field reads of .Aggro remain valid.
 func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType, roundsWaitTime ...int) {
+	c.SetAggroWithTrigger(userId, mobInstanceId, aggroType, "", roundsWaitTime...)
+}
+
+// SetAggroWithTrigger is SetAggro with the combat-phase trigger named by the
+// caller. An empty trigger derives it from aggroType, as SetAggro always has.
+// targeting.Commit passes combatphase.TriggerCastFold for a caster entering
+// combat only so its own fold steps; nothing else names a trigger.
+func (c *Character) SetAggroWithTrigger(userId int, mobInstanceId int, aggroType AggroType, trigger string, roundsWaitTime ...int) {
 	// Grace-period guard: don't acquire aggro on a grace-protected
 	// player. Other target shapes (mob, spellcast) are unaffected.
 	if userId > 0 && userUntargetableFn != nil && userUntargetableFn(userId) {
@@ -152,9 +160,11 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 	// A nil CombatPhase is the legacy/fixture path — there is nothing to
 	// refuse, so the write proceeds as it always did.
 	if c.CombatPhase != nil {
-		trigger := combatphase.TriggerAttackCommand
-		if aggroType == SurpriseAttack {
-			trigger = combatphase.TriggerSurpriseAttack
+		if trigger == "" {
+			trigger = combatphase.TriggerAttackCommand
+			if aggroType == SurpriseAttack {
+				trigger = combatphase.TriggerSurpriseAttack
+			}
 		}
 		if err := c.CombatPhase.TransitionToEngaging(combatphase.EngagingData{
 			Target: state.ActorRef{

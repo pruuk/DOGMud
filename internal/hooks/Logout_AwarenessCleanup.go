@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -60,12 +61,7 @@ const despawnUnseenByKey = `despawnUnseenBy`
 
 // playersNotPerceiving lists the players in room who cannot make out c
 // (characters.Character.Perceives: c is hidden and they have no see-hidden).
+// The body lives in actions (messaging M6 slice 4).
 func playersNotPerceiving(room *rooms.Room, c *characters.Character) []int {
-	var ids []int
-	for _, uid := range room.GetPlayers() {
-		if v := users.GetByUserId(uid); v != nil && !v.Character.Perceives(c) {
-			ids = append(ids, uid)
-		}
-	}
-	return ids
+	return actions.PlayersNotPerceiving(room, c)
 }

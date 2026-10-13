@@ -28,6 +28,7 @@ effect_type: charm
 cast_actor: >-
   You fix your gaze on your target, pressing your will
   against its mind...
+cast_actee: "{actor} stares at you, and a fierce will presses against your mind."
 cast_observer: >-
   {actor} stares intently at {actee}, brow furrowed with
   fierce concentration.

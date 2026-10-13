@@ -18,4 +18,5 @@ condition_ids:
 categories:
   - harm_single
 cast_actor: "You project a dense psionic fog toward your target."
+cast_actee: "{actor} stares at you with unfocused eyes, and a haze presses at your thoughts."
 cast_observer: "{actor} stares at a target with unfocused eyes, projecting something unseen."

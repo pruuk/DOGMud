@@ -15,7 +15,7 @@ func boltSpec() *SpellData {
 	return &SpellData{
 		SpellId: "bolt", Name: "Bolt", PrimaryStat: "willpower",
 		AttackType: combatvocab.AttackSpell, DamageType: combatvocab.DamageMental, Targeting: combatvocab.TargetSingle,
-		CastUserText: "You gather a bolt.", CastRoomText: "{actor} gathers a bolt at {actee}.", WaitUserText: "You hold the bolt.",
+		CastUserText: "You gather a bolt.", CastRoomText: "{actor} gathers a bolt at {actee}.", CastActeeText: "{actor} gathers a bolt at you.", WaitUserText: "You hold the bolt.",
 	}
 }
 
@@ -27,8 +27,8 @@ func TestNarrationCastPutsTheCasterInActor(t *testing.T) {
 	if len(v.Observer) != 1 || v.Observer[0] != "{actor} gathers a bolt at {actee}." {
 		t.Fatalf("Observer: %v", v.Observer)
 	}
-	if len(v.Actee) != 0 {
-		t.Fatalf("Actee must be empty (M6 authors it), got %v", v.Actee)
+	if len(v.Actee) != 1 || v.Actee[0] != "{actor} gathers a bolt at you." {
+		t.Fatalf("Actee: %v", v.Actee)
 	}
 }
 
@@ -47,6 +47,9 @@ func TestNarrateSubstitutesSourceAndTarget(t *testing.T) {
 	if roles.Actor != "You gather a bolt." || roles.Observer != "Kael gathers a bolt at Goblin." {
 		t.Fatalf("roles: %+v", roles)
 	}
+	if roles.Actee != "Kael gathers a bolt at you." {
+		t.Fatalf("actee: %q", roles.Actee)
+	}
 	if roles := boltSpec().Narrate(PhaseMagic, textutil.TokenContext{}); roles != (narration.Roles{}) {
 		t.Fatalf("magic should render nothing, got %+v", roles)
 	}
@@ -62,6 +65,24 @@ func TestValidateRefusesAWhitespaceOnlyLine(t *testing.T) {
 	s.WaitRoomText = ""
 	if err := s.Validate(); err != nil {
 		t.Fatalf("ordinary text must validate, got %v", err)
+	}
+}
+
+// The target's own line is a cast-phase line only (messaging M6 slice 4).
+func TestNarrationActeeIsCastPhaseOnly(t *testing.T) {
+	if v := boltSpec().Narration(PhaseWait); len(v.Actee) != 0 {
+		t.Fatalf("wait carries an actee: %v", v.Actee)
+	}
+}
+
+// A whitespace-only cast_actee is refused even when the phase has no other
+// line, so it cannot slip past the "phase not authored" skip.
+func TestValidateRefusesAWhitespaceOnlyActeeLine(t *testing.T) {
+	s := boltSpec()
+	s.CastUserText, s.CastRoomText, s.CastActeeText = "", "", " "
+	err := s.Validate()
+	if err == nil || !strings.Contains(err.Error(), "cast") {
+		t.Fatalf("expected a cast-phase validation error, got %v", err)
 	}
 }
 

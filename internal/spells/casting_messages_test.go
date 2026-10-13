@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/narration"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 )
 
 // seedCastingMessages installs a store for one test without touching the
@@ -12,7 +13,7 @@ import (
 func seedCastingMessages(t *testing.T, cm *CastingMessages) {
 	t.Helper()
 	prevStore, prevLoaded := castingMessages, castingMessagesLoaded
-	castingMessages, castingMessagesLoaded = cm, true
+	castingMessages, castingMessagesLoaded = cm, cm != nil
 	t.Cleanup(func() { castingMessages, castingMessagesLoaded = prevStore, prevLoaded })
 }
 
@@ -22,6 +23,59 @@ func shippedShape() *CastingMessages {
 		CastStarted:          []string{"a", "b", "c"},
 		CastContinuing:       []string{"a", "b", "c", "d"},
 		ConcentrationSlipped: []string{"a", "b", "c"},
+		CastStartedRoom:      []string{"{actor} a.", "{actor} b.", "{actor} c."},
+		CastContinuingRoom:   []string{"{actor} a.", "{actor} b.", "{actor} c."},
+		CastStartedUnseen:    []string{"a", "b", "c"},
+	}
+}
+
+// Messaging M6 slice 4, R7: the generic room lines are data, with a fallback
+// only when no world is loaded (unit tests), as GetCastMessage has.
+func TestCastRoomPoolReadsTheStoreThenFallsBack(t *testing.T) {
+	cm := shippedShape()
+	cm.CastStartedRoom = []string{"{actor} a.", "{actor} b.", "{actor} c."}
+	seedCastingMessages(t, cm)
+	if got := CastRoomPool(PhaseCast); len(got) != 3 || got[0] != "{actor} a." {
+		t.Fatalf("cast pool: %v", got)
+	}
+	if got := CastRoomPool(PhaseMagic); got != nil {
+		t.Fatalf("magic has no generic line, got %v", got)
+	}
+}
+
+func TestCastRoomPoolFallbackWhenUnloaded(t *testing.T) {
+	seedCastingMessages(t, nil)
+	if got := CastRoomPool(PhaseWait); len(got) != 1 || got[0] != "{actor} weaves magic with focused intent." {
+		t.Fatalf("wait fallback: %v", got)
+	}
+	if got := CastRoomPool(PhaseCast); len(got) != 1 || got[0] != "{actor} begins weaving a spell." {
+		t.Fatalf("cast fallback: %v", got)
+	}
+	if CastStartedUnseenLine() == "" {
+		t.Fatal("unseen line must never be empty")
+	}
+}
+
+// The generic room line varies across its whole pool: the picker reaches
+// past the first line, and {actor} is substituted.
+func TestCastRoomLineHonoursThePicker(t *testing.T) {
+	cm := shippedShape()
+	cm.CastStartedRoom = []string{"{actor} a.", "{actor} b.", "{actor} c."}
+	seedCastingMessages(t, cm)
+	ctx := textutil.TokenContext{ActorName: "Kael", ActorPlainName: "Kael"}
+	if got := CastRoomLine(PhaseCast, ctx, func(int) int { return 2 }); got != "Kael c." {
+		t.Fatalf("picked index 2, got %q", got)
+	}
+	if got := CastRoomLine(PhaseMagic, ctx); got != "" {
+		t.Fatalf("magic has no generic line, got %q", got)
+	}
+}
+
+func TestValidateRejectsAShortUnseenPool(t *testing.T) {
+	cm := shippedShape()
+	cm.CastStartedUnseen = cm.CastStartedUnseen[:1]
+	if err := cm.Validate(); err == nil || !strings.Contains(err.Error(), "cast_started_unseen") {
+		t.Fatalf("got %v", err)
 	}
 }
 

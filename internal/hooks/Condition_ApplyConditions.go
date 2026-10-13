@@ -3,6 +3,7 @@ package hooks
 import (
 	"slices"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -242,11 +243,9 @@ func sendConditionStartRoomText(r *rooms.Room, snap rooms.VisualSnapshot, msg st
 // The one exception is a hide's own end line, conditionEndLineUnseenBy. A
 // hidden mob's own acts skip the same readers (mobActUnseenBy). nil
 // for a visible holder, which costs no room walk, and for a nil room.
+// The body lives in actions (messaging M6 slice 4).
 func conditionLineUnseenBy(r *rooms.Room, holder *characters.Character) []int {
-	if r == nil || !holder.IsHidden() {
-		return nil
-	}
-	return playersNotPerceiving(r, holder)
+	return actions.UnseenBy(r, holder)
 }
 
 // conditionEndLineUnseenBy is conditionLineUnseenBy for an end line. A

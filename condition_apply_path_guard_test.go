@@ -109,9 +109,9 @@ var (
 var conditionApplyPathAllowlist = map[string]string{
 	// ── The sanctioned consumer of the event (re-keyed messaging M6 slice 1,
 	// when the family rival read landed above the adds) ──────────────────
-	"internal/hooks/Condition_ApplyConditions.go|122": "this IS the hook the event feeds; it is where every routed condition is finally applied",
-	"internal/hooks/Condition_ApplyConditions.go|124": "this IS the hook the event feeds; it is where every routed condition is finally applied",
-	"internal/hooks/Condition_ApplyConditions.go|126": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|123": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|125": "this IS the hook the event feeds; it is where every routed condition is finally applied",
+	"internal/hooks/Condition_ApplyConditions.go|127": "this IS the hook the event feeds; it is where every routed condition is finally applied",
 
 	// ── silent-start conditions whose applier narrates the moment itself ────
 	"internal/actions/combat_throttle.go|149": "condition 89 is silent-start; the throttle move narrates the choke as it lands and must apply it in the same tick",
@@ -143,7 +143,9 @@ var conditionApplyPathAllowlist = map[string]string{
 	"internal/hooks/Life_Cascades.go|131": "condition 81 Respawn Grace is secret:true, so StartUserNotice is empty by design and the event would narrate nothing anyway",
 
 	// ── the event path cannot express what the call needs ───────────────────
-	"internal/hooks/Awareness_Cascades.go|64": "condition 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",
+	// (Awareness_Cascades re-keyed messaging M6 slice 4, when the combat
+	// cascade gained its TriggerCastFold exemption, R6)
+	"internal/hooks/Awareness_Cascades.go|76": "condition 9 must be applied PERMANENT so the awareness state machine owns its lifecycle; the event path has no permanent form, and the transition callback holds only a Character",
 
 	// ── routing would narrate the wrong thing, or narrate it repeatedly ─────
 	"internal/hooks/pinnacle_tick.go|339": "the bandolier continuously re-applies any slotted potion condition that has lapsed, so routing would re-narrate each potion's start line on every lapse; the pinnacle announces attunement once itself",
@@ -217,8 +219,9 @@ var conditionApplyPathAllowlist = map[string]string{
 	// AddConditionMagnitudeBy and re-keyed messaging M6 slice 1, when the
 	// dot began to carry its caster and creditMobHarm landed above it; re-keyed
 	// loose issues sweep 3 when the dot began to read its record from
-	// condition_ids, #249) ──────
-	"internal/hooks/spell_effects.go|381": "spell dot: applies synchronously so an immune target's refusal is known before anything is narrated; the spell then tells the record's own start lines (narrateConditionStart, Blood Boil's 143) or, for a silent-start record (121), its own trio",
+	// condition_ids, #249; re-keyed messaging M6 slice 4 when
+	// commitHarmfulSpellAggro began to reveal a hidden caster and target, R6) ──────
+	"internal/hooks/spell_effects.go|420": "spell dot: applies synchronously so an immune target's refusal is known before anything is narrated; the spell then tells the record's own start lines (narrateConditionStart, Blood Boil's 143) or, for a silent-start record (121), its own trio",
 
 	// ── magnitude potions (lighting plan 5c): the player's and the mob's drink
 	// each carried this call (usercommands/drink.go and mobcommands/drink.go)

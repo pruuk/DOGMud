@@ -21,4 +21,5 @@ condition_ids:
 categories:
   - self_defense
 cast_actor: "You solidify your belief into a protective barrier."
+cast_actee: "{actor} spreads their arms toward you as a ward shimmers into being."
 cast_observer: "{actor} spreads their arms as conviction shimmers into a ward."

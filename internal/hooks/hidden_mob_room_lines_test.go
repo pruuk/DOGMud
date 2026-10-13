@@ -166,7 +166,7 @@ func TestHiddenMob_OwnActsAreSilentToNonPerceivers(t *testing.T) {
 			tickMobProneRecovery(m)
 		}, "Skeleton clambers to their feet in a rushed panic.", "clambers to their feet"},
 		{"weave", func(t *testing.T, m *mobs.Mob, room *rooms.Room, _ *users.UserRecord) {
-			sendMobWeaving(m, room)
+			sendMobFoldRoundForTest(m, room)
 		}, "Skeleton weaves magic with focused intent.", "weaves magic"},
 		{"focus shift", func(t *testing.T, m *mobs.Mob, room *rooms.Room, target *users.UserRecord) {
 			sendMobShiftsFocus(m, room, target)

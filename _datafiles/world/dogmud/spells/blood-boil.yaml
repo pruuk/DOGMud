@@ -18,4 +18,5 @@ effect_magnitude: 40
 damage_multiplier: 0.80
 effect_duration: 3
 cast_actor: "You focus on the target's blood, willing it to boil."
+cast_actee: "{actor} extends a trembling hand toward you, and your blood grows warm."
 cast_observer: "{actor} extends a trembling hand, eyes burning with intent."

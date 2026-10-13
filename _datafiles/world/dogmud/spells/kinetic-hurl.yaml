@@ -16,4 +16,5 @@ effect_type: damage
 effect_magnitude: 300
 damage_multiplier: 1.00
 cast_actor: "You gather telekinetic force, the air between your hands distorting."
+cast_actee: "{actor} gathers telekinetic force, the air between you distorting."
 cast_observer: "{actor} gathers telekinetic force, the air distorting around their hands."

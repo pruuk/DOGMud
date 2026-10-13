@@ -19,7 +19,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/templates"
-	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -193,34 +192,9 @@ func resolveSpell(user *users.UserRecord, cs activity.CastingData, spellData *sp
 	}
 
 	// --- Run spell script onMagic (if present) ---
-	// Send YAML magic text (if defined).
-	if spellData != nil && spellData.Narration(spells.PhaseMagic).Len() > 0 {
-		tCtx := textutil.TokenContext{
-			ActorName:      user.Character.GetCharacterName(true),
-			ActorPlainName: user.Character.GetCharacterName(false),
-		}
-		if len(cs.TargetUserIds) > 0 {
-			if tUser := users.GetByUserId(cs.TargetUserIds[0]); tUser != nil {
-				tCtx.ActeeName = tUser.Character.GetCharacterName(true)
-				tCtx.ActeePlainName = tUser.Character.GetCharacterName(false)
-			}
-		} else if len(cs.TargetMobInstanceIds) > 0 {
-			if tMob := mobs.GetInstance(cs.TargetMobInstanceIds[0]); tMob != nil {
-				tCtx.ActeeName = tMob.Character.GetCharacterName(true)
-				tCtx.ActeePlainName = tMob.Character.GetCharacterName(false)
-			}
-		}
-		roles := spellData.Narrate(spells.PhaseMagic, tCtx)
-		if roles.Actor != "" {
-			user.SendText(spellSchoolCategory(spellData), roles.Actor)
-		}
-		// Audio channel, as before this refactor: filed, not changed here.
-		if roles.Observer != "" {
-			if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-				r.SendText(spellSchoolCategory(spellData), roles.Observer, user.UserId)
-			}
-		}
-	}
+	// The magic line through the one body (messaging M6 slice 4).
+	actions.NarrateSpellPhase(actions.NewUserActorInRoom(user, room), spellData, spells.PhaseMagic,
+		cs.TargetUserIds, cs.TargetMobInstanceIds, room, spellSchoolCategory(spellData))
 	// Fumble gate for the post-target effects (summon / charm / Go hooks).
 	// A fumbled cast consumed conviction + component but should NOT also land
 	// the primary effect. A single flavor message; individual blocks skip
@@ -682,6 +656,9 @@ func resolveMobSpell(mob *mobs.Mob, cs activity.CastingData, spellData *spells.S
 		return false, true
 	}
 
+	// The magic line, as a player's cast has it (messaging M6 slice 4).
+	actions.NarrateSpellPhase(actions.NewMobActorInRoom(mob, room), spellData, spells.PhaseMagic,
+		cs.TargetUserIds, cs.TargetMobInstanceIds, room, spellSchoolCategory(spellData))
 	return anyLanded, false
 }
 
@@ -789,6 +766,17 @@ func resolveMobDrainArea(mob *mobs.Mob, room *rooms.Room, spellData *spells.Spel
 	sendVisualRoomText(room, spellSchoolCategory(spellData), fmt.Sprintf(
 		`%s's <ansi fg="cyan">%s</ansi> tears the life from everyone in the room!`,
 		mobSeenName(mob, room, 0), spellData.Name), mobActUnseenBy(room, mob)...)
+
+	// The drain is harmful: once it has drawn from anyone, it breaks its
+	// caster's hiding, as every harmful landing does (owner ruling R6). After
+	// the landing lines, so they are judged as the drain found the room. The
+	// area drain still reveals none of its targets.
+	for _, pr := range result.PlayerResults {
+		if pr.MoveResult.Hit || pr.MoveResult.Damage > 0 {
+			revealForHarmfulSpell(&mob.Character, spellData.SpellId)
+			break
+		}
+	}
 }
 
 // landed carries the same meaning as on the player path: the contest was WON

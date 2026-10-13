@@ -4,9 +4,11 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -21,8 +23,9 @@ import (
 //
 // charEnemiesFixture seeds one room, one fighting mob (Grave Wight, 30/50
 // hp), and one viewer, then asks GetCharNode for Char.Enemies. blind selects
-// whether the viewer is Blinded before the call.
-func charEnemiesFixture(t *testing.T, blind bool) []GMCPCharModule_Enemy {
+// whether the viewer is Blinded before the call; each setup runs on the
+// seeded mob and viewer just before the call.
+func charEnemiesFixture(t *testing.T, blind bool, setup ...func(enemy *mobs.Mob, viewer *users.UserRecord)) []GMCPCharModule_Enemy {
 	t.Helper()
 
 	t.Cleanup(rooms.SeedBiomesForTest(map[string]*rooms.BiomeInfo{
@@ -68,6 +71,9 @@ func charEnemiesFixture(t *testing.T, blind bool) []GMCPCharModule_Enemy {
 	}
 	t.Cleanup(users.SeedUsersForTest(map[int]*users.UserRecord{9701: viewer}))
 	room.AddPlayer(9701)
+	for _, s := range setup {
+		s(enemy, viewer)
+	}
 
 	g := &GMCPCharModule{}
 	data, moduleName := g.GetCharNode(viewer, `Char.Enemies`)
@@ -98,4 +104,31 @@ func TestCharEnemies_BlindViewerGetsNoIdentityOrHp(t *testing.T) {
 	require.NotEqual(t, "Grave Wight", e.Name, "a blind viewer's payload must name no mob")
 	require.Equal(t, 0, e.Hp, "a blind viewer must carry no readable hp")
 	require.Equal(t, 0, e.MaxHp, "a blind viewer must carry no readable hp_max")
+}
+
+// A hidden fighting mob the viewer does not perceive has no row: a hidden
+// caster is in combat for its whole fold (owner ruling R6, messaging M6
+// slice 4), and the room lines name it to nobody. With see-hidden the row
+// is back, named, with its health.
+func TestCharEnemies_HiddenMobListedOnlyToAPerceiver(t *testing.T) {
+	const veilId = 97293
+	t.Cleanup(conditions.SeedConditionsForTest(map[int]*conditions.ConditionSpec{
+		veilId: {ConditionId: veilId, Name: "Test Veil", Flags: []conditions.Flag{conditions.SeeHidden}},
+	}))
+	hide := func(enemy *mobs.Mob, _ *users.UserRecord) {
+		enemy.Character.Awareness = awareness.NewMachine()
+		reason := state.TransitionReason{Trigger: "gmcp_char_enemies_test"}
+		require.NoError(t, enemy.Character.Awareness.TransitionToConcealing(awareness.ConcealingData{}, reason))
+		enemy.Character.Awareness.ResolveConcealment(true, reason)
+		require.True(t, enemy.Character.IsHidden(), "precondition: the wight is hidden")
+	}
+
+	require.Empty(t, charEnemiesFixture(t, false, hide), "a hidden mob must not leak a row")
+
+	enemies := charEnemiesFixture(t, false, hide, func(_ *mobs.Mob, viewer *users.UserRecord) {
+		require.NoError(t, viewer.Character.AddCondition(veilId, true))
+	})
+	require.Len(t, enemies, 1, "a see-hidden viewer still gets the row")
+	require.Equal(t, "Grave Wight", enemies[0].Name)
+	require.Equal(t, 30, enemies[0].Hp)
 }

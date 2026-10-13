@@ -134,7 +134,10 @@ func TestMobMinCastRounds_AbsentFieldCompletesInOneRound(t *testing.T) {
 
 	handleMobFoldCasting(m, room)
 	require.False(t, m.Character.IsCasting(), "without the field the cast completes on its first step, as before")
-	require.Zero(t, countContaining(drainPlain(1), windupWarning))
+	// The completing round reads as every other fold round (messaging M6
+	// slice 4): it carries the spell's wait line once, then the blast. It is
+	// not a held round, which the IsCasting check above proves.
+	require.Equal(t, 1, countContaining(drainPlain(1), windupWarning))
 }
 
 // windupAreaMob is windupMob with an AREA harm spell whose cast-time target

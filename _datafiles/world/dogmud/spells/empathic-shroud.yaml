@@ -16,4 +16,5 @@ effect_type: condition
 condition_ids:
   - 31
 cast_actor: "You weave a psionic shroud of unnoticability."
+cast_actee: "{actor} traces patterns around you, and the air at your edges blurs."
 cast_observer: "{actor} traces patterns in the air that seem to blur reality."

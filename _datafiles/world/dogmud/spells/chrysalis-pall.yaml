@@ -18,5 +18,6 @@ effect_type: condition
 condition_ids:
   - 131
 cast_actor: "You coax the Chrysalis spores around you to drink the light."
+cast_actee: "{actor} concentrates on you as the air around you dims and thickens."
 cast_observer: "{actor} concentrates as the air around them dims and thickens."
 wait_actor: "You hold the image steady as the spores darken..."

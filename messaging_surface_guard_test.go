@@ -1279,7 +1279,6 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"cleanup/cleanup.go|You trash the <ansi fg=\"item\">%s</ansi> for good.":                                            {verdictCorrect, true, false, true, "trashing your own item from your own backpack; the room line exists (room.SendText two lines below, gated on not sneaking), so this is genuinely actor+observer, no actee since destroying your own item has no third party. Not part of the audit; read against source for this guard."},
 	"follow/follow.go|<ansi fg=\"username\">%s</ansi> stopped following you.":                                           {verdictCorrect, true, true, false, "the followed party privately learns their follower stopped; a follow relationship change has no room-facing component in this codebase. Not part of the audit; read against source for this guard."},
 	"follow/follow.go|You start following <ansi fg=\"username\">%s</ansi>.":                                             {verdictCorrect, true, true, false, "starting to follow someone notifies the two parties only, same as the stop case above; no room broadcast for a private relationship state change. Not part of the audit; read against source for this guard."},
-	"hooks/NewRound_DoCombat_helpers.go|messaging.CategorySpellFold, roles.Actor":                                       {verdictCorrect, true, false, true, "authored wait text through the spell store's door: caster plus room on `r.SendText` (observer, misread as actee by the walk's receiver-name rule); a channelling round has no actee."},
 	"hooks/NewRound_UserRoundTick.go|<ansi fg=\"green\">%s</ansi>":                                                      {verdictCorrect, true, false, true, "M3 item 6: multi-round craft succeeds (enchanting included); crafter gets the recipe's success line, the room its Observer slot, empty until M6. No second party, so no actee. Read against source for this guard."},
 	"hooks/NewRound_UserRoundTick.go|<ansi fg=\"red\">%s</ansi>":                                                        {verdictCorrect, true, false, true, "M3 item 6: multi-round craft fails; crafter gets the recipe's failure line, the room its Observer slot, empty until M6. No second party, so no actee. Read against source for this guard."},
 	"hooks/NewRound_UserRoundTick.go|You attempt to stand, but slip back down in the chaos of battle!":                  {verdictCorrect, true, false, true, "automatic recovery from prone fails; same shape as the success case above, actor+observer via sendVisualRoomText, no actee."},
@@ -1289,7 +1288,6 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"hooks/spell_purgeaffliction.go|<ansi fg=\"green\">You purge the afflictions from your body.</ansi>":                {verdictCorrect, true, false, true, "self-cast purge (caster targets themselves); sendVisualRoomText broadcasts to the room two lines below, no actee since there is no separate target. Sibling of the audited spell_purgeaffliction.go row for the other-target branch, which the audit already ruled full trio."},
 	"hooks/spell_resolution.go|You concentrate on the <ansi fg=\"item\">%s</ansi>...":                                   {verdictCorrect, true, false, true, "identify-via-spell concentration flavor; sendVisualRoomText broadcasts to the room, no actee since the target is an item, not a person."},
 	"hooks/spell_resolution.go|Your spell erupts outward but finds no targets.":                                         {verdictCorrect, true, false, true, "a disruption spell that finds no targets; sendVisualRoomText broadcasts it, no actee since nothing was hit. Same sendVisualRoomText-wrapper visibility this walk has and tools/narration_viewpoint_scan.py's regex does not, per the guard's header comment."},
-	"hooks/spell_resolution.go|spellSchoolCategory(spellData), roles.Actor":                                             {verdictCorrect, true, false, true, "authored magic_actor/magic_observer through the spell store's door (M3 item 5b): caster plus room; the room send is `r.SendText`, which this walk's observer recogniser cannot see (it only knows the receiver name `room`), so the booleans say actor+observer; the target is reached by the effect's own narration below."},
 
 	// M3 item 5a (2026-09-11) added the self-cast branches of applyPlayerEffect's
 	// purge, heal and condition arms here (one line to the caster and one room
@@ -1302,6 +1300,22 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	// canonical SendTrio shape this walk does not separately track, not moved
 	// or reworded. No gap was fixed (all three were already verdictCorrect)
 	// and nothing needs updating in the audit doc.
+
+	// Messaging M6 slice 4 (2026-10-12) retired the authored spell-text sends
+	// "hooks/NewRound_DoCombat_helpers.go|messaging.CategorySpellFold,
+	// roles.Actor" (wait text) and "hooks/spell_resolution.go|
+	// spellSchoolCategory(spellData), roles.Actor" (magic text), both
+	// verdictCorrect. Removed rather than re-keyed: the sends were replaced by
+	// calls to actions.NarrateSpellPhase, the one body for a caster's spell
+	// lines, which renders through messaging.Trio and the room send this walk
+	// does not track as a literal. No gap was fixed and nothing needs updating
+	// in the audit doc.
+	//
+	// The same slice also removed "usercommands/skill.cast.go|cast_started":
+	// the "closes their eyes in concentration" room send beside the caster's
+	// cast_started line is gone (its wording is now a cast_started_room pool
+	// line, sent by actions.NarrateSpellPhase), so the walk no longer finds
+	// the site incomplete. Removed rather than re-keyed; no gap was fixed.
 
 	"usercommands/admin.item.go|You wave your hands and <ansi fg=\"item\">%s</ansi> appears.":                               {verdictCorrect, true, false, true, "audit: admin conjures an item -- no player target (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/admin.item.go:127)"},
 	"usercommands/admin.locate.go|<ansi fg=\"username\">%s</ansi> is in room #<ansi fg=\"yellow-bold\">%d</ansi> - <an":     {verdictCorrect, true, true, false, "an admin locate command; the located player is privately told someone is looking for them (actee), but there is deliberately no room broadcast for an admin tool."},
@@ -1399,7 +1413,6 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"usercommands/sell.go|You sell a <ansi fg=\"itemname\">%s</ansi> for <ansi fg=\"gold\">%d gold</ansi>.":       {verdictCorrect, true, false, true, "audit: sells a single item -- merchant is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/sell.go:100)"},
 	"usercommands/shoot.go|messaging.CategorySystem, text":                                                        {verdictCorrect, true, true, false, "M2: the channel-defence shortage note, hoisted out of the target block by the SendTrio migration so the defender still reads it before the shot line. Actee-only mechanical feedback about their own spent resources; the actor viewpoint this walk pairs it with is the shooters separate shot line now sitting adjacent, not part of this event. No observer is correct -- the room cannot see a defender run short of stamina."},
 	"usercommands/show.go|You show the <ansi fg=\"item\">%s</ansi> to <ansi fg=\"mobname\">%s</ansi>.":            {verdictCorrect, true, false, true, "audit: shows an item to a mob -- actee is a mob (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/show.go:84)"},
-	"usercommands/skill.cast.go|cast_started":                                                                     {verdictCorrect, true, false, true, "audit: spell cast begins -- fires before any target is affected; the target is reached by the room line (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/skill.cast.go:387)"},
 	"usercommands/stand.go|You struggle to your feet!":                                                            {verdictCorrect, true, false, true, "audit: stands up from prone -- self-directed (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/stand.go:102)"},
 	"usercommands/stash.go|You stash the <ansi fg=\"itemname\">%s</ansi>. To get it back, try <ansi fg=\"comma":   {verdictCorrect, true, false, true, "audit: stashes an item in the room -- self-directed, own item (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/stash.go:35)"},
 	"usercommands/suicide.go|You are revived in a shower of magical sparks!":                                      {verdictCorrect, true, false, true, "audit: revive-on-death condition fires -- self-directed (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, usercommands/suicide.go:46)"},

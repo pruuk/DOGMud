@@ -382,6 +382,13 @@ narration, which reads the three-verdict `SightDecision` and treats
 `Char.Enemies` has no "a figure" middle ground: it matches the prompt's
 existing binary behaviour (`CanSeeClearly`).
 
+**A hidden mob the viewer does not perceive has no row at all**
+(`Character.Perceives`, messaging M6 slice 4). Unlike darkness, hiding is
+not a reader's sight problem: the room lines name a hidden mob to nobody,
+and a hidden caster is in combat for its whole fold (owner ruling R6), so
+any row would leak it. A see-hidden viewer gets the full row.
+`TestCharEnemies_HiddenMobListedOnlyToAPerceiver` pins both halves.
+
 ## Item names are per-viewer (finder-only baubles, owner ruling 2026-09-29)
 
 Item names in the backpack, the bandolier, the component bag and

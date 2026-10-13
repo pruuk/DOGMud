@@ -341,7 +341,18 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		if mob.Character.IsInCombat() {
 			// Strip combat-cancelling conditions (Hidden, etc.) and remove
 			// their permanent condition entries so Validate() doesn't re-apply them.
-			mob.Character.CancelCombatConditions()
+			//
+			// Not while the mob is folding: a hidden mob's harmful cast
+			// commits it to combat only so its fold steps here (#242), and
+			// the strip would reveal it at cast start. Its spell's landing
+			// reveals it (owner ruling R6, messaging M6 slice 4); a cast
+			// that ends without landing leaves it to this strip on its next
+			// round, before it can swing. A hidden mob that entered combat
+			// any other way was revealed on the way in (the Awareness
+			// cascade, RevealForCombat).
+			if !mob.Character.IsCasting() {
+				mob.Character.CancelCombatConditions()
+			}
 
 			if handleMobFoldCasting(mob, mobRoom) {
 				continue

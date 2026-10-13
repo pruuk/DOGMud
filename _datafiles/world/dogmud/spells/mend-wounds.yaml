@@ -23,4 +23,5 @@ condition_ids:
 categories:
   - self_heal
 cast_actor: "You press your will into the wounds, urging flesh to mend."
+cast_actee: "{actor} reaches toward you as warm light gathers in their hands."
 cast_observer: "{actor} places their hands forward as warm light gathers."

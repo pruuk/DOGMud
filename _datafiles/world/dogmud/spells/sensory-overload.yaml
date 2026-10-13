@@ -16,4 +16,5 @@ effect_type: condition
 condition_ids:
   - 37
 cast_actor: "You unleash a barrage of sensory input at the target's mind."
+cast_actee: "{actor} grimaces at you, and light and noise swell at the edges of your senses."
 cast_observer: "{actor} grimaces as they project overwhelming sensory energy."

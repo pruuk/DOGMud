@@ -365,13 +365,15 @@ func applySpellDefaultEffect(c spellEffectCtx) int {
 		}
 		return 0
 	}
+	// Read before the commit, which reveals a hidden caster (R6): the line is
+	// judged against the room as the spell found it.
+	casterName, targetName := c.casterName(), c.targetName()
 	if c.spell.IsHarm() {
 		commitHarmfulSpellAggro(c, fresh)
 	}
 	if spellNarratedByGoHook(c.spell.SpellId) {
 		return 0
 	}
-	casterName, targetName := c.casterName(), c.targetName()
 	if c.selfCast() {
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.Say(c.category(), fmt.Sprintf(`Your %s takes effect.`, c.spell.Name)),

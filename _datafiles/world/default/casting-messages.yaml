@@ -38,3 +38,23 @@ concentration_slipped:
   - "Your concentration breaks and {spell} slips away."
   - "You lose your grip on {spell} before it can take shape."
   - "The magic of {spell} scatters as your focus fails."
+
+# The room's line when a spell authors no cast_observer / wait_observer
+# (messaging M6 slice 4, R7). {actor} is the caster.
+cast_started_room:
+  - "{actor} begins weaving a spell."
+  - "{actor} draws a slow breath and begins to shape a spell."
+  - "{actor} goes still, gathering the threads of a spell."
+  - "{actor} closes their eyes in concentration."
+
+cast_continuing_room:
+  - "{actor} weaves magic with focused intent."
+  - "{actor} keeps their focus, the spell slowly taking shape."
+  - "{actor} works the threads of a spell, eyes fixed and distant."
+
+# Heard at cast start by a reader who does not perceive a hidden caster (R5).
+# Names nobody, says nothing of the target, fits any school.
+cast_started_unseen:
+  - "You hear a faint murmur nearby, though you see no one."
+  - "The air prickles, as if someone close by is gathering power."
+  - "A low whisper rises somewhere close, then fades."

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/narration"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -23,6 +24,15 @@ type CastingMessages struct {
 	// after the cast was initiated.
 	CastContinuing       []string `yaml:"cast_continuing"`
 	ConcentrationSlipped []string `yaml:"concentration_slipped"`
+	// CastStartedRoom and CastContinuingRoom are the room's line for a cast
+	// start and a fold round when the spell authors no *_observer line
+	// (messaging M6 slice 4, owner ruling R7). {actor} is the caster.
+	CastStartedRoom    []string `yaml:"cast_started_room"`
+	CastContinuingRoom []string `yaml:"cast_continuing_room"`
+	// CastStartedUnseen is what a reader who does not perceive a hidden
+	// caster hears when the cast starts (owner ruling R5). It names nobody
+	// and does not say who is targeted.
+	CastStartedUnseen []string `yaml:"cast_started_unseen"`
 }
 
 var (
@@ -57,9 +67,23 @@ func (cm *CastingMessages) Validate() error {
 		{"cast_started", cm.CastStarted},
 		{"cast_continuing", cm.CastContinuing},
 		{"concentration_slipped", cm.ConcentrationSlipped},
+		{"cast_started_unseen", cm.CastStartedUnseen},
 	}
 	for _, p := range pools {
 		if err := narration.ValidateVariants(narration.Variants{Actor: p.pool}, minCastingVariants, narration.RoleActor); err != nil {
+			return fmt.Errorf("casting-messages %s: %w", p.name, err)
+		}
+	}
+	// The two room pools hold {actor} lines, so they validate as Observer lines.
+	roomPools := []struct {
+		name string
+		pool []string
+	}{
+		{"cast_started_room", cm.CastStartedRoom},
+		{"cast_continuing_room", cm.CastContinuingRoom},
+	}
+	for _, p := range roomPools {
+		if err := narration.ValidateVariants(narration.Variants{Observer: p.pool}, minCastingVariants, narration.RoleObserver); err != nil {
 			return fmt.Errorf("casting-messages %s: %w", p.name, err)
 		}
 	}
@@ -105,7 +129,7 @@ func LoadCastingMessages() {
 
 	castingMessages = &cm
 	castingMessagesLoaded = true
-	mudlog.Info("spells.LoadCastingMessages()", "categories", 4, "Time Taken", time.Since(start))
+	mudlog.Info("spells.LoadCastingMessages()", "categories", 7, "Time Taken", time.Since(start))
 }
 
 // GetCastMessage picks a message from the named category, substituting
@@ -165,4 +189,63 @@ func GetCastMessage(category, spellName string, picker ...narration.Picker) stri
 		map[string]string{"{spell}": spellName},
 		pick,
 	).Actor
+}
+
+// CastRoomPool is the room's generic line for a phase whose spell authors no
+// *_observer line (owner ruling R7): cast_started_room for the cast,
+// cast_continuing_room for a fold round, none for magic. With no world
+// loaded (unit tests) it returns the one sentence each pool started from,
+// for the reason GetCastMessage gives: there is no authored text to shadow.
+func CastRoomPool(p Phase) []string {
+	if castingMessagesLoaded && castingMessages != nil {
+		switch p {
+		case PhaseCast:
+			if len(castingMessages.CastStartedRoom) > 0 {
+				return castingMessages.CastStartedRoom
+			}
+		case PhaseWait:
+			if len(castingMessages.CastContinuingRoom) > 0 {
+				return castingMessages.CastContinuingRoom
+			}
+		}
+	}
+	switch p {
+	case PhaseCast:
+		return []string{"{actor} begins weaving a spell."}
+	case PhaseWait:
+		return []string{"{actor} weaves magic with focused intent."}
+	}
+	return nil
+}
+
+// CastRoomLine picks and renders one generic room line for phase p (owner
+// ruling R7), with ctx's tokens. "" when the phase has no pool (magic). A nil
+// picker is passed through to narration.Render, as GetCastMessage does, so
+// production varies the line across the whole pool; textutil.Narrate would
+// pin it to the first line with narration.FirstPicker.
+func CastRoomLine(p Phase, ctx textutil.TokenContext, picker ...narration.Picker) string {
+	pool := CastRoomPool(p)
+	if len(pool) == 0 {
+		return ""
+	}
+	var pick narration.Picker
+	if len(picker) > 0 {
+		pick = picker[0]
+	}
+	return narration.Render(narration.Variants{Observer: pool}, ctx.Tokens(), pick).Observer
+}
+
+// CastStartedUnseenLine picks the line a reader who does not perceive a
+// hidden caster hears at cast start (owner ruling R5). A nil picker is passed
+// through to narration.Render as GetCastMessage does.
+func CastStartedUnseenLine(picker ...narration.Picker) string {
+	pool := []string{"You hear a faint murmur nearby, though you see no one."}
+	if castingMessagesLoaded && castingMessages != nil && len(castingMessages.CastStartedUnseen) > 0 {
+		pool = castingMessages.CastStartedUnseen
+	}
+	var pick narration.Picker
+	if len(picker) > 0 {
+		pick = picker[0]
+	}
+	return narration.Render(narration.Variants{Actor: pool}, nil, pick).Actor
 }

@@ -19,19 +19,20 @@ const (
 )
 
 // Narration assembles the variants for one phase: the caster's line is the
-// Actor, the room's line the Observer. Actee is empty; the target's own line
-// is authored in M6.
+// Actor, the room's line the Observer. The cast phase also carries the
+// target's own line as the Actee (cast_actee, messaging M6 slice 4); wait
+// and magic have none. actions.NarrateSpellPhase is the one sender.
 func (s *SpellData) Narration(p Phase) narration.Variants {
-	var caster, room string
+	var caster, target, room string
 	switch p {
 	case PhaseCast:
-		caster, room = s.CastUserText, s.CastRoomText
+		caster, target, room = s.CastUserText, s.CastActeeText, s.CastRoomText
 	case PhaseWait:
 		caster, room = s.WaitUserText, s.WaitRoomText
 	case PhaseMagic:
 		caster, room = s.MagicUserText, s.MagicRoomText
 	}
-	return narration.Variants{Actor: textutil.Pool(caster), Observer: textutil.Pool(room)}
+	return narration.Variants{Actor: textutil.Pool(caster), Actee: textutil.Pool(target), Observer: textutil.Pool(room)}
 }
 
 // Narrate renders one phase with the caster as the actor and the first target,
@@ -48,7 +49,7 @@ func (s *SpellData) validateNarration() error {
 	}{{"cast", PhaseCast}, {"wait", PhaseWait}, {"magic", PhaseMagic}}
 	for _, ph := range phases {
 		v := s.Narration(ph.p)
-		if len(v.Actor) == 0 && len(v.Observer) == 0 {
+		if len(v.Actor) == 0 && len(v.Actee) == 0 && len(v.Observer) == 0 {
 			continue
 		}
 		// No expected role set: a spell phase may legitimately author only the

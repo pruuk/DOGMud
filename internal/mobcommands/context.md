@@ -138,7 +138,8 @@ The `internal/mobcommands` package implements the AI command system for non-play
 - **Magic usage**: `cast`, `portal` - Spellcasting AI with tactical considerations.
   `Cast` (`cast.go`) begins a fold through `actions.InitiateCast`. A harmful
   cast begun out of combat commits the mob to its target at once
-  (`targeting.Commit`, `ReasonAttack`): the first player target, else the
+  (`targeting.Commit`, `ReasonCastFold`, which leaves a hidden caster hidden
+  until its spell lands, owner ruling R6): the first player target, else the
   first mob target `castFoeMob` lets it fight (not itself, not a
   non-combatant, not a companion of its own charmer). A harmful fold only
   steps in combat (`hooks.handleMobFoldCasting`), and `hooks.IdleMobs`

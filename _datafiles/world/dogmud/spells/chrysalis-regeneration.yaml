@@ -16,4 +16,5 @@ effect_type: condition
 condition_ids:
   - 33
 cast_actor: "You call upon deep Chrysalis energy to wrap the target in regenerative power."
+cast_actee: "{actor} turns to you, a vivid green glow pulsing in their hands."
 cast_observer: "{actor} draws deep Chrysalis energy, a vivid green glow pulsing."

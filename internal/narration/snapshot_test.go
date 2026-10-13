@@ -719,16 +719,22 @@ func buildCastingMessagesGolden(t *testing.T) string {
 
 	var b strings.Builder
 	fmt.Fprintf(&b, "# casting-messages.yaml store snapshot\n")
-	fmt.Fprintf(&b, "# bare file at tree root (not a directory), 24 lines at time of writing\n")
+	fmt.Fprintf(&b, "# bare file at tree root (not a directory), seven pools at time of writing\n")
 	fmt.Fprintf(&b, "# GetCastMessage used stdlib math/rand directly until 2026-09-07 (unreachable by any seam); this\n")
 	fmt.Fprintf(&b, "# task's Task 2 predecessor added the trailing picker param used here.\n")
-	fmt.Fprintf(&b, "# dimensions: category (already_casting/cast_started/cast_continuing/concentration_slipped)\n\n")
+	fmt.Fprintf(&b, "# dimensions: category (already_casting/cast_started/cast_continuing/concentration_slipped)\n")
+	fmt.Fprintf(&b, "# plus the M6 slice 4 pools: cast_started_room, cast_continuing_room, cast_started_unseen\n\n")
 
 	categories := []string{"already_casting", "cast_started", "cast_continuing", "concentration_slipped"}
 	for _, cat := range categories {
 		text := spells.GetCastMessage(cat, "Testspell", narration.SequencePicker())
 		fmt.Fprintf(&b, "casting|%s => %s\n", cat, text)
 	}
+
+	roomCtx := textutil.TokenContext{ActorName: "Kael", ActorPlainName: "Kael"}
+	fmt.Fprintf(&b, "casting|cast_started_room => %s\n", spells.CastRoomLine(spells.PhaseCast, roomCtx, narration.SequencePicker()))
+	fmt.Fprintf(&b, "casting|cast_continuing_room => %s\n", spells.CastRoomLine(spells.PhaseWait, roomCtx, narration.SequencePicker()))
+	fmt.Fprintf(&b, "casting|cast_started_unseen => %s\n", spells.CastStartedUnseenLine(narration.SequencePicker()))
 
 	// FALLBACK CASE (not the empty string): an unrecognized category yields
 	// an empty pool, and GetCastMessage's own fallback fires.

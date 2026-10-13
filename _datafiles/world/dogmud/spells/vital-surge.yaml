@@ -16,4 +16,5 @@ effect_type: condition
 condition_ids:
   - 32
 cast_actor: "You channel a sustained pulse of healing energy."
+cast_actee: "{actor} channels a warm, pulsing glow toward you."
 cast_observer: "{actor} channels a warm, pulsing glow."

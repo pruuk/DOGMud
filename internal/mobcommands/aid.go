@@ -9,7 +9,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/spells"
-	"github.com/GoMudEngine/GoMud/internal/textutil"
 )
 
 func Aid(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
@@ -57,19 +56,11 @@ func Aid(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	spellInfo := spells.GetSpell(`aidskill`)
 
-	// Send YAML cast text (if defined).
-	if spellInfo != nil && spellInfo.Narration(spells.PhaseCast).Len() > 0 {
-		castRoom := rooms.LoadRoom(mob.Character.RoomId)
-		roles := spellInfo.Narrate(spells.PhaseCast, textutil.TokenContext{
-			ActorName:      mob.Character.GetCharacterName(true),
-			ActorPlainName: mob.Character.GetCharacterName(false),
-			ActeeName:      p.Character.GetCharacterName(true),
-			ActeePlainName: p.Character.GetCharacterName(false),
-		})
-		// A mob caster has no client: its own line is rendered and dropped.
-		if roles.Observer != "" && castRoom != nil {
-			castRoom.SendTextVisual(messaging.CategorySpellVital, roles.Observer)
-		}
+	// Cast-start lines through the one body every caster shares (messaging M6
+	// slice 4). The aided player is the target.
+	if castRoom := rooms.LoadRoom(mob.Character.RoomId); castRoom != nil && spellInfo != nil {
+		actions.NarrateSpellPhase(actions.NewMobActorInRoom(mob, castRoom), spellInfo, spells.PhaseCast,
+			[]int{aidPlayerId}, nil, castRoom, messaging.CategorySpellVital)
 	}
 
 	mob.Character.CancelConditionsWithFlag(conditions.Hidden)

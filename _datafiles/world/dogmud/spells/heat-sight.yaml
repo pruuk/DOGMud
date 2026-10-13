@@ -17,5 +17,6 @@ effect_type: condition
 condition_ids:
   - 129
 cast_actor: "You turn your sight from light to warmth."
+cast_actee: "{actor} looks into your eyes, and a dull warmth gathers behind them."
 cast_observer: "{actor}'s eyes take on a dull red sheen."
 wait_actor: "You let the warmth of living things gather in your sight..."

@@ -46,7 +46,8 @@ func internalDirForSweepGuard(t *testing.T) string {
 }
 
 // directAggroWriters walks internal/ and returns file -> positions of every
-// direct SetAggro/EndAggro reference outside the two exempt packages.
+// direct SetAggro/SetAggroWithTrigger/EndAggro reference outside the two
+// exempt packages.
 func directAggroWriters(t *testing.T) map[string][]string {
 	t.Helper()
 	internalDir := internalDirForSweepGuard(t)
@@ -84,7 +85,9 @@ func directAggroWriters(t *testing.T) map[string][]string {
 			if !ok {
 				return true
 			}
-			if sel.Sel.Name == "SetAggro" || sel.Sel.Name == "EndAggro" {
+			// SetAggroWithTrigger is SetAggro with a named trigger (R6,
+			// messaging M6 slice 4); it is the same writer.
+			if sel.Sel.Name == "SetAggro" || sel.Sel.Name == "SetAggroWithTrigger" || sel.Sel.Name == "EndAggro" {
 				offenders[rel] = append(offenders[rel], fset.Position(sel.Pos()).String())
 			}
 			return true

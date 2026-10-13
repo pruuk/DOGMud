@@ -16,4 +16,5 @@ effect_type: condition
 condition_ids:
   - 34
 cast_actor: "You attune the target's mind for accelerated learning."
+cast_actee: "{actor} touches their temple and focuses on you, and a calm clarity stirs in your mind."
 cast_observer: "{actor} touches their temple and focuses deeply."

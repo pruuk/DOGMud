@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -209,7 +210,19 @@ func applySpellEffect(c spellEffectCtx) int {
 // target from the mob's own prior combat, exactly as usercommands/throw.go's
 // engageAfterThrow judges it for an area throw.
 func commitHarmfulSpellAggro(c spellEffectCtx, fresh bool) {
+	// A harmful spell breaks its caster's hiding when it lands, for every
+	// caster (owner ruling R6, messaging M6 slice 4). Explicit, because a
+	// caster already in combat (a mob committed at cast start by its
+	// fold-only commit, targeting.ReasonCastFold) makes no Idle to Engaging
+	// transition for the Awareness cascade to see.
+	revealForHarmfulSpell(c.casterChar, c.spell.SpellId)
 	tc := c.targetChar()
+	// A struck target is revealed too, fresh or not, as melee, the special
+	// moves and taunt reveal their defender (RevealForCombat). The fresh
+	// commit below used to be the only reveal, through the Awareness
+	// cascade, so a hidden mob already in combat (folding after its
+	// fold-only commit) stayed hidden under a spell.
+	revealForHarmfulSpell(tc, c.spell.SpellId)
 	if fresh {
 		targeting.Commit(tc, c.casterRef(), targeting.ReasonAttack)
 	}
@@ -219,6 +232,26 @@ func commitHarmfulSpellAggro(c spellEffectCtx, fresh bool) {
 	if u, m := c.casterUser(), c.targetMob(); u != nil && m != nil {
 		actions.SeedAggression(u, m, c.room, fresh)
 	}
+}
+
+// revealForHarmfulSpell ends ch's hiding because a harmful spell landed, as
+// its caster or its target (owner ruling R6, messaging M6 slice 4).
+//
+// Hiding only, through the Awareness machine, not RevealForCombat: that also
+// strips every cancel-on-combat condition (meditating, sleeping), which for
+// a combatant is the combat round's own job (CancelCombatConditions each
+// round), and a spell landing out of combat (a player caster's, before its
+// commit) would wake or rouse on the spot what melee only does to its
+// defender. The stealth records 9 and 31 still end, through the cascade's
+// condition mirror, with their end lines.
+func revealForHarmfulSpell(ch *characters.Character, spellId string) {
+	if ch == nil || ch.Awareness == nil || !ch.IsHidden() {
+		return
+	}
+	_ = ch.Awareness.TransitionToRevealing(state.TransitionReason{
+		Trigger:  awareness.TriggerCombatEntered,
+		Metadata: map[string]any{"spell": spellId},
+	})
 }
 
 // creditSpellDamage remembers who hurt a mob, as melee does: a player caster
@@ -282,23 +315,29 @@ func applySpellDamage(c spellEffectCtx) int {
 			fireItemProc(behaviortree.EventContext{EventType: "on_spell_hit"}, c.casterChar, tc, nil, dmg)
 		}
 	}
+	// Names are read BEFORE the commit, as the dot, knockdown and condition
+	// appliers read theirs: the commit reveals a hidden caster (R6) and a
+	// hidden target, and the strike line is judged against the room as the
+	// spell found it ("Something's spell strikes X!"). The reveal's own end
+	// line follows it.
+	casterName, targetName := c.casterName(), c.targetName()
+	casterHidden, targetHidden := c.hiddenFromRoom()
 	commitHarmfulSpellAggro(c, fresh)
 	if c.out.Defended {
 		return dmg // the defence triad above already told everyone
 	}
 	dmgDesc := combat.GetDamageDescription(dmg, tc.HealthMax.Value)
-	casterHidden, targetHidden := c.hiddenFromRoom()
 	messaging.SendTrio(messaging.Trio{
 		Actor: messaging.Say(c.category(), fmt.Sprintf(
 			`Your %s strikes %s! (<ansi fg="damage">%s</ansi>)%s`,
-			c.spell.Name, c.targetName(), dmgDesc, c.critTag())),
+			c.spell.Name, targetName, dmgDesc, c.critTag())),
 		Actee: messaging.Say(c.category(), fmt.Sprintf(
 			`%s's <ansi fg="cyan">%s</ansi> strikes you! (<ansi fg="damage">%s</ansi>)%s`,
-			c.casterName(), c.spell.Name, dmgDesc, c.critTag())),
+			casterName, c.spell.Name, dmgDesc, c.critTag())),
 		Observer: messaging.Say(c.category(), fmt.Sprintf(
 			`%s's <ansi fg="cyan">%s</ansi> strikes %s!`,
-			roomName(casterHidden, c.casterName()), c.spell.Name, roomName(targetHidden, c.targetName()))),
-	}, c.audience())
+			roomName(casterHidden, casterName), c.spell.Name, roomName(targetHidden, targetName))),
+	}, spellAudience(c.casterUser(), casterName, c.targetUser(), targetName, c.room))
 	return dmg
 }
 
@@ -443,10 +482,13 @@ func applySpellKnockdown(c spellEffectCtx) int {
 			knocked = false
 		}
 	}
+	// The defence triad's identities are read before the commit, which
+	// reveals a hidden caster (R6), as every other applier's are.
+	casterIdentity := spellDefenceIdentity(c.casterChar, c.casterUser(), c.room)
+	targetIdentity := spellDefenceIdentity(tc, c.targetUser(), c.room)
 	commitHarmfulSpellAggro(c, fresh)
 	sendSpellChannelDefenceMessages(c.room, c.category(), c.out,
-		spellDefenceIdentity(c.casterChar, c.casterUser(), c.room),
-		spellDefenceIdentity(tc, c.targetUser(), c.room), c.spell.Name, c.casterUser(), c.targetUser())
+		casterIdentity, targetIdentity, c.spell.Name, c.casterUser(), c.targetUser())
 	if c.out.Defended {
 		return dmg // the triad above already narrated it; a defended cast never knocks down
 	}

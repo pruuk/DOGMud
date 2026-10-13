@@ -29,7 +29,7 @@ var storeTextFieldOwners = []struct {
 	exempt map[string]string
 }{
 	{"internal/conditions", regexp.MustCompile(`\.(StartUserText|StartRoomText|TriggerUserText|TriggerRoomText|EndUserText|EndRoomText)\b`), "condition text fields", nil},
-	{"internal/spells", regexp.MustCompile(`\.(CastUserText|CastRoomText|WaitUserText|WaitRoomText|MagicUserText|MagicRoomText)\b`), "spell text fields", nil},
+	{"internal/spells", regexp.MustCompile(`\.(CastUserText|CastActeeText|CastRoomText|WaitUserText|WaitRoomText|MagicUserText|MagicRoomText)\b`), "spell text fields", nil},
 	{"internal/quests", regexp.MustCompile(`Rewards\.(PlayerMessage|RoomMessage)\b`), "quest reward messages", nil},
 	{"internal/crafting", regexp.MustCompile(`\.(SuccessMessage|FailureMessage|SuccessRoomMessage|FailureRoomMessage)\b`), "recipe message fields", map[string]string{
 		"internal/hooks/NewRound_IdleMobs_patrol.go":   "FailureMessage on the patrol plan struct, a log string unrelated to recipes",

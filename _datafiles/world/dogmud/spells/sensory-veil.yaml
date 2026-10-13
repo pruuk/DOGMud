@@ -17,4 +17,5 @@ effect_magnitude: 10
 condition_ids:
   - 3
 cast_actor: "You weave a Chrysalis shroud toward your target's senses."
+cast_actee: "{actor} traces a shimmering veil in the air toward your eyes."
 cast_observer: "{actor} traces a shimmering veil in the air."

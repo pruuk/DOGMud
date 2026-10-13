@@ -16,4 +16,5 @@ effect_type: damage
 effect_magnitude: 350
 damage_multiplier: 1.10
 cast_actor: "You channel Chrysalis energy, feeling the air shimmer with heat."
+cast_actee: "{actor} holds out their hands toward you as the air ripples with heat."
 cast_observer: "{actor} holds out their hands as the air begins to ripple with heat."

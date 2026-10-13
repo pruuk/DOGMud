@@ -16,5 +16,6 @@ effect_type: condition
 condition_ids:
   - 1
 cast_actor: "You coax the Chrysalis spores around you to luminesce."
+cast_actee: "{actor} concentrates on you as faint motes of light gather around you."
 cast_observer: "{actor} concentrates as faint motes of light gather."
 wait_actor: "You hold the image steady, coaxing more spores to glow..."

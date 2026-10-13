@@ -3,6 +3,7 @@ package targeting
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/combatphase"
 )
 
 // Reason says WHY a commit or release happened. It replaces the
@@ -35,6 +36,14 @@ const (
 	// weapon is still a Shooting subtype; swap the weapon between the shot and
 	// the target switch and the engagement quietly became DefaultAttack.
 	ReasonShoot
+
+	// ReasonCastFold is a caster entering combat only so its own harmful fold
+	// steps in the combat loop: a mob's harmful cast commits at cast start
+	// (#242). It engages exactly as ReasonAttack does, but under its own
+	// combat-phase trigger (combatphase.TriggerCastFold), which the Awareness
+	// cascade does not reveal on: starting a cast never breaks hiding, a
+	// harmful spell landing does (owner ruling R6, messaging M6 slice 4).
+	ReasonCastFold
 )
 
 // Commit enters combat with ref, and reports whether the engagement actually
@@ -63,7 +72,7 @@ func Commit(c *characters.Character, ref state.ActorRef, r Reason) bool {
 	if c == nil || ref.IsZero() {
 		return false
 	}
-	c.SetAggro(ref.UserId, ref.MobInstanceId, aggroTypeFor(r))
+	c.SetAggroWithTrigger(ref.UserId, ref.MobInstanceId, aggroTypeFor(r), triggerFor(r))
 	return committedTo(c, ref)
 }
 
@@ -76,8 +85,18 @@ func CommitAfter(c *characters.Character, ref state.ActorRef, r Reason, waitRoun
 	if c == nil || ref.IsZero() {
 		return false
 	}
-	c.SetAggro(ref.UserId, ref.MobInstanceId, aggroTypeFor(r), waitRounds)
+	c.SetAggroWithTrigger(ref.UserId, ref.MobInstanceId, aggroTypeFor(r), triggerFor(r), waitRounds)
 	return committedTo(c, ref)
+}
+
+// triggerFor names the combat-phase trigger a Reason commits under. Only
+// ReasonCastFold names its own; every other reason returns "", and
+// SetAggroWithTrigger derives the trigger from the aggro type as before.
+func triggerFor(r Reason) string {
+	if r == ReasonCastFold {
+		return combatphase.TriggerCastFold
+	}
+	return ""
 }
 
 // Release leaves combat.

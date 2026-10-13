@@ -1071,7 +1071,10 @@ record 31 and its end is told once, by 31's end line. `light_spell.go`'s
 record 31 as its magnitude, and `ApplyConditions` tells no start room line
 for a hidden-flag record landing on a holder already hidden. Every other
 condition line about a hidden holder reaches only the players who perceive
-them (#458, see `conditionLineUnseenBy`).
+them (#458, see `conditionLineUnseenBy`). `conditionLineUnseenBy`,
+`playersNotPerceiving`, `mobDisplayName`, `mobSeenName` and `mobHiddenFrom`
+are thin wrappers over `actions.UnseenBy`, `actions.PlayersNotPerceiving`,
+`actions.MobDisplayName`, `actions.MobSeenName` and `actions.MobHiddenFrom`.
 
 Also registers an `AfterTransition` callback on the Combat Phase machine
 that reveals a hidden character on `Idle → Engaging`. A surprise attack is
@@ -1081,6 +1084,26 @@ ambusher keeps their opening strike anyway, because that bonus reads
 cascade has run), not `IsHidden()`.
 `internal/hooks/surprise_reveal_test.go` pins both halves — the reveal
 fires, and it does not clear `Aggro.Type`.
+
+One exemption (owner ruling R6, messaging M6 slice 4): a transition under
+`combatphase.TriggerCastFold` does not reveal. That is a mob's harmful cast
+committing it at cast start only so its fold steps (`targeting.ReasonCastFold`,
+#242). Starting a cast never breaks hiding; a harmful spell breaks its
+caster's hiding when it lands, for every caster, through
+`revealForHarmfulSpell` (hiding only, via the Awareness machine, not
+`RevealForCombat`): in `commitHarmfulSpellAggro`, and in
+`resolveMobDrainArea` once the drain has drawn from anyone. The mob combat
+round skips its cancel-on-combat strip while the mob is folding, so the strip
+does not reveal it either; a cast that ends without landing leaves the strip
+to reveal it on its next round. The exemption is keyed on the trigger, not on
+`IsCasting`, so a hidden caster mid-fold that commits to combat any other way
+is still revealed by the cascade. Being struck reveals it whatever its combat
+state: melee, special moves and taunt through `RevealForCombat`, a harmful
+spell through `revealForHarmfulSpell` on the target in
+`commitHarmfulSpellAggro` (the area drain still reveals none of its
+targets). GMCP `Char.Enemies` lists no row for a hidden mob the viewer does
+not perceive. `spell_hiding_test.go` pins the hiding rule;
+`modules/gmcp/gmcp.CharEnemies_test.go` pins the enemies panel.
 
 `SetAggro` writes `c.Aggro` *before* it dual-writes the Combat Phase
 transition. That order matters for anything observing `Idle → Engaging`
@@ -1092,7 +1115,7 @@ the opening strike, which reads `Aggro.Type` later in the round.
 Events and cascades (per state transition, not per round):
 - Awareness `Visible → Hidden`: apply condition #9 (not for a shroud hide) + room text "sneaks away"
 - Awareness `Hidden → Visible`: remove condition #9 + room text "emerges from hiding"; clear the `sneaking` misc key (every exit from Hidden, #444), so `usercommands.Go` does not move a visible player as a sneaker
-- Combat Phase `Idle → Engaging`: trigger Awareness reveal cascade
+- Combat Phase `Idle → Engaging`: trigger Awareness reveal cascade (not under `TriggerCastFold`)
 
 ### Awareness_LightChange.go
 
@@ -1220,12 +1243,15 @@ line is one the name would give it away to.
 The same rule covers a hidden mob's own acts, by owner ruling R3 (#274: "a
 hidden actor does not emote. Silence, not an anonymous line."): the
 stat-gain emote (`emitMobStatGains`), the prone-recovery emote
-(`tickMobProneRecovery`), the weave (`sendMobWeaving`), the focus shift
-(`sendMobShiftsFocus`) and the drain-area landing line
-(`resolveMobDrainArea`) name the mob through `mobSeenName` and skip
-`mobActUnseenBy(room, mob)` (`NewRound_DoCombat_helpers.go`, a wrapper on
-`conditionLineUnseenBy`), so a see-hidden reader reads the name and the
-rest read nothing (#458; they read "Something ..." since #382). A spell
+(`tickMobProneRecovery`), the focus shift (`sendMobShiftsFocus`) and the
+drain-area landing line (`resolveMobDrainArea`) name the mob through
+`mobSeenName` and skip `mobActUnseenBy(room, mob)`
+(`NewRound_DoCombat_helpers.go`, a wrapper on `conditionLineUnseenBy`), so a
+see-hidden reader reads the name and the rest read nothing (#458; they read
+"Something ..." since #382). The fold-round weave is no longer one of these
+sites: it goes through `actions.NarrateSpellPhase`, which names the mob
+through `actions.MobSeenName` and skips `actions.UnseenBy(room, caster)`
+under the same rule. A spell
 disruption is the exception: a break, fizzle or falter is heard (owner
 ruling R4, #242), so `sendMobConcentrationBroke`, `sendMobSpellFailed` and
 the drain that finds no one to drain still read "Something's ..." to the
@@ -1845,10 +1871,10 @@ at the end of each per-pair tick via defer.
 the folds are already full. The rule is keyed on `char.GetUserId() == 0`,
 so a player's cast never meets it. A held step adds no folds, and
 `calcFoldConvictionCost` charges 0 for a step with no fold gain. On a held
-round `handleMobFoldCasting` calls `sendMobWindupWarning`, which sends the
-spell's `wait_observer` line (caster named by `mobSeenName`, same audience
-as `sendMobWeaving`) in place of the weave; a spell without the field or
-without that line keeps the weave. Disruptors need no change: the mob is
+round `handleMobFoldCasting` calls `actions.NarrateSpellPhase`, which sends
+the spell's `wait_observer` line (caster named by `MobSeenName`, sight only)
+in place of the generic weave; a spell without that line keeps the generic
+pool line. Disruptors need no change: the mob is
 casting for the whole windup, so `InterruptTargetCast` lands in any round.
 `mob_min_cast_rounds_test.go` pins all of it.
 

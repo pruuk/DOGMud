@@ -23,7 +23,9 @@ Shipped as slice U12a of the unified-targeting arc. U12b sweeps the remaining
 
 - `doc.go` — package doc, and the two layering rules in prose.
 - `commit.go` — `Reason`, `Commit`, `CommitAfter`, `Release`, `CommitTaunt`,
-  `ReasonForAggroType`, and the single private `aggroTypeFor` translation.
+  `ReasonForAggroType`, the single private `aggroTypeFor` translation, and
+  the private `triggerFor`, which gives `ReasonCastFold` its own combat-phase
+  trigger (`combatphase.TriggerCastFold`) and every other reason none.
 - `engagement.go` — `Engagement`, `EngagementOf`, `IsAimedAt`,
   `ConsumeOpeningStrike`.
 - `select.go` — `Kind`, `Criteria`, `Scope`, `Select` and the two strategies.
@@ -34,7 +36,11 @@ Shipped as slice U12a of the unified-targeting arc. U12b sweeps the remaining
 ## Core types
 
 ```go
-type Reason int // ReasonAttack, ReasonSurprise, ReasonRetaliate, ReasonTaunt, ReasonDisengage
+type Reason int // ReasonAttack, ReasonSurprise, ReasonRetaliate, ReasonTaunt, ReasonDisengage, ReasonShoot, ReasonCastFold
+// ReasonCastFold: a caster entering combat only so its own harmful fold steps
+// (mobcommands/cast.go, #242). It engages as ReasonAttack does, under
+// combatphase.TriggerCastFold, which the hooks Awareness cascade does not
+// reveal on: starting a cast never breaks hiding (owner ruling R6).
 
 type Engagement struct {
 	Phase          combatphase.State // STORED
