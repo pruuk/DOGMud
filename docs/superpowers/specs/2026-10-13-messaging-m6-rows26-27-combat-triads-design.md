@@ -145,8 +145,12 @@ full gates, merge.
 
 - New copy beyond partner lines and banner alignment; tier sizes as a goal;
   the selection code.
-- Defence messages and the special-moves store share the parallel-list shape;
-  a follow-up issue proposes the same record form for them.
+- The other stores that pair role lists by position get the same record form
+  in follow-ups: special-move narration #519 and grapple outcomes #520 (both
+  have suspected mismatches, so audit plus convert), defence messages #521 and
+  taunts #522 (none suspected, so convert only). Every other multi-role store
+  is single-variant, already authored as records (`position_control.yaml`),
+  or draws its roles independently by design (casting messages).
 
 ## Testing
 
