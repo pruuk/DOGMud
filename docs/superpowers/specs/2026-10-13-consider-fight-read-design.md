@@ -186,7 +186,9 @@ Worked examples (the playtest confirms them):
    If it is running, the player gets the existing not-ready refusal: no roll,
    no cost, no training.
 2. Read score = Perception (`ValueAdj`) + Search rank x `SkillWeight`. Target's
-   score = Charisma (`ValueAdj`) + Rhetoric rank x `SkillWeight`.
+   score = Charisma (`ValueAdj`) + Rhetoric rank x `SkillWeight`. The read
+   score pays the sight ramp (`messaging.SightMult` in the reader's room,
+   lighting plan 5b ruling); the target's side is voice and takes none.
 3. `combat.RunContest(read, []contest.Entry{{Name: "rhetoric", Score: target}})`,
    the one opposed-contest entry point (contest floor and gap compression
    included). Read quality:
@@ -197,8 +199,10 @@ Worked examples (the playtest confirms them):
    bands 1, 4, 7 and stalemate stay. Paces never slide; on a muddy read their
    line is hedged by the opener. The slide is deterministic given the roll, so
    tests can pin it.
-5. The roll trains through `actor.OnSkillUse("search")` on every roll that
-   claimed the cooldown. The "Do not re-add a progression call" comment is
+5. The roll trains through the resolved-contest applier,
+   `actor.AwardResolved(won, CandidateFor("search"))`, on every roll that
+   claimed the cooldown (full weight on a win, the failure fraction on a
+   loss; the progression seam guard forbids a raw `OnSkillUse` here). The "Do not re-add a progression call" comment is
    rewritten to say the cooldown is the gate.
 6. Output: an opener line by read quality ("You take a fresh look at X..."
    style; clear is confident, muddy hedges), the verdict line, then one pace

@@ -740,12 +740,22 @@ word on its own line (#430).
 
 **Function:** `Consider(actor, target) ConsiderResult`
 
-Computes a power-ratio assessment of `target` from `actor`'s perspective.
-- Returns `ConsiderResult` with `Ratio` (self power / target power), both
-  absolute power values, and target name/type.
-- **Progression:** Triggers `actor.OnStatUse("perception")`.
-- **Messaging:** Sends a colored difficulty string to the actor (e.g.,
-  "an easy opponent"). Mobs receive no feedback (SendText is a no-op).
+Reads a fight from `actor`'s side (#301): `ReadFight` (fight_read.go)
+classifies `combat.PredictFight` into a `Verdict` and two `Pace`s.
+- Returns `ConsiderResult`: `Read FightRead`, `Quality ReadQuality`,
+  `OnCooldown`, `TargetName`, `TargetIsPlayer`.
+- **Player:** claims the shared special-move cooldown (`ClaimSpecialMove`;
+  refused with the standard recover line when it is running), then rolls
+  Perception + Search x `SkillWeight`, times `messaging.SightMult` in the
+  reader's room, against Charisma + Rhetoric x `SkillWeight` through
+  `considerContest` (an alias of `combat.RunContest` tests pin). The roll sets
+  `ReadClear` / `ReadFair` / `ReadMuddy`; a muddy read slides a middle verdict
+  toward barely (`muddySlide`).
+- **Progression:** `actor.AwardResolved(won, CandidateFor("search"))`, only
+  behind the cooldown claim (`consider_no_progression_test.go`).
+- **Messaging:** opener, verdict line and pace line to a player. A mob actor
+  (including the AI companion, which words the read with `FightReadPlain`)
+  gets the bare `ReadFight`: no roll, no cooldown, no training, no text.
 
 ---
 
@@ -1706,7 +1716,7 @@ taunt path's ordering).
 
 | Action | Package | Actor→Target | Returns | Messaging | Cooldown |
 |--------|---------|---|---|---|---|
-| Consider | actions | self vs target | ConsiderResult | player only | none |
+| Consider | actions | self vs target | ConsiderResult | player only | shared (player) |
 | Defuse | actions | self vs trap | DefuseResult | varies | none |
 | Drink | actions | self | DrinkResult | both | none |
 | Forage | actions | self vs biome | ForageResult | varies | shared |

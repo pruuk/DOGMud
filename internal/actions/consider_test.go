@@ -83,8 +83,22 @@ func TestConsider_PlayerReadSendsThreeLinesAndTrainsSearch(t *testing.T) {
 	if r.Quality != ReadFair {
 		t.Errorf("quality %v, want fair for a narrow win", r.Quality)
 	}
-	if self.statUses["search"] != 1 || len(self.statUses) != 1 {
-		t.Errorf("trained %v, want search once and nothing else", self.statUses)
+	if _, n := self.awardedCandidate("search"); n != 1 || len(self.awards) != 1 || !self.awards[0].won {
+		t.Errorf("awards %+v, want one won award offering search", self.awards)
+	}
+	if len(self.statUses) != 0 {
+		t.Errorf("fired raw progression %v; consider trains only through AwardResolved", self.statUses)
+	}
+}
+
+// A lost read still trains, at the loss weight: the resolved-contest
+// convention (#301).
+func TestConsider_LostReadTrainsAsALoss(t *testing.T) {
+	fixRoll(t, contest.Result{Success: false})
+	self := newFakeActor("hero", 100, 100, true)
+	Consider(self, newFakeActor("orc", 100, 100, false))
+	if _, n := self.awardedCandidate("search"); n != 1 || len(self.awards) != 1 || self.awards[0].won {
+		t.Errorf("awards %+v, want one lost award offering search", self.awards)
 	}
 }
 
@@ -100,8 +114,8 @@ func TestConsider_CooldownRefusalNeitherRollsNorTrains(t *testing.T) {
 		t.Fatal("fixture could not claim the cooldown")
 	}
 	r := Consider(self, newFakeActor("orc", 100, 100, false))
-	if !r.OnCooldown || rolled || len(self.statUses) != 0 {
-		t.Fatalf("refusal: OnCooldown %v rolled %v trained %v", r.OnCooldown, rolled, self.statUses)
+	if !r.OnCooldown || rolled || len(self.statUses) != 0 || len(self.awards) != 0 {
+		t.Fatalf("refusal: OnCooldown %v rolled %v trained %v awards %+v", r.OnCooldown, rolled, self.statUses, self.awards)
 	}
 	if len(self.sent) != 1 || !strings.Contains(self.sent[0], "moment to recover") {
 		t.Fatalf("refusal text: %q", self.sent)
@@ -125,8 +139,8 @@ func TestConsider_MuddyReadSlidesTheVerdict(t *testing.T) {
 func TestConsider_MobReadIsSilentAndFree(t *testing.T) {
 	self := newFakeActor("goblin", 100, 100, false)
 	r := Consider(self, newFakeActor("hero", 100, 100, true))
-	if r.Quality != ReadNone || r.OnCooldown || len(self.statUses) != 0 || len(self.sent) != 0 {
-		t.Fatalf("mob read: %+v trained %v sent %q", r, self.statUses, self.sent)
+	if r.Quality != ReadNone || r.OnCooldown || len(self.statUses) != 0 || len(self.awards) != 0 || len(self.sent) != 0 {
+		t.Fatalf("mob read: %+v trained %v awards %+v sent %q", r, self.statUses, self.awards, self.sent)
 	}
 	if !SpecialMoveReady(self.char) {
 		t.Fatal("a mob's consider must not take the special-move cooldown")
