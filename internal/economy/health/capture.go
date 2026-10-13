@@ -3,6 +3,7 @@ package health
 import (
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/behaviortree"
@@ -340,10 +341,25 @@ func itemNameFor(itemId int) string {
 	return fmt.Sprintf("item %d", itemId)
 }
 
+// Placeholder states for a forager profile with no live mob.
+const (
+	ForagerStateDespawned     = "(despawned)"       // was live since boot, is gone now
+	ForagerStateNotYetSpawned = "(not yet spawned)" // never live since boot; its room has not loaded
+)
+
+// foragersSeen holds every forager mob id captureForagers has seen live
+// since boot, so a forager whose room loads late reads as not yet spawned
+// rather than despawned (#291).
+var (
+	foragersSeenMu sync.Mutex
+	foragersSeen   = map[int]bool{}
+)
+
 // captureForagers walks forager.AllProfiles() and, for each profile,
 // checks if a live mob instance exists. Emits distinct State strings
-// to distinguish despawned (no live mob) from idle-no-state (live mob
-// but empty BTreeState). For live mobs with valid forager_state, emits
+// to distinguish despawned (no live mob, seen live before), not yet
+// spawned (no live mob, never seen) and idle-no-state (live mob but
+// empty BTreeState). For live mobs with valid forager_state, emits
 // the full state snapshot including StuckRounds.
 func captureForagers() []ForagerSnapshot {
 	out := []ForagerSnapshot{}
@@ -363,14 +379,26 @@ func captureForagers() []ForagerSnapshot {
 
 	now := util.GetRoundCount()
 
+	foragersSeenMu.Lock()
+	defer foragersSeenMu.Unlock()
+	for mobId := range liveByMobId {
+		foragersSeen[mobId] = true
+	}
+
 	for _, p := range forager.AllProfiles() {
 		m, alive := liveByMobId[p.MobId]
 		if !alive {
+			// Never seen live since boot: its room has not loaded yet,
+			// which is not a despawn (#291).
+			state := ForagerStateDespawned
+			if !foragersSeen[p.MobId] {
+				state = ForagerStateNotYetSpawned
+			}
 			out = append(out, ForagerSnapshot{
 				MobId:         p.MobId,
 				Name:          p.Name,
 				Territory:     territoryFor(p.MobId),
-				State:         "(despawned)",
+				State:         state,
 				RoomId:        p.SanctuaryRoom,
 				CargoByBucket: map[string]int{},
 			})

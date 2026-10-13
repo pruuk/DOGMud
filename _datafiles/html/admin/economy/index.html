@@ -284,6 +284,9 @@
         if (snap.state === '(despawned)' || snap.state === '(not active)') {
             return '<span class="text-danger">despawned</span>';
         }
+        if (snap.state === '(not yet spawned)') {
+            return '<span class="text-muted">not yet spawned</span>';
+        }
         if (snap.stuck_rounds && snap.stuck_rounds > _stuckThreshold) {
             return '<span class="text-warning">stuck (&times;0.4)</span>';
         }
@@ -511,7 +514,7 @@
                 f.cargo_capacity || 1
             );
             var fd = d.deltas['1d'] && d.deltas['1d'].foragers && d.deltas['1d'].foragers[f.mob_id];
-            var isDespawned = f.state === '(despawned)' || f.state === '(not active)';
+            var isDespawned = f.state === '(despawned)' || f.state === '(not active)' || f.state === '(not yet spawned)';
             foragerHtml += tr([
                 f.name,
                 raw(fmtScore(sc.Score, sc.HasScore)),

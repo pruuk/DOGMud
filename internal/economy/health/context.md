@@ -115,9 +115,12 @@ instead of scoring zero and dragging it down.
   across the snapshot history, so a history window shorter than one cycle
   reports zero cycles — which looks identical to "broken". Check the window
   before concluding a caravan is stuck.
-- **`isDespawnedState` is how a dead entity is excluded.** An entity that is
-  merely still loading at boot can read as despawned; the dashboard has a known
-  rough edge here (no boot grace period).
+- **`isDespawnedState` is how a dead entity is excluded.** A forager profile
+  with no live mob reads `ForagerStateDespawned` only if `captureForagers` has
+  seen it live since boot (`foragersSeen`); one whose room has not loaded yet
+  reads `ForagerStateNotYetSpawned`, which scores as no data (`HasScore`
+  false, out of the mean) rather than 0 (#291). Tests reset the set with
+  `ResetForagersSeenForTest` (`export_test.go`).
 - **Scoring reads config through `ScoringConfigFromBalance()`.** Tests should
   build a `ScoringConfig` and call `ScoreWithConfig`, not mutate global config.
 - **Snapshot capture walks the entire world.** It is not cheap; it belongs on a

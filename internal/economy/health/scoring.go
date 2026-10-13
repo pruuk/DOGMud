@@ -789,7 +789,7 @@ type EntityScoreRow struct {
 // canonical "(despawned)" string and the legacy "(not active)" used
 // by snapshots captured before Phase 2.
 func isDespawnedState(s string) bool {
-	return s == "(despawned)" || s == "(not active)"
+	return s == ForagerStateDespawned || s == "(not active)"
 }
 
 // Score is the dashboard's main scoring entry point. Reads the live
@@ -928,6 +928,12 @@ func ScoreWithConfig(cur *Snapshot, history []*Snapshot, cfg ScoringConfig) Scor
 	var foragerSum float64
 	var foragerCount int
 	for _, f := range cur.Foragers {
+		// Not yet spawned is no data, not a failure: no score, and it stays
+		// out of the mean (#291).
+		if f.State == ForagerStateNotYetSpawned {
+			out.PerForager = append(out.PerForager, EntityScoreRow{InstId: f.InstId, Name: f.Name})
+			continue
+		}
 		cycles := CountForagerCycles(f.InstId, history)
 		expected := len(history) / 8
 		if expected < 1 {
