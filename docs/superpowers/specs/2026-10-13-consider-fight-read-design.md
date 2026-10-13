@@ -63,7 +63,7 @@ Read from `origin/master` at `8267eb06f` on 2026-10-13.
 | `ApplyMitigation`, `EffectiveMitigationFor`, pure; mitigation already folds wards, potions, shield spells, natural armor, gear | `damage_pipeline.go:106`, `:115`; `internal/characters/combat.go:155` |
 | Defence score per type: `(*Character).GetDefenseScoreFor(defenseType, includeSkill)` | `internal/characters/combat.go:284` |
 | Analytic hit chance: `dice.OpposedSuccessChance(attackerStat, defenderStat, stdDev) float64`, pure; spread `dice.StdDevFor(mean)` | `internal/dice/dice.go:171`, `:435` |
-| Opposed roll with contest floors: `dice.OpposedRollStat(atk, def) (bool, float64, RollResult, RollResult)` | `internal/dice/contest_floors.go:60` |
+| The single entry point for every opposed contest: `combat.RunContest(atkScore, entries []contest.Entry) contest.Result` (`Success`, attack-positive `Margin`); used by sneak, plant, defuse. `dice.OpposedRollStat` is deprecated with zero production callers | `internal/combat/run_contest.go:23`; `internal/contest/contest.go:35`; `internal/actions/move.go:315`; `internal/dice/contest_floors.go:60` |
 | Crit bar and crit size: `CritBarFor(atkRank, defRank)`, `CritDamageMultiplier(skillRank)` | `internal/combat/crit_bar.go:34`, `crit_damage.go:51` |
 | Live defence and contest roll dice and write state (`runBestOfAllDefenseWithRunner`, `RunContest`), so a prediction cannot call them | `combat_helpers.go:703`; `run_contest.go:23` |
 | Lifesteal: `atkChar.StatMod("lifesteal_pct")` heals that share of damage dealt; Hungering Touch grants it | `internal/hooks/NewRound_DoCombat_unified.go:390`; `_datafiles/world/dogmud/enchantments/hungering-touch.yaml` |
@@ -187,8 +187,10 @@ Worked examples (the playtest confirms them):
    no cost, no training.
 2. Read score = Perception (`ValueAdj`) + Search rank x `SkillWeight`. Target's
    score = Charisma (`ValueAdj`) + Rhetoric rank x `SkillWeight`.
-3. `dice.OpposedRollStat(read, target)`. Read quality:
-   - **clear**: won, and margin / `dice.StdDevFor(read)` >= `ConsiderClearReadZ` (1.0)
+3. `combat.RunContest(read, []contest.Entry{{Name: "rhetoric", Score: target}})`,
+   the one opposed-contest entry point (contest floor and gap compression
+   included). Read quality:
+   - **clear**: `Success`, and `Margin` / `dice.StdDevFor(read)` >= `ConsiderClearReadZ` (1.0)
    - **fair**: won
    - **muddy**: lost
 4. A muddy read slides verdict bands 2, 3, 5 and 6 one step toward band 4;
