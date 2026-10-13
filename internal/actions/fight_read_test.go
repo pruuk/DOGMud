@@ -46,6 +46,19 @@ func TestClassifyFight(t *testing.T) {
 		{"barely", p(8, 9, 0.9, 1.1), VerdictBarely},
 		{"likely lose", p(10, 5, 2, 0.5), VerdictLikelyLose},
 		{"lose badly", p(12, 2, 6, 0.2), VerdictLoseBadly},
+		// The ladder uses strict <, so a cost exactly on a band edge steps up.
+		{"cost on the scratches edge", p(5, 5, 0.25, 1), VerdictHurt},
+		{"cost on the barely edge", p(5, 5, 1.0, 1), VerdictLikelyLose},
+		{"cost on the lethal edge", p(5, 5, 3.0, 1), VerdictLoseBadly},
+	}
+	// Paces ride along with the verdict.
+	effigy := classifyFight(p(5000, 400, 12, 0.01), bal)
+	if effigy.YourPace != PaceAge || effigy.TheirPace != PaceAge {
+		t.Errorf("effigy paces %v/%v, want age/age", effigy.YourPace, effigy.TheirPace)
+	}
+	mega := classifyFight(p(inf, 1, inf, 0.001), bal)
+	if mega.YourPace != PaceNever || mega.TheirPace != PaceMoments {
+		t.Errorf("megalomania paces %v/%v, want never/moments", mega.YourPace, mega.TheirPace)
 	}
 	for _, c := range cases {
 		if got := classifyFight(c.in, bal).Verdict; got != c.want {
@@ -78,6 +91,11 @@ func TestReadQualityFor(t *testing.T) {
 	}
 	if got := readQualityFor(contest.Result{Success: true, Margin: 1.5 * sd}, 100, bal); got != ReadClear {
 		t.Errorf("wide win: %v, want clear", got)
+	}
+	// The clear test is >=, so a margin exactly on the threshold is clear.
+	edge := float64(bal.ConsiderClearReadZ) * sd
+	if got := readQualityFor(contest.Result{Success: true, Margin: edge}, 100, bal); got != ReadClear {
+		t.Errorf("win exactly on the threshold: %v, want clear", got)
 	}
 }
 

@@ -178,8 +178,8 @@ var verdictColor = map[Verdict]string{
 }
 
 var yourPaceText = map[Pace]string{
-	PaceMoments: `you'd beat them in moments`,
-	PaceShort:   `you'd beat them in a short fight`,
+	PaceMoments: `you could beat them in moments`,
+	PaceShort:   `you could beat them in a short fight`,
 	PaceLong:    `beating them would be a long fight`,
 	PaceAge:     `beating them would take an age`,
 	PaceNever:   `you could never beat them`,
@@ -197,7 +197,7 @@ var theirPaceText = map[Pace]string{
 func openerText(q ReadQuality, targetName string) string {
 	switch q {
 	case ReadClear:
-		return fmt.Sprintf(`You size up %s with a practised eye.`, targetName)
+		return fmt.Sprintf(`You size up %s with a practiced eye.`, targetName)
 	case ReadMuddy:
 		return fmt.Sprintf(`You study %s, unsure of what you see.`, targetName)
 	}
