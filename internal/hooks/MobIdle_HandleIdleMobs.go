@@ -30,6 +30,49 @@ import (
 // Handles default mob idle behavior
 //
 
+// narrateShopCraft tells the room what a shop keeper's background tick did.
+// A craft (success or failure) goes through the shared craft sender, each
+// onlooker judged by sight; there is no start line, since a shop craft is one
+// idle tick with no timed start (owner ruling 2026-10-13). A salvage is not a
+// craft and keeps its own line; a restock-only tick keeps its supply-cart
+// line. The line goes through the visual pipeline, which judges each reader's
+// sight, dark room or lit.
+func narrateShopCraft(mob *mobs.Mob, room *rooms.Room, result *mobs.CraftResult) {
+	if mob == nil || room == nil || result == nil {
+		return
+	}
+	switch {
+	case result.Restocked && !result.Success && result.RecipeName == "":
+		// Restock-only tick: supply cart delivery, no craft.
+		msgs := []string{
+			`A supply cart pulls up outside. <ansi fg="mobname">%s</ansi> sorts through a fresh delivery of materials.`,
+			`<ansi fg="mobname">%s</ansi> unpacks a crate of supplies and stacks them neatly behind the counter.`,
+			`A runner drops off a bundle of materials. <ansi fg="mobname">%s</ansi> checks the contents and nods.`,
+		}
+		sendVisualRoomText(room, messaging.CategoryMobIdle,
+			fmt.Sprintf(msgs[util.Rand(len(msgs))], mob.Character.Name))
+	case result.Salvaged:
+		// Salvage reports Success and shares the old success line; it is not
+		// a craft, so it never reaches the craft sender.
+		sendVisualRoomText(room, messaging.CategoryMobIdle, fmt.Sprintf(
+			`<ansi fg="mobname">%s</ansi> finishes crafting and sets a new item on the shelf.`,
+			mob.Character.Name))
+	case result.RecipeId != "":
+		// executeCraft and executeCraftLegacy fill RecipeId from a recipe they
+		// just resolved, so GetRecipe cannot miss for a shipped recipe; a nil
+		// here (a recipe unregistered mid-tick) sends nothing.
+		recipe := crafting.GetRecipe(result.RecipeId)
+		if recipe == nil {
+			return
+		}
+		phase := crafting.PhaseFailure
+		if result.Success {
+			phase = crafting.PhaseSuccess
+		}
+		actions.NarrateCraftPhase(actions.NewMobActorInRoom(mob, room), recipe, phase, room)
+	}
+}
+
 func HandleIdleMobs(e events.Event) events.ListenerReturn {
 
 	evt := e.(events.MobIdle)
@@ -105,30 +148,7 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
 	// and the result line below is sent to it.
 	craftRoom := rooms.LoadRoom(mob.Character.RoomId)
 	if result := mobs.TickMobCraft(mob, combat.SightRoom(craftRoom)); result != nil {
-		if room := craftRoom; room != nil {
-			var msg string
-			if result.Restocked && !result.Success && result.RecipeName == "" {
-				// Restock-only tick — supply cart delivery, no craft.
-				msgs := []string{
-					`A supply cart pulls up outside. <ansi fg="mobname">%s</ansi> sorts through a fresh delivery of materials.`,
-					`<ansi fg="mobname">%s</ansi> unpacks a crate of supplies and stacks them neatly behind the counter.`,
-					`A runner drops off a bundle of materials. <ansi fg="mobname">%s</ansi> checks the contents and nods.`,
-				}
-				msg = fmt.Sprintf(msgs[util.Rand(len(msgs))], mob.Character.Name)
-			} else if result.Success {
-				msg = fmt.Sprintf(
-					`<ansi fg="mobname">%s</ansi> finishes crafting and sets a new item on the shelf.`,
-					mob.Character.Name)
-			} else if result.RecipeName != "" {
-				msg = fmt.Sprintf(
-					`<ansi fg="mobname">%s</ansi> frowns at a failed attempt and discards the ruined materials.`,
-					mob.Character.Name)
-			}
-			// Visual text. The visual pipeline judges each reader's sight,
-			// dark room or lit; the dark-room branch that used to test the
-			// nightvision FLAG here is gone (lighting plan 5c).
-			sendVisualRoomText(room, messaging.CategoryMobIdle, msg)
-		}
+		narrateShopCraft(mob, craftRoom, result)
 		if result.Restocked {
 			restocked = true
 		}

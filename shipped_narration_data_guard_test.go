@@ -140,6 +140,23 @@ func TestShippedNarrationDataValidates(t *testing.T) {
 		}
 	})
 
+	t.Run("crafting-messages", func(t *testing.T) {
+		path := shippedWorldRoot + "/crafting-messages.yaml"
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("crafting-messages: %v", err)
+		}
+		// yaml.v2, matching internal/crafting/messages.go.
+		var cm crafting.CraftingMessages
+		if err := yamlv2.Unmarshal(data, &cm); err != nil {
+			t.Fatalf("crafting-messages: parse %s: %v", path, err)
+		}
+		skills := []string{"alchemy", "blacksmithing", "cooking", "enchanting", "jewelcrafting", "tailoring"}
+		if err := cm.Validate(skills); err != nil {
+			t.Errorf("crafting-messages: %v", err)
+		}
+	})
+
 	t.Run("conditions", func(t *testing.T) {
 		// THE ONE STORE WHOSE VALIDATION READS A BALANCE KNOB.
 		//
@@ -288,6 +305,7 @@ var narrationStoreWalkRoots = []string{
 	shippedWorldRoot + "/messaging",
 	shippedWorldRoot + "/weather/emotes",
 	shippedWorldRoot + "/casting-messages.yaml",
+	shippedWorldRoot + "/crafting-messages.yaml",
 	shippedWorldRoot + "/gossip_templates.yaml",
 	shippedWorldRoot + "/tips.yaml",
 	shippedWorldRoot + "/narration/special-moves",

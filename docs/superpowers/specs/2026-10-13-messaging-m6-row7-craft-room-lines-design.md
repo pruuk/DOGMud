@@ -1,0 +1,295 @@
+# Messaging M6 row 7: craft room lines
+
+Issue #370, ledger row 7 (`docs/superpowers/audits/messaging-m6-content-ledger.md`).
+Owner rulings 2026-10-13 are marked R1 to R3.
+
+## Problem
+
+A player who crafts is invisible to the room. Their start, success and failure
+send no room line at all, because the per-recipe observer slots
+(`success_observer`, `failure_observer`) exist but 0 of 127 recipes set them. A
+mob crafting is narrated, but by different rules: a sight-judged start line,
+a Go fallback finish line, and a silent failure. Two sibling paths that should
+match do not, and the player one is mute.
+
+## Rulings
+
+- **R1. Per-skill generic pools, no per-recipe copy.** Every craft room line
+  comes from a pool keyed by the recipe's skill. No recipe file changes.
+  Crafting is due for a rework later, so per-recipe copy waits for it.
+- **R2. The start is announced too**, for players as well as mobs. One sender
+  narrates start, success and failure for every crafter.
+- **R3. A reader who cannot see the crafter hears the craft.** A per-skill
+  sound line at start and at finish, the same sound for success and failure,
+  so the outcome is not given away. Same spirit as M6 slice 4's R5 (a hidden
+  cast start is heard as an unnamed murmur).
+- **R4. A craft that ends without finishing tells the room it stopped**
+  (owner, 2026-10-13, option C of three). Any exit from crafting other than
+  completion or death sends a per-skill `cancel_observer` seen line; a reader
+  who cannot see hears the skill's `finish_heard` sound, so a cancel sounds
+  like a finish and still gives no outcome away. Sent from one hook on the
+  activity machine rather than from each cancel site. See "Cancelled crafts"
+  below.
+
+## Facts verified against source (master `43d4eda93`)
+
+| Fact | Where |
+|---|---|
+| 127 recipe files: alchemy 37, blacksmithing 19, cooking 9, enchanting 24, jewelcrafting 18, tailoring 20 | `_datafiles/world/dogmud/recipes/<skill>/` |
+| The `default` world has no `recipes/` directory; `casting-messages.yaml` ships in both worlds | `_datafiles/world/default/` |
+| Observer slots `SuccessRoomMessage` `yaml:"success_observer"`, `FailureRoomMessage` `yaml:"failure_observer"`; no recipe sets either | `internal/crafting/crafting.go:53-54` |
+| Validator: room line must contain `{actor}`; tokens checked; boot panic on violation | `internal/crafting/narration.go` `validateNarration` |
+| Player tick success room line sent only when authored, via `sendVisualRoomText` | `internal/hooks/NewRound_UserRoundTick.go:672-674` |
+| Player tick failure, same shape | `internal/hooks/NewRound_UserRoundTick.go:709-711` |
+| Player instant success: `craftDeliverInstant` (SendTrio, Observer = `roles.Observer`, empty today) | `internal/usercommands/craft.go:198`, `:767` (`completeCraft`, enchanting instant) |
+| Player start: `craftDeliver`, Observer `messaging.NoLine` | `internal/usercommands/craft.go:205` |
+| Mob instant: `room.SendTextVisual(... MobRoomLine(PhaseSuccess, ..., "... works quickly and produces something."))` | `internal/mobcommands/craft.go:56` |
+| Mob start: `announceCraftBegin` loops players, `messaging.ReaderSight`, full line names the output via `craftBeginLine`, shapes line says "something", none gets nothing | `internal/mobcommands/craft.go:81-114` |
+| Mob tick success: `MobRoomLine(..., "... finishes their work.")` | `internal/hooks/NewRound_MobRoundTick.go:617` |
+| Mob tick failure: silent unless the recipe authors a line | `internal/hooks/NewRound_MobRoundTick.go:629` |
+| `RecipeSpec.MobRoomLine` is the only consumer of the mob fallback | `internal/crafting/mob_room_line.go:13` |
+| Shared tokens are `{actor}`, `{actee}`, `{actor_plain}`, `{actee_plain}` only; there is no item token | `internal/narration/render.go:129-132`, `internal/textutil/tokens.go` |
+| `items.SpecDisplayName(itemId int) string` | `internal/items/items.go:502` |
+| Pool store precedent: `spells.CastingMessages`, `LoadCastingMessages` (panics on missing/invalid), `CastRoomLine` renders via `narration.Render` with a picker | `internal/spells/casting_messages.go:114`, `:226`; loaded at `main.go:1982` |
+| Recipes load at `main.go:1642` (`crafting.LoadRecipeFiles`) | `main.go` |
+| One-sender precedent: `actions.NarrateSpellPhase`, guarded by `spell_phase_narration_guard_test.go` | `internal/actions/spell_phase_lines.go:32` |
+| Perception helpers: `UnseenBy(room, c) []int`, `PlayersNotPerceiving`, `MobSeenName(mob, room, viewingUserId)`, `MobDisplayName` | `internal/actions/perception.go` |
+| `messaging.ReaderSight(observer, room) SightDecision` carries the sleep gate (a sleeper is `SightNone`) | `internal/messaging/predicates.go:225` |
+| `Room.SendTextVisualHidingNames(cat, txt, names, exclude...)` hides names for a shapes reader | `internal/rooms/rooms.go:288` |
+| `Room.SendTextUnsighted(cat, txt, exclude...)` delivers on the audio channel to every `SightNone` reader, a sleeper included; the combat and spell-disruption sounds use it | `internal/rooms/rooms.go:566` |
+| A hidden spell caster's non-perceivers each get one `u.SendText` of an unnamed line | `internal/actions/spell_phase_lines.go` end of `NarrateSpellPhase` |
+
+**Correction to the design as presented:** the design said a sleeper reads
+nothing. The engine's one sound channel (`SendTextUnsighted`) reaches sleepers,
+and every other room sound (combat, spell disruption) already does. The craft
+sound follows that channel rather than adding a sleeper exception; a sleeper
+hears the hammer as they hear a fight. Noise waking is #336's business. The sender test
+`TestCraftPhase_SleeperHearsTheCraft` confirms a sleeper hears the craft.
+
+## Design
+
+### Store: `crafting-messages.yaml`
+
+New file `_datafiles/world/dogmud/crafting-messages.yaml`, one block per skill:
+
+```yaml
+blacksmithing:
+  start_observer:
+    - "{actor} sets to work at the forge on {item}."
+  success_observer:
+    - "{actor} quenches {item} with a hiss and sets it aside, finished."
+  failure_observer:
+    - "{actor} curses as the metal cracks, and the work is ruined."
+  start_heard:
+    - "You hear the ring of a hammer on metal nearby."
+  finish_heard:
+    - "The hammering nearby falls silent."
+```
+
+(Lines illustrative; final copy is a plan task.)
+
+- Each pool holds 3 to 4 variants, plain words, no dashes, no `: ` in an
+  unquoted scalar (all lines quoted), within the 80-column wrap.
+- `start_observer` and `success_observer` must contain `{actor}`; they may
+  contain `{item}`. `failure_observer` must contain `{actor}` and may not
+  contain `{item}` (the item was never made). Heard pools contain no token at
+  all: they name nobody.
+- `{item}` is a crafting-store token only. The store substitutes it before
+  handing the line to `narration.Render`, and the store's validator accepts it
+  where the shared `textutil.ValidateTokens` would not.
+- Go side, in `internal/crafting`: `CraftingMessages` (map of skill to
+  `SkillPools`), `LoadCraftingMessages()` (panics on a missing, unparseable or
+  invalid file, like `LoadCastingMessages`), called from `main.go` right after
+  `crafting.LoadRecipeFiles()`. Validation: every pool present and at least 3
+  deep, token rules above, and every skill used by a loaded recipe has a
+  block. An unknown skill block is an error too, so a misspelling cannot hide.
+- No default-world copy: the default world has no `recipes/`, and
+  `LoadRecipeFiles` already panics on the missing directory, so it does not
+  boot today (found while planning).
+- Render functions pick through the store's own `narration.Render` with a
+  picker, as `spells.CastRoomLine` does, never `textutil.Narrate` (which always
+  picks the first variant).
+
+### One sender: `actions.NarrateCraftPhase`
+
+```go
+func NarrateCraftPhase(crafter Actor, recipe *crafting.RecipeSpec, phase crafting.Phase, room *rooms.Room)
+```
+
+`crafting.Phase` gains `PhaseStart` alongside `PhaseSuccess` and
+`PhaseFailure`. The sender sends ROOM lines only; the crafter's own lines stay
+where they are (recipe `success_actor` / `failure_actor`, the "You begin
+crafting" line). For each player in the room other than the crafter:
+
+| Reader | Gets |
+|---|---|
+| Perceives the crafter, `SightFull` | seen line, crafter named, `{item}` = output display name |
+| Perceives the crafter, `SightShapes` | seen line, crafter name hidden, `{item}` = "something" |
+| `SightNone` (dark, blinded, asleep) | heard line: `start_heard` at start, `finish_heard` at success or failure |
+| Does not perceive a hidden crafter (`UnseenBy`) | the same heard line, whatever their sight |
+
+Composition, reusing existing senders:
+
+1. Render one seen line twice: `full` (item named) and `vague` (item
+   "something"). The crafter's name is the same in both; name hiding is the
+   room sender's job.
+2. Partition the room's players by `messaging.ReaderSight`, then send `full`
+   via `room.SendTextVisualHidingNames` excluding everyone but the full-sight
+   readers, and `vague` the same way for the shapes readers. Both exclude the
+   crafter and `UnseenBy`.
+3. Send the heard line via `room.SendTextUnsighted`, excluding the crafter and
+   every `UnseenBy` reader.
+4. Send the heard line to each `UnseenBy` reader other than the crafter with
+   `u.SendText`, whatever their sight, as `NarrateSpellPhase` does for R5.
+   Each reader is sent exactly once.
+
+Both the tagged and the plain crafter names are hidden from a shapes reader,
+so `{actor_plain}` in a seen line cannot leak a name.
+
+`{item}` resolves to `items.SpecDisplayName(recipe.Output.ItemId)` in the
+`itemname` colour, or "something" when the recipe has no output item (an
+enchant recipe) or the id does not resolve, the fallback `craftBeginLine` uses
+today. A mob crafter is named by `MobSeenName(mob, room, 0)`; a player by
+`GetCharacterName(true)`.
+
+Categories: seen lines `messaging.CategoryEmote` for a player crafter and
+`messaging.CategoryMobIdle` for a mob, as each path uses today. Heard lines use
+the same category as their seen line.
+
+### Sites moved onto the sender
+
+| Site | Today | After |
+|---|---|---|
+| Player start, `usercommands/craft.go` `result.Initiated` | no room line | `PhaseStart` |
+| Player enchanting timed start, `usercommands/craft.go` `craftEnchanting` | no room line | `PhaseStart` (found during build: enchanting shares the tick finish sites, so without it the room heard a finish with no start) |
+| Player instant, `craft.go:198` and `completeCraft` `:767` | empty Observer via `craftDeliverInstant` | `PhaseStart` then `PhaseSuccess`; `craftDeliverInstant` keeps only the crafter's line |
+| Player tick success/failure, `NewRound_UserRoundTick.go:672`, `:709` | authored-only `sendVisualRoomText` | `PhaseSuccess` / `PhaseFailure` |
+| Mob instant, `mobcommands/craft.go:56` | `MobRoomLine` with "produces something" fallback | `PhaseStart` then `PhaseSuccess` |
+| Mob start, `announceCraftBegin` | sight-judged Go line | `PhaseStart` |
+| Mob tick success/failure, `NewRound_MobRoundTick.go:617`, `:629` | fallback "finishes their work" / silent failure | `PhaseSuccess` / `PhaseFailure` |
+| Shop keepers' background crafting, `hooks/MobIdle_HandleIdleMobs.go` (`narrateShopCraft`, result of `mobs.TickMobCraft`) | ambient Go lines "finishes crafting and sets a new item on the shelf" / "frowns at a failed attempt" | `PhaseSuccess` / `PhaseFailure` only, no start (owner ruling 2026-10-13, option a: found in the playtest; a shop craft is one idle tick with no timed start, and a start line would double the shop-counter noise). Salvage and restock-only results are not crafts and keep their lines. `CraftResult` gains `RecipeId` so the hook can resolve the spec |
+
+The table is ten sites.
+
+An instant craft narrates start and success together, so the room is told the
+crafter began and finished, matching a timed craft's two moments.
+
+### Deleted
+
+`RecipeSpec.MobRoomLine` and `mob_room_line.go`, `announceCraftBegin`,
+`craftBeginLine`, the Observer half of `craftDeliverInstant`, both mob
+fallback strings, and the two shop-craft Go strings in
+`MobIdle_HandleIdleMobs.go` ("finishes crafting and sets a new item on the
+shelf" survives for the salvage case only; "frowns at a failed attempt and
+discards the ruined materials" is gone). The per-recipe `success_observer` / `failure_observer`
+fields STAY in the schema, unread by the sender; the crafting rework decides
+whether they return as an override or go. `RecipeSpec.Narration` keeps
+returning them so the validator still checks any that get authored, and the
+`textSurfaceRegistry` and snapshot entries for them stay.
+
+## Testing
+
+- **Store tests** (`internal/crafting`): shipped `crafting-messages.yaml`
+  loads; every recipe skill has a block; each pool has 3 or more variants;
+  `{actor}` required where stated; `{item}` refused in failure and heard
+  pools; no token in heard pools; unknown skill block refused; no dashes.
+- **Sender tests** (`internal/actions`), each proven able to fail first:
+  full-sight reader gets the item named; shapes reader gets "something" and no
+  crafter name; dark reader gets the heard line and no seen line; sleeper gets
+  the heard line; hidden crafter: a lit non-perceiver gets only the heard
+  line, a see-hidden reader gets the seen line; the crafter gets no room line;
+  enchant recipe renders "something" for a full-sight reader; failure and
+  success give a dark reader the same `finish_heard` pool.
+- **Root guard** `craft_phase_narration_guard_test.go`: no file but
+  `internal/actions/craft_phase_lines.go` reads a craft observer pool or calls
+  the crafting store's room renderers; no site calls `Narrate(...).Observer`
+  on a recipe. The Observer rule matches only a prefixed roles variable
+  (`successRoles.Observer` and the like) in files that use `crafting.Phase`,
+  because the round-tick hooks also hold condition narration in a variable
+  named plain `roles`.
+- **Goldens and snapshot**: re-record whatever the store snapshot harness
+  emits for the new store; existing recipe rows unchanged.
+- **Full gate**: `go test ./...` (root guards key on line numbers, so run
+  `go test .` after every batch), lint, two boots of the dogmud world.
+- **Playtest**: a player crafts a timed and an instant recipe in a lit room,
+  a dim room and a dark room with a second player watching; a mob does the
+  same, made to run `craft` by an admin command, since no shipped mob is
+  scripted to craft (`crafter: true` mobs restock without the command); a
+  hidden player crafts with a lit watcher. Each reader's lines checked against the table above.
+
+## Cancelled crafts (R4, amendment 2026-10-13)
+
+Found in the Task 4 review: `cancel`, walking away and damage end a timed
+craft after the room has read its start line, and the room then hears
+nothing. The owner chose one hook over a call at each site.
+
+### Facts verified against source (branch `feat/m6-row7-craft-room-lines`)
+
+| Fact | Where |
+|---|---|
+| Every exit from crafting goes through `TransitionToFree` (or `ForceFree`), which fires the inner machine's cascades and only THEN clears `m.crafting` | `internal/state/activity/rules.go:48-71` |
+| `CraftingData()` returns false once the state reads Free, so an `AfterTransition` cascade cannot read the recipe that ended | `internal/state/activity/activity.go:129-134` |
+| Triggers out of crafting: `craft_complete` (both round ticks only), `craft_cancel` (player and mob `cancel`, behaviour-tree `cancel_activity`), `movement_interrupt` (player `go`), `damage_interrupt` (`cancelCraftOrSalvageOnDamage`), `death` (`Activity_Cascades.go`) | `internal/state/activity/transitions.go`; `NewRound_UserRoundTick.go:557`, `NewRound_MobRoundTick.go:577`; `usercommands/cancel.go:56`, `mobcommands/cancel.go:36`, `behaviortree/actions_combat.go:290`; `usercommands/go.go:95`; `hooks/combat_shared_helpers.go:572-577`; `hooks/Activity_Cascades.go:35` |
+| An instant craft never enters the Crafting state, so it cannot trigger the hook | `internal/actions/craft.go` (ImmediateComplete returns before `TransitionToCrafting`) |
+| The activity machine's `Self()` is never set outside tests (`RegisterMachine` has no production caller), so the hook resolves the crafter from the `*Character` | `internal/state/activity/activity.go:160-168`; `characters.Character.ActorRef()` at `internal/characters/actor_identity.go:15` |
+| Per-character hooks are wired by `characters.OnCharacterCreated`; the Activity machine exists before it fires, and a mob instance gets fresh machines and a re-fire (`ResetForMobInstance`) | `internal/characters/character.go:426`, `:68-100`; `validate.go:662`, `:703-705`; precedent `hooks/Activity_Cascades.go` |
+| Player `go` cancels the craft before the move, in the old room | `internal/usercommands/go.go:90-99` |
+
+### Design
+
+1. **Engine: a craft-ended callback on the activity machine.** Because a
+   cascade cannot read the ended craft's data, `activity.Machine` gains
+   `OnCraftEnded(name string, fn func(d CraftingData, r state.TransitionReason))`.
+   `TransitionToFree` and `ForceFree` snapshot `m.crafting` before the
+   transition and, when the machine left Crafting successfully with data,
+   call every registered handler with the snapshot and the reason, after the
+   inner cascades and before returning. Nothing else in the machine changes.
+2. **Store:** each skill block gains a sixth pool, `cancel_observer` (three
+   lines, `{actor}` required, `{item}` refused: nothing was made). The
+   heard line for a cancel is the skill's existing `finish_heard`.
+   `CraftRoomLines` and `CraftHeardLine` accept a new `crafting.PhaseCancel`.
+3. **Sender:** `actions.NarrateCraftPhase` is unchanged in shape; the new
+   phase flows through it, so every reader rule above applies.
+4. **The hook:** in `internal/hooks`, a new `Activity_CraftEnded.go` wires,
+   per character via `characters.OnCharacterCreated`, an `OnCraftEnded`
+   handler that returns at once for trigger `craft_complete` or `death`;
+   otherwise it resolves the crafter (`c.ActorRef()`: a user by `UserId`, a
+   mob by `MobInstanceId`), the room (`rooms.LoadRoom(c.RoomId)`) and the
+   recipe (`crafting.GetRecipe(d.RecipeId)`), returns if any is missing, and
+   calls `actions.NarrateCraftPhase(..., crafting.PhaseCancel, room)`.
+5. **Ordering:** walking away sends the stop line before the departure line
+   (the cancel runs before the move, in the old room). Damage sends it where
+   the interrupt fires, inside the combat round. The crafter's own interrupt
+   lines are unchanged.
+
+### Corners
+
+- **Death:** no stop line; the death narration covers it. A killing blow that also interrupts the craft sends no stop line either (owner ruling 2026-10-13).
+- **Salvaging:** out of scope (no salvage room lines exist yet).
+- **A mob that moves mid-craft** keeps crafting and finishes in its new room
+  (pre-existing: mob movement never cancels mob crafting). Not a line
+  problem; filed as an issue.
+- **Root guard:** the hook is a second legitimate caller of
+  `NarrateCraftPhase`, not of the store renderers, so the one-sender guard
+  is unaffected.
+
+### Testing (R4)
+
+- Activity package: `OnCraftEnded` fires once with the snapshot data and
+  reason on `TransitionToFree` and `ForceFree` out of Crafting; never for an
+  exit from Casting or Salvaging; never on a vetoed or invalid transition.
+- Store: `cancel_observer` required, three deep, `{actor}` required, `{item}`
+  refused; `PhaseCancel` renders the cancel pool seen and `finish_heard`
+  heard.
+- Hook (hooks package): a player crafting in a lit room whose craft is
+  cancelled by trigger `craft_cancel`, `movement_interrupt` and
+  `damage_interrupt` gives a bystander one cancel line each; `craft_complete`
+  and `death` give none; a mob crafter cancelled gives the line too.
+- Snapshot golden re-recorded with the new pool.
+
+## Out of scope
+
+- Per-recipe copy (R1; the crafting rework).
+- A room line between start and finish of a long craft.
+- Enchanting naming the target item it enchants.
+- The crafter's own lines, which are already authored per recipe.

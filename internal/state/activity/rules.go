@@ -46,12 +46,17 @@ func (m *Machine) TransitionToSalvaging(d SalvagingData, r state.TransitionReaso
 // per-state data. All cancel / complete / interrupt paths route
 // through here.
 func (m *Machine) TransitionToFree(r state.TransitionReason) error {
+	ended := m.crafting
+	wasCrafting := m.State() == Crafting
 	if err := m.inner.TransitionTo(Free, r); err != nil {
 		return err
 	}
 	m.casting = nil
 	m.crafting = nil
 	m.salvaging = nil
+	if wasCrafting {
+		m.fireCraftEnded(ended, r)
+	}
 	return nil
 }
 
@@ -61,10 +66,15 @@ func (m *Machine) ForceFree(r state.TransitionReason) {
 	if m.State() == Free {
 		return
 	}
+	ended := m.crafting
+	wasCrafting := m.State() == Crafting
 	_ = m.inner.TransitionTo(Free, r)
 	m.casting = nil
 	m.crafting = nil
 	m.salvaging = nil
+	if wasCrafting {
+		m.fireCraftEnded(ended, r)
+	}
 }
 
 // AdvanceCastingFolds increments folds accumulated and conviction

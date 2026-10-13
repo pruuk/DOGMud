@@ -88,13 +88,15 @@ var textSurfaceRegistry = map[string]surfaceEntry{
 	// recipe files. Since M3 item 6 the recipe is a store with a door
 	// (internal/crafting/narration.go): the *_actor keys are the crafter's
 	// Actor line. The Observer slot keys, success_observer and
-	// failure_observer, are deliberately NOT registered: no shipped file
-	// sets them, so this guard would report them stale. Register them in the
-	// M6 commit that authors them. SPELLINGS CHANGED IN M4b-1: these were
-	// success_message / failure_message, and the Observer slot was
+	// failure_observer, are registered below: M6 row 7 authors them in
+	// _datafiles/world/dogmud/crafting-messages.yaml. SPELLINGS CHANGED IN
+	// M4b-1: these were success_message / failure_message, and the Observer
+	// slot was
 	// success_room_message / failure_room_message. --
-	"success_actor": {narration, "internal/crafting/crafting.go RecipeSpec.SuccessMessage -- the crafter's (Actor) line on a successful craft, 126 recipe files; rendered through RecipeSpec.Narrate. SPELLING CHANGED IN M4b-1: this key was `success_message`."},
-	"failure_actor": {narration, "internal/crafting/crafting.go RecipeSpec.FailureMessage -- the crafter's (Actor) line on a failed craft, paired with success_actor; rendered through RecipeSpec.Narrate. SPELLING CHANGED IN M4b-1: this key was `failure_message`."},
+	"success_actor":    {narration, "internal/crafting/crafting.go RecipeSpec.SuccessMessage -- the crafter's (Actor) line on a successful craft, 126 recipe files; rendered through RecipeSpec.Narrate. SPELLING CHANGED IN M4b-1: this key was `success_message`."},
+	"failure_actor":    {narration, "internal/crafting/crafting.go RecipeSpec.FailureMessage -- the crafter's (Actor) line on a failed craft, paired with success_actor; rendered through RecipeSpec.Narrate. SPELLING CHANGED IN M4b-1: this key was `failure_message`."},
+	"success_observer": {narration, "internal/crafting/messages.go SkillPools.SuccessObserver, the room-side line narrated when a craft succeeds, per skill, in crafting-messages.yaml; rendered through CraftRoomLines (messaging M6 row 7). Also internal/crafting/crafting.go RecipeSpec.SuccessRoomMessage (the per-recipe success_observer slot), read through RecipeSpec.Narrate but unread by any sender since M6 row 7; no shipped recipe file sets it."},
+	"failure_observer": {narration, "internal/crafting/messages.go SkillPools.FailureObserver, the room-side line narrated when a craft fails, per skill, in crafting-messages.yaml; rendered through CraftRoomLines (messaging M6 row 7). Also internal/crafting/crafting.go RecipeSpec.FailureRoomMessage (the per-recipe failure_observer slot), read through RecipeSpec.Narrate but unread by any sender since M6 row 7; no shipped recipe file sets it."},
 
 	// -- Enchanting narration: internal/enchantments/enchantments.go
 	// EnchantSpec. description_suffix below is the CONTENT half of this
@@ -271,10 +273,11 @@ var messagingSurfaceAudienceKeys = map[string]bool{
 	// the moment they were renamed -- the same trap the combat triad hit, one
 	// task earlier.
 	//
-	// magic_actor/magic_observer and success_observer/failure_observer are
-	// listed for completeness of the vocabulary; no shipped file authors them
-	// today, so the walk finds them nowhere and they are correctly absent from
-	// textSurfaceRegistry.
+	// magic_actor/magic_observer are listed for completeness of the
+	// vocabulary; no shipped file authors them today, so the walk finds them
+	// nowhere and they are correctly absent from textSurfaceRegistry.
+	// success_observer/failure_observer are authored by crafting-messages.yaml
+	// and registered above.
 	"start_actee": true, "start_observer": true,
 	"trigger_actee": true, "trigger_observer": true,
 	"end_actee": true, "end_observer": true,
@@ -1279,15 +1282,18 @@ var narrationViewpointRegistry = map[string]narrationEntry{
 	"cleanup/cleanup.go|You trash the <ansi fg=\"item\">%s</ansi> for good.":                                            {verdictCorrect, true, false, true, "trashing your own item from your own backpack; the room line exists (room.SendText two lines below, gated on not sneaking), so this is genuinely actor+observer, no actee since destroying your own item has no third party. Not part of the audit; read against source for this guard."},
 	"follow/follow.go|<ansi fg=\"username\">%s</ansi> stopped following you.":                                           {verdictCorrect, true, true, false, "the followed party privately learns their follower stopped; a follow relationship change has no room-facing component in this codebase. Not part of the audit; read against source for this guard."},
 	"follow/follow.go|You start following <ansi fg=\"username\">%s</ansi>.":                                             {verdictCorrect, true, true, false, "starting to follow someone notifies the two parties only, same as the stop case above; no room broadcast for a private relationship state change. Not part of the audit; read against source for this guard."},
-	"hooks/NewRound_UserRoundTick.go|<ansi fg=\"green\">%s</ansi>":                                                      {verdictCorrect, true, false, true, "M3 item 6: multi-round craft succeeds (enchanting included); crafter gets the recipe's success line, the room its Observer slot, empty until M6. No second party, so no actee. Read against source for this guard."},
-	"hooks/NewRound_UserRoundTick.go|<ansi fg=\"red\">%s</ansi>":                                                        {verdictCorrect, true, false, true, "M3 item 6: multi-round craft fails; crafter gets the recipe's failure line, the room its Observer slot, empty until M6. No second party, so no actee. Read against source for this guard."},
-	"hooks/NewRound_UserRoundTick.go|You attempt to stand, but slip back down in the chaos of battle!":                  {verdictCorrect, true, false, true, "automatic recovery from prone fails; same shape as the success case above, actor+observer via sendVisualRoomText, no actee."},
-	"hooks/NewRound_UserRoundTick.go|You scramble to your feet!":                                                        {verdictCorrect, true, false, true, "automatic recovery from prone succeeds; the room sees it via sendVisualRoomText, actor+observer, no actee since recovering from prone is self-only."},
-	"hooks/charm_spell.go|<ansi fg=\"cyan\">%s's eyes glaze as your will takes hold. It is yours.</ansi>":               {verdictCorrect, true, false, true, "a charm spell binds a mob; sendVisualRoomText broadcasts it to the room two lines below, actee is a mob."},
-	"hooks/spell_foldanchor.go|A Chrysalis anchor locks into place here.":                                               {verdictCorrect, true, false, true, "audit: Chrysalis fold anchor set -- self-targeted spell (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, hooks/spell_foldanchor.go:18)"},
-	"hooks/spell_purgeaffliction.go|<ansi fg=\"green\">You purge the afflictions from your body.</ansi>":                {verdictCorrect, true, false, true, "self-cast purge (caster targets themselves); sendVisualRoomText broadcasts to the room two lines below, no actee since there is no separate target. Sibling of the audited spell_purgeaffliction.go row for the other-target branch, which the audit already ruled full trio."},
-	"hooks/spell_resolution.go|You concentrate on the <ansi fg=\"item\">%s</ansi>...":                                   {verdictCorrect, true, false, true, "identify-via-spell concentration flavor; sendVisualRoomText broadcasts to the room, no actee since the target is an item, not a person."},
-	"hooks/spell_resolution.go|Your spell erupts outward but finds no targets.":                                         {verdictCorrect, true, false, true, "a disruption spell that finds no targets; sendVisualRoomText broadcasts it, no actee since nothing was hit. Same sendVisualRoomText-wrapper visibility this walk has and tools/narration_viewpoint_scan.py's regex does not, per the guard's header comment."},
+	// hooks/NewRound_UserRoundTick.go's multi-round craft success and failure
+	// lines (`<ansi fg="green">%s</ansi>` / red) were here (M3 item 6,
+	// verdictCorrect). Messaging M6 row 7 (2026-10-13) moved their room half
+	// to actions.NarrateCraftPhase, which this walk does not track, so the
+	// sites left the walk. Removed rather than re-keyed: no gap was fixed.
+	"hooks/NewRound_UserRoundTick.go|You attempt to stand, but slip back down in the chaos of battle!":    {verdictCorrect, true, false, true, "automatic recovery from prone fails; same shape as the success case above, actor+observer via sendVisualRoomText, no actee."},
+	"hooks/NewRound_UserRoundTick.go|You scramble to your feet!":                                          {verdictCorrect, true, false, true, "automatic recovery from prone succeeds; the room sees it via sendVisualRoomText, actor+observer, no actee since recovering from prone is self-only."},
+	"hooks/charm_spell.go|<ansi fg=\"cyan\">%s's eyes glaze as your will takes hold. It is yours.</ansi>": {verdictCorrect, true, false, true, "a charm spell binds a mob; sendVisualRoomText broadcasts it to the room two lines below, actee is a mob."},
+	"hooks/spell_foldanchor.go|A Chrysalis anchor locks into place here.":                                 {verdictCorrect, true, false, true, "audit: Chrysalis fold anchor set -- self-targeted spell (docs/superpowers/audits/2026-09-07-narration-viewpoint-audit.md, hooks/spell_foldanchor.go:18)"},
+	"hooks/spell_purgeaffliction.go|<ansi fg=\"green\">You purge the afflictions from your body.</ansi>":  {verdictCorrect, true, false, true, "self-cast purge (caster targets themselves); sendVisualRoomText broadcasts to the room two lines below, no actee since there is no separate target. Sibling of the audited spell_purgeaffliction.go row for the other-target branch, which the audit already ruled full trio."},
+	"hooks/spell_resolution.go|You concentrate on the <ansi fg=\"item\">%s</ansi>...":                     {verdictCorrect, true, false, true, "identify-via-spell concentration flavor; sendVisualRoomText broadcasts to the room, no actee since the target is an item, not a person."},
+	"hooks/spell_resolution.go|Your spell erupts outward but finds no targets.":                           {verdictCorrect, true, false, true, "a disruption spell that finds no targets; sendVisualRoomText broadcasts it, no actee since nothing was hit. Same sendVisualRoomText-wrapper visibility this walk has and tools/narration_viewpoint_scan.py's regex does not, per the guard's header comment."},
 
 	// M3 item 5a (2026-09-11) added the self-cast branches of applyPlayerEffect's
 	// purge, heal and condition arms here (one line to the caster and one room

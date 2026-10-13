@@ -31,6 +31,7 @@ var proseDashDirs = []string{
 // proseDashFiles are bare player-text files at the world root.
 var proseDashFiles = []string{
 	"casting-messages.yaml",
+	"crafting-messages.yaml",
 }
 
 // The characters around a spaced dash may be a tag bracket or a token brace

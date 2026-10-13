@@ -1801,6 +1801,20 @@ start those players hear one `cast_started_unseen` line. Root guard
 `spell_phase_narration_guard_test.go` keeps every other site from sending
 these lines itself.
 
+`NarrateCraftPhase` (`craft_phase_lines.go`, M6 row 7) is its sibling for
+crafts: one sender for `crafting.PhaseStart`, `PhaseSuccess` and
+`PhaseFailure`, for a player or a mob crafter, sending ROOM lines only (the
+crafter's own lines stay with the sites). Each player but the crafter reads
+one line, by band: full sight reads the skill's seen line with the output
+item named; shapes reads the same variant with the crafter's tagged and plain
+names hidden and the item as "something"; no sight (dark, blinded, asleep)
+reads the skill's heard line, `start_heard` at start and `finish_heard` at
+success and failure alike; a reader who does not perceive a hidden crafter
+(`UnseenBy`) reads the heard line whatever their sight. Each reader is sent
+exactly once. Lines come from `crafting-messages.yaml` (see
+`internal/crafting/context.md`). Root guard `craft_phase_narration_guard_test.go`
+keeps every other site from sending craft room lines itself.
+
 `MobDisplayName`, `MobSeenName`, `MobHiddenFrom`, `PlayersNotPerceiving` and
 `UnseenBy` (`perception.go`) are the one answer to who perceives a character
 and what a reader calls a mob; the lowercase helpers in `hooks`

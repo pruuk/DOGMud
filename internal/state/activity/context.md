@@ -213,6 +213,21 @@ func (m *Machine) ForceFree(r state.TransitionReason)
 Idempotent transition to `Free` from any state. Used by admin commands
 and emergency cleanup. Does not return an error.
 
+### OnCraftEnded
+
+```go
+func (m *Machine) OnCraftEnded(name string, fn func(CraftingData, state.TransitionReason))
+```
+
+Registers a handler called after the machine leaves `Crafting` through
+`TransitionToFree` or `ForceFree`, with the data of the craft that ended and
+the reason. It exists because an `AfterTransition` cascade runs once the state
+already reads `Free`, when `CraftingData()` no longer answers. Handlers run
+after the state and data are cleared, with no lock held. They do not fire for
+Casting or Salvaging, nor when the machine was already Free. The hook in
+`internal/hooks/Activity_CraftEnded.go` uses it to tell the room (messaging
+M6 row 7, R4).
+
 ### Advance helpers
 
 ```go

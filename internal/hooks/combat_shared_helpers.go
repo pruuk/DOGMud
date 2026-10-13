@@ -569,15 +569,29 @@ func cancelCraftOrSalvageOnDamage(ch *characters.Character) {
 	}
 	switch ch.Activity.State() {
 	case activity.Crafting:
-		_ = ch.Activity.TransitionToFree(state.TransitionReason{
+		err := ch.Activity.TransitionToFree(state.TransitionReason{
 			Trigger: activity.TriggerDamageInterrupt,
 			Actor:   ch.Activity.Self(),
 		})
+		// Tell a player crafter, as walking away does (usercommands/go.go).
+		// The room already hears the craft stop; a mob is told nothing.
+		// "Pain", not "blow": a bleed tick lands here too, with no blow (#515).
+		if err == nil && ch.GetUserId() > 0 {
+			if u := users.GetByUserId(ch.GetUserId()); u != nil {
+				u.SendText(messaging.CategorySystem, `<ansi fg="red">The pain interrupts your crafting.</ansi>`)
+			}
+		}
 	case activity.Salvaging:
-		_ = ch.Activity.TransitionToFree(state.TransitionReason{
+		err := ch.Activity.TransitionToFree(state.TransitionReason{
 			Trigger: activity.TriggerDamageInterrupt,
 			Actor:   ch.Activity.Self(),
 		})
+		// Tell a player salvager, as walking away does (usercommands/go.go).
+		if err == nil && ch.GetUserId() > 0 {
+			if u := users.GetByUserId(ch.GetUserId()); u != nil {
+				u.SendText(messaging.CategorySystem, `<ansi fg="red">The pain interrupts your salvaging.</ansi>`)
+			}
+		}
 	}
 }
 

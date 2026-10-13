@@ -623,7 +623,8 @@ func HandleIdleMobs(e events.Event) events.ListenerReturn {
     // import cycles in the mobs package.
     craftRoom := rooms.LoadRoom(mob.Character.RoomId) // loaded once
     if result := mobs.TickMobCraft(mob, combat.SightRoom(craftRoom)); result != nil {
-        // Emit room flavor text (success/failure)
+        // narrateShopCraft: craft success/failure via actions.NarrateCraftPhase
+        // (no start line); salvage and restock-only keep their own lines
         // Emit MobCraftedRare world event if SkillMinimum >= CrafterRareThreshold
     }
 
@@ -1446,7 +1447,7 @@ effects have already fired.
 
 ## Activity Machine Cascade + Observers (chunk 3)
 
-One file in the hooks package wires the Activity machine into the engine
+Two files in the hooks package wire the Activity machine into the engine
 without creating import cycles (same pattern as chunks 0-2).
 
 ### Activity_Cascades.go
@@ -1476,6 +1477,15 @@ concentration-break path). A separate `AfterTransition` cascade for
 combat-entry was evaluated and removed as unreachable (the veto fires
 before the transition succeeds for craft/salvage; nothing to cascade
 for casting).
+
+### Activity_CraftEnded.go
+
+`characters.OnCharacterCreated(wireCraftEndedNarration)` registers an
+`Activity.OnCraftEnded` handler. When a craft ends without finishing (cancel,
+movement or damage interrupt) it calls `actions.NarrateCraftPhase` with
+`crafting.PhaseCancel`, so the room sees the work set aside. Completion
+(`TriggerCraftComplete`) and `TriggerDeath` are skipped: the round tick
+narrates its own outcome, and death has its own narration.
 
 ### Call-site wirings (not AfterTransition)
 

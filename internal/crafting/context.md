@@ -261,8 +261,6 @@ A recipe is a narration store. Read its text only through the door in
 - `(*RecipeSpec).Narrate(p, textutil.TokenContext) narration.Roles`: renders
   through `textutil.Narrate`, crafter as the actor (`{actor}`,
   `{actor_plain}`).
-- `(*RecipeSpec).MobRoomLine(p, mobName, fallback) string`: a mob crafter's
-  room line, the authored Observer line or the fallback.
 - `(RecipeSpec).ValidateNarrationTokens() []string`: unknown `{token}`
   spellings across all four narration fields, via `textutil.ValidateTokens`.
 - `Validate` refuses: an empty `success_actor` or `failure_actor`; a
@@ -270,8 +268,43 @@ A recipe is a narration store. Read its text only through the door in
   (M4a, matching conditions and spells). The loader panics on the error, so a
   typo cannot ship and render raw to the player.
 
-Room messages are empty in all 126 shipped recipes until M6 authors them; a
-player craft with none sends nothing to the room.
+Since M6 row 7 the per-recipe `success_observer` / `failure_observer` are
+unread: no shipped recipe sets them, and the room line comes from
+`actions.NarrateCraftPhase` and the store below. They stay in the schema, and
+the validator still checks any that get authored, until the crafting rework
+decides their fate.
+
+## Room lines (crafting-messages.yaml)
+
+`messages.go` loads `_datafiles/world/dogmud/crafting-messages.yaml`: one
+block per recipe skill (six shipped), six pools each. Only the dogmud world
+ships it; the default world has no `recipes/` and does not boot today.
+
+- `SkillPools`: `start_observer`, `success_observer`, `failure_observer`,
+  `cancel_observer` (seen lines, `{actor}` required, `{item}` allowed in start
+  and success only) and `start_heard`, `finish_heard` (sound lines naming
+  nobody). `finish_heard` serves success, failure and cancel alike so a sound
+  never gives the outcome away.
+- `CraftingMessages`: skill to `SkillPools`. `Validate` needs every pool at
+  least 3 deep, the token rules above, and a block for every skill a loaded
+  recipe uses; an unknown skill block is an error.
+- `LoadCraftingMessages()`: called from `main.go` after `LoadRecipeFiles`;
+  panics on a missing, unparseable or invalid file. `RecipeSkills()` lists the
+  skills the cross-check uses.
+- `TokenItem` (`{item}`): this store's own event token; the store puts it in
+  the token map it hands `narration.Render`. It reads "something" when the
+  reader cannot make the item out or the recipe makes no item.
+- `PhaseStart` and `PhaseCancel` join `PhaseSuccess` and `PhaseFailure`. They
+  have no recipe text. `PhaseCancel` is a craft that ended unfinished (R4); its
+  seen line is `cancel_observer`, sent by the hook in
+  `internal/hooks/Activity_CraftEnded.go`.
+- `CraftRoomLines(skill, phase, ctx, item, picker...)` returns the seen line
+  twice from one variant (`full` names the item, `vague` says "something").
+  `CraftHeardLine(skill, phase, picker...)` returns the sound line.
+- `SeedCraftingMessagesForTest(cm)` installs a store and returns the restore
+  func.
+
+Call these only through `actions.NarrateCraftPhase`; a root guard enforces it.
 
 ## Global State
 

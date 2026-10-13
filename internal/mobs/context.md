@@ -572,14 +572,20 @@ nil for unity, never a typed-nil `*rooms.Room`.
 type CraftResult struct {
     Success      bool
     RecipeName   string
+    RecipeId     string // set by executeCraft / executeCraftLegacy; empty for salvage and restock-only
     OutputItemId int
     SkillMinimum int
     MobName      string
     Zone         string
+    Salvaged     bool
+    Restocked    bool
 }
 ```
 
-The caller (`MobIdle_HandleIdleMobs.go`) handles room flavor text and emits
+The caller (`MobIdle_HandleIdleMobs.go`, `narrateShopCraft`) sends a craft's
+room lines through `actions.NarrateCraftPhase` (success or failure, no start;
+the hook resolves the spec with `crafting.GetRecipe(RecipeId)`), keeps the old
+lines for salvage and restock-only results, and emits
 `MobCraftedRare` world events when `SkillMinimum >= CrafterRareThreshold`.
 
 ### Config (in `config.balance.go`)

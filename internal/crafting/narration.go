@@ -15,6 +15,14 @@ type Phase uint8
 const (
 	PhaseSuccess Phase = iota
 	PhaseFailure
+	// PhaseStart is a craft beginning (messaging M6 row 7). It has no recipe
+	// text: Narration returns empty variants for it, and the room's start line
+	// comes from the crafting-messages store.
+	PhaseStart
+	// PhaseCancel is a craft that ended without finishing (R4): cancelled,
+	// walked away from, or interrupted by damage. Like PhaseStart it has no
+	// recipe text; its lines come from the crafting-messages store.
+	PhaseCancel
 )
 
 // Narration assembles the variants for one outcome: the crafter's line is the

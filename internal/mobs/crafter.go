@@ -25,6 +25,7 @@ var saveShopFn = func(zone string, mobId int, roomId int) error {
 type CraftResult struct {
 	Success      bool
 	RecipeName   string
+	RecipeId     string // the crafted recipe's id; empty for salvage and restock-only results
 	OutputItemId int
 	SkillMinimum int
 	MobName      string
@@ -518,6 +519,7 @@ func executeCraft(mob *Mob, recipe *crafting.RecipeSpec, shopInv *shops.ShopInve
 
 	result := &CraftResult{
 		RecipeName:   recipe.Name,
+		RecipeId:     recipe.RecipeId,
 		OutputItemId: recipe.Output.ItemId,
 		SkillMinimum: recipe.SkillMinimum,
 		MobName:      mob.Character.Name,
@@ -579,6 +581,7 @@ func executeCraftLegacy(mob *Mob, recipe *crafting.RecipeSpec, room messaging.Ro
 
 	result := &CraftResult{
 		RecipeName:   recipe.Name,
+		RecipeId:     recipe.RecipeId,
 		OutputItemId: recipe.Output.ItemId,
 		SkillMinimum: recipe.SkillMinimum,
 		MobName:      mob.Character.Name,
