@@ -17,23 +17,32 @@ from the one combat uses, so the two can drift.
 
 ## Decisions (owner, 2026-10-13)
 
-1. The verdict tells the player **what the fight would cost them**, not who
+1. The read tells the player **what the fight would cost them**, not who
    wins: from "it won't lay a finger on you" to "you have zero chance".
-2. Seven bands (below). The bottom band is measured from the other side: you
+2. **Verdict and pace are separate.** A single cost number mixes who comes out
+   ahead with how fast the fight goes: the Straw Effigy (vast health, pillow
+   hits) read "it would kill you quickly" for a fight hundreds of rounds long,
+   or "won't lay a finger on you" once regeneration outpaced its hits. So the
+   read gives a verdict (who comes out ahead, how cleanly) and two paces (how
+   long you would take to bring it down, how long it would take to bring you
+   down). Pace wording is general: how fast, never by what means (no melee
+   versus spell split).
+3. Eight verdict bands (below), including a stalemate for fights neither side
+   would finish soon. The bottom band is measured from the other side: you
    would die before taking a sliver of its health.
-3. Both characters are read **as they stand now**: buffs, wards, potions,
+4. Both characters are read **as they stand now**: buffs, wards, potions,
    enchantments (Hungering Touch's lifesteal) and conditions count. Special
    moves, ambush openers, parties and room effects are out of v1.
-4. `consider` becomes an **opposed roll**: the considerer's Perception plus
+5. `consider` becomes an **opposed roll**: the considerer's Perception plus
    Search against the target's Charisma plus Rhetoric. The roll sets how clear
    the read is and the read trains Search (and Perception, its primary stat).
-5. `consider` **claims the shared special-move cooldown**, so it competes with
+6. `consider` **claims the shared special-move cooldown**, so it competes with
    special moves and spells. Re-reading is allowed; it costs a move each time.
    The help file says plainly that it is a skill roll and results vary.
-6. A lost roll hedges the wording and may slide a middle band one step toward
+7. A lost roll hedges the wording and may slide a middle band one step toward
    the centre. The two extreme bands never slide. No extra slide on a critical
    failure: too cruel to new players, whose reads are already weaker.
-7. **One set of shared helpers**, not similar-but-separate code. PowerScore
+8. **One set of shared helpers**, not similar-but-separate code. PowerScore
    keeps its absolute one-number shape, but its offense and defense terms are
    rebuilt on the same helpers as the fight prediction.
 
@@ -116,24 +125,52 @@ input is recomputed by a copy.
 - **Dent** = rounds for it to kill you x your net damage per round to it / its
   current health (the share of its health you take before dying).
 
-### The seven bands
+### Pace: how long each side needs
 
-Checked in this order; limits are balance knobs in `config.balance.go` and
-`_datafiles/config.yaml` (initial values below, tuned by the playtest):
+Each side's rounds-to-kill maps to one pace on a shared scale. Limits are
+balance knobs in `config.balance.go` and `_datafiles/config.yaml` (initial
+values below, tuned by the playtest):
 
-| # | Condition | Meaning (copy written separately) |
+| Pace | Rounds to kill |
+|---|---|
+| moments | <= `ConsiderPaceMoments` (2) |
+| a short fight | <= `ConsiderPaceShort` (6) |
+| a long fight | <= `ConsiderPaceLong` (20) |
+| an age | more than that |
+| never | no net damage (rounds to kill is infinite) |
+
+Pace wording is general: it says how fast, never by what means. The read gives
+two paces: how long you would take to bring it down, and how long it would
+take to bring you down.
+
+### The verdict bands
+
+Checked in this order; limits are balance knobs as above:
+
+| Band | Condition | Meaning (copy written separately) |
 |---|---|---|
-| 1 | it deals you no net damage, or cost < `ConsiderBandUntouched` (0.05) | it won't lay a finger on you |
-| 7 | dent < `ConsiderBandHopelessDent` (0.05) | what could you possibly be thinking? You have zero chance |
+| 1 untouched | it deals you no net damage, or cost < `ConsiderBandUntouched` (0.05) | it won't lay a finger on you |
+| 7 hopeless | dent < `ConsiderBandHopelessDent` (0.05) | what could you possibly be thinking? You have zero chance |
+| S stalemate | both paces are "an age" | neither of you is ending this soon |
 | 2 | cost < `ConsiderBandScratches` (0.25) | a few scratches at most |
 | 3 | cost < `ConsiderBandHurt` (0.6) | you'll win, but you'll feel it |
 | 4 | cost < `ConsiderBandBarely` (1.0) | you'd win, barely, if at all |
-| 5 | cost < `ConsiderBandLethal` (3.0) | it would likely kill you |
-| 6 | otherwise | it would kill you quickly |
+| 5 | cost < `ConsiderBandLethal` (3.0) | you'd likely lose |
+| 6 | otherwise | you'd lose badly |
 
-Band 1 is checked first so a target that cannot hurt you never reads hopeless
-just because you cannot hurt it either. Rounds-to-kill of infinity (zero net
-damage) is handled explicitly, not by floating-point accident.
+No verdict mentions pace ("quickly" is gone from band 6); pace is the second
+line's job. Band 1 is checked first so a target that cannot hurt you never
+reads hopeless just because you cannot hurt it either. Infinite rounds-to-kill
+(zero net damage) is handled explicitly, not by floating-point accident.
+
+Worked examples (the playtest confirms them):
+
+- **Straw Effigy** (vast health, pillow hits): if your regeneration outpaces
+  its hits, band 1 with paces "an age" / "never" ("It won't lay a finger on
+  you. It would take you an age to bring down, and it could never bring you
+  down."). If its hits get through, stalemate with "an age" / "an age".
+- **A fragile hard hitter**: band 4 with paces "moments" / "a short fight".
+- **Megalomania with a starter character**: band 7.
 
 ### The read roll (players only)
 
@@ -146,14 +183,18 @@ damage) is handled explicitly, not by floating-point accident.
    - **clear**: won, and margin / `dice.StdDevFor(read)` >= `ConsiderClearReadZ` (1.0)
    - **fair**: won
    - **muddy**: lost
-4. A muddy read slides bands 2 to 6 one step toward band 4; bands 1, 4 and 7
-   stay. The slide is deterministic given the roll, so tests can pin it.
+4. A muddy read slides verdict bands 2, 3, 5 and 6 one step toward band 4;
+   bands 1, 4, 7 and stalemate stay. Paces never slide; on a muddy read their
+   line is hedged by the opener. The slide is deterministic given the roll, so
+   tests can pin it.
 5. The roll trains through `actor.OnSkillUse("search")` on every roll that
    claimed the cooldown. The "Do not re-add a progression call" comment is
    rewritten to say the cooldown is the gate.
 6. Output: an opener line by read quality ("You take a fresh look at X..."
-   style; clear is confident, muddy hedges), then the band line. 7 band lines
-   plus 3 openers, written to the player-copy rules (no numbers, 80 columns).
+   style; clear is confident, muddy hedges), the verdict line, then one pace
+   line built from two clauses (your pace against it, its pace against you).
+   Copy: 8 verdict lines, 5 + 5 pace clauses and 3 openers, written to the
+   player-copy rules (no numbers, 80 columns).
 
 Mobs (`mobcommands/consider.go`) and the AI companion use `PredictFight`
 directly: no roll, no cooldown, no training. The companion's flee check moves
@@ -181,19 +222,40 @@ Special-move bonuses (knockdown, grapple control), ambush openers, party and
 companion help, room effects and mutators, and resource pools running dry.
 A party fight reads as one on one.
 
+## Drift guards
+
+PowerScore, consider, mob consider and the companion must never drift apart
+again. Four guards, cheapest first:
+
+1. **No second copy.** A repo-root guard test (like the shipped-data guards)
+   fails if `combat/calculations.go`, `actions/consider.go` or the companion
+   reintroduces its own swing, hit or damage formula: PowerScore must call the
+   layer 1 profiles, and consider and the companion must call `PredictFight`.
+2. **Same inputs.** For a set of fixture characters, PowerScore's offense and
+   defense terms equal the layer 1 profile outputs.
+3. **Prediction matches combat.** For a few fixed matchups (a bare starter
+   against a rat, a buffed fighter against a mid-level mob, a caster), run the
+   real combat round code many times with a fixed seed; the predicted damage
+   per round must land within a stated tolerance of the measured average. A
+   combat change that bypasses the shared helpers turns this red. It also
+   measures how rough the read really is, which informs the band limits.
+4. **Verdicts pinned.** The Straw Effigy, a starter rat and the Megalomania
+   case are named tests pinned to their expected verdict and paces.
+
 ## Testing
 
 - Layer 1 and 2 helpers against hand-built characters, including a lifesteal
   weapon, a ward, a heal-over-time, and a spellcaster.
-- Every band at its limits, band 1 before band 7, and zero-damage sides.
-- Read tiers and the muddy slide with a fixed roll; bands 1, 4 and 7 never
-  slide; the cooldown refusal does not roll or train.
-- A guard that the live combat path and the profile call the same extracted
-  input functions (no second copy of the swing formula or attack multipliers).
+- Every band and pace at its limits, band 1 before band 7, stalemate, and
+  zero-damage sides.
+- Read tiers and the muddy slide with a fixed roll; bands 1, 4, 7 and
+  stalemate never slide; paces never slide; the cooldown refusal does not roll
+  or train.
+- The four drift guards above.
 - PowerScore before/after table as above.
-- Playtest gate: consider the Straw Effigy (band 7), a starter rat (band 1)
-  and a mid-level mob, both bare and buffed; repeat a consider to see the
-  cooldown and a changed read.
+- Playtest gate: consider the Straw Effigy, a starter rat and a mid-level mob,
+  both bare and buffed, checking each against the worked examples; repeat a
+  consider to see the cooldown and a changed read.
 
 ## Files expected to change
 
