@@ -181,8 +181,8 @@ func TestCancelCraftOnDamage_PlayerCrafterIsToldMobIsNot(t *testing.T) {
 	cancelCraftOrSalvageOnDamage(crafter.Character)
 
 	own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
-	if len(own) != 1 || own[0] != "The blow interrupts your crafting." {
-		t.Fatalf("crafter read %q, want one line %q", own, "The blow interrupts your crafting.")
+	if len(own) != 1 || own[0] != "The pain interrupts your crafting." {
+		t.Fatalf("crafter read %q, want one line %q", own, "The pain interrupts your crafting.")
 	}
 	got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId))
 	if len(got) != 1 || got[0] != "Kael stops forging." {
@@ -245,8 +245,8 @@ func TestCancelSalvageOnDamage_PlayerSalvagerIsTold(t *testing.T) {
 	cancelCraftOrSalvageOnDamage(crafter.Character)
 
 	own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
-	if len(own) != 1 || own[0] != "The blow interrupts your salvaging." {
-		t.Fatalf("salvager read %q, want one line %q", own, "The blow interrupts your salvaging.")
+	if len(own) != 1 || own[0] != "The pain interrupts your salvaging." {
+		t.Fatalf("salvager read %q, want one line %q", own, "The pain interrupts your salvaging.")
 	}
 	if got := events.DrainQueuedMessagesForTest(craftEndedWatcherId); len(got) != 0 {
 		t.Fatalf("watcher heard %q, want nothing", got)
