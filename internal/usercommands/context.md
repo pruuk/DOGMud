@@ -585,6 +585,10 @@ a gate.
   use) and a wrapper that renders `Busy` from a shared body's own result
   (`Remove`, below): the wording must not fork between "refused before the
   call" and "refused inside the call".
+- **`Go` is the one interrupter** (`go.go`): it stops a craft or salvage
+  through `actions.InterruptWorkOnMove`, the helper every mob own move shares
+  (#512), and tells the player "Your movement interrupts your crafting." or
+  "...salvaging." from the state it returns. Casting walks on.
 - **`Get`** (`get.go`): refuses up front on `actions.TooDarkToGet`
   ("You can't see anything to pick up!"), asked before the container, corpse
   and bag branches so all of them stay refused in the dark too.

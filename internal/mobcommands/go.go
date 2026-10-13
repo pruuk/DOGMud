@@ -78,6 +78,10 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			// by the room before the move; the entry line, after it.
 			departSnap := room.VisualSnapshot()
 
+			// #512: running off is the mob's own move, so it stops a craft
+			// or salvage before it leaves, as actions.RelocateMob does.
+			actions.InterruptWorkOnMove(&mob.Character)
+
 			room.RemoveMob(mob.InstanceId)
 			actions.ClearRoomAggroOnDeparture(room, mob.InstanceId)
 			destRoom.AddMob(mob.InstanceId)

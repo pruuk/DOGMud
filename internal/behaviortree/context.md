@@ -444,6 +444,11 @@ are subject to perception-scaled reaction delays (see below).
 |--------|--------|-------------|
 | `try_store_excess` | `chest_room` (int, required) | Forager chest-deposit workflow. Multi-tick: each tick advances one step — pathto chest room → unlock lockbox → put items in lockbox → lock lockbox. Returns Failure if `chest_room` param is missing, satchel is empty, or the chest room has no lockbox container. Engine handles chest-full gracefully: failed puts are no-ops and items remain in satchel for the next cycle. |
 
+The forager's recall (`tickForagerRecalling` in `actions_forager.go`) moves
+the mob straight to its anchor room instead of casting fold-recall. It is the
+forager's own move, so it calls `actions.InterruptWorkOnMove` before leaving
+and stops a craft or salvage as walking does (#512).
+
 ### Archer / Ranged — varied delays (ranged-weapons feature)
 
 | Action | Params | Description |

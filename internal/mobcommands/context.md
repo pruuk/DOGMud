@@ -310,6 +310,13 @@ why a command available to both players and mobs must be registered twice
   path. Its exit line is judged by the room before the move
   (`Room.VisualSnapshot`, then `SendTextVisualWithAudioToSnapshot`, #456);
   the entry line still goes through `sendMovementMessage`, judged after it.
+- **A mob's move stops its craft or salvage** (#512, owner ruling
+  2026-10-13), as a player's does: both `Go` paths call
+  `actions.InterruptWorkOnMove` before the room change (the exit path inside
+  `actions.RelocateMob`, the forced path directly), so the stop line is heard
+  in the room the mob leaves. The call sits at the move itself, not at the
+  top of `Go`, because `Go` is also the fallback for any unrecognised mob
+  command and must not end work for a command that is not a move.
 
 ## Fixtures (lighting 5e)
 

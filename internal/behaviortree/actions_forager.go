@@ -15,6 +15,7 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/economy"
 	"github.com/GoMudEngine/GoMud/internal/forager"
@@ -525,6 +526,9 @@ func tickForagerRecalling(
 					Actor:   mob.Character.Activity.Self(),
 				})
 			}
+			// #512: the recall is the forager's own move, so it stops a
+			// craft or salvage before leaving, as walking does.
+			actions.InterruptWorkOnMove(&mob.Character)
 			if fromRoom != nil {
 				fromRoom.RemoveMob(mob.InstanceId)
 			}

@@ -78,7 +78,8 @@ func ClearRoomAggroOnDeparture(room *rooms.Room, departingInstanceId int) {
 // RelocateMob moves a mob from one room to the room through exitName, with no
 // gate and no charge: the caller has already decided the move happens.
 // Walking (mobcommands.Go, after its lock checks) and a successful flee
-// (hooks.handleMobFlee) both end here. It drops aggro the old room held on the
+// (hooks.handleMobFlee) both end here. It first stops a craft or salvage
+// (InterruptWorkOnMove, #512), then drops aggro the old room held on the
 // mob, narrates the exit and the entry (sight-gated, with a sound fallback),
 // plays the movement sounds, and pulls an NPC party's idle members after
 // their leader.
@@ -99,6 +100,10 @@ func RelocateMob(mob *mobs.Mob, from *rooms.Room, exitName string, dest *rooms.R
 	// on their own way out, so the exit line is judged by the room before
 	// the move. The entry line keeps being judged after it.
 	departSnap := from.VisualSnapshot()
+
+	// #512: a mob's own move stops its craft or salvage, as a player's does,
+	// and before it leaves, so the stop is told to the room it is leaving.
+	InterruptWorkOnMove(&mob.Character)
 
 	from.RemoveMob(mob.InstanceId)
 	ClearRoomAggroOnDeparture(from, mob.InstanceId)

@@ -3,6 +3,7 @@ package hooks
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -72,6 +73,9 @@ func TransportCompanions(owner *users.UserRecord, oldRoomId, newRoomId int) {
 				Actor:   mob.Character.Activity.Self(),
 			})
 		}
+		// #512: following is the companion's own move, as a player follower's
+		// go is, so it stops a craft or salvage while still in the old room.
+		actions.InterruptWorkOnMove(&mob.Character)
 
 		// Remove from current room.
 		curRoom := rooms.LoadRoom(mob.Character.RoomId)

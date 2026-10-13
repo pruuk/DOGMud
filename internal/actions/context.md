@@ -305,7 +305,8 @@ wrappers that render the outcome.
   is the mob's move with no gate and no charge: walking
   (`mobcommands.Go`, after its own lock check, passing `actions.MobIsSneaking(mob)`)
   and a successful flee (`hooks.handleMobFlee`, passing
-  `actions.MobIsSneaking(mob)`) both end here. It removes the mob from `from`, calls
+  `actions.MobIsSneaking(mob)`) both end here. It first calls
+  `InterruptWorkOnMove` (#512), then removes the mob from `from`, calls
   `ClearRoomAggroOnDeparture`, adds it to `dest`, narrates both sides
   (sight-gated, with a sound fallback) unless `sneaking`, plays the movement
   sounds either way, and pulls an NPC party's idle (not in-combat) members
@@ -366,7 +367,25 @@ func QuoteMove(actor Actor, dest *rooms.Room) MoveCharge  // prices, spends noth
 func ChargeMove(actor Actor, dest *rooms.Room) MoveCharge // pays, or refunds AP on a stamina refusal
 func QuoteMobStep(mob *mobs.Mob, exitName string) MoveCharge // quotes a mob's next step by exit name; a step that does not resolve quotes as affordable
 func TrainSearchOnMove(actor Actor) // the rare Search training a completed step earns
+func InterruptWorkOnMove(c *characters.Character) activity.State // stops Crafting/Salvaging; returns what stopped, or Free
 ```
+
+**`InterruptWorkOnMove` is movement's one interrupt** (#512, owner ruling
+2026-10-13): a move stops a craft or salvage, for a player and a mob alike,
+through this one helper so the two cannot drift apart. It transitions
+Crafting or Salvaging to Free with `activity.TriggerMovementInterrupt` and
+returns the state it stopped (`activity.Free` when nothing stopped, including
+a nil character or Activity). Casting is never interrupted by movement and is
+left alone. Callers: `usercommands.Go` (which tells the player "Your movement
+interrupts your crafting." or "...salvaging."), `RelocateMob` (mob walk and
+flee), `mobcommands.Go`'s forced `go <roomId>`, `hooks.TransportCompanions`
+(a companion following) and the forager recall teleport
+(`behaviortree.tickForagerRecalling`). Call it before the room change: the
+craft-ended hook narrates the stop to the crafter's current room. Forced
+relocations (admin teleport, `rooms.MoveToRoom` for a player, companion
+sweep, caravan regroup and reset, ferry factor stuck recovery, spawn and
+despawn) do not call it, matching a player, whose forced moves keep their
+work.
 
 `MovePrice` reads the destination biome by NAME (`rooms.GetBiome(dest.Biome)`)
 and multiplies by `FlightMoveStaminaMult` when the mover is flying. The

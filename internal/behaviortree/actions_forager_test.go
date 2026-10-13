@@ -590,6 +590,39 @@ func TestTickForagerRecalling_TeleportsDirectly(t *testing.T) {
 	}
 }
 
+// #512: the recall teleport is the forager's own move, so it stops a craft
+// as walking does (actions.InterruptWorkOnMove).
+func TestTickForagerRecalling_StopsACraft(t *testing.T) {
+	const territoryRoom, sanctuaryRoom = 4177, 4198
+	cleanRooms := rooms.SeedRoomsForTest(map[int]*rooms.Room{
+		territoryRoom: {RoomId: territoryRoom, Zone: "stillwater", Exits: map[string]exit.RoomExit{}},
+		sanctuaryRoom: {RoomId: sanctuaryRoom, Zone: "stillwater", Exits: map[string]exit.RoomExit{}},
+	}, map[string]*rooms.ZoneConfig{})
+	defer cleanRooms()
+
+	mob := buildForagerMob(t, 8241, 371, territoryRoom, 100, 100)
+	mob.Character.Activity = activity.NewMachine()
+	if err := mob.Character.Activity.TransitionToCrafting(
+		activity.CraftingData{RecipeId: "forager-test", RoundsTotal: 5},
+		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
+	); err != nil {
+		t.Fatalf("fixture: begin craft: %v", err)
+	}
+	mob.Character.SetMiscData("fold-anchor-room", sanctuaryRoom)
+	rooms.LoadRoom(territoryRoom).AddMob(mob.InstanceId)
+
+	bstate := NewBehaviorState()
+	bstate.Set(keyForagerState, forager.StateRecalling.Name())
+	tickForagerRecalling(forager.ProfileFor(371), mob, &EvalContext{InstanceId: 8241, RoomId: territoryRoom, MobState: bstate})
+
+	if mob.Character.RoomId != sanctuaryRoom {
+		t.Fatalf("fixture: mob RoomId = %d, want %d", mob.Character.RoomId, sanctuaryRoom)
+	}
+	if !mob.Character.Activity.IsFree() {
+		t.Errorf("Activity = %v after the recall, want Free", mob.Character.Activity.State())
+	}
+}
+
 // ---- try_store_excess tests ----
 
 // TestTryStoreExcess_RegisteredInActionRegistry verifies the action is

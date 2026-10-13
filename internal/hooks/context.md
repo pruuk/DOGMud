@@ -1295,6 +1295,12 @@ Veil and vanishes!", visual only: no sound exists for a fold),
 swept out of the room!", whose name is now identity-tagged and hidden at
 shapes) all do. Arrival lines stay judged after the move.
 
+A companion following its owner (`TransportCompanions`) moves of its own
+will, as a player follower's re-issued `go` does, so it calls
+`actions.InterruptWorkOnMove` in the old room to stop a craft or salvage
+(#512). `PushCompanionsToRoom` is a forced sweep and does not, matching a
+player moved by `rooms.MoveToRoom`, which keeps their work.
+
 ## Attributed death routing (U5c)
 
 `CharacterDied_RouteDeath.go` is the **single place a harm-driven death is
@@ -1492,7 +1498,11 @@ interruption (see `work_interrupt_narration.go`), and the flush then tells a
 living player crafter "The pain interrupts your crafting." and sends the
 room's stop line (#514; the old hand-placed `cancelCraftOrSalvageOnDamage`
 helper is gone, the interrupt lives in `Character.ApplyHarm`). Every other
-exit narrates at once.
+exit narrates at once. The line goes to the crafter's room at the moment the
+craft ends (`c.RoomId`), which is why `actions.InterruptWorkOnMove` runs
+before every move's room change: a mob that walks away is heard stopping in
+the room it left (#512). A mob crafter gets no line of its own;
+`NarrateCraftPhase` sends only to players in the room.
 
 ### Activity_SalvageEnded.go
 
@@ -1500,8 +1510,9 @@ exit narrates at once.
 `Activity.OnSalvageEnded` handler. On `TriggerDamageInterrupt` only, for a
 living player salvager, it queues a pending interruption; the flush sends
 "The pain interrupts your salvaging." Nothing for any other trigger (movement
-tells the salvager in `usercommands/go.go`) and nothing to the room, since
-salvage has no room lines.
+tells a player salvager in `usercommands/go.go`; a mob salvager stopped by
+its own move, through `actions.InterruptWorkOnMove`, is told nothing) and
+nothing to the room, since salvage has no room lines.
 
 ### work_interrupt_narration.go
 
@@ -1536,7 +1547,7 @@ Movement and damage interrupts do not fit the machine-to-machine
 
 | Interrupt | Location | Trigger fired |
 |-----------|----------|---------------|
-| Movement (Crafting/Salvaging) | `internal/usercommands/go.go` | `TriggerMovementInterrupt` |
+| Movement (Crafting/Salvaging) | `actions.InterruptWorkOnMove`, called by `usercommands/go.go` and every mob own move (#512) | `TriggerMovementInterrupt` |
 | Damage taken (Crafting/Salvaging) | `Character.ApplyHarm` (`interruptWork`, #514) | `TriggerDamageInterrupt` |
 | Damage taken (Casting) | `clearCastingActivity` in `combat_shared_helpers.go` | `TriggerConcentrationBreak` on roll failure |
 
