@@ -18,4 +18,5 @@ damage_multiplier: 0.50
 categories:
   - harm_single
 cast_actor: "You focus your conviction into a sharp point of force."
+cast_actee: "{actor} narrows their eyes at you, conviction sharpening to a point."
 cast_observer: "{actor} narrows their eyes, conviction crystallizing in the air."

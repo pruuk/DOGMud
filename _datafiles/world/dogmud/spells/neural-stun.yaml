@@ -17,4 +17,5 @@ effect_magnitude: 10
 condition_ids:
   - 2
 cast_actor: "You focus a psionic pulse at your target's nervous system."
+cast_actee: "{actor} stares at you, brow furrowed, and a buzz rises along your nerves."
 cast_observer: "{actor} stares intently, brow furrowed with concentration."

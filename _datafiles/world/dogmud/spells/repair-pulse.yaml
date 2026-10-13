@@ -26,4 +26,5 @@ effect_magnitude: 8
 condition_ids:
   - 142
 cast_actor: "Arc-light gathers between your manipulators."
+cast_actee: "{actor} crackles with hard blue-white arc-light, current arcing toward you."
 cast_observer: "{actor} crackles with hard blue-white arc-light, current arcing toward {actee}."

@@ -16,4 +16,5 @@ effect_type: condition
 condition_ids:
   - 28
 cast_actor: "You channel Chrysalis energy into accelerating the target."
+cast_actee: "{actor} weaves quickening energy toward you, and your pulse stirs."
 cast_observer: "{actor} weaves quickening energy through the air."

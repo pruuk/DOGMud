@@ -16,4 +16,5 @@ effect_type: condition
 condition_ids:
   - 53
 cast_actor: "You open your perception to the Veil, seeking what hides beyond."
+cast_actee: "{actor} narrows their eyes at you, and the edges of your sight shimmer."
 cast_observer: "{actor} narrows their eyes, peering at something unseen."

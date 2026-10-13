@@ -21,4 +21,5 @@ condition_ids:
 categories:
   - self_defense
 cast_actor: "You draw living Chrysalis around the target, weaving a protective cocoon."
+cast_actee: "{actor} gestures at you as tendrils of living Chrysalis curl close."
 cast_observer: "{actor} gestures as tendrils of living Chrysalis weave into a shell."

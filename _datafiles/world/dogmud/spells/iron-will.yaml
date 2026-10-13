@@ -18,4 +18,5 @@ condition_ids:
 categories:
   - self_defense
 cast_actor: "You forge a wall of iron resolve."
+cast_actee: "{actor} focuses on you, a steely aura gathering at your temples."
 cast_observer: "{actor} focuses intently, a steely aura forming."

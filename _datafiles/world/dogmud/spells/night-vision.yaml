@@ -17,5 +17,6 @@ effect_type: condition
 condition_ids:
   - 128
 cast_actor: "You draw the faint light of this place into your eyes."
+cast_actee: "{actor} looks into your eyes, and the faint light here seems to gather in them."
 cast_observer: "{actor} blinks slowly as their pupils widen."
 wait_actor: "You hold the widening steady..."

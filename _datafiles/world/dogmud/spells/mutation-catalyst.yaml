@@ -16,4 +16,5 @@ effect_type: condition
 condition_ids:
   - 35
 cast_actor: "You channel Chrysalis energy into accelerating mutagenic change."
+cast_actee: "{actor} channels a sickly green energy toward you, crackling with potential."
 cast_observer: "{actor} channels a sickly green energy that crackles with potential."

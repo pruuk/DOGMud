@@ -16,4 +16,5 @@ effect_type: knockdown
 effect_magnitude: 150
 damage_multiplier: 0.55
 cast_actor: "You gather telekinetic force and thrust it forward."
+cast_actee: "{actor} thrusts their palm toward you, the air before you distorting."
 cast_observer: "{actor} thrusts their palm forward, the air distorting."

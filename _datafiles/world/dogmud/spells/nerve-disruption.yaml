@@ -18,4 +18,5 @@ condition_ids:
 categories:
   - harm_single
 cast_actor: "You reach into the target's nervous system with psionic energy."
+cast_actee: "{actor} studies you with a sharp, clinical intensity, and your skin prickles."
 cast_observer: "{actor} focuses with a sharp, clinical intensity."

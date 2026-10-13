@@ -21,4 +21,5 @@ condition_ids:
 categories:
   - self_defense
 cast_actor: "You raise your belief into a bulwark."
+cast_actee: "{actor} lifts their hands toward you as belief gathers at your side."
 cast_observer: "{actor} lifts their hands as belief gathers into a bulwark."

@@ -18,4 +18,5 @@ condition_ids:
 categories:
   - self_defense
 cast_actor: "You solidify your conviction into a protective shell."
+cast_actee: "{actor} looks to you as conviction hardens in the air around you."
 cast_observer: "{actor} concentrates as conviction hardens into visible armor."

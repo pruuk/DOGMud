@@ -16,4 +16,5 @@ effect_type: condition
 condition_ids:
   - 36
 cast_actor: "You drive a psionic anchor into the target's mind."
+cast_actee: "{actor} fixes you with a piercing stare, and a weight presses on your thoughts."
 cast_observer: "{actor} stares at a target with piercing focus."

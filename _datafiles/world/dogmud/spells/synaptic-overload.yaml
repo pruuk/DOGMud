@@ -16,4 +16,5 @@ effect_type: damage
 effect_magnitude: 600
 damage_multiplier: 1.80
 cast_actor: "You flood your consciousness toward the target, overwhelming their synapses."
+cast_actee: "{actor} locks eyes with you, veins pulsing at their temples."
 cast_observer: "{actor} locks eyes with their target, veins pulsing at the temples."

@@ -14,6 +14,7 @@ difficulty: 20
 primarystat: willpower
 cast_actor: >-
   You focus Chrysalis energy inward, seeking out foreign agents.
+cast_actee: "{actor} enters a meditative focus, Chrysalis energy pulsing softly toward you."
 cast_observer: >-
   {actor} enters a meditative focus, Chrysalis energy pulsing
   softly.
