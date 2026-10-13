@@ -46,11 +46,11 @@ func TestConsider_ProtectedMobSaysYouCantFightIt(t *testing.T) {
 		out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
 		assert.Contains(t, out, "You can't fight", tc.arg)
 		assert.Contains(t, out, tc.name)
-		assert.NotContains(t, out, "Your instincts tell you", tc.arg)
+		assert.NotContains(t, out, "You size up", tc.arg)
 	}
 
 	// A mob you may fight is still weighed up.
 	events.DrainQueuedMessagesForTest(user.UserId)
 	Consider("dock ruffian", user, room, 0)
-	assert.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n"), "Your instincts tell you")
+	assert.Contains(t, strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n"), "You size up")
 }

@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
-// fakeActor is a minimal Actor implementation for unit tests. It
-// records SendText messages and tracks OnStatUse/OnSkillUse calls.
+// fakeActor is a minimal Actor for unit tests. It records SendText lines and
+// OnStatUse/OnSkillUse calls.
 type fakeActor struct {
 	awardRecorder // records Actor.AwardResolved calls
 	char          *characters.Character
@@ -21,15 +21,15 @@ type fakeActor struct {
 	statUses      map[string]int
 }
 
-// newFakeActor builds a fakeActor with the given ValueAdj for
-// Strength/Dexterity and a HealthMax for durability. Setting
-// ValueAdj directly skips the Training → Value → ValueAdj
-// recalculation pipeline and matches how character_test.go
-// constructs characters for combat math testing.
+// newFakeActor builds a validated character (the fight prediction reads its
+// Position, pools and plan) with every stat's ValueAdj at statAdj and pools
+// at healthMax. Setting ValueAdj after Validate skips the Training pipeline,
+// as character_test.go does for combat math.
 func newFakeActor(name string, statAdj, healthMax int, isPlayer bool) *fakeActor {
-	c := &characters.Character{
-		Name:       name,
-		Conditions: conditions.New(),
+	c := characters.New()
+	c.Name = name
+	if err := c.Validate(); err != nil {
+		panic(err)
 	}
 	c.Stats.Strength.ValueAdj = statAdj
 	c.Stats.Dexterity.ValueAdj = statAdj
@@ -37,15 +37,10 @@ func newFakeActor(name string, statAdj, healthMax int, isPlayer bool) *fakeActor
 	c.Stats.Vitality.ValueAdj = statAdj
 	c.Stats.Willpower.ValueAdj = statAdj
 	c.Stats.Charisma.ValueAdj = statAdj
-	c.HealthMax.Value = healthMax
-	c.StaminaMax.Value = healthMax
-	c.ConvictionMax.Value = healthMax / 2
-	return &fakeActor{
-		char:     c,
-		name:     name,
-		isPlayer: isPlayer,
-		statUses: map[string]int{},
-	}
+	c.HealthMax.Value, c.Health = healthMax, healthMax
+	c.StaminaMax.Value, c.Stamina = healthMax, healthMax
+	c.ConvictionMax.Value, c.Conviction = healthMax/2, healthMax/2
+	return &fakeActor{char: c, name: name, isPlayer: isPlayer, statUses: map[string]int{}}
 }
 
 func (a *fakeActor) GetCharacter() *characters.Character         { return a.char }
@@ -65,87 +60,75 @@ func (a *fakeActor) OnStatUse(statName string) bool {
 	return false
 }
 
-// Consider must NOT train perception. Inverted by U10b-0 Phase D Task 1: look
-// and consider were the only stat faucets with no cooldown and no gate, worth
-// ~3,600 perception uses/hour against forage's 150 ceiling. This is the
-// behavioural half of the guard; consider_no_progression_test.go is the
-// structural half and also covers look.go.
-func TestConsider_DoesNotTrainPerception(t *testing.T) {
-	self := newFakeActor("self", 100, 100, true)
-	target := newFakeActor("target", 100, 100, true)
-
-	Consider(self, target)
-	if got := self.statUses["perception"]; got != 0 {
-		t.Errorf("Consider trained perception %d time(s); Phase D removed the "+
-			"ungated faucet and it must award nothing", got)
-	}
-	if len(self.statUses) != 0 {
-		t.Errorf("Consider trained %v; it must award no progression at all",
-			self.statUses)
-	}
+// fixRoll pins the read roll for one test.
+func fixRoll(t *testing.T, res contest.Result) {
+	t.Helper()
+	old := considerContest
+	considerContest = func(float64, []contest.Entry) contest.Result { return res }
+	t.Cleanup(func() { considerContest = old })
 }
 
-func TestConsider_TextEmittedForPlayer(t *testing.T) {
+func TestConsider_PlayerReadSendsThreeLinesAndTrainsSearch(t *testing.T) {
+	fixRoll(t, contest.Result{Success: true, Margin: 1})
 	self := newFakeActor("hero", 100, 100, true)
 	target := newFakeActor("orc", 100, 100, false)
 
-	Consider(self, target)
-	if len(self.sent) != 2 {
-		t.Fatalf("expected 2 text lines emitted, got %d", len(self.sent))
+	r := Consider(self, target)
+	if len(self.sent) != 3 {
+		t.Fatalf("got %d lines, want opener, verdict and pace: %q", len(self.sent), self.sent)
 	}
 	if !strings.Contains(self.sent[0], "orc") {
-		t.Errorf("first line should name the target, got %q", self.sent[0])
+		t.Errorf("opener should name the target: %q", self.sent[0])
 	}
-	if !strings.Contains(self.sent[1], "instincts tell you") {
-		t.Errorf("second line should be the prediction, got %q", self.sent[1])
+	if r.Quality != ReadFair {
+		t.Errorf("quality %v, want fair for a narrow win", r.Quality)
+	}
+	if self.statUses["search"] != 1 || len(self.statUses) != 1 {
+		t.Errorf("trained %v, want search once and nothing else", self.statUses)
 	}
 }
 
-func TestConsider_ZeroTargetPower(t *testing.T) {
+// The cooldown is the gate: a refused read neither rolls nor trains (#301).
+func TestConsider_CooldownRefusalNeitherRollsNorTrains(t *testing.T) {
+	rolled := false
+	old := considerContest
+	considerContest = func(float64, []contest.Entry) contest.Result { rolled = true; return contest.Result{} }
+	t.Cleanup(func() { considerContest = old })
+
 	self := newFakeActor("hero", 100, 100, true)
-	// Construct a target with truly zero PowerScore: all ValueAdj=0,
-	// no health, no skills, no mutations.
-	target := &fakeActor{
-		char:     &characters.Character{Name: "Ghost", Conditions: conditions.New()},
-		name:     "Ghost",
-		isPlayer: false,
-		statUses: map[string]int{},
+	if !ClaimSpecialMove(self.char) {
+		t.Fatal("fixture could not claim the cooldown")
 	}
+	r := Consider(self, newFakeActor("orc", 100, 100, false))
+	if !r.OnCooldown || rolled || len(self.statUses) != 0 {
+		t.Fatalf("refusal: OnCooldown %v rolled %v trained %v", r.OnCooldown, rolled, self.statUses)
+	}
+	if len(self.sent) != 1 || !strings.Contains(self.sent[0], "moment to recover") {
+		t.Fatalf("refusal text: %q", self.sent)
+	}
+}
+
+func TestConsider_MuddyReadSlidesTheVerdict(t *testing.T) {
+	fixRoll(t, contest.Result{Success: false})
+	self := newFakeActor("hero", 100, 100, true)
+	target := newFakeActor("orc", 100, 100, false)
+	clean := ReadFight(self.char, target.char).Verdict
 
 	r := Consider(self, target)
-	if r.TargetPower != 0 {
-		// If this fails, default-construct of Character introduces
-		// non-zero terms (e.g., default weapon offense). Document
-		// the actual TargetPower and adjust the test expectation.
-		t.Logf("TargetPower=%f (expected 0); see PowerScore default-weapon path", r.TargetPower)
-	}
-	if r.TargetPower == 0 && r.Ratio != 0 {
-		t.Errorf("expected Ratio=0 when TargetPower=0, got %f", r.Ratio)
+	if r.Quality != ReadMuddy || r.Read.Verdict != muddySlide(clean) {
+		t.Fatalf("muddy read: quality %v verdict %v, want muddy %v", r.Quality, r.Read.Verdict, muddySlide(clean))
 	}
 }
 
-func TestConsider_PredictionRatioBands(t *testing.T) {
-	cases := []struct {
-		ratio  float64
-		expect string
-	}{
-		{5.0, "pose no threat"},
-		{3.5, "clear advantage"},
-		{2.5, "odds favor you"},
-		{1.5, "even contest"},
-		{0.75, "upper hand"},
-		{0.51, "upper hand"},
-		// #481: the old single band from 0 to 0.5 split at 0.25.
-		{0.5, "badly outmatched"},
-		{0.25, "badly outmatched"},
-		{0.249, "severely outmatched"},
-		{0.01, "severely outmatched"},
-		{0.0, "will not survive"},
+// A mob's consider (and the AI companion's) has no roll, no cooldown, no
+// training and no text.
+func TestConsider_MobReadIsSilentAndFree(t *testing.T) {
+	self := newFakeActor("goblin", 100, 100, false)
+	r := Consider(self, newFakeActor("hero", 100, 100, true))
+	if r.Quality != ReadNone || r.OnCooldown || len(self.statUses) != 0 || len(self.sent) != 0 {
+		t.Fatalf("mob read: %+v trained %v sent %q", r, self.statUses, self.sent)
 	}
-	for _, c := range cases {
-		got := predictionFor(c.ratio)
-		if !strings.Contains(got, c.expect) {
-			t.Errorf("ratio=%v: expected %q in %q", c.ratio, c.expect, got)
-		}
+	if !SpecialMoveReady(self.char) {
+		t.Fatal("a mob's consider must not take the special-move cooldown")
 	}
 }

@@ -33,29 +33,23 @@ func readSource(t *testing.T, rel string) string {
 	return string(b)
 }
 
-// Consider must not award progression.
+// Consider trains, but only behind the shared special-move cooldown (#301).
 //
-// look and consider were the ONLY stat faucets in the game with no cooldown and
-// no gate: at one command per second that is ~3,600 perception uses/hour,
-// against forage's 150/hour ceiling. Measured live in the Phase D session --
-// the very first `consider` issued printed "STATISTIC INCREASED / perception".
-//
-// Perception is now fed by search/forage, the perception crafts (alchemy,
-// cooking, enchanting), salvage and ranged-combat, all via SkillPrimaryStats.
-// Re-adding a progression call here reopens a ~24x exploit, so this test guards
-// the file structurally rather than behaviourally -- there is no seam to assert
-// on, since the whole point is the ABSENCE of a call.
-func TestConsider_AwardsNoProgression(t *testing.T) {
+// look and consider were once the only stat faucets with no cooldown and no
+// gate: ~3,600 perception uses an hour against forage's 150 (U10b-0 Phase D).
+// consider now competes with special moves and spells for the cooldown, which
+// is the gate. This guard keeps the training call after the claim, keeps it on
+// skill use only, and keeps stat and direct progression calls out.
+func TestConsider_TrainsOnlyBehindTheCooldown(t *testing.T) {
 	src := readSource(t, "consider.go")
-	for _, banned := range []string{
-		"OnStatUse",
-		"OnSkillUse",
-		"CheckStatProgression",
-		"CheckSkillProgression",
-	} {
+	claim := strings.Index(src, "ClaimSpecialMove(")
+	train := strings.Index(src, "OnSkillUse(")
+	if claim < 0 || train < 0 || train < claim {
+		t.Fatalf("consider.go must claim the special-move cooldown before it trains (claim at %d, train at %d)", claim, train)
+	}
+	for _, banned := range []string{"OnStatUse", "CheckStatProgression", "CheckSkillProgression"} {
 		if strings.Contains(src, banned) {
-			t.Errorf("consider.go calls %s; U10b-0 Phase D removed the ungated "+
-				"perception faucet and it must not return", banned)
+			t.Errorf("consider.go calls %s; it trains only through OnSkillUse behind the cooldown", banned)
 		}
 	}
 }

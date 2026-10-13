@@ -254,7 +254,7 @@ func TestConsiderSight_ShapesConsidersAFigure(t *testing.T) {
 	user, room := aimScene(t, aimShapes)
 	_, _ = Consider("2.shape", user, room, events.EventFlag(0))
 	told := aimTold(1)
-	assert.Contains(t, told, "You consider a figure")
+	assert.Contains(t, told, "You size up a figure")
 	assert.NotContains(t, told, "Skeleton")
 }
 
