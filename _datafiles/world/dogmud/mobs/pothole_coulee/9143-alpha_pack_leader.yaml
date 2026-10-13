@@ -24,7 +24,7 @@ idlecommands:
     coulee above shifts position in response: felt rather than heard'
   - ''
 combatcommands:
-  - 'emote does not move immediately. It watches. It is reading you
+  - 'emote does not move immediately. It watches. It is reading its foe
     the way a hunter reads a trail, and when it has seen what it needs
     to see it will act, and not before'
   - ''
@@ -32,7 +32,7 @@ combatcommands:
     body behind the charge, not fast, because it does not need to be fast,
     just inevitable'
   - ''
-  - 'emote wheels and places itself between you and the den entrance
+  - 'emote wheels and places itself between its foe and the den entrance
     without apparent urgency, rerouting the fight on its own terms'
   - ''
   - 'emote drops the massive head and presses straight in, giving no

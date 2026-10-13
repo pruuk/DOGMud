@@ -18,7 +18,7 @@ idlecommands:
 combatcommands:
   - 'emote swings a heavy fist, aiming for the jaw'
   - ''
-  - 'emote kicks at your legs, trying to knock you off balance'
+  - 'emote kicks at its foe''s legs, trying to knock them off balance'
   - ''
 activitylevel: 25
 character:

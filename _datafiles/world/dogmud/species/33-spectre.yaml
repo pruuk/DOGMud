@@ -16,7 +16,7 @@ tameable: false
 conditionids:
   - 53 # Veil Sight — see-hidden
 angrycommands:
-  - emote fixes you with hollow eyes, and the air grows cold and still.
+  - emote fixes its foe with hollow eyes, and the air grows cold and still.
   - emote drifts forward, trailing a sense of absolute dread.
 stats:
   strength:

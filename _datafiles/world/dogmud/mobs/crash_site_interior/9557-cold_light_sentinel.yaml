@@ -17,9 +17,9 @@ idlecommands:
   - ''
 combatcommands:
   - 'emote lets its banked light flare hard and brings the whole cold
-    weight of it down on you.'
+    weight of it down on its foe.'
   - ''
-  - 'emote lashes a flat arc of cold light across the space between you.'
+  - 'emote lashes a flat arc of cold light across the space between it and its foe.'
   - ''
 character:
   name: Cold-Light Sentinel

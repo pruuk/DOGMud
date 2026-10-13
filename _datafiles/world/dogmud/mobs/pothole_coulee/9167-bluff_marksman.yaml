@@ -19,7 +19,7 @@ idlecommands:
   - ''
 combatcommands:
   - 'emote gives ground a step at a time, loosing on each pause, never
-    letting you set your feet'
+    letting its foe set their feet'
   - ''
 character:
   name: Bluff Marksman

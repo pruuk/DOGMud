@@ -18,7 +18,7 @@ return_damage: 25
 return_damage_channel: magical  # chunk 5.11f: elemental backlash answers to MAGICAL mitigation
 angrycommands:
   - emote flares suddenly brighter, crackling with furious heat.
-  - emote streams toward you like a wave of burning wind.
+  - emote streams toward its foe like a wave of burning wind.
 stats:
   strength:
     base: 60

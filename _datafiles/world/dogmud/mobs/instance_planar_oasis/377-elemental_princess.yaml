@@ -12,7 +12,7 @@ combatcommands:
   - 'emote slips sideways like a current and rakes with liquid talons'
   - ''
   - 'emote coils a whip of water around its prey before striking'
-  - 'emote dissolves to spray and reforms at your flank, claws first'
+  - 'emote dissolves to spray and reforms at its foe''s flank, claws first'
   - ''
 spawnmutations: [apex-predator, rending-claws]
 character:

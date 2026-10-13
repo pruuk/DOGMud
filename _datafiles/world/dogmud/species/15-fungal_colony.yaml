@@ -17,7 +17,7 @@ tameable: false
 speech: false
 angrycommands:
   - emote pulsates, releasing a thick cloud of acrid spores.
-  - emote stretches its mycelial threads toward you with a wet, tearing sound.
+  - emote stretches its mycelial threads toward its foe with a wet, tearing sound.
 stats:
   strength:
     base: 60

@@ -17,9 +17,9 @@ idlecommands:
   - ''
 combatcommands:
   - 'emote surges forward on a flare of cold light and strikes from the
-    dark before you can set your feet.'
+    dark before its foe can set their feet.'
   - ''
-  - 'emote wraps you in a cold grey grip and bears down.'
+  - 'emote wraps its foe in a cold grey grip and bears down.'
   - ''
 character:
   name: Deep Drifter

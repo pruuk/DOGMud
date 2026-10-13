@@ -17,7 +17,7 @@ idlecommands:
 combatcommands:
   - 'emote flares and strikes with a hard needle of cold light.'
   - ''
-  - 'emote wheels close and lashes at you with a whip of force.'
+  - 'emote wheels close and lashes at its foe with a whip of force.'
   - ''
 character:
   name: A Roused Ward

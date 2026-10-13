@@ -17,7 +17,7 @@ tameable: false
 conditionids:
   - 53 # Veil Sight — see-hidden
 angrycommands:
-  - emote wails with a sound that seems to come from inside your skull.
+  - emote wails with a sound that seems to come from inside its foe's skull.
   - emote phases partially out of sight, edges blurring into shadow.
 stats:
   strength:

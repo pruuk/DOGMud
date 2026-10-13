@@ -14,7 +14,7 @@ selectable: false
 tameable: false
 speech: false
 angrycommands:
-  - emote shudders, its tendrils whipping toward you with surprising speed.
+  - emote shudders, its tendrils whipping toward its foe with surprising speed.
   - emote opens its maw wide, releasing the stench of rotting meat.
 stats:
   strength:

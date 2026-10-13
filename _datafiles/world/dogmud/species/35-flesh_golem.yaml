@@ -16,7 +16,7 @@ selectable: false
 tameable: false
 speech: false
 angrycommands:
-  - emote turns toward you with a grinding of mismatched joints.
+  - emote turns toward its foe with a grinding of mismatched joints.
   - emote slams one grafted fist into its open palm with a wet crack.
 stats:
   strength:
