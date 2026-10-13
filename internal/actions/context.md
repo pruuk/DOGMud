@@ -1788,6 +1788,25 @@ bleeds (drain, the drain area, hamstring, maul, rake, throttle) pass it to
 `Character.AddConditionMagnitudeBy` as the record's caster, so a bleed that
 kills credits the attacker (#240).
 
+## Spell phase lines and perception (messaging M6 slice 4)
+
+`NarrateSpellPhase` (`spell_phase_lines.go`) sends a caster's own lines for
+the cast start, each fold round and the magic line, for every caster (player
+cast, mob cast, mob aid, the fold-round loops, both resolvers). The caster
+reads `*_actor`; at cast start a player target other than the caster reads
+`cast_actee`, for a `TargetSingle` spell only; the room reads `*_observer` or
+a random line of the generic pool (`spells.CastRoomLine`), by sight only. A
+hidden caster's lines skip the players who do not perceive them, and at cast
+start those players hear one `cast_started_unseen` line. Root guard
+`spell_phase_narration_guard_test.go` keeps every other site from sending
+these lines itself.
+
+`MobDisplayName`, `MobSeenName`, `MobHiddenFrom`, `PlayersNotPerceiving` and
+`UnseenBy` (`perception.go`) are the one answer to who perceives a character
+and what a reader calls a mob; the lowercase helpers in `hooks`
+(`mobDisplayName`, `mobSeenName`, `conditionLineUnseenBy`,
+`playersNotPerceiving`) are thin wrappers over them.
+
 ## Caller Integration
 
 **User commands** (`internal/usercommands/`): Parse CLI args into

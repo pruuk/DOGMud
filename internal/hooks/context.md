@@ -1071,7 +1071,10 @@ record 31 and its end is told once, by 31's end line. `light_spell.go`'s
 record 31 as its magnitude, and `ApplyConditions` tells no start room line
 for a hidden-flag record landing on a holder already hidden. Every other
 condition line about a hidden holder reaches only the players who perceive
-them (#458, see `conditionLineUnseenBy`).
+them (#458, see `conditionLineUnseenBy`). `conditionLineUnseenBy`,
+`playersNotPerceiving`, `mobDisplayName` and `mobSeenName` are thin wrappers
+over `actions.UnseenBy`, `actions.PlayersNotPerceiving`,
+`actions.MobDisplayName` and `actions.MobSeenName`.
 
 Also registers an `AfterTransition` callback on the Combat Phase machine
 that reveals a hidden character on `Idle → Engaging`. A surprise attack is

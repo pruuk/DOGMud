@@ -306,6 +306,17 @@ func GetCastMessage(category, spellName string, picker ...narration.Picker) stri
 `GetCastMessage` renders through `narration.Render` as the single-role
 degenerate case: one role (the caster), no band, one token (`{spell}`).
 
+The file carries three more pools (messaging M6 slice 4). `cast_started_room`
+and `cast_continuing_room` are the room's line when a spell authors no
+`cast_observer` / `wait_observer`: `CastRoomPool(p)` returns the raw pool and
+`CastRoomLine(p, ctx, picker...)` renders one random variant with the
+caster's name. `cast_started_unseen` is what a reader who does not perceive a
+hidden caster hears at cast start (`CastStartedUnseenLine`).
+
+`cast_actee` is the target's own cast-start line, the `Actee` variant of
+`Narration(PhaseCast)`. Every single-target spell that can land on someone
+else authors one (root guard `spell_cast_actee_guard_test.go`).
+
 ### Gotchas
 
 **`spellName` is the DISPLAY name (`spellInfo.Name`), never the spellid.**
@@ -336,18 +347,17 @@ for defence, so a caster sees a repeat every third spell.
 ### The narration door (M3 item 5b, `narration.go`)
 
 `Phase` (`PhaseCast`, `PhaseWait`, `PhaseMagic`); `Narration(p)` puts
-`*_actor` in Actor and `*_observer` in Observer (Actee is authored in M6);
-`Narrate(p, ctx)` renders through `textutil.Narrate`. The cast command (player
-and mob), the two wait-text sites in `NewRound_DoCombat_helpers.go`, the magic
-text in `spell_resolution.go` and the mob `aid` command all render through it
-and deliver on their own channel. `Validate` refuses a whitespace-only line,
-and since M4a an unknown `{token}` too: the loader panics, so a typo cannot
-render raw to a player.
-No file outside this package reads the six text fields (root guard
-`store_text_fields_guard_test.go`). The two shipped `wait_observer` lines still
-go out on the audio channel; that is filed, not a property of the door.
+`*_actor` in Actor and `*_observer` in Observer, and for `PhaseCast` also
+`cast_actee` in Actee; `Narrate(p, ctx)` renders through `textutil.Narrate`.
+`actions.NarrateSpellPhase` is the one sender of every phase (root guard
+`spell_phase_narration_guard_test.go`). `Validate` refuses a whitespace-only
+line, and since M4a an unknown `{token}` too: the loader panics, so a typo
+cannot render raw to a player.
+No file outside this package reads the seven text fields (root guard
+`store_text_fields_guard_test.go`).
 
-The six authored keys are `cast_actor` / `cast_observer`, `wait_actor` /
+The seven authored keys are `cast_actor` / `cast_observer`, `cast_actee`,
+`wait_actor` /
 `wait_observer` and `magic_actor` / `magic_observer`. M4b-1 renamed them from
 `cast_user_text` / `cast_room_text` and their wait and magic siblings: the
 phase half stays, the role half is now the canonical vocabulary every

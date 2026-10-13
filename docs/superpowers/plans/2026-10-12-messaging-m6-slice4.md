@@ -1308,7 +1308,7 @@ paths = sorted((root / "_datafiles/world/dogmud/spells").glob("*.yaml")) + [
 bad = 0
 for p in paths:
     rel = p.relative_to(root).as_posix()
-    old = subprocess.run(["git", "-C", str(root), "show", f"origin/master:{rel}"], capture_output=True, text=True)
+    old = subprocess.run(["git", "-C", str(root), "show", f"origin/master:{rel}"], capture_output=True, text=True, encoding="utf-8")
     if old.returncode != 0:
         continue
     a, b = shape(yaml.safe_load(old.stdout)), shape(yaml.safe_load(p.read_text(encoding="utf-8")))

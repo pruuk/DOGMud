@@ -2,6 +2,15 @@
 
 ## Unreleased: Fighting blind, and plainer combat words
 
+- When someone starts a spell aimed at you, you now read a line of your own
+  telling you so.
+- A hidden caster starting a spell nearby is heard but not seen: a faint
+  murmur or a prickle in the air, with no name and no hint of the target.
+  A hidden caster now stays hidden until a harmful spell lands, and a
+  hidden target struck by a harmful spell is revealed.
+- When a player starts casting, the room now sees it begin, as it always
+  has for creatures.
+
 - Beasts and other creatures without a voice now snarl, roar and hiss at
   you instead of trading insults, and answer your taunts the same way. A
   wolf's howl now sounds like a howl, with real variety.
