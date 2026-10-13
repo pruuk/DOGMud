@@ -39,23 +39,39 @@ func TestCritShare_ParityIsTheTwoSigmaTail(t *testing.T) {
 	}
 }
 
-// At parity a swing lands half the time; a defenceless target is always hit.
+func TestSelfCritShare_IsTheOneSidedTail(t *testing.T) {
+	if got := selfCritShare(2.0); math.Abs(got-0.0227501) > 1e-6 {
+		t.Fatalf("selfCritShare(2) = %v, want 0.02275", got)
+	}
+}
+
+// At parity (equal scores) a swing lands half the time, and crits at the
+// two-sigma-style tail of a zero margin; the whole per-round figure is pinned
+// per weapon, inside a loose bracket of every swing landing.
 func TestMeleeDamagePerRound_HitChanceBrackets(t *testing.T) {
 	pinParityBalance(t)
 	a := parityCombatant(t, "attacker")
 	d := parityCombatant(t, "defender")
 
-	full := 0.0
+	full, want := 0.0, 0.0
 	for _, sw := range expectedSwings(a, d, User) {
 		full += float64(sw.swings) * sw.dmgMean
+		hit := 0.5
+		c := 0.5 * math.Erfc((sw.critBar-0)/math.Sqrt2)
+		want += float64(sw.swings) * ((hit-c)*sw.dmgMean + c*sw.critMean)
 	}
 	got := meleeDamagePerRound(a, d, User)
 	t.Logf("meleeDamagePerRound = %v, full = %v, ratio = %v", got, full, got/full)
 	if got <= 0.4*full || got >= 0.7*full {
 		t.Fatalf("parity damage per round %v, want about half of every swing landing (%v)", got, full)
 	}
-	if bestMeleeDefenceScore(d) <= 0 {
-		t.Fatal("parity defender must have a defence score")
+	// dice.normalCDF is an Abramowitz-Stegun approximation (error up to 7.5e-8),
+	// so the live hit chance at parity is 0.5 only to about that precision.
+	if math.Abs(got-want) > 1e-6 {
+		t.Fatalf("parity damage per round %v, want the exact parity expectation %v", got, want)
+	}
+	if s, ok := bestMeleeDefenceScore(d); !ok || s <= 0 {
+		t.Fatalf("parity defender must have a defence score, got %v %v", s, ok)
 	}
 }
 

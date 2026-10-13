@@ -84,16 +84,27 @@ func expectedSwings(src, tgt *characters.Character, srcType SourceTarget) []swin
 }
 
 // bestMeleeDefenceScore is defender's strongest melee defence, scored by
-// defenceEntryScore as the live contest scores it; 0 with none.
-func bestMeleeDefenceScore(defender *characters.Character) float64 {
+// defenceEntryScore as the live contest scores it. The bool is false when
+// DefenceEntriesFor returns no entries at all (no contest happens live); the
+// score is then 0.
+func bestMeleeDefenceScore(defender *characters.Character) (float64, bool) {
 	best := 0.0
 	ctx := neutralCtx()
-	for _, d := range DefenceEntriesFor(combatvocab.Melee(combatvocab.TargetSingle), defender, DefenceEntryOpts{}) {
+	entries := DefenceEntriesFor(combatvocab.Melee(combatvocab.TargetSingle), defender, DefenceEntryOpts{})
+	for _, d := range entries {
 		if s, _, _ := defenceEntryScore(defender, d, false, ctx); s > best {
 			best = s
 		}
 	}
-	return best
+	return best, len(entries) > 0
+}
+
+// selfCritShare is the chance an undefended swing crits. Live, with no
+// defence attempted, resolveDefenseOutcomeInner falls back to the attacker's
+// own roll z-score against the bar (the "T2" branch), so the chance is
+// P(Z >= bar) for a standard normal.
+func selfCritShare(bar float64) float64 {
+	return 0.5 * math.Erfc(bar/math.Sqrt2)
 }
 
 // critShare is the chance a swing crits: the attack-positive margin,
@@ -113,14 +124,15 @@ func critShare(atk, def, bar float64) float64 {
 // contest floor, gap compression, fumbles or partial deflection. The read is
 // rough by design (spec), and fight_expect_stat_test.go measures how rough.
 func meleeDamagePerRound(src, tgt *characters.Character, srcType SourceTarget) float64 {
-	def := bestMeleeDefenceScore(tgt)
+	def, defended := bestMeleeDefenceScore(tgt)
 	total := 0.0
 	for _, sw := range expectedSwings(src, tgt, srcType) {
 		hit := 1.0
-		if def > 0 {
+		crit := selfCritShare(sw.critBar)
+		if defended {
 			hit = dice.OpposedSuccessChance(sw.attackScore, def, dice.StdDevFor(sw.attackScore))
+			crit = math.Min(critShare(sw.attackScore, def, sw.critBar), hit)
 		}
-		crit := math.Min(critShare(sw.attackScore, def, sw.critBar), hit)
 		total += float64(sw.swings) * ((hit-crit)*sw.dmgMean + crit*sw.critMean)
 	}
 	return total
