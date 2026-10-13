@@ -84,9 +84,9 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// begin a cast at zero conviction and drive the pool negative. Spellcasting
 	// is in the refuse column, so ApplyCost is correct.
 	//
-	// Placement is load-bearing on both sides. It is ABOVE the YAML cast-text
-	// block so a mob that cannot afford the spell never narrates it to the room,
-	// and it is ABOVE TransitionToCasting so the ledger cannot lead the FSM.
+	// Placement is load-bearing on both sides. It is ABOVE the cast-start
+	// narration so a mob that cannot afford the spell never narrates it to the
+	// room, and it is ABOVE TransitionToCasting so the ledger cannot lead the FSM.
 	//
 	// InitiateCast has already consumed the shared special-move cooldown (see
 	// actions/cast.go, gated on !IgnoreMoveCooldown), so a refusal here must roll
@@ -110,13 +110,6 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			"requested_spell", spellName,
 			"reason", "insufficient conviction")
 		return true, nil
-	}
-
-	// Cast-start lines through the one body every caster shares (messaging M6
-	// slice 4). A mob caster has no client, so it reads nothing.
-	if castRoom := rooms.LoadRoom(mob.Character.RoomId); castRoom != nil {
-		actions.NarrateSpellPhase(actions.NewMobActorInRoom(mob, castRoom), spellInfo, spells.PhaseCast,
-			result.TargetUserIds, result.TargetMobInstanceIds, castRoom, messaging.CategorySpellFold)
 	}
 
 	// Commit CastingState to Activity machine (sole truth).
@@ -147,6 +140,14 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// happened, so give it back.
 		mob.Character.ApplyRestore(characters.PoolConviction, firstRoundCost)
 		return true, nil
+	}
+
+	// Cast-start lines through the one body every caster shares (messaging M6
+	// slice 4), once the cast has really begun: a refused transition narrates
+	// nothing. A mob caster has no client, so it reads nothing.
+	if castRoom := rooms.LoadRoom(mob.Character.RoomId); castRoom != nil {
+		actions.NarrateSpellPhase(actions.NewMobActorInRoom(mob, castRoom), spellInfo, spells.PhaseCast,
+			result.TargetUserIds, result.TargetMobInstanceIds, castRoom, messaging.CategorySpellFold)
 	}
 
 	// Initiate combat aggro immediately when an offensive spell has a target.

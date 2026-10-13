@@ -36,6 +36,7 @@ cast_started_room:
   - "{actor} begins weaving a spell."
   - "{actor} draws a slow breath and begins to shape a spell."
   - "{actor} goes still, gathering the threads of a spell."
+  - "{actor} closes their eyes in concentration."
 
 cast_continuing_room:
   - "{actor} weaves magic with focused intent."

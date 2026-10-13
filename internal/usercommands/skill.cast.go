@@ -356,9 +356,6 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// 14. Announce the cast start (skill progression now fires in InitiateCast).
 	user.SendText(messaging.CategorySpellFold, spells.GetCastMessage("cast_started", spellInfo.Name))
-	room.SendTextVisual(messaging.CategorySpellFold, fmt.Sprintf(
-		`<ansi fg="username">%s</ansi> closes their eyes in concentration.`,
-		user.Character.Name), user.UserId)
 
 	// Quest engine: command notification — the cast successfully initiated.
 	// Lets quests gate a step on the `cast` command (the newbie Folding
