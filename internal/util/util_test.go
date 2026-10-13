@@ -1208,6 +1208,10 @@ func TestConvertToAscii(t *testing.T) {
 		{"moon glyph", "☾", "("},
 		{"weather glyphs", "⚡❄", "!*"},
 		{"map glyphs", "▲▼≈⌂", "^v~#"},
+		// #502: the prompt goes out with telnet IAC GA (0xFF 0xF9) in the
+		// same write. Those bytes are not UTF-8 and must pass through as
+		// they are, not become two U+FFFD.
+		{"telnet go-ahead after prompt", "[☀ HP:██]:\xff\xf9", "[* HP:##]:\xff\xf9"},
 		// #253: heavy rules and the pet, companion, death and counter
 		// markers are dropped; dashes become a hyphen. A dropped glyph
 		// takes the space it leaves with it.
