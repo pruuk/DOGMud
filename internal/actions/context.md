@@ -740,12 +740,35 @@ word on its own line (#430).
 
 **Function:** `Consider(actor, target) ConsiderResult`
 
-Computes a power-ratio assessment of `target` from `actor`'s perspective.
-- Returns `ConsiderResult` with `Ratio` (self power / target power), both
-  absolute power values, and target name/type.
-- **Progression:** Triggers `actor.OnStatUse("perception")`.
-- **Messaging:** Sends a colored difficulty string to the actor (e.g.,
-  "an easy opponent"). Mobs receive no feedback (SendText is a no-op).
+Reads a fight from `actor`'s side (#301): `ReadFight` (fight_read.go)
+classifies `combat.PredictFight` into a `Verdict` and two `Pace`s.
+- Returns `ConsiderResult`: `Read FightRead`, `Quality ReadQuality`,
+  `OnCooldown`, `TargetName`, `TargetIsPlayer`.
+- **Player:** claims the shared special-move cooldown (`ClaimSpecialMove`;
+  refused with the standard recover line when it is running), then rolls
+  Perception + Search x `SkillWeight`, times `messaging.SightMult` in the
+  reader's room, against Charisma + Rhetoric x `SkillWeight` through
+  `considerContest` (an alias of `combat.RunContest` tests pin). The roll sets
+  `ReadClear` / `ReadFair` / `ReadMuddy`; a muddy read slides a middle verdict
+  toward barely (`muddySlide`).
+- **`fight_read.go`:** `Verdict` (eight values; `Lethal()` and `Danger()`),
+  `Pace` (moments, short, long, age, never, cut by `paceFor` from the
+  `ConsiderPace*` knobs), `ReadQuality` (`ReadNone` for a read with no
+  roll, then clear, fair, muddy), `FightRead` (verdict, both paces and the
+  `combat.FightPrediction`), `ReadFight(you, them)` (the roll-free read),
+  `classifyFight` and `FightReadPlain` (untagged verdict then pace words
+  for the AI companion). Band order in `classifyFight` matters: untouched
+  first (a target that cannot hurt you is never hopeless), then stalemate
+  (both paces an age, so a slow pillow-hitter is not zero chance), then
+  hopeless (their dent too small), then scratches, hurt, barely, likely
+  lose, lose badly by `Cost`. `muddySlide` only moves scratches, hurt,
+  likely lose and lose badly one step toward barely. `readQualityFor`
+  turns the roll into clear, fair or muddy with `ConsiderClearReadZ`.
+- **Progression:** `actor.AwardResolved(won, CandidateFor("search"))`, only
+  behind the cooldown claim (`consider_no_progression_test.go`).
+- **Messaging:** opener, verdict line and pace line to a player. A mob actor
+  (including the AI companion, which words the read with `FightReadPlain`)
+  gets the bare `ReadFight`: no roll, no cooldown, no training, no text.
 
 ---
 
@@ -1706,7 +1729,7 @@ taunt path's ordering).
 
 | Action | Package | Actor→Target | Returns | Messaging | Cooldown |
 |--------|---------|---|---|---|---|
-| Consider | actions | self vs target | ConsiderResult | player only | none |
+| Consider | actions | self vs target | ConsiderResult | player only | shared (player) |
 | Defuse | actions | self vs trap | DefuseResult | varies | none |
 | Drink | actions | self | DrinkResult | both | none |
 | Forage | actions | self vs biome | ForageResult | varies | shared |

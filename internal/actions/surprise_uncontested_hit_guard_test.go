@@ -117,14 +117,14 @@ var rawDamageSiteOwners = map[string]string{
 
 	// Spell damage is computed here and consumed downstream of the spell's
 	// contest; this function applies nothing itself.
-	"internal/hooks/combat_shared_helpers.go:rollSpellDamage": "pure calculation, consumed downstream of the spell contest (calcSpellDamageForCharacter wraps it; #480 kept its inputs for the SpellDamage log)",
+	"internal/combat/spell_damage.go:SpellRawDamage": "pure calculation of a spell's mean, consumed downstream of the spell contest by hooks.rollSpellDamage (calcSpellDamageForCharacter wraps it) and by the fight read's prediction, which applies no damage (#301)",
 
 	// Crit follow-up effects, which only exist because the round's contest was
 	// already won decisively.
 	"internal/hooks/combat_shared_helpers.go:applyCritEffects": "contested: only reachable from a crit the round's own contest produced",
 
 	// Not attacks. No defender exists to contest them.
-	"internal/combat/calculations.go:PowerScore":              "not an attack: PowerScore only SCORES a character, it applies no damage",
+	"internal/combat/calculations.go:powerScoreParts":         "not an attack: PowerScore's parts only SCORE a character, they apply no damage (#301)",
 	"internal/usercommands/inventory.go:checkSpoiledGrenades": "not an attack: a spoiled grenade detonating in its owner's own pack, self-harm only",
 }
 

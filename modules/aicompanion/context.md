@@ -443,6 +443,12 @@ skills, health) is never in the mind file; it lives on the owner's
 
 ## Combat rules
 
+- She reads fights through the shared fight read (#301), never a score of
+  her own. Consider words come from `actions.FightReadPlain` over
+  `actions.Consider(...).Read` (a mob actor gets the bare read: no roll, no
+  cooldown, no training). Flee readiness comes from `worstRead`
+  (combat.go), the most dangerous read among the enemies in the room, and
+  `Verdict.Lethal()`.
 - The engine's combat AI does the fighting; the module never blocks it.
 - Plans come from the model in the background; reflexes run every round
   with `CombatReactionRounds` between moves, using only `attack #id`,

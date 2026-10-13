@@ -103,6 +103,12 @@ var contestSiteOwners = map[string]string{
 
 	"internal/combat/skill_moves.go:var knockdownContestRunner": "U10 (knockdown opposed contest after a landed special move; lighting plan 5b moved it behind this test seam)",
 	"internal/hooks/recovery_contest.go:recoveryContest":        "U10 (prone-recovery opposed contest; free stands never contest)",
+
+	// #301: a player's consider is a skill read, Perception plus Search
+	// against Charisma plus Rhetoric. Not a channel attack (nothing lands on
+	// the target), so ResolveChannelAttack does not apply. Behind this test
+	// seam so the consider tests can pin the read quality.
+	"internal/actions/consider.go:var considerContest": "#301 (consider's read roll, behind the special-move cooldown)",
 }
 
 // contestCoreSelectors are the internal/contest entry points a selector call

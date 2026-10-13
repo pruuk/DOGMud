@@ -400,6 +400,18 @@ func (c *Character) HealthPerRound() int {
 	return base
 }
 
+// CombatHealthRegenPerRound is the health a heal spell's Regenerating record
+// restores each combat round, before toxicity and the room multiplier: base
+// regen times the record's multiplier, or 0 with no record. There is no other
+// regeneration in combat. NewRound_AutoHeal's in-combat branches and the fight
+// prediction both read it (#301).
+func (c *Character) CombatHealthRegenPerRound() float64 {
+	if !c.Conditions.HasEffect(conditions.EffectRegenMult) {
+		return 0
+	}
+	return float64(c.HealthPerRound()) * c.Conditions.Effect(conditions.EffectRegenMult)
+}
+
 func (c *Character) StaminaPerRound() int {
 	b := configs.GetBalanceConfig()
 	pct := float64(b.PlayerStaminaRegenPct)

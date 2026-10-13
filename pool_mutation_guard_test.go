@@ -63,6 +63,11 @@ var poolWriteExemptions = map[string]string{
 	// above it and a restore for anyone below. Neither primitive fits.
 	"internal/hooks/Life_Cascades.go": "respawn sets pools to a fraction of max",
 
+	// atFullPools refills Health and Stamina on its own by-value copy of the
+	// character so PowerScore rates the build at full pools. The helper lives in
+	// its own file so the exemption covers exactly those two writes.
+	"internal/combat/powerscore_pools.go": "PowerScore's own by-value copy, refilled so it rates the build at full pools (#301); never written back to any live character",
+
 	// --- 4. Admin commands, which deliberately bypass cost and harm semantics. ---
 	"internal/usercommands/admin.zap.go": "admin set-to-1",
 	"internal/usercommands/admin.mob.go": "admin mob heal",

@@ -2,6 +2,13 @@
 
 ## Unreleased: Fighting blind, and plainer combat words
 
+- `consider` now tells you what a fight would really cost you, from "they
+  won't lay a finger on you" to "you have zero chance", and how long each of
+  you would need to beat the other. It weighs both of you as you stand right
+  now, buffs, wards and enchantments included. Sizing someone up is now a
+  skill: Perception and search against their Charisma and rhetoric, so a
+  poor read is muddier, and a dark or dazzling room makes it harder. It uses
+  your special-move recovery, and it trains search.
 - Any attack now interrupts crafting or salvaging, not just an ordinary
   swing: a charge, a kick, a spell or a thrown blade all break your
   concentration on the work.

@@ -25,8 +25,22 @@ func RunContest(atkScore float64, entries []contest.Entry) contest.Result {
 	// roll spread from the attack score, so lowering it would shrink the spread
 	// and cancel most of the compression. Applied HERE and nowhere else -- see
 	// gap_compression_guard_test.go.
-	entries = compressContestGap(atkScore, entries, contestGapSaturation())
-	return contest.RunWithFloors(atkScore, entries, float64(configs.GetBalanceConfig().ContestFloor))
+	return contest.RunWithFloors(atkScore, compressedDefences(atkScore, entries), contestFloor())
+}
+
+// contestFloor is Balance.ContestFloor as RunWithFloors applies it, clamped to
+// [0, 0.5]. RunContest passes it and the fight read (meleeDamagePerRound)
+// predicts with it, so both see one value. RunWithFloors clamps again, which
+// is harmless.
+func contestFloor() float64 {
+	return contest.ClampFloor(float64(configs.GetBalanceConfig().ContestFloor))
+}
+
+// compressedDefences is entries after gap compression, exactly as RunContest
+// rolls them. The fight read calls it too, so the prediction compresses the
+// same way live combat does without a second compressContestGap call site.
+func compressedDefences(atkScore float64, entries []contest.Entry) []contest.Entry {
+	return compressContestGap(atkScore, entries, contestGapSaturation())
 }
 
 // compressContestGap narrows how far an attacker's score sits above each

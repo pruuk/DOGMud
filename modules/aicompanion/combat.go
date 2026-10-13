@@ -201,7 +201,7 @@ func fightLines(f *fightState, room *rooms.Room, mob *mobs.Mob, owner *users.Use
 		case t.MobInstanceId != 0 || t.UserId != 0:
 			who = `someone else`
 		}
-		odds := considerWords(actions.Consider(self, actions.NewMobActorInRoom(m, room)).Ratio)
+		odds := actions.FightReadPlain(actions.Consider(self, actions.NewMobActorInRoom(m, room)).Read)
 		mark := ``
 		if id == f.TargetId {
 			mark = ` (your chosen target)`
@@ -319,7 +319,7 @@ func (m *AICompanionModule) combatTick(c *controller, u *users.UserRecord, round
 		m.closeConversation(c, `a fight started`)
 		// Sizing up what it is facing, as anyone would: hopeless odds make
 		// it readier to run before the model has said anything.
-		if odds := worstOdds(room, mob, f); odds > 0 && odds < 0.4 && f.FleeAt == `about_to_die` {
+		if r, ok := worstRead(room, mob, f); ok && r.Verdict.Lethal() && f.FleeAt == `about_to_die` {
 			f.FleeAt = `badly_hurt`
 			c.mind.addLine(Line{Kind: `event`, Text: `You sized this up as a fight you could lose.`}, m.cfg.WorkingMemoryLines)
 		}
@@ -906,23 +906,24 @@ func unjustFight(p *Profile, f *fightState) (string, bool) {
 	return ``, false
 }
 
-// worstOdds is the least favourable power ratio among the enemies here, the
-// same comparison a player gets from `consider`. Below 1 means the other
-// side has the upper hand.
-func worstOdds(room *rooms.Room, mob *mobs.Mob, f *fightState) float64 {
+// worstRead is the most dangerous fight among the enemies here, the same read
+// a player gets from consider, without the roll. ok is false with no enemy in
+// the room.
+func worstRead(room *rooms.Room, mob *mobs.Mob, f *fightState) (actions.FightRead, bool) {
 	self := actions.NewMobActorInRoom(mob, room)
-	worst := 0.0
+	var worst actions.FightRead
+	found := false
 	for id := range f.Enemies {
 		e := mobs.GetInstance(id)
 		if e == nil || e.Character.RoomId != room.RoomId {
 			continue
 		}
-		r := actions.Consider(self, actions.NewMobActorInRoom(e, room)).Ratio
-		if worst == 0 || r < worst {
-			worst = r
+		r := actions.Consider(self, actions.NewMobActorInRoom(e, room)).Read
+		if !found || r.Verdict.Danger() > worst.Verdict.Danger() {
+			worst, found = r, true
 		}
 	}
-	return worst
+	return worst, found
 }
 
 // Arrows are not gone when they are loosed: they are in the dirt, in a

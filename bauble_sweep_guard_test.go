@@ -71,6 +71,7 @@ var itemStoreVars = map[string]string{
 	`internal/rooms.roomManager`:      `the rooms live source (LoadedRooms)`,
 	`internal/shops.shopCache`:        `the shops live source (AllShops)`,
 	`internal/users.userManager`:      `the users live source (GetAllLoadedUsers)`,
+	`internal/combat.neutralChar`:     `the fight read's neutral scoring target (#301): built once from characters.New(), never equipped or given items, never persisted; nothing in it needs walking`,
 	`internal/items.ItemDisabledSlot`: `a sentinel value (ItemId -1), never a real item`,
 	`internal/mobs.mobs`:              `authored mob templates; no runtime item is ever put in one`,
 	`internal/pets.petTypes`:          `authored pet templates; no runtime item is ever put in one`,

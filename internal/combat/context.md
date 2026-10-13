@@ -903,29 +903,25 @@ Players can switch combat targets mid-fight using `attack <new-target>`:
 - Separate messaging for same-room vs cross-room combat
 - Critical hit and backstab message highlighting
 
-## Power Ranking System
-```
-Combat assessment weights:
-- Damage output: 40%
-- Dexterity comparison: 30%
-- Health comparison: 20%
-- Defense comparison: 10%
-```
-
 ## Power Scoring & Gear Contribution
 
-`combat.PowerScore(char)` combines six terms: Offense, Defense,
-Durability, Skills, Mutations, and KD ratio. Equipment
-contribution flows through the standard pipes; there is no
-separate "gear quality" axis.
+`combat.PowerScore(char)` is `powerScoreParts(char).total()`. The terms
+(`powerScoreTerms`): melee offense, spell offense, mitigation (x300),
+avoidance (x2), natural armor, durability, skills, mutations and KD
+ratio. `PowerScore` rates the build at full pools (`atFullPools`,
+`powerscore_pools.go`); the fight read reads live state. Melee offense
+and avoidance are not formulas of their own: they call the fight read's
+shared helpers (`meleeOffenseRaw`, `meleeAvoidance`, see "The fight
+read"). Equipment contribution flows through the standard pipes; there
+is no separate "gear quality" axis.
 
 | PowerScore term | Equipment field(s) that feed it |
 |---|---|
-| Offense (physAtk per-swing) | weapon `DamageMultiplier`, `SpeedMultiplier`; offhand + ExtraArm weapons |
-| Offense (magAtk caster) | equipped weapon `SpellDamageMultiplier` |
+| Melee offense (`meleeOffenseRaw`) | every planned swing's mean damage against `neutralTarget()`: weapon `DamageMultiplier`, `SpeedMultiplier`; offhand + ExtraArm weapons |
+| Spell offense (magical and conviction raw damage, half weight each) | equipped weapon `SpellDamageMultiplier` |
 | Offense (any stat-derived) | equipment `StatMods` → `Stats.X.ValueAdj` |
 | Defense (mitigation) | equipment `PhysicalMitigation` / `MagicalMitigation` / `ConvictionMitigation` summed by `char.Get*Mitigation()`, bent through each channel's curve by `EffectiveMitigationFor` (#465) |
-| Defense (avoidance) | equipment-driven dodge/parry/block via `char.GetDefenseScore(...)` |
+| Avoidance (`meleeAvoidance`) | mean of dodge, parry and block, each scored by `defenceEntryScore` exactly as the live contest scores it |
 | Durability | `char.HealthMax.Value` / `StaminaMax.Value` / `ConvictionMax.Value` — all reflect equipment stat boosts |
 | Skills | not gear-driven |
 | Mutations | not gear-driven |
@@ -933,16 +929,55 @@ separate "gear quality" axis.
 
 A player swapping a steel sword for an iron one will see
 PowerScore drop because (a) the weapon's `DamageMultiplier`
-changes (physAtk) and (b) any stat-mod difference flows through
+changes (melee offense) and (b) any stat-mod difference flows through
 `ValueAdj` into multiple terms. The Incorporeal mutation (chunk
 2.2a) further scales gear contributions via
 `mutations.GearEffectivenessMultiplier` — an ethereal wraith's
 PowerScore reflects gear at the rank-determined fraction.
 
-Consumers: `actions.Consider` (player + mob `consider`),
-behavior tree conditions `target_power_ratio_above` and
-`target_power_ratio_below`, behavior tree action
-`target_weakest_mob_in_room`.
+Consumers: behavior tree conditions `target_power_ratio_above` and
+`target_power_ratio_below` (`internal/behaviortree/conditions_combat.go`),
+the weakest-mob selection in `internal/targeting` (wired to PowerScore by
+`targeting_wiring.go` through `SetPowerScoreFn`), and the power leaderboard
+in `modules/leaderboards`. `actions.Consider` does not use PowerScore: it
+reads `PredictFight` (next section).
+
+## The fight read (#301)
+
+`consider` and the AI companion read a fight from two layers. Nothing in
+either layer may carry its own swing, hit, damage or defence formula: the
+drift guards (repo root `fight_read_drift_guard_test.go`, plus
+`fight_expect_stat_test.go` and `gap_compression_guard_test.go` here)
+fail on a second copy, and PowerScore's melee offense and avoidance sit
+on the same helpers so the three cannot drift.
+
+**Layer 1, `fight_expect.go`** (pure: no dice, no state written):
+- `expectedSwings(src, tgt, srcType)` plans a round: swings, attack
+  score, mean normal and crit damage and crit bar per weapon.
+- `meleeDefenceEntries(defender)` scores the melee defence set with
+  `defenceEntryScore` (`combat_helpers.go`), the function live contests
+  use. `bestCompressedDefence(atkScore, entries)` takes the strongest
+  after `compressedDefences` (`run_contest.go`), the shared gap
+  compression seam.
+- `meleeDamagePerRound(src, tgt, srcType)` applies the contest floor
+  (`contestFloor()`, the same clamped value `RunContest` uses) and gap
+  compression, with `critShare` / `selfCritShare` for crits. Owner ruling
+  2026-10-13. It omits fumbles and partial deflection by design, so the
+  read is rough; `fight_expect_stat_test.go` measures how rough.
+- `spellDamagePerRound(src, tgt)` is the best damaging spell, via
+  `SpellRawDamage` and `SpellMitigation` (`spell_damage.go`, the same
+  functions `hooks.rollSpellDamage` calls), over the special-move
+  cooldown.
+- `meleeOffenseRaw`, `meleeAvoidance`, `neutralTarget` / `neutralCtx`
+  and `sourceTypeOf` serve PowerScore and the above.
+
+**Layer 2, `fight_predict.go`:** `PredictFight(you, them)` returns a
+`FightPrediction` (net damage per round each way, rounds to kill each
+way, `Cost`, `Dent`). `healPerRound` nets out lifesteal (only when
+`lifesteal_pct` is above zero), `Character.CombatHealthRegenPerRound` and
+`Conditions.PoolTickPerRound("health")`; `nonNegative` and `finish` do
+the clamping and the rounds, with infinity for zero damage.
+`actions.ReadFight` classifies the result.
 
 ## Contest core (chunks U1 to U6)
 
@@ -2273,7 +2308,10 @@ own identical terms (converging that is not Task 17's mandate).
 | `crit_damage.go` | `CritDamageMultiplier` (skill-scaled crit worth) and `CritOrMitigatedDamage` (5.11g) |
 | `situational.go` | U6b Task 17: `SituationalAttackMult(attacker, room messaging.RoomVisibility, shape combatvocab.Attack)` — the shared attacker-side situational accuracy layer (prone + stamina depletion on `Melee`/`Ranged`/`Thrown` only; lighting plan 5b's sight row on those and `Spell`, never `Rhetoric`; see "Shared situational-modifier layer"). Lighting plan 5b also added `SituationalDefenceMult(defender, room, shape)`, the defender-side sight row `ResolveChannelAttack` applies per defence entry, and `SightRoom(r *rooms.Room)`, the typed-nil guard. Also the round-start sleeping snapshot: `PublishSleepingSnapshot` (written once per round by `hooks.DoCombat`) and `SleepingForceCrit(defender)` — THE lookup for the sleeping-victim auto-crit contract, consumed by melee's round passes and threaded into channel contests as `AttackSide.ForceCrit`. |
 | `calculations.go` | Core combat maths |
-| `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. |
+| `run_contest.go` | `RunContest`, the single entry point for every opposed contest, wrapping `internal/contest`. The one place `Balance.ContestFloor` is read. U6 deleted the three floor-pair wrappers this replaced. `contestFloor()` (the clamped floor) and `compressedDefences()` (gap compression) are shared with the fight read's `meleeDamagePerRound` (#301), so the prediction and the live contest use one floor and one compression. |
+| `fight_expect.go` / `fight_predict.go` | The fight read (#301): layer 1 expected melee and spell output built from live combat's own seams, layer 2 `PredictFight` / `FightPrediction`. See "The fight read". |
+| `spell_damage.go` | `SpellRawDamage` and `SpellMitigation`, the pure halves of a spell's damage that `hooks.rollSpellDamage` and the fight read share (#301) |
+| `powerscore_pools.go` | `atFullPools`, the one place PowerScore refills a by-value copy's pools (exempted in `pool_mutation_guard_test.go`) |
 | `run_concentration_contest.go` | `RunConcentrationContest(casterScore, disruption) contest.Result` (U10) — the single entry point for every concentration contest (damage, position, throttle triggers). The one place `Balance.ConcentrationFloor` (0.02) is read; deliberately its own, much smaller mercy band than `ContestFloor`. |
 | `defence_sets.go` | `DefenceEntriesFor(shape combatvocab.Attack, defender, opts)` — the equipment-gated defence-set NAME builder EVERY attack uses: `ResolveChannelAttack` for the non-melee attacks, and melee's `calculateCombat` for the names `runBestOfAllDefense` scores. The eligibility table itself (which defences apply to which `(AttackType, DamageType)` pair) lives in `internal/combatvocab.EligibleDefences` (M4b-2; this file's own flattened-channel enum and its lookup switch, U6 Task 11, are deleted). See "Defence sets are a property of the attack" below. |
 | `attack_cost.go` | `ChargeAttackCost(attacker, swings)` — the raw aggregate `ActionAttack` quote and one `CostPartial` commit. Composition remains centralized in `QuoteActionCost`; `Short()` is true only for `CostPartiallyPaid`. |

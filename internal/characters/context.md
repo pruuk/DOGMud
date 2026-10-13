@@ -844,6 +844,12 @@ why the clearing lives here and not in each command (docs/baubles).
 - **Charm system** (`charminfo.go`): Mind control and pet mechanics
 - **Mob mastery** (`mobmastery.go`): Character proficiency with specific creature types
 - **Shop system** (`shop.go`): NPC merchant capabilities with restocking mechanics
+- **Combat health regen** (`resources.go`): `CombatHealthRegenPerRound()` is
+  the health a heal spell's Regenerating record restores each combat round
+  (`HealthPerRound` times the record's `EffectRegenMult`, or 0 with no
+  record), before toxicity and the room multiplier. `NewRound_AutoHeal`'s
+  in-combat branches and `combat.PredictFight` both read it, so the fight
+  read and the live round agree (#301).
 
 ### Character Presentation
 - **Formatted names** (`formattedname.go`): Rich text rendering with adjectives and color coding.

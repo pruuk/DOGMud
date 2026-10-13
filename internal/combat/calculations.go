@@ -4,9 +4,6 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/combatvocab"
-	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -14,104 +11,59 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// PowerScore computes an absolute power score for a character.
-// Uses the real damage pipeline so it automatically tracks config tuning.
-// Components: Offense, Defense, Durability, Skills, Mutations, KD Ratio.
-func PowerScore(char characters.Character) float64 {
-	bal := configs.GetBalanceConfig()
-	softCap := float64(bal.SkillSoftCap)
-	if softCap <= 0 {
-		softCap = 50
-	}
+// powerScoreTerms are PowerScore's components, kept apart so drift guard 2
+// can hold the shared ones to the fight read's layer 1 (#301).
+type powerScoreTerms struct {
+	meleeOffense float64 // layer 1: every planned swing's mean against the neutral target
+	spellOffense float64 // magical and conviction channel raw damage, half weight each
+	mitigation   float64 // effective mitigation, averaged over the three channels
+	avoidance    float64 // layer 1: mean of dodge, parry and block as the contest scores them
+	naturalArmor float64
+	durability   float64
+	skills       float64
+	mutations    float64
+	kd           float64
+}
+
+func (p powerScoreTerms) total() float64 {
+	return p.meleeOffense + p.spellOffense + p.mitigation*300 + p.avoidance*2 + p.naturalArmor +
+		p.durability + p.skills + p.mutations + p.kd
+}
+
+// powerScoreParts computes PowerScore's terms. Melee offense and avoidance
+// come from the fight read's shared helpers (fight_expect.go), so PowerScore,
+// consider and combat cannot drift apart (#301).
+func powerScoreParts(char characters.Character) powerScoreTerms {
+	// PowerScore rates the build at full pools; the fight read (PredictFight)
+	// reads live state. See atFullPools.
+	char = atFullPools(char)
+	c := &char
+	p := powerScoreTerms{}
 
 	// ── OFFENSE ──────────────────────────────────────────────────────────
-	physAtk := 0.0
+	p.meleeOffense = meleeOffenseRaw(c, sourceTypeOf(c))
 
-	addWeaponDPS := func(weapon items.Item, isOffhand bool) {
-		spec := weapon.GetSpec()
-		damageMult := spec.DamageMultiplier
-		if damageMult <= 0 {
-			damageMult = 0.30
-		}
-		weaponSpeed := spec.SpeedMultiplier
-		if weaponSpeed <= 0 {
-			weaponSpeed = 1.0
-		}
-
-		dex := float64(char.Stats.Dexterity.ValueAdj)
-		combatSkill := float64(char.GetCombatSkillLevel()) * float64(bal.SkillWeight)
-		swings := 1.0 + (dex-50.0)/100.0*weaponSpeed*(1.0+combatSkill/softCap)
-		if isOffhand {
-			wcLevel := float64(char.GetSkillLevel(skills.WeaponCombat)) * float64(bal.SkillWeight)
-			dualWieldMod := 0.5 + (wcLevel/50.0)*0.5
-			swings *= dualWieldMod
-		}
-		if swings < 1 {
-			swings = 1
-		}
-		if swings > 4 {
-			swings = 4
-		}
-
-		rawDmg := CalcRawDamage(char.Stats.Strength.ValueAdj, char.GetCombatSkillLevel(), damageMult, ChannelPhysical)
-		physAtk += swings * rawDmg
-	}
-
-	if char.Equipment.Weapon.ItemId > 0 {
-		addWeaponDPS(char.Equipment.Weapon, false)
-	} else {
-		addWeaponDPS(items.Item{}, false)
-	}
-	if char.Equipment.Offhand.ItemId > 0 {
-		addWeaponDPS(char.Equipment.Offhand, true)
-	}
-	if char.ExtraArms >= 1 && char.Equipment.ExtraArm1.ItemId > 0 {
-		addWeaponDPS(char.Equipment.ExtraArm1, true)
-	}
-	if char.ExtraArms >= 2 && char.Equipment.ExtraArm2.ItemId > 0 {
-		addWeaponDPS(char.Equipment.ExtraArm2, true)
-	}
-	if char.ExtraArms >= 3 && char.Equipment.ExtraArm3.ItemId > 0 {
-		addWeaponDPS(char.Equipment.ExtraArm3, true)
-	}
-	if char.ExtraArms >= 4 && char.Equipment.ExtraArm4.ItemId > 0 {
-		addWeaponDPS(char.Equipment.ExtraArm4, true)
-	}
-	physAtk *= (1.0 + mutations.GetDamageMultiplier(char.Mutations))
-
-	// Normalize all three channels to comparable scale
 	spellcastingRank := char.GetSkillLevel(skills.Spellcasting)
 	spellMult := 1.0
 	if char.Equipment.Weapon.ItemId > 0 {
-		sdm := char.Equipment.Weapon.GetSpec().SpellDamageMultiplier
-		if sdm > 0 {
+		if sdm := char.Equipment.Weapon.GetSpec().SpellDamageMultiplier; sdm > 0 {
 			spellMult = sdm * mutations.GearEffectivenessMultiplier(char.Mutations)
 		}
 	}
 	magAtk := CalcRawDamage(char.Stats.Willpower.ValueAdj, spellcastingRank, spellMult, ChannelMagical)
-
-	rhetoricRank := char.GetSkillLevel(skills.Rhetoric)
-	convAtk := CalcRawDamage(char.Stats.Charisma.ValueAdj, rhetoricRank, 0.5, ChannelConviction)
-
-	// Normalize: physical already includes swing count so it's higher per-round.
-	// Magical/conviction are single-cast values. Weight them equally.
-	offenseScore := physAtk + magAtk*0.5 + convAtk*0.5
+	convAtk := CalcRawDamage(char.Stats.Charisma.ValueAdj, char.GetSkillLevel(skills.Rhetoric), 0.5, ChannelConviction)
+	p.spellOffense = magAtk*0.5 + convAtk*0.5
 
 	// ── DEFENSE ──────────────────────────────────────────────────────────
-	// Effective, not raw (#465): consider, mob flee and target choice and the
-	// power leaderboard weigh the protection combat actually applies.
-	avgMit := (EffectiveMitigationFor(&char, ChannelPhysical) +
-		EffectiveMitigationFor(&char, ChannelMagical) +
-		EffectiveMitigationFor(&char, ChannelConviction)) / 3.0
-	dodgeScore := char.GetDefenseScore(combatvocab.DefenceDodge)
-	parryScore := char.GetDefenseScore(combatvocab.DefenceParry)
-	blockScore := char.GetDefenseScore(combatvocab.DefenceBlock)
-	defenseAvoidance := (dodgeScore + parryScore + blockScore) / 3.0
-	naturalArmor := mutations.GetNaturalArmor(char.Mutations)
-	defenseScore := (avgMit * 300) + (defenseAvoidance * 2) + float64(naturalArmor)
+	// Effective, not raw (#465).
+	p.mitigation = (EffectiveMitigationFor(c, ChannelPhysical) +
+		EffectiveMitigationFor(c, ChannelMagical) +
+		EffectiveMitigationFor(c, ChannelConviction)) / 3.0
+	p.avoidance = meleeAvoidance(c)
+	p.naturalArmor = float64(mutations.GetNaturalArmor(char.Mutations))
 
 	// ── DURABILITY ───────────────────────────────────────────────────────
-	durabilityScore := float64(char.HealthMax.Value) +
+	p.durability = float64(char.HealthMax.Value) +
 		float64(char.StaminaMax.Value)*0.5 +
 		float64(char.ConvictionMax.Value)*0.5
 
@@ -120,7 +72,7 @@ func PowerScore(char characters.Character) float64 {
 	for _, rank := range char.GetAllSkillRanks() {
 		totalRanks += rank
 	}
-	skillScore := math.Sqrt(float64(totalRanks)) * 25.0
+	p.skills = math.Sqrt(float64(totalRanks)) * 25.0
 
 	// ── MUTATIONS ────────────────────────────────────────────────────────
 	totalMutLevels := 0
@@ -129,17 +81,23 @@ func PowerScore(char characters.Character) float64 {
 			totalMutLevels += level
 		}
 	}
-	mutationScore := float64(totalMutLevels) * 20.0
+	p.mutations = float64(totalMutLevels) * 20.0
 
 	// ── KD RATIO ─────────────────────────────────────────────────────────
 	deaths := char.KD.TotalDeaths
 	if deaths < 1 {
 		deaths = 1
 	}
-	kdRatio := float64(char.KD.TotalKills) / float64(deaths)
-	kdScore := math.Min(kdRatio*10.0, 50.0)
+	p.kd = math.Min(float64(char.KD.TotalKills)/float64(deaths)*10.0, 50.0)
 
-	return offenseScore + defenseScore + durabilityScore + skillScore + mutationScore + kdScore
+	return p
+}
+
+// PowerScore computes an absolute power score for a character: one number for
+// the behavior trees, targeting and the leaderboard. Its melee offense and
+// avoidance are the fight read's shared terms (powerScoreParts).
+func PowerScore(char characters.Character) float64 {
+	return powerScoreParts(char).total()
 }
 
 func ChanceToTame(s *users.UserRecord, t *mobs.Mob) int {

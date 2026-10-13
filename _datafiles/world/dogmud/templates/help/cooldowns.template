@@ -7,11 +7,11 @@ expire before using that ability again.
 
 <ansi fg="yellow">Special Combat Moves: </ansi>
 
-The special combat moves (<ansi fg="command">bash</ansi>, <ansi fg="command">trip</ansi>,
-<ansi fg="command">kick</ansi>) share a single cooldown. Using any one of
-them prevents you from using any of the three until the
+Special moves (<ansi fg="command">bash</ansi>, <ansi fg="command">trip</ansi>, <ansi fg="command">kick</ansi> and the like) and spells
+share a single cooldown. <ansi fg="command">consider</ansi> uses it too. Using any one of
+them prevents you from using the others until the
 cooldown expires. This encourages tactical timing rather
-than chaining knockdown attempts.
+than chaining knockdown attempts. See <ansi fg="command">help special</ansi>.
 
 <ansi fg="yellow">Usage: </ansi>
 
