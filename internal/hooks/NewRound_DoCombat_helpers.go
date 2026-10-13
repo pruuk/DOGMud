@@ -23,7 +23,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
-	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -542,35 +541,6 @@ func fizzleMobFold(mob *mobs.Mob, room *rooms.Room, cs activity.CastingData) {
 	sendMobSpellFailed(mob, room, "fizzles")
 }
 
-// sendMobWeaving narrates a mob still holding its fold. Sight only: a quiet
-// weave makes no sound (owner ruling R4), and a hidden weaver is silent to a
-// reader who does not perceive it (mobActUnseenBy).
-func sendMobWeaving(mob *mobs.Mob, room *rooms.Room) {
-	sendVisualRoomText(room, messaging.CategorySpellFold, fmt.Sprintf(
-		`%s weaves magic with focused intent.`, mobSeenName(mob, room, 0)),
-		mobActUnseenBy(room, mob)...)
-}
-
-// sendMobWindupWarning is the held round of a min_cast_rounds windup (#480):
-// the spell's own wait_observer line in place of the generic weave, to the
-// same audience and with the caster named the same way. It sends nothing and
-// returns false for a spell without the field or without that line, so every
-// other mob cast keeps the weave.
-func sendMobWindupWarning(mob *mobs.Mob, room *rooms.Room, spellData *spells.SpellData) bool {
-	if spellData == nil || spellData.MinCastRounds <= 0 {
-		return false
-	}
-	// Both forms take the seen name, as the weave does: a plain name would
-	// name a hidden caster.
-	seen := mobSeenName(mob, room, 0)
-	roles := spellData.Narrate(spells.PhaseWait, textutil.TokenContext{ActorName: seen, ActorPlainName: seen})
-	if roles.Observer == "" {
-		return false
-	}
-	sendVisualRoomText(room, messaging.CategorySpellFold, roles.Observer, mobActUnseenBy(room, mob)...)
-	return true
-}
-
 // sendPlayerConcentrationBroke narrates a player caster's broken
 // concentration to the rest of the room, as sendMobConcentrationBroke does
 // for a mob: seen by sight, heard by a reader who sees nothing. The caster
@@ -694,21 +664,11 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 	case result.CastComplete:
 		cs := result.CastingData
 		spellData := result.SpellData
-		// Send YAML wait text (if defined).
-		if spellData != nil && spellData.Narration(spells.PhaseWait).Len() > 0 {
-			roles := spellData.Narrate(spells.PhaseWait, textutil.TokenContext{
-				ActorName:      user.Character.GetCharacterName(true),
-				ActorPlainName: user.Character.GetCharacterName(false),
-			})
-			if roles.Actor != "" {
-				user.SendText(messaging.CategorySpellFold, roles.Actor)
-			}
-			// Audio channel, as before this refactor: filed, not changed here.
-			if roles.Observer != "" {
-				if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-					r.SendText(messaging.CategorySpellFold, roles.Observer, user.UserId)
-				}
-			}
+		// The fold round's lines through the one body (messaging M6 slice 4):
+		// sight only, silent to readers who do not perceive a hidden caster.
+		if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+			actions.NarrateSpellPhase(actions.NewUserActorInRoom(user, r), spellData, spells.PhaseWait,
+				cs.TargetUserIds, cs.TargetMobInstanceIds, r, messaging.CategorySpellFold)
 		}
 
 		resolveRoom := rooms.LoadRoom(user.Character.RoomId)
@@ -836,22 +796,11 @@ func handlePlayerFoldCasting(user *users.UserRecord, userId int) bool {
 
 	case result.StillCasting:
 		cs := result.CastingData
-		// Send YAML wait text (if defined).
+		// The fold round's lines through the one body (messaging M6 slice 4).
 		waitSpellInfo := spells.GetSpell(cs.SpellId)
-		if waitSpellInfo != nil && waitSpellInfo.Narration(spells.PhaseWait).Len() > 0 {
-			roles := waitSpellInfo.Narrate(spells.PhaseWait, textutil.TokenContext{
-				ActorName:      user.Character.GetCharacterName(true),
-				ActorPlainName: user.Character.GetCharacterName(false),
-			})
-			if roles.Actor != "" {
-				user.SendText(messaging.CategorySpellFold, roles.Actor)
-			}
-			// Audio channel, as before this refactor: filed, not changed here.
-			if roles.Observer != "" {
-				if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
-					r.SendText(messaging.CategorySpellFold, roles.Observer, user.UserId)
-				}
-			}
+		if r := rooms.LoadRoom(user.Character.RoomId); r != nil {
+			actions.NarrateSpellPhase(actions.NewUserActorInRoom(user, r), waitSpellInfo, spells.PhaseWait,
+				cs.TargetUserIds, cs.TargetMobInstanceIds, r, messaging.CategorySpellFold)
 		}
 		// "cast_continuing", not "cast_started": this fires once per round while
 		// the folds are still being laid down, so the start pool announced the
@@ -929,6 +878,10 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 	case result.CastComplete:
 		cs := result.CastingData
 		spellData := result.SpellData
+		// The completing fold round reads as every other fold round, for a mob
+		// as for a player (messaging M6 slice 4).
+		actions.NarrateSpellPhase(actions.NewMobActorInRoom(mob, mobRoom), spellData, spells.PhaseWait,
+			cs.TargetUserIds, cs.TargetMobInstanceIds, mobRoom, messaging.CategorySpellFold)
 		castLanded, fizzled := false, false
 		if resolveRoom := rooms.LoadRoom(mob.Character.RoomId); resolveRoom != nil {
 			castLanded, fizzled = resolveMobSpell(mob, cs, spellData, resolveRoom)
@@ -1010,9 +963,9 @@ func handleMobFoldCasting(mob *mobs.Mob, mobRoom *rooms.Room) bool {
 		}
 
 	case result.StillCasting:
-		if !sendMobWindupWarning(mob, mobRoom, result.SpellData) {
-			sendMobWeaving(mob, mobRoom)
-		}
+		cs := result.CastingData
+		actions.NarrateSpellPhase(actions.NewMobActorInRoom(mob, mobRoom), result.SpellData, spells.PhaseWait,
+			cs.TargetUserIds, cs.TargetMobInstanceIds, mobRoom, messaging.CategorySpellFold)
 	}
 
 	return true

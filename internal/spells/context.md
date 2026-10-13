@@ -103,7 +103,7 @@ high fold rate otherwise completes any cast on its first step, which leaves
 one round to interrupt. `hooks.processFoldRound` applies it, counting steps
 in `activity.CastingData.RoundsStepped`; a held step adds no folds and costs
 no conviction. Each held step shows the spell's `wait_observer` line in
-place of the generic "weaves magic" line (`hooks.sendMobWindupWarning`), and
+place of the generic room line (`actions.NarrateSpellPhase`), and
 every disruptor can cancel the cast across the whole windup. A player's
 cast ignores the field, so `Validate()` refuses it on a spell without
 `mob_only: true`, and refuses a negative count. Absent (0) changes nothing.

@@ -68,9 +68,18 @@ func TestMobSpellDisruption_ShapesReadAFigure_BlindHearTheSound(t *testing.T) {
 	}
 }
 
+// sendMobFoldRoundForTest is a mob's fold-round line for a spell that
+// authors none: the generic weave, through the one body (messaging M6
+// slice 4).
+func sendMobFoldRoundForTest(m *mobs.Mob, room *rooms.Room) {
+	actions.NarrateSpellPhase(actions.NewMobActorInRoom(m, room),
+		&spells.SpellData{SpellId: "test-weave", Name: "Test Weave"}, spells.PhaseWait,
+		nil, nil, room, messaging.CategorySpellFold)
+}
+
 func TestMobSpellChannel_WeaveIsSightOnly(t *testing.T) {
 	room := seedFallbackRoom(t, 10, heatEyesConditionId)
-	sendMobWeaving(spellChannelMob(t), room)
+	sendMobFoldRoundForTest(spellChannelMob(t), room)
 
 	shapes, blind := drainPlain(1), drainPlain(2)
 	require.Equal(t, 1, countContaining(shapes, "weaves magic"), "%v", shapes)
@@ -82,7 +91,7 @@ func TestMobSpellChannel_LitRoomNamesTheCaster(t *testing.T) {
 	room := seedFallbackRoom(t, 60, heatEyesConditionId)
 	m := spellChannelMob(t)
 	sendMobConcentrationBroke(m, room)
-	sendMobWeaving(m, room)
+	sendMobFoldRoundForTest(m, room)
 	got := drainPlain(2)
 	require.Equal(t, 1, countContaining(got, "Skeleton's concentration breaks."), "%v", got)
 	require.Equal(t, 1, countContaining(got, "Skeleton weaves magic"), "%v", got)

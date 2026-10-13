@@ -1220,7 +1220,7 @@ line is one the name would give it away to.
 The same rule covers a hidden mob's own acts, by owner ruling R3 (#274: "a
 hidden actor does not emote. Silence, not an anonymous line."): the
 stat-gain emote (`emitMobStatGains`), the prone-recovery emote
-(`tickMobProneRecovery`), the weave (`sendMobWeaving`), the focus shift
+(`tickMobProneRecovery`), the fold-round weave (`actions.NarrateSpellPhase`), the focus shift
 (`sendMobShiftsFocus`) and the drain-area landing line
 (`resolveMobDrainArea`) name the mob through `mobSeenName` and skip
 `mobActUnseenBy(room, mob)` (`NewRound_DoCombat_helpers.go`, a wrapper on
@@ -1845,10 +1845,10 @@ at the end of each per-pair tick via defer.
 the folds are already full. The rule is keyed on `char.GetUserId() == 0`,
 so a player's cast never meets it. A held step adds no folds, and
 `calcFoldConvictionCost` charges 0 for a step with no fold gain. On a held
-round `handleMobFoldCasting` calls `sendMobWindupWarning`, which sends the
-spell's `wait_observer` line (caster named by `mobSeenName`, same audience
-as `sendMobWeaving`) in place of the weave; a spell without the field or
-without that line keeps the weave. Disruptors need no change: the mob is
+round `handleMobFoldCasting` calls `actions.NarrateSpellPhase`, which sends
+the spell's `wait_observer` line (caster named by `MobSeenName`, sight only)
+in place of the generic weave; a spell without that line keeps the generic
+pool line. Disruptors need no change: the mob is
 casting for the whole windup, so `InterruptTargetCast` lands in any round.
 `mob_min_cast_rounds_test.go` pins all of it.
 
