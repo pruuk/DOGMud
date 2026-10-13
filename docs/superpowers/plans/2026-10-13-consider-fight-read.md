@@ -34,7 +34,7 @@ Read from `origin/master` at `8267eb06f`, 2026-10-13, in addition to the spec's 
 | Structural guard forbidding progression in `consider.go` | `internal/actions/consider_no_progression_test.go` |
 | `fakeActor` in actions tests builds a bare `&characters.Character{}` (no Position); the new prediction needs a validated character | `internal/actions/consider_test.go:28-49` |
 | AI companion: `considerWords(ratio)` (`actions.go:717`), its test (`aicompanion_test.go:504`), `.Ratio` reads at `actions.go:756`, `combat.go:204`, `combat.go:920`, flee check `combat.go:322` | as named |
-| Mob ids: Straw Effigy 9614 (species 19, zero base damage). "Megalomania" is not in shipped mob data, so the hopeless case uses a fixture | `_datafiles/world/dogmud/mobs/newcomer_antechamber/9614-straw_effigy.yaml` |
+| Mob ids: Straw Effigy 9614 (species 19, zero base damage). "Megalomania" is not in shipped mob data, so the hopeless case uses the owner's yardstick: species 99 Ascended (base 1000 in every stat), every skill at 100 (`skills.GetAllSkillNames()`), wielding the Blackrazor (item 40183); `Validate` hydrates species base stats | `_datafiles/world/dogmud/mobs/newcomer_antechamber/9614-straw_effigy.yaml`; `_datafiles/world/dogmud/species/99-ascended.yaml`; `_datafiles/world/dogmud/items/materials-40000/40183-the_blackrazor.yaml`; `internal/characters/validate.go:50-76`; `internal/skills/skills.go:144` |
 | 19 mob files use the `lookout`, `thief` or `predator` archetype (the three PowerScore thresholds) | grep of `_datafiles/world/dogmud/mobs` |
 | Root tests load mob templates with `fileloader.LoadAllFlatFiles[int, *mobs.Mob]` plus `mobs.SeedMobsForTest`, and spawn with `mobs.NewMobByIdFresh` | `shop_night_trade_guard_test.go:75-194` |
 
@@ -2651,7 +2651,10 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // Drift guard 4 (#301): reads the owner named, pinned.
@@ -2677,13 +2680,40 @@ func TestPinnedRead_StrawEffigy(t *testing.T) {
 	}
 }
 
-// A pinnacle build against a novice: zero chance for the novice, and moments
-// for the pinnacle.
+// fixtureAscended is the owner's "zero chance" yardstick: species 99
+// (Ascended, base 1000 in every stat, hydrated by Validate), every skill at
+// 100, wielding the Blackrazor (item 40183).
+func fixtureAscended(t *testing.T) *characters.Character {
+	t.Helper()
+	c := characters.New()
+	c.Name = "Ascended"
+	c.RoomId = 1
+	c.SpeciesId = 99
+	if err := c.Validate(); err != nil {
+		t.Fatalf("validate Ascended: %v", err)
+	}
+	if c.Stats.Strength.ValueAdj < 1000 {
+		t.Fatalf("Ascended strength %d: species stats did not hydrate", c.Stats.Strength.ValueAdj)
+	}
+	for _, s := range skills.GetAllSkillNames() {
+		c.Skills[string(s)] = 100
+	}
+	c.Equipment.Weapon = items.New(40183)
+	if c.Equipment.Weapon.ItemId != 40183 {
+		t.Fatal("the Blackrazor (40183) did not load")
+	}
+	c.Health = c.HealthMax.Value
+	c.Stamina = c.StaminaMax.Value
+	c.Conviction = c.ConvictionMax.Value
+	return c
+}
+
+// An Ascended with every skill at 100 and the Blackrazor against a novice:
+// zero chance for the novice, and moments for the Ascended.
 func TestPinnedRead_Hopeless(t *testing.T) {
 	loadFightWorld(t)
 	novice := fixtureAdventurer(t, "Novice", 60, 1)
-	pinnacle := fixtureAdventurer(t, "Pinnacle", 1000, 100)
-	pinnacle.HealthMax.Value, pinnacle.Health = 100000, 100000
+	pinnacle := fixtureAscended(t)
 
 	if r := actions.ReadFight(novice, pinnacle); r.Verdict != actions.VerdictHopeless {
 		t.Errorf("novice vs pinnacle: %v, want hopeless (prediction %+v)", r.Verdict, r.Prediction)
@@ -2844,7 +2874,7 @@ The work is done when every one of these holds, each checked by the named eviden
 
 1. **#301 is fixed.** A player who would win in one round never reads "even": the old ratio bands are gone (`predictionFor` deleted, guard 1), and a strong-versus-weak read is `VerdictUntouched` in moments (`TestPinnedRead_Hopeless`).
 2. **The effigy reads true.** The Straw Effigy reads "won't lay a finger" or a stalemate with your pace "an age", never hopeless or a loss (`TestPinnedRead_StrawEffigy`, playtest goal 1).
-3. **Zero chance exists.** A novice against a pinnacle build reads hopeless (`TestPinnedRead_Hopeless`).
+3. **Zero chance exists.** A novice against an Ascended with every skill at 100 and the Blackrazor reads hopeless (`TestPinnedRead_Hopeless`).
 4. **Verdict and pace are separate.** Every read sends an opener, a verdict that never mentions pace, and one pace line (`TestConsider_PlayerReadSendsThreeLinesAndTrainsSearch`, `fight_read.go` copy tables).
 5. **Buffs count.** Lifesteal lowers incoming damage (`TestPredictFight_LifestealReducesIncoming`); mitigation from wards and potions feeds through `buildDamageParams` (`TestMeleePredictionMatchesCombat`, "armoured defender"); playtest goal 3 shows a buffed read is no worse.
 6. **The roll works as ruled.** Perception plus Search against Charisma plus Rhetoric through `combat.RunContest`; clear, fair and muddy tiers (`TestReadQualityFor`); a muddy read slides only bands 2, 3, 5 and 6, one step toward barely, with no extra slide on a critical failure (`TestMuddySlide`, `TestConsider_MuddyReadSlidesTheVerdict`).
