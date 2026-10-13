@@ -95,23 +95,6 @@ func TestRecipeValidate_Narration(t *testing.T) {
 	}
 }
 
-func TestMobRoomLine_AuthoredLineElseFallback(t *testing.T) {
-	r := narrationTestRecipe()
-	const fallback = `<ansi fg="mobname">Smith</ansi> finishes their work.`
-
-	if got := r.MobRoomLine(PhaseSuccess, "Smith", fallback); got != fallback {
-		t.Errorf("no authored room line: got %q, want the fallback %q", got, fallback)
-	}
-	if got := r.MobRoomLine(PhaseFailure, "Smith", ""); got != "" {
-		t.Errorf("no authored failure line and no fallback: got %q, want empty", got)
-	}
-
-	r.SuccessRoomMessage = "{actor} sets down a finished stew."
-	if want := `<ansi fg="mobname">Smith</ansi> sets down a finished stew.`; r.MobRoomLine(PhaseSuccess, "Smith", fallback) != want {
-		t.Errorf("authored room line: got %q, want %q", r.MobRoomLine(PhaseSuccess, "Smith", fallback), want)
-	}
-}
-
 // The loader's Validate is where the unknown-token check has to bite: that is
 // the call fileloader makes, and crafting.LoadRecipeFiles panics on its error.
 func TestRecipeValidateFailsTheLoadOnAnUnknownToken(t *testing.T) {

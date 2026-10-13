@@ -261,8 +261,6 @@ A recipe is a narration store. Read its text only through the door in
 - `(*RecipeSpec).Narrate(p, textutil.TokenContext) narration.Roles`: renders
   through `textutil.Narrate`, crafter as the actor (`{actor}`,
   `{actor_plain}`).
-- `(*RecipeSpec).MobRoomLine(p, mobName, fallback) string`: a mob crafter's
-  room line, the authored Observer line or the fallback.
 - `(RecipeSpec).ValidateNarrationTokens() []string`: unknown `{token}`
   spellings across all four narration fields, via `textutil.ValidateTokens`.
 - `Validate` refuses: an empty `success_actor` or `failure_actor`; a

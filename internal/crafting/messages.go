@@ -23,7 +23,7 @@ import (
 const TokenItem = "{item}"
 
 // unknownItem is what {item} reads when the reader cannot make the item out,
-// or the recipe makes no item (an enchant), the word craftBeginLine used.
+// or the recipe makes no item (an enchant).
 const unknownItem = "something"
 
 // minCraftingVariants is the floor for every pool, casting's floor.
@@ -216,4 +216,13 @@ func CraftHeardLine(skill string, p Phase, picker ...narration.Picker) string {
 		return ""
 	}
 	return narration.Render(narration.Variants{Actor: pool}, nil, pickerOf(picker)).Actor
+}
+
+// SeedRecipesForTest installs the recipe registry (nil unloads it), clears
+// the output-id index, and returns the restore func for t.Cleanup. It does
+// not validate.
+func SeedRecipesForTest(recipes map[string]*RecipeSpec) func() {
+	prev, prevIdx := allRecipes, recipeByOutputId
+	allRecipes, recipeByOutputId = recipes, nil
+	return func() { allRecipes, recipeByOutputId = prev, prevIdx }
 }
