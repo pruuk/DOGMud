@@ -670,9 +670,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										ActorPlainName: user.Character.GetCharacterName(false),
 									})
 									user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, successRoles.Actor))
-									if successRoles.Observer != "" {
-										sendVisualRoomText(room, messaging.CategoryEmote, successRoles.Observer, user.UserId)
-									}
+									actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, crafting.PhaseSuccess, room)
 
 									// Stage 31.1: Recipe discovery roll
 									bal := configs.GetBalanceConfig()
@@ -707,9 +705,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										ActorPlainName: user.Character.GetCharacterName(false),
 									})
 									user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">%s</ansi>`, failureRoles.Actor))
-									if failureRoles.Observer != "" {
-										sendVisualRoomText(room, messaging.CategoryEmote, failureRoles.Observer, user.UserId)
-									}
+									actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, crafting.PhaseFailure, room)
 								}
 							}
 						}

@@ -43,27 +43,17 @@ func craftDeliver(user *users.UserRecord, cat messaging.Category, text string) {
 	})
 }
 
-// craftDeliverInstant sends an instant-complete craft's two lines -- the
-// crafter's own success line and the room's observer line -- through
-// messaging.SendTrio. Unlike craftDeliver, this path HAS a room line that
-// names the crafter (recipe.Narrate's {actor} substitution), so it needs a
-// real Audience with Room set: that is what lets SendTrio's HideNames catch
-// the name for a shapes-only observer, rather than leaving it to the
-// tag-based messaging.Anonymize stage alone. Shared by both instant-complete
+// craftDeliverInstant sends an instant-complete craft's lines: the crafter's
+// own success line here, and the room's start and success lines through
+// actions.NarrateCraftPhase (messaging M6 row 7). An instant craft tells the
+// room both moments a timed craft does. Shared by both instant-complete
 // sites: case result.ImmediateComplete in Craft(), and completeCraft (the
 // enchanting instant path).
-func craftDeliverInstant(user *users.UserRecord, room *rooms.Room, roles narration.Roles) {
-	messaging.SendTrio(messaging.Trio{
-		Actor:    messaging.Say(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, roles.Actor)),
-		Actee:    messaging.NoLine,
-		Observer: messaging.Say(messaging.CategoryEmote, roles.Observer),
-	}, messaging.Audience{
-		Actor:     user,
-		ActorId:   user.UserId,
-		ActorName: user.Character.Name,
-		ActeeName: messaging.NoName,
-		Room:      room,
-	})
+func craftDeliverInstant(user *users.UserRecord, room *rooms.Room, recipe *crafting.RecipeSpec, roles narration.Roles) {
+	craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, roles.Actor))
+	actor := actions.NewUserActorInRoom(user, room)
+	actions.NarrateCraftPhase(actor, recipe, crafting.PhaseStart, room)
+	actions.NarrateCraftPhase(actor, recipe, crafting.PhaseSuccess, room)
 }
 
 // Craft handles the `craft` and `craft list` commands (Stage 13.1).
@@ -199,13 +189,14 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			ActorName:      user.Character.GetCharacterName(true),
 			ActorPlainName: user.Character.GetCharacterName(false),
 		})
-		craftDeliverInstant(user, room, roles)
+		craftDeliverInstant(user, room, result.Recipe, roles)
 		return true, nil
 
 	case result.Initiated:
 		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
 			`<ansi fg="yellow">You begin crafting %s... (%s)</ansi>`,
 			result.RecipeName, craftTimeDesc(result.TimeRounds)))
+		actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), result.Recipe, crafting.PhaseStart, room)
 
 		// Quest engine: command notification
 		bridge := questengine.NewGameBridge(user, room.RoomId)
@@ -428,6 +419,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 	craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
 		`<ansi fg="yellow">You begin enchanting <ansi fg="itemname">%s</ansi>... (%s)</ansi>`,
 		targetItem.DisplayName(), craftTimeDesc(recipe.TimeRounds)))
+	actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, crafting.PhaseStart, room)
 
 	// Quest engine: command notification
 	bridge := questengine.NewGameBridge(user, room.RoomId)
@@ -768,7 +760,7 @@ func completeCraft(user *users.UserRecord, room *rooms.Room, recipe *crafting.Re
 		ActorName:      user.Character.GetCharacterName(true),
 		ActorPlainName: user.Character.GetCharacterName(false),
 	})
-	craftDeliverInstant(user, room, roles)
+	craftDeliverInstant(user, room, recipe, roles)
 }
 
 // titleCase capitalises the first letter of each space-separated word.
