@@ -1,0 +1,60 @@
+# #301 consider fight read, run B: weak creatures, a stronger one, and a
+# buff.
+#
+# WHAT CHANGED. `consider` now reads a fight as three lines: an opener set
+# by a skill roll (clear "You size up X with a practiced eye.", fair "You
+# take a fresh look at X, weighing your chances.", muddy "You study X,
+# unsure of what you see."), a verdict ("They won't lay a finger on you." /
+# "A few scratches at most." / "You'll win, but you'll feel it." / "You'd
+# win, barely, if at all." / "Neither of you is ending this soon." / "You'd
+# likely lose." / "You'd lose badly." / "What could you possibly be
+# thinking? You have zero chance."), and a pace line (how long each side
+# needs to beat the other). It reads both sides as they stand right now, so
+# a ward on you should make the read the same or better, never worse.
+# consider uses the shared special-move cooldown (about 4 rounds) and
+# casting a spell uses it too.
+#
+# WHY HERE. Room 3000 (Ironwind Steppe) has steppe rats, an easy creature
+# for a mid-level character. Wolves roam nearby on the steppe. The mid
+# profile knows the `conviction-ward` spell.
+#
+# 3 commands per round; overflow is dropped. Wait a few rounds between
+# considers and after casting.
+
+ephemeral:
+  profile: mid
+  start_room: 3000
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    Type `look`. Find a rat (or any creature) here and type `consider
+    <name>`. Copy all three lines VERBATIM. A rat should read as easy: "They
+    won't lay a finger on you." or "A few scratches at most.", with your
+    pace "moments" or "a short fight". Report what you got.
+  - >-
+    Walk the steppe (east or north a few rooms, using `look` each time)
+    until you find a wolf or another creature that looks dangerous. Do not
+    attack anything. Consider it and copy all three lines VERBATIM. Report
+    whether the read is harder than the rat's.
+  - >-
+    The ward test. While still in the same room as that stronger creature:
+    consider it once (copy the verdict and pace), wait a few rounds, then
+    type `cast conviction-ward` (or `cast conviction-ward me` if it asks for
+    a target), wait about five rounds, and consider it again. Copy both
+    reads. Report whether the read after the ward is the same or better
+    than before. A WORSE read after the ward is a bug, unless the second
+    read's opener was the unsure "You study ... unsure of what you see"
+    one (a muddy read may be off by one step); say which opener each read
+    had.
+  - >-
+    Type `cooldowns` right after a consider and copy what it shows. Report
+    whether consider's use of the special-move cooldown is visible there.
+  - >-
+    Report anything that reads WRONG: a raw token like {actor} or a number
+    in a consider line, a verdict that contradicts its pace line, an empty
+    or fragment line, or a consider that trains nothing at all over many
+    tries (watch for any skill or stat improvement message about search or
+    perception and quote it). Do not start fights. If something attacks
+    you, flee and keep testing.

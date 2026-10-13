@@ -1,0 +1,63 @@
+# #301 consider fight read, run A: the Straw Effigy and the cooldown.
+#
+# WHAT CHANGED. `consider` used to compare a power ratio and say things like
+# "An even contest". It now reads a fight as three lines:
+#   1. an opener that depends on a skill roll (a clear read "You size up X
+#      with a practiced eye.", a fair read "You take a fresh look at X,
+#      weighing your chances.", a muddy read "You study X, unsure of what you
+#      see."),
+#   2. a verdict (one of: "They won't lay a finger on you." / "A few
+#      scratches at most." / "You'll win, but you'll feel it." / "You'd win,
+#      barely, if at all." / "Neither of you is ending this soon." / "You'd
+#      likely lose." / "You'd lose badly." / "What could you possibly be
+#      thinking? You have zero chance."),
+#   3. a pace line saying how long you would need to beat them and they to
+#      beat you ("moments", "a short fight", "a long fight", "would take an
+#      age", "never").
+# consider now uses the shared special-move cooldown, so a second consider
+# right away is refused with "You need a moment to recover before attempting
+# another special move."
+#
+# WHY HERE. Room 5227 (The Drill Yard) holds the Straw Effigy: vast health,
+# pillow hits. It must read as a stalemate (or "won't lay a finger"), with
+# YOUR pace "beating them would take an age". It must NOT read "zero
+# chance", "You'd lose", or "in moments".
+#
+# 3 commands per round; overflow is dropped. Wait a few rounds between
+# considers (the cooldown is about 4 rounds).
+
+ephemeral:
+  profile: mid
+  start_room: 5227
+  budgets:
+    wall_clock: 25m
+
+goals:
+  - >-
+    Type `look` and find the Straw Effigy in the room. Then type `consider
+    effigy`. Copy all three lines you receive VERBATIM, exactly as they
+    appear. Report which verdict line you got and what the pace line says.
+  - >-
+    IMMEDIATELY (in the very next command, without waiting) type `consider
+    effigy` again. You should be refused with a line about needing a moment
+    to recover before another special move. Copy that line verbatim. Say
+    whether you got a refusal or a second read.
+  - >-
+    Now wait about five rounds (type `look` or `status` a few times, slowly)
+    and consider the effigy four more times, waiting a few rounds between
+    each. For every consider, copy the opener line (the first line). Report
+    how many distinct openers you saw and whether the verdict ever changed
+    between considers. A changed verdict is allowed only by one step, and
+    only when the opener was the unsure "You study ... unsure of what you
+    see" one.
+  - >-
+    Type `help consider` and copy the whole help text. Report any line that
+    looks wider than the others, any typo, any number, or anything that
+    contradicts what you actually saw.
+  - >-
+    Report anything that reads WRONG: a raw token like {actor} or a number
+    in a consider line, a verdict that contradicts its pace line (for
+    example "You'd likely lose" next to "you could beat them in moments" is
+    fine, but "They won't lay a finger on you" next to "they could beat you
+    in moments" is not), an empty line, or a line that reads like a
+    fragment. Do NOT attack the effigy. Do not flee anywhere.
