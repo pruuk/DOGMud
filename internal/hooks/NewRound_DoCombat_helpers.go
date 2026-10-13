@@ -402,37 +402,26 @@ func attackerBonusSkillAndStat(res combat.AttackResult, atkChar *characters.Char
 // the mob did or had done to it (recoil, spell, condition and defence
 // lines), where "You recoil from striking Skeleton (charmed)!" told a state
 // tag (#454 review).
+//
+// The body lives in actions (messaging M6 slice 4).
 func mobDisplayName(mob *mobs.Mob, room *rooms.Room, viewingUserId int) string {
-	if mobHiddenFrom(mob, viewingUserId) {
-		return messaging.UnseenFigure(messaging.SightNone)
-	}
-	return mobSeenName(mob, room, viewingUserId)
+	return actions.MobDisplayName(mob, room, viewingUserId)
 }
 
 // mobSeenName is mobDisplayName for a reader known to perceive the mob, so
 // it names a hidden mob too. A condition line is the caller: it goes only to
 // the readers who perceive its holder (conditionLineUnseenBy, #458).
+// The body lives in actions (messaging M6 slice 4).
 func mobSeenName(mob *mobs.Mob, room *rooms.Room, viewingUserId int) string {
-	dupIdx := room.GetMobDuplicateIndex(mob.InstanceId)
-	f := mob.Character.GetMobNameIndexed(viewingUserId, dupIdx)
-	f.Adjectives = nil
-	f.QuestAlert = false
-	f.PetName = ``
-	return f.String()
+	return actions.MobSeenName(mob, room, viewingUserId)
 }
 
 // mobHiddenFrom reports whether a line about mob must not name it to
 // viewingUserId: the mob is hidden and the viewer does not Perceive it. Viewer
 // 0 (a room-wide line) perceives no hidden mob.
+// The body lives in actions (messaging M6 slice 4).
 func mobHiddenFrom(mob *mobs.Mob, viewingUserId int) bool {
-	if !mob.Character.IsHidden() {
-		return false
-	}
-	if viewingUserId == 0 {
-		return true
-	}
-	u := users.GetByUserId(viewingUserId)
-	return u == nil || !u.Character.Perceives(&mob.Character)
+	return actions.MobHiddenFrom(mob, viewingUserId)
 }
 
 // sendVisualRoomText sends a visual message that requires sight.
