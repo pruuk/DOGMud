@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 )
 
 // The record layout (#370, M6 rows 26-27): each split holds tier -> list of
@@ -64,9 +66,25 @@ func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (poo
 	if err := unmarshal(&tiers); err != nil {
 		return nil, false, err
 	}
+	// A map decode silently keeps the last of a repeated key, so a second
+	// keys-only pass finds duplicates. Values stay exact strings from `tiers`.
+	var slices map[string][]yaml.MapSlice
+	if err := unmarshal(&slices); err != nil {
+		return nil, false, err
+	}
 	pools = make(map[string]SkillTieredMessages, len(roles))
 	for _, tier := range tierNames {
 		for i, rec := range tiers[tier] {
+			if i < len(slices[tier]) {
+				seen := make(map[string]bool, len(slices[tier][i]))
+				for _, item := range slices[tier][i] {
+					k := fmt.Sprint(item.Key)
+					if seen[k] {
+						return nil, false, fmt.Errorf("%s record %d: duplicate key %q", tier, i, k)
+					}
+					seen[k] = true
+				}
+			}
 			recKeys := make([]string, 0, len(rec))
 			for k := range rec {
 				recKeys = append(recKeys, k)

@@ -156,6 +156,14 @@ options:
       actor: {beginner: ['A']}
       remote_observer: {beginner: ['X']}
 `, "option[`weak`]: together: unknown key \"remote_observer\""},
+		"duplicate key": {`
+optionid: test
+options:
+  weak:
+    together:
+      beginner:
+      - {actor: 'A', actee: 'D1', actee: 'D2', observer: 'R'}
+`, "option[`weak`]: together: beginner record 0: duplicate key \"actee\""},
 		"first unknown key in sorted order": {`
 optionid: test
 options:
@@ -204,6 +212,21 @@ options:
 				t.Fatal("strict decode accepted a typo'd key")
 			}
 		})
+	}
+}
+
+func TestStrictDecodingRejectsTypoTierInRecordLayout(t *testing.T) {
+	doc := `
+optionid: test
+options:
+  weak:
+    together:
+      begginer:
+      - {actor: 'A', actee: 'D', observer: 'R'}
+`
+	var g WeaponAttackMessageGroup
+	if err := yaml.UnmarshalStrict([]byte(doc), &g); err == nil {
+		t.Fatal("strict decode accepted a typo'd tier in the record layout")
 	}
 }
 
