@@ -15,7 +15,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -71,76 +70,11 @@ func logSpellDamage(spellData *spells.SpellData, caster, target *characters.Char
 // rollSpellDamage is calcSpellDamageForCharacter with its inputs kept.
 func rollSpellDamage(spellData *spells.SpellData, caster *characters.Character, target *characters.Character, magnitude int, isCrit bool) spellDamageRoll {
 
-	if spellData.DamageMultiplier > 0 && caster != nil {
-		// U9: the spell's own primarystat and school drive damage, exactly as
-		// they now drive its attack roll, duration and shield strength. This
-		// site was missed by U9's original list of caster-side reads, which was
-		// enumerated from spell_resolution.go only -- so for a while a spell
-		// could roll to hit on one stat and deal damage on another.
-		//
-		// No shipped spell changes behaviour here: the fourteen charisma spells
-		// are the manifestation family, and none of them carries a
-		// DamageMultiplier.
-		castSkill := skills.Spellcasting
-		if spellData.HasSchool(spells.SchoolManifestation) {
-			castSkill = skills.Manifestation
-		}
-		skillLevel := caster.GetSkillLevel(castSkill)
-		rawDmg := combat.CalcRawDamage(spellData.CasterStatValue(caster.Stats), skillLevel, spellData.DamageMultiplier, combat.ChannelMagical)
-
-		// Mutation graph: spell-power passives (Ether Gland, Corvid Brain) amplify caster output.
-		if spBonus := mutations.GetSpellPowerMultiplier(caster.Mutations); spBonus != 0 {
-			rawDmg *= 1.0 + spBonus
-		}
-
-		// #22 crash-site: inside the buried hull, belief-driven power is suppressed.
-		// (caster is already non-nil — the enclosing branch requires it.)
-		if caster.HasConditionFlag(conditions.Dampened) {
-			factor := float64(configs.GetBalanceConfig().CrashSiteSuppressionFactor)
-			rawDmg *= factor
-			if rawDmg < 1 {
-				rawDmg = 1
-			}
-		}
-
-		// Apply weapon spell damage multiplier (caster weapons), scaled
-		// by gear-effectiveness for incorporeal casters.
-		if caster.Equipment.Weapon.ItemId > 0 {
-			if sdm := caster.Equipment.Weapon.GetSpec().SpellDamageMultiplier; sdm > 0 {
-				rawDmg *= sdm * mutations.GearEffectivenessMultiplier(caster.Mutations)
-			}
-		}
-
-		// Apply smooth conviction-based spell damage penalty. EffectivePoolMax,
-		// not the raw max (U7 Task 11): a caster fielding a companion has their
-		// current Conviction reserve-clamped already, so a raw denominator would
-		// tax their spell damage on top of shrinking their pool.
-		cpPenalty := float64(configs.GetBalanceConfig().ConvictionPenaltyMax)
-		rawDmg *= combat.ResourceMultiplier(caster.Conviction,
-			caster.EffectivePoolMax(characters.PoolConviction), cpPenalty)
-
-		// Mitigation is keyed by the DAMAGE type (combat.MitigationChannelFor):
-		// physical harm meets physical mitigation, mental meets magical,
-		// social meets conviction. A non-harm cast never reaches this helper.
-		var mitigPct float64
-		var curve combat.MitigationCurve
-		channelName := "none"
-		if ch, ok := combat.MitigationChannelFor(spellData.DamageType); ok {
-			switch ch {
-			case combat.ChannelPhysical:
-				mitigPct = target.GetPhysicalMitigation()
-				channelName = "physical"
-			case combat.ChannelMagical:
-				mitigPct = target.GetMagicalMitigation()
-				channelName = "magical"
-			case combat.ChannelConviction:
-				mitigPct = target.GetConvictionMitigation()
-				channelName = "conviction"
-			}
-			curve = combat.MitigationCurveFor(ch)
-		} else {
+	if rawDmg, skillLevel, ok := combat.SpellRawDamage(spellData, caster); ok {
+		// Mitigation is keyed by the DAMAGE type; see combat.SpellMitigation.
+		mitigPct, curve, channelName, chOk := combat.SpellMitigation(spellData, target)
+		if !chOk {
 			mudlog.Error("calcSpellDamageForCharacter", "spell", spellData.SpellId, "error", "non-harm spell reached the damage pipeline")
-			curve = combat.MitigationCurveFor(combat.ChannelPhysical)
 		}
 
 		// Chunk 5.11g: a crit bypasses mitigation up to the knee AND scales by the caster's
