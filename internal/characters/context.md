@@ -455,6 +455,7 @@ func (c *Character) ApplyCostFloatOrRefuse(pool Pool, amount float64) bool
 func (c *Character) CooldownReady(trackingTag string) bool
 
 func (c *Character) ApplyHarm(pool Pool, amount int, source state.ActorRef) int
+func (c *Character) ApplyAttrition(pool Pool, amount int, source state.ActorRef) int
 func (c *Character) ApplyRestore(pool Pool, amount int) int
 
 // DisplayHealth returns Health clamped at 0 for player-facing output (U5b-2).
@@ -469,6 +470,18 @@ surface through it: the nine reads in `internal/users/userrecord.prompt.go`,
 `internal/templates/templatesfunctions.go`. `renderVitalBar`,
 `targetHealthDesc` and `modules/gmcp/gmcp.Party.go` already clamp internally and
 were deliberately left alone.
+
+`ApplyHarm` ends a craft or salvage in progress (#514): health harm that
+actually lands (`applied > 0`) transitions the Activity machine to Free with
+`TriggerDamageInterrupt` via the unexported `interruptWork`, after the vital
+change, so a killing blow is already at zero health when the craft-ended hook
+reads it. Stamina and conviction harm never interrupt. `ApplyAttrition` applies
+identical harm through the shared unexported `harm(..., interrupt bool)` with
+the interrupt off, for health loss that is not an attack: the pinnacle blade
+toll, toxicity sickness and stuck-mob decay (#514 R2). A new health-loss site
+that is an attack calls `ApplyHarm`; one that is not calls `ApplyAttrition`.
+The root guard `damage_interrupt_seam_guard_test.go` keeps
+`TriggerDamageInterrupt` out of every other file.
 
 `source` is `internal/state.ActorRef`. Unexported support: `poolMax`, `setPool`,
 and `applyVitalChange` (the single signed pipeline behind harm and restore).

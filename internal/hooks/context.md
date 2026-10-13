@@ -1485,7 +1485,19 @@ for casting).
 movement or damage interrupt) it calls `actions.NarrateCraftPhase` with
 `crafting.PhaseCancel`, so the room sees the work set aside. Completion
 (`TriggerCraftComplete`) and `TriggerDeath` are skipped: the round tick
-narrates its own outcome, and death has its own narration.
+narrates its own outcome, and death has its own narration. On
+`TriggerDamageInterrupt` it also tells a living player crafter "The pain
+interrupts your crafting." (#514; the old hand-placed
+`cancelCraftOrSalvageOnDamage` helper is gone, the interrupt lives in
+`Character.ApplyHarm`).
+
+### Activity_SalvageEnded.go
+
+`characters.OnCharacterCreated(wireSalvageEndedNarration)` registers an
+`Activity.OnSalvageEnded` handler. On `TriggerDamageInterrupt` only, a living
+player salvager reads "The pain interrupts your salvaging." Nothing for any
+other trigger (movement tells the salvager in `usercommands/go.go`) and
+nothing to the room, since salvage has no room lines.
 
 ### Call-site wirings (not AfterTransition)
 

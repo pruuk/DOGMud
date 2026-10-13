@@ -77,8 +77,10 @@ crafting and the room later reads the success line.
 
 - `characters`: `ApplyHarm` on a crafting character ends the craft with
   `damage_interrupt`; the same for salvaging; `ApplyAttrition` leaves the
-  craft running; conviction harm leaves it running; harm fully absorbed
-  leaves it running.
+  craft running; conviction harm leaves it running; zero harm leaves it
+  running. Absorption happens upstream of `ApplyHarm` (health is never floored
+  in `harm`, so landed harm always applies), so the seam test covers zero harm
+  only.
 - `activity`: `OnSalvageEnded` fires once with the snapshot on leaving
   Salvaging, never for Crafting or Casting, never on a vetoed transition.
 - `hooks`: the existing craft-ended and damage tests move from

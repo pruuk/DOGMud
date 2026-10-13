@@ -342,7 +342,7 @@ data without re-transitioning (transition-table-safe).
 - **Crafting** — combat entry blocked by the activity veto in
   `CombatPhase_Vetoes.go` (`RegisterActivityCheck` returns
   `!c.IsCrafting() && !c.IsSalvaging()`). Damage fires hard cancel
-  via `cancelCraftOrSalvageOnDamage` (no roll). Movement cancels via
+  at the `Character.ApplyHarm` seam (no roll, #514). Movement cancels via
   `Activity.TransitionToFree(TriggerMovementInterrupt)` from `go.go`.
 - **Salvaging** — same rules as Crafting.
 
