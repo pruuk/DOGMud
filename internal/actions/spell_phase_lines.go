@@ -93,7 +93,9 @@ func NarrateSpellPhase(caster Actor, spell *spells.SpellData, phase spells.Phase
 	}
 
 	aud := messaging.Audience{ActorName: actorName, ActeeName: hideActee, Room: room}
-	trio := messaging.Trio{}
+	// The observer half is sent below, not by SendTrio (see there), so it is
+	// a considered silence here.
+	trio := messaging.Trio{Actor: messaging.NoLine, Actee: messaging.NoLine, Observer: messaging.NoLine}
 	exclude := slices.Clone(unseenBy)
 	if casterUser != nil {
 		aud.Actor, aud.ActorId = casterUser, casterUser.UserId
