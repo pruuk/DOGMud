@@ -1204,7 +1204,16 @@ func ConvertToAscii(s string) string {
 		atBoundary = last == ' ' || last == '\n'
 	}
 
-	for _, r := range s {
+	for i, r := range s {
+		// A byte that is not UTF-8 passes through as it is: the prompt goes
+		// out with telnet IAC GA (0xFF 0xF9) in the same write, and range
+		// reads each such byte as U+FFFD (#502).
+		if r == utf8.RuneError {
+			if _, size := utf8.DecodeRuneInString(s[i:]); size == 1 {
+				buf = append(buf, s[i])
+				continue
+			}
+		}
 		if inEsc {
 			buf = utf8.AppendRune(buf, r)
 			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
