@@ -67,5 +67,9 @@ No archetype decision flips for any mob against any fixture player. Thresholds u
 Compared cell by cell, all 57 acts/- marks match the Before table. The
 fixture players' own scores rose (journeyman 971 to 1021, veteran 1461 to
 1551, novice 571 to 570), so ratios moved, but none crossed an archetype
-threshold. Closest to an edge: 9140 Scab-Hound and 9176 Lean Coyote against
-the journeyman, both 1.00 and still "-".
+threshold. PowerScore now rates the build at full pools; the fixture players
+are already at full pools, so regenerating the table after that change moved
+nothing and every mark still matches Before. The cells closest to an edge are
+lookouts, which act above 1.0: 283 Bandit Lookout against the veteran at 1.01
+(acts, down from 1.09) and 222 Goblin Sentry against the journeyman at 1.02
+(acts).

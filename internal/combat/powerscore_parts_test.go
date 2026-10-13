@@ -19,3 +19,25 @@ func TestPowerScoreParts_AreTheSharedTerms(t *testing.T) {
 		t.Errorf("PowerScore %v, sum of parts %v", got, want)
 	}
 }
+
+// PowerScore rates the build, not current condition (#301): a hurt character
+// scores the same as a healthy one, and the caller's copy is left alone.
+func TestPowerScore_RatesTheBuildAtFullPools(t *testing.T) {
+	pinParityBalance(t)
+	full := parityCombatant(t, "fighter")
+	full.Health = full.HealthMax.Value
+	full.Stamina = full.StaminaMax.Value
+
+	hurt := *full
+	hurt.Health = full.HealthMax.Value / 10
+	hurt.Stamina = full.StaminaMax.Value / 10
+	wantHealth, wantStamina := hurt.Health, hurt.Stamina
+
+	if got, want := PowerScore(hurt), PowerScore(*full); got != want {
+		t.Errorf("hurt PowerScore %v, full-pools PowerScore %v", got, want)
+	}
+	if hurt.Health != wantHealth || hurt.Stamina != wantStamina {
+		t.Errorf("caller's character modified: Health %d (want %d), Stamina %d (want %d)",
+			hurt.Health, wantHealth, hurt.Stamina, wantStamina)
+	}
+}

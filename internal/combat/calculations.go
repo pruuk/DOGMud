@@ -37,6 +37,12 @@ func powerScoreParts(char characters.Character) powerScoreTerms {
 	c := &char
 	p := powerScoreTerms{}
 
+	// PowerScore rates the build at full pools; the fight read (PredictFight)
+	// reads live state. char is a by-value copy, so this leaves the caller's
+	// character alone (ints only: the copy is shallow).
+	c.Health = c.HealthMax.Value
+	c.Stamina = c.StaminaMax.Value
+
 	// ── OFFENSE ──────────────────────────────────────────────────────────
 	p.meleeOffense = meleeOffenseRaw(c, sourceTypeOf(c))
 
