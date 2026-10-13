@@ -115,6 +115,7 @@ func TestFightReadCopy_FitsAndHasNoNumbers(t *testing.T) {
 			lines = append(lines, paceText(FightRead{YourPace: yp, TheirPace: tp}))
 		}
 	}
+	lines = append(lines, muddyPaceText)
 	for _, l := range lines {
 		if len(l) > 80 {
 			t.Errorf("%d columns: %q", len(l), l)

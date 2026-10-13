@@ -750,7 +750,8 @@ classifies `combat.PredictFight` into a `Verdict` and two `Pace`s.
   reader's room, against Charisma + Rhetoric x `SkillWeight` through
   `considerContest` (an alias of `combat.RunContest` tests pin). The roll sets
   `ReadClear` / `ReadFair` / `ReadMuddy`; a muddy read slides a middle verdict
-  toward barely (`muddySlide`).
+  toward barely (`muddySlide`), and its pace line is the fixed hedge
+  `muddyPaceText` (via `paceLineFor`) instead of the exact paces.
 - **`fight_read.go`:** `Verdict` (eight values; `Lethal()` and `Danger()`),
   `Pace` (moments, short, long, age, never, cut by `paceFor` from the
   `ConsiderPace*` knobs), `ReadQuality` (`ReadNone` for a read with no
