@@ -640,6 +640,7 @@ One subagent per file, sequentially, because every file's proof runs the same go
 One subagent per file, sequentially.
 
 - [ ] **Step 1:** Apply the file's approved proposals with the Edit tool: a `swap` exchanges the two role lines; a `move` cuts the record and pastes it at the end of the target tier's list (create the tier key if absent, in tier order); a `rewrite` replaces the line. Text of swapped and moved lines stays byte-identical.
+- [ ] **Step 1b:** `python tools/combat_message_proposals_check.py <converted-commit> <file> docs/superpowers/audits/m6-rows26-27-batch-<N>.json`: exit 0 (the working tree file equals the converted file with the approved proposals applied, slot for slot).
 - [ ] **Step 2:** Add the file to `bannerGuardFiles` in `combat_banner_agreement_guard_test.go`. Run `go test . -run 'Banner' -v`: PASS. A remaining failure means a proposal is missing: report it to the controller, who takes it back to the owner (no allowlist).
 - [ ] **Step 3:** `python tools/combat_message_pad_check.py <converted-commit> <file> --ignore-tier --manifest docs/superpowers/audits/m6-rows26-27-batch-<N>.json`: exit 0.
 - [ ] **Step 4:** `go test ./internal/narration/ -run TestSnapshotStores -update`, then read the golden diff: every changed row must trace to a proposal (a swap or move changes rows at both ends; a rewrite changes its own row). Then `go test ./internal/items/ ./internal/combat/ ./internal/narration/ .`.
