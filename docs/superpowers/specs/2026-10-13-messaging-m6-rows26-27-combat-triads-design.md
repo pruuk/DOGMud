@@ -77,7 +77,11 @@ critical:
   versus tier names). The final PR deletes the role-first path, so no file can
   return to parallel lists.
 - The default world stays untouched: it already uses keys this decoder never
-  read and does not boot. Noted in the final PR.
+  read and does not boot. From batch 1 on, its combat files (pre-M4b
+  `toattacker` keys) are rejected as unknown keys, so loading that world fails
+  `items.LoadDataFilesE` at the combat-messages step (it used to load empty
+  pools silently). True from batch 1, not only after batch 5. Noted in the
+  final PR.
 
 ### 2. Banner-word test
 

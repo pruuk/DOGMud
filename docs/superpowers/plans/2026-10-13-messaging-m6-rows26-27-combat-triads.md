@@ -666,7 +666,7 @@ One subagent per file, sequentially.
 - [ ] **Step 2: Implement.** In `decodeTieredRecords`, return `nil, false, fmt.Errorf("role-first layout is retired; write one record per blow")` when `sawRole`; drop the `roleFirst` return value and the `type plain` fallbacks in both `UnmarshalYAML` methods. Run: PASS.
 - [ ] **Step 3: Guard over every file.** Replace `bannerGuardFiles` with a glob of `_datafiles/world/dogmud/combat-messages/*.yaml` (names without extension), keeping a `len(files) == 20` fatal so an empty glob cannot pass. Run `go test . -run Banner`: PASS.
 - [ ] **Step 4: Validate.** `Validate`'s per-tier equality check stays as it is (records make it always pass; it still guards a hand-built group in tests). Update its comment to say so.
-- [ ] **Step 5: Docs.** `internal/items/context.md`: legacy layout gone. Ledger rows 26 and 27: `done: record layout plus banner guard, five batches (PRs <list>)`. Note in the PR that the default world's combat files (old `toattacker` keys, world does not boot) were left untouched and now fail to decode if that world is ever loaded. Commit.
+- [ ] **Step 5: Docs.** `internal/items/context.md`: legacy layout gone. Ledger rows 26 and 27: `done: record layout plus banner guard, five batches (PRs <list>)`. Note in the PR that the default world's combat files (old `toattacker` keys, world does not boot) were left untouched and fail to decode if that world is ever loaded (true from batch 1, not only after batch 5: the decoder rejects the old keys as unknown, so `items.LoadDataFilesE` fails at the combat-messages step; it used to load empty pools silently). Commit.
 
 ---
 

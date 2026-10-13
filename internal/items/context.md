@@ -532,9 +532,15 @@ map the roles onto `ToAttacker`, `ToDefender`, `ToRoom` (and `ToAttackerRoom`,
 which keeps the original unmarshal func so strict decoding, exact scalar text
 and true line numbers survive (a marshal and re-parse would lose them).
 
-Transition rule: files still in the legacy role-first layout (`toattacker`
-style keys, role -> tier -> list) decode through the `plain` fallback until
-the last batch of #370 converts the final file and retires that layout.
+Transition rule: files still in the legacy role-first layout (role -> tier ->
+list, with `actor`/`actee`/`observer`/`remote_observer` keys) decode through
+the `plain` fallback until the last batch of #370 converts the final file and
+retires that layout. Files with the pre-M4b keys (`toattacker`, `todefender`,
+`toroom`, ...), such as the 8 under `_datafiles/world/default/combat-messages/`,
+do NOT decode: `decodeTieredRecords` rejects them as unknown keys, so loading
+the default world fails `LoadDataFilesE` at the combat-messages step (it used
+to load empty pools silently). The default world already does not boot (no
+`recipes/`).
 
 ### Defence Message Structure
 
@@ -1425,7 +1431,8 @@ Those are the GO FIELD names, and they lag the YAML. M4b-1 renamed the authored
 keys to the canonical role vocabulary, so a data file now says `actor`,
 `actee`, `observer` and, in the `separate` split only, `remote_observer`.
 `toattacker`/`todefender`/`toroom`/`toattackerroom`/`todefenderroom` are the
-old spellings and no longer load anything. `toattackerroom` became plain
+old spellings; since #370 a file using them fails to load with an unknown key
+error (it no longer loads silently empty). `toattackerroom` became plain
 `observer` because it is the same audience as `together`'s room line: the
 observers standing with the actor. The same rename covers
 `defense-messages/` (`DefenseTogetherMessages`) and `taunt-messages/`
