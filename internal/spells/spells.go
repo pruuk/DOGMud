@@ -85,8 +85,12 @@ type SpellData struct {
 	// role vocabulary every narration store shares since M4b-1. A spell's
 	// caster is the `actor`, the opposite of the conditions store, where the
 	// holder a condition happens to is the `actee`.
-	CastUserText  string `yaml:"cast_actor,omitempty"`
-	CastRoomText  string `yaml:"cast_observer,omitempty"`
+	CastUserText string `yaml:"cast_actor,omitempty"`
+	CastRoomText string `yaml:"cast_observer,omitempty"`
+	// CastActeeText is the target's own line when the cast begins (messaging
+	// M6 slice 4): a player the spell is aimed at reads it instead of
+	// cast_observer. A self-cast and a mob target read nothing from it.
+	CastActeeText string `yaml:"cast_actee,omitempty"`
 	WaitUserText  string `yaml:"wait_actor,omitempty"`
 	WaitRoomText  string `yaml:"wait_observer,omitempty"`
 	MagicUserText string `yaml:"magic_actor,omitempty"`
