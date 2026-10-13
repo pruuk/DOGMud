@@ -38,6 +38,15 @@ rewards:
   observer: ""
   gold: 0
 triggers:
+  # First, so it is judged before the trigger below gives the disc; after
+  # it, both would fire in the command that lifts the disc (#495).
+  - event: room_interact
+    room: 5343
+    noun: disc
+    conditions:
+      has_item: 40167
+    actions:
+      - actor: "The crack in the floor is empty now. You already carry what lay beneath it."
   - event: room_interact
     room: 5343
     noun: disc
@@ -52,13 +61,6 @@ triggers:
           line. You do not understand it. You are fairly certain no one
           here does. You put it away.
       - observer: "{actor} works something free of the cracked floor and pockets it."
-  - event: room_interact
-    room: 5343
-    noun: disc
-    conditions:
-      has_item: 40167
-    actions:
-      - actor: "The crack in the floor is empty now. You already carry what lay beneath it."
   - event: room_interact
     room: 4023
     noun: journal
