@@ -111,7 +111,13 @@ func TestCraftEnded_RoomHearsWhenTheCraftStopsShort(t *testing.T) {
 			if len(got) != 1 || got[0] != "Kael stops forging." {
 				t.Fatalf("watcher read %q, want one line %q", got, "Kael stops forging.")
 			}
-			if own := events.DrainQueuedMessagesForTest(craftEndedCrafterId); len(own) != 0 {
+			own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
+			if trigger == activity.TriggerDamageInterrupt {
+				// Hurt: the crafter is told once, in the second person (#514).
+				if len(own) != 1 || own[0] != "The pain interrupts your crafting." {
+					t.Fatalf("crafter read %q, want one line %q", own, "The pain interrupts your crafting.")
+				}
+			} else if len(own) != 0 {
 				t.Fatalf("crafter was sent a room line: %q", own)
 			}
 		})
@@ -178,7 +184,8 @@ func TestCancelCraftOnDamage_PlayerCrafterIsToldMobIsNot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("begin craft: %v", err)
 	}
-	cancelCraftOrSalvageOnDamage(crafter.Character)
+	crafter.Character.Health = 20
+	crafter.Character.ApplyHarm(characters.PoolHealth, 1, state.ActorRef{})
 
 	own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
 	if len(own) != 1 || own[0] != "The pain interrupts your crafting." {
@@ -189,7 +196,7 @@ func TestCancelCraftOnDamage_PlayerCrafterIsToldMobIsNot(t *testing.T) {
 		t.Fatalf("watcher read %q, want one line %q", got, "Kael stops forging.")
 	}
 	// Already Free: a second hit says nothing.
-	cancelCraftOrSalvageOnDamage(crafter.Character)
+	crafter.Character.ApplyHarm(characters.PoolHealth, 1, state.ActorRef{})
 	if own := events.DrainQueuedMessagesForTest(craftEndedCrafterId); len(own) != 0 {
 		t.Fatalf("a hit on an idle crafter sent %q", own)
 	}
@@ -218,7 +225,7 @@ func TestCancelCraftOnDamage_MobCrafterSendsNoCrafterLine(t *testing.T) {
 	if err != nil {
 		t.Fatalf("begin craft: %v", err)
 	}
-	cancelCraftOrSalvageOnDamage(&m.Character)
+	m.Character.ApplyHarm(characters.PoolHealth, 1, state.ActorRef{})
 
 	got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId))
 	if len(got) != 1 || got[0] != "Smith stops forging." {
@@ -242,7 +249,8 @@ func TestCancelSalvageOnDamage_PlayerSalvagerIsTold(t *testing.T) {
 	if err != nil {
 		t.Fatalf("begin salvage: %v", err)
 	}
-	cancelCraftOrSalvageOnDamage(crafter.Character)
+	crafter.Character.Health = 20
+	crafter.Character.ApplyHarm(characters.PoolHealth, 1, state.ActorRef{})
 
 	own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId))
 	if len(own) != 1 || own[0] != "The pain interrupts your salvaging." {
@@ -250,6 +258,32 @@ func TestCancelSalvageOnDamage_PlayerSalvagerIsTold(t *testing.T) {
 	}
 	if got := events.DrainQueuedMessagesForTest(craftEndedWatcherId); len(got) != 0 {
 		t.Fatalf("watcher heard %q, want nothing", got)
+	}
+}
+
+// A killing blow through the real seam (ApplyHarm, health 1, harm 5) frees the
+// craft but tells nobody anything: no room stop line, no crafter line. The
+// death narration covers it.
+func TestApplyHarm_KillingBlowOnCrafterSendsNoLines(t *testing.T) {
+	crafter := craftEndedScene(t)
+	crafter.Character.Health = 1
+	err := crafter.Character.Activity.TransitionToCrafting(
+		activity.CraftingData{RecipeId: craftEndedRecipeId, RoundsTotal: 5},
+		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
+	)
+	if err != nil {
+		t.Fatalf("begin craft: %v", err)
+	}
+	crafter.Character.ApplyHarm(characters.PoolHealth, 5, state.ActorRef{})
+
+	if st := crafter.Character.Activity.State(); st != activity.Free {
+		t.Fatalf("activity is %v after a killing blow, want Free", st)
+	}
+	if got := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedWatcherId)); len(got) != 0 {
+		t.Fatalf("watcher read %q on a killing blow, want nothing", got)
+	}
+	if own := craftEndedPlain(events.DrainQueuedMessagesForTest(craftEndedCrafterId)); len(own) != 0 {
+		t.Fatalf("crafter read %q on a killing blow, want nothing", own)
 	}
 }
 

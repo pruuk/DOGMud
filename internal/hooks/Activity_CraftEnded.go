@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -32,6 +33,17 @@ func wireCraftEndedNarration(c *characters.Character) {
 		// pools.go documents), not yet Dead. Cover both.
 		if c.Health < 1 || !c.IsAlive() {
 			return
+		}
+		// Tell a player crafter they were hurt, as walking away does
+		// (usercommands/go.go). "Pain", not "blow": a bleed tick lands here too,
+		// with no blow (#515). A mob has no connection to tell. The room line
+		// below is sent in addition.
+		if r.Trigger == activity.TriggerDamageInterrupt {
+			if uid := c.ActorRef().UserId; uid > 0 {
+				if u := users.GetByUserId(uid); u != nil {
+					u.SendText(messaging.CategorySystem, `<ansi fg="red">The pain interrupts your crafting.</ansi>`)
+				}
+			}
 		}
 		recipe := crafting.GetRecipe(d.RecipeId)
 		room := rooms.LoadRoom(c.RoomId)

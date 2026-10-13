@@ -334,9 +334,9 @@ Casting is not interrupted by movement.
 
 ### Damage interrupts (call-site wiring)
 
-`cancelCraftOrSalvageOnDamage` in `internal/hooks/combat_shared_helpers.go`
-fires `TriggerDamageInterrupt` unconditionally (hard cancel, no roll) at
-every damage application site when the target is Crafting or Salvaging.
+`Character.ApplyHarm` (`interruptWork` in `internal/characters/pools.go`)
+fires `TriggerDamageInterrupt` unconditionally (hard cancel, no roll) on any
+health harm that lands when the target is Crafting or Salvaging.
 Casting takes a different path: `checkConcentrationBreak` rolls Willpower
 and fires `TriggerConcentrationBreak` only on failure.
 

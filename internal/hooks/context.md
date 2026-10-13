@@ -507,9 +507,9 @@ returns it; read the RETURNED value, not `condition.TickAmount`.
 Three things the tick path does at the moment health harm lands, all of which
 the old poison hook did and the condition tick path did NOT:
 
-- `cancelCraftOrSalvageOnDamage(char)` and `cancelDamageConditions(char)`
-  (`combat_shared_helpers.go`), so a damaging tick now wakes a sleeper and
-  cancels a `cancel-on-damage` record.
+- `cancelDamageConditions(char)` (`combat_shared_helpers.go`), so a damaging
+  tick now wakes a sleeper and cancels a `cancel-on-damage` record. (The
+  craft/salvage interrupt is in `Character.ApplyHarm` itself, #514.)
 - `tickCauseFor(spec)` (`tick_cause.go`) returns "poison" for a `poison`-flagged
   record and "bleeding out" for a `bleeding`-flagged one, and the tick stamps
   it on `Character.LastTickCause` with `LastTickCauseRound`. `deathCauseFor`
@@ -1495,7 +1495,7 @@ Movement and damage interrupts do not fit the machine-to-machine
 | Interrupt | Location | Trigger fired |
 |-----------|----------|---------------|
 | Movement (Crafting/Salvaging) | `internal/usercommands/go.go` | `TriggerMovementInterrupt` |
-| Damage taken (Crafting/Salvaging) | `cancelCraftOrSalvageOnDamage` in `combat_shared_helpers.go` | `TriggerDamageInterrupt` |
+| Damage taken (Crafting/Salvaging) | `Character.ApplyHarm` (`interruptWork`, #514) | `TriggerDamageInterrupt` |
 | Damage taken (Casting) | `clearCastingActivity` in `combat_shared_helpers.go` | `TriggerConcentrationBreak` on roll failure |
 
 Completion triggers are fired by per-tick consumers after a successful

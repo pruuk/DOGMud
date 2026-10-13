@@ -90,7 +90,8 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 			// Lethal toxicity is caught by the Health<1 non-combat death check above
 			// on the next tick.
 			if dmg := user.Character.ToxicitySicknessDamage(); dmg > 0 {
-				user.Character.ApplyHarm(characters.PoolHealth, dmg, state.ActorRef{})
+				// Attrition, not an attack: it does not interrupt a craft (#514 R2).
+				user.Character.ApplyAttrition(characters.PoolHealth, dmg, state.ActorRef{})
 			}
 		}
 
