@@ -1471,3 +1471,159 @@ git commit -m "docs: M6 row 7 context, spec corrections, ledger"
   File any finding as a GitHub issue on `pruuk/DOGMud` (search first). Report the run ids.
 
 - [ ] **Step 4: Merge** after the owner's go-ahead, per `dogmud-shipping`. The owner deploys; do not deploy.
+
+---
+
+### Task 9: Cancelled crafts tell the room (R4, amendment 2026-10-13)
+
+Spec section "Cancelled crafts (R4, amendment 2026-10-13)" holds the verified facts. Same rules as every task above.
+
+**Files:**
+- Modify: `internal/state/activity/activity.go` (Machine field), `internal/state/activity/rules.go` (`TransitionToFree`, `ForceFree`), and add `OnCraftEnded`
+- Test: `internal/state/activity/craft_ended_test.go` (new)
+- Modify: `internal/crafting/narration.go` (`PhaseCancel`), `internal/crafting/messages.go` (pool, validation, render), `internal/crafting/messages_test.go`
+- Modify: `_datafiles/world/dogmud/crafting-messages.yaml`, `internal/narration/snapshot_test.go` + golden
+- Create: `internal/hooks/Activity_CraftEnded.go`, `internal/hooks/activity_craft_ended_test.go`
+- Modify: `internal/state/activity/context.md`, `internal/crafting/context.md`, `internal/hooks/context.md` (if it lists cascade files), `docs/PATCH_NOTES.md`
+
+- [ ] **Step 1: Engine callback, test first.** In `internal/state/activity/craft_ended_test.go`, test that a handler registered with `m.OnCraftEnded("t", fn)`:
+  - fires exactly once with the `CraftingData` that was set (`RecipeId: "r1"`) and the reason's `Trigger` after `TransitionToCrafting` then `TransitionToFree(state.TransitionReason{Trigger: TriggerCraftCancel})`;
+  - fires once after `TransitionToCrafting` then `ForceFree(...)`;
+  - does not fire for `TransitionToCasting` then `TransitionToFree`, nor for salvaging;
+  - does not fire when `TransitionToFree` is called while already Free (it returns an error or no-ops; read `rules.go` and assert whatever the real behaviour is, with no handler call).
+  Read `internal/state/activity/*_test.go` first for how existing tests build data and reasons. Run: FAIL to compile.
+
+- [ ] **Step 2: Implement.** In `activity.go` add to `Machine` a field `craftEnded []craftEndedEntry` with `type craftEndedEntry struct { name string; fn func(CraftingData, state.TransitionReason) }`, and:
+
+```go
+// OnCraftEnded registers a handler called after the machine leaves Crafting,
+// with the data of the craft that ended and the reason it ended (messaging M6
+// row 7, R4). It exists because an AfterTransition cascade runs once the
+// state already reads Free, when CraftingData no longer answers.
+func (m *Machine) OnCraftEnded(name string, fn func(CraftingData, state.TransitionReason)) {
+	m.craftEnded = append(m.craftEnded, craftEndedEntry{name: name, fn: fn})
+}
+
+// fireCraftEnded calls the craft-ended handlers for a craft that just ended.
+func (m *Machine) fireCraftEnded(ended *CraftingData, r state.TransitionReason) {
+	if ended == nil {
+		return
+	}
+	for _, e := range m.craftEnded {
+		e.fn(*ended, r)
+	}
+}
+```
+
+  In `rules.go`, `TransitionToFree`: capture `ended := m.crafting` and `wasCrafting := m.State() == Crafting` before `m.inner.TransitionTo`; after the existing clearing, `if wasCrafting { m.fireCraftEnded(ended, r) }`. `ForceFree`: same capture after its early `Free` return, fire after clearing. If `Machine` uses a mutex around these fields, follow it. Run the Step 1 tests: PASS. `go test ./internal/state/...`: PASS.
+
+- [ ] **Step 3: Store pool, test first.** In `messages_test.go`: extend `validPools()` with `CancelObserver: []string{"{actor} stops.", "{actor} sets it down.", "{actor} gives up for now."}`; add refusal cases "cancel line without actor" (expect `cancel_observer must name the crafter with {actor}`) and "item in a cancel line" (`cancel_observer may not use {item}`); add a render test: `CraftRoomLines("cooking", PhaseCancel, ctx, "Stew", narration.FirstPicker)` gives `"Kael stops."` for both full and vague, and `CraftHeardLine("cooking", PhaseCancel, narration.FirstPicker)` gives `"The work stops."` (the finish pool). Run: FAIL.
+
+- [ ] **Step 4: Implement the pool.** `narration.go`: add `PhaseCancel` AFTER `PhaseStart` in the const block, with a one-line comment (a craft that ended without finishing, R4). `messages.go`: `SkillPools` gains `CancelObserver []string \`yaml:"cancel_observer"\``; `pools()` gains `{"cancel_observer", p.CancelObserver, true, actorOnly}`; `CraftRoomLines` switch gains `case PhaseCancel: pool = pools.CancelObserver`; `CraftHeardLine` already returns `FinishHeard` for any phase but `PhaseStart`; add a comment saying a cancel deliberately sounds like a finish (R3, R4). Update the SkillPools doc comment. Run: PASS.
+
+- [ ] **Step 5: The copy.** Add to each skill block in `_datafiles/world/dogmud/crafting-messages.yaml`, after `failure_observer`, exactly:
+
+```yaml
+  # alchemy
+  cancel_observer:
+    - "{actor} stops working and pushes the vials aside, the batch unfinished."
+    - "{actor} corks a half-made mixture and sets it down."
+    - "{actor} pinches out the small flame and leaves the work for now."
+  # blacksmithing
+  cancel_observer:
+    - "{actor} sets down the hammer, the work unfinished."
+    - "{actor} pulls the metal from the forge and stops."
+    - "{actor} leaves the work cooling on the anvil, unfinished."
+  # cooking
+  cancel_observer:
+    - "{actor} pulls the pot off the fire, the meal unfinished."
+    - "{actor} stops cooking and sets the pot aside."
+    - "{actor} leaves the half-made meal where it sits."
+  # enchanting
+  cancel_observer:
+    - "{actor} lets the glowing pattern fade, the work unfinished."
+    - "{actor} breaks off the enchantment, and the gathered light dies away."
+    - "{actor} stops murmuring, and the faint light fades."
+  # jewelcrafting
+  cancel_observer:
+    - "{actor} sets down the file, the piece unfinished."
+    - "{actor} loosens the vise and puts the work away for now."
+    - "{actor} stops working and lays the tools aside."
+  # tailoring
+  cancel_observer:
+    - "{actor} sets the needle down, the work unfinished."
+    - "{actor} folds away the half-sewn cloth."
+    - "{actor} stops sewing and puts the work aside."
+```
+
+  (The `# skill` comments mark which block each goes in; do not paste them.) Update the file's header comment to list `cancel_observer` and say a cancel is heard as `finish_heard`. Snapshot: in `buildCraftingMessagesGolden` add `{"cancel", crafting.PhaseCancel}` to the seen phases; re-record with `go test ./internal/narration/ -run TestSnapshotStores -update`; only `crafting_messages.golden` may change. Shape check with the Python one-liner from Task 2 Step 7. Run `go test ./internal/crafting/ ./internal/narration/ .`: PASS.
+
+- [ ] **Step 6: The hook, test first.** Create `internal/hooks/activity_craft_ended_test.go`. Read how hooks tests build a lit room with two players and seed stores (grep `SeedUsersForTest`, `SeedBiomesForTest` in `internal/hooks/*_test.go`; reuse an existing scene helper if one fits). Seed `crafting.SeedCraftingMessagesForTest` with a blacksmithing block whose `CancelObserver` is `[]string{"{actor} stops forging."}` and `FinishHeard` `[]string{"The hammering stops."}` (other pools one line each), and register a recipe with `crafting.RegisterRecipeForTest` (skill blacksmithing; cleanup `UnregisterRecipeForTest`). For a crafter player whose `Character` has passed through `Validate()` or `characters.New()` (so `OnCharacterCreated` wired the hook; confirm by reading how the fixture builds characters), call `c.Activity.TransitionToCrafting(activity.CraftingData{RecipeId: <id>, RoundsTotal: 5}, reason)` then `c.Activity.TransitionToFree(state.TransitionReason{Trigger: <t>})` and assert the lit bystander's lines:
+  - `activity.TriggerCraftCancel`, `TriggerMovementInterrupt`, `TriggerDamageInterrupt`: exactly one line, `"<Crafter> stops forging."` (plain text after stripping tags);
+  - `activity.TriggerCraftComplete`, `activity.TriggerDeath`: no line.
+  If wiring through `OnCharacterCreated` is impractical in the test fixture, export nothing new: call the hook's wiring function directly on the test character (it is in the same package) and say so in the report. Run: FAIL (no hook yet).
+
+- [ ] **Step 7: Implement the hook.** Create `internal/hooks/Activity_CraftEnded.go`:
+
+```go
+package hooks
+
+import (
+	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/crafting"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
+	"github.com/GoMudEngine/GoMud/internal/users"
+)
+
+// wireCraftEndedNarration tells the room when a craft ends without finishing
+// (messaging M6 row 7, owner ruling R4): cancel, walking away, damage, or any
+// later path that leaves Crafting. Completion narrates its own outcome at the
+// round tick, and death has its own narration, so both are skipped. One hook
+// rather than a call at each cancel site, so a new cancel path cannot be
+// silent.
+func wireCraftEndedNarration(c *characters.Character) {
+	if c.Activity == nil {
+		return
+	}
+	c.Activity.OnCraftEnded("craft_ended_room_line", func(d activity.CraftingData, r state.TransitionReason) {
+		if r.Trigger == activity.TriggerCraftComplete || r.Trigger == activity.TriggerDeath {
+			return
+		}
+		recipe := crafting.GetRecipe(d.RecipeId)
+		room := rooms.LoadRoom(c.RoomId)
+		if recipe == nil || room == nil {
+			return
+		}
+		var crafter actions.Actor
+		ref := c.ActorRef()
+		switch {
+		case ref.UserId > 0:
+			if u := users.GetByUserId(ref.UserId); u != nil {
+				crafter = actions.NewUserActorInRoom(u, room)
+			}
+		case ref.MobInstanceId > 0:
+			if m := mobs.GetInstance(ref.MobInstanceId); m != nil {
+				crafter = actions.NewMobActorInRoom(m, room)
+			}
+		}
+		if crafter == nil {
+			return
+		}
+		actions.NarrateCraftPhase(crafter, recipe, crafting.PhaseCancel, room)
+	})
+}
+
+func init() {
+	characters.OnCharacterCreated(wireCraftEndedNarration)
+}
+```
+
+  Check: `crafting.GetRecipe` returns the recipe by id (`crafting.go:126`); if `CraftingData.RecipeId` for an enchant holds something else, read `usercommands/craft.go` `craftEnchanting` and handle it. Check the import graph builds (`hooks` already imports all of these). Run Step 6 tests: PASS. Then prove one bites: change the skip line to also skip `TriggerCraftCancel`, confirm the cancel case FAILS, revert by Edit.
+
+- [ ] **Step 8: Docs and gate.** `internal/state/activity/context.md`: document `OnCraftEnded` and why it exists. `internal/crafting/context.md`: `PhaseCancel`, `cancel_observer`, cancel heard as `finish_heard`. `internal/hooks/context.md`: add `Activity_CraftEnded.go` beside `Activity_Cascades.go` if that file lists cascade hooks. `docs/PATCH_NOTES.md`: extend the crafting bullet with one sentence: "If someone stops partway, the room sees them set the work aside." Spec already carries R4. Full gate, each standalone: `gofmt -l internal/ modules/ *.go`, `go build ./...`, `go vet ./...`, `go test ./...`, `golangci-lint run --new-from-merge-base=origin/master ./...`. Commit per step or in two commits (engine + store; hook + copy + docs), named paths only.
+
+- [ ] **Step 9: File the mob-movement issue.** Search first (`gh issue list --repo pruuk/DOGMud --search "mob craft move"`); if none, `gh issue create --repo pruuk/DOGMud` titled "A mob that moves mid-craft keeps crafting and finishes in its new room", body: mob movement never cancels mob crafting (players' `go` does, `usercommands/go.go:90-99`), so the new room hears a finish with no start; found in the M6 row 7 final review (PR #508); behaviour question, not a narration one.

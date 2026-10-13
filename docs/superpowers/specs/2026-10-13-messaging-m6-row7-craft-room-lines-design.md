@@ -23,6 +23,13 @@ match do not, and the player one is mute.
   sound line at start and at finish, the same sound for success and failure,
   so the outcome is not given away. Same spirit as M6 slice 4's R5 (a hidden
   cast start is heard as an unnamed murmur).
+- **R4. A craft that ends without finishing tells the room it stopped**
+  (owner, 2026-10-13, option C of three). Any exit from crafting other than
+  completion or death sends a per-skill `cancel_observer` seen line; a reader
+  who cannot see hears the skill's `finish_heard` sound, so a cancel sounds
+  like a finish and still gives no outcome away. Sent from one hook on the
+  activity machine rather than from each cancel site. See "Cancelled crafts"
+  below.
 
 ## Facts verified against source (master `43d4eda93`)
 
@@ -203,6 +210,76 @@ returning them so the validator still checks any that get authored, and the
   same, made to run `craft` by an admin command, since no shipped mob is
   scripted to craft (`crafter: true` mobs restock without the command); a
   hidden player crafts with a lit watcher. Each reader's lines checked against the table above.
+
+## Cancelled crafts (R4, amendment 2026-10-13)
+
+Found in the Task 4 review: `cancel`, walking away and damage end a timed
+craft after the room has read its start line, and the room then hears
+nothing. The owner chose one hook over a call at each site.
+
+### Facts verified against source (branch `feat/m6-row7-craft-room-lines`)
+
+| Fact | Where |
+|---|---|
+| Every exit from crafting goes through `TransitionToFree` (or `ForceFree`), which fires the inner machine's cascades and only THEN clears `m.crafting` | `internal/state/activity/rules.go:48-71` |
+| `CraftingData()` returns false once the state reads Free, so an `AfterTransition` cascade cannot read the recipe that ended | `internal/state/activity/activity.go:129-134` |
+| Triggers out of crafting: `craft_complete` (both round ticks only), `craft_cancel` (player and mob `cancel`, behaviour-tree `cancel_activity`), `movement_interrupt` (player `go`), `damage_interrupt` (`cancelCraftOrSalvageOnDamage`), `death` (`Activity_Cascades.go`) | `internal/state/activity/transitions.go`; `NewRound_UserRoundTick.go:557`, `NewRound_MobRoundTick.go:577`; `usercommands/cancel.go:56`, `mobcommands/cancel.go:36`, `behaviortree/actions_combat.go:290`; `usercommands/go.go:95`; `hooks/combat_shared_helpers.go:572-577`; `hooks/Activity_Cascades.go:35` |
+| An instant craft never enters the Crafting state, so it cannot trigger the hook | `internal/actions/craft.go` (ImmediateComplete returns before `TransitionToCrafting`) |
+| The activity machine's `Self()` is never set outside tests (`RegisterMachine` has no production caller), so the hook resolves the crafter from the `*Character` | `internal/state/activity/activity.go:160-168`; `characters.Character.ActorRef()` at `internal/characters/actor_identity.go:15` |
+| Per-character hooks are wired by `characters.OnCharacterCreated`; the Activity machine exists before it fires, and a mob instance gets fresh machines and a re-fire (`ResetForMobInstance`) | `internal/characters/character.go:426`, `:68-100`; `validate.go:662`, `:703-705`; precedent `hooks/Activity_Cascades.go` |
+| Player `go` cancels the craft before the move, in the old room | `internal/usercommands/go.go:90-99` |
+
+### Design
+
+1. **Engine: a craft-ended callback on the activity machine.** Because a
+   cascade cannot read the ended craft's data, `activity.Machine` gains
+   `OnCraftEnded(name string, fn func(d CraftingData, r state.TransitionReason))`.
+   `TransitionToFree` and `ForceFree` snapshot `m.crafting` before the
+   transition and, when the machine left Crafting successfully with data,
+   call every registered handler with the snapshot and the reason, after the
+   inner cascades and before returning. Nothing else in the machine changes.
+2. **Store:** each skill block gains a sixth pool, `cancel_observer` (three
+   lines, `{actor}` required, `{item}` refused: nothing was made). The
+   heard line for a cancel is the skill's existing `finish_heard`.
+   `CraftRoomLines` and `CraftHeardLine` accept a new `crafting.PhaseCancel`.
+3. **Sender:** `actions.NarrateCraftPhase` is unchanged in shape; the new
+   phase flows through it, so every reader rule above applies.
+4. **The hook:** in `internal/hooks`, a new `Activity_CraftEnded.go` wires,
+   per character via `characters.OnCharacterCreated`, an `OnCraftEnded`
+   handler that returns at once for trigger `craft_complete` or `death`;
+   otherwise it resolves the crafter (`c.ActorRef()`: a user by `UserId`, a
+   mob by `MobInstanceId`), the room (`rooms.LoadRoom(c.RoomId)`) and the
+   recipe (`crafting.GetRecipe(d.RecipeId)`), returns if any is missing, and
+   calls `actions.NarrateCraftPhase(..., crafting.PhaseCancel, room)`.
+5. **Ordering:** walking away sends the stop line before the departure line
+   (the cancel runs before the move, in the old room). Damage sends it where
+   the interrupt fires, inside the combat round. The crafter's own interrupt
+   lines are unchanged.
+
+### Corners
+
+- **Death:** no stop line; the death narration covers it.
+- **Salvaging:** out of scope (no salvage room lines exist yet).
+- **A mob that moves mid-craft** keeps crafting and finishes in its new room
+  (pre-existing: mob movement never cancels mob crafting). Not a line
+  problem; filed as an issue.
+- **Root guard:** the hook is a second legitimate caller of
+  `NarrateCraftPhase`, not of the store renderers, so the one-sender guard
+  is unaffected.
+
+### Testing (R4)
+
+- Activity package: `OnCraftEnded` fires once with the snapshot data and
+  reason on `TransitionToFree` and `ForceFree` out of Crafting; never for an
+  exit from Casting or Salvaging; never on a vetoed or invalid transition.
+- Store: `cancel_observer` required, three deep, `{actor}` required, `{item}`
+  refused; `PhaseCancel` renders the cancel pool seen and `finish_heard`
+  heard.
+- Hook (hooks package): a player crafting in a lit room whose craft is
+  cancelled by trigger `craft_cancel`, `movement_interrupt` and
+  `damage_interrupt` gives a bystander one cancel line each; `craft_complete`
+  and `death` give none; a mob crafter cancelled gives the line too.
+- Snapshot golden re-recorded with the new pool.
 
 ## Out of scope
 
