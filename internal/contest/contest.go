@@ -153,7 +153,7 @@ func RunWithFloors(atkScore float64, entries []Entry, floor float64) Result {
 		return res
 	}
 
-	floor = clampFloor(floor)
+	floor = ClampFloor(floor)
 	if floor <= 0 {
 		return res
 	}
@@ -172,10 +172,12 @@ func RunWithFloors(atkScore float64, entries []Entry, floor float64) Result {
 	return res
 }
 
-// clampFloor bounds a floor to [0, 0.5], matching dice.clampFloor. Duplicated
+// ClampFloor bounds a floor to [0, 0.5], matching dice.clampFloor. Duplicated
 // rather than imported because dice keeps it unexported, and this package takes
-// its tunables as parameters by design.
-func clampFloor(v float64) float64 {
+// its tunables as parameters by design. Exported so combat.contestFloor (the
+// floor RunContest passes and the fight read predicts with) is the same value
+// RunWithFloors applies.
+func ClampFloor(v float64) float64 {
 	if v < 0 {
 		return 0
 	}

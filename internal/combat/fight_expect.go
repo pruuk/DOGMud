@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -83,20 +84,30 @@ func expectedSwings(src, tgt *characters.Character, srcType SourceTarget) []swin
 	return out
 }
 
-// bestMeleeDefenceScore is defender's strongest melee defence, scored by
-// defenceEntryScore as the live contest scores it. The bool is false when
-// DefenceEntriesFor returns no entries at all (no contest happens live); the
-// score is then 0.
-func bestMeleeDefenceScore(defender *characters.Character) (float64, bool) {
-	best := 0.0
+// meleeDefenceEntries is defender's melee defence set, each scored by
+// defenceEntryScore as the live contest scores it, before gap compression.
+// Empty when DefenceEntriesFor returns no entries (no contest happens live).
+func meleeDefenceEntries(defender *characters.Character) []contest.Entry {
 	ctx := neutralCtx()
-	entries := DefenceEntriesFor(combatvocab.Melee(combatvocab.TargetSingle), defender, DefenceEntryOpts{})
-	for _, d := range entries {
-		if s, _, _ := defenceEntryScore(defender, d, false, ctx); s > best {
-			best = s
+	defs := DefenceEntriesFor(combatvocab.Melee(combatvocab.TargetSingle), defender, DefenceEntryOpts{})
+	out := make([]contest.Entry, 0, len(defs))
+	for _, d := range defs {
+		s, _, _ := defenceEntryScore(defender, d, false, ctx)
+		out = append(out, contest.Entry{Name: string(d), Score: s})
+	}
+	return out
+}
+
+// bestCompressedDefence is the strongest of entries after the gap compression
+// RunContest applies against atkScore (compressedDefences, the shared seam).
+func bestCompressedDefence(atkScore float64, entries []contest.Entry) float64 {
+	best := 0.0
+	for _, e := range compressedDefences(atkScore, entries) {
+		if e.Score > best {
+			best = e.Score
 		}
 	}
-	return best, len(entries) > 0
+	return best
 }
 
 // selfCritShare is the chance an undefended swing crits. Live, with no
@@ -120,18 +131,26 @@ func critShare(atk, def, bar float64) float64 {
 }
 
 // meleeDamagePerRound is src's expected melee damage to tgt in one round.
-// It approximates the live contest on purpose: one defence (the best), no
-// contest floor, gap compression, fumbles or partial deflection. The read is
-// rough by design (spec), and fight_expect_stat_test.go measures how rough.
+// It applies live combat's own contest math through the shared seams: the
+// defences are gap-compressed as RunContest compresses them (the best one is
+// read), and the contest floor F flips the outcome as RunWithFloors does, so
+// a swing lands with p(1-F) + (1-p)F. A floor-granted win carries a sentinel
+// margin and cannot crit, and a natural crit flipped to a loss is lost, so
+// crits scale by (1-F). Owner ruling 2026-10-13. An uncontested swing is
+// never floored. It still omits fumbles and partial deflection, so the read
+// is rough by design (spec); fight_expect_stat_test.go measures how rough.
 func meleeDamagePerRound(src, tgt *characters.Character, srcType SourceTarget) float64 {
-	def, defended := bestMeleeDefenceScore(tgt)
+	entries := meleeDefenceEntries(tgt)
+	floor := contestFloor()
 	total := 0.0
 	for _, sw := range expectedSwings(src, tgt, srcType) {
 		hit := 1.0
 		crit := selfCritShare(sw.critBar)
-		if defended {
-			hit = dice.OpposedSuccessChance(sw.attackScore, def, dice.StdDevFor(sw.attackScore))
-			crit = math.Min(critShare(sw.attackScore, def, sw.critBar), hit)
+		if len(entries) > 0 {
+			def := bestCompressedDefence(sw.attackScore, entries)
+			p := dice.OpposedSuccessChance(sw.attackScore, def, dice.StdDevFor(sw.attackScore))
+			hit = p*(1-floor) + (1-p)*floor
+			crit = math.Min(critShare(sw.attackScore, def, sw.critBar), p) * (1 - floor)
 		}
 		total += float64(sw.swings) * ((hit-crit)*sw.dmgMean + crit*sw.critMean)
 	}

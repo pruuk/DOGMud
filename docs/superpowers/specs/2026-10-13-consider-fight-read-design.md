@@ -110,11 +110,17 @@ input is recomputed by a copy.
 
 `PredictFight(a, b)` combines the two profiles:
 
-- a's hit chance against b: `dice.OpposedSuccessChance` of a's attack score
-  against b's best defence score, with `dice.StdDevFor`. This deliberately
-  approximates the live contest: it ignores the contest floors, gap
-  compression, fumbles and partial-defence degrees. The read is meant to be
-  rough, and the bands are wide enough to absorb it.
+- a's hit chance against b: `dice.OpposedSuccessChance` p of a's attack score
+  against b's best defence score after gap compression (the same
+  `compressedDefences` seam `RunContest` rolls), with `dice.StdDevFor`. The
+  contest floor F (`contestFloor()`, the value `RunContest` passes) flips the
+  outcome as `RunWithFloors` does, so hit = p(1-F) + (1-p)F and the crit
+  share scales by (1-F) (a floor-granted win cannot crit). An uncontested
+  swing is never floored. Owner ruling 2026-10-13: the prediction applies the
+  contest floor and gap compression (`meleeDamagePerRound` in
+  `internal/combat/fight_expect.go`). It still ignores fumbles and
+  partial-defence degrees; the read is meant to be rough, and the bands are
+  wide enough to absorb it. `fight_expect_stat_test.go` measures how rough.
 - a's damage per round to b: swings x hit chance x expected damage through b's
   mitigation (crit share included), plus spell offense, then minus b's
   heal-over-time and plus b's damage-over-time; a's lifesteal reduces a's own

@@ -2680,6 +2680,7 @@ func TestPinnedRead_StrawEffigy(t *testing.T) {
 	}
 }
 
+// Deviation (Task 12, 2026-10-13): the shipped fixture zeroes the six base stats before Validate, since characters.New rolls stats and Validate hydrates only a zero base.
 // fixtureAscended is the owner's "zero chance" yardstick: species 99
 // (Ascended, base 1000 in every stat, hydrated by Validate), every skill at
 // 100, wielding the Blackrazor (item 40183).

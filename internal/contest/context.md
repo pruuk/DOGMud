@@ -16,7 +16,7 @@ it without a cycle.
 
 | File | Purpose |
 |------|---------|
-| `contest.go` | `Entry`, `Result`, `Run`, `RunWithFloors`, `AgainstDifficulty`, and the unexported `clampFloor`. The whole package. |
+| `contest.go` | `Entry`, `Result`, `Run`, `RunWithFloors`, `AgainstDifficulty`, and `ClampFloor` (exported for `combat.contestFloor`, so the fight read predicts with the floor `RunWithFloors` applies). The whole package. |
 
 ## Core types
 

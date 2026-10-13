@@ -47,17 +47,25 @@ func TestSelfCritShare_IsTheOneSidedTail(t *testing.T) {
 
 // At parity (equal scores) a swing lands half the time, and crits at the
 // two-sigma-style tail of a zero margin; the whole per-round figure is pinned
-// per weapon, inside a loose bracket of every swing landing.
+// per weapon, inside a loose bracket of every swing landing. Gap compression
+// is a no-op at parity (the attacker is not ahead), and the contest floor F
+// leaves the hit chance at 0.5(1-F) + 0.5F = 0.5 but scales the crit share by
+// (1-F): a floor-granted win cannot crit and a flipped natural crit is lost
+// (owner ruling 2026-10-13).
 func TestMeleeDamagePerRound_HitChanceBrackets(t *testing.T) {
 	pinParityBalance(t)
 	a := parityCombatant(t, "attacker")
 	d := parityCombatant(t, "defender")
+	floor := contestFloor()
+	if floor <= 0 {
+		t.Fatalf("contest floor %v; the parity expectation needs a live floor to mean anything", floor)
+	}
 
 	full, want := 0.0, 0.0
 	for _, sw := range expectedSwings(a, d, User) {
 		full += float64(sw.swings) * sw.dmgMean
 		hit := 0.5
-		c := 0.5 * math.Erfc((sw.critBar-0)/math.Sqrt2)
+		c := 0.5 * math.Erfc((sw.critBar-0)/math.Sqrt2) * (1 - floor)
 		want += float64(sw.swings) * ((hit-c)*sw.dmgMean + c*sw.critMean)
 	}
 	got := meleeDamagePerRound(a, d, User)
@@ -70,8 +78,9 @@ func TestMeleeDamagePerRound_HitChanceBrackets(t *testing.T) {
 	if math.Abs(got-want) > 1e-6 {
 		t.Fatalf("parity damage per round %v, want the exact parity expectation %v", got, want)
 	}
-	if s, ok := bestMeleeDefenceScore(d); !ok || s <= 0 {
-		t.Fatalf("parity defender must have a defence score, got %v %v", s, ok)
+	entries := meleeDefenceEntries(d)
+	if s := bestCompressedDefence(160, entries); len(entries) == 0 || math.Abs(s-160) > 1e-9 {
+		t.Fatalf("parity defender's best compressed defence %v (%d entries), want the uncompressed 160", s, len(entries))
 	}
 }
 
