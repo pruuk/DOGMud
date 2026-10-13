@@ -79,43 +79,34 @@ func TestGenericYamlDefinesCoupDeGrace(t *testing.T) {
 		t.Fatalf("read generic.yaml: %v", err)
 	}
 
-	var parsed struct {
-		Options map[string]struct {
-			Together map[string]map[string][]string `yaml:"together"`
-			Separate map[string]map[string][]string `yaml:"separate"`
-		} `yaml:"options"`
-	}
-	if err := yaml.Unmarshal(raw, &parsed); err != nil {
+	// Decode through the items type so either combat-message layout (role-first
+	// or record-per-blow) is read exactly as the loader reads it.
+	var g items.WeaponAttackMessageGroup
+	if err := yaml.Unmarshal(raw, &g); err != nil {
 		t.Fatalf("parse generic.yaml: %v", err)
 	}
 
-	cdg, ok := parsed.Options[string(items.CoupDeGrace)]
+	cdg, ok := g.Options[items.CoupDeGrace]
 	if !ok {
 		t.Fatalf("generic.yaml defines no %q block; every weapon would fall back to silence",
 			items.CoupDeGrace)
 	}
 
-	// Mirror the keys the renderer actually reads, so a block that parses but
+	// Mirror the pools the renderer actually reads, so a block that parses but
 	// is missing a branch still fails here rather than rendering nothing.
-	for _, key := range []string{"actor", "actee", "observer"} {
-		tiers, ok := cdg.Together[key]
-		if !ok {
-			t.Errorf("coupdegrace.together is missing %q", key)
-			continue
-		}
-		if len(tiers["beginner"]) == 0 {
-			t.Errorf("coupdegrace.together.%s has no beginner messages", key)
-		}
+	pools := []struct {
+		name string
+		got  items.MessageOptions
+	}{
+		{"together.actor", cdg.Together.ToAttacker.Beginner},
+		{"together.actee", cdg.Together.ToDefender.Beginner},
+		{"together.observer", cdg.Together.ToRoom.Beginner},
+		{"separate.actor", cdg.Separate.ToAttacker.Beginner},
+		{"separate.actee", cdg.Separate.ToDefender.Beginner},
 	}
-
-	for _, key := range []string{"actor", "actee"} {
-		tiers, ok := cdg.Separate[key]
-		if !ok {
-			t.Errorf("coupdegrace.separate is missing %q", key)
-			continue
-		}
-		if len(tiers["beginner"]) == 0 {
-			t.Errorf("coupdegrace.separate.%s has no beginner messages", key)
+	for _, p := range pools {
+		if len(p.got) == 0 {
+			t.Errorf("coupdegrace.%s has no beginner messages", p.name)
 		}
 	}
 }
