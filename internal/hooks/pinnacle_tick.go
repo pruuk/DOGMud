@@ -172,7 +172,7 @@ func tickHunger(c *characters.Character, user *users.UserRecord, now uint64) {
 	}
 	// Deliberate design decision: the drain is non-combat attrition applied
 	// directly to Health, bypassing the damage hooks entirely (no sleep-wake,
-	// no aggro, no mitigation, no craft interrupt: #514 R2) — the blade's toll, not an attack.
+	// no aggro, no mitigation, no craft interrupt: #514 R2): the blade's toll, not an attack.
 	// Anonymous source: the toll comes from the item, and conditions and items carry no
 	// applier the pool primitives can attribute to.
 	c.ApplyAttrition(characters.PoolHealth, drain, state.ActorRef{})
