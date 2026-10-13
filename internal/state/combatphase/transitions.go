@@ -52,4 +52,9 @@ const (
 	TriggerCharm           = "charm_acquired"
 	TriggerCombatantToggle = "combatant_toggle"
 	TriggerForceIdle       = "force_idle"
+
+	// TriggerCastFold is a caster entering combat only so its own harmful
+	// fold steps (targeting.ReasonCastFold). The Awareness cascade does not
+	// reveal on it: the spell's landing does (owner ruling R6).
+	TriggerCastFold = "cast_fold"
 )

@@ -1368,7 +1368,10 @@ where `SetAggro`, `EndAggro` and `IsAggro` live now. Use the predicate methods
 above to ask about engagement.
 
 `SetAggro` and `EndAggro` survived the collapse as the storage primitives, and
-they write `CombatPhase` alone. `AggroType` survived as a parameter, never as
+they write `CombatPhase` alone. `SetAggroWithTrigger` is `SetAggro` with the
+combat-phase trigger named by the caller (empty derives it as `SetAggro`
+does); only `targeting.Commit` names one, `TriggerCastFold`, and the guard
+counts it as the same writer. `AggroType` survived as a parameter, never as
 stored state; the file's header comment lists where each of the struct's four
 other jobs went. The rule on these two is a CALLER restriction, not a deletion:
 everything outside `internal/characters` and `internal/targeting` goes through

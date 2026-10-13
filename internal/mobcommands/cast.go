@@ -156,13 +156,17 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// stepped, and IdleMobs fizzles it (#242). A player target comes first,
 	// as it always has; failing one, the first mob target the mob could
 	// fight (castFoeMob).
+	//
+	// The commit is fold-only (targeting.ReasonCastFold), so it leaves a
+	// hidden caster hidden: starting a cast never breaks hiding, the
+	// spell's landing does (owner ruling R6, messaging M6 slice 4).
 	if spellInfo.IsHarm() && !mob.Character.IsInCombat() {
 		if len(result.TargetUserIds) > 0 {
 			targeting.Commit(&mob.Character,
-				state.ActorRef{UserId: result.TargetUserIds[0]}, targeting.ReasonAttack)
+				state.ActorRef{UserId: result.TargetUserIds[0]}, targeting.ReasonCastFold)
 		} else if mId := castFoeMob(mob, result.TargetMobInstanceIds); mId > 0 {
 			targeting.Commit(&mob.Character,
-				state.ActorRef{MobInstanceId: mId}, targeting.ReasonAttack)
+				state.ActorRef{MobInstanceId: mId}, targeting.ReasonCastFold)
 		}
 	}
 

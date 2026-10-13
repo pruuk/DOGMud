@@ -334,6 +334,7 @@ inline literals to ensure stable identifiers across the codebase:
 | `TriggerCharm` | `"charm_acquired"` |
 | `TriggerCombatantToggle` | `"combatant_toggle"` |
 | `TriggerForceIdle` | `"force_idle"` |
+| `TriggerCastFold` | `"cast_fold"` (a caster's fold-only commit; the Awareness cascade does not reveal on it, R6) |
 
 ---
 

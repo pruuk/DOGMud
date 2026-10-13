@@ -15,7 +15,8 @@ import (
 // Two cascade directions:
 //
 //  1. Combat Phase → Awareness:
-//     - Idle → Engaging: Hidden → Revealing
+//     - Idle → Engaging: Hidden → Revealing, except under
+//     combatphase.TriggerCastFold (a caster's fold-only commit, R6)
 //
 //  2. Awareness → Condition #9:
 //     - Entering Hidden: AddCondition(9, false)
@@ -31,6 +32,15 @@ func wireAwarenessFromCombatPhase(c *characters.Character) {
 	c.CombatPhase.Inner().AfterTransition("awareness_combat_cascade",
 		func(from, to combatphase.State, r state.TransitionReason) {
 			if from != combatphase.Idle || to != combatphase.Engaging {
+				return
+			}
+			// A caster entering combat only so its own fold steps (a mob's
+			// harmful cast commits at cast start, #242) stays hidden: the
+			// spell's landing reveals it (commitHarmfulSpellAggro, owner
+			// ruling R6, messaging M6 slice 4). Keyed on the commit's own
+			// trigger, not on IsCasting: a hidden caster mid-fold that is
+			// attacked, or turns on an attacker, is revealed as before.
+			if r.Trigger == combatphase.TriggerCastFold {
 				return
 			}
 			if c.Awareness.State() == awareness.Hidden {

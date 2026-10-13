@@ -1082,6 +1082,18 @@ cascade has run), not `IsHidden()`.
 `internal/hooks/surprise_reveal_test.go` pins both halves — the reveal
 fires, and it does not clear `Aggro.Type`.
 
+One exemption (owner ruling R6, messaging M6 slice 4): a transition under
+`combatphase.TriggerCastFold` does not reveal. That is a mob's harmful cast
+committing it at cast start only so its fold steps (`targeting.ReasonCastFold`,
+#242). Starting a cast never breaks hiding; a harmful spell breaks its
+caster's hiding when it lands, explicitly in `commitHarmfulSpellAggro`, for
+every caster. The mob combat round skips its cancel-on-combat strip while the
+mob is folding, so the strip does not reveal it either; a cast that ends
+without landing leaves the strip to reveal it on its next round. The
+exemption is keyed on the trigger, not on `IsCasting`, so a hidden caster
+mid-fold that enters combat any other way is still revealed.
+`spell_hiding_test.go` pins all of this.
+
 `SetAggro` writes `c.Aggro` *before* it dual-writes the Combat Phase
 transition. That order matters for anything observing `Idle → Engaging`
 — notably the `mob_engaging` btree event in
@@ -1092,7 +1104,7 @@ the opening strike, which reads `Aggro.Type` later in the round.
 Events and cascades (per state transition, not per round):
 - Awareness `Visible → Hidden`: apply condition #9 (not for a shroud hide) + room text "sneaks away"
 - Awareness `Hidden → Visible`: remove condition #9 + room text "emerges from hiding"; clear the `sneaking` misc key (every exit from Hidden, #444), so `usercommands.Go` does not move a visible player as a sneaker
-- Combat Phase `Idle → Engaging`: trigger Awareness reveal cascade
+- Combat Phase `Idle → Engaging`: trigger Awareness reveal cascade (not under `TriggerCastFold`)
 
 ### Awareness_LightChange.go
 
