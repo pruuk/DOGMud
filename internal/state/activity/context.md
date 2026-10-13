@@ -239,7 +239,8 @@ The salvage twin of `OnCraftEnded`: called after the machine leaves
 salvage that ended and the reason, after state and data are cleared and with
 no lock held. Not fired for Crafting or Casting, a vetoed transition, or a
 machine already Free. `internal/hooks/Activity_SalvageEnded.go` uses it to
-tell a salvager "The pain interrupts your salvaging." (#514).
+tell a salvager "The pain interrupts your salvaging." (#514), queued for the
+round-end flush so it reads after the hit line.
 
 ### Advance helpers
 

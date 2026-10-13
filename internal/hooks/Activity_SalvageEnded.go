@@ -2,10 +2,8 @@ package hooks
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
-	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 // wireSalvageEndedNarration tells a player salvager that being hurt stopped
@@ -13,7 +11,9 @@ import (
 // wireCraftEndedNarration. Only a damage interrupt speaks here: walking away
 // is already told by usercommands/go.go, and a salvage has no room lines yet.
 // A mob has no connection to tell, and a dying character is left to the death
-// narration.
+// narration. The line waits for the round-end flush
+// (work_interrupt_narration.go, owner ruling 2026-10-13) so it reads after the
+// hit line that caused it.
 func wireSalvageEndedNarration(c *characters.Character) {
 	if c.Activity == nil {
 		return
@@ -29,9 +29,11 @@ func wireSalvageEndedNarration(c *characters.Character) {
 		if uid <= 0 {
 			return
 		}
-		if u := users.GetByUserId(uid); u != nil {
-			u.SendText(messaging.CategorySystem, `<ansi fg="red">The pain interrupts your salvaging.</ansi>`)
-		}
+		queueWorkInterrupt(pendingWorkInterrupt{
+			userId:  uid,
+			roomId:  c.RoomId,
+			salvage: true,
+		})
 	})
 }
 

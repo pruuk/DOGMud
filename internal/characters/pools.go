@@ -714,8 +714,9 @@ func (c *Character) harm(pool Pool, amount int, source state.ActorRef, interrupt
 }
 
 // interruptWork ends a craft or salvage in progress because the character was
-// hurt (#514). The Activity machine's craft-ended and salvage-ended callbacks
-// narrate it.
+// hurt (#514). The state changes here, at once; the Activity machine's
+// craft-ended and salvage-ended callbacks queue the narration, which hooks
+// sends at the end of the round, after the hit line that caused it.
 func (c *Character) interruptWork() {
 	if c.Activity == nil {
 		return

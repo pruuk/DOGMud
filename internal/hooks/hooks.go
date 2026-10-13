@@ -80,6 +80,10 @@ func RegisterListeners() {
 	events.RegisterListener(events.MobIdle{}, HandleIdleMobs)
 	events.RegisterListener(events.NewRound{}, FerryTick)     // Ferry vessels: schedule reconcile
 	events.RegisterListener(events.NewRound{}, WarehouseTick) // Warehouse pools: accrual + dirty save
+	// #514: damage-ended craft and salvage lines are sent after every other
+	// NewRound listener (events.Last), so they read after the round's hit lines.
+	// Registration order alone would not do: module listeners register later.
+	events.RegisterListener(events.NewRound{}, FlushWorkInterruptNarration, events.Last)
 
 	// Turn Hooks
 	events.RegisterListener(events.NewTurn{}, CleanupZombies)

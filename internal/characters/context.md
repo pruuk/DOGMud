@@ -475,7 +475,9 @@ were deliberately left alone.
 actually lands (`applied > 0`) transitions the Activity machine to Free with
 `TriggerDamageInterrupt` via the unexported `interruptWork`, after the vital
 change, so a killing blow is already at zero health when the craft-ended hook
-reads it. Stamina and conviction harm never interrupt. `ApplyAttrition` applies
+reads it. The state change is immediate; the hooks package defers the
+interrupt lines to the end of the round so they read after the hit line
+(owner ruling 2026-10-13). Stamina and conviction harm never interrupt. `ApplyAttrition` applies
 identical harm through the shared unexported `harm(..., interrupt bool)` with
 the interrupt off, for health loss that is not an attack: the pinnacle blade
 toll, toxicity sickness and stuck-mob decay (#514 R2). A new health-loss site

@@ -84,6 +84,7 @@ events.RegisterListener(events.NewRound{}, HandleRespawns)        // Mob respawn
 events.RegisterListener(events.NewRound{}, DoCombat)              // Combat resolution
 events.RegisterListener(events.NewRound{}, AutoHeal)              // Natural healing
 events.RegisterListener(events.NewRound{}, IdleMobs)              // Mob idle behavior
+events.RegisterListener(events.NewRound{}, FlushWorkInterruptNarration, events.Last) // Damage-ended craft/salvage lines (#514)
 ```
 
 ### NewTurn Event Handlers (4 handlers)
@@ -1486,18 +1487,43 @@ movement or damage interrupt) it calls `actions.NarrateCraftPhase` with
 `crafting.PhaseCancel`, so the room sees the work set aside. Completion
 (`TriggerCraftComplete`) and `TriggerDeath` are skipped: the round tick
 narrates its own outcome, and death has its own narration. On
-`TriggerDamageInterrupt` it also tells a living player crafter "The pain
-interrupts your crafting." (#514; the old hand-placed
-`cancelCraftOrSalvageOnDamage` helper is gone, the interrupt lives in
-`Character.ApplyHarm`).
+`TriggerDamageInterrupt` it sends nothing itself: it queues a pending
+interruption (see `work_interrupt_narration.go`), and the flush then tells a
+living player crafter "The pain interrupts your crafting." and sends the
+room's stop line (#514; the old hand-placed `cancelCraftOrSalvageOnDamage`
+helper is gone, the interrupt lives in `Character.ApplyHarm`). Every other
+exit narrates at once.
 
 ### Activity_SalvageEnded.go
 
 `characters.OnCharacterCreated(wireSalvageEndedNarration)` registers an
-`Activity.OnSalvageEnded` handler. On `TriggerDamageInterrupt` only, a living
-player salvager reads "The pain interrupts your salvaging." Nothing for any
-other trigger (movement tells the salvager in `usercommands/go.go`) and
-nothing to the room, since salvage has no room lines.
+`Activity.OnSalvageEnded` handler. On `TriggerDamageInterrupt` only, for a
+living player salvager, it queues a pending interruption; the flush sends
+"The pain interrupts your salvaging." Nothing for any other trigger (movement
+tells the salvager in `usercommands/go.go`) and nothing to the room, since
+salvage has no room lines.
+
+### work_interrupt_narration.go
+
+Deferred narration for work ended by damage (owner ruling 2026-10-13, option
+A). Damage lands before the hit line that reports it is sent, so the craft or
+salvage ends at once in `Character.ApplyHarm` but its lines wait. The two
+ended hooks call `queueWorkInterrupt` with a `pendingWorkInterrupt` (user id
+or mob instance id, room id, recipe id or `salvage`, phase) into a
+mutex-guarded package slice; the dying skip is decided there, at record time.
+`FlushWorkInterruptNarration`, registered in `hooks.go` as a `NewRound`
+listener with `events.Last`, calls `flushWorkInterrupts`, which drains the
+queue (`takeWorkInterrupts`) and sends the same lines the hooks used to: the
+player's own line, then `actions.NarrateCraftPhase` resolved against the
+recorded room. An unresolvable crafter or room is dropped, as is a crafter
+who has started dying since. `events.Last` puts the flush after every other
+`NewRound` listener, including `UserRoundTick`, `MobRoundTick`, `DoCombat`
+(with spell resolution) and module listeners registered later, and messages
+are FIFO `events.Message` events at one priority, so the lines read after the
+round's hit lines. A `NewRound` listener that returned `Cancel` would skip
+the flush; none does. Damage outside round processing waits for the next
+round. Tests call `flushWorkInterrupts` directly and clear the queue with
+`takeWorkInterrupts`.
 
 ### Call-site wirings (not AfterTransition)
 
