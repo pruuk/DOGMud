@@ -4,7 +4,7 @@ import "testing"
 
 func TestValidateConsider_Defaults(t *testing.T) {
 	b := Balance{}
-	b.validateConsider()
+	b.Validate()
 	want := map[string][2]float64{
 		"PaceMoments":      {float64(b.ConsiderPaceMoments), 2},
 		"PaceShort":        {float64(b.ConsiderPaceShort), 6},
@@ -33,7 +33,25 @@ func TestValidateConsider_OutOfOrderLaddersReset(t *testing.T) {
 	if b.ConsiderPaceMoments != 2 || b.ConsiderPaceShort != 6 || b.ConsiderPaceLong != 20 {
 		t.Errorf("pace ladder = %v/%v/%v, want 2/6/20", b.ConsiderPaceMoments, b.ConsiderPaceShort, b.ConsiderPaceLong)
 	}
-	if b.ConsiderBandScratches != 0.25 || b.ConsiderBandHurt != 0.6 {
-		t.Errorf("band ladder not reset: scratches %v hurt %v", b.ConsiderBandScratches, b.ConsiderBandHurt)
+	if b.ConsiderBandUntouched != 0.05 || b.ConsiderBandScratches != 0.25 ||
+		b.ConsiderBandHurt != 0.6 || b.ConsiderBandBarely != 1.0 || b.ConsiderBandLethal != 3.0 {
+		t.Errorf("band ladder not reset: %v/%v/%v/%v/%v, want 0.05/0.25/0.6/1/3",
+			b.ConsiderBandUntouched, b.ConsiderBandScratches, b.ConsiderBandHurt,
+			b.ConsiderBandBarely, b.ConsiderBandLethal)
+	}
+}
+
+func TestValidateConsider_ValidCustomLadderKept(t *testing.T) {
+	b := Balance{ConsiderPaceMoments: 1, ConsiderPaceShort: 3, ConsiderPaceLong: 9,
+		ConsiderBandUntouched: 0.1, ConsiderBandScratches: 0.3, ConsiderBandHurt: 0.7,
+		ConsiderBandBarely: 1.5, ConsiderBandLethal: 4.0}
+	b.validateConsider()
+	if b.ConsiderPaceMoments != 1 || b.ConsiderPaceShort != 3 || b.ConsiderPaceLong != 9 {
+		t.Errorf("pace ladder changed: %v/%v/%v", b.ConsiderPaceMoments, b.ConsiderPaceShort, b.ConsiderPaceLong)
+	}
+	if b.ConsiderBandUntouched != 0.1 || b.ConsiderBandScratches != 0.3 ||
+		b.ConsiderBandHurt != 0.7 || b.ConsiderBandBarely != 1.5 || b.ConsiderBandLethal != 4.0 {
+		t.Errorf("band ladder changed: %v/%v/%v/%v/%v", b.ConsiderBandUntouched,
+			b.ConsiderBandScratches, b.ConsiderBandHurt, b.ConsiderBandBarely, b.ConsiderBandLethal)
 	}
 }
