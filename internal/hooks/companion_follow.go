@@ -3,12 +3,12 @@ package hooks
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -37,8 +37,8 @@ func CompanionSweepCallback(userId, destRoomId int) {
 
 // TransportCompanions moves every live companion of owner into the owner's
 // new room. Called after a successful owner room change (go, recall, portal,
-// fold-recall, etc). Aborts any in-progress cast (conviction already spent is
-// forfeit). Ends aggro on targets no longer in the new room.
+// fold-recall, etc). Stops a craft or salvage (actions.InterruptWorkOnMove)
+// and keeps a cast. Ends aggro on targets no longer in the new room.
 //
 // No-op when newRoomId == oldRoomId or owner is nil.
 func TransportCompanions(owner *users.UserRecord, oldRoomId, newRoomId int) {
@@ -65,13 +65,14 @@ func TransportCompanions(owner *users.UserRecord, oldRoomId, newRoomId int) {
 			continue
 		}
 
-		// Interrupt any in-progress cast (spent conviction is forfeit).
-		if mob.Character.Activity != nil && mob.Character.Activity.IsCasting() {
-			mob.Character.Activity.ForceFree(state.TransitionReason{
-				Trigger: "companion_follow",
-				Actor:   mob.Character.Activity.Self(),
-			})
-		}
+		// #512: following is the companion's own move, as a player follower's
+		// go is, so it stops a craft or salvage while still in the old room.
+		// A cast is kept (owner ruling B, 2026-10-13: movement never
+		// interrupts casting). The cast rules end it if it cannot land: a
+		// harmful fold at a foe left behind loses its fight below and is
+		// fizzled by IdleMobs' stranded-fold sweep; a help fold steps on and
+		// fizzles at its fold step if its target is gone.
+		actions.InterruptWorkOnMove(&mob.Character)
 
 		// Remove from current room.
 		curRoom := rooms.LoadRoom(mob.Character.RoomId)
@@ -179,13 +180,12 @@ func PushCompanionsToRoom(owner *users.UserRecord, destRoomId int) {
 			continue
 		}
 
-		// Interrupt any in-progress cast (spent conviction is forfeit).
-		if mob.Character.Activity != nil && mob.Character.Activity.IsCasting() {
-			mob.Character.Activity.ForceFree(state.TransitionReason{
-				Trigger: "companion_sweep",
-				Actor:   mob.Character.Activity.Self(),
-			})
-		}
+		// A cast is kept (owner ruling B, applied to the sweep 2026-10-13:
+		// movement never interrupts casting). The cast rules end it: a
+		// harmful fold at the foe left behind loses its fight below and is
+		// fizzled by IdleMobs' stranded-fold sweep; a help fold at the owner,
+		// who stays in the fight room, fizzles at landing. A forced sweep
+		// does not interrupt work either (#528).
 
 		// Remove from current room.
 		curRoomId := mob.Character.RoomId

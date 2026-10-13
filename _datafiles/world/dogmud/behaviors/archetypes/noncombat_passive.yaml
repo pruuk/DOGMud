@@ -18,7 +18,7 @@ tree:
     - type: action
       event: player_enter
       do: emote
-      text: "pays you little mind."
+      text: "pays the newcomer little mind."
 
     - type: action
       event: player_attack_rejected

@@ -106,6 +106,22 @@ const (
 	// existing Category value shifts. Lighting plan 3d's band-change notices.
 	CategoryLight
 
+	// Work, appended so no existing Category value shifts (#515). The
+	// crafter's and salvager's OWN lines: begin, per-round progress,
+	// success, failure, interrupt and stop. Recipe success and failure
+	// lines are authored prose that often runs past 80 columns, so this
+	// category wraps where CategorySystem, a mixed bucket, cannot.
+	// Refusals ("you are missing...") stay on CategorySystem.
+	CategoryCraft
+
+	// The room's lines ABOUT a crafter (owner ruling C, 2026-10-13):
+	// actions.NarrateCraftPhase's seen, shapes and heard lines, for a player
+	// or a mob crafter. They rode CategoryEmote (player) and CategoryMobIdle
+	// (mob), and CategoryEmote never wraps, so a long name and item name ran
+	// past 80. Appended so no existing value shifts; normalised and colored
+	// as CategoryEmote is (alias craft-seen, same value as emote).
+	CategoryCraftSeen
+
 	// categoryMax is the exclusive upper bound of the Category enum.
 	// Used by tests to iterate the full range; do not consume in
 	// production code.
@@ -240,6 +256,10 @@ func (c Category) String() string {
 		return "toxin"
 	case CategoryLight:
 		return "light"
+	case CategoryCraft:
+		return "craft"
+	case CategoryCraftSeen:
+		return "craft-seen"
 	}
 	return "Unknown"
 }

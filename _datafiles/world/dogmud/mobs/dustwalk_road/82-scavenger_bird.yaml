@@ -19,7 +19,7 @@ idlecommands:
 combatcommands:
   - 'emote dives with talons extended, screeching'
   - ''
-  - 'emote beats its wings in your face, trying to blind you'
+  - 'emote beats its wings in its foe''s face, trying to blind them'
   - ''
 activitylevel: 30
 character:

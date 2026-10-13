@@ -20,7 +20,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/relationships"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -55,16 +54,8 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	// If no valid exit, check if it's a recognized cardinal direction (handled below
 	// as "bumping into walls"). Otherwise return false so the dispatcher shows
 	// "not recognized" instead of a confusing "can't do that in combat" message.
-	isCardinal := false
-	if exitName == `` {
-		switch rest {
-		case "north", "south", "east", "west", "up", "down",
-			"northwest", "northeast", "southwest", "southeast":
-			isCardinal = true
-		}
-		if !isCardinal {
-			return false, nil
-		}
+	if exitName == `` && !actions.IsCompassDirection(rest) {
+		return false, nil
 	}
 
 	if user.Character.IsInCombat() {
@@ -87,23 +78,13 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		return true, nil
 	}
 
-	// Movement cancels crafting and salvaging — route through Activity
-	// machine for both. Casting is NOT interrupted by movement (policy).
-	if user.Character.Activity != nil && !user.Character.Activity.IsFree() {
-		switch user.Character.Activity.State() {
-		case activity.Crafting:
-			_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
-				Trigger: activity.TriggerMovementInterrupt,
-				Actor:   state.ActorRef{UserId: user.UserId},
-			})
-			user.SendText(messaging.CategorySystem, `<ansi fg="red">Your movement interrupts your crafting.</ansi>`)
-		case activity.Salvaging:
-			_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
-				Trigger: activity.TriggerMovementInterrupt,
-				Actor:   state.ActorRef{UserId: user.UserId},
-			})
-			user.SendText(messaging.CategorySystem, `<ansi fg="red">Your movement interrupts your salvaging.</ansi>`)
-		}
+	// Movement cancels crafting and salvaging through the helper every mob
+	// move shares (#512). Casting is NOT interrupted by movement (policy).
+	switch actions.InterruptWorkOnMove(user.Character) {
+	case activity.Crafting:
+		user.SendText(messaging.CategoryCraft, `<ansi fg="red">Your movement interrupts your crafting.</ansi>`)
+	case activity.Salvaging:
+		user.SendText(messaging.CategoryCraft, `<ansi fg="red">Your movement interrupts your salvaging.</ansi>`)
 	}
 	// If has a condition that prevents combat, skip the player
 	if user.Character.HasConditionFlag(conditions.NoMovement) {

@@ -22,7 +22,7 @@ idlecommands:
 combatcommands:
   - 'emote lunges from cover, striking for the throat'
   - ''
-  - 'emote twists behind you and drives an elbow toward your kidney'
+  - 'emote twists behind its foe and drives an elbow toward their kidney'
   - ''
   - 'flee'
   - 'emote breaks contact and vanishes into the nearest shadow'

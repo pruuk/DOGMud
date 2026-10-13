@@ -21,8 +21,8 @@ combatcommands:
   - 'emote gives ground without ever turning his back, each step opening the
     range, each pause buying another aimed shot'
   - ''
-  - 'emote reads your rush, drifts wide along the rim, and makes you cross
-    open stone for every stride you steal back'
+  - 'emote reads its foe''s rush, drifts wide along the rim, and makes them cross
+    open stone for every stride they steal back'
   - ''
 spawnmutations: [chameleon-skin, compound-eyes]
 character:

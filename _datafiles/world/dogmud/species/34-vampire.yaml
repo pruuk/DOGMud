@@ -16,7 +16,7 @@ lifedrain: true
 selectable: false
 tameable: false
 angrycommands:
-  - emote fixes you with a cold, measuring gaze, utterly unhurried.
+  - emote fixes its foe with a cold, measuring gaze, utterly unhurried.
   - emote bares its fangs in something that is not quite a smile.
 stats:
   strength:

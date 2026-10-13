@@ -28,5 +28,5 @@ tree:
           - type: action
             do: send_room_text
             text: >-
-              The Hull Sweeper's disruptor field lashes out — your
-              conjured allies are hurled from the chamber!
+              The Hull Sweeper's disruptor field lashes out, and every
+              conjured ally is hurled from the chamber!

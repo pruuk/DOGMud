@@ -20,7 +20,7 @@ func TestSendSeen_HiddenActorReachesNoOne(t *testing.T) {
 		{"hidden player", true, messaging.CategoryEmote,
 			FormatEmoteText("Kesh", "waves.", "username")},
 		{"hidden mob", false, messaging.CategoryMobEmote,
-			FormatMobEmoteText("Grel", "pays you little mind.")},
+			FormatMobEmoteText("Grel", "pays the newcomer little mind.")},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

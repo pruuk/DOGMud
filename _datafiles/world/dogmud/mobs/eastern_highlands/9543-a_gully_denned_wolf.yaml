@@ -23,10 +23,10 @@ idlecommands:
   - ''
 combatcommands:
   - 'emote drops into a low, flat run and closes the ground between
-    you without announcement.'
+    itself and its foe without announcement.'
   - hamstring
   - ''
-  - 'emote breaks off and circles to your flank, unhurried, patient,
+  - 'emote breaks off and circles to its foe''s flank, unhurried, patient,
     looking for the angle it wants.'
   - howl
   - ''

@@ -56,14 +56,14 @@ func Cancel(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			Trigger: activity.TriggerCraftCancel,
 			Actor:   state.ActorRef{UserId: user.UserId},
 		})
-		user.SendText(messaging.CategorySystem, `You stop crafting.`)
+		user.SendText(messaging.CategoryCraft, `You stop crafting.`)
 
 	case activity.Salvaging:
 		_ = a.TransitionToFree(state.TransitionReason{
 			Trigger: activity.TriggerSalvageCancel,
 			Actor:   state.ActorRef{UserId: user.UserId},
 		})
-		user.SendText(messaging.CategorySystem, `You stop salvaging.`)
+		user.SendText(messaging.CategoryCraft, `You stop salvaging.`)
 	}
 	return true, nil
 }

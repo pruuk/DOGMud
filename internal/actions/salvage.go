@@ -217,12 +217,12 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 			corpseName = target.NameAt(sight)
 		}
 		if len(recovered) > 0 {
-			salvagerLine = messaging.Say(messaging.CategorySystem, fmt.Sprintf(
+			salvagerLine = messaging.Say(messaging.CategoryCraft, fmt.Sprintf(
 				`<ansi fg="green">You salvage the %s and recover: %s.</ansi>`,
 				corpseName,
 				formatRecovered(recovered)))
 		} else {
-			salvagerLine = messaging.Say(messaging.CategorySystem, fmt.Sprintf(
+			salvagerLine = messaging.Say(messaging.CategoryCraft, fmt.Sprintf(
 				`<ansi fg="red">You attempt to salvage the %s but recover nothing useful.</ansi>`,
 				corpseName))
 		}
@@ -238,16 +238,17 @@ func salvageCorpse(actor Actor, room *rooms.Room, opts SalvageOptions, score flo
 	// The name tag follows the actor, because <ansi fg="mobname"> around a
 	// player's name renders them as a mob.
 	//
-	// The category is unchanged from the mob line it generalises. Whether
-	// CategoryMobIdle is the right class for a player's action is a separate
-	// question and not this fix's to answer.
+	// The line rides CategoryCraftSeen, the room's lines about someone at
+	// work, as actions.NarrateCraftPhase's craft lines do (#515): the same
+	// color as the CategoryMobIdle it rode before, and it wraps, for a
+	// player or a mob salvager alike.
 	salvageObserver := messaging.NoLine
 	if room.PlayerCt() > 0 {
 		nameTag := "mobname"
 		if actor.IsPlayer() {
 			nameTag = "username"
 		}
-		salvageObserver = messaging.Say(messaging.CategoryMobIdle, fmt.Sprintf(
+		salvageObserver = messaging.Say(messaging.CategoryCraftSeen, fmt.Sprintf(
 			`<ansi fg="%s">%s</ansi> kneels over the <ansi fg="mob-corpse">%s</ansi> and works it for salvage.`,
 			nameTag, actor.GetName(), target.ObservedName()))
 	}
@@ -388,12 +389,12 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 
 	if actor.IsPlayer() {
 		if len(recovered) > 0 {
-			actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+			actor.SendText(messaging.CategoryCraft, fmt.Sprintf(
 				`<ansi fg="green">You salvage the <ansi fg="itemname">%s</ansi> and recover: %s.</ansi>`,
 				targetItem.DisplayName(),
 				formatRecovered(recovered)))
 		} else {
-			actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+			actor.SendText(messaging.CategoryCraft, fmt.Sprintf(
 				`<ansi fg="red">You attempt to salvage the <ansi fg="itemname">%s</ansi> but recover nothing useful.</ansi>`,
 				targetItem.DisplayName()))
 		}

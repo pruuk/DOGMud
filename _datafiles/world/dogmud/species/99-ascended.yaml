@@ -11,7 +11,7 @@ unarmedname: will
 selectable: false
 knowsfirstaid: true
 angrycommands:
-  - emote fixes their gaze on you. The air stops moving.
+  - emote fixes their gaze on their foe. The air stops moving.
   - emote tilts their head. Reality tilts with it.
 tameable: false
 stats:

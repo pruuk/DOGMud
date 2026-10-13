@@ -16,9 +16,9 @@ idlecommands:
   - ''
   - ''
 combatcommands:
-  - 'emote swings a heavy fist at your head'
+  - 'emote swings a heavy fist at its foe''s head'
   - ''
-  - 'emote charges forward, trying to pin you against the wall'
+  - 'emote charges forward, trying to pin its foe against the wall'
   - ''
 activitylevel: 10
 aiprofile: aggressive

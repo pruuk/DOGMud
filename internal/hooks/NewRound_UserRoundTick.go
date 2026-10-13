@@ -517,9 +517,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						// Salvaging tick — advance round via Activity machine.
 						sd, complete := user.Character.Activity.AdvanceSalvagingRound()
 						if !complete {
-							user.SendText(messaging.CategorySystem, fmt.Sprintf(
-								`<ansi fg="yellow">You continue salvaging... (%d/%d)</ansi>`,
-								sd.RoundsComplete, sd.RoundsTotal))
+							user.SendText(messaging.CategoryCraft, salvageProgressLine(user.Character, sd))
 						} else {
 							// Determine salvage type from ItemUuid prefix.
 							const corpsePrefix = "corpse:"
@@ -546,9 +544,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						// Crafting tick — advance round via Activity machine.
 						cd, complete := user.Character.Activity.AdvanceCraftingRound()
 						if !complete {
-							user.SendText(messaging.CategorySystem, fmt.Sprintf(
-								`<ansi fg="yellow">You continue working on %s... (%d/%d)</ansi>`,
-								cd.RecipeId, cd.RoundsComplete, cd.RoundsTotal))
+							user.SendText(messaging.CategoryCraft, craftProgressLine(user.Character, cd))
 						} else {
 							recipe := crafting.GetRecipe(cd.RecipeId)
 							enchantTargetSlot := cd.TargetSlot
@@ -672,7 +668,8 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										ActorName:      user.Character.GetCharacterName(true),
 										ActorPlainName: user.Character.GetCharacterName(false),
 									})
-									user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, successRoles.Actor))
+									// CategoryCraft wraps: recipe lines run past 80 (#515).
+									user.SendText(messaging.CategoryCraft, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, successRoles.Actor))
 									actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, roomPhase, room)
 
 									// Stage 31.1: Recipe discovery roll
@@ -707,7 +704,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 										ActorName:      user.Character.GetCharacterName(true),
 										ActorPlainName: user.Character.GetCharacterName(false),
 									})
-									user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">%s</ansi>`, failureRoles.Actor))
+									user.SendText(messaging.CategoryCraft, fmt.Sprintf(`<ansi fg="red">%s</ansi>`, failureRoles.Actor))
 									actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, crafting.PhaseFailure, room)
 								}
 							}

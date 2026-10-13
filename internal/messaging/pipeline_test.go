@@ -116,12 +116,15 @@ var wrapAllowlist = map[Category]bool{
 	CategoryMutation:        true,
 	CategoryTip:             true,
 	CategoryLogout:          true,
+	CategoryCraft:           true, // #515
+	CategoryCraftSeen:       true, // owner ruling C, 2026-10-13
 }
 
 // TestShouldWrapMatchesPinnedAllowlist pins shouldWrap's exact
 // membership against wrapAllowlist. A mismatch means one of the two
 // changed without the other; update both deliberately. It also asserts
-// the admitted count is exactly 46, so the pin itself cannot be edited
+// the admitted count is exactly 48 (46 before CategoryCraft, #515, and
+// CategoryCraftSeen, owner ruling C), so the pin itself cannot be edited
 // without updating its own count.
 func TestShouldWrapMatchesPinnedAllowlist(t *testing.T) {
 	admitted := 0
@@ -135,8 +138,8 @@ func TestShouldWrapMatchesPinnedAllowlist(t *testing.T) {
 			admitted++
 		}
 	}
-	if admitted != 46 {
-		t.Errorf("expected exactly 46 categories admitted to wrap, got %d", admitted)
+	if admitted != 48 {
+		t.Errorf("expected exactly 48 categories admitted to wrap, got %d", admitted)
 	}
 }
 

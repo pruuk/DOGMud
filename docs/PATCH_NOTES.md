@@ -17,6 +17,20 @@
   your special-move recovery, and it trains search.
 - When you can't size someone up clearly, `consider` no longer guesses at
   how long the fight would last.
+- Creatures that are crafting or salvaging now stop when they move or try
+  to move, just as you do, and anyone watching sees them stop.
+- A companion that follows you, gets pushed out of a boss fight, or heads
+  home now keeps casting its spell. The spell lands or fizzles as usual
+  instead of vanishing.
+- While you craft or salvage, the progress line names what you are making
+  and tells you in words how far along you are. Enchanting names the item
+  you are enchanting.
+- Your crafting lines, and what others see while someone crafts, now wrap
+  neatly instead of running off the edge of your screen.
+- Creatures fighting someone else no longer describe their attacks as aimed
+  at you. Their moves now say they strike at their foe. A few greetings that
+  spoke to everyone in the room as "you" read correctly now too, including
+  Cleric Hadwen's rite.
 - Any attack now interrupts crafting or salvaging, not just an ordinary
   swing: a charge, a kick, a spell or a thrown blade all break your
   concentration on the work.

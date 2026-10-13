@@ -508,7 +508,7 @@ func TestForagerWatchdog_DoesNotResetActiveForager(t *testing.T) {
 
 // TestTickForagerRecalling_TeleportsDirectly verifies that tickForagerRecalling
 // teleports the mob to its anchor room without going through the fold-cast system,
-// clears any stale CastingState, and leaves the forager_state still in
+// keeps any cast it holds, and leaves the forager_state still in
 // "recalling" (the at-sanctuary path handles the resting transition on the
 // next tick).
 func TestTickForagerRecalling_TeleportsDirectly(t *testing.T) {
@@ -576,9 +576,12 @@ func TestTickForagerRecalling_TeleportsDirectly(t *testing.T) {
 			mob.Character.RoomId, sanctuaryRoom)
 	}
 
-	// Activity machine must have been cleared back to Free.
-	if mob.Character.Activity != nil && !mob.Character.Activity.IsFree() {
-		t.Errorf("Activity.State() = %v, want Free (stale cast not cleared)",
+	// Owner ruling B (2026-10-13): movement never interrupts casting, so the
+	// recall keeps the cast. The cast rules end it afterwards (a fold-recall
+	// completing on its anchor collapses without moving the mob, see
+	// hooks.TestResolveFoldRecall_AMobOnItsAnchorStaysPut).
+	if !mob.Character.Activity.IsCasting() {
+		t.Errorf("Activity.State() = %v, want Casting (the move kept the cast)",
 			mob.Character.Activity.State())
 	}
 
@@ -587,6 +590,39 @@ func TestTickForagerRecalling_TeleportsDirectly(t *testing.T) {
 	if got := state.GetString(keyForagerState); got != forager.StateRecalling.Name() {
 		t.Errorf("forager_state = %q, want %q (premature state transition)",
 			got, forager.StateRecalling.Name())
+	}
+}
+
+// #512: the recall teleport is the forager's own move, so it stops a craft
+// as walking does (actions.InterruptWorkOnMove).
+func TestTickForagerRecalling_StopsACraft(t *testing.T) {
+	const territoryRoom, sanctuaryRoom = 4177, 4198
+	cleanRooms := rooms.SeedRoomsForTest(map[int]*rooms.Room{
+		territoryRoom: {RoomId: territoryRoom, Zone: "stillwater", Exits: map[string]exit.RoomExit{}},
+		sanctuaryRoom: {RoomId: sanctuaryRoom, Zone: "stillwater", Exits: map[string]exit.RoomExit{}},
+	}, map[string]*rooms.ZoneConfig{})
+	defer cleanRooms()
+
+	mob := buildForagerMob(t, 8241, 371, territoryRoom, 100, 100)
+	mob.Character.Activity = activity.NewMachine()
+	if err := mob.Character.Activity.TransitionToCrafting(
+		activity.CraftingData{RecipeId: "forager-test", RoundsTotal: 5},
+		state.TransitionReason{Trigger: activity.TriggerCraftBegin},
+	); err != nil {
+		t.Fatalf("fixture: begin craft: %v", err)
+	}
+	mob.Character.SetMiscData("fold-anchor-room", sanctuaryRoom)
+	rooms.LoadRoom(territoryRoom).AddMob(mob.InstanceId)
+
+	bstate := NewBehaviorState()
+	bstate.Set(keyForagerState, forager.StateRecalling.Name())
+	tickForagerRecalling(forager.ProfileFor(371), mob, &EvalContext{InstanceId: 8241, RoomId: territoryRoom, MobState: bstate})
+
+	if mob.Character.RoomId != sanctuaryRoom {
+		t.Fatalf("fixture: mob RoomId = %d, want %d", mob.Character.RoomId, sanctuaryRoom)
+	}
+	if !mob.Character.Activity.IsFree() {
+		t.Errorf("Activity = %v after the recall, want Free", mob.Character.Activity.State())
 	}
 }
 

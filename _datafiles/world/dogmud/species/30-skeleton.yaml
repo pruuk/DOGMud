@@ -14,7 +14,7 @@ tameable: false
 speech: false
 angrycommands:
   - emote clacks its jaws and raises its bony hands.
-  - emote turns its eyeless gaze on you, hollow sockets glowing cold.
+  - emote turns its eyeless gaze on its foe, hollow sockets glowing cold.
 stats:
   strength:
     base: 100

@@ -36,6 +36,7 @@ func skipStages(cat Category) normalizeStage {
 		CategoryNPCDialogue, CategoryDialogueHint,
 		CategoryMobIdle,
 		CategorySpeech, CategoryWhisper, CategoryShout, CategoryEmote,
+		CategoryCraftSeen, // rode CategoryEmote / CategoryMobIdle (owner ruling C)
 		CategoryBroadcast,
 		CategorySkillProgress: // banner has its own formatting
 		// CategoryBroadcast has exactly two production senders and

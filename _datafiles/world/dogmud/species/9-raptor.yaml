@@ -17,7 +17,7 @@ tameable: true
 speech: false
 angrycommands:
   - emote screeches and spreads its wings wide, talons extended.
-  - emote fixes you with a piercing, unblinking stare.
+  - emote fixes its foe with a piercing, unblinking stare.
 stats:
   strength:
     base: 50

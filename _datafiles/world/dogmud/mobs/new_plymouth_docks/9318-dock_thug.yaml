@@ -20,7 +20,7 @@ idlecommands:
     not otherwise change position.'
 combatcommands:
   - 'emote presses forward fast, closing the distance before
-    you have finished deciding.'
+    its foe has finished deciding.'
   - ''
   - 'emote drives a knee toward the midsection, economical,
     no announcement.'

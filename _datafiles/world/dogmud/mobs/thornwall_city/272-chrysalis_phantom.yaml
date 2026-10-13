@@ -27,14 +27,14 @@ idlecommands:
   - 'emote tilts its head, studying the room with pale, reflective eyes'
 combatcommands:
   - 'emote phases sideways mid-strike, knuckles connecting from an angle
-    that should have been behind you'
+    that should have been behind its foe'
   - ''
   - 'emote breaks contact and blurs toward the nearest shadow'
   - ''
   - 'flee'
   - 'emote dissolves into the dark, footsteps going silent two paces in'
   - ''
-  - 'emote re-enters from a direction you did not watch, already
+  - 'emote re-enters from a direction its foe did not watch, already
     swinging'
   - ''
 activitylevel: 90

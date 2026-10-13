@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/activity"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -175,6 +176,40 @@ func TrainSearchOnMove(actor Actor) {
 	if movementTrainsSearch() {
 		actor.AwardResolved(true, actor.GetCharacter().CandidateFor(string(skills.Search)))
 	}
+}
+
+// InterruptWorkOnMove is movement's one interrupt: a character who moves of
+// their own will stops crafting or salvaging (TriggerMovementInterrupt).
+// Every other command refuses while busy (usercommands/busy_refuse.go);
+// casting is never interrupted by movement and is left alone here.
+//
+// It is the single place both movers stop their work (#512, owner ruling
+// 2026-10-13): the player's go and every mob's own move (actions.RelocateMob
+// for walking and fleeing, mobcommands.Go's `go <roomId>`, a companion
+// following its owner, a forager's recall), so the two cannot drift apart.
+// Call it BEFORE the room change: the craft-ended hook narrates the stop to
+// the crafter's current room, which must be the room being left.
+//
+// It returns the work it interrupted (Crafting or Salvaging, even if a veto
+// held the transition), or activity.Free when there was no work to stop.
+// The caller tells a player what stopped; a mob has no one to tell.
+func InterruptWorkOnMove(c *characters.Character) activity.State {
+	if c == nil || c.Activity == nil {
+		return activity.Free
+	}
+	work := c.Activity.State()
+	if work != activity.Crafting && work != activity.Salvaging {
+		return activity.Free
+	}
+	// The result is the work the move interrupted, read before the
+	// transition, whatever the transition returns: a player's go told them
+	// the move interrupted their work regardless of the outcome before this
+	// helper existed, and still does.
+	_ = c.Activity.TransitionToFree(state.TransitionReason{
+		Trigger: activity.TriggerMovementInterrupt,
+		Actor:   c.ActorRef(),
+	})
+	return work
 }
 
 // EntryDetectionResult reports what arrival detection left behind.

@@ -15,6 +15,7 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/economy"
 	"github.com/GoMudEngine/GoMud/internal/forager"
@@ -23,7 +24,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/sealedcrate"
-	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -503,11 +503,10 @@ func tickForagerRecalling(
 	}
 
 	// Teleport directly to anchor rather than issuing "cast fold-recall".
-	// The fold-cast system only advances casts inside the combat loop
-	// (gated on the mob being in combat), so foragers recalling
-	// outside combat would be permanently stuck with IsCasting()=true
-	// and never actually move. Direct room manipulation mirrors exactly
-	// what resolveFoldRecall does internally for mobs.
+	// When this was written the fold-cast system only advanced casts inside
+	// the combat loop, so a forager recalling outside combat would have sat
+	// casting and never moved. Direct room manipulation mirrors what
+	// resolveFoldRecall does internally for mobs.
 	anchorRoomId := getMiscDataIntForager(mob, "fold-anchor-room")
 	if anchorRoomId <= 0 {
 		// No anchor set in MiscData — fall back to the profile sanctuary.
@@ -518,13 +517,13 @@ func tickForagerRecalling(
 		toRoom := rooms.LoadRoom(anchorRoomId)
 		if toRoom != nil {
 			targeting.Release(&mob.Character, targeting.ReasonDisengage)
-			// Clear any stale cast via Activity machine.
-			if mob.Character.Activity != nil && mob.Character.Activity.IsCasting() {
-				mob.Character.Activity.ForceFree(state.TransitionReason{
-					Trigger: "forager_teleport",
-					Actor:   mob.Character.Activity.Self(),
-				})
-			}
+			// #512: the recall is the forager's own move, so it stops a
+			// craft or salvage before leaving, as walking does. A cast is
+			// kept (owner ruling B, 2026-10-13: movement never interrupts
+			// casting). It no longer hangs: out of combat IdleMobs fizzles a
+			// harmful fold (#242) and steps a help fold, and a fold-recall
+			// landing on the anchor it already stands on collapses in place.
+			actions.InterruptWorkOnMove(&mob.Character)
 			if fromRoom != nil {
 				fromRoom.RemoveMob(mob.InstanceId)
 			}

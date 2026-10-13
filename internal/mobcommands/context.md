@@ -310,6 +310,16 @@ why a command available to both players and mobs must be registered twice
   path. Its exit line is judged by the room before the move
   (`Room.VisualSnapshot`, then `SendTextVisualWithAudioToSnapshot`, #456);
   the entry line still goes through `sendMovementMessage`, judged after it.
+- **A mob's move ATTEMPT stops its craft or salvage** (#512, owner rulings
+  2026-10-13), as a player's go does: `Go` calls
+  `actions.InterruptWorkOnMove` first, before the root, lock, price and
+  wall checks, whenever `isMoveAttempt(rest, room)` says the word is a move
+  (the room-id form, an exit of the room, or a compass word from
+  `actions.IsCompassDirection`). Any other word does not interrupt, because
+  `Go` is also the fallback for every unrecognised mob command. The stop is
+  told to the room the mob is in, which is the room it is leaving.
+  `actions.RelocateMob` calls it again for a flee; on a walk that second call
+  finds the mob already Free and says nothing. Casting is never interrupted.
 
 ## Fixtures (lighting 5e)
 
