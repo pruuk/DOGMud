@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/narration"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -215,6 +216,23 @@ func CastRoomPool(p Phase) []string {
 		return []string{"{actor} weaves magic with focused intent."}
 	}
 	return nil
+}
+
+// CastRoomLine picks and renders one generic room line for phase p (owner
+// ruling R7), with ctx's tokens. "" when the phase has no pool (magic). A nil
+// picker is passed through to narration.Render, as GetCastMessage does, so
+// production varies the line across the whole pool; textutil.Narrate would
+// pin it to the first line with narration.FirstPicker.
+func CastRoomLine(p Phase, ctx textutil.TokenContext, picker ...narration.Picker) string {
+	pool := CastRoomPool(p)
+	if len(pool) == 0 {
+		return ""
+	}
+	var pick narration.Picker
+	if len(picker) > 0 {
+		pick = picker[0]
+	}
+	return narration.Render(narration.Variants{Observer: pool}, ctx.Tokens(), pick).Observer
 }
 
 // CastStartedUnseenLine picks the line a reader who does not perceive a

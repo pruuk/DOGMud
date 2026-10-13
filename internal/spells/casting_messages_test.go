@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/narration"
+	"github.com/GoMudEngine/GoMud/internal/textutil"
 )
 
 // seedCastingMessages installs a store for one test without touching the
@@ -52,6 +53,21 @@ func TestCastRoomPoolFallbackWhenUnloaded(t *testing.T) {
 	}
 	if CastStartedUnseenLine() == "" {
 		t.Fatal("unseen line must never be empty")
+	}
+}
+
+// The generic room line varies across its whole pool: the picker reaches
+// past the first line, and {actor} is substituted.
+func TestCastRoomLineHonoursThePicker(t *testing.T) {
+	cm := shippedShape()
+	cm.CastStartedRoom = []string{"{actor} a.", "{actor} b.", "{actor} c."}
+	seedCastingMessages(t, cm)
+	ctx := textutil.TokenContext{ActorName: "Kael", ActorPlainName: "Kael"}
+	if got := CastRoomLine(PhaseCast, ctx, func(int) int { return 2 }); got != "Kael c." {
+		t.Fatalf("picked index 2, got %q", got)
+	}
+	if got := CastRoomLine(PhaseMagic, ctx); got != "" {
+		t.Fatalf("magic has no generic line, got %q", got)
 	}
 }
 

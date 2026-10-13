@@ -135,6 +135,17 @@ func TestSpellPhase_UnauthoredActeeLeavesTheTargetTheRoomLine(t *testing.T) {
 	requireOneLine(t, "target", phaseLines(phaseTargetId), "Kael stares intently.")
 }
 
+// R2: cast_actee is a single-target line; an area spell that authors one
+// still leaves the target reading the room line.
+func TestSpellPhase_AreaSpellSendsNoActee(t *testing.T) {
+	room := phaseScene(t, "city", false)
+	s := phaseSpell(true)
+	s.Targeting = combatvocab.TargetArea
+	castAt(NewUserActorInRoom(users.GetByUserId(phaseCasterId), room), s, spells.PhaseCast, room, phaseTargetId)
+
+	requireOneLine(t, "target", phaseLines(phaseTargetId), "Kael stares intently.")
+}
+
 func TestSpellPhase_SelfCastSendsNoActee(t *testing.T) {
 	room := phaseScene(t, "city", false)
 	castAt(NewUserActorInRoom(users.GetByUserId(phaseCasterId), room), phaseSpell(true), spells.PhaseCast, room, phaseCasterId)

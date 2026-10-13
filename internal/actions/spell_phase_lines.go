@@ -3,9 +3,9 @@ package actions
 import (
 	"slices"
 
+	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
@@ -19,9 +19,10 @@ import (
 // every other site from rendering a phase itself.
 //
 //   - A player caster reads the phase's *_actor line.
-//   - Cast phase only: the first target, when it is a player other than the
-//     caster and the spell authors cast_actee, reads cast_actee instead of the
-//     room line, the caster hidden by the target's sight (owner ruling R1).
+//   - Cast phase of a single-target spell only (R2): the first target, when
+//     it is a player other than the caster and the spell authors cast_actee,
+//     reads cast_actee instead of the room line, the caster hidden by the
+//     target's sight (owner ruling R1).
 //   - The room reads the phase's *_observer line, or the generic pool line
 //     when none is authored (R7), by sight only, names hidden by each
 //     reader's sight.
@@ -34,25 +35,40 @@ func NarrateSpellPhase(caster Actor, spell *spells.SpellData, phase spells.Phase
 	if caster == nil || spell == nil || room == nil {
 		return
 	}
+	var casterUser *users.UserRecord
+	var casterMob *mobs.Mob
+	switch a := caster.(type) {
+	case *UserActor:
+		if a.User == nil {
+			return
+		}
+		casterUser = a.User
+	case *MobActor:
+		if a.Mob == nil {
+			return
+		}
+		casterMob = a.Mob
+	}
 	cc := caster.GetCharacter()
 	if cc == nil {
 		return
 	}
-	var casterUser *users.UserRecord
 	actorName, actorPlain := cc.GetCharacterName(true), cc.GetCharacterName(false)
-	switch a := caster.(type) {
-	case *UserActor:
-		casterUser = a.User
-	case *MobActor:
-		actorName = MobSeenName(a.Mob, room, 0)
+	if casterMob != nil {
+		actorName = MobSeenName(casterMob, room, 0)
 	}
 	unseenBy := UnseenBy(room, cc)
 
 	ctx := textutil.TokenContext{ActorName: actorName, ActorPlainName: actorPlain}
+	// hideActee is the actee name the lines hide per reader. A hidden mob
+	// target already renders as the combat-anon "something", which is no
+	// name to hide, so it hides nothing (messaging.NoName).
+	hideActee := messaging.NoName
 	var target *users.UserRecord
 	if len(targetUserIds) > 0 {
 		if tu := users.GetByUserId(targetUserIds[0]); tu != nil {
 			ctx.ActeeName, ctx.ActeePlainName = tu.Character.GetCharacterName(true), tu.Character.GetCharacterName(false)
+			hideActee = ctx.ActeeName
 			if casterUser == nil || tu.UserId != casterUser.UserId {
 				target = tu
 			}
@@ -60,21 +76,23 @@ func NarrateSpellPhase(caster Actor, spell *spells.SpellData, phase spells.Phase
 	} else if len(targetMobIds) > 0 {
 		if tm := mobs.GetInstance(targetMobIds[0]); tm != nil {
 			ctx.ActeeName, ctx.ActeePlainName = MobDisplayName(tm, room, 0), tm.Character.GetCharacterName(false)
+			if !MobHiddenFrom(tm, 0) {
+				hideActee = ctx.ActeeName
+			}
 		}
 	}
 
 	// Authored roles render together (they are index-paired); the generic
 	// room pool renders on its own, since Variants.Len is 0 for pools of
-	// different lengths.
+	// different lengths, and through spells.CastRoomLine so the line varies
+	// across the pool (textutil.Narrate always picks the first).
 	roles := spell.Narrate(phase, ctx)
 	observer := roles.Observer
 	if observer == "" {
-		if pool := spells.CastRoomPool(phase); len(pool) > 0 {
-			observer = textutil.Narrate(narration.Variants{Observer: pool}, ctx).Observer
-		}
+		observer = spells.CastRoomLine(phase, ctx)
 	}
 
-	aud := messaging.Audience{ActorName: actorName, ActeeName: ctx.ActeeName, Room: room}
+	aud := messaging.Audience{ActorName: actorName, ActeeName: hideActee, Room: room}
 	trio := messaging.Trio{}
 	exclude := slices.Clone(unseenBy)
 	if casterUser != nil {
@@ -82,7 +100,8 @@ func NarrateSpellPhase(caster Actor, spell *spells.SpellData, phase spells.Phase
 		trio.Actor = messaging.Say(cat, roles.Actor)
 		exclude = append(exclude, casterUser.UserId)
 	}
-	if phase == spells.PhaseCast && target != nil && roles.Actee != "" && !slices.Contains(unseenBy, target.UserId) {
+	if phase == spells.PhaseCast && spell.Targeting == combatvocab.TargetSingle && target != nil &&
+		roles.Actee != "" && !slices.Contains(unseenBy, target.UserId) {
 		aud.Actee, aud.ActeeId = target, target.UserId
 		trio.Actee = messaging.Say(cat, roles.Actee)
 		exclude = append(exclude, target.UserId)
@@ -92,7 +111,7 @@ func NarrateSpellPhase(caster Actor, spell *spells.SpellData, phase spells.Phase
 	// The room line goes here rather than through SendTrio, whose observer
 	// half cannot skip the readers who do not perceive a hidden caster.
 	if observer != "" {
-		room.SendTextVisualHidingNames(cat, observer, []string{actorName, ctx.ActeeName}, exclude...)
+		room.SendTextVisualHidingNames(cat, observer, []string{actorName, hideActee}, exclude...)
 	}
 	if phase == spells.PhaseCast {
 		for _, uid := range unseenBy {
