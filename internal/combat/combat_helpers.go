@@ -700,9 +700,98 @@ func runBestOfAllDefense(result *AttackResult, sourceChar *characters.Character,
 	return runBestOfAllDefenseWithRunner(result, sourceChar, targetChar, defSeq, atkScore, isThirdParty, ctx, RunContest)
 }
 
-func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character, defSeq []combatvocab.Defence, atkScore float64, isThirdParty bool, ctx combatContext, runner defenceContestRunner) bestDefenseResult {
+// defenceEntryScore is one defence's contest score against a melee swing, and
+// the quote it was scored under. Pure: QuoteDefenseCost only quotes.
+//
+// The live contest loop and the fight prediction (fight_expect.go) both call
+// it, so a defence can never be scored two ways (#301).
+func defenceEntryScore(targetChar *characters.Character, defenseType combatvocab.Defence, isThirdParty bool, ctx combatContext) (float64, characters.CostQuote, bool) {
 	bal := configs.GetBalanceConfig()
 
+	// Quote every eligible defence before the contest without mutating the
+	// defender. Only this candidate's affordability controls whether its own
+	// governing skill addend reaches the score.
+	quote, quoted := targetChar.QuoteDefenseCost(defenseType)
+	includeSkill := !quoted || quote.Affordable()
+	defenseScore := targetChar.GetDefenseScoreFor(defenseType, includeSkill)
+
+	// Apply base effectiveness multipliers. Shared with the non-physical
+	// channels rather than switched inline here: U6 Task 12 left two copies
+	// of this table, and a per-defence dial that disagrees between the melee
+	// path and the spell path is exactly the kind of drift that is invisible
+	// until someone retunes one of them.
+	defenseScore *= defenceEffectiveness(defenseType)
+
+	// Stage 7.5: Apply position-based defense penalties. Chunk 4b R1:
+	// FSM-driven — Prone/Supine collapse to the legacy "prone"
+	// penalty bucket, IsStandingGrapple matches the legacy
+	// "clinched" bucket, IsGroundGrapple matches the legacy
+	// "grounded" bucket.
+	// U6 Task 12 replaced the bare "dodge"/"parry"/"block" string literals
+	// these three switches used to carry with the combatvocab.Defence*
+	// constants they were meant to match. The literals were the same values,
+	// so this is not a behaviour change -- it removes the drift risk, since a
+	// literal that stops matching its constant silently drops the penalty
+	// rather than failing to compile.
+	//
+	// There are still no quell or defy arms, and that gap is DISCLOSED, not
+	// an oversight: quell and defy do not run through this function (they
+	// resolve in ResolveChannelAttack), and giving them positional penalties
+	// would need ProneQuellPenalty and four more knobs that do not exist.
+	// Whoever wires either defence into melee owns adding them.
+	switch {
+	case targetChar.IsProne() || targetChar.IsSupine():
+		switch defenseType {
+		case combatvocab.DefenceDodge:
+			defenseScore *= float64(bal.ProneDodgePenalty)
+		case combatvocab.DefenceParry:
+			defenseScore *= float64(bal.ProneParryPenalty)
+		case combatvocab.DefenceBlock:
+			defenseScore *= float64(bal.ProneBlockPenalty)
+		}
+	case targetChar.IsStandingGrapple():
+		switch defenseType {
+		case combatvocab.DefenceDodge:
+			defenseScore *= float64(bal.ClinchDodgePenalty)
+		case combatvocab.DefenceParry:
+			defenseScore *= float64(bal.ClinchParryPenalty)
+		case combatvocab.DefenceBlock:
+			defenseScore *= float64(bal.ClinchBlockPenalty)
+		}
+	case targetChar.IsGroundGrapple():
+		switch defenseType {
+		case combatvocab.DefenceDodge:
+			defenseScore *= float64(bal.GroundedDodgePenalty)
+		case combatvocab.DefenceParry:
+			defenseScore *= float64(bal.GroundedParryPenalty)
+		case combatvocab.DefenceBlock:
+			defenseScore *= float64(bal.GroundedBlockPenalty)
+		}
+	}
+
+	// Rally record: defense score multiplier from the rhetoric shout. The
+	// same door folds the grapple exposure (Task 5) and any other defense
+	// multiplier.
+	defenseScore *= targetChar.Conditions.Effect(conditions.EffectDefenseMult)
+
+	// Stage 8.5: Apply third-party vulnerability penalty
+	if isThirdParty {
+		defenseScore *= float64(bal.ThirdPartyGrapplePenalty)
+	}
+
+	// Sight ramp (plan 5b): the defender pays by how far the light sits
+	// outside its comfortable band; the sight verdict does not score.
+	defenseScore *= messaging.SightScoreMultiplier(ctx.targetDark, ctx.targetBright, bal)
+
+	// Incorporeal mutation: physical defense bonus (channel-scoped
+	// to physical attacks; this function only handles physical
+	// swings — spells use a different resolution path).
+	defenseScore += mutations.GetPhysicalDefenseBonus(targetChar.Mutations)
+
+	return defenseScore, quote, quoted
+}
+
+func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.Character, targetChar *characters.Character, defSeq []combatvocab.Defence, atkScore float64, isThirdParty bool, ctx combatContext, runner defenceContestRunner) bestDefenseResult {
 	entries := make([]contest.Entry, 0, len(defSeq))
 	candidates := make([]quotedDefenceCandidate, 0, len(defSeq))
 
@@ -728,85 +817,7 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 		// addend from this candidate when its own immutable quote is unaffordable.
 		// Stats, equipment and the multipliers below remain unchanged.
 
-		// Quote every eligible defence before the contest without mutating the
-		// defender. Only this candidate's affordability controls whether its own
-		// governing skill addend reaches the score.
-		quote, quoted := targetChar.QuoteDefenseCost(defenseType)
-		includeSkill := !quoted || quote.Affordable()
-		defenseScore := targetChar.GetDefenseScoreFor(defenseType, includeSkill)
-
-		// Apply base effectiveness multipliers. Shared with the non-physical
-		// channels rather than switched inline here: U6 Task 12 left two copies
-		// of this table, and a per-defence dial that disagrees between the melee
-		// path and the spell path is exactly the kind of drift that is invisible
-		// until someone retunes one of them.
-		defenseScore *= defenceEffectiveness(defenseType)
-
-		// Stage 7.5: Apply position-based defense penalties. Chunk 4b R1:
-		// FSM-driven — Prone/Supine collapse to the legacy "prone"
-		// penalty bucket, IsStandingGrapple matches the legacy
-		// "clinched" bucket, IsGroundGrapple matches the legacy
-		// "grounded" bucket.
-		// U6 Task 12 replaced the bare "dodge"/"parry"/"block" string literals
-		// these three switches used to carry with the combatvocab.Defence*
-		// constants they were meant to match. The literals were the same values,
-		// so this is not a behaviour change -- it removes the drift risk, since a
-		// literal that stops matching its constant silently drops the penalty
-		// rather than failing to compile.
-		//
-		// There are still no quell or defy arms, and that gap is DISCLOSED, not
-		// an oversight: quell and defy do not run through this function (they
-		// resolve in ResolveChannelAttack), and giving them positional penalties
-		// would need ProneQuellPenalty and four more knobs that do not exist.
-		// Whoever wires either defence into melee owns adding them.
-		switch {
-		case targetChar.IsProne() || targetChar.IsSupine():
-			switch defenseType {
-			case combatvocab.DefenceDodge:
-				defenseScore *= float64(bal.ProneDodgePenalty)
-			case combatvocab.DefenceParry:
-				defenseScore *= float64(bal.ProneParryPenalty)
-			case combatvocab.DefenceBlock:
-				defenseScore *= float64(bal.ProneBlockPenalty)
-			}
-		case targetChar.IsStandingGrapple():
-			switch defenseType {
-			case combatvocab.DefenceDodge:
-				defenseScore *= float64(bal.ClinchDodgePenalty)
-			case combatvocab.DefenceParry:
-				defenseScore *= float64(bal.ClinchParryPenalty)
-			case combatvocab.DefenceBlock:
-				defenseScore *= float64(bal.ClinchBlockPenalty)
-			}
-		case targetChar.IsGroundGrapple():
-			switch defenseType {
-			case combatvocab.DefenceDodge:
-				defenseScore *= float64(bal.GroundedDodgePenalty)
-			case combatvocab.DefenceParry:
-				defenseScore *= float64(bal.GroundedParryPenalty)
-			case combatvocab.DefenceBlock:
-				defenseScore *= float64(bal.GroundedBlockPenalty)
-			}
-		}
-
-		// Rally record: defense score multiplier from the rhetoric shout. The
-		// same door folds the grapple exposure (Task 5) and any other defense
-		// multiplier.
-		defenseScore *= targetChar.Conditions.Effect(conditions.EffectDefenseMult)
-
-		// Stage 8.5: Apply third-party vulnerability penalty
-		if isThirdParty {
-			defenseScore *= float64(bal.ThirdPartyGrapplePenalty)
-		}
-
-		// Sight ramp (plan 5b): the defender pays by how far the light sits
-		// outside its comfortable band; the sight verdict does not score.
-		defenseScore *= messaging.SightScoreMultiplier(ctx.targetDark, ctx.targetBright, bal)
-
-		// Incorporeal mutation: physical defense bonus (channel-scoped
-		// to physical attacks; this function only handles physical
-		// swings — spells use a different resolution path).
-		defenseScore += mutations.GetPhysicalDefenseBonus(targetChar.Mutations)
+		defenseScore, quote, quoted := defenceEntryScore(targetChar, defenseType, isThirdParty, ctx)
 
 		entry := contest.Entry{Name: string(defenseType), Score: defenseScore}
 		entries = append(entries, entry)
