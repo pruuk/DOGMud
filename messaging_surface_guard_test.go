@@ -89,13 +89,14 @@ var textSurfaceRegistry = map[string]surfaceEntry{
 	// (internal/crafting/narration.go): the *_actor keys are the crafter's
 	// Actor line. The Observer slot keys, success_observer and
 	// failure_observer, are registered below: M6 row 7 authors them in
-	// _datafiles/world/dogmud/crafting-messages.yaml. SPELLINGS CHANGED IN M4b-1: these were
-	// success_message / failure_message, and the Observer slot was
+	// _datafiles/world/dogmud/crafting-messages.yaml. SPELLINGS CHANGED IN
+	// M4b-1: these were success_message / failure_message, and the Observer
+	// slot was
 	// success_room_message / failure_room_message. --
 	"success_actor":    {narration, "internal/crafting/crafting.go RecipeSpec.SuccessMessage -- the crafter's (Actor) line on a successful craft, 126 recipe files; rendered through RecipeSpec.Narrate. SPELLING CHANGED IN M4b-1: this key was `success_message`."},
 	"failure_actor":    {narration, "internal/crafting/crafting.go RecipeSpec.FailureMessage -- the crafter's (Actor) line on a failed craft, paired with success_actor; rendered through RecipeSpec.Narrate. SPELLING CHANGED IN M4b-1: this key was `failure_message`."},
-	"success_observer": {narration, "internal/crafting/messages.go SkillPools.SuccessObserver, the room-side line narrated when a craft succeeds, per skill, in crafting-messages.yaml; rendered through CraftRoomLines (messaging M6 row 7)."},
-	"failure_observer": {narration, "internal/crafting/messages.go SkillPools.FailureObserver, the room-side line narrated when a craft fails, per skill, in crafting-messages.yaml; rendered through CraftRoomLines (messaging M6 row 7)."},
+	"success_observer": {narration, "internal/crafting/messages.go SkillPools.SuccessObserver, the room-side line narrated when a craft succeeds, per skill, in crafting-messages.yaml; rendered through CraftRoomLines (messaging M6 row 7). Also internal/crafting/crafting.go RecipeSpec.SuccessRoomMessage (the per-recipe success_observer slot), read through RecipeSpec.Narrate but unread by any sender since M6 row 7; no shipped recipe file sets it."},
+	"failure_observer": {narration, "internal/crafting/messages.go SkillPools.FailureObserver, the room-side line narrated when a craft fails, per skill, in crafting-messages.yaml; rendered through CraftRoomLines (messaging M6 row 7). Also internal/crafting/crafting.go RecipeSpec.FailureRoomMessage (the per-recipe failure_observer slot), read through RecipeSpec.Narrate but unread by any sender since M6 row 7; no shipped recipe file sets it."},
 
 	// -- Enchanting narration: internal/enchantments/enchantments.go
 	// EnchantSpec. description_suffix below is the CONTENT half of this

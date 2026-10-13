@@ -48,8 +48,11 @@ type RecipeSpec struct {
 	// narration store shares since M4b-1; the crafter is the actor.
 	SuccessMessage string `yaml:"success_actor"`
 	FailureMessage string `yaml:"failure_actor"`
-	// Observer slot for the room watching the crafter (M3 item 6). Empty in
-	// every shipped recipe until M6 authors them. Read through Narrate only.
+	// Observer slot for the room watching the crafter (M3 item 6). Unread
+	// since messaging M6 row 7, which moved every craft's room line to the
+	// per-skill crafting-messages store and actions.NarrateCraftPhase. It
+	// stays in the schema for the crafting rework to keep as an override or
+	// drop, and the validator still checks any that get authored.
 	SuccessRoomMessage string `yaml:"success_observer,omitempty"`
 	FailureRoomMessage string `yaml:"failure_observer,omitempty"`
 }
