@@ -2682,6 +2682,102 @@
    "old": "<ansi fg=\"{actortype}\">{actor}</ansi>'s perfect leap is disrupted: a <ansi fg=\"red-bold\">FUMBLE</ansi>!",
    "new": "<ansi fg=\"{actortype}\">{actor}</ansi>'s perfect leap at <ansi fg=\"{acteetype}\">{actee}</ansi> is disrupted: a <ansi fg=\"red-bold\">FUMBLE</ansi>!",
    "why": "Room line never named the target."
+  },
+  {
+   "file": "throttle",
+   "intensity": "miss",
+   "split": "together",
+   "tier": "expert",
+   "index": 2,
+   "kind": "swap",
+   "role": "actor",
+   "with_tier": "master",
+   "with_index": 1,
+   "why": "Branch review: the chin-drop actor line belongs with the chin-drop defender and room lines at expert[2]."
+  },
+  {
+   "file": "throttle",
+   "intensity": "miss",
+   "split": "together",
+   "tier": "master",
+   "index": 1,
+   "kind": "rewrite",
+   "role": "actor",
+   "old": "You feint and drive, but <ansi fg=\"{acteetype}\">{actee}</ansi> ducks away!",
+   "new": "Despite flawless timing, <ansi fg=\"{acteetype}\">{actee}</ansi> slips the angle and denies your choke!",
+   "why": "Branch review: after the swap no actor line describes the masterful angle slip; match the defender and room lines."
+  },
+  {
+   "file": "whipping",
+   "intensity": "miss",
+   "split": "together",
+   "tier": "master",
+   "index": 2,
+   "kind": "rewrite",
+   "role": "actee",
+   "old": "{momentum}, you expertly avoid <ansi fg=\"{actortype}\">{actor}</ansi>'s flowing whip attack!",
+   "new": "You expertly avoid <ansi fg=\"{actortype}\">{actor}</ansi>'s flowing whip attack!",
+   "why": "Branch review: {momentum} is the attacker's state but here describes the defender."
+  },
+  {
+   "file": "whipping",
+   "intensity": "miss",
+   "split": "together",
+   "tier": "master",
+   "index": 2,
+   "kind": "rewrite",
+   "role": "observer",
+   "old": "{momentum}, <ansi fg=\"{acteetype}\">{actee}</ansi> expertly avoids the flowing whip attack!",
+   "new": "<ansi fg=\"{acteetype}\">{actee}</ansi> expertly avoids <ansi fg=\"{actortype}\">{actor}</ansi>'s flowing whip attack!",
+   "why": "Branch review: {momentum} attached to the defender; dropped, active voice (owner 2026-10-14)."
+  },
+  {
+   "file": "cleaving",
+   "intensity": "normal",
+   "split": "together",
+   "tier": "master",
+   "index": 9,
+   "kind": "rewrite",
+   "role": "actee",
+   "old": "<ansi fg=\"{actortype}\">{actor}</ansi> cleaves into your {bodypart} with a brutal swing!",
+   "new": "<ansi fg=\"{actortype}\">{actor}</ansi> chops into your {bodypart} with a precise swing!",
+   "why": "Branch review: actor and room describe a precise chop; the defender line called it brutal."
+  },
+  {
+   "file": "whipping",
+   "intensity": "weak",
+   "split": "together",
+   "tier": "master",
+   "index": 0,
+   "kind": "rewrite",
+   "role": "actor",
+   "old": "With legendary precision, you score a calculated nick on <ansi fg=\"{acteetype}\">{actee}</ansi> from perfect distance.",
+   "new": "You snap a stinging flick that herds <ansi fg=\"{acteetype}\">{actee}</ansi> right where you want them.",
+   "why": "Branch review: the chained actor swaps left this record's three lines without partners; owner asked for a setup blow that barely damages (2026-10-14)."
+  },
+  {
+   "file": "whipping",
+   "intensity": "weak",
+   "split": "together",
+   "tier": "master",
+   "index": 0,
+   "kind": "rewrite",
+   "role": "actee",
+   "old": "<ansi fg=\"{actortype}\">{actor}</ansi> tests your defense with a probing lash from impossible distance.",
+   "new": "<ansi fg=\"{actortype}\">{actor}</ansi> snaps a stinging flick that herds you right where they want you.",
+   "why": "Same setup blow as the actor line (owner 2026-10-14)."
+  },
+  {
+   "file": "whipping",
+   "intensity": "weak",
+   "split": "together",
+   "tier": "master",
+   "index": 0,
+   "kind": "rewrite",
+   "role": "observer",
+   "old": "<ansi fg=\"{actortype}\">{actor}</ansi> tests <ansi fg=\"{acteetype}\">{actee}</ansi>'s defense with a probing lash from expert distance.",
+   "new": "<ansi fg=\"{actortype}\">{actor}</ansi> snaps a stinging flick that herds <ansi fg=\"{acteetype}\">{actee}</ansi> right where they want them.",
+   "why": "Same setup blow as the actor line (owner 2026-10-14)."
   }
  ],
  "copy_notes": {

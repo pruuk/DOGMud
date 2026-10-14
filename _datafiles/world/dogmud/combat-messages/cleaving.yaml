@@ -250,7 +250,7 @@ options:
         actee: '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> bites into your {bodypart}!'
         observer: '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> bites into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
       - actor: 'You chop into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart} with a precise swing!'
-        actee: '<ansi fg="{actortype}">{actor}</ansi> cleaves into your {bodypart} with a brutal swing!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> chops into your {bodypart} with a precise swing!'
         observer: '<ansi fg="{actortype}">{actor}</ansi> chops into <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart} with a precise swing!'
   heavy:
     # messages for when they are in the same room
