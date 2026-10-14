@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go, yaml.v2, the `internal/narration` render core, `internal/messaging` sight predicates, `internal/rooms` senders.
 
-**Spec:** `docs/superpowers/specs/2026-10-13-messaging-m6-row7-craft-room-lines-design.md` (owner approved 2026-10-13).
+**Spec:** `docs/superpowers/specs/completed/2026-10-13-messaging-m6-row7-craft-room-lines-design.md` (owner approved 2026-10-13).
 
 ---
 
@@ -1410,7 +1410,7 @@ git commit -m "test: root guard keeps craft room lines in NarrateCraftPhase"
 
 **Files:**
 - Modify: `internal/crafting/context.md`, `internal/actions/context.md`
-- Modify: `docs/superpowers/specs/2026-10-13-messaging-m6-row7-craft-room-lines-design.md`
+- Modify: `docs/superpowers/specs/completed/2026-10-13-messaging-m6-row7-craft-room-lines-design.md`
 - Modify: `docs/superpowers/audits/messaging-m6-content-ledger.md` (row 7)
 - Modify: `docs/README.md` (plan entry)
 
@@ -1432,7 +1432,7 @@ Change row 7's status cell to: `done: per-skill crafting-messages.yaml + actions
 
 - [ ] **Step 5: docs/README.md**
 
-Add a row for this plan after the spec's row, in the same table style: path `superpowers/plans/2026-10-13-messaging-m6-row7-craft-room-lines.md`, one sentence: "Plan for the row 7 spec: the crafting-messages store and copy, the one sender, eight sites moved, the mob-only lines retired, a root guard, and a playtest."
+Add a row for this plan after the spec's row, in the same table style: path `superpowers/plans/completed/2026-10-13-messaging-m6-row7-craft-room-lines.md`, one sentence: "Plan for the row 7 spec: the crafting-messages store and copy, the one sender, eight sites moved, the mob-only lines retired, a root guard, and a playtest."
 
 - [ ] **Step 6: Full gate**
 
@@ -1450,7 +1450,7 @@ Expected: all PASS / no new findings. Then boot the dogmud world once from the w
 - [ ] **Step 7: Commit**
 
 ```bash
-git add internal/crafting/context.md internal/actions/context.md docs/superpowers/specs/2026-10-13-messaging-m6-row7-craft-room-lines-design.md docs/superpowers/audits/messaging-m6-content-ledger.md docs/README.md
+git add internal/crafting/context.md internal/actions/context.md docs/superpowers/specs/completed/2026-10-13-messaging-m6-row7-craft-room-lines-design.md docs/superpowers/audits/messaging-m6-content-ledger.md docs/README.md
 git commit -m "docs: M6 row 7 context, spec corrections, ledger"
 ```
 

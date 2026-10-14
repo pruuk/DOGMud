@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go; `internal/characters`, `internal/state/activity`, `internal/hooks`.
 
-**Spec:** `docs/superpowers/specs/2026-10-13-514-damage-interrupts-crafting-design.md` (facts table at the top; read it first).
+**Spec:** `docs/superpowers/specs/completed/2026-10-13-514-damage-interrupts-crafting-design.md` (facts table at the top; read it first).
 
 ---
 
