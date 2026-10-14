@@ -10,7 +10,7 @@
 # {stance}      - combat stance: 'aggressive', 'defensive', 'balanced', 'reckless'
 # {position}    - combat position: 'standing', 'prone', 'locked in close combat', 'grappling on the ground'
 # {momentum}    - combat momentum: 'on the offensive', 'on the defensive', 'in control', 'pressured'
-optionid: drain
+optionid: siphon
 options:
   prepare:
     # messages for when they are in the same room

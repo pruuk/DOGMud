@@ -30,7 +30,7 @@ contains:
 - `body_parts` — canonical anatomy tags (chunk 2.5)
 - `intrinsic_mutations` — natural traits (chunk 2.5)
 - `natural_attack` — `ItemSubType` used for BASIC unarmed attack
-  combat messages (`bite`, `claws`, `slam`, `gore`, `sting`). Empty
+  combat messages (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`). Empty
   means the humanoid default (generic-punch messaging). Validated at
   load by `validateNaturalAttack`; panics on unknown values.
 - `speech` — `*bool`; `speech: false` marks a species with no voice (beasts,
@@ -81,7 +81,7 @@ Non-human species declare their BASIC unarmed attack messaging style via
 `NaturalAttack items.ItemSubType` (YAML: `natural_attack:`). This field
 selects the combat-message file used when the mob has no equipped weapon.
 
-Valid values: `bite`, `claws`, `slam`, `gore`, `sting`. An empty string
+Valid values: `bite`, `claws`, `slam`, `gore`, `sting`, `siphon`. An empty string
 falls back to the humanoid default (generic-punch messaging). Unknown
 values cause a startup panic via `validateNaturalAttack`. The field has
 no effect on armed mobs — an equipped weapon's own `Subtype` always takes

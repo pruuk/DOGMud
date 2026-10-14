@@ -1310,10 +1310,19 @@ ground-grapple radius (0.3 m), so they pay no penalty — by design.
 5. Arm length / species reach is intentionally out of scope (chunk 4c
    decision). Weapon reach only.
 
+### Siphon subtype
+
+`items.Siphon` (`siphon`) is a weapon and natural-attack subtype meaning a
+spectral or cursed pull on life-force. Its combat-message file is
+`combat-messages/siphon.yaml` (formerly `drain.yaml`, which no subtype
+could reach; the name `drain` stays with the `drain` special move).
+`combat.CategoryForWeaponSubtype` renders it in the caster band
+(`CategoryHitCaster`), alongside wand, sceptre and staff.
+
 ### Natural-attack subtypes: live for mob basic attacks
 
 The natural-attack `ItemSubType`s — `bite`, `claws`, `slam`, `gore`,
-and `sting` — and their combat-message files are now the standard
+`sting` and `siphon` — and their combat-message files are now the standard
 rendering path for non-human mob melee (Phase 1 non-human attack
 messaging). When a species YAML sets `natural_attack:`, `buildWeaponSetup`
 in `internal/combat/combat_helpers.go` routes unarmed mob attacks through

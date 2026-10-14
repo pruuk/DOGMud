@@ -66,7 +66,7 @@ The combat system is built around several key components:
 When an attacker has no equipped weapon, `buildWeaponSetup`
 (`combat_helpers.go`) resolves the attack-message subtype from the
 attacker's species `NaturalAttack` field (via `species.GetSpecies`).
-If non-empty, that subtype (`bite`, `claws`, `slam`, `gore`, `sting`)
+If non-empty, that subtype (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`)
 drives message selection instead of the generic-punch fallback
 (`items.Unarmed`). An equipped weapon's own `Subtype` always takes
 precedence — this path only fires when the weapon slot is empty. This
