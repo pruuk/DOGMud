@@ -83,7 +83,10 @@ selects the combat-message file used when the mob has no equipped weapon.
 
 Valid values: `bite`, `claws`, `slam`, `gore`, `sting`, `siphon`. An empty string
 falls back to the humanoid default (generic-punch messaging). Unknown
-values cause a startup panic via `validateNaturalAttack`. The field has
+values cause a startup panic via `validateNaturalAttack`. `siphon` also
+requires `lifedrain: true` on the species (`validateSiphonHasLifeDrain`,
+panics at load), because the `drain` special move is how it steals life;
+`gore` likewise requires the `horns` body part (`validateGoreHasHorns`). The field has
 no effect on armed mobs — an equipped weapon's own `Subtype` always takes
 precedence.
 
