@@ -20,7 +20,7 @@ import (
 
 // bannerGuardFiles are the converted combat-message files. Each batch adds its
 // files; the last batch replaces this list with every file in the store.
-var bannerGuardFiles = []string{"bite", "claws", "gore", "maul", "slashing", "bludgeoning", "stabbing", "slam", "throttle", "cleaving", "whipping"}
+var bannerGuardFiles = []string{"bite", "claws", "gore", "maul", "slashing", "bludgeoning", "stabbing", "slam", "throttle", "cleaving", "whipping", "pounce"}
 
 var bannerTag = regexp.MustCompile(`<ansi fg="[a-z]+-bold">([^<]+)</ansi>`)
 
