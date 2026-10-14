@@ -1319,6 +1319,15 @@ could reach; the name `drain` stays with the `drain` special move).
 `combat.CategoryForWeaponSubtype` renders it in the caster band
 (`CategoryHitCaster`), alongside wand, sceptre and staff.
 
+An item with `subtype: siphon` must carry built-in life steal: a
+`lifesteal_pct` entry in `statmods` above zero, or a `behavior:` whose tree
+file in `behaviors/items/` holds a node with `effect: lifesteal` (as
+`blackrazor.yaml` does). The root-package guard
+`TestEverySiphonWeaponCarriesLifeSteal` (`siphon_lifesteal_guard_test.go`)
+enforces it; no item uses the subtype yet, so it passes vacuously today. A
+species whose `natural_attack` is `siphon` instead needs `lifedrain: true`
+(see `internal/species/context.md`).
+
 ### Natural-attack subtypes: live for mob basic attacks
 
 The natural-attack `ItemSubType`s — `bite`, `claws`, `slam`, `gore`,
