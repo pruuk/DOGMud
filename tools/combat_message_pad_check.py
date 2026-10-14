@@ -14,10 +14,11 @@ authored lines against a baseline ref. The contract it enforces:
   * lines may be REORDERED freely within their group
   * lines may be ADDED
 
-Both on-disk layouts are read:
+Authored files are in the record layout; the retired role-first reader stays
+so the diff can read old commits:
 
-  Role-first: split -> role -> tier -> [lines]
   Records:    split -> tier -> [{actor, actee, observer[, remote_observer]}]
+  Role-first (historical revisions only): split -> role -> tier -> [lines]
 
 Flags:
 

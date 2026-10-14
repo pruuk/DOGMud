@@ -55,37 +55,28 @@ func decodeGroup(t *testing.T, doc string) (WeaponAttackMessageGroup, error) {
 	return g, err
 }
 
-func TestRecordLayoutDecodesToTheSamePoolsAsRoleFirst(t *testing.T) {
-	a, err := decodeGroup(t, roleFirstDoc)
-	if err != nil {
-		t.Fatalf("role-first: %v", err)
-	}
-	b, err := decodeGroup(t, recordDoc)
+func TestRecordLayoutDecodes(t *testing.T) {
+	g, err := decodeGroup(t, recordDoc)
 	if err != nil {
 		t.Fatalf("records: %v", err)
 	}
-	for _, lvl := range []int{0, 34, 67} {
-		at, bt := a.Options[Weak].Together, b.Options[Weak].Together
-		for name, pair := range map[string][2][]string{
-			"actor":    {at.ToAttacker.PoolFor(lvl), bt.ToAttacker.PoolFor(lvl)},
-			"actee":    {at.ToDefender.PoolFor(lvl), bt.ToDefender.PoolFor(lvl)},
-			"observer": {at.ToRoom.PoolFor(lvl), bt.ToRoom.PoolFor(lvl)},
-		} {
-			if strings.Join(pair[0], "|") != strings.Join(pair[1], "|") {
-				t.Errorf("level %d %s: role-first %v, records %v", lvl, name, pair[0], pair[1])
-			}
-		}
-		as, bs := a.Options[Weak].Separate, b.Options[Weak].Separate
-		for name, pair := range map[string][2][]string{
-			"sep actor":           {as.ToAttacker.PoolFor(lvl), bs.ToAttacker.PoolFor(lvl)},
-			"sep actee":           {as.ToDefender.PoolFor(lvl), bs.ToDefender.PoolFor(lvl)},
-			"sep observer":        {as.ToAttackerRoom.PoolFor(lvl), bs.ToAttackerRoom.PoolFor(lvl)},
-			"sep remote_observer": {as.ToDefenderRoom.PoolFor(lvl), bs.ToDefenderRoom.PoolFor(lvl)},
-		} {
-			if len(pair[0]) == 0 || strings.Join(pair[0], "|") != strings.Join(pair[1], "|") {
-				t.Errorf("level %d %s: role-first %v, records %v", lvl, name, pair[0], pair[1])
-			}
-		}
+	o := g.Options[Weak]
+	if got := strings.Join(o.Together.ToAttacker.PoolFor(0), "|"); got != "A0|A1" {
+		t.Errorf("together actor pool = %q", got)
+	}
+	if got := strings.Join(o.Separate.ToDefenderRoom.PoolFor(0), "|"); got != "SX0" {
+		t.Errorf("separate remote_observer pool = %q", got)
+	}
+}
+
+func TestRoleFirstLayoutIsRejected(t *testing.T) {
+	_, err := decodeGroup(t, roleFirstDoc)
+	if err == nil {
+		t.Fatal("role-first layout decoded; it is retired")
+	}
+	want := "together: role-first layout is retired; write one record per blow"
+	if !strings.Contains(err.Error(), want) {
+		t.Fatalf("error %q does not contain %q", err, want)
 	}
 }
 
@@ -231,15 +222,6 @@ options:
 }
 
 func TestUnquotedScalarsStayExact(t *testing.T) {
-	roleFirst := `
-optionid: test
-options:
-  weak:
-    together:
-      actor: {beginner: [yes, 0x1F]}
-      actee: {beginner: [yes, 0x1F]}
-      observer: {beginner: [yes, 0x1F]}
-`
 	records := `
 optionid: test
 options:
@@ -249,7 +231,7 @@ options:
       - {actor: yes, actee: yes, observer: yes}
       - {actor: 0x1F, actee: 0x1F, observer: 0x1F}
 `
-	for name, doc := range map[string]string{"role-first": roleFirst, "records": records} {
+	for name, doc := range map[string]string{"records": records} {
 		t.Run(name, func(t *testing.T) {
 			g, err := decodeGroup(t, doc)
 			if err != nil {

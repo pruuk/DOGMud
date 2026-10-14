@@ -9,11 +9,11 @@ import (
 )
 
 // The record layout (#370, M6 rows 26-27): each split holds tier -> list of
-// records, and each record carries every role's line for ONE blow. The old
-// role-first layout paired separate per-role lists only by position, so a
-// reorder in one list silently narrated different blows to different
-// audiences. Records make that unrepresentable: moving a record moves all of
-// its roles. The decoder fills the same per-role SkillTieredMessages the rest
+// records, and each record carries every role's line for ONE blow. The
+// retired role-first layout paired separate per-role lists only by position,
+// so a reorder in one list silently narrated different blows to different
+// audiences; it is now rejected at load. Records make that unrepresentable:
+// moving a record moves all of its roles. The decoder fills the same per-role SkillTieredMessages the rest
 // of the package has always used, so PoolFor and Render are unchanged.
 
 var (
@@ -32,12 +32,11 @@ func isOneOf(s string, set []string) bool {
 }
 
 // decodeTieredRecords reads one split in the record layout and returns its
-// pools keyed by role. roleFirst is true when the node is instead the legacy
-// role -> tier -> list layout, which the caller decodes itself.
-func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (pools map[string]SkillTieredMessages, roleFirst bool, err error) {
+// pools keyed by role. The retired role -> tier -> list layout is rejected.
+func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (pools map[string]SkillTieredMessages, err error) {
 	var probe map[string]interface{}
 	if err := unmarshal(&probe); err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	keys := make([]string, 0, len(probe))
 	for k := range probe {
@@ -52,25 +51,25 @@ func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (poo
 		case isOneOf(k, tierNames):
 			sawTier = true
 		default:
-			return nil, false, fmt.Errorf("unknown key %q", k)
+			return nil, fmt.Errorf("unknown key %q", k)
 		}
 	}
 	if sawRole && sawTier {
-		return nil, false, fmt.Errorf("mixes role keys and tier keys")
+		return nil, fmt.Errorf("mixes role keys and tier keys")
 	}
 	if sawRole {
-		return nil, true, nil
+		return nil, fmt.Errorf("role-first layout is retired; write one record per blow")
 	}
 
 	var tiers map[string][]map[string]string
 	if err := unmarshal(&tiers); err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	// A map decode silently keeps the last of a repeated key, so a second
 	// keys-only pass finds duplicates. Values stay exact strings from `tiers`.
 	var slices map[string][]yaml.MapSlice
 	if err := unmarshal(&slices); err != nil {
-		return nil, false, err
+		return nil, err
 	}
 	pools = make(map[string]SkillTieredMessages, len(roles))
 	for _, tier := range tierNames {
@@ -80,7 +79,7 @@ func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (poo
 				for _, item := range slices[tier][i] {
 					k := fmt.Sprint(item.Key)
 					if seen[k] {
-						return nil, false, fmt.Errorf("%s record %d: duplicate key %q", tier, i, k)
+						return nil, fmt.Errorf("%s record %d: duplicate key %q", tier, i, k)
 					}
 					seen[k] = true
 				}
@@ -92,16 +91,16 @@ func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (poo
 			sort.Strings(recKeys)
 			for _, k := range recKeys {
 				if !isOneOf(k, roles) {
-					return nil, false, fmt.Errorf("%s record %d: unknown key %q", tier, i, k)
+					return nil, fmt.Errorf("%s record %d: unknown key %q", tier, i, k)
 				}
 			}
 			for _, role := range roles {
 				line, ok := rec[role]
 				if !ok {
-					return nil, false, fmt.Errorf("%s record %d: missing role %q", tier, i, role)
+					return nil, fmt.Errorf("%s record %d: missing role %q", tier, i, role)
 				}
 				if strings.TrimSpace(line) == "" {
-					return nil, false, fmt.Errorf("%s record %d: empty %q line", tier, i, role)
+					return nil, fmt.Errorf("%s record %d: empty %q line", tier, i, role)
 				}
 				p := pools[role]
 				switch tier {
@@ -116,34 +115,24 @@ func decodeTieredRecords(unmarshal func(interface{}) error, roles []string) (poo
 			}
 		}
 	}
-	return pools, false, nil
+	return pools, nil
 }
 
-// UnmarshalYAML accepts the record layout and, until the last batch is
-// converted, the legacy role-first layout.
+// UnmarshalYAML accepts only the record layout.
 func (m *TogetherMessages) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	pools, roleFirst, err := decodeTieredRecords(unmarshal, togetherRoles)
+	pools, err := decodeTieredRecords(unmarshal, togetherRoles)
 	if err != nil {
 		return fmt.Errorf("together: %w", err)
-	}
-	if roleFirst {
-		type plain TogetherMessages
-		return unmarshal((*plain)(m))
 	}
 	m.ToAttacker, m.ToDefender, m.ToRoom = pools["actor"], pools["actee"], pools["observer"]
 	return nil
 }
 
-// UnmarshalYAML accepts the record layout and, until the last batch is
-// converted, the legacy role-first layout.
+// UnmarshalYAML accepts only the record layout.
 func (m *SeparateMessages) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	pools, roleFirst, err := decodeTieredRecords(unmarshal, separateRoles)
+	pools, err := decodeTieredRecords(unmarshal, separateRoles)
 	if err != nil {
 		return fmt.Errorf("separate: %w", err)
-	}
-	if roleFirst {
-		type plain SeparateMessages
-		return unmarshal((*plain)(m))
 	}
 	m.ToAttacker, m.ToDefender = pools["actor"], pools["actee"]
 	m.ToAttackerRoom, m.ToDefenderRoom = pools["observer"], pools["remote_observer"]

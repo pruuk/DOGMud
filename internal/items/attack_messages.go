@@ -197,6 +197,9 @@ func (w *WeaponAttackMessageGroup) Id() ItemSubType {
 // Validate checks that every required intensity is present and that every
 // authored group can be rendered from ONE coordinated index.
 //
+// The record layout makes the per-tier equality always pass for authored
+// files; the check still guards hand-built groups in tests.
+//
 // Equality is checked PER TIER, not on the union totals. The runtime union is
 // cumulative (beginner, plus expert at 34, plus master at 67), so equal totals
 // with unequal tiers would still pair an expert line against a master one at
