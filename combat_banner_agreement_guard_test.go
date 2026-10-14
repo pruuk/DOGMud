@@ -58,8 +58,15 @@ func bannersAgree(a, b []string) bool {
 	return true
 }
 
+// separateMayOmitBanner names the roles that may carry no banner in a
+// separate split: the attacker's room watches the attack leave through the
+// exit and cannot see it land (owner 2026-10-14). A banner it does carry must
+// still agree with the actor's.
+var separateMayOmitBanner = map[string]bool{"observer": true}
+
 // slotFailures compares every role of each slot against the actor's line.
-func slotFailures(where string, roles map[string][]string) []string {
+// Roles in mayOmit may carry no banner at all.
+func slotFailures(where string, roles map[string][]string, mayOmit map[string]bool) []string {
 	var out []string
 	actor := roles["actor"]
 	for i := range actor {
@@ -69,6 +76,9 @@ func slotFailures(where string, roles map[string][]string) []string {
 				continue
 			}
 			got := bannerWords(lines[i])
+			if len(got) == 0 && mayOmit[role] {
+				continue
+			}
 			if (len(want) > 0 || len(got) > 0) && !bannersAgree(want, got) {
 				out = append(out, fmt.Sprintf("%s[%d] %s %v against actor %v", where, i, role, got, want))
 			}
@@ -100,13 +110,13 @@ func bannerFailures(name string, g *items.WeaponAttackMessageGroup) []string {
 				"actor":    strs(tier.get(opts.Together.ToAttacker)),
 				"actee":    strs(tier.get(opts.Together.ToDefender)),
 				"observer": strs(tier.get(opts.Together.ToRoom)),
-			})...)
+			}, nil)...)
 			out = append(out, slotFailures(fmt.Sprintf("%s %s separate %s", name, intensity, tier.name), map[string][]string{
 				"actor":           strs(tier.get(opts.Separate.ToAttacker)),
 				"actee":           strs(tier.get(opts.Separate.ToDefender)),
 				"observer":        strs(tier.get(opts.Separate.ToAttackerRoom)),
 				"remote_observer": strs(tier.get(opts.Separate.ToDefenderRoom)),
-			})...)
+			}, separateMayOmitBanner)...)
 		}
 	}
 	return out
@@ -172,8 +182,33 @@ func TestBannerGuardCatchesAMismatchedSlot(t *testing.T) {
 		"actee":    {b("FLAWLESS BITE"), b("SHREDS")},
 		"observer": {b("FLAWLESS BITE"), "no banner here"},
 	}
-	got := slotFailures("probe", roles)
+	got := slotFailures("probe", roles, nil)
 	if len(got) != 3 {
 		t.Fatalf("want 3 failures (two roles at [0], the missing banner at [1]), got %d: %v", len(got), got)
+	}
+}
+
+// In a separate split the attacker's room watches the shot leave and cannot
+// see it land, so its line may carry no banner (owner 2026-10-14); a banner it
+// does carry must still agree.
+func TestBannerGuardLetsTheAttackerRoomOmitInSeparate(t *testing.T) {
+	b := func(w string) string { return `x <ansi fg="cyan-bold">` + w + `</ansi>!` }
+	roles := map[string][]string{
+		"actor":           {b("DEVASTATES"), b("SHRED")},
+		"actee":           {b("DEVASTATES"), b("SHREDS")},
+		"observer":        {"fires through the exit", b("FLAWLESS")},
+		"remote_observer": {b("DEVASTATES"), b("SHREDS")},
+	}
+	got := slotFailures("probe", roles, separateMayOmitBanner)
+	if len(got) != 1 {
+		t.Fatalf("want 1 failure (the wrong banner at [1]; the missing one at [0] is allowed), got %d: %v", len(got), got)
+	}
+	if got := slotFailures("probe", map[string][]string{
+		"actor":           {b("DEVASTATES")},
+		"actee":           {b("DEVASTATES")},
+		"observer":        {b("DEVASTATES")},
+		"remote_observer": {"a shot lands"},
+	}, separateMayOmitBanner); len(got) != 1 {
+		t.Fatalf("the defender's room sees the hit and must keep the banner, got %d: %v", len(got), got)
 	}
 }
