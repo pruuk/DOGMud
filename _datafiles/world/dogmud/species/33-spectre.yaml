@@ -10,7 +10,7 @@ intrinsic_mutations:
   second-sight: 1
   discorporation: 1
 size: medium
-unarmedname: presence
+unarmedname: cold touch
 natural_attack: siphon # basic attacks pull on life-force (needs lifedrain below)
 selectable: false
 tameable: false
