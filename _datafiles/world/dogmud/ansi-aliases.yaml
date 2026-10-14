@@ -198,7 +198,7 @@ colors:
   hit-blunt: 130         # warm orange-brown — bludgeoning / slam (hammers, maces)
   hit-natural-sharp: 95  # dark red-brown — claws / bite / sting / gore
   hit-ranged: 110        # light sky blue — shooting / whipping (bows, whips)
-  hit-caster: 146        # lavender — wand / sceptre / staff melee
+  hit-caster: 146        # lavender — wand / sceptre / staff / siphon melee
   hit-unarmed: 215       # sandy brown — explicit unarmed / fist
 
 # Combat — defense

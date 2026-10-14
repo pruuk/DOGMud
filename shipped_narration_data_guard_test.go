@@ -908,7 +908,8 @@ var observerIdentityGuardRoots = []string{
 // THE KEY IS THE PATH RELATIVE TO shippedWorldRoot ("conditions/9-hidden.yaml",
 // "narration/special-moves/drain.yaml", "defense-messages/dodge.yaml"), never a
 // bare basename. combat-messages and narration/special-moves both ship a
-// drain.yaml, gore.yaml, maul.yaml, pounce.yaml and throttle.yaml; a
+// gore.yaml, maul.yaml, pounce.yaml and throttle.yaml (its drain.yaml became
+// siphon.yaml, so special-moves drain.yaml has no twin now); a
 // basename-only key would let marking the special-moves twin safe silently
 // also exempt the combat-messages twin, which earns its safety a completely
 // different way (its own ansi tagging, not SendTrio) and was never meant to

@@ -12,6 +12,7 @@ intrinsic_mutations:
   discorporation: 1
 size: medium
 unarmedname: touch
+natural_attack: siphon # basic attacks pull on life-force (needs lifedrain below)
 selectable: false
 tameable: false
 conditionids:

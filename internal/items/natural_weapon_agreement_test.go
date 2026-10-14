@@ -13,11 +13,11 @@ import (
 // naturalWeaponPools are the combat-message pools a natural weapon renders
 // through: the natural-attack subtypes, plus every species natural_attack
 // value found in either world.
-var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam}
+var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam, Siphon}
 
 // naturalWeaponSpecialPools are the special-attack pools whose {itemname} is
 // the same natural weapon, so they follow the same rule (M6 slice 2 review).
-var naturalWeaponSpecialPools = []string{"throttle", "drain", "maul"}
+var naturalWeaponSpecialPools = []string{"throttle", "maul"}
 
 // afterItemName finds each {itemname} and the text that follows it.
 var afterItemName = regexp.MustCompile(`\{itemname\}(.*)`)

@@ -262,7 +262,7 @@ func CategoryForWeaponSubtype(sub items.ItemSubType) messaging.Category {
 		return messaging.CategoryHitNaturalSharp
 	case items.Shooting, items.Whipping:
 		return messaging.CategoryHitRanged
-	case items.Wand, items.Sceptre, items.Staff:
+	case items.Wand, items.Sceptre, items.Staff, items.Siphon:
 		return messaging.CategoryHitCaster
 	case items.Unarmed, items.Fist:
 		return messaging.CategoryHitUnarmed

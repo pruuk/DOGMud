@@ -210,11 +210,12 @@ func (s *Species) Save() error {
 // basic unarmed attacks. Each must have a loaded combat-message file of the
 // same name in _datafiles/world/dogmud/combat-messages/.
 var validNaturalAttacks = map[items.ItemSubType]struct{}{
-	items.Bite:  {},
-	items.Claws: {},
-	items.Slam:  {},
-	items.Gore:  {},
-	items.Sting: {},
+	items.Bite:   {},
+	items.Claws:  {},
+	items.Slam:   {},
+	items.Gore:   {},
+	items.Sting:  {},
+	items.Siphon: {},
 }
 
 // validateGoreHasHorns returns an error if a gore (horned) species does not
@@ -229,6 +230,16 @@ func validateGoreHasHorns(s *Species) error {
 		}
 	}
 	return fmt.Errorf("species %d (%s): natural_attack gore requires \"horns\" in body_parts", s.SpeciesId, s.Name)
+}
+
+// validateSiphonHasLifeDrain returns an error if a siphon species does not set
+// lifedrain. Siphon is a pull on life-force, and the drain special move that
+// steals it only fires for a species with lifedrain.
+func validateSiphonHasLifeDrain(s *Species) error {
+	if s.NaturalAttack != items.Siphon || s.LifeDrain {
+		return nil
+	}
+	return fmt.Errorf("species %d (%s): natural_attack siphon requires lifedrain: true", s.SpeciesId, s.Name)
 }
 
 func validateNaturalAttack(s *Species) error {
@@ -259,6 +270,9 @@ func LoadDataFiles() {
 			panic(err)
 		}
 		if err := validateGoreHasHorns(s); err != nil {
+			panic(err)
+		}
+		if err := validateSiphonHasLifeDrain(s); err != nil {
 			panic(err)
 		}
 	}

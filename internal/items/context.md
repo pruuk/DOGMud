@@ -1310,10 +1310,28 @@ ground-grapple radius (0.3 m), so they pay no penalty — by design.
 5. Arm length / species reach is intentionally out of scope (chunk 4c
    decision). Weapon reach only.
 
+### Siphon subtype
+
+`items.Siphon` (`siphon`) is a weapon and natural-attack subtype meaning a
+spectral or cursed pull on life-force. Its combat-message file is
+`combat-messages/siphon.yaml` (formerly `drain.yaml`, which no subtype
+could reach; the name `drain` stays with the `drain` special move).
+`combat.CategoryForWeaponSubtype` renders it in the caster band
+(`CategoryHitCaster`), alongside wand, sceptre and staff.
+
+An item with `subtype: siphon` must carry built-in life steal: a
+`lifesteal_pct` entry in `statmods` above zero, or a `behavior:` whose tree
+file in `behaviors/items/` holds a node with `effect: lifesteal` (as
+`blackrazor.yaml` does). The root-package guard
+`TestEverySiphonWeaponCarriesLifeSteal` (`siphon_lifesteal_guard_test.go`)
+enforces it; no item uses the subtype yet, so it passes vacuously today. A
+species whose `natural_attack` is `siphon` instead needs `lifedrain: true`
+(see `internal/species/context.md`).
+
 ### Natural-attack subtypes: live for mob basic attacks
 
 The natural-attack `ItemSubType`s — `bite`, `claws`, `slam`, `gore`,
-and `sting` — and their combat-message files are now the standard
+`sting` and `siphon` — and their combat-message files are now the standard
 rendering path for non-human mob melee (Phase 1 non-human attack
 messaging). When a species YAML sets `natural_attack:`, `buildWeaponSetup`
 in `internal/combat/combat_helpers.go` routes unarmed mob attacks through

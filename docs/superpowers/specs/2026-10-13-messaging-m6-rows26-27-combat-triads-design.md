@@ -127,7 +127,7 @@ Five PRs, about four files each, ledger-named files first:
 1. decoder, banner guard, checker; `bite`, `claws`, `gore`, `maul`
 2. `slashing`, `bludgeoning`, `stabbing`, `slam`
 3. `throttle`, `cleaving`, `whipping`, `pounce`
-4. `sting`, `drain`, `staff`, `sceptre`, `wand`
+4. `sting`, `siphon` (was `drain`), `staff`, `sceptre`, `wand`
 5. `generic`, `shooting`, `unarmed`; role-first path deleted; banner guard
    over every file; ledger rows 26 and 27 closed
 

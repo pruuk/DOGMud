@@ -583,7 +583,7 @@ Batch file lists:
 | 1 | bite, claws, gore, maul | `feature/m6-row26-tier-bleed` (with Part A) |
 | 2 | slashing, bludgeoning, stabbing, slam | `feature/m6-r26-batch2` |
 | 3 | throttle, cleaving, whipping, pounce | `feature/m6-r26-batch3` |
-| 4 | sting, drain, staff, sceptre, wand | `feature/m6-r26-batch4` |
+| 4 | sting, siphon (was drain), staff, sceptre, wand | `feature/m6-r26-batch4` |
 | 5 | generic, shooting, unarmed | `feature/m6-r26-batch5` (plus Part C) |
 
 ### Task 5: Convert the batch's files losslessly
