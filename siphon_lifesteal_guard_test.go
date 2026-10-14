@@ -131,7 +131,11 @@ func TestEverySiphonWeaponCarriesLifeSteal(t *testing.T) {
 			return nil
 		}
 		var item siphonItemDoc
-		if yaml.Unmarshal(raw, &item) != nil || item.Subtype != "siphon" {
+		if uerr := yaml.Unmarshal(raw, &item); uerr != nil {
+			t.Errorf("unmarshal %s: %v", path, uerr)
+			return nil
+		}
+		if item.Subtype != "siphon" {
 			return nil
 		}
 		if !siphonItemCarriesLifeSteal(item, behaviorYAML) {

@@ -135,6 +135,10 @@ Valid stat names: `strength`, `dexterity`, `perception`, `vitality`, `willpower`
 - `subtype: wand` — caster weapon, light, 1-handed (uses `spell_damage_multiplier`)
 - `subtype: sceptre` — caster weapon, moderate, 1-handed (uses `spell_damage_multiplier`)
 - `subtype: staff` — caster weapon, defensive, 2-handed (uses `spell_damage_multiplier`)
+- `subtype: siphon` — spectral or cursed pull on life-force; must carry life steal (a `lifesteal_pct` statmod above zero or a behavior with an `effect: lifesteal` node)
+- `subtype: unarmed`, `generic`, `fist` — fists and unspecified weapons; they pick attack messages only
+- `subtype: bludgeoning`, `cleaving`, `stabbing`, `slashing`, `shooting`, `whipping` — attack-message subtypes (`piercing` is accepted as a synonym for stabbing)
+- `subtype: claws`, `bite`, `sting`, `gore`, `slam` — natural-weapon attack-message subtypes
 
 **Armor (type IS the slot):**
 - `type: head`, `type: body`, `type: legs`, `type: feet`, `type: hands`
