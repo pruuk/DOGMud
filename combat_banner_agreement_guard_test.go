@@ -18,9 +18,28 @@ import (
 // part of a strong hit that every role repeats, so it must agree across the
 // roles of a slot.
 
-// bannerGuardFiles are the converted combat-message files. Each batch adds its
-// files; the last batch replaces this list with every file in the store.
-var bannerGuardFiles = []string{"bite", "claws", "gore", "maul", "slashing", "bludgeoning", "stabbing", "slam", "throttle", "cleaving", "whipping", "pounce", "sting", "staff", "sceptre", "wand", "siphon", "generic", "shooting", "unarmed"}
+// bannerGuardFileCount is how many files the store holds. The guard fails on
+// any other count so an empty or partial glob cannot pass.
+const bannerGuardFileCount = 20
+
+// bannerGuardFiles globs every combat-message file in the store, names
+// without extension.
+func bannerGuardFiles(t *testing.T) []string {
+	t.Helper()
+	dir := filepath.Join("_datafiles", "world", "dogmud", "combat-messages")
+	paths, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
+	if err != nil {
+		t.Fatalf("glob %s: %v", dir, err)
+	}
+	if len(paths) != bannerGuardFileCount {
+		t.Fatalf("found %d combat-message files in %s, want exactly %d", len(paths), dir, bannerGuardFileCount)
+	}
+	names := make([]string, 0, len(paths))
+	for _, p := range paths {
+		names = append(names, strings.TrimSuffix(filepath.Base(p), ".yaml"))
+	}
+	return names
+}
 
 var bannerTag = regexp.MustCompile(`<ansi fg="[a-z]+-bold">([^<]+)</ansi>`)
 
@@ -123,7 +142,7 @@ func bannerFailures(name string, g *items.WeaponAttackMessageGroup) []string {
 }
 
 func TestCombatBannerWordsAgreeAcrossRoles(t *testing.T) {
-	for _, name := range bannerGuardFiles {
+	for _, name := range bannerGuardFiles(t) {
 		path := filepath.Join("_datafiles", "world", "dogmud", "combat-messages", name+".yaml")
 		raw, err := os.ReadFile(path)
 		if err != nil {
