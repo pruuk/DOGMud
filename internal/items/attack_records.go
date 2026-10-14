@@ -13,8 +13,9 @@ import (
 // retired role-first layout paired separate per-role lists only by position,
 // so a reorder in one list silently narrated different blows to different
 // audiences; it is now rejected at load. Records make that unrepresentable:
-// moving a record moves all of its roles. The decoder fills the same per-role SkillTieredMessages the rest
-// of the package has always used, so PoolFor and Render are unchanged.
+// moving a record moves all of its roles. The decoder fills the same per-role
+// SkillTieredMessages the rest of the package has always used, so PoolFor and
+// Render are unchanged.
 
 var (
 	tierNames     = []string{"beginner", "expert", "master"}
