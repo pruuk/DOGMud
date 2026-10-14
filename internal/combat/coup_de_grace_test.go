@@ -79,8 +79,8 @@ func TestGenericYamlDefinesCoupDeGrace(t *testing.T) {
 		t.Fatalf("read generic.yaml: %v", err)
 	}
 
-	// Decode through the items type so either combat-message layout (role-first
-	// or record-per-blow) is read exactly as the loader reads it.
+	// Decode through the items type so the record-per-blow layout is read
+	// exactly as the loader reads it.
 	var g items.WeaponAttackMessageGroup
 	if err := yaml.Unmarshal(raw, &g); err != nil {
 		t.Fatalf("parse generic.yaml: %v", err)

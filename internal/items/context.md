@@ -532,10 +532,10 @@ map the roles onto `ToAttacker`, `ToDefender`, `ToRoom` (and `ToAttackerRoom`,
 which keeps the original unmarshal func so strict decoding, exact scalar text
 and true line numbers survive (a marshal and re-parse would lose them).
 
-Transition rule: files still in the legacy role-first layout (role -> tier ->
-list, with `actor`/`actee`/`observer`/`remote_observer` keys) decode through
-the `plain` fallback until the last batch of #370 converts the final file and
-retires that layout. Files with the pre-M4b keys (`toattacker`, `todefender`,
+The legacy role-first layout (role -> tier -> list, with
+`actor`/`actee`/`observer`/`remote_observer` keys) is retired: all 20 files
+are records, and the decoder rejects it with `role-first layout is retired;
+write one record per blow`. Files with the pre-M4b keys (`toattacker`, `todefender`,
 `toroom`, ...), such as the 8 under `_datafiles/world/default/combat-messages/`,
 do NOT decode: `decodeTieredRecords` rejects them as unknown keys, so loading
 the default world fails `LoadDataFilesE` at the combat-messages step (it used

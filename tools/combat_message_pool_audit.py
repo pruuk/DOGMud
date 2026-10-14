@@ -4,10 +4,11 @@ PR 2 of messaging M3 item 8 renders every audience of one swing from a single
 coordinated index, which requires the role pools in each (verb, split, tier)
 group to be equal in length. This reports every group where they are not.
 
-Both layouts are read: role-first (split -> role -> tier -> [lines]) and
-records (split -> tier -> [{actor, actee, observer[, remote_observer]}]).
-Records keep pools equal by construction; the audit still reports any short
-pool, such as a record missing a role.
+Authored files are in the record layout (split -> tier -> [{actor, actee,
+observer[, remote_observer]}]). The retired role-first reader (split -> role
+-> tier -> [lines]) stays for historical revisions. Records keep pools equal
+by construction; the audit still reports any short pool, such as a record
+missing a role.
 
 READ ONLY. Never write YAML from Python: yaml.dump would destroy the token
 comment header, the quoting and the key order of every file it touched.

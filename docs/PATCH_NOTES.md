@@ -5,6 +5,9 @@
 - Combat lines now always show the attacker, the defender and onlookers the
   same moment, from the opening feint to the fumble; some used to describe a
   different blow to each.
+- Onlookers now always see who was hit, not just who swung.
+- Wraiths and spectres now fight with a chilling touch that pulls the life out
+  of you, and their blows read that way.
 
 ## Unreleased: Fighting blind, and plainer combat words
 
