@@ -14,365 +14,293 @@ optionid: wand
 options:
   prepare:
     together:
-      actor:
-        beginner:
-        - 'You raise your <ansi fg="item">{itemname}</ansi>, arcane energy crackling at its tip.'
-        - 'You point your <ansi fg="item">{itemname}</ansi> toward <ansi fg="{acteetype}">{actee}</ansi>, gathering your focus.'
-        - 'You grip your <ansi fg="item">{itemname}</ansi> tightly, preparing to channel against <ansi fg="{acteetype}">{actee}</ansi>.'
-        expert:
-        - 'You settle into a {stance} stance, your <ansi fg="item">{itemname}</ansi> tracing a ward in the air.'
-        - 'While {position}, you level your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi> with practiced precision.'
-        - 'You focus your will through your <ansi fg="item">{itemname}</ansi>, sizing up <ansi fg="{acteetype}">{actee}</ansi>.'
-        master:
-        - 'With fluid grace, you bring your <ansi fg="item">{itemname}</ansi> to bear, arcane threads already forming.'
-        - 'Your <ansi fg="item">{itemname}</ansi> hums with anticipation as you read <ansi fg="{acteetype}">{actee}</ansi>''s aura.'
-        - '{momentum}, you align your <ansi fg="item">{itemname}</ansi> with deadly focus.'
-      actee:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> raises their <ansi fg="item">{itemname}</ansi> toward you, energy crackling.'
-        - '<ansi fg="{actortype}">{actor}</ansi> points their <ansi fg="item">{itemname}</ansi> in your direction menacingly.'
-        - '<ansi fg="{actortype}">{actor}</ansi> grips their <ansi fg="item">{itemname}</ansi> tightly, preparing to channel against you.'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> traces a ward in the air with their <ansi fg="item">{itemname}</ansi>, eyeing you.'
-        - '<ansi fg="{actortype}">{actor}</ansi> levels their <ansi fg="item">{itemname}</ansi> at you with calm precision.'
-        - '<ansi fg="{actortype}">{actor}</ansi> focuses their will through their <ansi fg="item">{itemname}</ansi>, sizing you up.'
-        master:
-        - 'Arcane threads form around <ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> as they focus on you.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> hums with gathering power aimed your way.'
-        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> aligns their <ansi fg="item">{itemname}</ansi> with deadly focus on you.'
-      observer:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> raises their <ansi fg="item">{itemname}</ansi> toward <ansi fg="{acteetype}">{actee}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi> points their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, energy crackling.'
-        - '<ansi fg="{actortype}">{actor}</ansi> grips their <ansi fg="item">{itemname}</ansi> tightly, preparing to channel against <ansi fg="{acteetype}">{actee}</ansi>.'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> traces a ward with their <ansi fg="item">{itemname}</ansi>, facing <ansi fg="{acteetype}">{actee}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi> levels their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi> with precision.'
-        - '<ansi fg="{actortype}">{actor}</ansi> focuses their will through their <ansi fg="item">{itemname}</ansi>, sizing up <ansi fg="{acteetype}">{actee}</ansi>.'
-        master:
-        - 'With practiced grace, <ansi fg="{actortype}">{actor}</ansi> brings their <ansi fg="item">{itemname}</ansi> to bear.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> hums as arcane threads form around it.'
-        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> aligns their <ansi fg="item">{itemname}</ansi> with deadly focus on <ansi fg="{acteetype}">{actee}</ansi>.'
+      beginner:
+      - actor: 'You raise your <ansi fg="item">{itemname}</ansi>, arcane energy crackling at its tip.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> raises their <ansi fg="item">{itemname}</ansi> toward you, energy crackling.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> raises their <ansi fg="item">{itemname}</ansi> toward <ansi fg="{acteetype}">{actee}</ansi>.'
+      - actor: 'You point your <ansi fg="item">{itemname}</ansi> toward <ansi fg="{acteetype}">{actee}</ansi>, gathering your focus.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> points their <ansi fg="item">{itemname}</ansi> in your direction menacingly.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> points their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, energy crackling.'
+      - actor: 'You grip your <ansi fg="item">{itemname}</ansi> tightly, preparing to channel against <ansi fg="{acteetype}">{actee}</ansi>.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> grips their <ansi fg="item">{itemname}</ansi> tightly, preparing to channel against you.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> grips their <ansi fg="item">{itemname}</ansi> tightly, preparing to channel against <ansi fg="{acteetype}">{actee}</ansi>.'
+      expert:
+      - actor: 'You settle into a {stance} stance, your <ansi fg="item">{itemname}</ansi> tracing a ward in the air.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> traces a ward in the air with their <ansi fg="item">{itemname}</ansi>, eyeing you.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> traces a ward with their <ansi fg="item">{itemname}</ansi>, facing <ansi fg="{acteetype}">{actee}</ansi>.'
+      - actor: 'While {position}, you level your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi> with practiced precision.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> levels their <ansi fg="item">{itemname}</ansi> at you with calm precision.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> levels their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi> with precision.'
+      - actor: 'You focus your will through your <ansi fg="item">{itemname}</ansi>, sizing up <ansi fg="{acteetype}">{actee}</ansi>.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> focuses their will through their <ansi fg="item">{itemname}</ansi>, sizing you up.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> focuses their will through their <ansi fg="item">{itemname}</ansi>, sizing up <ansi fg="{acteetype}">{actee}</ansi>.'
+      master:
+      - actor: 'With fluid grace, you bring your <ansi fg="item">{itemname}</ansi> to bear, arcane threads already forming.'
+        actee: 'Arcane threads form around <ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> as they focus on you.'
+        observer: 'With practiced grace, <ansi fg="{actortype}">{actor}</ansi> brings their <ansi fg="item">{itemname}</ansi> to bear.'
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> hums with anticipation as you read <ansi fg="{acteetype}">{actee}</ansi>''s aura.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> hums with gathering power aimed your way.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> hums as arcane threads form around it.'
+      - actor: '{momentum}, you align your <ansi fg="item">{itemname}</ansi> with deadly focus.'
+        actee: '{momentum}, <ansi fg="{actortype}">{actor}</ansi> aligns their <ansi fg="item">{itemname}</ansi> with deadly focus on you.'
+        observer: '{momentum}, <ansi fg="{actortype}">{actor}</ansi> aligns their <ansi fg="item">{itemname}</ansi> with deadly focus on <ansi fg="{acteetype}">{actee}</ansi>.'
   wait:
     together:
-      actor:
-        beginner:
-        - 'You wave your <ansi fg="item">{itemname}</ansi> slowly, searching for an opening.'
-        - 'You hold your <ansi fg="item">{itemname}</ansi> steady, watching <ansi fg="{acteetype}">{actee}</ansi> carefully.'
-        - 'You circle <ansi fg="{acteetype}">{actee}</ansi>, your <ansi fg="item">{itemname}</ansi> tracing idle patterns.'
-        expert:
-        - 'From your {stance} stance, you study <ansi fg="{acteetype}">{actee}</ansi> through channeled senses.'
-        - 'While {position}, you probe <ansi fg="{acteetype}">{actee}</ansi>''s defenses with subtle arcane feints.'
-        - 'You draw arcane focus through your <ansi fg="item">{itemname}</ansi>, seeking weakness.'
-        master:
-        - '{momentum}, you read every flicker of <ansi fg="{acteetype}">{actee}</ansi>''s aura with clarity.'
-        - 'Your <ansi fg="item">{itemname}</ansi> pulses faintly as you anticipate <ansi fg="{acteetype}">{actee}</ansi>''s next move.'
-        - 'Like a hawk, you track <ansi fg="{acteetype}">{actee}</ansi>''s energy through your attuned focus.'
-      actee:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> waves their <ansi fg="item">{itemname}</ansi> slowly, watching you.'
-        - '<ansi fg="{actortype}">{actor}</ansi> holds their <ansi fg="item">{itemname}</ansi> steady, studying you.'
-        - '<ansi fg="{actortype}">{actor}</ansi> circles you, their <ansi fg="item">{itemname}</ansi> tracing idle patterns.'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> studies you through their channeled senses.'
-        - '<ansi fg="{actortype}">{actor}</ansi> probes your defenses with subtle arcane feints.'
-        - '<ansi fg="{actortype}">{actor}</ansi> draws arcane focus through their <ansi fg="item">{itemname}</ansi>, seeking your weakness.'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi> reads your aura with unsettling precision.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> pulses as they track your every move.'
-        - 'Like a hawk, <ansi fg="{actortype}">{actor}</ansi> tracks your energy through their attuned focus.'
-      observer:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> waves their <ansi fg="item">{itemname}</ansi>, circling <ansi fg="{acteetype}">{actee}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi> holds their <ansi fg="item">{itemname}</ansi> steady, watching <ansi fg="{acteetype}">{actee}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi> circles <ansi fg="{acteetype}">{actee}</ansi>, their <ansi fg="item">{itemname}</ansi> tracing idle patterns.'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> studies <ansi fg="{acteetype}">{actee}</ansi> through channeled senses.'
-        - '<ansi fg="{actortype}">{actor}</ansi> probes <ansi fg="{acteetype}">{actee}</ansi>''s defenses with arcane feints.'
-        - '<ansi fg="{actortype}">{actor}</ansi> draws arcane focus through their <ansi fg="item">{itemname}</ansi>, seeking <ansi fg="{acteetype}">{actee}</ansi>''s weakness.'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s aura with predatory precision.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s focus pulses as they track <ansi fg="{acteetype}">{actee}</ansi>''s every shift.'
-        - 'Like a hawk, <ansi fg="{actortype}">{actor}</ansi> tracks <ansi fg="{acteetype}">{actee}</ansi>''s energy through their attuned focus.'
+      beginner:
+      - actor: 'You wave your <ansi fg="item">{itemname}</ansi> slowly, searching for an opening.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> waves their <ansi fg="item">{itemname}</ansi> slowly, watching you.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> waves their <ansi fg="item">{itemname}</ansi>, circling <ansi fg="{acteetype}">{actee}</ansi>.'
+      - actor: 'You hold your <ansi fg="item">{itemname}</ansi> steady, watching <ansi fg="{acteetype}">{actee}</ansi> carefully.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> holds their <ansi fg="item">{itemname}</ansi> steady, studying you.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> holds their <ansi fg="item">{itemname}</ansi> steady, watching <ansi fg="{acteetype}">{actee}</ansi>.'
+      - actor: 'You circle <ansi fg="{acteetype}">{actee}</ansi>, your <ansi fg="item">{itemname}</ansi> tracing idle patterns.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> circles you, their <ansi fg="item">{itemname}</ansi> tracing idle patterns.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> circles <ansi fg="{acteetype}">{actee}</ansi>, their <ansi fg="item">{itemname}</ansi> tracing idle patterns.'
+      expert:
+      - actor: 'From your {stance} stance, you study <ansi fg="{acteetype}">{actee}</ansi> through channeled senses.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> studies you through their channeled senses.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> studies <ansi fg="{acteetype}">{actee}</ansi> through channeled senses.'
+      - actor: 'While {position}, you probe <ansi fg="{acteetype}">{actee}</ansi>''s defenses with subtle arcane feints.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> probes your defenses with subtle arcane feints.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> probes <ansi fg="{acteetype}">{actee}</ansi>''s defenses with arcane feints.'
+      - actor: 'You draw arcane focus through your <ansi fg="item">{itemname}</ansi>, seeking weakness.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> draws arcane focus through their <ansi fg="item">{itemname}</ansi>, seeking your weakness.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> draws arcane focus through their <ansi fg="item">{itemname}</ansi>, seeking <ansi fg="{acteetype}">{actee}</ansi>''s weakness.'
+      master:
+      - actor: '{momentum}, you read every flicker of <ansi fg="{acteetype}">{actee}</ansi>''s aura with clarity.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> reads your aura with unsettling precision.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s aura with predatory precision.'
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> pulses faintly as you anticipate <ansi fg="{acteetype}">{actee}</ansi>''s next move.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> pulses as they track your every move.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s focus pulses as they track <ansi fg="{acteetype}">{actee}</ansi>''s every shift.'
+      - actor: 'Like a hawk, you track <ansi fg="{acteetype}">{actee}</ansi>''s energy through your attuned focus.'
+        actee: 'Like a hawk, <ansi fg="{actortype}">{actor}</ansi> tracks your energy through their attuned focus.'
+        observer: 'Like a hawk, <ansi fg="{actortype}">{actor}</ansi> tracks <ansi fg="{acteetype}">{actee}</ansi>''s energy through their attuned focus.'
   miss:
     together:
-      actor:
-        beginner:
-        - 'You flick your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but the strike misses!'
-        - 'Your arcane jab misses <ansi fg="{acteetype}">{actee}</ansi> completely!'
-        - 'You thrust your <ansi fg="item">{itemname}</ansi> forward, but <ansi fg="{acteetype}">{actee}</ansi> evades!'
-        expert:
-        - 'Your calculated strike with the <ansi fg="item">{itemname}</ansi> finds only air!'
-        - 'Despite your {stance} approach, <ansi fg="{acteetype}">{actee}</ansi> sidesteps your channeled blow!'
-        - 'You lunge forward but <ansi fg="{acteetype}">{actee}</ansi> anticipates and dodges!'
-        master:
-        - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected agility sends your perfect strike wide!'
-        - 'Despite flawless form, <ansi fg="{acteetype}">{actee}</ansi> reads your intent and evades!'
-        - 'Your masterful thrust meets an equally masterful defense!'
-      actee:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> flicks their <ansi fg="item">{itemname}</ansi> at you, but misses!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s arcane jab misses you completely!'
-        - '<ansi fg="{actortype}">{actor}</ansi> thrusts their <ansi fg="item">{itemname}</ansi> your way, missing entirely!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s calculated jab finds only empty air!'
-        - 'You sidestep <ansi fg="{actortype}">{actor}</ansi>''s channeled strike!'
-        - 'You anticipate <ansi fg="{actortype}">{actor}</ansi>''s lunge and dodge!'
-        master:
-        - 'Your agility sends <ansi fg="{actortype}">{actor}</ansi>''s perfect strike wide!'
-        - 'You read <ansi fg="{actortype}">{actor}</ansi>''s intent and evade their masterful thrust!'
-        - 'Your masterful defense meets <ansi fg="{actortype}">{actor}</ansi>''s equally masterful thrust!'
-      observer:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> flicks their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but misses!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s arcane jab misses <ansi fg="{acteetype}">{actee}</ansi> completely!'
-        - '<ansi fg="{actortype}">{actor}</ansi> thrusts at <ansi fg="{acteetype}">{actee}</ansi> but fails to connect!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s calculated jab finds only air!'
-        - '<ansi fg="{acteetype}">{actee}</ansi> sidesteps <ansi fg="{actortype}">{actor}</ansi>''s channeled strike!'
-        - '<ansi fg="{acteetype}">{actee}</ansi> anticipates <ansi fg="{actortype}">{actor}</ansi>''s lunge and dodges!'
-        master:
-        - '<ansi fg="{acteetype}">{actee}</ansi>''s defense forces <ansi fg="{actortype}">{actor}</ansi>''s perfect strike wide!'
-        - '<ansi fg="{acteetype}">{actee}</ansi> reads <ansi fg="{actortype}">{actor}</ansi>''s intent and evades!'
-        - 'A clash of arcane will results in no contact!'
+      beginner:
+      - actor: 'You flick your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but the strike misses!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> flicks their <ansi fg="item">{itemname}</ansi> at you, but misses!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> flicks their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>, but misses!'
+      - actor: 'Your arcane jab misses <ansi fg="{acteetype}">{actee}</ansi> completely!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s arcane jab misses you completely!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s arcane jab misses <ansi fg="{acteetype}">{actee}</ansi> completely!'
+      - actor: 'You thrust your <ansi fg="item">{itemname}</ansi> forward, but <ansi fg="{acteetype}">{actee}</ansi> evades!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> thrusts their <ansi fg="item">{itemname}</ansi> your way, missing entirely!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> thrusts at <ansi fg="{acteetype}">{actee}</ansi> but fails to connect!'
+      expert:
+      - actor: 'Your calculated strike with the <ansi fg="item">{itemname}</ansi> finds only air!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s calculated jab finds only empty air!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s calculated jab finds only air!'
+      - actor: 'Despite your {stance} approach, <ansi fg="{acteetype}">{actee}</ansi> sidesteps your channeled blow!'
+        actee: 'You sidestep <ansi fg="{actortype}">{actor}</ansi>''s channeled strike!'
+        observer: '<ansi fg="{acteetype}">{actee}</ansi> sidesteps <ansi fg="{actortype}">{actor}</ansi>''s channeled strike!'
+      - actor: 'You lunge forward but <ansi fg="{acteetype}">{actee}</ansi> anticipates and dodges!'
+        actee: 'You anticipate <ansi fg="{actortype}">{actor}</ansi>''s lunge and dodge!'
+        observer: '<ansi fg="{acteetype}">{actee}</ansi> anticipates <ansi fg="{actortype}">{actor}</ansi>''s lunge and dodges!'
+      master:
+      - actor: '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected agility sends your perfect strike wide!'
+        actee: 'Your agility sends <ansi fg="{actortype}">{actor}</ansi>''s perfect strike wide!'
+        observer: '<ansi fg="{acteetype}">{actee}</ansi>''s defense forces <ansi fg="{actortype}">{actor}</ansi>''s perfect strike wide!'
+      - actor: 'Despite flawless form, <ansi fg="{acteetype}">{actee}</ansi> reads your intent and evades!'
+        actee: 'You read <ansi fg="{actortype}">{actor}</ansi>''s intent and evade their masterful thrust!'
+        observer: '<ansi fg="{acteetype}">{actee}</ansi> reads <ansi fg="{actortype}">{actor}</ansi>''s intent and evades!'
+      - actor: 'Your masterful thrust meets an equally masterful defense!'
+        actee: 'Your masterful defense meets <ansi fg="{actortype}">{actor}</ansi>''s equally masterful thrust!'
+        observer: 'A clash of arcane will results in no contact!'
   weak:
     together:
-      actor:
-        beginner:
-        - 'You tap <ansi fg="{acteetype}">{actee}</ansi> with the tip of your <ansi fg="item">{itemname}</ansi>.'
-        - 'Your <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi> with a faint crackle.'
-        - 'You poke <ansi fg="{acteetype}">{actee}</ansi> lightly with your <ansi fg="item">{itemname}</ansi>.'
-        expert:
-        - 'You flick a quick jab at <ansi fg="{acteetype}">{actee}</ansi>, barely connecting.'
-        - 'Circling left, you graze <ansi fg="{acteetype}">{actee}</ansi> with a channeled tap.'
-        - 'You feint high and prod low, landing a light touch on <ansi fg="{acteetype}">{actee}</ansi>.'
-        master:
-        - 'You probe <ansi fg="{acteetype}">{actee}</ansi>''s guard with a measured arcane tap.'
-        - 'Dancing back, you flick your <ansi fg="item">{itemname}</ansi> across <ansi fg="{acteetype}">{actee}</ansi>.'
-        - 'You find a small opening and deliver a precise but light strike.'
-      actee:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> taps you with the tip of their <ansi fg="item">{itemname}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> grazes you with a faint crackle.'
-        - '<ansi fg="{actortype}">{actor}</ansi> pokes you lightly with their <ansi fg="item">{itemname}</ansi>.'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> flicks a quick jab at you, barely connecting.'
-        - 'Circling left, <ansi fg="{actortype}">{actor}</ansi> grazes you with a channeled tap.'
-        - '<ansi fg="{actortype}">{actor}</ansi> feints and prods you with a light channeled touch.'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi> probes your guard with a measured arcane tap.'
-        - '<ansi fg="{actortype}">{actor}</ansi> dances back while flicking their <ansi fg="item">{itemname}</ansi> across you.'
-        - '<ansi fg="{actortype}">{actor}</ansi> finds a small opening and delivers a precise but light strike.'
-      observer:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> taps <ansi fg="{acteetype}">{actee}</ansi> with the tip of their <ansi fg="item">{itemname}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi> with a crackle.'
-        - '<ansi fg="{actortype}">{actor}</ansi> pokes <ansi fg="{acteetype}">{actee}</ansi> lightly with their <ansi fg="item">{itemname}</ansi>.'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> flicks a quick jab at <ansi fg="{acteetype}">{actee}</ansi>, barely connecting.'
-        - 'Circling left, <ansi fg="{actortype}">{actor}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi> with a channeled tap.'
-        - '<ansi fg="{actortype}">{actor}</ansi> feints and prods <ansi fg="{acteetype}">{actee}</ansi> with a light touch.'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi> probes <ansi fg="{acteetype}">{actee}</ansi>''s guard with a measured strike.'
-        - '<ansi fg="{actortype}">{actor}</ansi> dances back while flicking their <ansi fg="item">{itemname}</ansi> across <ansi fg="{acteetype}">{actee}</ansi>.'
-        - '<ansi fg="{actortype}">{actor}</ansi> finds a small opening in <ansi fg="{acteetype}">{actee}</ansi>''s guard and delivers a precise but light strike.'
+      beginner:
+      - actor: 'You tap <ansi fg="{acteetype}">{actee}</ansi> with the tip of your <ansi fg="item">{itemname}</ansi>.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> taps you with the tip of their <ansi fg="item">{itemname}</ansi>.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> taps <ansi fg="{acteetype}">{actee}</ansi> with the tip of their <ansi fg="item">{itemname}</ansi>.'
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi> with a faint crackle.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> grazes you with a faint crackle.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi> with a crackle.'
+      - actor: 'You poke <ansi fg="{acteetype}">{actee}</ansi> lightly with your <ansi fg="item">{itemname}</ansi>.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> pokes you lightly with their <ansi fg="item">{itemname}</ansi>.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> pokes <ansi fg="{acteetype}">{actee}</ansi> lightly with their <ansi fg="item">{itemname}</ansi>.'
+      expert:
+      - actor: 'You flick a quick jab at <ansi fg="{acteetype}">{actee}</ansi>, barely connecting.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> flicks a quick jab at you, barely connecting.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> flicks a quick jab at <ansi fg="{acteetype}">{actee}</ansi>, barely connecting.'
+      - actor: 'Circling left, you graze <ansi fg="{acteetype}">{actee}</ansi> with a channeled tap.'
+        actee: 'Circling left, <ansi fg="{actortype}">{actor}</ansi> grazes you with a channeled tap.'
+        observer: 'Circling left, <ansi fg="{actortype}">{actor}</ansi> grazes <ansi fg="{acteetype}">{actee}</ansi> with a channeled tap.'
+      - actor: 'You feint high and prod low, landing a light touch on <ansi fg="{acteetype}">{actee}</ansi>.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> feints and prods you with a light channeled touch.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> feints and prods <ansi fg="{acteetype}">{actee}</ansi> with a light touch.'
+      master:
+      - actor: 'You probe <ansi fg="{acteetype}">{actee}</ansi>''s guard with a measured arcane tap.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> probes your guard with a measured arcane tap.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> probes <ansi fg="{acteetype}">{actee}</ansi>''s guard with a measured strike.'
+      - actor: 'Dancing back, you flick your <ansi fg="item">{itemname}</ansi> across <ansi fg="{acteetype}">{actee}</ansi>.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> dances back while flicking their <ansi fg="item">{itemname}</ansi> across you.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> dances back while flicking their <ansi fg="item">{itemname}</ansi> across <ansi fg="{acteetype}">{actee}</ansi>.'
+      - actor: 'You find a small opening and deliver a precise but light strike.'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> finds a small opening and delivers a precise but light strike.'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> finds a small opening in <ansi fg="{acteetype}">{actee}</ansi>''s guard and delivers a precise but light strike.'
   normal:
     together:
-      actor:
-        beginner:
-        - 'You jab <ansi fg="{acteetype}">{actee}</ansi> sharply with your <ansi fg="item">{itemname}</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> connects with <ansi fg="{acteetype}">{actee}</ansi>, energy crackling on impact!'
-        - 'You thrust your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with a flash of light!'
-        expert:
-        - 'You step forward and drive your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Feinting left, you channel a solid strike through your <ansi fg="item">{itemname}</ansi>!'
-        - 'Reading their stance, you jab with channeled precision!'
-        - 'You draw their defense and strike cleanly with your <ansi fg="item">{itemname}</ansi>!'
-        master:
-        - 'You press your advantage with a channeled thrust!'
-        - 'You exploit an opening and jab decisively at <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> flares as you deliver a solid arcane strike!'
-        - '{momentum}, your channeled strike finds its mark!'
-      actee:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> jabs you sharply with their <ansi fg="item">{itemname}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> connects, energy crackling on impact!'
-        - '<ansi fg="{actortype}">{actor}</ansi> thrusts their <ansi fg="item">{itemname}</ansi> into you with a flash of light!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> steps in and drives their <ansi fg="item">{itemname}</ansi> into you!'
-        - '<ansi fg="{actortype}">{actor}</ansi> channels a solid strike through their focus!'
-        - '<ansi fg="{actortype}">{actor}</ansi> reads your stance and jabs with channeled precision!'
-        - '<ansi fg="{actortype}">{actor}</ansi> draws out your defense and strikes cleanly with their <ansi fg="item">{itemname}</ansi>!'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi> presses their advantage with a channeled thrust!'
-        - '<ansi fg="{actortype}">{actor}</ansi> exploits an opening and jabs decisively at you!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> flares as it strikes you solidly!'
-        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi>''s channeled strike finds its mark on you!'
-      observer:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> jabs <ansi fg="{acteetype}">{actee}</ansi> sharply with their <ansi fg="item">{itemname}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> connects with <ansi fg="{acteetype}">{actee}</ansi>, energy crackling!'
-        - '<ansi fg="{actortype}">{actor}</ansi> thrusts their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with a flash of light!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> drives their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> steps forward and channels a solid strike!'
-        - '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s stance and jabs with channeled precision!'
-        - '<ansi fg="{actortype}">{actor}</ansi> draws out <ansi fg="{acteetype}">{actee}</ansi>''s defense and strikes cleanly with their <ansi fg="item">{itemname}</ansi>!'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi> presses forward with a channeled thrust at <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> exploits an opening and jabs decisively at <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> flares as it strikes <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi>''s channeled strike finds its mark on <ansi fg="{acteetype}">{actee}</ansi>!'
+      beginner:
+      - actor: 'You jab <ansi fg="{acteetype}">{actee}</ansi> sharply with your <ansi fg="item">{itemname}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> jabs you sharply with their <ansi fg="item">{itemname}</ansi>!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> jabs <ansi fg="{acteetype}">{actee}</ansi> sharply with their <ansi fg="item">{itemname}</ansi>!'
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> connects with <ansi fg="{acteetype}">{actee}</ansi>, energy crackling on impact!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> connects, energy crackling on impact!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> connects with <ansi fg="{acteetype}">{actee}</ansi>, energy crackling!'
+      - actor: 'You thrust your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with a flash of light!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> thrusts their <ansi fg="item">{itemname}</ansi> into you with a flash of light!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> thrusts their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with a flash of light!'
+      expert:
+      - actor: 'You step forward and drive your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> steps in and drives their <ansi fg="item">{itemname}</ansi> into you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> drives their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'Feinting left, you channel a solid strike through your <ansi fg="item">{itemname}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> channels a solid strike through their focus!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> steps forward and channels a solid strike!'
+      - actor: 'Reading their stance, you jab with channeled precision!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> reads your stance and jabs with channeled precision!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s stance and jabs with channeled precision!'
+      - actor: 'You draw their defense and strike cleanly with your <ansi fg="item">{itemname}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> draws out your defense and strikes cleanly with their <ansi fg="item">{itemname}</ansi>!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> draws out <ansi fg="{acteetype}">{actee}</ansi>''s defense and strikes cleanly with their <ansi fg="item">{itemname}</ansi>!'
+      master:
+      - actor: 'You press your advantage with a channeled thrust!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> presses their advantage with a channeled thrust!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> presses forward with a channeled thrust at <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'You exploit an opening and jab decisively at <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> exploits an opening and jabs decisively at you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> exploits an opening and jabs decisively at <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> flares as you deliver a solid arcane strike!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> flares as it strikes you solidly!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> flares as it strikes <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: '{momentum}, your channeled strike finds its mark!'
+        actee: '{momentum}, <ansi fg="{actortype}">{actor}</ansi>''s channeled strike finds its mark on you!'
+        observer: '{momentum}, <ansi fg="{actortype}">{actor}</ansi>''s channeled strike finds its mark on <ansi fg="{acteetype}">{actee}</ansi>!'
   heavy:
     together:
-      actor:
-        beginner:
-        - 'You drive your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with a burst of energy!'
-        - 'Your <ansi fg="item">{itemname}</ansi> slams into <ansi fg="{acteetype}">{actee}</ansi>, discharging a flash of power!'
-        - 'You channel a powerful strike through your <ansi fg="item">{itemname}</ansi>!'
-        expert:
-        - 'You step in close and unleash a devastating channeled blow on <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'From your {stance} stance, you drive arcane force through your <ansi fg="item">{itemname}</ansi>!'
-        - '{momentum}, you press forward and slam your focus into <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Feinting a retreat, you surge forward with a powerful channeled thrust!'
-        master:
-        - 'You draw their guard aside and unleash a punishing arcane strike!'
-        - 'Reading their weakness, you channel devastating force through your <ansi fg="item">{itemname}</ansi>!'
-        - 'Your {stance} approach pays off as you deliver a searing blow!'
-        - 'Seizing the advantage, you slam your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with arcane fury!'
-        - 'While {position} and {momentum}, you strike with channeled precision!'
-        - 'Arcane energy from your <ansi fg="item">{itemname}</ansi> sears <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
-      actee:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> drives their <ansi fg="item">{itemname}</ansi> into you with a burst of energy!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> slams into you, discharging power!'
-        - '<ansi fg="{actortype}">{actor}</ansi> channels a powerful strike through their <ansi fg="item">{itemname}</ansi> into you!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> steps in and unleashes a devastating channeled blow!'
-        - 'From their {stance} stance, <ansi fg="{actortype}">{actor}</ansi> drives arcane force through their <ansi fg="item">{itemname}</ansi> into you!'
-        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> presses forward and slams their focus into you!'
-        - '<ansi fg="{actortype}">{actor}</ansi> surges forward with a powerful arcane thrust!'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi> draws your guard and unleashes a punishing arcane strike!'
-        - '<ansi fg="{actortype}">{actor}</ansi> reads your weakness and channels devastating force!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s {stance} approach pays off as they deliver a searing blow to you!'
-        - '<ansi fg="{actortype}">{actor}</ansi> seizes advantage and slams you with arcane fury!'
-        - 'While {position} and {momentum}, <ansi fg="{actortype}">{actor}</ansi> strikes you with channeled precision!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s arcane energy sears your {bodypart}!'
-      observer:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}</ansi> drives their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with a burst of energy!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> slams into <ansi fg="{acteetype}">{actee}</ansi>, discharging power!'
-        - '<ansi fg="{actortype}">{actor}</ansi> channels a powerful strike through their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> steps in and unleashes a devastating channeled blow!'
-        - 'From their {stance} stance, <ansi fg="{actortype}">{actor}</ansi> drives arcane force through their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '{momentum}, <ansi fg="{actortype}">{actor}</ansi> presses forward and slams their focus into <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> surges forward with a powerful arcane thrust at <ansi fg="{acteetype}">{actee}</ansi>!'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi> draws the guard and unleashes a punishing arcane strike!'
-        - '<ansi fg="{actortype}">{actor}</ansi> channels devastating force through their <ansi fg="item">{itemname}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s {stance} approach pays off as they deliver a searing blow to <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> seizes advantage and slams <ansi fg="{acteetype}">{actee}</ansi> with arcane fury!'
-        - 'While {position} and {momentum}, <ansi fg="{actortype}">{actor}</ansi> strikes <ansi fg="{acteetype}">{actee}</ansi> with channeled precision!'
-        - 'Arcane energy from <ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> sears <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
+      beginner:
+      - actor: 'You drive your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with a burst of energy!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> drives their <ansi fg="item">{itemname}</ansi> into you with a burst of energy!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> drives their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with a burst of energy!'
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> slams into <ansi fg="{acteetype}">{actee}</ansi>, discharging a flash of power!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> slams into you, discharging power!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> slams into <ansi fg="{acteetype}">{actee}</ansi>, discharging power!'
+      - actor: 'You channel a powerful strike through your <ansi fg="item">{itemname}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> channels a powerful strike through their <ansi fg="item">{itemname}</ansi> into you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> channels a powerful strike through their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
+      expert:
+      - actor: 'You step in close and unleash a devastating channeled blow on <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> steps in and unleashes a devastating channeled blow!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> steps in and unleashes a devastating channeled blow!'
+      - actor: 'From your {stance} stance, you drive arcane force through your <ansi fg="item">{itemname}</ansi>!'
+        actee: 'From their {stance} stance, <ansi fg="{actortype}">{actor}</ansi> drives arcane force through their <ansi fg="item">{itemname}</ansi> into you!'
+        observer: 'From their {stance} stance, <ansi fg="{actortype}">{actor}</ansi> drives arcane force through their <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: '{momentum}, you press forward and slam your focus into <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: '{momentum}, <ansi fg="{actortype}">{actor}</ansi> presses forward and slams their focus into you!'
+        observer: '{momentum}, <ansi fg="{actortype}">{actor}</ansi> presses forward and slams their focus into <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'Feinting a retreat, you surge forward with a powerful channeled thrust!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> surges forward with a powerful arcane thrust!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> surges forward with a powerful arcane thrust at <ansi fg="{acteetype}">{actee}</ansi>!'
+      master:
+      - actor: 'You draw their guard aside and unleash a punishing arcane strike!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> draws your guard and unleashes a punishing arcane strike!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> draws the guard and unleashes a punishing arcane strike!'
+      - actor: 'Reading their weakness, you channel devastating force through your <ansi fg="item">{itemname}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> reads your weakness and channels devastating force!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> channels devastating force through their <ansi fg="item">{itemname}</ansi>!'
+      - actor: 'Your {stance} approach pays off as you deliver a searing blow!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s {stance} approach pays off as they deliver a searing blow to you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s {stance} approach pays off as they deliver a searing blow to <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'Seizing the advantage, you slam your <ansi fg="item">{itemname}</ansi> into <ansi fg="{acteetype}">{actee}</ansi> with arcane fury!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> seizes advantage and slams you with arcane fury!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> seizes advantage and slams <ansi fg="{acteetype}">{actee}</ansi> with arcane fury!'
+      - actor: 'While {position} and {momentum}, you strike with channeled precision!'
+        actee: 'While {position} and {momentum}, <ansi fg="{actortype}">{actor}</ansi> strikes you with channeled precision!'
+        observer: 'While {position} and {momentum}, <ansi fg="{actortype}">{actor}</ansi> strikes <ansi fg="{acteetype}">{actee}</ansi> with channeled precision!'
+      - actor: 'Arcane energy from your <ansi fg="item">{itemname}</ansi> sears <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s arcane energy sears your {bodypart}!'
+        observer: 'Arcane energy from <ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> sears <ansi fg="{acteetype}">{actee}</ansi>''s {bodypart}!'
   critical:
     together:
-      actor:
-        beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH POWER</ansi> as it strikes <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'You deliver a <ansi fg="cyan-bold">CRITICAL ARCANE STRIKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH ENERGY</ansi> on impact!'
-        - 'By pure luck, your wild swing with your <ansi fg="item">{itemname}</ansi> connects and <ansi fg="cyan-bold">CRACKS INTO</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        expert:
-        - 'You channel overwhelming force and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>, and you <ansi fg="cyan-bold">ANNIHILATE</ansi> them with arcane fury!'
-        - 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
-        - 'You slip past their guard and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRACKS TRUE</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
-        master:
-        - 'Your tactical brilliance creates the perfect opening, and you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> strike!'
-        - 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
-        - 'Channeling all momentum, you <ansi fg="cyan-bold">SEAR THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly!'
-      actee:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH POWER</ansi> as it strikes you!'
-        - 'You are hit by a <ansi fg="cyan-bold">CRITICAL ARCANE STRIKE</ansi> from <ansi fg="{actortype}">{actor}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH ENERGY</ansi> as it slams into you!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s wild swing gets lucky and <ansi fg="cyan-bold">CRACKS INTO</ansi> you!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> channels overwhelming force and <ansi fg="cyan-bold">DEVASTATES</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}</ansi> opens your guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> you with arcane fury!'
-        - '<ansi fg="{actortype}">{actor}</ansi> reads your stance and <ansi fg="cyan-bold">FLAWLESSLY STRIKES</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}</ansi> slips past your guard and <ansi fg="cyan-bold">CRACKS TRUE</ansi> against you!'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance creates the perfect opening, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
-        - 'With almost contemptuous ease, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> you!'
-        - '<ansi fg="{actortype}">{actor}</ansi> needs only the barest motion to deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> against you!'
-        - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">SEARS THROUGH</ansi> you utterly!'
-      observer:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH POWER</ansi> striking <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL ARCANE STRIKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH ENERGY</ansi> as it slams into <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi>''s wild swing gets lucky, <ansi fg="cyan-bold">CRACKING INTO</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}</ansi> channels overwhelming force and <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> opens the guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s stance and delivers a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> slips past the guard and <ansi fg="cyan-bold">CRACKS TRUE</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
-        master:
-        - '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
-        - 'With almost contemptuous ease, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> needs only the barest motion to deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">SEARS THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+      beginner:
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH POWER</ansi> as it strikes <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH POWER</ansi> as it strikes you!'
+        observer: '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">ERUPTS WITH POWER</ansi> striking <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'You deliver a <ansi fg="cyan-bold">CRITICAL ARCANE STRIKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: 'You are hit by a <ansi fg="cyan-bold">CRITICAL ARCANE STRIKE</ansi> from <ansi fg="{actortype}">{actor}</ansi>!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL ARCANE STRIKE</ansi> to <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH ENERGY</ansi> on impact!'
+        actee: '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH ENERGY</ansi> as it slams into you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">BLAZES WITH ENERGY</ansi> as it slams into <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'By pure luck, your wild swing with your <ansi fg="item">{itemname}</ansi> connects and <ansi fg="cyan-bold">CRACKS INTO</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s wild swing gets lucky and <ansi fg="cyan-bold">CRACKS INTO</ansi> you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s wild swing gets lucky, <ansi fg="cyan-bold">CRACKING INTO</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+      expert:
+      - actor: 'You channel overwhelming force and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> channels overwhelming force and <ansi fg="cyan-bold">DEVASTATES</ansi> you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> channels overwhelming force and <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'Your masterful feint opens <ansi fg="{acteetype}">{actee}</ansi>, and you <ansi fg="cyan-bold">ANNIHILATE</ansi> them with arcane fury!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> opens your guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> you with arcane fury!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> opens the guard and <ansi fg="cyan-bold">ANNIHILATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'Reading every move, you deliver a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> reads your stance and <ansi fg="cyan-bold">FLAWLESSLY STRIKES</ansi> you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> reads <ansi fg="{acteetype}">{actee}</ansi>''s stance and delivers a <ansi fg="cyan-bold">FLAWLESS CHANNELED STRIKE</ansi>!'
+      - actor: 'You slip past their guard and your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRACKS TRUE</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> slips past your guard and <ansi fg="cyan-bold">CRACKS TRUE</ansi> against you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> slips past the guard and <ansi fg="cyan-bold">CRACKS TRUE</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
+      master:
+      - actor: 'Your tactical brilliance creates the perfect opening, and you <ansi fg="cyan-bold">OBLITERATE</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance creates the perfect opening, and you are <ansi fg="cyan-bold">OBLITERATED</ansi>!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi>''s tactical brilliance: <ansi fg="cyan-bold">OBLITERATION</ansi>!'
+      - actor: 'Your {stance} approach culminates in a <ansi fg="cyan-bold">DEVASTATING CRITICAL</ansi> strike!'
+        actee: 'With almost contemptuous ease, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> you!'
+        observer: 'With almost contemptuous ease, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="cyan-bold">OBLITERATES</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'While {position}, {momentum}, you deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> needs only the barest motion to deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> against you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> needs only the barest motion to deliver a <ansi fg="cyan-bold">PERFECT EXECUTION</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'Channeling all momentum, you <ansi fg="cyan-bold">SEAR THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi> utterly!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">SEARS THROUGH</ansi> you utterly!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> channels all momentum and <ansi fg="cyan-bold">SEARS THROUGH</ansi> <ansi fg="{acteetype}">{actee}</ansi>!'
   fumble:
     together:
-      actor:
-        beginner:
-        - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as the energy fizzles out!'
-        - 'You <ansi fg="red-bold">FUMBLE</ansi> and nearly drop your <ansi fg="item">{itemname}</ansi>!'
-        - 'You overextend your thrust and <ansi fg="red-bold">FUMBLE</ansi>, stumbling forward!'
-        - 'You swing your <ansi fg="item">{itemname}</ansi> wildly and <ansi fg="red-bold">FUMBLE</ansi>, nearly braining yourself!'
-        expert:
-        - 'Your channeled strike misfires, and you <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your arcane jab!'
-        - 'You lose your balance at the worst moment and <ansi fg="red-bold">FUMBLE</ansi> the strike!'
-        - 'You overcommit to the feint and <ansi fg="red-bold">FUMBLE</ansi>, your <ansi fg="item">{itemname}</ansi> skittering off course!'
-        master:
-        - '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter disrupts your channel, and you <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Despite perfect form, a surge of wild magic causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'A moment''s carelessness is all it takes, and you <ansi fg="red-bold">FUMBLE</ansi> despite your mastery!'
-        - 'Your <ansi fg="item">{itemname}</ansi> catches on <ansi fg="{acteetype}">{actee}</ansi>''s guard and you <ansi fg="red-bold">FUMBLE</ansi>!'
-      actee:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as its energy fizzles!'
-        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> in a clumsy display!'
-        - '<ansi fg="{actortype}">{actor}</ansi> overextends their thrust and <ansi fg="red-bold">FUMBLES</ansi>, stumbling toward you!'
-        - '<ansi fg="{actortype}">{actor}</ansi> swings wildly and <ansi fg="red-bold">FUMBLES</ansi>, nearly braining themselves!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> channeled strike misfires, and they <ansi fg="red-bold">FUMBLE</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> misjudges and <ansi fg="red-bold">FUMBLES</ansi> their arcane jab!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and <ansi fg="red-bold">FUMBLES</ansi> the strike against you!'
-        - '<ansi fg="{actortype}">{actor}</ansi> overcommits to the feint and <ansi fg="red-bold">FUMBLES</ansi>, their <ansi fg="item">{itemname}</ansi> skittering wide!'
-        master:
-        - 'Your defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s channel, and they <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Despite their skill, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their strike!'
-        - 'A moment''s carelessness costs <ansi fg="{actortype}">{actor}</ansi>, and they <ansi fg="red-bold">FUMBLE</ansi> despite their mastery!'
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> catches on your guard and they <ansi fg="red-bold">FUMBLE</ansi>!'
-      observer:
-        beginner:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as its energy fizzles!'
-        - '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their arcane strike against <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> overextends their thrust and <ansi fg="red-bold">FUMBLES</ansi>, stumbling toward <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> swings wildly and <ansi fg="red-bold">FUMBLES</ansi>, nearly braining themselves!'
-        expert:
-        - '<ansi fg="{actortype}">{actor}''s</ansi> channeled strike misfires, and they <ansi fg="red-bold">FUMBLE</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> loses their balance and <ansi fg="red-bold">FUMBLES</ansi> the strike against <ansi fg="{acteetype}">{actee}</ansi>!'
-        - '<ansi fg="{actortype}">{actor}</ansi> overcommits to the feint and <ansi fg="red-bold">FUMBLES</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
-        master:
-        - '<ansi fg="{acteetype}">{actee}''s</ansi> defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s channel: a <ansi fg="red-bold">FUMBLE</ansi>!'
-        - 'Despite masterful form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
-        - 'A moment''s carelessness costs <ansi fg="{actortype}">{actor}</ansi>: a <ansi fg="red-bold">FUMBLE</ansi> despite their mastery!'
-        - 'Despite masterful form, <ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> catches wrong and they <ansi fg="red-bold">FUMBLE</ansi>!'
+      beginner:
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as the energy fizzles out!'
+        actee: '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as its energy fizzles!'
+        observer: '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="red-bold">FUMBLES</ansi> as its energy fizzles!'
+      - actor: 'You <ansi fg="red-bold">FUMBLE</ansi> and nearly drop your <ansi fg="item">{itemname}</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their <ansi fg="item">{itemname}</ansi> in a clumsy display!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their arcane strike against <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'You overextend your thrust and <ansi fg="red-bold">FUMBLE</ansi>, stumbling forward!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> overextends their thrust and <ansi fg="red-bold">FUMBLES</ansi>, stumbling toward you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> overextends their thrust and <ansi fg="red-bold">FUMBLES</ansi>, stumbling toward <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'You swing your <ansi fg="item">{itemname}</ansi> wildly and <ansi fg="red-bold">FUMBLE</ansi>, nearly braining yourself!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> swings wildly and <ansi fg="red-bold">FUMBLES</ansi>, nearly braining themselves!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> swings wildly and <ansi fg="red-bold">FUMBLES</ansi>, nearly braining themselves!'
+      expert:
+      - actor: 'Your channeled strike misfires, and you <ansi fg="red-bold">FUMBLE</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}''s</ansi> channeled strike misfires, and they <ansi fg="red-bold">FUMBLE</ansi>!'
+        observer: '<ansi fg="{actortype}">{actor}''s</ansi> channeled strike misfires, and they <ansi fg="red-bold">FUMBLE</ansi>!'
+      - actor: 'You misjudge the distance and <ansi fg="red-bold">FUMBLE</ansi> your arcane jab!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> misjudges and <ansi fg="red-bold">FUMBLES</ansi> their arcane jab!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> misjudges the distance and <ansi fg="red-bold">FUMBLES</ansi>!'
+      - actor: 'You lose your balance at the worst moment and <ansi fg="red-bold">FUMBLE</ansi> the strike!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> loses their balance and <ansi fg="red-bold">FUMBLES</ansi> the strike against you!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> loses their balance and <ansi fg="red-bold">FUMBLES</ansi> the strike against <ansi fg="{acteetype}">{actee}</ansi>!'
+      - actor: 'You overcommit to the feint and <ansi fg="red-bold">FUMBLE</ansi>, your <ansi fg="item">{itemname}</ansi> skittering off course!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> overcommits to the feint and <ansi fg="red-bold">FUMBLES</ansi>, their <ansi fg="item">{itemname}</ansi> skittering wide!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> overcommits to the feint and <ansi fg="red-bold">FUMBLES</ansi> against <ansi fg="{acteetype}">{actee}</ansi>!'
+      master:
+      - actor: '<ansi fg="{acteetype}">{actee}</ansi>''s unexpected counter disrupts your channel, and you <ansi fg="red-bold">FUMBLE</ansi>!'
+        actee: 'Your defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s channel, and they <ansi fg="red-bold">FUMBLE</ansi>!'
+        observer: '<ansi fg="{acteetype}">{actee}''s</ansi> defense disrupts <ansi fg="{actortype}">{actor}</ansi>''s channel: a <ansi fg="red-bold">FUMBLE</ansi>!'
+      - actor: 'Despite perfect form, a surge of wild magic causes you to <ansi fg="red-bold">FUMBLE</ansi>!'
+        actee: 'Despite their skill, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi> their strike!'
+        observer: 'Despite masterful form, <ansi fg="{actortype}">{actor}</ansi> <ansi fg="red-bold">FUMBLES</ansi>!'
+      - actor: 'A moment''s carelessness is all it takes, and you <ansi fg="red-bold">FUMBLE</ansi> despite your mastery!'
+        actee: 'A moment''s carelessness costs <ansi fg="{actortype}">{actor}</ansi>, and they <ansi fg="red-bold">FUMBLE</ansi> despite their mastery!'
+        observer: 'A moment''s carelessness costs <ansi fg="{actortype}">{actor}</ansi>: a <ansi fg="red-bold">FUMBLE</ansi> despite their mastery!'
+      - actor: 'Your <ansi fg="item">{itemname}</ansi> catches on <ansi fg="{acteetype}">{actee}</ansi>''s guard and you <ansi fg="red-bold">FUMBLE</ansi>!'
+        actee: '<ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> catches on your guard and they <ansi fg="red-bold">FUMBLE</ansi>!'
+        observer: 'Despite masterful form, <ansi fg="{actortype}">{actor}''s</ansi> <ansi fg="item">{itemname}</ansi> catches wrong and they <ansi fg="red-bold">FUMBLE</ansi>!'
