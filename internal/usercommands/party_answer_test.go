@@ -38,3 +38,28 @@ func TestPartyAnswer_MemberWithNoInvitationIsRefused(t *testing.T) {
 		})
 	}
 }
+
+// A player in no party at all has no invitation either, and must read the
+// same line as a member with none (the M7 slice 1 playtest found "You are not
+// attached to a party." here).
+func TestPartyAnswer_NoPartyIsRefusedTheSame(t *testing.T) {
+	for _, cmd := range []string{`accept`, `join`, `decline`} {
+		t.Run(cmd, func(t *testing.T) {
+			t.Cleanup(seedAllRegistries())
+			user, room := getTestUserAndRoom(t)
+			if p := parties.Get(user.UserId); p != nil {
+				p.Disband()
+			}
+			require.Nil(t, parties.Get(user.UserId))
+			events.DrainQueuedMessagesForTest(user.UserId)
+
+			handled, err := Party(cmd, user, room, 0)
+			require.NoError(t, err)
+			require.True(t, handled)
+
+			out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
+			assert.Contains(t, out, refusal.NoPartyInviteLine)
+			assert.Nil(t, parties.Get(user.UserId), "still in no party")
+		})
+	}
+}

@@ -44,6 +44,15 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return cmdPartyInvite(user, room, currentParty, rest)
 	}
 
+	// Answering an invitation comes before the party check: a player in no
+	// party has no invitation, and reads the same line as a member with none.
+	if partyCommand == `accept` || partyCommand == `join` || partyCommand == `decline` {
+		if currentParty == nil {
+			refusal.NoPartyInvite(user)
+			return true, nil
+		}
+	}
+
 	//
 	// what follows doesn't mamke sense unless they are in a party
 	//
