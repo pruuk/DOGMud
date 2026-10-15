@@ -129,7 +129,11 @@ before you can ..."), guild, companion (including "You have no companion
 to ..."), party leader, in combat (including the generic "can't do that while
 fighting" gate), failure, "Who???" and prompts. The prompt row matches a
 literal opening with a question (`Pet what?`, `Talk to whom?`, `Bid how
-much?`); interactive `cmdPrompt.Ask` questions do not match it. The "nobody
+much gold?`). Two more rows catch the "which" form (`Switch to which
+target?`) and the would-you-like form (`What would you like to sell?`).
+`refusalPhraseHits` skips any literal passed directly to a `.Ask(` call
+(every receiver is `cmdPrompt`): interactive questions wait for the
+player's answer and are not refusals. The "nobody
 like that here" row is narrowed to
 "to ask": the companion module's "to cast it at" text is a trace reason for
 the model, not a line a player reads.
