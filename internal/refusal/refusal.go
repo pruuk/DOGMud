@@ -32,7 +32,7 @@ func send(to Recipient, line string) {
 }
 
 // echo is typed as a refusal may repeat it: tags stripped, trimmed, capped at
-// echoMax runes, and any leftover markup escaped, so typed input cannot style
+// echoMax display columns, and any leftover markup escaped, so typed input cannot style
 // the line. Only names the player holds or knows are echoed (spec section 2).
 func echo(typed string) string {
 	s := strings.TrimSpace(ansiTag.ReplaceAllString(typed, ``))
