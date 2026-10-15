@@ -149,7 +149,6 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 					break
 				}
 				if !storageAddQuiet(user, itm) {
-					storageFull = true
 					break
 				}
 				deposited++

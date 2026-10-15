@@ -40,7 +40,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				// swallowed error here would report success on a failed drop.
 				return Drop(fmt.Sprintf("%d gold", user.Character.Gold), user, room, flags)
 			}
-			user.SendText(messaging.CategorySystem, `You don't have any gold to drop.`)
+			user.SendText(messaging.CategoryRefusal, `You don't have any gold to drop.`)
 			return true, nil
 		}
 
@@ -79,7 +79,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			if user.Character.Gold > 0 {
 				user.SendText(messaging.CategoryRefusal, `Drop how much gold? Try <ansi fg="command">drop <amount> gold</ansi>.`)
 			} else {
-				user.SendText(messaging.CategorySystem, `You don't have any gold to drop.`)
+				user.SendText(messaging.CategoryRefusal, `You don't have any gold to drop.`)
 			}
 			return true, nil
 		}

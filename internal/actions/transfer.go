@@ -55,7 +55,7 @@ func TransferItemToBackpack(item items.Item, toChar *characters.Character, toUse
 	if !toChar.StoreItem(item) {
 		// Restore to source on failure
 		rollback(item)
-		return fmt.Errorf("inventory capacity exceeded")
+		return ErrInventoryFull
 	}
 
 	// Fire ItemOwnership event for gain
