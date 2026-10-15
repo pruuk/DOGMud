@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go (`internal/items`, root guards), yaml.v2, Python read-only tools in `tools/`.
 
-**Spec:** `docs/superpowers/specs/2026-10-13-messaging-m6-rows26-27-combat-triads-design.md` (facts table at the top).
+**Spec:** `docs/superpowers/specs/completed/2026-10-13-messaging-m6-rows26-27-combat-triads-design.md` (facts table at the top).
 
 ---
 
