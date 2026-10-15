@@ -237,7 +237,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	stagedTargets := stageThrowTargets(room)
 	if !actions.SpecialMoveReady(user.Character) {
-		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
+		refusal.Cooldown(user, "throw")
 		return true, nil
 	}
 

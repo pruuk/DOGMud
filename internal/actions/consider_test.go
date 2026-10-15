@@ -120,7 +120,7 @@ func TestConsider_CooldownRefusalNeitherRollsNorTrains(t *testing.T) {
 	if !r.OnCooldown || rolled || len(self.statUses) != 0 || len(self.awards) != 0 {
 		t.Fatalf("refusal: OnCooldown %v rolled %v trained %v awards %+v", r.OnCooldown, rolled, self.statUses, self.awards)
 	}
-	if len(self.sent) != 1 || !strings.Contains(self.sent[0], "moment to recover") {
+	if len(self.sent) != 1 || !strings.Contains(self.sent[0], "before you can consider anyone") {
 		t.Fatalf("refusal text: %q", self.sent)
 	}
 }

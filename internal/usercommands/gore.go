@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -38,11 +39,11 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if res.OnCooldown {
-		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
+		refusal.Cooldown(user, "gore")
 		return true, nil
 	}
 	if res.NoTarget {
-		user.SendText(messaging.CategorySystem, "You have no target!")
+		refusal.NoTarget(user, "gore")
 		return true, nil
 	}
 

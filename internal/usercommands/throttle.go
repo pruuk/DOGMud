@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -50,11 +51,11 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		return true, nil
 	}
 	if res.OnCooldown {
-		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
+		refusal.Cooldown(user, "throttle")
 		return true, nil
 	}
 	if res.NoTarget {
-		user.SendText(messaging.CategorySystem, "You have no target!")
+		refusal.NoTarget(user, "throttle")
 		return true, nil
 	}
 

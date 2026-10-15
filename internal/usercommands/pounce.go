@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -45,11 +46,11 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 	if res.OnCooldown {
-		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
+		refusal.Cooldown(user, "pounce")
 		return true, nil
 	}
 	if res.NoTarget {
-		user.SendText(messaging.CategorySystem, "You have no target!")
+		refusal.NoTarget(user, "pounce")
 		return true, nil
 	}
 

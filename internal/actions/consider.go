@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -21,9 +22,6 @@ type ConsiderResult struct {
 
 // considerContest rolls a player's read. Tests pin it.
 var considerContest = combat.RunContest
-
-// considerCooldownText is the special-move refusal every special move sends.
-const considerCooldownText = "You need a moment to recover before attempting another special move."
 
 // Consider reads a fight from actor's side (#301): a verdict and two paces
 // predicted from combat's own math (ReadFight).
@@ -52,7 +50,7 @@ func Consider(actor Actor, target Actor) ConsiderResult {
 
 	if !ClaimSpecialMove(selfChar) {
 		result.OnCooldown = true
-		actor.SendText(messaging.CategorySystem, considerCooldownText)
+		refusal.Cooldown(actor, "consider anyone")
 		return result
 	}
 
