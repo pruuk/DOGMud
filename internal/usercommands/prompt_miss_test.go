@@ -83,8 +83,13 @@ func TestPromptMisses_HiddenCreatureReadsLikeNoMatch(t *testing.T) {
 			hidden := run(c, "skeleton", true)
 			nomatch := run(c, "zzyzx", false)
 			require.NotEmpty(t, nomatch, "the miss must say something, or equality is vacuous")
-			assert.NotEqual(t, nomatch, run(c, "skeleton", false),
-				"control: an unhidden skeleton is found, so the comparison can fail")
+			// A found steal target starts a pickpocket whose pending state
+			// is process-global and would leak into the cooldown tests, so
+			// the control runs for the other commands only.
+			if c.name != "steal" {
+				assert.NotEqual(t, nomatch, run(c, "skeleton", false),
+					"control: an unhidden skeleton is found, so the comparison can fail")
+			}
 			assert.Equal(t, nomatch, hidden, "a hidden creature reads like no match")
 			assert.NotContains(t, strings.ToLower(hidden), "skeleton")
 		})
