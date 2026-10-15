@@ -18,6 +18,7 @@ func Read(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	foundItemName := ""
 	foundItemLongName := ""
 	foundItemDescription := ""
+	carriedWithoutText := false
 	// Search for an exact match first
 	if readItem, found := user.Character.FindInBackpack(rest); found {
 		iSpec := readItem.GetSpec()
@@ -38,12 +39,16 @@ func Read(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			foundItemName = readItem.DisplayName()
 			foundItemLongName = readItem.DisplayName()
 			foundItemDescription = desc
+		} else {
+			carriedWithoutText = true
 		}
 	}
 
 	isSneaking := user.Character.IsHidden()
 
-	if len(foundItemName) == 0 {
+	if carriedWithoutText {
+		user.SendText(messaging.CategoryRefusal, `There is nothing written on it.`)
+	} else if len(foundItemName) == 0 {
 		refusal.NotCarrying(user, rest)
 	} else {
 		user.SendText(messaging.CategorySystem,

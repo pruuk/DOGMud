@@ -271,7 +271,7 @@ func cmdCharacterChange(user *users.UserRecord, room *rooms.Room, cmdPrompt *pro
 
 		succes := user.SwapToAlt(match)
 		if !succes {
-			refusal.Failed(user, "", errors.New("SwapToAlt failed"), "userId", user.UserId)
+			refusal.Failed(user, "", errors.New("SwapToAlt failed"), "userId", user.UserId, "alt", match)
 			user.ClearPrompt()
 			return true, nil
 		}

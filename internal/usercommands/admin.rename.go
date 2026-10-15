@@ -33,7 +33,7 @@ func Rename(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	rest = strings.Join(args[1:], " ")
 
 	if !found {
-		refusal.NotCarrying(user, rest)
+		refusal.NotCarrying(user, args[0])
 	} else {
 		// Swap the item location
 		user.Character.RemoveItem(matchItem)
