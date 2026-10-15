@@ -55,7 +55,7 @@ func TestKickActorLineWrapsAt80(t *testing.T) {
 // against a SendText line joined with the line after it.
 var systemNoticeMarkers = []string{
 	"CostRefusalText", "focused on your work", "need a moment", "no target",
-	"already rallied", "still echoes", "Throw what?", "to throw.", "isn't something you can throw",
+	"already rallied", "still echoes", "to throw.", "isn't something you can throw",
 	"crumbles apart", "ChannelDefenceShortageText", "text)", "cannot make a sound",
 }
 

@@ -46,7 +46,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// 2. Parse spell name and optional target from rest
 	rest = strings.TrimSpace(rest)
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Cast what? (Usage: cast <spell> [target])</ansi>`)
+		refusal.Prompt(user, "cast", refusal.What, "cast <spell> <name>")
 		return true, nil
 	}
 

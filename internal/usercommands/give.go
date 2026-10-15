@@ -26,7 +26,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) < 2 {
-		user.SendText(messaging.CategorySystem, `Give what? To whom? (<ansi fg="command">give {object-name} {receiver-name}</ansi>)`)
+		refusal.Prompt(user, "give", refusal.What, "give <item> <name>")
 		return true, nil
 	}
 
@@ -421,7 +421,7 @@ func splitGiveArgs(args []string, user *users.UserRecord, room *rooms.Room) (giv
 }
 
 // giveHowMuchGoldLine answers a gold give of zero or less.
-const giveHowMuchGoldLine = `Give how much gold? Try <ansi fg="command">give <amount> gold <name></ansi>.`
+var giveHowMuchGoldLine = refusal.PromptText("give", refusal.HowMuchGold, "give <amount> gold <name>")
 
 // parseGoldPhrase is the single gold parser for both resolution and execution.
 // It reports whether `what` is a gold phrase ("50 gold", "50gold") and, if so,

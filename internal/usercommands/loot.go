@@ -30,7 +30,7 @@ func Loot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	rest = strings.TrimSpace(rest)
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, "Loot what?")
+		refusal.Prompt(user, "loot", refusal.What, "loot <corpse>")
 		return true, nil
 	}
 

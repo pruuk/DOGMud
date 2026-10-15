@@ -85,7 +85,7 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 
 	// Require a target noun.
 	if opts.TargetNoun == "" {
-		actor.SendText(messaging.CategorySystem, "Defuse what? Specify an exit or container.")
+		refusal.Prompt(actor, "defuse", refusal.What, "defuse <exit or container>")
 		return DefuseResult{Reason: "no target"}
 	}
 
