@@ -70,7 +70,7 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			user.SendText(messaging.CategorySystem, "You can't shadow yourself.")
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, "Shadow whom?")
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 

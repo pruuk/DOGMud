@@ -552,7 +552,7 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, `Follow whom?`)
+	refusal.NotHereCreature(user)
 
 	return true, nil
 }

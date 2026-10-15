@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -91,16 +92,16 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	// #454, owner call 2: a typed name resolves only at full sight, or
 	// asking would confirm who is there in the dark.
-	searchName, refusal := actions.AimBySight(user.Character, user.UserId, room, args[0], `ask`)
-	if refusal != `` {
-		user.SendText(messaging.CategoryRefusal, refusal)
+	searchName, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, args[0], `ask`)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 
 	// Only ask charmed players or mobs to do stuff
 	target, err := actions.ResolveTargetActor(room, searchName, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil {
-		user.SendText(messaging.CategorySystem, `ask who what?`)
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 	if target.IsPlayer() {

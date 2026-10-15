@@ -48,8 +48,12 @@ func Talk(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	target, err := actions.ResolveTargetActor(room, searchName, actions.ResolveTargetOptions{Viewer: user.Character})
-	if err != nil || target.IsPlayer() {
-		user.SendText(messaging.CategorySystem, `Talk to whom?`)
+	if err != nil {
+		refusal.NotHereCreature(user)
+		return true, nil
+	}
+	if target.IsPlayer() {
+		refusal.TalkToPlayer(user)
 		return true, nil
 	}
 	mob := target.(*actions.MobActor).Mob

@@ -3,6 +3,7 @@ package usercommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -61,5 +62,5 @@ func TestLookAtCreature_ClearViewerStillLooks(t *testing.T) {
 
 	out := runGate(t, viewer, func() (bool, error) { return Look("bobrick", viewer, room, 0) })
 	require.NotContains(t, out, shapesLookHint)
-	require.NotContains(t, out, "Look at what???")
+	require.NotContains(t, out, refusal.NotHereThingLine)
 }

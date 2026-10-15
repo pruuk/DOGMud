@@ -126,7 +126,7 @@ func parseStealArgs(args []string, room *rooms.Room, user *users.UserRecord) *ac
 		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return nil
 	}
-	user.SendText(messaging.CategorySystem, "Steal from whom?")
+	refusal.NotHereThing(user)
 	return nil
 }
 

@@ -121,6 +121,6 @@ func parsePlantArgs(args []string, room *rooms.Room, user *users.UserRecord) (ac
 		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return actions.PlantOptions{}, false
 	}
-	user.SendText(messaging.CategorySystem, "Plant on whom?")
+	refusal.NotHereThing(user)
 	return actions.PlantOptions{}, false
 }
