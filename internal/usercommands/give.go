@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -106,7 +107,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				userActor := &actions.UserActor{User: user, Room: room}
 				result := actions.GiveItemToChar(userActor, giveWhat, targetUser.Character, targetUser.UserId, 0)
 				if result.Err != nil {
-					user.SendText(messaging.CategorySystem, "Something went wrong.")
+					refusal.Failed(user, "", result.Err, "userId", user.UserId)
 					return true, nil
 				}
 
@@ -128,7 +129,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				giveGoldToUser(user, targetUser, room, giveGoldAmount)
 
 			} else {
-				user.SendText(messaging.CategorySystem, "Something went wrong.")
+				refusal.Failed(user, "", errors.New("give to a player: neither an item nor gold"), "userId", user.UserId)
 			}
 
 			return true, nil
@@ -154,7 +155,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			if giveGoldAmount > 0 {
 				userActor := &actions.UserActor{User: user, Room: room}
 				if err := actions.GiveGoldToChar(userActor, giveGoldAmount, &m.Character); err != nil {
-					user.SendText(messaging.CategorySystem, "Something went wrong.")
+					refusal.Failed(user, "", err, "userId", user.UserId)
 					return true, nil
 				}
 
@@ -216,7 +217,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				userActor := &actions.UserActor{User: user, Room: room}
 				result := actions.GiveItemToChar(userActor, giveWhat, &m.Character, 0, m.InstanceId)
 				if result.Err != nil {
-					user.SendText(messaging.CategorySystem, "Something went wrong.")
+					refusal.Failed(user, "", result.Err, "userId", user.UserId)
 					return true, nil
 				}
 				// Update giveItem so onGive scripting below has the live value.
@@ -274,7 +275,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				m.Command(fmt.Sprintf(`gearup !%d`, giveItem.ItemId))
 			}
 		} else {
-			user.SendText(messaging.CategorySystem, "Something went wrong.")
+			refusal.Failed(user, "", errors.New("give to a mob: neither an item nor gold"), "userId", user.UserId)
 		}
 
 		return true, nil
@@ -317,7 +318,7 @@ func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount
 
 	userActor := &actions.UserActor{User: user, Room: room}
 	if err := actions.GiveGoldToChar(userActor, amount, targetUser.Character); err != nil {
-		user.SendText(messaging.CategorySystem, "Something went wrong.")
+		refusal.Failed(user, "", err, "userId", user.UserId)
 		return
 	}
 

@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"math"
@@ -158,7 +159,7 @@ func cmdPartyCreate(user *users.UserRecord, currentParty *parties.Party) (bool, 
 		dispatchPartyEvent(currentParty, `created`)
 
 	} else {
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party create failed"), "userId", user.UserId)
 	}
 
 	return true, nil
@@ -217,7 +218,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		createdParty = true
 	}
 	if currentParty == nil {
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party invite: no party after create"), "userId", user.UserId)
 		return true, nil
 	}
 
@@ -235,7 +236,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		if createdParty {
 			currentParty.Disband()
 		}
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party invite failed"), "userId", user.UserId)
 		return true, nil
 	}
 
@@ -267,7 +268,7 @@ func cmdPartyAccept(user *users.UserRecord, currentParty *parties.Party) (bool, 
 		dispatchPartyEvent(currentParty, `joined`)
 
 	} else {
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party accept failed"), "userId", user.UserId)
 	}
 	return true, nil
 }
@@ -283,7 +284,7 @@ func cmdPartyDecline(user *users.UserRecord, currentParty *parties.Party) (bool,
 		user.SendText(messaging.CategorySystem, `You decline the invitation.`)
 
 	} else {
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party decline failed"), "userId", user.UserId)
 	}
 	return true, nil
 }

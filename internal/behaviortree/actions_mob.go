@@ -508,7 +508,7 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 	if err != nil {
 		mudlog.Error("actOpenInstancePortal", "zone", templateZone, "userId", user.UserId, "error", err)
 		user.Character.Gold += goldAmount // refund
-		mob.Command("say Something went wrong. The planes resist me. Your gold is returned.")
+		mob.Command("say The planes resist me. Your gold is returned.")
 		return Success
 	}
 
@@ -520,7 +520,8 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 	room := rooms.LoadRoom(ctx.RoomId)
 	if room == nil {
 		user.Character.Gold += goldAmount // refund
-		mob.Command("say Something went wrong. Your gold is returned.")
+		mudlog.Error("actOpenInstancePortal", "zone", templateZone, "userId", user.UserId, "error", "room did not load", "roomId", ctx.RoomId)
+		mob.Command("say The way will not open. Your gold is returned.")
 		return Success
 	}
 	added := room.AddTemporaryExit(exitKey, exit.TemporaryRoomExit{

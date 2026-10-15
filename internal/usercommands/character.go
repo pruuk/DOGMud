@@ -3,6 +3,7 @@ package usercommands
 import (
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/casing"
@@ -270,7 +271,7 @@ func cmdCharacterChange(user *users.UserRecord, room *rooms.Room, cmdPrompt *pro
 
 		succes := user.SwapToAlt(match)
 		if !succes {
-			user.SendText(messaging.CategorySystem, `<ansi fg="203">Something went wrong.</ansi>`)
+			refusal.Failed(user, "", errors.New("SwapToAlt failed"), "userId", user.UserId)
 			user.ClearPrompt()
 			return true, nil
 		}

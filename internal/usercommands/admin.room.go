@@ -52,7 +52,7 @@ func Room(rest string, user *users.UserRecord, liveRoom *rooms.Room, flags event
 	}
 
 	if room == nil {
-		err := fmt.Errorf(`Something went wrong for RoomId: %d`, liveRoom.RoomId)
+		err := fmt.Errorf("room %d did not load from its template", liveRoom.RoomId)
 		user.SendText(messaging.CategorySystem, err.Error())
 		return true, err
 	}

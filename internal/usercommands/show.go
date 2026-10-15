@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -59,7 +60,7 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	user.Character.CancelConditionsWithFlag(conditions.Hidden)
 
 	if showItem.ItemId == 0 {
-		user.SendText(messaging.CategorySystem, "Something went wrong.")
+		refusal.Failed(user, "", errors.New("show: found item has no id"), "userId", user.UserId)
 		return true, nil
 	}
 
