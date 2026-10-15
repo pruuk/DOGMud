@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/quests"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -25,14 +26,14 @@ func Talk(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	args := util.SplitButRespectQuotes(rest)
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, `Talk to whom?`)
+		refusal.Prompt(user, "talk to", refusal.Whom, "talk <name>")
 		return true, nil
 	}
 
 	// Support "talk to <npc>" as well as "talk <npc>"
 	if strings.ToLower(args[0]) == `to` {
 		if len(args) < 2 {
-			user.SendText(messaging.CategorySystem, `Talk to whom?`)
+			refusal.Prompt(user, "talk to", refusal.Whom, "talk <name>")
 			return true, nil
 		}
 		args = args[1:]
@@ -40,9 +41,9 @@ func Talk(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// #454, owner call 2: a typed name resolves only at full sight, or
 	// talking would confirm who is there in the dark.
-	searchName, refusal := actions.AimBySight(user.Character, user.UserId, room, args[0], `talk`)
-	if refusal != `` {
-		user.SendText(messaging.CategoryRefusal, refusal)
+	searchName, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, args[0], `talk`)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 

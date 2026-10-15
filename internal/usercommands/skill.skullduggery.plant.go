@@ -29,12 +29,12 @@ func Plant(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, "Plant what?")
+		refusal.Prompt(user, "plant", refusal.What, "plant <item> <name>")
 		return true, nil
 	}
 
 	if len(args) == 1 {
-		user.SendText(messaging.CategorySystem, "Plant on whom?")
+		refusal.Prompt(user, "plant on", refusal.Whom, "plant <item> <name>")
 		return true, nil
 	}
 
@@ -86,7 +86,7 @@ func parsePlantArgs(args []string, room *rooms.Room, user *users.UserRecord) (ac
 	}
 
 	if targetNoun == "" {
-		user.SendText(messaging.CategorySystem, "Plant on whom?")
+		refusal.Prompt(user, "plant on", refusal.Whom, "plant <item> <name>")
 		return actions.PlantOptions{}, false
 	}
 

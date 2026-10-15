@@ -70,13 +70,13 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 	// Require a target.
 	if opts.TargetMobInstanceId == 0 && opts.TargetUserId == 0 &&
 		opts.ContainerNoun == "" {
-		actor.SendText(messaging.CategorySystem, "Plant on whom?")
+		refusal.Prompt(actor, "plant on", refusal.Whom, "plant <item> <name>")
 		return PlantResult{Reason: "no target"}
 	}
 
 	// Require an item noun.
 	if opts.ItemNoun == "" {
-		actor.SendText(messaging.CategorySystem, "Plant what?")
+		refusal.Prompt(actor, "plant", refusal.What, "plant <item> <name>")
 		return PlantResult{Reason: "no item"}
 	}
 

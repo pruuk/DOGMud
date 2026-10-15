@@ -17,7 +17,9 @@ func TestShout_EmptyIsRefused(t *testing.T) {
 		handled, err := Shout(rest, alice, room, 0)
 		require.NoError(t, err)
 		require.True(t, handled)
-		require.Equal(t, []string{"Shout what?"}, speechWrapperHeard(1), "rest %q", rest)
+		// speechWrapperHeard strips tag-shaped text, so the <message> in the
+		// hint goes with the ansi tags.
+		require.Equal(t, []string{"Shout what? Try shout ."}, speechWrapperHeard(1), "rest %q", rest)
 		require.Empty(t, speechWrapperHeard(2), "rest %q: the room heard an empty shout", rest)
 	}
 }

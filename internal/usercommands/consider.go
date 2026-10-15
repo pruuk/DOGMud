@@ -18,7 +18,7 @@ import (
 func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	args := util.SplitButRespectQuotes(rest)
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, "Consider whom? (try consider <target>)")
+		refusal.Prompt(user, "consider", refusal.Whom, "consider <name>")
 		return true, nil
 	}
 

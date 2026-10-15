@@ -119,7 +119,7 @@ func Steal(actor Actor, opts StealOptions) StealResult {
 	// Require a target.
 	if opts.TargetMobInstanceId == 0 && opts.TargetUserId == 0 &&
 		opts.ContainerNoun == "" && opts.HouseholdItem.ItemId == 0 {
-		actor.SendText(messaging.CategorySystem, "Steal from whom?")
+		refusal.Prompt(actor, "steal from", refusal.Whom, "steal <name>")
 		return StealResult{Reason: "no target"}
 	}
 

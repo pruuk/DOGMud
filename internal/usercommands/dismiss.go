@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
@@ -52,7 +53,7 @@ func Dismiss(rest string, user *users.UserRecord,
 
 	rest = strings.TrimSpace(rest)
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, "Dismiss whom? (dismiss <companion name>)")
+		refusal.Prompt(user, "dismiss", refusal.Whom, "dismiss <name>")
 		return true, nil
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -46,14 +47,14 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, "Shadow whom?")
+		refusal.Prompt(user, "shadow", refusal.Whom, "shadow <name>")
 		return true, nil
 	}
 
 	// #454: a typed name resolves only at full sight.
-	name, refusal := actions.AimBySight(user.Character, user.UserId, room, strings.ToLower(rest), `shadow`)
-	if refusal != `` {
-		user.SendText(messaging.CategoryRefusal, refusal)
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, strings.ToLower(rest), `shadow`)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 	rest = name

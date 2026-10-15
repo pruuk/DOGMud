@@ -176,7 +176,7 @@ func cmdPartyCreate(user *users.UserRecord, currentParty *parties.Party) (bool, 
 
 func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *parties.Party, rest string) (bool, error) {
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, `Invite who?`)
+		refusal.Prompt(user, "invite", refusal.Whom, "party invite <name>")
 		return true, nil
 	}
 

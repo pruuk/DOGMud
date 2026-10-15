@@ -41,7 +41,7 @@ func Steal(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, "Steal from whom?")
+		refusal.Prompt(user, "steal from", refusal.Whom, "steal <name>")
 		return true, nil
 	}
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -16,7 +17,7 @@ func Whisper(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	args := util.SplitButRespectQuotes(rest)
 
 	if len(args) < 1 {
-		user.SendText(messaging.CategorySystem, "Whisper to who?")
+		refusal.Prompt(user, "whisper to", refusal.Whom, "whisper <name> <message>")
 		return true, nil
 	}
 
