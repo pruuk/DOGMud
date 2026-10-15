@@ -63,11 +63,13 @@ time. [[feedback_helpfile_loadout_vs_reaction_advice]]
 
 ## No em or en dashes
 
-Player-facing copy also follows the project's no-dash preference: see
-[[feedback_no_em_dashes_in_prose]] for the rule and rationale.
+Player-facing copy follows the global no-dash rule in `~/.claude/CLAUDE.md`
+("Writing"): no em or en dashes, `&mdash;`/`&ndash;` in web copy included;
+hyphens in compound words are fine.
 
 ## Sources
 
 - [[feedback_esl_clear_language_player_copy]]
 - [[feedback_helpfile_loadout_vs_reaction_advice]]
-- [[feedback_no_em_dashes_in_prose]] (preference, cited above, not folded)
+- `~/.claude/CLAUDE.md` "Writing" (the dash rule; its memory file was retired
+  2026-10-15 once the rule went global)
