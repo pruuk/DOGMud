@@ -1,5 +1,13 @@
 # DOGMud Patch Notes
 
+## 2026-10-15: Commands ask for what they need the same way
+
+- A command typed without what it needs now asks the same way everywhere
+  and shows how to finish it, for example `pet <name>`.
+- `lock` no longer asks what to unlock.
+- Asking or talking to someone who isn't there now says you don't see them.
+- Talking to another player points you to `say`.
+
 ## 2026-10-15: The most common refusals read the same everywhere
 
 - The most common refusals read the same everywhere. When you name
