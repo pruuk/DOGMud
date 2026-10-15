@@ -19,9 +19,11 @@ import (
 // phrases is a copy the helpers replaced. A hit is converted to the helper,
 // or, if it is not that refusal, the phrase here is narrowed; never
 // allow-listed by file. Each phrase's probe proves the pattern can match.
-// Later slices add rows. The prompt row matches a literal that opens with a
-// question; interactive cmdPrompt.Ask questions ("Send mail to whom?") do
-// not, and must stay that way.
+// Later slices add rows. The prompt rows match a literal that opens with a
+// question: "<Verb> what|whom|who|how much?", "... which <noun>?" and
+// "What would you like to <verb>?". Literals passed to a .Ask( call (every
+// receiver today is cmdPrompt) are skipped by refusalPhraseHits: interactive
+// questions wait for the player's answer and are not refusals.
 var refusalPhrases = []struct {
 	family string
 	re     *regexp.Regexp
@@ -49,7 +51,9 @@ var refusalPhrases = []struct {
 	{"not here, nobody like that", regexp.MustCompile(`nobody like that here to ask`), "There is nobody like that here to ask."},
 	{"companion, reset", regexp.MustCompile(`You have no companion to`), "You have no companion to reset."},
 	{"not here, who", regexp.MustCompile(`^Who\?\?\?`), "Who???"},
-	{"prompt", regexp.MustCompile(`(?i)^\S+( (on|from|to|at|with))? (what|whom|who|how much)\?`), "Pet what?"},
+	{"prompt", regexp.MustCompile(`(?i)^\S+( (on|from|to|at|with|in|into|for|about))? (what|whom|who|how much( gold)?)\?`), "Pet what?"},
+	{"prompt, which", regexp.MustCompile(`(?i)^\S+( \S+){0,3} which \w+\?`), "Switch to which target?"},
+	{"prompt, would you like", regexp.MustCompile(`(?i)^What (would you like|do you want) to \w+\??`), "What would you like to sell?"},
 }
 
 // refusalPhraseHits reports every literal in src that carries a phrase.
@@ -60,10 +64,26 @@ func refusalPhraseHits(t *testing.T, rel string, src []byte) []string {
 	if err != nil {
 		t.Fatalf("%s: %v", rel, err)
 	}
+	// Literal arguments of a .Ask( call are interactive questions.
+	asked := map[*ast.BasicLit]bool{}
+	ast.Inspect(f, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		if sel, ok := call.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == "Ask" {
+			for _, a := range call.Args {
+				if lit, ok := a.(*ast.BasicLit); ok {
+					asked[lit] = true
+				}
+			}
+		}
+		return true
+	})
 	var hits []string
 	ast.Inspect(f, func(n ast.Node) bool {
 		lit, ok := n.(*ast.BasicLit)
-		if !ok || lit.Kind != token.STRING {
+		if !ok || lit.Kind != token.STRING || asked[lit] {
 			return true
 		}
 		s, err := strconv.Unquote(lit.Value)
