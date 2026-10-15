@@ -149,3 +149,30 @@ func TestRefusalMembership(t *testing.T) {
 		assert.Contains(t, aimTagPattern.ReplaceAllString(raw, ""), aimTagPattern.ReplaceAllString(refusal.NotInGuildText(), ""), "guild "+sub)
 	}
 }
+
+// give 0 gold is a player's mistake, not a server fault: the how-much line on
+// the refusal category, nothing on the error category, no gold moves.
+func TestRefusalGiveZeroGold(t *testing.T) {
+	const line = `Give how much gold? Try <ansi fg="command">give <amount> gold <name></ansi>.`
+	for _, who := range []string{"bobrick", "skeleton"} {
+		t.Run(who, func(t *testing.T) {
+			t.Cleanup(seedAllRegistries())
+			user, room := getTestUserAndRoom(t)
+			other := users.GetByUserId(2)
+			user.Character.Gold = 10
+			other.Character.Gold = 5
+			events.DrainQueuedMessagesForTest(1)
+
+			handled, err := Give("0 gold "+who, user, room, 0)
+			require.NoError(t, err)
+			require.True(t, handled)
+			raw := refusalRaw(1)
+			assert.Contains(t, raw, `fg="refusal"`)
+			assert.Contains(t, raw, line)
+			assert.NotContains(t, raw, `fg="error"`)
+			assert.NotContains(t, raw, refusal.FailedText(""))
+			assert.Equal(t, 10, user.Character.Gold)
+			assert.Equal(t, 5, other.Character.Gold)
+		})
+	}
+}

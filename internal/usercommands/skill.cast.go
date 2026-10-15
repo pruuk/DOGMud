@@ -230,7 +230,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	switch {
 	case result.OnCooldown:
-		user.SendText(messaging.CategorySystem, `You need a moment before you can do that.`)
+		refusal.Cooldown(user, "cast")
 		return true, nil
 	case result.NoTarget:
 		// The refusal may already have been narrated with a specific reason -- a

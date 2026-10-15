@@ -483,7 +483,7 @@ func (m *AICompanionModule) cmdUnstick(rest string, user *users.UserRecord, room
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion to reset.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	// Each reset abandons a call that may already have been paid for, and
@@ -642,7 +642,7 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 	_, mobInstanceId := room.FindByNameSeenBy(user.Character, who)
 	target := mobs.GetInstance(mobInstanceId)
 	if target == nil || target.Character.IsCharmed() {
-		user.SendText(messaging.CategorySystem, `There is nobody like that here to ask.`)
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 	c.askAuth = &askAuthority{MobInstanceId: mobInstanceId, Topic: topic, Expires: time.Now().Unix() + 60}

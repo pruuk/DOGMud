@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -56,8 +57,7 @@ func Steal(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// actions.Steal emits player-facing text for every outcome except
 	// the cooldown case (which returns without calling SendText).
 	if result.OnCooldown {
-		user.SendText(messaging.CategorySystem,
-			"You need a moment before you can try that again.")
+		refusal.Cooldown(user, "try that again")
 	}
 
 	return true, nil

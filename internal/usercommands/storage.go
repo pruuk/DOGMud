@@ -133,13 +133,12 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		// storage add all iron-ore — deposit all matching units
 		if qtyAll {
 			deposited := 0
-			storageFull := false
 			var hot items.Item
 			for {
 				if user.ItemStorage.SlotCount() >= storageCap {
-					// Full only matters if there was something to add.
-					_, there, stolen := storageFindAddable(user, itemName, room)
-					storageFull = there
+					// Filled by this loop (a full store was refused above), so
+					// deposited > 0; only a stolen item still needs saying.
+					_, _, stolen := storageFindAddable(user, itemName, room)
 					hot = stolen
 					break
 				}
@@ -156,8 +155,6 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			switch {
 			case deposited == 0 && hot.ItemId != 0:
 				// the refusal below says why
-			case deposited == 0 && storageFull:
-				user.SendText(messaging.CategoryRefusal, `Your storage is full.`)
 			case deposited == 0:
 				refusal.NotCarrying(user, itemName)
 			case deposited == 1:

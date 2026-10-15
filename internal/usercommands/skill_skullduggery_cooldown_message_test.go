@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -27,7 +28,7 @@ import (
 
 // skullduggeryCooldownRefusal is the exact player-facing line a thief sees
 // when the shared steal/plant cooldown refuses another attempt.
-const skullduggeryCooldownRefusal = "You need a moment before you can try that again."
+var skullduggeryCooldownRefusal = refusal.CooldownText("try that again")
 
 // armSkullduggeryCooldown gives the actor rank enough to try, then pre-arms
 // the shared steal/plant cooldown so the very next attempt is refused.

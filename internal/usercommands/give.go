@@ -44,10 +44,20 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if amount, isGold, ok := parseGoldPhrase(giveWhat); isGold {
 
 		if !ok {
-			// Either unparseable or negative. The old code accepted a
-			// negative here and rejected it with its own message; keep a
-			// single message now that one parser owns both cases.
-			user.SendText(messaging.CategorySystem, "That isn't an amount of gold you can give.")
+			// Either unparseable or negative. A negative amount is the
+			// same player mistake as zero and reads the same line.
+			if strings.HasPrefix(strings.TrimSpace(giveWhat), "-") {
+				user.SendText(messaging.CategoryRefusal, giveHowMuchGoldLine)
+			} else {
+				user.SendText(messaging.CategoryRefusal, "That isn't an amount of gold you can give.")
+			}
+			return true, nil
+		}
+
+		// A zero amount is a player's mistake, not a server fault: refuse it
+		// here, before any path that could reach refusal.Failed.
+		if amount < 1 {
+			user.SendText(messaging.CategoryRefusal, giveHowMuchGoldLine)
 			return true, nil
 		}
 
@@ -409,6 +419,9 @@ func splitGiveArgs(args []string, user *users.UserRecord, room *rooms.Room) (giv
 	}
 	return strings.Join(args[:len(args)-1], " "), args[len(args)-1]
 }
+
+// giveHowMuchGoldLine answers a gold give of zero or less.
+const giveHowMuchGoldLine = `Give how much gold? Try <ansi fg="command">give <amount> gold <name></ansi>.`
 
 // parseGoldPhrase is the single gold parser for both resolution and execution.
 // It reports whether `what` is a gold phrase ("50 gold", "50gold") and, if so,

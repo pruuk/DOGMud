@@ -95,7 +95,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 
 		if dropAmt > user.Character.Gold {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't have %d gold to drop.", dropAmt))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf("You don't have %d gold to drop.", dropAmt))
 			return true, nil
 		}
 

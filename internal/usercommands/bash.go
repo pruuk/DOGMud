@@ -54,7 +54,7 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		refusal.Cooldown(user, "bash")
 		return true, nil
 	case bashResult.NoTarget:
-		user.SendText(messaging.CategorySystem, "Your target is gone!")
+		refusal.NoTarget(user, "bash")
 		return true, nil
 	}
 

@@ -18,13 +18,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// attackNothingHereLine answers a bare `attack` with no foe to pick up;
-// attackNoSuchNameLine answers a name that resolves to no one (owner,
-// 2026-08-15). A resolved id whose record is gone reads the second line too.
-const (
-	attackNothingHereLine = `There is nothing here to attack.`
-	attackNoSuchNameLine  = `Nothing by that name is in this room.`
-)
+// attackNothingHereLine answers a bare `attack` with no foe to pick up. A name
+// that resolves to no one (and a resolved id whose record is gone) reads
+// refusal.NotHereCreatureLine.
+const attackNothingHereLine = `There is nothing here to attack.`
 
 func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -126,7 +123,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		if rest == `` {
 			user.SendText(messaging.CategorySystem, attackNothingHereLine)
 		} else {
-			user.SendText(messaging.CategorySystem, attackNoSuchNameLine)
+			refusal.NotHereCreature(user)
 		}
 		return true, nil
 	}
@@ -190,7 +187,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// here) used to fall through and return with NO output at all. A
 		// failed resolution must always message the player.
 		if m == nil {
-			user.SendText(messaging.CategorySystem, attackNoSuchNameLine)
+			refusal.NotHereCreature(user)
 			return true, nil
 		}
 
@@ -326,7 +323,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// stale player id arrived here as a non-nil id with no user record
 		// behind it and the command returned with no output.
 		if p == nil {
-			user.SendText(messaging.CategorySystem, attackNoSuchNameLine)
+			refusal.NotHereCreature(user)
 			return true, nil
 		}
 
