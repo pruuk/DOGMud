@@ -22,14 +22,20 @@ func refusalRaw(userId int) string {
 	return strings.Join(events.DrainQueuedMessagesForTest(userId), "")
 }
 
-// Every special move names its own verb in the no-target hint and the
-// cooldown line, and both lines fit the 80 column rule.
+// Every special move verb is a registered command, and its refusal lines
+// fit the 80 column rule: the cooldown line for every verb, the no-target
+// line for the verbs whose command file calls refusal.NoTarget. This checks
+// registration and width only, not which command sends which line.
 func TestRefusalSpecialMoveVerbs(t *testing.T) {
-	for _, verb := range []string{"kick", "drain", "gore", "grapple", "maul", "pounce", "rake", "taunt", "throttle", "trip"} {
+	noTarget := []string{"kick", "drain", "gore", "grapple", "maul", "pounce", "rake", "taunt", "throttle", "trip"}
+	cooldownOnly := []string{"bash", "rally", "throw", "warcry"}
+	for _, verb := range append(append([]string{}, noTarget...), cooldownOnly...) {
 		_, ok := userCommands[verb]
 		assert.True(t, ok, "%s is not a registered command", verb)
-		assert.LessOrEqual(t, util.VisibleWidth(refusal.NoTargetText(verb)), 80, "%s no-target line", verb)
 		assert.LessOrEqual(t, util.VisibleWidth(refusal.CooldownText(verb)), 80, "%s cooldown line", verb)
+	}
+	for _, verb := range noTarget {
+		assert.LessOrEqual(t, util.VisibleWidth(refusal.NoTargetText(verb)), 80, "%s no-target line", verb)
 	}
 }
 

@@ -49,7 +49,7 @@ func aimRefusalSends(t *testing.T, rel string, src []byte) (bad []string, calls 
 				return true
 			}
 			call, ok := as.Rhs[0].(*ast.CallExpr)
-			if !ok || calledName(call) != `AimBySight` {
+			if !ok || (calledName(call) != `AimBySight` && calledName(call) != `aimAtSight`) {
 				return true
 			}
 			calls++

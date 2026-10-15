@@ -98,7 +98,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			storageCap = 20
 		}
 		if user.ItemStorage.SlotCount() >= storageCap {
-			user.SendText(messaging.CategorySystem, `Your storage is full.`)
+			user.SendText(messaging.CategoryRefusal, `Your storage is full.`)
 			return true, nil
 		}
 
@@ -180,7 +180,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		deposited := 0
 		for i := 0; i < qty; i++ {
 			if user.ItemStorage.SlotCount() >= storageCap {
-				user.SendText(messaging.CategorySystem, `Your storage is full.`)
+				user.SendText(messaging.CategoryRefusal, `Your storage is full.`)
 				break
 			}
 			itm, found, hot := storageFindAddable(user, itemName, room)

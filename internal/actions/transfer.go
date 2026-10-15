@@ -11,8 +11,9 @@ import (
 )
 
 // ErrInventoryFull is returned by TransferItemBetweenChars (and so
-// GiveItemToChar) when the receiver cannot carry the item. It is a refusal
-// for the giver, not a server fault; test with errors.Is.
+// GiveItemToChar) and by TransferItemToBackpack when the receiver cannot
+// carry the item. It is a refusal for the giver, not a server fault; test
+// with errors.Is.
 var ErrInventoryFull = errors.New("destination inventory capacity exceeded")
 
 // TransferItemToFloor moves an item from a character's inventory to the room floor.
