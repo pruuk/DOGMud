@@ -53,7 +53,7 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	target, err := actions.ResolveTargetActor(room, targetName, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil {
-		user.SendText(messaging.CategorySystem, "Who???")
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 

@@ -306,7 +306,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		petUser := users.GetByUserId(petUserId)
 		if petUser == nil {
-			user.SendText(messaging.CategorySystem, "Who???")
+			refusal.NotHereCreature(user)
 			return true, nil
 		}
 
@@ -314,7 +314,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, `Who??? (<ansi fg="command">give {object-name} {receiver-name}</ansi>)`)
+	refusal.NotHereCreature(user)
 
 	return true, nil
 }

@@ -46,6 +46,7 @@ var refusalPhrases = []struct {
 	{"not here, nothing by that name", regexp.MustCompile(`Nothing by that name is in this room`), "Nothing by that name is in this room."},
 	{"not here, nobody like that", regexp.MustCompile(`nobody like that here to ask`), "There is nobody like that here to ask."},
 	{"companion, reset", regexp.MustCompile(`You have no companion to`), "You have no companion to reset."},
+	{"not here, who", regexp.MustCompile(`^Who\?\?\?`), "Who???"},
 }
 
 // refusalPhraseHits reports every literal in src that carries a phrase.
