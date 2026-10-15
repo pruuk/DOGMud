@@ -19,7 +19,9 @@ import (
 // phrases is a copy the helpers replaced. A hit is converted to the helper,
 // or, if it is not that refusal, the phrase here is narrowed; never
 // allow-listed by file. Each phrase's probe proves the pattern can match.
-// Later slices add rows.
+// Later slices add rows. The prompt row matches a literal that opens with a
+// question; interactive cmdPrompt.Ask questions ("Send mail to whom?") do
+// not, and must stay that way.
 var refusalPhrases = []struct {
 	family string
 	re     *regexp.Regexp
@@ -47,6 +49,7 @@ var refusalPhrases = []struct {
 	{"not here, nobody like that", regexp.MustCompile(`nobody like that here to ask`), "There is nobody like that here to ask."},
 	{"companion, reset", regexp.MustCompile(`You have no companion to`), "You have no companion to reset."},
 	{"not here, who", regexp.MustCompile(`^Who\?\?\?`), "Who???"},
+	{"prompt", regexp.MustCompile(`(?i)^\S+( (on|from|to|at|with))? (what|whom|who|how much)\?`), "Pet what?"},
 }
 
 // refusalPhraseHits reports every literal in src that carries a phrase.
