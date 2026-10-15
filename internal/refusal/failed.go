@@ -1,6 +1,10 @@
 package refusal
 
 import (
+	"fmt"
+	"path/filepath"
+	"runtime"
+
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
@@ -19,6 +23,7 @@ func FailedText(action string) string {
 // that does not send on CategoryRefusal: this is the server's fault, not a
 // refusal of what the player asked.
 func Failed(to Recipient, action string, err error, logArgs ...any) {
-	mudlog.Error(`refusal.Failed`, append([]any{`action`, action, `error`, err}, logArgs...)...)
+	_, file, line, _ := runtime.Caller(1)
+	mudlog.Error(`refusal.Failed`, append([]any{`action`, action, `error`, err, `at`, fmt.Sprintf(`%s:%d`, filepath.Base(file), line)}, logArgs...)...)
 	to.SendText(messaging.CategoryError, FailedText(action))
 }

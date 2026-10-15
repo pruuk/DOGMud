@@ -1,9 +1,32 @@
 package messaging
 
 import (
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
+
+// TestRefusalAliasMatchesSystem is the data test the promise above relies on:
+// the dogmud world colours refusal exactly as it colours system.
+func TestRefusalAliasMatchesSystem(t *testing.T) {
+	_, here, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	path := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud", "ansi-aliases.yaml")
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	var doc struct {
+		Colors map[string]any `yaml:"colors"`
+	}
+	require.NoError(t, yaml.Unmarshal(data, &doc))
+	require.Contains(t, doc.Colors, "system")
+	require.Contains(t, doc.Colors, "refusal", "dogmud ansi-aliases.yaml must define refusal")
+	require.Equal(t, doc.Colors["system"], doc.Colors["refusal"], "refusal must keep system's colour value")
+}
 
 // TestCategoryRefusalKeepsSystemTreatment pins M7's promise (#371): moving a
 // refusal off CategorySystem changes nothing a player sees. Same alias

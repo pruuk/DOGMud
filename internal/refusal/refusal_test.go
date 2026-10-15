@@ -43,6 +43,7 @@ func TestEchoTrimsStripsAndCaps(t *testing.T) {
 	long := strings.Repeat("x", 40)
 	assert.Equal(t, strings.Repeat("x", echoMax)+"...", echo(long))
 	assert.Equal(t, "", echo("   "))
+	assert.NotContains(t, echo("<an<ansi>si fg=\"red\">x"), "<ansi", "strip first, then escape")
 }
 
 func TestHintNamesACommand(t *testing.T) {
@@ -55,9 +56,10 @@ func fits80(t *testing.T, line string) {
 	assert.LessOrEqual(t, util.VisibleWidth(line), 80, "%q", line)
 }
 
-func TestNotHereLinesNeverEcho(t *testing.T) {
-	// The sight-gated helpers take no name at all: a creature that is there
-	// but unseen and a name that matches nothing cannot read differently (#454).
+func TestNotHereLinesWording(t *testing.T) {
+	// The no-echo property comes from the signatures (these helpers take no
+	// name) and is proven through a command by a later test (#454); this one
+	// pins the wording and the category.
 	for line, send := range map[string]func(Recipient){
 		NotHereCreatureLine: NotHereCreature,
 		NotHereThingLine:    NotHereThing,
@@ -79,6 +81,7 @@ func TestNotCarrying(t *testing.T) {
 		one(t, f, messaging.CategoryRefusal))
 	assert.Equal(t, `You aren't carrying that. Try <ansi fg="command">inventory</ansi>.`, NotCarryingText(""))
 	fits80(t, NotCarryingText(strings.Repeat("w", 60)))
+	fits80(t, NotCarryingText(strings.Repeat("绳", 30)))
 }
 
 func TestCombatFamily(t *testing.T) {
@@ -121,5 +124,5 @@ func TestFailedTellsPlainlyOnError(t *testing.T) {
 	Failed(f, "", assert.AnError, "userId", 7)
 	assert.Equal(t, "That didn't work. The error has been logged.", one(t, f, messaging.CategoryError))
 	assert.Equal(t, "That salvage didn't work. The error has been logged.", FailedText("salvage"))
-	assert.NotContains(t, FailedText(""), assert.AnError.Error(), "the cause goes to the log, not the player")
+	assert.NotContains(t, f.got[0].text, assert.AnError.Error(), "the cause goes to the log, not the player")
 }
