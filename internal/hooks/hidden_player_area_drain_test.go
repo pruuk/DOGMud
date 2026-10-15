@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -104,6 +105,6 @@ func TestHiddenMob_RefusedKickLeavesItHidden(t *testing.T) {
 	require.True(t, handled)
 
 	mine := drainPlain(1)
-	assert.NotZero(t, countContaining(mine, "recover before attempting"), "the kick was refused: %v", mine)
+	assert.NotZero(t, countContaining(mine, refusal.CooldownText("kick")), "the kick was refused: %v", mine)
 	assert.True(t, m.Character.IsHidden(), "a refused kick does not reveal its target")
 }
