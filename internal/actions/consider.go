@@ -2,12 +2,12 @@ package actions
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/refusal"
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 

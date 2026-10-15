@@ -3,7 +3,6 @@ package usercommands
 import (
 	"errors"
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/casing"
@@ -16,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"

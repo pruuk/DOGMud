@@ -450,8 +450,8 @@ func giveTargetResolves(who string, user *users.UserRecord, room *rooms.Room) bo
 	if ownPetNamed(who, user) {
 		return true
 	}
-	name, refusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
-	if refusal != `` {
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
+	if aimRefusal != `` {
 		return false
 	}
 	if playerId, mobInstanceId := room.FindByNameSeenBy(user.Character, name); playerId > 0 || mobInstanceId > 0 {

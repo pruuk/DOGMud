@@ -22,6 +22,10 @@ func FailedText(action string) string {
 // the player plainly on CategoryError (spec section 4). It is the one helper
 // that does not send on CategoryRefusal: this is the server's fault, not a
 // refusal of what the player asked.
+//
+// The log line records the source line that called Failed (runtime.Caller(1)).
+// Wrapping Failed in a local helper makes every log point at the wrapper, so
+// call it directly.
 func Failed(to Recipient, action string, err error, logArgs ...any) {
 	_, file, line, _ := runtime.Caller(1)
 	mudlog.Error(`refusal.Failed`, append([]any{`action`, action, `error`, err, `at`, fmt.Sprintf(`%s:%d`, filepath.Base(file), line)}, logArgs...)...)

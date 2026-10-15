@@ -2,7 +2,6 @@ package aicompanion
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"sort"
 	"strings"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -634,9 +634,9 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 	// somebody they themselves cannot see. The typed name goes through the
 	// shared sight rule first (#454), so in the dark a name that is there
 	// and one that is not read the same refusal.
-	who, refusal := actions.AimBySight(user.Character, user.UserId, room, who, `companion-ask`)
-	if refusal != `` {
-		user.SendText(messaging.CategoryRefusal, refusal)
+	who, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `companion-ask`)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 	_, mobInstanceId := room.FindByNameSeenBy(user.Character, who)

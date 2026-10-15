@@ -2,11 +2,11 @@ package actions
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/refusal"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 )
 
 // MutationOpts carries optional inputs to a mutation-active trigger (e.g. a
