@@ -5,10 +5,16 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func init() {
+	// Failed logs through mudlog, which panics until it is set up.
+	mudlog.SetupLogger(nil, "", "", false)
+}
 
 type sent struct {
 	cat  messaging.Category
@@ -47,4 +53,73 @@ func TestHintNamesACommand(t *testing.T) {
 func fits80(t *testing.T, line string) {
 	t.Helper()
 	assert.LessOrEqual(t, util.VisibleWidth(line), 80, "%q", line)
+}
+
+func TestNotHereLinesNeverEcho(t *testing.T) {
+	// The sight-gated helpers take no name at all: a creature that is there
+	// but unseen and a name that matches nothing cannot read differently (#454).
+	for line, send := range map[string]func(Recipient){
+		NotHereCreatureLine: NotHereCreature,
+		NotHereThingLine:    NotHereThing,
+		NothingToAimLine:    NothingToAim,
+	} {
+		f := &fakeRecipient{}
+		send(f)
+		assert.Equal(t, line, one(t, f, messaging.CategoryRefusal))
+	}
+	assert.Equal(t, "You don't see them here.", NotHereCreatureLine)
+	assert.Equal(t, "You don't see that here.", NotHereThingLine)
+	assert.Equal(t, "You can't see anything to aim at.", NothingToAimLine)
+}
+
+func TestNotCarrying(t *testing.T) {
+	f := &fakeRecipient{}
+	NotCarrying(f, " rope ")
+	assert.Equal(t, `You aren't carrying 'rope'. Try <ansi fg="command">inventory</ansi>.`,
+		one(t, f, messaging.CategoryRefusal))
+	assert.Equal(t, `You aren't carrying that. Try <ansi fg="command">inventory</ansi>.`, NotCarryingText(""))
+	fits80(t, NotCarryingText(strings.Repeat("w", 60)))
+}
+
+func TestCombatFamily(t *testing.T) {
+	f := &fakeRecipient{}
+	NoTarget(f, "kick")
+	assert.Equal(t, `You have no target. Try <ansi fg="command">kick <name></ansi>.`, one(t, f, messaging.CategoryRefusal))
+
+	f = &fakeRecipient{}
+	Cooldown(f, "kick")
+	assert.Equal(t, "You need a moment to recover before you can kick.", one(t, f, messaging.CategoryRefusal))
+
+	f = &fakeRecipient{}
+	WhileFighting(f, "steal")
+	assert.Equal(t, "You can't steal while fighting.", one(t, f, messaging.CategoryRefusal))
+
+	// The player-copy rule: a cooldown never names a duration.
+	assert.NotRegexp(t, `[0-9]`, CooldownText("kick"))
+	fits80(t, "No ambush ready. "+CooldownText("ambush"))
+}
+
+func TestMembershipFamily(t *testing.T) {
+	f := &fakeRecipient{}
+	NotInGuild(f)
+	line := one(t, f, messaging.CategoryRefusal)
+	assert.Equal(t, `You aren't in a guild. Try <ansi fg="command">guild create <TAG> <name></ansi>.`, line)
+	fits80(t, line)
+
+	f = &fakeRecipient{}
+	NoCompanion(f)
+	assert.Equal(t, "You have no companion travelling with you.", one(t, f, messaging.CategoryRefusal))
+
+	f = &fakeRecipient{}
+	NotPartyLeader(f, "set the loot mode")
+	assert.Equal(t, "Only the party leader can set the loot mode.", one(t, f, messaging.CategoryRefusal))
+	assert.Equal(t, "Only the party leader can do that.", NotPartyLeaderText(""))
+}
+
+func TestFailedTellsPlainlyOnError(t *testing.T) {
+	f := &fakeRecipient{}
+	Failed(f, "", assert.AnError, "userId", 7)
+	assert.Equal(t, "That didn't work. The error has been logged.", one(t, f, messaging.CategoryError))
+	assert.Equal(t, "That salvage didn't work. The error has been logged.", FailedText("salvage"))
+	assert.NotContains(t, FailedText(""), assert.AnError.Error(), "the cause goes to the log, not the player")
 }
