@@ -2,9 +2,9 @@
 
 ## 2026-10-15: The most common refusals read the same everywhere
 
-- The most common refusals read the same everywhere. When you name something you aren't
-  carrying, the game repeats what you typed and points you at your
-  inventory.
+- The most common refusals read the same everywhere. When you name
+  something you aren't carrying, the game repeats what you typed and points
+  you at your inventory.
 - Special moves name what you're waiting to do while you recover.
 - Targeting a creature you can't see no longer repeats the name you typed.
 - Answering a party invitation you don't have now says so plainly.
@@ -13,6 +13,8 @@
 - Typing `drop gold` with no amount now asks how much instead of guessing.
 - Reading a blank item now says there is nothing written on it.
 - Giving zero gold now asks how much you meant to give.
+- Giving or showing something to someone who isn't there now says you don't
+  see them, as every other command does.
 
 ## 2026-10-13: One blow, one story
 
