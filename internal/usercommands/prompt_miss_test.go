@@ -3,11 +3,14 @@ package usercommands
 import (
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/skills"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -83,13 +86,19 @@ func TestPromptMisses_HiddenCreatureReadsLikeNoMatch(t *testing.T) {
 			hidden := run(c, "skeleton", true)
 			nomatch := run(c, "zzyzx", false)
 			require.NotEmpty(t, nomatch, "the miss must say something, or equality is vacuous")
-			// A found steal target starts a pickpocket whose pending state
-			// is process-global and would leak into the cooldown tests, so
-			// the control runs for the other commands only.
-			if c.name != "steal" {
-				assert.NotEqual(t, nomatch, run(c, "skeleton", false),
-					"control: an unhidden skeleton is found, so the comparison can fail")
+			// A found steal target starts a pickpocket in its pause; flush it
+			// so it cannot leak into the cooldown tests.
+			found := run(c, "skeleton", false)
+			if c.name == "steal" {
+				util.LockMud()
+				actions.FlushPocketAttempts()
+				util.UnlockMud()
+				// The attempt's goroutine untracks itself once it sees the
+				// flush (as actions' waitSettled waits for).
+				require.Eventually(t, func() bool { return actions.PendingPocketAttempts() == 0 },
+					5*time.Second, 5*time.Millisecond, "the control's pickpocket is flushed")
 			}
+			assert.NotEqual(t, nomatch, found, "control: an unhidden skeleton is found, so the comparison can fail")
 			assert.Equal(t, nomatch, hidden, "a hidden creature reads like no match")
 			assert.NotContains(t, strings.ToLower(hidden), "skeleton")
 		})
