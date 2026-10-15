@@ -52,7 +52,7 @@ func admitCastAim(actor Actor, spellInfo *spells.SpellData, targetName string) (
 	sight := messaging.ParticipantSight(char, room)
 	name, refusal := aimAtSight(char, actor.GetUserId(), room, sight, targetName, `cast `+spellInfo.SpellId)
 	if refusal != `` {
-		actor.SendText(messaging.CategorySystem, refusal)
+		actor.SendText(messaging.CategoryRefusal, refusal)
 		return aim, true
 	}
 	aim.targetName = name

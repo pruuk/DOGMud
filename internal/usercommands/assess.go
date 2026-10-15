@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -26,7 +27,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	corpse, found := room.FindCorpse(rest, user.Character)
 	if !found {
-		user.SendText(messaging.CategorySystem, `You don't see those remains here.`)
+		refusal.NotHereThing(user)
 		return true, nil
 	}
 

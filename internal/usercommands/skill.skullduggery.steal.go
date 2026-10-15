@@ -123,7 +123,7 @@ func parseStealArgs(args []string, room *rooms.Room, user *users.UserRecord) *ac
 	}
 
 	if aimRefusal != `` {
-		user.SendText(messaging.CategorySystem, aimRefusal)
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return nil
 	}
 	user.SendText(messaging.CategorySystem, "Steal from whom?")

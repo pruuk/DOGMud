@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
@@ -103,14 +104,14 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// "@id" or "#id" it stands for. A wildcard picks among what the
 		// attacker perceives, so it needs only some sight.
 		if rest[0] != '*' {
-			name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `attack`)
-			if refusal != `` {
-				user.SendText(messaging.CategorySystem, refusal)
+			name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, rest, `attack`)
+			if aimRefusal != `` {
+				user.SendText(messaging.CategoryRefusal, aimRefusal)
 				return true, nil
 			}
 			rest = name
 		} else if messaging.ParticipantSight(user.Character, room) == messaging.SightNone {
-			user.SendText(messaging.CategorySystem, actions.AimNothingLine)
+			refusal.NothingToAim(user)
 			return true, nil
 		}
 		// Wildcard and named-target resolution delegated to shared helper.

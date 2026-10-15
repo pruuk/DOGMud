@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
@@ -171,9 +172,9 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 
 	// #454: a typed name resolves only at full sight. A shape becomes the
 	// "@id" or "#id" it stands for.
-	name, refusal := AimBySight(user.Character, user.UserId, room, rest, opts.Verb)
-	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+	name, aimRefusal := AimBySight(user.Character, user.UserId, room, rest, opts.Verb)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return nil, true
 	}
 	rest = name
@@ -186,7 +187,7 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 			user.SendText(messaging.CategorySystem, opts.selfTargetMsg())
 			return nil, true
 		}
-		user.SendText(messaging.CategorySystem, "You don't see them here.")
+		refusal.NotHereCreature(user)
 		return nil, true
 	}
 

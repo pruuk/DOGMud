@@ -118,7 +118,7 @@ func parsePlantArgs(args []string, room *rooms.Room, user *users.UserRecord) (ac
 	}
 
 	if aimRefusal != `` {
-		user.SendText(messaging.CategorySystem, aimRefusal)
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return actions.PlantOptions{}, false
 	}
 	user.SendText(messaging.CategorySystem, "Plant on whom?")

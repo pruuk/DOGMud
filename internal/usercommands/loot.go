@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -46,7 +47,7 @@ func Loot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	corpseIdx := room.FindCorpseIndex(rest, user.Character)
 	if corpseIdx < 0 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see a %s to loot.", rest))
+		refusal.NotHereThing(user)
 		return true, nil
 	}
 
@@ -160,7 +161,7 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 
 	corpseIdx := room.FindCorpseIndex(rest, user.Character)
 	if corpseIdx < 0 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see a %s to loot.", rest))
+		refusal.NotHereThing(user)
 		return true, nil
 	}
 

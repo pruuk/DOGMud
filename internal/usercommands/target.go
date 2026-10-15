@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
@@ -59,9 +60,9 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	// #454: a typed name resolves only at full sight.
-	name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `target`)
-	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, rest, `target`)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 	rest = name
@@ -78,7 +79,7 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			user.SendText(messaging.CategorySystem, "You can't target yourself!")
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see '%s' here.", rest))
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 
@@ -103,7 +104,7 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if newTargetMobInstanceId > 0 {
 		m := mobs.GetInstance(newTargetMobInstanceId)
 		if m == nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see '%s' here.", rest))
+			refusal.NotHereCreature(user)
 			return true, nil
 		}
 
@@ -129,7 +130,7 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if newTargetPlayerId > 0 {
 		p := users.GetByUserId(newTargetPlayerId)
 		if p == nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see '%s' here.", rest))
+			refusal.NotHereCreature(user)
 			return true, nil
 		}
 

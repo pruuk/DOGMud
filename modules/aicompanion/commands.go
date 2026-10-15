@@ -635,7 +635,7 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 	// and one that is not read the same refusal.
 	who, refusal := actions.AimBySight(user.Character, user.UserId, room, who, `companion-ask`)
 	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+		user.SendText(messaging.CategoryRefusal, refusal)
 		return true, nil
 	}
 	_, mobInstanceId := room.FindByNameSeenBy(user.Character, who)

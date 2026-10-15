@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -110,7 +111,7 @@ func TestStealAFixtureInTheDarkSaysNothingOfIt(t *testing.T) {
 	assert.NotContains(t, out, "fixed in place")
 	// #454: with no sight the noun names no creature either, so the thief
 	// reads the sight refusal, which names nothing.
-	assert.Contains(t, out, actions.AimNotHereLine)
+	assert.Contains(t, out, refusal.NotHereCreatureLine)
 }
 
 // A fixture that is first on the floor must not shadow an ordinary item the

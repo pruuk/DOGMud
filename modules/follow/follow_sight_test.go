@@ -5,13 +5,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -93,7 +93,7 @@ func TestFollowSight_NoSightFollowsNoOneAndNamesNoOne(t *testing.T) {
 	_, _ = f.followUserCommand("bobrick", u1, room, events.EventFlag(0))
 	assert.False(t, f.isFollowing(followId{userId: 1}), "a follow started in the dark")
 	told := followTold(1)
-	assert.Contains(t, told, actions.AimNotHereLine)
+	assert.Contains(t, told, refusal.NotHereCreatureLine)
 	assert.NotContains(t, told, "Bobrick")
 	assert.Empty(t, followTold(2), "the target was told someone followed them")
 }

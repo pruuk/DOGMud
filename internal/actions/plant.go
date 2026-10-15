@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
@@ -348,7 +349,7 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item, t
 	room := actor.GetRoom()
 	container, ok := room.Containers[containerName]
 	if !ok {
-		actor.SendText(messaging.CategorySystem, "You don't see that here.")
+		refusal.NotHereThing(actor)
 		return PlantResult{Reason: "not found"}
 	}
 

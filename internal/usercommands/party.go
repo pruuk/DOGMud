@@ -182,7 +182,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 	// is there in the dark.
 	name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `party invite`)
 	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+		user.SendText(messaging.CategoryRefusal, refusal)
 		return true, nil
 	}
 	inviterSight := messaging.ParticipantSight(user.Character, room)

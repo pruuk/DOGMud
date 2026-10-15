@@ -43,7 +43,7 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// #454: a typed name resolves only at full sight.
 	name, refusal := actions.AimBySight(user.Character, user.UserId, room, targetName, `show `+objectName)
 	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+		user.SendText(messaging.CategoryRefusal, refusal)
 		return true, nil
 	}
 	targetName = name

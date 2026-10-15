@@ -82,7 +82,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	{
 		name, refusal := actions.AimBySight(user.Character, user.UserId, room, giveWho, `give `+giveWhat)
 		if refusal != `` {
-			user.SendText(messaging.CategorySystem, refusal)
+			user.SendText(messaging.CategoryRefusal, refusal)
 			return true, nil
 		}
 		giveWho = name

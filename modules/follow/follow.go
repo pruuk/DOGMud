@@ -431,7 +431,7 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 	if len(followTargetName) > 0 {
 		name, refusal := actions.AimBySight(user.Character, user.UserId, room, followTargetName, `follow`)
 		if refusal != `` {
-			user.SendText(messaging.CategorySystem, refusal)
+			user.SendText(messaging.CategoryRefusal, refusal)
 			return true, nil
 		}
 		followTargetName = name
