@@ -290,3 +290,7 @@ colors:
 # as `emote` and `mob-idle`, the categories these lines rode, so moving them
 # only changes where they wrap.
   craft-seen: 144
+
+# Refusals and prompts (messaging M7, #371). Same value as `system`, the
+# category these lines rode, so moving them changes nothing a player sees.
+  refusal: 8
