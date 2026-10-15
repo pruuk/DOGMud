@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,4 +49,44 @@ func TestTalkToAPlayerSaysUseSay(t *testing.T) {
 	// would eat the "<message>" placeholder in the line.
 	raw := strings.Join(events.DrainQueuedMessagesForTest(1), "")
 	assert.Contains(t, raw, refusal.TalkToPlayerLine)
+}
+
+// #454: a creature hidden from the viewer reads the same as a name that
+// matches nothing, and never leaks its own name.
+func TestPromptMisses_HiddenCreatureReadsLikeNoMatch(t *testing.T) {
+	cases := []struct {
+		name string
+		cmd  UserCommand
+		rest string // %s is the typed name
+	}{
+		{"ask", Ask, "%s to sit"},
+		{"talk", Talk, "%s"},
+		{"look", Look, "%s"},
+		{"steal", Steal, "%s"},
+	}
+	run := func(c struct {
+		name string
+		cmd  UserCommand
+		rest string
+	}, typed string, hide bool) string {
+		user, room := aimScene(t, aimFull)
+		user.Character.Skills = map[string]int{string(skills.Skullduggery): 3}
+		if hide {
+			hideForAmbushTest(t, &mobs.GetInstance(100).Character)
+		}
+		_, err := c.cmd(strings.Replace(c.rest, "%s", typed, 1), user, room, 0)
+		require.NoError(t, err)
+		return aimTold(1)
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			hidden := run(c, "skeleton", true)
+			nomatch := run(c, "zzyzx", false)
+			require.NotEmpty(t, nomatch, "the miss must say something, or equality is vacuous")
+			assert.NotEqual(t, nomatch, run(c, "skeleton", false),
+				"control: an unhidden skeleton is found, so the comparison can fail")
+			assert.Equal(t, nomatch, hidden, "a hidden creature reads like no match")
+			assert.NotContains(t, strings.ToLower(hidden), "skeleton")
+		})
+	}
 }
