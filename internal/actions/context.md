@@ -701,8 +701,8 @@ word on its own line (#430).
   `refusal.NotHereCreatureLine` for a name; an out-of-range `N.shape` also
   answers `refusal.NotHereCreatureLine`). The constants moved to
   `internal/refusal` in M7 slice 1 (`AimNothingLine` and `AimNotHereLine`
-  are gone); see `internal/refusal/context.md`. It returns the name to resolve and the refusal to tell, ""
-  when admitted. Player commands that name a creature run it (the list is
+  are gone); see `internal/refusal/context.md`. It returns the name to
+  resolve and the refusal to tell, "" when admitted. Player commands that name a creature run it (the list is
   in `internal/usercommands/context.md`), except three left ungated on
   purpose (plan D-H2-12): `look <creature>` (`look.go`, which names a
   creature only when `NamesCreatures`, i.e. at full sight, and refuses with

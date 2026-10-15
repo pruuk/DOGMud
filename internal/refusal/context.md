@@ -71,7 +71,9 @@ duration. `NotPartyLeader` with an empty action reads "do that".
 did nothing wrong and the server could not do the job. Never use it for a
 player's mistake. The party invite case (no invitation to answer) and the
 full-recipient case (`actions.ErrInventoryFull`) are refusals with their own
-helpers (`NoPartyInvite`, `RecipientFull`), not failures.
+helpers (`NoPartyInvite`, `RecipientFull`), not failures. So is `give 0 gold
+<name>`: `Give` answers a zero or negative amount with "Give how much gold?"
+on `CategoryRefusal` before any path that could reach `Failed`.
 
 It logs through `mudlog.Error` with the action, the error, the calling
 `file:line` (`runtime.Caller(1)`) and the extra args (pass `"userId", id`),
@@ -93,6 +95,15 @@ Two root-level tests keep the package the only source of these lines.
   finds each `AimBySight` call, follows the identifier its refusal is
   assigned to, and requires every `SendText` of it in that function to use
   `CategoryRefusal`. `TestAimRefusalGuardCanFail` proves it can fail.
+
+The rows cover these families: not here (including "Nothing by that name is
+in this room" and "nobody like that here to ask"), not carrying, no target
+(including "Your target is gone"), cooldown (including "You need a moment
+before you can ..."), guild, companion (including "You have no companion
+to ..."), party leader, in combat (including the generic "can't do that while
+fighting" gate) and failure. The "nobody like that here" row is narrowed to
+"to ask": the companion module's "to cast it at" text is a trace reason for
+the model, not a line a player reads.
 
 To add a phrase row: append `{family, regexp, probe}` to `refusalPhrases`,
 where `probe` is a real old-style line the regexp must match. When a hit

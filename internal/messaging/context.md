@@ -540,8 +540,9 @@ each side (hit, dodge, interrupt). A single-`Category` seam would
 silently recategorise them. Category decides the line's colour and
 whether it wraps at 80 (`CategorySystem` never wraps, which is why #449
 moved the special-move actor and actee lines off it onto the move's own
-category; refusals moved to `CategoryRefusal` in M7, and only cost
-notices stay on `CategorySystem`).
+category; the M7 slice 1 refusal families moved to `CategoryRefusal`;
+other refusals (special-move busy and shield lines, craft, cost notices)
+remain on `CategorySystem` until later slices).
 Verbosity suppression is NOT driven by a Trio line's category: it applies
 only to the combat-round drains in `internal/hooks/combat_verbosity.go`.
 
