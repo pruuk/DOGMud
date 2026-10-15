@@ -40,6 +40,12 @@ var refusalPhrases = []struct {
 	{"party leader", regexp.MustCompile(`not the leader of your party|Only the party leader can`), "You are not the leader of your party."},
 	{"in combat", regexp.MustCompile(`can't do that while in combat`), "You can't do that while in combat!"},
 	{"failure", regexp.MustCompile(`Something went wrong`), "Something went wrong."},
+	{"in combat, generic gate", regexp.MustCompile(`can't do that while fighting`), "You can't do that while fighting!"},
+	{"no target, gone", regexp.MustCompile(`Your target is gone`), "Your target is gone!"},
+	{"cooldown, moment", regexp.MustCompile(`You need a moment before you can`), "You need a moment before you can do that."},
+	{"not here, nothing by that name", regexp.MustCompile(`Nothing by that name is in this room`), "Nothing by that name is in this room."},
+	{"not here, nobody like that", regexp.MustCompile(`nobody like that here to ask`), "There is nobody like that here to ask."},
+	{"companion, reset", regexp.MustCompile(`You have no companion to`), "You have no companion to reset."},
 }
 
 // refusalPhraseHits reports every literal in src that carries a phrase.

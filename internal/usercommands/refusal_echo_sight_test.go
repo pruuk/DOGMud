@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -56,5 +57,27 @@ func TestRefusalNeverEchoesThroughSight(t *testing.T) {
 		litNothing := refusalEchoRun(t, aimFull, c.needsCombat, c.run, "zzyzx")
 		assert.Contains(t, litNothing, refusal.NotHereCreatureLine, "%s in light", c.name)
 		assert.NotContains(t, litNothing, "zzyzx", "%s echoed a name the player looked for", c.name)
+	}
+}
+
+// The shapes-only band: a typed name gets the shapes hint, and a creature
+// that is there ("skeleton") and a name that matches nothing ("zzyzx") read
+// identically and never echo what was typed.
+func TestRefusalNeverEchoesAtShapes(t *testing.T) {
+	cmds := []struct {
+		name        string
+		run         func(string, *users.UserRecord, *rooms.Room, events.EventFlag) (bool, error)
+		needsCombat bool
+	}{
+		{"target", Target, true},
+		{"consider", Consider, false},
+	}
+	for _, c := range cmds {
+		there := refusalEchoRun(t, aimShapes, c.needsCombat, c.run, "skeleton")
+		nothing := refusalEchoRun(t, aimShapes, c.needsCombat, c.run, "zzyzx")
+		assert.Equal(t, there, nothing, "%s: a creature that is there and no match must read the same at shapes", c.name)
+		assert.Contains(t, there, aimTagPattern.ReplaceAllString(actions.AimShapesHint(c.name), ``), "%s: the shapes hint", c.name)
+		assert.NotContains(t, strings.ToLower(there), "skeleton", c.name)
+		assert.NotContains(t, nothing, "zzyzx", "%s echoed a typed name at shapes", c.name)
 	}
 }
