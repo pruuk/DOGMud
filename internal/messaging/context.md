@@ -104,7 +104,8 @@ Types and constants:
   `CategorySystem` cannot wrap. Otherwise it is treated as `CategorySystem`:
   no normalisation skips, no verbosity tier drops it, and alias `craft` in
   `ansi-aliases.yaml` is 8, the `system` value. Refusals (unknown recipe,
-  missing ingredients, already busy, too dark) stay on `CategorySystem`;
+  missing ingredients, already busy, too dark) stay on `CategorySystem`
+  (slice 1 of M7 moved only the `internal/refusal` families);
   the room's onlooker lines ride `CategoryCraftSeen`, below.
   Pinned by `category_craft_test.go`.
 - `CategoryCraftSeen` (owner ruling C, 2026-10-13): the room's lines ABOUT a
@@ -117,6 +118,15 @@ Types and constants:
   `CategoryEmote` is (every stage skipped), no verbosity tier drops it, and
   alias `craft-seen` in `ansi-aliases.yaml` is 144, the `emote` and
   `mob-idle` value, so the onlooker color is unchanged.
+- `CategoryRefusal` (messaging M7, #371): every line `internal/refusal`
+  sends (not-here, not-carrying, no target, cooldown, while fighting, guild,
+  companion, party leader, party invite, recipient full). Appended after
+  `CategoryCraftSeen` so no value shifts. Treated exactly as
+  `CategorySystem` (every normalise stage, never wrapped), and alias
+  `refusal` in `ansi-aliases.yaml` is 8, the `system` value, so a player
+  sees no change until the owner recolours it. `refusal.Failed` is the one
+  helper that does not use it (it sends on `CategoryError`). Pinned by
+  `category_refusal_test.go`.
 - `Verbosity`, `ParseVerbosity`, `(Verbosity).Suppresses` — combat-text
   verbosity primitives in `verbosity.go`. The allowlists
   (`suppressibleAtMedium`, `suppressibleAtLight`) declare which
@@ -530,7 +540,8 @@ each side (hit, dodge, interrupt). A single-`Category` seam would
 silently recategorise them. Category decides the line's colour and
 whether it wraps at 80 (`CategorySystem` never wraps, which is why #449
 moved the special-move actor and actee lines off it onto the move's own
-category; only refusals and cost notices stay on `CategorySystem`).
+category; refusals moved to `CategoryRefusal` in M7, and only cost
+notices stay on `CategorySystem`).
 Verbosity suppression is NOT driven by a Trio line's category: it applies
 only to the combat-round drains in `internal/hooks/combat_verbosity.go`.
 

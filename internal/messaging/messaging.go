@@ -111,7 +111,8 @@ const (
 	// success, failure, interrupt and stop. Recipe success and failure
 	// lines are authored prose that often runs past 80 columns, so this
 	// category wraps where CategorySystem, a mixed bucket, cannot.
-	// Refusals ("you are missing...") stay on CategorySystem.
+	// Refusals ("you are missing...") moved to CategoryRefusal in M7; cost
+	// notices still ride CategorySystem.
 	CategoryCraft
 
 	// The room's lines ABOUT a crafter (owner ruling C, 2026-10-13):

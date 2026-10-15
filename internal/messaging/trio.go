@@ -8,8 +8,8 @@ package messaging
 // personal side and throw uses three on each side (hit, dodge, interrupt).
 // Before #449 most player-side special moves sent their personal lines as
 // CategorySystem, which never wraps; they now ride the move's own category
-// (bash, kick, trip, grapple, throttle, taunt, throw, rally, warcry), and only
-// refusals and cost notices stay on CategorySystem.
+// (bash, kick, trip, grapple, throttle, taunt, throw, rally, warcry); refusals
+// moved to CategoryRefusal in M7, and only cost notices stay on CategorySystem.
 //
 // A single-Category seam would have silently recategorised verbs while
 // claiming to change nothing. The category decides a line's colour and
