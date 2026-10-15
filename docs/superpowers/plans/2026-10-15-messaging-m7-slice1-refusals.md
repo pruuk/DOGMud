@@ -76,7 +76,7 @@ Every line is under 80 visible columns at the longest echo (24 runes plus `...`)
 | portal mob, 511 | say The planes resist me. Your gold is returned. | "say Something went wrong. The planes resist me..." |
 | portal mob, 523 | say The way will not open. Your gold is returned. | "say Something went wrong. Your gold is returned." |
 
-**Bold** is the command colour (`<ansi fg="command">`), the codebase's style (fact 29). The spec says single quotes; see the open question in the PR.
+**Bold** is the command colour (`<ansi fg="command">`), the codebase's style (fact 29). Owner ruling 2026-10-15: hints use the command colour, not the single quotes spec section 3 named.
 
 ## File structure
 
@@ -861,4 +861,4 @@ func TestRefusalPhraseGuardCanFail(t *testing.T) {
 
 - Spec coverage for slice 1: package and `context.md` (Tasks 2, 3, 11), `CategoryRefusal` (1), echo rule and its test (2, 9), hints (2, 3), families with most repeats (3 to 7), `Failed` and the `actions_mob.go` check (8: both reach a player as mob speech, so they are reworded, not turned into logs), phrase guard with probes (10), boot and playtest (12). Deferred by the spec's slicing: `Prompt`, `WhileBusy`, `TargetAsleep`, `Cost`, `NotWearing` (no slice 1 site), `CategoryUsage`, `CategoryAdmin`, narration out of System, the tag guard.
 - Departure from the spec's helper names: `NotHereCreature` and siblings have `...Line` constants instead of `...Text` functions, because `AimBySight` returns its line rather than sending it.
-- Open question for the owner (also in the PR): hints in the command colour (codebase style, fact 29) or single quotes (spec section 3). The plan uses the command colour; switching is one line in `hint()` plus the expected strings in `refusal_test.go`.
+- Hint style ruled 2026-10-15 (owner): the command colour, as the codebase already writes hints (fact 29). `TestHintNamesACommand` pins it.
