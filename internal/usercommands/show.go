@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -36,14 +38,14 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	showItem, found = user.Character.FindInBackpack(objectName)
 
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't have a %s to show.", objectName))
+		refusal.NotCarrying(user, objectName)
 		return true, nil
 	}
 
 	// #454: a typed name resolves only at full sight.
-	name, refusal := actions.AimBySight(user.Character, user.UserId, room, targetName, `show `+objectName)
-	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, targetName, `show `+objectName)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 	targetName = name
@@ -51,14 +53,14 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	target, err := actions.ResolveTargetActor(room, targetName, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil {
-		user.SendText(messaging.CategorySystem, "Who???")
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 
 	user.Character.CancelConditionsWithFlag(conditions.Hidden)
 
 	if showItem.ItemId == 0 {
-		user.SendText(messaging.CategorySystem, "Something went wrong.")
+		refusal.Failed(user, "", errors.New("show: found item has no id"), "userId", user.UserId)
 		return true, nil
 	}
 

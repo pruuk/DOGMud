@@ -53,7 +53,7 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// #454: a typed name resolves only at full sight.
 	name, refusal := actions.AimBySight(user.Character, user.UserId, room, strings.ToLower(rest), `shadow`)
 	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+		user.SendText(messaging.CategoryRefusal, refusal)
 		return true, nil
 	}
 	rest = name

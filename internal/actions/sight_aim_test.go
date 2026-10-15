@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,12 +34,12 @@ func TestAimBySight_ShapesHintsATypedNameAndNamesTheVerb(t *testing.T) {
 func TestAimBySight_ShapesResolvesAShapeToItsFigure(t *testing.T) {
 	a, room := castSightScene(t, "cave")
 	giveCasterInfrared(t, a)
-	name, refusal := AimBySight(a.GetCharacter(), 7811, room, "2.shape", "kick")
-	assert.Equal(t, "", refusal)
+	name, aimRefusal := AimBySight(a.GetCharacter(), 7811, room, "2.shape", "kick")
+	assert.Equal(t, "", aimRefusal)
 	assert.Equal(t, "@7813", name, "figures are the other players in room order")
 
-	name, refusal = AimBySight(a.GetCharacter(), 7811, room, "4.shape", "kick")
-	assert.Equal(t, AimNotHereLine, refusal, "there are only two figures")
+	name, aimRefusal = AimBySight(a.GetCharacter(), 7811, room, "4.shape", "kick")
+	assert.Equal(t, refusal.NotHereCreatureLine, aimRefusal, "there are only two figures")
 	assert.Equal(t, "4.shape", name)
 }
 
@@ -56,15 +57,15 @@ func TestAimBySight_ShapesAdmitsAnIdForm(t *testing.T) {
 func TestAimBySight_NoSightResolvesNothing(t *testing.T) {
 	a, room := castSightScene(t, "cave")
 	for _, tc := range []struct{ name, want string }{
-		{"witness", AimNotHereLine},
-		{"@7812", AimNotHereLine},
-		{"shape", AimNothingLine},
-		{"2.shape", AimNothingLine},
-		{"all.shape", AimNothingLine},
-		{"", AimNothingLine},
+		{"witness", refusal.NotHereCreatureLine},
+		{"@7812", refusal.NotHereCreatureLine},
+		{"shape", refusal.NothingToAimLine},
+		{"2.shape", refusal.NothingToAimLine},
+		{"all.shape", refusal.NothingToAimLine},
+		{"", refusal.NothingToAimLine},
 	} {
-		_, refusal := AimBySight(a.GetCharacter(), 7811, room, tc.name, "kick")
-		assert.Equal(t, tc.want, refusal, "%q", tc.name)
+		_, aimRefusal := AimBySight(a.GetCharacter(), 7811, room, tc.name, "kick")
+		assert.Equal(t, tc.want, aimRefusal, "%q", tc.name)
 	}
 }
 

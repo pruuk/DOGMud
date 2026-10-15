@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/guilds"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -90,7 +91,7 @@ func announceGuild(g *guilds.Guild, msg string, exceptUserId int) {
 func guildInfo(user *users.UserRecord) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild. Found one with <ansi fg="command">guild create <TAG> <name></ansi>, or get invited to one.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>: %d member(s)`, g.Name, g.Tag, len(g.Members)))
@@ -172,7 +173,7 @@ func guildList(user *users.UserRecord) {
 func guildLeave(user *users.UserRecord, rest string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if g.IsLeader(user.UserId) {
@@ -208,7 +209,7 @@ func guildLeave(user *users.UserRecord, rest string) {
 func guildDisband(user *users.UserRecord, rest string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if !g.IsLeader(user.UserId) {
@@ -260,7 +261,7 @@ func memberName(g *guilds.Guild, userId int) string {
 func guildInvite(user *users.UserRecord, remainder string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if !g.CanManage(user.UserId) {
@@ -326,7 +327,7 @@ func guildDeclineInvite(user *users.UserRecord) {
 func guildKick(user *users.UserRecord, remainder string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if !g.CanManage(user.UserId) {
@@ -360,7 +361,7 @@ func guildKick(user *users.UserRecord, remainder string) {
 func guildSetRank(user *users.UserRecord, remainder string, promote bool) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if !g.IsLeader(user.UserId) {
@@ -397,7 +398,7 @@ func guildSetRank(user *users.UserRecord, remainder string, promote bool) {
 func guildTransfer(user *users.UserRecord, remainder, rest string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if !g.IsLeader(user.UserId) {
@@ -444,7 +445,7 @@ func guildChatRecipients(g *guilds.Guild, senderId int) []int {
 func guildChatSend(user *users.UserRecord, msg string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if user.Muted {
@@ -521,7 +522,7 @@ func parseGoldAmount(s string, allValue int) (amount int, isAll, ok bool) {
 func guildDeposit(user *users.UserRecord, remainder string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	amount, _, ok := parseGoldAmount(remainder, user.Character.Bank)
@@ -550,7 +551,7 @@ func guildDeposit(user *users.UserRecord, remainder string) {
 func guildWithdraw(user *users.UserRecord, remainder string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if !g.CanWithdraw(user.UserId) {
@@ -580,7 +581,7 @@ func guildWithdraw(user *users.UserRecord, remainder string) {
 func guildDonate(user *users.UserRecord, remainder string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	name := strings.TrimSpace(remainder)
@@ -590,7 +591,7 @@ func guildDonate(user *users.UserRecord, remainder string) {
 	}
 	item, found := user.Character.FindInBackpack(name)
 	if !found {
-		user.SendText(messaging.CategorySystem, `You don't have that item.`)
+		refusal.NotCarrying(user, name)
 		return
 	}
 	itemName := item.DisplayName()
@@ -609,7 +610,7 @@ func guildDonate(user *users.UserRecord, remainder string) {
 func guildTake(user *users.UserRecord, remainder string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if !g.CanWithdraw(user.UserId) {
@@ -644,7 +645,7 @@ func guildTake(user *users.UserRecord, remainder string) {
 func guildTreasury(user *users.UserRecord, remainder string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	// `guild treasury delegate [on|off]` — leader-only.
@@ -706,7 +707,7 @@ func parseGuildRank(s string) (guilds.GuildRank, bool) {
 func guildSetTitle(user *users.UserRecord, remainder string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if !g.IsLeader(user.UserId) {
@@ -740,7 +741,7 @@ func guildSetTitle(user *users.UserRecord, remainder string) {
 func guildSetMotd(user *users.UserRecord, remainder string) {
 	g, ok := guilds.GetByUser(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You are not in a guild.`)
+		refusal.NotInGuild(user)
 		return
 	}
 	if !g.CanManage(user.UserId) {

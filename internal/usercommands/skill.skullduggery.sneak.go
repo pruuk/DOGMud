@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -57,7 +58,7 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 
 	case result.InCombat:
-		user.SendText(messaging.CategorySystem, "You can't do that while in combat!")
+		refusal.WhileFighting(user, "sneak")
 		return true, nil
 
 	case result.ReplacedShroud:

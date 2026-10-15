@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -99,7 +100,7 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a "%s" to wear.`, rest))
+		refusal.NotCarrying(user, rest)
 	} else {
 
 		iSpec := matchItem.GetSpec()

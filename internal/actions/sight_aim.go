@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -20,11 +21,6 @@ const shapeWord = "shape"
 // name, so a creature that is there and a name that matches nothing read the
 // same.
 const (
-	// AimNothingLine answers a player who sees nothing and named a shape, or
-	// named nothing at all.
-	AimNothingLine = `You can't see anything to aim at.`
-	// AimNotHereLine answers a name a player cannot see to pick out.
-	AimNotHereLine = `You don't see them here.`
 	// aimShapesLine opens the hint a player who makes out shapes only reads
 	// when they typed a name.
 	aimShapesLine = `You can only make out shapes here.`
@@ -67,9 +63,9 @@ func aimAtSight(viewer *characters.Character, selfUserId int, room *rooms.Room, 
 	switch sight {
 	case messaging.SightNone:
 		if name == `` || aimNamesAShape(name) {
-			return name, AimNothingLine
+			return name, refusal.NothingToAimLine
 		}
-		return name, AimNotHereLine
+		return name, refusal.NotHereCreatureLine
 	case messaging.SightShapes:
 		if name == `` || aimIdForm(name) {
 			return name, ``
@@ -82,7 +78,7 @@ func aimAtSight(viewer *characters.Character, selfUserId int, room *rooms.Room, 
 	if shape > 0 {
 		figures := aimFigures(viewer, selfUserId, room)
 		if shape > len(figures) {
-			return name, AimNotHereLine
+			return name, refusal.NotHereCreatureLine
 		}
 		return figures[shape-1], ``
 	}

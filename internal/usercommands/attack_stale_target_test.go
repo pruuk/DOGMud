@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatvocab"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -100,7 +101,7 @@ func TestAttack_StaleTargetPlayerId_MessagesInsteadOfSilence(t *testing.T) {
 
 	msgs := events.DrainQueuedMessagesForTest(user.UserId)
 	require.NotEmpty(t, msgs, "a failed resolution must always message the player")
-	assert.True(t, strings.Contains(strings.Join(msgs, "\n"), attackNoSuchNameLine),
+	assert.True(t, strings.Contains(strings.Join(msgs, "\n"), refusal.NotHereCreatureLine),
 		"expected the not-found family message, got: %q", msgs)
 	assert.False(t, user.Character.IsInCombat(), "no engagement may happen on a vanished target")
 }

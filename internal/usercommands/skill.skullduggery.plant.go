@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -49,8 +50,7 @@ func Plant(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// actions.Plant emits player-facing text for every outcome except
 	// the cooldown case (which returns without calling SendText).
 	if result.OnCooldown {
-		user.SendText(messaging.CategorySystem,
-			"You need a moment before you can try that again.")
+		refusal.Cooldown(user, "plant anything")
 	}
 
 	return true, nil
@@ -118,7 +118,7 @@ func parsePlantArgs(args []string, room *rooms.Room, user *users.UserRecord) (ac
 	}
 
 	if aimRefusal != `` {
-		user.SendText(messaging.CategorySystem, aimRefusal)
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return actions.PlantOptions{}, false
 	}
 	user.SendText(messaging.CategorySystem, "Plant on whom?")

@@ -1,0 +1,67 @@
+# M7 slice 1 (#371): refusals read the same everywhere.
+#
+# WHAT CHANGED. The common "you can't do that" lines now come from one place
+# and read the same in every command:
+#   - a creature you name but cannot pick out: "You don't see them here."
+#   - a thing in the room you cannot pick out: "You don't see that here."
+#   - something you are not carrying: "You aren't carrying 'NAME'. Try
+#     inventory." (NAME is what you typed, cut short if long)
+#   - a special move with no target: "You have no target. Try kick <name>."
+#   - the shared special-move timer: "You need a moment to recover before you
+#     can kick." (names the move, never a number)
+#   - "You aren't in a guild. Try guild create <TAG> <name>."
+#   - "You have no party invitation to answer."
+#   - bare `drop gold`: "Drop how much gold? Try drop <amount> gold."
+# A name you could only find by LOOKING (a creature, an item on the floor)
+# must never be repeated back to you, so a creature that is there in the dark
+# and a name that matches nothing must read EXACTLY the same.
+#
+# WHY HERE. Room 3101 (Cave Mouth) is an unlit cave with cave crawlers and a
+# wind scorpion (weak, hostile). West is Cliff Base (3100), outdoors.
+#
+# 3 commands per round on the AI port; the overflow is dropped. Pace your
+# commands. Quote every line VERBATIM.
+
+ephemeral:
+  profile: mid
+  start_room: 3101
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    DARK CHECKS, before anything attacks you if you can. Type `look` and say
+    whether you can read the room. Then type each of these, one at a time,
+    and quote exactly what you are told: `consider crawler`, `consider
+    zzyzx`, `target crawler`, `target zzyzx`, `get zzyzx`. A crawler is
+    really here, zzyzx is not. Report whether the crawler line and the zzyzx
+    line are IDENTICAL for each command, and whether any line repeats the
+    word crawler or zzyzx back to you (that would be a bug).
+  - >-
+    NOT CARRYING. Type each of these and quote the reply: `drop zzyzx`, `eat
+    zzyzx`, `drink zzyzx`, `use zzyzx`, `throw zzyzx`, `drop
+    averyveryverylongnamethatgoesonandon`. Each should say you aren't
+    carrying it, repeat what you typed in quotes (the long one cut short with
+    ...), and suggest inventory. Then type `drop gold` (no number) and quote
+    it: it must ASK how much and must NOT drop your gold. Type `inventory`
+    or `gold` afterwards and confirm your gold is unchanged.
+  - >-
+    MEMBERSHIP. Type `guild info` and `guild leave` and quote both. Then
+    `party accept` (you have no invitation) and quote it. Then `party
+    create`, then `party accept` again, and quote it: it must say you have no
+    party invitation to answer, NOT that something went wrong or that an
+    error was logged.
+  - >-
+    COOLDOWN. If a crawler or scorpion is fighting you, type `kick` twice in
+    a row (or `kick crawler` if it asks whom). Quote both replies. The second
+    should say you need a moment to recover before you can kick. If nothing
+    is fighting you, walk west to Cliff Base, find any creature, and type
+    `consider <name>` twice in a row; the second should say you need a
+    moment to recover before you can consider anyone. Quote it.
+  - >-
+    Report anything that reads WRONG in any refusal: a raw token like {actor}
+    or <name> missing its command colour, a number of seconds, a line longer
+    than one screen line, a line that says "Something went wrong" or "The
+    error has been logged" for something that was only your own mistake, or
+    two different wordings for the same situation. If something attacks you,
+    fight it off or flee and keep testing.

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -66,7 +67,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 
 	// Combat gate.
 	if char.IsInCombat() {
-		actor.SendText(messaging.CategorySystem, "You can't do that while in combat!")
+		refusal.WhileFighting(actor, "shadow anyone")
 		return ShadowResult{Reason: "in combat"}
 	}
 

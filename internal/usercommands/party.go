@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -40,6 +42,15 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	if partyCommand == `invite` {
 		return cmdPartyInvite(user, room, currentParty, rest)
+	}
+
+	// Answering an invitation comes before the party check: a player in no
+	// party has no invitation, and reads the same line as a member with none.
+	if partyCommand == `accept` || partyCommand == `join` || partyCommand == `decline` {
+		if currentParty == nil {
+			refusal.NoPartyInvite(user)
+			return true, nil
+		}
 	}
 
 	//
@@ -157,7 +168,7 @@ func cmdPartyCreate(user *users.UserRecord, currentParty *parties.Party) (bool, 
 		dispatchPartyEvent(currentParty, `created`)
 
 	} else {
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party create failed"), "userId", user.UserId)
 	}
 
 	return true, nil
@@ -173,16 +184,16 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 	// party gets one only once the invite is actually sent (#459), so a
 	// refused invite does not leave them leading an empty party.
 	if currentParty != nil && !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
+		refusal.NotPartyLeader(user, "invite others")
 		return true, nil
 	}
 
 	// #454, owner call 2: the invitee is found among the room's occupants, so
 	// a typed name resolves only at full sight, or inviting would confirm who
 	// is there in the dark.
-	name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `party invite`)
-	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, rest, `party invite`)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 	inviterSight := messaging.ParticipantSight(user.Character, room)
@@ -216,7 +227,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		createdParty = true
 	}
 	if currentParty == nil {
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party invite: no party after create"), "userId", user.UserId)
 		return true, nil
 	}
 
@@ -234,7 +245,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		if createdParty {
 			currentParty.Disband()
 		}
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party invite failed"), "userId", user.UserId)
 		return true, nil
 	}
 
@@ -244,11 +255,16 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 }
 
 func cmdPartyAccept(user *users.UserRecord, currentParty *parties.Party) (bool, error) {
+	// parties.Get also returns a party the player already belongs to; only an
+	// invited player has anything to accept.
+	if !currentParty.Invited(user.UserId) {
+		refusal.NoPartyInvite(user)
+		return true, nil
+	}
+
 	// Settle the shared pool to the EXISTING members before the new member
 	// joins, so the joiner doesn't collect a share of gold pooled pre-join.
-	if currentParty.Invited(user.UserId) {
-		settlePartyGold(currentParty)
-	}
+	settlePartyGold(currentParty)
 
 	if currentParty.AcceptInvite(user.UserId) {
 
@@ -266,12 +282,17 @@ func cmdPartyAccept(user *users.UserRecord, currentParty *parties.Party) (bool, 
 		dispatchPartyEvent(currentParty, `joined`)
 
 	} else {
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party accept failed"), "userId", user.UserId)
 	}
 	return true, nil
 }
 
 func cmdPartyDecline(user *users.UserRecord, currentParty *parties.Party) (bool, error) {
+	if !currentParty.Invited(user.UserId) {
+		refusal.NoPartyInvite(user)
+		return true, nil
+	}
+
 	dispatchPartyEvent(currentParty, `declined`)
 
 	if currentParty.DeclineInvite(user.UserId) {
@@ -282,7 +303,7 @@ func cmdPartyDecline(user *users.UserRecord, currentParty *parties.Party) (bool,
 		user.SendText(messaging.CategorySystem, `You decline the invitation.`)
 
 	} else {
-		user.SendText(messaging.CategorySystem, `Something went wrong.`)
+		refusal.Failed(user, "", errors.New("party decline failed"), "userId", user.UserId)
 	}
 	return true, nil
 }
@@ -557,7 +578,7 @@ func cmdPartyLeave(user *users.UserRecord, currentParty *parties.Party) (bool, e
 
 func cmdPartyDisband(user *users.UserRecord, currentParty *parties.Party) (bool, error) {
 	if !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
+		refusal.NotPartyLeader(user, "disband the party")
 		return true, nil
 	}
 
@@ -590,7 +611,7 @@ func cmdPartyDisband(user *users.UserRecord, currentParty *parties.Party) (bool,
 
 func cmdPartyKick(user *users.UserRecord, currentParty *parties.Party, rest string) {
 	if !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
+		refusal.NotPartyLeader(user, "remove members")
 		return
 	}
 
@@ -621,7 +642,7 @@ func cmdPartyKick(user *users.UserRecord, currentParty *parties.Party, rest stri
 
 func cmdPartyPromote(user *users.UserRecord, currentParty *parties.Party, rest string) {
 	if !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
+		refusal.NotPartyLeader(user, "promote a member")
 		return
 	}
 
@@ -654,7 +675,7 @@ func cmdPartyPromote(user *users.UserRecord, currentParty *parties.Party, rest s
 // the change to the whole party.
 func cmdPartyLoot(user *users.UserRecord, currentParty *parties.Party, rest string) (bool, error) {
 	if !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only the party leader can set the loot mode.`)
+		refusal.NotPartyLeader(user, "set the loot mode")
 		return true, nil
 	}
 

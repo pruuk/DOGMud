@@ -11,19 +11,17 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// attackNothingHereLine answers a bare `attack` with no foe to pick up;
-// attackNoSuchNameLine answers a name that resolves to no one (owner,
-// 2026-08-15). A resolved id whose record is gone reads the second line too.
-const (
-	attackNothingHereLine = `There is nothing here to attack.`
-	attackNoSuchNameLine  = `Nothing by that name is in this room.`
-)
+// attackNothingHereLine answers a bare `attack` with no foe to pick up. A name
+// that resolves to no one (and a resolved id whose record is gone) reads
+// refusal.NotHereCreatureLine.
+const attackNothingHereLine = `There is nothing here to attack.`
 
 func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -103,14 +101,14 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// "@id" or "#id" it stands for. A wildcard picks among what the
 		// attacker perceives, so it needs only some sight.
 		if rest[0] != '*' {
-			name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `attack`)
-			if refusal != `` {
-				user.SendText(messaging.CategorySystem, refusal)
+			name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, rest, `attack`)
+			if aimRefusal != `` {
+				user.SendText(messaging.CategoryRefusal, aimRefusal)
 				return true, nil
 			}
 			rest = name
 		} else if messaging.ParticipantSight(user.Character, room) == messaging.SightNone {
-			user.SendText(messaging.CategorySystem, actions.AimNothingLine)
+			refusal.NothingToAim(user)
 			return true, nil
 		}
 		// Wildcard and named-target resolution delegated to shared helper.
@@ -125,7 +123,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		if rest == `` {
 			user.SendText(messaging.CategorySystem, attackNothingHereLine)
 		} else {
-			user.SendText(messaging.CategorySystem, attackNoSuchNameLine)
+			refusal.NotHereCreature(user)
 		}
 		return true, nil
 	}
@@ -189,7 +187,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// here) used to fall through and return with NO output at all. A
 		// failed resolution must always message the player.
 		if m == nil {
-			user.SendText(messaging.CategorySystem, attackNoSuchNameLine)
+			refusal.NotHereCreature(user)
 			return true, nil
 		}
 
@@ -325,7 +323,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// stale player id arrived here as a non-nil id with no user record
 		// behind it and the command returned with no output.
 		if p == nil {
-			user.SendText(messaging.CategorySystem, attackNoSuchNameLine)
+			refusal.NotHereCreature(user)
 			return true, nil
 		}
 
@@ -425,23 +423,23 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 // special-move timer was already claimed spent their cover, took an ordinary
 // swing, and was told neither thing. To the player the ambush simply did not
 // work.
-const (
-	// surpriseMeleeDeniedText is the refusal a melee ambusher sees when the
-	// shared special-move timer was already claimed.
-	//
-	// It used to alias the ranged refusal, so the two halves could not drift.
-	// They have now drifted ON PURPOSE: the RANGED opener is no longer gated on
-	// the timer at all, because firing chambers its own next round and therefore
-	// claims on every shot, which would have denied the ambush after any
-	// previous shot. Melee has no per-swing claim, so its gate still means what
-	// it always meant and this line is still reachable.
-	//
-	// The second sentence is the engine's established refusal wording ("You need
-	// a moment to recover before attempting another special move." -- throw.go,
-	// mutation_helpers.go), trimmed to fit, so the same cooldown is refused in
-	// the same words wherever a player still meets it.
-	surpriseMeleeDeniedText = `No ambush ready. You need a moment to recover before another special move.`
 
+// surpriseMeleeDeniedText is the refusal a melee ambusher sees when the
+// shared special-move timer was already claimed.
+//
+// It used to alias the ranged refusal, so the two halves could not drift.
+// They have now drifted ON PURPOSE: the RANGED opener is no longer gated on
+// the timer at all, because firing chambers its own next round and therefore
+// claims on every shot, which would have denied the ambush after any
+// previous shot. Melee has no per-swing claim, so its gate still means what
+// it always meant and this line is still reachable.
+//
+// The second sentence is the shared cooldown refusal from internal/refusal
+// (refusal.CooldownText, naming the move), so the same cooldown is refused in
+// the same words wherever a player still meets it.
+var surpriseMeleeDeniedText = "No ambush ready. " + refusal.CooldownText("ambush")
+
+const (
 	// surpriseMeleeRevealedText names the consequence the refusal does not,
 	// and it is the more expensive of the two: the ambush is off, the cover is
 	// spent anyway. Shaped after surpriseShotRevealedText ("The shot gives

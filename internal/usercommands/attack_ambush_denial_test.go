@@ -279,7 +279,7 @@ func TestMeleeAmbushDenialCopy_ObeysThePlayerCopyRules(t *testing.T) {
 	// deleted as unreachable. Melee has no per-swing claim, so its gate still
 	// means what it always meant and this wording is still reachable.
 	assert.Equal(t,
-		`No ambush ready. You need a moment to recover before another special move.`,
+		`No ambush ready. You need a moment to recover before you can ambush.`,
 		surpriseMeleeDeniedText,
-		"the melee refusal keeps the engine's established cooldown wording")
+		"the melee refusal uses the shared cooldown wording")
 }

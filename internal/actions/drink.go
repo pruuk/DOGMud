@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -205,7 +206,7 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	}
 
 	if !found {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a "%s" to drink.`, rest))
+		refusal.NotCarrying(actor, rest)
 		return DrinkResult{Refusal: DrinkRefuseNotFound}
 	}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -326,8 +327,7 @@ func salvageItem(actor Actor, uuid string, spoiledPotion bool, score float64) Sa
 	spec := items.GetItemSpec(itemId)
 	if spec == nil {
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategoryError,
-				`<ansi fg="red">Something went wrong with your salvage attempt.</ansi>`)
+			refusal.Failed(actor, "salvage", fmt.Errorf("no item spec for item %d", itemId), "userId", actor.GetUserId())
 		}
 		result.Reason = "spec not found"
 		return result

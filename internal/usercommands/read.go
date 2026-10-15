@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -17,6 +18,7 @@ func Read(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	foundItemName := ""
 	foundItemLongName := ""
 	foundItemDescription := ""
+	carriedWithoutText := false
 	// Search for an exact match first
 	if readItem, found := user.Character.FindInBackpack(rest); found {
 		iSpec := readItem.GetSpec()
@@ -37,13 +39,17 @@ func Read(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			foundItemName = readItem.DisplayName()
 			foundItemLongName = readItem.DisplayName()
 			foundItemDescription = desc
+		} else {
+			carriedWithoutText = true
 		}
 	}
 
 	isSneaking := user.Character.IsHidden()
 
-	if len(foundItemName) == 0 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a "%s" that can be read.`, rest))
+	if carriedWithoutText {
+		user.SendText(messaging.CategoryRefusal, `There is nothing written on it.`)
+	} else if len(foundItemName) == 0 {
+		refusal.NotCarrying(user, rest)
 	} else {
 		user.SendText(messaging.CategorySystem,
 			fmt.Sprintf(`You look at <ansi fg="item">%s</ansi>...`, foundItemLongName),

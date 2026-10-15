@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -50,11 +51,11 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		return true, nil
 	}
 	if res.OnCooldown {
-		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
+		refusal.Cooldown(user, "throttle")
 		return true, nil
 	}
 	if res.NoTarget {
-		user.SendText(messaging.CategorySystem, "You have no target!")
+		refusal.NoTarget(user, "throttle")
 		return true, nil
 	}
 

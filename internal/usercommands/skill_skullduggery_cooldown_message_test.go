@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -25,9 +26,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// skullduggeryCooldownRefusal is the exact player-facing line a thief sees
-// when the shared steal/plant cooldown refuses another attempt.
-const skullduggeryCooldownRefusal = "You need a moment before you can try that again."
+// The exact player-facing lines a thief sees when the shared steal/plant
+// cooldown refuses another attempt: each names what the player tried.
+var (
+	stealCooldownRefusal = refusal.CooldownText("steal")
+	plantCooldownRefusal = refusal.CooldownText("plant anything")
+)
 
 // armSkullduggeryCooldown gives the actor rank enough to try, then pre-arms
 // the shared steal/plant cooldown so the very next attempt is refused.
@@ -57,7 +61,7 @@ func TestSteal_OnCooldown_TellsThePlayerPlainly(t *testing.T) {
 	require.NoError(t, err)
 
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	assert.Contains(t, out, skullduggeryCooldownRefusal)
+	assert.Contains(t, out, stealCooldownRefusal)
 	assert.NotContains(t, out, "rounds remaining",
 		"no raw round count belongs in player-facing text")
 }
@@ -78,7 +82,7 @@ func TestPlant_OnCooldown_TellsThePlayerPlainly(t *testing.T) {
 	require.NoError(t, err)
 
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	assert.Contains(t, out, skullduggeryCooldownRefusal)
+	assert.Contains(t, out, plantCooldownRefusal)
 	assert.NotContains(t, out, "rounds remaining",
 		"no raw round count belongs in player-facing text")
 }

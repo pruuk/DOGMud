@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -42,17 +44,27 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if amount, isGold, ok := parseGoldPhrase(giveWhat); isGold {
 
 		if !ok {
-			// Either unparseable or negative. The old code accepted a
-			// negative here and rejected it with its own message; keep a
-			// single message now that one parser owns both cases.
-			user.SendText(messaging.CategorySystem, "That isn't an amount of gold you can give.")
+			// Either unparseable or negative. A negative amount is the
+			// same player mistake as zero and reads the same line.
+			if strings.HasPrefix(strings.TrimSpace(giveWhat), "-") {
+				user.SendText(messaging.CategoryRefusal, giveHowMuchGoldLine)
+			} else {
+				user.SendText(messaging.CategoryRefusal, "That isn't an amount of gold you can give.")
+			}
+			return true, nil
+		}
+
+		// A zero amount is a player's mistake, not a server fault: refuse it
+		// here, before any path that could reach refusal.Failed.
+		if amount < 1 {
+			user.SendText(messaging.CategoryRefusal, giveHowMuchGoldLine)
 			return true, nil
 		}
 
 		giveGoldAmount = amount
 
 		if giveGoldAmount > user.Character.Gold {
-			user.SendText(messaging.CategorySystem, "You don't have that much gold to give.")
+			user.SendText(messaging.CategoryRefusal, "You don't have that much gold to give.")
 			return true, nil
 		}
 
@@ -64,7 +76,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		giveItem, found = user.Character.FindInBackpack(giveWhat)
 
 		if !found {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s to give. (<ansi fg="command">give {object-name} {receiver-name}</ansi>)`, giveWhat))
+			refusal.NotCarrying(user, giveWhat)
 			return true, nil
 		}
 
@@ -80,9 +92,9 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// #454: a typed name resolves only at full sight.
 	{
-		name, refusal := actions.AimBySight(user.Character, user.UserId, room, giveWho, `give `+giveWhat)
-		if refusal != `` {
-			user.SendText(messaging.CategorySystem, refusal)
+		name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, giveWho, `give `+giveWhat)
+		if aimRefusal != `` {
+			user.SendText(messaging.CategoryRefusal, aimRefusal)
 			return true, nil
 		}
 		giveWho = name
@@ -104,8 +116,12 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			if giveItem.ItemId > 0 {
 				userActor := &actions.UserActor{User: user, Room: room}
 				result := actions.GiveItemToChar(userActor, giveWhat, targetUser.Character, targetUser.UserId, 0)
+				if errors.Is(result.Err, actions.ErrInventoryFull) {
+					refusal.RecipientFull(user)
+					return true, nil
+				}
 				if result.Err != nil {
-					user.SendText(messaging.CategorySystem, "Something went wrong.")
+					refusal.Failed(user, "", result.Err, "userId", user.UserId)
 					return true, nil
 				}
 
@@ -127,7 +143,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				giveGoldToUser(user, targetUser, room, giveGoldAmount)
 
 			} else {
-				user.SendText(messaging.CategorySystem, "Something went wrong.")
+				refusal.Failed(user, "", errors.New("give to a player: neither an item nor gold"), "userId", user.UserId)
 			}
 
 			return true, nil
@@ -153,7 +169,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			if giveGoldAmount > 0 {
 				userActor := &actions.UserActor{User: user, Room: room}
 				if err := actions.GiveGoldToChar(userActor, giveGoldAmount, &m.Character); err != nil {
-					user.SendText(messaging.CategorySystem, "Something went wrong.")
+					refusal.Failed(user, "", err, "userId", user.UserId)
 					return true, nil
 				}
 
@@ -214,8 +230,12 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				// Normal flow — transfer item to mob via atomic transfer.
 				userActor := &actions.UserActor{User: user, Room: room}
 				result := actions.GiveItemToChar(userActor, giveWhat, &m.Character, 0, m.InstanceId)
+				if errors.Is(result.Err, actions.ErrInventoryFull) {
+					refusal.RecipientFull(user)
+					return true, nil
+				}
 				if result.Err != nil {
-					user.SendText(messaging.CategorySystem, "Something went wrong.")
+					refusal.Failed(user, "", result.Err, "userId", user.UserId)
 					return true, nil
 				}
 				// Update giveItem so onGive scripting below has the live value.
@@ -273,7 +293,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				m.Command(fmt.Sprintf(`gearup !%d`, giveItem.ItemId))
 			}
 		} else {
-			user.SendText(messaging.CategorySystem, "Something went wrong.")
+			refusal.Failed(user, "", errors.New("give to a mob: neither an item nor gold"), "userId", user.UserId)
 		}
 
 		return true, nil
@@ -286,7 +306,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		petUser := users.GetByUserId(petUserId)
 		if petUser == nil {
-			user.SendText(messaging.CategorySystem, "Who???")
+			refusal.NotHereCreature(user)
 			return true, nil
 		}
 
@@ -294,7 +314,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, `Who??? (<ansi fg="command">give {object-name} {receiver-name}</ansi>)`)
+	refusal.NotHereCreature(user)
 
 	return true, nil
 }
@@ -316,7 +336,7 @@ func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount
 
 	userActor := &actions.UserActor{User: user, Room: room}
 	if err := actions.GiveGoldToChar(userActor, amount, targetUser.Character); err != nil {
-		user.SendText(messaging.CategorySystem, "Something went wrong.")
+		refusal.Failed(user, "", err, "userId", user.UserId)
 		return
 	}
 
@@ -400,6 +420,9 @@ func splitGiveArgs(args []string, user *users.UserRecord, room *rooms.Room) (giv
 	return strings.Join(args[:len(args)-1], " "), args[len(args)-1]
 }
 
+// giveHowMuchGoldLine answers a gold give of zero or less.
+const giveHowMuchGoldLine = `Give how much gold? Try <ansi fg="command">give <amount> gold <name></ansi>.`
+
 // parseGoldPhrase is the single gold parser for both resolution and execution.
 // It reports whether `what` is a gold phrase ("50 gold", "50gold") and, if so,
 // the amount.
@@ -440,8 +463,8 @@ func giveTargetResolves(who string, user *users.UserRecord, room *rooms.Room) bo
 	if ownPetNamed(who, user) {
 		return true
 	}
-	name, refusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
-	if refusal != `` {
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `give`)
+	if aimRefusal != `` {
 		return false
 	}
 	if playerId, mobInstanceId := room.FindByNameSeenBy(user.Character, name); playerId > 0 || mobInstanceId > 0 {

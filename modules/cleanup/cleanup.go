@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -68,7 +69,7 @@ func (c *CleanupModule) userTrashCommand(rest string, user *users.UserRecord, ro
 	matchItem, found := user.Character.FindInBackpack(rest)
 
 	if !found {
-		user.SendText(messaging.CategoryError, fmt.Sprintf(`You don't have a "%s" to trash.`, rest))
+		refusal.NotCarrying(user, rest)
 	} else {
 
 		isSneaking := user.Character.HasConditionFlag(conditions.Hidden)

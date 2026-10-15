@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/parser"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -77,7 +78,7 @@ func getAllMatchingFromFloor(user *users.UserRecord, room *rooms.Room, itemName 
 			// than deny there is anything there.
 			fixedInPlace(user, fixed[0])
 		default:
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see any "%s" to pick up.`, itemName))
+			refusal.NotHereThing(user)
 		}
 		return
 	}
@@ -734,7 +735,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	if containerName != `` {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can't pick up the <ansi fg="container">%s</ansi>. Try looking at it.`, containerName))
 	} else {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't see a %s around.", rest))
+		refusal.NotHereThing(user)
 	}
 
 	return true, nil

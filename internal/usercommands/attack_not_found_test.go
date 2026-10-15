@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,7 +39,7 @@ func TestAttack_UnmatchedName_SaysNothingByThatName(t *testing.T) {
 	require.NoError(t, err)
 
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	require.Contains(t, out, "Nothing by that name is in this room.")
+	require.Contains(t, out, refusal.NotHereCreatureLine)
 	require.NotContains(t, out, "zzyzx", "the typed name is never echoed")
 	require.NotContains(t, out, "darkness")
 }

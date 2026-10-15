@@ -22,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/seeders"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -100,7 +101,7 @@ func Steal(actor Actor, opts StealOptions) StealResult {
 
 	// Combat gate — can't steal while actively fighting.
 	if char.IsInCombat() {
-		actor.SendText(messaging.CategorySystem, "You can't do that while in combat!")
+		refusal.WhileFighting(actor, "steal")
 		return StealResult{Reason: "in combat"}
 	}
 
@@ -531,7 +532,7 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 	room := actor.GetRoom()
 	container, ok := room.Containers[containerName]
 	if !ok {
-		actor.SendText(messaging.CategorySystem, "You don't see that here.")
+		refusal.NotHereThing(actor)
 		return StealResult{Reason: "not found"}
 	}
 
@@ -864,7 +865,7 @@ func stealHouseholdBauble(actor Actor, itm items.Item, t theftAttempt) StealResu
 	name := itm.DisplayName()
 
 	if !itm.BaubleBelongsTo(room.RoomId) {
-		actor.SendText(messaging.CategorySystem, "You don't see that here.")
+		refusal.NotHereThing(actor)
 		return StealResult{Reason: "not found"}
 	}
 	if t.rank < 2 {

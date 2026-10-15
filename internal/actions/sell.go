@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -177,7 +178,7 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 	probe, found := sellFindItemInChar(char, itemName)
 	if !found {
 		if seller.IsPlayer() {
-			seller.SendText(messaging.CategorySystem, "You don't have that item.")
+			refusal.NotCarrying(seller, itemName)
 		}
 		return SellResult{Reason: SellStopNoItem}
 	}

@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -482,7 +483,7 @@ func (m *AICompanionModule) cmdUnstick(rest string, user *users.UserRecord, room
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion to reset.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	// Each reset abandons a call that may already have been paid for, and
@@ -523,7 +524,7 @@ func (m *AICompanionModule) cmdPart(rest string, user *users.UserRecord, room *r
 			user.SendText(messaging.CategorySystem, name+` has gone their own way.`)
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	if msg := m.confirmPart(c, user); msg != `` {
@@ -540,7 +541,7 @@ func (m *AICompanionModule) cmdCourt(rest string, user *users.UserRecord, room *
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	if msg := m.courtStep(c, user); msg != `` {
@@ -557,7 +558,7 @@ func (m *AICompanionModule) cmdBoundary(rest string, user *users.UserRecord, roo
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	user.SendText(messaging.CategorySystem, messaging.WrapAnsi(m.setBoundary(c, strings.ToLower(strings.TrimSpace(rest))), 80))
@@ -617,7 +618,7 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	who, topic, _ := strings.Cut(strings.TrimSpace(rest), ` `)
@@ -633,15 +634,15 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 	// somebody they themselves cannot see. The typed name goes through the
 	// shared sight rule first (#454), so in the dark a name that is there
 	// and one that is not read the same refusal.
-	who, refusal := actions.AimBySight(user.Character, user.UserId, room, who, `companion-ask`)
-	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+	who, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, who, `companion-ask`)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 	_, mobInstanceId := room.FindByNameSeenBy(user.Character, who)
 	target := mobs.GetInstance(mobInstanceId)
 	if target == nil || target.Character.IsCharmed() {
-		user.SendText(messaging.CategorySystem, `There is nobody like that here to ask.`)
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 	c.askAuth = &askAuthority{MobInstanceId: mobInstanceId, Topic: topic, Expires: time.Now().Unix() + 60}
@@ -675,7 +676,7 @@ func (m *AICompanionModule) cmdStay(rest string, user *users.UserRecord, room *r
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	want := strings.ToLower(strings.TrimSpace(rest))
@@ -718,7 +719,7 @@ func (m *AICompanionModule) cmdAI(rest string, user *users.UserRecord, room *roo
 	}
 	rec := m.bonds.Users[user.UserId]
 	if rec == nil {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	name := `Your companion`

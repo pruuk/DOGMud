@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -46,7 +47,7 @@ func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 		item, found := user.Character.FindInBackpack(rest)
 		if !found {
-			user.SendText(messaging.CategorySystem, "You don't have that item.")
+			refusal.NotCarrying(user, rest)
 			return true, nil
 		}
 

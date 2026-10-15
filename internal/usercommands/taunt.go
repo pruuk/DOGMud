@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -43,12 +44,12 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if result.OnCooldown {
-		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
+		refusal.Cooldown(user, "taunt")
 		return true, nil
 	}
 
 	if result.NoTarget {
-		user.SendText(messaging.CategorySystem, "You have no target!")
+		refusal.NoTarget(user, "taunt")
 		return true, nil
 	}
 

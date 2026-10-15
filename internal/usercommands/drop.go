@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -39,7 +40,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				// swallowed error here would report success on a failed drop.
 				return Drop(fmt.Sprintf("%d gold", user.Character.Gold), user, room, flags)
 			}
-			user.SendText(messaging.CategorySystem, `You don't have any gold to drop.`)
+			user.SendText(messaging.CategoryRefusal, `You don't have any gold to drop.`)
 			return true, nil
 		}
 
@@ -71,6 +72,19 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
+	// "drop gold" with no amount asks how much (dropping the whole purse by
+	// accident is not offered). An item the word "gold" names wins.
+	if len(args) == 1 && args[0] == "gold" {
+		if _, carried := user.Character.FindInBackpack("gold"); !carried {
+			if user.Character.Gold > 0 {
+				user.SendText(messaging.CategoryRefusal, `Drop how much gold? Try <ansi fg="command">drop <amount> gold</ansi>.`)
+			} else {
+				user.SendText(messaging.CategoryRefusal, `You don't have any gold to drop.`)
+			}
+			return true, nil
+		}
+	}
+
 	// Drop N gold
 	if len(args) >= 2 && args[1] == "gold" {
 		g, _ := strconv.ParseInt(args[0], 10, 32)
@@ -81,7 +95,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 
 		if dropAmt > user.Character.Gold {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't have %d gold to drop.", dropAmt))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf("You don't have %d gold to drop.", dropAmt))
 			return true, nil
 		}
 
@@ -122,7 +136,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			dropped++
 		}
 		if dropped == 0 {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have any "%s" to drop.`, itemName))
+			refusal.NotCarrying(user, itemName)
 		} else {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You drop %s.`, itemCount(dropped)))
 			room.SendTextVisual(messaging.CategoryLoot,
@@ -138,7 +152,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	result := actions.DropItem(actor, rest)
 
 	if !result.Found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't have a %s to drop.", rest))
+		refusal.NotCarrying(user, rest)
 	} else {
 		user.Character.CancelConditionsWithFlag(conditions.Hidden)
 

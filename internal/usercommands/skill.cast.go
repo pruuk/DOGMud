@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -229,7 +230,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	switch {
 	case result.OnCooldown:
-		user.SendText(messaging.CategorySystem, `You need a moment before you can do that.`)
+		refusal.Cooldown(user, "cast")
 		return true, nil
 	case result.NoTarget:
 		// The refusal may already have been narrated with a specific reason -- a
@@ -243,7 +244,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// HarmSingle / HarmArea / HelpSingle can set this; supply a
 		// context-aware message.
 		if !spellInfo.IsHarm() && spellInfo.Targeting == combatvocab.TargetSingle {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">You don't see "%s" here.</ansi>`, targetName))
+			refusal.NotHereCreature(user)
 		} else if spellInfo.IsHarm() && spellInfo.Targeting == combatvocab.TargetArea {
 			// Refused before any resources were spent (U7b admission rule).
 			user.SendText(messaging.CategorySystem, `<ansi fg="red">There is nothing here for that spell to strike.</ansi>`)

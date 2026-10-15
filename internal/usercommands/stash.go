@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -15,7 +16,7 @@ func Stash(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	matchItem, found := user.Character.FindInBackpack(rest)
 
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't have a %s to stash.", rest))
+		refusal.NotCarrying(user, rest)
 	} else {
 		// Swap the item location
 

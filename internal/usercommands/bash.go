@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -50,10 +51,10 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, "You need a shield equipped to perform a shield bash!")
 		return true, nil
 	case bashResult.OnCooldown:
-		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
+		refusal.Cooldown(user, "bash")
 		return true, nil
 	case bashResult.NoTarget:
-		user.SendText(messaging.CategorySystem, "Your target is gone!")
+		refusal.NoTarget(user, "bash")
 		return true, nil
 	}
 

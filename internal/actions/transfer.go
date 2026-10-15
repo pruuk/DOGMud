@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -8,6 +9,12 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
+
+// ErrInventoryFull is returned by TransferItemBetweenChars (and so
+// GiveItemToChar) and by TransferItemToBackpack when the receiver cannot
+// carry the item. It is a refusal for the giver, not a server fault; test
+// with errors.Is.
+var ErrInventoryFull = errors.New("destination inventory capacity exceeded")
 
 // TransferItemToFloor moves an item from a character's inventory to the room floor.
 // Returns an error if the item cannot be removed from the character's inventory.
@@ -49,7 +56,7 @@ func TransferItemToBackpack(item items.Item, toChar *characters.Character, toUse
 	if !toChar.StoreItem(item) {
 		// Restore to source on failure
 		rollback(item)
-		return fmt.Errorf("inventory capacity exceeded")
+		return ErrInventoryFull
 	}
 
 	// Fire ItemOwnership event for gain
@@ -79,7 +86,7 @@ func TransferItemBetweenChars(item items.Item, fromChar *characters.Character, f
 			// This should never happen since we just removed it
 			return fmt.Errorf("critical error: failed to rollback item to source")
 		}
-		return fmt.Errorf("destination inventory capacity exceeded")
+		return ErrInventoryFull
 	}
 
 	// Fire ItemOwnership events

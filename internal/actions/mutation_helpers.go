@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 )
 
 // MutationOpts carries optional inputs to a mutation-active trigger (e.g. a
@@ -95,8 +96,7 @@ func mutationPreamble(actor Actor, mutationKey string, combatRequired bool, stam
 	// Gate 3: shared special-move cooldown.
 	if !ClaimSpecialMove(char) {
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
-				"You need a moment to recover before attempting another special move.")
+			refusal.Cooldown(actor, "use that ability")
 		}
 		return preambleResult{BlockReason: "on-cooldown"}
 	}

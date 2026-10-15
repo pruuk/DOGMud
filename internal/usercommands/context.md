@@ -95,7 +95,7 @@ ungated: `look <creature>` (names one only at full sight), `sell` to a
 named merchant and `buy <x> from <merc>`. A pet is named, never a shape: `ownPetNamed`
 (`pet.go`) admits the player's own pet (`pet` or its name) at any sight, and
 `petOwnerInSight` finds another player's pet only at full sight of a
-perceived owner, so `pet <name>` (`AimNotHereLine` below full sight),
+perceived owner, so `pet <name>` (`refusal.NotHereCreatureLine` below full sight),
 `get x from <pet>` and `give x <pet>` never confirm a pet in the dark.
 `fire` refuses below full sight of the room it is
 aimed into (`actions.ShotSight`) before any name resolves. Lines that follow

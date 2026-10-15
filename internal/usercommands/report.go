@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -62,9 +63,9 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// Find target player in room. #454, owner call 2: a typed name
 		// resolves only at full sight, or a whisper would confirm who is there
 		// in the dark.
-		name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `rep`)
-		if refusal != `` {
-			user.SendText(messaging.CategorySystem, refusal)
+		name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, rest, `rep`)
+		if aimRefusal != `` {
+			user.SendText(messaging.CategoryRefusal, aimRefusal)
 			return true, nil
 		}
 		target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
@@ -73,7 +74,7 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			return true, nil
 		}
 		if err != nil || !target.IsPlayer() {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see "%s" here.`, rest))
+			refusal.NotHereCreature(user)
 			return true, nil
 		}
 

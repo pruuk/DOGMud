@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -385,7 +386,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 	matchItem, found := user.Character.FindInBackpack(rest)
 
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't have a %s to auction.", rest))
+		refusal.NotCarrying(user, rest)
 		return true, nil
 	}
 

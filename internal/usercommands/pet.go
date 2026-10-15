@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -59,19 +59,19 @@ func Pet(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	} else if messaging.ParticipantSight(user.Character, room) != messaging.SightFull {
 		// Another player's pet is named, never a shape: below full sight
 		// the name is refused the same whether the pet is there or not.
-		user.SendText(messaging.CategorySystem, actions.AimNotHereLine)
+		refusal.NotHereCreature(user)
 		return true, nil
 	} else {
 		petUserId = petOwnerInSight(rest, user, room)
 	}
 	if petUserId == 0 {
-		user.SendText(messaging.CategorySystem, `Can't find that to pet.`)
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 
 	petUser := users.GetByUserId(petUserId)
 	if petUser == nil {
-		user.SendText(messaging.CategorySystem, `Can't find that to pet.`)
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 

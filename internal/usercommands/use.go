@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -75,7 +76,7 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	matchItem, found := user.Character.FindInBackpack(rest)
 
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a "%s" to use.`, rest))
+		refusal.NotCarrying(user, rest)
 	} else {
 
 		itemSpec := matchItem.GetSpec()

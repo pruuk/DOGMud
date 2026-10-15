@@ -508,6 +508,13 @@ ErrTooDark`) rather than a refusal naming an item it should not be able to
 see. `GetGoldFromFloor(actor, amount) error` (`:83`) refuses the same way
 before `FloorPickupGold`.
 
+`ErrInventoryFull` (`transfer.go`, M7 slice 1) is returned by
+`TransferItemBetweenChars` (and so `GiveItemToChar`) and by
+`TransferItemToBackpack` when the receiver cannot carry the item. It is a
+refusal for the giver, not a server fault: test with `errors.Is`, and answer
+with `refusal.RecipientFull` (as `usercommands/give.go` does), never
+`refusal.Failed`.
+
 **`look.go`** (new file, slice 5a): `ResolveLook(actor Actor, lookAt string)
 LookResolution` (`:49`) is the shared look body, in the player's exact order:
 sight first, then no-target (the room), then a creature (resolved with the
@@ -690,9 +697,12 @@ word on its own line (#430).
   `#<mobInstanceId>`; figures are perceived players then mobs, in room
   order), an id form (`@N`, `#N`, what party auto-assist types) and an empty
   name, and answers any other name with `AimShapesHint(verb)`; no sight
-  admits nothing (`AimNothingLine` for a shape or no name, `AimNotHereLine`
-  for a name). It returns the name to resolve and the refusal to tell, ""
-  when admitted. Player commands that name a creature run it (the list is
+  admits nothing (`refusal.NothingToAimLine` for a shape or no name,
+  `refusal.NotHereCreatureLine` for a name; an out-of-range `N.shape` also
+  answers `refusal.NotHereCreatureLine`). The constants moved to
+  `internal/refusal` in M7 slice 1 (`AimNothingLine` and `AimNotHereLine`
+  are gone); see `internal/refusal/context.md`. It returns the name to
+  resolve and the refusal to tell, "" when admitted. Player commands that name a creature run it (the list is
   in `internal/usercommands/context.md`), except three left ungated on
   purpose (plan D-H2-12): `look <creature>` (`look.go`, which names a
   creature only when `NamesCreatures`, i.e. at full sight, and refuses with

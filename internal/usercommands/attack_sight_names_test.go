@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -46,7 +46,7 @@ func TestAttack_PitchDark_DoesNotNameTheMobToTheAttacker(t *testing.T) {
 	// #454: with no sight a typed name resolves to nothing, so the attacker is
 	// refused, and the refusal names no one either.
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	require.Contains(t, out, actions.AimNotHereLine, "the refusal must be sent: %q", out)
+	require.Contains(t, out, refusal.NotHereCreatureLine, "the refusal must be sent: %q", out)
 	require.Equal(t, 0, user.Character.CurrentCombatTarget().MobInstanceId, "no sight engaged a named target")
 	require.NotContains(t, strings.ToLower(out), "skeleton",
 		"an attacker who sees nothing must not learn the target's name: %q", out)

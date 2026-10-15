@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -31,7 +32,7 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 	if result.OnCooldown {
-		user.SendText(messaging.CategorySystem, "You need a moment to recover before attempting another special move.")
+		refusal.Cooldown(user, "rally")
 		return true, nil
 	}
 	if !result.Executed {

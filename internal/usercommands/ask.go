@@ -93,7 +93,7 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	// asking would confirm who is there in the dark.
 	searchName, refusal := actions.AimBySight(user.Character, user.UserId, room, args[0], `ask`)
 	if refusal != `` {
-		user.SendText(messaging.CategorySystem, refusal)
+		user.SendText(messaging.CategoryRefusal, refusal)
 		return true, nil
 	}
 

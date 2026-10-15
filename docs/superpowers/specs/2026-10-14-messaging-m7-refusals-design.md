@@ -98,7 +98,9 @@ wording overlaps a family above, they call the family's `...Text` for it.
 A helper adds a hint only where a next step exists, from its keywords:
 "You have no target. Try 'attack <name>'." / "Pet what? Try 'pet <name>'."
 Hints name a command the player can type, in single quotes, and fit the line
-in 80 visible columns. Cooldowns name the move and never a duration.
+in 80 visible columns.
+Owner ruling 2026-10-15: hints use the command colour (<ansi fg="command">), the codebase's existing style, not single quotes.
+Cooldowns name the move and never a duration.
 
 ### 4. Failures
 

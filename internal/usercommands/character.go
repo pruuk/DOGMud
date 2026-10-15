@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -270,7 +271,7 @@ func cmdCharacterChange(user *users.UserRecord, room *rooms.Room, cmdPrompt *pro
 
 		succes := user.SwapToAlt(match)
 		if !succes {
-			user.SendText(messaging.CategorySystem, `<ansi fg="203">Something went wrong.</ansi>`)
+			refusal.Failed(user, "", errors.New("SwapToAlt failed"), "userId", user.UserId, "alt", match)
 			user.ClearPrompt()
 			return true, nil
 		}

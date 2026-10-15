@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
@@ -51,7 +52,7 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 
 	// Combat gate — can't plant while actively fighting.
 	if char.IsInCombat() {
-		actor.SendText(messaging.CategorySystem, "You can't do that while in combat!")
+		refusal.WhileFighting(actor, "plant anything")
 		return PlantResult{Reason: "in combat"}
 	}
 
@@ -82,7 +83,7 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 	// Find item in actor's backpack.
 	plantItem, found := char.FindInBackpack(opts.ItemNoun)
 	if !found {
-		actor.SendText(messaging.CategorySystem, "You don't have that.")
+		refusal.NotCarrying(actor, opts.ItemNoun)
 		return PlantResult{Reason: "item not in backpack"}
 	}
 
@@ -348,7 +349,7 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item, t
 	room := actor.GetRoom()
 	container, ok := room.Containers[containerName]
 	if !ok {
-		actor.SendText(messaging.CategorySystem, "You don't see that here.")
+		refusal.NotHereThing(actor)
 		return PlantResult{Reason: "not found"}
 	}
 

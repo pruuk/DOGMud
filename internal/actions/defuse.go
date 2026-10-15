@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
@@ -68,7 +69,7 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 
 	// Combat gate.
 	if char.IsInCombat() {
-		actor.SendText(messaging.CategorySystem, "You can't do that while in combat!")
+		refusal.WhileFighting(actor, "defuse a trap")
 		return DefuseResult{Reason: "in combat"}
 	}
 

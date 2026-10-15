@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -495,7 +496,7 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 		if !cmdInfo.AllowedInCombat {
 			// If in combat, prevent it (unless admin)
 			if user.Character.IsInCombat() && !cmdInfo.AdminOnly {
-				user.SendText(messaging.CategorySystem, "You can't do that while fighting!")
+				refusal.WhileFighting(user, "do that")
 				return true, nil
 			}
 		}

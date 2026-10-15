@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/pets"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -97,9 +98,9 @@ func TestAttackSight_NoSightResolvesNothing(t *testing.T) {
 		assert.Equal(t, 0, user.Character.CurrentCombatTarget().MobInstanceId, "%q engaged with no sight", rest)
 		told := aimTold(1)
 		if rest == "skeleton" {
-			assert.Contains(t, told, actions.AimNotHereLine)
+			assert.Contains(t, told, refusal.NotHereCreatureLine)
 		} else {
-			assert.Contains(t, told, actions.AimNothingLine, "%q", rest)
+			assert.Contains(t, told, refusal.NothingToAimLine, "%q", rest)
 		}
 	}
 }
@@ -120,7 +121,7 @@ func TestMeleeStageSight_KickAtEachBand(t *testing.T) {
 	user, room = aimScene(t, aimDark)
 	_, handled = actions.StageMeleeTarget(user, room, "skeleton", actions.MeleeTargetOpts{Verb: "kick"})
 	assert.True(t, handled, "no sight stages nothing")
-	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 }
 
 // target is attack's sibling: attack hands a target switch to it.
@@ -128,7 +129,7 @@ func TestTargetSight_NoSightResolvesNothing(t *testing.T) {
 	user, room := aimScene(t, aimDark)
 	require.True(t, targeting.Commit(user.Character, state.ActorRef{MobInstanceId: 100}, targeting.ReasonAttack))
 	_, _ = Target("bobrick", user, room, events.EventFlag(0))
-	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 	assert.Equal(t, 100, user.Character.CurrentCombatTarget().MobInstanceId, "the target did not change")
 }
 
@@ -165,7 +166,7 @@ func TestGiveSight_NoSightGivesNothing(t *testing.T) {
 	user.Character.Gold = 50
 	_, _ = Give("10 gold bobrick", user, room, events.EventFlag(0))
 	assert.Equal(t, 50, user.Character.Gold)
-	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 }
 
 func TestShowSight_ShapesHidesTheNameAfterAShape(t *testing.T) {
@@ -192,7 +193,7 @@ func TestStealSight_EachBand(t *testing.T) {
 
 	user, room = aimScene(t, aimDark)
 	assert.Nil(t, parseStealArgs([]string{"skeleton"}, room, user))
-	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 }
 
 // #454 review F8: plant's creature noun goes through the sight rule; a
@@ -214,7 +215,7 @@ func TestPlantSight_EachBand(t *testing.T) {
 	user, room = aimScene(t, aimDark)
 	_, ok = parsePlantArgs([]string{"sword", "skeleton"}, room, user)
 	assert.False(t, ok)
-	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 	room.Containers = map[string]rooms.Container{"chest": {}}
 	opts, ok = parsePlantArgs([]string{"sword", "chest"}, room, user)
 	require.True(t, ok, "a container is still named in the dark")
@@ -246,7 +247,7 @@ func TestShadowSight_EachBand(t *testing.T) {
 	user, room = setup(aimDark)
 	_, _ = Shadow("skeleton", user, room, events.EventFlag(0))
 	told = aimTold(1)
-	assert.Contains(t, told, actions.AimNotHereLine)
+	assert.Contains(t, told, refusal.NotHereCreatureLine)
 	assert.NotContains(t, told, reached, "a name resolved with no sight")
 }
 
@@ -263,9 +264,9 @@ func TestConsiderSight_ShapesConsidersAFigure(t *testing.T) {
 func TestTalkAskSight_NoSightResolvesNothing(t *testing.T) {
 	user, room := aimScene(t, aimDark)
 	_, _ = Talk("skeleton", user, room, events.EventFlag(0))
-	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 	_, _ = Ask("skeleton quest", user, room, events.EventFlag(0))
-	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 }
 
 func TestTalkSight_ShapesHintsAName(t *testing.T) {
@@ -282,7 +283,7 @@ func TestPartyInviteSight_EachBand(t *testing.T) {
 		}
 	})
 	_, _ = Party("invite bobrick", user, room, events.EventFlag(0))
-	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 	assert.Empty(t, aimTold(2), "a player nobody could see was invited")
 
 	user, room = aimScene(t, aimShapes)
@@ -297,7 +298,7 @@ func TestPartyInviteSight_EachBand(t *testing.T) {
 func TestRepSight_EachBand(t *testing.T) {
 	user, room := aimScene(t, aimDark)
 	_, _ = Report("bobrick", user, room, events.EventFlag(0))
-	assert.Contains(t, aimTold(1), actions.AimNotHereLine)
+	assert.Contains(t, aimTold(1), refusal.NotHereCreatureLine)
 	assert.Empty(t, aimTold(2), "a whisper reached a player nobody could see")
 
 	user, room = aimScene(t, aimShapes)
@@ -403,7 +404,7 @@ func TestGiveSight_DarkSplitReadsTheSameWhetherPresentOrNot(t *testing.T) {
 		assert.True(t, has, "present=%v: the sword left the giver in the dark", present)
 	}
 	assert.Equal(t, told[true], told[false], "the refusal told a present recipient from an absent one")
-	assert.Contains(t, told[true], actions.AimNotHereLine)
+	assert.Contains(t, told[true], refusal.NotHereCreatureLine)
 }
 
 // The lit control: at full sight the two-word recipient resolves.
@@ -517,7 +518,7 @@ func TestShareSight_EachBandPaysTheParty(t *testing.T) {
 		assert.Equal(t, 45, user.Character.Gold, "band %d: the sharer kept Bobrick's share", band)
 		assert.Equal(t, 5, bob.Character.Gold, "band %d: Bobrick got no share", band)
 		told, bobTold := aimTold(1), aimTold(2)
-		assert.NotContains(t, told, actions.AimNotHereLine, "band %d", band)
+		assert.NotContains(t, told, refusal.NotHereCreatureLine, "band %d", band)
 		if band == aimFull {
 			assert.Contains(t, told, "to Bobrick.")
 			assert.Contains(t, bobTold, "Aliceia gives you")

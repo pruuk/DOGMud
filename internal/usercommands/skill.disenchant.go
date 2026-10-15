@@ -1,7 +1,6 @@
 package usercommands
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
@@ -10,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -37,7 +37,7 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 		targetItem = pMatch
 	}
 	if targetItem.ItemId < 1 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">You don't have "%s" in your inventory.</ansi>`, rest))
+		refusal.NotCarrying(user, rest)
 		return true, nil
 	}
 

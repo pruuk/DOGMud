@@ -180,7 +180,7 @@ func TestTransferItemToBackpack_CapacityFull(t *testing.T) {
 	}
 
 	err := TransferItemToBackpack(itm, char, 1, 0, removeFrom, rollback)
-	assert.Error(t, err, "should error when capacity exceeded")
+	assert.ErrorIs(t, err, ErrInventoryFull, "should error when capacity exceeded")
 	assert.True(t, rollbackCalled, "rollback must be called on failure")
 
 	afterTotal := countCharItems(char) + countFloorItems(room)
@@ -245,7 +245,7 @@ func TestTransferItemBetweenChars_DestFull(t *testing.T) {
 	beforeTotal := countCharItems(charA) + countCharItems(charB)
 
 	err := TransferItemBetweenChars(itm, charA, 1, 0, charB, 2, 0)
-	assert.Error(t, err, "should error when destination is full")
+	assert.ErrorIs(t, err, ErrInventoryFull, "should error when destination is full")
 
 	afterTotal := countCharItems(charA) + countCharItems(charB)
 

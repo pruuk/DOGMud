@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -97,7 +98,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			storageCap = 20
 		}
 		if user.ItemStorage.SlotCount() >= storageCap {
-			user.SendText(messaging.CategorySystem, `Your storage is full.`)
+			user.SendText(messaging.CategoryRefusal, `Your storage is full.`)
 			return true, nil
 		}
 
@@ -135,6 +136,10 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			var hot items.Item
 			for {
 				if user.ItemStorage.SlotCount() >= storageCap {
+					// Filled by this loop (a full store was refused above), so
+					// deposited > 0; only a stolen item still needs saying.
+					_, _, stolen := storageFindAddable(user, itemName, room)
+					hot = stolen
 					break
 				}
 				itm, found, stolen := storageFindAddable(user, itemName, room)
@@ -151,7 +156,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			case deposited == 0 && hot.ItemId != 0:
 				// the refusal below says why
 			case deposited == 0:
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s to add to storage.%s`, itemName, term.CRLFStr))
+				refusal.NotCarrying(user, itemName)
 			case deposited == 1:
 				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You placed the <ansi fg="itemname">%s</ansi> into storage.`, itemName))
 			default:
@@ -172,7 +177,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		deposited := 0
 		for i := 0; i < qty; i++ {
 			if user.ItemStorage.SlotCount() >= storageCap {
-				user.SendText(messaging.CategorySystem, `Your storage is full.`)
+				user.SendText(messaging.CategoryRefusal, `Your storage is full.`)
 				break
 			}
 			itm, found, hot := storageFindAddable(user, itemName, room)
@@ -183,7 +188,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 				case deposited > 0:
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You only had %d to deposit.`, deposited))
 				default:
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s to add to storage.%s`, itemName, term.CRLFStr))
+					refusal.NotCarrying(user, itemName)
 				}
 				break
 			}

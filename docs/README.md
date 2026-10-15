@@ -75,6 +75,7 @@ than reading an old result:
 
 | Path | What it does |
 |------|--------------|
+| [`../internal/refusal/context.md`](../internal/refusal/context.md) | The refusal package (messaging M7, #371): one helper and one line per refusal situation, sent on `CategoryRefusal`; the echo rule, the helper table, `Failed` for server faults only, and the two root guards with how to add a phrase row |
 | [`../tools/context_md_audit.py`](../tools/context_md_audit.py) | Finds `context.md` files documenting symbols the package no longer defines. Coverage is 100%; accuracy is what rots. Triage the output, it has known false positives |
 | [`../tools/lighting_golden_diff.py`](../tools/lighting_golden_diff.py) | Read-only analyser for the graded-lighting arc: groups a `lighting_daycycle.golden` diff by sample section and by biome transition, and reports section and room COUNT changes separately from value moves. Every golden move in the arc must be explained room-for-room with this before it is re-recorded |
 | [`../tools/balance/`](../tools/balance/) | Combat balance models behind roadmap 5.11 — skill leverage, real player-vs-mob matchups, and the `SkillWeight`/statpool tuning matrix |
