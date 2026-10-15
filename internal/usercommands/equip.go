@@ -59,7 +59,7 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `Wear WHAT?`)
+		refusal.Prompt(user, "equip", refusal.What, "equip <item>")
 		return true, nil
 	}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -851,7 +852,7 @@ func resolveMobSpellAgainstPlayer(caster *mobs.Mob, target *users.UserRecord, ro
 func resolveIdentify(user *users.UserRecord, itemName string, room *rooms.Room) {
 
 	if itemName == "" {
-		user.SendText(messaging.CategorySystem, "Identify what? (Usage: cast identify <item>)")
+		refusal.Prompt(user, "identify", refusal.What, "cast identify <item>")
 		return
 	}
 

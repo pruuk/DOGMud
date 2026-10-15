@@ -315,7 +315,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 		}
 
 		if len(args) < 2 {
-			user.SendText(messaging.CategorySystem, `Bid how much?`)
+			refusal.Prompt(user, "bid", refusal.HowMuch, "auction bid <amount>")
 			return true, nil
 		}
 

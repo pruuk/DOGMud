@@ -21,7 +21,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, `Drop what?`)
+		refusal.Prompt(user, "drop", refusal.What, "drop <item>")
 
 		return true, nil
 	}
@@ -77,7 +77,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if len(args) == 1 && args[0] == "gold" {
 		if _, carried := user.Character.FindInBackpack("gold"); !carried {
 			if user.Character.Gold > 0 {
-				user.SendText(messaging.CategoryRefusal, `Drop how much gold? Try <ansi fg="command">drop <amount> gold</ansi>.`)
+				refusal.Prompt(user, "drop", refusal.HowMuchGold, "drop <amount> gold")
 			} else {
 				user.SendText(messaging.CategoryRefusal, `You don't have any gold to drop.`)
 			}

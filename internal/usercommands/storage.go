@@ -57,7 +57,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	}
 
 	if rest == `add` {
-		user.SendText(messaging.CategorySystem, `add what?`+term.CRLFStr)
+		refusal.Prompt(user, "storage add", refusal.What, "storage add <item>")
 		return true, nil
 	}
 
@@ -170,7 +170,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 		// storage add [N] iron-ore
 		if itemName == `` {
-			user.SendText(messaging.CategorySystem, `add what?`+term.CRLFStr)
+			refusal.Prompt(user, "storage add", refusal.What, "storage add <item>")
 			return true, nil
 		}
 

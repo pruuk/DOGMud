@@ -23,7 +23,7 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) < 2 {
-		user.SendText(messaging.CategorySystem, "Show what? To whom?")
+		refusal.Prompt(user, "show", refusal.What, "show <item> <name>")
 		return true, nil
 	}
 

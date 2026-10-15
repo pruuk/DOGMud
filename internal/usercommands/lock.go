@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -17,7 +18,7 @@ func Lock(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) < 1 {
-		user.SendText(messaging.CategorySystem, "Unlock what?")
+		refusal.Prompt(user, "lock", refusal.What, "lock <exit or container>")
 		return true, nil
 	}
 

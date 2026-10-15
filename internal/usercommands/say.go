@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -23,7 +24,7 @@ func Say(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	// Nothing to say: refuse rather than speak a blank line to the room
 	// (#260).
 	if strings.TrimSpace(rest) == `` {
-		user.SendText(messaging.CategorySystem, `Say what?`)
+		refusal.Prompt(user, "say", refusal.What, "say <message>")
 		return true, nil
 	}
 

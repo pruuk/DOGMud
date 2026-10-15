@@ -73,7 +73,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 
 	// Require a target.
 	if opts.TargetMobInstanceId == 0 && opts.TargetUserId == 0 {
-		actor.SendText(messaging.CategorySystem, "Shadow whom?")
+		refusal.Prompt(actor, "shadow", refusal.Whom, "shadow <name>")
 		return ShadowResult{Reason: "no target"}
 	}
 

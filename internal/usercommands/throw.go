@@ -185,7 +185,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, "Throw what? Specify a throwable item.")
+		refusal.Prompt(user, "throw", refusal.What, "throw <item>")
 		return true, nil
 	}
 

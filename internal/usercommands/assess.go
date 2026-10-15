@@ -21,7 +21,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	rest = strings.TrimSpace(rest)
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, `Assess what?`)
+		refusal.Prompt(user, "assess", refusal.What, "assess <corpse>")
 		return true, nil
 	}
 

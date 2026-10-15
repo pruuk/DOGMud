@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -27,7 +28,7 @@ func Shout(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Nothing to shout: refuse rather than broadcast a blank line to this
 	// room and the next (#260).
 	if strings.TrimSpace(rest) == `` {
-		user.SendText(messaging.CategorySystem, `Shout what?`)
+		refusal.Prompt(user, "shout", refusal.What, "shout <message>")
 		return true, nil
 	}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -391,7 +392,7 @@ func (f *FollowModule) onPlayerDeath(e events.Event) events.ListenerReturn {
 func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `Follow whom? Try <ansi fg="command">help command</ansi>`)
+		refusal.Prompt(user, "follow", refusal.Whom, "follow <name>")
 		return true, nil
 	}
 
@@ -429,9 +430,9 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 	// that names a creature (actions.AimBySight). `stop` and `lose` name no
 	// one and need no sight. A shape becomes the "@id" or "#id" it stands for.
 	if len(followTargetName) > 0 {
-		name, refusal := actions.AimBySight(user.Character, user.UserId, room, followTargetName, `follow`)
-		if refusal != `` {
-			user.SendText(messaging.CategoryRefusal, refusal)
+		name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, followTargetName, `follow`)
+		if aimRefusal != `` {
+			user.SendText(messaging.CategoryRefusal, aimRefusal)
 			return true, nil
 		}
 		followTargetName = name
@@ -551,7 +552,7 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, `Follow whom?`)
+	refusal.NotHereCreature(user)
 
 	return true, nil
 }

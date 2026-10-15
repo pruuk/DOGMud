@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -15,7 +16,7 @@ import (
 func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, "What would you like to sell?")
+		refusal.Prompt(user, "sell", refusal.What, "sell <item>")
 		return true, nil
 	}
 

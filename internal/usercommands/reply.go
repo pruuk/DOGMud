@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -19,7 +20,7 @@ func Reply(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, "Reply with what?")
+		refusal.Prompt(user, "reply with", refusal.What, "reply <message>")
 		return true, nil
 	}
 

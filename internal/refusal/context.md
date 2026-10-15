@@ -62,6 +62,32 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `Failed(u, "", err)` / `FailedText` | That didn't work. The error has been logged. |
 | `Failed(u, "salvage", err)` | That salvage didn't work. The error has been logged. |
 
+## Prompts
+
+A prompt answers a command typed without what it needs (slice 2).
+`Prompt(to, verb, ask, usage)` / `PromptText` writes `<Verb> <ask>?` with the
+verb capitalized, then ` Try <usage>.` in the command colour when `usage` is
+not empty. `verb` carries any preposition ("talk to", "steal from", "plant
+on"); an empty verb asks the bare question. `ask` is one of a fixed set, so
+no caller writes a question literal:
+
+| `Ask` | Example |
+|---|---|
+| `What` | Pet what? Try **pet &lt;name&gt;**. |
+| `Whom` | Steal from whom? Try **steal &lt;name&gt;**. |
+| `HowMuch` | Deposit how much? Try **bank deposit &lt;amount&gt;**. |
+| `HowMuchGold` | Drop how much gold? Try **drop &lt;amount&gt; gold**. |
+
+The special moves get theirs from `actions.StageMeleeTarget`
+(`MeleeTargetOpts.PromptVerb`, default `Verb`): "Kick whom? Try **kick
+&lt;name&gt;**.". `TalkToPlayer` / `TalkToPlayerLine` answers `talk` aimed at
+a player: "To speak with a player, try **say &lt;message&gt;**.".
+
+A name that was typed and matched nothing is a miss, not a prompt: it gets
+`NotHereCreature` or `NotHereThing`, never a question back. Interactive
+questions that wait for an answer (`cmdPrompt.Ask`, e.g. mail's "Send mail
+to whom?") are not prompts in this sense and stay where they are.
+
 `Cooldown` takes what the player tried ("kick", "consider anyone"), never a
 duration. `NotPartyLeader` with an empty action reads "do that".
 
@@ -101,7 +127,14 @@ in this room" and "nobody like that here to ask"), not carrying, no target
 (including "Your target is gone"), cooldown (including "You need a moment
 before you can ..."), guild, companion (including "You have no companion
 to ..."), party leader, in combat (including the generic "can't do that while
-fighting" gate) and failure. The "nobody like that here" row is narrowed to
+fighting" gate), failure, "Who???" and prompts. The prompt row matches a
+literal opening with a question (`Pet what?`, `Talk to whom?`, `Bid how
+much gold?`). Two more rows catch the "which" form (`Switch to which
+target?`) and the would-you-like form (`What would you like to sell?`).
+`refusalPhraseHits` skips any literal passed directly to a `.Ask(` call
+(every receiver is `cmdPrompt`): interactive questions wait for the
+player's answer and are not refusals. The "nobody
+like that here" row is narrowed to
 "to ask": the companion module's "to cast it at" text is a trace reason for
 the model, not a line a player reads.
 
@@ -116,5 +149,7 @@ echo through sight) and `internal/usercommands/refusal_commands_test.go`
 
 ## Left for later slices
 
-Slices 2 to 4 of #371 move the remaining refusal families (and prompts) into
-this package and add their phrase rows.
+Slices 3 and 4 of #371 move the remaining refusal families into this
+package (`WhileBusy`, `TargetAsleep`, `Cost`, `NotWearing`, then package by
+package), add their phrase rows, and add `CategoryUsage`, `CategoryAdmin`
+and the tag guard.

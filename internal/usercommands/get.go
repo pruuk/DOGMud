@@ -112,7 +112,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, "Get what?")
+		refusal.Prompt(user, "get", refusal.What, "get <item>")
 		return true, nil
 	}
 

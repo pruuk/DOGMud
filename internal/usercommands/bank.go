@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -29,7 +30,7 @@ func Bank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if rest == `deposit` || rest == `withdraw` {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s how much? Make sure to include the amount of gold or "all".%s`, rest, term.CRLFStr))
+		refusal.Prompt(user, rest, refusal.HowMuch, "bank "+rest+" <amount>")
 		return true, nil
 	}
 

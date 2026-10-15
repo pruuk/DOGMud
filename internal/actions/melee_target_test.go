@@ -23,7 +23,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "bash",
 			opts:     MeleeTargetOpts{Verb: "bash"},
 			crafting: `<ansi fg="red">You can't bash while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Bash whom?",
+			prompt:   "Bash whom? Try <ansi fg=\"command\">bash <name></ansi>.",
 			self:     "You can't bash yourself.",
 			charmed:  "You can't bash a companion.",
 		},
@@ -31,7 +31,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "drain",
 			opts:     MeleeTargetOpts{Verb: "drain"},
 			crafting: `<ansi fg="red">You can't drain while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Drain whom?",
+			prompt:   "Drain whom? Try <ansi fg=\"command\">drain <name></ansi>.",
 			self:     "You can't drain yourself.",
 			charmed:  "You can't drain a companion.",
 		},
@@ -39,7 +39,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "gore",
 			opts:     MeleeTargetOpts{Verb: "gore"},
 			crafting: `<ansi fg="red">You can't gore while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Gore whom?",
+			prompt:   "Gore whom? Try <ansi fg=\"command\">gore <name></ansi>.",
 			self:     "You can't gore yourself.",
 			charmed:  "You can't gore a companion.",
 		},
@@ -47,7 +47,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "grapple",
 			opts:     MeleeTargetOpts{Verb: "grapple"},
 			crafting: `<ansi fg="red">You can't grapple while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Grapple whom?",
+			prompt:   "Grapple whom? Try <ansi fg=\"command\">grapple <name></ansi>.",
 			self:     "You can't grapple yourself.",
 			charmed:  "You can't grapple a companion.",
 		},
@@ -55,7 +55,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "kick",
 			opts:     MeleeTargetOpts{Verb: "kick"},
 			crafting: `<ansi fg="red">You can't kick while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Kick whom?",
+			prompt:   "Kick whom? Try <ansi fg=\"command\">kick <name></ansi>.",
 			self:     "You can't kick yourself.",
 			charmed:  "You can't kick a companion.",
 		},
@@ -63,7 +63,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "maul",
 			opts:     MeleeTargetOpts{Verb: "maul"},
 			crafting: `<ansi fg="red">You can't maul while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Maul whom?",
+			prompt:   "Maul whom? Try <ansi fg=\"command\">maul <name></ansi>.",
 			self:     "You can't maul yourself.",
 			charmed:  "You can't maul a companion.",
 		},
@@ -72,12 +72,12 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name: "pounce",
 			opts: MeleeTargetOpts{
 				Verb:          "pounce",
-				PromptMsg:     "Pounce on whom?",
+				PromptVerb:    "pounce on",
 				SelfTargetMsg: "You can't pounce on yourself.",
 				CharmedMsg:    "You can't pounce on a companion.",
 			},
 			crafting: `<ansi fg="red">You can't pounce while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Pounce on whom?",
+			prompt:   "Pounce on whom? Try <ansi fg=\"command\">pounce <name></ansi>.",
 			self:     "You can't pounce on yourself.",
 			charmed:  "You can't pounce on a companion.",
 		},
@@ -85,7 +85,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "rake",
 			opts:     MeleeTargetOpts{Verb: "rake"},
 			crafting: `<ansi fg="red">You can't rake while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Rake whom?",
+			prompt:   "Rake whom? Try <ansi fg=\"command\">rake <name></ansi>.",
 			self:     "You can't rake yourself.",
 			charmed:  "You can't rake a companion.",
 		},
@@ -93,7 +93,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "taunt",
 			opts:     MeleeTargetOpts{Verb: "taunt"},
 			crafting: `<ansi fg="red">You can't taunt while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Taunt whom?",
+			prompt:   "Taunt whom? Try <ansi fg=\"command\">taunt <name></ansi>.",
 			self:     "You can't taunt yourself.",
 			charmed:  "You can't taunt a companion.",
 		},
@@ -101,7 +101,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "throttle",
 			opts:     MeleeTargetOpts{Verb: "throttle"},
 			crafting: `<ansi fg="red">You can't throttle while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Throttle whom?",
+			prompt:   "Throttle whom? Try <ansi fg=\"command\">throttle <name></ansi>.",
 			self:     "You can't throttle yourself.",
 			charmed:  "You can't throttle a companion.",
 		},
@@ -110,16 +110,19 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			name:     "trip",
 			opts:     MeleeTargetOpts{Verb: "trip", CraftingVerb: "trip someone"},
 			crafting: `<ansi fg="red">You can't trip someone while focused on your work. Finish or be interrupted first.</ansi>`,
-			prompt:   "Trip whom?",
+			prompt:   "Trip whom? Try <ansi fg=\"command\">trip <name></ansi>.",
 			self:     "You can't trip yourself.",
 			charmed:  "You can't trip a companion.",
 		},
 	}
 
+	// An empty Verb asks as attack.
+	assert.Equal(t, `Attack whom? Try <ansi fg="command">attack <name></ansi>.`, MeleeTargetOpts{}.promptText())
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.crafting, tt.opts.craftingMsg(), "crafting-guard message changed")
-			assert.Equal(t, tt.prompt, tt.opts.promptMsg(), "empty-target prompt changed")
+			assert.Equal(t, tt.prompt, tt.opts.promptText(), "empty-target prompt changed")
 			assert.Equal(t, tt.self, tt.opts.selfTargetMsg(), "self-target message changed")
 			assert.Equal(t, tt.charmed, tt.opts.charmedMsg(), "charmed-target message changed")
 		})

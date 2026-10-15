@@ -39,6 +39,20 @@ func TestRefusalSpecialMoveVerbs(t *testing.T) {
 	}
 }
 
+// A bare special move out of combat asks whom, on the refusal category.
+func TestRefusalKickBarePromptsOnRefusal(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
+		refusalLeggedSpeciesId: {SpeciesId: refusalLeggedSpeciesId, Name: "walker", BodyParts: []string{"arms", "hands", "legs"}},
+	}))
+	user.Character.SpeciesId = refusalLeggedSpeciesId
+	_, err := Kick("", user, room, events.EventFlag(0))
+	require.NoError(t, err)
+	raw := refusalRaw(1)
+	assert.Contains(t, raw, `fg="refusal"`)
+	assert.Contains(t, raw, refusal.PromptText("kick", refusal.Whom, "kick <name>"))
+}
+
 func TestRefusalKickNoTargetAndCooldownLines(t *testing.T) {
 	// aimScene reseeds the species registry, so the legged species goes in
 	// after each scene is built (a legless kicker is refused as no target).

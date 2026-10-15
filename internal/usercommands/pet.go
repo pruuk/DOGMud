@@ -17,7 +17,7 @@ func Pet(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	args := util.SplitButRespectQuotes(rest)
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, `Pet what?`)
+		refusal.Prompt(user, "pet", refusal.What, "pet <name>")
 		return true, nil
 	}
 

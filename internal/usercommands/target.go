@@ -55,7 +55,7 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, "Switch to which target?")
+		refusal.Prompt(user, "target", refusal.Whom, "target <name>")
 		return true, nil
 	}
 

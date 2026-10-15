@@ -19,7 +19,11 @@ import (
 // phrases is a copy the helpers replaced. A hit is converted to the helper,
 // or, if it is not that refusal, the phrase here is narrowed; never
 // allow-listed by file. Each phrase's probe proves the pattern can match.
-// Later slices add rows.
+// Later slices add rows. The prompt rows match a literal that opens with a
+// question: "<Verb> what|whom|who|how much?", "... which <noun>?" and
+// "What would you like to <verb>?". Literals passed straight to
+// cmdPrompt.Ask( are skipped by refusalPhraseHits: interactive questions wait
+// for the player's answer and are not refusals.
 var refusalPhrases = []struct {
 	family string
 	re     *regexp.Regexp
@@ -47,6 +51,9 @@ var refusalPhrases = []struct {
 	{"not here, nobody like that", regexp.MustCompile(`nobody like that here to ask`), "There is nobody like that here to ask."},
 	{"companion, reset", regexp.MustCompile(`You have no companion to`), "You have no companion to reset."},
 	{"not here, who", regexp.MustCompile(`^Who\?\?\?`), "Who???"},
+	{"prompt", regexp.MustCompile(`(?i)^\S+( (on|from|to|at|with|in|into|for|about))? (what|whom|who|how much( gold)?)\?`), "Pet what?"},
+	{"prompt, which", regexp.MustCompile(`(?i)^\S+( \S+){0,3} which \w+\?`), "Switch to which target?"},
+	{"prompt, would you like", regexp.MustCompile(`(?i)^What (would you like|do you want) to \w+\?`), "What would you like to sell?"},
 }
 
 // refusalPhraseHits reports every literal in src that carries a phrase.
@@ -57,10 +64,30 @@ func refusalPhraseHits(t *testing.T, rel string, src []byte) []string {
 	if err != nil {
 		t.Fatalf("%s: %v", rel, err)
 	}
+	// Literal arguments of a cmdPrompt.Ask( call are interactive questions.
+	asked := map[*ast.BasicLit]bool{}
+	ast.Inspect(f, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok || sel.Sel.Name != "Ask" {
+			return true
+		}
+		if recv, ok := sel.X.(*ast.Ident); ok && recv.Name == "cmdPrompt" {
+			for _, a := range call.Args {
+				if lit, ok := a.(*ast.BasicLit); ok {
+					asked[lit] = true
+				}
+			}
+		}
+		return true
+	})
 	var hits []string
 	ast.Inspect(f, func(n ast.Node) bool {
 		lit, ok := n.(*ast.BasicLit)
-		if !ok || lit.Kind != token.STRING {
+		if !ok || lit.Kind != token.STRING || asked[lit] {
 			return true
 		}
 		s, err := strconv.Unquote(lit.Value)
@@ -126,7 +153,32 @@ func TestRefusalPhraseGuardCanFail(t *testing.T) {
 	}
 	b.WriteString("}\n")
 	hits := refusalPhraseHits(t, "probe.go", []byte(b.String()))
-	if len(hits) < len(refusalPhrases) {
-		t.Errorf("scanner found %d hits for %d probes:\n%s", len(hits), len(refusalPhrases), strings.Join(hits, "\n"))
+	joined := strings.Join(hits, "\n")
+	for _, p := range refusalPhrases {
+		if !strings.Contains(joined, ": "+p.family+": ") {
+			t.Errorf("%s: no hit for its probe:\n%s", p.family, joined)
+		}
+	}
+}
+
+// TestRefusalPhraseGuardSkipsOnlyAskQuestions: a literal handed straight to
+// cmdPrompt.Ask is an interactive question and is skipped; the same phrase
+// anywhere else, even nested inside an Ask call or on another receiver's
+// Ask, is still a hit.
+func TestRefusalPhraseGuardSkipsOnlyAskQuestions(t *testing.T) {
+	src := "package probe\n\nfunc f() {\n" +
+		"\tcmdPrompt.Ask(\"Pet what?\", nil)\n" +
+		"\tcmdPrompt.Ask(wrap(\"Shout what?\"), nil)\n" +
+		"\tother.Ask(\"Say what?\", nil)\n" +
+		"\tsend(\"Get what?\")\n" +
+		"}\n"
+	hits := strings.Join(refusalPhraseHits(t, "probe.go", []byte(src)), "\n")
+	if strings.Contains(hits, "Pet what?") {
+		t.Errorf("a cmdPrompt.Ask question was flagged:\n%s", hits)
+	}
+	for _, want := range []string{"Shout what?", "Say what?", "Get what?"} {
+		if !strings.Contains(hits, want) {
+			t.Errorf("%q should be a hit:\n%s", want, hits)
+		}
 	}
 }

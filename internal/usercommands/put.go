@@ -20,7 +20,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) < 2 {
-		user.SendText(messaging.CategorySystem, "Place what where?")
+		refusal.Prompt(user, "put", refusal.What, "put <item> in <container>")
 		return true, nil
 	}
 
@@ -66,7 +66,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if len(args) < 1 {
-		user.SendText(messaging.CategorySystem, "Place what where?")
+		refusal.Prompt(user, "put", refusal.What, "put <item> in <container>")
 		return true, nil
 	}
 

@@ -30,7 +30,7 @@ func Loot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	rest = strings.TrimSpace(rest)
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, "Loot what?")
+		refusal.Prompt(user, "loot", refusal.What, "loot <corpse>")
 		return true, nil
 	}
 
@@ -155,7 +155,7 @@ func lootCorpseAll(user *users.UserRecord, room *rooms.Room, corpseIdx int) {
 func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool, error) {
 
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, "Pass your loot on which corpse?")
+		refusal.Prompt(user, "loot pass", refusal.What, "loot pass <corpse>")
 		return true, nil
 	}
 

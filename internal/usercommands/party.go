@@ -176,7 +176,7 @@ func cmdPartyCreate(user *users.UserRecord, currentParty *parties.Party) (bool, 
 
 func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *parties.Party, rest string) (bool, error) {
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, `Invite who?`)
+		refusal.Prompt(user, "invite", refusal.Whom, "party invite <name>")
 		return true, nil
 	}
 
@@ -798,7 +798,7 @@ func cmdPartyGold(user *users.UserRecord, currentParty *parties.Party, rest stri
 
 func cmdPartyChat(user *users.UserRecord, currentParty *parties.Party, rest string) {
 	if len(rest) == 0 {
-		user.SendText(messaging.CategorySystem, `What do you want to say?`)
+		refusal.Prompt(user, "party chat", refusal.What, "party chat <message>")
 		return
 	}
 

@@ -1,11 +1,11 @@
 package usercommands
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +31,7 @@ func TestStorageAdd_LoneNumberAsksWhat(t *testing.T) {
 
 	got := sentTo(user)
 	assert.NotContains(t, got, "You don't have a")
-	assert.Contains(t, strings.ToLower(got), "add what?")
+	assert.Contains(t, got, refusal.PromptText("storage add", refusal.What, "storage add <item>"))
 }
 
 // #308: `storage remove 2` read the 2 as a quantity with no item name and
