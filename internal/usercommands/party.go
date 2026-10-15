@@ -798,7 +798,7 @@ func cmdPartyGold(user *users.UserRecord, currentParty *parties.Party, rest stri
 
 func cmdPartyChat(user *users.UserRecord, currentParty *parties.Party, rest string) {
 	if len(rest) == 0 {
-		user.SendText(messaging.CategorySystem, `What do you want to say?`)
+		refusal.Prompt(user, "party chat", refusal.What, "party chat <message>")
 		return
 	}
 

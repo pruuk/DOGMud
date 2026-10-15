@@ -54,6 +54,8 @@ var promptRows = []struct {
 	{"bid", HowMuch, "auction bid <amount>"}, {"drop", HowMuchGold, "drop <amount> gold"},
 	{"give", HowMuchGold, "give <amount> gold <name>"}, {"throttle", Whom, "throttle <name>"},
 	{"pounce on", Whom, "pounce <name>"}, {"grapple", Whom, "grapple <name>"},
+	{"sell", What, "sell <item>"}, {"target", Whom, "target <name>"},
+	{"loot pass", What, "loot pass <corpse>"}, {"party chat", What, "party chat <message>"},
 }
 
 func TestPromptLinesFit80(t *testing.T) {
