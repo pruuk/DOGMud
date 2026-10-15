@@ -300,12 +300,11 @@ asked:
   unstage anything, so a later `git add` on only the file you meant to change
   can still ship the reversion in the commit. Always run `git status` (or
   `git diff --cached --stat`) after any such checkout, before committing.
-  [[feedback-git-checkout-pathspec-stages-the-revert]]
 - **`git stash push -- <path>` with nothing to stash is a silent no-op that
   still exits 0.** A paired `git stash pop` then pops whatever was already at
   `stash@{0}`, which in this repo is one of several long-lived stashes. Prefer
   a detached worktree over a stash when the goal is comparing against an
-  unmodified tree. [[feedback-git-stash-pathspec-noop-then-pop-hits-another-stash]]
+  unmodified tree.
 - **`gh pr checks <n> --repo pruuk/DOGMud --watch` can return green before a
   slower, path-filtered job has even registered.** It reports on the checks it
   currently knows about, not the full expected set. Before merging anything
@@ -353,8 +352,8 @@ Folded memory files (rule stated inline above, cited here):
 - [[feedback_go_run_dot_not_main]]
 - [[feedback_master_is_main_branch]]
 - [[feedback-gh-pr-checks-can-return-early]]
-- [[feedback-git-checkout-pathspec-stages-the-revert]]
-- [[feedback-git-stash-pathspec-noop-then-pop-hits-another-stash]]
+- The two git-trap memories (checkout stages, stash no-op) were folded
+  above and retired 2026-10-15; both rules are also in `~/.claude/CLAUDE.md`.
 - [[reference_boot_test_in_isolated_worktree]]
 - [[reference_gh_cli_now_installed]]
 - [[reference-lint-gate-inverts-on-large-prs]]

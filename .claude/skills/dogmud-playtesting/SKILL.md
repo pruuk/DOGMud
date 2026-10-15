@@ -19,15 +19,15 @@ work that booted a local server for smoke-testing or verification is done,
 kill the process before considering the chunk finished. A lingering test
 process holds ports and file handles and causes spurious failures on the
 next run, including a server a background agent run started and never
-cleaned up itself. [[feedback_kill_test_servers]]
+cleaned up itself.
 
 **Never blanket-kill by process name or port sweep.** The user runs their
 own server on this machine. It is not yours to stop, restart, or start a
 second one against. A recorded incident established this the hard way: a
 name-based kill of every `GoMud.exe` process took down the user's own live
 session mid-test, because the assumption about which of two processes was
-"stale" was backwards. The dated narrative stays in the file; the
-operational rule from it does not. [[feedback_never_blanket_kill_the_local_server]]
+"stale" was backwards (2026-07-30). The global rule is in
+`~/.claude/CLAUDE.md` and `guard.py` (H4) enforces it.
 
 The distinction, stated precisely: kill by PID, identified as yours, never
 by name or port sweep that could also catch a server you did not start.
@@ -38,10 +38,8 @@ errors is the redundant one. If a server is already running and the user
 might be connected, do not start a second one; ask, or reuse the running
 instance.
 
-`feedback_kill_test_servers`'s own example cleanup commands
-(`Stop-Process -Name dogmud* -Force`, `taskkill /F /IM dogmud-test.exe`)
-are themselves name-based blanket kills. Treat them as superseded by the
-PID-based rule above; do not run them literally.
+Never clean up with `Stop-Process -Name dogmud*` or
+`taskkill /F /IM dogmud-test.exe`: both are name-based blanket kills.
 
 ## The harness is external
 
@@ -147,6 +145,14 @@ behavior, encumber the character with item 12. Crafting needs a station;
 use the `crafter` profile rather than trying to craft from an arbitrary
 starting room. (Per MEMORY.md.)
 
+**Your own visit can hide a boot bug.** A room's spawns fire on the first
+player visit unless the room is in `main.go`'s `systemNPCAnchorRooms`, so an
+admin `goto` or `look` into a room makes a missing NPC appear and the
+symptom "goes away". Before calling something a timing artifact, ask what
+you did that could have made it disappear, and check it on a clean boot or
+on prod. (2026-05-26: Tova never spawned on prod because her anchor still
+named her old room.)
+
 ## Harness limits
 
 The AI port caps input at `Network.AICommandsPerRound` (shipped at 3)
@@ -236,13 +242,10 @@ Memory keeps only what the next session needs to run the harness better
 - CLAUDE.md, "AI Testing" (source lines 953-1002): lifted verbatim in
   "Local versus prod invocation," with three em dashes normalized to
   colons per this skill's own punctuation rule.
-- [[feedback_kill_test_servers]]: rule folded (kill the test servers you
-  started, after each chunk); its 2026-05-06 incident narrative and its
-  own name-based cleanup commands are not restated as guidance here.
-- [[feedback_never_blanket_kill_the_local_server]]: rule folded (never
-  blanket-kill by process name; kill by PID, identified via the owning
-  port and bind-error logs); its 2026-07-30 dated narrative stays in the
-  file.
+- The kill-test-servers and never-blanket-kill memories were folded here
+  and retired 2026-10-15 once kill-by-PID went global.
+- The timing-artifact memory (2026-05-26, Tova's stale anchor room) was
+  folded into "Making a run productive" and retired 2026-10-15.
 - [[reference-playtest-harness-restore]]: rule folded (the harness is
   external, was deleted once, check before assuming it is broken, restore
   steps); the file's architecture notes and its three session-cost traps

@@ -149,6 +149,15 @@ move the "s" inside the tag so the rendered word matches the noun key
 exactly, or add the plural form as its own `nouns:` alias pointing at the
 same prose (both fixes can be combined).
 
+**A builder save rewrites the whole file, so a diff lies about deletions.**
+`rooms.SaveRoomTemplate`, `items.SaveItemSpec` and `mobs.SaveMobSpec`
+re-marshal in struct order with sorted map keys, so a moved block reads as
+a `-` hunk near the top and a `+` hunk further down. Before claiming a save
+lost content, grep the new file for it; never judge from `git diff | head`.
+Expected room churn: struct-ordered fields, sorted map keys, the `coord:`
+block dropped, `"y"` quoted, `respawnrate: 15 real minutes` written out.
+(2026-07-25: room 468 was wrongly reported as losing a mutator and a noun.)
+
 ## Room and zone conventions
 
 [[feedback_cardinal_exits_only]]: prefer cardinal direction exits (north,
@@ -266,6 +275,8 @@ Folded memory files:
 - [[feedback_no_name_recycling_no_js]]
 - [[feedback-room-cartesian-consistency]]
 - [[feedback_ansi_plural_inside_tag]]
+- The semantic-compare memory (builder saves canonicalize), folded into
+  "YAML traps" and retired 2026-10-15
 - [[reference_world_coordinate_frame_crawl]]
 - [[reference_room_coordinate_and_reciprocity_gotchas]]. The memory index
   cited this file as [[reference-room-coordinate-and-reciprocity-gotchas]];
