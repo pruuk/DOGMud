@@ -245,7 +245,7 @@ func TestTransferItemBetweenChars_DestFull(t *testing.T) {
 	beforeTotal := countCharItems(charA) + countCharItems(charB)
 
 	err := TransferItemBetweenChars(itm, charA, 1, 0, charB, 2, 0)
-	assert.Error(t, err, "should error when destination is full")
+	assert.ErrorIs(t, err, ErrInventoryFull, "should error when destination is full")
 
 	afterTotal := countCharItems(charA) + countCharItems(charB)
 

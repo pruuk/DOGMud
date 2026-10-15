@@ -19,3 +19,9 @@ func NotPartyLeaderText(action string) string {
 func NotInGuild(to Recipient)                    { send(to, NotInGuildText()) }
 func NoCompanion(to Recipient)                   { send(to, NoCompanionLine) }
 func NotPartyLeader(to Recipient, action string) { send(to, NotPartyLeaderText(action)) }
+
+// NoPartyInviteLine answers `party accept` or `party decline` from a player
+// with no invitation waiting (a member, or one whose invite is gone).
+const NoPartyInviteLine = `You have no party invitation to answer.`
+
+func NoPartyInvite(to Recipient) { send(to, NoPartyInviteLine) }

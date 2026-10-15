@@ -126,3 +126,17 @@ func TestFailedTellsPlainlyOnError(t *testing.T) {
 	assert.Equal(t, "That salvage didn't work. The error has been logged.", FailedText("salvage"))
 	assert.NotContains(t, f.got[0].text, assert.AnError.Error(), "the cause goes to the log, not the player")
 }
+
+func TestNoPartyInvite(t *testing.T) {
+	f := &fakeRecipient{}
+	NoPartyInvite(f)
+	assert.Equal(t, "You have no party invitation to answer.", one(t, f, messaging.CategoryRefusal))
+	assert.Equal(t, NoPartyInviteLine, "You have no party invitation to answer.")
+}
+
+func TestRecipientFull(t *testing.T) {
+	f := &fakeRecipient{}
+	RecipientFull(f)
+	assert.Equal(t, "They can't carry any more.", one(t, f, messaging.CategoryRefusal))
+	assert.Equal(t, RecipientFullLine, "They can't carry any more.")
+}

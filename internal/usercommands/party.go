@@ -246,11 +246,16 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 }
 
 func cmdPartyAccept(user *users.UserRecord, currentParty *parties.Party) (bool, error) {
+	// parties.Get also returns a party the player already belongs to; only an
+	// invited player has anything to accept.
+	if !currentParty.Invited(user.UserId) {
+		refusal.NoPartyInvite(user)
+		return true, nil
+	}
+
 	// Settle the shared pool to the EXISTING members before the new member
 	// joins, so the joiner doesn't collect a share of gold pooled pre-join.
-	if currentParty.Invited(user.UserId) {
-		settlePartyGold(currentParty)
-	}
+	settlePartyGold(currentParty)
 
 	if currentParty.AcceptInvite(user.UserId) {
 
@@ -274,6 +279,11 @@ func cmdPartyAccept(user *users.UserRecord, currentParty *parties.Party) (bool, 
 }
 
 func cmdPartyDecline(user *users.UserRecord, currentParty *parties.Party) (bool, error) {
+	if !currentParty.Invited(user.UserId) {
+		refusal.NoPartyInvite(user)
+		return true, nil
+	}
+
 	dispatchPartyEvent(currentParty, `declined`)
 
 	if currentParty.DeclineInvite(user.UserId) {

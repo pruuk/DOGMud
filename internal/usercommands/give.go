@@ -106,6 +106,10 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			if giveItem.ItemId > 0 {
 				userActor := &actions.UserActor{User: user, Room: room}
 				result := actions.GiveItemToChar(userActor, giveWhat, targetUser.Character, targetUser.UserId, 0)
+				if errors.Is(result.Err, actions.ErrInventoryFull) {
+					refusal.RecipientFull(user)
+					return true, nil
+				}
 				if result.Err != nil {
 					refusal.Failed(user, "", result.Err, "userId", user.UserId)
 					return true, nil
@@ -216,6 +220,10 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				// Normal flow — transfer item to mob via atomic transfer.
 				userActor := &actions.UserActor{User: user, Room: room}
 				result := actions.GiveItemToChar(userActor, giveWhat, &m.Character, 0, m.InstanceId)
+				if errors.Is(result.Err, actions.ErrInventoryFull) {
+					refusal.RecipientFull(user)
+					return true, nil
+				}
 				if result.Err != nil {
 					refusal.Failed(user, "", result.Err, "userId", user.UserId)
 					return true, nil

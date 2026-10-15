@@ -12,3 +12,8 @@ func NotCarryingText(typed string) string {
 }
 
 func NotCarrying(to Recipient, typed string) { send(to, NotCarryingText(typed)) }
+
+// RecipientFullLine answers a give to someone who cannot carry any more.
+const RecipientFullLine = `They can't carry any more.`
+
+func RecipientFull(to Recipient) { send(to, RecipientFullLine) }
