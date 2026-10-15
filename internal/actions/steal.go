@@ -101,7 +101,7 @@ func Steal(actor Actor, opts StealOptions) StealResult {
 
 	// Combat gate — can't steal while actively fighting.
 	if char.IsInCombat() {
-		actor.SendText(messaging.CategorySystem, "You can't do that while in combat!")
+		refusal.WhileFighting(actor, "steal")
 		return StealResult{Reason: "in combat"}
 	}
 

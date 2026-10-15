@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
@@ -66,7 +67,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 
 	// Combat gate.
 	if char.IsInCombat() {
-		actor.SendText(messaging.CategorySystem, "You can't do that while in combat!")
+		refusal.WhileFighting(actor, "shadow anyone")
 		return ShadowResult{Reason: "in combat"}
 	}
 

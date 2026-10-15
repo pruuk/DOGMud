@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -57,7 +58,7 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 
 	case result.InCombat:
-		user.SendText(messaging.CategorySystem, "You can't do that while in combat!")
+		refusal.WhileFighting(user, "sneak")
 		return true, nil
 
 	case result.ReplacedShroud:

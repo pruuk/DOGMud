@@ -2,6 +2,7 @@ package aicompanion
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"sort"
 	"strings"
 	"time"
@@ -523,7 +524,7 @@ func (m *AICompanionModule) cmdPart(rest string, user *users.UserRecord, room *r
 			user.SendText(messaging.CategorySystem, name+` has gone their own way.`)
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	if msg := m.confirmPart(c, user); msg != `` {
@@ -540,7 +541,7 @@ func (m *AICompanionModule) cmdCourt(rest string, user *users.UserRecord, room *
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	if msg := m.courtStep(c, user); msg != `` {
@@ -557,7 +558,7 @@ func (m *AICompanionModule) cmdBoundary(rest string, user *users.UserRecord, roo
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	user.SendText(messaging.CategorySystem, messaging.WrapAnsi(m.setBoundary(c, strings.ToLower(strings.TrimSpace(rest))), 80))
@@ -617,7 +618,7 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	who, topic, _ := strings.Cut(strings.TrimSpace(rest), ` `)
@@ -675,7 +676,7 @@ func (m *AICompanionModule) cmdStay(rest string, user *users.UserRecord, room *r
 	}
 	c, ok := m.ctrls[user.UserId]
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	want := strings.ToLower(strings.TrimSpace(rest))
@@ -718,7 +719,7 @@ func (m *AICompanionModule) cmdAI(rest string, user *users.UserRecord, room *roo
 	}
 	rec := m.bonds.Users[user.UserId]
 	if rec == nil {
-		user.SendText(messaging.CategorySystem, `You have no companion travelling with you.`)
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 	name := `Your companion`

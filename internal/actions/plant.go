@@ -52,7 +52,7 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 
 	// Combat gate — can't plant while actively fighting.
 	if char.IsInCombat() {
-		actor.SendText(messaging.CategorySystem, "You can't do that while in combat!")
+		refusal.WhileFighting(actor, "plant anything")
 		return PlantResult{Reason: "in combat"}
 	}
 

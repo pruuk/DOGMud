@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"math"
 	"strconv"
 	"strings"
@@ -173,16 +174,16 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 	// party gets one only once the invite is actually sent (#459), so a
 	// refused invite does not leave them leading an empty party.
 	if currentParty != nil && !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
+		refusal.NotPartyLeader(user, "invite others")
 		return true, nil
 	}
 
 	// #454, owner call 2: the invitee is found among the room's occupants, so
 	// a typed name resolves only at full sight, or inviting would confirm who
 	// is there in the dark.
-	name, refusal := actions.AimBySight(user.Character, user.UserId, room, rest, `party invite`)
-	if refusal != `` {
-		user.SendText(messaging.CategoryRefusal, refusal)
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, rest, `party invite`)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 	inviterSight := messaging.ParticipantSight(user.Character, room)
@@ -557,7 +558,7 @@ func cmdPartyLeave(user *users.UserRecord, currentParty *parties.Party) (bool, e
 
 func cmdPartyDisband(user *users.UserRecord, currentParty *parties.Party) (bool, error) {
 	if !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
+		refusal.NotPartyLeader(user, "disband the party")
 		return true, nil
 	}
 
@@ -590,7 +591,7 @@ func cmdPartyDisband(user *users.UserRecord, currentParty *parties.Party) (bool,
 
 func cmdPartyKick(user *users.UserRecord, currentParty *parties.Party, rest string) {
 	if !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
+		refusal.NotPartyLeader(user, "remove members")
 		return
 	}
 
@@ -621,7 +622,7 @@ func cmdPartyKick(user *users.UserRecord, currentParty *parties.Party, rest stri
 
 func cmdPartyPromote(user *users.UserRecord, currentParty *parties.Party, rest string) {
 	if !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `You are not the leader of your party.`)
+		refusal.NotPartyLeader(user, "promote a member")
 		return
 	}
 
@@ -654,7 +655,7 @@ func cmdPartyPromote(user *users.UserRecord, currentParty *parties.Party, rest s
 // the change to the whole party.
 func cmdPartyLoot(user *users.UserRecord, currentParty *parties.Party, rest string) (bool, error) {
 	if !currentParty.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only the party leader can set the loot mode.`)
+		refusal.NotPartyLeader(user, "set the loot mode")
 		return true, nil
 	}
 
