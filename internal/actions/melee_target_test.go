@@ -116,6 +116,9 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		},
 	}
 
+	// An empty Verb asks as attack.
+	assert.Equal(t, `Attack whom? Try <ansi fg="command">attack <name></ansi>.`, MeleeTargetOpts{}.promptText())
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.crafting, tt.opts.craftingMsg(), "crafting-guard message changed")

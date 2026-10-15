@@ -16,10 +16,11 @@ const (
 // PromptText answers a command typed without what it needs:
 // "<Verb> <ask>?" with the verb capitalized, then a hint naming usage when
 // usage is not empty. verb carries any preposition ("talk to", "steal
-// from") and must not be empty.
+// from"); an empty verb asks the bare question rather than panic.
 func PromptText(verb string, ask Ask, usage string) string {
-	v := strings.TrimSpace(verb)
-	line := strings.ToUpper(v[:1]) + v[1:] + ` ` + string(ask) + `?`
+	v := strings.TrimSpace(verb) + ` ` + string(ask)
+	v = strings.TrimSpace(v)
+	line := strings.ToUpper(v[:1]) + v[1:] + `?`
 	if usage != `` {
 		line += hint(usage)
 	}

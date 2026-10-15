@@ -50,7 +50,7 @@ func (o MeleeTargetOpts) craftingMsg() string {
 }
 
 // promptText is the empty-target prompt: "<PromptVerb> whom?" with a hint
-// naming Verb, or "Attack whom?" for an empty Verb.
+// naming Verb; an empty Verb asks as attack.
 func (o MeleeTargetOpts) promptText() string {
 	verb, usage := o.PromptVerb, o.Verb
 	if usage == `` {

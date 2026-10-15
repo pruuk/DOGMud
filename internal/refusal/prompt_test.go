@@ -20,6 +20,7 @@ func TestPromptWording(t *testing.T) {
 		PromptText("drop", HowMuchGold, "drop <amount> gold"))
 	assert.Equal(t, "Say what?", PromptText("say", What, ""), "no usage, no hint")
 	assert.Equal(t, "Talk to whom?", PromptText("  talk to ", Whom, ""), "the verb is trimmed")
+	assert.Equal(t, "What?", PromptText("  ", What, ""), "an empty verb asks the bare question")
 }
 
 func TestTalkToPlayerWording(t *testing.T) {
