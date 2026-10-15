@@ -10,8 +10,8 @@ import (
 
 const blankReadItemId = 999994
 
-// `drop gold` with no amount drops all carried gold, as `drop all gold` does.
-func TestDropGoldWithNoAmountDropsAllGold(t *testing.T) {
+// `drop gold` with no amount asks how much; it never drops the purse.
+func TestDropGoldWithNoAmountAsksHowMuch(t *testing.T) {
 	t.Cleanup(seedAllRegistries())
 	user, room := getTestUserAndRoom(t)
 	user.Character.Items = nil
@@ -23,9 +23,11 @@ func TestDropGoldWithNoAmountDropsAllGold(t *testing.T) {
 	handled, err := Drop("gold", user, room, 0)
 	require.NoError(t, err)
 	require.True(t, handled)
-	assert.Equal(t, 0, user.Character.Gold)
-	assert.Equal(t, startFloor+25, room.Gold)
-	assert.NotContains(t, sentTo(user), "aren't carrying")
+	assert.Equal(t, 25, user.Character.Gold, "gold unchanged")
+	assert.Equal(t, startFloor, room.Gold, "floor unchanged")
+	out := sentTo(user)
+	assert.Contains(t, out, `Drop how much gold? Try <ansi fg="command">drop <amount> gold</ansi>.`)
+	assert.NotContains(t, out, "aren't carrying")
 }
 
 func TestDropGoldWithNoGoldSaysSo(t *testing.T) {

@@ -72,14 +72,15 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	// "drop gold" with no amount: the same as "drop all gold", unless the
-	// player carries an item the word "gold" names, which then wins.
+	// "drop gold" with no amount asks how much (dropping the whole purse by
+	// accident is not offered). An item the word "gold" names wins.
 	if len(args) == 1 && args[0] == "gold" {
 		if _, carried := user.Character.FindInBackpack("gold"); !carried {
 			if user.Character.Gold > 0 {
-				return Drop(fmt.Sprintf("%d gold", user.Character.Gold), user, room, flags)
+				user.SendText(messaging.CategoryRefusal, `Drop how much gold? Try <ansi fg="command">drop <amount> gold</ansi>.`)
+			} else {
+				user.SendText(messaging.CategorySystem, `You don't have any gold to drop.`)
 			}
-			user.SendText(messaging.CategorySystem, `You don't have any gold to drop.`)
 			return true, nil
 		}
 	}
