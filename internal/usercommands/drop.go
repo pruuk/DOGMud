@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -122,7 +123,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			dropped++
 		}
 		if dropped == 0 {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have any "%s" to drop.`, itemName))
+			refusal.NotCarrying(user, itemName)
 		} else {
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You drop %s.`, itemCount(dropped)))
 			room.SendTextVisual(messaging.CategoryLoot,
@@ -138,7 +139,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	result := actions.DropItem(actor, rest)
 
 	if !result.Found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't have a %s to drop.", rest))
+		refusal.NotCarrying(user, rest)
 	} else {
 		user.Character.CancelConditionsWithFlag(conditions.Hidden)
 

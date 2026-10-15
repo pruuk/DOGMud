@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -91,7 +92,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if !itemFound && goldAmt == 0 {
-		user.SendText(messaging.CategorySystem, `You don't seem to be carrying that.`)
+		refusal.NotCarrying(user, "")
 		return true, nil
 	}
 

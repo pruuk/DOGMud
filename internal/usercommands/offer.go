@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -36,7 +37,7 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	item, found := user.Character.FindInBackpack(rest)
 	if !found {
-		user.SendText(messaging.CategorySystem, "You don't have that item.")
+		refusal.NotCarrying(user, rest)
 		return true, nil
 	}
 

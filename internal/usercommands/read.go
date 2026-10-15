@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -43,7 +44,7 @@ func Read(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	isSneaking := user.Character.IsHidden()
 
 	if len(foundItemName) == 0 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a "%s" that can be read.`, rest))
+		refusal.NotCarrying(user, rest)
 	} else {
 		user.SendText(messaging.CategorySystem,
 			fmt.Sprintf(`You look at <ansi fg="item">%s</ansi>...`, foundItemLongName),

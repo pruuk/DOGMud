@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -34,7 +35,7 @@ func Redescribe(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	rest = strings.Join(args[1:], " ")
 
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't have a %s to rename.", rest))
+		refusal.NotCarrying(user, rest)
 	} else {
 		// Swap the item location
 		user.Character.RemoveItem(matchItem)

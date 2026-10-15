@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/movenarration"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -210,7 +211,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Find throwable in backpack or bandolier
 	matchItem, itemLocation, found := findThrowItem(user.Character, rest)
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a "%s" to throw.`, rest))
+		refusal.NotCarrying(user, rest)
 		return true, nil
 	}
 

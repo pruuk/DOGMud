@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -64,7 +65,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		giveItem, found = user.Character.FindInBackpack(giveWhat)
 
 		if !found {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s to give. (<ansi fg="command">give {object-name} {receiver-name}</ansi>)`, giveWhat))
+			refusal.NotCarrying(user, giveWhat)
 			return true, nil
 		}
 
@@ -80,9 +81,9 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// #454: a typed name resolves only at full sight.
 	{
-		name, refusal := actions.AimBySight(user.Character, user.UserId, room, giveWho, `give `+giveWhat)
-		if refusal != `` {
-			user.SendText(messaging.CategoryRefusal, refusal)
+		name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, giveWho, `give `+giveWhat)
+		if aimRefusal != `` {
+			user.SendText(messaging.CategoryRefusal, aimRefusal)
 			return true, nil
 		}
 		giveWho = name

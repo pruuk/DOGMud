@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/guilds"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -590,7 +591,7 @@ func guildDonate(user *users.UserRecord, remainder string) {
 	}
 	item, found := user.Character.FindInBackpack(name)
 	if !found {
-		user.SendText(messaging.CategorySystem, `You don't have that item.`)
+		refusal.NotCarrying(user, name)
 		return
 	}
 	itemName := item.DisplayName()

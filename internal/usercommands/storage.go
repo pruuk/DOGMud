@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -151,7 +152,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			case deposited == 0 && hot.ItemId != 0:
 				// the refusal below says why
 			case deposited == 0:
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s to add to storage.%s`, itemName, term.CRLFStr))
+				refusal.NotCarrying(user, itemName)
 			case deposited == 1:
 				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You placed the <ansi fg="itemname">%s</ansi> into storage.`, itemName))
 			default:
@@ -183,7 +184,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 				case deposited > 0:
 					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You only had %d to deposit.`, deposited))
 				default:
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s to add to storage.%s`, itemName, term.CRLFStr))
+					refusal.NotCarrying(user, itemName)
 				}
 				break
 			}

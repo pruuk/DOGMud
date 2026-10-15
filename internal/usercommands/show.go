@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -36,14 +37,14 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	showItem, found = user.Character.FindInBackpack(objectName)
 
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("You don't have a %s to show.", objectName))
+		refusal.NotCarrying(user, objectName)
 		return true, nil
 	}
 
 	// #454: a typed name resolves only at full sight.
-	name, refusal := actions.AimBySight(user.Character, user.UserId, room, targetName, `show `+objectName)
-	if refusal != `` {
-		user.SendText(messaging.CategoryRefusal, refusal)
+	name, aimRefusal := actions.AimBySight(user.Character, user.UserId, room, targetName, `show `+objectName)
+	if aimRefusal != `` {
+		user.SendText(messaging.CategoryRefusal, aimRefusal)
 		return true, nil
 	}
 	targetName = name

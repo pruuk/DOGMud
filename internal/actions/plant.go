@@ -83,7 +83,7 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 	// Find item in actor's backpack.
 	plantItem, found := char.FindInBackpack(opts.ItemNoun)
 	if !found {
-		actor.SendText(messaging.CategorySystem, "You don't have that.")
+		refusal.NotCarrying(actor, opts.ItemNoun)
 		return PlantResult{Reason: "item not in backpack"}
 	}
 
