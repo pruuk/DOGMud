@@ -22,7 +22,7 @@ var pounceCategories = moveCategories{Actor: messaging.CategoryHitNaturalSharp, 
 func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	actor, handled := stageSpecialMoveTarget(user, room, rest, actions.MeleeTargetOpts{
 		Verb:          "pounce",
-		PromptMsg:     "Pounce on whom?",
+		PromptVerb:    "pounce on",
 		SelfTargetMsg: "You can't pounce on yourself.",
 		CharmedMsg:    "You can't pounce on a companion.",
 	})

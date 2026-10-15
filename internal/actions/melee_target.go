@@ -2,7 +2,6 @@ package actions
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -28,9 +27,9 @@ type MeleeTargetOpts struct {
 	// Defaults to Verb. `trip` uses "trip someone".
 	CraftingVerb string
 
-	// PromptMsg overrides the empty-target prompt.
-	// Defaults to "<Verb> whom?" (title-cased). `pounce` uses "Pounce on whom?".
-	PromptMsg string
+	// PromptVerb is the verb the empty-target prompt asks with, preposition
+	// included. Defaults to Verb. `pounce` uses "pounce on".
+	PromptVerb string
 
 	// SelfTargetMsg overrides the self-targeting rejection.
 	// Defaults to "You can't <Verb> yourself." `pounce` adds "on".
@@ -50,14 +49,17 @@ func (o MeleeTargetOpts) craftingMsg() string {
 		`<ansi fg="red">You can't %s while focused on your work. Finish or be interrupted first.</ansi>`, v)
 }
 
-func (o MeleeTargetOpts) promptMsg() string {
-	if o.PromptMsg != "" {
-		return o.PromptMsg
+// promptText is the empty-target prompt: "<PromptVerb> whom?" with a hint
+// naming Verb, or "Attack whom?" for an empty Verb.
+func (o MeleeTargetOpts) promptText() string {
+	verb, usage := o.PromptVerb, o.Verb
+	if usage == `` {
+		usage = `attack`
 	}
-	if o.Verb == "" {
-		return "Attack whom?"
+	if verb == `` {
+		verb = usage
 	}
-	return strings.ToUpper(o.Verb[:1]) + o.Verb[1:] + " whom?"
+	return refusal.PromptText(verb, refusal.Whom, usage+` <name>`)
 }
 
 func (o MeleeTargetOpts) charmedMsg() string {
@@ -166,7 +168,7 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 		return base, false
 	}
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, opts.promptMsg())
+		user.SendText(messaging.CategoryRefusal, opts.promptText())
 		return nil, true
 	}
 
