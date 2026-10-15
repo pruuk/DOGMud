@@ -57,7 +57,7 @@ func Steal(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// actions.Steal emits player-facing text for every outcome except
 	// the cooldown case (which returns without calling SendText).
 	if result.OnCooldown {
-		refusal.Cooldown(user, "try that again")
+		refusal.Cooldown(user, "steal")
 	}
 
 	return true, nil

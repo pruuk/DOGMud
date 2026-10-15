@@ -26,9 +26,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// skullduggeryCooldownRefusal is the exact player-facing line a thief sees
-// when the shared steal/plant cooldown refuses another attempt.
-var skullduggeryCooldownRefusal = refusal.CooldownText("try that again")
+// The exact player-facing lines a thief sees when the shared steal/plant
+// cooldown refuses another attempt: each names what the player tried.
+var (
+	stealCooldownRefusal = refusal.CooldownText("steal")
+	plantCooldownRefusal = refusal.CooldownText("plant anything")
+)
 
 // armSkullduggeryCooldown gives the actor rank enough to try, then pre-arms
 // the shared steal/plant cooldown so the very next attempt is refused.
@@ -58,7 +61,7 @@ func TestSteal_OnCooldown_TellsThePlayerPlainly(t *testing.T) {
 	require.NoError(t, err)
 
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	assert.Contains(t, out, skullduggeryCooldownRefusal)
+	assert.Contains(t, out, stealCooldownRefusal)
 	assert.NotContains(t, out, "rounds remaining",
 		"no raw round count belongs in player-facing text")
 }
@@ -79,7 +82,7 @@ func TestPlant_OnCooldown_TellsThePlayerPlainly(t *testing.T) {
 	require.NoError(t, err)
 
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	assert.Contains(t, out, skullduggeryCooldownRefusal)
+	assert.Contains(t, out, plantCooldownRefusal)
 	assert.NotContains(t, out, "rounds remaining",
 		"no raw round count belongs in player-facing text")
 }

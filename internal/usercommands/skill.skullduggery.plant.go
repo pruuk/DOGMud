@@ -50,7 +50,7 @@ func Plant(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// actions.Plant emits player-facing text for every outcome except
 	// the cooldown case (which returns without calling SendText).
 	if result.OnCooldown {
-		refusal.Cooldown(user, "try that again")
+		refusal.Cooldown(user, "plant anything")
 	}
 
 	return true, nil

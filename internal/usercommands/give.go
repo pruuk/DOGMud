@@ -64,7 +64,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		giveGoldAmount = amount
 
 		if giveGoldAmount > user.Character.Gold {
-			user.SendText(messaging.CategorySystem, "You don't have that much gold to give.")
+			user.SendText(messaging.CategoryRefusal, "You don't have that much gold to give.")
 			return true, nil
 		}
 
