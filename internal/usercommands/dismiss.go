@@ -65,7 +65,7 @@ func Dismiss(rest string, user *users.UserRecord,
 	comp := user.Character.GetCompanion(rest)
 	if comp == nil {
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
-			`You have no companion named "%s".`, rest,
+			`You have no companion named "%s".`, refusal.Echo(rest),
 		))
 		return true, nil
 	}

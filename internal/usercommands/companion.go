@@ -105,7 +105,7 @@ func Companion(rest string, user *users.UserRecord,
 	comp := user.Character.GetCompanion(compName)
 	if comp == nil {
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
-			`You have no companion named "%s".`, compName,
+			`You have no companion named "%s".`, refusal.Echo(compName),
 		))
 		return true, nil
 	}

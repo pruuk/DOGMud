@@ -51,14 +51,13 @@ func TestKickActorLineWrapsAt80(t *testing.T) {
 }
 
 // systemNoticeMarkers are the only things a special-move file may still send
-// as CategorySystem: refusals not yet moved to internal/refusal, never
-// narration. Matched against a SendText line joined with the line after it.
-// A marker stays only while its line is still on CategorySystem in one of
-// the four files; the busy and cost lines left with M7 slice 3 (#371).
-var systemNoticeMarkers = []string{
-	"already rallied", "still echoes", "isn't something you can throw",
-	"crumbles apart", "text)", "cannot make a sound",
-}
+// as CategorySystem: notices, never narration and never refusals (every
+// refusal rides CategoryRefusal since M7 slice 3, #371). Matched against a
+// SendText line joined with the line after it. A marker stays only while its
+// line is still on CategorySystem in one of the four files: "text)" is
+// taunt.go's channel-defence shortage notice to the defender, "crumbles
+// apart" is throw.go's spoiled-item notice.
+var systemNoticeMarkers = []string{"crumbles apart", "text)"}
 
 // #449 siblings: taunt, throw, rally and warcry kept narration on
 // CategorySystem. A source-level pin, like the other guards in this package:

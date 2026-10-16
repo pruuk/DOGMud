@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -47,7 +48,7 @@ func SetHome(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			`<ansi fg="red">Unknown location "%s".</ansi> Type `+
 				`<ansi fg="command">sethome</ansi> to see options.`,
-			args))
+			refusal.Echo(args)))
 		return true, nil
 	}
 

@@ -29,26 +29,9 @@ var refusalOpener = regexp.MustCompile(`^(You (can't|cannot|don't have|aren't|ar
 
 var openerTag = regexp.MustCompile(`<[^>]*>`)
 
-// openerGuardScope is widened by each group task of slice 3; Task 12 sets it
-// to every Go file under internal/ and modules/.
-var openerGuardScope = []string{
-	"internal/actions/", "internal/behaviortree/", "internal/bountyhunter/",
-	"internal/combat/", "internal/hooks/", "internal/justice/",
-	"internal/messaging/", "internal/mobcommands/", "internal/questengine/",
-	"internal/rooms/", "modules/",
-	"internal/usercommands/a", "internal/usercommands/b",
-	"internal/usercommands/c", "internal/usercommands/d",
-	"internal/usercommands/e", "internal/usercommands/f",
-	"internal/usercommands/g", "internal/usercommands/h",
-	"internal/usercommands/i", "internal/usercommands/j",
-	"internal/usercommands/k", "internal/usercommands/l",
-	"internal/usercommands/m", "internal/usercommands/n",
-	"internal/usercommands/o", "internal/usercommands/p",
-	"internal/usercommands/q", "internal/usercommands/r",
-	"internal/usercommands/s", "internal/usercommands/t",
-	"internal/usercommands/u", "internal/usercommands/v",
-	"internal/usercommands/w",
-}
+// openerGuardScope is every non-test Go file under internal/ and modules/
+// (slice 3 widened it group by group; it now covers the whole tree).
+var openerGuardScope = []string{"internal/", "modules/"}
 
 func inOpenerScope(rel string) bool {
 	for _, p := range openerGuardScope {

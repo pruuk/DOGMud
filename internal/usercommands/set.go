@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -414,7 +415,7 @@ func cmdSetSubmission(user *users.UserRecord, args []string) (bool, error) {
 
 	newPolicy, ok := characters.ParseSubmissionPolicy(args[0])
 	if !ok {
-		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown submission policy: <ansi fg=\"red\">%s</ansi>", args[0]))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown submission policy: <ansi fg=\"red\">%s</ansi>", refusal.Echo(args[0])))
 		user.SendText(messaging.CategoryRefusal, "Valid policies: mercy, subdue, cripple, lethal.")
 		return true, nil
 	}
@@ -455,7 +456,7 @@ func cmdSetSurrender(user *users.UserRecord, args []string) (bool, error) {
 	policyStr := strings.Join(args, " ")
 	newPolicy, ok := characters.ParseSurrenderPolicy(policyStr)
 	if !ok {
-		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown surrender policy: <ansi fg=\"red\">%s</ansi>", policyStr))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown surrender policy: <ansi fg=\"red\">%s</ansi>", refusal.Echo(policyStr)))
 		user.SendText(messaging.CategoryRefusal, "Valid policies: never, always, auto-tap-below &lt;1-100&gt;.")
 		return true, nil
 	}
@@ -478,7 +479,7 @@ func cmdSetArrest(user *users.UserRecord, args []string) (bool, error) {
 	}
 	newPolicy, ok := characters.ParseArrestPolicy(strings.ToLower(args[0]))
 	if !ok {
-		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown arrest policy: <ansi fg=\"red\">%s</ansi>", args[0]))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown arrest policy: <ansi fg=\"red\">%s</ansi>", refusal.Echo(args[0])))
 		user.SendText(messaging.CategoryRefusal, "Valid policies: surrender, resist.")
 		return true, nil
 	}

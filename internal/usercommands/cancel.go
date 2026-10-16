@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -132,6 +133,6 @@ func cancelCondition(name string, user *users.UserRecord) (bool, error) {
 		lightnotice.Check(user, lightnotice.TriggerCommand)
 		return true, nil
 	}
-	user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You have no %s you can let go of.`, name))
+	user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You have no %s you can let go of.`, refusal.Echo(name)))
 	return true, nil
 }

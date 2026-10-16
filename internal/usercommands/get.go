@@ -455,7 +455,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		matchItem, found := user.Character.Pet.FindItem(rest)
 		if !found {
-			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You don't see a %s carried by %s.`, rest, user.Character.Pet.DisplayName()))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You don't see a %s carried by %s.`, refusal.Echo(rest), user.Character.Pet.DisplayName()))
 		} else {
 
 			if user.Character.Pet.RemoveItem(matchItem) {
