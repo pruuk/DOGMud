@@ -1,5 +1,24 @@
 # DOGMud Patch Notes
 
+## 2026-10-16: Every refusal reads plainly
+
+- Trying something while you craft, cast or salvage now says you're busy and
+  points you to `cancel`, the same way for every command.
+- Cooldowns on forage, search, track, assess, sneak and shadow no longer
+  count rounds at you; they say what you're waiting to do.
+- Dozens of refusals that ran past the screen edge, read awkwardly or showed
+  internal error text now read plainly, for example locked doors, guild
+  treasury limits, the jail fine and a misspelled spell or recipe.
+- Removing a cursed item now says so calmly instead of shouting.
+- Using or storing near a container no longer names it unless you named it,
+  and a refused steal no longer names a creature you can't see.
+- Picking a name that isn't allowed no longer shows the server's name rules;
+  every name problem now reads as a plain sentence.
+- When something goes wrong on the server's side, you're told plainly and the
+  problem is logged for the staff.
+- Learning a spell from a quest now names the spell, and a stray debug line
+  after dropping a grenade is gone.
+
 ## 2026-10-15: Commands ask for what they need the same way
 
 - A command typed without what it needs now asks the same way everywhere
