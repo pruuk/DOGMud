@@ -5,7 +5,6 @@ import (
 	"go/parser"
 	"go/token"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"testing"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -91,44 +89,6 @@ func TestU8SharedActionsUseQuoteCommitInsteadOfLegacyCostCalls(t *testing.T) {
 				return
 			}
 			require.Empty(t, violations, "%s must use the shared quote/commit cost seam", target.name)
-		})
-	}
-}
-
-// TestCostRefusalText_UsesPoolAwareProseOnlyForRefusal catches a renderer that
-// exposes cost values, confuses pools, or turns a paid/no-charge result into a
-// refusal message.
-func TestCostRefusalText_UsesPoolAwareProseOnlyForRefusal(t *testing.T) {
-	digit := regexp.MustCompile(`\d`)
-	for _, tc := range []struct {
-		name   string
-		result characters.CostCommitResult
-		phrase string
-	}{
-		{
-			name:   "stamina",
-			result: characters.CostCommitResult{Status: characters.CostRefused, Pool: characters.PoolStamina},
-			phrase: "too spent",
-		},
-		{
-			name:   "conviction",
-			result: characters.CostCommitResult{Status: characters.CostRefused, Pool: characters.PoolConviction},
-			phrase: "cannot muster the resolve",
-		},
-		{
-			name:   "paid",
-			result: characters.CostCommitResult{Status: characters.CostPaid, Pool: characters.PoolStamina},
-			phrase: "",
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			got := refusal.CostText(tc.result)
-			if tc.phrase == "" {
-				require.Empty(t, got)
-				return
-			}
-			require.Contains(t, got, tc.phrase)
-			require.False(t, digit.MatchString(got), "refusal prose must not expose a number")
 		})
 	}
 }

@@ -86,7 +86,7 @@ func TestTrackStop_AllowedWhileCrafting(t *testing.T) {
 		t.Fatalf("track stop errored: handled=%v err=%v", handled, err)
 	}
 	msgs := strings.Join(events.DrainQueuedMessagesForTest(brUserId), "\n")
-	if strings.Contains(msgs, refusal.WhileBusyText("track")) {
+	if strings.Contains(msgs, "while you're busy.") {
 		t.Errorf("track stop must not be busy-refused:\n%s", msgs)
 	}
 }

@@ -526,8 +526,7 @@ func TestTauntRallyWarcryWrapperAdmission(t *testing.T) {
 			} else {
 				require.Len(t, refusal.Body.List, 1)
 				require.True(t, handledReturn(refusal.Body.List[0]))
-				require.False(t, nodeHasCall(fn.Body, "Cost"))
-				require.False(t, nodeHasCall(fn.Body, "CostText"))
+				require.False(t, nodeHasRefusalCost(fn.Body))
 			}
 			if guard.staged {
 				require.Len(t, exactCallPositions(t, fset, fn.Body, "stageSpecialMoveTarget", true), 1)
@@ -545,6 +544,29 @@ func handledReturn(stmt ast.Stmt) bool {
 	first, firstOK := ret.Results[0].(*ast.Ident)
 	second, secondOK := ret.Results[1].(*ast.Ident)
 	return firstOK && secondOK && first.Name == "true" && second.Name == "nil"
+}
+
+// nodeHasRefusalCost reports whether node calls refusal.Cost or
+// refusal.CostText, package-qualified. An unrelated .Cost( method call does
+// not match, so a mob-wrapper silence check cannot be tripped by one.
+func nodeHasRefusalCost(node ast.Node) bool {
+	found := false
+	ast.Inspect(node, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return !found
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return !found
+		}
+		pkg, ok := sel.X.(*ast.Ident)
+		if ok && pkg.Name == "refusal" && (sel.Sel.Name == "Cost" || sel.Sel.Name == "CostText") {
+			found = true
+		}
+		return !found
+	})
+	return found
 }
 
 func nodeHasCall(node ast.Node, name string) bool {
@@ -645,8 +667,7 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 			} else {
 				require.Len(t, refusal.Body.List, 1, "%s mob refusal branch must be silent and immediate", function)
 				require.True(t, handledReturn(refusal.Body.List[0]), "%s mob refusal branch must return handled", function)
-				require.False(t, nodeHasCall(fn.Body, "Cost"), "%s mob wrapper must not render private refusal text", function)
-				require.False(t, nodeHasCall(fn.Body, "CostText"), "%s mob wrapper must not render private refusal text", function)
+				require.False(t, nodeHasRefusalCost(fn.Body), "%s mob wrapper must not render private refusal text", function)
 			}
 			return
 		}

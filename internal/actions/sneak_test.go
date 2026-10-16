@@ -300,8 +300,7 @@ func TestThrowSneakCostAdmissionOrdering(t *testing.T) {
 		require.Less(t, int(attempt), int(progression))
 		require.False(t, nodeHasCall(fn.Body, "CooldownReady"))
 		require.False(t, nodeHasCall(fn.Body, "TryCooldown"))
-		require.False(t, nodeHasCall(fn.Body, "Cost"), "mob refusal must stay silent")
-		require.False(t, nodeHasCall(fn.Body, "CostText"), "mob refusal must stay silent")
+		require.False(t, nodeHasRefusalCost(fn.Body), "mob refusal must stay silent")
 	})
 
 	t.Run("throw command", func(t *testing.T) {

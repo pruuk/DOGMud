@@ -83,11 +83,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 	// Check cooldown before doing target resolution.
 	if !char.TryCooldown(cooldownKey,
 		fmt.Sprintf(`%d rounds`, cfg.ShadowCooldown)) {
-		return ShadowResult{
-			OnCooldown: true,
-			Reason: fmt.Sprintf("%d rounds remaining",
-				char.GetCooldown(cooldownKey)),
-		}
+		return ShadowResult{OnCooldown: true}
 	}
 
 	if opts.TargetMobInstanceId > 0 {
