@@ -38,16 +38,16 @@ The controller read each of the 32 mobs' own descriptions on master against #208
 | D1 | Fungal Grub (`labyrinth_of_low_tunnels/77`) | rodent → insectoid | A legless larva ("fat, pale grub ... leaving shallow furrows"); insectoid has legs, so it would qualify for leg moves | insectoid (as #208); worm (18: mouth and skin, no legs) | **worm** |
 | D2 | Scavenger Bird (`dustwalk_road/82`) | bat → raptor | A carrion eater ("dropped food, abandoned packs, or ... something that stops moving"); #208 put the two carrion crows on bird, and its own bird species says "not a hunter of other beasts" | raptor (as #208, hunting-bird moves); bird | **bird** |
 | D3 | Canal Lurker (`new_plymouth_old_quarter/9393`) | serpent → insectoid | "Between an eel and a crayfish ... too many short legs", in water | insectoid (as #208); a new `crustacean` species | **insectoid** now; a crustacean species only when a second one exists |
-| D4 | Cave Lurker (`amber_valley/9409`) | serpent → insectoid | "A low armoured bulk of slate-grey plate and folded limbs", hunts by ambush | insectoid (as #208); arachnid (trapdoor-style) | **insectoid** |
+| D4 | Cave Lurker (`amber_valley/9409`) | serpent → insectoid | "A low armoured bulk of slate-grey plate and folded limbs", hunts by ambush | insectoid (as #208); arachnid (trapdoor-style) | **insectoid** (owner 2026-10-16: insectoid for now; arachnid preferred later) |
 | D5 | Bird's default attack | `claws`, "beak and claws" | Crows and herons peck; claws copy speaks of talons and slashes | claws (as #208); a new `peck` attack with its own combat-message file and copy | **claws** now; `peck` later if birds fight often |
-| D6 | Horse's default attack | `slam`, "hooves" | `slam.yaml` was written for heavy bodies and elementals; some lines read oddly with hooves ("You rear up, preparing to hurl your hooves at ...") | slam (as #208); a new `kick` or `trample` attack later | **slam** now, and file the odd lines for a later copy pass |
+| D6 | Horse's default attack | `slam`, "hooves" | `slam.yaml` was written for heavy bodies and elementals; some lines read oddly with hooves ("You rear up, preparing to hurl your hooves at ...", lines 19, 103-104) | slam (as #208); a new `kick` or `trample` attack later | **slam**; the odd lines are fixed in the follow-up below, between this plan and slice 2 (owner 2026-10-16) |
 | D7 | River Lurker's extra changes | removes loot item `40048`, adds a `harvest:` table | Harvesting does not exist on master (Fact 3); removing the item loses its drop | port the species only and keep the item (this plan); port #208's change too | **species only, keep the item** |
 | D8 | Jackrabbit (`east_road_to_greenford/9499`) | serpent → rodent | A rabbit is not a rodent | rodent (as #208); a new `lagomorph` species | **rodent** |
 
 ### Fixed without a decision (bring back only if you disagree)
 
 - Both new species gain `speech: false` (Fact 4): without it, chickens and horses count as able to speak.
-- Both new species drop #208's `harvest:` block (Fact 3; hunting is salvage item 8, not this work).
+- Both new species drop #208's `harvest:` block (Fact 3; hunting is salvage item 8, not this work). Why #208 has it at all: it extends our corpse salvage with a species fallback (`internal/crafting/corpse_salvage.go`, `LookupCorpseSalvageForMob`) and ALSO adds a separate `carcass` skin and butcher system (`internal/usercommands/carcass.go`, `internal/species/harvest.go`) with per-species `harvest:` tables, tools, rare parts and spoilage. The two do not talk to each other: our review's finding F065 is that skinning and then salvaging the same corpse pays twice. If skinning and butchering are ever wanted, they extend `salvage` rather than sit beside it.
 
 ### Final reassignment table (with the recommended decisions)
 
@@ -240,9 +240,16 @@ Check that `speciesid` sits under `character:` in a sample of the 32 files (Fact
 ### Task 4: Gate, boot, PR
 
 - [ ] **Step 1:** `gofmt -l internal/ modules/`; `go build ./...`; `golangci-lint run --new-from-merge-base=origin/master` (0 issues); the full `go test . ./internal/... ./modules/...`; a YAML shape check of the 32 files against master (each differs in exactly one line); the boot check per `dogmud-shipping` (exit 124, `Server Ready` 1, no panics).
-- [ ] **Step 2:** If D6 stands, file an issue (search first) for the `slam.yaml` lines that read oddly with hooves, under #385.
-- [ ] **Step 3:** PR with `--repo pruuk/DOGMud`, body naming slice 1 of the #541 spec, the decision table as ruled, and the evidence. Part of #541 and #539 (no closing keyword).
-- [ ] **Step 4:** After merge, comment on PR #208: its species corrections (32 mobs, bird and horse) landed separately in the merge commit, with the two differences (D1 fungal grub on worm, D2 scavenger bird on bird) and the speech and harvest notes, so FinalTwist can drop them from #208.
+- [ ] **Step 2:** PR with `--repo pruuk/DOGMud`, body naming slice 1 of the #541 spec, the decision table as ruled, and the evidence. Part of #541 and #539 (no closing keyword).
+- [ ] **Step 3:** After merge, comment on PR #208: its species corrections (32 mobs, bird and horse) landed separately in the merge commit, with the two differences (D1 fungal grub on worm, D2 scavenger bird on bird) and the speech and harvest notes, so FinalTwist can drop them from #208.
+
+## Follow-up before slice 2: slam lines that only fit fists (D6, owner 2026-10-16)
+
+A small copy PR after this plan merges and before slice 2 starts.
+
+- [ ] **Step 1: Audit.** Every `slam.yaml` line holding `{itemname}` is read with each slam species' `unarmedname` substituted (the horse's "hooves" and the 11 other slam species: `grep -h "unarmedname" _datafiles/world/dogmud/species/*.yaml` for the slam ones). A line that only works for something thrown or gripped ("You hurl your {itemname} at ...", lines 19, 103-104 today) is listed; a line about the body's weight ("you hurl your weight into ...") is fine and is not.
+- [ ] **Step 2: Owner review.** The listed lines and their proposed rewrites go to the owner as a table (today, proposed, why), each rewrite fitting 80 columns and every role of a record describing one moment (the M6 rule).
+- [ ] **Step 3: Apply** the approved rewrites, run the combat-message guards (`go test . ./internal/combat/ ./internal/items/`) and the narration golden re-record per its documented procedure, then the full suite, and open the PR (part of #541, #385).
 
 ## Self-review
 
