@@ -1,5 +1,15 @@
 # DOGMud Patch Notes
 
+## 2026-10-16: Talking items, and quieter housekeeping
+
+- Items that speak now talk in the colour other characters' speech uses, and
+  their longer lines wrap to fit your screen.
+- When staff move your party, you now see a flash of light carry you away
+  instead of a room number.
+- Behind the scenes, usage hints, staff output and party and guild notices
+  now each have their own place, so they can be coloured or filtered
+  separately later. Nothing else looks different today.
+
 ## 2026-10-16: Every refusal reads plainly
 
 - Trying something while you craft, cast or salvage now says you're busy and
