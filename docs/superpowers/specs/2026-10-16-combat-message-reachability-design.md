@@ -1,9 +1,10 @@
 # Combat-message reachability and species beast moves
 
 Issues #541 (combat-message reachability) and #539 (unreachable throttle,
-pounce and maul files), under the combat narration epic #385. Owner rulings
-recorded on both issues on 2026-10-16. This spec designs the whole change;
-the plan slices it.
+pounce and maul files), under the combat narration epic #385, plus the
+species corrections salvaged from PR #208. Owner rulings recorded on #541
+and #539 on 2026-10-16. This spec designs the whole change in two slices,
+each with its own plan (see Slicing).
 
 ## Facts verified against source (master `779746a31`, 2026-10-16)
 
@@ -22,6 +23,8 @@ the plan slices it.
 | 11 | AI beast moves are chosen by `CanUse*` gates in `internal/combat/ai.go` (rake 529, maul 555, pounce 577, gore 674, drain 702, throttle 818, hamstring 385) and player readiness by `internal/actions/command_readiness.go:103-132`. Both read attack-family predicates: `SpeciesIsFanged` (bite), `SpeciesIsClawed` (claws), `SpeciesIsHorned` (gore), `SpeciesIsQuadrupedPredator` (no hands, legs, fanged or clawed) and `SpeciesHasLifeDrain`. The action entry points repeat them (`actions/combat_maul.go:83`, `combat_throttle.go:95`, `combat_rake.go:83`, `combat_gore.go:78`, `combat_hamstring.go:92`) | grep |
 | 12 | A mob can also be scripted to use a move through its `combatcommands` list (e.g. `charge` and `bash` on `mobs/cascade_pass_road/9539-a_tusked_forest_boar.yaml`); `charge` has no AI gate and is mob-only (`internal/actions/divergences.go:188`) | grep |
 | 13 | Natural attack counts: bite 10 species, claws 7, slam 12, gore 2, siphon 2. Mobs: 2 bears, 4 cats, 19 serpents | grep |
+| 14 | Many creatures carry the wrong species on master: the Ashwick timber wolf and forest fox are rodents (10), the Marches farm cat a reptile (21), the Greenford river otter and the east road hawk serpents (8), the Ashwick chicken an orb (20), the Marches feral hog a deer (7) | `git show origin/master:<mob file>` |
+| 15 | PR #208 (FinalTwist, open) corrects 32 mob species and adds `species/25-bird.yaml` (claws, legs, small) and `species/26-horse.yaml` (slam, legs and tail, large); every one of the 32 mobs still carries #208's base species on master, so the port applies without drift. Moves by count: 9→25 ×4, 8→12 ×3, 10→2 ×3, 8→25, 8→24, 20→25, 10→12, 1→26 ×2 each, and one each of 8→9, 8→21, 8→13, 8→10, 7→6, 22→9, 21→11, 21→10, 20→9, 1→21, 1→2, 1→10 | review worktree `C:/tmp/dogmud-pr208-review` at `3ce674451`, diff against its base `c696c117a`; salvage survey item 13 (`docs/audits/2026-10-05-pr208-review/salvage-survey.md:46`) |
 
 ## Owner rulings (2026-10-16)
 
@@ -31,8 +34,25 @@ the plan slices it.
 - **D.** Bears' default attack becomes `maul`, cats' becomes `pounce`. Serpents stay on bite. No python species (none exist). `throttle` stays a special move only; the default-attack `combat-messages/throttle.yaml` is retired.
 - **E. Principle.** A species' default attack is what it does most of the time. Its special moves are rarer or finishing moves.
 - **F.** Which special moves a species can use becomes species data, reviewed as a table (section 5). `throttle` goes to the throat crushers: cats, canines, and any species the table names. Bears do not get the `maul` special move; their basic swings use maul lines.
+- **G.** The species corrections in PR #208 are ported as slice 1 of this work, ahead of everything else, because section 5 grants moves by species and a wolf filed as a rodent would get a rodent's moves.
+- **H.** Each plan updates the relevant `context.md` files with the principle (ruling E) and the species-data rule (ruling F), and puts a short code comment where a future author will meet them: the species `BeastMoves` field and the `CanUse*` gates.
+
+## Slicing
+
+Two plans, in order:
+
+1. **Slice 1: species corrections** (section 0). Data only plus the two new species; no behaviour change beyond each creature now being the species it looks like.
+2. **Slice 2: reachability and beast moves** (sections 1 to 6).
 
 ## Design
+
+### 0. Slice 1: species corrections from PR #208
+
+- Port `species/25-bird.yaml` and `species/26-horse.yaml` from the #208 review worktree, keeping only the fields master's species loader reads (read `internal/species/species.go`); any #208-only field (hunting part tables, alliance data) is dropped and listed in the plan, since hunting is salvage item 8, not this work. Both pass the species validator (`validNaturalAttacks`: claws and slam are allowed today).
+- Apply the 32 `speciesid` changes (Fact 15) to the mob files on master, each checked against #208's base value before it is changed.
+- What a player notices: a wolf fights, hunts and is described as a wolf; a hawk or chicken as a bird; a horse as a horse. Each mob's AI beast moves follow its new species under today's rules until slice 2 moves them to data.
+- Tests: a table test pins the 32 mobs to their new species; the boot check loads every zone.
+- PR #208 is told on the PR that its species corrections landed separately, with the commit.
 
 ### 1. One weapon-type rule
 
@@ -79,6 +99,8 @@ Table (owner review: approve with the spec; rows not listed have no beast moves 
 | 21 | reptile | bite | maul, throttle, pounce, hamstring | maul | the crocodile's roll |
 | 22 | bat | claws | rake, pounce, hamstring | rake | |
 | 24 | mustelid | bite | maul, throttle, pounce, hamstring | throttle, pounce | weasels kill with a neck bite |
+| 25 | bird (new, slice 1) | claws | rake, pounce, hamstring (claws, legs, no hands) | none | crows, chickens and grouse peck; hunting birds of prey are raptors |
+| 26 | horse (new, slice 1) | slam | none | none | a kick or a trample is a later move |
 | 32, 33, 34 | wraith, spectre, vampire | siphon, siphon, claws | drain | drain | |
 
 Bears' `charge`: add `charge` to the two bear mobs' `combatcommands` (data only), so bears bull-rush without an AI gate. An AI-chosen `charge` for every bear is out of scope.
@@ -89,6 +111,14 @@ Bears' `charge`: add `charge` to the two bear mobs' `combatcommands` (data only)
 - A table test pins every species' beast moves to section 5's Proposed column, and a guard proves the `CanUse*` gates read the list (a species whose list omits a move cannot use it even with the matching attack family).
 - Goldens re-recorded only for the deliberate changes, each diff quoted in its commit.
 - Boot check, and a playtest: a cat and a wolf fight a player while a second player watches; the engage line, wait lines and swings read the same from both seats; the cat throttles, the rat does not.
+
+### 7. Docs and comments (ruling H)
+
+- `internal/species/context.md`: the principle (a default attack is what a creature does most of the time; a special move is rarer or a finisher), `natural_attack` versus `beast_moves`, the validator's body checks, and how to add a species.
+- `internal/combat/context.md`: one weapon-type rule (`AttackSubtype`), the engage lines from `prepare`, and that `CanUse*` reads the species list while the family predicates describe the body.
+- `internal/actions/context.md`: the readiness and action-entry gates read the same list.
+- Code comments: on the species `BeastMoves` field (the principle in one sentence and where the table lives), and above the `CanUse*` gates in `ai.go` (moves come from species data, never from the attack family).
+- Slice 1 adds the bird and horse rows to `internal/species/context.md`'s species notes if it keeps a list.
 
 ## Out of scope
 
