@@ -20,7 +20,7 @@ func Eat(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	// Chunk 4e: can't eat while grappled — both hands committed.
 	if user.Character.Position != nil && user.Character.Position.IsGrappling() {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Your hands are committed to the grapple, so you can't reach for that.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">Your hands are committed to the grapple, so you can't reach for that.</ansi>`)
 		return true, nil
 	}
 
@@ -42,7 +42,7 @@ func Eat(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		itemSpec := matchItem.GetSpec()
 
 		if itemSpec.Subtype != items.Edible {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryRefusal,
 				fmt.Sprintf(`You can't eat <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()),
 			)
 			return true, nil
@@ -50,7 +50,7 @@ func Eat(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		// Food that has gone bad is refused; mob eat asks the same (#277).
 		if matchItem.IsSpoiledFood(util.GetRoundCount()) {
-			user.SendText(messaging.CategorySystem, `<ansi fg="red">The food has gone bad! It reeks of decay and is clearly inedible.</ansi>`)
+			user.SendText(messaging.CategoryRefusal, `<ansi fg="red">The food has gone bad! It reeks of decay and is clearly inedible.</ansi>`)
 			return true, nil
 		}
 

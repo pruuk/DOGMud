@@ -35,7 +35,7 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if res.NotLifeDrainer {
-		user.SendText(messaging.CategorySystem, "Your body cannot drain the life from another.")
+		user.SendText(messaging.CategoryRefusal, "Your body cannot drain the life from another.")
 		return true, nil
 	}
 	if res.OnCooldown {

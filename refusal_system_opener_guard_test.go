@@ -36,6 +36,9 @@ var openerGuardScope = []string{
 	"internal/combat/", "internal/hooks/", "internal/justice/",
 	"internal/messaging/", "internal/mobcommands/", "internal/questengine/",
 	"internal/rooms/", "modules/",
+	"internal/usercommands/a", "internal/usercommands/b",
+	"internal/usercommands/c", "internal/usercommands/d",
+	"internal/usercommands/e", "internal/usercommands/f",
 }
 
 func inOpenerScope(rel string) bool {

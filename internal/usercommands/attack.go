@@ -202,12 +202,12 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			switch mobs.CheckPlayerHarm(m) {
 			case mobs.HarmBlockedCompanion:
-				user.SendText(messaging.CategorySystem, messaging.HideNames(
+				user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 					fmt.Sprintf(`%s is someone's companion!`, mName),
 					[]string{m.Character.Name}, attackerSight))
 				return true, nil
 			case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
-				user.SendText(messaging.CategorySystem, messaging.HideNames(
+				user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 					fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, m.Character.Name),
 					[]string{m.Character.Name}, attackerSight))
 				mobs.FireAttackRejected(m, user.UserId)
@@ -329,13 +329,13 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		if p != nil {
 
 			if pvpErr := room.CanPvp(user, p); pvpErr != nil {
-				user.SendText(messaging.CategorySystem, pvpErr.Error())
+				user.SendText(messaging.CategoryRefusal, pvpErr.Error())
 				return true, nil
 			}
 
 			if partyInfo := parties.Get(user.UserId); partyInfo != nil {
 				if partyInfo.IsMember(attackPlayerId) {
-					user.SendText(messaging.CategorySystem, messaging.HideNames(
+					user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 						fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name),
 						[]string{p.Character.Name}, messaging.ParticipantSight(user.Character, room)))
 					return true, nil

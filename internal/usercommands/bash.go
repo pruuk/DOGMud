@@ -48,7 +48,7 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	switch {
 	case bashResult.NoShield:
-		user.SendText(messaging.CategorySystem, "You need a shield equipped to perform a shield bash!")
+		user.SendText(messaging.CategoryRefusal, "You need a shield equipped to perform a shield bash!")
 		return true, nil
 	case bashResult.OnCooldown:
 		refusal.Cooldown(user, "bash")

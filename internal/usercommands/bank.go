@@ -19,7 +19,7 @@ func Bank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	user.SendText(messaging.CategorySystem, ``)
 
 	if !room.IsBank {
-		user.SendText(messaging.CategorySystem, `You are not at a bank.`+term.CRLFStr)
+		user.SendText(messaging.CategoryRefusal, `You are not at a bank.`+term.CRLFStr)
 		return true, nil
 	}
 
@@ -37,7 +37,7 @@ func Bank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) < 2 || (args[0] != `deposit` && args[0] != `withdraw`) {
-		user.SendText(messaging.CategorySystem, `Try <ansi fg="command">help bank</ansi> for more information about banking.`+term.CRLFStr)
+		user.SendText(messaging.CategoryRefusal, `Try <ansi fg="command">help bank</ansi> for more information about banking.`+term.CRLFStr)
 		return true, nil
 	}
 
@@ -47,7 +47,7 @@ func Bank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if amount < 1 && amountStr != `all` {
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You must specify an amount greater than zero to %s.%s`, action, term.CRLFStr))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You must specify an amount greater than zero to %s.%s`, action, term.CRLFStr))
 		return true, nil
 
 	} else if action == `deposit` {

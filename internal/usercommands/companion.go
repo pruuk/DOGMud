@@ -104,7 +104,7 @@ func Companion(rest string, user *users.UserRecord,
 
 	comp := user.Character.GetCompanion(compName)
 	if comp == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			`You have no companion named "%s".`, compName,
 		))
 		return true, nil
@@ -114,7 +114,7 @@ func Companion(rest string, user *users.UserRecord,
 	if renameNick != "" {
 		// A bonded companion already has a name of its own.
 		if comp.SourceType == characters.CompanionBonded {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> already has a name.`, comp.Name,
 			))
 			return true, nil

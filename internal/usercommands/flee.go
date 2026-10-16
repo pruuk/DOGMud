@@ -32,7 +32,7 @@ var fleeRefusalText = map[actions.FleeRefusal]string{
 func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	begin := actions.BeginFlee(actions.NewUserActorInRoom(user, room), "")
 	if !begin.Accepted {
-		user.SendText(messaging.CategorySystem, fleeRefusalText[begin.Refusal])
+		user.SendText(messaging.CategoryRefusal, fleeRefusalText[begin.Refusal])
 		return true, nil
 	}
 	if begin.Short {

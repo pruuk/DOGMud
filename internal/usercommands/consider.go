@@ -48,7 +48,7 @@ func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	// refuses it through the same check, so consider says so instead of
 	// rating the odds (#286). The quest notification below still fires.
 	if m := mobs.GetInstance(target.GetMobInstanceId()); mobs.CheckPlayerHarm(m).Blocked() {
-		user.SendText(messaging.CategorySystem, messaging.HideNames(
+		user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 			fmt.Sprintf(`You can't fight <ansi fg="mobname">%s</ansi>.`, m.Character.Name),
 			[]string{m.Character.Name}, messaging.ParticipantSight(user.Character, room)))
 	} else {

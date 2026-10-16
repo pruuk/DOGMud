@@ -102,7 +102,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.Character.CancelConditionsWithFlag(conditions.Hidden)
 
 		if err := actions.FloorDropGold(dropAmt, user.Character, room); err != nil {
-			user.SendText(messaging.CategorySystem, "Oops!")
+			refusal.Failed(user, "drop", err, "userId", user.UserId)
 			return true, nil
 		}
 

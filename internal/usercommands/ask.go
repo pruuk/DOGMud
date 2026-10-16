@@ -105,7 +105,7 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return true, nil
 	}
 	if target.IsPlayer() {
-		user.SendText(messaging.CategorySystem, `You can't ask another player.`)
+		user.SendText(messaging.CategoryRefusal, `You can't ask another player.`)
 		return true, nil
 	}
 

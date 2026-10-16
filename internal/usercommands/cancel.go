@@ -32,7 +32,7 @@ func Cancel(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		if rest = strings.TrimSpace(rest); rest != `` {
 			return cancelCondition(rest, user)
 		}
-		user.SendText(messaging.CategorySystem, `You aren't doing anything to cancel.`)
+		user.SendText(messaging.CategoryRefusal, `You aren't doing anything to cancel.`)
 		return true, nil
 	}
 
@@ -132,6 +132,6 @@ func cancelCondition(name string, user *users.UserRecord) (bool, error) {
 		lightnotice.Check(user, lightnotice.TriggerCommand)
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You have no %s you can let go of.`, name))
+	user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You have no %s you can let go of.`, name))
 	return true, nil
 }

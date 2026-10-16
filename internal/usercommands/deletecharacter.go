@@ -37,7 +37,7 @@ func DeleteCharacter(rest string, user *users.UserRecord, room *rooms.Room, flag
 		return true, nil
 	}
 	if q2.Response != user.Character.Name { // case-sensitive
-		user.SendText(messaging.CategorySystem, `That doesn't match. Aborted.`)
+		user.SendText(messaging.CategoryRefusal, `That doesn't match. Aborted.`)
 		user.ClearPrompt()
 		return true, nil
 	}

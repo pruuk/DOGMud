@@ -105,7 +105,7 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 		iSpec := matchItem.GetSpec()
 		if iSpec.Type != items.Weapon && iSpec.Subtype != items.Wearable {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryRefusal,
 				fmt.Sprintf(`Your <ansi fg="item">%s</ansi> doesn't look very fashionable.`, matchItem.DisplayName()),
 			)
 			return true, nil
@@ -219,7 +219,7 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			if len(failureReason) <= 1 {
 				failureReason = fmt.Sprintf(`You can't figure out how to equip the <ansi fg="item">%s</ansi>.`, matchItem.DisplayName())
 			}
-			user.SendText(messaging.CategorySystem, failureReason)
+			user.SendText(messaging.CategoryRefusal, failureReason)
 		}
 
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -28,14 +29,14 @@ func Bug(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	feedbackDir := util.FilePath(`_datafiles/feedback`)
 	if err := os.MkdirAll(feedbackDir, 0755); err != nil {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Could not save bug report. Please notify an admin.</ansi>`)
+		refusal.Failed(user, "bug report", err, "userId", user.UserId)
 		return true, nil
 	}
 
 	filePath := util.FilePath(`_datafiles/feedback/bugs.txt`)
 	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Could not save bug report. Please notify an admin.</ansi>`)
+		refusal.Failed(user, "bug report", err, "userId", user.UserId)
 		return true, nil
 	}
 	defer f.Close()
@@ -50,7 +51,7 @@ func Bug(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	)
 
 	if _, err := f.WriteString(entry); err != nil {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Could not save bug report. Please notify an admin.</ansi>`)
+		refusal.Failed(user, "bug report", err, "userId", user.UserId)
 		return true, nil
 	}
 
