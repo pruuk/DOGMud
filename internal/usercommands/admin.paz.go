@@ -42,7 +42,7 @@ func Paz(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			u := target.(*actions.UserActor).User
 			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`You illuminate <ansi fg="username">%s</ansi> with a %s!`, u.Character.Name, beamOfLight))
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> illuminates <ansi fg="username">%s</ansi> with a %s!`, user.Character.Name, u.Character.Name, beamOfLight), user.UserId, u.UserId)
-			u.SendText(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> illuminates you with a %s!`, user.Character.Name, beamOfLight))
+			u.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(`<ansi fg="username">%s</ansi> illuminates you with a %s!`, user.Character.Name, beamOfLight)))
 
 			u.Character.Health = u.Character.HealthMax.Value
 			u.Character.Conviction = u.Character.ConvictionMax.Value

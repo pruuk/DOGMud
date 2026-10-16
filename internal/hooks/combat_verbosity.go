@@ -300,11 +300,12 @@ func recordTallyFor(viewerId int, atk, def actions.Actor, res *combat.AttackResu
 // drainParticipantLines sends a participant's combat lines subject to
 // their verbosity. incoming=true marks lines describing swings AGAINST
 // the viewer: landed hits there are floor-protected (always full prose,
-// any level); only defense/miss lines are suppressible.
+// any level); only defense/miss lines are suppressible. A line marked
+// AlwaysShow (the defence-shortage note) passes at every level too.
 func drainParticipantLines(u *users.UserRecord, msgs []combat.TaggedMessage, lvl messaging.Verbosity, incoming bool) {
 	for _, msg := range msgs {
-		if incoming && isHitCategory(msg.Category) {
-			u.SendText(msg.Category, msg.Text) // floor: damage to you always shows
+		if msg.AlwaysShow || (incoming && isHitCategory(msg.Category)) {
+			u.SendText(msg.Category, msg.Text) // floor: damage to you, or a note that always shows
 			continue
 		}
 		if lvl.Suppresses(msg.Category) {
@@ -343,7 +344,7 @@ func drainSpectatorLines(room *rooms.Room, msgs []combat.TaggedMessage, excludeU
 		}
 		lvl := u.GetCombatVerbosity().OneStepLower()
 		for _, msg := range msgs {
-			if lvl.Suppresses(msg.Category) {
+			if !msg.AlwaysShow && lvl.Suppresses(msg.Category) {
 				continue
 			}
 			room.SendTextVisualToUser(u, msg.Category, msg.Text)

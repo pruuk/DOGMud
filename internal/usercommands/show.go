@@ -75,9 +75,9 @@ func Show(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		)
 
 		// Tell the Showee, at the showee's own sight.
-		targetUser.SendText(messaging.CategoryMobEmote, messaging.HideNames(
+		targetUser.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(messaging.HideNames(
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> shows you their <ansi fg="item">%s</ansi>.`, user.Character.Name, showItem.DisplayName()),
-			[]string{user.Character.Name}, messaging.ParticipantSight(targetUser.Character, room)),
+			[]string{user.Character.Name}, messaging.ParticipantSight(targetUser.Character, room))),
 		)
 
 		targetUser.SendText(messaging.CategoryMobEmote,

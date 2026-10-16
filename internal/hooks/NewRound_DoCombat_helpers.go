@@ -995,17 +995,16 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 		}
 		// The blocker acts on the fleer: the fleer's line and the room's ride
 		// one category, by the blocker's kind (M7 slice 4, rule N2).
-		blockCat := messaging.CategoryMobEmote
-		if blocker.IsPlayer() {
-			blockCat = messaging.CategoryEmote
-		}
+		// Neither category capitalizes, so the line opening with the
+		// blocker's name is capitalized here.
+		blockCat := messaging.EmoteCategoryFor(blocker.IsPlayer())
 		// The fleer reads the blocker at their own sight, as the room line
 		// below does for everyone else. The literal stays INLINE for the root
 		// viewpoint guard.
-		user.SendText(blockCat, messaging.HideNames(
+		user.SendText(blockCat, messaging.CapitalizeStart(messaging.HideNames(
 			fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="%s">%s</ansi> blocks you from fleeing!</ansi>`, targetTag, blocker.Name),
 			[]string{blocker.Name},
-			messaging.ParticipantSight(user.Character, uRoom)))
+			messaging.ParticipantSight(user.Character, uRoom))))
 		excludes := []int{user.UserId}
 		if blocker.IsPlayer() {
 			excludes = append(excludes, blocker.UserId)

@@ -240,10 +240,10 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			// The person being targeted does not learn WHO is aiming at them
 			// if they cannot see; judged by THEIR sight, not the actor's.
-			p.SendText(messaging.CategoryMobEmote, messaging.HideNames(
+			p.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(messaging.HideNames(
 				fmt.Sprintf("<ansi fg=\"username\">%s</ansi> shifts focus to you!", user.Character.Name),
 				[]string{user.Character.Name},
-				messaging.ParticipantSight(p.Character, room)))
+				messaging.ParticipantSight(p.Character, room))))
 
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
 				fmt.Sprintf("<ansi fg=\"username\">%s</ansi> shifts focus to <ansi fg=\"username\">%s</ansi>!", user.Character.Name, p.Character.Name),

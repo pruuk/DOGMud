@@ -452,3 +452,59 @@ func TestCombatVerbosityWiring(t *testing.T) {
 			"blind attacker must not receive a tally summary naming the target")
 	})
 }
+
+// #371 slice 4 review: the melee defence-shortage note rides the winning
+// defence's category (Dodge here), which Light and Medium drop. On
+// CategorySystem it always showed; combat marks it AlwaysShow so the drain
+// still delivers it, once, at every level, while the dodge line itself is
+// suppressed as before.
+func TestMeleeDefenceShortageNoteShowsAtEveryVerbosity(t *testing.T) {
+	for _, level := range []string{"", "medium", "light"} {
+		t.Run("level="+level, func(t *testing.T) {
+			cleanup := seedAllRegistries()
+			defer cleanup()
+			roundTallies = newCombatTallies()
+			rooms.LoadRoom(1).Lamp = rooms.LampPtr(90)
+
+			u := users.GetByUserId(1)
+			require.NotNil(t, u)
+			u.CombatVerbosity = level
+
+			room1 := rooms.LoadRoom(1)
+			require.NotNil(t, room1)
+			mob := mobs.GetInstance(100)
+			require.NotNil(t, mob)
+			atk := actions.NewMobActorInRoom(mob, room1)
+			def := actions.NewUserActorInRoom(u, room1)
+
+			// A defended round against a short defender: the dodge line and
+			// the note beside it, both on the dodge's category, as
+			// combat.sendDefenceShortageOnce queues them.
+			res := &combat.AttackResult{
+				DefenderWasAttacked: true,
+				SwingEvents:         []combat.SwingEvent{{Hit: false}},
+				MessagesToTarget: []combat.TaggedMessage{
+					{Category: messaging.CategoryDodge, Text: vbDodgeText},
+					{Category: messaging.CategoryDodge, Text: expectedChannelDefenceShortageLine, AlwaysShow: true},
+				},
+			}
+
+			captured, capCleanup := captureMessages(t)
+			defer capCleanup()
+
+			dispatchCritAndMessaging(atk, def, res)
+			flushCombatTallies()
+			events.ProcessEvents()
+
+			texts := textsForUser(*captured, 1)
+			assert.Equal(t, 1, countContainingFolded(texts, expectedChannelDefenceShortageLine),
+				"the shortage note reaches the defender exactly once at every verbosity")
+			wantDodge := 1
+			if level != "" {
+				wantDodge = 0
+			}
+			assert.Equal(t, wantDodge, countContaining(texts, "twist away"),
+				"the dodge line itself keeps its verbosity gate")
+		})
+	}
+}

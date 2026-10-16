@@ -301,3 +301,15 @@ func (c Category) String() string {
 	}
 	return "Unknown"
 }
+
+// EmoteCategoryFor is the category of a line told to a player about what
+// another creature does: CategoryEmote when that creature is a player,
+// CategoryMobEmote when it is a mob, the split M5 made for emotes. Neither
+// category runs the normalizer's capitalize stage, so a sender whose line
+// opens with the creature's name builds it through CapitalizeStart.
+func EmoteCategoryFor(isPlayer bool) Category {
+	if isPlayer {
+		return CategoryEmote
+	}
+	return CategoryMobEmote
+}

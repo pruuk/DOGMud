@@ -197,6 +197,7 @@ func commitDefenceWinner(defender *characters.Character, candidates []quotedDefe
 // the defence line sent beside it (CategoryForDefenseVerb of the winning
 // defence), so the dedupe matches the note on any melee defence category: a
 // round whose first short winner dodged and second parried still reads it once.
+// The note is AlwaysShow, so every combat verbosity level delivers it.
 func sendDefenceShortageOnce(result *AttackResult, defender *characters.Character, cost characters.CostCommitResult, defence combatvocab.Defence) {
 	if result == nil || defender == nil || defender.GetUserId() <= 0 || !cost.Short() {
 		return
@@ -206,7 +207,13 @@ func sendDefenceShortageOnce(result *AttackResult, defender *characters.Characte
 			return
 		}
 	}
-	result.SendToTarget(CategoryForDefenseVerb(string(defence)), defenceShortageText)
+	// AlwaysShow: the defence categories are suppressible at Light and
+	// Medium, but the note always showed on CategorySystem and still must.
+	result.MessagesToTarget = append(result.MessagesToTarget, TaggedMessage{
+		Category:   CategoryForDefenseVerb(string(defence)),
+		Text:       defenceShortageText,
+		AlwaysShow: true,
+	})
 }
 
 // isMeleeDefenceCategory reports whether c is one CategoryForDefenseVerb returns.

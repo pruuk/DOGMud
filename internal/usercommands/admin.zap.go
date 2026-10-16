@@ -43,7 +43,7 @@ func Zap(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			u := target.(*actions.UserActor).User
 			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`You zap <ansi fg="username">%s</ansi> with a %s!`, u.Character.Name, boltOfLightning))
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps <ansi fg="username">%s</ansi> with a %s!`, user.Character.Name, u.Character.Name, boltOfLightning), user.UserId, u.UserId)
-			u.SendText(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps you with a %s!`, user.Character.Name, boltOfLightning))
+			u.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps you with a %s!`, user.Character.Name, boltOfLightning)))
 
 			u.Character.Health = 1
 			u.Character.Conviction = 1
@@ -87,7 +87,7 @@ func Zap(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			// The room broadcast now also excludes the target, as that path's
 			// does, so they read the direct line rather than the third-person
 			// one about themselves.
-			u.SendText(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps you with a %s!`, user.Character.Name, boltOfLightning))
+			u.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps you with a %s!`, user.Character.Name, boltOfLightning)))
 
 			u.Character.Health = 1
 			u.Character.Conviction = 1

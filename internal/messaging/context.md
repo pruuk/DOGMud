@@ -524,7 +524,17 @@ Functions:
   uppercasing the first character after any leading `<ansi>` tags. A sender
   on a category that skips that stage (`CategoryNPCDialogue`) calls it on a
   sentence-initial name where it builds the line (the talking-item voice
-  lines in `behaviortree`, #371).
+  lines in `behaviortree`, #371). The same holds for `CategoryEmote` and
+  `CategoryMobEmote`: every line slice 4 moved there that opens with a name
+  (steal, plant, sneak and search notices, follow, flee block, zap, paz) is
+  built through it, after any `HideNames`, never before (a capitalised name
+  no longer matches the exact name `HideNames` hides). A room sender that
+  hides names per reader (`SendTextVisualHidingNames`) cannot be
+  capitalised at the source for that reason.
+- `EmoteCategoryFor(isPlayer bool) Category`: `CategoryEmote` when the
+  creature acting on the reader is a player, `CategoryMobEmote` when it is a
+  mob (the M5 emote split). The one helper for that choice; `actions`,
+  `usercommands` and `hooks` call it (#371).
 - `Anonymize(text string) string`: the pipeline's infrared fallback for every
   visual line. Replaces each identity tag with "a figure" and takes the
   adjective span behind it (same pattern as `HideNames`), because

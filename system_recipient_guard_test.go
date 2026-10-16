@@ -40,6 +40,9 @@ func receiverRoot(e ast.Expr) *ast.Ident {
 	}
 }
 
+// paramNames is the parameters of a function that can stand for the acting
+// player. A parameter whose type names a Room (`room *rooms.Room`) is the
+// room around that player, everybody in it, so it never counts.
 func paramNames(recv *ast.FieldList, ft *ast.FuncType) map[string]bool {
 	names := map[string]bool{}
 	for _, fl := range []*ast.FieldList{recv, ft.Params} {
@@ -47,6 +50,11 @@ func paramNames(recv *ast.FieldList, ft *ast.FuncType) map[string]bool {
 			continue
 		}
 		for _, f := range fl.List {
+			var typ strings.Builder
+			printer.Fprint(&typ, token.NewFileSet(), f.Type)
+			if strings.Contains(typ.String(), `Room`) {
+				continue
+			}
 			for _, n := range f.Names {
 				names[n.Name] = true
 			}
@@ -128,10 +136,11 @@ func TestSystemReachesOnlyTheActingPlayer(t *testing.T) {
 func TestSystemRecipientGuardCanFail(t *testing.T) {
 	src := "package p\n" +
 		"var userCommands = map[string]CommandAccess{`party`: {Party, false, true, false}}\n" +
-		"func Party(rest string, user *users.UserRecord) {\n" +
+		"func Party(rest string, user *users.UserRecord, room *rooms.Room) {\n" +
 		"  user.SendText(messaging.CategorySystem, `You started a party.`)\n" +
 		"  for _, u := range members { u.SendText(messaging.CategorySystem, `X joined.`) }\n" +
 		"  if t := users.GetByUserId(9); t != nil { t.SendText(messaging.CategorySystem, `hi`) }\n" +
+		"  room.SendText(messaging.CategorySystem, `A party forms.`)\n" +
 		"  tell(user)\n" +
 		"}\n" +
 		"func tell(who *users.UserRecord) { who.SendText(messaging.CategorySystem, `ok`) }\n"
@@ -141,7 +150,7 @@ func TestSystemRecipientGuardCanFail(t *testing.T) {
 		t.Fatal(err)
 	}
 	hits := systemRecipientHits(pkgSrc{files: map[string]*ast.File{`probe.go`: f}, fset: fset})
-	if len(hits) != 2 || !strings.Contains(hits[0], `probe.go:5`) || !strings.Contains(hits[1], `probe.go:6`) {
-		t.Fatalf(`want hits at lines 5 and 6, got %v`, hits)
+	if len(hits) != 3 || !strings.Contains(hits[0], `probe.go:5`) || !strings.Contains(hits[1], `probe.go:6`) || !strings.Contains(hits[2], `probe.go:7`) {
+		t.Fatalf(`want hits at lines 5, 6 and 7 (the room parameter is not the acting player), got %v`, hits)
 	}
 }

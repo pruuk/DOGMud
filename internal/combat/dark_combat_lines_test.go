@@ -206,7 +206,7 @@ func TestHideIdentities_BlindAttackerReadsADarkLine(t *testing.T) {
 	r := darkResult()
 	hideIdentitiesInPersonalLines(r, atk, def, ctx)
 	if len(r.MessagesToSource) != 1 || !slices.Contains(darkcombat.Pool(darkcombat.Attacker, darkcombat.Hit), r.MessagesToSource[0].Text) {
-		t.Fatalf("blind attacker read %q, want an attacker/hit dark line", r.MessagesToSource)
+		t.Fatalf("blind attacker read %+v, want an attacker/hit dark line", r.MessagesToSource)
 	}
 	if strings.Contains(r.MessagesToTarget[0].Text, "something") || !strings.Contains(r.MessagesToTarget[0].Text, "Grimwald") {
 		t.Fatalf("the sighted defender's line changed: %q", r.MessagesToTarget[0].Text)

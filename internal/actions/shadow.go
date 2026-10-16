@@ -206,7 +206,7 @@ func ShadowSenseRoll(shadower, target Actor, room *rooms.Room) bool {
 	detected := combat.RunContest(senseScore, []contest.Entry{{Score: sneakScore}}).Success
 	shadower.AwardResolved(!detected, shadowChar.CandidateFor(string(skills.Skullduggery)))
 	if detected {
-		target.SendText(emoteCategoryFor(shadower.IsPlayer()), shadowSensedLine)
+		target.SendText(messaging.EmoteCategoryFor(shadower.IsPlayer()), shadowSensedLine)
 	}
 	return detected
 }

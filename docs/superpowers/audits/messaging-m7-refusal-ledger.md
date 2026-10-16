@@ -191,8 +191,8 @@ NOT 2
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
-| 40 | NOT | You turn your attention to %s! |  | retarget notice (RetargetNotice), HideNames-gated |
-| 50 | NOT | You turn your attention to %s! |  | retarget notice |
+| 40 | NOT | You turn your attention to %s! |  | controller (slice 4 review): read again; each player in the room reads only their OWN automatic retarget, the same notice `hooks/NewRound_DoCombat.go:155` and `hooks/NewRound_DoCombat_unified.go:1039` send on System, so it stays on the category its event's other lines use (System); retarget notice (RetargetNotice), HideNames-gated |
+| 50 | NOT | You turn your attention to %s! |  | controller (slice 4 review): as line 40 (the companion-defence branch of the same retarget); retarget notice |
 
 ## `internal/actions/scan.go`
 
@@ -225,8 +225,8 @@ FAM 1 NARR 2 NOT 9
 | 392 | NOT | You discover something: %s |  | find |
 | 394 | NOT | (the hidden noun's description) |  | find |
 | 456 | NOT | You find nothing of interest. |  | outcome (deliberately identical for empty and missed) |
-| 498 | NARR | %s searches the room and spots you! | CategoryEmote | told to the hider about a player's search |
-| 501 | NARR | Someone searches the room and spots you! | CategoryEmote | as :498 |
+| 498 | NARR | %s searches the room and spots you! | messaging.EmoteCategoryFor(searcher kind) | controller (slice 4 review): Emote for a player searcher, MobEmote for a mob one (revealSpotted calls it only for a player today; slice F opens the mob path), name capitalised at the source; told to the hider about a player's search |
+| 501 | NARR | Someone searches the room and spots you! | messaging.EmoteCategoryFor(searcher kind) | as :498 |
 
 ## `internal/actions/search_bauble.go`
 

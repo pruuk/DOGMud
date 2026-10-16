@@ -214,7 +214,9 @@ Points that bite:
   once per combat round. Mobs use the same admission and resolution mechanics
   without receiving that player-facing message. On the melee path
   `sendDefenceShortageOnce` sends it on the winning defence's category
-  (`CategoryForDefenseVerb`) and dedupes on any of Dodge, Parry or Block; the
+  (`CategoryForDefenseVerb`), marked `TaggedMessage.AlwaysShow` so the hooks
+  verbosity drain delivers it at Light and Medium as it did on
+  `CategorySystem`, and dedupes on any of Dodge, Parry or Block; the
   channel paths send `ChannelDefenceShortageText` on the category of the
   defence triad beside it (M7 slice 4, #371).
 - **This replaced a once-per-round `DeductAttackStamina` call** in each of the

@@ -467,7 +467,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						// site cannot drift from SendTextVisual and a blinded
 						// player in a lit room stops reading names too.
 						if messaging.CanSeeClearly(user.Character, destRoom) {
-							user.SendText(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> notices you as you enter!`, mob.Character.Name))
+							user.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> notices you as you enter!`, mob.Character.Name)))
 						} else {
 							user.SendText(messaging.CategoryMobEmote, `<ansi fg="yellow">Something notices you in the darkness!</ansi>`)
 						}

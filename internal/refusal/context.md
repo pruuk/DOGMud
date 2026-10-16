@@ -223,8 +223,12 @@ a planted source and requires it to fail where it should.
   rule N1): inside a command handler (every function reachable from a
   registered command), a `CategorySystem` send goes to a parameter of the
   enclosing function, never to a looked-up local, a range variable over other
-  players or a room. Hooks are excluded: an event has no single acting
-  player. Probe: `TestSystemRecipientGuardCanFail`.
+  players or a room. A parameter whose type names a Room (`room *rooms.Room`)
+  never counts as the acting player. Hooks are excluded: an event has no
+  single acting player. What it cannot see: a send through a method not named
+  `SendText*`, a category passed in a variable rather than written as
+  `messaging.CategorySystem`, and a call into another package (reach follows
+  same-package callees only). Probe: `TestSystemRecipientGuardCanFail`.
 - `system_subject_guard_test.go` (`TestNarrationAboutYouNeverRidesSystem`,
   rule N2): a `CategorySystem` line that opens with another creature (a name
   tag, a bare `%s`, "Someone", "Something") and addresses "you" or "your" is
@@ -238,7 +242,9 @@ and `internal/mobcommands/throttle_categories_test.go`).
 `throw.go`, `rally.go` and `warcry.go` hold no `messaging.CategorySystem` at
 all. The defence-shortage note ("You mount a desperate response ...") reaches
 the defender, so at each site it rides the category of the defence line sent
-with it.
+with it. On the melee path that category is suppressible at Light and Medium,
+so the note is marked `combat.TaggedMessage.AlwaysShow` and still shows at
+every verbosity, as it did on System.
 
 ## M7 complete
 

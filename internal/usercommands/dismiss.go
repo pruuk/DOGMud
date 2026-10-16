@@ -175,10 +175,10 @@ func Dismiss(rest string, user *users.UserRecord,
 	present := mob.Character.RoomId == user.Character.RoomId
 	if present {
 		targeting.Commit(&mob.Character, state.ActorRef{UserId: user.UserId}, targeting.ReasonAttack)
-		user.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
+		user.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> turns on you with fury!`,
 			compName,
-		))
+		)))
 	}
 
 	// Room message (exclude the dismissing player — they already saw it).
