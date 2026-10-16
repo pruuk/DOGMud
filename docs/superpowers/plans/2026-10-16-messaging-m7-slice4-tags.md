@@ -35,13 +35,19 @@
 | 15 | Root goldens that fingerprint narration sends: `testdata/m2-routing.golden` (`m2_routing_guard_test.go`, re-record with `M2_RECORD_ROUTING=1 go test . -run TestM2RoutingIsFrozen`) and the viewpoint audit in `messaging_surface_guard_test.go` (`TestNarrationSitesMatchViewpointAudit`) | files |
 | 16 | `admin.teleport.go:134` sends "Moved to room %d." to non-staff party members (a raw room id); `admin.skillset.go:92` sends its "Skill not found" refusal to the target instead of the staff member; `admin.teleport.go:75,86` name `teleport.direction` in permission text where the checks are `teleport.playername` / `teleport.roomid`; `roommanager.go:293` says "enscribed" | admin ledger notes, files |
 | 17 | `weather_commands.go:93` shows every player a front's internal id and intensity numbers | admin ledger note |
+| 18 | Of 1381 `SendText*` calls on `CategorySystem`, 1286 send to a parameter of the enclosing function; 84 to a local, 5 to a range variable, 3 to a room, 1 to a call result. Inside command handlers the non-parameter ones are table B's party, guild, follow, give, show, target, report, staff-notice sites, plus `go.go:361` (party follow), `shoot.go:492` (shortage note to the shot player); in hooks they are the event's own player (deaths, arrests, quests, achievements), which N1 does not cover | AST prototype over `internal/` and `modules/` (scratch `recvscan`) |
+| 19 | N2 (opens with another creature, addresses "you"/"your") over the slice 3 ledger's rows still on System after this plan: 14 narration sites the ledger ruled NOT: `actions/plant.go:189,284,434`, `actions/steal.go:406,463,576,897`, `actions/steal_pocket.go:398`, `hooks/NewRound_DoCombat_helpers.go:999`, `usercommands/character.go:448`, `usercommands/dismiss.go:178`, `usercommands/go.go:313`, `usercommands/shoot.go:531`, `modules/aicompanion/commands.go:531`, and two reports it must not take, `actions/track.go:257,267` ("%s is in the room with you!", the result of the player's own `track`) | scratch `opener3p.py` over both ledgers |
+| 20 | The defence-shortage note's sites: `combat/combat_helpers.go:204` (melee, `result.SendToTarget`), `usercommands/taunt.go:160`, `usercommands/skill_move_defence.go:81`, `usercommands/shoot.go:491`, `hooks/spell_resolution.go:440`, `mobcommands/taunt.go:210`, `mobcommands/shoot.go:88`, `mobcommands/skill_move_defence.go:53` | grep `ChannelDefenceShortageText` |
 
 ## Owner rulings (approve with the plan)
 
 - **R1, party and guild lines.** The 13 party notices, 4 guild notices (joined, left, kicked, promoted, loot mode, invited) and 3 group chats (`party chat`, `guild` chat, `report` to the party) are notices and talk aimed at group members, not narration and not the player's own report. Recommended: a new `CategoryGroup` (alias `group: 8`, same treatment as System) for the notices, and the three chats on `CategoryBroadcast`, where channel chat already rides (it never rewrites player-typed text). Locks in: a client or the owner can recolour or filter group traffic later without touching code. Alternative: leave them on System (no new category; they stay in the mixed bucket).
 - **R2, staff refusals.** A refusal an admin-only command shows staff ("No such room", "Unknown mob") rides `CategoryAdmin`, not `CategoryRefusal`: everything a staff command shows staff is one stream. The four refusals a non-staff player can reach in these files (`admin.bounty.go:43,164,169`, `admin.reload.go:36`) ride `CategoryRefusal`. Locks in: no per-line refusal-versus-report calls inside staff output (the ledger agents drew that line differently, which is the reason). Alternative: staff refusals ride `CategoryRefusal`, as slice 3 did for `admin.zap.go:60`.
 - **R3, notices to the target of a staff action.** "You have been banned.", "You have been disconnected by staff.", "Your role has been set to ...", "Your skill level has been set ..." (when the target is someone else) and "You get the feeling someone is looking for you..." ride `CategoryWarning`. Staff actions the room sees (`zap`, `paz`, `teleport` arrival) ride `CategoryMobEmote`, the category their room lines already use.
-- **R4, the per-file tests stay.** Spec section 7 folds `special_move_categories_test.go` and `throttle_categories_test.go` into the new guard. A general tag rule cannot tell narration from a confirmation, so folding would only move the same file list; this plan keeps both, tightens the special-move one to the shortage notice alone once `throw.go:276` moves, and records why in `internal/refusal/context.md`.
+- **R4, the per-file tests stay, and two guards tell narration from a confirmation** (owner 2026-10-16: "keep them, but look at other guards ... that would be able to tell narration from a confirmation"). Both rules were measured against master before they went in (Facts 18 to 20):
+  - **N1, the recipient rule.** A confirmation reaches only the player whose action produced it, so inside a command handler (every function reachable from a registered player or admin command), a `CategorySystem` send goes to a parameter of the enclosing function, never to a local looked up from another id, a range variable over other players, or a room. Hooks are outside it: an event has no single acting player.
+  - **N2, the subject rule.** A line that opens with another creature (a name tag, a bare `%s` subject, "Someone", "Something") and addresses the player ("you", "your") is narration of something done to them, never a confirmation, anywhere in the tree.
+  - The defence-shortage note ("You mount a desperate response, too spent ...") reaches the defender, not the attacker who typed the command, so N1 moves it: at each of its sites it rides the category of the defence line sent with it. With that and `throw.go:276` moved, `special_move_categories_test.go` asserts its four files send nothing on `CategorySystem`, which is what it was written to protect.
 
 ## Wording (owner review: approve with the plan)
 
@@ -602,10 +608,303 @@ func TestAdminGuardCanFail(t *testing.T) {
 **Files:** the sites in Wording table B; `special_move_categories_test.go`; the goldens of Fact 15.
 
 - [ ] **Step 1: Convert table B.** For each site, read the function: if the same event's other roles already ride a category, use it (report any disagreement with table B instead of guessing); else the table's category. Emote versus MobEmote is decided by the other party's kind (a mob actor or a player), with a branch where one function serves both.
-- [ ] **Step 2: Tighten the special-move test (R4).** `systemNoticeMarkers` drops `"crumbles apart"` (throw.go:276 moved); its comment says the shortage notice (`combat.ChannelDefenceShortageText`) is the one notice left on System and why (it rides System on every path, Fact 14).
+- [ ] **Step 2: The shortage note (R4, Fact 20).** At each site the note rides the category of the defence line sent beside it (read each: the channel defence triad's category at the special-move sites, the defence message category on the melee path in `combat_helpers.go`). Then `systemNoticeMarkers` is empty: change `TestSpecialMoveFilesKeepOnlyNoticesOnSystem` to require that taunt.go, throw.go, rally.go and warcry.go contain no `messaging.CategorySystem` at all, and update its comment.
 - [ ] **Step 3: Goldens.** Run `go test .`; if `TestM2RoutingIsFrozen` or `TestNarrationSitesMatchViewpointAudit` fails only because a category in a frozen site changed, re-record per the file's documented procedure in the same commit and quote the diff lines in the commit message. Any other change in the golden is a stop-and-report.
 - [ ] **Step 4: Run.** `go test . ./internal/... ./modules/...` Expected: PASS.
 - [ ] **Step 5: Commit.** `refactor(messaging): narration and group notices leave CategorySystem (#371)`.
+
+### Task 5b: N1, the recipient guard
+
+**Files:** Create root `system_recipient_guard_test.go` (reuses `parsePkg`, `registrations`, `funcIndex`, `reach` from `admin_category_guard_test.go`, `package main`).
+
+- [ ] **Step 1: Write the guard.**
+
+```go
+package main
+
+import (
+	"go/ast"
+	"go/parser"
+	"go/printer"
+	"go/token"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"strings"
+	"testing"
+)
+
+// Messaging M7 slice 4 (#371), ruling R4, rule N1: a confirmation reaches only
+// the player whose action produced it. Inside a command handler (any function
+// reachable from a registered player or admin command in the same package), a
+// SendText* on messaging.CategorySystem must go to a parameter of an enclosing
+// function. A local looked up from another id, a range variable over other
+// players, or a room is somebody else: that line is a notice or narration and
+// belongs on its own category. Hooks are outside this rule (an event has no
+// single acting player). A hit is converted; never allow-list a file.
+
+func receiverRoot(e ast.Expr) *ast.Ident {
+	for {
+		switch v := e.(type) {
+		case *ast.Ident:
+			return v
+		case *ast.SelectorExpr:
+			e = v.X
+		case *ast.IndexExpr:
+			e = v.X
+		case *ast.StarExpr:
+			e = v.X
+		case *ast.ParenExpr:
+			e = v.X
+		default:
+			return nil
+		}
+	}
+}
+
+func paramNames(recv *ast.FieldList, ft *ast.FuncType) map[string]bool {
+	names := map[string]bool{}
+	for _, fl := range []*ast.FieldList{recv, ft.Params} {
+		if fl == nil {
+			continue
+		}
+		for _, f := range fl.List {
+			for _, n := range f.Names {
+				names[n.Name] = true
+			}
+		}
+	}
+	return names
+}
+
+func systemRecipientHits(p pkgSrc) []string {
+	admin, player := registrations(p)
+	roots := map[string]bool{}
+	for k := range admin {
+		roots[k] = true
+	}
+	for k := range player {
+		roots[k] = true
+	}
+	var hits []string
+	for fd := range reach(funcIndex(p), roots) {
+		scopes := []map[string]bool{paramNames(fd.Recv, fd.Type)}
+		var walk func(n ast.Node) bool
+		walk = func(n ast.Node) bool {
+			if lit, ok := n.(*ast.FuncLit); ok {
+				scopes = append(scopes, paramNames(nil, lit.Type))
+				ast.Inspect(lit.Body, walk)
+				scopes = scopes[:len(scopes)-1]
+				return false
+			}
+			call, ok := n.(*ast.CallExpr)
+			if !ok || len(call.Args) == 0 {
+				return true
+			}
+			sel, ok := call.Fun.(*ast.SelectorExpr)
+			if !ok || !strings.HasPrefix(sel.Sel.Name, `SendText`) {
+				return true
+			}
+			cat, ok := call.Args[0].(*ast.SelectorExpr)
+			if !ok || cat.Sel.Name != `CategorySystem` {
+				return true
+			}
+			root := receiverRoot(sel.X)
+			isParam := false
+			if root != nil {
+				for _, s := range scopes {
+					if s[root.Name] {
+						isParam = true
+					}
+				}
+			}
+			if !isParam {
+				var b strings.Builder
+				printer.Fprint(&b, p.fset, sel.X)
+				hits = append(hits, p.fset.Position(call.Pos()).String()+`: `+fd.Name.Name+` sends CategorySystem to `+b.String()+`, not to the player whose command it is`)
+			}
+			return true
+		}
+		ast.Inspect(fd.Body, walk)
+	}
+	sort.Strings(hits)
+	return hits
+}
+
+func TestSystemReachesOnlyTheActingPlayer(t *testing.T) {
+	_, here, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal(`runtime.Caller failed`)
+	}
+	root := filepath.Dir(here)
+	for _, dir := range []string{`internal/usercommands`, `modules/aicompanion`, `modules/playtest`, `modules/auctions`, `modules/follow`, `modules/gmcp`, `modules/leaderboards`, `modules/cleanup`, `modules/time`, `modules/weather`} {
+		for _, h := range systemRecipientHits(parsePkg(t, root, dir)) {
+			t.Error(h)
+		}
+	}
+}
+
+func TestSystemRecipientGuardCanFail(t *testing.T) {
+	src := "package p\n" +
+		"var userCommands = map[string]CommandAccess{`party`: {Party, false, true, false}}\n" +
+		"func Party(rest string, user *users.UserRecord) {\n" +
+		"  user.SendText(messaging.CategorySystem, `You started a party.`)\n" +
+		"  for _, u := range members { u.SendText(messaging.CategorySystem, `X joined.`) }\n" +
+		"  if t := users.GetByUserId(9); t != nil { t.SendText(messaging.CategorySystem, `hi`) }\n" +
+		"  tell(user)\n" +
+		"}\n" +
+		"func tell(who *users.UserRecord) { who.SendText(messaging.CategorySystem, `ok`) }\n"
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, `probe.go`, src, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hits := systemRecipientHits(pkgSrc{files: map[string]*ast.File{`probe.go`: f}, fset: fset})
+	if len(hits) != 2 || !strings.Contains(hits[0], `probe.go:5`) || !strings.Contains(hits[1], `probe.go:6`) {
+		t.Fatalf(`want hits at lines 5 and 6, got %v`, hits)
+	}
+}
+```
+
+The module directory list is the `modules/*` packages that register commands (`grep -rln "AddUserCommand\|RegisterCommand(" modules`); a package that registers none gives no roots and no hits, so keeping the list complete costs nothing. Check it against that grep and add any missing package.
+
+- [ ] **Step 2: Run it.** After Tasks 4 and 5 it should report only the shortage note's command-side sites if Task 5 Step 2 has not landed, else nothing. Any other hit is a notice or narration the ledgers missed: give it its category (the category the same event's other lines use) and add it to the slice 3 ledger as a controller row; report each.
+- [ ] **Step 3: Commit.** `test(messaging): System reaches only the acting player (#371)`.
+
+### Task 5c: N2, the subject guard
+
+**Files:** Create root `system_subject_guard_test.go`; the 14 narration sites of Fact 19.
+
+- [ ] **Step 1: Write the guard.**
+
+```go
+package main
+
+import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"regexp"
+	"runtime"
+	"strconv"
+	"strings"
+	"testing"
+)
+
+// Messaging M7 slice 4 (#371), ruling R4, rule N2: a line that opens with
+// another creature and addresses the player ("Bandit catches you in the
+// act!") is narration of something done to them, never a confirmation of
+// their own action, so it does not ride CategorySystem. Checked on the
+// literal that leads the argument after messaging.CategorySystem (the slice
+// 3 opener guard's leadLiteral). A hit is converted, or the rule below is
+// narrowed (as "with you" is, for track's own report); never allow-list a file.
+var otherSubject = regexp.MustCompile(`^(?:<ansi fg="(?:username|mobname)">%s</ansi>|%s |Someone |Something )`)
+var addressesYou = regexp.MustCompile(`(?i)\byour?\b`)
+var subjectNarrowings = []*regexp.Regexp{
+	regexp.MustCompile(`is in the room with you!$`), // track's result, the player's own report
+}
+
+func systemSubjectHits(t *testing.T, rel string, src []byte) []string {
+	t.Helper()
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, rel, src, 0)
+	if err != nil {
+		t.Fatalf("%s: %v", rel, err)
+	}
+	var hits []string
+	ast.Inspect(f, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		for i, a := range call.Args {
+			sel, ok := a.(*ast.SelectorExpr)
+			if !ok || sel.Sel.Name != `CategorySystem` || i+1 >= len(call.Args) {
+				continue
+			}
+			s, ok := leadLiteral(call.Args[i+1])
+			if !ok || !otherSubject.MatchString(strings.TrimSpace(s)) {
+				continue
+			}
+			plain := openerTag.ReplaceAllString(s, ``)
+			if !addressesYou.MatchString(plain) {
+				continue
+			}
+			narrowed := false
+			for _, nr := range subjectNarrowings {
+				if nr.MatchString(strings.TrimSpace(plain)) {
+					narrowed = true
+				}
+			}
+			if !narrowed {
+				hits = append(hits, rel+`:`+strconv.Itoa(fset.Position(call.Pos()).Line)+`: `+plain)
+			}
+		}
+		return true
+	})
+	return hits
+}
+
+func TestNarrationAboutYouNeverRidesSystem(t *testing.T) {
+	_, here, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal(`runtime.Caller failed`)
+	}
+	root := filepath.Dir(here)
+	scanned := 0
+	for _, top := range []string{`internal`, `modules`} {
+		err := filepath.WalkDir(filepath.Join(root, top), func(path string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() || !strings.HasSuffix(path, `.go`) || strings.HasSuffix(path, `_test.go`) {
+				return err
+			}
+			rel, _ := filepath.Rel(root, path)
+			src, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			scanned++
+			for _, h := range systemSubjectHits(t, filepath.ToSlash(rel), src) {
+				t.Errorf(`%s (narration about the player: give it its narration category)`, h)
+			}
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if scanned < 100 {
+		t.Fatalf(`scanned only %d Go files; the walk is broken`, scanned)
+	}
+}
+
+func TestSystemSubjectGuardCanFail(t *testing.T) {
+	src := "package p\n" +
+		"func a(u U) { u.SendText(messaging.CategorySystem, fmt.Sprintf(`%s catches you in the act!`, n)) }\n" +
+		"func b(u U) { u.SendText(messaging.CategorySystem, `<ansi fg=\"mobname\">%s</ansi> turns on you with fury!`) }\n" +
+		"func c(u U) { u.SendText(messaging.CategorySystem, `Someone is attacking you.`) }\n" +
+		"func d(u U) { u.SendText(messaging.CategorySystem, `<ansi fg=\"mobname\">%s</ansi> is now known as %s.`) }\n" +
+		"func e(u U) { u.SendText(messaging.CategoryMobEmote, `%s catches you in the act!`) }\n" +
+		"func f(u U) { u.SendText(messaging.CategorySystem, `%s is in the room with you!`) }\n"
+	hits := systemSubjectHits(t, `probe.go`, []byte(src))
+	want := []string{`probe.go:2:`, `probe.go:3:`, `probe.go:4:`}
+	if len(hits) != len(want) {
+		t.Fatalf(`want %d hits, got %v`, len(want), hits)
+	}
+	for i, w := range want {
+		if !strings.HasPrefix(hits[i], w) {
+			t.Fatalf(`hit %d: want %s, got %s`, i, w, hits[i])
+		}
+	}
+}
+```
+
+- [ ] **Step 2: Run it (red).** Expected hits: the 14 narration sites of Fact 19 (track is narrowed). Record the list.
+- [ ] **Step 3: Convert.** Each takes the category its event's other lines already use, else `CategoryMobEmote` when a mob acts on the player and `CategoryEmote` when a player does; `shoot.go:531` ("Someone is attacking you. You cannot steady your aim ...") takes the shot's own outcome category. Add each to the slice 3 ledger as a controller row (NOT to NARR).
+- [ ] **Step 4: Run.** `go test . ./internal/... ./modules/...` Expected: PASS.
+- [ ] **Step 5: Commit.** `refactor(messaging): narration about the player leaves System; subject guard (#371)`.
 
 ### Task 6: Words and recipients (table C)
 
@@ -632,5 +931,5 @@ func TestAdminGuardCanFail(t *testing.T) {
 ## Self-review
 
 - Spec section 5: `CategoryUsage` (Task 1, 2), `CategoryAdmin` (Task 1, 4), System keeps reports/tables/help/confirmations (Task 7 re-inventory), narration moved out (Task 5), `CategoryError`/`Warning`/`Tip` meanings recorded (Task 7 docs).
-- Spec section 7 tags: admin output guard (Task 3, generalised from "admin.*.go" to the registry because `bounty` and `reload` live in admin files and are player commands), usage guard (Task 2), per-file tests (R4: kept, with the reason).
+- Spec section 7 tags: admin output guard (Task 3, generalised from "admin.*.go" to the registry because `bounty` and `reload` live in admin files and are player commands), usage guard (Task 2), per-file tests (R4: kept, the special-move one tightened to "no System at all"), and the two narration guards the owner asked for (Tasks 5b, 5c: recipient and subject).
 - Known limits: the admin guard sees registry handlers and same-package callees only; `party admin`, `weather` admin and `bounty` staff subcommands are converted from the ledger without a guard. The usage guard sees literal-led sends and `*Usage` functions; a usage block sent through a template is converted from the ledger.
