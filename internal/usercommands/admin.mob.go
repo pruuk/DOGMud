@@ -31,7 +31,7 @@ func Mob(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	if len(args) < 1 {
 		infoOutput, _ := templates.Process("admincommands/help/command.mob", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 
@@ -113,7 +113,7 @@ func mob_Heal(args []string, user *users.UserRecord, room *rooms.Room, _ events.
 	// Specific instance id.
 	instId, err := strconv.Atoi(args[0])
 	if err != nil || instId < 1 {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">mob heal [instId]</ansi> — omit instId to heal every mob in the room.`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">mob heal [instId]</ansi> — omit instId to heal every mob in the room.`)
 		return true, nil
 	}
 
@@ -236,13 +236,13 @@ func mobVitalsLine(m *mobs.Mob, turn uint64) string {
 // Usage: mob schedule <instId>
 func mob_Schedule(args []string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryUsage,
 			`Usage: <ansi fg="command">mob schedule [instId]</ansi>`)
 		return true, nil
 	}
 	instId, err := strconv.Atoi(args[0])
 	if err != nil || instId < 1 {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryUsage,
 			`Usage: <ansi fg="command">mob schedule [instId]</ansi>`)
 		return true, nil
 	}

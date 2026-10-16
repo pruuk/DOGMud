@@ -20,8 +20,8 @@ func QuestDebug(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	rest = strings.TrimSpace(rest)
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `<ansi fg="command">questdebug <player></ansi> - Enable verbose quest logging for a player.`)
-		user.SendText(messaging.CategorySystem, `<ansi fg="command">questdebug <player> off</ansi> - Disable quest debug for a player.`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="command">questdebug <player></ansi> - Enable verbose quest logging for a player.`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="command">questdebug <player> off</ansi> - Disable quest debug for a player.`)
 		return true, nil
 	}
 

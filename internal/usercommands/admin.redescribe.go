@@ -26,7 +26,7 @@ func Redescribe(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 		// 2026-08-03 helpfile audit: this said "command.rename" — a template
 		// that has never existed — so redescribe's real helpfile never showed.
 		infoOutput, _ := templates.Process("admincommands/help/command.redescribe", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 

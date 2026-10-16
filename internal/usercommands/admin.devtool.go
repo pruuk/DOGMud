@@ -142,7 +142,7 @@ func Devtool(rest string, user *users.UserRecord, room *rooms.Room, flags events
 // showDevtoolHelp renders and sends the devtool help template to the user.
 func showDevtoolHelp(user *users.UserRecord) {
 	infoOutput, _ := templates.Process("admincommands/help/command.devtool", nil, user.UserId)
-	user.SendText(messaging.CategorySystem, infoOutput)
+	user.SendText(messaging.CategoryUsage, infoOutput)
 }
 
 // parseZoneRoom splits "zoneName/roomId" into its components.

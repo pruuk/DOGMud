@@ -20,8 +20,8 @@ func Suggest(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	rest = strings.TrimSpace(rest)
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: <ansi fg="cyan-bold">suggest <your idea></ansi>`)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Use this command to share ideas and suggestions for improving the game.</ansi>`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Usage: <ansi fg="cyan-bold">suggest <your idea></ansi>`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Use this command to share ideas and suggestions for improving the game.</ansi>`)
 		return true, nil
 	}
 

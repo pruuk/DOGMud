@@ -20,7 +20,7 @@ import (
 func AiFlag(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">ai-flag &lt;username&gt;</ansi> - Toggle AI flag on a user account.`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">ai-flag &lt;username&gt;</ansi> - Toggle AI flag on a user account.`)
 		return true, nil
 	}
 

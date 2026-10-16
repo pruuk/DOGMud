@@ -45,10 +45,10 @@ func adminRoom_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags
 		return room_Edit_Mutators(``, user, room, flags)
 	}
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="red">edit WHAT?</ansi> Try:`)
-	user.SendText(messaging.CategorySystem, `    <ansi fg="command">room edit containers</ansi>`)
-	user.SendText(messaging.CategorySystem, `    <ansi fg="command">room edit exits</ansi>`)
-	user.SendText(messaging.CategorySystem, `    <ansi fg="command">room edit mutators</ansi>`)
+	user.SendText(messaging.CategoryUsage, `<ansi fg="red">edit WHAT?</ansi> Try:`)
+	user.SendText(messaging.CategoryUsage, `    <ansi fg="command">room edit containers</ansi>`)
+	user.SendText(messaging.CategoryUsage, `    <ansi fg="command">room edit exits</ansi>`)
+	user.SendText(messaging.CategoryUsage, `    <ansi fg="command">room edit mutators</ansi>`)
 	return true, nil
 }
 

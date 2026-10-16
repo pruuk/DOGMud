@@ -22,7 +22,7 @@ func CombatStats(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 
 	if rest == "" {
 		infoOutput, _ := templates.Process("admincommands/help/command.combatstats", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 
@@ -45,7 +45,7 @@ func CombatStats(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		return combatStats_Export(user)
 	default:
 		infoOutput, _ := templates.Process("admincommands/help/command.combatstats", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 	}
 
 	return true, nil

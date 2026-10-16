@@ -51,25 +51,25 @@ func (m *AICompanionModule) cmdAICompanion(rest string, user *users.UserRecord, 
 		m.cmdProfiles(user)
 	case `grant`:
 		if len(args) < 3 {
-			user.SendText(messaging.CategorySystem, aiCompanionUsage)
+			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
 		user.SendText(messaging.CategorySystem, m.grant(args[1], args[2]))
 	case `revoke`:
 		if len(args) < 2 {
-			user.SendText(messaging.CategorySystem, aiCompanionUsage)
+			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
 		user.SendText(messaging.CategorySystem, m.revoke(args[1]))
 	case `mind`:
 		if len(args) < 2 {
-			user.SendText(messaging.CategorySystem, aiCompanionUsage)
+			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
 		user.SendText(messaging.CategorySystem, m.describeMind(args[1]))
 	case `trace`, `prompt`:
 		if len(args) < 2 {
-			user.SendText(messaging.CategorySystem, aiCompanionUsage)
+			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
 		user.SendText(messaging.CategorySystem, m.describeDebug(args[1], strings.ToLower(args[0])))
@@ -81,12 +81,12 @@ func (m *AICompanionModule) cmdAICompanion(rest string, user *users.UserRecord, 
 		user.SendText(messaging.CategorySystem, `Circuit breaker reset; model calls resume.`)
 	case `pause`, `resume`:
 		if len(args) < 2 {
-			user.SendText(messaging.CategorySystem, aiCompanionUsage)
+			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
 		user.SendText(messaging.CategorySystem, m.setPaused(args[1], strings.ToLower(args[0]) == `pause`))
 	default:
-		user.SendText(messaging.CategorySystem, aiCompanionUsage)
+		user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 	}
 	return true, nil
 }
@@ -624,7 +624,7 @@ func (m *AICompanionModule) cmdAskFor(rest string, user *users.UserRecord, room 
 	who, topic, _ := strings.Cut(strings.TrimSpace(rest), ` `)
 	topic = strings.TrimPrefix(strings.TrimSpace(topic), `about `)
 	if who == `` || topic == `` {
-		user.SendText(messaging.CategorySystem, `Usage: companion-ask <who> about <what>`)
+		user.SendText(messaging.CategoryUsage, `Usage: companion-ask <who> about <what>`)
 		return true, nil
 	}
 	if room == nil {
@@ -691,7 +691,7 @@ func (m *AICompanionModule) cmdStay(rest string, user *users.UserRecord, room *r
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(
 			`%s will %s (companion-stay close|normal|free)`, c.profile.Name, roamWords(c.mind.Autonomy)))
 	default:
-		user.SendText(messaging.CategorySystem, `Usage: companion-stay close|normal|free`)
+		user.SendText(messaging.CategoryUsage, `Usage: companion-stay close|normal|free`)
 	}
 	return true, nil
 }

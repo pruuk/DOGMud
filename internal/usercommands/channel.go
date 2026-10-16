@@ -28,7 +28,7 @@ func sendChannel(user *users.UserRecord, channelName, rest string) (bool, error)
 
 	rest = strings.TrimSpace(rest)
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Usage: <ansi fg="command">%s</ansi> &lt;message&gt;`, ch.Name))
+		user.SendText(messaging.CategoryUsage, fmt.Sprintf(`Usage: <ansi fg="command">%s</ansi> &lt;message&gt;`, ch.Name))
 		return true, nil
 	}
 

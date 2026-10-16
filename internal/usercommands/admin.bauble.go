@@ -88,10 +88,10 @@ func Bauble(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 func baubleUsage(user *users.UserRecord) {
 	if out, err := templates.Process("admincommands/help/command.bauble", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  bauble status\r\n"+
 			"  bauble stats\r\n"+
@@ -443,7 +443,7 @@ func baubleEdit(args []string, user *users.UserRecord, room *rooms.Room) (bool, 
 		}
 	}
 	if fieldAt < 1 || fieldAt == len(args)-1 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Usage: bauble edit <bauble> <field> <text>. Fields: %s.`, strings.Join(baubles.EditFields, `, `)))
+		user.SendText(messaging.CategoryUsage, fmt.Sprintf(`Usage: bauble edit <bauble> <field> <text>. Fields: %s.`, strings.Join(baubles.EditFields, `, `)))
 		return true, nil
 	}
 	rec, ok := resolveBaubleArg(strings.Join(args[:fieldAt], ` `), user, room)
@@ -557,7 +557,7 @@ func baublePromote(args []string, user *users.UserRecord, room *rooms.Room) (boo
 func baubleCorpus(args []string, user *users.UserRecord) (bool, error) {
 	usage := `Usage: bauble corpus list [key] | remove <key> <name or record id> | reload | export`
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, usage)
+		user.SendText(messaging.CategoryUsage, usage)
 		return true, nil
 	}
 	switch strings.ToLower(args[0]) {

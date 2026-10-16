@@ -59,10 +59,10 @@ func Crime(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 func crimeShowUsage(user *users.UserRecord) {
 	if out, err := templates.Process("admincommands/help/command.crime", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  crime list <factionId> [--all]\r\n"+
 			"  crime show <playerName> [--all]\r\n"+

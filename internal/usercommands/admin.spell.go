@@ -25,7 +25,7 @@ func Spell(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	if len(args) < 1 {
 		infoOutput, _ := templates.Process("admincommands/help/command.spell", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 

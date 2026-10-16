@@ -28,7 +28,7 @@ func Petition(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	rest = strings.TrimSpace(rest)
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: <ansi fg="cyan-bold">petition <message></ansi>: send a message to the staff (harassment, a stuck quest, anything).</ansi>`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Usage: <ansi fg="cyan-bold">petition <message></ansi>: send a message to the staff (harassment, a stuck quest, anything).</ansi>`)
 		return true, nil
 	}
 

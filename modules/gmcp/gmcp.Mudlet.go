@@ -643,7 +643,7 @@ func (g *GMCPMudletModule) sendUICommand(rest string, user *users.UserRecord, ro
 		user.SendText(messaging.CategorySystem, "You can use <ansi fg=\"command\">mudletui hide</ansi> in the future if you want to hide the prompts again.\n")
 
 	default:
-		user.SendText(messaging.CategorySystem, "\nUsage: mudletui install|remove|update|hide|show\n\nType '<ansi fg=\"command\">help mudletui</ansi>' for more information.\n")
+		user.SendText(messaging.CategoryUsage, "\nUsage: mudletui install|remove|update|hide|show\n\nType '<ansi fg=\"command\">help mudletui</ansi>' for more information.\n")
 	}
 
 	return true, nil
@@ -694,7 +694,7 @@ func (g *GMCPMudletModule) discordCommand(rest string, user *users.UserRecord, r
 	// Process arguments
 	args := strings.Fields(rest)
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, "\nUsage: discord area on|off|party on|off|name on|off|level on|off|info on|off|status on|off\n")
+		user.SendText(messaging.CategoryUsage, "\nUsage: discord area on|off|party on|off|name on|off|level on|off|info on|off|status on|off\n")
 		return true, nil
 	}
 
@@ -707,7 +707,7 @@ func (g *GMCPMudletModule) discordCommand(rest string, user *users.UserRecord, r
 			} else if args[1] == "off" {
 				g.handleToggleCommand(user, "discord_show_area", false, "Area display in Discord status disabled.", "")
 			} else {
-				user.SendText(messaging.CategorySystem, "\nUsage: discord area on|off\n")
+				user.SendText(messaging.CategoryUsage, "\nUsage: discord area on|off\n")
 			}
 
 		case "party":
@@ -716,7 +716,7 @@ func (g *GMCPMudletModule) discordCommand(rest string, user *users.UserRecord, r
 			} else if args[1] == "off" {
 				g.handleToggleCommand(user, "discord_show_party", false, "Party display in Discord status disabled.", "")
 			} else {
-				user.SendText(messaging.CategorySystem, "\nUsage: discord party on|off\n")
+				user.SendText(messaging.CategoryUsage, "\nUsage: discord party on|off\n")
 			}
 
 		case "name":
@@ -725,7 +725,7 @@ func (g *GMCPMudletModule) discordCommand(rest string, user *users.UserRecord, r
 			} else if args[1] == "off" {
 				g.handleToggleCommand(user, "discord_show_name", false, "Character name display in Discord status disabled.", "")
 			} else {
-				user.SendText(messaging.CategorySystem, "\nUsage: discord name on|off\n")
+				user.SendText(messaging.CategoryUsage, "\nUsage: discord name on|off\n")
 			}
 
 		case "level":
@@ -734,7 +734,7 @@ func (g *GMCPMudletModule) discordCommand(rest string, user *users.UserRecord, r
 			} else if args[1] == "off" {
 				g.handleToggleCommand(user, "discord_show_level", false, "Level display in Discord status disabled.", "")
 			} else {
-				user.SendText(messaging.CategorySystem, "\nUsage: discord level on|off\n")
+				user.SendText(messaging.CategoryUsage, "\nUsage: discord level on|off\n")
 			}
 
 		case "info":
@@ -752,7 +752,7 @@ func (g *GMCPMudletModule) discordCommand(rest string, user *users.UserRecord, r
 					InviteURL:     "",
 				})
 			} else {
-				user.SendText(messaging.CategorySystem, "\nUsage: discord info on|off\n")
+				user.SendText(messaging.CategoryUsage, "\nUsage: discord info on|off\n")
 			}
 
 		case "status":
@@ -763,14 +763,14 @@ func (g *GMCPMudletModule) discordCommand(rest string, user *users.UserRecord, r
 				g.handleToggleCommand(user, "discord_enable_status", false, "Discord.Status package sending disabled.", "")
 				g.clearDiscordStatus(user.UserId)
 			} else {
-				user.SendText(messaging.CategorySystem, "\nUsage: discord status on|off\n")
+				user.SendText(messaging.CategoryUsage, "\nUsage: discord status on|off\n")
 			}
 
 		default:
-			user.SendText(messaging.CategorySystem, "\nUsage: discord area on|off|party on|off|name on|off|level on|off|info on|off|status on|off\n")
+			user.SendText(messaging.CategoryUsage, "\nUsage: discord area on|off|party on|off|name on|off|level on|off|info on|off|status on|off\n")
 		}
 	} else {
-		user.SendText(messaging.CategorySystem, "\nUsage: discord area on|off|party on|off|name on|off|level on|off|info on|off|status on|off\n")
+		user.SendText(messaging.CategoryUsage, "\nUsage: discord area on|off|party on|off|name on|off|level on|off|info on|off|status on|off\n")
 	}
 
 	return true, nil

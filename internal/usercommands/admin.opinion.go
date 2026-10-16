@@ -55,10 +55,10 @@ func Opinion(rest string, user *users.UserRecord, room *rooms.Room, flags events
 func opinionShowUsage(user *users.UserRecord) {
 	// Try templated help first; fall back to inline if missing.
 	if out, err := templates.Process("admincommands/help/command.opinion", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  opinion show <playerName>\r\n"+
 			"  opinion show <mobName|mobId> <playerName>\r\n"+

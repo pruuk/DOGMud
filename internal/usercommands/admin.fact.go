@@ -56,10 +56,10 @@ func Fact(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 func factUsage(user *users.UserRecord) {
 	if out, err := templates.Process("admincommands/help/command.fact", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  fact list [--all]\r\n"+
 			"  fact show <factId>\r\n"+
@@ -155,7 +155,7 @@ func factDeclare(rest string, user *users.UserRecord) (bool, error) {
 	// Custom parser: split on ` -- ` first to extract description.
 	idx := strings.Index(rest, " -- ")
 	if idx < 0 {
-		user.SendText(messaging.CategorySystem, "Missing -- separator before description.\r\nUsage: fact declare <factId> [opts] -- <description>\r\n")
+		user.SendText(messaging.CategoryUsage, "Missing -- separator before description.\r\nUsage: fact declare <factId> [opts] -- <description>\r\n")
 		return true, nil
 	}
 	beforeDash := strings.TrimSpace(rest[:idx])

@@ -193,7 +193,7 @@ func SetCondition(rest string, user *users.UserRecord, room *rooms.Room, flags e
 
 	// send some sort of help info?
 	infoOutput, _ := templates.Process("admincommands/help/command.setcondition", nil, user.UserId, user.UserId)
-	user.SendText(messaging.CategorySystem, infoOutput)
+	user.SendText(messaging.CategoryUsage, infoOutput)
 
 	return true, nil
 }

@@ -29,7 +29,7 @@ func Caravan(rest string, user *users.UserRecord, room *rooms.Room,
 	args := util.SplitButRespectQuotes(rest)
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">caravan reset [instanceId]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">caravan reset [instanceId]</ansi>`)
 		return true, nil
 	}
 
@@ -76,7 +76,7 @@ func Caravan(rest string, user *users.UserRecord, room *rooms.Room,
 		return true, nil
 
 	default:
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">caravan reset [instanceId]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">caravan reset [instanceId]</ansi>`)
 	}
 
 	return true, nil

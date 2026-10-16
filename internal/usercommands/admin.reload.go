@@ -66,7 +66,7 @@ func Reload(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	case `help`:
 		infoOutput, _ := templates.Process("admincommands/help/command.reload", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	default:
 		user.SendText(messaging.CategorySystem, `Unknown reload command. See <ansi fg="command">reload help</ansi>.`)

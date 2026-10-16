@@ -40,7 +40,7 @@ func Room(rest string, user *users.UserRecord, liveRoom *rooms.Room, flags event
 
 	if len(args) == 0 {
 		infoOutput, _ := templates.Process("admincommands/help/command.room", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return handled, nil
 	}
 

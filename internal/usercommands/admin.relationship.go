@@ -45,10 +45,10 @@ func Relationship(rest string, user *users.UserRecord, room *rooms.Room, flags e
 
 func relationshipUsage(user *users.UserRecord) {
 	if out, err := templates.Process("admincommands/help/command.relationship", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  relationship show <mobId>\r\n"+
 			"  relationship between <mobIdA> <mobIdB>\r\n"+

@@ -118,7 +118,7 @@ func guildCreate(user *users.UserRecord, remainder, rest string) {
 	}
 	fields := strings.Fields(remainder)
 	if len(fields) < 2 {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">guild create <TAG> <name></ansi>  (TAG is 2-4 letters/digits).`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild create <TAG> <name></ansi>  (TAG is 2-4 letters/digits).`)
 		return
 	}
 	tag := fields[0]
@@ -277,7 +277,7 @@ func guildInvite(user *users.UserRecord, remainder string) {
 	}
 	name := strings.TrimSpace(remainder)
 	if name == "" {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">guild invite <player></ansi>`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild invite <player></ansi>`)
 		return
 	}
 	target := users.GetByCharacterName(name)
@@ -467,7 +467,7 @@ func guildChatSend(user *users.UserRecord, msg string) {
 	}
 	msg = strings.TrimSpace(msg)
 	if msg == "" {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">guild chat &lt;message&gt;</ansi>  (or <ansi fg="command">gc &lt;message&gt;</ansi>)`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild chat &lt;message&gt;</ansi>  (or <ansi fg="command">gc &lt;message&gt;</ansi>)`)
 		return
 	}
 	// Neutralise <ansi> markup before interpolation.
@@ -540,7 +540,7 @@ func guildDeposit(user *users.UserRecord, remainder string) {
 	}
 	amount, _, ok := parseGoldAmount(remainder, user.Character.Bank)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">guild deposit <amount|all></ansi>  (gold comes from your bank).`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild deposit <amount|all></ansi>  (gold comes from your bank).`)
 		return
 	}
 	if amount > user.Character.Bank {
@@ -573,7 +573,7 @@ func guildWithdraw(user *users.UserRecord, remainder string) {
 	}
 	amount, _, ok := parseGoldAmount(remainder, g.Treasury)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">guild withdraw <amount|all></ansi>  (gold goes to your bank).`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild withdraw <amount|all></ansi>  (gold goes to your bank).`)
 		return
 	}
 	if amount <= 0 {
@@ -605,7 +605,7 @@ func guildDonate(user *users.UserRecord, remainder string) {
 	}
 	name := strings.TrimSpace(remainder)
 	if name == "" {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">guild donate <item></ansi>`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild donate <item></ansi>`)
 		return
 	}
 	item, found := user.Character.FindInBackpack(name)
@@ -741,7 +741,7 @@ func guildSetTitle(user *users.UserRecord, remainder string) {
 	}
 	fields := strings.Fields(remainder)
 	if len(fields) == 0 {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">guild title <member|officer|leader> [new name]</ansi>  (omit the name to reset).`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">guild title <member|officer|leader> [new name]</ansi>  (omit the name to reset).`)
 		return
 	}
 	rank, ok := parseGuildRank(fields[0])

@@ -18,8 +18,8 @@ import (
 func SetMotd(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">setmotd <message></ansi> - Set the message of the day.`)
-		user.SendText(messaging.CategorySystem, `Use <ansi fg="command">motd</ansi> to view the current message.`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">setmotd <message></ansi> - Set the message of the day.`)
+		user.SendText(messaging.CategoryUsage, `Use <ansi fg="command">motd</ansi> to view the current message.`)
 		return true, nil
 	}
 

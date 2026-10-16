@@ -491,7 +491,7 @@ func cmdPartyAutoattack(user *users.UserRecord, currentParty *parties.Party, res
 			user.SendText(messaging.CategorySystem, `You already have auto-attacking disabled.`)
 		}
 	} else {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">party autoattack [on/off]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">party autoattack [on/off]</ansi>`)
 		return
 	}
 
@@ -706,10 +706,10 @@ func cmdPartyLoot(user *users.UserRecord, currentParty *parties.Party, rest stri
 		if current == `` {
 			current = `ffa`
 		}
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">party loot [ffa/roundrobin/leaderhold]</ansi>`)
-		user.SendText(messaging.CategorySystem, `  <ansi fg="command">ffa</ansi>         - Free-for-all: anyone can loot corpses.`)
-		user.SendText(messaging.CategorySystem, `  <ansi fg="command">roundrobin</ansi>  - Loot rights rotate through party members.`)
-		user.SendText(messaging.CategorySystem, `  <ansi fg="command">leaderhold</ansi>  - Only the leader may loot corpses.`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">party loot [ffa/roundrobin/leaderhold]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `  <ansi fg="command">ffa</ansi>         - Free-for-all: anyone can loot corpses.`)
+		user.SendText(messaging.CategoryUsage, `  <ansi fg="command">roundrobin</ansi>  - Loot rights rotate through party members.`)
+		user.SendText(messaging.CategoryUsage, `  <ansi fg="command">leaderhold</ansi>  - Only the leader may loot corpses.`)
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`The current loot mode is <ansi fg="magenta-bold">%s</ansi>.`, current))
 		return true, nil
 	}
@@ -859,8 +859,8 @@ func cmdPartyAdmin(user *users.UserRecord, rest string) (bool, error) {
 		}
 		cmdPartyAdminShow(user, idStr)
 	default:
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">party admin list-npc</ansi>`)
-		user.SendText(messaging.CategorySystem, `       <ansi fg="command">party admin show <id></ansi>`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">party admin list-npc</ansi>`)
+		user.SendText(messaging.CategoryUsage, `       <ansi fg="command">party admin show <id></ansi>`)
 	}
 	return true, nil
 }
@@ -903,7 +903,7 @@ func cmdPartyAdminListNPC(user *users.UserRecord) {
 // cmdPartyAdminShow dumps full state of one party by PartyIdInternal().
 func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 	if idStr == `` {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">party admin show <id></ansi>`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">party admin show <id></ansi>`)
 		return
 	}
 	targetId, err := strconv.Atoi(idStr)

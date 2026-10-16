@@ -21,9 +21,9 @@ func Bug(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	rest = strings.TrimSpace(rest)
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: <ansi fg="cyan-bold">bug <description></ansi>`)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Use this command to report bugs or typos you encounter in the game.</ansi>`)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Your character name, location, and timestamp will be recorded automatically.</ansi>`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Usage: <ansi fg="cyan-bold">bug <description></ansi>`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Use this command to report bugs or typos you encounter in the game.</ansi>`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Your character name, location, and timestamp will be recorded automatically.</ansi>`)
 		return true, nil
 	}
 

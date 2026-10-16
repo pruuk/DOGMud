@@ -21,7 +21,7 @@ func Ban(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	fields := strings.Fields(rest)
 	if len(fields) == 0 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: ban <name> [reason]  |  ban ip <name|ip> [reason]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Usage: ban <name> [reason]  |  ban ip <name|ip> [reason]</ansi>`)
 		return true, nil
 	}
 

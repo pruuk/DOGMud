@@ -26,7 +26,7 @@ func QuestToken(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	if len(args) == 0 {
 		// send some sort of help info?
 		infoOutput, _ := templates.Process("admincommands/help/command.questtoken", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 	} else if args[0] == "list" {
 
 		allTokens := user.Character.GetQuestProgress()
@@ -103,7 +103,7 @@ func QuestToken(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	} else if args[0] == "flag" {
 
 		if len(args) < 2 {
-			user.SendText(messaging.CategorySystem, "Usage: questtoken flag <key> [value]")
+			user.SendText(messaging.CategoryUsage, "Usage: questtoken flag <key> [value]")
 		} else if len(args) == 2 {
 			val := user.Character.GetQuestFlag(args[1])
 			if val == "" {

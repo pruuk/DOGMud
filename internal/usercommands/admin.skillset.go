@@ -31,11 +31,11 @@ func Skillset(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	if len(args) < 2 {
 		// send some sort of help info?
 		infoOutput, _ := templates.Process("admincommands/help/command.skillset", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 
-		user.SendText(messaging.CategorySystem, `Skill Names:`)
+		user.SendText(messaging.CategoryUsage, `Skill Names:`)
 		for _, name := range skills.GetAllSkillNames() {
-			user.SendText(messaging.CategorySystem, `  <ansi fg="skill">`+string(name)+`</ansi>`)
+			user.SendText(messaging.CategoryUsage, `  <ansi fg="skill">`+string(name)+`</ansi>`)
 		}
 
 		return true, nil
@@ -51,11 +51,11 @@ func Skillset(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	if len(args) < 2 {
 		// send some sort of help info?
 		infoOutput, _ := templates.Process("admincommands/help/command.skillset", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 
-		user.SendText(messaging.CategorySystem, `Skill Names:`)
+		user.SendText(messaging.CategoryUsage, `Skill Names:`)
 		for _, name := range skills.GetAllSkillNames() {
-			user.SendText(messaging.CategorySystem, `  <ansi fg="skill">`+string(name)+`</ansi>`)
+			user.SendText(messaging.CategoryUsage, `  <ansi fg="skill">`+string(name)+`</ansi>`)
 		}
 
 		return true, nil

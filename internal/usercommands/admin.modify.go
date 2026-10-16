@@ -25,7 +25,7 @@ func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	if len(args) < 3 {
 		infoOutput, _ := templates.Process("admincommands/help/command.modify", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 

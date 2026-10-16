@@ -32,7 +32,7 @@ func Zone(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if len(args) == 0 {
 		// send some sort of help info?
 		infoOutput, _ := templates.Process("admincommands/help/command.zone", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 
 		return handled, nil
 	}

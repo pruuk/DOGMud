@@ -64,10 +64,10 @@ func Bounty(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 func bountyAdminUsage(user *users.UserRecord) {
 	if out, err := templates.Process("admincommands/help/command.bounty", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  bounty list [--all] [filter]\r\n"+
 			"  bounty show <id>\r\n"+
@@ -81,10 +81,10 @@ func bountyAdminUsage(user *users.UserRecord) {
 
 func bountyUserUsage(user *users.UserRecord) {
 	if out, err := templates.Process("help/bounty", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  bounty list [filter]\r\n"+
 			"  bounty show <id>\r\n"+

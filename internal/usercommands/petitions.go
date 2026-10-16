@@ -45,7 +45,7 @@ func Petitions(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 	case fields[0] == "resolve":
 		if len(fields) < 2 {
-			user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: petitions resolve <id> [note]</ansi>`)
+			user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Usage: petitions resolve <id> [note]</ansi>`)
 			return true, nil
 		}
 		id, err := strconv.Atoi(fields[1])
@@ -64,7 +64,7 @@ func Petitions(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	default: // detail by id
 		id, err := strconv.Atoi(fields[0])
 		if err != nil {
-			user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: petitions | petitions all | petitions <id> | petitions resolve <id> [note]</ansi>`)
+			user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Usage: petitions | petitions all | petitions <id> | petitions resolve <id> [note]</ansi>`)
 			return true, nil
 		}
 		p, ok := moderation.Get(id)

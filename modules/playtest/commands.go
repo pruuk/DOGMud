@@ -19,7 +19,7 @@ func (m *PlaytestModule) registerCommands() {
 func (m *PlaytestModule) cmdAIFlag(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	parts := strings.Fields(rest)
 	if len(parts) == 0 {
-		user.SendText(messaging.CategorySystem, `Usage: ai-flag <username> [on|off]`)
+		user.SendText(messaging.CategoryUsage, `Usage: ai-flag <username> [on|off]`)
 		return true, nil
 	}
 	name := parts[0]

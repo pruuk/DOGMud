@@ -18,7 +18,7 @@ func Boot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	fields := strings.Fields(rest)
 	if len(fields) == 0 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: boot <name> [reason]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Usage: boot <name> [reason]</ansi>`)
 		return true, nil
 	}
 	name := fields[0]
