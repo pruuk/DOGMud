@@ -14,7 +14,7 @@ import (
 // server-fault line on top of it.
 func TestGo_InstanceDenialIsNotAFault(t *testing.T) {
 	t.Cleanup(seedAllRegistries())
-	user, room := getTestUserAndRoom(t)
+	user, _ := getTestUserAndRoom(t)
 
 	const ephId = 2_000_000_123
 	require.True(t, rooms.IsEphemeralRoomId(ephId), "fixture premise: the target id is ephemeral")
@@ -27,7 +27,7 @@ func TestGo_InstanceDenialIsNotAFault(t *testing.T) {
 		"TestZone": {Name: "TestZone", RoomId: 1, RoomIds: map[int]struct{}{1: {}}},
 		"Vault":    {Name: "Vault", RoomId: ephId, RoomIds: map[int]struct{}{ephId: {}}},
 	}))
-	room = rooms.LoadRoom(1)
+	room := rooms.LoadRoom(1)
 	room.AddPlayer(user.UserId)
 	user.Character.RoomId = 1
 	user.Character.ActionPoints = 100
