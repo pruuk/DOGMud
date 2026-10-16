@@ -228,7 +228,7 @@ func stealFromMob(actor Actor, mobInstanceId int, t theftAttempt) StealResult {
 	// Its pocket is its owner's (owner ruling 2026-09-29). This holds for a
 	// mob thief as well, as the two protections below do.
 	// The refusals name the mob only for a thief who can see it.
-	sight := messaging.ParticipantSight(t.char, actor.GetRoom())
+	sight := messaging.ParticipantSight(t.char, combat.SightRoom(actor.GetRoom()))
 	if m.Character.IsCharmed() || companionai.IsBondedCompanion(m.InstanceId) {
 		actor.SendText(messaging.CategoryRefusal, messaging.HideNames(fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> is someone's companion. You can't steal from them.`,

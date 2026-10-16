@@ -22,7 +22,20 @@ func TestRoomContainerRefusalsNeverNameIt(t *testing.T) {
 		events.DrainQueuedMessagesForTest(1)
 		_, _ = Use("chest", user, room, events.EventFlag(0))
 		_, _ = Storage("", user, room, events.EventFlag(0))
+		_, _ = Put("rock in chest", user, room, events.EventFlag(0))
 		told := strings.ToLower(aimTold(1))
+		assert.Equal(t, 2, strings.Count(told, "that is locked."), "band %d: premise, use and put both refused the lock", band)
+		assert.NotContains(t, told, "chest", "band %d", band)
+
+		// Unlocked, but the recipe's ingredients are not inside: use's
+		// "missing something" branch.
+		room.Containers = map[string]rooms.Container{
+			"chest": {Lock: gamelock.Lock{}, Recipes: map[int][]int{1: {2}}},
+		}
+		events.DrainQueuedMessagesForTest(1)
+		_, _ = Use("chest", user, room, events.EventFlag(0))
+		told = strings.ToLower(aimTold(1))
+		assert.Contains(t, told, "missing something", "band %d: premise, the recipe branch ran", band)
 		assert.NotContains(t, told, "chest", "band %d", band)
 		room.Containers = nil
 	}

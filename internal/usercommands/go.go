@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -250,7 +251,14 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		departSnap := room.VisualSnapshot()
 
 		if err := rooms.MoveToRoom(user.UserId, destRoom.RoomId); err != nil {
-			refusal.Failed(user, "move", err, "userId", user.UserId)
+			// An instance not opened for the player is an ordinary refusal
+			// MoveToRoom has already narrated; anything else is a fault.
+			// Either way the player has been told, and the exit exists, so
+			// nothing below ("bumping into walls") may answer it again.
+			if !errors.Is(err, rooms.ErrInstanceAccessDenied) {
+				refusal.Failed(user, "move", err, "userId", user.UserId)
+			}
+			return true, nil
 		} else {
 
 			// Quest engine: room_enter notification. For an ephemeral room

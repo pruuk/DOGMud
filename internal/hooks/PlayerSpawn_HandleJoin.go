@@ -294,7 +294,7 @@ func HandleJoin(e events.Event) events.ListenerReturn {
 
 	if user.HasPlaintextPassword() {
 		user.SendText(messaging.CategoryRefusal, `<ansi fg="alert-5">You must change your password before doing anything else.</ansi>`)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Type <ansi fg="yellow-bold">password</ansi> to set a new password.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="yellow">Type <ansi fg="yellow-bold">password</ansi> to set a new password.</ansi>`)
 	} else {
 		loginCmds := configs.GetConfig().Server.OnLoginCommands
 		if len(loginCmds) > 0 {

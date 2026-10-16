@@ -62,10 +62,13 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// drift on which spell names resolve.
 	spellInfo, targetName := spells.ResolveSpellGreedy(rest)
 	if spellInfo == nil {
+		// Echo only the first word, the last spell name the greedy lookup
+		// tried: the words after it may be a target the player found by
+		// looking (spec section 2). rest is non-empty, so Fields has one.
 		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			`<ansi fg="red">There is no spell called '%s'.</ansi> `+
 				`Try <ansi fg="command">spells</ansi>.`,
-			refusal.Echo(rest)))
+			refusal.Echo(strings.Fields(rest)[0])))
 		return true, nil
 	}
 

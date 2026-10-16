@@ -360,6 +360,11 @@ func GetAllZoneRoomsIds(zoneName string) []int {
 	return []int{}
 }
 
+// ErrInstanceAccessDenied is MoveToRoom's refusal of a player whose instance
+// was not opened for them. MoveToRoom has already told the player why, so a
+// caller treats it as an ordinary refusal and does not report a fault.
+var ErrInstanceAccessDenied = errors.New("instance access denied")
+
 func MoveToRoom(userId int, toRoomId int, isSpawn ...bool) error {
 
 	user := users.GetByUserId(userId)
@@ -424,7 +429,7 @@ func MoveToRoom(userId int, toRoomId int, isSpawn ...bool) error {
 				if user != nil {
 					user.SendText(messaging.CategoryError, `<ansi fg="red">The portal's energy pushes you back. It wasn't opened for you.</ansi>`)
 				}
-				return fmt.Errorf("instance access denied")
+				return ErrInstanceAccessDenied
 			}
 		}
 	}
