@@ -20,12 +20,18 @@ Plan: `docs/superpowers/plans/2026-10-16-messaging-m7-slice3-refusals.md`. Spec:
 | RETAG | 352 | change the category to `CategoryRefusal`, words unchanged |
 | REWORD | 51 | new words from the plan Wording table, on `CategoryRefusal` |
 | FAIL | 14 | `refusal.Failed` (logs the cause, sends on `CategoryError`) |
-| NARR | 63 | nothing (slice 4 moves narration out of System) |
+| NARR | 64 | nothing (slice 4 moves narration out of System) |
 | USAGE | 47 | nothing (slice 4: `CategoryUsage`) |
-| NOT | 695 | nothing (reports, confirmations, outcomes, help, staff output) |
+| NOT | 694 | nothing (reports, confirmations, outcomes, help, staff output) |
 | total | 1325 | |
 
 Slice 3 converted every FAM, RETAG, REWORD and FAIL row in PR #559; the re-inventory after Task 9 left exactly the 805 NOT, NARR and USAGE rows on `CategorySystem`.
+
+Slice 4 (plan `docs/superpowers/plans/2026-10-16-messaging-m7-slice4-tags.md`, ruling R4)
+amended the NOT rows its root guards found to be narration or a notice to someone
+other than the acting player (marked "controller (slice 4 N1):" for the recipient
+guard `system_recipient_guard_test.go`, "controller (slice 4 N2):" for the subject
+guard `system_subject_guard_test.go`); the counts above include them.
 
 Columns: line, ruling, what the player reads today (args as `%s`), the proposal,
 the note. NOT rows are listed too, so a later reader can see each was looked at.
@@ -634,11 +640,11 @@ NOT 1
 
 ## `modules/aicompanion/tiers.go`
 
-NOT 1
+NARR 1
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
-| 362 | NOT | (%s falls back on a few set words: your key's provider did not answer.) |  | notice (tellOwner) |
+| 362 | NARR | (%s falls back on a few set words: your key's provider did not answer.) | CategoryWarning | controller (slice 4 N1): the owner is told when a companion call settles, not as the result of a command they typed (the recipient is looked up from ownerId); a notice like R3's, so CategoryWarning, which also never wraps; agent: notice (tellOwner) |
 
 ## `modules/auctions/auctions.go`
 
@@ -1724,7 +1730,7 @@ FAM 2 NARR 14 NOT 33 RETAG 7 REWORD 4 USAGE 8
 | 701 | USAGE |   <ansi fg="command">roundrobin</ansi>  - Loot rights rotate through party members. |  | usage block line |
 | 702 | USAGE |   <ansi fg="command">leaderhold</ansi>  - Only the leader may loot corpses. |  | usage block line |
 | 703 | NOT | The current loot mode is <ansi fg="magenta-bold">%s</ansi>. |  | report (ends the usage block) |
-| 726 | NOT | You set the party loot mode to <ansi fg="magenta-bold">%s</ansi>. |  | confirmation |
+| 726 | NOT | You set the party loot mode to <ansi fg="magenta-bold">%s</ansi>. |  | controller (slice 4 N1): stays on System, now sent through the `user` parameter (the actor's branch of the loop over members, where `u` was the same record); the others' copy (:728) rides CategoryGroup; agent: confirmation |
 | 728 | NARR | <ansi fg="username">%s</ansi> set the party loot mode to <ansi fg="magenta-bold">%s</ansi>. | party notice: new CategoryParty, or keep System | sent to the other members |
 | 786 | RETAG | The party pool is empty. |  | party gold split with nothing to split |
 | 793 | NOT | The party pool holds <ansi fg="yellow-bold">%d gold</ansi>. |  | report |

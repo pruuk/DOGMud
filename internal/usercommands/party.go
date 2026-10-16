@@ -733,7 +733,7 @@ func cmdPartyLoot(user *users.UserRecord, currentParty *parties.Party, rest stri
 			continue
 		}
 		if uid == user.UserId {
-			u.SendText(messaging.CategorySystem, fmt.Sprintf(`You set the party loot mode to <ansi fg="magenta-bold">%s</ansi>.`, label))
+			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You set the party loot mode to <ansi fg="magenta-bold">%s</ansi>.`, label))
 		} else {
 			u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> set the party loot mode to <ansi fg="magenta-bold">%s</ansi>.`, user.Character.Name, label))
 		}
