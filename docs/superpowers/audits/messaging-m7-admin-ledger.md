@@ -26,7 +26,7 @@ and usage rows outside these files are in the slice 3 ledger,
 
 Final category: Admin 552, Refusal 4, System 11, Usage 88, other 12.
 
-Slice 4 converted the Admin, Usage, Refusal, notice and narration rows (PR to follow).
+Slice 4 converted the Admin, Usage, Refusal, notice and narration rows in PR #562.
 
 Columns: line, ruling, what the recipient reads (args as `%s`), final category,
 the agent's proposal, the note.

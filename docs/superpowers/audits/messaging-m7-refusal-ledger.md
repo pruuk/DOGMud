@@ -33,7 +33,7 @@ other than the acting player (marked "controller (slice 4 N1):" for the recipien
 guard `system_recipient_guard_test.go`, "controller (slice 4 N2):" for the subject
 guard `system_subject_guard_test.go`); the counts above include them.
 
-Slice 4 converted the Admin, Usage, Refusal, notice and narration rows (PR to follow).
+Slice 4 converted the Admin, Usage, Refusal, notice and narration rows in PR #562.
 
 Columns: line, ruling, what the player reads today (args as `%s`), the proposal,
 the note. NOT rows are listed too, so a later reader can see each was looked at.
