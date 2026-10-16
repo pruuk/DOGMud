@@ -119,7 +119,7 @@ func Companion(rest string, user *users.UserRecord,
 			return true, nil
 		}
 		if err := validateCompanionName(renameNick); err != nil {
-			user.SendText(messaging.CategorySystem, err.Error())
+			user.SendText(messaging.CategoryRefusal, err.Error())
 			return true, nil
 		}
 

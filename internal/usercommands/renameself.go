@@ -43,7 +43,7 @@ func RenameSelf(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	}
 
 	if err := users.ValidateActorName(newName, users.ValidateActorOpts{ExcludeUserId: user.UserId}); err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`That name won't work: %s`, err.Error()))
+		user.SendText(messaging.CategoryRefusal, err.Error())
 		return true, nil
 	}
 

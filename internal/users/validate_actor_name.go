@@ -25,7 +25,7 @@ func ValidateActorName(name string, opts ValidateActorOpts) error {
 	validation := configs.GetValidationConfig()
 
 	if len(name) < int(validation.NameSizeMin) || len(name) > int(validation.NameSizeMax) {
-		return fmt.Errorf("name must be between %d and %d characters long",
+		return fmt.Errorf("Names must be between %d and %d characters long.",
 			validation.NameSizeMin, validation.NameSizeMax)
 	}
 
@@ -36,32 +36,32 @@ func ValidateActorName(name string, opts ValidateActorOpts) error {
 	}
 
 	if !opts.SkipBannedCheck {
-		if bannedPattern, ok := configs.GetConfig().IsBannedName(name); ok {
-			return fmt.Errorf(`that name matched the prohibited pattern: %q`, bannedPattern)
+		if _, ok := configs.GetConfig().IsBannedName(name); ok {
+			return errors.New("That name is not allowed.")
 		}
 	}
 
 	if !opts.SkipMobCheck {
 		for _, mobName := range mobs.GetAllMobNames() {
 			if strings.EqualFold(mobName, name) {
-				return errors.New("that name is in use")
+				return errors.New("That name is already in use.")
 			}
 		}
 	}
 
 	if foundUserId, _ := CharacterNameSearch(name); foundUserId > 0 && foundUserId != opts.ExcludeUserId {
-		return errors.New("that name is already in use")
+		return errors.New("That name is already in use.")
 	}
 
 	userManager.mu.RLock()
 	existingId, exists := userManager.Usernames[strings.ToLower(name)]
 	userManager.mu.RUnlock()
 	if exists && existingId != opts.ExcludeUserId {
-		return errors.New("that name is already in use")
+		return errors.New("That name is already in use.")
 	}
 
 	if CompanionNameExists(name) {
-		return errors.New("that name is in use by a companion")
+		return errors.New("That name is already in use.")
 	}
 
 	return nil

@@ -140,3 +140,29 @@ func TestValidateActorName_MobCollision(t *testing.T) {
 		t.Fatalf("SkipMobCheck should bypass mob collision, got %v", err)
 	}
 }
+
+// M7 slice 3 (#371): every error is a sentence a player can read, and the
+// banned case never prints the moderation pattern.
+func TestValidateActorNameSpeaksInSentences(t *testing.T) {
+	setupValidationConfig(t)
+	_ = configs.AddOverlayOverrides(map[string]any{"Validation.BannedNames": []string{"*grob*"}})
+	t.Cleanup(func() { _ = configs.AddOverlayOverrides(map[string]any{"Validation.BannedNames": []string{}}) })
+
+	err := ValidateActorName("", ValidateActorOpts{})
+	if err == nil || err.Error() != "Names must be between 1 and 20 characters long." {
+		t.Fatalf("length: %v", err)
+	}
+	err = ValidateActorName("Grobnar", ValidateActorOpts{})
+	if err == nil || err.Error() != "That name is not allowed." {
+		t.Fatalf("banned: %v", err)
+	}
+	if strings.Contains(err.Error(), "grob") {
+		t.Fatalf("the banned pattern leaked: %v", err)
+	}
+	cleanup := seedMobName(t, "Skeletor")
+	defer cleanup()
+	err = ValidateActorName("Skeletor", ValidateActorOpts{})
+	if err == nil || err.Error() != "That name is already in use." {
+		t.Fatalf("mob collision: %v", err)
+	}
+}
