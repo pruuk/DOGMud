@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -78,7 +79,8 @@ func Help(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		helpTxt, err = templates.Process("help/help", helpCommandList, user.UserId)
 		if err != nil {
-			helpTxt = err.Error()
+			refusal.Failed(user, "help", err, "userId", user.UserId)
+			return true, nil
 		}
 	} else {
 
@@ -86,7 +88,7 @@ func Help(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if err != nil {
 			adminTxt, ok := adminHelpFor(rest, user)
 			if !ok {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`No help found for "%s"`, rest))
+				user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`No help found for "%s"`, rest))
 				return true, err
 			}
 			helpTxt, err = adminTxt, nil

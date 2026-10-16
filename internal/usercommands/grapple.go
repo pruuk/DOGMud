@@ -31,13 +31,13 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	res := actions.ExecuteGrapple(actor)
 	if res.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		refusal.Cost(user, res.Cost)
 		return true, nil
 	}
 
 	if res.Crafting {
 		// Safety net — should have been caught by the pre-reject above.
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't grapple while focused on your work. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "grapple")
 		return true, nil
 	}
 
@@ -51,7 +51,7 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		return true, nil
 	}
 	if res.TargetGrappling {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("%s is already grappling.", res.Target.Name))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("%s is already grappling.", res.Target.Name))
 		return true, nil
 	}
 
@@ -64,23 +64,23 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		// telling that player their hands passed through it was simply false.
 		switch res.ImmuneReason {
 		case actions.GrappleImmuneSelfSpecies:
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryRefusal,
 				"Your body has nothing that can take hold. Grappling is not a thing you can do.")
 		case actions.GrappleImmuneSelfNoArms:
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryRefusal,
 				"Grappling means seizing and holding, and you have no arms to do it with.")
 		case actions.GrappleImmuneTargetImmovable:
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				"You get both hands on %s and heave. It might as well be a boulder. Nothing shifts.",
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+				"You heave at %s with both hands. Nothing shifts.",
 				res.Target.Name))
 		default:
 			// Incorporeal, and the safe landing spot for any reason added later.
 			// Guarded on the name because a future no-Target reason must not
 			// reintroduce the empty-name bug.
 			if res.Target.Name == "" {
-				user.SendText(messaging.CategorySystem, "You cannot get a grip on that.")
+				user.SendText(messaging.CategoryRefusal, "You cannot get a grip on that.")
 			} else {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 					"You reach for %s but your hands pass right through!", res.Target.Name))
 			}
 		}

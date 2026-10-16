@@ -16,7 +16,7 @@ import (
 func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	if user.Character.Zone == `Shadow Realm` {
-		user.SendText(messaging.CategorySystem, `You're already dead!`)
+		user.SendText(messaging.CategoryRefusal, `You're already dead!`)
 		return true, errors.New(`already dead`)
 	}
 

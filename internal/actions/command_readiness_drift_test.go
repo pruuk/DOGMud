@@ -521,13 +521,12 @@ func TestTauntRallyWarcryWrapperAdmission(t *testing.T) {
 			require.NotNil(t, refusal)
 			if guard.player {
 				require.Len(t, refusal.Body.List, 2)
-				require.True(t, nodeHasCall(refusal.Body.List[0], "SendText"))
-				require.True(t, nodeHasCall(refusal.Body.List[0], "CostRefusalText"))
+				require.Equal(t, "refusal.Cost(user, result.Cost)", formattedASTNode(t, fset, refusal.Body.List[0]))
 				require.True(t, handledReturn(refusal.Body.List[1]))
 			} else {
 				require.Len(t, refusal.Body.List, 1)
 				require.True(t, handledReturn(refusal.Body.List[0]))
-				require.False(t, nodeHasCall(fn.Body, "CostRefusalText"))
+				require.False(t, nodeHasRefusalCost(fn.Body))
 			}
 			if guard.staged {
 				require.Len(t, exactCallPositions(t, fset, fn.Body, "stageSpecialMoveTarget", true), 1)
@@ -545,6 +544,29 @@ func handledReturn(stmt ast.Stmt) bool {
 	first, firstOK := ret.Results[0].(*ast.Ident)
 	second, secondOK := ret.Results[1].(*ast.Ident)
 	return firstOK && secondOK && first.Name == "true" && second.Name == "nil"
+}
+
+// nodeHasRefusalCost reports whether node calls refusal.Cost or
+// refusal.CostText, package-qualified. An unrelated .Cost( method call does
+// not match, so a mob-wrapper silence check cannot be tripped by one.
+func nodeHasRefusalCost(node ast.Node) bool {
+	found := false
+	ast.Inspect(node, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return !found
+		}
+		sel, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return !found
+		}
+		pkg, ok := sel.X.(*ast.Ident)
+		if ok && pkg.Name == "refusal" && (sel.Sel.Name == "Cost" || sel.Sel.Name == "CostText") {
+			found = true
+		}
+		return !found
+	})
+	return found
 }
 
 func nodeHasCall(node ast.Node, name string) bool {
@@ -639,13 +661,13 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 				}
 				require.True(t, executeAssignment, "%s must pass its staged actor directly to %s", function, executeName)
 				require.Len(t, refusal.Body.List, 2, "%s refusal branch must send shared text then return", function)
-				require.True(t, nodeHasCall(refusal.Body.List[0], "SendText"), "%s refusal branch must send player text first", function)
-				require.True(t, nodeHasCall(refusal.Body.List[0], "CostRefusalText"), "%s refusal branch must use shared refusal text", function)
+				require.Equal(t, "refusal.Cost(user, "+resultName+".Cost)", formattedASTNode(t, fset, refusal.Body.List[0]),
+					"%s refusal branch must send the shared refusal.Cost line first", function)
 				require.True(t, handledReturn(refusal.Body.List[1]), "%s refusal branch must immediately return handled", function)
 			} else {
 				require.Len(t, refusal.Body.List, 1, "%s mob refusal branch must be silent and immediate", function)
 				require.True(t, handledReturn(refusal.Body.List[0]), "%s mob refusal branch must return handled", function)
-				require.False(t, nodeHasCall(fn.Body, "CostRefusalText"), "%s mob wrapper must not render private refusal text", function)
+				require.False(t, nodeHasRefusalCost(fn.Body), "%s mob wrapper must not render private refusal text", function)
 			}
 			return
 		}

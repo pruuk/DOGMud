@@ -19,7 +19,7 @@ import (
 func hoodedLight(user *users.UserRecord) (recs []*conditions.Condition, ok bool) {
 	lightItem := &user.Character.Equipment.Light
 	if lightItem.ItemId < 1 {
-		user.SendText(messaging.CategorySystem, `You have no lantern with a hood.`)
+		user.SendText(messaging.CategoryRefusal, `You have no lantern with a hood.`)
 		return nil, false
 	}
 	for _, id := range lightItem.GetSpec().WornConditionIds {
@@ -30,7 +30,7 @@ func hoodedLight(user *users.UserRecord) (recs []*conditions.Condition, ok bool)
 		recs = append(recs, user.Character.Conditions.GetConditions(id)...)
 	}
 	if len(recs) == 0 {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryRefusal,
 			fmt.Sprintf(`Your <ansi fg="item">%s</ansi> has no hood.`, lightItem.DisplayName()))
 		return nil, false
 	}
@@ -45,7 +45,7 @@ func Hood(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if recs[0].Hooded {
-		user.SendText(messaging.CategorySystem, `Your lantern is already hooded.`)
+		user.SendText(messaging.CategoryRefusal, `Your lantern is already hooded.`)
 		return true, nil
 	}
 	// Judged against the room just before the hood goes down (owner rule,
@@ -81,7 +81,7 @@ func Unhood(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 	if !recs[0].Hooded {
-		user.SendText(messaging.CategorySystem, `Your lantern's hood is already open.`)
+		user.SendText(messaging.CategoryRefusal, `Your lantern's hood is already open.`)
 		return true, nil
 	}
 	var beforeUnhood rooms.VisualSnapshot

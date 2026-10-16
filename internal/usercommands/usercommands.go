@@ -426,11 +426,7 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			// Fall through — let the flee command execute normally
 		} else if cmd != `cancel` && cmd != `flee` {
 			if cmdInfo, hasCmdInfo := userCommands[cmd]; !hasCmdInfo || !cmdInfo.AllowedWhenDowned {
-				cs, _ := user.Character.Activity.CastingData()
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
-					`<ansi fg="cyan">You are holding <ansi fg="cyan-bold">%d/%d</ansi> folds. Type <ansi fg="cyan-bold">cancel</ansi> to stop.</ansi>`,
-					cs.FoldsAccumulated,
-					cs.FoldsNeeded))
+				refusal.WhileBusy(user, "do that")
 				return true, nil
 			}
 		}
@@ -469,8 +465,8 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 	}
 
 	if user.HasPlaintextPassword() && cmd != `password` {
-		user.SendText(messaging.CategorySystem, `<ansi fg="alert-5">You must change your password before doing anything else.</ansi>`)
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Type <ansi fg="yellow-bold">password</ansi> to set a new password.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="alert-5">You must change your password before doing anything else.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="yellow">Type <ansi fg="yellow-bold">password</ansi> to set a new password.</ansi>`)
 		return true, nil
 	}
 
@@ -482,7 +478,7 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			// (unless admin). AllowedWhenDowned is the legacy field name for
 			// "may be run while dead" — there is no "downed but alive" state.
 			if userDisabled && !cmdInfo.AdminOnly {
-				user.SendText(messaging.CategorySystem, "You can't do that while you're dead. Hold on; you'll be pulled back to safety.")
+				user.SendText(messaging.CategoryRefusal, "You can't do that while you're dead. Hold on; you'll be pulled back to safety.")
 				return true, nil
 			}
 

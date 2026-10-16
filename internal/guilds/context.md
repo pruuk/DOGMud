@@ -85,6 +85,15 @@ func SetMotd(tag, text string) error
 func SetRankTitle(tag string, rank GuildRank, title string) error
 ```
 
+Errors callers branch on (compare with `errors.Is`, never `err.Error()`):
+
+```go
+var ErrNoSuchGuild   // every mutator, when the tag is not registered
+var ErrTreasuryShort // WithdrawGold, amount exceeds the treasury
+var ErrVaultFull     // DonateItem, vault at GuildVaultCapacity
+var ErrSaveFailed    // Create wraps a Save failure in it (a server fault)
+```
+
 Persistence:
 
 ```go

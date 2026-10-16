@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -92,7 +93,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Cooldown gate (anti-spam). Only bites right after a successful send.
 	cooldown := uint64(configs.GetBalanceConfig().MailSendCooldownRounds)
 	if mailOnCooldown(user.Character.LastMailSentRound, util.GetRoundCount(), cooldown) {
-		user.SendText(messaging.CategorySystem, `You must wait a while before sending more mail.`)
+		user.SendText(messaging.CategoryRefusal, `You must wait a while before sending more mail.`)
 		return true, nil
 	}
 
@@ -115,9 +116,9 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if isNew && recipientName != `` {
 		if _, _, ok := resolveMailRecipient(recipientName, user.UserId, users.GetByCharacterName, users.CharacterNameSearch); !ok {
 			if users.GetByCharacterName(recipientName) != nil {
-				user.SendText(messaging.CategorySystem, `You can't mail yourself.`)
+				user.SendText(messaging.CategoryRefusal, `You can't mail yourself.`)
 			} else {
-				user.SendText(messaging.CategorySystem, `No adventurer by that name has ever been recorded.`)
+				user.SendText(messaging.CategoryRefusal, `No adventurer by that name has ever been recorded.`)
 			}
 			user.ClearPrompt()
 			return true, nil
@@ -135,7 +136,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if question.Response == `` {
-		user.SendText(messaging.CategorySystem, `A message is required.`)
+		user.SendText(messaging.CategoryRefusal, `A message is required.`)
 		user.ClearPrompt()
 		return true, nil
 	}
@@ -154,7 +155,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		gold = 0
 	}
 	if gold > user.Character.Gold {
-		user.SendText(messaging.CategorySystem, `You aren't carrying that much gold.`)
+		user.SendText(messaging.CategoryRefusal, `You aren't carrying that much gold.`)
 		question.RejectResponse()
 		return true, nil
 	}
@@ -172,7 +173,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			attached = &itemCopy
 			msg.Item = attached
 		} else {
-			user.SendText(messaging.CategorySystem, `Could not find item: `+question.Response)
+			refusal.NotCarrying(user, question.Response)
 			question.RejectResponse()
 			return true, nil
 		}
@@ -198,7 +199,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// record, or write a disk copy a now-online session would clobber).
 	rec, offlineUsername, ok := resolveMailRecipient(recipientName, user.UserId, users.GetByCharacterName, users.CharacterNameSearch)
 	if !ok || !deliverMail(rec, offlineUsername, msg) {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your mail to <ansi fg="username">%s</ansi> could not be delivered. Nothing was sent.`, recipientName))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`Your mail to <ansi fg="username">%s</ansi> could not be delivered. Nothing was sent.`, recipientName))
 		return true, nil
 	}
 

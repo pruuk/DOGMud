@@ -42,12 +42,12 @@ func Character(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	c := configs.GetGamePlayConfig()
 
 	if c.MaxAltCharacters == 0 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="203">Alt character are disabled on this server.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="203">Alt characters are disabled on this server.</ansi>`)
 		return true, errors.New(`alt characters disabled`)
 	}
 
 	if user.Character.GetTotalSkillRanks() < 20 && len(nameToAlt) < 1 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="203">You must gain at least 20 total skill ranks to access character alts.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="203">You need more skill training before you can have alt characters.</ansi>`)
 		return true, errors.New(`20 skill ranks minimum`)
 	}
 
@@ -129,7 +129,7 @@ func selectAltByName(cmdPrompt *prompt.Prompt, altNames []string, questionText s
 // checkHiredOut checks if a character is currently hired out as a mob. Returns true if hired out (and sends message).
 func checkHiredOut(user *users.UserRecord, char characters.Character, hiredOutChars map[string]characters.Character) bool {
 	if friend, ok := hiredOutChars[char.Name]; ok && friend.Description == char.Description {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is currently hired out.`, char.Name))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is currently hired out.`, char.Name))
 		user.ClearPrompt()
 		return true
 	}
@@ -139,8 +139,8 @@ func checkHiredOut(user *users.UserRecord, char characters.Character, hiredOutCh
 func cmdCharacterNew(user *users.UserRecord, room *rooms.Room, cmdPrompt *prompt.Prompt, nameToAlt map[string]characters.Character, altNames []string, c configs.GamePlay) (bool, error) {
 
 	if len(altNames) >= int(c.MaxAltCharacters) {
-		user.SendText(messaging.CategorySystem, `<ansi fg="203">You already have too many alts.</ansi>`)
-		user.SendText(messaging.CategorySystem, `<ansi fg="203">You'll need to delete one to create a new one.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="203">You already have too many alts.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="203">You'll need to delete one to create a new one.</ansi>`)
 
 		// Reject the menu response so they can pick again
 		// Re-calling Ask with the same question text returns the existing question object
@@ -229,7 +229,7 @@ func cmdCharacterDelete(user *users.UserRecord, cmdPrompt *prompt.Prompt, altNam
 
 	}
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="203">No character with the name <ansi fg="username">`+rawResponse+`</ansi> found.</ansi>`)
+	user.SendText(messaging.CategoryRefusal, `<ansi fg="203">No character with the name <ansi fg="username">`+refusal.Echo(rawResponse)+`</ansi> found.</ansi>`)
 
 	user.ClearPrompt()
 	return true, nil
@@ -308,7 +308,7 @@ func cmdCharacterChange(user *users.UserRecord, room *rooms.Room, cmdPrompt *pro
 
 	}
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="203">No character with the name <ansi fg="username">`+rawResponse+`</ansi> found.</ansi>`)
+	user.SendText(messaging.CategoryRefusal, `<ansi fg="203">No character with the name <ansi fg="username">`+refusal.Echo(rawResponse)+`</ansi> found.</ansi>`)
 
 	user.ClearPrompt()
 	return true, nil
@@ -354,7 +354,7 @@ func cmdCharacterView(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 	}
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="203">No character with the name <ansi fg="username">`+rawResponse+`</ansi> found.</ansi>`)
+	user.SendText(messaging.CategoryRefusal, `<ansi fg="203">No character with the name <ansi fg="username">`+refusal.Echo(rawResponse)+`</ansi> found.</ansi>`)
 
 	user.ClearPrompt()
 	return true, nil
@@ -373,7 +373,7 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 		// Do they already have this mob hired??
 		if friend, ok := hiredOutChars[char.Name]; ok && friend.Description == char.Description {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is already hired out.`, char.Name))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is already hired out.`, char.Name))
 			user.ClearPrompt()
 			return true, nil
 		}
@@ -397,7 +397,7 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 		}
 
 		if user.Character.Gold < charValue {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You only have <ansi fg="gold">%d gold</ansi> and it would cost <ansi fg="gold">%d gold</ansi> to hire <ansi fg="username">%s</ansi>.`, charValue, charValue, char.Name))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You only have <ansi fg="gold">%d gold</ansi> and it would cost <ansi fg="gold">%d gold</ansi> to hire <ansi fg="username">%s</ansi>.`, user.Character.Gold, charValue, char.Name))
 			user.ClearPrompt()
 			return true, nil
 		}
@@ -405,7 +405,7 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 		// Prevent follower overage
 		maxCharmed := user.Character.GetMaxCharmedCreatures()
 		if len(hiredOutChars) >= maxCharmed {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can only have %d mobs following you at a time.`, maxCharmed))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can only have %d mobs following you at a time.`, maxCharmed))
 			user.ClearPrompt()
 			return true, nil
 		}
@@ -455,7 +455,7 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 	}
 
-	user.SendText(messaging.CategorySystem, `<ansi fg="203">No character with the name <ansi fg="username">`+rawResponse+`</ansi> found.</ansi>`)
+	user.SendText(messaging.CategoryRefusal, `<ansi fg="203">No character with the name <ansi fg="username">`+refusal.Echo(rawResponse)+`</ansi> found.</ansi>`)
 
 	user.ClearPrompt()
 	return true, nil

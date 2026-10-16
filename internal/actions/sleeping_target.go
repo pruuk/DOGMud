@@ -1,12 +1,11 @@
 package actions
 
 import (
-	"fmt"
-
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -49,15 +48,13 @@ func RefuseIfAsleep(c *characters.Character, name string, user *users.UserRecord
 		// Suggest shout WITH words. Bare `shout` wakes them but prints the
 		// rather silly `You shout, ""`, and "try shout" was read as an
 		// instruction to type exactly that.
-		line := fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi> is fast asleep. `+
-				`You could make some noise. Try <ansi fg="command">shout wake up</ansi>.`, name)
+		line := refusal.TargetAsleepText(name)
 		// A player who aimed at a shape never learned the sleeper's name
 		// (#454): hide it at their sight in their own room.
 		if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
 			line = messaging.HideNames(line, []string{name}, messaging.ParticipantSight(user.Character, room))
 		}
-		user.SendText(messaging.CategorySystem, line)
+		user.SendText(messaging.CategoryRefusal, line)
 	}
 	return true
 }

@@ -35,13 +35,13 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	res := actions.ExecuteTrip(actor)
 	if res.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		refusal.Cost(user, res.Cost)
 		return true, nil
 	}
 
 	if res.Crafting {
 		// Safety net — should have been caught by the pre-reject above.
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't trip someone while focused on your work. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "trip someone")
 		return true, nil
 	}
 
@@ -55,7 +55,7 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if res.TargetOnFloor {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("%s is already on the ground.", res.Target.Name))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("%s is already on the ground.", res.Target.Name))
 		return true, nil
 	}
 

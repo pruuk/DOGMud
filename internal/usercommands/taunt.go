@@ -28,18 +28,18 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	result := executeTauntAction(actor)
 	if result.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
+		refusal.Cost(user, result.Cost)
 		return true, nil
 	}
 
 	if result.Crafting {
 		// Safety net — should have been caught by the pre-reject above.
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't taunt while focused on your work. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "taunt")
 		return true, nil
 	}
 
 	if result.Silenced {
-		user.SendText(messaging.CategorySystem, "You cannot make a sound.")
+		user.SendText(messaging.CategoryRefusal, "You cannot make a sound.")
 		return true, nil
 	}
 

@@ -30,12 +30,12 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Delegate core resolution to the shared action.
 	res := actions.ExecuteRake(actor)
 	if res.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		refusal.Cost(user, res.Cost)
 		return true, nil
 	}
 
 	if res.NotClawed {
-		user.SendText(messaging.CategorySystem, "You have no claws to rake with.")
+		user.SendText(messaging.CategoryRefusal, "You have no claws to rake with.")
 		return true, nil
 	}
 	if res.OnCooldown {

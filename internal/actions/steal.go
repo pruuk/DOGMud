@@ -112,7 +112,7 @@ func Steal(actor Actor, opts StealOptions) StealResult {
 
 	// Under-attack gate — mobs with userId=0 short-circuit this harmlessly.
 	if room.AreMobsAttacking(actor.GetUserId()) {
-		actor.SendText(messaging.CategorySystem, "You can't do that while you are under attack!")
+		refusal.WhileUnderAttack(actor, "steal")
 		return StealResult{Reason: "under attack"}
 	}
 
@@ -128,7 +128,7 @@ func Steal(actor Actor, opts StealOptions) StealResult {
 	// One pickpocket at a time: a thief still in one's pause starts no other
 	// (the cooldown normally covers this, but it may be set to nothing).
 	if actor.IsPlayer() && pocketPending(actor.GetUserId()) {
-		actor.SendText(messaging.CategorySystem, "Your hand is still in someone's pocket.")
+		actor.SendText(messaging.CategoryRefusal, "Your hand is still in someone's pocket.")
 		return StealResult{Reason: "busy"}
 	}
 
@@ -218,7 +218,7 @@ func stealFromMob(actor Actor, mobInstanceId int, t theftAttempt) StealResult {
 
 	m := mobs.GetInstance(mobInstanceId)
 	if m == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return StealResult{Reason: "target not found"}
 	}
 
@@ -227,10 +227,12 @@ func stealFromMob(actor Actor, mobInstanceId int, t theftAttempt) StealResult {
 	// first) or one bonded to the AI companion, which need not be charmed.
 	// Its pocket is its owner's (owner ruling 2026-09-29). This holds for a
 	// mob thief as well, as the two protections below do.
+	// The refusals name the mob only for a thief who can see it.
+	sight := messaging.ParticipantSight(t.char, combat.SightRoom(actor.GetRoom()))
 	if m.Character.IsCharmed() || companionai.IsBondedCompanion(m.InstanceId) {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryRefusal, messaging.HideNames(fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> is someone's companion. You can't steal from them.`,
-			m.Character.Name))
+			m.Character.Name), []string{m.Character.Name}, sight))
 		return StealResult{
 			DefenderName: m.Character.Name,
 			Reason:       "companion",
@@ -239,9 +241,9 @@ func stealFromMob(actor Actor, mobInstanceId int, t theftAttempt) StealResult {
 
 	// The rest of mobs.CheckPlayerHarm's policy.
 	if block := mobs.CheckPlayerHarm(m); block.Blocked() {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryRefusal, messaging.HideNames(fmt.Sprintf(
 			`You can't steal from <ansi fg="mobname">%s</ansi>.`,
-			m.Character.Name))
+			m.Character.Name), []string{m.Character.Name}, sight))
 		return StealResult{
 			DefenderName: m.Character.Name,
 			Reason:       "immune",
@@ -253,7 +255,7 @@ func stealFromMob(actor Actor, mobInstanceId int, t theftAttempt) StealResult {
 	// gets the immune rebuff (which doesn't imply skill would help)
 	// rather than the skill rebuff (which does).
 	if t.rank < 2 {
-		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
+		actor.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{
 			DefenderName: m.Character.Name,
 			Reason:       "not advanced enough",
@@ -437,13 +439,13 @@ func stealFromPlayer(actor Actor, targetUserId int, t theftAttempt) StealResult 
 
 	targetUser := users.GetByUserId(targetUserId)
 	if targetUser == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return StealResult{Reason: "target not found"}
 	}
 
 	// Skill rank 2 required.
 	if t.rank < 2 {
-		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
+		actor.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{
 			DefenderName: targetUser.Character.Name,
 			Reason:       "not advanced enough",
@@ -540,12 +542,12 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 	// gate in stealFromMob; checked AFTER target validation so the rebuff
 	// order is consistent.
 	if t.rank < 2 {
-		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
+		actor.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{Reason: "not advanced enough"}
 	}
 
 	if len(container.Items) == 0 && container.Gold == 0 {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			`You root around inside the <ansi fg="itemname">%s</ansi> `+
 				`but find it empty.`,
 			containerName))
@@ -869,13 +871,12 @@ func stealHouseholdBauble(actor Actor, itm items.Item, t theftAttempt) StealResu
 		return StealResult{Reason: "not found"}
 	}
 	if t.rank < 2 {
-		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
+		actor.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return StealResult{Reason: "not advanced enough"}
 	}
 	// Too heavy to lift is not a theft.
 	if char.GetCarriedWeight()+itm.GetSpec().GetWeight() > char.CarryCapacity()*2.0 {
-		actor.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, name))
+		actor.SendText(messaging.CategoryRefusal, `You can't carry that. You're already overloaded!`)
 		return StealResult{Reason: "overloaded"}
 	}
 
@@ -914,8 +915,7 @@ func stealHouseholdBauble(actor Actor, itm items.Item, t theftAttempt) StealResu
 	}
 
 	if !char.StoreItem(itm) {
-		actor.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, name))
+		actor.SendText(messaging.CategoryRefusal, `You can't carry that. You're already overloaded!`)
 		return StealResult{Reason: "overloaded"}
 	}
 	room.RemoveItem(itm, false)

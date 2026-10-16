@@ -20,7 +20,7 @@ func Sort(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if !hasBag && !hasBandolier {
-		user.SendText(messaging.CategorySystem, `You don't have a component bag or bandolier equipped.`)
+		user.SendText(messaging.CategoryRefusal, `You don't have a component bag or bandolier equipped.`)
 		return true, nil
 	}
 
@@ -35,7 +35,7 @@ func Sort(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if materialsMoved == 0 && potionsMoved == 0 {
-		user.SendText(messaging.CategorySystem, `No items found to sort.`)
+		user.SendText(messaging.CategoryRefusal, `No items found to sort.`)
 		return true, nil
 	}
 

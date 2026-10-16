@@ -95,7 +95,7 @@ func Channels(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		for _, c := range channels.All() {
 			names = append(names, c.Name)
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`No such channel. Valid channels: %s`, strings.Join(names, ", ")))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`No such channel. Valid channels: %s`, strings.Join(names, ", ")))
 		return true, nil
 	}
 

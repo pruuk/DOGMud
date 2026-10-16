@@ -35,7 +35,7 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if rest == "party" {
 		currentParty := parties.Get(user.UserId)
 		if currentParty == nil {
-			user.SendText(messaging.CategorySystem, "You are not in a party.")
+			refusal.NotInParty(user)
 			return true, nil
 		}
 
@@ -70,7 +70,7 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 		target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
 		if err == actions.ErrTargetVanished {
-			user.SendText(messaging.CategorySystem, "They are no longer here.")
+			user.SendText(messaging.CategoryRefusal, "They are no longer here.")
 			return true, nil
 		}
 		if err != nil || !target.IsPlayer() {

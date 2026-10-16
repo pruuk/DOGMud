@@ -59,7 +59,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 
 	// Must be hidden to shadow.
 	if !char.IsHidden() {
-		actor.SendText(messaging.CategorySystem,
+		actor.SendText(messaging.CategoryRefusal,
 			"You must be hidden to shadow someone. "+
 				`Try <ansi fg="command">sneak</ansi> first.`)
 		return ShadowResult{Reason: "not hidden"}
@@ -83,11 +83,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 	// Check cooldown before doing target resolution.
 	if !char.TryCooldown(cooldownKey,
 		fmt.Sprintf(`%d rounds`, cfg.ShadowCooldown)) {
-		return ShadowResult{
-			OnCooldown: true,
-			Reason: fmt.Sprintf("%d rounds remaining",
-				char.GetCooldown(cooldownKey)),
-		}
+		return ShadowResult{OnCooldown: true}
 	}
 
 	if opts.TargetMobInstanceId > 0 {
@@ -101,7 +97,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 func shadowMob(actor Actor, mobInstanceId int) ShadowResult {
 	m := mobs.GetInstance(mobInstanceId)
 	if m == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return ShadowResult{Reason: "target not found"}
 	}
 
@@ -147,7 +143,7 @@ func shadowMob(actor Actor, mobInstanceId int) ShadowResult {
 func shadowPlayer(actor Actor, targetUserId int) ShadowResult {
 	targetUser := users.GetByUserId(targetUserId)
 	if targetUser == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return ShadowResult{Reason: "target not found"}
 	}
 

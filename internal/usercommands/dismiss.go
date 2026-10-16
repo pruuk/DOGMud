@@ -58,14 +58,14 @@ func Dismiss(rest string, user *users.UserRecord,
 	}
 
 	if len(user.Character.Companions) == 0 {
-		user.SendText(messaging.CategorySystem, "You have no companions to dismiss.")
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 
 	comp := user.Character.GetCompanion(rest)
 	if comp == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`You have no companion named "%s".`, rest,
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+			`You have no companion named "%s".`, refusal.Echo(rest),
 		))
 		return true, nil
 	}
@@ -83,8 +83,8 @@ func Dismiss(rest string, user *users.UserRecord,
 	// the bond; with the module on but no profile for this companion,
 	// nothing will ever take it up, and it is the same.
 	if sourceType == characters.CompanionBonded && companionai.DrivesBonded(comp.MobId) {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`<ansi fg="mobname">%s</ansi> is not yours to dismiss. If you want to part ways, you will have to tell them.`,
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+			`<ansi fg="mobname">%s</ansi> is not yours to dismiss. To part ways, tell them.`,
 			compName,
 		))
 		return true, nil

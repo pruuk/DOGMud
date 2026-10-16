@@ -36,19 +36,19 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Delegate core bash logic to the shared action.
 	bashResult := actions.ExecuteBash(actor)
 	if bashResult.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(bashResult.Cost))
+		refusal.Cost(user, bashResult.Cost)
 		return true, nil
 	}
 
 	if bashResult.Crafting {
 		// Safety net — should have been caught by the pre-reject above.
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't bash while focused on your work. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "bash")
 		return true, nil
 	}
 
 	switch {
 	case bashResult.NoShield:
-		user.SendText(messaging.CategorySystem, "You need a shield equipped to perform a shield bash!")
+		user.SendText(messaging.CategoryRefusal, "You need a shield equipped to perform a shield bash!")
 		return true, nil
 	case bashResult.OnCooldown:
 		refusal.Cooldown(user, "bash")

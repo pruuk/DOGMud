@@ -63,7 +63,7 @@ func getAllMatchingFromFloor(user *users.UserRecord, room *rooms.Room, itemName 
 		}
 		user.Character.CancelConditionsWithFlag(conditions.Hidden)
 		if err != nil {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryRefusal,
 				fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
 			)
 			break
@@ -105,7 +105,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	// rule, actions.TooDarkToGet). Asked here, first, so the container,
 	// corpse and bag branches below stay refused in the dark too.
 	if actions.TooDarkToGet(&actions.UserActor{User: user, Room: room}) {
-		user.SendText(messaging.CategorySystem, "You can't see anything to pick up!")
+		user.SendText(messaging.CategoryRefusal, "You can't see anything to pick up!")
 		return true, nil
 	}
 
@@ -124,7 +124,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	// Sealed crate short-circuit — players can't `get` from it.
 	if len(args) > 0 && room.MatchesSealedCrate(strings.ToLower(args[len(args)-1])) {
-		user.SendText(messaging.CategorySystem, `The shipping crate is sealed and bound for the caravan; you can't get into it.`)
+		user.SendText(messaging.CategoryRefusal, `The shipping crate is sealed and bound for the caravan; you can't get into it.`)
 		return true, nil
 	}
 
@@ -135,7 +135,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			allLastArg := args[len(args)-1]
 			if allLastArg == "bag" || allLastArg == "case" || allLastArg == "pouch" || allLastArg == "components" {
 				if len(user.Character.ComponentItems) == 0 {
-					user.SendText(messaging.CategorySystem, `Your component bag is empty.`)
+					user.SendText(messaging.CategoryRefusal, `Your component bag is empty.`)
 				} else {
 					ct := len(user.Character.ComponentItems)
 					user.Character.Items = append(user.Character.Items, user.Character.ComponentItems...)
@@ -146,7 +146,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 			if allLastArg == "bandolier" || allLastArg == "potions" {
 				if len(user.Character.PotionItems) == 0 {
-					user.SendText(messaging.CategorySystem, `Your bandolier is empty.`)
+					user.SendText(messaging.CategoryRefusal, `Your bandolier is empty.`)
 				} else {
 					ct := len(user.Character.PotionItems)
 					user.Character.Items = append(user.Character.Items, user.Character.PotionItems...)
@@ -179,7 +179,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					}
 				}
 				if container.Gold < 1 && len(container.Items) < 1 {
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`There's nothing in the <ansi fg="container">%s</ansi>.`, cName))
+					user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`There's nothing in the <ansi fg="container">%s</ansi>.`, cName))
 				}
 				return true, nil
 			}
@@ -200,7 +200,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			if _, cm, ok := parser.SplitTrailingContainer(parser.Scope{User: user, Room: room}, rest); ok && cm.Kind == parser.KindCorpse {
 				corpse := &room.Corpses[cm.CorpseIdx]
 				if !canLootCorpse(user, corpse) {
-					user.SendText(messaging.CategorySystem, `This isn't your kill.`)
+					user.SendText(messaging.CategoryRefusal, `This isn't your kill.`)
 					return true, nil
 				}
 				hadGold := corpse.Loot.Gold > 0
@@ -212,7 +212,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					takeCorpseItem(user, room, corpse, item.Name())
 				}
 				if !hadGold && len(iCopies) == 0 {
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`There's nothing left on the %s.`, corpseNameFor(user, room, corpse)))
+					user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`There's nothing left on the %s.`, corpseNameFor(user, room, corpse)))
 				}
 				return true, nil
 			}
@@ -271,7 +271,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		}
 
 		if offered == 0 {
-			user.SendText(messaging.CategorySystem, `There is nothing here to pick up.`)
+			user.SendText(messaging.CategoryRefusal, `There is nothing here to pick up.`)
 		}
 
 		return true, nil
@@ -353,7 +353,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 
 			if foundItem.ItemId == 0 {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a "%s" in your %s.`, rest, label))
+				refusal.NotCarrying(user, rest)
 				return true, nil
 			}
 
@@ -410,7 +410,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			if petUserId > 0 {
 
 				if petUserId != user.UserId {
-					user.SendText(messaging.CategorySystem, `You can't do that!`)
+					user.SendText(messaging.CategoryRefusal, `You can only take things from your own pet.`)
 					return true, nil
 				}
 
@@ -436,7 +436,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		// Ownership/mode gate: enforces kill ownership and party loot mode.
 		if !canLootCorpse(user, corpse) {
-			user.SendText(messaging.CategorySystem, `This isn't your kill.`)
+			user.SendText(messaging.CategoryRefusal, `This isn't your kill.`)
 			return true, nil
 		}
 
@@ -455,13 +455,13 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		matchItem, found := user.Character.Pet.FindItem(rest)
 		if !found {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s carried by %s.`, rest, user.Character.Pet.DisplayName()))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You don't see a %s carried by %s.`, refusal.Echo(rest), user.Character.Pet.DisplayName()))
 		} else {
 
 			if user.Character.Pet.RemoveItem(matchItem) {
 				if !user.Character.StoreItem(matchItem) {
 					user.Character.Pet.StoreItem(matchItem)
-					user.SendText(messaging.CategorySystem,
+					user.SendText(messaging.CategoryRefusal,
 						fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
 					)
 				} else {
@@ -498,9 +498,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		// Mirrors the gate every sibling command applies (look.go, put.go,
 		// lock.go, unlock.go, picklock.go).
 		if container.Lock.IsLocked() {
-			user.SendText(messaging.CategorySystem, ``)
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
-			user.SendText(messaging.CategorySystem, ``)
+			user.SendText(messaging.CategoryRefusal, ``)
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
+			user.SendText(messaging.CategoryRefusal, ``)
 			return true, nil
 		}
 
@@ -509,7 +509,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if strings.EqualFold(strings.TrimSpace(rest), `gold`) {
 
 			if container.Gold < 1 {
-				user.SendText(messaging.CategorySystem, "There's no gold to grab.")
+				user.SendText(messaging.CategoryRefusal, "There's no gold to grab.")
 			} else {
 
 				user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
@@ -539,7 +539,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		matchItem, found := container.FindItem(rest)
 
 		if !found {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s in the <ansi fg="container">%s</ansi>.`, rest, containerName))
+			refusal.NotHereThing(user)
 		} else {
 
 			user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
@@ -571,7 +571,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				return true, nil
 
 			} else {
-				user.SendText(messaging.CategorySystem,
+				user.SendText(messaging.CategoryRefusal,
 					fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
 				)
 			}
@@ -585,7 +585,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if strings.EqualFold(strings.TrimSpace(rest), `gold`) {
 
 			if room.Gold < 1 {
-				user.SendText(messaging.CategorySystem, "There's no gold to grab.")
+				user.SendText(messaging.CategoryRefusal, "There's no gold to grab.")
 			} else {
 
 				user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
@@ -623,7 +623,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				found = true
 				switch {
 				case errors.Is(result.Err, actions.ErrExploding):
-					user.SendText(messaging.CategorySystem, `You can't pick that up, it's about to explode!`)
+					user.SendText(messaging.CategoryRefusal, `You can't pick that up, it's about to explode!`)
 					return true, nil
 				case errors.Is(result.Err, actions.ErrFixture):
 					fixedInPlace(user, matchItem)
@@ -633,13 +633,13 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					// `get` never commits a crime: the shared pickup
 					// refuses it for every taker, and this names the
 					// steal command, which is the theft.
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(
-						`The <ansi fg="itemname">%s</ansi> belongs to this household. To take it anyway, <ansi fg="command">steal %s</ansi>.`,
+					user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+						`The <ansi fg="itemname">%s</ansi> belongs to this household. Try <ansi fg="command">steal %s</ansi>.`,
 						matchItem.DisplayName(), stealWord(matchItem)))
 					return true, nil
 				case result.Err != nil:
 					// Capacity exceeded: item was rolled back to floor
-					user.SendText(messaging.CategorySystem,
+					user.SendText(messaging.CategoryRefusal,
 						fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
 					)
 					return true, nil
@@ -657,11 +657,11 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					found = true
 					matchItem = result.Item
 					if errors.Is(result.Err, actions.ErrExploding) {
-						user.SendText(messaging.CategorySystem, `You can't pick that up, it's about to explode!`)
+						user.SendText(messaging.CategoryRefusal, `You can't pick that up, it's about to explode!`)
 						return true, nil
 					}
 					if result.Err != nil {
-						user.SendText(messaging.CategorySystem,
+						user.SendText(messaging.CategoryRefusal,
 							fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
 						)
 						return true, nil
@@ -711,7 +711,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		foundNoun, _ := room.FindNoun(rest)
 		if len(foundNoun) > 0 {
 
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can't get the <ansi fg="noun">%s</ansi>`, foundNoun))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can't get the <ansi fg="noun">%s</ansi>`, foundNoun))
 			room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> is grasping at the air.`, user.Character.Name), user.UserId)
 
 			return true, nil
@@ -720,7 +720,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if _, corpseFound := room.FindCorpse(rest, user.Character); corpseFound {
-		user.SendText(messaging.CategorySystem, `You can't pick up corpses. What would people think?`)
+		user.SendText(messaging.CategoryRefusal, `You can't pick up corpses. What would people think?`)
 		return true, nil
 	}
 
@@ -733,7 +733,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		}
 	}
 	if containerName != `` {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can't pick up the <ansi fg="container">%s</ansi>. Try looking at it.`, containerName))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can't pick up the <ansi fg="container">%s</ansi>. Try looking at it.`, containerName))
 	} else {
 		refusal.NotHereThing(user)
 	}
@@ -773,7 +773,7 @@ func canLootCorpse(user *users.UserRecord, corpse *rooms.Corpse) bool {
 // `get all <corpse>` works at any sight the lookup itself allowed (#435).
 func takeCorpseGold(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corpse) {
 	if corpse.Loot.Gold < 1 {
-		user.SendText(messaging.CategorySystem, "There's no gold to grab.")
+		user.SendText(messaging.CategoryRefusal, "There's no gold to grab.")
 		return
 	}
 	user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
@@ -798,7 +798,7 @@ func takeCorpseGold(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corp
 func takeCorpseItem(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corpse, itemName string) {
 	matchItem, found := corpse.Loot.FindItem(itemName)
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s in the %s.`, itemName, corpseNameFor(user, room, corpse)))
+		refusal.NotHereThing(user)
 		return
 	}
 
@@ -806,14 +806,14 @@ func takeCorpseItem(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corp
 	// in the caller; this reserves specific items to specific members until
 	// the free-for-all timeout.
 	if !corpse.CanTakeItem(matchItem.UUID.String(), user.UserId, util.GetRoundCount()) {
-		user.SendText(messaging.CategorySystem, corpseItemGateMessage(corpse.LootMode))
+		user.SendText(messaging.CategoryRefusal, corpseItemGateMessage(corpse.LootMode))
 		return
 	}
 
 	user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
 
 	if !user.Character.StoreItem(matchItem) {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryRefusal,
 			fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, matchItem.DisplayName()),
 		)
 		return
@@ -894,15 +894,15 @@ func takeableOnFloor(room *rooms.Room, itemName string) (items.Item, bool) {
 
 // fixedInPlace tells a player a fixture cannot be taken (lighting 5e).
 func fixedInPlace(user *users.UserRecord, itm items.Item) {
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
+	user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 		`The <ansi fg="itemname">%s</ansi> is fixed in place.`, itm.DisplayName()))
 }
 
 // leaveHouseholdBauble tells a player sweeping the floor with `get all` that
 // a household's bauble was left alone.
 func leaveHouseholdBauble(user *users.UserRecord, itm items.Item) {
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(
-		`You leave the <ansi fg="itemname">%s</ansi>: it belongs to this household. To take it anyway, <ansi fg="command">steal %s</ansi>.`,
+	user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+		`You leave the <ansi fg="itemname">%s</ansi>; it belongs to this household. Try <ansi fg="command">steal %s</ansi>.`,
 		itm.DisplayName(), stealWord(itm)))
 }
 

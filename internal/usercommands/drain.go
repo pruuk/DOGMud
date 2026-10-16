@@ -30,12 +30,12 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// Delegate core resolution to the shared action.
 	res := actions.ExecuteDrain(actor)
 	if res.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		refusal.Cost(user, res.Cost)
 		return true, nil
 	}
 
 	if res.NotLifeDrainer {
-		user.SendText(messaging.CategorySystem, "Your body cannot drain the life from another.")
+		user.SendText(messaging.CategoryRefusal, "Your body cannot drain the life from another.")
 		return true, nil
 	}
 	if res.OnCooldown {

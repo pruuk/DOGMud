@@ -35,6 +35,12 @@ func refusalEchoRun(t *testing.T, band aimBand, needsCombat bool, run func(strin
 	return told
 }
 
+// partyInvite drives `party invite <rest>` as a one-word command for the
+// sight tables below.
+func partyInvite(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	return Party("invite "+rest, user, room, flags)
+}
+
 // M7 spec section 2 (#454): a creature that is there but unseen and a name
 // that matches nothing read the same, and neither echoes what was typed.
 // Each command is driven in the dark at the Skeleton (there) and at a name
@@ -47,6 +53,7 @@ func TestRefusalNeverEchoesThroughSight(t *testing.T) {
 	}{
 		{"target", Target, true},
 		{"consider", Consider, false},
+		{"party invite", partyInvite, false},
 	}
 	for _, c := range cmds {
 		there := refusalEchoRun(t, aimDark, c.needsCombat, c.run, "skeleton")
@@ -56,7 +63,7 @@ func TestRefusalNeverEchoesThroughSight(t *testing.T) {
 		assert.NotContains(t, strings.ToLower(there), "skeleton", c.name)
 		litNothing := refusalEchoRun(t, aimFull, c.needsCombat, c.run, "zzyzx")
 		assert.Contains(t, litNothing, refusal.NotHereCreatureLine, "%s in light", c.name)
-		assert.NotContains(t, litNothing, "zzyzx", "%s echoed a name the player looked for", c.name)
+		assert.NotContains(t, strings.ToLower(litNothing), "zzyzx", "%s echoed a name the player looked for", c.name)
 	}
 }
 
@@ -71,6 +78,7 @@ func TestRefusalNeverEchoesAtShapes(t *testing.T) {
 	}{
 		{"target", Target, true},
 		{"consider", Consider, false},
+		{"party invite", partyInvite, false},
 	}
 	for _, c := range cmds {
 		there := refusalEchoRun(t, aimShapes, c.needsCombat, c.run, "skeleton")
@@ -78,6 +86,6 @@ func TestRefusalNeverEchoesAtShapes(t *testing.T) {
 		assert.Equal(t, there, nothing, "%s: a creature that is there and no match must read the same at shapes", c.name)
 		assert.Contains(t, there, aimTagPattern.ReplaceAllString(actions.AimShapesHint(c.name), ``), "%s: the shapes hint", c.name)
 		assert.NotContains(t, strings.ToLower(there), "skeleton", c.name)
-		assert.NotContains(t, nothing, "zzyzx", "%s echoed a typed name at shapes", c.name)
+		assert.NotContains(t, strings.ToLower(nothing), "zzyzx", "%s echoed a typed name at shapes", c.name)
 	}
 }

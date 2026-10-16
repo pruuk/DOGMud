@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -187,9 +188,7 @@ func Search(actor Actor, opts SearchOptions) SearchResult {
 	if !char.TryCooldown("search", "2 rounds") {
 		result.OnCooldown = true
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
-				fmt.Sprintf("You need to wait %d more rounds to do that again.",
-					char.GetCooldown("search")))
+			refusal.Cooldown(actor, "search again")
 		}
 		return result
 	}

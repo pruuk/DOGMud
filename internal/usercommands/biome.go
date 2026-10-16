@@ -15,7 +15,7 @@ func Biome(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	biome, ok := rooms.GetBiome(room.Biome)
 
 	if !ok {
-		user.SendText(messaging.CategorySystem, `No biome information found about this area.`)
+		user.SendText(messaging.CategoryRefusal, `No biome information found about this area.`)
 		return false, fmt.Errorf(`biome %s not found`, room.Biome)
 	}
 

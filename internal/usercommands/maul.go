@@ -30,12 +30,12 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Delegate core resolution to the shared action.
 	res := actions.ExecuteMaul(actor)
 	if res.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		refusal.Cost(user, res.Cost)
 		return true, nil
 	}
 
 	if res.NotFanged {
-		user.SendText(messaging.CategorySystem, "You have no fangs to maul with.")
+		user.SendText(messaging.CategoryRefusal, "You have no fangs to maul with.")
 		return true, nil
 	}
 	if res.OnCooldown {

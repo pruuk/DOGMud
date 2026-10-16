@@ -24,7 +24,7 @@ func TestAttack_NoArgumentAndNoFoe_SaysNothingToAttack(t *testing.T) {
 	require.NoError(t, err)
 
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	require.Contains(t, out, "There is nothing here to attack.")
+	require.Contains(t, out, refusal.NoTargetText("attack"))
 	require.NotContains(t, out, "darkness")
 }
 

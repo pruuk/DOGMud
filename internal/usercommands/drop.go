@@ -90,7 +90,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		g, _ := strconv.ParseInt(args[0], 10, 32)
 		dropAmt := int(g)
 		if dropAmt < 1 {
-			user.SendText(messaging.CategorySystem, "Oops!")
+			refusal.Prompt(user, "drop", refusal.HowMuchGold, "drop <amount> gold")
 			return true, nil
 		}
 
@@ -102,7 +102,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.Character.CancelConditionsWithFlag(conditions.Hidden)
 
 		if err := actions.FloorDropGold(dropAmt, user.Character, room); err != nil {
-			user.SendText(messaging.CategorySystem, "Oops!")
+			refusal.Failed(user, "drop", err, "userId", user.UserId)
 			return true, nil
 		}
 
@@ -156,8 +156,6 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	} else {
 		user.Character.CancelConditionsWithFlag(conditions.Hidden)
 
-		iSpec := result.Item.GetSpec()
-
 		user.SendText(messaging.CategorySystem,
 			fmt.Sprintf(`You drop the <ansi fg="item">%s</ansi>.`, result.Item.DisplayName()),
 		)
@@ -165,11 +163,6 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> drops their <ansi fg="item">%s</ansi>...`, user.Character.Name, result.Item.DisplayName()),
 			user.UserId,
 		)
-
-		// If grenades are dropped, they explode and affect everyone in the room!
-		if iSpec.Type == items.Grenade {
-			user.SendText(messaging.CategorySystem, `Todo. Grenades disabled for now.`)
-		}
 	}
 
 	return true, nil

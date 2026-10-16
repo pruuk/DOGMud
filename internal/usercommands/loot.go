@@ -24,7 +24,7 @@ func Loot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Can't loot if you can't see anything at all; shapes are enough (lighting
 	// plan 5c).
 	if messaging.ParticipantSight(user.Character, room) == messaging.SightNone {
-		user.SendText(messaging.CategorySystem, "You can't see anything to loot!")
+		user.SendText(messaging.CategoryRefusal, "You can't see anything to loot!")
 		return true, nil
 	}
 
@@ -84,12 +84,12 @@ func lootCorpseAll(user *users.UserRecord, room *rooms.Room, corpseIdx int) {
 
 	// Ownership/mode gate: enforces kill ownership and party loot mode.
 	if !canLootCorpse(user, corpse) {
-		user.SendText(messaging.CategorySystem, `This isn't your kill.`)
+		user.SendText(messaging.CategoryRefusal, `This isn't your kill.`)
 		return
 	}
 
 	if !corpse.HasLoot() {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`There's nothing to loot from the %s.`, corpseNameFor(user, room, corpse)))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`There's nothing to loot from the %s.`, corpseNameFor(user, room, corpse)))
 		return
 	}
 
@@ -117,7 +117,7 @@ func lootCorpseAll(user *users.UserRecord, room *rooms.Room, corpseIdx int) {
 			)
 			tookSomething = true
 		} else {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryRefusal,
 				fmt.Sprintf(`You can't carry the <ansi fg="itemname">%s</ansi> - you're already overloaded!`, it.DisplayName()),
 			)
 			break
@@ -168,13 +168,13 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 	corpse := &room.Corpses[corpseIdx]
 
 	if corpse.LootMode != "roundrobin" || len(corpse.RRAssignee) == 0 {
-		user.SendText(messaging.CategorySystem, "There's nothing to pass. Loot passing only applies to round-robin looting.")
+		user.SendText(messaging.CategoryRefusal, "There's nothing to pass. Loot passing only applies to round-robin looting.")
 		return true, nil
 	}
 
 	party := parties.Get(user.UserId)
 	if party == nil {
-		user.SendText(messaging.CategorySystem, "There's nothing to pass.")
+		user.SendText(messaging.CategoryRefusal, "There's nothing to pass.")
 		return true, nil
 	}
 
@@ -190,7 +190,7 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 		}
 	}
 	if len(members) < 2 {
-		user.SendText(messaging.CategorySystem, "There's no one to pass your share to.")
+		user.SendText(messaging.CategoryRefusal, "There's no one to pass your share to.")
 		return true, nil
 	}
 
@@ -202,7 +202,7 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 		}
 	}
 	if selfIdx < 0 {
-		user.SendText(messaging.CategorySystem, "There's nothing to pass.")
+		user.SendText(messaging.CategoryRefusal, "There's nothing to pass.")
 		return true, nil
 	}
 
@@ -218,7 +218,7 @@ func lootPassCorpse(rest string, user *users.UserRecord, room *rooms.Room) (bool
 	}
 
 	if reassigned == 0 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You have no share to pass on the %s.`, corpseNameFor(user, room, corpse)))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You have no share to pass on the %s.`, corpseNameFor(user, room, corpse)))
 		return true, nil
 	}
 

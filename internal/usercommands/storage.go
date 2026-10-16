@@ -22,15 +22,12 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	if !room.IsStorage {
 
-		user.SendText(messaging.CategorySystem, `You are not at a storage location.`+term.CRLFStr)
+		user.SendText(messaging.CategoryRefusal, `You are not at a storage location.`+term.CRLFStr)
 
+		// The hint names no container: the player found it by looking, and a
+		// hidden one must not be named (spec section 2).
 		if len(room.Containers) > 0 {
-			cName := ``
-			for k := range room.Containers {
-				cName = k
-				break
-			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`Maybe you meant to use the <ansi fg="command">put</ansi> command to <ansi fg="command">put</ansi> something into the <ansi fg="container">%s</ansi>?`, cName)+term.CRLFStr)
+			user.SendText(messaging.CategoryRefusal, `Try <ansi fg="command">put <item> <container></ansi>.`+term.CRLFStr)
 		}
 
 		return true, nil
@@ -216,7 +213,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		for _, slot := range user.ItemStorage.GetSlots() {
 			for i := 0; i < slot.Count; i++ {
 				if !storageRemoveQuiet(user, slot.Item) {
-					user.SendText(messaging.CategorySystem, `You can't carry the rest.`)
+					user.SendText(messaging.CategoryRefusal, `You can't carry the rest.`)
 					break
 				}
 				retrieved++
@@ -244,7 +241,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			}
 			if !storageRemoveQuiet(user, itm) {
 				if retrieved > 0 {
-					user.SendText(messaging.CategorySystem, `You can't carry the rest.`)
+					user.SendText(messaging.CategoryRefusal, `You can't carry the rest.`)
 				}
 				break
 			}
@@ -252,7 +249,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		}
 		switch retrieved {
 		case 0:
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s in storage.`, itemName))
+			refusal.NotInStorage(user, itemName)
 		case 1:
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You removed the <ansi fg="itemname">%s</ansi> from storage.`, itemName))
 		default:
@@ -266,7 +263,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		slots := user.ItemStorage.GetSlots()
 		itmIdx-- // convert to 0-based
 		if itmIdx >= len(slots) {
-			user.SendText(messaging.CategorySystem, `You don't have that item in storage.`)
+			refusal.NotInStorage(user, "")
 			return true, nil
 		}
 		storageRemoveOne(user, slots[itmIdx].Item)
@@ -281,15 +278,15 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			if retrieved > 0 {
 				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can only retrieve %d from storage.`, retrieved))
 			} else {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s in storage.`, itemName))
+				refusal.NotInStorage(user, itemName)
 			}
 			break
 		}
 		if !storageRemoveOne(user, itm) {
 			if retrieved == 0 {
-				user.SendText(messaging.CategorySystem, `You can't carry that!`)
+				user.SendText(messaging.CategoryRefusal, `You can't carry that!`)
 			} else {
-				user.SendText(messaging.CategorySystem, `You can't carry the rest.`)
+				user.SendText(messaging.CategoryRefusal, `You can't carry the rest.`)
 			}
 			break
 		}
@@ -363,7 +360,7 @@ func storageFindAddable(user *users.UserRecord, itemName string, room *rooms.Roo
 
 // storageSayStolen tells the player why storage turned name away.
 func storageSayStolen(user *users.UserRecord, name string) {
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`The keepers will not take the <ansi fg="itemname">%s</ansi>: it was reported stolen, and not long ago.`, name))
+	user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The keepers won't take the <ansi fg="itemname">%s</ansi>: it was reported stolen.`, name))
 }
 
 // storageAddQuiet transfers one unit of itm from the player to storage.

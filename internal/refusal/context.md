@@ -30,11 +30,19 @@ in the room.
 
 - Sight-gated helpers (`NotHereCreature`, `NotHereThing`, `NothingToAim`)
   take no name at all, so they cannot echo.
-- `NotCarrying` echoes (the player's own belongings), through `echo`: ANSI
+- `NotCarrying`, `NotWearing`, `NotInStorage` (the player's own belongings)
+  and `NotPartyMember` (their own party) echo, through `echo`: ANSI
   tags stripped, trimmed, truncated by display width to 24 columns plus
   `...` (`runewidth.Truncate`, so wide characters count as two columns and
   the longest echo still fits 80 columns), then leftover markup escaped with
-  `util.EscapeAnsiTags` so typed input cannot style the line.
+  `util.EscapeAnsiTags` so typed input cannot style the line. An empty
+  echo reads "that".
+- `Echo(typed)` exports the same echo for lines outside the package that
+  repeat what the player typed about their own things: a companion name
+  (`companion.go`, `dismiss.go`), an alt (`character.go`), a recipe (`craft.go`), a spell
+  (`skill.cast.go`, `cancel.go`), the pet's pack (`get.go`), a setting
+  (`set.go`, `sethome.go`). Never pass it a name the player could only find
+  by looking (a creature, a floor item): those lines take no name at all.
 - The normalizer runs on refusal lines exactly as it ran on `CategorySystem`,
   so an echoed "a apple" reads "an apple" and "rope rope" reads "rope". That
   is accepted, not a regression.
@@ -59,8 +67,34 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `NotPartyLeader(u, "set the loot mode")` / `NotPartyLeaderText` | Only the party leader can set the loot mode. |
 | `NoPartyInvite` / `NoPartyInviteLine` | You have no party invitation to answer. |
 | `RecipientFull` / `RecipientFullLine` | They can't carry any more. |
+| `WhileBusy(u, "change equipment")` / `WhileBusyText` | You can't change equipment while you're busy. Try **cancel**. |
+| `WhileUnderAttack(u, "steal")` / `WhileUnderAttackText` | You can't steal while under attack. |
+| `TargetAsleepText("Mira")` (no send) | **Mira** is fast asleep. You could make some noise. Try **shout wake up**. |
+| `Cost(u, res)` / `CostText` (stamina refused) | You are too spent to manage that right now. |
+| `Cost(u, res)` / `CostText` (conviction refused) | You cannot muster the resolve for that right now. |
+| `NotWearing(u, "ring")` / `NotWearingText` | You aren't wearing 'ring'. Try **inventory**. |
+| `NotInStorage(u, "rope")` / `NotInStorageText` | You don't have 'rope' in storage. Try **storage**. |
+| `NotInStorage(u, "")` | You don't have that in storage. Try **storage**. |
+| `NotInParty` / `NotInPartyText` | You aren't in a party. Try **party create**. |
+| `NotGuildLeader(u, "disband the guild")` / `NotGuildLeaderText` | Only the guild leader can disband the guild. |
+| `NotGuildOfficer(u, "invite")` / `NotGuildOfficerText` | Only guild officers and the leader can invite. |
+| `CompanionsFull` / `CompanionsFullLine` | You are already sustaining as many companions as your will can hold. |
+| `NotPartyMember(u, "Bob")` / `NotPartyMemberText` | No one in your party is called 'Bob'. |
 | `Failed(u, "", err)` / `FailedText` | That didn't work. The error has been logged. |
 | `Failed(u, "salvage", err)` | That salvage didn't work. The error has been logged. |
+
+`WhileBusy` covers casting, crafting and salvaging alike (`cancel` ends any
+of them); `usercommands.refuseWhileBusy` and the special moves send it.
+`NotGuildLeader` and `NotGuildOfficer` with an empty action read "do that".
+
+`TargetAsleepText` has no send of its own: it names the sleeper, and its
+caller (`actions.RefuseIfAsleep`) hides the name at the player's sight
+before sending, so a sleeper the player cannot see is not named.
+
+`Cost` sends nothing unless the cost was refused (`CostText` is empty for
+any other status, and for a pool with no refusal line), so a caller passes
+every `CostCommitResult` through it without checking first. A mob actor's
+`SendText` does nothing, so mob wrappers stay silent.
 
 ## Prompts
 
@@ -109,7 +143,8 @@ point at the wrapper. Call it directly at each site.
 
 ## Guards
 
-Two root-level tests keep the package the only source of these lines.
+Three root-level tests keep the package the only source of these lines and
+keep every refusal on `CategoryRefusal`.
 
 - `refusal_phrase_guard_test.go` (`TestRefusalPhrasesLiveInThePackage`)
   walks every non-test Go file under `internal/` and `modules/` (skipping
@@ -121,6 +156,21 @@ Two root-level tests keep the package the only source of these lines.
   finds each `AimBySight` call, follows the identifier its refusal is
   assigned to, and requires every `SendText` of it in that function to use
   `CategoryRefusal`. `TestAimRefusalGuardCanFail` proves it can fail.
+- `refusal_system_opener_guard_test.go`
+  (`TestRefusalOpenersNeverRideSystem`, slice 3) walks every non-test Go
+  file under `internal/` and `modules/` (`openerGuardScope`), finds each
+  call passing `messaging.CategorySystem`, reads the argument after it (a
+  string literal, the format of `fmt.Sprintf`, or the left end of a `+`
+  concatenation), strips tags and fails when it matches `refusalOpener`
+  ("You can't", "You don't have", "You aren't", "You need to", "Only the",
+  "Only officers" and the like). A line holding `, but ` is a partial
+  success ("You don't have that much gold on hand, but what you do have you
+  deposit."), not a refusal, and passes. `TestRefusalOpenerGuardCanFail`
+  feeds the finder each send shape and requires the hits it should find.
+  A hit is sent on `CategoryRefusal` or `refusalOpener` is narrowed; never
+  allow-list a file. Lines no opener can tell from a report were ruled one
+  by one in the slice 3 ledger
+  (`docs/superpowers/audits/messaging-m7-refusal-ledger.md`).
 
 The rows cover these families: not here (including "Nothing by that name is
 in this room" and "nobody like that here to ask"), not carrying, no target
@@ -147,9 +197,15 @@ Behaviour tests: `internal/usercommands/refusal_echo_sight_test.go` (no
 echo through sight) and `internal/usercommands/refusal_commands_test.go`
 (command-level lines).
 
-## Left for later slices
+## Slice 4
 
-Slices 3 and 4 of #371 move the remaining refusal families into this
-package (`WhileBusy`, `TargetAsleep`, `Cost`, `NotWearing`, then package by
-package), add their phrase rows, and add `CategoryUsage`, `CategoryAdmin`
-and the tag guard.
+Slice 3 put every refusal on `CategoryRefusal`. `CategorySystem` still
+carries reports, confirmations, help, usage and admin output. Slice 4 of
+#371:
+
+- adds `CategoryUsage` for usage lines (the ledger's 47 USAGE rows);
+- adds `CategoryAdmin` for staff output (`internal/usercommands/admin.*.go`,
+  retagged by file);
+- moves narration out of `CategorySystem` (the ledger's 63 NARR rows: party
+  notices to other members, guild announcements, follow lines);
+- adds the tag guard.

@@ -1,0 +1,68 @@
+# M7 slice 3 (#371): every refusal reads plainly.
+#
+# WHAT CHANGED. Refusals now come from one place and read the same in every
+# command. The ones this run checks:
+#   - doing something while you cast, craft or salvage:
+#     "You can't <do that> while you're busy. Try cancel."
+#   - a room container you named that is locked: "That is locked."
+#     (it must NOT repeat the container's name back to you)
+#   - `storage` away from a storage place: "You are not at a storage
+#     location." then "Try put <item> <container>." (no container named)
+#   - `party kick` with no name: "Kick whom? Try party kick <name>."
+#   - a guild command when you are in no guild: "You aren't in a guild.
+#     Try guild create <TAG> <name>."
+#   - a misspelled spell: "There is no spell called '<word>'. Try spells."
+#     (only the spell word, never the target name you typed after it)
+#   - a name you can only find by LOOKING (a creature, a container) is never
+#     repeated back to you in the dark.
+#
+# WHY HERE. Room 492 (Stash Room, Thornwall tunnels) is an unlit cave with a
+# container called "crates". Room 503 (Fungal Nook) nearby is lit by fungi
+# and holds a locked chest.
+#
+# 3 commands per round on the AI port; the overflow is dropped. Pace your
+# commands. Quote every line VERBATIM.
+
+ephemeral:
+  profile: mid
+  start_room: 492
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    DARK CHECKS. Type `look` and say whether you can see. Then type each of
+    these, one at a time, and quote exactly what you are told: `put crates
+    crates`, `use crates`, `storage`, `party invite zzyzx`, `consider zzyzx`.
+    Report whether any reply repeats the word "crates" or "zzyzx" back to you
+    (that would be a bug, unless you yourself can see the crates in the room
+    description).
+  - >-
+    BUSY. Type `cast heal` and, while the spell is still being cast (before
+    it finishes), type `inventory` and then `kick`. Quote the replies. A
+    command refused while you cast should say you can't do it while you're
+    busy and suggest cancel, and must not show any numbers like "2/5". Then
+    type `cancel` and quote it.
+  - >-
+    NO NAME AND NO GUILD. Type `party create`, then `party kick` (no name),
+    then `party promote` (no name), then `party kick zzyzx`. Quote all four.
+    Then type `party leave`. Then `guild disband` and `guild invite bob` and
+    quote both (you are in no guild).
+  - >-
+    TYPOS. Type `cast fierball zzyzx` and quote it: it should name only the
+    misspelled spell word, never zzyzx. Type `craft
+    averyveryverylongrecipenamethatgoesonandon` and quote it: the name should
+    be cut short with ... and the line should fit one screen line. Type
+    `help` and confirm a help page shows (not an error).
+  - >-
+    LIT CONTAINER. Find a way to a lit room with a chest (the Fungal Nook,
+    room 503, is in these tunnels; use `look` and the exits). If you reach a
+    room with a locked chest, type `put <any item you carry> chest` and `use
+    chest` and quote both. A locked chest should read "That is locked."
+  - >-
+    Report anything that reads WRONG in any refusal: a raw token like {actor}
+    or <name> with no command colour, a number of rounds or seconds, a line
+    longer than one screen line, "Something went wrong" or "The error has been
+    logged" for something that was only your own mistake, or two different
+    wordings for the same situation. If something attacks you, fight it off or
+    flee and keep testing.

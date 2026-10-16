@@ -38,7 +38,7 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// Below the faces band you can't make out the goods (lighting plan 5b).
 	if actions.ShopSightRefusal(user.Character, room) {
-		user.SendText(messaging.CategorySystem, actions.ShopSightRefusalText)
+		user.SendText(messaging.CategoryRefusal, actions.ShopSightRefusalText)
 		return true, nil
 	}
 
@@ -110,12 +110,12 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// sleep. "Visit a merchant" would read as though the player came to
 		// the wrong place, when they simply came at the wrong hour.
 		if away := actions.MerchantAwayAsleep(room); away != nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="mobname">%s</ansi> has closed up for the night and gone to bed. `+
-					`Come back in the morning, or make some noise nearby.`, away.Character.Name))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+				`<ansi fg="mobname">%s</ansi> has gone to bed. `+
+					`Come back in the morning, or make some noise.`, away.Character.Name))
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, "Visit a merchant to list and buy objects.")
+		user.SendText(messaging.CategoryRefusal, "Visit a merchant to list and buy objects.")
 		return true, nil
 	}
 

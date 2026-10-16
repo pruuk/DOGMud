@@ -584,7 +584,7 @@ func (g *GMCPMudletModule) sendUICommand(rest string, user *users.UserRecord, ro
 	// Only proceed if client is Mudlet
 	connId := user.ConnectionId()
 	if gmcpData, ok := gmcpModule.cache.Get(connId); !ok || !gmcpData.Client.IsMudlet {
-		user.SendText(messaging.CategorySystem, "\n<ansi fg=\"red\">This command is only available for Mudlet clients.</ansi> You are currently using: "+gmcpData.Client.Name+"\n")
+		user.SendText(messaging.CategoryRefusal, "\n<ansi fg=\"red\">This command is only available for Mudlet clients.</ansi> You are currently using: "+gmcpData.Client.Name+"\n")
 		return true, nil
 	}
 
@@ -687,7 +687,7 @@ func (g *GMCPMudletModule) discordCommand(rest string, user *users.UserRecord, r
 	// Only proceed if client is Mudlet
 	connId := user.ConnectionId()
 	if gmcpData, ok := gmcpModule.cache.Get(connId); !ok || !gmcpData.Client.IsMudlet {
-		user.SendText(messaging.CategorySystem, "\n<ansi fg=\"red\">This command is only available for Mudlet clients.</ansi> You are currently using: "+gmcpData.Client.Name+"\n")
+		user.SendText(messaging.CategoryRefusal, "\n<ansi fg=\"red\">This command is only available for Mudlet clients.</ansi> You are currently using: "+gmcpData.Client.Name+"\n")
 		return true, nil
 	}
 

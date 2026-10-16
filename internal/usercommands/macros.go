@@ -14,7 +14,7 @@ import (
 func Macros(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	if len(user.Macros) == 0 {
-		user.SendText(messaging.CategorySystem, "You have no macros set.")
+		user.SendText(messaging.CategoryRefusal, "You have no macros set.")
 		return true, nil
 	}
 

@@ -37,7 +37,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		container := room.Containers[containerName]
 
 		if !container.Lock.IsLocked() {
-			user.SendText(messaging.CategorySystem, "That's not locked.")
+			user.SendText(messaging.CategoryRefusal, "That's not locked.")
 			return true, nil
 		}
 
@@ -83,7 +83,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="container">%s</ansi>.`, user.Character.Name, containerName),
 				user.UserId)
 		} else {
-			user.SendText(messaging.CategorySystem, `You do not have the key for that. Maybe you could <ansi fg="command">picklock</ansi> the lock.`)
+			user.SendText(messaging.CategoryRefusal, `You do not have the key for that. Maybe you could <ansi fg="command">picklock</ansi> the lock.`)
 		}
 
 		return true, nil
@@ -93,7 +93,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		exitInfo, _ := room.GetExitInfo(exitName)
 
 		if !exitInfo.Lock.IsLocked() {
-			user.SendText(messaging.CategorySystem, "That's not locked.")
+			user.SendText(messaging.CategoryRefusal, "That's not locked.")
 			return true, nil
 		}
 
@@ -139,14 +139,14 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="exit">%s</ansi> lock`, user.Character.Name, exitName),
 				user.UserId)
 		} else {
-			user.SendText(messaging.CategorySystem, `You do not have the key for that. Maybe you could <ansi fg="command">picklock</ansi> the lock.`)
+			user.SendText(messaging.CategoryRefusal, `You do not have the key for that. Maybe you could <ansi fg="command">picklock</ansi> the lock.`)
 		}
 
 		return true, nil
 
 	}
 
-	user.SendText(messaging.CategorySystem, "There is no such exit or container.")
+	refusal.NotHereThing(user)
 	return true, nil
 
 }

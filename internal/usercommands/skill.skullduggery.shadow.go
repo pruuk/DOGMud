@@ -1,7 +1,6 @@
 package usercommands
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -30,7 +29,7 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return false, nil
 	}
 	if skillLevel < 3 {
-		user.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
+		user.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return true, nil
 	}
 
@@ -41,7 +40,7 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		if targetUserId, targetMobId := actions.ShadowTargetOf(user.Character); targetUserId != 0 || targetMobId != 0 {
 			actions.EndShadow(actions.NewUserActorInRoom(user, room), "You stop shadowing your target.")
 		} else {
-			user.SendText(messaging.CategorySystem, "You aren't shadowing anyone.")
+			user.SendText(messaging.CategoryRefusal, "You aren't shadowing anyone.")
 		}
 		return true, nil
 	}
@@ -67,7 +66,7 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if err != nil {
 		// Check whether the name matched the player themselves.
 		if pId, _ := room.FindByName(strings.ToLower(rest)); pId == user.UserId {
-			user.SendText(messaging.CategorySystem, "You can't shadow yourself.")
+			user.SendText(messaging.CategoryRefusal, "You can't shadow yourself.")
 			return true, nil
 		}
 		refusal.NotHereCreature(user)
@@ -85,9 +84,7 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	result := actions.Shadow(actor, opts)
 
 	if result.OnCooldown {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			"You need to wait %s before shadowing again.",
-			result.Reason))
+		refusal.Cooldown(user, "shadow anyone")
 	}
 
 	return true, nil

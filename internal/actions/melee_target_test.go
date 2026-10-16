@@ -3,6 +3,7 @@ package actions
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +23,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		{
 			name:     "bash",
 			opts:     MeleeTargetOpts{Verb: "bash"},
-			crafting: `<ansi fg="red">You can't bash while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("bash"),
 			prompt:   "Bash whom? Try <ansi fg=\"command\">bash <name></ansi>.",
 			self:     "You can't bash yourself.",
 			charmed:  "You can't bash a companion.",
@@ -30,7 +31,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		{
 			name:     "drain",
 			opts:     MeleeTargetOpts{Verb: "drain"},
-			crafting: `<ansi fg="red">You can't drain while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("drain"),
 			prompt:   "Drain whom? Try <ansi fg=\"command\">drain <name></ansi>.",
 			self:     "You can't drain yourself.",
 			charmed:  "You can't drain a companion.",
@@ -38,7 +39,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		{
 			name:     "gore",
 			opts:     MeleeTargetOpts{Verb: "gore"},
-			crafting: `<ansi fg="red">You can't gore while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("gore"),
 			prompt:   "Gore whom? Try <ansi fg=\"command\">gore <name></ansi>.",
 			self:     "You can't gore yourself.",
 			charmed:  "You can't gore a companion.",
@@ -46,7 +47,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		{
 			name:     "grapple",
 			opts:     MeleeTargetOpts{Verb: "grapple"},
-			crafting: `<ansi fg="red">You can't grapple while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("grapple"),
 			prompt:   "Grapple whom? Try <ansi fg=\"command\">grapple <name></ansi>.",
 			self:     "You can't grapple yourself.",
 			charmed:  "You can't grapple a companion.",
@@ -54,7 +55,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		{
 			name:     "kick",
 			opts:     MeleeTargetOpts{Verb: "kick"},
-			crafting: `<ansi fg="red">You can't kick while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("kick"),
 			prompt:   "Kick whom? Try <ansi fg=\"command\">kick <name></ansi>.",
 			self:     "You can't kick yourself.",
 			charmed:  "You can't kick a companion.",
@@ -62,7 +63,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		{
 			name:     "maul",
 			opts:     MeleeTargetOpts{Verb: "maul"},
-			crafting: `<ansi fg="red">You can't maul while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("maul"),
 			prompt:   "Maul whom? Try <ansi fg=\"command\">maul <name></ansi>.",
 			self:     "You can't maul yourself.",
 			charmed:  "You can't maul a companion.",
@@ -76,7 +77,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 				SelfTargetMsg: "You can't pounce on yourself.",
 				CharmedMsg:    "You can't pounce on a companion.",
 			},
-			crafting: `<ansi fg="red">You can't pounce while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("pounce"),
 			prompt:   "Pounce on whom? Try <ansi fg=\"command\">pounce <name></ansi>.",
 			self:     "You can't pounce on yourself.",
 			charmed:  "You can't pounce on a companion.",
@@ -84,7 +85,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		{
 			name:     "rake",
 			opts:     MeleeTargetOpts{Verb: "rake"},
-			crafting: `<ansi fg="red">You can't rake while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("rake"),
 			prompt:   "Rake whom? Try <ansi fg=\"command\">rake <name></ansi>.",
 			self:     "You can't rake yourself.",
 			charmed:  "You can't rake a companion.",
@@ -92,7 +93,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		{
 			name:     "taunt",
 			opts:     MeleeTargetOpts{Verb: "taunt"},
-			crafting: `<ansi fg="red">You can't taunt while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("taunt"),
 			prompt:   "Taunt whom? Try <ansi fg=\"command\">taunt <name></ansi>.",
 			self:     "You can't taunt yourself.",
 			charmed:  "You can't taunt a companion.",
@@ -100,7 +101,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 		{
 			name:     "throttle",
 			opts:     MeleeTargetOpts{Verb: "throttle"},
-			crafting: `<ansi fg="red">You can't throttle while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("throttle"),
 			prompt:   "Throttle whom? Try <ansi fg=\"command\">throttle <name></ansi>.",
 			self:     "You can't throttle yourself.",
 			charmed:  "You can't throttle a companion.",
@@ -109,7 +110,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 			// trip's crafting message says "trip someone", not just "trip".
 			name:     "trip",
 			opts:     MeleeTargetOpts{Verb: "trip", CraftingVerb: "trip someone"},
-			crafting: `<ansi fg="red">You can't trip someone while focused on your work. Finish or be interrupted first.</ansi>`,
+			crafting: refusal.WhileBusyText("trip someone"),
 			prompt:   "Trip whom? Try <ansi fg=\"command\">trip <name></ansi>.",
 			self:     "You can't trip yourself.",
 			charmed:  "You can't trip a companion.",
@@ -121,7 +122,7 @@ func TestMeleeTargetOpts_MessagesMatchPreExtraction(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.crafting, tt.opts.craftingMsg(), "crafting-guard message changed")
+			assert.Equal(t, tt.crafting, refusal.WhileBusyText(tt.opts.craftingVerb()), "crafting-guard message changed")
 			assert.Equal(t, tt.prompt, tt.opts.promptText(), "empty-target prompt changed")
 			assert.Equal(t, tt.self, tt.opts.selfTargetMsg(), "self-target message changed")
 			assert.Equal(t, tt.charmed, tt.opts.charmedMsg(), "charmed-target message changed")

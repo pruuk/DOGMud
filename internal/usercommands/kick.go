@@ -30,13 +30,13 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Delegate core resolution to the shared action.
 	res := actions.ExecuteKick(actor)
 	if res.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		refusal.Cost(user, res.Cost)
 		return true, nil
 	}
 
 	if res.Crafting {
 		// Safety net — should have been caught by the pre-reject above.
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't kick while focused on your work. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "kick")
 		return true, nil
 	}
 

@@ -1,6 +1,7 @@
 package guilds
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -9,6 +10,17 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/util"
+)
+
+// Sentinel errors for the cases callers branch on (errors.Is). The text of the
+// first three is what a player may read, so it stays plain.
+var (
+	ErrNoSuchGuild   = errors.New("no such guild")
+	ErrTreasuryShort = errors.New("the treasury does not hold that much gold")
+	ErrVaultFull     = errors.New("the guild vault is full")
+	// ErrSaveFailed wraps a disk failure inside Create, so the caller can tell
+	// a server fault from a validation error the player should read.
+	ErrSaveFailed = errors.New("guild save failed")
 )
 
 // Invariant: all guild mutations run on the single event-processing goroutine
@@ -114,7 +126,7 @@ func Create(tag, name string, leaderUserId int, leaderName string) (*Guild, erro
 	indexGuild(g)
 	if err := Save(g); err != nil {
 		Delete(g.Tag)
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", ErrSaveFailed, err)
 	}
 	return g, nil
 }
@@ -123,7 +135,7 @@ func Create(tag, name string, leaderUserId int, leaderName string) (*Guild, erro
 func AddMember(tag string, userId int, charName string) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	if _, in := GetByUser(userId); in {
 		return fmt.Errorf("that player is already in a guild")
@@ -176,7 +188,7 @@ func ClearInvites(userId int) { clearInvitesEverywhere(userId) }
 func RemoveMember(tag string, userId int) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	prevMembers := append([]GuildMember(nil), g.Members...)
@@ -206,7 +218,7 @@ func RemoveMember(tag string, userId int) error {
 func SetRank(tag string, userId int, rank GuildRank) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	prevMembers := append([]GuildMember(nil), g.Members...)
@@ -229,7 +241,7 @@ func SetRank(tag string, userId int, rank GuildRank) error {
 func TransferLeader(tag string, newLeaderId int) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	if !g.IsMember(newLeaderId) {
 		return fmt.Errorf("that player is not in the guild")
@@ -260,7 +272,7 @@ func TransferLeader(tag string, newLeaderId int) error {
 func SetMotd(tag, text string) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	g.Motd = util.EscapeAnsiTags(text)
@@ -271,7 +283,7 @@ func SetMotd(tag, text string) error {
 func AddInvite(tag string, userId int) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	if !g.HasInvite(userId) {
@@ -284,7 +296,7 @@ func AddInvite(tag string, userId int) error {
 func RemoveInvite(tag string, userId int) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	g.PendingInvites = removeInt(g.PendingInvites, userId)
@@ -313,7 +325,7 @@ func DepositGold(tag string, amount int) error {
 	}
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	g.Treasury += amount
@@ -330,12 +342,12 @@ func WithdrawGold(tag string, amount int) error {
 	}
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	if g.Treasury < amount {
 		registryMu.Unlock()
-		return fmt.Errorf("the treasury does not hold that much gold")
+		return ErrTreasuryShort
 	}
 	g.Treasury -= amount
 	registryMu.Unlock()
@@ -347,13 +359,13 @@ func WithdrawGold(tag string, amount int) error {
 func DonateItem(tag string, item items.Item) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	capLimit := int(configs.GetBalanceConfig().GuildVaultCapacity)
 	registryMu.Lock()
 	if len(g.Vault) >= capLimit {
 		registryMu.Unlock()
-		return fmt.Errorf("the guild vault is full")
+		return ErrVaultFull
 	}
 	g.Vault = append(g.Vault, item)
 	registryMu.Unlock()
@@ -366,7 +378,7 @@ func DonateItem(tag string, item items.Item) error {
 func TakeItem(tag string, idx int) (items.Item, error) {
 	g, ok := Get(tag)
 	if !ok {
-		return items.Item{}, fmt.Errorf("no such guild")
+		return items.Item{}, ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	if idx < 0 || idx >= len(g.Vault) {
@@ -384,7 +396,7 @@ func TakeItem(tag string, idx int) (items.Item, error) {
 func SetTreasuryDelegated(tag string, delegated bool) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	g.TreasuryDelegated = delegated
@@ -397,7 +409,7 @@ func SetTreasuryDelegated(tag string, delegated bool) error {
 func SetRankTitle(tag string, rank GuildRank, title string) error {
 	g, ok := Get(tag)
 	if !ok {
-		return fmt.Errorf("no such guild")
+		return ErrNoSuchGuild
 	}
 	registryMu.Lock()
 	if title == "" {

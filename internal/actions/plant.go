@@ -63,7 +63,7 @@ func Plant(actor Actor, opts PlantOptions) PlantResult {
 
 	// Under-attack gate — mobs with userId=0 short-circuit this harmlessly.
 	if room.AreMobsAttacking(actor.GetUserId()) {
-		actor.SendText(messaging.CategorySystem, "You can't do that while you are under attack!")
+		refusal.WhileUnderAttack(actor, "plant anything")
 		return PlantResult{Reason: "under attack"}
 	}
 
@@ -121,7 +121,7 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item, t theftAtt
 
 	m := mobs.GetInstance(mobInstanceId)
 	if m == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return PlantResult{Reason: "target not found"}
 	}
 
@@ -267,7 +267,7 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftA
 
 	targetUser := users.GetByUserId(targetUserId)
 	if targetUser == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return PlantResult{Reason: "target not found"}
 	}
 

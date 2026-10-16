@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -26,7 +27,7 @@ func Mutations(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		depth := mutations.LevelDescription(level)
 		spec := mutations.GetMutation(mutId)
 		if spec == nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="yellow">%s</ansi> (%s)  <ansi fg="red">[data missing]</ansi>`, mutId, depth))
+			mudlog.Error("mutations: missing spec", "mutationId", mutId, "userId", user.UserId)
 			continue
 		}
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="yellow">%s</ansi> <ansi fg="magenta">(%s)</ansi>`, spec.Name, depth))

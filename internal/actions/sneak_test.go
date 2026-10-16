@@ -273,7 +273,7 @@ func TestThrowSneakCostAdmissionOrdering(t *testing.T) {
 		fset, fn := task6FunctionAST(t, path, "Sneak")
 		ready := task6OnlyCall(t, fset, fn, "user.Character.CooldownReady(sneakCooldownKey)", false)
 		attempt := task6OnlyCall(t, fset, fn, "actions.Sneak(&actions.UserActor{User: user, Room: room})", false)
-		refusal := task6OnlyCall(t, fset, fn, "actions.CostRefusalText(result.Cost)", false)
+		refusal := task6OnlyCall(t, fset, fn, "refusal.Cost(user, result.Cost)", false)
 		failureCooldown := task6OnlyCall(t, fset, fn, "user.Character.TryCooldown", true)
 		// U10b-1 Task 18 converted both sneak sites off the direct
 		// CheckSkillProgression call -- which bypassed every entry point -- and
@@ -300,7 +300,7 @@ func TestThrowSneakCostAdmissionOrdering(t *testing.T) {
 		require.Less(t, int(attempt), int(progression))
 		require.False(t, nodeHasCall(fn.Body, "CooldownReady"))
 		require.False(t, nodeHasCall(fn.Body, "TryCooldown"))
-		require.False(t, nodeHasCall(fn.Body, "CostRefusalText"), "mob refusal must stay silent")
+		require.False(t, nodeHasRefusalCost(fn.Body), "mob refusal must stay silent")
 	})
 
 	t.Run("throw command", func(t *testing.T) {

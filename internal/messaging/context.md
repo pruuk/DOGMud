@@ -118,9 +118,12 @@ Types and constants:
   `CategoryEmote` is (every stage skipped), no verbosity tier drops it, and
   alias `craft-seen` in `ansi-aliases.yaml` is 144, the `emote` and
   `mob-idle` value, so the onlooker color is unchanged.
-- `CategoryRefusal` (messaging M7, #371): every line `internal/refusal`
-  sends (not-here, not-carrying, no target, cooldown, while fighting, guild,
-  companion, party leader, party invite, recipient full). Appended after
+- `CategoryRefusal` (messaging M7, #371): every refusal. Slice 1 moved the
+  lines `internal/refusal` sends; slice 3 moved every other refusal in the
+  tree, and the root guard `TestRefusalOpenersNeverRideSystem`
+  (`refusal_system_opener_guard_test.go`) fails on a refusal opener sent on
+  `CategorySystem`. `CategorySystem` keeps reports, confirmations, help,
+  usage and admin output until slice 4. Appended after
   `CategoryCraftSeen` so no value shifts. Treated exactly as
   `CategorySystem` (every normalise stage, never wrapped), and alias
   `refusal` in `ansi-aliases.yaml` is 8, the `system` value, so a player
@@ -540,9 +543,8 @@ each side (hit, dodge, interrupt). A single-`Category` seam would
 silently recategorise them. Category decides the line's colour and
 whether it wraps at 80 (`CategorySystem` never wraps, which is why #449
 moved the special-move actor and actee lines off it onto the move's own
-category; the M7 slice 1 refusal families moved to `CategoryRefusal`;
-other refusals (special-move busy and shield lines, craft, cost notices)
-remain on `CategorySystem` until later slices).
+category; every refusal, special-move busy and cost lines included, rides
+`CategoryRefusal` since M7 slice 3, #371).
 Verbosity suppression is NOT driven by a Trio line's category: it applies
 only to the combat-round drains in `internal/hooks/combat_verbosity.go`.
 

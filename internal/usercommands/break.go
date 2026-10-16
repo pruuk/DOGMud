@@ -20,7 +20,7 @@ func Break(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			user.UserId,
 		)
 	} else {
-		user.SendText(messaging.CategorySystem, `You aren't in combat!`)
+		user.SendText(messaging.CategoryRefusal, `You aren't in combat!`)
 	}
 
 	return true, nil

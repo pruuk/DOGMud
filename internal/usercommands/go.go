@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -18,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/relationships"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -68,13 +70,13 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		// home, an ordinary room they can flee from normally. And with
 		// DeathRecoveryRoom now 0 the hatch would have opened in room 0
 		// instead, letting anyone standing there ignore combat entirely.
-		user.SendText(messaging.CategorySystem, "You can't do that! You are in combat!")
+		refusal.WhileFighting(user, "move")
 		return true, nil
 	}
 
 	// Block movement during quest sequences (e.g., Awakening Rite ceremony)
 	if lockMsg, ok := user.GetTempData(`questSequenceLock`).(string); ok && lockMsg != "" {
-		user.SendText(messaging.CategorySystem, lockMsg)
+		user.SendText(messaging.CategoryRefusal, lockMsg)
 		return true, nil
 	}
 
@@ -88,7 +90,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	}
 	// If has a condition that prevents combat, skip the player
 	if user.Character.HasConditionFlag(conditions.NoMovement) {
-		user.SendText(messaging.CategorySystem, "You can't do that!")
+		user.SendText(messaging.CategoryRefusal, "You can't move right now.")
 		return true, nil
 	}
 
@@ -110,7 +112,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	if exitName != `` {
 
 		if user.Character.IsDisabled() {
-			user.SendText(messaging.CategorySystem, "You can't do that while you're dead. Hold on; you'll be pulled back to safety.")
+			user.SendText(messaging.CategoryRefusal, "You can't do that while you're dead. Hold on; you'll be pulled back to safety.")
 			return true, nil
 		}
 
@@ -176,7 +178,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				}
 
 				if exitInfo.Lock.IsLocked() {
-					user.SendText(messaging.CategorySystem, `There's a lock preventing you from going that way. You'll need a <ansi fg="item">Key</ansi> or to <ansi fg="command">pick</ansi> the lock with <ansi fg="item">lockpicks</ansi>.`)
+					user.SendText(messaging.CategoryRefusal, `That way is locked. You need a <ansi fg="item">key</ansi>, or <ansi fg="command">pick</ansi> the lock with <ansi fg="item">lockpicks</ansi>.`)
 					// Send GMCP message
 					if f, ok := GetExportedFunction(`SendGMCPEvent`); ok {
 						if gmcpSendFunc, ok := f.(func(int, string, any)); ok { // make sure the func definition is `func(int, string, any)`
@@ -204,14 +206,14 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		charge := actions.ChargeMove(actions.NewUserActorInRoom(user, room), destRoom)
 		switch charge.Refusal {
 		case actions.MoveRefuseEncumbered:
-			user.SendText(messaging.CategorySystem, "You're too encumbered to move (<ansi fg=\"command\">help encumbrance</ansi>)!")
+			user.SendText(messaging.CategoryRefusal, "You're too encumbered to move (<ansi fg=\"command\">help encumbrance</ansi>)!")
 			return true, nil
 		case actions.MoveRefuseTired:
-			user.SendText(messaging.CategorySystem, "You're too tired to move (slow down)!")
+			user.SendText(messaging.CategoryRefusal, "You're too tired to move (slow down)!")
 			mudlog.Debug("No ActionPoints", "AP", user.Character.ActionPoints, "Needed", charge.ActionCost)
 			return true, nil
 		case actions.MoveRefuseExhausted:
-			user.SendText(messaging.CategorySystem, "You're too exhausted to move! Rest and recover your stamina.")
+			user.SendText(messaging.CategoryRefusal, "You're too exhausted to move! Rest and recover your stamina.")
 			return true, nil
 		}
 		if charge.Winded {
@@ -249,7 +251,14 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		departSnap := room.VisualSnapshot()
 
 		if err := rooms.MoveToRoom(user.UserId, destRoom.RoomId); err != nil {
-			user.SendText(messaging.CategorySystem, "Oops, couldn't move there!")
+			// An instance not opened for the player is an ordinary refusal
+			// MoveToRoom has already narrated; anything else is a fault.
+			// Either way the player has been told, and the exit exists, so
+			// nothing below ("bumping into walls") may answer it again.
+			if !errors.Is(err, rooms.ErrInstanceAccessDenied) {
+				refusal.Failed(user, "move", err, "userId", user.UserId)
+			}
+			return true, nil
 		} else {
 
 			// Quest engine: room_enter notification. For an ephemeral room
@@ -568,7 +577,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	if !handled {
 
 		if rest == "north" || rest == "south" || rest == "east" || rest == "west" || rest == "up" || rest == "down" || rest == "northwest" || rest == "northeast" || rest == "southwest" || rest == "southeast" {
-			user.SendText(messaging.CategorySystem, "You're bumping into walls.")
+			user.SendText(messaging.CategoryRefusal, "You're bumping into walls.")
 
 			// Send GMCP message
 			if f, ok := GetExportedFunction(`SendGMCPEvent`); ok {

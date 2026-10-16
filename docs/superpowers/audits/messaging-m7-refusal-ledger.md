@@ -5,22 +5,27 @@ Every `messaging.CategorySystem` send in a non-test Go file under `internal/` an
 them by file), ruled one by one. Inventory: `tools/refusal_classify.py --tsv` at master
 `1abb49f12` (2026-10-16), 1325 rows. Rulings: five read-only agents read each site in
 source; the controller reconciled the counts (1325 rows, keys identical to the
-inventory) and amended 22 rows (marked "controller:"). Line numbers are as of
-`1abb49f12`; match by text once a file has been edited.
+inventory) and amended 22 rows (marked "controller:"), plus rows found during the
+build (marked "controller (Task N):"). Line numbers are as of `1abb49f12`; match
+by text once a file has been edited. Two more sites outside this inventory (they
+sent on `CategorySpellManifestation`) moved to `refusal.CompanionsFull` in Task 4:
+`hooks/companion_summon.go:47`, `usercommands/skill.cast.go:193`.
 
 Plan: `docs/superpowers/plans/2026-10-16-messaging-m7-slice3-refusals.md`. Spec:
 `docs/superpowers/specs/2026-10-14-messaging-m7-refusals-design.md` section 6.
 
 | Ruling | Rows | Slice 3 does |
 |---|---|---|
-| FAM | 102 | call the named `internal/refusal` helper |
-| RETAG | 353 | change the category to `CategoryRefusal`, words unchanged |
+| FAM | 103 | call the named `internal/refusal` helper |
+| RETAG | 352 | change the category to `CategoryRefusal`, words unchanged |
 | REWORD | 51 | new words from the plan Wording table, on `CategoryRefusal` |
 | FAIL | 14 | `refusal.Failed` (logs the cause, sends on `CategoryError`) |
 | NARR | 63 | nothing (slice 4 moves narration out of System) |
 | USAGE | 47 | nothing (slice 4: `CategoryUsage`) |
 | NOT | 695 | nothing (reports, confirmations, outcomes, help, staff output) |
 | total | 1325 | |
+
+Slice 3 converted every FAM, RETAG, REWORD and FAIL row in PR #559; the re-inventory after Task 9 left exactly the 805 NOT, NARR and USAGE rows on `CategorySystem`.
 
 Columns: line, ruling, what the player reads today (args as `%s`), the proposal,
 the note. NOT rows are listed too, so a later reader can see each was looked at.
@@ -839,11 +844,11 @@ FAM 1 NOT 7
 
 ## `internal/usercommands/assist.go`
 
-RETAG 5
+FAM 1 RETAG 4
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
-| 22 | RETAG | You are not in a party. |  | only one "not in a party" site in this group; a NotInParty helper may be worth it if other groups repeat it |
+| 22 | FAM | You are not in a party. | refusal.NotInParty(user) | controller (Task 4): same situation as party.go:61, converted with it; agent: only one "not in a party" site in this group; a NotInParty helper may be worth it if other groups repeat it |
 | 63 | RETAG | No party member found to assist. |  | does not echo the typed name |
 | 68 | RETAG | <ansi fg="username">%s</ansi> is not fighting anyone. |  | echoes a party member's name (own party, known) |
 | 73 | RETAG | <ansi fg="username">%s</ansi> is not here. |  | echoes a party member's name (own party, known) |

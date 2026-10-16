@@ -111,9 +111,10 @@ const (
 	// success, failure, interrupt and stop. Recipe success and failure
 	// lines are authored prose that often runs past 80 columns, so this
 	// category wraps where CategorySystem, a mixed bucket, cannot.
-	// Craft refusals ("you are missing...") and cost notices still ride
-	// CategorySystem; only the M7 slice 1 refusal families moved to
-	// CategoryRefusal.
+	// Craft refusals ("you are missing...") and cost refusals ride
+	// CategoryRefusal like every refusal (M7 slice 3, #371); CategorySystem
+	// keeps reports, confirmations, help, usage and admin output until
+	// slice 4.
 	CategoryCraft
 
 	// The room's lines ABOUT a crafter (owner ruling C, 2026-10-13):
@@ -125,7 +126,9 @@ const (
 	CategoryCraftSeen
 
 	// Refusals and prompts (messaging M7, #371): every line internal/refusal
-	// sends. Appended so no existing value shifts. Treated exactly as
+	// sends, and since slice 3 every refusal anywhere in the tree (the root
+	// guard TestRefusalOpenersNeverRideSystem holds it). Appended so no
+	// existing value shifts. Treated exactly as
 	// CategorySystem, where these lines rode (every normalize stage, never
 	// wrapped, alias refusal at the same value as system), so the move
 	// changes nothing a player sees until the owner recolours it.

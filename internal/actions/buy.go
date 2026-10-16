@@ -337,7 +337,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 				buyer.SendText(messaging.CategoryError, "You can't buy from yourself.")
 				return BuyResult{Reason: BuyReasonSelfTarget, Requested: quantity}
 			}
-			buyer.SendText(messaging.CategorySystem, "Visit a merchant to purchase objects or services.")
+			buyer.SendText(messaging.CategoryRefusal, "Visit a merchant to purchase objects or services.")
 			return BuyResult{Reason: BuyReasonNoMerchant, Requested: quantity}
 		} else {
 			return BuyResult{Reason: BuyReasonNoMerchant, Requested: quantity}
@@ -349,7 +349,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 
 	if len(merchantPlayers) == 0 && len(merchantMobs) == 0 {
 		if buyer.IsPlayer() {
-			buyer.SendText(messaging.CategorySystem, "Visit a merchant to purchase objects or services.")
+			buyer.SendText(messaging.CategoryRefusal, "Visit a merchant to purchase objects or services.")
 		}
 		return BuyResult{Reason: BuyReasonNoMerchant, Requested: quantity}
 	}
@@ -360,7 +360,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 	// MobActor (the "no merchant here" test fixture) never reaches this line.
 	if ShopSightRefusal(buyer.GetCharacter(), room) {
 		if buyer.IsPlayer() {
-			buyer.SendText(messaging.CategorySystem, ShopSightRefusalText)
+			buyer.SendText(messaging.CategoryRefusal, ShopSightRefusalText)
 		}
 		return BuyResult{Reason: BuyReasonNoSight, Requested: quantity}
 	}

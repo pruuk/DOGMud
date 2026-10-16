@@ -3,6 +3,7 @@ package usercommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -44,7 +45,7 @@ func TestGetFromCorpse_ShapesTakerAndWatcherDoNotReadTheCorpseName(t *testing.T)
 	handled, err := Get("dagger from corpse", taker, room, 0)
 	require.True(t, handled)
 	require.NoError(t, err)
-	require.Equal(t, []string{"You don't see a dagger in the corpse of a figure."}, craftPlainLines(1))
+	require.Equal(t, []string{refusal.NotHereThingLine}, craftPlainLines(1))
 
 	craftPlainLines(1)
 	handled, err = Get("all corpse", taker, room, 0)

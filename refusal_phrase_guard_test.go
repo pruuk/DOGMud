@@ -54,6 +54,19 @@ var refusalPhrases = []struct {
 	{"prompt", regexp.MustCompile(`(?i)^\S+( (on|from|to|at|with|in|into|for|about))? (what|whom|who|how much( gold)?)\?`), "Pet what?"},
 	{"prompt, which", regexp.MustCompile(`(?i)^\S+( \S+){0,3} which \w+\?`), "Switch to which target?"},
 	{"prompt, would you like", regexp.MustCompile(`(?i)^What (would you like|do you want) to \w+\?`), "What would you like to sell?"},
+	{"busy", regexp.MustCompile(`while focused on your work`), "You can't bash while focused on your work. Finish or be interrupted first."},
+	{"busy, working", regexp.MustCompile(`already (busy )?working on something|busy with something else|too busy to cast`), "You're already busy working on something."},
+	{"cost", regexp.MustCompile(`too spent to manage|cannot muster the resolve`), "You are too spent to manage that right now."},
+	{"asleep", regexp.MustCompile(`is fast asleep\. You could make some noise`), "%s is fast asleep. You could make some noise."},
+	{"under attack", regexp.MustCompile(`while you are under attack`), "You can't do that while you are under attack!"},
+	{"not here, vanished", regexp.MustCompile(`seem to have vanished`), "They seem to have vanished."},
+	{"cooldown, rounds", regexp.MustCompile(`more rounds (before|to)`), "You need to wait %d more rounds before you can try that again."},
+	{"party", regexp.MustCompile(`not attached to a party|You are not in a party`), "You are not attached to a party."},
+	{"guild leader", regexp.MustCompile(`Only the guild leader can|Only officers and the leader can`), "Only officers and the leader can invite."},
+	{"storage", regexp.MustCompile(`You don't have .* in storage`), "You don't have a %s in storage."},
+	{"companions full", regexp.MustCompile(`maintain any more companions|as many companions as your will`), "You cannot maintain any more companions."},
+	{"no companions", regexp.MustCompile(`You have no companions`), "You have no companions to dismiss."},
+	{"prompt, specify", regexp.MustCompile(`^Specify what you want|You need to specify a message`), "Specify what you want to sell."},
 }
 
 // refusalPhraseHits reports every literal in src that carries a phrase.

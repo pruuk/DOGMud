@@ -18,10 +18,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// attackNothingHereLine answers a bare `attack` with no foe to pick up. A name
-// that resolves to no one (and a resolved id whose record is gone) reads
+// A bare `attack` with no foe to pick up reads refusal.NoTarget. A name that
+// resolves to no one (and a resolved id whose record is gone) reads
 // refusal.NotHereCreatureLine.
-const attackNothingHereLine = `There is nothing here to attack.`
 
 func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -121,7 +120,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// unperceived hider and a name that matches nothing read the same.
 	if attackMobInstanceId == 0 && attackPlayerId == 0 {
 		if rest == `` {
-			user.SendText(messaging.CategorySystem, attackNothingHereLine)
+			refusal.NoTarget(user, "attack")
 		} else {
 			refusal.NotHereCreature(user)
 		}
@@ -203,12 +202,12 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			switch mobs.CheckPlayerHarm(m) {
 			case mobs.HarmBlockedCompanion:
-				user.SendText(messaging.CategorySystem, messaging.HideNames(
+				user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 					fmt.Sprintf(`%s is someone's companion!`, mName),
 					[]string{m.Character.Name}, attackerSight))
 				return true, nil
 			case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
-				user.SendText(messaging.CategorySystem, messaging.HideNames(
+				user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 					fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, m.Character.Name),
 					[]string{m.Character.Name}, attackerSight))
 				mobs.FireAttackRejected(m, user.UserId)
@@ -330,13 +329,13 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		if p != nil {
 
 			if pvpErr := room.CanPvp(user, p); pvpErr != nil {
-				user.SendText(messaging.CategorySystem, pvpErr.Error())
+				user.SendText(messaging.CategoryRefusal, pvpErr.Error())
 				return true, nil
 			}
 
 			if partyInfo := parties.Get(user.UserId); partyInfo != nil {
 				if partyInfo.IsMember(attackPlayerId) {
-					user.SendText(messaging.CategorySystem, messaging.HideNames(
+					user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 						fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name),
 						[]string{p.Character.Name}, messaging.ParticipantSight(user.Character, room)))
 					return true, nil

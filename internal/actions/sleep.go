@@ -5,7 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
-	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 )
 
 // SleepOptions is reserved for future authoring knobs (bed-item
@@ -23,7 +23,7 @@ type SleepResult struct {
 // (via mob.Command("sleep")).
 //
 // Fails when the actor is in combat or has Aggro. User actors receive a
-// player-visible "You can't sleep right now." message; mob actors fail
+// player-visible refusal.WhileFighting line; mob actors fail
 // silently — the schedule executor retries on the next idle tick after
 // combat ends.
 //
@@ -43,8 +43,7 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 	// Combat gate.
 	if c.IsInCombat() {
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
-				"You can't sleep right now.")
+			refusal.WhileFighting(actor, "sleep")
 		}
 		return SleepResult{Success: false, Reason: "in combat"}
 	}
@@ -58,13 +57,10 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 	// owes the holder the start line: that is what the SendText below is for.
 	// The condition YAML has no room text, so the third-person visual is also ours.
 	if err := c.AddCondition(15, false); err != nil {
-		// Never surface the raw internal error (it leaks the condition id). Log it
-		// for ops and give the player clean flavor.
-		mudlog.Error("Sleep", "msg", "AddCondition(15 Sleeping) failed", "actor", actor.GetName(), "error", err)
-		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
-				"You can't seem to settle into sleep right now.")
-		}
+		// A server fault: Failed logs the cause and tells the player plainly,
+		// never the raw error (it leaks the condition id). A mob actor's
+		// SendText does nothing, so the log is all a mob sleeper leaves.
+		refusal.Failed(actor, "sleep", err, "userId", actor.GetUserId())
 		return SleepResult{Success: false, Reason: err.Error()}
 	}
 

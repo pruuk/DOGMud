@@ -33,7 +33,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		nameSearch = args[i] + nameSearch
 
 		if room.MatchesSealedCrate(nameSearch) {
-			user.SendText(messaging.CategorySystem, `The shipping crate is sealed; the caravan only lets through what they put in themselves.`)
+			user.SendText(messaging.CategoryRefusal, `The shipping crate is sealed. Only the caravan can put things in it.`)
 			return true, nil
 		}
 
@@ -52,16 +52,17 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if containerName == `` {
-		user.SendText(messaging.CategorySystem, `No container found by that name`)
+		refusal.NotHereThing(user)
 		return true, nil
 	}
 
 	container := room.Containers[containerName]
 
 	if container.Lock.IsLocked() {
-		user.SendText(messaging.CategorySystem, ``)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
-		user.SendText(messaging.CategorySystem, ``)
+		// Named by no container: it was found by looking (spec section 2).
+		user.SendText(messaging.CategoryRefusal, ``)
+		user.SendText(messaging.CategoryRefusal, `That is locked.`)
+		user.SendText(messaging.CategoryRefusal, ``)
 		return true, nil
 	}
 
@@ -92,12 +93,18 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if !itemFound && goldAmt == 0 {
-		refusal.NotCarrying(user, "")
+		// The item is the player's own, so the refusal echoes it. A trailing
+		// "in" or "into" is the joining word before the container, not the item.
+		typed := args
+		if len(typed) > 1 && (typed[len(typed)-1] == `in` || typed[len(typed)-1] == `into`) {
+			typed = typed[:len(typed)-1]
+		}
+		refusal.NotCarrying(user, strings.Join(typed, ` `))
 		return true, nil
 	}
 
 	if goldAmt > user.Character.Gold {
-		user.SendText(messaging.CategorySystem, `You don't have that much gold.`)
+		user.SendText(messaging.CategoryRefusal, `You don't have that much gold.`)
 		return true, nil
 	}
 

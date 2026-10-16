@@ -9,8 +9,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -114,9 +114,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if !user.Character.TryCooldown(`map`, "1 round") {
-		user.SendText(messaging.CategorySystem,
-			`You can only create 1 map per round.`,
-		)
+		refusal.Cooldown(user, "draw another map")
 		return true, errors.New(`you're doing that too often`)
 	}
 
@@ -149,8 +147,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	zMapper := mapper.GetMapper(roomId)
 	if zMapper == nil {
-		mudlog.Error("Map", "error", "Could not find mapper for zone:"+zone)
-		user.SendText(messaging.CategorySystem, `No map found (or an error occured)"`)
+		refusal.Failed(user, "map", errors.New("no mapper for zone "+zone), "userId", user.UserId)
 		return true, err
 	}
 
@@ -221,8 +218,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	mapTxt, err := templates.Process("maps/map", mapData, user.UserId)
 	if err != nil {
-		mudlog.Error("Map", "error", err.Error())
-		user.SendText(messaging.CategorySystem, `No map found (or an error occured)"`)
+		refusal.Failed(user, "map", err, "userId", user.UserId)
 		return true, err
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -19,7 +20,7 @@ func Assist(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	partyInfo := parties.Get(user.UserId)
 	if partyInfo == nil {
-		user.SendText(messaging.CategorySystem, `You are not in a party.`)
+		refusal.NotInParty(user)
 		return true, nil
 	}
 
@@ -60,17 +61,17 @@ func Assist(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if assistTarget == nil {
-		user.SendText(messaging.CategorySystem, `No party member found to assist.`)
+		user.SendText(messaging.CategoryRefusal, `No party member found to assist.`)
 		return true, nil
 	}
 
 	if !assistTarget.Character.IsInCombat() {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is not fighting anyone.`, assistTarget.Character.Name))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="username">%s</ansi> is not fighting anyone.`, assistTarget.Character.Name))
 		return true, nil
 	}
 
 	if assistTarget.Character.RoomId != user.Character.RoomId {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is not here.`, assistTarget.Character.Name))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="username">%s</ansi> is not here.`, assistTarget.Character.Name))
 		return true, nil
 	}
 
@@ -87,7 +88,7 @@ func Assist(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 	}
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi>'s target is no longer here.`, assistTarget.Character.Name))
+	user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="username">%s</ansi>'s target is no longer here.`, assistTarget.Character.Name))
 	return true, nil
 }
 

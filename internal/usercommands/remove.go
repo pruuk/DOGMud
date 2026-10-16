@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -20,20 +21,16 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// Taken up here so the `all` branch is covered by the same snapshot.
 	beforeReservation := user.Character.ReservationTotals()
 
-	cursedLine := func(it items.Item) string {
-		return fmt.Sprintf(`You can't seem to remove your <ansi fg="item">%s</ansi>... It's <ansi fg="red-bold">CURSED!</ansi>`, it.DisplayName())
-	}
-
 	if rest == "all" {
 		// The busy, curse and per-item rules live in actions.RemoveAllEquipment
 		// (slice 5a), which fires one EquipmentChange per item.
 		res := actions.RemoveAllEquipment(actor)
 		if res.Busy {
-			user.SendText(messaging.CategorySystem, busyRefusalText(`change equipment`))
+			refusal.WhileBusy(user, `change equipment`)
 			return true, nil
 		}
 		for _, it := range res.Cursed {
-			user.SendText(messaging.CategorySystem, cursedLine(it))
+			user.SendText(messaging.CategoryRefusal, user.Character.CursedRefusal(it))
 		}
 		sendReservationReturnDisclosure(user, beforeReservation)
 		for _, item := range res.Removed {
@@ -52,11 +49,11 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	result := actions.RemoveEquipment(actor, rest)
 	switch {
 	case result.Busy:
-		user.SendText(messaging.CategorySystem, busyRefusalText(`change equipment`))
+		refusal.WhileBusy(user, `change equipment`)
 	case !result.Found:
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't appear to be using a "%s".`, rest))
+		refusal.NotWearing(user, rest)
 	case result.Cursed:
-		user.SendText(messaging.CategorySystem, cursedLine(result.Item))
+		user.SendText(messaging.CategoryRefusal, user.Character.CursedRefusal(result.Item))
 	default:
 		if result.CursedOverridden {
 			user.SendText(messaging.CategorySystem,
@@ -78,7 +75,7 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				lightnotice.Check(user, lightnotice.TriggerCommand)
 			}
 		} else {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryRefusal,
 				fmt.Sprintf(`You can't seem to remove your <ansi fg="item">%s</ansi>.`, result.Item.DisplayName()),
 			)
 		}

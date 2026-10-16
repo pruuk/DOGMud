@@ -57,7 +57,7 @@ func Zap(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if !user.Character.IsInCombat() {
-		user.SendText(messaging.CategorySystem, "You are not in combat.")
+		user.SendText(messaging.CategoryRefusal, "You are not in combat.")
 		return true, nil
 	}
 

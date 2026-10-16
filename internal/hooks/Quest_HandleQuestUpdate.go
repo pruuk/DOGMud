@@ -205,7 +205,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		_, incomingStep := quests.TokenToParts(evt.QuestToken)
 		if incomingStep == `start` && questInfo.Repeatable &&
 			questUser.Character.QuestCooldownActive(questInfo.QuestId) {
-			questUser.SendText(messaging.CategorySystem,
+			questUser.SendText(messaging.CategoryRefusal,
 				`You have put in the work recently. Rest a while before taking this on again.`)
 			return events.Continue
 		}

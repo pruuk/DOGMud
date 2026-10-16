@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -28,7 +29,7 @@ func Companion(rest string, user *users.UserRecord,
 	// ── Form 1: no args → list ──────────────────────────────────────────────
 	if rest == "" {
 		if len(companions) == 0 {
-			user.SendText(messaging.CategorySystem, "You have no companions.")
+			refusal.NoCompanion(user)
 			return true, nil
 		}
 
@@ -103,8 +104,8 @@ func Companion(rest string, user *users.UserRecord,
 
 	comp := user.Character.GetCompanion(compName)
 	if comp == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`You have no companion named "%s".`, compName,
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+			`You have no companion named "%s".`, refusal.Echo(compName),
 		))
 		return true, nil
 	}
@@ -113,13 +114,13 @@ func Companion(rest string, user *users.UserRecord,
 	if renameNick != "" {
 		// A bonded companion already has a name of its own.
 		if comp.SourceType == characters.CompanionBonded {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> already has a name.`, comp.Name,
 			))
 			return true, nil
 		}
 		if err := validateCompanionName(renameNick); err != nil {
-			user.SendText(messaging.CategorySystem, err.Error())
+			user.SendText(messaging.CategoryRefusal, err.Error())
 			return true, nil
 		}
 

@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/species"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -165,7 +166,7 @@ func (b *GameBridge) GiveItem(itemId int) error {
 		return fmt.Errorf("give_item: item %d not found", itemId)
 	}
 	if !b.user.Character.StoreItem(newItem) {
-		b.user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		b.user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			"You are carrying too much to take the <ansi fg=\"item\">%s</ansi>. "+
 				"Put something down, then try again.", newItem.DisplayName()))
 		mudlog.Warn("GameBridge.GiveItem", "msg", "player could not carry quest item",
@@ -287,7 +288,11 @@ func (b *GameBridge) SpawnItem(s SpawnDef) {
 // TeachSpell grants the player a new spell, notifying them if it was learned.
 func (b *GameBridge) TeachSpell(spellId string) {
 	if b.user.Character.LearnSpell(spellId) {
-		b.user.SendText(messaging.CategorySystem, fmt.Sprintf("You have learned the <ansi fg=\"spellname\">%s</ansi> spell.", spellId))
+		name := spellId
+		if sp := spells.GetSpell(spellId); sp != nil {
+			name = sp.Name
+		}
+		b.user.SendText(messaging.CategorySystem, fmt.Sprintf("You have learned the <ansi fg=\"spellname\">%s</ansi> spell.", name))
 	}
 }
 

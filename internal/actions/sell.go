@@ -73,7 +73,7 @@ func Sell(seller Actor, opts SellOptions) SellResult {
 	if len(room.GetPlayers(rooms.FindMerchant)) > 0 || len(room.GetMobs(rooms.FindMerchant)) > 0 {
 		if ShopSightRefusal(seller.GetCharacter(), room) {
 			if seller.IsPlayer() {
-				seller.SendText(messaging.CategorySystem, ShopSightRefusalText)
+				seller.SendText(messaging.CategoryRefusal, ShopSightRefusalText)
 			}
 			return SellResult{Reason: SellStopNoSight}
 		}
@@ -184,7 +184,7 @@ func sellNamed(seller Actor, room *rooms.Room, itemName string, quantity int) Se
 	}
 	if probe.GetSpec().QuestToken != "" {
 		if seller.IsPlayer() {
-			seller.SendText(messaging.CategorySystem, "Quest items cannot be sold!")
+			seller.SendText(messaging.CategoryRefusal, "Quest items cannot be sold!")
 		}
 		return SellResult{Reason: SellStopRejected}
 	}
@@ -308,7 +308,7 @@ func sellOneToMerchant(seller Actor, itemName string, room *rooms.Room,
 	}
 	if itemSpec.QuestToken != "" {
 		if seller.IsPlayer() {
-			seller.SendText(messaging.CategorySystem, "Quest items cannot be sold!")
+			seller.SendText(messaging.CategoryRefusal, "Quest items cannot be sold!")
 		}
 		return 0, SellStopRejected
 	}

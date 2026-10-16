@@ -5,7 +5,6 @@ import (
 	"go/parser"
 	"go/token"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"testing"
 
@@ -91,56 +90,6 @@ func TestU8SharedActionsUseQuoteCommitInsteadOfLegacyCostCalls(t *testing.T) {
 			}
 			require.Empty(t, violations, "%s must use the shared quote/commit cost seam", target.name)
 		})
-	}
-}
-
-// TestCostRefusalText_UsesPoolAwareProseOnlyForRefusal catches a renderer that
-// exposes cost values, confuses pools, or turns a paid/no-charge result into a
-// refusal message.
-func TestCostRefusalText_UsesPoolAwareProseOnlyForRefusal(t *testing.T) {
-	digit := regexp.MustCompile(`\d`)
-	for _, tc := range []struct {
-		name   string
-		result characters.CostCommitResult
-		phrase string
-	}{
-		{
-			name:   "stamina",
-			result: characters.CostCommitResult{Status: characters.CostRefused, Pool: characters.PoolStamina},
-			phrase: "too spent",
-		},
-		{
-			name:   "conviction",
-			result: characters.CostCommitResult{Status: characters.CostRefused, Pool: characters.PoolConviction},
-			phrase: "cannot muster the resolve",
-		},
-		{
-			name:   "paid",
-			result: characters.CostCommitResult{Status: characters.CostPaid, Pool: characters.PoolStamina},
-			phrase: "",
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			got := costRefusalText(tc.result)
-			if tc.phrase == "" {
-				require.Empty(t, got)
-				return
-			}
-			require.Contains(t, got, tc.phrase)
-			require.False(t, digit.MatchString(got), "refusal prose must not expose a number")
-		})
-	}
-}
-
-// TestCostRefusalText_ExportsTheWrapperSeam catches an exported wrapper API
-// that bypasses the pool-aware private helper or returns a different result.
-func TestCostRefusalText_ExportsTheWrapperSeam(t *testing.T) {
-	for _, result := range []characters.CostCommitResult{
-		{Status: characters.CostRefused, Pool: characters.PoolStamina},
-		{Status: characters.CostRefused, Pool: characters.PoolConviction},
-		{Status: characters.CostPaid, Pool: characters.PoolStamina},
-	} {
-		require.Equal(t, costRefusalText(result), CostRefusalText(result))
 	}
 }
 

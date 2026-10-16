@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -80,7 +81,7 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// so making out warm shapes by infrared is not enough to do it. Sibling
 	// refusals live in get.go, loot.go and shoot.go.
 	if actions.TooDarkToCraft(&actions.UserActor{User: user, Room: room}) {
-		user.SendText(messaging.CategorySystem, `You can't see well enough to work on anything here.`)
+		user.SendText(messaging.CategoryRefusal, `You can't see well enough to work on anything here.`)
 		return true, nil
 	}
 
@@ -118,7 +119,7 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// Unreachable today: the early refusal above already returns before
 		// InitiateCraft runs. The case exists because CannotSee is part of the
 		// result's contract for every caller, including mobs and the companion.
-		craftDeliver(user, messaging.CategorySystem, `You can't see well enough to work on anything here.`)
+		craftDeliver(user, messaging.CategoryRefusal, `You can't see well enough to work on anything here.`)
 		return true, nil
 
 	case len(result.AmbiguousRecipes) > 0:
@@ -126,43 +127,43 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		for _, n := range result.AmbiguousRecipes {
 			list = append(list, fmt.Sprintf(`<ansi fg="cyan-bold">%s</ansi>`, n))
 		}
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
+		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(
 			`You know more than one recipe like that: %s. Type more of the name to pick one.`,
 			strings.Join(list, `, `)))
 		return true, nil
 
 	case result.RecipeNotFound:
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
-			`<ansi fg="red">No recipe found for "%s". Type <ansi fg="cyan-bold">craft list</ansi> to see available recipes.</ansi>`,
-			rest))
+		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(
+			`<ansi fg="red">No recipe matches '%s'.</ansi> Try <ansi fg="command">craft list</ansi>.`,
+			refusal.Echo(rest)))
 		return true, nil
 
 	case result.RecipeNotKnown:
-		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">You don't know that recipe yet. Keep crafting to discover new ones!</ansi>`)
+		craftDeliver(user, messaging.CategoryRefusal, `<ansi fg="red">You don't know that recipe yet. Keep crafting to discover new ones!</ansi>`)
 		return true, nil
 
 	case result.AlreadyCrafting:
-		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">You are already working on something. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "craft")
 		return true, nil
 
 	case result.SkillTooLow:
-		craftDeliver(user, messaging.CategorySystem,
+		craftDeliver(user, messaging.CategoryRefusal,
 			craftSkillTooLowText(result.SkillName, result.SkillMinimum, result.SkillLevel))
 		return true, nil
 
 	case result.WrongStation:
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
+		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(
 			`<ansi fg="red">You need to be at a %s to craft that.</ansi>`,
 			result.StationNeeded))
 		return true, nil
 
 	case result.MissingIngredients:
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">You are missing: %s.</ansi>`,
+		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="red">You are missing: %s.</ansi>`,
 			storageAwareMissingTag(user, result.Recipe, result.MissingTag)))
 		return true, nil
 
 	case result.ForeignComponent:
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
+		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(
 			`<ansi fg="red">The %s must be your own work. It bears another maker's mark.</ansi>`,
 			result.ForeignComponentName))
 		return true, nil
@@ -283,7 +284,7 @@ func ensureComponentsFromStorage(user *users.UserRecord, room *rooms.Room, recip
 		if storageRemoveQuiet(user, itm) {
 			craftDeliver(user, messaging.CategoryLoot, fmt.Sprintf(`You draw <ansi fg="item">%s</ansi> from storage.`, itm.DisplayName()))
 		} else {
-			craftDeliver(user, messaging.CategorySystem, `You're too encumbered to draw any more from storage.`)
+			craftDeliver(user, messaging.CategoryRefusal, `You're too encumbered to draw any more from storage.`)
 			return
 		}
 	}
@@ -312,27 +313,27 @@ func craftSkillTooLowText(skillName string, minimum, level int) string {
 func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserRecord, room *rooms.Room) (bool, error) {
 	// Known-recipe gate
 	if !user.Character.HasRecipe(recipe.RecipeId) {
-		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">You don't know that recipe yet. Keep crafting to discover new ones!</ansi>`)
+		craftDeliver(user, messaging.CategoryRefusal, `<ansi fg="red">You don't know that recipe yet. Keep crafting to discover new ones!</ansi>`)
 		return true, nil
 	}
 
 	// Already crafting?
 	if user.Character.IsCrafting() {
-		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">You are already working on something. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "craft")
 		return true, nil
 	}
 
 	// Skill gate
 	skillLevel := user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))
 	if skillLevel < recipe.SkillMinimum {
-		craftDeliver(user, messaging.CategorySystem,
+		craftDeliver(user, messaging.CategoryRefusal,
 			craftSkillTooLowText(recipe.Skill, recipe.SkillMinimum, skillLevel))
 		return true, nil
 	}
 
 	// Station check
 	if !actions.StationSatisfied(user.Character, recipe.Station, room.Station) {
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
+		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(
 			`<ansi fg="red">You need to be at a %s to craft that.</ansi>`,
 			strings.ReplaceAll(recipe.Station, "_", " ")))
 		return true, nil
@@ -341,14 +342,14 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 	// Ingredient check
 	ok, missing := crafting.HasIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 	if !ok {
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">You are missing: %s.</ansi>`,
+		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="red">You are missing: %s.</ansi>`,
 			storageAwareMissingTag(user, recipe, missing)))
 		return true, nil
 	}
 
 	// Self-crafted-component check (require_own_components)
 	if ownOk, offendingName := crafting.CheckOwnComponents(recipe, user.Character.Items, user.Character.ComponentItems, user.Character.Name); !ownOk {
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(
+		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(
 			`<ansi fg="red">The %s must be your own work. It bears another maker's mark.</ansi>`,
 			offendingName))
 		return true, nil
@@ -367,12 +368,12 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 
 	slotLabel, targetItem, errMsg := resolveEnchantSlot(&user.Character.Equipment, recipe.TargetType, specifier)
 	if errMsg != "" {
-		craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">%s</ansi>`, errMsg))
+		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="red">%s</ansi>`, errMsg))
 		return true, nil
 	}
 
 	if targetItem == nil {
-		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">Could not find a valid item in that slot.</ansi>`)
+		craftDeliver(user, messaging.CategoryRefusal, `<ansi fg="red">Could not find a valid item in that slot.</ansi>`)
 		return true, nil
 	}
 
@@ -388,7 +389,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 		added := user.Character.EnchantReserveAt(recipe.EnchantType, 0, targetItem.GetSpec().Hands, pool) -
 			user.Character.ItemReserveOnPool(*targetItem, pool)
 		if user.Character.WouldBreachReservationCap(pool, added) {
-			craftDeliver(user, messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">%s</ansi>`,
+			craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="red">%s</ansi>`,
 				user.Character.ReservationRefusal(pool, added)))
 			return true, nil
 		}
@@ -413,7 +414,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 			Actor:   state.ActorRef{UserId: user.UserId},
 		},
 	); err != nil {
-		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">You are already working on something. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "craft")
 		return true, nil
 	}
 	craftDeliver(user, messaging.CategoryCraft, fmt.Sprintf(

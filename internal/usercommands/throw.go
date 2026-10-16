@@ -217,7 +217,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	spec := matchItem.GetSpec()
 	if spec.Subtype != items.Throwable {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="itemname">%s</ansi> isn't something you can throw.`, matchItem.DisplayName()))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="itemname">%s</ansi> isn't something you can throw.`, matchItem.DisplayName()))
 		return true, nil
 	}
 
@@ -243,7 +243,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	cost := admitThrowCost(user.Character, float64(cfg.SpecialMoveBaseStaminaCost))
 	if cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(cost))
+		refusal.Cost(user, cost)
 		return true, nil
 	}
 

@@ -860,7 +860,7 @@ func resolveIdentify(user *users.UserRecord, itemName string, room *rooms.Room) 
 	matchItem, _, found := user.Character.FindItem(itemName)
 
 	if !found {
-		user.SendText(messaging.CategorySystem, "You can't seem to identify that.")
+		refusal.NotCarrying(user, itemName)
 		return
 	}
 

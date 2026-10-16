@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -13,7 +14,8 @@ import (
 
 // 2026-08-03 crafting-focus audit: 13 active commands could fire mid-craft.
 // Each newly gated command must refuse (not interrupt) while the Activity
-// machine is occupied, matching the shoot/reload convention.
+// machine is occupied, matching the shoot/reload convention. The refusal is
+// refusal.WhileBusy (M7 slice 3, #371).
 
 const brUserId = 9141
 
@@ -38,20 +40,21 @@ func seedBusyUser(t *testing.T) (*users.UserRecord, *rooms.Room, func()) {
 
 func TestBusyCommands_RefuseWhileCrafting(t *testing.T) {
 	cases := []struct {
-		name string
-		run  func(u *users.UserRecord, r *rooms.Room) (bool, error)
+		name  string
+		doing string
+		run   func(u *users.UserRecord, r *rooms.Room) (bool, error)
 	}{
-		{"eat", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Eat("bread", u, r, 0) }},
-		{"drink", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Drink("water", u, r, 0) }},
-		{"sleep", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Sleep("", u, r, 0) }},
-		{"use", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Use("lever", u, r, 0) }},
-		{"equip", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Equip("sword", u, r, 0) }},
-		{"remove", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Remove("sword", u, r, 0) }},
-		{"gearup", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Gearup("", u, r, 0) }},
-		{"throw", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Throw("rock north", u, r, 0) }},
-		{"forage", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Forage("", u, r, 0) }},
-		{"search", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Search("", u, r, 0) }},
-		{"track", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Track("wolf", u, r, 0) }},
+		{"eat", "eat", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Eat("bread", u, r, 0) }},
+		{"drink", "drink", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Drink("water", u, r, 0) }},
+		{"sleep", "sleep", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Sleep("", u, r, 0) }},
+		{"use", "use that", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Use("lever", u, r, 0) }},
+		{"equip", "change equipment", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Equip("sword", u, r, 0) }},
+		{"remove", "change equipment", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Remove("sword", u, r, 0) }},
+		{"gearup", "change equipment", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Gearup("", u, r, 0) }},
+		{"throw", "throw anything", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Throw("rock north", u, r, 0) }},
+		{"forage", "forage", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Forage("", u, r, 0) }},
+		{"search", "search", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Search("", u, r, 0) }},
+		{"track", "track", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Track("wolf", u, r, 0) }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -63,7 +66,7 @@ func TestBusyCommands_RefuseWhileCrafting(t *testing.T) {
 				t.Fatalf("command errored: handled=%v err=%v", handled, err)
 			}
 			msgs := strings.Join(events.DrainQueuedMessagesForTest(brUserId), "\n")
-			if !strings.Contains(msgs, "focused on your work") {
+			if !strings.Contains(msgs, refusal.WhileBusyText(tc.doing)) {
 				t.Errorf("no busy refusal sent; got:\n%s", msgs)
 			}
 			if !u.Character.IsCrafting() {
@@ -83,7 +86,7 @@ func TestTrackStop_AllowedWhileCrafting(t *testing.T) {
 		t.Fatalf("track stop errored: handled=%v err=%v", handled, err)
 	}
 	msgs := strings.Join(events.DrainQueuedMessagesForTest(brUserId), "\n")
-	if strings.Contains(msgs, "focused on your work") {
+	if strings.Contains(msgs, "while you're busy.") {
 		t.Errorf("track stop must not be busy-refused:\n%s", msgs)
 	}
 }
@@ -91,11 +94,12 @@ func TestTrackStop_AllowedWhileCrafting(t *testing.T) {
 // Skill-gated commands refuse only when the command is visible at all.
 func TestStealPicklock_RefuseWhileCrafting(t *testing.T) {
 	for _, tc := range []struct {
-		name string
-		run  func(u *users.UserRecord, r *rooms.Room) (bool, error)
+		name  string
+		doing string
+		run   func(u *users.UserRecord, r *rooms.Room) (bool, error)
 	}{
-		{"steal", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Steal("coin rat", u, r, 0) }},
-		{"picklock", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Picklock("north", u, r, 0) }},
+		{"steal", "steal", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Steal("coin rat", u, r, 0) }},
+		{"picklock", "pick a lock", func(u *users.UserRecord, r *rooms.Room) (bool, error) { return Picklock("north", u, r, 0) }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			u, room, cleanup := seedBusyUser(t)
@@ -110,7 +114,7 @@ func TestStealPicklock_RefuseWhileCrafting(t *testing.T) {
 				t.Fatalf("command errored: handled=%v err=%v", handled, err)
 			}
 			msgs := strings.Join(events.DrainQueuedMessagesForTest(brUserId), "\n")
-			if !strings.Contains(msgs, "focused on your work") {
+			if !strings.Contains(msgs, refusal.WhileBusyText(tc.doing)) {
 				t.Errorf("no busy refusal sent; got:\n%s", msgs)
 			}
 		})

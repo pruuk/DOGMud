@@ -4,12 +4,22 @@ package refusal
 // It echoes typed (the player's own belongings, spec section 2); an empty
 // typed reads "that".
 func NotCarryingText(typed string) string {
-	what := `that`
-	if e := echo(typed); e != `` {
-		what = `'` + e + `'`
-	}
-	return `You aren't carrying ` + what + `.` + hint(`inventory`)
+	return `You aren't carrying ` + quoted(typed) + `.` + hint(`inventory`)
 }
+
+// NotWearingText answers a name the player looked for in what they wear.
+func NotWearingText(typed string) string {
+	return `You aren't wearing ` + quoted(typed) + `.` + hint(`inventory`)
+}
+
+func NotWearing(to Recipient, typed string) { send(to, NotWearingText(typed)) }
+
+// NotInStorageText answers a name the player looked for in their storage.
+func NotInStorageText(typed string) string {
+	return `You don't have ` + quoted(typed) + ` in storage.` + hint(`storage`)
+}
+
+func NotInStorage(to Recipient, typed string) { send(to, NotInStorageText(typed)) }
 
 func NotCarrying(to Recipient, typed string) { send(to, NotCarryingText(typed)) }
 

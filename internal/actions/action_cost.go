@@ -19,26 +19,6 @@ func admitFullCost(actor Actor, action costs.Action, pool characters.Pool, base 
 	return character.CommitCost(quote, characters.CostFullOrRefuse)
 }
 
-// costRefusalText supplies private player-facing prose for a refused voluntary
-// action. Shared actions return the structured result only; user-command
-// wrappers decide whether to render this text, while mob wrappers stay silent.
-func costRefusalText(result characters.CostCommitResult) string {
-	if result.Status != characters.CostRefused {
-		return ""
-	}
-
-	switch result.Pool {
-	case characters.PoolStamina:
-		return "You are too spent to manage that right now."
-	case characters.PoolConviction:
-		return "You cannot muster the resolve for that right now."
-	default:
-		return ""
-	}
-}
-
-// CostRefusalText supplies the pool-aware refusal prose that player-command
-// wrappers render for a refused voluntary action. Mob wrappers remain silent.
-func CostRefusalText(result characters.CostCommitResult) string {
-	return costRefusalText(result)
-}
+// Shared actions return the structured CostCommitResult only; user-command
+// wrappers render a refused cost with refusal.Cost (or refusal.CostText),
+// while mob wrappers stay silent.

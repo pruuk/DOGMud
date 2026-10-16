@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -299,7 +300,7 @@ func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args [
 	if element != `` {
 		desc, valid := validToggles[element]
 		if !valid {
-			user.SendText(messaging.CategorySystem, `Unknown toggle. Valid options: bars, pos, target, targethealth, targetpos, tank`)
+			user.SendText(messaging.CategoryRefusal, `Unknown toggle. Valid options: bars, pos, target, targethealth, targetpos, tank`)
 			return true, nil
 		}
 		key := `fprompt-tog-` + element
@@ -414,8 +415,8 @@ func cmdSetSubmission(user *users.UserRecord, args []string) (bool, error) {
 
 	newPolicy, ok := characters.ParseSubmissionPolicy(args[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown submission policy: <ansi fg=\"red\">%s</ansi>", args[0]))
-		user.SendText(messaging.CategorySystem, "Valid policies: mercy, subdue, cripple, lethal.")
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown submission policy: <ansi fg=\"red\">%s</ansi>", refusal.Echo(args[0])))
+		user.SendText(messaging.CategoryRefusal, "Valid policies: mercy, subdue, cripple, lethal.")
 		return true, nil
 	}
 
@@ -455,8 +456,8 @@ func cmdSetSurrender(user *users.UserRecord, args []string) (bool, error) {
 	policyStr := strings.Join(args, " ")
 	newPolicy, ok := characters.ParseSurrenderPolicy(policyStr)
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown surrender policy: <ansi fg=\"red\">%s</ansi>", policyStr))
-		user.SendText(messaging.CategorySystem, "Valid policies: never, always, auto-tap-below &lt;1-100&gt;.")
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown surrender policy: <ansi fg=\"red\">%s</ansi>", refusal.Echo(policyStr)))
+		user.SendText(messaging.CategoryRefusal, "Valid policies: never, always, auto-tap-below &lt;1-100&gt;.")
 		return true, nil
 	}
 
@@ -478,8 +479,8 @@ func cmdSetArrest(user *users.UserRecord, args []string) (bool, error) {
 	}
 	newPolicy, ok := characters.ParseArrestPolicy(strings.ToLower(args[0]))
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown arrest policy: <ansi fg=\"red\">%s</ansi>", args[0]))
-		user.SendText(messaging.CategorySystem, "Valid policies: surrender, resist.")
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Unknown arrest policy: <ansi fg=\"red\">%s</ansi>", refusal.Echo(args[0])))
+		user.SendText(messaging.CategoryRefusal, "Valid policies: surrender, resist.")
 		return true, nil
 	}
 	user.Character.ArrestPolicy = newPolicy
@@ -494,7 +495,7 @@ func cmdSetLineWidth(user *users.UserRecord, args []string) (bool, error) {
 	}
 	n, err := strconv.Atoi(args[0])
 	if err != nil || n < 40 || n > 240 {
-		user.SendText(messaging.CategorySystem, "Line width must be a number between 40 and 240.")
+		user.SendText(messaging.CategoryRefusal, "Line width must be a number between 40 and 240.")
 		return true, nil
 	}
 	user.LineWidth = n
@@ -517,7 +518,7 @@ func cmdSetCombatVerbosity(user *users.UserRecord, args []string) (bool, error) 
 	}
 	choice := strings.ToLower(args[0])
 	if choice != `full` && choice != `medium` && choice != `light` {
-		user.SendText(messaging.CategorySystem, `Combat verbosity must be <ansi fg="command">full</ansi>, <ansi fg="command">medium</ansi>, or <ansi fg="command">light</ansi>.`)
+		user.SendText(messaging.CategoryRefusal, `Combat verbosity must be <ansi fg="command">full</ansi>, <ansi fg="command">medium</ansi>, or <ansi fg="command">light</ansi>.`)
 		return true, nil
 	}
 	if choice == `full` {
@@ -552,7 +553,7 @@ func cmdSetMacro(user *users.UserRecord, setTarget string, args []string) (bool,
 
 	macroNum, _ := strconv.Atoi(string(setTarget[1]))
 	if macroNum == 0 {
-		user.SendText(messaging.CategorySystem, "Invalid macro number supplied.")
+		user.SendText(messaging.CategoryRefusal, "Invalid macro number supplied.")
 		return true, nil
 	}
 
@@ -572,7 +573,7 @@ func cmdSetMacro(user *users.UserRecord, setTarget string, args []string) (bool,
 
 		allComands := strings.Split(setVal, ";")
 		if len(allComands) > 10 {
-			user.SendText(messaging.CategorySystem, `Macros are limited to 10 commands.`)
+			user.SendText(messaging.CategoryRefusal, `Macros are limited to 10 commands.`)
 			return true, nil
 		}
 
@@ -582,7 +583,7 @@ func cmdSetMacro(user *users.UserRecord, setTarget string, args []string) (bool,
 
 			if len(cmd) > 0 {
 				if cmd[0] == '=' {
-					user.SendText(messaging.CategorySystem, `You cannot reference macros inside of a macro`)
+					user.SendText(messaging.CategoryRefusal, `You cannot reference macros inside of a macro`)
 					return true, nil
 				}
 				finalMacroCommands = append(finalMacroCommands, cmd)
@@ -591,7 +592,7 @@ func cmdSetMacro(user *users.UserRecord, setTarget string, args []string) (bool,
 		}
 
 		if len(finalMacroCommands) < 1 {
-			user.SendText(messaging.CategorySystem, `There was a problem setting your macro.`)
+			user.SendText(messaging.CategoryRefusal, `Your macro has no commands in it.`)
 			return true, nil
 		}
 
