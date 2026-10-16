@@ -1,0 +1,69 @@
+# M6 rows 26 and 27 adversarial gate: natural-attack combat triads (#370).
+#
+# Rows 26 and 27 rewrote every combat-message file as one record per blow, so
+# the attacker, the defender and the room are each told about the SAME strike,
+# banner included, and every room line names the target. A banner guard and a
+# golden prove the records are well formed. Neither can tell whether the
+# defender's sentence and the room's sentence read as one event. That is this
+# run's job.
+#
+# The attacker is a creature, so the attacker's own line has no reader. The two
+# seats that DO have readers are the defender (the player it is goring) and the
+# room (a second player standing beside them). Both are players here.
+#
+# Fixture: the Feral Boar (mob 363, boar species, natural_attack gore) in Boar
+# Wallow (4162, The Fernway South). Non-hostile, so it fights only whoever
+# attacks it and leaves the witness alone. combat_passive archetype, so it
+# throws plain basic attacks and no special moves to muddy the lines. It is a
+# dead end off the Old Burn Scar (4160); a Timber Wolf (364, bite) wanders the
+# Pine Stand (4161) next door and hates boars, so a bite round is possible too.
+#
+# TIER: a mob's attack tier comes from GetCombatSkillLevel(), which for a
+# creature with no weapon is its unarmed-combat skill. No natural-attack mob in
+# the dogmud world authors unarmed-combat above 1, so this run can only show
+# the BEGINNER tier. Expert (34) and master (67) records of bite, claws, gore
+# and maul are not reachable by any mob in play today.
+#
+# The witness must turn party auto-attack OFF before the fight, or it will
+# join in on the first round and its own lines will mix into the report.
+name: m6-rows26-27-natural-attacks
+mode: party
+summary: >-
+  A player fights a goring boar bare-handed while a plain witness stands in the
+  room. Every round both quote what they were told so the defender's line and
+  the room's line for the same gore can be compared.
+on_actor_stop: continue
+budgets:
+  wall_clock: 35m
+requires:
+  max_connections: 20
+roster:
+  - id: defender
+    personality: bug-finder
+    goals: goals/scenarios/m6-rows26-27-natural-attacks/defender.yaml
+  - id: witness
+    personality: bug-finder
+    goals: goals/scenarios/m6-rows26-27-natural-attacks/witness.yaml
+
+group_goals:
+  - id: gore-defender-and-room-agree
+    do: >-
+      The defender attacks the Feral Boar and keeps fighting it for at least
+      four rounds while the witness stands in the room doing nothing. After
+      each round both quote every line verbatim on the party channel.
+    verify: >-
+      For each round, the boar's line to the defender and the boar's line to
+      the room describe ONE gore: same action, same result, same banner. The
+      room line names the defender. Judge round by round.
+  - id: player-blow-and-room-agree
+    do: >-
+      The defender's own blows on the boar, first bare-handed and then for a
+      round or two with the longsword.
+    verify: >-
+      The defender's actor line and the witness's room line describe one blow,
+      and the room line names the boar.
+  - id: no-token-or-blank-leaks
+    do: Watch every line in every round.
+    verify: >-
+      A literal curly-brace token, a doubled or missing name, a lowercase
+      sentence start or an EMPTY combat line is a finding.
