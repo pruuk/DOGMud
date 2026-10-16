@@ -75,7 +75,7 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if currentParty.Invited(user.UserId) {
-		user.SendText(messaging.CategorySystem, `You haven't accepted an invitation to the party.`)
+		user.SendText(messaging.CategoryRefusal, `You haven't accepted an invitation to the party.`)
 		return true, nil
 	}
 
@@ -152,11 +152,11 @@ func cmdPartyCreate(user *users.UserRecord, currentParty *parties.Party) (bool, 
 	// check if they are already part of a party
 	if currentParty != nil {
 		if currentParty.Invited(user.UserId) {
-			user.SendText(messaging.CategorySystem, `You already have a pending party invite. Try <ansi fg="command">party accept/decline</ansi> first`)
+			user.SendText(messaging.CategoryRefusal, `You already have a pending party invite. Try <ansi fg="command">party accept/decline</ansi> first`)
 		} else if currentParty.IsLeader(user.UserId) {
-			user.SendText(messaging.CategorySystem, `You already own a party Type <ansi fg="command">party list</ansi> for more info.`)
+			user.SendText(messaging.CategoryRefusal, `You already lead a party. Try <ansi fg="command">party list</ansi>.`)
 		} else {
-			user.SendText(messaging.CategorySystem, `You are already party of a party.`)
+			user.SendText(messaging.CategoryRefusal, `You are already in a party.`)
 		}
 		return true, nil
 	}
@@ -204,7 +204,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 		return true, nil
 	}
 	if !target.IsPlayer() {
-		user.SendText(messaging.CategorySystem, `You can only invite players to your party.`)
+		user.SendText(messaging.CategoryRefusal, `You can only invite players to your party.`)
 		return true, nil
 	}
 
@@ -212,12 +212,12 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 	invitePlayerId := invitedUser.UserId
 
 	if invitePlayerId == user.UserId {
-		user.SendText(messaging.CategorySystem, `You can't invite yourself.`)
+		user.SendText(messaging.CategoryRefusal, `You can't invite yourself.`)
 		return true, nil
 	}
 
 	if invitedParty := parties.Get(invitePlayerId); invitedParty != nil {
-		user.SendText(messaging.CategorySystem, `That player is already in a party.`)
+		user.SendText(messaging.CategoryRefusal, `That player is already in a party.`)
 		return true, nil
 	}
 
@@ -615,13 +615,18 @@ func cmdPartyKick(user *users.UserRecord, currentParty *parties.Party, rest stri
 		return
 	}
 
+	if rest == `` {
+		refusal.Prompt(user, "kick", refusal.Whom, "party kick <name>")
+		return
+	}
+
 	// Settle the shared gold pool BEFORE the kicked member is removed, so
 	// they still receive their share.
 	settlePartyGold(currentParty)
 
 	kickUserId, matchUser, found := findPartyMemberByName(currentParty, rest)
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s not found.`, rest))
+		refusal.NotPartyMember(user, rest)
 		return
 	}
 
@@ -646,9 +651,14 @@ func cmdPartyPromote(user *users.UserRecord, currentParty *parties.Party, rest s
 		return
 	}
 
+	if rest == `` {
+		refusal.Prompt(user, "promote", refusal.Whom, "party promote <name>")
+		return
+	}
+
 	promoteUserId, matchUser, found := findPartyMemberByName(currentParty, rest)
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s not found.`, rest))
+		refusal.NotPartyMember(user, rest)
 		return
 	}
 
@@ -783,7 +793,7 @@ func cmdPartyGold(user *users.UserRecord, currentParty *parties.Party, rest stri
 
 	if arg == `` || strings.HasPrefix(arg, `split`) {
 		if currentParty.GoldPool == 0 {
-			user.SendText(messaging.CategorySystem, `The party pool is empty.`)
+			user.SendText(messaging.CategoryRefusal, `The party pool is empty.`)
 			return true, nil
 		}
 		settlePartyGold(currentParty)
@@ -829,7 +839,7 @@ func cmdPartyChat(user *users.UserRecord, currentParty *parties.Party, rest stri
 // the party.debug role permission (admin users always pass).
 func cmdPartyAdmin(user *users.UserRecord, rest string) (bool, error) {
 	if !user.HasRolePermission(`party.debug`) {
-		user.SendText(messaging.CategorySystem, `You do not have <ansi fg="command">party.debug</ansi> permission.`)
+		user.SendText(messaging.CategoryRefusal, `You do not have <ansi fg="command">party.debug</ansi> permission.`)
 		return true, nil
 	}
 

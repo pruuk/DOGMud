@@ -21,10 +21,6 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// Taken up here so the `all` branch is covered by the same snapshot.
 	beforeReservation := user.Character.ReservationTotals()
 
-	cursedLine := func(it items.Item) string {
-		return fmt.Sprintf(`You can't seem to remove your <ansi fg="item">%s</ansi>... It's <ansi fg="red-bold">CURSED!</ansi>`, it.DisplayName())
-	}
-
 	if rest == "all" {
 		// The busy, curse and per-item rules live in actions.RemoveAllEquipment
 		// (slice 5a), which fires one EquipmentChange per item.
@@ -34,7 +30,7 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			return true, nil
 		}
 		for _, it := range res.Cursed {
-			user.SendText(messaging.CategorySystem, cursedLine(it))
+			user.SendText(messaging.CategoryRefusal, user.Character.CursedRefusal(it))
 		}
 		sendReservationReturnDisclosure(user, beforeReservation)
 		for _, item := range res.Removed {
@@ -57,7 +53,7 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	case !result.Found:
 		refusal.NotWearing(user, rest)
 	case result.Cursed:
-		user.SendText(messaging.CategorySystem, cursedLine(result.Item))
+		user.SendText(messaging.CategoryRefusal, user.Character.CursedRefusal(result.Item))
 	default:
 		if result.CursedOverridden {
 			user.SendText(messaging.CategorySystem,
@@ -79,7 +75,7 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				lightnotice.Check(user, lightnotice.TriggerCommand)
 			}
 		} else {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryRefusal,
 				fmt.Sprintf(`You can't seem to remove your <ansi fg="item">%s</ansi>.`, result.Item.DisplayName()),
 			)
 		}

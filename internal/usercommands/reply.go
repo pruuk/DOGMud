@@ -15,7 +15,7 @@ import (
 func Reply(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	if user.LastWhisperFrom == 0 {
-		user.SendText(messaging.CategorySystem, "No one has whispered to you recently.")
+		user.SendText(messaging.CategoryRefusal, "No one has whispered to you recently.")
 		return true, nil
 	}
 
@@ -26,7 +26,7 @@ func Reply(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	targetUser := users.GetByUserId(user.LastWhisperFrom)
 	if targetUser == nil {
-		user.SendText(messaging.CategorySystem, "That person is no longer online.")
+		user.SendText(messaging.CategoryRefusal, "That person is no longer online.")
 		user.LastWhisperFrom = 0
 		return true, nil
 	}

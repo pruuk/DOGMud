@@ -37,7 +37,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	if lockpickItm.ItemId < 1 {
-		user.SendText(messaging.CategorySystem, `You need <ansi fg="item">lockpicks</ansi> to pick a lock.`)
+		user.SendText(messaging.CategoryRefusal, `You need <ansi fg="item">lockpicks</ansi> to pick a lock.`)
 		return true, nil
 	}
 
@@ -49,7 +49,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	if room.MatchesSealedCrate(args[0]) {
-		user.SendText(messaging.CategorySystem, `The shipping crate has no lock to pick. It's sealed by the caravan's binding, not by mechanism.`)
+		user.SendText(messaging.CategoryRefusal, `The shipping crate has no lock. The caravan's binding seals it.`)
 		return true, nil
 	}
 
@@ -73,12 +73,12 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		container := room.Containers[containerName]
 
 		if !container.HasLock() {
-			user.SendText(messaging.CategorySystem, "There is no lock there.")
+			user.SendText(messaging.CategoryRefusal, "There is no lock there.")
 			return true, nil
 		}
 
 		if !container.Lock.IsLocked() {
-			user.SendText(messaging.CategorySystem, "It's already unlocked.")
+			user.SendText(messaging.CategoryRefusal, "It's already unlocked.")
 			return true, nil
 		}
 
@@ -96,12 +96,12 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		exitInfo, _ := room.GetExitInfo(exitName)
 
 		if !exitInfo.HasLock() {
-			user.SendText(messaging.CategorySystem, "There is no lock there.")
+			user.SendText(messaging.CategoryRefusal, "There is no lock there.")
 			return true, nil
 		}
 
 		if !exitInfo.Lock.IsLocked() {
-			user.SendText(messaging.CategorySystem, "It's already unlocked.")
+			user.SendText(messaging.CategoryRefusal, "It's already unlocked.")
 			return true, nil
 		}
 
@@ -112,7 +112,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	} else {
 
-		user.SendText(messaging.CategorySystem, "There is no such exit or container.")
+		user.SendText(messaging.CategoryRefusal, "There is no such exit or container.")
 		return true, nil
 	}
 

@@ -33,7 +33,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		nameSearch = args[i] + nameSearch
 
 		if room.MatchesSealedCrate(nameSearch) {
-			user.SendText(messaging.CategorySystem, `The shipping crate is sealed; the caravan only lets through what they put in themselves.`)
+			user.SendText(messaging.CategoryRefusal, `The shipping crate is sealed. Only the caravan can put things in it.`)
 			return true, nil
 		}
 
@@ -60,7 +60,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	if container.Lock.IsLocked() {
 		user.SendText(messaging.CategorySystem, ``)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
 		user.SendText(messaging.CategorySystem, ``)
 		return true, nil
 	}
@@ -97,7 +97,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if goldAmt > user.Character.Gold {
-		user.SendText(messaging.CategorySystem, `You don't have that much gold.`)
+		user.SendText(messaging.CategoryRefusal, `You don't have that much gold.`)
 		return true, nil
 	}
 

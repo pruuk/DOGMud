@@ -24,12 +24,12 @@ func Pet(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	if args[0] == `name` {
 
 		if !user.Character.Pet.Exists() {
-			user.SendText(messaging.CategorySystem, `You have no pet to name.`)
+			user.SendText(messaging.CategoryRefusal, `You have no pet to name.`)
 			return true, nil
 		}
 
 		if user.Character.Pet.Name != `` && user.Character.Pet.Name != user.Character.Pet.Type {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s already has a name.`, user.Character.Pet.DisplayName()))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`%s already has a name.`, user.Character.Pet.DisplayName()))
 			return true, nil
 		}
 

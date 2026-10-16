@@ -38,11 +38,11 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if res.Grappling {
-		user.SendText(messaging.CategorySystem, "You can't pounce from a clinch.")
+		user.SendText(messaging.CategoryRefusal, "You can't pounce from a clinch.")
 		return true, nil
 	}
 	if res.NotPredator {
-		user.SendText(messaging.CategorySystem, "You aren't built to pounce.")
+		user.SendText(messaging.CategoryRefusal, "You aren't built to pounce.")
 		return true, nil
 	}
 	if res.OnCooldown {

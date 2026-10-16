@@ -35,7 +35,7 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if res.NotClawed {
-		user.SendText(messaging.CategorySystem, "You have no claws to rake with.")
+		user.SendText(messaging.CategoryRefusal, "You have no claws to rake with.")
 		return true, nil
 	}
 	if res.OnCooldown {

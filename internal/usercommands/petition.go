@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/moderation"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -34,7 +35,7 @@ func Petition(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	gp := configs.GetGamePlayConfig()
 
 	if maxLen := int(gp.PetitionMaxLen); maxLen > 0 && len(rest) > maxLen {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">That's a bit long. Please keep your petition under %d characters.</ansi>`, maxLen))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="yellow">That's a bit long. Please keep your petition under %d characters.</ansi>`, maxLen))
 		return true, nil
 	}
 
@@ -47,7 +48,7 @@ func Petition(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	onCooldown := seen && cd > 0 && nowRound-last < cd
 	petitionCooldownMu.Unlock()
 	if onCooldown {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">You've just sent a petition. Give the staff a moment before sending another.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="yellow">You've just sent a petition. Give the staff a moment before sending another.</ansi>`)
 		return true, nil
 	}
 
@@ -59,7 +60,7 @@ func Petition(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	p, err := moderation.Add(user.Username, user.Character.RoomId, user.Character.Zone, rest)
 	if err != nil {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Your petition could not be filed. Please try again or find an admin.</ansi>`)
+		refusal.Failed(user, "petition", err, "userId", user.UserId)
 		return true, nil
 	}
 

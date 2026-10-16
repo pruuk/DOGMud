@@ -25,7 +25,7 @@ func RenameSelf(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	}
 
 	if strings.EqualFold(newName, user.Character.Name) {
-		user.SendText(messaging.CategorySystem, `That's already your name.`)
+		user.SendText(messaging.CategoryRefusal, `That's already your name.`)
 		return true, nil
 	}
 
@@ -35,7 +35,7 @@ func RenameSelf(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 		cooldown := time.Duration(cooldownHours) * time.Hour
 		if elapsed < cooldown {
 			nextAt := user.LastRenameAt.Add(cooldown)
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 				`You renamed yourself recently. You can rename again on %s.`,
 				nextAt.Format(`2006-01-02 at 15:04`)))
 			return true, nil
@@ -74,7 +74,9 @@ func RenameSelf(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	oldName := user.Character.Name
 	if err := users.RenameUser(user, newName); err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Rename failed: %s`, err.Error()))
+		// RenameUser's only error is the race for the name: the player lost
+		// it, which is a refusal rather than a server fault.
+		user.SendText(messaging.CategoryRefusal, `Someone else just took that name.`)
 		user.ClearPrompt()
 		return true, err
 	}
