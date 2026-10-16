@@ -31,7 +31,7 @@ func Whisper(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	toUser := users.GetByCharacterName(whisperName)
 	if toUser == nil {
-		user.SendText(messaging.CategorySystem, "You can't find anyone by that name.")
+		user.SendText(messaging.CategoryRefusal, "You can't find anyone by that name.")
 		return true, nil
 	}
 

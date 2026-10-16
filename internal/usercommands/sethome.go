@@ -44,7 +44,7 @@ func SetHome(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	}
 
 	if _, valid := characters.HomeLocations[args]; !valid {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			`<ansi fg="red">Unknown location "%s".</ansi> Type `+
 				`<ansi fg="command">sethome</ansi> to see options.`,
 			args))

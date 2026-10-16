@@ -26,7 +26,7 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	// Must be at an enchanting circle
 	if room.Station != "enchanting_circle" {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You need to be at an enchanting circle to strip an enchantment.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You need to be at an enchanting circle to strip an enchantment.</ansi>`)
 		return true, nil
 	}
 
@@ -43,7 +43,7 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	// Must have an enchantment
 	if !targetItem.HasChrysalisEnchantment() {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">That item has no Chrysalis enchantment to strip.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">That item has no Chrysalis enchantment to strip.</ansi>`)
 		return true, nil
 	}
 

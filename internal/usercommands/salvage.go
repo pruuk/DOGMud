@@ -40,8 +40,8 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	if !found {
 		corpse, corpseFound := room.FindCorpse(rest, user.Character)
 		if !corpseFound {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
-				`<ansi fg="red">You don't have "%s" and there's no corpse of that name here.</ansi>`, rest))
+			user.SendText(messaging.CategoryRefusal,
+				`<ansi fg="red">You aren't carrying that, and you don't see a corpse like that here.</ansi>`)
 			return true, nil
 		}
 		return startCorpseSalvage(user, room, corpse)
@@ -62,7 +62,7 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	// Equipped items are still refused: taking a sword apart while holding it
 	// is the case this guard is actually for.
 	if !salvageableSource(source) {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You need to remove that before you can salvage it.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You need to remove that before you can salvage it.</ansi>`)
 		return true, nil
 	}
 
@@ -92,7 +92,7 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	hasSalvageReturns := len(spec.SalvageReturns) > 0
 
 	if recipe == nil && !hasSalvageReturns && !isSpoiledPotion {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't find anything useful to salvage from that.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You can't find anything useful to salvage from that.</ansi>`)
 		return true, nil
 	}
 
@@ -140,26 +140,26 @@ func startCorpseSalvage(user *users.UserRecord, room *rooms.Room, corpse rooms.C
 
 	// Player corpses are out of scope for v1.
 	if corpse.MobId <= 0 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't bring yourself to salvage that.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You can't bring yourself to salvage that.</ansi>`)
 		return true, nil
 	}
 
 	mobSpec := mobs.GetMobSpec(mobs.MobId(corpse.MobId))
 	if mobSpec == nil {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">Something is wrong with that corpse.</ansi>`)
+		refusal.Failed(user, "salvage", fmt.Errorf("corpse mob %d has no spec", corpse.MobId), "userId", user.UserId)
 		return true, nil
 	}
 
 	returns := crafting.LookupCorpseSalvage(mobSpec.Groups)
 	if len(returns) == 0 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">There's nothing useful to recover here.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">There's nothing useful to recover here.</ansi>`)
 		return true, nil
 	}
 
 	// A corpse that still holds loot must be picked clean first — salvaging
 	// removes the corpse and would destroy any loot on it.
 	if corpse.HasLoot() {
-		user.SendText(messaging.CategorySystem, `That corpse still has loot on it. Pick it clean first.`)
+		user.SendText(messaging.CategoryRefusal, `That corpse still has loot on it. Pick it clean first.`)
 		return true, nil
 	}
 

@@ -51,7 +51,7 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	switch {
 	case result.AlreadyHidden:
-		user.SendText(messaging.CategorySystem, "You're already hidden!")
+		user.SendText(messaging.CategoryRefusal, "You're already hidden!")
 		return true, nil
 
 	case result.InCombat:

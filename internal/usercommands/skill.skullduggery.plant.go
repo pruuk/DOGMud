@@ -98,7 +98,7 @@ func parsePlantArgs(args []string, room *rooms.Room, user *users.UserRecord) (ac
 		target, err := actions.ResolveTargetActor(room, creatureNoun, actions.ResolveTargetOptions{Viewer: user.Character})
 		if err == nil {
 			if target.IsPlayer() {
-				user.SendText(messaging.CategorySystem, "You can't plant items on other players.")
+				user.SendText(messaging.CategoryRefusal, "You can't plant items on other players.")
 				return actions.PlantOptions{}, false
 			}
 			return actions.PlantOptions{

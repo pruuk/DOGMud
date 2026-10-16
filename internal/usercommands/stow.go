@@ -15,7 +15,7 @@ import (
 // Shorthand for the component-only case of `storage add all`.
 func Stow(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	if !room.IsStorage {
-		user.SendText(messaging.CategorySystem, `There is nowhere to stow anything here.`)
+		user.SendText(messaging.CategoryRefusal, `There is nowhere to stow anything here.`)
 		return true, nil
 	}
 	storageCap := room.StorageCapacity
@@ -43,9 +43,9 @@ func Stow(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 	switch {
 	case stowed == 0 && full:
-		user.SendText(messaging.CategorySystem, `Storage is full.`)
+		user.SendText(messaging.CategoryRefusal, `Storage is full.`)
 	case stowed == 0:
-		user.SendText(messaging.CategorySystem, `You have no crafting components to stow.`)
+		user.SendText(messaging.CategoryRefusal, `You have no crafting components to stow.`)
 	case full:
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You stow %d component(s); storage filled up before the rest.`, stowed))
 	default:

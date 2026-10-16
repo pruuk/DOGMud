@@ -47,7 +47,7 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	if res.NotFanged {
-		user.SendText(messaging.CategorySystem, "You have no fangs to throttle with.")
+		user.SendText(messaging.CategoryRefusal, "You have no fangs to throttle with.")
 		return true, nil
 	}
 	if res.OnCooldown {

@@ -29,7 +29,7 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if result.AlreadyActive {
-		user.SendText(messaging.CategorySystem, "Your warcry still echoes. You can't shout it louder.")
+		user.SendText(messaging.CategoryRefusal, "Your warcry still echoes. You can't shout it louder.")
 		return true, nil
 	}
 

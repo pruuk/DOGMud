@@ -63,9 +63,9 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if strings.TrimSpace(rest) != `` {
 		if actions.ShotSight(user.Character, room, rest) != messaging.SightFull {
 			if user.Character.Perception != nil && user.Character.Perception.State() == perception.Blinded {
-				user.SendText(messaging.CategorySystem, actions.ShotBlindedLine)
+				user.SendText(messaging.CategoryRefusal, actions.ShotBlindedLine)
 			} else {
-				user.SendText(messaging.CategorySystem, actions.ShotTooDarkLine)
+				user.SendText(messaging.CategoryRefusal, actions.ShotTooDarkLine)
 			}
 			return true, nil
 		}
@@ -74,7 +74,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// Issue 3 (self-target): room.FindByName can resolve the shooter.
 	if tUserId > 0 && tUserId == user.UserId {
-		user.SendText(messaging.CategorySystem, `You can't shoot yourself.`)
+		user.SendText(messaging.CategoryRefusal, `You can't shoot yourself.`)
 		return true, nil
 	}
 
@@ -82,7 +82,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if tUserId > 0 {
 		if p := users.GetByUserId(tUserId); p != nil {
 			if partyInfo := parties.Get(user.UserId); partyInfo != nil && partyInfo.IsMember(tUserId) {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name))
+				user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name))
 				return true, nil
 			}
 			// Issue 1 (PvP bypass): gate BEFORE firing, exactly as melee's
@@ -91,12 +91,12 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			// require the TARGET's room to permit PvP — you must not be able to
 			// snipe into a sanctuary from a lawless room outside it.
 			if pvpErr := room.CanPvp(user, p); pvpErr != nil {
-				user.SendText(messaging.CategorySystem, pvpErr.Error())
+				user.SendText(messaging.CategoryRefusal, pvpErr.Error())
 				return true, nil
 			}
 			if tRoom != nil && tRoom != room {
 				if pvpErr := tRoom.CanPvp(user, p); pvpErr != nil {
-					user.SendText(messaging.CategorySystem, pvpErr.Error())
+					user.SendText(messaging.CategoryRefusal, pvpErr.Error())
 					return true, nil
 				}
 			}
@@ -116,7 +116,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.NoWeapon {
-		user.SendText(messaging.CategorySystem, `You don't have a ranged weapon equipped.`)
+		user.SendText(messaging.CategoryRefusal, `You don't have a ranged weapon equipped.`)
 		return true, nil
 	}
 	if result.NotLoaded {
@@ -129,7 +129,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// or bundle changed underneath the last shot. Naming a cause here would
 		// be a guess, and the wrong guess reads as a bug to a player who can see
 		// arrows in their pack.
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> is empty. Check that you still have ammunition, and the breath to ready it.`, result.WeaponName))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`Your <ansi fg="itemname">%s</ansi> is empty. You may be out of ammunition, or too winded.`, result.WeaponName))
 		return true, nil
 	}
 	if result.BadSyntax {
@@ -137,7 +137,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.ExitLocked {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="exit">%s</ansi> exit is locked.`, result.ExitName))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The <ansi fg="exit">%s</ansi> exit is locked.`, result.ExitName))
 		return true, nil
 	}
 	if result.NoTarget {
@@ -145,19 +145,19 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.Blinded {
-		user.SendText(messaging.CategorySystem, actions.ShotBlindedLine)
+		user.SendText(messaging.CategoryRefusal, actions.ShotBlindedLine)
 		return true, nil
 	}
 	if result.TooDarkToAim {
-		user.SendText(messaging.CategorySystem, actions.ShotTooDarkLine)
+		user.SendText(messaging.CategoryRefusal, actions.ShotTooDarkLine)
 		return true, nil
 	}
 	if result.IsCharmed {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is your friend!`, result.TargetName))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is your friend!`, result.TargetName))
 		return true, nil
 	}
 	if result.IsNonCombatant {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, result.TargetName))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, result.TargetName))
 		return true, nil
 	}
 
@@ -286,7 +286,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// the next shot reports "you have nothing left to load it with", which
 		// is a LIE to a player who is merely winded and still carrying ammo.
 		// Say which it was.
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryRefusal,
 			fmt.Sprintf(`You cannot work another round into your <ansi fg="itemname">%s</ansi> just now. It stays empty.`,
 				result.Chambered.WeaponName))
 	}

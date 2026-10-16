@@ -39,7 +39,7 @@ func Taunt(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	if result.Silenced {
-		user.SendText(messaging.CategorySystem, "You cannot make a sound.")
+		user.SendText(messaging.CategoryRefusal, "You cannot make a sound.")
 		return true, nil
 	}
 

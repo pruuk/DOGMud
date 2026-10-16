@@ -192,9 +192,9 @@ func buildPlayerState(user *users.UserRecord) *dialogue.PlayerState {
 			// quest triggers and auto-grants QuestTokens — advanced quest
 			// state on an item the player never received.
 			if !user.Character.StoreItem(newItem) {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
-					`You are carrying too much to take the <ansi fg="itemname">%s</ansi>. `+
-						`Put something down, then ask again.`, newItem.DisplayName()))
+				user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+					`You can't carry the <ansi fg="itemname">%s</ansi>. `+
+						`Drop something, then ask again.`, newItem.DisplayName()))
 				mudlog.Warn("talk.GiveItem", "msg", "player could not carry dialogue item",
 					"userId", user.UserId, "itemId", itemId)
 				return false

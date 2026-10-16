@@ -32,18 +32,19 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if len(container.Recipes) > 0 {
 
 			if container.Lock.IsLocked() {
-				user.SendText(messaging.CategorySystem, ``)
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
-				user.SendText(messaging.CategorySystem, ``)
+				// Named by no container: it was found by looking (spec section 2).
+				user.SendText(messaging.CategoryRefusal, ``)
+				user.SendText(messaging.CategoryRefusal, `That is locked.`)
+				user.SendText(messaging.CategoryRefusal, ``)
 				return true, nil
 			}
 
 			recipeReadyItemId := container.RecipeReady()
 
 			if recipeReadyItemId == 0 {
-				user.SendText(messaging.CategorySystem, "")
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> seems to be missing something.`, containerName))
-				user.SendText(messaging.CategorySystem, "")
+				user.SendText(messaging.CategoryRefusal, "")
+				user.SendText(messaging.CategoryRefusal, `That seems to be missing something.`)
+				user.SendText(messaging.CategoryRefusal, "")
 				return true, nil
 			}
 
@@ -82,7 +83,7 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		itemSpec := matchItem.GetSpec()
 
 		if itemSpec.Subtype != items.Usable {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryRefusal,
 				fmt.Sprintf(`You can't use <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()))
 			return true, nil
 		}

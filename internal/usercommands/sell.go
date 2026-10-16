@@ -87,7 +87,7 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	case actions.SellStopNoItem:
 		return true, nil // actions.Sell already sent the refusal.NotCarrying line
 	case actions.SellStopNoMerchant:
-		user.SendText(messaging.CategorySystem, "There's no merchant here.")
+		user.SendText(messaging.CategoryRefusal, "There's no merchant here.")
 		return true, nil
 	}
 

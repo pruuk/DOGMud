@@ -30,15 +30,15 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// must be escaped, not stood out of (previously any non-prone/supine state
 	// — including grapples — wrongly reported "already standing").
 	if user.Character.IsStanding() {
-		user.SendText(messaging.CategorySystem, "You're already standing.")
+		user.SendText(messaging.CategoryRefusal, "You're already standing.")
 		return true, nil
 	}
 	if user.Character.IsGrappling() {
-		user.SendText(messaging.CategorySystem, "You're locked in a grapple. You'll need to break free first.")
+		user.SendText(messaging.CategoryRefusal, "You're locked in a grapple. You'll need to break free first.")
 		return true, nil
 	}
 	if !user.Character.IsProne() && !user.Character.IsSupine() {
-		user.SendText(messaging.CategorySystem, "You can't stand up right now.")
+		user.SendText(messaging.CategoryRefusal, "You can't stand up right now.")
 		return true, nil
 	}
 
@@ -74,12 +74,11 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// misleading: rest cannot return stamina the character's gear is holding
 		// out of the pool, and the player has no other way to learn that. Bands,
 		// never raw numbers -- same disclosure style as assess.
-		msg := `You're too winded to get up. Catch your breath first.`
+		user.SendText(messaging.CategoryRefusal, `You're too winded to get up. Catch your breath first.`)
 		if reserved := user.Character.StaminaMax.Value - effMax; reserved > 0 {
-			msg += ` Your gear is holding ` + reserveShareBand(reserved, user.Character.StaminaMax.Value) +
-				` of your stamina in reserve, so you have less to draw on than you might expect.`
+			user.SendText(messaging.CategoryRefusal, `Your gear holds `+
+				reserveShareBand(reserved, user.Character.StaminaMax.Value)+` of your stamina in reserve.`)
 		}
-		user.SendText(messaging.CategorySystem, msg)
 		return true, nil
 	}
 
@@ -87,7 +86,7 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// (shouldn't happen since Prone→Standing and Supine→Standing are valid edges).
 	if err := user.Character.Position.TransitionToStanding(state.TransitionReason{Trigger: position.TriggerStandCommand}); err != nil {
 		mudlog.Warn("Stand: TransitionToStanding failed", "user", user.UserId, "err", err)
-		user.SendText(messaging.CategorySystem, "Something prevents you from standing.")
+		user.SendText(messaging.CategoryRefusal, "Something prevents you from standing.")
 		return true, nil
 	}
 

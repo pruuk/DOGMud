@@ -20,7 +20,7 @@ var onboardingAllowedQuests = map[int]struct{}{30: {}, 31: {}, 21: {}}
 func Tutorial(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	for questId := range user.Character.QuestProgress {
 		if _, ok := onboardingAllowedQuests[questId]; !ok {
-			user.SendText(messaging.CategorySystem, `The newcomers' coulee is for those just arriving. You are past that now.`)
+			user.SendText(messaging.CategoryRefusal, `The newcomers' coulee is for those just arriving. You are past that now.`)
 			return true, nil
 		}
 	}

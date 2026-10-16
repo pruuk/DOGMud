@@ -30,7 +30,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// 0. Dead characters can't cast (Health <= 0).
 	if user.Character.IsDisabled() {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't cast. You are dead.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You can't cast. You are dead.</ansi>`)
 		return true, nil
 	}
 
@@ -39,7 +39,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	skillLevel := user.Character.GetSkillLevel(skills.Spellcasting)
 	manifestLevel := user.Character.GetSkillLevel(skills.Manifestation)
 	if skillLevel == 0 && manifestLevel == 0 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You have no spellcasting skill.</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You have no spellcasting skill.</ansi>`)
 		return true, nil
 	}
 
@@ -62,11 +62,10 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// drift on which spell names resolve.
 	spellInfo, targetName := spells.ResolveSpellGreedy(rest)
 	if spellInfo == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`<ansi fg="red">No spell found for "%s". Use the spell name or an alias `+
-				`(e.g. <ansi fg="cyan-bold">mm</ansi>, <ansi fg="cyan-bold">heal</ansi>). `+
-				`Type <ansi fg="cyan-bold">spells</ansi> to list what you know.</ansi>`,
-			rest))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+			`<ansi fg="red">There is no spell called '%s'.</ansi> `+
+				`Try <ansi fg="command">spells</ansi>.`,
+			refusal.Echo(rest)))
 		return true, nil
 	}
 
@@ -82,19 +81,19 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	spellName := spellInfo.SpellId
 
 	if !user.Character.HasSpell(spellInfo.SpellId) {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">You haven't learned the spell "%s".</ansi>`, spellInfo.Name))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="red">You haven't learned the spell "%s".</ansi>`, spellInfo.Name))
 		return true, nil
 	}
 
 	// 3b. Verify the player has the skill appropriate for this spell's school.
 	if spellInfo.HasSchool(spells.SchoolManifestation) {
 		if manifestLevel == 0 {
-			user.SendText(messaging.CategorySystem, `<ansi fg="red">You have no manifestation skill.</ansi>`)
+			user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You have no manifestation skill.</ansi>`)
 			return true, nil
 		}
 	} else {
 		if skillLevel == 0 {
-			user.SendText(messaging.CategorySystem, `<ansi fg="red">You have no spellcasting skill.</ansi>`)
+			user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You have no spellcasting skill.</ansi>`)
 			return true, nil
 		}
 	}
@@ -119,7 +118,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	convMult := 1.0 + mutations.GetConvictionCostMultiplier(user.Character.Mutations)
 	totalConvictionCost := spellInfo.GetTotalConvictionCost(convMult)
 	if totalConvictionCost > 0 && user.Character.Conviction < totalConvictionCost {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			`<ansi fg="red">You don't have the conviction to cast %s.</ansi>`,
 			spellInfo.Name))
 		return true, nil
@@ -139,7 +138,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		}
 		if !found {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 				`<ansi fg="red">%s requires a %s in your inventory.</ansi>`,
 				spellInfo.Name, spellInfo.ComponentTag))
 			return true, nil
@@ -154,13 +153,14 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		}
 		if !found {
-			componentName := fmt.Sprintf("item #%d", spellInfo.SummonComponentId)
+			// The fallback never shows the item id: a player cannot act on it.
+			componentName := "component"
 			if spec := items.GetItemSpec(spellInfo.SummonComponentId); spec != nil && spec.NameSimple != "" {
 				componentName = spec.NameSimple
 			} else if spec != nil && spec.Name != "" {
 				componentName = spec.Name
 			}
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 				`<ansi fg="red">%s requires a %s in your inventory.</ansi>`,
 				spellInfo.Name, componentName))
 			return true, nil
@@ -246,7 +246,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			refusal.NotHereCreature(user)
 		} else if spellInfo.IsHarm() && spellInfo.Targeting == combatvocab.TargetArea {
 			// Refused before any resources were spent (U7b admission rule).
-			user.SendText(messaging.CategorySystem, `<ansi fg="red">There is nothing here for that spell to strike.</ansi>`)
+			user.SendText(messaging.CategoryRefusal, `<ansi fg="red">There is nothing here for that spell to strike.</ansi>`)
 		} else {
 			refusal.NoTarget(user, "cast "+spellInfo.SpellId)
 		}
@@ -318,7 +318,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		blocked := false
 		if currentRoom := rooms.LoadRoom(currentRoomId); currentRoom != nil {
 			if allowed, ok := currentRoom.GetTempData("allow_recall").(bool); ok && !allowed {
-				user.SendText(messaging.CategorySystem, "Something about this place prevents you from recalling.")
+				user.SendText(messaging.CategoryRefusal, "Something about this place prevents you from recalling.")
 				blocked = true
 			}
 		}
@@ -333,12 +333,11 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				}
 			}
 			if anchorRoom <= 0 {
-				user.SendText(messaging.CategorySystem, `You reach for the Veil, but there is no anchor to `+
-					`pull you. Set one first with `+
-					`<ansi fg="command">cast fold-anchor</ansi>.`)
+				user.SendText(messaging.CategoryRefusal, `You have no anchor to return to. `+
+					`Try <ansi fg="command">cast fold-anchor</ansi>.`)
 				blocked = true
 			} else if anchorRoom == currentRoomId {
-				user.SendText(messaging.CategorySystem, "You are already standing on your anchor.")
+				user.SendText(messaging.CategoryRefusal, "You are already standing on your anchor.")
 				blocked = true
 			}
 		}

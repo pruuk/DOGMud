@@ -42,7 +42,7 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	// Must be in combat to switch targets
 	if !user.Character.IsInCombat() {
-		user.SendText(messaging.CategorySystem, "You're not in combat. Use <ansi fg=\"command\">attack</ansi> to initiate combat.")
+		user.SendText(messaging.CategoryRefusal, "You're not in combat. Use <ansi fg=\"command\">attack</ansi> to initiate combat.")
 		return true, nil
 	}
 
@@ -50,7 +50,7 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// aggro type against DefaultAttack/Shooting; those were the two ORDINARY
 	// attack types, so the question it was really asking is the one asked here.
 	if user.Character.IsCasting() || user.Character.IsDisengaging() {
-		user.SendText(messaging.CategorySystem, "You can't switch targets right now.")
+		user.SendText(messaging.CategoryRefusal, "You can't switch targets right now.")
 		return true, nil
 	}
 
@@ -76,7 +76,7 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if err != nil {
 		// Distinguish self-targeting vs not-found via the original wording.
 		if pId, _ := room.FindByName(rest); pId == user.UserId {
-			user.SendText(messaging.CategorySystem, "You can't target yourself!")
+			user.SendText(messaging.CategoryRefusal, "You can't target yourself!")
 			return true, nil
 		}
 		refusal.NotHereCreature(user)
@@ -91,12 +91,12 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	currentTargetMobId := user.Character.EngagedTarget().MobInstanceId
 
 	if newTargetPlayerId > 0 && newTargetPlayerId == currentTargetUserId {
-		user.SendText(messaging.CategorySystem, "You're already targeting them!")
+		user.SendText(messaging.CategoryRefusal, "You're already targeting them!")
 		return true, nil
 	}
 
 	if newTargetMobInstanceId > 0 && newTargetMobInstanceId == currentTargetMobId {
-		user.SendText(messaging.CategorySystem, "You're already targeting them!")
+		user.SendText(messaging.CategoryRefusal, "You're already targeting them!")
 		return true, nil
 	}
 
@@ -114,12 +114,12 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// switching targets onto it.
 		switch mobs.CheckPlayerHarm(m) {
 		case mobs.HarmBlockedCompanion:
-			user.SendText(messaging.CategorySystem, messaging.HideNames(
+			user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 				fmt.Sprintf("<ansi fg=\"mobname\">%s</ansi> is someone's companion!", m.Character.Name),
 				[]string{m.Character.Name}, sight))
 			return true, nil
 		case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
-			user.SendText(messaging.CategorySystem, messaging.HideNames(
+			user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 				fmt.Sprintf("You can't attack <ansi fg=\"mobname\">%s</ansi>.", m.Character.Name),
 				[]string{m.Character.Name}, sight))
 			mobs.FireAttackRejected(m, user.UserId)
@@ -136,14 +136,14 @@ func Target(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		// Check PvP restrictions
 		if pvpErr := room.CanPvp(user, p); pvpErr != nil {
-			user.SendText(messaging.CategorySystem, pvpErr.Error())
+			user.SendText(messaging.CategoryRefusal, pvpErr.Error())
 			return true, nil
 		}
 
 		// Can't target party members
 		if partyInfo := parties.Get(user.UserId); partyInfo != nil {
 			if partyInfo.IsMember(newTargetPlayerId) {
-				user.SendText(messaging.CategorySystem, messaging.HideNames(
+				user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 					fmt.Sprintf("<ansi fg=\"username\">%s</ansi> is in your party!", p.Character.Name),
 					[]string{p.Character.Name}, sight))
 				return true, nil

@@ -71,7 +71,7 @@ func TestDialogueGiveItem_OverloadedPlayer_NoPhantomDeliveryOrEvent(t *testing.T
 	if strings.Contains(msgs, "You receive") {
 		t.Errorf("player was told they received an item they do not have:\n%s", msgs)
 	}
-	if !strings.Contains(msgs, "carrying too much") {
+	if !strings.Contains(msgs, "You can't carry the") {
 		t.Errorf("player got no usable explanation for the failure:\n%s", msgs)
 	}
 }

@@ -123,7 +123,7 @@ func TestStand_RefusalDisclosesReservation(t *testing.T) {
 		strings.Join(events.DrainQueuedMessagesForTest(user.UserId), " ")), " ")
 
 	require.NotEmpty(t, sent, "Stand sent the player nothing at all")
-	assert.Contains(t, sent, "Your gear is holding "+wantBand+" of your stamina in reserve",
+	assert.Contains(t, sent, "Your gear holds "+wantBand+" of your stamina in reserve",
 		"the refusal must NAME the reservation. Blaming exhaustion alone is a lie: "+
 			"resting cannot return stamina the character's gear is holding out of the pool")
 	assert.NotContains(t, sent, "40",
@@ -158,7 +158,7 @@ func TestStand_RefusalWithoutReservationMentionsNoGear(t *testing.T) {
 
 	require.NotEmpty(t, sent, "Stand sent the player nothing at all")
 	assert.Contains(t, sent, "too winded to get up")
-	assert.NotContains(t, sent, "Your gear is holding",
+	assert.NotContains(t, sent, "Your gear holds",
 		"a character with no reservation must not be told their gear is holding stamina")
 
 	user.Character.Stamina = 100
