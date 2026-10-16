@@ -1102,7 +1102,10 @@ the `SentientChatter*` knobs are retired.
   listener's sight, never deafen-filtered (spec X17, ruling 6). A mob holder
   gets the room line only (ruling R6); a mob holder with `to: holder` has no
   audience, so `speak` fails and arms nothing; a floor item has no voice. The
-  listener caps start only when the room line was actually sent.
+  listener caps start only when the room line was actually sent. Both lines
+  ride `CategoryNPCDialogue` (#371), which skips the normalizer's capitalize
+  stage, so `speak` capitalises the opening name itself
+  (`messaging.CapitalizeStart`): a mob holder "ogre" reads "Ogre's ...".
 - **`taunt_pull`** (ruling R5) makes a player holder's foe, a mob fighting
   someone else, fight the holder through `targeting.CommitTaunt`. It always
   returns Success, so a taunt branch never falls through to another line.

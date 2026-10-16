@@ -19,18 +19,18 @@ func Deafen(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	if rest == "" {
 		infoOutput, _ := templates.Process("admincommands/help/command.deafen", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 
 	u := resolveModTarget(room, rest)
 	if u == nil {
-		user.SendText(messaging.CategorySystem, "Could not find user.")
+		user.SendText(messaging.CategoryAdmin, "Could not find user.")
 		return true, nil
 	}
 	u.Deafened = true
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> (<ansi fg="username">%s</ansi>) has been <ansi fg="alert-5">DEAFENED</ansi>`, u.Username, u.Character.Name))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="username">%s</ansi> (<ansi fg="username">%s</ansi>) has been <ansi fg="alert-5">DEAFENED</ansi>`, u.Username, u.Character.Name))
 
 	return true, nil
 }
@@ -39,18 +39,18 @@ func UnDeafen(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	if rest == "" {
 		infoOutput, _ := templates.Process("admincommands/help/command.deafen", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 
 	u := resolveModTarget(room, rest)
 	if u == nil {
-		user.SendText(messaging.CategorySystem, "Could not find user.")
+		user.SendText(messaging.CategoryAdmin, "Could not find user.")
 		return true, nil
 	}
 	u.Deafened = false
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> (<ansi fg="username">%s</ansi>) has been <ansi fg="alert-1">UNDEAFENED</ansi>`, u.Username, u.Character.Name))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="username">%s</ansi> (<ansi fg="username">%s</ansi>) has been <ansi fg="alert-1">UNDEAFENED</ansi>`, u.Username, u.Character.Name))
 
 	return true, nil
 }

@@ -25,13 +25,13 @@ func Zap(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		target, err := actions.ResolveTargetActor(room, rest)
 		if err == actions.ErrTargetVanished {
-			user.SendText(messaging.CategorySystem, "Zap target not found.")
+			user.SendText(messaging.CategoryAdmin, "Zap target not found.")
 			return true, nil
 		}
 		if err == nil {
 			if !target.IsPlayer() {
 				mob := target.(*actions.MobActor).Mob
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You zap <ansi fg="mobname">%s</ansi> with a %s!`, mob.Character.Name, boltOfLightning))
+				user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`You zap <ansi fg="mobname">%s</ansi> with a %s!`, mob.Character.Name, boltOfLightning))
 				room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps <ansi fg="mobname">%s</ansi> with a %s!`, user.Character.Name, mob.Character.Name, boltOfLightning), user.UserId)
 
 				mob.Character.Health = 1
@@ -41,9 +41,9 @@ func Zap(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 
 			u := target.(*actions.UserActor).User
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You zap <ansi fg="username">%s</ansi> with a %s!`, u.Character.Name, boltOfLightning))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`You zap <ansi fg="username">%s</ansi> with a %s!`, u.Character.Name, boltOfLightning))
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps <ansi fg="username">%s</ansi> with a %s!`, user.Character.Name, u.Character.Name, boltOfLightning), user.UserId, u.UserId)
-			u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps you with a %s!`, user.Character.Name, boltOfLightning))
+			u.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps you with a %s!`, user.Character.Name, boltOfLightning)))
 
 			u.Character.Health = 1
 			u.Character.Conviction = 1
@@ -57,17 +57,17 @@ func Zap(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if !user.Character.IsInCombat() {
-		user.SendText(messaging.CategoryRefusal, "You are not in combat.")
+		user.SendText(messaging.CategoryAdmin, "You are not in combat.")
 		return true, nil
 	}
 
 	if user.Character.EngagedTarget().MobInstanceId > 0 {
 		mob := mobs.GetInstance(user.Character.EngagedTarget().MobInstanceId)
 		if mob == nil {
-			user.SendText(messaging.CategorySystem, "Zap Mob not found.")
+			user.SendText(messaging.CategoryAdmin, "Zap Mob not found.")
 			return true, nil
 		} else {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You zap <ansi fg="mobname">%s</ansi> with a %s!`, mob.Character.Name, boltOfLightning))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`You zap <ansi fg="mobname">%s</ansi> with a %s!`, mob.Character.Name, boltOfLightning))
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps <ansi fg="mobname">%s</ansi> with a %s!`, user.Character.Name, mob.Character.Name, boltOfLightning), user.UserId)
 
 			mob.Character.Health = 1
@@ -76,10 +76,10 @@ func Zap(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	} else if user.Character.EngagedTarget().UserId > 0 {
 		u := users.GetByUserId(user.Character.EngagedTarget().UserId)
 		if u == nil {
-			user.SendText(messaging.CategorySystem, "Zap User not found.")
+			user.SendText(messaging.CategoryAdmin, "Zap User not found.")
 			return true, nil
 		} else {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You zap <ansi fg="username">%s</ansi> with a %s!`, u.Character.Name, boltOfLightning))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`You zap <ansi fg="username">%s</ansi> with a %s!`, u.Character.Name, boltOfLightning))
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps <ansi fg="username">%s</ansi> with a %s!`, user.Character.Name, u.Character.Name, boltOfLightning), user.UserId, u.UserId)
 			// M1 audit defect: this path dropped a player to 1 health and 1
 			// conviction without telling them, while the explicit-target path
@@ -87,7 +87,7 @@ func Zap(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			// The room broadcast now also excludes the target, as that path's
 			// does, so they read the direct line rather than the third-person
 			// one about themselves.
-			u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps you with a %s!`, user.Character.Name, boltOfLightning))
+			u.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(`<ansi fg="username">%s</ansi> zaps you with a %s!`, user.Character.Name, boltOfLightning)))
 
 			u.Character.Health = 1
 			u.Character.Conviction = 1

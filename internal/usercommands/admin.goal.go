@@ -66,10 +66,10 @@ func Goal(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 func goalShowUsage(user *users.UserRecord) {
 	if out, err := templates.Process("admincommands/help/command.goal", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  goal list <mob-ident>\r\n"+
 			"  goal show <mob-ident> <goal-id>\r\n"+
@@ -108,12 +108,12 @@ func goalList(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, name, ok := goalResolveMobIdent(args[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
 		return true, nil
 	}
 	all := goals.GoalsOf(mobId, util.ConvertForFilename(name))
 	if len(all) == 0 {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf("%s (%d) has no goals.\r\n", name, mobId))
 		return true, nil
 	}
@@ -125,7 +125,7 @@ func goalList(args []string, user *users.UserRecord) (bool, error) {
 		fmt.Fprintf(&b, "  %-4s  %-20s  %-4d  %s\r\n",
 			g.Id, g.Type, g.Priority, formatParamsInline(g.Params))
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -136,7 +136,7 @@ func goalShow(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, name, ok := goalResolveMobIdent(args[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
 		return true, nil
 	}
 	for _, g := range goals.GoalsOf(mobId, util.ConvertForFilename(name)) {
@@ -160,11 +160,11 @@ func goalShow(args []string, user *users.UserRecord) (bool, error) {
 					fmt.Fprintf(&b, "    %s: %v\r\n", k, g.Params[k])
 				}
 			}
-			user.SendText(messaging.CategorySystem, b.String())
+			user.SendText(messaging.CategoryAdmin, b.String())
 			return true, nil
 		}
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryAdmin,
 		fmt.Sprintf("No goal %s on %s (%d).\r\n", args[1], name, mobId))
 	return true, nil
 }
@@ -176,20 +176,20 @@ func goalAdd(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, name, ok := goalResolveMobIdent(args[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
 		return true, nil
 	}
 	goalType := args[1]
 	prio, err := strconv.Atoi(args[2])
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Bad priority %q: %v\r\n", args[2], err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Bad priority %q: %v\r\n", args[2], err))
 		return true, nil
 	}
 	params := map[string]any{}
 	for _, kv := range args[3:] {
 		k, v, found := strings.Cut(kv, "=")
 		if !found {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryAdmin,
 				fmt.Sprintf("Bad param %q (expected key=value)\r\n", kv))
 			return true, nil
 		}
@@ -203,13 +203,13 @@ func goalAdd(args []string, user *users.UserRecord) (bool, error) {
 	res, err := goals.Add(mobId, util.ConvertForFilename(name), g)
 	var ce *goals.ConflictError
 	if errors.As(err, &ce) {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf("Blocked by goal %s (type=%s, priority=%d).\r\n",
 				ce.BlockerGoalId, ce.BlockerType, ce.BlockerPrio))
 		return true, nil
 	}
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Add failed: %v\r\n", err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Add failed: %v\r\n", err))
 		return true, nil
 	}
 	msg := fmt.Sprintf("Added goal %s (type=%s, priority=%d)",
@@ -217,7 +217,7 @@ func goalAdd(args []string, user *users.UserRecord) (bool, error) {
 	if len(res.Displaced) > 0 {
 		msg += fmt.Sprintf(" — displaced goals: %s", strings.Join(res.Displaced, ", "))
 	}
-	user.SendText(messaging.CategorySystem, msg+".\r\n")
+	user.SendText(messaging.CategoryAdmin, msg+".\r\n")
 	return true, nil
 }
 
@@ -228,20 +228,20 @@ func goalRemove(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, name, ok := goalResolveMobIdent(args[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
 		return true, nil
 	}
 	err := goals.Remove(mobId, util.ConvertForFilename(name), args[1])
 	if errors.Is(err, goals.ErrGoalNotFound) {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf("No goal %s on %s (%d).\r\n", args[1], name, mobId))
 		return true, nil
 	}
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Remove failed: %v\r\n", err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Remove failed: %v\r\n", err))
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryAdmin,
 		fmt.Sprintf("Removed goal %s from %s (%d).\r\n", args[1], name, mobId))
 	return true, nil
 }
@@ -253,14 +253,14 @@ func goalClear(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, name, ok := goalResolveMobIdent(args[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
 		return true, nil
 	}
 	if err := goals.Clear(mobId, util.ConvertForFilename(name)); err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Clear failed: %v\r\n", err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Clear failed: %v\r\n", err))
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryAdmin,
 		fmt.Sprintf("Cleared all goals from %s (%d).\r\n", name, mobId))
 	return true, nil
 }
@@ -273,19 +273,19 @@ func goalCurrent(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, name, ok := goalResolveMobIdent(args[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
 		return true, nil
 	}
 	ns := util.ConvertForFilename(name)
 	all := goals.GoalsOf(mobId, ns)
 	if len(all) == 0 {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf("Current goal for %s (mob %d): none\r\n  (0 goals on file)\r\n", name, mobId))
 		return true, nil
 	}
 	current := goals.CurrentGoalOf(mobId, ns)
 	if current == nil {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf("Current goal for %s (mob %d): none\r\n  (%d goal(s) on file; selection has not landed on one)\r\n",
 				name, mobId, len(all)))
 		return true, nil
@@ -293,7 +293,7 @@ func goalCurrent(args []string, user *users.UserRecord) (bool, error) {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Current goal for %s (mob %d): %s %s priority=%d\r\n",
 		name, mobId, current.Id, current.Type, current.Priority)
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -307,13 +307,13 @@ func goalScores(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, name, ok := goalResolveMobIdent(args[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", args[0]))
 		return true, nil
 	}
 	ns := util.ConvertForFilename(name)
 	all := goals.GoalsOf(mobId, ns)
 	if len(all) == 0 {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf("Score breakdown for %s (mob %d): no goals on file.\r\n", name, mobId))
 		return true, nil
 	}
@@ -353,7 +353,7 @@ func goalScores(args []string, user *users.UserRecord) (bool, error) {
 		fmt.Fprintf(&b, "  %-4s  %-20s  %-4d  %-7.2f  %-7.2f  %-10.2f  %s\r\n",
 			g.Id, g.Type, g.Priority, w, ctxMod, eff, status)
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 

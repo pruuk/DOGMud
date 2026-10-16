@@ -161,7 +161,9 @@ func TestDeterministicDefenceResult_FlooredSaveStartsFromAttackWinningRolls(t *t
 func countDefenceShortageMessages(result *AttackResult) int {
 	count := 0
 	for _, msg := range result.MessagesToTarget {
-		if msg.Category == messaging.CategorySystem && msg.Text == defenceShortageText {
+		// Counted on its text alone, whatever its category, so a zero
+		// expectation also catches a note sent on the wrong category.
+		if msg.Text == defenceShortageText {
 			count++
 		}
 	}
@@ -276,6 +278,17 @@ func TestRunBestOfAllDefense_ShortWinnerChargesAndMessagesOnce(t *testing.T) {
 	}
 	if got := countDefenceShortageMessages(result); got != 1 {
 		t.Fatalf("shortage messages = %d, want exactly 1 for the round", got)
+	}
+	// The note rides the winning defence's category, the dodge's here, and
+	// is marked AlwaysShow so a Light or Medium reader, whose drain drops
+	// dodge lines, still reads it (it always showed on CategorySystem, #371).
+	for _, msg := range result.MessagesToTarget {
+		if msg.Text == defenceShortageText && msg.Category != messaging.CategoryDodge {
+			t.Fatalf("shortage note category = %v, want CategoryDodge (the winning defence)", msg.Category)
+		}
+		if msg.Text == defenceShortageText && !msg.AlwaysShow {
+			t.Fatalf("shortage note is not AlwaysShow; a Light or Medium reader would lose it")
+		}
 	}
 
 	// sendDefenseMessages no longer rolls skill progression at all (see the

@@ -61,7 +61,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) < 2 || (args[0] != `add` && args[0] != `remove`) {
-		user.SendText(messaging.CategorySystem, `Try <ansi fg="command">help storage</ansi> for more information about storage.`+term.CRLFStr)
+		user.SendText(messaging.CategoryUsage, `Try <ansi fg="command">help storage</ansi> for more information about storage.`+term.CRLFStr)
 		return true, nil
 	}
 

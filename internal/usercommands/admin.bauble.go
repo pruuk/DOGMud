@@ -88,10 +88,10 @@ func Bauble(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 func baubleUsage(user *users.UserRecord) {
 	if out, err := templates.Process("admincommands/help/command.bauble", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  bauble status\r\n"+
 			"  bauble stats\r\n"+
@@ -115,7 +115,7 @@ func baubleSpawn(args []string, user *users.UserRecord, room *rooms.Room) (bool,
 	if len(args) > 0 {
 		t, ok := baubles.ParseTier(strings.ToLower(args[0]))
 		if !ok {
-			user.SendText(messaging.CategorySystem, `Tier must be one of: cheap, average, rare.`)
+			user.SendText(messaging.CategoryAdmin, `Tier must be one of: cheap, average, rare.`)
 			return true, nil
 		}
 		tier = t
@@ -126,7 +126,7 @@ func baubleSpawn(args []string, user *users.UserRecord, room *rooms.Room) (bool,
 	// delivered to your pack after at least BaubleRevealSeconds.
 	actions.StartBaubleFind(user.UserId, room, tier, baubles.SourceAdmin)
 
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryAdmin,
 		fmt.Sprintf(`You conjure a %s bauble from this room. It will arrive in your pack shortly, %s.`, tier, baubleSpawnHow()))
 	return true, nil
 }
@@ -181,7 +181,7 @@ func baubleStatus(user *users.UserRecord) (bool, error) {
 	}
 	fmt.Fprintf(&b, "Catalog: %d records.\r\n", baubles.Count())
 	b.WriteString(baubleSweepLine(baubles.LastSweep(), baubles.SweepInterval()))
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -252,7 +252,7 @@ func baubleShow(args []string, user *users.UserRecord, room *rooms.Room) (bool, 
 		fmt.Fprintf(&b, "  last sold:   %d gold, %s\r\n", rec.SoldValue, rec.SoldAt.Format(`2006-01-02 15:04 MST`))
 	}
 	fmt.Fprintf(&b, "  description: %s\r\n", rec.Description)
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -287,7 +287,7 @@ func baubleList(args []string, user *users.UserRecord) (bool, error) {
 		}
 	}
 	if len(recent) == 0 {
-		user.SendText(messaging.CategorySystem, `The bauble catalog is empty.`)
+		user.SendText(messaging.CategoryAdmin, `The bauble catalog is empty.`)
 		return true, nil
 	}
 	var b strings.Builder
@@ -299,7 +299,7 @@ func baubleList(args []string, user *users.UserRecord) (bool, error) {
 	for _, r := range recent {
 		fmt.Fprintf(&b, "  %s  %-8s %-7s %4dg %5.1flb  %-32s %s\r\n", r.Id, r.Status, r.Tier, r.Value, r.WeightLbs, r.Name, r.Region)
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -308,7 +308,7 @@ func baubleList(args []string, user *users.UserRecord) (bool, error) {
 func baubleWindow(args []string, user *users.UserRecord, room *rooms.Room) (bool, error) {
 	if len(args) > 0 && strings.EqualFold(args[0], `reset`) {
 		baubles.ResetWindow(room.RoomId)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Bauble roll windows for room %d and its features reset. The next search starts a fresh one.`, room.RoomId))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Bauble roll windows for room %d and its features reset. The next search starts a fresh one.`, room.RoomId))
 		return true, nil
 	}
 
@@ -350,7 +350,7 @@ func baubleWindow(args []string, user *users.UserRecord, room *rooms.Room) (bool
 		b.WriteString(" <ansi fg=\"red\">This zone is excluded (BaubleExcludedZones).</ansi>")
 	}
 	b.WriteString("\r\n")
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -360,7 +360,7 @@ func baubleWindow(args []string, user *users.UserRecord, room *rooms.Room) (bool
 func resolveBaubleArg(arg string, user *users.UserRecord, room *rooms.Room) (baubles.Record, bool) {
 	arg = strings.TrimSpace(arg)
 	if arg == `` {
-		user.SendText(messaging.CategorySystem, `Which bauble? Give an id (B0000012) or the name of one in your pack or on the floor.`)
+		user.SendText(messaging.CategoryAdmin, `Which bauble? Give an id (B0000012) or the name of one in your pack or on the floor.`)
 		return baubles.Record{}, false
 	}
 	if baubles.LooksLikeId(arg) {
@@ -368,7 +368,7 @@ func resolveBaubleArg(arg string, user *users.UserRecord, room *rooms.Room) (bau
 		if rec, ok := baubles.Get(id); ok {
 			return rec, true
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`No bauble record %s.`, id))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`No bauble record %s.`, id))
 		return baubles.Record{}, false
 	}
 	isBauble := func(i items.Item) bool { return i.IsBauble() }
@@ -382,7 +382,7 @@ func resolveBaubleArg(arg string, user *users.UserRecord, room *rooms.Room) (bau
 			return rec, true
 		}
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`No bauble called "%s" in your pack or on the floor here.`, arg))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`No bauble called "%s" in your pack or on the floor here.`, arg))
 	return baubles.Record{}, false
 }
 
@@ -422,7 +422,7 @@ func baubleStats(user *users.UserRecord) (bool, error) {
 		}
 		b.WriteString("\r\n")
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -443,7 +443,7 @@ func baubleEdit(args []string, user *users.UserRecord, room *rooms.Room) (bool, 
 		}
 	}
 	if fieldAt < 1 || fieldAt == len(args)-1 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Usage: bauble edit <bauble> <field> <text>. Fields: %s.`, strings.Join(baubles.EditFields, `, `)))
+		user.SendText(messaging.CategoryUsage, fmt.Sprintf(`Usage: bauble edit <bauble> <field> <text>. Fields: %s.`, strings.Join(baubles.EditFields, `, `)))
 		return true, nil
 	}
 	rec, ok := resolveBaubleArg(strings.Join(args[:fieldAt], ` `), user, room)
@@ -452,16 +452,16 @@ func baubleEdit(args []string, user *users.UserRecord, room *rooms.Room) (bool, 
 	}
 	updated, removed, err := baubles.Edit(rec.Id, args[fieldAt], strings.Join(args[fieldAt+1:], ` `), user.Character.Name)
 	if err != nil && !errors.Is(err, baubles.ErrCorpusCleanup) {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Not changed: %s.`, err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Not changed: %s.`, err))
 		return true, nil
 	}
 	if removed > 0 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Its old text left the fallback corpus (promoted entries removed: %d).`, removed))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Its old text left the fallback corpus (promoted entries removed: %d).`, removed))
 	}
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">%s.</ansi>`, err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">%s.</ansi>`, err))
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`Bauble %s is now <ansi fg="itemname">%s</ansi> (keyword %s, %s, %d gold, %.1f lb). Every copy in the world shows the change.`,
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Bauble %s is now <ansi fg="itemname">%s</ansi> (keyword %s, %s, %d gold, %.1f lb). Every copy in the world shows the change.`,
 		updated.Id, updated.Name, updated.NameSimple, updated.Tier, updated.Value, updated.WeightLbs))
 	return true, nil
 }
@@ -473,14 +473,14 @@ func baubleRegen(args []string, user *users.UserRecord, room *rooms.Room) (bool,
 		return true, nil
 	}
 	if _, ok := baubles.CurrentGenerator(); !ok {
-		user.SendText(messaging.CategorySystem, `No model is set up (see "bauble status"), so there is nothing to regenerate with.`)
+		user.SendText(messaging.CategoryAdmin, `No model is set up (see "bauble status"), so there is nothing to regenerate with.`)
 		return true, nil
 	}
 	if err := actions.RegenerateBauble(rec.Id, user.UserId, user.Character.Name); err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Could not regenerate %s: %s.`, rec.Id, err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Could not regenerate %s: %s.`, rec.Id, err))
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`Asking the model to rename %s (%s). You will be told when it answers.`, rec.Id, rec.Name))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Asking the model to rename %s (%s). You will be told when it answers.`, rec.Id, rec.Name))
 	return true, nil
 }
 
@@ -492,20 +492,20 @@ func baubleRetire(args []string, user *users.UserRecord, room *rooms.Room, retir
 	}
 	if retire {
 		if err := baubles.Retire(rec.Id, user.Character.Name); err != nil && !errors.Is(err, baubles.ErrCorpusCleanup) {
-			user.SendText(messaging.CategorySystem, err.Error())
+			user.SendText(messaging.CategoryAdmin, err.Error())
 			return true, nil
 		} else if err != nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">%s.</ansi>`, err))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">%s.</ansi>`, err))
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Bauble %s (%s) is retired: it now shows as a plain Trinket everywhere. "bauble restore %s" undoes it.`, rec.Id, rec.Name, rec.Id))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Bauble %s (%s) is retired: it now shows as a plain Trinket everywhere. "bauble restore %s" undoes it.`, rec.Id, rec.Name, rec.Id))
 		return true, nil
 	}
 	if err := baubles.Restore(rec.Id, user.Character.Name); err != nil {
-		user.SendText(messaging.CategorySystem, err.Error())
+		user.SendText(messaging.CategoryAdmin, err.Error())
 		return true, nil
 	}
 	restored, _ := baubles.Get(rec.Id)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`Bauble %s shows as <ansi fg="itemname">%s</ansi> again.`, rec.Id, restored.Name))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Bauble %s shows as <ansi fg="itemname">%s</ansi> again.`, rec.Id, restored.Name))
 	return true, nil
 }
 
@@ -517,7 +517,7 @@ func baublePrompt(args []string, user *users.UserRecord, room *rooms.Room) (bool
 	}
 	msgs, ok := baubles.PreviewPrompt(actions.BaubleRequestForRecord(rec))
 	if !ok {
-		user.SendText(messaging.CategorySystem, `No prompt renderer is installed (the baubles module is not built in).`)
+		user.SendText(messaging.CategoryAdmin, `No prompt renderer is installed (the baubles module is not built in).`)
 		return true, nil
 	}
 	var b strings.Builder
@@ -526,7 +526,7 @@ func baublePrompt(args []string, user *users.UserRecord, room *rooms.Room) (bool
 		b.WriteString(m)
 		b.WriteString("\r\n\r\n")
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -546,10 +546,10 @@ func baublePromote(args []string, user *users.UserRecord, room *rooms.Room) (boo
 	}
 	key, err := baubles.Promote(rec.Id)
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Not promoted: %s.`, err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Not promoted: %s.`, err))
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`Bauble %s (%s) is now in the fallback corpus under %s. Finds with no model may use its text.`, rec.Id, rec.Name, key))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Bauble %s (%s) is now in the fallback corpus under %s. Finds with no model may use its text.`, rec.Id, rec.Name, key))
 	return true, nil
 }
 
@@ -557,7 +557,7 @@ func baublePromote(args []string, user *users.UserRecord, room *rooms.Room) (boo
 func baubleCorpus(args []string, user *users.UserRecord) (bool, error) {
 	usage := `Usage: bauble corpus list [key] | remove <key> <name or record id> | reload | export`
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, usage)
+		user.SendText(messaging.CategoryUsage, usage)
 		return true, nil
 	}
 	switch strings.ToLower(args[0]) {
@@ -606,7 +606,7 @@ func baubleCorpus(args []string, user *users.UserRecord) (bool, error) {
 	default:
 		b.WriteString(usage)
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -665,12 +665,12 @@ func baubleCorpusList(args []string, user *users.UserRecord) {
 // Print command sends a message the same way.
 func baubleCorpusExport(user *users.UserRecord) {
 	if _, promotedN := baubles.CorpusCounts(); promotedN == 0 {
-		user.SendText(messaging.CategorySystem, `No promoted entries to export.`)
+		user.SendText(messaging.CategoryAdmin, `No promoted entries to export.`)
 		return
 	}
 	out, err := baubles.ExportPromoted()
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Could not export: %s.`, err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Could not export: %s.`, err))
 		return
 	}
 	header := "Promoted entries in the seed's format. The output already carries its own " +

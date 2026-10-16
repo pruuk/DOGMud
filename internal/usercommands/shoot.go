@@ -133,7 +133,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.BadSyntax {
-		user.SendText(messaging.CategorySystem, `Syntax: <ansi fg="command">shoot &lt;target&gt; [direction]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `Syntax: <ansi fg="command">shoot &lt;target&gt; [direction]</ansi>`)
 		return true, nil
 	}
 	if result.ExitLocked {
@@ -489,7 +489,7 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	// at-most-once note, not part of the shot's narration.
 	if targetPlayer != nil && result.MoveResult.Defence.Defended {
 		if text := combat.ChannelDefenceShortageText(result.MoveResult.Defence, targetPlayer.Character); text != "" {
-			targetPlayer.SendText(messaging.CategorySystem, text)
+			targetPlayer.SendText(messaging.CategoryHitRanged, text)
 		}
 	}
 
@@ -522,14 +522,21 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	// down it is news again -- which is also what heals the one case EndAggro
 	// cannot reach, a cross-room shooter who never held Aggro of their own.
 	//
-	// CategorySystem, not CategorySurpriseAttack, and the difference is not an
-	// oversight: this fires on ORDINARY shots and has nothing to do with an
-	// ambush. It is a mechanical explanation, like the cost refusal and the
-	// defence shortage text this same function already routes to CategorySystem.
+	// The cue rides the category of the shooter's own outcome line for this
+	// shot (M7 slice 4, #371, rule N2: "Someone is attacking you" narrates
+	// what is done to the shooter, so it is not CategorySystem); a shot whose
+	// outcome line is silent falls back to CategoryHitRanged. (The defence
+	// shortage note this function sends the defender rides the shot's
+	// CategoryHitRanged since M7 slice 4: it reaches the defender, not the
+	// shooter.)
 	speak, nowSpoken := shouldSpeakEngagedCue(result.AimedWhileEngaged, user.Character.RangedEngagedCueSpoken)
 	user.Character.RangedEngagedCueSpoken = nowSpoken
 	if speak {
-		user.SendText(messaging.CategorySystem, aimedWhileEngagedText)
+		cueCat := shooterLine.Cat
+		if shooterLine == messaging.NoLine {
+			cueCat = messaging.CategoryHitRanged
+		}
+		user.SendText(cueCat, aimedWhileEngagedText)
 	}
 
 	weapon := fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, result.WeaponName)

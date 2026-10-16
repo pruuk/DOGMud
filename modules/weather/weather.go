@@ -143,6 +143,8 @@ func (m *weatherModule) rebuildGraph() {
 
 // sendLine writes one line to a user. It is the ONLY place this module calls
 // the engine's SendText. DOGMud's fork signature is SendText(category, text).
-func sendLine(user *users.UserRecord, text string) {
-	user.SendText(messaging.CategorySystem, text)
+// The caller picks the category: the player report rides CategorySystem, the
+// admin subcommands CategoryAdmin and their usage lines CategoryUsage (#371).
+func sendLine(user *users.UserRecord, cat messaging.Category, text string) {
+	user.SendText(cat, text)
 }

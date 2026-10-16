@@ -19,7 +19,7 @@ func (m *PlaytestModule) registerCommands() {
 func (m *PlaytestModule) cmdAIFlag(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	parts := strings.Fields(rest)
 	if len(parts) == 0 {
-		user.SendText(messaging.CategorySystem, `Usage: ai-flag <username> [on|off]`)
+		user.SendText(messaging.CategoryUsage, `Usage: ai-flag <username> [on|off]`)
 		return true, nil
 	}
 	name := parts[0]
@@ -29,15 +29,15 @@ func (m *PlaytestModule) cmdAIFlag(rest string, user *users.UserRecord, room *ro
 	}
 	target, err := users.LoadUser(name)
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("No such account: %s", name))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No such account: %s", name))
 		return true, nil
 	}
 	target.IsAI = on
 	if err := users.SaveUser(target); err != nil {
-		user.SendText(messaging.CategorySystem, "Failed to save: "+err.Error())
+		user.SendText(messaging.CategoryAdmin, "Failed to save: "+err.Error())
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("%s IsAI = %v", name, on))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf("%s IsAI = %v", name, on))
 	return true, nil
 }
 
@@ -56,12 +56,12 @@ func (m *PlaytestModule) cmdAIList(rest string, user *users.UserRecord, room *ro
 		return true
 	})
 	if len(lines) == 0 {
-		user.SendText(messaging.CategorySystem, `No AI-flagged accounts.`)
+		user.SendText(messaging.CategoryAdmin, `No AI-flagged accounts.`)
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem, `AI-flagged accounts:`)
+	user.SendText(messaging.CategoryAdmin, `AI-flagged accounts:`)
 	for _, l := range lines {
-		user.SendText(messaging.CategorySystem, l)
+		user.SendText(messaging.CategoryAdmin, l)
 	}
 	return true, nil
 }

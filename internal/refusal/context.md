@@ -144,7 +144,7 @@ point at the wrapper. Call it directly at each site.
 ## Guards
 
 Three root-level tests keep the package the only source of these lines and
-keep every refusal on `CategoryRefusal`.
+keep every refusal on `CategoryRefusal`; four more, below, cover slice 4.
 
 - `refusal_phrase_guard_test.go` (`TestRefusalPhrasesLiveInThePackage`)
   walks every non-test Go file under `internal/` and `modules/` (skipping
@@ -197,15 +197,58 @@ Behaviour tests: `internal/usercommands/refusal_echo_sight_test.go` (no
 echo through sight) and `internal/usercommands/refusal_commands_test.go`
 (command-level lines).
 
-## Slice 4
+## Slice 4 guards
 
-Slice 3 put every refusal on `CategoryRefusal`. `CategorySystem` still
-carries reports, confirmations, help, usage and admin output. Slice 4 of
-#371:
+Four more root tests (M7 slice 4, #371) keep usage, staff output and
+narration off `CategorySystem`. Each has a probe test that feeds the scanner
+a planted source and requires it to fail where it should.
 
-- adds `CategoryUsage` for usage lines (the ledger's 47 USAGE rows);
-- adds `CategoryAdmin` for staff output (`internal/usercommands/admin.*.go`,
-  retagged by file);
-- moves narration out of `CategorySystem` (the ledger's 63 NARR rows: party
-  notices to other members, guild announcements, follow lines);
-- adds the tag guard.
+- `usage_category_guard_test.go` (`TestUsageRidesCategoryUsage`): a send whose
+  text opens with "Usage:", and every send inside a `*Usage(user)` function,
+  rides `CategoryUsage`. It sees literal-led sends and the `*Usage`
+  functions; a usage block built through a template is converted from the
+  ledger, not caught. Probe: `TestUsageGuardCanFail`.
+- `admin_category_guard_test.go` (`TestAdminOutputRidesCategoryAdmin`): no
+  function reachable only from an admin-only command sends on
+  `CategorySystem`. The admin set is derived from the command registry
+  (`userCommands` entries whose `AdminOnly` field is true, plus module
+  `AddUserCommand` and `RegisterCommand` registrations), not from file names, because `bounty` and
+  `reload` live in `admin.*.go` and are player commands. Reach is followed
+  through same-package callees, and tells selectors, fields and literal keys
+  from function names. It cannot see staff subcommands of player commands
+  (party admin, bounty, reload, weather, `bauble_admin`); those were
+  converted from the admin ledger with no guard. Probe:
+  `TestAdminGuardCanFail`.
+- `system_recipient_guard_test.go` (`TestSystemReachesOnlyTheActingPlayer`,
+  rule N1): inside a command handler (every function reachable from a
+  registered command), a `CategorySystem` send goes to a parameter of the
+  enclosing function, never to a looked-up local, a range variable over other
+  players or a room. A parameter whose type names a Room (`room *rooms.Room`)
+  never counts as the acting player. Hooks are excluded: an event has no
+  single acting player. What it cannot see: a send through a method not named
+  `SendText*`, a category passed in a variable rather than written as
+  `messaging.CategorySystem`, and a call into another package (reach follows
+  same-package callees only). Probe: `TestSystemRecipientGuardCanFail`.
+- `system_subject_guard_test.go` (`TestNarrationAboutYouNeverRidesSystem`,
+  rule N2): a `CategorySystem` line that opens with another creature (a name
+  tag, a bare `%s`, "Someone", "Something") and addresses "you" or "your" is
+  narration of something done to the player and takes a narration category.
+  Narrowed for `track`'s own report ("%s is in the room with you!") and the
+  "Something glints" find. Probe: `TestSystemSubjectGuardCanFail`.
+
+R4: the two per-file tests stay (`internal/usercommands/special_move_categories_test.go`
+and `internal/mobcommands/throttle_categories_test.go`).
+`TestSpecialMoveFilesKeepOnlyNoticesOnSystem` now requires that `taunt.go`,
+`throw.go`, `rally.go` and `warcry.go` hold no `messaging.CategorySystem` at
+all. The defence-shortage note ("You mount a desperate response ...") reaches
+the defender, so at each site it rides the category of the defence line sent
+with it. On the melee path that category is suppressible at Light and Medium,
+so the note is marked `combat.TaggedMessage.AlwaysShow` and still shows at
+every verbosity, as it did on System.
+
+## M7 complete
+
+M7 (#371) shipped in slices 1 to 4: #547, #549, #559 and the slice 4 PR.
+`CategorySystem` now carries reports, tables, help and confirmations of the
+player's own action; refusals, usage, staff output, group notices and
+narration each have their own category.

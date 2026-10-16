@@ -63,6 +63,27 @@ func TestRevealSpotted_AHiddenPlayerIsRevealedAndTold(t *testing.T) {
 	assert.True(t, revealTold(events.DrainQueuedMessagesForTest(7911), "searches the room and spots you!"))
 }
 
+// #371 slice 4 review: the spotted line rides the searcher's kind, Emote for
+// a player and MobEmote for a mob, and a lowercase mob name still opens the
+// line with a capital (neither category runs the capitalize stage).
+func TestEndHidingOnSpot_RidesTheSearchersKind(t *testing.T) {
+	room, hider := revealPlayerScene(t, "city")
+	room.Lamp = rooms.LampPtr(90) // lit whatever the ambient hour
+	endHidingOnSpot("goblin scout", false, hider.Character, hider, room)
+	got := strings.Join(events.DrainQueuedMessagesForTest(7911), "")
+	assert.Contains(t, got, `fg="mob-emote"`, "a mob searcher's line rides CategoryMobEmote")
+	assert.Contains(t, got, `<ansi fg="mobname">Goblin scout</ansi> searches the room and spots you!`,
+		"a lowercase mob name opens the line with a capital, in the mob name colour")
+
+	room, hider = revealPlayerScene(t, "city")
+	room.Lamp = rooms.LampPtr(90)
+	endHidingOnSpot("Seeker", true, hider.Character, hider, room)
+	got = strings.Join(events.DrainQueuedMessagesForTest(7911), "")
+	assert.Contains(t, got, `fg="emote"`, "a player searcher's line rides CategoryEmote")
+	assert.Contains(t, got, `<ansi fg="username">Seeker</ansi> searches the room and spots you!`)
+	assert.NotContains(t, got, `fg="mob-emote"`)
+}
+
 func TestRevealSpotted_AHiderWhoCannotSeeIsNotToldTheName(t *testing.T) {
 	room, hider := revealPlayerScene(t, "cave")
 	revealSpotted(newSearchFakeActor("Seeker", room, true, 0), SearchResult{HiddenPlayersFound: []int{7911}}, room)

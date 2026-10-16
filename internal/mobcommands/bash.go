@@ -101,7 +101,7 @@ func Bash(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		partialObserver := lineOrNone(messaging.CategoryBash, roles.Observer)
 		if defended {
 			partialObserver = messaging.Say(messaging.CategoryBash, defence.ToRoom)
-			sendMoveDefenceShortage(targetUser, defence)
+			sendMoveDefenceShortage(messaging.Say(messaging.CategoryBash, defence.Shortage), aud)
 		}
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.NoLine,
@@ -111,7 +111,7 @@ func Bash(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, bashLabel); defended {
 		// A defence stopped it outright: the defender's line and the room line
 		// both come from the triad.
-		sendMoveDefenceShortage(targetUser, defence)
+		sendMoveDefenceShortage(messaging.Say(messaging.CategoryBash, defence.Shortage), aud)
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.NoLine,
 			Actee:    acteeDefenceLine(targetUser, room, messaging.CategoryBash, defence.ToDefender, mobName),

@@ -18,7 +18,7 @@ func Boot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	fields := strings.Fields(rest)
 	if len(fields) == 0 {
-		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Usage: boot <name> [reason]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `<ansi fg="yellow">Usage: boot <name> [reason]</ansi>`)
 		return true, nil
 	}
 	name := fields[0]
@@ -29,15 +29,15 @@ func Boot(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	target := users.GetByCharacterName(name)
 	if target == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">No online player named "%s".</ansi>`, name))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">No online player named "%s".</ansi>`, name))
 		return true, nil
 	}
 
 	target.EventLog.Add(`conn`, fmt.Sprintf("Booted by %s: %s", user.Username, reason))
-	target.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">You have been disconnected by staff.</ansi> %s`, reason))
+	target.SendText(messaging.CategoryWarning, fmt.Sprintf(`<ansi fg="alert-5">You have been disconnected by staff.</ansi> %s`, reason))
 
 	connections.Kick(target.ConnectionId(), fmt.Sprintf("Booted by %s: %s", user.Username, reason))
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> has been <ansi fg="alert-5">booted</ansi>.`, target.Username))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="username">%s</ansi> has been <ansi fg="alert-5">booted</ansi>.`, target.Username))
 	return true, nil
 }

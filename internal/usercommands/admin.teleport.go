@@ -29,7 +29,7 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	if len(rest) == 0 {
 		// send some sort of help info?
 		infoOutput, _ := templates.Process("admincommands/help/command.teleport", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 
 		return true, nil
 	}
@@ -52,7 +52,7 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		if mapper.IsCompassDirection(rest) {
 
 			if !user.HasRolePermission(`teleport.direction`) {
-				user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">teleport.direction</ansi> permission`)
+				user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">teleport.direction</ansi> permission`)
 				return true, nil
 			}
 
@@ -60,7 +60,7 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			if zMapper == nil {
 				err := fmt.Errorf("Could not find mapper for zone: %s", room.Zone)
 				mudlog.Error("Map", "error", err)
-				user.SendText(messaging.CategorySystem, `No map found (or an error occured)"`)
+				user.SendText(messaging.CategoryAdmin, `No map found (or an error occured)"`)
 				return true, err
 			}
 
@@ -72,7 +72,7 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			if locateUser := users.GetByCharacterName(rest); locateUser != nil {
 
 				if !user.HasRolePermission(`teleport.playername`) {
-					user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">teleport.direction</ansi> permission`)
+					user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">teleport.playername</ansi> permission`)
 					return true, nil
 				}
 
@@ -83,7 +83,7 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	} else {
 		if !user.HasRolePermission(`teleport.roomid`) {
-			user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">teleport.direction</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">teleport.roomid</ansi> permission`)
 			return true, nil
 		}
 	}
@@ -97,16 +97,16 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		fromRoom := rooms.LoadRoom(targetUser.Character.RoomId)
 
 		if err := rooms.MoveToRoom(targetUser.UserId, gotoRoomId); err != nil {
-			user.SendText(messaging.CategorySystem, err.Error())
+			user.SendText(messaging.CategoryAdmin, err.Error())
 
 		} else {
 
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("Moved to room %d.", gotoRoomId))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Moved to room %d.", gotoRoomId))
 
 			// The arrival is seen: the destination room's sight path, so a
 			// viewer who makes out shapes only reads a figure (#428).
 			gotoRoom := rooms.LoadRoom(gotoRoomId)
-			gotoRoom.SendTextVisualHidingNames(messaging.CategorySystem,
+			gotoRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote,
 				fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, targetUser.Character.Name),
 				[]string{targetUser.Character.Name},
 				targetUser.UserId,
@@ -131,7 +131,10 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 							}
 
 							rooms.MoveToRoom(partyUser.UserId, gotoRoomId)
-							partyUser.SendText(messaging.CategorySystem, fmt.Sprintf("Moved to room %d.", gotoRoomId))
+							// A party member reads the move, never a room id
+							// (#371 table C); the staff member's own report
+							// above keeps the id.
+							partyUser.SendText(messaging.CategoryMobEmote, `A flash of light carries you away.`)
 							gotoRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, partyUser.Character.Name), []string{partyUser.Character.Name}, partyUser.UserId)
 
 							Look(``, partyUser, gotoRoom, flags)
@@ -155,7 +158,7 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 		}
 	} else {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Invalid teleport command: <ansi fg="command">%s</ansi> (No RoomId, direction, or character name match)`, rest))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Invalid teleport command: <ansi fg="command">%s</ansi> (No RoomId, direction, or character name match)`, rest))
 	}
 
 	return true, nil

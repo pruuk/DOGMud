@@ -55,10 +55,10 @@ func Opinion(rest string, user *users.UserRecord, room *rooms.Room, flags events
 func opinionShowUsage(user *users.UserRecord) {
 	// Try templated help first; fall back to inline if missing.
 	if out, err := templates.Process("admincommands/help/command.opinion", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  opinion show <playerName>\r\n"+
 			"  opinion show <mobName|mobId> <playerName>\r\n"+
@@ -88,13 +88,13 @@ func opinionShow(args []string, user *users.UserRecord) (bool, error) {
 func opinionShowAll(playerName string, user *users.UserRecord) (bool, error) {
 	target := users.GetByCharacterNameOrLoad(playerName)
 	if target == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("No such player: %s\r\n", playerName))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No such player: %s\r\n", playerName))
 		return true, nil
 	}
 
 	rows := opinions.AllRowsForUser(target.UserId)
 	if len(rows) == 0 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("No NPCs hold an opinion of %s.\r\n", playerName))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No NPCs hold an opinion of %s.\r\n", playerName))
 		return true, nil
 	}
 
@@ -114,23 +114,23 @@ func opinionShowAll(playerName string, user *users.UserRecord) (bool, error) {
 			r.Score, opinionTierName(opinions.TierOf(r.Score)),
 			opinionRoundsAgo(now, r.LastUpdatedRound))
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
 func opinionShowOne(mobIdent, playerName string, user *users.UserRecord) (bool, error) {
 	mobId, mobName, ok := opinionResolveMobIdent(mobIdent)
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", mobIdent))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", mobIdent))
 		return true, nil
 	}
 	target := users.GetByCharacterNameOrLoad(playerName)
 	if target == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("No such player: %s\r\n", playerName))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No such player: %s\r\n", playerName))
 		return true, nil
 	}
 	score := opinions.Get(mobId, target.UserId)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("%s (%d) -> %s: score=%d, tier=%s\r\n",
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf("%s (%d) -> %s: score=%d, tier=%s\r\n",
 		mobName, mobId, playerName, score, opinionTierName(opinions.TierOf(score))))
 	return true, nil
 }
@@ -151,7 +151,7 @@ func opinionMutate(args []string, user *users.UserRecord, mode opinionMutateMode
 		return f
 	})
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", strings.Join(args, " ")))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", strings.Join(args, " ")))
 		return true, nil
 	}
 	rest := strings.Fields(tail)
@@ -166,7 +166,7 @@ func opinionMutate(args []string, user *users.UserRecord, mode opinionMutateMode
 	mobId, mobName, _ := opinionResolveMobIdent(mobIdent)
 	target := users.GetByCharacterNameOrLoad(rest[0])
 	if target == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("No such player: %s\r\n", rest[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No such player: %s\r\n", rest[0]))
 		return true, nil
 	}
 
@@ -174,24 +174,24 @@ func opinionMutate(args []string, user *users.UserRecord, mode opinionMutateMode
 	case mutateSet:
 		v, err := strconv.Atoi(rest[1])
 		if err != nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("Bad score %q: %v\r\n", rest[1], err))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Bad score %q: %v\r\n", rest[1], err))
 			return true, nil
 		}
 		opinions.Set(mobId, target.UserId, v)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Set %s (%d) -> %s = %d\r\n", mobName, mobId, rest[0], v))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Set %s (%d) -> %s = %d\r\n", mobName, mobId, rest[0], v))
 	case mutateBump:
 		v, err := strconv.Atoi(rest[1])
 		if err != nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("Bad delta %q: %v\r\n", rest[1], err))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Bad delta %q: %v\r\n", rest[1], err))
 			return true, nil
 		}
 		opinions.Bump(mobId, target.UserId, v)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Bumped %s (%d) -> %s by %d (now %d)\r\n",
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Bumped %s (%d) -> %s by %d (now %d)\r\n",
 			mobName, mobId, rest[0], v, opinions.Get(mobId, target.UserId)))
 	case mutateReset:
 		def := opinionMobDefaultDisposition(mobId)
 		opinions.Set(mobId, target.UserId, def)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Reset %s (%d) -> %s to default %d\r\n",
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Reset %s (%d) -> %s to default %d\r\n",
 			mobName, mobId, rest[0], def))
 	}
 	return true, nil

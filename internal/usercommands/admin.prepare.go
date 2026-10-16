@@ -16,7 +16,7 @@ func Prepare(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	if rest == "" {
 		infoOutput, _ := templates.Process("admincommands/help/command.prepare", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 
@@ -26,7 +26,7 @@ func Prepare(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		room.Prepare(false) // we are preparing all rooms, no need to check adjacent rooms
 	}
 
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryAdmin,
 		"All rooms have been Prepare()'ed",
 	)
 

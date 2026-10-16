@@ -122,14 +122,48 @@ Types and constants:
   lines `internal/refusal` sends; slice 3 moved every other refusal in the
   tree, and the root guard `TestRefusalOpenersNeverRideSystem`
   (`refusal_system_opener_guard_test.go`) fails on a refusal opener sent on
-  `CategorySystem`. `CategorySystem` keeps reports, confirmations, help,
-  usage and admin output until slice 4. Appended after
+  `CategorySystem`. Slice 4 moved usage, staff output and narration off
+  `CategorySystem` too (the next three entries). Appended after
   `CategoryCraftSeen` so no value shifts. Treated exactly as
   `CategorySystem` (every normalise stage, never wrapped), and alias
   `refusal` in `ansi-aliases.yaml` is 8, the `system` value, so a player
   sees no change until the owner recolours it. `refusal.Failed` is the one
   helper that does not use it (it sends on `CategoryError`). Pinned by
   `category_refusal_test.go`.
+- `CategoryUsage`, `CategoryAdmin`, `CategoryGroup` (messaging M7 slice 4,
+  #371), appended after `CategoryRefusal` so no value shifts. Each is
+  treated exactly as `CategorySystem`: alias `usage`, `admin`, `group` in
+  `ansi-aliases.yaml` is 8 (the `system` value), every normalise stage runs,
+  and none is in `shouldWrap`, so a player sees no change until the owner
+  recolours one.
+  - `CategoryUsage`: "Usage:" lines and usage blocks (the `*Usage(user)`
+    functions), staff and player alike. Guard: `usage_category_guard_test.go`.
+  - `CategoryAdmin`: everything an admin-only command or a staff-only
+    subcommand shows the staff member who typed it, its refusals included
+    (ruling R2: one stream for staff output, no per-line refusal-versus-report
+    call). The few refusals a non-staff player can reach in those files
+    (`bounty`, `reload`) ride `CategoryRefusal`. Guard:
+    `admin_category_guard_test.go`.
+  - `CategoryGroup`: party and guild membership notices sent to other group
+    members (joined, left, kicked, promoted, invited, loot mode; ruling R1).
+    Party chat, guild chat and `report` to the party ride
+    `CategoryBroadcast`, where channel chat rides; that category skips every
+    normalise stage, so typed text is never rewritten.
+  - Ruling R3: a notice to the target of a staff action ("You have been
+    banned.", "Your role has been set to ...", "Your skill level has been
+    set ...") rides `CategoryWarning`; a staff action the room sees (`zap`,
+    `paz`, `teleport` arrival) rides `CategoryMobEmote`.
+  - Owner rulings during the build: a talking item speaks on
+    `CategoryNPCDialogue` with its name capitalised at the source
+    (`CapitalizeStart`, since that category skips the capitalising stage);
+    the channel-defence shortage note rides the category of the defence line
+    sent beside it, because it reaches the defender, not the player who
+    typed the command.
+  - What `CategorySystem` holds now: reports, tables, help, confirmations of
+    the player's own action, and the bounty player reports. Two root guards
+    keep narration off it: `system_recipient_guard_test.go` (inside a command
+    handler it reaches only a parameter) and `system_subject_guard_test.go`
+    (a line opening with another creature and addressing "you" is narration).
 - `Verbosity`, `ParseVerbosity`, `(Verbosity).Suppresses` — combat-text
   verbosity primitives in `verbosity.go`. The allowlists
   (`suppressibleAtMedium`, `suppressibleAtLight`) declare which
@@ -486,6 +520,21 @@ Functions:
   (hooks, #453, #458); a player
   holder's `GetCharacterName(true)` carries no span to begin with.
 - `Normalize(cat Category, text string) string`
+- `CapitalizeStart(text string) string`: the normalizer's capitalize stage,
+  uppercasing the first character after any leading `<ansi>` tags. A sender
+  on a category that skips that stage (`CategoryNPCDialogue`) calls it on a
+  sentence-initial name where it builds the line (the talking-item voice
+  lines in `behaviortree`, #371). The same holds for `CategoryEmote` and
+  `CategoryMobEmote`: every line slice 4 moved there that opens with a name
+  (steal, plant, sneak and search notices, follow, flee block, zap, paz) is
+  built through it, after any `HideNames`, never before (a capitalised name
+  no longer matches the exact name `HideNames` hides). A room sender that
+  hides names per reader (`SendTextVisualHidingNames`) cannot be
+  capitalised at the source for that reason.
+- `EmoteCategoryFor(isPlayer bool) Category`: `CategoryEmote` when the
+  creature acting on the reader is a player, `CategoryMobEmote` when it is a
+  mob (the M5 emote split). The one helper for that choice; `actions`,
+  `usercommands` and `hooks` call it (#371).
 - `Anonymize(text string) string`: the pipeline's infrared fallback for every
   visual line. Replaces each identity tag with "a figure" and takes the
   adjective span behind it (same pattern as `HideNames`), because

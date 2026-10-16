@@ -26,7 +26,7 @@ func QuestToken(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	if len(args) == 0 {
 		// send some sort of help info?
 		infoOutput, _ := templates.Process("admincommands/help/command.questtoken", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 	} else if args[0] == "list" {
 
 		allTokens := user.Character.GetQuestProgress()
@@ -58,7 +58,7 @@ func QuestToken(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 		searchResultsTable := templates.GetTable("Quest Tokens", headers, rows)
 		tplTxt, _ := templates.Process("tables/generic", searchResultsTable, user.UserId)
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryAdmin, tplTxt)
 
 	} else if args[0] == "all" {
 
@@ -80,7 +80,7 @@ func QuestToken(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 		searchResultsTable := templates.GetTable("Quest Tokens", headers, rows)
 		tplTxt, _ := templates.Process("tables/generic", searchResultsTable, user.UserId)
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryAdmin, tplTxt)
 
 	} else if args[0] == "flags" {
 
@@ -98,22 +98,22 @@ func QuestToken(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 		searchResultsTable := templates.GetTable("Quest Flags", headers, rows)
 		tplTxt, _ := templates.Process("tables/generic", searchResultsTable, user.UserId)
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryAdmin, tplTxt)
 
 	} else if args[0] == "flag" {
 
 		if len(args) < 2 {
-			user.SendText(messaging.CategorySystem, "Usage: questtoken flag <key> [value]")
+			user.SendText(messaging.CategoryUsage, "Usage: questtoken flag <key> [value]")
 		} else if len(args) == 2 {
 			val := user.Character.GetQuestFlag(args[1])
 			if val == "" {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf("Flag %q is not set.", args[1]))
+				user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Flag %q is not set.", args[1]))
 			} else {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf("Flag %q = %q", args[1], val))
+				user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Flag %q = %q", args[1], val))
 			}
 		} else {
 			user.Character.SetQuestFlag(args[1], args[2])
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("Set flag %q = %q", args[1], args[2]))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Set flag %q = %q", args[1], args[2]))
 		}
 
 	} else {

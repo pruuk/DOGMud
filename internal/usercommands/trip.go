@@ -130,7 +130,7 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		roles, _ := renderMoveEvent("trip", partialEvent, ids, damageTokens)
 		defence, defended := moveDefenceLines(user, room, target, result.Defence, tripAttack)
 		if defended {
-			sendMoveDefenceShortage(targetChar, defence)
+			sendMoveDefenceShortage(messaging.Say(messaging.CategoryTrip, defence.Shortage), aud)
 		}
 		observer := lineOrNone(messaging.CategoryTrip, roles.Observer)
 		if defended {
@@ -151,7 +151,7 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 		if defence, defended := moveDefenceLines(user, room, target, result.Defence, tripAttack); defended {
 			// A defence stopped it outright: all three lines come from the triad.
-			sendMoveDefenceShortage(targetChar, defence)
+			sendMoveDefenceShortage(messaging.Say(messaging.CategoryTrip, defence.Shortage), aud)
 			messaging.SendTrio(messaging.Trio{
 				Actor:    messaging.Say(messaging.CategoryTrip, defence.ToAttacker),
 				Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryTrip, defence.ToDefender, user.Character.Name),

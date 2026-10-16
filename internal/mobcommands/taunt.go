@@ -208,7 +208,7 @@ func sendChannelDefenceMessages(out combat.ChannelDefenceResult, mob *mobs.Mob,
 	defender *users.UserRecord, room *rooms.Room, defenderName, defenderPlainName, attack string) {
 	if defender != nil {
 		if text := combat.ChannelDefenceShortageText(out, defender.Character); text != "" {
-			defender.SendText(messaging.CategorySystem, text)
+			defender.SendText(messaging.CategoryTauntResist, text)
 		}
 	}
 	attackerName := mob.Character.GetMobNameIndexed(0, room.GetMobDuplicateIndex(mob.InstanceId)).String()

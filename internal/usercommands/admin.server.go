@@ -35,7 +35,7 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	if rest == "" {
 		infoOutput, _ := templates.Process("admincommands/help/command.server", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 
@@ -50,7 +50,7 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		if len(args) < 1 {
 
-			user.SendText(messaging.CategorySystem, ``)
+			user.SendText(messaging.CategoryAdmin, ``)
 
 			cfgData := configs.GetConfig().DisplayConfigData()
 			cfgKeys := make([]string, 0, len(cfgData))
@@ -80,7 +80,7 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 					if len(parts) > 1 {
 						if lastPrefix != parts[0] {
 							lastPrefix = parts[0]
-							user.SendText(messaging.CategorySystem, ``)
+							user.SendText(messaging.CategoryAdmin, ``)
 						}
 						nameColorized = `<ansi fg="yellow">` + parts[0] + `.</ansi>`
 						displayName = strings.Join(parts[1:], `.`)
@@ -88,7 +88,7 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				}
 				extraSpace := strings.Repeat(` `, longestKey-len(k))
 
-				user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">`+nameColorized+displayName+`</ansi>: <ansi fg="red-bold">`+extraSpace+util.SplitStringNL(fmt.Sprintf(`%v`, cfgData[k]), lineLength, strings.Repeat(` `, longestKey+2))+`</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `<ansi fg="yellow-bold">`+nameColorized+displayName+`</ansi>: <ansi fg="red-bold">`+extraSpace+util.SplitStringNL(fmt.Sprintf(`%v`, cfgData[k]), lineLength, strings.Repeat(` `, longestKey+2))+`</ansi>`)
 
 			}
 
@@ -98,12 +98,12 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		if args[0] == "day" {
 			gametime.SetToDay(-1)
 			gd := gametime.GetDate()
-			user.SendText(messaging.CategorySystem, `Time set to `+gd.String())
+			user.SendText(messaging.CategoryAdmin, `Time set to `+gd.String())
 			return true, nil
 		} else if args[0] == "night" {
 			gametime.SetToNight(-1)
 			gd := gametime.GetDate()
-			user.SendText(messaging.CategorySystem, `Time set to `+gd.String())
+			user.SendText(messaging.CategoryAdmin, `Time set to `+gd.String())
 			return true, nil
 		}
 
@@ -111,18 +111,18 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		configValue := strings.Join(args[1:], ` `)
 
 		if err := configs.SetVal(configName, configValue); err != nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`config change error: %s=%s (%s)`, configName, configValue, err))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`config change error: %s=%s (%s)`, configName, configValue, err))
 			return true, nil
 		}
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`config changed: %s=%s`, configName, configValue))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`config changed: %s=%s`, configName, configValue))
 
 		return true, nil
 	}
 
 	if rest == "reload-ansi" {
 		templates.LoadAliases()
-		user.SendText(messaging.CategorySystem, `ansi aliases reloaded`)
+		user.SendText(messaging.CategoryAdmin, `ansi aliases reloaded`)
 		return true, nil
 	}
 
@@ -143,9 +143,9 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		//
 		// General Go stats
 		//
-		user.SendText(messaging.CategorySystem, ``)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow-bold">IP/Port:</ansi>    <ansi fg="red">%s</ansi>`, util.GetServerAddress()))
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="yellow-bold">IP/Port:</ansi>    <ansi fg="red">%s</ansi>`, util.GetServerAddress()))
+		user.SendText(messaging.CategoryAdmin, ``)
 
 		//
 		// Special timing related stats
@@ -179,7 +179,7 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		tblData := templates.GetTable(`Timer Stats`, headers, rows, formatting)
 		tplTxt, _ := templates.Process("tables/generic", tblData, user.UserId)
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryAdmin, tplTxt)
 
 		//
 		// Alternative rendering
@@ -293,7 +293,7 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		memRepRows = append(memRepRows, rowData)
 		memRepTblData := templates.GetTable(`Specific Memory`, memRepHeaders, memRepRows, memRepFormatting)
 		memRepTxt, _ := templates.Process("tables/generic", memRepTblData, user.UserId)
-		user.SendText(messaging.CategorySystem, memRepTxt)
+		user.SendText(messaging.CategoryAdmin, memRepTxt)
 	}
 
 	return true, nil
@@ -305,10 +305,10 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 	cmdPrompt, isNew := user.StartPrompt(`server config`, "")
 
 	if isNew {
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendText(messaging.CategoryAdmin, ``)
 		menuOptions, _ := getConfigOptions("")
 		tplTxt, _ := templates.Process("tables/numbered-list", menuOptions, user.UserId)
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryAdmin, tplTxt)
 	}
 
 	configPrefix := ""
@@ -321,7 +321,7 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 		if configVal, ok := allConfigData[configPrefix]; ok {
 
 			if !isEditAllowed(configPrefix) {
-				user.SendText(messaging.CategorySystem, errValueLocked.Error())
+				user.SendText(messaging.CategoryAdmin, errValueLocked.Error())
 				user.ClearPrompt()
 				return true, nil
 			}
@@ -336,12 +336,12 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 			err := configs.SetVal(configPrefix, question.Response)
 			if err == nil {
 				allConfigData := configs.GetConfig().DisplayConfigData()
-				user.SendText(messaging.CategorySystem, ``)
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="6">%s</ansi> has been set to: <ansi fg="9">%s<ansi>`, configPrefix, allConfigData[configPrefix]))
-				user.SendText(messaging.CategorySystem, ``)
+				user.SendText(messaging.CategoryAdmin, ``)
+				user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="6">%s</ansi> has been set to: <ansi fg="9">%s<ansi>`, configPrefix, allConfigData[configPrefix]))
+				user.SendText(messaging.CategoryAdmin, ``)
 				return true, nil
 			}
-			user.SendText(messaging.CategorySystem, err.Error())
+			user.SendText(messaging.CategoryAdmin, err.Error())
 			return true, nil
 		}
 	}
@@ -352,7 +352,7 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 	}
 
 	if question.Response == "quit" {
-		user.SendText(messaging.CategorySystem, "Quitting...")
+		user.SendText(messaging.CategoryAdmin, "Quitting...")
 		user.ClearPrompt()
 		return true, nil
 	}
@@ -364,7 +364,7 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 	fullPath += question.Response
 
 	if !isEditAllowed(fullPath) {
-		user.SendText(messaging.CategorySystem, errValueLocked.Error())
+		user.SendText(messaging.CategoryAdmin, errValueLocked.Error())
 		question.RejectResponse()
 		return true, nil
 	}
@@ -384,7 +384,7 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 			cmdPrompt.Store("config-selected", fullPath)
 
 			if !isEditAllowed(fullPath) {
-				user.SendText(messaging.CategorySystem, errValueLocked.Error())
+				user.SendText(messaging.CategoryAdmin, errValueLocked.Error())
 				user.ClearPrompt()
 				return true, nil
 			}
@@ -401,12 +401,12 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 	}
 
 	if fullPath != "" {
-		user.SendText(messaging.CategorySystem, ``)
-		user.SendText(messaging.CategorySystem, `   [<ansi fg="6">`+fullPath+`</ansi>]`)
+		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendText(messaging.CategoryAdmin, `   [<ansi fg="6">`+fullPath+`</ansi>]`)
 	}
 
 	tplTxt, _ := templates.Process("tables/numbered-list", menuOptions, user.UserId)
-	user.SendText(messaging.CategorySystem, tplTxt)
+	user.SendText(messaging.CategoryAdmin, tplTxt)
 
 	question.RejectResponse()
 

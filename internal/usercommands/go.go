@@ -319,7 +319,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				// Tell everyone if the pet is following
 				if user.Character.Pet.Exists() {
 
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s follows you.`, user.Character.Pet.DisplayName()))
+					user.SendText(messaging.CategoryRoomExit, fmt.Sprintf(`%s follows you.`, user.Character.Pet.DisplayName()))
 
 					// SendTextVisualWithAudio, not SendText: the named line is
 					// pure sight and used to reach a player in a pitch dark
@@ -358,7 +358,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						}
 						if partyUser := users.GetByUserId(partyMemberId); partyUser != nil {
 							if partyUser.Character.RoomId == room.RoomId {
-								partyUser.SendText(messaging.CategorySystem, `You follow the party leader.`)
+								partyUser.SendText(messaging.CategoryRoomExit, `You follow the party leader.`)
 								partyUser.Command(rest)
 							}
 						}
@@ -467,9 +467,9 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						// site cannot drift from SendTextVisual and a blinded
 						// player in a lit room stops reading names too.
 						if messaging.CanSeeClearly(user.Character, destRoom) {
-							user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> notices you as you enter!`, mob.Character.Name))
+							user.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> notices you as you enter!`, mob.Character.Name)))
 						} else {
-							user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Something notices you in the darkness!</ansi>`)
+							user.SendText(messaging.CategoryMobEmote, `<ansi fg="yellow">Something notices you in the darkness!</ansi>`)
 						}
 					}
 

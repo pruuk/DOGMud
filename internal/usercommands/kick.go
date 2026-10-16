@@ -127,7 +127,7 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		observer := lineOrNone(messaging.CategoryKick, roles.Observer)
 		if defended {
 			observer = messaging.Say(messaging.CategoryKick, defence.ToRoom)
-			sendMoveDefenceShortage(targetChar, defence)
+			sendMoveDefenceShortage(messaging.Say(messaging.CategoryKick, defence.Shortage), aud)
 		}
 		messaging.SendTrio(messaging.Trio{
 			Actor:    lineOrNone(kickCategories.Actor, roles.Actor),
@@ -136,7 +136,7 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}, aud)
 	} else if defence, defended := moveDefenceLines(user, room, target, result.Defence, attackName); defended {
 		// A defence stopped it outright: all three lines come from the triad.
-		sendMoveDefenceShortage(targetChar, defence)
+		sendMoveDefenceShortage(messaging.Say(messaging.CategoryKick, defence.Shortage), aud)
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.Say(messaging.CategoryKick, defence.ToAttacker),
 			Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryKick, defence.ToDefender, user.Character.Name),

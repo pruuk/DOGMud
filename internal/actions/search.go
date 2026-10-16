@@ -468,23 +468,26 @@ func revealSpotted(actor Actor, found SearchResult, room *rooms.Room) {
 	if !actor.IsPlayer() {
 		return
 	}
-	searcher := actor.GetName()
+	searcher, searcherIsPlayer := actor.GetName(), actor.IsPlayer()
 	for _, uid := range found.HiddenPlayersFound {
 		if u := users.GetByUserId(uid); u != nil {
-			endHidingOnSpot(searcher, u.Character, u, room)
+			endHidingOnSpot(searcher, searcherIsPlayer, u.Character, u, room)
 		}
 	}
 	for _, mid := range found.HiddenMobsFound {
 		if m := mobs.GetInstance(mid); m != nil {
-			endHidingOnSpot(searcher, &m.Character, nil, room)
+			endHidingOnSpot(searcher, searcherIsPlayer, &m.Character, nil, room)
 		}
 	}
 }
 
 // endHidingOnSpot drives the hider's Awareness machine out of Hidden, exactly
 // as go.go does for a spotted occupant; the Awareness cascade then cancels
-// condition 9. A player hider is told, by name only if they can see the searcher.
-func endHidingOnSpot(searcher string, hider *characters.Character, hiderUser *users.UserRecord, room *rooms.Room) {
+// condition 9. A player hider is told, by name only if they can see the
+// searcher, on Emote or MobEmote by the searcher's kind. revealSpotted only
+// calls it for a player searcher today (a mob's search ends nothing until
+// slice F); the kind is passed so that path is right when it opens.
+func endHidingOnSpot(searcher string, searcherIsPlayer bool, hider *characters.Character, hiderUser *users.UserRecord, room *rooms.Room) {
 	if hider.Awareness != nil {
 		_ = hider.Awareness.TransitionToRevealing(
 			state.TransitionReason{Trigger: awareness.TriggerObserverSearch})
@@ -493,11 +496,16 @@ func endHidingOnSpot(searcher string, hider *characters.Character, hiderUser *us
 		return
 	}
 	hider.SetMiscData("sneaking", nil)
+	cat := messaging.EmoteCategoryFor(searcherIsPlayer)
 	if messaging.CanSeeClearly(hider, room) {
-		hiderUser.SendText(messaging.CategorySystem, fmt.Sprintf(
-			"<ansi fg=\"username\">%s</ansi> searches the room and spots you!", searcher))
+		tag := `mobname`
+		if searcherIsPlayer {
+			tag = `username`
+		}
+		hiderUser.SendText(cat, messaging.CapitalizeStart(fmt.Sprintf(
+			"<ansi fg=\"%s\">%s</ansi> searches the room and spots you!", tag, searcher)))
 	} else {
-		hiderUser.SendText(messaging.CategorySystem, "Someone searches the room and spots you!")
+		hiderUser.SendText(cat, "Someone searches the room and spots you!")
 	}
 }
 

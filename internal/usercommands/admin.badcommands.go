@@ -35,7 +35,7 @@ func BadCommands(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 	badCommandTableData := templates.GetTable(`Bad Commands`, headers, rows)
 	tplTxt, _ := templates.Process("tables/generic", badCommandTableData, user.UserId, user.UserId)
 
-	user.SendText(messaging.CategorySystem, tplTxt)
+	user.SendText(messaging.CategoryAdmin, tplTxt)
 
 	return true, nil
 }

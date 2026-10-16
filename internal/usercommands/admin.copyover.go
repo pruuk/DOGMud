@@ -13,10 +13,10 @@ import (
 * copyover			(All)
  */
 func Copyover(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
-	user.SendText(messaging.CategorySystem, `Initiating copyover...`)
+	user.SendText(messaging.CategoryAdmin, `Initiating copyover...`)
 	if err := triggerCopyoverFunc(); err != nil {
 		mudlog.Error("copyover command", "error", err)
-		user.SendText(messaging.CategorySystem, `Copyover failed: `+err.Error())
+		user.SendText(messaging.CategoryAdmin, `Copyover failed: `+err.Error())
 	}
 	return true, nil
 }

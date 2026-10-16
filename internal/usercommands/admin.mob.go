@@ -31,7 +31,7 @@ func Mob(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	if len(args) < 1 {
 		infoOutput, _ := templates.Process("admincommands/help/command.mob", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 
@@ -39,7 +39,7 @@ func Mob(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	if args[0] == `spawn` {
 
 		if !user.HasRolePermission(`mob.spawn`) {
-			user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">mob.spawn</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">mob.spawn</ansi> permission`)
 			return true, nil
 		}
 
@@ -50,7 +50,7 @@ func Mob(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	if args[0] == `list` {
 
 		if !user.HasRolePermission(`mob.spawn`) {
-			user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">mob.spawn</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">mob.spawn</ansi> permission`)
 			return true, nil
 		}
 
@@ -61,7 +61,7 @@ func Mob(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	if args[0] == `heal` {
 
 		if !user.HasRolePermission(`mob.spawn`) {
-			user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">mob.spawn</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">mob.spawn</ansi> permission`)
 			return true, nil
 		}
 
@@ -72,7 +72,7 @@ func Mob(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	if args[0] == `schedule` {
 
 		if !user.HasRolePermission(`mob.spawn`) {
-			user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">mob.spawn</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">mob.spawn</ansi> permission`)
 			return true, nil
 		}
 
@@ -103,23 +103,23 @@ func mob_Heal(args []string, user *users.UserRecord, room *rooms.Room, _ events.
 			}
 		}
 		if healed == 0 {
-			user.SendText(messaging.CategorySystem, `No mobs in this room to heal.`)
+			user.SendText(messaging.CategoryAdmin, `No mobs in this room to heal.`)
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Healed %d mob(s) in the room to full.`, healed))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Healed %d mob(s) in the room to full.`, healed))
 		return true, nil
 	}
 
 	// Specific instance id.
 	instId, err := strconv.Atoi(args[0])
 	if err != nil || instId < 1 {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">mob heal [instId]</ansi> — omit instId to heal every mob in the room.`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">mob heal [instId]</ansi> — omit instId to heal every mob in the room.`)
 		return true, nil
 	}
 
 	m := mobs.GetInstance(instId)
 	if m == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`No mob instance with id %d.`, instId))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`No mob instance with id %d.`, instId))
 		return true, nil
 	}
 
@@ -127,7 +127,7 @@ func mob_Heal(args []string, user *users.UserRecord, room *rooms.Room, _ events.
 	m.Character.Stamina = m.Character.StaminaMax.Value
 	m.Character.Conviction = m.Character.ConvictionMax.Value
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`Healed <ansi fg="mobname">%s</ansi> (instance %d) to full.`, m.Character.Name, instId))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Healed <ansi fg="mobname">%s</ansi> (instance %d) to full.`, m.Character.Name, instId))
 	return true, nil
 }
 
@@ -167,11 +167,11 @@ func mob_List(rest string, user *users.UserRecord, _ *rooms.Room, _ events.Event
 	numWidth := len(strconv.Itoa(len(mobList)))
 	colWidth := 1 + numWidth + 2 + longestName + 1
 
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendText(messaging.CategoryAdmin, ``)
 	sw := user.ClientSettings().Display.GetScreenWidth()
 	strOut := templates.DynamicList(mobList, colWidth, sw, numWidth, longestName)
-	user.SendText(messaging.CategorySystem, strOut)
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendText(messaging.CategoryAdmin, strOut)
+	user.SendText(messaging.CategoryAdmin, ``)
 
 	return true, nil
 }
@@ -183,7 +183,7 @@ func mob_Spawn(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	// special handling of loot goblin
 	if rest == `loot goblin` && c.RoomId != 0 {
 		if gRoom := rooms.LoadRoom(int(c.RoomId)); gRoom != nil { // loot goblin room
-			user.SendText(messaging.CategorySystem, `Somewhere in the realm, a <ansi fg="mobname">loot goblin</ansi> appears!`)
+			user.SendText(messaging.CategoryAdmin, `Somewhere in the realm, a <ansi fg="mobname">loot goblin</ansi> appears!`)
 			mudlog.Info(`Loot Goblin Spawn`, `roundNumber`, util.GetRoundCount(), `forced`, true)
 			gRoom.Prepare(false) // Make sure the loot goblin spawns.
 		}
@@ -201,7 +201,7 @@ func mob_Spawn(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		if mob := mobs.NewMobById(mobId, room.RoomId); mob != nil {
 			room.AddMob(mob.InstanceId)
 
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryAdmin,
 				fmt.Sprintf(`You wave your hands and <ansi fg="mobname">%s</ansi> appears.`, mob.Character.Name),
 			)
 			room.SendTextVisual(messaging.CategoryMobEmote,
@@ -213,7 +213,7 @@ func mob_Spawn(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		}
 	}
 
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryAdmin,
 		fmt.Sprintf(`Mob <ansi fg="mobname">%s</ansi> not found.`, rest),
 	)
 
@@ -236,35 +236,35 @@ func mobVitalsLine(m *mobs.Mob, turn uint64) string {
 // Usage: mob schedule <instId>
 func mob_Schedule(args []string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryUsage,
 			`Usage: <ansi fg="command">mob schedule [instId]</ansi>`)
 		return true, nil
 	}
 	instId, err := strconv.Atoi(args[0])
 	if err != nil || instId < 1 {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryUsage,
 			`Usage: <ansi fg="command">mob schedule [instId]</ansi>`)
 		return true, nil
 	}
 	m := mobs.GetInstance(instId)
 	if m == nil {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf(`No mob instance with id %d.`, instId))
 		return true, nil
 	}
 	// Vitals come first so a patrol-only mob, which has no schedule, still
 	// shows whether it is too tired to walk (movement parity 4b).
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("Vitals for %s (instance %d):\n%s",
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Vitals for %s (instance %d):\n%s",
 		m.Character.Name, instId, mobVitalsLine(m, util.GetTurnCount())))
 	if m.ScheduleId == "" {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf(`%s (mob %d, instance %d) has no schedule.`,
 				m.Character.Name, m.MobId, instId))
 		return true, nil
 	}
 	s := mobs.GetSchedule(m.ScheduleId)
 	if s == nil {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf(`%s references unknown schedule %q.`,
 				m.Character.Name, m.ScheduleId))
 		return true, nil
@@ -272,7 +272,7 @@ func mob_Schedule(args []string, user *users.UserRecord, room *rooms.Room, _ eve
 	hour := gametime.GetDate().Hour24
 	cur := s.CurrentSegment(hour)
 	if cur == nil {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf(`Schedule %q has no segment for hour %d (coverage bug).`,
 				m.ScheduleId, hour))
 		return true, nil
@@ -307,7 +307,7 @@ func mob_Schedule(args []string, user *users.UserRecord, room *rooms.Room, _ eve
 		atTarget, cur.TargetRoom,
 		m.Path.Len(),
 	)
-	user.SendText(messaging.CategorySystem, out)
+	user.SendText(messaging.CategoryAdmin, out)
 
 	// Chunk 3.4: also show patrol state if the mob has one (either via
 	// PatrolId directly or via the active schedule segment's patrol_id).
@@ -318,7 +318,7 @@ func mob_Schedule(args []string, user *users.UserRecord, room *rooms.Room, _ eve
 	if activePatrolId != "" {
 		p := mobs.GetPatrol(activePatrolId)
 		if p == nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 				"  (patrol_id %q does not resolve)", activePatrolId))
 		} else {
 			idx := m.Character.GetMiscData("patrol_waypoint_idx")
@@ -347,7 +347,7 @@ func mob_Schedule(args []string, user *users.UserRecord, room *rooms.Room, _ eve
 				activePatrolId, loopShape,
 				idx, waypointRoom,
 				dir, dwell, fails)
-			user.SendText(messaging.CategorySystem, patrolOut)
+			user.SendText(messaging.CategoryAdmin, patrolOut)
 		}
 	}
 

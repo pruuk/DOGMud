@@ -86,7 +86,7 @@ func Fire(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if u != nil {
 		if result.MoveResult.Defence.Defended {
 			if text := combat.ChannelDefenceShortageText(result.MoveResult.Defence, u.Character); text != "" {
-				u.SendText(messaging.CategorySystem, text)
+				u.SendText(messaging.CategoryHitRanged, text)
 			}
 		}
 		// Stealth is not darkness. The pipeline hides the shooter's name by the

@@ -1,6 +1,7 @@
 package behaviortree
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -236,11 +237,36 @@ func TestSpeakForAMobHolder(t *testing.T) {
 	if !TryItemBehavior(voiceEvent("item_idle"), held) {
 		t.Fatal("a mob-held voiced item speaks")
 	}
-	// The renderer capitalises the name at the sentence start.
+	// The line rides CategoryNPCDialogue, whose normalizer skips the
+	// capitalize stage, so actSpeak capitalises the name itself (#371).
 	if got := drained(voiceListenerId); !strings.Contains(got, `<ansi fg="mobname">Ogre</ansi>'s <ansi fg="item">Probe Shield</ansi> mutters`) {
 		t.Errorf("the room reads %q, want the mob's item muttering", got)
 	}
 }
+
+// #371: the voice lines ride CategoryNPCDialogue, which skips the
+// normalizer's capitalize stage. A mob holder named "ogre" must still open
+// the room line with a capital.
+func TestSpeakCapitalisesALowercaseMobHolder(t *testing.T) {
+	seedVoiceWorld(t)
+	t.Cleanup(seedTestMob(t, voiceMobTemplateId, voiceMobInstanceId, voiceLitRoom, "ogre"))
+	rooms.LoadRoom(voiceLitRoom).AddMob(voiceMobInstanceId)
+	held := ItemSubject{UUID: uuid.UUID{3}, ItemId: voiceProbeItemId, MobInstanceId: voiceMobInstanceId, Slot: "offhand"}
+	if !TryItemBehavior(voiceEvent("item_idle"), held) {
+		t.Fatal("a mob-held voiced item speaks")
+	}
+	got := drained(voiceListenerId)
+	visible := strings.TrimSpace(ansiTagPattern.ReplaceAllString(got, ""))
+	if !strings.HasPrefix(visible, "Ogre's Probe Shield mutters") {
+		t.Errorf("the room reads %q (visible %q), want a line opening with \"Ogre's\"", got, visible)
+	}
+	if !strings.Contains(got, `fg="npc-dialogue"`) {
+		t.Errorf("the room line %q is not coloured as NPC dialogue", got)
+	}
+}
+
+// ansiTagPattern matches one markup tag, so a test can read the visible text.
+var ansiTagPattern = regexp.MustCompile(`<[^>]*>`)
 
 // The Pinnacle switch silences every voice node.
 func TestVoiceNodesHonourThePinnacleSwitch(t *testing.T) {

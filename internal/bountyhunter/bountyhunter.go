@@ -132,7 +132,7 @@ func spawnHunter(targetUserId, bountyId, bountyGold int, issuerFaction string) i
 
 	// Telegraph the target if they are currently online.
 	if u := users.GetByUserId(targetUserId); u != nil {
-		u.SendText(messaging.CategorySystem,
+		u.SendText(messaging.CategoryWarning,
 			"Word reaches you that a hunter has taken the contract on your head.")
 	}
 

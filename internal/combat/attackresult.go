@@ -139,6 +139,12 @@ type SwingDefence struct {
 type TaggedMessage struct {
 	Category messaging.Category
 	Text     string
+	// AlwaysShow marks a line every combat verbosity level delivers to its
+	// reader, whatever its category: the drain lets it through as it lets
+	// through damage to the viewer. The defence-shortage note is one: it
+	// rides the winning defence's category for its colour, but a Light or
+	// Medium reader still needs to know their defence was short.
+	AlwaysShow bool
 }
 
 type AttackResult struct {

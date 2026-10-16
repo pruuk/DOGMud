@@ -24,7 +24,7 @@ func Rename(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if len(args) < 2 {
 		// send some sort of help info?
 		infoOutput, _ := templates.Process("admincommands/help/command.renameitem", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 
@@ -50,7 +50,7 @@ func Rename(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		user.Character.StoreItem(matchItem)
 
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf(`You chant softly and wave your hand over the <ansi fg="item">%s</ansi>. Success! It's now a <ansi fg="item">%s</ansi>`, oldNameSimple, matchItem.DisplayName()),
 		)
 		room.SendTextVisual(messaging.CategoryMobEmote,

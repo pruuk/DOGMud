@@ -445,7 +445,7 @@ func cmdCharacterHire(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 		user.EventLog.Add(`char`, `Hired an alt character to help you out: <ansi fg="username">`+m.Character.Name+`</ansi>`)
 
-		user.SendText(messaging.CategorySystem, `<ansi fg="username">`+m.Character.Name+`</ansi> appears to help you out!`)
+		user.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(`<ansi fg="username">`+m.Character.Name+`</ansi> appears to help you out!`))
 		room.SendTextVisual(messaging.CategoryMobEmote, `<ansi fg="username">`+m.Character.Name+`</ansi> appears to help <ansi fg="username">`+user.Character.Name+`</ansi>!`, user.UserId)
 
 		m.Command(`emote waves sheepishly.`, 2)

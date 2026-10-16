@@ -993,13 +993,18 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 		if blocker.IsPlayer() {
 			targetTag = "username"
 		}
+		// The blocker acts on the fleer: the fleer's line and the room's ride
+		// one category, by the blocker's kind (M7 slice 4, rule N2).
+		// Neither category capitalizes, so the line opening with the
+		// blocker's name is capitalized here.
+		blockCat := messaging.EmoteCategoryFor(blocker.IsPlayer())
 		// The fleer reads the blocker at their own sight, as the room line
 		// below does for everyone else. The literal stays INLINE for the root
 		// viewpoint guard.
-		user.SendText(messaging.CategorySystem, messaging.HideNames(
+		user.SendText(blockCat, messaging.CapitalizeStart(messaging.HideNames(
 			fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="%s">%s</ansi> blocks you from fleeing!</ansi>`, targetTag, blocker.Name),
 			[]string{blocker.Name},
-			messaging.ParticipantSight(user.Character, uRoom)))
+			messaging.ParticipantSight(user.Character, uRoom))))
 		excludes := []int{user.UserId}
 		if blocker.IsPlayer() {
 			excludes = append(excludes, blocker.UserId)
@@ -1007,7 +1012,7 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 		// Visual (owner ruling 2026-09-21): a reader who cannot see does not
 		// witness a blocked escape at all, and one who makes out shapes reads
 		// neither name.
-		uRoom.SendTextVisualHidingNames(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is blocked from fleeing by <ansi fg="%s">%s</ansi>!`, user.Character.Name, targetTag, blocker.Name), []string{user.Character.Name, blocker.Name}, excludes...)
+		uRoom.SendTextVisualHidingNames(blockCat, fmt.Sprintf(`<ansi fg="username">%s</ansi> is blocked from fleeing by <ansi fg="%s">%s</ansi>!`, user.Character.Name, targetTag, blocker.Name), []string{user.Character.Name, blocker.Name}, excludes...)
 		return true
 	case out.NoExit:
 		user.SendText(messaging.CategoryRefusal, `You can't find an exit!`)

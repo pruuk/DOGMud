@@ -116,7 +116,7 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		observer := lineOrNone(messaging.CategoryBash, roles.Observer)
 		if defended {
 			observer = messaging.Say(messaging.CategoryBash, defence.ToRoom)
-			sendMoveDefenceShortage(targetUser, defence)
+			sendMoveDefenceShortage(messaging.Say(messaging.CategoryBash, defence.Shortage), aud)
 		}
 		messaging.SendTrio(messaging.Trio{
 			Actor:    lineOrNone(bashCategories.Actor, roles.Actor),
@@ -125,7 +125,7 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}, aud)
 	} else if defence, defended := moveDefenceLines(user, room, target, result.Defence, "shield bash"); defended {
 		// A defence stopped it outright: all three lines come from the triad.
-		sendMoveDefenceShortage(targetUser, defence)
+		sendMoveDefenceShortage(messaging.Say(messaging.CategoryBash, defence.Shortage), aud)
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.Say(messaging.CategoryBash, defence.ToAttacker),
 			Actee:    acteeDefenceLine(targetUser, room, messaging.CategoryBash, defence.ToDefender, user.Character.Name),

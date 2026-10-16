@@ -350,8 +350,10 @@ func (m *AICompanionModule) noticeFallback(ownerId int) {
 	m.tellOwner(ownerId, fmt.Sprintf(`(%s falls back on a few set words: your key's provider did not answer.)`, name))
 }
 
-// tellOwner sends a player a system line, wrapped at 80 columns: the
-// system category is never wrapped for them.
+// tellOwner sends a player a warning notice, wrapped at 80 columns: the
+// warning category is never wrapped for them. The notice reaches the owner
+// when a call settles, not as the result of a command they typed, so it
+// does not ride CategorySystem (M7 slice 4, rule N1).
 func (m *AICompanionModule) tellOwner(userId int, text string) {
 	text = messaging.WrapAnsi(text, 80)
 	if m.tell != nil {
@@ -359,6 +361,6 @@ func (m *AICompanionModule) tellOwner(userId int, text string) {
 		return
 	}
 	if u := users.GetByUserId(userId); u != nil {
-		u.SendText(messaging.CategorySystem, text)
+		u.SendText(messaging.CategoryWarning, text)
 	}
 }

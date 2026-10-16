@@ -75,11 +75,17 @@ func moveDefenceLines(user *users.UserRecord, room *rooms.Room, target actions.A
 // positions it independently there too.
 //
 // It lives here rather than at the call sites so the note stays in one place
-// and does not have to be repeated in every verb.
-func sendMoveDefenceShortage(targetUser *users.UserRecord, lines moveDefence) {
-	if targetUser != nil && lines.Shortage != "" {
-		targetUser.SendText(messaging.CategorySystem, lines.Shortage)
-	}
+// and does not have to be repeated in every verb. note is
+// messaging.Say(<the verb's category>, defence.Shortage): the note rides the
+// category of the defence line sent beside it, since it reaches the defender
+// and not the player who typed the command (M7 slice 4, #371). It leaves
+// through SendTrio as the actee's line because Kick, Trip and Bash leave only
+// through SendTrio (send_trio_only_guard_test.go). An empty Shortage (no
+// player defender, or no shortage) sends nothing.
+func sendMoveDefenceShortage(note messaging.Line, aud messaging.Audience) {
+	// Private to the defender: the attacker and the room are not told that
+	// the defender ran short.
+	messaging.SendTrio(messaging.Trio{Actor: messaging.NoLine, Actee: note, Observer: messaging.NoLine}, aud)
 }
 
 // acteeDefenceLine renders the defender's personal defence line with the

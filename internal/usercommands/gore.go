@@ -96,7 +96,7 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
 		if defended {
 			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(targetChar, defence)
+			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
 		}
 		messaging.SendTrio(messaging.Trio{
 			Actor:    lineOrNone(goreCategories.Actor, roles.Actor),
@@ -105,7 +105,7 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}, aud)
 	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "goring charge"); defended {
 		// A defence stopped it outright: all three lines come from the triad.
-		sendMoveDefenceShortage(targetChar, defence)
+		sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToAttacker),
 			Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryHitNaturalSharp, defence.ToDefender, user.Character.Name),

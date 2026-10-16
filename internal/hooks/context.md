@@ -953,7 +953,10 @@ medium / light). Touch-points live in `dispatchCritAndMessaging`
   `user.GetCombatVerbosity().OneStepLower()`). Medium suppresses
   dodge/parry/block lines; Light suppresses all individual hit lines.
   The floor rule (incoming hit-category lines always pass to the
-  defender regardless of setting) is enforced here. Sight-gating is NOT
+  defender regardless of setting) is enforced here, and a
+  `combat.TaggedMessage` marked `AlwaysShow` (the melee defence-shortage
+  note, which rides a suppressible defence category) passes at every
+  level in both drains. Sight-gating is NOT
   uniform: participant tally recording (below) gates on
   `messaging.CanSeeSightImpairedOnly` (no sleep gate), while
   `recordSpectatorTallies` gates on `messaging.CanSeeClearly` (sleep-

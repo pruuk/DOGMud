@@ -223,9 +223,14 @@ func actSpeak(params map[string]any, ctx *EvalContext) Result {
 		return Failure // a mob holder has no one to hear a holder-only line
 	}
 
+	// Both lines ride CategoryNPCDialogue (owner ruling 2026-10-16, #371),
+	// which skips the normalizer's capitalize stage, so the name that opens
+	// each line is capitalised here: a mob holder "ogre" reads "Ogre's Probe
+	// Shield mutters". The hidden-name list carries the same spelling so the
+	// hider still finds the tag.
 	if holderUser != nil {
-		holderUser.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`<ansi fg="item">%s</ansi> says, "<ansi fg="yellow">%s</ansi>"`, spec.Name, line))
+		holderUser.SendText(messaging.CategoryNPCDialogue, fmt.Sprintf(
+			`<ansi fg="item">%s</ansi> says, "<ansi fg="yellow">%s</ansi>"`, messaging.CapitalizeStart(spec.Name), line))
 	}
 	room := rooms.LoadRoom(ctx.RoomId)
 	roomHeard := toRoom && room != nil
@@ -234,10 +239,11 @@ func actSpeak(params map[string]any, ctx *EvalContext) Result {
 		if holderUser != nil {
 			exclude = append(exclude, holderUser.UserId)
 		}
-		room.SendTextHidingNames(messaging.CategorySystem, fmt.Sprintf(
+		speaker := messaging.CapitalizeStart(holderName)
+		room.SendTextHidingNames(messaging.CategoryNPCDialogue, fmt.Sprintf(
 			`<ansi fg="%s">%s</ansi>'s <ansi fg="item">%s</ansi> mutters, "<ansi fg="yellow">%s</ansi>"`,
-			nameTag, holderName, possessedItemName(spec.Name), line),
-			[]string{holderName}, messaging.HideSpeakerNames, exclude...)
+			nameTag, speaker, possessedItemName(spec.Name), line),
+			[]string{speaker}, messaging.HideSpeakerNames, exclude...)
 	}
 
 	if paced {

@@ -31,11 +31,11 @@ func Skillset(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	if len(args) < 2 {
 		// send some sort of help info?
 		infoOutput, _ := templates.Process("admincommands/help/command.skillset", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 
-		user.SendText(messaging.CategorySystem, `Skill Names:`)
+		user.SendText(messaging.CategoryUsage, `Skill Names:`)
 		for _, name := range skills.GetAllSkillNames() {
-			user.SendText(messaging.CategorySystem, `  <ansi fg="skill">`+string(name)+`</ansi>`)
+			user.SendText(messaging.CategoryUsage, `  <ansi fg="skill">`+string(name)+`</ansi>`)
 		}
 
 		return true, nil
@@ -51,14 +51,21 @@ func Skillset(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	if len(args) < 2 {
 		// send some sort of help info?
 		infoOutput, _ := templates.Process("admincommands/help/command.skillset", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 
-		user.SendText(messaging.CategorySystem, `Skill Names:`)
+		user.SendText(messaging.CategoryUsage, `Skill Names:`)
 		for _, name := range skills.GetAllSkillNames() {
-			user.SendText(messaging.CategorySystem, `  <ansi fg="skill">`+string(name)+`</ansi>`)
+			user.SendText(messaging.CategoryUsage, `  <ansi fg="skill">`+string(name)+`</ansi>`)
 		}
 
 		return true, nil
+	}
+
+	// The skill notice is staff output when staff set their own skills and a
+	// notice of a staff action when the target is someone else (#371 R3).
+	skillNoticeCat := messaging.CategoryAdmin
+	if targetUser.UserId != user.UserId {
+		skillNoticeCat = messaging.CategoryWarning
 	}
 
 	if args[0] == `all` {
@@ -66,11 +73,11 @@ func Skillset(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 		for _, skillName := range skills.GetAllSkillNames() {
 			targetUser.Character.SetSkill(string(skillName), skillValueInt)
-			targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`Your "<ansi fg="skill">%s</ansi>" skill level has been set to <ansi fg="red">%d</ansi>.`, skillName, skillValueInt))
+			targetUser.SendText(skillNoticeCat, fmt.Sprintf(`Your "<ansi fg="skill">%s</ansi>" skill level has been set to <ansi fg="red">%d</ansi>.`, skillName, skillValueInt))
 		}
 
 		if targetUser.UserId != user.UserId {
-			user.SendText(messaging.CategorySystem, "done.")
+			user.SendText(messaging.CategoryAdmin, "done.")
 		}
 
 		return true, nil
@@ -83,13 +90,15 @@ func Skillset(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	if found {
 		targetUser.Character.SetSkill(skillName, skillValueInt)
-		targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`Your "<ansi fg="skill">%s</ansi>" skill level has been set to <ansi fg="red">%d</ansi>.`, skillName, skillValueInt))
+		targetUser.SendText(skillNoticeCat, fmt.Sprintf(`Your "<ansi fg="skill">%s</ansi>" skill level has been set to <ansi fg="red">%d</ansi>.`, skillName, skillValueInt))
 
 		if targetUser.UserId != user.UserId {
-			user.SendText(messaging.CategorySystem, "done.")
+			user.SendText(messaging.CategoryAdmin, "done.")
 		}
 	} else {
-		targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(`Skill "%s" not found.`, skillName))
+		// The refusal is staff output: the staff member who typed the
+		// command reads it, never the target (#371).
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Skill "%s" not found.`, skillName))
 	}
 
 	return true, nil

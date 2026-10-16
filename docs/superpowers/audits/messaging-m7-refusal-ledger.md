@@ -20,12 +20,20 @@ Plan: `docs/superpowers/plans/2026-10-16-messaging-m7-slice3-refusals.md`. Spec:
 | RETAG | 352 | change the category to `CategoryRefusal`, words unchanged |
 | REWORD | 51 | new words from the plan Wording table, on `CategoryRefusal` |
 | FAIL | 14 | `refusal.Failed` (logs the cause, sends on `CategoryError`) |
-| NARR | 63 | nothing (slice 4 moves narration out of System) |
+| NARR | 79 | nothing (slice 4 moves narration out of System) |
 | USAGE | 47 | nothing (slice 4: `CategoryUsage`) |
-| NOT | 695 | nothing (reports, confirmations, outcomes, help, staff output) |
+| NOT | 679 | nothing (reports, confirmations, outcomes, help, staff output) |
 | total | 1325 | |
 
 Slice 3 converted every FAM, RETAG, REWORD and FAIL row in PR #559; the re-inventory after Task 9 left exactly the 805 NOT, NARR and USAGE rows on `CategorySystem`.
+
+Slice 4 (plan `docs/superpowers/plans/2026-10-16-messaging-m7-slice4-tags.md`, ruling R4)
+amended the NOT rows its root guards found to be narration or a notice to someone
+other than the acting player (marked "controller (slice 4 N1):" for the recipient
+guard `system_recipient_guard_test.go`, "controller (slice 4 N2):" for the subject
+guard `system_subject_guard_test.go`); the counts above include them.
+
+Slice 4 converted the Admin, Usage, Refusal, notice and narration rows in PR #562.
 
 Columns: line, ruling, what the player reads today (args as `%s`), the proposal,
 the note. NOT rows are listed too, so a later reader can see each was looked at.
@@ -163,18 +171,18 @@ FAM 1 RETAG 3
 
 ## `internal/actions/plant.go`
 
-FAM 3 NARR 1 NOT 5
+FAM 3 NARR 4 NOT 2
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
 | 66 | FAM | You can't do that while you are under attack! | refusal.WhileUnderAttack(actor, "plant anything") | controller: as defuse.go:82; agent: matches the in-combat gate at :55 |
 | 124 | FAM | They seem to have vanished. | refusal.NotHereCreature(actor) | target gone between resolve and act; 6 sites (plant:124,270, shadow:104,150, steal:221,440) |
 | 176 | NOT | You deftly slip the %s into %s's belongings unnoticed. |  | success outcome |
-| 189 | NOT | %s catches you in the act! |  | failure outcome |
+| 189 | NARR | %s catches you in the act! | CategoryMobEmote | controller (slice 4 N2): a mob catches the planter; the room line rides MobEmote; agent: failure outcome |
 | 270 | FAM | They seem to have vanished. | refusal.NotHereCreature(actor) | as :124 |
-| 284 | NOT | %s catches you in the act! |  | failure outcome |
+| 284 | NARR | %s catches you in the act! | CategoryEmote | controller (slice 4 N2): a player catches the planter (player acts on player); agent: failure outcome |
 | 333 | NARR | %s slips something into your belongings! | CategoryMobEmote | told to the victim about a mob's plant |
-| 434 | NOT | %s spots you slipping something into the %s! |  | failure outcome |
+| 434 | NARR | %s spots you slipping something into the %s! | CategoryMobEmote | controller (slice 4 N2): a mob spotter; the room line rides MobEmote; agent: failure outcome |
 | 476 | NOT | You quietly slip your %s into the %s. |  | success outcome |
 
 ## `internal/actions/relocate_mob.go`
@@ -183,8 +191,8 @@ NOT 2
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
-| 40 | NOT | You turn your attention to %s! |  | retarget notice (RetargetNotice), HideNames-gated |
-| 50 | NOT | You turn your attention to %s! |  | retarget notice |
+| 40 | NOT | You turn your attention to %s! |  | controller (slice 4 review): read again; each player in the room reads only their OWN automatic retarget, the same notice `hooks/NewRound_DoCombat.go:155` and `hooks/NewRound_DoCombat_unified.go:1039` send on System, so it stays on the category its event's other lines use (System); retarget notice (RetargetNotice), HideNames-gated |
+| 50 | NOT | You turn your attention to %s! |  | controller (slice 4 review): as line 40 (the companion-defence branch of the same retarget); retarget notice |
 
 ## `internal/actions/scan.go`
 
@@ -217,8 +225,8 @@ FAM 1 NARR 2 NOT 9
 | 392 | NOT | You discover something: %s |  | find |
 | 394 | NOT | (the hidden noun's description) |  | find |
 | 456 | NOT | You find nothing of interest. |  | outcome (deliberately identical for empty and missed) |
-| 498 | NARR | %s searches the room and spots you! | CategoryEmote | told to the hider about a player's search |
-| 501 | NARR | Someone searches the room and spots you! | CategoryEmote | as :498 |
+| 498 | NARR | %s searches the room and spots you! | messaging.EmoteCategoryFor(searcher kind) | controller (slice 4 review): Emote for a player searcher, MobEmote for a mob one (revealSpotted calls it only for a player today; slice F opens the mob path), name capitalised at the source; told to the hider about a player's search |
+| 501 | NARR | Someone searches the room and spots you! | messaging.EmoteCategoryFor(searcher kind) | as :498 |
 
 ## `internal/actions/search_bauble.go`
 
@@ -288,7 +296,7 @@ NARR 1
 
 ## `internal/actions/steal.go`
 
-FAM 3 NARR 1 NOT 5 RETAG 6 REWORD 4
+FAM 3 NARR 5 NOT 1 RETAG 6 REWORD 4
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
@@ -299,28 +307,28 @@ FAM 3 NARR 1 NOT 5 RETAG 6 REWORD 4
 | 242 | REWORD | You can't steal from %s. | as :231 | controller: as :231; agent: rule 1, as :231 |
 | 256 | RETAG | You aren't advanced enough at skullduggery for that. |  | see defuse:66 |
 | 383 | NOT | You deftly rifle through %s's belongings but find nothing worth taking. |  | outcome after the contest |
-| 406 | NOT | %s catches you in the act! |  | failure outcome |
+| 406 | NARR | %s catches you in the act! | CategoryMobEmote | controller (slice 4 N2): caughtByMob; the room line rides MobEmote; agent: failure outcome |
 | 440 | FAM | They seem to have vanished. | refusal.NotHereCreature(actor) | as plant:124 |
 | 446 | RETAG | You aren't advanced enough at skullduggery for that. |  | see defuse:66 |
-| 463 | NOT | %s catches you in the act! |  | failure outcome |
+| 463 | NARR | %s catches you in the act! | CategoryEmote | controller (slice 4 N2): a player catches the thief (player acts on player); agent: failure outcome |
 | 517 | NARR | %s lifts %s gold from your pocket! | CategoryMobEmote | told to the victim about a mob's theft |
 | 543 | RETAG | You aren't advanced enough at skullduggery for that. |  | see defuse:66 |
 | 548 | RETAG | You root around inside the %s but find it empty. |  | refused before the contest and the cooldown; the container was matched by name |
-| 576 | NOT | %s spots you reaching into the %s! |  | failure outcome |
+| 576 | NARR | %s spots you reaching into the %s! | CategoryMobEmote | controller (slice 4 N2): a mob spotter; the room line rides MobEmote; agent: failure outcome |
 | 872 | RETAG | You aren't advanced enough at skullduggery for that. |  | see defuse:66 |
 | 877 | REWORD | You can't carry the %s - you're already overloaded! | `You can't carry that. You're already overloaded!` | rule 1: householdBaubleNamed (usercommands/skill.skullduggery.steal.go:135) matches floor items with no sight check, so a player in the dark who types part of a name reads the full bauble name before any roll |
-| 897 | NOT | %s spots you reaching for the %s! |  | failure outcome |
+| 897 | NARR | %s spots you reaching for the %s! | CategoryMobEmote | controller (slice 4 N2): a mob spotter; the room line rides MobEmote; agent: failure outcome |
 | 917 | REWORD | You can't carry the %s - you're already overloaded! | `You can't carry that. You're already overloaded!` | rule 1, kept identical to :877 (post-contest storage failure; the thief may still be in the dark) |
 
 ## `internal/actions/steal_pocket.go`
 
-NOT 3
+NARR 1 NOT 2
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
 | 149 | NOT | You attempt to pick %s's pocket... |  | begin line |
 | 310 | NOT | You lose your chance at %s's pocket. |  | outcome |
-| 398 | NOT | %s felt your hand in their pocket. A cry of "Thief!" rings out. |  | outcome of the thief's failed roll |
+| 398 | NARR | %s felt your hand in their pocket. A cry of "Thief!" rings out. | CategoryMobEmote | controller (slice 4 N2): the mark's room line rides MobEmote; agent: outcome of the thief's failed roll |
 
 ## `internal/actions/stolen_bauble.go`
 
@@ -421,12 +429,12 @@ NOT 2
 
 ## `internal/hooks/NewRound_DoCombat_helpers.go`
 
-NARR 1 NOT 1 RETAG 2
+NARR 2 RETAG 2
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
 | 988 | RETAG | You can't flee while grappled! |  | controller: a queued flee refused at round time is a refusal; agent: round-time outcome of an admitted flee; the command-time refusal is usercommands.fleeRefusalText |
-| 999 | NOT | %s blocks you from fleeing! |  | round-time flee outcome |
+| 999 | NARR | %s blocks you from fleeing! | CategoryMobEmote or CategoryEmote | controller (slice 4 N2): blockCat, the room line's category, by the blocker's kind; agent: round-time flee outcome |
 | 1010 | NARR | %s is blocked from fleeing by %s! | CategoryMobEmote | room broadcast (SendTextVisualHidingNames) |
 | 1013 | RETAG | You can't find an exit! |  | controller: as :988; agent: round-time flee outcome |
 
@@ -580,7 +588,7 @@ NARR 1
 
 ## `modules/aicompanion/commands.go`
 
-NOT 18 RETAG 1 USAGE 8
+NARR 1 NOT 17 RETAG 1 USAGE 8
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
@@ -603,7 +611,7 @@ NOT 18 RETAG 1 USAGE 8
 | 493 | RETAG | You reset your companion only a moment ago. Give it a minute. |  | cooldown refusal with no raw number |
 | 506 | NOT | Your companion has been reset. Their memories are untouched. |  | confirmation |
 | 524 | NOT | %s has gone their own way. |  | confirmation |
-| 531 | NOT | %s looks at you and waits. Type companion-part again within a minute to part ways for good; ... |  | confirmation prompt (confirmPart) |
+| 531 | NARR | %s looks at you and waits. Type companion-part again within a minute to part ways for good; ... | CategoryMobEmote | controller (slice 4 N2): the companion (a mob) acts on the owner; the guard cannot see this site (msg is a call result), converted by hand; agent: confirmation prompt (confirmPart) |
 | 549 | NOT | (courtStep result) |  | mixed: in-fiction answers ("%s is not looking for that, and says so kindly.", "%s hears you, and it is plain that %s.") and confirmations; split it if those answers should be refusals |
 | 564 | NOT | (setBoundary result) |  | confirmations; its default branch is a usage-style hint |
 | 627 | USAGE | Usage: companion-ask <who> about <what> |  | usage line |
@@ -634,11 +642,11 @@ NOT 1
 
 ## `modules/aicompanion/tiers.go`
 
-NOT 1
+NARR 1
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
-| 362 | NOT | (%s falls back on a few set words: your key's provider did not answer.) |  | notice (tellOwner) |
+| 362 | NARR | (%s falls back on a few set words: your key's provider did not answer.) | CategoryWarning | controller (slice 4 N1): the owner is told when a companion call settles, not as the result of a command they typed (the recipient is looked up from ownerId); a notice like R3's, so CategoryWarning, which also never wraps; agent: notice (tellOwner) |
 
 ## `modules/auctions/auctions.go`
 
@@ -989,7 +997,7 @@ NOT 3 RETAG 1 USAGE 1
 
 ## `internal/usercommands/character.go`
 
-NOT 13 RETAG 9 REWORD 3
+NARR 1 NOT 12 RETAG 9 REWORD 3
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
@@ -1016,7 +1024,7 @@ NOT 13 RETAG 9 REWORD 3
 | 376 | RETAG | <ansi fg="mobname">%s</ansi> is already hired out. |  | own alt name |
 | 400 | REWORD | You only have <ansi fg="gold">%s gold</ansi> and it would cost <ansi fg="gold">%s gold</ansi> to hire <ansi fg="username">%s</ansi>. | same text; the first amount becomes user.Character.Gold | controller: bug, both amounts were charValue; agent: refusal (not enough gold), classifier said other. BUG: the Sprintf passes charValue for both amounts, so it reads "You only have 500 gold and it would cost 500 gold"; the first arg should be user.Character.Gold |
 | 408 | RETAG | You can only have %s mobs following you at a time. |  | refusal; the follower cap is a count, not a damage/duration/skill value. "mobs" is engine jargon but not one of the reword rules |
-| 448 | NOT | <ansi fg="username">%s</ansi> appears to help you out! |  | outcome |
+| 448 | NARR | <ansi fg="username">%s</ansi> appears to help you out! | CategoryMobEmote | controller (slice 4 N2): the hired alt appears; the room line rides MobEmote; agent: outcome |
 | 458 | RETAG | <ansi fg="203">No character with the name <ansi fg="username">%s</ansi> found.</ansi> |  | same as 232 (raw unescaped echo) |
 
 ## `internal/usercommands/companion.go`
@@ -1132,7 +1140,7 @@ NOT 2 RETAG 1
 
 ## `internal/usercommands/dismiss.go`
 
-FAM 1 NOT 5 RETAG 1 REWORD 1
+FAM 1 NARR 1 NOT 4 RETAG 1 REWORD 1
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
@@ -1143,7 +1151,7 @@ FAM 1 NOT 5 RETAG 1 REWORD 1
 | 128 | NOT | You part ways with <ansi fg="mobname">%s</ansi>, who turns away and takes a different road. |  | outcome |
 | 145 | NOT | You release <ansi fg="mobname">%s</ansi>. It dissolves back into the energies that shaped it. |  | outcome |
 | 162 | NOT | You sever the bond with <ansi fg="mobname">%s</ansi>. |  | outcome |
-| 178 | NOT | <ansi fg="mobname">%s</ansi> turns on you with fury! |  | outcome to the actor (room gets its own MobEmote line) |
+| 178 | NARR | <ansi fg="mobname">%s</ansi> turns on you with fury! | CategoryMobEmote | controller (slice 4 N2): the dismissed companion acts on the owner; the room line rides MobEmote; agent: outcome to the actor (room gets its own MobEmote line) |
 
 ## `internal/usercommands/drain.go`
 
@@ -1289,7 +1297,7 @@ NARR 2 NOT 7
 
 ## `internal/usercommands/go.go`
 
-FAIL 1 FAM 1 NARR 3 NOT 3 RETAG 6 REWORD 2
+FAIL 1 FAM 1 NARR 4 NOT 2 RETAG 6 REWORD 2
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
@@ -1304,7 +1312,7 @@ FAIL 1 FAM 1 NARR 3 NOT 3 RETAG 6 REWORD 2
 | 214 | RETAG | You're too exhausted to move! Rest and recover your stamina. |  | wording fine |
 | 218 | NOT | <ansi fg="yellow">You're feeling winded. Consider resting to recover your stamina.</ansi> |  | warning; the move goes ahead (CategoryWarning is a candidate) |
 | 252 | FAIL | Oops, couldn't move there! | refusal.Failed(user, "move", err, "userId", user.UserId) | rooms.MoveToRoom error: a server fault; the err is dropped today |
-| 313 | NOT | %s follows you. |  | confirmation: own pet follows |
+| 313 | NARR | %s follows you. | CategoryRoomExit | controller (slice 4 N2): the pet follows on departure, as the party follow line (go.go "You follow the party leader.") rides RoomExit; agent: confirmation: own pet follows |
 | 352 | NARR | You follow the party leader. | CategoryRoomExit | sent to each party member when the leader moves, an event another player caused |
 | 461 | NARR | <ansi fg="mobname">%s</ansi> notices you as you enter! | CategoryMobEmote | world event: an aggro mob notices the arriving player |
 | 463 | NARR | <ansi fg="yellow">Something notices you in the darkness!</ansi> | CategoryMobEmote | world event, dark form of 461 |
@@ -1724,7 +1732,7 @@ FAM 2 NARR 14 NOT 33 RETAG 7 REWORD 4 USAGE 8
 | 701 | USAGE |   <ansi fg="command">roundrobin</ansi>  - Loot rights rotate through party members. |  | usage block line |
 | 702 | USAGE |   <ansi fg="command">leaderhold</ansi>  - Only the leader may loot corpses. |  | usage block line |
 | 703 | NOT | The current loot mode is <ansi fg="magenta-bold">%s</ansi>. |  | report (ends the usage block) |
-| 726 | NOT | You set the party loot mode to <ansi fg="magenta-bold">%s</ansi>. |  | confirmation |
+| 726 | NOT | You set the party loot mode to <ansi fg="magenta-bold">%s</ansi>. |  | controller (slice 4 N1): stays on System, now sent through the `user` parameter (the actor's branch of the loop over members, where `u` was the same record); the others' copy (:728) rides CategoryGroup; agent: confirmation |
 | 728 | NARR | <ansi fg="username">%s</ansi> set the party loot mode to <ansi fg="magenta-bold">%s</ansi>. | party notice: new CategoryParty, or keep System | sent to the other members |
 | 786 | RETAG | The party pool is empty. |  | party gold split with nothing to split |
 | 793 | NOT | The party pool holds <ansi fg="yellow-bold">%d gold</ansi>. |  | report |
@@ -2170,7 +2178,7 @@ FAM 1 RETAG 3
 
 ## `internal/usercommands/shoot.go`
 
-FAM 3 NOT 4 RETAG 13 REWORD 1 USAGE 1
+FAM 3 NARR 1 NOT 3 RETAG 13 REWORD 1 USAGE 1
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
@@ -2195,7 +2203,7 @@ FAM 3 NOT 4 RETAG 13 REWORD 1 USAGE 1
 | 274 | NOT | You reach for more <ansi fg="item">%s</ansi> and find none. Your <ansi fg="itemname">%s</ansi> is empty. |  | post-shot chambering outcome |
 | 288 | RETAG | You cannot work another round into your <ansi fg="itemname">%s</ansi> just now. It stays empty. |  | controller: the reload refused; agent: post-shot chambering outcome (the shot already fired) |
 | 491 | NOT | %s (combat.ChannelDefenceShortageText, to the player target) |  | defender's resource note during the shot, an outcome |
-| 531 | NOT | Someone is attacking you. You cannot steady your aim, so the shot is weak. |  | aimedWhileEngagedText: outcome explanation after the shot |
+| 531 | NARR | Someone is attacking you. You cannot steady your aim, so the shot is weak. | the shooter's outcome line's category (shooterLine.Cat; CategoryHitRanged when that line is silent) | controller (slice 4 N2): plan Step 3: the shot's own outcome category; agent: aimedWhileEngagedText: outcome explanation after the shot |
 
 ## `internal/usercommands/show.go`
 
@@ -2277,7 +2285,7 @@ FAM 1 RETAG 3
 
 ## `internal/usercommands/skill.skullduggery.sneak.go`
 
-FAM 3 NOT 3 RETAG 1
+FAM 3 NARR 1 NOT 2 RETAG 1
 
 | Line | Ruling | Today | Proposal | Note |
 |---|---|---|---|---|
@@ -2286,7 +2294,7 @@ FAM 3 NOT 3 RETAG 1
 | 51 | FAM | %s (actions.CostRefusalText) | refusal.Cost(user, result.Cost) | cost refusal |
 | 57 | RETAG | You're already hidden! |  | wrong state |
 | 67 | NOT | You let the shroud fall away and slip into the shadows on your own. |  | outcome |
-| 77 | NOT | You try to blend into the shadows but <ansi fg="mobname">%s</ansi> notices you. |  | actions.SpottedLine: failed attempt outcome |
+| 77 | NARR | You try to blend into the shadows but <ansi fg="mobname">%s</ansi> notices you. | CategoryMobEmote or CategoryEmote | controller (slice 4 N2): by the spotter's kind, as move.go's sneaking-arrival spotted line (slice 4 Task 5); the guard cannot see it (opens with You); agent: actions.SpottedLine: failed attempt outcome |
 | 96 | NOT | You slip into the shadows. |  | outcome |
 
 ## `internal/usercommands/skill.skullduggery.steal.go`

@@ -30,7 +30,7 @@ func Item(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if len(args) < 1 {
 		infoOutput, _ := templates.Process("admincommands/help/command.item", nil, user.UserId)
-		user.SendText(messaging.CategorySystem, infoOutput)
+		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	}
 
@@ -38,7 +38,7 @@ func Item(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if args[0] == `create` {
 
 		if !user.HasRolePermission(`item.create`) {
-			user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">item.create</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">item.create</ansi> permission`)
 			return true, nil
 		}
 
@@ -49,7 +49,7 @@ func Item(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if args[0] == `spawn` {
 
 		if !user.HasRolePermission(`item.spawn`) {
-			user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">item.create</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">item.create</ansi> permission`)
 			return true, nil
 		}
 
@@ -60,7 +60,7 @@ func Item(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if args[0] == `list` {
 
 		if !user.HasRolePermission(`item.spawn`) {
-			user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">item.create</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">item.create</ansi> permission`)
 			return true, nil
 		}
 
@@ -106,11 +106,11 @@ func item_List(rest string, user *users.UserRecord, _ *rooms.Room, _ events.Even
 	numWidth := len(strconv.Itoa(len(itmNames)))
 	colWidth := 1 + numWidth + 2 + longestName + 1
 
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendText(messaging.CategoryAdmin, ``)
 	sw := user.ClientSettings().Display.GetScreenWidth()
 	strOut := templates.DynamicList(itmNames, colWidth, sw, numWidth, longestName)
-	user.SendText(messaging.CategorySystem, strOut)
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendText(messaging.CategoryAdmin, strOut)
+	user.SendText(messaging.CategoryAdmin, ``)
 
 	return true, nil
 }
@@ -124,7 +124,7 @@ func item_Spawn(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 		if itm.ItemId > 0 {
 			room.AddItem(itm, false)
 
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryAdmin,
 				fmt.Sprintf(`You wave your hands and <ansi fg="item">%s</ansi> appears.`, itm.DisplayName()),
 			)
 			room.SendTextVisual(messaging.CategoryMobEmote,
@@ -137,7 +137,7 @@ func item_Spawn(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	}
 
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryAdmin,
 		fmt.Sprintf(`Item <ansi fg="itemname">%s</ansi> not found.`, rest),
 	)
 
@@ -158,8 +158,8 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 	cmdPrompt, isNew := user.StartPrompt(`item create`, rest)
 
 	if isNew {
-		user.SendText(messaging.CategorySystem, ``)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Lets get a little info first.%s`, term.CRLFStr))
+		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Lets get a little info first.%s`, term.CRLFStr))
 	}
 
 	//
@@ -193,7 +193,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		question := cmdPrompt.Ask(`What Type of item will it be?`, []string{string(newItemSpec.Type)}, string(newItemSpec.Type))
 		if !question.Done {
 			tplTxt, _ := templates.Process("tables/numbered-list", typeOptions, user.UserId)
-			user.SendText(messaging.CategorySystem, tplTxt)
+			user.SendText(messaging.CategoryAdmin, tplTxt)
 			return true, nil
 		}
 
@@ -214,7 +214,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 			question.RejectResponse()
 
 			tplTxt, _ := templates.Process("tables/numbered-list", typeOptions, user.UserId)
-			user.SendText(messaging.CategorySystem, tplTxt)
+			user.SendText(messaging.CategoryAdmin, tplTxt)
 
 			return true, nil
 		}
@@ -300,7 +300,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		}
 
 		if question.Response == `` {
-			user.SendText(messaging.CategorySystem, "Aborting...")
+			user.SendText(messaging.CategoryAdmin, "Aborting...")
 			user.ClearPrompt()
 			return true, nil
 		}
@@ -317,7 +317,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		}
 
 		if question.Response == `` {
-			user.SendText(messaging.CategorySystem, "Aborting...")
+			user.SendText(messaging.CategoryAdmin, "Aborting...")
 			user.ClearPrompt()
 			return true, nil
 		}
@@ -342,12 +342,12 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		question := cmdPrompt.Ask(`What Subtype of item will it be?`, []string{string(newItemSpec.Subtype)}, string(newItemSpec.Subtype))
 		if !question.Done {
 			tplTxt, _ := templates.Process("tables/numbered-list", subTypeOptions, user.UserId)
-			user.SendText(messaging.CategorySystem, tplTxt)
+			user.SendText(messaging.CategoryAdmin, tplTxt)
 			return true, nil
 		}
 
 		if question.Response == `` {
-			user.SendText(messaging.CategorySystem, "Aborting...")
+			user.SendText(messaging.CategoryAdmin, "Aborting...")
 			user.ClearPrompt()
 			return true, nil
 		}
@@ -369,7 +369,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 			question.RejectResponse()
 
 			tplTxt, _ := templates.Process("tables/numbered-list", subTypeOptions, user.UserId)
-			user.SendText(messaging.CategorySystem, tplTxt)
+			user.SendText(messaging.CategoryAdmin, tplTxt)
 
 			return true, nil
 		}
@@ -417,7 +417,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		if question.Response != `_` {
 
 			if quests.GetQuest(question.Response) == nil {
-				user.SendText(messaging.CategorySystem, `Invalid quest token`)
+				user.SendText(messaging.CategoryAdmin, `Invalid quest token`)
 				question.RejectResponse()
 				return true, nil
 			}
@@ -456,36 +456,36 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		question := cmdPrompt.Ask(`Does this look correct?`, []string{`y`, `n`}, `n`)
 		if !question.Done {
 
-			user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Name:</ansi>        <ansi fg="white-bold">`+newItemSpec.Name+`</ansi>`)
-			user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Desc:</ansi>        <ansi fg="white-bold">`+newItemSpec.Description+`</ansi>`)
-			user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Type:</ansi>        <ansi fg="white-bold">`+string(newItemSpec.Type)+`</ansi>`)
+			user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Name:</ansi>        <ansi fg="white-bold">`+newItemSpec.Name+`</ansi>`)
+			user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Desc:</ansi>        <ansi fg="white-bold">`+newItemSpec.Description+`</ansi>`)
+			user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Type:</ansi>        <ansi fg="white-bold">`+string(newItemSpec.Type)+`</ansi>`)
 
 			if newItemSpec.Type == items.Key {
-				user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">KeyId:</ansi>       <ansi fg="white-bold">`+newItemSpec.KeyLockId+`</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">KeyId:</ansi>       <ansi fg="white-bold">`+newItemSpec.KeyLockId+`</ansi>`)
 			}
 			if newItemSpec.Type == items.Weapon {
-				user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Damage:</ansi>      <ansi fg="white-bold">`+newItemSpec.Damage.DiceRoll+`</ansi>`)
-				user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">DmgMult:</ansi>     <ansi fg="white-bold">`+fmt.Sprintf(`%.2f`, newItemSpec.DamageMultiplier)+`</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Damage:</ansi>      <ansi fg="white-bold">`+newItemSpec.Damage.DiceRoll+`</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">DmgMult:</ansi>     <ansi fg="white-bold">`+fmt.Sprintf(`%.2f`, newItemSpec.DamageMultiplier)+`</ansi>`)
 			}
 			if newItemSpec.PhysicalMitigation > 0 || newItemSpec.MagicalMitigation > 0 || newItemSpec.ConvictionMitigation > 0 {
-				user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Physical:</ansi>    <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.PhysicalMitigation)+`%</ansi>`)
-				user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Magical:</ansi>     <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.MagicalMitigation)+`%</ansi>`)
-				user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Conviction:</ansi>  <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.ConvictionMitigation)+`%</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Physical:</ansi>    <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.PhysicalMitigation)+`%</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Magical:</ansi>     <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.MagicalMitigation)+`%</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Conviction:</ansi>  <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.ConvictionMitigation)+`%</ansi>`)
 			}
 
 			if newItemSpec.Uses > 0 {
-				user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Uses:</ansi>        <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.Uses)+`</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Uses:</ansi>        <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.Uses)+`</ansi>`)
 			}
 
 			if newItemSpec.Value > 0 {
-				user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Value:</ansi>       <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.Value)+`</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Value:</ansi>       <ansi fg="white-bold">`+strconv.Itoa(newItemSpec.Value)+`</ansi>`)
 			}
 
 			if newItemSpec.QuestToken != `` {
-				user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">Quest Token:</ansi> <ansi fg="white-bold">`+newItemSpec.QuestToken+`</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">Quest Token:</ansi> <ansi fg="white-bold">`+newItemSpec.QuestToken+`</ansi>`)
 			}
 
-			user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">SubType:</ansi>     <ansi fg="white-bold">`+string(newItemSpec.Subtype)+`</ansi>`)
+			user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">SubType:</ansi>     <ansi fg="white-bold">`+string(newItemSpec.Subtype)+`</ansi>`)
 
 			return true, nil
 		}
@@ -493,7 +493,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 		user.ClearPrompt()
 
 		if question.Response != `y` {
-			user.SendText(messaging.CategorySystem, "Aborting...")
+			user.SendText(messaging.CategoryAdmin, "Aborting...")
 			return true, nil
 		}
 	}
@@ -501,18 +501,18 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 	newItemId, err := items.CreateNewItemFile(newItemSpec)
 
 	if err != nil {
-		user.SendText(messaging.CategorySystem, "Error: "+err.Error())
+		user.SendText(messaging.CategoryAdmin, "Error: "+err.Error())
 		return true, nil
 	}
 
 	itemInst := items.GetItemSpec(newItemId)
 
-	user.SendText(messaging.CategorySystem, ``)
-	user.SendText(messaging.CategorySystem, `  <ansi bg="red" fg="white-bold">ITEM CREATED</ansi>`)
-	user.SendText(messaging.CategorySystem, ``)
-	user.SendText(messaging.CategorySystem, `  <ansi fg="yellow-bold">File Path:</ansi>   <ansi fg="white-bold">`+itemInst.Filepath()+`</ansi>`)
-	user.SendText(messaging.CategorySystem, ``)
-	user.SendText(messaging.CategorySystem, `  <ansi fg="black-bold">note: Try <ansi fg="command">item spawn `+newItemSpec.Name+`</ansi> to test it.`)
+	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendText(messaging.CategoryAdmin, `  <ansi bg="red" fg="white-bold">ITEM CREATED</ansi>`)
+	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">File Path:</ansi>   <ansi fg="white-bold">`+itemInst.Filepath()+`</ansi>`)
+	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendText(messaging.CategoryAdmin, `  <ansi fg="black-bold">note: Try <ansi fg="command">item spawn `+newItemSpec.Name+`</ansi> to test it.`)
 
 	return true, nil
 }

@@ -29,7 +29,7 @@ func Caravan(rest string, user *users.UserRecord, room *rooms.Room,
 	args := util.SplitButRespectQuotes(rest)
 
 	if len(args) == 0 {
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">caravan reset [instanceId]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">caravan reset [instanceId]</ansi>`)
 		return true, nil
 	}
 
@@ -41,19 +41,19 @@ func Caravan(rest string, user *users.UserRecord, room *rooms.Room,
 			// Targeted reset by instance ID.
 			instId, err := strconv.Atoi(args[1])
 			if err != nil {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 					`<ansi fg="red">Invalid instance ID %q — must be an integer.</ansi>`,
 					args[1],
 				))
 				return true, nil
 			}
 			if behaviortree.ResetCaravanStateByInstanceId(instId) {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 					`<ansi fg="yellow">Caravan leader #%d reset to ThornwallDwell.</ansi>`,
 					instId,
 				))
 			} else {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 					`<ansi fg="red">Instance #%d not found or is not a caravan leader.</ansi>`,
 					instId,
 				))
@@ -64,11 +64,11 @@ func Caravan(rest string, user *users.UserRecord, room *rooms.Room,
 		// Global reset — all caravan leaders.
 		count := behaviortree.ResetAllCaravanStates()
 		if count == 0 {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryAdmin,
 				`<ansi fg="yellow">No active caravan leaders found.</ansi>`,
 			)
 		} else {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 				`<ansi fg="yellow">Reset %d caravan leader(s) to ThornwallDwell.</ansi>`,
 				count,
 			))
@@ -76,7 +76,7 @@ func Caravan(rest string, user *users.UserRecord, room *rooms.Room,
 		return true, nil
 
 	default:
-		user.SendText(messaging.CategorySystem, `Usage: <ansi fg="command">caravan reset [instanceId]</ansi>`)
+		user.SendText(messaging.CategoryUsage, `Usage: <ansi fg="command">caravan reset [instanceId]</ansi>`)
 	}
 
 	return true, nil

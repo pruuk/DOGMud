@@ -186,9 +186,9 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item, t theftAtt
 	}
 
 	// Failure — detected.
-	actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+	actor.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(
 		`<ansi fg="mobname">%s</ansi> catches you in the act!`,
-		m.Character.Name))
+		m.Character.Name)))
 
 	if room != nil {
 		room.SendTextVisual(messaging.CategoryMobEmote,
@@ -281,9 +281,9 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftA
 	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	if !success {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryEmote, messaging.CapitalizeStart(fmt.Sprintf(
 			`<ansi fg="username">%s</ansi> catches you in the act!`,
-			targetUser.Character.Name))
+			targetUser.Character.Name)))
 		actor.GetCharacter().Awareness.TransitionToRevealing(state.TransitionReason{
 			Trigger: awareness.TriggerSkullduggeryFailed,
 		})
@@ -330,10 +330,10 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftA
 		sneakScore := CalcSneakScoreVsObserver(actor.GetCharacter(), targetUser.Character, roomLight)
 		detected := combat.RunContest(searchScore, []contest.Entry{{Score: sneakScore}}).Success
 		if detected {
-			targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(
+			targetUser.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> slips something into your `+
 					`belongings!`,
-				actor.GetName()))
+				actor.GetName())))
 			result.Detected = true
 		}
 	}
@@ -431,10 +431,10 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item, t
 	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	if !success {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> spots you slipping something into `+
 				`the <ansi fg="itemname">%s</ansi>!`,
-			spotterName, containerName))
+			spotterName, containerName)))
 
 		room.SendTextVisual(messaging.CategoryMobEmote,
 			fmt.Sprintf(

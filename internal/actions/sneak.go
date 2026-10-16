@@ -55,12 +55,13 @@ func sneakObserverScore(observer *characters.Character, room messaging.RoomVisib
 // sneakNoticeLine is what an observer who wins a sneak contest reads. seen
 // is the line with the sneaker's name tagged (moverName); the name follows
 // the observer's sight (HideNames), and an observer who sees nothing only
-// heard someone (#215, #333).
+// heard someone (#215, #333). The line rides Emote or MobEmote, neither of
+// which capitalizes, so a lowercase name is capitalized here, after hiding.
 func sneakNoticeLine(seen, sneakerName string, sight messaging.SightDecision) string {
 	if sight == messaging.SightNone {
 		return `You hear someone trying to move quietly.`
 	}
-	return messaging.HideNames(seen, []string{sneakerName}, sight)
+	return messaging.CapitalizeStart(messaging.HideNames(seen, []string{sneakerName}, sight))
 }
 
 // SpottedLine is what a sneaker reads when spotter catches the attempt, the
@@ -220,7 +221,7 @@ func Sneak(actor Actor) SneakResult {
 		success := combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success
 		if !success {
 			// Notify the observing player, as far as its sight allows.
-			observer.SendText(messaging.CategorySystem, sneakNoticeLine(
+			observer.SendText(messaging.EmoteCategoryFor(actor.IsPlayer()), sneakNoticeLine(
 				moverName(actor)+` tries to hide but you notice them.`, actor.GetName(), sight))
 			char.Awareness.ResolveConcealment(false, state.TransitionReason{
 				Trigger: awareness.TriggerSneakFailed,

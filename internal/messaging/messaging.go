@@ -134,6 +134,24 @@ const (
 	// changes nothing a player sees until the owner recolours it.
 	CategoryRefusal
 
+	// Usage lines and blocks (messaging M7 slice 4, #371): "Usage: x <y>"
+	// and the *Usage(user) blocks, staff and player alike. Appended so no
+	// existing value shifts; treated exactly as CategorySystem (alias usage
+	// at system's value), so the move changes nothing a player sees.
+	CategoryUsage
+
+	// Staff output (M7 slice 4, #371): everything an admin-only command or a
+	// staff-only subcommand shows the staff member who typed it, its
+	// refusals included (owner ruling R2). Treated exactly as CategorySystem
+	// (alias admin at system's value).
+	CategoryAdmin
+
+	// Party and guild membership notices (M7 slice 4, #371, owner ruling
+	// R1): joined, left, kicked, promoted, invited, loot mode. Treated
+	// exactly as CategorySystem (alias group at system's value). Group chat
+	// rides CategoryBroadcast, where channel chat rides.
+	CategoryGroup
+
 	// categoryMax is the exclusive upper bound of the Category enum.
 	// Used by tests to iterate the full range; do not consume in
 	// production code.
@@ -274,6 +292,24 @@ func (c Category) String() string {
 		return "craft-seen"
 	case CategoryRefusal:
 		return "refusal"
+	case CategoryUsage:
+		return "usage"
+	case CategoryAdmin:
+		return "admin"
+	case CategoryGroup:
+		return "group"
 	}
 	return "Unknown"
+}
+
+// EmoteCategoryFor is the category of a line told to a player about what
+// another creature does: CategoryEmote when that creature is a player,
+// CategoryMobEmote when it is a mob, the split M5 made for emotes. Neither
+// category runs the normalizer's capitalize stage, so a sender whose line
+// opens with the creature's name builds it through CapitalizeStart.
+func EmoteCategoryFor(isPlayer bool) Category {
+	if isPlayer {
+		return CategoryEmote
+	}
+	return CategoryMobEmote
 }

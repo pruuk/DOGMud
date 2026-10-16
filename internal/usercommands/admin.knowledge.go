@@ -43,10 +43,10 @@ func Knowledge(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 func knowledgeUsage(user *users.UserRecord) {
 	if out, err := templates.Process("admincommands/help/command.knowledge", nil, user.UserId); err == nil && strings.TrimSpace(out) != "" {
-		user.SendText(messaging.CategorySystem, out)
+		user.SendText(messaging.CategoryUsage, out)
 		return
 	}
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryUsage,
 		"Usage:\r\n"+
 			"  knowledge show <mobId>\r\n"+
 			"  knowledge show <mobId> <playerName>\r\n"+
@@ -122,7 +122,7 @@ func knowledgeShow(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, rest, ok := knowledgeSplitMob(args)
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", strings.Join(args, " ")))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", strings.Join(args, " ")))
 		return true, nil
 	}
 
@@ -130,7 +130,7 @@ func knowledgeShow(args []string, user *users.UserRecord) (bool, error) {
 		// List all records for this observer.
 		records := knowledge.AllForObserver(mobId)
 		if len(records) == 0 {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf("No knowledge records for mob %d.\r\n", mobId))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No knowledge records for mob %d.\r\n", mobId))
 			return true, nil
 		}
 		var b strings.Builder
@@ -150,19 +150,19 @@ func knowledgeShow(args []string, user *users.UserRecord) (bool, error) {
 			lastSeen := fmt.Sprintf("room %d @ round %d", r.LastSeenRoom, r.LastSeenRound)
 			fmt.Fprintf(&b, "  %-12s  %4s  %-20s  %s\r\n", subject, met, r.NameLearned, lastSeen)
 		}
-		user.SendText(messaging.CategorySystem, b.String())
+		user.SendText(messaging.CategoryAdmin, b.String())
 		return true, nil
 	}
 
 	// Drill into a specific subject.
 	subj, ok := knowledgeResolveSubject(rest)
 	if !ok {
-		user.SendText(messaging.CategorySystem, "Unknown subject\r\n")
+		user.SendText(messaging.CategoryAdmin, "Unknown subject\r\n")
 		return true, nil
 	}
 	r := knowledge.Get(mobId, subj)
 	if r == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("No record: mob %d <-> %s:%d\r\n", mobId, subj.Type, subj.Id))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No record: mob %d <-> %s:%d\r\n", mobId, subj.Type, subj.Id))
 		return true, nil
 	}
 	var b strings.Builder
@@ -182,7 +182,7 @@ func knowledgeShow(args []string, user *users.UserRecord) (bool, error) {
 			fmt.Fprintf(&b, "    crime %d (%s) resolved: %s\r\n", w.CrimeId, w.Kind, resolved)
 		}
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -193,7 +193,7 @@ func knowledgeFrequented(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, rest, ok := knowledgeSplitMob(args)
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", strings.Join(args, " ")))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", strings.Join(args, " ")))
 		return true, nil
 	}
 	if len(rest) < 1 {
@@ -202,7 +202,7 @@ func knowledgeFrequented(args []string, user *users.UserRecord) (bool, error) {
 	}
 	target := users.GetByCharacterNameOrLoad(rest[0])
 	if target == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("No such player: %s\r\n", rest[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No such player: %s\r\n", rest[0]))
 		return true, nil
 	}
 	topK := 5
@@ -213,7 +213,7 @@ func knowledgeFrequented(args []string, user *users.UserRecord) (bool, error) {
 	}
 	rows := knowledge.FrequentedRooms(mobId, knowledge.PlayerSubject(target.UserId), topK)
 	if len(rows) == 0 {
-		user.SendText(messaging.CategorySystem, "No observations recorded.\r\n")
+		user.SendText(messaging.CategoryAdmin, "No observations recorded.\r\n")
 		return true, nil
 	}
 	var b strings.Builder
@@ -221,7 +221,7 @@ func knowledgeFrequented(args []string, user *users.UserRecord) (bool, error) {
 	for _, r := range rows {
 		fmt.Fprintf(&b, "  room %d  (%d sightings)\r\n", r.Room, r.Count)
 	}
-	user.SendText(messaging.CategorySystem, b.String())
+	user.SendText(messaging.CategoryAdmin, b.String())
 	return true, nil
 }
 
@@ -232,7 +232,7 @@ func knowledgeForget(args []string, user *users.UserRecord) (bool, error) {
 	}
 	mobId, rest, ok := knowledgeSplitMob(args)
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Unknown mob: %s\r\n", strings.Join(args, " ")))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Unknown mob: %s\r\n", strings.Join(args, " ")))
 		return true, nil
 	}
 	if len(rest) < 1 {
@@ -241,16 +241,16 @@ func knowledgeForget(args []string, user *users.UserRecord) (bool, error) {
 	}
 	target := users.GetByCharacterNameOrLoad(rest[0])
 	if target == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("No such player: %s\r\n", rest[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("No such player: %s\r\n", rest[0]))
 		return true, nil
 	}
 	subj := knowledge.PlayerSubject(target.UserId)
 	if len(rest) == 1 {
 		knowledge.Forget(mobId, subj)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Forgot record: mob %d <-> %s\r\n", mobId, rest[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Forgot record: mob %d <-> %s\r\n", mobId, rest[0]))
 		return true, nil
 	}
 	knowledge.ForgetFact(mobId, subj, strings.ToLower(rest[1]))
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("Forgot fact %q: mob %d <-> %s\r\n", rest[1], mobId, rest[0]))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Forgot fact %q: mob %d <-> %s\r\n", rest[1], mobId, rest[0]))
 	return true, nil
 }
