@@ -5294,6 +5294,34 @@ func TestAdminSkillsetDeep(t *testing.T) {
 	})
 }
 
+// #371: `skillset <player> <unknown skill> <n>` refuses to the staff member
+// who typed it, on CategoryAdmin; the target reads nothing.
+func TestAdminSkillset_UnknownSkillRefusesTheStaffMember(t *testing.T) {
+	const roomId, staffId, targetId = 9450, 9451, 9452
+	staff := users.NewTestUser(staffId, "skillstaff", "Skillstaff", uint64(staffId))
+	staff.Role = users.RoleAdmin
+	target := users.NewTestUser(targetId, "skilltarget", "Skilltarget", uint64(targetId))
+	room := &rooms.Room{RoomId: roomId}
+	defer rooms.SeedRoomsForTest(map[int]*rooms.Room{roomId: room}, nil)()
+	defer users.SeedUsersForTest(map[int]*users.UserRecord{staffId: staff, targetId: target})()
+	for _, u := range []*users.UserRecord{staff, target} {
+		u.Character.RoomId = roomId
+		room.AddPlayer(u.UserId)
+	}
+	events.DrainQueuedMessagesForTest(staffId)
+	events.DrainQueuedMessagesForTest(targetId)
+
+	handled, err := Skillset("Skilltarget zzz-no-such-skill 5", staff, room, 0)
+	require.True(t, handled)
+	require.NoError(t, err)
+
+	staffGot := strings.Join(events.DrainQueuedMessagesForTest(staffId), "")
+	targetGot := strings.Join(events.DrainQueuedMessagesForTest(targetId), "")
+	assert.Contains(t, staffGot, `Skill "zzz-no-such-skill" not found.`, "the staff member reads the refusal")
+	assert.Contains(t, staffGot, `fg="admin"`, "the refusal rides CategoryAdmin")
+	assert.Empty(t, targetGot, "the target reads nothing")
+}
+
 // ─── Deeper admin.reload branches ───────────────────────────────────────────
 
 func TestAdminReloadDeep(t *testing.T) {

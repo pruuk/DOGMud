@@ -96,7 +96,9 @@ func Skillset(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			user.SendText(messaging.CategoryAdmin, "done.")
 		}
 	} else {
-		targetUser.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Skill "%s" not found.`, skillName))
+		// The refusal is staff output: the staff member who typed the
+		// command reads it, never the target (#371).
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Skill "%s" not found.`, skillName))
 	}
 
 	return true, nil

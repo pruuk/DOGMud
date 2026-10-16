@@ -72,7 +72,7 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			if locateUser := users.GetByCharacterName(rest); locateUser != nil {
 
 				if !user.HasRolePermission(`teleport.playername`) {
-					user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">teleport.direction</ansi> permission`)
+					user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">teleport.playername</ansi> permission`)
 					return true, nil
 				}
 
@@ -83,7 +83,7 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	} else {
 		if !user.HasRolePermission(`teleport.roomid`) {
-			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">teleport.direction</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">teleport.roomid</ansi> permission`)
 			return true, nil
 		}
 	}
@@ -131,7 +131,10 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 							}
 
 							rooms.MoveToRoom(partyUser.UserId, gotoRoomId)
-							partyUser.SendText(messaging.CategoryMobEmote, fmt.Sprintf("Moved to room %d.", gotoRoomId))
+							// A party member reads the move, never a room id
+							// (#371 table C); the staff member's own report
+							// above keeps the id.
+							partyUser.SendText(messaging.CategoryMobEmote, `A flash of light carries you away.`)
 							gotoRoom.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, partyUser.Character.Name), []string{partyUser.Character.Name}, partyUser.UserId)
 
 							Look(``, partyUser, gotoRoom, flags)
