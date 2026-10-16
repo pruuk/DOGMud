@@ -57,11 +57,12 @@ func moveDefenceLines(mob *mobs.Mob, room *rooms.Room, target actions.AggroTarge
 
 // sendMoveDefenceShortage speaks the defender's resource-shortage note. See the
 // usercommands twin: it is a separate at-most-once event, not part of the
-// defence narration.
-func sendMoveDefenceShortage(targetUser *users.UserRecord, lines moveDefence) {
-	if targetUser != nil && lines.Shortage != "" {
-		targetUser.SendText(messaging.CategorySystem, lines.Shortage)
-	}
+// defence narration. note is messaging.Say(<the verb's category>,
+// defence.Shortage), the category of the defence line sent beside it, and it
+// leaves through SendTrio as the usercommands twin explains.
+func sendMoveDefenceShortage(note messaging.Line, aud messaging.Audience) {
+	// Private to the defender: the room is not told the defender ran short.
+	messaging.SendTrio(messaging.Trio{Actor: messaging.NoLine, Actee: note, Observer: messaging.NoLine}, aud)
 }
 
 // acteeDefenceLine renders the defender's personal defence line with the

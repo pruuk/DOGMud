@@ -104,7 +104,7 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		observer := lineOrNone(messaging.CategoryHitNaturalSharp, roles.Observer)
 		if defended {
 			observer = messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToRoom)
-			sendMoveDefenceShortage(targetChar, defence)
+			sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
 		}
 		messaging.SendTrio(messaging.Trio{
 			Actor:    lineOrNone(drainCategories.Actor, roles.Actor),
@@ -121,7 +121,7 @@ func Drain(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		}
 	} else if defence, defended := moveDefenceLines(user, room, res.Target, res.MoveResult.Defence, "draining grasp"); defended {
 		// A defence stopped it outright: all three lines come from the triad.
-		sendMoveDefenceShortage(targetChar, defence)
+		sendMoveDefenceShortage(messaging.Say(messaging.CategoryHitNaturalSharp, defence.Shortage), aud)
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.Say(messaging.CategoryHitNaturalSharp, defence.ToAttacker),
 			Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryHitNaturalSharp, defence.ToDefender, user.Character.Name),

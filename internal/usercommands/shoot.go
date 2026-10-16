@@ -489,7 +489,7 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	// at-most-once note, not part of the shot's narration.
 	if targetPlayer != nil && result.MoveResult.Defence.Defended {
 		if text := combat.ChannelDefenceShortageText(result.MoveResult.Defence, targetPlayer.Character); text != "" {
-			targetPlayer.SendText(messaging.CategorySystem, text)
+			targetPlayer.SendText(messaging.CategoryHitRanged, text)
 		}
 	}
 
@@ -524,8 +524,10 @@ func sendShootMessages(user *users.UserRecord, room *rooms.Room, result actions.
 	//
 	// CategorySystem, not CategorySurpriseAttack, and the difference is not an
 	// oversight: this fires on ORDINARY shots and has nothing to do with an
-	// ambush. It is a mechanical explanation, like the cost refusal and the
-	// defence shortage text this same function already routes to CategorySystem.
+	// ambush. It is a mechanical explanation to the shooter. (The defence
+	// shortage note this function sends the defender rides the shot's
+	// CategoryHitRanged since M7 slice 4, #371: it reaches the defender, not
+	// the shooter.)
 	speak, nowSpoken := shouldSpeakEngagedCue(result.AimedWhileEngaged, user.Character.RangedEngagedCueSpoken)
 	user.Character.RangedEngagedCueSpoken = nowSpoken
 	if speak {

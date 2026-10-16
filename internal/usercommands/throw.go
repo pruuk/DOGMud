@@ -273,7 +273,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		})
 	}
 	if spoiled {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(
 			`<ansi fg="red-bold">You pull out the <ansi fg="itemname">%s</ansi> and it crumbles apart in your hand. It's gone bad!</ansi>`,
 			matchItem.DisplayName()))
 		return true, nil

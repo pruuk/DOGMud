@@ -93,7 +93,7 @@ func Charge(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		partialObserver := lineOrNone(messaging.CategoryTrip, roles.Observer)
 		if defended {
 			partialObserver = messaging.Say(messaging.CategoryTrip, defence.ToRoom)
-			sendMoveDefenceShortage(targetChar, defence)
+			sendMoveDefenceShortage(messaging.Say(messaging.CategoryTrip, defence.Shortage), aud)
 		}
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.NoLine,
@@ -101,7 +101,7 @@ func Charge(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			Observer: partialObserver,
 		}, aud)
 	} else if defence, defended := moveDefenceLines(mob, room, target, result.Defence, "charge"); defended {
-		sendMoveDefenceShortage(targetChar, defence)
+		sendMoveDefenceShortage(messaging.Say(messaging.CategoryTrip, defence.Shortage), aud)
 		messaging.SendTrio(messaging.Trio{
 			Actor:    messaging.NoLine,
 			Actee:    acteeDefenceLine(targetChar, room, messaging.CategoryTrip, defence.ToDefender, mobName),

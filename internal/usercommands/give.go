@@ -129,7 +129,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					fmt.Sprintf(`You give the <ansi fg="item">%s</ansi> to <ansi fg="username">%s</ansi>.`, result.Item.DisplayName(), targetUser.Character.Name),
 					[]string{targetUser.Character.Name}, giverSight),
 				)
-				targetUser.SendText(messaging.CategorySystem, messaging.HideNames(
+				targetUser.SendText(messaging.CategoryLoot, messaging.HideNames(
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> gives you their <ansi fg="item">%s</ansi>.`, user.Character.Name, result.Item.DisplayName()),
 					[]string{user.Character.Name}, recipientSight),
 				)
@@ -354,7 +354,7 @@ func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount
 		fmt.Sprintf(`You give <ansi fg="gold">%d gold</ansi> to <ansi fg="username">%s</ansi>.`, amount, targetUser.Character.Name),
 		[]string{targetUser.Character.Name}, messaging.ParticipantSight(user.Character, room)),
 	)
-	targetUser.SendText(messaging.CategorySystem, messaging.HideNames(
+	targetUser.SendText(messaging.CategoryLoot, messaging.HideNames(
 		fmt.Sprintf(`<ansi fg="username">%s</ansi> gives you <ansi fg="gold">%d gold</ansi>.`, user.Character.Name, amount),
 		[]string{user.Character.Name}, messaging.ParticipantSight(targetUser.Character, room)),
 	)

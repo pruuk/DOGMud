@@ -237,7 +237,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 			[]string{invitedUser.Character.Name}, inviterSight))
 		// The invitation is words from a person: "Someone" to a reader who
 		// cannot see who, as speech reads (HideSpeakerNames).
-		invitedUser.SendText(messaging.CategorySystem, messaging.HideSpeakerNames(
+		invitedUser.SendText(messaging.CategoryGroup, messaging.HideSpeakerNames(
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> invited you to their party. Type <ansi fg="command">party accept</ansi> or <ansi fg="command">party decline</ansi> to respond.`, user.Character.Name),
 			[]string{user.Character.Name}, messaging.ParticipantSight(invitedUser.Character, room)))
 	} else {
@@ -275,7 +275,7 @@ func cmdPartyAccept(user *users.UserRecord, currentParty *parties.Party) (bool, 
 				continue
 			}
 			if u := users.GetByUserId(uid); u != nil {
-				u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> joined the party!`, user.Character.Name))
+				u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> joined the party!`, user.Character.Name))
 			}
 		}
 
@@ -298,7 +298,7 @@ func cmdPartyDecline(user *users.UserRecord, currentParty *parties.Party) (bool,
 	if currentParty.DeclineInvite(user.UserId) {
 
 		if u := users.GetByUserId(currentParty.LeaderUserId); u != nil {
-			u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> declined the invitation.`, user.Character.Name))
+			u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> declined the invitation.`, user.Character.Name))
 		}
 		user.SendText(messaging.CategorySystem, `You decline the invitation.`)
 
@@ -541,9 +541,9 @@ func cmdPartyLeave(user *users.UserRecord, currentParty *parties.Party) (bool, e
 				if u := users.GetByUserId(uid); u != nil {
 					if currentParty.LeaderUserId == uid {
 						u.EventLog.Add(`party`, `Promoted to party leader`)
-						u.SendText(messaging.CategorySystem, `You are now the leader of the party.`)
+						u.SendText(messaging.CategoryGroup, `You are now the leader of the party.`)
 					} else {
-						u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is now the leader of the party.`, newLeaderUser.Character.Name))
+						u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> is now the leader of the party.`, newLeaderUser.Character.Name))
 					}
 				}
 			}
@@ -569,7 +569,7 @@ func cmdPartyLeave(user *users.UserRecord, currentParty *parties.Party) (bool, e
 			continue
 		}
 		if u := users.GetByUserId(uid); u != nil {
-			u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> left the party.`, user.Character.Name))
+			u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> left the party.`, user.Character.Name))
 		}
 	}
 
@@ -591,12 +591,12 @@ func cmdPartyDisband(user *users.UserRecord, currentParty *parties.Party) (bool,
 			continue
 		}
 		if u := users.GetByUserId(uid); u != nil {
-			u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> disbanded the party.`, user.Character.Name))
+			u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> disbanded the party.`, user.Character.Name))
 		}
 	}
 	for _, uid := range currentParty.InviteUserIds {
 		if u := users.GetByUserId(uid); u != nil {
-			u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> disbanded the party.`, user.Character.Name))
+			u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> disbanded the party.`, user.Character.Name))
 		}
 	}
 
@@ -635,12 +635,12 @@ func cmdPartyKick(user *users.UserRecord, currentParty *parties.Party, rest stri
 	currentParty.Leave(kickUserId)
 
 	if u := users.GetByUserId(kickUserId); u != nil {
-		u.SendText(messaging.CategorySystem, `You were kicked from the party.`)
+		u.SendText(messaging.CategoryGroup, `You were kicked from the party.`)
 	}
 
 	for _, uid := range currentParty.UserIds {
 		if u := users.GetByUserId(uid); u != nil {
-			u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> was kicked from the party.`, matchUser))
+			u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> was kicked from the party.`, matchUser))
 		}
 	}
 }
@@ -668,13 +668,13 @@ func cmdPartyPromote(user *users.UserRecord, currentParty *parties.Party, rest s
 
 	if u := users.GetByUserId(promoteUserId); u != nil {
 		u.EventLog.Add(`party`, `Promoted to party leader`)
-		u.SendText(messaging.CategorySystem, `You have been promoted to party leader.`)
+		u.SendText(messaging.CategoryGroup, `You have been promoted to party leader.`)
 	}
 
 	for _, uid := range currentParty.UserIds {
 		if uid != promoteUserId {
 			if u := users.GetByUserId(uid); u != nil {
-				u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is now the party leader.`, matchUser))
+				u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> is now the party leader.`, matchUser))
 			}
 		}
 	}
@@ -735,7 +735,7 @@ func cmdPartyLoot(user *users.UserRecord, currentParty *parties.Party, rest stri
 		if uid == user.UserId {
 			u.SendText(messaging.CategorySystem, fmt.Sprintf(`You set the party loot mode to <ansi fg="magenta-bold">%s</ansi>.`, label))
 		} else {
-			u.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> set the party loot mode to <ansi fg="magenta-bold">%s</ansi>.`, user.Character.Name, label))
+			u.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> set the party loot mode to <ansi fg="magenta-bold">%s</ansi>.`, user.Character.Name, label))
 		}
 	}
 
@@ -821,11 +821,11 @@ func cmdPartyChat(user *users.UserRecord, currentParty *parties.Party, rest stri
 		}
 		if u := users.GetByUserId(uId); u != nil {
 			msg := fmt.Sprintf(`<ansi fg="magenta">(party)</ansi> <ansi fg="username">%s</ansi> says, "<ansi fg="yellow">%s</ansi>"`, user.Character.Name, rest)
-			u.SendText(messaging.CategorySystem, util.SplitStringNL(msg, 80))
+			u.SendText(messaging.CategoryBroadcast, util.SplitStringNL(msg, 80))
 		}
 	}
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="magenta">(party)</ansi> You say, "<ansi fg="yellow">%s</ansi>"`, rest))
+	user.SendText(messaging.CategoryBroadcast, fmt.Sprintf(`<ansi fg="magenta">(party)</ansi> You say, "<ansi fg="yellow">%s</ansi>"`, rest))
 
 	events.AddToQueue(events.Communication{
 		SourceUserId: user.UserId,

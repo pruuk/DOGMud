@@ -290,7 +290,7 @@ func RoomMaintenance() []int {
 							}
 						} else if sign.VisibleUserId == userId {
 							if u := users.GetByUserId(userId); u != nil {
-								u.SendText(messaging.CategorySystem, "The rune you had enscribed here has faded away.\n")
+								u.SendText(messaging.CategoryRoomDescription, "The rune you had enscribed here has faded away.\n")
 							}
 						}
 					}

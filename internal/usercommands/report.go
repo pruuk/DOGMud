@@ -44,12 +44,12 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				continue
 			}
 			if u := users.GetByUserId(uId); u != nil {
-				u.SendText(messaging.CategorySystem, fmt.Sprintf(
+				u.SendText(messaging.CategoryBroadcast, fmt.Sprintf(
 					`<ansi fg="magenta">(party)</ansi> <ansi fg="username">%s</ansi> reports: %s`,
 					c.Name, barText))
 			}
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="magenta">(party)</ansi> You report: %s`, barText))
+		user.SendText(messaging.CategoryBroadcast, fmt.Sprintf(`<ansi fg="magenta">(party)</ansi> You report: %s`, barText))
 		return true, nil
 	}
 
@@ -86,7 +86,7 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		// Each side's line hides the other's name at that reader's sight. The
 		// report is a whisper, so its sender is "Someone" (HideSpeakerNames).
-		targetUser.SendText(messaging.CategorySystem, messaging.HideSpeakerNames(fmt.Sprintf(
+		targetUser.SendText(messaging.CategoryWhisper, messaging.HideSpeakerNames(fmt.Sprintf(
 			`<ansi fg="whisper"><ansi fg="username">%s</ansi> reports to you: %s</ansi>`,
 			c.Name, barText),
 			[]string{c.Name}, messaging.ParticipantSight(targetUser.Character, room)))

@@ -514,8 +514,9 @@ know, so the switch has a `default` arm on purpose. Do not "simplify" it away.
   `Aggro` of their own).
 - The ambush lines route through `messaging.CategorySurpriseAttack`, which no
   verbosity level suppresses. The engaged-aim cue does NOT: it fires on ordinary
-  shots and is a mechanical explanation, so it uses `CategorySystem` like the
-  cost refusal and defence shortage lines beside it.
+  shots and is a mechanical explanation to the shooter, so it uses
+  `CategorySystem`. The defence shortage note beside it reaches the defender
+  and rides the shot's `CategoryHitRanged` (M7 slice 4, #371).
 
 None of these lines carries the melee `*[SURPRISE ATTACK]*` banner. A
 20-column marker plus a target name plus a damage band does not fit in 80

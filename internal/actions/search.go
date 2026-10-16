@@ -494,10 +494,10 @@ func endHidingOnSpot(searcher string, hider *characters.Character, hiderUser *us
 	}
 	hider.SetMiscData("sneaking", nil)
 	if messaging.CanSeeClearly(hider, room) {
-		hiderUser.SendText(messaging.CategorySystem, fmt.Sprintf(
+		hiderUser.SendText(messaging.CategoryEmote, fmt.Sprintf(
 			"<ansi fg=\"username\">%s</ansi> searches the room and spots you!", searcher))
 	} else {
-		hiderUser.SendText(messaging.CategorySystem, "Someone searches the room and spots you!")
+		hiderUser.SendText(messaging.CategoryEmote, "Someone searches the room and spots you!")
 	}
 }
 

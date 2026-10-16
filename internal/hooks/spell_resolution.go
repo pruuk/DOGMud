@@ -438,7 +438,7 @@ func sendSpellChannelDefenceMessages(room *rooms.Room, category messaging.Catego
 	attackerUser, defenderUser *users.UserRecord, indexOverride ...int) {
 	if defenderUser != nil {
 		if text := combat.ChannelDefenceShortageText(out, defenderUser.Character); text != "" {
-			defenderUser.SendText(messaging.CategorySystem, text)
+			defenderUser.SendText(category, text)
 		}
 	}
 	triad := combat.RenderChannelDefenceMessages(out, combat.ChannelDefenceIdentities{

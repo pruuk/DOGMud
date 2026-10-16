@@ -65,7 +65,7 @@ func checkSpoiledGrenades(user *users.UserRecord, room *rooms.Room) {
 				}
 				user.Character.ApplyHarm(characters.PoolHealth, dmg,
 					state.ActorRef{UserId: user.UserId})
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(
 					`<ansi fg="red-bold">A <ansi fg="itemname">%s</ansi> in your pack detonates! (%s)</ansi>`,
 					item.DisplayName(),
 					combat.GetDamageDescription(dmg, user.Character.HealthMax.Value)))
@@ -74,7 +74,7 @@ func checkSpoiledGrenades(user *users.UserRecord, room *rooms.Room) {
 				for _, conditionId := range spec.ConditionIds {
 					user.AddCondition(conditionId, "grenade-accident")
 				}
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
+				user.SendText(messaging.CategoryHitRanged, fmt.Sprintf(
 					`<ansi fg="red-bold">A <ansi fg="itemname">%s</ansi> in your pack goes off!</ansi>`,
 					item.DisplayName()))
 			}
@@ -91,7 +91,7 @@ func checkSpoiledGrenades(user *users.UserRecord, room *rooms.Room) {
 	if detonated > 0 || fizzled > 0 {
 		user.Character.Items = remaining
 		if fizzled > 0 {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryEquipment, fmt.Sprintf(
 				`<ansi fg="yellow">%d grenade(s) have destabilized and dissolved into putrid residue.</ansi>`,
 				fizzled))
 		}

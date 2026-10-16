@@ -50,39 +50,21 @@ func TestKickActorLineWrapsAt80(t *testing.T) {
 	}
 }
 
-// systemNoticeMarkers are the only things a special-move file may still send
-// as CategorySystem: notices, never narration and never refusals (every
-// refusal rides CategoryRefusal since M7 slice 3, #371). Matched against a
-// SendText line joined with the line after it. A marker stays only while its
-// line is still on CategorySystem in one of the four files: "text)" is
-// taunt.go's channel-defence shortage notice to the defender, "crumbles
-// apart" is throw.go's spoiled-item notice.
-var systemNoticeMarkers = []string{"crumbles apart", "text)"}
-
 // #449 siblings: taunt, throw, rally and warcry kept narration on
 // CategorySystem. A source-level pin, like the other guards in this package:
-// any SendText on CategorySystem in these files must be a refusal or notice.
+// these four files send nothing on CategorySystem at all. Every refusal rides
+// CategoryRefusal (M7 slice 3, #371); the last two notices left with M7 slice
+// 4 (#371): taunt.go's channel-defence shortage note reaches the defender, not
+// the taunter, and rides the defence triad's CategoryTauntResist; throw.go's
+// spoiled-item line is the throw's outcome and rides CategoryHitRanged.
 func TestSpecialMoveFilesKeepOnlyNoticesOnSystem(t *testing.T) {
 	for _, file := range []string{"taunt.go", "throw.go", "rally.go", "warcry.go"} {
 		raw, err := os.ReadFile(file)
 		require.NoError(t, err, file)
 		lines := strings.Split(string(raw), "\n")
 		for i, line := range lines {
-			if !strings.Contains(line, "messaging.CategorySystem") {
-				continue
-			}
-			joined := line
-			if i+1 < len(lines) {
-				joined += lines[i+1]
-			}
-			ok := false
-			for _, marker := range systemNoticeMarkers {
-				if strings.Contains(joined, marker) {
-					ok = true
-					break
-				}
-			}
-			require.True(t, ok, "%s:%d narration still on CategorySystem: %s", file, i+1, strings.TrimSpace(line))
+			require.NotContains(t, line, "messaging.CategorySystem",
+				"%s:%d still on CategorySystem: %s", file, i+1, strings.TrimSpace(line))
 		}
 	}
 }

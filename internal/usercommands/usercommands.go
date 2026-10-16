@@ -411,7 +411,7 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 				Trigger: activity.TriggerCastCancel,
 				Actor:   state.ActorRef{UserId: user.UserId},
 			})
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategorySpellDisruption,
 				`<ansi fg="cyan">You lose your concentration as you flee!</ansi>`)
 			// Seen by sight, heard by a reader who sees nothing, in the
 			// shared spell-disruption wording (#242, owner ruling R4).

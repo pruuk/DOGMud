@@ -254,7 +254,7 @@ func EntryDetection(mover Actor, dest *rooms.Room, sneaking bool) EntryDetection
 		// own sight allows, as the sneak command does (SpottedLine): a
 		// hidden spotter reads "something". A mob mover's SendText is a
 		// no-op. Sight gates playtest fixes, F4.
-		mover.SendText(messaging.CategorySystem,
+		mover.SendText(emoteCategoryFor(spotter.GetUserId() > 0),
 			spottedLineFrom(spottedOpeningArrive, mc, dest, spotter))
 	}
 
@@ -263,6 +263,16 @@ func EntryDetection(mover Actor, dest *rooms.Room, sneaking bool) EntryDetection
 	}
 
 	return EntryDetectionResult{StillSneaking: sneaking}
+}
+
+// emoteCategoryFor is the category of a line told to a player about another
+// creature: CategoryEmote when that creature is a player, CategoryMobEmote
+// when it is a mob, the split M5 made for emotes.
+func emoteCategoryFor(isPlayer bool) messaging.Category {
+	if isPlayer {
+		return messaging.CategoryEmote
+	}
+	return messaging.CategoryMobEmote
 }
 
 // moverName is the mover's name in its identity colour.
@@ -348,7 +358,7 @@ func sneakerSpotted(mover Actor, dest *rooms.Room, light messaging.RoomVisibilit
 		sneakScore := CalcSneakScoreVsObserver(mc, p.Character, light)
 		observerScore, sight := sneakObserverScore(p.Character, dest)
 		if !combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success {
-			NewUserActor(p).SendText(messaging.CategorySystem, sneakNoticeLine(
+			NewUserActor(p).SendText(emoteCategoryFor(mover.IsPlayer()), sneakNoticeLine(
 				moverName(mover)+` slips into the room but you notice them.`, mover.GetName(), sight))
 			return p.Character
 		}
@@ -402,10 +412,10 @@ func newcomerSpots(mover Actor, dest *rooms.Room, light messaging.RoomVisibility
 			hiddenP.Character.SetMiscData(`sneaking`, nil)
 			hider := NewUserActor(hiddenP)
 			if messaging.CanSeeClearly(hiddenP.Character, dest) {
-				hider.SendText(messaging.CategorySystem, fmt.Sprintf(
+				hider.SendText(emoteCategoryFor(mover.IsPlayer()), fmt.Sprintf(
 					`%s enters the room and notices you!`, moverName(mover)))
 			} else {
-				hider.SendText(messaging.CategorySystem,
+				hider.SendText(emoteCategoryFor(mover.IsPlayer()),
 					`Someone enters the room and notices you!`)
 			}
 			if messaging.CanSeeClearly(mc, dest) {
@@ -449,7 +459,7 @@ func newcomerSpots(mover Actor, dest *rooms.Room, light messaging.RoomVisibility
 			// SendTextVisual, not SendText: a sight event. The audio channel
 			// bypasses the sight gate and the anonymizer; Visual gets each
 			// bystander the version their eyes allow, or nothing.
-			dest.SendTextVisual(messaging.CategorySystem, fmt.Sprintf(
+			dest.SendTextVisual(emoteCategoryFor(mover.IsPlayer()), fmt.Sprintf(
 				`%s spots <ansi fg="mobname">%s</ansi> hiding in the shadows!`,
 				moverName(mover), m.Character.Name),
 				mover.GetUserId())

@@ -242,7 +242,7 @@ func recognizeOn(carrier Actor, owners []*mobs.Mob, room *rooms.Room, now time.T
 func ownerRecognizes(carrier Actor, m *mobs.Mob, itm items.Item, room *rooms.Room, now time.Time) {
 	baubles.MarkRecognized(itm.Bauble, carrier.GetUserId(), now)
 	name := itm.DisplayName()
-	carrier.SendText(messaging.CategorySystem, fmt.Sprintf(
+	carrier.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
 		`<ansi fg="mobname">%s</ansi> stares at the <ansi fg="itemname">%s</ansi> you are carrying. "That's mine! Thief!"`,
 		m.Character.Name, name))
 	who := `a figure`
@@ -317,7 +317,7 @@ func StolenBaubleGiven(giver Actor, m *mobs.Mob, itm items.Item) bool {
 	baubles.MarkReturned(itm.Bauble, userId, credited, now)
 
 	name := itm.DisplayName()
-	giver.SendText(messaging.CategorySystem, fmt.Sprintf(
+	giver.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
 		`<ansi fg="mobname">%s</ansi> turns the <ansi fg="itemname">%s</ansi> over in disbelief. "My %s! I never thought to see it again."`,
 		m.Character.Name, name, name))
 	if room := giver.GetRoom(); room != nil {

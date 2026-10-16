@@ -157,7 +157,7 @@ func sendChannelDefenceMessages(out combat.ChannelDefenceResult, identities comb
 	attacker, defender *users.UserRecord, room *rooms.Room, defenderUserID int) bool {
 	if defender != nil {
 		if text := combat.ChannelDefenceShortageText(out, defender.Character); text != "" {
-			defender.SendText(messaging.CategorySystem, text)
+			defender.SendText(messaging.CategoryTauntResist, text)
 		}
 	}
 	triad := combat.RenderChannelDefenceMessages(out, identities, attack)

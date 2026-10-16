@@ -516,7 +516,7 @@ func stealFromPlayer(actor Actor, targetUserId int, t theftAttempt) StealResult 
 		sneakScore := CalcSneakScoreVsObserver(actor.GetCharacter(), targetUser.Character, roomLight)
 		detected := combat.RunContest(searchScore, []contest.Entry{{Score: sneakScore}}).Success
 		if detected {
-			targetUser.SendText(messaging.CategorySystem, fmt.Sprintf(
+			targetUser.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
 				`<ansi fg="mobname">%s</ansi> lifts `+
 					`<ansi fg="yellow-bold">%d gold</ansi> from your pocket!`,
 				actor.GetName(), result.StoleGold))

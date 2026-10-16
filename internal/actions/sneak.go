@@ -220,7 +220,7 @@ func Sneak(actor Actor) SneakResult {
 		success := combat.RunContest(sneakScore, []contest.Entry{{Score: observerScore}}).Success
 		if !success {
 			// Notify the observing player, as far as its sight allows.
-			observer.SendText(messaging.CategorySystem, sneakNoticeLine(
+			observer.SendText(emoteCategoryFor(actor.IsPlayer()), sneakNoticeLine(
 				moverName(actor)+` tries to hide but you notice them.`, actor.GetName(), sight))
 			char.Awareness.ResolveConcealment(false, state.TransitionReason{
 				Trigger: awareness.TriggerSneakFailed,

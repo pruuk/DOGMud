@@ -192,16 +192,26 @@ func commitDefenceWinner(defender *characters.Character, candidates []quotedDefe
 	return characters.CostCommitResult{Status: characters.CostNoCharge}
 }
 
-func sendDefenceShortageOnce(result *AttackResult, defender *characters.Character, cost characters.CostCommitResult) {
+// sendDefenceShortageOnce tells a player defender, once per AttackResult (one
+// round), that the winning defence was short. The note rides the category of
+// the defence line sent beside it (CategoryForDefenseVerb of the winning
+// defence), so the dedupe matches the note on any melee defence category: a
+// round whose first short winner dodged and second parried still reads it once.
+func sendDefenceShortageOnce(result *AttackResult, defender *characters.Character, cost characters.CostCommitResult, defence combatvocab.Defence) {
 	if result == nil || defender == nil || defender.GetUserId() <= 0 || !cost.Short() {
 		return
 	}
 	for _, msg := range result.MessagesToTarget {
-		if msg.Category == messaging.CategorySystem && msg.Text == defenceShortageText {
+		if isMeleeDefenceCategory(msg.Category) && msg.Text == defenceShortageText {
 			return
 		}
 	}
-	result.SendToTarget(messaging.CategorySystem, defenceShortageText)
+	result.SendToTarget(CategoryForDefenseVerb(string(defence)), defenceShortageText)
+}
+
+// isMeleeDefenceCategory reports whether c is one CategoryForDefenseVerb returns.
+func isMeleeDefenceCategory(c messaging.Category) bool {
+	return c == messaging.CategoryDodge || c == messaging.CategoryParry || c == messaging.CategoryBlock
 }
 
 // calcSwingCount computes the number of swings for a single weapon per round.
@@ -856,7 +866,7 @@ func runBestOfAllDefenseWithRunner(result *AttackResult, sourceChar *characters.
 	// progression. Partial payment is life-preserving and strips only the skill
 	// term already omitted above.
 	best.cost = commitDefenceWinner(targetChar, candidates, res)
-	sendDefenceShortageOnce(result, targetChar, best.cost)
+	sendDefenceShortageOnce(result, targetChar, best.cost, best.defenseType)
 
 	return best
 }

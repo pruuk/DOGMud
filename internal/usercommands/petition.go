@@ -75,7 +75,7 @@ func Petition(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		p.Id, user.Username, room.Title, rest)
 	for _, staff := range users.GetAllActiveUsers() {
 		if staff.Role != users.RoleUser {
-			staff.SendText(messaging.CategorySystem, alert)
+			staff.SendText(messaging.CategoryAdmin, alert)
 		}
 	}
 

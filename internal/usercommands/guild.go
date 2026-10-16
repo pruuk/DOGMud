@@ -84,7 +84,7 @@ func announceGuild(g *guilds.Guild, msg string, exceptUserId int) {
 			continue
 		}
 		if u := users.GetByUserId(m.UserId); u != nil {
-			u.SendText(messaging.CategorySystem, msg)
+			u.SendText(messaging.CategoryGroup, msg)
 		}
 	}
 }
@@ -298,7 +298,7 @@ func guildInvite(user *users.UserRecord, remainder string) {
 		return
 	}
 	guilds.AddInvite(g.Tag, target.UserId)
-	target.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> invites you to join <ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>. <ansi fg="command">guild accept</ansi> or <ansi fg="command">guild decline</ansi>.`, user.Character.Name, g.Name, g.Tag))
+	target.SendText(messaging.CategoryGroup, fmt.Sprintf(`<ansi fg="username">%s</ansi> invites you to join <ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>. <ansi fg="command">guild accept</ansi> or <ansi fg="command">guild decline</ansi>.`, user.Character.Name, g.Name, g.Tag))
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You invite <ansi fg="username">%s</ansi> to the guild.`, target.Character.Name))
 }
 
@@ -363,7 +363,7 @@ func guildKick(user *users.UserRecord, remainder string) {
 	name := memberName(g, targetId)
 	guilds.RemoveMember(g.Tag, targetId)
 	if tu := users.GetByUserId(targetId); tu != nil {
-		tu.SendText(messaging.CategorySystem, fmt.Sprintf(`You have been removed from <ansi fg="yellow-bold">%s</ansi>.`, g.Name))
+		tu.SendText(messaging.CategoryGroup, fmt.Sprintf(`You have been removed from <ansi fg="yellow-bold">%s</ansi>.`, g.Name))
 	}
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You remove <ansi fg="username">%s</ansi> from the guild.`, name))
 	if g2, ok := guilds.Get(g.Tag); ok {
@@ -404,7 +404,7 @@ func guildSetRank(user *users.UserRecord, remainder string, promote bool) {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You demote <ansi fg="username">%s</ansi> to %s.`, name, g.RankTitle(guilds.RankMember)))
 	}
 	if tu := users.GetByUserId(targetId); tu != nil {
-		tu.SendText(messaging.CategorySystem, `Your guild rank has changed.`)
+		tu.SendText(messaging.CategoryGroup, `Your guild rank has changed.`)
 	}
 }
 
@@ -476,10 +476,10 @@ func guildChatSend(user *users.UserRecord, msg string) {
 	for _, uid := range guildChatRecipients(g, user.UserId) {
 		if u := users.GetByUserId(uid); u != nil {
 			line := fmt.Sprintf(`<ansi fg="cyan">(guild)</ansi> <ansi fg="username">%s</ansi>: <ansi fg="white">%s</ansi>`, user.Character.Name, msg)
-			u.SendText(messaging.CategorySystem, util.SplitStringNL(line, 80))
+			u.SendText(messaging.CategoryBroadcast, util.SplitStringNL(line, 80))
 		}
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="cyan">(guild)</ansi> You: <ansi fg="white">%s</ansi>`, msg))
+	user.SendText(messaging.CategoryBroadcast, fmt.Sprintf(`<ansi fg="cyan">(guild)</ansi> You: <ansi fg="white">%s</ansi>`, msg))
 	events.AddToQueue(events.Communication{
 		SourceUserId: user.UserId,
 		CommType:     `guild`,

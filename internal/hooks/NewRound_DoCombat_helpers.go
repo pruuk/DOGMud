@@ -1007,7 +1007,11 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 		// Visual (owner ruling 2026-09-21): a reader who cannot see does not
 		// witness a blocked escape at all, and one who makes out shapes reads
 		// neither name.
-		uRoom.SendTextVisualHidingNames(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is blocked from fleeing by <ansi fg="%s">%s</ansi>!`, user.Character.Name, targetTag, blocker.Name), []string{user.Character.Name, blocker.Name}, excludes...)
+		blockCat := messaging.CategoryMobEmote
+		if blocker.IsPlayer() {
+			blockCat = messaging.CategoryEmote
+		}
+		uRoom.SendTextVisualHidingNames(blockCat, fmt.Sprintf(`<ansi fg="username">%s</ansi> is blocked from fleeing by <ansi fg="%s">%s</ansi>!`, user.Character.Name, targetTag, blocker.Name), []string{user.Character.Name, blocker.Name}, excludes...)
 		return true
 	case out.NoExit:
 		user.SendText(messaging.CategoryRefusal, `You can't find an exit!`)
