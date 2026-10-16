@@ -10,10 +10,7 @@ func NotInGuildText() string {
 // NotPartyLeaderText answers a leader-only party command; action completes
 // "Only the party leader can ...", empty reads "do that".
 func NotPartyLeaderText(action string) string {
-	if action == `` {
-		action = `do that`
-	}
-	return `Only the party leader can ` + action + `.`
+	return `Only the party leader can ` + orDoThat(action) + `.`
 }
 
 func NotInGuild(to Recipient)                    { send(to, NotInGuildText()) }
@@ -25,3 +22,41 @@ func NotPartyLeader(to Recipient, action string) { send(to, NotPartyLeaderText(a
 const NoPartyInviteLine = `You have no party invitation to answer.`
 
 func NoPartyInvite(to Recipient) { send(to, NoPartyInviteLine) }
+
+func NotInPartyText() string { return `You aren't in a party.` + hint(`party create`) }
+
+func NotInParty(to Recipient) { send(to, NotInPartyText()) }
+
+// NotGuildLeaderText answers a leader-only guild command; action completes
+// "Only the guild leader can ...", empty reads "do that".
+func NotGuildLeaderText(action string) string {
+	return `Only the guild leader can ` + orDoThat(action) + `.`
+}
+
+// NotGuildOfficerText answers an officer-or-leader guild command.
+func NotGuildOfficerText(action string) string {
+	return `Only guild officers and the leader can ` + orDoThat(action) + `.`
+}
+
+func NotGuildLeader(to Recipient, action string)  { send(to, NotGuildLeaderText(action)) }
+func NotGuildOfficer(to Recipient, action string) { send(to, NotGuildOfficerText(action)) }
+
+// CompanionsFullLine answers a summon or charm past the companion limit.
+const CompanionsFullLine = `You are already sustaining as many companions as your will can hold.`
+
+func CompanionsFull(to Recipient) { send(to, CompanionsFullLine) }
+
+// NotPartyMemberText answers a party command naming someone not in the
+// player's party. It echoes: the player's own party is a name they know.
+func NotPartyMemberText(typed string) string {
+	return `No one in your party is called ` + quoted(typed) + `.`
+}
+
+func NotPartyMember(to Recipient, typed string) { send(to, NotPartyMemberText(typed)) }
+
+func orDoThat(action string) string {
+	if action == `` {
+		return `do that`
+	}
+	return action
+}

@@ -140,3 +140,34 @@ func TestRecipientFull(t *testing.T) {
 	assert.Equal(t, "They can't carry any more.", one(t, f, messaging.CategoryRefusal))
 	assert.Equal(t, RecipientFullLine, "They can't carry any more.")
 }
+
+func TestNewMembershipAndCarrying(t *testing.T) {
+	cases := []struct {
+		send func(Recipient)
+		want string
+	}{
+		{func(r Recipient) { NotWearing(r, " ring ") }, `You aren't wearing 'ring'. Try <ansi fg="command">inventory</ansi>.`},
+		{func(r Recipient) { NotInStorage(r, "rope") }, `You don't have 'rope' in storage. Try <ansi fg="command">storage</ansi>.`},
+		{func(r Recipient) { NotInStorage(r, "") }, `You don't have that in storage. Try <ansi fg="command">storage</ansi>.`},
+		{func(r Recipient) { NotInParty(r) }, `You aren't in a party. Try <ansi fg="command">party create</ansi>.`},
+		{func(r Recipient) { NotGuildLeader(r, "disband the guild") }, "Only the guild leader can disband the guild."},
+		{func(r Recipient) { NotGuildOfficer(r, "invite") }, "Only guild officers and the leader can invite."},
+		{func(r Recipient) { CompanionsFull(r) }, "You are already sustaining as many companions as your will can hold."},
+		{func(r Recipient) { NotPartyMember(r, "Bob") }, "No one in your party is called 'Bob'."},
+	}
+	for _, c := range cases {
+		f := &fakeRecipient{}
+		c.send(f)
+		assert.Equal(t, c.want, one(t, f, messaging.CategoryRefusal))
+		fits80(t, c.want)
+	}
+	assert.Equal(t, "Only the guild leader can do that.", NotGuildLeaderText(""))
+	assert.Equal(t, "Only guild officers and the leader can do that.", NotGuildOfficerText(""))
+	fits80(t, NotWearingText(strings.Repeat("w", 60)))
+	fits80(t, NotInStorageText(strings.Repeat("w", 60)))
+	fits80(t, NotPartyMemberText(strings.Repeat("w", 60)))
+}
+
+func TestEchoIsExported(t *testing.T) {
+	assert.Equal(t, echo(`<ansi fg="red">rope</ansi> `), Echo(`<ansi fg="red">rope</ansi> `))
+}

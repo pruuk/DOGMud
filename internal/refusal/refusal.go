@@ -40,6 +40,19 @@ func echo(typed string) string {
 	return util.EscapeAnsiTags(s)
 }
 
+// quoted is typed echoed in single quotes, or "that" when nothing is left.
+func quoted(typed string) string {
+	if e := echo(typed); e != `` {
+		return `'` + e + `'`
+	}
+	return `that`
+}
+
+// Echo is the slice 1 echo for lines outside the package that repeat what the
+// player typed about their own things (spec section 2). Never pass it a name
+// the player could only find by looking.
+func Echo(typed string) string { return echo(typed) }
+
 // hint is the tail naming a command the player can type next.
 func hint(command string) string {
 	return ` Try <ansi fg="command">` + command + `</ansi>.`
