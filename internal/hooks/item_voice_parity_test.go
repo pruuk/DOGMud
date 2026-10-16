@@ -32,6 +32,13 @@ import (
 //
 // Only the bearer's own lines are recorded: the room line changed on
 // purpose (spec X17, it is heard and hides the bearer's name).
+//
+// Re-recorded once on purpose (#371, owner ruling 2026-10-16): the voice
+// lines moved from CategorySystem to CategoryNPCDialogue, so the colour
+// alias changed and a line past the reader's width now wraps. Same lines,
+// same rounds, same words. The Aegis's round 183 line is past its divert
+// round and is the record's own Pinnacle line, re-rendered like round 25,
+// which speaks the same words.
 
 const (
 	voiceParityUserId   = 1
@@ -186,14 +193,17 @@ func recordLinesBefore(lines []string, cutoff int) []string {
 	if cutoff < 0 {
 		return lines
 	}
+	// A wrapped message (CategoryNPCDialogue wraps, #371) records its
+	// continuation lines with no round prefix: they go with the round line
+	// above them.
 	var kept []string
+	keep := false
 	for _, line := range lines {
-		colon := strings.Index(line, ":")
-		if colon < 0 {
-			continue
+		colon := strings.Index(line, ": ")
+		if round, err := strconv.Atoi(line[:max(colon, 0)]); colon > 0 && err == nil {
+			keep = round < cutoff
 		}
-		round, err := strconv.Atoi(line[:colon])
-		if err == nil && round < cutoff {
+		if keep {
 			kept = append(kept, line)
 		}
 	}

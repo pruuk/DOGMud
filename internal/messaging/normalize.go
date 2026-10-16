@@ -91,7 +91,7 @@ func Normalize(cat Category, text string) string {
 
 	// 1. Sentence-start capitalization.
 	if skip&stageCapitalize == 0 {
-		text = capitalizeStart(text)
+		text = CapitalizeStart(text)
 	}
 
 	// 2. a/an agreement.
@@ -174,9 +174,11 @@ func collapseDupWords(text string) string {
 	}
 }
 
-// capitalizeStart uppercases the first non-ansi-tag character of text.
-// Idempotent — if the first letter is already uppercase, no-op.
-func capitalizeStart(text string) string {
+// CapitalizeStart uppercases the first non-ansi-tag character of text.
+// Idempotent: if the first letter is already uppercase, no-op. Exported so
+// a sender on a category that skips the capitalize stage (NPC dialogue) can
+// capitalise a sentence-initial name where it builds the line.
+func CapitalizeStart(text string) string {
 	// Skip past any opening <ansi …> tag(s) before capitalizing.
 	i := 0
 	for i < len(text) && text[i] == '<' {

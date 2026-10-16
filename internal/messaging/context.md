@@ -486,6 +486,11 @@ Functions:
   (hooks, #453, #458); a player
   holder's `GetCharacterName(true)` carries no span to begin with.
 - `Normalize(cat Category, text string) string`
+- `CapitalizeStart(text string) string`: the normalizer's capitalize stage,
+  uppercasing the first character after any leading `<ansi>` tags. A sender
+  on a category that skips that stage (`CategoryNPCDialogue`) calls it on a
+  sentence-initial name where it builds the line (the talking-item voice
+  lines in `behaviortree`, #371).
 - `Anonymize(text string) string`: the pipeline's infrared fallback for every
   visual line. Replaces each identity tag with "a figure" and takes the
   adjective span behind it (same pattern as `HideNames`), because
