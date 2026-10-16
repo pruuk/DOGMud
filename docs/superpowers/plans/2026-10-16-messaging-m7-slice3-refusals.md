@@ -992,7 +992,7 @@ A locked `Lock{Difficulty: 5}` reads `IsLocked()` true while `UnlockedRound` is 
 
 ### Task 10: The re-inventory
 
-- [ ] **Step 1:** Run `python tools/refusal_classify.py --tsv > "$TMP/after.tsv"` and count: the rows left must be the ledger's NOT, NARR and USAGE rows (695 + 63 + 47 = 805), give or take lines a Task 11 fix removes. Any row the classifier marks `refusal` that the ledger ruled NOT is read once more; a real refusal is converted and added to the ledger as a controller row.
+- [ ] **Step 1:** Run `python tools/refusal_classify.py --tsv` into a file in the session scratchpad directory (never `$TMP`, which guard.py H5 blocks) and count: the rows left must be the ledger's NOT, NARR and USAGE rows (695 + 63 + 47 = 805), give or take lines a Task 11 fix removes. Any row the classifier marks `refusal` that the ledger ruled NOT is read once more; a real refusal is converted and added to the ledger as a controller row.
 
 - [ ] **Step 2:** In the ledger, add a "Done" column note at the top: "Slice 3 converted the FAM, RETAG, REWORD and FAIL rows in PR #<n>." (Rows are never deleted.)
 
