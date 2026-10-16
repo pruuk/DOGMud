@@ -146,13 +146,18 @@ catch what CI cannot see or what wastes a CI round-trip.
 
    Use an **isolated detached worktree** so you never disturb the user's running
    server. The worktree's committed `config.yaml` is the shipped one; point
-   `CONFIG_PATH` at a scratch override that moves every port off the owner's:
+   `CONFIG_PATH` at a scratch override that moves every port off the owner's.
+   The override goes in your session scratchpad, by the full path of the
+   "Scratchpad directory" your system prompt names. `$TMP`, `$TEMP` and Git
+   Bash's `/tmp` are the machine-wide Temp folder every session shares, and
+   `guard.py` (H5) blocks writes there:
 
    ```bash
+   S="<your session scratchpad directory, full path>"
    git worktree add --detach C:/tmp/dogmud-boot-check HEAD
-   printf 'Network:\n  TelnetPort: [43333]\n  LocalPort: 19999\n  HttpPort: 18090\n  AIPort: 45555\n' > "$TMP/boot-override.yaml"
+   printf 'Network:\n  TelnetPort: [43333]\n  LocalPort: 19999\n  HttpPort: 18090\n  AIPort: 45555\n' > "$S/boot-override.yaml"
    cd C:/tmp/dogmud-boot-check && go build -o boot-check.exe .
-   CONFIG_PATH="$TMP/boot-override.yaml" timeout 180 ./boot-check.exe > boot.log 2>&1
+   CONFIG_PATH="$S/boot-override.yaml" timeout 180 ./boot-check.exe > boot.log 2>&1
    grep -cE "^panic:|goroutine [0-9]+ \[running\]|runtime error" boot.log  # want 0
    grep -c "Server Ready" boot.log                                          # want 1
    ```
@@ -196,10 +201,11 @@ because it is a distinct, reusable procedure: build to a fixed-path
 `GamePlay.MapConsistencyEnforce: panic` is a legitimate config value.
 
 ```bash
+S="<your session scratchpad directory, full path>"   # never $TMP: guard.py H5
 git worktree add --detach C:/tmp/dogmud-boot-check HEAD
-printf 'Network:\n  TelnetPort: [43333]\n  LocalPort: 19999\n  HttpPort: 18090\n  AIPort: 45555\n' > "$TMP/boot-override.yaml"
+printf 'Network:\n  TelnetPort: [43333]\n  LocalPort: 19999\n  HttpPort: 18090\n  AIPort: 45555\n' > "$S/boot-override.yaml"
 cd C:/tmp/dogmud-boot-check && go build -o boot-check.exe .
-CONFIG_PATH="$TMP/boot-override.yaml" timeout 180 ./boot-check.exe > boot.log 2>&1
+CONFIG_PATH="$S/boot-override.yaml" timeout 180 ./boot-check.exe > boot.log 2>&1
 grep -cE "^panic:|goroutine [0-9]+ \[running\]|runtime error" boot.log  # want 0
 grep -c "Server Ready" boot.log                                          # want 1
 ```
