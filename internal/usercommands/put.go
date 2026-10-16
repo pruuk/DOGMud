@@ -93,7 +93,13 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if !itemFound && goldAmt == 0 {
-		refusal.NotCarrying(user, "")
+		// The item is the player's own, so the refusal echoes it. A trailing
+		// "in" or "into" is the joining word before the container, not the item.
+		typed := args
+		if len(typed) > 1 && (typed[len(typed)-1] == `in` || typed[len(typed)-1] == `into`) {
+			typed = typed[:len(typed)-1]
+		}
+		refusal.NotCarrying(user, strings.Join(typed, ` `))
 		return true, nil
 	}
 

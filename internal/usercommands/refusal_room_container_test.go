@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gamelock"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/stretchr/testify/assert"
 )
@@ -39,4 +40,30 @@ func TestRoomContainerRefusalsNeverNameIt(t *testing.T) {
 		assert.NotContains(t, told, "chest", "band %d", band)
 		room.Containers = nil
 	}
+}
+
+// The storage hint writes raw angle brackets inside the command tag, as every
+// other refusal hint does; an escaped &lt; would reach the player literally.
+func TestStorageHintWritesRawBrackets(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	room.IsStorage = false
+	room.Containers = map[string]rooms.Container{"chest": {}}
+	events.DrainQueuedMessagesForTest(1)
+	_, _ = Storage("", user, room, events.EventFlag(0))
+	raw := strings.Join(events.DrainQueuedMessagesForTest(1), "")
+	assert.Contains(t, raw, "put <item> <container>")
+	assert.NotContains(t, raw, "&lt;")
+	room.Containers = nil
+}
+
+// put echoes the item words the player typed: the item is their own.
+func TestPutNotCarryingEchoesTheItem(t *testing.T) {
+	user, room := aimScene(t, aimFull)
+	room.IsStorage = false
+	room.Containers = map[string]rooms.Container{"chest": {}}
+	events.DrainQueuedMessagesForTest(1)
+	_, _ = Put("zzyzx in chest", user, room, events.EventFlag(0))
+	raw := strings.Join(events.DrainQueuedMessagesForTest(1), "")
+	assert.Contains(t, raw, refusal.NotCarryingText("zzyzx"))
+	room.Containers = nil
 }

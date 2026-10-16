@@ -27,7 +27,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		// The hint names no container: the player found it by looking, and a
 		// hidden one must not be named (spec section 2).
 		if len(room.Containers) > 0 {
-			user.SendText(messaging.CategoryRefusal, `Try <ansi fg="command">put &lt;item&gt; &lt;container&gt;</ansi>.`+term.CRLFStr)
+			user.SendText(messaging.CategoryRefusal, `Try <ansi fg="command">put <item> <container></ansi>.`+term.CRLFStr)
 		}
 
 		return true, nil
