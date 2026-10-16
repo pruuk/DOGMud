@@ -25,6 +25,8 @@ Plan: `docs/superpowers/plans/2026-10-16-messaging-m7-slice3-refusals.md`. Spec:
 | NOT | 695 | nothing (reports, confirmations, outcomes, help, staff output) |
 | total | 1325 | |
 
+Slice 3 converted every FAM, RETAG, REWORD and FAIL row on branch `feature/m7-slice3-refusals` (PR to follow); the re-inventory after Task 9 left exactly the 805 NOT, NARR and USAGE rows on `CategorySystem`.
+
 Columns: line, ruling, what the player reads today (args as `%s`), the proposal,
 the note. NOT rows are listed too, so a later reader can see each was looked at.
 
