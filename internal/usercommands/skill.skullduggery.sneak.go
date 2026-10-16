@@ -71,7 +71,14 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				fmt.Sprintf(`%d rounds`, cfg.SneakFailCooldown))
 		}
 		// The spotter is named only as far as the sneaker can see (#215).
-		user.SendText(messaging.CategorySystem,
+		// The spotter acts on the sneaker, so the line rides Emote or
+		// MobEmote by the spotter's kind, as a sneaking arrival's spotted
+		// line does (actions.EntryDetection; M7 slice 4, rule N2).
+		spottedCat := messaging.CategoryMobEmote
+		if result.SpottedBy.GetUserId() > 0 {
+			spottedCat = messaging.CategoryEmote
+		}
+		user.SendText(spottedCat,
 			actions.SpottedLine(user.Character, room, result.SpottedBy))
 
 		// U10b-1 Task 18: the SPOTTED branch, so won is false -- this is the

@@ -319,7 +319,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				// Tell everyone if the pet is following
 				if user.Character.Pet.Exists() {
 
-					user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s follows you.`, user.Character.Pet.DisplayName()))
+					user.SendText(messaging.CategoryRoomExit, fmt.Sprintf(`%s follows you.`, user.Character.Pet.DisplayName()))
 
 					// SendTextVisualWithAudio, not SendText: the named line is
 					// pure sight and used to reach a player in a pitch dark

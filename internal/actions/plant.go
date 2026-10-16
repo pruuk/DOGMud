@@ -186,7 +186,7 @@ func plantOnMob(actor Actor, mobInstanceId int, plantItem items.Item, t theftAtt
 	}
 
 	// Failure — detected.
-	actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+	actor.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
 		`<ansi fg="mobname">%s</ansi> catches you in the act!`,
 		m.Character.Name))
 
@@ -281,7 +281,7 @@ func plantOnPlayer(actor Actor, targetUserId int, plantItem items.Item, t theftA
 	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	if !success {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryEmote, fmt.Sprintf(
 			`<ansi fg="username">%s</ansi> catches you in the act!`,
 			targetUser.Character.Name))
 		actor.GetCharacter().Awareness.TransitionToRevealing(state.TransitionReason{
@@ -431,7 +431,7 @@ func plantInContainer(actor Actor, containerName string, plantItem items.Item, t
 	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	if !success {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> spots you slipping something into `+
 				`the <ansi fg="itemname">%s</ansi>!`,
 			spotterName, containerName))

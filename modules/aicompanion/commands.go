@@ -528,7 +528,7 @@ func (m *AICompanionModule) cmdPart(rest string, user *users.UserRecord, room *r
 		return true, nil
 	}
 	if msg := m.confirmPart(c, user); msg != `` {
-		user.SendText(messaging.CategorySystem, msg)
+		user.SendText(messaging.CategoryMobEmote, msg)
 	}
 	return true, nil
 }

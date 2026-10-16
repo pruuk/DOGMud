@@ -405,7 +405,7 @@ func takeFromMob(actor Actor, m *mobs.Mob, extra []items.Item) StealResult {
 
 // caughtByMob is a failed theft from a mob: caught in the act.
 func caughtByMob(actor Actor, m *mobs.Mob, room *rooms.Room) StealResult {
-	actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+	actor.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
 		`<ansi fg="mobname">%s</ansi> catches you in the act!`,
 		m.Character.Name))
 
@@ -462,7 +462,7 @@ func stealFromPlayer(actor Actor, targetUserId int, t theftAttempt) StealResult 
 	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	if !success {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryEmote, fmt.Sprintf(
 			`<ansi fg="username">%s</ansi> catches you in the act!`,
 			targetUser.Character.Name))
 		actor.GetCharacter().Awareness.TransitionToRevealing(state.TransitionReason{
@@ -575,7 +575,7 @@ func stealFromContainer(actor Actor, containerName string, t theftAttempt) Steal
 	actor.AwardResolved(success, actor.GetCharacter().CandidateFor(string(skills.Skullduggery)))
 
 	if !success {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> spots you reaching into the `+
 				`<ansi fg="itemname">%s</ansi>!`,
 			spotterName, containerName))
@@ -895,7 +895,7 @@ func stealHouseholdBauble(actor Actor, itm items.Item, t theftAttempt) StealResu
 	actor.AwardResolved(success, char.CandidateFor(string(skills.Skullduggery)))
 
 	if !success {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
+		actor.SendText(messaging.CategoryMobEmote, fmt.Sprintf(
 			`<ansi fg="mobname">%s</ansi> spots you reaching for the <ansi fg="itemname">%s</ansi>!`,
 			spotterName, name))
 		room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
