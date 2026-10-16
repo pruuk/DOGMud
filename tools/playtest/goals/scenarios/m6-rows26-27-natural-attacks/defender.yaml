@@ -1,0 +1,47 @@
+# M6 rows 26 and 27: the DEFENDER.
+#
+# You are Midroad Scout, seeded in Boar Wallow (4162) beside a Feral Boar. You
+# are the one being gored. Your partner is a plain onlooker; THEY report what
+# the room was told, you report what you were told, and the pair is compared.
+#
+# The change under test: every combat line now comes from one record per blow,
+# so the boar's gore reads the same to you and to anyone watching, banner
+# included, and the watcher's line names you as the target.
+#
+# QUOTE LINES VERBATIM. A paraphrase is useless: the whole question is whether
+# two sentences describe the same moment.
+#
+# 3 commands per round on the AI port and the overflow is dropped. Read every
+# line before sending more.
+#
+# KNOWN NON-BUGS, do not refile: damage is words and never numbers; corpses
+# persist for hours.
+
+ephemeral:
+  profile: mid
+  start_room: 4162
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    SET UP. Form a party with your partner (`party invite <their name>`; they
+    accept). Wait until they confirm on the party channel that their party
+    auto-attack is OFF before you start. If they join the fight, the run is
+    spoiled.
+  - >-
+    FIGHT BARE-HANDED. `remove` your longsword so the fight lasts, then
+    `attack boar`. Keep fighting for at least four rounds. After EVERY round,
+    put each combat line you were given on the party channel word for word:
+    first the boar's line to you, then your own line. Do not batch rounds.
+  - >-
+    ONE OR TWO ROUNDS ARMED. Late in the fight, `wield` the longsword for a
+    round or two and quote those lines the same way. If the boar is nearly
+    dead, skip this rather than end the fight early.
+  - >-
+    DO NOT DIE. If your health drops below a third, drink your Healing Salve
+    or flee. A finished comparison is worth more than a kill.
+  - >-
+    ADVERSARIAL PASS. Report any literal curly-brace token, any doubled or
+    missing name, any sentence starting lowercase, and any EMPTY line where a
+    blow should be.

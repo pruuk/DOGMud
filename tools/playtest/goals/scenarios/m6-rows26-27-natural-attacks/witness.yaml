@@ -1,0 +1,41 @@
+# M6 rows 26 and 27: the WITNESS.
+#
+# You are the instrument of this run. A creature's gore is narrated to the one
+# struck and to everyone else in the room. The creature cannot report its own
+# line, so the ROOM's line exists in this run only if you write it down.
+#
+# QUOTE, DO NOT SUMMARISE. Copy each combat line word for word onto the party
+# channel in the round it arrived.
+#
+# DO NOT FIGHT. Before the fight starts, type `party autoattack off`. A party
+# member in the room auto-joins a fight by default, and your own lines would
+# then mix into the ones you are here to report.
+#
+# 3 commands per round on the AI port and the overflow is dropped.
+
+ephemeral:
+  # m2-witness: plain senses, enough health to stand beside a fight.
+  profile: m2-witness
+  start_room: 4162
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    SET UP. Accept your partner's party invite (`party accept`), then type
+    `party autoattack off` and say on the party channel that it is off.
+  - >-
+    STAND AND READ. While your partner fights the Feral Boar, do nothing but
+    quote. After each round put every combat line you were given on the party
+    channel verbatim: the boar's line about your partner first, then your
+    partner's line about the boar.
+  - >-
+    COMPARE. For each round, read your partner's quote of the same blow and
+    say plainly SAME or DIFFERENT: same action, same result, same banner. Say
+    whether your line named your partner as the target.
+  - >-
+    ADVERSARIAL PASS. Flag any curly-brace token, doubled or missing name,
+    lowercase sentence start, or EMPTY line where a blow should be.
+  - >-
+    IF IT IS DARK and you cannot make out who is fighting, say so, then drink
+    the Cat's Eye Draught you carry and carry on.

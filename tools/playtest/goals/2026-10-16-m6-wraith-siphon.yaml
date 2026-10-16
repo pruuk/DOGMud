@@ -1,0 +1,45 @@
+# M6 rows 26 and 27 (#370): the wraith round, from the defender's seat.
+#
+# Wraiths (mob 302) and spectres (mob 303) are summon-only, so nobody meets one
+# by walking. Their basic attack is the siphon subtype: the combat lines were
+# rewritten in this slice to describe life being pulled away by will or by a
+# cold touch, because a wraith has no body parts (`body_parts: []`). Nobody has
+# read these lines in play.
+#
+# Single agent with the admin profile, because the multi-agent mode bans admin
+# and spawning is the only way to meet one.
+#
+# TIER: a wraith carries no unarmed-combat skill, so its siphon lines come from
+# the BEGINNER tier only. Report the tier you believe you saw.
+#
+# 3 commands per round on the AI port and the overflow is dropped.
+
+ephemeral:
+  profile: admin
+  start_room: 4160
+  budgets:
+    wall_clock: 30m
+
+goals:
+  - >-
+    SPAWN. `mob spawn 302` to bring a wraith into the room. `look` to confirm
+    it is there. It is not hostile by default.
+  - >-
+    BARE-HANDED FIGHT. `remove` your sword, then `attack wraith`. Fight for at
+    least five rounds. Quote, verbatim, every line the wraith's attack sends
+    YOU. If it is about to die, `mob heal` keeps it up.
+  - >-
+    JUDGE THE SIPHON LINES. Each should describe your life being pulled away
+    by its will or its touch. Any line naming a claw, fang, fist, hand, limb or
+    other body part a wraith does not have is a finding. Say whether each line
+    reads as one coherent sentence.
+  - >-
+    SPECTRE. If time allows, `mob spawn 303` and repeat for three rounds.
+  - >-
+    GENERIC WEAPON AT MASTER TIER. `item spawn 10019` (an iron spear, which has
+    no combat-message file of its own and so uses the generic lines), `wield
+    spear`, `skillset weapon-combat 100`, then fight the wraith or spectre for
+    two or three rounds and quote your own attack lines verbatim.
+  - >-
+    ADVERSARIAL PASS. Report any curly-brace token, doubled or missing name,
+    lowercase sentence start, or EMPTY line where a blow should be.
