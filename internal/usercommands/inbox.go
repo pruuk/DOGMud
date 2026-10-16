@@ -52,8 +52,8 @@ func Inbox(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				// Attached item won't fit — keep the message unread so nothing is
 				// lost; the reader frees space and checks mail again. (The message
 				// body + border were already printed above this block.)
-				user.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`Your pack is too full to receive the <ansi fg="item">%s</ansi>. Free some space and check your mail again.`, msg.Item.DisplayName()))
+				user.SendText(messaging.CategoryRefusal,
+					fmt.Sprintf(`Your pack is too full for the <ansi fg="item">%s</ansi>. Make room and check your mail again.`, msg.Item.DisplayName()))
 				continue
 			}
 		}

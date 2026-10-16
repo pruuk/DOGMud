@@ -458,7 +458,7 @@ func TestPetSight_LitFindsOthersPet(t *testing.T) {
 	_, _ = Pet("rex", user, room, events.EventFlag(0))
 	assert.Contains(t, aimTold(1), "You pet Rex")
 	_, _ = Get("sword from rex", user, room, events.EventFlag(0))
-	assert.Contains(t, aimTold(1), "You can't do that!")
+	assert.Contains(t, aimTold(1), "You can only take things from your own pet.")
 }
 
 // The own pet is at hand in the dark too.

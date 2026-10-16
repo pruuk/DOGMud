@@ -86,7 +86,7 @@ func Help(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if err != nil {
 			adminTxt, ok := adminHelpFor(rest, user)
 			if !ok {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`No help found for "%s"`, rest))
+				user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`No help found for "%s"`, rest))
 				return true, err
 			}
 			helpTxt, err = adminTxt, nil

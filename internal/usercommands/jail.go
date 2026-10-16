@@ -35,7 +35,7 @@ func currentJailFine(user *users.UserRecord) (int, uint64, justice.JailRecord, b
 func Fine(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	fine, _, _, ok := currentJailFine(user)
 	if !ok {
-		user.SendText(messaging.CategorySystem, "You aren't being held anywhere.")
+		user.SendText(messaging.CategoryRefusal, "You aren't being held anywhere.")
 		return true, nil
 	}
 	if fine <= 0 {
@@ -53,7 +53,7 @@ func Fine(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 func PayFine(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	fine, _, _, ok := currentJailFine(user)
 	if !ok {
-		user.SendText(messaging.CategorySystem, "You aren't being held anywhere.")
+		user.SendText(messaging.CategoryRefusal, "You aren't being held anywhere.")
 		return true, nil
 	}
 	if fine <= 0 {
@@ -63,9 +63,9 @@ func PayFine(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	}
 	total := user.Character.Gold + user.Character.Bank
 	if total < fine {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`You can't cover the <ansi fg="gold">%d gold</ansi> fine, even counting your bank.`+
-				` You'll have to sit it out.`, fine))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+			`You can't pay the <ansi fg="gold">%d gold</ansi> fine, even with your bank.`+
+				` You must serve your time.`, fine))
 		return true, nil
 	}
 	// On-person gold first, bank as fallback.

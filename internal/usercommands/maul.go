@@ -35,7 +35,7 @@ func Maul(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if res.NotFanged {
-		user.SendText(messaging.CategorySystem, "You have no fangs to maul with.")
+		user.SendText(messaging.CategoryRefusal, "You have no fangs to maul with.")
 		return true, nil
 	}
 	if res.OnCooldown {

@@ -39,6 +39,11 @@ var openerGuardScope = []string{
 	"internal/usercommands/a", "internal/usercommands/b",
 	"internal/usercommands/c", "internal/usercommands/d",
 	"internal/usercommands/e", "internal/usercommands/f",
+	"internal/usercommands/g", "internal/usercommands/h",
+	"internal/usercommands/i", "internal/usercommands/j",
+	"internal/usercommands/k", "internal/usercommands/l",
+	"internal/usercommands/m", "internal/usercommands/n",
+	"internal/usercommands/o",
 }
 
 func inOpenerScope(rel string) bool {

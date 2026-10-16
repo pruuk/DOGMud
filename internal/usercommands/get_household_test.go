@@ -58,6 +58,6 @@ func TestHouseholdBauble_GetRefusesThroughTheSharedPickup(t *testing.T) {
 	require.True(t, handled)
 	require.NoError(t, err)
 	out := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	assert.Contains(t, out, "belongs to this household. To take it anyway")
+	assert.Contains(t, out, "belongs to this household. Try")
 	assert.Empty(t, user.Character.Items, "nothing taken")
 }

@@ -55,7 +55,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if line, refused := noSightRefusal(res.Kind); refused {
-		user.SendText(messaging.CategorySystem, line)
+		user.SendText(messaging.CategoryRefusal, line)
 		return true, nil
 	}
 	sight := res.Sight
@@ -153,11 +153,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 
 	case actions.LookExitTooDark:
-		user.SendText(messaging.CategorySystem, `It's too dark to see anything in that direction.`)
+		user.SendText(messaging.CategoryRefusal, `It's too dark to see anything in that direction.`)
 		return true, nil
 
 	case actions.LookExitLocked:
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("The %s exit is locked.", res.ExitName))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("The %s exit is locked.", res.ExitName))
 		return true, nil
 
 	case actions.LookExitShapes:
@@ -214,9 +214,9 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		container := room.Containers[containerName]
 
 		if container.Lock.IsLocked() {
-			user.SendText(messaging.CategorySystem, ``)
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
-			user.SendText(messaging.CategorySystem, ``)
+			user.SendText(messaging.CategoryRefusal, ``)
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
+			user.SendText(messaging.CategoryRefusal, ``)
 			return true, nil
 		}
 
@@ -286,7 +286,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// If the input is a recognized direction alias but no exit exists,
 	// stop here — never fall through to item/mob matching.
 	if alias := keywords.TryDirectionAlias(lookAt); alias != lookAt {
-		user.SendText(messaging.CategorySystem, "There is no exit in that direction.")
+		user.SendText(messaging.CategoryRefusal, "There is no exit in that direction.")
 		return true, nil
 	}
 
@@ -538,7 +538,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Nothing found. At shapes the name may have been a creature's, which
 	// was deliberately not resolved above; say why rather than deny it.
 	if sight == messaging.SightShapes {
-		user.SendText(messaging.CategorySystem, `You can only make out shapes here.`)
+		user.SendText(messaging.CategoryRefusal, `You can only make out shapes here.`)
 		return true, nil
 	}
 	refusal.NotHereThing(user)

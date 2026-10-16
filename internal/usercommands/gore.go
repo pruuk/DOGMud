@@ -35,7 +35,7 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if res.NotHorned {
-		user.SendText(messaging.CategorySystem, "You have no horns to gore with.")
+		user.SendText(messaging.CategoryRefusal, "You have no horns to gore with.")
 		return true, nil
 	}
 	if res.OnCooldown {

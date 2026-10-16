@@ -71,7 +71,7 @@ func Guild(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	case "title":
 		guildSetTitle(user, remainder)
 	default:
-		user.SendText(messaging.CategorySystem, `Unknown guild command. Try <ansi fg="command">help guild</ansi>.`)
+		user.SendText(messaging.CategoryRefusal, `Unknown guild command. Try <ansi fg="command">help guild</ansi>.`)
 	}
 	return true, nil
 }
@@ -112,7 +112,7 @@ func guildInfo(user *users.UserRecord) {
 
 func guildCreate(user *users.UserRecord, remainder, rest string) {
 	if _, in := guilds.GetByUser(user.UserId); in {
-		user.SendText(messaging.CategorySystem, `You are already in a guild.`)
+		user.SendText(messaging.CategoryRefusal, `You are already in a guild.`)
 		return
 	}
 	fields := strings.Fields(remainder)
@@ -136,13 +136,13 @@ func guildCreate(user *users.UserRecord, remainder, rest string) {
 	}
 
 	if user.Character.Bank < cost {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You need %d gold in the bank to found a guild.`, cost))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You need %d gold in the bank to found a guild.`, cost))
 		return
 	}
 
 	g, err := guilds.Create(tag, name, user.UserId, user.Character.Name)
 	if err != nil {
-		user.SendText(messaging.CategorySystem, `Cannot found the guild: `+err.Error())
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can't found that guild: %s.`, err))
 		return
 	}
 	user.Character.Bank -= cost
@@ -178,7 +178,7 @@ func guildLeave(user *users.UserRecord, rest string) {
 	}
 	if g.IsLeader(user.UserId) {
 		if len(g.Members) > 1 {
-			user.SendText(messaging.CategorySystem, `As leader you must <ansi fg="command">guild transfer <player></ansi> or <ansi fg="command">guild disband</ansi> first.`)
+			user.SendText(messaging.CategoryRefusal, `As leader you must <ansi fg="command">guild transfer <player></ansi> or <ansi fg="command">guild disband</ansi> first.`)
 			return
 		}
 		// Sole-member leader: leaving disbands.
@@ -275,19 +275,19 @@ func guildInvite(user *users.UserRecord, remainder string) {
 	}
 	target := users.GetByCharacterName(name)
 	if target == nil {
-		user.SendText(messaging.CategorySystem, `No player by that name is online to invite.`)
+		user.SendText(messaging.CategoryRefusal, `No player by that name is online to invite.`)
 		return
 	}
 	if target.UserId == user.UserId {
-		user.SendText(messaging.CategorySystem, `You can't invite yourself.`)
+		user.SendText(messaging.CategoryRefusal, `You can't invite yourself.`)
 		return
 	}
 	if _, in := guilds.GetByUser(target.UserId); in {
-		user.SendText(messaging.CategorySystem, `That player is already in a guild.`)
+		user.SendText(messaging.CategoryRefusal, `That player is already in a guild.`)
 		return
 	}
 	if g.HasInvite(target.UserId) {
-		user.SendText(messaging.CategorySystem, `That player already has a pending invite.`)
+		user.SendText(messaging.CategoryRefusal, `That player already has a pending invite.`)
 		return
 	}
 	guilds.AddInvite(g.Tag, target.UserId)
@@ -297,16 +297,22 @@ func guildInvite(user *users.UserRecord, remainder string) {
 
 func guildAcceptInvite(user *users.UserRecord) {
 	if _, in := guilds.GetByUser(user.UserId); in {
-		user.SendText(messaging.CategorySystem, `You are already in a guild.`)
+		user.SendText(messaging.CategoryRefusal, `You are already in a guild.`)
 		return
 	}
 	g, ok := guilds.GuildWithInvite(user.UserId)
 	if !ok {
-		user.SendText(messaging.CategorySystem, `You have no pending guild invitation.`)
+		user.SendText(messaging.CategoryRefusal, `You have no pending guild invitation.`)
 		return
 	}
 	if err := guilds.AddMember(g.Tag, user.UserId, user.Character.Name); err != nil {
-		user.SendText(messaging.CategorySystem, `Cannot join: `+err.Error())
+		// The invite outlived its guild (disbanded since); anything else,
+		// such as a failed save, is the server's fault.
+		if err.Error() == `no such guild` {
+			user.SendText(messaging.CategoryRefusal, `That guild no longer exists.`)
+		} else {
+			refusal.Failed(user, "join", err, "userId", user.UserId)
+		}
 		return
 	}
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You join <ansi fg="yellow-bold">%s</ansi> <ansi fg="cyan">[%s]</ansi>!`, g.Name, g.Tag))
@@ -317,7 +323,7 @@ func guildAcceptInvite(user *users.UserRecord) {
 
 func guildDeclineInvite(user *users.UserRecord) {
 	if _, ok := guilds.GuildWithInvite(user.UserId); !ok {
-		user.SendText(messaging.CategorySystem, `You have no pending guild invitation.`)
+		user.SendText(messaging.CategoryRefusal, `You have no pending guild invitation.`)
 		return
 	}
 	guilds.ClearInvites(user.UserId) // clear every pending invite deterministically
@@ -336,15 +342,15 @@ func guildKick(user *users.UserRecord, remainder string) {
 	}
 	targetId, found := findGuildMemberByName(g, remainder)
 	if !found {
-		user.SendText(messaging.CategorySystem, `No guild member by that name.`)
+		user.SendText(messaging.CategoryRefusal, `No guild member by that name.`)
 		return
 	}
 	if targetId == user.UserId {
-		user.SendText(messaging.CategorySystem, `To leave, use <ansi fg="command">guild leave</ansi>.`)
+		user.SendText(messaging.CategoryRefusal, `To leave, use <ansi fg="command">guild leave</ansi>.`)
 		return
 	}
 	if !g.CanKick(user.UserId, targetId) {
-		user.SendText(messaging.CategorySystem, `You can't kick someone of equal or higher rank.`)
+		user.SendText(messaging.CategoryRefusal, `You can't kick someone of equal or higher rank.`)
 		return
 	}
 	name := memberName(g, targetId)
@@ -370,21 +376,21 @@ func guildSetRank(user *users.UserRecord, remainder string, promote bool) {
 	}
 	targetId, found := findGuildMemberByName(g, remainder)
 	if !found || targetId == user.UserId {
-		user.SendText(messaging.CategorySystem, `Name another guild member.`)
+		user.SendText(messaging.CategoryRefusal, `Name another guild member.`)
 		return
 	}
 	cur, _ := g.MemberRank(targetId)
 	name := memberName(g, targetId)
 	if promote {
 		if cur != guilds.RankMember {
-			user.SendText(messaging.CategorySystem, `That member is already an officer.`)
+			user.SendText(messaging.CategoryRefusal, `That member is already an officer.`)
 			return
 		}
 		guilds.SetRank(g.Tag, targetId, guilds.RankOfficer)
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You promote <ansi fg="username">%s</ansi> to %s.`, name, g.RankTitle(guilds.RankOfficer)))
 	} else {
 		if cur != guilds.RankOfficer {
-			user.SendText(messaging.CategorySystem, `That member is not an officer.`)
+			user.SendText(messaging.CategoryRefusal, `That member is not an officer.`)
 			return
 		}
 		guilds.SetRank(g.Tag, targetId, guilds.RankMember)
@@ -407,7 +413,7 @@ func guildTransfer(user *users.UserRecord, remainder, rest string) {
 	}
 	targetId, found := findGuildMemberByName(g, remainder)
 	if !found || targetId == user.UserId {
-		user.SendText(messaging.CategorySystem, `Name another guild member to lead.`)
+		user.SendText(messaging.CategoryRefusal, `Name another guild member to lead.`)
 		return
 	}
 	name := memberName(g, targetId)
@@ -531,15 +537,15 @@ func guildDeposit(user *users.UserRecord, remainder string) {
 		return
 	}
 	if amount > user.Character.Bank {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You only have <ansi fg="gold">%d gold</ansi> in the bank.`, user.Character.Bank))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You only have <ansi fg="gold">%d gold</ansi> in the bank.`, user.Character.Bank))
 		return
 	}
 	if amount <= 0 {
-		user.SendText(messaging.CategorySystem, `Deposit a positive amount.`)
+		user.SendText(messaging.CategoryRefusal, `Deposit a positive amount.`)
 		return
 	}
 	if err := guilds.DepositGold(g.Tag, amount); err != nil {
-		user.SendText(messaging.CategorySystem, `Cannot deposit: `+err.Error())
+		refusal.Failed(user, "deposit", err, "userId", user.UserId)
 		return
 	}
 	user.Character.Bank -= amount
@@ -555,7 +561,7 @@ func guildWithdraw(user *users.UserRecord, remainder string) {
 		return
 	}
 	if !g.CanWithdraw(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only the leader can withdraw (unless the leader has delegated treasury access to officers).`)
+		user.SendText(messaging.CategoryRefusal, `Only the leader can withdraw, unless officers have treasury access.`)
 		return
 	}
 	amount, _, ok := parseGoldAmount(remainder, g.Treasury)
@@ -564,12 +570,18 @@ func guildWithdraw(user *users.UserRecord, remainder string) {
 		return
 	}
 	if amount <= 0 {
-		user.SendText(messaging.CategorySystem, `The treasury is empty.`)
+		user.SendText(messaging.CategoryRefusal, `The treasury is empty.`)
 		return
 	}
 	// WithdrawGold rejects (without mutating) if amount exceeds the treasury.
 	if err := guilds.WithdrawGold(g.Tag, amount); err != nil {
-		user.SendText(messaging.CategorySystem, `Cannot withdraw: `+err.Error())
+		// The short treasury is the player's to hear; "no such guild" (the
+		// guild vanished mid-command) or a failed save is the server's fault.
+		if err.Error() == `the treasury does not hold that much gold` {
+			user.SendText(messaging.CategoryRefusal, `The treasury doesn't hold that much gold.`)
+		} else {
+			refusal.Failed(user, "withdrawal", err, "userId", user.UserId)
+		}
 		return
 	}
 	user.Character.Bank += amount
@@ -598,7 +610,13 @@ func guildDonate(user *users.UserRecord, remainder string) {
 	// DonateItem errors (without mutating) if the vault is full. Only strip the
 	// item from the donor after it has landed in the vault.
 	if err := guilds.DonateItem(g.Tag, item); err != nil {
-		user.SendText(messaging.CategorySystem, `Cannot donate: `+err.Error())
+		// A full vault is the player's to hear; "no such guild" (the guild
+		// vanished mid-command) or a failed save is the server's fault.
+		if err.Error() == `the guild vault is full` {
+			user.SendText(messaging.CategoryRefusal, `The guild vault is full.`)
+		} else {
+			refusal.Failed(user, "donation", err, "userId", user.UserId)
+		}
 		return
 	}
 	user.Character.RemoveItem(item)
@@ -614,27 +632,27 @@ func guildTake(user *users.UserRecord, remainder string) {
 		return
 	}
 	if !g.CanWithdraw(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only the leader can take from the vault (unless the leader has delegated treasury access to officers).`)
+		user.SendText(messaging.CategoryRefusal, `Only the leader can take from the vault, unless officers have treasury access.`)
 		return
 	}
 	name := strings.TrimSpace(remainder)
 	idx, found := findVaultItem(g.Vault, name)
 	if !found {
-		user.SendText(messaging.CategorySystem, `No such item in the guild vault. See <ansi fg="command">guild treasury</ansi>.`)
+		user.SendText(messaging.CategoryRefusal, `No such item in the guild vault. See <ansi fg="command">guild treasury</ansi>.`)
 		return
 	}
 	// Item-loss guard: prove the item fits in the taker's pack BEFORE removing it
 	// from the vault, so a full pack never destroys a vault item.
 	it := g.Vault[idx]
 	if !user.Character.StoreItem(it) {
-		user.SendText(messaging.CategorySystem, `Your pack is too full to carry that.`)
+		user.SendText(messaging.CategoryRefusal, `Your pack is too full to carry that.`)
 		return
 	}
 	itemName := it.DisplayName()
 	if _, err := guilds.TakeItem(g.Tag, idx); err != nil {
 		// Vault changed under us; undo the store so nothing is duplicated.
 		user.Character.RemoveItem(it)
-		user.SendText(messaging.CategorySystem, `Cannot take that item right now.`)
+		user.SendText(messaging.CategoryRefusal, `Cannot take that item right now.`)
 		return
 	}
 	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: it, Gained: true})
@@ -721,7 +739,7 @@ func guildSetTitle(user *users.UserRecord, remainder string) {
 	}
 	rank, ok := parseGuildRank(fields[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, `Name a rank: <ansi fg="white">member</ansi>, <ansi fg="white">officer</ansi>, or <ansi fg="white">leader</ansi>.`)
+		user.SendText(messaging.CategoryRefusal, `Name a rank: <ansi fg="white">member</ansi>, <ansi fg="white">officer</ansi>, or <ansi fg="white">leader</ansi>.`)
 		return
 	}
 	title := strings.TrimSpace(strings.Join(fields[1:], " "))
@@ -731,7 +749,7 @@ func guildSetTitle(user *users.UserRecord, remainder string) {
 		return
 	}
 	if err := guilds.ValidRankTitle(title); err != nil {
-		user.SendText(messaging.CategorySystem, `Invalid title: `+err.Error())
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can't use that title: %s.`, err))
 		return
 	}
 	guilds.SetRankTitle(g.Tag, rank, title)
