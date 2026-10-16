@@ -294,3 +294,10 @@ colors:
 # Refusals and prompts (messaging M7, #371). Same value as `system`, the
 # category these lines rode, so moving them changes nothing a player sees.
   refusal: 8
+
+# Usage lines, staff output and group notices (messaging M7 slice 4, #371).
+# Same value as `system`, the category these lines rode, so moving them
+# changes nothing a player sees.
+  usage: 8
+  admin: 8
+  group: 8
