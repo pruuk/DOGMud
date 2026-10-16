@@ -1,6 +1,7 @@
 package auctions
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -105,6 +106,21 @@ func TestBid_BuyItNow(t *testing.T) {
 	}
 	if b.Character.Bank != 4000 {
 		t.Errorf("buyer bank=%d want 4000 (1000 escrowed)", b.Character.Bank)
+	}
+}
+
+// A bidder the lookup cannot find is a server fault, not a player sentence:
+// Bid returns errBidderNotFound so the caller routes it to refusal.Failed.
+func TestBid_MissingBidderIsSentinel(t *testing.T) {
+	seller := users.NewTestUser(9012, "sell2", "Sell2", 9912)
+	defer fakeUsers(seller)()
+
+	am := &AuctionManager{}
+	am.StartAuction(items.Item{ItemId: 1}, 9012, 1000, 60, false)
+
+	err := am.Bid(9099, 300)
+	if !errors.Is(err, errBidderNotFound) {
+		t.Fatalf("Bid by unknown user: err=%v want errBidderNotFound", err)
 	}
 }
 

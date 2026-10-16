@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -142,7 +143,13 @@ func guildCreate(user *users.UserRecord, remainder, rest string) {
 
 	g, err := guilds.Create(tag, name, user.UserId, user.Character.Name)
 	if err != nil {
-		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can't found that guild: %s.`, err))
+		// A failed save is the server's fault; a validation error is the
+		// player's to read.
+		if errors.Is(err, guilds.ErrSaveFailed) {
+			refusal.Failed(user, "guild founding", err, "userId", user.UserId)
+		} else {
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can't found that guild: %s.`, err))
+		}
 		return
 	}
 	user.Character.Bank -= cost
@@ -308,7 +315,7 @@ func guildAcceptInvite(user *users.UserRecord) {
 	if err := guilds.AddMember(g.Tag, user.UserId, user.Character.Name); err != nil {
 		// The invite outlived its guild (disbanded since); anything else,
 		// such as a failed save, is the server's fault.
-		if err.Error() == `no such guild` {
+		if errors.Is(err, guilds.ErrNoSuchGuild) {
 			user.SendText(messaging.CategoryRefusal, `That guild no longer exists.`)
 		} else {
 			refusal.Failed(user, "join", err, "userId", user.UserId)
@@ -577,7 +584,7 @@ func guildWithdraw(user *users.UserRecord, remainder string) {
 	if err := guilds.WithdrawGold(g.Tag, amount); err != nil {
 		// The short treasury is the player's to hear; "no such guild" (the
 		// guild vanished mid-command) or a failed save is the server's fault.
-		if err.Error() == `the treasury does not hold that much gold` {
+		if errors.Is(err, guilds.ErrTreasuryShort) {
 			user.SendText(messaging.CategoryRefusal, `The treasury doesn't hold that much gold.`)
 		} else {
 			refusal.Failed(user, "withdrawal", err, "userId", user.UserId)
@@ -612,7 +619,7 @@ func guildDonate(user *users.UserRecord, remainder string) {
 	if err := guilds.DonateItem(g.Tag, item); err != nil {
 		// A full vault is the player's to hear; "no such guild" (the guild
 		// vanished mid-command) or a failed save is the server's fault.
-		if err.Error() == `the guild vault is full` {
+		if errors.Is(err, guilds.ErrVaultFull) {
 			user.SendText(messaging.CategoryRefusal, `The guild vault is full.`)
 		} else {
 			refusal.Failed(user, "donation", err, "userId", user.UserId)

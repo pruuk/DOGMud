@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -88,5 +89,27 @@ func TestGameBridge_LearnRecipe_UsesDisplayName(t *testing.T) {
 	}
 	if !strings.Contains(msgs, "no-such-recipe-slug") {
 		t.Errorf("an unknown recipe should fall back to its slug:\n%s", msgs)
+	}
+}
+
+// The learned line names the spell by its display name, not its id. An id
+// with no spell spec still names itself.
+func TestGameBridge_TeachSpell_UsesSpellName(t *testing.T) {
+	u, cleanup := seedChargeGoldUser(t, 0)
+	defer cleanup()
+	defer spells.SeedSpellsForTest(map[string]*spells.SpellData{
+		"test-fold-anchor": {SpellId: "test-fold-anchor", Name: "Fold Anchor"},
+	})()
+
+	b := NewGameBridge(u, 1)
+	b.TeachSpell("test-fold-anchor")
+	b.TeachSpell("no-such-spell-id")
+
+	msgs := strings.Join(events.DrainQueuedMessagesForTest(cgUserId), "\n")
+	if !strings.Contains(msgs, ">Fold Anchor<") || strings.Contains(msgs, "test-fold-anchor") {
+		t.Errorf("learned line should name Fold Anchor, not the id:\n%s", msgs)
+	}
+	if !strings.Contains(msgs, "no-such-spell-id") {
+		t.Errorf("an unknown spell should fall back to its id:\n%s", msgs)
 	}
 }

@@ -80,7 +80,7 @@ func validRankTitle(title string) error {
 	}
 	for _, r := range title {
 		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == ' ') {
-			return fmt.Errorf("a rank title may only contain letters, digits, and spaces")
+			return fmt.Errorf("a rank title may only use letters, digits and spaces")
 		}
 	}
 	return nil

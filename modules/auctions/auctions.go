@@ -342,7 +342,11 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 		// different pools. Because refunds only ever return to the bank, the
 		// carried-gold half was destroyed outright. See TestAuctionsAreBankOnly.
 		if err := mod.auctionMgr.Bid(user.UserId, amt); err != nil {
-			user.SendText(messaging.CategoryRefusal, err.Error())
+			if errors.Is(err, errBidderNotFound) {
+				refusal.Failed(user, "bid", err, "userId", user.UserId)
+			} else {
+				user.SendText(messaging.CategoryRefusal, err.Error())
+			}
 			return true, nil
 		}
 
@@ -799,6 +803,11 @@ func (a *AuctionItem) IsEnded() bool {
 	return time.Now().After(a.EndTime)
 }
 
+// errBidderNotFound is Bid's error when the bidder's record cannot be found.
+// It is a server fault, so the caller logs it through refusal.Failed rather
+// than showing its text to the player.
+var errBidderNotFound = errors.New("bidder not found")
+
 // getUser is the auctions package's user lookup, overridable in tests. Defaults
 // to the live users.GetByUserId.
 var getUser = users.GetByUserId
@@ -1072,7 +1081,7 @@ func (am *AuctionManager) Bid(userId int, bid int) error {
 
 	u := getUser(userId)
 	if u == nil {
-		return errors.New("User not found.")
+		return errBidderNotFound
 	}
 	if u.Character.Bank < bid {
 		return fmt.Errorf(`You only have <ansi fg="gold">%d gold</ansi> in the bank.`, u.Character.Bank)
