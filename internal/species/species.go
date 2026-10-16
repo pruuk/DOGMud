@@ -39,6 +39,8 @@ type Species struct {
 	// species uses for BASIC attacks (e.g. items.Bite, items.Claws). Empty =>
 	// humanoid default (Unarmed -> generic). Must be a known items.ItemSubType
 	// with a loaded combat-message file (validated at load in a later task).
+	// It is the attack this species makes most of the time; special moves are
+	// rarer or finishers (spec 2026-10-16 combat-message reachability, ruling E).
 	NaturalAttack items.ItemSubType `yaml:"natural_attack,omitempty"`
 	Tameable      bool
 	// Speech is false for a species with no voice (beasts, slimes, elementals,
