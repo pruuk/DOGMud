@@ -234,8 +234,8 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 
 	if on := user.GetConfigOption(`auction`); on != nil && !on.(bool) {
 
-		user.SendText(messaging.CategorySystem,
-			`Auctions are disabled. See <ansi fg="command">help set</ansi> for learn how to change this.`,
+		user.SendText(messaging.CategoryRefusal,
+			`Auctions are disabled. See <ansi fg="command">help set</ansi> to learn how to change this.`,
 		)
 
 		return true, nil
@@ -300,17 +300,17 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 	if args[0] == `bid` {
 
 		if currentAuction == nil {
-			user.SendText(messaging.CategorySystem, `There is not an auction to bid on.`)
+			user.SendText(messaging.CategoryRefusal, `There is not an auction to bid on.`)
 			return true, nil
 		}
 
 		if currentAuction.SellerUserId == user.UserId {
-			user.SendText(messaging.CategorySystem, `You cannot bid on your own auction.`)
+			user.SendText(messaging.CategoryRefusal, `You cannot bid on your own auction.`)
 			return true, nil
 		}
 
 		if currentAuction.HighestBidUserId == user.UserId {
-			user.SendText(messaging.CategorySystem, `You are already the highest bidder.`)
+			user.SendText(messaging.CategoryRefusal, `You are already the highest bidder.`)
 			return true, nil
 		}
 
@@ -326,7 +326,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 
 		amt, _ := strconv.Atoi(args[1])
 		if amt < minBid {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You must bid at least <ansi fg="gold">%d gold</ansi>.`, minBid))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You must bid at least <ansi fg="gold">%d gold</ansi>.`, minBid))
 			return true, nil
 		}
 
@@ -342,7 +342,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 		// different pools. Because refunds only ever return to the bank, the
 		// carried-gold half was destroyed outright. See TestAuctionsAreBankOnly.
 		if err := mod.auctionMgr.Bid(user.UserId, amt); err != nil {
-			user.SendText(messaging.CategorySystem, err.Error())
+			user.SendText(messaging.CategoryRefusal, err.Error())
 			return true, nil
 		}
 
@@ -378,7 +378,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 
 	// If there is already an auction happening, abort this attempt.
 	if currentAuction != nil {
-		user.SendText(messaging.CategorySystem, `There is already an auction in progress.`)
+		user.SendText(messaging.CategoryRefusal, `There is already an auction in progress.`)
 		return true, nil
 	}
 
@@ -393,7 +393,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 	// Trivial items can't be listed — keeps clutter (and cheap shopkeeper
 	// relists) off the block.
 	if tooTrivialToAuction(matchItem) {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryRefusal,
 			fmt.Sprintf(`The <ansi fg="item">%s</ansi> is too trivial to interest the auction house.`, matchItem.DisplayName()))
 		return true, nil
 	}
@@ -401,7 +401,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 	// A hot stolen bauble (docs/baubles Phase 6c) cannot be sold in the open
 	// while it is still being looked for; that is what fences are for.
 	if auctionRefusesStolen(matchItem, room.Zone) {
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryRefusal,
 			fmt.Sprintf(`The auction house will not list the <ansi fg="item">%s</ansi>: it was reported stolen, and not long ago.`, matchItem.DisplayName()))
 		return true, nil
 	}
@@ -425,7 +425,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 
 	amt, _ := strconv.Atoi(questionAmount.Response)
 	if amt < 1 {
-		user.SendText(messaging.CategorySystem, `Aborting auction`)
+		user.SendText(messaging.CategoryRefusal, `Aborting auction`)
 		user.ClearPrompt()
 		return true, nil
 	}

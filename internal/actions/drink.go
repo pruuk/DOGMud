@@ -183,7 +183,7 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 
 	// Chunk 4e: can't drink while grappled, both hands committed.
 	if char.Position != nil && char.Position.IsGrappling() {
-		actor.SendText(messaging.CategorySystem, `<ansi fg="red">Your hands are committed to the grapple: you can't reach for that.</ansi>`)
+		actor.SendText(messaging.CategoryRefusal, `<ansi fg="red">Your hands are committed to the grapple: you can't reach for that.</ansi>`)
 		return DrinkResult{Refusal: DrinkRefuseGrappled}
 	}
 
@@ -212,7 +212,7 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	itemSpec := matchItem.GetSpec()
 
 	if itemSpec.Subtype != items.Drinkable {
-		actor.SendText(messaging.CategorySystem,
+		actor.SendText(messaging.CategoryRefusal,
 			fmt.Sprintf(`You can't drink <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()),
 		)
 		return DrinkResult{Refusal: DrinkRefuseNotDrinkable, ItemId: matchItem.ItemId}
@@ -280,7 +280,7 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	if itemSpec.Toxicity > 0 && !bypassesToxicityGate(itemSpec.ItemId) {
 		toxCost := float64(itemSpec.Toxicity)
 		if char.Toxicity+toxCost > char.GetToxicityMax() {
-			actor.SendText(messaging.CategorySystem,
+			actor.SendText(messaging.CategoryRefusal,
 				`<ansi fg="red">Your body rejects the potion: too much toxicity.</ansi>`)
 			return DrinkResult{Refusal: DrinkRefuseToxicity, ItemId: matchItem.ItemId}
 		}

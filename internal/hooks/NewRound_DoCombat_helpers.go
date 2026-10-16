@@ -985,7 +985,7 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 
 	switch {
 	case out.Grappled:
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't flee while grappled!</ansi>`)
+		user.SendText(messaging.CategoryRefusal, `<ansi fg="red">You can't flee while grappled!</ansi>`)
 		return true
 	case out.Blocker != nil:
 		blocker := out.Blocker
@@ -1010,7 +1010,7 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 		uRoom.SendTextVisualHidingNames(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> is blocked from fleeing by <ansi fg="%s">%s</ansi>!`, user.Character.Name, targetTag, blocker.Name), []string{user.Character.Name, blocker.Name}, excludes...)
 		return true
 	case out.NoExit:
-		user.SendText(messaging.CategorySystem, `You can't find an exit!`)
+		user.SendText(messaging.CategoryRefusal, `You can't find an exit!`)
 		return true
 	}
 

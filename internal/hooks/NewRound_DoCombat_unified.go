@@ -85,7 +85,7 @@ func handleCombatRound(
 		// Divergence: only player attackers get the "can't seem to find
 		// your target" feedback. Mob attackers silently bail (no chat).
 		if atk.IsPlayer() {
-			atk.SendText(messaging.CategorySystem, "You can't seem to find your target.")
+			atk.SendText(messaging.CategoryRefusal, "You can't seem to find your target.")
 		}
 		return
 	}

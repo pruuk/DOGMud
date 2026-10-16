@@ -63,7 +63,7 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 		return DefuseResult{Reason: "not advanced enough"}
 	}
 	if skillLevel < 3 {
-		actor.SendText(messaging.CategorySystem, "You aren't advanced enough at skullduggery for that.")
+		actor.SendText(messaging.CategoryRefusal, "You aren't advanced enough at skullduggery for that.")
 		return DefuseResult{Reason: "not advanced enough"}
 	}
 
@@ -115,7 +115,7 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 	}
 
 	if !kitFound {
-		actor.SendText(messaging.CategorySystem, `You need a <ansi fg="item">disarm kit</ansi> to attempt this.`)
+		actor.SendText(messaging.CategoryRefusal, `You need a <ansi fg="item">disarm kit</ansi> to attempt this.`)
 		return DefuseResult{
 			TrapName: trapTargetDisplayName(tgt),
 			Reason:   "no disarm kit",
@@ -205,11 +205,11 @@ func resolveDefuseLockTarget(actor Actor, room *rooms.Room, noun string) defuseL
 	if containerName != "" {
 		container := room.Containers[containerName]
 		if !container.HasLock() {
-			actor.SendText(messaging.CategorySystem, "There is no lock there.")
+			actor.SendText(messaging.CategoryRefusal, "There is no lock there.")
 			return defuseLockTarget{kind: lockTargetNone}
 		}
 		if len(container.Lock.TrapConditionIds) == 0 {
-			actor.SendText(messaging.CategorySystem, "You don't detect any traps on that.")
+			actor.SendText(messaging.CategoryRefusal, "You don't detect any traps on that.")
 			return defuseLockTarget{kind: lockTargetNone}
 		}
 		return defuseLockTarget{
@@ -226,11 +226,11 @@ func resolveDefuseLockTarget(actor Actor, room *rooms.Room, noun string) defuseL
 		exitInfo, ok := room.GetExitInfo(exitName)
 		if ok {
 			if !exitInfo.HasLock() {
-				actor.SendText(messaging.CategorySystem, "There is no lock there.")
+				actor.SendText(messaging.CategoryRefusal, "There is no lock there.")
 				return defuseLockTarget{kind: lockTargetNone}
 			}
 			if len(exitInfo.Lock.TrapConditionIds) == 0 {
-				actor.SendText(messaging.CategorySystem, "You don't detect any traps on that.")
+				actor.SendText(messaging.CategoryRefusal, "You don't detect any traps on that.")
 				return defuseLockTarget{kind: lockTargetNone}
 			}
 			return defuseLockTarget{

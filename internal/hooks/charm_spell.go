@@ -76,7 +76,7 @@ func applyMobEffect_charm(
 		return 0
 	}
 	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
-		user.SendText(messaging.CategorySystem, ch.ReservationRefusal(characters.PoolConviction, reserve))
+		user.SendText(messaging.CategoryRefusal, ch.ReservationRefusal(characters.PoolConviction, reserve))
 		return 0
 	}
 

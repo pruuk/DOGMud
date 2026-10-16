@@ -78,7 +78,7 @@ func mutationPreamble(actor Actor, mutationKey string, combatRequired bool, stam
 	// Gate 1: mutation ownership.
 	if !mutations.HasMutation(char.Mutations, mutationKey) {
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem, "You don't have that ability.")
+			actor.SendText(messaging.CategoryRefusal, "You don't have that ability.")
 		}
 		return preambleResult{BlockReason: "no-mutation"}
 	}
@@ -86,7 +86,7 @@ func mutationPreamble(actor Actor, mutationKey string, combatRequired bool, stam
 	// Gate 2: combat requirement.
 	if combatRequired && !char.IsInCombat() {
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
+			actor.SendText(messaging.CategoryRefusal,
 				fmt.Sprintf("You must be in combat to use %s!", mutationKey))
 		}
 		return preambleResult{BlockReason: "not-in-combat"}
@@ -110,7 +110,7 @@ func mutationPreamble(actor Actor, mutationKey string, combatRequired bool, stam
 		// actor isn't punished with a cooldown for a failed attempt.
 		ReleaseSpecialMove(char)
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem, "You're too exhausted!")
+			actor.SendText(messaging.CategoryRefusal, "You're too exhausted!")
 		}
 		return preambleResult{BlockReason: "low-stamina"}
 	}

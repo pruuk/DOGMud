@@ -397,7 +397,7 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 	}
 
 	if parties.Get(user.UserId) != nil {
-		user.SendText(messaging.CategorySystem, `You can't use this command while in a party.`)
+		user.SendText(messaging.CategoryRefusal, `You can't use this command while in a party.`)
 		return true, nil
 	}
 
@@ -448,7 +448,7 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 	followCommandSource := followId{userId: user.UserId}
 
 	if followCommandTarget.userId == followCommandSource.userId {
-		user.SendText(messaging.CategorySystem, `You can't target yourself.`)
+		user.SendText(messaging.CategoryRefusal, `You can't target yourself.`)
 		return true, nil
 	}
 
@@ -513,7 +513,7 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 
 		}
 
-		user.SendText(messaging.CategorySystem, `You aren't following anyone.`)
+		user.SendText(messaging.CategoryRefusal, `You aren't following anyone.`)
 
 		return true, nil
 	}

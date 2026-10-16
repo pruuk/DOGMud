@@ -54,7 +54,7 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 	biome := room.GetBiome()
 	if _, ok := forager.ForageYields[biome.BiomeId]; !ok {
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
+			actor.SendText(messaging.CategoryRefusal,
 				`There is nothing here worth foraging. Try an outdoor area.`)
 		}
 		result.Reason = "wrong biome"

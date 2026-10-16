@@ -59,7 +59,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 
 	// Must be hidden to shadow.
 	if !char.IsHidden() {
-		actor.SendText(messaging.CategorySystem,
+		actor.SendText(messaging.CategoryRefusal,
 			"You must be hidden to shadow someone. "+
 				`Try <ansi fg="command">sneak</ansi> first.`)
 		return ShadowResult{Reason: "not hidden"}

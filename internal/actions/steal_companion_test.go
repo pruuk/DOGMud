@@ -1,10 +1,12 @@
 package actions
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/companionai"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
@@ -35,6 +37,42 @@ func TestSteal_RefusesAnyCompanion(t *testing.T) {
 		mobs.SetInstanceForTest(testMobInstId, nil)
 		if result.Reason != "companion" || result.Succeeded || result.Pending || target.Character.Gold != 50 || len(actor.awards) != awards {
 			t.Errorf("%v: refused, nothing taken or trained: %+v gold=%d", name, result, target.Character.Gold)
+		}
+	}
+}
+
+// recordingStealActor keeps what the thief is told.
+type recordingStealActor struct {
+	*stubActorWithId
+	told []string
+}
+
+func (r *recordingStealActor) SendText(_ messaging.Category, msg string) {
+	r.told = append(r.told, msg)
+}
+
+// M7 slice 3 (#371): the companion refusal names the mob only for a thief
+// who can see it.
+func TestSteal_CompanionRefusalHidesTheNameInTheDark(t *testing.T) {
+	for _, lit := range []bool{true, false} {
+		actor := &recordingStealActor{stubActorWithId: newStealPlayerActor(200, 8)}
+		if lit {
+			lamp := 60
+			actor.room.Lamp = &lamp
+		} else {
+			actor.room.Biome = "cave"
+		}
+		target := newStealTestMob(testMobInstId, 50, 1)
+		target.Character.Charmed = characters.NewCharm(4242, 10, ``)
+		mobs.SetInstanceForTest(testMobInstId, target)
+		delete(actor.char.Cooldowns, skills.Skullduggery.String("steal"))
+
+		Steal(actor, StealOptions{TargetMobInstanceId: testMobInstId})
+
+		mobs.SetInstanceForTest(testMobInstId, nil)
+		told := strings.Join(actor.told, "\n")
+		if lit != strings.Contains(told, "Bandit") {
+			t.Errorf("lit=%v: the name shows only in light; told %q", lit, told)
 		}
 	}
 }

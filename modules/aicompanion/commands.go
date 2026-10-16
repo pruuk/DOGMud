@@ -490,7 +490,7 @@ func (m *AICompanionModule) cmdUnstick(rest string, user *users.UserRecord, room
 	// frees her to start the next at once, so it is not to be used as a
 	// way to make her think again and again.
 	if user.Character != nil && !user.Character.TryCooldown(unstickCooldownTag, fmt.Sprintf(`%d real seconds`, unstickSeconds)) {
-		user.SendText(messaging.CategorySystem, `You reset your companion only a moment ago. Give it a minute.`)
+		user.SendText(messaging.CategoryRefusal, `You reset your companion only a moment ago. Give it a minute.`)
 		return true, nil
 	}
 	c.seq++

@@ -186,7 +186,7 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 	if err != nil {
 		// Self-exclusion collapses to NotFound, so distinguish the two here.
 		if pId, _ := room.FindByName(rest); pId == user.UserId {
-			user.SendText(messaging.CategorySystem, opts.selfTargetMsg())
+			user.SendText(messaging.CategoryRefusal, opts.selfTargetMsg())
 			return nil, true
 		}
 		refusal.NotHereCreature(user)
@@ -201,10 +201,10 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 		// grappled/tripped with no message at all.
 		switch mobs.CheckPlayerHarm(mob) {
 		case mobs.HarmBlockedCompanion:
-			user.SendText(messaging.CategorySystem, opts.charmedMsg())
+			user.SendText(messaging.CategoryRefusal, opts.charmedMsg())
 			return nil, true
 		case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
-			user.SendText(messaging.CategorySystem, messaging.HideNames(
+			user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 				fmt.Sprintf(`You can't attack <ansi fg="mobname">%s</ansi>.`, mob.Character.Name),
 				[]string{mob.Character.Name}, sight))
 			return nil, true
@@ -240,7 +240,7 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 
 	p := target.(*UserActor).User
 	if pvpErr := room.CanPvp(user, p); pvpErr != nil {
-		user.SendText(messaging.CategorySystem, pvpErr.Error())
+		user.SendText(messaging.CategoryRefusal, pvpErr.Error())
 		return nil, true
 	}
 	// Party members are not valid targets. room.CanPvp does NOT cover this — it
@@ -249,7 +249,7 @@ func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opt
 	// grapple or trip their own party member, while `attack` and `shoot` both
 	// refused. Same bypass shape as the charmed-companion gate above.
 	if partyInfo := parties.Get(user.UserId); partyInfo != nil && partyInfo.IsMember(p.UserId) {
-		user.SendText(messaging.CategorySystem, messaging.HideNames(
+		user.SendText(messaging.CategoryRefusal, messaging.HideNames(
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name),
 			[]string{p.Character.Name}, sight))
 		return nil, true

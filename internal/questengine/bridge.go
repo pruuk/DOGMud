@@ -165,7 +165,7 @@ func (b *GameBridge) GiveItem(itemId int) error {
 		return fmt.Errorf("give_item: item %d not found", itemId)
 	}
 	if !b.user.Character.StoreItem(newItem) {
-		b.user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		b.user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
 			"You are carrying too much to take the <ansi fg=\"item\">%s</ansi>. "+
 				"Put something down, then try again.", newItem.DisplayName()))
 		mudlog.Warn("GameBridge.GiveItem", "msg", "player could not carry quest item",

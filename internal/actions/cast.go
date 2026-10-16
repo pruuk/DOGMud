@@ -141,7 +141,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 				// of another character is a PvP feature with its own design
 				// questions; see spec 14.
 				if spellInfo.EffectType == "charm" {
-					actor.SendText(messaging.CategorySystem,
+					actor.SendText(messaging.CategoryRefusal,
 						`You cannot bend another person's mind to your will.`)
 					return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
 				}
@@ -156,7 +156,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 					targetUser := users.GetByUserId(pId)
 					if casterUser != nil && targetUser != nil {
 						if pvpErr := room.CanPvp(casterUser, targetUser); pvpErr != nil {
-							actor.SendText(messaging.CategorySystem, pvpErr.Error())
+							actor.SendText(messaging.CategoryRefusal, pvpErr.Error())
 							return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
 						}
 					}
@@ -216,7 +216,7 @@ func InitiateCast(actor Actor, spellName, targetName string) CastResult {
 					targetUser := users.GetByUserId(pId)
 					if casterUser != nil && targetUser != nil {
 						if pvpErr := room.CanPvp(casterUser, targetUser); pvpErr != nil {
-							actor.SendText(messaging.CategorySystem, pvpErr.Error())
+							actor.SendText(messaging.CategoryRefusal, pvpErr.Error())
 							return CastResult{SpellInfo: spellInfo, NoTarget: true, RefusalExplained: true}
 						}
 					}
@@ -447,7 +447,7 @@ func rejectHarmTarget(actor Actor, mobInstanceId int) bool {
 
 	switch mobs.CheckPlayerHarm(m) {
 	case mobs.HarmBlockedCompanion:
-		actor.SendText(messaging.CategorySystem, "You can't target a companion with a harmful spell.")
+		actor.SendText(messaging.CategoryRefusal, "You can't target a companion with a harmful spell.")
 		return true
 	case mobs.HarmBlockedNonCombatant, mobs.HarmBlockedAttackImmune:
 		// The name is only the caster.s to hear if they can make the mob out.
@@ -458,7 +458,7 @@ func rejectHarmTarget(actor Actor, mobInstanceId int) bool {
 			line = messaging.HideNames(line, []string{m.Character.Name},
 				messaging.ParticipantSight(actor.GetCharacter(), room))
 		}
-		actor.SendText(messaging.CategorySystem, line)
+		actor.SendText(messaging.CategoryRefusal, line)
 		// Let the mob's behavior tree react to the refused aggression, the
 		// same way a refused melee attack does.
 		mobs.FireAttackRejected(m, actor.GetUserId())
