@@ -79,7 +79,7 @@ func Defuse(actor Actor, opts DefuseOptions) DefuseResult {
 	}
 
 	if room.AreMobsAttacking(actor.GetUserId()) {
-		actor.SendText(messaging.CategorySystem, "You can't do that while you are under attack!")
+		refusal.WhileUnderAttack(actor, "defuse a trap")
 		return DefuseResult{Reason: "under attack"}
 	}
 
@@ -242,7 +242,7 @@ func resolveDefuseLockTarget(actor Actor, room *rooms.Room, noun string) defuseL
 		}
 	}
 
-	actor.SendText(messaging.CategorySystem, "There is no such exit or container.")
+	refusal.NotHereThing(actor)
 	return defuseLockTarget{kind: lockTargetNone}
 }
 

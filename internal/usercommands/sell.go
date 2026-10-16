@@ -45,7 +45,7 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	if strings.HasPrefix(lower, "all.") {
 		suffix := strings.TrimPrefix(lower, "all.")
 		if strings.TrimSpace(suffix) == "" {
-			user.SendText(messaging.CategorySystem, "Specify what you want to sell. (e.g. <ansi fg=\"command\">sell all iron-ore</ansi>)")
+			refusal.Prompt(user, "sell", refusal.What, "sell <item>")
 			return true, nil
 		}
 		quantity = unlimited
@@ -58,7 +58,7 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			firstWord := strings.ToLower(args[0])
 			if firstWord == "all" {
 				if strings.TrimSpace(args[1]) == "" {
-					user.SendText(messaging.CategorySystem, "Specify what you want to sell. (e.g. <ansi fg=\"command\">sell all iron-ore</ansi>)")
+					refusal.Prompt(user, "sell", refusal.What, "sell <item>")
 					return true, nil
 				}
 				quantity = unlimited
@@ -69,7 +69,7 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		} else if strings.ToLower(strings.TrimSpace(rest)) == "all" {
 			// bare "sell all" with no item name
-			user.SendText(messaging.CategorySystem, "Specify what you want to sell. (e.g. <ansi fg=\"command\">sell all iron-ore</ansi>)")
+			refusal.Prompt(user, "sell", refusal.What, "sell <item>")
 			return true, nil
 		}
 	}

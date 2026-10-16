@@ -70,8 +70,7 @@ func mutationPreamble(actor Actor, mutationKey string, combatRequired bool, stam
 	// should not venom-coat between hammer strokes.
 	if char.IsActing() {
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
-				"You can't use that ability while focused on your work. Finish or be interrupted first.")
+			refusal.WhileBusy(actor, "use that ability")
 		}
 		return preambleResult{BlockReason: "busy"}
 	}

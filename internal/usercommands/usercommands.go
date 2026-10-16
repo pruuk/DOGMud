@@ -426,11 +426,7 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 			// Fall through — let the flee command execute normally
 		} else if cmd != `cancel` && cmd != `flee` {
 			if cmdInfo, hasCmdInfo := userCommands[cmd]; !hasCmdInfo || !cmdInfo.AllowedWhenDowned {
-				cs, _ := user.Character.Activity.CastingData()
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(
-					`<ansi fg="cyan">You are holding <ansi fg="cyan-bold">%d/%d</ansi> folds. Type <ansi fg="cyan-bold">cancel</ansi> to stop.</ansi>`,
-					cs.FoldsAccumulated,
-					cs.FoldsNeeded))
+				refusal.WhileBusy(user, "do that")
 				return true, nil
 			}
 		}

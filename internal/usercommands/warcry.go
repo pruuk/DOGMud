@@ -19,12 +19,12 @@ import (
 func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 	result := actions.ExecuteWarcry(&actions.UserActor{User: user, Room: room})
 	if result.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
+		refusal.Cost(user, result.Cost)
 		return true, nil
 	}
 
 	if result.Crafting {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't muster a warcry while focused on your work. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "muster a warcry")
 		return true, nil
 	}
 

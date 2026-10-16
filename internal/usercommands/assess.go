@@ -37,9 +37,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if !user.Character.TryCooldown(`assess`, "6 rounds") {
-		user.SendText(messaging.CategorySystem,
-			fmt.Sprintf("You need to wait %d more rounds before you can assess again.", user.Character.GetCooldown(`assess`)),
-		)
+		refusal.Cooldown(user, "assess again")
 		return true, nil
 	}
 

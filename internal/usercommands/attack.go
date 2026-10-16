@@ -18,10 +18,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-// attackNothingHereLine answers a bare `attack` with no foe to pick up. A name
-// that resolves to no one (and a resolved id whose record is gone) reads
+// A bare `attack` with no foe to pick up reads refusal.NoTarget. A name that
+// resolves to no one (and a resolved id whose record is gone) reads
 // refusal.NotHereCreatureLine.
-const attackNothingHereLine = `There is nothing here to attack.`
 
 func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -121,7 +120,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// unperceived hider and a name that matches nothing read the same.
 	if attackMobInstanceId == 0 && attackPlayerId == 0 {
 		if rest == `` {
-			user.SendText(messaging.CategorySystem, attackNothingHereLine)
+			refusal.NoTarget(user, "attack")
 		} else {
 			refusal.NotHereCreature(user)
 		}

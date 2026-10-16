@@ -40,13 +40,13 @@ type MeleeTargetOpts struct {
 	CharmedMsg string
 }
 
-func (o MeleeTargetOpts) craftingMsg() string {
-	v := o.CraftingVerb
-	if v == "" {
-		v = o.Verb
+// craftingVerb is what refusal.WhileBusy says the player can't do while
+// busy: CraftingVerb, else Verb.
+func (o MeleeTargetOpts) craftingVerb() string {
+	if o.CraftingVerb != "" {
+		return o.CraftingVerb
 	}
-	return fmt.Sprintf(
-		`<ansi fg="red">You can't %s while focused on your work. Finish or be interrupted first.</ansi>`, v)
+	return o.Verb
 }
 
 // promptText is the empty-target prompt: "<PromptVerb> whom?" with a hint
@@ -161,7 +161,7 @@ func commitMeleeEngagement(actor Actor) {
 func StageMeleeTarget(user *users.UserRecord, room *rooms.Room, rest string, opts MeleeTargetOpts) (Actor, bool) {
 	base := &UserActor{User: user, Room: room}
 	if user.Character.IsActing() {
-		user.SendText(messaging.CategorySystem, opts.craftingMsg())
+		refusal.WhileBusy(user, opts.craftingVerb())
 		return nil, true
 	}
 	if user.Character.IsInCombat() {

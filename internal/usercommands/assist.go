@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -19,7 +20,7 @@ func Assist(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	partyInfo := parties.Get(user.UserId)
 	if partyInfo == nil {
-		user.SendText(messaging.CategorySystem, `You are not in a party.`)
+		refusal.NotInParty(user)
 		return true, nil
 	}
 

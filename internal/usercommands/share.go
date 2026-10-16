@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -80,7 +81,7 @@ func Share(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	} else {
 
-		user.SendText(messaging.CategorySystem, `You can share gold by typing <ansi fg="command">share [amt] gold</ansi>?`)
+		refusal.Prompt(user, "share", refusal.HowMuchGold, "share <amount> gold")
 	}
 
 	return true, nil

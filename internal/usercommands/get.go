@@ -353,7 +353,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 
 			if foundItem.ItemId == 0 {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a "%s" in your %s.`, rest, label))
+				refusal.NotCarrying(user, rest)
 				return true, nil
 			}
 
@@ -539,7 +539,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		matchItem, found := container.FindItem(rest)
 
 		if !found {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s in the <ansi fg="container">%s</ansi>.`, rest, containerName))
+			refusal.NotHereThing(user)
 		} else {
 
 			user.Character.CancelConditionsWithFlag(conditions.Hidden) // No longer sneaking
@@ -798,7 +798,7 @@ func takeCorpseGold(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corp
 func takeCorpseItem(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corpse, itemName string) {
 	matchItem, found := corpse.Loot.FindItem(itemName)
 	if !found {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't see a %s in the %s.`, itemName, corpseNameFor(user, room, corpse)))
+		refusal.NotHereThing(user)
 		return
 	}
 

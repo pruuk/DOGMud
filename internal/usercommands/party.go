@@ -58,7 +58,7 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	//
 
 	if currentParty == nil {
-		user.SendText(messaging.CategorySystem, `You are not attached to a party.`)
+		refusal.NotInParty(user)
 		return true, nil
 	}
 
@@ -200,7 +200,7 @@ func cmdPartyInvite(user *users.UserRecord, room *rooms.Room, currentParty *part
 
 	target, err := actions.ResolveTargetActor(room, name, actions.ResolveTargetOptions{Viewer: user.Character})
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`%s not found.`, rest))
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 	if !target.IsPlayer() {

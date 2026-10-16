@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -172,7 +173,7 @@ func Mail(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			attached = &itemCopy
 			msg.Item = attached
 		} else {
-			user.SendText(messaging.CategorySystem, `Could not find item: `+question.Response)
+			refusal.NotCarrying(user, question.Response)
 			question.RejectResponse()
 			return true, nil
 		}

@@ -213,7 +213,7 @@ func guildDisband(user *users.UserRecord, rest string) {
 		return
 	}
 	if !g.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only the guild leader can disband the guild.`)
+		refusal.NotGuildLeader(user, "disband the guild")
 		return
 	}
 	cmdPrompt, _ := user.StartPrompt(`guild`, rest)
@@ -265,7 +265,7 @@ func guildInvite(user *users.UserRecord, remainder string) {
 		return
 	}
 	if !g.CanManage(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only officers and the leader can invite.`)
+		refusal.NotGuildOfficer(user, "invite")
 		return
 	}
 	name := strings.TrimSpace(remainder)
@@ -331,7 +331,7 @@ func guildKick(user *users.UserRecord, remainder string) {
 		return
 	}
 	if !g.CanManage(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only officers and the leader can kick.`)
+		refusal.NotGuildOfficer(user, "kick")
 		return
 	}
 	targetId, found := findGuildMemberByName(g, remainder)
@@ -365,7 +365,7 @@ func guildSetRank(user *users.UserRecord, remainder string, promote bool) {
 		return
 	}
 	if !g.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only the guild leader can change ranks.`)
+		refusal.NotGuildLeader(user, "change ranks")
 		return
 	}
 	targetId, found := findGuildMemberByName(g, remainder)
@@ -402,7 +402,7 @@ func guildTransfer(user *users.UserRecord, remainder, rest string) {
 		return
 	}
 	if !g.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only the guild leader can transfer leadership.`)
+		refusal.NotGuildLeader(user, "transfer leadership")
 		return
 	}
 	targetId, found := findGuildMemberByName(g, remainder)
@@ -651,7 +651,7 @@ func guildTreasury(user *users.UserRecord, remainder string) {
 	// `guild treasury delegate [on|off]` — leader-only.
 	if fields := strings.Fields(strings.ToLower(remainder)); len(fields) > 0 && fields[0] == "delegate" {
 		if !g.IsLeader(user.UserId) {
-			user.SendText(messaging.CategorySystem, `Only the leader can delegate treasury access.`)
+			refusal.NotGuildLeader(user, "delegate treasury access")
 			return
 		}
 		on := !g.TreasuryDelegated
@@ -711,7 +711,7 @@ func guildSetTitle(user *users.UserRecord, remainder string) {
 		return
 	}
 	if !g.IsLeader(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only the guild leader can rename ranks.`)
+		refusal.NotGuildLeader(user, "rename ranks")
 		return
 	}
 	fields := strings.Fields(remainder)
@@ -745,7 +745,7 @@ func guildSetMotd(user *users.UserRecord, remainder string) {
 		return
 	}
 	if !g.CanManage(user.UserId) {
-		user.SendText(messaging.CategorySystem, `Only officers and the leader can set the MOTD.`)
+		refusal.NotGuildOfficer(user, "set the MOTD")
 		return
 	}
 	text := strings.TrimSpace(remainder)

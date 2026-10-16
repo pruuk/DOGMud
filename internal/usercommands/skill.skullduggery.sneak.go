@@ -30,7 +30,7 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	// Can't sneak while crafting or otherwise occupied
 	if !user.Character.IsFree() {
-		user.SendText(messaging.CategorySystem, `You are busy with something else.`)
+		refusal.WhileBusy(user, "sneak")
 		return true, nil
 	}
 
@@ -39,16 +39,13 @@ func Sneak(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	// Check cooldown — only block if on cooldown from a prior failure
 	if !user.Character.CooldownReady(sneakCooldownKey) {
-		remaining := user.Character.Cooldowns[sneakCooldownKey]
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			"You need to wait %d more rounds before you can try that again.",
-			remaining))
+		refusal.Cooldown(user, "sneak")
 		return true, nil
 	}
 
 	result := actions.Sneak(&actions.UserActor{User: user, Room: room})
 	if result.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
+		refusal.Cost(user, result.Cost)
 		return true, nil
 	}
 

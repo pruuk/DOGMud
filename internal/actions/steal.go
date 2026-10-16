@@ -112,7 +112,7 @@ func Steal(actor Actor, opts StealOptions) StealResult {
 
 	// Under-attack gate — mobs with userId=0 short-circuit this harmlessly.
 	if room.AreMobsAttacking(actor.GetUserId()) {
-		actor.SendText(messaging.CategorySystem, "You can't do that while you are under attack!")
+		refusal.WhileUnderAttack(actor, "steal")
 		return StealResult{Reason: "under attack"}
 	}
 
@@ -218,7 +218,7 @@ func stealFromMob(actor Actor, mobInstanceId int, t theftAttempt) StealResult {
 
 	m := mobs.GetInstance(mobInstanceId)
 	if m == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return StealResult{Reason: "target not found"}
 	}
 
@@ -437,7 +437,7 @@ func stealFromPlayer(actor Actor, targetUserId int, t theftAttempt) StealResult 
 
 	targetUser := users.GetByUserId(targetUserId)
 	if targetUser == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return StealResult{Reason: "target not found"}
 	}
 

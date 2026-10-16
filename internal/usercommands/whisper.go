@@ -23,7 +23,7 @@ func Whisper(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	whisperName := args[0]
 	if len(rest) < len(whisperName)+1 {
-		user.SendText(messaging.CategorySystem, "You need to specify a message.")
+		refusal.Prompt(user, "whisper", refusal.What, "whisper <name> <message>")
 		return true, nil
 	}
 

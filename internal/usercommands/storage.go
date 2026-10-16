@@ -252,7 +252,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		}
 		switch retrieved {
 		case 0:
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s in storage.`, itemName))
+			refusal.NotInStorage(user, itemName)
 		case 1:
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You removed the <ansi fg="itemname">%s</ansi> from storage.`, itemName))
 		default:
@@ -266,7 +266,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		slots := user.ItemStorage.GetSlots()
 		itmIdx-- // convert to 0-based
 		if itmIdx >= len(slots) {
-			user.SendText(messaging.CategorySystem, `You don't have that item in storage.`)
+			refusal.NotInStorage(user, "")
 			return true, nil
 		}
 		storageRemoveOne(user, slots[itmIdx].Item)
@@ -281,7 +281,7 @@ func Storage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			if retrieved > 0 {
 				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can only retrieve %d from storage.`, retrieved))
 			} else {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't have a %s in storage.`, itemName))
+				refusal.NotInStorage(user, itemName)
 			}
 			break
 		}

@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -43,8 +44,7 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 	// separately so a player at their companion limit isn't wrongly told they
 	// lack conviction.
 	if len(ch.Companions) >= ch.GetMaxCompanions() {
-		user.SendText(messaging.CategorySpellManifestation,
-			"You are already sustaining as many companions as your will can hold.")
+		refusal.CompanionsFull(user)
 		return false
 	}
 	reserve := ch.CalcCompanionReserve(baseReserve)
@@ -127,7 +127,7 @@ func resolveCompanionSummon(user *users.UserRecord, spellData *spells.SpellData,
 	}
 	if !ch.AddCompanion(info) {
 		// Should not happen since we checked the budget above, but be safe
-		user.SendText(messaging.CategorySystem, "You cannot maintain any more companions.")
+		refusal.CompanionsFull(user)
 		return false
 	}
 	// Apply the new reservation immediately so usable Conviction drops now.

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	mobcmd "github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -20,11 +21,8 @@ var refusalFailureTonePattern = regexp.MustCompile(`(?i)\b(?:failed|failure|erro
 
 func assertVoluntaryRefusalOutput(t *testing.T, lines []string, pool characters.Pool) {
 	t.Helper()
-	want := map[characters.Pool]string{
-		characters.PoolStamina:    "You are too spent to manage that right now.",
-		characters.PoolConviction: "You cannot muster the resolve for that right now.",
-	}[pool]
-	require.NotEmpty(t, want, "test must independently specify the pool-aware refusal prose")
+	want := refusal.CostText(characters.CostCommitResult{Status: characters.CostRefused, Pool: pool})
+	require.NotEmpty(t, want, "the pool must have refusal.CostText prose")
 	require.Len(t, lines, 1, "a voluntary refusal must emit exactly one private line")
 	require.Equal(t, 1, strings.Count(lines[0], want), "the exact refusal prose must appear once")
 	require.Empty(t, refusalDisclosurePattern.FindString(lines[0]), "refusal leaked tuning or numeric detail")

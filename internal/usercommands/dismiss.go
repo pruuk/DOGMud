@@ -58,7 +58,7 @@ func Dismiss(rest string, user *users.UserRecord,
 	}
 
 	if len(user.Character.Companions) == 0 {
-		user.SendText(messaging.CategorySystem, "You have no companions to dismiss.")
+		refusal.NoCompanion(user)
 		return true, nil
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -114,9 +115,7 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if !user.Character.TryCooldown(`map`, "1 round") {
-		user.SendText(messaging.CategorySystem,
-			`You can only create 1 map per round.`,
-		)
+		refusal.Cooldown(user, "draw another map")
 		return true, errors.New(`you're doing that too often`)
 	}
 

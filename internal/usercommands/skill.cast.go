@@ -110,7 +110,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Use IsFree() rather than checking CraftingState directly so that all
 	// Activity machine states are covered through the migration window.
 	if !user.Character.IsFree() {
-		user.SendText(messaging.CategorySystem, `You are too busy to cast right now.`)
+		refusal.WhileBusy(user, "cast")
 		return true, nil
 	}
 
@@ -189,8 +189,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// expression for both is what stops the two seams disagreeing.
 	if spellInfo.SummonMobId > 0 || spellInfo.EffectType == `charm` {
 		if len(user.Character.Companions) >= user.Character.GetMaxCompanions() {
-			user.SendText(messaging.CategorySpellManifestation,
-				`You are already sustaining as many companions as your will can hold.`)
+			refusal.CompanionsFull(user)
 			return true, nil
 		}
 		reserve := user.Character.CalcCompanionReserve(
@@ -249,7 +248,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			// Refused before any resources were spent (U7b admission rule).
 			user.SendText(messaging.CategorySystem, `<ansi fg="red">There is nothing here for that spell to strike.</ansi>`)
 		} else {
-			user.SendText(messaging.CategorySystem, `<ansi fg="red">You need a target to cast that spell.</ansi>`)
+			refusal.NoTarget(user, "cast "+spellInfo.SpellId)
 		}
 		return true, nil
 	case !result.Initiated:
@@ -302,7 +301,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		// Activity machine refused — already busy with something. This
 		// path should not be reached (IsFree() check above guards it),
 		// but handle defensively.
-		user.SendText(messaging.CategorySystem, `You're already busy with something else.`)
+		refusal.WhileBusy(user, "cast")
 		return true, nil
 	}
 

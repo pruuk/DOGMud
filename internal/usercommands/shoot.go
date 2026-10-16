@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/opinions"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/perception"
@@ -105,13 +106,13 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	result := actions.ExecuteFire(&actions.UserActor{User: user, Room: room}, rest)
 
 	if result.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(result.Cost))
+		refusal.Cost(user, result.Cost)
 		return true, nil
 	}
 
 	// --- Early exits (no shot fired) ---
 	if result.Crafting {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't shoot while focused on your work. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "shoot")
 		return true, nil
 	}
 	if result.NoWeapon {
@@ -140,7 +141,7 @@ func Fire(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if result.NoTarget {
-		user.SendText(messaging.CategorySystem, `Could not find your target.`)
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 	if result.Blinded {

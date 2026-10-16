@@ -146,7 +146,7 @@ func Unlock(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	}
 
-	user.SendText(messaging.CategorySystem, "There is no such exit or container.")
+	refusal.NotHereThing(user)
 	return true, nil
 
 }

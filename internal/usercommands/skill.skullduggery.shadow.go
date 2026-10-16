@@ -1,7 +1,6 @@
 package usercommands
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
@@ -85,9 +84,7 @@ func Shadow(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	result := actions.Shadow(actor, opts)
 
 	if result.OnCooldown {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
-			"You need to wait %s before shadowing again.",
-			result.Reason))
+		refusal.Cooldown(user, "shadow anyone")
 	}
 
 	return true, nil

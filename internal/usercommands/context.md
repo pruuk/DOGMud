@@ -580,11 +580,11 @@ a gate.
   sends no room line. `hood` refuses a darkness in the light
   slot with its existing "has no hood." line (`hoodedLight` reads light
   sources only).
-- **`busyRefusalText(verb string)`** (`busy_refuse.go`) is now the one string
-  builder behind both `refuseWhileBusy` (the pre-dispatch gate most commands
-  use) and a wrapper that renders `Busy` from a shared body's own result
-  (`Remove`, below): the wording must not fork between "refused before the
-  call" and "refused inside the call".
+- **`refusal.WhileBusy(user, verb)`** (`internal/refusal`) is the one busy
+  line behind both `refuseWhileBusy` (`busy_refuse.go`, the pre-dispatch gate
+  most commands use) and a wrapper that renders `Busy` from a shared body's
+  own result (`Remove`, below): the wording must not fork between "refused
+  before the call" and "refused inside the call".
 - **`Go` is the one interrupter** (`go.go`): it stops a craft or salvage
   through `actions.InterruptWorkOnMove`, the helper every mob own move shares
   (#512), and tells the player "Your movement interrupts your crafting." or
@@ -608,7 +608,7 @@ a gate.
 - **`Remove`** (`remove.go`): the `all` branch calls
   `actions.RemoveAllEquipment(actor)`, which owns the busy gate, the curse
   gate per item and one `EquipmentChange` event per removal; the wrapper
-  renders `res.Busy` through `busyRefusalText`, a line per `res.Cursed` item,
+  renders `res.Busy` through `refusal.WhileBusy`, a line per `res.Cursed` item,
   then the reservation-return disclosure. The single-item path calls
   `actions.RemoveEquipment(actor, rest)` and switches on `result.Busy`,
   `!result.Found`, `result.Cursed` and `result.CursedOverridden`, so a

@@ -521,13 +521,13 @@ func TestTauntRallyWarcryWrapperAdmission(t *testing.T) {
 			require.NotNil(t, refusal)
 			if guard.player {
 				require.Len(t, refusal.Body.List, 2)
-				require.True(t, nodeHasCall(refusal.Body.List[0], "SendText"))
-				require.True(t, nodeHasCall(refusal.Body.List[0], "CostRefusalText"))
+				require.Equal(t, "refusal.Cost(user, result.Cost)", formattedASTNode(t, fset, refusal.Body.List[0]))
 				require.True(t, handledReturn(refusal.Body.List[1]))
 			} else {
 				require.Len(t, refusal.Body.List, 1)
 				require.True(t, handledReturn(refusal.Body.List[0]))
-				require.False(t, nodeHasCall(fn.Body, "CostRefusalText"))
+				require.False(t, nodeHasCall(fn.Body, "Cost"))
+				require.False(t, nodeHasCall(fn.Body, "CostText"))
 			}
 			if guard.staged {
 				require.Len(t, exactCallPositions(t, fset, fn.Body, "stageSpecialMoveTarget", true), 1)
@@ -639,13 +639,14 @@ func TestSpecialMoveWrapperAdmission(t *testing.T) {
 				}
 				require.True(t, executeAssignment, "%s must pass its staged actor directly to %s", function, executeName)
 				require.Len(t, refusal.Body.List, 2, "%s refusal branch must send shared text then return", function)
-				require.True(t, nodeHasCall(refusal.Body.List[0], "SendText"), "%s refusal branch must send player text first", function)
-				require.True(t, nodeHasCall(refusal.Body.List[0], "CostRefusalText"), "%s refusal branch must use shared refusal text", function)
+				require.Equal(t, "refusal.Cost(user, "+resultName+".Cost)", formattedASTNode(t, fset, refusal.Body.List[0]),
+					"%s refusal branch must send the shared refusal.Cost line first", function)
 				require.True(t, handledReturn(refusal.Body.List[1]), "%s refusal branch must immediately return handled", function)
 			} else {
 				require.Len(t, refusal.Body.List, 1, "%s mob refusal branch must be silent and immediate", function)
 				require.True(t, handledReturn(refusal.Body.List[0]), "%s mob refusal branch must return handled", function)
-				require.False(t, nodeHasCall(fn.Body, "CostRefusalText"), "%s mob wrapper must not render private refusal text", function)
+				require.False(t, nodeHasCall(fn.Body, "Cost"), "%s mob wrapper must not render private refusal text", function)
+				require.False(t, nodeHasCall(fn.Body, "CostText"), "%s mob wrapper must not render private refusal text", function)
 			}
 			return
 		}

@@ -90,7 +90,7 @@ func Drop(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		g, _ := strconv.ParseInt(args[0], 10, 32)
 		dropAmt := int(g)
 		if dropAmt < 1 {
-			user.SendText(messaging.CategorySystem, "Oops!")
+			refusal.Prompt(user, "drop", refusal.HowMuchGold, "drop <amount> gold")
 			return true, nil
 		}
 

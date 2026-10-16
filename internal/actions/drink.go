@@ -177,8 +177,7 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	}
 
 	if char.IsActing() {
-		actor.SendText(messaging.CategorySystem, fmt.Sprintf(
-			`<ansi fg="red">You can't %s while focused on your work. Finish or be interrupted first.</ansi>`, `drink`))
+		refusal.WhileBusy(actor, `drink`)
 		return DrinkResult{Refusal: DrinkRefuseBusy}
 	}
 

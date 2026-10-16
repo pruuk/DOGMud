@@ -42,7 +42,7 @@ func Throttle(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	// Delegate core resolution to the shared action.
 	res := actions.ExecuteThrottle(actor)
 	if res.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(res.Cost))
+		refusal.Cost(user, res.Cost)
 		return true, nil
 	}
 

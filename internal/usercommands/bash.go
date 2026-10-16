@@ -36,13 +36,13 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Delegate core bash logic to the shared action.
 	bashResult := actions.ExecuteBash(actor)
 	if bashResult.Cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(bashResult.Cost))
+		refusal.Cost(user, bashResult.Cost)
 		return true, nil
 	}
 
 	if bashResult.Crafting {
 		// Safety net — should have been caught by the pre-reject above.
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You can't bash while focused on your work. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "bash")
 		return true, nil
 	}
 

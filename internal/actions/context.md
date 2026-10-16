@@ -72,8 +72,8 @@ single-unit request, then delegates the full-or-refuse decision, pool update,
 and fractional carry to `Character.QuoteActionCost` and `Character.CommitCost`.
 It performs no direct `ApplyCost*` call and emits no private text. U8 shared
 action results carry the returned `CostCommitResult`; user wrappers can
-render a refused status through `CostRefusalText`, while equivalent mob wrappers
-stay silent.
+render a refused status through `refusal.Cost` (`internal/refusal`), while
+equivalent mob wrappers stay silent.
 
 - **UserActor** (`actor_user.go`): wraps a `*users.UserRecord`, sends text via
   `user.SendText()`, skill progression goes through `user.Character.OnSkillUse()`.

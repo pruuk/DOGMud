@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/narration"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
@@ -142,7 +143,7 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 
 	case result.AlreadyCrafting:
-		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">You are already working on something. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "craft")
 		return true, nil
 
 	case result.SkillTooLow:
@@ -318,7 +319,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 
 	// Already crafting?
 	if user.Character.IsCrafting() {
-		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">You are already working on something. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "craft")
 		return true, nil
 	}
 
@@ -413,7 +414,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 			Actor:   state.ActorRef{UserId: user.UserId},
 		},
 	); err != nil {
-		craftDeliver(user, messaging.CategorySystem, `<ansi fg="red">You are already working on something. Finish or be interrupted first.</ansi>`)
+		refusal.WhileBusy(user, "craft")
 		return true, nil
 	}
 	craftDeliver(user, messaging.CategoryCraft, fmt.Sprintf(

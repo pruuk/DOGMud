@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 )
 
 // SleepOptions is reserved for future authoring knobs (bed-item
@@ -23,7 +24,7 @@ type SleepResult struct {
 // (via mob.Command("sleep")).
 //
 // Fails when the actor is in combat or has Aggro. User actors receive a
-// player-visible "You can't sleep right now." message; mob actors fail
+// player-visible refusal.WhileFighting line; mob actors fail
 // silently — the schedule executor retries on the next idle tick after
 // combat ends.
 //
@@ -43,8 +44,7 @@ func Sleep(actor Actor, opts SleepOptions) SleepResult {
 	// Combat gate.
 	if c.IsInCombat() {
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
-				"You can't sleep right now.")
+			refusal.WhileFighting(actor, "sleep")
 		}
 		return SleepResult{Success: false, Reason: "in combat"}
 	}

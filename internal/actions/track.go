@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/contest"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -203,9 +204,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 		if !char.TryCooldown(skills.Search.String(), "1 round") {
 			result.OnCooldown = true
 			if actor.IsPlayer() {
-				actor.SendText(messaging.CategorySystem,
-					fmt.Sprintf("You need to wait %d more rounds to use that skill again.",
-						char.GetCooldown(skills.Search.String())))
+				refusal.Cooldown(actor, "track again")
 			}
 			return result
 		}
@@ -226,9 +225,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	if !char.TryCooldown(skills.Search.String(), "1 round") {
 		result.OnCooldown = true
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
-				fmt.Sprintf("You need to wait %d more rounds to use that skill again.",
-					char.GetCooldown(skills.Search.String())))
+			refusal.Cooldown(actor, "track again")
 		}
 		return result
 	}

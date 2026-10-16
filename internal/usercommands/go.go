@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/relationships"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -68,7 +69,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		// home, an ordinary room they can flee from normally. And with
 		// DeathRecoveryRoom now 0 the hatch would have opened in room 0
 		// instead, letting anyone standing there ignore combat entirely.
-		user.SendText(messaging.CategorySystem, "You can't do that! You are in combat!")
+		refusal.WhileFighting(user, "move")
 		return true, nil
 	}
 

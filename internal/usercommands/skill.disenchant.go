@@ -20,7 +20,7 @@ func Disenchant(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	rest = strings.TrimSpace(rest)
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `<ansi fg="command">disenchant <item></ansi>: strip a Chrysalis enchantment from an item.`)
+		refusal.Prompt(user, "disenchant", refusal.What, "disenchant <item>")
 		return true, nil
 	}
 

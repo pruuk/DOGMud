@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
@@ -43,7 +44,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
 	if len(args) < 1 {
-		user.SendText(messaging.CategorySystem, "You wanna pock a lock? Specify where it is.")
+		refusal.Prompt(user, "pick", refusal.What, "picklock <exit or container>")
 		return true, nil
 	}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/lightnotice"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -29,7 +30,7 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// (slice 5a), which fires one EquipmentChange per item.
 		res := actions.RemoveAllEquipment(actor)
 		if res.Busy {
-			user.SendText(messaging.CategorySystem, busyRefusalText(`change equipment`))
+			refusal.WhileBusy(user, `change equipment`)
 			return true, nil
 		}
 		for _, it := range res.Cursed {
@@ -52,9 +53,9 @@ func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	result := actions.RemoveEquipment(actor, rest)
 	switch {
 	case result.Busy:
-		user.SendText(messaging.CategorySystem, busyRefusalText(`change equipment`))
+		refusal.WhileBusy(user, `change equipment`)
 	case !result.Found:
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You don't appear to be using a "%s".`, rest))
+		refusal.NotWearing(user, rest)
 	case result.Cursed:
 		user.SendText(messaging.CategorySystem, cursedLine(result.Item))
 	default:

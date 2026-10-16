@@ -35,7 +35,7 @@ func Report(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if rest == "party" {
 		currentParty := parties.Get(user.UserId)
 		if currentParty == nil {
-			user.SendText(messaging.CategorySystem, "You are not in a party.")
+			refusal.NotInParty(user)
 			return true, nil
 		}
 

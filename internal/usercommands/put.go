@@ -52,7 +52,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	if containerName == `` {
-		user.SendText(messaging.CategorySystem, `No container found by that name`)
+		refusal.NotHereThing(user)
 		return true, nil
 	}
 

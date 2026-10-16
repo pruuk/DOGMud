@@ -51,12 +51,13 @@ func TestKickActorLineWrapsAt80(t *testing.T) {
 }
 
 // systemNoticeMarkers are the only things a special-move file may still send
-// as CategorySystem: refusals and cost notices, never narration. Matched
-// against a SendText line joined with the line after it.
+// as CategorySystem: refusals not yet moved to internal/refusal, never
+// narration. Matched against a SendText line joined with the line after it.
+// A marker stays only while its line is still on CategorySystem in one of
+// the four files; the busy and cost lines left with M7 slice 3 (#371).
 var systemNoticeMarkers = []string{
-	"CostRefusalText", "focused on your work", "need a moment", "no target",
-	"already rallied", "still echoes", "to throw.", "isn't something you can throw",
-	"crumbles apart", "ChannelDefenceShortageText", "text)", "cannot make a sound",
+	"already rallied", "still echoes", "isn't something you can throw",
+	"crumbles apart", "text)", "cannot make a sound",
 }
 
 // #449 siblings: taunt, throw, rally and warcry kept narration on

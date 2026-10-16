@@ -243,7 +243,7 @@ func Throw(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	cost := admitThrowCost(user.Character, float64(cfg.SpecialMoveBaseStaminaCost))
 	if cost.Status == characters.CostRefused {
-		user.SendText(messaging.CategorySystem, actions.CostRefusalText(cost))
+		refusal.Cost(user, cost)
 		return true, nil
 	}
 

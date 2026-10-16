@@ -101,7 +101,7 @@ func Shadow(actor Actor, opts ShadowOptions) ShadowResult {
 func shadowMob(actor Actor, mobInstanceId int) ShadowResult {
 	m := mobs.GetInstance(mobInstanceId)
 	if m == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return ShadowResult{Reason: "target not found"}
 	}
 
@@ -147,7 +147,7 @@ func shadowMob(actor Actor, mobInstanceId int) ShadowResult {
 func shadowPlayer(actor Actor, targetUserId int) ShadowResult {
 	targetUser := users.GetByUserId(targetUserId)
 	if targetUser == nil {
-		actor.SendText(messaging.CategorySystem, "They seem to have vanished.")
+		refusal.NotHereCreature(actor)
 		return ShadowResult{Reason: "target not found"}
 	}
 

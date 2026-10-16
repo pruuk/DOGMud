@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/activity"
@@ -23,13 +24,13 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	rest = strings.TrimSpace(rest)
 
 	if rest == "" {
-		user.SendText(messaging.CategorySystem, `<ansi fg="command">salvage <item></ansi> - Break down an item for materials.`)
+		refusal.Prompt(user, "salvage", refusal.What, "salvage <item>")
 		return true, nil
 	}
 
 	// Already busy? (Activity machine will also reject if not Free.)
 	if !user.Character.IsFree() {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You're already busy working on something.</ansi>`)
+		refusal.WhileBusy(user, "salvage")
 		return true, nil
 	}
 
@@ -121,7 +122,7 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			Actor:   state.ActorRef{UserId: user.UserId},
 		},
 	); err != nil {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You're already busy working on something.</ansi>`)
+		refusal.WhileBusy(user, "salvage")
 		return true, nil
 	}
 
@@ -181,7 +182,7 @@ func startCorpseSalvage(user *users.UserRecord, room *rooms.Room, corpse rooms.C
 			Actor:   state.ActorRef{UserId: user.UserId},
 		},
 	); err != nil {
-		user.SendText(messaging.CategorySystem, `<ansi fg="red">You're already busy working on something.</ansi>`)
+		refusal.WhileBusy(user, "salvage")
 		return true, nil
 	}
 

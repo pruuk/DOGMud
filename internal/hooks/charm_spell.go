@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -71,8 +72,7 @@ func applyMobEffect_charm(
 	// something enormous is the DANGER, not the invoice.
 	reserve := ch.CalcCompanionReserve(characters.CompanionReserveBase(0))
 	if len(ch.Companions) >= ch.GetMaxCompanions() {
-		user.SendText(messaging.CategorySystem,
-			`You are already sustaining as many companions as your will can hold.`)
+		refusal.CompanionsFull(user)
 		return 0
 	}
 	if ch.WouldBreachReservationCap(characters.PoolConviction, reserve) {
@@ -118,7 +118,7 @@ func applyMobEffect_charm(
 		ConvictionReserve: reserve,
 	}
 	if !ch.AddCompanion(info) {
-		user.SendText(messaging.CategorySystem, `You cannot maintain any more companions.`)
+		refusal.CompanionsFull(user)
 		return 0
 	}
 	// Apply the new reservation immediately so usable Conviction drops now.

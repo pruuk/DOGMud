@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
@@ -63,9 +64,7 @@ func Forage(actor Actor, opts ForageOptions) ForageResult {
 	if !char.TryCooldown("forage", "6 rounds") {
 		result.OnCooldown = true
 		if actor.IsPlayer() {
-			actor.SendText(messaging.CategorySystem,
-				fmt.Sprintf("You need to wait %d more rounds before you can forage again.",
-					char.GetCooldown("forage")))
+			refusal.Cooldown(actor, "forage again")
 		}
 		return result
 	}

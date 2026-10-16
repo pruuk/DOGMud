@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -28,7 +29,7 @@ func Companion(rest string, user *users.UserRecord,
 	// ── Form 1: no args → list ──────────────────────────────────────────────
 	if rest == "" {
 		if len(companions) == 0 {
-			user.SendText(messaging.CategorySystem, "You have no companions.")
+			refusal.NoCompanion(user)
 			return true, nil
 		}
 

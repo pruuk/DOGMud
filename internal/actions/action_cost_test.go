@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/costs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
@@ -121,7 +122,7 @@ func TestCostRefusalText_UsesPoolAwareProseOnlyForRefusal(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := costRefusalText(tc.result)
+			got := refusal.CostText(tc.result)
 			if tc.phrase == "" {
 				require.Empty(t, got)
 				return
@@ -129,18 +130,6 @@ func TestCostRefusalText_UsesPoolAwareProseOnlyForRefusal(t *testing.T) {
 			require.Contains(t, got, tc.phrase)
 			require.False(t, digit.MatchString(got), "refusal prose must not expose a number")
 		})
-	}
-}
-
-// TestCostRefusalText_ExportsTheWrapperSeam catches an exported wrapper API
-// that bypasses the pool-aware private helper or returns a different result.
-func TestCostRefusalText_ExportsTheWrapperSeam(t *testing.T) {
-	for _, result := range []characters.CostCommitResult{
-		{Status: characters.CostRefused, Pool: characters.PoolStamina},
-		{Status: characters.CostRefused, Pool: characters.PoolConviction},
-		{Status: characters.CostPaid, Pool: characters.PoolStamina},
-	} {
-		require.Equal(t, costRefusalText(result), CostRefusalText(result))
 	}
 }
 
