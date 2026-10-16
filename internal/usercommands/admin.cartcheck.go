@@ -29,7 +29,7 @@ func CartCheck(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 	if rest != "" {
 		if _, err := rooms.GetZoneRoot(rest); err != nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`Zone "%s" not found.`, rest))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Zone "%s" not found.`, rest))
 			return true, nil
 		}
 	}
@@ -62,12 +62,12 @@ func CartCheck(rest string, user *users.UserRecord, room *rooms.Room, flags even
 	}
 
 	if len(lines) == 0 {
-		user.SendText(messaging.CategorySystem, "Cartesian consistency: no findings. All checked zones are clean.")
+		user.SendText(messaging.CategoryAdmin, "Cartesian consistency: no findings. All checked zones are clean.")
 		return true, nil
 	}
 
 	out := strings.Join(lines, "\n")
 	out += fmt.Sprintf("\n\n%d error(s), %d warning(s).", totalErr, totalWarn)
-	user.SendText(messaging.CategorySystem, out)
+	user.SendText(messaging.CategoryAdmin, out)
 	return true, nil
 }

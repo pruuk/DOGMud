@@ -34,11 +34,11 @@ func Locate(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			return false, fmt.Errorf(`room %d not found`, locateUser.Character.RoomId)
 		}
 
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryAdmin,
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> is in room #<ansi fg="yellow-bold">%d</ansi> - <ansi fg="magenta">%s</ansi> <ansi fg="red">【%s】</ansi>`, locateUser.Character.Name, room.RoomId, room.Title, locateUser.Character.Zone),
 		)
 
-		locateUser.SendText(messaging.CategorySystem,
+		locateUser.SendText(messaging.CategoryWarning,
 			`You get the feeling someone is looking for you...`,
 		)
 
@@ -151,7 +151,7 @@ func Locate(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				if ct >= matchesPerPage {
 					onlineTableData := templates.GetTable(fmt.Sprintf(`Matches for "%s" [Page %d/%d]`, rest, pageNow+1, pageCt), headers, rows)
 					tplTxt, _ := templates.Process("tables/generic", onlineTableData, user.UserId)
-					user.SendText(messaging.CategorySystem, tplTxt)
+					user.SendText(messaging.CategoryAdmin, tplTxt)
 					rows = [][]string{}
 					ct = 0
 					pageNow++
@@ -164,13 +164,13 @@ func Locate(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		if pageNow < pageCt {
 			onlineTableData := templates.GetTable(fmt.Sprintf(`Matches for "%s" [Page %d/%d]`, rest, pageNow+1, pageCt), headers, rows)
 			tplTxt, _ := templates.Process("tables/generic", onlineTableData, user.UserId)
-			user.SendText(messaging.CategorySystem, tplTxt)
+			user.SendText(messaging.CategoryAdmin, tplTxt)
 		}
 
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem,
+	user.SendText(messaging.CategoryAdmin,
 		fmt.Sprintf("No user or mob found with the name %s", rest),
 	)
 

@@ -25,17 +25,17 @@ func Unban(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// An unban that did not persist must not be reported as done: the ban
 		// returns at the next restart while staff believe it was lifted.
 		if err := moderation.UnbanIP(fields[1]); err != nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">Unban FAILED to save:</ansi> %s is STILL banned. %s`, fields[1], err))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="alert-5">Unban FAILED to save:</ansi> %s is STILL banned. %s`, fields[1], err))
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">IP unbanned:</ansi> %s`, fields[1]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="green">IP unbanned:</ansi> %s`, fields[1]))
 		return true, nil
 	}
 
 	if err := moderation.Unban(fields[0]); err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">Unban FAILED to save:</ansi> <ansi fg="username">%s</ansi> is STILL banned. %s`, fields[0], err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="alert-5">Unban FAILED to save:</ansi> <ansi fg="username">%s</ansi> is STILL banned. %s`, fields[0], err))
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green"><ansi fg="username">%s</ansi> has been unbanned.</ansi>`, fields[0]))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="green"><ansi fg="username">%s</ansi> has been unbanned.</ansi>`, fields[0]))
 	return true, nil
 }

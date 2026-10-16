@@ -31,17 +31,17 @@ func QuestDebug(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 
 	target := users.GetByCharacterName(playerName)
 	if target == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">Player "%s" not found or not online.</ansi>`, playerName))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">Player "%s" not found or not online.</ansi>`, playerName))
 		return true, nil
 	}
 
 	if disable {
 		questengine.SetPlayerDebug(target.UserId, false)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 			`<ansi fg="yellow">Quest debug disabled for %s.</ansi>`, target.Character.Name))
 	} else {
 		questengine.SetPlayerDebug(target.UserId, true)
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 			`<ansi fg="green">Quest debug enabled for %s. All quest evaluations will log at verbose.</ansi>`,
 			target.Character.Name))
 	}

@@ -33,7 +33,7 @@ func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if args[0] == `role` {
 
 		if !user.HasRolePermission(`modify.role`) {
-			user.SendText(messaging.CategorySystem, `you do not have <ansi fg="command">modify.role</ansi> permission`)
+			user.SendText(messaging.CategoryAdmin, `you do not have <ansi fg="command">modify.role</ansi> permission`)
 			return true, nil
 		}
 
@@ -44,7 +44,7 @@ func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		_, roleExists := allRoles[newRole]
 
 		if newRole != users.RoleAdmin && newRole != users.RoleUser && !roleExists {
-			user.SendText(messaging.CategorySystem, `<ansi fg="alert-4">Invalid permission type.</ansi>`)
+			user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">Invalid permission type.</ansi>`)
 			return true, nil
 		}
 
@@ -55,12 +55,12 @@ func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			if strings.EqualFold(searchUser, u.Username) {
 
 				if u.Role == users.RoleAdmin {
-					user.SendText(messaging.CategorySystem, `<ansi fg="alert-4">Admin permissions cannot be removed this way.</ansi>`)
+					user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">Admin permissions cannot be removed this way.</ansi>`)
 					return true, nil
 				}
 
 				if u.Role == newRole {
-					user.SendText(messaging.CategorySystem, `<ansi fg="alert-4">That permission is already set for this user.</ansi>`)
+					user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">That permission is already set for this user.</ansi>`)
 					return true, nil
 				}
 
@@ -71,7 +71,7 @@ func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 				users.SaveUser(u)
 
-				u.SendText(messaging.CategorySystem, `<ansi fg="alert-3">Your role has been set to: `+newRole+`</ansi>`)
+				u.SendText(messaging.CategoryWarning, `<ansi fg="alert-3">Your role has been set to: `+newRole+`</ansi>`)
 				break
 			}
 		}
@@ -82,12 +82,12 @@ func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				if strings.EqualFold(searchUser, u.Username) {
 
 					if u.Role == users.RoleAdmin {
-						user.SendText(messaging.CategorySystem, `<ansi fg="alert-4">Admin permissions cannot be removed this way.</ansi>`)
+						user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">Admin permissions cannot be removed this way.</ansi>`)
 						return false
 					}
 
 					if u.Role == newRole {
-						user.SendText(messaging.CategorySystem, `<ansi fg="alert-4">That permission is already set for this user.</ansi>`)
+						user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-4">That permission is already set for this user.</ansi>`)
 						return false
 					}
 
@@ -106,7 +106,7 @@ func Modify(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		}
 
 		if len(foundUsername) > 0 {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`Role changed for user <ansi fg="username">%s</ansi> (Character name: <ansi fg="username">%s</ansi>).`, foundUsername, foundCharacterName))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Role changed for user <ansi fg="username">%s</ansi> (Character name: <ansi fg="username">%s</ansi>).`, foundUsername, foundCharacterName))
 			return true, nil
 		}
 

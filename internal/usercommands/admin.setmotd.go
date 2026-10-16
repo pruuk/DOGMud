@@ -26,13 +26,13 @@ func SetMotd(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	newMotd := strings.TrimSpace(rest)
 
 	if err := configs.SetVal("server.motd", newMotd); err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Error setting MOTD: %s`, err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Error setting MOTD: %s`, err))
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, `Message of the day has been updated.`)
-	user.SendText(messaging.CategorySystem, ``)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`New MOTD: %s`, newMotd))
+	user.SendText(messaging.CategoryAdmin, `Message of the day has been updated.`)
+	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`New MOTD: %s`, newMotd))
 
 	return true, nil
 }

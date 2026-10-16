@@ -90,8 +90,10 @@ reload → tick).
 ## DOGMud backport
 This is the DOGMud-native copy of the weather module. Data loads at runtime from
 `os.DirFS` over the engine's datafiles path rather than an embedded FS.
-`sendLine` isolates the DOGMud-specific two-argument `SendText(category, text)`
-call (DOGMud's fork signature).
+`sendLine(user, cat, text)` isolates the DOGMud-specific two-argument
+`SendText(category, text)` call (DOGMud's fork signature). The caller picks the
+category: the player report (`printLocalWeather`) passes `CategorySystem`, the
+admin subcommands `CategoryAdmin`, and their usage lines `CategoryUsage`.
 
 ## Files
 

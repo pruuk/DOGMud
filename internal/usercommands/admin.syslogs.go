@@ -28,13 +28,13 @@ func SysLogs(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	if args[0] == "off" {
 
 		events.AddToQueue(events.Log{FollowRemove: user.ConnectionId()})
-		user.SendText(messaging.CategorySystem, `Log follow disabled.`)
+		user.SendText(messaging.CategoryAdmin, `Log follow disabled.`)
 
 		return true, nil
 	}
 
 	events.AddToQueue(events.Log{FollowAdd: user.ConnectionId(), Level: strings.ToUpper(args[0])})
-	user.SendText(messaging.CategorySystem, `Log follow enabled. Use <ansi fg="command">syslogs off</ansi> to turn it off.`)
+	user.SendText(messaging.CategoryAdmin, `Log follow enabled. Use <ansi fg="command">syslogs off</ansi> to turn it off.`)
 
 	return true, nil
 }

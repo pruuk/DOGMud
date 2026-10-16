@@ -32,7 +32,7 @@ func Mudmail(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	// Get if already exists, otherwise create new
 	cmdPrompt, isNew := user.StartPrompt(`mudmail`, rest)
 	if isNew {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Starting a new mud mail...%s`, term.CRLFStr))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Starting a new mud mail...%s`, term.CRLFStr))
 	}
 
 	msg := users.Message{
@@ -48,7 +48,7 @@ func Mudmail(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	}
 
 	if question.Response == `` {
-		user.SendText(messaging.CategorySystem, `Some name must be provided.`)
+		user.SendText(messaging.CategoryAdmin, `Some name must be provided.`)
 		question.RejectResponse()
 		return true, nil
 	}
@@ -92,7 +92,7 @@ func Mudmail(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		if itemAttached, found := user.Character.FindInBackpack(question.Response); found {
 			msg.Item = &itemAttached
 		} else {
-			user.SendText(messaging.CategorySystem, `Could not find item: `+question.Response)
+			user.SendText(messaging.CategoryAdmin, `Could not find item: `+question.Response)
 			question.RejectResponse()
 			return true, nil
 		}
@@ -105,7 +105,7 @@ func Mudmail(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	if !question.Done {
 
 		tplTxt, _ := templates.Process("mail/message", msg, user.UserId)
-		user.SendText(messaging.CategorySystem, tplTxt)
+		user.SendText(messaging.CategoryAdmin, tplTxt)
 
 		return true, nil
 	}
@@ -113,7 +113,7 @@ func Mudmail(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	user.ClearPrompt()
 
 	if question.Response[0:1] != `Y` {
-		user.SendText(messaging.CategorySystem, `Okay! Cancelling mass mail.`)
+		user.SendText(messaging.CategoryAdmin, `Okay! Cancelling mass mail.`)
 		return true, nil
 	}
 
@@ -129,8 +129,8 @@ func Mudmail(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		u.Command(`inbox check`)
 	}
 
-	user.SendText(messaging.CategorySystem, ``)
-	user.SendText(messaging.CategorySystem, `<ansi fg="alert-5">Message SENT!</ansi>`)
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-5">Message SENT!</ansi>`)
+	user.SendText(messaging.CategoryAdmin, ``)
 	return true, nil
 }

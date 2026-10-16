@@ -33,7 +33,7 @@ func Reload(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		// A player who types `reload` is almost certainly holding a ranged
 		// weapon and expecting the retired command. Point them at the verb that
 		// replaced it rather than at a permissions error.
-		user.SendText(messaging.CategorySystem,
+		user.SendText(messaging.CategoryRefusal,
 			`You do not need to reload. Firing readies the next round by itself. See <ansi fg="command">help fire</ansi>.`)
 		return true, nil
 	}
@@ -41,35 +41,35 @@ func Reload(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	switch strings.ToLower(rest) {
 	case `items`:
 		if err := items.LoadDataFilesE(); err != nil {
-			user.SendText(messaging.CategorySystem,
+			user.SendText(messaging.CategoryAdmin,
 				`<ansi fg="red">Items reload failed. The items loaded before are still in use.</ansi>`)
-			user.SendText(messaging.CategorySystem, util.EscapeAnsiTags(err.Error()))
+			user.SendText(messaging.CategoryAdmin, util.EscapeAnsiTags(err.Error()))
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, `Items reloaded.`)
+		user.SendText(messaging.CategoryAdmin, `Items reloaded.`)
 		return true, nil
 	case `biomes`:
 		rooms.LoadBiomeDataFiles()
-		user.SendText(messaging.CategorySystem, `Biomes reloaded.`)
+		user.SendText(messaging.CategoryAdmin, `Biomes reloaded.`)
 		return true, nil
 	case `translations`:
 		ok := language.ReloadTranslation()
 		if !ok {
-			user.SendText(messaging.CategorySystem, `Translations reload failed.`)
+			user.SendText(messaging.CategoryAdmin, `Translations reload failed.`)
 		} else {
-			user.SendText(messaging.CategorySystem, `Translations reloaded.`)
+			user.SendText(messaging.CategoryAdmin, `Translations reloaded.`)
 		}
 		return true, nil
 	case `mapcache`:
 		mapper.ClearCache()
-		user.SendText(messaging.CategorySystem, `Mapper cache cleared. Next 'map' command will rebuild from current room data.`)
+		user.SendText(messaging.CategoryAdmin, `Mapper cache cleared. Next 'map' command will rebuild from current room data.`)
 		return true, nil
 	case `help`:
 		infoOutput, _ := templates.Process("admincommands/help/command.reload", nil, user.UserId)
 		user.SendText(messaging.CategoryUsage, infoOutput)
 		return true, nil
 	default:
-		user.SendText(messaging.CategorySystem, `Unknown reload command. See <ansi fg="command">reload help</ansi>.`)
+		user.SendText(messaging.CategoryAdmin, `Unknown reload command. See <ansi fg="command">reload help</ansi>.`)
 		return true, nil
 	}
 }

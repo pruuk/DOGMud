@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/modules/weather/engine"
@@ -53,17 +54,17 @@ func (m *weatherModule) cmdWeather(rest string, user *users.UserRecord, room *ro
 	case "rebuild":
 		m.rebuildGraph()
 		if m.graph == nil {
-			sendLine(user, "Weather: graph rebuild failed (see server log).")
+			sendLine(user, messaging.CategoryAdmin, "Weather: graph rebuild failed (see server log).")
 			return true, nil
 		}
-		sendLine(user, fmt.Sprintf("Weather: rebuilt graph — %d zones, %d edges, %d components.",
+		sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Weather: rebuilt graph — %d zones, %d edges, %d components.",
 			len(m.graph.Nodes), len(m.graph.Edges), m.graph.Components))
 	case "status":
 		m.printStatus(user)
 	case "seasons":
 		m.printSeasons(user)
 	default:
-		sendLine(user, adminUsage)
+		sendLine(user, messaging.CategoryUsage, adminUsage)
 	}
 	return true, nil
 }
@@ -71,17 +72,17 @@ func (m *weatherModule) cmdWeather(rest string, user *users.UserRecord, room *ro
 // printLocalWeather shows the weather where the user stands (the player view).
 func (m *weatherModule) printLocalWeather(user *users.UserRecord, room *rooms.Room) {
 	if !m.simReady || room == nil {
-		sendLine(user, "The weather seems entirely unremarkable.")
+		sendLine(user, messaging.CategorySystem, "The weather seems entirely unremarkable.")
 		return
 	}
 	w := m.state.Weather[room.Zone]
 	if w == "" {
 		w = sim.Clear
 	}
-	sendLine(user, fmt.Sprintf("The weather in %s is %s.", room.Zone, w))
+	sendLine(user, messaging.CategorySystem, fmt.Sprintf("The weather in %s is %s.", room.Zone, w))
 	if m.seasonsOn {
 		if zs, ok := m.zoneSeasons[room.Zone]; ok {
-			sendLine(user, fmt.Sprintf("The season here is %s.", zs.Season))
+			sendLine(user, messaging.CategorySystem, fmt.Sprintf("The season here is %s.", zs.Season))
 		}
 	}
 	if covers := sim.Covering(m.graph, m.state.Fronts, m.simCfg, room.Zone); len(covers) > 0 {
@@ -90,35 +91,35 @@ func (m *weatherModule) printLocalWeather(user *users.UserRecord, room *rooms.Ro
 		if c.Hops > 0 {
 			where = fmt.Sprintf("%d zone(s) away", c.Hops)
 		}
-		sendLine(user, fmt.Sprintf("  A %s system (front #%d) is %s — intensity %.2f, felt here at %.2f.",
+		sendLine(user, messaging.CategorySystem, fmt.Sprintf("  A %s system (front #%d) is %s — intensity %.2f, felt here at %.2f.",
 			c.Front.Type, c.Front.Id, where, c.Front.Intensity, c.Effective))
 	}
 }
 
 func (m *weatherModule) printZones(user *users.UserRecord) {
 	if !m.simReady {
-		sendLine(user, "Weather: simulation not running.")
+		sendLine(user, messaging.CategoryAdmin, "Weather: simulation not running.")
 		return
 	}
 	zones := m.graph.Zones()
-	sendLine(user, fmt.Sprintf("Current weather (%d zones):", len(zones)))
+	sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Current weather (%d zones):", len(zones)))
 	for _, z := range zones {
-		sendLine(user, fmt.Sprintf("  %-30s %s", z, m.state.Weather[z]))
+		sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("  %-30s %s", z, m.state.Weather[z]))
 	}
 }
 
 func (m *weatherModule) printFronts(user *users.UserRecord) {
 	if !m.simReady {
-		sendLine(user, "Weather: simulation not running.")
+		sendLine(user, messaging.CategoryAdmin, "Weather: simulation not running.")
 		return
 	}
 	if len(m.state.Fronts) == 0 {
-		sendLine(user, "No active weather fronts.")
+		sendLine(user, messaging.CategoryAdmin, "No active weather fronts.")
 		return
 	}
-	sendLine(user, fmt.Sprintf("Active fronts (%d):", len(m.state.Fronts)))
+	sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Active fronts (%d):", len(m.state.Fronts)))
 	for _, f := range m.state.Fronts {
-		sendLine(user, fmt.Sprintf("  #%-3d %-10s @ %-25s intensity %.2f moisture %.2f age %d/%d",
+		sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("  #%-3d %-10s @ %-25s intensity %.2f moisture %.2f age %d/%d",
 			f.Id, f.Type, f.Zone, f.Intensity, f.Moisture, f.Age, f.MaxAge))
 	}
 }
@@ -128,11 +129,11 @@ func (m *weatherModule) printFronts(user *users.UserRecord) {
 // one zone word remains.
 func (m *weatherModule) cmdSpawn(user *users.UserRecord, parts []string) {
 	if !m.simReady {
-		sendLine(user, "Weather: simulation not running.")
+		sendLine(user, messaging.CategoryAdmin, "Weather: simulation not running.")
 		return
 	}
 	if len(parts) < 2 {
-		sendLine(user, "Usage: weather spawn <type> <zone> [intensity 0..1]")
+		sendLine(user, messaging.CategoryUsage, "Usage: weather spawn <type> <zone> [intensity 0..1]")
 		return
 	}
 	wtype := strings.ToLower(parts[0])
@@ -146,32 +147,32 @@ func (m *weatherModule) cmdSpawn(user *users.UserRecord, parts []string) {
 	}
 	zone, ok := m.graph.FindZone(strings.Join(rest, " "))
 	if !ok {
-		sendLine(user, fmt.Sprintf("Weather: zone %q is not in the graph.", strings.Join(rest, " ")))
+		sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Weather: zone %q is not in the graph.", strings.Join(rest, " ")))
 		return
 	}
 	next, _, ok := sim.ForceSpawn(m.state, m.graph, m.simCfg, sim.WeatherType(wtype), zone, intensity, sim.Clock{Round: engine.CurrentRound()})
 	if !ok {
-		sendLine(user, "Weather: spawn failed.")
+		sendLine(user, messaging.CategoryAdmin, "Weather: spawn failed.")
 		return
 	}
 	m.state = next
 	engine.Reconcile(m.state.Weather)
 	m.persistState()
 	f := m.state.Fronts[len(m.state.Fronts)-1]
-	sendLine(user, fmt.Sprintf("Spawned front #%d: %s @ %s, intensity %.2f.", f.Id, f.Type, f.Zone, f.Intensity))
+	sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Spawned front #%d: %s @ %s, intensity %.2f.", f.Id, f.Type, f.Zone, f.Intensity))
 }
 
 // cmdClear: weather clear [zone words...]. No zone = clear everything.
 func (m *weatherModule) cmdClear(user *users.UserRecord, parts []string) {
 	if !m.simReady {
-		sendLine(user, "Weather: simulation not running.")
+		sendLine(user, messaging.CategoryAdmin, "Weather: simulation not running.")
 		return
 	}
 	var zones []sim.ZoneId
 	if len(parts) > 0 {
 		zone, ok := m.graph.FindZone(strings.Join(parts, " "))
 		if !ok {
-			sendLine(user, fmt.Sprintf("Weather: zone %q is not in the graph.", strings.Join(parts, " ")))
+			sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Weather: zone %q is not in the graph.", strings.Join(parts, " ")))
 			return
 		}
 		zones = []sim.ZoneId{zone}
@@ -181,41 +182,41 @@ func (m *weatherModule) cmdClear(user *users.UserRecord, parts []string) {
 	m.state = next
 	engine.Reconcile(m.state.Weather)
 	m.persistState()
-	sendLine(user, fmt.Sprintf("Cleared %d front(s); %d zone change(s).", before-len(m.state.Fronts), len(diff.Changes)))
+	sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Cleared %d front(s); %d zone change(s).", before-len(m.state.Fronts), len(diff.Changes)))
 }
 
 func (m *weatherModule) printStatus(user *users.UserRecord) {
 	if m.graph == nil {
-		sendLine(user, "Weather: no geography graph yet. Try 'weather rebuild'.")
+		sendLine(user, messaging.CategoryAdmin, "Weather: no geography graph yet. Try 'weather rebuild'.")
 		return
 	}
 	g := m.graph
-	sendLine(user, fmt.Sprintf("Geography: %d zones, %d edges, %d components (built round %d).",
+	sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Geography: %d zones, %d edges, %d components (built round %d).",
 		len(g.Nodes), len(g.Edges), g.Components, g.BuiltAtRound))
 	if !m.simReady {
-		sendLine(user, "Simulation: NOT running.")
+		sendLine(user, messaging.CategoryAdmin, "Simulation: NOT running.")
 		return
 	}
-	sendLine(user, fmt.Sprintf("Simulation: %d active front(s); state round %d; next tick at round %d (every %d game hour(s)).",
+	sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Simulation: %d active front(s); state round %d; next tick at round %d (every %d game hour(s)).",
 		len(m.state.Fronts), m.state.Round, m.nextTick, m.cfg.TickEveryGameHours))
-	sendLine(user, fmt.Sprintf("Emotes: mode=%s every ~%d rounds; conditions=%v; persist=%v.",
+	sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Emotes: mode=%s every ~%d rounds; conditions=%v; persist=%v.",
 		m.cfg.EmoteMode, m.cfg.EmoteEveryRounds, m.cfg.ConditionsEnabled, m.cfg.Persist))
 	if m.seasonsOn {
-		sendLine(user, fmt.Sprintf("Seasons: ON — %d track(s), %d zone(s) seasonal.",
+		sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Seasons: ON — %d track(s), %d zone(s) seasonal.",
 			len(m.tracks), len(m.zoneSeasons)))
 	} else {
-		sendLine(user, "Seasons: off.")
+		sendLine(user, messaging.CategoryAdmin, "Seasons: off.")
 	}
 }
 
 // printSeasons lists the loaded tracks and where each stands on the calendar.
 func (m *weatherModule) printSeasons(user *users.UserRecord) {
 	if !m.seasonsOn {
-		sendLine(user, "Weather: seasons are off.")
+		sendLine(user, messaging.CategoryAdmin, "Weather: seasons are off.")
 		return
 	}
 	pos := engine.CalendarNow()
-	sendLine(user, fmt.Sprintf("Seasons active: %d track(s); %d zone(s) seasonal (day %d/%d).",
+	sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Seasons active: %d track(s); %d zone(s) seasonal (day %d/%d).",
 		len(m.tracks), len(m.zoneSeasons), pos.DayOfYear, pos.DaysPerYear))
 	names := make([]string, 0, len(m.tracks))
 	for name := range m.tracks {
@@ -225,9 +226,9 @@ func (m *weatherModule) printSeasons(user *users.UserRecord) {
 	for _, name := range names {
 		cur, prev, blend := m.tracks[name].Resolve(pos.DayOfYear)
 		if blend >= 1 || cur == prev {
-			sendLine(user, fmt.Sprintf("  %-12s %s", name, cur))
+			sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("  %-12s %s", name, cur))
 		} else {
-			sendLine(user, fmt.Sprintf("  %-12s %s (blending from %s, %.0f%%)", name, cur, prev, blend*100))
+			sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("  %-12s %s (blending from %s, %.0f%%)", name, cur, prev, blend*100))
 		}
 	}
 }
@@ -236,25 +237,25 @@ func (m *weatherModule) printSeasons(user *users.UserRecord) {
 // Neighbors result is a shared index slice — copy before sorting.
 func (m *weatherModule) printGraphForZone(user *users.UserRecord, zone string) {
 	if m.graph == nil {
-		sendLine(user, "Weather: no geography graph yet (built on the first round). Try 'weather rebuild'.")
+		sendLine(user, messaging.CategoryAdmin, "Weather: no geography graph yet (built on the first round). Try 'weather rebuild'.")
 		return
 	}
 	canonical, ok := m.graph.FindZone(zone)
 	if !ok {
-		sendLine(user, fmt.Sprintf("Weather: zone %q is not in the graph.", zone))
+		sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("Weather: zone %q is not in the graph.", zone))
 		return
 	}
 	node := m.graph.Nodes[canonical]
-	sendLine(user, fmt.Sprintf(
+	sendLine(user, messaging.CategoryAdmin, fmt.Sprintf(
 		"Zone %s [biome=%s rooms=%d outdoor=%v]:", node.Zone, node.Biome, node.Rooms, node.HasOutdoor))
 
 	neighbors := append([]sim.Edge(nil), m.graph.Neighbors(canonical)...)
 	if len(neighbors) == 0 {
-		sendLine(user, "  (no adjacent zones)")
+		sendLine(user, messaging.CategoryAdmin, "  (no adjacent zones)")
 		return
 	}
 	sort.Slice(neighbors, func(i, j int) bool { return neighbors[i].B < neighbors[j].B })
 	for _, e := range neighbors {
-		sendLine(user, fmt.Sprintf("  -> %s (weight %d)", e.B, e.Weight))
+		sendLine(user, messaging.CategoryAdmin, fmt.Sprintf("  -> %s (weight %d)", e.B, e.Weight))
 	}
 }

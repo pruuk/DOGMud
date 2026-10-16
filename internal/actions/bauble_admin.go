@@ -35,7 +35,7 @@ var runBaubleJob = func(job func(lock bool)) {
 // so tests can capture it.
 var tellBaubleAdmin = func(userId int, text string) {
 	if u := users.GetByUserId(userId); u != nil {
-		u.SendText(messaging.CategorySystem, text)
+		u.SendText(messaging.CategoryAdmin, text)
 	}
 }
 

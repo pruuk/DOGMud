@@ -37,12 +37,12 @@ func Ban(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if net.ParseIP(targetArg) == nil {
 			target := users.GetByCharacterName(targetArg)
 			if target == nil {
-				user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="red">No online player named "%s" (and "%s" is not an IP).</ansi>`, targetArg, targetArg))
+				user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">No online player named "%s" (and "%s" is not an IP).</ansi>`, targetArg, targetArg))
 				return true, nil
 			}
 			cd := connections.Get(target.ConnectionId())
 			if cd == nil {
-				user.SendText(messaging.CategorySystem, `<ansi fg="red">Could not read that player's connection.</ansi>`)
+				user.SendText(messaging.CategoryAdmin, `<ansi fg="red">Could not read that player's connection.</ansi>`)
 				return true, nil
 			}
 			host, _, err := net.SplitHostPort(cd.RemoteAddr().String())
@@ -56,10 +56,10 @@ func Ban(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		// error told staff the IP was banned while the ban existed only in
 		// memory, so it vanished at the next restart (review finding 7).
 		if err := moderation.BanIP(ip, reason, user.Username); err != nil {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">IP ban FAILED to save:</ansi> %s. The ban is NOT in effect. %s`, ip, err))
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="alert-5">IP ban FAILED to save:</ansi> %s. The ban is NOT in effect. %s`, ip, err))
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">IP banned:</ansi> %s`, ip))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="alert-5">IP banned:</ansi> %s`, ip))
 		return true, nil
 	}
 
@@ -81,18 +81,18 @@ func Ban(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	// Same contract as the IP branch: no success message, and no kick, unless
 	// the ban actually persisted.
 	if err := moderation.BanAccount(banName, reason, user.Username); err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">Ban FAILED to save:</ansi> <ansi fg="username">%s</ansi> is NOT banned. %s`, banName, err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="alert-5">Ban FAILED to save:</ansi> <ansi fg="username">%s</ansi> is NOT banned. %s`, banName, err))
 		return true, nil
 	}
 
 	if target != nil {
 		// Boot the online session.
-		target.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="alert-5">You have been banned.</ansi> %s`, reason))
+		target.SendText(messaging.CategoryWarning, fmt.Sprintf(`<ansi fg="alert-5">You have been banned.</ansi> %s`, reason))
 		connections.Kick(target.ConnectionId(), "Banned by staff: "+reason)
 	} else if !users.Exists(name) {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">Note: no account named "%s" is currently known. The name is banned and will apply if it is ever registered.</ansi>`, name))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="yellow">Note: no account named "%s" is currently known. The name is banned and will apply if it is ever registered.</ansi>`, name))
 	}
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="username">%s</ansi> has been <ansi fg="alert-5">banned</ansi>. Reason: %s`, banName, reason))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="username">%s</ansi> has been <ansi fg="alert-5">banned</ansi>. Reason: %s`, banName, reason))
 	return true, nil
 }

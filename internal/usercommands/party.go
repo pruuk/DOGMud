@@ -891,12 +891,12 @@ func cmdPartyAdminListNPC(user *users.UserRecord) {
 		))
 	}
 	if len(lines) == 0 {
-		user.SendText(messaging.CategorySystem, `No active NPC parties.`)
+		user.SendText(messaging.CategoryAdmin, `No active NPC parties.`)
 		return
 	}
-	user.SendText(messaging.CategorySystem, `NPC Parties:`)
+	user.SendText(messaging.CategoryAdmin, `NPC Parties:`)
 	for _, l := range lines {
-		user.SendText(messaging.CategorySystem, l)
+		user.SendText(messaging.CategoryAdmin, l)
 	}
 }
 
@@ -908,7 +908,7 @@ func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 	}
 	targetId, err := strconv.Atoi(idStr)
 	if err != nil || targetId <= 0 {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Invalid party id: %s`, idStr))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Invalid party id: %s`, idStr))
 		return
 	}
 
@@ -920,7 +920,7 @@ func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 		}
 	}
 	if found == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`No party with id %d.`, targetId))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`No party with id %d.`, targetId))
 		return
 	}
 
@@ -933,7 +933,7 @@ func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 		helpStr = strconv.Itoa(found.HelpRoomId)
 	}
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`Party #%d`, found.PartyIdInternal()))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Party #%d`, found.PartyIdInternal()))
 
 	if found.Leader != nil {
 		leaderRoom := 0
@@ -941,14 +941,14 @@ func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 			leaderRoom = r.RoomId
 		}
 		if found.Leader.IsPlayer() {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 				`  Leader: %s (player %d, room %d)`,
 				found.Leader.GetName(),
 				found.Leader.GetUserId(),
 				leaderRoom,
 			))
 		} else {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 				`  Leader: %s (mob %d, room %d)`,
 				found.Leader.GetName(),
 				found.Leader.GetMobInstanceId(),
@@ -956,10 +956,10 @@ func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 			))
 		}
 	} else {
-		user.SendText(messaging.CategorySystem, `  Leader: (none)`)
+		user.SendText(messaging.CategoryAdmin, `  Leader: (none)`)
 	}
 
-	user.SendText(messaging.CategorySystem, `  Members:`)
+	user.SendText(messaging.CategoryAdmin, `  Members:`)
 	for _, m := range found.Members {
 		memberRoom := 0
 		if r := m.GetRoom(); r != nil {
@@ -970,12 +970,12 @@ func cmdPartyAdminShow(user *users.UserRecord, idStr string) {
 			leaderTag = ` [LEADER]`
 		}
 		if m.IsPlayer() {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 				`    %s (player %d, room %d)%s`,
 				m.GetName(), m.GetUserId(), memberRoom, leaderTag,
 			))
 		} else {
-			user.SendText(messaging.CategorySystem, fmt.Sprintf(
+			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(
 				`    %s (mob %d, room %d)%s`,
 				m.GetName(), m.GetMobInstanceId(), memberRoom, leaderTag,
 			))

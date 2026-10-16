@@ -54,37 +54,37 @@ func (m *AICompanionModule) cmdAICompanion(rest string, user *users.UserRecord, 
 			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, m.grant(args[1], args[2]))
+		user.SendText(messaging.CategoryAdmin, m.grant(args[1], args[2]))
 	case `revoke`:
 		if len(args) < 2 {
 			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, m.revoke(args[1]))
+		user.SendText(messaging.CategoryAdmin, m.revoke(args[1]))
 	case `mind`:
 		if len(args) < 2 {
 			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, m.describeMind(args[1]))
+		user.SendText(messaging.CategoryAdmin, m.describeMind(args[1]))
 	case `trace`, `prompt`:
 		if len(args) < 2 {
 			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, m.describeDebug(args[1], strings.ToLower(args[0])))
+		user.SendText(messaging.CategoryAdmin, m.describeDebug(args[1], strings.ToLower(args[0])))
 	case `models`:
 		m.cmdModels(user)
 	case `breaker`:
 		// The server key's breaker is shared with every feature that uses it.
 		m.fw().ResetBreaker()
-		user.SendText(messaging.CategorySystem, `Circuit breaker reset; model calls resume.`)
+		user.SendText(messaging.CategoryAdmin, `Circuit breaker reset; model calls resume.`)
 	case `pause`, `resume`:
 		if len(args) < 2 {
 			user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 			return true, nil
 		}
-		user.SendText(messaging.CategorySystem, m.setPaused(args[1], strings.ToLower(args[0]) == `pause`))
+		user.SendText(messaging.CategoryAdmin, m.setPaused(args[1], strings.ToLower(args[0]) == `pause`))
 	default:
 		user.SendText(messaging.CategoryUsage, aiCompanionUsage)
 	}
@@ -171,12 +171,12 @@ func (m *AICompanionModule) cmdStatus(user *users.UserRecord) {
 		}
 		b.WriteString("\n")
 	}
-	user.SendText(messaging.CategorySystem, strings.TrimRight(b.String(), "\n"))
+	user.SendText(messaging.CategoryAdmin, strings.TrimRight(b.String(), "\n"))
 }
 
 func (m *AICompanionModule) cmdProfiles(user *users.UserRecord) {
 	if len(m.profiles) == 0 {
-		user.SendText(messaging.CategorySystem, `No companion profiles are loaded.`)
+		user.SendText(messaging.CategoryAdmin, `No companion profiles are loaded.`)
 		return
 	}
 	ids := make([]string, 0, len(m.profiles))
@@ -189,7 +189,7 @@ func (m *AICompanionModule) cmdProfiles(user *users.UserRecord) {
 		p := m.profiles[id]
 		fmt.Fprintf(&b, "  %s: %s (mob %d)\n", id, p.Name, p.MobId)
 	}
-	user.SendText(messaging.CategorySystem, strings.TrimRight(b.String(), "\n"))
+	user.SendText(messaging.CategoryAdmin, strings.TrimRight(b.String(), "\n"))
 }
 
 // grant bonds a companion to an online player (admin). See bondTo.
@@ -433,7 +433,7 @@ func (m *AICompanionModule) cmdModels(user *users.UserRecord) {
 		b.WriteString("Since boot:\n")
 		b.WriteString(strings.Join(lines, "\n"))
 	}
-	user.SendText(messaging.CategorySystem, strings.TrimRight(b.String(), "\n"))
+	user.SendText(messaging.CategoryAdmin, strings.TrimRight(b.String(), "\n"))
 }
 
 // describeDebug shows a companion's recent decisions, or the full last

@@ -40,7 +40,7 @@ func Bounty(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return bountyAdminShow(args[1:], user)
 	case "declare", "withdraw", "prune-expired":
 		if !isAdmin {
-			user.SendText(messaging.CategorySystem, "That subcommand is admin-only.\r\n")
+			user.SendText(messaging.CategoryRefusal, "That subcommand is admin-only.\r\n")
 			return true, nil
 		}
 		switch strings.ToLower(args[0]) {
@@ -161,12 +161,12 @@ func bountyAdminShow(args []string, user *users.UserRecord) (bool, error) {
 	}
 	id, err := strconv.Atoi(args[0])
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Bad bounty id %q\r\n", args[0]))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("Bad bounty id %q\r\n", args[0]))
 		return true, nil
 	}
 	b := bounties.Get(id)
 	if b == nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("No bounty with id %d\r\n", id))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("No bounty with id %d\r\n", id))
 		return true, nil
 	}
 	var sb strings.Builder
@@ -196,12 +196,12 @@ func bountyAdminDeclare(args []string, user *users.UserRecord) (bool, error) {
 	}
 	issuer, ok := parseIssuerSpec(args[0])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Bad issuer spec %q (use type:id)\r\n", args[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Bad issuer spec %q (use type:id)\r\n", args[0]))
 		return true, nil
 	}
 	target, ok := parseTargetSpec(args[1])
 	if !ok {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Bad target spec %q (use type:id)\r\n", args[1]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Bad target spec %q (use type:id)\r\n", args[1]))
 		return true, nil
 	}
 	opts := bounties.DeclareOpts{}
@@ -241,10 +241,10 @@ func bountyAdminDeclare(args []string, user *users.UserRecord) (bool, error) {
 	}
 	id, err := bounties.Declare(issuer, target, bounties.ConditionKill, expiryRound, opts)
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Declare failed: %v\r\n", err))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Declare failed: %v\r\n", err))
 		return true, nil
 	}
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("Declared bounty #%d.\r\n", id))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Declared bounty #%d.\r\n", id))
 	return true, nil
 }
 
@@ -255,17 +255,17 @@ func bountyAdminWithdraw(args []string, user *users.UserRecord) (bool, error) {
 	}
 	id, err := strconv.Atoi(args[0])
 	if err != nil {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf("Bad bounty id %q\r\n", args[0]))
+		user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Bad bounty id %q\r\n", args[0]))
 		return true, nil
 	}
 	bounties.Withdraw(id)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("Withdrew bounty #%d.\r\n", id))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Withdrew bounty #%d.\r\n", id))
 	return true, nil
 }
 
 func bountyAdminPrune(user *users.UserRecord) (bool, error) {
 	count := bounties.PruneExpired()
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("Pruned %d expired bounty rows.\r\n", count))
+	user.SendText(messaging.CategoryAdmin, fmt.Sprintf("Pruned %d expired bounty rows.\r\n", count))
 	return true, nil
 }
 
