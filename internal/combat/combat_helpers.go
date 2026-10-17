@@ -1819,7 +1819,7 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		// on defended swings, but a deflected swing now deals real damage and
 		// takes the branch above instead — do not "fix" this back.
 		if int(pctDamage) == 0 && !result.Fumble {
-			isFeint = checkFeint(sourceChar.GetCombatSkillLevel())
+			isFeint = checkFeint(sourceChar.GetCombatSkillLevelFor(ws.weapon))
 		}
 	}
 
@@ -1845,8 +1845,10 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		items.TokenBodyPart:     GetRandomBodyPart(),
 	}
 
-	// Get source character's weapon skill level for message selection
-	skillLevel := sourceChar.GetCombatSkillLevel()
+	// The skill of the weapon THIS swing used (#564): an off-hand fist swung
+	// beside a mastered spear narrates at the fist's tier, not the spear's.
+	// GetCombatSkillLevel() resolves from the main hand only.
+	skillLevel := sourceChar.GetCombatSkillLevelFor(ws.weapon)
 
 	if srcType == Mob {
 		tokenReplacements[items.TokenActor] = sourceChar.GetMobName(0).String()
