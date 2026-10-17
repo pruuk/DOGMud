@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/stretchr/testify/assert"
 )
@@ -26,8 +27,8 @@ func TestAimBySight_ShapesHintsATypedNameAndNamesTheVerb(t *testing.T) {
 	giveCasterInfrared(t, a)
 	_, refusal := AimBySight(a.GetCharacter(), 7811, room, "witness", "kick")
 	assert.Contains(t, refusal, "You can only make out shapes here.")
-	assert.Contains(t, refusal, `<ansi fg="command">kick shape</ansi>`)
-	assert.Contains(t, refusal, `<ansi fg="command">kick 2.shape</ansi>`)
+	assert.Contains(t, refusal, `<ansi fg="command">kick figure</ansi>`)
+	assert.Contains(t, refusal, `<ansi fg="command">kick 2.figure</ansi>`)
 	assert.NotContains(t, strings.ToLower(refusal), "witness")
 }
 
@@ -41,6 +42,44 @@ func TestAimBySight_ShapesResolvesAShapeToItsFigure(t *testing.T) {
 	name, aimRefusal = AimBySight(a.GetCharacter(), 7811, room, "4.shape", "kick")
 	assert.Equal(t, refusal.NotHereCreatureLine, aimRefusal, "there are only two figures")
 	assert.Equal(t, "4.shape", name)
+}
+
+// The word the room shows a figure by is the word that aims at it (2026-10-17
+// pre-deploy playtest: the room read "Also here: a figure" while only
+// `shape` resolved, and the hint named a word the player never saw).
+func TestAimBySight_ShapesResolvesTheWordTheRoomShows(t *testing.T) {
+	a, room := castSightScene(t, "cave")
+	giveCasterInfrared(t, a)
+
+	shown := messaging.UnseenNoun(messaging.SightShapes)
+	assert.True(t, strings.HasSuffix(shown, " "+messaging.FigureWord),
+		"the room roster %q must end in the aim word %q", shown, messaging.FigureWord)
+
+	for _, tc := range []struct{ typed, want string }{
+		{"figure", "@7812"},
+		{"Figure", "@7812"},
+		{"2.figure", "@7813"},
+		{"figure#2", "@7813"},
+		{"shape", "@7812"},
+	} {
+		name, aimRefusal := AimBySight(a.GetCharacter(), 7811, room, tc.typed, "consider")
+		assert.Equal(t, "", aimRefusal, "%q", tc.typed)
+		assert.Equal(t, tc.want, name, "%q", tc.typed)
+	}
+
+	_, hint := AimBySight(a.GetCharacter(), 7811, room, "witness", "consider")
+	assert.Contains(t, hint, `<ansi fg="command">consider figure</ansi>`)
+	assert.Contains(t, hint, `<ansi fg="command">consider 2.figure</ansi>`)
+	assert.Contains(t, AimShapesHint(""), `<ansi fg="command">figure</ansi>`)
+}
+
+// With no sight the figure word is refused as the shape word is.
+func TestAimBySight_NoSightRefusesTheFigureWord(t *testing.T) {
+	a, room := castSightScene(t, "cave")
+	for _, typed := range []string{"figure", "2.figure", "all.figure"} {
+		_, aimRefusal := AimBySight(a.GetCharacter(), 7811, room, typed, "kick")
+		assert.Equal(t, refusal.NothingToAimLine, aimRefusal, "%q", typed)
+	}
 }
 
 // An id form is what a shape becomes, and what party auto-assist types.

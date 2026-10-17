@@ -11,8 +11,8 @@ import (
 // reads the named line, a reader who makes out only shapes reads the
 // anonymous one, and a reader who sees nothing reads nothing (the collapse
 // sound already told them). Called only where a corpse is created. The lines
-// say "remains", not "body", so they fit wreckage, an elemental, an orb or a
-// slime as well as a beast.
+// say "remains" (rooms.RemainsWord), not "body", so they fit wreckage, an
+// elemental, an orb or a slime as well as a beast.
 //
 // identity is the tagged name (`<ansi fg="mobname">Name</ansi>` for a mob, the
 // `username` tag for a player; never the corpse's own tag). An empty identity
@@ -40,15 +40,17 @@ func announceCorpse(room *rooms.Room, identity string, excludeUserIds ...int) {
 				continue
 			}
 			room.SendTextVisualToUser(u, messaging.CategoryDeath,
-				identity+"'s remains lie where they fell.")
+				identity+"'s "+rooms.RemainsWord+" lie where they fell.")
 		case messaging.SightShapes:
 			room.SendTextVisualToUser(u, messaging.CategoryDeath, corpseLineAnonymous)
 		}
 	}
 }
 
-// corpseLineAnonymous is the corpse line that names no one.
-const corpseLineAnonymous = "Some remains lie where they fell."
+// corpseLineAnonymous is the corpse line that names no one. Its noun is
+// rooms.RemainsWord, which room.FindCorpseIndex takes as "corpse", so the word
+// shown reaches the corpse (`look remains`).
+const corpseLineAnonymous = "Some " + rooms.RemainsWord + " lie where they fell."
 
 func corpseLineExcluded(uid int, excluded []int) bool {
 	for _, e := range excluded {

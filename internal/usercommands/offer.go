@@ -28,6 +28,14 @@ func merchantSay(room *rooms.Room, mob *mobs.Mob, line string) {
 
 func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Offer deals only with a merchant mob. With none here it says so at
+	// every light (it used to say nothing at all when lit, and the sight
+	// refusal when dim, which hinted at a merchant who was not there).
+	if len(room.GetMobs(rooms.FindMerchant)) == 0 {
+		user.SendText(messaging.CategoryRefusal, "There's no merchant here.")
+		return true, nil
+	}
+
 	// Below the faces band you can't make out the goods (lighting plan 5b,
 	// #272): asking for an offer is dealing, as list, buy and sell are.
 	if actions.ShopSightRefusal(user.Character, room) {

@@ -104,7 +104,7 @@ func TestFollowSight_ShapesHintsAName(t *testing.T) {
 	assert.False(t, f.isFollowing(followId{userId: 1}), "a typed name followed at shapes")
 	told := followTold(1)
 	assert.Contains(t, told, "You can only make out shapes here.")
-	assert.Contains(t, told, "follow 2.shape")
+	assert.Contains(t, told, "follow 2.figure")
 	assert.NotContains(t, told, "Bobrick")
 }
 

@@ -83,7 +83,7 @@ func TestAttackSight_ShapesHintsANameAndTakesAShape(t *testing.T) {
 	_, _ = Attack("skeleton", user, room, events.EventFlag(0))
 	told := aimTold(1)
 	assert.Contains(t, told, "You can only make out shapes here.")
-	assert.Contains(t, told, "attack shape")
+	assert.Contains(t, told, "attack figure")
 	assert.Equal(t, 0, user.Character.CurrentCombatTarget().MobInstanceId, "a typed name engaged at shapes")
 
 	_, _ = Attack("2.shape", user, room, events.EventFlag(0))
@@ -114,7 +114,7 @@ func TestMeleeStageSight_KickAtEachBand(t *testing.T) {
 	user, room = aimScene(t, aimShapes)
 	_, handled = actions.StageMeleeTarget(user, room, "skeleton", actions.MeleeTargetOpts{Verb: "kick"})
 	assert.True(t, handled)
-	assert.Contains(t, aimTold(1), "kick 2.shape")
+	assert.Contains(t, aimTold(1), "kick 2.figure")
 	_, handled = actions.StageMeleeTarget(user, room, "2.shape", actions.MeleeTargetOpts{Verb: "kick"})
 	assert.False(t, handled, "a shape stages at shapes")
 
@@ -147,7 +147,7 @@ func TestGiveSight_ShapesHintsANameAndHidesNamesAfterAShape(t *testing.T) {
 	user.Character.Gold = 50
 	_, _ = Give("10 gold bobrick", user, room, events.EventFlag(0))
 	told := aimTold(1)
-	assert.Contains(t, told, "give 10 gold shape")
+	assert.Contains(t, told, "give 10 gold figure")
 	assert.Equal(t, 50, user.Character.Gold, "a typed name was given to at shapes")
 
 	_, _ = Give("10 gold 1.shape", user, room, events.EventFlag(0))
@@ -186,7 +186,7 @@ func TestStealSight_EachBand(t *testing.T) {
 
 	user, room = aimScene(t, aimShapes)
 	assert.Nil(t, parseStealArgs([]string{"skeleton"}, room, user))
-	assert.Contains(t, aimTold(1), "steal 2.shape")
+	assert.Contains(t, aimTold(1), "steal 2.figure")
 	opts = parseStealArgs([]string{"2.shape"}, room, user)
 	require.NotNil(t, opts, "a shape is stolen from at shapes")
 	assert.Equal(t, 100, opts.TargetMobInstanceId)
@@ -207,7 +207,7 @@ func TestPlantSight_EachBand(t *testing.T) {
 	user, room = aimScene(t, aimShapes)
 	_, ok = parsePlantArgs([]string{"sword", "skeleton"}, room, user)
 	assert.False(t, ok, "a typed name was planted on at shapes")
-	assert.Contains(t, aimTold(1), "plant sword on 2.shape")
+	assert.Contains(t, aimTold(1), "plant sword on 2.figure")
 	opts, ok = parsePlantArgs([]string{"sword", "on", "2.shape"}, room, user)
 	require.True(t, ok, "a shape is planted on at shapes")
 	assert.Equal(t, 100, opts.TargetMobInstanceId)
@@ -239,7 +239,7 @@ func TestShadowSight_EachBand(t *testing.T) {
 	user, room = setup(aimShapes)
 	_, _ = Shadow("skeleton", user, room, events.EventFlag(0))
 	told := aimTold(1)
-	assert.Contains(t, told, "shadow 2.shape")
+	assert.Contains(t, told, "shadow 2.figure")
 	assert.NotContains(t, told, reached, "a typed name resolved at shapes")
 	_, _ = Shadow("2.shape", user, room, events.EventFlag(0))
 	assert.Contains(t, aimTold(1), reached, "a shape resolves at shapes")
@@ -272,7 +272,7 @@ func TestTalkAskSight_NoSightResolvesNothing(t *testing.T) {
 func TestTalkSight_ShapesHintsAName(t *testing.T) {
 	user, room := aimScene(t, aimShapes)
 	_, _ = Talk("skeleton", user, room, events.EventFlag(0))
-	assert.Contains(t, aimTold(1), "talk 2.shape")
+	assert.Contains(t, aimTold(1), "talk 2.figure")
 }
 
 func TestPartyInviteSight_EachBand(t *testing.T) {

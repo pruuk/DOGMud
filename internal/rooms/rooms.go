@@ -1587,8 +1587,11 @@ func (r *Room) FindCorpse(searchName string, viewer *characters.Character) (Corp
 // name that matched would confirm whose corpse it is: below SightFull each
 // corpse, mob or player, answers only to the word "corpse", newest first and
 // countable ("2.corpse"). A nil viewer (a system lookup, a test) matches by
-// name as clear sight does.
+// name as clear sight does. At every sight the word the corpse line shows,
+// RemainsWord, stands for "corpse" (`look remains`, `2.remains`).
 func (r *Room) FindCorpseIndex(searchName string, viewer *characters.Character) int {
+
+	searchName = corpseSearchName(searchName)
 
 	if viewer != nil && messaging.ParticipantSight(viewer, r) != messaging.SightFull {
 		candidates := []string{}

@@ -24,6 +24,27 @@ func ShopSightRefusal(c *characters.Character, room *rooms.Room) bool {
 	return messaging.LightBand(c, room) < messaging.BandFaces
 }
 
+// MerchantHere reports whether room holds anyone to deal with: a merchant mob,
+// or a merchant player other than selfUserId. Every shop verb asks it (or its
+// own narrower merchant check) BEFORE ShopSightRefusal, so a room with no
+// merchant answers with the verb's no-merchant line at every light, and the
+// sight refusal never hints at a merchant who is not there (2026-10-17
+// pre-deploy playtest).
+func MerchantHere(room *rooms.Room, selfUserId int) bool {
+	if room == nil {
+		return false
+	}
+	if len(room.GetMobs(rooms.FindMerchant)) > 0 {
+		return true
+	}
+	for _, uid := range room.GetPlayers(rooms.FindMerchant) {
+		if uid != selfUserId {
+			return true
+		}
+	}
+	return false
+}
+
 // ShopSightRefusalText is the one line every refusing verb prints.
 const ShopSightRefusalText = "You can't make out the goods well enough to deal."
 

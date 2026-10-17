@@ -692,13 +692,15 @@ word on its own line (#430).
   and the `*`, `*mob`, `*user` pools skip what `viewer` does not perceive.
 - **`AimBySight(viewer, selfUserId, room, name, verb) (string, string)`**
   (`sight_aim.go`, #454): the one rule for a creature name a player types.
-  Clear sight admits the name as typed; shapes only admits `shape` /
-  `N.shape` / `shape#N` (rewritten to the figure's `@<userId>` or
-  `#<mobInstanceId>`; figures are perceived players then mobs, in room
-  order), an id form (`@N`, `#N`, what party auto-assist types) and an empty
+  Clear sight admits the name as typed; shapes only admits the aim word
+  `figure` / `N.figure` / `figure#N` (`messaging.FigureWord`, the word the
+  room shows: "Also here: a figure"; the older `shape` is still accepted as
+  an alias, and the hint names `figure` only) (rewritten to the figure's
+  `@<userId>` or `#<mobInstanceId>`; figures are perceived players then
+  mobs, in room order; the rewrite applies at clear sight too), an id form (`@N`, `#N`, what party auto-assist types) and an empty
   name, and answers any other name with `AimShapesHint(verb)`; no sight
-  admits nothing (`refusal.NothingToAimLine` for a shape or no name,
-  `refusal.NotHereCreatureLine` for a name; an out-of-range `N.shape` also
+  admits nothing (`refusal.NothingToAimLine` for an aim word or no name,
+  `refusal.NotHereCreatureLine` for a name; an out-of-range `N.figure` also
   answers `refusal.NotHereCreatureLine`). The constants moved to
   `internal/refusal` in M7 slice 1 (`AimNothingLine` and `AimNotHereLine`
   are gone); see `internal/refusal/context.md`. It returns the name to
@@ -1678,8 +1680,14 @@ the free supply-handoff paths — these are NOT routed through `actions.Sell`.
   `Sell` check it only once a merchant is confirmed present in the room
   (`SellStopNoSight` / `BuyReasonNoSight`), so "there's no merchant here"
   still wins over a sight refusal, and a nil-Mob `MobActor` test fixture
-  (no merchant path) never calls `GetCharacter()` unguarded. `usercommands.List`
-  checks it directly, right after its own sleep gate.
+  (no merchant path) never calls `GetCharacter()` unguarded. The player
+  verbs keep the same order: `usercommands.List` checks it right after its
+  own sleep gate and only when **`MerchantHere(room, selfUserId) bool`**
+  (a merchant mob, or a merchant player other than self) is true;
+  `Appraise` and `Offer` check it after their own "no merchant mob here"
+  refusal. So an empty dim room answers with the verb's no-merchant line,
+  never a sight refusal that hints at an unseen merchant (2026-10-17
+  pre-deploy playtest).
 - **`ShopSightRefusalText`**, the one line every refusing verb prints:
   "You can't make out the goods well enough to deal."
 - **Content keeps every shop above the gate at night** (merchants slice,
