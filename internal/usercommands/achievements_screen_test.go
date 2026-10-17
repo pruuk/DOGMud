@@ -16,7 +16,7 @@ var achievementsTagRE = regexp.MustCompile(`</?ansi[^>]*>`)
 // each category heading reads as drawn: a blank line above it and no stop
 // after it. The 2026-10-17 playtest saw "Combat." straight under the summary
 // line: the heading rode CategorySystem, whose end-punctuation stage added
-// the stop, and SendText dropped the empty line sent before it.
+// the stop, and the empty SendText sent before it delivers nothing.
 func TestAchievementsHeadingsStandAlone(t *testing.T) {
 	cleanup := seedAllRegistries()
 	defer cleanup()
@@ -32,9 +32,12 @@ func TestAchievementsHeadingsStandAlone(t *testing.T) {
 	require.NoError(t, err)
 	msgs := events.DrainQueuedMessagesForTest(user.UserId)
 
+	// A message may carry several lines (a heading brings its own blank line
+	// above it), so split each one into lines.
 	var lines []string
 	for _, m := range msgs {
-		lines = append(lines, strings.TrimRight(achievementsTagRE.ReplaceAllString(m, ""), "\r\n"))
+		plain := strings.ReplaceAll(achievementsTagRE.ReplaceAllString(m, ""), "\r", "")
+		lines = append(lines, strings.Split(strings.TrimRight(plain, "\n"), "\n")...)
 	}
 	headings := 0
 	for i, l := range lines {

@@ -73,9 +73,10 @@ func Achievements(rest string, user *users.UserRecord, room *rooms.Room, flags e
 			continue
 		}
 
-		user.SendText(messaging.CategoryScreen, ``)
+		// The blank line rides in the heading's own text: an empty SendText
+		// delivers nothing.
 		user.SendText(messaging.CategoryScreen,
-			fmt.Sprintf(`<ansi fg="cyan-bold">%s%s</ansi>`, strings.ToUpper(cat[:1]), cat[1:]))
+			fmt.Sprintf("\n"+`<ansi fg="cyan-bold">%s%s</ansi>`, strings.ToUpper(cat[:1]), cat[1:]))
 
 		for _, d := range inCat {
 			if char.HasAchievement(d.Id) {
