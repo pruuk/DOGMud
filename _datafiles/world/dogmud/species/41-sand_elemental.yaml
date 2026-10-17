@@ -6,7 +6,7 @@ description: A swirling column of grit and sun-warmed sand, the sand
   with sweeping clouds that sting the eyes blind.
 size: medium
 unarmedname: abrasive whirl
-natural_attack: slam
+natural_attack: blast
 selectable: false
 tameable: false
 speech: false

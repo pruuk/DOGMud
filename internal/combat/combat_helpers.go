@@ -1578,8 +1578,9 @@ func calcHitDamage(result *AttackResult, isCrit bool, openingStrike bool, sdp sw
 //     Stabbing) narrate as Bludgeoning — the fiction tracks the pommel/hilt
 //     strike that the reach damage penalty already reflects.
 //
-// Natural-blunt subtypes (Fist, Claws, Bite, Sting, Slam, Gore, Whipping) and
-// caster subtypes (Wand, Sceptre, Staff) keep their own vocabulary.
+// Natural-blunt subtypes (Fist, Claws, Bite, Sting, Slam, Trample, Lash,
+// Blast, Gore, Whipping) and caster subtypes (Wand, Sceptre, Staff) keep their
+// own vocabulary.
 func meleeDisplaySubtype(weaponSubType items.ItemSubType, weaponReach, posRadius float64) items.ItemSubType {
 	if weaponSubType == items.Shooting {
 		return items.Bludgeoning

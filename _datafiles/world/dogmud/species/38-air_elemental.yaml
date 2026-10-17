@@ -11,7 +11,7 @@ intrinsic_mutations:
   second-sight: 1
 size: medium
 unarmedname: slicing gust
-natural_attack: slam
+natural_attack: blast
 selectable: false
 tameable: false
 speech: false

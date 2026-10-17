@@ -13,7 +13,7 @@ import (
 // naturalWeaponPools are the combat-message pools a natural weapon renders
 // through: the natural-attack subtypes, plus every species natural_attack
 // value found in either world.
-var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam, Siphon}
+var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam, Siphon, Trample, Lash, Blast}
 
 // naturalWeaponSpecialPools are the special-attack pools whose {itemname} is
 // the same natural weapon, so they follow the same rule (M6 slice 2 review).

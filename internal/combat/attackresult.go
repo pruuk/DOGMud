@@ -260,7 +260,7 @@ func (a *AttackResult) SendToRoomOld(cat messaging.Category, msg string) {
 // the YAML naming is normalized.
 func CategoryForWeaponSubtype(sub items.ItemSubType) messaging.Category {
 	switch sub {
-	case items.Bludgeoning, items.Slam:
+	case items.Bludgeoning, items.Slam, items.Trample, items.Lash:
 		return messaging.CategoryHitBlunt
 	case items.Cleaving, items.Stabbing, items.Slashing, "piercing":
 		return messaging.CategoryHitMelee
@@ -268,7 +268,7 @@ func CategoryForWeaponSubtype(sub items.ItemSubType) messaging.Category {
 		return messaging.CategoryHitNaturalSharp
 	case items.Shooting, items.Whipping:
 		return messaging.CategoryHitRanged
-	case items.Wand, items.Sceptre, items.Staff, items.Siphon:
+	case items.Wand, items.Sceptre, items.Staff, items.Siphon, items.Blast:
 		return messaging.CategoryHitCaster
 	case items.Unarmed, items.Fist:
 		return messaging.CategoryHitUnarmed

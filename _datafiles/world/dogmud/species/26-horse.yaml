@@ -8,7 +8,7 @@ intrinsic_mutations:
   tail: 1
 size: large
 unarmedname: hooves
-natural_attack: slam
+natural_attack: trample
 selectable: false
 tameable: true
 speech: false
