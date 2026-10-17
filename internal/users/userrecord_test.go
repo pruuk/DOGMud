@@ -51,3 +51,20 @@ func TestUserTriggers_QueueMode(t *testing.T) {
 		t.Fatalf("queueMode not stored: %+v", u.Triggers[0])
 	}
 }
+
+func TestAchievementsExcluded(t *testing.T) {
+	cases := []struct {
+		name string
+		u    *UserRecord
+		want bool
+	}{
+		{"normal", &UserRecord{Role: RoleUser}, false},
+		{"admin", &UserRecord{Role: RoleAdmin}, true},
+		{"ai", &UserRecord{Role: RoleUser, IsAI: true}, true},
+	}
+	for _, tc := range cases {
+		if got := tc.u.AchievementsExcluded(); got != tc.want {
+			t.Errorf("%s: got %v want %v", tc.name, got, tc.want)
+		}
+	}
+}
