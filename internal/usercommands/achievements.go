@@ -57,6 +57,11 @@ func Achievements(rest string, user *users.UserRecord, room *rooms.Room, flags e
 		fmt.Sprintf(`<ansi fg="yellow-bold">Achievements</ansi>: earned <ansi fg="white-bold">%d/%d</ansi>, <ansi fg="yellow">%d points</ansi>`,
 			earnedCount, len(defs), earnedPoints))
 
+	if user.AchievementsExcluded() {
+		user.SendText(messaging.CategoryScreen,
+			`<ansi fg="white">Achievements are not tracked on this account.</ansi>`)
+	}
+
 	for _, cat := range achievementCategories {
 		if filter != "" && filter != cat {
 			continue

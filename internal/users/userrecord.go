@@ -315,6 +315,13 @@ func (u *UserRecord) HasShop() bool {
 	return len(u.Character.Shop) > 0
 }
 
+// AchievementsExcluded reports whether this account is kept out of achievement
+// tracking: admins and AI-flagged accounts, matching the leaderboard exclusion.
+// The award poll skips these accounts and the achievements screen tells them so.
+func (u *UserRecord) AchievementsExcluded() bool {
+	return u.Role == RoleAdmin || u.IsAI
+}
+
 func (u *UserRecord) DidTip(tipName string, completed ...bool) bool {
 
 	if u.TipsComplete == nil {
