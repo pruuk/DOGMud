@@ -59,7 +59,7 @@ func TestTrack_PresentCreatureIsNamedOnlyWithFullSight(t *testing.T) {
 				Track(a, TrackOptions{TargetNoun: "scout"})
 				sent += trackSightSent(a) + "\n"
 			}
-			inRoom := strings.Contains(sent, "here in the open with you") || strings.Contains(sent, "is in the room with you")
+			inRoom := strings.Contains(sent, "is right here with you") || strings.Contains(sent, "is in the room with you")
 			if c.named && !inRoom {
 				t.Fatalf("full sight should read the present scout by name, got %q", sent)
 			}

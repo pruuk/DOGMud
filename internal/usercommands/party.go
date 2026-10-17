@@ -779,7 +779,7 @@ func settlePartyGold(currentParty *parties.Party) int {
 			GoldChange: -amount,
 		})
 		u.SendText(messaging.CategoryLoot,
-			fmt.Sprintf(`Your share of the party pool: <ansi fg="yellow-bold">%d gold</ansi>.`, amount))
+			fmt.Sprintf(`Your share of the party pool: <ansi fg="yellow-bold">%s gold</ansi>.`, util.FormatNumber(amount)))
 	}
 	currentParty.GoldPool += reserved // conserve: undistributed shares stay pooled
 	return total
@@ -801,7 +801,7 @@ func cmdPartyGold(user *users.UserRecord, currentParty *parties.Party, rest stri
 	}
 
 	user.SendText(messaging.CategorySystem,
-		fmt.Sprintf(`The party pool holds <ansi fg="yellow-bold">%d gold</ansi>.`, currentParty.GoldPool))
+		fmt.Sprintf(`The party pool holds <ansi fg="yellow-bold">%s gold</ansi>.`, util.FormatNumber(currentParty.GoldPool)))
 	user.SendText(messaging.CategorySystem, `Type <ansi fg="command">party gold split</ansi> to divide it among members.`)
 	return true, nil
 }

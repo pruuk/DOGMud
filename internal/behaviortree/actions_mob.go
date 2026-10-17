@@ -484,7 +484,7 @@ func actOpenInstancePortal(params map[string]any, ctx *EvalContext) Result {
 		minGold = 100
 	}
 	if goldAmount < minGold {
-		mob.Command(fmt.Sprintf("say That barely covers the runes. I need at least %d gold.", minGold))
+		mob.Command(fmt.Sprintf("say That barely covers the runes. I need at least %s gold.", util.FormatNumber(minGold)))
 		return Success
 	}
 	if user.Character.Gold < goldAmount {

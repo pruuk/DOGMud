@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/textutil"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // skillGrant is one parsed skill reward (skill tag + target level).
@@ -302,7 +303,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		}
 		// Gold reward?
 		if questInfo.Rewards.Gold > 0 {
-			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="gold">%d gold</ansi>!`, questInfo.Rewards.Gold))
+			questUser.SendText(messaging.CategoryLoot, fmt.Sprintf(`You receive <ansi fg="gold">%s gold</ansi>!`, util.FormatNumber(questInfo.Rewards.Gold)))
 			questUser.Character.Gold += questInfo.Rewards.Gold
 
 			events.AddToQueue(events.EquipmentChange{

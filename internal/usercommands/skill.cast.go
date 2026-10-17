@@ -247,6 +247,9 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	switch {
 	case result.OnCooldown:
 		refusal.Cooldown(user, "cast")
+		if result.SharedCooldown {
+			user.SendText(messaging.CategoryRefusal, refusal.CastSharesSpecialMoveText)
+		}
 		return true, nil
 	case result.NoTarget:
 		// The refusal may already have been narrated with a specific reason -- a

@@ -326,7 +326,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 
 		amt, _ := strconv.Atoi(args[1])
 		if amt < minBid {
-			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You must bid at least <ansi fg="gold">%d gold</ansi>.`, minBid))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You must bid at least <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(minBid)))
 			return true, nil
 		}
 
@@ -436,7 +436,7 @@ func (mod *AuctionsModule) auctionCommand(rest string, user *users.UserRecord, r
 
 	user.ClearPrompt()
 
-	user.SendText(messaging.CategorySystem, fmt.Sprintf("Auctioning your <ansi fg=\"item\">%s</ansi>: buyout <ansi fg=\"gold\">%d gold</ansi>, reserve <ansi fg=\"gold\">%d gold</ansi>.", matchItem.DisplayName(), amt, reserveFrom(amt, auctionReservePct)))
+	user.SendText(messaging.CategorySystem, fmt.Sprintf("Auctioning your <ansi fg=\"item\">%s</ansi>: buyout <ansi fg=\"gold\">%s gold</ansi>, reserve <ansi fg=\"gold\">%s gold</ansi>.", matchItem.DisplayName(), util.FormatNumber(amt), util.FormatNumber(reserveFrom(amt, auctionReservePct))))
 
 	duration := 60
 	if dur, ok := mod.plug.Config.Get(`DurationSeconds`).(int); ok {
@@ -567,7 +567,7 @@ func (mod *AuctionsModule) newRoundHandler(e events.Event) events.ListenerReturn
 				// settles to the seller minus the house commission (a gold sink).
 				payout := auctionNow.HighestBid - commissionFor(auctionNow.HighestBid, auctionCommissionPct)
 
-				msg := fmt.Sprintf(`Your auction of the <ansi fg="item">%s</ansi> has ended. The highest bid was made by <ansi fg="username">%s</ansi> for <ansi fg="gold">%d gold</ansi> (after the auction house's cut).`, auctionNow.ItemData.DisplayName(), auctionNow.HighestBidderName, payout)
+				msg := fmt.Sprintf(`Your auction of the <ansi fg="item">%s</ansi> has ended. The highest bid was made by <ansi fg="username">%s</ansi> for <ansi fg="gold">%s gold</ansi> (after the auction house's cut).`, auctionNow.ItemData.DisplayName(), auctionNow.HighestBidderName, util.FormatNumber(payout))
 
 				if sellerUser := users.GetByUserId(auctionNow.SellerUserId); sellerUser != nil {
 					sellerUser.Character.Bank += payout
@@ -580,7 +580,7 @@ func (mod *AuctionsModule) newRoundHandler(e events.Event) events.ListenerReturn
 
 				} else {
 
-					msg := fmt.Sprintf(`Your auction of the <ansi fg="item">%s</ansi> has ended while you were offline. The highest bid was made by <ansi fg="username">%s</ansi> for <ansi fg="gold">%d gold</ansi> (after the auction house's cut).`, auctionNow.ItemData.DisplayName(), auctionNow.HighestBidderName, payout)
+					msg := fmt.Sprintf(`Your auction of the <ansi fg="item">%s</ansi> has ended while you were offline. The highest bid was made by <ansi fg="username">%s</ansi> for <ansi fg="gold">%s gold</ansi> (after the auction house's cut).`, auctionNow.ItemData.DisplayName(), auctionNow.HighestBidderName, util.FormatNumber(payout))
 
 					users.SearchOfflineUsers(func(u *users.UserRecord) bool {
 						if u.UserId == auctionNow.SellerUserId {
@@ -997,13 +997,13 @@ func (mod *AuctionsModule) resolveSeizedLot(a *AuctionItem) {
 		if seller := getUser(a.SellerUserId); seller != nil {
 			seller.Character.Bank += surplus
 			events.AddToQueue(events.EquipmentChange{UserId: seller.UserId, BankChange: surplus})
-			seller.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">Your seized <ansi fg="item">%s</ansi> sold at auction. After the debt and the house's cut, <ansi fg="gold">%d gold</ansi> was returned to your account.</ansi>`, a.ItemData.DisplayName(), surplus))
+			seller.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow">Your seized <ansi fg="item">%s</ansi> sold at auction. After the debt and the house's cut, <ansi fg="gold">%s gold</ansi> was returned to your account.</ansi>`, a.ItemData.DisplayName(), util.FormatNumber(surplus)))
 		} else {
 			users.SearchOfflineUsers(func(u *users.UserRecord) bool {
 				if u.UserId == a.SellerUserId {
 					u.Inbox.Add(users.Message{
 						FromName: `Auction System`,
-						Message:  fmt.Sprintf(`Your seized %s sold at auction. After the debt and the house's cut, %d gold was returned to your account.`, a.ItemData.DisplayName(), surplus),
+						Message:  fmt.Sprintf(`Your seized %s sold at auction. After the debt and the house's cut, %s gold was returned to your account.`, a.ItemData.DisplayName(), util.FormatNumber(surplus)),
 						Gold:     surplus,
 					})
 					users.SaveUser(u)
@@ -1076,7 +1076,7 @@ func (am *AuctionManager) Bid(userId int, bid int) error {
 		minBid = am.ActiveAuction.HighestBid + 1
 	}
 	if bid < minBid {
-		return fmt.Errorf(`The minimum bid is <ansi fg="gold">%d gold</ansi>`, minBid)
+		return fmt.Errorf(`The minimum bid is <ansi fg="gold">%s gold</ansi>`, util.FormatNumber(minBid))
 	}
 
 	u := getUser(userId)
@@ -1084,7 +1084,7 @@ func (am *AuctionManager) Bid(userId int, bid int) error {
 		return errBidderNotFound
 	}
 	if u.Character.Bank < bid {
-		return fmt.Errorf(`You only have <ansi fg="gold">%d gold</ansi> in the bank.`, u.Character.Bank)
+		return fmt.Errorf(`You only have <ansi fg="gold">%s gold</ansi> in the bank.`, util.FormatNumber(u.Character.Bank))
 	}
 
 	// Escrow: refund the previous high bidder (user or NPC), then debit this

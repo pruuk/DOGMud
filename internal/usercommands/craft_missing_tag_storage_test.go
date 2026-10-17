@@ -107,10 +107,14 @@ func TestCraft_RefusalNamesWhatStorageCannotCover(t *testing.T) {
 	joined := strings.Join(lines, "\n")
 	require.Contains(t, joined, "You are missing:",
 		"expected the ingredient refusal, got %v", lines)
-	require.Contains(t, joined, "You are missing: chrysalis-shard.",
+	// No item spec carries these fixture tags, so the refusal shows each tag
+	// as plain words (items.ComponentTagName, #530), never the dashed id.
+	require.Contains(t, joined, "You are missing: chrysalis shard.",
 		"the refusal must name what the bank ALSO lacks, got %v", lines)
-	require.NotContains(t, joined, "copper-wire",
+	require.NotContains(t, joined, "copper wire",
 		"the refusal named the component sitting in the player's bank: %v", lines)
+	require.NotContains(t, joined, "chrysalis-shard",
+		"the refusal showed a dashed component id: %v", lines)
 }
 
 // TestRecipeStatus_MissingRowNamesWhatStorageCannotCover covers the other
@@ -130,7 +134,7 @@ func TestRecipeStatus_MissingRowNamesWhatStorageCannotCover(t *testing.T) {
 
 	indicator, reason := recipeStatus(user, room, crafting.GetRecipe(craftStorageRecipeId), 0)
 	require.Equal(t, "X", indicator, "the recipe is not craftable, so the row is not ready")
-	require.Equal(t, "missing chrysalis-shard", reason,
+	require.Equal(t, "missing chrysalis shard", reason,
 		"the row must name what the bank ALSO lacks, not the first-listed tag")
 }
 

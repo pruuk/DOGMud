@@ -126,7 +126,7 @@ func guildCreate(user *users.UserRecord, remainder, rest string) {
 	cost := int(configs.GetBalanceConfig().GuildFoundingCost)
 
 	cmdPrompt, _ := user.StartPrompt(`guild`, rest)
-	q := cmdPrompt.Ask(fmt.Sprintf(`Found "%s" [%s] for %d gold from your bank?`, name, strings.ToUpper(tag), cost), []string{`Yes`, `No`}, `No`)
+	q := cmdPrompt.Ask(fmt.Sprintf(`Found "%s" [%s] for %s gold from your bank?`, name, strings.ToUpper(tag), util.FormatNumber(cost)), []string{`Yes`, `No`}, `No`)
 	if !q.Done {
 		return
 	}
@@ -137,7 +137,7 @@ func guildCreate(user *users.UserRecord, remainder, rest string) {
 	}
 
 	if user.Character.Bank < cost {
-		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You need %d gold in the bank to found a guild.`, cost))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You need %s gold in the bank to found a guild.`, util.FormatNumber(cost)))
 		return
 	}
 
@@ -544,7 +544,7 @@ func guildDeposit(user *users.UserRecord, remainder string) {
 		return
 	}
 	if amount > user.Character.Bank {
-		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You only have <ansi fg="gold">%d gold</ansi> in the bank.`, user.Character.Bank))
+		user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You only have <ansi fg="gold">%s gold</ansi> in the bank.`, util.FormatNumber(user.Character.Bank)))
 		return
 	}
 	if amount <= 0 {
@@ -557,8 +557,8 @@ func guildDeposit(user *users.UserRecord, remainder string) {
 	}
 	user.Character.Bank -= amount
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, BankChange: -amount})
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You deposit <ansi fg="gold">%d gold</ansi> into the guild treasury.`, amount))
-	announceGuild(g, fmt.Sprintf(`<ansi fg="username">%s</ansi> deposited <ansi fg="gold">%d gold</ansi> into the guild treasury.`, user.Character.Name, amount), user.UserId)
+	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You deposit <ansi fg="gold">%s gold</ansi> into the guild treasury.`, util.FormatNumber(amount)))
+	announceGuild(g, fmt.Sprintf(`<ansi fg="username">%s</ansi> deposited <ansi fg="gold">%s gold</ansi> into the guild treasury.`, user.Character.Name, util.FormatNumber(amount)), user.UserId)
 }
 
 func guildWithdraw(user *users.UserRecord, remainder string) {
@@ -593,8 +593,8 @@ func guildWithdraw(user *users.UserRecord, remainder string) {
 	}
 	user.Character.Bank += amount
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, BankChange: amount})
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You withdraw <ansi fg="gold">%d gold</ansi> from the guild treasury to your bank.`, amount))
-	announceGuild(g, fmt.Sprintf(`<ansi fg="username">%s</ansi> withdrew <ansi fg="gold">%d gold</ansi> from the guild treasury.`, user.Character.Name, amount), user.UserId)
+	user.SendText(messaging.CategorySystem, fmt.Sprintf(`You withdraw <ansi fg="gold">%s gold</ansi> from the guild treasury to your bank.`, util.FormatNumber(amount)))
+	announceGuild(g, fmt.Sprintf(`<ansi fg="username">%s</ansi> withdrew <ansi fg="gold">%s gold</ansi> from the guild treasury.`, user.Character.Name, util.FormatNumber(amount)), user.UserId)
 }
 
 func guildDonate(user *users.UserRecord, remainder string) {
@@ -700,7 +700,7 @@ func guildTreasury(user *users.UserRecord, remainder string) {
 	}
 
 	capacity := int(configs.GetBalanceConfig().GuildVaultCapacity)
-	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> treasury: <ansi fg="gold">%d gold</ansi>`, g.Name, g.Treasury))
+	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> treasury: <ansi fg="gold">%s gold</ansi>`, g.Name, util.FormatNumber(g.Treasury)))
 	if len(g.Vault) == 0 {
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`Vault: empty (0/%d).`, capacity))
 	} else {

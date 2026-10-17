@@ -24,7 +24,7 @@ func Bank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if rest == `` {
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You have <ansi fg="gold">%d gold</ansi> on hand and <ansi fg="gold">%d gold</ansi> in the bank.`, user.Character.Gold, user.Character.Bank))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You have <ansi fg="gold">%s gold</ansi> on hand and <ansi fg="gold">%s gold</ansi> in the bank.`, util.FormatNumber(user.Character.Gold), util.FormatNumber(user.Character.Bank)))
 		user.SendText(messaging.CategorySystem, `You can <ansi fg="command">deposit</ansi> to or <ansi fg="command">withdraw</ansi> from the bank.`+term.CRLFStr)
 		return true, nil
 	}
@@ -69,8 +69,8 @@ func Bank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			BankChange: amount,
 		})
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You deposit <ansi fg="gold">%d gold</ansi>.`, amount))
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You now have <ansi fg="gold">%d gold</ansi> on hand and <ansi fg="gold">%d gold</ansi> in the bank.`, user.Character.Gold, user.Character.Bank))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You deposit <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(amount)))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You now have <ansi fg="gold">%s gold</ansi> on hand and <ansi fg="gold">%s gold</ansi> in the bank.`, util.FormatNumber(user.Character.Gold), util.FormatNumber(user.Character.Bank)))
 
 	} else if action == `withdraw` {
 		if amountStr == `all` {
@@ -91,8 +91,8 @@ func Bank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			BankChange: amount,
 		})
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You withdraw <ansi fg="gold">%d gold</ansi>.`, amount))
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You now have <ansi fg="gold">%d gold</ansi> on hand and <ansi fg="gold">%d gold</ansi> in the bank.`, user.Character.Gold, user.Character.Bank))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You withdraw <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(amount)))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You now have <ansi fg="gold">%s gold</ansi> on hand and <ansi fg="gold">%s gold</ansi> in the bank.`, util.FormatNumber(user.Character.Gold), util.FormatNumber(user.Character.Bank)))
 	}
 
 	user.SendText(messaging.CategorySystem, ``)

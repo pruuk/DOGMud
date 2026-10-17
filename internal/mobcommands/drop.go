@@ -52,7 +52,7 @@ func Drop(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		if dropAmt <= mob.Character.Gold {
 			if err := actions.FloorDropGold(dropAmt, &mob.Character, room); err == nil {
 				room.SendTextVisual(messaging.CategoryLoot,
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> drops <ansi fg="gold">%d gold</ansi>.`, mob.Character.Name, dropAmt))
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> drops <ansi fg="gold">%s gold</ansi>.`, mob.Character.Name, util.FormatNumber(dropAmt)))
 			}
 			return true, nil
 		}

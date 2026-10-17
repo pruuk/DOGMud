@@ -124,8 +124,8 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 
 	if loot.Gold > 0 {
 		msg := fmt.Sprintf(
-			`<ansi fg="yellow-bold">%d gold</ansi> drops to the ground.`,
-			loot.Gold,
+			`<ansi fg="yellow-bold">%s gold</ansi> drops to the ground.`,
+			util.FormatNumber(loot.Gold),
 		)
 		room.SendTextVisual(messaging.CategoryLoot, msg)
 		room.Gold += loot.Gold
@@ -180,7 +180,7 @@ func autoLootGold(playerDamage map[int]int, gold int) int {
 		// membership change or `party gold split`.
 		if u := users.GetByUserId(topDamager(playerDamage)); u != nil {
 			u.SendText(messaging.CategoryLoot,
-				fmt.Sprintf(`<ansi fg="yellow-bold">%d gold</ansi> goes into the party pool.`, plan.amount))
+				fmt.Sprintf(`<ansi fg="yellow-bold">%s gold</ansi> goes into the party pool.`, util.FormatNumber(plan.amount)))
 		}
 		return plan.amount
 	}
@@ -192,6 +192,6 @@ func autoLootGold(playerDamage map[int]int, gold int) int {
 	u.Character.Gold += plan.amount
 	events.AddToQueue(events.EquipmentChange{UserId: plan.userId, GoldChange: plan.amount})
 	u.SendText(messaging.CategoryLoot,
-		fmt.Sprintf(`You collect <ansi fg="yellow-bold">%d gold</ansi>.`, plan.amount))
+		fmt.Sprintf(`You collect <ansi fg="yellow-bold">%s gold</ansi>.`, util.FormatNumber(plan.amount)))
 	return plan.amount
 }

@@ -250,8 +250,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 
 		if container.Gold > 0 {
-			itemNames = append(itemNames, fmt.Sprintf(`%d gold`, container.Gold))
-			itemNamesFormatted = append(itemNamesFormatted, fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, container.Gold))
+			itemNames = append(itemNames, fmt.Sprintf(`%s gold`, util.FormatNumber(container.Gold)))
+			itemNamesFormatted = append(itemNamesFormatted, fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(container.Gold)))
 		}
 
 		for _, item := range container.Items {
@@ -521,8 +521,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				itemNamesFormatted := []string{}
 
 				if corpse.Loot.Gold > 0 {
-					itemNames = append(itemNames, fmt.Sprintf(`%d gold`, corpse.Loot.Gold))
-					itemNamesFormatted = append(itemNamesFormatted, fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, corpse.Loot.Gold))
+					itemNames = append(itemNames, fmt.Sprintf(`%s gold`, util.FormatNumber(corpse.Loot.Gold)))
+					itemNamesFormatted = append(itemNamesFormatted, fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(corpse.Loot.Gold)))
 				}
 
 				for _, item := range corpse.Loot.Items {
@@ -837,7 +837,7 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	}
 
 	if room.Gold > 0 {
-		groundStuff = append(groundStuff, fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, room.Gold))
+		groundStuff = append(groundStuff, fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(room.Gold)))
 	}
 
 	// Stack identical floor items for display
