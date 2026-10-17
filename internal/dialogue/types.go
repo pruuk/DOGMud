@@ -4,10 +4,14 @@ package dialogue
 // can gate options on player progress without importing characters/users.
 // When nil is passed the engine skips all quest/item checks (backward compat).
 type PlayerState struct {
-	HasQuest   func(token string) bool
-	HasItem    func(itemId int) bool
-	RemoveItem func(itemId int) bool
-	GiveQuest  func(token string)
+	HasQuest func(token string) bool
+	HasItem  func(itemId int) bool
+	// CarriesItem reports whether the player holds the item anywhere: the
+	// backpack, worn or wielded, the component pouch or the bandolier. It
+	// backs itemExcluded. Nil falls back to HasItem.
+	CarriesItem func(itemId int) bool
+	RemoveItem  func(itemId int) bool
+	GiveQuest   func(token string)
 	// GiveItem reports whether the item actually reached the player.
 	// false (e.g. over carry capacity) makes the engine abort the node's
 	// OTHER effects too — grantsQuest, requiresItem removal, flags, rep,
@@ -68,6 +72,7 @@ type Pattern struct {
 	QuestExcluded      []string          `yaml:"questExcluded,omitempty" json:"questExcluded,omitempty"`
 	GrantsQuest        string            `yaml:"grantsQuest,omitempty" json:"grantsQuest,omitempty"`
 	RequiresItem       int               `yaml:"requiresItem,omitempty" json:"requiresItem,omitempty"`
+	ItemExcluded       int               `yaml:"itemExcluded,omitempty" json:"itemExcluded,omitempty"` // hidden while the player carries this item
 	GivesItem          int               `yaml:"givesItem,omitempty" json:"givesItem,omitempty"`
 	QuestFlagRequired  map[string]string `yaml:"questFlagRequired,omitempty" json:"questFlagRequired,omitempty"`
 	QuestFlagExcluded  map[string]string `yaml:"questFlagExcluded,omitempty" json:"questFlagExcluded,omitempty"`
@@ -92,6 +97,7 @@ type TreeNode struct {
 	QuestExcluded      []string          `yaml:"questExcluded,omitempty" json:"questExcluded,omitempty"`
 	GrantsQuest        string            `yaml:"grantsQuest,omitempty" json:"grantsQuest,omitempty"`
 	RequiresItem       int               `yaml:"requiresItem,omitempty" json:"requiresItem,omitempty"`
+	ItemExcluded       int               `yaml:"itemExcluded,omitempty" json:"itemExcluded,omitempty"` // hidden while the player carries this item
 	GivesItem          int               `yaml:"givesItem,omitempty" json:"givesItem,omitempty"`
 	QuestFlagRequired  map[string]string `yaml:"questFlagRequired,omitempty" json:"questFlagRequired,omitempty"`
 	QuestFlagExcluded  map[string]string `yaml:"questFlagExcluded,omitempty" json:"questFlagExcluded,omitempty"`
@@ -114,6 +120,7 @@ type QuestGreeting struct {
 	GrantsQuest        string            `yaml:"grantsQuest,omitempty" json:"grantsQuest,omitempty"`
 	GivesItem          int               `yaml:"givesItem,omitempty" json:"givesItem,omitempty"`
 	RequiresItem       int               `yaml:"requiresItem,omitempty" json:"requiresItem,omitempty"`
+	ItemExcluded       int               `yaml:"itemExcluded,omitempty" json:"itemExcluded,omitempty"` // hidden while the player carries this item
 	SetsQuestFlag      *QuestFlagSet     `yaml:"setsQuestFlag,omitempty" json:"setsQuestFlag,omitempty"`
 	BumpsRep           []RepBump         `yaml:"bumpsRep,omitempty" json:"bumpsRep,omitempty"`
 	GivesGold          int               `yaml:"givesGold,omitempty" json:"givesGold,omitempty"`

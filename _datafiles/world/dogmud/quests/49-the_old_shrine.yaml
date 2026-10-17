@@ -9,6 +9,11 @@
 #              search-command Notify was added this chunk.
 #   49-end   — granted by Sere's shrine_turnin node (needs 49-find).
 #
+# Looking at the disc is not a step (2026-10-17): the search beat already
+# narrates the whole find, so `look disc` is offered in the step descriptions
+# as optional study, and the hints name one command each (search, then the
+# report).
+#
 # Design: the quiet-discovery capstone -- NO boss, NO fight (the soft spoke).
 # Search out the half-buried disc under the Reliquary floor (the sci-fi tease,
 # deliberately NOT understood), study it, and bring word back. Reward: a Charisma
@@ -30,20 +35,20 @@ steps:
     description: >-
       Sere wants you to find what lies beneath the shrine. In the Reliquary, the
       deepest back-chamber, the flagstone floor has cracked and heaved over
-      something. Search it out.
+      something. Search it out. Once it is uncovered, you can look at the disc
+      to study it.
     hint: >-
-      Go up through the shrine to the Reliquary (the deepest back-chamber). Type
-      search to work at the disturbed floor and uncover what lies beneath --
-      search again if the first try turns up nothing. Then look at what you find,
-      and return to Sere -- ask sere done.
+      From the Old Shrine, go west into the Collapsed Nave and north into the
+      Reliquary, then type search.
   - id: find
     map_target: 5341
     description: >-
       You worked a disc of pale, impossible metal free of the floor -- a thing
       older than the folk, marked with a sign even the loresingers cannot read.
-      Study the disc, then bring word to Sere.
+      You can look at the disc to study it before you bring word to Sere.
     hint: >-
-      Return to Hermit Sere and tell her what you found -- ask sere done.
+      Go south and east back to Hermit Sere in the Old Shrine and type ask sere
+      done.
   - id: end
     description: >-
       You have seen the thing under the shrine and brought word of it back. You
@@ -91,4 +96,5 @@ triggers:
           You do not understand it, and you are fairly certain no one in the
           coulee does. It feels less like something the folk made and lost than
           like something that was already here when they came, waiting under the
-          floor for a hand to lift it. Now yours has. Bring word of it to Sere.
+          floor for a hand to lift it. Now yours has. Go back to Sere in the
+          Old Shrine and type ask sere done.

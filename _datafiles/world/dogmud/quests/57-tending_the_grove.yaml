@@ -4,7 +4,9 @@
 #   57-start — granted by Keeper Orrin's dialogue (grove_loop_offer node).
 #              Requires 46-end (The Unfolded). Repeatable with cooldown.
 #   57-end   — mob_death trigger on Drift-Wisp (9147). Player kills it by
-#              casting. Auto-grants reward + clears for repeat.
+#              casting. Auto-grants reward + clears for repeat. Orrin is not
+#              there when it lands, so no text sends the player back to him.
+#              Nearest wisp: the Grove Edge (5308), south of Orrin (5309).
 
 questid: 57
 name: Tending the Grove
@@ -18,29 +20,29 @@ cooldown_rounds: 300
 
 steps:
   - id: start
-    map_target: 5309  # the Whispering Grove
+    map_target: 5308  # the Grove Edge, where a drift-wisp spawns
     description: >-
       Orrin has asked you to go into the grove and put down one of
-      the veil-warped things that wanders back in.
+      the veil-warped things that wanders back in. The task is done
+      the moment the drift-wisp falls.
     hint: >-
-      Head into the grove and cast to bring down a drift-wisp. Come
-      back to Orrin when it is done.
+      If it is dark, type cast chrysalis-glow first. Go south to the
+      Grove Edge and type cast conviction-spike wisp until it falls.
   - id: end
     description: >-
-      The grove is quiet again for now. Orrin will ask you back when
-      the watch slips.
+      The grove is quiet again for now. Orrin will have more work
+      when the watch slips.
 
 rewards:
   gold: 6
   skillinfo: "spellcasting:1"
   actor: >-
-    Orrin's edge arrives a half-step behind him, as always, when he
-    turns to you. "The fold held clean. The grove is quieter when
-    the work is done properly -- come back when it needs doing again.
-    It always needs doing again."
+    The grove goes still around you, and for a moment every edge
+    arrives on time. The fold held clean. Orrin will have more work
+    when the warped things drift back in. They always drift back in.
   observer: >-
-    Orrin's outline catches up with him slowly, as if the grove
-    approves of the stillness.
+    The grove settles around the caster, as if it approves of the
+    stillness.
 
 triggers:
   - event: mob_death
@@ -52,4 +54,4 @@ triggers:
       - grant: "57-end"
       - actor: >-
           The drift-wisp unravels and is gone. The grove is a little
-          quieter. Go back and tell Orrin it is done.
+          quieter, and the task is done.

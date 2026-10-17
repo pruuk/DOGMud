@@ -1,10 +1,13 @@
 # Quest 54 — Back to the Forge (Pothole Coulee, Spoke B repeatable)
 #
 # Token flow:
-#   54-start — granted by Survivor Ovell's dialogue (forge_loop_offer node).
-#              Requires 37-end (Into the Vein). Repeatable with cooldown.
-#   54-end   — command trigger on craft in the forge room (5245). Auto-grants
-#              reward + clears for repeat.
+#   54-start: granted by Survivor Ovell's dialogue (forge_loop_offer node).
+#             Requires 37-end (Into the Vein). Repeatable with cooldown.
+#   54-end:   command trigger on craft at the forge (room 5245). It finishes
+#              the quest on the spot (reward + clears for repeat), so no text
+#              asks the player to come back. Any recipe crafted at the forge
+#              counts; the hint names the iron dagger because every player who
+#              reaches this quest has made one and Rusk sells its materials.
 
 questid: 54
 name: Back to the Forge
@@ -19,11 +22,14 @@ steps:
   - id: start
     map_target: 5245
     description: >-
-      Ovell has asked you to return to the forge and put your
-      blacksmithing to work once more.
+      Ovell has asked you to put your blacksmithing to work once more.
+      Any recipe made at the forge in the Coulee Smithy counts, and the
+      quest is done the moment the craft succeeds. An iron dagger needs an iron
+      ingot and a leather strip, and Smith Rusk sells both.
     hint: >-
-      Go to the forge in the coulee and type craft to make something at
-      the anvil. Come back to Ovell when you are done.
+      At the forge in the Coulee Smithy, type craft iron dagger.
+      A craft can fail. If it does, buy an iron ingot and a leather
+      strip again and retry.
   - id: end
     description: >-
       You put good work through the forge again. Ovell will have another
@@ -49,4 +55,4 @@ triggers:
       - grant: "54-end"
       - actor: >-
           The work rings clean off the anvil. That is what Ovell wanted
-          to know -- that the forge is still yours. Report back to him.
+          to know: the forge is still yours.

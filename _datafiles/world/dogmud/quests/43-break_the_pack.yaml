@@ -27,14 +27,14 @@ steps:
   - id: start
     map_target: 5298
     description: >-
-      Delk has set you on the pack. Press south into their territory,
-      fight through the hounds, and defeat the alpha pack-leader in the
-      den.
+      Delk has set you on the pack. Cook a meal and carry it before you go:
+      the pack comes at you in numbers, two and three to a room. From the
+      Game Trail, east of Delk's camp, the way runs south through the
+      Killing Ground and the Bone Field to the Den. Consider a foe to size
+      it up, and flee if a fight turns against you.
     hint: >-
-      Cook a meal and carry it before you go -- the pack comes at you in
-      numbers. Head south through the killing ground and the bone field
-      to the den. Type consider on a foe to size it up; type flee if a
-      fight turns against you. Defeat the alpha pack-leader in the den.
+      In the Den, south of the Bone Field, type attack alpha. If it is dark,
+      type cast chrysalis-glow first.
   - id: end
     description: >-
       The alpha is dead and the pack is broken. You came to the steppe

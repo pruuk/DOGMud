@@ -70,12 +70,16 @@ tree:
 
       # ── Mid quest 44 ─────────────────────────────────────
       - questRequired: ["44-start"]
-        questExcluded: ["44-end"]
+        questExcluded: ["44-cast", "44-end"]
         text: "You have not loosed it yet. North, into the Star Chamber --
           the practice mote hangs at the mark. Type cast conviction-spike
           mote and let the spell go at it. Then come back and tell me."
-        hints: "Go north to the Star Chamber. Type cast conviction-spike
-          mote. Then ask grieve done."
+        hints: "Go north into the Star Chamber and type cast
+          conviction-spike mote."
+      - questRequired: ["44-cast"]
+        questExcluded: ["44-end"]
+        text: "I felt that one fold. Tell me how it went."
+        hints: "Type ask grieve done."
 
       # ── Quest 44 complete ────────────────────────────────
       - questRequired: ["44-end"]
@@ -101,9 +105,8 @@ tree:
         it. Stand at the mark and cast a spell you already know at the mote.
         The spike you woke with will do -- type cast conviction-spike mote.
         Do not force it. Shape it, and let it go. Then come back to me."
-      hints: "Go north into the Star Chamber. Type cast conviction-spike mote
-        to loose your starting spell at the practice mote. Then return and
-        type ask grieve done."
+      hints: "Go north into the Star Chamber and type cast conviction-spike
+        mote."
 
     # ── QUEST 44 TURN-IN ──────────────────────────────────────
     - id: cast_turnin

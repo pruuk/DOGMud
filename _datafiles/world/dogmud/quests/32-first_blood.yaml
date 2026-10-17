@@ -1,117 +1,146 @@
 questid: 32
 name: First Blood
-description: A cudgel, a training dummy, and Drillmaster Vorn's Drill Yard --
-  learn the four pillars of combat there before you take your bruises
-  somewhere they can kill you.
+description: A cudgel, a training dummy, and Drillmaster Vorn's Drill Yard.
+  Learn the basics of combat there before you take your bruises somewhere
+  they can kill you.
 secret: false
 
+# One command per step, in order (owner ruling 2026-10-17). Each trigger
+# gates on the step before it. Step ids start, strike, special, consider
+# and verbosity are what saved characters hold; wield was inserted between
+# start and strike, so a player saved on start is told to wield and resumes.
 steps:
   - id: start
     map_target: 5227
-    description: "Take your cudgel to the training dummy in the Drill
-      Yard and learn by doing. Drillmaster Vorn keeps the yard."
-    hint: "Type wield cudgel, then attack dummy to start your first
-      fight."
+    description: "Drillmaster Vorn gave you a cudgel. Hold it in your hand
+      before you fight. If you already hold it, type remove cudgel, then
+      wield it again."
+    hint: "Type wield cudgel."
+  - id: wield
+    map_target: 5227
+    description: "The cudgel is in your hand. Now fight the training dummy
+      in the Drill Yard until it falls."
+    hint: "Type attack dummy."
   - id: strike
     map_target: 5227
-    description: "You have traded blows with the training dummy and
-      lived to tell it. The dummy did not fare as well."
-    hint: "The dummy resets after it drops. On a fresh one, LEAD with
-      kick dummy or trip dummy -- land the special before the killing blow."
+    description: "You beat the training dummy. A new dummy stands up in the
+      yard after a short wait. Now try a special move on it: a kick hits
+      hard, and a trip (trip dummy) puts it on the ground. Either one
+      counts."
+    hint: "Type kick dummy."
   - id: special
     map_target: 5227
-    description: "You landed a special move on the dummy. Kicks and
-      trips are tools, not tricks -- use them when the moment is right."
-    hint: "Type consider dummy to read your opponent before the next
-      round."
+    description: "You used a special move. Kicks and trips cost stamina,
+      so use them when they help most."
+    hint: "Type consider dummy."
   - id: consider
     map_target: 5227
-    description: "You sized up the training dummy. Consider tells you
-      what you are walking into before you commit."
-    hint: "Combat verbosity sets how much fight text you see. Full shows
-      every swing, medium shows only the hits, and light shows one line a
-      round. Type set combatverbosity and the level you want, for example
-      set combatverbosity medium. For more, type help combatverbosity."
+    description: "You sized up the training dummy. Consider tells you how
+      dangerous a foe is before you start a fight. Next, choose how much
+      combat detail you see: full shows every swing, medium shows only the
+      hits, and light shows one line a round."
+    hint: "Combat verbosity sets how much fight text you see. Type set
+      combatverbosity full. For more, type help combatverbosity."
   - id: verbosity
     map_target: 5227
-    description: "You have tuned your combat output. The Drill Yard
-      has taught you what it can. Report to Vorn."
-    hint: "Tell Vorn you are done -- type ask vorn report."
+    description: "You chose your combat detail. You can change it at any
+      time. The Drill Yard has taught you what it can."
+    hint: "Go back to Drillmaster Vorn in the Drill Yard and type ask vorn
+      report."
   - id: end
-    description: "Drillmaster Vorn has signed off on your first bout.
-      The cudgel has earned its first notch. Head east into the wash
-      and find Caravan Guard Garve."
+    description: "Drillmaster Vorn has signed off on your first fight. Go
+      north to the Sparring Circle, east three times to the Lower Wash,
+      then south to Squatter's Hollow, where Caravan Guard Garve waits."
 
 rewards:
   gold: 15
   skillinfo: "weapon-combat:1"
   actor: >-
     Vorn turns your performance over in his head for a long moment,
-    the way a smith eyes a finished blade for flaws. Then he nods --
+    the way a smith eyes a finished blade for flaws. Then he nods
     once, short, like it costs him something. "Passable. You did not
     freeze, you did not panic, and you remembered to think between
     swings. That is more than most manage on the first day." He
-    presses a few coins into your hand. "Take the east path into
+    presses a few coins into your hand. "Go north, then east along
     the wash. Find Garve. He will put that edge to use."
   observer: "Vorn nods at you with a gruff, brief approval."
 
 triggers:
+  # ── WIELD: equip anything (equip carries no item name) ──
+  - event: command
+    command: equip
+    conditions:
+      has: ["32-start"]
+      missing: ["32-wield"]
+    actions:
+      - grant: "32-wield"
+      - actor: "The cudgel sits in your hand. Now fight the training
+          dummy: type attack dummy."
+
   # ── DUMMY DEFEATED (mob 9109) ─────────────────────────
   - event: mob_death
     mob: 9109
     conditions:
-      has: ["32-start"]
+      has: ["32-wield"]
       missing: ["32-strike"]
     actions:
       - grant: "32-strike"
-      - actor: "The training dummy shudders and goes still. Your
-          arms remember the rhythm of it -- weight, angle, follow
-          through. Now try something more deliberate: kick dummy or
-          trip dummy."
+      - actor: "The training dummy shudders and goes still. Your arms
+          remember the rhythm of it: weight, angle, follow through. A new
+          dummy stands up soon. When it does, type kick dummy."
 
-  # ── SPECIAL MOVE: kick (room 5227) ────────────────────
-  # command_issued (not command): credit the ATTEMPT, not a landed hit.
-  # The dummy (mob 9109) is deliberately fragile (~15 vitality) so the
-  # 32-strike kill is quick, which means auto-attack often drops the
-  # respawned dummy before a kick/trip can land — leaving the player
-  # whiffing "no target" repeatedly. Gating on the typed command teaches
-  # the move without fighting the dummy's HP or a lucky crit.
-  - event: command_issued
+  # ── SPECIAL MOVE: kick or trip ────────────────────────
+  # event: command, not command_issued. kick and trip send `command` only
+  # once the move resolves against a target (a hit or a miss; a trip on a
+  # target already on the ground also counts), so a refused move ("no
+  # target", not enough stamina, on cooldown) does not finish the step.
+  # This depends on the training dummy standing back up promptly after the
+  # 32-strike kill (the room 5227 respawn fix, 2026-10-17): the dummy is
+  # fragile, and a player who arrives here while it is still down has
+  # nothing to kick until it returns.
+  - event: command
     command: kick
     conditions:
-      has: ["32-start"]
+      has: ["32-strike"]
       missing: ["32-special"]
     actions:
       - grant: "32-special"
+      - actor: "That is a special move. Now read your opponent: type
+          consider dummy."
 
-  # ── SPECIAL MOVE: trip (room 5227) ────────────────────
-  - event: command_issued
+  - event: command
     command: trip
     conditions:
-      has: ["32-start"]
+      has: ["32-strike"]
       missing: ["32-special"]
     actions:
       - grant: "32-special"
+      - actor: "That is a special move. Now read your opponent: type
+          consider dummy."
 
-  # ── CONSIDER (room 5227) ──────────────────────────────
-  # command_issued: same reasoning as kick/trip — `consider dummy` needs a
-  # live target, and the fragile dummy may be dead/mid-respawn when the
-  # player types it. Credit the attempt. (combatverbosity below stays on
-  # `command`: it is reached via `set combatverbosity`, which fires a
-  # logical "combatverbosity" command event by hand — see set.go.)
-  - event: command_issued
+  # ── CONSIDER ──────────────────────────────────────────
+  # event: command: consider sends it only once its target resolves, so
+  # `consider dummy` while the dummy is down does not count. Same respawn
+  # dependency as the special move above.
+  - event: command
     command: consider
     conditions:
-      has: ["32-start"]
+      has: ["32-special"]
       missing: ["32-consider"]
     actions:
       - grant: "32-consider"
+      - actor: "Now choose how much combat detail you see: type set
+          combatverbosity full."
 
-  # ── COMBATVERBOSITY (room 5227) ───────────────────────
+  # ── COMBATVERBOSITY ───────────────────────────────────
+  # Reached via `set combatverbosity`, which fires a logical
+  # "combatverbosity" command event (set.go).
   - event: command
     command: combatverbosity
     conditions:
-      has: ["32-start"]
+      has: ["32-consider"]
       missing: ["32-verbosity"]
     actions:
       - grant: "32-verbosity"
+      - actor: "Your combat detail is set. Go back to Vorn and type ask
+          vorn report."

@@ -1,18 +1,19 @@
 # Quest 55 — Another Brew (Pothole Coulee, Spoke C repeatable)
 #
-# Token flow:
+# Token flow (one command per step, owner ruling 2026-10-17):
 #   55-start — granted by Falv's dialogue (brew_loop_offer node).
 #              Requires 40-end (Heart of the Mire). Repeatable with cooldown.
-#   55-brew  — command trigger on craft in the alchemy bench room (5265).
-#   55-end   — command trigger on drink (anywhere, no room). Auto-grants
-#              reward + clears for repeat.
+#   55-brew: command trigger on craft at an alchemy bench (5265 or 5267).
+#   55-end:  command trigger on drink (anywhere, no room), once brewed.
+#              Auto-grants the reward + clears for repeat. There is no
+#              report back to Falv, so no line tells the player to return.
 
 questid: 55
 name: Another Brew
 description: >-
   Falv figures anyone worth keeping alive stays current with their
-  kit. Brew something at the alchemy bench and drink it down -- then
-  come back and tell him it held.
+  kit. Brew something at the alchemy bench and drink it down. The
+  brew is its own proof, and the run ends when you drink it.
 secret: false
 repeatable: true
 cooldown_rounds: 300
@@ -22,15 +23,17 @@ steps:
     map_target: 5265
     description: >-
       Falv wants you to brew at the alchemy bench and drink what you
-      make.
+      make. The benches are at Birna's Sheltered Pool and on the Drying
+      Racks west of it. Any recipe counts; a healing salve takes two
+      healer's roots and a glass vial.
     hint: >-
-      Go to the alchemy bench and type craft to make a brew. Then type
-      drink to take it. Come back to Falv when you are done.
+      At the alchemy bench, type craft healing salve. A craft can fail. If
+      it does, buy the ingredients again and retry.
   - id: brew
     map_target: -1  # action step (command/skill) — no travel destination
     description: >-
-      You made the brew. Now drink it down before you report back.
-    hint: "Type drink to drink what you just brewed."
+      You made the brew. Now drink it down. That finishes the run.
+    hint: "Type drink healing salve."
   - id: end
     description: >-
       The brew held. Falv will send you back to the bench before long.
@@ -39,11 +42,10 @@ rewards:
   gold: 6
   skillinfo: "alchemy:1"
   actor: >-
-    Falv flicks a look your way and holds out a hand for the empty
-    vessel. "Still brewing. Good. The marsh does not care how long
-    ago you learned -- only whether your salve is fresh. Come back
-    when the stock runs thin."
-  observer: "Falv checks the empty vessel and pockets it without comment."
+    The brew settles in you, clean and right. You remember what Falv
+    said: the marsh does not care how long ago you learned, only whether
+    your salve is fresh. Ask him for more work when the stock runs thin.
+  observer: "The newcomer drinks down a fresh brew."
 
 triggers:
   - event: command
@@ -55,8 +57,19 @@ triggers:
     actions:
       - grant: "55-brew"
       - actor: >-
-          The brew takes shape on the bench -- clean steep, right color.
-          Now drink it down.
+          The brew came off the bench clean, steeped to the right color.
+          Type drink healing salve, or drink whatever you made.
+  - event: command
+    command: craft
+    room: 5267
+    conditions:
+      has: ["55-start"]
+      missing: ["55-brew"]
+    actions:
+      - grant: "55-brew"
+      - actor: >-
+          The brew came off the bench clean, steeped to the right color.
+          Type drink healing salve, or drink whatever you made.
 
   - event: command
     command: drink
@@ -67,4 +80,4 @@ triggers:
       - grant: "55-end"
       - actor: >-
           The brew does what it promised. That is what Falv wanted to
-          know. Report back to him.
+          know.

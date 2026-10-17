@@ -2869,9 +2869,9 @@ room 5350 biome=cliffs
   infrared     sight=shapes clear=false shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5351 biome=cliffs
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
-  infrared     sight=shapes clear=false shapes=true
+  infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5352 biome=cliffs
   plain        sight=shapes clear=false shapes=true

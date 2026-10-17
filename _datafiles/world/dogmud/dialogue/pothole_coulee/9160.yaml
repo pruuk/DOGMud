@@ -28,6 +28,14 @@ patterns:
           worn into the same shape."
 
   - keywords: ["beneath", "under", "floor", "disc", "stone", "buried"]
+    questRequired: ["49-end"]
+    responses:
+      - "The disc is still down there under the Reliquary floor, where the
+          light can reach it. I go and sit with it some evenings. It does not
+          seem to mind."
+
+  - keywords: ["beneath", "under", "floor", "disc", "stone", "buried"]
+    questExcluded: ["49-start"]
     responses:
       - "Something lies under the floor of the innermost chamber -- the
           Reliquary, the deepest room. I have felt it there for thirty years,
@@ -65,16 +73,27 @@ tree:
           you are ready to bring it to light."
         hints: "Type ask sere beneath to take on the shrine's task."
 
-      # ── Mid quest 49 ─────────────────────────────────────
+      # ── Mid quest 49, one variant per step (one command each) ─
       - questRequired: ["49-start"]
+        questExcluded: ["49-find", "49-end"]
+        text: "It is still down there, under the Reliquary floor. West into the
+          nave, then north, to the deepest chamber, where the flags have
+          cracked and heaved. Search it out with your hands."
+        hints: "Go west into the Collapsed Nave and north into the Reliquary,
+          then type search."
+      - questRequired: ["49-find"]
         questExcluded: ["49-end"]
-        text: "It is still down there, under the Reliquary floor -- the deepest
-          chamber, where the flags have cracked and heaved. Search it out with
-          your hands. Search again if the first try finds only stone. Look on
-          what you uncover, then come and tell me it is real."
-        hints: "Go to the Reliquary (deepest chamber). Type search to uncover
-          what lies beneath the floor -- search again if the first try finds
-          only stone. Then ask sere done."
+        text: "You have the look of someone who has touched it. Tell me. Is it
+          real?"
+        hints: "Type ask sere done."
+
+      # ── Repeatable 58 open ───────────────────────────────
+      - questRequired: ["58-start"]
+        questExcluded: ["58-end"]
+        text: "The stones are waiting for you in the Reliquary. Go and listen
+          to them. They will tell you themselves when they are done."
+        hints: "Go west into the Collapsed Nave and north into the Reliquary,
+          then type search."
 
       # ── Quest 49 complete ────────────────────────────────
       - questRequired: ["49-end"]
@@ -83,7 +102,8 @@ tree:
           do with it. You are a friend of the folk now, and the only soul living
           who has seen the thing beneath the shrine. That is no small thing to
           be. Go well, and come back if the world ever tells you what it was."
-        hints: "You have cleared the Lore spoke. Well done."
+        hints: "You have cleared the Lore spoke. To read the stones again, type
+          ask sere work."
 
   nodes:
     # ── QUEST 49 OFFER ────────────────────────────────────────
@@ -94,18 +114,18 @@ tree:
       questExcluded: ["49-start", "49-end"]
       grantsQuest: "49-start"
       text: "Then I will send you where I cannot go on my own account. The
-        Reliquary is the deepest chamber of the shrine -- up through here and
-        back. Its flagstone floor has cracked and lifted over something that has
-        wanted lifting a long time. Search the floor with your hands -- more
-        than once, if it hides from you -- and bring out what is under it. Look
-        on it well. Then come and tell me what you saw."
-      hints: "Go to the Reliquary (the deepest back-chamber of the shrine). Type
-        search to uncover what lies beneath the floor. Then return and tell Sere
-        -- ask sere done."
+        Reliquary is the deepest chamber of the shrine: west into the nave
+        from here, then north. Its flagstone floor has cracked and lifted over
+        something that has wanted lifting a long time. Search the floor with
+        your hands and bring out what is under it. Look on it well. Then come
+        and tell me what you saw."
+      hints: "Go west into the Collapsed Nave and north into the Reliquary,
+        then type search."
 
     # ── QUEST 49 TURN-IN ──────────────────────────────────────
     - id: shrine_turnin
-      triggers: ["report", "done", "ready", "finished", "real", "quest", "task"]
+      triggers: ["report", "done", "ready", "finished", "real", "found",
+        "disc", "beneath", "under", "floor", "buried", "quest", "task"]
       questRequired: ["49-find"]
       questExcluded: ["49-end"]
       grantsQuest: "49-end"
@@ -119,17 +139,45 @@ tree:
       hints: "Quest complete. You have cleared the Lore spoke."
 
     # ── REPEATABLE STONES READING OFFER ──────────────────────
+    #    The search in the Reliquary finishes quest 58 on the spot; there is
+    #    no report back, so nothing here asks the player to return.
     - id: stones_loop_offer
       triggers: ["work", "again", "more", "stones", "shrine", "quest", "task"]
       questRequired: ["49-end"]
       grantsQuest: "58-start"
       questExcluded: ["58-start", "58-end"]
       text: "The shrine speaks differently each time. If you have the
-        patience to go back to the Reliquary and read the stones again,
-        I would like to hear what they say to you now."
-      hints: >-
-        You could return to the Reliquary and read the stones again --
-        type ask sere work.
+        patience, go back to the Reliquary and read the stones again. They
+        will tell you what they have to say. You need not come back to tell
+        me. I will hear it in the stones."
+      hints: "Go west into the Collapsed Nave and north into the Reliquary,
+        then type search."
+
+    # ── QUEST 49 MID-QUEST (before the search): answers the report and lesson
+    #    words a player tries early, so they do not reach the patterns. Placed
+    #    after every grant node (the editor validator requires grants first);
+    #    its 49-start gate keeps it off the 58 offer's path. ──
+    - id: shrine_progress
+      triggers: ["report", "done", "ready", "finished", "real", "quest",
+        "task", "search", "disc", "floor", "beneath", "under", "buried",
+        "reliquary", "where", "how", "help"]
+      questRequired: ["49-start"]
+      questExcluded: ["49-find", "49-end"]
+      text: "Not yet. It is still under the Reliquary floor. West into the nave
+        from here, then north. Search the cracked flags with your hands."
+      hints: "Go west into the Collapsed Nave and north into the Reliquary,
+        then type search."
+
+    # ── REPEATABLE 58 OPEN: the reading is still to do ───────
+    - id: stones_loop_progress
+      triggers: ["work", "again", "more", "stones", "shrine", "report",
+        "done", "ready", "quest", "task", "search", "how", "help"]
+      questRequired: ["58-start"]
+      questExcluded: ["58-end"]
+      text: "The stones are waiting for you in the Reliquary, not here with
+        me. Go and search them."
+      hints: "Go west into the Collapsed Nave and north into the Reliquary,
+        then type search."
 
 memory:
   expiryPeriod: ""

@@ -1,16 +1,28 @@
 # Caravan Guard Garve — Squatter's Hollow (5234). Wary, weary caravan
 # guard; convoy was ambushed, left arm out of commission. Grants and
-# closes quest 33 (Hold the Wash). No combat; non_combatant is true.
+# closes quest 33 (Hold the Wash), grants 34 (Take the Tower) and the
+# repeatable 53 (Cull the Wash). No combat; non_combatant is true.
 # Animal-lambent eyes (Opened). Mid-ring foe context: Bandit Scout
 # (9110, rooms 5232/5233/5236), Bandit Squatter (9111, rooms 5235/5236,
 # drops a body vest). Reward armor: Toughened Leggings (item 20087).
+#
+# Directions from the hollow (verified against the room exits):
+#   north -> Lower Wash (5232, scout); east -> Cracked Cistern (5235,
+#   squatter); cistern northeast -> Upper Wash (5236), east twice ->
+#   Broken Gate (5238), north -> Tower Base (5240), up twice -> Watch
+#   Room (5242, captain). Lower Wash west three times -> Sparring Circle
+#   (5229), south -> Drill Yard (5227). Mending Hut (5209) is two rooms
+#   west of the Drill Yard.
 #
 # Variant order (first match wins):
 #   1. Not Opened (no 30-end)            → redirect to Hadwen
 #   2. Opened, not trained (no 32-end)   → redirect to Drillmaster Vorn
 #   3. Trained, pre-offer (no 33-start)  → prompt ask garve wash
-#   4. Mid-quest (33-start, no 33-end)   → remind to clear / flee / wake
-#   5. Completed (33-end)                → thanks + tower forward hook
+#   4-6. Mid quest 33, one per step      → that step's one command
+#   7. 33 done, tower not taken          → tower offer
+#   8. Mid quest 34                      → attack captain
+#   9-10. Mid quest 53, one per step     → that step's one command
+#   11. Completed (34-end)               → thanks + road onward
 #
 # Tree nodes:
 #   wash_offer   — grants 33-start; triggers include quest/task (SOP)
@@ -65,35 +77,53 @@ tree:
           Opened, good. But you are still carrying yourself like
           someone who has not put that to work yet. The wash is not
           a forgiving place to find out for the first time. There is
-          a drillmaster in the yard -- Vorn, west side of the
-          coulee, just past the market. He turns raw into ready.
-          Come back when you have worked with him.
+          a drillmaster, Vorn, in the Drill Yard, back west along the
+          wash. He turns raw into ready. Come back when you have
+          worked with him.
         hints: >-
-          Find Drillmaster Vorn in the drill yard west of the market
-          and train with him before heading into the wash.
+          Find Drillmaster Vorn in the Drill Yard: go north to the
+          Lower Wash, west three times to the Sparring Circle, then
+          south. Train with him before you fight in the wash.
       - questRequired: ["32-end"]
         questExcluded: ["33-start", "33-end"]
         text: >-
           Trained and still standing. Then maybe we can do each other
-          some good. The wash east of here has at least one scout
-          watching the bend and a squatter dug into the cistern
-          further back. I cannot move on this arm. You might be able
+          some good. North of here, the Lower Wash has a scout on
+          watch, and a squatter has dug into the old cistern east of
+          this hollow. I cannot move on this arm. You might be able
           to move on their heads.
         hints: >-
-          Ask Garve about the wash if you want the full picture.
+          Type ask garve wash to hear what he needs.
+
+      # ── Mid quest 33, one variant per step (one command each) ─
       - questRequired: ["33-start"]
+        questExcluded: ["33-scout", "33-end"]
+        text: >-
+          Still in the field. Good. Scout first. There is one in the
+          Lower Wash, just north of here. If a fight turns on you,
+          flee. I mean it, not as advice but as the correct move.
+          Fall and you wake at the Mending Hut. That is how the
+          coulee works, not the end of anything.
+        hints: >-
+          Go north from Squatter's Hollow to the Lower Wash and type
+          attack scout.
+      - questRequired: ["33-scout"]
+        questExcluded: ["33-squatter", "33-end"]
+        text: >-
+          The scout is down. Good. Now the squatter. He has dug into
+          the old cistern, east of this hollow. Same rule as before:
+          if it turns on you, flee.
+        hints: >-
+          From Squatter's Hollow, go east to the Cracked Cistern and
+          type attack squatter.
+      - questRequired: ["33-squatter"]
         questExcluded: ["33-end"]
         text: >-
-          Still in the field. Good. Scout first, squatter second --
-          the scout holds the bend and the squatter is back by the
-          cistern. If a fight turns on you, flee -- I mean it, not
-          as advice but as the correct move. Fall and you wake at
-          the Mending Hut. That is how the coulee works, not the
-          end of anything.
+          You have the look of someone who has been busy. Tell me how
+          it went out there.
         hints: >-
-          Head east into the wash. Type flee if a fight goes badly.
-          You will wake at the Mending Hut if you fall -- not dead
-          for good. Come back when both are down.
+          Type ask garve report.
+
       - questRequired: ["33-end"]
         questExcluded: ["34-start", "34-end"]
         text: >-
@@ -110,19 +140,40 @@ tree:
           ask garve might to be honed toward Strength, or ask garve
           finesse to be honed toward quickness. Ask garve tower for
           the full picture.
+
+      # ── Mid quest 34 (one step: the captain) ──────────────
       - questRequired: ["34-start"]
         questExcluded: ["34-end"]
         text: >-
-          Still down here? The captain is still up there. Climb the
-          wash to the broken gate, take the tower stairs, and put her
-          down in the watch room at the top. Mind the crew on the way
-          -- there is a bruiser and a lieutenant between you and her.
+          Still down here? The captain is still up there. Go east to
+          the cistern, northeast to the Upper Wash, and east twice to
+          the Broken Gate. The tower is north of the gate. Climb the
+          stairs to the watch room and put her down. A bruiser holds
+          the gate, and a lieutenant sits in the barracks east of it.
           Flee and come back if you have to. The Mending Hut still
           has your name.
         hints: >-
-          Head east up the wash to the broken gate, climb the tower
-          stairs, and defeat the bandit captain in the watch room.
-          Type flee if a fight turns against you.
+          In the Watch Room at the top of the tower, type attack
+          captain.
+
+      # ── Mid quest 53 (repeatable), one variant per step ───
+      - questRequired: ["53-start"]
+        questExcluded: ["53-firstkill", "53-end"]
+        text: >-
+          Scout first, same as before. There is usually one in the
+          Lower Wash, just north of here.
+        hints: >-
+          Go north from Squatter's Hollow to the Lower Wash and type
+          attack scout.
+      - questRequired: ["53-firstkill"]
+        questExcluded: ["53-end"]
+        text: >-
+          One scout down. Now the squatter in the old cistern, east
+          of here. The job is done when he falls.
+        hints: >-
+          From Squatter's Hollow, go east to the Cracked Cistern and
+          type attack squatter.
+
       - questRequired: ["34-end"]
         text: >-
           You took the tower. I heard it go quiet up there and I knew.
@@ -143,37 +194,32 @@ tree:
       questExcluded: ["33-start", "33-end"]
       grantsQuest: "33-start"
       text: >-
-        Here is what I am asking. There is a scout holding the
-        bend east of here -- where the wash narrows. Deeper in,
-        past the drop, a squatter has claimed the old cistern.
-        Between them they own the lower wash and I cannot push
-        them without this arm. You can. Put them both down and
-        come back to me.
+        Here is what I am asking. There is a scout in the Lower
+        Wash, just north of here, and more of them up the bend.
+        East of this hollow, a squatter has claimed the old
+        cistern. Between them they own the lower wash and I
+        cannot push them without this arm. You can. Scout first,
+        then the squatter, then come back to me.
         One piece of advice that is not optional: if a fight
         turns against you, use flee. The wash will kill a
         careless fighter, and dead is not what either of us
-        needs right now. And if you do go down -- if the worst
-        happens -- you wake at the Mending Hut on the west side
-        of the hollow. Not in a ditch. Not gone. You walk back
-        and try again. That is how the coulee works.
+        needs right now. And if you do go down, if the worst
+        happens, you wake at the Mending Hut, back in the
+        coulee, two rooms west of the Drill Yard. Not in a
+        ditch. Not gone. You walk back and try again. That is
+        how the coulee works.
         One more thing. Strip what they carry while you are at
-        it -- gear does a dead bandit no good, and it will do
+        it. Gear does a dead bandit no good, and it will do
         you plenty.
       hints: >-
-        Head east from here into the lower wash to find the
-        scout. The squatter camps deeper in by the cistern.
-        Type flee to pull out if a fight turns against you --
-        you will wake at the Mending Hut if you fall, not dead
-        for good. When a bandit falls, its gear stays on the
-        corpse -- type loot corpse (or get all corpse) to take
-        it, then type wear to put on any armor you find. Type
-        sethome coulee if you have not set your wake point yet.
+        Go north from Squatter's Hollow to the Lower Wash and type
+        attack scout.
       moodChange: neutral
 
     - id: wash_turnin
       triggers: ["report", "done", "cleared", "clear", "finished",
                  "quest", "task", "both", "down"]
-      questRequired: ["33-scout", "33-squatter"]
+      questRequired: ["33-squatter"]
       questExcluded: ["33-end"]
       grantsQuest: "33-end"
       text: >-
@@ -192,6 +238,45 @@ tree:
         may have more work waiting -- come back to Garve when
         you are ready.
       moodChange: friendly
+
+    # ── MID QUEST 33 (S10): one answer per step ───────────
+    # After wash_turnin, so "report" on the last step still turns in.
+    - id: wash_progress_start
+      triggers: ["scout", "squatter", "wash", "help", "how", "where",
+                 "report", "done", "clear", "finished", "quest", "task",
+                 "flee", "cistern", "bend", "bandit", "next", "what"]
+      questRequired: ["33-start"]
+      questExcluded: ["33-scout", "33-end"]
+      text: >-
+        Scout first. There is one in the Lower Wash, just north of
+        here. If the fight turns on you, flee. If you fall, you wake
+        at the Mending Hut and walk back. Then the squatter in the
+        cistern, east of here.
+      hints: >-
+        Go north from Squatter's Hollow to the Lower Wash and type
+        attack scout.
+    - id: wash_progress_scout
+      triggers: ["scout", "squatter", "wash", "help", "how", "where",
+                 "report", "done", "clear", "finished", "quest", "task",
+                 "flee", "cistern", "bend", "bandit", "next", "what"]
+      questRequired: ["33-scout"]
+      questExcluded: ["33-squatter", "33-end"]
+      text: >-
+        The scout is down. Now the squatter. He holds the old
+        cistern, east of this hollow. If the fight turns on you,
+        flee.
+      hints: >-
+        From Squatter's Hollow, go east to the Cracked Cistern and
+        type attack squatter.
+    - id: wash_progress_squatter
+      triggers: ["scout", "squatter", "wash", "help", "how", "where",
+                 "flee", "cistern", "bend", "bandit", "next", "what"]
+      questRequired: ["33-squatter"]
+      questExcluded: ["33-end"]
+      text: >-
+        Sounds like the wash is quieter. Tell me properly.
+      hints: >-
+        Type ask garve report.
 
     - id: tower_offer
       triggers: ["tower", "captain", "take", "assault", "watchtower",
@@ -220,14 +305,15 @@ tree:
       setsQuestFlag: {key: "34-boon", value: "might"}
       grantsQuest: "34-start"
       text: >-
-        Might it is. Then we build the swing -- shoulder and back and
-        the will to close the distance and end it. Climb the wash to
-        the broken gate, take the stairs, and break her in the watch
-        room. Come back stronger or do not come back small.
+        Might it is. Then we build the swing: shoulder and back and
+        the will to close the distance and end it. Go east to the
+        cistern, northeast to the Upper Wash, and east twice to the
+        Broken Gate. The tower is north of the gate. Take the stairs
+        up and break her in the watch room. Come back stronger or do
+        not come back small.
       hints: >-
-        You have chosen the path of might (Strength). Head east up the
-        wash to the broken gate, climb the tower stairs, and defeat
-        the bandit captain in the watch room at the top.
+        You have chosen the path of might (Strength). In the Watch
+        Room at the top of the tower, type attack captain.
       moodChange: neutral
 
     - id: tower_finesse
@@ -239,14 +325,32 @@ tree:
       grantsQuest: "34-start"
       text: >-
         Finesse, then. Good for fighting someone bigger than you, and
-        she will be. We sharpen the feet and the timing -- be where
-        the blow is not, and put yours where she is. Climb to the
+        she will be. We sharpen the feet and the timing: be where
+        the blow is not, and put yours where she is. Go east to the
+        cistern, northeast to the Upper Wash, and east twice to the
+        Broken Gate. The tower is north of the gate. Climb to the
         watch room and outpace her. Then come tell me how it went.
       hints: >-
-        You have chosen the path of finesse (Dexterity). Head east up
-        the wash to the broken gate, climb the tower stairs, and
-        defeat the bandit captain in the watch room at the top.
+        You have chosen the path of finesse (Dexterity). In the Watch
+        Room at the top of the tower, type attack captain.
       moodChange: neutral
+
+    # ── MID QUEST 34 (S10) ────────────────────────────────
+    - id: tower_progress
+      triggers: ["captain", "tower", "help", "how", "where", "report",
+                 "done", "quest", "task", "watch", "gate", "stairs",
+                 "next", "what"]
+      questRequired: ["34-start"]
+      questExcluded: ["34-end"]
+      text: >-
+        The captain holds the watch room at the top of the tower. Go
+        east to the cistern, northeast to the Upper Wash, and east
+        twice to the Broken Gate. The tower is north of the gate, and
+        the stairs go up from there. Flee if you have to and come
+        back.
+      hints: >-
+        In the Watch Room at the top of the tower, type attack
+        captain.
 
     - id: arm_wound
       triggers: ["arm", "wound", "wrapped", "hurt", "injury",
@@ -303,15 +407,44 @@ tree:
         Clear the wash first. Garve may have more to offer
         about the tower when you come back.
 
+    # ── MID QUEST 53 (S10): one answer per step ───────────
+    # The quest finishes on the squatter's death; there is no turn-in.
+    - id: cull_progress_start
+      triggers: ["scout", "squatter", "wash", "help", "how", "where",
+                 "report", "done", "quest", "task", "work", "job",
+                 "more", "again", "next"]
+      questRequired: ["53-start"]
+      questExcluded: ["53-firstkill", "53-end"]
+      text: >-
+        Scout first, same as before. There is usually one in the
+        Lower Wash, just north of here. Then the squatter in the
+        cistern. The job is done when he falls. You do not need to
+        come back to me for the pay.
+      hints: >-
+        Go north from Squatter's Hollow to the Lower Wash and type
+        attack scout.
+    - id: cull_progress_firstkill
+      triggers: ["scout", "squatter", "wash", "help", "how", "where",
+                 "report", "done", "quest", "task", "work", "job",
+                 "more", "again", "next"]
+      questRequired: ["53-firstkill"]
+      questExcluded: ["53-end"]
+      text: >-
+        One scout down. Now the squatter in the old cistern, east of
+        here. The job is done when he falls.
+      hints: >-
+        From Squatter's Hollow, go east to the Cracked Cistern and
+        type attack squatter.
+
     - id: cull_offer
       triggers: ["work", "again", "more", "job", "quest", "task"]
       questRequired: ["34-end"]
       grantsQuest: "53-start"
       questExcluded: ["53-start", "53-firstkill", "53-end"]
       text: >-
-        There is always more work in the wash. Thin the squatters
-        out -- scout and squatter, same as before -- and come back
-        to me when it is done. The coins are the same.
+        There is always more work in the wash. Thin them out again:
+        a scout first, then the squatter, same as before. The job is
+        done when the squatter falls, and the coin finds you then.
       hints: >-
-        You could take on another run in the wash -- type ask garve
-        work.
+        Go north from Squatter's Hollow to the Lower Wash and type
+        attack scout.

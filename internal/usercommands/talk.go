@@ -162,6 +162,21 @@ func buildPlayerState(user *users.UserRecord) *dialogue.PlayerState {
 			}
 			return false
 		},
+		// Backs itemExcluded: anywhere on the player counts, so a wielded
+		// sling or a pouch in the bandolier still means "already has one".
+		CarriesItem: func(itemId int) bool {
+			for _, itm := range user.Character.GetAllCarriedItems() {
+				if itm.ItemId == itemId {
+					return true
+				}
+			}
+			for _, itm := range user.Character.GetAllWornItems() {
+				if itm.ItemId == itemId {
+					return true
+				}
+			}
+			return false
+		},
 		RemoveItem: func(itemId int) bool {
 			for _, itm := range user.Character.GetAllBackpackItems() {
 				if itm.ItemId == itemId {

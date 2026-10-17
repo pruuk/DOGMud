@@ -7,7 +7,14 @@
 #              hunting bow (itemid), a generous ammo stockpile (item_info), and
 #              gold. Turn-in is automatic on the kill, like the other capstones.
 #
-# Design: the ranged capstone — and the capstone of the whole newbie area. The
+# One command per step (owner ruling 2026-10-17): the start hint names only
+# the shot. The route and the dark aside are not commands; the ammo and
+# kiting advice live in the description. Route, walked in the room dump:
+# Canyon Head (5358) up to Overlook Rise (5360), then north through Raider
+# Perch (5361) and The High Stand (5362) to The Overlook (5364), where Skell
+# spawns.
+#
+# Design: the ranged capstone, and the capstone of the whole newbie area. The
 # boss is a kiting archer (the `archer` archetype: shoots, gives ground, opens
 # the distance as you close). The lesson it embodies: out-shoot a kiter, or
 # close the gap faster than it can open it. Bring ammo.
@@ -26,14 +33,15 @@ steps:
   - id: start
     map_target: 5364
     description: >-
-      Bryn has set you against Bowmaster Skell. Climb the chimney at the
-      canyon's head to the raider overlook, fight up through the raider
-      shooters, and bring down the bowmaster on the highest stand.
+      Bryn has set you against Bowmaster Skell. Climb from the Canyon Head to
+      the raider overlook, fight up past the raider shooters, and bring down
+      the bowmaster on the Overlook itself. Carry more ammo than you think you
+      need before you climb: Skell gives ground and shoots, so the fight runs
+      long. Out-shoot him or close fast. If you run low, Scout Bryn will spare
+      bolts before you go up.
     hint: >-
-      Carry plenty of ammo before you go. Go up from the Canyon Head to the
-      overlook, then north through the raider perches to the highest stand.
-      Skell keeps his distance and shoots -- out-shoot him or close fast.
-      Defeat Bowmaster Skell on the Overlook.
+      From the Canyon Head, go up, then keep north to the Overlook and type
+      fire skell. If it is dark, type cast chrysalis-glow first.
   - id: end
     description: >-
       Skell is down and the overlook is taken. The bluff band has lost the

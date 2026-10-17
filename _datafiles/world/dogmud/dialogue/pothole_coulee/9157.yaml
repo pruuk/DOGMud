@@ -28,11 +28,18 @@ patterns:
           and now I sing them in two voices at once."
 
   - keywords: ["dispute", "quarrel", "garrow", "ferd", "green", "standoff"]
+    questExcluded: ["48-taunt"]
     responses:
       - "There is a sourness on the mustering green just now -- young Garrow
           squared up against old Ferd over a boundary stone, and neither will
           give. Soft words have only hardened them. It wants a harder word. Ask
           me about it if you have the nerve to be that word."
+
+  - keywords: ["dispute", "quarrel", "garrow", "ferd", "green", "standoff"]
+    questRequired: ["48-taunt"]
+    responses:
+      - "The green is quiet now. Ferd has his boundary stone back, and Garrow
+          has his pride to nurse somewhere out of sight. That was your doing."
 
   - keywords: ["origins", "came", "before", "old", "carvings", "world"]
     responses:
@@ -74,24 +81,28 @@ tree:
         hints: "Type ask hale stones to take on the loresinger's task, or ask
           hale dispute about the quarrel on the green."
 
-      # ── Mid quest 48 ─────────────────────────────────────
+      # ── Mid quest 48, one variant per step (one command each) ─
       - questRequired: ["48-start"]
-        questExcluded: ["48-end"]
+        questExcluded: ["48-taunt", "48-end"]
         text: "The green is still sour. Young Garrow will not be reasoned down,
-          so do not reason -- go and taunt him, put a hard true word on him,
-          and break the standoff. Come back when the green is quiet again."
-        hints: "Go to the Mustering Green and type taunt garrow to face him
-          down. Then ask hale done."
+          so do not reason. Go north to the green and put a hard true word on
+          him, and break the standoff."
+        hints: "Go north to the Mustering Green and type taunt garrow."
+      - questRequired: ["48-taunt"]
+        questExcluded: ["48-end"]
+        text: "The green has gone quiet. I can hear it from here. Tell me how it
+          went."
+        hints: "Type ask hale done."
 
       # ── Quest 48 complete ────────────────────────────────
       - questRequired: ["48-end"]
         text: "You quieted the green with a handful of words. Ferd has not
           stopped thanking the stones for it. You have the reckoning-bone now --
           read it when you can, though the oldest end will baffle you as it
-          baffles me. North and up is the shrine. Sere keeps the thing the bone
-          only points at. Go on."
-        hints: "Head north and up to the old shrine and type ask sere to find
-          Hermit Sere."
+          baffles me. The shrine is north, past the Tall Stone. Sere keeps the
+          thing the bone only points at. Go on."
+        hints: "Head north past the Tall Stone to the old shrine and type ask
+          sere to find Hermit Sere."
 
   nodes:
     # ── QUEST 48 OFFER ────────────────────────────────────────
@@ -101,14 +112,14 @@ tree:
       questRequired: ["47-end"]
       questExcluded: ["48-start", "48-end"]
       grantsQuest: "48-start"
-      text: "Then earn the telling. Down on the mustering green, young Garrow
-        has squared up against old Ferd and dug in past all reason -- a boundary
+      text: "Then earn the telling. Just north of here, on the mustering
+        green, young Garrow has squared up against old Ferd and dug in past
+        all reason -- a boundary
         quarrel swollen out of all sense. Gentle words have only fed it. So do
         not be gentle. Go and taunt him -- land one hard, true word where his
         bluster is thinnest -- and break his nerve. Settle the green, and the
         deep story is yours."
-      hints: "Go to the Mustering Green within the ring. Type taunt garrow to
-        face the belligerent farmhand down. Then return -- ask hale done."
+      hints: "Go north to the Mustering Green and type taunt garrow."
 
     # ── QUEST 48 TURN-IN ──────────────────────────────────────
     - id: stones_turnin
@@ -122,8 +133,22 @@ tree:
         carry this with it: the oldest marks on it are not ours. The folk came
         from somewhere we no longer name. Sere keeps the proof of it, north at
         the shrine -- go and look on the thing the bone only points at."
-      hints: "Quest complete. You received the reckoning-bone. Head north to the
-        old shrine and type ask sere to find Hermit Sere."
+      hints: "Quest complete. You received the reckoning-bone. Head north past
+        the Tall Stone to the old shrine and type ask sere to find Hermit
+        Sere."
+
+    # ── QUEST 48 MID-QUEST (before the taunt): answers the report and lesson
+    #    words a player tries early, so they do not reach the patterns. ──
+    - id: stones_progress
+      triggers: ["report", "done", "ready", "finished", "quest", "task",
+        "taunt", "garrow", "ferd", "green", "dispute", "quarrel", "standoff",
+        "how", "help"]
+      questRequired: ["48-start"]
+      questExcluded: ["48-taunt", "48-end"]
+      text: "Not yet. The green is still sour. Go north to it and put one hard,
+        true word on Garrow, where his bluster is thinnest. Words alone. No
+        fists."
+      hints: "Go north to the Mustering Green and type taunt garrow."
 
 memory:
   expiryPeriod: ""

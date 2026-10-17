@@ -6,13 +6,41 @@
 #     plays the paced rite sequence, and fires 30-end (the "Opened" token).
 #     Blank-slate Awakening: the rite grants NO starter mutation — mutations
 #     are earned afterward through use-based drift.
-# Token gating makes the rite single-shot: 30-end is granted at eval
-# time, so a re-ask falls through to dialogue (which has a gentle
-# refusal node). Pattern follows behaviors/rooms/sanctum_basin/113.yaml.
+# Single-shot: 30-end is granted at the CLOSE of the rite (a delayed
+# action), so for the ~41 s the rite runs the asker still lacks 30-end
+# and token gating alone would let a second `ask hadwen begin` queue a
+# second rite (2026-10-17 audit S6). The `rite_running` state flag closes
+# that window, the way The Landing's tree holds `leaving`
+# (behaviors/rooms/newcomer_antechamber/6467.yaml): set instantly when the
+# rite starts, checked by the rite and by the mid-rite answer below. 6467
+# never clears its flag; Hadwen serves every newcomer, so his clear is a
+# delayed action queued with the rite itself. Queued closures run whether
+# or not the asker is still online, and BehaviorState is not saved
+# (mobs.Mob.BTreeState is yaml:"-"), so a logout or a reboot mid-rite
+# cannot leave the flag stuck. After the rite, a re-ask falls through to
+# dialogue (which has a gentle refusal node).
+# Test: internal/behaviortree/hadwen_rite_guard_test.go.
 
 tree:
   type: selector
   children:
+
+    # ── MID-RITE: ask hadwen begin while the rite is already running ──
+    - type: sequence
+      event: player_ask
+      children:
+        - type: condition
+          check: keyword_match
+          keywords: [begin, ready]
+        - type: condition
+          check: state_equals
+          key: rite_running
+          value: "1"
+        - type: action
+          do: say
+          text: >-
+            Hush, now. The pool is still speaking, and it will not be
+            hurried. Let it finish.
 
     # ── THE RITE: ask hadwen begin (30-start held, not yet opened) ──
     - type: sequence
@@ -27,6 +55,14 @@ tree:
         - type: condition
           check: player_missing_quest
           quest: "30-end"
+        - type: condition
+          check: state_equals
+          key: rite_running
+          value: ""
+        - type: action
+          do: set_state
+          key: rite_running
+          value: "1"
         - type: action
           do: say
           text: Then we begin. Step to the edge with me.
@@ -102,6 +138,17 @@ tree:
             truer one. And <ansi fg="command">help</ansi> answers most
             questions with more patience than I have.
           delay: 29.5
+        # The light spell, for both roads (2026-10-17 audit B3: a player
+        # who leaves through Esk never hears Toke's hub lessons).
+        - type: action
+          do: say
+          text: >-
+            One gift more, and you carry it from today: a light of your
+            own. Gaius keeps true dark in its caves and mines, and the
+            dark will blind you. When it does, type
+            <ansi fg="command">cast chrysalis-glow</ansi> and the spores
+            in you will answer.
+          delay: 33.0
         - type: action
           do: say
           text: >-
@@ -113,7 +160,7 @@ tree:
             Toke you need your footing:
             <ansi fg="command">ask toke footing</ansi>. He will walk
             you through the town properly.
-          delay: 33.0
+          delay: 36.5
         - type: action
           do: say
           text: >-
@@ -122,17 +169,17 @@ tree:
             market to the Threshold House, then
             <ansi fg="command">ask esk passage</ansi>. The coulee will
             still be here either way.
-          delay: 36.5
+          delay: 40.0
         # Blank-slate Awakening: no starter mutation is granted during the rite.
         # The pool opens the capacity; every mutation is earned afterward through
         # use-based drift (see the mutation-graph acquisition design). The quest
-        # completion is the FINAL beat, after the last send-off line at 36.5 --
+        # completion is the FINAL beat, after the last send-off line at 40.0 --
         # otherwise the "quest complete" banner fires at t=0 and spoils the rite.
         # This action honors the static `delay` param (behaviortree/actions.go).
         - type: action
           do: grant_quest
           quest: "30-end"
-          delay: 37.0
+          delay: 40.5
         # Immediately hand the freshly-Opened player a persistent objective so
         # they are never left adrift: "Two Roads" (quest 29) names both onward
         # paths -- Crier Toke (learn the town) and Warden Esk (leave). Granted
@@ -142,7 +189,15 @@ tree:
         - type: action
           do: grant_quest
           quest: "29-start"
-          delay: 37.5
+          delay: 41.0
+        # The rite is over: clear the flag so the next newcomer can begin.
+        # Queued after both grants (the queue runs in order), so by the time
+        # a re-ask can pass the flag the asker already holds 30-end.
+        - type: action
+          do: set_state
+          key: rite_running
+          value: ""
+          delay: 41.0
 
     # ── GREETING: an un-Opened player arrives (incl. FIRST SPAWN —
     #    HandleJoin emits player_enter once per brand-new character).

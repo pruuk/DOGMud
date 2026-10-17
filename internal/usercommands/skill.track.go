@@ -23,9 +23,15 @@ func Track(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	actor := &actions.UserActor{User: user, Room: room}
-	_ = actions.Track(actor, opts)
+	result := actions.Track(actor, opts)
 
-	// Quest engine: command notification (preserved from prior behavior).
+	// Quest engine: the track ran. `track stop` reads no ground and a cooldown
+	// refusal reads none either, so neither sends the event and a quest step
+	// cannot finish on them (owner ruling 2026-10-17). A read that finds no
+	// tracks still counts: the player did track.
+	if opts.CancelTracking || result.OnCooldown {
+		return true, nil
+	}
 	bridge := questengine.NewGameBridge(user, room.RoomId)
 	questengine.GetEngine().Notify("command", questengine.EventDetails{
 		UserId:  user.UserId,

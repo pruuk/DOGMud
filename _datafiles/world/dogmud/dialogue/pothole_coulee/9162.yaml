@@ -64,16 +64,23 @@ tree:
           about the canyon when you are ready."
         hints: "Type ask bryn canyon to take on the cross-canyon lesson."
 
-      # ── Mid quest 51 ─────────────────────────────────────
+      # ── Mid quest 51, one variant per step (one command each) ─
       - questRequired: ["51-start"]
-        questExcluded: ["51-end"]
+        questExcluded: ["51-shoot", "51-end"]
         text: "Still at it. The scout holds the sounding floor, one
           chamber north of the Narrows. Stand in the Narrows and put a
-          shot across the exit -- fire scout north. It will charge. Stand
-          and finish it. Come back when it is down."
-        hints: "Go north to the Echoing Narrows. Type fire scout north to
-          shoot across the exit, then finish the scout when it charges.
-          Then ask bryn done."
+          shot across the exit before it ever sees you."
+        hints: "Go north to the Echoing Narrows and type fire scout north.
+          If it is dark, type cast chrysalis-glow first."
+      - questRequired: ["51-shoot"]
+        questExcluded: ["51-kill", "51-end"]
+        text: "You hit it, and now it is coming for you. Hold the Narrows
+          and finish it when it arrives."
+        hints: "When the scout reaches you, type fire scout until it falls."
+      - questRequired: ["51-kill"]
+        questExcluded: ["51-end"]
+        text: "I heard it fall. Tell me how it went."
+        hints: "Type ask bryn done."
 
       # ── Ready for quest 52 ───────────────────────────────
       - questRequired: ["51-end"]
@@ -89,12 +96,26 @@ tree:
       - questRequired: ["52-start"]
         questExcluded: ["52-end"]
         text: "He is still up there. Up the chimney at the canyon's head,
-          through the perches, to the high stand. Skell gives ground and
-          shoots -- out-shoot him or close fast, and do not run dry. Out
-          of ammo? Ask me before you climb."
-        hints: "Go up from the Canyon Head through the raider perches to
-          the Overlook; defeat Bowmaster Skell. Low on ammo? ask bryn
-          ammo."
+          past the perch and the high stand, to the Overlook itself. Skell
+          gives ground and shoots. Out-shoot him or close fast, and do not
+          run dry. Out of ammo? Ask me before you climb."
+        hints: "From the Canyon Head, go up, then keep north to the
+          Overlook and type fire skell. If it is dark, type cast
+          chrysalis-glow first."
+
+      # ── Mid quest 59 (repeatable drill), one variant per step ─
+      # Before the 52-end variant: a drilling player holds 52-end too.
+      - questRequired: ["59-start"]
+        questExcluded: ["59-shoot", "59-end"]
+        text: "The drill, then. The scout is back on the sounding floor.
+          Shoot it from the Narrows, across the exit."
+        hints: "Go north to the Echoing Narrows and type fire scout north.
+          If it is dark, type cast chrysalis-glow first."
+      - questRequired: ["59-shoot"]
+        questExcluded: ["59-end"]
+        text: "It is coming for you. Stand in the Narrows and finish it.
+          The drill is done when it falls."
+        hints: "When the scout reaches you, type fire scout until it falls."
 
       # ── Quest 52 complete ────────────────────────────────
       - questRequired: ["52-end"]
@@ -121,14 +142,12 @@ tree:
         the slot at you, because a shot thing always does. Stand your
         ground and finish it. That is the cross-canyon shot, and the
         price of it. Go."
-      hints: "Go north to the Echoing Narrows. Type fire scout north to
-        shoot into the next chamber; the scout will charge -- stand and
-        finish it. Then ask bryn done."
+      hints: "Go north to the Echoing Narrows and type fire scout north."
 
     # ── QUEST 51 TURN-IN ──────────────────────────────────────
     - id: canyon_turnin
       triggers: ["done", "report", "ready", "finished", "quest", "task"]
-      questRequired: ["51-shoot", "51-kill"]
+      questRequired: ["51-kill"]
       questExcluded: ["51-end"]
       grantsQuest: "51-end"
       text: "Reached across the slot and stood when it came. That is the
@@ -150,25 +169,58 @@ tree:
         fights the way you have just learned to -- at range, on the move,
         giving ground a step at a time and making you pay for every yard
         you take back. Climb the chimney at the Canyon Head, fight up
-        through his shooters, and bring him down on the high stand. Carry
-        all the ammo you can, because up there you will spend it. Go,
-        and come back having done it."
-      hints: "Carry plenty of ammo. Go up from the Canyon Head through
-        the raider perches to the Overlook; defeat Bowmaster Skell. Low
-        on ammo? ask bryn ammo."
+        past his shooters, and bring him down on the Overlook, past the
+        high stand. Carry all the ammo you can, because up there you will
+        spend it. Go, and finish it."
+      hints: "From the Canyon Head, go up, then keep north to the Overlook
+        and type fire skell."
+
+    # ── SHOT SUPPLY DURING QUEST 51 (the sling is still the weapon) ──
+    # Iden's pouch handout closes at 50-end, so without this a student who
+    # ran the sling dry in the canyon had nowhere to turn. itemExcluded:
+    # only a player with no pouch on them gets one (an empty pouch is
+    # removed when its last stone is spent).
+    - id: canyon_shot_supply
+      triggers: ["ammo", "shot", "pouch", "supply", "resupply", "more"]
+      questRequired: ["51-start"]
+      questExcluded: ["51-end"]
+      itemExcluded: 30064
+      givesItem: 30064
+      text: "Out of stones? Here, a pouch of shot. The scout will not wait
+        while you go looking for more."
+      hints: "You received a pouch of shot."
+    - id: canyon_shot_have
+      triggers: ["ammo", "shot", "pouch", "supply", "resupply", "more"]
+      questRequired: ["51-start"]
+      questExcluded: ["51-end"]
+      text: "You still have a pouch of shot on you. Spend it first. When
+        the last stone is gone, ask me again."
+      hints: "You already carry a pouch of shot. You could ask Bryn for
+        more once it is empty."
 
     # ── AMMO RESUPPLY (for the boss climb) ────────────────────
+    # itemExcluded: only a player with no case of bolts on them gets one
+    # (an empty case is removed when its last bolt is spent).
     - id: ammo_resupply
       triggers: ["ammo", "bolts", "shot", "supply", "resupply", "more"]
       questRequired: ["51-end"]
       questExcluded: ["52-end"]
+      itemExcluded: 30063
       givesItem: 30063
       text: "A case of bolts. Take it -- a kiter makes a long fight, and
         an empty weapon on the overlook is a dead climber. Run dry up
         there and you will wish you had asked twice. Come back for more
         if you need it."
       hints: "You received a case of bolts. Carry plenty against Skell.
-        Ask bryn ammo again if you run low."
+        You could ask Bryn for more ammo if you run dry."
+    - id: ammo_have
+      triggers: ["ammo", "bolts", "shot", "supply", "resupply", "more"]
+      questRequired: ["51-end"]
+      questExcluded: ["52-end"]
+      text: "You still have bolts in that case. Spend them first. When the
+        case is empty, come and ask me again, before you climb."
+      hints: "You already carry a case of bolts. You could ask Bryn for
+        more once it is empty."
 
     # ── CROSS-SHOT / KITING HELP ──────────────────────────────
     - id: cross_help
@@ -183,6 +235,56 @@ tree:
       hints: "Cross-room shot: fire <target> <direction>. Against a
         kiter, out-shoot it or close fast, and keep ammo on you."
 
+    # ── MID-QUEST COACH (quests 51, 52, 59; one node per step) ──
+    # The words a mid-quest player reaches for (done, quest, scout, skell,
+    # work) would otherwise fall to the patterns, which offer the lesson
+    # again, or to the catch-all. Each node answers with the step's one
+    # command, the same as the root greeting for that step. They sit after
+    # canyon_turnin so "done" on 51's last step still turns in, and after
+    # cross_help so "help" and "how" still get the how-to.
+    - id: coach_51_start
+      triggers: ["done", "report", "finished", "quest", "task", "next", "scout", "canyon", "cross", "narrows", "fire"]
+      questRequired: ["51-start"]
+      questExcluded: ["51-shoot", "51-end"]
+      text: "Not yet. The scout holds the sounding floor, one chamber north
+        of the Narrows. Shoot it from the Narrows, across the exit."
+      hints: "Go north to the Echoing Narrows and type fire scout north."
+    - id: coach_51_shoot
+      triggers: ["done", "report", "finished", "quest", "task", "next", "scout", "canyon", "cross", "narrows", "fire"]
+      questRequired: ["51-shoot"]
+      questExcluded: ["51-kill", "51-end"]
+      text: "Not yet. You hit it, and it is coming for you. Hold the
+        Narrows and finish it."
+      hints: "When the scout reaches you, type fire scout until it falls."
+    - id: coach_51_kill
+      triggers: ["scout", "canyon", "cross", "narrows", "fire", "next"]
+      questRequired: ["51-kill"]
+      questExcluded: ["51-end"]
+      text: "The scout is down. That is the lesson. Tell me how it went."
+      hints: "Type ask bryn done."
+    - id: coach_52_start
+      triggers: ["done", "report", "finished", "quest", "task", "next", "skell", "overlook", "bowmaster", "climb"]
+      questRequired: ["52-start"]
+      questExcluded: ["52-end"]
+      text: "Not yet. He is still up there. Up the chimney at the canyon's
+        head, past the perch and the high stand, to the Overlook itself."
+      hints: "From the Canyon Head, go up, then keep north to the Overlook
+        and type fire skell."
+    - id: coach_59_start
+      triggers: ["done", "report", "finished", "quest", "task", "next", "work", "again", "drill", "practice", "range", "scout", "job"]
+      questRequired: ["59-start"]
+      questExcluded: ["59-shoot", "59-end"]
+      text: "Same drill. The scout is on the sounding floor. Shoot it from
+        the Narrows, across the exit."
+      hints: "Go north to the Echoing Narrows and type fire scout north."
+    - id: coach_59_shoot
+      triggers: ["done", "report", "finished", "quest", "task", "next", "work", "again", "drill", "practice", "range", "scout", "job"]
+      questRequired: ["59-shoot"]
+      questExcluded: ["59-end"]
+      text: "It is coming for you. Finish it. The drill is done when it
+        falls."
+      hints: "When the scout reaches you, type fire scout until it falls."
+
     # ── REPEATABLE RANGE PRACTICE OFFER ──────────────────────
     - id: range_loop_offer
       triggers: ["work", "again", "more", "practice", "job", "quest", "task"]
@@ -190,9 +292,9 @@ tree:
       grantsQuest: "59-start"
       questExcluded: ["59-start", "59-shoot", "59-end"]
       text: "The eye drifts if you stop using it. Put a shot through the
-        slot and finish what charges you. Same drill. Come back when
-        it is done."
-      hints: "You could run the range drill again -- type ask bryn work."
+        slot from the Narrows and finish what charges you. Same drill. It
+        is done the moment the scout falls."
+      hints: "Go north to the Echoing Narrows and type fire scout north."
 
 memory:
   expiryPeriod: ""
