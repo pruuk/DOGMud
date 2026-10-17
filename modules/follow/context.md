@@ -64,6 +64,32 @@ player's own name) and `follow lose`, and the round expiry lines in
 `onNewRound` for player and player, mob and player, player and mob. A mob
 subject reads "Something", a player subject "Someone".
 
+## Light and parties (owner ruling 2026-10-17)
+
+Following keys off the FOLLOWED person's light. `roomChangeHandler` moves a
+player follower only when `rooms.(*Room).DepartureSight(follower, mover)` is
+not `SightNone`: the room the mover left, lit as if the mover still stood
+in it. An unlit follower follows a lit leader; in true darkness with no
+light, or while blinded, the follower reads `FollowLostLine` and the follow
+ends (`loseSightOf`, which tells the followed player "X stopped following
+you." at their sight). Party auto-follow in `usercommands.Go` uses the same
+gate and says `usercommands.PartyFollowLostLine`. Mob followers are not
+gated.
+
+`follow <name>` works inside a party (it once refused there). Following
+someone you already follow, by `follow` or as a member of the party they
+lead, answers "You're already following X." (`alreadyFollows`), the name
+hidden at the follower's sight. `movingWithParty` skips a follower whose
+party is walking together (the follower and the mover share a party whose
+leader now stands where the mover went), so party auto-follow does not
+walk them twice or end their follow. Known edge: a member following
+another member who walks alone into the room where the leader already
+stands is not moved.
+
+`help follow` ships here (`files/datafiles/templates/help/follow.template`)
+and is indexed under `parties` by `files/data-overlays/keywords.yaml`; it
+and `help party` link to each other.
+
 ## Gotchas
 
 - **Any new way for an actor to leave the world needs a listener here.**
@@ -71,8 +97,9 @@ subject reads "Something", a player subject "Someone".
   instance-transfer is not automatically.
 - **`loseFollowers` returns the dropped followers** so the caller can message
   them. Discarding the return leaves players silently un-followed.
-- **Follow is not the same as party.** They interact (`onPartyChange`) but a
-  party member is not automatically a follower.
+- **Follow is not the same as party.** They interact (`onPartyChange`,
+  `alreadyFollows`, `movingWithParty`) but a party member is not a follower
+  in this module's maps; party auto-follow lives in `usercommands.Go`.
 - **Mobs follow via their idle tick**, so a followed player moving faster than
   the mob's tick can outrun it. That is intended.
 

@@ -63,6 +63,10 @@ func questGateRefuses(user *users.UserRecord, room *rooms.Room, destRoom *rooms.
 	}, bridge, bridge).Handled
 }
 
+// PartyFollowLostLine is what a party member reads when the leader leaves
+// and the member cannot see them go (owner ruling 2026-10-17).
+const PartyFollowLostLine = `You can't see where the party leader went, so you stay here.`
+
 func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	exitResult := actions.FindExit(room, rest)
@@ -383,6 +387,15 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						}
 						if partyUser := users.GetByUserId(partyMemberId); partyUser != nil {
 							if partyUser.Character.RoomId == room.RoomId {
+								// Owner ruling 2026-10-17: a member follows a
+								// leader they can see go, and the leader's own
+								// light counts (room.DepartureSight), so an
+								// unlit member follows a lit leader. Nobody
+								// follows a leader lost in true darkness.
+								if room.DepartureSight(partyUser.Character, user.Character) == messaging.SightNone {
+									partyUser.SendText(messaging.CategoryRoomExit, PartyFollowLostLine)
+									continue
+								}
 								partyUser.SendText(messaging.CategoryRoomExit, `You follow the party leader.`)
 								partyUser.Command(rest)
 							}

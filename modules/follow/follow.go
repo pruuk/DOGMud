@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
@@ -92,6 +93,25 @@ type FollowModule struct {
 func (f *FollowModule) isFollowing(followCheck followId) bool {
 	_, ok := f.followers[followCheck]
 	return ok
+}
+
+// alreadyFollows reports whether source already follows target: by `follow`,
+// or as a member of the party target leads, whom party auto-follow moves
+// with the leader (usercommands.Go).
+func (f *FollowModule) alreadyFollows(source, target followId) bool {
+	if target == (followId{}) {
+		return false
+	}
+	if current, ok := f.followers[source]; ok && current == target {
+		return true
+	}
+	if source.userId > 0 && target.userId > 0 {
+		if p := parties.Get(source.userId); p != nil && p.IsMember(source.userId) &&
+			p.IsLeader(target.userId) && !p.IsLeader(source.userId) {
+			return true
+		}
+	}
+	return false
 }
 
 // Get all followeres attached to a target
@@ -186,6 +206,58 @@ func readerSight(u *users.UserRecord) messaging.SightDecision {
 	}
 	return messaging.ParticipantSight(u.Character, room)
 }
+
+// moverCharacter is the character of whoever moved in evt, or nil.
+func moverCharacter(evt events.RoomChange) *characters.Character {
+	if evt.UserId > 0 {
+		if u := users.GetByUserId(evt.UserId); u != nil {
+			return u.Character
+		}
+		return nil
+	}
+	if evt.MobInstanceId > 0 {
+		if m := mobs.GetInstance(evt.MobInstanceId); m != nil {
+			return &m.Character
+		}
+	}
+	return nil
+}
+
+// movingWithParty reports whether the follower and the player who moved in
+// evt share a party whose leader now stands where the mover went: the party
+// is walking together, and usercommands.Go's party auto-follow moves the
+// follower (or already has). `follow <name>` works inside a party, so a
+// member may follow another member as well.
+func movingWithParty(followerUserId int, evt events.RoomChange) bool {
+	if evt.UserId == 0 {
+		return false
+	}
+	p := parties.Get(followerUserId)
+	if p == nil || !p.IsMember(followerUserId) || !p.IsMember(evt.UserId) {
+		return false
+	}
+	leader := users.GetByUserId(p.LeaderUserId)
+	return leader != nil && leader.Character.RoomId == evt.ToRoomId
+}
+
+// loseSightOf ends a follow whose follower could not see the one they follow
+// leave (owner ruling 2026-10-17). The follower is told why; the one followed
+// reads the `follow stop` line, the follower's name hidden at their sight.
+func (f *FollowModule) loseSightOf(follower *users.UserRecord, fId followId) {
+	wasFollowing := f.stopFollowing(fId)
+	follower.SendText(messaging.CategoryRoomExit, FollowLostLine)
+	if wasFollowing.userId > 0 {
+		if followedUser := users.GetByUserId(wasFollowing.userId); followedUser != nil {
+			followedUser.SendText(messaging.CategoryEmote, messaging.CapitalizeStart(messaging.HideSpeakerNames(
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> stopped following you.`, follower.Character.Name),
+				[]string{follower.Character.Name}, readerSight(followedUser))))
+		}
+	}
+}
+
+// FollowLostLine is what a follower reads when the one they follow leaves
+// and they cannot see them go (owner ruling 2026-10-17).
+const FollowLostLine = `You can't see where they went, so you stop following.`
 
 // Does a cleanup check every round for any follows that have expired.
 func (f *FollowModule) onNewRound(e events.Event) events.ListenerReturn {
@@ -333,7 +405,23 @@ func (f *FollowModule) roomChangeHandler(e events.Event) events.ListenerReturn {
 			} else if fId.userId > 0 {
 
 				if user := users.GetByUserId(fId.userId); user != nil {
+					// A party walking together: the leader's party
+					// auto-follow (usercommands.Go) carries this follower,
+					// so a second step here would walk them twice, or end
+					// the follow because the party step already ran.
+					if movingWithParty(fId.userId, evt) {
+						continue
+					}
 					if fromRoom.RoomId == user.Character.RoomId {
+						// Owner ruling 2026-10-17: a follower moves only when
+						// they see the one they follow go, by that mover's own
+						// light as well as the room's (rooms.DepartureSight).
+						// Losing sight of them ends the follow.
+						if moverChar := moverCharacter(evt); moverChar != nil &&
+							fromRoom.DepartureSight(user.Character, moverChar) == messaging.SightNone {
+							f.loseSightOf(user, fId)
+							continue
+						}
 						user.Command(followExitName, .25)
 						continue
 					}
@@ -396,10 +484,8 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 		return true, nil
 	}
 
-	if parties.Get(user.UserId) != nil {
-		user.SendText(messaging.CategoryRefusal, `You can't use this command while in a party.`)
-		return true, nil
-	}
+	// `follow` works inside a party (owner 2026-10-17): it once refused
+	// there outright. A member's party leader is someone they already follow.
 
 	args := util.SplitButRespectQuotes(strings.ToLower(rest))
 
@@ -516,6 +602,24 @@ func (f *FollowModule) followUserCommand(rest string, user *users.UserRecord, ro
 		user.SendText(messaging.CategoryRefusal, `You aren't following anyone.`)
 
 		return true, nil
+	}
+
+	// Already following them, by `follow` or as their party member? Say so
+	// rather than starting the same follow again.
+	if f.alreadyFollows(followCommandSource, followCommandTarget) {
+		name, tagged := ``, ``
+		if targetUser := users.GetByUserId(followCommandTarget.userId); followCommandTarget.userId > 0 && targetUser != nil {
+			name = targetUser.Character.Name
+			tagged = fmt.Sprintf(`<ansi fg="username">%s</ansi>`, name)
+		} else if targetMob := mobs.GetInstance(followCommandTarget.mobInstanceId); followCommandTarget.mobInstanceId > 0 && targetMob != nil {
+			name = targetMob.Character.Name
+			tagged = fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, name)
+		}
+		if name != `` {
+			user.SendText(messaging.CategoryRefusal, messaging.HideNames(
+				fmt.Sprintf(`You're already following %s.`, tagged), []string{name}, followerSight))
+			return true, nil
+		}
 	}
 
 	// Default behavior is follow

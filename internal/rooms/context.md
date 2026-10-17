@@ -274,6 +274,18 @@ snapshots to name which term moved and so which cause to report for a band
 change. `LightTerms` and `LightLevel` share one computation
 (`composeLight`), so a caller reading both never risks the two disagreeing.
 
+**`(*Room) DepartureSight(observer, mover *characters.Character)
+messaging.SightDecision`** (2026-10-17) is what `observer`, standing in the
+room, makes out of `mover` leaving it: `messaging.ParticipantSight` against
+the room lit as if `mover` still stood in it (their carried lights and
+darknesses counted once, whether or not the move has already taken them
+out of the occupant list). It is the follow gate (owner ruling 2026-10-17):
+party auto-follow in `usercommands.Go` and `follow <name>` in
+`modules/follow` both move a follower only when it is not `SightNone`, so an
+unlit follower follows a lit leader and nobody follows an unlit leader in
+true darkness. The mover's light counts on their way out, as the
+departure-line ruling of 2026-10-09 has it.
+
 **Sky fraction and lamp are both `*float64`/`*int` POINTERS, on both
 `Room` and `BiomeInfo`, because zero is meaningful for both.** A cave's sky
 fraction is genuinely `0` (no sky reaches it at all) and must be
