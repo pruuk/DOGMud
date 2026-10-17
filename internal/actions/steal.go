@@ -330,7 +330,7 @@ func takeFromMob(actor Actor, m *mobs.Mob, extra []items.Item) StealResult {
 			}
 		}
 
-		if itemStolen, found := m.Character.GetRandomItem(); found {
+		if itemStolen, found := m.Character.GetRandomStealableItem(); found {
 			m.Character.RemoveItem(itemStolen)
 			actor.GetCharacter().StoreItem(itemStolen)
 			if itemStolen.IsBauble() && actor.IsPlayer() {
