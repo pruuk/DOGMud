@@ -13,6 +13,11 @@ import (
 )
 
 func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if rest == `` {
+		refusal.Prompt(user, `use`, refusal.What, `use <item>`)
+		return true, nil
+	}
+
 	if refuseWhileBusy(user, `use that`) {
 		return true, nil
 	}

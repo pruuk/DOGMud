@@ -72,9 +72,13 @@ drains those chests into cook-vendor stock.
   in-process registry. Called from `main.go` at startup.
 - **`GetRecipe(id string) (*RecipeSpec, bool)`** — look up a recipe
   by its string id.
-- **`GetRecipesForSkill(skill string) []*RecipeSpec`** — return all
+- **`GetAllForSkill(skill string) []*RecipeSpec`**: return all
   recipes belonging to a skill tag (e.g., `"cooking"`), sorted by
   name for stable UI ordering.
+- **`IsIngredientForSkill(item items.Item, skill string) bool`**: whether
+  the item's component tag is an ingredient of any recipe of that skill
+  (`componentTagOf`, as `HasIngredients` matches). `eat` asks it for
+  `cooking`, so raw meat says "Cook it first." instead of a bare refusal.
 
 #### The three ingredient questions, and which one to ask
 

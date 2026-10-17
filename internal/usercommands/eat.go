@@ -2,18 +2,26 @@ package usercommands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/crafting"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func Eat(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if strings.TrimSpace(rest) == `` {
+		refusal.Prompt(user, `eat`, refusal.What, `eat <item>`)
+		return true, nil
+	}
+
 	if refuseWhileBusy(user, `eat`) {
 		return true, nil
 	}
@@ -42,6 +50,14 @@ func Eat(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		itemSpec := matchItem.GetSpec()
 
 		if itemSpec.Subtype != items.Edible {
+			// A cooking ingredient (raw hare meat) says what to do with it
+			// (2026-10-17 playtest: the refusal gave no pointer to cooking).
+			if crafting.IsIngredientForSkill(matchItem, string(skills.Cooking)) {
+				user.SendText(messaging.CategoryRefusal,
+					fmt.Sprintf(`You can't eat <ansi fg="itemname">%s</ansi> as it is. Cook it first. Try <ansi fg="command">help cooking</ansi>.`, matchItem.DisplayName()),
+				)
+				return true, nil
+			}
 			user.SendText(messaging.CategoryRefusal,
 				fmt.Sprintf(`You can't eat <ansi fg="itemname">%s</ansi>.`, matchItem.DisplayName()),
 			)

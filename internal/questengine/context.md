@@ -150,6 +150,17 @@ own, unrelated action param.)
   before returning, so audit and gate output is stable between runs.
 - **`command_issued` and `command` are different events** — the first fires when
   a command is typed, the second only when it succeeded.
+- **`room_gate` refuses a walk before it happens; `room_enter` fires after.**
+  `usercommands.Go` notifies `room_gate` (filter `room`, the destination's
+  template id) after the lock check and before the exit message, the move
+  cost and `MoveToRoom`. A `Handled` result refuses the step: the trigger's
+  actions narrate why and the player never moves, so no departure line and
+  no arrival detection follow. The bridge is the player's CURRENT room, so
+  `in_room` names the side the gate stands on (quest 14's cellar gate is
+  `in_room: 485`, so a player inside the tunnels can always walk out). A
+  room_enter trigger that teleports the player back is the old shape and
+  printed the refusal, then "You head downward.", then the destination's
+  detection line (#558); do not write a gate that way.
 - **Ephemeral (instance) rooms match their TEMPLATE room id** in `room:`
   triggers, not their runtime id.
 - **Every quest `observer` line must contain `{actor}`, and `quests.Quest.Validate`

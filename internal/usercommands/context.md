@@ -295,7 +295,10 @@ already known, so no presence leaks.
 #### **Movement (`go.go`, movement parity 4b)**
 
 `Go` is now a thin wrapper: it keeps the lock gate (pick, key ring, backpack
-key), the narration, and the exit-message requeue, but the step's price and
+key), the quest gate (`questGateRefuses`: the quest engine's `room_gate`
+triggers, right after the lock gate, so a refused step prints no departure
+line, costs nothing and never arrives; #558), the narration, and the
+exit-message requeue, but the step's price and
 the hidden-detection contests moved to `internal/actions/move.go` (see that
 package's "Movement" section for the mechanism). The charge
 (`actions.ChargeMove`) now runs AFTER the lock gate and after the
@@ -668,6 +671,10 @@ mute check too, since they carry no free text.
 `Offer` and `Appraise`, `appraise.go`) only calls
 `actions.Say(&actions.MobActor{...}, line)`; it hand-rolls no room line of
 its own, matching the canonical `merchantSay` in `internal/actions/sell.go`.
+`Offer` asks `actions.SaleMerchant` and `actions.QuoteSale`, the merchant and
+price `sell` uses, and `appraise` prices a bauble with `QuoteSale` too, so
+neither quotes a price sell then refuses. Both refuse a sleeping shop
+(`actions.ShopClosedForSleep`) as list, buy and sell do.
 
 ### Crafting: instant-complete narration (`craft.go`)
 

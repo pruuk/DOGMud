@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -28,6 +29,12 @@ func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	merchantMobs := room.GetMobs(rooms.FindMerchant)
 	if len(merchantMobs) == 0 {
 		user.SendText(messaging.CategoryRefusal, `You need to be at a merchant to appraise items.`)
+		return true, nil
+	}
+
+	// Shut for the night, as for list, buy, sell and offer.
+	if asleep := actions.ShopClosedForSleep(room); asleep != nil {
+		actions.RefuseMobIfAsleep(asleep, user)
 		return true, nil
 	}
 
@@ -132,10 +139,13 @@ func appraiseBauble(item items.Item, user *users.UserRecord, room *rooms.Room, m
 	}
 	user.SendText(messaging.CategorySystem, b.String())
 
-	offer := actions.BaubleOfferFrom(item, mob)
-	if offer.Price > 0 {
-		merchantSay(room, mob, fmt.Sprintf(`I'd give you <ansi fg="gold">%d gold</ansi> for it.`, offer.Price))
+	// The quote sell would pay this merchant (actions.QuoteSale), purse
+	// check included, so appraise never names a price sell then refuses.
+	shopInv := shops.GetShopInventory(mob.Zone, int(mob.MobId), mob.HomeRoomId)
+	quote := actions.QuoteSale(user.Character, room, mob, shopInv, item, true)
+	if quote.Price > 0 {
+		merchantSay(room, mob, fmt.Sprintf(`I'd give you <ansi fg="gold">%d gold</ansi> for it.`, quote.Price))
 	} else {
-		merchantSay(room, mob, offer.Refusal)
+		merchantSay(room, mob, quote.Say)
 	}
 }

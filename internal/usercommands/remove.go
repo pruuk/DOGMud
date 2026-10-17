@@ -14,6 +14,11 @@ import (
 )
 
 func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if rest == `` {
+		refusal.Prompt(user, `remove`, refusal.What, `remove <item>`)
+		return true, nil
+	}
+
 	actor := &actions.UserActor{User: user, Room: room}
 
 	// Snapshot reservation BEFORE anything leaves the body, so the disclosure

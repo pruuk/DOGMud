@@ -63,14 +63,19 @@ rewards:
 
 triggers:
   # ── CELLAR GATE: block descent without quest ──────────
-  - event: room_enter
+  # room_gate refuses the step before the move (#558). in_room: 485 gates
+  # only the climb down from the cellar, so a player in the tunnels without
+  # the token can always walk back out through 486.
+  - event: room_gate
     room: 486
     conditions:
       missing: ["14-start"]
+      in_room: 485
     actions:
-      - actor: "The iron grate covers a dark opening that descends into
-          the old drainage tunnels. You have no reason to go down there."
-      - teleport: 485
+      # Sight-neutral: the cellar is dark, and a player without a light
+      # still reads this line.
+      - actor: "The opening past the grate leads only into the old drainage
+          tunnels. You have no reason to go down there."
 
   # ── EXPLORE: tally stick pickup ───────────────────────
   - event: item_gain

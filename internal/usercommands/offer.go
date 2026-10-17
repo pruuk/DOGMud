@@ -35,57 +35,50 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
+	if rest == "" {
+		refusal.Prompt(user, "offer", refusal.What, "offer <item>")
+		return true, nil
+	}
+
+	// Shut for the night, as for list, buy and sell: a sleeping keeper
+	// quotes nothing sell would then refuse.
+	if asleep := actions.ShopClosedForSleep(room); asleep != nil {
+		actions.RefuseMobIfAsleep(asleep, user)
+		return true, nil
+	}
+
 	item, found := user.Character.FindInBackpack(rest)
 	if !found {
 		refusal.NotCarrying(user, rest)
 		return true, nil
 	}
 
-	itemSpec := item.GetSpec()
-	if itemSpec.ItemId < 1 {
+	if item.GetSpec().ItemId < 1 {
 		return true, nil
 	}
 
-	for _, mobId := range room.GetMobs(rooms.FindMerchant) {
-
-		mob := mobs.GetInstance(mobId)
-		if mob == nil {
-			continue
-		}
-
-		user.Character.CancelConditionsWithFlag(conditions.Hidden)
-
-		// Baubles are priced from their catalog record (docs/baubles).
-		if item.IsBauble() {
-			offer := actions.BaubleOfferFrom(item, mob)
-			if offer.Price <= 0 {
-				merchantSay(room, mob, offer.Refusal)
-				continue
-			}
-			merchantSay(room, mob, fmt.Sprintf(`I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, offer.Price, item.DisplayName()))
-			break
-		}
-
-		if item.IsSpecial() {
-
-			merchantSay(room, mob, "I'm afraid I don't buy those.")
-
-			continue
-		}
-
-		sellValue := mob.GetSellPrice(item)
-
-		if sellValue <= 0 {
-
-			merchantSay(room, mob, "I'm not interested in that.")
-
-			continue
-		}
-
-		merchantSay(room, mob, fmt.Sprintf(`I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, sellValue, item.DisplayName()))
-
-		break
+	// The merchant sell would deal with, and the quote sell would pay
+	// (actions.QuoteSale), so offer never names a price sell then refuses.
+	mob, shopInv := actions.SaleMerchant(room, item, true)
+	if mob == nil {
+		user.SendText(messaging.CategoryRefusal, "There's no merchant here.")
+		return true, nil
 	}
+
+	quote := actions.QuoteSale(user.Character, room, mob, shopInv, item, true)
+	if quote.Tell != "" {
+		user.SendText(messaging.CategoryRefusal, quote.Tell)
+		return true, nil
+	}
+
+	user.Character.CancelConditionsWithFlag(conditions.Hidden)
+
+	if quote.Price <= 0 {
+		merchantSay(room, mob, quote.Say)
+		return true, nil
+	}
+
+	merchantSay(room, mob, fmt.Sprintf(`I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, quote.Price, item.DisplayName()))
 
 	return true, nil
 }

@@ -3,6 +3,7 @@ package actions
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -174,6 +175,13 @@ func Drink(actor DrinkActor, rest string) DrinkResult {
 	if actor.IsPlayer() {
 		nameColor = `username`
 		roomExclude = []int{actor.GetUserId()}
+	}
+
+	// Nothing named: ask what, as get, drop and sell do (2026-10-17
+	// playtest: a bare `drink` read "You aren't carrying that.").
+	if strings.TrimSpace(rest) == `` {
+		refusal.Prompt(actor, `drink`, refusal.What, `drink <item>`)
+		return DrinkResult{Refusal: DrinkRefuseNotFound}
 	}
 
 	if char.IsActing() {
