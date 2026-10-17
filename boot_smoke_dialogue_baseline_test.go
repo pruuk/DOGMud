@@ -10,14 +10,11 @@ package main
 // the missing tokens ("17-letter", "11-sylara", "11-rhett") are gates on
 // branches no player can reach. Recorded 2026-10-17 when the sweep first ran.
 //
-// Worked down the same day (#611): 12 ask-word, 7 end-token and 4
-// undefined-token entries were fixed in content. What is left: the grant-first order
-// (the quest mechanisms arc, #375); ask-word nodes where "quest" would charge
-// gold (9584), pick a branch for the player (9397) or never arrive because
-// an earlier node already answers it; "17-letter", whose quest was turned
-// into lore with no token to point at; and Kael's root variant 1 (240),
-// whose "no side chosen yet" gate cannot be written in place, since a flag
-// map excludes one value per key.
+// Worked down the same day (#611): 12 ask-word, 7 end-token and 6
+// undefined-token entries were fixed in content. What is left: the
+// grant-first order (the quest mechanisms arc, #375); ask-word nodes that
+// never receive "quest" because an earlier node already answers it; and the
+// entries carrying their own reason comment below (owner rulings 2026-10-17).
 //
 // The semicolon rule is never baselined: a ';' in spoken text truncates it in
 // play, so every one is fixed in the content instead.
@@ -25,21 +22,26 @@ package main
 // To clear an entry: fix the content (or the rule), confirm the line no longer
 // reports, and delete it here.
 var knownDialogueValidatorFindings = map[string]bool{
-	"_datafiles/world/dogmud/dialogue/amber_valley/9397.yaml: node \"water_mediate\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":               true,
-	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: node \"apprentice_deep\": quest token \"17-letter\" does not exist":                                                                                           true,
-	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: node \"apprentice_surface\": quest token \"17-letter\" does not exist":                                                                                        true,
-	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: node \"quest_complete_forager\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":            true,
-	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: node \"quest_complete_herbs\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":              true,
-	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                                true,
-	"_datafiles/world/dogmud/dialogue/ashwick/260.yaml: node \"family_deep\": quest token \"17-letter\" does not exist":                                                                                               true,
-	"_datafiles/world/dogmud/dialogue/ashwick/260.yaml: node \"family_surface\": quest token \"17-letter\" does not exist":                                                                                            true,
-	"_datafiles/world/dogmud/dialogue/ashwick/260.yaml: node \"trouble_deep\": quest token \"17-letter\" does not exist":                                                                                              true,
+	// branch-choice node: ask quest would pick an ending
+	"_datafiles/world/dogmud/dialogue/amber_valley/9397.yaml: node \"water_mediate\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	// quest 17 Empty Cottage deleted (5b35ed600); lore surfacing decided in #375
+	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: node \"apprentice_deep\": quest token \"17-letter\" does not exist": true,
+	// quest 17 Empty Cottage deleted (5b35ed600); lore surfacing decided in #375
+	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: node \"apprentice_surface\": quest token \"17-letter\" does not exist":                                                                             true,
+	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: node \"quest_complete_forager\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: node \"quest_complete_herbs\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":   true,
+	"_datafiles/world/dogmud/dialogue/ashwick/259.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                     true,
+	// quest 17 Empty Cottage deleted (5b35ed600); lore surfacing decided in #375
+	"_datafiles/world/dogmud/dialogue/ashwick/260.yaml: node \"family_deep\": quest token \"17-letter\" does not exist": true,
+	// quest 17 Empty Cottage deleted (5b35ed600); lore surfacing decided in #375
+	"_datafiles/world/dogmud/dialogue/ashwick/260.yaml: node \"family_surface\": quest token \"17-letter\" does not exist": true,
+	// quest 17 Empty Cottage deleted (5b35ed600); lore surfacing decided in #375
+	"_datafiles/world/dogmud/dialogue/ashwick/260.yaml: node \"trouble_deep\": quest token \"17-letter\" does not exist": true,
+	// quest 17 Empty Cottage deleted (5b35ed600); lore surfacing decided in #375
 	"_datafiles/world/dogmud/dialogue/ashwick/260.yaml: node \"trouble_surface\": quest token \"17-letter\" does not exist":                                                                                           true,
 	"_datafiles/world/dogmud/dialogue/ashwick/262.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                                true,
 	"_datafiles/world/dogmud/dialogue/dustwalk_road/83.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                           true,
 	"_datafiles/world/dogmud/dialogue/greenford/9516.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                             true,
-	"_datafiles/world/dogmud/dialogue/ironwind_steppe/240.yaml: root variant 1: quest token \"11-rhett\" does not exist":                                                                                              true,
-	"_datafiles/world/dogmud/dialogue/ironwind_steppe/240.yaml: root variant 1: quest token \"11-sylara\" does not exist":                                                                                             true,
 	"_datafiles/world/dogmud/dialogue/ironwind_steppe/241.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                        true,
 	"_datafiles/world/dogmud/dialogue/ironwind_steppe/242.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                        true,
 	"_datafiles/world/dogmud/dialogue/labyrinth_of_low_tunnels/74.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                true,
@@ -67,20 +69,29 @@ var knownDialogueValidatorFindings = map[string]bool{
 	"_datafiles/world/dogmud/dialogue/stillwater/355.yaml: node \"ask_kingfisher\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":                 true,
 	"_datafiles/world/dogmud/dialogue/stillwater/355.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                             true,
 	"_datafiles/world/dogmud/dialogue/the_confluence/9465.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                        true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_aegis\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":               true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_bandolier\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":           true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_blackrazor\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":          true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_choir\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":               true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_phial\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":               true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_prism\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":               true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_thornwall\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":           true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_wayfarer\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":            true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_zephyr\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works":              true,
-	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                        true,
-	"_datafiles/world/dogmud/dialogue/thornwall_city/94.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                          true,
-	"_datafiles/world/dogmud/dialogue/thornwall_city/95.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                          true,
-	"_datafiles/world/dogmud/dialogue/thornwall_city/96.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                          true,
-	"_datafiles/world/dogmud/dialogue/thornwall_outskirts/89.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                     true,
-	"_datafiles/world/dogmud/dialogue/watchers_crossing/84.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                       true,
-	"_datafiles/world/dogmud/dialogue/watchers_crossing/86.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                       true,
+	// paid recipe node: owner plans to make pinnacle items a recipe shop instead of a quest
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_aegis\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	// paid recipe node: owner plans to make pinnacle items a recipe shop instead of a quest
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_bandolier\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	// paid recipe node: owner plans to make pinnacle items a recipe shop instead of a quest
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_blackrazor\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	// paid recipe node: owner plans to make pinnacle items a recipe shop instead of a quest
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_choir\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	// paid recipe node: owner plans to make pinnacle items a recipe shop instead of a quest
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_phial\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	// paid recipe node: owner plans to make pinnacle items a recipe shop instead of a quest
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_prism\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	// paid recipe node: owner plans to make pinnacle items a recipe shop instead of a quest
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_thornwall\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	// paid recipe node: owner plans to make pinnacle items a recipe shop instead of a quest
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_wayfarer\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	// paid recipe node: owner plans to make pinnacle items a recipe shop instead of a quest
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: node \"teach_zephyr\": quest-granting entries must include \"quest\" and \"task\" in their triggers/keywords so `ask <npc> quest` works": true,
+	"_datafiles/world/dogmud/dialogue/the_confluence/9584.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                           true,
+	"_datafiles/world/dogmud/dialogue/thornwall_city/94.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                             true,
+	"_datafiles/world/dogmud/dialogue/thornwall_city/95.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                             true,
+	"_datafiles/world/dogmud/dialogue/thornwall_city/96.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                             true,
+	"_datafiles/world/dogmud/dialogue/thornwall_outskirts/89.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                        true,
+	"_datafiles/world/dogmud/dialogue/watchers_crossing/84.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                          true,
+	"_datafiles/world/dogmud/dialogue/watchers_crossing/86.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                          true,
 }

@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/crafting"
@@ -467,4 +468,75 @@ func TestSmoke_EveryQuestStepHasMarkerDecision(t *testing.T) {
 			len(violations), strings.Join(violations, "\n"))
 	}
 	t.Logf("all quest steps have a marker decision")
+}
+
+// TestSmoke_KaelGreetingFollowsQuest11Branch walks Hermit Kael's (mob 240)
+// root variants across the quest 11, 12 and 13 states against the real quest
+// registry. HasQuest counts a finished player as holding every earlier step,
+// so a variant gated only on 11-start matches everyone past it: when "Have you
+// chosen yet?" sat first, every player who had ever started quest 11 saw it
+// forever (#611). It must stay below the two sided-with variants, because a
+// flag map cannot say "no 11-branch yet".
+func TestSmoke_KaelGreetingFollowsQuest11Branch(t *testing.T) {
+	if os.Getenv(bootSmokeEnvVar) == `` {
+		t.Skipf("set %s=1 to run the Kael greeting walk", bootSmokeEnvVar)
+	}
+
+	mudlog.SetupLogger(nil, `LOW`, ``, false)
+	if err := configs.ReloadConfig(); err != nil {
+		t.Fatalf("ReloadConfig failed: %v", err)
+	}
+	func() {
+		defer func() { _ = recover() }() // boot failures are the boot test's job
+		loadAllDataFiles(false)
+	}()
+	if quests.GetQuest(`11-start`) == nil || quests.GetQuest(`13-extraction`) == nil {
+		t.Fatal("quests 11-13 not loaded; the walk would fail for the wrong reason")
+	}
+
+	raw, err := os.ReadFile(filepath.Join(`_datafiles`, `world`, `dogmud`, `dialogue`, `ironwind_steppe`, `240.yaml`))
+	if err != nil {
+		t.Fatalf("read Kael's dialogue: %v", err)
+	}
+	var df dialogue.DialogueFile
+	if err := yaml.Unmarshal(raw, &df); err != nil {
+		t.Fatalf("parse Kael's dialogue: %v", err)
+	}
+
+	cases := []struct {
+		name     string
+		progress map[int]string
+		branch   string
+		want     string // a phrase unique to the expected greeting
+	}{
+		{"no quest", map[int]string{}, ``, `A weathered man in patched leather`},
+		{"11-start, no side", map[int]string{11: `start`}, ``, `Have you chosen yet?`},
+		{"11-start, sylara", map[int]string{11: `start`}, `sylara`, `You sided with Sylara.`},
+		{"11-start, rhett", map[int]string{11: `start`}, `rhett`, `You sided with Rhett.`},
+		{"11-end, sylara", map[int]string{11: `end`}, `sylara`, `You made your choice.`},
+		{"11-end, rhett", map[int]string{11: `end`}, `rhett`, `You made your choice.`},
+		{"12-start", map[int]string{11: `end`, 12: `start`}, `sylara`, `Walking the Windwarden's path`},
+		{"12-ritual", map[int]string{11: `end`, 12: `ritual`}, `sylara`, `Walking the Windwarden's path`},
+		{"12-end", map[int]string{11: `end`, 12: `end`}, `sylara`, `The spirits walk with you now.`},
+		{"13-start", map[int]string{11: `end`, 13: `start`}, `rhett`, `Walking the scholar's path.`},
+		{"13-extraction", map[int]string{11: `end`, 13: `extraction`}, `rhett`, `Walking the scholar's path.`},
+		{"13-end", map[int]string{11: `end`, 13: `end`}, `rhett`, `Rhett got his crystal.`},
+	}
+	for i, c := range cases {
+		ch := &characters.Character{QuestProgress: c.progress}
+		branch := c.branch
+		ps := &dialogue.PlayerState{
+			HasQuest: ch.HasQuest,
+			GetQuestFlag: func(key string) string {
+				if key == `11-branch` {
+					return branch
+				}
+				return ``
+			},
+		}
+		text, _, ok := dialogue.Greet(&df, 990000+i, 1, ps)
+		if !ok || !strings.Contains(text, c.want) {
+			t.Errorf("%s: Kael greets with %q, want the greeting containing %q", c.name, text, c.want)
+		}
+	}
 }

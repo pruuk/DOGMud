@@ -37,10 +37,6 @@ tree:
     hints: "Ask about the problem, the steppe, or who lives here."
     variants:
       - questRequired: ["11-start"]
-        questExcluded: ["11-sylara", "11-rhett"]
-        text: "Kael looks up. 'Have you chosen yet? Sylara is at the stone circle, east of the ridge trail junction. Rhett camps at the ridge approach on the western slope. Pick one and offer your help -- but understand that choosing one means the other will not work with you.'"
-        hints: "Visit Windwarden Sylara at the stone circle or Geomancer Rhett at the ridge approach. Choosing one locks out the other."
-      - questRequired: ["11-start"]
         questExcluded: ["11-end"]
         questFlagRequired:
           "11-branch": "sylara"
@@ -50,6 +46,13 @@ tree:
         questFlagRequired:
           "11-branch": "rhett"
         text: "'You sided with Rhett. Good -- or bad. Either way, do what he asks. The steppe will judge the rest.'"
+      # Must stay below the two sided-with variants: a flag map cannot say
+      # "no 11-branch yet", so this one reads "on quest 11, no side shown
+      # above" by coming after them (owner ruling 2026-10-17, #611).
+      - questRequired: ["11-start"]
+        questExcluded: ["11-end"]
+        text: "Kael looks up. 'Have you chosen yet? Sylara is at the stone circle, east of the ridge trail junction. Rhett camps at the ridge approach on the western slope. Pick one and offer your help -- but understand that choosing one means the other will not work with you.'"
+        hints: "Visit Windwarden Sylara at the stone circle or Geomancer Rhett at the ridge approach. Choosing one locks out the other."
       - questRequired: ["12-end"]
         text: "'The spirits walk with you now. I can feel it -- the wind moves differently around you. The steppe has accepted you as one of its own.' Kael nods with quiet respect."
       - questRequired: ["12-start"]
