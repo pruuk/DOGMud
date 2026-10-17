@@ -1,5 +1,16 @@
 # DOGMud Patch Notes
 
+## 2026-10-16: Creatures fight the way their bodies do
+
+- Elementals of water, air, fire, magma, sand, storm and ice now strike
+  with their element, in surges, waves and bursts, instead of a generic
+  slam.
+- Horses kick, rear and trample; slimes and fungal colonies lash, smother
+  and engulf, and no longer swing fists they don't have.
+- Earth elementals and automatons still slam, with new lines about heavy
+  fists and the weight behind them.
+- Smoke elementals now rake with claws made of smoke.
+
 ## 2026-10-16: Talking items, and quieter housekeeping
 
 - Items that speak now talk in the colour other characters' speech uses, and
