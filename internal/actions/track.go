@@ -104,7 +104,7 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 	// this action only consumes TargetNoun.
 	targetNoun := opts.TargetNoun
 
-	// The two in-room shortcuts below ("here in the open with you", "is in the
+	// The two in-room shortcuts below ("is right here with you", "is in the
 	// room with you!") name a creature on the strength of seeing it, so they
 	// are for a tracker who sees faces (lighting plan 5c). Below that the
 	// tracker reads the ground like anyone else: the sight-scaled roll and the
@@ -123,8 +123,12 @@ func Track(actor Actor, opts TrackOptions) TrackResult {
 				if isMob {
 					nameTag = "mobname"
 				}
+				// Two lines: CategorySystem is never wrapped, and the one-line
+				// form ran to 91 columns. "Right here" also holds underground,
+				// where the old "in the open" did not (#261).
 				actor.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`You read <ansi fg="%s">%s</ansi>'s sign in the scuffed ground. It is close, here in the open with you.`, nameTag, name))
+					fmt.Sprintf(`You read <ansi fg="%s">%s</ansi>'s sign in the scuffed ground.`, nameTag, name))
+				actor.SendText(messaging.CategorySystem, `Whoever left it is right here with you.`)
 			}
 			return result
 		}
