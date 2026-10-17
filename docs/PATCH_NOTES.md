@@ -25,6 +25,13 @@
   hour.
 - Gold amounts show thousands separators, the weather command speaks in
   words, and craft lists name the ingredients you need.
+- Screens such as look, set and craft have their blank lines back.
+- Naming something that is not there now answers "You can't find that
+  here." in any light.
+- NPC lines that were cut off mid-sentence now finish.
+- Kael on the Ironwind Steppe greets you by the side you chose, more quest
+  givers answer when you ask them about a quest, and a deal you already
+  made in Ashwick is no longer offered again.
 
 ## 2026-10-16: Creatures fight the way their bodies do
 
