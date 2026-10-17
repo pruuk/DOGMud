@@ -55,6 +55,10 @@ triggers:
     actions:
       - grant: 29-end
   # ── ESK'S ROAD: passing through the arch into Thornwall (468) closes it.
+  #    The arch is a move_player teleport, which raises no room_enter, so
+  #    both arch transits (Esk's behavior tree 9107 and the room tree 5215)
+  #    grant 29-end themselves under this same gate. This trigger covers a
+  #    player who reaches 468 on foot instead.
   - event: room_enter
     room: 468
     conditions:
