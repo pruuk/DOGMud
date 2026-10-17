@@ -175,6 +175,13 @@ floor was only ever evaluated on the swings a defence crit did not consume.
   winner (already decided, and already floored, by `RunContest`) → crit →
   normal outcome. Crit fires only for the side that WON, and never on a floored
   outcome, whose margin is the ±1 sentinel rather than a real one.
+- Defence narration runs once per swing, after the crit floors, in
+  `narrateDefenceOutcome` (called from `resolveDefenseOutcomeWithFloors`, which
+  `resolveDefenseOutcome` wraps with the configured floors). A defensive crit
+  sends one line to each audience and the swing loop then skips
+  `buildAttackMessages`, so no miss-pool line follows it; a deflection sends
+  the room line only. Tests that need narration without a random floor
+  promotion call `resolveDefenseOutcomeWithFloors(..., 0, 0)`.
 - One floor, `ContestFloor`, applied once inside `RunContest`. There is no
   second post-crit floor any more.
 - Defense crit detection (z > 2.0): parry crit → disarm, dodge crit → grapple opportunity
