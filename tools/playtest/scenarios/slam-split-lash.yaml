@@ -6,10 +6,15 @@
 # defender's sentence and the room's sentence read as one blow. That is this
 # run's job, for the one new file a walking player can reach with a witness.
 #
-# Fixture: A Culvert Slime (mob 9564, slime species 16, natural_attack lash,
-# unarmedname pseudopods) in The Junction Vault (6408, New Plymouth Sewers).
-# It is HOSTILE: it may go for the witness too. The witness stays out of the
-# fight and steps out of the room if attacked.
+# Fixture: A Deep Slime (mob 9569, slime species 16, natural_attack lash,
+# unarmedname pseudopods, statpool 500) in The Silt Run (6420, New Plymouth
+# Sewers). It is HOSTILE and goes for whoever is in the room first, so the
+# witness starts one room east (6418) and walks in once the fight is on.
+#
+# Fixture lessons (first run, 2026-10-16): the sewers are pitch dark and a
+# Cat's Eye Draught does not see in pitch dark, so the defender carries a
+# torch; A Culvert Slime (9564) dies in one to four rounds against `mid`, so
+# the defender is `early` and fights the tougher Deep Slime.
 #
 # Why not the others: Hob and Bran (the only horses, trample) are
 # player_attack_immune; no fungal colony mob exists; elementals are summons or
@@ -20,9 +25,9 @@
 name: slam-split-lash
 mode: party
 summary: >-
-  A player fights a culvert slime while a plain witness stands in the room.
-  Every round both quote what they were told so the defender's line and the
-  room's line for the same lash can be compared.
+  A player fights a deep slime by torchlight while a plain witness stands in
+  the room. Every round both quote what they were told so the defender's line
+  and the room's line for the same lash can be compared.
 on_actor_stop: continue
 budgets:
   wall_clock: 35m
@@ -39,9 +44,9 @@ roster:
 group_goals:
   - id: lash-defender-and-room-agree
     do: >-
-      The defender fights the Culvert Slime for at least four rounds while the
-      witness stands in the room doing nothing. After each round both quote
-      every line verbatim on the party channel.
+      The defender fights the Deep Slime for at least four rounds while the
+      witness stands in the room doing nothing. After each round both record
+      every line verbatim with its round number.
     verify: >-
       For each round, the slime's line to the defender and the slime's line to
       the room describe ONE lash: same action, same result, same banner. The
