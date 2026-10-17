@@ -880,7 +880,7 @@ Behavioral parity with the old polling path in `NewRound_DoCombat`:
 
 An owner who sees nothing in their room is not sent to `attack @<id>` /
 `attack #<id>` (#454): the sight gate would refuse the id form and tell them
-"You don't see them here." every round. This path and
+"You can't find them here." every round. This path and
 `handleCompanionOwnerAssist` (`NewRound_DoCombat_helpers.go`) both skip such
 an owner through `memberSeesSomething`, the check party auto-assist uses.
 

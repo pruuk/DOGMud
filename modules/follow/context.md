@@ -48,7 +48,7 @@ The player `follow <name>` runs the typed name through `actions.AimBySight`
 before it resolves, like every command that names a creature: full sight
 resolves names, shapes only resolves `shape` / `N.shape` / `shape#N` (and
 `@N` / `#N`) and answers a typed name with a hint, no sight resolves nothing
-("You don't see them here."). `follow stop` and `follow lose` name no one and
+("You can't find them here."). `follow stop` and `follow lose` name no one and
 need no sight. The lines that follow a start hide each name at its reader's
 sight (`messaging.HideNames` for the follower, `HideSpeakerNames` for the
 target, who reads "Someone is following you."). `follow stop` tells the

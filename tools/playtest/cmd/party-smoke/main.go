@@ -269,7 +269,7 @@ func run() error {
 				ev.add("NOTE: kick→stomp missed; re-prone and retry")
 				break
 			}
-			if waitMatchFrom(joiner.BridgeDir, kickBase, regexp.MustCompile(`(?i)You don't see them here`), 200*time.Millisecond) {
+			if waitMatchFrom(joiner.BridgeDir, kickBase, regexp.MustCompile(`(?i)You can't find them here`), 200*time.Millisecond) {
 				ev.add("FAIL: joiner missed thug after entering alley")
 				break
 			}

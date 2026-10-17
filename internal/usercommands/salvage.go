@@ -41,7 +41,7 @@ func Salvage(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		corpse, corpseFound := room.FindCorpse(rest, user.Character)
 		if !corpseFound {
 			user.SendText(messaging.CategoryRefusal,
-				`<ansi fg="red">You aren't carrying that, and you don't see a corpse like that here.</ansi>`)
+				`<ansi fg="red">You aren't carrying that, and you can't find a corpse like that here.</ansi>`)
 			return true, nil
 		}
 		return startCorpseSalvage(user, room, corpse)

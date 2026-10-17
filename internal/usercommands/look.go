@@ -564,10 +564,14 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	// Nothing found. At shapes the name may have been a creature's, which
-	// was deliberately not resolved above; say why rather than deny it.
-	if sight == messaging.SightShapes {
-		user.SendText(messaging.CategoryRefusal, `You can only make out shapes here.`)
+	// Nothing found (#609, owner ruling 2026-10-17). The aim word (`figure`,
+	// `3.figure`, `shape#3`) names a creature, so it reads the creature line,
+	// as every aiming verb's does; anything else the thing line, at every
+	// light. At shapes a creature's own name was deliberately not resolved
+	// above, and it reads the thing line too, exactly as a name that matches
+	// nothing does, so the answer is not an oracle for who is standing there.
+	if actions.NamesAFigure(lookAt) {
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 	refusal.NotHereThing(user)
