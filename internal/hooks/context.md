@@ -1407,7 +1407,8 @@ Cross-machine cleanup that fires on two Life transitions:
   cancelled and pruned before the death still narrates; anything still
   expired-but-held at respawn is removed silently. Pinned by
   `death_strip_end_lines_test.go`.
-- Refills all resource pools to 5% of max
+- Refills all resource pools to `GamePlay.Death.RespawnPoolFraction` of max
+  (ships at 0.05). Pinned by `TestDie_RespawnPoolsFollowRespawnPoolFraction`.
 - Applies `NoAggroTarget` grace condition (#81)
 - Clears live `PlayerDamage` map (snapshot already in `DeadData`)
 - Queues `CharacterVitalsChanged` event

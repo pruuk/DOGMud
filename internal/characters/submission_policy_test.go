@@ -79,3 +79,12 @@ func TestDefaultSurrenderPolicyForArchetype(t *testing.T) {
 	assert.Equal(t, characters.SurrenderAutoTap, generic.Mode)
 	assert.Equal(t, 10, generic.HpPctThreshold)
 }
+
+// Describe is the status sheet's wording; String stays the command syntax.
+func TestSurrenderPolicyDescribe(t *testing.T) {
+	assert.Equal(t, "never tap out", characters.SurrenderPolicy{Mode: characters.SurrenderNever}.Describe())
+	assert.Equal(t, "always tap out", characters.SurrenderPolicy{Mode: characters.SurrenderAlways}.Describe())
+	autoTap := characters.SurrenderPolicy{Mode: characters.SurrenderAutoTap, HpPctThreshold: 25}
+	assert.Equal(t, "tap out below 25% health", autoTap.Describe())
+	assert.Equal(t, "auto-tap-below 25", autoTap.String(), "String must stay parseable by ParseSurrenderPolicy")
+}

@@ -20,7 +20,7 @@ a tactical move rather than a finisher.
   <ansi fg="stat">Knockdown Chance:</ansi> The most reliable knockdown of the three
     special moves, resolved against the defender's Dexterity and
     combat skill.
-  <ansi fg="stat">Cooldown:</ansi> Shared with bash and kick.
+  <ansi fg="stat">Cooldown:</ansi> Shared by every special move. See <ansi fg="command">help special</ansi>.
   <ansi fg="stat">Skill:</ansi> Progresses Unarmed Combat
 
 Trip spends Stamina and requires full payment before the sweep. Carried load

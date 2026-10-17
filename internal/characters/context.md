@@ -1869,6 +1869,10 @@ HP% drops below `HpPctThreshold`). Default for players:
 character and the one `Validate` gives a save whose policy is the zero value
 (#284).
 
+`String()` is the `set surrender` syntax (`auto-tap-below 15`) that
+`ParseSurrenderPolicy` reads back; `Describe()` is the plain-words form the
+status sheet prints (`tap out below 15% health`).
+
 Persisted: `yaml:"surrender_policy,omitempty"`.
 
 Only `mercy` policy on the attempter consults `SurrenderPolicy`. The

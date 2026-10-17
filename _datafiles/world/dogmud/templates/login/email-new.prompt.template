@@ -1,2 +1,3 @@
-<ansi fg="8">Used only to recover your account if you forget your password -- never shared, never spammed.</ansi>
-<ansi fg="39">Email Address</ansi><ansi fg="black-bold">{{ if .emailIsOptional }} (optional -- press Enter to skip){{ end }}: </ansi>
+<ansi fg="8">Used only to recover your account if you forget your password.</ansi>
+<ansi fg="8">Never shared, never spammed.</ansi>
+<ansi fg="39">Email Address</ansi><ansi fg="black-bold">{{ if .emailIsOptional }} (optional, press Enter to skip){{ end }}: </ansi>

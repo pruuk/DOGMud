@@ -3,6 +3,7 @@ package hooks
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/conditions"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/state"
 	"github.com/GoMudEngine/GoMud/internal/state/awareness"
@@ -125,10 +126,13 @@ func wireLifeCrossMachineCascades(c *characters.Character) {
 					}
 				}
 
-				c.Health = c.HealthMax.Value / 20         // 5%
-				c.Stamina = c.StaminaMax.Value / 20       // 5%
-				c.Conviction = c.ConvictionMax.Value / 20 // 5%
-				_ = c.AddCondition(81, false)             // NoAggroTarget grace
+				// Pools come back at GamePlay.Death.RespawnPoolFraction of max
+				// (Validate defaults it to 0.05 when config.yaml omits it).
+				frac := float64(configs.GetGamePlayConfig().Death.RespawnPoolFraction)
+				c.Health = int(float64(c.HealthMax.Value) * frac)
+				c.Stamina = int(float64(c.StaminaMax.Value) * frac)
+				c.Conviction = int(float64(c.ConvictionMax.Value) * frac)
+				_ = c.AddCondition(81, false) // NoAggroTarget grace
 
 				// Clear damage ledger and notify vitals subscribers.
 				clear(c.PlayerDamage)

@@ -303,6 +303,7 @@ GamePlay:
     # the loss fell every time on the few they had barely touched.
     StatDecayFloor: 100        # Never degrade a stat's PERMANENT part (racial roll + training) below this. Equipment and condition mods are excluded on purpose, so a permanent loss cannot hinge on what you were wearing.
     SkillRustFloor: 1          # Never rust a skill below this rank
+    RespawnPoolFraction: 0.05  # Fraction of max Health, Stamina and Conviction a player respawns with (read by hooks/Life_Cascades.go)
     # - ProtectionSkillRanks -
     #   Players with total skill ranks at or below this value are protected
     #   from death penalties. Gives new players a grace period.
