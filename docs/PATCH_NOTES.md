@@ -32,6 +32,20 @@
 - Kael on the Ironwind Steppe greets you by the side you chose, more quest
   givers answer when you ask them about a quest, and a deal you already
   made in Ashwick is no longer offered again.
+- Every beginner quest in the Pothole Coulee now asks for one thing at a
+  time, and its hint names the command to type. Steps count only when the
+  action works, and the directions in them are right.
+- Dewey's tutorial now teaches room details you can look at, the skills
+  and spells commands, your three pools, and the Chrysalis Glow light
+  spell. During the practice fight he speaks to you directly.
+- The people of the Pothole Coulee carry lanterns, and its practice
+  grounds are lit, so you can find them and train at any hour. Practice
+  targets and wild game come back much sooner.
+- You can follow someone by their light even if you carry none, and you
+  can use follow inside a party. There is a new help follow.
+- A portal in the Thornwall temple leads back to the Pothole Coulee.
+- The web client's vitals update as they change, a party no longer shows
+  you twice, and actions queued at the front now run.
 
 ## 2026-10-16: Creatures fight the way their bodies do
 
