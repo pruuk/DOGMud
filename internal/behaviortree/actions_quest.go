@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
 )
 
@@ -86,7 +87,7 @@ func actGiveGold(params map[string]any, ctx *EvalContext) Result {
 		return Failure
 	}
 	user.Character.Gold += amount
-	user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive %d gold.\n", amount))
+	user.SendText(messaging.CategoryLoot, fmt.Sprintf("You receive %s gold.\n", util.FormatNumber(amount)))
 	return Success
 }
 

@@ -131,7 +131,7 @@ func lootCorpseAll(user *users.UserRecord, room *rooms.Room, corpseIdx int) {
 		grantCorpseGold(user, amt)
 
 		user.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`You take <ansi fg="gold">%d gold</ansi> from the %s.`, amt, corpseName),
+			fmt.Sprintf(`You take <ansi fg="gold">%s gold</ansi> from the %s.`, util.FormatNumber(amt), corpseName),
 		)
 		tookSomething = true
 	}

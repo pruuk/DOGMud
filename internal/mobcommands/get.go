@@ -52,7 +52,7 @@ func Get(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			if err := actions.GetGoldFromFloor(actor, goldAmt); err == nil {
 				// Revealed by the pickup, not by trying one in the dark.
 				mob.Character.CancelConditionsWithFlag(conditions.Hidden)
-				room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> picks up <ansi fg="gold">%d gold</ansi>.`, mob.Character.Name, goldAmt))
+				room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> picks up <ansi fg="gold">%s gold</ansi>.`, mob.Character.Name, util.FormatNumber(goldAmt)))
 			}
 		}
 

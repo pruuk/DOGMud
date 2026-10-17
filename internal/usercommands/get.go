@@ -525,7 +525,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				})
 
 				user.SendText(messaging.CategorySystem,
-					fmt.Sprintf(`You pick up <ansi fg="gold">%d gold</ansi> from the <ansi fg="container">%s</ansi>.`, goldAmt, containerName),
+					fmt.Sprintf(`You pick up <ansi fg="gold">%s gold</ansi> from the <ansi fg="container">%s</ansi>.`, util.FormatNumber(goldAmt), containerName),
 				)
 				room.SendTextVisual(messaging.CategoryLoot,
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> picks up some <ansi fg="gold">gold</ansi> from the <ansi fg="container">%s</ansi>.`, user.Character.Name, containerName),
@@ -598,7 +598,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 					})
 
 					user.SendText(messaging.CategorySystem,
-						fmt.Sprintf(`You pick up <ansi fg="gold">%d gold</ansi>.`, goldAmt),
+						fmt.Sprintf(`You pick up <ansi fg="gold">%s gold</ansi>.`, util.FormatNumber(goldAmt)),
 					)
 					room.SendTextVisual(messaging.CategoryLoot,
 						fmt.Sprintf(`<ansi fg="username">%s</ansi> picks up some <ansi fg="gold">gold</ansi>.`, user.Character.Name),
@@ -783,7 +783,7 @@ func takeCorpseGold(user *users.UserRecord, room *rooms.Room, corpse *rooms.Corp
 	grantCorpseGold(user, amt)
 
 	user.SendText(messaging.CategorySystem,
-		fmt.Sprintf(`You take <ansi fg="gold">%d gold</ansi> from the %s.`, amt, corpseNameFor(user, room, corpse)),
+		fmt.Sprintf(`You take <ansi fg="gold">%s gold</ansi> from the %s.`, util.FormatNumber(amt), corpseNameFor(user, room, corpse)),
 	)
 	// Both names hidden per bystander, as loot's room line (#428).
 	room.SendTextVisualHidingNames(messaging.CategoryLoot,
@@ -861,7 +861,7 @@ func grantCorpseGold(user *users.UserRecord, amt int) {
 		// character's gold or emit the gold-sync event; the pool pays out later.
 		p.AddGold(amt)
 		user.SendText(messaging.CategoryLoot,
-			fmt.Sprintf(`<ansi fg="yellow-bold">%d gold</ansi> goes into the party pool.`, amt))
+			fmt.Sprintf(`<ansi fg="yellow-bold">%s gold</ansi> goes into the party pool.`, util.FormatNumber(amt)))
 		return
 	}
 	// Solo: straight to the purse (keep the prompt/GMCP gold-sync event).

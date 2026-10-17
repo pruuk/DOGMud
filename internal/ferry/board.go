@@ -63,7 +63,7 @@ func Board(user *users.UserRecord, mob *mobs.Mob, roomId int, routeId string) Bo
 	}
 
 	if user.Character.Gold < r.Fare {
-		mob.Command(fmt.Sprintf(`say Passage on %s is %d gold. Come back when you have it.`, r.Name, r.Fare))
+		mob.Command(fmt.Sprintf(`say Passage on %s is %s gold. Come back when you have it.`, r.Name, util.FormatNumber(r.Fare)))
 		return BoardNoGold
 	}
 
@@ -92,7 +92,7 @@ func Board(user *users.UserRecord, mob *mobs.Mob, roomId int, routeId string) Bo
 			user.UserId)
 	}
 	user.SendText(messaging.CategoryRoomDescription,
-		fmt.Sprintf(`You pay %d gold and cross the gangplank aboard %s.`, r.Fare, r.Name))
+		fmt.Sprintf(`You pay %s gold and cross the gangplank aboard %s.`, util.FormatNumber(r.Fare), r.Name))
 
 	// Show the destination room. MoveToRoom does not auto-describe (same
 	// engine trap actMovePlayer documents) — queue a look so arrival on

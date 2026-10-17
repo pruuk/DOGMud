@@ -185,7 +185,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				})
 
 				user.SendText(messaging.CategorySystem, messaging.HideNames(
-					fmt.Sprintf(`You give <ansi fg="gold">%d gold</ansi> to <ansi fg="username">%s</ansi>.`, giveGoldAmount, m.Character.Name),
+					fmt.Sprintf(`You give <ansi fg="gold">%s gold</ansi> to <ansi fg="username">%s</ansi>.`, util.FormatNumber(giveGoldAmount), m.Character.Name),
 					[]string{m.Character.Name}, giverSight),
 				)
 				room.SendTextVisual(messaging.CategoryLoot,
@@ -326,7 +326,7 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount int) {
 	if targetUser.UserId == user.UserId {
 		user.SendText(messaging.CategorySystem,
-			fmt.Sprintf(`You count out <ansi fg="gold">%d gold</ansi> and put it back in your pocket.`, amount),
+			fmt.Sprintf(`You count out <ansi fg="gold">%s gold</ansi> and put it back in your pocket.`, util.FormatNumber(amount)),
 		)
 		room.SendTextVisual(messaging.CategoryLoot,
 			fmt.Sprintf(`<ansi fg="username">%s</ansi> counts out some <ansi fg="gold">gold</ansi> and put it back in their pocket.`, user.Character.Name),
@@ -351,11 +351,11 @@ func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount
 	})
 
 	user.SendText(messaging.CategorySystem, messaging.HideNames(
-		fmt.Sprintf(`You give <ansi fg="gold">%d gold</ansi> to <ansi fg="username">%s</ansi>.`, amount, targetUser.Character.Name),
+		fmt.Sprintf(`You give <ansi fg="gold">%s gold</ansi> to <ansi fg="username">%s</ansi>.`, util.FormatNumber(amount), targetUser.Character.Name),
 		[]string{targetUser.Character.Name}, messaging.ParticipantSight(user.Character, room)),
 	)
 	targetUser.SendText(messaging.CategoryLoot, messaging.HideNames(
-		fmt.Sprintf(`<ansi fg="username">%s</ansi> gives you <ansi fg="gold">%d gold</ansi>.`, user.Character.Name, amount),
+		fmt.Sprintf(`<ansi fg="username">%s</ansi> gives you <ansi fg="gold">%s gold</ansi>.`, user.Character.Name, util.FormatNumber(amount)),
 		[]string{user.Character.Name}, messaging.ParticipantSight(targetUser.Character, room)),
 	)
 	room.SendTextVisual(messaging.CategoryLoot,
@@ -367,7 +367,7 @@ func giveGoldToUser(user, targetUser *users.UserRecord, room *rooms.Room, amount
 // giveToPet hands giveItem to petUser's pet. Gold a pet has no use for.
 func giveToPet(user, petUser *users.UserRecord, room *rooms.Room, giveItem items.Item, giveGoldAmount int) {
 	if giveGoldAmount > 0 {
-		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`What would %s do with <ansi fg="gold">%d gold</ansi>?`, petUser.Character.Pet.DisplayName(), giveGoldAmount))
+		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`What would %s do with <ansi fg="gold">%s gold</ansi>?`, petUser.Character.Pet.DisplayName(), util.FormatNumber(giveGoldAmount)))
 		return
 	}
 
