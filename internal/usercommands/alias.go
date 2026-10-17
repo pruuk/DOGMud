@@ -85,7 +85,7 @@ func Alias(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow"><ansi fg="command">help alias</ansi> for more information on setting custom aliases.</ansi>`)
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	return true, nil
 }

@@ -73,6 +73,10 @@ func (a *searchFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
 }
 
+func (a *searchFakeActor) SendBlankLine(_ messaging.Category) {
+	a.sent = append(a.sent, "")
+}
+
 // suppressSearchFinds drops an actor's search score far enough below the
 // tier thresholds that finding anything is negligible.
 //

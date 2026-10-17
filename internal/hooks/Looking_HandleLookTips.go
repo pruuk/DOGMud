@@ -41,7 +41,7 @@ func HandleLookTips(e events.Event) events.ListenerReturn {
 
 		if showListTip {
 			user.SendText(messaging.CategoryTip, `<ansi fg="alert-5">TIP:</ansi> <ansi fg="tip-text">Type <ansi fg="command">list</ansi> to see what merchants have for sale.</ansi>`)
-			user.SendText(messaging.CategoryTip, ``)
+			user.SendBlankLine(messaging.CategorySystem)
 		}
 
 	}

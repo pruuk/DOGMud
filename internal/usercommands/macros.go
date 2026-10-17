@@ -28,7 +28,7 @@ func Macros(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	user.SendText(messaging.CategorySystem, `<ansi fg="226">Your macros:</ansi>`)
 	for _, macro := range sortedKeys {
 		macroCommand := user.Macros[macro]
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="228">%s</ansi>:`, macro))
 
@@ -46,7 +46,7 @@ func Macros(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`      %s) <ansi fg="command">%s</ansi> %s`, string(rune(97+i)), cmdAlone, cmdRest))
 		}
 	}
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 	user.SendText(messaging.CategorySystem, `To use a macro, type <ansi fg="command">={num}</ansi>.`)
 	user.SendText(messaging.CategorySystem, `Some terminals support pressing the associated F-Key (<ansi fg="228">F1</ansi>, <ansi fg="228">F2</ansi>, etc.)`)
 

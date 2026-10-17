@@ -498,6 +498,23 @@ func (u *UserRecord) SendText(cat messaging.Category, txt string) {
 	})
 }
 
+// SendBlankLine delivers exactly one empty line to this user (#610). It is
+// the only way to send a deliberate blank line: SendText with an empty text
+// delivers nothing, so a message that comes out empty at runtime stays
+// silent. cat must be a screen category (messaging.BlankLineAllowed); any
+// other is refused and logged, because a blank line is screen spacing and
+// has no place in a combat, ambient, speech or refusal stream.
+func (u *UserRecord) SendBlankLine(cat messaging.Category) {
+	if !messaging.BlankLineAllowed(cat) {
+		mudlog.Error("SendBlankLine", "error", "category refused for a blank line", "category", cat.String(), "userId", u.UserId)
+		return
+	}
+	events.AddToQueue(events.Message{
+		UserId: u.UserId,
+		Text:   "\n",
+	})
+}
+
 // GetLineWidth returns the user's configured line width, falling back
 // to 80 if unset or invalid. The messaging pipeline reads this for
 // per-recipient wrapping.

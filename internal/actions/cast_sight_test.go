@@ -33,6 +33,10 @@ func (a *castSightActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
 }
 
+func (a *castSightActor) SendBlankLine(_ messaging.Category) {
+	a.sent = append(a.sent, "")
+}
+
 func (a *castSightActor) told(substr string) bool {
 	for _, s := range a.sent {
 		if strings.Contains(s, substr) {

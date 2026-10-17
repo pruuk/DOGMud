@@ -108,9 +108,9 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 			delete(room.Exits, currentlyEditing.Name)
 			rooms.SaveRoomTemplate(*room)
 
-			user.SendText(messaging.CategoryAdmin, ``)
+			user.SendBlankLine(messaging.CategoryAdmin)
 			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="exit">%s</ansi> deleted from the room.`, currentlyEditing.Name))
-			user.SendText(messaging.CategoryAdmin, ``)
+			user.SendBlankLine(messaging.CategoryAdmin)
 
 			user.ClearPrompt()
 			return true, nil
@@ -235,7 +235,7 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 	room.Exits[currentlyEditing.NameNew] = currentlyEditing.Exit
 	rooms.SaveRoomTemplate(*room)
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 
 	if currentlyEditing.Exit.Lock.Difficulty > 0 {
 		lockId := fmt.Sprintf(`%d-%s`, room.RoomId, currentlyEditing.NameNew)
@@ -248,9 +248,9 @@ func room_Edit_Exits(rest string, user *users.UserRecord, room *rooms.Room, flag
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">To pick lock - Sequence: <ansi fg="green">%s</ansi></ansi>`, seqString))
 	}
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, `Changes saved.`)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 
 	user.ClearPrompt()
 

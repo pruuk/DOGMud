@@ -663,8 +663,13 @@ if found {
 ```
 `Character` has no `GiveItem` method; the equivalent is `StoreItem`.
 `SendText` takes a `messaging.Category`, not just a string. An empty string
-sends nothing (the pipeline renders it as nothing); a screen that needs a
-blank line puts the newline in its own text.
+sends nothing (the pipeline renders it as nothing), so a message that comes
+out empty at runtime stays silent. A deliberate blank line is
+`SendBlankLine(cat)` (#610), which delivers exactly one empty line and accepts
+only the screen categories `messaging.BlankLineAllowed` names (System, Screen,
+Admin, RoomDescription); any other category is refused and logged. The root
+guards in `blank_line_guard_test.go` fail CI on a literal empty `SendText`
+text and hold every `SendBlankLine` call to a per-file count with a reason.
 
 ### Messaging System
 ```go

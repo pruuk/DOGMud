@@ -76,7 +76,7 @@ func Character(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 		if len(nameToAlt) > 0 {
 			altTblTxt := getAltTable(nameToAlt, hiredOutChars, user.UserId)
-			user.SendText(messaging.CategorySystem, ``)
+			user.SendBlankLine(messaging.CategorySystem)
 			user.SendText(messaging.CategorySystem, altTblTxt)
 		}
 
@@ -185,7 +185,7 @@ func cmdCharacterDelete(user *users.UserRecord, cmdPrompt *prompt.Prompt, altNam
 
 	if len(nameToAlt) > 0 {
 		altTblTxt := getAltTable(nameToAlt, hiredOutChars, user.UserId)
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, altTblTxt)
 	}
 
@@ -239,7 +239,7 @@ func cmdCharacterChange(user *users.UserRecord, room *rooms.Room, cmdPrompt *pro
 
 	if len(nameToAlt) > 0 {
 		altTblTxt := getAltTable(nameToAlt, hiredOutChars, user.UserId)
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, altTblTxt)
 	}
 
@@ -318,7 +318,7 @@ func cmdCharacterView(user *users.UserRecord, room *rooms.Room, cmdPrompt *promp
 
 	if len(nameToAlt) > 0 {
 		altTblTxt := getAltTable(nameToAlt, hiredOutChars, user.UserId)
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, altTblTxt)
 	}
 

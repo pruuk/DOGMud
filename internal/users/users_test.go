@@ -1004,6 +1004,29 @@ func TestUserRecord_SendText(t *testing.T) {
 	u.SendText(messaging.CategorySystem, "Hello, world!")
 }
 
+// TestUserRecord_SendBlankLine pins #610's two halves. A deliberate blank
+// line delivers exactly one empty line; an empty SendText (a message that
+// came out empty at runtime) still delivers nothing; and a blank line on a
+// category that is not a screen is refused.
+func TestUserRecord_SendBlankLine(t *testing.T) {
+	const userId = 9932
+	u := &UserRecord{UserId: userId}
+	events.DrainQueuedMessagesForTest(userId)
+
+	u.SendBlankLine(messaging.CategorySystem)
+	assert.Equal(t, []string{"\n"}, events.DrainQueuedMessagesForTest(userId),
+		"a blank-line send must deliver exactly one empty line")
+
+	u.SendText(messaging.CategorySystem, "")
+	assert.Empty(t, events.DrainQueuedMessagesForTest(userId),
+		"an empty SendText must still deliver nothing")
+
+	u.SendBlankLine(messaging.CategoryHitMelee)
+	u.SendBlankLine(messaging.CategoryRefusal)
+	assert.Empty(t, events.DrainQueuedMessagesForTest(userId),
+		"a blank line on a non-screen category must be refused")
+}
+
 func TestUserRecord_AddCondition(t *testing.T) {
 	u := &UserRecord{UserId: 1}
 	// Should not panic

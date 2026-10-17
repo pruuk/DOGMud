@@ -60,9 +60,7 @@ func Put(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	if container.Lock.IsLocked() {
 		// Named by no container: it was found by looking (spec section 2).
-		user.SendText(messaging.CategoryRefusal, ``)
 		user.SendText(messaging.CategoryRefusal, `That is locked.`)
-		user.SendText(messaging.CategoryRefusal, ``)
 		return true, nil
 	}
 

@@ -42,6 +42,9 @@ func (a *MobActor) GetRoom() *rooms.Room {
 // SendText is a no-op for mobs — they have no player connection.
 func (a *MobActor) SendText(cat messaging.Category, msg string) {}
 
+// SendBlankLine is a no-op for mobs, as SendText is.
+func (a *MobActor) SendBlankLine(cat messaging.Category) {}
+
 func (a *MobActor) GetName() string {
 	return a.Mob.Character.Name
 }

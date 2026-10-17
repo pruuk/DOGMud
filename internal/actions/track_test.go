@@ -70,6 +70,10 @@ func (a *trackFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
 }
 
+func (a *trackFakeActor) SendBlankLine(_ messaging.Category) {
+	a.sent = append(a.sent, "")
+}
+
 // newTrackTestRoom builds a minimal Room with no exits.
 func newTrackTestRoom(roomId int) *rooms.Room {
 	return &rooms.Room{RoomId: roomId}

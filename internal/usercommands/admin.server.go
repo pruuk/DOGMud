@@ -50,7 +50,7 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		if len(args) < 1 {
 
-			user.SendText(messaging.CategoryAdmin, ``)
+			user.SendBlankLine(messaging.CategoryAdmin)
 
 			cfgData := configs.GetConfig().DisplayConfigData()
 			cfgKeys := make([]string, 0, len(cfgData))
@@ -80,7 +80,7 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 					if len(parts) > 1 {
 						if lastPrefix != parts[0] {
 							lastPrefix = parts[0]
-							user.SendText(messaging.CategoryAdmin, ``)
+							user.SendBlankLine(messaging.CategoryAdmin)
 						}
 						nameColorized = `<ansi fg="yellow">` + parts[0] + `.</ansi>`
 						displayName = strings.Join(parts[1:], `.`)
@@ -143,9 +143,9 @@ func Server(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		//
 		// General Go stats
 		//
-		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendBlankLine(messaging.CategoryAdmin)
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="yellow-bold">IP/Port:</ansi>    <ansi fg="red">%s</ansi>`, util.GetServerAddress()))
-		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendBlankLine(messaging.CategoryAdmin)
 
 		//
 		// Special timing related stats
@@ -305,7 +305,7 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 	cmdPrompt, isNew := user.StartPrompt(`server config`, "")
 
 	if isNew {
-		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendBlankLine(messaging.CategoryAdmin)
 		menuOptions, _ := getConfigOptions("")
 		tplTxt, _ := templates.Process("tables/numbered-list", menuOptions, user.UserId)
 		user.SendText(messaging.CategoryAdmin, tplTxt)
@@ -336,9 +336,9 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 			err := configs.SetVal(configPrefix, question.Response)
 			if err == nil {
 				allConfigData := configs.GetConfig().DisplayConfigData()
-				user.SendText(messaging.CategoryAdmin, ``)
+				user.SendBlankLine(messaging.CategoryAdmin)
 				user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="6">%s</ansi> has been set to: <ansi fg="9">%s<ansi>`, configPrefix, allConfigData[configPrefix]))
-				user.SendText(messaging.CategoryAdmin, ``)
+				user.SendBlankLine(messaging.CategoryAdmin)
 				return true, nil
 			}
 			user.SendText(messaging.CategoryAdmin, err.Error())
@@ -401,7 +401,7 @@ func server_Config(_ string, user *users.UserRecord, room *rooms.Room, flags eve
 	}
 
 	if fullPath != "" {
-		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendBlankLine(messaging.CategoryAdmin)
 		user.SendText(messaging.CategoryAdmin, `   [<ansi fg="6">`+fullPath+`</ansi>]`)
 	}
 

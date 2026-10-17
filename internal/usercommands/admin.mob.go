@@ -167,11 +167,11 @@ func mob_List(rest string, user *users.UserRecord, _ *rooms.Room, _ events.Event
 	numWidth := len(strconv.Itoa(len(mobList)))
 	colWidth := 1 + numWidth + 2 + longestName + 1
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	sw := user.ClientSettings().Display.GetScreenWidth()
 	strOut := templates.DynamicList(mobList, colWidth, sw, numWidth, longestName)
 	user.SendText(messaging.CategoryAdmin, strOut)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 
 	return true, nil
 }
