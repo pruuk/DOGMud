@@ -11,8 +11,8 @@ by text once a file has been edited. Two more sites outside this inventory (they
 sent on `CategorySpellManifestation`) moved to `refusal.CompanionsFull` in Task 4:
 `hooks/companion_summon.go:47`, `usercommands/skill.cast.go:193`.
 
-Plan: `docs/superpowers/plans/2026-10-16-messaging-m7-slice3-refusals.md`. Spec:
-`docs/superpowers/specs/2026-10-14-messaging-m7-refusals-design.md` section 6.
+Plan: `docs/superpowers/plans/completed/2026-10-16-messaging-m7-slice3-refusals.md`. Spec:
+`docs/superpowers/specs/completed/2026-10-14-messaging-m7-refusals-design.md` section 6.
 
 | Ruling | Rows | Slice 3 does |
 |---|---|---|
@@ -27,7 +27,7 @@ Plan: `docs/superpowers/plans/2026-10-16-messaging-m7-slice3-refusals.md`. Spec:
 
 Slice 3 converted every FAM, RETAG, REWORD and FAIL row in PR #559; the re-inventory after Task 9 left exactly the 805 NOT, NARR and USAGE rows on `CategorySystem`.
 
-Slice 4 (plan `docs/superpowers/plans/2026-10-16-messaging-m7-slice4-tags.md`, ruling R4)
+Slice 4 (plan `docs/superpowers/plans/completed/2026-10-16-messaging-m7-slice4-tags.md`, ruling R4)
 amended the NOT rows its root guards found to be narration or a notice to someone
 other than the acting player (marked "controller (slice 4 N1):" for the recipient
 guard `system_recipient_guard_test.go`, "controller (slice 4 N2):" for the subject

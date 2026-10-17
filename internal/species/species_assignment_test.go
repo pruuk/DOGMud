@@ -11,7 +11,7 @@ import (
 
 // Slice 1 of the combat reachability spec (#541): creatures PR #208 found on
 // the wrong species are the species they look like. Owner decisions D1 to D8
-// are recorded in docs/superpowers/plans/2026-10-16-combat-reachability-slice1-species.md.
+// are recorded in docs/superpowers/plans/completed/2026-10-16-combat-reachability-slice1-species.md.
 func TestCreaturesAreTheSpeciesTheyLookLike(t *testing.T) {
 	want := map[string]int{
 		"amber_valley/9407-a_sun_lizard.yaml":               21,
