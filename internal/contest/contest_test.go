@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -132,13 +133,37 @@ func TestRun_SuccessTracksMargin(t *testing.T) {
 // TestRunWithFloors_ZeroFloorsMatchRun — with both floors off, the floored
 // variant must behave exactly like Run. This is the property that makes the
 // migration safe for any caller passing 0.
+//
+// #576: this used to assert that a 10000-vs-1 attacker won all 500 live
+// draws, which failed about once in 1700 runs on the Normal tail. It now
+// replays one seeded sequence through both functions and demands identical
+// results, over even contests that both win and lose, which is the property
+// the name claims.
 func TestRunWithFloors_ZeroFloorsMatchRun(t *testing.T) {
-	for i := 0; i < 500; i++ {
-		res := RunWithFloors(10000, []Entry{{Name: "d", Score: 1}}, 0)
-		assert.True(t, res.Success, "attacker should win on merit with no floors")
-		assert.Greater(t, res.Margin, 0.0, "margin must be the real one, not a sentinel")
-		assert.False(t, res.Floored, "no floor was configured, so nothing was floored")
+	const seed, draws = 576, 500
+	entries := []Entry{{Name: "a", Score: 100}, {Name: "b", Score: 90}}
+
+	restore := dice.SetRandForTest(seed)
+	plain := make([]Result, draws)
+	for i := range plain {
+		plain[i] = Run(100, entries)
 	}
+	restore()
+
+	restore = dice.SetRandForTest(seed)
+	defer restore()
+	wins := 0
+	for i := 0; i < draws; i++ {
+		res := RunWithFloors(100, entries, 0)
+		assert.Equal(t, plain[i], res, "draw %d: zero floors must match Run exactly", i)
+		assert.False(t, res.Floored, "no floor was configured, so nothing was floored")
+		if res.Success {
+			wins++
+		}
+	}
+	// The comparison is only worth something if both outcomes occurred.
+	assert.Positive(t, wins, "fixture: some draws must be wins")
+	assert.Less(t, wins, draws, "fixture: some draws must be losses")
 }
 
 // TestRunWithFloors_SuccessFloorRescuesAHopelessAttack pins the 5.9 guarantee:

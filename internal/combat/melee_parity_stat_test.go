@@ -328,6 +328,7 @@ func TestMeleeParityDamagePerSwing(t *testing.T) {
 	if testing.Short() {
 		t.Skip("statistical parity gate; skipped in -short")
 	}
+	skipStatSweepUnderRace(t)
 	pinParityBalance(t)
 
 	bal := configs.GetBalanceConfig()

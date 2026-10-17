@@ -143,8 +143,18 @@ func TestMobMinCastRounds_AbsentFieldCompletesInOneRound(t *testing.T) {
 // windupAreaMob is windupMob with an AREA harm spell whose cast-time target
 // list holds both players and an add (instance 999) that is gone by the
 // held round, as a killed add's instance is.
+//
+// #524: the landing is a live spell contest, and a caster fumbles about 2.3%
+// of rolls whatever the stats (the self-relative fumble), so the "is hit"
+// assertions flaked at that rate. The fixture seeds the one random source
+// dice and util.Rand share, so the contest replays the same draws every run.
+// If a later change to the draw order makes this seed fumble, the tests fail
+// every run (not now and then): pick another seed and say why in the commit.
+const windupAreaSeed = 524
+
 func windupAreaMob(t *testing.T) (*mobs.Mob, *rooms.Room) {
 	t.Helper()
+	t.Cleanup(util.SetRandForTest(windupAreaSeed))
 	m, room := windupMob(t, 2)
 	area := windupSpell(2)
 	area.Targeting = combatvocab.TargetArea
