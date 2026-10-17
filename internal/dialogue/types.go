@@ -4,14 +4,14 @@ package dialogue
 // can gate options on player progress without importing characters/users.
 // When nil is passed the engine skips all quest/item checks (backward compat).
 type PlayerState struct {
-	HasQuest   func(token string) bool
-	HasItem    func(itemId int) bool
+	HasQuest func(token string) bool
+	HasItem  func(itemId int) bool
 	// CarriesItem reports whether the player holds the item anywhere: the
-	// backpack, worn or wielded, or the component pouch. It backs
-	// itemExcluded. Nil falls back to HasItem.
+	// backpack, worn or wielded, the component pouch or the bandolier. It
+	// backs itemExcluded. Nil falls back to HasItem.
 	CarriesItem func(itemId int) bool
 	RemoveItem  func(itemId int) bool
-	GiveQuest  func(token string)
+	GiveQuest   func(token string)
 	// GiveItem reports whether the item actually reached the player.
 	// false (e.g. over carry capacity) makes the engine abort the node's
 	// OTHER effects too — grantsQuest, requiresItem removal, flags, rep,
