@@ -123,7 +123,10 @@ questions that wait for an answer (`cmdPrompt.Ask`, e.g. mail's "Send mail
 to whom?") are not prompts in this sense and stay where they are.
 
 `Cooldown` takes what the player tried ("kick", "consider anyone"), never a
-duration. `NotPartyLeader` with an empty action reads "do that".
+duration. A cast blocked by the shared special-move timer
+(`actions.CastResult.SharedCooldown`) follows it with
+`CastSharesSpecialMoveText` ("Casting counts as a special move, so it shares
+their recovery time."); the conjure timer gets the plain line only. `NotPartyLeader` with an empty action reads "do that".
 
 ## Failed
 

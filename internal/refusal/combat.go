@@ -11,6 +11,11 @@ func CooldownText(doing string) string {
 	return `You need a moment to recover before you can ` + doing + `.`
 }
 
+// CastSharesSpecialMoveText follows CooldownText("cast") when the cast was
+// blocked by the shared special-move timer, so the player learns why a
+// recent bash or taunt stops a spell (#264).
+const CastSharesSpecialMoveText = `Casting counts as a special move, so it shares their recovery time.`
+
 // WhileFightingText answers an action combat forbids.
 func WhileFightingText(doing string) string {
 	return `You can't ` + doing + ` while fighting.`

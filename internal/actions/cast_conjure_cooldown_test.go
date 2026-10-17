@@ -102,7 +102,24 @@ func TestInitiateCast_ConjureOnCooldown_Refused(t *testing.T) {
 	result := InitiateCast(actor, sd.SpellId, "")
 
 	assert.True(t, result.OnCooldown, "a conjure on cooldown must be refused")
+	assert.False(t, result.SharedCooldown, "the conjure timer is not the shared special-move one")
 	assert.False(t, result.Initiated)
 	assert.Zero(t, char.Cooldowns["special-move"],
 		"a refused conjure must not consume a special-move slot as a fallback")
+}
+
+// TestInitiateCast_SharedCooldown_Flagged pins #264: a cast blocked by the
+// shared special-move timer says so, so the refusal can tell the player that
+// casting shares the timer with bash, taunt and the rest.
+func TestInitiateCast_SharedCooldown_Flagged(t *testing.T) {
+	sd, cleanup := seedSummonSpell("test-raise-cd", 301, true)
+	defer cleanup()
+
+	actor, char, _ := newCastActor()
+	char.Cooldowns["special-move"] = 3
+
+	result := InitiateCast(actor, sd.SpellId, "")
+
+	assert.True(t, result.OnCooldown, "a cast on the shared cooldown must be refused")
+	assert.True(t, result.SharedCooldown, "the refusal must know it was the shared special-move timer")
 }
