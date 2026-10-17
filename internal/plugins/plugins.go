@@ -192,7 +192,7 @@ func (p pluginRegistry) AllFileSubSystems(yield func(fs.ReadFileFS) bool) {
 func (p pluginRegistry) ReadFile(name string) ([]byte, error) {
 	for _, p := range registry {
 
-		if embedPath, ok := p.files.filePaths[name]; ok {
+		if embedPath, ok := p.files.embedPath(name); ok {
 			b, err := p.files.fileSystem.ReadFile(embedPath)
 			if err == nil {
 				return b, nil
@@ -207,7 +207,7 @@ func (p pluginRegistry) Open(name string) (fs.File, error) {
 
 	for _, p := range registry {
 
-		if embedPath, ok := p.files.filePaths[name]; ok {
+		if embedPath, ok := p.files.embedPath(name); ok {
 			return p.files.fileSystem.Open(embedPath)
 
 		}
@@ -221,7 +221,7 @@ func (p pluginRegistry) Stat(name string) (fs.FileInfo, error) {
 
 	for _, p := range registry {
 
-		if embedPath, ok := p.files.filePaths[name]; ok {
+		if embedPath, ok := p.files.embedPath(name); ok {
 			return fs.Stat(p.files.fileSystem, embedPath)
 		}
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/itemlight"
 	"github.com/GoMudEngine/GoMud/internal/lightscale"
+	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -240,34 +241,85 @@ func levelOfRaw(v float64) int {
 // non-nil. One pass over the room's occupants: each bearer's records are read
 // exactly once.
 func (r *Room) carriedTerms(exclude *conditions.Condition) (light, dark []float64) {
-	add := func(c *characters.Character) {
-		for _, rec := range c.Conditions.LightAndDarknessSources() {
-			if rec == exclude {
-				continue
-			}
-			spec := conditions.GetConditionSpec(rec.ConditionId)
-			v, ok := rec.LightNow(spec)
-			if !ok {
-				continue
-			}
-			if spec.IsDarknessSource() {
-				dark = append(dark, v)
-			} else {
-				light = append(light, v)
-			}
-		}
-	}
 	for _, id := range r.mobs {
 		if m := mobs.GetInstance(id); m != nil {
-			add(&m.Character)
+			light, dark = appendBearerTerms(&m.Character, exclude, light, dark)
 		}
 	}
 	for _, id := range r.players {
 		if u := users.GetByUserId(id); u != nil && u.Character != nil {
-			add(u.Character)
+			light, dark = appendBearerTerms(u.Character, exclude, light, dark)
 		}
 	}
 	return light, dark
+}
+
+// appendBearerTerms appends every light and darkness c carries, except
+// exclude, to light and dark.
+func appendBearerTerms(c *characters.Character, exclude *conditions.Condition, light, dark []float64) ([]float64, []float64) {
+	for _, rec := range c.Conditions.LightAndDarknessSources() {
+		if rec == exclude {
+			continue
+		}
+		spec := conditions.GetConditionSpec(rec.ConditionId)
+		v, ok := rec.LightNow(spec)
+		if !ok {
+			continue
+		}
+		if spec.IsDarknessSource() {
+			dark = append(dark, v)
+		} else {
+			light = append(light, v)
+		}
+	}
+	return light, dark
+}
+
+// holdsBearer reports whether c is one of the room's own occupants, by
+// identity, so a bearer still listed here is never counted twice.
+func (r *Room) holdsBearer(c *characters.Character) bool {
+	for _, id := range r.players {
+		if u := users.GetByUserId(id); u != nil && u.Character == c {
+			return true
+		}
+	}
+	for _, id := range r.mobs {
+		if m := mobs.GetInstance(id); m != nil && &m.Character == c {
+			return true
+		}
+	}
+	return false
+}
+
+// withBearerLight is r lit as if bearer still stood in it: the lighting a
+// departure is judged by (owner ruling 2026-10-09, a mover is seen by the
+// light they carry on their own way out).
+type withBearerLight struct {
+	r      *Room
+	bearer *characters.Character
+}
+
+func (l withBearerLight) LightLevel() int {
+	if l.bearer == nil || l.r.holdsBearer(l.bearer) {
+		return l.r.LightLevel()
+	}
+	carried, dark := l.r.carriedTerms(nil)
+	carried, dark = appendBearerTerms(l.bearer, nil, carried, dark)
+	fxLight, fxDark := itemlight.Terms(l.r.RoomId)
+	return l.r.composeWithFixtures(configs.GetLightingConfig(), gametime.CelestialLight(), gametime.LampsLit(),
+		l.r.mutatorSkyFilter(), carried, dark, fxLight, fxDark).Level
+}
+
+// DepartureSight is what observer, standing in r, makes out of mover leaving
+// r. It is judged with the mover's own carried light (and darkness) counted
+// in r whether or not the move has already taken the mover out of r, so a
+// follower who carries no light still sees a leader who does. It is optics
+// only (messaging.ParticipantSight): blindness, the room's light and the
+// observer's own eyes. Following keys off it (owner ruling 2026-10-17): a
+// follower moves only when this is not SightNone, for party auto-follow and
+// `follow <name>` alike.
+func (r *Room) DepartureSight(observer, mover *characters.Character) messaging.SightDecision {
+	return messaging.ParticipantSight(observer, withBearerLight{r: r, bearer: mover})
 }
 
 // mutatorSkyFilter multiplies the skylight fraction of every active mutator

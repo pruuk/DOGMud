@@ -1,15 +1,29 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">follow</ansi>
 
-The <ansi fg="command">follow</ansi> follows another player so that when they leave a room, you go with them.
+The <ansi fg="command">follow</ansi> command lets you walk with someone. When they leave the
+room, you go with them through the same exit.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">follow Jim</ansi>
-  This would follow <ansi fg="username">Jim</ansi> from now on.
+  <ansi fg="command">follow <name></ansi>  Start following someone in the room with you.
+  <ansi fg="command">follow stop</ansi>    Stop following. <ansi fg="command">unfollow</ansi> does the same.
+  <ansi fg="command">follow lose</ansi>    Make everyone who follows you stop. <ansi fg="command">lose</ansi> does the same.
 
-  <ansi fg="command">follow stop</ansi>
-  Stop following anyone
+<ansi fg="yellow">Parties</ansi>
 
-  <ansi fg="command">follow lose</ansi>
-  Shake off anyone following you, so that they aren't anymore.
+  In a party you follow the party leader without this command. When the
+  leader leaves a room, every member in that room goes too. You can still
+  follow someone else, in your party or outside it.
 
+<ansi fg="yellow">Following in the dark</ansi>
+
+  You can only follow someone you see leave. Their light counts as well
+  as yours: if they carry a light, you can follow them even when you
+  carry none. Seeing their shape is enough.
+
+  If you cannot see them go, because it is too dark or you are blinded,
+  you stay where you are. A follow you started with this command ends
+  then. Party members stay in the party, and follow the leader again
+  next time they can see the leader leave.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help party</ansi>, <ansi fg="command">help light</ansi>
