@@ -55,7 +55,8 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if res.TargetOnFloor {
-		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("%s is already on the ground.", res.Target.Name))
+		user.SendText(messaging.CategoryRefusal, messaging.HideNames(fmt.Sprintf("%s is already on the ground.", res.Target.Name),
+			[]string{res.Target.Name}, messaging.ParticipantSight(user.Character, room)))
 		// The trip is refused, but what it is for (the target on the ground)
 		// already holds, so the quest engine hears it as a trip. Without this
 		// the tutorial's trip step could not be finished while an automatic

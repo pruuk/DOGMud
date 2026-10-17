@@ -525,7 +525,15 @@ perceive can be named), then a sealed crate or a known room container
 (`lookNamesAnObject`, `:116`), then an exit (direction alias resolved, then
 through-sight, then lock). `LookKind` (`:12`) is `LookBlind`, `LookTooDark`,
 `LookRoom`, `LookCreature`, `LookExit`, `LookExitTooDark`, `LookExitLocked`,
-`LookExitShapes`, `LookOther`, `LookOwnGearByTouch`. `LookExitShapes` (lighting plan 6, owner
+`LookExitShapes`, `LookOther`, `LookOwnGearByTouch`, `LookFigure`. `LookFigure` (owner
+ruling 2026-10-17) is a player at shapes naming a figure by the aim word
+(`look figure`, `look 2.shape`, AimBySight's figures), checked before the
+creature step and never for a mob looker; the player wrapper reads it as a
+corpse at shapes ("You can make out no more than its shape.", one constant
+in `usercommands/look.go`) and names no one; a looked-at player reads
+"<looker> is looking at you." at `LookResolution.TargetSight` (nothing when
+they see nothing), the room by sight. A count past the last figure
+falls through to "You can only make out shapes here.". `LookExitShapes` (lighting plan 6, owner
 ruling O6) is an exit the light here is too poor to see through
 (`messaging.SeesThroughExit` false) whose next room heat still reaches
 (`messaging.SensesHeatThroughExit`); a locked exit under heat is still
@@ -694,13 +702,15 @@ word on its own line (#430).
   and the `*`, `*mob`, `*user` pools skip what `viewer` does not perceive.
 - **`AimBySight(viewer, selfUserId, room, name, verb) (string, string)`**
   (`sight_aim.go`, #454): the one rule for a creature name a player types.
-  Clear sight admits the name as typed; shapes only admits `shape` /
-  `N.shape` / `shape#N` (rewritten to the figure's `@<userId>` or
-  `#<mobInstanceId>`; figures are perceived players then mobs, in room
-  order), an id form (`@N`, `#N`, what party auto-assist types) and an empty
+  Clear sight admits the name as typed; shapes only admits the aim word
+  `figure` / `N.figure` / `figure#N` (`messaging.FigureWord`, the word the
+  room shows: "Also here: a figure"; the older `shape` is still accepted as
+  an alias, and the hint names `figure` only) (rewritten to the figure's
+  `@<userId>` or `#<mobInstanceId>`; figures are perceived players then
+  mobs, in room order; the rewrite applies at clear sight too), an id form (`@N`, `#N`, what party auto-assist types) and an empty
   name, and answers any other name with `AimShapesHint(verb)`; no sight
-  admits nothing (`refusal.NothingToAimLine` for a shape or no name,
-  `refusal.NotHereCreatureLine` for a name; an out-of-range `N.shape` also
+  admits nothing (`refusal.NothingToAimLine` for an aim word or no name,
+  `refusal.NotHereCreatureLine` for a name; an out-of-range `N.figure` also
   answers `refusal.NotHereCreatureLine`). The constants moved to
   `internal/refusal` in M7 slice 1 (`AimNothingLine` and `AimNotHereLine`
   are gone); see `internal/refusal/context.md`. It returns the name to
@@ -1725,8 +1735,14 @@ the free supply-handoff paths — these are NOT routed through `actions.Sell`.
   `Sell` check it only once a merchant is confirmed present in the room
   (`SellStopNoSight` / `BuyReasonNoSight`), so "there's no merchant here"
   still wins over a sight refusal, and a nil-Mob `MobActor` test fixture
-  (no merchant path) never calls `GetCharacter()` unguarded. `usercommands.List`
-  checks it directly, right after its own sleep gate.
+  (no merchant path) never calls `GetCharacter()` unguarded. The player
+  verbs keep the same order: `usercommands.List` checks it right after its
+  own sleep gate and only when **`MerchantHere(room, selfUserId) bool`**
+  (a merchant mob, or a merchant player other than self) is true;
+  `Appraise` and `Offer` check it after their own "no merchant mob here"
+  refusal. So an empty dim room answers with the verb's no-merchant line,
+  never a sight refusal that hints at an unseen merchant (2026-10-17
+  pre-deploy playtest).
 - **`ShopSightRefusalText`**, the one line every refusing verb prints:
   "You can't make out the goods well enough to deal."
 - **Content keeps every shop above the gate at night** (merchants slice,
@@ -1902,7 +1918,10 @@ reads `*_actor`; at cast start a player target other than the caster reads
 `cast_actee`, for a `TargetSingle` spell only; the room reads `*_observer` or
 a random line of the generic pool (`spells.CastRoomLine`), by sight only. A
 hidden caster's lines skip the players who do not perceive them, and at cast
-start those players hear one `cast_started_unseen` line. Root guard
+start those players hear one `cast_started_unseen` line. A room line that
+names a hidden player target (`{actee}`) reads "something" in its place to
+each player who does not perceive that target (`UnseenBy`, #504), as a
+hidden mob target reads. Root guard
 `spell_phase_narration_guard_test.go` keeps every other site from sending
 these lines itself.
 

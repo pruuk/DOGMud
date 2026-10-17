@@ -110,7 +110,11 @@ The `internal/rooms` package is the core world management system for GoMud, hand
   viewer's `ParticipantSight` in the room. At clear sight (or a nil viewer, a
   system lookup) by name, newest first, as before. Below it every corpse, mob
   or player, answers only to the word "corpse", newest first and countable
-  (`2.corpse`), so typing a name cannot confirm whose corpse it is.
+  (`2.corpse`), so typing a name cannot confirm whose corpse it is. At every
+  sight the word the corpse line shows, `RemainsWord` ("remains", `corpse.go`),
+  stands for "corpse" (`look remains`, `2.remains`; `corpseSearchName`
+  rewrites it), so the word a player reads reaches the corpse. A room noun
+  named `remains` (room 5300) still wins in `look`, which checks nouns first.
 - **Corpse decay line (#276):** "The corpse of <name> crumbles to dust." goes
   out through `SendTextVisualHidingNames` with `ObservedName()` and the dead
   one's name hidden, the same shape as every other corpse line: a shapes

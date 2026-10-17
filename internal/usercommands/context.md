@@ -91,7 +91,9 @@ whose item alone resolves, so a refusal never tells who is there), `show`, `cons
 (a refused noun may still be a container), `shadow`, `talk`, `ask`,
 `party invite` and `rep`, and outside this package `follow`
 (`modules/follow`) and `companion-ask` (`modules/aicompanion`). Knowingly
-ungated: `look <creature>` (names one only at full sight), `sell` to a
+ungated: `look <creature>` (names one only at full sight; at shapes
+`look figure` / `look 2.shape` finds a figure and reads "You can make out no
+more than its shape.", `actions.LookFigure`), `sell` to a
 named merchant and `buy <x> from <merc>`. A pet is named, never a shape: `ownPetNamed`
 (`pet.go`) admits the player's own pet (`pet` or its name) at any sight, and
 `petOwnerInSight` finds another player's pet only at full sight of a
@@ -250,7 +252,9 @@ already known, so no presence leaks.
   sweep. `stealWord` is the bauble's keyword, or `trinket`.
 - Taking one is `steal <name>`: `parseStealArgs` falls back to
   `householdBaubleNamed` (a household bauble on this room's floor) when no
-  creature or container matches, and hands it to `actions.Steal` as
+  creature or container matches and the thief can see the floor
+  (`actions.TooDarkToGet` false, as for fixtures; in the dark a bauble that
+  is there answers as a name that is not, #553), and hands it to `actions.Steal` as
   `StealOptions.HouseholdItem` (the steal checks; see
   `internal/actions/context.md`).
 

@@ -56,9 +56,9 @@ func Anonymize(text string) string {
 	last := 0
 	for _, loc := range nameTagPattern.FindAllStringSubmatchIndex(text, -1) {
 		out = append(out, text[last:loc[0]]...)
-		word := "a figure"
+		word := figureNoun
 		if atSentenceStart(text, loc[0]) {
-			word = "A figure"
+			word = "A " + FigureWord
 		}
 		out = append(out, `<ansi fg="combat-anon">`+word+`</ansi>`...)
 		if ps := loc[2*nameTagPossIdx]; ps >= 0 {

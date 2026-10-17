@@ -1,10 +1,42 @@
 package rooms
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// RemainsWord is the word the corpse lines show a corpse by ("Some remains
+// lie where they fell.", hooks.announceCorpse). FindCorpseIndex takes it as
+// the word "corpse", so the word a player reads is a word that reaches the
+// corpse (2026-10-17 pre-deploy playtest).
+const RemainsWord = `remains`
+
+// corpseSearchName rewrites each whole word RemainsWord in searchName to
+// "corpse", keeping a count (`2.remains`, `remains#2`, `all.remains`). Any
+// other name comes back unchanged.
+func corpseSearchName(searchName string) string {
+	name, n := util.GetMatchNumber(searchName)
+	words := strings.Fields(name)
+	changed := false
+	for i, w := range words {
+		if w == RemainsWord {
+			words[i] = `corpse`
+			changed = true
+		}
+	}
+	if !changed {
+		return searchName
+	}
+	if n < 0 {
+		return `all.` + strings.Join(words, ` `)
+	}
+	return fmt.Sprintf(`%d.%s`, n, strings.Join(words, ` `))
+}
 
 type Corpse struct {
 	UserId       int

@@ -656,7 +656,11 @@ func (f *FollowModule) followMobCommand(rest string, mob *mobs.Mob, room *rooms.
 
 		targetUser := users.GetByUserId(followCommandTarget.userId)
 
-		targetUser.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is following you.`, mob.Character.Name)))
+		// The mob's name, hidden at the followed player's sight, as its
+		// `follow stop` line is (#554).
+		targetUser.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(messaging.HideNames(
+			fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is following you.`, mob.Character.Name),
+			[]string{mob.Character.Name}, readerSight(targetUser))))
 
 		return true, nil
 	}

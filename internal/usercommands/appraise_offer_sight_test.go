@@ -7,6 +7,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,6 +44,44 @@ func TestOffer_DarkRoom_Refuses(t *testing.T) {
 
 		lines := listSightPlain(events.DrainQueuedMessagesForTest(8411))
 		require.Equal(t, []string{actions.ShopSightRefusalText}, lines, "biome %s", biome)
+	}
+}
+
+// 2026-10-17 pre-deploy playtest: `list` in an empty dim room said "You can't
+// make out the goods well enough to deal.", which tells the player an unseen
+// merchant is there. With no merchant in the room every shop verb gives its
+// no-merchant refusal at every light, as buy and sell already do; the sight
+// gate only answers when there is someone to deal with. The fixture is
+// listSightRoom with its merchant taken out of the room.
+func TestShopVerbs_NoMerchant_SayNoMerchantAtEveryLight(t *testing.T) {
+	for _, tc := range []struct {
+		verb string
+		run  func(*users.UserRecord, *rooms.Room) error
+		want string
+	}{
+		{"list", func(u *users.UserRecord, r *rooms.Room) error {
+			_, err := List("", u, r, 0)
+			return err
+		}, "Visit a merchant to list and buy objects."},
+		{"offer", func(u *users.UserRecord, r *rooms.Room) error {
+			_, err := Offer("tin cup", u, r, 0)
+			return err
+		}, "There's no merchant here."},
+		{"appraise", func(u *users.UserRecord, r *rooms.Room) error {
+			_, err := Appraise("tin cup", u, r, 0)
+			return err
+		}, "You need to be at a merchant to appraise items."},
+	} {
+		for _, biome := range []string{"shapes", "city"} {
+			t.Run(tc.verb+"/"+biome, func(t *testing.T) {
+				user, room := listSightRoom(t, biome)
+				room.RemoveMob(8412)
+				user.Character.StoreItem(items.New(84001))
+				require.NoError(t, tc.run(user, room))
+				lines := listSightPlain(events.DrainQueuedMessagesForTest(8411))
+				require.Equal(t, []string{tc.want}, lines)
+			})
+		}
 	}
 }
 

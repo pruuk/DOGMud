@@ -258,6 +258,32 @@ func TestSpellPhase_SeeHiddenReaderReadsTheNamedLines(t *testing.T) {
 	}
 }
 
+// #504: a room line that names its target ({actee}) never names a hidden
+// player target to a reader who does not perceive them. That reader reads
+// "something" in its place, as a hidden mob target reads; a reader who
+// perceives the target reads the name.
+func TestSpellPhase_HiddenPlayerTargetIsNotNamedToWhoCannotSeeThem(t *testing.T) {
+	room := phaseScene(t, "city", false)
+	target := users.GetByUserId(phaseTargetId)
+	phaseHide(t, target.Character)
+	bystander := users.GetByUserId(phaseBystanderId)
+	if bystander.Character.Perceives(target.Character) {
+		t.Fatal("precondition: the bystander should not perceive the hidden target")
+	}
+	s := phaseSpell(false)
+	s.CastRoomText = "{actor} stares at {actee}."
+	caster := NewUserActorInRoom(users.GetByUserId(phaseCasterId), room)
+
+	castAt(caster, s, spells.PhaseCast, room, phaseTargetId)
+	requireOneLine(t, "bystander", phaseLines(phaseBystanderId), "Kael stares at something.")
+
+	if !bystander.Character.Conditions.AddCondition(phaseSeeHiddenId, true) {
+		t.Fatal("precondition: see hidden")
+	}
+	castAt(caster, s, spells.PhaseCast, room, phaseTargetId)
+	requireOneLine(t, "perceiving bystander", phaseLines(phaseBystanderId), "Kael stares at Mira.")
+}
+
 func TestSpellPhase_MobTargetReadsNothingAndTheRoomReadsTheRoomLine(t *testing.T) {
 	room := phaseScene(t, "city", false)
 	m := phaseMob(t, room, false)

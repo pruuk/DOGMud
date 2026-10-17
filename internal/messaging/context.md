@@ -488,6 +488,11 @@ Functions:
   it, so a caller may pass formatted names through the seam without leaking
   "(dead)" or "(♥friend)". A match inside tag markup itself is never
   replaced.
+- `FigureWord` (const, "figure"): the one word every line shows a creature by
+  to a shapes-only reader. `UnseenNoun`, `SpeakerNoun` and `Anonymize` build
+  "a figure" from it, and `actions.AimBySight` takes it as the aim word
+  (`consider figure`, `2.figure`), so the word the room shows is the word a
+  player can type (2026-10-17 pre-deploy playtest). Change it here only.
 - `UnseenNoun(d SightDecision) string`: the word `HideNames` substitutes, "a
   figure" at shapes and "something" otherwise. `UnseenFigure(d)` is the same
   word in the `combat-anon` tag, for a list entry that stands alone; the room

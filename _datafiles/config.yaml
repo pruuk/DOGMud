@@ -2649,6 +2649,11 @@ Validation:
   - "conjure*"
   - "summon*"
   - "companion"
+  # The words a player who makes out only shapes aims with (actions.AimBySight:
+  # `consider figure`, `attack 2.shape`). A player so named could not be told
+  # apart from the first figure in the room.
+  - "figure"
+  - "shape"
 
 ################################################################################
 #

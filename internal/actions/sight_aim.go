@@ -13,9 +13,21 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// shapeWord is what a player who makes out shapes aims at: `shape`, `2.shape`,
-// `shape#2`. No dogmud mob, item, noun or alias uses the word.
-const shapeWord = "shape"
+// aimWord is what a player who makes out shapes aims at: `figure`, `2.figure`,
+// `figure#2`. It is messaging.FigureWord, the word every line shows such a
+// creature by ("Also here: a figure"), so the word the room shows is the word
+// that targets (2026-10-17 pre-deploy playtest). No dogmud mob name uses it.
+const aimWord = messaging.FigureWord
+
+// aimWordAlias is the older aim word (#454), still accepted: the shapes-only
+// lines say "You can only make out shapes here.", so a player may well type
+// it. Every hint names aimWord.
+const aimWordAlias = "shape"
+
+// isAimWord reports whether word is one a shapes-only player aims with.
+func isAimWord(word string) bool {
+	return word == aimWord || word == aimWordAlias
+}
 
 // The refusals a player's sight gives a typed name (#454). Neither echoes the
 // name, so a creature that is there and a name that matches nothing read the
@@ -33,8 +45,9 @@ const (
 // makes out of room (#454, lifted from the cast's own rule, follow-up slice A):
 //
 //	clear sight:  every name, as typed
-//	shapes only:  `shape`, `N.shape`, `shape#N`, or an id form (`@N`, `#N`);
-//	              a typed name gets a hint naming verb
+//	shapes only:  `figure`, `N.figure`, `figure#N` (or the same with the
+//	              alias `shape`), or an id form (`@N`, `#N`); a typed name
+//	              gets a hint naming verb
 //	no sight:     nothing
 //
 // It returns the name to resolve, with a shape rewritten to "@<userId>" or
@@ -86,34 +99,36 @@ func aimAtSight(viewer *characters.Character, selfUserId int, room *rooms.Room, 
 }
 
 // AimShapesHint is the hint a player who makes out shapes only reads when
-// they typed a name: two lines, the second naming verb with a shape after it.
-// A verb too long for the second line to fit 80 columns drops out of it.
+// they typed a name: two lines, the second naming verb with the aim word
+// (the word the room shows) after it. A verb too long for the second line to
+// fit 80 columns drops out of it.
 func AimShapesHint(verb string) string {
-	try := fmt.Sprintf(`Try <ansi fg="command">%s shape</ansi> or <ansi fg="command">%s 2.shape</ansi>.`, verb, verb)
-	if verb == `` || len(`Try  shape or  2.shape.`)+2*len([]rune(verb)) > aimHintWidth {
-		try = `Use <ansi fg="command">shape</ansi> or <ansi fg="command">2.shape</ansi> in place of a name.`
+	try := fmt.Sprintf(`Try <ansi fg="command">%s %s</ansi> or <ansi fg="command">%s 2.%s</ansi>.`, verb, aimWord, verb, aimWord)
+	if verb == `` || len(fmt.Sprintf(`Try  %s or  2.%s.`, aimWord, aimWord))+2*len([]rune(verb)) > aimHintWidth {
+		try = fmt.Sprintf(`Use <ansi fg="command">%s</ansi> or <ansi fg="command">2.%s</ansi> in place of a name.`, aimWord, aimWord)
 	}
 	return aimShapesLine + "\n" + try
 }
 
-// aimNamesAShape reports whether the player typed the shape word at all,
-// including `all.shape`, which names no single figure. aimShapeIndex returns 0
-// for that, and without this the refusal would call it a typed name.
+// aimNamesAShape reports whether the player typed an aim word at all,
+// including `all.figure`, which names no single figure. aimShapeIndex returns
+// 0 for that, and without this the refusal would call it a typed name.
 func aimNamesAShape(name string) bool {
 	if name == `` {
 		return false
 	}
 	word, _ := util.GetMatchNumber(name)
-	return word == shapeWord
+	return isAimWord(word)
 }
 
-// aimShapeIndex is N for `shape`, `N.shape` or `shape#N`, and 0 otherwise.
+// aimShapeIndex is N for `figure`, `N.figure` or `figure#N` (or the alias),
+// and 0 otherwise.
 func aimShapeIndex(name string) int {
 	if name == `` {
 		return 0
 	}
 	word, n := util.GetMatchNumber(name)
-	if word != shapeWord || n < 1 {
+	if !isAimWord(word) || n < 1 {
 		return 0
 	}
 	return n

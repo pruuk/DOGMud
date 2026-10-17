@@ -152,6 +152,35 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		return true, nil
 
+	case actions.LookFigure:
+		// A figure at shapes (owner ruling 2026-10-17): read as a corpse is
+		// read there, naming no one to the looker. The looked-at player and
+		// the room read the looker as their own sight allows, as the
+		// clear-sight creature look tells them.
+		fig := messaging.UnseenFigure(messaging.SightShapes)
+		user.SendText(messaging.CategoryRoomDescription, fmt.Sprintf(`You look at %s.`, fig))
+		user.SendText(messaging.CategoryRoomDescription, lookShapeOnlyLine)
+		if !isSneaking {
+			targetName := res.Target.GetCharacter().Name
+			tag := `mobname`
+			skip := []int{user.UserId}
+			if res.Target.IsPlayer() {
+				tag = `username`
+				u := res.Target.(*actions.UserActor).User
+				skip = append(skip, u.UserId)
+				// A look is seen, not heard: one who sees nothing is not told.
+				if d := res.TargetSight; d != messaging.SightNone {
+					u.SendText(messaging.CategoryMobEmote, messaging.CapitalizeStart(messaging.HideNames(
+						fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at you.`, user.Character.Name),
+						[]string{user.Character.Name}, d)))
+				}
+			}
+			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at <ansi fg="%s">%s</ansi>.`, user.Character.Name, tag, targetName),
+				[]string{user.Character.Name, targetName}, skip...)
+		}
+		return true, nil
+
 	case actions.LookExitTooDark:
 		user.SendText(messaging.CategoryRefusal, `It's too dark to see anything in that direction.`)
 		return true, nil
@@ -476,7 +505,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> is looking at the <ansi fg="%s">%s</ansi>.`, user.Character.Name, corpseColor, observedCorpse), hidden, user.UserId)
 
 			if sight != messaging.SightFull {
-				user.SendText(messaging.CategoryRoomDescription, `You can make out no more than its shape.`)
+				user.SendText(messaging.CategoryRoomDescription, lookShapeOnlyLine)
 			} else if corpse.CorpseDescription != "" {
 				user.SendText(messaging.CategoryRoomDescription, corpse.CorpseDescription)
 			} else {
@@ -546,6 +575,10 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	return true, nil
 
 }
+
+// lookShapeOnlyLine is what a looker below clear sight reads of what they
+// looked at: a corpse, or a figure (`look figure`, owner ruling 2026-10-17).
+const lookShapeOnlyLine = `You can make out no more than its shape.`
 
 // noSightRefusal words the refusal of a looker who sees nothing here. A
 // looker in the dark is told that light, or other eyes,

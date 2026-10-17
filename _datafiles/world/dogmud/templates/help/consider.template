@@ -6,7 +6,7 @@ you, and how long each of you would need to beat the other.
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">consider goblin</ansi>
-  <ansi fg="command">consider shape</ansi>    in the dark, when you can only make out shapes
+  <ansi fg="command">consider figure</ansi>   in the dark, when you can only make out shapes
 
 It reads both of you as you stand right now. Your spells, potions, wards and
 enchantments count, and so do theirs.

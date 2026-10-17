@@ -50,8 +50,14 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		refusal.NoTargetAfterCost(user, "grapple", res.Cost)
 		return true, nil
 	}
+	// Every refusal that names the target names it at the player's sight: one
+	// who aimed at a shape reads "a figure" (#557), as StageMeleeTarget does.
+	atSight := func(line string) string {
+		return messaging.HideNames(line, []string{res.Target.Name}, messaging.ParticipantSight(user.Character, room))
+	}
+
 	if res.TargetGrappling {
-		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("%s is already grappling.", res.Target.Name))
+		user.SendText(messaging.CategoryRefusal, atSight(fmt.Sprintf("%s is already grappling.", res.Target.Name)))
 		return true, nil
 	}
 
@@ -70,9 +76,9 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			user.SendText(messaging.CategoryRefusal,
 				"Grappling means seizing and holding, and you have no arms to do it with.")
 		case actions.GrappleImmuneTargetImmovable:
-			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
+			user.SendText(messaging.CategoryRefusal, atSight(fmt.Sprintf(
 				"You heave at %s with both hands. Nothing shifts.",
-				res.Target.Name))
+				res.Target.Name)))
 		default:
 			// Incorporeal, and the safe landing spot for any reason added later.
 			// Guarded on the name because a future no-Target reason must not
@@ -80,8 +86,8 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			if res.Target.Name == "" {
 				user.SendText(messaging.CategoryRefusal, "You cannot get a grip on that.")
 			} else {
-				user.SendText(messaging.CategoryRefusal, fmt.Sprintf(
-					"You reach for %s but your hands pass right through!", res.Target.Name))
+				user.SendText(messaging.CategoryRefusal, atSight(fmt.Sprintf(
+					"You reach for %s but your hands pass right through!", res.Target.Name)))
 			}
 		}
 		return true, nil

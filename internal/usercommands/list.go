@@ -37,7 +37,9 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	// Below the faces band you can't make out the goods (lighting plan 5b).
-	if actions.ShopSightRefusal(user.Character, room) {
+	// Only with a merchant here: with nobody to deal with, the no-merchant
+	// line below answers at every light.
+	if actions.MerchantHere(room, user.UserId) && actions.ShopSightRefusal(user.Character, room) {
 		user.SendText(messaging.CategoryRefusal, actions.ShopSightRefusalText)
 		return true, nil
 	}

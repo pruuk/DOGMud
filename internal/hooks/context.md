@@ -1268,7 +1268,9 @@ room through `mobSubjectName` and `sendVisualElseAudible`.
 remains lie where they fell." to full-sight readers and "Some remains lie
 where they fell." to shapes readers (nothing at no sight), judged per player
 by `messaging.ReaderSight`. "Remains", not "body", so the line fits
-wreckage, elementals, orbs and slimes. An empty identity sends the anonymous
+wreckage, elementals, orbs and slimes. The noun is `rooms.RemainsWord`,
+which `Room.FindCorpseIndex` takes as "corpse", so `look remains` reaches
+the corpse the line announced. An empty identity sends the anonymous
 line to full sight too; `dropMobLootAndSetCorpse` passes one for a mob with
 an authored `corpse_name`. Called only where a corpse is created
 (`dropMobLootAndSetCorpse` inside `CorpsesEnabled`, `wirePlayerCorpse`), after
