@@ -482,7 +482,19 @@ func (u *UserRecord) lifeEpoch() uint64 {
 // SendText delivers an audio-channel message to this user. See
 // rooms.SendText for channel semantics. CategoryDefault keeps prose
 // uncolored.
+//
+// An empty txt is a blank line, as it was before the categorized pipeline
+// (T9): the pipeline renders "" as "", which SendText used to read as "don't
+// deliver", so every empty SendText a screen sent to space itself out was
+// silently dropped.
 func (u *UserRecord) SendText(cat messaging.Category, txt string) {
+	if txt == "" {
+		events.AddToQueue(events.Message{
+			UserId: u.UserId,
+			Text:   "\n",
+		})
+		return
+	}
 	rendered := messaging.RenderForRecipient(messaging.RenderInput{
 		Category:  cat,
 		Text:      txt,
