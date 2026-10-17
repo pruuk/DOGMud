@@ -10,7 +10,7 @@
 
 **Tech Stack:** Go, testify, the slice 1 `go/ast` phrase guard.
 
-**Spec:** `docs/superpowers/specs/2026-10-14-messaging-m7-refusals-design.md`, "Suggested slicing" item 2 ("Prompts (`Prompt`), with usage hints"). Slice 1 shipped as #547 (`8362b2bfd`). Per the spec's Testing section, the playtests fall at the end of slices 1 and 3, so this slice has no playtest.
+**Spec:** `docs/superpowers/specs/completed/2026-10-14-messaging-m7-refusals-design.md`, "Suggested slicing" item 2 ("Prompts (`Prompt`), with usage hints"). Slice 1 shipped as #547 (`8362b2bfd`). Per the spec's Testing section, the playtests fall at the end of slices 1 and 3, so this slice has no playtest.
 
 ---
 

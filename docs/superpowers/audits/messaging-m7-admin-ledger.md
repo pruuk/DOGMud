@@ -9,7 +9,7 @@ counts (667 rows, keys identical to the inventory) and set the final category pe
 the plan's owner rulings. Line numbers are as of `ae94920b7`; match by text once a
 file has been edited.
 
-Plan: `docs/superpowers/plans/2026-10-16-messaging-m7-slice4-tags.md`. The narration
+Plan: `docs/superpowers/plans/completed/2026-10-16-messaging-m7-slice4-tags.md`. The narration
 and usage rows outside these files are in the slice 3 ledger,
 `docs/superpowers/audits/messaging-m7-refusal-ledger.md` (NARR and USAGE rows).
 

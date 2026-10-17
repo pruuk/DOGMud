@@ -10,7 +10,7 @@
 
 **Tech Stack:** Go (`internal/combat`, `internal/items`, `internal/species`, `internal/actions`, `internal/mobcommands`, `internal/usercommands`, `internal/behaviortree`, `internal/actionspec`, `internal/costs`, `internal/conditions`), YAML world data (`_datafiles/world/dogmud/`), root-package guards, the narration store goldens, the playtest harness.
 
-**Spec:** `docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md` (#541, #539; owner rulings A to H; Appendix A). Section 0 (slice 1) shipped in #568 and is not planned here. The slam split (#569, PR #571, `docs/superpowers/specs/2026-10-16-slam-split-design.md`) merges first; this plan is written against its HEAD.
+**Spec:** `docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md` (#541, #539; owner rulings A to H; Appendix A). Section 0 (slice 1) shipped in #568 and is not planned here. The slam split (#569, PR #571, `docs/superpowers/specs/completed/2026-10-16-slam-split-design.md`) merges first; this plan is written against its HEAD.
 
 ---
 
@@ -1557,7 +1557,7 @@ Docs that name them (Fact 18): `internal/combat/context.md:832-836` becomes one 
 
 ## Task 8: `maul.yaml` and `pounce.yaml` fit 80 columns (D7 (b), D3)
 
-Modelled on the slam split's copy process (`docs/superpowers/plans/2026-10-16-slam-split.md` Tasks 1 to 3: agents draft, controller checks, owner reviews one table per file, then the approved copy lands with a width guard). It runs before Task 9 switches bears and cats onto these files, so no player ever reads an over-width maul or pounce line.
+Modelled on the slam split's copy process (`docs/superpowers/plans/completed/2026-10-16-slam-split.md` Tasks 1 to 3: agents draft, controller checks, owner reviews one table per file, then the approved copy lands with a width guard). It runs before Task 9 switches bears and cats onto these files, so no player ever reads an over-width maul or pounce line.
 
 **Files:** `_datafiles/world/dogmud/combat-messages/maul.yaml`, `_datafiles/world/dogmud/combat-messages/pounce.yaml`, `internal/narration/testdata/stores/combat_messages.golden`. Scratch (session scratchpad, full path): `measure_width.py`, `maul-draft.yaml`, `pounce-draft.yaml`, `maul-review.md`, `pounce-review.md`.
 

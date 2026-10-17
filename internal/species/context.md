@@ -104,7 +104,7 @@ species decides the default attack, body parts, damage and which special
 moves a mob can use, so a wrong species gives a creature the wrong fight.
 Slice 1 of the spec above moved 32 mobs that were on the wrong species
 (ported from PR #208, owner decisions in
-`docs/superpowers/plans/2026-10-16-combat-reachability-slice1-species.md`);
+`docs/superpowers/plans/completed/2026-10-16-combat-reachability-slice1-species.md`);
 `internal/species/species_assignment_test.go` pins them.
 
 Species 25 `bird` (claws, "beak and claws", small; does not hunt other
@@ -131,7 +131,7 @@ materialises claws and rakes. Its signature `smother` special move lands in
 slice 2 (Appendix A of
 `docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md`).
 `species_slam_split_test.go` (`TestSlamSplitAssignments`) pins every row.
-Spec: `docs/superpowers/specs/2026-10-16-slam-split-design.md`.
+Spec: `docs/superpowers/specs/completed/2026-10-16-slam-split-design.md`.
 
 ### Choosing a natural attack for a new species
 

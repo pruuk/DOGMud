@@ -10,7 +10,7 @@
 
 **Tech Stack:** Go, `go/ast` for the guard, testify.
 
-**Spec:** `docs/superpowers/specs/2026-10-14-messaging-m7-refusals-design.md` (owner approved 2026-10-15). This is slice 1 of 4 from the spec's "Suggested slicing".
+**Spec:** `docs/superpowers/specs/completed/2026-10-14-messaging-m7-refusals-design.md` (owner approved 2026-10-15). This is slice 1 of 4 from the spec's "Suggested slicing".
 
 ---
 
