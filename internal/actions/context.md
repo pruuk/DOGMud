@@ -1863,7 +1863,10 @@ reads `*_actor`; at cast start a player target other than the caster reads
 `cast_actee`, for a `TargetSingle` spell only; the room reads `*_observer` or
 a random line of the generic pool (`spells.CastRoomLine`), by sight only. A
 hidden caster's lines skip the players who do not perceive them, and at cast
-start those players hear one `cast_started_unseen` line. Root guard
+start those players hear one `cast_started_unseen` line. A room line that
+names a hidden player target (`{actee}`) reads "something" in its place to
+each player who does not perceive that target (`UnseenBy`, #504), as a
+hidden mob target reads. Root guard
 `spell_phase_narration_guard_test.go` keeps every other site from sending
 these lines itself.
 

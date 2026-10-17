@@ -25,7 +25,8 @@ import (
 //     target's sight (owner ruling R1).
 //   - The room reads the phase's *_observer line, or the generic pool line
 //     when none is authored (R7), by sight only, names hidden by each
-//     reader's sight.
+//     reader's sight. A hidden player target reads "something" to each
+//     reader who does not perceive them (#504), as a hidden mob target does.
 //   - A hidden caster's lines skip every player who does not perceive them
 //     (R3), and at cast start each of those players hears one unnamed
 //     cast_started_unseen line instead (R5).
@@ -65,10 +66,15 @@ func NarrateSpellPhase(caster Actor, spell *spells.SpellData, phase spells.Phase
 	// name to hide, so it hides nothing (messaging.NoName).
 	hideActee := messaging.NoName
 	var target *users.UserRecord
+	// targetUnseenBy are the readers who do not perceive a hidden player
+	// target (#504): the room line reads "something" in its name for them,
+	// as a hidden mob target reads for everyone.
+	var targetUnseenBy []int
 	if len(targetUserIds) > 0 {
 		if tu := users.GetByUserId(targetUserIds[0]); tu != nil {
 			ctx.ActeeName, ctx.ActeePlainName = tu.Character.GetCharacterName(true), tu.Character.GetCharacterName(false)
 			hideActee = ctx.ActeeName
+			targetUnseenBy = UnseenBy(room, tu.Character)
 			if casterUser == nil || tu.UserId != casterUser.UserId {
 				target = tu
 			}
@@ -113,7 +119,20 @@ func NarrateSpellPhase(caster Actor, spell *spells.SpellData, phase spells.Phase
 	// The room line goes here rather than through SendTrio, whose observer
 	// half cannot skip the readers who do not perceive a hidden caster.
 	if observer != "" {
-		room.SendTextVisualHidingNames(cat, observer, []string{actorName, hideActee}, exclude...)
+		room.SendTextVisualHidingNames(cat, observer, []string{actorName, hideActee}, append(slices.Clone(exclude), targetUnseenBy...)...)
+		if len(targetUnseenBy) > 0 {
+			// Only the readers who do not perceive the hidden target, with its
+			// name read at no sight ("something"); the caster still hidden by
+			// each reader's own sight.
+			others := slices.Clone(exclude)
+			for _, uid := range room.GetPlayers() {
+				if !slices.Contains(targetUnseenBy, uid) {
+					others = append(others, uid)
+				}
+			}
+			room.SendTextVisualHidingNames(cat, messaging.HideNames(observer, []string{hideActee}, messaging.SightNone),
+				[]string{actorName}, others...)
+		}
 	}
 	if phase == spells.PhaseCast {
 		for _, uid := range unseenBy {
