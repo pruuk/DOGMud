@@ -111,9 +111,33 @@ tree:
       hints: "Quest complete. Head south into the fringe and type ask delk
         to find Hunter Delk."
 
+    # ── MID QUEST 41 (S10): one answer per step ───────────────
+    # After the offer and the turn-in, so a fresh player still reaches the
+    # offer and a player on the forage step still reaches the turn-in.
+    - id: sign_progress_start
+      triggers: ["quest", "task", "help", "how", "next", "done",
+        "report", "ready", "finished"]
+      questRequired: ["41-start"]
+      questExcluded: ["41-track", "41-end"]
+      text: "Not yet. First the tracks. A hare has crossed the Open
+        Steppe, just south of here. Read the ground for it."
+      hints: "On the Open Steppe, type track hare."
+    - id: sign_progress_track
+      triggers: ["quest", "task", "help", "how", "next", "done",
+        "report", "ready", "finished"]
+      questRequired: ["41-track"]
+      questExcluded: ["41-forage", "41-end"]
+      text: "Not yet. You read the ground. Now the scrub. See what your
+        hands turn up."
+      hints: "Type forage."
+
     # ── TRACK / FORAGE HELP ───────────────────────────────────
+    # "track" and "trail" are here so a player who already took the lesson
+    # gets help, not the "ask me and I will set you a trail" pattern; the
+    # offer above still answers them first for a player who has not.
     - id: sign_help
-      triggers: ["hare", "forage", "plants", "help", "follow"]
+      triggers: ["hare", "forage", "plants", "help", "follow", "track",
+        "trail"]
       text: "Two things. Tracking: type track and a creature's name to
         pick up its trail -- track hare out on the open ground. Foraging:
         type forage where things grow, and your hands and your luck decide
