@@ -181,6 +181,12 @@ func Map(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	mapOutput := zMapper.GetLimitedMap(roomId, c)
 
 	legend := mapOutput.GetLegend(keywords.GetAllLegendAliases(room.Zone))
+	if user.AsciiMode {
+		// Map cells take the map's own ASCII forms, so two legend entries
+		// never read as one character (Shore and Deep Water were both "~").
+		mapOutput.AsciiCells()
+		legend = mapper.AsciiLegend(legend)
+	}
 
 	width := 0
 
