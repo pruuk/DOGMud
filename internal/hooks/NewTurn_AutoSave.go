@@ -105,16 +105,8 @@ func drainPendingWrites() {
 	total := time.Since(preparedAt)
 	if err := res.Cycle.Err(); err != nil {
 		mudlog.Error("AutoSave", "stage", "commit", "error", err)
-		events.AddToQueue(events.Broadcast{
-			Text:            `Saved with errors.` + term.CRLFStr,
-			SkipLineRefresh: true,
-		})
-	} else {
-		events.AddToQueue(events.Broadcast{
-			Text:            `Done.` + term.CRLFStr,
-			SkipLineRefresh: true,
-		})
 	}
+	events.AddToQueue(autosaveDoneBroadcast(res.Cycle.Err()))
 
 	// One structured line per autosave cycle. prepareMs is the part that still
 	// holds the world lock in one block and is therefore the player-visible
@@ -137,6 +129,24 @@ func drainPendingWrites() {
 	)
 }
 
+// autosaveStartBroadcast and autosaveDoneBroadcast are the two lines a cycle
+// prints. Each is a whole line that clears the prompt line first, because the
+// cycle drains over many turns and other output lands between them. Upstream
+// sent "Saving..." with no line end and "Done." appended to it with no line
+// refresh, which only reads right when the save finishes before anything else
+// prints. Here combat lines glued onto "Saving..." and "Done." landed after a
+// redrawn prompt (2026-10-17 playtest, #399).
+func autosaveStartBroadcast() events.Broadcast {
+	return events.Broadcast{Text: `Saving...` + term.CRLFStr}
+}
+
+func autosaveDoneBroadcast(err error) events.Broadcast {
+	if err != nil {
+		return events.Broadcast{Text: `Saved with errors.` + term.CRLFStr}
+	}
+	return events.Broadcast{Text: `Done.` + term.CRLFStr}
+}
+
 // prepareAutosaveCycle takes the atomic snapshot and hands it to the queue.
 func prepareAutosaveCycle() {
 
@@ -148,7 +158,7 @@ func prepareAutosaveCycle() {
 	loadedRooms := rooms.LoadedRoomCount()
 	activeUsers := len(users.GetAllActiveUsers())
 
-	events.AddToQueue(events.Broadcast{Text: `Saving...`})
+	events.AddToQueue(autosaveStartBroadcast())
 
 	//////////////////////////////////////////
 	// SNAPSHOT ROOMS, USERS, AND PLUGINS — ONE PASS
