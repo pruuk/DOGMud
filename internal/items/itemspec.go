@@ -106,6 +106,9 @@ func ItemSubtypes() []ItemTypeInfo {
 		{string(Sceptre), `A caster weapon that boosts spell damage.`, 0, 0, 0},
 		{string(Staff), `A two-handed caster weapon with high spell damage boost.`, 0, 0, 0},
 		{string(Siphon), `A cursed or spectral weapon that pulls life-force from its target.`, 0, 0, 0},
+		{string(Trample), `A hoofed beast's kicks, stamps and trampling weight.`, 0, 0, 0},
+		{string(Lash), `An amorphous creature's whipping pseudopods or tendrils.`, 0, 0, 0},
+		{string(Blast), `An energy elemental's strike with its own element.`, 0, 0, 0},
 		// Miscellaneous data
 		{string(BlobContent), `Can store blob content in the item data.`, 0, 0, 0},
 	}
@@ -175,7 +178,10 @@ const (
 	Wand        ItemSubType = "wand"
 	Sceptre     ItemSubType = "sceptre"
 	Staff       ItemSubType = "staff"
-	Siphon      ItemSubType = "siphon" // spectral or cursed pull on life-force
+	Siphon      ItemSubType = "siphon"  // spectral or cursed pull on life-force
+	Trample     ItemSubType = "trample" // hooves: kicks, rears and tramples (slam split, #541)
+	Lash        ItemSubType = "lash"    // amorphous bodies: pseudopods and tendrils (#541)
+	Blast       ItemSubType = "blast"   // energy elementals strike with their element (#541)
 
 	BlobContent ItemSubType = "blobcontent"
 

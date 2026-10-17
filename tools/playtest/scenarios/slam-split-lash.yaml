@@ -1,0 +1,64 @@
+# Slam split (#541) two-seat gate: the new `lash` lines from both readers.
+#
+# The slam split moved ten species off `slam` into three new combat-message
+# files (trample, lash, blast) and rewrote slam itself. A golden and the copy
+# guards prove the records are well formed; neither can tell whether the
+# defender's sentence and the room's sentence read as one blow. That is this
+# run's job, for the one new file a walking player can reach with a witness.
+#
+# Fixture: A Deep Slime (mob 9569, slime species 16, natural_attack lash,
+# unarmedname pseudopods, statpool 500) in The Silt Run (6420, New Plymouth
+# Sewers). It is HOSTILE and goes for whoever is in the room first, so the
+# witness starts one room east (6418) and walks in once the fight is on.
+#
+# Fixture lessons (first run, 2026-10-16): the sewers are pitch dark and a
+# Cat's Eye Draught does not see in pitch dark, so the defender carries a
+# torch; A Culvert Slime (9564) dies in one to four rounds against `mid`, so
+# the defender is `early` and fights the tougher Deep Slime.
+#
+# Why not the others: Hob and Bran (the only horses, trample) are
+# player_attack_immune; no fungal colony mob exists; elementals are summons or
+# paid-instance mobs. The admin run `goals/2026-10-16-slam-split-admin.yaml`
+# covers blast, slam and the defender's lash lines.
+#
+# TIER: no slime authors unarmed-combat above 1, so only BEGINNER lines show.
+name: slam-split-lash
+mode: party
+summary: >-
+  A player fights a deep slime by torchlight while a plain witness stands in
+  the room. Every round both quote what they were told so the defender's line
+  and the room's line for the same lash can be compared.
+on_actor_stop: continue
+budgets:
+  wall_clock: 35m
+requires:
+  max_connections: 20
+roster:
+  - id: defender
+    personality: bug-finder
+    goals: goals/scenarios/slam-split-lash/defender.yaml
+  - id: witness
+    personality: bug-finder
+    goals: goals/scenarios/slam-split-lash/witness.yaml
+
+group_goals:
+  - id: lash-defender-and-room-agree
+    do: >-
+      The defender fights the Deep Slime for at least four rounds while the
+      witness stands in the room doing nothing. After each round both record
+      every line verbatim with its round number.
+    verify: >-
+      For each round, the slime's line to the defender and the slime's line to
+      the room describe ONE lash: same action, same result, same banner. The
+      room line names the defender. Judge round by round.
+  - id: no-missing-body-parts
+    do: Read every slime line.
+    verify: >-
+      A slime has no fists, claws, teeth, hands or limbs. Any slime line that
+      names one is a finding. The weapon name is its pseudopods.
+  - id: no-token-or-blank-leaks
+    do: Watch every line in every round.
+    verify: >-
+      A literal curly-brace token, a doubled or missing name, a lowercase
+      sentence start, an EMPTY combat line, or a line that wraps oddly mid-word
+      is a finding.

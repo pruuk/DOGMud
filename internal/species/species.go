@@ -212,12 +212,15 @@ func (s *Species) Save() error {
 // basic unarmed attacks. Each must have a loaded combat-message file of the
 // same name in _datafiles/world/dogmud/combat-messages/.
 var validNaturalAttacks = map[items.ItemSubType]struct{}{
-	items.Bite:   {},
-	items.Claws:  {},
-	items.Slam:   {},
-	items.Gore:   {},
-	items.Sting:  {},
-	items.Siphon: {},
+	items.Bite:    {},
+	items.Claws:   {},
+	items.Slam:    {},
+	items.Gore:    {},
+	items.Sting:   {},
+	items.Siphon:  {},
+	items.Trample: {},
+	items.Lash:    {},
+	items.Blast:   {},
 }
 
 // validateGoreHasHorns returns an error if a gore (horned) species does not

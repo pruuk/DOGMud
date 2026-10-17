@@ -6,8 +6,8 @@ description: A lithe, shifting shape of smoke and flickering embers,
   strikes from where it isn't, leaving stinging trails of cinder
   in its wake.
 size: medium
-unarmedname: ember lash
-natural_attack: slam
+unarmedname: smoke-wrought claws
+natural_attack: claws
 selectable: false
 tameable: false
 speech: false

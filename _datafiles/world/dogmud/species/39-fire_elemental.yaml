@@ -9,8 +9,8 @@ intrinsic_mutations:
   ether-gland: 1
   kinetic-backlash: 1
 size: medium
-unarmedname: scorching strike
-natural_attack: slam
+unarmedname: scorching fists
+natural_attack: blast
 selectable: false
 tameable: false
 speech: false

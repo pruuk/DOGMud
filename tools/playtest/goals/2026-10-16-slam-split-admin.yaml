@@ -1,0 +1,51 @@
+# Slam split (#541): blast, slam and lash from the defender's seat.
+#
+# The slam split moved ten species off `slam` into three new combat-message
+# files and rewrote slam itself:
+# - blast: water, air, fire, magma, sand, storm and ice elementals. The element
+#   strikes through its own name, so lines must read right for water and fire.
+# - slam: earth elementals and automatons, heavy bodies that pound with fists.
+# - lash: slimes and fungal colonies, whips and engulfs, no other body parts.
+# (trample, for horses, cannot be met: both horses are player_attack_immune.)
+#
+# Elementals are summons or paid-instance mobs, so nobody meets one by walking.
+# Single agent with the admin profile, because the multi-agent mode bans admin
+# and spawning is the only way to meet one. The two-seat run
+# `scenarios/slam-split-lash.yaml` checks the room's lines for lash.
+#
+# TIER: these mobs carry no unarmed-combat skill, so only BEGINNER lines show.
+#
+# 3 commands per round on the AI port and the overflow is dropped.
+
+ephemeral:
+  profile: admin
+  start_room: 4160
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    WATER (blast). `mob spawn 310` to bring a Water Elemental into the room and
+    `look` to confirm it. It is not hostile. `remove` your sword, then `attack
+    elemental`. Fight for at least four rounds and quote, verbatim, every line
+    its attack sends YOU. If it is about to die, `mob heal` keeps it up. When
+    done, kill it or let it die before the next spawn.
+  - >-
+    FIRE (blast). `mob spawn 313` and repeat for three rounds. The same file
+    serves water and fire: any line that only makes sense for one element (a
+    splash from fire, a scorch from water) is a finding.
+  - >-
+    EARTH (slam). `mob spawn 311` and repeat for four rounds. Its blows should
+    read as heavy fists and body weight.
+  - >-
+    SLIME (lash). `mob spawn 9564` (A Culvert Slime, hostile) and fight it for
+    three rounds. Any line naming a fist, claw, tooth, hand or limb is a
+    finding; its weapon is its pseudopods.
+  - >-
+    JUDGE EVERY LINE. Say whether each reads as one clear sentence an English
+    learner would follow, and whether the creature does the action (never the
+    weapon acting on its own, as in "its fists strike").
+  - >-
+    ADVERSARIAL PASS. Report any curly-brace token, doubled or missing name,
+    lowercase sentence start, EMPTY line where a blow should be, or a line that
+    wraps oddly mid-word.

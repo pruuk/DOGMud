@@ -102,6 +102,7 @@ Table (owner review: approve with the spec; rows not listed have no beast moves 
 | 25 | bird (new, slice 1) | claws | rake, pounce, hamstring (claws, legs, no hands) | none | crows, chickens and grouse peck; hunting birds of prey are raptors |
 | 26 | horse (new, slice 1) | slam | none | none | a kick or a trample is a later move |
 | 32, 33, 34 | wraith, spectre, vampire | siphon, siphon, claws | drain | drain | |
+| 44 | smoke elemental | claws (slam split) | none | **smother** (new, mob-only) | smoke pours into the target's face; copy in Appendix A |
 
 Bears' `charge`: add `charge` to the two bear mobs' `combatcommands` (data only), so bears bull-rush without an AI gate. An AI-chosen `charge` for every bear is out of scope.
 
@@ -135,3 +136,109 @@ Bears' `charge`: add `charge` to the two bear mobs' `combatcommands` (data only)
 | Changing bears' and cats' default attack changes which special moves they qualify for | Section 5 decouples moves from the attack family before section 4 switches the attack; the table test pins the result |
 | An engage line now varies and could repeat a weapon name the reader cannot see | Names hidden at each reader's sight, as today; the dark test for the attack command extends to the new lines |
 | Retiring `separate` breaks a path not yet found | Fact 7 plus a test that renders no `separate` key; a grep of every `.Separate` use in the plan |
+
+## Appendix A: `smother` copy (owner-approved 2026-10-16, slam split #541)
+
+The slam split spec (`2026-10-16-slam-split-design.md`, section 3) gives the smoke elemental (species 44) `claws` with the unarmedname "smoke-wrought claws", plus a new mob-only special move, `smother`. The copy was drafted and approved with the slam split; it lands here because an unreferenced special-move file or condition fails the store guards, so it ships with the move's code in slice 2.
+
+Rulings that come with it (owner, 2026-10-16):
+
+- On a hit the target is Blinded (condition 3) and Smothered (a new condition). A partial applies neither, and its lines claim neither.
+- `cast_interrupt` is kept: smoke can choke a spell off mid-cast, as throttle does. It rides the shared special-move cooldown (`Cooldowns["special-move"]`, which every `CanUse*` gate refuses on), so it can happen at most once per cooldown window, never every round. Slice 2 adds a test that a second smother inside the cooldown is refused.
+- Smothered keeps its per-round tick line (Throttled, 89, has none).
+- Names stay bare `{actor}` / `{actee}`, as in `throttle.yaml`; the mob command wraps them in `moveIdentities`. Every line fits 80 columns with 20-character names and `{damage}` as "devastating wounds".
+
+`_datafiles/world/dogmud/narration/special-moves/smother.yaml`:
+
+```yaml
+moveid: smother
+# Mob-only: the smoke elemental's special move (slam split spec, section 3).
+# Variant N of every role describes one moment. On a hit the target is
+# Blinded (condition 3) and Smothered; the hit lines say both.
+# The attacker has no body: smoke and embers only.
+events:
+  hit:
+    actor:
+      - 'You pour into {actee}''s eyes and lungs! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your smoke fills {actee}''s eyes and throat! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You wrap {actee} in choking, blinding smoke! (<ansi fg="damage">{damage}</ansi>)'
+      - 'Your embers blind {actee} as they choke! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You smother {actee}. They gasp, blinded! (<ansi fg="damage">{damage}</ansi>)'
+    actee:
+      - '{actor} pours into your eyes and lungs! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} fills your eyes and throat with smoke! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} wraps you in choking, blinding smoke! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor}''s embers blind you as you choke! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actor} smothers you. You gasp, blinded! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+      - '{actor} pours into {actee}''s eyes and lungs!'
+      - '{actor} fills {actee}''s eyes and throat with smoke!'
+      - '{actor} wraps {actee} in choking, blinding smoke!'
+      - '{actor}''s embers blind {actee}, who chokes!'
+      - '{actor} smothers {actee}, who gasps, blinded!'
+  # Smoke chokes a spell off mid-cast, as throttle does (combat_throttle.go).
+  # It rides the shared special-move cooldown, so at most once per window.
+  cast_interrupt:
+    actor:
+      - 'Your smoke chokes {actee}''s spell off mid-word!'
+      - '{actee}''s spell collapses as they cough and gasp!'
+    actee:
+      - '{actor}''s smoke chokes your spell off mid-word!'
+      - 'Your spell collapses as you cough and gasp!'
+    observer:
+      - '{actor}''s smoke chokes {actee}''s spell off mid-word!'
+      - '{actee} coughs and gasps, and their spell collapses!'
+  # A partial applies no condition (conditions ride on hit only),
+  # so these lines claim neither blindness nor choking.
+  partial:
+    actor:
+      - '{actee} turns aside, but your embers sting! (<ansi fg="damage">{damage}</ansi>)'
+      - '{actee} holds their breath; you still sting! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You singe {actee} as they twist away! (<ansi fg="damage">{damage}</ansi>)'
+    actee:
+      - 'You turn aside, but {actor}''s embers sting! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You hold your breath; {actor} still stings! (<ansi fg="damage">{damage}</ansi>)'
+      - 'You twist away, but {actor} singes you! (<ansi fg="damage">{damage}</ansi>)'
+    observer:
+      - '{actee} turns aside, but {actor}''s embers sting!'
+      - '{actee} holds their breath, but {actor} still stings!'
+      - '{actee} twists away, but {actor} singes them!'
+  miss:
+    actor:
+      - 'You billow toward {actee}''s face, but miss!'
+      - 'Your smoke drifts past {actee}!'
+      - '{actee} ducks under your rolling smoke!'
+      - '{actee} steps clear before you can engulf them!'
+    actee:
+      - '{actor} billows toward your face, but misses!'
+      - '{actor}''s smoke drifts past you!'
+      - 'You duck under {actor}''s rolling smoke!'
+      - 'You step clear before {actor} can engulf you!'
+    observer:
+      - '{actor} billows toward {actee}''s face, but misses!'
+      - '{actor}''s smoke drifts past {actee}!'
+      - '{actee} ducks under {actor}''s rolling smoke!'
+      - '{actee} steps clear before {actor} can engulf them!'
+```
+
+`_datafiles/world/dogmud/conditions/NN-smothered.yaml` (slice 2 picks the next free id; the tick values mirror Throttled, 89, and are balance placeholders to check against `config.yaml` and 89 when the code lands):
+
+```yaml
+conditionid: NN
+name: Smothered
+description: Smoke fills your lungs, and you can barely breathe.
+start_actee: Smoke pours down your throat and you choke on it.
+trigger_actee: You cough up smoke and fight for breath.
+end_actee: You cough out the last of the smoke and breathe freely again.
+triggerrate: 1 round
+triggercount: 3
+tick_pool: stamina
+tick_percent: -0.06
+tick_min: 2
+flags:
+  # The smother combat move narrates the smoke as it lands, and it has to
+  # apply the condition synchronously, so Condition_ApplyConditions never
+  # sees this condition and the start_actee line above is not its own line
+  # to send.
+  - silent-start
+```

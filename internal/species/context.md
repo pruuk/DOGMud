@@ -30,7 +30,8 @@ contains:
 - `body_parts` — canonical anatomy tags (chunk 2.5)
 - `intrinsic_mutations` — natural traits (chunk 2.5)
 - `natural_attack` — `ItemSubType` used for BASIC unarmed attack
-  combat messages (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`). Empty
+  combat messages (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`,
+  `trample`, `lash`, `blast`). Empty
   means the humanoid default (generic-punch messaging). Validated at
   load by `validateNaturalAttack`; panics on unknown values.
 - `speech` — `*bool`; `speech: false` marks a species with no voice (beasts,
@@ -81,7 +82,8 @@ Non-human species declare their BASIC unarmed attack messaging style via
 `NaturalAttack items.ItemSubType` (YAML: `natural_attack:`). This field
 selects the combat-message file used when the mob has no equipped weapon.
 
-Valid values: `bite`, `claws`, `slam`, `gore`, `sting`, `siphon`. An empty string
+Valid values: `bite`, `claws`, `slam`, `gore`, `sting`, `siphon`, `trample`,
+`lash`, `blast` (the keys of `validNaturalAttacks` in `species.go`). An empty string
 falls back to the humanoid default (generic-punch messaging). Unknown
 values cause a startup panic via `validateNaturalAttack`. `siphon` also
 requires `lifedrain: true` on the species (`validateSiphonHasLifeDrain`,
@@ -106,8 +108,49 @@ Slice 1 of the spec above moved 32 mobs that were on the wrong species
 `internal/species/species_assignment_test.go` pins them.
 
 Species 25 `bird` (claws, "beak and claws", small; does not hunt other
-beasts) and 26 `horse` (slam, "hooves", large) were added then. Like every
-beast species they set `speech: false`; a species that omits it can speak.
+beasts) and 26 `horse` (then slam, now trample; "hooves", large) were added
+then. Like every beast species they set `speech: false`; a species that omits
+it can speak.
+
+### The slam split (#541, owner ruling S1, 2026-10-16)
+
+`slam` once covered 13 species, and one file of lines could not fit hooves,
+pseudopods, stone fists and a gust of wind at once ("hurl your hooves",
+"smash your molten slam into", feet on a slime). It was split by body, so
+each file's lines say what that body does and stay within 80 columns:
+
+| Type | Species (id, `unarmedname`) | What its lines do |
+|---|---|---|
+| `slam` | earth elemental 37 "stone fists", automaton 45 "servo-driven fists" | heavy bodies pound with fists and drive their weight |
+| `trample` | horse 26 "hooves" | kicks, rears, stamps; may name hooves, legs, head, chest |
+| `lash` | fungal colony 15 "spore tendrils", slime 16 "pseudopods" | whips, smothers, engulfs; names no feet, head, chest or shoulder |
+| `blast` | water 36 "watery surge", air 38 "slicing gust", fire 39 "scorching fists", magma 40 "molten fists", sand 41 "abrasive whirl", storm 42 "coruscating fists", ice 43 "crystalline fists" | the element strikes through its own `unarmedname`; no body parts they lack. Lines read for a singular force and for plural fists alike, and the 17-character names set blast's width budget |
+
+The smoke elemental (44) left slam for `claws` ("smoke-wrought claws"): it
+materialises claws and rakes. Its signature `smother` special move lands in
+slice 2 (Appendix A of
+`docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md`).
+`species_slam_split_test.go` (`TestSlamSplitAssignments`) pins every row.
+Spec: `docs/superpowers/specs/2026-10-16-slam-split-design.md`.
+
+### Choosing a natural attack for a new species
+
+1. **Pick the default for what it does most of the time** (the principle
+   above). A rare flourish or finisher is a special move, not the default.
+2. **Pick by body.** Read the candidate type's combat-message file with the
+   new species' `unarmedname` in every `{itemname}` slot; if a line gives it
+   a body part it lacks or a verb that does not fit, choose another type.
+   Natural pools put the attacker on the verb ("You rake X with your
+   {itemname}"), so a singular or plural `unarmedname` both read right.
+3. **A new type needs all of these, or it fails at load or in a guard:**
+   the subtype constant and description in `internal/items/itemspec.go`; an
+   entry in `validNaturalAttacks` (`species.go`, checked by
+   `validateNaturalAttack`); a combat-message file of the same name in
+   `_datafiles/world/dogmud/combat-messages/`; a hit band in
+   `combat.CategoryForWeaponSubtype` (`internal/combat/attackresult.go`); the
+   `naturalWeaponPools` list in `internal/items/natural_weapon_agreement_test.go`;
+   and a reach case in `items.DefaultReachForSubtype` (`internal/items/reach.go`).
+   `siphon` (#538) and the slam split (#541) are the worked examples.
 
 ---
 
@@ -117,6 +160,7 @@ beast species they set `speech: false`; a species that omits it can speak.
 |------|---------|
 | `species.go` | Structs, registry, loader, body-part validation |
 | `species_test.go` | Unit tests for body-part logic |
+| `species_slam_split_test.go` | Pins each former slam species to its type after the slam split (#541) |
 | `test_helpers.go` | Test utilities |
 | `testing_support.go` | `SetSpeciesForTest` / `LoadForTest` — scoped roster swaps |
 | `context.md` | This file — package overview for Claude Code |

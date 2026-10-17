@@ -19,7 +19,8 @@ func TestShippedBirdAndHorseSpecies(t *testing.T) {
 		parts   []string
 	}{
 		{25, "bird", items.Claws, "beak and claws", []string{"legs", "eyes", "mouth", "skin"}},
-		{26, "horse", items.Slam, "hooves", []string{"legs", "eyes", "mouth", "skin", "tail"}},
+		// The horse tramples since the slam split (#541).
+		{26, "horse", items.Trample, "hooves", []string{"legs", "eyes", "mouth", "skin", "tail"}},
 	}
 	for _, c := range cases {
 		sp := all[c.id]

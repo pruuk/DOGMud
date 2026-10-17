@@ -9,7 +9,7 @@ intrinsic_mutations:
   regrowth: 1
 size: large
 unarmedname: watery surge
-natural_attack: slam
+natural_attack: blast
 selectable: false
 tameable: false
 speech: false

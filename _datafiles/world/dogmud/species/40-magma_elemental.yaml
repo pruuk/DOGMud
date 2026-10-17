@@ -10,8 +10,8 @@ intrinsic_mutations:
   thick-hide: 1
   chitin-plating: 1
 size: large
-unarmedname: molten slam
-natural_attack: slam
+unarmedname: molten fists
+natural_attack: blast
 selectable: false
 tameable: false
 speech: false

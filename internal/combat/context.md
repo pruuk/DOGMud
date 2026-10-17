@@ -66,12 +66,24 @@ The combat system is built around several key components:
 When an attacker has no equipped weapon, `buildWeaponSetup`
 (`combat_helpers.go`) resolves the attack-message subtype from the
 attacker's species `NaturalAttack` field (via `species.GetSpecies`).
-If non-empty, that subtype (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`)
+If non-empty, that subtype (`bite`, `claws`, `slam`, `gore`, `sting`, `siphon`,
+`trample`, `lash`, `blast`)
 drives message selection instead of the generic-punch fallback
 (`items.Unarmed`). An equipped weapon's own `Subtype` always takes
 precedence — this path only fires when the weapon slot is empty. This
 is what makes non-human mobs' basic attacks read as bites or claws
 instead of punches.
+
+**The slam split (#541).** `trample` (horse), `lash` (slime, fungal colony)
+and `blast` (the water, air, fire, magma, sand, storm and ice elementals)
+were split off `slam`, which keeps the earth elemental and automaton.
+`CategoryForWeaponSubtype` (`attackresult.go`) renders `trample` and `lash`
+in `CategoryHitBlunt` with `slam`, and `blast` in `CategoryHitCaster` with
+`siphon` and the caster weapons. All three keep their own vocabulary in
+`meleeDisplaySubtype` (no bludgeon swap). `attackresult_slam_split_test.go`
+pins the bands; `slam_split_render_test.go` proves a slime, a horse, a sand
+elemental and an automaton each render from their own file. The groups and
+how to choose a type: `internal/species/context.md`.
 
 ## Key Features
 
@@ -2063,7 +2075,7 @@ the bandit's ribs" instead of slashing narration. Damage math is unchanged;
 the swap is cosmetic only.
 
 **Exempt subtypes (no swap):**
-- Natural-blunt: Fist, Claws, Bite, Sting, Slam, Gore, Whipping
+- Natural-blunt: Fist, Claws, Bite, Sting, Slam, Trample, Lash, Blast, Gore, Whipping
 - Caster: Wand, Sceptre, Staff
 
 **Affected subtypes (swap fires):** Slashing, Cleaving, Stabbing, Shooting.

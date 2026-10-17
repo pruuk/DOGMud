@@ -20,8 +20,8 @@ func DefaultReachForSubtype(s ItemSubType) float64 {
 		return 0.15
 	case Sting:
 		return 0.2
-	case Slam:
-		return 0.3
+	case Slam, Trample, Lash, Blast:
+		return 0.3 // the slam split (#541) kept slam's reach for every body it split off
 	case Gore:
 		return 0.4
 	case Whipping:

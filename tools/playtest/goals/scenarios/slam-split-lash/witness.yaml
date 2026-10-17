@@ -1,0 +1,42 @@
+# Slam split (#541): the WITNESS.
+#
+# You are the instrument of this run. A creature's lash is narrated to the one
+# struck and to everyone else in the room. The creature cannot report its own
+# line, so the ROOM's line exists in this run only if you write it down.
+#
+# You start one room east of the slime. It is hostile and goes for whoever is
+# in its room first, so you walk in only once it is already fighting your
+# partner. Your partner carries a torch, which lights the room for you too.
+#
+# QUOTE, DO NOT SUMMARISE. Record each combat line word for word with the
+# round it arrived in.
+#
+# DO NOT FIGHT. If the slime turns on you, say so, step back east and return
+# once it is fighting your partner again.
+#
+# 3 commands per round on the AI port and the overflow is dropped.
+
+ephemeral:
+  # m2-witness: plain senses, enough health to stand beside a fight.
+  profile: m2-witness
+  start_room: 6418
+  budgets:
+    wall_clock: 35m
+
+goals:
+  - >-
+    WAIT, THEN WALK IN. Give your partner a few rounds to light a torch and
+    start fighting, then go `west` into The Silt Run.
+  - >-
+    STAND AND READ. While your partner fights the Deep Slime, do nothing but
+    quote. Record every combat line you are given, verbatim, with its round
+    number: the slime's line about your partner first, then your partner's
+    line about the slime.
+  - >-
+    COMPARE. For each round, set your line beside your partner's line for the
+    same blow and say plainly SAME or DIFFERENT: same action, same result,
+    same banner. Say whether your line named your partner as the target.
+  - >-
+    ADVERSARIAL PASS. Flag any curly-brace token, doubled or missing name,
+    lowercase sentence start, a body part a slime does not have, or an EMPTY
+    line where a blow should be.
