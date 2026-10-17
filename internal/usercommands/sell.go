@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -99,8 +100,9 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	displayName := res.LastItemName
 	if res.Sold == 1 {
 		user.EventLog.Add(`shop`, fmt.Sprintf(`Sold your <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>`, displayName, util.FormatNumber(res.TotalGold)))
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell a <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>.`, displayName, util.FormatNumber(res.TotalGold)))
-		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> sells a <ansi fg="itemname">%s</ansi>.`, user.Character.Name, displayName), user.UserId)
+		article := items.IndefiniteArticle(displayName)
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell %s <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>.`, article, displayName, util.FormatNumber(res.TotalGold)))
+		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> sells %s <ansi fg="itemname">%s</ansi>.`, user.Character.Name, article, displayName), user.UserId)
 	} else if res.Mixed {
 		// Different things (every bauble has its own name): count them
 		// rather than pluralising the last one.
