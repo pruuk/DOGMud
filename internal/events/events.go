@@ -766,6 +766,29 @@ func DrainAllQueuedEventsForTest() int {
 	return n
 }
 
+// DrainQueuedByTypeForTest removes every queued event whose Type() is
+// typeName and returns them (heap order, not delivery order). For event types declared outside
+// this package (a module's own GMCPOut, say), which the typed drains above
+// cannot name.
+//
+// FOR TEST USE ONLY. Mutates the queue.
+func DrainQueuedByTypeForTest(typeName string) []Event {
+	qLock.Lock()
+	defer qLock.Unlock()
+	var found []Event
+	remaining := make(priorityQueue, 0, len(globalQueue))
+	for _, pe := range globalQueue {
+		if pe.event.Type() == typeName {
+			found = append(found, pe.event)
+			continue
+		}
+		remaining = append(remaining, pe)
+	}
+	globalQueue = remaining
+	heap.Init(&globalQueue)
+	return found
+}
+
 // Initialize the priority queue.
 func init() {
 	heap.Init(&globalQueue)
