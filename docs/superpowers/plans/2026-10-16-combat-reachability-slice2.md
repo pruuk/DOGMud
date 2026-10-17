@@ -37,7 +37,7 @@ Every row was read from the worktree `C:/tmp/dogmud-slam` at that SHA. "Spec" ma
 | 15 | WRONG in spec section 5 table: the smoke elemental (44) is not "none today". It is `claws`, `body_parts: []`, so no hands, and `CanUseRake` passes today; no legs, so no pounce or hamstring. Today: rake | data + ai.go:529 | section 5 row 44 |
 | 16 | WRONG in spec section 5: "no hands for every beast move" cannot hold for drain. The vampire (34) has `[arms, hands, legs, eyes, mouth, skin]` and `lifedrain: true`; `CanUseDrain` has no hands check (`ai.go:702-707`) and `internal/combat/context.md:876-881` records "drain is EXEMPT" from the hands rule. Drain's body requirement is lifedrain only | data, file | section 5 rule |
 | 17 | `Species` struct `species.go:31-73` has no move list; loader `LoadDataFiles` `:261-286` panics on `validateNaturalAttack`, `validateGoreHasHorns`, `validateSiphonHasLifeDrain`. `characters.Character.HasBodyPart` (`internal/characters/anatomy.go:9-20`) returns false for a nil species or nil body list, while `Species.HasBodyPart` (`species.go:318-333`) fails open; the validator must read the list the way the runtime gate does | file | added |
-| 18 | Predicate callers, production (21): `SpeciesIsFanged` ai.go:562,570,825, command_readiness.go:107,110,129, combat_maul.go:83, combat_throttle.go:95; `SpeciesIsClawed` ai.go:536,570, command_readiness.go:104,129; `SpeciesIsHorned` ai.go:681, command_readiness.go:117, combat_gore.go:78; `SpeciesIsQuadrupedPredator` ai.go:584, command_readiness.go:114, combat_pounce.go:93; `SpeciesHasLifeDrain` ai.go:706, command_readiness.go:132, combat_drain.go:96. Tests: `internal/combat/ai_test.go:605-614` (8 calls), `internal/actions/command_readiness_drift_test.go:172-191` (6 string literals). No validator or mutation code calls them (the spec's "other callers keep their meaning" has no subject). After section 5, none has a production caller | grep `\b(SpeciesIsFanged\|...)\(` | added; affects spec section 4 |
+| 18 | Predicate callers, production (21): `SpeciesIsFanged` ai.go:562,570,825, command_readiness.go:107,110,129, combat_maul.go:83, combat_throttle.go:95; `SpeciesIsClawed` ai.go:536,570, command_readiness.go:104,129; `SpeciesIsHorned` ai.go:681, command_readiness.go:117, combat_gore.go:78; `SpeciesIsQuadrupedPredator` ai.go:584, command_readiness.go:114, combat_pounce.go:93; `SpeciesHasLifeDrain` ai.go:706, command_readiness.go:132, combat_drain.go:96. Tests: `internal/combat/ai_test.go:605-614` (8 calls), `internal/actions/command_readiness_drift_test.go:172-191` (6 string literals). No validator or mutation code calls them (the spec's "other callers keep their meaning" has no subject). After section 5, none has a production caller. `SpeciesNaturalAttack` (`ai.go:248`) is called in production only by three of them (`ai.go:255,258,261`); its one test mention is a test NAME, `TestBuildWeaponSetup_UsesSpeciesNaturalAttack` (`combat_helpers_test.go:13`), not a call. D6 deletes all six. Docs naming them: `internal/actions/context.md:220-221`, `internal/combat/context.md:832-836`, `internal/mobcommands/context.md:41-42`, `internal/usercommands/context.md:75-76` (re-grepped on master `8e4727129`) | grep `\b(SpeciesIsFanged\|...)\(` | added; affects spec section 4 |
 | 19 | Test fixtures that seed a beast species (`NaturalAttack: items.(Bite\|Claws\|Gore)` or `LifeDrain: true`), by file: actions/combat_drain_test 4, combat_gore_test 3, combat_hamstring_test 1, combat_maul_test 4, combat_pounce_test 5, combat_rake_test 4, combat_test 4, combat_throttle_test 6, command_readiness_drift_test 8; behaviortree/actions_test 1, archetype_predator_beastmove_test 1; combat/ai_test 30, combat_helpers_test 2; mobcommands/predator_test 1; species/species_siphon_test 1, species_test 4; usercommands/special_move_admission_side_effect_test 4 | grep | added |
 | 20 | `SeparateMessages`: type `attack_messages.go:56-61`, `Render` `:173-190` (only user of the `exit` import, `:8`), validator branch `:260-272`, `anyPool` `:281-284`; decoder `internal/items/attack_records.go:23,133-141`; renders `combat.go:292-296`, `combat_helpers.go:1858-1862`. Test users: `combat_banner_agreement_guard_test.go:135-138,170,203-237`; `internal/combat/coup_de_grace_test.go:104-105`; `internal/combat/wait_remote_room_hiding_test.go` (whole file); `internal/items/attack_messages_test.go:74-95,136-148,237-260`; `internal/items/attack_messages_vertical_test.go` (whole file); `internal/items/attack_records_test.go:31,48,67,109-116`; `internal/items/test_helpers_combat.go:102-107`; `internal/narration/snapshot_test.go:340,363-371,431-450`; `messaging_surface_guard_test.go:158` (comment). `remote_observer` stays in use by the movenarration store (`internal/movenarration/store.go:76`, shoot) | grep `\.Separate\b\|SeparateMessages\|ToDefenderRoom\|remote_observer` | added (spec risk row 3) |
 | 21 | No `together` line in dogmud combat messages uses `{exitname}` or `{entrancename}` (awk over together blocks of generic.yaml and shooting.yaml: 0); the tokens appear only in `separate` blocks and in each file's header comment | awk | added |
@@ -47,9 +47,9 @@ Every row was read from the worktree `C:/tmp/dogmud-slam` at that SHA. "Spec" ma
 | 25 | Special-move store guards: `TestMoveEventKeysAgree` (`move_narration_migration_guard_test.go:461`) fails an authored event no Go site names and a named event the YAML lacks; mob-only moves author no `actor` role (`charge.yaml`, `hamstring.yaml`; guard comment 566-568). Appendix A's smother copy authors `actor` lines for every event, which a mob-only move can never send | file | Appendix A |
 | 26 | File-count guards and throttle.yaml references: `bannerGuardFileCount = 23` (`combat_banner_agreement_guard_test.go:24`); `internal/narration/snapshot_test.go:12` comment; `combat_messages.golden` header (23 files, throttle listed); `naturalWeaponSpecialPools = {"throttle", "maul"}` (`natural_weapon_agreement_test.go:20`); `shipped_narration_data_guard_test.go:911` comment. The banner guard fails a file holding no banner record (`combat_banner_agreement_guard_test.go:162-164`), which a prepare-and-wait-only shooting.yaml would be. `grep -rn "throttle" internal --include=*.go` finds no code that requests a `throttle` subtype | grep | 3, added |
 | 27 | Scripted beast moves in dogmud combatcommands (18): hamstring on wolves 9538, 9543, 9548, 205, 206, 215, 223 (canine) and cats 9540, 9544, 9549 (feline); drain on summon 304 (vampire); charge on boars 9539, 9545, 207, 208, 216 and both bears. Every one is in its species' Proposed list or is charge. No behaviour archetype names a beast move | YAML walk | 12 |
-| 28 | `SelectSpecialMove` keeps the HIGHEST weighted score (`ai.go:190-201`); an unweighted move gets 10. Cats run `ambush_predator` (`ai.go:89-94`: pounce 45, rake 40, hamstring 20, trip 10, no throttle), so throttle (base 50) would score 5 against rake's 18 to 24: cats would essentially never throttle without a profile weight | file | ruling F |
+| 28 | `SelectSpecialMove` keeps the HIGHEST weighted score (`ai.go:190-201`); an unweighted move gets 10. Cats run `ambush_predator` (`ai.go:88-93` on master `8e4727129`: pounce 45, rake 40, hamstring 20, trip 10, no throttle), so throttle (base 50) would score 5 against rake's 18 to 24: cats would essentially never throttle without a profile weight. D4 leaves the profile alone (#574) | file | ruling F |
 | 29 | Once cats use `pounce`, `TestNaturalWeaponPoolsNeverPutAVerbAfterTheWeapon` covers `pounce.yaml` and fails on `:240-242` (normal/master: "Your {itemname} flash") and `:285` (heavy/master: "drive your {itemname} forward", a false positive: `forward` is missing from `weaponNotSubject`). Replicated in scratch; the probe "Your {itemname} bites into you!" is caught, so the check can fail. `maul.yaml` passes | script | 4 |
-| 30 | Width at 20-character names and the species `unarmedname` ("claws and teeth", "claws and fangs"): `maul.yaml` 149 of 345 role lines exceed 80 columns, `pounce.yaml` 121; today's `claws.yaml` 126 of 354 and `bite.yaml` 130 of 345 by the same measure. Bears and cats are not made wider than they are today | script | 4 |
+| 30 | Re-measured 2026-10-16 on master `8e4727129` (slam split merged) by `<scratchpad>/measure_width.py`, which mirrors `TestSlamSplitLinesFitEightyColumns` (`internal/items/slam_split_copy_test.go:138`): every role line, names at 20 characters, every other token at its widest value from `slamSplitWidestTokens` (`:32-44`), tags stripped, no token left unfilled. `unarmedname` read from species YAML: bear 3 "claws and teeth" (`3-bear.yaml:12`), feline 11 "claws and fangs" (`11-feline.yaml:13`). `maul.yaml`: 149 of 345 role lines over 80 (widest 124; prepare 23, wait 18, miss 10, weak 14, normal 20, heavy 24, critical 30, fumble 10). `pounce.yaml`: 121 of 345 (widest 116; prepare 21, wait 15, miss 5, weak 12, normal 14, heavy 25, critical 22, fumble 7). For comparison, by the same rule with each file's longest current `unarmedname`: `claws.yaml` 128 of 354 ("smoke-wrought claws"), `bite.yaml` 135 of 345 ("tendrils and maw"); those two are out of this slice's scope. The guard is generic over its `slamSplitFiles` list (`:21`) and reads the longest `unarmedname` of the species using each file (`:93-120`), failing when none does | script, file | 4, D7 |
 | 31 | Engage-line guards: `messaging_surface_guard_test.go:1343` registers `usercommands/attack.go\|You prepare to enter into mortal combat with %s.`; `TestNarrationSitesMatchViewpointAudit` (`:1475`) fails a stale entry. `attack_sight_names_test.go` asserts the dark and blinded fallbacks; `attack_announce_test.go` counts `prepares to fight` per recipient. Command tests do not seed the attack store (`seedAllRegistries`, `mobcommands_test.go:73`), so an empty authored line must fall back to today's text | file | 3 |
 | 32 | The only smoke elemental mob is 322 Elemental Prince (`mobs/instance_planar_oasis/322-elemental_prince.yaml`): hostile, no `player_attack_immune`, no `aiprofile` (so `default`), `loot_pool` 10030, 20074, activitylevel 30; default `SpecialMoveChance` 30 (`internal/mobs/mobs.go:709-710`) | file | Appendix A |
 | 33 | Negative searches: `grep -rn smother --include=*.go .` returns 0 lines while `grep -rln throttle --include=*.go .` returns 59 files; `grep -rn "beast_moves\|BeastMoves" --include=*.go --include=*.yaml .` returns only `ai_test.go:950-958` (a test name), while `beastMoves` (lowercase) hits `behaviortree/actions_mob.go:237`. No smother code and no move-list field exist | grep | added |
@@ -57,18 +57,18 @@ Every row was read from the worktree `C:/tmp/dogmud-slam` at that SHA. "Spec" ma
 
 Spec facts 14 and 15 (the PR #208 species corrections) belong to slice 1, which shipped in #568, and are not re-verified here.
 
-## Owner decisions this plan needs (Task 0 records them before any code)
+## Owner decisions (decided 2026-10-16; Task 0 Step 1 records them)
 
-The plan below is written with the recommended option of each. Where an option changes a step, the step says so.
+Every task below is written to these rulings. Each entry gives the question, the ruling and the reason.
 
-- **D1. Smother's actor lines.** Appendix A gives every event an `actor` role, but smother is mob-only and a mob has no client: those 14 lines can never be sent (Fact 25), which is the defect #541 exists to remove. (a) Ship the file without `actor` roles, like `charge.yaml` and `hamstring.yaml`. (b) Keep Appendix A verbatim. Recommend (a).
-- **D2. Engage lines in the dark.** A prepare line names the weapon ("their Rusted Cleaver"). (a) A participant at full sight reads the prepare line; anyone else reads today's plain line with names hidden, as the wait round already does. (b) Everyone reads the prepare line with only names hidden, so a blind defender learns the weapon. Recommend (a). No new copy either way.
-- **D3. New copy in `pounce.yaml` (normal/master record at lines 240-242).** The record makes the weapon the subject of "flash" and fails the natural-weapon guard once cats use pounce. Proposed (all within 80 columns): actor `You press <actee> with masterful control, <item> flashing!`, actee `<actor> presses you hard, <item> flashing!`, observer `<actor> presses <actee>, <item> flashing!` (exact YAML in Task 8). Needs approval or edits. Line 285 needs no copy change: `forward` joins the guard's allowlist.
-- **D4. Cats' throttle weight.** Ruling F gives cats throttle, but their `ambush_predator` profile has no throttle weight, so they would almost never choose it (Fact 28). (a) Add `"throttle": 30` (predator's weight) to `ambush_predator`: cats throttle a caster or a knocked-down target, otherwise they rake. (b) Leave the profile; cats can throttle only when scripted. Recommend (a).
-- **D5. Smother's defence label.** The defence triad prints the move's label ("You dodge the Elemental Prince's throttle lunge"). Proposed label `rolling smoke`, reused from the approved miss lines. Needs approval.
-- **D6. The attack-family predicates.** After section 5 no production code calls `SpeciesIsFanged`, `SpeciesIsClawed`, `SpeciesIsHorned` or `SpeciesHasLifeDrain` (Fact 18). (a) Keep them as body descriptions, as spec section 4 says, pinned by a test. (b) Delete them. Recommend (a), since the spec is approved, with `SpeciesIsQuadrupedPredator` deleted in both cases because it was a pounce gate, not a body description.
-- **D7. maul and pounce width.** Both files run past 80 columns at 20-character names about as often as `claws.yaml` and `bite.yaml` do today (Fact 30). (a) Ship as-is and file a copy issue for all four. (b) Rewrite both in this slice through a review table. Recommend (a).
-- **D8. Patch note copy** (Task 11 Step 5) is player text and needs approval.
+- **D1. Smother's actor lines. DECIDED (a): `smother.yaml` ships without `actor` roles,** like `charge.yaml` and `hamstring.yaml`. Reason: smother is mob-only and a mob has no client, so actor lines have no reader (`internal/mobcommands/throttle.go` sends the actor `NoLine`; Fact 25); shipping them would recreate the unreachable-copy defect #541 removes. The `cast_interrupt` event keeps its `actee` and `observer` lines. If players ever gain smother, actor lines come back with that feature. Applied in Task 10.
+- **D2. Engage lines in the dark. DECIDED (a): a participant at full sight reads the prepare engage line; anyone else reads today's plain line with names hidden,** as the wait round does. Reason: a prepare line names the weapon ("their Rusted Cleaver"), which a reader who cannot see must not learn. No new copy. Applied in Task 4.
+- **D3. The `pounce.yaml` normal/master record (lines 240-242). APPROVED as written:** actor `You press <actee> with masterful control, <item> flashing!`, actee `<actor> presses you hard, <item> flashing!`, observer `<actor> presses <actee>, <item> flashing!` (exact YAML in Task 8). Reason: today's record makes the weapon the subject of "flash" (the #455 rule) and fails the natural-weapon guard once cats use pounce. D7 rewrites the rest of `pounce.yaml`; this record is part of that rewrite and is already approved, so the Task 8 review table shows it as approved, not for review.
+- **D4. Cats' throttle weight. DECIDED: do NOT change the `ambush_predator` AI profile in this slice.** Filed as #574, a sub-issue of the behaviour arc parent #575. Reason: tuning which move a mob picks belongs to the behaviour arc, not to a data-reachability slice. Consequence: cats list throttle in `beast_moves` and the gate allows it, but with no profile weight the AI will rarely pick it (Fact 28). The tests check the gate (`CanUseThrottle` passes for a feline and fails for a rodent, Task 7); the playtest checks that a rat never throttles and does not require a cat to throttle (Task 14).
+- **D5. Smother's defence label. APPROVED: `rolling smoke`** (renders "You dodge the Elemental Prince's rolling smoke"). Reason: it reuses the approved miss lines' own words. Applied in Task 11.
+- **D6. The attack-family predicates. DECIDED (b): DELETE `SpeciesIsFanged`, `SpeciesIsClawed`, `SpeciesIsHorned` and `SpeciesHasLifeDrain`** (and `SpeciesIsQuadrupedPredator`, deleted under either option) once the gates read `beast_moves`. Reason: no production caller remains (Fact 18), and #563 (anatomy-aware combat text) will want a proper anatomy model rather than attack-family predicates. The same reason covers `SpeciesNaturalAttack`, whose only production callers are those predicates (`ai.go:255,258,261`), so it goes with them. **This supersedes spec section 4's bullet that the predicates "describe the body".** Applied in Task 7 Step 6 and Task 9.
+- **D7. maul and pounce width. DECIDED (b): rewrite every `maul.yaml` and `pounce.yaml` line over 80 visible columns IN THIS SLICE,** through an owner review table, before bears and cats switch to them. Reason: the 80-column hard wrap is a rule for player copy, and these two files go live for the first time in this slice; shipping them over width would ship a known defect. Re-measured: `maul.yaml` 149 of 345 role lines over 80, `pounce.yaml` 121 of 345 (Fact 30). Applied in Task 8; the width guard lands in Task 9.
+- **D8. Patch note copy (Task 12 Step 5). APPROVED as drafted,** subject to staying true after D4. "Wolves and cats can go for the throat" overstates cats under D4, so the line carries an "owner to confirm" note with a proposed rewording; the approved text stays in place until the owner confirms.
 
 ---
 
@@ -76,11 +76,11 @@ The plan below is written with the recommended option of each. Where an option c
 
 **Files:** `docs/superpowers/plans/2026-10-16-combat-reachability-slice2.md` (this plan), `docs/README.md`.
 
-- [ ] **Step 1:** Put D1 to D8 to the owner as one short message, recommendations included. Record each answer in this plan under its decision. Do not start Task 1 before every answer is in.
+- [x] **Step 1:** D1 to D8 were put to the owner and answered on 2026-10-16. Each ruling is recorded above under "Owner decisions", with its reason, and every task is written to it. The one open point is the D8 patch-note wording forced by D4 (Task 12 Step 5, "owner to confirm"); it does not block Task 1.
 - [ ] **Step 2:** On a branch off master after #571 merges (`git switch -c feature/combat-reachability-slice2 origin/master`), copy this plan to `docs/superpowers/plans/2026-10-16-combat-reachability-slice2.md` and add its row to `docs/README.md` under the 2026-10-16 combat rows (after the slam split rows at lines 113-114):
 
 ```markdown
-| [`superpowers/plans/2026-10-16-combat-reachability-slice2.md`](superpowers/plans/2026-10-16-combat-reachability-slice2.md) | Plan for slice 2 of the reachability spec over a 34-row facts table: one weapon-type rule (`combat.AttackSubtype`), engage lines from `prepare`, the `separate` split and `shooting.yaml`'s swing lines retired, the default-attack `throttle.yaml` deleted, `beast_moves` species data read by every beast-move gate, bears on `maul` and cats on `pounce`, and the smoke elemental's mob-only `smother`; guards, docs, gate, playtest |
+| [`superpowers/plans/2026-10-16-combat-reachability-slice2.md`](superpowers/plans/2026-10-16-combat-reachability-slice2.md) | Plan for slice 2 of the reachability spec over a 34-row facts table: one weapon-type rule (`combat.AttackSubtype`), engage lines from `prepare`, the `separate` split and `shooting.yaml`'s swing lines retired, the default-attack `throttle.yaml` deleted, `beast_moves` species data read by every beast-move gate (the attack-family predicates deleted), `maul.yaml` and `pounce.yaml` rewritten to 80 columns through an owner review, bears on `maul` and cats on `pounce`, and the smoke elemental's mob-only `smother`; owner rulings D1 to D8; guards, docs, gate, playtest |
 ```
 
 - [ ] **Step 3:** Commit.
@@ -806,7 +806,7 @@ func EngageLineFor(sight messaging.SightDecision, authored, plain string, names 
 }
 ```
 
-Under D2 option (b) the body of `EngageLineFor` is instead `if authored != "" { return messaging.HideNames(authored, names, sight) }; return messaging.HideNames(plain, names, sight)`, and the dark test asserts only that no name leaks.
+This is D2 (a) as decided: the authored line only at full sight, so a reader below full sight never learns the weapon.
 
 - [ ] **Step 4: Player sites** (`internal/usercommands/attack.go`; add the `combat` import). The mob branch, replacing `:286-298`:
 
@@ -1011,7 +1011,7 @@ func TestAttackMob_EngageRoomLineComesFromThePreparePool(t *testing.T) {
 ```
 
 - [ ] **Step 7: Run** `go test ./internal/combat/ ./internal/usercommands/ ./internal/mobcommands/ -count=1`, then `go test . -run 'TestNarrationSitesMatchViewpointAudit|TestEveryTextSurfaceIsRegistered|TestEveryTrioLiteralNamesAllThreeRoles' -count=1`. If the viewpoint audit reports `usercommands/attack.go|You prepare to enter into mortal combat with %s.` stale, remove that entry (`messaging_surface_guard_test.go:1343`) and leave the guard's own convention comment in its place: `// usercommands/attack.go's engage line moved to combat.EngageMessages (#541 slice 2): the prepare pool's coordinated draw, with this literal kept only as the dark fallback. Removed rather than re-keyed: no gap was fixed.` Then the full suite; expected PASS.
-- [ ] **Step 8: Commit** `feat(combat): engage lines come from the prepare pool (#541)`, paths named, body: ruling A, D2 choice, double-announce guards untouched, fallback keeps tests that do not load the store on today's text.
+- [ ] **Step 8: Commit** `feat(combat): engage lines come from the prepare pool (#541)`, paths named, body: ruling A, D2 (a) (full sight reads the prepare line, anyone else the plain line with names hidden), double-announce guards untouched, fallback keeps tests that do not load the store on today's text.
 
 ## Task 5: Delete the default-attack `throttle.yaml` (spec section 3, third bullet; ruling D)
 
@@ -1033,7 +1033,7 @@ func TestThrottleIsASpecialMoveOnly(t *testing.T) {
 
 Run `go test . -run TestThrottleIsASpecialMoveOnly -count=1`: FAIL.
 
-- [ ] **Step 2: Delete and re-count.** `git rm _datafiles/world/dogmud/combat-messages/throttle.yaml`. Set `bannerGuardFileCount = 22` and its comment to `22 since the slam split (#541) added trample, lash and blast and slice 2 retired the default-attack throttle.yaml`. In `snapshot_test.go:12-13` write `22 files (weapon subtypes; the slam split, #541, added trample, lash and blast; slice 2 removed throttle on <commit date>)` with the real date. In `natural_weapon_agreement_test.go:20` set `naturalWeaponSpecialPools = []string{"maul"}` (Task 8 removes the list). In `shipped_narration_data_guard_test.go:911` write `gore.yaml, maul.yaml and pounce.yaml (throttle.yaml left combat-messages in #541 slice 2; its drain.yaml became siphon.yaml, ...)`, keeping the rest of the sentence.
+- [ ] **Step 2: Delete and re-count.** `git rm _datafiles/world/dogmud/combat-messages/throttle.yaml`. Set `bannerGuardFileCount = 22` and its comment to `22 since the slam split (#541) added trample, lash and blast and slice 2 retired the default-attack throttle.yaml`. In `snapshot_test.go:12-13` write `22 files (weapon subtypes; the slam split, #541, added trample, lash and blast; slice 2 removed throttle on <commit date>)` with the real date. In `natural_weapon_agreement_test.go:20` set `naturalWeaponSpecialPools = []string{"maul"}` (Task 9 removes the list). In `shipped_narration_data_guard_test.go:911` write `gore.yaml, maul.yaml and pounce.yaml (throttle.yaml left combat-messages in #541 slice 2; its drain.yaml became siphon.yaml, ...)`, keeping the rest of the sentence.
 - [ ] **Step 3: Goldens** (`-run TestSnapshotStores -update`): only `combat_messages.golden` changes (header 22, `throttle` gone from the subtype list, its rows gone). Quote the removed row count in the commit.
 - [ ] **Step 4: Run** the full suite; PASS. Commit `chore(combat): retire the default-attack throttle.yaml (#539, #541)`.
 
@@ -1208,9 +1208,11 @@ In `LoadDataFiles`, after the siphon check: `if err := validateBeastMoves(s); er
 - [ ] **Step 3: Data.** Add one line after `natural_attack:` (for 32 and 33, after `lifedrain:`) in each file, exactly as the table above, e.g. `beast_moves: [maul, throttle, pounce, hamstring]` in `2-canine.yaml`, `beast_moves: [rake]` in `3-bear.yaml`, `beast_moves: [gore]` in `6-boar.yaml` and `7-deer.yaml`, `beast_moves: [rake, pounce]` in `9-raptor.yaml`, `beast_moves: [hamstring]` in `10-rodent.yaml`, `beast_moves: [rake, pounce, hamstring, throttle]` in `11-feline.yaml`, `beast_moves: [pounce]` in `17-arachnid.yaml`, `beast_moves: [maul]` in `21-reptile.yaml`, `beast_moves: [rake]` in `22-bat.yaml`, `beast_moves: [throttle, pounce]` in `24-mustelid.yaml`, `beast_moves: [drain]` in `32-wraith.yaml`, `33-spectre.yaml`, `34-vampire.yaml`, `beast_moves: [smother]` in `44-smoke_elemental.yaml`. No gate reads the list yet, so play is unchanged.
 - [ ] **Step 4: Run** the full suite (world data changed). Expected PASS. Commit `feat(species): beast_moves lists each species' special moves (#541)`.
 
-## Task 7: The gates read the list (spec section 5; D4, D6)
+## Task 7: The gates read the list, and the family predicates go (spec section 5; D4, D6)
 
-**Files:** `internal/combat/ai.go`, `internal/actions/command_readiness.go`, `internal/actions/combat_{rake,maul,throttle,gore,hamstring,pounce,drain}.go`, `internal/actions/command_readiness_drift_test.go`, the fixture files of Fact 19, new `internal/combat/beast_move_gates_test.go`, new root `beast_move_gate_guard_test.go`.
+**Files:** `internal/combat/ai.go`, `internal/combat/ai_test.go`, `internal/actions/command_readiness.go`, `internal/actions/combat_{rake,maul,throttle,gore,hamstring,pounce,drain}.go`, `internal/actions/command_readiness_drift_test.go`, the fixture files of Fact 19, new `internal/combat/beast_move_gates_test.go`, new root `beast_move_gate_guard_test.go`, `internal/actions/context.md`, `internal/combat/context.md`, `internal/mobcommands/context.md`, `internal/usercommands/context.md`.
+
+D4: this task does not touch `aiProfiles` (the `ambush_predator` weights stay; #574). D6 (b): once every gate reads the list, Step 6 deletes the attack-family predicates; this supersedes spec section 4's bullet that they "describe the body".
 
 - [ ] **Step 1: Failing tests.** Create `internal/combat/beast_move_gates_test.go`:
 
@@ -1252,8 +1254,9 @@ func TestBeastMoveGatesReadTheSpeciesList(t *testing.T) {
 	}
 }
 
-// The table in practice: a cat throttles, a rat does not, a bear no longer
-// pounces, a serpent does nothing but bite.
+// The table in practice: the gate lets a cat throttle and refuses a rat, a
+// bear no longer pounces, a serpent does nothing but bite. (D4: whether the
+// cat's AI ever picks throttle is profile tuning, #574; this tests the gate.)
 func TestBeastMoveGates_TableExamples(t *testing.T) {
 	t.Cleanup(species.SeedSpeciesForTest(map[int]*species.Species{
 		11: {SpeciesId: 11, Name: "feline", BodyParts: []string{"legs", "eyes", "mouth", "skin", "tail"}, NaturalAttack: items.Claws,
@@ -1267,7 +1270,7 @@ func TestBeastMoveGates_TableExamples(t *testing.T) {
 	cat, rat, bear, snake := &characters.Character{SpeciesId: 11}, &characters.Character{SpeciesId: 10},
 		&characters.Character{SpeciesId: 3}, &characters.Character{SpeciesId: 8}
 	if !CanUseThrottle(cat) || CanUseThrottle(rat) {
-		t.Error("the cat throttles and the rat does not")
+		t.Error("the gate must allow a cat's throttle and refuse a rat's")
 	}
 	if CanUsePounce(bear) || CanUseHamstring(bear) || !CanUseRake(bear) {
 		t.Error("a bear rakes; it does not pounce or hamstring")
@@ -1439,13 +1442,13 @@ func TestScriptedBeastMoveFindings_CanFail(t *testing.T) {
 
 Run `go test ./internal/combat/ -run TestBeastMoveGates -count=1` and `go test . -run 'TestBeastMoveGatesNeverReadTheAttackFamily|TestFamilyReadsIn_CanFail|TestScripted' -count=1`. Expected: the gate tests and the family guard FAIL; both probes and the scripted-move guard PASS (Fact 27).
 
-- [ ] **Step 2: ai.go.** Add, after `SpeciesHasLifeDrain`:
+- [ ] **Step 2: ai.go.** Add, after `SpeciesHasLifeDrain` (Step 6 deletes the predicates around it, so it then stands where they stood):
 
 ```go
 // SpeciesHasBeastMove reports whether the character's species lists move in
-// beast_moves. It is the only species read a beast-move gate makes; the
-// family predicates above describe the body and grant nothing. Exported for
-// the readiness and action-entry gates in internal/actions.
+// beast_moves. It is the only species read a beast-move gate makes; no gate
+// decides a move by attack family. Exported for the readiness and
+// action-entry gates in internal/actions.
 func SpeciesHasBeastMove(char *characters.Character, move string) bool {
 	return species.GetSpecies(char.SpeciesId).HasBeastMove(move)
 }
@@ -1488,9 +1491,7 @@ Gates become (bodies after the cooldown check):
 	return SpeciesHasBeastMove(char, "drain")
 ```
 
-Rewrite each gate's doc comment to say the move is "listed in the species' beast_moves" in place of "requires a fanged/clawed/horned natural attack". Delete `SpeciesIsQuadrupedPredator` (`:564-571`, D6: it was a pounce gate).
-
-D4 (a): in `aiProfiles["ambush_predator"]` add `"throttle": 30, // ruling F: cats crush the throat of a caster or a downed target`.
+Rewrite each gate's doc comment to say the move is "listed in the species' beast_moves" in place of "requires a fanged/clawed/horned natural attack". Delete `SpeciesIsQuadrupedPredator` (`:564-571`, D6: it was a pounce gate). The other predicates still have callers until Step 3; Step 6 deletes them.
 
 - [ ] **Step 3: Readiness and entries.** `command_readiness.go` cases become:
 
@@ -1537,13 +1538,76 @@ Action entries (one line each, same line count, so the `condition_apply_path_gua
 Update each entry's comment and each result field's doc comment (`NotFanged`, `NotClawed`, `NotHorned`, `NotPredator`, `NotBeast`, `NotLifeDrainer`) to "the species does not list this move in beast_moves, or the body lacks what it needs". The field names and the player refusal texts stay.
 
 - [ ] **Step 4: Drift test.** In `TestSpecialMoveAdmissionOrdering` set the gate expressions exactly to the Step 3 lines (`"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"rake\")"`, and so on, hamstring keeping its `NoLegs` row before it). In `TestCommandReadinessDrift` give the seeded species lists: 7304 `BeastMoves: []string{"rake", "pounce", "hamstring"}`, 7305 `{"maul", "throttle", "pounce", "hamstring"}`, 7306 `{"gore"}`, 7307 `{"drain"}`, 7309 `{"maul", "throttle"}`, 7310 to 7312 the same lists as their identity (hands must still block). Add species `7314: {SpeciesId: 7314, Name: "unlisted-clawed-test", BodyParts: []string{"legs", "mouth"}, NaturalAttack: items.Claws}` and three rows that must be not-ready: `{"rake_notlisted", "rake", ...SpeciesId = 7314..., false, "NotClawed"}`, `{"pounce_notlisted", "pounce", ..., false, "NotPredator"}`, `{"hamstring_notlisted", "hamstring", ..., false, "NotBeast"}`, each with a registered target as `throttle_notfanged` does.
-- [ ] **Step 5: Fixture sweep.** Run `go test ./internal/actions/... ./internal/combat/... ./internal/behaviortree/... ./internal/mobcommands/... ./internal/usercommands/... -count=1`. For each failure in the files of Fact 19, give the seeded species the moves its old family granted it, so the test keeps its meaning: a bite fixture with legs `{"maul", "throttle", "pounce", "hamstring"}`, without legs `{"maul", "throttle"}`; a claws fixture with legs `{"rake", "pounce", "hamstring"}`, without legs `{"rake"}`; gore `{"gore"}`; lifedrain `{"drain"}`. A fixture that asserts a species CANNOT use a move (for example `TestThrottle_NotFanged`'s feline) keeps a list without that move. In `ai_test.go`'s `TestBeastIdentityPredicates` nothing changes yet. Re-run until PASS.
-- [ ] **Step 6: Bears' charge (spec section 5).** Already scripted on 9541 and 9547 (Fact 14); no data change. `TestScriptedBeastMovesAreInTheSpeciesList` is the record.
-- [ ] **Step 7: Run** the full suite; PASS. Commit `feat(combat): beast-move gates read species beast_moves (#541)`; body: the three sync points, the drift rows added, D4, the bird and serpent losing their family moves per the table.
+- [ ] **Step 5: Fixture sweep.** Run `go test ./internal/actions/... ./internal/combat/... ./internal/behaviortree/... ./internal/mobcommands/... ./internal/usercommands/... -count=1`. For each failure in the files of Fact 19, give the seeded species the moves its old family granted it, so the test keeps its meaning: a bite fixture with legs `{"maul", "throttle", "pounce", "hamstring"}`, without legs `{"maul", "throttle"}`; a claws fixture with legs `{"rake", "pounce", "hamstring"}`, without legs `{"rake"}`; gore `{"gore"}`; lifedrain `{"drain"}`. A fixture that asserts a species CANNOT use a move (for example `TestThrottle_NotFanged`'s feline) keeps a list without that move. `ai_test.go`'s `TestBeastIdentityPredicates` is left for Step 6, which deletes it. Re-run until PASS.
+- [ ] **Step 6: Delete the attack-family predicates (D6 (b)).** First prove the caller search can match, BEFORE deleting anything:
 
-## Task 8: `maul` and `pounce` as default attacks (spec section 4; D3, D6)
+```bash
+P='\b(SpeciesIsFanged|SpeciesIsClawed|SpeciesIsHorned|SpeciesHasLifeDrain|SpeciesIsQuadrupedPredator|SpeciesNaturalAttack)\('
+grep -rnE "$P" --include=*.go . | grep -v _test.go    # expect ONLY the five definitions left (Step 2 deleted
+                                                       # SpeciesIsQuadrupedPredator) and the three
+                                                       # SpeciesNaturalAttack calls inside them (ai.go:248-263)
+grep -rnE "$P" --include=*.go . | grep _test.go       # expect ai_test.go:605-614 (TestBeastIdentityPredicates)
+```
 
-**Files:** `internal/items/itemspec.go`, `internal/species/species.go`, `internal/combat/attackresult.go`, `internal/items/reach.go`, `internal/items/reach_test.go`, `internal/items/natural_weapon_agreement_test.go`, `internal/combat/combat_helpers.go` (comment), `internal/combat/ai.go`, `internal/combat/ai_test.go`, `_datafiles/world/dogmud/species/3-bear.yaml`, `11-feline.yaml`, `_datafiles/world/dogmud/combat-messages/pounce.yaml`, new `internal/species/species_maul_pounce_test.go`, new `internal/combat/maul_pounce_render_test.go`, golden.
+The first command must print the definitions: that is the proof the pattern matches the symbols it is meant to catch (on master `8e4727129`, before Task 7, the same pattern hits `ai.go:248,254,255,257,258,260,261,263,569` as definitions and calls, plus the gate calls of Fact 18: proof it can match). If it prints any other production line, a gate was missed in Steps 2 and 3: fix that first. Then, in `internal/combat/ai.go`, delete `SpeciesNaturalAttack`, `SpeciesIsFanged`, `SpeciesIsClawed`, `SpeciesIsHorned` and `SpeciesHasLifeDrain` (`:248-266` on master; re-read the lines first), rewrite the section header above them (`:244-246`, "Beast-identity predicates (single source of truth for beast-move gating)") to head `SpeciesHasBeastMove` as the one species read the gates make, and drop any import only they used (`go build ./...` says). In `internal/combat/ai_test.go` delete `TestBeastIdentityPredicates` (`:592-615`). The drift test's string literals for the old gate expressions (`command_readiness_drift_test.go:172-191`) were already rewritten in Step 4. Run the same two greps again: expect no output from either (run each alone: an empty grep exits 1). Keep the names in the root guard's `familyReads` map (Step 1): it then guards against any of them coming back.
+
+Docs that name them (Fact 18): `internal/combat/context.md:832-836` becomes one line, "Beast moves are decided by `SpeciesHasBeastMove` (the species' `beast_moves`); the attack-family predicates were deleted in #541 slice 2 (D6): #563 will want a proper anatomy model"; `internal/actions/context.md:220-221`, `internal/mobcommands/context.md:41-42` and `internal/usercommands/context.md:75-76` name `combat.SpeciesHasBeastMove` in place of the predicate list. Then `grep -rnE "SpeciesIs(Fanged|Clawed|Horned|QuadrupedPredator)|SpeciesHasLifeDrain|SpeciesNaturalAttack" internal modules --include=*.md` prints nothing (run alone), and `python tools/context_md_audit.py internal/combat`, then `internal/actions`, `internal/mobcommands`, `internal/usercommands`, one per call, report no phantom symbol.
+- [ ] **Step 7: Bears' charge (spec section 5).** Already scripted on 9541 and 9547 (Fact 14); no data change. `TestScriptedBeastMovesAreInTheSpeciesList` is the record.
+- [ ] **Step 8: Run** the full suite; PASS. Commit `feat(combat): beast-move gates read species beast_moves (#541)` with the files above named; body: the three sync points, the drift rows added, D6 (the attack-family predicates and `SpeciesNaturalAttack` deleted, no production caller left, superseding spec section 4's "describe the body" bullet), D4 (no AI profile change, #574), the bird and serpent losing their family moves per the table.
+
+## Task 8: `maul.yaml` and `pounce.yaml` fit 80 columns (D7 (b), D3)
+
+Modelled on the slam split's copy process (`docs/superpowers/plans/2026-10-16-slam-split.md` Tasks 1 to 3: agents draft, controller checks, owner reviews one table per file, then the approved copy lands with a width guard). It runs before Task 9 switches bears and cats onto these files, so no player ever reads an over-width maul or pounce line.
+
+**Files:** `_datafiles/world/dogmud/combat-messages/maul.yaml`, `_datafiles/world/dogmud/combat-messages/pounce.yaml`, `internal/narration/testdata/stores/combat_messages.golden`. Scratch (session scratchpad, full path): `measure_width.py`, `maul-draft.yaml`, `pounce-draft.yaml`, `maul-review.md`, `pounce-review.md`.
+
+- [ ] **Step 1: Measure.** Write `<scratchpad>/measure_width.py` with the Write tool, mirroring `TestSlamSplitLinesFitEightyColumns` (`internal/items/slam_split_copy_test.go:138-148`) exactly: walk every role line of a file (`options` / intensity / `together` / tier / record / role), replace `{itemname}` with the `unarmedname` given, every other token with its value in `slamSplitWidestTokens` (`:32-44`: names 20 characters, `{position}` "grappling on the ground", `{momentum}` "on the defensive", `{stance}` "aggressive", `{bodypart}` "right shoulder", `{damage}` "999"), strip `</?ansi[^>]*>`, count characters, fail any token left unfilled. Read the two `unarmedname` values from the species files at run time, not from this plan (on master: bear 3 "claws and teeth", feline 11 "claws and fangs"; Fact 30). Run it on today's files with `python -I`. Expected (Fact 30): `maul.yaml` 149 of 345 over 80, `pounce.yaml` 121 of 345. A count of 0 means the script is broken, not the data: that run is the probe that the measure can fail.
+- [ ] **Step 2: Draft (two Opus agents in parallel, read-only on code).** One agent per file. Each writes `<scratchpad>/<file>-draft.yaml` (the whole file, same intensities, tiers and record counts as today) and `<scratchpad>/<file>-review.md`, a table `| intensity | tier | # | role | today | proposed | cols | why |` holding every record with any role over 80, each role of that record on its own row (all three roles shown even when only one changes, so the reviewer reads the moment whole). Rules every agent brief carries, beside the standing ones at the top of this plan:
+  - Rewrite only records with a role over 80 columns by Step 1's measure. A record whose roles all fit is copied unchanged.
+  - Each record is ONE moment told three ways: actor, actee and observer describe the same blow, same body part, same outcome. Changing one role means re-reading the other two.
+  - The #455 rule: `{itemname}` is never the subject of a verb ("Your {itemname} flash" is wrong); the creature does the action ("You rake with your {itemname}"). The draft is checked against `subjectVerbAfterItemName` (`internal/items/natural_weapon_agreement_test.go`) by a scratch replica in Step 3.
+  - Banner agreement: a record whose roles carry a banner word (`<ansi fg="...-bold">WORD</ansi>`) carries the same word in every role (`combat_banner_agreement_guard_test.go:45,145`).
+  - No retired idiom: nothing matching `retiredCombatIdiom` (`combat_idiom_guard_test.go:18`: clip, goes wide, slips most, sliver, footing, overrun, carries straight past).
+  - ESL-clear plain English, no raw numbers beyond the `{damage}` token where today's line carries it, no em or en dashes, no "its" for an actor, a space before every ansi tag, every token the line needs kept.
+  - Bodies: maul is a bear (swiping claws, a crushing bite, its weight); pounce is a big cat (a leap, raking claws, fangs). Neither names hands, fists or a held weapon.
+  - D3: `pounce.yaml`'s normal/master record at lines 240-242 is ALREADY APPROVED and goes in exactly as below; the review table lists it marked "approved (D3)", not for review:
+
+```yaml
+      - actor: 'You press <ansi fg="{acteetype}">{actee}</ansi> with masterful control, <ansi fg="item">{itemname}</ansi> flashing!'
+        actee: '<ansi fg="{actortype}">{actor}</ansi> presses you hard, <ansi fg="item">{itemname}</ansi> flashing!'
+        observer: '<ansi fg="{actortype}">{actor}</ansi> presses <ansi fg="{acteetype}">{actee}</ansi>, <ansi fg="item">{itemname}</ansi> flashing!'
+```
+
+  Each agent reports its width-script output and `read N of N` for the files it modelled on (the file it rewrites, `slam.yaml` or `trample.yaml` for the slam split's register, and `narration/special-moves/pounce.yaml` / `maul.yaml` for the move's own voice), each printed in chunks of at most 400 lines.
+- [ ] **Step 3: Controller check** of each draft: it parses; intensities, tiers and record counts per tier match today's file; `measure_width.py` on the draft reports 0 over 80; the scratch replica of `subjectVerbAfterItemName` (with `weaponNotSubject` copied from the test file) reports nothing, and catches the probe `Your {itemname} bites into you!`; the banner words agree per record; `retiredCombatIdiom` finds nothing; `grep -nP "[\x{2013}\x{2014}]"` finds nothing. Records under 80 are byte-identical to today's (diff the draft against the file and confirm every changed record appears in the review table).
+- [ ] **Step 4: Owner gate.** Open both review tables for the owner (`code "C:\Users\Calabe Davis\workspace\DOGMud" "<scratchpad>\maul-review.md"`, the same for pounce), with a counts header per file (records reviewed, lines over 80 before and after). The owner approves or edits each table; apply edits to the drafts, re-run Step 3, and record the approval date per file here: maul ____, pounce ____. Do not start Step 5 before both are approved.
+- [ ] **Step 5: Apply.** `cp` each approved draft over its file in `_datafiles/world/dogmud/combat-messages/` (H3: no shell write into the tree except `cp` from scratch). `git diff --stat` shows only the two files.
+- [ ] **Step 6: Goldens.** `go test ./internal/narration/... -run TestSnapshotStores -update -count=1`, then `git diff --stat internal/narration/testdata/stores/`: only `combat_messages.golden` changes, and only in maul and pounce rows. Read the diff; quote its size in the commit.
+- [ ] **Step 7: Run** the full `go test . ./internal/... ./modules/... -count=1` (combat-message data changed). PASS. The Go width guard over these two files lands in Task 9 Step 1, because it reads the longest `unarmedname` of the species USING each file (`slamSplitLongestItemName`, `slam_split_copy_test.go:93-120`) and no species uses maul or pounce until Task 9.
+- [ ] **Step 8: Commit.**
+
+```bash
+git add _datafiles/world/dogmud/combat-messages/maul.yaml _datafiles/world/dogmud/combat-messages/pounce.yaml \
+  internal/narration/testdata/stores/combat_messages.golden
+git commit -F - <<'EOF'
+content(combat): maul and pounce lines fit 80 columns (#541)
+
+Owner ruling D7: every maul.yaml and pounce.yaml line over 80 visible
+columns at 20-character names is rewritten before bears and cats use
+the files (maul <N> records, pounce <N>; 149 and 121 role lines were
+over). Each record keeps one moment across its three roles; the weapon
+is never the subject of a verb (#455). pounce's normal/master record is
+the D3-approved text. Owner review approved <date>. Golden: <rows>.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+EOF
+```
+
+## Task 9: `maul` and `pounce` as default attacks (spec section 4; D6, D7)
+
+**Files:** `internal/items/itemspec.go`, `internal/species/species.go`, `internal/combat/attackresult.go`, `internal/items/reach.go`, `internal/items/reach_test.go`, `internal/items/natural_weapon_agreement_test.go`, `internal/items/slam_split_copy_test.go`, `internal/combat/combat_helpers.go` (comment), `_datafiles/world/dogmud/species/3-bear.yaml`, `11-feline.yaml`, new `internal/species/species_maul_pounce_test.go`, new `internal/combat/maul_pounce_render_test.go`.
+
+Spec section 4's bullet that the attack-family predicates "describe the body" is superseded by D6 (b): Task 7 Step 6 deleted them, so this task neither extends nor tests them.
 
 - [ ] **Step 1: Failing tests.** `internal/species/species_maul_pounce_test.go`:
 
@@ -1641,7 +1705,11 @@ func TestMaulAndPounceRenderFromTheirOwnFiles(t *testing.T) {
 }
 ```
 
-Extend `TestBeastIdentityPredicates` (`ai_test.go:592-615`) with `8005: bear, NaturalAttack: items.Maul` and `8006: cat, NaturalAttack: items.Pounce`, asserting `SpeciesIsClawed` is true for both and `SpeciesIsFanged` false. Add `Maul: 0.15, Pounce: 0.15` to the table in `reach_test.go`. Run: FAIL (`undefined: items.Maul`).
+Add `Maul: 0.15, Pounce: 0.15` to the table in `reach_test.go`.
+
+The width guard (D7): in `internal/items/slam_split_copy_test.go` set `var slamSplitFiles = []ItemSubType{Slam, Trample, Lash, Blast, Maul, Pounce}` and its comment to `the four files the split wrote or rewrote, and maul and pounce, rewritten to 80 columns before bears and cats used them (#541 slice 2, owner ruling D7)`. The guard is generic (Fact 30): it measures each listed file with the longest `unarmedname` of the species using it, so after Step 2 it reads "claws and teeth" for maul and "claws and fangs" for pounce from species data. Its can-fail probe already exists (`TestSlamSplitWidthCheck_CanFail`, `:151-156`); the pre-rewrite files were the live proof (Task 8 Step 1: 149 and 121 over). Before Step 2 this guard also fails, with `no dogmud species uses "maul"`, so it is part of the failing set.
+
+Run: FAIL (`undefined: items.Maul`).
 
 - [ ] **Step 2: Wire the two subtypes** in every place the slam split wired trample:
 
@@ -1667,39 +1735,13 @@ var naturalWeaponPools = []ItemSubType{Claws, Bite, Sting, Gore, Slam, Siphon, T
 
 Delete `naturalWeaponSpecialPools` and its loop in `naturalWeaponPoolFiles` (maul is now a natural pool; throttle's file is gone). Add `Maul, Pounce` to the natural-blunt list in `meleeDisplaySubtype`'s comment. Set `natural_attack: maul` in `3-bear.yaml` and `natural_attack: pounce` in `11-feline.yaml`.
 
-- [ ] **Step 3: Predicates describe the body** (D6 (a)):
+- [ ] **Step 3: The natural-weapon guard now covers pounce.** `go test ./internal/items/ -run 'TestNaturalWeaponPoolsNeverPutAVerbAfterTheWeapon|TestSlamSplitLinesFitEightyColumns' -count=1` must PASS: Task 8 already replaced the `pounce.yaml:240-242` record with the D3-approved text and checked every draft line against the same rule. If the guard still reports `forward` after `{itemname}` (the false positive at today's `:285`, Fact 29) because an approved line kept "drive your {itemname} forward", add `"forward": true,` to `weaponNotSubject` beside `"home"` (a direction word, like "down" and "up") and add `` `You drive your {itemname} forward and crash in!` `` to the no-verb list of `TestSubjectVerbAfterItemName_CatchesShippedDefects` so the entry is exercised; if no approved line carries it, leave the allowlist alone. Any other hit is a Task 8 defect: fix the copy through the owner, not the guard.
+- [ ] **Step 4: Goldens.** `go test ./internal/narration/... -run TestSnapshotStores -count=1` (no `-update`) PASSES: switching the species changes no store text (Task 8 landed the copy).
+- [ ] **Step 5: Run** the full suite; PASS. Commit `feat(combat): bears maul and cats pounce in ordinary combat (#539, #541)` with the files above named; body: the six wiring sites, the width guard extended to maul and pounce (D7), the `forward` guard word if it was needed.
 
-```go
-// SpeciesIsClawed reports a clawed body: claws, or the bear's maul and the
-// big cat's pounce, which strike with claws too (spec section 4). It
-// describes the body; it grants no move (Species.BeastMoves does).
-func SpeciesIsClawed(char *characters.Character) bool {
-	switch SpeciesNaturalAttack(char) {
-	case items.Claws, items.Maul, items.Pounce:
-		return true
-	}
-	return false
-}
-```
+## Task 10: The `Smothered` condition and the `smother` narration (Appendix A; D1)
 
-Give `SpeciesIsFanged`, `SpeciesIsHorned` and `SpeciesHasLifeDrain` the same closing sentence. Under D6 (b) delete all four and the predicate test instead.
-
-- [ ] **Step 4: pounce.yaml.** `go test ./internal/items/ -run TestNaturalWeaponPoolsNeverPutAVerbAfterTheWeapon -count=1` now FAILS on `pounce.yaml:240-242` and `:285` (Fact 29). Add `"forward": true,` to `weaponNotSubject` in `natural_weapon_agreement_test.go` beside `"home"` (a direction word, like "down" and "up"), and add `` `You drive your {itemname} forward and crash in!` `` to the no-verb list of `TestSubjectVerbAfterItemName_CatchesShippedDefects` so the allowlist entry is exercised. Replace the record at `pounce.yaml:240-242` with the D3-approved text (proposal below; use the owner's edit if given):
-
-```yaml
-      - actor: 'You press <ansi fg="{acteetype}">{actee}</ansi> with masterful control, <ansi fg="item">{itemname}</ansi> flashing!'
-        actee: '<ansi fg="{actortype}">{actor}</ansi> presses you hard, <ansi fg="item">{itemname}</ansi> flashing!'
-        observer: '<ansi fg="{actortype}">{actor}</ansi> presses <ansi fg="{acteetype}">{actee}</ansi>, <ansi fg="item">{itemname}</ansi> flashing!'
-```
-
-(widths at 20-character names and "claws and fangs": 80, 64, 76).
-
-- [ ] **Step 5: Goldens** (`-run TestSnapshotStores -update`): only `combat_messages.golden`, only the three pounce rows. Quote the diff in the commit.
-- [ ] **Step 6: Run** the full suite; PASS. Commit `feat(combat): bears maul and cats pounce in ordinary combat (#539, #541)`; body: the six wiring sites, the pounce record (D3), the guard word, predicates describe the body.
-
-## Task 9: The `Smothered` condition and the `smother` narration (Appendix A; D1)
-
-**Files:** new `_datafiles/world/dogmud/conditions/144-smothered.yaml`, new `_datafiles/world/dogmud/narration/special-moves/smother.yaml`, `internal/conditions/ids.go`. These land in the same commit as Task 10, because `TestMoveEventKeysAgree` fails an event no Go site names; Task 9 stages, Task 10 commits.
+**Files:** new `_datafiles/world/dogmud/conditions/144-smothered.yaml`, new `_datafiles/world/dogmud/narration/special-moves/smother.yaml`, `internal/conditions/ids.go`. These land in the same commit as Task 11, because `TestMoveEventKeysAgree` fails an event no Go site names; Task 10 stages, Task 11 commits.
 
 - [ ] **Step 1: Condition.** Write `_datafiles/world/dogmud/conditions/144-smothered.yaml` (Appendix A with the id; tick values equal Throttled 89, Fact 24):
 
@@ -1725,7 +1767,7 @@ flags:
 
 In `internal/conditions/ids.go` add `ConditionIdSmothered = 144 // smoke in the lungs; the smother move applies it (#541 slice 2)`.
 
-- [ ] **Step 2: Narration.** Write `_datafiles/world/dogmud/narration/special-moves/smother.yaml`. Under D1 (a) it is Appendix A's file with every `actor:` block removed and the header line "Mob-only ... no actor role: a mob has no client, as charge.yaml and hamstring.yaml" added:
+- [ ] **Step 2: Narration.** Write `_datafiles/world/dogmud/narration/special-moves/smother.yaml`. Per D1 (a) it is Appendix A's file with every `actor:` block removed and the header line "Mob-only ... no actor role: a mob has no client, as charge.yaml and hamstring.yaml" added; `cast_interrupt` keeps its `actee` and `observer` lines:
 
 ```yaml
 moveid: smother
@@ -1781,11 +1823,11 @@ events:
       - '{actee} steps clear before {actor} can engulf them!'
 ```
 
-Under D1 (b) the file is Appendix A verbatim (lines 153 to 221 of the spec). Every line was measured at 20-character names and `{damage}` as "devastating wounds": 42 of 42 fit 80 columns. This is approved copy; nothing new is authored.
+This is Appendix A (lines 153 to 221 of the spec) less its `actor` lines, per D1 (a); if players ever gain smother, the actor lines come back with that feature. Every Appendix A line was measured at 20-character names and `{damage}` as "devastating wounds": 42 of 42 fit 80 columns, so the 28 shipped here (42 less the 14 actor lines) do too. This is approved copy; nothing new is authored.
 
-## Task 10: The `smother` move (Appendix A; D5)
+## Task 11: The `smother` move (Appendix A; D5)
 
-**Files:** `internal/actionspec/action.go`, `internal/costs/action.go`, `internal/costs/action_test.go`, new `internal/actions/choke_interrupt.go`, `internal/actions/combat_throttle.go`, new `internal/actions/combat_smother.go`, new `internal/actions/combat_smother_test.go`, `internal/actions/command_readiness.go`, `internal/actions/action_readiness.go`, `internal/actions/divergences.go`, `internal/actions/action_cost_test.go`, `internal/actions/command_readiness_drift_test.go`, new `internal/mobcommands/smother.go`, `internal/mobcommands/mobcommands.go`, `internal/mobcommands/command_parity_test.go`, `internal/behaviortree/actions_mob.go`, `internal/combat/ai.go`, `internal/combat/beast_move_gates_test.go`, `internal/items/defensive_messages_newly_defendable_test.go`, `condition_apply_path_guard_test.go`, `move_narration_migration_guard_test.go`, `shipped_narration_data_guard_test.go`, goldens, plus Task 9's two files.
+**Files:** `internal/actionspec/action.go`, `internal/costs/action.go`, `internal/costs/action_test.go`, new `internal/actions/choke_interrupt.go`, `internal/actions/combat_throttle.go`, new `internal/actions/combat_smother.go`, new `internal/actions/combat_smother_test.go`, `internal/actions/command_readiness.go`, `internal/actions/action_readiness.go`, `internal/actions/divergences.go`, `internal/actions/action_cost_test.go`, `internal/actions/command_readiness_drift_test.go`, new `internal/mobcommands/smother.go`, `internal/mobcommands/mobcommands.go`, `internal/mobcommands/command_parity_test.go`, `internal/behaviortree/actions_mob.go`, `internal/combat/ai.go`, `internal/combat/beast_move_gates_test.go`, `internal/items/defensive_messages_newly_defendable_test.go`, `condition_apply_path_guard_test.go`, `move_narration_migration_guard_test.go`, `shipped_narration_data_guard_test.go`, goldens, plus Task 10's two files.
 
 - [ ] **Step 1: Failing tests.** Create `internal/actions/combat_smother_test.go`:
 
@@ -2110,10 +2152,10 @@ func ScoreSmother(mob *mobs.Mob, target *characters.Character) int {
 ```
 
 and in `SelectSpecialMove` after throttle: `if CanUseSmother(&mob.Character) { moveScores["smother"] = ScoreSmother(mob, target) }`. `command_readiness.go`: `case "smother": return char.IsInCombat() && !char.HasBodyPart("hands") && combat.SpeciesHasBeastMove(char, "smother")`. `action_readiness.go` `specialMoveVerbs`: add `"smother": true`. `behaviortree/actions_mob.go` `beastMoves`: add `"smother": true,`. `divergences.go` `mobOnlyCommands`: `"smother": "mob-ai: the smoke elemental's special move; no player can be a smoke elemental",`.
-- [ ] **Step 6: The mob command.** Create `internal/mobcommands/smother.go`, the shape of `mobcommands/throttle.go` with: `actions.ExecuteSmother`, `res.NotSmoke` swallowed silently, `sendMoveEvent("smother", "hit", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens)`, `sendMoveEvent("smother", "cast_interrupt", ids, aud, messaging.CategorySpellDisruption, nil, messaging.SoundChantBreaksOff)` when `res.InterruptedCast`, the partial branch with `renderMoveEvent("smother", "partial", ids, damageTokens)` and `moveDefenceLines(mob, room, target, result.Defence, "rolling smoke")` (D5), the defended branch with the same label, `sendMoveEvent("smother", "miss", ids, aud, messaging.CategoryHitNaturalSharp, nil)`, then `actions.DispatchCounterMessages`. Doc comment: `// Smother is the smoke elemental's special move (spec 2026-10-16 #541, Appendix A): smoke pours into the target's eyes and lungs, blinding and choking it, and can choke off a spell.` Register `"smother": {Smother, false},` in `mobcommands.go` after `"throttle"`.
+- [ ] **Step 6: The mob command.** Create `internal/mobcommands/smother.go`, the shape of `mobcommands/throttle.go` with: `actions.ExecuteSmother`, `res.NotSmoke` swallowed silently, `sendMoveEvent("smother", "hit", ids, aud, messaging.CategoryHitNaturalSharp, damageTokens)`, `sendMoveEvent("smother", "cast_interrupt", ids, aud, messaging.CategorySpellDisruption, nil, messaging.SoundChantBreaksOff)` when `res.InterruptedCast`, the partial branch with `renderMoveEvent("smother", "partial", ids, damageTokens)` and `moveDefenceLines(mob, room, target, result.Defence, "rolling smoke")` (D5, approved: "You dodge the Elemental Prince's rolling smoke"), the defended branch with the same label, `sendMoveEvent("smother", "miss", ids, aud, messaging.CategoryHitNaturalSharp, nil)`, then `actions.DispatchCounterMessages`. Doc comment: `// Smother is the smoke elemental's special move (spec 2026-10-16 #541, Appendix A): smoke pours into the target's eyes and lungs, blinding and choking it, and can choke off a spell.` Register `"smother": {Smother, false},` in `mobcommands.go` after `"throttle"`.
 - [ ] **Step 7: Guard lists.** Drift test: add to `TestSpecialMoveAdmissionOrdering` `{"combat_smother.go", "ExecuteSmother", "SmotherResult", "costs.ActionSmother", []specialMoveEarlyReturn{{"char.IsActing()", "Crafting"}, {"!target.Found", "NoTarget"}, {"char.HasBodyPart(\"hands\") || !combat.SpeciesHasBeastMove(char, \"smother\")", "NotSmoke"}}, []string{"combat.ExecuteSkillMove", "target.Char.AddCondition", "chokeCastInterrupt", "combat.RecordSpecialMove", "actor.AwardResolved"}, true}`; `mobWrappers` and its name map: `"smother": "Smother"`; `runExecuteAndReadExecuted` and `runExecuteAndReadFlag` cases for smother (Crafting, OnCooldown, NoTarget, NotSmoke); `physicalSpecial["smother"] = true`; a seeded species `7313: {SpeciesId: 7313, Name: "smoke-test", BodyParts: []string{}, BeastMoves: []string{"smother"}}` and rows `smother_ready`, `smother_crafting`, `smother_cooldown`, `smother_no_aggro`, `smother_notlisted` (SpeciesId 7304, reason `NotSmoke`), modelled on the throttle rows; `combat_smother.go` in the file list of `TestSpecialMoves_NoProgressionAwardSitsInsideAHitGate`. `action_cost_test.go`: `{file: "combat_smother.go", name: "ExecuteSmother"},`. `command_parity_test.go`: `"smother"` in `supported`. `move_narration_migration_guard_test.go`: `"internal/mobcommands/smother.go",` in `migratedNarrationLiteralFiles` (fix the "thirteen" count in its comment to fourteen). `shipped_narration_data_guard_test.go`: `"narration/special-moves/smother.yaml": true,` and "fourteen shipped files" to "fifteen". `defensive_messages_newly_defendable_test.go`: `{"rolling smoke", meleeDefences},`. Run `go test . -run TestPlayerConditionsTravelTheEventPath -count=1` (`condition_apply_path_guard_test.go:367`) and add the two reported keys with: `"internal/actions/combat_smother.go|<line>": "condition 144 is silent-start; the smother move narrates the smoke as it lands and must apply it in the same tick"` and `"internal/actions/combat_smother.go|<line>": "Blinded (3) carries spell start lines; the smother hit line narrates the blinding, and it must land in the same tick so the target's next line is judged blind"`, with the line numbers the guard prints.
 - [ ] **Step 8: Goldens** (`-run TestSnapshotStores -update`): `special_moves.golden` gains the smother rows, `conditions.golden` gains condition 144. Read both diffs; nothing else may move.
-- [ ] **Step 9: Run** the full suite; PASS. Commit (Task 9's files included):
+- [ ] **Step 9: Run** the full suite; PASS. Commit (Task 10's files included):
 
 ```bash
 git add _datafiles/world/dogmud/conditions/144-smothered.yaml _datafiles/world/dogmud/narration/special-moves/smother.yaml \
@@ -2133,21 +2175,23 @@ Mob-only, built on throttle: a hit blinds (3) and smothers (144, new);
 a partial applies nothing; a casting target faces the choke contest,
 now one helper shared with throttle, at most once per special-move
 cooldown (a test refuses a second smother inside it). The AI gate reads
-the species' beast_moves. Copy from Appendix A (D1 recorded in the plan).
+the species' beast_moves. Copy from Appendix A without actor lines
+(owner ruling D1: a mob has no client); defence label "rolling smoke"
+(D5).
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 EOF
 ```
 
-## Task 11: Docs and code comments (spec section 7, ruling H)
+## Task 12: Docs and code comments (spec section 7, ruling H)
 
 **Files:** `internal/species/context.md`, `internal/combat/context.md`, `internal/actions/context.md`, `internal/items/context.md`, `internal/mobcommands/context.md`, `internal/conditions/context.md`, `internal/exit/context.md`, `docs/PATCH_NOTES.md`.
 
 - [ ] **Step 1: `internal/species/context.md`.** In "Natural-Attack Subtype": valid values gain `maul`, `pounce`; a short "Bears and cats (#541 slice 2)" paragraph (bear 3 `maul` "claws and teeth", feline 11 `pounce` "claws and fangs", both natural-sharp). New section "Beast moves (`beast_moves`)": the principle (ruling E, already stated above it: link it), `natural_attack` is the default and `beast_moves` the special moves, the reviewed table (copy the Proposed column), the validator's body rules (no hands for every move but drain; legs for pounce and hamstring; horns for gore; lifedrain for drain; unknown and repeated names fail the load), that charge stays scripted, and "how to add a species": pick the default by body, then list only the moves the creature really makes, then run `go test ./internal/species/`. Update "Choosing a natural attack" step 3 to say the six wiring sites list now has eleven worked examples. Files table: `species_beast_moves_test.go`, `species_maul_pounce_test.go`.
-- [ ] **Step 2: `internal/combat/context.md`.** "Natural-Attack Subtype Resolution": `AttackSubtype` is the one weapon-type rule and who reads it; engage lines from `prepare` (`EngageMessages`, `EngageLineFor`, the dark fallback D2); `separate` retired and why; `items.MeleeSwingNarratedAs`. "Beast Moveset" table: Gate column becomes "listed in beast_moves" for every move, a `smother` row (mob-only; Blinded 3 plus Smothered 144; cast interrupt via the shared choke contest), and a line that the family predicates describe the body while `CanUse*` reads the species list; `SpeciesIsQuadrupedPredator` removed; `ambush_predator` gains throttle (D4).
-- [ ] **Step 3: The others.** `internal/actions/context.md`: readiness and every `Execute*` entry read `combat.SpeciesHasBeastMove`; `chokeCastInterrupt`; `ExecuteSmother`; Combat specials file row gains `combat_smother.go`, `choke_interrupt.go`. `internal/items/context.md` (`:35`, `:500-531`): drop `SeparateMessages`, say `AttackOptions` decodes `together` only and rejects `separate`, add `MeleeSwingNarratedAs`. `internal/mobcommands/context.md`: `smother.go`. `internal/conditions/context.md`: `ConditionIdSmothered`. `internal/exit/context.md`: `PhraseVerticalExits` no longer has an items caller. Run `python tools/context_md_audit.py internal/species`, then each of `internal/combat`, `internal/actions`, `internal/items`, `internal/mobcommands`, `internal/conditions`, `internal/exit`, one per call; fix any phantom symbol.
+- [ ] **Step 2: `internal/combat/context.md`.** "Natural-Attack Subtype Resolution": `AttackSubtype` is the one weapon-type rule and who reads it; engage lines from `prepare` (`EngageMessages`, `EngageLineFor`, the dark fallback D2); `separate` retired and why; `items.MeleeSwingNarratedAs`. "Beast Moveset" table: Gate column becomes "listed in beast_moves" for every move, a `smother` row (mob-only; Blinded 3 plus Smothered 144; cast interrupt via the shared choke contest), and the line Task 7 Step 6 wrote (the attack-family predicates deleted under D6, `SpeciesHasBeastMove` the one species read). The AI profile table is unchanged: `ambush_predator` carries no throttle weight (D4, #574), so say that a cat's throttle is allowed by the gate but rarely chosen.
+- [ ] **Step 3: The others.** `internal/actions/context.md`: readiness and every `Execute*` entry read `combat.SpeciesHasBeastMove` (Task 7 Step 6 replaced the predicate list; check it reads whole); `chokeCastInterrupt`; `ExecuteSmother`; Combat specials file row gains `combat_smother.go`, `choke_interrupt.go`. `internal/items/context.md` (`:35`, `:500-531`): drop `SeparateMessages`, say `AttackOptions` decodes `together` only and rejects `separate`, add `MeleeSwingNarratedAs`. `internal/mobcommands/context.md`: `smother.go`. `internal/conditions/context.md`: `ConditionIdSmothered`. `internal/exit/context.md`: `PhraseVerticalExits` no longer has an items caller. Run `python tools/context_md_audit.py internal/species`, then each of `internal/combat`, `internal/actions`, `internal/items`, `internal/mobcommands`, `internal/conditions`, `internal/exit`, one per call; fix any phantom symbol.
 - [ ] **Step 4: Code comments** (ruling H): confirm the `BeastMoves` field comment (Task 6) and the block comment above the `CanUse*` gates (Task 7) are in place; `grep -n "BeastMoves\|beast_moves" internal/species/species.go internal/combat/ai.go`.
-- [ ] **Step 5: `docs/PATCH_NOTES.md`** (D8: owner approves the wording). New top entry, dated the day the PR opens:
+- [ ] **Step 5: `docs/PATCH_NOTES.md`** (D8: approved as drafted, one line pending, see the note under the block). New top entry, dated the day the PR opens:
 
 ```markdown
 ## 2026-10-17: Every creature squares up its own way
@@ -2163,10 +2207,19 @@ EOF
   choking you for a short time, and its smoke can choke off a spell.
 ```
 
+**Owner to confirm (D8 after D4):** "Wolves and cats can go for the throat" is no longer true for cats: D4 leaves the `ambush_predator` profile without a throttle weight (#574), so a cat's gate allows throttle but its AI rarely picks it (Fact 28). Proposed replacement for that bullet, keeping the rest of the approved text:
+
+```markdown
+- Each kind of beast now has its own special moves. Wolves can go for the
+  throat, rats nip at ankles, and snakes simply bite.
+```
+
+Ship the approved text above unless the owner confirms the replacement; record the answer here before this step's commit.
+
 Check every line is within 80 columns, has no number and no dash.
 - [ ] **Step 6: Commit** `docs(combat): reachability slice 2 in the package docs and patch notes (#541)`.
 
-## Task 12: Ship gate (dogmud-shipping)
+## Task 13: Ship gate (dogmud-shipping)
 
 - [ ] **Step 1:** `gofmt -l internal/ modules/` prints nothing.
 - [ ] **Step 2:** `go build ./...` succeeds.
@@ -2188,18 +2241,18 @@ grep -n "species.LoadDataFiles\|attackMessageCount" "$S/boot.log"             # 
 
 Then `git worktree remove --force C:/tmp/dogmud-boot-check` (PowerShell `Remove-Item -Recurse -Force` if Windows holds the exe).
 
-## Task 13: Playtest (dogmud-playtesting)
+## Task 14: Playtest (dogmud-playtesting)
 
 **Files:** new `tools/playtest/scenarios/beast-moves.yaml`, `tools/playtest/goals/scenarios/beast-moves/defender.yaml`, `tools/playtest/goals/scenarios/beast-moves/witness.yaml`, `tools/playtest/goals/2026-10-17-beast-moves-admin.yaml`.
 
 - [ ] **Step 1: Fixture check.** The Ironwind Steppe holds every creature the spec names (Fact 32 and the mob files): Feral Cat 202 (rooms 3001, 3007, 3009; hostile, `ambush_predator`, `generic_fighter`), Steppe Wolf 205 (3013, 3015, 3016; `predator`), Steppe Rat 200 (3000 to 3002; `skirmisher`). Before writing the goals, read rooms 3001 and 3015 for exits and light, and confirm the steppe's day lighting; carry a torch (item 20096, as the slam split lash run did) if any room reads dark.
-- [ ] **Step 2: Two-seat scenario** `tools/playtest/scenarios/beast-moves.yaml` (party mode, `defender` and `witness`, both `bug-finder`, 40 minutes), modelled on `slam-split-lash.yaml`: the defender fights the Feral Cat in 3001 for at least six rounds, then a Steppe Wolf in 3015 for six, then a Steppe Rat for four; the witness walks into each room once the fight is on and does nothing. Group goals: (a) the engage line, each wait line and each swing read as one moment from both seats, and the witness's line names the defender; (b) the cat's lines are pounce lines (leaps, claws and fangs), the wolf's bite lines, no line names a weapon the creature lacks; (c) every special move is quoted with its round; a throttle from the cat is expected only after it has knocked the defender down or while the defender casts, and a throttle, maul or pounce from the rat is a finding; (d) no curly-brace token, doubled or missing name, lowercase start, empty line, or a line wrapping mid-word. Defender goals: `ephemeral.profile: mid` (survives the wolf), `start_room: 3001`, `grant_items: [20096]`, wear the torch, `remove` the weapon so fights last, drink a salve below a third of health.
-- [ ] **Step 3: Admin single run** `tools/playtest/goals/2026-10-17-beast-moves-admin.yaml` (`profile: admin`, `start_room: 4160`, 35 minutes), modelled on `2026-10-16-slam-split-admin.yaml`: `mob spawn 202` and fight eight rounds, quoting every line and every special move; `mob spawn 9541` (The Pass-Apex, a bear: its swings are maul lines, it rakes and charges, it never pounces or hamstrings); `mob spawn 322` (the Elemental Prince, the only smoke elemental): first `look` to confirm it spawned outside its instance and that `attack prince` is accepted (a refusal is the finding to report, then skip the rest of this goal), then fight up to twelve rounds with `mob heal` as needed, quoting every smother line, whether the defender reads that they are blinded and choking, the Smothered per-round line, and whether a second smother ever lands within a few rounds of the first. A cast is the way to see the interrupt: the admin profile casts any spell it knows mid-fight.
+- [ ] **Step 2: Two-seat scenario** `tools/playtest/scenarios/beast-moves.yaml` (party mode, `defender` and `witness`, both `bug-finder`, 40 minutes), modelled on `slam-split-lash.yaml`: the defender fights the Feral Cat in 3001 for at least six rounds, then a Steppe Wolf in 3015 for six, then a Steppe Rat for four; the witness walks into each room once the fight is on and does nothing. Group goals: (a) the engage line, each wait line and each swing read as one moment from both seats, and the witness's line names the defender; (b) the cat's lines are pounce lines (leaps, claws and fangs), the wolf's bite lines, no line names a weapon the creature lacks; (c) every special move is quoted with its round; the rat never throttles, mauls or pounces (any one is a finding); a cat's throttle is NOT required (D4: its gate allows throttle, but with no `ambush_predator` weight its AI rarely picks it, #574; the gate is proven by `TestBeastMoveGates_TableExamples`, Task 7), so report a cat throttle if one happens and do not report its absence; a cat's rake, pounce or hamstring and a wolf's maul, throttle, pounce or hamstring are expected moves; (d) no curly-brace token, doubled or missing name, lowercase start, empty line, or a line wrapping mid-word. Defender goals: `ephemeral.profile: mid` (survives the wolf), `start_room: 3001`, `grant_items: [20096]`, wear the torch, `remove` the weapon so fights last, drink a salve below a third of health.
+- [ ] **Step 3: Admin single run** `tools/playtest/goals/2026-10-17-beast-moves-admin.yaml` (`profile: admin`, `start_room: 4160`, 35 minutes), modelled on `2026-10-16-slam-split-admin.yaml`: `mob spawn 202` and fight eight rounds, quoting every line and every special move (a cat throttle is not required, D4); `mob spawn 9541` (The Pass-Apex, a bear: its swings are maul lines, every line fits 80 columns, it rakes and charges, it never pounces or hamstrings); `mob spawn 322` (the Elemental Prince, the only smoke elemental): first `look` to confirm it spawned outside its instance and that `attack prince` is accepted (a refusal is the finding to report, then skip the rest of this goal), then fight up to twelve rounds with `mob heal` as needed, quoting every smother line, whether the defender reads that they are blinded and choking, the Smothered per-round line, and whether a second smother ever lands within a few rounds of the first. A cast is the way to see the interrupt: the admin profile casts any spell it knows mid-fight.
 - [ ] **Step 4: Run** `/playtest-scenario --checkout <abs path of the branch checkout> tools/playtest/scenarios/beast-moves.yaml` and `/playtest local --checkout <abs> feature-tester 2026-10-17-beast-moves-admin.yaml`. Confirm the containers are gone afterwards (`playtestrun stop` leaves them up; `docker rm -f` by name of the run's own container).
-- [ ] **Step 5: Findings to issues** (reports are gitignored): search `gh issue list --repo pruuk/DOGMud --search "<words>"` first; file new ones with `gh issue create --repo pruuk/DOGMud --label bug --label from-playtest --label area:combat`. File D7's width issue now if D7 is (a): "maul, pounce, claws and bite run past 80 columns at 20-character names", with the Fact 30 counts. Record harness lessons in memory only.
+- [ ] **Step 5: Findings to issues** (reports are gitignored): search `gh issue list --repo pruuk/DOGMud --search "<words>"` first; file new ones with `gh issue create --repo pruuk/DOGMud --label bug --label from-playtest --label area:combat`. A maul or pounce line wrapping past 80 columns is a finding against Task 8 (D7 rewrote both files). A cat that never throttles is not a finding (D4, #574). Record harness lessons in memory only.
 - [ ] **Step 6: Commit** the four goal and scenario files, `test(playtest): beast moves two-seat and admin runs (#541)`, the body naming the fixtures and what the run found.
 
-## Task 14: PR
+## Task 15: PR
 
 - [ ] **Step 1:** `git push -u origin feature/combat-reachability-slice2`.
 - [ ] **Step 2:** Open the PR; the body goes through a file written with Write to the scratchpad:
@@ -2210,7 +2263,7 @@ gh pr create --repo pruuk/DOGMud --base master --head feature/combat-reachabilit
   --body-file "$S/pr-body.md"
 ```
 
-`pr-body.md` says "Part of #541." and "Part of #539." (never a closing keyword: issue #541 closes by hand once the owner agrees nothing remains, and #222 shows prose about a future plan auto-closes); lists the owner decisions D1 to D8 as taken; the behaviour changes a player sees (engage lines, wait lines in the creature's own way, bare-handed humanoids now waiting from `unarmed.yaml`, bears maul, cats pounce, the per-species move table with what the bird, serpent and rodent lost, smother); what was retired (17 separate blocks, shooting.yaml's swing lines, the default-attack throttle.yaml) with golden row counts; the new files by full path; the gate evidence (Task 12 tails) and the playtest result with issue numbers; and ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+`pr-body.md` says "Part of #541." and "Part of #539." (never a closing keyword: issue #541 closes by hand once the owner agrees nothing remains, and #222 shows prose about a future plan auto-closes); lists the owner rulings D1 to D8 as recorded in this plan (including D4's follow-up #574 under #575, and the D6 deletion superseding spec section 4's predicate bullet); the behaviour changes a player sees (engage lines, wait lines in the creature's own way, bare-handed humanoids now waiting from `unarmed.yaml`, bears maul, cats pounce, maul and pounce lines within 80 columns, the per-species move table with what the bird, serpent and rodent lost, smother); what was retired (17 separate blocks, shooting.yaml's swing lines, the default-attack throttle.yaml) with golden row counts; the new files by full path; the gate evidence (Task 13 tails) and the playtest result with issue numbers; and ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 - [ ] **Step 3:** Read the URL `gh` prints; it must say `pruuk/DOGMud`. `gh pr checks <n> --repo pruuk/DOGMud --watch`, then confirm with `gh run list --repo pruuk/DOGMud` that every expected workflow ran. The owner merges and deploys; do not deploy.
 
 ---
@@ -2219,7 +2272,7 @@ gh pr create --repo pruuk/DOGMud --base master --head feature/combat-reachabilit
 
 | Risk | Answer |
 |---|---|
-| Switching bears and cats changes which moves they qualify for (spec) | Tasks 6 and 7 move the moves to data before Task 8 switches the attack; `TestBeastMovesMatchTheReviewedTable` pins the result |
+| Switching bears and cats changes which moves they qualify for (spec) | Tasks 6 and 7 move the moves to data before Task 9 switches the attack; `TestBeastMovesMatchTheReviewedTable` pins the result |
 | An engage line repeats a weapon name a reader cannot see (spec) | D2 (a): below full sight the plain line is sent with names hidden, as the wait round does; `TestEngageLineFor_DarkReaderGetsThePlainLine` and the existing dark and blinded attack tests hold it |
 | Retiring `separate` breaks a path not yet found (spec) | Fact 20 lists every use; the decoder rejects the key at load; the compiler enumerates the rest once the type is gone; the full suite and the boot check run |
 | The default world's combat messages carry `separate` | They already fail to load (role-first layout, Fact 7); the default world is out of scope and untouched |
@@ -2227,18 +2280,29 @@ gh pr create --repo pruuk/DOGMud --base master --head feature/combat-reachabilit
 | Bare-handed humanoids' wait and engage lines move from generic.yaml to unarmed.yaml, and the entangled-defence lines change colour for natural attackers | A direct consequence of ruling B and the one rule; named in the PR body and checked in the playtest |
 | Refactoring throttle's cast interrupt into a helper changes a guarded file | The helper is a move of the same code; throttle's tests and the drift test's callee row catch a drift; allowlist line keys for `combat_throttle.go:146,149` do not move |
 | The Prince spawned outside its instance may behave oddly or refuse an attack | The admin goal checks the spawn and the attack first and reports a refusal as the finding; the unit tests cover smother regardless |
-| Cats throttle rarely even with D4 | By design: ruling E makes throttle the finisher; the weight lets it win against casters and downed targets |
-| maul.yaml and pounce.yaml exceed 80 columns at 20-character names | No regression against claws.yaml and bite.yaml (Fact 30); D7 files the copy issue |
+| Cats rarely throttle: the gate allows it but `ambush_predator` has no throttle weight (Fact 28) | D4: the profile is not changed in this slice; the tuning is #574 under the behaviour arc #575. Tests prove the gate, the playtest does not require a cat throttle, and the patch note stops promising it (D8, owner to confirm) |
+| maul.yaml and pounce.yaml exceed 80 columns at 20-character names (149 and 121 of 345 role lines, Fact 30) | D7 (b): Task 8 rewrites every over-width record through an owner review before Task 9 switches bears and cats, and Task 9 extends the generic width guard to both files |
+| Deleting the predicates removes something #563 might have reused | D6 (b): #563 wants a proper anatomy model, not attack-family predicates; Task 7 Step 6 greps (with a pre-deletion proof the pattern matches) that no caller remains, and the root guard keeps the names from returning to a gate |
+| The D7 rewrite drifts from a record's one moment or reintroduces a #455 defect | Task 8 Step 3 checks each draft by the same rules the guards apply (width, subject-verb, banner, idiom, dashes) before the owner sees it; Task 9 Step 3 runs the real natural-weapon guard once cats use pounce |
 
 ## Self-review
 
 - Spec section 1 (one rule, its callers, the test): Task 1. Fumble and coup de grace reach it through `buildWeaponSetup` (Fact 6); the fourth reader (entangled lines) is included.
 - Section 2 (engage from prepare, by `AttackSubtype` not `meleeDisplaySubtype`, sight hiding, guards untouched): Task 4.
 - Section 3 (separate retired with type, render and both branches; shooting exemption read from one function; throttle.yaml deleted with guard lists and goldens; counts re-recorded): Tasks 2, 3, 5.
-- Section 4 (maul, pounce subtypes and descriptions, `validNaturalAttacks`, natural-sharp band, plus reach and pools; bear and feline switched; predicates describe the body): Task 8.
+- Section 4 (maul, pounce subtypes and descriptions, `validNaturalAttacks`, natural-sharp band, plus reach and pools; bear and feline switched): Task 9, after Task 8 brings both files within 80 columns. Its bullet that the predicates "describe the body" is superseded by D6 (b): Task 7 Step 6 deletes them.
 - Section 5 (the field, the validator with unknown names and body rules, the gates at all three sync points, the table including row 44, bears' charge, scripted moves unchanged): Tasks 6 and 7; corrections in Facts 14 to 16.
-- Section 6 (unit tests for the three cases, wolf engage and wait from bite, bear from maul, cat from pounce, bow from shooting prepare; the table test; the gate-reads-the-list guard; goldens only for deliberate changes; boot and playtest): Tasks 1, 4, 6, 7, 8, 12, 13.
-- Section 7 and ruling H (three named context.md files plus four more the change touches, the two code comments, patch notes): Task 11.
-- Appendix A (narration, Smothered at 144 with 89's values, Blinded on hit, partial nothing, cast interrupt on the shared cooldown with the second-smother test, the AI gate reading beast_moves): Tasks 9 and 10.
-- Every guard added demonstrates it can fail: `TestUnreachableCombatLine_CanFail`, `TestValidateBeastMoves_CanFail`, `TestFamilyReadsIn_CanFail`, `TestScriptedBeastMoveFindings_CanFail`, the both-halves `TestBeastMoveGatesReadTheSpeciesList`, the `_notlisted` drift rows, and the subject-verb probe extended in Task 8.
-- New player text: only D3 (three pounce lines), D5 (the defence label) and D8 (patch notes), each flagged for approval. Engage lines come from existing prepare pools; smother's copy is Appendix A (approved).
+- Section 6 (unit tests for the three cases, wolf engage and wait from bite, bear from maul, cat from pounce, bow from shooting prepare; the table test; the gate-reads-the-list guard; goldens only for deliberate changes; boot and playtest): Tasks 1, 4, 6, 7, 8, 9, 13, 14.
+- Section 7 and ruling H (three named context.md files plus four more the change touches, the two code comments, patch notes): Task 12, with the predicate mentions in four context.md files handled in Task 7 Step 6.
+- Appendix A (narration, Smothered at 144 with 89's values, Blinded on hit, partial nothing, cast interrupt on the shared cooldown with the second-smother test, the AI gate reading beast_moves): Tasks 10 and 11.
+- Owner rulings, each to its task:
+  - D1 (a) smother.yaml without actor roles, cast_interrupt keeps actee and observer: Task 10 Step 2; Task 11 commit body.
+  - D2 (a) authored engage line at full sight only: Task 4 Steps 1 and 3 (`EngageLineFor`, `TestEngageLineFor_DarkReaderGetsThePlainLine`).
+  - D3 pounce 240-242 record approved: Task 8 Step 2 (lands with the D7 rewrite, shown as approved); Task 9 Step 3 runs the natural-weapon guard over it.
+  - D4 no AI profile change (#574 under #575): Task 7 header and Step 8 body (no `aiProfiles` edit), `TestBeastMoveGates_TableExamples` proves the gate, Task 12 Step 2 (context.md), Task 14 Steps 2, 3 and 5 (no cat throttle required, a rat never throttles), Risks.
+  - D5 "rolling smoke": Task 11 Steps 6 and 7 (`moveDefenceLines` label, `defensive_messages_newly_defendable_test.go`).
+  - D6 (b) predicates and `SpeciesNaturalAttack` deleted: Task 7 Steps 2 and 6 (grep with a pre-deletion proof, test deletion, four context.md files); Task 9 no longer touches them.
+  - D7 (b) maul and pounce rewritten to 80 columns: Task 8 (measure, draft, check, owner gate, apply, golden), Task 9 Step 1 (width guard over both files), Fact 30 (re-measured counts).
+  - D8 patch note approved, cats' throat line pending: Task 12 Step 5 ("owner to confirm" with the proposed bullet).
+- Every guard added demonstrates it can fail: `TestUnreachableCombatLine_CanFail`, `TestValidateBeastMoves_CanFail`, `TestFamilyReadsIn_CanFail`, `TestScriptedBeastMoveFindings_CanFail`, the both-halves `TestBeastMoveGatesReadTheSpeciesList`, the `_notlisted` drift rows, `TestSlamSplitWidthCheck_CanFail` plus the pre-rewrite measure (Task 8 Step 1) for the width guard extended to maul and pounce, the Task 7 Step 6 pre-deletion grep, and the subject-verb probe (Task 8 Step 3, and Task 9 Step 3 if `forward` is allowlisted).
+- New player text: the Task 8 maul and pounce rewrites (owner review table, D7) including D3's three approved pounce lines, D5 (the defence label, approved) and D8 (patch notes, approved with one bullet pending). Engage lines come from existing prepare pools; smother's copy is Appendix A (approved) less its actor lines.
