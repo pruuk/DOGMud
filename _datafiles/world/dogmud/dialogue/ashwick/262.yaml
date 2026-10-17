@@ -38,7 +38,7 @@ tree:
       moodChange: neutral
 
     - id: negotiate
-      triggers: ["negotiate", "work", "delia", "help", "arrangement", "together", "deal"]
+      triggers: ["negotiate", "work", "delia", "help", "arrangement", "together", "deal", "quest", "task"]
       questRequired: ["16-start"]
       questExcluded: ["16-end"]
       grantsQuest: "16-forager"

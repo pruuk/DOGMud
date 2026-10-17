@@ -41,7 +41,7 @@ tree:
       unlocks: ["give_crate"]
 
     - id: give_crate
-      triggers: ["here", "crate", "take", "brought"]
+      triggers: ["here", "crate", "take", "brought", "quest", "task"]
       questRequired: ["17-start"]
       questExcluded: ["17-end"]
       requiresItem: 52
