@@ -23,7 +23,7 @@ tree:
   root:
     text: "Remnant bins are at the front — ends and offcuts, priced
       down from the original bolt. If you want full-weight cloth I
-      don't carry it; what you see is what this shop does."
+      don't carry it. What you see is what this shop does."
     hints: "You could ask Marn about his fabric stock, the kinds of
       cloth he carries, or whether there is more to the shop."
     variants:
@@ -91,7 +91,7 @@ tree:
       text: "What I carry is what's left after the bolt has been used
         for its purpose — short lengths, odd weights, colors that were
         fashionable one season and weren't renewed the next. Thread and
-        bone needles I stock in quantity; they move steadily. Everything
+        bone needles I stock in quantity. They move steadily. Everything
         is priced at what it actually is, not what it might have been."
       hints: "You could ask Marn about the back of the shop, or about
         his competition in the cloth trade."

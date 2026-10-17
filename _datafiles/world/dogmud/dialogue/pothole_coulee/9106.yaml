@@ -46,7 +46,7 @@ tree:
         text: >-
           Still walking the town? Good. The slates, the shelves, and
           the taps -- in that order. Type
-          <ansi fg="command">quest</ansi> if you lose your place; I
+          <ansi fg="command">quest</ansi> if you lose your place. I
           will still be shouting when you get back.
         hints: >-
           Type quests to see your next stop.
@@ -77,9 +77,9 @@ tree:
       text: >-
         You will not walk Gaius alone -- real folk fill these roads,
         same as you. A few words to carry: type say followed by your
-        words to speak to everyone in the room; who to see who is
-        about; tell someone's-name then your words to speak just to
-        them; and try an emote like wave or grin. That is the whole of
+        words to speak to everyone in the room, who to see who is
+        about, tell someone's-name then your words to speak just to
+        them, and try an emote like wave or grin. That is the whole of
         getting on with people. The rest you will pick up by doing. Off
         you go.
       hints: >-
@@ -151,7 +151,7 @@ tree:
         Fighting in one, smithing in another, brewing, the wilds,
         folding -- the quiet art, mind you -- old lore, and the far
         hill where they teach the long shot. The paths are marked off
-        the shore and the square. Walk any of them; walk all of them
+        the shore and the square. Walk any of them. Walk all of them
         if your boots hold.
       hints: >-
         The mouths open off the edges of town. The map command shows
@@ -174,7 +174,7 @@ tree:
       triggers: ["voices", "mouth", "throat", "loud", "shout"]
       text: >-
         Born with both, and glad of it. The low one carries across the
-        square; the top one does the thinking. They get along better
+        square. The top one does the thinking. They get along better
         than most married couples. Folk stop noticing inside a week --
         you will too.
       hints: >-

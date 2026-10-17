@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/dialogue"
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 )
 
@@ -26,35 +25,11 @@ type dialogueDeps struct {
 
 func realDialogueDeps() dialogueDeps {
 	return dialogueDeps{
-		load:   dialogue.Load,
-		save:   dialogue.SaveDialogueFile,
-		create: dialogue.CreateNewDialogueFile,
-		del:    dialogue.DeleteDialogueFile,
-		validators: dialogue.DialogueValidators{
-			QuestExists: func(tok string) bool { return quests.GetQuest(tok) != nil },
-			QuestEndToken: func(tok string) (string, bool) {
-				if q := quests.GetQuest(tok); q != nil {
-					return fmt.Sprintf("%d-end", q.QuestId), true
-				}
-				return "", false
-			},
-			FlagDeclared: func(key, value string) bool {
-				for _, q := range quests.GetAllQuests() {
-					for _, f := range q.Flags {
-						if f.Key != key {
-							continue
-						}
-						for _, v := range f.Values {
-							if v == value {
-								return true
-							}
-						}
-					}
-				}
-				return false
-			},
-			ItemExists: func(id int) bool { return items.GetItemSpec(id) != nil },
-		},
+		load:       dialogue.Load,
+		save:       dialogue.SaveDialogueFile,
+		create:     dialogue.CreateNewDialogueFile,
+		del:        dialogue.DeleteDialogueFile,
+		validators: dialogue.RegistryValidators(),
 	}
 }
 

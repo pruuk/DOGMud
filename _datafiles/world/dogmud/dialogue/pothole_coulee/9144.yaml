@@ -47,7 +47,7 @@ patterns:
 
 tree:
   root:
-    text: "Grieve. Adept, once; caretaker, now."
+    text: "Grieve. Adept, once. Caretaker, now."
     hints: "You could ask Grieve about casting or your task."
     variants:
       # ── Not yet Opened ───────────────────────────────────
@@ -97,7 +97,7 @@ tree:
       grantsQuest: "44-start"
       text: "Then here is the first turning. North of here is the Star
         Chamber, and at its center a practice mark with a mote of folded
-        light hanging over it -- I conjure them for students; you cannot harm
+        light hanging over it -- I conjure them for students. You cannot harm
         it. Stand at the mark and cast a spell you already know at the mote.
         The spike you woke with will do -- type cast conviction-spike mote.
         Do not force it. Shape it, and let it go. Then come back to me."
@@ -113,7 +113,7 @@ tree:
       grantsQuest: "44-end"
       text: "You let it go instead of throwing it. I felt the fold from here.
         That is the whole foundation -- everything else is only larger folds
-        and steadier nerves. Take this staff; oak, a focus, it will steady
+        and steadier nerves. Take this staff. Oak, a focus, it will steady
         your castings without ever casting for you. North now, to the grove.
         Orrin will teach you to hold a working together while the world tries
         to break it."

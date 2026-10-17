@@ -28,7 +28,13 @@ Two conversation styles coexist in one file:
 - **memory.go** — per-(mob instance, player) conversation memory.
 - **mood.go** — per-mob-instance mood state.
 - **greetings.go** — ambient arrival greetings and greet-once tracking.
-- **validate.go** — `ValidateDialogueFile` with injectable validators.
+- **validate.go** — `ValidateDialogueFile` with injectable validators. The
+  semicolon rule covers spoken fields only (greetings, pattern responses,
+  root, variant and node text); hints go out through SendText and are exempt.
+- **registry_validators.go** — `RegistryValidators()`, the validators backed by
+  the loaded quest and item registries. The builder's dialogue editor
+  (modules/gmcp) and the boot smoke sweep
+  `TestSmoke_ShippedDialoguePassesTheEditorValidator` both use it.
 - **validation.go** — `CollectFlagReferences` for quest-flag cross-checking.
 - **walk.go** — `WalkAllFiles`, used by audits and boot-time validation.
 
@@ -98,6 +104,7 @@ func HasGreeted(mobInstanceId, userId int) bool
 func MarkGreeted(mobInstanceId, userId int)
 
 func ValidateDialogueFile(df DialogueFile, v DialogueValidators) (errs, warns []string)
+func RegistryValidators() DialogueValidators
 func CollectFlagReferences(df *DialogueFile) (refs, sets []FlagRef)
 
 func SaveDialogueFile(df DialogueFile) error

@@ -13,7 +13,7 @@ greetings:
 patterns:
   - keywords: ["hello", "hi", "greet", "hey"]
     responses:
-      - "Welcome in. Mind the reed-dust; it gets everywhere this season."
+      - "Welcome in. Mind the reed-dust. It gets everywhere this season."
       - "Hello. The good stock is at eye level and the better stock is behind me."
 
   - keywords: [""]
@@ -62,7 +62,7 @@ tree:
       text: >-
         I buy as well as sell -- type <ansi fg="command">sell</ansi>
         and the thing's name, and I will name my price. It will be
-        less than I charge for the same thing; that gap is called a
+        less than I charge for the same thing. That gap is called a
         roof over my head. Bring me what the coulee coughs up and we
         will both do fine.
       hints: >-
@@ -75,7 +75,7 @@ tree:
         honest opinion delivered at distance. Cheap to feed, light to
         carry, harder to master than it looks. Folk who take to it
         usually end up out past the far-hill mouth, where they teach
-        the long shot properly. Pouch of shot goes with it; do not
+        the long shot properly. Pouch of shot goes with it. Do not
         buy one without the other.
       hints: >-
         You could ask about her wares or about selling.

@@ -20,7 +20,7 @@ patterns:
       - "Lanterns and lamp oil are on the shelf to the left -- I keep
         a good stock because the caves draw more than the usual number
         of people who forgot to bring a light. Salvage kit is behind
-        the counter; I do not put it out front because the last one
+        the counter. I do not put it out front because the last one
         walked out in someone's pack by accident."
       - "Salvage kits, lanterns, lamp oil, rope, salt. A little of
         everything useful. Nothing glamorous. That is the trade."
@@ -91,7 +91,7 @@ tree:
         mis-spelled, same as always. I know his handwriting now, so
         I check against the crate rather than the paper. Between the
         two of them it comes out right. I have taken on extra lamp
-        oil and rope this run; the caves have been busy."
+        oil and rope this run. The caves have been busy."
 
     - id: knows_everyone
       triggers: ["orders", "regular", "everyone", "know", "customers",

@@ -8,7 +8,7 @@ greetings:
 patterns:
   - keywords: ["hello", "hi", "greet", "hey"]
     responses:
-      - "Day to you. Announcements on the hour; board's up if
+      - "Day to you. Announcements on the hour. Board's up if
         you want to read ahead."
   - keywords: ["news", "hear", "what", "today"]
     responses:
@@ -40,7 +40,7 @@ tree:
         a white ear, name of Burr, answers to neither -- that's
         the owner's description, not mine. The board has all of
         it written up. I read it on the bell and again on
-        request. The bell's the announcement; the board is
+        request. The bell's the announcement. The board is
         the record.
       hints: "You could ask about the market square, or about
         Greenford and the university uphill."
@@ -54,7 +54,7 @@ tree:
         market for eleven years and the square has changed
         less than you'd expect: same cobbles, same stalls in
         roughly the same places, same produce on a Thursday.
-        The inn's on the east side; the bookshop's on the
+        The inn's on the east side. The bookshop's on the
         west. The rest of the town fills in around them. It's
         a settled place.
       hints: "You could ask about the notices and the day's

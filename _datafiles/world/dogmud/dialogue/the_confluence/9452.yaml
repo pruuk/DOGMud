@@ -49,7 +49,7 @@ tree:
       text: "River broth and black bread -- I make both each
         morning in quantity. It is not elaborate. It is hot
         and filling, which is what a road-worn pilgrim needs.
-        I ask a small coin for it; the hall's supplies have
+        I ask a small coin for it. The hall's supplies have
         to come from somewhere. If you are truly without coin,
         speak up. The Prior would not have me turn a hungry
         pilgrim away over a few copper."
@@ -61,7 +61,7 @@ tree:
         "lodge", "lodging", "where", "back"]
       text: "The back hall has pallets -- straw, clean, dry.
         Good enough for a night's rest. There is no charge
-        for sleeping; that is the founding covenant of the
+        for sleeping. That is the founding covenant of the
         hall, and I keep it. Pilgrims who arrive sick or
         injured stay until they can walk, no questions asked.
         The temple has resources for longer care if you
@@ -89,7 +89,7 @@ tree:
       text: "The causeway is straight out the forecourt gate
         and across to the island. The public temple is open --
         the founding reliefs, the altar, the sacred fire. It
-        is worth a visit even if the faith is not yours; the
+        is worth a visit even if the faith is not yours. The
         stonework is very old. The Warden at the gate can
         answer more about what lies beyond the public nave."
       hints: "You could ask about the food or the pallets

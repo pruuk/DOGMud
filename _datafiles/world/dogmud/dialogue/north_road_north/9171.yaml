@@ -47,7 +47,7 @@ tree:
       triggers: ["quest", "task", "bandits", "bandit", "report", "done"]
       questRequired: ["61-start"]
       questExcluded: ["61-end"]
-      text: "Not finished yet -- I would know it on my custom if you were. The hedgerow bandit lies up along the road north; the Reach-Touched is further on, out in the Empty Reach. Both have to go down. Come and tell me when they have."
+      text: "Not finished yet -- I would know it on my custom if you were. The hedgerow bandit lies up along the road north. The Reach-Touched is further on, out in the Empty Reach. Both have to go down. Come and tell me when they have."
       hints: "Kill both the hedgerow bandit (on the road north) and the Reach-Touched (in the Empty Reach), then return and tell Pemberton."
 
     - id: quest_done

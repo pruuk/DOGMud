@@ -107,11 +107,11 @@ tree:
       questExcluded: ["42-start", "42-end"]
       grantsQuest: "42-start"
       givesItem: 40017
-      text: "Right. Here -- a salt-pouch; you will want it for the fire.
+      text: "Right. Here -- a salt-pouch. You will want it for the fire.
         The loop is this. First, take meat: track and kill a pronghorn
         out on the fringe -- it drops raw meat, so pick it up. Second,
         rest rough: type sleep where it is safe and the field mends you
-        faster than walking does; type stand to rise. Third, cook it: at
+        faster than walking does. Type stand to rise. Third, cook it: at
         my fire here, type craft grilled meat -- the meat and the salt
         become a meal. Do all three and come back."
       hints: "You received a salt-pouch. Hunt a pronghorn (get the meat it
@@ -139,7 +139,7 @@ tree:
       text: "Killed clean, rested rough, ate what you took. That is the
         whole of being a hunter, and you did it without me holding your
         hand. Take these boots -- broken in, good for long ground -- and
-        the stew recipe; a hot meal does more than fill you. Now the bad
+        the stew recipe. A hot meal does more than fill you. Now the bad
         work, when you are ready. The pack. Ask me about it."
       hints: "Quest complete. Type ask delk pack when you are ready for
         the final task."

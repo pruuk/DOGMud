@@ -21,7 +21,7 @@ tree:
   root:
     text: |
       University gate -- I am Kern, the porter. Sign in at
-      the lodge window if you are visiting; name and purpose,
+      the lodge window if you are visiting. Name and purpose,
       nothing more. Library is east across the quad. Archive
       is south of the reading room. Brennan's office is west
       in the lecture-hall range. Visiting hours are on the
@@ -37,9 +37,9 @@ tree:
         "go", "map", "how do"]
       text: |
         Library is east across the quad -- public stacks,
-        reference, and lending; reading room is south of
+        reference, and lending. Reading room is south of
         that. Archive is further south again, past the
-        reading room; if it is the eastern surveys you want,
+        reading room. If it is the eastern surveys you want,
         Tess the Archivist has them. Brennan's office is
         west, in the lecture-hall range -- first door on the
         south side. The board here has visiting hours for
@@ -57,7 +57,7 @@ tree:
         the tower every other week. Seven years I have been
         at this gate and the campus has not stopped changing.
         The colleges each have their own hours and their own
-        particulars; the board covers the main buildings.
+        particulars. The board covers the main buildings.
         The university is the town's main industry and its
         main personality, in about equal measure.
       hints: "You could ask for directions to the library,
@@ -74,7 +74,7 @@ tree:
         it exact. If someone has been here, their name is in
         it. If they left, that is in it too. Seven years of
         that record is in the lodge behind me. Some of it is
-        interesting in hindsight; most of it is just names
+        interesting in hindsight. Most of it is just names
         and hours, which is what it is supposed to be.
       hints: "You could ask for directions across the campus,
         or about the university and its history."

@@ -53,12 +53,12 @@ func ValidateDialogueFile(df DialogueFile, v DialogueValidators) (errs []string,
 			askWords: p.Keywords})
 	}
 	if df.Tree != nil {
+		// Hints are not checked: they reach the player through SendText, never
+		// through a mob's `say`, so the command splitter never sees them.
 		noSemi("tree root text", df.Tree.Root.Text)
-		noSemi("tree root hints", df.Tree.Root.Hints)
 		for i, rv := range df.Tree.Root.Variants {
 			w := fmt.Sprintf("root variant %d", i+1)
 			noSemi(w+" text", rv.Text)
-			noSemi(w+" hints", rv.Hints)
 			gates = append(gates, gateFields{where: w, grantsQuest: rv.GrantsQuest,
 				questRequired: rv.QuestRequired, questExcluded: rv.QuestExcluded,
 				flagRequired: rv.QuestFlagRequired, flagExcluded: rv.QuestFlagExcluded,
@@ -74,7 +74,6 @@ func ValidateDialogueFile(df DialogueFile, v DialogueValidators) (errs []string,
 		for _, n := range df.Tree.Nodes {
 			w := fmt.Sprintf("node %q", n.Id)
 			noSemi(w+" text", n.Text)
-			noSemi(w+" hints", n.Hints)
 			if n.GrantsQuest != "" && plainSeen {
 				grantSeenAfterPlain = true
 			}

@@ -21,8 +21,8 @@ tree:
     text: |
       Public stacks -- lending and reference, open until the
       afternoon bell. Reading room is south if you need a
-      table and a lamp. Card catalogue is beside this desk;
-      the system is straightforward once you have used it
+      table and a lamp. Card catalogue is beside this desk.
+      The system is straightforward once you have used it
       once. What do you need?
     hints: "You could ask Vance about the library holdings and
       sections, about borrowing and the lending rules, about
@@ -37,7 +37,7 @@ tree:
         runs, geography and natural philosophy, a good run of
         the university's own published papers. The upper tiers
         are reference only, not to leave the room. The card
-        catalogue covers everything in the public stacks; it
+        catalogue covers everything in the public stacks. It
         does not cover the archive, which is a separate set
         of holdings south of the reading room. If you know
         what you want, the catalogue will tell you where to
@@ -52,7 +52,7 @@ tree:
       text: |
         Lending items go out on a standard card -- the card
         stays here, you take the book. Two weeks, renewable
-        once. Returns go on the cart by the entrance; I re-
+        once. Returns go on the cart by the entrance. I re-
         shelve on a daily cycle. Reference items do not leave
         the room. Hours are the morning bell to the afternoon
         bell, six days. The reading room south has the same
@@ -67,7 +67,7 @@ tree:
         "silent", "rule", "shh", "why", "convention"]
       text: |
         The rule is old and does not need a sign. People who
-        use the stacks regularly already know it; people who
+        use the stacks regularly already know it. People who
         do not learn it from the people who do. The reading
         room south is the same. I find most visitors respect
         it without being told, which is the best version of

@@ -33,7 +33,7 @@ tree:
     variants:
       - questExcluded: ["30-end"]
         text: >-
-          New, and not yet Opened -- I can tell; the unopened hold
+          New, and not yet Opened -- I can tell. The unopened hold
           their shoulders like they are still carrying the old world.
           See Hadwen at the pool when you are ready. Then come back
           and we will talk about keeping you in one piece.
@@ -72,7 +72,7 @@ tree:
         It opened the year I started mending, which I have always
         taken as the work approving of me. It sees slow things -- the
         mend under a scab, the fever before the heat. It blinks when
-        it is thinking. Pay it no mind; it has seen worse than you.
+        it is thinking. Pay it no mind. It has seen worse than you.
       hints: >-
         You could ask about healing or about making this place home.
 

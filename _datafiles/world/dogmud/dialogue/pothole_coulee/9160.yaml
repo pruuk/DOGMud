@@ -5,7 +5,7 @@ defaultMood: neutral
 patterns:
   - keywords: ["hello", "hi", "greet", "hey", "hail"]
     responses:
-      - "You found your way up here. Few do. I am Sere; I keep the shrine, or
+      - "You found your way up here. Few do. I am Sere. I keep the shrine, or
           the shrine keeps me -- after this long it is hard to say which."
       - "Speak softly. The old places hear better than the new ones, and this
           is the oldest of all."
@@ -24,7 +24,7 @@ patterns:
     responses:
       - "The thinning shows through me, yes -- the bone of my skull, pale under
           the skin at the temples. The old place does it to whoever stays in
-          it. I stayed longest. I have made my peace; the shrine and I have
+          it. I stayed longest. I have made my peace. The shrine and I have
           worn into the same shape."
 
   - keywords: ["beneath", "under", "floor", "disc", "stone", "buried"]
@@ -51,7 +51,7 @@ tree:
         text: "You have come up out of order. The stones come before the shrine
           -- go down to Hale, learn the folk's story and settle what needs
           settling, and come back when he has named you sound. What lies here is
-          not for the unready, and I have waited this long; I can wait a little
+          not for the unready, and I have waited this long. I can wait a little
           more."
         hints: "Return to Loresinger Hale at the standing stones and finish his
           task before coming to Hermit Sere."
@@ -70,7 +70,7 @@ tree:
         questExcluded: ["49-end"]
         text: "It is still down there, under the Reliquary floor -- the deepest
           chamber, where the flags have cracked and heaved. Search it out with
-          your hands; search again if the first try finds only stone. Look on
+          your hands. Search again if the first try finds only stone. Look on
           what you uncover, then come and tell me it is real."
         hints: "Go to the Reliquary (deepest chamber). Type search to uncover
           what lies beneath the floor -- search again if the first try finds
@@ -111,7 +111,7 @@ tree:
       grantsQuest: "49-end"
       text: "So it is real. I have felt it under the floor for thirty years and
         never had the hands to lift it -- and you did, in an afternoon. Leave it
-        where the light can reach it; some things are meant to be found more
+        where the light can reach it. Some things are meant to be found more
         than once. You came to us a stranger, and you leave the one soul living
         who has looked on the thing beneath the shrine and carried the wondering
         back out. Carry it well. The world may tell you what it was, one day,

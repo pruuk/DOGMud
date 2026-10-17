@@ -59,7 +59,7 @@ tree:
         text: >-
           You have not been through the pool yet -- I can tell by
           the eyes. Cleric Hadwen at the water will sort that.
-          Come back after; the slope will keep and so will I.
+          Come back after. The slope will keep and so will I.
         hints: >-
           Find Cleric Hadwen at the pool in Pothole Coulee and
           go through the Awakening Rite before heading up the slope.
@@ -79,7 +79,7 @@ tree:
         questExcluded: ["36-start", "36-end"]
         text: >-
           Forged something already. Good -- the slope respects
-          that. The vein is still there; the company is not good.
+          that. The vein is still there. The company is not good.
           If you want the work, I can point you at it.
         hints: >-
           Ask Ovell about the vein or the slope if you want the
@@ -90,8 +90,8 @@ tree:
           Still out there? The scavengers run in the lower scree
           and the lurker holds the pocket -- they will not give
           ground easy. If it turns against you, flee and come
-          back down. The Mending Hut will have you if you fall;
-          that is the coulee's way of saying you are not done
+          back down. The Mending Hut will have you if you fall.
+          That is the coulee's way of saying you are not done
           just because you went down. And the vein -- you forage
           it, same as anything else on the slope. Type forage
           when you are standing on the scree.
@@ -124,7 +124,7 @@ tree:
           The beast is still down there in the deep dark. Light your
           glow -- cast chrysalis-glow -- before you take the descent,
           then fight your way down past the workings and put the thing
-          down in its den at the bottom. Flee back up if you must; the
+          down in its den at the bottom. Flee back up if you must. The
           Mending Hut holds, same as ever.
         hints: >-
           Type cast chrysalis-glow, then descend the mine mouth below
@@ -162,7 +162,7 @@ tree:
         standing on the scree field. The rock will give up what it
         has.
         If a fight turns against you up there, flee. I mean it. You
-        wake at the Mending Hut if you go down; the slope does not
+        wake at the Mending Hut if you go down. The slope does not
         get to keep you. Come back, try again. The rock is patient.
         Check what they drop and put it on if it fits -- armor is
         armor up here.
@@ -184,15 +184,15 @@ tree:
       text: >-
         You actually did it. The pocket is clear -- I can hear the
         difference in how the wind moves up there. And you worked
-        the vein. The ore you pulled is better than it looks raw;
-        it forges dark and holds an edge longer than standard iron.
+        the vein. The ore you pulled is better than it looks raw.
+        It forges dark and holds an edge longer than standard iron.
         Take this. I carried it out of three claim sites and it
         has never been empty long. Your materials will find it on
         their own -- anything flagged as a component routes to it
         when you pick it up. If you have loose materials already,
         type sort and it gathers them in. And if you find yourself
         with worn gear you cannot use: salvage it. Type salvage
-        and the name of the piece; the slope gives back what went
+        and the name of the piece. The slope gives back what went
         into making it, roughly. That is the work, more or less.
       hints: >-
         Quest complete. You receive a Component Pouch -- crafting

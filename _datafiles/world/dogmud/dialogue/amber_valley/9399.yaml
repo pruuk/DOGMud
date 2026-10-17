@@ -2,7 +2,7 @@ mobid: 9399
 zone: Amber Valley
 defaultMood: friendly
 greetings:
-  - text: "Ah — mind the shavings, they get everywhere. Pull up that stool, the one I carved. Tell me it's comfortable; I need to hear it today."
+  - text: "Ah — mind the shavings, they get everywhere. Pull up that stool, the one I carved. Tell me it's comfortable. I need to hear it today."
     moods: ["friendly"]
 patterns:
   - keywords: ["hello", "hi", "greet", "hey"]

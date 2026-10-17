@@ -84,7 +84,7 @@ tree:
         been able to get him to explain it. You might manage
         better -- but before you go to Reth, I want you to
         read the filed survey yourself. Tess the Archivist
-        has it; she will point you to the right one. Read it.
+        has it. She will point you to the right one. Read it.
         Then come back to me. I want to know what you see
         in it before you go any further.
       hints: "You could go to the Archive and ask Tess to
@@ -123,7 +123,7 @@ tree:
       text: |
         The Archive -- south of the reading room. Tess the
         Archivist will point you to the right one. The eastern
-        surveys are on the upper tier; Reth's report is the
+        surveys are on the upper tier. Reth's report is the
         thin one, filed under the date of the last expedition.
         Read it, then come back to me.
       hints: "You could go to the Archive and find Reth's filed
@@ -144,7 +144,7 @@ tree:
         examples on that wall -- different hands, forty years
         apart. I find them the most interesting problem I
         have, and I have no answer to offer you. I have asked
-        the Archive; I have written to colleagues at two other
+        the Archive. I have written to colleagues at two other
         institutions. The honest summary: it recurs, and no
         one knows why.
       hints: "You could ask about Brennan's survey work and

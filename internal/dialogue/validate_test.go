@@ -78,16 +78,26 @@ func TestValidate_GrantNodesMustComeFirst(t *testing.T) {
 	}
 }
 
-// Semicolons are the command separator — in spoken text they truncate.
+// Semicolons are the command separator: in spoken text they truncate. Hints
+// are exempt because they reach the player through SendText, not `say`.
 func TestValidate_NoSemicolons(t *testing.T) {
 	df := DialogueFile{MobId: 1, Zone: "z",
 		Greetings: []Greeting{{Text: "Hello; friend."}},
 		Patterns:  []Pattern{{Keywords: []string{"x"}, Responses: []string{"Fine; thanks."}}},
 		Tree: &Tree{Root: TreeRoot{Text: "Root; text.", Hints: "Hint; here."},
-			Nodes: []TreeNode{{Id: "n", Triggers: []string{"t"}, Text: "Node; text."}}}}
+			Nodes: []TreeNode{{Id: "n", Triggers: []string{"t"}, Text: "Node; text.", Hints: "Node; hint."}}}}
 	errs, _ := ValidateDialogueFile(df, permissiveValidators())
-	if len(errs) < 5 {
-		t.Errorf("expected a semicolon error per offending field, got %v", errs)
+	semi := 0
+	for _, e := range errs {
+		if strings.Contains(e, "semicolons") {
+			semi++
+			if strings.Contains(e, "hints") {
+				t.Errorf("hints are sent with SendText and must not be refused: %s", e)
+			}
+		}
+	}
+	if semi != 4 {
+		t.Errorf("expected a semicolon error for each of the 4 spoken fields, got %v", errs)
 	}
 }
 

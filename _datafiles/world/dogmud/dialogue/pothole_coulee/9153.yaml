@@ -73,7 +73,7 @@ tree:
       - questRequired: ["47-start"]
         questExcluded: ["47-end"]
         text: "Still learning. Ask me about the folk, the ways, the stones --
-          whatever you like; that is the lesson. And type help to open the
+          whatever you like. That is the lesson. And type help to open the
           in-game reckoning, the one that outlasts your memory. Come back when
           you have."
         hints: "Ask Wenna about the folk/ways/stones; type help to open the
@@ -113,7 +113,7 @@ tree:
       grantsQuest: "47-end"
       text: "You asked, and you listened, and you found the help that outlasts
         the asking. That is the whole way of the folk -- the rest is only more
-        of it. Take this charm; wear it where it shows, and ours will know you
+        of it. Take this charm. Wear it where it shows, and ours will know you
         for a friend. Now -- the stones, west and north. Hale keeps the deep
         story. Go and let him tell it."
       hints: "Quest complete. Head to the standing stones and type ask hale to
