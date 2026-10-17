@@ -250,7 +250,9 @@ already known, so no presence leaks.
   sweep. `stealWord` is the bauble's keyword, or `trinket`.
 - Taking one is `steal <name>`: `parseStealArgs` falls back to
   `householdBaubleNamed` (a household bauble on this room's floor) when no
-  creature or container matches, and hands it to `actions.Steal` as
+  creature or container matches and the thief can see the floor
+  (`actions.TooDarkToGet` false, as for fixtures; in the dark a bauble that
+  is there answers as a name that is not, #553), and hands it to `actions.Steal` as
   `StealOptions.HouseholdItem` (the steal checks; see
   `internal/actions/context.md`).
 
