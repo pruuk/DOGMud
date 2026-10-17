@@ -573,7 +573,7 @@ room 5347 biome=cliffs light=34
 room 5348 biome=cliffs light=34
 room 5349 biome=cliffs light=34
 room 5350 biome=cliffs light=34
-room 5351 biome=cliffs light=34
+room 5351 biome=cliffs light=52
 room 5352 biome=cliffs light=34
 room 5353 biome=cliffs light=34
 room 5354 biome=cliffs light=34
@@ -1879,7 +1879,7 @@ room 5347 biome=cliffs light=34
 room 5348 biome=cliffs light=34
 room 5349 biome=cliffs light=34
 room 5350 biome=cliffs light=34
-room 5351 biome=cliffs light=34
+room 5351 biome=cliffs light=52
 room 5352 biome=cliffs light=34
 room 5353 biome=cliffs light=34
 room 5354 biome=cliffs light=34
@@ -4491,7 +4491,7 @@ room 5347 biome=cliffs light=31
 room 5348 biome=cliffs light=31
 room 5349 biome=cliffs light=31
 room 5350 biome=cliffs light=31
-room 5351 biome=cliffs light=31
+room 5351 biome=cliffs light=51
 room 5352 biome=cliffs light=31
 room 5353 biome=cliffs light=31
 room 5354 biome=cliffs light=31
@@ -5797,7 +5797,7 @@ room 5347 biome=cliffs light=21
 room 5348 biome=cliffs light=21
 room 5349 biome=cliffs light=21
 room 5350 biome=cliffs light=21
-room 5351 biome=cliffs light=21
+room 5351 biome=cliffs light=51
 room 5352 biome=cliffs light=21
 room 5353 biome=cliffs light=21
 room 5354 biome=cliffs light=21
@@ -7103,7 +7103,7 @@ room 5347 biome=cliffs light=22
 room 5348 biome=cliffs light=22
 room 5349 biome=cliffs light=22
 room 5350 biome=cliffs light=22
-room 5351 biome=cliffs light=22
+room 5351 biome=cliffs light=51
 room 5352 biome=cliffs light=22
 room 5353 biome=cliffs light=22
 room 5354 biome=cliffs light=22
@@ -8409,7 +8409,7 @@ room 5347 biome=cliffs light=70
 room 5348 biome=cliffs light=70
 room 5349 biome=cliffs light=70
 room 5350 biome=cliffs light=70
-room 5351 biome=cliffs light=70
+room 5351 biome=cliffs light=69
 room 5352 biome=cliffs light=70
 room 5353 biome=cliffs light=70
 room 5354 biome=cliffs light=70
@@ -9715,7 +9715,7 @@ room 5347 biome=cliffs light=26
 room 5348 biome=cliffs light=26
 room 5349 biome=cliffs light=26
 room 5350 biome=cliffs light=26
-room 5351 biome=cliffs light=26
+room 5351 biome=cliffs light=51
 room 5352 biome=cliffs light=26
 room 5353 biome=cliffs light=26
 room 5354 biome=cliffs light=26
@@ -11021,7 +11021,7 @@ room 5347 biome=cliffs light=31
 room 5348 biome=cliffs light=31
 room 5349 biome=cliffs light=31
 room 5350 biome=cliffs light=31
-room 5351 biome=cliffs light=31
+room 5351 biome=cliffs light=51
 room 5352 biome=cliffs light=31
 room 5353 biome=cliffs light=31
 room 5354 biome=cliffs light=31
@@ -12327,7 +12327,7 @@ room 5347 biome=cliffs light=61
 room 5348 biome=cliffs light=61
 room 5349 biome=cliffs light=61
 room 5350 biome=cliffs light=61
-room 5351 biome=cliffs light=61
+room 5351 biome=cliffs light=62
 room 5352 biome=cliffs light=61
 room 5353 biome=cliffs light=61
 room 5354 biome=cliffs light=61
@@ -13633,7 +13633,7 @@ room 5347 biome=cliffs light=74
 room 5348 biome=cliffs light=74
 room 5349 biome=cliffs light=74
 room 5350 biome=cliffs light=74
-room 5351 biome=cliffs light=74
+room 5351 biome=cliffs light=71
 room 5352 biome=cliffs light=74
 room 5353 biome=cliffs light=74
 room 5354 biome=cliffs light=74
@@ -14939,7 +14939,7 @@ room 5347 biome=cliffs light=61
 room 5348 biome=cliffs light=61
 room 5349 biome=cliffs light=61
 room 5350 biome=cliffs light=61
-room 5351 biome=cliffs light=61
+room 5351 biome=cliffs light=62
 room 5352 biome=cliffs light=61
 room 5353 biome=cliffs light=61
 room 5354 biome=cliffs light=61
