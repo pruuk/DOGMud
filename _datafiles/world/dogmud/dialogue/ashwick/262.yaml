@@ -40,7 +40,7 @@ tree:
     - id: negotiate
       triggers: ["negotiate", "work", "delia", "help", "arrangement", "together", "deal", "quest", "task"]
       questRequired: ["16-start"]
-      questExcluded: ["16-end"]
+      questExcluded: ["16-forager", "16-end"]
       grantsQuest: "16-forager"
       text: "Work with the herbalist? She would have to know what I am. And she would have to not care. You think she would accept that? You think a woman in a village with a deacon and a ritual circle and the whole weight of what people believe about the unchanged would just... take me on?"
       hints: "Return to Delia and vouch for the arrangement."

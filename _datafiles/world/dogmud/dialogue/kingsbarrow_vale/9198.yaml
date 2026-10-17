@@ -30,7 +30,7 @@ tree:
       triggers: ["waybill", "parcel", "delivery", "package", "road", "deliver",
                  "hand", "give", "turn", "done", "report", "quest", "task"]
       questRequired: ["60-waybill"]
-      questExcluded: ["60-manifest"]
+      questExcluded: ["60-manifest", "60-end"]
       requiresItem: 40072
       grantsQuest: "60-manifest"
       text: "Verrold takes the waybill, checks the counter-sign, and makes his

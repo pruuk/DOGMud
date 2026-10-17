@@ -69,7 +69,7 @@ tree:
     - id: reassure
       triggers: ["help", "safe", "harm", "friendly", "trust", "calm", "peace", "quest", "task"]
       questRequired: ["8-start"]
-      questExcluded: ["8-found"]
+      questExcluded: ["8-found", "8-end"]
       grantsQuest: "8-found"
       text: "You do not look like one of his people. All right. I am Elara. I am sure you have heard the name -- my father has been telling everyone I am missing. I am not missing. I left. There is a difference, but the guard does not care about the distinction."
       hints: "You could ask why she left, or about her father. Or ask what happens now."

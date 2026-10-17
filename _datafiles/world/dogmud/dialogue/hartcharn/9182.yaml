@@ -38,7 +38,7 @@ tree:
       triggers: ["dispatch", "parcel", "delivery", "package", "road", "deliver",
                  "hand", "give", "turn", "done", "report", "quest", "task"]
       questRequired: ["60-start"]
-      questExcluded: ["60-waybill"]
+      questExcluded: ["60-waybill", "60-end"]
       requiresItem: 40071
       grantsQuest: "60-waybill"
       text: "Pell checks the seal-mark and counter-signs in one motion. \"Garrick's
