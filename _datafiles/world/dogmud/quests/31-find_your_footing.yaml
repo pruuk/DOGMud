@@ -3,8 +3,12 @@
 # Token flow:
 #   31-start   — granted by Crier Toke's dialogue (requires 30-end)
 #   31-school  — room_enter trigger, Chrysalis School Hall (5213)
+#   31-list:     command trigger, `list` at Coulee Provisions (5207), teaches
+#                the `list` command (step inserted 2026-10-17: one command
+#                per step; it used to be a nudge that did not advance)
 #   31-shop    — item_gain trigger, buying a cotton shirt (20008) at Coulee
 #                Provisions (5207) — teaches the `buy` command
+#   Steps run in order; each trigger gates on the step before it.
 #   31-equip   — command trigger, `equip` — teaches wearing gear
 #   31-lantern — room_enter trigger, The Drowned Lantern (5205)
 #   31-end     — granted by Toke's dialogue turn-in (requires 31-lantern)
@@ -16,25 +20,31 @@ secret: false
 
 steps:
   - id: start
-    description: "Crier Toke wants you to learn the town before the town has to learn you. Start at the Chrysalis School Hall."
-    hint: "From Hub Square go north past the Awakening Pool and climb the basalt stair -- keep north to the school hall. Type map if you lose your way."
+    description: "Crier Toke wants you to learn the town before the town has to learn you. Start at the Chrysalis School Hall. If you lose your way, the map command shows where you have been."
+    hint: "From Hub Square go north past the Awakening Pool, then keep north up the basalt stair to the Chrysalis School Hall. Walking in is enough."
   - id: school
     map_target: 5207  # fallback when Trader Onna is not spawned
     map_target_mob: 9104  # follow Trader Onna (schedule pothole_onna) — a fixed room is wrong for part of the day
-    description: "You found the school hall. Next, kit yourself out at Coulee Provisions -- buy a cotton shirt from Trader Onna."
-    hint: "Coulee Provisions is south of Hub Square -- go south to Market Row, then east. Type list to see Onna's wares, then buy cotton shirt. You start with coin to spare."
+    description: "You found the school hall. Next, kit yourself out at Coulee Provisions, Trader Onna's shop. First see what she sells."
+    hint: "From the school hall go south four times to Hub Square, south again to Market Row, then east into Coulee Provisions. There, type list."
+  # list: inserted 2026-10-17 (one command per step). A player saved on
+  # `school` is told to list; one saved on `shop` or later is past it.
+  - id: list
+    map_target: -1  # action step (command/skill): no travel destination
+    description: "Onna's wares are laid out. Buy a cotton shirt. You start with coin to spare."
+    hint: "Type buy cotton shirt."
   - id: shop
     map_target: -1  # action step (command/skill) — no travel destination
-    description: "You bought a cotton shirt. Now put it on -- gear does nothing folded in your pack."
-    hint: "Type equip cotton shirt (or just equip cotton) to wear it."
+    description: "You bought a cotton shirt. Now put it on. Gear does nothing folded in your pack."
+    hint: "Type equip cotton shirt."
   - id: equip
     description: "You are dressed for the coulee. Now put your head into The Drowned Lantern, the town's inn."
-    hint: "The Drowned Lantern is off Market Row -- from Coulee Provisions go west twice. Walking in is enough."
+    hint: "The Drowned Lantern is the inn off Market Row. From Coulee Provisions go west twice. Walking in is enough."
   - id: lantern
     map_target: 5203  # fallback when Crier Toke is not spawned
     map_target_mob: 9106  # follow Crier Toke (schedule pothole_toke) — a fixed room is wrong for part of the day
     description: "You have seen the school, kitted out at the shop, and found the inn. Report back to Crier Toke in Hub Square."
-    hint: "Toke is at the notice post in Hub Square. Type ask toke footing to finish."
+    hint: "From the inn go east to Market Row, then north to Hub Square. Find Toke at the notice post and type ask toke footing to finish."
   - id: end
     description: "You know the hub now. Toke says the coulee mouths are next, whenever you are ready."
     hint: "Ask any of the townsfolk about the coulee when you want to push outward."
@@ -57,7 +67,23 @@ triggers:
       - actor: >-
           A tutor glances up from a slate as you enter. "Newly Opened.
           When the changes start and you want to know what is happening to
-          you, this hall is where you come."
+          you, this hall is where you come." Next, go to Coulee Provisions,
+          south past Hub Square to Market Row and then east, and type list.
+
+  # ── PROVISIONS: list Onna's wares (room 5207), teaches `list` ──
+  #    list sends `command` only when a merchant was actually listed.
+  - event: command
+    command: list
+    room: 5207
+    conditions:
+      has: [31-school]
+      missing: [31-list]
+    actions:
+      - grant: 31-list
+      - actor: >-
+          Trader Onna watches you weigh her wares. "The cotton shirt keeps the
+          chill off and the coulee's teeth out. You have coin enough." Type
+          buy cotton shirt.
 
   # ── PROVISIONS: buy a cotton shirt (room 5207) — teaches `buy` ──
   #    item_gain fires when the shirt lands in the pack; a route-2 player
@@ -65,28 +91,14 @@ triggers:
   - event: item_gain
     item: 20008
     conditions:
-      has: [31-school]
+      has: [31-list]
       missing: [31-shop]
     actions:
       - grant: 31-shop
       - actor: >-
           Trader Onna nods as the coin changes hands. "A shirt won't turn a
-          blade, but it beats bare skin. Put it on -- gear does nothing folded
-          in your pack."
-
-  # ── PROVISIONS: helpful nudge if they just look (room 5207) ──
-  #    Does NOT advance the quest — buying does. Keeps `list` discoverable.
-  - event: command
-    command: list
-    room: 5207
-    conditions:
-      has: [31-school]
-      missing: [31-shop]
-    actions:
-      - actor: >-
-          Trader Onna watches you weigh her wares. "The cotton shirt keeps the
-          chill off and the coulee's teeth out. Type buy cotton shirt -- you've
-          coin enough."
+          blade, but it beats bare skin. Put it on. Gear does nothing folded
+          in your pack." Type equip cotton shirt.
 
   # ── EQUIP: wear the shirt — teaches `equip` ──
   - event: command
@@ -97,8 +109,9 @@ triggers:
     actions:
       - grant: 31-equip
       - actor: >-
-          You settle the shirt across your shoulders. That is the whole of it
-          -- buy the gear, wear the gear, and the coulee bites a little less.
+          You settle the shirt across your shoulders. That is the whole of it:
+          buy the gear, wear the gear, and the coulee bites a little less.
+          Next, find The Drowned Lantern: from Coulee Provisions go west twice.
 
   # ── THE DROWNED LANTERN: arrive (room 5205) ─────────────
   - event: room_enter
@@ -111,7 +124,8 @@ triggers:
       - actor: >-
           The keeper of the Drowned Lantern tips you a nod as you step in.
           "First one is on the house -- the coulee's welcome. Rest while it
-          is still being gentle with you."
+          is still being gentle with you." Now go back to Crier Toke in Hub
+          Square, east and then north, and type ask toke footing.
 
   # ── FOOTING COMPLETE: open all seven coulee mouths at once ──
   #    When Toke turns in the footing quest (grants 31-end), the quest_granted
