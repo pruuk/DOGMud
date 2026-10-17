@@ -9,8 +9,14 @@ description: >
   is not subtle. It is a weight in the air that coats the back
   of the throat. Scavengers work the edges; larger shapes move
   at the margins, unhurried, watching the flat the way a landlord
-  watches his property.
+  watches his property. An iron brazier stands at the near edge, and the
+  hunters keep it burning day and night to hold the scavengers back.
 biome: land
+# 2026-10-17 newbie quest audit (B2): quests 42 and 56 attack a pronghorn here,
+# and attacking a mob that is not hostile needs full sight. The hunters'
+# brazier (see the description) lights the flat to full sight for a normal
+# observer at every hour. TestNewbieQuestTargetRoomsGiveFullSightAtEveryHour.
+lamp: 50
 coord:
   x: 43
   y: 8
@@ -22,11 +28,15 @@ exits:
     roomid: 5292
 spawninfo:
 - mobid: 9139
+  respawnrate: 2 real minutes
 nouns:
   bones: Old, gnawed bones scattered in arcs across the flat, some
     still articulated, most long since scattered by competing mouths.
   feathers: Loose clumps pressed into the dust where birds came down
     to feed and did not leave again.
+  brazier: A squat iron basket on three legs, heaped with burning wood
+    and dried dung. Its fire is never allowed to go out, and the
+    scavengers keep well clear of its light.
   carrion: The reek of old kills, thick and particular, that marks
     this flat as something's private table.
 idlemessages:

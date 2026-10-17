@@ -170,6 +170,15 @@ own, unrelated action param.)
   detection line (#558); do not write a gate that way.
 - **Ephemeral (instance) rooms match their TEMPLATE room id** in `room:`
   triggers, not their runtime id.
+- **`craft`, `sleep` and `search` send `command` on success only** (owner,
+  2026-10-17: a quest step advances only when the action succeeds). `craft`
+  goes out when a craft COMPLETES and succeeded, never when it begins: a timed
+  craft's contest runs at its last round, so the round hook
+  (`hooks.tickUserCrafting`) sends it then, from the crafter's room, and a
+  failed craft or an enchant that could not land sends nothing; an instant
+  recipe sends it at once (`usercommands.notifyCraftQuest`). `sleep` is sent
+  only when the player is asleep (not on a refusal in combat), `search` not on
+  a cooldown refusal.
 - **Every quest `observer` line must contain `{actor}`, and `quests.Quest.Validate`
   refuses a quest whose line does not**, including lines nested in a sequence's
   `on_complete`. `Validate` runs on every quest file parse at boot AND before an

@@ -20,7 +20,11 @@ func Search(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 	actor := &actions.UserActor{User: user, Room: room}
-	_ = actions.Search(actor, actions.SearchOptions{Feature: rest})
+	// A search refused for cooldown never ran, so it sends no quest event: a
+	// quest step advances only when the action succeeds (owner, 2026-10-17).
+	if actions.Search(actor, actions.SearchOptions{Feature: rest}).OnCooldown {
+		return true, nil
+	}
 
 	// Quest engine: command notification — lets a quest gate a step on the
 	// `search` command (the newbie Lore spoke's shrine beat: searching out the
