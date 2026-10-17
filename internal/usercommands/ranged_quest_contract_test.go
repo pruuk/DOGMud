@@ -53,10 +53,12 @@ func TestRangedQuestTriggersMatchTheNotifyConstant(t *testing.T) {
 		// Commands these quests legitimately gate on besides the shot itself.
 		// `sneak` is quest 50's ambush beat: it grants for LEARNING TO HIDE,
 		// because the command event carries only a name and so cannot tell that
-		// a shot was an ambush.
+		// a shot was an ambush. `equip` is quest 50's first step, readying the
+		// sling (one command per step, owner ruling 2026-10-17).
 		allowed := map[string]bool{
 			questNotifyCommand: true,
 			"sneak":            true,
+			"equip":            true,
 		}
 
 		found := 0

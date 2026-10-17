@@ -28,16 +28,14 @@ steps:
       loose a spell you know at the practice mote -- conviction-spike, the
       attack you woke with, will serve. Adept Grieve keeps the observatory.
     hint: >-
-      Go north into the Star Chamber. Type cast conviction-spike mote to
-      loose your starting attack spell at the practice mote. Then return to
-      Adept Grieve and type ask grieve done.
+      Go north into the Star Chamber and type cast conviction-spike mote.
   - id: cast
     map_target: 5303
     description: >-
       You shaped a spell and loosed it at the mark. Return to Grieve in the
       Observatory Hall.
     hint: >-
-      Report back to Adept Grieve in the Observatory Hall -- type ask grieve
+      Go back to Adept Grieve in the Observatory Hall and type ask grieve
       done.
   - id: end
     description: >-

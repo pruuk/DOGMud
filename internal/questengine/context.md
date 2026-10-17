@@ -156,7 +156,18 @@ own, unrelated action param.)
   canonical spell id as `Noun`; `trip` also sends it when the target is
   already on the ground, and `warcry` when one is already riding the player
   (the goal holds); `flee` is sent by the round hook once the player has
-  arrived, from the room fled into.
+  arrived, from the room fled into. `forage` is sent only when the forage
+  rolled (not on a wrong-ground or cooldown refusal; finding nothing still
+  counts), `track` not for `track stop` or a cooldown refusal, and `sneak`
+  only when the player ends up hidden (already hidden counts).
+- **A quest holds ONE current step, so objectives cannot run in any order.**
+  `characters.HasQuest(t)` is true for the current step and every step before
+  it, and a grant only moves forward. Two triggers that each gate only on
+  `-start` let the later objective, done first, mark the earlier one done
+  without doing it. Gate each trigger on the previous step's token. Newbie
+  quests also ask for one command per step, each hint naming it plainly
+  (owner ruling 2026-10-17; `newbie_one_command_steps_test.go` walks quests
+  41 and 50 and checks the cert hints).
 - **`room_gate` refuses a walk before it happens; `room_enter` fires after.**
   `usercommands.Go` notifies `room_gate` (filter `room`, the destination's
   template id) after the lock check and before the exit message, the move

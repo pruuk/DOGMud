@@ -26,6 +26,7 @@ exits:
     roomid: 5352
 spawninfo:
 - mobid: 9163
+  respawnrate: 5 rounds
 nouns:
   shelf: The shelf is the bluff's natural upper ledge, widened and
     leveled by hand at the inner edge but left raw at the outer.

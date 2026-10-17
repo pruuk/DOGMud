@@ -61,16 +61,31 @@ tree:
           sling when you are ready to put a stone in the straw."
         hints: "Type ask iden shoot to take up the sling and the lesson."
 
-      # ── Mid quest 50 ─────────────────────────────────────
+      # ── Mid quest 50, one variant per step (one command each) ─
       - questRequired: ["50-start"]
+        questExcluded: ["50-equip", "50-shoot", "50-end"]
+        text: "Still at it. A sling does nothing in your pack. Ready it
+          first."
+        hints: "Type equip sling."
+      - questRequired: ["50-equip"]
+        questExcluded: ["50-shoot", "50-end"]
+        text: "The sling is in your hand. The butts are down-range, east
+          on the Long Terrace. Put a stone in the straw."
+        hints: "Go east to the Long Terrace and type fire butt."
+      - questRequired: ["50-shoot"]
+        questExcluded: ["50-ambush", "50-end"]
+        text: "One in the open. Now get out of sight before the next one,
+          so you feel the difference."
+        hints: "On the Long Terrace, type sneak."
+      - questRequired: ["50-ambush"]
+        questExcluded: ["50-cover_shot", "50-end"]
+        text: "You know how to get out of sight. Now take the shot from
+          there, before anything knows where you are."
+        hints: "Go east to the Long Terrace and type fire butt."
+      - questRequired: ["50-cover_shot"]
         questExcluded: ["50-end"]
-        text: "Still at it. Equip the sling, get shot for it from me if
-          you need, then take it east to the Long Terrace and fire butt.
-          Do it once in the open, then sneak and do it again from cover
-          so you feel the difference. Then come back."
-        hints: "Type equip sling. If you need ammo, ask iden shot. Go east
-          to the Long Terrace and type fire butt, then sneak and fire butt
-          again. Then return and ask iden done."
+        text: "I heard that one land. Tell me how it felt."
+        hints: "Type ask iden done."
 
       # ── Quest 50 complete ────────────────────────────────
       - questRequired: ["50-end"]
@@ -89,17 +104,12 @@ tree:
       questExcluded: ["50-start", "50-end"]
       grantsQuest: "50-start"
       givesItem: 10038
-      text: "Here -- a sling, plaited cord and a leather cradle, cheap
-        and honest. It is yours. Now ask me for a pouch of shot to feed
-        it. Then this: type equip sling to ready it, walk east to the
-        Long Terrace where the butts stand down-range, and fire butt. The
-        cradle fills itself while your eye is still on the mark, so do
-        not go looking for a second step. Then sneak and fire butt again
-        from cover, and mind the difference. Come tell me after."
-      hints: "You received a sling. Type ask iden shot for ammunition,
-        then equip sling. Go east to the Long Terrace and type fire butt,
-        then sneak and fire butt again, then return west and ask iden
-        done."
+      text: "Here. A sling, plaited cord and a leather cradle, cheap and
+        honest, and a pouch of shot to feed it. Both are yours. Ready the
+        sling first. The cradle fills itself while your eye is still on
+        the mark, so there is no second motion to learn. I will walk you
+        through the rest one thing at a time."
+      hints: "Type equip sling."
 
     # ── SHOT SUPPLY / RECOVERY ────────────────────────────────
     - id: shot_supply
@@ -111,8 +121,8 @@ tree:
         it. Each shot draws one from the pouch on its own. When the pouch
         runs dry the sling will tell you, and so will I if you ask. No
         one learns the eye on an empty sling."
-      hints: "You received a pouch of shot. Go east to the Long Terrace
-        and type fire butt. Run dry? Ask iden shot again."
+      hints: "You received a pouch of shot. If you run dry, type ask iden
+        shot."
 
     # ── SLING RECOVERY (lost the weapon) ──────────────────────
     - id: sling_recovery
@@ -123,8 +133,7 @@ tree:
       text: "Lost your sling already? It happens to the heavy-handed.
         Here is another -- mind it this time. Equip it, feed it shot,
         and get to the butt."
-      hints: "You received a sling. Type equip sling, ask iden shot for
-        ammo, then fire butt."
+      hints: "You received a sling. Type equip sling."
 
     # ── FIRE / EQUIP HELP ─────────────────────────────────────
     # `reload` stays in the triggers on purpose: it is the word a player
@@ -144,7 +153,7 @@ tree:
     # ── QUEST 50 TURN-IN ──────────────────────────────────────
     - id: shoot_turnin
       triggers: ["done", "report", "ready", "finished", "quest", "task"]
-      questRequired: ["50-shoot", "50-ambush"]
+      questRequired: ["50-cover_shot"]
       questExcluded: ["50-end"]
       grantsQuest: "50-end"
       text: "Out in the open and again from cover, and the straw has your

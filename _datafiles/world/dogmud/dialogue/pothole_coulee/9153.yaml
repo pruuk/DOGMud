@@ -71,13 +71,15 @@ tree:
 
       # ── Mid quest 47 ─────────────────────────────────────
       - questRequired: ["47-start"]
+        questExcluded: ["47-help", "47-end"]
+        text: "Still learning. Ask me about the folk, the ways, the stones,
+          whatever you like. That is half the lesson. The other half is the
+          in-game reckoning, the one that outlasts your memory. Open it."
+        hints: "Type help."
+      - questRequired: ["47-help"]
         questExcluded: ["47-end"]
-        text: "Still learning. Ask me about the folk, the ways, the stones --
-          whatever you like. That is the lesson. And type help to open the
-          in-game reckoning, the one that outlasts your memory. Come back when
-          you have."
-        hints: "Ask Wenna about the folk/ways/stones; type help to open the
-          in-game reference. Then ask wenna done."
+        text: "You found the reckoning. Good. Tell me so properly."
+        hints: "Type ask wenna done."
 
       # ── Quest 47 complete ────────────────────────────────
       - questRequired: ["47-end"]
@@ -97,13 +99,12 @@ tree:
       questExcluded: ["47-start", "47-end"]
       grantsQuest: "47-start"
       text: "Then here is the first of it, and the whole of it: learn to ask,
-        and learn where to look. Ask me about the folk and our ways -- the
-        stones, the tradition, whatever takes you -- and listen to the answers.
-        And when your own memory fails, type help: it is the in-game reckoning,
-        more patient than I am and always to hand. Do both, and come back to
-        me."
-      hints: "Ask Wenna about the folk/ways/stones to hear her out. Type help to
-        open the in-game reference. Then return -- ask wenna done."
+        and learn where to look. You asked, and that is half. Ask me about the
+        folk and our ways whenever you like, and listen to the answers. The
+        other half is the in-game reckoning, for when your own memory fails:
+        it is more patient than I am and always to hand. Open it now, then
+        come back to me."
+      hints: "Type help."
 
     # ── QUEST 47 TURN-IN ──────────────────────────────────────
     - id: words_turnin

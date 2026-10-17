@@ -21,20 +21,17 @@ steps:
   - id: start
     map_target: 5324
     description: >-
-      The way of the folk is mostly the way of asking. Hear Elder Wenna out
-      about the folk and their ways, and learn to use the in-game help -- type
-      help to open it.
+      The way of the folk is mostly the way of asking, and of knowing where
+      to look a thing up. Start with the in-game help.
     hint: >-
-      Talk to Elder Wenna -- type ask wenna ways (or folk, or stones) to hear
-      her out. Then type help to open the in-game reference. Return to Wenna
-      afterward -- ask wenna done.
+      Type help.
   - id: help
     map_target: 5324
     description: >-
       You opened the help reference -- your surest guide when memory fails.
       Return to Wenna.
     hint: >-
-      Report back to Elder Wenna -- type ask wenna done.
+      Go back to Elder Wenna and type ask wenna done.
   - id: end
     description: >-
       Wenna has named you a friend of the folk. West and north the standing
