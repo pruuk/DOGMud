@@ -75,6 +75,9 @@ func init() {
 	// connection setup (otherwise the status panel header + conditions stay
 	// blank until a later CharacterChanged event).
 	events.RegisterListener(events.NewRound{}, g.newRoundHandler)
+	// Char.Vitals on change, checked once a round: see gmcp.CharVitalsWatch.go.
+	events.RegisterListener(events.NewRound{}, g.vitalsWatchHandler)
+	events.RegisterListener(events.PlayerDespawn{}, g.vitalsWatchDespawnHandler)
 
 	events.RegisterListener(events.Quest{}, g.questProgressHandler)
 
@@ -404,6 +407,17 @@ func (g *GMCPCharModule) buildAndSendGMCPPayload(e events.Event) events.Listener
 
 			payload, moduleName := g.GetCharNode(user, requestedId)
 
+			// Note what Char.Vitals now says, so the round watcher
+			// (vitalsWatchHandler) only pushes again when it changes.
+			switch p := payload.(type) {
+			case *GMCPCharModule_Payload_Vitals:
+				recordSentVitals(evt.UserId, *p)
+			case GMCPCharModule_Payload:
+				if p.Vitals != nil {
+					recordSentVitals(evt.UserId, *p.Vitals)
+				}
+			}
+
 			events.AddToQueue(GMCPOut{
 				UserId:  evt.UserId,
 				Module:  moduleName,
@@ -595,20 +609,8 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 	if all || g.wantsGMCPPayload(`Char.Vitals`, gmcpModule) {
 
-		payload.Vitals = &GMCPCharModule_Payload_Vitals{
-			Hp:            user.Character.DisplayHealth(),
-			HpMax:         user.Character.HealthMax.Value,
-			Stamina:       user.Character.Stamina,
-			StaminaMax:    user.Character.StaminaMax.Value,
-			Conviction:    user.Character.Conviction,
-			ConvictionMax: user.Character.ConvictionMax.Value,
-
-			HpReserved:         user.Character.GetPoolReservation("health", user.Character.HealthMax.Value),
-			StaminaReserved:    user.Character.GetPoolReservation("stamina", user.Character.StaminaMax.Value),
-			ConvictionReserved: user.Character.GetPoolReservation("conviction", user.Character.ConvictionMax.Value),
-
-			Toxicity: user.Character.ToxicityBandName(),
-		}
+		v := buildVitalsPayload(user.Character)
+		payload.Vitals = &v
 
 		if !all {
 			return payload.Vitals, `Char.Vitals`

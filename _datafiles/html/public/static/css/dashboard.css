@@ -150,6 +150,11 @@
 #panel-feed #terminal .xterm,
 #panel-feed #terminal .xterm-viewport,
 #panel-feed #terminal .xterm-screen { height: 100%; }
+/* overflow-y: scroll (xterm.css) makes overflow-x compute to auto, so a
+   sideways wheel could shift the feed's text out of view. Never scroll the
+   feed sideways; static/js/feedscroll.js covers the rest (playtest
+   2026-10-17). */
+#panel-feed #terminal .xterm-viewport { overflow-x: hidden; }
 #panel-cmd { flex: 0 0 auto; }
 #panel-cmd .dash-panel-body { display: flex; padding: 4px; }
 

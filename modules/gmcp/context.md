@@ -259,6 +259,26 @@ leaving a stale reserved band drawn on the bar.
 PRESENCE, not value, and fails if `omitempty` is reintroduced on any field.
 Do not add it back.
 
+### When Char.Vitals is sent: on change, checked each round
+
+Most pool changes queue no `events.CharacterVitalsChanged`: combat damage, a
+spell's stamina or conviction cost, a reservation starting or ending, and
+stamina and conviction regen (the round regen hook compares health only). So
+`gmcp.CharVitalsWatch.go` checks once a round (`vitalsWatchHandler` on
+`NewRound`): for every GMCP client it builds the payload
+(`buildVitalsPayload`, which `GetCharNode` also uses) and, when it differs
+from the last `Char.Vitals` actually sent to that user, queues
+`CharacterVitalsChanged`. That one event already fans out to `Char.Vitals`
+with `Char.Conditions`, `Party.Vitals` and `Commands.State`. The baseline is
+recorded in `buildAndSendGMCPPayload` whenever a `Char.Vitals` or full `Char`
+payload goes out (`recordSentVitals`), so an event-driven push is not echoed
+the next round, and a round with no change sends nothing. Playtest
+2026-10-17: the web client's Vitals window froze until the player moved.
+`gmcp.CharVitalsWatch_test.go` covers it. Before adding a new emitter of
+`CharacterVitalsChanged` for a pool change, know that the watcher already
+delivers it within a round; an emitter is only worth it where a round's delay
+matters.
+
 ### Client Usage
 
 The client trigger engine reads these fields from each incoming
@@ -454,7 +474,8 @@ payload schema and push triggers — this table is the map, not the schema.
 | `gmcp.Automation.go` | `Char.Automation` | Triggers, macros, aliases, the action queue |
 | `gmcp.Room.go` | `Room` | Current room: description, exits, occupants |
 | `gmcp.Zone.go` | `Zone` | The `Zone.Map` snapshot the web mapper draws, plus `party` |
-| `gmcp.Party.go` | `Party` | Party roster and member vitals |
+| `gmcp.CharVitalsWatch.go` | `Char.Vitals` | The once-a-round on-change check that keeps `Char.Vitals` current (see "When Char.Vitals is sent") |
+| `gmcp.Party.go` | `Party` | Party roster and member vitals. The full `Party` package goes out on `PartyUpdated` and also to a member on `PlayerSpawn` (and once more the next round): a reconnect inside the zombie window keeps the party, and without the push the fresh client had `Party.Vitals` but no `Members`, so the web client's Vitals window showed the viewer twice (playtest 2026-10-17) |
 | `gmcp.Comm.go` | `Comm` | Channel messages |
 | `gmcp.Item.go` / `gmcp.Item_refs.go` | `Char.Items` | Inventory and equipment, plus item reference data |
 | `gmcp.Quest.go` / `gmcp.Quest_refs.go` | `Quest` | Quest tracker state and quest reference data |

@@ -621,6 +621,11 @@ restore func, so a test can run a real registration such as
 (including `init()`-registered listeners) back afterwards. Unlike
 `ClearListeners`, it loses nothing for later tests.
 
+`DrainQueuedByTypeForTest(typeName)` drains every queued event whose `Type()`
+is `typeName`, for event types declared outside this package that no typed
+drain can name (`modules/gmcp`'s `GMCPOut`, say). It returns them in heap
+order, not delivery order.
+
 `DrainQueuedUserInputsForTest(userId)` (parity slice 6) drains the `Input`
 events `UserRecord.Command` queued for a player (`MobInstanceId` 0, matched on
 `UserId`); `DrainQueuedInputsForTest` and `InspectQueuedInputForTest` match
