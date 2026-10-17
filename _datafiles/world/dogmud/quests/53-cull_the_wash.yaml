@@ -1,45 +1,55 @@
 # Quest 53 — Cull the Wash (Pothole Coulee, Spoke A repeatable)
 #
-# Token flow:
+# Token flow (one command per step, in order; owner ruling 2026-10-17):
 #   53-start     — granted by Caravan Guard Garve's dialogue (cull_offer node).
 #                  Requires 34-end (Take the Tower). Repeatable with cooldown.
 #   53-firstkill — mob_death trigger on Bandit Scout (9110). Requires 53-start.
 #   53-end       — mob_death trigger on Bandit Squatter (9111). Requires
-#                  53-firstkill. Auto-grants reward + clears for repeat.
+#                  53-firstkill. The quest completes on this kill, wherever
+#                  it happens: there is no turn-in at Garve. Completion
+#                  grants the reward and clears progress for the repeat.
 
 questid: 53
 name: Cull the Wash
 description: >-
-  Garve always has more work clearing squatters out of the wash. Thin
-  them out and report back when you have the stomach for it.
+  Garve always has more work clearing bandits out of the wash. Kill a
+  bandit scout, then a bandit squatter. The job is done the moment the
+  squatter falls, and the pay comes to you then.
 secret: false
 repeatable: true
 cooldown_rounds: 300
 
 steps:
   - id: start
-    map_target: -1  # -1: no single resolved destination (near [5234]); Phase 2 review
+    map_target: 5232  # Lower Wash, north of Squatter's Hollow: Bandit Scout (mob 9110)
     description: >-
-      Garve has asked you to thin out the squatters in the wash again.
+      Garve has asked you to thin out the bandits in the wash again: a
+      bandit scout first, then a bandit squatter. The nearest scout is in
+      the Lower Wash, just north of Squatter's Hollow.
     hint: >-
-      Head east into the wash. Put down a bandit scout and a bandit
-      squatter, then come back to Garve.
+      Go north from Squatter's Hollow to the Lower Wash and type attack
+      scout. If it is dark, type cast chrysalis-glow first.
   - id: firstkill
-    map_target: -1  # -1: no single resolved destination; Phase 2 review
-    description: "One squatter down. One more should satisfy Garve."
-    hint: "Find and kill one more bandit in the wash."
+    map_target: 5235  # Cracked Cistern: Bandit Squatter (mob 9111)
+    description: >-
+      One bandit scout is down. Now the bandit squatter, in the Cracked
+      Cistern east of Squatter's Hollow. The job is done when it falls.
+    hint: >-
+      From Squatter's Hollow, go east to the Cracked Cistern and type
+      attack squatter.
   - id: end
     description: >-
-      You thinned the wash again. Garve will have more work next time.
+      You thinned the wash again. Garve will have more work after a
+      while.
 
 rewards:
   gold: 6
   skillinfo: "weapon-combat:1"
   actor: >-
-    Garve counts your tally with a grunt and flips you a few coins.
-    "Good. They breed faster than I can swing. Come back when you have
-    the stomach for more."
-  observer: "Garve gives you a short, approving nod."
+    The wash is quiet for now. Garve's pay finds its way to you: a few
+    coins, and a surer hand with your weapon. He will have more work
+    after a while.
+  observer: ""
 
 triggers:
   - event: mob_death
@@ -50,7 +60,8 @@ triggers:
     actions:
       - grant: "53-firstkill"
       - actor: >-
-          One down. One more should satisfy Garve.
+          One scout down. Now the squatter: from Squatter's Hollow, go
+          east to the Cracked Cistern and type attack squatter.
 
   - event: mob_death
     mob: 9111
@@ -60,5 +71,5 @@ triggers:
     actions:
       - grant: "53-end"
       - actor: >-
-          The second squatter drops. The wash is clear for now.
-          Garve will have more work when you are ready for it.
+          The squatter drops. The wash is clear for now, and Garve's job
+          is done.
