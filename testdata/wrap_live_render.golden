@@ -23,11 +23,11 @@
  <ansi fg="red-bold">3</ansi>. <ansi fg="yellow-bold">Leather Boots</ansi>    <ansi fg="red-bold">4</ansi>. <ansi fg="yellow-bold">Silver Ring</ansi>     
  <ansi fg="red-bold">5</ansi>. <ansi fg="yellow-bold">Oak Shield</ansi>       <ansi fg="red-bold">6</ansi>. <ansi fg="yellow-bold">Bronze Dagger.</ansi>   </ansi>
 === motd (CategoryBroadcast) ===
-<ansi fg="broadcast"><ansi fg="yellow"> ╔═════════════════════════════════════════════════════╗
+<ansi fg="broadcast"><ansi fg="yellow"> ╔════════════════════════════════════════════════════╗
  ║  <ansi fg="cyan-bold">.:  M E S S A G E   O F   T H E   D A Y</ansi>           ║
- ╠═════════════════════════════════════════════════════╣
+ ╠════════════════════════════════════════════════════╣
  ║ Welcome to Delusions of Grandeur. Read the rules,  ║
  ║ mind the newbie zone hazards, and ask a mod if     ║
  ║ anything looks broken.                             ║
- ╚═════════════════════════════════════════════════════╝</ansi>
+ ╚════════════════════════════════════════════════════╝</ansi>
 </ansi>
