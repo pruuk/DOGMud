@@ -41,18 +41,17 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	// The shout always steadies the shouter (ExecuteRally applied the
 	// record); it only names allies when one is here to hear it.
+	roomLine := `<ansi fg="cyan-bold"><ansi fg="username">%s</ansi> rallies everyone with an inspiring shout!</ansi>`
 	if shoutReachesAllies(user) {
 		user.SendText(messaging.CategoryRally, `<ansi fg="cyan-bold">You rally your allies with an inspiring shout that steadies their resolve!</ansi>`)
-		// Heard, not seen: the name follows each listener's sight (sight gates 5b).
-		actions.SendHeard(&actions.UserActor{User: user, Room: room}, messaging.CategoryRally,
-			fmt.Sprintf(`<ansi fg="cyan-bold"><ansi fg="username">%s</ansi> rallies everyone with an inspiring shout!</ansi>`, user.Character.Name),
-		)
 	} else {
 		user.SendText(messaging.CategoryRally, `<ansi fg="cyan-bold">You let out an inspiring shout that steadies your own resolve!</ansi>`)
-		actions.SendHeard(&actions.UserActor{User: user, Room: room}, messaging.CategoryRally,
-			fmt.Sprintf(`<ansi fg="cyan-bold"><ansi fg="username">%s</ansi> lets out an inspiring shout!</ansi>`, user.Character.Name),
-		)
+		roomLine = `<ansi fg="cyan-bold"><ansi fg="username">%s</ansi> lets out an inspiring shout!</ansi>`
 	}
+	// Heard, not seen: the name follows each listener's sight (sight gates 5b).
+	actions.SendHeard(&actions.UserActor{User: user, Room: room}, messaging.CategoryRally,
+		fmt.Sprintf(roomLine, user.Character.Name),
+	)
 
 	// Fan out to party members in the room.
 	if party := parties.Get(user.UserId); party != nil {

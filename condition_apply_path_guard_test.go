@@ -124,12 +124,12 @@ var conditionApplyPathAllowlist = map[string]string{
 	// combat read it ────────────────────────────────────────────────────────
 	"internal/actions/combat_warcry.go|121": "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
 	"internal/actions/combat_rally.go|119":  "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/warcry.go|58":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/warcry.go|91":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/warcry.go|119":   "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/rally.go|58":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/rally.go|87":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/rally.go|115":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|64":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|97":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|151":   "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|66":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|95":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|123":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
 
 	// ── former combat condition: enchant withdrawal ─────────────────────────
 	"internal/usercommands/skill.disenchant.go|71": "former combat condition (withdrawal): the disenchant command narrates; must apply synchronously so Validate clamps the pool now",
