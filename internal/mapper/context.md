@@ -19,6 +19,15 @@ the same crawl.
 - **mapper.map.go** — `mapRender` and legend assembly.
 - **maptag.go**: `LegendSlug` and `ColorizeLegendLine`, the one colour-tag
   builder for a rendered map line (minimap, `map`, legend template).
+- **mapper.ascii.go**: `AsciiMapSymbol`, `mapRender.AsciiCells` and
+  `AsciiLegend`, the map's own ASCII cell forms for an ASCII-mode player
+  (`map` and the `look` minimap call them after `GetLegend`). The
+  `asciiMapSymbols` table holds only glyphs whose shared `ConvertToAscii`
+  form would read the same as another legend entry: Deep Water `≈` is `D`
+  (Shore is `~`), the town and road biomes' `•` is `o` (Desert is `*`) and
+  Snow `❄` is `n`. UTF-8 players and every other use of those runes are
+  untouched. `usercommands`' `TestMapLegendAsciiFormsAreDistinct` scans every
+  biome, room mapsymbol and marker and fails on a collision.
 - **mapper.config.go** — `Config` (render options) and `SymbolOverride`.
 - **mapper.path.go** — A\* pathfinding, the path cache, and `GetPath`/`NextStep`.
 - **mapper.consistency.go** — the Cartesian consistency engine (see below).

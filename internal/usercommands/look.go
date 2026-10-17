@@ -682,6 +682,12 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 			c.OverrideSymbol(roomId, '@', `You`)
 
 			output := zMapper.GetLimitedMap(room.RoomId, c)
+			legend := output.GetLegend(keywords.GetAllLegendAliases(room.Zone))
+			if user.AsciiMode {
+				// Same map cell forms as the map command (mapper.AsciiMapSymbol).
+				output.AsciiCells()
+				legend = mapper.AsciiLegend(legend)
+			}
 			tinyMap := []string{}
 			tinyMap = append(tinyMap, `╔═════╗`)
 			for _, mapLine := range output.Render {
@@ -695,8 +701,6 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 				youLine[3] = '@'
 				tinyMap[3] = string(youLine)
 			}
-
-			legend := output.GetLegend(keywords.GetAllLegendAliases(room.Zone))
 
 			for i := 1; i <= c.Height; i++ {
 				tinyMap[i] = mapper.ColorizeLegendLine(tinyMap[i], legend)

@@ -28,16 +28,24 @@ func Motd(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		text = m
 	}
 
+	user.SendText(messaging.CategoryBroadcast, motdBox(text, user.GetLineWidth()))
+
+	return true, nil
+}
+
+// motdBox draws the MOTD text in a double-line box exactly lw columns wide.
+func motdBox(text string, lw int) string {
 	// Box outer width scales with the player's configured line width.
 	// Layout: " " + "║" + " " + <content padded to padWidth> + "║"
 	//          1     1     1          ...                       1   = lw
 	// So padWidth = lw - 4 and wrap width = padWidth - 1 (leave a
-	// trailing space gutter inside the right border).
-	lw := user.GetLineWidth()
+	// trailing space gutter inside the right border). A border row is
+	// " " + "╔" + <innerWidth rules> + "╗", so innerWidth = lw - 3: the
+	// rules fill the same columns as the content line's " " + padWidth.
 	if lw < 20 {
 		lw = 20 // sanity floor; below this the box can't render
 	}
-	innerWidth := lw - 2 // chars between the ║ borders
+	innerWidth := lw - 3 // chars between the ╔ ╗ corners
 	padWidth := lw - 4   // ` ║ ` (3) + `║` (1) = 4 frame chars per line
 	wrapWidth := padWidth - 1
 
@@ -74,7 +82,5 @@ func Motd(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 	output += ` ╚` + horiz + `╝</ansi>` + "\n"
 
-	user.SendText(messaging.CategoryBroadcast, output)
-
-	return true, nil
+	return output
 }

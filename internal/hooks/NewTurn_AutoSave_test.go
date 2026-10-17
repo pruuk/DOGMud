@@ -113,6 +113,28 @@ func TestAutoSaveDrain_ReportsFailureRatherThanSuccess(t *testing.T) {
 	}
 }
 
+// TestAutoSaveLinesStandAlone is the 2026-10-17 playtest line
+// "Scab-Hound[|healthy] :Saving...Your torn wounds keep bleeding.": the cycle
+// drains over many turns, so each of its two lines must end itself and clear
+// the prompt line first, or other output glues onto them (#399).
+func TestAutoSaveLinesStandAlone(t *testing.T) {
+	for name, b := range map[string]events.Broadcast{
+		"start":  autosaveStartBroadcast(),
+		"done":   autosaveDoneBroadcast(nil),
+		"failed": autosaveDoneBroadcast(fmt.Errorf("disk full")),
+	} {
+		if !strings.HasSuffix(b.Text, "\r\n") {
+			t.Errorf("%s line %q does not end its line; the next output glues onto it", name, b.Text)
+		}
+		if b.SkipLineRefresh {
+			t.Errorf("%s line %q skips the line refresh, so it lands after a redrawn prompt", name, b.Text)
+		}
+	}
+	if got := autosaveDoneBroadcast(fmt.Errorf("x")).Text; !strings.Contains(got, "Saved with errors.") {
+		t.Errorf("a failed cycle must say so, got %q", got)
+	}
+}
+
 func TestAutoSaveDrain_IsCheapWhenThereIsNothingToDo(t *testing.T) {
 	// This runs on EVERY turn, so the idle path has to be nearly free. If it
 	// ever starts doing work when the queue is empty, that is 20 wasted wakeups

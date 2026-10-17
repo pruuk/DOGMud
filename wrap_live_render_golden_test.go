@@ -191,14 +191,14 @@ func TestLiveRenderedOutputSurvivesThePipeline(t *testing.T) {
 	// shape:
 	//
 	//   lw := user.GetLineWidth()          -> lineWidth (55) here
-	//   innerWidth := lw - 2                -> chars between the borders
+	//   innerWidth := lw - 3                -> chars between the corners
 	//   padWidth := lw - 4                  -> ` ║ ` (3) + `║` (1) = 4 frame chars
 	//   wrapWidth := padWidth - 1           -> lw - 5, leaves a gutter space
 	motdText := "Welcome to Delusions of Grandeur. Read the rules, mind the " +
 		"newbie zone hazards, and ask a mod if anything looks broken."
 	motdWrapped := strings.Split(messaging.WrapAnsi(motdText, lineWidth-5), "\n")
 
-	innerWidth := lineWidth - 2
+	innerWidth := lineWidth - 3
 	padWidth := lineWidth - 4
 	horiz := strings.Repeat("═", innerWidth)
 	title := `.:  M E S S A G E   O F   T H E   D A Y`

@@ -90,6 +90,16 @@ markers `☺ ☹ ⚷` become `P & K`, `→` becomes `->`, `…` `...`, `±` `+/-
 character or its row shifts; `internal/mapper`'s
 `TestMapGlyphsConvertToOneAsciiCharacter` holds every biome and mapper glyph
 to that.
+The splash and banner art has rows too: the star-field dots `· ˙`, the wave
+bars `▁▂▃▅▆▇`, the quadrants, flowers and sparkles, the prompt pointer `»`
+(`>`), and the shield emoji (dropped, the words SHIELD SLAM say it). Runes
+the table does not name go through `asciiFallback`: a Braille cell (the
+goodbye art) becomes a shade by its dot count, any other box-drawing piece
+becomes `+`, and anything else passes through. `TestAsciiModeCoversEveryShippedGlyph`
+scans the live world's templates and YAML, `config.yaml` and every non-test
+Go string and rune literal (comments and `localize/` are not read) and fails
+on any rune that converts to non-ASCII, so a new glyph needs its row in the
+same change.
 
 **`StripANSI` and `EscapeAnsiTags` are unrelated.** `StripANSI` removes raw
 terminal escape sequences (`\x1b[...m`) from already-rendered output.
