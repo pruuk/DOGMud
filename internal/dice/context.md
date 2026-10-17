@@ -77,6 +77,26 @@ Z-score thresholds are unaffected by it: `ZScore >= 2.0` is a critical,
 `ZScore <= -2.0` is a fumble or backfire — roughly 2.3% each, whatever the
 spread.
 
+## The random source (`source.go`)
+
+Every draw in this package, and every `util.Rand` draw, comes from one source.
+In production that is the `math/rand` top-level generator, unchanged; the only
+cost is one atomic load of a nil pointer per draw. A test can swap in a seeded
+generator:
+
+```go
+func SetRandForTest(seed int64) func() // returns restore
+func Float64() float64                 // uniform [0, 1), seedable
+func Intn(n int) int                   // uniform [0, n), seedable
+```
+
+`util.SetRandForTest` calls `dice.SetRandForTest`, so one seed pins every
+Normal roll, contest floor, percentile, table pick and `util.Rand` pick, in
+call order (#576, #524). The seeded generator is mutex-guarded, so concurrent
+draws are race-free, but only a single-goroutine test replays the same
+sequence every run. A plain chance check outside this package should draw
+`dice.Float64()` rather than `math/rand`, or a seeded test cannot pin it.
+
 ## Public API
 
 Rolling:
@@ -172,7 +192,9 @@ detection uniform across every subsystem. `String()` renders it for debug logs.
 
 ## Dependencies
 
-`configs` (for `RollSpread`) and the standard library `math`/`math/rand`.
+The standard library only (`math`, `math/rand`, `sync`, `sync/atomic`). The
+`RollSpread` value arrives through `SetRollSpread` at startup; dice does not
+import `configs`.
 
 ## Consumers
 

@@ -135,7 +135,7 @@ space-form query matches the underscore filename form.
 
 ```go
 func Rand(maxInt int) int
-func SetRandForTest(seed int64) func() // tests only: Rand draws from a seeded source until restore
+func SetRandForTest(seed int64) func() // tests only: Rand AND every dice draw use one seeded source until restore
 func LogRoll(name string, rollResult, targetNumber int)
 func RollDice(dice, sides int) int
 func ParseDiceRoll(dRoll string) (attacks, dCount, dSides, bonus int, conditionOnCrit []int)
@@ -149,6 +149,10 @@ through `internal/contest`, reached via `combat.RunContest` in
 wrappers into that one entry point). `dice.OpposedRollStat` is deprecated and
 has no production callers as of U4. What remains here is
 authored `2d6+3` notation parsing and non-combat randomness.
+
+`Rand` draws from the dice source (`internal/dice/source.go`), and
+`SetRandForTest` is `dice.SetRandForTest`: one seed pins `Rand` and every
+contest roll together, in call order (#576, #524).
 
 ## Files, hashing, encoding
 
@@ -248,7 +252,8 @@ server reloads.
 
 ## Dependencies
 
-`configs`, `mudlog`, `copyover`, and the standard library. Nothing else.
+`copyover`, `dice` (the shared random source behind `Rand`), `mudlog`,
+`term`, `go-runewidth`, and the standard library. Nothing else.
 
 ## Consumers
 

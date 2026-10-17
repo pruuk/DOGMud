@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -22,6 +21,7 @@ import (
 
 	"crypto/md5"
 
+	"github.com/GoMudEngine/GoMud/internal/dice"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/mattn/go-runewidth"
@@ -202,30 +202,23 @@ func (t *Accumulator) Record(nextValue float64) {
 	}
 }
 
-// randSource is where Rand draws: the math/rand global, unless a test has
-// swapped in a seeded source with SetRandForTest. Atomic so a -race run
-// sees no data race on the swap.
-var randSource atomic.Pointer[func(int) int]
-
+// Rand returns a uniform int in [0, maxInt), or 0 when maxInt < 1. It draws
+// from the dice source (internal/dice/source.go): the math/rand global in
+// production, or the seeded generator a test installed with SetRandForTest.
 func Rand(maxInt int) int {
 	if maxInt < 1 {
 		return 0
 	}
-	if src := randSource.Load(); src != nil {
-		return (*src)(maxInt)
-	}
-	return rand.Intn(maxInt)
+	return dice.Intn(maxInt)
 }
 
-// SetRandForTest makes Rand draw from a source seeded with seed, so a test
-// can replay every random draw a run makes (item behaviour slice 2, spec
-// X19). Returns a restore func. The seeded source is not safe for
-// concurrent draws: use it only in a test that draws from one goroutine.
+// SetRandForTest seeds the one random source that Rand AND every dice roll
+// draw from (dice.SetRandForTest), so a test can replay every random draw a
+// run makes (item behaviour slice 2, spec X19; #576, #524). Returns a
+// restore func. Draws are mutex-guarded, so concurrent draws are race-free,
+// but only a single-goroutine test replays the same sequence every time.
 func SetRandForTest(seed int64) func() {
-	r := rand.New(rand.NewSource(seed))
-	draw := func(n int) int { return r.Intn(n) }
-	prev := randSource.Swap(&draw)
-	return func() { randSource.Store(prev) }
+	return dice.SetRandForTest(seed)
 }
 
 func LogRoll(name string, rollResult int, targetNumber int) {

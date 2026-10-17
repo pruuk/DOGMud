@@ -14,8 +14,6 @@
 package contest
 
 import (
-	"math/rand"
-
 	"github.com/GoMudEngine/GoMud/internal/dice"
 )
 
@@ -161,7 +159,7 @@ func RunWithFloors(atkScore float64, entries []Entry, floor float64) Result {
 	// At most ONE flip per call. The attacker either lost and is rescued, or
 	// won and is stopped -- never both, because drawing twice would change the
 	// outcome distribution.
-	if rand.Float64() < floor {
+	if dice.Float64() < floor {
 		if res.Success {
 			res.Success, res.Margin, res.Floored = false, -1, true
 		} else {
