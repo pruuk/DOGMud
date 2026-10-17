@@ -134,7 +134,7 @@ func FindRaiseCorpse(room *rooms.Room, spellInfo *spells.SpellData, spellRest st
 		corpses = room.Corpses
 	}
 	nameFilter, targetIndex := ParseRaiseTarget(spellRest)
-	idx, pool, reason := SelectRaiseCorpse(corpses, nameFilter, targetIndex, int(spellInfo.SummonMinCorpsePool))
+	idx, pool, reason := SelectRaiseCorpse(corpses, nameFilter, targetIndex, spellInfo.SummonMinCorpsePool)
 	if idx < 0 {
 		return -1, 0, RaiseCorpseRefusal(reason, nameFilter)
 	}
