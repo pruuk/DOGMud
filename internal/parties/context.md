@@ -53,6 +53,12 @@ Represents a player party with the following features:
   - Used by combat system for tactical positioning
 
 ### Position Management
+Hidden and inert since 2026-10-17 (#295): the `backrank`/`frontrank` aliases
+pointed at a `rank` command that never existed, so they were removed, and the
+`party` table no longer shows a Position column. `SetRank` has no caller, so
+every member reads "middle". The data (`Party.Position`, `GetRank`, `SetRank`,
+`ChanceToBeTargetted`) and the GMCP party member `position` field stay in
+place for the positioning design (#600).
 - **GetRank(userId int) string**: Retrieves tactical position of party member
   - Returns position string: "front", "middle", or "back"
   - Used for combat calculations and tactical display

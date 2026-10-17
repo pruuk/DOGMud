@@ -356,8 +356,6 @@ command-aliases:
   'bank withdraw':    ['withdraw']
   'storage add':      ['store']
   'storage remove':   ['unstore']
-  'rank back':        ['backrank']
-  'rank front':       ['frontrank']
   defuse:             ['disarm']
   suggest:            ['idea']
   'help about':       ['about']
