@@ -5,9 +5,8 @@ description: >
   The town's heart opens out here across flat basalt slabs, worn smooth
   by more feet than anyone has bothered to count. A weathered notice post
   stands square in the middle, its boards layered thick with the crier's
-  latest word and a hundred older ones gone soft beneath. Even with not a
-  soul about, the square does not feel empty: it holds the kept-breath
-  hum of a place where news breaks and gossip travels, where the day's
+  latest word and a hundred older ones gone soft beneath. Busy or quiet,
+  the square never feels empty: it holds the kept-breath hum of a place where news breaks and gossip travels, where the day's
   first word and its last both get spoken aloud. Ways run off in every
   direction: north toward the pool, south to the market, west along the
   stilt-walk, east to the squat strongbox-house. Stand here a spell and
@@ -52,6 +51,6 @@ spawninfo:
 - mobid: 9106
 idlemessages:
 - A loose notice lifts and flutters against the <ansi fg="itemname">notice post</ansi>, then settles.
-- Footsteps cross the empty <ansi fg="itemname">square</ansi> somewhere behind you and fade off into a side lane.
+- Footsteps cross the <ansi fg="itemname">square</ansi> somewhere behind you and fade off into a side lane.
 x: 44
 y: 20

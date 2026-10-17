@@ -35,8 +35,13 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 	if !m.Character.HasConditionFlag(conditions.PermaGear) {
 
 		// Carried items: 100% base drop chance (per-item DropChance
-		// still applies via ShouldDrop).
+		// still applies via ShouldDrop). A NeverDrops item is skipped here
+		// too: a crit disarm returns the weapon to the pack (ReturnToPack),
+		// so mob-only gear can be carried, not worn, when the mob dies.
 		for _, item := range m.Character.Items {
+			if item.GetSpec().NeverDrops {
+				continue
+			}
 			if !item.ShouldDrop(100) {
 				continue
 			}
@@ -50,8 +55,8 @@ func dropMobLootAndSetCorpse(m *mobs.Mob, room *rooms.Room) {
 			// NeverDrops (e.g. boss-only stat-boost gear like the Core
 			// Guardian's Hull Plating / Core Matrix) is skipped entirely —
 			// distinct from PermaGear, which also suppresses this mob's
-			// carried Items + Gold. NeverDrops only touches equipped gear,
-			// leaving the mob's intended carried-item loot untouched.
+			// carried Items + Gold. NeverDrops only touches items flagged
+			// with it, leaving the mob's intended carried-item loot untouched.
 			if item.GetSpec().NeverDrops {
 				continue
 			}

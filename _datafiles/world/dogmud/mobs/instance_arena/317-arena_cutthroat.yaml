@@ -29,6 +29,9 @@ character:
   speciesid: 1
   level: 1
   gold: 0
+  equipment:
+    weapon:
+      itemid: 10050
   stats:
     dexterity:
       base: 105

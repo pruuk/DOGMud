@@ -39,8 +39,7 @@ idlemessages:
   on its tray.
 - Through the wall, the Tannery's noise carries faintly from
   the south.
-- The high window admits a narrow, controlled measure of
-  daylight onto the workbench.
+- The high window is set so that whatever light it gives falls squarely on the workbench.
 spawninfo:
   - mobid: 9610
 x: -6

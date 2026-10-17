@@ -41,6 +41,11 @@ character:
   speciesid: 1
   level: 1
   gold: 15
+  equipment:
+    weapon:
+      itemid: 10052
+    offhand:
+      itemid: 20100
   stats:
     strength:
       base: 108

@@ -46,7 +46,7 @@ func narrateShopCraft(mob *mobs.Mob, room *rooms.Room, result *mobs.CraftResult)
 		// Restock-only tick: supply cart delivery, no craft.
 		msgs := []string{
 			`A supply cart pulls up outside. <ansi fg="mobname">%s</ansi> sorts through a fresh delivery of materials.`,
-			`<ansi fg="mobname">%s</ansi> unpacks a crate of supplies and stacks them neatly behind the counter.`,
+			`<ansi fg="mobname">%s</ansi> unpacks a crate of supplies and stacks them neatly out of the way.`,
 			`A runner drops off a bundle of materials. <ansi fg="mobname">%s</ansi> checks the contents and nods.`,
 		}
 		sendVisualRoomText(room, messaging.CategoryMobIdle,

@@ -1,0 +1,21 @@
+itemid: 10050
+name: Pit Fighter's Knife
+namesimple: knife
+description: >-
+  A short, plain blade of dark iron with a cord-wrapped grip, the
+  edge kept keen and the point kept keener. Arena fighters carry
+  these in pairs and the arena keeps them: they go back on the rack
+  when the fight is done.
+type: weapon
+hands: 1
+subtype: stabbing
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.60
+speedmultiplier: 1.1
+parryrating: 4
+weight: 0.8
+never_drops: true
+not_salable: true
+value: 0
