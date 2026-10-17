@@ -3,6 +3,7 @@ package messaging
 import (
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 // normalizeSkip indicates per-Category opt-outs from individual
@@ -225,6 +226,13 @@ func appendEndPunct(text string) string {
 	if trimmed == "" {
 		return text
 	}
+	// A line that ends on a drawn border is a table or box bottom, not a
+	// sentence: `└────┘`, `╚═══╝`, `+----+`, a `|` row end, a `-` rule or a
+	// block-element bar. A stop there printed as `+----+.` once the ASCII
+	// downgrade ran, on every boxed screen (#460).
+	if r, _ := utf8.DecodeLastRuneInString(trimmed); isBorderRune(r) {
+		return text
+	}
 	last := trimmed[len(trimmed)-1]
 	switch last {
 	case '.', '!', '?', ',', ')', ']', '"', '\'', '*':
@@ -236,4 +244,17 @@ func appendEndPunct(text string) string {
 		return text
 	}
 	return trimmed + "." + suffix + trailing
+}
+
+// isBorderRune reports whether r draws a table or box edge: the Unicode
+// box-drawing block (U+2500 to U+257F), the block elements (U+2580 to
+// U+259F), or the ASCII border characters `+`, `|` and `-`.
+func isBorderRune(r rune) bool {
+	switch {
+	case r >= 0x2500 && r <= 0x259F:
+		return true
+	case r == '+', r == '|', r == '-':
+		return true
+	}
+	return false
 }

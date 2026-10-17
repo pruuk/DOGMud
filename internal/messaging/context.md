@@ -26,6 +26,10 @@ the recipient's connection.
    (`pet.go`: "You pet %s."). A line that ends in text the stage must
    not touch ends in a terminator it already honours (`.!?,)]"'*`): the
    afk message is quoted and the report's vital bars are bracketed.
+   A line that ends on a drawn border (box drawing U+2500 to U+257F,
+   block elements U+2580 to U+259F, or ASCII `+ | -`) is a table or box
+   bottom and gets no stop (`isBorderRune`, #460); the root test
+   `TestBoxedScreensEndWithoutAStop` renders the boxed screens to prove it.
 3. **Sight gate** (visual channel only) — per-recipient: CanSeeClearly,
    CanSeeShapes, or skip-visual-deliver-audio. Consumes the chunk-6
    Perception FSM (see `internal/state/perception/`).
