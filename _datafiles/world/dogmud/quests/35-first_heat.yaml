@@ -2,29 +2,59 @@ questid: 35
 name: First Heat
 description: >-
   The coulee smithy's forge, and Smith Rusk to judge your work. Buy
-  an iron ingot and a leather strip from his stall, work them at the
-  forge into an iron dagger, and bring the finished blade back to him.
+  an iron ingot and a leather strip from her stall, work them at the
+  forge into an iron dagger, and bring the finished blade back to her.
 secret: false
+
+# Token flow (owner ruling 2026-10-17: one command per step, in order,
+# each trigger gated on the step before it):
+#   35-start  granted by Rusk's craft_offer node (9116.yaml).
+#   35-list   list beside Rusk in the smithy (5245); she is the merchant.
+#   35-ingot  item_gain of an iron ingot (40001), gated on 35-list.
+#   35-strip  item_gain of a leather strip (40002), gated on 35-ingot.
+#   35-craft  craft at the forge (5245), LENIENT: gated on 35-start, because
+#             the craft cannot begin without both materials in hand. A player
+#             saved on 35-start (the old first step) who already bought them
+#             can craft straight away.
+#   35-end    Rusk's craft_turnin node (gated on 35-craft), or handing her
+#             the dagger (item_give trigger below).
 
 steps:
   - id: start
     map_target: 5245
-    description: "The forge is where iron learns its shape. Buy an iron
-      ingot and a leather strip from Smith Rusk's stall, then type craft
-      iron dagger at the forge."
-    hint: "Type list at Rusk's stall to browse goods. Buy iron
-      ingot and buy leather strip, then type craft iron dagger
-      while standing at the forge."
+    description: "The forge is where iron learns its shape. First see
+      what Smith Rusk sells. She stands at the forge in the Coulee
+      Smithy, and her goods are on her stall."
+    hint: "In the Coulee Smithy, next to Rusk, type list."
+  - id: list
+    map_target: 5245
+    description: "You have seen Rusk's goods. The dagger needs an iron
+      ingot and a leather strip. Buy the ingot first."
+    hint: "Type buy iron ingot."
+  - id: ingot
+    map_target: 5245
+    description: "You have an iron ingot. Now buy the leather strip for
+      the grip."
+    hint: "Type buy leather strip."
+  - id: strip
+    map_target: 5245
+    description: "You have both materials. Stand at the forge in the
+      Coulee Smithy and make the dagger. The forge takes a few moments
+      to finish the work."
+    hint: "At the forge in the Coulee Smithy, type craft iron dagger.
+      A craft can fail. If it does, buy an iron ingot and a leather
+      strip again and retry."
   - id: craft
     map_target: 5245
     description: "You worked iron at the forge for the first time
       and turned raw materials into something that did not exist
       before. Bring it back to Rusk."
-    hint: "Report to Smith Rusk -- type ask rusk done."
+    hint: "Go to Smith Rusk at the forge and type ask rusk done."
   - id: end
     description: "Rusk has looked the blade over and said nothing
-      that was not a compliment. The coulee is your range now --
-      head west to the talus slope and find Ovell."
+      that was not a compliment. The coulee is your range now. Go
+      north to the Quench Shed and west to the talus slope, and
+      find Survivor Ovell in the Collapsed Cut."
 
 rewards:
   skillinfo: "blacksmithing:1"
@@ -32,19 +62,56 @@ rewards:
   actor: >-
     Rusk takes the dagger and turns it slowly, checking the edge
     with one thumbnail. The grey forearm catches the forge light.
-    After a moment he sets it back on the anvil and looks at you
-    -- not at the blade, at you -- with the measuring expression
-    of a man deciding whether a piece of iron is worth tempering.
+    After a moment she sets it back on the anvil and looks at you,
+    not at the blade, with the measuring expression of a smith
+    deciding whether a piece of iron is worth tempering.
     "Straight seam. Weight is forward where it belongs. You did
-    not rush the quench." He presses coins into your hand with
-    the finality of a door closing. "West path. Talus slope. Find
-    Ovell. He pulled himself out of a cave-in and has been waiting
-    for someone to notice. Do not make him wait longer."
+    not rush the quench." She presses coins into your hand with
+    the finality of a door closing. "North through the Quench Shed,
+    then west to the talus. Find Ovell in the Collapsed Cut, south
+    of the Lower Talus. He pulled himself out of a cave-in and has
+    been waiting for someone to notice. Do not make him wait longer."
   observer: "Rusk examines the dagger briefly, nods once, and
     presses a few coins into your hand."
 
 triggers:
+  # ── LIST RUSK'S GOODS (she trades in the smithy, room 5245) ─────
+  - event: command
+    command: list
+    room: 5245
+    conditions:
+      has: ["35-start"]
+      missing: ["35-list"]
+    actions:
+      - grant: "35-list"
+      - actor: "Those are Rusk's goods. The dagger needs an iron
+          ingot and a leather strip. Type buy iron ingot."
+
+  # ── BUY THE IRON INGOT (item 40001) ─────────────────────────────
+  - event: item_gain
+    item: 40001
+    conditions:
+      has: ["35-list"]
+      missing: ["35-ingot"]
+    actions:
+      - grant: "35-ingot"
+      - actor: "You have an iron ingot. Now the grip. Type buy
+          leather strip."
+
+  # ── BUY THE LEATHER STRIP (item 40002) ──────────────────────────
+  - event: item_gain
+    item: 40002
+    conditions:
+      has: ["35-ingot"]
+      missing: ["35-strip"]
+    actions:
+      - grant: "35-strip"
+      - actor: "You have the leather strip. That is everything the
+          dagger needs. At the forge, type craft iron dagger."
+
   # ── CRAFT AT THE FORGE (room 5245) ───────────────────────
+  # Lenient gate (35-start, not 35-strip): the craft cannot succeed without
+  # the ingot and the strip in hand, so a craft proves the buying steps.
   - event: command
     command: craft
     room: 5245
@@ -53,14 +120,12 @@ triggers:
       missing: ["35-craft"]
     actions:
       - grant: "35-craft"
-      # Fires when crafting BEGINS (the craft command), so it must NOT
-      # claim the blade is already in hand -- the forge takes a few rounds
-      # (time_rounds: 3) to finish. The wield/inv teaching lives on the
-      # recipe's success_message, which fires when the dagger actually
-      # appears (recipes/blacksmithing/iron-dagger.yaml).
-      - actor: "You set to work at the forge. Give it a few moments --
-          the iron has to take the heat and the shape both. When the
-          finished blade is in your hands, bring it back to Rusk."
+      # The craft quest event fires only when a craft SUCCEEDS (coordinator,
+      # 2026-10-17), so the dagger exists when this line plays. The wield/inv
+      # teaching lives on the recipe's success_actor
+      # (recipes/blacksmithing/iron-dagger.yaml).
+      - actor: "The iron dagger is yours, made at the forge. Take it
+          to Rusk and type ask rusk done."
 
   # ── TURN IN BY GIVING THE BLADE ──────────────────────────
   # Alternate completion path to the `ask rusk done` dialogue node:
@@ -70,7 +135,7 @@ triggers:
   # weapon to wield (Equals compares UUID, so the returned dagger is
   # a distinct instance and give.go's post-consume RemoveItem is a
   # no-op). consume_item makes give.go take its consume branch, which
-  # returns before the generic archetype "hands it back" emote — so
+  # returns before the generic archetype "hands it back" emote, so
   # the turn-in reads cleanly.
   - event: item_give
     mob: 9116

@@ -1,15 +1,19 @@
 # Quest 37 — Into the Vein (Pothole Coulee, Spoke B / Forge outer ring,
 # capstone). Granted by Survivor Ovell (9117) after quest 36 (Pick the Vein).
 # The player descends the DARK basalt mine (they must cast chrysalis-glow to
-# see -- taught in the hub + reinforced by Ovell's dark_help node) and defeats
+# see: taught in the hub and reinforced by Ovell's dark_help node) and defeats
 # the Stone-Blooded Beast (9123) in the Den at the bottom.
+#
+# Route (rooms.txt): Upper Talus 5253 west -> Mine Mouth 5254, down -> Mine
+# Head 5255, west -> Timbered Drift 5256, down -> Lower Drift 5258, west ->
+# Stone Gallery 5259, west -> The Den 5260.
 #
 # Token flow:
 #   37-start  — granted by Ovell's mine_offer dialogue node.
 #   37-end    — granted by the boss-kill trigger below (mob_death 9123). The
 #               rewards block fires on 37-end: the forged blade (10045), a
 #               blacksmithing rank, a permanent Strength gain (stat_info), and
-#               the advanced basalt-iron recipe (recipe_info -- the recipe-grant
+#               the advanced basalt-iron recipe (recipe_info: the recipe-grant
 #               engine feature added this chunk; the player can then forge their
 #               own basalt-iron blades).
 
@@ -17,15 +21,15 @@ questid: 37
 name: Into the Vein
 description: >-
   A stone-blooded beast has denned at the bottom of the basalt mine below the
-  slope. The mine is pitch dark -- cast your glow before you descend -- and the
+  slope. The mine is pitch dark, so cast your glow before you descend, and the
   beast is the worst thing in it. Take it, and the deep vein is yours.
 secret: false
 
 steps:
   - id: start
     map_target: 5260
-    description: "Survivor Ovell has set you on the mine. Cast chrysalis-glow to light the dark, descend past the workings, and defeat the stone-blooded beast in the Den at the bottom."
-    hint: "Head down the mine mouth. The deep workings are pitch black -- type cast chrysalis-glow to see. Fight your way down to the Den and defeat the stone-blooded beast. Type consider on a foe first to size it up."
+    description: "Survivor Ovell has set you on the mine. The Mine Mouth is west of the Upper Talus. From there the way to the Den is down, west, down, then west twice. The mine is pitch black, so cast chrysalis-glow before you go down. Other things live in the workings: type consider on a foe to size it up, and flee if a fight turns."
+    hint: "In the Den at the bottom of the mine, type attack beast. If it is dark, type cast chrysalis-glow first."
   - id: end
     description: "The beast is dead and the deep vein is open. You came in not knowing which end of a hammer to hold. You leave a smith."
     hint: "You have taken the mine. Speak with Ovell on the slope if you want to hear what it means."
