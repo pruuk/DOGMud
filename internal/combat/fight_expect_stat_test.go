@@ -38,6 +38,7 @@ func TestMeleePredictionMatchesCombat(t *testing.T) {
 	if testing.Short() {
 		t.Skip("statistical guard; skipped in -short")
 	}
+	skipStatSweepUnderRace(t)
 	pinParityBalance(t)
 	// The Go default is 0 (compression off); _datafiles/config.yaml ships
 	// ContestGapSaturation 2.80. Pin the shipped value so the guard measures
