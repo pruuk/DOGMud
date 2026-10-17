@@ -10,6 +10,15 @@ package main
 // the missing tokens ("17-letter", "11-sylara", "11-rhett") are gates on
 // branches no player can reach. Recorded 2026-10-17 when the sweep first ran.
 //
+// Worked down the same day (#611): 12 ask-word, 7 end-token and 4
+// undefined-token entries were fixed in content. What is left: the grant-first order
+// (the quest mechanisms arc, #375); ask-word nodes where "quest" would charge
+// gold (9584), pick a branch for the player (9397) or never arrive because
+// an earlier node already answers it; "17-letter", whose quest was turned
+// into lore with no token to point at; and Kael's root variant 1 (240),
+// whose "no side chosen yet" gate cannot be written in place, since a flag
+// map excludes one value per key.
+//
 // The semicolon rule is never baselined: a ';' in spoken text truncates it in
 // play, so every one is fixed in the content instead.
 //
@@ -29,12 +38,8 @@ var knownDialogueValidatorFindings = map[string]bool{
 	"_datafiles/world/dogmud/dialogue/ashwick/262.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                                true,
 	"_datafiles/world/dogmud/dialogue/dustwalk_road/83.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                           true,
 	"_datafiles/world/dogmud/dialogue/greenford/9516.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                             true,
-	"_datafiles/world/dogmud/dialogue/ironwind_steppe/240.yaml: node \"the_problem\": quest token \"11-rhett\" does not exist":                                                                                        true,
-	"_datafiles/world/dogmud/dialogue/ironwind_steppe/240.yaml: node \"the_problem\": quest token \"11-sylara\" does not exist":                                                                                       true,
 	"_datafiles/world/dogmud/dialogue/ironwind_steppe/240.yaml: root variant 1: quest token \"11-rhett\" does not exist":                                                                                              true,
 	"_datafiles/world/dogmud/dialogue/ironwind_steppe/240.yaml: root variant 1: quest token \"11-sylara\" does not exist":                                                                                             true,
-	"_datafiles/world/dogmud/dialogue/ironwind_steppe/240.yaml: root variant 2: quest token \"11-sylara\" does not exist":                                                                                             true,
-	"_datafiles/world/dogmud/dialogue/ironwind_steppe/240.yaml: root variant 3: quest token \"11-rhett\" does not exist":                                                                                              true,
 	"_datafiles/world/dogmud/dialogue/ironwind_steppe/241.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                        true,
 	"_datafiles/world/dogmud/dialogue/ironwind_steppe/242.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                        true,
 	"_datafiles/world/dogmud/dialogue/labyrinth_of_low_tunnels/74.yaml: tree.nodes: quest-grant nodes must come FIRST":                                                                                                true,
