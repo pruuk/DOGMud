@@ -75,7 +75,7 @@ func Assess(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		[]string{corpse.Character.Name}, messaging.ParticipantSight(user.Character, room)))
 	user.SendText(messaging.CategorySystem, `You sense `+essenceDesc+`.`)
 
-	// A player's remains never answer the call: selectRaiseCorpse skips any
+	// A player's remains never answer the call: actions.SelectRaiseCorpse skips any
 	// corpse carrying a UserId, so listing forms below would promise a summon
 	// that raise then refuses with "You cannot find suitable remains here".
 	//

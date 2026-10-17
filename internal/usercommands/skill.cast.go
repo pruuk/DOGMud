@@ -170,6 +170,20 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 	}
 
+	// 6a. A raise needs a usable corpse. Checked before the binding gates
+	// below (#282): selection spends nothing, and a player at the reservation
+	// ceiling with no usable corpse must hear about the corpse, not free up
+	// reserve only to fail again for it. Refused here, at initiation, so a
+	// raise that cannot land never channels or spends (U7b admission rule).
+	// Raise spells target self, so InitiateCast hands targetName on as the
+	// SpellRest that resolution's backstop gate reads; both parse it alike.
+	if spellInfo.SummonRequiresCorpse {
+		if idx, _, refusalLine := actions.FindRaiseCorpse(room, spellInfo, targetName); idx < 0 {
+			user.SendText(messaging.CategoryRefusal, refusalLine)
+			return true, nil
+		}
+	}
+
 	// 6b. U7b: refuse an unsustainable binding at INITIATION, before any
 	// conviction moves.
 	//
