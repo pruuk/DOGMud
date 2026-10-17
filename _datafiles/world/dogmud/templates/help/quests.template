@@ -1,7 +1,16 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">quests</ansi>
 
-The <ansi fg="command">quests</ansi> command shows all current and completed quests.
+The <ansi fg="command">quests</ansi> command lists the quests you are working on. Each one shows
+its name, a progress bar, and what to do for your current step.
+
+Finished quests are hidden. Add <ansi fg="command">all</ansi> to list them too.
 
 <ansi fg="yellow">Usage: </ansi>
 
-  <ansi fg="command">quests</ansi>
+  <ansi fg="command">quests</ansi>              Show the quests you are working on
+  <ansi fg="command">quests all</ansi>          Show every quest you have started, finished ones too
+
+Stuck on a step? <ansi fg="command">hint</ansi> gives a nudge for your current quest, and
+<ansi fg="command">hint [name]</ansi> gives one for a quest you name.
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help hint</ansi>
