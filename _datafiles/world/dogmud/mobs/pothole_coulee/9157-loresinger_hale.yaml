@@ -42,6 +42,9 @@ character:
   speciesid: 1
   level: 1
   gold: 0
+  equipment:
+    light:
+      itemid: 20100
   stats:
     charisma:
       base: 114
