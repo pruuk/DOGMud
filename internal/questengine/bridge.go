@@ -435,10 +435,16 @@ func (b *GameBridge) GiveMutation() {
 	}
 }
 
-// npcCommand builds a "say" or "emote" command string from a SayLineDef.
-func npcCommand(line SayLineDef) string {
+// npcCommand builds a "say", "emote" or "whisper" command string from a
+// SayLineDef. A whispered line is aimed at toUserId, the triggering player,
+// by id ("@<userId>"), so it reaches that player alone and no name lookup
+// can miss.
+func npcCommand(line SayLineDef, toUserId int) string {
 	if line.Emote {
 		return fmt.Sprintf("emote %s", line.Text)
+	}
+	if line.Whisper && toUserId > 0 {
+		return fmt.Sprintf("whisper @%d %s", toUserId, line.Text)
 	}
 	return fmt.Sprintf("say %s", line.Text)
 }
@@ -457,9 +463,9 @@ func (b *GameBridge) QueueNpcSay(n NpcSayDef) {
 			continue
 		}
 		if line.Delay > 0 {
-			mob.Command(npcCommand(line), float64(line.Delay))
+			mob.Command(npcCommand(line, b.user.UserId), float64(line.Delay))
 		} else {
-			mob.Command(npcCommand(line))
+			mob.Command(npcCommand(line, b.user.UserId))
 		}
 	}
 }
@@ -516,9 +522,9 @@ func (b *GameBridge) QueueSequence(s SequenceDef) {
 				continue
 			}
 			if delay > 0 {
-				mob.Command(npcCommand(line), float64(delay))
+				mob.Command(npcCommand(line, b.user.UserId), float64(delay))
 			} else {
-				mob.Command(npcCommand(line))
+				mob.Command(npcCommand(line, b.user.UserId))
 			}
 		} else {
 			if delay > 0 {

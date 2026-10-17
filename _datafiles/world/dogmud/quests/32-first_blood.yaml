@@ -28,8 +28,10 @@ steps:
     map_target: 5227
     description: "You sized up the training dummy. Consider tells you
       what you are walking into before you commit."
-    hint: "Tune your combat output -- type set combatverbosity full,
-      medium, or light."
+    hint: "Combat verbosity sets how much fight text you see. Full shows
+      every swing, medium shows only the hits, and light shows one line a
+      round. Type set combatverbosity and the level you want, for example
+      set combatverbosity medium. For more, type help combatverbosity."
   - id: verbosity
     map_target: 5227
     description: "You have tuned your combat output. The Drill Yard

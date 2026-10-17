@@ -1,5 +1,6 @@
 # 6259 Knowing Yourself — movement gate only. Lessons + Dewey's voice live in
-# quest 28. Block the exit until the room's lesson (28-statused) is done.
+# quest 28. Block the exit until the room's last lesson (28-glowed: status,
+# skills, spells, then a first cast of Chrysalis Glow) is done.
 tree:
   type: selector
   children:
@@ -11,7 +12,7 @@ tree:
           commands: [north, n, go, south, s, east, e, west, w, up, u, down, d]
         - type: condition
           check: player_missing_quest
-          quest: "28-statused"
+          quest: "28-glowed"
         - type: action
           do: mob_say
           mob_id: 9491

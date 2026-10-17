@@ -210,6 +210,10 @@ type oldSayLineDef struct {
 	Delay   int    `yaml:"delay,omitempty"`
 	Speaker int    `yaml:"speaker,omitempty"`
 	Emote   bool   `yaml:"emote,omitempty"`
+	// Added 2026-10-17 with the new authored key (quest 28 whispers Dewey's
+	// effigy-fight lines). A new key, not drift: without it the harness
+	// compares an absent old field against a populated new one.
+	Whisper bool `yaml:"whisper,omitempty"`
 }
 
 type oldSpawnDef struct {

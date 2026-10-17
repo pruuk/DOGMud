@@ -157,6 +157,11 @@ own, unrelated action param.)
   already on the ground, and `warcry` when one is already riding the player
   (the goal holds); `flee` is sent by the round hook once the player has
   arrived, from the room fled into.
+- **An `npc_say` line with `whisper: true` reaches the triggering player
+  alone.** `npcCommand` turns it into the mob command `whisper @<userId>`,
+  framed in asterisks so it stands out from combat text; the room hears
+  nothing, so the line prints once. Quest 28 whispers Dewey's lines during the
+  effigy fight. A line with `emote: true` ignores `whisper`.
 - **`room_gate` refuses a walk before it happens; `room_enter` fires after.**
   `usercommands.Go` notifies `room_gate` (filter `room`, the destination's
   template id) after the lock check and before the exit message, the move

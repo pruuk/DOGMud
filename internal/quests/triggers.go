@@ -114,6 +114,10 @@ type SayLineDef struct {
 	Delay   int    `yaml:"delay,omitempty" json:"delay,omitempty"`     // delay in seconds before this line
 	Speaker int    `yaml:"speaker,omitempty" json:"speaker,omitempty"` // mob ID override (0 = use parent NpcSayDef.Mob)
 	Emote   bool   `yaml:"emote,omitempty" json:"emote,omitempty"`     // true = emote instead of say
+	// Whisper sends the line to the triggering player alone, framed as a
+	// whisper, instead of saying it to the room. For a line that must stand
+	// out from combat text (quest 28's effigy fight). Ignored for an emote.
+	Whisper bool `yaml:"whisper,omitempty" json:"whisper,omitempty"`
 }
 
 type SpawnDef struct {
