@@ -40,7 +40,7 @@ character:
   gold: 0
   equipment:
     light:
-      itemid: 20100
+      itemid: 20134
   stats:
     perception:
       base: 112

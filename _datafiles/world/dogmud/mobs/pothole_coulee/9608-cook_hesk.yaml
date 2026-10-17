@@ -42,7 +42,7 @@ character:
   gold: 1000
   equipment:
     light:
-      itemid: 20100
+      itemid: 20134
   skills:
     cooking: 1
   stats:
