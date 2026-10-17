@@ -1276,6 +1276,9 @@ fires (pommel/hilt strike narration). Full design spec and formula:
 | Bite        | 0.15      | Head-mounted, neck-length                |
 | Sting       | 0.20      | Abdomen/tail-tip                         |
 | Slam        | 0.30      | Bull rush, shoulder-check                |
+| Trample     | 0.30      | Hooves; kept slam's reach (#541)         |
+| Lash        | 0.30      | Pseudopods, tendrils; slam's reach (#541)|
+| Blast       | 0.30      | Elemental strike; slam's reach (#541)    |
 | Stabbing    | 0.30      | Dagger / shiv family                     |
 | Gore        | 0.40      | Horn-tip from skull base                 |
 | Wand        | 0.40      | Foot-long focus                          |
@@ -1330,8 +1333,9 @@ species whose `natural_attack` is `siphon` instead needs `lifedrain: true`
 
 ### Natural-attack subtypes: live for mob basic attacks
 
-The natural-attack `ItemSubType`s — `bite`, `claws`, `slam`, `gore`,
-`sting` and `siphon` — and their combat-message files are now the standard
+The natural-attack `ItemSubType`s (`bite`, `claws`, `slam`, `gore`,
+`sting`, `siphon`, `trample`, `lash` and `blast`) and their combat-message
+files are now the standard
 rendering path for non-human mob melee (Phase 1 non-human attack
 messaging). When a species YAML sets `natural_attack:`, `buildWeaponSetup`
 in `internal/combat/combat_helpers.go` routes unarmed mob attacks through
@@ -1480,8 +1484,9 @@ returns.
 **Natural-weapon pools never make `{itemname}` a verb's subject.** A mob's
 natural weapon renders as the species' `unarmedname`, singular for some
 ("maw", "abrasive whirl") and plural for most ("claws", "pseudopods"), so
-no verb can agree with it. In the `claws`, `bite`, `sting`, `gore` and
-`slam` pools (and any other species `natural_attack` pool) the attacker
+no verb can agree with it. In the `claws`, `bite`, `sting`, `gore`,
+`slam`, `trample`, `lash` and `blast` pools (and any other species
+`natural_attack` pool) the attacker
 does the verb: "You rake X with your {itemname}". In both worlds,
 `natural_weapon_agreement_test.go` fails any line where a word other than a
 preposition, particle or participle follows `{itemname}` (#455).
