@@ -866,6 +866,32 @@ func FindSpecByComponentTag(tag string) *ItemSpec {
 	return best
 }
 
+// ComponentTagName is the player-facing name for a crafting component tag
+// (#530). A tag exactly one item carries reads as that item's name
+// ("healers-root" is "Healer's Root", as inventory shows it). A tag several
+// items share ("bottle": Clay Flask, Glass Vial, ...) or none carries reads
+// as the tag itself with spaces for dashes, never a dashed id. It does not
+// use FindSpecByComponentTag, because naming the cheapest bottle would tell
+// the player only that one bottle counts.
+func ComponentTagName(tag string) string {
+	var only *ItemSpec
+	n := 0
+	for _, spec := range items {
+		if spec == nil || spec.ComponentTag != tag {
+			continue
+		}
+		n++
+		only = spec
+		if n > 1 {
+			break
+		}
+	}
+	if n == 1 && only.Name != `` {
+		return only.Name
+	}
+	return strings.ReplaceAll(tag, `-`, ` `)
+}
+
 // LoadDataFiles loads every item spec and the combat and defense message
 // sets at boot. It panics on a load error: the server cannot run without
 // them. A live reload calls LoadDataFilesE instead.

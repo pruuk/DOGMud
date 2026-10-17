@@ -733,6 +733,13 @@ out at a 50% speed reduction (skill approximately 100+).
 known `CraftedRound`, past `PhaseSpoiled` at bottle speed 1.0. Player and mob
 `eat` both ask it; no shipped food carries `aging:` yet.
 
+### Component tag names
+`ComponentTagName(tag)` is the player-facing name of a component tag, used
+by every `craft` line that names an ingredient: the item's `Name` when
+exactly one spec carries the tag, else the tag with spaces for dashes (a
+shared tag such as `bottle`, or an unknown one). `FindSpecByComponentTag` is
+the resolver for creating or pricing an item; do not use it for display.
+
 ### Bottle Tiers
 All four bottles share `component_tag: bottle`; crafting consumes whichever
 matches first. The chosen bottle's `BottleAgingMultiplier` (`ItemSpec`) is

@@ -159,7 +159,7 @@ func Craft(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	case result.MissingIngredients:
 		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="red">You are missing: %s.</ansi>`,
-			storageAwareMissingTag(user, result.Recipe, result.MissingTag)))
+			items.ComponentTagName(storageAwareMissingTag(user, result.Recipe, result.MissingTag))))
 		return true, nil
 
 	case result.ForeignComponent:
@@ -343,7 +343,7 @@ func craftEnchanting(rest string, recipe *crafting.RecipeSpec, user *users.UserR
 	ok, missing := crafting.HasIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
 	if !ok {
 		craftDeliver(user, messaging.CategoryRefusal, fmt.Sprintf(`<ansi fg="red">You are missing: %s.</ansi>`,
-			storageAwareMissingTag(user, recipe, missing)))
+			items.ComponentTagName(storageAwareMissingTag(user, recipe, missing))))
 		return true, nil
 	}
 
@@ -693,7 +693,7 @@ func recipeStatus(user *users.UserRecord, room *rooms.Room, r *crafting.RecipeSp
 	ok, missing := crafting.HasIngredientsWithStorage(
 		user.Character.Items, user.Character.ComponentItems, user.ItemStorage.GetItems(), r)
 	if !ok {
-		return "X", fmt.Sprintf("missing %s", missing)
+		return "X", fmt.Sprintf("missing %s", items.ComponentTagName(missing))
 	}
 	return "V", ""
 }
@@ -747,7 +747,7 @@ func storageCompletable(user *users.UserRecord, r *crafting.RecipeSpec) bool {
 func ingredientSummary(r *crafting.RecipeSpec) string {
 	parts := make([]string, 0, len(r.Ingredients))
 	for _, ing := range r.Ingredients {
-		parts = append(parts, fmt.Sprintf("%dx %s", ing.Quantity, ing.ItemTag))
+		parts = append(parts, fmt.Sprintf("%dx %s", ing.Quantity, items.ComponentTagName(ing.ItemTag)))
 	}
 	return strings.Join(parts, ", ")
 }
