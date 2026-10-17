@@ -33,7 +33,7 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// every light (it used to say nothing at all when lit, and the sight
 	// refusal when dim, which hinted at a merchant who was not there).
 	if len(room.GetMobs(rooms.FindMerchant)) == 0 {
-		user.SendText(messaging.CategoryRefusal, "There's no merchant here.")
+		refusal.NoMerchant(user)
 		return true, nil
 	}
 
@@ -70,7 +70,7 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	// (actions.QuoteSale), so offer never names a price sell then refuses.
 	mob, shopInv := actions.SaleMerchant(room, item, true)
 	if mob == nil {
-		user.SendText(messaging.CategoryRefusal, "There's no merchant here.")
+		refusal.NoMerchant(user)
 		return true, nil
 	}
 

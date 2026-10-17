@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -337,7 +338,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 				buyer.SendText(messaging.CategoryError, "You can't buy from yourself.")
 				return BuyResult{Reason: BuyReasonSelfTarget, Requested: quantity}
 			}
-			buyer.SendText(messaging.CategoryRefusal, "Visit a merchant to purchase objects or services.")
+			refusal.NoMerchant(buyer)
 			return BuyResult{Reason: BuyReasonNoMerchant, Requested: quantity}
 		} else {
 			return BuyResult{Reason: BuyReasonNoMerchant, Requested: quantity}
@@ -349,7 +350,7 @@ func Buy(buyer Actor, opts BuyOptions) BuyResult {
 
 	if len(merchantPlayers) == 0 && len(merchantMobs) == 0 {
 		if buyer.IsPlayer() {
-			buyer.SendText(messaging.CategoryRefusal, "Visit a merchant to purchase objects or services.")
+			refusal.NoMerchant(buyer)
 		}
 		return BuyResult{Reason: BuyReasonNoMerchant, Requested: quantity}
 	}

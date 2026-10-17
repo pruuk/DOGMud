@@ -30,6 +30,9 @@ in the room.
 
 - Sight-gated helpers (`NotHereCreature`, `NotHereThing`, `NothingToAim`)
   take no name at all, so they cannot echo.
+- `NoMerchant` (`NoMerchantLine`, "There's no merchant here.") is the one
+  answer every shop verb (list, buy, sell, offer, appraise) gives where no
+  merchant is present.
 - `NotCarrying`, `NotWearing`, `NotInStorage` (the player's own belongings)
   and `NotPartyMember` (their own party) echo, through `echo`: ANSI
   tags stripped, trimmed, truncated by display width to 24 columns plus

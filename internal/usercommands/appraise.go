@@ -22,7 +22,7 @@ func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 	merchantMobs := room.GetMobs(rooms.FindMerchant)
 	if len(merchantMobs) == 0 {
-		user.SendText(messaging.CategoryRefusal, `You need to be at a merchant to appraise items.`)
+		refusal.NoMerchant(user)
 		return true, nil
 	}
 

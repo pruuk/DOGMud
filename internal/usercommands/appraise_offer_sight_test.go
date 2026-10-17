@@ -62,7 +62,7 @@ func TestShopVerbs_NoMerchant_SayNoMerchantAtEveryLight(t *testing.T) {
 		{"list", func(u *users.UserRecord, r *rooms.Room) error {
 			_, err := List("", u, r, 0)
 			return err
-		}, "Visit a merchant to list and buy objects."},
+		}, "There's no merchant here."},
 		{"offer", func(u *users.UserRecord, r *rooms.Room) error {
 			_, err := Offer("tin cup", u, r, 0)
 			return err
@@ -70,7 +70,7 @@ func TestShopVerbs_NoMerchant_SayNoMerchantAtEveryLight(t *testing.T) {
 		{"appraise", func(u *users.UserRecord, r *rooms.Room) error {
 			_, err := Appraise("tin cup", u, r, 0)
 			return err
-		}, "You need to be at a merchant to appraise items."},
+		}, "There's no merchant here."},
 	} {
 		for _, biome := range []string{"shapes", "city"} {
 			t.Run(tc.verb+"/"+biome, func(t *testing.T) {

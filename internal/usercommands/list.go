@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/pets"
 	"github.com/GoMudEngine/GoMud/internal/questengine"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -117,7 +118,7 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					`Come back in the morning, or make some noise.`, away.Character.Name))
 			return true, nil
 		}
-		user.SendText(messaging.CategoryRefusal, "Visit a merchant to list and buy objects.")
+		refusal.NoMerchant(user)
 		return true, nil
 	}
 
