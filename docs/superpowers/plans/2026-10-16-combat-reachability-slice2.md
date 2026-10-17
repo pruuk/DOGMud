@@ -68,7 +68,7 @@ Every task below is written to these rulings. Each entry gives the question, the
 - **D5. Smother's defence label. APPROVED: `rolling smoke`** (renders "You dodge the Elemental Prince's rolling smoke"). Reason: it reuses the approved miss lines' own words. Applied in Task 11.
 - **D6. The attack-family predicates. DECIDED (b): DELETE `SpeciesIsFanged`, `SpeciesIsClawed`, `SpeciesIsHorned` and `SpeciesHasLifeDrain`** (and `SpeciesIsQuadrupedPredator`, deleted under either option) once the gates read `beast_moves`. Reason: no production caller remains (Fact 18), and #563 (anatomy-aware combat text) will want a proper anatomy model rather than attack-family predicates. The same reason covers `SpeciesNaturalAttack`, whose only production callers are those predicates (`ai.go:255,258,261`), so it goes with them. **This supersedes spec section 4's bullet that the predicates "describe the body".** Applied in Task 7 Step 6 and Task 9.
 - **D7. maul and pounce width. DECIDED (b): rewrite every `maul.yaml` and `pounce.yaml` line over 80 visible columns IN THIS SLICE,** through an owner review table, before bears and cats switch to them. Reason: the 80-column hard wrap is a rule for player copy, and these two files go live for the first time in this slice; shipping them over width would ship a known defect. Re-measured: `maul.yaml` 149 of 345 role lines over 80, `pounce.yaml` 121 of 345 (Fact 30). Applied in Task 8; the width guard lands in Task 9.
-- **D8. Patch note copy (Task 12 Step 5). APPROVED as drafted,** subject to staying true after D4. "Wolves and cats can go for the throat" overstates cats under D4, so the line carries an "owner to confirm" note with a proposed rewording; the approved text stays in place until the owner confirms.
+- **D8. Patch note copy (Task 12 Step 5). APPROVED,** with the throat bullet naming wolves only (owner confirmed 2026-10-16), since under D4 cats rarely throttle.
 
 ---
 
@@ -76,7 +76,7 @@ Every task below is written to these rulings. Each entry gives the question, the
 
 **Files:** `docs/superpowers/plans/2026-10-16-combat-reachability-slice2.md` (this plan), `docs/README.md`.
 
-- [x] **Step 1:** D1 to D8 were put to the owner and answered on 2026-10-16. Each ruling is recorded above under "Owner decisions", with its reason, and every task is written to it. The one open point is the D8 patch-note wording forced by D4 (Task 12 Step 5, "owner to confirm"); it does not block Task 1.
+- [x] **Step 1:** D1 to D8 were put to the owner and answered on 2026-10-16. Each ruling is recorded above under "Owner decisions", with its reason, and every task is written to it. The D8 wording forced by D4 was confirmed the same day (Task 12 Step 5). The plan was approved on 2026-10-16, including `SpeciesNaturalAttack` joining the D6 deletion.
 - [ ] **Step 2:** On a branch off master after #571 merges (`git switch -c feature/combat-reachability-slice2 origin/master`), copy this plan to `docs/superpowers/plans/2026-10-16-combat-reachability-slice2.md` and add its row to `docs/README.md` under the 2026-10-16 combat rows (after the slam split rows at lines 113-114):
 
 ```markdown
@@ -2201,20 +2201,13 @@ EOF
   moment.
 - A creature waiting for an opening now waits in its own way.
 - Bears now maul and big cats pounce in their ordinary attacks.
-- Each kind of beast now has its own special moves. Wolves and cats can go
-  for the throat, rats nip at ankles, and snakes simply bite.
+- Each kind of beast now has its own special moves. Wolves can go for the
+  throat, rats nip at ankles, and snakes simply bite.
 - The smoke elemental can pour itself into your eyes and lungs, blinding and
   choking you for a short time, and its smoke can choke off a spell.
 ```
 
-**Owner to confirm (D8 after D4):** "Wolves and cats can go for the throat" is no longer true for cats: D4 leaves the `ambush_predator` profile without a throttle weight (#574), so a cat's gate allows throttle but its AI rarely picks it (Fact 28). Proposed replacement for that bullet, keeping the rest of the approved text:
-
-```markdown
-- Each kind of beast now has its own special moves. Wolves can go for the
-  throat, rats nip at ankles, and snakes simply bite.
-```
-
-Ship the approved text above unless the owner confirms the replacement; record the answer here before this step's commit.
+Owner approved this text on 2026-10-16. The throat bullet names wolves only, because D4 leaves the cats' AI profile without a throttle weight (#574), so a cat rarely throttles (Fact 28).
 
 Check every line is within 80 columns, has no number and no dash.
 - [ ] **Step 6: Commit** `docs(combat): reachability slice 2 in the package docs and patch notes (#541)`.
@@ -2280,7 +2273,7 @@ gh pr create --repo pruuk/DOGMud --base master --head feature/combat-reachabilit
 | Bare-handed humanoids' wait and engage lines move from generic.yaml to unarmed.yaml, and the entangled-defence lines change colour for natural attackers | A direct consequence of ruling B and the one rule; named in the PR body and checked in the playtest |
 | Refactoring throttle's cast interrupt into a helper changes a guarded file | The helper is a move of the same code; throttle's tests and the drift test's callee row catch a drift; allowlist line keys for `combat_throttle.go:146,149` do not move |
 | The Prince spawned outside its instance may behave oddly or refuse an attack | The admin goal checks the spawn and the attack first and reports a refusal as the finding; the unit tests cover smother regardless |
-| Cats rarely throttle: the gate allows it but `ambush_predator` has no throttle weight (Fact 28) | D4: the profile is not changed in this slice; the tuning is #574 under the behaviour arc #575. Tests prove the gate, the playtest does not require a cat throttle, and the patch note stops promising it (D8, owner to confirm) |
+| Cats rarely throttle: the gate allows it but `ambush_predator` has no throttle weight (Fact 28) | D4: the profile is not changed in this slice; the tuning is #574 under the behaviour arc #575. Tests prove the gate, the playtest does not require a cat throttle, and the patch note stops promising it (D8, confirmed) |
 | maul.yaml and pounce.yaml exceed 80 columns at 20-character names (149 and 121 of 345 role lines, Fact 30) | D7 (b): Task 8 rewrites every over-width record through an owner review before Task 9 switches bears and cats, and Task 9 extends the generic width guard to both files |
 | Deleting the predicates removes something #563 might have reused | D6 (b): #563 wants a proper anatomy model, not attack-family predicates; Task 7 Step 6 greps (with a pre-deletion proof the pattern matches) that no caller remains, and the root guard keeps the names from returning to a gate |
 | The D7 rewrite drifts from a record's one moment or reintroduces a #455 defect | Task 8 Step 3 checks each draft by the same rules the guards apply (width, subject-verb, banner, idiom, dashes) before the owner sees it; Task 9 Step 3 runs the real natural-weapon guard once cats use pounce |
@@ -2303,6 +2296,6 @@ gh pr create --repo pruuk/DOGMud --base master --head feature/combat-reachabilit
   - D5 "rolling smoke": Task 11 Steps 6 and 7 (`moveDefenceLines` label, `defensive_messages_newly_defendable_test.go`).
   - D6 (b) predicates and `SpeciesNaturalAttack` deleted: Task 7 Steps 2 and 6 (grep with a pre-deletion proof, test deletion, four context.md files); Task 9 no longer touches them.
   - D7 (b) maul and pounce rewritten to 80 columns: Task 8 (measure, draft, check, owner gate, apply, golden), Task 9 Step 1 (width guard over both files), Fact 30 (re-measured counts).
-  - D8 patch note approved, cats' throat line pending: Task 12 Step 5 ("owner to confirm" with the proposed bullet).
+  - D8 patch note approved with the wolves-only throat bullet: Task 12 Step 5.
 - Every guard added demonstrates it can fail: `TestUnreachableCombatLine_CanFail`, `TestValidateBeastMoves_CanFail`, `TestFamilyReadsIn_CanFail`, `TestScriptedBeastMoveFindings_CanFail`, the both-halves `TestBeastMoveGatesReadTheSpeciesList`, the `_notlisted` drift rows, `TestSlamSplitWidthCheck_CanFail` plus the pre-rewrite measure (Task 8 Step 1) for the width guard extended to maul and pounce, the Task 7 Step 6 pre-deletion grep, and the subject-verb probe (Task 8 Step 3, and Task 9 Step 3 if `forward` is allowlisted).
 - New player text: the Task 8 maul and pounce rewrites (owner review table, D7) including D3's three approved pounce lines, D5 (the defence label, approved) and D8 (patch notes, approved with one bullet pending). Engage lines come from existing prepare pools; smother's copy is Appendix A (approved) less its actor lines.
