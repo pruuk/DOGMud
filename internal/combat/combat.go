@@ -516,7 +516,17 @@ func calculateCombat(sourceChar *characters.Character, targetChar *characters.Ch
 				weaponHit.BestRoll = best.hitRoll.Value
 			}
 
-			res := resolveDefenseOutcome(&attackResult, best, sourceChar, targetChar, critThreshold, isThirdParty, ctx.forceCrit, openingStrikeThisSwing)
+			// The swing's feint roll rides with it: a defensive crit may read as
+			// a deliberate feint (U6 Task 14), and that crit's lines are sent
+			// inside the resolver, so the roll is made there too.
+			res := resolveDefenseOutcomeWithFloors(&attackResult, best, sourceChar, targetChar, critThreshold, isThirdParty, ctx.forceCrit, openingStrikeThisSwing,
+				AttackCritFloor(), DefenseCritFloor(), &swingFeint{
+					skill:         sourceChar.GetCombatSkillLevelFor(ws.weapon),
+					weaponSubType: ws.weaponSubType,
+					srcType:       sourceType,
+					tgtType:       targetType,
+					openingStrike: openingStrikeThisSwing,
+				})
 
 			// Momentum builds only on clean wins and resets on deflections,
 			// matching pre-U6 behavior where a deflected swing was a miss.

@@ -176,7 +176,7 @@ func TestBuildAttackMessages_DefendedOpeningStrikeNamesTheDefence(t *testing.T) 
 
 	// critOnWin true: this IS the opening strike. The defence won it anyway,
 	// which is the whole point of the redesign -- the ambush is contestable.
-	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, true, 0, 0)
+	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, true, 0, 0, nil)
 	if !res.defended {
 		t.Fatal("fixture did not produce a defended swing")
 	}
@@ -241,7 +241,7 @@ func TestBuildAttackMessages_ZeroDamageDefendedOpenerKeepsARoomLine(t *testing.T
 
 	result := &AttackResult{}
 	best := defenceWinBest(15*math.Sqrt2, 15)
-	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, true, 0, 0)
+	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, true, 0, 0, nil)
 	if !res.defended {
 		t.Fatal("fixture did not produce a defended swing")
 	}
@@ -282,7 +282,7 @@ func TestDefensiveCritOpener_IsNotTheCompositePath(t *testing.T) {
 	result := &AttackResult{}
 	best := defenceWinBest(15*math.Sqrt2*3, 15)
 
-	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, true, 0, 0)
+	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, true, 0, 0, nil)
 	if !res.defenseCrit {
 		t.Fatal("fixture did not produce a defensive crit")
 	}

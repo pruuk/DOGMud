@@ -256,7 +256,7 @@ func buildDeflectedSwing(t *testing.T, srcName, tgtName string) *AttackResult {
 	result := &AttackResult{}
 	best := defenceWinBest(15*math.Sqrt2, 15) // dodge, plain defensive win
 
-	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, false, 0, 0)
+	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, false, 0, 0, nil)
 	if !res.defended {
 		t.Fatal("fixture did not produce a deflection")
 	}

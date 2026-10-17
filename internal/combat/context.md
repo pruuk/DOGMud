@@ -180,8 +180,13 @@ floor was only ever evaluated on the swings a defence crit did not consume.
   `resolveDefenseOutcome` wraps with the configured floors). A defensive crit
   sends one line to each audience and the swing loop then skips
   `buildAttackMessages`, so no miss-pool line follows it; a deflection sends
-  the room line only. Tests that need narration without a random floor
-  promotion call `resolveDefenseOutcomeWithFloors(..., 0, 0)`.
+  the room line only. A defensive crit still rolls the feint it rolled when
+  `buildAttackMessages` narrated it (U6 Task 14): the swing loop passes a
+  `swingFeint` (the swinging weapon's skill, subtype, roles, opener flag),
+  and a feint's lines (`sendFeintLines`) stand in for the defence lines, so
+  it is still one line per audience. Tests that need narration without a
+  random floor promotion or feint call
+  `resolveDefenseOutcomeWithFloors(..., 0, 0, nil)`.
 - One floor, `ContestFloor`, applied once inside `RunContest`. There is no
   second post-crit floor any more.
 - Defense crit detection (z > 2.0): parry crit → disarm, dodge crit → grapple opportunity

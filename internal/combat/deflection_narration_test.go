@@ -46,7 +46,7 @@ func TestSendDefenseMessages_PartialSendsRoomLinesOnly(t *testing.T) {
 	result := &AttackResult{}
 	best := defenceWinBest(15*math.Sqrt2, 15)
 
-	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, false, 0, 0)
+	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, false, 0, 0, nil)
 
 	if !res.defended {
 		t.Fatal("fixture did not produce a deflection")
@@ -76,7 +76,7 @@ func TestSendDefenseMessages_DefensiveCritKeepsPersonalLines(t *testing.T) {
 	result := &AttackResult{}
 	best := defenceWinBest(15*math.Sqrt2*3, 15)
 
-	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, false, 0, 0)
+	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, false, 0, 0, nil)
 
 	if !res.defenseCrit {
 		t.Fatal("fixture did not produce a defensive crit")
@@ -107,7 +107,7 @@ func TestBuildAttackMessages_DeflectedSwingOneCoherentLinePerViewer(t *testing.T
 	result := &AttackResult{}
 	best := defenceWinBest(15*math.Sqrt2, 15) // dodge, plain defensive win
 
-	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, false, 0, 0)
+	res := resolveDefenseOutcomeWithFloors(result, best, src, tgt, 2.0, false, false, false, 0, 0, nil)
 	if !res.defended {
 		t.Fatal("fixture did not produce a deflection")
 	}

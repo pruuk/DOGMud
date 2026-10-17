@@ -1078,14 +1078,27 @@ func handleDoubleFumble(result *AttackResult, sourceChar *characters.Character, 
 // handleDoubleFumble.
 func resolveDefenseOutcome(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, openingStrike bool) hitResolution {
 	return resolveDefenseOutcomeWithFloors(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit, openingStrike,
-		AttackCritFloor(), DefenseCritFloor())
+		AttackCritFloor(), DefenseCritFloor(), nil)
+}
+
+// swingFeint carries what a defensive crit needs to roll and narrate its
+// feint (U6 Task 14: a defensive crit is a true zero-damage outcome, so a
+// skilled attacker may read it as a deliberate feint). The swing loop passes
+// one per swing; nil skips the roll, which is how unit tests of the resolver
+// keep a fixed outcome.
+type swingFeint struct {
+	skill         int // the swinging weapon's skill (#564)
+	weaponSubType items.ItemSubType
+	srcType       SourceTarget
+	tgtType       SourceTarget
+	openingStrike bool
 }
 
 // resolveDefenseOutcomeWithFloors is resolveDefenseOutcome with the two crit
-// floors passed in, so a test can drive the full resolve-floor-narrate
-// sequence at floor 0 without a random promotion. Production passes the
-// configured floors through resolveDefenseOutcome.
-func resolveDefenseOutcomeWithFloors(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, openingStrike bool, attackFloor, defenseFloor float64) hitResolution {
+// floors and the feint roll passed in. The swing loop calls it with the
+// configured floors and its swingFeint; a test passes floor 0 and nil to drive
+// the full resolve-floor-narrate sequence without a random promotion or feint.
+func resolveDefenseOutcomeWithFloors(result *AttackResult, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, critThreshold float64, isThirdParty bool, forceCrit bool, openingStrike bool, attackFloor, defenseFloor float64, feint *swingFeint) hitResolution {
 	res := resolveDefenseOutcomeCore(result, best, sourceChar, targetChar, critThreshold, isThirdParty, forceCrit, openingStrike)
 
 	// Chunk 5.11e: crit floors run HERE, after every branch above has settled
@@ -1097,7 +1110,7 @@ func resolveDefenseOutcomeWithFloors(result *AttackResult, best bestDefenseResul
 	applyCritFloors(&res, result, best, attackFloor, defenseFloor)
 
 	// Narration reads the settled verdict, so it follows the floors.
-	narrateDefenceOutcome(result, res, best, sourceChar, targetChar, isThirdParty, openingStrike)
+	narrateDefenceOutcome(result, res, best, sourceChar, targetChar, isThirdParty, openingStrike, feint)
 
 	return res
 }
@@ -1351,11 +1364,26 @@ func resolveDefenseOutcomeInner(result *AttackResult, best bestDefenseResult, so
 // 2026-10-17 playtest's "Your armor shrugs off the pitiful strike with ease!"
 // followed by "Mire Brute's clumsy swing catches nothing but air!").
 //
+// The feint roll a defensive crit carried on master survives: before this
+// function existed, buildAttackMessages rolled checkFeint on every
+// zero-damage, non-fumble swing, and a defensive crit was the main such
+// swing (U6 Task 14). That roll now lives here, at the same rate and under
+// the same conditions (not against a target already dying, whose swings
+// narrate as a coup de grace). A feint is still one line per audience: its
+// lines stand in for the defence lines, while the defence's side effects
+// (DefenseUsed, the entangled note) are kept.
+//
 // A deflection (res.defended) sends the room line only; buildAttackMessages
 // owns its two personal lines. Every other outcome sends nothing here.
-func narrateDefenceOutcome(result *AttackResult, res hitResolution, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, isThirdParty bool, openingStrike bool) {
+func narrateDefenceOutcome(result *AttackResult, res hitResolution, best bestDefenseResult, sourceChar *characters.Character, targetChar *characters.Character, isThirdParty bool, openingStrike bool, feint *swingFeint) {
 	switch {
 	case res.defenseCrit:
+		if feint != nil && !IsDying(targetChar) && checkFeint(feint.skill) {
+			result.DefenseUsed = best.defenseType
+			sendFeintLines(result, sourceChar, targetChar, *feint)
+			sendEntangledDefenceNote(result, best, isThirdParty)
+			return
+		}
 		sendDefenseMessages(result, best, sourceChar, targetChar, isThirdParty, false, defenceBand{crit: true, openingStrike: openingStrike})
 	case res.defended:
 		// partial == true: the swing deals partial damage, so
@@ -1545,10 +1573,52 @@ func sendDefenseMessages(result *AttackResult, best bestDefenseResult, sourceCha
 		}
 	}
 
-	// Stage 8.5: Add third-party context if applicable
+	sendEntangledDefenceNote(result, best, isThirdParty)
+}
+
+// sendEntangledDefenceNote is the Stage 8.5 third-party context: a defender
+// who won while entangled in someone else's grapple is told so. Shared by
+// sendDefenseMessages and the feint that stands in for a defensive crit's
+// lines (narrateDefenceOutcome).
+func sendEntangledDefenceNote(result *AttackResult, best bestDefenseResult, isThirdParty bool) {
 	if isThirdParty {
-		result.SendToTarget(CategoryForDefenseVerb(defenseVerb), fmt.Sprintf(
-			`<ansi fg="yellow">(Despite being entangled in a grapple!)</ansi>`))
+		result.SendToTarget(CategoryForDefenseVerb(string(best.defenseType)),
+			`<ansi fg="yellow">(Despite being entangled in a grapple!)</ansi>`)
+	}
+}
+
+// sendFeintLines narrates a swing as a deliberate feint, one coordinated
+// feintMessages variant for the attacker, the defender and the room. These
+// are the lines buildAttackMessages swapped in on master; the categories,
+// the per-swing line marks (for a sightless reader's swap) and the opening
+// strike banner and category follow that same path.
+func sendFeintLines(result *AttackResult, sourceChar, targetChar *characters.Character, f swingFeint) {
+	actor, actee := sourceChar.Name, targetChar.Name
+	if f.srcType == Mob {
+		actor = sourceChar.GetMobName(0).String()
+	}
+	if f.tgtType == Mob {
+		actee = targetChar.GetMobName(0).String()
+	}
+	tokens := items.TokenStrings(map[items.TokenName]string{
+		items.TokenActor:     actor,
+		items.TokenActorType: string(f.srcType) + `name`,
+		items.TokenActee:     actee,
+		items.TokenActeeType: string(f.tgtType) + `name`,
+	})
+	fm := getFeintMessage()
+	prefix := ``
+	cat := CategoryForWeaponSubtype(f.weaponSubType)
+	if f.openingStrike {
+		prefix = surpriseAttackBanner
+		cat = messaging.CategorySurpriseAttack
+	}
+	result.sendSwingToSource(cat, prefix+narration.Substitute(fm.toAttacker, tokens))
+	result.sendSwingToTarget(cat, prefix+narration.Substitute(fm.toDefender, tokens))
+	room := prefix + narration.Substitute(fm.toRoom, tokens)
+	result.SendToSourceRoom(cat, room)
+	if sourceChar.RoomId != targetChar.RoomId {
+		result.SendToTargetRoom(cat, room)
 	}
 }
 
@@ -1813,9 +1883,9 @@ func buildAttackMessages(result *AttackResult, sourceChar *characters.Character,
 		// Feint check: skilled attackers can turn misses into deliberate-looking
 		// feints. Decision (U6 Task 14): this gate stays on true zero-damage
 		// outcomes. A defensive crit no longer reaches this branch (the swing
-		// loop skips buildAttackMessages on it, 2026-10-17), so a feint can
-		// no longer follow a defence line that already told the swing's
-		// story. Pre-U6 it also fired
+		// loop skips buildAttackMessages on it, 2026-10-17); its feint roll
+		// moved with its narration to narrateDefenceOutcome, at the same
+		// rate. Pre-U6 it also fired
 		// on defended swings, but a deflected swing now deals real damage and
 		// takes the branch above instead — do not "fix" this back.
 		if int(pctDamage) == 0 && !result.Fumble {
