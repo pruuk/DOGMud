@@ -1,16 +1,26 @@
 # Quest 51 — Across the Canyon (Pothole Coulee, Spoke G / Ranged middle ring)
 #
-# Token flow:
+# Token flow (one command per step, in order, owner ruling 2026-10-17):
 #   51-start — granted by Scout Bryn's canyon_offer node (requires 50-end).
 #   51-shoot — command trigger on `fire` in the Echoing Narrows (5354): the
 #              CROSS-ROOM shot. The player stands in 5354 and shoots the Canyon
 #              Scout (9165) in the next chamber north (The Sounding Floor, 5356)
 #              with `fire scout north`. The fire Notify fires with the
-#              SHOOTER's room (5354), so the beat gates on 5354 — the room shot
+#              SHOOTER's room (5354), so the beat gates on 5354, the room shot
 #              FROM, not the target's room.
 #   51-kill  — mob_death of the Canyon Scout (9165), who charges into 5354 the
-#              moment it is shot (a melee foe — the retaliation lesson).
-#   51-end   — granted by Bryn's canyon_turnin node (needs 51-shoot + 51-kill).
+#              moment it is shot (a melee foe: the retaliation lesson). Gated
+#              on 51-shoot, so a scout killed before the cross-room shot does
+#              not skip the shot.
+#   51-end:    granted by Bryn's canyon_turnin node (needs 51-kill, the last
+#              step, which a linear quest holds only after 51-shoot).
+#
+# Mid-quest saves: the step ids are unchanged. A player saved on `start` who
+# already killed the scout some other way (walked up and cut it down) is not
+# stuck: the kill no longer advances them, the scout respawns on the Sounding
+# Floor (room 5356 spawninfo), and the start hint asks for the shot from the
+# Narrows. A player saved on `shoot` finishes on the kill; one saved on `kill`
+# turns in.
 #
 # Design: teach the cross-room shot + the retaliation rule (a shot target comes
 # for you). Rewards an upgrade weapon (hand crossbow) + its ammo.
@@ -28,33 +38,32 @@ steps:
   - id: start
     map_target: 5354  # Echoing Narrows — the shoot trigger is scoped to this room
     description: >-
-      Bryn wants you to take the canyon scout posted on the sounding floor --
-      and to do it the hard way, with a shot from the chamber below before it
-      ever reaches you. Stand in the Echoing Narrows and shoot the scout in
-      the chamber to the north; when it charges, finish it.
+      Bryn wants you to take the canyon scout posted on the Sounding Floor,
+      and to do it the hard way: with a shot from the chamber below, before
+      it ever reaches you. Stand in the Echoing Narrows and shoot across the
+      exit into the chamber to the north. When it charges, finish it.
     hint: >-
-      Go north into the Echoing Narrows. The canyon scout stands on the
-      Sounding Floor, one chamber north. Type fire scout north to shoot across
-      the exit. It will charge in -- stand and finish it. Then report to Scout
-      Bryn -- type ask bryn done.
+      Go north to the Echoing Narrows and type fire scout north.
+      If it is dark, type cast chrysalis-glow first.
   - id: shoot
     map_target: 5354  # Echoing Narrows — hold this ground; the scout charges to you (was 5356, where it no longer is)
     description: >-
-      Your shot crossed the gap and bit. The scout is coming -- put it down.
+      Your shot crossed the gap and bit. The scout is coming for you. Hold
+      your ground in the Narrows and put it down when it arrives.
     hint: >-
-      The canyon scout is charging you. Finish the fight (fire again or
-      cut it down), then report to Scout Bryn -- type ask bryn done.
+      When the scout reaches you, type fire scout until it falls.
   - id: kill
     map_target: 5353
     description: >-
-      The scout is down. If you have not yet made the cross-room shot the
-      lesson is incomplete -- but the way is open.
+      The scout is down. You reached across the canyon and stood your ground
+      when the fight came to you. Scout Bryn waits in the Canyon Mouth.
     hint: >-
-      Report to Scout Bryn in the Canyon Mouth -- type ask bryn done.
+      Go back to Scout Bryn in the Canyon Mouth, south of the Narrows, and
+      type ask bryn done.
   - id: end
     description: >-
       Bryn has seen you reach across the canyon and connect. Up the chimney
-      at the canyon's head the raider overlook waits -- and the bowmaster who
+      at the canyon's head the raider overlook waits, and the bowmaster who
       holds it, the first foe that fights the way you now can.
 
 rewards:
@@ -86,18 +95,18 @@ triggers:
       - grant: "51-shoot"
       - actor: >-
           Your shot streaks north out of the Narrows and finds the scout on
-          the open floor beyond. It is hit -- and it is coming. Hold the
-          ground and finish it.
+          the open floor beyond. It is hit, and it is coming. Hold your
+          ground. When it reaches you, type fire scout until it falls.
 
   # ── KILL: the Canyon Scout charges in and is put down (9165) ───────────
   - event: mob_death
     mob: 9165
     conditions:
-      has: ["51-start"]
+      has: ["51-shoot"]
       missing: ["51-kill"]
     actions:
       - grant: "51-kill"
       - actor: >-
-          The canyon scout drops at your feet, run up the slot by your own
-          shot. That is the whole of it -- reach out, then stand your ground.
-          See Bryn in the canyon mouth.
+          The canyon scout drops, run up the slot by your own shot. That is
+          the whole of it: reach out, then stand your ground. Go back to
+          Scout Bryn in the Canyon Mouth and type ask bryn done.

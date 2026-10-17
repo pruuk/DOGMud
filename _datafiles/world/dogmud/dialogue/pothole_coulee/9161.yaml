@@ -112,10 +112,15 @@ tree:
       hints: "Type equip sling."
 
     # ── SHOT SUPPLY / RECOVERY ────────────────────────────────
+    # itemExcluded: only a player with no pouch on them gets one. The
+    # pouch is removed when its last stone is spent (combat_reload.go),
+    # so a player who ran dry can always ask again. shot_have answers the
+    # same words for a player who still carries one.
     - id: shot_supply
       triggers: ["shot", "ammo", "pouch", "supply", "more", "ammunition"]
       questRequired: ["50-start"]
       questExcluded: ["50-end"]
+      itemExcluded: 30064
       givesItem: 30064
       text: "Shot for the sling -- a pouch of smooth river stones. Take
         it. Each shot draws one from the pouch on its own. When the pouch
@@ -123,17 +128,35 @@ tree:
         one learns the eye on an empty sling."
       hints: "You received a pouch of shot. If you run dry, type ask iden
         shot."
+    - id: shot_have
+      triggers: ["shot", "ammo", "pouch", "supply", "more", "ammunition"]
+      questRequired: ["50-start"]
+      questExcluded: ["50-end"]
+      text: "You still have a pouch of shot on you. Spend it first. When
+        the last stone is gone, the sling will tell you, and then I will
+        give you another."
+      hints: "You already carry a pouch of shot. You could ask Iden for
+        more once it is empty."
 
     # ── SLING RECOVERY (lost the weapon) ──────────────────────
     - id: sling_recovery
       triggers: ["lost", "another", "replace", "broke", "broken"]
       questRequired: ["50-start"]
       questExcluded: ["50-end"]
+      itemExcluded: 10038
       givesItem: 10038
       text: "Lost your sling already? It happens to the heavy-handed.
         Here is another -- mind it this time. Equip it, feed it shot,
         and get to the butt."
       hints: "You received a sling. Type equip sling."
+    - id: sling_have
+      triggers: ["lost", "another", "replace", "broke", "broken"]
+      questRequired: ["50-start"]
+      questExcluded: ["50-end"]
+      text: "You have a sling on you already. One is all a shooter needs.
+        If it is not in your hand, ready it."
+      hints: "You already carry a sling. If it is not in your hand, type
+        equip sling."
 
     # ── FIRE / EQUIP HELP ─────────────────────────────────────
     # `reload` stays in the triggers on purpose: it is the word a player
@@ -147,8 +170,8 @@ tree:
         the mark, so there is no third motion to learn -- you shoot until
         the pouch is empty, and the weapon will tell you when it is.
         Sneak first and the shot lands far harder, but only the once."
-      hints: "Type equip sling. Go east to the Long Terrace and type fire
-        butt. Try sneak first to shoot from cover."
+      hints: "Ready the sling with equip sling, then fire butt on the Long
+        Terrace. To shoot from cover, sneak first, then fire."
 
     # ── QUEST 50 TURN-IN ──────────────────────────────────────
     - id: shoot_turnin
@@ -164,6 +187,47 @@ tree:
         ready. Bryn will teach you the rest."
       hints: "Quest complete. Head north into the canyon and find Scout
         Bryn."
+
+    # ── QUEST 50 MID-QUEST COACH (one node per step) ──────────
+    # The words a student reaches for mid-lesson (done, quest, sling,
+    # sneak, butt) would otherwise fall to the patterns, which offer the
+    # sling again, or to the catch-all. Each node answers with the step's
+    # one command, the same as the root greeting for that step. They sit
+    # after shoot_turnin so "done" on the last step still turns in.
+    - id: coach_start
+      triggers: ["done", "report", "finished", "quest", "task", "next", "sling", "sneak", "cover", "hide", "butt", "target", "straw"]
+      questRequired: ["50-start"]
+      questExcluded: ["50-equip", "50-end"]
+      text: "Not yet. A sling does nothing in your pack. Ready it first."
+      hints: "Type equip sling."
+    - id: coach_equip
+      triggers: ["done", "report", "finished", "quest", "task", "next", "sling", "sneak", "cover", "hide", "butt", "target", "straw"]
+      questRequired: ["50-equip"]
+      questExcluded: ["50-shoot", "50-end"]
+      text: "Not yet. The butts are down-range, east on the Long Terrace.
+        Put a stone in the straw."
+      hints: "Go east to the Long Terrace and type fire butt."
+    - id: coach_shoot
+      triggers: ["done", "report", "finished", "quest", "task", "next", "sling", "sneak", "cover", "hide", "butt", "target", "straw"]
+      questRequired: ["50-shoot"]
+      questExcluded: ["50-ambush", "50-end"]
+      text: "One in the open. Now get out of sight before the next one, so
+        you feel the difference."
+      hints: "On the Long Terrace, type sneak."
+    - id: coach_ambush
+      triggers: ["done", "report", "finished", "quest", "task", "next", "sling", "sneak", "cover", "hide", "butt", "target", "straw"]
+      questRequired: ["50-ambush"]
+      questExcluded: ["50-cover_shot", "50-end"]
+      text: "You know how to get out of sight. Now take the shot from
+        there, before anything knows where you are."
+      hints: "Go east to the Long Terrace and type fire butt."
+    - id: coach_cover_shot
+      triggers: ["sling", "sneak", "cover", "hide", "butt", "target", "straw", "next"]
+      questRequired: ["50-cover_shot"]
+      questExcluded: ["50-end"]
+      text: "I heard that one land. That is the lesson done. Tell me how
+        it felt."
+      hints: "Type ask iden done."
 
 memory:
   expiryPeriod: ""

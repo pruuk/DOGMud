@@ -1,18 +1,23 @@
 # Quest 59 — Range Practice (Pothole Coulee, Spoke G repeatable)
 #
-# Token flow:
+# Token flow (one command per step, in order, owner ruling 2026-10-17):
 #   59-start — granted by Scout Bryn's dialogue (range_loop_offer node).
 #              Requires 52-end (The Overlook). Repeatable with cooldown.
-#   59-shoot — command trigger on fire in the range room (5354).
-#              Requires 59-start.
-#   59-end   — mob_death trigger on Canyon Scout (9165). Requires 59-shoot.
-#              Auto-grants reward + clears for repeat.
+#   59-shoot:  command trigger on fire in the Echoing Narrows (5354), the
+#              cross-room shot at the Canyon Scout on the Sounding Floor
+#              (5356). Requires 59-start.
+#   59-end:    mob_death trigger on Canyon Scout (9165). Requires 59-shoot.
+#              Completes the drill on the spot: reward + clears for repeat.
+#              There is no report to Bryn, so no line sends the player back.
+#
+# Mid-quest saves: the step ids are unchanged; a player saved on `shoot`
+# finishes on the kill.
 
 questid: 59
 name: Range Practice
 description: >-
-  Bryn never stops drilling. She wants you to put a shot through the
-  canyon slot and then finish what charges you -- the same lesson,
+  Bryn never stops drilling. He wants you to put a shot through the
+  canyon slot and then finish what charges you: the same lesson,
   kept sharp.
 secret: false
 repeatable: true
@@ -22,19 +27,19 @@ steps:
   - id: start
     map_target: 5354
     description: >-
-      Bryn has sent you to put a cross-canyon shot through the slot
-      and then bring down whatever comes charging.
+      Bryn has sent you to the Echoing Narrows to put a shot across the
+      exit at the canyon scout on the Sounding Floor, then bring it down
+      when it charges. The drill is done the moment the scout falls.
     hint: >-
-      Go to the range and type fire at a target across the exit.
-      Finish the scout when it charges. Come back to Bryn when
-      it is done.
+      Go north to the Echoing Narrows and type fire scout north.
+      If it is dark, type cast chrysalis-glow first.
   - id: shoot
-    map_target: 5356
+    map_target: 5354
     description: >-
-      The shot crossed the slot. Stand your ground and finish the
-      target when it reaches you.
+      The shot crossed the slot. Stand your ground in the Narrows and finish
+      the scout when it reaches you. The drill ends when it falls.
     hint: >-
-      The target is coming. Finish it, then come back to Bryn.
+      When the scout reaches you, type fire scout until it falls.
   - id: end
     description: >-
       Shot placed, target finished. Bryn will have another run in
@@ -44,10 +49,10 @@ rewards:
   gold: 6
   skillinfo: "ranged-combat:1"
   actor: >-
-    Bryn watches the range go quiet without moving from her position.
-    "Good reach. Stood when it came. Come back when the eye starts to
-    drift -- it always drifts."
-  observer: "Bryn's gaze moves back to the bluffs. The compliment was in the coins."
+    Bryn's voice carries up the slot from the canyon mouth, low and level.
+    "Good reach. Stood when it came. Come and find me when the eye starts to
+    drift. It always drifts."
+  observer: "A low voice carries up the slot from the canyon mouth."
 
 triggers:
   - event: command
@@ -59,8 +64,8 @@ triggers:
     actions:
       - grant: "59-shoot"
       - actor: >-
-          The shot crosses the slot and bites. Now it will come at you
-          -- stand your ground and finish it.
+          The shot crosses the slot and bites. Now it will come at you.
+          When it reaches you, type fire scout until it falls.
 
   - event: mob_death
     mob: 9165
@@ -70,5 +75,5 @@ triggers:
     actions:
       - grant: "59-end"
       - actor: >-
-          The target drops. Shot placed, fight finished -- that is the
-          whole drill. Come back and tell Bryn.
+          The scout drops. Shot placed, fight finished: that is the
+          whole drill, and it is done.
