@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/messaging"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/species"
@@ -541,174 +542,7 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 						}
 
 					case activity.Crafting:
-						// Crafting tick — advance round via Activity machine.
-						cd, complete := user.Character.Activity.AdvanceCraftingRound()
-						if !complete {
-							user.SendText(messaging.CategoryCraft, craftProgressLine(user.Character, cd))
-						} else {
-							recipe := crafting.GetRecipe(cd.RecipeId)
-							enchantTargetSlot := cd.TargetSlot
-							_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
-								Trigger: activity.TriggerCraftComplete,
-								Actor:   user.Character.Activity.Self(),
-							})
-							if recipe != nil {
-								sl := user.Character.Skills[recipe.Skill]
-
-								// U10b-1b: craft is an ordinary contest. The
-								// crafter scores stat + skill*SkillWeight; the
-								// recipe supplies a difficulty built from its
-								// SkillMinimum and the DEAREST MATERIAL ACTUALLY
-								// BEING SPENT.
-								//
-								// SelectIngredients (not the recipe's declared
-								// tags) is what makes that honest: it names the
-								// concrete items ConsumeIngredients will take,
-								// in the same order, so the roll and the
-								// consumption cannot disagree.
-								consumed := crafting.SelectIngredients(
-									user.Character.Items, user.Character.ComponentItems, recipe)
-								craftScore := crafting.CraftScore(
-									float64(user.Character.GetStatValue(crafting.CraftPrimaryStat(recipe))), sl)
-								// sight ramp (plan 5b): the crafter needs to see.
-								craftScore *= messaging.SightMult(user.Character, room)
-								craftDiff := crafting.CraftDifficulty(
-									recipe.SkillMinimum, crafting.DearestMaterialTier(consumed))
-								won := crafting.RunCraftContest(craftScore, craftDiff).Success
-
-								// U10b-1 Task 16: awarded HERE, above the branch,
-								// so a FAILED craft trains at
-								// ProgressionFailureFraction instead of nothing.
-								// This is the case the whole slice is justified
-								// by: burning materials on a botched attempt and
-								// learning literally nothing from it.
-								//
-								// U10b-3: the recipe-difficulty multiplier that
-								// used to ride here is gone. skill_minimum now
-								// decides what you can DISCOVER and shades which
-								// recipe a discovery roll draws, rather than
-								// making hard recipes train faster to make. With
-								// no bonus left, plain AwardResolved is correct.
-								user.Character.AwardResolved(user.UserId, won,
-									user.Character.CandidateFor(recipe.Skill))
-
-								if won {
-									// The bottle's aging multiplier comes from the bottle ACTUALLY
-									// BEING CONSUMED, read off the same selection that priced the
-									// craft.
-									//
-									// 🔴 This was a real bug before U10b-1b, not a tidy-up. The old
-									// code scanned Character.Items and THEN ComponentItems for the
-									// first bottle with a multiplier, while ConsumeIngredients drew
-									// from the component bag FIRST — so the potion could inherit the
-									// aging speed of a bottle that was never spent, while the bottle
-									// that WAS spent contributed nothing. Four bottles ship with
-									// multipliers from 3.0 down to 0.25, so the two could differ by 12x.
-									var bottleAgingMult float64
-									// The room hears a failure when an enchant does not apply.
-									roomPhase := crafting.PhaseSuccess
-									for _, itm := range consumed {
-										if spec := itm.GetSpec(); spec.ComponentTag == "bottle" && spec.BottleAgingMultiplier > 0 {
-											bottleAgingMult = spec.BottleAgingMultiplier
-											break
-										}
-									}
-
-									if crafting.IsEnchantingRecipe(recipe) {
-										// Enchanting: use the stored slot label to find the target
-										targetItem := user.Character.Equipment.GetSlotPointer(enchantTargetSlot)
-										if targetItem == nil || targetItem.ItemId < 1 {
-											user.SendText(messaging.CategoryWarning, `<ansi fg="red">The item is no longer equipped. The enchanting fails, but your materials are returned.</ansi>`)
-											roomPhase = crafting.PhaseFailure
-										} else if pool, added, breach := enchantApplyWouldBreach(user.Character, targetItem, recipe.EnchantType); breach {
-											// U7b: craft.go refuses this before the work starts, but
-											// the rounds in between are not free of change: a worn
-											// enchantment can tier up mid-craft, and a lapsing condition
-											// can shrink the pool the ceiling is measured against.
-											// Refusing here still returns the materials, exactly as
-											// the "no longer equipped" case above does.
-											user.SendText(messaging.CategoryWarning, fmt.Sprintf(
-												`<ansi fg="red">%s The enchanting fails, but your materials are returned.</ansi>`,
-												user.Character.ReservationRefusal(pool, added)))
-											roomPhase = crafting.PhaseFailure
-										} else {
-											user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
-											eDef := enchantments.GetEnchantment(recipe.EnchantType)
-											if eDef != nil {
-												targetItem.EnchantType = recipe.EnchantType
-												targetItem.EnchantTier = 0
-												targetItem.EnchantUses = 0
-												targetItem.ReservePool = eDef.ReservePool
-												enchantments.ApplyTier(targetItem, eDef, 0)
-											}
-										}
-									} else {
-										// Provident Hands may preserve the materials (efficient craft).
-										if !user.Character.CraftMaterialsSaved() {
-											user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
-										}
-										// Normal crafting: produce output item
-										newItem := items.New(recipe.Output.ItemId)
-										newItem.CraftedRound = util.GetRoundCount()
-										newItem.CraftSkill = user.Character.CraftQualityLevel(user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))) // Faithwrought quality lift
-										if bottleAgingMult > 0 {
-											newItem.BottleMultiplier = bottleAgingMult
-										}
-										// Maker's mark for skilled crafters — see
-										// crafting.ShouldStampMakerName for the policy (components
-										// stamp regardless of Type; plain Objects don't).
-										newSpec := newItem.GetSpec()
-										if crafting.ShouldStampMakerName(newItem.CraftSkill, newSpec) {
-											newItem.MakerName = user.Character.Name
-										}
-										user.Character.StoreItem(newItem)
-										events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
-									}
-									successRoles := recipe.Narrate(crafting.PhaseSuccess, textutil.TokenContext{
-										ActorName:      user.Character.GetCharacterName(true),
-										ActorPlainName: user.Character.GetCharacterName(false),
-									})
-									// CategoryCraft wraps: recipe lines run past 80 (#515).
-									user.SendText(messaging.CategoryCraft, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, successRoles.Actor))
-									actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, roomPhase, room)
-
-									// Stage 31.1: Recipe discovery roll
-									bal := configs.GetBalanceConfig()
-									knownCount := len(user.Character.KnownRecipes)
-									craftSkillLevel := user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))
-									discChance := configs.DiscoveryChance(configs.DiscoveryParams{
-										Base:       float64(bal.RecipeDiscoveryBaseChance),
-										Decay:      float64(bal.RecipeDiscoveryDecayRate),
-										Known:      knownCount,
-										Perception: user.Character.Stats.Perception.ValueAdj,
-										Skill:      craftSkillLevel,
-									})
-									if util.Rand(100) < int(discChance) {
-										eligible := crafting.GetEligibleRecipes(
-											user.Character.KnownRecipes,
-											user.Character.Skills,
-											recipe.Skill)
-										if len(eligible) > 0 {
-											pick := eligible[configs.WeightedDiscoveryPick(crafting.SkillMinimumsFor(eligible), util.Rand)]
-											if user.Character.LearnRecipe(pick) {
-												if newRecipe := crafting.GetRecipe(pick); newRecipe != nil {
-													user.SendText(messaging.CategorySkillProgress, fmt.Sprintf(
-														`<ansi fg="yellow-bold">A new idea takes shape in your mind: %s!</ansi>`, newRecipe.Name))
-												}
-											}
-										}
-									}
-								} else {
-									user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
-									failureRoles := recipe.Narrate(crafting.PhaseFailure, textutil.TokenContext{
-										ActorName:      user.Character.GetCharacterName(true),
-										ActorPlainName: user.Character.GetCharacterName(false),
-									})
-									user.SendText(messaging.CategoryCraft, fmt.Sprintf(`<ansi fg="red">%s</ansi>`, failureRoles.Actor))
-									actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, crafting.PhaseFailure, room)
-								}
-							}
-						}
+						tickUserCrafting(user, room)
 					}
 				}
 
@@ -734,6 +568,196 @@ func UserRoundTick(e events.Event) events.ListenerReturn {
 	}
 
 	return events.Continue
+}
+
+// tickUserCrafting advances a player's craft by one round and, on the last
+// round, resolves it: the craft contest, the award, the output item and the
+// lines. Lifted out of UserRoundTick so a test can drive the player path the
+// way tickMobCrafting drives the mob one.
+func tickUserCrafting(user *users.UserRecord, room *rooms.Room) {
+	// Crafting tick — advance round via Activity machine.
+	cd, complete := user.Character.Activity.AdvanceCraftingRound()
+	if !complete {
+		user.SendText(messaging.CategoryCraft, craftProgressLine(user.Character, cd))
+	} else {
+		recipe := crafting.GetRecipe(cd.RecipeId)
+		enchantTargetSlot := cd.TargetSlot
+		_ = user.Character.Activity.TransitionToFree(state.TransitionReason{
+			Trigger: activity.TriggerCraftComplete,
+			Actor:   user.Character.Activity.Self(),
+		})
+		if recipe != nil {
+			sl := user.Character.Skills[recipe.Skill]
+
+			// U10b-1b: craft is an ordinary contest. The
+			// crafter scores stat + skill*SkillWeight; the
+			// recipe supplies a difficulty built from its
+			// SkillMinimum and the DEAREST MATERIAL ACTUALLY
+			// BEING SPENT.
+			//
+			// SelectIngredients (not the recipe's declared
+			// tags) is what makes that honest: it names the
+			// concrete items ConsumeIngredients will take,
+			// in the same order, so the roll and the
+			// consumption cannot disagree.
+			consumed := crafting.SelectIngredients(
+				user.Character.Items, user.Character.ComponentItems, recipe)
+			craftScore := crafting.CraftScore(
+				float64(user.Character.GetStatValue(crafting.CraftPrimaryStat(recipe))), sl)
+			// sight ramp (plan 5b): the crafter needs to see.
+			craftScore *= messaging.SightMult(user.Character, room)
+			craftDiff := crafting.CraftDifficulty(
+				recipe.SkillMinimum, crafting.DearestMaterialTier(consumed))
+			won := crafting.RunCraftContest(craftScore, craftDiff).Success
+
+			// U10b-1 Task 16: awarded HERE, above the branch,
+			// so a FAILED craft trains at
+			// ProgressionFailureFraction instead of nothing.
+			// This is the case the whole slice is justified
+			// by: burning materials on a botched attempt and
+			// learning literally nothing from it.
+			//
+			// U10b-3: the recipe-difficulty multiplier that
+			// used to ride here is gone. skill_minimum now
+			// decides what you can DISCOVER and shades which
+			// recipe a discovery roll draws, rather than
+			// making hard recipes train faster to make. With
+			// no bonus left, plain AwardResolved is correct.
+			user.Character.AwardResolved(user.UserId, won,
+				user.Character.CandidateFor(recipe.Skill))
+
+			if won {
+				// The bottle's aging multiplier comes from the bottle ACTUALLY
+				// BEING CONSUMED, read off the same selection that priced the
+				// craft.
+				//
+				// 🔴 This was a real bug before U10b-1b, not a tidy-up. The old
+				// code scanned Character.Items and THEN ComponentItems for the
+				// first bottle with a multiplier, while ConsumeIngredients drew
+				// from the component bag FIRST — so the potion could inherit the
+				// aging speed of a bottle that was never spent, while the bottle
+				// that WAS spent contributed nothing. Four bottles ship with
+				// multipliers from 3.0 down to 0.25, so the two could differ by 12x.
+				var bottleAgingMult float64
+				// The room hears a failure when an enchant does not apply.
+				roomPhase := crafting.PhaseSuccess
+				for _, itm := range consumed {
+					if spec := itm.GetSpec(); spec.ComponentTag == "bottle" && spec.BottleAgingMultiplier > 0 {
+						bottleAgingMult = spec.BottleAgingMultiplier
+						break
+					}
+				}
+
+				if crafting.IsEnchantingRecipe(recipe) {
+					// Enchanting: use the stored slot label to find the target
+					targetItem := user.Character.Equipment.GetSlotPointer(enchantTargetSlot)
+					if targetItem == nil || targetItem.ItemId < 1 {
+						user.SendText(messaging.CategoryWarning, `<ansi fg="red">The item is no longer equipped. The enchanting fails, but your materials are returned.</ansi>`)
+						roomPhase = crafting.PhaseFailure
+					} else if pool, added, breach := enchantApplyWouldBreach(user.Character, targetItem, recipe.EnchantType); breach {
+						// U7b: craft.go refuses this before the work starts, but
+						// the rounds in between are not free of change: a worn
+						// enchantment can tier up mid-craft, and a lapsing condition
+						// can shrink the pool the ceiling is measured against.
+						// Refusing here still returns the materials, exactly as
+						// the "no longer equipped" case above does.
+						user.SendText(messaging.CategoryWarning, fmt.Sprintf(
+							`<ansi fg="red">%s The enchanting fails, but your materials are returned.</ansi>`,
+							user.Character.ReservationRefusal(pool, added)))
+						roomPhase = crafting.PhaseFailure
+					} else {
+						user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
+						eDef := enchantments.GetEnchantment(recipe.EnchantType)
+						if eDef != nil {
+							targetItem.EnchantType = recipe.EnchantType
+							targetItem.EnchantTier = 0
+							targetItem.EnchantUses = 0
+							targetItem.ReservePool = eDef.ReservePool
+							enchantments.ApplyTier(targetItem, eDef, 0)
+						}
+					}
+				} else {
+					// Provident Hands may preserve the materials (efficient craft).
+					if !user.Character.CraftMaterialsSaved() {
+						user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
+					}
+					// Normal crafting: produce output item
+					newItem := items.New(recipe.Output.ItemId)
+					newItem.CraftedRound = util.GetRoundCount()
+					newItem.CraftSkill = user.Character.CraftQualityLevel(user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))) // Faithwrought quality lift
+					if bottleAgingMult > 0 {
+						newItem.BottleMultiplier = bottleAgingMult
+					}
+					// Maker's mark for skilled crafters — see
+					// crafting.ShouldStampMakerName for the policy (components
+					// stamp regardless of Type; plain Objects don't).
+					newSpec := newItem.GetSpec()
+					if crafting.ShouldStampMakerName(newItem.CraftSkill, newSpec) {
+						newItem.MakerName = user.Character.Name
+					}
+					user.Character.StoreItem(newItem)
+					events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
+				}
+				successRoles := recipe.Narrate(crafting.PhaseSuccess, textutil.TokenContext{
+					ActorName:      user.Character.GetCharacterName(true),
+					ActorPlainName: user.Character.GetCharacterName(false),
+				})
+				// CategoryCraft wraps: recipe lines run past 80 (#515).
+				user.SendText(messaging.CategoryCraft, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, successRoles.Actor))
+				actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, roomPhase, room)
+
+				// Quest engine: the craft command event goes out HERE, on a
+				// craft that succeeded, never when the work begins (owner,
+				// 2026-10-17: a failed brew used to grant quest 38's brew
+				// step). An enchant that could not land (roomPhase failure)
+				// does not count. The instant-craft twin is notifyCraftQuest
+				// in usercommands/craft.go.
+				if roomPhase == crafting.PhaseSuccess {
+					bridge := questengine.NewGameBridge(user, room.RoomId)
+					questengine.GetEngine().Notify("command", questengine.EventDetails{
+						UserId:  user.UserId,
+						RoomId:  room.RoomId,
+						Command: "craft",
+					}, bridge, bridge)
+				}
+
+				// Stage 31.1: Recipe discovery roll
+				bal := configs.GetBalanceConfig()
+				knownCount := len(user.Character.KnownRecipes)
+				craftSkillLevel := user.Character.GetSkillLevel(skills.SkillTag(recipe.Skill))
+				discChance := configs.DiscoveryChance(configs.DiscoveryParams{
+					Base:       float64(bal.RecipeDiscoveryBaseChance),
+					Decay:      float64(bal.RecipeDiscoveryDecayRate),
+					Known:      knownCount,
+					Perception: user.Character.Stats.Perception.ValueAdj,
+					Skill:      craftSkillLevel,
+				})
+				if util.Rand(100) < int(discChance) {
+					eligible := crafting.GetEligibleRecipes(
+						user.Character.KnownRecipes,
+						user.Character.Skills,
+						recipe.Skill)
+					if len(eligible) > 0 {
+						pick := eligible[configs.WeightedDiscoveryPick(crafting.SkillMinimumsFor(eligible), util.Rand)]
+						if user.Character.LearnRecipe(pick) {
+							if newRecipe := crafting.GetRecipe(pick); newRecipe != nil {
+								user.SendText(messaging.CategorySkillProgress, fmt.Sprintf(
+									`<ansi fg="yellow-bold">A new idea takes shape in your mind: %s!</ansi>`, newRecipe.Name))
+							}
+						}
+					}
+				}
+			} else {
+				user.Character.Items, user.Character.ComponentItems = crafting.ConsumeIngredients(user.Character.Items, user.Character.ComponentItems, recipe)
+				failureRoles := recipe.Narrate(crafting.PhaseFailure, textutil.TokenContext{
+					ActorName:      user.Character.GetCharacterName(true),
+					ActorPlainName: user.Character.GetCharacterName(false),
+				})
+				user.SendText(messaging.CategoryCraft, fmt.Sprintf(`<ansi fg="red">%s</ansi>`, failureRoles.Actor))
+				actions.NarrateCraftPhase(actions.NewUserActorInRoom(user, room), recipe, crafting.PhaseFailure, room)
+			}
+		}
+	}
 }
 
 // resolveSalvageFromData resolves salvage completion using Activity SalvagingData

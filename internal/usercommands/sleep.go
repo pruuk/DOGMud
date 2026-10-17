@@ -14,7 +14,11 @@ func Sleep(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	if refuseWhileBusy(user, `sleep`) {
 		return true, nil
 	}
-	actions.Sleep(&actions.UserActor{User: user, Room: room}, actions.SleepOptions{})
+	// A refused sleep (in combat, or a server fault) sends no quest event:
+	// a quest step advances only when the action succeeds (owner, 2026-10-17).
+	if !actions.Sleep(&actions.UserActor{User: user, Room: room}, actions.SleepOptions{}).Success {
+		return true, nil
+	}
 
 	// Quest engine: command notification — sleeping advances "rest in the
 	// field" quest steps (e.g. the Spoke D wilderness cert). Mirrors the

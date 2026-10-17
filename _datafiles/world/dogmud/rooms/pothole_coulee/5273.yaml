@@ -22,6 +22,7 @@ exits:
     roomid: 5274
 spawninfo:
 - mobid: 9130
+  respawnrate: 2 real minutes
 nouns:
   pool: The water is perfectly still and very dark, the color of old tea.
     The bottom, if there is one, is not visible. The surface reflects the

@@ -6,7 +6,9 @@ description: >
   enough to touch on both sides simultaneously, and the sightline that
   opens to the north is startlingly clear: a straight run of open
   floor all the way into the next chamber, pale stone and compressed
-  shadow, a hundred feet of unobstructed kill-ground. Something moves
+  shadow, a hundred feet of unobstructed kill-ground. Thin veins of pale
+  crystal run through both walls and on into the far chamber, giving off
+  a cold, even light, so the slot is never truly dark. Something moves
   in that far chamber. You can see it the way you see things at the edge
   of attention: a shift of silhouette, a quality of stillness that is
   not quite stillness. The narrows funnels every sound to a point. A
@@ -15,6 +17,11 @@ description: >
   slot, and whatever is in that northern room would hear the draw long
   before the arrow arrived.
 biome: cliffs
+# 2026-10-17 newbie quest audit (B1): quests 51 and 59 fire north from here at
+# the scout, and an aimed shot needs full sight. The crystal veins (see the
+# description) light the slot to full sight for a normal observer at every
+# hour. TestNewbieQuestTargetRoomsGiveFullSightAtEveryHour.
+lamp: 50
 coord:
   x: 49
   y: -5
@@ -25,6 +32,9 @@ exits:
   north:
     roomid: 5356
 nouns:
+  veins: Threads of pale crystal, none wider than a finger, run through
+    the stone of both walls. Each one glows with a cold, even light that
+    does not change with the hour, enough to see a face by.
   sightline: A long clean line of open floor running north through the
     narrowest part of the canyon. The walls converge here and then open
     slightly beyond, but the corridor is straight and unbroken. A patient

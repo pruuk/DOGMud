@@ -2559,9 +2559,9 @@ room 5288 biome=land
   infrared     sight=shapes clear=false shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5289 biome=land
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
-  infrared     sight=shapes clear=false shapes=true
+  infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5290 biome=land
   plain        sight=shapes clear=false shapes=true
@@ -2569,9 +2569,9 @@ room 5290 biome=land
   infrared     sight=shapes clear=false shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5291 biome=land
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
-  infrared     sight=shapes clear=false shapes=true
+  infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5292 biome=land
   plain        sight=shapes clear=false shapes=true
@@ -2639,9 +2639,9 @@ room 5304 biome=fort
   infrared     sight=shapes clear=false shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5305 biome=fort
-  plain        sight=none   clear=false shapes=false
-  nightvision  sight=shapes clear=false shapes=true
-  infrared     sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
+  nightvision  sight=full   clear=true shapes=true
+  infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5306 biome=ruins
   plain        sight=shapes clear=false shapes=true
@@ -2884,9 +2884,9 @@ room 5353 biome=cliffs
   infrared     sight=shapes clear=false shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5354 biome=cliffs
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
-  infrared     sight=shapes clear=false shapes=true
+  infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5355 biome=cliffs
   plain        sight=shapes clear=false shapes=true
@@ -2894,9 +2894,9 @@ room 5355 biome=cliffs
   infrared     sight=shapes clear=false shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5356 biome=cliffs
-  plain        sight=shapes clear=false shapes=true
+  plain        sight=full   clear=true shapes=true
   nightvision  sight=full   clear=true shapes=true
-  infrared     sight=shapes clear=false shapes=true
+  infrared     sight=full   clear=true shapes=true
   blinded      sight=none   clear=false shapes=false
 room 5357 biome=cliffs
   plain        sight=shapes clear=false shapes=true
