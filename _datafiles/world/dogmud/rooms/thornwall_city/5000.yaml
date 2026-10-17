@@ -8,9 +8,13 @@ description: >-
   carved with runes that shift and rearrange when observed too
   closely. The air smells of ozone and something older: the dry,
   electric scent of places that should not be connected touching.
-  A robed riftkeeper tends the archway with practiced care.
+  The riftkeeper Sable tends the archway with practiced care.
 biome: dungeon
-lamp: 38
+# Owner ruling 2026-10-17: the portals make a lot of light, so the chamber is
+# lit like full winter daylight: 63, what an open-sky land room reads at a
+# clear midwinter noon on the lighting model (testdata/lighting_daycycle.golden).
+# The Rift Stone's pulse adds at most one. TestRiftChamberLitLikeWinterDaylight.
+lamp: 63
 coord:
   x: 2
   y: 1
