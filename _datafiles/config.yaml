@@ -2211,6 +2211,23 @@ Balance:
   ToxicityDecayPerTick: 1.0     # points shed per regen tick
   ToxicitySicknessDamagePct: 0.02  # max-HP fraction of acute harm at the top band
   ToxicityHighDecaySlowMult: 0.5   # decay multiplier at/above 75% (clears slower)
+  # ── INSTANCE GOLD (owner ruling 2026-10-17) ─────────────────────────────────
+  # Opt-in per zone: only a paid instance of a zone whose zone-config sets
+  # instance_gold: true (Instance Arena and Instance Planar Oasis today) uses
+  # this; every other zone, paid or not, keeps template gold. There a mob's
+  # gold replaces its template gold and scales linearly with the entry: this
+  # much gold per 100 gold paid, by tier. Tier is the spawn's authored stat-pool multiplier:
+  # 1 or less regular, 2-3 tough, 4 or more boss. The entry is clamped to
+  # InstanceStatPoolCap / tier (InstanceStatPoolCap is absent here and runs at
+  # its Go default of 50000), so gold stops rising where the mob stops
+  # growing. The result is rolled uniformly within +-InstanceGoldVariancePct
+  # and rounded; a base of 1 or more never rolls below 1. The fast arena
+  # respawn is an intended gold farm; tune the payout here, not with respawn
+  # rates.
+  InstanceGoldPer100Regular: 2
+  InstanceGoldPer100Tough: 3
+  InstanceGoldPer100Boss: 5
+  InstanceGoldVariancePct: 25      # percent; 0 or absent falls back to 25, max 100
   # ── BOSS INTERRUPTS ──────────────────────────────────────────────────────────
   # General-purpose disruptor allowlists (not crash-site-specific). A mob
   # mid-fold-cast has its cast interrupted when hit by a thrown item whose id

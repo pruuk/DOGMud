@@ -5,3 +5,4 @@ death_policy: rejoin
 portal_duration: "30 real minutes"
 entry_room: 5003
 allow_recall: true
+instance_gold: true

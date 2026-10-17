@@ -314,6 +314,21 @@ func (b *Balance) validateMisc() {
 	if b.InstanceStatPoolCap < 1 {
 		b.InstanceStatPoolCap = 50000
 	}
+	if b.InstanceGoldPer100Regular <= 0 {
+		b.InstanceGoldPer100Regular = 2
+	}
+	if b.InstanceGoldPer100Tough <= 0 {
+		b.InstanceGoldPer100Tough = 3
+	}
+	if b.InstanceGoldPer100Boss <= 0 {
+		b.InstanceGoldPer100Boss = 5
+	}
+	if b.InstanceGoldVariancePct <= 0 {
+		b.InstanceGoldVariancePct = 25
+	}
+	if b.InstanceGoldVariancePct > 100 {
+		b.InstanceGoldVariancePct = 100
+	}
 
 	// ── CRASH SITE (#22) ─────────────────────────────────────────────────────
 	// inside the buried hull (#22), spell power and mutation combat bonuses are
