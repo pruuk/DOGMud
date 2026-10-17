@@ -677,8 +677,11 @@ mute check too, since they carry no free text.
 its own, matching the canonical `merchantSay` in `internal/actions/sell.go`.
 `Offer` asks `actions.SaleMerchant` and `actions.QuoteSale`, the merchant and
 price `sell` uses, and `appraise` prices a bauble with `QuoteSale` too, so
-neither quotes a price sell then refuses. Both refuse a sleeping shop
-(`actions.ShopClosedForSleep`) as list, buy and sell do.
+neither quotes a price sell then refuses. All five shop verbs (list, buy,
+sell, offer, appraise) refuse a closed shop through one gate,
+`actions.RefuseIfShopClosed`: every keeper asleep, or the only keeper here
+off shift (`mobs.Mob.OffShift`, owner ruling 2026-10-17), after the
+no-merchant check and before the dim-light check.
 
 ### Crafting: instant-complete narration (`craft.go`)
 

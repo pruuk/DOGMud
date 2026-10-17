@@ -20,6 +20,7 @@ segments:
     end: 13
     target_room: 5605
     activity: ""
+    offshift_line: "I'm on my break. Come to the Forge Yard after."
     idlecommands:
       - emote takes the stool at the cookshop counter with the air of a man
         keeping an appointment under mild protest.

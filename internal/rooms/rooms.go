@@ -1829,7 +1829,11 @@ func (r *Room) GetMobs(findTypes ...FindFlag) []int {
 			continue
 		}
 
-		if typeFlag&FindMerchant == FindMerchant && mob.HasShop() {
+		// An off-shift keeper (mobs.OffShift: Kerra at the tavern of an
+		// evening) is not a merchant there: no list, buy, sell, offer or
+		// appraise finds her, so her stock never mixes into another keeper's
+		// shop. actions.RefuseIfShopClosed still finds her, to say so.
+		if typeFlag&FindMerchant == FindMerchant && mob.HasShop() && !mob.OffShift() {
 			mobMatches = append(mobMatches, mobId)
 			continue
 		}

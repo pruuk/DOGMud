@@ -20,15 +20,15 @@ import (
 
 func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	merchantMobs := room.GetMobs(rooms.FindMerchant)
-	if len(merchantMobs) == 0 {
-		refusal.NoMerchant(user)
+	// Shut (every keeper asleep, or the only keeper here off shift), as for
+	// list, buy, sell and offer.
+	if actions.RefuseIfShopClosed(room, user) {
 		return true, nil
 	}
 
-	// Shut for the night, as for list, buy, sell and offer.
-	if asleep := actions.ShopClosedForSleep(room); asleep != nil {
-		actions.RefuseMobIfAsleep(asleep, user)
+	merchantMobs := room.GetMobs(rooms.FindMerchant)
+	if len(merchantMobs) == 0 {
+		refusal.NoMerchant(user)
 		return true, nil
 	}
 

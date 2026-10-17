@@ -5,6 +5,7 @@ segments:
     end: 9
     target_room: 5101
     activity: ""
+    offshift_line: "Not yet. The forge opens once I've had my breakfast."
     idlecommands:
       - emote rubs sleep from her eyes.
       - emote pulls on her boots and apron.
@@ -22,6 +23,7 @@ segments:
     end: 22
     target_room: 472
     activity: ""
+    offshift_line: "Not here. Come by the forge tomorrow."
     idlecommands:
       - emote sips from a tankard.
       - say Long day at the forge.

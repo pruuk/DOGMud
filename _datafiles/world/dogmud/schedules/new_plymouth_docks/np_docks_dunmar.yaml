@@ -16,6 +16,7 @@ segments:
     end: 14
     target_room: 5516
     activity: ""
+    offshift_line: "Not here. The warehouse opens again after the meal."
     idlecommands:
       - emote takes the meal standing, bowl balanced on one forearm, a list checked with his free hand.
       - say One hour. It is sufficient.

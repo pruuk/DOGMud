@@ -31,9 +31,8 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	listedSomething := false
 
-	// Shut for the night — see buy.go.
-	if asleep := actions.ShopClosedForSleep(room); asleep != nil {
-		actions.RefuseMobIfAsleep(asleep, user)
+	// Shut for the night or off shift: see buy.go.
+	if actions.RefuseIfShopClosed(room, user) {
 		return true, nil
 	}
 

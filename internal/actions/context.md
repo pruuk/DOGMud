@@ -734,6 +734,13 @@ word on its own line (#430).
 - **`RefuseIfAsleep` / `RefuseMobIfAsleep`** (`sleeping_target.go`) hide the
   sleeper's name at the player's sight in their own room ("A figure is fast
   asleep."), since an `ask` or `give` aimed at a shape never learned it.
+- **`RefuseIfShopClosed(room, user) bool`** (`sleeping_target.go`) is the one
+  closed-shop gate of list, buy, sell, offer and appraise: no merchant at all
+  answers false (the caller says no merchant); every keeper asleep gives the
+  asleep line (`ShopClosedForSleep`); a keeper here only off shift
+  (`OffShiftMerchant`, `mobs.Mob.OffShift`) says their segment's
+  `offshift_line` or `OffShiftFallbackLine`, name hidden at the player's
+  sight. The dim-light check runs after it.
 - **`ShotSight(viewer, room, rest) messaging.SightDecision`**
   (`combat_fire.go`): what a shooter makes out of the room a shot is aimed
   into, parsing `rest` as `ExecuteFire` does: their own room, or `scanReach`

@@ -55,7 +55,10 @@ var nightTradeSampleDays = []struct {
 //     target room, unless the segment is sleeping or patrol. The loader
 //     rejects a target of 0 outside patrol, so every awake segment names a
 //     real room. A sleeping keeper is exempt, since ShopClosedForSleep
-//     refuses before the sight gate ever runs. A patrolling keeper is on the
+//     refuses before the sight gate ever runs. So is a keeper whose segment
+//     sends them away from their spawn room, the home room their shop
+//     belongs to: off shift (mobs.OffShift), they do not trade at all, so
+//     the light there is not a shop's light. A patrolling keeper is on the
 //     road, not keeping shop. The schedule executor pins MaxWander to 0, so
 //     a scheduled keeper never wanders.
 //
@@ -242,7 +245,7 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 
 				here := roamRooms
 				if sched != nil {
-					here = scheduledRoom(t, sched, hour, mobId)
+					here = scheduledRoom(t, sched, hour, mobId, p.room.RoomId)
 				}
 				for _, r := range here {
 					inst.Character.RoomId = r.RoomId
@@ -333,16 +336,18 @@ func TestEveryShopkeeperCanTradeAtNightWhileAwake(t *testing.T) {
 // in fact tested at night, so an entry cannot outlive its reason.
 var nightSampleExempt = map[int]string{}
 
-// scheduledRoom returns the room a scheduled keeper is awake in at hour, or
-// nothing when the hour's segment is sleeping or patrol.
-func scheduledRoom(t *testing.T, sched *mobs.Schedule, hour int, mobId int) []*rooms.Room {
+// scheduledRoom returns the room a scheduled keeper is awake and trading in at
+// hour, or nothing when the hour's segment is sleeping or patrol, or sends the
+// keeper away from the home room its shop belongs to (off shift, mobs.OffShift:
+// an off-shift keeper does not trade, owner ruling 2026-10-17).
+func scheduledRoom(t *testing.T, sched *mobs.Schedule, hour int, mobId int, homeRoomId int) []*rooms.Room {
 	t.Helper()
 	seg := sched.CurrentSegment(hour)
 	if seg == nil {
 		// The loader rejects a schedule that does not cover all 24 hours.
 		t.Fatalf("mob %d schedule %q has no segment at hour %d", mobId, sched.Id, hour)
 	}
-	if seg.Activity == "sleeping" || seg.Activity == "patrol" {
+	if seg.Activity == "sleeping" || seg.Activity == "patrol" || seg.TargetRoom != homeRoomId {
 		return nil
 	}
 	r := rooms.LoadRoom(seg.TargetRoom)

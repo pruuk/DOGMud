@@ -26,6 +26,7 @@ segments:
     end: 14
     target_room: 5516
     activity: ""
+    offshift_line: "I'm off my feet for an hour. Come back after."
     idlecommands:
       - emote takes a bowl at the cookshop counter and eats standing, trading a
         few low words with whoever is working the brazier.
