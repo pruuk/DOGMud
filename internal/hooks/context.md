@@ -2225,6 +2225,12 @@ conviction. Summon reserve is derived from the spell's
 `SummonPetMultiplier` through `characters.CompanionReserveBase`; charm passes 0,
 meaning unscaled, so charm's price did not move.
 
+For a raise, `resolveCompanionSummon` runs the corpse gate
+(`actions.FindRaiseCorpse`) FIRST, before the count cap, the ceiling and the
+component (#282): selection spends nothing, so a raise with no usable corpse
+names the corpse and keeps its component. The corpse itself is removed only
+after every gate passes. `usercommands.Cast` runs the same gate at cast start.
+
 U10c renamed the charm arm from `resolveCharmSpell` to `applyMobEffect_charm`
 and moved it into the effect dispatcher (now `applySpellEffect`), because the old function ran a
 second private `RunContest` on top of the one the cast had already run and

@@ -80,8 +80,19 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `NotGuildOfficer(u, "invite")` / `NotGuildOfficerText` | Only guild officers and the leader can invite. |
 | `CompanionsFull` / `CompanionsFullLine` | You are already sustaining as many companions as your will can hold. |
 | `NotPartyMember(u, "Bob")` / `NotPartyMemberText` | No one in your party is called 'Bob'. |
+| `NoRemainsLine` (no send) | There are no suitable remains here to raise. |
+| `NoRemainsMatchingLine` (no send) | You cannot find suitable remains matching that description. |
+| `RemainsHoldLootLine` (no send) | Those remains still hold spoils. Clear the loot from them first, then raise what's left. |
+| `RemainsTooFaintLine` (no send) | Those remains are too faint to hold a bound spirit. |
+| `RemainsAlreadyRaisedLine` (no send) | Those remains were already animated once; there is nothing left to raise. |
 | `Failed(u, "", err)` / `FailedText` | That didn't work. The error has been logged. |
 | `Failed(u, "salvage", err)` | That salvage didn't work. The error has been logged. |
+
+The five raise lines (`remains.go`) answer a raise spell that found no
+corpse it could animate. `actions.RaiseCorpseRefusal` picks one from the
+corpse selection's reason, and both raise gates (cast start in
+`usercommands.Cast`, resolution in `hooks.resolveCompanionSummon`) send it on
+`CategoryRefusal`, before the reservation gate (#282).
 
 `WhileBusy` covers casting, crafting and salvaging alike (`cancel` ends any
 of them); `usercommands.refuseWhileBusy` and the special moves send it.

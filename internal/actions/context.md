@@ -770,6 +770,31 @@ word on its own line (#430).
   mob-departure retarget, since neither package is importable from the
   other but both import `actions`.
 
+## Raise corpse gate (`cast_raise_corpse.go`, #282)
+
+A raise spell (`SummonRequiresCorpse`) needs a usable corpse. The one gate
+both raise sites run is `FindRaiseCorpse(room, spellInfo, spellRest)`,
+returning the corpse's index in `room.Corpses` and its pool, or -1 and the
+refusal line. It changes nothing; the caller removes the corpse only once
+every other gate has passed. `usercommands.Cast` runs it at cast start and
+`hooks.resolveCompanionSummon` at resolution (the backstop for a corpse that
+went away mid-channel). Both run it BEFORE the companion-count and reservation
+gates, and resolution also before consuming the component: selection spends
+nothing, so a player at the ceiling with no usable corpse hears about the
+corpse, not about reserve they would free up only to fail again.
+
+- `ParseRaiseTarget(spellRest)`: "corpse", "2.corpse", "corpse#2" match by
+  index; any other word is the name filter with its index stripped
+  ("2.goblin" filters on "goblin").
+- `SelectRaiseCorpse(corpses, nameFilter, targetIndex, minPool)`: the
+  targetIndex-th valid mob corpse; on none, the most actionable
+  `RaiseSkipReason` among name-matching near misses (`RaiseHasLoot` over
+  `RaiseTooWeak` over `RaiseWasCharmed` over `RaiseNoMatch`). Player corpses
+  and prunable remains never count. A corpse scores by `StatPoolTotal`, the
+  number `assess` reports.
+- `RaiseCorpseRefusal(reason, nameFilter)`: the `refusal.Remains*` /
+  `refusal.NoRemains*` line, sent on `CategoryRefusal` by both sites.
+
 ## Skill Actions
 
 ### Consider
@@ -2037,7 +2062,7 @@ the rest are ordinary verbs.
 | Targeting | `target_resolution.go`, `target_helpers.go`, `melee_target.go`, `sleeping_target.go` |
 | Shared helpers | `combat_helpers.go`, `skill_helpers.go`, `mutation_helpers.go`, `aggression.go`, `bleed.go` (`bleedPerRound`) |
 | Combat specials | `combat_attack.go`, `combat_bash.go`, `combat_counter.go`, `combat_drain.go`, `combat_fire.go`, `combat_gore.go`, `combat_grapple.go`, `combat_hamstring.go`, `combat_kick.go`, `combat_maul.go`, `combat_pounce.go`, `combat_rake.go`, `combat_rally.go`, `combat_reload.go`, `combat_taunt.go`, `combat_throttle.go`, `combat_trip.go`, `combat_warcry.go` |
-| Casting | `cast.go`, `cast_interrupt.go` |
+| Casting | `cast.go`, `cast_interrupt.go`, `cast_admission.go`, `cast_raise_corpse.go` (the raise corpse gate) |
 | Flee | `flee.go`, `relocate_mob.go` |
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |
 | Room roster | `roster.go` (`RenderRoster`: the "Also here:" line from `descriptions/who`, wrapped to the reader's width because neither of its categories is pipeline-wrapped; `look` and a search's find both send it; `RenderGround` does the same for the "On the Ground:" list from `descriptions/ontheground`, and a guard test keeps every ground send on it) |

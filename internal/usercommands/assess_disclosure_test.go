@@ -113,7 +113,7 @@ func TestAssess_FlagsUnaffordableReservation(t *testing.T) {
 	}
 }
 
-// A player corpse can never be raised: selectRaiseCorpse skips any corpse with
+// A player corpse can never be raised: actions.SelectRaiseCorpse skips any corpse with
 // a UserId. Assess must not advertise forms for one, or it promises a summon
 // that raise then answers with "You cannot find suitable remains".
 //
