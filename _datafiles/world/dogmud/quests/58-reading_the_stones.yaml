@@ -5,13 +5,17 @@
 #              Requires 49-end (The Old Shrine). Repeatable with cooldown.
 #   58-end   — command trigger on search in the Reliquary room (5343).
 #              Requires 58-start. Auto-grants reward + clears for repeat.
+#              There is no report back (2026-10-17): the hint, Sere's offer
+#              and the reward lines all say the search finishes it, and the
+#              reward plays in the Reliquary, where Sere is not.
 
 questid: 58
 name: Reading the Stones
 description: >-
   Sere believes the shrine still has things to teach anyone patient
   enough to listen. She wants you to go back to the Reliquary and
-  read what the stones have to say.
+  read what the stones have to say. The reading is the whole of it:
+  the stones finish the lesson themselves.
 secret: false
 repeatable: true
 cooldown_rounds: 300
@@ -20,28 +24,28 @@ steps:
   - id: start
     map_target: 5343
     description: >-
-      Sere has asked you to return to the Reliquary and search the
-      old stones again.
+      Sere has asked you to go back to the Reliquary and search the
+      old stones again. The search itself completes the reading.
     hint: >-
-      Go to the Reliquary at the back of the shrine and type search
-      to read what the stones hold. Come back to Sere when you
-      have looked.
+      From the Old Shrine, go west into the Collapsed Nave and north
+      into the Reliquary, then type search.
   - id: end
     description: >-
-      You read the stones again. Sere will have more questions for
-      you when the shrine is ready to give them.
+      You read the stones again. Sere will have more for you when the
+      shrine is ready to give it.
 
 rewards:
   gold: 6
   skillinfo: "rhetoric:1"
   actor: >-
-    Sere listens in her unhurried way as you describe what the stones
-    showed you this time. "It changes," she says. "That is the thing
-    about very old places -- they keep speaking, and the words shift
-    with the listener. Come again when you have patience for it."
+    You sit back on your heels in the quiet of the Reliquary and let
+    what the stones showed you settle. It is not quite what they said
+    last time. Sere was right: very old places keep speaking, and the
+    words shift with the listener. Come again when you have the
+    patience for it.
   observer: >-
-    Sere folds her hands and listens with the patience of someone
-    who has been listening a very long time.
+    {actor} kneels by the cracked floor, quiet, as though listening to
+    something no one else can hear.
 
 triggers:
   - event: command
@@ -56,4 +60,3 @@ triggers:
           The stones give up a little more than they did before --
           not much, but something. The mark at the center of the
           disc catches your eye again, unchanged and patient.
-          Bring word of it to Sere.

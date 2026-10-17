@@ -120,6 +120,18 @@ tree:
       hints: "Quest complete. Head to the standing stones and type ask hale to
         find Loresinger Hale."
 
+    # ── QUEST 47 MID-QUEST (before the help step): answers the report words
+    #    a player tries early, so they do not reach the catch-all. ──
+    - id: words_progress
+      triggers: ["report", "done", "ready", "finished", "lesson", "quest",
+        "task"]
+      questRequired: ["47-start"]
+      questExcluded: ["47-help", "47-end"]
+      text: "Not yet. You have done the asking part. Now open the in-game
+        reckoning, the one that holds what memory drops. Then come back and
+        tell me."
+      hints: "Type help."
+
     # ── HELP EXPLANATION ──────────────────────────────────────
     - id: help_node
       triggers: ["help", "reference", "remember", "how"]
