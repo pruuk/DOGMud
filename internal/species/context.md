@@ -90,6 +90,25 @@ panics at load), because the `drain` special move is how it steals life;
 no effect on armed mobs — an equipped weapon's own `Subtype` always takes
 precedence.
 
+**The principle (owner ruling, 2026-10-16).** A species' default attack
+(`natural_attack`) is the attack it makes most of the time. Its special
+moves are rarer, or finishing moves. Pick the default attack for what the
+creature does in an ordinary fight, and give the flourish to a special move.
+Spec: `docs/superpowers/specs/2026-10-16-combat-message-reachability-design.md`.
+
+**A creature is the species it looks like.** A wolf is `canine`, a crow or
+a heron `bird`, a hawk `raptor` (birds that hunt), an otter `mustelid`. The
+species decides the default attack, body parts, damage and which special
+moves a mob can use, so a wrong species gives a creature the wrong fight.
+Slice 1 of the spec above moved 32 mobs that were on the wrong species
+(ported from PR #208, owner decisions in
+`docs/superpowers/plans/2026-10-16-combat-reachability-slice1-species.md`);
+`internal/species/species_assignment_test.go` pins them.
+
+Species 25 `bird` (claws, "beak and claws", small; does not hunt other
+beasts) and 26 `horse` (slam, "hooves", large) were added then. Like every
+beast species they set `speech: false`; a species that omits it can speak.
+
 ---
 
 ## Files in This Package
