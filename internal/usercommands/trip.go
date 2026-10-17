@@ -55,7 +55,8 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if res.TargetOnFloor {
-		user.SendText(messaging.CategoryRefusal, fmt.Sprintf("%s is already on the ground.", res.Target.Name))
+		user.SendText(messaging.CategoryRefusal, messaging.HideNames(fmt.Sprintf("%s is already on the ground.", res.Target.Name),
+			[]string{res.Target.Name}, messaging.ParticipantSight(user.Character, room)))
 		return true, nil
 	}
 

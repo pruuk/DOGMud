@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/state"
+	"github.com/GoMudEngine/GoMud/internal/state/position"
 	"github.com/GoMudEngine/GoMud/internal/targeting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -538,4 +539,41 @@ func TestGiveSight_OwnPetByNameAtShapes(t *testing.T) {
 	_, _ = Give("sword fang", user, room, events.EventFlag(0))
 	assert.Len(t, user.Character.Pet.Items, 1, "the own pet by name was refused at shapes")
 	assert.NotContains(t, aimTold(1), "make out shapes")
+}
+
+// #557: a trip or grapple refusal about the target names it at the player's
+// sight, as StageMeleeTarget's own refusals do. A player who aimed at a shape
+// reads "A figure", never the creature's name.
+func TestSpecialMoveRefusals_NameTheTargetAtSight(t *testing.T) {
+	for _, tc := range []struct {
+		verb string
+		pos  position.State
+		run  func(string, *users.UserRecord, *rooms.Room, events.EventFlag) (bool, error)
+		line string
+	}{
+		{"trip", position.Prone, Trip, "is already on the ground."},
+		{"grapple", position.Clinch, Grapple, "is already grappling."},
+	} {
+		for _, band := range []aimBand{aimFull, aimShapes} {
+			user, room := aimScene(t, band)
+			t.Cleanup(seedSpecialMoveSpecies())
+			user.Character.SpeciesId = 11 // humanoid: arms and legs
+			skeleton := mobs.GetInstance(100)
+			require.NotNil(t, skeleton)
+			setCombatPositionParallel(&skeleton.Character, tc.pos)
+			target := "skeleton"
+			if band == aimShapes {
+				target = "2.figure"
+			}
+			_, err := tc.run(target, user, room, events.EventFlag(0))
+			require.NoError(t, err)
+			told := aimTold(1)
+			if band == aimFull {
+				assert.Contains(t, told, "Skeleton "+tc.line, "%s at clear sight", tc.verb)
+			} else {
+				assert.Contains(t, told, "A figure "+tc.line, "%s at shapes", tc.verb)
+				assert.NotContains(t, told, "Skeleton", "%s at shapes named the shape", tc.verb)
+			}
+		}
+	}
 }
