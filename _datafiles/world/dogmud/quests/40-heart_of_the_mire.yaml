@@ -29,15 +29,17 @@ steps:
   - id: start
     map_target: 5280
     description: >-
-      Falv has set you on the mire. Descend the poison swamp past the
-      miasma edge, drop into the sunken hollow, and defeat the spirit of
-      the swamp at the heart of the mire.
+      Falv has set you on the mire. The spirit of the swamp is a hard
+      fight: brew healing salves and carry firebombs before you go. From
+      the Black Pool, go south past the Miasma Edge and the Fenrot Approach
+      to the Sulphur Flats. The sinkhole there drops down into the Sunken
+      Hollow, and the Heart of the Mire lies two rooms south of it, past
+      the Black Mere. Consider a foe to size it up, and flee if a fight
+      turns against you.
     hint: >-
-      Brew salves and firepots and carry them before you go -- the boss
-      is a hard fight. Head south past the miasma edge into the poison
-      swamp, take the sinkhole down into the sunken hollow, and fight
-      through to the Heart of the Mire. Type consider on a foe to size
-      it up, and flee if a fight turns against you.
+      Go down the sinkhole at the Sulphur Flats, then south to the Heart of
+      the Mire, and type attack spirit. If it is dark, type cast
+      chrysalis-glow first.
   - id: end
     description: >-
       The spirit of the swamp is broken and the mire runs clear. You came
