@@ -2,7 +2,7 @@ mutationid: venom-glands
 name: Venom Glands
 description: |
   Glands swell behind your teeth and beneath your nails, weeping a potent
-  neurotoxin. Anything you strike with tooth or claw is envenomed — the
+  neurotoxin. Anything you strike with tooth or claw is envenomed, and the
   poison does its slow, certain work long after the blow lands.
 rarity: 8
 max_rank: 1  # connective-tissue bridge: apex-class, binary (no deepen)

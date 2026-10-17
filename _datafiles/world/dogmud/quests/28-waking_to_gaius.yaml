@@ -272,7 +272,9 @@ triggers:
             - {delay: 1, text: "People answer when you speak to them out
                 there. Type say hello."}
 
-  - event: command_issued
+  # `command`, not command_issued: a refused bare `say` must not count.
+  # The same goes for every step below whose command can be refused.
+  - event: command
     command: say
     conditions:
       has: [28-speaks_prompt]
@@ -285,8 +287,9 @@ triggers:
             - {delay: 0, text: "Ha -- and the world will answer, out there.
                 Now ask me something directly. Type ask dewey world."}
 
-  - event: command_issued
-    command: ask
+  # The question has to reach Dewey: a bare `ask` or `ask world` is refused.
+  - event: dialogue
+    mob: 9491
     conditions:
       has: [28-said]
       missing: [28-asked]
@@ -313,7 +316,7 @@ triggers:
             - {delay: 1, text: "The practice ring -- where you make your
                 mistakes safely. Steel yourself first. Type warcry."}
 
-  - event: command_issued
+  - event: command
     command: warcry
     conditions:
       has: [28-proving_prompt]
@@ -383,9 +386,11 @@ triggers:
             - {delay: 0, text: "Your steady swings are free. Now spend your
                 focus on belief. Type cast spike."}
 
-  - event: command_issued
+  # Noun is the canonical spell id on the cast success event, so `cast spike`
+  # and `cast conviction-spike` both count and a refused cast does not.
+  - event: command
     command: cast
-    noun: spike
+    noun: conviction-spike
     conditions:
       has: [28-attacked]
       missing: [28-cast_spike]
@@ -399,7 +404,10 @@ triggers:
             - {delay: 8, text: "When your spike lands, take its legs the
                 body's way -- type trip."}
 
-  - event: command_issued
+  # A trip that is carried out, landed or not, counts. So does the refusal
+  # "already on the ground": an automatic SWEEP often drops the effigy first,
+  # and trip.go reports that case as a trip so the step cannot soft-lock.
+  - event: command
     command: trip
     conditions:
       has: [28-cast_spike]
@@ -409,8 +417,9 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 1, text: "Down it goes, wearing a condition of its own
-                -- voice, belief, and body, all yours."}
+            - {delay: 1, text: "That is the body's way. When a trip lands,
+                the foe goes down wearing a condition of its own. Voice,
+                belief, and body: all yours."}
             - {delay: 4, text: "Out here you grow by doing. Belief deepens
                 your Willpower, blades sharpen your Dexterity -- you earn
                 it, you never pick it."}
@@ -418,7 +427,11 @@ triggers:
                 already gave you -- this fight cannot be won. Type flee to
                 break away and live."}
 
-  - event: command_issued
+  # Fires once the flee has worked and the player has arrived in 6467, where
+  # Dewey is waiting (NewRound_DoCombat_helpers.go notifyFleeSucceeded). A
+  # refused or blocked flee does not count, and Dewey's line no longer
+  # prints before "You flee to the north exit!".
+  - event: command
     command: flee
     conditions:
       has: [28-tripped]
@@ -428,8 +441,8 @@ triggers:
       - npc_say:
           mob: 9491
           lines:
-            - {delay: 0, text: "Running isn't losing -- it's how you live to
-                win the next one. I'll see you through on the far side."}
+            - {delay: 0, text: "Running isn't losing. It's how you live to
+                win the next one."}
 
   # ── 6467 The Landing: the `talk dewey` handoff (farewell + teleport to the
   #    Awakening Pool + grant of quest 30 + completion of 28-end) is handled by

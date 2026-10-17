@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/GoMudEngine/GoMud/internal/actions"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -140,8 +141,11 @@ func (g *GMCPModule) handleCharOp(e events.Event) events.ListenerReturn {
 		if u == nil {
 			break
 		}
-		// Only allow focusing an active quest.
+		// Only allow focusing an active quest, and never a secret one.
 		if _, ok := u.Character.GetQuestProgress()[req.Id]; !ok {
+			break
+		}
+		if characters.IsSecretQuest(req.Id) {
 			break
 		}
 		u.Character.LastQuestId = req.Id

@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/progression"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -1049,9 +1050,29 @@ func handlePlayerFlee(user *users.UserRecord, uRoom *rooms.Room, userId int) boo
 			UserId:    user.UserId,
 			RoomId:    out.ExitRoomId,
 		})
+
+		notifyFleeSucceeded(user, out.ExitRoomId)
 	}
 
 	return true
+}
+
+// notifyFleeSucceeded is the quest engine's flee command notification. It
+// fires only once the player has broken away and arrived, never when the
+// flee is refused, blocked or finds no exit; command_issued fires at the
+// moment `flee` is typed, a round before any of that is known. Sent from the
+// room fled INTO, so an NPC there can answer (the tutorial's guide waits on
+// the far side). The event matches on the template id, as command_issued
+// does, so room-scoped triggers work in ephemeral instances; the bridge keeps
+// the real id for mob resolution.
+func notifyFleeSucceeded(user *users.UserRecord, arrivedRoomId int) {
+	matchRoom, _ := rooms.OriginalRoomId(arrivedRoomId)
+	bridge := questengine.NewGameBridge(user, arrivedRoomId)
+	questengine.GetEngine().Notify("command", questengine.EventDetails{
+		UserId:  user.UserId,
+		RoomId:  matchRoom,
+		Command: "flee",
+	}, bridge, bridge)
 }
 
 // handleMobFlee is the mob twin of handlePlayerFlee: the same

@@ -149,7 +149,14 @@ own, unrelated action param.)
 - **`AllQuests` is sorted by quest id.** It iterates a map internally but sorts
   before returning, so audit and gate output is stable between runs.
 - **`command_issued` and `command` are different events** — the first fires when
-  a command is typed, the second only when it succeeded.
+  a command is typed, the second only when it succeeded. `command_issued` fires
+  on a refusal too, so a step whose command can be refused listens on
+  `command` (quest 28 does for say, warcry, cast, trip and flee). Each handler
+  sends its own `command`; a few cases worth knowing: `cast` carries the
+  canonical spell id as `Noun`; `trip` also sends it when the target is
+  already on the ground, and `warcry` when one is already riding the player
+  (the goal holds); `flee` is sent by the round hook once the player has
+  arrived, from the room fled into.
 - **Ephemeral (instance) rooms match their TEMPLATE room id** in `room:`
   triggers, not their runtime id.
 - **Every quest `observer` line must contain `{actor}`, and `quests.Quest.Validate`

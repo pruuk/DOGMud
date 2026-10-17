@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mutations"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/questengine"
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -30,6 +31,9 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	if result.AlreadyActive {
 		user.SendText(messaging.CategoryRefusal, "Your warcry still echoes. You can't shout it louder.")
+		// Refused, but the warcry is riding on the player, which is what a
+		// quest step on warcry is checking for.
+		notifyWarcry(user, room)
 		return true, nil
 	}
 
@@ -104,7 +108,21 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// Rhetoric progression is awarded inside actions.ExecuteWarcry,
 	// so the mob wrapper gets it too.
 
+	notifyWarcry(user, room)
+
 	return true, nil
+}
+
+// notifyWarcry is the quest engine's warcry command notification. It fires
+// only when the player ends the command under a warcry, never on a cost,
+// busy or cooldown refusal (command_issued fires on those too).
+func notifyWarcry(user *users.UserRecord, room *rooms.Room) {
+	bridge := questengine.NewGameBridge(user, room.RoomId)
+	questengine.GetEngine().Notify("command", questengine.EventDetails{
+		UserId:  user.UserId,
+		RoomId:  room.RoomId,
+		Command: "warcry",
+	}, bridge, bridge)
 }
 
 func applyWarcryToCompanions(owner *users.UserRecord, room *rooms.Room, bonus float64, duration int) {
