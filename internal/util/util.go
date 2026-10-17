@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/bits"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -1235,7 +1236,7 @@ func ConvertToAscii(s string) string {
 
 		repl, ok := unicodeToAscii[r]
 		if !ok {
-			repl = string(r)
+			repl = asciiFallback(r)
 		}
 
 		if repl == "" {
@@ -1250,6 +1251,30 @@ func ConvertToAscii(s string) string {
 		trim()
 	}
 	return string(buf)
+}
+
+// asciiFallback converts a rune the table does not name. Braille cells (the
+// goodbye art) become a shade by how many dots they set; any other box-drawing
+// piece becomes "+". Every other rune passes through unchanged: the table is
+// the list of glyphs the game emits, and TestAsciiModeCoversEveryShippedGlyph
+// fails when a template, config string or Go literal brings in one it lacks.
+func asciiFallback(r rune) string {
+	switch {
+	case r >= 0x2800 && r <= 0x28FF:
+		switch dots := bits.OnesCount8(uint8(r - 0x2800)); {
+		case dots == 0:
+			return " "
+		case dots <= 2:
+			return "."
+		case dots <= 5:
+			return ":"
+		default:
+			return "#"
+		}
+	case r >= 0x2500 && r <= 0x257F:
+		return "+"
+	}
+	return string(r)
 }
 
 // unicodeToAscii maps decorative Unicode runes to ASCII string equivalents.
@@ -1270,9 +1295,41 @@ var unicodeToAscii = map[rune]string{
 	'╞': "+", '╡': "+", '╤': "+", '╧': "+", '╪': "+",
 	'╓': "+", '╖': "+", '╙': "+", '╜': "+",
 	'╟': "+", '╢': "+", '╥': "+", '╨': "+", '╫': "+",
+	// Box-drawing: the half strokes and mixed-weight pieces the splash art
+	// uses (spring's sprouts are ╿).
+	'╿': "|", '╽': "|", '╼': "-", '╾': "-",
 	// Block elements
 	'█': "#", '▓': "#", '▒': ":", '░': ".",
 	'▄': "-", '▀': "_", '▌': "|", '▐': "|",
+	// Block elements: the eighth-height bars that draw the sunrise, sunset and
+	// season wave lines (▂▃▄▅▆▇), rising low to high, and the eighth-width bars.
+	'▁': "_", '▂': "_", '▃': "-", '▅': "=", '▆': "=", '▇': "#",
+	'▉': "#", '▊': "#", '▋': "|", '▍': "|", '▎': "|", '▏': "|",
+	'▔': "-", '▕': "|",
+	// Block elements: quadrants (the season splash ground lines). A lone low
+	// quadrant is a dot, a lone high one a tick, three quadrants are solid,
+	// and the two diagonal pairs lean the way they are drawn.
+	'▖': ".", '▗': ".", '▘': "'", '▝': "'",
+	'▙': "#", '▛': "#", '▜': "#", '▟': "#",
+	'▚': "\\", '▞': "/",
+	// Small dots: the star fields in the sunrise, sunset, moon and mutation
+	// banners.
+	'·': ".", '˙': "'",
+	// Flowers and sparkles in the season and weather splashes.
+	'❀': "*", '❁': "*", '✿': "*", '☘': "*", '✳': "*",
+	// The combat prompt's target pointer.
+	'»': ">", '«': "<",
+	// The shield-slam and block-crit lines (combat and help combat): dropped,
+	// the words SHIELD SLAM beside it say it.
+	'🛡': "",
+	// The storm splash's lightning stroke.
+	'⟍': "\\",
+	// Map help legend: the storage marker.
+	'▢': "#",
+	// Text glyphs in admin and help text.
+	'←': "<-", '↔': "<->", '⇒': "=>", '≥': ">=", '≤': "<=", '−': "-",
+	'∈': "in", '’': "'", '‘': "'", '“': "\"", '”': "\"", 'σ': "s",
+	'【': "[", '】': "]", '§': "S",
 	// Bullet / misc
 	'•': "*",
 	// Diagonal lines
