@@ -141,7 +141,6 @@ var userOnlyCommands = map[string]string{
 	"talk":       "player-mechanic",
 	"target":     "player-mechanic",
 	"use":        "player-mechanic",
-	"whisper":    "player-mechanic",
 	"zombieact":  "player-mechanic",
 
 	// --- Intentionally NOT allowlisted ---

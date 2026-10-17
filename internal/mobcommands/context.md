@@ -79,6 +79,12 @@ The `internal/mobcommands` package implements the AI command system for non-play
   (unfiltered for a mob) and, for `shout`, the adjacent-room line and waking
   sleepers, all live in the shared body. `speech_wrapper_guard_test.go`
   (repo root) fails if any of these five re-forks that logic.
+- **Whisper**: `whisper <target> <text>` (`whisper.go`) reaches one player
+  alone, framed in asterisks like a player's whisper so it stands out from
+  combat text. The target is usually `@<userId>`: a quest `npc_say` line with
+  `whisper: true` is sent this way to the triggering player
+  (`questengine.npcCommand`). The speaker's name follows the addressee's
+  sight, a hidden mob reads "Someone", and a deafened player still hears it.
 - **Emotional expression**: `emote` - Rich behavioral expressions
 - **Quest integration**: `givequest` - Dynamic quest assignment
 
@@ -270,7 +276,7 @@ The `internal/mobcommands` package implements the AI command system for non-play
 This package transforms static NPCs into dynamic, intelligent entities that create a living, breathing game world through sophisticated AI behaviors and decision-making systems.
 ## Files: one command per file
 
-75 non-test files, one per mob command; the filename is the command. This
+76 non-test files, one per mob command; the filename is the command. This
 package is the mob-side twin of `internal/usercommands`.
 
 Handler signature:
