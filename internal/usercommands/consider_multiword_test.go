@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/conditions"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -78,7 +79,7 @@ func TestConsider_MultiWordNameTargetsTheRightMob(t *testing.T) {
 	require.NoError(t, err)
 
 	joined := strings.Join(events.DrainQueuedMessagesForTest(user.UserId), "\n")
-	assert.NotContains(t, joined, "You don't see them here.",
+	assert.NotContains(t, joined, refusal.NotHereCreatureLine,
 		"consider must resolve a multi-word target")
 	assert.Contains(t, joined, "Bandit Archer",
 		"consider bandit archer must consider the ARCHER")

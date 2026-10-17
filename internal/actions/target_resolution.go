@@ -68,7 +68,7 @@ var (
 //
 //	target, err := actions.ResolveTargetActor(room, name)
 //	if err != nil {
-//	    user.SendText(messaging.CategoryError, "You don't see them here.")  // caller controls wording
+//	    refusal.NotHereCreature(user)  // caller controls wording
 //	    return true, nil
 //	}
 //	// ... use target uniformly ...

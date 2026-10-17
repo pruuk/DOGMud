@@ -91,7 +91,8 @@ func ResolveLook(actor Actor, lookAt string) LookResolution {
 	// A player who makes out shapes looks at a figure by the word the room
 	// shows it by, as they aim at one (AimBySight's figures, owner ruling
 	// 2026-10-17). It is resolved for no name: the wrapper words what shapes
-	// show. A count past the last figure falls through, to the shapes refusal.
+	// show. A count past the last figure falls through, to the wrapper's
+	// refusal.NotHereCreatureLine (#609).
 	if res.Sight == messaging.SightShapes && actor.IsPlayer() {
 		if n := aimShapeIndex(lookAt); n > 0 {
 			if figures := aimFigures(char, actor.GetUserId(), room); n <= len(figures) {

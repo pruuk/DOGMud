@@ -121,6 +121,13 @@ func aimNamesAShape(name string) bool {
 	return isAimWord(word)
 }
 
+// NamesAFigure reports whether name is the aim word in any of its forms
+// (`figure`, `3.figure`, `shape#2`, `all.figure`): a name for a creature.
+// look reads a missing one as refusal.NotHereCreatureLine (#609).
+func NamesAFigure(name string) bool {
+	return aimNamesAShape(name)
+}
+
 // aimShapeIndex is N for `figure`, `N.figure` or `figure#N` (or the alias),
 // and 0 otherwise.
 func aimShapeIndex(name string) int {

@@ -135,7 +135,7 @@ func TestCastSight_ShapesOnlyAimsAtAShape(t *testing.T) {
 
 func TestCastSight_NoSightRefusesEveryTargetedCast(t *testing.T) {
 	a, _ := castSightScene(t, "cave")
-	requireRefused(t, a, InitiateCast(a, "sight-heal", "witness"), "You don't see them here.")
+	requireRefused(t, a, InitiateCast(a, "sight-heal", "witness"), "You can't find them here.")
 
 	a, _ = castSightScene(t, "cave")
 	requireRefused(t, a, InitiateCast(a, "sight-heal", "shape"), "You can't see anything to aim at.")

@@ -36,6 +36,8 @@ func seedShapesRosterRoom(t *testing.T, lamp, condition int) (*users.UserRecord,
 	return viewer, room
 }
 
+// shapesLookHint is the shapes line look no longer gives a name it did not
+// find (#609): a typed name reads refusal.NotHereThingLine at every light.
 const shapesLookHint = "You can only make out shapes here."
 
 func TestLookAtCreature_ShapesViewerIsNotToldWhoItIs(t *testing.T) {
@@ -45,13 +47,15 @@ func TestLookAtCreature_ShapesViewerIsNotToldWhoItIs(t *testing.T) {
 	drainBob()
 
 	out := runGate(t, viewer, func() (bool, error) { return Look("bobrick", viewer, room, 0) })
-	require.Contains(t, out, shapesLookHint)
+	require.Contains(t, out, refusal.NotHereThingLine)
+	require.NotContains(t, out, shapesLookHint)
 	require.NotContains(t, out, "Bobrick")
 
 	// A name that matches nobody gets the same answer, so the reply is not
 	// an oracle for who is standing there.
 	out = runGate(t, viewer, func() (bool, error) { return Look("zzyzx", viewer, room, 0) })
-	require.Contains(t, out, shapesLookHint)
+	require.Contains(t, out, refusal.NotHereThingLine)
+	require.NotContains(t, out, shapesLookHint)
 
 	// Bobrick is not told he is being looked at by name: he was never found.
 	require.NotContains(t, drainBob(), "is looking at you")

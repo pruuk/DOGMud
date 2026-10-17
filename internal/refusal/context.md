@@ -30,6 +30,11 @@ in the room.
 
 - Sight-gated helpers (`NotHereCreature`, `NotHereThing`, `NothingToAim`)
   take no name at all, so they cannot echo.
+- `NotHereCreature` and `NotHereThing` are sense-neutral ("can't find", not
+  "don't see"; #609, owner ruling 2026-10-17), so one line fits every verb at
+  every light. `look` answers a missing target through them too: the aim word
+  (`figure`, `3.figure`, `actions.NamesAFigure`) reads `NotHereCreature`,
+  anything else `NotHereThing`, at every light.
 - `NoMerchant` (`NoMerchantLine`, "There's no merchant here.") is the one
   answer every shop verb (list, buy, sell, offer, appraise) gives where no
   merchant is present.
@@ -57,8 +62,8 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 
 | Helper | Line |
 |---|---|
-| `NotHereCreature` / `NotHereCreatureLine` | You don't see them here. |
-| `NotHereThing` / `NotHereThingLine` | You don't see that here. |
+| `NotHereCreature` / `NotHereCreatureLine` | You can't find them here. |
+| `NotHereThing` / `NotHereThingLine` | You can't find that here. |
 | `NothingToAim` / `NothingToAimLine` | You can't see anything to aim at. |
 | `NotCarrying(u, "rope")` / `NotCarryingText` | You aren't carrying 'rope'. Try **inventory**. |
 | `NotCarrying(u, "")` | You aren't carrying that. Try **inventory**. |
