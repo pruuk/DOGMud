@@ -21,15 +21,21 @@ const arenaZone = "Instance Arena"
 // armedText matches mob text that puts a weapon in the mob's hands.
 var armedText = regexp.MustCompile(`(?i)\b(blades?|swords?|knife|knives|mace|axe|spear)\b`)
 
+// shieldText matches mob text that puts a shield on the mob's arm.
+var shieldText = regexp.MustCompile(`(?i)\bshields?\b`)
+
 // TestArenaMobsCarryTheGearTheirTextNames is the content guard for two rules:
 //
-//  1. A mob whose description, idle or combat text names a weapon wields one
-//     from its template. An unarmed mob is narrated with its fists, which
+//  1. A mob whose description, idle or combat text names a weapon (or a
+//     shield) gets one, either worn from its template or from its
+//     loot_pool. An unarmed mob is narrated with its fists, which
 //     contradicts a cutthroat "flipping a blade" (2026-10-17 playtest).
+//     loot_pool counts because every arena entry is paid, and a paid spawn
+//     generates and wears each loot_pool item (rooms.SpawnMob); that is how
+//     the Champion gets its mace and tower shield.
 //  2. Every item an arena mob wears from its template is NeverDrops, so the
 //     intended gold farm does not turn into an item farm. Paid-run loot
-//     comes from loot_pool, which is equipped over the template gear and
-//     keeps the mob's itemdropchance.
+//     comes from loot_pool, which keeps the mob's itemdropchance.
 //
 // It loads the real items and every mob template, and checks every mob in
 // the arena zone, so a new arena mob is held to the same rules.
@@ -59,9 +65,29 @@ func TestArenaMobsCarryTheGearTheirTextNames(t *testing.T) {
 
 		text := strings.Join(append(append([]string{m.Character.Description},
 			m.IdleCommands...), m.CombatCommands...), "\n")
-		if armedText.MatchString(text) && m.Character.Equipment.Weapon.ItemId == 0 {
-			t.Errorf("mob %d (%s): its text names a weapon (%q) but it wields none",
+		hasWeapon := m.Character.Equipment.Weapon.ItemId != 0
+		hasShield := m.Character.Equipment.Offhand.ItemId != 0
+		for _, poolId := range m.LootPool {
+			spec := items.GetItemSpec(poolId)
+			if spec == nil {
+				t.Errorf("mob %d (%s): loot_pool item %d does not exist",
+					id, m.Character.Name, poolId)
+				continue
+			}
+			switch spec.Type {
+			case items.Weapon:
+				hasWeapon = true
+			case items.Offhand:
+				hasShield = true
+			}
+		}
+		if armedText.MatchString(text) && !hasWeapon {
+			t.Errorf("mob %d (%s): its text names a weapon (%q) but neither its template nor its loot_pool gives it one",
 				id, m.Character.Name, armedText.FindString(text))
+		}
+		if shieldText.MatchString(text) && !hasShield {
+			t.Errorf("mob %d (%s): its text names a shield but neither its template nor its loot_pool gives it one",
+				id, m.Character.Name)
 		}
 
 		for _, worn := range m.Character.Equipment.GetAllItems() {

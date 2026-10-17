@@ -36,7 +36,7 @@ character:
   gold: 5
   equipment:
     weapon:
-      itemid: 10051
+      itemid: 10086
   stats:
     strength:
       base: 104
