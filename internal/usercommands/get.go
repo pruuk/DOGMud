@@ -498,9 +498,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		// Mirrors the gate every sibling command applies (look.go, put.go,
 		// lock.go, unlock.go, picklock.go).
 		if container.Lock.IsLocked() {
-			user.SendText(messaging.CategoryRefusal, ``)
 			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
-			user.SendText(messaging.CategoryRefusal, ``)
 			return true, nil
 		}
 

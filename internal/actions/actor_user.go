@@ -43,6 +43,10 @@ func (a *UserActor) SendText(cat messaging.Category, msg string) {
 	a.User.SendText(cat, msg)
 }
 
+func (a *UserActor) SendBlankLine(cat messaging.Category) {
+	a.User.SendBlankLine(cat)
+}
+
 func (a *UserActor) GetName() string {
 	return a.User.Character.Name
 }

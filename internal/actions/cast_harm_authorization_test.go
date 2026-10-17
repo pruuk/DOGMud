@@ -37,6 +37,10 @@ func (p *playerStub) SendText(_ messaging.Category, s string) {
 	p.sent = append(p.sent, s)
 }
 
+func (p *playerStub) SendBlankLine(_ messaging.Category) {
+	p.sent = append(p.sent, "")
+}
+
 func newPlayerActor() (*playerStub, *characters.Character, *rooms.Room) {
 	char := newTestChar()
 	room := newTestRoom()

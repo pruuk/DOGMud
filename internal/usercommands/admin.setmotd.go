@@ -31,7 +31,7 @@ func SetMotd(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	}
 
 	user.SendText(messaging.CategoryAdmin, `Message of the day has been updated.`)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`New MOTD: %s`, newMotd))
 
 	return true, nil

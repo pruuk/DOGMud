@@ -112,7 +112,7 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 	// UserActor text rendering. MobActor.SendText is a no-op.
 	if actor.IsPlayer() {
 		actor.SendText(messaging.CategorySystem, `You scan the surrounding area...`)
-		actor.SendText(messaging.CategorySystem, ``)
+		actor.SendBlankLine(messaging.CategorySystem)
 		if len(result.Sightings) == 0 {
 			actor.SendText(messaging.CategorySystem,
 				`  There are no visible exits to scan.`)
@@ -182,7 +182,7 @@ func Scan(actor Actor, opts ScanOptions) ScanResult {
 					fmt.Sprintf(`  %s: nothing of interest`, label))
 			}
 		}
-		actor.SendText(messaging.CategorySystem, ``)
+		actor.SendBlankLine(messaging.CategorySystem)
 	}
 
 	return result

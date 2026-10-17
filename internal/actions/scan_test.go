@@ -69,6 +69,10 @@ func (a *scanFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
 }
 
+func (a *scanFakeActor) SendBlankLine(_ messaging.Category) {
+	a.sent = append(a.sent, "")
+}
+
 // newScanTestRoom builds a minimal Room with no exits.
 func newScanTestRoom(roomId int) *rooms.Room {
 	return &rooms.Room{RoomId: roomId}

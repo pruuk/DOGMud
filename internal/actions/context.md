@@ -31,6 +31,7 @@ type Actor interface {
 	GetCharacter() *characters.Character
 	GetRoom() *rooms.Room
 	SendText(cat messaging.Category, msg string)
+	SendBlankLine(cat messaging.Category) // one empty line; screen categories only (#610)
 	GetName() string
 	IsPlayer() bool
 	GetUserId() int                 // 0 for mobs
@@ -76,8 +77,9 @@ render a refused status through `refusal.Cost` (`internal/refusal`), while
 equivalent mob wrappers stay silent.
 
 - **UserActor** (`actor_user.go`): wraps a `*users.UserRecord`, sends text via
-  `user.SendText()`, skill progression goes through `user.Character.OnSkillUse()`.
-- **MobActor** (`actor_mob.go`): wraps a `*mobs.Mob`; `SendText` is a no-op
+  `user.SendText()` and blank lines via `user.SendBlankLine()` (an empty
+  `SendText` delivers nothing), skill progression goes through `user.Character.OnSkillUse()`.
+- **MobActor** (`actor_mob.go`): wraps a `*mobs.Mob`; `SendText` and `SendBlankLine` are no-ops
   because a mob has no private player connection. A mob's room line goes out
   through `Say`/`Shout`/`SendHeard`/`SendSeen` below, not through the Actor
   interface itself (`SendRoomCommunication` is deleted, sight gates slice

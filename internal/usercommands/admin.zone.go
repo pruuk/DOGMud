@@ -53,11 +53,11 @@ func Zone(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if zoneCmd == `info` {
 
-		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendBlankLine(messaging.CategoryAdmin)
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="yellow-bold">Zone Config for:    <ansi fg="red">%s</ansi></ansi>`, room.Zone))
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`   <ansi fg="yellow-bold">Root Room Id:</ansi>    <ansi fg="red">%d</ansi>`, zoneConfig.RoomId))
 
-		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendBlankLine(messaging.CategoryAdmin)
 
 		return true, nil
 	}
@@ -246,9 +246,9 @@ func zone_Edit(rest string, user *users.UserRecord, room *rooms.Room, flags even
 
 	rooms.SaveZoneConfig(&editZoneConfig)
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, `Changes saved.`)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 
 	user.ClearPrompt()
 

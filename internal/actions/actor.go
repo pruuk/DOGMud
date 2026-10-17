@@ -24,6 +24,11 @@ type Actor interface {
 	// for mobs). Routes through the centralized messaging pipeline.
 	SendText(cat messaging.Category, msg string)
 
+	// SendBlankLine delivers one empty line to this actor only (no-op for
+	// mobs). An empty SendText delivers nothing; see
+	// UserRecord.SendBlankLine for the screen categories it accepts.
+	SendBlankLine(cat messaging.Category)
+
 	// GetName returns the display name of the actor.
 	GetName() string
 

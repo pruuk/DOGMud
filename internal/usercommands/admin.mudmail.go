@@ -129,8 +129,8 @@ func Mudmail(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		u.Command(`inbox check`)
 	}
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, `<ansi fg="alert-5">Message SENT!</ansi>`)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	return true, nil
 }

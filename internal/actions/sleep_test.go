@@ -40,6 +40,10 @@ func (a *sleepFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
 }
 
+func (a *sleepFakeActor) SendBlankLine(_ messaging.Category) {
+	a.sent = append(a.sent, "")
+}
+
 // newSleepActor builds a minimal actor for sleep tests.
 // inCombat=true sets Aggro on the character to simulate combat.
 func newSleepActor(t *testing.T, inCombat bool, isPlayer bool) *sleepFakeActor {

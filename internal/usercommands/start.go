@@ -37,7 +37,7 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			user.Character.SpeciesId = humanSpecies.Id()
 			user.Character.Validate()
 
-			user.SendText(messaging.CategorySystem, ``)
+			user.SendBlankLine(messaging.CategorySystem)
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="magenta">*** Your form takes shape on the world of Gaius ***</ansi>%s`, term.CRLFStr))
 		}
 	}

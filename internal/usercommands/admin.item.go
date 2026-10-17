@@ -106,11 +106,11 @@ func item_List(rest string, user *users.UserRecord, _ *rooms.Room, _ events.Even
 	numWidth := len(strconv.Itoa(len(itmNames)))
 	colWidth := 1 + numWidth + 2 + longestName + 1
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	sw := user.ClientSettings().Display.GetScreenWidth()
 	strOut := templates.DynamicList(itmNames, colWidth, sw, numWidth, longestName)
 	user.SendText(messaging.CategoryAdmin, strOut)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 
 	return true, nil
 }
@@ -158,7 +158,7 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 	cmdPrompt, isNew := user.StartPrompt(`item create`, rest)
 
 	if isNew {
-		user.SendText(messaging.CategoryAdmin, ``)
+		user.SendBlankLine(messaging.CategoryAdmin)
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`Lets get a little info first.%s`, term.CRLFStr))
 	}
 
@@ -507,11 +507,11 @@ func item_Create(rest string, user *users.UserRecord, room *rooms.Room, flags ev
 
 	itemInst := items.GetItemSpec(newItemId)
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, `  <ansi bg="red" fg="white-bold">ITEM CREATED</ansi>`)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, `  <ansi fg="yellow-bold">File Path:</ansi>   <ansi fg="white-bold">`+itemInst.Filepath()+`</ansi>`)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, `  <ansi fg="black-bold">note: Try <ansi fg="command">item spawn `+newItemSpec.Name+`</ansi> to test it.`)
 
 	return true, nil

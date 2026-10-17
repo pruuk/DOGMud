@@ -75,6 +75,10 @@ func (a *salvageFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
 }
 
+func (a *salvageFakeActor) SendBlankLine(_ messaging.Category) {
+	a.sent = append(a.sent, "")
+}
+
 // newSalvageTestRoom builds a minimal Room with the specified RoomId.
 func newSalvageTestRoom(t *testing.T, roomId int) *rooms.Room {
 	t.Helper()

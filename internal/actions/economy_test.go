@@ -50,6 +50,7 @@ func newStubActor(char *characters.Character, room *rooms.Room) *stubActor {
 func (a *stubActor) GetCharacter() *characters.Character     { return a.char }
 func (a *stubActor) GetRoom() *rooms.Room                    { return a.room }
 func (a *stubActor) SendText(_ messaging.Category, _ string) {}
+func (a *stubActor) SendBlankLine(_ messaging.Category)      {}
 func (a *stubActor) GetName() string                         { return "TestActor" }
 func (a *stubActor) IsPlayer() bool                          { return false }
 func (a *stubActor) GetUserId() int                          { return 0 }

@@ -30,7 +30,7 @@ func SetHome(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(
 			`<ansi fg="yellow-bold">Current home:</ansi> %s`,
 			currentName))
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">Available locations:</ansi>`)
 		for key, name := range characters.HomeLocationNames {
 			marker := ""

@@ -665,6 +665,10 @@ flags). Everything else — `rooms`, `users`, `mobs`, `combat`,
 5. If it is narration that should fold at the reader's width, add it to
    `shouldWrap` in `pipeline.go` AND to `wrapAllowlist` in
    `pipeline_test.go`, and bump that test's admitted count.
+6. If it is a laid-out screen that spaces itself with blank lines, add it
+   to `BlankLineAllowed` in `messaging.go`, to the table in
+   `blank_line_test.go`, and to `blankLineCategoryNames` in the root
+   `blank_line_guard_test.go`. Otherwise `SendBlankLine` refuses it.
 
 ## See Also
 
@@ -681,7 +685,7 @@ The package is the pipeline, one stage per file, plus the fan-out (`trio.go`):
 
 | File | Stage |
 |------|-------|
-| `messaging.go` | Entry points and the `Category` vocabulary |
+| `messaging.go` | Entry points and the `Category` vocabulary; `BlankLineAllowed`, the screen categories a deliberate blank line (`UserRecord.SendBlankLine`, #610) may ride |
 | `pipeline.go` | Stage ordering: compose, normalize, sight gate, anonymize, color, wrap, deliver |
 | `normalize.go` | Grammar and article normalisation |
 | `anonymize.go` | Replacing names the observer should not see (infrared fallback, whole-line) |

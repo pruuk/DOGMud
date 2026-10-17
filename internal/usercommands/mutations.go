@@ -20,9 +20,9 @@ func Mutations(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		return true, nil
 	}
 
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 	user.SendText(messaging.CategorySystem, `<ansi fg="magenta"> .:. <ansi fg="yellow">Your Mutations</ansi> .:.</ansi>`)
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	// CategorySystem is never wrapped by the pipeline, so each prose line
 	// wraps itself to the reader's width, continuation lines keeping the
@@ -56,6 +56,6 @@ func Mutations(rest string, user *users.UserRecord, room *rooms.Room, flags even
 		}
 	}
 
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 	return true, nil
 }
