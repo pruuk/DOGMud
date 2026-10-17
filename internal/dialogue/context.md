@@ -55,8 +55,13 @@ type DialogueFile struct {
 `Pattern`, `TreeNode`, and `QuestGreeting` each carry the **same gating
 fields**: `QuestRequired`, `QuestExcluded`, `GrantsQuest`, `RequiresItem`,
 `GivesItem`, `QuestFlagRequired`, `QuestFlagExcluded`, `SetsQuestFlag`,
-`BumpsRep`, `GivesGold`, `ChargesGold`, `MasterworkRequired`, `GoldRequired`. Two shared
-helpers do the work for all three:
+`BumpsRep`, `GivesGold`, `ChargesGold`, `MasterworkRequired`, `GoldRequired`,
+`ItemExcluded`. Two shared helpers do the work for all three, plus
+`itemExcludedBlocks` for `itemExcluded` (YAML `itemExcluded: <itemId>`): the
+entry is hidden while the player carries the item anywhere
+(`PlayerState.CarriesItem`, falling back to `HasItem`). It keeps a quest
+giver's handout to one item while the quest is open; put the refusal in a
+later entry with the same triggers and no gate (2026-10-17).
 
 ```go
 func checkQuestGate(questRequired, questExcluded []string, requiresItem int,
