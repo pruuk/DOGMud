@@ -9,7 +9,7 @@ package quests
 
 // TriggerDef defines when and how a quest step fires.
 type TriggerDef struct {
-	Event      string      `yaml:"event" json:"event"`                                 // room_enter, item_give, skill_use, mob_death, command, command_issued, item_gain, dialogue, quest_granted, room_interact
+	Event      string      `yaml:"event" json:"event"`                                 // room_enter, room_gate, item_give, skill_use, mob_death, command, command_issued, item_gain, dialogue, quest_granted, room_interact
 	Room       int         `yaml:"room,omitempty" json:"room,omitempty"`               // room ID filter
 	Mob        int         `yaml:"mob,omitempty" json:"mob,omitempty"`                 // mob ID filter
 	Item       int         `yaml:"item,omitempty" json:"item,omitempty"`               // item ID filter

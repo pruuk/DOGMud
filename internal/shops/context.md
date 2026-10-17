@@ -111,6 +111,11 @@ change (forager deliveries, NPC sells, player purchases) lives in
   player rounds UP to the next gold (owner ruling 2026-09-30): this, and in
   `internal/actions` the affixed, bauble and fence prices. The flat price
   truncated until then, so a 3-gold item at 0.5 paid 1 instead of 2.
+  A refusal carries `BuyOffer.Refused` (a `BuyRefusal`): `BuyRefusedNoTrade`
+  (no spec, a quest item, or no `vendor_categories`, so no shop buys it),
+  `BuyRefusedSpoiled`, `BuyRefusedWrongShop` (craft_support takes none of its
+  tags), `BuyRefusedOverstock`, `BuyRefusedReserve`. `actions.QuoteSale`
+  turns it into the merchant's spoken reason.
 - **`ApplyBarterSellDiscount(price int, discount float64) int`**: Applies a
   caller-supplied fractional discount to a sell price (buyer side).
 - **`ApplyBarterBuyBonus(price int, bonus float64) int`**: Applies a

@@ -137,6 +137,7 @@ type questDetail struct {
 
 var questEventVocab = []vocabEntry{
 	{"room_enter", "player walks into a room (filter: room)"},
+	{"room_gate", "player tries to walk into a room; a match REFUSES the step before the move, the actions narrate why (filter: room; in_room is the side the player stands on)"},
 	{"item_give", "player gives an item to a mob — fires AFTER the transfer (filters: mob, item)"},
 	{"skill_use", "player uses a skill (filter: skill)"},
 	{"mob_death", "a mob dies with the player involved (filters: mob, room)"},

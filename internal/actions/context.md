@@ -93,6 +93,8 @@ command was a separate copy with no toxicity, no aging or crafter scaling and
 no special potions. `usercommands.Drink` and `mobcommands.Drink` are now thin
 wrappers, and the repo-root `drink_wrapper_guard_test.go`
 (`TestDrinkWrappersDoNotReFork`) fails if either grows drink rules again.
+A bare `drink` (nothing named) gets the prompt "Drink what? Try **drink
+&lt;item&gt;**." and `DrinkRefuseNotFound`, before any other check.
 
 - **`DrinkActor`** is `Actor` plus `AddConditionScaled` and
   `AddConditionMagnitude`. It is its own interface, not two new `Actor`
@@ -1595,6 +1597,24 @@ type SellResult struct {
 speech lines synchronously (not via the mob's async command queue — see
 `merchantSay` in `sell.go`). Mob sellers receive no feedback text.
 
+**One quote (`sell_quote.go`, 2026-10-17).** `QuoteSale(char, room, mob,
+shopInv, item, playerSale) SaleQuote` is the one price a merchant puts on an
+item: `sellOneToMerchant` pays it, and the `offer` and `appraise` commands
+say it, so offer never quotes what sell refuses (offer used to price through
+`mobs.GetSellPrice` while sell asked `shops.EvaluateBuyRules`). It covers
+quest items (`Tell`, a seller-only line), baubles (`baubleOfferFor` plus the
+purse check), non-affixed custom specs, affixed loot, the living-economy
+shop (`EvaluateBuyRules`, then the barter bonus; a nil `char` skips the
+bonus) and the legacy `GetSellPrice`, then for a player the merchant's
+purse. A refusal's `Say` says why in player words: `shops.BuyOffer.Refused`
+maps to "That has no value to a trader. No shop will buy it." (no
+`vendor_categories`), "I don't deal in that sort of thing. Another trader
+might buy it." (wrong `craft_support`), the overstock, spoiled-potion and
+can't-afford lines (`buyRefusalLine`). `Broke` marks the gold refusals,
+which stop a sale as `SellStopMerchantBroke`. `SaleMerchant(room, item,
+playerSale)` is `resolveMerchant` falling back to `firstMerchantInRoom`: the
+merchant sell deals with, which offer also answers for.
+
 **Progression:** Triggers `seller.OnSkillUse("bartering")` and
 `mob.Character.OnStatUse("charisma")` on each successful sale.
 
@@ -1636,8 +1656,9 @@ above. `sellOneToMerchant` hands it to `sellBaubleToMerchant`, and
   in the same heat area, the zone or its `BaubleHeatAreas` group; read
   through the `baubleNowForSale` clock; a shop that buys no trinkets says so
   first) and buys it anywhere else, or once cooled, at the honest price.
-  `baubleOfferFor(item, shopInv, fence, zone)`: the sale room's zone, or
-  `merchantZone(mob)` for `offer`/`appraise`; `resolveMerchant(room, probe,
+  `baubleOfferFor(item, shopInv, fence, zone)`: the sale room's zone (the
+  room `QuoteSale` is given, for sell, offer and appraise alike), or
+  `merchantZone(mob)` for `BaubleOfferFrom`; `resolveMerchant(room, probe,
   playerSale)` sends a bauble to the best offer in the room that the
   merchant can pay (`bestBaubleMerchant`; a merchant's gold constrains only
   a player's sale), and `sellNamed` picks the buyer again for each bauble.
@@ -1656,8 +1677,9 @@ above. `sellOneToMerchant` hands it to `sellBaubleToMerchant`, and
   bauble in the buyer's own view (`NameFor`, `DisplayNameFor` on the
   buyer's line), trims the listed cap lazily, rolls back with
   `RestoreAffixedStock`, and calls `baubles.MarkBought` on a buyback.
-- `BaubleOfferFrom(item, mob)` is the same offer for the `offer` and
-  `appraise` commands. `mobs.GetSellPrice` returns 0 for any bauble.
+- `BaubleOfferFrom(item, mob)` is the same offer for one merchant, without
+  the purse check; `offer` and `appraise` say `QuoteSale` instead, which
+  adds it. `mobs.GetSellPrice` returns 0 for any bauble.
 - `sellNamed` names each sale by the item actually sold (not the probe), and
   sets `SellResult.Mixed` when they differ, so `sell all bauble` reports
   "3 items" rather than pluralising one bauble's name.
@@ -2020,7 +2042,7 @@ the rest are ordinary verbs.
 | Mutation actives | `mutation_cocoon.go`, `mutation_venom_coat.go` |
 | Room roster | `roster.go` (`RenderRoster`: the "Also here:" line from `descriptions/who`, wrapped to the reader's width because neither of its categories is pipeline-wrapped; `look` and a search's find both send it; `RenderGround` does the same for the "On the Ground:" list from `descriptions/ontheground`, and a guard test keeps every ground send on it) |
 | Stealth / perception | `sneak.go`, `shadow.go`, `search.go`, `search_bauble.go` (roll and delayed delivery), `search_feature.go` (`search <feature>`), `scan.go`, `track.go`, `steal.go`, `steal_pocket.go` (a player's pickpocket pause and bauble) |
-| Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
+| Items & economy | `get.go` (`GetItemFromFloor` refuses a household's bauble (`BaubleBelongsTo`) with `ErrHouseholdBauble`, the item found and nothing moved, for every taker: a player's `get`, a mob's, a companion's, a scavenger's (owner ruling 2026-09-29); its gates sit in one early-return block), `drop.go`, `give.go`, `transfer.go`, `buy.go`, `sell.go`, `sell_quote.go` (`QuoteSale`, `SaleMerchant`: the one quote sell, offer and appraise share), `sell_bauble.go`, `stolen_bauble.go` (heat, recognition, returns), `remove_equip.go`, `shop_sight.go`, `drink.go` |
 | Trades | `craft.go`, `salvage.go`, `forage.go`, `plant.go`, `defuse.go` |
 | Movement & state | `go.go`, `sleep.go`, `consider.go`, `map_visit.go` (`MarkRoomMappedIfSeen`: puts a room on the fog-of-war map by its template id only when the character makes anything out there; a room walked in the dark stays off until seen, #252 ruling R5; `usercommands.Go` and gmcp's `SightBandChanged` handler call it) |
 | Social | `say.go`, `emote.go`, `emote_aliases.go` |

@@ -11,7 +11,22 @@ import (
 type BuyOffer struct {
 	Price  int
 	Reason string // "craft_material", "potion", "general", ""
+	// Refused says why the NPC will not buy, when Price is 0. The caller
+	// turns it into the merchant's spoken line (actions.QuoteSale).
+	Refused BuyRefusal
 }
+
+// BuyRefusal is why EvaluateBuyRules turned an item down.
+type BuyRefusal int
+
+const (
+	BuyRefusedNone      BuyRefusal = iota // the NPC buys it (Price > 0)
+	BuyRefusedNoTrade                     // no trader buys it: no spec, a quest item, or no vendor_categories
+	BuyRefusedSpoiled                     // a potion past its prime
+	BuyRefusedWrongShop                   // this shop's craft_support takes none of its tags
+	BuyRefusedOverstock                   // the shop holds all it wants of it
+	BuyRefusedReserve                     // paying would drop the shop below its gold reserve
+)
 
 // EvaluateBuyRules returns what an NPC will pay for an item offered by
 // a player. Single-rule tag-overlap with overstock and gold-reserve gates.
@@ -41,24 +56,24 @@ func EvaluateBuyRules(
 ) BuyOffer {
 	spec := item.GetSpec()
 	if spec.ItemId < 1 || spec.QuestToken != "" {
-		return BuyOffer{}
+		return BuyOffer{Refused: BuyRefusedNoTrade}
 	}
 
 	if spec.Type == items.Potion && isPotionDeclining(item, &spec) {
-		return BuyOffer{}
+		return BuyOffer{Refused: BuyRefusedSpoiled}
 	}
 
 	if len(spec.VendorCategories) == 0 {
-		return BuyOffer{}
+		return BuyOffer{Refused: BuyRefusedNoTrade}
 	}
 	if !vendorAcceptsAny(shopInv.CraftSupport, spec.VendorCategories) {
-		return BuyOffer{}
+		return BuyOffer{Refused: BuyRefusedWrongShop}
 	}
 
 	// Overstock cap.
 	if entry := shopInv.GetStock(spec.ItemId); entry != nil &&
 		entry.MaxStock > 0 && entry.Current >= entry.MaxStock {
-		return BuyOffer{}
+		return BuyOffer{Refused: BuyRefusedOverstock}
 	}
 
 	// Compute price. Two paths:
@@ -93,7 +108,7 @@ func EvaluateBuyRules(
 	}
 	reserve := shopInv.GoldReserve(reserveRatio)
 	if !shopInv.CanAfford(price, reserve) {
-		return BuyOffer{}
+		return BuyOffer{Refused: BuyRefusedReserve}
 	}
 
 	return BuyOffer{Price: price, Reason: pickReason(&spec)}

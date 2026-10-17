@@ -3,11 +3,11 @@ zone: Thornwall City
 title: Tavern Cellar
 description: >
   A low-ceilinged cellar beneath the Drowning Post's kitchen, smelling of
-  damp stone and stale beer. Barrels and crates line the walls, some covered
-  in dust, others showing recent use. The floor is flagstone, cracked and
-  uneven, with dark water pooled in the low spots. Against the far wall, an
-  iron grate has been pulled aside, revealing a rough-hewn opening that
-  descends into darkness. Scratch marks on the stone around the grate show
+  damp stone and stale beer. Old barrels line the walls under a coat of
+  dust, but the crates stacked beside them show recent use. The floor is
+  flagstone, cracked and uneven, with dark water pooled in the low spots.
+  Against the far wall, an iron grate has been pulled aside, revealing a
+  rough-hewn opening that descends into darkness. Scratch marks on the stone around the grate show
   it has been moved recently, and often.
 biome: cave
 coord:

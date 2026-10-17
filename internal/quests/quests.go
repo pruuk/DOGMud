@@ -107,7 +107,7 @@ func (r *Quest) Validate() error {
 	}
 
 	validEvents := map[string]bool{
-		"room_enter": true, "item_give": true, "skill_use": true,
+		"room_enter": true, "room_gate": true, "item_give": true, "skill_use": true,
 		"mob_death": true, "command": true, "item_gain": true,
 		"dialogue": true, "quest_granted": true, "room_interact": true,
 		"command_issued": true,
