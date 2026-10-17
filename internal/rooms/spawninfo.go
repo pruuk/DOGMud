@@ -23,6 +23,11 @@ type SpawnInfo struct {
 	ConditionIds []int    `yaml:"conditionids,omitempty,flow" json:"conditionIds,omitempty"` // (optional) list of conditions the mob always has active
 	StatPool     int      `yaml:"statpool,omitempty" json:"statPool,omitempty"`              // (optional) force this mob to a specific stat pool
 	StatPoolMod  int      `yaml:"statpoolmod,omitempty" json:"statPoolMod,omitempty"`        // (optional) modify this mob's stat pool by this amount
+	// InstanceTier is the authored stat-pool multiplier (1 regular, 2 tough,
+	// 4 boss) kept by ScaleSpawnStatPools when it replaces StatPool with the
+	// scaled pool, so spawn time can still pick the mob's gold rate. Runtime
+	// only: 0 on every spawn that was never scaled.
+	InstanceTier int `yaml:"-" json:"-"`
 	// spawn tracking and rate
 	DespawnedRound uint64 `yaml:"-" json:"despawnedRound,omitempty"`                  // When this mob was last despawned (killed)
 	RespawnRate    string `yaml:"respawnrate,omitempty" json:"respawnRate,omitempty"` // How long until it respawns when not present?

@@ -1157,6 +1157,11 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 
 				// Instance loot: generate and equip affixed items from loot pool
 				if goldPaid, ok := r.GetTempData("gold_paid").(int); ok && goldPaid > 0 {
+					// Paid-instance gold replaces the template's (and any
+					// gold a stale mob instance save restored), scaled by
+					// the entry and the spawn's tier.
+					mob.Character.Gold = InstanceMobGold(goldPaid, spawnInfo.InstanceTier)
+
 					if len(mob.LootPool) > 0 {
 						scalar := float64(configs.GetBalanceConfig().LootBudgetScalar)
 						goldPerPoint := float64(configs.GetBalanceConfig().GoldPerAffixPoint)

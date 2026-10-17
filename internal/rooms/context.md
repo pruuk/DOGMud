@@ -433,6 +433,8 @@ question).
 - **Spawn configuration**: Mob templates, items, gold, and containers
 - **Respawn mechanics**: Time-based respawning with configurable rates
 - **Spawn customization**: Level modifications, hostility, scripting overrides
+- **InstanceTier** (`yaml:"-" json:"-"`): the authored stat-pool multiplier
+  kept by `ScaleSpawnStatPools`; picks a paid-instance mob's gold rate
 - **Quest integration**: Quest flags and condition assignments for spawned entities
 
 ### Container System (`container.go`)
@@ -463,18 +465,34 @@ func CreateZoneInstanceWithOpts(
     authorizedUsers []int,
     overworldRoomId int,
     opts          ZoneInstanceOpts,
-) (int, bool)
+) (*ZoneInstance, error)
 ```
 
-- Returns the ephemeral entry room ID and `true` on success.
+- Returns the registered `*ZoneInstance` (its `EntryRoomId` is the
+  ephemeral entry room) or an error.
 - `ZoneInstanceOpts{SuppressReturnPortal bool}` — when `true`, the
   auto-added "return portal" exit is **not** created. Use this for
   confinement instances (e.g. instanced jail cells) where the occupant
   must not be able to walk out; lifetime is controlled by explicit
   teardown rather than portal expiry.
-- `CreateZoneInstance(zoneName, goldPaid, ownerUserId, overworldRoomId)`
+- `CreateZoneInstance(zoneName, goldPaid, ownerUserId, authorizedUsers, overworldRoomId)`
   passes a zero-value `ZoneInstanceOpts` (i.e. portal created as before),
   so all existing callers are unaffected.
+
+**Gold-paid scaling (`ScaleSpawnStatPools`, `InstanceMobGold`):**
+Every ephemeral room of an instance (cloned zones and the Planar Oasis cube
+from `GenerateOasisCube` alike) goes through `ScaleSpawnStatPools`, which
+REPLACES each spawn's `StatPool` (authored as a tier multiplier: 1 regular,
+2 tough, 4 boss) with `goldPaid * mult`, capped at `InstanceStatPoolCap`, and
+keeps the multiplier on the runtime-only `SpawnInfo.InstanceTier`. Each room
+is then stamped with `gold_paid` temp data. At spawn, `Room.Prepare` sees
+`gold_paid > 0` and sets the mob's gold to `InstanceMobGold(goldPaid,
+InstanceTier)`, replacing template gold and any gold a mob instance save
+restored: `InstanceGoldPer100Regular/Tough/Boss` gold per 100 paid (tier 1 or
+less, 2-3, 4+), with the entry clamped to `InstanceStatPoolCap / tier`,
+rolled within `+-InstanceGoldVariancePct` via `util.Rand` (so
+`util.SetRandForTest` replays it), never below 1 when the base is at least 1.
+Rooms without `gold_paid` keep template gold.
 
 **Confinement zones and `CheckPortalTimers`:**
 A zone whose YAML sets `portal_duration: none` is **skipped** by

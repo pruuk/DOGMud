@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"fmt"
+	"math"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -260,8 +261,10 @@ func GetInstanceRegistry() *InstanceRegistry {
 }
 
 // ScaleSpawnStatPools multiplies each spawn's StatPool by goldPaid.
-// Template stat pools act as multipliers (1=trash, 2=tough, 3=boss).
+// Template stat pools act as multipliers (1=trash, 2=tough, 4=boss).
 // Spawns with StatPool 0 default to 1x. Cap of 0 means uncapped.
+// The multiplier is kept on InstanceTier, because StatPool no longer holds
+// it afterwards and InstanceMobGold needs it at spawn time.
 func ScaleSpawnStatPools(spawns []SpawnInfo, goldPaid int, cap int) {
 	for i := range spawns {
 		mult := spawns[i].StatPool
@@ -273,7 +276,52 @@ func ScaleSpawnStatPools(spawns []SpawnInfo, goldPaid int, cap int) {
 			scaled = cap
 		}
 		spawns[i].StatPool = scaled
+		spawns[i].InstanceTier = mult
 	}
+}
+
+// InstanceMobGold returns the gold a mob carries in a paid instance (owner
+// ruling 2026-10-17): InstanceGoldPer100Regular, Tough or Boss gold per 100
+// gold of entry, picked by tier (the authored stat-pool multiplier: 1 or less
+// regular, 2-3 tough, 4 or more boss), rolled uniformly within
+// +-InstanceGoldVariancePct and rounded to whole gold. A base of at least 1
+// never rolls below 1. When InstanceStatPoolCap clamps the mob's pool the
+// entry is clamped with it (cap/tier), so gold stops rising where the mob
+// stops growing. The roll draws from util.Rand, so SetRandForTest replays it.
+func InstanceMobGold(goldPaid int, tier int) int {
+	if goldPaid <= 0 {
+		return 0
+	}
+	if tier < 1 {
+		tier = 1
+	}
+	b := configs.GetBalanceConfig()
+
+	rate := float64(b.InstanceGoldPer100Regular)
+	switch {
+	case tier >= 4:
+		rate = float64(b.InstanceGoldPer100Boss)
+	case tier >= 2:
+		rate = float64(b.InstanceGoldPer100Tough)
+	}
+
+	paid := float64(goldPaid)
+	if cap := int(b.InstanceStatPoolCap); cap > 0 {
+		paid = math.Min(paid, float64(cap)/float64(tier))
+	}
+	base := paid * rate / 100
+
+	spread := base * float64(b.InstanceGoldVariancePct) / 100
+	const steps = 10000
+	frac := float64(util.Rand(steps+1)) / steps // uniform in [0, 1]
+	gold := int(math.Round(base - spread + 2*spread*frac))
+	if base >= 1 && gold < 1 {
+		gold = 1
+	}
+	if gold < 0 {
+		gold = 0
+	}
+	return gold
 }
 
 // ZoneInstanceOpts holds optional behavioral overrides for CreateZoneInstanceWithOpts.
