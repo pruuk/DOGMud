@@ -6,7 +6,7 @@ description: A slender humanoid figure of translucent crystal and
   her crystalline limbs strike with the brittle, splintering force
   of a glacier calving.
 size: medium
-unarmedname: crystal strike
+unarmedname: crystalline fists
 natural_attack: blast
 selectable: false
 tameable: false

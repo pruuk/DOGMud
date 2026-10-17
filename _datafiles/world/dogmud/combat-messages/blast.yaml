@@ -39,7 +39,7 @@ options:
         observer: '<ansi fg="{actortype}">{actor}</ansi> surges, eager to crash into <ansi fg="{acteetype}">{actee}</ansi>.'
       expert:
       - actor: 'In a {stance} stance, you aim your <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>.'
-        actee: 'In a {stance} stance, <ansi fg="{actortype}">{actor}</ansi> aims their <ansi fg="item">{itemname}</ansi> at you.'
+        actee: 'In a {stance} stance, <ansi fg="{actortype}">{actor}</ansi> aims <ansi fg="item">{itemname}</ansi> at you.'
         observer: '<ansi fg="{actortype}">{actor}</ansi> aims their <ansi fg="item">{itemname}</ansi> at <ansi fg="{acteetype}">{actee}</ansi>.'
       - actor: 'While {position}, you gauge the distance to <ansi fg="{acteetype}">{actee}</ansi>.'
         actee: '<ansi fg="{actortype}">{actor}</ansi> gauges the distance to you while {position}.'
