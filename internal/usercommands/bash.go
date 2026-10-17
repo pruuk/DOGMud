@@ -51,10 +51,10 @@ func Bash(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategoryRefusal, "You need a shield equipped to perform a shield bash!")
 		return true, nil
 	case bashResult.OnCooldown:
-		refusal.Cooldown(user, "bash")
+		refusal.CooldownAfterCost(user, "bash", bashResult.Cost)
 		return true, nil
 	case bashResult.NoTarget:
-		refusal.NoTarget(user, "bash")
+		refusal.NoTargetAfterCost(user, "bash", bashResult.Cost)
 		return true, nil
 	}
 

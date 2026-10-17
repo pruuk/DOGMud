@@ -34,7 +34,7 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if result.OnCooldown {
-		refusal.Cooldown(user, "warcry")
+		refusal.CooldownAfterCost(user, "warcry", result.Cost)
 		return true, nil
 	}
 	if !result.Executed {

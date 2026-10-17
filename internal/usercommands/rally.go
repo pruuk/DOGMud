@@ -32,7 +32,7 @@ func Rally(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 	if result.OnCooldown {
-		refusal.Cooldown(user, "rally")
+		refusal.CooldownAfterCost(user, "rally", result.Cost)
 		return true, nil
 	}
 	if !result.Executed {

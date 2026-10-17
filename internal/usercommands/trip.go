@@ -46,12 +46,12 @@ func Trip(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if res.OnCooldown {
-		refusal.Cooldown(user, "trip")
+		refusal.CooldownAfterCost(user, "trip", res.Cost)
 		return true, nil
 	}
 
 	if res.NoTarget {
-		refusal.NoTarget(user, "trip")
+		refusal.NoTargetAfterCost(user, "trip", res.Cost)
 		return true, nil
 	}
 	if res.TargetOnFloor {

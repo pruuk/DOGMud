@@ -41,11 +41,11 @@ func Kick(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	if res.OnCooldown {
-		refusal.Cooldown(user, "kick")
+		refusal.CooldownAfterCost(user, "kick", res.Cost)
 		return true, nil
 	}
 	if res.NoTarget {
-		refusal.NoTarget(user, "kick")
+		refusal.NoTargetAfterCost(user, "kick", res.Cost)
 		return true, nil
 	}
 

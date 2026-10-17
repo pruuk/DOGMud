@@ -39,11 +39,11 @@ func Rake(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if res.OnCooldown {
-		refusal.Cooldown(user, "rake")
+		refusal.CooldownAfterCost(user, "rake", res.Cost)
 		return true, nil
 	}
 	if res.NoTarget {
-		refusal.NoTarget(user, "rake")
+		refusal.NoTargetAfterCost(user, "rake", res.Cost)
 		return true, nil
 	}
 

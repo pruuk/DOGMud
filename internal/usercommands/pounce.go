@@ -46,11 +46,11 @@ func Pounce(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		return true, nil
 	}
 	if res.OnCooldown {
-		refusal.Cooldown(user, "pounce")
+		refusal.CooldownAfterCost(user, "pounce", res.Cost)
 		return true, nil
 	}
 	if res.NoTarget {
-		refusal.NoTarget(user, "pounce")
+		refusal.NoTargetAfterCost(user, "pounce", res.Cost)
 		return true, nil
 	}
 
