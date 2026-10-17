@@ -7,6 +7,7 @@ surrender_policy: never
 routine: arena_gauntlet
 statpool: 4
 hostile: true
+pack_flee_immune: true # pit fighters are rivals, not a pack
 groups:
   - humanoid
 activitylevel: 20
