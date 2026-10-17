@@ -1159,8 +1159,12 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 				if goldPaid, ok := r.GetTempData("gold_paid").(int); ok && goldPaid > 0 {
 					// Paid-instance gold replaces the template's (and any
 					// gold a stale mob instance save restored), scaled by
-					// the entry and the spawn's tier.
-					mob.Character.Gold = InstanceMobGold(goldPaid, spawnInfo.InstanceTier)
+					// the entry and the spawn's tier, in zones that opt in
+					// (zone-config instance_gold, stamped at instance
+					// creation). Other zones keep template gold.
+					if optIn, _ := r.GetTempData("instance_gold").(bool); optIn {
+						mob.Character.Gold = InstanceMobGold(goldPaid, spawnInfo.InstanceTier)
+					}
 
 					if len(mob.LootPool) > 0 {
 						scalar := float64(configs.GetBalanceConfig().LootBudgetScalar)

@@ -473,6 +473,8 @@ func CreateZoneInstanceWithOpts(
 		room.SetTempData("allow_recall", inst.AllowRecall)
 		room.SetTempData("death_policy", inst.DeathPolicy)
 		room.SetTempData("gold_paid", inst.GoldPaid)
+		// Instance gold is opt-in per zone (zone-config instance_gold).
+		room.SetTempData("instance_gold", zCfg.InstanceGold)
 	}
 
 	// 7. Register the instance in the global registry.

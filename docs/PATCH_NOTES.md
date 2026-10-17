@@ -10,8 +10,8 @@
 - Earth elementals and automatons still slam, with new lines about heavy
   fists and the weight behind them.
 - Smoke elementals now rake with claws made of smoke.
-- Foes in the Arena, the Planar Oasis and the Crash Site now carry gold in
-  step with what you paid to enter. Tougher foes carry more, bosses carry
+- Foes in the Arena and the Planar Oasis now carry gold in step with what
+  you paid to enter. Tougher foes carry more, bosses carry
   the most, and each one's purse varies a little.
 
 ## 2026-10-16: Talking items, and quieter housekeeping

@@ -47,6 +47,7 @@ func spawnGold(t *testing.T, mult, goldPaid, templateGold int, seed int64) int {
 	if goldPaid > 0 {
 		ScaleSpawnStatPools(room.SpawnInfo, goldPaid, int(configs.GetBalanceConfig().InstanceStatPoolCap))
 		room.SetTempData("gold_paid", goldPaid)
+		room.SetTempData("instance_gold", true) // an opted-in zone, as step 6 stamps it
 	}
 
 	restore := util.SetRandForTest(seed)
@@ -173,13 +174,15 @@ func TestInstanceMobGold_OasisCubeCarriesTier(t *testing.T) {
 	roomIds, _, err := GenerateOasisCube(5003, "Instance Planar Oasis", paid, 1, true, "rejoin")
 	require.NoError(t, err)
 
-	// Step 5 of CreateZoneInstanceWithOpts, verbatim in effect.
+	// Steps 5 and 6 of CreateZoneInstanceWithOpts, in effect: scale, then
+	// stamp the zone's opt-in (the shipped oasis zone-config opts in).
 	pickByMult := map[int]*Room{}
 	for _, rid := range roomIds {
 		r := LoadRoom(rid)
 		require.NotNil(t, r)
 		mult := r.SpawnInfo[0].StatPool
 		ScaleSpawnStatPools(r.SpawnInfo, paid, int(configs.GetBalanceConfig().InstanceStatPoolCap))
+		r.SetTempData("instance_gold", true)
 		if _, ok := pickByMult[mult]; !ok {
 			pickByMult[mult] = r
 		}

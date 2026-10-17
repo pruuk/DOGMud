@@ -4,3 +4,4 @@ death_policy: ejected
 portal_duration: "30 real minutes"
 entry_room: 5001
 allow_recall: false
+instance_gold: true
