@@ -238,7 +238,7 @@ func validatePurchase(
 
 	tradeInString := ""
 	if price > 0 {
-		tradeInString = fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, price)
+		tradeInString = fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(price))
 	}
 	if tradeItemName != "" {
 		if itm, found := char.FindInBackpack(tradeItemName); found {
@@ -731,7 +731,7 @@ func tryPurchaseFromInventory(buyer Actor, request string, shopMob *mobs.Mob, sh
 	}
 	shopSaved = true
 
-	tradeInString := fmt.Sprintf(`<ansi fg="gold">%d gold</ansi>`, matched.price)
+	tradeInString := fmt.Sprintf(`<ansi fg="gold">%s gold</ansi>`, util.FormatNumber(matched.price))
 	if matched.price == 0 {
 		tradeInString = "nothing"
 	}

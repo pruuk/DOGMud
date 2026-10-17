@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // merchantSay makes the merchant speak a line to the room synchronously. The
@@ -86,7 +87,7 @@ func Offer(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-	merchantSay(room, mob, fmt.Sprintf(`I can give you <ansi fg="gold">%d gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, quote.Price, item.DisplayName()))
+	merchantSay(room, mob, fmt.Sprintf(`I can give you <ansi fg="gold">%s gold</ansi> for that <ansi fg="itemname">%s</ansi>.`, util.FormatNumber(quote.Price), item.DisplayName()))
 
 	return true, nil
 }

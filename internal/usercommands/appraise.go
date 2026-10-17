@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/shops"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -86,7 +87,7 @@ func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 		if appraisePrice > user.Character.Gold {
 
-			mob.Command(fmt.Sprintf("say That costs %d gold to appraise, which you don't seem to have.", appraisePrice))
+			mob.Command(fmt.Sprintf("say That costs %s gold to appraise, which you don't seem to have.", util.FormatNumber(appraisePrice)))
 
 			return true, nil
 		}
@@ -99,7 +100,7 @@ func Appraise(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			GoldChange: appraisePrice,
 		})
 
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You give <ansi fg="mobname">%s</ansi> %d gold to appraise <ansi fg="itemname">%s</ansi>.`, mob.Character.Name, appraisePrice, itemSpec.Name))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You give <ansi fg="mobname">%s</ansi> %s gold to appraise <ansi fg="itemname">%s</ansi>.`, mob.Character.Name, util.FormatNumber(appraisePrice), itemSpec.Name))
 		room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="username">%s</ansi> appraises <ansi fg="itemname">%s</ansi>.`, user.Character.Name, itemSpec.Name), user.UserId)
 
 		inspectTxt, _ := templates.Process("descriptions/identify", details, user.UserId)
@@ -134,7 +135,7 @@ func appraiseBauble(item items.Item, user *users.UserRecord, room *rooms.Room, m
 		fmt.Fprintf(&b, "  Made of:  %s\r\n", material)
 	}
 	fmt.Fprintf(&b, "  Weight:   %.1f lb\r\n", spec.Weight)
-	fmt.Fprintf(&b, "  Worth:    <ansi fg=\"gold\">%d gold</ansi>\r\n", spec.Value)
+	fmt.Fprintf(&b, "  Worth:    <ansi fg=\"gold\">%s gold</ansi>\r\n", util.FormatNumber(spec.Value))
 	if rec.Region != `` {
 		fmt.Fprintf(&b, "  Found in: %s\r\n", rec.Region)
 	}
@@ -145,7 +146,7 @@ func appraiseBauble(item items.Item, user *users.UserRecord, room *rooms.Room, m
 	shopInv := shops.GetShopInventory(mob.Zone, int(mob.MobId), mob.HomeRoomId)
 	quote := actions.QuoteSale(user.Character, room, mob, shopInv, item, true)
 	if quote.Price > 0 {
-		merchantSay(room, mob, fmt.Sprintf(`I'd give you <ansi fg="gold">%d gold</ansi> for it.`, quote.Price))
+		merchantSay(room, mob, fmt.Sprintf(`I'd give you <ansi fg="gold">%s gold</ansi> for it.`, util.FormatNumber(quote.Price)))
 	} else {
 		merchantSay(room, mob, quote.Say)
 	}

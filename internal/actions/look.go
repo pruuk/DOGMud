@@ -34,13 +34,13 @@ type LookResolution struct {
 	// NamesCreatures is Sight == SightFull: only then is a creature or a pet
 	// named, so a shapes-only looker cannot confirm who is standing there.
 	NamesCreatures bool
-	Target         Actor  // LookCreature, LookFigure (never named to the looker for LookFigure)
+	Target         Actor // LookCreature, LookFigure (never named to the looker for LookFigure)
 	// TargetSight is what a player Target makes out of the room (LookFigure
 	// only), so the wrapper names the looker to them at their sight.
 	TargetSight messaging.SightDecision
-	LookAt         string // the target, after a direction alias resolved to an exit
-	ExitName       string // the LookExit kinds
-	ExitRoomId     int    // LookExit, LookExitShapes
+	LookAt      string // the target, after a direction alias resolved to an exit
+	ExitName    string // the LookExit kinds
+	ExitRoomId  int    // LookExit, LookExitShapes
 	// PetUserId is the owner of a pet the looker may name here (clear sight
 	// only), 0 otherwise. It is not a kind because the player resolves the
 	// pet AFTER carried items and room nouns; each wrapper reads it at its

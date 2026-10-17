@@ -23,6 +23,8 @@
   what the game actually does.
 - Room descriptions and idle lines written for noon now hold true at any
   hour.
+- Gold amounts show thousands separators, the weather command speaks in
+  words, and craft lists name the ingredients you need.
 
 ## 2026-10-16: Creatures fight the way their bodies do
 

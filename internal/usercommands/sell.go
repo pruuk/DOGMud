@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/refusal"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -97,19 +98,19 @@ func Sell(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	displayName := res.LastItemName
 	if res.Sold == 1 {
-		user.EventLog.Add(`shop`, fmt.Sprintf(`Sold your <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%d gold</ansi>`, displayName, res.TotalGold))
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell a <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%d gold</ansi>.`, displayName, res.TotalGold))
+		user.EventLog.Add(`shop`, fmt.Sprintf(`Sold your <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>`, displayName, util.FormatNumber(res.TotalGold)))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell a <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>.`, displayName, util.FormatNumber(res.TotalGold)))
 		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> sells a <ansi fg="itemname">%s</ansi>.`, user.Character.Name, displayName), user.UserId)
 	} else if res.Mixed {
 		// Different things (every bauble has its own name): count them
 		// rather than pluralising the last one.
-		user.EventLog.Add(`shop`, fmt.Sprintf(`Sold %d items for <ansi fg="gold">%d gold</ansi>`, res.Sold, res.TotalGold))
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell %d items for <ansi fg="gold">%d gold</ansi>.`, res.Sold, res.TotalGold))
+		user.EventLog.Add(`shop`, fmt.Sprintf(`Sold %d items for <ansi fg="gold">%s gold</ansi>`, res.Sold, util.FormatNumber(res.TotalGold)))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell %d items for <ansi fg="gold">%s gold</ansi>.`, res.Sold, util.FormatNumber(res.TotalGold)))
 		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> sells %d items.`, user.Character.Name, res.Sold), user.UserId)
 	} else {
 		pluralName := displayName + "s"
-		user.EventLog.Add(`shop`, fmt.Sprintf(`Sold %d <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%d gold</ansi>`, res.Sold, pluralName, res.TotalGold))
-		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell %d <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%d gold</ansi>.`, res.Sold, pluralName, res.TotalGold))
+		user.EventLog.Add(`shop`, fmt.Sprintf(`Sold %d <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>`, res.Sold, pluralName, util.FormatNumber(res.TotalGold)))
+		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You sell %d <ansi fg="itemname">%s</ansi> for <ansi fg="gold">%s gold</ansi>.`, res.Sold, pluralName, util.FormatNumber(res.TotalGold)))
 		room.SendTextVisual(messaging.CategoryLoot, fmt.Sprintf(`<ansi fg="username">%s</ansi> sells %d <ansi fg="itemname">%s</ansi>.`, user.Character.Name, res.Sold, pluralName), user.UserId)
 	}
 
