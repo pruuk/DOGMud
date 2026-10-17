@@ -38,14 +38,20 @@ func Warcry(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	if result.OnCooldown {
-		refusal.Cooldown(user, "warcry")
+		refusal.CooldownAfterCost(user, "warcry", result.Cost)
 		return true, nil
 	}
 	if !result.Executed {
 		return true, nil
 	}
 
-	user.SendText(messaging.CategoryWarcry, `<ansi fg="red-bold">You let out a thunderous warcry that ignites the fighting spirit of your allies!</ansi>`)
+	// The shout always lifts the shouter (ExecuteWarcry applied the record);
+	// it only names allies when one is here to hear it.
+	if shoutReachesAllies(user) {
+		user.SendText(messaging.CategoryWarcry, `<ansi fg="red-bold">You let out a thunderous warcry that ignites the fighting spirit of your allies!</ansi>`)
+	} else {
+		user.SendText(messaging.CategoryWarcry, `<ansi fg="red-bold">You let out a thunderous warcry that ignites your own fighting spirit!</ansi>`)
+	}
 	// Heard, not seen: the name follows each listener's sight (sight gates 5b).
 	actions.SendHeard(&actions.UserActor{User: user, Room: room}, messaging.CategoryWarcry,
 		fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi> lets out a thunderous warcry!</ansi>`, user.Character.Name),
@@ -123,6 +129,32 @@ func notifyWarcry(user *users.UserRecord, room *rooms.Room) {
 		RoomId:  room.RoomId,
 		Command: "warcry",
 	}, bridge, bridge)
+}
+
+// shoutReachesAllies reports whether a warcry or rally from user would reach
+// anyone but the shouter: a party member in the same room, or one of the
+// shouter's own companions there. It reads the same membership the fan-out
+// loops in Warcry and Rally apply to, so a shout's opening line names allies
+// exactly when the fan-out has someone to lift. (A party member's companions
+// are reached only through that member, who already counts.)
+func shoutReachesAllies(user *users.UserRecord) bool {
+	if party := parties.Get(user.UserId); party != nil {
+		for _, memberId := range party.GetMembers() {
+			if memberId == user.UserId {
+				continue
+			}
+			if memberUser := users.GetByUserId(memberId); memberUser != nil &&
+				memberUser.Character.RoomId == user.Character.RoomId {
+				return true
+			}
+		}
+	}
+	for _, mobInstId := range user.Character.GetCharmIds() {
+		if mob := mobs.GetInstance(mobInstId); mob != nil && mob.Character.RoomId == user.Character.RoomId {
+			return true
+		}
+	}
+	return false
 }
 
 func applyWarcryToCompanions(owner *users.UserRecord, room *rooms.Room, bonus float64, duration int) {

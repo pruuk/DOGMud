@@ -10,4 +10,6 @@ tick_min: 2
 start_actee: Ragged claw-wounds tear open across you, bleeding freely!
 start_observer: "{actee_plain} is raked open, blood welling from ragged claw-wounds."
 trigger_actee: Your torn wounds keep bleeding.
-end_actee: The bleeding finally slows and clots.
+end_actee: Your torn claw-wounds finally clot.
+flags:
+  - bleeding

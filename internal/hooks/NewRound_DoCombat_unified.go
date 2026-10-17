@@ -333,8 +333,14 @@ func applyCombatDamageBonuses(atk, def actions.Actor, res *combat.AttackResult) 
 	// struck defender. Route through the actor condition wrapper (not the raw
 	// Character.AddCondition) so the condition's start text fires and the GMCP
 	// conditions panel refreshes, for both player and mob defenders.
+	//
+	// The attacker rides the event as its caster, so a harmful start line can
+	// name who did it (owner ruling 2026-10-10: {actor} in the target and room
+	// start lines) and a damage-over-time tick credits the attacker. Evil
+	// Eye's Cursed used to land as "A cold, watching malice settles over you."
+	// with no source at all (2026-10-17 playtest).
 	for _, conditionId := range mutations.GetOnHitConditions(atkChar.Mutations) {
-		def.AddCondition(conditionId, "mutation")
+		queueOnHitCondition(def, atk, conditionId)
 	}
 
 	// Conviction Surge: +15% damage on hit when DamageBonus condition flag set.
@@ -1109,6 +1115,28 @@ func asMob(a actions.Actor) *mobs.Mob {
 		return m.Mob
 	}
 	panic("asMob called on non-mob Actor")
+}
+
+// queueOnHitCondition queues an on-hit mutation condition on the struck
+// defender with the attacker as its caster, through the same narrating event
+// door AddCondition uses (Condition_ApplyConditions tells the start lines and
+// refreshes GMCP). An Actor that is neither a player nor a mob (a test
+// double) falls back to AddCondition, which carries no caster.
+func queueOnHitCondition(def, atk actions.Actor, conditionId int) {
+	evt := events.Condition{ConditionId: conditionId, Source: "mutation", Caster: actions.ActorRefOf(atk)}
+	switch d := def.(type) {
+	case *actions.UserActor:
+		if d != nil && d.User != nil {
+			d.User.QueueCondition(evt)
+			return
+		}
+	case *actions.MobActor:
+		if d != nil && d.Mob != nil {
+			d.Mob.QueueCondition(evt)
+			return
+		}
+	}
+	def.AddCondition(conditionId, "mutation")
 }
 
 // asMobOrNil is the safe form of asMob — returns nil if the actor is not

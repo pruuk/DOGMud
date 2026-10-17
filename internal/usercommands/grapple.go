@@ -42,12 +42,12 @@ func Grapple(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	}
 
 	if res.OnCooldown {
-		refusal.Cooldown(user, "grapple")
+		refusal.CooldownAfterCost(user, "grapple", res.Cost)
 		return true, nil
 	}
 
 	if res.NoTarget {
-		refusal.NoTarget(user, "grapple")
+		refusal.NoTargetAfterCost(user, "grapple", res.Cost)
 		return true, nil
 	}
 	if res.TargetGrappling {

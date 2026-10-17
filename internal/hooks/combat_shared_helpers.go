@@ -324,6 +324,12 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 
 	// ── Dodge crit → auto-trip (ignores cooldown) ───────────────────────
 	if roundResult.DodgeCritDetected {
+		// Read BEFORE the move: a swinger already on the floor cannot be
+		// swept down (ExecuteSkillMove skips the knockdown for a body that is
+		// not Standing), so the lines below must not tell anyone that they
+		// "stay up" or "keep their footing" (2026-10-17 playtest).
+		alreadyDown := attacker.IsOnFloor()
+
 		// U6b Task 7: through the channel seam. IsCounter marks this as a
 		// move executed AS a counter — consumed by Task 10 (a counter must
 		// never trigger another counter); behaviour-neutral until then.
@@ -348,7 +354,21 @@ func applyCritEffects(attacker, defender *characters.Character, roundResult comb
 		result.AutoTrip = true
 		result.TripResult = tripResult
 
-		if tripResult.Hit {
+		if alreadyDown && (tripResult.Hit || tripResult.Damage > 0) {
+			dmgDesc := combat.GetDamageDescription(tripResult.Damage, tripResult.TargetMaxHP)
+			result.DefenderMsg = fmt.Sprintf(
+				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> You dodge and kick at them where they lie! (<ansi fg="damage">%s</ansi>)`, dmgDesc)
+			result.AttackerMsg = fmt.Sprintf(
+				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> %s dodges and kicks you where you lie! (<ansi fg="damage">%s</ansi>)`, defender.Name, dmgDesc)
+			result.RoomMsg = fmt.Sprintf(
+				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> %s dodges and kicks %s, who is already down!`, defender.Name, attacker.Name)
+		} else if alreadyDown {
+			result.DefenderMsg = `<ansi fg="cyan-bold">⚡ SWEEP!</ansi> You dodge and kick at them where they lie, but miss!`
+			result.AttackerMsg = fmt.Sprintf(
+				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> %s dodges and kicks at you where you lie, but misses!`, defender.Name)
+			result.RoomMsg = fmt.Sprintf(
+				`<ansi fg="cyan-bold">⚡ SWEEP!</ansi> %s dodges and kicks at %s on the ground, but misses!`, defender.Name, attacker.Name)
+		} else if tripResult.Hit {
 			dmgDesc := combat.GetDamageDescription(tripResult.Damage, tripResult.TargetMaxHP)
 			if tripResult.KnockedDown {
 				result.DefenderMsg = fmt.Sprintf(

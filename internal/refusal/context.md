@@ -61,6 +61,8 @@ Hints use the command colour: `hint` appends ` Try <ansi fg="command">x</ansi>.`
 | `NotCarrying(u, "")` | You aren't carrying that. Try **inventory**. |
 | `NoTarget(u, "kick")` / `NoTargetText` | You have no target. Try **kick &lt;name&gt;**. |
 | `Cooldown(u, "kick")` / `CooldownText` | You need a moment to recover before you can kick. |
+| `NoTargetAfterCost(u, "taunt", cost)` / `NoTargetSpentText` | Your target is gone before you can taunt, and the effort is spent. (NoTarget when nothing was charged) |
+| `CooldownAfterCost(u, "kick", cost)` / `CooldownSpentText` | You need a moment to recover before you can kick, and the effort is spent. (Cooldown when nothing was charged) |
 | `WhileFighting(u, "steal")` / `WhileFightingText` | You can't steal while fighting. |
 | `NotInGuild` / `NotInGuildText` | You aren't in a guild. Try **guild create &lt;TAG&gt; &lt;name&gt;**. |
 | `NoCompanion` / `NoCompanionLine` | You have no companion travelling with you. |

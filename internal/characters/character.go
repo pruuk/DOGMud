@@ -822,6 +822,26 @@ func (c *Character) SetRoundsWaiting(n int) {
 	c.CombatPhase.SetRoundsWaiting(n)
 }
 
+// SpendRoundOnAction marks this actor's next combat round as spent by an
+// action that already narrated itself, so the round is consumed without a
+// wait line. See combatphase.Machine.SpendRoundOnAction. No-op without a
+// combat phase machine.
+func (c *Character) SpendRoundOnAction() {
+	if c.CombatPhase == nil {
+		return
+	}
+	c.CombatPhase.SpendRoundOnAction()
+}
+
+// RoundSpentByAction reports whether the pending wait round was spent by an
+// action (SpendRoundOnAction) and so consumes silently.
+func (c *Character) RoundSpentByAction() bool {
+	if c.CombatPhase == nil {
+		return false
+	}
+	return c.CombatPhase.RoundSpentByAction()
+}
+
 // ConsumeRoundWaiting decrements the round budget and reports whether this
 // round was consumed by the wait. False means the actor is free to act.
 func (c *Character) ConsumeRoundWaiting() bool {

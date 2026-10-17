@@ -107,7 +107,7 @@ func Stand(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	// If in combat, standing costs the current round
 	if user.Character.CombatPhase != nil {
-		user.Character.SetRoundsWaiting(1)
+		user.Character.SpendRoundOnAction()
 	}
 
 	return true, nil

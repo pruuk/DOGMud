@@ -215,7 +215,7 @@ func ExecuteThrottle(actor Actor) ThrottleResult {
 
 	// Consume the combat round.
 	if char.CombatPhase != nil {
-		char.SetRoundsWaiting(1)
+		char.SpendRoundOnAction()
 	}
 
 	// Progression: unarmed-combat on hit.

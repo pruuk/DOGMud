@@ -124,12 +124,12 @@ var conditionApplyPathAllowlist = map[string]string{
 	// combat read it ────────────────────────────────────────────────────────
 	"internal/actions/combat_warcry.go|121": "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
 	"internal/actions/combat_rally.go|119":  "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/warcry.go|62":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/warcry.go|95":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/warcry.go|137":   "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/rally.go|58":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/rally.go|87":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
-	"internal/usercommands/rally.go|115":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|68":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|101":   "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/warcry.go|169":   "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|66":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|95":     "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
+	"internal/usercommands/rally.go|123":    "former combat condition (warcry/rally): silent-start record, the shout narrates; must apply synchronously so the fan-out and the same-round combat read it",
 
 	// ── former combat condition: enchant withdrawal ─────────────────────────
 	"internal/usercommands/skill.disenchant.go|71": "former combat condition (withdrawal): the disenchant command narrates; must apply synchronously so Validate clamps the pool now",
@@ -232,7 +232,7 @@ var conditionApplyPathAllowlist = map[string]string{
 	// through it. Re-keyed when the room lines moved to
 	// SendTextVisualHidingNames and their comment grew, and again when the
 	// bare-drink prompt went in above the busy check (2026-10-17) ─────────────
-	"internal/actions/drink.go|362":"potion at its item magnitude scaled by potency, player or mob: the EVENT door (DrinkActor.AddConditionMagnitude reaches users.UserRecord / mobs.Mob AddConditionMagnitude, both queue events.Condition); listed only because arity cannot tell it from the silent character door",
+	"internal/actions/drink.go|362": "potion at its item magnitude scaled by potency, player or mob: the EVENT door (DrinkActor.AddConditionMagnitude reaches users.UserRecord / mobs.Mob AddConditionMagnitude, both queue events.Condition); listed only because arity cannot tell it from the silent character door",
 
 	// ── the DrinkActor doors (drink path unification): a.User is a
 	// *users.UserRecord and a.Mob is a *mobs.Mob, whose AddConditionMagnitude

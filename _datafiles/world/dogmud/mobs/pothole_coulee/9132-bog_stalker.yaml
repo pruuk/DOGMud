@@ -22,11 +22,11 @@ combatcommands:
   - 'emote accelerates from standstill with a low scrabbling burst, closing
     the distance before the posture has any right to mean attack'
   - ''
-  - 'emote drives the armored snout into the target like a wedge and twists,
-    using leverage instead of raw force'
+  - 'emote lowers the armored snout like a wedge and shifts its weight,
+    searching for the angle that will give it leverage'
   - ''
-  - 'emote whips the heavy tail in a flat arc that catches anything standing
-    too close to the flank'
+  - 'emote sweeps the heavy tail back and forth across the mud, guarding
+    the ground beside its flank'
   - ''
 character:
   name: Bog Stalker

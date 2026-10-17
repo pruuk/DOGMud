@@ -256,7 +256,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 			char, target.Char, util.GetRoundCount())
 
 		if char.CombatPhase != nil {
-			char.SetRoundsWaiting(1)
+			char.SpendRoundOnAction()
 		}
 
 		return TauntResult{
@@ -375,7 +375,7 @@ func ExecuteTaunt(actor Actor) TauntResult {
 	}
 
 	if char.CombatPhase != nil {
-		char.SetRoundsWaiting(1)
+		char.SpendRoundOnAction()
 	}
 
 	// U6b Task 10, the defy carve-out: a defy CRIT counter-taunts, replacing

@@ -294,14 +294,15 @@ func TestSpecialMoveAdmissionOrdering(t *testing.T) {
 				// (char.SetRoundsWaiting(1)) where it used to be an assignment
 				// (char.Aggro.RoundsWaiting = 1). The guard's job is unchanged:
 				// every special move must consume a round, after the consuming
-				// TryCooldown.
+				// TryCooldown. 2026-10-17: the call is char.SpendRoundOnAction(),
+				// which spends the round without a wait line.
 				roundPositions := []token.Pos{}
 				ast.Inspect(body, func(node ast.Node) bool {
 					call, ok := node.(*ast.CallExpr)
 					if !ok {
 						return true
 					}
-					if formattedASTNode(t, fset, call) == "char.SetRoundsWaiting(1)" {
+					if formattedASTNode(t, fset, call) == "char.SpendRoundOnAction()" {
 						roundPositions = append(roundPositions, call.Pos())
 					}
 					return true
@@ -438,7 +439,7 @@ func TestTauntRallyWarcryAdmissionOrdering(t *testing.T) {
 			roundPositions := []token.Pos{}
 			ast.Inspect(fn.Body, func(node ast.Node) bool {
 				call, ok := node.(*ast.CallExpr)
-				if ok && formattedASTNode(t, fset, call) == "char.SetRoundsWaiting(1)" {
+				if ok && formattedASTNode(t, fset, call) == "char.SpendRoundOnAction()" {
 					roundPositions = append(roundPositions, call.Pos())
 				}
 				return true

@@ -39,11 +39,11 @@ func Gore(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 	if res.OnCooldown {
-		refusal.Cooldown(user, "gore")
+		refusal.CooldownAfterCost(user, "gore", res.Cost)
 		return true, nil
 	}
 	if res.NoTarget {
-		refusal.NoTarget(user, "gore")
+		refusal.NoTargetAfterCost(user, "gore", res.Cost)
 		return true, nil
 	}
 
