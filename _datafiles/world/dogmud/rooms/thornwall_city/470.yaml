@@ -1,11 +1,12 @@
 roomid: 470
 zone: Thornwall City
 title: Craftsmen's Quarter, East
-description: The eastern end of the Craftsmen's Quarter is dominated by a blacksmith's
-  forge, the largest workshop on the street, with its double doors thrown wide to vent
-  the heat. The forge fire glows orange through the doorway, and the smith's anvil
-  rings with a steady, purposeful rhythm. This is where the city's tools, hardware,
-  and weapons are made and repaired. The smithy also serves as an informal gathering
+description: The eastern end of the Craftsmen's Quarter is dominated by a
+  blacksmith's forge, the largest workshop on the street, its double doors built
+  wide to vent the heat. The forge is never let go fully cold. Even banked, its
+  coals show a deep red through the doorway, and the anvil before it is worn bright
+  from years of hammering. This is where the city's tools, hardware, and weapons
+  are made and repaired. The smithy also serves as an informal gathering
   place for the quarter's workers, who stop by to warm their hands and exchange news.
 biome: city_backstreet
 coord:
@@ -33,8 +34,8 @@ nouns:
 spawninfo:
 - mobid: 97
 idlemessages:
-- The forge fire flares as the bellows sighs, sending sparks up the chimney.
-- Metal rings on the anvil with a clear, purposeful note.
-- The smith pauses to wipe sweat from her brow, examining her work critically.
+- The coals in the forge shift and settle, sending a few sparks up the chimney.
+- A hammer hung on its peg swings in the draft and taps against the wall.
+- Warm air breathes out through the smithy doors, smelling of coal and iron.
 x: 13
 y: 6

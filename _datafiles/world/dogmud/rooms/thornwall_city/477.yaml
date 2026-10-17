@@ -4,8 +4,8 @@ title: Residential Ward, North
 description: North of the market, the city settles into a residential neighbourhood
   of narrow streets and close-built houses. The buildings are two and three stories
   tall, their upper floors jutting out over the street on timber brackets until the
-  houses nearly touch across the gap. Laundry lines create a web of drying cloth
-  overhead. The ward houses the city's working population, including labourers, clerks, junior
+  houses nearly touch across the gap. Laundry lines strung between the upper
+  windows make a web overhead. The ward houses the city's working population, including labourers, clerks, junior
   merchants, and families who have lived in the same buildings for generations. It is
   quiet compared to the market, with the particular hush of a neighbourhood where
   people are either at work or sleeping.
@@ -22,8 +22,9 @@ nouns:
     its neighbours, such as a different colour of shutter, a window box here, a carved
     doorframe there. The individuality is small but fierce, the only expression
     of personality available in such tight quarters.
-  laundry: Lines of drying clothes span the street from upper windows, hung with shirts,
-    sheets, stockings, all fluttering like flags of domesticity. The arrangement
+  laundry: Lines span the street from upper window to upper window, most of them
+    hung with something (shirts, sheets, stockings) that stirs like a flag of
+    domesticity. The arrangement
     suggests an informal system where certain lines belong to certain households.
 spawninfo:
 - mobid: 107

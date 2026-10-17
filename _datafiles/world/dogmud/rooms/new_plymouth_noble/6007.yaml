@@ -80,10 +80,7 @@ idlemessages:
   produces a faint sound, the particular
   creak of a step that the keeper has
   long stopped noticing.
-- The older paintings' varnish catches the
-  afternoon light at a low angle. At this
-  hour, the detail in the third panel
-  from the left is briefly very clear.
+- The older paintings' varnish catches the light at a low angle, and for a moment the detail in the third panel from the left is very clear.
 spawninfo:
   - mobid: 9371
     respawnrate: "10 real minutes"

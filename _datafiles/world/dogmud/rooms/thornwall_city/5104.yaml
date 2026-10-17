@@ -21,8 +21,8 @@ exits:
   down:
     roomid: 473
 idlemessages:
-- A bunk creaks as the building settles in the night air.
-- Moonlight falls in a thin bar through the narrow window onto the floorboards.
+- A bunk creaks as the building settles.
+- A thin bar of light falls through the narrow window onto the floorboards.
 - The distant sound of a watch bell carries faintly from the gate below.
 x: 10
 y: 4

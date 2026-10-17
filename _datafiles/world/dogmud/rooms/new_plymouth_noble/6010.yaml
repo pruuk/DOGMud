@@ -77,7 +77,7 @@ idlemessages:
 - A basket of pins sits at the cutting
   table's right edge, its contents depleted
   on one side and restocked on the other,
-  the record of a morning's work.
+  the record of a day's work.
 spawninfo:
   - mobid: 9373
     respawnrate: "10 real minutes"

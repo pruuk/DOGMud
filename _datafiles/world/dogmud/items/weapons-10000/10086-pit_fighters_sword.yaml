@@ -1,0 +1,22 @@
+itemid: 10086
+name: Pit Fighter's Sword
+namesimple: sword
+description: >-
+  A broad, short sword of hammered iron, its edge nicked and
+  reground so many times the blade has grown narrow at the tip.
+  Arena issue: it goes back on the rack when the fight is done.
+type: weapon
+hands: 1
+subtype: slashing
+weight: 3.0
+speedmultiplier: 1.0
+staminacost: 5
+grapplemodifier: 0.8
+damage:
+  basedamage: 5
+  variance: 2
+damage_multiplier: 0.70
+parryrating: 6
+never_drops: true
+not_salable: true
+value: 0

@@ -92,7 +92,7 @@ idlemessages:
 - The font's overflow runs in its steady soft sheet, the same sound it has always made.
 - A candle on the altar gutters once and recovers.
 - A worshipper enters quietly, kneels at the altar for a moment, and leaves the way they came.
-- The eastern windows brighten as a cloud passes off the sun outside.
+- The eastern windows brighten and dim as clouds pass outside.
 - A faint scrape of file-on-stone carries down from the upper room.
 spawninfo:
 - mobid: 344

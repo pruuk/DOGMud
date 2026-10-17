@@ -21,7 +21,7 @@ tree:
     - type: action
       event: player_enter
       do: emote
-      text: "nods in greeting from behind the counter."
+      text: "looks up and nods in greeting."
 
     - type: action
       event: player_attack_rejected

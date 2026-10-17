@@ -30,7 +30,7 @@ nouns:
     without any hurry. They have been working this flat longer than the
     trail to the east has existed. They pay you no attention at all.
 idlemessages:
-- The <ansi fg="itemname">bees</ansi> drone on, indifferent to the sun moving overhead.
+- The <ansi fg="itemname">bees</ansi> drone on, indifferent to you.
 - A breath of wind crosses the <ansi fg="itemname">sage</ansi> and the whole flat exhales its scent.
 x: 41
 y: 22

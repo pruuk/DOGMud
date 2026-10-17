@@ -365,7 +365,7 @@ type ItemSpec struct {
 	MaterialTier     int      `yaml:"material_tier,omitempty"`
 	VendorCategories []string `yaml:"vendor_categories,omitempty"` // Disciplines that buy/sell this item; mirrors shops.ValidCraftSupports minus "general"
 	NotSalable       bool     `yaml:"not_salable,omitempty"`       // True for lore / flavor / legacy items excluded from vendor economy validation
-	NeverDrops       bool     `yaml:"never_drops,omitempty"`       // Equipped-only: this item is skipped entirely by mob death-loot drops (boss-only gear that must never reach players). Does not affect carried Character.Items — use a separate mechanism (loot_pool / character.items) for guaranteed loot on the same mob.
+	NeverDrops       bool     `yaml:"never_drops,omitempty"`       // Mob-only gear: this item is skipped entirely by mob death-loot drops, worn or carried (a disarm puts a weapon in the pack), so it never reaches players. Other carried Character.Items still drop; use loot_pool / character.items for guaranteed loot on the same mob.
 	Restricted       bool     `yaml:"restricted,omitempty"`        // Contraband: bid on by the auction Official (The Crown Assessor, econ #2.5). Interest tag only — no other mechanics.
 
 	// Behavior names the item's behaviour tree,
