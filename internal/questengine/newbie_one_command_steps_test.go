@@ -1,6 +1,7 @@
 package questengine
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -178,49 +179,193 @@ func (w *questWalker) notify(event string, d EventDetails) {
 // typedCommand matches each command a hint tells the player to type.
 var typedCommand = regexp.MustCompile(`(?i)\btype\s`)
 
-// TestNewbieCertHintsNameOneCommand pins the ruling as a principle: in these
-// cert quests every step but the end names exactly one command to type. The
-// list is the cert quests that follow the ruling today; a newbie quest brought
-// under the ruling joins it.
-func TestNewbieCertHintsNameOneCommand(t *testing.T) {
-	for _, tc := range []struct {
-		file string
-		id   int
-	}{
-		{"41-first_sign.yaml", 41},
-		{"44-first_casting.yaml", 44},
-		{"47-first_words.yaml", 47},
-		{"50-first_shot.yaml", 50},
-	} {
-		q := loadShippedQuest(t, tc.file, tc.id)
-		for _, s := range q.Steps {
+// darkAside is the one sentence a step hint may carry besides its command:
+// the owner-requested reminder on kill quests whose rooms go dark at night
+// (2026-10-17 audit, B4). It is a precondition, not a second step, and it is
+// stripped verbatim before counting so any other wording still counts.
+const darkAside = "If it is dark, type cast chrysalis-glow first."
+
+// newbieQuestStart matches a quest start granted in dialogue or a behaviour
+// tree: `grantsQuest: "41-start"` or `quest: "29-start"`.
+var newbieQuestStart = regexp.MustCompile(`(?m)^\s*(?:grantsQuest|quest):\s*"?(\d+)-start"?`)
+
+// potholeCouleeQuests enumerates the newbie-area quests FROM DATA: every
+// quest whose start token is granted by a Pothole Coulee dialogue file or
+// behaviour tree, plus every quest those quests grant from their own
+// triggers (quest 31's send-off grants the seven cert quests). A new coulee
+// quest is covered the moment a coulee giver grants it.
+func potholeCouleeQuests(t *testing.T) []*QuestDef {
+	t.Helper()
+	_, here, _, ok := runtime.Caller(0)
+	require.True(t, ok)
+	world := filepath.Join(filepath.Dir(here), "..", "..", "_datafiles", "world", "dogmud")
+
+	ids := map[int]bool{}
+	for _, dir := range []string{"dialogue", "behaviors"} {
+		files, err := filepath.Glob(filepath.Join(world, dir, "pothole_coulee", "*.yaml"))
+		require.NoError(t, err)
+		require.NotEmpty(t, files, "no %s files under pothole_coulee; the enumeration would prove nothing", dir)
+		for _, f := range files {
+			raw, err := os.ReadFile(f)
+			require.NoError(t, err)
+			for _, m := range newbieQuestStart.FindAllStringSubmatch(string(raw), -1) {
+				id := 0
+				for _, r := range m[1] {
+					id = id*10 + int(r-'0')
+				}
+				ids[id] = true
+			}
+		}
+	}
+
+	byId := map[int]*QuestDef{}
+	files, err := filepath.Glob(filepath.Join(world, "quests", "*.yaml"))
+	require.NoError(t, err)
+	for _, f := range files {
+		raw, err := os.ReadFile(f)
+		require.NoError(t, err)
+		var q QuestDef
+		require.NoError(t, yaml.Unmarshal(raw, &q), "parse %s", f)
+		qq := q
+		byId[q.QuestId] = &qq
+	}
+
+	// Close over grants made by the coulee quests' own triggers.
+	for changed := true; changed; {
+		changed = false
+		for id := range ids {
+			q := byId[id]
+			if q == nil {
+				continue
+			}
+			for _, tr := range q.Triggers {
+				for _, a := range tr.Actions {
+					if !strings.HasSuffix(a.Grant, "-start") {
+						continue
+					}
+					gid, _ := (&linearPlayer{}).split(a.Grant)
+					if gid > 0 && !ids[gid] {
+						ids[gid] = true
+						changed = true
+					}
+				}
+			}
+		}
+	}
+
+	var out []*QuestDef
+	for id := range ids {
+		q := byId[id]
+		require.NotNil(t, q, "a coulee giver grants %d-start but no quest file defines quest %d", id, id)
+		out = append(out, q)
+	}
+	require.GreaterOrEqual(t, len(out), 30, "found only %d coulee quests; the enumeration is broken", len(out))
+	return out
+}
+
+// walksToNextStep reports whether the trigger that finishes step i is a
+// room_enter: a walk, which has no command to type.
+func walksToNextStep(q *QuestDef, i int) bool {
+	if i+1 >= len(q.Steps) {
+		return false
+	}
+	next := strings.ToLower(q.Steps[i+1].Id)
+	for _, tr := range q.Triggers {
+		for _, a := range tr.Actions {
+			if strings.HasSuffix(a.Grant, "-"+next) && tr.Event == "room_enter" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// TestNewbieQuestHintsNameOneCommand pins the owner ruling (2026-10-17) as a
+// principle over every Pothole Coulee quest: each step but the end names
+// exactly one command to type. A step finished by walking into a room may
+// name none.
+func TestNewbieQuestHintsNameOneCommand(t *testing.T) {
+	for _, q := range potholeCouleeQuests(t) {
+		for i, s := range q.Steps {
 			if s.Id == "end" {
 				continue
 			}
-			n := len(typedCommand.FindAllString(s.Hint, -1))
-			require.Equal(t, 1, n, "quest %d step %q hint must name exactly one command, got %d: %q",
-				tc.id, s.Id, n, s.Hint)
+			hint := strings.ReplaceAll(s.Hint, darkAside, "")
+			n := len(typedCommand.FindAllString(hint, -1))
+			if n == 0 && walksToNextStep(q, i) {
+				continue
+			}
+			if n != 1 {
+				t.Errorf("quest %d (%s) step %q hint must name exactly one command, got %d: %q",
+					q.QuestId, q.Name, s.Id, n, s.Hint)
+			}
 		}
 	}
 }
 
-// TestNewbieCertTriggersListenForSuccess: a refused command must not finish a
-// step, so no trigger in these quests listens on command_issued.
-func TestNewbieCertTriggersListenForSuccess(t *testing.T) {
-	for _, tc := range []struct {
-		file string
-		id   int
-	}{
-		{"41-first_sign.yaml", 41},
-		{"50-first_shot.yaml", 50},
-	} {
-		q := loadShippedQuest(t, tc.file, tc.id)
-		require.NotEmpty(t, q.Triggers)
+// TestNewbieQuestTriggersListenForSuccess: a refused command must not finish
+// a step, so no trigger in any Pothole Coulee quest listens on command_issued.
+func TestNewbieQuestTriggersListenForSuccess(t *testing.T) {
+	for _, q := range potholeCouleeQuests(t) {
 		for _, tr := range q.Triggers {
-			require.NotEqual(t, "command_issued", tr.Event,
-				"quest %d trigger on %q listens on command_issued, which a refusal also fires", tc.id, tr.Command)
+			if tr.Event == "command_issued" {
+				t.Errorf("quest %d (%s) trigger on %q listens on command_issued, which a refusal also fires",
+					q.QuestId, q.Name, tr.Command)
+			}
 		}
 	}
+}
+
+// TestNewbieQuestTriggersGateOnThePreviousStep: steps run in order. A trigger
+// that grants step i must require a token from an earlier step (at least
+// -start), and a trigger that grants a step past the second must not gate on
+// -start alone unless the quest documents why (lenientGrants), because a
+// later objective done first would mark the earlier ones done.
+func TestNewbieQuestTriggersGateOnThePreviousStep(t *testing.T) {
+	for _, q := range potholeCouleeQuests(t) {
+		idx := map[string]int{}
+		for i, s := range q.Steps {
+			idx[strings.ToLower(s.Id)] = i
+		}
+		for _, tr := range q.Triggers {
+			for _, a := range tr.Actions {
+				id, step := (&linearPlayer{}).split(a.Grant)
+				if id != q.QuestId {
+					continue
+				}
+				gi, ok := idx[strings.ToLower(step)]
+				if !ok || gi <= 1 {
+					continue // start, or the first step after it
+				}
+				if lenientGrants[a.Grant] {
+					continue
+				}
+				prev := strings.ToLower(q.Steps[gi-1].Id)
+				want := fmt.Sprintf("%d-%s", q.QuestId, prev)
+				has := false
+				for _, h := range tr.Conditions.Has {
+					if strings.EqualFold(h, want) {
+						has = true
+					}
+				}
+				if !has {
+					t.Errorf("quest %d (%s): the trigger granting %s must gate on %s, the step before it (has: %v)",
+						q.QuestId, q.Name, a.Grant, want, tr.Conditions.Has)
+				}
+			}
+		}
+	}
+}
+
+// lenientGrants are the grants that gate on an EARLIER step than the one
+// before them, on purpose: the command cannot succeed unless the skipped
+// steps' result is already in hand (a crafted item needs its materials, a
+// shot needs a readied weapon), so a player saved before a step was inserted
+// is never held on a step whose lesson they already learned.
+var lenientGrants = map[string]bool{
+	"50-shoot": true, // fire needs the sling readied (the equip step)
+	"35-craft": true, // crafting the dagger needs the bought ingot and strip
+	"38-brew":  true, // brewing the salve needs the bought vial and roots
 }
 
 func TestQuest41FirstSign_OneCommandPerStep(t *testing.T) {
