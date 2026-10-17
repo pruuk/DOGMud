@@ -207,6 +207,24 @@ func TestFollowSight_MobStopNamesTheMobHiddenAtSight(t *testing.T) {
 	}
 }
 
+// #554: a mob starting to follow a player tells them its name at their sight,
+// as its `follow stop` does: a player in the dark reads "Something", not the
+// mob's name.
+func TestFollowSight_MobStartNamesTheMobHiddenAtSight(t *testing.T) {
+	for _, band := range []followBand{followFull, followDark} {
+		f, _, _, room := followScene(t, band)
+		rat := followMob(t, room)
+		_, _ = f.followMobCommand("bobrick", rat, room)
+		told := followTold(2)
+		if band == followFull {
+			assert.Contains(t, told, "Rat is following you.")
+		} else {
+			assert.Contains(t, told, "Something is following you.")
+			assert.NotContains(t, told, "Rat", "band %d: the followed player read the mob's name in the dark", band)
+		}
+	}
+}
+
 // A mob's `follow lose` tells each lost player the mob's name at their sight.
 func TestFollowSight_MobLoseHidesTheMobFromADarkFollower(t *testing.T) {
 	for _, band := range []followBand{followFull, followDark} {

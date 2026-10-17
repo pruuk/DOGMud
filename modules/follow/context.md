@@ -55,6 +55,8 @@ target, who reads "Someone is following you."). `follow stop` tells the
 followed user the follower's name the same way ("Someone stopped following
 you." in the dark), and the follower's own line hides the followed name at
 the follower's sight. The mob `follow` is not gated: mobs act on shapes.
+The line a player reads when a mob starts following them ("Rat is following
+you.") hides the mob's name at that player's sight (`readerSight`, #554).
 Every line a player reads about a follow ending hides the other party's
 name at that player's sight in their own room (`readerSight`): a mob's
 `follow stop` ("Rat stopped following you.", which once printed the
