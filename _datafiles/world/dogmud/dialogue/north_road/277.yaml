@@ -96,7 +96,7 @@ tree:
 
     - id: reward_quiet
       triggers: ["done", "quiet", "kept", "said nothing", "back",
-        "report"]
+        "report", "quest", "task"]
       questRequired: ["18-start"]
       questExcluded: ["18-end"]
       questFlagRequired:
@@ -111,7 +111,7 @@ tree:
       moodChange: friendly
 
     - id: result_told
-      triggers: ["done", "told", "agent", "back", "report"]
+      triggers: ["done", "told", "agent", "back", "report", "quest", "task"]
       questRequired: ["18-start"]
       questExcluded: ["18-end"]
       questFlagRequired:
@@ -122,7 +122,7 @@ tree:
 
     - id: result_killed
       triggers: ["done", "killed", "dead", "agent", "back",
-        "report"]
+        "report", "quest", "task"]
       questRequired: ["18-start"]
       questExcluded: ["18-end"]
       questFlagRequired:

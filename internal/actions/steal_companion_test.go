@@ -51,6 +51,10 @@ func (r *recordingStealActor) SendText(_ messaging.Category, msg string) {
 	r.told = append(r.told, msg)
 }
 
+func (r *recordingStealActor) SendBlankLine(_ messaging.Category) {
+	r.told = append(r.told, "")
+}
+
 // M7 slice 3 (#371): the companion refusal names the mob only for a thief
 // who can see it.
 func TestSteal_CompanionRefusalHidesTheNameInTheDark(t *testing.T) {

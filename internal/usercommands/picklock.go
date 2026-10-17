@@ -141,15 +141,15 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	if sequenceMatches(keyring_sequence, sequence) {
-		user.SendText(messaging.CategorySystem, "")
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, "Your keyring already has this lock on it.")
 
 		user.ClearPrompt()
 
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">***</ansi> <ansi fg="green-bold">You Successfully picked the lock!</ansi> <ansi fg="yellow-bold">***</ansi>`)
 		user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">***</ansi> <ansi fg="green-bold">You can automatically pick this lock any time as long as you carry <ansi fg="item">lockpicks</ansi>!</ansi> <ansi fg="yellow-bold">***</ansi>`)
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 
 		// U10b-1 Task 18: WIN-ONLY, deliberately. Picking a lock is a pin
 		// minigame rather than a contest -- there is no opposing score and no
@@ -224,16 +224,16 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			entered = ``
 			user.Character.UseItem(lockpickItm)
 
-			user.SendText(messaging.CategorySystem, ``)
+			user.SendBlankLine(messaging.CategorySystem)
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="yellow-bold">***</ansi> <ansi fg="red-bold">Oops! Your <ansi fg="item">%s</ansi> break off in the lock, resetting the lock. You'll have to start all over.</ansi> <ansi fg="yellow-bold">***</ansi>`, lockpickItm.GetSpec().NameSimple))
-			user.SendText(messaging.CategorySystem, ``)
+			user.SendBlankLine(messaging.CategorySystem)
 
 			room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="alert-2"><ansi fg="username">%s</ansi> broke their lockpicks trying to pick a lock!</ansi>`, user.Character.Name), user.UserId)
 
 			if len(lockTrap) > 0 {
 
 				user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">***</ansi> <ansi fg="alert-5">A trap was triggered!</ansi> <ansi fg="yellow-bold">***</ansi>`)
-				user.SendText(messaging.CategorySystem, ``)
+				user.SendBlankLine(messaging.CategorySystem)
 				room.SendTextVisual(messaging.CategoryMobEmote, fmt.Sprintf(`<ansi fg="alert-3"><ansi fg="username">%s</ansi> triggered a trap!</ansi>`, user.Character.Name), user.UserId)
 
 				for _, conditionId := range lockTrap {
@@ -246,7 +246,7 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	user.Character.SetKey(lockId, entered)
 
 	if len(entered) > 0 {
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, `<ansi fg="green-bold">A satisfying *click* tells you that you're making progress...</ansi>`)
 	} else {
 		user.ClearPrompt()
@@ -262,10 +262,10 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			user.Character.SetKey(lockId, entered)
 		}
 
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">***</ansi> <ansi fg="green-bold">You Successfully picked the lock!</ansi> <ansi fg="yellow-bold">***</ansi>`)
 		user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">***</ansi> <ansi fg="green-bold">You can automatically pick this lock any time as long as you carry <ansi fg="item">lockpicks</ansi>!</ansi> <ansi fg="yellow-bold">***</ansi>`)
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 
 		// U10b-1 Task 18: WIN-ONLY, deliberately. Picking a lock is a pin
 		// minigame rather than a contest -- there is no opposing score and no

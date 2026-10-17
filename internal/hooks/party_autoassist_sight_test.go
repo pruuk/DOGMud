@@ -15,7 +15,7 @@ import (
 
 // #454: party auto-assist types `attack #<id>` for every member in the room.
 // A member who sees nothing cannot pick the mob out, so assisting would only
-// tell them "You don't see them here." every round. They are skipped; a member
+// tell them "You can't find them here." every round. They are skipped; a member
 // who can see still assists (the control).
 func TestPartyAutoAssist_SkipsAMemberWhoSeesNothing(t *testing.T) {
 	cleanup := seedAllRegistries()

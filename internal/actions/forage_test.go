@@ -74,6 +74,10 @@ func (a *forageFakeActor) SendText(_ messaging.Category, msg string) {
 	a.sent = append(a.sent, msg)
 }
 
+func (a *forageFakeActor) SendBlankLine(_ messaging.Category) {
+	a.sent = append(a.sent, "")
+}
+
 // newForageTestRoom builds a minimal Room with the specified biome string.
 // biomeId is written directly to Room.Biome; the biome registry lookup in
 // GetBiome() will either find it (if seeded) or fall back to "default".

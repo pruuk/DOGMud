@@ -12,7 +12,7 @@ func Pvp(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	setting := configs.GetGamePlayConfig().PVP
 
-	user.SendText(messaging.CategorySystem, "")
+	user.SendBlankLine(messaging.CategorySystem)
 	if setting == configs.PVPDisabled {
 		user.SendText(messaging.CategorySystem, `PVP is <ansi fg="alert-5">disabled</ansi> on this server. You cannot fight other players.`)
 	} else if setting == configs.PVPEnabled {
@@ -20,7 +20,7 @@ func Pvp(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	} else if setting == configs.PVPLimited {
 		user.SendText(messaging.CategorySystem, `PVP is <ansi fg="yellow">limited</ansi> on this server. You can fight other players in places labeled with: <ansi fg="11" bg="52"> ☠ PK Area ☠ </ansi>.`)
 	}
-	user.SendText(messaging.CategorySystem, "")
+	user.SendBlankLine(messaging.CategorySystem)
 
 	return true, nil
 }

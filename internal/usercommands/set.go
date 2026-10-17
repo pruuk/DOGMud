@@ -75,7 +75,7 @@ func displaySetStatus(user *users.UserRecord) {
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">description:</ansi>`)
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow">`+util.SplitStringNL(user.Character.Description, 80)+`</ansi>`)
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">ScreenReader:</ansi> `)
 	if user.ScreenReader {
@@ -83,7 +83,7 @@ func displaySetStatus(user *users.UserRecord) {
 	} else {
 		user.SendText(messaging.CategorySystem, `<ansi fg="red">OFF</ansi>`)
 	}
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">charset:</ansi> `)
 	if user.AsciiMode {
@@ -91,7 +91,7 @@ func displaySetStatus(user *users.UserRecord) {
 	} else {
 		user.SendText(messaging.CategorySystem, `<ansi fg="green">UTF-8</ansi>`)
 	}
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	displayBoolSetting(user, `auction`, `auction`)
 	displayBoolSetting(user, `shortadjectives`, `shortadjectives`)
@@ -104,7 +104,7 @@ func displaySetStatus(user *users.UserRecord) {
 	}
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">prompt: </ansi> `)
 	user.SendText(messaging.CategorySystem, currentPrompt.(string))
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	currentPrompt = user.GetConfigOption(`fprompt`)
 	if currentPrompt == nil {
@@ -112,7 +112,7 @@ func displaySetStatus(user *users.UserRecord) {
 	}
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">fprompt:</ansi> `)
 	user.SendText(messaging.CategorySystem, currentPrompt.(string))
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	currentWimpy := user.GetConfigOption(`wimpy`)
 	if currentWimpy == nil {
@@ -120,19 +120,19 @@ func displaySetStatus(user *users.UserRecord) {
 	}
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">wimpy:</ansi> `)
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`%d%%`, currentWimpy.(int)))
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">submission:</ansi> `)
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.Character.SubmissionPolicy))
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">surrender:</ansi> `)
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.Character.SurrenderPolicy))
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">combatverbosity:</ansi> `)
 	user.SendText(messaging.CategorySystem, fmt.Sprintf(`<ansi fg="green">%s</ansi>`, user.GetCombatVerbosity().String()))
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	user.SendText(messaging.CategorySystem, `See: <ansi fg="command">help set</ansi>`)
 }
@@ -145,7 +145,7 @@ func displayBoolSetting(user *users.UserRecord, settingName string, label string
 	}
 	user.SendText(messaging.CategorySystem, `<ansi fg="yellow-bold">`+label+`:</ansi> `)
 	user.SendText(messaging.CategorySystem, onTxt)
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 }
 
 func cmdSetDescription(user *users.UserRecord, rest string, setTarget string) (bool, error) {
@@ -256,7 +256,7 @@ func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args [
 		} else {
 			user.SendText(messaging.CategorySystem, `  `+customPrompt.(string))
 		}
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, `<ansi fg="yellow">Toggle Settings</ansi> <ansi fg="8">(set fprompt tog <name> to change):</ansi>`)
 		toggleList := []struct{ name, desc string }{
 			{"bars", "HP/SP/CP vital bars"},
@@ -275,7 +275,7 @@ func cmdSetFprompt(user *users.UserRecord, rest string, setTarget string, args [
 			}
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`  <ansi fg="magenta">%-14s</ansi> %s %s`, t.name, state, t.desc))
 		}
-		user.SendText(messaging.CategorySystem, ``)
+		user.SendBlankLine(messaging.CategorySystem)
 		user.SendText(messaging.CategorySystem, `Type <ansi fg="command">help set-prompt</ansi> for more info on customizing prompts.`)
 		return true, nil
 	}

@@ -69,8 +69,8 @@ func TestNotHereLinesWording(t *testing.T) {
 		send(f)
 		assert.Equal(t, line, one(t, f, messaging.CategoryRefusal))
 	}
-	assert.Equal(t, "You don't see them here.", NotHereCreatureLine)
-	assert.Equal(t, "You don't see that here.", NotHereThingLine)
+	assert.Equal(t, "You can't find them here.", NotHereCreatureLine)
+	assert.Equal(t, "You can't find that here.", NotHereThingLine)
 	assert.Equal(t, "You can't see anything to aim at.", NothingToAimLine)
 }
 

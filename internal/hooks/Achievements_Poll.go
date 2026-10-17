@@ -48,7 +48,7 @@ func CheckAchievements(e events.Event) events.ListenerReturn {
 
 	for _, u := range users.GetAllActiveUsers() {
 		// Match the leaderboard exclusion: no admins, no AI-flagged accounts.
-		if u.Role == users.RoleAdmin || u.IsAI {
+		if u.AchievementsExcluded() {
 			continue
 		}
 		earnedPoints := achievements.PointsFor(u.Character.Achievements)

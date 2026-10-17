@@ -455,7 +455,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		matchItem, found := user.Character.Pet.FindItem(rest)
 		if !found {
-			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You don't see a %s carried by %s.`, refusal.Echo(rest), user.Character.Pet.DisplayName()))
+			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`You can't find a %s carried by %s.`, refusal.Echo(rest), user.Character.Pet.DisplayName()))
 		} else {
 
 			if user.Character.Pet.RemoveItem(matchItem) {
@@ -498,9 +498,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		// Mirrors the gate every sibling command applies (look.go, put.go,
 		// lock.go, unlock.go, picklock.go).
 		if container.Lock.IsLocked() {
-			user.SendText(messaging.CategoryRefusal, ``)
 			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
-			user.SendText(messaging.CategoryRefusal, ``)
 			return true, nil
 		}
 

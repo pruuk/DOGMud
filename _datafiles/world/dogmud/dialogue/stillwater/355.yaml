@@ -93,7 +93,7 @@ tree:
       triggers: ["kingfisher", "carving", "token", "vella", "deliver", "hand",
         "give", "turn", "done", "finished", "report", "quest", "task"]
       questRequired: ["20-kingfisher_found"]
-      questExcluded: ["20-vella_journal"]
+      questExcluded: ["20-vella_journal", "20-end"]
       requiresItem: 40060
       grantsQuest: "20-vella_journal"
       givesItem: 40061
@@ -122,7 +122,7 @@ tree:
     - id: ask_kingfisher
       triggers: ["kingfisher", "carving", "bird"]
       questRequired: ["20-kingfisher_found"]
-      questExcluded: ["20-vella_journal"]
+      questExcluded: ["20-vella_journal", "20-end"]
       requiresItem: 40060
       grantsQuest: "20-vella_journal"
       givesItem: 40061

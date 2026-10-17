@@ -262,9 +262,9 @@ func adminRoom_Set(args []string, user *users.UserRecord, room *rooms.Room) (boo
 			for _, mut := range room.Mutators {
 				user.SendText(messaging.CategoryAdmin, `  <ansi fg="mutator">`+mut.MutatorId+`</ansi>`)
 			}
-			user.SendText(messaging.CategoryAdmin, ``)
+			user.SendBlankLine(messaging.CategoryAdmin)
 		} else {
-			user.SendText(messaging.CategoryAdmin, ``)
+			user.SendBlankLine(messaging.CategoryAdmin)
 			if !mutators.IsMutator(propertyValue) {
 				user.SendText(messaging.CategoryAdmin, `<ansi fg="table-title"><ansi fg="mutator">`+propertyValue+`</ansi> is an invalid mutator id.</ansi>`)
 				user.SendText(messaging.CategoryAdmin, `<ansi fg="table-title">  Here is a list of valid mutator id's:</ansi>`)
@@ -276,7 +276,7 @@ func adminRoom_Set(args []string, user *users.UserRecord, room *rooms.Room) (boo
 			} else if room.Mutators.Add(propertyValue) {
 				user.SendText(messaging.CategoryAdmin, `<ansi fg="table-title">Mutator <ansi fg="mutator">`+propertyValue+`</ansi> Added.</ansi>`)
 			}
-			user.SendText(messaging.CategoryAdmin, ``)
+			user.SendBlankLine(messaging.CategoryAdmin)
 		}
 		return true, nil
 	}

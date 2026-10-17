@@ -115,7 +115,7 @@ tree:
       moodChange: friendly
 
     - id: sample_return
-      triggers: ["sample", "found", "here", "brought", "return", "have", "windstone"]
+      triggers: ["sample", "found", "here", "brought", "return", "have", "windstone", "quest", "task"]
       questRequired: ["11-start"]
       questExcluded: ["11-end"]
       requiresItem: 40032
@@ -141,7 +141,7 @@ tree:
       moodChange: friendly
 
     - id: extraction_begin
-      triggers: ["ready", "extract", "begin", "help", "yes", "gambit"]
+      triggers: ["ready", "extract", "begin", "help", "yes", "gambit", "quest", "task"]
       questRequired: ["13-start"]
       questExcluded: ["13-extraction", "13-end"]
       grantsQuest: "13-extraction"
@@ -149,7 +149,7 @@ tree:
       unlocks: ["extraction_complete"]
 
     - id: extraction_complete
-      triggers: ["hold", "steady", "brace", "done", "complete", "yes"]
+      triggers: ["hold", "steady", "brace", "done", "complete", "yes", "quest", "task"]
       questRequired: ["13-extraction"]
       questExcluded: ["13-end"]
       grantsQuest: "13-end"

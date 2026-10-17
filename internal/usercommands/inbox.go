@@ -61,10 +61,10 @@ func Inbox(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		user.Inbox[idx].Read = true
 	}
 
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 	user.SendText(messaging.CategorySystem, language.T(`Inbox.ReadOldMessages`))
 	user.SendText(messaging.CategorySystem, language.T(`Inbox.ClearMessages`))
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	return true, nil
 }

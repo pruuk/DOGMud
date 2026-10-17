@@ -44,6 +44,9 @@ func (f *fakeActor) GetRoom() *rooms.Room                { return f.room }
 func (f *fakeActor) SendText(_ messaging.Category, msg string) {
 	f.selfTexts = append(f.selfTexts, msg)
 }
+func (f *fakeActor) SendBlankLine(_ messaging.Category) {
+	f.selfTexts = append(f.selfTexts, "")
+}
 func (f *fakeActor) GetName() string                             { return f.name }
 func (f *fakeActor) IsPlayer() bool                              { return f.isPlayer }
 func (f *fakeActor) GetUserId() int                              { return f.userId }

@@ -315,6 +315,13 @@ func (u *UserRecord) HasShop() bool {
 	return len(u.Character.Shop) > 0
 }
 
+// AchievementsExcluded reports whether this account is kept out of achievement
+// tracking: admins and AI-flagged accounts, matching the leaderboard exclusion.
+// The award poll skips these accounts and the achievements screen tells them so.
+func (u *UserRecord) AchievementsExcluded() bool {
+	return u.Role == RoleAdmin || u.IsAI
+}
+
 func (u *UserRecord) DidTip(tipName string, completed ...bool) bool {
 
 	if u.TipsComplete == nil {
@@ -495,6 +502,23 @@ func (u *UserRecord) SendText(cat messaging.Category, txt string) {
 	events.AddToQueue(events.Message{
 		UserId: u.UserId,
 		Text:   rendered + "\n",
+	})
+}
+
+// SendBlankLine delivers exactly one empty line to this user (#610). It is
+// the only way to send a deliberate blank line: SendText with an empty text
+// delivers nothing, so a message that comes out empty at runtime stays
+// silent. cat must be a screen category (messaging.BlankLineAllowed); any
+// other is refused and logged, because a blank line is screen spacing and
+// has no place in a combat, ambient, speech or refusal stream.
+func (u *UserRecord) SendBlankLine(cat messaging.Category) {
+	if !messaging.BlankLineAllowed(cat) {
+		mudlog.Error("SendBlankLine", "error", "category refused for a blank line", "category", cat.String(), "userId", u.UserId)
+		return
+	}
+	events.AddToQueue(events.Message{
+		UserId: u.UserId,
+		Text:   "\n",
 	})
 }
 

@@ -53,7 +53,7 @@ tree:
       questRequired: ["73-map"]
       questExcluded: ["73-end"]
       triggers: ["report", "return", "found", "done", "back", "finished",
-        "examined", "seen", "evidence", "results"]
+        "examined", "seen", "evidence", "results", "quest", "task"]
       text: "You have seen all three, then? The bookseller's damaged chart,
         Tallis's old copies, the hall's own map in its margin? Then you have
         seen what I have seen, and what a dozen scholars before me saw and

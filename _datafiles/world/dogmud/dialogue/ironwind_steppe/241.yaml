@@ -99,7 +99,7 @@ tree:
       moodChange: neutral
 
     - id: totem_return
-      triggers: ["totem", "found", "here", "brought", "return", "have"]
+      triggers: ["totem", "found", "here", "brought", "return", "have", "quest", "task"]
       questRequired: ["11-start"]
       questExcluded: ["11-end"]
       requiresItem: 40033
@@ -129,7 +129,7 @@ tree:
       unlocks: ["ritual_complete"]
 
     - id: ritual_complete
-      triggers: ["hear", "listen", "accept", "yes", "wolf", "spirit", "complete"]
+      triggers: ["hear", "listen", "accept", "yes", "wolf", "spirit", "complete", "quest", "task"]
       questRequired: ["12-ritual"]
       questExcluded: ["12-end"]
       grantsQuest: "12-end"

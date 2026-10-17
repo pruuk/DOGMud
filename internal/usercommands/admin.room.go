@@ -190,9 +190,9 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 			delete(room.Containers, currentlyEditing.Name)
 			rooms.SaveRoomTemplate(*room)
 
-			user.SendText(messaging.CategoryAdmin, ``)
+			user.SendBlankLine(messaging.CategoryAdmin)
 			user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="container">%s</ansi> deleted from the room.`, currentlyEditing.Name))
-			user.SendText(messaging.CategoryAdmin, ``)
+			user.SendBlankLine(messaging.CategoryAdmin)
 
 			user.ClearPrompt()
 			return true, nil
@@ -273,7 +273,7 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 	room.Containers[currentlyEditing.NameNew] = currentlyEditing.Container
 	rooms.SaveRoomTemplate(*room)
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 
 	if currentlyEditing.Container.Lock.Difficulty > 0 {
 		lockId := fmt.Sprintf(`%d-%s`, room.RoomId, currentlyEditing.NameNew)
@@ -286,9 +286,9 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 		user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`<ansi fg="red">To pick lock - Sequence: <ansi fg="green">%s</ansi></ansi>`, seqString))
 	}
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, `Changes saved.`)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 
 	user.ClearPrompt()
 
@@ -299,7 +299,7 @@ func room_Edit_Containers_SendRecipes(user *users.UserRecord, recipeResultItemId
 
 	itm := items.New(recipeResultItemId)
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, fmt.Sprintf(`    Current Recipe for %d (<ansi fg="itemname">%s</ansi>):`, recipeResultItemId, itm.DisplayName()))
 
 	itemsList := []string{}
@@ -317,7 +317,7 @@ func room_Edit_Containers_SendRecipes(user *users.UserRecord, recipeResultItemId
 		user.SendText(messaging.CategoryAdmin, txt)
 	}
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 }
 
 // editLockAndTrap handles the lock/trap questionnaire shared by containers and exits.
@@ -643,7 +643,7 @@ func editContainerRecipes(cmdPrompt *prompt.Prompt, user *users.UserRecord, reci
 			question = cmdPrompt.Ask(`Enter an itemId to add to the recipe, or nothing to continue:`, []string{``}, `skip`)
 			if !question.Done {
 				// They have a recipe to modify, ask for item id's
-				user.SendText(messaging.CategoryAdmin, ``)
+				user.SendBlankLine(messaging.CategoryAdmin)
 				user.SendText(messaging.CategoryAdmin, `<ansi fg="cyan">Positive numbers add items, negative numbers remove items.</ansi>`)
 
 				room_Edit_Containers_SendRecipes(user, recipeNow, neededItems)
@@ -842,9 +842,9 @@ func room_Edit_Mutators(rest string, user *users.UserRecord, room *rooms.Room, f
 	}
 	rooms.SaveRoomTemplate(*room)
 
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 	user.SendText(messaging.CategoryAdmin, `Changes saved.`)
-	user.SendText(messaging.CategoryAdmin, ``)
+	user.SendBlankLine(messaging.CategoryAdmin)
 
 	user.ClearPrompt()
 

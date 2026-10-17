@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/achievements"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,4 +53,49 @@ func TestAchievementsHeadingsStandAlone(t *testing.T) {
 		}
 	}
 	require.Greater(t, headings, 0, "no heading found, so this check proves nothing: %q", lines)
+}
+
+// TestAchievementsNotTrackedLine checks the screen tells an excluded account
+// (admin or AI-flagged) that achievements are not tracked for it, and tells a
+// normal account nothing of the kind (#612). The award poll skips the same
+// accounts through users.UserRecord.AchievementsExcluded.
+func TestAchievementsNotTrackedLine(t *testing.T) {
+	cleanup := seedAllRegistries()
+	defer cleanup()
+	t.Cleanup(achievements.LoadDataFiles)
+	useDogmudTemplates(t)
+	achievements.LoadDataFiles()
+	require.NotEmpty(t, achievements.All())
+
+	const line = "Achievements are not tracked on this account."
+	user, room := getTestUserAndRoom(t)
+	origRole, origAI := user.Role, user.IsAI
+	t.Cleanup(func() { user.Role, user.IsAI = origRole, origAI })
+
+	cases := []struct {
+		name string
+		role string
+		ai   bool
+		want bool
+	}{
+		{"normal user", users.RoleUser, false, false},
+		{"admin", users.RoleAdmin, false, true},
+		{"ai account", users.RoleUser, true, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			user.Role, user.IsAI = tc.role, tc.ai
+			events.DrainQueuedMessagesForTest(user.UserId)
+			handled, err := Achievements("", user, room, 0)
+			require.True(t, handled)
+			require.NoError(t, err)
+			var all []string
+			for _, m := range events.DrainQueuedMessagesForTest(user.UserId) {
+				all = append(all, achievementsTagRE.ReplaceAllString(m, ""))
+			}
+			text := strings.Join(all, "\n")
+			require.Equal(t, tc.want, strings.Contains(text, line), "screen text: %q", text)
+			require.Contains(t, text, "Combat", "the full list must still print")
+		})
+	}
 }

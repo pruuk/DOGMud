@@ -16,7 +16,7 @@ import (
 
 func Bank(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 
 	if !room.IsBank {
 		user.SendText(messaging.CategoryRefusal, `You are not at a bank.`+term.CRLFStr)
@@ -95,6 +95,6 @@ func Bank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.SendText(messaging.CategorySystem, fmt.Sprintf(`You now have <ansi fg="gold">%s gold</ansi> on hand and <ansi fg="gold">%s gold</ansi> in the bank.`, util.FormatNumber(user.Character.Gold), util.FormatNumber(user.Character.Bank)))
 	}
 
-	user.SendText(messaging.CategorySystem, ``)
+	user.SendBlankLine(messaging.CategorySystem)
 	return true, nil
 }

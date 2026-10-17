@@ -314,6 +314,21 @@ func (c Category) String() string {
 	return "Unknown"
 }
 
+// BlankLineAllowed reports whether a deliberate blank line may ride cat
+// (#610). A blank line is screen spacing: it separates the blocks of a laid
+// out screen (look, set, craft, the admin screens, scan). It belongs on the
+// categories those screens ride and nowhere else, so a blank line never
+// lands in a combat, ambient, speech or refusal stream. UserRecord.SendBlankLine
+// refuses any other category, and the root guard TestBlankLineSendsAreRecorded
+// holds every call site to a literal category from this set.
+func BlankLineAllowed(cat Category) bool {
+	switch cat {
+	case CategorySystem, CategoryScreen, CategoryAdmin, CategoryRoomDescription:
+		return true
+	}
+	return false
+}
+
 // EmoteCategoryFor is the category of a line told to a player about what
 // another creature does: CategoryEmote when that creature is a player,
 // CategoryMobEmote when it is a mob, the split M5 made for emotes. Neither

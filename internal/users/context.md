@@ -663,8 +663,13 @@ if found {
 ```
 `Character` has no `GiveItem` method; the equivalent is `StoreItem`.
 `SendText` takes a `messaging.Category`, not just a string. An empty string
-sends nothing (the pipeline renders it as nothing); a screen that needs a
-blank line puts the newline in its own text.
+sends nothing (the pipeline renders it as nothing), so a message that comes
+out empty at runtime stays silent. A deliberate blank line is
+`SendBlankLine(cat)` (#610), which delivers exactly one empty line and accepts
+only the screen categories `messaging.BlankLineAllowed` names (System, Screen,
+Admin, RoomDescription); any other category is refused and logged. The root
+guards in `blank_line_guard_test.go` fail CI on a literal empty `SendText`
+text and hold every `SendBlankLine` call to a per-file count with a reason.
 
 ### Messaging System
 ```go
@@ -816,7 +821,7 @@ restores a captured baseline before re-deriving the spec. Copy that. Note
 | File | Purpose |
 |------|---------|
 | `users.go` | Registry, connect/disconnect, lookup, save file read/write (`LoadUser`, `loadUserFromPath`, `SaveUser`, `SaveAllUsers`). A validating load runs `Character.DiscardEndedStealthRecords()` before `Validate(true)`, so a stealth record the logout reveal expired is not told as "emerges from the shadows" after login (#451) |
-| `userrecord.go` | The `UserRecord` type |
+| `userrecord.go` | The `UserRecord` type. `(*UserRecord).AchievementsExcluded()` is the one predicate for "admin or AI-flagged, kept out of achievements"; the award poll (`hooks/Achievements_Poll.go`) and the `achievements` screen both call it (#612) |
 | `userrecord.prompt.go` | Prompt rendering and tokens. `SetPromptSightCheck(fn func(*characters.Character) messaging.SightDecision)` registers the reader's room sight (`messaging.ReaderSight`), wired at boot in `main.go` because `users` cannot import `rooms`; nil (boot, tests) means full sight. The fight prompt reads it to name a combat target below full sight as combat lines do, "a figure" at shapes and "something" with none, and to hide its health and position (#455) |
 | `storage.go` / `storage_migrate.go` | Bank inventory (`Storage`, `StorageSlot`), its legacy `Items`-to-`Slots` shape migration, and the U10d ranged-weapon rescale over banked items |
 | `index.go` / `index_rebuild.go` / `character_index.go` | Name/character indexes |

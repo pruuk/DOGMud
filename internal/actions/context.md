@@ -31,6 +31,7 @@ type Actor interface {
 	GetCharacter() *characters.Character
 	GetRoom() *rooms.Room
 	SendText(cat messaging.Category, msg string)
+	SendBlankLine(cat messaging.Category) // one empty line; screen categories only (#610)
 	GetName() string
 	IsPlayer() bool
 	GetUserId() int                 // 0 for mobs
@@ -76,8 +77,9 @@ render a refused status through `refusal.Cost` (`internal/refusal`), while
 equivalent mob wrappers stay silent.
 
 - **UserActor** (`actor_user.go`): wraps a `*users.UserRecord`, sends text via
-  `user.SendText()`, skill progression goes through `user.Character.OnSkillUse()`.
-- **MobActor** (`actor_mob.go`): wraps a `*mobs.Mob`; `SendText` is a no-op
+  `user.SendText()` and blank lines via `user.SendBlankLine()` (an empty
+  `SendText` delivers nothing), skill progression goes through `user.Character.OnSkillUse()`.
+- **MobActor** (`actor_mob.go`): wraps a `*mobs.Mob`; `SendText` and `SendBlankLine` are no-ops
   because a mob has no private player connection. A mob's room line goes out
   through `Say`/`Shout`/`SendHeard`/`SendSeen` below, not through the Actor
   interface itself (`SendRoomCommunication` is deleted, sight gates slice
@@ -533,7 +535,9 @@ corpse at shapes ("You can make out no more than its shape.", one constant
 in `usercommands/look.go`) and names no one; a looked-at player reads
 "<looker> is looking at you." at `LookResolution.TargetSight` (nothing when
 they see nothing), the room by sight. A count past the last figure
-falls through to "You can only make out shapes here.". `LookExitShapes` (lighting plan 6, owner
+falls through to `refusal.NotHereCreatureLine` (the player wrapper reads any
+missing aim word that way, `NamesAFigure` in `sight_aim.go`, and every other
+missing name as `refusal.NotHereThingLine`, at every light, #609). `LookExitShapes` (lighting plan 6, owner
 ruling O6) is an exit the light here is too poor to see through
 (`messaging.SeesThroughExit` false) whose next room heat still reaches
 (`messaging.SensesHeatThroughExit`); a locked exit under heat is still
@@ -713,7 +717,9 @@ word on its own line (#430).
   `refusal.NotHereCreatureLine` for a name; an out-of-range `N.figure` also
   answers `refusal.NotHereCreatureLine`). The constants moved to
   `internal/refusal` in M7 slice 1 (`AimNothingLine` and `AimNotHereLine`
-  are gone); see `internal/refusal/context.md`. It returns the name to
+  are gone); see `internal/refusal/context.md`. `NamesAFigure(name)` (same
+  file, #609) reports the aim word in any form, `all.figure` included; `look`
+  uses it to read a missing aim word as `refusal.NotHereCreatureLine`. It returns the name to
   resolve and the refusal to tell, "" when admitted. Player commands that name a creature run it (the list is
   in `internal/usercommands/context.md`), except three left ungated on
   purpose (plan D-H2-12): `look <creature>` (`look.go`, which names a

@@ -243,9 +243,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		container := room.Containers[containerName]
 
 		if container.Lock.IsLocked() {
-			user.SendText(messaging.CategoryRefusal, ``)
 			user.SendText(messaging.CategoryRefusal, fmt.Sprintf(`The <ansi fg="container">%s</ansi> is locked.`, containerName))
-			user.SendText(messaging.CategoryRefusal, ``)
 			return true, nil
 		}
 
@@ -266,7 +264,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		if len(container.Recipes) > 0 {
 
-			user.SendText(messaging.CategorySystem, ``)
+			user.SendBlankLine(messaging.CategorySystem)
 			user.SendText(messaging.CategorySystem, fmt.Sprintf(`You can <ansi fg="command">use</ansi> the <ansi fg="container">%s</ansi> if you put the following objects inside:`, containerName))
 
 			for finalItemId, recipeList := range container.Recipes {
@@ -277,7 +275,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					neededItems[inputItemId] += 1
 				}
 
-				user.SendText(messaging.CategorySystem, ``)
+				user.SendBlankLine(messaging.CategorySystem)
 
 				finalItem := items.New(finalItemId)
 				user.SendText(messaging.CategorySystem, fmt.Sprintf(`    <ansi fg="230">To receive 1 <ansi fg="itemname">%s</ansi>:</ansi> `, finalItem.DisplayName()))
@@ -305,9 +303,9 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		textOut, _ := templates.Process("descriptions/insidecontainer", chestStuff, user.UserId)
 
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 		user.SendText(messaging.CategoryRoomDescription, textOut)
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 
 		return true, nil
 	}
@@ -325,11 +323,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// than the lantern.
 	//
 	if noun, desc, ok := user.Character.FindItemNoun(lookAt); ok {
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 		user.SendText(messaging.CategoryRoomDescription, fmt.Sprintf(`You look at the <ansi fg="noun">%s</ansi>:`, noun))
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 		user.SendText(messaging.CategoryRoomDescription, util.SplitStringNL(desc, 80))
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 		return true, nil
 	}
 
@@ -340,13 +338,13 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if foundItem {
 
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 
 		user.SendText(messaging.CategoryRoomDescription,
 			fmt.Sprintf(`You look at the <ansi fg="item">%s</ansi> %s:`, lookItem.DisplayNameFor(user.UserId), lookDestination),
 		)
 
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 
 		if !isSneaking {
 			room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
@@ -385,7 +383,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		}
 
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 
 		return true, nil
 	}
@@ -414,13 +412,13 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 	if len(foundNoun) > 0 {
 
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 
 		user.SendText(messaging.CategoryRoomDescription,
 			fmt.Sprintf(`You look at the <ansi fg="noun">%s</ansi>:`, foundNoun),
 		)
 
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 
 		if !isSneaking {
 
@@ -447,7 +445,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		user.SendText(messaging.CategoryRoomDescription, util.SplitStringNL(foundDesc, 80))
 
-		user.SendText(messaging.CategoryRoomDescription, ``)
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 
 		return true, nil
 	}
@@ -564,10 +562,14 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
-	// Nothing found. At shapes the name may have been a creature's, which
-	// was deliberately not resolved above; say why rather than deny it.
-	if sight == messaging.SightShapes {
-		user.SendText(messaging.CategoryRefusal, `You can only make out shapes here.`)
+	// Nothing found (#609, owner ruling 2026-10-17). The aim word (`figure`,
+	// `3.figure`, `shape#3`) names a creature, so it reads the creature line,
+	// as every aiming verb's does; anything else the thing line, at every
+	// light. At shapes a creature's own name was deliberately not resolved
+	// above, and it reads the thing line too, exactly as a name that matches
+	// nothing does, so the answer is not an oracle for who is standing there.
+	if actions.NamesAFigure(lookAt) {
+		refusal.NotHereCreature(user)
 		return true, nil
 	}
 	refusal.NotHereThing(user)
@@ -621,11 +623,11 @@ func lookAtFloorItem(user *users.UserRecord, room *rooms.Room, floorItem items.I
 		where = `here`
 	}
 
-	user.SendText(messaging.CategoryRoomDescription, ``)
+	user.SendBlankLine(messaging.CategoryRoomDescription)
 	user.SendText(messaging.CategoryRoomDescription,
 		fmt.Sprintf(`You look at the <ansi fg="item">%s</ansi> %s:`, floorItem.DisplayNameFor(user.UserId), where),
 	)
-	user.SendText(messaging.CategoryRoomDescription, ``)
+	user.SendBlankLine(messaging.CategoryRoomDescription)
 
 	if !isSneaking {
 		room.SendTextVisualHidingNames(messaging.CategoryMobEmote,
@@ -642,7 +644,7 @@ func lookAtFloorItem(user *users.UserRecord, room *rooms.Room, floorItem items.I
 		user.SendText(messaging.CategoryRoomDescription,
 			`It belongs to this household. Taking it would be theft.`)
 	}
-	user.SendText(messaging.CategoryRoomDescription, ``)
+	user.SendBlankLine(messaging.CategoryRoomDescription)
 }
 
 func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
@@ -804,7 +806,7 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	}
 
 	if signCt > 0 {
-		user.SendText(messaging.CategoryRoomDescription, "")
+		user.SendBlankLine(messaging.CategoryRoomDescription)
 	}
 
 	textOut = actions.RenderRoster(details, user.UserId)

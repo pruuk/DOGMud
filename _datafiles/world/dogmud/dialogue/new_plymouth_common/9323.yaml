@@ -35,7 +35,7 @@ tree:
                  "deliver", "hand", "give", "turn", "done",
                  "report", "quest", "task"]
       questRequired: ["66-start"]
-      questExcluded: ["66-escort"]
+      questExcluded: ["66-escort", "66-end"]
       requiresItem: 40110
       grantsQuest: "66-escort"
       text: "Ysolde takes the wax wrapper and holds it close,
